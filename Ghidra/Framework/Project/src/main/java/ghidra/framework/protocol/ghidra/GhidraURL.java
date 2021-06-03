@@ -174,7 +174,7 @@ public class GhidraURL {
 	/**
 	 * Create a Ghidra URL from a string form of Ghidra URL or local project path.
 	 * This method can consume strings produced by the getDisplayString method.
-	 * @param path project path (<absolute-directory>/<project-name>)
+	 * @param projectPathOrURL {@literal project path (<absolute-directory>/<project-name>)}
 	 * @return local Ghidra project URL
 	 * @see #getDisplayString(URL)
 	 * @throws IllegalArgumentException invalid path or URL specified
@@ -289,7 +289,7 @@ public class GhidraURL {
 	 * Create a URL which refers to Ghidra Server repository content.  Path may correspond 
 	 * to either a file or folder.  
 	 * @param host server host name/address
-	 * @param port optional server port (a value <= 0 refers to the default port)
+	 * @param port optional server port (a value &lt;= 0 refers to the default port)
 	 * @param repositoryName repository name
 	 * @param repositoryPath absolute folder or file path within repository.  
 	 * Folder paths should end with a '/' character.
@@ -303,7 +303,7 @@ public class GhidraURL {
 	 * Create a URL which refers to Ghidra Server repository content.  Path may correspond 
 	 * to either a file or folder.  
 	 * @param host server host name/address
-	 * @param port optional server port (a value <= 0 refers to the default port)
+	 * @param port optional server port (a value &lt;= 0 refers to the default port)
 	 * @param repositoryName repository name
 	 * @param repositoryPath absolute folder path within repository. 
 	 * @param fileName name of a file contained within the specified repository/path
@@ -352,7 +352,7 @@ public class GhidraURL {
 	/**
 	 * Create a URL which refers to Ghidra Server repository and its root folder
 	 * @param host server host name/address
-	 * @param port optional server port (a value <= 0 refers to the default port)
+	 * @param port optional server port (a value &lt;= 0 refers to the default port)
 	 * @param repositoryName repository name
 	 * @return Ghidra Server repository URL
 	 */

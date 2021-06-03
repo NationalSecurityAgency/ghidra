@@ -216,7 +216,7 @@ public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
 					}
 					catch (IOException e) {
 						Msg.showError(this, panel, "IO Error",
-							"Error occured while generating old language file:\n" + file, e);
+							"Error occurred while generating old language file:\n" + file, e);
 					}
 				}
 			});
@@ -317,7 +317,7 @@ public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
 					}
 					catch (IOException e) {
 						Msg.showError(this, panel, "IO Error",
-							"Error occured while generating translator file:\n" + transFile, e);
+							"Error occurred while generating translator file:\n" + transFile, e);
 					}
 					close();
 				}

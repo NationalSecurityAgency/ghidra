@@ -97,7 +97,7 @@ public class FcgProvider
 
 	private ToggleDockingAction navigateIncomingToggleAction;
 
-	public FcgProvider(DockingTool tool, FunctionCallGraphPlugin plugin) {
+	public FcgProvider(Tool tool, FunctionCallGraphPlugin plugin) {
 		super(tool, NAME, plugin.getName());
 		this.plugin = plugin;
 

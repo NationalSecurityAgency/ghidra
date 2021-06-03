@@ -762,7 +762,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 :ROR rd, ximm4 is opcode=0x1 & rd & ximm4 & op3=0xf
 {
 	local cnt:2 = ximm4;
-	rd = (rd >> cnt) | (rd << (16 - rd));
+	rd = (rd >> cnt) | (rd << (16 - cnt));
 	
     default_flags(rd);
 }
@@ -770,7 +770,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 :ROR rd, rs1 is opcode=0x1 & rd & rs1 & op4=0x17
 {
 	local cnt:2 = rs1 & 0xf;
-	rd = (rd >> cnt) | (rd << (16 - rd));
+	rd = (rd >> cnt) | (rd << (16 - cnt));
 	
     default_flags(rd);
 }

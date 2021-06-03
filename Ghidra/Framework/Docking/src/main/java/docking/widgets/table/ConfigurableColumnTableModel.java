@@ -29,28 +29,18 @@ import ghidra.docking.settings.SettingsDefinition;
 public interface ConfigurableColumnTableModel extends TableModel {
 
 	/**
-	 * Returns settings for the specified column index.
+	 * Returns settings for the specified column index
 	 * @param index column index
 	 * @return column settings.
 	 */
 	public Settings getColumnSettings(int index);
 
 	/**
-	 * Returns settings definitions for the specified column index.
+	 * Returns settings definitions for the specified column index
 	 * @param index column index
 	 * @return column settings definitions.
 	 */
 	public SettingsDefinition[] getColumnSettingsDefinitions(int index);
-
-	/**
-	 * A convenience method to set bulk column setting information for a group of columns at one
-	 * time (this saves repeated rebuilding when settings are changing for multiple columns at
-	 * once).
-	 * @param index the column index
-	 * @param newSettings A list of pair objects that contain the column index of the column to
-	 *        which the new settings apply and the new settings object.
-	 */
-	public void setColumnSettings(int index, Settings newSettings);
 
 	/**
 	 * Allows for the bulk setting of Settings.  This prevents excessive event 
@@ -58,18 +48,22 @@ public interface ConfigurableColumnTableModel extends TableModel {
 	 * 
 	 * @param settings An array of Settings that contains Settings for each column  
 	 *        where the index of the Settings in the array is the index of the column
-	 *        in the model.
-	 * @see #setColumnSettings(int, Settings)
+	 *        in the model
 	 */
 	public void setAllColumnSettings(Settings[] settings);
 
 	/**
 	 * Gets the maximum number of text display lines needed for any given cell within the 
-	 * specified column.
+	 * specified column
 	 * @param index column field index
 	 * @return maximum number of lines needed for specified column
 	 */
 	public int getMaxLines(int index);
 
+	/**
+	 * Returns the table cell renderer for the given column
+	 * @param columnIndex the index of the column
+	 * @return the renderer
+	 */
 	public TableCellRenderer getRenderer(int columnIndex);
 }

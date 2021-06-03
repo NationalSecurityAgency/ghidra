@@ -31,7 +31,7 @@ import ghidra.util.task.TaskMonitor;
  * in the area will be replaced with the new dataType, except when the existing data
  * or the given dataType is a pointer.  If the existing dataType is a pointer, then
  * it will be changed into a pointer to the given dataType.  If the given dataType
- * is a pointer and the existing data is >= to the size of a pointer, it will become
+ * is a pointer and the existing data is &gt;= to the size of a pointer, it will become
  * a pointer to the existing type.  If the existing dataType is less than the size
  * of a pointer, then a pointer to dataType will only be created if there are
  * enough undefined bytes following to make a pointer.

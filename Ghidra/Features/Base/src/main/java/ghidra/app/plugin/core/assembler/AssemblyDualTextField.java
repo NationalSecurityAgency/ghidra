@@ -208,7 +208,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * Represents the description of an error encountered during parsing or assembling
-	 * @note not used until error descriptions improve
+	 * NOTE: not used until error descriptions improve
 	 */
 	static class AssemblyError extends AssemblyCompletion {
 		private String text;
@@ -488,7 +488,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * Set the visibility of the text box(es)
-	 * @param determines whether both are hidden, the dual variant is shown, or the single variant is shown.
+	 * @param visibility the VisibilityMode to set.
 	 */
 	public void setVisible(VisibilityMode visibility) {
 		switch (visibility) {
@@ -510,7 +510,7 @@ public class AssemblyDualTextField {
 	/**
 	 * Add a focus listener to the box(es)
 	 * 
-	 * @note The listener will not fire when focus passes among the linked boxes of the dual variant.
+	 * NOTE: The listener will not fire when focus passes among the linked boxes of the dual variant.
 	 * @param listener the listener
 	 */
 	public void addFocusListener(FocusListener listener) {

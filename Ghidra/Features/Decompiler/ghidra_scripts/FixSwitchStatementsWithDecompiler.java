@@ -60,7 +60,7 @@ public class FixSwitchStatementsWithDecompiler extends GhidraScript {
 
 		Set<Function> functions = instructionsByFunction.keySet();
 		try {
-			ParallelDecompiler.decompileFunctions(callback, currentProgram, functions, monitor);
+			ParallelDecompiler.decompileFunctions(callback, functions, monitor);
 		}
 		finally {
 			callback.dispose();

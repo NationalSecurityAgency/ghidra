@@ -573,7 +573,7 @@ macro pop24(val) {
 :PUSH drk47	is $(GROUP3) & ophi=12 & oplo=10; $(DRK47) & s03=11 { push16(drk47); }
 
 # SETB bit
-:SETB xBitAddr^"."^xBitByteAddr   is $(GROUP3) & ophi=10 & oplo=9; (d47=13 & s3=0 & bit02; xBitByteAddr) & xBitAddr { xBitBtyteAddr:1 = (xBitByteAddr) | (1 << bit02); }
+:SETB xBitAddr^"."^xBitByteAddr   is $(GROUP3) & ophi=10 & oplo=9; (d47=13 & s3=0 & bit02; xBitByteAddr) & xBitAddr { xBitByteAddr = (xBitByteAddr) | (1 << bit02); }
 
 # SLL Rm
 :SLL rm47	is $(GROUP3) & ophi=3 & oplo=14; rm47 & s03=0  { $(CY) = ((rm47>>7) & 1); rm47 = rm47 << 1; resultflags(rm47); }

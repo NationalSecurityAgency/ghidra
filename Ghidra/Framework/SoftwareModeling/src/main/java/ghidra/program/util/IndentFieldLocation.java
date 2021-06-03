@@ -26,7 +26,7 @@ public class IndentFieldLocation extends CodeUnitLocation {
 	/**
 	 * Construct a new IndentFieldLocation object.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param addr address of the location; should not be null
 	 * fragment by its hierarchy names; this parameter may be null
 	 * @param componentPath array of indexes for each nested data component; the

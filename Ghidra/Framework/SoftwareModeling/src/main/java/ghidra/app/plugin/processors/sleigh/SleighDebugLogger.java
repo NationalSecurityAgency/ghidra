@@ -67,9 +67,10 @@ public class SleighDebugLogger {
 
 	/**
 	 * Performs a parse debug at the specified memory location within program.
-	 * @param buf
-	 * @param programContext
-	 * @param verbose if true extended debug information may be provided
+	 * @param buf the memory buffer
+	 * @param context the processor context
+	 * @param language the sleigh language
+	 * @param mode the sleigh debug mode
 	 * @throws IllegalArgumentException if program language provider is not Sleigh
 	 */
 	public SleighDebugLogger(MemBuffer buf, ProcessorContextView context, Language language,
@@ -83,8 +84,8 @@ public class SleighDebugLogger {
 		}
 
 		if (!(language instanceof SleighLanguage)) {
-			throw new IllegalArgumentException("unsupport language provider: " +
-				language.getClass().getSimpleName());
+			throw new IllegalArgumentException(
+				"unsupport language provider: " + language.getClass().getSimpleName());
 		}
 
 		ContextCache contextCache = new ContextCache();
@@ -111,9 +112,8 @@ public class SleighDebugLogger {
 		}
 
 		try {
-			prototype =
-				new SleighInstructionPrototype((SleighLanguage) language, buf, context,
-					contextCache, false, this);
+			prototype = new SleighInstructionPrototype((SleighLanguage) language, buf, context,
+				contextCache, false, this);
 
 			prototype.cacheInfo(buf, context, false);
 
@@ -141,14 +141,15 @@ public class SleighDebugLogger {
 
 	/**
 	 * Performs a parse debug at the specified memory location within program.
-	 * @param program
-	 * @param start
-	 * @param verbose if true extended debug information may be provided
+	 * @param program the program the memory location is found in
+	 * @param start the start address of the memory location
+	 * @param mode the sleigh debug mode
 	 * @throws IllegalArgumentException if program language provider is not Sleigh
 	 */
 	public SleighDebugLogger(Program program, Address start, SleighDebugMode mode) {
-		this(new MemoryBufferImpl(program.getMemory(), start), new MyProcessorContextView(
-			program.getProgramContext(), start), program.getLanguage(), mode);
+		this(new MemoryBufferImpl(program.getMemory(), start),
+			new MyProcessorContextView(program.getProgramContext(), start), program.getLanguage(),
+			mode);
 	}
 
 	private class DebugInstructionContext implements InstructionContext {
@@ -199,7 +200,7 @@ public class SleighDebugLogger {
 
 	/**
 	 * @return true if a parse error was detected, otherwise false is returned.
-	 * The methods getMaskedInstructionBytes() and getInstructionBitMask() should
+	 * The methods getMaskedBytes() and getInstructionMask() should
 	 * only be invoked if this method returns false.
 	 */
 	public boolean parseFailed() {
@@ -239,7 +240,8 @@ public class SleighDebugLogger {
 		if (!"instruction".equals(tableName) || name.startsWith("\n")) {
 			name = tableName;
 		}
-		list.add(name + "(" + Integer.toString(ct.getLineno()) + ")");
+
+		list.add(name + "(" + ct.getSourceFile() + ":" + Integer.toString(ct.getLineno()) + ")");
 
 		int flowthruindex = ct.getFlowthruIndex();
 		if (flowthruindex != -1) {
@@ -297,7 +299,7 @@ public class SleighDebugLogger {
 	 * NOTE: Method has no affect unless constructed with VERBOSE logging mode.
 	 * @param value integer array
 	 * @param startbit identifies the first most-significant bit within the
-	 * bracketed range (left-most value[0] bit is bit-0, right-most value[n] bit is bit-<32(n+1)-1> ).
+	 * {@literal bracketed range (left-most value[0] bit is bit-0, right-most value[n] bit is bit-<32(n+1)-1> ).}
 	 * @param bitcount number of bits included within range
 	 */
 	public void append(int[] value, int startbit, int bitcount) {
@@ -323,7 +325,7 @@ public class SleighDebugLogger {
 	 * NOTE: Method has no affect unless constructed with VERBOSE logging mode.
 	 * @param value byte array
 	 * @param startbit identifies the first most-significant bit within the
-	 * bracketed range (left-most value[0] bit is bit-0, right-most value[n] bit is bit-<8(n+1)-1> ).
+	 * {@literal bracketed range (left-most value[0] bit is bit-0, right-most value[n] bit is bit-<8(n+1)-1> ).}
 	 * @param bitcount number of bits included within range
 	 */
 	public void append(byte[] value, int startbit, int bitcount) {
@@ -337,8 +339,7 @@ public class SleighDebugLogger {
 		endbit = endbit % 8;
 
 		for (int i = 0; i < value.length; i++) {
-			String byteStr =
-				StringUtilities.pad(Integer.toBinaryString(value[i] & 0xff), '0', 8);
+			String byteStr = StringUtilities.pad(Integer.toBinaryString(value[i] & 0xff), '0', 8);
 			if (startbit >= 0) {
 				if (endByte == i) {
 					byteStr =
@@ -620,8 +621,8 @@ public class SleighDebugLogger {
 			Math.min(contextBaseRegister.getMinimumByteSize() - byteOffset, maskvec.length * 4);
 
 		byte[] maskPatternValue = new byte[2 * contextBaseRegister.getMinimumByteSize()];
-		System.arraycopy(getBytes(valvec), 0, maskPatternValue, (maskPatternValue.length / 2) +
-			byteOffset, vecByteCnt);
+		System.arraycopy(getBytes(valvec), 0, maskPatternValue,
+			(maskPatternValue.length / 2) + byteOffset, vecByteCnt);
 
 		byte[] mask = getBytes(maskvec);
 		System.arraycopy(mask, 0, maskActualValue, byteOffset, vecByteCnt);
@@ -639,9 +640,8 @@ public class SleighDebugLogger {
 				BigInteger actual = childActualValue.getUnsignedValueIgnoreMask();
 				BigInteger match = childMatchValue.getUnsignedValueIgnoreMask();
 				String partialMatch = childMatchValue.hasValue() ? "" : "*";
-				String matchStr =
-					match.equals(actual) ? " Match" : (" Failed (=0x" +
-						Long.toHexString(actual.longValue()) + ")");
+				String matchStr = match.equals(actual) ? " Match"
+						: (" Failed (=0x" + Long.toHexString(actual.longValue()) + ")");
 				int msb = baseRegSize - reg.getLeastSignificatBitInBaseRegister() - 1;
 				int lsb = msb - reg.getBitLength() + 1;
 				append(partialMatch + reg.getName() + "(" + lsb + "," + msb + ") == 0x" +
@@ -718,7 +718,8 @@ public class SleighDebugLogger {
 		dumpGlobalSet(state, num, mask, value, null);
 	}
 
-	private void dumpGlobalSet(ConstructState state, int num, int mask, int value, Address setAddr) {
+	private void dumpGlobalSet(ConstructState state, int num, int mask, int value,
+			Address setAddr) {
 
 		byte[] maskActualValue = new byte[contextBaseRegister.getMinimumByteSize() * 2];
 		int byteOffset = num * 4;
@@ -914,7 +915,7 @@ public class SleighDebugLogger {
 	 * the instruction (includes addressing modes, generally excludes register selector bits
 	 * associated with attaches or immediate values used in for semantic values only).
 	 * @throws IllegalStateException if prototype parse failed
-	 * @see SleighDebugLogger#getMaskedInstructionBytes()
+	 * @see #getFormattedInstructionMask(int) getFormattedInstructionMask(-1)
 	 */
 	public byte[] getInstructionMask() {
 		buildMasks();
@@ -950,8 +951,7 @@ public class SleighDebugLogger {
 	public static String getFormattedBytes(byte[] value) {
 		StringBuffer buf = new StringBuffer();
 		for (int i = 0; i < value.length; i++) {
-			String byteStr =
-				StringUtilities.pad(Integer.toBinaryString(value[i] & 0xff), '0', 8);
+			String byteStr = StringUtilities.pad(Integer.toBinaryString(value[i] & 0xff), '0', 8);
 			buf.append(byteStr);
 			if (i < (value.length - 1)) {
 				buf.append(" ");
@@ -1275,7 +1275,7 @@ public class SleighDebugLogger {
 		}
 
 		@Override
-		public Register[] getRegisters() {
+		public List<Register> getRegisters() {
 			if (originalContext != null) {
 				return originalContext.getRegisters();
 			}

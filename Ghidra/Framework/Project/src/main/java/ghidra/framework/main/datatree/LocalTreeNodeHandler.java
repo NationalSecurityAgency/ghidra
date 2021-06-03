@@ -222,7 +222,7 @@ public final class LocalTreeNodeHandler
 
 				GTreeNode copyNode = toCopy.get(i);
 				monitor.setMessage(
-					"Processing file " + i + " of " + size + ": " + copyNode.getName());
+					"Processing file " + (i + 1) + " of " + size + ": " + copyNode.getName());
 
 				add(destination, copyNode, dropAction, subMonitors[i]);
 				monitor.setProgress(i);

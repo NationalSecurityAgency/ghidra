@@ -15,10 +15,11 @@
  */
 package ghidra.app.util.html;
 
-import ghidra.app.util.html.diff.DataTypeDiffInput;
-import ghidra.util.StringUtilities;
-
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+
+import ghidra.app.util.html.diff.DataTypeDiffInput;
 
 public class HTMLDataTypeRepresentationDiffInput implements DataTypeDiffInput {
 
@@ -43,6 +44,6 @@ public class HTMLDataTypeRepresentationDiffInput implements DataTypeDiffInput {
 
 	@Override
 	public String toString() {
-		return source.getClass().getSimpleName() + '\n' + StringUtilities.toString(lines, ",\n");
+		return source.getClass().getSimpleName() + '\n' + StringUtils.join(lines, ",\n");
 	}
 }

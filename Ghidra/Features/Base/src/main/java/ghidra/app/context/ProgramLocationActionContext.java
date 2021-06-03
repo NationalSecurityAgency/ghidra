@@ -69,7 +69,8 @@ public class ProgramLocationActionContext extends ProgramActionContext {
 	}
 
 	/**
-	 * @return the code unit at the action's program location or null
+	 * Returns the code unit containing the action's program location or null
+	 * @return the code unit containing the action's program location or null
 	 */
 	public CodeUnit getCodeUnit() {
 		if (!codeUnitInitialized) {

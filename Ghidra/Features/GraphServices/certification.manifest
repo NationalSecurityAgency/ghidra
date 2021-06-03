@@ -1,0 +1,26 @@
+##VERSION: 2.0
+##MODULE IP: Apache License 2.0
+##MODULE IP: BSD
+##MODULE IP: FAMFAMFAM Icons - CC 2.5
+##MODULE IP: LGPL 2.1
+##MODULE IP: MIT
+##MODULE IP: Oxygen Icons - LGPL 3.0
+##MODULE IP: Tango Icons - Public Domain
+Module.manifest||GHIDRA||||END|
+data/ExtensionPoint.manifest||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/shared/arrow.gif||GHIDRA||||END|
+src/main/help/help/shared/note.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/help/help/shared/tip.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/help/help/topics/GraphServices/GraphDisplay.htm||GHIDRA||||END|
+src/main/help/help/topics/GraphServices/GraphExport.htm||GHIDRA||||END|
+src/main/help/help/topics/GraphServices/images/DefaultGraphDisplay.png||GHIDRA||||END|
+src/main/help/help/topics/GraphServices/images/ExportDialog.png||GHIDRA||||END|
+src/main/resources/images/Lasso.png||GHIDRA||||END|
+src/main/resources/images/magnifier.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/project-open.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/redspheregraph.png||GHIDRA||||END|
+src/main/resources/images/sat2.png||GHIDRA||||END|
+src/main/resources/images/tree.png||GHIDRA||||END|
+src/main/resources/images/view-fullscreen.png||Tango Icons - Public Domain|||tango icon set|END|
+src/main/resources/jungrapht.properties||GHIDRA||||END|

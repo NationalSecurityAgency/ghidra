@@ -1,0 +1,2886 @@
+#!/usr/bin/env python3
+## ###
+#  IP: GHIDRA
+# 
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#  
+#       http://www.apache.org/licenses/LICENSE-2.0
+#  
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+##
+"""Script to generate base RISC-V SLEIGH for Ghidra module
+
+Just an artifact to keep around for the development at this point as a lot of
+cleanup and reorganization was done after generating the intial SLEIGH.
+
+Data was copied from various files in binutils, a lot of it unused.
+"""
+
+import sys
+import re
+
+MATCH_SLLI_RV32=0x1013
+MASK_SLLI_RV32=0xfe00707f
+MATCH_SRLI_RV32=0x5013
+MASK_SRLI_RV32=0xfe00707f
+MATCH_SRAI_RV32=0x40005013
+MASK_SRAI_RV32=0xfe00707f
+MATCH_FRFLAGS=0x102073
+MASK_FRFLAGS=0xfffff07f
+MATCH_FSFLAGS=0x101073
+MASK_FSFLAGS=0xfff0707f
+MATCH_FSFLAGSI=0x105073
+MASK_FSFLAGSI=0xfff0707f
+MATCH_FRRM=0x202073
+MASK_FRRM=0xfffff07f
+MATCH_FSRM=0x201073
+MASK_FSRM=0xfff0707f
+MATCH_FSRMI=0x205073
+MASK_FSRMI=0xfff0707f
+MATCH_FSCSR=0x301073
+MASK_FSCSR=0xfff0707f
+MATCH_FRCSR=0x302073
+MASK_FRCSR=0xfffff07f
+MATCH_RDCYCLE=0xc0002073
+MASK_RDCYCLE=0xfffff07f
+MATCH_RDTIME=0xc0102073
+MASK_RDTIME=0xfffff07f
+MATCH_RDINSTRET=0xc0202073
+MASK_RDINSTRET=0xfffff07f
+MATCH_RDCYCLEH=0xc8002073
+MASK_RDCYCLEH=0xfffff07f
+MATCH_RDTIMEH=0xc8102073
+MASK_RDTIMEH=0xfffff07f
+MATCH_RDINSTRETH=0xc8202073
+MASK_RDINSTRETH=0xfffff07f
+MATCH_SCALL=0x73
+MASK_SCALL=0xffffffff
+MATCH_SBREAK=0x100073
+MASK_SBREAK=0xffffffff
+MATCH_BEQ=0x63
+MASK_BEQ=0x707f
+MATCH_BNE=0x1063
+MASK_BNE=0x707f
+MATCH_BLT=0x4063
+MASK_BLT=0x707f
+MATCH_BGE=0x5063
+MASK_BGE=0x707f
+MATCH_BLTU=0x6063
+MASK_BLTU=0x707f
+MATCH_BGEU=0x7063
+MASK_BGEU=0x707f
+MATCH_JALR=0x67
+MASK_JALR=0x707f
+MATCH_JAL=0x6f
+MASK_JAL=0x7f
+MATCH_LUI=0x37
+MASK_LUI=0x7f
+MATCH_AUIPC=0x17
+MASK_AUIPC=0x7f
+MATCH_ADDI=0x13
+MASK_ADDI=0x707f
+MATCH_SLLI=0x1013
+MASK_SLLI=0xfc00707f
+MATCH_SLTI=0x2013
+MASK_SLTI=0x707f
+MATCH_SLTIU=0x3013
+MASK_SLTIU=0x707f
+MATCH_XORI=0x4013
+MASK_XORI=0x707f
+MATCH_SRLI=0x5013
+MASK_SRLI=0xfc00707f
+MATCH_SRAI=0x40005013
+MASK_SRAI=0xfc00707f
+MATCH_ORI=0x6013
+MASK_ORI=0x707f
+MATCH_ANDI=0x7013
+MASK_ANDI=0x707f
+MATCH_ADD=0x33
+MASK_ADD=0xfe00707f
+MATCH_SUB=0x40000033
+MASK_SUB=0xfe00707f
+MATCH_SLL=0x1033
+MASK_SLL=0xfe00707f
+MATCH_SLT=0x2033
+MASK_SLT=0xfe00707f
+MATCH_SLTU=0x3033
+MASK_SLTU=0xfe00707f
+MATCH_XOR=0x4033
+MASK_XOR=0xfe00707f
+MATCH_SRL=0x5033
+MASK_SRL=0xfe00707f
+MATCH_SRA=0x40005033
+MASK_SRA=0xfe00707f
+MATCH_OR=0x6033
+MASK_OR=0xfe00707f
+MATCH_AND=0x7033
+MASK_AND=0xfe00707f
+MATCH_ADDIW=0x1b
+MASK_ADDIW=0x707f
+MATCH_SLLIW=0x101b
+MASK_SLLIW=0xfe00707f
+MATCH_SRLIW=0x501b
+MASK_SRLIW=0xfe00707f
+MATCH_SRAIW=0x4000501b
+MASK_SRAIW=0xfe00707f
+MATCH_ADDW=0x3b
+MASK_ADDW=0xfe00707f
+MATCH_SUBW=0x4000003b
+MASK_SUBW=0xfe00707f
+MATCH_SLLW=0x103b
+MASK_SLLW=0xfe00707f
+MATCH_SRLW=0x503b
+MASK_SRLW=0xfe00707f
+MATCH_SRAW=0x4000503b
+MASK_SRAW=0xfe00707f
+MATCH_LB=0x3
+MASK_LB=0x707f
+MATCH_LH=0x1003
+MASK_LH=0x707f
+MATCH_LW=0x2003
+MASK_LW=0x707f
+MATCH_LD=0x3003
+MASK_LD=0x707f
+MATCH_LBU=0x4003
+MASK_LBU=0x707f
+MATCH_LHU=0x5003
+MASK_LHU=0x707f
+MATCH_LWU=0x6003
+MASK_LWU=0x707f
+MATCH_SB=0x23
+MASK_SB=0x707f
+MATCH_SH=0x1023
+MASK_SH=0x707f
+MATCH_SW=0x2023
+MASK_SW=0x707f
+MATCH_SD=0x3023
+MASK_SD=0x707f
+MATCH_FENCE=0xf
+MASK_FENCE=0x707f
+MATCH_FENCE_I=0x100f
+MASK_FENCE_I=0x707f
+MATCH_FENCE_TSO=0x8330000f
+MASK_FENCE_TSO=0xfff0707f
+MATCH_MUL=0x2000033
+MASK_MUL=0xfe00707f
+MATCH_MULH=0x2001033
+MASK_MULH=0xfe00707f
+MATCH_MULHSU=0x2002033
+MASK_MULHSU=0xfe00707f
+MATCH_MULHU=0x2003033
+MASK_MULHU=0xfe00707f
+MATCH_DIV=0x2004033
+MASK_DIV=0xfe00707f
+MATCH_DIVU=0x2005033
+MASK_DIVU=0xfe00707f
+MATCH_REM=0x2006033
+MASK_REM=0xfe00707f
+MATCH_REMU=0x2007033
+MASK_REMU=0xfe00707f
+MATCH_MULW=0x200003b
+MASK_MULW=0xfe00707f
+MATCH_DIVW=0x200403b
+MASK_DIVW=0xfe00707f
+MATCH_DIVUW=0x200503b
+MASK_DIVUW=0xfe00707f
+MATCH_REMW=0x200603b
+MASK_REMW=0xfe00707f
+MATCH_REMUW=0x200703b
+MASK_REMUW=0xfe00707f
+MATCH_AMOADD_W=0x202f
+MASK_AMOADD_W=0xf800707f
+MATCH_AMOXOR_W=0x2000202f
+MASK_AMOXOR_W=0xf800707f
+MATCH_AMOOR_W=0x4000202f
+MASK_AMOOR_W=0xf800707f
+MATCH_AMOAND_W=0x6000202f
+MASK_AMOAND_W=0xf800707f
+MATCH_AMOMIN_W=0x8000202f
+MASK_AMOMIN_W=0xf800707f
+MATCH_AMOMAX_W=0xa000202f
+MASK_AMOMAX_W=0xf800707f
+MATCH_AMOMINU_W=0xc000202f
+MASK_AMOMINU_W=0xf800707f
+MATCH_AMOMAXU_W=0xe000202f
+MASK_AMOMAXU_W=0xf800707f
+MATCH_AMOSWAP_W=0x800202f
+MASK_AMOSWAP_W=0xf800707f
+MATCH_LR_W=0x1000202f
+MASK_LR_W=0xf9f0707f
+MATCH_SC_W=0x1800202f
+MASK_SC_W=0xf800707f
+MATCH_AMOADD_D=0x302f
+MASK_AMOADD_D=0xf800707f
+MATCH_AMOXOR_D=0x2000302f
+MASK_AMOXOR_D=0xf800707f
+MATCH_AMOOR_D=0x4000302f
+MASK_AMOOR_D=0xf800707f
+MATCH_AMOAND_D=0x6000302f
+MASK_AMOAND_D=0xf800707f
+MATCH_AMOMIN_D=0x8000302f
+MASK_AMOMIN_D=0xf800707f
+MATCH_AMOMAX_D=0xa000302f
+MASK_AMOMAX_D=0xf800707f
+MATCH_AMOMINU_D=0xc000302f
+MASK_AMOMINU_D=0xf800707f
+MATCH_AMOMAXU_D=0xe000302f
+MASK_AMOMAXU_D=0xf800707f
+MATCH_AMOSWAP_D=0x800302f
+MASK_AMOSWAP_D=0xf800707f
+MATCH_LR_D=0x1000302f
+MASK_LR_D=0xf9f0707f
+MATCH_SC_D=0x1800302f
+MASK_SC_D=0xf800707f
+MATCH_ECALL=0x73
+MASK_ECALL=0xffffffff
+MATCH_EBREAK=0x100073
+MASK_EBREAK=0xffffffff
+MATCH_URET=0x200073
+MASK_URET=0xffffffff
+MATCH_SRET=0x10200073
+MASK_SRET=0xffffffff
+MATCH_HRET=0x20200073
+MASK_HRET=0xffffffff
+MATCH_MRET=0x30200073
+MASK_MRET=0xffffffff
+MATCH_DRET=0x7b200073
+MASK_DRET=0xffffffff
+MATCH_SFENCE_VM=0x10400073
+MASK_SFENCE_VM=0xfff07fff
+MATCH_SFENCE_VMA=0x12000073
+MASK_SFENCE_VMA=0xfe007fff
+MATCH_WFI=0x10500073
+MASK_WFI=0xffffffff
+MATCH_CSRRW=0x1073
+MASK_CSRRW=0x707f
+MATCH_CSRRS=0x2073
+MASK_CSRRS=0x707f
+MATCH_CSRRC=0x3073
+MASK_CSRRC=0x707f
+MATCH_CSRRWI=0x5073
+MASK_CSRRWI=0x707f
+MATCH_CSRRSI=0x6073
+MASK_CSRRSI=0x707f
+MATCH_CSRRCI=0x7073
+MASK_CSRRCI=0x707f
+MATCH_FADD_S=0x53
+MASK_FADD_S=0xfe00007f
+MATCH_FSUB_S=0x8000053
+MASK_FSUB_S=0xfe00007f
+MATCH_FMUL_S=0x10000053
+MASK_FMUL_S=0xfe00007f
+MATCH_FDIV_S=0x18000053
+MASK_FDIV_S=0xfe00007f
+MATCH_FSGNJ_S=0x20000053
+MASK_FSGNJ_S=0xfe00707f
+MATCH_FSGNJN_S=0x20001053
+MASK_FSGNJN_S=0xfe00707f
+MATCH_FSGNJX_S=0x20002053
+MASK_FSGNJX_S=0xfe00707f
+MATCH_FMIN_S=0x28000053
+MASK_FMIN_S=0xfe00707f
+MATCH_FMAX_S=0x28001053
+MASK_FMAX_S=0xfe00707f
+MATCH_FSQRT_S=0x58000053
+MASK_FSQRT_S=0xfff0007f
+MATCH_FADD_D=0x2000053
+MASK_FADD_D=0xfe00007f
+MATCH_FSUB_D=0xa000053
+MASK_FSUB_D=0xfe00007f
+MATCH_FMUL_D=0x12000053
+MASK_FMUL_D=0xfe00007f
+MATCH_FDIV_D=0x1a000053
+MASK_FDIV_D=0xfe00007f
+MATCH_FSGNJ_D=0x22000053
+MASK_FSGNJ_D=0xfe00707f
+MATCH_FSGNJN_D=0x22001053
+MASK_FSGNJN_D=0xfe00707f
+MATCH_FSGNJX_D=0x22002053
+MASK_FSGNJX_D=0xfe00707f
+MATCH_FMIN_D=0x2a000053
+MASK_FMIN_D=0xfe00707f
+MATCH_FMAX_D=0x2a001053
+MASK_FMAX_D=0xfe00707f
+MATCH_FCVT_S_D=0x40100053
+MASK_FCVT_S_D=0xfff0007f
+MATCH_FCVT_D_S=0x42000053
+MASK_FCVT_D_S=0xfff0007f
+MATCH_FSQRT_D=0x5a000053
+MASK_FSQRT_D=0xfff0007f
+MATCH_FADD_Q=0x6000053
+MASK_FADD_Q=0xfe00007f
+MATCH_FSUB_Q=0xe000053
+MASK_FSUB_Q=0xfe00007f
+MATCH_FMUL_Q=0x16000053
+MASK_FMUL_Q=0xfe00007f
+MATCH_FDIV_Q=0x1e000053
+MASK_FDIV_Q=0xfe00007f
+MATCH_FSGNJ_Q=0x26000053
+MASK_FSGNJ_Q=0xfe00707f
+MATCH_FSGNJN_Q=0x26001053
+MASK_FSGNJN_Q=0xfe00707f
+MATCH_FSGNJX_Q=0x26002053
+MASK_FSGNJX_Q=0xfe00707f
+MATCH_FMIN_Q=0x2e000053
+MASK_FMIN_Q=0xfe00707f
+MATCH_FMAX_Q=0x2e001053
+MASK_FMAX_Q=0xfe00707f
+MATCH_FCVT_S_Q=0x40300053
+MASK_FCVT_S_Q=0xfff0007f
+MATCH_FCVT_Q_S=0x46000053
+MASK_FCVT_Q_S=0xfff0007f
+MATCH_FCVT_D_Q=0x42300053
+MASK_FCVT_D_Q=0xfff0007f
+MATCH_FCVT_Q_D=0x46100053
+MASK_FCVT_Q_D=0xfff0007f
+MATCH_FSQRT_Q=0x5e000053
+MASK_FSQRT_Q=0xfff0007f
+MATCH_FLE_S=0xa0000053
+MASK_FLE_S=0xfe00707f
+MATCH_FLT_S=0xa0001053
+MASK_FLT_S=0xfe00707f
+MATCH_FEQ_S=0xa0002053
+MASK_FEQ_S=0xfe00707f
+MATCH_FLE_D=0xa2000053
+MASK_FLE_D=0xfe00707f
+MATCH_FLT_D=0xa2001053
+MASK_FLT_D=0xfe00707f
+MATCH_FEQ_D=0xa2002053
+MASK_FEQ_D=0xfe00707f
+MATCH_FLE_Q=0xa6000053
+MASK_FLE_Q=0xfe00707f
+MATCH_FLT_Q=0xa6001053
+MASK_FLT_Q=0xfe00707f
+MATCH_FEQ_Q=0xa6002053
+MASK_FEQ_Q=0xfe00707f
+MATCH_FCVT_W_S=0xc0000053
+MASK_FCVT_W_S=0xfff0007f
+MATCH_FCVT_WU_S=0xc0100053
+MASK_FCVT_WU_S=0xfff0007f
+MATCH_FCVT_L_S=0xc0200053
+MASK_FCVT_L_S=0xfff0007f
+MATCH_FCVT_LU_S=0xc0300053
+MASK_FCVT_LU_S=0xfff0007f
+MATCH_FMV_X_S=0xe0000053
+MASK_FMV_X_S=0xfff0707f
+MATCH_FCLASS_S=0xe0001053
+MASK_FCLASS_S=0xfff0707f
+MATCH_FCVT_W_D=0xc2000053
+MASK_FCVT_W_D=0xfff0007f
+MATCH_FCVT_WU_D=0xc2100053
+MASK_FCVT_WU_D=0xfff0007f
+MATCH_FCVT_L_D=0xc2200053
+MASK_FCVT_L_D=0xfff0007f
+MATCH_FCVT_LU_D=0xc2300053
+MASK_FCVT_LU_D=0xfff0007f
+MATCH_FMV_X_D=0xe2000053
+MASK_FMV_X_D=0xfff0707f
+MATCH_FCLASS_D=0xe2001053
+MASK_FCLASS_D=0xfff0707f
+MATCH_FCVT_W_Q=0xc6000053
+MASK_FCVT_W_Q=0xfff0007f
+MATCH_FCVT_WU_Q=0xc6100053
+MASK_FCVT_WU_Q=0xfff0007f
+MATCH_FCVT_L_Q=0xc6200053
+MASK_FCVT_L_Q=0xfff0007f
+MATCH_FCVT_LU_Q=0xc6300053
+MASK_FCVT_LU_Q=0xfff0007f
+MATCH_FMV_X_Q=0xe6000053
+MASK_FMV_X_Q=0xfff0707f
+MATCH_FCLASS_Q=0xe6001053
+MASK_FCLASS_Q=0xfff0707f
+MATCH_FCVT_S_W=0xd0000053
+MASK_FCVT_S_W=0xfff0007f
+MATCH_FCVT_S_WU=0xd0100053
+MASK_FCVT_S_WU=0xfff0007f
+MATCH_FCVT_S_L=0xd0200053
+MASK_FCVT_S_L=0xfff0007f
+MATCH_FCVT_S_LU=0xd0300053
+MASK_FCVT_S_LU=0xfff0007f
+MATCH_FMV_S_X=0xf0000053
+MASK_FMV_S_X=0xfff0707f
+MATCH_FCVT_D_W=0xd2000053
+MASK_FCVT_D_W=0xfff0007f
+MATCH_FCVT_D_WU=0xd2100053
+MASK_FCVT_D_WU=0xfff0007f
+MATCH_FCVT_D_L=0xd2200053
+MASK_FCVT_D_L=0xfff0007f
+MATCH_FCVT_D_LU=0xd2300053
+MASK_FCVT_D_LU=0xfff0007f
+MATCH_FMV_D_X=0xf2000053
+MASK_FMV_D_X=0xfff0707f
+MATCH_FCVT_Q_W=0xd6000053
+MASK_FCVT_Q_W=0xfff0007f
+MATCH_FCVT_Q_WU=0xd6100053
+MASK_FCVT_Q_WU=0xfff0007f
+MATCH_FCVT_Q_L=0xd6200053
+MASK_FCVT_Q_L=0xfff0007f
+MATCH_FCVT_Q_LU=0xd6300053
+MASK_FCVT_Q_LU=0xfff0007f
+MATCH_FMV_Q_X=0xf6000053
+MASK_FMV_Q_X=0xfff0707f
+MATCH_FLW=0x2007
+MASK_FLW=0x707f
+MATCH_FLD=0x3007
+MASK_FLD=0x707f
+MATCH_FLQ=0x4007
+MASK_FLQ=0x707f
+MATCH_FSW=0x2027
+MASK_FSW=0x707f
+MATCH_FSD=0x3027
+MASK_FSD=0x707f
+MATCH_FSQ=0x4027
+MASK_FSQ=0x707f
+MATCH_FMADD_S=0x43
+MASK_FMADD_S=0x600007f
+MATCH_FMSUB_S=0x47
+MASK_FMSUB_S=0x600007f
+MATCH_FNMSUB_S=0x4b
+MASK_FNMSUB_S=0x600007f
+MATCH_FNMADD_S=0x4f
+MASK_FNMADD_S=0x600007f
+MATCH_FMADD_D=0x2000043
+MASK_FMADD_D=0x600007f
+MATCH_FMSUB_D=0x2000047
+MASK_FMSUB_D=0x600007f
+MATCH_FNMSUB_D=0x200004b
+MASK_FNMSUB_D=0x600007f
+MATCH_FNMADD_D=0x200004f
+MASK_FNMADD_D=0x600007f
+MATCH_FMADD_Q=0x6000043
+MASK_FMADD_Q=0x600007f
+MATCH_FMSUB_Q=0x6000047
+MASK_FMSUB_Q=0x600007f
+MATCH_FNMSUB_Q=0x600004b
+MASK_FNMSUB_Q=0x600007f
+MATCH_FNMADD_Q=0x600004f
+MASK_FNMADD_Q=0x600007f
+MATCH_C_ADDI4SPN=0x0
+MASK_C_ADDI4SPN=0xe003
+MATCH_C_FLD=0x2000
+MASK_C_FLD=0xe003
+MATCH_C_LW=0x4000
+MASK_C_LW=0xe003
+MATCH_C_FLW=0x6000
+MASK_C_FLW=0xe003
+MATCH_C_FSD=0xa000
+MASK_C_FSD=0xe003
+MATCH_C_SW=0xc000
+MASK_C_SW=0xe003
+MATCH_C_FSW=0xe000
+MASK_C_FSW=0xe003
+MATCH_C_ADDI=0x1
+MASK_C_ADDI=0xe003
+MATCH_C_JAL=0x2001
+MASK_C_JAL=0xe003
+MATCH_C_LI=0x4001
+MASK_C_LI=0xe003
+MATCH_C_LUI=0x6001
+MASK_C_LUI=0xe003
+MATCH_C_SRLI=0x8001
+MASK_C_SRLI=0xec03
+MATCH_C_SRLI64=0x8001
+MASK_C_SRLI64=0xfc7f
+MATCH_C_SRAI=0x8401
+MASK_C_SRAI=0xec03
+MATCH_C_SRAI64=0x8401
+MASK_C_SRAI64=0xfc7f
+MATCH_C_ANDI=0x8801
+MASK_C_ANDI=0xec03
+MATCH_C_SUB=0x8c01
+MASK_C_SUB=0xfc63
+MATCH_C_XOR=0x8c21
+MASK_C_XOR=0xfc63
+MATCH_C_OR=0x8c41
+MASK_C_OR=0xfc63
+MATCH_C_AND=0x8c61
+MASK_C_AND=0xfc63
+MATCH_C_SUBW=0x9c01
+MASK_C_SUBW=0xfc63
+MATCH_C_ADDW=0x9c21
+MASK_C_ADDW=0xfc63
+MATCH_C_J=0xa001
+MASK_C_J=0xe003
+MATCH_C_BEQZ=0xc001
+MASK_C_BEQZ=0xe003
+MATCH_C_BNEZ=0xe001
+MASK_C_BNEZ=0xe003
+MATCH_C_SLLI=0x2
+MASK_C_SLLI=0xe003
+MATCH_C_SLLI64=0x2
+MASK_C_SLLI64=0xf07f
+MATCH_C_FLDSP=0x2002
+MASK_C_FLDSP=0xe003
+MATCH_C_LWSP=0x4002
+MASK_C_LWSP=0xe003
+MATCH_C_FLWSP=0x6002
+MASK_C_FLWSP=0xe003
+MATCH_C_MV=0x8002
+MASK_C_MV=0xf003
+MATCH_C_ADD=0x9002
+MASK_C_ADD=0xf003
+MATCH_C_FSDSP=0xa002
+MASK_C_FSDSP=0xe003
+MATCH_C_SWSP=0xc002
+MASK_C_SWSP=0xe003
+MATCH_C_FSWSP=0xe002
+MASK_C_FSWSP=0xe003
+MATCH_C_NOP=0x1
+MASK_C_NOP=0xffff
+MATCH_C_ADDI16SP=0x6101
+MASK_C_ADDI16SP=0xef83
+MATCH_C_JR=0x8002
+MASK_C_JR=0xf07f
+MATCH_C_JALR=0x9002
+MASK_C_JALR=0xf07f
+MATCH_C_EBREAK=0x9002
+MASK_C_EBREAK=0xffff
+MATCH_C_LD=0x6000
+MASK_C_LD=0xe003
+MATCH_C_SD=0xe000
+MASK_C_SD=0xe003
+MATCH_C_ADDIW=0x2001
+MASK_C_ADDIW=0xe003
+MATCH_C_LDSP=0x6002
+MASK_C_LDSP=0xe003
+MATCH_C_SDSP=0xe002
+MASK_C_SDSP=0xe003
+MATCH_CUSTOM0=0xb
+MASK_CUSTOM0=0x707f
+MATCH_CUSTOM0_RS1=0x200b
+MASK_CUSTOM0_RS1=0x707f
+MATCH_CUSTOM0_RS1_RS2=0x300b
+MASK_CUSTOM0_RS1_RS2=0x707f
+MATCH_CUSTOM0_RD=0x400b
+MASK_CUSTOM0_RD=0x707f
+MATCH_CUSTOM0_RD_RS1=0x600b
+MASK_CUSTOM0_RD_RS1=0x707f
+MATCH_CUSTOM0_RD_RS1_RS2=0x700b
+MASK_CUSTOM0_RD_RS1_RS2=0x707f
+MATCH_CUSTOM1=0x2b
+MASK_CUSTOM1=0x707f
+MATCH_CUSTOM1_RS1=0x202b
+MASK_CUSTOM1_RS1=0x707f
+MATCH_CUSTOM1_RS1_RS2=0x302b
+MASK_CUSTOM1_RS1_RS2=0x707f
+MATCH_CUSTOM1_RD=0x402b
+MASK_CUSTOM1_RD=0x707f
+MATCH_CUSTOM1_RD_RS1=0x602b
+MASK_CUSTOM1_RD_RS1=0x707f
+MATCH_CUSTOM1_RD_RS1_RS2=0x702b
+MASK_CUSTOM1_RD_RS1_RS2=0x707f
+MATCH_CUSTOM2=0x5b
+MASK_CUSTOM2=0x707f
+MATCH_CUSTOM2_RS1=0x205b
+MASK_CUSTOM2_RS1=0x707f
+MATCH_CUSTOM2_RS1_RS2=0x305b
+MASK_CUSTOM2_RS1_RS2=0x707f
+MATCH_CUSTOM2_RD=0x405b
+MASK_CUSTOM2_RD=0x707f
+MATCH_CUSTOM2_RD_RS1=0x605b
+MASK_CUSTOM2_RD_RS1=0x707f
+MATCH_CUSTOM2_RD_RS1_RS2=0x705b
+MASK_CUSTOM2_RD_RS1_RS2=0x707f
+MATCH_CUSTOM3=0x7b
+MASK_CUSTOM3=0x707f
+MATCH_CUSTOM3_RS1=0x207b
+MASK_CUSTOM3_RS1=0x707f
+MATCH_CUSTOM3_RS1_RS2=0x307b
+MASK_CUSTOM3_RS1_RS2=0x707f
+MATCH_CUSTOM3_RD=0x407b
+MASK_CUSTOM3_RD=0x707f
+MATCH_CUSTOM3_RD_RS1=0x607b
+MASK_CUSTOM3_RD_RS1=0x707f
+MATCH_CUSTOM3_RD_RS1_RS2=0x707b
+MASK_CUSTOM3_RD_RS1_RS2=0x707f
+CSR_USTATUS=0x0
+CSR_UIE=0x4
+CSR_UTVEC=0x5
+CSR_USCRATCH=0x40
+CSR_UEPC=0x41
+CSR_UCAUSE=0x42
+CSR_UTVAL=0x43
+CSR_UIP=0x44
+CSR_FFLAGS=0x1
+CSR_FRM=0x2
+CSR_FCSR=0x3
+CSR_CYCLE=0xc00
+CSR_TIME=0xc01
+CSR_INSTRET=0xc02
+CSR_HPMCOUNTER3=0xc03
+CSR_HPMCOUNTER4=0xc04
+CSR_HPMCOUNTER5=0xc05
+CSR_HPMCOUNTER6=0xc06
+CSR_HPMCOUNTER7=0xc07
+CSR_HPMCOUNTER8=0xc08
+CSR_HPMCOUNTER9=0xc09
+CSR_HPMCOUNTER10=0xc0a
+CSR_HPMCOUNTER11=0xc0b
+CSR_HPMCOUNTER12=0xc0c
+CSR_HPMCOUNTER13=0xc0d
+CSR_HPMCOUNTER14=0xc0e
+CSR_HPMCOUNTER15=0xc0f
+CSR_HPMCOUNTER16=0xc10
+CSR_HPMCOUNTER17=0xc11
+CSR_HPMCOUNTER18=0xc12
+CSR_HPMCOUNTER19=0xc13
+CSR_HPMCOUNTER20=0xc14
+CSR_HPMCOUNTER21=0xc15
+CSR_HPMCOUNTER22=0xc16
+CSR_HPMCOUNTER23=0xc17
+CSR_HPMCOUNTER24=0xc18
+CSR_HPMCOUNTER25=0xc19
+CSR_HPMCOUNTER26=0xc1a
+CSR_HPMCOUNTER27=0xc1b
+CSR_HPMCOUNTER28=0xc1c
+CSR_HPMCOUNTER29=0xc1d
+CSR_HPMCOUNTER30=0xc1e
+CSR_HPMCOUNTER31=0xc1f
+CSR_CYCLEH=0xc80
+CSR_TIMEH=0xc81
+CSR_INSTRETH=0xc82
+CSR_HPMCOUNTER3H=0xc83
+CSR_HPMCOUNTER4H=0xc84
+CSR_HPMCOUNTER5H=0xc85
+CSR_HPMCOUNTER6H=0xc86
+CSR_HPMCOUNTER7H=0xc87
+CSR_HPMCOUNTER8H=0xc88
+CSR_HPMCOUNTER9H=0xc89
+CSR_HPMCOUNTER10H=0xc8a
+CSR_HPMCOUNTER11H=0xc8b
+CSR_HPMCOUNTER12H=0xc8c
+CSR_HPMCOUNTER13H=0xc8d
+CSR_HPMCOUNTER14H=0xc8e
+CSR_HPMCOUNTER15H=0xc8f
+CSR_HPMCOUNTER16H=0xc90
+CSR_HPMCOUNTER17H=0xc91
+CSR_HPMCOUNTER18H=0xc92
+CSR_HPMCOUNTER19H=0xc93
+CSR_HPMCOUNTER20H=0xc94
+CSR_HPMCOUNTER21H=0xc95
+CSR_HPMCOUNTER22H=0xc96
+CSR_HPMCOUNTER23H=0xc97
+CSR_HPMCOUNTER24H=0xc98
+CSR_HPMCOUNTER25H=0xc99
+CSR_HPMCOUNTER26H=0xc9a
+CSR_HPMCOUNTER27H=0xc9b
+CSR_HPMCOUNTER28H=0xc9c
+CSR_HPMCOUNTER29H=0xc9d
+CSR_HPMCOUNTER30H=0xc9e
+CSR_HPMCOUNTER31H=0xc9f
+CSR_SSTATUS=0x100
+CSR_SEDELEG=0x102
+CSR_SIDELEG=0x103
+CSR_SIE=0x104
+CSR_STVEC=0x105
+CSR_SCOUNTEREN=0x106
+CSR_SSCRATCH=0x140
+CSR_SEPC=0x141
+CSR_SCAUSE=0x142
+CSR_STVAL=0x143
+CSR_SIP=0x144
+CSR_SATP=0x180
+CSR_MVENDORID=0xf11
+CSR_MARCHID=0xf12
+CSR_MIMPID=0xf13
+CSR_MHARTID=0xf14
+CSR_MSTATUS=0x300
+CSR_MISA=0x301
+CSR_MEDELEG=0x302
+CSR_MIDELEG=0x303
+CSR_MIE=0x304
+CSR_MTVEC=0x305
+CSR_MCOUNTEREN=0x306
+CSR_MSCRATCH=0x340
+CSR_MEPC=0x341
+CSR_MCAUSE=0x342
+CSR_MTVAL=0x343
+CSR_MIP=0x344
+CSR_PMPCFG0=0x3a0
+CSR_PMPCFG1=0x3a1
+CSR_PMPCFG2=0x3a2
+CSR_PMPCFG3=0x3a3
+CSR_PMPADDR0=0x3b0
+CSR_PMPADDR1=0x3b1
+CSR_PMPADDR2=0x3b2
+CSR_PMPADDR3=0x3b3
+CSR_PMPADDR4=0x3b4
+CSR_PMPADDR5=0x3b5
+CSR_PMPADDR6=0x3b6
+CSR_PMPADDR7=0x3b7
+CSR_PMPADDR8=0x3b8
+CSR_PMPADDR9=0x3b9
+CSR_PMPADDR10=0x3ba
+CSR_PMPADDR11=0x3bb
+CSR_PMPADDR12=0x3bc
+CSR_PMPADDR13=0x3bd
+CSR_PMPADDR14=0x3be
+CSR_PMPADDR15=0x3bf
+CSR_MCYCLE=0xb00
+CSR_MINSTRET=0xb02
+CSR_MHPMCOUNTER3=0xb03
+CSR_MHPMCOUNTER4=0xb04
+CSR_MHPMCOUNTER5=0xb05
+CSR_MHPMCOUNTER6=0xb06
+CSR_MHPMCOUNTER7=0xb07
+CSR_MHPMCOUNTER8=0xb08
+CSR_MHPMCOUNTER9=0xb09
+CSR_MHPMCOUNTER10=0xb0a
+CSR_MHPMCOUNTER11=0xb0b
+CSR_MHPMCOUNTER12=0xb0c
+CSR_MHPMCOUNTER13=0xb0d
+CSR_MHPMCOUNTER14=0xb0e
+CSR_MHPMCOUNTER15=0xb0f
+CSR_MHPMCOUNTER16=0xb10
+CSR_MHPMCOUNTER17=0xb11
+CSR_MHPMCOUNTER18=0xb12
+CSR_MHPMCOUNTER19=0xb13
+CSR_MHPMCOUNTER20=0xb14
+CSR_MHPMCOUNTER21=0xb15
+CSR_MHPMCOUNTER22=0xb16
+CSR_MHPMCOUNTER23=0xb17
+CSR_MHPMCOUNTER24=0xb18
+CSR_MHPMCOUNTER25=0xb19
+CSR_MHPMCOUNTER26=0xb1a
+CSR_MHPMCOUNTER27=0xb1b
+CSR_MHPMCOUNTER28=0xb1c
+CSR_MHPMCOUNTER29=0xb1d
+CSR_MHPMCOUNTER30=0xb1e
+CSR_MHPMCOUNTER31=0xb1f
+CSR_MCYCLEH=0xb80
+CSR_MINSTRETH=0xb82
+CSR_MHPMCOUNTER3H=0xb83
+CSR_MHPMCOUNTER4H=0xb84
+CSR_MHPMCOUNTER5H=0xb85
+CSR_MHPMCOUNTER6H=0xb86
+CSR_MHPMCOUNTER7H=0xb87
+CSR_MHPMCOUNTER8H=0xb88
+CSR_MHPMCOUNTER9H=0xb89
+CSR_MHPMCOUNTER10H=0xb8a
+CSR_MHPMCOUNTER11H=0xb8b
+CSR_MHPMCOUNTER12H=0xb8c
+CSR_MHPMCOUNTER13H=0xb8d
+CSR_MHPMCOUNTER14H=0xb8e
+CSR_MHPMCOUNTER15H=0xb8f
+CSR_MHPMCOUNTER16H=0xb90
+CSR_MHPMCOUNTER17H=0xb91
+CSR_MHPMCOUNTER18H=0xb92
+CSR_MHPMCOUNTER19H=0xb93
+CSR_MHPMCOUNTER20H=0xb94
+CSR_MHPMCOUNTER21H=0xb95
+CSR_MHPMCOUNTER22H=0xb96
+CSR_MHPMCOUNTER23H=0xb97
+CSR_MHPMCOUNTER24H=0xb98
+CSR_MHPMCOUNTER25H=0xb99
+CSR_MHPMCOUNTER26H=0xb9a
+CSR_MHPMCOUNTER27H=0xb9b
+CSR_MHPMCOUNTER28H=0xb9c
+CSR_MHPMCOUNTER29H=0xb9d
+CSR_MHPMCOUNTER30H=0xb9e
+CSR_MHPMCOUNTER31H=0xb9f
+CSR_MHPMEVENT3=0x323
+CSR_MHPMEVENT4=0x324
+CSR_MHPMEVENT5=0x325
+CSR_MHPMEVENT6=0x326
+CSR_MHPMEVENT7=0x327
+CSR_MHPMEVENT8=0x328
+CSR_MHPMEVENT9=0x329
+CSR_MHPMEVENT10=0x32a
+CSR_MHPMEVENT11=0x32b
+CSR_MHPMEVENT12=0x32c
+CSR_MHPMEVENT13=0x32d
+CSR_MHPMEVENT14=0x32e
+CSR_MHPMEVENT15=0x32f
+CSR_MHPMEVENT16=0x330
+CSR_MHPMEVENT17=0x331
+CSR_MHPMEVENT18=0x332
+CSR_MHPMEVENT19=0x333
+CSR_MHPMEVENT20=0x334
+CSR_MHPMEVENT21=0x335
+CSR_MHPMEVENT22=0x336
+CSR_MHPMEVENT23=0x337
+CSR_MHPMEVENT24=0x338
+CSR_MHPMEVENT25=0x339
+CSR_MHPMEVENT26=0x33a
+CSR_MHPMEVENT27=0x33b
+CSR_MHPMEVENT28=0x33c
+CSR_MHPMEVENT29=0x33d
+CSR_MHPMEVENT30=0x33e
+CSR_MHPMEVENT31=0x33f
+CSR_TSELECT=0x7a0
+CSR_TDATA1=0x7a1
+CSR_TDATA2=0x7a2
+CSR_TDATA3=0x7a3
+CSR_DCSR=0x7b0
+CSR_DPC=0x7b1
+CSR_DSCRATCH=0x7b2
+CSR_HSTATUS=0x200
+CSR_HEDELEG=0x202
+CSR_HIDELEG=0x203
+CSR_HIE=0x204
+CSR_HTVEC=0x205
+CSR_HSCRATCH=0x240
+CSR_HEPC=0x241
+CSR_HCAUSE=0x242
+CSR_HBADADDR=0x243
+CSR_HIP=0x244
+CSR_MBASE=0x380
+CSR_MBOUND=0x381
+CSR_MIBASE=0x382
+CSR_MIBOUND=0x383
+CSR_MDBASE=0x384
+CSR_MDBOUND=0x385
+CSR_MUCOUNTEREN=0x320
+CSR_MSCOUNTEREN=0x321
+CSR_MHCOUNTEREN=0x322
+CAUSE_MISALIGNED_FETCH=0x0
+CAUSE_FAULT_FETCH=0x1
+CAUSE_ILLEGAL_INSTRUCTION=0x2
+CAUSE_BREAKPOINT=0x3
+CAUSE_MISALIGNED_LOAD=0x4
+CAUSE_FAULT_LOAD=0x5
+CAUSE_MISALIGNED_STORE=0x6
+CAUSE_FAULT_STORE=0x7
+CAUSE_USER_ECALL=0x8
+CAUSE_SUPERVISOR_ECALL=0x9
+CAUSE_HYPERVISOR_ECALL=0xa
+CAUSE_MACHINE_ECALL=0xb
+
+MASK_RD=0x1f
+
+OP_MASK_OP=0x7f
+OP_SH_OP=0
+OP_MASK_RS2=0x1f
+OP_SH_RS2=20
+OP_MASK_RS1=0x1f
+OP_SH_RS1=15
+OP_MASK_RS3=0x1f
+OP_SH_RS3=27
+OP_MASK_RD=0x1f
+OP_SH_RD=7
+OP_MASK_SHAMT=0x3f
+OP_SH_SHAMT=20
+OP_MASK_SHAMTW=0x1f
+OP_SH_SHAMTW=20
+OP_MASK_RM=0x7
+OP_SH_RM=12
+OP_MASK_PRED=0xf
+OP_SH_PRED=24
+OP_MASK_SUCC=0xf
+OP_SH_SUCC=20
+OP_MASK_AQ=0x1
+OP_SH_AQ=26
+OP_MASK_RL=0x1
+OP_SH_RL=25
+OP_MASK_CUSTOM_IMM=0x7f
+OP_SH_CUSTOM_IMM=25
+OP_MASK_CSR=0xfff
+OP_SH_CSR=20
+OP_MASK_FUNCT3=0x7
+OP_SH_FUNCT3=12
+OP_MASK_FUNCT7=0x7f
+OP_SH_FUNCT7=25
+OP_MASK_FUNCT2=0x3
+OP_SH_FUNCT2=25
+OP_MASK_OP2=0x3
+OP_SH_OP2=0
+
+OP_MASK_CRS2=0x1f
+OP_SH_CRS2=2
+OP_MASK_CRS1S=0x7
+OP_SH_CRS1S=7
+OP_MASK_CRS2S=0x7
+OP_SH_CRS2S=2
+
+OP_MASK_CFUNCT6=0x3f
+OP_SH_CFUNCT6=10
+OP_MASK_CFUNCT4=0xf
+OP_SH_CFUNCT4=12
+OP_MASK_CFUNCT3=0x7
+OP_SH_CFUNCT3=13
+OP_MASK_CFUNCT2=0x3
+OP_SH_CFUNCT2=5
+
+M_LA=0
+M_LLA=1
+M_LA_TLS_GD=2
+M_LA_TLS_IE=3
+M_LB=4
+M_LBU=5
+M_LH=6
+M_LHU=7
+M_LW=8
+M_LWU=9
+M_LD=10
+M_SB=11
+M_SH=12
+M_SW=13
+M_SD=14
+M_FLW=15
+M_FLD=16
+M_FLQ=17
+M_FSW=18
+M_FSD=19
+M_FSQ=20
+M_CALL=21
+M_J=22
+M_LI=23
+M_NUM_MACROS=24
+
+
+
+X_RA=1
+X_SP=2
+X_GP=3
+X_TP=4
+X_T0=5
+X_T1=6
+X_T2=7
+X_T3=28
+
+NGPR=32
+NFPR=32
+
+
+
+
+ISAC = 1
+ISAI = 2
+ISAA = 3
+ISAM = 4
+ISAF = 5
+ISAFC = 6
+ISADC = 7
+ISAD = 8
+ISAQ = 9
+
+INSN_TYPE=0x0000000e
+INSN_MACRO=0xffffffff
+INSN_ALIAS=0x00000001
+INSN_BRANCH=0x00000002
+INSN_CONDBRANCH=0x00000004
+INSN_JSR=0x00000006
+INSN_DREF=0x00000008
+
+
+INSN_DATA_SIZE=0x00000070
+INSN_DATA_SIZE_SHIFT=4
+INSN_1_BYTE=0x00000010
+INSN_2_BYTE=0x00000020
+INSN_4_BYTE=0x00000030
+INSN_8_BYTE=0x00000040
+INSN_16_BYTE=0x0000050
+
+
+
+
+def RV_X(x, s, n):
+    return (((x) >> (s)) & ((1 << (n)) - 1))
+
+def RV_IMM_SIGN(x):
+    return (-(((x) >> 31) & 1))
+
+def EXTRACT_ITYPE_IMM(x):
+    return (RV_X(x, 20, 12) | (RV_IMM_SIGN(x) << 12))
+def EXTRACT_STYPE_IMM(x):
+    return (RV_X(x, 7, 5) | (RV_X(x, 25, 7) << 5) | (RV_IMM_SIGN(x) << 12))
+def EXTRACT_SBTYPE_IMM(x):
+    return ((RV_X(x, 8, 4) << 1) | (RV_X(x, 25, 6) << 5) | (RV_X(x, 7, 1) << 11) | (RV_IMM_SIGN(x) << 12))
+def EXTRACT_UTYPE_IMM(x):
+    return ((RV_X(x, 12, 20) << 12) | (RV_IMM_SIGN(x) << 32))
+def EXTRACT_UJTYPE_IMM(x):
+    return ((RV_X(x, 21, 10) << 1) | (RV_X(x, 20, 1) << 11) | (RV_X(x, 12, 8) << 12) | (RV_IMM_SIGN(x) << 20))
+def EXTRACT_RVC_IMM(x):
+    return (RV_X(x, 2, 5) | (-RV_X(x, 12, 1) << 5))
+def EXTRACT_RVC_LUI_IMM(x):
+    return (EXTRACT_RVC_IMM (x) << RISCV_IMM_BITS)
+def EXTRACT_RVC_SIMM3(x):
+    return (RV_X(x, 10, 2) | (-RV_X(x, 12, 1) << 2))
+def EXTRACT_RVC_UIMM8(x):
+    return (RV_X(x, 5, 8))
+def EXTRACT_RVC_ADDI4SPN_IMM(x):
+    return ((RV_X(x, 6, 1) << 2) | (RV_X(x, 5, 1) << 3) | (RV_X(x, 11, 2) << 4) | (RV_X(x, 7, 4) << 6))
+def EXTRACT_RVC_ADDI16SP_IMM(x):
+    return ((RV_X(x, 6, 1) << 4) | (RV_X(x, 2, 1) << 5) | (RV_X(x, 5, 1) << 6) | (RV_X(x, 3, 2) << 7) | (-RV_X(x, 12, 1) << 9))
+def EXTRACT_RVC_LW_IMM(x):
+    return ((RV_X(x, 6, 1) << 2) | (RV_X(x, 10, 3) << 3) | (RV_X(x, 5, 1) << 6))
+def EXTRACT_RVC_LD_IMM(x):
+    return ((RV_X(x, 10, 3) << 3) | (RV_X(x, 5, 2) << 6))
+def EXTRACT_RVC_LWSP_IMM(x):
+    return ((RV_X(x, 4, 3) << 2) | (RV_X(x, 12, 1) << 5) | (RV_X(x, 2, 2) << 6))
+def EXTRACT_RVC_LDSP_IMM(x):
+    return ((RV_X(x, 5, 2) << 3) | (RV_X(x, 12, 1) << 5) | (RV_X(x, 2, 3) << 6))
+def EXTRACT_RVC_SWSP_IMM(x):
+    return ((RV_X(x, 9, 4) << 2) | (RV_X(x, 7, 2) << 6))
+def EXTRACT_RVC_SDSP_IMM(x):
+    return ((RV_X(x, 10, 3) << 3) | (RV_X(x, 7, 3) << 6))
+def EXTRACT_RVC_B_IMM(x):
+    return ((RV_X(x, 3, 2) << 1) | (RV_X(x, 10, 2) << 3) | (RV_X(x, 2, 1) << 5) | (RV_X(x, 5, 2) << 6) | (-RV_X(x, 12, 1) << 8))
+def EXTRACT_RVC_J_IMM(x):
+    return ((RV_X(x, 3, 3) << 1) | (RV_X(x, 11, 1) << 4) | (RV_X(x, 2, 1) << 5) | (RV_X(x, 7, 1) << 6) | (RV_X(x, 6, 1) << 7) | (RV_X(x, 9, 2) << 8) | (RV_X(x, 8, 1) << 10) | (-RV_X(x, 12, 1) << 11))
+
+def ENCODE_ITYPE_IMM(x):
+    return (RV_X(x, 0, 12) << 20)
+def ENCODE_STYPE_IMM(x):
+    return ((RV_X(x, 0, 5) << 7) | (RV_X(x, 5, 7) << 25))
+def ENCODE_SBTYPE_IMM(x):
+    return ((RV_X(x, 1, 4) << 8) | (RV_X(x, 5, 6) << 25) | (RV_X(x, 11, 1) << 7) | (RV_X(x, 12, 1) << 31))
+def ENCODE_UTYPE_IMM(x):
+    return (RV_X(x, 12, 20) << 12)
+def ENCODE_UJTYPE_IMM(x):
+    return ((RV_X(x, 1, 10) << 21) | (RV_X(x, 11, 1) << 20) | (RV_X(x, 12, 8) << 12) | (RV_X(x, 20, 1) << 31))
+def ENCODE_RVC_IMM(x):
+    return ((RV_X(x, 0, 5) << 2) | (RV_X(x, 5, 1) << 12))
+def ENCODE_RVC_LUI_IMM(x):
+    return ENCODE_RVC_IMM ((x) >> RISCV_IMM_BITS)
+def ENCODE_RVC_SIMM3(x):
+    return (RV_X(x, 0, 3) << 10)
+def ENCODE_RVC_UIMM8(x):
+    return (RV_X(x, 0, 8) << 5)
+def ENCODE_RVC_ADDI4SPN_IMM(x):
+    return ((RV_X(x, 2, 1) << 6) | (RV_X(x, 3, 1) << 5) | (RV_X(x, 4, 2) << 11) | (RV_X(x, 6, 4) << 7))
+def ENCODE_RVC_ADDI16SP_IMM(x):
+    return ((RV_X(x, 4, 1) << 6) | (RV_X(x, 5, 1) << 2) | (RV_X(x, 6, 1) << 5) | (RV_X(x, 7, 2) << 3) | (RV_X(x, 9, 1) << 12))
+def ENCODE_RVC_LW_IMM(x):
+    return ((RV_X(x, 2, 1) << 6) | (RV_X(x, 3, 3) << 10) | (RV_X(x, 6, 1) << 5))
+def ENCODE_RVC_LD_IMM(x):
+    return ((RV_X(x, 3, 3) << 10) | (RV_X(x, 6, 2) << 5))
+def ENCODE_RVC_LWSP_IMM(x):
+    return ((RV_X(x, 2, 3) << 4) | (RV_X(x, 5, 1) << 12) | (RV_X(x, 6, 2) << 2))
+def ENCODE_RVC_LDSP_IMM(x):
+    return ((RV_X(x, 3, 2) << 5) | (RV_X(x, 5, 1) << 12) | (RV_X(x, 6, 3) << 2))
+def ENCODE_RVC_SWSP_IMM(x):
+    return ((RV_X(x, 2, 4) << 9) | (RV_X(x, 6, 2) << 7))
+def ENCODE_RVC_SDSP_IMM(x):
+    return ((RV_X(x, 3, 3) << 10) | (RV_X(x, 6, 3) << 7))
+def ENCODE_RVC_B_IMM(x):
+    return ((RV_X(x, 1, 2) << 3) | (RV_X(x, 3, 2) << 10) | (RV_X(x, 5, 1) << 2) | (RV_X(x, 6, 2) << 5) | (RV_X(x, 8, 1) << 12))
+def ENCODE_RVC_J_IMM(x):
+    return ((RV_X(x, 1, 3) << 3) | (RV_X(x, 4, 1) << 11) | (RV_X(x, 5, 1) << 2) | (RV_X(x, 6, 1) << 7) | (RV_X(x, 7, 1) << 6) | (RV_X(x, 8, 2) << 9) | (RV_X(x, 10, 1) << 8) | (RV_X(x, 11, 1) << 12))
+
+
+
+MASK_RS1= (OP_MASK_RS1 << OP_SH_RS1)
+MASK_RS2= (OP_MASK_RS2 << OP_SH_RS2)
+MASK_RD= (OP_MASK_RD << OP_SH_RD)
+MASK_CRS2= (OP_MASK_CRS2 << OP_SH_CRS2)
+MASK_IMM= ENCODE_ITYPE_IMM(-1)
+MASK_RVC_IMM= ENCODE_RVC_IMM(-1)
+MASK_UIMM= ENCODE_UTYPE_IMM(-1)
+MASK_RM= (OP_MASK_RM << OP_SH_RM)
+MASK_PRED= (OP_MASK_PRED << OP_SH_PRED)
+MASK_SUCC= (OP_MASK_SUCC << OP_SH_SUCC)
+MASK_AQ= (OP_MASK_AQ << OP_SH_AQ)
+MASK_RL= (OP_MASK_RL << OP_SH_RL)
+MASK_AQRL= (MASK_AQ | MASK_RL)
+
+
+def match_opcode(op, insn):
+    print("match_opcode: %08x %08x %08x %08x %08x" % (op.match, op.mask, insn, insn ^ op.match, (insn ^ op.match) & op.mask))
+    return ((insn ^ op.match) & op.mask) == 0
+
+def match_never(op, insn):
+    return False
+
+def match_rs1_eq_rs2(op, insn):
+    rs1 = (insn & MASK_RS1) >> OP_SH_RS1
+    rs2 = (insn & MASK_RS2) >> OP_SH_RS2
+    return match_opcode(op, insn) and rs1 == rs2
+
+def match_rd_nonzero(op, insn):
+    return match_opcode(op, insn) and ((insn & MASK_RD) != 0)
+
+def match_c_add(op, insn):
+    return match_rd_nonzero(op, insn) and ((insn & MASK_CRS2) != 0)
+
+def match_c_add_with_hint(op, insn):
+    return match_opcode(op, insn) and ((insn & MASK_CRS2) != 0)
+
+def match_c_nop(op, insn):
+    return match_opcode(op, insn) and (((insn & MASK_RD) >> OP_SH_RD) == 0)
+
+def match_c_add16sp(op, insn):
+    return match_opcode(op, insn) and (((insn & MASK_RD) >> OP_SH_RD) == 2)
+
+def match_c_lui(op, insn):
+    return False
+
+def match_c_addi4spn(op, insn):
+    return False
+
+def match_c_addi16sp(op, insn):
+    return False
+
+def match_slli_as_c_slli(op, insn):
+    return False
+
+def match_srxi_as_c_srxi(op, insn):
+    return False
+
+def match_c_lui_with_hint(op, insn):
+    return False
+
+def match_c_slli(op, insn):
+    return False
+
+def match_c_slli64(op, insn):
+    return False
+
+
+
+class OpCode:
+    def __init__(self, op):
+        self.name = op[0]
+        self.xlen = op[1]
+        self.isa = op[2]
+        self.operands = op[3]
+        self.match = op[4]
+        self.mask = op[5]
+        self.func = op[6]
+        self.pinfo = op[7]
+        self.size = 0
+        if self.pinfo & INSN_DATA_SIZE:
+            self.size = ((self.pinfo & INSN_DATA_SIZE) >> INSN_DATA_SIZE_SHIFT)
+            self.size = 1 << (self.size - 1)
+    def __str__(self):
+        return "%s %s %08x %08x %08x (%d, %d) " % (self.name, self.operands, self.match, self.mask, self.pinfo, self.xlen, self.size)
+    def __eq__(self, other):
+        if other is None:
+            return False
+        if self.name != other.name:
+            return False
+        if self.mask != other.mask:
+            return False
+        if self.match != other.match:
+            return False
+        if self.operands != other.operands:
+            return False
+        if self.pinfo != other.pinfo:
+            return False
+        if self.xlen != other.xlen:
+            return False
+        return True
+
+# name,     xlen, isa,   operands, match, mask, match_func, pinfo
+opcodes = [
+    ("unimp",       0, ISAC,   "",  0, 0xffff,  match_opcode, INSN_ALIAS ),
+    ("unimp",       0, ISAI,   "",  MATCH_CSRRW | (CSR_CYCLE << OP_SH_CSR), 0xffffffff,  match_opcode, 0 ), #/* csrw cycle, x0 */
+    ("ebreak",      0, ISAC,   "",  MATCH_C_EBREAK, MASK_C_EBREAK, match_opcode, INSN_ALIAS ),
+    ("ebreak",      0, ISAI,   "",    MATCH_EBREAK, MASK_EBREAK, match_opcode, 0 ),
+    #("sbreak",      0, ISAC,   "",  MATCH_C_EBREAK, MASK_C_EBREAK, match_opcode, INSN_ALIAS ),
+    #("sbreak",      0, ISAI,   "",    MATCH_EBREAK, MASK_EBREAK, match_opcode, INSN_ALIAS ),
+    ("ret",         0, ISAC,   "",  MATCH_C_JR | (X_RA << OP_SH_RD), MASK_C_JR | MASK_RD, match_opcode, INSN_ALIAS|INSN_BRANCH ),
+    ("ret",         0, ISAI,   "",  MATCH_JALR | (X_RA << OP_SH_RS1), MASK_JALR | MASK_RD | MASK_RS1 | MASK_IMM, match_opcode, INSN_ALIAS|INSN_BRANCH ),
+    ("jr",          0, ISAC,   "d",  MATCH_C_JR, MASK_C_JR, match_rd_nonzero, INSN_ALIAS|INSN_BRANCH ),
+    ("jr",          0, ISAI,   "s",  MATCH_JALR, MASK_JALR | MASK_RD | MASK_IMM, match_opcode, INSN_ALIAS|INSN_BRANCH ),
+    ("jr",          0, ISAI,   "o(s)",  MATCH_JALR, MASK_JALR | MASK_RD, match_opcode, INSN_ALIAS|INSN_BRANCH ),
+    ("jr",          0, ISAI,   "s,j",  MATCH_JALR, MASK_JALR | MASK_RD, match_opcode, INSN_ALIAS|INSN_BRANCH ),
+    ("jalr",        0, ISAC,   "d",  MATCH_C_JALR, MASK_C_JALR, match_rd_nonzero, INSN_ALIAS|INSN_JSR ),
+    ("jalr",        0, ISAI,   "s",  MATCH_JALR | (X_RA << OP_SH_RD), MASK_JALR | MASK_RD | MASK_IMM, match_opcode, INSN_ALIAS|INSN_JSR ),
+    ("jalr",        0, ISAI,   "o(s)",  MATCH_JALR | (X_RA << OP_SH_RD), MASK_JALR | MASK_RD, match_opcode, INSN_ALIAS|INSN_JSR ),
+    ("jalr",        0, ISAI,   "s,j",  MATCH_JALR | (X_RA << OP_SH_RD), MASK_JALR | MASK_RD, match_opcode, INSN_ALIAS|INSN_JSR ),
+    ("jalr",        0, ISAI,   "d,s",  MATCH_JALR, MASK_JALR | MASK_IMM, match_opcode, INSN_ALIAS|INSN_JSR ),
+    ("jalr",        0, ISAI,   "d,o(s)",  MATCH_JALR, MASK_JALR, match_opcode, INSN_JSR ),
+    ("jalr",        0, ISAI,   "d,s,j",  MATCH_JALR, MASK_JALR, match_opcode, INSN_JSR ),
+    ("j",           0, ISAC,   "Ca",  MATCH_C_J, MASK_C_J, match_opcode, INSN_ALIAS|INSN_BRANCH ),
+    ("j",           0, ISAI,   "a",  MATCH_JAL, MASK_JAL | MASK_RD, match_opcode, INSN_ALIAS|INSN_BRANCH ),
+    ("jal",         0, ISAI,   "d,a",  MATCH_JAL, MASK_JAL, match_opcode, INSN_JSR ),
+    ("jal",        32, ISAC,   "Ca",  MATCH_C_JAL, MASK_C_JAL, match_opcode, INSN_ALIAS|INSN_JSR ),
+    ("jal",         0, ISAI,   "a",  MATCH_JAL | (X_RA << OP_SH_RD), MASK_JAL | MASK_RD, match_opcode, INSN_ALIAS|INSN_JSR ),
+    ("call",        0, ISAI,   "d,c", (X_T1 << OP_SH_RS1),  M_CALL,  match_never, INSN_MACRO ),
+    ("call",        0, ISAI,   "c", (X_RA << OP_SH_RS1) | (X_RA << OP_SH_RD),  M_CALL,  match_never, INSN_MACRO ),
+    ("tail",        0, ISAI,   "c", (X_T1 << OP_SH_RS1),  M_CALL,  match_never, INSN_MACRO ),
+    ("jump",        0, ISAI,   "c,s", 0,  M_CALL,  match_never, INSN_MACRO ),
+    ("nop",         0, ISAC,   "",  MATCH_C_ADDI, 0xffff, match_opcode, INSN_ALIAS ),
+    ("nop",         0, ISAI,   "",         MATCH_ADDI, MASK_ADDI | MASK_RD | MASK_RS1 | MASK_IMM, match_opcode, INSN_ALIAS ),
+    ("lui",         0, ISAC,   "d,Cu",  MATCH_C_LUI, MASK_C_LUI, match_c_lui, INSN_ALIAS ),
+    ("lui",         0, ISAI,   "d,u",  MATCH_LUI, MASK_LUI, match_opcode, 0 ),
+    ("li",          0, ISAC,   "d,Cv",  MATCH_C_LUI, MASK_C_LUI, match_c_lui, INSN_ALIAS ),
+    ("li",          0, ISAC,   "d,Co",  MATCH_C_LI, MASK_C_LI, match_rd_nonzero, INSN_ALIAS ),
+    ("li",          0, ISAI,   "d,j",      MATCH_ADDI, MASK_ADDI | MASK_RS1, match_opcode, INSN_ALIAS ), #/* addi */
+    ("li",          0, ISAI,   "d,I",  0,     M_LI,  match_never, INSN_MACRO ),
+    ("mv",          0, ISAC,   "d,CV",  MATCH_C_MV, MASK_C_MV, match_c_add, INSN_ALIAS ),
+    ("mv",          0, ISAI,   "d,s",  MATCH_ADDI, MASK_ADDI | MASK_IMM, match_opcode, INSN_ALIAS ),
+    ("move",        0, ISAC,   "d,CV",  MATCH_C_MV, MASK_C_MV, match_c_add, INSN_ALIAS ),
+    ("move",        0, ISAI,   "d,s",  MATCH_ADDI, MASK_ADDI | MASK_IMM, match_opcode, INSN_ALIAS ),
+    ("andi",        0, ISAC,   "Cs,Cw,Co",  MATCH_C_ANDI, MASK_C_ANDI, match_opcode, INSN_ALIAS ),
+    ("andi",        0, ISAI,   "d,s,j",  MATCH_ANDI, MASK_ANDI, match_opcode, 0 ),
+    ("and",         0, ISAC,   "Cs,Cw,Ct",  MATCH_C_AND, MASK_C_AND, match_opcode, INSN_ALIAS ),
+    ("and",         0, ISAC,   "Cs,Ct,Cw",  MATCH_C_AND, MASK_C_AND, match_opcode, INSN_ALIAS ),
+    ("and",         0, ISAC,   "Cs,Cw,Co",  MATCH_C_ANDI, MASK_C_ANDI, match_opcode, INSN_ALIAS ),
+    ("and",         0, ISAI,   "d,s,t",  MATCH_AND, MASK_AND, match_opcode, 0 ),
+    ("and",         0, ISAI,   "d,s,j",  MATCH_ANDI, MASK_ANDI, match_opcode, INSN_ALIAS ),
+    ("beqz",        0, ISAC,   "Cs,Cp",  MATCH_C_BEQZ, MASK_C_BEQZ, match_opcode, INSN_ALIAS|INSN_CONDBRANCH ),
+    ("beqz",        0, ISAI,   "s,p",  MATCH_BEQ, MASK_BEQ | MASK_RS2, match_opcode, INSN_ALIAS|INSN_CONDBRANCH ),
+    ("beq",         0, ISAC,   "Cs,Cz,Cp",  MATCH_C_BEQZ, MASK_C_BEQZ, match_opcode, INSN_ALIAS|INSN_CONDBRANCH ),
+    ("beq",         0, ISAI,   "s,t,p",  MATCH_BEQ, MASK_BEQ, match_opcode, INSN_CONDBRANCH ),
+    ("blez",        0, ISAI,   "t,p",  MATCH_BGE, MASK_BGE | MASK_RS1, match_opcode, INSN_ALIAS|INSN_CONDBRANCH ),
+    ("bgez",        0, ISAI,   "s,p",  MATCH_BGE, MASK_BGE | MASK_RS2, match_opcode, INSN_ALIAS|INSN_CONDBRANCH ),
+    ("bge",         0, ISAI,   "s,t,p",  MATCH_BGE, MASK_BGE, match_opcode, INSN_CONDBRANCH ),
+    ("bgeu",        0, ISAI,   "s,t,p",  MATCH_BGEU, MASK_BGEU, match_opcode, INSN_CONDBRANCH ),
+    ("ble",         0, ISAI,   "t,s,p",  MATCH_BGE, MASK_BGE, match_opcode, INSN_ALIAS|INSN_CONDBRANCH ),
+    ("bleu",        0, ISAI,   "t,s,p",  MATCH_BGEU, MASK_BGEU, match_opcode, INSN_ALIAS|INSN_CONDBRANCH ),
+    ("bltz",        0, ISAI,   "s,p",  MATCH_BLT, MASK_BLT | MASK_RS2, match_opcode, INSN_ALIAS|INSN_CONDBRANCH ),
+    ("bgtz",        0, ISAI,   "t,p",  MATCH_BLT, MASK_BLT | MASK_RS1, match_opcode, INSN_ALIAS|INSN_CONDBRANCH ),
+    ("blt",         0, ISAI,   "s,t,p",  MATCH_BLT, MASK_BLT, match_opcode, INSN_CONDBRANCH ),
+    ("bltu",        0, ISAI,   "s,t,p",  MATCH_BLTU, MASK_BLTU, match_opcode, INSN_CONDBRANCH ),
+    ("bgt",         0, ISAI,   "t,s,p",  MATCH_BLT, MASK_BLT, match_opcode, INSN_ALIAS|INSN_CONDBRANCH ),
+    ("bgtu",        0, ISAI,   "t,s,p",  MATCH_BLTU, MASK_BLTU, match_opcode, INSN_ALIAS|INSN_CONDBRANCH ),
+    ("bnez",        0, ISAC,   "Cs,Cp",  MATCH_C_BNEZ, MASK_C_BNEZ, match_opcode, INSN_ALIAS|INSN_CONDBRANCH ),
+    ("bnez",        0, ISAI,   "s,p",  MATCH_BNE, MASK_BNE | MASK_RS2, match_opcode, INSN_ALIAS|INSN_CONDBRANCH ),
+    ("bne",         0, ISAC,   "Cs,Cz,Cp",  MATCH_C_BNEZ, MASK_C_BNEZ, match_opcode, INSN_ALIAS|INSN_CONDBRANCH ),
+    ("bne",         0, ISAI,   "s,t,p",  MATCH_BNE, MASK_BNE, match_opcode, INSN_CONDBRANCH ),
+    ("addi",        0, ISAC,   "Ct,Cc,CK", MATCH_C_ADDI4SPN, MASK_C_ADDI4SPN, match_c_addi4spn, INSN_ALIAS ),
+    ("addi",        0, ISAC,   "d,CU,Cj",  MATCH_C_ADDI, MASK_C_ADDI, match_rd_nonzero, INSN_ALIAS ),
+    ("addi",        0, ISAC,   "d,CU,z",    MATCH_C_NOP, MASK_C_ADDI | MASK_RVC_IMM, match_c_nop, INSN_ALIAS ),
+    ("addi",        0, ISAC,   "Cc,Cc,CL", MATCH_C_ADDI16SP, MASK_C_ADDI16SP, match_c_addi16sp, INSN_ALIAS ),
+    ("addi",        0, ISAI,   "d,s,j",  MATCH_ADDI, MASK_ADDI, match_opcode, 0 ),
+    ("add",         0, ISAC,   "d,CU,CV",  MATCH_C_ADD, MASK_C_ADD, match_c_add, INSN_ALIAS ),
+    ("add",         0, ISAC,   "d,CV,CU",  MATCH_C_ADD, MASK_C_ADD, match_c_add, INSN_ALIAS ),
+    ("add",         0, ISAC,   "d,CU,Co",  MATCH_C_ADDI, MASK_C_ADDI, match_rd_nonzero, INSN_ALIAS ),
+    ("add",         0, ISAC,   "Ct,Cc,CK", MATCH_C_ADDI4SPN, MASK_C_ADDI4SPN, match_c_addi4spn, INSN_ALIAS ),
+    ("add",         0, ISAC,   "Cc,Cc,CL", MATCH_C_ADDI16SP, MASK_C_ADDI16SP, match_c_addi16sp, INSN_ALIAS ),
+    ("add",         0, ISAI,   "d,s,t",  MATCH_ADD, MASK_ADD, match_opcode, 0 ),
+    #/* This is used for TLS, where the fourth arg is %tprel_add, to get a reloc
+    #applied to an add instruction, for relaxation to use.  */
+    #("add",         0, ISAI,   "d,s,t,1",MATCH_ADD, MASK_ADD, match_opcode, 0 ),
+    ("add",         0, ISAI,   "d,s,j",  MATCH_ADDI, MASK_ADDI, match_opcode, INSN_ALIAS ),
+    ("la",          0, ISAI,   "d,B",  0,     M_LA,  match_never, INSN_MACRO ),
+    ("lla",         0, ISAI,   "d,B",  0,     M_LLA,  match_never, INSN_MACRO ),
+    ("la.tls.gd",   0, ISAI,   "d,A",  0,     M_LA_TLS_GD,  match_never, INSN_MACRO ),
+    ("la.tls.ie",   0, ISAI,   "d,A",  0,     M_LA_TLS_IE,  match_never, INSN_MACRO ),
+    ("neg",         0, ISAI,   "d,t",  MATCH_SUB, MASK_SUB | MASK_RS1, match_opcode, INSN_ALIAS ), #/* sub 0 */
+    ("slli",        0, ISAC,   "d,CU,C>",  MATCH_C_SLLI, MASK_C_SLLI, match_slli_as_c_slli, INSN_ALIAS ),
+    ("slli",        0, ISAI,   "d,s,>",   MATCH_SLLI, MASK_SLLI, match_opcode, 0 ),
+    ("sll",         0, ISAC,   "d,CU,C>",  MATCH_C_SLLI, MASK_C_SLLI, match_slli_as_c_slli, INSN_ALIAS ),
+    ("sll",         0, ISAI,   "d,s,t",   MATCH_SLL, MASK_SLL, match_opcode, 0 ),
+    ("sll",         0, ISAI,   "d,s,>",   MATCH_SLLI, MASK_SLLI, match_opcode, INSN_ALIAS ),
+    ("srli",        0, ISAC,   "Cs,Cw,C>",  MATCH_C_SRLI, MASK_C_SRLI, match_srxi_as_c_srxi, INSN_ALIAS ),
+    ("srli",        0, ISAI,   "d,s,>",   MATCH_SRLI, MASK_SRLI, match_opcode, 0 ),
+    ("srl",         0, ISAC,   "Cs,Cw,C>",  MATCH_C_SRLI, MASK_C_SRLI, match_srxi_as_c_srxi, INSN_ALIAS ),
+    ("srl",         0, ISAI,   "d,s,t",   MATCH_SRL, MASK_SRL, match_opcode, 0 ),
+    ("srl",         0, ISAI,   "d,s,>",   MATCH_SRLI, MASK_SRLI, match_opcode, INSN_ALIAS ),
+    ("srai",        0, ISAC,   "Cs,Cw,C>",  MATCH_C_SRAI, MASK_C_SRAI, match_srxi_as_c_srxi, INSN_ALIAS ),
+    ("srai",        0, ISAI,   "d,s,>",   MATCH_SRAI, MASK_SRAI, match_opcode, 0 ),
+    ("sra",         0, ISAC,   "Cs,Cw,C>",  MATCH_C_SRAI, MASK_C_SRAI, match_srxi_as_c_srxi, INSN_ALIAS ),
+    ("sra",         0, ISAI,   "d,s,t",   MATCH_SRA, MASK_SRA, match_opcode, 0 ),
+    ("sra",         0, ISAI,   "d,s,>",   MATCH_SRAI, MASK_SRAI, match_opcode, INSN_ALIAS ),
+    ("sub",         0, ISAC,   "Cs,Cw,Ct",  MATCH_C_SUB, MASK_C_SUB, match_opcode, INSN_ALIAS ),
+    ("sub",         0, ISAI,   "d,s,t",  MATCH_SUB, MASK_SUB, match_opcode, 0 ),
+    ("lb",          0, ISAI,   "d,o(s)",  MATCH_LB, MASK_LB, match_opcode, INSN_DREF|INSN_1_BYTE ),
+    ("lb",          0, ISAI,   "d,A",  0,  M_LB, match_never, INSN_MACRO ),
+    ("lbu",         0, ISAI,   "d,o(s)",  MATCH_LBU, MASK_LBU, match_opcode, INSN_DREF|INSN_1_BYTE ),
+    ("lbu",         0, ISAI,   "d,A",  0,  M_LBU, match_never, INSN_MACRO ),
+    ("lh",          0, ISAI,   "d,o(s)",  MATCH_LH, MASK_LH, match_opcode, INSN_DREF|INSN_2_BYTE ),
+    ("lh",          0, ISAI,   "d,A",  0,  M_LH, match_never, INSN_MACRO ),
+    ("lhu",         0, ISAI,   "d,o(s)",  MATCH_LHU, MASK_LHU, match_opcode, INSN_DREF|INSN_2_BYTE ),
+    ("lhu",         0, ISAI,   "d,A",  0,  M_LHU, match_never, INSN_MACRO ),
+    ("lw",          0, ISAC,   "d,Cm(Cc)",  MATCH_C_LWSP, MASK_C_LWSP, match_rd_nonzero, INSN_ALIAS|INSN_DREF|INSN_4_BYTE ),
+    ("lw",          0, ISAC,   "Ct,Ck(Cs)",  MATCH_C_LW, MASK_C_LW, match_opcode, INSN_ALIAS|INSN_DREF|INSN_4_BYTE ),
+    ("lw",          0, ISAI,   "d,o(s)",  MATCH_LW, MASK_LW, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("lw",          0, ISAI,   "d,A",  0,  M_LW, match_never, INSN_MACRO ),
+    ("not",         0, ISAI,   "d,s",  MATCH_XORI | MASK_IMM, MASK_XORI | MASK_IMM, match_opcode, INSN_ALIAS ),
+    ("ori",         0, ISAI,   "d,s,j",  MATCH_ORI, MASK_ORI, match_opcode, 0 ),
+    ("or",          0, ISAC,   "Cs,Cw,Ct",  MATCH_C_OR, MASK_C_OR, match_opcode, INSN_ALIAS ),
+    ("or",          0, ISAC,   "Cs,Ct,Cw",  MATCH_C_OR, MASK_C_OR, match_opcode, INSN_ALIAS ),
+    ("or",          0, ISAI,   "d,s,t",  MATCH_OR, MASK_OR, match_opcode, 0 ),
+    ("or",          0, ISAI,   "d,s,j",  MATCH_ORI, MASK_ORI, match_opcode, INSN_ALIAS ),
+    ("auipc",       0, ISAI,   "d,u",  MATCH_AUIPC, MASK_AUIPC, match_opcode, 0 ),
+    ("seqz",        0, ISAI,   "d,s",  MATCH_SLTIU | ENCODE_ITYPE_IMM (1), MASK_SLTIU | MASK_IMM, match_opcode, INSN_ALIAS ),
+    ("snez",        0, ISAI,   "d,t",  MATCH_SLTU, MASK_SLTU | MASK_RS1, match_opcode, INSN_ALIAS ),
+    ("sltz",        0, ISAI,   "d,s",  MATCH_SLT, MASK_SLT | MASK_RS2, match_opcode, INSN_ALIAS ),
+    ("sgtz",        0, ISAI,   "d,t",  MATCH_SLT, MASK_SLT | MASK_RS1, match_opcode, INSN_ALIAS ),
+    ("slti",        0, ISAI,   "d,s,j",  MATCH_SLTI, MASK_SLTI, match_opcode, 0 ),
+    ("slt",         0, ISAI,   "d,s,t",  MATCH_SLT, MASK_SLT, match_opcode, 0 ),
+    ("slt",         0, ISAI,   "d,s,j",  MATCH_SLTI, MASK_SLTI, match_opcode, INSN_ALIAS ),
+    ("sltiu",       0, ISAI,   "d,s,j",  MATCH_SLTIU, MASK_SLTIU, match_opcode, 0 ),
+    ("sltu",        0, ISAI,   "d,s,t",  MATCH_SLTU, MASK_SLTU, match_opcode, 0 ),
+    ("sltu",        0, ISAI,   "d,s,j",  MATCH_SLTIU, MASK_SLTIU, match_opcode, INSN_ALIAS ),
+    ("sgt",         0, ISAI,   "d,t,s",  MATCH_SLT, MASK_SLT, match_opcode, INSN_ALIAS ),
+    ("sgtu",        0, ISAI,   "d,t,s",  MATCH_SLTU, MASK_SLTU, match_opcode, INSN_ALIAS ),
+    ("sb",          0, ISAI,   "t,q(s)",  MATCH_SB, MASK_SB, match_opcode, INSN_DREF|INSN_1_BYTE ),
+    ("sb",          0, ISAI,   "t,A,s",  0,  M_SB, match_never, INSN_MACRO ),
+    ("sh",          0, ISAI,   "t,q(s)",  MATCH_SH, MASK_SH, match_opcode, INSN_DREF|INSN_2_BYTE ),
+    ("sh",          0, ISAI,   "t,A,s",  0,  M_SH, match_never, INSN_MACRO ),
+    ("sw",          0, ISAC,   "CV,CM(Cc)",  MATCH_C_SWSP, MASK_C_SWSP, match_opcode, INSN_ALIAS|INSN_DREF|INSN_4_BYTE ),
+    ("sw",          0, ISAC,   "Ct,Ck(Cs)",  MATCH_C_SW, MASK_C_SW, match_opcode, INSN_ALIAS|INSN_DREF|INSN_4_BYTE ),
+    ("sw",          0, ISAI,   "t,q(s)",  MATCH_SW, MASK_SW, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("sw",          0, ISAI,   "t,A,s",  0,  M_SW, match_never, INSN_MACRO ),
+    ("fence",       0, ISAI,   "",  MATCH_FENCE | MASK_PRED | MASK_SUCC, MASK_FENCE | MASK_RD | MASK_RS1 | MASK_IMM, match_opcode, INSN_ALIAS ),
+    ("fence",       0, ISAI,   "P,Q",  MATCH_FENCE, MASK_FENCE | MASK_RD | MASK_RS1 | (MASK_IMM & ~MASK_PRED & ~MASK_SUCC), match_opcode, 0 ),
+    ("fence.i",     0, ISAI,   "",  MATCH_FENCE_I, MASK_FENCE | MASK_RD | MASK_RS1 | MASK_IMM, match_opcode, 0 ),
+    ("fence.tso",   0, ISAI,   "",  MATCH_FENCE_TSO, MASK_FENCE_TSO | MASK_RD | MASK_RS1, match_opcode, INSN_ALIAS ),
+    ("rdcycle",     0, ISAI,   "d",  MATCH_RDCYCLE, MASK_RDCYCLE, match_opcode, INSN_ALIAS ),
+    ("rdinstret",   0, ISAI,   "d",  MATCH_RDINSTRET, MASK_RDINSTRET, match_opcode, INSN_ALIAS ),
+    ("rdtime",      0, ISAI,   "d",  MATCH_RDTIME, MASK_RDTIME, match_opcode, INSN_ALIAS ),
+    ("rdcycleh",   32, ISAI,   "d",  MATCH_RDCYCLEH, MASK_RDCYCLEH, match_opcode, INSN_ALIAS ),
+    ("rdinstreth", 32, ISAI,   "d",  MATCH_RDINSTRETH, MASK_RDINSTRETH, match_opcode, INSN_ALIAS ),
+    ("rdtimeh",    32, ISAI,   "d",  MATCH_RDTIMEH, MASK_RDTIMEH, match_opcode, INSN_ALIAS ),
+    ("ecall",       0, ISAI,   "",    MATCH_SCALL, MASK_SCALL, match_opcode, 0 ),
+    #("scall",       0, ISAI,   "",    MATCH_SCALL, MASK_SCALL, match_opcode, 0 ),
+    ("xori",        0, ISAI,   "d,s,j",  MATCH_XORI, MASK_XORI, match_opcode, 0 ),
+    ("xor",         0, ISAC,   "Cs,Cw,Ct",  MATCH_C_XOR, MASK_C_XOR, match_opcode, INSN_ALIAS ),
+    ("xor",         0, ISAC,   "Cs,Ct,Cw",  MATCH_C_XOR, MASK_C_XOR, match_opcode, INSN_ALIAS ),
+    ("xor",         0, ISAI,   "d,s,t",  MATCH_XOR, MASK_XOR, match_opcode, 0 ),
+    ("xor",         0, ISAI,   "d,s,j",  MATCH_XORI, MASK_XORI, match_opcode, INSN_ALIAS ),
+    ("lwu",        64, ISAI, "d,o(s)",  MATCH_LWU, MASK_LWU, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("lwu",        64, ISAI, "d,A",  0,  M_LWU, match_never, INSN_MACRO ),
+    ("ld",         64, ISAC, "d,Cn(Cc)",  MATCH_C_LDSP, MASK_C_LDSP, match_rd_nonzero, INSN_ALIAS|INSN_DREF|INSN_8_BYTE ),
+    ("ld",         64, ISAC, "Ct,Cl(Cs)",  MATCH_C_LD, MASK_C_LD, match_opcode, INSN_ALIAS|INSN_DREF|INSN_8_BYTE ),
+    ("ld",         64, ISAI, "d,o(s)", MATCH_LD, MASK_LD, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("ld",         64, ISAI, "d,A",  0,  M_LD, match_never, INSN_MACRO ),
+    ("sd",         64, ISAC, "CV,CN(Cc)",  MATCH_C_SDSP, MASK_C_SDSP, match_opcode, INSN_ALIAS|INSN_DREF|INSN_8_BYTE ),
+    ("sd",         64, ISAC, "Ct,Cl(Cs)",  MATCH_C_SD, MASK_C_SD, match_opcode, INSN_ALIAS|INSN_DREF|INSN_8_BYTE ),
+    ("sd",         64, ISAI, "t,q(s)",  MATCH_SD, MASK_SD, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("sd",         64, ISAI, "t,A,s",  0,  M_SD, match_never, INSN_MACRO ),
+    ("sext.w",     64, ISAC, "d,CU",  MATCH_C_ADDIW, MASK_C_ADDIW | MASK_RVC_IMM, match_rd_nonzero, INSN_ALIAS ),
+    ("sext.w",     64, ISAI, "d,s",  MATCH_ADDIW, MASK_ADDIW | MASK_IMM, match_opcode, INSN_ALIAS ),
+    ("addiw",      64, ISAC, "d,CU,Co",  MATCH_C_ADDIW, MASK_C_ADDIW, match_rd_nonzero, INSN_ALIAS ),
+    ("addiw",      64, ISAI, "d,s,j",  MATCH_ADDIW, MASK_ADDIW, match_opcode, 0 ),
+    ("addw",       64, ISAC, "Cs,Cw,Ct",  MATCH_C_ADDW, MASK_C_ADDW, match_opcode, INSN_ALIAS ),
+    ("addw",       64, ISAC, "Cs,Ct,Cw",  MATCH_C_ADDW, MASK_C_ADDW, match_opcode, INSN_ALIAS ),
+    ("addw",       64, ISAC, "d,CU,Co",  MATCH_C_ADDIW, MASK_C_ADDIW, match_rd_nonzero, INSN_ALIAS ),
+    ("addw",       64, ISAI, "d,s,t",  MATCH_ADDW, MASK_ADDW, match_opcode, 0 ),
+    ("addw",       64, ISAI, "d,s,j",  MATCH_ADDIW, MASK_ADDIW, match_opcode, INSN_ALIAS ),
+    ("negw",       64, ISAI, "d,t",  MATCH_SUBW, MASK_SUBW | MASK_RS1, match_opcode, INSN_ALIAS ), #/* sub 0 */
+    ("slliw",      64, ISAI, "d,s,<",   MATCH_SLLIW, MASK_SLLIW, match_opcode, 0 ),
+    ("sllw",       64, ISAI, "d,s,t",   MATCH_SLLW, MASK_SLLW, match_opcode, 0 ),
+    ("sllw",       64, ISAI, "d,s,<",   MATCH_SLLIW, MASK_SLLIW, match_opcode, INSN_ALIAS ),
+    ("srliw",      64, ISAI, "d,s,<",   MATCH_SRLIW, MASK_SRLIW, match_opcode, 0 ),
+    ("srlw",       64, ISAI, "d,s,t",   MATCH_SRLW, MASK_SRLW, match_opcode, 0 ),
+    ("srlw",       64, ISAI, "d,s,<",   MATCH_SRLIW, MASK_SRLIW, match_opcode, INSN_ALIAS ),
+    ("sraiw",      64, ISAI, "d,s,<",   MATCH_SRAIW, MASK_SRAIW, match_opcode, 0 ),
+    ("sraw",       64, ISAI, "d,s,t",   MATCH_SRAW, MASK_SRAW, match_opcode, 0 ),
+    ("sraw",       64, ISAI, "d,s,<",   MATCH_SRAIW, MASK_SRAIW, match_opcode, INSN_ALIAS ),
+    ("subw",       64, ISAC, "Cs,Cw,Ct",  MATCH_C_SUBW, MASK_C_SUBW, match_opcode, INSN_ALIAS ),
+    ("subw",       64, ISAI, "d,s,t",  MATCH_SUBW, MASK_SUBW, match_opcode, 0 ),
+
+#/* Atomic memory operation instruction subset */
+    ("lr.w",         0, ISAA,   "d,0(s)",    MATCH_LR_W, MASK_LR_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("sc.w",         0, ISAA,   "d,t,0(s)",  MATCH_SC_W, MASK_SC_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoadd.w",     0, ISAA,   "d,t,0(s)",  MATCH_AMOADD_W, MASK_AMOADD_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoswap.w",    0, ISAA,   "d,t,0(s)",  MATCH_AMOSWAP_W, MASK_AMOSWAP_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoand.w",     0, ISAA,   "d,t,0(s)",  MATCH_AMOAND_W, MASK_AMOAND_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoor.w",      0, ISAA,   "d,t,0(s)",  MATCH_AMOOR_W, MASK_AMOOR_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoxor.w",     0, ISAA,   "d,t,0(s)",  MATCH_AMOXOR_W, MASK_AMOXOR_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amomax.w",     0, ISAA,   "d,t,0(s)",  MATCH_AMOMAX_W, MASK_AMOMAX_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amomaxu.w",    0, ISAA,   "d,t,0(s)",  MATCH_AMOMAXU_W, MASK_AMOMAXU_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amomin.w",     0, ISAA,   "d,t,0(s)",  MATCH_AMOMIN_W, MASK_AMOMIN_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amominu.w",    0, ISAA,   "d,t,0(s)",  MATCH_AMOMINU_W, MASK_AMOMINU_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("lr.w.aq",      0, ISAA,   "d,0(s)",    MATCH_LR_W | MASK_AQ, MASK_LR_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("sc.w.aq",      0, ISAA,   "d,t,0(s)",  MATCH_SC_W | MASK_AQ, MASK_SC_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoadd.w.aq",  0, ISAA,   "d,t,0(s)",  MATCH_AMOADD_W | MASK_AQ, MASK_AMOADD_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoswap.w.aq", 0, ISAA,   "d,t,0(s)",  MATCH_AMOSWAP_W | MASK_AQ, MASK_AMOSWAP_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoand.w.aq",  0, ISAA,   "d,t,0(s)",  MATCH_AMOAND_W | MASK_AQ, MASK_AMOAND_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoor.w.aq",   0, ISAA,   "d,t,0(s)",  MATCH_AMOOR_W | MASK_AQ, MASK_AMOOR_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoxor.w.aq",  0, ISAA,   "d,t,0(s)",  MATCH_AMOXOR_W | MASK_AQ, MASK_AMOXOR_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amomax.w.aq",  0, ISAA,   "d,t,0(s)",  MATCH_AMOMAX_W | MASK_AQ, MASK_AMOMAX_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amomaxu.w.aq", 0, ISAA,   "d,t,0(s)",  MATCH_AMOMAXU_W | MASK_AQ, MASK_AMOMAXU_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amomin.w.aq",  0, ISAA,   "d,t,0(s)",  MATCH_AMOMIN_W | MASK_AQ, MASK_AMOMIN_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amominu.w.aq", 0, ISAA,   "d,t,0(s)",  MATCH_AMOMINU_W | MASK_AQ, MASK_AMOMINU_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("lr.w.rl",      0, ISAA,   "d,0(s)",    MATCH_LR_W | MASK_RL, MASK_LR_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("sc.w.rl",      0, ISAA,   "d,t,0(s)",  MATCH_SC_W | MASK_RL, MASK_SC_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoadd.w.rl",  0, ISAA,   "d,t,0(s)",  MATCH_AMOADD_W | MASK_RL, MASK_AMOADD_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoswap.w.rl", 0, ISAA,   "d,t,0(s)",  MATCH_AMOSWAP_W | MASK_RL, MASK_AMOSWAP_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoand.w.rl",  0, ISAA,   "d,t,0(s)",  MATCH_AMOAND_W | MASK_RL, MASK_AMOAND_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoor.w.rl",   0, ISAA,   "d,t,0(s)",  MATCH_AMOOR_W | MASK_RL, MASK_AMOOR_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoxor.w.rl",  0, ISAA,   "d,t,0(s)",  MATCH_AMOXOR_W | MASK_RL, MASK_AMOXOR_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amomax.w.rl",  0, ISAA,   "d,t,0(s)",  MATCH_AMOMAX_W | MASK_RL, MASK_AMOMAX_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amomaxu.w.rl", 0, ISAA,   "d,t,0(s)",  MATCH_AMOMAXU_W | MASK_RL, MASK_AMOMAXU_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amomin.w.rl",  0, ISAA,   "d,t,0(s)",  MATCH_AMOMIN_W | MASK_RL, MASK_AMOMIN_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amominu.w.rl", 0, ISAA,   "d,t,0(s)",  MATCH_AMOMINU_W | MASK_RL, MASK_AMOMINU_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("lr.w.aqrl",    0, ISAA,   "d,0(s)",    MATCH_LR_W | MASK_AQRL, MASK_LR_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("sc.w.aqrl",    0, ISAA,   "d,t,0(s)",  MATCH_SC_W | MASK_AQRL, MASK_SC_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoadd.w.aqrl",  0, ISAA,   "d,t,0(s)",  MATCH_AMOADD_W | MASK_AQRL, MASK_AMOADD_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoswap.w.aqrl", 0, ISAA,   "d,t,0(s)",  MATCH_AMOSWAP_W | MASK_AQRL, MASK_AMOSWAP_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoand.w.aqrl",  0, ISAA,   "d,t,0(s)",  MATCH_AMOAND_W | MASK_AQRL, MASK_AMOAND_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoor.w.aqrl",   0, ISAA,   "d,t,0(s)",  MATCH_AMOOR_W | MASK_AQRL, MASK_AMOOR_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amoxor.w.aqrl",  0, ISAA,   "d,t,0(s)",  MATCH_AMOXOR_W | MASK_AQRL, MASK_AMOXOR_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amomax.w.aqrl",  0, ISAA,   "d,t,0(s)",  MATCH_AMOMAX_W | MASK_AQRL, MASK_AMOMAX_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amomaxu.w.aqrl", 0, ISAA,   "d,t,0(s)",  MATCH_AMOMAXU_W | MASK_AQRL, MASK_AMOMAXU_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amomin.w.aqrl",  0, ISAA,   "d,t,0(s)",  MATCH_AMOMIN_W | MASK_AQRL, MASK_AMOMIN_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("amominu.w.aqrl", 0, ISAA,   "d,t,0(s)",  MATCH_AMOMINU_W | MASK_AQRL, MASK_AMOMINU_W | MASK_AQRL, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("lr.d",         64, ISAA , "d,0(s)",    MATCH_LR_D, MASK_LR_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("sc.d",         64, ISAA , "d,t,0(s)",  MATCH_SC_D, MASK_SC_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoadd.d",     64, ISAA , "d,t,0(s)",  MATCH_AMOADD_D, MASK_AMOADD_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoswap.d",    64, ISAA , "d,t,0(s)",  MATCH_AMOSWAP_D, MASK_AMOSWAP_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoand.d",     64, ISAA , "d,t,0(s)",  MATCH_AMOAND_D, MASK_AMOAND_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoor.d",      64, ISAA , "d,t,0(s)",  MATCH_AMOOR_D, MASK_AMOOR_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoxor.d",     64, ISAA , "d,t,0(s)",  MATCH_AMOXOR_D, MASK_AMOXOR_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amomax.d",     64, ISAA , "d,t,0(s)",  MATCH_AMOMAX_D, MASK_AMOMAX_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amomaxu.d",    64, ISAA , "d,t,0(s)",  MATCH_AMOMAXU_D, MASK_AMOMAXU_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amomin.d",     64, ISAA , "d,t,0(s)",  MATCH_AMOMIN_D, MASK_AMOMIN_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amominu.d",    64, ISAA , "d,t,0(s)",  MATCH_AMOMINU_D, MASK_AMOMINU_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("lr.d.aq",      64, ISAA , "d,0(s)",    MATCH_LR_D | MASK_AQ, MASK_LR_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("sc.d.aq",      64, ISAA , "d,t,0(s)",  MATCH_SC_D | MASK_AQ, MASK_SC_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoadd.d.aq",  64, ISAA , "d,t,0(s)",  MATCH_AMOADD_D | MASK_AQ, MASK_AMOADD_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoswap.d.aq", 64, ISAA , "d,t,0(s)",  MATCH_AMOSWAP_D | MASK_AQ, MASK_AMOSWAP_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoand.d.aq",  64, ISAA , "d,t,0(s)",  MATCH_AMOAND_D | MASK_AQ, MASK_AMOAND_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoor.d.aq",   64, ISAA , "d,t,0(s)",  MATCH_AMOOR_D | MASK_AQ, MASK_AMOOR_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoxor.d.aq",  64, ISAA , "d,t,0(s)",  MATCH_AMOXOR_D | MASK_AQ, MASK_AMOXOR_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amomax.d.aq",  64, ISAA , "d,t,0(s)",  MATCH_AMOMAX_D | MASK_AQ, MASK_AMOMAX_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amomaxu.d.aq", 64, ISAA , "d,t,0(s)",  MATCH_AMOMAXU_D | MASK_AQ, MASK_AMOMAXU_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amomin.d.aq",  64, ISAA , "d,t,0(s)",  MATCH_AMOMIN_D | MASK_AQ, MASK_AMOMIN_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amominu.d.aq", 64, ISAA , "d,t,0(s)",  MATCH_AMOMINU_D | MASK_AQ, MASK_AMOMINU_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("lr.d.rl",      64, ISAA , "d,0(s)",    MATCH_LR_D | MASK_RL, MASK_LR_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("sc.d.rl",      64, ISAA , "d,t,0(s)",  MATCH_SC_D | MASK_RL, MASK_SC_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoadd.d.rl",  64, ISAA , "d,t,0(s)",  MATCH_AMOADD_D | MASK_RL, MASK_AMOADD_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoswap.d.rl", 64, ISAA , "d,t,0(s)",  MATCH_AMOSWAP_D | MASK_RL, MASK_AMOSWAP_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoand.d.rl",  64, ISAA , "d,t,0(s)",  MATCH_AMOAND_D | MASK_RL, MASK_AMOAND_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoor.d.rl",   64, ISAA , "d,t,0(s)",  MATCH_AMOOR_D | MASK_RL, MASK_AMOOR_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoxor.d.rl",  64, ISAA , "d,t,0(s)",  MATCH_AMOXOR_D | MASK_RL, MASK_AMOXOR_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amomax.d.rl",  64, ISAA , "d,t,0(s)",  MATCH_AMOMAX_D | MASK_RL, MASK_AMOMAX_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amomaxu.d.rl", 64, ISAA , "d,t,0(s)",  MATCH_AMOMAXU_D | MASK_RL, MASK_AMOMAXU_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amomin.d.rl",  64, ISAA , "d,t,0(s)",  MATCH_AMOMIN_D | MASK_RL, MASK_AMOMIN_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amominu.d.rl", 64, ISAA , "d,t,0(s)",  MATCH_AMOMINU_D | MASK_RL, MASK_AMOMINU_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("lr.d.aqrl",    64, ISAA , "d,0(s)",    MATCH_LR_D | MASK_AQRL, MASK_LR_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("sc.d.aqrl",    64, ISAA , "d,t,0(s)",  MATCH_SC_D | MASK_AQRL, MASK_SC_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoadd.d.aqrl",  64, ISAA , "d,t,0(s)",  MATCH_AMOADD_D | MASK_AQRL, MASK_AMOADD_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoswap.d.aqrl", 64, ISAA , "d,t,0(s)",  MATCH_AMOSWAP_D | MASK_AQRL, MASK_AMOSWAP_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoand.d.aqrl",  64, ISAA , "d,t,0(s)",  MATCH_AMOAND_D | MASK_AQRL, MASK_AMOAND_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoor.d.aqrl",   64, ISAA , "d,t,0(s)",  MATCH_AMOOR_D | MASK_AQRL, MASK_AMOOR_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amoxor.d.aqrl",  64, ISAA , "d,t,0(s)",  MATCH_AMOXOR_D | MASK_AQRL, MASK_AMOXOR_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amomax.d.aqrl",  64, ISAA , "d,t,0(s)",  MATCH_AMOMAX_D | MASK_AQRL, MASK_AMOMAX_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amomaxu.d.aqrl", 64, ISAA , "d,t,0(s)",  MATCH_AMOMAXU_D | MASK_AQRL, MASK_AMOMAXU_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amomin.d.aqrl",  64, ISAA , "d,t,0(s)",  MATCH_AMOMIN_D | MASK_AQRL, MASK_AMOMIN_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("amominu.d.aqrl", 64, ISAA , "d,t,0(s)",  MATCH_AMOMINU_D | MASK_AQRL, MASK_AMOMINU_D | MASK_AQRL, match_opcode, INSN_DREF|INSN_8_BYTE ),
+
+#/* Multiply/Divide instruction subset */
+    ("mul",       0, ISAM,   "d,s,t",  MATCH_MUL, MASK_MUL, match_opcode, 0 ),
+    ("mulh",      0, ISAM,   "d,s,t",  MATCH_MULH, MASK_MULH, match_opcode, 0 ),
+    ("mulhu",     0, ISAM,   "d,s,t",  MATCH_MULHU, MASK_MULHU, match_opcode, 0 ),
+    ("mulhsu",    0, ISAM,   "d,s,t",  MATCH_MULHSU, MASK_MULHSU, match_opcode, 0 ),
+    ("div",       0, ISAM,   "d,s,t",  MATCH_DIV, MASK_DIV, match_opcode, 0 ),
+    ("divu",      0, ISAM,   "d,s,t",  MATCH_DIVU, MASK_DIVU, match_opcode, 0 ),
+    ("rem",       0, ISAM,   "d,s,t",  MATCH_REM, MASK_REM, match_opcode, 0 ),
+    ("remu",      0, ISAM,   "d,s,t",  MATCH_REMU, MASK_REMU, match_opcode, 0 ),
+    ("mulw",     64, ISAM, "d,s,t",  MATCH_MULW, MASK_MULW, match_opcode, 0 ),
+    ("divw",     64, ISAM, "d,s,t",  MATCH_DIVW, MASK_DIVW, match_opcode, 0 ),
+    ("divuw",    64, ISAM, "d,s,t",  MATCH_DIVUW, MASK_DIVUW, match_opcode, 0 ),
+    ("remw",     64, ISAM, "d,s,t",  MATCH_REMW, MASK_REMW, match_opcode, 0 ),
+    ("remuw",    64, ISAM, "d,s,t",  MATCH_REMUW, MASK_REMUW, match_opcode, 0 ),
+
+#/* Single-precision floating-point instruction subset */
+    ("frsr",      0, ISAF,   "d",  MATCH_FRCSR, MASK_FRCSR, match_opcode, 0 ),
+    ("fssr",      0, ISAF,   "s",  MATCH_FSCSR, MASK_FSCSR | MASK_RD, match_opcode, 0 ),
+    ("fssr",      0, ISAF,   "d,s",  MATCH_FSCSR, MASK_FSCSR, match_opcode, 0 ),
+    ("frcsr",     0, ISAF,   "d",  MATCH_FRCSR, MASK_FRCSR, match_opcode, 0 ),
+    ("fscsr",     0, ISAF,   "s",  MATCH_FSCSR, MASK_FSCSR | MASK_RD, match_opcode, 0 ),
+    ("fscsr",     0, ISAF,   "d,s",  MATCH_FSCSR, MASK_FSCSR, match_opcode, 0 ),
+    ("frrm",      0, ISAF,   "d",  MATCH_FRRM, MASK_FRRM, match_opcode, 0 ),
+    ("fsrm",      0, ISAF,   "s",  MATCH_FSRM, MASK_FSRM | MASK_RD, match_opcode, 0 ),
+    ("fsrm",      0, ISAF,   "d,s",  MATCH_FSRM, MASK_FSRM, match_opcode, 0 ),
+    ("fsrmi",     0, ISAF,   "d,Z",  MATCH_FSRMI, MASK_FSRMI, match_opcode, 0 ),
+    ("fsrmi",     0, ISAF,   "Z",  MATCH_FSRMI, MASK_FSRMI | MASK_RD, match_opcode, 0 ),
+    ("frflags",   0, ISAF,   "d",  MATCH_FRFLAGS, MASK_FRFLAGS, match_opcode, 0 ),
+    ("fsflags",   0, ISAF,   "s",  MATCH_FSFLAGS, MASK_FSFLAGS | MASK_RD, match_opcode, 0 ),
+    ("fsflags",   0, ISAF,   "d,s",  MATCH_FSFLAGS, MASK_FSFLAGS, match_opcode, 0 ),
+    ("fsflagsi",  0, ISAF,   "d,Z",  MATCH_FSFLAGSI, MASK_FSFLAGSI, match_opcode, 0 ),
+    ("fsflagsi",  0, ISAF,   "Z",  MATCH_FSFLAGSI, MASK_FSFLAGSI | MASK_RD, match_opcode, 0 ),
+    ("flw",      32, ISAFC, "D,Cm(Cc)",  MATCH_C_FLWSP, MASK_C_FLWSP, match_opcode, INSN_ALIAS|INSN_DREF|INSN_4_BYTE ),
+    ("flw",      32, ISAFC, "CD,Ck(Cs)",  MATCH_C_FLW, MASK_C_FLW, match_opcode, INSN_ALIAS|INSN_DREF|INSN_4_BYTE ),
+    ("flw",       0, ISAF,   "D,o(s)",  MATCH_FLW, MASK_FLW, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("flw",       0, ISAF,   "D,A,s",  0,  M_FLW, match_never, INSN_MACRO ),
+    ("fsw",      32, ISAFC, "CT,CM(Cc)",  MATCH_C_FSWSP, MASK_C_FSWSP, match_opcode, INSN_ALIAS|INSN_DREF|INSN_4_BYTE ),
+    ("fsw",      32, ISAFC, "CD,Ck(Cs)",  MATCH_C_FSW, MASK_C_FSW, match_opcode, INSN_ALIAS|INSN_DREF|INSN_4_BYTE ),
+    ("fsw",       0, ISAF,   "T,q(s)",  MATCH_FSW, MASK_FSW, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("fsw",       0, ISAF,   "T,A,s",  0,  M_FSW, match_never, INSN_MACRO ),
+
+    ("fmv.x.w",    0, ISAF,   "d,S",  MATCH_FMV_X_S, MASK_FMV_X_S, match_opcode, 0 ),
+    ("fmv.w.x",    0, ISAF,   "D,s",  MATCH_FMV_S_X, MASK_FMV_S_X, match_opcode, 0 ),
+
+    ("fmv.x.s",    0, ISAF,   "d,S",  MATCH_FMV_X_S, MASK_FMV_X_S, match_opcode, 0 ),
+    ("fmv.s.x",    0, ISAF,   "D,s",  MATCH_FMV_S_X, MASK_FMV_S_X, match_opcode, 0 ),
+
+    ("fmv.s",      0, ISAF,   "D,U",  MATCH_FSGNJ_S, MASK_FSGNJ_S, match_rs1_eq_rs2, INSN_ALIAS ),
+    ("fneg.s",     0, ISAF,   "D,U",  MATCH_FSGNJN_S, MASK_FSGNJN_S, match_rs1_eq_rs2, INSN_ALIAS ),
+    ("fabs.s",     0, ISAF,   "D,U",  MATCH_FSGNJX_S, MASK_FSGNJX_S, match_rs1_eq_rs2, INSN_ALIAS ),
+    ("fsgnj.s",    0, ISAF,   "D,S,T",  MATCH_FSGNJ_S, MASK_FSGNJ_S, match_opcode, 0 ),
+    ("fsgnjn.s",   0, ISAF,   "D,S,T",  MATCH_FSGNJN_S, MASK_FSGNJN_S, match_opcode, 0 ),
+    ("fsgnjx.s",   0, ISAF,   "D,S,T",  MATCH_FSGNJX_S, MASK_FSGNJX_S, match_opcode, 0 ),
+    ("fadd.s",     0, ISAF,   "D,S,T",  MATCH_FADD_S | MASK_RM, MASK_FADD_S | MASK_RM, match_opcode, 0 ),
+    ("fadd.s",     0, ISAF,   "D,S,T,m",  MATCH_FADD_S, MASK_FADD_S, match_opcode, 0 ),
+    ("fsub.s",     0, ISAF,   "D,S,T",  MATCH_FSUB_S | MASK_RM, MASK_FSUB_S | MASK_RM, match_opcode, 0 ),
+    ("fsub.s",     0, ISAF,   "D,S,T,m",  MATCH_FSUB_S, MASK_FSUB_S, match_opcode, 0 ),
+    ("fmul.s",     0, ISAF,   "D,S,T",  MATCH_FMUL_S | MASK_RM, MASK_FMUL_S | MASK_RM, match_opcode, 0 ),
+    ("fmul.s",     0, ISAF,   "D,S,T,m",  MATCH_FMUL_S, MASK_FMUL_S, match_opcode, 0 ),
+    ("fdiv.s",     0, ISAF,   "D,S,T",  MATCH_FDIV_S | MASK_RM, MASK_FDIV_S | MASK_RM, match_opcode, 0 ),
+    ("fdiv.s",     0, ISAF,   "D,S,T,m",  MATCH_FDIV_S, MASK_FDIV_S, match_opcode, 0 ),
+    ("fsqrt.s",    0, ISAF,   "D,S",  MATCH_FSQRT_S | MASK_RM, MASK_FSQRT_S | MASK_RM, match_opcode, 0 ),
+    ("fsqrt.s",    0, ISAF,   "D,S,m",  MATCH_FSQRT_S, MASK_FSQRT_S, match_opcode, 0 ),
+    ("fmin.s",     0, ISAF,   "D,S,T",  MATCH_FMIN_S, MASK_FMIN_S, match_opcode, 0 ),
+    ("fmax.s",     0, ISAF,   "D,S,T",  MATCH_FMAX_S, MASK_FMAX_S, match_opcode, 0 ),
+    ("fmadd.s",    0, ISAF,   "D,S,T,R",  MATCH_FMADD_S | MASK_RM, MASK_FMADD_S | MASK_RM, match_opcode, 0 ),
+    ("fmadd.s",    0, ISAF,   "D,S,T,R,m",  MATCH_FMADD_S, MASK_FMADD_S, match_opcode, 0 ),
+    ("fnmadd.s",   0, ISAF,   "D,S,T,R",  MATCH_FNMADD_S | MASK_RM, MASK_FNMADD_S | MASK_RM, match_opcode, 0 ),
+    ("fnmadd.s",   0, ISAF,   "D,S,T,R,m",  MATCH_FNMADD_S, MASK_FNMADD_S, match_opcode, 0 ),
+    ("fmsub.s",    0, ISAF,   "D,S,T,R",  MATCH_FMSUB_S | MASK_RM, MASK_FMSUB_S | MASK_RM, match_opcode, 0 ),
+    ("fmsub.s",    0, ISAF,   "D,S,T,R,m",  MATCH_FMSUB_S, MASK_FMSUB_S, match_opcode, 0 ),
+    ("fnmsub.s",   0, ISAF,   "D,S,T,R",  MATCH_FNMSUB_S | MASK_RM, MASK_FNMSUB_S | MASK_RM, match_opcode, 0 ),
+    ("fnmsub.s",   0, ISAF,   "D,S,T,R,m",  MATCH_FNMSUB_S, MASK_FNMSUB_S, match_opcode, 0 ),
+    ("fcvt.w.s",   0, ISAF,   "d,S",  MATCH_FCVT_W_S | MASK_RM, MASK_FCVT_W_S | MASK_RM, match_opcode, 0 ),
+    ("fcvt.w.s",   0, ISAF,   "d,S,m",  MATCH_FCVT_W_S, MASK_FCVT_W_S, match_opcode, 0 ),
+    ("fcvt.wu.s",  0, ISAF,   "d,S",  MATCH_FCVT_WU_S | MASK_RM, MASK_FCVT_WU_S | MASK_RM, match_opcode, 0 ),
+    ("fcvt.wu.s",  0, ISAF,   "d,S,m",  MATCH_FCVT_WU_S, MASK_FCVT_WU_S, match_opcode, 0 ),
+    ("fcvt.s.w",   0, ISAF,   "D,s",  MATCH_FCVT_S_W | MASK_RM, MASK_FCVT_S_W | MASK_RM, match_opcode, 0 ),
+    ("fcvt.s.w",   0, ISAF,   "D,s,m",  MATCH_FCVT_S_W, MASK_FCVT_S_W, match_opcode, 0 ),
+    ("fcvt.s.wu",  0, ISAF,   "D,s",  MATCH_FCVT_S_WU | MASK_RM, MASK_FCVT_S_W | MASK_RM, match_opcode, 0 ),
+    ("fcvt.s.wu",  0, ISAF,   "D,s,m",  MATCH_FCVT_S_WU, MASK_FCVT_S_WU, match_opcode, 0 ),
+    ("fclass.s",   0, ISAF,   "d,S",  MATCH_FCLASS_S, MASK_FCLASS_S, match_opcode, 0 ),
+    ("feq.s",      0, ISAF,   "d,S,T",    MATCH_FEQ_S, MASK_FEQ_S, match_opcode, 0 ),
+    ("flt.s",      0, ISAF,   "d,S,T",    MATCH_FLT_S, MASK_FLT_S, match_opcode, 0 ),
+    ("fle.s",      0, ISAF,   "d,S,T",    MATCH_FLE_S, MASK_FLE_S, match_opcode, 0 ),
+    ("fgt.s",      0, ISAF,   "d,T,S",    MATCH_FLT_S, MASK_FLT_S, match_opcode, 0 ),
+    ("fge.s",      0, ISAF,   "d,T,S",    MATCH_FLE_S, MASK_FLE_S, match_opcode, 0 ),
+    ("fcvt.l.s",  64, ISAF, "d,S",  MATCH_FCVT_L_S | MASK_RM, MASK_FCVT_L_S | MASK_RM, match_opcode, 0 ),
+    ("fcvt.l.s",  64, ISAF, "d,S,m",  MATCH_FCVT_L_S, MASK_FCVT_L_S, match_opcode, 0 ),
+    ("fcvt.lu.s", 64, ISAF, "d,S",  MATCH_FCVT_LU_S | MASK_RM, MASK_FCVT_LU_S | MASK_RM, match_opcode, 0 ),
+    ("fcvt.lu.s", 64, ISAF, "d,S,m",  MATCH_FCVT_LU_S, MASK_FCVT_LU_S, match_opcode, 0 ),
+    ("fcvt.s.l",  64, ISAF, "D,s",  MATCH_FCVT_S_L | MASK_RM, MASK_FCVT_S_L | MASK_RM, match_opcode, 0 ),
+    ("fcvt.s.l",  64, ISAF, "D,s,m",  MATCH_FCVT_S_L, MASK_FCVT_S_L, match_opcode, 0 ),
+    ("fcvt.s.lu", 64, ISAF, "D,s",  MATCH_FCVT_S_LU | MASK_RM, MASK_FCVT_S_L | MASK_RM, match_opcode, 0 ),
+    ("fcvt.s.lu", 64, ISAF, "D,s,m",  MATCH_FCVT_S_LU, MASK_FCVT_S_LU, match_opcode, 0 ),
+
+#/* Double-precision floating-point instruction subset */
+    ("fld",        0, ISADC,   "D,Cn(Cc)",  MATCH_C_FLDSP, MASK_C_FLDSP, match_opcode, INSN_ALIAS|INSN_DREF|INSN_8_BYTE ),
+    ("fld",        0, ISADC,   "CD,Cl(Cs)",  MATCH_C_FLD, MASK_C_FLD, match_opcode, INSN_ALIAS|INSN_DREF|INSN_8_BYTE ),
+    ("fld",        0, ISAD,   "D,o(s)",  MATCH_FLD, MASK_FLD, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("fld",        0, ISAD,   "D,A,s",  0,  M_FLD, match_never, INSN_MACRO ),
+    ("fsd",        0, ISADC,   "CT,CN(Cc)",  MATCH_C_FSDSP, MASK_C_FSDSP, match_opcode, INSN_ALIAS|INSN_DREF|INSN_8_BYTE ),
+    ("fsd",        0, ISADC,   "CD,Cl(Cs)",  MATCH_C_FSD, MASK_C_FSD, match_opcode, INSN_ALIAS|INSN_DREF|INSN_8_BYTE ),
+    ("fsd",        0, ISAD,   "T,q(s)",  MATCH_FSD, MASK_FSD, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("fsd",        0, ISAD,   "T,A,s",  0,  M_FSD, match_never, INSN_MACRO ),
+    ("fmv.d",      0, ISAD,   "D,U",  MATCH_FSGNJ_D, MASK_FSGNJ_D, match_rs1_eq_rs2, INSN_ALIAS ),
+    ("fneg.d",     0, ISAD,   "D,U",  MATCH_FSGNJN_D, MASK_FSGNJN_D, match_rs1_eq_rs2, INSN_ALIAS ),
+    ("fabs.d",     0, ISAD,   "D,U",  MATCH_FSGNJX_D, MASK_FSGNJX_D, match_rs1_eq_rs2, INSN_ALIAS ),
+    ("fsgnj.d",    0, ISAD,   "D,S,T",  MATCH_FSGNJ_D, MASK_FSGNJ_D, match_opcode, 0 ),
+    ("fsgnjn.d",   0, ISAD,   "D,S,T",  MATCH_FSGNJN_D, MASK_FSGNJN_D, match_opcode, 0 ),
+    ("fsgnjx.d",   0, ISAD,   "D,S,T",  MATCH_FSGNJX_D, MASK_FSGNJX_D, match_opcode, 0 ),
+    ("fadd.d",     0, ISAD,   "D,S,T",  MATCH_FADD_D | MASK_RM, MASK_FADD_D | MASK_RM, match_opcode, 0 ),
+    ("fadd.d",     0, ISAD,   "D,S,T,m",  MATCH_FADD_D, MASK_FADD_D, match_opcode, 0 ),
+    ("fsub.d",     0, ISAD,   "D,S,T",  MATCH_FSUB_D | MASK_RM, MASK_FSUB_D | MASK_RM, match_opcode, 0 ),
+    ("fsub.d",     0, ISAD,   "D,S,T,m",  MATCH_FSUB_D, MASK_FSUB_D, match_opcode, 0 ),
+    ("fmul.d",     0, ISAD,   "D,S,T",  MATCH_FMUL_D | MASK_RM, MASK_FMUL_D | MASK_RM, match_opcode, 0 ),
+    ("fmul.d",     0, ISAD,   "D,S,T,m",  MATCH_FMUL_D, MASK_FMUL_D, match_opcode, 0 ),
+    ("fdiv.d",     0, ISAD,   "D,S,T",  MATCH_FDIV_D | MASK_RM, MASK_FDIV_D | MASK_RM, match_opcode, 0 ),
+    ("fdiv.d",     0, ISAD,   "D,S,T,m",  MATCH_FDIV_D, MASK_FDIV_D, match_opcode, 0 ),
+    ("fsqrt.d",    0, ISAD,   "D,S",  MATCH_FSQRT_D | MASK_RM, MASK_FSQRT_D | MASK_RM, match_opcode, 0 ),
+    ("fsqrt.d",    0, ISAD,   "D,S,m",  MATCH_FSQRT_D, MASK_FSQRT_D, match_opcode, 0 ),
+    ("fmin.d",     0, ISAD,   "D,S,T",  MATCH_FMIN_D, MASK_FMIN_D, match_opcode, 0 ),
+    ("fmax.d",     0, ISAD,   "D,S,T",  MATCH_FMAX_D, MASK_FMAX_D, match_opcode, 0 ),
+    ("fmadd.d",    0, ISAD,   "D,S,T,R",  MATCH_FMADD_D | MASK_RM, MASK_FMADD_D | MASK_RM, match_opcode, 0 ),
+    ("fmadd.d",    0, ISAD,   "D,S,T,R,m",  MATCH_FMADD_D, MASK_FMADD_D, match_opcode, 0 ),
+    ("fnmadd.d",   0, ISAD,   "D,S,T,R",  MATCH_FNMADD_D | MASK_RM, MASK_FNMADD_D | MASK_RM, match_opcode, 0 ),
+    ("fnmadd.d",   0, ISAD,   "D,S,T,R,m",  MATCH_FNMADD_D, MASK_FNMADD_D, match_opcode, 0 ),
+    ("fmsub.d",    0, ISAD,   "D,S,T,R",  MATCH_FMSUB_D | MASK_RM, MASK_FMSUB_D | MASK_RM, match_opcode, 0 ),
+    ("fmsub.d",    0, ISAD,   "D,S,T,R,m",  MATCH_FMSUB_D, MASK_FMSUB_D, match_opcode, 0 ),
+    ("fnmsub.d",   0, ISAD,   "D,S,T,R",  MATCH_FNMSUB_D | MASK_RM, MASK_FNMSUB_D | MASK_RM, match_opcode, 0 ),
+    ("fnmsub.d",   0, ISAD,   "D,S,T,R,m",  MATCH_FNMSUB_D, MASK_FNMSUB_D, match_opcode, 0 ),
+    ("fcvt.w.d",   0, ISAD,   "d,S",  MATCH_FCVT_W_D | MASK_RM, MASK_FCVT_W_D | MASK_RM, match_opcode, 0 ),
+    ("fcvt.w.d",   0, ISAD,   "d,S,m",  MATCH_FCVT_W_D, MASK_FCVT_W_D, match_opcode, 0 ),
+    ("fcvt.wu.d",  0, ISAD,   "d,S",  MATCH_FCVT_WU_D | MASK_RM, MASK_FCVT_WU_D | MASK_RM, match_opcode, 0 ),
+    ("fcvt.wu.d",  0, ISAD,   "d,S,m",  MATCH_FCVT_WU_D, MASK_FCVT_WU_D, match_opcode, 0 ),
+    ("fcvt.d.w",   0, ISAD,   "D,s",  MATCH_FCVT_D_W, MASK_FCVT_D_W | MASK_RM, match_opcode, 0 ),
+    ("fcvt.d.wu",  0, ISAD,   "D,s",  MATCH_FCVT_D_WU, MASK_FCVT_D_WU | MASK_RM, match_opcode, 0 ),
+    ("fcvt.d.s",   0, ISAD,   "D,S",  MATCH_FCVT_D_S, MASK_FCVT_D_S | MASK_RM, match_opcode, 0 ),
+    ("fcvt.s.d",   0, ISAD,   "D,S",  MATCH_FCVT_S_D | MASK_RM, MASK_FCVT_S_D | MASK_RM, match_opcode, 0 ),
+    ("fcvt.s.d",   0, ISAD,   "D,S,m",  MATCH_FCVT_S_D, MASK_FCVT_S_D, match_opcode, 0 ),
+    ("fclass.d",   0, ISAD,   "d,S",  MATCH_FCLASS_D, MASK_FCLASS_D, match_opcode, 0 ),
+    ("feq.d",      0, ISAD,   "d,S,T",    MATCH_FEQ_D, MASK_FEQ_D, match_opcode, 0 ),
+    ("flt.d",      0, ISAD,   "d,S,T",    MATCH_FLT_D, MASK_FLT_D, match_opcode, 0 ),
+    ("fle.d",      0, ISAD,   "d,S,T",    MATCH_FLE_D, MASK_FLE_D, match_opcode, 0 ),
+    ("fgt.d",      0, ISAD,   "d,T,S",    MATCH_FLT_D, MASK_FLT_D, match_opcode, 0 ),
+    ("fge.d",      0, ISAD,   "d,T,S",    MATCH_FLE_D, MASK_FLE_D, match_opcode, 0 ),
+    ("fmv.x.d",   64, ISAD, "d,S",  MATCH_FMV_X_D, MASK_FMV_X_D, match_opcode, 0 ),
+    ("fmv.d.x",   64, ISAD, "D,s",  MATCH_FMV_D_X, MASK_FMV_D_X, match_opcode, 0 ),
+    ("fcvt.l.d",  64, ISAD, "d,S",  MATCH_FCVT_L_D | MASK_RM, MASK_FCVT_L_D | MASK_RM, match_opcode, 0 ),
+    ("fcvt.l.d",  64, ISAD, "d,S,m",  MATCH_FCVT_L_D, MASK_FCVT_L_D, match_opcode, 0 ),
+    ("fcvt.lu.d", 64, ISAD, "d,S",  MATCH_FCVT_LU_D | MASK_RM, MASK_FCVT_LU_D | MASK_RM, match_opcode, 0 ),
+    ("fcvt.lu.d", 64, ISAD, "d,S,m",  MATCH_FCVT_LU_D, MASK_FCVT_LU_D, match_opcode, 0 ),
+    ("fcvt.d.l",  64, ISAD, "D,s",  MATCH_FCVT_D_L | MASK_RM, MASK_FCVT_D_L | MASK_RM, match_opcode, 0 ),
+    ("fcvt.d.l",  64, ISAD, "D,s,m",  MATCH_FCVT_D_L, MASK_FCVT_D_L, match_opcode, 0 ),
+    ("fcvt.d.lu", 64, ISAD, "D,s",  MATCH_FCVT_D_LU | MASK_RM, MASK_FCVT_D_L | MASK_RM, match_opcode, 0 ),
+    ("fcvt.d.lu", 64, ISAD, "D,s,m",  MATCH_FCVT_D_LU, MASK_FCVT_D_LU, match_opcode, 0 ),
+
+#/* Quad-precision floating-point instruction subset */
+    ("flq",        0, ISAQ,   "D,o(s)",  MATCH_FLQ, MASK_FLQ, match_opcode, INSN_DREF|INSN_16_BYTE ),
+    ("flq",        0, ISAQ,   "D,A,s",  0,  M_FLQ, match_never, INSN_MACRO ),
+    ("fsq",        0, ISAQ,   "T,q(s)",  MATCH_FSQ, MASK_FSQ, match_opcode, INSN_DREF|INSN_16_BYTE ),
+    ("fsq",        0, ISAQ,   "T,A,s",  0,  M_FSQ, match_never, INSN_MACRO ),
+    ("fmv.q",      0, ISAQ,   "D,U",  MATCH_FSGNJ_Q, MASK_FSGNJ_Q, match_rs1_eq_rs2, INSN_ALIAS ),
+    ("fneg.q",     0, ISAQ,   "D,U",  MATCH_FSGNJN_Q, MASK_FSGNJN_Q, match_rs1_eq_rs2, INSN_ALIAS ),
+    ("fabs.q",     0, ISAQ,   "D,U",  MATCH_FSGNJX_Q, MASK_FSGNJX_Q, match_rs1_eq_rs2, INSN_ALIAS ),
+    ("fsgnj.q",    0, ISAQ,   "D,S,T",  MATCH_FSGNJ_Q, MASK_FSGNJ_Q, match_opcode, 0 ),
+    ("fsgnjn.q",   0, ISAQ,   "D,S,T",  MATCH_FSGNJN_Q, MASK_FSGNJN_Q, match_opcode, 0 ),
+    ("fsgnjx.q",   0, ISAQ,   "D,S,T",  MATCH_FSGNJX_Q, MASK_FSGNJX_Q, match_opcode, 0 ),
+    ("fadd.q",     0, ISAQ,   "D,S,T",  MATCH_FADD_Q | MASK_RM, MASK_FADD_Q | MASK_RM, match_opcode, 0 ),
+    ("fadd.q",     0, ISAQ,   "D,S,T,m",  MATCH_FADD_Q, MASK_FADD_Q, match_opcode, 0 ),
+    ("fsub.q",     0, ISAQ,   "D,S,T",  MATCH_FSUB_Q | MASK_RM, MASK_FSUB_Q | MASK_RM, match_opcode, 0 ),
+    ("fsub.q",     0, ISAQ,   "D,S,T,m",  MATCH_FSUB_Q, MASK_FSUB_Q, match_opcode, 0 ),
+    ("fmul.q",     0, ISAQ,   "D,S,T",  MATCH_FMUL_Q | MASK_RM, MASK_FMUL_Q | MASK_RM, match_opcode, 0 ),
+    ("fmul.q",     0, ISAQ,   "D,S,T,m",  MATCH_FMUL_Q, MASK_FMUL_Q, match_opcode, 0 ),
+    ("fdiv.q",     0, ISAQ,   "D,S,T",  MATCH_FDIV_Q | MASK_RM, MASK_FDIV_Q | MASK_RM, match_opcode, 0 ),
+    ("fdiv.q",     0, ISAQ,   "D,S,T,m",  MATCH_FDIV_Q, MASK_FDIV_Q, match_opcode, 0 ),
+    ("fsqrt.q",    0, ISAQ,   "D,S",  MATCH_FSQRT_Q | MASK_RM, MASK_FSQRT_Q | MASK_RM, match_opcode, 0 ),
+    ("fsqrt.q",    0, ISAQ,   "D,S,m",  MATCH_FSQRT_Q, MASK_FSQRT_Q, match_opcode, 0 ),
+    ("fmin.q",     0, ISAQ,   "D,S,T",  MATCH_FMIN_Q, MASK_FMIN_Q, match_opcode, 0 ),
+    ("fmax.q",     0, ISAQ,   "D,S,T",  MATCH_FMAX_Q, MASK_FMAX_Q, match_opcode, 0 ),
+    ("fmadd.q",    0, ISAQ,   "D,S,T,R",  MATCH_FMADD_Q | MASK_RM, MASK_FMADD_Q | MASK_RM, match_opcode, 0 ),
+    ("fmadd.q",    0, ISAQ,   "D,S,T,R,m",  MATCH_FMADD_Q, MASK_FMADD_Q, match_opcode, 0 ),
+    ("fnmadd.q",   0, ISAQ,   "D,S,T,R",  MATCH_FNMADD_Q | MASK_RM, MASK_FNMADD_Q | MASK_RM, match_opcode, 0 ),
+    ("fnmadd.q",   0, ISAQ,   "D,S,T,R,m",  MATCH_FNMADD_Q, MASK_FNMADD_Q, match_opcode, 0 ),
+    ("fmsub.q",    0, ISAQ,   "D,S,T,R",  MATCH_FMSUB_Q | MASK_RM, MASK_FMSUB_Q | MASK_RM, match_opcode, 0 ),
+    ("fmsub.q",    0, ISAQ,   "D,S,T,R,m",  MATCH_FMSUB_Q, MASK_FMSUB_Q, match_opcode, 0 ),
+    ("fnmsub.q",   0, ISAQ,   "D,S,T,R",  MATCH_FNMSUB_Q | MASK_RM, MASK_FNMSUB_Q | MASK_RM, match_opcode, 0 ),
+    ("fnmsub.q",   0, ISAQ,   "D,S,T,R,m",  MATCH_FNMSUB_Q, MASK_FNMSUB_Q, match_opcode, 0 ),
+    ("fcvt.w.q",   0, ISAQ,   "d,S",  MATCH_FCVT_W_Q | MASK_RM, MASK_FCVT_W_Q | MASK_RM, match_opcode, 0 ),
+    ("fcvt.w.q",   0, ISAQ,   "d,S,m",  MATCH_FCVT_W_Q, MASK_FCVT_W_Q, match_opcode, 0 ),
+    ("fcvt.wu.q",  0, ISAQ,   "d,S",  MATCH_FCVT_WU_Q | MASK_RM, MASK_FCVT_WU_Q | MASK_RM, match_opcode, 0 ),
+    ("fcvt.wu.q",  0, ISAQ,   "d,S,m",  MATCH_FCVT_WU_Q, MASK_FCVT_WU_Q, match_opcode, 0 ),
+    ("fcvt.q.w",   0, ISAQ,   "D,s",  MATCH_FCVT_Q_W, MASK_FCVT_Q_W | MASK_RM, match_opcode, 0 ),
+    ("fcvt.q.wu",  0, ISAQ,   "D,s",  MATCH_FCVT_Q_WU, MASK_FCVT_Q_WU | MASK_RM, match_opcode, 0 ),
+    ("fcvt.q.s",   0, ISAQ,   "D,S",  MATCH_FCVT_Q_S, MASK_FCVT_Q_S | MASK_RM, match_opcode, 0 ),
+    ("fcvt.q.d",   0, ISAQ,   "D,S",  MATCH_FCVT_Q_D, MASK_FCVT_Q_D | MASK_RM, match_opcode, 0 ),
+    ("fcvt.s.q",   0, ISAQ,   "D,S",  MATCH_FCVT_S_Q | MASK_RM, MASK_FCVT_S_Q | MASK_RM, match_opcode, 0 ),
+    ("fcvt.s.q",   0, ISAQ,   "D,S,m",  MATCH_FCVT_S_Q, MASK_FCVT_S_Q, match_opcode, 0 ),
+    ("fcvt.d.q",   0, ISAQ,   "D,S",  MATCH_FCVT_D_Q | MASK_RM, MASK_FCVT_D_Q | MASK_RM, match_opcode, 0 ),
+    ("fcvt.d.q",   0, ISAQ,   "D,S,m",  MATCH_FCVT_D_Q, MASK_FCVT_D_Q, match_opcode, 0 ),
+    ("fclass.q",   0, ISAQ,   "d,S",  MATCH_FCLASS_Q, MASK_FCLASS_Q, match_opcode, 0 ),
+    ("feq.q",      0, ISAQ,   "d,S,T",    MATCH_FEQ_Q, MASK_FEQ_Q, match_opcode, 0 ),
+    ("flt.q",      0, ISAQ,   "d,S,T",    MATCH_FLT_Q, MASK_FLT_Q, match_opcode, 0 ),
+    ("fle.q",      0, ISAQ,   "d,S,T",    MATCH_FLE_Q, MASK_FLE_Q, match_opcode, 0 ),
+    ("fgt.q",      0, ISAQ,   "d,T,S",    MATCH_FLT_Q, MASK_FLT_Q, match_opcode, 0 ),
+    ("fge.q",      0, ISAQ,   "d,T,S",    MATCH_FLE_Q, MASK_FLE_Q, match_opcode, 0 ),
+    ("fmv.x.q",   64, ISAQ, "d,S",  MATCH_FMV_X_Q, MASK_FMV_X_Q, match_opcode, 0 ),
+    ("fmv.q.x",   64, ISAQ, "D,s",  MATCH_FMV_Q_X, MASK_FMV_Q_X, match_opcode, 0 ),
+    ("fcvt.l.q",  64, ISAQ, "d,S",  MATCH_FCVT_L_Q | MASK_RM, MASK_FCVT_L_Q | MASK_RM, match_opcode, 0 ),
+    ("fcvt.l.q",  64, ISAQ, "d,S,m",  MATCH_FCVT_L_Q, MASK_FCVT_L_Q, match_opcode, 0 ),
+    ("fcvt.lu.q", 64, ISAQ, "d,S",  MATCH_FCVT_LU_Q | MASK_RM, MASK_FCVT_LU_Q | MASK_RM, match_opcode, 0 ),
+    ("fcvt.lu.q", 64, ISAQ, "d,S,m",  MATCH_FCVT_LU_Q, MASK_FCVT_LU_Q, match_opcode, 0 ),
+    ("fcvt.q.l",  64, ISAQ, "D,s",  MATCH_FCVT_Q_L | MASK_RM, MASK_FCVT_Q_L | MASK_RM, match_opcode, 0 ),
+    ("fcvt.q.l",  64, ISAQ, "D,s,m",  MATCH_FCVT_Q_L, MASK_FCVT_Q_L, match_opcode, 0 ),
+    ("fcvt.q.lu", 64, ISAQ, "D,s",  MATCH_FCVT_Q_LU | MASK_RM, MASK_FCVT_Q_L | MASK_RM, match_opcode, 0 ),
+    ("fcvt.q.lu", 64, ISAQ, "D,s,m",  MATCH_FCVT_Q_LU, MASK_FCVT_Q_LU, match_opcode, 0 ),
+
+#/* Compressed instructions.  */
+    ("c.unimp",    0, ISAC,   "",  0, 0xffff,  match_opcode, 0 ),
+    ("c.ebreak",   0, ISAC,   "",  MATCH_C_EBREAK, MASK_C_EBREAK, match_opcode, 0 ),
+    ("c.jr",       0, ISAC,   "d",  MATCH_C_JR, MASK_C_JR, match_rd_nonzero, INSN_BRANCH ),
+    ("c.jalr",     0, ISAC,   "d",  MATCH_C_JALR, MASK_C_JALR, match_rd_nonzero, INSN_JSR ),
+    ("c.j",        0, ISAC,   "Ca",  MATCH_C_J, MASK_C_J, match_opcode, INSN_BRANCH ),
+    ("c.jal",     32, ISAC, "Ca",  MATCH_C_JAL, MASK_C_JAL, match_opcode, INSN_JSR ),
+    ("c.beqz",     0, ISAC,   "Cs,Cp",  MATCH_C_BEQZ, MASK_C_BEQZ, match_opcode, INSN_CONDBRANCH ),
+    ("c.bnez",     0, ISAC,   "Cs,Cp",  MATCH_C_BNEZ, MASK_C_BNEZ, match_opcode, INSN_CONDBRANCH ),
+    ("c.lwsp",     0, ISAC,   "d,Cm(Cc)",  MATCH_C_LWSP, MASK_C_LWSP, match_rd_nonzero, 0 ),
+    ("c.lw",       0, ISAC,   "Ct,Ck(Cs)",  MATCH_C_LW, MASK_C_LW, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("c.swsp",     0, ISAC,   "CV,CM(Cc)",  MATCH_C_SWSP, MASK_C_SWSP, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("c.sw",       0, ISAC,   "Ct,Ck(Cs)",  MATCH_C_SW, MASK_C_SW, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("c.nop",      0, ISAC,   "",  MATCH_C_ADDI, 0xffff, match_opcode, INSN_ALIAS ),
+    ("c.nop",      0, ISAC,   "Cj",  MATCH_C_ADDI, MASK_C_ADDI | MASK_RD, match_opcode, INSN_ALIAS ),
+    ("c.mv",       0, ISAC,   "d,CV",  MATCH_C_MV, MASK_C_MV, match_c_add_with_hint, 0 ),
+    ("c.lui",      0, ISAC,   "d,Cu",  MATCH_C_LUI, MASK_C_LUI, match_c_lui_with_hint, 0 ),
+    ("c.li",       0, ISAC,   "d,Co",  MATCH_C_LI, MASK_C_LI, match_opcode, 0 ),
+    ("c.addi4spn", 0, ISAC,   "Ct,Cc,CK", MATCH_C_ADDI4SPN, MASK_C_ADDI4SPN, match_c_addi4spn, 0 ),
+    ("c.addi16sp", 0, ISAC,   "Cc,CL", MATCH_C_ADDI16SP, MASK_C_ADDI16SP, match_c_addi16sp, 0 ),
+    ("c.addi",     0, ISAC,   "d,Co",  MATCH_C_ADDI, MASK_C_ADDI, match_opcode, 0 ),
+    ("c.add",      0, ISAC,   "d,CV",  MATCH_C_ADD, MASK_C_ADD, match_c_add_with_hint, 0 ),
+    ("c.sub",      0, ISAC,   "Cs,Ct",  MATCH_C_SUB, MASK_C_SUB, match_opcode, 0 ),
+    ("c.and",      0, ISAC,   "Cs,Ct",  MATCH_C_AND, MASK_C_AND, match_opcode, 0 ),
+    ("c.or",       0, ISAC,   "Cs,Ct",  MATCH_C_OR, MASK_C_OR, match_opcode, 0 ),
+    ("c.xor",      0, ISAC,   "Cs,Ct",  MATCH_C_XOR, MASK_C_XOR, match_opcode, 0 ),
+    ("c.slli",     0, ISAC,   "d,C>",  MATCH_C_SLLI, MASK_C_SLLI, match_c_slli, 0 ),
+    ("c.srli",     0, ISAC,   "Cs,C>",  MATCH_C_SRLI, MASK_C_SRLI, match_c_slli, 0 ),
+    ("c.srai",     0, ISAC,   "Cs,C>",  MATCH_C_SRAI, MASK_C_SRAI, match_c_slli, 0 ),
+    ("c.slli64",   0, ISAC,   "d",  MATCH_C_SLLI64, MASK_C_SLLI64, match_c_slli64, 0 ),
+    ("c.srli64",   0, ISAC,   "Cs",  MATCH_C_SRLI64, MASK_C_SRLI64, match_c_slli64, 0 ),
+    ("c.srai64",   0, ISAC,   "Cs",  MATCH_C_SRAI64, MASK_C_SRAI64, match_c_slli64, 0 ),
+    ("c.andi",     0, ISAC,   "Cs,Co",  MATCH_C_ANDI, MASK_C_ANDI, match_opcode, 0 ),
+    ("c.addiw",   64, ISAC, "d,Co",  MATCH_C_ADDIW, MASK_C_ADDIW, match_rd_nonzero, 0 ),
+    ("c.addw",    64, ISAC, "Cs,Ct",  MATCH_C_ADDW, MASK_C_ADDW, match_opcode, 0 ),
+    ("c.subw",    64, ISAC, "Cs,Ct",  MATCH_C_SUBW, MASK_C_SUBW, match_opcode, 0 ),
+    ("c.ldsp",    64, ISAC, "d,Cn(Cc)",  MATCH_C_LDSP, MASK_C_LDSP, match_rd_nonzero, INSN_DREF|INSN_8_BYTE ),
+    ("c.ld",      64, ISAC, "Ct,Cl(Cs)",  MATCH_C_LD, MASK_C_LD, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("c.sdsp",    64, ISAC, "CV,CN(Cc)",  MATCH_C_SDSP, MASK_C_SDSP, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("c.sd",      64, ISAC, "Ct,Cl(Cs)",  MATCH_C_SD, MASK_C_SD, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("c.fldsp",    0, ISADC,   "D,Cn(Cc)",  MATCH_C_FLDSP, MASK_C_FLDSP, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("c.fld",      0, ISADC,   "CD,Cl(Cs)",  MATCH_C_FLD, MASK_C_FLD, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("c.fsdsp",    0, ISADC,   "CT,CN(Cc)",  MATCH_C_FSDSP, MASK_C_FSDSP, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("c.fsd",      0, ISADC,   "CD,Cl(Cs)",  MATCH_C_FSD, MASK_C_FSD, match_opcode, INSN_DREF|INSN_8_BYTE ),
+    ("c.flwsp",   32, ISAFC, "D,Cm(Cc)",  MATCH_C_FLWSP, MASK_C_FLWSP, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("c.flw",     32, ISAFC, "CD,Ck(Cs)",  MATCH_C_FLW, MASK_C_FLW, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("c.fswsp",   32, ISAFC, "CT,CM(Cc)",  MATCH_C_FSWSP, MASK_C_FSWSP, match_opcode, INSN_DREF|INSN_4_BYTE ),
+    ("c.fsw",     32, ISAFC, "CD,Ck(Cs)",  MATCH_C_FSW, MASK_C_FSW, match_opcode, INSN_DREF|INSN_4_BYTE ),
+
+#/* Supervisor instructions */
+    ("csrr",       0, ISAI,   "d,E",  MATCH_CSRRS, MASK_CSRRS | MASK_RS1, match_opcode, INSN_ALIAS ),
+    ("csrwi",      0, ISAI,   "E,Z",  MATCH_CSRRWI, MASK_CSRRWI | MASK_RD, match_opcode, INSN_ALIAS ),
+    ("csrsi",      0, ISAI,   "E,Z",  MATCH_CSRRSI, MASK_CSRRSI | MASK_RD, match_opcode, INSN_ALIAS ),
+    ("csrci",      0, ISAI,   "E,Z",  MATCH_CSRRCI, MASK_CSRRCI | MASK_RD, match_opcode, INSN_ALIAS ),
+    ("csrw",       0, ISAI,   "E,s",  MATCH_CSRRW, MASK_CSRRW | MASK_RD, match_opcode, INSN_ALIAS ),
+    ("csrw",       0, ISAI,   "E,Z",  MATCH_CSRRWI, MASK_CSRRWI | MASK_RD, match_opcode, INSN_ALIAS ),
+    ("csrs",       0, ISAI,   "E,s",  MATCH_CSRRS, MASK_CSRRS | MASK_RD, match_opcode, INSN_ALIAS ),
+    ("csrs",       0, ISAI,   "E,Z",  MATCH_CSRRSI, MASK_CSRRSI | MASK_RD, match_opcode, INSN_ALIAS ),
+    ("csrc",       0, ISAI,   "E,s",  MATCH_CSRRC, MASK_CSRRC | MASK_RD, match_opcode, INSN_ALIAS ),
+    ("csrc",       0, ISAI,   "E,Z",  MATCH_CSRRCI, MASK_CSRRCI | MASK_RD, match_opcode, INSN_ALIAS ),
+    ("csrrwi",     0, ISAI,   "d,E,Z",  MATCH_CSRRWI, MASK_CSRRWI, match_opcode, 0 ),
+    ("csrrsi",     0, ISAI,   "d,E,Z",  MATCH_CSRRSI, MASK_CSRRSI, match_opcode, 0 ),
+    ("csrrci",     0, ISAI,   "d,E,Z",  MATCH_CSRRCI, MASK_CSRRCI, match_opcode, 0 ),
+    ("csrrw",      0, ISAI,   "d,E,s",  MATCH_CSRRW, MASK_CSRRW, match_opcode, 0 ),
+    ("csrrw",      0, ISAI,   "d,E,Z",  MATCH_CSRRWI, MASK_CSRRWI, match_opcode, INSN_ALIAS ),
+    ("csrrs",      0, ISAI,   "d,E,s",  MATCH_CSRRS, MASK_CSRRS, match_opcode, 0 ),
+    ("csrrs",      0, ISAI,   "d,E,Z",  MATCH_CSRRSI, MASK_CSRRSI, match_opcode, INSN_ALIAS ),
+    ("csrrc",      0, ISAI,   "d,E,s",  MATCH_CSRRC, MASK_CSRRC, match_opcode, 0 ),
+    ("csrrc",      0, ISAI,   "d,E,Z",  MATCH_CSRRCI, MASK_CSRRCI, match_opcode, INSN_ALIAS ),
+    ("uret",       0, ISAI,   "",     MATCH_URET, MASK_URET, match_opcode, 0 ),
+    ("sret",       0, ISAI,   "",     MATCH_SRET, MASK_SRET, match_opcode, 0 ),
+    ("hret",       0, ISAI,   "",     MATCH_HRET, MASK_HRET, match_opcode, 0 ),
+    ("mret",       0, ISAI,   "",     MATCH_MRET, MASK_MRET, match_opcode, 0 ),
+    ("dret",       0, ISAI,   "",     MATCH_DRET, MASK_DRET, match_opcode, 0 ),
+    ("sfence.vm",  0, ISAI,   "",     MATCH_SFENCE_VM, MASK_SFENCE_VM | MASK_RS1, match_opcode, 0 ),
+    ("sfence.vm",  0, ISAI,   "s",    MATCH_SFENCE_VM, MASK_SFENCE_VM, match_opcode, 0 ),
+    ("sfence.vma", 0, ISAI,   "",     MATCH_SFENCE_VMA, MASK_SFENCE_VMA | MASK_RS1 | MASK_RS2, match_opcode, INSN_ALIAS ),
+    ("sfence.vma", 0, ISAI,   "s",    MATCH_SFENCE_VMA, MASK_SFENCE_VMA | MASK_RS2, match_opcode, INSN_ALIAS ),
+    ("sfence.vma", 0, ISAI,   "s,t",  MATCH_SFENCE_VMA, MASK_SFENCE_VMA, match_opcode, 0 ),
+    ("wfi",        0, ISAI,   "",     MATCH_WFI, MASK_WFI, match_opcode, 0 )]
+
+
+
+# expanded
+# 16  xxxxxxxxxxxxxxaa != 11
+# 32  xxxxxxxxxxxbbb11 != 111
+# 48  xxxxxxxxxx011111
+# 64  xxxxxxxxx0111111
+# 80  xnnnxxxxx1111111 != 111
+# 192 x111xxxxx1111111
+
+# print("immI: op2031 is op2031 { local tmp:4 = op2031; export tmp; }")
+# print("immS: imm is op0711 & op2531 [ imm = (op2531 << 5) | op0711; ] { local tmp:4 = zext(imm); export tmp; }")
+# print("immSB: imm is op0707 & op0811 & op2530 & op3131 [ imm = (op3131 << 12) | (op2530 << 5) | (op0811 << 1) | (op0707 << 11); ] { local tmp:4 = zext(imm); export tmp; }")
+# print("immU: imm is op1231 [ imm = (op1231 << 12); ] { local tmp:4 = zext(imm); export tmp; }")
+# print("immUJ: imm is op1219 & op2020 & op2130 & op3131 [ imm = (op3131 << 20) | (op2130 << 1) | (op2020 << 11) | (op1219 << 12); ] { local tmp:4 = zext(imm); export tmp; }")
+
+# print("shamt5: op2024 is op2024 { local tmp:4 = op2024; export tmp; }")
+# print("shamt6: imm is op2024 & op2525 [ imm = (op2525 << 5) | op2024; ] { local tmp:4 = imm; export tmp; }")
+
+# print("fmt: \".s\" is op2526=0 {}")
+# print("fmt: \".d\" is op2526=1 {}")
+# print("fmt: \".h\" is op2526=2 {}")
+# print("fmt: \".q\" is op2526=3 {}")
+
+
+
+def parse_operand(op):
+    dis = op.operands
+    is16 = op.match & 3 != 3
+    x = 0
+    out = ""
+    cons=[]
+    while x < len(dis):
+        if dis[x] == 'C':
+            x += 1
+            if dis[x] == 'a':
+                out += "cjimm"
+                cons.append("cjimm")
+            elif dis[x] == 'c':
+                out += "sp"
+                cons.append("cop0711=2")
+                cons.append("sp")
+            elif dis[x] == 'i':
+                out += "csimm3"
+                cons.append("csimm3")
+            elif dis[x] == 'o' or dis[x] == 'j':
+                out += "cimmI"
+                cons.append("cimmI")
+            elif dis[x] == 'k':
+                out += "clwimm"
+                cons.append("clwimm")
+            elif dis[x] == 'l':
+                out += "cldimm"
+                cons.append("cldimm")
+            elif dis[x] == 'm':
+                out += "clwspimm"
+                cons.append("clwspimm")
+            elif dis[x] == 'n':
+                out += "cldspimm"
+                cons.append("cldspimm")
+            elif dis[x] == 'p':
+                out += "cbimm"
+                cons.append("cbimm")
+            elif dis[x] == 's':
+                out += "cr0709s"
+                cons.append("cr0709s")
+            elif dis[x] == 't':
+                out += "cr0204s"
+                cons.append("cr0204s")
+            elif dis[x] == 'w':
+                out += "cd0709s"
+                cons.append("cd0709s")
+            elif dis[x] == 'x':
+                out += "cr0204s"
+                cons.append("cr0204s")
+            elif dis[x] == 'u' or dis[x] == 'v':
+                out += "cbigimm"
+                cons.append("cbigimm")
+            elif dis[x] == 'z':
+                out += "zero"
+                cons.append("cop0206=0")
+                cons.append("zero")
+            elif dis[x] == 'U':
+                out += "cr0711"
+                cons.append("cr0711")
+            elif dis[x] == 'V':
+                out += "cr0206"
+                cons.append("cr0206")
+            elif dis[x] == 'K':
+                out += "caddi4spnimm"
+                cons.append("caddi4spnimm")
+            elif dis[x] == 'L':
+                out += "caddi16spimm"
+                cons.append("caddi16spimm")
+            elif dis[x] == 'M':
+                out += "cswspimm"
+                cons.append("cswspimm")
+            elif dis[x] == 'N':
+                out += "csdspimm"
+                cons.append("csdspimm")
+            elif dis[x] == '>':
+                out += "c6imm"
+                cons.append("c6imm")
+            elif dis[x] == '<':
+                out += "c5imm"
+                cons.append("c5imm")
+            elif dis[x] == 'T':
+                out += "cfr0206"
+                cons.append("cfr0206")
+            elif dis[x] == 'D':
+                out += "cfr0204s"
+                cons.append("cfr0204s")
+            else:
+                print("BAD C case %c" % (dis[x]))
+                print(op)
+                exit(1)
+        elif dis[x] in [',', '(', ')', '[', ']']:
+            out += dis[x]
+        elif dis[x] == '0':
+            if x+1 == len(dis):
+                out += "0"
+        elif dis[x] == 'b' or dis[x] == 's':
+            if is16:
+                out += "cr1519"
+                cons.append("cr1519")
+            else:
+                out += "r1519"
+                cons.append("r1519")
+        elif dis[x] == 't':
+            if is16:
+                out += "cr2024"
+                cons.append("cr2024")
+            else:
+                out += "r2024"
+                cons.append("r2024")
+        elif dis[x] == 'u':
+            out += "immU"
+            cons.append("immU")
+        elif dis[x] == 'm':
+            out += "frm"
+            cons.append("frm")
+        elif dis[x] == 'P':
+            out += "pred"
+            cons.append("pred")
+        elif dis[x] == 'Q':
+            out += "succ"
+            cons.append("succ")
+        elif dis[x] == 'o':
+            out += "immI"
+            cons.append("immI")
+        elif dis[x] == 'j':
+            out += "immI"
+            cons.append("immI")
+        elif dis[x] == 'q':
+            out += "immS"
+            cons.append("immS")
+        elif dis[x] == 'a':
+            out += "immUJ"
+            cons.append("immUJ")
+        elif dis[x] == 'p':
+            out += "immSB"
+            cons.append("immSB")
+        elif dis[x] == 'd':
+            if is16:
+                out += "cd0711"
+                cons.append("cd0711")
+            else:
+                out += "r0711"
+                cons.append("r0711")
+        elif dis[x] == 'z':
+            out += "zero"
+            cons.append("zero")
+        elif dis[x] == '>':
+            out += "shamt6"
+            cons.append("shamt6")
+        elif dis[x] == '<':
+            out += "shamt5"
+            cons.append("shamt5")
+        elif dis[x] == 'S' or dis[x] == 'U':
+            if is16:
+                out += "cfr1519"
+                cons.append("cfr1519")
+            else:
+                out += "fr1519"
+                cons.append("fr1519")
+        elif dis[x] == 'T':
+            if is16:
+                out += "cfr2024"
+                cons.append("cfr2024")
+            else:
+                out += "fr2024"
+                cons.append("fr2024")
+        elif dis[x] == 'D':
+            if is16:
+                out += "cfr0711"
+                cons.append("cfr0711")
+            else:
+                out += "fr0711"
+                cons.append("fr0711")
+        elif dis[x] == 'R':
+            if is16:
+                out += "cfr2731"
+                cons.append("cfr2731")
+            else:
+                out += "fr2731"
+                cons.append("fr2731")
+        elif dis[x] == 'E':
+            out += "csr"
+            cons.append("csr")
+        elif dis[x] == 'Z':
+            if is16:
+                out += "cr1519"
+                cons.append("cr1519")
+            else:
+                out += "r1519"
+                cons.append("r1519")
+        else:
+            print("BAD top case %c" % (dis[x]))
+            print(op)
+            exit(1)
+        x += 1
+    # print("DISPLAY: %s" % out)
+    return (out, cons)
+
+def parse_r(op):
+    funct3 = (op.match >> 12) & ((1<<3) - 1)
+    funct7 = (op.match >> 25) & ((1<<7) - 1)
+    op.bitpattern.append("funct3=0x%x" % funct3)
+    op.bitpattern.append("funct7=0x%x" % funct7)
+    return
+
+def parse_i(op):
+    funct3 = (op.match >> 12) & ((1<<3) - 1)
+    op.bitpattern.append("funct3=0x%x" % funct3)
+    return
+
+def parse_s(op):
+    funct3 = (op.match >> 12) & ((1<<3) - 1)
+    op.bitpattern.append("funct3=0x%x" % funct3)
+    return
+
+def parse_u(op):
+    return
+
+def parse_b(op):
+    funct3 = (op.match >> 12) & ((1<<3) - 1)
+    op.bitpattern.append("funct3=0x%x" % funct3)
+    return
+
+def parse_j(op):
+    return
+
+def parse_misc_mem(op):
+    fm = (op.match >> 28) & ((1<<4) - 1)
+    funct3 = (op.match >> 12) & ((1<<3) - 1)
+    op.bitpattern.append("funct3=0x%x" % funct3)
+    op.bitpattern.append("fm=0x%x" % fm)
+    return
+
+
+def parse_CR(op, rv):
+    return
+
+def parse_CI(op, rv):
+    x = (op.match >> 13) & 7
+    if op.bitpattern.count("clwspimm") == 1:
+        op.bitpattern.remove("clwspimm")
+        if x == 2 or (x == 3 and rv == 32):
+            op.display = op.display.replace("clwspimm", "clwspimm54276")
+            op.bitpattern.append("clwspimm54276")
+        elif x == 1 and rv == 128:
+            op.display = op.display.replace("clwspimm", "clwspimm5496")
+            op.bitpattern.append("clwspimm5496")
+        elif (x == 1 and (rv == 32 or rv == 64)) or (x == 3 and (rv == 64 or rv == 128)):
+            op.display = op.display.replace("clwspimm", "clwspimm54386")
+            op.bitpattern.append("clwspimm54386")
+    if op.bitpattern.count("cldspimm") == 1:
+        op.bitpattern.remove("cldspimm")
+        if x == 2 or (x == 3 and rv == 32):
+            op.display = op.display.replace("cldspimm", "cldspimm54276")
+            op.bitpattern.append("cldspimm54276")
+        elif x == 1 and rv == 128:
+            op.display = op.display.replace("cldspimm", "cldspimm5496")
+            op.bitpattern.append("cldspimm5496")
+        elif (x == 1 and (rv == 32 or rv == 64)) or (x == 3 and (rv == 64 or rv == 128)):
+            op.display = op.display.replace("cldspimm", "cldspimm54386")
+            op.bitpattern.append("cldspimm54386")
+    return
+
+def parse_CSS(op, rv):
+    x = (op.match >> 13) & 7
+    if op.bitpattern.count("cswspimm") == 1:
+        op.bitpattern.remove("cswspimm")
+        if (x == 5 and (rv == 32 or rv == 64)) or (x == 7 and (rv == 128 or rv == 64)):
+            op.display = op.display.replace("cswspimm", "cswspimm5386")
+            op.bitpattern.append("cswspimm5386")
+        elif (x == 5 and rv == 128):
+            op.display = op.display.replace("cswspimm", "cswspimm5496")
+            op.bitpattern.append("cswspimm5496")
+        elif (x == 7 and rv == 32) or (x == 6):
+            op.display = op.display.replace("cswspimm", "cswspimm5276")
+            op.bitpattern.append("cswspimm5276")
+    if op.bitpattern.count("csdspimm") == 1:
+        op.bitpattern.remove("csdspimm")
+        if (x == 5 and (rv == 32 or rv == 64)) or (x == 7 and (rv == 128 or rv == 64)):
+            op.display = op.display.replace("csdspimm", "csdspimm5386")
+            op.bitpattern.append("csdspimm5386")
+        elif (x == 5 and rv == 128):
+            op.display = op.display.replace("csdspimm", "csdspimm5496")
+            op.bitpattern.append("csdspimm5496")
+        elif (x == 7 and rv == 32) or (x == 6):
+            op.display = op.display.replace("csdspimm", "csdspimm5276")
+            op.bitpattern.append("csdspimm5276")
+    return
+
+def parse_CIW(op, rv):
+    return
+
+def parse_CL(op, rv):
+    x = (op.match >> 13) & 7
+    if op.bitpattern.count("cldspimm") == 1:
+        op.bitpattern.remove("cldspimm")
+        if x == 2 or (x == 3 and rv == 32):
+            op.display = op.display.replace("cldspimm", "cldspimm54276")
+            op.bitpattern.append("cldspimm54276")
+        elif x == 1 and rv == 128:
+            op.display = op.display.replace("cldspimm", "cldspimm5496")
+            op.bitpattern.append("cldspimm5496")
+        elif (x == 1 and (rv == 32 or rv == 64)) or (x == 3 and (rv == 64 or rv == 128)):
+            op.display = op.display.replace("cldspimm", "cldspimm54386")
+            op.bitpattern.append("cldspimm54386")
+    if op.bitpattern.count("clwspimm") == 1:
+        op.bitpattern.remove("clwspimm")
+        if x == 2 or (x == 3 and rv == 32):
+            op.display = op.display.replace("clwspimm", "clwspimm54276")
+            op.bitpattern.append("clwspimm54276")
+        elif x == 1 and rv == 128:
+            op.display = op.display.replace("clwspimm", "clwspimm5496")
+            op.bitpattern.append("clwspimm5496")
+        elif (x == 1 and (rv == 32 or rv == 64)) or (x == 3 and (rv == 64 or rv == 128)):
+            op.display = op.display.replace("clwspimm", "clwspimm54386")
+            op.bitpattern.append("clwspimm54386")
+    if op.bitpattern.count("cldimm") == 1:
+        op.bitpattern.remove("cldimm")
+        if None == rv:
+            op.display = op.display.replace("cldimm", "cldimm5326")
+            op.bitpattern.append("cldimm5326")
+        elif 32 == rv and (x == 3 or x == 7):
+            op.display = op.display.replace("cldimm", "cldimm5326")
+            op.bitpattern.append("cldimm5326")
+        elif (32 == rv or 64 == rv) and (x == 1 or x == 5):
+            op.display = op.display.replace("cldimm", "cldimm5376")
+            op.bitpattern.append("cldimm5376")
+        elif (128 == rv or 64 == rv) and (x == 3 or x == 7):
+            op.display = op.display.replace("cldimm", "cldimm5376")
+            op.bitpattern.append("cldimm5376")
+        elif 128 == rv and (x == 1 or x == 7):
+            op.display = op.display.replace("cldimm", "cldimm54876")
+            op.bitpattern.append("cldimm54876")
+        else:
+            print("BAD CL rv %r" % (rv))
+            exit(1)
+    if op.bitpattern.count("clwimm") == 1:
+        op.bitpattern.remove("clwimm")
+        if None == rv:
+            op.display = op.display.replace("clwimm", "clwimm5326")
+            op.bitpattern.append("clwimm5326")
+        elif 32 == rv and (x == 3 or x == 7):
+            op.display = op.display.replace("clwimm", "clwimm5326")
+            op.bitpattern.append("clwimm5326")
+        elif (32 == rv or 64 == rv) and (x == 1 or x == 5):
+            op.display = op.display.replace("clwimm", "clwimm5376")
+            op.bitpattern.append("clwimm5376")
+        elif (128 == rv or 64 == rv) and (x == 3 or x == 7):
+            op.display = op.display.replace("clwimm", "clwimm5376")
+            op.bitpattern.append("clwimm5376")
+        elif 128 == rv and (x == 1 or x == 7):
+            op.display = op.display.replace("clwimm", "clwimm54876")
+            op.bitpattern.append("clwimm54876")
+        else:
+            print("BAD CL rv %r" % (rv))
+            exit(1)
+    return
+
+def parse_CS(op, rv):
+    x = (op.match >> 13) & 7
+    if op.bitpattern.count("clwimm") == 1:
+        op.bitpattern.remove("clwimm")
+        if None == rv:
+            op.display = op.display.replace("clwimm", "clwimm5326")
+            op.bitpattern.append("clwimm5326")
+        elif 32 == rv and (x == 3 or x == 7):
+            op.display = op.display.replace("clwimm", "clwimm5326")
+            op.bitpattern.append("clwimm5326")
+        elif (32 == rv or 64 == rv) and (x == 1 or x == 5):
+            op.display = op.display.replace("clwimm", "clwimm5376")
+            op.bitpattern.append("clwimm5376")
+        elif (128 == rv or 64 == rv) and (x == 3 or x == 7):
+            op.display = op.display.replace("clwimm", "clwimm5376")
+            op.bitpattern.append("clwimm5376")
+        elif 128 == rv and (x == 1 or x == 7):
+            op.display = op.display.replace("clwimm", "clwimm54876")
+            op.bitpattern.append("clwimm54876")
+        else:
+            print("BAD CL rv %r" % (rv))
+            exit(1)
+    if op.bitpattern.count("cldimm") == 1:
+        op.bitpattern.remove("cldimm")
+        if None == rv:
+            op.display = op.display.replace("cldimm", "cldimm5326")
+            op.bitpattern.append("cldimm5326")
+        elif 32 == rv and (x == 3 or x == 7):
+            op.display = op.display.replace("cldimm", "cldimm5326")
+            op.bitpattern.append("cldimm5326")
+        elif (32 == rv or 64 == rv) and (x == 1 or x == 5):
+            op.display = op.display.replace("cldimm", "cldimm5376")
+            op.bitpattern.append("cldimm5376")
+        elif (128 == rv or 64 == rv) and (x == 3 or x == 7):
+            op.display = op.display.replace("cldimm", "cldimm5376")
+            op.bitpattern.append("cldimm5376")
+        elif 128 == rv and (x == 1 or x == 7):
+            op.display = op.display.replace("cldimm", "cldimm54876")
+            op.bitpattern.append("cldimm54876")
+        else:
+            print("BAD CL rv %r" % (rv))
+            exit(1)
+    return
+
+def parse_CA(op, rv):
+    return
+
+def parse_CB(op, rv):
+    return
+
+def parse_CJ(op, rv):
+    return
+
+
+def opcode_map_c(op):
+    '''
+    CR   |funct4 | cr0711 | cr0206 | op |
+    CI   |funct3 | cop1212 | cr0711 | cop0206 | op |
+    CSS  |funct3 | cop0712 | cr0206 | op |
+    CIW  |funct3 | cop0512 | cr0204s | op |
+    CL   |funct3 | cop1012 | cs0709s | cop0506 | cr0204s | op |
+    CS   |funct3 | cop1012 | cr0709s | cop0506 | cr0204s | op |
+    CA   |funct6 | cr0709s | funct2 | cr0204s | op |
+    CB   |funct3 | off1012 | cr0709s | off0206 | op |
+    CJ   |funct3 | target | op |
+    '''
+    x = (op.match >> 13) & 7
+    y = op.match & 3
+    op.bitpattern.append("cop0001=0x%x" % y)
+    op.bitpattern.append("cop1315=0x%x" % x)
+    # print("CMAP: RV32, RV64, RV128")
+    if x == 0 and y == 0:
+        # ADDI4SPN
+        parse_CIW(op, None)
+    elif x == 0 and y == 1:
+        # ADDI
+        parse_CI(op, None)
+    elif x == 0 and y == 2:
+        # SLLI
+        parse_CI(op, None)
+    elif x == 1 and y == 0:
+        # FLD FLD LQ
+        # print("CMAP: FLD FLD LQ")
+        if op.name.find("fld") >= 0:
+            print("#TODO  32 64")
+            parse_CL(op, 32)
+            parse_CL(op, 64)
+        elif op.name.find("lq") >= 0: parse_CL(op, 128)
+        else:
+            print("CMAP -- %s" % (op.name))
+            print(op)
+            exit(1)
+        pass
+    elif x == 1 and y == 1:
+        # JAL ADDIW ADDIW
+        # print("CMAP: JAL ADDIW ADDIW")
+        if op.name.find("jal") >= 0: parse_CJ(op, 32)
+        elif op.name.find("addiw") >= 0:
+            print("#TODO  32 64")
+            parse_CI(op, 64)
+            parse_CI(op, 128)
+        elif op.name == "sext.w":
+            print("#TODO  %s %s" % (op.display, ' & '.join(op.bitpattern)))
+            pass
+        elif op.name == "addw":
+            print("#TODO  %s %s" % (op.display, ' & '.join(op.bitpattern)))
+            pass
+        else:
+            print("CMAP -- %s" % (op.name))
+            print(op)
+            exit(1)
+        pass
+    elif x == 1 and y == 2:
+        # LW LI LWSP
+        # print("CMAP: FLDSP FLDSP LQSP")
+        if op.name.find("fldsp") >= 0:
+            print("#TODO  32 64")
+            parse_CI(op, 32)
+            parse_CI(op, 64)
+        elif op.name.find("lqsp") >= 0: parse_CI(op, 128)
+        elif op.name == "fld":
+            print("#TODO  %s %s" % (op.display, ' & '.join(op.bitpattern)))
+            pass
+        else:
+            print("CMAP -- %s" % (op.name))
+            print(op)
+            exit(1)
+        pass
+    elif x == 2 and y == 0:
+        # FW
+        parse_CL(op, None)
+    elif x == 2 and y == 1:
+        # LI
+        # print("CMAP: LI")
+        if op.name.find("li") >= 0: parse_CI(op, None)
+        else:
+            print("CMAP -- %s" % (op.name))
+            print(op)
+            exit(1)
+        pass
+    elif x == 2 and y == 2:
+        # LWSP
+        parse_CI(op, None)
+    elif x == 3 and y == 0:
+        # FLW LD LD
+        # print("CMAP: FLW LD LD")
+        if op.name.find("flw") >= 0: parse_CL(op, 32)
+        elif op.name.find("ld") >= 0:
+            print("#TODO  64 128")
+            parse_CL(op, 64)
+            parse_CL(op, 128)
+        else:
+            print("CMAP -- %s" % (op.name))
+            print(op)
+            exit(1)
+        pass
+    elif x == 3 and y == 1:
+        # LUI ADDI16SP
+        # print("CMAP: LUI ADDI16SP")
+        if op.name.find("lui") >= 0: parse_CI(op, None)
+        elif op.name.find("addi16sp") >= 0: parse_CJ(op, None)
+        elif op.name == "li":
+            print("#TODO  %s %s" % (op.display, ' & '.join(op.bitpattern)))
+            pass
+        elif op.name == "addi":
+            print("#TODO  %s %s" % (op.display, ' & '.join(op.bitpattern)))
+            pass
+        elif op.name == "add":
+            print("#TODO  %s %s" % (op.display, ' & '.join(op.bitpattern)))
+            pass
+        else:
+            print("CMAP -- %s" % (op.name))
+            print(op)
+            exit(1)
+        pass
+    elif x == 3 and y == 2:
+        # FLWSP LDSP LDSP
+        # print("CMAP: FLWSP LDSP LDSP")
+        if op.name.find("flwsp") >= 0: parse_CI(op, 32)
+        elif op.name.find("ldsp") >= 0:
+            print("#TODO  64 128")
+            parse_CI(op, 64)
+            parse_CI(op, 128)
+        elif op.name == "ld":
+            print("#TODO  %s %s" % (op.display, ' & '.join(op.bitpattern)))
+            pass
+        elif op.name == "flw":
+            print("#TODO  %s %s" % (op.display, ' & '.join(op.bitpattern)))
+            pass
+        else:
+            print("CMAP -- %s" % (op.name))
+            print(op)
+            exit(1)
+        pass
+    elif x == 4 and y == 0:
+        # RESERVED
+        # print("CMAP: RESERVED C 3 0")
+        print("#TODO  %s %s" % (op.display, ' & '.join(op.bitpattern)))
+        pass
+    elif x == 4 and y == 1:
+        # MISC-ALU
+        # print("CMAP: MISC-ALU")
+        if (op.match >> 10) & 3 == 3:
+            parse_CA(op, None)
+        else:
+            parse_CB(op, None)
+        pass
+    elif x == 4 and y == 2:
+        # JR JALR MV ADD
+        # print("CMAP: JR JALR MV ADD")
+        if op.name.find("jr") >= 0: parse_CI(op, None)
+        elif op.name.find("jalr") >= 0: parse_CI(op, None)
+        elif op.name.find("mv") >= 0: parse_CR(op, None)
+        elif op.name.find("add") >= 0: parse_CR(op, None)
+        elif op.name == "ebreak": parse_CJ(op, None)
+        elif op.name == "c.ebreak":
+            print("#TODO  %s %s" % (op.display, ' & '.join(op.bitpattern)))
+            pass
+        elif op.name == "ret":
+            print("#TODO  %s %s" % (op.display, ' & '.join(op.bitpattern)))
+            pass
+        elif op.name == "move":
+            print("#TODO  %s %s" % (op.display, ' & '.join(op.bitpattern)))
+            pass
+        else:
+            print("CMAP -- %s" % (op.name))
+            print(op)
+            exit(1)
+        pass
+    elif x == 5 and y == 0:
+        # FSD FSD SQ
+        # print("CMAP: FSD FSD SQ")
+        if op.name.find("fsd") >= 0:
+            print("#TODO  32 64")
+            parse_CS(op, 32)
+            parse_CS(op, 64)
+        elif op.name.find("sq") >= 0: parse_CS(op, 128)
+        else:
+            print("CMAP -- %s" % (op.name))
+            print(op)
+            exit(1)
+        pass
+    elif x == 5 and y == 1:
+        # J
+        # print("CMAP: J")
+        if op.name.find("j") >= 0: parse_CJ(op, None)
+        else:
+            print("CMAP -- %s" % (op.name))
+            print(op)
+            exit(1)
+        pass
+    elif x == 5 and y == 2:
+        # FSDSP FSDSP SQSP
+        # print("CMAP: FSDSP FSDSP SQSP")
+        if op.name.find("fsdsp") >= 0:
+            print("#TODO  32 64")
+            parse_CSS(op, 32)
+            parse_CSS(op, 64)
+        elif op.name.find("sqsp") >= 0: parse_CSS(op, 128)
+        elif op.name == "fsd":
+            print("#TODO  %s %s" % (op.display, ' & '.join(op.bitpattern)))
+            pass
+        else:
+            print("CMAP -- %s" % (op.name))
+            print(op)
+            exit(1)
+        pass
+    elif x == 6 and y == 0:
+        # SW
+        # print("CMAP: SW")
+        if op.name.find("sw") >= 0: parse_CS(op, None)
+        else:
+            print("CMAP -- %s" % (op.name))
+            print(op)
+            exit(1)
+        pass
+    elif x == 6 and y == 1:
+        # BEQZ
+        parse_CB(op, None)
+    elif x == 6 and y == 2:
+        # SWSP
+        parse_CSS(op, None)
+    elif x == 7 and y == 0:
+        # FSW SD SD
+        # print("CMAP: FSW SD SD")
+        if op.name.find("fsw") >= 0: parse_CS(op, 32)
+        elif op.name.find("sd") >= 0:
+            print("#TODO  64 128")
+            parse_CS(op, 64)
+            parse_CS(op, 128)
+        else:
+            print("CMAP -- %s" % (op.name))
+            print(op)
+            exit(1)
+        pass
+    elif x == 7 and y == 1:
+        # BNEZ
+        parse_CB(op, None)
+    elif x == 7 and y == 2:
+        # 
+        # print("CMAP: FSWSP SDSP SDSP")
+        if op.name.find("fswsp") >= 0: parse_CSS(op, 32)
+        elif op.name.find("sdsp") >= 0:
+            print("#TODO  64 128")
+            parse_CSS(op, 64)
+            parse_CSS(op, 128)
+        elif op.name == "sd":
+            print("#TODO  %s %s" % (op.display, ' & '.join(op.bitpattern)))
+            pass
+        elif op.name == "fsw":
+            print("#TODO  %s %s" % (op.display, ' & '.join(op.bitpattern)))
+            pass
+        else:
+            print("CMAP -- %s" % (op.name))
+            print(op)
+            exit(1)
+        pass
+    else:
+        print("CBAD X %x Y %x" % (x, y))
+        print(op)
+        exit(1)
+
+
+def opcode_map(op):
+    x = (op.match >> 2) & 7
+    y = (op.match >> 5) & 3
+    op.bitpattern.append("op0001=0x3")
+    op.bitpattern.append("op0204=0x%x" % x)
+    op.bitpattern.append("op0506=0x%x" % y)
+    if x == 0:
+        if y == 0:
+            # LOAD
+            # print("MAP: LOAD")
+            parse_i(op)
+            pass
+        elif y == 1:
+            # STORE
+            # print("MAP: STORE")
+            parse_s(op)
+            pass
+        elif y == 2:
+            # MADD
+            # print("MAP: MADD")
+            parse_r(op)
+            pass
+        elif y == 3:
+            # BRANCH
+            # print("MAP: BRANCH")
+            parse_b(op)
+            pass
+        else:
+            print("BAD Y %x X %x" % (y,x))
+            print(op)
+            exit(1)
+    elif x == 1:
+        if y == 0:
+            # LOAD-FP
+            # print("MAP: LOAD-FP")
+            parse_i(op)
+            pass
+        elif y == 1:
+            # STORE-FP
+            # print("MAP: STORE-FP")
+            parse_s(op)
+            pass
+        elif y == 2:
+            # MSUB
+            # print("MAP: MSUB")
+            parse_r(op)
+            pass
+        elif y == 3:
+            # JALR
+            # print("MAP: JALR")
+            parse_i(op)
+            pass
+        else:
+            print("BAD Y %x X %x" % (y,x))
+            print(op)
+            exit(1)
+    elif x == 2:
+        if y == 0:
+            # CUSTOM0
+            print("MAP: CUSTOM0")
+            pass
+        elif y == 1:
+            # CUSTOM1
+            print("MAP: CUSTOM1")
+            pass
+        elif y == 2:
+            # NMSUB
+            # print("MAP: NMSUB")
+            parse_r(op)
+            pass
+        elif y == 3:
+            # RESERVED
+            print("MAP: RESERVED 2 3")
+            pass
+        else:
+            print("BAD Y %x X %x" % (y,x))
+            print(op)
+            exit(1)
+    elif x == 3:
+        if y == 0:
+            # MISC-MEM
+            # print("MAP: MISC-MEM")
+            parse_misc_mem(op)
+            pass
+        elif y == 1:
+            # AMO
+            # print("MAP: AMO")
+            parse_r(op)
+            pass
+        elif y == 2:
+            # NMADD
+            # print("MAP: NMADD")
+            parse_r(op)
+            pass
+        elif y == 3:
+            # JAL
+            # print("MAP: JAL")
+            parse_j(op)
+            pass
+        else:
+            print("BAD Y %x X %x" % (y,x))
+            print(op)
+            exit(1)
+    elif x == 4:
+        if y == 0:
+            # OP-IMM
+            # print("MAP: OP-IMM")
+            parse_i(op)
+        elif y == 1:
+            # OP
+            # print("MAP: OP")
+            parse_r(op)
+            pass
+        elif y == 2:
+            # OP-FP
+            # print("MAP: OP-FP")
+            parse_r(op)
+            pass
+        elif y == 3:
+            # SYSTEM
+            # print("MAP: SYSTEM")
+            parse_i(op)
+            pass
+        else:
+            print("BAD Y %x X %x" % (y,x))
+            print(op)
+            exit(1)
+    elif x == 5:
+        if y == 0:
+            # AUIPC
+            # print("MAP: AUIPC")
+            parse_u(op)
+            pass
+        elif y == 1:
+            # LUI
+            # print("MAP: LUI")
+            parse_u(op)
+            pass
+        elif y == 2:
+            # RESERVED
+            print("MAP: RESERVED 5 2")
+            pass
+        elif y == 3:
+            # RESERVED
+            print("MAP: RESERVED 5 3")
+            pass
+        else:
+            print("BAD Y %x X %x" % (y,x))
+            print(op)
+            exit(1)
+    elif x == 6:
+        if y == 0:
+            # OP-IMM-32
+            # print("MAP: OP-IMM-32")
+            parse_i(op)
+            pass
+        elif y == 1:
+            # OP-32
+            # print("MAP: OP-32")
+            parse_r(op)
+            pass
+        elif y == 2:
+            # CUSTOM2
+            print("MAP: CUSTOM2")
+            pass
+        elif y == 3:
+            # CUSTOM3
+            print("MAP: CUSTOM3")
+            pass
+        else:
+            print("BAD Y %x X %x" % (y,x))
+            print(op)
+            exit(1)
+    else:
+        print("BAD X %x" % (x))
+        print(op)
+        exit(1)
+
+
+
+def find_gaps(op):
+    """Account for all the bits in the pattern
+    dummy style just added as they got added"""
+    gap = {
+        'op0001': (0,1),
+        'op0204': (2,4),
+        'op0506': (5,6),
+        'op0707': (7,7),
+        'op0711': (7,11),
+        'r0711': (7,11),
+        'fr0711': (7,11),
+        'op0811': (8,11),
+        'op1214': (12,14),
+        'funct3': (12,14),
+        'op1219': (12,19),
+        'op1231': (12,31),
+        'sop1231': (12,31),
+        'r1519': (15,19),
+        'fr1519': (15,19),
+        'fd1519': (15,19),
+        'op1527': (15,27),
+        'op1531': (15,31),
+        'op2020': (20,20),
+        'succ': (20,23),
+        'op2024': (20,24),
+        'r2024': (20,24),
+        'fr2024': (20,24),
+        'op2031': (20,31),
+        'sop2031': (20,31),
+        'op2130': (21,30),
+        'pred': (24,27),
+        'op2525': (25,25),
+        'op2526': (25,26),
+        'op2530': (25,30),
+        'op2531': (25,31),
+        'sop2531': (25,31),
+        'op2631': (26,31),
+        'funct7': (25,31),
+        'op2731': (27,31),
+        'r2731': (27,31),
+        'fr2731': (27,31),
+        'fm': (28,31),
+        'sop3131': (31,31),
+        'cop0001': (0,1),
+        'cop0202': (2,2),
+        'cop0203': (2,3),
+        'cop0204': (2,4),
+        'cr0204s': (2,4),
+        'cfr0204s': (2,4),
+        'cop0205': (2,5),
+        'cop0206': (2,6),
+        'cr0206': (2,6),
+        'cfr0206': (2,6),
+        'cop0212': (2,12),
+        'cop0304': (3,4),
+        'cop0305': (3,5),
+        'cop0406': (4,6),
+        'cop0505': (5,5),
+        'cop0506': (5,6),
+        'cop0512': (5,12),
+        'cop0606': (6,6),
+        'cop0707': (7,7),
+        'cop0708': (7,8),
+        'cop0709': (7,9),
+        'cr0709s': (7,9),
+        'cd0709s': (7,9),
+        'cfr0709s': (7,9),
+        'cop0710': (7,10),
+        'cop0711': (7,11),
+        'cr0711': (7,11),
+        'cd0711': (7,11),
+        'cfr0711': (7,11),
+        'cop0712': (7,12),
+        'cop0808': (8,8),
+        'cop0910': (9,10),
+        'cop0912': (9,12),
+        'cop1010': (10,10),
+        'cop1011': (10,11),
+        'cop1012': (10,12),
+        'cop1111': (11,11),
+        'cop1112': (11,12),
+        'cop1212': (12,12),
+        'scop1212': (12,12),
+        'cop1315': (13,15),
+        'immI': "sop2031",
+        'immS': "op0711 & sop2531",
+        'immSB': "op0707 & op0811 & op2530 & sop3131",
+        'immU': "sop1231",
+        'immUJ': "op1219 & op2020 & op2130 & sop3131",
+        'shamt5': "op2024",
+        'shamt6': "op2024 & op2525",
+        'frm': "op1214=0",
+        'frm': "op1214=1",
+        'frm': "op1214=2",
+        'frm': "op1214=3",
+        'frm': "op1214=4",
+        'frm': "op1214=7",
+        'fmt': "op2526=0",
+        'fmt': "op2526=1",
+        'fmt': "op2526=2",
+        'fmt': "op2526=3",
+        'csr1': "op2031",
+        'csr2': "op2031",
+        'csr4': "op2031",
+        'csr8': "op2031",
+        'csr': "op2031",
+        'cimmI': "cop1212 & cop0204 & cop0506",
+        'cbimm': "scop1212 & cop1011 & cop0506 & cop0304 & cop0202",
+        'cjimm': "scop1212 & cop1111 & cop0910 & cop0808 & cop0707 & cop0606 & cop0305 & cop0202",
+        'c6imm': "cop1212 & cop0206",
+        'cbigimm': "scop1212 & cop0206",
+        'caddi4spnimm': "cop1112 & cop0710 & cop0606 & cop0505",
+        'caddi16spimm': "scop1212 & cop0606 & cop0505 & cop0304 & cop0202",
+        'cldimm': "cop1012 & cop0506",
+        'cldimm5376': "cop1012 & cop0506",
+        'cldimm54876': "cop1112 & cop1010 & cop0506",
+        'cldimm5326': "cop1012 & cop0606 & cop0505",
+        'clwimm': "cop1012 & cop0506",
+        'clwimm5376': "cop1012 & cop0506",
+        'clwimm54876': "cop1112 & cop1010 & cop0506",
+        'clwimm5326': "cop1012 & cop0606 & cop0505",
+        'cldspimm': "cop1212 & cop0506 & cop0204",
+        'cldspimm54386': "cop1212 & cop0506 & cop0204",
+        'cldspimm5496': "cop1212 & cop0606 & cop0205",
+        'cldspimm54276': "cop1212 & cop0406 & cop0203",
+        'clwspimm': "cop1212 & cop0506 & cop0204",
+        'clwspimm54386': "cop1212 & cop0506 & cop0204",
+        'clwspimm5496': "cop1212 & cop0606 & cop0205",
+        'clwspimm54276': "cop1212 & cop0406 & cop0203",
+        'csdspimm': "cop0709 & cop1012",
+        'csdspimm5386': "cop0709 & cop1012",
+        'csdspimm5496': "cop0710 & cop1112",
+        'csdspimm5276': "cop0708 & cop0912",
+        'cswspimm': "cop0709 & cop1012",
+        'cswspimm5386': "cop0709 & cop1012",
+        'cswspimm5496': "cop0710 & cop1112",
+        'cswspimm5276': "cop0708 & cop0912",
+        'sp': None,
+        'zero': None
+    }
+    pattern = 0x0
+    for x in op.bitpattern:
+        x = x.split('=')[0]
+        if not x in gap.keys():
+            print("GAP: %r" % x)
+            exit(1)
+        x = gap[x]
+        if isinstance(x, str):
+            y = x.split('&')
+            for _ in y:
+                w = gap[_.strip().split('=')[0]]
+                pattern |= (((1 << (w[1] - w[0] + 1)) - 1) << w[0])
+        if isinstance(x, tuple):
+            pattern |= (((1 << (x[1] - x[0] + 1)) - 1) << x[0])
+    # print("# %s 10987654321098765432109876543210" % (op.name))
+    # print("# %s %s" % (op.name, '{:032b}'.format(pattern)))
+    z = '{:032b}'.format(pattern)[::-1]
+    z0 = '{:032b}'.format(op.match)[::-1]
+    z1 = '{:032b}'.format(op.mask)[::-1]
+    # print("# %s %s" % (op.name, '{:032b}'.format(op.match)))
+    # print("# %s %s" % (op.name, '{:032b}'.format(op.mask)))
+    x = 0
+    y = 32 if op.match & 3 == 3 else 16
+    while x < y:
+        start = z.find('0', x)
+        if start > 0 and start < y:
+            # print("# START %d %d %d" % (x, start, y))
+            end = z.find('1', start)
+            if end < 0:
+                end = y
+            # print("# chunk %d - %d (%d) " % (start, end - 1, x))
+            t0 = z1[start:end]
+            # print("# THING %s %s" % (t0, z1))
+            if t0.find('0') > 0:
+                print("damnit %s" % (z1[start:end]))
+                exit(1)
+            t0 = int(z0[start:end][::-1], 2)
+            t1 = int(z1[start:end][::-1], 2)
+            # print("# %d %d" % (t0, t1))
+            if 16 == y:
+                bp = "cop%02d%02d=0x%x" % (start, end - 1, t0 & t1)
+            else:
+                bp = "op%02d%02d=0x%x" % (start, end - 1, t0 & t1)
+            # print("# BP = %s " % bp)
+            op.bitpattern.append(bp)
+            x = end + 1
+            
+        else:
+            # print("#END 1")
+            break
+        
+
+def parse():
+    sorted_opcodes = sorted(opcodes, key=lambda x: x[0])
+    for op in sorted_opcodes:
+        size = 0
+        op = OpCode(op)
+        if op.xlen:
+            print("@if defined(RISCV%d)" % (op.xlen))
+        if INSN_MACRO == op.pinfo:
+            print("#TODO  MACRO")
+            print("# %s" % op)
+            if op.xlen:
+                print("@endif")
+            print("")
+            continue
+        if INSN_ALIAS & op.pinfo != 0:
+            print("#TODO ALIAS")
+        print("# %s" % op)
+        op.display, op.bitpattern = parse_operand(op)
+        op.bitpattern = list(set(op.bitpattern))
+        if op.match & 3 == 3:
+            opcode_map(op)
+        else:
+            opcode_map_c(op)
+        find_gaps(op)
+        if INSN_ALIAS & op.pinfo != 0:
+            print("#:%s %s is %s\n#{\n#}" % (op.name, op.display, ' & '.join(op.bitpattern)))
+        else:
+            print(":%s %s is %s\n{\n}" % (op.name, op.display, ' & '.join(op.bitpattern)))
+        if op.xlen:
+            print("@endif")
+        print("")
+    return
+
+
+def make_unique():
+    sorted_opcodes = sorted(opcodes, key=lambda x: x[0])
+    for opX in sorted_opcodes:
+        print("-------------------------")
+        opX = OpCode(opX)
+        print("X: %s" % (opX))
+        for opY in sorted_opcodes:
+            opY = OpCode(opY)
+            if opY == opX:
+                continue
+            if opX.mask != opY.mask:
+                continue
+            if opX.match != opY.match:
+                continue
+            if opX.xlen != opY.xlen:
+                continue
+            print("Y: %s" % (opY))
+
+if __name__ == "__main__":
+    parse()
+    # make_unique()
+

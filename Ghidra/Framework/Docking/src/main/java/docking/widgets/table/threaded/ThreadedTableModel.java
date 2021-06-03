@@ -15,6 +15,8 @@
  */
 package docking.widgets.table.threaded;
 
+import static docking.widgets.table.AddRemoveListItem.Type.*;
+
 import java.util.*;
 
 import javax.swing.SwingUtilities;
@@ -24,6 +26,7 @@ import docking.widgets.table.*;
 import docking.widgets.table.sort.DefaultColumnComparator;
 import generic.concurrent.ConcurrentListenerSet;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.util.Swing;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.*;
 import ghidra.util.exception.*;
@@ -74,9 +77,9 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * This variable can be in one of three states:
 	 * 	<ul>
 	 * 		<li>null - signals that there is no filter change taking place</li>
-	 * 		<li>An instance of <tt>NullTableFitler</tt> - the client has removed the current
+	 * 		<li>An instance of <code>NullTableFilter</code> - the client has removed the current
 	 *          filter by calling {@link #setTableFilter(TableFilter)} with a null value</li>
-	 * 		<li>An instance of a custom <tt>TableFitler</tt> - the client has changed the
+	 * 		<li>An instance of a custom <code>TableFilter</code> - the client has changed the
 	 *          filter to a non-null value by calling {@link #setTableFilter(TableFilter)}</li>
 	 *  </ul>
 	 */
@@ -89,6 +92,8 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	private volatile Worker worker; // only created as needed (if we are incremental)
 	private int minUpdateDelayMillis;
 	private int maxUpdateDelayMillis;
+	private TableAddRemoveStrategy<ROW_OBJECT> binarySearchAddRemoveStrategy =
+		new DefaultAddRemoveStrategy<>();
 
 	protected ThreadedTableModel(String modelName, ServiceProvider serviceProvider) {
 		this(modelName, serviceProvider, null);
@@ -123,7 +128,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 			TaskMonitor monitor, boolean loadIncrementally) {
 		super(serviceProvider);
 
-		if (!SwingUtilities.isEventDispatchThread()) {
+		if (!Swing.isSwingThread()) {
 			throw new AssertException(
 				"You must create the ThreadedTableModel in the AWT Event Dispatch Thread");
 		}
@@ -143,7 +148,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		// We are expecting to be in the swing thread.  We want the reload to happen after our
 		// constructor is fully completed since the reload will cause our initialize method to
 		// be called in another thread, thereby creating a possible race condition.
-		SwingUtilities.invokeLater(() -> updateManager.reload());
+		Swing.runLater(() -> updateManager.reload());
 	}
 
 	public boolean isLoadIncrementally() {
@@ -214,7 +219,37 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	protected abstract void doLoad(Accumulator<ROW_OBJECT> accumulator, TaskMonitor monitor)
 			throws CancelledException;
 
+	/**
+	 * This method will retrieve a column value for the given row object.  Further, the retrieved
+	 * value will be cached.   This is useful when sorting a table, as the same column value may
+	 * be requested multiple times.
+	 * 
+	 * <p><u>Performance Notes</u>
+	 * <ul>
+	 * 	<li>This method uses a {@link HashMap} to cache column values for a row object.   Further,
+	 *      upon a key collision, the map will perform O(logn) lookups <b>if the 
+	 *      key (the row object) is {@link Comparable}</b>.   If the key is not comparable, then
+	 *      the collision lookups will be linear.    So, make your row objects comparable
+	 *      for maximum speed <b>when your table size becomes large</b>  (for small tables there
+	 *      is no observable impact).
+	 *  <li>Even if your row objects are comparable, relying on this table model to convert your 
+	 *      row object into column values can be slow <b>for large tables</b>.  This is because
+	 *      the default column comparison framework for the tables will call this method 
+	 *      multiple times, resulting in many more method calls per column value lookup.  For 
+	 *      large data, the repeated method calls start to become noticeable.  For maximum 
+	 *      column sorting speed, use a comparator that works not on the column value, but on 
+	 *      the row value.  To do this, return a comparator from your model's 
+	 *      {@link #createSortComparator(int)} method, instead of from the column itself or 
+	 *      by relying on column item implementing {@link Comparable}.  This is possible any
+	 *      time that a row object already has a field that is used for a given column.
+	 * </ul>
+	 * 
+	 * @param rowObject the row object
+	 * @param columnIndex the column index for which to get a value
+	 * @return the column value
+	 */
 	Object getCachedColumnValueForRow(ROW_OBJECT rowObject, int columnIndex) {
+
 		Map<ROW_OBJECT, Map<Integer, Object>> cachedColumnValues = threadLocalColumnCache.get();
 
 		if (cachedColumnValues == null) {
@@ -239,7 +274,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	}
 
 	void initializeCache() {
-		threadLocalColumnCache.set(new LRUMap<ROW_OBJECT, Map<Integer, Object>>(20000));
+		threadLocalColumnCache.set(new LRUMap<ROW_OBJECT, Map<Integer, Object>>(1000000));
 	}
 
 	void clearCache() {
@@ -369,14 +404,14 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 *
 	 * @return true if there is a table filter set.
 	 */
-	public boolean hasFitler() {
+	public boolean hasFilter() {
 		TableFilter<ROW_OBJECT> currentFilter = getTableFilter();
 		return !currentFilter.isEmpty();
 	}
 
 	/**
 	 * Override this to change how filtering is performed.  This implementation will do nothing
-	 * if a <tt>TableFilter</tt> has not been set via a call to {@link #setTableFilter(TableFilter)}.
+	 * if a <code>TableFilter</code> has not been set via a call to {@link #setTableFilter(TableFilter)}.
 	 * 
 	 *
 	 * @param data The list of data to be filtered.
@@ -399,7 +434,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 			return data;
 		}
 
-		if (!hasFitler()) {
+		if (!hasFilter()) {
 			return data;
 		}
 
@@ -433,14 +468,14 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	}
 
 	/**
-	 * Sets the given <tt>TableFitler</tt> on this model.  This table filter will then be used
+	 * Sets the given <code>TableFilter</code> on this model.  This table filter will then be used
 	 * by this model in the default {@link #doFilter(List, TableSortingContext, TaskMonitor)}
 	 * method.
-	 * @param tableFitler The filter to use for table filtering.
+	 * @param tableFilter The filter to use for table filtering.
 	 */
 	@Override
-	public void setTableFilter(TableFilter<ROW_OBJECT> tableFitler) {
-		this.pendingTableFilter = tableFitler;
+	public void setTableFilter(TableFilter<ROW_OBJECT> tableFilter) {
+		this.pendingTableFilter = tableFilter;
 		if (pendingTableFilter == null) {
 			// Don't allow the pending filter to be null in this case.  The client has changed
 			// the filter.  If we use null, then we don't know the difference between a client
@@ -450,8 +485,8 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		reFilter();
 	}
 
-	private void setAppliedTableFitler(TableFilter<ROW_OBJECT> tableFitler) {
-		if (tableFitler == null) {
+	private void setAppliedTableFilter(TableFilter<ROW_OBJECT> tableFilter) {
+		if (tableFilter == null) {
 			// null means there was no change to the text filter--so don't set it (see the
 			// javadoc for the filter variables)
 			return;
@@ -466,7 +501,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * @param obj the object for which to schedule the update
 	 */
 	public void updateObject(ROW_OBJECT obj) {
-		updateManager.addRemove(new AddRemoveListItem<>(true, true, obj));
+		updateManager.addRemove(new AddRemoveListItem<>(CHANGE, obj));
 	}
 
 	/**
@@ -474,15 +509,26 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * @param obj the object to add
 	 */
 	public void addObject(ROW_OBJECT obj) {
-		updateManager.addRemove(new AddRemoveListItem<>(true, false, obj));
+		updateManager.addRemove(new AddRemoveListItem<>(ADD, obj));
 	}
 
 	/**
 	 * Removes the specified object from this model and schedules an update.
+	 * 
+	 * <P>Note: for this method to function correctly, the given object must compare as 
+	 * {@link #equals(Object)} and have the same {@link #hashCode()} as the object to be removed 
+	 * from the table data.   This allows clients to create proxy objects to pass into this method,
+	 * as long as they honor those requirements.    
+	 * 
+	 * <P>If this model's data is sorted, then a binary search will be used to locate the item
+	 * to be removed.  However, for this to work, all field used to sort the data must still be 
+	 * available from the original object and must be the same values.   If this is not true, then
+	 * the binary search will not work and a brute force search will be used.
+	 * 
 	 * @param obj the object to remove
 	 */
 	public void removeObject(ROW_OBJECT obj) {
-		updateManager.addRemove(new AddRemoveListItem<>(false, true, obj));
+		updateManager.addRemove(new AddRemoveListItem<>(REMOVE, obj));
 	}
 
 	protected void updateNow() {
@@ -502,7 +548,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		this.allData = allData;
 		this.filteredData = filteredData;
 
-		setAppliedTableFitler(pendingTableFilter);
+		setAppliedTableFilter(pendingTableFilter);
 		pendingSortContext = null;
 
 		TableSortingContext<ROW_OBJECT> newSortingContext = filteredData.getSortContext();
@@ -587,12 +633,11 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 */
 	@Override
 	public void fireTableChanged(TableModelEvent e) {
-		if (SwingUtilities.isEventDispatchThread()) {
+		if (Swing.isSwingThread()) {
 			super.fireTableChanged(e);
 			return;
 		}
-		final TableModelEvent e1 = e;
-		SwingUtilities.invokeLater(() -> ThreadedTableModel.super.fireTableChanged(e1));
+		Swing.runLater(() -> ThreadedTableModel.super.fireTableChanged(e));
 	}
 
 	/**
@@ -606,6 +651,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 			worker.dispose();
 		}
 		doClearData();
+		disposeDynamicColumnData();
 	}
 
 	/**
@@ -747,16 +793,29 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		return maxUpdateDelayMillis;
 	}
 
-	protected Class<?> getSortedColumnClass(int columnIndex) {
-		return getColumnClass(columnIndex);
-	}
-
 	ThreadedTableModelUpdateMgr<ROW_OBJECT> getUpdateManager() {
 		return updateManager;
 	}
 
 	void setDefaultTaskMonitor(TaskMonitor monitor) {
 		updateManager.setTaskMonitor(monitor);
+	}
+
+	/**
+	 * Returns the strategy to use for performing adds and removes to this table.   Subclasses can
+	 * override this method to customize this process for their particular type of data.   See
+	 * the implementations of {@link TableAddRemoveStrategy} for details.
+	 * 
+	 * <P>Note: The default add/remove strategy assumes that objects to be removed will be the 
+	 * same instance that is in the list of this model.   This allows the {@link #equals(Object)} 
+	 * and {@link #hashCode()} to be used when removing the object from the list.   If you model 
+	 * does not pass the same instance into {@link #removeObject(Object)}, then you will need to 
+	 * update your add/remove strategy accordingly.
+	 * 
+	 * @return the strategy
+	 */
+	protected TableAddRemoveStrategy<ROW_OBJECT> getAddRemoveStrategy() {
+		return binarySearchAddRemoveStrategy;
 	}
 
 	public void setIncrementalTaskMonitor(TaskMonitor monitor) {

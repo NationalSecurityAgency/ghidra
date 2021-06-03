@@ -29,7 +29,7 @@ XPART: ":T" is ctx_usex & xpart=0x1 {
 	tmp = tmp >> 16;
 	tmpa:2 = tmp:2;
 	tmpb:4 = sext(tmpa);
-	export *[const]:4 tmpb;
+	export *:4 tmpb;
 }
 
 XPART: ":B" is ctx_usex & xpart=0x0 { 
@@ -37,7 +37,7 @@ XPART: ":B" is ctx_usex & xpart=0x0 {
 	tmp = tmp & 0xFFFF;
 	tmpa:2 = tmp:2;
 	tmpb:4 = sext(tmpa);
-	export *[const]:4 tmpb;
+	export *:4 tmpb;
 }
 
 YPART: ":T" is ctx_usey & ypart=0x1 { 
@@ -45,7 +45,7 @@ YPART: ":T" is ctx_usey & ypart=0x1 {
 	tmp = tmp >> 16;
 	tmpa:2 = tmp:2;
 	tmpb:4 = sext(tmpa);
-	export *[const]:4 tmpb;
+	export *:4 tmpb;
 }
 
 YPART: ":B" is ctx_usey & ypart=0x0 { 
@@ -53,7 +53,7 @@ YPART: ":B" is ctx_usey & ypart=0x0 {
 	tmp = tmp & 0xFFFF;
 	tmpa:2 = tmp:2;
 	tmpb:4 = sext(tmpa);
-	export *[const]:4 tmpb;
+	export *:4 tmpb;
 }
 
 :ADDHH.W erd0, rx9^XPART, ry0^YPART is op13_3=0x7 & op4_5=0x0 & rx9 & ry0  ;
@@ -248,38 +248,38 @@ YPART: ":B" is ctx_usey & ypart=0x0 {
 
 
 
-SATM:	is ebp5_5=0  { tmp:4 = 0x00000000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=1  { tmp:4 = 0xFFFFFFFF; export *[const]:4 tmp; }
-SATM:	is ebp5_5=2  { tmp:4 = 0xFFFFFFFE; export *[const]:4 tmp; }
-SATM:	is ebp5_5=3  { tmp:4 = 0xFFFFFFFC; export *[const]:4 tmp; }
-SATM:	is ebp5_5=4  { tmp:4 = 0xFFFFFFF8; export *[const]:4 tmp; }
-SATM:	is ebp5_5=5  { tmp:4 = 0xFFFFFFF0; export *[const]:4 tmp; }
-SATM:	is ebp5_5=6  { tmp:4 = 0xFFFFFFE0; export *[const]:4 tmp; }
-SATM:	is ebp5_5=7  { tmp:4 = 0xFFFFFFC0; export *[const]:4 tmp; }
-SATM:	is ebp5_5=8  { tmp:4 = 0xFFFFFF80; export *[const]:4 tmp; }
-SATM:	is ebp5_5=9  { tmp:4 = 0xFFFFFF00; export *[const]:4 tmp; }
-SATM:	is ebp5_5=10 { tmp:4 = 0xFFFFFE00; export *[const]:4 tmp; }
-SATM:	is ebp5_5=11 { tmp:4 = 0xFFFFFC00; export *[const]:4 tmp; }
-SATM:	is ebp5_5=12 { tmp:4 = 0xFFFFF800; export *[const]:4 tmp; }
-SATM:	is ebp5_5=13 { tmp:4 = 0xFFFFF000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=14 { tmp:4 = 0xFFFFE000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=15 { tmp:4 = 0xFFFFC000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=16 { tmp:4 = 0xFFFF8000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=17 { tmp:4 = 0xFFFF0000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=18 { tmp:4 = 0xFFFE0000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=19 { tmp:4 = 0xFFFC0000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=20 { tmp:4 = 0xFFF80000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=21 { tmp:4 = 0xFFF00000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=22 { tmp:4 = 0xFFE00000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=23 { tmp:4 = 0xFFC00000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=24 { tmp:4 = 0xFF800000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=25 { tmp:4 = 0xFF000000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=26 { tmp:4 = 0xFE000000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=27 { tmp:4 = 0xFC000000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=28 { tmp:4 = 0xF8000000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=29 { tmp:4 = 0xF0000000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=30 { tmp:4 = 0xE0000000; export *[const]:4 tmp; }
-SATM:	is ebp5_5=31 { tmp:4 = 0xC0000000; export *[const]:4 tmp; }
+SATM:	is ebp5_5=0  { tmp:4 = 0x00000000; export tmp; }
+SATM:	is ebp5_5=1  { tmp:4 = 0xFFFFFFFF; export tmp; }
+SATM:	is ebp5_5=2  { tmp:4 = 0xFFFFFFFE; export tmp; }
+SATM:	is ebp5_5=3  { tmp:4 = 0xFFFFFFFC; export tmp; }
+SATM:	is ebp5_5=4  { tmp:4 = 0xFFFFFFF8; export tmp; }
+SATM:	is ebp5_5=5  { tmp:4 = 0xFFFFFFF0; export tmp; }
+SATM:	is ebp5_5=6  { tmp:4 = 0xFFFFFFE0; export tmp; }
+SATM:	is ebp5_5=7  { tmp:4 = 0xFFFFFFC0; export tmp; }
+SATM:	is ebp5_5=8  { tmp:4 = 0xFFFFFF80; export tmp; }
+SATM:	is ebp5_5=9  { tmp:4 = 0xFFFFFF00; export tmp; }
+SATM:	is ebp5_5=10 { tmp:4 = 0xFFFFFE00; export tmp; }
+SATM:	is ebp5_5=11 { tmp:4 = 0xFFFFFC00; export tmp; }
+SATM:	is ebp5_5=12 { tmp:4 = 0xFFFFF800; export tmp; }
+SATM:	is ebp5_5=13 { tmp:4 = 0xFFFFF000; export tmp; }
+SATM:	is ebp5_5=14 { tmp:4 = 0xFFFFE000; export tmp; }
+SATM:	is ebp5_5=15 { tmp:4 = 0xFFFFC000; export tmp; }
+SATM:	is ebp5_5=16 { tmp:4 = 0xFFFF8000; export tmp; }
+SATM:	is ebp5_5=17 { tmp:4 = 0xFFFF0000; export tmp; }
+SATM:	is ebp5_5=18 { tmp:4 = 0xFFFE0000; export tmp; }
+SATM:	is ebp5_5=19 { tmp:4 = 0xFFFC0000; export tmp; }
+SATM:	is ebp5_5=20 { tmp:4 = 0xFFF80000; export tmp; }
+SATM:	is ebp5_5=21 { tmp:4 = 0xFFF00000; export tmp; }
+SATM:	is ebp5_5=22 { tmp:4 = 0xFFE00000; export tmp; }
+SATM:	is ebp5_5=23 { tmp:4 = 0xFFC00000; export tmp; }
+SATM:	is ebp5_5=24 { tmp:4 = 0xFF800000; export tmp; }
+SATM:	is ebp5_5=25 { tmp:4 = 0xFF000000; export tmp; }
+SATM:	is ebp5_5=26 { tmp:4 = 0xFE000000; export tmp; }
+SATM:	is ebp5_5=27 { tmp:4 = 0xFC000000; export tmp; }
+SATM:	is ebp5_5=28 { tmp:4 = 0xF8000000; export tmp; }
+SATM:	is ebp5_5=29 { tmp:4 = 0xF0000000; export tmp; }
+SATM:	is ebp5_5=30 { tmp:4 = 0xE0000000; export tmp; }
+SATM:	is ebp5_5=31 { tmp:4 = 0xC0000000; export tmp; }
 
 :SATRNDS rd0^" >> "^esa0_5, ebp5_5^SATM is op4_12=0xf3b & rd0 ;
         eop10_6=0x0 & esa0_5 & ebp5_5 & SATM

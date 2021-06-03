@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +18,7 @@ package ghidra.program.database.symbol;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.GhidraClass;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -61,6 +59,19 @@ class GhidraClassDB implements GhidraClass {
 	@Override
 	public String getName() {
 		return symbol.getName();
+	}
+
+	public void setName(String name, SourceType source, boolean checkForDuplicates)
+			throws DuplicateNameException, InvalidInputException {
+
+		try {
+			symbol.doSetNameAndNamespace(name, symbol.getParentNamespace(), source,
+				checkForDuplicates);
+		}
+		catch (CircularDependencyException e) {
+			// can't happen since we are not changing the namespace
+		}
+
 	}
 
 	/**

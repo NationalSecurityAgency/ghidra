@@ -22,7 +22,8 @@ import java.util.List;
 import javax.swing.Icon;
 import javax.swing.JButton;
 
-import docking.*;
+import docking.ActionContext;
+import docking.DockingWindowManager;
 import docking.action.*;
 import docking.widgets.EventTrigger;
 import ghidra.util.HelpLocation;
@@ -54,6 +55,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	private MultipleActionDockingToolbarButton multipleButton;
 
 	private boolean performActionOnPrimaryButtonClick = true;
+	private boolean useCheckboxForIcons;
 
 	// A listener that will get called when the button (not the popup) is clicked.  Toolbar
 	// actions do not use this listener. 
@@ -99,9 +101,9 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	public abstract void actionStateChanged(ActionState<T> newActionState, EventTrigger trigger);
 
 	/**
-	 * If <tt>doPerformAction</tt> is <tt>true</tt>, then, when the user clicks the
+	 * If <code>doPerformAction</code> is <code>true</code>, then, when the user clicks the
 	 * button and not the drop-down arrow, the {@link #doActionPerformed(ActionContext)}
-	 * method will be called.  If <tt>doPerformAction</tt> is <tt>false</tt>, then, when
+	 * method will be called.  If <code>doPerformAction</code> is <code>false</code>, then, when
 	 * the user clicks the button and not the drop-down arrow, the popup menu will be shown, just
 	 * as if the user had clicked the drop-down arrow.
 	 * <p>
@@ -123,6 +125,18 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		if (performActionOnPrimaryButtonClick) {
 			multipleButton.addActionListener(clickListener);
 		}
+	}
+
+	/**
+	 * Overrides the default icons for actions shown in popup menu of the multi-state action.  By
+	 * default, the popup menu items will use the icons as provided by the {@link ActionState}.
+	 * By passing true to this method, icons will not be used in the popup menu.  Instead, a 
+	 * checkbox icon will be used to show the active action state.
+	 * 
+	 * @param useCheckboxForIcons true to use a checkbox
+	 */
+	public void setUseCheckboxForIcons(boolean useCheckboxForIcons) {
+		this.useCheckboxForIcons = useCheckboxForIcons;
 	}
 
 	@Override
@@ -148,17 +162,27 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 
 	private ActionContext getActionContext() {
 		DockingWindowManager manager = DockingWindowManager.getActiveInstance();
-		ComponentProvider provider = manager.getActiveComponentProvider();
-		ActionContext localContext = provider == null ? null : provider.getActionContext(null);
-		final ActionContext actionContext =
-			localContext == null ? manager.getGlobalContext() : localContext;
-		return actionContext;
+
+		ActionContext context = manager.getActionContext(this);
+
+		if (context == null) {
+			context = new ActionContext();
+		}
+		return context;
 	}
 
 	protected List<DockingActionIf> getStateActions() {
+		ActionState<T> selectedState = actionStates.get(currentStateIndex);
 		List<DockingActionIf> actions = new ArrayList<>(actionStates.size());
 		for (ActionState<T> actionState : actionStates) {
-			actions.add(new ActionStateAction(actionState));
+
+			//@formatter:off
+			boolean isSelected = actionState == selectedState;
+			DockingActionIf a = useCheckboxForIcons ? 
+				new ActionStateToggleAction(actionState, isSelected) :
+			    new ActionStateAction(actionState, isSelected);
+			actions.add(a);
+			//@formatter:on
 		}
 		return actions;
 	}
@@ -173,6 +197,11 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		tbd.setToolBarSubGroup(subGroup);
 	}
 
+	/**
+	 * add the supplied {@code ActionState}
+	 * if {@code fireFirstEvent} is {@code true} the first one will fire its event
+	 * @param actionState the {@code ActionState} to add
+	 */
 	public void addActionState(ActionState<T> actionState) {
 		actionStates.add(actionState);
 		if (actionStates.size() == 1) {
@@ -209,7 +238,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		}
 
 		throw new AssertException(
-			"Attempted to set an action state by a user type not " + "contained herein: " + t);
+			"Attempted to set an action state by a user type not contained herein: " + t);
 	}
 
 	public void setCurrentActionState(ActionState<T> actionState) {
@@ -232,7 +261,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		ToolBarData tbd = getToolBarData();
 		tbd.setIcon(getIcon(actionState));
 
-		setDescription(getTooTipText());
+		setDescription(getToolTipText());
 		actionStateChanged(actionState, trigger);
 	}
 
@@ -285,20 +314,54 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		throw new UnsupportedOperationException();
 	}
 
-	public String getTooTipText() {
+	public String getToolTipText() {
 		return getName() + ": " + getCurrentState().getName();
 	}
 
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
+
+	private class ActionStateToggleAction extends ToggleDockingAction {
+
+		private final ActionState<T> actionState;
+
+		private ActionStateToggleAction(ActionState<T> actionState, boolean isSelected) {
+			super(actionState.getName(), "multiStateAction");
+
+			this.actionState = actionState;
+
+			setSelected(isSelected);
+
+			setMenuBarData(
+				new MenuData(new String[] { actionState.getName() }));
+			HelpLocation helpLocation = actionState.getHelpLocation();
+			if (helpLocation != null) {
+				setHelpLocation(helpLocation);
+			}
+		}
+
+		@Override
+		public String getInceptionInformation() {
+			// we want the debug info for these internal actions to be that of the outer class
+			return MultiStateDockingAction.this.getInceptionInformation();
+		}
+
+		@Override
+		public void actionPerformed(ActionContext context) {
+			setCurrentActionStateWithTrigger(actionState, EventTrigger.GUI_ACTION);
+		}
+
+	}
+
 	private class ActionStateAction extends DockingAction {
 
 		private final ActionState<T> actionState;
 
-		private ActionStateAction(ActionState<T> actionState) {
+		private ActionStateAction(ActionState<T> actionState, boolean isSelected) {
 			super(actionState.getName(), "multiStateAction");
 			this.actionState = actionState;
+
 			setMenuBarData(
 				new MenuData(new String[] { actionState.getName() }, actionState.getIcon()));
 			HelpLocation helpLocation = actionState.getHelpLocation();

@@ -22,7 +22,6 @@ import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.StringUtilities;
 import ghidra.util.task.TaskMonitor;
-import util.demangler.GenericDemangledString;
 
 public class DemangledString extends DemangledObject {
 	private String string;
@@ -31,6 +30,8 @@ public class DemangledString extends DemangledObject {
 
 	/**
 	 * Construct demangled string.
+	 * @param mangled the source mangled string
+	 * @param originalDemangled the original demangled string
 	 * @param name name associated with this object
 	 * @param string string text associated with this object or null.  This is used to establish
 	 * label and plate comment if specified.  If null, name will be used as symbol name.
@@ -38,34 +39,22 @@ public class DemangledString extends DemangledObject {
 	 * assumes null terminated string.
 	 * @param unicode true if string is a Unicode string.
 	 */
-	public DemangledString(String name, String string, int length, boolean unicode) {
+	public DemangledString(String mangled, String originalDemangled, String name, String string,
+			int length, boolean unicode) {
+		super(mangled, originalDemangled);
 		setName(name);
 		this.string = string;
 		this.length = length;
 		this.unicode = unicode;
 	}
 
-	/**
-	 * Construct demangled string from a GenericDemangledString 
-	 * @param generic generic demangled string
-	 */
-	DemangledString(GenericDemangledString generic) {
-		super(generic);
-		string = generic.getString();
-		length = generic.getLength();
-		unicode = generic.isUnicode();
-	}
-
 	@Override
 	public String getSignature(boolean format) {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		if (specialPrefix != null) {
-			buffer.append(specialPrefix + " for ");
+			buffer.append(specialPrefix);
 		}
 		buffer.append(string);
-		if (specialSuffix != null) {
-			buffer.append(" " + specialSuffix);
-		}
 		return buffer.toString();
 	}
 
@@ -84,9 +73,9 @@ public class DemangledString extends DemangledObject {
 	public boolean applyTo(Program program, Address address, DemanglerOptions options,
 			TaskMonitor monitor) throws Exception {
 
-		String label = SymbolUtilities.replaceInvalidChars(string, false);
+		String label = buildStringLabel();
 		if (hasLabel(program, address, label)) {
-			return true; // Desired symbol already exists here.
+			return true; // This string has already been applied
 		}
 
 		if (!super.applyTo(program, address, options, monitor)) {
@@ -100,24 +89,24 @@ public class DemangledString extends DemangledObject {
 			return false;
 		}
 
-		// TODO: should we be using length ?
 		CreateStringCmd cmd = new CreateStringCmd(address, -1, isUnicode());
 		cmd.applyTo(program);
 
-		// unclear what demangled name should be used so apply
-		// fabricated string label which is more useful than mangled name
 		Symbol demangledSymbol =
-			applyDemangledName(buildStringLabel(), address, true, false, program);
+			applyDemangledName(label, address, true, false, program);
 		return (demangledSymbol != null);
 	}
 
 	private String buildStringLabel() {
-		// build string label consistent with dynamic label formatting
+
 		if (specialPrefix != null) {
+			// a 'special prefix' implies that the author wishes to apply the string exactly as-is
 			return getName();
 		}
+
+		// build string label consistent with dynamic label formatting
 		int len = string.length();
-		StringBuffer buf = new StringBuffer(len);
+		StringBuilder buf = new StringBuilder(len);
 		for (int i = 0; i < len; ++i) {
 			char c = string.charAt(i);
 			if (StringUtilities.isDisplayable(c) && (c != ' ')) {

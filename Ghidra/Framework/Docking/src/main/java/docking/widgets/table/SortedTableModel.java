@@ -40,7 +40,7 @@ public interface SortedTableModel extends TableModel {
 	public boolean isSortable(int columnIndex);
 
 	/**
-	 * Returns the column index that is the primary sorted column
+	 * Returns the column index that is the primary sorted column; -1 if no column is sorted
 	 * 
 	 * @return the index
 	 */

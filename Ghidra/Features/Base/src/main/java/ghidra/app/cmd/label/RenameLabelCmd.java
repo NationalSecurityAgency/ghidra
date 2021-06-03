@@ -120,9 +120,14 @@ public class RenameLabelCmd implements Command {
 			}
 			else {
 				s.setName(newName, source);
-				if ((newName.length() != 0 && !newName.equals(s.getName())) ||
-					(newName.length() == 0 && s.getSource() != SourceType.DEFAULT)) {
-					errorMsg = "Rename failed - default names may not be used";
+
+				if (newName.length() == 0 && s.getSource() != SourceType.DEFAULT) {
+					errorMsg = "Rename failed - cannot set non-default symbol name to \"\"";
+					return false;
+				}
+
+				if (!newName.equals(s.getName())) {
+					errorMsg = "Rename failed";
 					return false;
 				}
 			}

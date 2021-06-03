@@ -1,25 +1,20 @@
 ##VERSION: 2.0
-ghidra.xtext.sleigh.feature/build.gradle||GHIDRA||||END|
 ghidra.xtext.sleigh.feature/build.properties||GHIDRA||||END|
 ghidra.xtext.sleigh.feature/category.xml||GHIDRA||||END|
 ghidra.xtext.sleigh.feature/feature.xml||GHIDRA||||END|
 ghidra.xtext.sleigh.ide/META-INF/MANIFEST.MF||GHIDRA||||END|
-ghidra.xtext.sleigh.ide/build.gradle||GHIDRA||||END|
 ghidra.xtext.sleigh.ide/build.properties||GHIDRA||||END|
 ghidra.xtext.sleigh.ide/src/ghidra/xtext/sleigh/ide/SleighIdeModule.xtend||GHIDRA||||END|
 ghidra.xtext.sleigh.ide/src/ghidra/xtext/sleigh/ide/SleighIdeSetup.xtend||GHIDRA||||END|
 ghidra.xtext.sleigh.tests/META-INF/MANIFEST.MF||GHIDRA||||END|
-ghidra.xtext.sleigh.tests/build.gradle||GHIDRA||||END|
 ghidra.xtext.sleigh.tests/build.properties||GHIDRA||||END|
 ghidra.xtext.sleigh.tests/src/ghidra/xtext/sleigh/tests/CrossReferenceTest.xtend||GHIDRA||||END|
 ghidra.xtext.sleigh.tests/src/ghidra/xtext/sleigh/tests/SleighMacroTest.xtend||GHIDRA||||END|
 ghidra.xtext.sleigh.tests/src/ghidra/xtext/sleigh/tests/SleighParsingTest.xtend||GHIDRA||||END|
 ghidra.xtext.sleigh.tests/src/ghidra/xtext/sleigh/tests/SleighScopeTest.xtend||GHIDRA||||END|
 ghidra.xtext.sleigh.ui.tests/META-INF/MANIFEST.MF||GHIDRA||||END|
-ghidra.xtext.sleigh.ui.tests/build.gradle||GHIDRA||||END|
 ghidra.xtext.sleigh.ui.tests/build.properties||GHIDRA||||END|
 ghidra.xtext.sleigh.ui/META-INF/MANIFEST.MF||GHIDRA||||END|
-ghidra.xtext.sleigh.ui/build.gradle||GHIDRA||||END|
 ghidra.xtext.sleigh.ui/build.properties||GHIDRA||||END|
 ghidra.xtext.sleigh.ui/plugin.xml||GHIDRA||||END|
 ghidra.xtext.sleigh.ui/src/ghidra/xtext/sleigh/ui/SleighEObjectHoverProvider.xtend||GHIDRA||||END|
@@ -35,7 +30,6 @@ ghidra.xtext.sleigh/.launch/Generate Sleigh (sleigh) Language Infrastructure.lau
 ghidra.xtext.sleigh/.launch/Launch Runtime Eclipse.launch||GHIDRA||||END|
 ghidra.xtext.sleigh/GhidraSleighEditor_README.html||GHIDRA||||END|
 ghidra.xtext.sleigh/META-INF/MANIFEST.MF||GHIDRA||||END|
-ghidra.xtext.sleigh/build.gradle||GHIDRA||||END|
 ghidra.xtext.sleigh/build.properties||GHIDRA||||END|
 ghidra.xtext.sleigh/build_README.txt||GHIDRA||||END|
 ghidra.xtext.sleigh/plugin.xml||GHIDRA||||END|

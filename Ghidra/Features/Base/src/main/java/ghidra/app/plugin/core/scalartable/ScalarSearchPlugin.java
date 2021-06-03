@@ -145,7 +145,7 @@ public class ScalarSearchPlugin extends ProgramPlugin implements DomainObjectLis
 			}
 
 			@Override
-			protected boolean isValidContext(NavigatableActionContext context) {
+			protected boolean isEnabledForContext(NavigatableActionContext context) {
 				return !(context instanceof RestrictedAddressSetContext);
 			}
 		};
@@ -154,6 +154,7 @@ public class ScalarSearchPlugin extends ProgramPlugin implements DomainObjectLis
 		searchAction.setMenuBarData(new MenuData(
 			new String[] { ToolConstants.MENU_SEARCH, "For Scalars..." }, null, "search for"));
 		searchAction.setDescription("Search program for scalars");
+		searchAction.addToWindowWhen(NavigatableActionContext.class);
 		tool.addAction(searchAction);
 
 		//
@@ -163,6 +164,6 @@ public class ScalarSearchPlugin extends ProgramPlugin implements DomainObjectLis
 		//               providers are created, as they would only appear in the options at
 		//               that point.
 		//
-		DeleteTableRowAction.registerDummy(tool);
+		DeleteTableRowAction.registerDummy(tool, getName());
 	}
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,9 @@
  */
 package ghidra.util.graph.attributes;
 
-import ghidra.util.datastruct.LongObjectHashtable;
-import ghidra.util.exception.NoValueException;
+import java.util.HashMap;
+import java.util.Map;
+
 import ghidra.util.graph.KeyIndexableSet;
 import ghidra.util.graph.KeyedObject;
 
@@ -26,7 +26,7 @@ import ghidra.util.graph.KeyedObject;
  */
 public class ObjectAttribute<T extends KeyedObject> extends Attribute<T> {
 	//private Object[] values;
-	private LongObjectHashtable<Object> values;
+	private Map<Long, Object> values;
 	private static String attributeType = AttributeManager.OBJECT_TYPE;
 
 	/** Constructor.
@@ -37,7 +37,7 @@ public class ObjectAttribute<T extends KeyedObject> extends Attribute<T> {
 	public ObjectAttribute(String name, KeyIndexableSet<T> set) {
 		super(name, set);
 		//this.values = new Object[set.capacity()];
-		values = new LongObjectHashtable<Object>();
+		values = new HashMap<>();
 	}
 
 	/** Set the value of this attribute for the specified KeyedObject.
@@ -60,9 +60,8 @@ public class ObjectAttribute<T extends KeyedObject> extends Attribute<T> {
 		return false;
 	}
 
-	/** Return the value associated to the specified KeyedObject.
-	 * @throws NoValueException if the value has not been set or 
-	 * the KeyedObject does not belong to the owningSet.
+	/**
+	 * Return the value associated to the specified KeyedObject.
 	 */
 	public Object getValue(KeyedObject o) //throws NoValueException
 	{
@@ -95,7 +94,7 @@ public class ObjectAttribute<T extends KeyedObject> extends Attribute<T> {
 	/** Removes all assigned values of this attribute. */
 	@Override
 	public void clear() {
-		values.removeAll();
+		values.clear();
 	}
 
 	/** Return the attribute of the specified KeyedObject as a String.
@@ -103,7 +102,7 @@ public class ObjectAttribute<T extends KeyedObject> extends Attribute<T> {
 	@Override
 	public String getValueAsString(KeyedObject o) {
 		Object v;
-		if (values.contains(o.key())) {
+		if (values.containsKey(o.key())) {
 			v = getValue(o);
 			if (v != null) {
 				return v.toString();

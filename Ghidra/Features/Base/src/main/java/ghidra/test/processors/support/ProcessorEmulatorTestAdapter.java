@@ -18,8 +18,7 @@ package ghidra.test.processors.support;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
+import java.math.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -72,7 +71,7 @@ import utility.application.ApplicationLayout;
  * contained within the binary repository (e.g., ghidra.bin).
  * <p>
  * Within the pcodetests directory all files and folders which start with the prefix
- * <processor-designator>_pcodetest* will be processed.  All files contained within a matching
+ * {@literal <processor-designator>_pcodetest*} will be processed.  All files contained within a matching
  * subdirectory will be treated as related binaries and imported.  Any *.gzf file will be
  * imported but assumed to be pre-analyzed.  Binary files to be imported and analyzed must
  * utilize the *.out file extension.
@@ -255,8 +254,10 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 			try {
 				// By default, create test output within a directory at the same level as the
 				// development repositories
-				outputRoot =
-					Application.getApplicationRootDirectory().getParentFile().getParentFile().getCanonicalPath();
+				outputRoot = Application.getApplicationRootDirectory()
+						.getParentFile()
+						.getParentFile()
+						.getCanonicalPath();
 			}
 			catch (IOException e) {
 				throw new RuntimeException(e);
@@ -761,15 +762,17 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 
 	private static class FloatFormatter extends DumpFormatter {
 		private final FloatFormat ff;
+		private final int maxWidth;
 
 		FloatFormatter(int elementSize, boolean bigEndian) {
 			super(elementSize, bigEndian);
 			ff = FloatFormatFactory.getFloatFormat(elementSize);
+			maxWidth = ff.round(ff.maxValue).negate().toString().length();
 		}
 
 		@Override
 		int getMaxWidth() {
-			return ff.maxValue.negate().toString().length();
+			return maxWidth;
 		}
 
 		@Override
@@ -779,7 +782,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 						false)
 					: LittleEndianDataConverter.INSTANCE.getBigInteger(bytes, index, elementSize,
 						false);
-			BigDecimal val = ff.getHostFloat(encoding);
+			BigDecimal val = ff.round(ff.getHostFloat(encoding));
 			return val.toString();
 		}
 	}
@@ -873,7 +876,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 		String floatStr = "";
 		if (reg != null && floatRegSet.contains(reg)) {
 			FloatFormat floatFormat = FloatFormatFactory.getFloatFormat(size);
-			BigDecimal hostFloat = floatFormat.getHostFloat(new BigInteger(1, values));
+			BigDecimal hostFloat =
+				floatFormat.round(floatFormat.getHostFloat(new BigInteger(1, values)));
 			floatStr = " (" + hostFloat.toString() + ")";
 		}
 
@@ -1191,7 +1195,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 
 			if (pass < 0 || fail < 0) {
 				failTest(testRunner,
-					"ERROR Invalid pass/fail counts - test may not have run properly or improper TestInfo structure updates occured: pass " +
+					"ERROR Invalid pass/fail counts - test may not have run properly or improper TestInfo structure updates occurred: pass " +
 						pass + " fail " + fail);
 			}
 
@@ -1243,8 +1247,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 
 		}
 		catch (Exception e) {
-			log(testGroup, "Exception occured during test", e);
-			fail("Exception occured during test: " + e.getMessage());
+			log(testGroup, "Exception occurred during test", e);
+			fail("Exception occurred during test: " + e.getMessage());
 		}
 		finally {
 			if (testRunner != null) {
@@ -1390,7 +1394,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 		catch (UsrException e) {
 			if (inDelaySlot) {
 				log(testRunner.getTestGroup(),
-					"Instruction parse error occured in delay-slot at: " +
+					"Instruction parse error occurred in delay-slot at: " +
 						memBuf.getAddress().toString(true));
 			}
 			// parse failed
@@ -1640,8 +1644,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 			if (tReg != null && (offset & 1) == 1) {
 				RegisterValue thumbMode = new RegisterValue(tReg, BigInteger.ONE);
 				try {
-					program.getProgramContext().setRegisterValue(functionAddr, functionAddr,
-						thumbMode);
+					program.getProgramContext()
+							.setRegisterValue(functionAddr, functionAddr, thumbMode);
 				}
 				catch (ContextChangeException e) {
 					throw new AssertException(e);
@@ -1654,8 +1658,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 			if (isaModeReg != null && (offset & 1) == 1) {
 				RegisterValue thumbMode = new RegisterValue(isaModeReg, BigInteger.ONE);
 				try {
-					program.getProgramContext().setRegisterValue(functionAddr, functionAddr,
-						thumbMode);
+					program.getProgramContext()
+							.setRegisterValue(functionAddr, functionAddr, thumbMode);
 				}
 				catch (ContextChangeException e) {
 					throw new AssertException(e);
@@ -1879,8 +1883,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 						GZF_CACHEDIR_NAME + "/" + fileReferencePath + GZF_FILE_EXT; //
 					if (absoluteGzfFilePath.exists()) {
 						program = getGzfProgram(outputDir, gzfCachePath);
-						if (program != null && !MD5Utilities.getMD5Hash(testFile.file).equals(
-							program.getExecutableMD5())) {
+						if (program != null && !MD5Utilities.getMD5Hash(testFile.file)
+								.equals(program.getExecutableMD5())) {
 							// remove obsolete GZF cache file
 							env.release(program);
 							program = null;
@@ -1904,8 +1908,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 								env.getGhidraProject().importProgram(testFile.file, loaderClass);
 						}
 						else {
-							program = env.getGhidraProject().importProgram(testFile.file, language,
-								compilerSpec);
+							program = env.getGhidraProject()
+									.importProgram(testFile.file, language, compilerSpec);
 						}
 						program.addConsumer(this);
 						env.getGhidraProject().close(program);
@@ -1925,8 +1929,9 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 				txId = program.startTransaction("Analyze");
 
 				if (!program.getLanguageID().equals(language.getLanguageID()) ||
-					!program.getCompilerSpec().getCompilerSpecID().equals(
-						compilerSpec.getCompilerSpecID())) {
+					!program.getCompilerSpec()
+							.getCompilerSpecID()
+							.equals(compilerSpec.getCompilerSpecID())) {
 					throw new IOException((usingCachedGZF ? "Cached " : "") +
 						"Program has incorrect language/compiler spec (" + program.getLanguageID() +
 						"/" + program.getCompilerSpec().getCompilerSpecID() + "): " +
@@ -2090,8 +2095,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 				nameAndAddr = StringUtilities.pad(nameAndAddr, ' ', -paddedLen);
 				testFileDigest.append(nameAndAddr);
 				testFileDigest.append(" (GroupInfo @ ");
-				testFileDigest.append(
-					testGroup.controlBlock.getInfoStructureAddress().toString(true));
+				testFileDigest
+						.append(testGroup.controlBlock.getInfoStructureAddress().toString(true));
 				testFileDigest.append(")");
 				if (duplicateTests.contains(testGroup.testGroupName)) {
 					testFileDigest.append(" *DUPLICATE*");
@@ -2167,6 +2172,10 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 	}
 
 	public final void test_BIOPS2() {
+		// stub
+	}
+
+	public final void test_BIOPS4() {
 		// stub
 	}
 

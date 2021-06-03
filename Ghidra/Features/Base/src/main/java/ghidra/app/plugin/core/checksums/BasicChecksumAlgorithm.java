@@ -19,15 +19,13 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.util.MemoryByteIterator;
-import ghidra.util.classfinder.ExtensionPoint;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * This class is used for the computation of various basic checksums.
  */
-@ExtensionPoint.Exclude(reason = "Subclasses will get picked up by extension points.")
-public class BasicChecksumAlgorithm extends ChecksumAlgorithm {
+public abstract class BasicChecksumAlgorithm extends ChecksumAlgorithm {
 
 	/**
 	 * The byte sizes that are supported by the basic checksum algorithm.

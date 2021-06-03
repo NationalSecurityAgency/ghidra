@@ -1,662 +1,469 @@
 #include "pcode_test.h"
 
-TEST unopNotu2_Main()
+TEST u2_complexLogic_Main()
 {
-	extern u2 unopNotu2(u2 lhs);
-	ASSERTU2(unopNotu2(2), 0);
-	ASSERTU2(unopNotu2(U2_MAX), 0);
-	ASSERTU2(unopNotu2(0), 1);
+	extern u2 u2_complexLogic(u2 a, u2 b, u2 c, u2 d, u2 e, u2 f);
+	ASSERTU2(u2_complexLogic(15941, 23971, 41361, 0, 43462, 0), 15);
+	ASSERTU2(u2_complexLogic(52937, 43562, 0, 0, 48661, 51969), 11);
+	ASSERTU2(u2_complexLogic(54831, 59630, 16661, 0, 0, 25991), 14);
+	ASSERTU2(u2_complexLogic(0, 49882, 61260, 0, 8407, 16234), 10);
 }
 
-TEST biopSubu1u1_Main()
+TEST i2_complexLogic_Main()
 {
-	extern u1 biopSubu1u1(u1 lhs, u1 rhs);
-	ASSERTU1(biopSubu1u1(0x01, 0x01), 0);
-	ASSERTU1(biopSubu1u1(U1_MAX, U1_MAX), 0);
-	ASSERTU1(biopSubu1u1(U1_MAX, 0), U1_MAX);
-	ASSERTU1(biopSubu1u1(0, U1_MAX), 1);
+	extern i2 i2_complexLogic(i2 a, i2 b, i2 c, i2 d, i2 e, i2 f);
+	ASSERTI2(i2_complexLogic(0, 46379, (i2) -52108, 0, (i2) -54966, 53127), 11);
+	ASSERTI2(i2_complexLogic((i2) -5607, 26256, 23643, 0, (i2) -21648, 0), 14);
+	ASSERTI2(i2_complexLogic((i2) -19816, 41002, 63272, 0, 4483, 0), 15);
+	ASSERTI2(i2_complexLogic(0, (i2) -25128, 33393, 0, 61486, 53285), 11);
 }
 
-TEST biopGeu1u1_Main()
+TEST u2_compareLogic_Main()
 {
-	extern u1 biopGeu1u1(u1 lhs, u1 rhs);
-	ASSERTU1(biopGeu1u1(0x01, 0x01), 1);
-	ASSERTU1(biopGeu1u1(U1_MAX, U1_MAX), 1);
-	ASSERTU1(biopGeu1u1(U1_MAX, 0), 1);
-	ASSERTU1(biopGeu1u1(0, U1_MAX), 0);
+	extern u2 u2_compareLogic(u2 lhs, u2 rhs);
+	ASSERTU2(u2_compareLogic(0x1, 0x1), 1);
+	ASSERTU2(u2_compareLogic(0x1, 0x2), 23);
+	ASSERTU2(u2_compareLogic(0x2, 0x1), 22);
 }
 
-TEST biopShtRhtu4u4_Main()
+TEST i2_compareLogic_Main()
 {
-	extern u4 biopShtRhtu4u4(u4 lhs, u4 rhs);
-	ASSERTU4(biopShtRhtu4u4(0x01010101, 16), 0x0101);
-	ASSERTU4(biopShtRhtu4u4(2, 1), 1);
-	ASSERTU4(biopShtRhtu4u4(U4_MAX, 4), 268435455);
-	ASSERTU4(biopShtRhtu4u4(U4_MAX, 4*8-1), 1);
-	ASSERTU4(biopShtRhtu4u4(4, 4), 0);
+	extern i2 i2_compareLogic(i2 lhs, i2 rhs);
+	ASSERTI2(i2_compareLogic(0x1, 0x1), 21);
+	ASSERTI2(i2_compareLogic(0x1, 0x2), 21);
+	ASSERTI2(i2_compareLogic(0x2, 0x1), 22);
+	ASSERTI2(i2_compareLogic(-0x1, -0x1), 21);
+	ASSERTI2(i2_compareLogic(-0x1, -0x2), 21);
+	ASSERTI2(i2_compareLogic(-0x2, -0x1), 24);
 }
 
-TEST biopXOri2i2_Main()
+/* Comparison operators */
+TEST u2_greaterThan_Main()
 {
-	extern i2 biopXOri2i2(i2 lhs, i2 rhs);
-	ASSERTI2(biopXOri2i2(2, 1), 3);
-	ASSERTI2(biopXOri2i2(0x0101, 0x0101), 0);
-	ASSERTI2(biopXOri2i2(0x0101, 0x1010), 0x1111);
-	ASSERTI2(biopXOri2i2(I2_MAX, I2_MAX), 0);
-	ASSERTI2(biopXOri2i2(I2_MAX, I2_MIN), -1);
-	ASSERTI2(biopXOri2i2(I2_MAX, 0), 32767);
-	ASSERTI2(biopXOri2i2(I2_MAX, -1), -32768);
+	extern u2 u2_greaterThan(u2 lhs, u2 rhs);
+	ASSERTU2(u2_greaterThan(2, 1), 1);
+	ASSERTU2(u2_greaterThan(U2_MAX, U2_MAX), 0);
+	ASSERTU2(u2_greaterThan(U2_MAX, 0), 1);
+	ASSERTU2(u2_greaterThan(0, U2_MAX), 0);
 }
 
-TEST biopLei2i2_Main()
+TEST u2_greaterThanEquals_Main()
 {
-	extern i2 biopLei2i2(i2 lhs, i2 rhs);
-	ASSERTI2(biopLei2i2(2, 1), 0);
-	ASSERTI2(biopLei2i2(0x0101, 0x0101), 1);
-	ASSERTI2(biopLei2i2(0x0101, 0x0100), 0);
-	ASSERTI2(biopLei2i2(0x0101, -0x0101), 0);
-	ASSERTI2(biopLei2i2(I2_MAX, I2_MAX), 1);
-	ASSERTI2(biopLei2i2(I2_MAX, I2_MIN), 0);
-	ASSERTI2(biopLei2i2(I2_MIN, I2_MAX), 1);
-	ASSERTI2(biopLei2i2(I2_MAX, 0), 0);
+	extern u2 u2_greaterThanEquals(u2 lhs, u2 rhs);
+	ASSERTU2(u2_greaterThanEquals(2, 1), 1);
+	ASSERTU2(u2_greaterThanEquals(U2_MAX, U2_MAX), 1);
+	ASSERTU2(u2_greaterThanEquals(1, 1), 1);
+	ASSERTU2(u2_greaterThanEquals(1, 2), 0);
 }
 
-TEST biopSubi4i4_Main()
+TEST u2_lessThan_Main()
 {
-	extern i4 biopSubi4i4(i4 lhs, i4 rhs);
-	ASSERTI4(biopSubi4i4(2, 1), 1);
-	ASSERTI4(biopSubi4i4(0x01010101, 0x01010101), 0);
-	ASSERTI4(biopSubi4i4(0x01010101, 0x01000100), 0x00010001);
-	ASSERTI4(biopSubi4i4(0x01000100, 0x01010101), -0x00010001);
-	ASSERTI4(biopSubi4i4(I4_MAX, I4_MAX), 0);
-	ASSERTI4(biopSubi4i4(I4_MAX, I4_MIN), -1);
-	ASSERTI4(biopSubi4i4(I4_MAX, 0), 2147483647);
-	ASSERTI4(biopSubi4i4(0, I4_MAX), -2147483647);
+	extern u2 u2_lessThan(u2 lhs, u2 rhs);
+	ASSERTU2(u2_lessThan(2, 1), 0);
+	ASSERTU2(u2_lessThan(2, 1), 0);
+	ASSERTU2(u2_lessThan(U2_MAX, U2_MAX), 0);
+	ASSERTU2(u2_lessThan(0, 0), 0);
+	ASSERTU2(u2_lessThan(1, 2), 1);
 }
 
-TEST biopAddu1u1_Main()
+TEST u2_lessThanEquals_Main()
 {
-	extern u1 biopAddu1u1(u1 lhs, u1 rhs);
-	ASSERTU1(biopAddu1u1(0x01, 0x01), 2);
-	ASSERTU1(biopAddu1u1(U1_MAX, U1_MAX), 254);
-	ASSERTU1(biopAddu1u1(U1_MAX, 0), 255);
-	ASSERTU1(biopAddu1u1(U1_MAX, 1), 0);
+	extern u2 u2_lessThanEquals(u2 lhs, u2 rhs);
+	ASSERTU2(u2_lessThanEquals(2, 1), 0);
+	ASSERTU2(u2_lessThanEquals(U2_MAX, U2_MAX), 1);
+	ASSERTU2(u2_lessThanEquals(U2_MIN, U2_MIN), 1);
+	ASSERTU2(u2_lessThanEquals(1, 2), 1);
 }
 
-TEST biopLtu1u1_Main()
+TEST u2_equals_Main()
 {
-	extern u1 biopLtu1u1(u1 lhs, u1 rhs);
-	ASSERTU1(biopLtu1u1(0x01, 0x01), 0);
-	ASSERTU1(biopLtu1u1(U1_MAX, U1_MAX), 0);
-	ASSERTU1(biopLtu1u1(U1_MAX, 0), 0);
+	extern u2 u2_equals(u2 lhs, u2 rhs);
+	ASSERTU2(u2_equals(2, 1), 0);
+	ASSERTU2(u2_equals(U2_MAX, U2_MAX), 1);
+	ASSERTU2(u2_equals(U2_MIN, U2_MIN), 1);
+	ASSERTU2(u2_equals(0, 0), 1);
 }
 
-TEST biopGtu4u4_Main()
+TEST u2_notEquals_Main()
 {
-	extern u4 biopGtu4u4(u4 lhs, u4 rhs);
-	ASSERTU4(biopGtu4u4(0x01010101, 0x01010101), 0);
-	ASSERTU4(biopGtu4u4(2, 1), 1);
-	ASSERTU4(biopGtu4u4(U4_MAX, U4_MAX), 0);
-	ASSERTU4(biopGtu4u4(U4_MAX, 0), 1);
-	ASSERTU4(biopGtu4u4(0, U4_MAX), 0);
+	extern u2 u2_notEquals(u2 lhs, u2 rhs);
+	ASSERTU2(u2_notEquals(2, 1), 1);
+	ASSERTU2(u2_notEquals(U2_MAX, U2_MAX), 0);
+	ASSERTU2(u2_notEquals(0, 0), 0);
 }
 
-TEST biopLogicOri2i2_Main()
+TEST i2_greaterThan_Main()
 {
-	extern i2 biopLogicOri2i2(i2 lhs, i2 rhs);
-	ASSERTI2(biopLogicOri2i2(0x0101, 0x0101), 1);
-	ASSERTI2(biopLogicOri2i2(2, 1), 1);
-	ASSERTI2(biopLogicOri2i2(I2_MAX, I2_MAX), 1);
-	ASSERTI2(biopLogicOri2i2(I2_MAX, I2_MIN), 1);
-	ASSERTI2(biopLogicOri2i2(I2_MAX, 0), 1);
-	ASSERTI2(biopLogicOri2i2(0, 0), 0);
+	extern i2 i2_greaterThan(i2 lhs, i2 rhs);
+	ASSERTI2(i2_greaterThan(0x0101, 0x0101), 0);
+	ASSERTI2(i2_greaterThan(0x0101, 0x0100), 1);
+	ASSERTI2(i2_greaterThan(0x0101, -0x0101), 1);
+	ASSERTI2(i2_greaterThan(2, 1), 1);
+	ASSERTI2(i2_greaterThan(I1_MAX, I1_MAX), 0);
+	ASSERTI2(i2_greaterThan(I1_MIN, I1_MIN), 0);
+	ASSERTI2(i2_greaterThan(I1_MAX-1, I1_MAX), 0);
+	ASSERTI2(i2_greaterThan(I1_MAX, I1_MAX-1), 1);
 }
 
-TEST biopEqi2i2_Main()
+TEST i2_greaterThanEquals_Main()
 {
-	extern i2 biopEqi2i2(i2 lhs, i2 rhs);
-	ASSERTI2(biopEqi2i2(2, 1), 0);
-	ASSERTI2(biopEqi2i2(0x0101, 0x0101), 1);
-	ASSERTI2(biopEqi2i2(0x0101, 0x0100), 0);
-	ASSERTI2(biopEqi2i2(0x0101, -0x0101), 0);
-	ASSERTI2(biopEqi2i2(I2_MAX, I2_MAX), 1);
-	ASSERTI2(biopEqi2i2(I2_MIN, I2_MIN), 1);
-	ASSERTI2(biopEqi2i2(I2_MAX-1, I2_MAX), 0);
+	extern i2 i2_greaterThanEquals(i2 lhs, i2 rhs);
+	ASSERTI2(i2_greaterThanEquals(2, 1), 1);
+	ASSERTI2(i2_greaterThanEquals(I2_MAX, I2_MAX), 1);
+	ASSERTI2(i2_greaterThanEquals(I2_MIN, I2_MIN), 1);
+	ASSERTI2(i2_greaterThanEquals(I2_MAX, I2_MIN), 1);
+	ASSERTI2(i2_greaterThanEquals(I2_MIN, I2_MAX), 0);
 }
 
-TEST unopPlusu2_Main()
+TEST i2_lessThan_Main()
 {
-	extern u2 unopPlusu2(u2 lhs);
-	ASSERTU2(unopPlusu2(2), 2);
-	ASSERTU2(unopPlusu2(U2_MAX), 65535);
-	ASSERTU2(unopPlusu2(0), 0);
+	extern i2 i2_lessThan(i2 lhs, i2 rhs);
+	ASSERTI2(i2_lessThan(2, 1), 0);
+	ASSERTI2(i2_lessThan(0x0101, 0x0101), 0);
+	ASSERTI2(i2_lessThan(0x0101, -0x0101), 0);
+	ASSERTI2(i2_lessThan(0x0101, -0x0101), 0);
+	ASSERTI2(i2_lessThan(I2_MAX, I2_MAX), 0);
+	ASSERTI2(i2_lessThan(I2_MAX, I2_MIN), 0);
+	ASSERTI2(i2_lessThan(I2_MAX, 0), 0);
+	ASSERTI2(i2_lessThan(0, I2_MAX), 1);
 }
 
-TEST biopAddi4i4_Main()
+TEST i2_lessThanEquals_Main()
 {
-	extern i4 biopAddi4i4(i4 lhs, i4 rhs);
-	ASSERTI4(biopAddi4i4(2, 1), 3);
-	ASSERTI4(biopAddi4i4(0x01010101, 0x01010101), 33686018);
-	ASSERTI4(biopAddi4i4(0x01010101, -0x01010101), 0);
-	ASSERTI4(biopAddi4i4(I4_MAX, I4_MAX), -2);
-	ASSERTI4(biopAddi4i4(I4_MAX, I4_MIN), -1);
-	ASSERTI4(biopAddi4i4(I4_MAX, 0), 2147483647);
-	ASSERTI4(biopAddi4i4(I4_MIN, I4_MIN), 0);
+	extern i2 i2_lessThanEquals(i2 lhs, i2 rhs);
+	ASSERTI2(i2_lessThanEquals(2, 1), 0);
+	ASSERTI2(i2_lessThanEquals(0x0101, 0x0101), 1);
+	ASSERTI2(i2_lessThanEquals(0x0101, 0x0100), 0);
+	ASSERTI2(i2_lessThanEquals(0x0101, -0x0101), 0);
+	ASSERTI2(i2_lessThanEquals(I2_MAX, I2_MAX), 1);
+	ASSERTI2(i2_lessThanEquals(I2_MAX, I2_MIN), 0);
+	ASSERTI2(i2_lessThanEquals(I2_MIN, I2_MAX), 1);
+	ASSERTI2(i2_lessThanEquals(I2_MAX, 0), 0);
 }
 
-TEST biopGeu4u4_Main()
+TEST i2_equals_Main()
 {
-	extern u4 biopGeu4u4(u4 lhs, u4 rhs);
-	ASSERTU4(biopGeu4u4(2, 1), 1);
-	ASSERTU4(biopGeu4u4(U4_MAX, U4_MAX), 1);
-	ASSERTU4(biopGeu4u4(U4_MAX, 0), 1);
-	ASSERTU4(biopGeu4u4(0, U4_MAX), 0);
+	extern i2 i2_equals(i2 lhs, i2 rhs);
+	ASSERTI2(i2_equals(2, 1), 0);
+	ASSERTI2(i2_equals(0x0101, 0x0101), 1);
+	ASSERTI2(i2_equals(0x0101, 0x0100), 0);
+	ASSERTI2(i2_equals(0x0101, -0x0101), 0);
+	ASSERTI2(i2_equals(I2_MAX, I2_MAX), 1);
+	ASSERTI2(i2_equals(I2_MIN, I2_MIN), 1);
+	ASSERTI2(i2_equals(I2_MAX-1, I2_MAX), 0);
 }
 
-TEST biopShtLftu1u1_Main()
+TEST i2_notEquals_Main()
 {
-	extern u1 biopShtLftu1u1(u1 lhs, u1 rhs);
-	ASSERTU1(biopShtLftu1u1(0x01, 2), 0x4);
-	ASSERTU1(biopShtLftu1u1(U1_MAX, 2), 252);
-	ASSERTU1(biopShtLftu1u1(U1_MAX, 8-1), 128);
-	ASSERTU1(biopShtLftu1u1(U1_MAX, 8), 0);
-	ASSERTU1(biopShtLftu1u1(2, 1), 0x4);
+	extern i2 i2_notEquals(i2 lhs, i2 rhs);
+	ASSERTI2(i2_notEquals(2, 1), 1);
+	ASSERTI2(i2_notEquals(0x0101, 0x0101), 0);
+	ASSERTI2(i2_notEquals(0x0101, 0x0100), 1);
+	ASSERTI2(i2_notEquals(0x0101, -0x0101), 1);
+	ASSERTI2(i2_notEquals(I2_MAX, I2_MAX), 0);
+	ASSERTI2(i2_notEquals(I2_MAX, I2_MIN), 1);
+	ASSERTI2(i2_notEquals(I2_MIN, I2_MAX), 1);
 }
 
-TEST biopLeu1u1_Main()
+/* Bitwise operators */
+TEST u2_bitwiseAnd_Main()
 {
-	extern u1 biopLeu1u1(u1 lhs, u1 rhs);
-	ASSERTU1(biopLeu1u1(0x01, 0x01), 1);
-	ASSERTU1(biopLeu1u1(U1_MAX, U1_MAX), 1);
-	ASSERTU1(biopLeu1u1(0, 0), 1);
-	ASSERTU1(biopLeu1u1(U1_MAX, 0), 0);
-	ASSERTU1(biopLeu1u1(0, U1_MAX), 1);
+	extern u2 u2_bitwiseAnd(u2 lhs, u2 rhs);
+	ASSERTU2(u2_bitwiseAnd(2, 1), 0);
+	ASSERTU2(u2_bitwiseAnd(U2_MAX, U2_MAX), 65535);
+	ASSERTU2(u2_bitwiseAnd(U2_MIN, U2_MIN), 0);
+	ASSERTU2(u2_bitwiseAnd(0, U2_MAX), 0);
+	ASSERTU2(u2_bitwiseAnd(0, 0), 0);
 }
 
-TEST biopLogicAndi2i2_Main()
+TEST u2_bitwiseOr_Main()
 {
-	extern i2 biopLogicAndi2i2(i2 lhs, i2 rhs);
-	ASSERTI2(biopLogicAndi2i2(0x0101, 0x0101), 1);
-	ASSERTI2(biopLogicAndi2i2(2, 1), 1);
-	ASSERTI2(biopLogicAndi2i2(0x0101, 0x0101), 1);
-	ASSERTI2(biopLogicAndi2i2(0x0101, 0x0), 0);
-	ASSERTI2(biopLogicAndi2i2(I2_MAX, I2_MAX), 1);
-	ASSERTI2(biopLogicAndi2i2(I2_MIN, I2_MIN), 1);
-	ASSERTI2(biopLogicAndi2i2(I2_MAX, I2_MIN), 1);
-	ASSERTI2(biopLogicAndi2i2(I2_MAX, 0), 0);
+	extern u2 u2_bitwiseOr(u2 lhs, u2 rhs);
+	ASSERTU2(u2_bitwiseOr(2, 1), 3);
+	ASSERTU2(u2_bitwiseOr(U2_MAX, U2_MAX), 65535);
+	ASSERTU2(u2_bitwiseOr(U2_MAX, 0), 65535);
+	ASSERTU2(u2_bitwiseOr(U2_MAX, U2_MAX), 65535);
 }
 
-TEST biopNei2i2_Main()
+TEST u2_bitwiseXor_Main()
 {
-	extern i2 biopNei2i2(i2 lhs, i2 rhs);
-	ASSERTI2(biopNei2i2(2, 1), 1);
-	ASSERTI2(biopNei2i2(0x0101, 0x0101), 0);
-	ASSERTI2(biopNei2i2(0x0101, 0x0100), 1);
-	ASSERTI2(biopNei2i2(0x0101, -0x0101), 1);
-	ASSERTI2(biopNei2i2(I2_MAX, I2_MAX), 0);
-	ASSERTI2(biopNei2i2(I2_MAX, I2_MIN), 1);
-	ASSERTI2(biopNei2i2(I2_MIN, I2_MAX), 1);
+	extern u2 u2_bitwiseXor(u2 lhs, u2 rhs);
+	ASSERTU2(u2_bitwiseXor(2, 1), 3);
+	ASSERTU2(u2_bitwiseXor(U2_MAX, U2_MAX), 0);
+	ASSERTU2(u2_bitwiseXor(0, 0), 0);
+	ASSERTU2(u2_bitwiseXor(0, U2_MAX), 65535);
 }
 
-TEST biopMulti1i1_Main()
+TEST i2_bitwiseAnd_Main()
 {
-	extern i1 biopMulti1i1(i1 lhs, i1 rhs);
-	ASSERTI1(biopMulti1i1(2, 1), 2);
-	ASSERTI1(biopMulti1i1(I1_MAX, I1_MAX), 1);
-	ASSERTI1(biopMulti1i1(I1_MAX, I1_MIN), -128);
-	ASSERTI1(biopMulti1i1(I1_MAX, 0), 0);
+	extern i2 i2_bitwiseAnd(i2 lhs, i2 rhs);
+	ASSERTI2(i2_bitwiseAnd(2, 1), 0);
+	ASSERTI2(i2_bitwiseAnd(0x0101, 0x0101), 0x0101);
+	ASSERTI2(i2_bitwiseAnd(0x0101, 0x1010), 0x0);
+	ASSERTI2(i2_bitwiseAnd(I2_MAX, I2_MAX), 32767);
+	ASSERTI2(i2_bitwiseAnd(I2_MIN, I2_MIN), -32768);
+	ASSERTI2(i2_bitwiseAnd(I2_MAX, I2_MIN), 0);
+	ASSERTI2(i2_bitwiseAnd(I2_MAX, 0), 0x0);
 }
 
-TEST biopShtLfti4i4_Main()
+TEST i2_bitwiseOr_Main()
 {
-	extern i4 biopShtLfti4i4(i4 lhs, i4 rhs);
-	ASSERTI4(biopShtLfti4i4(2, 1), 4);
-	ASSERTI4(biopShtLfti4i4(0x01010101, 16), 0x01010000);
-	ASSERTI4(biopShtLfti4i4(0x01010101, 0), 0x01010101);
-	ASSERTI4(biopShtLfti4i4(I4_MAX, 2), -4);
-	ASSERTI4(biopShtLfti4i4(I4_MAX, 0), 2147483647);
+	extern i2 i2_bitwiseOr(i2 lhs, i2 rhs);
+	ASSERTI2(i2_bitwiseOr(2, 1), 3);
+	ASSERTI2(i2_bitwiseOr(0x0101, 0x0101), 0x0101);
+	ASSERTI2(i2_bitwiseOr(0x0101, 0x1010), 0x1111);
+	ASSERTI2(i2_bitwiseOr(0x0101, 0x0), 0x0101);
+	ASSERTI2(i2_bitwiseOr(I2_MAX, I2_MAX), 32767);
+	ASSERTI2(i2_bitwiseOr(I2_MAX, I2_MIN), -1);
+	ASSERTI2(i2_bitwiseOr(I2_MAX, 0), 32767);
 }
 
-TEST biopLtu4u4_Main()
+TEST i2_bitwiseXor_Main()
 {
-	extern u4 biopLtu4u4(u4 lhs, u4 rhs);
-	ASSERTU4(biopLtu4u4(0x01010101, 0x01010101), 0);
-	ASSERTU4(biopLtu4u4(2, 1), 0);
-	ASSERTU4(biopLtu4u4(U4_MAX, U4_MAX), 0);
-	ASSERTU4(biopLtu4u4(U4_MAX, 0), 0);
-	ASSERTU4(biopLtu4u4(0, U4_MAX), 1);
+	extern i2 i2_bitwiseXor(i2 lhs, i2 rhs);
+	ASSERTI2(i2_bitwiseXor(2, 1), 3);
+	ASSERTI2(i2_bitwiseXor(0x0101, 0x0101), 0);
+	ASSERTI2(i2_bitwiseXor(0x0101, 0x1010), 0x1111);
+	ASSERTI2(i2_bitwiseXor(I2_MAX, I2_MAX), 0);
+	ASSERTI2(i2_bitwiseXor(I2_MAX, I2_MIN), -1);
+	ASSERTI2(i2_bitwiseXor(I2_MAX, 0), 32767);
+	ASSERTI2(i2_bitwiseXor(I2_MAX, -1), -32768);
 }
 
-TEST biopShtRhtu1u1_Main()
+/* Logical operators */
+TEST u2_logicalAnd_Main()
 {
-	extern u1 biopShtRhtu1u1(u1 lhs, u1 rhs);
-	ASSERTU1(biopShtRhtu1u1(0x80, 2), 0x20);
-	ASSERTU1(biopShtRhtu1u1(U1_MAX, 2), 63);
-	ASSERTU1(biopShtRhtu1u1(U1_MAX, 8-1), 1);
-	ASSERTU1(biopShtRhtu1u1(U1_MAX, 8), 0);
+	extern u2 u2_logicalAnd(u2 lhs, u2 rhs);
+	ASSERTU2(u2_logicalAnd(2, 1), 1);
+	ASSERTU2(u2_logicalAnd(I2_MAX, I2_MAX), 1);
+	ASSERTU2(u2_logicalAnd(I2_MIN, I2_MIN), 1);
+	ASSERTU2(u2_logicalAnd(I2_MAX, I2_MIN), 1);
+	ASSERTU2(u2_logicalAnd(I2_MAX, 0), 0);
 }
 
-TEST biopEqu1u1_Main()
+TEST u2_logicalOr_Main()
 {
-	extern u1 biopEqu1u1(u1 lhs, u1 rhs);
-	ASSERTU1(biopEqu1u1(0x01, 0x01), 1);
-	ASSERTU1(biopEqu1u1(U1_MAX, U1_MAX), 1);
-	ASSERTU1(biopEqu1u1(U1_MAX, 0), 0);
-	ASSERTU1(biopEqu1u1(0, U1_MAX), 0);
+	extern u2 u2_logicalOr(u2 lhs, u2 rhs);
+	ASSERTU2(u2_logicalOr(2, 1), 1);
+	ASSERTU2(u2_logicalOr(2, 1), 1);
+	ASSERTU2(u2_logicalOr(U2_MAX, U2_MAX), 1);
+	ASSERTU2(u2_logicalOr(U2_MIN, U2_MIN), 0);
+	ASSERTU2(u2_logicalOr(U2_MAX, U2_MIN), 1);
+	ASSERTU2(u2_logicalOr(U2_MAX, 0), 1);
+	ASSERTU2(u2_logicalOr(0, 0), 0);
 }
 
-TEST unopNoti2_Main()
+TEST u2_logicalNot_Main()
 {
-	extern i2 unopNoti2(i2 lhs);
-	ASSERTI2(unopNoti2(0x0101), 0);
-	ASSERTI2(unopNoti2(2), 0);
-	ASSERTI2(unopNoti2(I2_MAX), 0);
-	ASSERTI2(unopNoti2(I2_MIN), 0);
-	ASSERTI2(unopNoti2(0), 1);
+	extern u2 u2_logicalNot(u2 lhs);
+	ASSERTU2(u2_logicalNot(2), 0);
+	ASSERTU2(u2_logicalNot(U2_MAX), 0);
+	ASSERTU2(u2_logicalNot(0), 1);
 }
 
-TEST biopAndi2i2_Main()
+TEST i2_logicalAnd_Main()
 {
-	extern i2 biopAndi2i2(i2 lhs, i2 rhs);
-	ASSERTI2(biopAndi2i2(2, 1), 0);
-	ASSERTI2(biopAndi2i2(0x0101, 0x0101), 0x0101);
-	ASSERTI2(biopAndi2i2(0x0101, 0x1010), 0x0);
-	ASSERTI2(biopAndi2i2(I2_MAX, I2_MAX), 32767);
-	ASSERTI2(biopAndi2i2(I2_MIN, I2_MIN), -32768);
-	ASSERTI2(biopAndi2i2(I2_MAX, I2_MIN), 0);
-	ASSERTI2(biopAndi2i2(I2_MAX, 0), 0x0);
+	extern i2 i2_logicalAnd(i2 lhs, i2 rhs);
+	ASSERTI2(i2_logicalAnd(0x0101, 0x0101), 1);
+	ASSERTI2(i2_logicalAnd(2, 1), 1);
+	ASSERTI2(i2_logicalAnd(0x0101, 0x0101), 1);
+	ASSERTI2(i2_logicalAnd(0x0101, 0x0), 0);
+	ASSERTI2(i2_logicalAnd(I2_MAX, I2_MAX), 1);
+	ASSERTI2(i2_logicalAnd(I2_MIN, I2_MIN), 1);
+	ASSERTI2(i2_logicalAnd(I2_MAX, I2_MIN), 1);
+	ASSERTI2(i2_logicalAnd(I2_MAX, 0), 0);
 }
 
-TEST biopSubi1i1_Main()
+TEST i2_logicalOr_Main()
 {
-	extern i1 biopSubi1i1(i1 lhs, i1 rhs);
-	ASSERTI1(biopSubi1i1(2, 1), 1);
-	ASSERTI1(biopSubi1i1(I1_MAX, I1_MAX), 0);
-	ASSERTI1(biopSubi1i1(I1_MAX, I1_MIN), -1);
-	ASSERTI1(biopSubi1i1(I1_MIN, I1_MAX), 1);
-	ASSERTI1(biopSubi1i1(I1_MIN, I1_MIN), 0);
-	ASSERTI1(biopSubi1i1(I1_MAX, 0), 127);
-
-}
-
-TEST biopNeu1u1_Main()
-{
-	extern u1 biopNeu1u1(u1 lhs, u1 rhs);
-	ASSERTU1(biopNeu1u1(0x01, 0x01), 0);
-	ASSERTU1(biopNeu1u1(U1_MAX, U1_MAX), 0);
-	ASSERTU1(biopNeu1u1(U1_MAX, 0), 1);
-	ASSERTU1(biopNeu1u1(0, U1_MAX), 1);
-}
-
-TEST biopShtRhti4i4_Main()
-{
-	extern i4 biopShtRhti4i4(i4 lhs, i4 rhs);
-	ASSERTI4(biopShtRhti4i4(2, 1), 1);
-	ASSERTI4(biopShtRhti4i4(0x01010101, 16), 0x0101);
-	ASSERTI4(biopShtRhti4i4(0x01010101, 31), 0x0);
-	ASSERTI4(biopShtRhti4i4(0x01010101, 0), 0x01010101);
-	ASSERTI4(biopShtRhti4i4(I4_MAX, 2), 536870911);
-}
-
-TEST biopLeu4u4_Main()
-{
-	extern u4 biopLeu4u4(u4 lhs, u4 rhs);
-	ASSERTU4(biopLeu4u4(0x01010101, 0x01010101), 1);
-	ASSERTU4(biopLeu4u4(2, 1), 0);
-	ASSERTU4(biopLeu4u4(U4_MAX, U4_MAX), 1);
-	ASSERTU4(biopLeu4u4(U4_MAX, 0), 0);
-	ASSERTU4(biopLeu4u4(0, U4_MAX), 1);
-}
-
-TEST unopNegativei2_Main()
-{
-	extern i2 unopNegativei2(i2 lhs);
-	ASSERTI2(unopNegativei2(0x0101), -0x0101);
-	ASSERTI2(unopNegativei2(-0x0101), 0x0101);
-	ASSERTI2(unopNegativei2(I2_MAX), -32767);
-	ASSERTI2(unopNegativei2(I2_MIN), I2_MIN);
-	ASSERTI2(unopNegativei2(0), 0);
-}
-
-TEST biopGti4i4_Main()
-{
-	extern i4 biopGti4i4(i4 lhs, i4 rhs);
-	ASSERTI4(biopGti4i4(2, 1), 1);
-	ASSERTI4(biopGti4i4(0x01010101, 0x01010101), 0);
-	ASSERTI4(biopGti4i4(0x01000101, 0x01010101), 0);
-	ASSERTI4(biopGti4i4(0x01010101, -0x01010101), 1);
-	ASSERTI4(biopGti4i4(I4_MAX, I4_MAX), 0);
-	ASSERTI4(biopGti4i4(I4_MAX, I4_MIN), 1);
-	ASSERTI4(biopGti4i4(I4_MIN, I4_MAX), 0);
-}
-
-TEST biopAddi1i1_Main()
-{
-	extern i1 biopAddi1i1(i1 lhs, i1 rhs);
-	ASSERTI1(biopAddi1i1(2, 1), 3);
-	ASSERTI1(biopAddi1i1(I1_MAX, I1_MAX), -2);
-	ASSERTI1(biopAddi1i1(I1_MAX, I1_MIN), -1);
-	ASSERTI1(biopAddi1i1(I1_MAX, 0), 127);
-}
-
-TEST biopAndu1u1_Main()
-{
-	extern u1 biopAndu1u1(u1 lhs, u1 rhs);
-	ASSERTU1(biopAndu1u1(0x01, 0x01), 0x01);
-	ASSERTU1(biopAndu1u1(U1_MAX, U1_MAX), 255);
-	ASSERTU1(biopAndu1u1(U1_MAX, 0), 0);
-	ASSERTU1(biopAndu1u1(U1_MAX, 1), 0x01);
-}
-
-TEST biopEqu4u4_Main()
-{
-	extern u4 biopEqu4u4(u4 lhs, u4 rhs);
-	ASSERTU4(biopEqu4u4(0x01010101, 0x01010101), 1);
-	ASSERTU4(biopEqu4u4(2, 1), 0);
-	ASSERTU4(biopEqu4u4(U4_MAX, U4_MAX), 1);
-	ASSERTU4(biopEqu4u4(U4_MAX, 0), 0);
-	ASSERTU4(biopEqu4u4(0, U4_MAX), 0);
-}
-
-TEST unopPlusi2_Main()
-{
-	extern i2 unopPlusi2(i2 lhs);
-	ASSERTI2(unopPlusi2(0x0101), 0x0101);
-	ASSERTI2(unopPlusi2(-0x0101), -0x0101);
-	ASSERTI2(unopPlusi2(2), 2);
-	ASSERTI2(unopPlusi2(I2_MAX), 32767);
-	ASSERTI2(unopPlusi2(I2_MIN), -32768);
-	ASSERTI2(unopPlusi2(0), 0);
-}
-
-TEST biopGei4i4_Main()
-{
-	extern i4 biopGei4i4(i4 lhs, i4 rhs);
-	ASSERTI4(biopGei4i4(2, 1), 1);
-	ASSERTI4(biopGei4i4(-2, 1), 0);
-	ASSERTI4(biopGei4i4(0x01010101, 0x01010100), 1);
-	ASSERTI4(biopGei4i4(I4_MAX, I4_MAX), 1);
-	ASSERTI4(biopGei4i4(I4_MAX, I4_MIN), 1);
-	ASSERTI4(biopGei4i4(I4_MIN, I4_MAX), 0);
-}
-
-TEST biopShtLfti1i1_Main()
-{
-	extern i1 biopShtLfti1i1(i1 lhs, i1 rhs);
-	ASSERTI1(biopShtLfti1i1(2, 1), 4);
-	ASSERTI1(biopShtLfti1i1(I1_MAX, 2), -4);
-	ASSERTI1(biopShtLfti1i1(I1_MIN, 2), 0);
-	ASSERTI1(biopShtLfti1i1(I1_MAX, 0), 127);
-}
-
-TEST biopOru1u1_Main()
-{
-	extern u1 biopOru1u1(u1 lhs, u1 rhs);
-	ASSERTU1(biopOru1u1(0x01, 0x01), 0x01);
-	ASSERTU1(biopOru1u1(U1_MAX, U1_MAX), U1_MAX);
-	ASSERTU1(biopOru1u1(U1_MAX, U1_MIN), 255);
-}
-
-TEST biopNeu4u4_Main()
-{
-	extern u4 biopNeu4u4(u4 lhs, u4 rhs);
-	ASSERTU4(biopNeu4u4(0x01010101, 0x01010101), 0);
-	ASSERTU4(biopNeu4u4(2, 1), 1);
-	ASSERTU4(biopNeu4u4(U4_MAX, U4_MAX), 0);
-	ASSERTU4(biopNeu4u4(U4_MAX, 0), 1);
-	ASSERTU4(biopNeu4u4(0, U4_MAX), 1);
-}
-
-TEST biopMultu2u2_Main()
-{
-	extern u2 biopMultu2u2(u2 lhs, u2 rhs);
-	ASSERTU2(biopMultu2u2(2, 1), 2);
-	ASSERTU2(biopMultu2u2(U2_MAX, U2_MAX), 1);
-	ASSERTU2(biopMultu2u2(U2_MAX, 0), 0);
-	ASSERTU2(biopMultu2u2(U2_MAX, 1), U2_MAX);
-}
-
-TEST biopShtRhti1i1_Main()
-{
-	extern i1 biopShtRhti1i1(i1 lhs, i1 rhs);
-	ASSERTI1(biopShtRhti1i1(2, 1), 1);
-	ASSERTI1(biopShtRhti1i1(I1_MAX, 2), 31);
-	ASSERTI1(biopShtRhti1i1(16, 4), 1);
-}
-
-TEST biopLti4i4_Main()
-{
-	extern i4 biopLti4i4(i4 lhs, i4 rhs);
-	ASSERTI4(biopLti4i4(2, 1), 0);
-	ASSERTI4(biopLti4i4(0x01010101, 0x01010101), 0);
-	ASSERTI4(biopLti4i4(0x01000101, 0x01010101), 1);
-	ASSERTI4(biopLti4i4(0x01010101, -0x01010101), 0);
-}
-
-TEST biopAndu4u4_Main()
-{
-	extern u4 biopAndu4u4(u4 lhs, u4 rhs);
-	ASSERTU4(biopAndu4u4(0x01010101, 0x01010101), 0x01010101);
-	ASSERTU4(biopAndu4u4(2, 1), 0);
-	ASSERTU4(biopAndu4u4(U4_MAX, U4_MAX), -1);
-	ASSERTU4(biopAndu4u4(U4_MAX, U4_MIN), 0);
-	ASSERTU4(biopAndu4u4(U4_MAX, 0), 0);
-}
-
-TEST biopXOru1u1_Main()
-{
-	extern u1 biopXOru1u1(u1 lhs, u1 rhs);
-	ASSERTU1(biopXOru1u1(0x01, 0x01), 0);
-	ASSERTU1(biopXOru1u1(U1_MAX, U1_MAX), 0);
-	ASSERTU1(biopXOru1u1(U1_MAX, 0), 255);
-}
-
-TEST biopSubu2u2_Main()
-{
-	extern u2 biopSubu2u2(u2 lhs, u2 rhs);
-	ASSERTU2(biopSubu2u2(2, 1), 1);
-	ASSERTU2(biopSubu2u2(2, 1), 1);
-	ASSERTU2(biopSubu2u2(U2_MAX, U2_MAX), 0);
-	ASSERTU2(biopSubu2u2(U2_MAX, 0), U2_MAX);
-	ASSERTU2(biopSubu2u2(0, U2_MAX), 1);
-}
-
-TEST biopGti1i1_Main()
-{
-	extern i1 biopGti1i1(i1 lhs, i1 rhs);
-	ASSERTI1(biopGti1i1(2, 1), 1);
-	ASSERTI1(biopGti1i1(I1_MAX, I1_MAX), 0);
-	ASSERTI1(biopGti1i1(I1_MAX, I1_MIN), 1);
-	ASSERTI1(biopGti1i1(I1_MIN, I1_MAX), 0);
-}
-
-TEST biopLei4i4_Main()
-{
-	extern i4 biopLei4i4(i4 lhs, i4 rhs);
-	ASSERTI4(biopLei4i4(2, 1), 0);
-	ASSERTI4(biopLei4i4(0x01010101, 0x01010101), 1);
-	ASSERTI4(biopLei4i4(0x01000101, 0x01010101), 1);
-	ASSERTI4(biopLei4i4(0x01010101, -0x01010101), 0);
-	ASSERTI4(biopLei4i4(I4_MAX, I4_MAX), 1);
-	ASSERTI4(biopLei4i4(I4_MAX, I4_MIN), 0);
-	ASSERTI4(biopLei4i4(I4_MIN, I4_MAX), 1);
-}
-
-TEST biopOru4u4_Main()
-{
-	extern u4 biopOru4u4(u4 lhs, u4 rhs);
-	ASSERTU4(biopOru4u4(0x01010101, 0x01010101), 0x01010101);
-	ASSERTU4(biopOru4u4(2, 1), 3);
-	ASSERTU4(biopOru4u4(U4_MAX, U4_MAX), U4_MAX);
-	ASSERTU4(biopOru4u4(U4_MAX, 0), U4_MAX);
-}
-
-TEST biopLogicOru1u1_Main()
-{
-	extern u1 biopLogicOru1u1(u1 lhs, u1 rhs);
-	ASSERTU1(biopLogicOru1u1(0x01, 0x01), 1);
-	ASSERTU1(biopLogicOru1u1(U1_MAX, U1_MAX), 1);
-	ASSERTU1(biopLogicOru1u1(U1_MAX, 0), 1);
+	extern i2 i2_logicalOr(i2 lhs, i2 rhs);
+	ASSERTI2(i2_logicalOr(0x0101, 0x0101), 1);
+	ASSERTI2(i2_logicalOr(2, 1), 1);
+	ASSERTI2(i2_logicalOr(I2_MAX, I2_MAX), 1);
+	ASSERTI2(i2_logicalOr(I2_MAX, I2_MIN), 1);
+	ASSERTI2(i2_logicalOr(I2_MAX, 0), 1);
+	ASSERTI2(i2_logicalOr(0, 0), 0);
 }
 
-TEST biopAddu2u2_Main()
+TEST i2_logicalNot_Main()
 {
-	extern u2 biopAddu2u2(u2 lhs, u2 rhs);
-	ASSERTU2(biopAddu2u2(2, 1), 3);
-	ASSERTU2(biopAddu2u2(U2_MAX, U2_MAX), 65534);
-	ASSERTU2(biopAddu2u2(U2_MAX, 0), U2_MAX);
+	extern i2 i2_logicalNot(i2 lhs);
+	ASSERTI2(i2_logicalNot(0x0101), 0);
+	ASSERTI2(i2_logicalNot(2), 0);
+	ASSERTI2(i2_logicalNot(I2_MAX), 0);
+	ASSERTI2(i2_logicalNot(I2_MIN), 0);
+	ASSERTI2(i2_logicalNot(0), 1);
 }
 
-TEST biopGei1i1_Main()
+/* Shift operators */
+TEST u2_shiftLeft_Main()
 {
-	extern i1 biopGei1i1(i1 lhs, i1 rhs);
-	ASSERTI1(biopGei1i1(2, 1), 1);
-	ASSERTI1(biopGei1i1(I1_MAX, I1_MAX), 1);
-	ASSERTI1(biopGei1i1(I1_MAX, I1_MIN), 1);
-	ASSERTI1(biopGei1i1(I1_MIN, I1_MAX), 0);
+	extern u2 u2_shiftLeft(u2 lhs, u2 rhs);
+	ASSERTU2(u2_shiftLeft(2, 1), 4);
+	ASSERTU2(u2_shiftLeft(2, 1), 4);
+	ASSERTU2(u2_shiftLeft(U2_MAX, 2), 65532);
+	ASSERTU2(u2_shiftLeft(U2_MAX, 0), 65535);
 }
 
-TEST biopLogicAndu1u1_Main()
+TEST u2_shiftRight_Main()
 {
-	extern u1 biopLogicAndu1u1(u1 lhs, u1 rhs);
-	ASSERTU1(biopLogicAndu1u1(0x01, 0x01), 1);
-	ASSERTU1(biopLogicAndu1u1(U1_MAX, U1_MAX), 1);
-	ASSERTU1(biopLogicAndu1u1(U1_MAX, 0), 0);
-	ASSERTU1(biopLogicAndu1u1(U1_MAX, 1), 1);
+	extern u2 u2_shiftRight(u2 lhs, u2 rhs);
+	ASSERTU2(u2_shiftRight(2, 1), 1);
+	ASSERTU2(u2_shiftRight(U2_MAX, 2), 16383);
+	ASSERTU2(u2_shiftRight(U2_MAX, 0), 65535);
 }
 
-TEST biopEqi4i4_Main()
+TEST i2_shiftLeft_Main()
 {
-	extern i4 biopEqi4i4(i4 lhs, i4 rhs);
-	ASSERTI4(biopEqi4i4(0x01010101, -0x01010101), 0);
-	ASSERTI4(biopEqi4i4(2, 1), 0);
-	ASSERTI4(biopEqi4i4(0x01010101, 0x01010101), 1);
-	ASSERTI4(biopEqi4i4(0x01000101, 0x01010101), 0);
-	ASSERTI4(biopEqi4i4(I4_MAX, I4_MAX), 1);
-	ASSERTI4(biopEqi4i4(I4_MAX, I4_MIN), 0);
-	ASSERTI4(biopEqi4i4(I4_MIN, I4_MAX), 0);
+	extern i2 i2_shiftLeft(i2 lhs, i2 rhs);
+	ASSERTI2(i2_shiftLeft(0x0101, 15), 0x8000);
+	ASSERTI2(i2_shiftLeft(0x0101, 8), 0x100);
+	ASSERTI2(i2_shiftLeft(0x0101, 0), 0x101);
+	ASSERTI2(i2_shiftLeft(2, 1), 4);
+	ASSERTI2(i2_shiftLeft(I2_MAX, 4), -16);
+	ASSERTI2(i2_shiftLeft(I2_MIN, 4), 0);
+	ASSERTI2(i2_shiftLeft(0, 4), 0);
 }
 
-TEST biopXOru4u4_Main()
+TEST i2_shiftRight_Main()
 {
-	extern u4 biopXOru4u4(u4 lhs, u4 rhs);
-	ASSERTU4(biopXOru4u4(0x01010101, 0x01010101), 0);
-	ASSERTU4(biopXOru4u4(2, 1), 3);
-	ASSERTU4(biopXOru4u4(U4_MAX, U4_MAX), 0);
-	ASSERTU4(biopXOru4u4(U4_MAX, U4_MIN), -1);
-	ASSERTU4(biopXOru4u4(U4_MAX, 0), -1);
+	extern i2 i2_shiftRight(i2 lhs, i2 rhs);
+	ASSERTI2(i2_shiftRight(0x7fff, 15), 0x0000);
+	ASSERTI2(i2_shiftRight(0x0101, 8), 0x1);
+	ASSERTI2(i2_shiftRight(0x0101, 0), 0x0101);
+	ASSERTI2(i2_shiftRight(2, 1), 1);
+	ASSERTI2(i2_shiftRight(I2_MAX, 4), 2047);
+	ASSERTI2(i2_shiftRight(I2_MAX, 0), 32767);
+	ASSERTI2(i2_shiftRight(I2_MIN, 4), -2048);
+	ASSERTI2(i2_shiftRight(I2_MIN, 0), -32768);
 }
 
-TEST biopShtLftu2u2_Main()
+/* Arithmetic operators */
+TEST u2_unaryPlus_Main()
 {
-	extern u2 biopShtLftu2u2(u2 lhs, u2 rhs);
-	ASSERTU2(biopShtLftu2u2(2, 1), 4);
-	ASSERTU2(biopShtLftu2u2(2, 1), 4);
-	ASSERTU2(biopShtLftu2u2(U2_MAX, 2), 65532);
-	ASSERTU2(biopShtLftu2u2(U2_MAX, 0), 65535);
+	extern u2 u2_unaryPlus(u2 lhs);
+	ASSERTU2(u2_unaryPlus(2), 2);
+	ASSERTU2(u2_unaryPlus(U2_MAX), 65535);
+	ASSERTU2(u2_unaryPlus(0), 0);
 }
 
-TEST biopNei4i4_Main()
+TEST u2_addition_Main()
 {
-	extern i4 biopNei4i4(i4 lhs, i4 rhs);
-	ASSERTI4(biopNei4i4(0x01010101, 0x01010101), 0);
-	ASSERTI4(biopNei4i4(0x01000101, 0x01010101), 1);
-	ASSERTI4(biopNei4i4(0x01000101, -0x01010101), 1);
-	ASSERTI4(biopNei4i4(2, 1), 1);
-	ASSERTI4(biopNei4i4(I4_MAX, I4_MAX), 0);
-	ASSERTI4(biopNei4i4(I4_MAX, I4_MIN), 1);
-	ASSERTI4(biopNei4i4(I4_MIN, I4_MAX), 1);
+	extern u2 u2_addition(u2 lhs, u2 rhs);
+	ASSERTU2(u2_addition(2, 1), 3);
+	ASSERTU2(u2_addition(U2_MAX, U2_MAX), 65534);
+	ASSERTU2(u2_addition(U2_MAX, 0), U2_MAX);
 }
 
-TEST biopLti1i1_Main()
+TEST u2_subtract_Main()
 {
-	extern i1 biopLti1i1(i1 lhs, i1 rhs);
-	ASSERTI1(biopLti1i1(2, 1), 0);
-	ASSERTI1(biopLti1i1(I1_MAX, I1_MAX), 0);
-	ASSERTI1(biopLti1i1(I1_MAX, I1_MIN), 0);
-	ASSERTI1(biopLti1i1(I1_MIN, I1_MAX), 1);
+	extern u2 u2_subtract(u2 lhs, u2 rhs);
+	ASSERTU2(u2_subtract(2, 1), 1);
+	ASSERTU2(u2_subtract(2, 1), 1);
+	ASSERTU2(u2_subtract(U2_MAX, U2_MAX), 0);
+	ASSERTU2(u2_subtract(U2_MAX, 0), U2_MAX);
+	ASSERTU2(u2_subtract(0, U2_MAX), 1);
 }
 
-TEST unopNotu1_Main()
+TEST u2_multiply_Main()
 {
-	extern u1 unopNotu1(u1 lhs);
-	ASSERTU1(unopNotu1(0x01), 0);
-	ASSERTU1(unopNotu1(U1_MAX), 0);
-	ASSERTU1(unopNotu1(0), 1);
+	extern u2 u2_multiply(u2 lhs, u2 rhs);
+	ASSERTU2(u2_multiply(2, 1), 2);
+	ASSERTU2(u2_multiply(U2_MAX, U2_MAX), 1);
+	ASSERTU2(u2_multiply(U2_MAX, 0), 0);
+	ASSERTU2(u2_multiply(U2_MAX, 1), U2_MAX);
 }
 
-TEST biopLogicOru4u4_Main()
+TEST u2_divide_Main()
 {
-	extern u4 biopLogicOru4u4(u4 lhs, u4 rhs);
-	ASSERTU4(biopLogicOru4u4(0x01010101, 0x01010101), 1);
-	ASSERTU4(biopLogicOru4u4(2, 1), 1);
-	ASSERTU4(biopLogicOru4u4(U4_MAX, U4_MAX), 1);
-	ASSERTU4(biopLogicOru4u4(U4_MAX, U4_MIN), 1);
+	extern i2 u2_divide(i2 lhs, i2 rhs);
+	ASSERTI2(u2_divide(0x0101, 0x0101), 0x1);
+	ASSERTI2(u2_divide(U2_MAX, U2_MAX), 0x1);
 }
 
-TEST biopShtRhtu2u2_Main()
+TEST u2_remainder_Main()
 {
-	extern u2 biopShtRhtu2u2(u2 lhs, u2 rhs);
-	ASSERTU2(biopShtRhtu2u2(2, 1), 1);
-	ASSERTU2(biopShtRhtu2u2(U2_MAX, 2), 16383);
-	ASSERTU2(biopShtRhtu2u2(U2_MAX, 0), 65535);
+	extern u2 u2_remainder(u2 lhs, u2 rhs);
+	ASSERTU2(u2_remainder(0x0101, 0x0101), 0x0);
+	ASSERTU2(u2_remainder(U2_MAX, 1), 0x0);
+	ASSERTU2(u2_remainder(U2_MAX, 2), 1);
+	ASSERTU2(u2_remainder(U2_MAX, U2_MAX), 0x0);
 }
 
-TEST biopDividu1u1_Main()
+TEST i2_unaryMinus_Main()
 {
-	extern i1 biopDividu1u1(u1 lhs, u1 rhs);
-	ASSERTI1(biopDividu1u1(0x01, 0x01), 1);
-	ASSERTI1(biopDividu1u1(U1_MAX, U1_MAX), 1);
-	ASSERTI1(biopDividu1u1(U1_MAX, 1), U1_MAX);
+	extern i2 i2_unaryMinus(i2 lhs);
+	ASSERTI2(i2_unaryMinus(0x0101), -0x0101);
+	ASSERTI2(i2_unaryMinus(-0x0101), 0x0101);
+	ASSERTI2(i2_unaryMinus(I2_MAX), -32767);
+	ASSERTI2(i2_unaryMinus(I2_MIN), I2_MIN);
+	ASSERTI2(i2_unaryMinus(0), 0);
 }
 
-TEST biopDividu2u2_Main()
+TEST i2_unaryPlus_Main()
 {
-	extern i2 biopDividu2u2(i2 lhs, i2 rhs);
-	ASSERTI2(biopDividu2u2(0x0101, 0x0101), 0x1);
-	ASSERTI2(biopDividu2u2(U2_MAX, U2_MAX), 0x1);
+	extern i2 i2_unaryPlus(i2 lhs);
+	ASSERTI2(i2_unaryPlus(0x0101), 0x0101);
+	ASSERTI2(i2_unaryPlus(-0x0101), -0x0101);
+	ASSERTI2(i2_unaryPlus(2), 2);
+	ASSERTI2(i2_unaryPlus(I2_MAX), 32767);
+	ASSERTI2(i2_unaryPlus(I2_MIN), -32768);
+	ASSERTI2(i2_unaryPlus(0), 0);
 }
 
-TEST biopDividu4u4_Main()
+TEST i2_addition_Main()
 {
-	extern u4 biopDividu4u4(u4 lhs, u4 rhs);
-	ASSERTU4(biopDividu4u4(0x01010101, 0x01010101), 1);
-	ASSERTU4(biopDividu4u4(-0x01010101, 0x01010101), 254);
-	ASSERTU4(biopDividu4u4(0, 0x01010101), 0);
-	ASSERTU4(biopDividu4u4(0x01010101, 2), 0x808080);
-	ASSERTU4(biopDividu4u4(U4_MAX, U4_MAX), 1);
-	ASSERTU4(biopDividu4u4(U4_MAX, 1), U4_MAX);
+	extern i2 i2_addition(i2 lhs, i2 rhs);
+	ASSERTI2(i2_addition(0x0101, 0x0101), 514);
+	ASSERTI2(i2_addition(0x0101, -0x0101), 0);
+	ASSERTI2(i2_addition(2, 1), 3);
+	ASSERTI2(i2_addition(I2_MAX, I2_MAX), -2);
+	ASSERTI2(i2_addition(I2_MIN, I2_MIN), 0);
+	ASSERTI2(i2_addition(0, 0), 0);
 }
 
-TEST biopRemainderu1u1_Main()
+TEST i2_subtract_Main()
 {
-	extern u1 biopRemainderu1u1(u1 lhs, u1 rhs);
-	ASSERTU1(biopRemainderu1u1(0x01, 0x01), 0);
-	ASSERTU1(biopRemainderu1u1(U1_MAX, U1_MAX), 0);
-	ASSERTU1(biopRemainderu1u1(0, I1_MIN), 0);
+	extern i2 i2_subtract(i2 lhs, i2 rhs);
+	ASSERTI2(i2_subtract(0x0101, 0x0100), 0x1);
+	ASSERTI2(i2_subtract(0x0100, 0x0101), -0x1);
+	ASSERTI2(i2_subtract(0x0101, 0x0101), 0);
+	ASSERTI2(i2_subtract(2, 1), 1);
+	ASSERTI2(i2_subtract(I2_MAX, I2_MAX), 0);
+	ASSERTI2(i2_subtract(I2_MIN, I2_MIN), 0);
+	ASSERTI2(i2_subtract(I2_MAX, 0), I2_MAX);
+	ASSERTI2(i2_subtract(0, 0), 0);
 }
 
-TEST biopRemainderu2u2_Main()
+TEST i2_multiply_Main()
 {
-	extern u2 biopRemainderu2u2(u2 lhs, u2 rhs);
-	ASSERTU2(biopRemainderu2u2(0x0101, 0x0101), 0x0);
-	ASSERTU2(biopRemainderu2u2(U2_MAX, 1), 0x0);
-	ASSERTU2(biopRemainderu2u2(U2_MAX, 2), 1);
-	ASSERTU2(biopRemainderu2u2(U2_MAX, U2_MAX), 0x0);
+	extern i2 i2_multiply(i2 lhs, i2 rhs);
+	ASSERTI2(i2_multiply(0x0101, 0x0101), 0x201);
+	ASSERTI2(i2_multiply(0x0101, -0x0101), -513);
+	ASSERTI2(i2_multiply(0, -0x0101), 0);
+	ASSERTI2(i2_multiply(2, 1), 2);
+	ASSERTI2(i2_multiply(I2_MAX, I2_MAX), 1);
+	ASSERTI2(i2_multiply(I2_MIN, I2_MIN), 0);
+	ASSERTI2(i2_multiply(1, I2_MIN), I2_MIN);
+	ASSERTI2(i2_multiply(-1, I2_MIN), -I2_MIN);
 }
 
-TEST biopRemainderu4u4_Main()
+TEST i2_divide_Main()
 {
-	extern u4 biopRemainderu4u4(u4 lhs, u4 rhs);
-	ASSERTU4(biopRemainderu4u4(0x01010101, 0x01010101), 0);
-	ASSERTU4(biopRemainderu4u4(U4_MAX, U4_MAX), 0);
-	ASSERTU4(biopRemainderu4u4(I4_MIN, I4_MIN), 0);
-	ASSERTU4(biopRemainderu4u4(~1000, ~10), 4294966295);
-	ASSERTU4(biopRemainderu4u4(0, U4_MAX), 0);
+	extern i2 i2_divide(i2 lhs, i2 rhs);
+	ASSERTI2(i2_divide(0x0101, 0x0101), 0x1);
+	ASSERTI2(i2_divide(I2_MAX, I2_MAX), 0x1);
+	ASSERTI2(i2_divide(I2_MIN, I2_MIN), 0x1);
 }
 
-MAIN BIOPS2_main()
+TEST i2_remainder_Main()
 {
+	extern i2 i2_remainder(i2 lhs, i2 rhs);
+	ASSERTI2(i2_remainder(0x0101, 0x0101), 0x0);
+	ASSERTI2(i2_remainder(I2_MAX, I2_MAX), 0x0);
+	ASSERTI2(i2_remainder(I2_MIN, I2_MIN), 0x0);
+	ASSERTI2(i2_remainder(0, I2_MIN), 0x0);
 }
 
+MAIN BIOPS2_main(){ }
 

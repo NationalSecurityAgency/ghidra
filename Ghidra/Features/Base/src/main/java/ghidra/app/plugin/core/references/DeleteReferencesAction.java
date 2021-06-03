@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.references;
 
 import java.awt.event.KeyEvent;
 
-import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.app.cmd.refs.RemoveAllReferencesCmd;
@@ -116,10 +115,4 @@ public class DeleteReferencesAction extends ListingContextAction {
 		}
 		return actionOK;
 	}
-
-	@Override
-	public boolean isValidGlobalContext(ActionContext globalContext) {
-		return false;  // only work on active provider context.
-	}
-
 }

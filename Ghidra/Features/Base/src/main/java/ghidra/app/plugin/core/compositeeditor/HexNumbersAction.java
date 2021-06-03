@@ -28,16 +28,15 @@ import docking.menu.DockingCheckboxMenuItemUI;
  */
 public class HexNumbersAction extends CompositeEditorTableAction implements ToggleDockingActionIf {
 
-	private final static String ACTION_NAME = "Show Numbers In Hex";
+	public final static String ACTION_NAME = "Show Numbers In Hex";
 	private final static String GROUP_NAME = DATA_ACTION_GROUP;
-	private final static String defaultDescription = "Show Numbers in Hexadecimal";
-	private static String[] defaultPath = new String[] { defaultDescription };
+	private final static String DESCRIPTION = "Show Numbers in Hexadecimal";
+	private static String[] PATH = new String[] { DESCRIPTION };
 	private boolean isSelected;
 
 	public HexNumbersAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, defaultPath, defaultPath,
-			null);
-		setDescription(defaultDescription);
+		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, PATH, PATH, null);
+		setDescription(DESCRIPTION);
 		setEnabled(true);
 		setSelected(model.isShowingNumbersInHex());
 	}
@@ -59,6 +58,9 @@ public class HexNumbersAction extends CompositeEditorTableAction implements Togg
 
 	@Override
 	public void setSelected(boolean newValue) {
+		if (isSelected == newValue) {
+			return;
+		}
 		isSelected = newValue;
 		firePropertyChanged(SELECTED_STATE_PROPERTY, !isSelected, isSelected);
 	}

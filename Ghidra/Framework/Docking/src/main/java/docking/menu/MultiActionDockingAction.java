@@ -75,8 +75,8 @@ public abstract class MultiActionDockingAction extends DockingAction
 	}
 
 	/**
-	 * By default a click on this action will trigger <tt>actionPerformed()</tt> to be called.
-	 * You can call this method to disable that feature.  When called with <tt>false</tt>, this
+	 * By default a click on this action will trigger <code>actionPerformed()</code> to be called.
+	 * You can call this method to disable that feature.  When called with <code>false</code>, this
 	 * method will effectively let the user click anywhere on the button or its drop-down arrow
 	 * to show the popup menu.  During normal operation, the user can only show the popup by
 	 * clicking the drop-down arrow.

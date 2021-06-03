@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +18,15 @@ package ghidra.framework.options;
 public interface CustomOption {
 
 	/**
+	 * <code>SaveState</code> key which corresponds to custom option
+	 * implementation class.  The use of this key/value within the stored
+	 * state information is reserved for use by the option storage 
+	 * implementation and should be ignored by {@link #readState(SaveState)}
+	 * implementation
+	 */
+	public final String CUSTOM_OPTION_CLASS_NAME_KEY = "CUSTOM_OPTION_CLASS";
+
+	/**
 	 * Concrete subclass of WrappedOption should read all of its
 	 * state from the given saveState object.
 	 * @param saveState container of state information
@@ -31,5 +39,15 @@ public interface CustomOption {
 	 * @param saveState container of state information
 	 */
 	public void writeState(SaveState saveState);
+
+	/**
+	 * CustomOption should implement this method to provide a formatted 
+	 * string value of this option value.  The returned value will 
+	 * be used in support of the {@link Options#getValueAsString(String)}
+	 * and {@link Options#getDefaultValueAsString(String)}.
+	 * @return option value as string
+	 */
+	@Override
+	public String toString();
 
 }

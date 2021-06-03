@@ -20,13 +20,9 @@ import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.data.DataType;
 
 /**
- * Data Creation service.
- *
- * NOTE: This version is dependant on the currentProgram of the implementing
- * plugin class. If you want a version that is not dependant on it, please use
- * DataCreationService
+ * Service for creating data
  */
-@ServiceInfo(description = "Data creation service.")
+@ServiceInfo(description = "Data creation service")
 public interface DataService {
 
 	/**
@@ -34,7 +30,7 @@ public interface DataService {
 	 * location is contained within the current program selection, the entire
 	 * selection is examined.
 	 *
-	 * @param programActionContext contains program, location, and selection information
+	 * @param context the context containing program, location, and selection information
 	 * @return true if create data is allowed, else false.
 	 */
 	public boolean isCreateDataAllowed(ListingActionContext context);
@@ -42,13 +38,12 @@ public interface DataService {
 	/**
 	 * Apply the given data type at a location.
 	 *
-	 * @param dt
-	 *            dataType to create at the location
-	 * @param location
-	 *            program location to create the data type
-	 * @param enableConflictHandling
-	 * 				if true, the service may prompt the user to resolve data conflicts
+	 * @param dt data type to create at the location
+	 * @param context the context containing program, location, and selection information
+	 * @param enableConflictHandling if true, the service may prompt the user to resolve data 
+	 *        conflicts
 	 * @return true if the data could be created at the current location
 	 */
-	public boolean createData(DataType dt, ListingActionContext context, boolean enableConflictHandling);
+	public boolean createData(DataType dt, ListingActionContext context,
+			boolean enableConflictHandling);
 }

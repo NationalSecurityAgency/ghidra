@@ -53,31 +53,6 @@
     class files in that directory will be used (not jar files within that directory).   
     If the path is a jar file, then classes within the jar file will be used.
     </P>
-    
-    <P>
-    The <I>User Plugin Jar Directory</I> shows the directory that contains jar files to 
-    search. 
-
-	<P>
-    	<IMG SRC="images/note.png" />
-    	In addition to the above, Ghidra also searches in the installation directory, in the
-    	<code>&lt;home&gt;/.ghidra/.ghidra-&lt;version&gt;/plugins</code> directory, if it exists.
-    </P>
-
-
-	<P>
-	The directories noted above, as well as any found jar files, are added to Ghidra's 
-	classpath.   The search order of these paths is:<A name="SearchOrder"></A></P>
-	</P>
-    <BLOCKQUOTE>
-      <OL>
-        <LI>Jar files in <I>User Plugin Jar Directory</I> (Plugin Path preference)</LI>
-
-        <LI>Jar files in the Ghidra <code>plugins</code> installation directory</LI>
-
-        <LI><I>User Plugin Paths</I> from the Plugin Paths preference</LI>
-      </OL>
-    </BLOCKQUOTE>
 
 	<H2>Editing Plugin Paths</H2>
 	
@@ -140,29 +115,6 @@
 	      <P><IMG src="../../shared/note.png" border="0">The search order is
 	      important when you have different versions of a plugin in different jar files. The first
 	      class that is loaded is the one that you will be using when you run Ghidra.&nbsp;</P>
-	    </BLOCKQUOTE>
-	
-	    <H3>Set the User Plugin Jar Directory</H3>
-	
-	    <UL>
-	      <LI>To set the User Plugin Jar Directory,</LI>
-	    </UL>
-	
-	    <BLOCKQUOTE>
-	      <OL>
-	        <LI>Enter the absolute directory path in the <I>User Plugin Jar Directory</I> field, OR
-	        click on the <B>...</B> button to choose a directory from the file system.</LI>
-	
-	        <LI>
-	          Select the <B>Apply or OK</B> button<B>.</B> 
-	
-	          <UL>
-	            <LI><B>Apply</B> applies the changes and leaves the dialog up.</LI>
-	
-	            <LI><B>OK</B> applies the changes and dismisses the dialog.&nbsp;</LI>
-	          </UL>
-	        </LI>
-	      </OL>
 	    </BLOCKQUOTE>
 	
 	    <H3>Remove Paths</H3>

@@ -15,13 +15,13 @@
  */
 package ghidra.program.model.address;
 
-import ghidra.util.UniversalIdGenerator;
-
 import java.util.*;
+
+import ghidra.util.UniversalIdGenerator;
 
 /**
  * <code>AddressMapImpl</code> provides a stand-alone AddressMap.
- * An AddressMapimpl instance should only be used to decode keys which it has generated.
+ * An AddressMapImpl instance should only be used to decode keys which it has generated.
  * If this map is used for a specific program instance, the map should be discard if any changes 
  * are made to that programs address map (e.g., removing or renaming overlay spaces).
  */
@@ -79,7 +79,8 @@ public class AddressMapImpl {
 			max = max < 0 ? MAX_OFFSET : Math.min(max, MAX_OFFSET);
 			// Avoid use of add which fails for overlay addresses which have restricted min/max offsets
 			long off = sortedBaseStartAddrs[i].getOffset() | max;
-			sortedBaseEndAddrs[i] = sortedBaseStartAddrs[i].getAddressSpace().getAddressInThisSpaceOnly(off);
+			sortedBaseEndAddrs[i] =
+				sortedBaseStartAddrs[i].getAddressSpace().getAddressInThisSpaceOnly(off);
 		}
 		addrToIndexMap.clear();
 		for (int i = 0; i < baseAddrs.length; i++) {
@@ -94,6 +95,7 @@ public class AddressMapImpl {
 	 * start of a key range.
 	 */
 	private Comparator<Object> addressInsertionKeyRangeComparator = new Comparator<Object>() {
+		@Override
 		public int compare(Object keyRangeObj, Object addrObj) {
 			KeyRange range = (KeyRange) keyRangeObj;
 			Address addr = (Address) addrObj;
@@ -158,7 +160,7 @@ public class AddressMapImpl {
 	}
 
 	void checkAddressSpace(AddressSpace addrSpace) {
-		String name = addrSpace.getName().toUpperCase();
+		String name = addrSpace.getName();
 		AddressSpace existingSpace = spaceMap.get(name);
 		if (existingSpace == null) {
 			spaceMap.put(name, addrSpace);
@@ -169,7 +171,7 @@ public class AddressMapImpl {
 	}
 
 	/**
-	 * @see ghidra.program.model.address.AddressMap#decodeAddress(long)
+	 * @see ghidra.program.database.map.AddressMap#decodeAddress(long)
 	 */
 	public synchronized Address decodeAddress(long value) {
 		if ((value & MAP_ID_MASK) != mapIdBits) {
@@ -192,7 +194,7 @@ public class AddressMapImpl {
 	 * single program should be passed to this method. Only limited checking is not performed in order to 
 	 * improve performance.
 	 * @param addr address
-	 * @see ghidra.program.model.address.AddressMap#getKey(ghidra.program.model.address.Address)
+	 * @see ghidra.program.database.map.AddressMap#getKey(Address, boolean)
 	 */
 	public synchronized long getKey(Address addr) {
 		return mapIdBits | ((long) getBaseAddressIndex(addr) << ADDR_OFFSET_SIZE) |
@@ -200,7 +202,7 @@ public class AddressMapImpl {
 	}
 
 	/**
-	 * @see ghidra.program.model.address.AddressMap#findKeyRange(java.util.List, ghidra.program.model.address.Address)
+	 * @see ghidra.program.database.map.AddressMap#findKeyRange(List, Address)
 	 */
 	public int findKeyRange(List<KeyRange> keyRangeList, Address addr) {
 		if (addr == null) {
@@ -210,10 +212,11 @@ public class AddressMapImpl {
 	}
 
 	/**
-	 * @see ghidra.program.model.address.AddressMap#getKeyRanges(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
+	 * @see ghidra.program.database.map.AddressMap#getKeyRanges(Address, Address, boolean)
 	 */
 	public List<KeyRange> getKeyRanges(Address start, Address end) {
-		if (start.getAddressSpace() != end.getAddressSpace() || start.getOffset() > end.getOffset()) {
+		if (start.getAddressSpace() != end.getAddressSpace() ||
+			start.getOffset() > end.getOffset()) {
 			throw new IllegalArgumentException();
 		}
 		ArrayList<KeyRange> keyRangeList = new ArrayList<KeyRange>();
@@ -222,15 +225,15 @@ public class AddressMapImpl {
 	}
 
 	/**
-	 * @see ghidra.program.model.address.AddressMap#getKeyRanges(ghidra.program.model.address.AddressSetView)
+	 * @see ghidra.program.database.map.AddressMap#getKeyRanges(AddressSetView, boolean)
 	 */
 	public synchronized List<KeyRange> getKeyRanges(AddressSetView set) {
 
 		ArrayList<KeyRange> keyRangeList = new ArrayList<KeyRange>();
 		if (set == null) {
 			for (int i = 0; i < sortedBaseStartAddrs.length; i++) {
-				keyRangeList.add(new KeyRange(getKey(sortedBaseStartAddrs[i]),
-					getKey(sortedBaseEndAddrs[i])));
+				keyRangeList.add(
+					new KeyRange(getKey(sortedBaseStartAddrs[i]), getKey(sortedBaseEndAddrs[i])));
 			}
 		}
 		else {
@@ -245,10 +248,12 @@ public class AddressMapImpl {
 
 	private void addKeyRanges(List<KeyRange> keyRangeList, Address start, Address end) {
 		int index = Arrays.binarySearch(sortedBaseStartAddrs, start);
-		if (index < 0)
+		if (index < 0) {
 			index = -index - 2;
-		if (index < 0)
+		}
+		if (index < 0) {
 			index++;
+		}
 		while (index < sortedBaseStartAddrs.length &&
 			end.compareTo(sortedBaseStartAddrs[index]) >= 0) {
 			Address addr1 = max(start, sortedBaseStartAddrs[index]);
@@ -309,7 +314,7 @@ public class AddressMapImpl {
 		}
 
 		for (AddressSpace space : remapSpaces.values()) {
-			spaceMap.put(space.getName().toUpperCase(), space);
+			spaceMap.put(space.getName(), space);
 		}
 
 		for (int i = 0; i < baseAddrs.length; i++) {

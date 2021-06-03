@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +22,6 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.util.ProgramSelection;
 
-import java.util.Set;
-
 public abstract class PreviousRangeAction extends NavigatableContextAction {
 
 	private PluginTool tool;
@@ -36,16 +33,7 @@ public abstract class PreviousRangeAction extends NavigatableContextAction {
 		this.tool = tool;
 		this.navOptions = navOptions;
 		setEnabled(false);
-	}
-
-	@Override
-	protected boolean isValidContext(NavigatableActionContext context) {
-		//
-		// We want the nav actions to work in the current view that supports this, which right 
-		// now is the ListingActionContext.  If the current context does not support that, then 
-		// we will be called later with the global context, which does support navigation.
-		//
-		return context instanceof ListingActionContext;
+		addToWindowWhen(NavigatableActionContext.class);
 	}
 
 	@Override
@@ -58,9 +46,8 @@ public abstract class PreviousRangeAction extends NavigatableContextAction {
 	}
 
 	private Address getGoToAddress(NavigatableActionContext context) {
-		ListingActionContext listingContext = (ListingActionContext) context;
-		ProgramSelection selection = getSelection(listingContext);
-		Address currentAddress = listingContext.getAddress();
+		ProgramSelection selection = getSelection(context);
+		Address currentAddress = context.getAddress();
 
 		AddressRangeIterator it = selection.getAddressRanges(currentAddress, false);
 		if (!it.hasNext()) {
@@ -94,8 +81,7 @@ public abstract class PreviousRangeAction extends NavigatableContextAction {
 	@Override
 	public boolean isEnabledForContext(NavigatableActionContext context) {
 		Address currentAddress = context.getAddress();
-		ListingActionContext listingContext = (ListingActionContext) context;
-		ProgramSelection selection = getSelection(listingContext);
+		ProgramSelection selection = getSelection(context);
 		if (selection == null || selection.isEmpty() || currentAddress == null) {
 			return false;
 		}
@@ -104,14 +90,4 @@ public abstract class PreviousRangeAction extends NavigatableContextAction {
 	}
 
 	abstract protected ProgramSelection getSelection(ProgramLocationActionContext context);
-
-	@Override
-	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-		for (Class<?> class1 : contextTypes) {
-			if (NavigatableRangeActionContext.class.isAssignableFrom(class1)) {
-				return true;
-			}
-		}
-		return false;
-	}
 }

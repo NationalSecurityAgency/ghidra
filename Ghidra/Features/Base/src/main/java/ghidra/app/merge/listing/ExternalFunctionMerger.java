@@ -36,7 +36,8 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.util.*;
-import ghidra.util.datastruct.*;
+import ghidra.util.datastruct.LongLongHashtable;
+import ghidra.util.datastruct.ObjectIntHashtable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -191,14 +192,8 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 	/**
 	 * Manages changes and conflicts for externals between the latest versioned
 	 * program and the modified program being checked into version control.
-	 * @param mergeManager the top level merge manager for merging a program version.
-	 * @param resultPgm the program to be updated with the result of the merge.
-	 * This is the program that will actually get checked in.
-	 * @param originalPgm the program that was checked out.
-	 * @param latestPgm the latest checked-in version of the program.
-	 * @param myPgm the program requesting to be checked in.
-	 * @param latestChanges the address set of changes between original and latest versioned program.
-	 * @param myChanges the address set of changes between original and my modified program.
+	 * @param listingMergeManager the top level merge manager for merging a program version.
+	 * @param showListingPanel true to show the listing panel.
 	 */
 	public ExternalFunctionMerger(ListingMergeManager listingMergeManager,
 			boolean showListingPanel) {
@@ -460,11 +455,11 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			throws ProgramConflictException, MemoryAccessException, CancelledException {
 
 		if (mergeManager != null) {
-			latestResolvedDts = (LongObjectHashtable<DataType>) mergeManager.getResolveInformation(
+			latestResolvedDts = (Map<Long, DataType>) mergeManager.getResolveInformation(
 				MergeConstants.RESOLVED_LATEST_DTS);
-			myResolvedDts = (LongObjectHashtable<DataType>) mergeManager.getResolveInformation(
+			myResolvedDts = (Map<Long, DataType>) mergeManager.getResolveInformation(
 				MergeConstants.RESOLVED_MY_DTS);
-			origResolvedDts = (LongObjectHashtable<DataType>) mergeManager.getResolveInformation(
+			origResolvedDts = (Map<Long, DataType>) mergeManager.getResolveInformation(
 				MergeConstants.RESOLVED_ORIGINAL_DTS);
 
 			latestResolvedSymbols = (LongLongHashtable) mergeManager.getResolveInformation(
@@ -1822,8 +1817,9 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		}
 		if (originalImportedName != null) {
 			try {
-				resultExternalLocation.getSymbol().setNameAndNamespace(externalLocation.getLabel(),
-					resolvedNamespace, externalLocation.getSource());
+				resultExternalLocation.getSymbol()
+						.setNameAndNamespace(externalLocation.getLabel(),
+							resolvedNamespace, externalLocation.getSource());
 			}
 			catch (CircularDependencyException e) {
 				throw new AssertException(e);
@@ -2147,13 +2143,15 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 				}
 				// If we have a function variable storage choice then a "Use For All" has already occurred.
 				if (variableStorageChoice != ASK_USER) {
-					for (Pair<List<Variable>, List<Variable>> pair : variableStorageConflicts.getOverlappingVariables()) {
+					for (Pair<List<Variable>, List<Variable>> pair : variableStorageConflicts
+							.getOverlappingVariables()) {
 						monitor.checkCanceled();
 						mergeVariableStorage(functions, pair, variableStorageChoice, monitor);
 					}
 				}
 				else if (askUser && mergeManager != null) {
-					for (Pair<List<Variable>, List<Variable>> pair : variableStorageConflicts.getOverlappingVariables()) {
+					for (Pair<List<Variable>, List<Variable>> pair : variableStorageConflicts
+							.getOverlappingVariables()) {
 						monitor.checkCanceled();
 						boolean useForAll = (variableStorageChoice != ASK_USER);
 						if (useForAll) {
@@ -2170,7 +2168,8 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 					}
 				}
 				else {
-					for (Pair<List<Variable>, List<Variable>> pair : variableStorageConflicts.getOverlappingVariables()) {
+					for (Pair<List<Variable>, List<Variable>> pair : variableStorageConflicts
+							.getOverlappingVariables()) {
 						monitor.checkCanceled();
 						mergeVariableStorage(functions, pair, currentConflictOption, monitor);
 					}

@@ -163,16 +163,18 @@
 
 :rfci				is $(NOTVLE) & OP=19 & BITS_21_25=0 & BITS_16_20=0 & BITS_11_15=0 & XOP_1_10=51 & BIT_0=0
 {
-	returnFromCriticalInterrupt();
-	return[SRR0]; 
+	MSR = returnFromCriticalInterrupt(MSR, CSRR1);
+	local ra = CSRR0;
+	return[ra];
 
 }
 
 #rfi	0x4c 00 00 64 
 :rfi		is $(NOTVLE) & OP=19 & BITS_11_25=0 & XOP_1_10=50 & BIT_0=0	
 { 
-	returnFromInterrupt();  
-	return[SRR0]; 
+	MSR = returnFromInterrupt(MSR, SRR1);
+	local ra = SRR0;
+	return[ra];
 }
 
 

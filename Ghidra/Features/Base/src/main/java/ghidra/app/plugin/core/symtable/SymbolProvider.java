@@ -74,17 +74,13 @@ class SymbolProvider extends ComponentProviderAdapter {
 		if (program == null) {
 			return null;
 		}
-		List<SymbolRowObject> rowObjects = symbolPanel.getSelectedSymbolKeys();
-		long[] symbolIDs = new long[rowObjects.size()];
-		int index = 0;
-		for (SymbolRowObject obj : rowObjects) {
-			symbolIDs[index++] = obj.getKey();
-		}
-		return new ProgramSymbolActionContext(this, program, symbolIDs, getTable());
+
+		List<Symbol> symbols = symbolPanel.getSelectedSymbols();
+		return new ProgramSymbolActionContext(this, program, symbols, getTable());
 	}
 
 	void deleteSymbols() {
-		List<SymbolRowObject> rowObjects = symbolPanel.getSelectedSymbolKeys();
+		List<Symbol> rowObjects = symbolPanel.getSelectedSymbols();
 		symbolKeyModel.delete(rowObjects);
 	}
 
@@ -93,11 +89,15 @@ class SymbolProvider extends ComponentProviderAdapter {
 	}
 
 	Symbol getCurrentSymbol() {
-		List<SymbolRowObject> rowObjects = symbolPanel.getSelectedSymbolKeys();
+		List<Symbol> rowObjects = symbolPanel.getSelectedSymbols();
 		if (rowObjects != null && rowObjects.size() >= 1) {
-			return symbolKeyModel.getSymbol(rowObjects.get(0).getKey());
+			return rowObjects.get(0);
 		}
 		return null;
+	}
+
+	Symbol getSymbolForRow(int row) {
+		return symbolKeyModel.getRowObject(row);
 	}
 
 	void setCurrentSymbol(Symbol symbol) {
@@ -126,9 +126,9 @@ class SymbolProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	void symbolRemoved(long symbolID) {
+	void symbolRemoved(Symbol s) {
 		if (isVisible()) {
-			symbolKeyModel.symbolRemoved(symbolID);
+			symbolKeyModel.symbolRemoved(s);
 		}
 	}
 
@@ -149,8 +149,12 @@ class SymbolProvider extends ComponentProviderAdapter {
 		return symbolPanel.getTable();
 	}
 
-	NewSymbolFilter getFilter() {
+	SymbolFilter getFilter() {
 		return symbolPanel.getFilter();
+	}
+
+	boolean isShowingDynamicSymbols() {
+		return getFilter().acceptsDefaultLabelSymbols();
 	}
 
 	private String generateSubTitle() {
@@ -174,11 +178,15 @@ class SymbolProvider extends ComponentProviderAdapter {
 		}
 	}
 
+	boolean isBusy() {
+		return symbolKeyModel.isBusy();
+	}
+
 	@Override
 	public void componentHidden() {
 		symbolKeyModel.reload(null);
 		if (plugin != null) {
-			plugin.closeReferenceProvider();
+			plugin.symbolProviderClosed();
 		}
 	}
 
@@ -199,5 +207,4 @@ class SymbolProvider extends ComponentProviderAdapter {
 	void writeConfigState(SaveState saveState) {
 		symbolPanel.writeConfigState(saveState);
 	}
-
 }

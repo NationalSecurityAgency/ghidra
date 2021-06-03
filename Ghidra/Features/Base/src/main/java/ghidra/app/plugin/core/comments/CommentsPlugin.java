@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.comments;
 
 import java.awt.event.KeyEvent;
 
-import docking.ActionContext;
 import docking.action.*;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.cmd.comments.SetCommentCmd;
@@ -186,11 +185,6 @@ public class CommentsPlugin extends Plugin implements OptionsChangeListener {
 				}
 				getPopupMenuData().setMenuPath(new String[] { "Comments", "Delete" });
 				return false;
-			}
-
-			@Override
-			public boolean isValidGlobalContext(ActionContext globalContext) {
-				return false;  // only work on active provider context.
 			}
 		};
 		deleteAction.setPopupMenuData(new MenuData(DELETE_MENUPATH, null, "comments"));

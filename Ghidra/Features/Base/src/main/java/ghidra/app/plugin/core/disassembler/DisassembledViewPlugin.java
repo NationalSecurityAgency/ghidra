@@ -53,13 +53,13 @@ import ghidra.util.exception.UsrException;
  * 
  * 
  * 
- * @todo Change the PseudoCodeUnit's getComment(int) method or change its 
+ *  TODO Change the PseudoCodeUnit's getComment(int) method or change its 
  *       getPreview(int) method not to call getComment(int) and then change
  *       this class to not handle the UnsupportedOperationException.
- * @todo are the category and names correct?
- * @todo decide how to represent multiple selections in the display
+ *  TODO are the category and names correct?
+ *  TODO decide how to represent multiple selections in the display
  * 
- * @todo Potential user options:
+ *  TODO Potential user options:
  *       -look ahead count
  *       -to or to not display multiple selections
  *       -change the format of the preview displayed

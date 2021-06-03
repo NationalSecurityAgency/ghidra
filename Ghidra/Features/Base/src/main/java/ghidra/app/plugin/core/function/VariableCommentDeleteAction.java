@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.function;
 
 import java.awt.event.KeyEvent;
 
-import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.action.KeyBindingType;
 import ghidra.app.cmd.function.SetVariableCommentCmd;
@@ -89,8 +88,4 @@ class VariableCommentDeleteAction extends ListingContextAction {
 		return (loc instanceof VariableCommentFieldLocation);
 	}
 
-	@Override
-	public boolean isValidGlobalContext(ActionContext globalContext) {
-		return false;  // only work on active provider context.
-	}
 }

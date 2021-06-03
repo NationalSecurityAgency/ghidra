@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +17,7 @@ package ghidra.program.model.pcode;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
+import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -28,8 +28,16 @@ public class HighParam extends HighLocal {
 	private int slot;
 
 	/**
+	 * Constructor for use with restoreXml
+	 * @param high is the HighFunction containing this parameter
+	 */
+	public HighParam(HighFunction high) {
+		super(high);
+	}
+
+	/**
 	 * @param tp data type of variable
-	 * @param store variable storage
+	 * @param rep is the representative input Varnode
 	 * @param pc null or Address of PcodeOp which defines the representative
 	 * @param slot parameter index starting at 0
 	 * @param sym associated symbol
@@ -47,8 +55,10 @@ public class HighParam extends HighLocal {
 	}
 
 	@Override
-	protected int getFirstUseOffset() {
-		return 0;
+	public void restoreXml(XmlPullParser parser) throws PcodeXMLException {
+		super.restoreXml(parser);
+		HighSymbol sym = getSymbol();
+		slot = sym.getCategoryIndex();
 	}
 
 }

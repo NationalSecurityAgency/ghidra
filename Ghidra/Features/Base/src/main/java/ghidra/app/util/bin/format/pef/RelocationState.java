@@ -66,7 +66,7 @@ public class RelocationState {
 	 * @param header the PEF container header
 	 * @param relocationHeader the specific relocation header for this state
 	 * @param program the program being relocated
-	 * @param sectionMap the map of section headers to memory blocks
+	 * @param importState the current import state
 	 */
 	public RelocationState(ContainerHeader header, LoaderRelocationHeader relocationHeader,
 			Program program, ImportStateCache importState) {
@@ -191,7 +191,6 @@ public class RelocationState {
 
 	/**
 	 * Increments the integer in memory at the specified address
-	 * @param program the program
 	 * @param address the address to increment
 	 * @param addend the value to add
 	 * @param log a message log

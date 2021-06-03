@@ -15,10 +15,10 @@
  */
 package docking.tool.util;
 
-import docking.DockingTool;
+import docking.Tool;
 
 /**
- * An interface to house constants used by the {@link DockingTool}
+ * An interface to house constants used by the {@link Tool}
  */
 public interface DockingToolConstants {
 

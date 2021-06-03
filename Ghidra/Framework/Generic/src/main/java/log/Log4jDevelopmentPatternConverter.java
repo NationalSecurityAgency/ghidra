@@ -31,7 +31,7 @@ import utilities.util.reflection.ReflectionUtilities;
  * of the current log message. This is to be used in log4j configurations as part
  * of a pattern layout. eg:
  * 
- * 		<PatternLayout pattern="%-5p %m %hl %n"/> 
+ * 		{@literal <PatternLayout pattern="%-5p %m %hl %n"/>} 
  * 
  * See generic.log4jdev.xml for a working example.
  */

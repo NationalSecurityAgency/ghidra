@@ -39,31 +39,45 @@ public class GnuDemangler implements Demangler {
 	}
 
 	@Override
+	public DemanglerOptions createDefaultOptions() {
+		return new GnuDemanglerOptions();
+	}
+
+	@Override
 	public boolean canDemangle(Program program) {
+
 		String executableFormat = program.getExecutableFormat();
 		if (isELF(executableFormat) || isMacho(executableFormat)) {
 			return true;
 		}
 
-		//check if language is GCC
-		CompilerSpec compilerSpec = program.getCompilerSpec();
-		if (compilerSpec.getCompilerSpecID().getIdAsString().toLowerCase().indexOf(
-			"windows") == -1) {
+		CompilerSpec spec = program.getCompilerSpec();
+		String specId = spec.getCompilerSpecID().getIdAsString();
+		if (!specId.toLowerCase().contains("windows")) {
 			return true;
 		}
 		return false;
 	}
 
 	@Override
+	@Deprecated(since = "9.2", forRemoval = true)
 	public DemangledObject demangle(String mangled, boolean demangleOnlyKnownPatterns)
 			throws DemangledException {
+		GnuDemanglerOptions options = new GnuDemanglerOptions();
+		options.setDemangleOnlyKnownPatterns(demangleOnlyKnownPatterns);
+		return demangle(mangled, options);
+	}
 
-		if (skip(mangled, demangleOnlyKnownPatterns)) {
+	@Override
+	public DemangledObject demangle(String mangled, DemanglerOptions demanglerOtions)
+			throws DemangledException {
+
+		GnuDemanglerOptions options = getGnuOptions(demanglerOtions);
+		if (skip(mangled, options)) {
 			return null;
 		}
 
 		String originalMangled = mangled;
-
 		String globalPrefix = null;
 		if (mangled.startsWith(GLOBAL_PREFIX)) {
 			int index = mangled.indexOf("_Z");
@@ -84,44 +98,39 @@ public class GnuDemangler implements Demangler {
 		}
 
 		try {
-			GnuDemanglerNativeProcess process = GnuDemanglerNativeProcess.getDemanglerNativeProcess();
-			String demangled = process.demangle(mangled).trim();
 
+			GnuDemanglerNativeProcess process = getNativeProcess(options);
+			String demangled = process.demangle(mangled).trim();
 			if (mangled.equals(demangled) || demangled.length() == 0) {
 				throw new DemangledException(true);
 			}
 
-			DemangledObject demangledObject =
-				parse(mangled, process, demangled, demangleOnlyKnownPatterns);
+			boolean onlyKnownPatterns = options.demangleOnlyKnownPatterns();
+			DemangledObject demangledObject = parse(mangled, process, demangled, onlyKnownPatterns);
 			if (demangledObject == null) {
 				return demangledObject;
 			}
 
 			if (globalPrefix != null) {
-				// TODO: may need better naming convention for demangled function
-				DemangledFunction dfunc =
-					new DemangledFunction(globalPrefix + demangledObject.getName());
+				DemangledFunction dfunc = new DemangledFunction(originalMangled, demangled,
+					globalPrefix + demangledObject.getName());
 				dfunc.setNamespace(demangledObject.getNamespace());
 				demangledObject = dfunc;
 			}
-			else {
-				demangledObject.setSignature(demangled);
-			}
-			demangledObject.setOriginalMangled(originalMangled);
 
 			if (isDwarf) {
-				DemangledAddressTable dat = new DemangledAddressTable((String) null, 1);
+				DemangledAddressTable dat =
+					new DemangledAddressTable(originalMangled, demangled, (String) null, false);
 				dat.setSpecialPrefix("DWARF Debug ");
 				dat.setName(demangledObject.getName());
 				dat.setNamespace(demangledObject.getNamespace());
-				dat.setOriginalMangled(originalMangled);
 				return dat;
 			}
 
 			return demangledObject;
 		}
 		catch (IOException e) {
-			if (e.getMessage().endsWith("14001")) {//missing runtime dlls, prolly
+			if (e.getMessage().endsWith("14001")) {
 				ResourceFile installationDir = Application.getInstallationDirectory();
 				throw new DemangledException("Missing runtime libraries. " + "Please install " +
 					installationDir + File.separatorChar + "support" + File.separatorChar +
@@ -131,7 +140,38 @@ public class GnuDemangler implements Demangler {
 		}
 	}
 
-	private boolean skip(String mangled, boolean demangleOnlyKnownPatterns) {
+	private GnuDemanglerOptions getGnuOptions(DemanglerOptions options) {
+
+		if (options instanceof GnuDemanglerOptions) {
+			return (GnuDemanglerOptions) options;
+		}
+
+		return new GnuDemanglerOptions(options);
+	}
+
+	private GnuDemanglerNativeProcess getNativeProcess(GnuDemanglerOptions options)
+			throws IOException {
+
+		String demanglerName = options.getDemanglerName();
+		String applicationOptions = options.getDemanglerApplicationArguments();
+		return GnuDemanglerNativeProcess.getDemanglerNativeProcess(demanglerName,
+			applicationOptions);
+	}
+
+	/**
+	 * Determines if the given mangled string should not be demangled.  There are a couple
+	 * patterns that will always be skipped.
+	 * If {@link GnuDemanglerOptions#demangleOnlyKnownPatterns()} is true, then only mangled
+	 * symbols matching a list of known start patters will not be skipped.
+	 *
+	 * <P>This demangler class will default to demangling most patterns, since we do not yet
+	 * have a comprehensive list of known start patterns.
+	 *
+	 * @param mangled the mangled string
+	 * @param options the options
+	 * @return true if the string should not be demangled
+	 */
+	private boolean skip(String mangled, GnuDemanglerOptions options) {
 
 		// Ignore versioned symbols which are generally duplicated at the same address
 		if (mangled.indexOf("@") > 0) { // do not demangle versioned symbols
@@ -143,53 +183,49 @@ public class GnuDemangler implements Demangler {
 			return true;
 		}
 
-		if (!demangleOnlyKnownPatterns) {
+		if (!options.demangleOnlyKnownPatterns()) {
 			return false; // let it go through
 		}
 
-		// add to this list if we find any other known GNU start patterns
+		// This is the current list of known demangler start patterns.  Add to this list if we
+		// find any other known GNU start patterns.
 		if (mangled.startsWith("_Z")) {
 			return false;
 		}
-		else if (mangled.startsWith("__Z")) {
+		if (mangled.startsWith("__Z")) {
 			return false;
 		}
-		else if (mangled.startsWith("h__")) {
+		if (mangled.startsWith("h__")) {
 			return false; // not sure about this one
 		}
-		else if (mangled.startsWith("?")) {
+		if (mangled.startsWith("?")) {
 			return false; // not sure about this one
 		}
-		else if (isGnu2Or3Pattern(mangled)) {
+		if (isGnu2Or3Pattern(mangled)) {
 			return false;
 		}
 
 		return true;
 	}
 
-	private DemangledObject parse(String mangled, GnuDemanglerNativeProcess process, String demangled,
-			boolean demangleOnlyKnownPatterns) {
+	private DemangledObject parse(String mangled, GnuDemanglerNativeProcess process,
+			String demangled, boolean demangleOnlyKnownPatterns) {
 
-		if (demangleOnlyKnownPatterns && !isMangledString(mangled, demangled)) {
+		if (demangleOnlyKnownPatterns && !isKnownMangledString(mangled, demangled)) {
 			return null;
 		}
 
-		try {
-			GnuDemanglerParser parser = new GnuDemanglerParser(process);
-			DemangledObject demangledObject = parser.parse(mangled, demangled);
-			return demangledObject;
-		}
-		catch (Exception e) {
-			throw e;
-		}
+		GnuDemanglerParser parser = new GnuDemanglerParser();
+		DemangledObject demangledObject = parser.parse(mangled, demangled);
+		return demangledObject;
 	}
 
-	private boolean isMangledString(String mangled, String demangled) {
+	private boolean isKnownMangledString(String mangled, String demangled) {
 		//
 		// We get requests to demangle strings that are not mangled.   For newer mangled strings
 		// we know how to avoid that.  However, older mangled strings can be of many forms.  To
 		// detect whether a string is mangled, we have to resort to examining the output of
-		// the demangler.  
+		// the demangler.
 		//
 
 		// check for the case where good strings have '__' in them (which is valid GNU2 mangling)

@@ -97,7 +97,7 @@ class MemoryMapDBAdapterV0 extends MemoryMapDBAdapter {
 
 		RecordIterator it = table.iterator();
 		while (it.hasNext()) {
-			Record rec = it.next();
+			DBRecord rec = it.next();
 			int permissions = 0;
 			if (rec.getBooleanValue(V0_IS_READ_COL)) {
 				permissions |= MemoryBlock.READ;
@@ -117,8 +117,8 @@ class MemoryMapDBAdapterV0 extends MemoryMapDBAdapter {
 				segment = rec.getIntValue(V0_SEGMENT_COL);
 			}
 
-			Record blockRecord = BLOCK_SCHEMA.createRecord(key);
-			Record subBlockRecord = SUB_BLOCK_SCHEMA.createRecord(key);
+			DBRecord blockRecord = BLOCK_SCHEMA.createRecord(key);
+			DBRecord subBlockRecord = SUB_BLOCK_SCHEMA.createRecord(key);
 
 			blockRecord.setString(NAME_COL, rec.getString(V0_NAME_COL));
 			blockRecord.setString(COMMENTS_COL, rec.getString(V0_COMMENTS_COL));
@@ -143,7 +143,7 @@ class MemoryMapDBAdapterV0 extends MemoryMapDBAdapter {
 		Collections.sort(blocks);
 	}
 
-	private SubMemoryBlock getSubBlock(MemoryMapDB memMap, long bufID, Record record, int type,
+	private SubMemoryBlock getSubBlock(MemoryMapDB memMap, long bufID, DBRecord record, int type,
 			long overlayAddr) throws IOException {
 		switch (type) {
 			case MemoryMapDBAdapterV2.BIT_MAPPED:
@@ -156,7 +156,7 @@ class MemoryMapDBAdapterV0 extends MemoryMapDBAdapter {
 				return new ByteMappedSubMemoryBlock(this, record);
 			case MemoryMapDBAdapterV2.INITIALIZED:
 				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_BUFFER);
-				record.setLongValue(SUB_SOURCE_OFFSET_COL, bufID);
+				record.setLongValue(SUB_LONG_DATA2_COL, bufID);
 				return new BufferSubMemoryBlock(this, record);
 			case MemoryMapDBAdapterV2.UNINITIALIZED:
 				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_UNITIALIZED);
@@ -212,7 +212,7 @@ class MemoryMapDBAdapterV0 extends MemoryMapDBAdapter {
 	}
 
 	@Override
-	void updateBlockRecord(Record record) throws IOException {
+	void updateBlockRecord(DBRecord record) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -223,7 +223,8 @@ class MemoryMapDBAdapterV0 extends MemoryMapDBAdapter {
 
 	@Override
 	MemoryBlockDB createBlock(MemoryBlockType blockType, String name, Address startAddr,
-			long length, Address overlayAddr, boolean initializeBytes, int permissions)
+			long length, Address overlayAddr, boolean initializeBytes, int permissions,
+			int mappingScheme)
 			throws IOException {
 		throw new UnsupportedOperationException();
 	}
@@ -247,13 +248,13 @@ class MemoryMapDBAdapterV0 extends MemoryMapDBAdapter {
 	}
 
 	@Override
-	protected void updateSubBlockRecord(Record record) throws IOException {
+	protected void updateSubBlockRecord(DBRecord record) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	Record createSubBlockRecord(long memBlockId, long startingOffset, long length, byte subType,
-			int sourceID, long sourceOffset) throws IOException {
+	DBRecord createSubBlockRecord(long memBlockId, long startingOffset, long length, byte subType,
+			int data1, long data2) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,9 +50,9 @@ public interface OperandValue extends Serializable {
 	/**
 	 * Construct operand representation as a list of objects
 	 * 
-	 * @param list
-	 * @param buf
-	 * @param i
+	 * @param list the list to fill
+	 * @param position the operand position
+	 * @param off the offset
 	 */
 	public void toList(ArrayList<Handle> list, Position position, int off)  throws Exception;
 	

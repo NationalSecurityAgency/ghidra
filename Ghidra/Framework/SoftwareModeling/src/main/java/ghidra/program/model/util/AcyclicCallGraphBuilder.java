@@ -91,7 +91,7 @@ public class AcyclicCallGraphBuilder {
 		AbstractDependencyGraph<Address> graph = new DependencyGraph<>();
 		Deque<Address> startPoints = findStartPoints();
 		Set<Address> unprocessed = new TreeSet<>(functionSet); // reliable processing order
-
+		monitor.initialize(unprocessed.size());
 		while (!unprocessed.isEmpty()) {
 			monitor.checkCanceled();
 			Address functionEntry = getNextStartFunction(startPoints, unprocessed);
@@ -123,7 +123,7 @@ public class AcyclicCallGraphBuilder {
 		return startPoints;
 	}
 
-	private void initializeNode(StackNode node, Set<Address> unprocessed) {
+	private void initializeNode(StackNode node) {
 		FunctionManager fmanage = program.getFunctionManager();
 		Function function = fmanage.getFunctionAt(node.address);
 		if (function.isThunk()) {
@@ -163,14 +163,16 @@ public class AcyclicCallGraphBuilder {
 			Address startFunction, TaskMonitor monitor) throws CancelledException {
 		VisitStack stack = new VisitStack(startFunction);
 		StackNode curnode = stack.peek();
-		initializeNode(curnode, unprocessed);
+		initializeNode(curnode);
 		graph.addValue(curnode.address);
 		while (!stack.isEmpty()) {
+			monitor.checkCanceled();
+
 			curnode = stack.peek();
 			if (curnode.nextchild >= curnode.children.length) {		// Node more to children to traverse for this node
 				unprocessed.remove(curnode.address);
+				monitor.incrementProgress(1);
 				stack.pop();
-				monitor.checkCanceled();
 			}
 			else {
 				Address childAddr = curnode.children[curnode.nextchild++];
@@ -178,7 +180,7 @@ public class AcyclicCallGraphBuilder {
 					if (unprocessed.contains(childAddr)) {
 						stack.push(childAddr);
 						StackNode nextnode = stack.peek();
-						initializeNode(nextnode, unprocessed);
+						initializeNode(nextnode);
 						childAddr = nextnode.address;
 						graph.addValue(nextnode.address);
 					}

@@ -58,7 +58,6 @@ public class OldFunctionManager implements ErrorHandler {
 	 * @param errHandler the error handler
 	 * @param addrMap the address map
 	 * @throws VersionException if function manager's version does not match its expected version
-	 * @throws IOException if an i/o error occurs
 	 */
 	public OldFunctionManager(DBHandle dbHandle, ErrorHandler errHandler, AddressMap addrMap)
 			throws VersionException {
@@ -262,7 +261,7 @@ public class OldFunctionManager implements ErrorHandler {
 		return functionMap.getBody(functionKey);
 	}
 
-	synchronized OldFunctionDataDB getFunction(Record rec) {
+	synchronized OldFunctionDataDB getFunction(DBRecord rec) {
 		return new OldFunctionDataDB(this, addrMap, rec, null);
 	}
 
@@ -315,7 +314,7 @@ public class OldFunctionManager implements ErrorHandler {
 			}
 			synchronized (OldFunctionManager.this) {
 				try {
-					Record rec = recordIter.next();
+					DBRecord rec = recordIter.next();
 					if (rec != null) {
 						func = getFunction(rec);
 						hasNext = true;

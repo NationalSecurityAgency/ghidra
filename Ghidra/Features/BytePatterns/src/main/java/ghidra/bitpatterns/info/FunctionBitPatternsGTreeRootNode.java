@@ -15,12 +15,11 @@
  */
 package ghidra.bitpatterns.info;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.Icon;
 
-import docking.widgets.tree.AbstractGTreeRootNode;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeNode;
 
 /**
@@ -30,7 +29,7 @@ import docking.widgets.tree.GTreeNode;
  *
  */
 
-public class FunctionBitPatternsGTreeRootNode extends AbstractGTreeRootNode {
+public class FunctionBitPatternsGTreeRootNode extends GTreeNode {
 
 	@Override
 	public String getName() {
@@ -54,7 +53,7 @@ public class FunctionBitPatternsGTreeRootNode extends AbstractGTreeRootNode {
 		for (GTreeNode node : getChildren()) {
 			((FunctionBitPatternsGTreeNode) node).sortAndSetFields();
 		}
-		List<GTreeNode> children = getChildren();
+		List<GTreeNode> children = new ArrayList<>(getChildren());
 		Collections.sort(children);
 		setChildren(children);
 	}

@@ -15,7 +15,8 @@
  */
 package ghidra.framework.project.tool;
 
-import java.beans.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.*;
 
 import org.jdom.Element;
@@ -24,6 +25,7 @@ import docking.ComponentProvider;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateNameException;
@@ -56,7 +58,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	private Map<String, ToolConnectionImpl> connectMap;
 
 	// map generic tool names to list of tools
-	private Map<String, List<Tool>> namesMap;
+	private Map<String, List<PluginTool>> namesMap;
 
 	/**
 	 * keep a handle to the active workspace to make inactive when another
@@ -90,8 +92,8 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	 * @param toolName the name of the tool being registers
 	 * @param tool the tool being registered
 	 */
-	private void registerTool(String toolName, Tool tool) {
-		List<Tool> list = namesMap.get(toolName);
+	private void registerTool(String toolName, PluginTool tool) {
+		List<PluginTool> list = namesMap.get(toolName);
 		if (list == null) {
 			list = new ArrayList<>(5);
 			namesMap.put(toolName, list);
@@ -109,8 +111,8 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		tool.addPropertyChangeListener(this);
 	}
 
-	private void deregisterTool(String toolName, Tool tool) {
-		List<Tool> list = namesMap.get(toolName);
+	private void deregisterTool(String toolName, PluginTool tool) {
+		List<PluginTool> list = namesMap.get(toolName);
 		SystemUtilities.assertTrue(list != null, "Attempted to remove tool that's not there");
 		list.remove(tool);
 		if (list.size() == 0) {
@@ -126,45 +128,45 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	}
 
 	@Override
-	public Tool[] getConsumerTools() {
-		ArrayList<Tool> consumers = new ArrayList<>(TYPICAL_NUM_TOOLS);
-		Tool[] runningTools = getRunningTools();
-		for (Tool tool : runningTools) {
+	public PluginTool[] getConsumerTools() {
+		ArrayList<PluginTool> consumers = new ArrayList<>(TYPICAL_NUM_TOOLS);
+		PluginTool[] runningTools = getRunningTools();
+		for (PluginTool tool : runningTools) {
 			if (tool.getConsumedToolEventNames().length > 0) {
 				consumers.add(tool);
 			}
 		}
-		Tool[] tools = new Tool[consumers.size()];
+		PluginTool[] tools = new PluginTool[consumers.size()];
 		consumers.toArray(tools);
 		return tools;
 	}
 
 	@Override
-	public Tool[] getProducerTools() {
-		ArrayList<Tool> producers = new ArrayList<>(TYPICAL_NUM_TOOLS);
-		Tool[] runningTools = getRunningTools();
-		for (Tool tool : runningTools) {
+	public PluginTool[] getProducerTools() {
+		ArrayList<PluginTool> producers = new ArrayList<>(TYPICAL_NUM_TOOLS);
+		PluginTool[] runningTools = getRunningTools();
+		for (PluginTool tool : runningTools) {
 			if (tool.getToolEventNames().length > 0) {
 				producers.add(tool);
 			}
 		}
-		Tool[] tools = new Tool[producers.size()];
+		PluginTool[] tools = new PluginTool[producers.size()];
 		return producers.toArray(tools);
 	}
 
 	@Override
-	public Tool[] getRunningTools() {
+	public PluginTool[] getRunningTools() {
 		Workspace[] wsList = new Workspace[workspaces.size()];
 		workspaces.toArray(wsList);
-		ArrayList<Tool> runningTools = new ArrayList<>(TYPICAL_NUM_TOOLS);
+		ArrayList<PluginTool> runningTools = new ArrayList<>(TYPICAL_NUM_TOOLS);
 		for (Workspace element : wsList) {
-			Tool[] tools = element.getTools();
-			for (Tool tool : tools) {
+			PluginTool[] tools = element.getTools();
+			for (PluginTool tool : tools) {
 				runningTools.add(tool);
 			}
 		}
 
-		Tool[] tools = new Tool[runningTools.size()];
+		PluginTool[] tools = new PluginTool[runningTools.size()];
 		runningTools.toArray(tools);
 
 		return tools;
@@ -174,7 +176,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	 * @see ghidra.framework.model.ToolManager#getConnection(ghidra.framework.model.Tool, ghidra.framework.model.Tool)
 	 */
 	@Override
-	public ToolConnection getConnection(Tool producer, Tool consumer) {
+	public ToolConnection getConnection(PluginTool producer, PluginTool consumer) {
 		String key = getKey(producer, consumer);
 		ToolConnectionImpl tc = connectMap.get(key);
 		if (tc == null) {
@@ -229,8 +231,8 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 		// first close all the tools running in the workspace
 		// and if any of the tools don't close, don't remove the workspace
-		Tool[] runningTools = ws.getTools();
-		for (Tool runningTool : runningTools) {
+		PluginTool[] runningTools = ws.getTools();
+		for (PluginTool runningTool : runningTools) {
 			// if data has changed in the tool, the frontEnd will take care
 			// of asking/confirming saving tool
 			runningTool.close();
@@ -310,7 +312,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	public void restoreFromXml(Element root) {
 		inRestoreMode = true;
 		try {
-			HashMap<String, Tool> toolMap = new HashMap<>();
+			HashMap<String, PluginTool> toolMap = new HashMap<>();
 			String activeWSName = root.getAttributeValue("ACTIVE_WORKSPACE");
 
 			Workspace makeMeActive = null;
@@ -325,8 +327,8 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 				if (ws.getName().equals(activeWSName)) {
 					makeMeActive = ws;
 				}
-				Tool[] tools = ws.getTools();
-				for (Tool tool : tools) {
+				PluginTool[] tools = ws.getTools();
+				for (PluginTool tool : tools) {
 					toolMap.put(tool.getName(), tool);
 				}
 			}
@@ -340,8 +342,8 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 				String producerName = elem.getAttributeValue("PRODUCER");
 				String consumerName = elem.getAttributeValue("CONSUMER");
 				// get the tools
-				Tool producer = toolMap.get(producerName);
-				Tool consumer = toolMap.get(consumerName);
+				PluginTool producer = toolMap.get(producerName);
+				PluginTool consumer = toolMap.get(consumerName);
 				if (producer != null && consumer != null) {
 					ToolConnectionImpl tc = new ToolConnectionImpl(producer, consumer);
 					tc.restoreFromXml(elem);
@@ -393,9 +395,9 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	public boolean saveSessionTools() {
 		Set<String> keySet = namesMap.keySet();
 		for (String toolName : keySet) {
-			List<Tool> tools = namesMap.get(toolName);
+			List<PluginTool> tools = namesMap.get(toolName);
 			if (tools.size() == 1) {
-				Tool tool = tools.get(0);
+				PluginTool tool = tools.get(0);
 				if (tool.shouldSave()) {
 					toolServices.saveTool(tool);
 				}
@@ -410,9 +412,9 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		return true;
 	}
 
-	private boolean saveToolSet(List<Tool> tools) {
-		List<Tool> changedTools = new ArrayList<>();
-		for (Tool tool : tools) {
+	private boolean saveToolSet(List<PluginTool> tools) {
+		List<PluginTool> changedTools = new ArrayList<>();
+		for (PluginTool tool : tools) {
 			if (tool.hasConfigChanged()) {
 				changedTools.add(tool);
 			}
@@ -422,7 +424,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		}
 
 		if (changedTools.size() == 1) {
-			Tool changedTool = changedTools.get(0);
+			PluginTool changedTool = changedTools.get(0);
 			if (changedTool.shouldSave()) {
 				toolServices.saveTool(changedTool);
 			}
@@ -436,7 +438,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 			return false;
 		}
 
-		Tool tool = dialog.getSelectedTool();
+		PluginTool tool = dialog.getSelectedTool();
 		if (tool != null) {
 			toolServices.saveTool(tool);
 		}
@@ -467,15 +469,15 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
 
-		Tool tool = (Tool) evt.getSource();
+		PluginTool tool = (PluginTool) evt.getSource();
 
 		String propertyName = evt.getPropertyName();
 
-		if (propertyName.equals(Tool.PLUGIN_COUNT_PROPERTY_NAME)) {
+		if (propertyName.equals(PluginTool.PLUGIN_COUNT_PROPERTY_NAME)) {
 			updateConnections(evt);
 		}
 
-		if (!propertyName.equals(Tool.TOOL_NAME_PROPERTY)) {
+		if (!propertyName.equals(PluginTool.TOOL_NAME_PROPERTY)) {
 			return;
 		}
 
@@ -524,7 +526,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	}
 
 	@Override
-	public void toolChanged(Tool tool) {
+	public void toolChanged(PluginTool tool) {
 		updateConnectMap(tool);
 	}
 
@@ -536,13 +538,13 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	 * @param toolName the name of the tool
 	 * @return the tool
 	 */
-	public Tool getTool(String toolName) {
+	public PluginTool getTool(String toolName) {
 		ToolTemplate template = toolServices.getToolChest().getToolTemplate(toolName);
 		if (template == null) {
 			return null;
 		}
 
-		Tool tool = template.createTool(project);
+		PluginTool tool = template.createTool(project);
 		if (tool != null) {
 			registerTool(toolName, tool);
 		}
@@ -558,13 +560,13 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	 * 
 	 * @param tool tool to be closed.
 	 */
-	void closeTool(Tool tool) {
+	void closeTool(PluginTool tool) {
 
 		// find the workspace running the tool
 		for (int i = 0; i < workspaces.size(); i++) {
 			WorkspaceImpl ws = (WorkspaceImpl) workspaces.get(i);
-			Tool[] tools = ws.getTools();
-			for (Tool tool2 : tools) {
+			PluginTool[] tools = ws.getTools();
+			for (PluginTool tool2 : tools) {
 				if (tool == tool2) {
 					ws.closeRunningTool(tool);
 					return;
@@ -655,8 +657,8 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	/*
 	 * Get a tool from the template; set the instance name.
 	 */
-	Tool getTool(Workspace ws, ToolTemplate template) {
-		Tool tool = template.createTool(project);
+	PluginTool getTool(Workspace ws, ToolTemplate template) {
+		PluginTool tool = template.createTool(project);
 		if (tool != null) {
 			registerTool(tool.getToolName(), tool);
 		}
@@ -666,7 +668,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	/*
 	 * Called by the workspace when a tool is removed.
 	 */
-	void toolRemoved(Workspace ws, Tool tool) {
+	void toolRemoved(Workspace ws, PluginTool tool) {
 		deregisterTool(tool.getToolName(), tool);
 		disconnectTool(tool);
 
@@ -680,13 +682,13 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	 * Generate an instance name in the form
 	 * of a one-up number.
 	 */
-	private String generateInstanceName(String toolName, Tool tool) {
-		List<Tool> list = namesMap.get(toolName);
+	private String generateInstanceName(String toolName, PluginTool tool) {
+		List<PluginTool> list = namesMap.get(toolName);
 		if (list.size() <= 1) {
 			return "";
 		}
 
-		Tool lastTool = list.get(list.size() - 2);	// the last one is the one we just added above
+		PluginTool lastTool = list.get(list.size() - 2);	// the last one is the one we just added above
 		String instanceName = lastTool.getInstanceName();
 		if (instanceName.length() == 0) {
 			return "2";
@@ -696,8 +698,8 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		return "" + (n + 1);
 	}
 
-	Tool createEmptyTool() {
-		Tool tool = new GhidraTool(project, "Untitled");
+	PluginTool createEmptyTool() {
+		PluginTool tool = new GhidraTool(project, "Untitled");
 		addNewTool(tool, "Untitled");
 		return tool;
 	}
@@ -706,18 +708,12 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	 * Add the tool to the table, add us as a listener for property
 	 * changes on the tool.
 	 */
-	private void addNewTool(Tool tool, String toolName) {
-		try {
-			tool.setToolName(toolName);
-			registerTool(toolName, tool);
-		}
-		catch (PropertyVetoException e) {
-			// shouldn't happen
-			Msg.showError(this, null, "Error Setting Tool Name", "Set tool name was vetoed", e);
-		}
+	private void addNewTool(PluginTool tool, String toolName) {
+		tool.setToolName(toolName);
+		registerTool(toolName, tool);
 	}
 
-	void fireToolAddedEvent(Workspace ws, Tool tool) {
+	void fireToolAddedEvent(Workspace ws, PluginTool tool) {
 		for (int i = 0; i < changeListeners.size(); i++) {
 			WorkspaceChangeListener l = changeListeners.get(i);
 			l.toolAdded(ws, tool);
@@ -725,13 +721,13 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	}
 
 	@Override
-	public void disconnectTool(Tool tool) {
+	public void disconnectTool(PluginTool tool) {
 		Iterator<String> keys = connectMap.keySet().iterator();
 		while (keys.hasNext()) {
 			String key = keys.next();
 			ToolConnection tc = connectMap.get(key);
-			Tool producer = tc.getProducer();
-			Tool consumer = tc.getConsumer();
+			PluginTool producer = tc.getProducer();
+			PluginTool consumer = tc.getConsumer();
 			if (producer == tool || consumer == tool) {
 				keys.remove();
 				producer.removeToolListener((ToolConnectionImpl) tc);
@@ -739,15 +735,15 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		}
 	}
 
-	private void updateConnectMap(Tool tool) {
+	private void updateConnectMap(PluginTool tool) {
 		Iterator<String> keys = connectMap.keySet().iterator();
 		Map<String, ToolConnectionImpl> map = new HashMap<>();
 
 		while (keys.hasNext()) {
 			String key = keys.next();
 			ToolConnectionImpl tc = connectMap.get(key);
-			Tool producer = tc.getProducer();
-			Tool consumer = tc.getConsumer();
+			PluginTool producer = tc.getProducer();
+			PluginTool consumer = tc.getConsumer();
 			if (producer == tool || consumer == tool) {
 				String newkey = getKey(producer, consumer);
 				tc.updateEventList();
@@ -767,13 +763,13 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	 * @param consumer tool consuming an event
 	 * 
 	 */
-	private String getKey(Tool producer, Tool consumer) {
+	private String getKey(PluginTool producer, PluginTool consumer) {
 		return producer.getName() + "+" + consumer.getName();
 	}
 
 	private void updateConnections(PropertyChangeEvent ev) {
 
-		Tool tool = (Tool) ev.getSource();
+		PluginTool tool = (PluginTool) ev.getSource();
 		updateConnectMap(tool);
 
 		// notify listeners of tool change
@@ -809,7 +805,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		return name;
 	}
 
-	public boolean canAutoSave(Tool tool) {
+	public boolean canAutoSave(PluginTool tool) {
 		ToolSaveStatus status = toolStatusMap.get(tool.getToolName());
 		if (status == ToolSaveStatus.ASK_SAVE_MODE) {
 			return false;
@@ -829,7 +825,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		return (status == ToolSaveStatus.AUTO_SAVE_MODE);
 	}
 
-	public void toolSaved(Tool tool, boolean toolChanged) {
+	public void toolSaved(PluginTool tool, boolean toolChanged) {
 		String toolName = tool.getToolName();
 		if (getToolInstanceCount(tool) == 1) {
 			// saving with only one instance open resets the status
@@ -841,8 +837,8 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		}
 	}
 
-	private int getToolInstanceCount(Tool tool) {
-		List<Tool> list = namesMap.get(tool.getToolName());
+	private int getToolInstanceCount(PluginTool tool) {
+		List<PluginTool> list = namesMap.get(tool.getToolName());
 		if (list == null) {
 			return 0;
 		}

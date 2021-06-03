@@ -8,6 +8,6 @@ eclipse.project.name = 'Processors VideoCore IV'
 
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }
 

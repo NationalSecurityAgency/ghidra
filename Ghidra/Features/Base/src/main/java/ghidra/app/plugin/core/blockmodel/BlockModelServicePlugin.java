@@ -81,10 +81,6 @@ public class BlockModelServicePlugin extends ProgramPlugin
 
 	private StringWithChoicesEditor editor;
 
-	/**
-	 * Constructor.
-	 * @param plugintool tool
-	 */
 	public BlockModelServicePlugin(PluginTool tool) {
 
 		super(tool, false, false);
@@ -128,9 +124,8 @@ public class BlockModelServicePlugin extends ProgramPlugin
 
 	/**
 	 * Handle an option change
-	 * @param options options object containing the property that changed
-	 * @param group
-	 * @param name name of option that changed
+	 * @param newOptions options object containing the property that changed
+	 * @param optionName name of option that changed
 	 * @param oldValue old value of the option
 	 * @param newValue new value of the option
 	 */

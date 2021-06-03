@@ -90,6 +90,14 @@
 					<LI> DefaultFoo - A "default" implementation that would be appropriate for the majority of use cases. </LI>
 					<LI> {descriptive}Foo - Other implementations should describe what makes them unique. </LI>  
 					</UL>
+				<H4> The design pattern for using an <u>abstract base class</u> without a corresponding interface should use the following naming conventions:</H4>
+					<UL>
+					<LI> Foo - The abstract base class should be named the fundamental thing. EXCEPTION: if the abstract
+							base class does not represent a "fundamental thing" whose type will be
+							referred to in other code as parameters, return types, etc., then the class 
+							should be named AbstractFoo.</LI>
+					<LI> {descriptive}Foo - subclasses that provide different flavors of Foo. </LI>
+					</UL>
 				<H4> Test class names should end with "Test" (e.g., FooTest).</H4>
 				<H4> Test doubles or stub objects should use the following naming rules: </H4>
 					<UL>
@@ -179,13 +187,13 @@
 					<LI> Header </LI>
 					<LI> Package statement </LI>
 					<LI> Import statements </LI>
-					<LI> Class Javadocs </LI>
+					<LI> Class javadocs </LI>
 					<LI> Class declaration </LI>
-					<LI> Static Variables </LI>
+					<LI> Static variables </LI>
+					<LI> Instance variables </LI>
 					<LI> Static factory methods </LI>
-					<LI> Instance Variables </LI>
 					<LI> Constructors </LI>
-					<LI> methods </LI>
+					<LI> Methods </LI>
 					<LI> Private classes </LI>
 					</UL>
 				<H4> Local variables should be declared when first needed and not at the top of the method and should be
@@ -212,6 +220,26 @@
 			<H3> Indenting </H3>
 				<H4> New blocks are indented using a tab character (the tab should be 4 spaces wide).</H4>
 				<H4> Line continuation should be indented the same as a new block. </H4>
+			<H3> Special Formatting </H3>
+				<H4> If special formatting is required to make code readable, you may surround the 
+					statement or code block with the eclipse formatter tags.  For example,  
+					<pre>
+	public String toString() {
+		<b>//@formatter:off</b>
+		return "{\n" +
+			"\tname: " + name + ",\n" +
+			"\tmodelColumn" + modelIndex + ",\n" +
+			"\tviewColumn: " + viewIndex + ",\n" +
+			"\tconstraints: " + 
+				CollectionUtils.collect(applicableConstraints, c -> c.asString()) +"\n" +
+		"}";
+		<b>//@formatter:on</b>
+	} 
+					</pre>
+					</H4>
+					
+				<H4> Do not use empty end-of-line comments "//" to trick eclipse into not formatting the line.</H4>
+				
 			<H3> Braces </H3>
 				<H4> Braces should always be used where optional.
 				<H4> Braces should follow the Kernighan and Ritchie style for nonempty blocks and block-like structures. </H4>

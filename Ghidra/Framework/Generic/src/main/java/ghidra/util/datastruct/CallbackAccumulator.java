@@ -24,8 +24,7 @@ import java.util.function.Consumer;
  * 
  * <P>This class is different than normal accumulators in that the values are <b>not</b> 
  * stored internally.  As such, calls to {@link #get()}, {@link #iterator()} and 
- * {@link #size()} will reflect having no data.   Further, to use this class, each client
- * must override {@link #itemAdded(Object)} in order to process the data as it arrives. 
+ * {@link #size()} will reflect having no data.
  *
  * @param <T> the type of the item being accumulated
  */
@@ -38,7 +37,7 @@ public class CallbackAccumulator<T> implements Accumulator<T> {
 	/**
 	 * Constructor
 	 * 
-	 * @param consumer the consumer that will get called each time an item is addded
+	 * @param consumer the consumer that will get called each time an item is added
 	 */
 	public CallbackAccumulator(Consumer<T> consumer) {
 		this.consumer = Objects.requireNonNull(consumer, "Consumer callback cannot be null");

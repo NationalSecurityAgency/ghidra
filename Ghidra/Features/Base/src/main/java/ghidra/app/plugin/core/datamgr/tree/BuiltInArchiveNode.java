@@ -22,8 +22,8 @@ import resources.MultiIcon;
 
 public class BuiltInArchiveNode extends ArchiveNode {
 
-	public BuiltInArchiveNode(BuiltInArchive archive) {
-		super(archive);
+	public BuiltInArchiveNode(BuiltInArchive archive, ArrayPointerFilterState filterState) {
+		super(archive, filterState);
 	}
 
 	@Override

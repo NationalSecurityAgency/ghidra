@@ -15,7 +15,6 @@
  */
 package ghidra.pcode.opbehavior;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.junit.Assert;
@@ -30,8 +29,8 @@ public class OpBehaviorFloatNanTest extends AbstractOpBehaviorTest {
 		super();
 	}
 
-@Test
-    public void testEvaluateBinaryLong() {
+	@Test
+	public void testEvaluateBinaryLong() {
 
 		OpBehaviorFloatNan op = new OpBehaviorFloatNan();
 
@@ -42,17 +41,17 @@ public class OpBehaviorFloatNanTest extends AbstractOpBehaviorTest {
 		Assert.assertEquals(0, op.evaluateUnary(1, 8, ff.getEncoding(1.234)));
 	}
 
-@Test
-    public void testEvaluateBinaryBigInteger() {
+	@Test
+	public void testEvaluateBinaryBigInteger() {
 
 		OpBehaviorFloatNan op = new OpBehaviorFloatNan();
 
 		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
 
-		Assert.assertEquals(BigInteger.ONE, op.evaluateUnary(1, 8, ff.getEncoding(FloatFormat.BIG_NaN)));
-		Assert.assertEquals(BigInteger.ZERO, op.evaluateUnary(1, 8, ff.getEncoding(BigDecimal.ZERO)));
+		Assert.assertEquals(BigInteger.ONE, op.evaluateUnary(1, 8, ff.getBigNaNEncoding(false)));
+		Assert.assertEquals(BigInteger.ZERO, op.evaluateUnary(1, 8, ff.getBigZeroEncoding(false)));
 		Assert.assertEquals(BigInteger.ZERO,
-			op.evaluateUnary(1, 8, ff.getEncoding(BigDecimal.valueOf(1.234d))));
+			op.evaluateUnary(1, 8, ff.getEncoding(ff.getBigFloat(1.234d))));
 
 	}
 

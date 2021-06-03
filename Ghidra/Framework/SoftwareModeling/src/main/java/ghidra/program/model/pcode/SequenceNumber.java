@@ -133,7 +133,7 @@ public class SequenceNumber implements Comparable<SequenceNumber> {
 	/**
 	 * Create a new Sequence number from XML SAX tree element.
 	 * 
-	 * @param el SAX tree element
+	 * @param parser the xml parser
 	 * @param factory pcode factory used to create new pcode
 	 * 
 	 * @return new sequence number

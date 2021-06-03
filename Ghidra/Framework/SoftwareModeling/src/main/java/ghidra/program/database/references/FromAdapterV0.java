@@ -58,8 +58,11 @@ class FromAdapterV0 extends FromAdapter {
 	@Override
 	public RefList getRefList(ProgramDB program, DBObjectCache<RefList> cache, Address from,
 			long fromAddr) throws IOException {
-		Record rec = table.getRecord(fromAddr);
+		DBRecord rec = table.getRecord(fromAddr);
 		if (rec != null) {
+			if (rec.getBinaryData(REF_DATA_COL) == null) {
+				return new BigRefListV0(rec, this, addrMap, program, cache, true);
+			}
 			return new RefListV0(rec, this, addrMap, program, cache, true);
 		}
 		return null;
@@ -71,9 +74,9 @@ class FromAdapterV0 extends FromAdapter {
 	}
 
 	@Override
-	public Record createRecord(long key, int numRefs, byte refLevel, byte[] refData)
+	public DBRecord createRecord(long key, int numRefs, byte refLevel, byte[] refData)
 			throws IOException {
-		Record rec = FROM_REFS_SCHEMA.createRecord(key);
+		DBRecord rec = FROM_REFS_SCHEMA.createRecord(key);
 		rec.setIntValue(REF_COUNT_COL, numRefs);
 		rec.setBinaryData(REF_DATA_COL, refData);
 		table.putRecord(rec);
@@ -81,12 +84,12 @@ class FromAdapterV0 extends FromAdapter {
 	}
 
 	@Override
-	public Record getRecord(long key) throws IOException {
+	public DBRecord getRecord(long key) throws IOException {
 		return table.getRecord(key);
 	}
 
 	@Override
-	public void putRecord(Record record) throws IOException {
+	public void putRecord(DBRecord record) throws IOException {
 		table.putRecord(record);
 	}
 

@@ -15,6 +15,11 @@
  */
 package ghidra.app.merge.tree;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+
+import javax.swing.SwingUtilities;
+
 import ghidra.app.merge.MergeResolver;
 import ghidra.app.merge.ProgramMultiUserMergeManager;
 import ghidra.app.util.HelpTopics;
@@ -25,11 +30,6 @@ import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-
-import javax.swing.SwingUtilities;
 
 /**
  * Manages changes and conflicts between the latest versioned Program and the
@@ -73,6 +73,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 
 	/**
 	 * Construct a new manager for merging trees
+	 * @param mergeManager the program merge manager
 	 * @param resultProgram latest version of the Program that is the 
 	 * destination for changes applied from the source program
 	 * @param myProgram source of changes to apply to the destination
@@ -82,7 +83,6 @@ public class ProgramTreeMergeManager implements MergeResolver {
 	 * resultProgram and latestProgram start out as being identical
 	 * @param latestChangeSet change set of the destination program
 	 * @param myChangeSet change set for the source program
-	 * @param monitor
 	 */
 	public ProgramTreeMergeManager(ProgramMultiUserMergeManager mergeManager,
 			Program resultProgram, Program myProgram, Program originalProgram,
@@ -153,15 +153,15 @@ public class ProgramTreeMergeManager implements MergeResolver {
 		mergeManager.updateProgress(0,
 			"Program Tree Merge is processing IDs changed in Checked Out...");
 		ArrayList<Long> changeList = new ArrayList<Long>();
-		for (int i = 0; i < myChangeIDs.length; i++) {
-			changeList.add(new Long(myChangeIDs[i]));
+		for (long myChangeID : myChangeIDs) {
+			changeList.add(new Long(myChangeID));
 		}
 
 		mergeManager.updateProgress(10,
 			"Program Tree Merge is processing IDs added in Checked Out...");
 		ArrayList<Long> myAddedList = new ArrayList<Long>();
-		for (int i = 0; i < myIDsAdded.length; i++) {
-			myAddedList.add(new Long(myIDsAdded[i]));
+		for (long element : myIDsAdded) {
+			myAddedList.add(new Long(element));
 		}
 
 		mergeManager.updateProgress(20, "Program Tree Merge is eliminating removed IDs...");
@@ -170,16 +170,16 @@ public class ProgramTreeMergeManager implements MergeResolver {
 
 		mergeManager.updateProgress(30, "Program Tree Merge is processing IDs added in Latest...");
 		ArrayList<Long> latestAddedList = new ArrayList<Long>();
-		for (int i = 0; i < latestIDsAdded.length; i++) {
-			latestAddedList.add(new Long(latestIDsAdded[i]));
+		for (long element : latestIDsAdded) {
+			latestAddedList.add(new Long(element));
 		}
 
 		conflictsChangeList = new ArrayList<Long>(changeList);
 
 		mergeManager.updateProgress(40, "Program Tree Merge is processing change IDs...");
 		ArrayList<Long> latestChangeList = new ArrayList<Long>();
-		for (int i = 0; i < latestChangeIDs.length; i++) {
-			latestChangeList.add(new Long(latestChangeIDs[i]));
+		for (long latestChangeID : latestChangeIDs) {
+			latestChangeList.add(new Long(latestChangeID));
 		}
 
 		mergeManager.updateProgress(50,
@@ -229,12 +229,12 @@ public class ProgramTreeMergeManager implements MergeResolver {
 	private void applyAdditions(ArrayList<Long> myList) throws CancelledException {
 
 		// add new trees
-		for (int i = 0; i < myList.size(); i++) {
+		for (Long element : myList) {
 			if (currentMonitor.isCancelled()) {
 				throw new CancelledException();
 			}
 			currentMonitor.setProgress(++progressIndex);
-			long treeID = myList.get(i).longValue();
+			long treeID = element.longValue();
 			ProgramModule sourceRoot = myListing.getRootModule(treeID);
 			if (sourceRoot != null) {
 				createTree(resultListing, getUniqueTreeName(sourceRoot.getTreeName()), sourceRoot);
@@ -272,13 +272,13 @@ public class ProgramTreeMergeManager implements MergeResolver {
 	 */
 	private void applyChanges(ArrayList<Long> changeList) throws CancelledException {
 
-		for (int i = 0; i < changeList.size(); i++) {
+		for (Long element : changeList) {
 			if (currentMonitor.isCancelled()) {
 				throw new CancelledException();
 			}
 			currentMonitor.setProgress(++progressIndex);
 
-			long treeID = changeList.get(i).longValue();
+			long treeID = element.longValue();
 			ProgramModule sourceRoot = myListing.getRootModule(treeID);
 			ProgramModule destRoot = resultListing.getRootModule(treeID);
 
@@ -375,8 +375,8 @@ public class ProgramTreeMergeManager implements MergeResolver {
 			removeEmptyFragments(root, fragmentNameList);
 
 			// remove the fragments that were created by default
-			for (int i = 0; i < names.length; i++) {
-				root.removeChild(names[i]);
+			for (String name : names) {
+				root.removeChild(name);
 			}
 			return root.getTreeID();
 		}
@@ -390,9 +390,9 @@ public class ProgramTreeMergeManager implements MergeResolver {
 
 	private void removeEmptyFragments(ProgramModule module, ArrayList<String> fragmentNameList) {
 		Group[] groups = module.getChildren();
-		for (int i = 0; i < groups.length; i++) {
-			if (groups[i] instanceof ProgramFragment) {
-				String name = groups[i].getName();
+		for (Group group : groups) {
+			if (group instanceof ProgramFragment) {
+				String name = group.getName();
 				if (!fragmentNameList.contains(name)) {
 					try {
 						module.removeChild(name);
@@ -403,7 +403,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 				}
 			}
 			else {
-				removeEmptyFragments((ProgramModule) groups[i], fragmentNameList);
+				removeEmptyFragments((ProgramModule) group, fragmentNameList);
 			}
 		}
 	}
@@ -413,16 +413,16 @@ public class ProgramTreeMergeManager implements MergeResolver {
 
 		parent.setComment(sourceParent.getComment());
 		Group[] kids = sourceParent.getChildren();
-		for (int i = 0; i < kids.length; i++) {
+		for (Group kid : kids) {
 			if (currentMonitor.isCancelled()) {
 				return;
 			}
-			String name = kids[i].getName();
-			if (kids[i] instanceof ProgramModule) {
-				createModule(parent, name, (ProgramModule) kids[i], fragmentNameList);
+			String name = kid.getName();
+			if (kid instanceof ProgramModule) {
+				createModule(parent, name, (ProgramModule) kid, fragmentNameList);
 			}
 			else {
-				createFragment(parent, name, (ProgramFragment) kids[i], fragmentNameList);
+				createFragment(parent, name, (ProgramFragment) kid, fragmentNameList);
 			}
 		}
 	}
@@ -477,8 +477,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 			while (iter.hasNext()) {
 				list.add(iter.next());
 			}
-			for (int i = 0; i < list.size(); i++) {
-				AddressRange range = list.get(i);
+			for (AddressRange range : list) {
 				try {
 					newFrag.move(range.getMinAddress(), range.getMaxAddress());
 				}
@@ -592,9 +591,9 @@ public class ProgramTreeMergeManager implements MergeResolver {
 
 	/**
 	 * Covers case 6: dest content changed, source content changed;
-	 *        case 7: dest name change & content changed, source name changed & content changed
-	 *        case 8: dest name & content changed, source content changed
-	 *        case 9: dest content changed, source name & content changed
+	 *        case 7: dest name change and content changed, source name changed and content changed
+	 *        case 8: dest name and content changed, source content changed
+	 *        case 9: dest content changed, source name and content changed
 	 * @throws CancelledException 
 	 */
 	private void keepOtherOrCreateTree(ProgramModule origRoot, ProgramModule sourceRoot, ProgramModule destRoot,
@@ -738,7 +737,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 	}
 
 	/**
-	 * Case 4: destination Name & content changed, source name changed
+	 * Case 4: destination Name and content changed, source name changed
 	 * @param sourceRoot source root module
 	 * @param sourceTreeName source tree name
 	 * @param destTreeName destination tree name
@@ -793,7 +792,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 	}
 
 	/**
-	 * Case 5: destination Name changed, source name & content changed
+	 * Case 5: destination Name changed, source name and content changed
 	 * @param sourceRoot source root module
 	 * @param sourceTreeName source tree name
 	 * @param destTreeName destination tree name

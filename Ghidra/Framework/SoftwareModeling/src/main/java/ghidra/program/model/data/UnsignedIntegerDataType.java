@@ -43,10 +43,10 @@ public class UnsignedIntegerDataType extends AbstractIntegerDataType {
 	}
 
 	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
+	 * @see ghidra.program.model.data.DataType#hasLanguageDependantLength()
 	 */
 	@Override
-	public boolean isDynamicallySized() {
+	public boolean hasLanguageDependantLength() {
 		return true;
 	}
 

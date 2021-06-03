@@ -96,7 +96,7 @@ void IfcLoadFile::execute(istream &s)
     return;
   }
   if (capa->getName() == "xml")		// If file is xml
-    dcp->conf->readLoaderSymbols(); // Read in loader symbols
+    dcp->conf->readLoaderSymbols("::"); // Read in loader symbols
 #ifdef OPACTION_DEBUG
   dcp->conf->setDebugStream(status->optr);
 #endif
@@ -170,29 +170,31 @@ int main(int argc,char **argv)
 {
   const char *initscript = (const char *)0;
 
-  vector<string> extrapaths;
-  int4 i=1;
-  while((i<argc)&&(argv[i][0]=='-')) {
-    if (argv[i][1]=='i')
-      initscript = argv[++i];
-    else if (argv[i][1]=='s')
-      extrapaths.push_back(argv[++i]);
-    i += 1;
-  }
-
-  string ghidraroot = FileManage::discoverGhidraRoot(argv[0]);
-  if (ghidraroot.size() == 0) {
-    const char *sleighhomepath = getenv("SLEIGHHOME");
-    if (sleighhomepath == (const char *)0) {
-      if (extrapaths.empty()) {
-	cerr << "Could not discover root of Ghidra installation" << endl;
-	exit(1);
-      }
+  {
+    vector<string> extrapaths;
+    int4 i = 1;
+    while ((i < argc) && (argv[i][0] == '-')) {
+      if (argv[i][1] == 'i')
+	initscript = argv[++i];
+      else if (argv[i][1] == 's')
+	extrapaths.push_back(argv[++i]);
+      i += 1;
     }
-    else
-      ghidraroot = sleighhomepath;
+
+    string ghidraroot = FileManage::discoverGhidraRoot(argv[0]);
+    if (ghidraroot.size() == 0) {
+      const char *sleighhomepath = getenv("SLEIGHHOME");
+      if (sleighhomepath == (const char*) 0) {
+	if (extrapaths.empty()) {
+	  cerr << "Could not discover root of Ghidra installation" << endl;
+	  exit(1);
+	}
+      }
+      else
+	ghidraroot = sleighhomepath;
+    }
+    startDecompilerLibrary(ghidraroot.c_str(), extrapaths);
   }
-  startDecompilerLibrary(ghidraroot.c_str(),extrapaths);
 
   IfaceStatus *status;
   try {

@@ -60,7 +60,7 @@ when generating Java source. There are two benefits: 1) I can keep most Java sou
 source files instead of the grammar source, 2) The code is no longer duplicated among many parsers
 can lexers.
 
-Second, I've split each sub-grammar into separate lexer and parser. This is required becuase ANTLR
+Second, I've split each sub-grammar into separate lexer and parser. This is required because ANTLR
 does not allow a "combined lexer/parser" to be imported by another lexer, parser, or combination.
 Aside from avoiding situations that are difficult to define, ANTLR's restriction also enforces the
 practice of separating components out. Note that BooleanExpression.g is unaffected by all of this,

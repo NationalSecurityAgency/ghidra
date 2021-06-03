@@ -55,7 +55,7 @@ public class GGlassPane extends JComponent {
 	/**
 	 * Default constructor.
 	 * <p>
-	 * <b>NOTE: </b>You must call {@link #setVisible( true )} on this component <b>after adding it
+	 * <b>NOTE: </b>You must call {@link #setVisible(boolean) setVisible(true)} on this component <b>after adding it
 	 * to the component</b>.  This is because the component will set the visibility to that of
 	 * the previous glass pane, which is false by default.
 	 */

@@ -21,8 +21,8 @@ public class MathUtilities {
 	}
 
 	/**
-	 * Perform unsigned division.  Provides proper handling of all 64-bit unsigned
-	 * values. 
+	 * Perform unsigned division. Provides proper handling of all 64-bit unsigned values.
+	 * 
 	 * @param numerator unsigned numerator
 	 * @param denominator positive divisor
 	 * @return result of unsigned division
@@ -47,8 +47,8 @@ public class MathUtilities {
 	}
 
 	/**
-	 * Perform unsigned modulo.  Provides proper handling of all 64-bit unsigned
-	 * values. 
+	 * Perform unsigned modulo. Provides proper handling of all 64-bit unsigned values.
+	 * 
 	 * @param numerator unsigned numerator
 	 * @param denominator positive divisor
 	 * @return result of unsigned modulo (i.e., remainder)
@@ -97,4 +97,111 @@ public class MathUtilities {
 		}
 	}
 
+	/**
+	 * Compute the minimum, treating the inputs as unsigned
+	 * 
+	 * @param a the first value to consider
+	 * @param b the second value to consider
+	 * @return the minimum
+	 */
+	public static long unsignedMin(long a, long b) {
+		return (Long.compareUnsigned(a, b) < 0) ? a : b;
+	}
+
+	/**
+	 * Compute the minimum, treating the inputs as unsigned
+	 * 
+	 * @param a the first value to consider
+	 * @param b the second value to consider
+	 * @return the minimum
+	 */
+	public static int unsignedMin(int a, int b) {
+		return (Integer.compareUnsigned(a, b) < 0) ? a : b;
+	}
+
+	/**
+	 * Compute the minimum, treating the inputs as unsigned
+	 * 
+	 * <p>
+	 * This method is overloaded to prevent accidental signed-extension on one of the inputs. This
+	 * method will correctly zero-extend the {@code int} parameter before performing any comparison.
+	 * Also note the return type is {@code int}, since b would never be selected if it overflows an
+	 * {@code int}.
+	 * 
+	 * @param a the first value to consider
+	 * @param b the second value to consider
+	 * @return the minimum
+	 */
+	public static int unsignedMin(int a, long b) {
+		return (Long.compareUnsigned(a & 0x0ffffffffL, b) < 0) ? a : (int) b;
+	}
+
+	/**
+	 * Compute the minimum, treating the inputs as unsigned
+	 * 
+	 * <p>
+	 * This method is overloaded to prevent accidental signed-extension on one of the inputs. This
+	 * method will correctly zero-extend the {@code int} parameter before performing any comparison.
+	 * Also note the return type is {@code int}, since b would never be selected if it overflows an
+	 * {@code int}.
+	 * 
+	 * @param a the first value to consider
+	 * @param b the second value to consider
+	 * @return the minimum
+	 */
+	public static int unsignedMin(long a, int b) {
+		return (Long.compareUnsigned(a, b & 0x0ffffffffL) < 0) ? (int) a : b;
+	}
+
+	/**
+	 * Compute the maximum, treating the inputs as unsigned
+	 * 
+	 * @param a the first value to consider
+	 * @param b the second value to consider
+	 * @return the maximum
+	 */
+	public static long unsignedMax(long a, long b) {
+		return (Long.compareUnsigned(a, b) > 0) ? a : b;
+	}
+
+	/**
+	 * Compute the maximum, treating the inputs as unsigned
+	 * 
+	 * @param a the first value to consider
+	 * @param b the second value to consider
+	 * @return the maximum
+	 */
+	public static int unsignedMax(int a, int b) {
+		return (Integer.compareUnsigned(a, b) > 0) ? a : b;
+	}
+
+	/**
+	 * Compute the maximum, treating the inputs as unsigned
+	 * 
+	 * <p>
+	 * This method is overloaded to prevent accidental signed-extension on one of the inputs. This
+	 * method will correctly zero-extend the {@code int} parameter before performing any comparison.
+	 * 
+	 * @param a the first value to consider
+	 * @param b the second value to consider
+	 * @return the maximum
+	 */
+	public static long unsignedMax(int a, long b) {
+		return (Long.compareUnsigned(a & 0x0ffffffffL, b) > 0) ? a : b;
+	}
+
+	/**
+	 * Compute the maximum, treating the inputs as unsigned
+	 * 
+	 * <p>
+	 * This method is overloaded to prevent accidental signed-extension on one of the inputs. This
+	 * method will correctly zero-extend the {@code int} parameter before performing any comparison.
+	 * 
+	 * @param a the first value to consider
+	 * @param b the second value to consider
+	 * @return the maximum
+	 */
+	public static long unsignedMax(long a, int b) {
+		return (Long.compareUnsigned(a, b & 0x0ffffffffL) > 0) ? a : b;
+	}
 }

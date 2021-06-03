@@ -21,16 +21,15 @@ import java.util.*;
 import javax.swing.JFrame;
 
 import docking.action.DockingActionIf;
-import docking.actions.PopupActionProvider;
-import docking.actions.ToolActions;
+import docking.actions.*;
 import ghidra.framework.options.ToolOptions;
 import ghidra.util.Swing;
 
 /**
- * A partial implementation of {@link DockingTool} that serves as a place to share common 
+ * A partial implementation of {@link Tool} that serves as a place to share common 
  * functionality
  */
-public abstract class AbstractDockingTool implements DockingTool {
+public abstract class AbstractDockingTool implements Tool {
 
 	protected DockingWindowManager winMgr;
 	protected ToolActions toolActions;
@@ -210,11 +209,6 @@ public abstract class AbstractDockingTool implements DockingTool {
 	}
 
 	@Override
-	public ActionContext getGlobalContext() {
-		return winMgr.getGlobalContext();
-	}
-
-	@Override
 	public void addContextListener(DockingContextListener listener) {
 		winMgr.addContextListener(listener);
 	}
@@ -240,7 +234,7 @@ public abstract class AbstractDockingTool implements DockingTool {
 	}
 
 	@Override
-	public ToolActions getToolActions() {
+	public DockingToolActions getToolActions() {
 		return toolActions;
 	}
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,14 @@
  */
 package ghidra.feature.vt.gui.provider.matchtable;
 
+import javax.swing.*;
+
 import ghidra.feature.vt.api.main.VTMatch;
 import ghidra.feature.vt.gui.filters.*;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.util.HelpLocation;
 import ghidra.util.layout.VariableRowHeightGridLayout;
 import ghidra.util.layout.VerticalLayout;
-
-import javax.swing.*;
 
 public class MatchesFilterDialogComponentProvider extends
 		AncillaryFilterDialogComponentProvider<VTMatch> {
@@ -58,9 +57,9 @@ public class MatchesFilterDialogComponentProvider extends
 
 		// Row 1 - Right Component 
 		// association status filter
-		AssociationStatusFilter associationStatusFitler = new AssociationStatusFilter();
-		addFilter(associationStatusFitler);
-		rowOnePanel.add(associationStatusFitler.getComponent());
+		AssociationStatusFilter associationStatusFilter = new AssociationStatusFilter();
+		addFilter(associationStatusFilter);
+		rowOnePanel.add(associationStatusFilter.getComponent());
 
 		// Row 2 - Left Component        
 		// symbol type filter

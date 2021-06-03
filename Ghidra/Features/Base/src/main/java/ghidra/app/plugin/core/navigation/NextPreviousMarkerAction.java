@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.navigation;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.Set;
 
 import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
@@ -72,20 +71,22 @@ public class NextPreviousMarkerAction extends MultiStateDockingAction<String> {
 		this.tool = tool;
 
 		ToolBarData toolBarData =
-			new ToolBarData(markerIcon, ToolConstants.NEXT_CODE_UNIT_NAVIGATION_MENU_GROUP);
+			new ToolBarData(markerIcon, ToolConstants.TOOLBAR_GROUP_FOUR);
 		toolBarData.setToolBarSubGroup(subGroup);
 		setToolBarData(toolBarData);
 
 		MenuData menuData =
 			new MenuData(new String[] { ToolConstants.MENU_NAVIGATION, getMenuName() }, markerIcon,
-				ToolConstants.NEXT_CODE_UNIT_NAVIGATION_MENU_GROUP);
+				ToolConstants.MENU_GROUP_NEXT_CODE_UNIT_NAV);
 		menuData.setMenuSubGroup(subGroup);
 		setMenuBarData(menuData);
 
 		setKeyBindingData(new KeyBindingData(getKeyStroke()));
+		addToWindowWhen(CodeViewerActionContext.class);
 
 		setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, getName()));
 		setDescription("Set marker options");
+		addToWindowWhen(CodeViewerActionContext.class);
 
 		ActionState<String> allMarkers =
 			new ActionState<String>("All Types", markerIcon, "All Types");
@@ -166,12 +167,12 @@ public class NextPreviousMarkerAction extends MultiStateDockingAction<String> {
 		MarkerManager markerManager = program.getMarkerManager();
 		Iterator<Marker> markerIterator = markerManager.getMarkersIterator(address, false);
 		if (isMarkerAddressEqualToCurrent(markerIterator.next(), address)) {
-
+	
 		}
 		MarkerSet nextMarker = getNextMarker(program, address, false, markerType);
 		return nextMarker == null ? null : nextMarker.getAddressSet().getMinAddress();
 	}
-
+	
 	private MarkerSet getNextMarker(Program program, Address address, boolean forward,
 			String markerType) {
 		MarkerManager markerManager = program.getMarkerManager();
@@ -182,7 +183,7 @@ public class NextPreviousMarkerAction extends MultiStateDockingAction<String> {
 			if (nextAddress.isExternalAddress()) {
 				continue;
 			}
-
+	
 			if (markerType.equals(MarkerType.ALL_TYPES) && !nextAddress.equals(address)) {
 				return nextMarker;
 			}
@@ -195,13 +196,13 @@ public class NextPreviousMarkerAction extends MultiStateDockingAction<String> {
 					!nextAddress.equals(address)) {
 					return nextMarker;
 				}
-
+	
 			}
 			else if (nextMarker.getTypeString().equals(markerType) && !nextAddress.equals(address)) {
 				return nextMarker;
 			}
 		}
-
+	
 		if (!markerIterator.hasNext()) {
 			return null;
 		}
@@ -310,13 +311,4 @@ public class NextPreviousMarkerAction extends MultiStateDockingAction<String> {
 		return isEnabledForContext(context);
 	}
 
-	@Override
-	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-		for (Class<?> class1 : contextTypes) {
-			if (CodeViewerActionContext.class.isAssignableFrom(class1)) {
-				return true;
-			}
-		}
-		return false;
-	}
 }

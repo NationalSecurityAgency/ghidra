@@ -33,7 +33,7 @@ public class FunctionLocation extends ProgramLocation {
 	/**
 	 * Create a new FunctionLocation.
 	 *
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param locationAddr the address of the listing location (i.e., referent code unit)
 	 * @param functionAddr the function address
 	 * @param row the row in the field
@@ -79,7 +79,6 @@ public class FunctionLocation extends ProgramLocation {
 	 * Save this function location to the given save state object.
 	 *
 	 * @param obj the save state object for saving the location
-	 * @param prefix prefix appended to the names of the save state items to make the entry unique
 	 */
 	@Override
 	public void saveState(SaveState obj) {
@@ -93,7 +92,8 @@ public class FunctionLocation extends ProgramLocation {
 	/**
 	 * Restore this function location using the given program and save state object.
 	 *
-	 * @param prefix prefix appended to the names of the save state items to make the entry unique
+	 * @param program1 the program containing the function location
+	 * @param obj the save state object for saving the location
 	 */
 	@Override
 	public void restoreState(Program program1, SaveState obj) {

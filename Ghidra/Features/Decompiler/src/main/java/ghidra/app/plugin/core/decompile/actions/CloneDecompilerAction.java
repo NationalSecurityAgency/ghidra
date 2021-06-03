@@ -22,36 +22,30 @@ import javax.swing.ImageIcon;
 
 import docking.action.KeyBindingData;
 import docking.action.ToolBarData;
-import ghidra.app.decompiler.component.DecompilerController;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
-import ghidra.app.plugin.core.decompile.DecompilerProvider;
+import ghidra.app.util.HelpTopics;
 import ghidra.util.HelpLocation;
 import resources.ResourceManager;
 
 public class CloneDecompilerAction extends AbstractDecompilerAction {
 
-	private final DecompilerProvider provider;
-	private DecompilerController controller;
-
-	public CloneDecompilerAction(DecompilerProvider provider, DecompilerController controller) {
+	public CloneDecompilerAction() {
 		super("Decompile Clone");
-		this.provider = provider;
-		this.controller = controller;
 		ImageIcon image = ResourceManager.loadImage("images/camera-photo.png");
 		setToolBarData(new ToolBarData(image, "ZZZ"));
 		setDescription("Create a snapshot (disconnected) copy of this Decompiler window ");
-		setHelpLocation(new HelpLocation("Snapshots", "Snapshots_Start"));
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ToolBarSnapshot"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_T,
 			InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
 	}
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		return controller.getFunction() != null;
+		return context.getFunction() != null;
 	}
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		provider.cloneWindow();
+		context.getComponentProvider().cloneWindow();
 	}
 }

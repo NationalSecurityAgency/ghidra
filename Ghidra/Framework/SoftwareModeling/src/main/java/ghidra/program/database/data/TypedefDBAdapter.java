@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,12 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.UniversalID;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.UniversalID;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Adapter to access the database table for typedef data types.
@@ -100,14 +98,14 @@ abstract class TypedefDBAdapter {
 			tmpAdapter = new TypedefDBAdapterV1(tmpHandle, true);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec, false);
 			}
 			oldAdapter.deleteTable(handle);
 			TypedefDBAdapter newAdapter = new TypedefDBAdapterV1(handle, true);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec, false);
 			}
 			return newAdapter;
@@ -129,7 +127,7 @@ abstract class TypedefDBAdapter {
 	 * @return the database record for this data type.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract Record createRecord(long dataTypeID, String name, long categoryID,
+	abstract DBRecord createRecord(long dataTypeID, String name, long categoryID,
 			long sourceArchiveID, long sourceDataTypeID, long lastChangeTime) throws IOException;
 
 	/**
@@ -138,7 +136,7 @@ abstract class TypedefDBAdapter {
 	 * @return the record for the type definition data type.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract Record getRecord(long typedefID) throws IOException;
+	abstract DBRecord getRecord(long typedefID) throws IOException;
 
 	/**
 	 * Gets an iterator over all type definition data type records.
@@ -162,7 +160,7 @@ abstract class TypedefDBAdapter {
 	 * current time before putting the record in the database.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract void updateRecord(Record record, boolean setLastChangeTime) throws IOException;
+	abstract void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException;
 
 	/**
 	 * Deletes the type definition data type table from the database with the specified database handle.
@@ -177,7 +175,7 @@ abstract class TypedefDBAdapter {
 	 * @return an array of IDs for the type definition data types in the category.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract long[] getRecordIdsInCategory(long categoryID) throws IOException;
+	abstract Field[] getRecordIdsInCategory(long categoryID) throws IOException;
 
 	/**
 	 * Gets an array with the IDs of all data types in the type definition table that were derived
@@ -186,9 +184,16 @@ abstract class TypedefDBAdapter {
 	 * @return the array data type IDs.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract long[] getRecordIdsForSourceArchive(long archiveID) throws IOException;
+	abstract Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException;
 
-	abstract Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
+	/**
+	 * Get typedef record whoose sourceID and datatypeID match the specified Universal IDs.
+	 * @param sourceID universal source archive ID
+	 * @param datatypeID universal datatype ID
+	 * @return typedef record found or null
+	 * @throws IOException if IO error occurs
+	 */
+	abstract DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
 			throws IOException;
 
 }

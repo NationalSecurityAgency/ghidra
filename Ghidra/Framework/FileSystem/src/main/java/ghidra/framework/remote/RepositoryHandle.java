@@ -219,7 +219,7 @@ public interface RepositoryHandle {
 	 * Perform a checkout on the specified item.
 	 * @param parentPath parent folder path
 	 * @param itemName name of item
-	 * @param CheckoutType checkout type.  If exclusive or transient, checkout is only successful 
+	 * @param checkoutType checkout type.  If exclusive or transient, checkout is only successful 
 	 * if no other checkouts exist.  No new checkouts of item will be permitted while an 
 	 * exclusive/transient checkout is active.
 	 * @param projectPath path of user's project

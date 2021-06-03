@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.elf;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import ghidra.app.util.bin.ByteArrayConverter;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
@@ -96,13 +97,24 @@ public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 
 		long entryPos = reader.getPointerIndex();
 
+		// load the all the symbol entries first, don't initialize the string name
+		// that will be done later to help localize memory access
 		for (int i = 0; i < symbolCount; i++) {
 			// Reposition reader to start of symbol element since ElfSymbol object 
 			// may not consume all symbol element data
 			reader.setPointerIndex(entryPos);
-			ElfSymbol sym = ElfSymbol.createElfSymbol(reader, i, this, stringTable, header);
+			ElfSymbol sym = ElfSymbol.createElfSymbol(reader, i, this, header);
 			symbolList.add(sym);
 			entryPos += entrySize;
+		}
+
+		// sort the entries by the index in the string table, so don't jump around reading
+		List<ElfSymbol> sortedList = symbolList.stream().sorted(
+			(o1, o2) -> Integer.compare(o1.getName(), o2.getName())).collect(Collectors.toList());
+
+		// initialize the Symbol string names from string table
+		for (ElfSymbol sym : sortedList) {
+			sym.initSymbolName(reader, stringTable);
 		}
 
 		reader.setPointerIndex(ptr);
@@ -163,9 +175,9 @@ public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 	 * @return the symbol at the specified address
 	 */
 	public ElfSymbol getSymbolAt(long addr) {
-		for (int i = 0; i < symbols.length; i++) {
-			if (symbols[i].getValue() == addr) {
-				return symbols[i];
+		for (ElfSymbol symbol : symbols) {
+			if (symbol.getValue() == addr) {
+				return symbol;
 			}
 		}
 		return null;
@@ -177,9 +189,9 @@ public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 	 */
 	public ElfSymbol[] getGlobalSymbols() {
 		List<ElfSymbol> list = new ArrayList<>();
-		for (int i = 0; i < symbols.length; i++) {
-			if (symbols[i].getBind() == ElfSymbol.STB_GLOBAL) {
-				list.add(symbols[i]);
+		for (ElfSymbol symbol : symbols) {
+			if (symbol.getBind() == ElfSymbol.STB_GLOBAL) {
+				list.add(symbol);
 			}
 		}
 		ElfSymbol[] array = new ElfSymbol[list.size()];
@@ -193,11 +205,11 @@ public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 	 */
 	public String[] getSourceFiles() {
 		List<String> list = new ArrayList<>();
-		for (int j = 0; j < symbols.length; j++) {
-			if (symbols[j].getType() == ElfSymbol.STT_FILE) {
-				String name = symbols[j].getNameAsString();
+		for (ElfSymbol symbol : symbols) {
+			if (symbol.getType() == ElfSymbol.STT_FILE) {
+				String name = symbol.getNameAsString();
 				if (name != null) {
-					list.add(symbols[j].getNameAsString());
+					list.add(symbol.getNameAsString());
 				}
 			}
 		}

@@ -28,7 +28,7 @@ body { margin-bottom: 50px; margin-left: 10px; margin-right: 10px; margin-top: 1
 li { font-family:times new roman; font-size:14pt; }
 h1 { color:#000080; font-family:times new roman; font-size:36pt; font-style:italic; font-weight:bold; text-align:center; }
 h2 { margin: 10px; margin-top: 20px; color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; }
-h3 { margin-left: 10px; margin-top: 20px; color:#0000ff; font-family:times new roman; font-size:14pt; font-weight:bold;  }
+h3 { margin-left: 10px; margin-top: 20px; color:#0000ff; font-family:times new roman; `font-size:14pt; font-weight:bold;  }
 h4 { margin-left: 10px; margin-top: 20px; font-family:times new roman; font-size:14pt; font-style:italic; }
  
 /*
@@ -55,4 +55,10 @@ table { margin-left: 20px; margin-top: 10px; width: 80%;}
 td { font-family:times new roman; font-size:14pt; vertical-align: top; }
 th { font-family:times new roman; font-size:14pt; font-weight:bold; background-color: #EDF3FE; }
 
-code { color: black; font-family: courier new; font-size: 14pt; }
+/*
+	Code-like formatting for things such as file system paths and proper names of classes, 
+	methods, etc.  To apply this to a file path, use this syntax:
+		<CODE CLASS="path">...</CODE>
+*/
+code { color: black; font-weight: bold; font-family: courier new, monospace; font-size: 14pt; white-space: nowrap; }
+code.path { color: #4682B4; font-weight: bold; font-family: courier new, monospace; font-size: 14pt; white-space: nowrap; }

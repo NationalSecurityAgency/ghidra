@@ -15,14 +15,15 @@
  */
 package ghidra.app.plugin.core.stackeditor;
 
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
+
+import javax.help.UnsupportedOperationException;
 
 import ghidra.program.model.data.*;
 import ghidra.util.exception.AssertException;
 
 /**
- * BiDirectionDataType is a special structure data type that allows both positive and negative 
+ * BiDirectionDataType is a special structure data type that allows both positive and negative
  * offset values.
  */
 public abstract class BiDirectionDataType extends StructureDataType
@@ -52,6 +53,49 @@ public abstract class BiDirectionDataType extends StructureDataType
 		this.negativeLength = negativeLength;
 		this.positiveLength = positiveLength;
 		this.splitOffset = splitOffset;
+	}
+
+	@Override
+	public int getAlignment() {
+		throw new UnsupportedOperationException(
+			"BiDirectionDataType.getAlignment() not implemented.");
+	}
+
+	@Override
+	public boolean repack(boolean notify) {
+		throw new AssertException();
+	}
+
+	@Override
+	public void setToDefaultAligned() {
+		// ignore
+	}
+
+	@Override
+	public void setToMachineAligned() {
+		// ignore
+	}
+
+	@Override
+	public void setPackingEnabled(boolean aligned) {
+		// ignore
+	}
+
+	@Override
+	public void setExplicitPackingValue(int packingValue) {
+		// ignore
+	}
+
+	@Override
+	public void setExplicitMinimumAlignment(int minimumAlignment) {
+		// ignore
+	}
+
+	@Override
+	public DataTypeComponent setFlexibleArrayComponent(DataType flexType, String name,
+			String comment) {
+		throw new UnsupportedOperationException(
+			"BiDirectionDataType.setFlexibleArrayComponent() not implemented.");
 	}
 
 	protected DataTypeComponent getDefinedComponentAt(int offset) {
@@ -109,19 +153,14 @@ public abstract class BiDirectionDataType extends StructureDataType
 	}
 
 	@Override
-	public int getLength() {
-		return structLength;
-	}
-
-	@Override
 	public void delete(int index) {
 		if (index < 0 || index >= numComponents) {
-			throw new ArrayIndexOutOfBoundsException(index);
+			throw new IndexOutOfBoundsException(index);
 		}
 		DataTypeComponent comp = getComponent(index);
 		int offset = comp.getOffset();
 		int length = comp.getLength();
-		int idx = Collections.binarySearch(components, new Integer(index), ordinalComparator);
+		int idx = Collections.binarySearch(components, index, ordinalComparator);
 		if (idx >= 0) {
 			DataTypeComponent dtc = components.remove(idx);
 			dtc.getDataType().removeParent(this);
@@ -137,7 +176,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 	}
 
 	@Override
-	public void delete(int[] ordinals) {
+	public void delete(Set<Integer> ordinals) {
 		for (int ordinal : ordinals) {
 			delete(ordinal);
 		}
@@ -173,6 +212,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 			}
 		}
 		structLength += deltaLength;
+//		nonpackedAlignedStructLength = -1;
 	}
 
 	/*
@@ -198,7 +238,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 
 	protected DataTypeComponent getDefinedComponent(int ordinal) {
 		if (ordinal < 0 || ordinal >= numComponents) {
-			throw new ArrayIndexOutOfBoundsException(ordinal);
+			throw new IndexOutOfBoundsException(ordinal);
 		}
 		int idx = Collections.binarySearch(components, new Integer(ordinal), ordinalComparator);
 		if (idx >= 0) {
@@ -210,7 +250,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 	@Override
 	public DataTypeComponent getComponent(int ordinal) {
 		if (ordinal < 0 || ordinal >= numComponents) {
-			throw new ArrayIndexOutOfBoundsException(ordinal);
+			throw new IndexOutOfBoundsException(ordinal);
 		}
 		int idx = Collections.binarySearch(components, new Integer(ordinal), ordinalComparator);
 		if (idx >= 0) {
@@ -243,7 +283,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 
 	@Override
 	public DataTypeComponentImpl insertAtOffset(int offset, DataType dataType, int length,
-			String newName, String comment) {
+			String newName, String comment) throws IllegalArgumentException {
 		if (offset < splitOffset - negativeLength || offset >= splitOffset + positiveLength) {
 			throw new IllegalArgumentException(
 				"Offset " + offset + " is not in " + getDisplayName() + ".");
@@ -255,12 +295,14 @@ public abstract class BiDirectionDataType extends StructureDataType
 			numComponents += deltaLength;
 			positiveLength += deltaLength;
 			structLength += deltaLength;
+//			nonpackedAlignedStructLength = -1;
 		}
 		if (nextOffset < splitOffset - negativeLength) {
 			int deltaLength = splitOffset - nextOffset - negativeLength;
 			numComponents += deltaLength;
 			negativeLength += deltaLength;
 			structLength += deltaLength;
+//			nonpackedAlignedStructLength = -1;
 		}
 		checkAncestry(dataType);
 		dataType = dataType.clone(getDataTypeManager());
@@ -304,7 +346,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 
 	@Override
 	public DataTypeComponent addPositive(DataType dataType, int length, String newName,
-			String comment) {
+			String comment) throws IllegalArgumentException {
 
 		validateDataType(dataType);
 		checkAncestry(dataType);
@@ -319,13 +361,14 @@ public abstract class BiDirectionDataType extends StructureDataType
 		numComponents++;
 		positiveLength += length;
 		structLength += length;
+//		nonpackedAlignedStructLength = -1;
 		notifySizeChanged();
 		return dtc;
 	}
 
 	@Override
 	public DataTypeComponent addNegative(DataType dataType, int length, String newName,
-			String comment) {
+			String comment) throws IllegalArgumentException {
 
 		validateDataType(dataType);
 		checkAncestry(dataType);
@@ -341,17 +384,18 @@ public abstract class BiDirectionDataType extends StructureDataType
 		numComponents++;
 		negativeLength += length;
 		structLength += length;
+//		nonpackedAlignedStructLength = -1;
 		notifySizeChanged();
 		return dtc;
 	}
 
 	/**
-	 * Increases the size of the bidirectional data type
-	 * If amount is positive then the positive offset side will grow by the 
-	 * indicated amount. If amount is negative, the data type grows on the 
-	 * negative offsets side.
-	 * @param amount Positive value indicates number of bytes to add to positive side.
-	 * Negative value indicates number of bytes to add to negative side.
+	 * Increases the size of the bidirectional data type If amount is positive then the positive
+	 * offset side will grow by the indicated amount. If amount is negative, the data type grows on
+	 * the negative offsets side.
+	 * 
+	 * @param amount Positive value indicates number of bytes to add to positive side. Negative
+	 *            value indicates number of bytes to add to negative side.
 	 */
 	@Override
 	public void growStructure(int amount) {
@@ -367,39 +411,14 @@ public abstract class BiDirectionDataType extends StructureDataType
 		}
 		numComponents += absAmount;
 		structLength += absAmount;
+//		nonpackedAlignedStructLength = -1;
 		notifySizeChanged();
 	}
 
 	@Override
 	public DataTypeComponent insert(int index, DataType dataType, int length, String newName,
 			String comment) {
-		throw new AssertException("BiDirectionDataType.insert() not implemented.");
-//		if (index < 0 || index > numComponents) {
-//			throw new ArrayIndexOutOfBoundsException(index);
-//		}
-//		if (index == numComponents) {
-//			return add(dataType, length, newName, comment);
-//		}
-//		validateDataType(dataType);
-//
-//		dataType = resolve(dataType);
-//		checkAncestry(dataType);
-//		
-//		int idx = Collections.binarySearch(components, new Integer(index), ordinalComparator);
-//		if (idx < 0) {
-//			idx = -idx -1;
-//		}
-//		if (dataType == DataType.DEFAULT) {
-//			shiftOffsets(idx, 1, 1);
-//			return getComponent(index);
-//		}
-//		int offset = ((DataTypeComponent)getComponent(index)).getOffset();
-//		DataTypeComponent dtc = new DataTypeComponentImpl(dataType,this, length,index,
-//														  offset, newName, comment);
-//		shiftOffsets(idx, 1, dtc.getLength());
-//		components.add(idx, dtc);											 
-//		sizeChanged();
-//		return dtc;
+		throw new UnsupportedOperationException("BiDirectionDataType.insert() not implemented.");
 	}
 
 	protected void insertAtOffset(int offset, int numBytes) {
@@ -441,6 +460,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 		}
 		numComponents += numBytes;
 		structLength += numBytes;
+//		nonpackedAlignedStructLength = -1;
 		notifySizeChanged();
 	}
 
@@ -479,7 +499,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 			if ((splitOffset != biDir.getSplitOffset()) ||
 				(negativeLength != biDir.getNegativeLength()) ||
 				(positiveLength != biDir.getPositiveLength()) ||
-				(structLength != biDir.getLength())) {
+				(getLength() != biDir.getLength())) {
 				return false;
 			}
 			DataTypeComponent[] myComps = getDefinedComponents();
@@ -499,80 +519,21 @@ public abstract class BiDirectionDataType extends StructureDataType
 
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
-		throw new AssertException("BiDirectionDataType.dataTypeSizeChanged() not implemented.");
-//		int n = components.size();
-//		boolean didChange = false;
-//		for(int i=0;i<n;i++) {
-//			DataTypeComponentImpl dtc = (DataTypeComponentImpl)components.get(i);
-//			if (dtc.getDataType() == dt) {
-//				int dtLen = dt.getLength();
-//				int dtcLen = dtc.getLength();
-//				if (dtLen < dtcLen) {
-//					dtc.setLength(dtLen);
-//					shiftOffsets(i+1, dtcLen-dtLen, 0);
-//					didChange = true;
-//				}
-//				else if (dtLen > dtcLen) {
-//					int consumed = consumeBytesAfter(i, dtLen-dtcLen);
-//					if (consumed > 0) {
-//						shiftOffsets(i+1, 0-consumed, 0);
-//						didChange = true;
-//					}
-//				}
-//			}
-//		}
-//		if (didChange & dtMgr != null) {
-//			dtMgr.dataTypeChanged(this);
-//		}
+		// ignore
 	}
 
-	/**
-	 * 
-	 * @param index the index of the defined component that is consuming the bytes.
-	 * @param numBytes the number of undefined bytes to consume
-	 * @return the number of bytes actually consumed
-	 */
-//	private int consumeBytesAfter(int index, int numBytes) {
-//	throw new AssertException("BiDirectionDataType.consumeBytesAfter() not implemented.");
-//		DataTypeComponentImpl thisDtc = (DataTypeComponentImpl)components.get(index);
-//		int thisLen = thisDtc.getLength();
-//		int nextOffset = thisDtc.getOffset()+thisLen;
-//		int available = structLength-nextOffset;
-//		if (index+1 < components.size()) {
-//			DataTypeComponent nextDtc = (DataTypeComponent)components.get(index+1);
-//			available = nextDtc.getOffset() - nextOffset;
-//		}
-//		else {
-//			available = structLength-nextOffset;
-//		}
-//		if (numBytes <= available) {
-//			thisDtc.setLength(thisLen + numBytes);
-//			return numBytes;	
-//		}
-//		else {
-//			thisDtc.setLength(thisLen + available);
-//			return available;	
-//		}
-//	}
-
-//	private boolean hasRoom(int index, int offset, int length) {
-//		if (offset+length > this.positiveLength) {
-//			return false;
-//		}
-//		if (index+1 < components.size()) {
-//			DataTypeComponent nextDtc = (DataTypeComponent)components.get(index+1);
-//			return offset+length <= nextDtc.getOffset();
-//		}
-//		return true;	
-//	}
+	@Override
+	public void dataTypeAlignmentChanged(DataType dt) {
+		// ignore
+	}
 
 	@Override
-	public abstract DataType clone(DataTypeManager dtm);
+	public abstract BiDirectionDataType clone(DataTypeManager dtm);
 
 	@Override
 	public void clearComponent(int index) {
 		if (index < 0 || index >= numComponents) {
-			throw new ArrayIndexOutOfBoundsException(index);
+			throw new IndexOutOfBoundsException(index);
 		}
 		int idx = Collections.binarySearch(components, new Integer(index), ordinalComparator);
 		if (idx >= 0) {
@@ -589,81 +550,20 @@ public abstract class BiDirectionDataType extends StructureDataType
 	}
 
 	public void replaceWith(Structure struct) {
-		throw new AssertException("BiDirectionDataType.replaceWith() not implemented.");
-//		int oldLength = structLength;
-//		doReplaceWith(struct);
-//		if (oldLength != structLength) {
-//			sizeChanged();
-//		}
-//		else if (dtMgr != null) {
-//			dtMgr.dataTypeChanged(this);
-//		}
+		throw new UnsupportedOperationException(
+			"BiDirectionDataType.replaceWith() not implemented.");
 	}
-
-//	private void doReplaceWith(Structure struct) {
-//		throw new AssertException("BiDirectionDataType.doReplaceWith() not implemented.");
-//		components.clear();
-//		structLength = struct.getLength();
-//		numComponents = structLength;
-//
-//		DataTypeComponent[] components = struct.getDefinedComponents();
-//		for(int i=0;i<components.length;i++) {
-//			DataTypeComponent dtc = components[i];
-//			DataType dt = dtc.getDataType();
-//			validateDataType(dt);
-//			dt = resolve(dt);
-//			replaceAtOffset(dtc.getOffset(), dt, dtc.getLength(), 
-//							dtc.getFieldName(), dtc.getComment());
-//		}
-//	}
 
 	@Override
 	public void dataTypeDeleted(DataType dt) {
-		throw new AssertException("BiDirectionDataType.dataTypeDeleted() not implemented.");
-//		boolean didChange = false;
-//		int n = components.size();
-//		for(int i=n-1;i>=0;i--) {
-//			DataTypeComponentImpl dtc = (DataTypeComponentImpl)components.get(i);
-//			if (dtc.getDataType() == dt) {
-//				components.remove(i);
-//				shiftOffsets(i, dtc.getLength()-1, 0);
-//				didChange = true;	
-//			}
-//		}
-//		if (didChange && dtMgr != null) {
-//			dtMgr.dataTypeChanged(this);
-//		}
-
+		throw new UnsupportedOperationException(
+			"BiDirectionDataType.dataTypeDeleted() not implemented.");
 	}
 
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
-		throw new AssertException("BiDirectionDataType.dataTypeReplaced() not implemented.");
-//		int n = components.size();
-//		boolean didChange = false;
-//		for(int i=0;i<n;i++) {
-//			DataTypeComponentImpl dtc = (DataTypeComponentImpl)components.get(i);
-//			if (dtc.getDataType() == oldDt) {
-//				int dtLen = oldDt.getLength();
-//				int dtcLen = dtc.getLength();
-//				dtc.setDataType(newDt);
-//				if (dtLen < dtcLen) {
-//					dtc.setLength(dtLen);
-//					shiftOffsets(i+1, dtcLen-dtLen, 0);
-//					didChange = true;
-//				}
-//				else if (dtLen > dtcLen) {
-//					int consumed = consumeBytesAfter(i, dtLen-dtcLen);
-//					if (consumed > 0) {
-//						shiftOffsets(i+1, 0-consumed, 0);
-//						didChange = true;
-//					}
-//				}
-//			}
-//		}
-//		if (didChange & dtMgr != null) {
-//			dtMgr.dataTypeChanged(this);
-//		}
+		throw new UnsupportedOperationException(
+			"BiDirectionDataType.dataTypeReplaced() not implemented.");
 	}
 
 	@Override
@@ -682,9 +582,9 @@ public abstract class BiDirectionDataType extends StructureDataType
 
 	@Override
 	public DataTypeComponent replace(int index, DataType dataType, int length, String newName,
-			String comment) {
+			String comment) throws IndexOutOfBoundsException, IllegalArgumentException {
 		if (index < 0 || index >= numComponents) {
-			throw new ArrayIndexOutOfBoundsException(index);
+			throw new IndexOutOfBoundsException(index);
 		}
 		validateDataType(dataType);
 		checkAncestry(dataType);
@@ -695,7 +595,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 
 	@Override
 	public DataTypeComponent replaceAtOffset(int offset, DataType dataType, int length,
-			String newName, String comment) {
+			String newName, String comment) throws IllegalArgumentException {
 		if (offset < splitOffset - negativeLength || offset >= splitOffset + positiveLength) {
 			throw new IllegalArgumentException(
 				"Offset " + offset + " is not in " + getDisplayName() + ".");
@@ -709,21 +609,20 @@ public abstract class BiDirectionDataType extends StructureDataType
 	}
 
 	/**
-	 * Replace the indicated component with a new component containing the 
-	 * specified data type.
+	 * Replace the indicated component with a new component containing the specified data type.
+	 * 
 	 * @param origDtc the original data type component in this structure.
 	 * @param dataType the data type of the new component
 	 * @param length the length of the new component
 	 * @param newName the field name of the new component
 	 * @param comment the comment for the new component
 	 * @return the new component or null if the new component couldn't fit.
-	 * @throws IllegalArgumentException if the dataType.getLength() is positive 
-	 * and does not match the given length parameter.
-	 * @throws IllegalArgumentException if the specified data type is not 
-	 * allowed to replace a component in this composite data type.
-	 * For example, suppose dt1 contains dt2. Therefore it is not valid
-	 * to replace a dt2 component with dt1 since this would cause a cyclic 
-	 * dependency.
+	 * @throws IllegalArgumentException if the dataType.getLength() is positive and does not match
+	 *             the given length parameter.
+	 * @throws IllegalArgumentException if the specified data type is not allowed to replace a
+	 *             component in this composite data type. For example, suppose dt1 contains dt2.
+	 *             Therefore it is not valid to replace a dt2 component with dt1 since this would
+	 *             cause a cyclic dependency.
 	 */
 	private DataTypeComponent replace(DataTypeComponent origDtc, DataType dataType, int length,
 			String newName, String comment) {

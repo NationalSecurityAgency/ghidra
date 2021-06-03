@@ -1,0 +1,254 @@
+# RV32F  Standard Extension
+
+# fadd.s D,S,T,m 00000053 fe00007f SIMPLE (0, 0) 
+:fadd.s frd,frs1S,frs2S,FRM is frs1S & frd & frs2S & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x0
+{
+	local tmp:4 = frs1S f+ frs2S;
+	fassignS(frd, tmp);
+}
+
+
+# fclass.s d,S e0001053 fff0707f SIMPLE (0, 0) 
+:fclass.s rd,frs1S is frs1S & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x70 & op2024=0x0
+{
+	#TODO
+	# rd = 0;
+	# rd[0, 1] = 0; #TODO  - inf
+	# rd[1, 1] = 0; #TODO  - norm num
+	# rd[2, 1] = 0; #TODO  - subnorm num
+	# rd[3, 1] = 0; #TODO  - 0
+	# rd[4, 1] = 0; #TODO  + 0
+	# rd[5, 1] = 0; #TODO  + norm num
+	# rd[6, 1] = 0; #TODO  + subnorm num
+	# rd[7, 1] = 0; #TODO  + inf
+	# rd[8, 1] = 0; #TODO  snan
+	# rd[9, 1] = 0; #TODO  qnan
+}
+
+
+# fcvt.s.w D,s,m d0000053 fff0007f SIMPLE (0, 0) 
+:fcvt.s.w frd,rs1W,FRM is frd & FRM & rs1W & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x68 & op2024=0x0
+{
+	local tmp:4 = int2float(rs1W);
+	fassignS(frd, tmp);
+}
+
+
+# fcvt.s.wu D,s,m d0100053 fff0007f SIMPLE (0, 0) 
+:fcvt.s.wu frd,rs1W,FRM is frd & FRM & rs1W & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x68 & op2024=0x1
+{
+	#ATTN  unsigned can be an issue here
+	local u32:$(XLEN2) = zext(rs1W);
+	local tmp:4 = int2float(u32);
+	fassignS(frd, tmp);
+}
+
+
+# fcvt.w.s d,S,m c0000053 fff0007f SIMPLE (0, 0) 
+:fcvt.w.s rdW,frs1S,FRM is frs1S & FRM & rdW & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x60 & op2024=0x0
+{
+	rdW = trunc(frs1S);
+}
+
+
+# fcvt.wu.s d,S,m c0100053 fff0007f SIMPLE (0, 0) 
+:fcvt.wu.s rdW,frs1S,FRM is frs1S & FRM & rdW & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x60 & op2024=0x1
+{
+	#TODO  unsigned
+	rdW = trunc(frs1S);
+}
+
+
+# fdiv.s D,S,T,m 18000053 fe00007f SIMPLE (0, 0) 
+:fdiv.s frd,frs1S,frs2S,FRM is frs1S & frd & frs2S & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0xc
+{
+	local tmp:4 = frs1S f/ frs2S;
+	fassignS(frd, tmp);
+}
+
+
+# feq.s d,S,T a0002053 fe00707f SIMPLE (0, 0) 
+:feq.s rd,frs1S,frs2S is frs2S & frs1S & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x2 & funct7=0x50
+{
+	rd = zext(frs1S f== frs2S);
+}
+
+
+# fle.s d,S,T a0000053 fe00707f SIMPLE (0, 0) 
+:fle.s rd,frs1S,frs2S is frs2S & frs1S & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x50
+{
+	rd = zext(frs1S f<= frs2S);
+}
+
+
+# flt.s d,S,T a0001053 fe00707f SIMPLE (0, 0) 
+:flt.s rd,frs1S,frs2S is frs2S & frs1S & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x50
+{
+	rd = zext(frs1S f< frs2S);
+}
+
+
+# flw D,o(s) 00002007 0000707f DWORD|DREF (0, 4) 
+:flw frd,immI(rs1) is immI & frd & rs1 & op0001=0x3 & op0204=0x1 & op0506=0x0 & funct3=0x2
+{
+	local ea:$(XLEN) = immI + rs1;
+	fassignS(frd, *[ram]:4 ea);
+}
+
+
+# fmadd.s D,S,T,R,m 00000043 0600007f SIMPLE (0, 0) 
+:fmadd.s frd,frs1S,frs2S,frs3S,FRM is frs1S & frd & frs2S & FRM & frs3S & op0001=0x3 & op0204=0x0 & op0506=0x2 & op2526=0x0
+{
+	local tmp:4 = (frs1S f* frs2S) f+ frs3S;
+	fassignS(frd, tmp);
+}
+
+
+# fmax.s D,S,T 28001053 fe00707f SIMPLE (0, 0) 
+:fmax.s frd,frs1S,frs2S is frs1S & frd & frs2S & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x14
+{
+	#TODO  redo this
+	local tmpfrs1 = frs1S;
+	local tmpfrs2 = frs2S;
+	fassignS(frd, tmpfrs1);
+	if (nan(tmpfrs1) && nan(tmpfrs2)) goto inst_next;
+	if (nan(tmpfrs2)) goto inst_next;
+	fassignS(frd, tmpfrs2);
+	if (nan(tmpfrs1)) goto inst_next;
+	if (tmpfrs2 f>= tmpfrs1) goto inst_next;
+	fassignS(frd, tmpfrs1);
+}
+
+
+# fmin.s D,S,T 28000053 fe00707f SIMPLE (0, 0) 
+:fmin.s frd,frs1S,frs2S is frs1S & frd & frs2S & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x14
+{
+	#TODO  redo this
+	local tmpfrs1 = frs1S;
+	local tmpfrs2 = frs2S;
+	fassignS(frd, tmpfrs1);
+	if (nan(tmpfrs1) && nan(tmpfrs2)) goto inst_next;
+	if (nan(tmpfrs2)) goto inst_next;
+	fassignS(frd, tmpfrs2);
+	if (nan(tmpfrs1)) goto inst_next;
+	if (tmpfrs2 f<= tmpfrs1) goto inst_next;
+	fassignS(frd, tmpfrs1);
+}
+
+
+# fmsub.s D,S,T,R,m 00000047 0600007f SIMPLE (0, 0) 
+:fmsub.s frd,frs1S,frs2S,frs3S,FRM is frs1S & frd & frs2S & FRM & frs3S & op0001=0x3 & op0204=0x1 & op0506=0x2 & op2526=0x0
+{
+	local tmp:4 = (frs1S f* frs2S) f- frs3S;
+	fassignS(frd, tmp);
+}
+
+
+# fmul.s D,S,T,m 10000053 fe00007f SIMPLE (0, 0) 
+:fmul.s frd,frs1S,frs2S,FRM is frs1S & frd & frs2S & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x8
+{
+	local tmp:4 = frs1S f* frs2S;
+	fassignS(frd, tmp);
+}
+
+
+# fmv.w.x D,s f0000053 fff0707f SIMPLE (0, 0) 
+:fmv.w.x frd,rs1W is frd & rs1W & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x0
+{
+	fassignS(frd, rs1W);
+}
+
+# fmv.x.w d,S e0000053 fff0707f SIMPLE (0, 0) 
+:fmv.x.w rdW,frs1S is frs1S & rdW & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x70 & op2024=0x0
+{
+	local tmpreg:4 = &frs1S;
+	local tmp:4 = *[register]:4 tmpreg;
+	rdW = tmp;
+}
+
+
+# fnmadd.s D,S,T,R,m 0000004f 0600007f SIMPLE (0, 0) 
+:fnmadd.s frd,frs1S,frs2S,frs3S,FRM is frs1S & frd & frs2S & FRM & frs3S & op0001=0x3 & op0204=0x3 & op0506=0x2 & op2526=0x0
+{
+	local tmp:4 = (f- (frs1S f* frs2S)) f- frs3S;
+	fassignS(frd, tmp);
+}
+
+
+# fnmsub.s D,S,T,R,m 0000004b 0600007f SIMPLE (0, 0) 
+:fnmsub.s frd,frs1S,frs2S,frs3S,FRM is frs1S & frd & frs2S & FRM & frs3S & op0001=0x3 & op0204=0x2 & op0506=0x2 & op2526=0x0
+{
+	local tmp:4 = (f- (frs1S f* frs2S)) f+ frs3S;
+	fassignS(frd, tmp);
+}
+
+
+# fsgnj.s D,S,T 20000053 fe00707f SIMPLE (0, 0) 
+:fsgnj.s frd,frs1S,frs2S is frs1S & frd & frs2S & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x10
+{
+	local tmp:$(SFLEN) = frs1S;
+	tmp[31,1] = frs2S[31,1];
+	fassignS(frd, tmp);
+}
+
+# fmv.s D,U 20000053 fe00707f ALIAS (0, 0)
+:fmv.s frd,frs1S is frd & frs1S & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x10 & op1519=op2024
+{
+	fassignS(frd, frs1S);
+}
+
+
+# fsgnjn.s D,S,T 20001053 fe00707f SIMPLE (0, 0) 
+:fsgnjn.s frd,frs1S,frs2S is frs1S & frd & frs2S & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x10
+{
+	local tmp:$(SFLEN) = frs1S;
+	tmp[31,1] = !frs2S[31,1];
+	fassignS(frd, tmp);
+}
+
+# fneg.s D,U 20001053 fe00707f ALIAS (0, 0)
+:fneg.s frd,frs1S is frs1S & frd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x10 & op1519=op2024
+{
+	local tmp:4 = f- frs1S;
+	fassignS(frd, tmp);
+}
+
+
+# fsgnjx.s D,S,T 20002053 fe00707f SIMPLE (0, 0) 
+:fsgnjx.s frd,frs1S,frs2S is frs1S & frd & frs2S & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x2 & funct7=0x10
+{
+	local tmp:$(SFLEN) = frs1S;
+	tmp[31,1] = tmp[31,1] ^ frs2S[31,1];
+	fassignS(frd, tmp);
+}
+
+# fabs.s D,U 20002053 fe00707f ALIAS (0, 0)
+:fabs.s frd,frs1S is frd & frs1S & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x2 & funct7=0x10 & op1519=op2024
+{
+	local tmp:4 = abs(frs1S);
+	fassignS(frd, tmp);
+}
+
+
+# fsqrt.s D,S,m 58000053 fff0007f SIMPLE (0, 0) 
+:fsqrt.s frd,frs1S,FRM is frs1S & frd & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x2c & op2024=0x0
+{
+	local tmp:4 = sqrt(frs1S);
+	fassignS(frd, tmp);
+}
+
+
+# fsub.s D,S,T,m 08000053 fe00007f SIMPLE (0, 0) 
+:fsub.s frd,frs1S,frs2S,FRM is frs1S & frd & frs2S & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x4
+{
+	local tmp:4 = frs1S f- frs2S;
+	fassignS(frd, tmp);
+}
+
+
+# fsw T,q(s) 00002027 0000707f DWORD|DREF (0, 4) 
+:fsw frs2S,immS(rs1) is frs2S & immS & rs1 & op0001=0x3 & op0204=0x1 & op0506=0x1 & funct3=0x2
+{
+	local ea:$(XLEN) = immS + rs1;
+	*[ram]:$(SFLEN) ea = frs2S;
+}

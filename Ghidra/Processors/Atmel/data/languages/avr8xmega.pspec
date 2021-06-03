@@ -1,0 +1,1482 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+
+  <programcounter register="PC"/> 
+  <data_space space="mem"/>
+
+  <!-- 
+     - NOTE: The settings within this file may be specific to a particular 
+     - processor variant and will likely need to be changed to reflect 
+     - the specific target processor.
+     The RAMPx, EIND, SREG registers are not marked volatile, even though they could be changed
+     indirectly with memory references.  If they are made volatile, then the addressing
+     won't work in decompiler or reference recovery.
+	 Some registers only appear in newer avr8's, or with large memory spaces
+    --> 
+    
+  <volatile outputop="write_volatile" inputop="read_volatile">
+    <range space="mem" first="0x00" last="0x37"/>
+    <range space="mem" first="0x40" last="0xfff"/>
+  </volatile>
+  
+  <default_symbols>
+
+
+    <symbol name="BOOT" address="code:0x0000" entry="true"/>
+    <symbol name="OSC_XOSCF" address="code:0x0002" entry="true"/>
+
+    <symbol name="PORTC_INT0" address="code:0x0004" entry="true"/>
+    <symbol name="PORTC_INT1" address="code:0x0006" entry="true"/>
+
+    <symbol name="PORTR_INT0" address="code:0x0008" entry="true"/>
+    <symbol name="PORTR_INT1" address="code:0x000A" entry="true"/>
+
+    <symbol name="DMA_CH0" address="code:0x000C" entry="true"/>
+    <symbol name="DMA_CH1" address="code:0x000E" entry="true"/>
+    <symbol name="DMA_CH2" address="code:0x0010" entry="true"/>
+    <symbol name="DMA_CH3" address="code:0x0012" entry="true"/>
+
+    <symbol name="RTC_OVF" address="code:0x0014" entry="true"/>
+    <symbol name="RTC_COMP" address="code:0x0018" entry="true"/>
+
+    <symbol name="TWIC_TWIS" address="code:0x001A" entry="true"/>
+    <symbol name="TWIC_TWIM" address="code:0x001B" entry="true"/>
+
+    <symbol name="TCC0_OVF" address="code:0x001C" entry="true"/>
+    <symbol name="TCC0_ERR" address="code:0x001E" entry="true"/>
+    <symbol name="TCC0_CCA" address="code:0x0020" entry="true"/>
+    <symbol name="TCC0_CCB" address="code:0x0022" entry="true"/>
+    <symbol name="TCC0_CCC" address="code:0x0024" entry="true"/>
+    <symbol name="TCC0_CCD" address="code:0x0026" entry="true"/>
+
+    <symbol name="TCC1_OVF" address="code:0x0028" entry="true"/>
+    <symbol name="TCC1_ERR" address="code:0x002A" entry="true"/>
+    <symbol name="TCC1_CCA" address="code:0x002C" entry="true"/>
+    <symbol name="TCC1_CCB" address="code:0x002E" entry="true"/>
+
+    <symbol name="SPIC_INT" address="code:0x0030" entry="true"/>
+
+    <symbol name="USARTC0_RXC" address="code:0x0032" entry="true"/>
+    <symbol name="USARTC0_DRE" address="code:0x0034" entry="true"/>
+    <symbol name="USARTC0_TXC" address="code:0x0036" entry="true"/>
+
+    <symbol name="USARTC1_RXC" address="code:0x0038" entry="true"/>
+    <symbol name="USARTC1_DRE" address="code:0x003A" entry="true"/>
+    <symbol name="USARTC1_TXC" address="code:0x003C" entry="true"/>
+
+    <symbol name="AES_INT" address="code:0x003E" entry="true"/>
+
+    <symbol name="NVM_EE" address="code:0x0040" entry="true"/>
+    <symbol name="NVM_SPM" address="code:0x0042" entry="true"/>
+
+    <symbol name="PORTB_INT0" address="code:0x0044" entry="true"/>
+    <symbol name="PORTB_INT1" address="code:0x0046" entry="true"/>
+
+    <symbol name="ACB_AC0" address="code:0x0048" entry="true"/>
+    <symbol name="ACB_AC1" address="code:0x004A" entry="true"/>
+    <symbol name="ACB_ACW" address="code:0x004C" entry="true"/>
+
+    <symbol name="ADCB_CH0" address="code:0x004E" entry="true"/>
+    <symbol name="ADCB_CH1" address="code:0x0050" entry="true"/>
+    <symbol name="ADCB_CH2" address="code:0x0052" entry="true"/>
+    <symbol name="ADCB_CH3" address="code:0x0054" entry="true"/>
+
+    <symbol name="PORTE_INT0" address="code:0x0056" entry="true"/>
+    <symbol name="PORTE_INT1" address="code:0x0058" entry="true"/>
+
+    <symbol name="TWIE_TWIS" address="code:0x005A" entry="true"/>
+    <symbol name="TWIE_TWIM" address="code:0x005C" entry="true"/>
+
+    <symbol name="TCE0_OVF" address="code:0x005E" entry="true"/>
+    <symbol name="TCE0_ERR" address="code:0x0060" entry="true"/>
+    <symbol name="TCE0_CCA" address="code:0x0062" entry="true"/>
+    <symbol name="TCE0_CCB" address="code:0x0064" entry="true"/>
+    <symbol name="TCE0_CCC" address="code:0x0066" entry="true"/>
+    <symbol name="TCE0_CCD" address="code:0x0068" entry="true"/>
+
+    <symbol name="TCE1_OVF" address="code:0x006A" entry="true"/>
+    <symbol name="TCE1_ERR" address="code:0x006C" entry="true"/>
+    <symbol name="TCE1_CCA" address="code:0x006E" entry="true"/>
+    <symbol name="TCE1_CCB" address="code:0x0070" entry="true"/>
+
+    <symbol name="SPIE_INT" address="code:0x0072" entry="true"/>
+
+    <symbol name="USARTE0_RXC" address="code:0x0074" entry="true"/>
+    <symbol name="USARTE0_DRE" address="code:0x0076" entry="true"/>
+    <symbol name="USARTE0_TXC" address="code:0x0078" entry="true"/>
+
+    <symbol name="USARTE1_RXC" address="code:0x007A" entry="true"/>
+    <symbol name="USARTE1_DRE" address="code:0x007C" entry="true"/>
+    <symbol name="USARTE1_TXC" address="code:0x007E" entry="true"/>
+
+    <symbol name="PORTD_INT0" address="code:0x0080" entry="true"/>
+    <symbol name="PORTD_INT1" address="code:0x0082" entry="true"/>
+
+    <symbol name="PORTA_INT0" address="code:0x0084" entry="true"/>
+    <symbol name="PORTA_INT1" address="code:0x0086" entry="true"/>
+
+    <symbol name="ACA_AC0" address="code:0x0088" entry="true"/>
+    <symbol name="ACA_AC1" address="code:0x008A" entry="true"/>
+    <symbol name="ACA_ACW" address="code:0x008C" entry="true"/>
+
+    <symbol name="ADCA_CH0" address="code:0x008E" entry="true"/>
+    <symbol name="ADCA_CH1" address="code:0x0090" entry="true"/>
+    <symbol name="ADCA_CH2" address="code:0x0092" entry="true"/>
+    <symbol name="ADCA_CH3" address="code:0x0094" entry="true"/>
+
+    <symbol name="TWID_TWIS" address="code:0x0096" entry="true"/>
+    <symbol name="TWID_TWIM" address="code:0x0098" entry="true"/>
+
+    <symbol name="TCD0_OVF" address="code:0x009A" entry="true"/>
+    <symbol name="TCD0_ERR" address="code:0x009C" entry="true"/>
+    <symbol name="TCD0_CCA" address="code:0x009E" entry="true"/>
+    <symbol name="TCD0_CCB" address="code:0x00A0" entry="true"/>
+    <symbol name="TCD0_CCC" address="code:0x00A2" entry="true"/>
+    <symbol name="TCD0_CCD" address="code:0x00A4" entry="true"/>
+
+    <symbol name="TCD1_OVF" address="code:0x00A6" entry="true"/>
+    <symbol name="TCD1_ERR" address="code:0x00A8" entry="true"/>
+    <symbol name="TCD1_CCA" address="code:0x00AA" entry="true"/>
+    <symbol name="TCD1_CCB" address="code:0x00AC" entry="true"/>
+
+    <symbol name="SPID_INT" address="code:0x00AE" entry="true"/>
+
+    <symbol name="USARTD0_RXC" address="code:0x00B0" entry="true"/>
+    <symbol name="USARTD0_DRE" address="code:0x00B2" entry="true"/>
+    <symbol name="USARTD0_TXC" address="code:0x00B4" entry="true"/>
+
+    <symbol name="USARTD1_RXC" address="code:0x00B6" entry="true"/>
+    <symbol name="USARTD1_DRE" address="code:0x00B8" entry="true"/>
+    <symbol name="USARTD1_TXC" address="code:0x00BA" entry="true"/>
+
+    <symbol name="PORTQ_INT0" address="code:0x00BC" entry="true"/>
+    <symbol name="PORTQ_INT1" address="code:0x00BE" entry="true"/>
+
+    <symbol name="PORTH_INT0" address="code:0x00C0" entry="true"/>
+    <symbol name="PORTH_INT1" address="code:0x00C2" entry="true"/>
+
+    <symbol name="PORTJ_INT0" address="code:0x00C4" entry="true"/>
+    <symbol name="PORTJ_INT1" address="code:0x00C6" entry="true"/>
+
+    <symbol name="PORTK_INT0" address="code:0x00C8" entry="true"/>
+    <symbol name="PORTK_INT1" address="code:0x00CA" entry="true"/>
+    
+    <symbol name="PORTM_INT0" address="code:0x00CC" entry="true"/>
+    <symbol name="PORTM_INT1" address="code:0x00CE" entry="true"/>
+
+    <symbol name="PORTF_INT0" address="code:0x00D0" entry="true"/>
+    <symbol name="PORTF_INT1" address="code:0x00D2" entry="true"/>
+
+    <symbol name="TWIF_TWIS" address="code:0x00D4" entry="true"/>
+    <symbol name="TWIF_TWIM" address="code:0x00D6" entry="true"/>
+
+    <symbol name="TCF0_OVF" address="code:0x00D8" entry="true"/>
+    <symbol name="TCF0_ERR" address="code:0x00DA" entry="true"/>
+    <symbol name="TCF0_CCA" address="code:0x00DC" entry="true"/>
+    <symbol name="TCF0_CCB" address="code:0x00DE" entry="true"/>
+    <symbol name="TCF0_CCC" address="code:0x00E0" entry="true"/>
+    <symbol name="TCF0_CCD" address="code:0x00E2" entry="true"/>
+
+    <symbol name="TCF1_OVF" address="code:0x00E4" entry="true"/>
+    <symbol name="TCF1_ERR" address="code:0x00E6" entry="true"/>
+    <symbol name="TCF1_CCA" address="code:0x00E8" entry="true"/>
+    <symbol name="TCF1_CCB" address="code:0x00EA" entry="true"/>
+
+    <symbol name="SPIF_INT" address="code:0x00EC" entry="true"/>
+
+    <symbol name="USARTF0_RXC" address="code:0x00EE" entry="true"/>
+    <symbol name="USARTF0_DRE" address="code:0x00F0" entry="true"/>
+    <symbol name="USARTF0_TXC" address="code:0x00F2" entry="true"/>
+
+    <symbol name="USARTF1_RXC" address="code:0x00F4" entry="true"/>
+    <symbol name="USARTF1_DRE" address="code:0x00F6" entry="true"/>
+    <symbol name="USARTF1_TXC" address="code:0x00F8" entry="true"/>
+
+    <!-- See /usr/lib/avr/include/avr/iox128a1.h -->
+
+   <symbol name="VPORT0" address="mem:0x0010"/>
+   <symbol name="VPORT1" address="mem:0x0014"/>
+   <symbol name="VPORT2" address="mem:0x0018"/>
+   <symbol name="VPORT3" address="mem:0x001C"/>
+   <symbol name="OCD" address="mem:0x002E"/>
+   <symbol name="CLK" address="mem:0x0040"/>
+   <symbol name="SLEEP" address="mem:0x0048"/>
+   <symbol name="OSC" address="mem:0x0050"/>
+   <symbol name="DFLLRC32M" address="mem:0x0060"/>
+   <symbol name="DFLLRC2M" address="mem:0x0068"/>
+   <symbol name="PR" address="mem:0x0070"/>
+   <symbol name="RST" address="mem:0x0078"/>
+   <symbol name="WDT" address="mem:0x0080"/>
+   <symbol name="MCU" address="mem:0x0090"/>
+   <symbol name="PMIC" address="mem:0x00A0"/>
+   <symbol name="PORTCFG" address="mem:0x00B0"/>
+   <symbol name="AES" address="mem:0x00C0"/>
+   <symbol name="CRC" address="mem:0x00D0"/>
+   <symbol name="VBAT" address="mem:0x00F0"/>
+   <symbol name="DMA" address="mem:0x0100"/>
+   <symbol name="EVSYS" address="mem:0x0180"/>
+   <symbol name="NVM" address="mem:0x01C0"/>
+   <symbol name="ADCA" address="mem:0x0200"/>
+   <symbol name="ADCB" address="mem:0x0240"/>
+   <symbol name="DACA" address="mem:0x0300"/>
+   <symbol name="DACB" address="mem:0x0320"/>
+   <symbol name="ACA" address="mem:0x0380"/>
+   <symbol name="ACB" address="mem:0x0390"/>
+   <symbol name="RTC" address="mem:0x0400"/>
+   <symbol name="EBI" address="mem:0x0440"/>
+   <symbol name="TWIC" address="mem:0x0480"/>
+   <symbol name="TWID" address="mem:0x0490"/>
+   <symbol name="TWIE" address="mem:0x04A0"/>
+   <symbol name="TWIF" address="mem:0x04B0"/>
+   <symbol name="PORTA" address="mem:0x0600"/>
+   <symbol name="PORTB" address="mem:0x0620"/>
+   <symbol name="PORTC" address="mem:0x0640"/>
+   <symbol name="PORTD" address="mem:0x0660"/>
+   <symbol name="PORTE" address="mem:0x0680"/>
+   <symbol name="PORTF" address="mem:0x06A0"/>
+   <symbol name="PORTH" address="mem:0x06E0"/>
+   <symbol name="PORTJ" address="mem:0x0700"/>
+   <symbol name="PORTK" address="mem:0x0720"/>
+   <symbol name="PORTM" address="mem:0x0760"/>
+   <symbol name="PORTQ" address="mem:0x07C0"/>
+   <symbol name="PORTR" address="mem:0x07E0"/>
+   <symbol name="TCC0" address="mem:0x0800"/>
+   <symbol name="TCC1" address="mem:0x0840"/>
+   <symbol name="AWEXC" address="mem:0x0880"/>
+   <symbol name="HIRESC" address="mem:0x0890"/>
+   <symbol name="USARTC0" address="mem:0x08A0"/>
+   <symbol name="USARTC1" address="mem:0x08B0"/>
+   <symbol name="SPIC" address="mem:0x08C0"/>
+   <symbol name="IRCOM" address="mem:0x08F8"/>
+   <symbol name="TCD0" address="mem:0x0900"/>
+   <symbol name="TCD1" address="mem:0x0940"/>
+   <symbol name="HIRESD" address="mem:0x0990"/>
+   <symbol name="USARTD0" address="mem:0x09A0"/>
+   <symbol name="USARTD1" address="mem:0x09B0"/>
+   <symbol name="SPID" address="mem:0x09C0"/>
+   <symbol name="TCE0" address="mem:0x0A00"/>
+   <symbol name="TCE1" address="mem:0x0A40"/>
+   <symbol name="AWEXE" address="mem:0x0A80"/>
+   <symbol name="HIRESE" address="mem:0x0A90"/>
+   <symbol name="USARTE0" address="mem:0x0AA0"/>
+   <symbol name="USARTE1" address="mem:0x0AB0"/>
+   <symbol name="SPIE" address="mem:0x0AC0"/>
+   <symbol name="TCF0" address="mem:0x0B00"/>
+   <symbol name="TCF1" address="mem:0x0B40"/>
+   <symbol name="HIRESF" address="mem:0x0B90"/>
+   <symbol name="USARTF0" address="mem:0x0BA0"/>
+   <symbol name="USARTF1" address="mem:0x0BB0"/>
+   <symbol name="SPIF" address="mem:0x0BC0"/>
+   <symbol name="LCD" address="mem:0x0D00"/>
+
+
+   <!-- WARNING: Below could be different on a different xmega device -->
+      <!--  GPIO - General Purpose IO Registers  -->
+   <symbol name="GPIO_GPIOR0" address="mem:0x0000"/>
+   <symbol name="GPIO_GPIOR1" address="mem:0x0001"/>
+   <symbol name="GPIO_GPIOR2" address="mem:0x0002"/>
+   <symbol name="GPIO_GPIOR3" address="mem:0x0003"/>
+   <symbol name="GPIO_GPIOR4" address="mem:0x0004"/>
+   <symbol name="GPIO_GPIOR5" address="mem:0x0005"/>
+   <symbol name="GPIO_GPIOR6" address="mem:0x0006"/>
+   <symbol name="GPIO_GPIOR7" address="mem:0x0007"/>
+   <symbol name="GPIO_GPIOR8" address="mem:0x0008"/>
+   <symbol name="GPIO_GPIOR9" address="mem:0x0009"/>
+   <symbol name="GPIO_GPIORA" address="mem:0x000A"/>
+   <symbol name="GPIO_GPIORB" address="mem:0x000B"/>
+   <symbol name="GPIO_GPIORC" address="mem:0x000C"/>
+   <symbol name="GPIO_GPIORD" address="mem:0x000D"/>
+   <symbol name="GPIO_GPIORE" address="mem:0x000E"/>
+   <symbol name="GPIO_GPIORF" address="mem:0x000F"/>
+
+      <!--  VPORT0 - Virtual Port 0  -->
+   <symbol name="VPORT0_DIR" address="mem:0x0010"/>
+   <symbol name="VPORT0_OUT" address="mem:0x0011"/>
+   <symbol name="VPORT0_IN" address="mem:0x0012"/>
+   <symbol name="VPORT0_INTFLAGS" address="mem:0x0013"/>
+
+      <!--  VPORT1 - Virtual Port 1  -->
+   <symbol name="VPORT1_DIR" address="mem:0x0014"/>
+   <symbol name="VPORT1_OUT" address="mem:0x0015"/>
+   <symbol name="VPORT1_IN" address="mem:0x0016"/>
+   <symbol name="VPORT1_INTFLAGS" address="mem:0x0017"/>
+
+      <!--  VPORT2 - Virtual Port 2  -->
+   <symbol name="VPORT2_DIR" address="mem:0x0018"/>
+   <symbol name="VPORT2_OUT" address="mem:0x0019"/>
+   <symbol name="VPORT2_IN" address="mem:0x001A"/>
+   <symbol name="VPORT2_INTFLAGS" address="mem:0x001B"/>
+
+      <!--  VPORT3 - Virtual Port 3  -->
+   <symbol name="VPORT3_DIR" address="mem:0x001C"/>
+   <symbol name="VPORT3_OUT" address="mem:0x001D"/>
+   <symbol name="VPORT3_IN" address="mem:0x001E"/>
+   <symbol name="VPORT3_INTFLAGS" address="mem:0x001F"/>
+
+      <!--  OCD - On-Chip Debug System  -->
+   <symbol name="OCD_OCDR0" address="mem:0x002E"/>
+   <symbol name="OCD_OCDR1" address="mem:0x002F"/>
+
+      <!--  CPU - CPU Registers  -->
+   <symbol name="CPU_CCP" address="mem:0x0034"/>
+   <symbol name="CPU_RAMPD" address="mem:0x0038"/>
+   <symbol name="CPU_RAMPX" address="mem:0x0039"/>
+   <symbol name="CPU_RAMPY" address="mem:0x003A"/>
+   <symbol name="CPU_RAMPZ" address="mem:0x003B"/>
+   <symbol name="CPU_EIND" address="mem:0x003C"/>
+   <symbol name="CPU_SPL" address="mem:0x003D"/>
+   <symbol name="CPU_SPH" address="mem:0x003E"/>
+   <symbol name="CPU_SREG" address="mem:0x003F"/>
+
+      <!--  CLK - Clock System  -->
+   <symbol name="CLK_CTRL" address="mem:0x0040"/>
+   <symbol name="CLK_PSCTRL" address="mem:0x0041"/>
+   <symbol name="CLK_LOCK" address="mem:0x0042"/>
+   <symbol name="CLK_RTCCTRL" address="mem:0x0043"/>
+   <symbol name="CLK_USBCTRL" address="mem:0x0044"/>
+
+      <!--  SLEEP - Sleep Controller  -->
+   <symbol name="SLEEP_CTRL" address="mem:0x0048"/>
+
+      <!--  OSC - Oscillator Control  -->
+   <symbol name="OSC_CTRL" address="mem:0x0050"/>
+   <symbol name="OSC_STATUS" address="mem:0x0051"/>
+   <symbol name="OSC_XOSCCTRL" address="mem:0x0052"/>
+   <symbol name="OSC_XOSCFAIL" address="mem:0x0053"/>
+   <symbol name="OSC_RC32KCAL" address="mem:0x0054"/>
+   <symbol name="OSC_PLLCTRL" address="mem:0x0055"/>
+   <symbol name="OSC_DFLLCTRL" address="mem:0x0056"/>
+   <symbol name="OSC_RC8MCAL" address="mem:0x0057"/>
+
+      <!--  DFLLRC32M - DFLL for 32MHz RC Oscillator  -->
+   <symbol name="DFLLRC32M_CTRL" address="mem:0x0060"/>
+   <symbol name="DFLLRC32M_CALA" address="mem:0x0062"/>
+   <symbol name="DFLLRC32M_CALB" address="mem:0x0063"/>
+   <symbol name="DFLLRC32M_COMP0" address="mem:0x0064"/>
+   <symbol name="DFLLRC32M_COMP1" address="mem:0x0065"/>
+   <symbol name="DFLLRC32M_COMP2" address="mem:0x0066"/>
+
+      <!--  DFLLRC2M - DFLL for 2MHz RC Oscillator  -->
+   <symbol name="DFLLRC2M_CTRL" address="mem:0x0068"/>
+   <symbol name="DFLLRC2M_CALA" address="mem:0x006A"/>
+   <symbol name="DFLLRC2M_CALB" address="mem:0x006B"/>
+   <symbol name="DFLLRC2M_COMP0" address="mem:0x006C"/>
+   <symbol name="DFLLRC2M_COMP1" address="mem:0x006D"/>
+   <symbol name="DFLLRC2M_COMP2" address="mem:0x006E"/>
+
+      <!--  PR - Power Reduction  -->
+   <symbol name="PR_PRGEN" address="mem:0x0070"/>
+   <symbol name="PR_PRPA" address="mem:0x0071"/>
+   <symbol name="PR_PRPB" address="mem:0x0072"/>
+   <symbol name="PR_PRPC" address="mem:0x0073"/>
+   <symbol name="PR_PRPD" address="mem:0x0074"/>
+   <symbol name="PR_PRPE" address="mem:0x0075"/>
+   <symbol name="PR_PRPF" address="mem:0x0076"/>
+
+      <!--  RST - Reset Controller  -->
+   <symbol name="RST_STATUS" address="mem:0x0078"/>
+   <symbol name="RST_CTRL" address="mem:0x0079"/>
+
+      <!--  WDT - Watch-Dog Timer  -->
+   <symbol name="WDT_CTRL" address="mem:0x0080"/>
+   <symbol name="WDT_WINCTRL" address="mem:0x0081"/>
+   <symbol name="WDT_STATUS" address="mem:0x0082"/>
+
+      <!--  MCU - MCU Control  -->
+   <symbol name="MCU_DEVID0" address="mem:0x0090"/>
+   <symbol name="MCU_DEVID1" address="mem:0x0091"/>
+   <symbol name="MCU_DEVID2" address="mem:0x0092"/>
+   <symbol name="MCU_REVID" address="mem:0x0093"/>
+   <symbol name="MCU_JTAGUID" address="mem:0x0094"/>
+   <symbol name="MCU_MCUCR" address="mem:0x0096"/>
+   <symbol name="MCU_ANAINIT" address="mem:0x0097"/>
+   <symbol name="MCU_EVSYSLOCK" address="mem:0x0098"/>
+   <symbol name="MCU_AWEXLOCK" address="mem:0x0099"/>
+   <symbol name="MCU_FAULTLOCK" address="mem:0x009A"/>
+
+      <!--  PMIC - Programmable Interrupt Controller  -->
+   <symbol name="PMIC_STATUS" address="mem:0x00A0"/>
+   <symbol name="PMIC_INTPRI" address="mem:0x00A1"/>
+   <symbol name="PMIC_CTRL" address="mem:0x00A2"/>
+
+      <!--  PORTCFG - Port Configuration  -->
+   <symbol name="PORTCFG_MPCMASK" address="mem:0x00B0"/>
+   <symbol name="PORTCFG_VPCTRLA" address="mem:0x00B2"/>
+   <symbol name="PORTCFG_VPCTRLB" address="mem:0x00B3"/>
+   <symbol name="PORTCFG_CLKEVOUT" address="mem:0x00B4"/>
+   <symbol name="PORTCFG_EVOUTSEL" address="mem:0x00B6"/>
+
+      <!--  AES - AES Crypto Module  -->
+   <symbol name="AES_CTRL" address="mem:0x00C0"/>
+   <symbol name="AES_STATUS" address="mem:0x00C1"/>
+   <symbol name="AES_STATE" address="mem:0x00C2"/>
+   <symbol name="AES_KEY" address="mem:0x00C3"/>
+   <symbol name="AES_INTCTRL" address="mem:0x00C4"/>
+
+      <!--  CRC - Cyclic Redundancy Checker  -->
+   <symbol name="CRC_CTRL" address="mem:0x00D0"/>
+   <symbol name="CRC_STATUS" address="mem:0x00D1"/>
+   <symbol name="CRC_DATAIN" address="mem:0x00D3"/>
+   <symbol name="CRC_CHECKSUM0" address="mem:0x00D4"/>
+   <symbol name="CRC_CHECKSUM1" address="mem:0x00D5"/>
+   <symbol name="CRC_CHECKSUM2" address="mem:0x00D6"/>
+   <symbol name="CRC_CHECKSUM3" address="mem:0x00D7"/>
+
+      <!--  VBAT - Battery Backup Module  -->
+   <symbol name="VBAT_CTRL" address="mem:0x00F0"/>
+   <symbol name="VBAT_STATUS" address="mem:0x00F1"/>
+   <symbol name="VBAT_BACKUP0" address="mem:0x00F2"/>
+   <symbol name="VBAT_BACKUP1" address="mem:0x00F3"/>
+
+      <!--  DMA - DMA Controller  -->
+   <symbol name="DMA_CTRL" address="mem:0x0100"/>
+   <symbol name="DMA_INTFLAGS" address="mem:0x0103"/>
+   <symbol name="DMA_STATUS" address="mem:0x0104"/>
+   <symbol name="DMA_TEMP" address="mem:0x0106"/>
+   <symbol name="DMA_CH0_CTRLA" address="mem:0x0110"/>
+   <symbol name="DMA_CH0_CTRLB" address="mem:0x0111"/>
+   <symbol name="DMA_CH0_ADDRCTRL" address="mem:0x0112"/>
+   <symbol name="DMA_CH0_TRIGSRC" address="mem:0x0113"/>
+   <symbol name="DMA_CH0_TRFCNT" address="mem:0x0114"/>
+   <symbol name="DMA_CH0_REPCNT" address="mem:0x0116"/>
+   <symbol name="DMA_CH0_SRCADDR0" address="mem:0x0118"/>
+   <symbol name="DMA_CH0_SRCADDR1" address="mem:0x0119"/>
+   <symbol name="DMA_CH0_SRCADDR2" address="mem:0x011A"/>
+   <symbol name="DMA_CH0_DESTADDR0" address="mem:0x011C"/>
+   <symbol name="DMA_CH0_DESTADDR1" address="mem:0x011D"/>
+   <symbol name="DMA_CH0_DESTADDR2" address="mem:0x011E"/>
+   <symbol name="DMA_CH1_CTRLA" address="mem:0x0120"/>
+   <symbol name="DMA_CH1_CTRLB" address="mem:0x0121"/>
+   <symbol name="DMA_CH1_ADDRCTRL" address="mem:0x0122"/>
+   <symbol name="DMA_CH1_TRIGSRC" address="mem:0x0123"/>
+   <symbol name="DMA_CH1_TRFCNT" address="mem:0x0124"/>
+   <symbol name="DMA_CH1_REPCNT" address="mem:0x0126"/>
+   <symbol name="DMA_CH1_SRCADDR0" address="mem:0x0128"/>
+   <symbol name="DMA_CH1_SRCADDR1" address="mem:0x0129"/>
+   <symbol name="DMA_CH1_SRCADDR2" address="mem:0x012A"/>
+   <symbol name="DMA_CH1_DESTADDR0" address="mem:0x012C"/>
+   <symbol name="DMA_CH1_DESTADDR1" address="mem:0x012D"/>
+   <symbol name="DMA_CH1_DESTADDR2" address="mem:0x012E"/>
+   <symbol name="DMA_CH2_CTRLA" address="mem:0x0130"/>
+   <symbol name="DMA_CH2_CTRLB" address="mem:0x0131"/>
+   <symbol name="DMA_CH2_ADDRCTRL" address="mem:0x0132"/>
+   <symbol name="DMA_CH2_TRIGSRC" address="mem:0x0133"/>
+   <symbol name="DMA_CH2_TRFCNT" address="mem:0x0134"/>
+   <symbol name="DMA_CH2_REPCNT" address="mem:0x0136"/>
+   <symbol name="DMA_CH2_SRCADDR0" address="mem:0x0138"/>
+   <symbol name="DMA_CH2_SRCADDR1" address="mem:0x0139"/>
+   <symbol name="DMA_CH2_SRCADDR2" address="mem:0x013A"/>
+   <symbol name="DMA_CH2_DESTADDR0" address="mem:0x013C"/>
+   <symbol name="DMA_CH2_DESTADDR1" address="mem:0x013D"/>
+   <symbol name="DMA_CH2_DESTADDR2" address="mem:0x013E"/>
+   <symbol name="DMA_CH3_CTRLA" address="mem:0x0140"/>
+   <symbol name="DMA_CH3_CTRLB" address="mem:0x0141"/>
+   <symbol name="DMA_CH3_ADDRCTRL" address="mem:0x0142"/>
+   <symbol name="DMA_CH3_TRIGSRC" address="mem:0x0143"/>
+   <symbol name="DMA_CH3_TRFCNT" address="mem:0x0144"/>
+   <symbol name="DMA_CH3_REPCNT" address="mem:0x0146"/>
+   <symbol name="DMA_CH3_SRCADDR0" address="mem:0x0148"/>
+   <symbol name="DMA_CH3_SRCADDR1" address="mem:0x0149"/>
+   <symbol name="DMA_CH3_SRCADDR2" address="mem:0x014A"/>
+   <symbol name="DMA_CH3_DESTADDR0" address="mem:0x014C"/>
+   <symbol name="DMA_CH3_DESTADDR1" address="mem:0x014D"/>
+   <symbol name="DMA_CH3_DESTADDR2" address="mem:0x014E"/>
+
+      <!--  EVSYS - Event System  -->
+   <symbol name="EVSYS_CH0MUX" address="mem:0x0180"/>
+   <symbol name="EVSYS_CH1MUX" address="mem:0x0181"/>
+   <symbol name="EVSYS_CH2MUX" address="mem:0x0182"/>
+   <symbol name="EVSYS_CH3MUX" address="mem:0x0183"/>
+   <symbol name="EVSYS_CH4MUX" address="mem:0x0184"/>
+   <symbol name="EVSYS_CH5MUX" address="mem:0x0185"/>
+   <symbol name="EVSYS_CH6MUX" address="mem:0x0186"/>
+   <symbol name="EVSYS_CH7MUX" address="mem:0x0187"/>
+   <symbol name="EVSYS_CH0CTRL" address="mem:0x0188"/>
+   <symbol name="EVSYS_CH1CTRL" address="mem:0x0189"/>
+   <symbol name="EVSYS_CH2CTRL" address="mem:0x018A"/>
+   <symbol name="EVSYS_CH3CTRL" address="mem:0x018B"/>
+   <symbol name="EVSYS_CH4CTRL" address="mem:0x018C"/>
+   <symbol name="EVSYS_CH5CTRL" address="mem:0x018D"/>
+   <symbol name="EVSYS_CH6CTRL" address="mem:0x018E"/>
+   <symbol name="EVSYS_CH7CTRL" address="mem:0x018F"/>
+   <symbol name="EVSYS_STROBE" address="mem:0x0190"/>
+   <symbol name="EVSYS_DATA" address="mem:0x0191"/>
+   <symbol name="EVSYS_DFCTRL" address="mem:0x0192"/>
+
+      <!--  NVM - Non Volatile Memory Controller  -->
+   <symbol name="NVM_ADDR0" address="mem:0x01C0"/>
+   <symbol name="NVM_ADDR1" address="mem:0x01C1"/>
+   <symbol name="NVM_ADDR2" address="mem:0x01C2"/>
+   <symbol name="NVM_DATA0" address="mem:0x01C4"/>
+   <symbol name="NVM_DATA1" address="mem:0x01C5"/>
+   <symbol name="NVM_DATA2" address="mem:0x01C6"/>
+   <symbol name="NVM_CMD" address="mem:0x01CA"/>
+   <symbol name="NVM_CTRLA" address="mem:0x01CB"/>
+   <symbol name="NVM_CTRLB" address="mem:0x01CC"/>
+   <symbol name="NVM_INTCTRL" address="mem:0x01CD"/>
+   <symbol name="NVM_STATUS" address="mem:0x01CF"/>
+   <symbol name="NVM_LOCKBITS" address="mem:0x01D0"/>
+
+      <!--  ADCA - Analog to Digital Converter A  -->
+   <symbol name="ADCA_CTRLA" address="mem:0x0200"/>
+   <symbol name="ADCA_CTRLB" address="mem:0x0201"/>
+   <symbol name="ADCA_REFCTRL" address="mem:0x0202"/>
+   <symbol name="ADCA_EVCTRL" address="mem:0x0203"/>
+   <symbol name="ADCA_PRESCALER" address="mem:0x0204"/>
+   <symbol name="ADCA_INTFLAGS" address="mem:0x0206"/>
+   <symbol name="ADCA_TEMP" address="mem:0x0207"/>
+   <symbol name="ADCA_SAMPCTRL" address="mem:0x0208"/>
+   <symbol name="ADCA_CAL" address="mem:0x020C"/>
+   <symbol name="ADCA_CH0RES" address="mem:0x0210"/>
+   <symbol name="ADCA_CH1RES" address="mem:0x0212"/>
+   <symbol name="ADCA_CH2RES" address="mem:0x0214"/>
+   <symbol name="ADCA_CH3RES" address="mem:0x0216"/>
+   <symbol name="ADCA_CMP" address="mem:0x0218"/>
+   <symbol name="ADCA_CH0_CTRL" address="mem:0x0220"/>
+   <symbol name="ADCA_CH0_MUXCTRL" address="mem:0x0221"/>
+   <symbol name="ADCA_CH0_INTCTRL" address="mem:0x0222"/>
+   <symbol name="ADCA_CH0_INTFLAGS" address="mem:0x0223"/>
+   <symbol name="ADCA_CH0_RES" address="mem:0x0224"/>
+   <symbol name="ADCA_CH0_SCAN" address="mem:0x0226"/>
+   <symbol name="ADCA_CH1_CTRL" address="mem:0x0228"/>
+   <symbol name="ADCA_CH1_MUXCTRL" address="mem:0x0229"/>
+   <symbol name="ADCA_CH1_INTCTRL" address="mem:0x022A"/>
+   <symbol name="ADCA_CH1_INTFLAGS" address="mem:0x022B"/>
+   <symbol name="ADCA_CH1_RES" address="mem:0x022C"/>
+   <symbol name="ADCA_CH2_CTRL" address="mem:0x0230"/>
+   <symbol name="ADCA_CH2_MUXCTRL" address="mem:0x0231"/>
+   <symbol name="ADCA_CH2_INTCTRL" address="mem:0x0232"/>
+   <symbol name="ADCA_CH2_INTFLAGS" address="mem:0x0233"/>
+   <symbol name="ADCA_CH2_RES" address="mem:0x0234"/>
+   <symbol name="ADCA_CH3_CTRL" address="mem:0x0238"/>
+   <symbol name="ADCA_CH3_MUXCTRL" address="mem:0x0239"/>
+   <symbol name="ADCA_CH3_INTCTRL" address="mem:0x023A"/>
+   <symbol name="ADCA_CH3_INTFLAGS" address="mem:0x023B"/>
+   <symbol name="ADCA_CH3_RES" address="mem:0x023C"/>
+
+      <!--  ADCB - Analog to Digital Converter B  -->
+   <symbol name="ADCB_CTRLA" address="mem:0x0240"/>
+   <symbol name="ADCB_CTRLB" address="mem:0x0241"/>
+   <symbol name="ADCB_REFCTRL" address="mem:0x0242"/>
+   <symbol name="ADCB_EVCTRL" address="mem:0x0243"/>
+   <symbol name="ADCB_PRESCALER" address="mem:0x0244"/>
+   <symbol name="ADCB_INTFLAGS" address="mem:0x0246"/>
+   <symbol name="ADCB_TEMP" address="mem:0x0247"/>
+   <symbol name="ADCB_SAMPCTRL" address="mem:0x0248"/>
+   <symbol name="ADCB_CAL" address="mem:0x024C"/>
+   <symbol name="ADCB_CH0RES" address="mem:0x0250"/>
+   <symbol name="ADCB_CH1RES" address="mem:0x0252"/>
+   <symbol name="ADCB_CH2RES" address="mem:0x0254"/>
+   <symbol name="ADCB_CH3RES" address="mem:0x0256"/>
+   <symbol name="ADCB_CMP" address="mem:0x0258"/>
+   <symbol name="ADCB_CH0_CTRL" address="mem:0x0260"/>
+   <symbol name="ADCB_CH0_MUXCTRL" address="mem:0x0261"/>
+   <symbol name="ADCB_CH0_INTCTRL" address="mem:0x0262"/>
+   <symbol name="ADCB_CH0_INTFLAGS" address="mem:0x0263"/>
+   <symbol name="ADCB_CH0_RES" address="mem:0x0264"/>
+   <symbol name="ADCB_CH0_SCAN" address="mem:0x0266"/>
+   <symbol name="ADCB_CH1_CTRL" address="mem:0x0268"/>
+   <symbol name="ADCB_CH1_MUXCTRL" address="mem:0x0269"/>
+   <symbol name="ADCB_CH1_INTCTRL" address="mem:0x026A"/>
+   <symbol name="ADCB_CH1_INTFLAGS" address="mem:0x026B"/>
+   <symbol name="ADCB_CH1_RES" address="mem:0x026C"/>
+   <symbol name="ADCB_CH2_CTRL" address="mem:0x0270"/>
+   <symbol name="ADCB_CH2_MUXCTRL" address="mem:0x0271"/>
+   <symbol name="ADCB_CH2_INTCTRL" address="mem:0x0272"/>
+   <symbol name="ADCB_CH2_INTFLAGS" address="mem:0x0273"/>
+   <symbol name="ADCB_CH2_RES" address="mem:0x0274"/>
+   <symbol name="ADCB_CH3_CTRL" address="mem:0x0278"/>
+   <symbol name="ADCB_CH3_MUXCTRL" address="mem:0x0279"/>
+   <symbol name="ADCB_CH3_INTCTRL" address="mem:0x027A"/>
+   <symbol name="ADCB_CH3_INTFLAGS" address="mem:0x027B"/>
+   <symbol name="ADCB_CH3_RES" address="mem:0x027C"/>
+
+      <!--  DACA - Digital to Analog Converter A  -->
+   <symbol name="DACA_CTRLA" address="mem:0x0300"/>
+   <symbol name="DACA_CTRLB" address="mem:0x0301"/>
+   <symbol name="DACA_CTRLC" address="mem:0x0302"/>
+   <symbol name="DACA_EVCTRL" address="mem:0x0303"/>
+   <symbol name="DACA_TIMCTRL" address="mem:0x0304"/>
+   <symbol name="DACA_STATUS" address="mem:0x0305"/>
+   <symbol name="DACA_GAINCAL" address="mem:0x0308"/>
+   <symbol name="DACA_OFFSETCAL" address="mem:0x0309"/>
+   <symbol name="DACA_CH0DATA" address="mem:0x0318"/>
+   <symbol name="DACA_CH1DATA" address="mem:0x031A"/>
+
+      <!--  DACB - Digital to Analog Converter B  -->
+   <symbol name="DACB_CTRLA" address="mem:0x0320"/>
+   <symbol name="DACB_CTRLB" address="mem:0x0321"/>
+   <symbol name="DACB_CTRLC" address="mem:0x0322"/>
+   <symbol name="DACB_EVCTRL" address="mem:0x0323"/>
+   <symbol name="DACB_TIMCTRL" address="mem:0x0324"/>
+   <symbol name="DACB_STATUS" address="mem:0x0325"/>
+   <symbol name="DACB_GAINCAL" address="mem:0x0328"/>
+   <symbol name="DACB_OFFSETCAL" address="mem:0x0329"/>
+   <symbol name="DACB_CH0DATA" address="mem:0x0338"/>
+   <symbol name="DACB_CH1DATA" address="mem:0x033A"/>
+
+      <!--  ACA - Analog Comparator A  -->
+   <symbol name="ACA_AC0CTRL" address="mem:0x0380"/>
+   <symbol name="ACA_AC1CTRL" address="mem:0x0381"/>
+   <symbol name="ACA_AC0MUXCTRL" address="mem:0x0382"/>
+   <symbol name="ACA_AC1MUXCTRL" address="mem:0x0383"/>
+   <symbol name="ACA_CTRLA" address="mem:0x0384"/>
+   <symbol name="ACA_CTRLB" address="mem:0x0385"/>
+   <symbol name="ACA_WINCTRL" address="mem:0x0386"/>
+   <symbol name="ACA_STATUS" address="mem:0x0387"/>
+   <symbol name="ACA_CURRCTRL" address="mem:0x0388"/>
+   <symbol name="ACA_CURRCALIB" address="mem:0x0389"/>
+
+      <!--  ACB - Analog Comparator B  -->
+   <symbol name="ACB_AC0CTRL" address="mem:0x0390"/>
+   <symbol name="ACB_AC1CTRL" address="mem:0x0391"/>
+   <symbol name="ACB_AC0MUXCTRL" address="mem:0x0392"/>
+   <symbol name="ACB_AC1MUXCTRL" address="mem:0x0393"/>
+   <symbol name="ACB_CTRLA" address="mem:0x0394"/>
+   <symbol name="ACB_CTRLB" address="mem:0x0395"/>
+   <symbol name="ACB_WINCTRL" address="mem:0x0396"/>
+   <symbol name="ACB_STATUS" address="mem:0x0397"/>
+   <symbol name="ACB_CURRCTRL" address="mem:0x0398"/>
+   <symbol name="ACB_CURRCALIB" address="mem:0x0399"/>
+
+      <!--  RTC - Real-Time Counter  -->
+   <symbol name="RTC_CTRL" address="mem:0x0400"/>
+   <symbol name="RTC_STATUS" address="mem:0x0401"/>
+   <symbol name="RTC_INTCTRL" address="mem:0x0402"/>
+   <symbol name="RTC_INTFLAGS" address="mem:0x0403"/>
+   <symbol name="RTC_TEMP" address="mem:0x0404"/>
+   <symbol name="RTC_CALIB" address="mem:0x0406"/>
+   <symbol name="RTC_CNT" address="mem:0x0408"/>
+   <symbol name="RTC_PER" address="mem:0x040A"/>
+   <symbol name="RTC_COMP" address="mem:0x040C"/>
+
+      <!--  EBI - External Bus Interface  -->
+   <symbol name="EBI_CTRL" address="mem:0x0440"/>
+   <symbol name="EBI_SDRAMCTRLA" address="mem:0x0441"/>
+   <symbol name="EBI_REFRESH" address="mem:0x0444"/>
+   <symbol name="EBI_INITDLY" address="mem:0x0446"/>
+   <symbol name="EBI_SDRAMCTRLB" address="mem:0x0448"/>
+   <symbol name="EBI_SDRAMCTRLC" address="mem:0x0449"/>
+   <symbol name="EBI_CS0_CTRLA" address="mem:0x0450"/>
+   <symbol name="EBI_CS0_CTRLB" address="mem:0x0451"/>
+   <symbol name="EBI_CS0_BASEADDR" address="mem:0x0452"/>
+   <symbol name="EBI_CS1_CTRLA" address="mem:0x0454"/>
+   <symbol name="EBI_CS1_CTRLB" address="mem:0x0455"/>
+   <symbol name="EBI_CS1_BASEADDR" address="mem:0x0456"/>
+   <symbol name="EBI_CS2_CTRLA" address="mem:0x0458"/>
+   <symbol name="EBI_CS2_CTRLB" address="mem:0x0459"/>
+   <symbol name="EBI_CS2_BASEADDR" address="mem:0x045A"/>
+   <symbol name="EBI_CS3_CTRLA" address="mem:0x045C"/>
+   <symbol name="EBI_CS3_CTRLB" address="mem:0x045D"/>
+   <symbol name="EBI_CS3_BASEADDR" address="mem:0x045E"/>
+
+
+      <!--  XCL - XMEGA Custom Logic  -->
+   <symbol name="XCL_CTRLA" address="mem:0x0460"/>
+   <symbol name="XCL_CTRLB" address="mem:0x0461"/>
+   <symbol name="XCL_CTRLC" address="mem:0x0462"/>
+   <symbol name="XCL_CTRLD" address="mem:0x0463"/>
+   <symbol name="XCL_CTRLE" address="mem:0x0464"/>
+   <symbol name="XCL_CTRLF" address="mem:0x0465"/>
+   <symbol name="XCL_CTRLG" address="mem:0x0466"/>
+   <symbol name="XCL_INTCTRL" address="mem:0x0467"/>
+   <symbol name="XCL_INTFLAGS" address="mem:0x0468"/>
+   <symbol name="XCL_PLC" address="mem:0x0469"/>
+   <symbol name="XCL_CNTL" address="mem:0x046A"/>
+   <symbol name="XCL_CNTH" address="mem:0x046B"/>
+   <symbol name="XCL_CMPL" address="mem:0x046C"/>
+   <symbol name="XCL_CMPH" address="mem:0x046D"/>
+   <symbol name="XCL_PERCAPTL" address="mem:0x046E"/>
+   <symbol name="XCL_PERCAPTH" address="mem:0x046F"/>
+
+      <!--  TWIC - Two-Wire Interface C  -->
+   <symbol name="TWIC_CTRL" address="mem:0x0480"/>
+   <symbol name="TWIC_MASTER_CTRLA" address="mem:0x0481"/>
+   <symbol name="TWIC_MASTER_CTRLB" address="mem:0x0482"/>
+   <symbol name="TWIC_MASTER_CTRLC" address="mem:0x0483"/>
+   <symbol name="TWIC_MASTER_STATUS" address="mem:0x0484"/>
+   <symbol name="TWIC_MASTER_BAUD" address="mem:0x0485"/>
+   <symbol name="TWIC_MASTER_ADDR" address="mem:0x0486"/>
+   <symbol name="TWIC_MASTER_DATA" address="mem:0x0487"/>
+   <symbol name="TWIC_SLAVE_CTRLA" address="mem:0x0488"/>
+   <symbol name="TWIC_SLAVE_CTRLB" address="mem:0x0489"/>
+   <symbol name="TWIC_SLAVE_STATUS" address="mem:0x048A"/>
+   <symbol name="TWIC_SLAVE_ADDR" address="mem:0x048B"/>
+   <symbol name="TWIC_SLAVE_DATA" address="mem:0x048C"/>
+   <symbol name="TWIC_SLAVE_ADDRMASK" address="mem:0x048D"/>
+   <symbol name="TWIC_TIMEOUT_TOS" address="mem:0x048E"/>
+   <symbol name="TWIC_TIMEOUT_TOCONF" address="mem:0x048F"/>
+
+      <!--  TWID - Two-Wire Interface D  -->
+   <symbol name="TWID_CTRL" address="mem:0x0490"/>
+   <symbol name="TWID_MASTER_CTRLA" address="mem:0x0491"/>
+   <symbol name="TWID_MASTER_CTRLB" address="mem:0x0492"/>
+   <symbol name="TWID_MASTER_CTRLC" address="mem:0x0493"/>
+   <symbol name="TWID_MASTER_STATUS" address="mem:0x0494"/>
+   <symbol name="TWID_MASTER_BAUD" address="mem:0x0495"/>
+   <symbol name="TWID_MASTER_ADDR" address="mem:0x0496"/>
+   <symbol name="TWID_MASTER_DATA" address="mem:0x0497"/>
+   <symbol name="TWID_SLAVE_CTRLA" address="mem:0x0498"/>
+   <symbol name="TWID_SLAVE_CTRLB" address="mem:0x0499"/>
+   <symbol name="TWID_SLAVE_STATUS" address="mem:0x049A"/>
+   <symbol name="TWID_SLAVE_ADDR" address="mem:0x049B"/>
+   <symbol name="TWID_SLAVE_DATA" address="mem:0x049C"/>
+   <symbol name="TWID_SLAVE_ADDRMASK" address="mem:0x049D"/>
+
+      <!--  TWIE - Two-Wire Interface E  -->
+   <symbol name="TWIE_CTRL" address="mem:0x04A0"/>
+   <symbol name="TWIE_MASTER_CTRLA" address="mem:0x04A1"/>
+   <symbol name="TWIE_MASTER_CTRLB" address="mem:0x04A2"/>
+   <symbol name="TWIE_MASTER_CTRLC" address="mem:0x04A3"/>
+   <symbol name="TWIE_MASTER_STATUS" address="mem:0x04A4"/>
+   <symbol name="TWIE_MASTER_BAUD" address="mem:0x04A5"/>
+   <symbol name="TWIE_MASTER_ADDR" address="mem:0x04A6"/>
+   <symbol name="TWIE_MASTER_DATA" address="mem:0x04A7"/>
+   <symbol name="TWIE_SLAVE_CTRLA" address="mem:0x04A8"/>
+   <symbol name="TWIE_SLAVE_CTRLB" address="mem:0x04A9"/>
+   <symbol name="TWIE_SLAVE_STATUS" address="mem:0x04AA"/>
+   <symbol name="TWIE_SLAVE_ADDR" address="mem:0x04AB"/>
+   <symbol name="TWIE_SLAVE_DATA" address="mem:0x04AC"/>
+   <symbol name="TWIE_SLAVE_ADDRMASK" address="mem:0x04AD"/>
+
+      <!--  TWIF - Two-Wire Interface F  -->
+   <symbol name="TWIF_CTRL" address="mem:0x04B0"/>
+   <symbol name="TWIF_MASTER_CTRLA" address="mem:0x04B1"/>
+   <symbol name="TWIF_MASTER_CTRLB" address="mem:0x04B2"/>
+   <symbol name="TWIF_MASTER_CTRLC" address="mem:0x04B3"/>
+   <symbol name="TWIF_MASTER_STATUS" address="mem:0x04B4"/>
+   <symbol name="TWIF_MASTER_BAUD" address="mem:0x04B5"/>
+   <symbol name="TWIF_MASTER_ADDR" address="mem:0x04B6"/>
+   <symbol name="TWIF_MASTER_DATA" address="mem:0x04B7"/>
+   <symbol name="TWIF_SLAVE_CTRLA" address="mem:0x04B8"/>
+   <symbol name="TWIF_SLAVE_CTRLB" address="mem:0x04B9"/>
+   <symbol name="TWIF_SLAVE_STATUS" address="mem:0x04BA"/>
+   <symbol name="TWIF_SLAVE_ADDR" address="mem:0x04BB"/>
+   <symbol name="TWIF_SLAVE_DATA" address="mem:0x04BC"/>
+   <symbol name="TWIF_SLAVE_ADDRMASK" address="mem:0x04BD"/>
+
+      <!--  USB - Universal Serial Bus  -->
+   <symbol name="USB_CTRLA" address="mem:0x04C0"/>
+   <symbol name="USB_CTRLB" address="mem:0x04C1"/>
+   <symbol name="USB_STATUS" address="mem:0x04C2"/>
+   <symbol name="USB_ADDR" address="mem:0x04C3"/>
+   <symbol name="USB_FIFOWP" address="mem:0x04C4"/>
+   <symbol name="USB_FIFORP" address="mem:0x04C5"/>
+   <symbol name="USB_EPPTR" address="mem:0x04C6"/>
+   <symbol name="USB_INTCTRLA" address="mem:0x04C8"/>
+   <symbol name="USB_INTCTRLB" address="mem:0x04C9"/>
+   <symbol name="USB_INTFLAGSACLR" address="mem:0x04CA"/>
+   <symbol name="USB_INTFLAGSASET" address="mem:0x04CB"/>
+   <symbol name="USB_INTFLAGSBCLR" address="mem:0x04CC"/>
+   <symbol name="USB_INTFLAGSBSET" address="mem:0x04CD"/>
+   <symbol name="USB_CAL0" address="mem:0x04FA"/>
+   <symbol name="USB_CAL1" address="mem:0x04FB"/>
+
+      <!--  PORTA - Port A  -->
+   <symbol name="PORTA_DIR" address="mem:0x0600"/>
+   <symbol name="PORTA_DIRSET" address="mem:0x0601"/>
+   <symbol name="PORTA_DIRCLR" address="mem:0x0602"/>
+   <symbol name="PORTA_DIRTGL" address="mem:0x0603"/>
+   <symbol name="PORTA_OUT" address="mem:0x0604"/>
+   <symbol name="PORTA_OUTSET" address="mem:0x0605"/>
+   <symbol name="PORTA_OUTCLR" address="mem:0x0606"/>
+   <symbol name="PORTA_OUTTGL" address="mem:0x0607"/>
+   <symbol name="PORTA_IN" address="mem:0x0608"/>
+   <symbol name="PORTA_INTCTRL" address="mem:0x0609"/>
+   <symbol name="PORTA_INT0MASK" address="mem:0x060A"/>
+   <symbol name="PORTA_INT1MASK" address="mem:0x060B"/>
+   <symbol name="PORTA_INTFLAGS" address="mem:0x060C"/>
+   <symbol name="PORTA_REMAP" address="mem:0x060E"/>
+   <symbol name="PORTA_PIN0CTRL" address="mem:0x0610"/>
+   <symbol name="PORTA_PIN1CTRL" address="mem:0x0611"/>
+   <symbol name="PORTA_PIN2CTRL" address="mem:0x0612"/>
+   <symbol name="PORTA_PIN3CTRL" address="mem:0x0613"/>
+   <symbol name="PORTA_PIN4CTRL" address="mem:0x0614"/>
+   <symbol name="PORTA_PIN5CTRL" address="mem:0x0615"/>
+   <symbol name="PORTA_PIN6CTRL" address="mem:0x0616"/>
+   <symbol name="PORTA_PIN7CTRL" address="mem:0x0617"/>
+
+      <!--  PORT - I/O Ports  -->
+   <symbol name="PORTB_DIR" address="mem:0x0620"/>
+   <symbol name="PORTB_DIRSET" address="mem:0x0621"/>
+   <symbol name="PORTB_DIRCLR" address="mem:0x0622"/>
+   <symbol name="PORTB_DIRTGL" address="mem:0x0623"/>
+   <symbol name="PORTB_OUT" address="mem:0x0624"/>
+   <symbol name="PORTB_OUTSET" address="mem:0x0625"/>
+   <symbol name="PORTB_OUTCLR" address="mem:0x0626"/>
+   <symbol name="PORTB_OUTTGL" address="mem:0x0627"/>
+   <symbol name="PORTB_IN" address="mem:0x0628"/>
+   <symbol name="PORTB_INTCTRL" address="mem:0x0629"/>
+   <symbol name="PORTB_INT0MASK" address="mem:0x062A"/>
+   <symbol name="PORTB_INT1MASK" address="mem:0x062B"/>
+   <symbol name="PORTB_INTFLAGS" address="mem:0x062C"/>
+   <symbol name="PORTB_REMAP" address="mem:0x062E"/>
+   <symbol name="PORTB_PIN0CTRL" address="mem:0x0630"/>
+   <symbol name="PORTB_PIN1CTRL" address="mem:0x0631"/>
+   <symbol name="PORTB_PIN2CTRL" address="mem:0x0632"/>
+   <symbol name="PORTB_PIN3CTRL" address="mem:0x0633"/>
+   <symbol name="PORTB_PIN4CTRL" address="mem:0x0634"/>
+   <symbol name="PORTB_PIN5CTRL" address="mem:0x0635"/>
+   <symbol name="PORTB_PIN6CTRL" address="mem:0x0636"/>
+   <symbol name="PORTB_PIN7CTRL" address="mem:0x0637"/>
+
+      <!--  PORTC - Port C  -->
+   <symbol name="PORTC_DIR" address="mem:0x0640"/>
+   <symbol name="PORTC_DIRSET" address="mem:0x0641"/>
+   <symbol name="PORTC_DIRCLR" address="mem:0x0642"/>
+   <symbol name="PORTC_DIRTGL" address="mem:0x0643"/>
+   <symbol name="PORTC_OUT" address="mem:0x0644"/>
+   <symbol name="PORTC_OUTSET" address="mem:0x0645"/>
+   <symbol name="PORTC_OUTCLR" address="mem:0x0646"/>
+   <symbol name="PORTC_OUTTGL" address="mem:0x0647"/>
+   <symbol name="PORTC_IN" address="mem:0x0648"/>
+   <symbol name="PORTC_INTCTRL" address="mem:0x0649"/>
+   <symbol name="PORTC_INT0MASK" address="mem:0x064A"/>
+   <symbol name="PORTC_INT1MASK" address="mem:0x064B"/>
+   <symbol name="PORTC_INTFLAGS" address="mem:0x064C"/>
+   <symbol name="PORTC_REMAP" address="mem:0x064E"/>
+   <symbol name="PORTC_PIN0CTRL" address="mem:0x0650"/>
+   <symbol name="PORTC_PIN1CTRL" address="mem:0x0651"/>
+   <symbol name="PORTC_PIN2CTRL" address="mem:0x0652"/>
+   <symbol name="PORTC_PIN3CTRL" address="mem:0x0653"/>
+   <symbol name="PORTC_PIN4CTRL" address="mem:0x0654"/>
+   <symbol name="PORTC_PIN5CTRL" address="mem:0x0655"/>
+   <symbol name="PORTC_PIN6CTRL" address="mem:0x0656"/>
+   <symbol name="PORTC_PIN7CTRL" address="mem:0x0657"/>
+
+      <!--  PORTD - Port D  -->
+   <symbol name="PORTD_DIR" address="mem:0x0660"/>
+   <symbol name="PORTD_DIRSET" address="mem:0x0661"/>
+   <symbol name="PORTD_DIRCLR" address="mem:0x0662"/>
+   <symbol name="PORTD_DIRTGL" address="mem:0x0663"/>
+   <symbol name="PORTD_OUT" address="mem:0x0664"/>
+   <symbol name="PORTD_OUTSET" address="mem:0x0665"/>
+   <symbol name="PORTD_OUTCLR" address="mem:0x0666"/>
+   <symbol name="PORTD_OUTTGL" address="mem:0x0667"/>
+   <symbol name="PORTD_IN" address="mem:0x0668"/>
+   <symbol name="PORTD_INTCTRL" address="mem:0x0669"/>
+   <symbol name="PORTD_INT0MASK" address="mem:0x066A"/>
+   <symbol name="PORTD_INT1MASK" address="mem:0x066B"/>
+   <symbol name="PORTD_INTFLAGS" address="mem:0x066C"/>
+   <symbol name="PORTD_REMAP" address="mem:0x066E"/>
+   <symbol name="PORTD_PIN0CTRL" address="mem:0x0670"/>
+   <symbol name="PORTD_PIN1CTRL" address="mem:0x0671"/>
+   <symbol name="PORTD_PIN2CTRL" address="mem:0x0672"/>
+   <symbol name="PORTD_PIN3CTRL" address="mem:0x0673"/>
+   <symbol name="PORTD_PIN4CTRL" address="mem:0x0674"/>
+   <symbol name="PORTD_PIN5CTRL" address="mem:0x0675"/>
+   <symbol name="PORTD_PIN6CTRL" address="mem:0x0676"/>
+   <symbol name="PORTD_PIN7CTRL" address="mem:0x0677"/>
+
+      <!--  PORTE - Port E  -->
+   <symbol name="PORTE_DIR" address="mem:0x0680"/>
+   <symbol name="PORTE_DIRSET" address="mem:0x0681"/>
+   <symbol name="PORTE_DIRCLR" address="mem:0x0682"/>
+   <symbol name="PORTE_DIRTGL" address="mem:0x0683"/>
+   <symbol name="PORTE_OUT" address="mem:0x0684"/>
+   <symbol name="PORTE_OUTSET" address="mem:0x0685"/>
+   <symbol name="PORTE_OUTCLR" address="mem:0x0686"/>
+   <symbol name="PORTE_OUTTGL" address="mem:0x0687"/>
+   <symbol name="PORTE_IN" address="mem:0x0688"/>
+   <symbol name="PORTE_INTCTRL" address="mem:0x0689"/>
+   <symbol name="PORTE_INT0MASK" address="mem:0x068A"/>
+   <symbol name="PORTE_INT1MASK" address="mem:0x068B"/>
+   <symbol name="PORTE_INTFLAGS" address="mem:0x068C"/>
+   <symbol name="PORTE_REMAP" address="mem:0x068E"/>
+   <symbol name="PORTE_PIN0CTRL" address="mem:0x0690"/>
+   <symbol name="PORTE_PIN1CTRL" address="mem:0x0691"/>
+   <symbol name="PORTE_PIN2CTRL" address="mem:0x0692"/>
+   <symbol name="PORTE_PIN3CTRL" address="mem:0x0693"/>
+   <symbol name="PORTE_PIN4CTRL" address="mem:0x0694"/>
+   <symbol name="PORTE_PIN5CTRL" address="mem:0x0695"/>
+   <symbol name="PORTE_PIN6CTRL" address="mem:0x0696"/>
+   <symbol name="PORTE_PIN7CTRL" address="mem:0x0697"/>
+
+      <!--  PORTF - Port F  -->
+   <symbol name="PORTF_DIR" address="mem:0x06A0"/>
+   <symbol name="PORTF_DIRSET" address="mem:0x06A1"/>
+   <symbol name="PORTF_DIRCLR" address="mem:0x06A2"/>
+   <symbol name="PORTF_DIRTGL" address="mem:0x06A3"/>
+   <symbol name="PORTF_OUT" address="mem:0x06A4"/>
+   <symbol name="PORTF_OUTSET" address="mem:0x06A5"/>
+   <symbol name="PORTF_OUTCLR" address="mem:0x06A6"/>
+   <symbol name="PORTF_OUTTGL" address="mem:0x06A7"/>
+   <symbol name="PORTF_IN" address="mem:0x06A8"/>
+   <symbol name="PORTF_INTCTRL" address="mem:0x06A9"/>
+   <symbol name="PORTF_INT0MASK" address="mem:0x06AA"/>
+   <symbol name="PORTF_INT1MASK" address="mem:0x06AB"/>
+   <symbol name="PORTF_INTFLAGS" address="mem:0x06AC"/>
+   <symbol name="PORTF_REMAP" address="mem:0x06AE"/>
+   <symbol name="PORTF_PIN0CTRL" address="mem:0x06B0"/>
+   <symbol name="PORTF_PIN1CTRL" address="mem:0x06B1"/>
+   <symbol name="PORTF_PIN2CTRL" address="mem:0x06B2"/>
+   <symbol name="PORTF_PIN3CTRL" address="mem:0x06B3"/>
+   <symbol name="PORTF_PIN4CTRL" address="mem:0x06B4"/>
+   <symbol name="PORTF_PIN5CTRL" address="mem:0x06B5"/>
+   <symbol name="PORTF_PIN6CTRL" address="mem:0x06B6"/>
+   <symbol name="PORTF_PIN7CTRL" address="mem:0x06B7"/>
+
+      <!--  PORT - I/O Ports  -->
+   <symbol name="PORTG_DIR" address="mem:0x06C0"/>
+   <symbol name="PORTG_DIRSET" address="mem:0x06C1"/>
+   <symbol name="PORTG_DIRCLR" address="mem:0x06C2"/>
+   <symbol name="PORTG_DIRTGL" address="mem:0x06C3"/>
+   <symbol name="PORTG_OUT" address="mem:0x06C4"/>
+   <symbol name="PORTG_OUTSET" address="mem:0x06C5"/>
+   <symbol name="PORTG_OUTCLR" address="mem:0x06C6"/>
+   <symbol name="PORTG_OUTTGL" address="mem:0x06C7"/>
+   <symbol name="PORTG_IN" address="mem:0x06C8"/>
+   <symbol name="PORTG_INTCTRL" address="mem:0x06C9"/>
+   <symbol name="PORTG_INT0MASK" address="mem:0x06CA"/>
+   <symbol name="PORTG_INT1MASK" address="mem:0x06CB"/>
+   <symbol name="PORTG_INTFLAGS" address="mem:0x06CC"/>
+   <symbol name="PORTG_REMAP" address="mem:0x06CE"/>
+   <symbol name="PORTG_PIN0CTRL" address="mem:0x06D0"/>
+   <symbol name="PORTG_PIN1CTRL" address="mem:0x06D1"/>
+   <symbol name="PORTG_PIN2CTRL" address="mem:0x06D2"/>
+   <symbol name="PORTG_PIN3CTRL" address="mem:0x06D3"/>
+   <symbol name="PORTG_PIN4CTRL" address="mem:0x06D4"/>
+   <symbol name="PORTG_PIN5CTRL" address="mem:0x06D5"/>
+   <symbol name="PORTG_PIN6CTRL" address="mem:0x06D6"/>
+   <symbol name="PORTG_PIN7CTRL" address="mem:0x06D7"/>
+
+      <!--  PORTH - Port H  -->
+   <symbol name="PORTH_DIR" address="mem:0x06E0"/>
+   <symbol name="PORTH_DIRSET" address="mem:0x06E1"/>
+   <symbol name="PORTH_DIRCLR" address="mem:0x06E2"/>
+   <symbol name="PORTH_DIRTGL" address="mem:0x06E3"/>
+   <symbol name="PORTH_OUT" address="mem:0x06E4"/>
+   <symbol name="PORTH_OUTSET" address="mem:0x06E5"/>
+   <symbol name="PORTH_OUTCLR" address="mem:0x06E6"/>
+   <symbol name="PORTH_OUTTGL" address="mem:0x06E7"/>
+   <symbol name="PORTH_IN" address="mem:0x06E8"/>
+   <symbol name="PORTH_INTCTRL" address="mem:0x06E9"/>
+   <symbol name="PORTH_INT0MASK" address="mem:0x06EA"/>
+   <symbol name="PORTH_INT1MASK" address="mem:0x06EB"/>
+   <symbol name="PORTH_INTFLAGS" address="mem:0x06EC"/>
+   <symbol name="PORTH_PIN0CTRL" address="mem:0x06F0"/>
+   <symbol name="PORTH_PIN1CTRL" address="mem:0x06F1"/>
+   <symbol name="PORTH_PIN2CTRL" address="mem:0x06F2"/>
+   <symbol name="PORTH_PIN3CTRL" address="mem:0x06F3"/>
+   <symbol name="PORTH_PIN4CTRL" address="mem:0x06F4"/>
+   <symbol name="PORTH_PIN5CTRL" address="mem:0x06F5"/>
+   <symbol name="PORTH_PIN6CTRL" address="mem:0x06F6"/>
+   <symbol name="PORTH_PIN7CTRL" address="mem:0x06F7"/>
+
+      <!--  PORTJ - Port J  -->
+   <symbol name="PORTJ_DIR" address="mem:0x0700"/>
+   <symbol name="PORTJ_DIRSET" address="mem:0x0701"/>
+   <symbol name="PORTJ_DIRCLR" address="mem:0x0702"/>
+   <symbol name="PORTJ_DIRTGL" address="mem:0x0703"/>
+   <symbol name="PORTJ_OUT" address="mem:0x0704"/>
+   <symbol name="PORTJ_OUTSET" address="mem:0x0705"/>
+   <symbol name="PORTJ_OUTCLR" address="mem:0x0706"/>
+   <symbol name="PORTJ_OUTTGL" address="mem:0x0707"/>
+   <symbol name="PORTJ_IN" address="mem:0x0708"/>
+   <symbol name="PORTJ_INTCTRL" address="mem:0x0709"/>
+   <symbol name="PORTJ_INT0MASK" address="mem:0x070A"/>
+   <symbol name="PORTJ_INT1MASK" address="mem:0x070B"/>
+   <symbol name="PORTJ_INTFLAGS" address="mem:0x070C"/>
+   <symbol name="PORTJ_PIN0CTRL" address="mem:0x0710"/>
+   <symbol name="PORTJ_PIN1CTRL" address="mem:0x0711"/>
+   <symbol name="PORTJ_PIN2CTRL" address="mem:0x0712"/>
+   <symbol name="PORTJ_PIN3CTRL" address="mem:0x0713"/>
+   <symbol name="PORTJ_PIN4CTRL" address="mem:0x0714"/>
+   <symbol name="PORTJ_PIN5CTRL" address="mem:0x0715"/>
+   <symbol name="PORTJ_PIN6CTRL" address="mem:0x0716"/>
+   <symbol name="PORTJ_PIN7CTRL" address="mem:0x0717"/>
+
+      <!--  PORTK - Port K  -->
+   <symbol name="PORTK_DIR" address="mem:0x0720"/>
+   <symbol name="PORTK_DIRSET" address="mem:0x0721"/>
+   <symbol name="PORTK_DIRCLR" address="mem:0x0722"/>
+   <symbol name="PORTK_DIRTGL" address="mem:0x0723"/>
+   <symbol name="PORTK_OUT" address="mem:0x0724"/>
+   <symbol name="PORTK_OUTSET" address="mem:0x0725"/>
+   <symbol name="PORTK_OUTCLR" address="mem:0x0726"/>
+   <symbol name="PORTK_OUTTGL" address="mem:0x0727"/>
+   <symbol name="PORTK_IN" address="mem:0x0728"/>
+   <symbol name="PORTK_INTCTRL" address="mem:0x0729"/>
+   <symbol name="PORTK_INT0MASK" address="mem:0x072A"/>
+   <symbol name="PORTK_INT1MASK" address="mem:0x072B"/>
+   <symbol name="PORTK_INTFLAGS" address="mem:0x072C"/>
+   <symbol name="PORTK_PIN0CTRL" address="mem:0x0730"/>
+   <symbol name="PORTK_PIN1CTRL" address="mem:0x0731"/>
+   <symbol name="PORTK_PIN2CTRL" address="mem:0x0732"/>
+   <symbol name="PORTK_PIN3CTRL" address="mem:0x0733"/>
+   <symbol name="PORTK_PIN4CTRL" address="mem:0x0734"/>
+   <symbol name="PORTK_PIN5CTRL" address="mem:0x0735"/>
+   <symbol name="PORTK_PIN6CTRL" address="mem:0x0736"/>
+   <symbol name="PORTK_PIN7CTRL" address="mem:0x0737"/>
+
+      <!--  PORT - I/O Ports  -->
+   <symbol name="PORTM_DIR" address="mem:0x0760"/>
+   <symbol name="PORTM_DIRSET" address="mem:0x0761"/>
+   <symbol name="PORTM_DIRCLR" address="mem:0x0762"/>
+   <symbol name="PORTM_DIRTGL" address="mem:0x0763"/>
+   <symbol name="PORTM_OUT" address="mem:0x0764"/>
+   <symbol name="PORTM_OUTSET" address="mem:0x0765"/>
+   <symbol name="PORTM_OUTCLR" address="mem:0x0766"/>
+   <symbol name="PORTM_OUTTGL" address="mem:0x0767"/>
+   <symbol name="PORTM_IN" address="mem:0x0768"/>
+   <symbol name="PORTM_INTCTRL" address="mem:0x0769"/>
+   <symbol name="PORTM_INT0MASK" address="mem:0x076A"/>
+   <symbol name="PORTM_INT1MASK" address="mem:0x076B"/>
+   <symbol name="PORTM_INTFLAGS" address="mem:0x076C"/>
+   <symbol name="PORTM_REMAP" address="mem:0x076E"/>
+   <symbol name="PORTM_PIN0CTRL" address="mem:0x0770"/>
+   <symbol name="PORTM_PIN1CTRL" address="mem:0x0771"/>
+   <symbol name="PORTM_PIN2CTRL" address="mem:0x0772"/>
+   <symbol name="PORTM_PIN3CTRL" address="mem:0x0773"/>
+   <symbol name="PORTM_PIN4CTRL" address="mem:0x0774"/>
+   <symbol name="PORTM_PIN5CTRL" address="mem:0x0775"/>
+   <symbol name="PORTM_PIN6CTRL" address="mem:0x0776"/>
+   <symbol name="PORTM_PIN7CTRL" address="mem:0x0777"/>
+
+      <!--  PORTQ - Port Q  -->
+   <symbol name="PORTQ_DIR" address="mem:0x07C0"/>
+   <symbol name="PORTQ_DIRSET" address="mem:0x07C1"/>
+   <symbol name="PORTQ_DIRCLR" address="mem:0x07C2"/>
+   <symbol name="PORTQ_DIRTGL" address="mem:0x07C3"/>
+   <symbol name="PORTQ_OUT" address="mem:0x07C4"/>
+   <symbol name="PORTQ_OUTSET" address="mem:0x07C5"/>
+   <symbol name="PORTQ_OUTCLR" address="mem:0x07C6"/>
+   <symbol name="PORTQ_OUTTGL" address="mem:0x07C7"/>
+   <symbol name="PORTQ_IN" address="mem:0x07C8"/>
+   <symbol name="PORTQ_INTCTRL" address="mem:0x07C9"/>
+   <symbol name="PORTQ_INT0MASK" address="mem:0x07CA"/>
+   <symbol name="PORTQ_INT1MASK" address="mem:0x07CB"/>
+   <symbol name="PORTQ_INTFLAGS" address="mem:0x07CC"/>
+   <symbol name="PORTQ_PIN0CTRL" address="mem:0x07D0"/>
+   <symbol name="PORTQ_PIN1CTRL" address="mem:0x07D1"/>
+   <symbol name="PORTQ_PIN2CTRL" address="mem:0x07D2"/>
+   <symbol name="PORTQ_PIN3CTRL" address="mem:0x07D3"/>
+   <symbol name="PORTQ_PIN4CTRL" address="mem:0x07D4"/>
+   <symbol name="PORTQ_PIN5CTRL" address="mem:0x07D5"/>
+   <symbol name="PORTQ_PIN6CTRL" address="mem:0x07D6"/>
+   <symbol name="PORTQ_PIN7CTRL" address="mem:0x07D7"/>
+
+      <!--  PORTR - Port R  -->
+   <symbol name="PORTR_DIR" address="mem:0x07E0"/>
+   <symbol name="PORTR_DIRSET" address="mem:0x07E1"/>
+   <symbol name="PORTR_DIRCLR" address="mem:0x07E2"/>
+   <symbol name="PORTR_DIRTGL" address="mem:0x07E3"/>
+   <symbol name="PORTR_OUT" address="mem:0x07E4"/>
+   <symbol name="PORTR_OUTSET" address="mem:0x07E5"/>
+   <symbol name="PORTR_OUTCLR" address="mem:0x07E6"/>
+   <symbol name="PORTR_OUTTGL" address="mem:0x07E7"/>
+   <symbol name="PORTR_IN" address="mem:0x07E8"/>
+   <symbol name="PORTR_INTCTRL" address="mem:0x07E9"/>
+   <symbol name="PORTR_INT0MASK" address="mem:0x07EA"/>
+   <symbol name="PORTR_INT1MASK" address="mem:0x07EB"/>
+   <symbol name="PORTR_INTFLAGS" address="mem:0x07EC"/>
+   <symbol name="PORTR_REMAP" address="mem:0x07EE"/>
+   <symbol name="PORTR_PIN0CTRL" address="mem:0x07F0"/>
+   <symbol name="PORTR_PIN1CTRL" address="mem:0x07F1"/>
+   <symbol name="PORTR_PIN2CTRL" address="mem:0x07F2"/>
+   <symbol name="PORTR_PIN3CTRL" address="mem:0x07F3"/>
+   <symbol name="PORTR_PIN4CTRL" address="mem:0x07F4"/>
+   <symbol name="PORTR_PIN5CTRL" address="mem:0x07F5"/>
+   <symbol name="PORTR_PIN6CTRL" address="mem:0x07F6"/>
+   <symbol name="PORTR_PIN7CTRL" address="mem:0x07F7"/>
+
+      <!--  TCC0 - Timer/Counter C0  -->
+   <symbol name="TCC0_CTRLA" address="mem:0x0800"/>
+   <symbol name="TCC0_CTRLB" address="mem:0x0801"/>
+   <symbol name="TCC0_CTRLC" address="mem:0x0802"/>
+   <symbol name="TCC0_CTRLD" address="mem:0x0803"/>
+   <symbol name="TCC0_CTRLE" address="mem:0x0804"/>
+   <symbol name="TCC0_INTCTRLA" address="mem:0x0806"/>
+   <symbol name="TCC0_INTCTRLB" address="mem:0x0807"/>
+   <symbol name="TCC0_CTRLFCLR" address="mem:0x0808"/>
+   <symbol name="TCC0_CTRLFSET" address="mem:0x0809"/>
+   <symbol name="TCC0_CTRLGCLR" address="mem:0x080A"/>
+   <symbol name="TCC0_CTRLGSET" address="mem:0x080B"/>
+   <symbol name="TCC0_INTFLAGS" address="mem:0x080C"/>
+   <symbol name="TCC0_TEMP" address="mem:0x080F"/>
+   <symbol name="TCC0_CNT" address="mem:0x0820"/>
+   <symbol name="TCC0_PER" address="mem:0x0826"/>
+   <symbol name="TCC0_CCA" address="mem:0x0828"/>
+   <symbol name="TCC0_CCB" address="mem:0x082A"/>
+   <symbol name="TCC0_CCC" address="mem:0x082C"/>
+   <symbol name="TCC0_CCD" address="mem:0x082E"/>
+   <symbol name="TCC0_PERBUF" address="mem:0x0836"/>
+   <symbol name="TCC0_CCABUF" address="mem:0x0838"/>
+   <symbol name="TCC0_CCBBUF" address="mem:0x083A"/>
+   <symbol name="TCC0_CCCBUF" address="mem:0x083C"/>
+   <symbol name="TCC0_CCDBUF" address="mem:0x083E"/>
+
+      <!--  TCC1 - Timer/Counter C1  -->
+   <symbol name="TCC1_CTRLA" address="mem:0x0840"/>
+   <symbol name="TCC1_CTRLB" address="mem:0x0841"/>
+   <symbol name="TCC1_CTRLC" address="mem:0x0842"/>
+   <symbol name="TCC1_CTRLD" address="mem:0x0843"/>
+   <symbol name="TCC1_CTRLE" address="mem:0x0844"/>
+   <symbol name="TCC1_INTCTRLA" address="mem:0x0846"/>
+   <symbol name="TCC1_INTCTRLB" address="mem:0x0847"/>
+   <symbol name="TCC1_CTRLFCLR" address="mem:0x0848"/>
+   <symbol name="TCC1_CTRLFSET" address="mem:0x0849"/>
+   <symbol name="TCC1_CTRLGCLR" address="mem:0x084A"/>
+   <symbol name="TCC1_CTRLGSET" address="mem:0x084B"/>
+   <symbol name="TCC1_INTFLAGS" address="mem:0x084C"/>
+   <symbol name="TCC1_TEMP" address="mem:0x084F"/>
+   <symbol name="TCC1_CNT" address="mem:0x0860"/>
+   <symbol name="TCC1_PER" address="mem:0x0866"/>
+   <symbol name="TCC1_CCA" address="mem:0x0868"/>
+   <symbol name="TCC1_CCB" address="mem:0x086A"/>
+   <symbol name="TCC1_PERBUF" address="mem:0x0876"/>
+   <symbol name="TCC1_CCABUF" address="mem:0x0878"/>
+   <symbol name="TCC1_CCBBUF" address="mem:0x087A"/>
+
+      <!--  AWEXC - Advanced Waveform Extension C  -->
+   <symbol name="AWEXC_CTRL" address="mem:0x0880"/>
+   <symbol name="AWEXC_FDEMASK" address="mem:0x0882"/>
+   <symbol name="AWEXC_FDCTRL" address="mem:0x0883"/>
+   <symbol name="AWEXC_STATUS" address="mem:0x0884"/>
+   <symbol name="AWEXC_STATUSSET" address="mem:0x0885"/>
+   <symbol name="AWEXC_DTBOTH" address="mem:0x0886"/>
+   <symbol name="AWEXC_DTBOTHBUF" address="mem:0x0887"/>
+   <symbol name="AWEXC_DTLS" address="mem:0x0888"/>
+   <symbol name="AWEXC_DTHS" address="mem:0x0889"/>
+   <symbol name="AWEXC_DTLSBUF" address="mem:0x088A"/>
+   <symbol name="AWEXC_DTHSBUF" address="mem:0x088B"/>
+   <symbol name="AWEXC_OUTOVEN" address="mem:0x088C"/>
+
+      <!--  HIRESC - High-Resolution Extension C  -->
+   <symbol name="HIRESC_CTRLA" address="mem:0x0890"/>
+
+      <!--  USARTC0 - Universal Asynchronous Receiver-Transmitter C0  -->
+   <symbol name="USARTC0_DATA" address="mem:0x08A0"/>
+   <symbol name="USARTC0_STATUS" address="mem:0x08A1"/>
+   <symbol name="USARTC0_CTRLA" address="mem:0x08A3"/>
+   <symbol name="USARTC0_CTRLB" address="mem:0x08A4"/>
+   <symbol name="USARTC0_CTRLC" address="mem:0x08A5"/>
+   <symbol name="USARTC0_BAUDCTRLA" address="mem:0x08A6"/>
+   <symbol name="USARTC0_BAUDCTRLB" address="mem:0x08A7"/>
+
+      <!--  USARTC1 - Universal Asynchronous Receiver-Transmitter C1  -->
+   <symbol name="USARTC1_DATA" address="mem:0x08B0"/>
+   <symbol name="USARTC1_STATUS" address="mem:0x08B1"/>
+   <symbol name="USARTC1_CTRLA" address="mem:0x08B3"/>
+   <symbol name="USARTC1_CTRLB" address="mem:0x08B4"/>
+   <symbol name="USARTC1_CTRLC" address="mem:0x08B5"/>
+   <symbol name="USARTC1_BAUDCTRLA" address="mem:0x08B6"/>
+   <symbol name="USARTC1_BAUDCTRLB" address="mem:0x08B7"/>
+
+      <!--  SPIC - Serial Peripheral Interface C  -->
+   <symbol name="SPIC_CTRL" address="mem:0x08C0"/>
+   <symbol name="SPIC_INTCTRL" address="mem:0x08C1"/>
+   <symbol name="SPIC_STATUS" address="mem:0x08C2"/>
+   <symbol name="SPIC_DATA" address="mem:0x08C3"/>
+
+      <!--  IRCOM - IR Communication Module  -->
+   <symbol name="IRCOM_CTRL" address="mem:0x08F8"/>
+   <symbol name="IRCOM_TXPLCTRL" address="mem:0x08F9"/>
+   <symbol name="IRCOM_RXPLCTRL" address="mem:0x08FA"/>
+
+      <!--  TCD0 - Timer/Counter D0  -->
+   <symbol name="TCD0_CTRLA" address="mem:0x0900"/>
+   <symbol name="TCD0_CTRLB" address="mem:0x0901"/>
+   <symbol name="TCD0_CTRLC" address="mem:0x0902"/>
+   <symbol name="TCD0_CTRLD" address="mem:0x0903"/>
+   <symbol name="TCD0_CTRLE" address="mem:0x0904"/>
+   <symbol name="TCD0_INTCTRLA" address="mem:0x0906"/>
+   <symbol name="TCD0_INTCTRLB" address="mem:0x0907"/>
+   <symbol name="TCD0_CTRLFCLR" address="mem:0x0908"/>
+   <symbol name="TCD0_CTRLFSET" address="mem:0x0909"/>
+   <symbol name="TCD0_CTRLGCLR" address="mem:0x090A"/>
+   <symbol name="TCD0_CTRLGSET" address="mem:0x090B"/>
+   <symbol name="TCD0_INTFLAGS" address="mem:0x090C"/>
+   <symbol name="TCD0_TEMP" address="mem:0x090F"/>
+   <symbol name="TCD0_CNT" address="mem:0x0920"/>
+   <symbol name="TCD0_PER" address="mem:0x0926"/>
+   <symbol name="TCD0_CCA" address="mem:0x0928"/>
+   <symbol name="TCD0_CCB" address="mem:0x092A"/>
+   <symbol name="TCD0_CCC" address="mem:0x092C"/>
+   <symbol name="TCD0_CCD" address="mem:0x092E"/>
+   <symbol name="TCD0_PERBUF" address="mem:0x0936"/>
+   <symbol name="TCD0_CCABUF" address="mem:0x0938"/>
+   <symbol name="TCD0_CCBBUF" address="mem:0x093A"/>
+   <symbol name="TCD0_CCCBUF" address="mem:0x093C"/>
+   <symbol name="TCD0_CCDBUF" address="mem:0x093E"/>
+
+
+      <!--  TCD1 - Timer/Counter D1  -->
+   <symbol name="TCD1_CTRLA" address="mem:0x0940"/>
+   <symbol name="TCD1_CTRLB" address="mem:0x0941"/>
+   <symbol name="TCD1_CTRLC" address="mem:0x0942"/>
+   <symbol name="TCD1_CTRLD" address="mem:0x0943"/>
+   <symbol name="TCD1_CTRLE" address="mem:0x0944"/>
+   <symbol name="TCD1_INTCTRLA" address="mem:0x0946"/>
+   <symbol name="TCD1_INTCTRLB" address="mem:0x0947"/>
+   <symbol name="TCD1_CTRLFCLR" address="mem:0x0948"/>
+   <symbol name="TCD1_CTRLFSET" address="mem:0x0949"/>
+   <symbol name="TCD1_CTRLGCLR" address="mem:0x094A"/>
+   <symbol name="TCD1_CTRLGSET" address="mem:0x094B"/>
+   <symbol name="TCD1_INTFLAGS" address="mem:0x094C"/>
+   <symbol name="TCD1_TEMP" address="mem:0x094F"/>
+   <symbol name="TCD1_CNT" address="mem:0x0960"/>
+   <symbol name="TCD1_PER" address="mem:0x0966"/>
+   <symbol name="TCD1_CCA" address="mem:0x0968"/>
+   <symbol name="TCD1_CCB" address="mem:0x096A"/>
+   <symbol name="TCD1_PERBUF" address="mem:0x0976"/>
+   <symbol name="TCD1_CCABUF" address="mem:0x0978"/>
+   <symbol name="TCD1_CCBBUF" address="mem:0x097A"/>
+
+      <!--  HIRESD - High-Resolution Extension D  -->
+   <symbol name="HIRESD_CTRLA" address="mem:0x0990"/>
+
+      <!--  USARTD0 - Universal Asynchronous Receiver-Transmitter D0  -->
+   <symbol name="USARTD0_DATA" address="mem:0x09A0"/>
+   <symbol name="USARTD0_STATUS" address="mem:0x09A1"/>
+   <symbol name="USARTD0_CTRLA" address="mem:0x09A3"/>
+   <symbol name="USARTD0_CTRLB" address="mem:0x09A4"/>
+   <symbol name="USARTD0_CTRLC" address="mem:0x09A5"/>
+   <symbol name="USARTD0_BAUDCTRLA" address="mem:0x09A6"/>
+   <symbol name="USARTD0_BAUDCTRLB" address="mem:0x09A7"/>
+
+      <!--  USARTD1 - Universal Asynchronous Receiver-Transmitter D1  -->
+   <symbol name="USARTD1_DATA" address="mem:0x09B0"/>
+   <symbol name="USARTD1_STATUS" address="mem:0x09B1"/>
+   <symbol name="USARTD1_CTRLA" address="mem:0x09B3"/>
+   <symbol name="USARTD1_CTRLB" address="mem:0x09B4"/>
+   <symbol name="USARTD1_CTRLC" address="mem:0x09B5"/>
+   <symbol name="USARTD1_BAUDCTRLA" address="mem:0x09B6"/>
+   <symbol name="USARTD1_BAUDCTRLB" address="mem:0x09B7"/>
+
+      <!--  SPID - Serial Peripheral Interface D  -->
+   <symbol name="SPID_CTRL" address="mem:0x09C0"/>
+   <symbol name="SPID_INTCTRL" address="mem:0x09C1"/>
+   <symbol name="SPID_STATUS" address="mem:0x09C2"/>
+   <symbol name="SPID_DATA" address="mem:0x09C3"/>
+
+      <!--  TCE0 - Timer/Counter E0  -->
+   <symbol name="TCE0_CTRLA" address="mem:0x0A00"/>
+   <symbol name="TCE0_CTRLB" address="mem:0x0A01"/>
+   <symbol name="TCE0_CTRLC" address="mem:0x0A02"/>
+   <symbol name="TCE0_CTRLD" address="mem:0x0A03"/>
+   <symbol name="TCE0_CTRLE" address="mem:0x0A04"/>
+   <symbol name="TCE0_INTCTRLA" address="mem:0x0A06"/>
+   <symbol name="TCE0_INTCTRLB" address="mem:0x0A07"/>
+   <symbol name="TCE0_CTRLFCLR" address="mem:0x0A08"/>
+   <symbol name="TCE0_CTRLFSET" address="mem:0x0A09"/>
+   <symbol name="TCE0_CTRLGCLR" address="mem:0x0A0A"/>
+   <symbol name="TCE0_CTRLGSET" address="mem:0x0A0B"/>
+   <symbol name="TCE0_INTFLAGS" address="mem:0x0A0C"/>
+   <symbol name="TCE0_TEMP" address="mem:0x0A0F"/>
+   <symbol name="TCE0_CNT" address="mem:0x0A20"/>
+   <symbol name="TCE0_PER" address="mem:0x0A26"/>
+   <symbol name="TCE0_CCA" address="mem:0x0A28"/>
+   <symbol name="TCE0_CCB" address="mem:0x0A2A"/>
+   <symbol name="TCE0_CCC" address="mem:0x0A2C"/>
+   <symbol name="TCE0_CCD" address="mem:0x0A2E"/>
+   <symbol name="TCE0_PERBUF" address="mem:0x0A36"/>
+   <symbol name="TCE0_CCABUF" address="mem:0x0A38"/>
+   <symbol name="TCE0_CCBBUF" address="mem:0x0A3A"/>
+   <symbol name="TCE0_CCCBUF" address="mem:0x0A3C"/>
+   <symbol name="TCE0_CCDBUF" address="mem:0x0A3E"/>
+
+      <!--  TC2 - 16-bit Timer/Counter type 2  -->
+   <symbol name="TCE2_CTRLA" address="mem:0x0A00"/>
+   <symbol name="TCE2_CTRLB" address="mem:0x0A01"/>
+   <symbol name="TCE2_CTRLC" address="mem:0x0A02"/>
+   <symbol name="TCE2_CTRLE" address="mem:0x0A04"/>
+   <symbol name="TCE2_INTCTRLA" address="mem:0x0A06"/>
+   <symbol name="TCE2_INTCTRLB" address="mem:0x0A07"/>
+   <symbol name="TCE2_CTRLF" address="mem:0x0A09"/>
+   <symbol name="TCE2_INTFLAGS" address="mem:0x0A0C"/>
+   <symbol name="TCE2_LCNT" address="mem:0x0A20"/>
+   <symbol name="TCE2_HCNT" address="mem:0x0A21"/>
+   <symbol name="TCE2_LPER" address="mem:0x0A26"/>
+   <symbol name="TCE2_HPER" address="mem:0x0A27"/>
+   <symbol name="TCE2_LCMPA" address="mem:0x0A28"/>
+   <symbol name="TCE2_HCMPA" address="mem:0x0A29"/>
+   <symbol name="TCE2_LCMPB" address="mem:0x0A2A"/>
+   <symbol name="TCE2_HCMPB" address="mem:0x0A2B"/>
+   <symbol name="TCE2_LCMPC" address="mem:0x0A2C"/>
+   <symbol name="TCE2_HCMPC" address="mem:0x0A2D"/>
+   <symbol name="TCE2_LCMPD" address="mem:0x0A2E"/>
+   <symbol name="TCE2_HCMPD" address="mem:0x0A2F"/>
+
+      <!--  TCE1 - Timer/Counter E1  -->
+   <symbol name="TCE1_CTRLA" address="mem:0x0A40"/>
+   <symbol name="TCE1_CTRLB" address="mem:0x0A41"/>
+   <symbol name="TCE1_CTRLC" address="mem:0x0A42"/>
+   <symbol name="TCE1_CTRLD" address="mem:0x0A43"/>
+   <symbol name="TCE1_CTRLE" address="mem:0x0A44"/>
+   <symbol name="TCE1_INTCTRLA" address="mem:0x0A46"/>
+   <symbol name="TCE1_INTCTRLB" address="mem:0x0A47"/>
+   <symbol name="TCE1_CTRLFCLR" address="mem:0x0A48"/>
+   <symbol name="TCE1_CTRLFSET" address="mem:0x0A49"/>
+   <symbol name="TCE1_CTRLGCLR" address="mem:0x0A4A"/>
+   <symbol name="TCE1_CTRLGSET" address="mem:0x0A4B"/>
+   <symbol name="TCE1_INTFLAGS" address="mem:0x0A4C"/>
+   <symbol name="TCE1_TEMP" address="mem:0x0A4F"/>
+   <symbol name="TCE1_CNT" address="mem:0x0A60"/>
+   <symbol name="TCE1_PER" address="mem:0x0A66"/>
+   <symbol name="TCE1_CCA" address="mem:0x0A68"/>
+   <symbol name="TCE1_CCB" address="mem:0x0A6A"/>
+   <symbol name="TCE1_PERBUF" address="mem:0x0A76"/>
+   <symbol name="TCE1_CCABUF" address="mem:0x0A78"/>
+   <symbol name="TCE1_CCBBUF" address="mem:0x0A7A"/>
+
+      <!--  AWEXE - Advanced Waveform Extension E  -->
+   <symbol name="AWEXE_CTRL" address="mem:0x0A80"/>
+   <symbol name="AWEXE_FDEMASK" address="mem:0x0A82"/>
+   <symbol name="AWEXE_FDCTRL" address="mem:0x0A83"/>
+   <symbol name="AWEXE_STATUS" address="mem:0x0A84"/>
+   <symbol name="AWEXE_DTBOTH" address="mem:0x0A86"/>
+   <symbol name="AWEXE_DTBOTHBUF" address="mem:0x0A87"/>
+   <symbol name="AWEXE_DTLS" address="mem:0x0A88"/>
+   <symbol name="AWEXE_DTHS" address="mem:0x0A89"/>
+   <symbol name="AWEXE_DTLSBUF" address="mem:0x0A8A"/>
+   <symbol name="AWEXE_DTHSBUF" address="mem:0x0A8B"/>
+   <symbol name="AWEXE_OUTOVEN" address="mem:0x0A8C"/>
+
+      <!--  HIRESE - High-Resolution Extension E  -->
+   <symbol name="HIRESE_CTRLA" address="mem:0x0A90"/>
+
+      <!--  USARTE0 - Universal Asynchronous Receiver-Transmitter E0  -->
+   <symbol name="USARTE0_DATA" address="mem:0x0AA0"/>
+   <symbol name="USARTE0_STATUS" address="mem:0x0AA1"/>
+   <symbol name="USARTE0_CTRLA" address="mem:0x0AA3"/>
+   <symbol name="USARTE0_CTRLB" address="mem:0x0AA4"/>
+   <symbol name="USARTE0_CTRLC" address="mem:0x0AA5"/>
+   <symbol name="USARTE0_BAUDCTRLA" address="mem:0x0AA6"/>
+   <symbol name="USARTE0_BAUDCTRLB" address="mem:0x0AA7"/>
+
+      <!--  USARTE1 - Universal Asynchronous Receiver-Transmitter E1  -->
+   <symbol name="USARTE1_DATA" address="mem:0x0AB0"/>
+   <symbol name="USARTE1_STATUS" address="mem:0x0AB1"/>
+   <symbol name="USARTE1_CTRLA" address="mem:0x0AB3"/>
+   <symbol name="USARTE1_CTRLB" address="mem:0x0AB4"/>
+   <symbol name="USARTE1_CTRLC" address="mem:0x0AB5"/>
+   <symbol name="USARTE1_BAUDCTRLA" address="mem:0x0AB6"/>
+   <symbol name="USARTE1_BAUDCTRLB" address="mem:0x0AB7"/>
+
+      <!--  SPIE - Serial Peripheral Interface E  -->
+   <symbol name="SPIE_CTRL" address="mem:0x0AC0"/>
+   <symbol name="SPIE_INTCTRL" address="mem:0x0AC1"/>
+   <symbol name="SPIE_STATUS" address="mem:0x0AC2"/>
+   <symbol name="SPIE_DATA" address="mem:0x0AC3"/>
+
+      <!--  TCF0 - Timer/Counter F0  -->
+   <symbol name="TCF0_CTRLA" address="mem:0x0B00"/>
+   <symbol name="TCF0_CTRLB" address="mem:0x0B01"/>
+   <symbol name="TCF0_CTRLC" address="mem:0x0B02"/>
+   <symbol name="TCF0_CTRLD" address="mem:0x0B03"/>
+   <symbol name="TCF0_CTRLE" address="mem:0x0B04"/>
+   <symbol name="TCF0_INTCTRLA" address="mem:0x0B06"/>
+   <symbol name="TCF0_INTCTRLB" address="mem:0x0B07"/>
+   <symbol name="TCF0_CTRLFCLR" address="mem:0x0B08"/>
+   <symbol name="TCF0_CTRLFSET" address="mem:0x0B09"/>
+   <symbol name="TCF0_CTRLGCLR" address="mem:0x0B0A"/>
+   <symbol name="TCF0_CTRLGSET" address="mem:0x0B0B"/>
+   <symbol name="TCF0_INTFLAGS" address="mem:0x0B0C"/>
+   <symbol name="TCF0_TEMP" address="mem:0x0B0F"/>
+   <symbol name="TCF0_CNT" address="mem:0x0B20"/>
+   <symbol name="TCF0_PER" address="mem:0x0B26"/>
+   <symbol name="TCF0_CCA" address="mem:0x0B28"/>
+   <symbol name="TCF0_CCB" address="mem:0x0B2A"/>
+   <symbol name="TCF0_CCC" address="mem:0x0B2C"/>
+   <symbol name="TCF0_CCD" address="mem:0x0B2E"/>
+   <symbol name="TCF0_PERBUF" address="mem:0x0B36"/>
+   <symbol name="TCF0_CCABUF" address="mem:0x0B38"/>
+   <symbol name="TCF0_CCBBUF" address="mem:0x0B3A"/>
+   <symbol name="TCF0_CCCBUF" address="mem:0x0B3C"/>
+   <symbol name="TCF0_CCDBUF" address="mem:0x0B3E"/>
+
+      <!--  TCF1 - Timer/Counter F1  -->
+   <symbol name="TCF1_CTRLA" address="mem:0x0B40"/>
+   <symbol name="TCF1_CTRLB" address="mem:0x0B41"/>
+   <symbol name="TCF1_CTRLC" address="mem:0x0B42"/>
+   <symbol name="TCF1_CTRLD" address="mem:0x0B43"/>
+   <symbol name="TCF1_CTRLE" address="mem:0x0B44"/>
+   <symbol name="TCF1_INTCTRLA" address="mem:0x0B46"/>
+   <symbol name="TCF1_INTCTRLB" address="mem:0x0B47"/>
+   <symbol name="TCF1_CTRLFCLR" address="mem:0x0B48"/>
+   <symbol name="TCF1_CTRLFSET" address="mem:0x0B49"/>
+   <symbol name="TCF1_CTRLGCLR" address="mem:0x0B4A"/>
+   <symbol name="TCF1_CTRLGSET" address="mem:0x0B4B"/>
+   <symbol name="TCF1_INTFLAGS" address="mem:0x0B4C"/>
+   <symbol name="TCF1_TEMP" address="mem:0x0B4F"/>
+   <symbol name="TCF1_CNT" address="mem:0x0B60"/>
+   <symbol name="TCF1_PER" address="mem:0x0B66"/>
+   <symbol name="TCF1_CCA" address="mem:0x0B68"/>
+   <symbol name="TCF1_CCB" address="mem:0x0B6A"/>
+   <symbol name="TCF1_PERBUF" address="mem:0x0B76"/>
+   <symbol name="TCF1_CCABUF" address="mem:0x0B78"/>
+   <symbol name="TCF1_CCBBUF" address="mem:0x0B7A"/>
+
+      <!--  HIRESF - High-Resolution Extension F  -->
+   <symbol name="HIRESF_CTRLA" address="mem:0x0B90"/>
+
+      <!--  USARTF0 - Universal Asynchronous Receiver-Transmitter F0  -->
+   <symbol name="USARTF0_DATA" address="mem:0x0BA0"/>
+   <symbol name="USARTF0_STATUS" address="mem:0x0BA1"/>
+   <symbol name="USARTF0_CTRLA" address="mem:0x0BA3"/>
+   <symbol name="USARTF0_CTRLB" address="mem:0x0BA4"/>
+   <symbol name="USARTF0_CTRLC" address="mem:0x0BA5"/>
+   <symbol name="USARTF0_BAUDCTRLA" address="mem:0x0BA6"/>
+   <symbol name="USARTF0_BAUDCTRLB" address="mem:0x0BA7"/>
+
+      <!--  USARTF1 - Universal Asynchronous Receiver-Transmitter F1  -->
+   <symbol name="USARTF1_DATA" address="mem:0x0BB0"/>
+   <symbol name="USARTF1_STATUS" address="mem:0x0BB1"/>
+   <symbol name="USARTF1_CTRLA" address="mem:0x0BB3"/>
+   <symbol name="USARTF1_CTRLB" address="mem:0x0BB4"/>
+   <symbol name="USARTF1_CTRLC" address="mem:0x0BB5"/>
+   <symbol name="USARTF1_BAUDCTRLA" address="mem:0x0BB6"/>
+   <symbol name="USARTF1_BAUDCTRLB" address="mem:0x0BB7"/>
+
+      <!--  SPIF - Serial Peripheral Interface F  -->
+   <symbol name="SPIF_CTRL" address="mem:0x0BC0"/>
+   <symbol name="SPIF_INTCTRL" address="mem:0x0BC1"/>
+   <symbol name="SPIF_STATUS" address="mem:0x0BC2"/>
+   <symbol name="SPIF_DATA" address="mem:0x0BC3"/>
+
+
+      <!--  LCD - LCD Controller  -->
+   <symbol name="LCD_CTRLA" address="mem:0x0D00"/>
+   <symbol name="LCD_CTRLB" address="mem:0x0D01"/>
+   <symbol name="LCD_CTRLC" address="mem:0x0D02"/>
+   <symbol name="LCD_INTCTRL" address="mem:0x0D03"/>
+   <symbol name="LCD_INTFLAG" address="mem:0x0D04"/>
+   <symbol name="LCD_CTRLD" address="mem:0x0D05"/>
+   <symbol name="LCD_CTRLE" address="mem:0x0D06"/>
+   <symbol name="LCD_CTRLF" address="mem:0x0D07"/>
+   <symbol name="LCD_CTRLG" address="mem:0x0D08"/>
+   <symbol name="LCD_CTRLH" address="mem:0x0D09"/>
+   <symbol name="LCD_DATA0" address="mem:0x0D10"/>
+   <symbol name="LCD_DATA1" address="mem:0x0D11"/>
+   <symbol name="LCD_DATA2" address="mem:0x0D12"/>
+   <symbol name="LCD_DATA3" address="mem:0x0D13"/>
+   <symbol name="LCD_DATA4" address="mem:0x0D14"/>
+   <symbol name="LCD_DATA5" address="mem:0x0D15"/>
+   <symbol name="LCD_DATA6" address="mem:0x0D16"/>
+   <symbol name="LCD_DATA7" address="mem:0x0D17"/>
+   <symbol name="LCD_DATA8" address="mem:0x0D18"/>
+   <symbol name="LCD_DATA9" address="mem:0x0D19"/>
+   <symbol name="LCD_DATA10" address="mem:0x0D1A"/>
+   <symbol name="LCD_DATA11" address="mem:0x0D1B"/>
+   <symbol name="LCD_DATA12" address="mem:0x0D1C"/>
+   <symbol name="LCD_DATA13" address="mem:0x0D1D"/>
+   <symbol name="LCD_DATA14" address="mem:0x0D1E"/>
+   <symbol name="LCD_DATA15" address="mem:0x0D1F"/>
+   <symbol name="LCD_DATA16" address="mem:0x0D20"/>
+   <symbol name="LCD_DATA17" address="mem:0x0D21"/>
+   <symbol name="LCD_DATA18" address="mem:0x0D22"/>
+   <symbol name="LCD_DATA19" address="mem:0x0D23"/>
+
+
+
+  </default_symbols>
+
+  <default_memory_blocks>
+    <memory_block name="iospace" start_address="mem:0x00" length="0x1000" initialized="false"/>
+    <memory_block name="eeprom" start_address="mem:0x1000" length="0x1000" initialized="false"/>
+  </default_memory_blocks>
+
+
+</processor_spec>

@@ -82,18 +82,12 @@ public class TranslationSettingsDefinition extends JavaEnumSettingsDefinition<TR
 		settings.setString(TRANSLATED_VALUE_SETTING_NAME, translatedValue);
 	}
 
-	/**
-	 * @see generic.settings.SettingsDefinition#clear(generic.settings.Settings)
-	 */
 	@Override
 	public void clear(Settings settings) {
 		super.clear(settings);
 		settings.clearSetting(TRANSLATED_VALUE_SETTING_NAME);
 	}
 
-	/**
-	 * @see generic.settings.SettingsDefinition#copySetting(generic.settings.Settings, generic.settings.Settings)
-	 */
 	@Override
 	public void copySetting(Settings srcSettings, Settings destSettings) {
 		super.copySetting(srcSettings, destSettings);

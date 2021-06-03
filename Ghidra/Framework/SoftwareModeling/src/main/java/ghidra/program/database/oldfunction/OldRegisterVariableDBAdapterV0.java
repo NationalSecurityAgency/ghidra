@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package ghidra.program.database.oldfunction;
 
-import ghidra.program.database.map.AddressMap;
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.program.database.map.AddressMap;
+import ghidra.util.exception.VersionException;
 
 /**
  * 
@@ -39,9 +37,9 @@ class OldRegisterVariableDBAdapterV0 extends OldRegisterVariableDBAdapter {
 
 	static final String REG_PARMS_TABLE_NAME = "Register Parameters";
 	static final Schema V0_REG_PARAMS_SCHEMA = new Schema(SCHEMA_VERSION, "Key",
-		new Class[] { LongField.class, StringField.class, LongField.class, StringField.class,
-			StringField.class }, new String[] { "Function ID", "Register", "DataType ID", "Name",
-			"Comment" });
+		new Field[] { LongField.INSTANCE, StringField.INSTANCE, LongField.INSTANCE,
+			StringField.INSTANCE, StringField.INSTANCE },
+		new String[] { "Function ID", "Register", "DataType ID", "Name", "Comment" });
 
 	private Table table;
 
@@ -52,34 +50,22 @@ class OldRegisterVariableDBAdapterV0 extends OldRegisterVariableDBAdapter {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.function.FunctionDBAdapter#getRegisterVariableRecord(long)
-	 */
 	@Override
-	public Record getRegisterVariableRecord(long key) throws IOException {
+	public DBRecord getRegisterVariableRecord(long key) throws IOException {
 		return table.getRecord(key);
 	}
 
-	/**
-	 * @see ghidra.program.database.function.FunctionDBAdapter#getRegisterVariableKeys(long)
-	 */
 	@Override
-	public long[] getRegisterVariableKeys(long functionKey) throws IOException {
+	public Field[] getRegisterVariableKeys(long functionKey) throws IOException {
 		return table.findRecords(new LongField(functionKey),
 			OldStackVariableDBAdapter.STACK_VAR_FUNCTION_KEY_COL);
 	}
 
-	/**
-	 * @see ghidra.program.database.function.RegisterVariableDBAdapter#deleteTable(db.DBHandle)
-	 */
 	@Override
 	void deleteTable(DBHandle handle) throws IOException {
 		handle.deleteTable(REG_PARMS_TABLE_NAME);
 	}
 
-	/**
-	 * @see ghidra.program.database.function.RegisterVariableDBAdapter#getRecordCount()
-	 */
 	@Override
 	int getRecordCount() {
 		return table.getRecordCount();

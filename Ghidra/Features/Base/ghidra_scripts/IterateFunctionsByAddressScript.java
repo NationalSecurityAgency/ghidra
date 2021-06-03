@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +42,7 @@ public class IterateFunctionsByAddressScript extends GhidraScript {
 	private void iterateForward() {
 		// Use the iterator, there is no easy way to use the function iterator on addresses
 		//   If the function begins at address zero, you won't get the function without
-		//   alot of extra more complicated code.
+		//   a lot of extra more complicated code.
 		FunctionIterator fiter = currentProgram.getFunctionManager().getFunctions(true);
 
 		int count = 0;

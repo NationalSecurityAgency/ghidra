@@ -266,6 +266,11 @@ public class EmulatorTestRunner {
 		Address breakOnErrorAddr =
 			alignAddress(testGroup.mainTestControlBlock.getBreakOnErrorAddress(), alignment);
 
+		executionListener.log(testGroup, "TestInfo pointers of interest:");
+		executionListener.log(testGroup, " onDone -> " + breakOnDoneAddr);
+		executionListener.log(testGroup, " onPass -> " + breakOnPassAddr);
+		executionListener.log(testGroup, " onError -> " + breakOnErrorAddr);
+
 		emuHelper.setBreakpoint(breakOnDoneAddr);
 		emuHelper.setBreakpoint(breakOnPassAddr);
 		emuHelper.setBreakpoint(breakOnErrorAddr);

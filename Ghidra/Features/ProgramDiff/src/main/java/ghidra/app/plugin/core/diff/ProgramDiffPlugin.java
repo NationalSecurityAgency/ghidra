@@ -190,7 +190,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		ProgramLocation p1Loc = p2Loc;
 		if (p2LocationAddress.getAddressSpace().isOverlaySpace()) {
 			ProgramLocation equivalentP1Loc = DiffUtility
-				.getCompatibleProgramLocation(secondaryDiffProgram, p2Loc, primaryProgram);
+					.getCompatibleProgramLocation(secondaryDiffProgram, p2Loc, primaryProgram);
 			if (equivalentP1Loc != null) {
 				AddressSpace p2Space = p2LocationAddress.getAddressSpace();
 				AddressSpace p1Space = equivalentP1Loc.getAddress().getAddressSpace();
@@ -465,7 +465,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 				diffControl.setLocation(previousP1Location.getAddress());
 			}
 			ProgramLocation previousP1LocationAsP2 = DiffUtility
-				.getCompatibleProgramLocation(primaryProgram, location, secondaryDiffProgram);
+					.getCompatibleProgramLocation(primaryProgram, location, secondaryDiffProgram);
 			if (previousP1LocationAsP2 != null) {
 				diffListingPanel.setCursorPosition(previousP1LocationAsP2);
 			}
@@ -804,8 +804,8 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		AddressSet p2SelectionAsP1 =
 			DiffUtility.getCompatibleAddressSet(p2Selection, primaryProgram);
 		AddressSet p1ApplySet = p2SelectionAsP1.intersect(p1ViewAddrSet)
-			.subtract(addressesOnlyInP1)
-			.subtract(compatibleOnlyInP2);
+				.subtract(addressesOnlyInP1)
+				.subtract(compatibleOnlyInP2);
 		if (p1ApplySet.isEmpty()) {
 			Msg.showInfo(getClass(), tool.getToolFrame(), "Apply Differences",
 				(p2Selection.isEmpty()) ? "No diff selection in the current view."
@@ -1882,7 +1882,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 				}
 			}
 			catch (CancelledException e) {
-				// For now do nothing if user cancels, the Diff.
+				// For now do nothing if user cancels
 			}
 
 			monitor.setMessage("");

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,13 @@
  */
 package ghidra.feature.vt.api.db;
 
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
 import db.*;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Abstract adapter for the database table that holds tags for version tracking matches.
@@ -31,16 +29,16 @@ import db.*;
 public abstract class VTMatchTagDBAdapter {
 
 	public enum ColumnDescription {
-		TAG_NAME_COL(StringField.class);
+		TAG_NAME_COL(StringField.INSTANCE);
 
-		private final Class<? extends Field> columnClass;
+		private final Field columnField;
 
-		private ColumnDescription(Class<? extends Field> columnClass) {
-			this.columnClass = columnClass;
+		private ColumnDescription(Field columnField) {
+			this.columnField = columnField;
 		}
 
-		public Class<? extends Field> getColumnClass() {
-			return columnClass;
+		public Field getColumnField() {
+			return columnField;
 		}
 
 		public int column() {
@@ -56,22 +54,19 @@ public abstract class VTMatchTagDBAdapter {
 			return list.toArray(new String[columns.length]);
 		}
 
-		@SuppressWarnings("unchecked")
-		// we know our class types are safe
-		private static Class<? extends Field>[] getColumnClasses() {
+		private static Field[] getColumnFields() {
 			ColumnDescription[] columns = ColumnDescription.values();
-			List<Class<? extends Field>> list = new LinkedList<Class<? extends Field>>();
-			for (ColumnDescription column : columns) {
-				list.add(column.getColumnClass());
+			Field[] fields = new Field[columns.length];
+			for (int i = 0; i < fields.length; i++) {
+				fields[i] = columns[i].getColumnField();
 			}
-			return list.toArray(new Class[columns.length]);
+			return fields;
 		}
 	}
 
 	static String TABLE_NAME = "MatchTagTable";
-	static Schema TABLE_SCHEMA =
-		new Schema(0, LongField.class, "Key", ColumnDescription.getColumnClasses(),
-			ColumnDescription.getColumnNames());
+	static Schema TABLE_SCHEMA = new Schema(0, "Key", ColumnDescription.getColumnFields(),
+		ColumnDescription.getColumnNames());
 
 	static VTMatchTagDBAdapter createAdapter(DBHandle dbHandle) throws IOException {
 		return new VTMatchTagDBAdapterV0(dbHandle);
@@ -82,15 +77,15 @@ public abstract class VTMatchTagDBAdapter {
 		return new VTMatchTagDBAdapterV0(dbHandle, openMode, monitor);
 	}
 
-	public abstract Record insertRecord(String tagName) throws IOException;
+	public abstract DBRecord insertRecord(String tagName) throws IOException;
 
 	public abstract RecordIterator getRecords() throws IOException;
 
-	abstract Record getRecord(long tagRecordKey) throws IOException;
+	abstract DBRecord getRecord(long tagRecordKey) throws IOException;
 
 	abstract int getRecordCount();
 
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	abstract boolean deleteRecord(long tagRecordKey) throws IOException;
 }

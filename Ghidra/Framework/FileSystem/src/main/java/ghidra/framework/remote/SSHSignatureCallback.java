@@ -52,28 +52,28 @@ public class SSHSignatureCallback implements Callback, Serializable {
 	}
 
 	/**
-	 * @returns token to be signed using user certificate.
+	 * @return token to be signed using user certificate.
 	 */
 	public byte[] getToken() {
 		return (token == null ? null : (byte[]) token.clone());
 	}
 
 	/**
-	 * @returns signed token bytes set by callback handler.
+	 * @return signed token bytes set by callback handler.
 	 */
 	public byte[] getSignature() {
 		return (signature == null ? null : (byte[]) signature.clone());
 	}
 
 	/**
-	 * @returns the server's signature of the token bytes.
+	 * @return the server's signature of the token bytes.
 	 */
 	public byte[] getServerSignature() {
 		return serverSignature;
 	}
 
 	/**
-	 * @returns true if callback has been signed
+	 * @return true if callback has been signed
 	 */
 	public boolean isSigned() {
 		return signature != null;

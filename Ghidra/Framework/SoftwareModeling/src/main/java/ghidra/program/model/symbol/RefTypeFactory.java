@@ -550,7 +550,7 @@ public class RefTypeFactory {
 				}
 			}
 			else if (op.getOpcode() == PcodeOp.LOAD) {
-				if (memAddr.getAddressSpace().getUniqueSpaceID() == inputs[0].getOffset() &&
+				if (memAddr.getAddressSpace().getSpaceID() == inputs[0].getOffset() &&
 					(memOffset == inputs[1].getOffset() || inputs[1].equals(offsetVarnode))) {
 					if (refType != null && refType.isWrite()) {
 						return RefType.READ_WRITE;

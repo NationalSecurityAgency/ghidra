@@ -103,6 +103,15 @@ bool Merge::mergeTestRequired(HighVariable *high_out,HighVariable *high_in)
   else if (high_out->isExtraOut())
     return false;
 
+  Symbol *symbolIn = high_in->getSymbol();
+  Symbol *symbolOut = high_out->getSymbol();
+  if (symbolIn != (Symbol *) 0 && symbolOut != (Symbol *) 0) {
+    if (symbolIn != symbolOut)
+      return false;		// Map to different symbols
+    if (high_in->getSymbolOffset() != high_out->getSymbolOffset())
+      return false;			// Map to different parts of same symbol
+  }
+
   return true;
 }
 
@@ -136,6 +145,14 @@ bool Merge::mergeTestAdjacent(HighVariable *high_out,HighVariable *high_in)
     Varnode *vn = high_in->getInputVarnode();
     if (vn->isIllegalInput()&&(!vn->isIndirectOnly())) return false;
   }
+  Symbol *symbol = high_in->getSymbol();
+  if (symbol != (Symbol *)0)
+    if (symbol->isIsolated())
+      return false;
+  symbol = high_out->getSymbol();
+  if (symbol != (Symbol *)0)
+    if (symbol->isIsolated())
+      return false;
   return true;
 }
 
@@ -151,9 +168,6 @@ bool Merge::mergeTestSpeculative(HighVariable *high_out,HighVariable *high_in)
 {
   if (!mergeTestAdjacent(high_out,high_in)) return false;
 
-  // Don't merge a mapped variable speculatively
-  if (high_out->isMapped()) return false;
-  if (high_in->isMapped()) return false;
   // Don't merge anything with a global speculatively
   if (high_out->isPersist()) return false;
   if (high_in->isPersist()) return false;
@@ -268,7 +282,7 @@ void Merge::mergeOpcode(OpCode opc)
 	vn2 = op->getIn(j);
 	if (!mergeTestBasic(vn2)) continue;
 	if (mergeTestRequired(vn1->getHigh(),vn2->getHigh()))
-	  merge(vn1->getHigh(),vn2->getHigh(),false);
+	  merge(vn1->getHigh(),vn2->getHigh(),false);	// This is a required merge
       }
     }
   }
@@ -798,6 +812,67 @@ void Merge::mergeMarker(void)
   }
 }
 
+/// \brief Merge together Varnodes mapped to SymbolEntrys from the same Symbol
+///
+/// Symbols that have more than one SymbolEntry may attach to more than one Varnode.
+/// These Varnodes need to be merged to properly represent a single variable.
+void Merge::mergeMultiEntry(void)
+
+{
+  SymbolNameTree::const_iterator iter = data.getScopeLocal()->beginMultiEntry();
+  SymbolNameTree::const_iterator enditer = data.getScopeLocal()->endMultiEntry();
+  for(;iter!=enditer;++iter) {
+    vector<Varnode *> mergeList;
+    Symbol *symbol = *iter;
+    int4 numEntries = symbol->numEntries();
+    int4 mergeCount = 0;
+    int4 skipCount = 0;
+    int4 conflictCount = 0;
+    for(int4 i=0;i<numEntries;++i) {
+      int4 prevSize = mergeList.size();
+      SymbolEntry *entry = symbol->getMapEntry(i);
+      if (entry->getSize() != symbol->getType()->getSize())
+	continue;
+      data.findLinkedVarnodes(entry, mergeList);
+      if (mergeList.size() == prevSize)
+	skipCount += 1;		// Did not discover any Varnodes corresponding to a particular SymbolEntry
+    }
+    if (mergeList.empty()) continue;
+    HighVariable *high = mergeList[0]->getHigh();
+    updateHigh(high);
+    for(int4 i=0;i<mergeList.size();++i) {
+      HighVariable *newHigh = mergeList[i]->getHigh();
+      if (newHigh == high) continue;		// Varnodes already merged
+      updateHigh(newHigh);
+      if (!mergeTestRequired(high, newHigh)) {
+	symbol->setMergeProblems();
+	newHigh->setUnmerged();
+	conflictCount += 1;
+	continue;
+      }
+      if (!merge(high,newHigh,false)) {		// Attempt the merge
+	symbol->setMergeProblems();
+	newHigh->setUnmerged();
+	conflictCount += 1;
+	continue;
+      }
+      mergeCount += 1;
+    }
+    if (skipCount != 0 || conflictCount !=0) {
+      ostringstream s;
+      s << "Unable to";
+      if (mergeCount != 0)
+	s << " fully";
+      s << " merge symbol: " << symbol->getName();
+      if (skipCount > 0)
+	s << " -- Some instance varnodes not found.";
+      if (conflictCount > 0)
+	s << " -- Some merges are forbidden";
+      data.warningHeader(s.str());
+    }
+  }
+}
+
 /// \brief Speculatively merge Varnodes that are input/output to the same p-code op
 ///
 /// If a single p-code op has an input and output HighVariable that share the same data-type,
@@ -1048,7 +1123,7 @@ void Merge::buildDominantCopy(HighVariable *high,vector<PcodeOp *> &copy,int4 po
     }
   }
   if (count > 0 && domCopyIsNew) {
-    high->merge(domVn->getHigh(),false);
+    high->merge(domVn->getHigh(),true);
   }
 }
 

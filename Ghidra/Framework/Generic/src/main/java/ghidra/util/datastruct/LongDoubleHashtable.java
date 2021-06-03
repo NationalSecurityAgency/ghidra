@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +24,7 @@ import java.io.Serializable;
  *     Class that implements a hashtable with long keys and double values.
  *     Because this class uses array of primitives
  *     to store the information, it serializes very fast.  This implementation uses
- *     seperate chaining to resolve collisions.
+ *     separate chaining to resolve collisions.
  *
  *     My local change of LongShortHashtable (SCP 4/13/00)
  */

@@ -26,7 +26,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.table.TableModel;
 
 import docking.widgets.button.GRadioButton;
-import docking.widgets.label.GDLabel;
+import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.GTable;
 import ghidra.app.merge.util.ConflictUtility;
@@ -43,7 +43,7 @@ public class ScrollingListChoicesPanel extends ConflictPanel {
 
 	private GridBagLayout gbl;
 	private JPanel rowPanel;
-	private JLabel headerLabel;
+	private GDHtmlLabel headerLabel;
 	private ButtonGroup buttonGroup;
 	private ListChoice leftListChoice;
 	private ListChoice rightListChoice;
@@ -71,7 +71,7 @@ public class ScrollingListChoicesPanel extends ConflictPanel {
 		gbl = new GridBagLayout();
 		rowPanel = new JPanel(gbl);
 		setLayout(new BorderLayout());
-		headerLabel = new GDLabel(" ");
+		headerLabel = new GDHtmlLabel(" ");
 		headerLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		add(headerLabel, BorderLayout.NORTH);
 		setHeader(null);

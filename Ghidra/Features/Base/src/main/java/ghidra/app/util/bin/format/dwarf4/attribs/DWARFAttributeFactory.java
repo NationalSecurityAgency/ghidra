@@ -73,7 +73,7 @@ public class DWARFAttributeFactory {
 				return new DWARFNumericAttribute(uoffset + unit.getStartOffset());
 			}
 			case DW_FORM_ref_udata: {
-				long uoffset = LEB128.decode(reader, false);
+				long uoffset = LEB128.readAsLong(reader, false);
 				return new DWARFNumericAttribute(uoffset + unit.getStartOffset());
 			}
 
@@ -103,7 +103,7 @@ public class DWARFAttributeFactory {
 				return new DWARFBlobAttribute(reader.readNextByteArray(length));
 			}
 			case DW_FORM_block: {
-				int length = LEB128.decode32u(reader);
+				int length = LEB128.readAsUInt32(reader);
 				if (length < 0 || length > MAX_BLOCK4_SIZE) {
 					throw new IOException("Invalid/bad dw_form_block size: " + length);
 				}
@@ -121,12 +121,12 @@ public class DWARFAttributeFactory {
 			case DW_FORM_data8:
 				return new DWARFNumericAttribute(reader.readNextLong());
 			case DW_FORM_sdata:
-				return new DWARFNumericAttribute(LEB128.decode(reader, true));
+				return new DWARFNumericAttribute(LEB128.readAsLong(reader, true));
 			case DW_FORM_udata:
-				return new DWARFNumericAttribute(LEB128.decode(reader, false));
+				return new DWARFNumericAttribute(LEB128.readAsLong(reader, false));
 
 			case DW_FORM_exprloc: {
-				int length = LEB128.decode32u(reader);
+				int length = LEB128.readAsUInt32(reader);
 				if (length < 0 || length > MAX_BLOCK4_SIZE) {
 					throw new IOException("Invalid/bad dw_form_exprloc size: " + length);
 				}
@@ -157,7 +157,7 @@ public class DWARFAttributeFactory {
 
 			// Indirect Form
 			case DW_FORM_indirect:
-				DWARFForm formValue = DWARFForm.find(LEB128.decode32u(reader));
+				DWARFForm formValue = DWARFForm.find(LEB128.readAsUInt32(reader));
 				DWARFAttributeValue value = read(reader, unit, formValue);
 
 				return new DWARFIndirectAttribute(value, formValue);

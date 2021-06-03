@@ -32,7 +32,7 @@ public class FieldNameFieldLocation extends CodeUnitLocation {
 	/**
 	 * Construct a new FieldNameFieldLocation.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param addr the address of the codeunit.
 	 * @param componentPath if not null, it is the array of indexes that point
 	 * to a specific data type inside of another data type

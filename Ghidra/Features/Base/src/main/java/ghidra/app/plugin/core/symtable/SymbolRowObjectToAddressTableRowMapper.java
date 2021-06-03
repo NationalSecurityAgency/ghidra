@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,21 +19,17 @@ import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.table.ProgramLocationTableRowMapper;
 
-public class SymbolRowObjectToAddressTableRowMapper extends
-		ProgramLocationTableRowMapper<SymbolRowObject, Address> {
+public class SymbolRowObjectToAddressTableRowMapper
+		extends ProgramLocationTableRowMapper<Symbol, Address> {
 
 	@Override
-	public Address map(SymbolRowObject rowObject, Program data, ServiceProvider serviceProvider) {
-		SymbolTable symbolTable = data.getSymbolTable();
-		Symbol symbol = symbolTable.getSymbol(rowObject.getKey());
-		if (symbol == null) {
+	public Address map(Symbol rowObject, Program data, ServiceProvider serviceProvider) {
+		if (rowObject == null) {
 			return null;
 		}
-
-		return symbol.getAddress();
+		return rowObject.getAddress();
 	}
 
 }

@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.hover;
 
-import static ghidra.util.HTMLUtilities.HTML;
+import static ghidra.util.HTMLUtilities.*;
 
 import java.awt.*;
 
@@ -35,6 +35,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.HelpLocation;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 
 /**
@@ -42,15 +43,14 @@ import ghidra.util.bean.opteditor.OptionsVetoException;
  */
 public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 
-	public static final int WINDOW_OFFSET = 50;
+	private static final int WINDOW_OFFSET = 50;
+	private static final Color BACKGROUND_COLOR = new Color(255, 255, 230);
 
-	protected static final Color BACKGROUND_COLOR = new Color(255, 255, 230);
-
-	protected CodeFormatService codeFormatService;
-	protected ListingPanel panel;
-	protected JToolTip toolTip;
-	protected ProgramLocation previewLocation;
-	protected GoToHelper gotoHelper;
+	private CodeFormatService codeFormatService;
+	private ListingPanel panel;
+	private JToolTip toolTip;
+	private ProgramLocation previewLocation;
+	private GoToHelper gotoHelper;
 
 	public AbstractReferenceHover(PluginTool tool, int priority) {
 		this(tool, null, priority);
@@ -82,23 +82,55 @@ public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 	}
 
 	@Override
-	public void setOptions(Options options, String name) {
-		enabled = options.getBoolean(name, true);
-		int dialogWidth = options.getInt(name + Options.DELIMITER + "Dialog Width", 600);
-		if (dialogWidth <= 0) {
-			throw new OptionsVetoException(
-				"Reference Code Viewer Dialog Width must be greater than 0");
+	public void initializeOptions() {
+
+		options = tool.getOptions(getOptionsCategory());
+
+		options.setOptionsHelpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, "MouseHover"));
+		HelpLocation help = new HelpLocation(HelpTopics.CODE_BROWSER, "ReferenceHover");
+
+		String hoverName = getName();
+		options.getOptions(hoverName).setOptionsHelpLocation(help);
+		options.registerOption(hoverName, true, null, getDescription());
+
+		options.registerOption(hoverName + Options.DELIMITER + "Dialog Height", 400, help,
+			"Height of the popup window");
+		options.registerOption(hoverName + Options.DELIMITER + "Dialog Width", 600, help,
+			"Width of the popup window");
+
+		setOptions(options, hoverName);
+		options.addOptionsChangeListener(this);
+	}
+
+	@Override
+	public void setOptions(Options options, String optionName) {
+
+		String hoverName = getName();
+		if (optionName.equals(hoverName)) {
+			enabled = options.getBoolean(hoverName, true);
+			return;
 		}
 
-		int dialogHeight = options.getInt(name + Options.DELIMITER + "Dialog Height", 400);
-		if (dialogHeight <= 0) {
-			throw new OptionsVetoException(
-				"Reference Code Viewer Dialog Height must be greater than 0");
-		}
+		String widthOptionName = optionName + Options.DELIMITER + "Dialog Width";
+		String heightOptionName = optionName + Options.DELIMITER + "Dialog Height";
 
-		Dimension d = new Dimension(dialogWidth, dialogHeight);
-		if (panel != null) {
-			panel.setPreferredSize(d);
+		if (optionName.equals(widthOptionName) ||
+			optionName.equals(heightOptionName)) {
+			int dialogWidth = options.getInt(widthOptionName, 600);
+			if (dialogWidth <= 0) {
+				throw new OptionsVetoException(
+					"Reference Code Viewer Dialog Width must be greater than 0");
+			}
+			int dialogHeight = options.getInt(heightOptionName, 400);
+			if (dialogHeight <= 0) {
+				throw new OptionsVetoException(
+					"Reference Code Viewer Dialog Height must be greater than 0");
+			}
+
+			Dimension d = new Dimension(dialogWidth, dialogHeight);
+			if (panel != null) {
+				panel.setPreferredSize(d);
+			}
 		}
 	}
 

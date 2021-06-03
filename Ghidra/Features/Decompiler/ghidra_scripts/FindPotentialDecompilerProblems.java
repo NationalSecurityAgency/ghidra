@@ -26,8 +26,6 @@
 
 import java.util.*;
 
-import com.google.common.collect.Iterators;
-
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.parallel.*;
 import ghidra.app.script.GhidraScript;
@@ -71,14 +69,14 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 
 		Set<Function> funcsToDecompile = new HashSet<>();
 		FunctionIterator fIter = currentProgram.getFunctionManager().getFunctionsNoStubs(true);
-		Iterators.addAll(funcsToDecompile, fIter);
+		fIter.forEach(e -> funcsToDecompile.add(e));
 
 		if (funcsToDecompile.isEmpty()) {
 			popup("No functions to decompile!");
 			return;
 		}
 
-		ParallelDecompiler.decompileFunctions(callback, currentProgram, funcsToDecompile, monitor);
+		ParallelDecompiler.decompileFunctions(callback, funcsToDecompile, monitor);
 		monitor.checkCanceled();
 		tableDialog.setMessage("Finished");
 	}

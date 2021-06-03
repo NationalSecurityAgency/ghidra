@@ -19,6 +19,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.swing.*;
 
@@ -51,7 +52,14 @@ import utilities.util.reflection.ReflectionUtilities;
  * method is used to determine if an action if applicable to the current context.   Overriding this
  * method allows actions to manage their own enablement.  Otherwise, the default behavior for this
  * method is to return the current enabled property of the action.  This allows for the possibility
- * for plugins to manage the enablement of its actions.
+ * for plugins to externally manage the enablement of its actions.
+ * <P>
+ * NOTE: If you wish to do your own external enablement management for an action (which is highly
+ * discouraged), it is very important that you don't use any of the internal enablement mechanisms
+ * by setting the predicates {@link #enabledWhen(Predicate)}, {@link #validContextWhen(Predicate)}
+ * or overriding {@link #isValidContext(ActionContext)}. These predicates and methods trigger
+ * internal enablement management which will interfere with you own calls to
+ * {@link DockingAction#setEnabled(boolean)}.
  */
 public abstract class DockingAction implements DockingActionIf {
 
@@ -71,6 +79,14 @@ public abstract class DockingAction implements DockingActionIf {
 	private MenuBarData menuBarData;
 	private PopupMenuData popupMenuData;
 	private ToolBarData toolBarData;
+
+	private Predicate<ActionContext> enabledPredicate;
+	private Predicate<ActionContext> popupPredicate;
+	private Predicate<ActionContext> validContextPredicate;
+	private boolean shouldAddToAllWindows = false;
+	private Class<? extends ActionContext> addToWindowWhenContextClass = null;
+
+	private boolean supportsDefaultToolContext;
 
 	public DockingAction(String name, String owner) {
 		this.name = name;
@@ -156,34 +172,65 @@ public abstract class DockingAction implements DockingActionIf {
 
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
+		if (popupPredicate != null) {
+			return popupPredicate.test(context);
+		}
 		return isEnabledForContext(context);
 	}
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
+		if (enabledPredicate != null) {
+			return enabledPredicate.test(context);
+		}
 		return isEnabled();
 	}
 
 	@Override
 	public boolean isValidContext(ActionContext context) {
+		if (validContextPredicate != null) {
+			return validContextPredicate.test(context);
+		}
 		return true;
 	}
 
-	@Override
-	public boolean isValidGlobalContext(ActionContext globalContext) {
-		return isValidContext(globalContext);
-	}
-
 	/**
-	 * Default behavior is to add to main window;
+	 * Determines if this action should be added to a window.
+	 * <P>
+	 * If the client wants the action on all windows, then they can call {@link #shouldAddToAllWindows}
+	 * <P>
+	 * If the client wants the action to be on a window only when the window can produce 
+	 * a certain context type, the the client should call 
+	 * {@link #addToWindowWhen(Class)}
+	 * <P>
+	 * Otherwise, by default, the action will only be on the main window.
+	 * 
 	 */
 	@Override
-	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-		if (isMainWindow) {
-			// only return true if it is a tool menu or toolbar action
-			return menuBarData != null || toolBarData != null;
+	public final boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
+		// this method only applies to actions with top level menus or tool bars.
+		if (menuBarData == null && toolBarData == null) {
+			return false;
 		}
-		return false;
+		
+		// clients can specify that the action should be on all windows.
+		if (shouldAddToAllWindows) {
+			return true;
+		}
+
+		// clients can specify a context class that determines if an action should
+		// be added to a window.
+		if (addToWindowWhenContextClass != null) {
+			for (Class<?> class1 : contextTypes) {
+				if (addToWindowWhenContextClass.isAssignableFrom(class1)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		// default to only appearing in main window
+		return isMainWindow;
 	}
 
 	/**
@@ -206,13 +253,22 @@ public abstract class DockingAction implements DockingActionIf {
 	}
 
 	@Override
-	public boolean setEnabled(boolean newValue) {
+	public void setEnabled(boolean newValue) {
 		if (isEnabled == newValue) {
-			return isEnabled;
+			return;
 		}
 		isEnabled = newValue;
 		firePropertyChanged(ENABLEMENT_PROPERTY, !isEnabled, isEnabled);
-		return !isEnabled;
+	}
+
+	@Override
+	public void setSupportsDefaultToolContext(boolean newValue) {
+		supportsDefaultToolContext = newValue;
+	}
+
+	@Override
+	public boolean supportsDefaultToolContext() {
+		return supportsDefaultToolContext;
 	}
 
 	@Override
@@ -286,6 +342,11 @@ public abstract class DockingAction implements DockingActionIf {
 
 	@Override
 	public void setKeyBindingData(KeyBindingData newKeyBindingData) {
+
+		if (!supportsKeyBinding(newKeyBindingData)) {
+			return;
+		}
+
 		KeyBindingData oldData = keyBindingData;
 		keyBindingData = KeyBindingData.validateKeyBindingData(newKeyBindingData);
 
@@ -294,6 +355,27 @@ public abstract class DockingAction implements DockingActionIf {
 		}
 
 		firePropertyChanged(KEYBINDING_DATA_PROPERTY, oldData, keyBindingData);
+	}
+
+	private boolean supportsKeyBinding(KeyBindingData kbData) {
+
+		KeyBindingType type = getKeyBindingType();
+		if (type.supportsKeyBindings()) {
+			return true;
+		}
+
+		KeyBindingPrecedence precedence = null;
+		if (kbData != null) {
+			precedence = kbData.getKeyBindingPrecedence();
+		}
+
+		if (precedence == KeyBindingPrecedence.ReservedActionsLevel) {
+			return true; // reserved actions are special
+		}
+
+		// log a trace message instead of throwing an exception, as to not break any legacy code
+		Msg.error(this, "Action does not support key bindings: " + getFullName(), new Throwable());
+		return false;
 	}
 
 	@Override
@@ -390,8 +472,8 @@ public abstract class DockingAction implements DockingActionIf {
 
 		// menu path
 		if (menuBarData != null) {
-			buffer.append("        MENU PATH:           ").append(
-				menuBarData.getMenuPathAsString());
+			buffer.append("        MENU PATH:           ")
+					.append(menuBarData.getMenuPathAsString());
 			buffer.append('\n');
 			buffer.append("        MENU GROUP:        ").append(menuBarData.getMenuGroup());
 			buffer.append('\n');
@@ -413,8 +495,8 @@ public abstract class DockingAction implements DockingActionIf {
 
 		// popup menu path
 		if (popupMenuData != null) {
-			buffer.append("        POPUP PATH:         ").append(
-				popupMenuData.getMenuPathAsString());
+			buffer.append("        POPUP PATH:         ")
+					.append(popupMenuData.getMenuPathAsString());
 			buffer.append('\n');
 			buffer.append("        POPUP GROUP:      ").append(popupMenuData.getMenuGroup());
 			buffer.append('\n');
@@ -480,6 +562,9 @@ public abstract class DockingAction implements DockingActionIf {
 	}
 
 	public void firePropertyChanged(String propertyName, Object oldValue, Object newValue) {
+		if (Objects.equals(oldValue, newValue)) {
+			return;
+		}
 		PropertyChangeEvent event = new PropertyChangeEvent(this, propertyName, oldValue, newValue);
 		for (PropertyChangeListener listener : propertyListeners) {
 			listener.propertyChange(event);
@@ -489,6 +574,67 @@ public abstract class DockingAction implements DockingActionIf {
 	@Override
 	public Object getHelpObject() {
 		return this;
+	}
+
+	/**
+	 * Sets a predicate for dynamically determining the action's enabled state.  If this
+	 * predicate is not set, the action's enable state must be controlled directly using the
+	 * {@link DockingAction#setEnabled(boolean)} method. See 
+	 * {@link DockingActionIf#isEnabledForContext(ActionContext)}
+	 *  
+	 * @param predicate the predicate that will be used to dynamically determine an action's 
+	 * enabled state.
+	 */
+	public void enabledWhen(Predicate<ActionContext> predicate) {
+		enabledPredicate = predicate;
+	}
+
+	/**
+	 * Sets a predicate for dynamically determining if this action should be included in
+	 * an impending pop-up menu.  If this predicate is not set, the action's will be included
+	 * in an impending pop-up, if it is enabled. See 
+	 * {@link DockingActionIf#isAddToPopup(ActionContext)}
+	 *  
+	 * @param predicate the predicate that will be used to dynamically determine an action's 
+	 * enabled state.
+	 */
+	public void popupWhen(Predicate<ActionContext> predicate) {
+		popupPredicate = predicate;
+	}
+
+	/**
+	 * Sets a predicate for dynamically determining if this action is valid for the current 
+	 * {@link ActionContext}.  See {@link DockingActionIf#isValidContext(ActionContext)}
+	 *  
+	 * @param predicate the predicate that will be used to dynamically determine an action's 
+	 * validity for a given {@link ActionContext}
+	 */
+	public void validContextWhen(Predicate<ActionContext> predicate) {
+		validContextPredicate = predicate;
+	}
+
+	/**
+	 * Sets the ActionContext class for when this action should be added to a window
+	 * <P>
+	 * If this is set, the the action will only be added to windows that have providers
+	 * that can produce an ActionContext that is appropriate for this action.
+	 * <P>
+	 * @param contextClass the ActionContext class required to be producible by a
+	 * provider that is hosted in that window before this action is added to that 
+	 * window. 
+	 * 
+	 */
+	public void addToWindowWhen(Class<? extends ActionContext> contextClass) {
+		addToWindowWhenContextClass = contextClass;
+	}
+	
+	/**
+	 * Tells this action to add itself to all windows
+	 * <P>
+	 * @param b to add to all windows or not
+	 */
+	public void setAddToAllWindows(boolean b) {
+		shouldAddToAllWindows = b;
 	}
 
 //==================================================================================================
@@ -508,14 +654,15 @@ public abstract class DockingAction implements DockingActionIf {
 			inceptionInformation = "";
 			return;
 		}
-
-		inceptionInformation = getInceptionFromTheFirstClassThatIsNotUs();
+		inceptionInformation = getInceptionFromTheFirstClassThatIsNotUsOrABuilder();
 	}
 
-	protected String getInceptionFromTheFirstClassThatIsNotUs() {
+	protected String getInceptionFromTheFirstClassThatIsNotUsOrABuilder() {
 		Throwable t = ReflectionUtilities.createThrowableWithStackOlderThan(getClass());
-		StackTraceElement[] trace = t.getStackTrace();
+		StackTraceElement[] trace =
+			ReflectionUtilities.filterStackTrace(t.getStackTrace(), "ActionBuilder");
 		String classInfo = trace[0].toString();
 		return classInfo;
 	}
+	
 }

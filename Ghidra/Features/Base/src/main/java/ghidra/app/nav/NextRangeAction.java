@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,40 +23,29 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.util.ProgramSelection;
 
-import java.util.Set;
-
 public abstract class NextRangeAction extends NavigatableContextAction {
 
 	private PluginTool tool;
 	private NavigationOptions navOptions;
 
-	public NextRangeAction(PluginTool tool, String name, String owner, NavigationOptions navOptions) {
+	public NextRangeAction(PluginTool tool, String name, String owner,
+			NavigationOptions navOptions) {
 		super(name, owner);
 		this.tool = tool;
 		this.navOptions = navOptions;
 		setEnabled(false);
-	}
-
-	@Override
-	protected boolean isValidContext(NavigatableActionContext context) {
-		//
-		// We want the nav actions to work in the current view that supports this, which right 
-		// now is the ListingActionContext.  If the current context does not support that, then 
-		// we will be called later with the global context, which does support navigation.
-		//
-		return context instanceof ListingActionContext;
+		addToWindowWhen(NavigatableActionContext.class);
 	}
 
 	@Override
 	public boolean isEnabledForContext(NavigatableActionContext context) {
 		Address currentAddress = context.getAddress();
-		ListingActionContext listingContext = (ListingActionContext) context;
-		ProgramSelection selection = getSelection(listingContext);
+		ProgramSelection selection = getSelection(context);
 		if (selection == null || selection.isEmpty() || currentAddress == null) {
 			return false;
 		}
 
-		CodeUnit cu = listingContext.getProgram().getListing().getCodeUnitAt(currentAddress);
+		CodeUnit cu = context.getProgram().getListing().getCodeUnitAt(currentAddress);
 		if (cu != null) {
 			currentAddress = cu.getMaxAddress();
 		}
@@ -71,13 +59,10 @@ public abstract class NextRangeAction extends NavigatableContextAction {
 
 	@Override
 	public void actionPerformed(NavigatableActionContext context) {
-		// Note: we verified above that the context we are grabbing here is the correct type
-		ListingActionContext listingContext = (ListingActionContext) context;
-
-		Address goToAddress = getGoToAddress(listingContext);
+		Address goToAddress = getGoToAddress(context);
 		GoToService service = tool.getService(GoToService.class);
 		if (service != null) {
-			service.goTo(listingContext.getNavigatable(), goToAddress);
+			service.goTo(context.getNavigatable(), goToAddress);
 		}
 	}
 
@@ -113,14 +98,4 @@ public abstract class NextRangeAction extends NavigatableContextAction {
 	}
 
 	abstract protected ProgramSelection getSelection(ProgramLocationActionContext context);
-
-	@Override
-	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-		for (Class<?> class1 : contextTypes) {
-			if (NavigatableRangeActionContext.class.isAssignableFrom(class1)) {
-				return true;
-			}
-		}
-		return false;
-	}
 }

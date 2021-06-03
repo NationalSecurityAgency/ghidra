@@ -26,14 +26,14 @@ import ghidra.util.exception.UserAccessException;
 public interface RepositoryServerHandle {
 
 	/**
-	 * @returns true if server allows anonymous access.
+	 * @return true if server allows anonymous access.
 	 * Individual repositories must grant anonymous access separately.
 	 * @throws IOException if an IO error occurs
 	 */
 	boolean anonymousAccessAllowed() throws IOException;
 
 	/**
-	 * @returns true if user has restricted read-only access to server (e.g., anonymous user)
+	 * @return true if user has restricted read-only access to server (e.g., anonymous user)
 	 * @throws IOException if an IO error occurs
 	 */
 	boolean isReadOnly() throws IOException;
@@ -102,9 +102,9 @@ public interface RepositoryServerHandle {
 	/**
 	 * Set the password for the user.
 	 * @param saltedSHA256PasswordHash SHA256 salted password hash
-	 * @returns true if password changed
+	 * @return true if password changed
 	 * @throws IOException if an IO error occurs
-	 * @see HashUtilities#getSaltedHash("SHA-256", char[])
+	 * @see ghidra.util.HashUtilities#getSaltedHash(String, char[])  HashUtilities.getSaltedHash("SHA-256", char[])
 	 */
 	boolean setPassword(char[] saltedSHA256PasswordHash) throws IOException;
 

@@ -23,7 +23,7 @@ import javax.swing.ImageIcon;
 import docking.action.MenuData;
 import docking.action.ToolBarData;
 import ghidra.framework.main.AppInfo;
-import ghidra.framework.main.datatable.DomainFileProvider;
+import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.util.task.Task;
@@ -55,7 +55,7 @@ public class VersionControlUpdateAction extends VersionControlAction {
 	}
 
 	@Override
-	public void actionPerformed(DomainFileProvider context) {
+	public void actionPerformed(DomainFileContext context) {
 		update(context.getSelectedFiles());
 	}
 
@@ -63,7 +63,7 @@ public class VersionControlUpdateAction extends VersionControlAction {
 	 * Returns true if at least one checked out file has a newer version in the repository.
 	 */
 	@Override
-	public boolean isEnabledForContext(DomainFileProvider context) {
+	public boolean isEnabledForContext(DomainFileContext context) {
 		List<DomainFile> providedList = context.getSelectedFiles();
 		for (DomainFile domainFile : providedList) {
 			if (domainFile.isVersioned() &&

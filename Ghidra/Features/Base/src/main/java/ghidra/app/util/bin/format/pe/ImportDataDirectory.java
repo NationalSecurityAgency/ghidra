@@ -40,7 +40,7 @@ public class ImportDataDirectory extends DataDirectory {
 	private ImportInfo[] imports;
 
 	ExportDataDirectory exportDirectory;
-	DataConverter conv = new LittleEndianDataConverter();
+	DataConverter conv = LittleEndianDataConverter.INSTANCE;
 
 	static ImportDataDirectory createImportDataDirectory(NTHeader ntHeader,
 			FactoryBundledWithBinaryReader reader) throws IOException {

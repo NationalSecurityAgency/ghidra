@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +24,7 @@ public interface HoverProvider {
 
 	/**
 	 * Returns true if this service's popup window is currently visible
+	 * @return true if this service's popup window is currently visible
 	 */
 	public boolean isShowing();
 
@@ -40,7 +40,6 @@ public interface HoverProvider {
 	 * @param field the field over which the mouse is hovering
 	 * @param fieldBounds the rectangle containing the bounds of the given field.
 	 * @param event the last mouse motion event over the field viewer component (i.e., FieldPanel).
-	 * @return true if a popup window has been displayed adjacent to the mouse location.
 	 */
 	public void mouseHovered(FieldLocation fieldLocation, Field field, Rectangle fieldBounds,
 			MouseEvent event);

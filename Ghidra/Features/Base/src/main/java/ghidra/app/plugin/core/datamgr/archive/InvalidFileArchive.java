@@ -20,8 +20,7 @@ import java.io.IOException;
 
 import javax.swing.ImageIcon;
 
-import ghidra.program.model.data.ArchiveType;
-import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.*;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.DuplicateFileException;
 import resources.ResourceManager;

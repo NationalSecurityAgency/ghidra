@@ -26,6 +26,7 @@ import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
 import utilities.util.FileUtilities;
+import utility.application.ApplicationLayout;
 
 /**
  * Utility methods for module related things.
@@ -205,18 +206,18 @@ public class ModuleUtilities {
 	/**
 	 * Returns true if the given path is parented by a module root directory.
 	 * <p>
-	 * For example, given a module path of <tt>/some/dir/features/cool_module/</tt>, then this
+	 * For example, given a module path of <code>/some/dir/features/cool_module/</code>, then this
 	 * method will return true for these paths:
 	 * <br>
 	 * <br>
-	 * <tt>/some/dir/features/cool_module</tt><br>
-	 * <tt>/some/dir/features/cool_module/some/child/dir</tt>
+	 * <code>/some/dir/features/cool_module</code><br>
+	 * <code>/some/dir/features/cool_module/some/child/dir</code>
 	 * <br>
 	 * <br>and false for these paths:
 	 * <br>
 	 * <br> 
-	 * <tt>/some/random/path</tt><br>
-	 * <tt>/some/dir/features/</tt>
+	 * <code>/some/random/path</code><br>
+	 * <code>/some/dir/features/</code>
 	 * 
 	 * @param pathName the path name to check
 	 * @return true if the given path is parented by a module root directory.
@@ -230,18 +231,18 @@ public class ModuleUtilities {
 	 * Returns the path of the module containing the given path string, if it is parented by a 
 	 * module root directory.
 	 * <p>
-	 * For example, given a module path of <tt>/some/dir/features/cool_module/</tt>, then this
+	 * For example, given a module path of <code>/some/dir/features/cool_module/</code>, then this
 	 * method will return that module path, given these paths:
 	 * <br>
 	 * <br>
-	 * <tt>/some/dir/features/cool_module</tt><br>
-	 * <tt>/some/dir/features/cool_module/some/child/dir</tt>
+	 * <code>/some/dir/features/cool_module</code><br>
+	 * <code>/some/dir/features/cool_module/some/child/dir</code>
 	 * <br>
 	 * <br>and null for these paths:
 	 * <br>
 	 * <br> 
-	 * <tt>/some/random/path</tt><br>
-	 * <tt>/some/dir/features/</tt>
+	 * <code>/some/random/path</code><br>
+	 * <code>/some/dir/features/</code>
 	 * 
 	 * @param pathName the path name to check
 	 * @return the module root directory; null if the path is not in a module
@@ -273,13 +274,13 @@ public class ModuleUtilities {
 	 * here means a folder that contains a repository folder.  As an example, given a repo 
 	 * structure of:
 	 * 
-	 * <p><tt>/userdir/repoRoot/repoDir/.git</tt><br>
+	 * <p><code>/userdir/repoRoot/repoDir/.git</code><br>
 	 * 
 	 * <p>then this method, given will produce the following results (input -&gt; output):<br>
 	 * 
-	 * <p><tt>/userdir/repoRoot/repoDir/.git -&gt; /userdir/repoRoot</tt>
-	 * <br><tt>/userdir/repoRoot/repoDir -&gt; /userdir/repoRoot</tt>
-	 * <br><tt>/userdir/repoRoot -&gt; /userdir/repoRoot</tt>
+	 * <p><code>/userdir/repoRoot/repoDir/.git -&gt; /userdir/repoRoot</code>
+	 * <br><code>/userdir/repoRoot/repoDir -&gt; /userdir/repoRoot</code>
+	 * <br><code>/userdir/repoRoot -&gt; /userdir/repoRoot</code>
 	 * 
 	 * 
 	 * @param f the child file of the desired repo
@@ -313,12 +314,12 @@ public class ModuleUtilities {
 	 * Returns a file that is the repository folder containing the given file.  As an example, 
 	 * given a repo structure of:
 	 * 
-	 * <p><tt>/userdir/repoRoot/repoDir/.git</tt><br>
+	 * <p><code>/userdir/repoRoot/repoDir/.git</code><br>
 	 * 
 	 * <p>then this method, given will produce the following results (input -&gt; output):<br>
 	 * 
-	 * <p><tt>/userdir/repoRoot/repoDir/.git -&gt; /userdir/repoRoot/repoDir</tt>
-	 * <br><tt>/userdir/repoRoot/repoDir -&gt; /userdir/repoRoot/repoDir</tt>
+	 * <p><code>/userdir/repoRoot/repoDir/.git -&gt; /userdir/repoRoot/repoDir</code>
+	 * <br><code>/userdir/repoRoot/repoDir -&gt; /userdir/repoRoot/repoDir</code>
 	 * 
 	 * @param f the child file of the desired repo
 	 * @return a file that is the repo folder of the repository containing the given file; null
@@ -333,5 +334,22 @@ public class ModuleUtilities {
 			return f;
 		}
 		return findRepo(f.getParentFile());
+	}
+
+	/**
+	 * Checks to see if the given {@link GModule module} is external to the Ghidra installation
+	 * directory
+	 * 
+	 * @param module the module to check
+	 * @param layout Ghidra's layout
+	 * @return true if the given {@link GModule module} is external to the Ghidra installation
+	 *   directory
+	 */
+	public static boolean isExternalModule(GModule module, ApplicationLayout layout) {
+		File moduleRootDir = module.getModuleRoot().getFile(false);
+		return !layout.getApplicationRootDirs()
+				.stream()
+				.map(dir -> dir.getParentFile().getFile(false))
+				.anyMatch(dir -> FileUtilities.isPathContainedWithin(dir, moduleRootDir));
 	}
 }

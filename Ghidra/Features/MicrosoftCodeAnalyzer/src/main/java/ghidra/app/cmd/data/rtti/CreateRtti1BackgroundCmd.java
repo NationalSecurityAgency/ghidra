@@ -63,7 +63,7 @@ public class CreateRtti1BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 	@Override
 	protected Rtti1Model createModel(Program program) {
 		if (model == null || program != model.getProgram()) {
-			model = new Rtti1Model(program, address, validationOptions);
+			model = new Rtti1Model(program, getDataAddress(), validationOptions);
 		}
 		return model;
 	}
@@ -71,7 +71,7 @@ public class CreateRtti1BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 	@Override
 	protected boolean createAssociatedData() throws CancelledException {
 
-		return createRtti0();
+		return createRtti0() | createRtti3();
 	}
 
 	private boolean createRtti0() throws CancelledException {
@@ -83,6 +83,15 @@ public class CreateRtti1BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 		return cmd.applyTo(model.getProgram(), monitor);
 	}
 
+	private boolean createRtti3() throws CancelledException {
+
+		monitor.checkCanceled();
+
+		CreateRtti3BackgroundCmd cmd =
+			new CreateRtti3BackgroundCmd(model.getRtti3Model(), applyOptions);
+		return cmd.applyTo(model.getProgram(), monitor);
+	}
+
 	@Override
 	protected boolean createMarkup() throws CancelledException {
 
@@ -91,34 +100,38 @@ public class CreateRtti1BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 		Program program = model.getProgram();
 		TypeDescriptorModel rtti0Model = model.getRtti0Model();
 
+		if (rtti0Model == null) {
+			return true;
+		}
+
 		monitor.checkCanceled();
+		
+		String suffix = "";
+		try {
+			suffix = " at " + getPMDAttrList(program);
+		}
+		catch (InvalidDataTypeException e) {
+			// Couldn't get pmd and attributes so leave it off and simply log the error.
+			String message =
+				"Unable to get PMD and attributes for RTTI1 at " + getDataAddress() + ".";
+			handleError(message);
+		}
 
-		if (rtti0Model != null) {
+		// Label
+		boolean shouldCreateComment = true;
+		if (applyOptions.shouldCreateLabel()) {
+			String rtti1Suffix = RTTI_1_NAME + suffix;
+			rtti1Suffix = SymbolUtilities.replaceInvalidChars(rtti1Suffix, true);
+			shouldCreateComment = RttiUtil.createSymbolFromDemangledType(program, getDataAddress(), rtti0Model,
+				rtti1Suffix);
+		}
 
-			String suffix = "";
-			try {
-				suffix = " at " + getPMDAttrList(program);
-			}
-			catch (InvalidDataTypeException e) {
-				// Couldn't get pmd and attributes so leave it off and simply log the error.
-				String message = "Unable to get PMD and attributes for RTTI1 at " + address + ".";
-				handleError(message);
-			}
-
-			// Plate Comment
+		// Plate Comment
+		if (shouldCreateComment) {
+			// comment created if a label was created, or createLabel option off
 			EHDataTypeUtilities.createPlateCommentIfNeeded(program,
-				RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.NAMESPACE_DELIMITER,
-				RTTI_1_NAME, suffix, address, applyOptions);
-
-			monitor.checkCanceled();
-
-			// Label
-			if (applyOptions.shouldCreateLabel()) {
-				String rtti1Suffix = RTTI_1_NAME + suffix;
-				rtti1Suffix = SymbolUtilities.replaceInvalidChars(rtti1Suffix, true);
-				RttiUtil.createSymbolFromDemangledType(program, address, rtti0Model, rtti1Suffix);
-			}
-
+					RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER, RTTI_1_NAME,
+					suffix, getDataAddress(), applyOptions);
 		}
 
 		return true;

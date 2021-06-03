@@ -26,7 +26,6 @@ import org.junit.Test;
 
 import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.Composite.AlignmentType;
 
 public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 
@@ -43,10 +42,8 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		assertEquals(0, model.getNumSelectedComponentRows());
 		assertEquals(1, model.getNumSelectedRows());
 		checkSelection(new int[] { 0 });
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(0);
 		assertEquals(emptyUnion.getName(), model.getCompositeName());
@@ -76,16 +73,14 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		assertEquals(simpleUnion.getNumComponents(), model.getNumComponents());
 		assertEquals(simpleUnion.getNumComponents() + 1, model.getRowCount());
 		assertEquals(simpleUnion.getLength(), model.getLength());
-		assertTrue(!model.hasChanges());// no Changes yet
+		assertFalse(model.hasChanges());// no Changes yet
 		assertTrue(model.isValidName());// name should be valid
 		assertEquals(simpleUnion.getDescription(), model.getDescription());
 		assertEquals(0, model.getNumSelectedComponentRows());
 		assertEquals(1, model.getNumSelectedRows());
 		checkSelection(new int[] { model.getNumComponents() });
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(8);
 		assertEquals(simpleUnion.getName(), model.getCompositeName());
@@ -242,7 +237,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 
 		int num = model.getNumComponents();
 		setSelection(new int[] { 3 });
-		assertTrue(!getDataType(3).isEquivalent(dt));
+		assertFalse(getDataType(3).isEquivalent(dt));
 		invoke(fav);
 		assertEquals(num, model.getNumComponents());
 		assertTrue(getDataType(3).isEquivalent(dt));
@@ -282,8 +277,8 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 
 		assertEquals(0, model.getLength());
 		assertEquals(0, model.getNumComponents());
-		invoke(fav);
-		dialog = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		invoke(fav, false);
+		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 7);
 		dialog = null;
@@ -376,8 +371,8 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		assertTrue(getDataType(2).isEquivalent(new CharDataType()));
 		assertEquals(getDataType(3), dt3);
 
-		invoke(action);
-		dialog = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		invoke(action, false);
+		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		cancelInput(dialog);
 		dialog = null;
@@ -412,7 +407,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		assertEquals(getDataType(1), dt1);
 		assertEquals(getDataType(2), dt2);
 		assertEquals(getDataType(3), dt3);
-		assertTrue(!"".equals(model.getStatus()));
+		assertFalse("".equals(model.getStatus()));
 	}
 
 	@Test
@@ -426,7 +421,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		String simpleTitle = getProviderSubTitle(simpleStructure);
 		assertTrue("Couldn't find editor = " + complexTitle,
 			isProviderShown(tool.getToolFrame(), "Union Editor", complexTitle));
-		assertTrue(!isProviderShown(tool.getToolFrame(), "Structure Editor", simpleTitle));
+		assertFalse(isProviderShown(tool.getToolFrame(), "Structure Editor", simpleTitle));
 		invoke(editComponentAction);
 		assertEquals("", model.getStatus());
 		assertTrue("Couldn't find editor = " + complexTitle,
@@ -438,7 +433,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 	@Test
 	public void testEditFieldOnBlankLine() throws Exception {
 		init(emptyUnion, pgmRootCat, false);
-		assertTrue(!model.isEditingField());
+		assertFalse(model.isEditingField());
 
 		triggerActionKey(getTable(), editFieldAction);
 		assertTrue(model.isEditingField());
@@ -453,7 +448,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		init(complexUnion, pgmTestCat, false);
 
 		setSelection(new int[] { 3 });
-		assertTrue(!model.isEditingField());
+		assertFalse(model.isEditingField());
 		invoke(editFieldAction);
 		assertTrue(model.isEditingField());
 		assertEquals(3, model.getRow());
@@ -484,7 +479,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		invoke(showComponentPathAction);
 		assertEquals("simpleStructure is in category \"" + pgmBbCat.getCategoryPathName() + "\".",
 			model.getStatus());
-		assertTrue(!listener.getBeep());
+		assertFalse(listener.getBeep());
 	}
 
 	@Test
@@ -511,7 +506,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		assertEquals(getDataType(4), dt3);
 		assertEquals(getDataType(5), dt4);
 		assertEquals(getDataType(6), dt5);
-		assertTrue(!model.isMoveDownAllowed());
+		assertFalse(model.isMoveDownAllowed());
 	}
 
 	@Test
@@ -550,7 +545,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		assertEquals(getDataType(4), dt1);
 		assertEquals(getDataType(5), dt5);
 		assertEquals(getDataType(6), dt6);
-		assertTrue(!model.isMoveUpAllowed());
+		assertFalse(model.isMoveUpAllowed());
 	}
 
 	@Test
@@ -589,9 +584,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		// Can't duplicate blank line
 		listener.clearStatus();
 		setSelection(new int[] { model.getNumComponents() });
-		invoke(duplicateAction);
-		assertEquals(num, model.getNumComponents());
-		assertEquals(len, model.getLength());
+		assertFalse(runSwing(() -> duplicateAction.isEnabled()));
 	}
 
 	@Test
@@ -601,6 +594,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		int len = model.getLength();
 		setSelection(new int[] { 3 });// simpleUnion == 8 bytes
 		invoke(deleteAction);
+		waitForTasks();
 		assertEquals(model.getLength(), len);
 		assertEquals(1, model.getNumSelectedComponentRows());
 		assertTrue(Arrays.equals(new int[] { 3 }, model.getSelectedComponentRows()));
@@ -612,6 +606,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 
 		setSelection(new int[] { 12 });// simpleStructure[3] == 87 bytes
 		invoke(deleteAction);
+		waitForTasks();
 		assertEquals(56, model.getLength());// simpleStructure*[7] == 56 bytes
 		assertEquals(1, model.getNumSelectedComponentRows());
 		assertTrue(Arrays.equals(new int[] { 12 }, model.getSelectedComponentRows()));
@@ -627,6 +622,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		int len = model.getLength();
 		setSelection(new int[] { 4, 5, 6, 7, 8, 9 });
 		invoke(deleteAction);
+		waitForTasks();
 		assertEquals(num - 6, model.getNumComponents());
 		assertEquals(len, model.getLength());
 		assertEquals(getDataType(3), dt3);
@@ -646,6 +642,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		int len = model.getLength();
 		setSelection(new int[] { 4, 5, 6, 7, 8, 9, 19, 20 });
 		invoke(deleteAction);
+		waitForTasks();
 		assertEquals(num - 8, model.getNumComponents());
 		assertEquals(len, model.getLength());
 		assertEquals(getDataType(3), dt3);
@@ -665,8 +662,8 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		DataType dt3 = getDataType(3);
 
 		// Cancel the array dialog
-		invoke(arrayAction);
-		dialog = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		invoke(arrayAction, false);
+		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		cancelInput(dialog);
 		dialog = null;
@@ -740,7 +737,6 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		assertTrue(((Pointer) getDataType(1)).getDataType().isEquivalent(StringDataType.dataType));
 		assertEquals(4, getDataType(1).getLength());
 		assertEquals(4, model.getComponent(1).getLength());
-
 	}
 
 	@Test
@@ -759,35 +755,6 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		assertEquals(4, model.getComponent(5).getLength());
 	}
 
-//	@Test
-//	public void testCreatePointerOnArray() throws Exception {
-//		init(complexUnion, pgmTestCat, false);
-//		int num = model.getNumComponents();
-//
-//		setSelection(new int[] { 10 });
-//		DataType dt10 = getDataType(10);
-//		invoke(pointerAction);
-//		assertEquals(num, model.getNumComponents());
-//		assertEquals("byte[7] *", getDataType(10).getDisplayName());
-//		assertTrue(((Pointer) getDataType(10)).getDataType().isEquivalent(dt10));
-//		assertEquals(4, getDataType(10).getLength());
-//		assertEquals(4, model.getComponent(10).getLength());
-//	}
-
-//	@Test
-//	public void testCreatePointerOnTypedef() throws Exception {
-//		init(complexUnion, pgmTestCat, false);
-//		int num = model.getNumComponents();
-//
-//		setSelection(new int[] { 15 });
-//		DataType dt15 = getDataType(15);
-//		invoke(pointerAction);
-//		assertEquals(num, model.getNumComponents());
-//		assertEquals("simpleStructureTypedef *", getDataType(15).getDisplayName());
-//		assertTrue(((Pointer) getDataType(15)).getDataType().isEquivalent(dt15));
-//		assertEquals(4, model.getComponent(15).getLength());
-//	}
-
 	@Test
 	public void testApplyComponentChange() throws Exception {
 		init(complexUnion, pgmTestCat, false);
@@ -796,7 +763,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		model.deleteSelectedComponents();
 		DataType viewCopy = model.viewComposite.clone(null);
 
-		assertTrue(!complexUnion.isEquivalent(model.viewComposite));
+		assertFalse(complexUnion.isEquivalent(model.viewComposite));
 		assertTrue(viewCopy.isEquivalent(model.viewComposite));
 		invoke(applyAction);
 		assertTrue(viewCopy.isEquivalent(complexUnion));
@@ -836,7 +803,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		triggerText(nameField, "#/$");
 		DataType viewCopy = model.viewComposite.clone(null);
 
-		assertTrue(!model.isValidName());
+		assertFalse(model.isValidName());
 		assertEquals("complexUnion#/$", nameField.getText());
 		assertEquals("complexUnion#/$", model.getCompositeName());
 		assertEquals("complexUnion", complexUnion.getName());
@@ -877,18 +844,16 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 
 		setSelection(new int[] { 0, 1, 2, 3, 4, 5, 6 });
 		invoke(deleteAction);
+		waitForTasks();
 		DataType viewCopy = model.viewComposite.clone(null);
 
-		assertTrue(!simpleUnion.isEquivalent(model.viewComposite));
+		assertFalse(simpleUnion.isEquivalent(model.viewComposite));
 		assertTrue(viewCopy.isEquivalent(model.viewComposite));
 		assertEquals(0, model.getNumComponents());
 		assertEquals(model.getStatus(), "");
 		invoke(applyAction);
 		assertTrue(simpleUnion.isEquivalent(model.viewComposite));
 		assertTrue(viewCopy.isEquivalent(model.viewComposite));
-//		assertEquals(
-//			"/aa/bb/simpleUnion is contained in /testCat/complexStructure and can't be changed to a zero size data type.",
-//			model.getStatus());
 	}
 
 	@Test

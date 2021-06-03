@@ -1,0 +1,1367 @@
+
+define alignment=2;
+
+define space ram type=ram_space size=$(XLEN) default;
+define space register type=register_space size=4;
+
+define register offset=0x1000 size=$(XLEN) [ pc ];
+
+
+#  08-31  reserved
+#  05-07  frm
+#         000 - RNE - round to nearest, ties to even
+#         001 - RTZ - round towards zero
+#         010 - RDN - round down (towards -inf)
+#         011 - RUP - round up (towards +inf)
+#         100 - RMM - round to nearest, ties to max magnitude
+#         101 - invalid
+#         110 - invalid
+#         111 - DYN - in rm field, selects dynamic rounding mode
+#                     in rounding mode register, invalid
+#  04     NV - invalid operation
+#  03     DZ - divide by zero
+#  02     OF - overflow
+#  01     UF - underflow
+#  00     NX - inexact
+#define register offset=0x1008 size=4 [ fcsr ];
+
+#TODO  FIXME
+#TODO  This is really broken
+#NOTE  This is stolen from ppc_common, so it has something similar
+define register offset=0x1010 size=$(XLEN) [ RESERVE_ADDRESS ];
+define register offset=0x1018 size=1 [ RESERVE ];
+define register offset=0x101C size=1 [ RESERVE_LENGTH ];
+#TODO  FIXME
+
+#ATTN  RV32E is the same instruction-set encoding, but only defines x0-x15
+# x0  x1  x2  x3  x4  x5  x6  x7  x8  x9  x10 x11 x12 x13 x14 x15
+# z   ra  sp  gp  tp  t0  t1  t2  s0  s1  a0  a1  a2  a3  a4  a5
+# x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31
+# a6  a7  s2  s3  s4  s5  s6  s7  s8  s9  s10 s11 t3  t4  t5  t6
+# register numbers 0x1000-0x101f
+define register offset=0x2000 size=$(XLEN) [ zero ra sp  gp  tp t0 t1 t2
+       			    	      	     s0   s1 a0  a1  a2 a3 a4 a5
+				       	     a6   a7 s2  s3  s4 s5 s6 s7
+				       	     s8   s9 s10 s11 t3 t4 t5 t6 ];
+
+# register numbers 0x1020-0x103f
+define register offset=0x3000 size=$(FLEN) [ ft0 ft1 ft2  ft3  ft4 ft5 ft6  ft7
+       			      	       	     fs0 fs1 fa0  fa1  fa2 fa3 fa4  fa5
+				       	     fa6 fa7 fs2  fs3  fs4 fs5 fs6  fs7
+				       	     fs8 fs9 fs10 fs11 ft8 ft9 ft10 ft11 ];
+
+#TODO  fix
+@define VLEN "256"
+define register offset=0x4000 size=$(VLEN) [ v0  v1  v2  v3  v4  v5  v6  v7
+       			      		     v8  v9  v10 v11 v12 v13 v14 v15
+					     v16 v17 v18 v19 v20 v21 v22 v23
+					     v24 v25 v26 v27 v28 v29 v30 v31 ];
+
+
+define register offset=0x90000000 size=$(XLEN) [
+ ustatus fflags frm fcsr uie utvec csr006 csr007
+ vstart vxsat  vxrm   csr00b csr00c csr00d csr00e vcsr
+ csr010 csr011 csr012 csr013 csr014 csr015 csr016 csr017
+ csr018 csr019 csr01a csr01b csr01c csr01d csr01e csr01f
+ csr020 csr021 csr022 csr023 csr024 csr025 csr026 csr027
+ csr028 csr029 csr02a csr02b csr02c csr02d csr02e csr02f
+ csr030 csr031 csr032 csr033 csr034 csr035 csr036 csr037
+ csr038 csr039 csr03a csr03b csr03c csr03d csr03e csr03f
+ uscratch uepc ucause utval uip csr045 csr046 csr047
+ csr048 csr049 csr04a csr04b csr04c csr04d csr04e csr04f
+ csr050 csr051 csr052 csr053 csr054 csr055 csr056 csr057
+ csr058 csr059 csr05a csr05b csr05c csr05d csr05e csr05f
+ csr060 csr061 csr062 csr063 csr064 csr065 csr066 csr067
+ csr068 csr069 csr06a csr06b csr06c csr06d csr06e csr06f
+ csr070 csr071 csr072 csr073 csr074 csr075 csr076 csr077
+ csr078 csr079 csr07a csr07b csr07c csr07d csr07e csr07f
+ csr080 csr081 csr082 csr083 csr084 csr085 csr086 csr087
+ csr088 csr089 csr08a csr08b csr08c csr08d csr08e csr08f
+ csr090 csr091 csr092 csr093 csr094 csr095 csr096 csr097
+ csr098 csr099 csr09a csr09b csr09c csr09d csr09e csr09f
+ csr0a0 csr0a1 csr0a2 csr0a3 csr0a4 csr0a5 csr0a6 csr0a7
+ csr0a8 csr0a9 csr0aa csr0ab csr0ac csr0ad csr0ae csr0af
+ csr0b0 csr0b1 csr0b2 csr0b3 csr0b4 csr0b5 csr0b6 csr0b7
+ csr0b8 csr0b9 csr0ba csr0bb csr0bc csr0bd csr0be csr0bf
+ csr0c0 csr0c1 csr0c2 csr0c3 csr0c4 csr0c5 csr0c6 csr0c7
+ csr0c8 csr0c9 csr0ca csr0cb csr0cc csr0cd csr0ce csr0cf
+ csr0d0 csr0d1 csr0d2 csr0d3 csr0d4 csr0d5 csr0d6 csr0d7
+ csr0d8 csr0d9 csr0da csr0db csr0dc csr0dd csr0de csr0df
+ csr0e0 csr0e1 csr0e2 csr0e3 csr0e4 csr0e5 csr0e6 csr0e7
+ csr0e8 csr0e9 csr0ea csr0eb csr0ec csr0ed csr0ee csr0ef
+ csr0f0 csr0f1 csr0f2 csr0f3 csr0f4 csr0f5 csr0f6 csr0f7
+ csr0f8 csr0f9 csr0fa csr0fb csr0fc csr0fd csr0fe csr0ff
+ sstatus csr101 sedeleg sideleg sie stvec scounteren csr107
+ csr108 csr109 csr10a csr10b csr10c csr10d csr10e csr10f
+ csr110 csr111 csr112 csr113 csr114 csr115 csr116 csr117
+ csr118 csr119 csr11a csr11b csr11c csr11d csr11e csr11f
+ csr120 csr121 csr122 csr123 csr124 csr125 csr126 csr127
+ csr128 csr129 csr12a csr12b csr12c csr12d csr12e csr12f
+ csr130 csr131 csr132 csr133 csr134 csr135 csr136 csr137
+ csr138 csr139 csr13a csr13b csr13c csr13d csr13e csr13f
+ sscratch sepc scause stval sip csr145 csr146 csr147
+ csr148 csr149 csr14a csr14b csr14c csr14d csr14e csr14f
+ csr150 csr151 csr152 csr153 csr154 csr155 csr156 csr157
+ csr158 csr159 csr15a csr15b csr15c csr15d csr15e csr15f
+ csr160 csr161 csr162 csr163 csr164 csr165 csr166 csr167
+ csr168 csr169 csr16a csr16b csr16c csr16d csr16e csr16f
+ csr170 csr171 csr172 csr173 csr174 csr175 csr176 csr177
+ csr178 csr179 csr17a csr17b csr17c csr17d csr17e csr17f
+ satp csr181 csr182 csr183 csr184 csr185 csr186 csr187
+ csr188 csr189 csr18a csr18b csr18c csr18d csr18e csr18f
+ csr190 csr191 csr192 csr193 csr194 csr195 csr196 csr197
+ csr198 csr199 csr19a csr19b csr19c csr19d csr19e csr19f
+ csr1a0 csr1a1 csr1a2 csr1a3 csr1a4 csr1a5 csr1a6 csr1a7
+ csr1a8 csr1a9 csr1aa csr1ab csr1ac csr1ad csr1ae csr1af
+ csr1b0 csr1b1 csr1b2 csr1b3 csr1b4 csr1b5 csr1b6 csr1b7
+ csr1b8 csr1b9 csr1ba csr1bb csr1bc csr1bd csr1be csr1bf
+ csr1c0 csr1c1 csr1c2 csr1c3 csr1c4 csr1c5 csr1c6 csr1c7
+ csr1c8 csr1c9 csr1ca csr1cb csr1cc csr1cd csr1ce csr1cf
+ csr1d0 csr1d1 csr1d2 csr1d3 csr1d4 csr1d5 csr1d6 csr1d7
+ csr1d8 csr1d9 csr1da csr1db csr1dc csr1dd csr1de csr1df
+ csr1e0 csr1e1 csr1e2 csr1e3 csr1e4 csr1e5 csr1e6 csr1e7
+ csr1e8 csr1e9 csr1ea csr1eb csr1ec csr1ed csr1ee csr1ef
+ csr1f0 csr1f1 csr1f2 csr1f3 csr1f4 csr1f5 csr1f6 csr1f7
+ csr1f8 csr1f9 csr1fa csr1fb csr1fc csr1fd csr1fe csr1ff
+ vsstatus csr201 csr202 csr203 vsie vstvec csr206 csr207
+ csr208 csr209 csr20a csr20b csr20c csr20d csr20e csr20f
+ csr210 csr211 csr212 csr213 csr214 csr215 csr216 csr217
+ csr218 csr219 csr21a csr21b csr21c csr21d csr21e csr21f
+ csr220 csr221 csr222 csr223 csr224 csr225 csr226 csr227
+ csr228 csr229 csr22a csr22b csr22c csr22d csr22e csr22f
+ csr230 csr231 csr232 csr233 csr234 csr235 csr236 csr237
+ csr238 csr239 csr23a csr23b csr23c csr23d csr23e csr23f
+ vsscratch vsepc vscause vstval vsip csr245 csr246 csr247
+ csr248 csr249 csr24a csr24b csr24c csr24d csr24e csr24f
+ csr250 csr251 csr252 csr253 csr254 csr255 csr256 csr257
+ csr258 csr259 csr25a csr25b csr25c csr25d csr25e csr25f
+ csr260 csr261 csr262 csr263 csr264 csr265 csr266 csr267
+ csr268 csr269 csr26a csr26b csr26c csr26d csr26e csr26f
+ csr270 csr271 csr272 csr273 csr274 csr275 csr276 csr277
+ csr278 csr279 csr27a csr27b csr27c csr27d csr27e csr27f
+ vsatp csr281 csr282 csr283 csr284 csr285 csr286 csr287
+ csr288 csr289 csr28a csr28b csr28c csr28d csr28e csr28f
+ csr290 csr291 csr292 csr293 csr294 csr295 csr296 csr297
+ csr298 csr299 csr29a csr29b csr29c csr29d csr29e csr29f
+ csr2a0 csr2a1 csr2a2 csr2a3 csr2a4 csr2a5 csr2a6 csr2a7
+ csr2a8 csr2a9 csr2aa csr2ab csr2ac csr2ad csr2ae csr2af
+ csr2b0 csr2b1 csr2b2 csr2b3 csr2b4 csr2b5 csr2b6 csr2b7
+ csr2b8 csr2b9 csr2ba csr2bb csr2bc csr2bd csr2be csr2bf
+ csr2c0 csr2c1 csr2c2 csr2c3 csr2c4 csr2c5 csr2c6 csr2c7
+ csr2c8 csr2c9 csr2ca csr2cb csr2cc csr2cd csr2ce csr2cf
+ csr2d0 csr2d1 csr2d2 csr2d3 csr2d4 csr2d5 csr2d6 csr2d7
+ csr2d8 csr2d9 csr2da csr2db csr2dc csr2dd csr2de csr2df
+ csr2e0 csr2e1 csr2e2 csr2e3 csr2e4 csr2e5 csr2e6 csr2e7
+ csr2e8 csr2e9 csr2ea csr2eb csr2ec csr2ed csr2ee csr2ef
+ csr2f0 csr2f1 csr2f2 csr2f3 csr2f4 csr2f5 csr2f6 csr2f7
+ csr2f8 csr2f9 csr2fa csr2fb csr2fc csr2fd csr2fe csr2ff
+ mstatus misa medeleg mideleg mie mtvec mcounteren csr307
+ csr308 csr309 csr30a csr30b csr30c csr30d csr30e csr30f
+ mstatush csr311 csr312 csr313 csr314 csr315 csr316 csr317
+ csr318 csr319 csr31a csr31b csr31c csr31d csr31e csr31f
+ mcountinhibit csr321 csr322 mhpmevent3 mhpmevent4 mhpmevent5 mhpmevent6 mhpmevent7
+ mhpmevent8 mhpmevent9 mhpmevent10 mhpmevent11 mhpmevent12 mhpmevent13 mhpmevent14 mhpmevent15
+ mhpmevent16 mhpmevent17 mhpmevent18 mhpmevent19 mhpmevent20 mhpmevent21 mhpmevent22 mhpmevent23
+ mhpmevent24 mhpmevent25 mhpmevent26 mhpmevent27 mhpmevent28 mhpmevent29 mhpmevent30 mhpmevent31
+ mscratch mepc mcause mtval mip csr345 csr346 csr347
+ csr348 csr349 mtinst mtval2 csr34c csr34d csr34e csr34f
+ csr350 csr351 csr352 csr353 csr354 csr355 csr356 csr357
+ csr358 csr359 csr35a csr35b csr35c csr35d csr35e csr35f
+ csr360 csr361 csr362 csr363 csr364 csr365 csr366 csr367
+ csr368 csr369 csr36a csr36b csr36c csr36d csr36e csr36f
+ csr370 csr371 csr372 csr373 csr374 csr375 csr376 csr377
+ csr378 csr379 csr37a csr37b csr37c csr37d csr37e csr37f
+ mbase mbound mibase mibound mdbase mdbound csr386 csr387
+ csr388 csr389 csr38a csr38b csr38c csr38d csr38e csr38f
+ csr390 csr391 csr392 csr393 csr394 csr395 csr396 csr397
+ csr398 csr399 csr39a csr39b csr39c csr39d csr39e csr39f
+ pmpcfg0 pmpcfg1 pmpcfg2 pmpcfg3 pmpcfg4 pmpcfg5 pmpcfg6 pmpcfg7
+ pmpcfg8 pmpcfg9 pmpcfg10 pmpcfg11 pmpcfg12 pmpcfg13 pmpcfg14 pmpcfg15
+ pmpaddr0 pmpaddr1 pmpaddr2 pmpaddr3 pmpaddr4 pmpaddr5 pmpaddr6 pmpaddr7
+ pmpaddr8 pmpaddr9 pmpaddr10 pmpaddr11 pmpaddr12 pmpaddr13 pmpaddr14 pmpaddr15
+ pmpaddr16 pmpaddr17 pmpaddr18 pmpaddr19 pmpaddr20 pmpaddr21 pmpaddr22 pmpaddr23
+ pmpaddr24 pmpaddr25 pmpaddr26 pmpaddr27 pmpaddr28 pmpaddr29 pmpaddr30 pmpaddr31
+ pmpaddr32 pmpaddr33 pmpaddr34 pmpaddr35 pmpaddr36 pmpaddr37 pmpaddr38 pmpaddr39
+ pmpaddr40 pmpaddr41 pmpaddr42 pmpaddr43 pmpaddr44 pmpaddr45 pmpaddr46 pmpaddr47
+ pmpaddr48 pmpaddr49 pmpaddr50 pmpaddr51 pmpaddr52 pmpaddr53 pmpaddr54 pmpaddr55
+ pmpaddr56 pmpaddr57 pmpaddr58 pmpaddr59 pmpaddr60 pmpaddr61 pmpaddr62 pmpaddr63
+ csr3f0 csr3f1 csr3f2 csr3f3 csr3f4 csr3f5 csr3f6 csr3f7
+ csr3f8 csr3f9 csr3fa csr3fb csr3fc csr3fd csr3fe csr3ff
+ csr400 csr401 csr402 csr403 csr404 csr405 csr406 csr407
+ csr408 csr409 csr40a csr40b csr40c csr40d csr40e csr40f
+ csr410 csr411 csr412 csr413 csr414 csr415 csr416 csr417
+ csr418 csr419 csr41a csr41b csr41c csr41d csr41e csr41f
+ csr420 csr421 csr422 csr423 csr424 csr425 csr426 csr427
+ csr428 csr429 csr42a csr42b csr42c csr42d csr42e csr42f
+ csr430 csr431 csr432 csr433 csr434 csr435 csr436 csr437
+ csr438 csr439 csr43a csr43b csr43c csr43d csr43e csr43f
+ csr440 csr441 csr442 csr443 csr444 csr445 csr446 csr447
+ csr448 csr449 csr44a csr44b csr44c csr44d csr44e csr44f
+ csr450 csr451 csr452 csr453 csr454 csr455 csr456 csr457
+ csr458 csr459 csr45a csr45b csr45c csr45d csr45e csr45f
+ csr460 csr461 csr462 csr463 csr464 csr465 csr466 csr467
+ csr468 csr469 csr46a csr46b csr46c csr46d csr46e csr46f
+ csr470 csr471 csr472 csr473 csr474 csr475 csr476 csr477
+ csr478 csr479 csr47a csr47b csr47c csr47d csr47e csr47f
+ csr480 csr481 csr482 csr483 csr484 csr485 csr486 csr487
+ csr488 csr489 csr48a csr48b csr48c csr48d csr48e csr48f
+ csr490 csr491 csr492 csr493 csr494 csr495 csr496 csr497
+ csr498 csr499 csr49a csr49b csr49c csr49d csr49e csr49f
+ csr4a0 csr4a1 csr4a2 csr4a3 csr4a4 csr4a5 csr4a6 csr4a7
+ csr4a8 csr4a9 csr4aa csr4ab csr4ac csr4ad csr4ae csr4af
+ csr4b0 csr4b1 csr4b2 csr4b3 csr4b4 csr4b5 csr4b6 csr4b7
+ csr4b8 csr4b9 csr4ba csr4bb csr4bc csr4bd csr4be csr4bf
+ csr4c0 csr4c1 csr4c2 csr4c3 csr4c4 csr4c5 csr4c6 csr4c7
+ csr4c8 csr4c9 csr4ca csr4cb csr4cc csr4cd csr4ce csr4cf
+ csr4d0 csr4d1 csr4d2 csr4d3 csr4d4 csr4d5 csr4d6 csr4d7
+ csr4d8 csr4d9 csr4da csr4db csr4dc csr4dd csr4de csr4df
+ csr4e0 csr4e1 csr4e2 csr4e3 csr4e4 csr4e5 csr4e6 csr4e7
+ csr4e8 csr4e9 csr4ea csr4eb csr4ec csr4ed csr4ee csr4ef
+ csr4f0 csr4f1 csr4f2 csr4f3 csr4f4 csr4f5 csr4f6 csr4f7
+ csr4f8 csr4f9 csr4fa csr4fb csr4fc csr4fd csr4fe csr4ff
+ csr500 csr501 csr502 csr503 csr504 csr505 csr506 csr507
+ csr508 csr509 csr50a csr50b csr50c csr50d csr50e csr50f
+ csr510 csr511 csr512 csr513 csr514 csr515 csr516 csr517
+ csr518 csr519 csr51a csr51b csr51c csr51d csr51e csr51f
+ csr520 csr521 csr522 csr523 csr524 csr525 csr526 csr527
+ csr528 csr529 csr52a csr52b csr52c csr52d csr52e csr52f
+ csr530 csr531 csr532 csr533 csr534 csr535 csr536 csr537
+ csr538 csr539 csr53a csr53b csr53c csr53d csr53e csr53f
+ csr540 csr541 csr542 csr543 csr544 csr545 csr546 csr547
+ csr548 csr549 csr54a csr54b csr54c csr54d csr54e csr54f
+ csr550 csr551 csr552 csr553 csr554 csr555 csr556 csr557
+ csr558 csr559 csr55a csr55b csr55c csr55d csr55e csr55f
+ csr560 csr561 csr562 csr563 csr564 csr565 csr566 csr567
+ csr568 csr569 csr56a csr56b csr56c csr56d csr56e csr56f
+ csr570 csr571 csr572 csr573 csr574 csr575 csr576 csr577
+ csr578 csr579 csr57a csr57b csr57c csr57d csr57e csr57f
+ csr580 csr581 csr582 csr583 csr584 csr585 csr586 csr587
+ csr588 csr589 csr58a csr58b csr58c csr58d csr58e csr58f
+ csr590 csr591 csr592 csr593 csr594 csr595 csr596 csr597
+ csr598 csr599 csr59a csr59b csr59c csr59d csr59e csr59f
+ csr5a0 csr5a1 csr5a2 csr5a3 csr5a4 csr5a5 csr5a6 csr5a7
+ scontext csr5a9 csr5aa csr5ab csr5ac csr5ad csr5ae csr5af
+ csr5b0 csr5b1 csr5b2 csr5b3 csr5b4 csr5b5 csr5b6 csr5b7
+ csr5b8 csr5b9 csr5ba csr5bb csr5bc csr5bd csr5be csr5bf
+ csr5c0 csr5c1 csr5c2 csr5c3 csr5c4 csr5c5 csr5c6 csr5c7
+ csr5c8 csr5c9 csr5ca csr5cb csr5cc csr5cd csr5ce csr5cf
+ csr5d0 csr5d1 csr5d2 csr5d3 csr5d4 csr5d5 csr5d6 csr5d7
+ csr5d8 csr5d9 csr5da csr5db csr5dc csr5dd csr5de csr5df
+ csr5e0 csr5e1 csr5e2 csr5e3 csr5e4 csr5e5 csr5e6 csr5e7
+ csr5e8 csr5e9 csr5ea csr5eb csr5ec csr5ed csr5ee csr5ef
+ csr5f0 csr5f1 csr5f2 csr5f3 csr5f4 csr5f5 csr5f6 csr5f7
+ csr5f8 csr5f9 csr5fa csr5fb csr5fc csr5fd csr5fe csr5ff
+ hstatus csr601 hedeleg hideleg hie htimedelta hcounteren hgeie
+ csr608 csr609 csr60a csr60b csr60c csr60d csr60e csr60f
+ csr610 csr611 csr612 csr613 csr614 htimedeltah csr616 csr617
+ csr618 csr619 csr61a csr61b csr61c csr61d csr61e csr61f
+ csr620 csr621 csr622 csr623 csr624 csr625 csr626 csr627
+ csr628 csr629 csr62a csr62b csr62c csr62d csr62e csr62f
+ csr630 csr631 csr632 csr633 csr634 csr635 csr636 csr637
+ csr638 csr639 csr63a csr63b csr63c csr63d csr63e csr63f
+ csr640 csr641 csr642 htval  hip    hvip   csr646 csr647
+ csr648 csr649 htinst csr64b csr64c csr64d csr64e csr64f
+ csr650 csr651 csr652 csr653 csr654 csr655 csr656 csr657
+ csr658 csr659 csr65a csr65b csr65c csr65d csr65e csr65f
+ csr660 csr661 csr662 csr663 csr664 csr665 csr666 csr667
+ csr668 csr669 csr66a csr66b csr66c csr66d csr66e csr66f
+ csr670 csr671 csr672 csr673 csr674 csr675 csr676 csr677
+ csr678 csr679 csr67a csr67b csr67c csr67d csr67e csr67f
+ hgatp csr681 csr682 csr683 csr684 csr685 csr686 csr687
+ csr688 csr689 csr68a csr68b csr68c csr68d csr68e csr68f
+ csr690 csr691 csr692 csr693 csr694 csr695 csr696 csr697
+ csr698 csr699 csr69a csr69b csr69c csr69d csr69e csr69f
+ csr6a0 csr6a1 csr6a2 csr6a3 csr6a4 csr6a5 csr6a6 csr6a7
+ hcontext csr6a9 csr6aa csr6ab csr6ac csr6ad csr6ae csr6af
+ csr6b0 csr6b1 csr6b2 csr6b3 csr6b4 csr6b5 csr6b6 csr6b7
+ csr6b8 csr6b9 csr6ba csr6bb csr6bc csr6bd csr6be csr6bf
+ csr6c0 csr6c1 csr6c2 csr6c3 csr6c4 csr6c5 csr6c6 csr6c7
+ csr6c8 csr6c9 csr6ca csr6cb csr6cc csr6cd csr6ce csr6cf
+ csr6d0 csr6d1 csr6d2 csr6d3 csr6d4 csr6d5 csr6d6 csr6d7
+ csr6d8 csr6d9 csr6da csr6db csr6dc csr6dd csr6de csr6df
+ csr6e0 csr6e1 csr6e2 csr6e3 csr6e4 csr6e5 csr6e6 csr6e7
+ csr6e8 csr6e9 csr6ea csr6eb csr6ec csr6ed csr6ee csr6ef
+ csr6f0 csr6f1 csr6f2 csr6f3 csr6f4 csr6f5 csr6f6 csr6f7
+ csr6f8 csr6f9 csr6fa csr6fb csr6fc csr6fd csr6fe csr6ff
+ csr700 csr701 csr702 csr703 csr704 csr705 csr706 csr707
+ csr708 csr709 csr70a csr70b csr70c csr70d csr70e csr70f
+ csr710 csr711 csr712 csr713 csr714 csr715 csr716 csr717
+ csr718 csr719 csr71a csr71b csr71c csr71d csr71e csr71f
+ csr720 csr721 csr722 csr723 csr724 csr725 csr726 csr727
+ csr728 csr729 csr72a csr72b csr72c csr72d csr72e csr72f
+ csr730 csr731 csr732 csr733 csr734 csr735 csr736 csr737
+ csr738 csr739 csr73a csr73b csr73c csr73d csr73e csr73f
+ csr740 csr741 csr742 csr743 csr744 csr745 csr746 csr747
+ csr748 csr749 csr74a csr74b csr74c csr74d csr74e csr74f
+ csr750 csr751 csr752 csr753 csr754 csr755 csr756 csr757
+ csr758 csr759 csr75a csr75b csr75c csr75d csr75e csr75f
+ csr760 csr761 csr762 csr763 csr764 csr765 csr766 csr767
+ csr768 csr769 csr76a csr76b csr76c csr76d csr76e csr76f
+ csr770 csr771 csr772 csr773 csr774 csr775 csr776 csr777
+ csr778 csr779 csr77a csr77b csr77c csr77d csr77e csr77f
+ csr780 csr781 csr782 csr783 csr784 csr785 csr786 csr787
+ csr788 csr789 csr78a csr78b csr78c csr78d csr78e csr78f
+ csr790 csr791 csr792 csr793 csr794 csr795 csr796 csr797
+ csr798 csr799 csr79a csr79b csr79c csr79d csr79e csr79f
+ tselect tdata1 tdata2 tdata3 csr7a4 csr7a5 csr7a6 csr7a7
+ mcontext csr7a9 csr7aa csr7ab csr7ac csr7ad csr7ae csr7af
+ dcsr dpc dscratch0 dscratch1 csr7b4 csr7b5 csr7b6 csr7b7
+ csr7b8 csr7b9 csr7ba csr7bb csr7bc csr7bd csr7be csr7bf
+ csr7c0 csr7c1 csr7c2 csr7c3 csr7c4 csr7c5 csr7c6 csr7c7
+ csr7c8 csr7c9 csr7ca csr7cb csr7cc csr7cd csr7ce csr7cf
+ csr7d0 csr7d1 csr7d2 csr7d3 csr7d4 csr7d5 csr7d6 csr7d7
+ csr7d8 csr7d9 csr7da csr7db csr7dc csr7dd csr7de csr7df
+ csr7e0 csr7e1 csr7e2 csr7e3 csr7e4 csr7e5 csr7e6 csr7e7
+ csr7e8 csr7e9 csr7ea csr7eb csr7ec csr7ed csr7ee csr7ef
+ csr7f0 csr7f1 csr7f2 csr7f3 csr7f4 csr7f5 csr7f6 csr7f7
+ csr7f8 csr7f9 csr7fa csr7fb csr7fc csr7fd csr7fe csr7ff
+ csr800 csr801 csr802 csr803 csr804 csr805 csr806 csr807
+ csr808 csr809 csr80a csr80b csr80c csr80d csr80e csr80f
+ csr810 csr811 csr812 csr813 csr814 csr815 csr816 csr817
+ csr818 csr819 csr81a csr81b csr81c csr81d csr81e csr81f
+ csr820 csr821 csr822 csr823 csr824 csr825 csr826 csr827
+ csr828 csr829 csr82a csr82b csr82c csr82d csr82e csr82f
+ csr830 csr831 csr832 csr833 csr834 csr835 csr836 csr837
+ csr838 csr839 csr83a csr83b csr83c csr83d csr83e csr83f
+ csr840 csr841 csr842 csr843 csr844 csr845 csr846 csr847
+ csr848 csr849 csr84a csr84b csr84c csr84d csr84e csr84f
+ csr850 csr851 csr852 csr853 csr854 csr855 csr856 csr857
+ csr858 csr859 csr85a csr85b csr85c csr85d csr85e csr85f
+ csr860 csr861 csr862 csr863 csr864 csr865 csr866 csr867
+ csr868 csr869 csr86a csr86b csr86c csr86d csr86e csr86f
+ csr870 csr871 csr872 csr873 csr874 csr875 csr876 csr877
+ csr878 csr879 csr87a csr87b csr87c csr87d csr87e csr87f
+ csr880 csr881 csr882 csr883 csr884 csr885 csr886 csr887
+ csr888 csr889 csr88a csr88b csr88c csr88d csr88e csr88f
+ csr890 csr891 csr892 csr893 csr894 csr895 csr896 csr897
+ csr898 csr899 csr89a csr89b csr89c csr89d csr89e csr89f
+ csr8a0 csr8a1 csr8a2 csr8a3 csr8a4 csr8a5 csr8a6 csr8a7
+ csr8a8 csr8a9 csr8aa csr8ab csr8ac csr8ad csr8ae csr8af
+ csr8b0 csr8b1 csr8b2 csr8b3 csr8b4 csr8b5 csr8b6 csr8b7
+ csr8b8 csr8b9 csr8ba csr8bb csr8bc csr8bd csr8be csr8bf
+ csr8c0 csr8c1 csr8c2 csr8c3 csr8c4 csr8c5 csr8c6 csr8c7
+ csr8c8 csr8c9 csr8ca csr8cb csr8cc csr8cd csr8ce csr8cf
+ csr8d0 csr8d1 csr8d2 csr8d3 csr8d4 csr8d5 csr8d6 csr8d7
+ csr8d8 csr8d9 csr8da csr8db csr8dc csr8dd csr8de csr8df
+ csr8e0 csr8e1 csr8e2 csr8e3 csr8e4 csr8e5 csr8e6 csr8e7
+ csr8e8 csr8e9 csr8ea csr8eb csr8ec csr8ed csr8ee csr8ef
+ csr8f0 csr8f1 csr8f2 csr8f3 csr8f4 csr8f5 csr8f6 csr8f7
+ csr8f8 csr8f9 csr8fa csr8fb csr8fc csr8fd csr8fe csr8ff
+ csr900 csr901 csr902 csr903 csr904 csr905 csr906 csr907
+ csr908 csr909 csr90a csr90b csr90c csr90d csr90e csr90f
+ csr910 csr911 csr912 csr913 csr914 csr915 csr916 csr917
+ csr918 csr919 csr91a csr91b csr91c csr91d csr91e csr91f
+ csr920 csr921 csr922 csr923 csr924 csr925 csr926 csr927
+ csr928 csr929 csr92a csr92b csr92c csr92d csr92e csr92f
+ csr930 csr931 csr932 csr933 csr934 csr935 csr936 csr937
+ csr938 csr939 csr93a csr93b csr93c csr93d csr93e csr93f
+ csr940 csr941 csr942 csr943 csr944 csr945 csr946 csr947
+ csr948 csr949 csr94a csr94b csr94c csr94d csr94e csr94f
+ csr950 csr951 csr952 csr953 csr954 csr955 csr956 csr957
+ csr958 csr959 csr95a csr95b csr95c csr95d csr95e csr95f
+ csr960 csr961 csr962 csr963 csr964 csr965 csr966 csr967
+ csr968 csr969 csr96a csr96b csr96c csr96d csr96e csr96f
+ csr970 csr971 csr972 csr973 csr974 csr975 csr976 csr977
+ csr978 csr979 csr97a csr97b csr97c csr97d csr97e csr97f
+ csr980 csr981 csr982 csr983 csr984 csr985 csr986 csr987
+ csr988 csr989 csr98a csr98b csr98c csr98d csr98e csr98f
+ csr990 csr991 csr992 csr993 csr994 csr995 csr996 csr997
+ csr998 csr999 csr99a csr99b csr99c csr99d csr99e csr99f
+ csr9a0 csr9a1 csr9a2 csr9a3 csr9a4 csr9a5 csr9a6 csr9a7
+ csr9a8 csr9a9 csr9aa csr9ab csr9ac csr9ad csr9ae csr9af
+ csr9b0 csr9b1 csr9b2 csr9b3 csr9b4 csr9b5 csr9b6 csr9b7
+ csr9b8 csr9b9 csr9ba csr9bb csr9bc csr9bd csr9be csr9bf
+ csr9c0 csr9c1 csr9c2 csr9c3 csr9c4 csr9c5 csr9c6 csr9c7
+ csr9c8 csr9c9 csr9ca csr9cb csr9cc csr9cd csr9ce csr9cf
+ csr9d0 csr9d1 csr9d2 csr9d3 csr9d4 csr9d5 csr9d6 csr9d7
+ csr9d8 csr9d9 csr9da csr9db csr9dc csr9dd csr9de csr9df
+ csr9e0 csr9e1 csr9e2 csr9e3 csr9e4 csr9e5 csr9e6 csr9e7
+ csr9e8 csr9e9 csr9ea csr9eb csr9ec csr9ed csr9ee csr9ef
+ csr9f0 csr9f1 csr9f2 csr9f3 csr9f4 csr9f5 csr9f6 csr9f7
+ csr9f8 csr9f9 csr9fa csr9fb csr9fc csr9fd csr9fe csr9ff
+ csra00 csra01 csra02 csra03 csra04 csra05 csra06 csra07
+ csra08 csra09 csra0a csra0b csra0c csra0d csra0e csra0f
+ csra10 csra11 csra12 csra13 csra14 csra15 csra16 csra17
+ csra18 csra19 csra1a csra1b csra1c csra1d csra1e csra1f
+ csra20 csra21 csra22 csra23 csra24 csra25 csra26 csra27
+ csra28 csra29 csra2a csra2b csra2c csra2d csra2e csra2f
+ csra30 csra31 csra32 csra33 csra34 csra35 csra36 csra37
+ csra38 csra39 csra3a csra3b csra3c csra3d csra3e csra3f
+ csra40 csra41 csra42 csra43 csra44 csra45 csra46 csra47
+ csra48 csra49 csra4a csra4b csra4c csra4d csra4e csra4f
+ csra50 csra51 csra52 csra53 csra54 csra55 csra56 csra57
+ csra58 csra59 csra5a csra5b csra5c csra5d csra5e csra5f
+ csra60 csra61 csra62 csra63 csra64 csra65 csra66 csra67
+ csra68 csra69 csra6a csra6b csra6c csra6d csra6e csra6f
+ csra70 csra71 csra72 csra73 csra74 csra75 csra76 csra77
+ csra78 csra79 csra7a csra7b csra7c csra7d csra7e csra7f
+ csra80 csra81 csra82 csra83 csra84 csra85 csra86 csra87
+ csra88 csra89 csra8a csra8b csra8c csra8d csra8e csra8f
+ csra90 csra91 csra92 csra93 csra94 csra95 csra96 csra97
+ csra98 csra99 csra9a csra9b csra9c csra9d csra9e csra9f
+ csraa0 csraa1 csraa2 csraa3 csraa4 csraa5 csraa6 csraa7
+ csraa8 csraa9 csraaa csraab csraac csraad csraae csraaf
+ csrab0 csrab1 csrab2 csrab3 csrab4 csrab5 csrab6 csrab7
+ csrab8 csrab9 csraba csrabb csrabc csrabd csrabe csrabf
+ csrac0 csrac1 csrac2 csrac3 csrac4 csrac5 csrac6 csrac7
+ csrac8 csrac9 csraca csracb csracc csracd csrace csracf
+ csrad0 csrad1 csrad2 csrad3 csrad4 csrad5 csrad6 csrad7
+ csrad8 csrad9 csrada csradb csradc csradd csrade csradf
+ csrae0 csrae1 csrae2 csrae3 csrae4 csrae5 csrae6 csrae7
+ csrae8 csrae9 csraea csraeb csraec csraed csraee csraef
+ csraf0 csraf1 csraf2 csraf3 csraf4 csraf5 csraf6 csraf7
+ csraf8 csraf9 csrafa csrafb csrafc csrafd csrafe csraff
+ mcycle csrb01 minstret mhpmcounter3 mhpmcounter4 mhpmcounter5 mhpmcounter6 mhpmcounter7
+ mhpmcounter8 mhpmcounter9 mhpmcounter10 mhpmcounter11 mhpmcounter12 mhpmcounter13 mhpmcounter14 mhpmcounter15
+ mhpmcounter16 mhpmcounter17 mhpmcounter18 mhpmcounter19 mhpmcounter20 mhpmcounter21 mhpmcounter22 mhpmcounter23
+ mhpmcounter24 mhpmcounter25 mhpmcounter26 mhpmcounter27 mhpmcounter28 mhpmcounter29 mhpmcounter30 mhpmcounter31
+ csrb20 csrb21 csrb22 csrb23 csrb24 csrb25 csrb26 csrb27
+ csrb28 csrb29 csrb2a csrb2b csrb2c csrb2d csrb2e csrb2f
+ csrb30 csrb31 csrb32 csrb33 csrb34 csrb35 csrb36 csrb37
+ csrb38 csrb39 csrb3a csrb3b csrb3c csrb3d csrb3e csrb3f
+ csrb40 csrb41 csrb42 csrb43 csrb44 csrb45 csrb46 csrb47
+ csrb48 csrb49 csrb4a csrb4b csrb4c csrb4d csrb4e csrb4f
+ csrb50 csrb51 csrb52 csrb53 csrb54 csrb55 csrb56 csrb57
+ csrb58 csrb59 csrb5a csrb5b csrb5c csrb5d csrb5e csrb5f
+ csrb60 csrb61 csrb62 csrb63 csrb64 csrb65 csrb66 csrb67
+ csrb68 csrb69 csrb6a csrb6b csrb6c csrb6d csrb6e csrb6f
+ csrb70 csrb71 csrb72 csrb73 csrb74 csrb75 csrb76 csrb77
+ csrb78 csrb79 csrb7a csrb7b csrb7c csrb7d csrb7e csrb7f
+ mcycleh csrb81 minstreth mhpmcounter3h mhpmcounter4h mhpmcounter5h mhpmcounter6h mhpmcounter7h
+ mhpmcounter8h mhpmcounter9h mhpmcounter10h mhpmcounter11h mhpmcounter12h mhpmcounter13h mhpmcounter14h mhpmcounter15h
+ mhpmcounter16h mhpmcounter17h mhpmcounter18h mhpmcounter19h mhpmcounter20h mhpmcounter21h mhpmcounter22h mhpmcounter23h
+ mhpmcounter24h mhpmcounter25h mhpmcounter26h mhpmcounter27h mhpmcounter28h mhpmcounter29h mhpmcounter30h mhpmcounter31h
+ csrba0 csrba1 csrba2 csrba3 csrba4 csrba5 csrba6 csrba7
+ csrba8 csrba9 csrbaa csrbab csrbac csrbad csrbae csrbaf
+ csrbb0 csrbb1 csrbb2 csrbb3 csrbb4 csrbb5 csrbb6 csrbb7
+ csrbb8 csrbb9 csrbba csrbbb csrbbc csrbbd csrbbe csrbbf
+ csrbc0 csrbc1 csrbc2 csrbc3 csrbc4 csrbc5 csrbc6 csrbc7
+ csrbc8 csrbc9 csrbca csrbcb csrbcc csrbcd csrbce csrbcf
+ csrbd0 csrbd1 csrbd2 csrbd3 csrbd4 csrbd5 csrbd6 csrbd7
+ csrbd8 csrbd9 csrbda csrbdb csrbdc csrbdd csrbde csrbdf
+ csrbe0 csrbe1 csrbe2 csrbe3 csrbe4 csrbe5 csrbe6 csrbe7
+ csrbe8 csrbe9 csrbea csrbeb csrbec csrbed csrbee csrbef
+ csrbf0 csrbf1 csrbf2 csrbf3 csrbf4 csrbf5 csrbf6 csrbf7
+ csrbf8 csrbf9 csrbfa csrbfb csrbfc csrbfd csrbfe csrbff
+ cycle time instret hpmcounter3 hpmcounter4 hpmcounter5 hpmcounter6 hpmcounter7
+ hpmcounter8 hpmcounter9 hpmcounter10 hpmcounter11 hpmcounter12 hpmcounter13 hpmcounter14 hpmcounter15
+ hpmcounter16 hpmcounter17 hpmcounter18 hpmcounter19 hpmcounter20 hpmcounter21 hpmcounter22 hpmcounter23
+ hpmcounter24 hpmcounter25 hpmcounter26 hpmcounter27 hpmcounter28 hpmcounter29 hpmcounter30 hpmcounter31
+ vl vtype vlenb csrc23 csrc24 csrc25 csrc26 csrc27
+ csrc28 csrc29 csrc2a csrc2b csrc2c csrc2d csrc2e csrc2f
+ csrc30 csrc31 csrc32 csrc33 csrc34 csrc35 csrc36 csrc37
+ csrc38 csrc39 csrc3a csrc3b csrc3c csrc3d csrc3e csrc3f
+ csrc40 csrc41 csrc42 csrc43 csrc44 csrc45 csrc46 csrc47
+ csrc48 csrc49 csrc4a csrc4b csrc4c csrc4d csrc4e csrc4f
+ csrc50 csrc51 csrc52 csrc53 csrc54 csrc55 csrc56 csrc57
+ csrc58 csrc59 csrc5a csrc5b csrc5c csrc5d csrc5e csrc5f
+ csrc60 csrc61 csrc62 csrc63 csrc64 csrc65 csrc66 csrc67
+ csrc68 csrc69 csrc6a csrc6b csrc6c csrc6d csrc6e csrc6f
+ csrc70 csrc71 csrc72 csrc73 csrc74 csrc75 csrc76 csrc77
+ csrc78 csrc79 csrc7a csrc7b csrc7c csrc7d csrc7e csrc7f
+ cycleh timeh instreth hpmcounter3h hpmcounter4h hpmcounter5h hpmcounter6h hpmcounter7h
+ hpmcounter8h hpmcounter9h hpmcounter10h hpmcounter11h hpmcounter12h hpmcounter13h hpmcounter14h hpmcounter15h
+ hpmcounter16h hpmcounter17h hpmcounter18h hpmcounter19h hpmcounter20h hpmcounter21h hpmcounter22h hpmcounter23h
+ hpmcounter24h hpmcounter25h hpmcounter26h hpmcounter27h hpmcounter28h hpmcounter29h hpmcounter30h hpmcounter31h
+ csrca0 csrca1 csrca2 csrca3 csrca4 csrca5 csrca6 csrca7
+ csrca8 csrca9 csrcaa csrcab csrcac csrcad csrcae csrcaf
+ csrcb0 csrcb1 csrcb2 csrcb3 csrcb4 csrcb5 csrcb6 csrcb7
+ csrcb8 csrcb9 csrcba csrcbb csrcbc csrcbd csrcbe csrcbf
+ csrcc0 csrcc1 csrcc2 csrcc3 csrcc4 csrcc5 csrcc6 csrcc7
+ csrcc8 csrcc9 csrcca csrccb csrccc csrccd csrcce csrccf
+ csrcd0 csrcd1 csrcd2 csrcd3 csrcd4 csrcd5 csrcd6 csrcd7
+ csrcd8 csrcd9 csrcda csrcdb csrcdc csrcdd csrcde csrcdf
+ csrce0 csrce1 csrce2 csrce3 csrce4 csrce5 csrce6 csrce7
+ csrce8 csrce9 csrcea csrceb csrcec csrced csrcee csrcef
+ csrcf0 csrcf1 csrcf2 csrcf3 csrcf4 csrcf5 csrcf6 csrcf7
+ csrcf8 csrcf9 csrcfa csrcfb csrcfc csrcfd csrcfe csrcff
+ csrd00 csrd01 csrd02 csrd03 csrd04 csrd05 csrd06 csrd07
+ csrd08 csrd09 csrd0a csrd0b csrd0c csrd0d csrd0e csrd0f
+ csrd10 csrd11 csrd12 csrd13 csrd14 csrd15 csrd16 csrd17
+ csrd18 csrd19 csrd1a csrd1b csrd1c csrd1d csrd1e csrd1f
+ csrd20 csrd21 csrd22 csrd23 csrd24 csrd25 csrd26 csrd27
+ csrd28 csrd29 csrd2a csrd2b csrd2c csrd2d csrd2e csrd2f
+ csrd30 csrd31 csrd32 csrd33 csrd34 csrd35 csrd36 csrd37
+ csrd38 csrd39 csrd3a csrd3b csrd3c csrd3d csrd3e csrd3f
+ csrd40 csrd41 csrd42 csrd43 csrd44 csrd45 csrd46 csrd47
+ csrd48 csrd49 csrd4a csrd4b csrd4c csrd4d csrd4e csrd4f
+ csrd50 csrd51 csrd52 csrd53 csrd54 csrd55 csrd56 csrd57
+ csrd58 csrd59 csrd5a csrd5b csrd5c csrd5d csrd5e csrd5f
+ csrd60 csrd61 csrd62 csrd63 csrd64 csrd65 csrd66 csrd67
+ csrd68 csrd69 csrd6a csrd6b csrd6c csrd6d csrd6e csrd6f
+ csrd70 csrd71 csrd72 csrd73 csrd74 csrd75 csrd76 csrd77
+ csrd78 csrd79 csrd7a csrd7b csrd7c csrd7d csrd7e csrd7f
+ csrd80 csrd81 csrd82 csrd83 csrd84 csrd85 csrd86 csrd87
+ csrd88 csrd89 csrd8a csrd8b csrd8c csrd8d csrd8e csrd8f
+ csrd90 csrd91 csrd92 csrd93 csrd94 csrd95 csrd96 csrd97
+ csrd98 csrd99 csrd9a csrd9b csrd9c csrd9d csrd9e csrd9f
+ csrda0 csrda1 csrda2 csrda3 csrda4 csrda5 csrda6 csrda7
+ csrda8 csrda9 csrdaa csrdab csrdac csrdad csrdae csrdaf
+ csrdb0 csrdb1 csrdb2 csrdb3 csrdb4 csrdb5 csrdb6 csrdb7
+ csrdb8 csrdb9 csrdba csrdbb csrdbc csrdbd csrdbe csrdbf
+ csrdc0 csrdc1 csrdc2 csrdc3 csrdc4 csrdc5 csrdc6 csrdc7
+ csrdc8 csrdc9 csrdca csrdcb csrdcc csrdcd csrdce csrdcf
+ csrdd0 csrdd1 csrdd2 csrdd3 csrdd4 csrdd5 csrdd6 csrdd7
+ csrdd8 csrdd9 csrdda csrddb csrddc csrddd csrdde csrddf
+ csrde0 csrde1 csrde2 csrde3 csrde4 csrde5 csrde6 csrde7
+ csrde8 csrde9 csrdea csrdeb csrdec csrded csrdee csrdef
+ csrdf0 csrdf1 csrdf2 csrdf3 csrdf4 csrdf5 csrdf6 csrdf7
+ csrdf8 csrdf9 csrdfa csrdfb csrdfc csrdfd csrdfe csrdff
+ csre00 csre01 csre02 csre03 csre04 csre05 csre06 csre07
+ csre08 csre09 csre0a csre0b csre0c csre0d csre0e csre0f
+ csre10 csre11 hgeip csre13 csre14 csre15 csre16 csre17
+ csre18 csre19 csre1a csre1b csre1c csre1d csre1e csre1f
+ csre20 csre21 csre22 csre23 csre24 csre25 csre26 csre27
+ csre28 csre29 csre2a csre2b csre2c csre2d csre2e csre2f
+ csre30 csre31 csre32 csre33 csre34 csre35 csre36 csre37
+ csre38 csre39 csre3a csre3b csre3c csre3d csre3e csre3f
+ csre40 csre41 csre42 csre43 csre44 csre45 csre46 csre47
+ csre48 csre49 csre4a csre4b csre4c csre4d csre4e csre4f
+ csre50 csre51 csre52 csre53 csre54 csre55 csre56 csre57
+ csre58 csre59 csre5a csre5b csre5c csre5d csre5e csre5f
+ csre60 csre61 csre62 csre63 csre64 csre65 csre66 csre67
+ csre68 csre69 csre6a csre6b csre6c csre6d csre6e csre6f
+ csre70 csre71 csre72 csre73 csre74 csre75 csre76 csre77
+ csre78 csre79 csre7a csre7b csre7c csre7d csre7e csre7f
+ csre80 csre81 csre82 csre83 csre84 csre85 csre86 csre87
+ csre88 csre89 csre8a csre8b csre8c csre8d csre8e csre8f
+ csre90 csre91 csre92 csre93 csre94 csre95 csre96 csre97
+ csre98 csre99 csre9a csre9b csre9c csre9d csre9e csre9f
+ csrea0 csrea1 csrea2 csrea3 csrea4 csrea5 csrea6 csrea7
+ csrea8 csrea9 csreaa csreab csreac csread csreae csreaf
+ csreb0 csreb1 csreb2 csreb3 csreb4 csreb5 csreb6 csreb7
+ csreb8 csreb9 csreba csrebb csrebc csrebd csrebe csrebf
+ csrec0 csrec1 csrec2 csrec3 csrec4 csrec5 csrec6 csrec7
+ csrec8 csrec9 csreca csrecb csrecc csrecd csrece csrecf
+ csred0 csred1 csred2 csred3 csred4 csred5 csred6 csred7
+ csred8 csred9 csreda csredb csredc csredd csrede csredf
+ csree0 csree1 csree2 csree3 csree4 csree5 csree6 csree7
+ csree8 csree9 csreea csreeb csreec csreed csreee csreef
+ csref0 csref1 csref2 csref3 csref4 csref5 csref6 csref7
+ csref8 csref9 csrefa csrefb csrefc csrefd csrefe csreff
+ csrf00 csrf01 csrf02 csrf03 csrf04 csrf05 csrf06 csrf07
+ csrf08 csrf09 csrf0a csrf0b csrf0c csrf0d csrf0e csrf0f
+ csrf10 mvendorid marchid mimpid mhartid csrf15 csrf16 csrf17
+ csrf18 csrf19 csrf1a csrf1b csrf1c csrf1d csrf1e csrf1f
+ csrf20 csrf21 csrf22 csrf23 csrf24 csrf25 csrf26 csrf27
+ csrf28 csrf29 csrf2a csrf2b csrf2c csrf2d csrf2e csrf2f
+ csrf30 csrf31 csrf32 csrf33 csrf34 csrf35 csrf36 csrf37
+ csrf38 csrf39 csrf3a csrf3b csrf3c csrf3d csrf3e csrf3f
+ csrf40 csrf41 csrf42 csrf43 csrf44 csrf45 csrf46 csrf47
+ csrf48 csrf49 csrf4a csrf4b csrf4c csrf4d csrf4e csrf4f
+ csrf50 csrf51 csrf52 csrf53 csrf54 csrf55 csrf56 csrf57
+ csrf58 csrf59 csrf5a csrf5b csrf5c csrf5d csrf5e csrf5f
+ csrf60 csrf61 csrf62 csrf63 csrf64 csrf65 csrf66 csrf67
+ csrf68 csrf69 csrf6a csrf6b csrf6c csrf6d csrf6e csrf6f
+ csrf70 csrf71 csrf72 csrf73 csrf74 csrf75 csrf76 csrf77
+ csrf78 csrf79 csrf7a csrf7b csrf7c csrf7d csrf7e csrf7f
+ csrf80 csrf81 csrf82 csrf83 csrf84 csrf85 csrf86 csrf87
+ csrf88 csrf89 csrf8a csrf8b csrf8c csrf8d csrf8e csrf8f
+ csrf90 csrf91 csrf92 csrf93 csrf94 csrf95 csrf96 csrf97
+ csrf98 csrf99 csrf9a csrf9b csrf9c csrf9d csrf9e csrf9f
+ csrfa0 csrfa1 csrfa2 csrfa3 csrfa4 csrfa5 csrfa6 csrfa7
+ csrfa8 csrfa9 csrfaa csrfab csrfac csrfad csrfae csrfaf
+ csrfb0 csrfb1 csrfb2 csrfb3 csrfb4 csrfb5 csrfb6 csrfb7
+ csrfb8 csrfb9 csrfba csrfbb csrfbc csrfbd csrfbe csrfbf
+ csrfc0 csrfc1 csrfc2 csrfc3 csrfc4 csrfc5 csrfc6 csrfc7
+ csrfc8 csrfc9 csrfca csrfcb csrfcc csrfcd csrfce csrfcf
+ csrfd0 csrfd1 csrfd2 csrfd3 csrfd4 csrfd5 csrfd6 csrfd7
+ csrfd8 csrfd9 csrfda csrfdb csrfdc csrfdd csrfde csrfdf
+ csrfe0 csrfe1 csrfe2 csrfe3 csrfe4 csrfe5 csrfe6 csrfe7
+ csrfe8 csrfe9 csrfea csrfeb csrfec csrfed csrfee csrfef
+ csrff0 csrff1 csrff2 csrff3 csrff4 csrff5 csrff6 csrff7
+ csrff8 csrff9 csrffa csrffb csrffc csrffd csrffe csrfff
+];
+
+
+# SEE 3.1.1  Machine ISA Register  misa
+# (MXLEN-1, MXLEN-2) MXL - Machine XLEN  {1: 32, 2: 64, 3: 128}
+# Bit Character Description
+# 0   A         Atomic extension
+# 1   B         Tentatively reserved for Bit-Manipulation extension
+# 2   C         Compressed extension
+# 3   D         Double-precision floating-point extension
+# 4   E         RV32E base ISA
+# 5   F         Single-precision floating-point extension
+# 6   G         Additional standard extensions present
+# 7   H         Hypervisor extension
+# 8   I         RV32I/64I/128I base ISA
+# 9   J         Tentatively reserved for Dynamically Translated Languages extension
+# 10  K         Reserved
+# 11  L         Tentatively reserved for Decimal Floating-Point extension
+# 12  M         Integer Multiply/Divide extension
+# 13  N         User-level interrupts supported
+# 14  O         Reserved
+# 15  P         Tentatively reserved for Packed-SIMD extension
+# 16  Q         Quad-precision floating-point extension
+# 17  R         Reserved
+# 18  S         Supervisor mode implemented
+# 19  T         Tentatively reserved for Transactional Memory extension
+# 20  U         User mode implemented
+# 21  V         Tentatively reserved for Vector extension
+# 22  W         Reserved
+# 23  X         Non-standard extensions present
+# 24  Y         Reserved
+# 25  Z         Reserved
+define context misa
+  RVA=(0,0)
+  RVB=(1,1)
+  RVC=(2,2)
+  RVD=(3,3)
+  RVE=(4,4)
+  RVF=(5,5)
+  RVG=(6,6)
+  RVH=(7,7)
+  RVI=(8,8)
+  RVJ=(9,9)
+  RVK=(10,10)
+  RVL=(11,11)
+  RVM=(12,12)
+  RVN=(13,13)
+  RVO=(14,14)
+  RVP=(15,15)
+  RVQ=(16,16)
+  RVR=(17,17)
+  RVS=(18,18)
+  RVT=(19,19)
+  RVU=(20,20)
+  RVV=(21,21)
+  RVW=(22,22)
+  RVX=(23,23)
+  RVY=(24,24)
+  RVZ=(25,25)
+  MXL=($(MXLEN_2), $(MXLEN_1))
+;
+
+
+define token instr (32)
+  op0001=(0,1)
+  op0006=(0,6)
+  op0204=(2,4)
+  op0506=(5,6)
+  op0707=(7,7)
+  op0711=(7,11)
+  r0711=(7,11)
+  fr0711=(7,11)
+  v0711=(7,11)
+  op0811=(8,11)
+  op1214=(12,14)
+  funct3=(12,14)
+  op1219=(12,19)
+  op1231=(12,31)
+  sop1231=(12,31) signed
+  op1519=(15,19)
+  sop1519=(15,19) signed
+  subf5=(15,19)
+  r1519=(15,19)
+  fr1519=(15,19)
+  v1519=(15,19)
+  op1527=(15,27)
+  op1531=(15,31)
+  op2020=(20,20)
+  op2022=(20,22)
+  succ=(20,23)
+  op2023=(20,23)
+  op2024=(20,24)
+  r2024=(20,24)
+  fr2024=(20,24)
+  v2024=(20,24)
+  op2025=(20,25)
+  op2026=(20,26)
+  csr_0=(20,27)
+  csr_1=(20,27)
+  csr_2=(20,27)
+  csr_3=(20,27)
+  csr_4=(20,27)
+  csr_50=(20,26)
+  csr_58=(20,25)
+  csr_5C=(20,25)
+  csr_60=(20,26)
+  csr_68=(20,25)
+  csr_6C=(20,25)
+  csr_70=(20,26)
+  csr_78=(20,24)
+  csr_7A=(20,23)
+  csr_7B=(20,23)
+  csr_7C=(20,25)
+  csr_8=(20,27)
+  csr_90=(20,26)
+  csr_98=(20,25)
+  csr_9C=(20,25)
+  csr_A0=(20,26)
+  csr_A8=(20,25)
+  csr_AC=(20,25)
+  csr_B0=(20,26)
+  csr_B8=(20,25)
+  csr_BC=(20,25)
+  csr_C0=(20,26)
+  csr_C8=(20,25)
+  csr_CC=(20,25)
+  csr_D0=(20,26)
+  csr_D8=(20,25)
+  csr_DC=(20,25)
+  csr_E0=(20,26)
+  csr_E8=(20,25)
+  csr_EC=(20,25)
+  csr_F0=(20,26)
+  csr_F8=(20,25)
+  csr_FC=(20,25)
+  op2030=(20,30)
+  op2031=(20,31)
+  sop2031=(20,31) signed
+  op2130=(21,30)
+  op2324=(23,24)
+  op2424=(24,24)
+  op2427=(24,27)
+  pred=(24,27)
+  op2525=(25,25)
+  op2526=(25,26)
+  op2527=(25,27)
+  op2529=(25,29)
+  op2530=(25,30)
+  op2531=(25,31)
+  sop2531=(25,31) signed
+  funct7=(25,31)
+  wd=(26,26)
+  op2626=(26,26)
+  op2627=(26,27)
+  op2631=(26,31)
+  op2731=(27,31)
+  amoop=(27,31)
+  funct5=(27,31)
+  op2727=(27,27)
+  r2731=(27,31)
+  fr2731=(27,31)
+  op2828=(28,28)
+  op2829=(28,29)
+  fm=(28,31)
+  op2931=(29,31)
+  op3031=(30,31)
+  op3131=(31,31)
+  sop3131=(31,31) signed
+;
+
+define token cinstr (16)
+  cop0001=(0,1)
+  cop0202=(2,2)
+  cop0203=(2,3)
+  cop0204=(2,4)
+  cr0204s=(2,4)
+  cfr0204s=(2,4)
+  cop0205=(2,5)
+  cop0206=(2,6)
+  cr0206=(2,6)
+  cfr0206=(2,6)
+  cop0212=(2,12)
+  cop0304=(3,4)
+  cop0305=(3,5)
+  cop0406=(4,6)
+  cop0505=(5,5)
+  cop0506=(5,6)
+  cop0512=(5,12)
+  cop0606=(6,6)
+  cop0707=(7,7)
+  cop0708=(7,8)
+  cop0709=(7,9)
+  cr0709s=(7,9)
+  cd0709s=(7,9)
+  cfr0709s=(7,9)
+  cop0710=(7,10)
+  cop0711=(7,11)
+  cr0711=(7,11)
+  cd0711=(7,11)  
+  cfr0711=(7,11)
+  cop0712=(7,12)
+  cop0808=(8,8)
+  cop0910=(9,10)
+  cop0912=(9,12)
+  cop1010=(10,10)
+  cop1011=(10,11)
+  cop1012=(10,12)
+  cop1111=(11,11)
+  cop1112=(11,12)
+  cop1212=(12,12)
+  scop1212=(12,12) signed
+  cop1315=(13,15)
+;
+
+
+attach variables [ r0711 r1519 r2024 r2731 ]
+       		 [ zero ra sp gp tp t0 t1 t2 s0 s1 a0  a1  a2 a3 a4 a5
+		   a6   a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 ];
+
+attach variables [ cr0206 cr0711 cd0711 ]
+       		 [ zero ra sp gp tp t0 t1 t2 s0 s1 a0  a1  a2 a3 a4 a5
+		   a6   a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 ];
+
+attach variables [ cr0204s cr0709s cd0709s ]
+       		 [ s0 s1 a0 a1 a2 a3 a4 a5 ];
+
+
+attach variables [ fr0711 fr1519 fr2024 fr2731 ]
+       		 [ ft0 ft1 ft2 ft3 ft4 ft5 ft6 ft7 fs0 fs1 fa0  fa1  fa2 fa3 fa4  fa5
+		   fa6 fa7 fs2 fs3 fs4 fs5 fs6 fs7 fs8 fs9 fs10 fs11 ft8 ft9 ft10 ft11 ];
+
+attach variables [ cfr0206 cfr0711 ]
+       		 [ ft0 ft1 ft2 ft3 ft4 ft5 ft6 ft7 fs0 fs1 fa0  fa1  fa2 fa3 fa4  fa5
+		   fa6 fa7 fs2 fs3 fs4 fs5 fs6 fs7 fs8 fs9 fs10 fs11 ft8 ft9 ft10 ft11 ];
+
+attach variables [ cfr0204s cfr0709s ]
+       		 [ fs0 fs1 fa0 fa1 fa2 fa3 fa4 fa5 ];
+
+
+attach variables [ v0711 v1519 v2024 ]
+       		 [ v0  v1  v2  v3  v4  v5  v6  v7  v8  v9  v10 v11 v12 v13 v14 v15
+		   v16 v17 v18 v19 v20 v21 v22 v23 v24 v25 v26 v27 v28 v29 v30 v31 ];
+
+
+attach variables [ csr_0 ]
+                 [ ustatus fflags frm fcsr uie utvec csr006 csr007
+                   vstart vxsat  vxrm   csr00b csr00c csr00d csr00e vcsr
+                   csr010 csr011 csr012 csr013 csr014 csr015 csr016 csr017
+                   csr018 csr019 csr01a csr01b csr01c csr01d csr01e csr01f
+                   csr020 csr021 csr022 csr023 csr024 csr025 csr026 csr027
+                   csr028 csr029 csr02a csr02b csr02c csr02d csr02e csr02f
+                   csr030 csr031 csr032 csr033 csr034 csr035 csr036 csr037
+                   csr038 csr039 csr03a csr03b csr03c csr03d csr03e csr03f
+                   uscratch uepc ucause utval uip csr045 csr046 csr047
+                   csr048 csr049 csr04a csr04b csr04c csr04d csr04e csr04f
+                   csr050 csr051 csr052 csr053 csr054 csr055 csr056 csr057
+                   csr058 csr059 csr05a csr05b csr05c csr05d csr05e csr05f
+                   csr060 csr061 csr062 csr063 csr064 csr065 csr066 csr067
+                   csr068 csr069 csr06a csr06b csr06c csr06d csr06e csr06f
+                   csr070 csr071 csr072 csr073 csr074 csr075 csr076 csr077
+                   csr078 csr079 csr07a csr07b csr07c csr07d csr07e csr07f
+                   csr080 csr081 csr082 csr083 csr084 csr085 csr086 csr087
+                   csr088 csr089 csr08a csr08b csr08c csr08d csr08e csr08f
+                   csr090 csr091 csr092 csr093 csr094 csr095 csr096 csr097
+                   csr098 csr099 csr09a csr09b csr09c csr09d csr09e csr09f
+                   csr0a0 csr0a1 csr0a2 csr0a3 csr0a4 csr0a5 csr0a6 csr0a7
+                   csr0a8 csr0a9 csr0aa csr0ab csr0ac csr0ad csr0ae csr0af
+                   csr0b0 csr0b1 csr0b2 csr0b3 csr0b4 csr0b5 csr0b6 csr0b7
+                   csr0b8 csr0b9 csr0ba csr0bb csr0bc csr0bd csr0be csr0bf
+                   csr0c0 csr0c1 csr0c2 csr0c3 csr0c4 csr0c5 csr0c6 csr0c7
+                   csr0c8 csr0c9 csr0ca csr0cb csr0cc csr0cd csr0ce csr0cf
+                   csr0d0 csr0d1 csr0d2 csr0d3 csr0d4 csr0d5 csr0d6 csr0d7
+                   csr0d8 csr0d9 csr0da csr0db csr0dc csr0dd csr0de csr0df
+                   csr0e0 csr0e1 csr0e2 csr0e3 csr0e4 csr0e5 csr0e6 csr0e7
+                   csr0e8 csr0e9 csr0ea csr0eb csr0ec csr0ed csr0ee csr0ef
+                   csr0f0 csr0f1 csr0f2 csr0f3 csr0f4 csr0f5 csr0f6 csr0f7
+                   csr0f8 csr0f9 csr0fa csr0fb csr0fc csr0fd csr0fe csr0ff ];
+attach variables [ csr_1 ]
+                 [ sstatus csr101 sedeleg sideleg sie stvec scounteren csr107
+                   csr108 csr109 csr10a csr10b csr10c csr10d csr10e csr10f
+                   csr110 csr111 csr112 csr113 csr114 csr115 csr116 csr117
+                   csr118 csr119 csr11a csr11b csr11c csr11d csr11e csr11f
+                   csr120 csr121 csr122 csr123 csr124 csr125 csr126 csr127
+                   csr128 csr129 csr12a csr12b csr12c csr12d csr12e csr12f
+                   csr130 csr131 csr132 csr133 csr134 csr135 csr136 csr137
+                   csr138 csr139 csr13a csr13b csr13c csr13d csr13e csr13f
+                   sscratch sepc scause stval sip csr145 csr146 csr147
+                   csr148 csr149 csr14a csr14b csr14c csr14d csr14e csr14f
+                   csr150 csr151 csr152 csr153 csr154 csr155 csr156 csr157
+                   csr158 csr159 csr15a csr15b csr15c csr15d csr15e csr15f
+                   csr160 csr161 csr162 csr163 csr164 csr165 csr166 csr167
+                   csr168 csr169 csr16a csr16b csr16c csr16d csr16e csr16f
+                   csr170 csr171 csr172 csr173 csr174 csr175 csr176 csr177
+                   csr178 csr179 csr17a csr17b csr17c csr17d csr17e csr17f
+                   satp csr181 csr182 csr183 csr184 csr185 csr186 csr187
+                   csr188 csr189 csr18a csr18b csr18c csr18d csr18e csr18f
+                   csr190 csr191 csr192 csr193 csr194 csr195 csr196 csr197
+                   csr198 csr199 csr19a csr19b csr19c csr19d csr19e csr19f
+                   csr1a0 csr1a1 csr1a2 csr1a3 csr1a4 csr1a5 csr1a6 csr1a7
+                   csr1a8 csr1a9 csr1aa csr1ab csr1ac csr1ad csr1ae csr1af
+                   csr1b0 csr1b1 csr1b2 csr1b3 csr1b4 csr1b5 csr1b6 csr1b7
+                   csr1b8 csr1b9 csr1ba csr1bb csr1bc csr1bd csr1be csr1bf
+                   csr1c0 csr1c1 csr1c2 csr1c3 csr1c4 csr1c5 csr1c6 csr1c7
+                   csr1c8 csr1c9 csr1ca csr1cb csr1cc csr1cd csr1ce csr1cf
+                   csr1d0 csr1d1 csr1d2 csr1d3 csr1d4 csr1d5 csr1d6 csr1d7
+                   csr1d8 csr1d9 csr1da csr1db csr1dc csr1dd csr1de csr1df
+                   csr1e0 csr1e1 csr1e2 csr1e3 csr1e4 csr1e5 csr1e6 csr1e7
+                   csr1e8 csr1e9 csr1ea csr1eb csr1ec csr1ed csr1ee csr1ef
+                   csr1f0 csr1f1 csr1f2 csr1f3 csr1f4 csr1f5 csr1f6 csr1f7
+                   csr1f8 csr1f9 csr1fa csr1fb csr1fc csr1fd csr1fe csr1ff ];
+attach variables [ csr_2 ]
+                 [ vsstatus csr201 csr202 csr203 vsie vstvec csr206 csr207
+                   csr208 csr209 csr20a csr20b csr20c csr20d csr20e csr20f
+                   csr210 csr211 csr212 csr213 csr214 csr215 csr216 csr217
+                   csr218 csr219 csr21a csr21b csr21c csr21d csr21e csr21f
+                   csr220 csr221 csr222 csr223 csr224 csr225 csr226 csr227
+                   csr228 csr229 csr22a csr22b csr22c csr22d csr22e csr22f
+                   csr230 csr231 csr232 csr233 csr234 csr235 csr236 csr237
+                   csr238 csr239 csr23a csr23b csr23c csr23d csr23e csr23f
+                   vsscratch vsepc vscause vstval vsip csr245 csr246 csr247
+                   csr248 csr249 csr24a csr24b csr24c csr24d csr24e csr24f
+                   csr250 csr251 csr252 csr253 csr254 csr255 csr256 csr257
+                   csr258 csr259 csr25a csr25b csr25c csr25d csr25e csr25f
+                   csr260 csr261 csr262 csr263 csr264 csr265 csr266 csr267
+                   csr268 csr269 csr26a csr26b csr26c csr26d csr26e csr26f
+                   csr270 csr271 csr272 csr273 csr274 csr275 csr276 csr277
+                   csr278 csr279 csr27a csr27b csr27c csr27d csr27e csr27f
+                   vsatp csr281 csr282 csr283 csr284 csr285 csr286 csr287
+                   csr288 csr289 csr28a csr28b csr28c csr28d csr28e csr28f
+                   csr290 csr291 csr292 csr293 csr294 csr295 csr296 csr297
+                   csr298 csr299 csr29a csr29b csr29c csr29d csr29e csr29f
+                   csr2a0 csr2a1 csr2a2 csr2a3 csr2a4 csr2a5 csr2a6 csr2a7
+                   csr2a8 csr2a9 csr2aa csr2ab csr2ac csr2ad csr2ae csr2af
+                   csr2b0 csr2b1 csr2b2 csr2b3 csr2b4 csr2b5 csr2b6 csr2b7
+                   csr2b8 csr2b9 csr2ba csr2bb csr2bc csr2bd csr2be csr2bf
+                   csr2c0 csr2c1 csr2c2 csr2c3 csr2c4 csr2c5 csr2c6 csr2c7
+                   csr2c8 csr2c9 csr2ca csr2cb csr2cc csr2cd csr2ce csr2cf
+                   csr2d0 csr2d1 csr2d2 csr2d3 csr2d4 csr2d5 csr2d6 csr2d7
+                   csr2d8 csr2d9 csr2da csr2db csr2dc csr2dd csr2de csr2df
+                   csr2e0 csr2e1 csr2e2 csr2e3 csr2e4 csr2e5 csr2e6 csr2e7
+                   csr2e8 csr2e9 csr2ea csr2eb csr2ec csr2ed csr2ee csr2ef
+                   csr2f0 csr2f1 csr2f2 csr2f3 csr2f4 csr2f5 csr2f6 csr2f7
+                   csr2f8 csr2f9 csr2fa csr2fb csr2fc csr2fd csr2fe csr2ff ];
+attach variables [ csr_3 ]
+                 [ mstatus misa medeleg mideleg mie mtvec mcounteren csr307
+                   csr308 csr309 csr30a csr30b csr30c csr30d csr30e csr30f
+                   mstatush csr311 csr312 csr313 csr314 csr315 csr316 csr317
+                   csr318 csr319 csr31a csr31b csr31c csr31d csr31e csr31f
+                   mcountinhibit csr321 csr322 mhpmevent3 mhpmevent4 mhpmevent5 mhpmevent6 mhpmevent7
+                   mhpmevent8 mhpmevent9 mhpmevent10 mhpmevent11 mhpmevent12 mhpmevent13 mhpmevent14 mhpmevent15
+                   mhpmevent16 mhpmevent17 mhpmevent18 mhpmevent19 mhpmevent20 mhpmevent21 mhpmevent22 mhpmevent23
+                   mhpmevent24 mhpmevent25 mhpmevent26 mhpmevent27 mhpmevent28 mhpmevent29 mhpmevent30 mhpmevent31
+                   mscratch mepc mcause mtval mip csr345 csr346 csr347
+                   csr348 csr349 mtinst mtval2 csr34c csr34d csr34e csr34f
+                   csr350 csr351 csr352 csr353 csr354 csr355 csr356 csr357
+                   csr358 csr359 csr35a csr35b csr35c csr35d csr35e csr35f
+                   csr360 csr361 csr362 csr363 csr364 csr365 csr366 csr367
+                   csr368 csr369 csr36a csr36b csr36c csr36d csr36e csr36f
+                   csr370 csr371 csr372 csr373 csr374 csr375 csr376 csr377
+                   csr378 csr379 csr37a csr37b csr37c csr37d csr37e csr37f
+                   mbase mbound mibase mibound mdbase mdbound csr386 csr387
+                   csr388 csr389 csr38a csr38b csr38c csr38d csr38e csr38f
+                   csr390 csr391 csr392 csr393 csr394 csr395 csr396 csr397
+                   csr398 csr399 csr39a csr39b csr39c csr39d csr39e csr39f
+                   pmpcfg0 pmpcfg1 pmpcfg2 pmpcfg3 pmpcfg4 pmpcfg5 pmpcfg6 pmpcfg7
+                   pmpcfg8 pmpcfg9 pmpcfg10 pmpcfg11 pmpcfg12 pmpcfg13 pmpcfg14 pmpcfg15
+                   pmpaddr0 pmpaddr1 pmpaddr2 pmpaddr3 pmpaddr4 pmpaddr5 pmpaddr6 pmpaddr7
+                   pmpaddr8 pmpaddr9 pmpaddr10 pmpaddr11 pmpaddr12 pmpaddr13 pmpaddr14 pmpaddr15
+                   pmpaddr16 pmpaddr17 pmpaddr18 pmpaddr19 pmpaddr20 pmpaddr21 pmpaddr22 pmpaddr23
+                   pmpaddr24 pmpaddr25 pmpaddr26 pmpaddr27 pmpaddr28 pmpaddr29 pmpaddr30 pmpaddr31
+                   pmpaddr32 pmpaddr33 pmpaddr34 pmpaddr35 pmpaddr36 pmpaddr37 pmpaddr38 pmpaddr39
+                   pmpaddr40 pmpaddr41 pmpaddr42 pmpaddr43 pmpaddr44 pmpaddr45 pmpaddr46 pmpaddr47
+                   pmpaddr48 pmpaddr49 pmpaddr50 pmpaddr51 pmpaddr52 pmpaddr53 pmpaddr54 pmpaddr55
+                   pmpaddr56 pmpaddr57 pmpaddr58 pmpaddr59 pmpaddr60 pmpaddr61 pmpaddr62 pmpaddr63
+                   csr3f0 csr3f1 csr3f2 csr3f3 csr3f4 csr3f5 csr3f6 csr3f7
+                   csr3f8 csr3f9 csr3fa csr3fb csr3fc csr3fd csr3fe csr3ff ];
+attach variables [ csr_4 ]
+                 [ csr400 csr401 csr402 csr403 csr404 csr405 csr406 csr407
+                   csr408 csr409 csr40a csr40b csr40c csr40d csr40e csr40f
+                   csr410 csr411 csr412 csr413 csr414 csr415 csr416 csr417
+                   csr418 csr419 csr41a csr41b csr41c csr41d csr41e csr41f
+                   csr420 csr421 csr422 csr423 csr424 csr425 csr426 csr427
+                   csr428 csr429 csr42a csr42b csr42c csr42d csr42e csr42f
+                   csr430 csr431 csr432 csr433 csr434 csr435 csr436 csr437
+                   csr438 csr439 csr43a csr43b csr43c csr43d csr43e csr43f
+                   csr440 csr441 csr442 csr443 csr444 csr445 csr446 csr447
+                   csr448 csr449 csr44a csr44b csr44c csr44d csr44e csr44f
+                   csr450 csr451 csr452 csr453 csr454 csr455 csr456 csr457
+                   csr458 csr459 csr45a csr45b csr45c csr45d csr45e csr45f
+                   csr460 csr461 csr462 csr463 csr464 csr465 csr466 csr467
+                   csr468 csr469 csr46a csr46b csr46c csr46d csr46e csr46f
+                   csr470 csr471 csr472 csr473 csr474 csr475 csr476 csr477
+                   csr478 csr479 csr47a csr47b csr47c csr47d csr47e csr47f
+                   csr480 csr481 csr482 csr483 csr484 csr485 csr486 csr487
+                   csr488 csr489 csr48a csr48b csr48c csr48d csr48e csr48f
+                   csr490 csr491 csr492 csr493 csr494 csr495 csr496 csr497
+                   csr498 csr499 csr49a csr49b csr49c csr49d csr49e csr49f
+                   csr4a0 csr4a1 csr4a2 csr4a3 csr4a4 csr4a5 csr4a6 csr4a7
+                   csr4a8 csr4a9 csr4aa csr4ab csr4ac csr4ad csr4ae csr4af
+                   csr4b0 csr4b1 csr4b2 csr4b3 csr4b4 csr4b5 csr4b6 csr4b7
+                   csr4b8 csr4b9 csr4ba csr4bb csr4bc csr4bd csr4be csr4bf
+                   csr4c0 csr4c1 csr4c2 csr4c3 csr4c4 csr4c5 csr4c6 csr4c7
+                   csr4c8 csr4c9 csr4ca csr4cb csr4cc csr4cd csr4ce csr4cf
+                   csr4d0 csr4d1 csr4d2 csr4d3 csr4d4 csr4d5 csr4d6 csr4d7
+                   csr4d8 csr4d9 csr4da csr4db csr4dc csr4dd csr4de csr4df
+                   csr4e0 csr4e1 csr4e2 csr4e3 csr4e4 csr4e5 csr4e6 csr4e7
+                   csr4e8 csr4e9 csr4ea csr4eb csr4ec csr4ed csr4ee csr4ef
+                   csr4f0 csr4f1 csr4f2 csr4f3 csr4f4 csr4f5 csr4f6 csr4f7
+                   csr4f8 csr4f9 csr4fa csr4fb csr4fc csr4fd csr4fe csr4ff ];
+attach variables [ csr_50 ]
+                 [ csr500 csr501 csr502 csr503 csr504 csr505 csr506 csr507
+                   csr508 csr509 csr50a csr50b csr50c csr50d csr50e csr50f
+                   csr510 csr511 csr512 csr513 csr514 csr515 csr516 csr517
+                   csr518 csr519 csr51a csr51b csr51c csr51d csr51e csr51f
+                   csr520 csr521 csr522 csr523 csr524 csr525 csr526 csr527
+                   csr528 csr529 csr52a csr52b csr52c csr52d csr52e csr52f
+                   csr530 csr531 csr532 csr533 csr534 csr535 csr536 csr537
+                   csr538 csr539 csr53a csr53b csr53c csr53d csr53e csr53f
+                   csr540 csr541 csr542 csr543 csr544 csr545 csr546 csr547
+                   csr548 csr549 csr54a csr54b csr54c csr54d csr54e csr54f
+                   csr550 csr551 csr552 csr553 csr554 csr555 csr556 csr557
+                   csr558 csr559 csr55a csr55b csr55c csr55d csr55e csr55f
+                   csr560 csr561 csr562 csr563 csr564 csr565 csr566 csr567
+                   csr568 csr569 csr56a csr56b csr56c csr56d csr56e csr56f
+                   csr570 csr571 csr572 csr573 csr574 csr575 csr576 csr577
+                   csr578 csr579 csr57a csr57b csr57c csr57d csr57e csr57f ];
+attach variables [ csr_58 ]
+                 [ csr580 csr581 csr582 csr583 csr584 csr585 csr586 csr587
+                    csr588 csr589 csr58a csr58b csr58c csr58d csr58e csr58f
+                    csr590 csr591 csr592 csr593 csr594 csr595 csr596 csr597
+                    csr598 csr599 csr59a csr59b csr59c csr59d csr59e csr59f
+                    csr5a0 csr5a1 csr5a2 csr5a3 csr5a4 csr5a5 csr5a6 csr5a7
+                    scontext csr5a9 csr5aa csr5ab csr5ac csr5ad csr5ae csr5af
+                    csr5b0 csr5b1 csr5b2 csr5b3 csr5b4 csr5b5 csr5b6 csr5b7
+                    csr5b8 csr5b9 csr5ba csr5bb csr5bc csr5bd csr5be csr5bf ];
+attach variables [ csr_5C ]
+                 [ csr5c0 csr5c1 csr5c2 csr5c3 csr5c4 csr5c5 csr5c6 csr5c7
+                   csr5c8 csr5c9 csr5ca csr5cb csr5cc csr5cd csr5ce csr5cf
+                   csr5d0 csr5d1 csr5d2 csr5d3 csr5d4 csr5d5 csr5d6 csr5d7
+                   csr5d8 csr5d9 csr5da csr5db csr5dc csr5dd csr5de csr5df
+                   csr5e0 csr5e1 csr5e2 csr5e3 csr5e4 csr5e5 csr5e6 csr5e7
+                   csr5e8 csr5e9 csr5ea csr5eb csr5ec csr5ed csr5ee csr5ef
+                   csr5f0 csr5f1 csr5f2 csr5f3 csr5f4 csr5f5 csr5f6 csr5f7
+                   csr5f8 csr5f9 csr5fa csr5fb csr5fc csr5fd csr5fe csr5ff ];
+attach variables [ csr_60 ]
+                 [ hstatus csr601 hedeleg hideleg hie htimedelta hcounteren hgeie
+                   csr608 csr609 csr60a csr60b csr60c csr60d csr60e csr60f
+                   csr610 csr611 csr612 csr613 csr614 htimedeltah csr616 csr617
+                   csr618 csr619 csr61a csr61b csr61c csr61d csr61e csr61f
+                   csr620 csr621 csr622 csr623 csr624 csr625 csr626 csr627
+                   csr628 csr629 csr62a csr62b csr62c csr62d csr62e csr62f
+                   csr630 csr631 csr632 csr633 csr634 csr635 csr636 csr637
+                   csr638 csr639 csr63a csr63b csr63c csr63d csr63e csr63f
+                   csr640 csr641 csr642 htval  hip    hvip   csr646 csr647
+                   csr648 csr649 htinst csr64b csr64c csr64d csr64e csr64f
+                   csr650 csr651 csr652 csr653 csr654 csr655 csr656 csr657
+                   csr658 csr659 csr65a csr65b csr65c csr65d csr65e csr65f
+                   csr660 csr661 csr662 csr663 csr664 csr665 csr666 csr667
+                   csr668 csr669 csr66a csr66b csr66c csr66d csr66e csr66f
+                   csr670 csr671 csr672 csr673 csr674 csr675 csr676 csr677
+                   csr678 csr679 csr67a csr67b csr67c csr67d csr67e csr67f ];
+attach variables [ csr_68 ]
+                 [ hgatp csr681 csr682 csr683 csr684 csr685 csr686 csr687
+                   csr688 csr689 csr68a csr68b csr68c csr68d csr68e csr68f
+                   csr690 csr691 csr692 csr693 csr694 csr695 csr696 csr697
+                   csr698 csr699 csr69a csr69b csr69c csr69d csr69e csr69f
+                   csr6a0 csr6a1 csr6a2 csr6a3 csr6a4 csr6a5 csr6a6 csr6a7
+                   hcontext csr6a9 csr6aa csr6ab csr6ac csr6ad csr6ae csr6af
+                   csr6b0 csr6b1 csr6b2 csr6b3 csr6b4 csr6b5 csr6b6 csr6b7
+                   csr6b8 csr6b9 csr6ba csr6bb csr6bc csr6bd csr6be csr6bf ];
+attach variables [ csr_6C ]
+                 [ csr6c0 csr6c1 csr6c2 csr6c3 csr6c4 csr6c5 csr6c6 csr6c7
+                   csr6c8 csr6c9 csr6ca csr6cb csr6cc csr6cd csr6ce csr6cf
+                   csr6d0 csr6d1 csr6d2 csr6d3 csr6d4 csr6d5 csr6d6 csr6d7
+                   csr6d8 csr6d9 csr6da csr6db csr6dc csr6dd csr6de csr6df
+                   csr6e0 csr6e1 csr6e2 csr6e3 csr6e4 csr6e5 csr6e6 csr6e7
+                   csr6e8 csr6e9 csr6ea csr6eb csr6ec csr6ed csr6ee csr6ef
+                   csr6f0 csr6f1 csr6f2 csr6f3 csr6f4 csr6f5 csr6f6 csr6f7
+                   csr6f8 csr6f9 csr6fa csr6fb csr6fc csr6fd csr6fe csr6ff ];
+attach variables [ csr_70 ]
+                 [ csr700 csr701 csr702 csr703 csr704 csr705 csr706 csr707
+                   csr708 csr709 csr70a csr70b csr70c csr70d csr70e csr70f
+                   csr710 csr711 csr712 csr713 csr714 csr715 csr716 csr717
+                   csr718 csr719 csr71a csr71b csr71c csr71d csr71e csr71f
+                   csr720 csr721 csr722 csr723 csr724 csr725 csr726 csr727
+                   csr728 csr729 csr72a csr72b csr72c csr72d csr72e csr72f
+                   csr730 csr731 csr732 csr733 csr734 csr735 csr736 csr737
+                   csr738 csr739 csr73a csr73b csr73c csr73d csr73e csr73f
+                   csr740 csr741 csr742 csr743 csr744 csr745 csr746 csr747
+                   csr748 csr749 csr74a csr74b csr74c csr74d csr74e csr74f
+                   csr750 csr751 csr752 csr753 csr754 csr755 csr756 csr757
+                   csr758 csr759 csr75a csr75b csr75c csr75d csr75e csr75f
+                   csr760 csr761 csr762 csr763 csr764 csr765 csr766 csr767
+                   csr768 csr769 csr76a csr76b csr76c csr76d csr76e csr76f
+                   csr770 csr771 csr772 csr773 csr774 csr775 csr776 csr777
+                   csr778 csr779 csr77a csr77b csr77c csr77d csr77e csr77f ];
+attach variables [ csr_78 ]
+                 [ csr780 csr781 csr782 csr783 csr784 csr785 csr786 csr787
+                   csr788 csr789 csr78a csr78b csr78c csr78d csr78e csr78f
+                   csr790 csr791 csr792 csr793 csr794 csr795 csr796 csr797
+                   csr798 csr799 csr79a csr79b csr79c csr79d csr79e csr79f ];
+attach variables [ csr_7A ]
+                 [ tselect tdata1 tdata2 tdata3 csr7a4 csr7a5 csr7a6 csr7a7
+                   mcontext csr7a9 csr7aa csr7ab csr7ac csr7ad csr7ae csr7af ];
+attach variables [ csr_7B ]
+                 [ dcsr dpc dscratch0 dscratch1 csr7b4 csr7b5 csr7b6 csr7b7
+                   csr7b8 csr7b9 csr7ba csr7bb csr7bc csr7bd csr7be csr7bf ];
+attach variables [ csr_7C ]
+                 [ csr7c0 csr7c1 csr7c2 csr7c3 csr7c4 csr7c5 csr7c6 csr7c7
+                   csr7c8 csr7c9 csr7ca csr7cb csr7cc csr7cd csr7ce csr7cf
+                   csr7d0 csr7d1 csr7d2 csr7d3 csr7d4 csr7d5 csr7d6 csr7d7
+                   csr7d8 csr7d9 csr7da csr7db csr7dc csr7dd csr7de csr7df
+                   csr7e0 csr7e1 csr7e2 csr7e3 csr7e4 csr7e5 csr7e6 csr7e7
+                   csr7e8 csr7e9 csr7ea csr7eb csr7ec csr7ed csr7ee csr7ef
+                   csr7f0 csr7f1 csr7f2 csr7f3 csr7f4 csr7f5 csr7f6 csr7f7
+                   csr7f8 csr7f9 csr7fa csr7fb csr7fc csr7fd csr7fe csr7ff ];
+attach variables [ csr_8 ]
+                 [ csr800 csr801 csr802 csr803 csr804 csr805 csr806 csr807
+                   csr808 csr809 csr80a csr80b csr80c csr80d csr80e csr80f
+                   csr810 csr811 csr812 csr813 csr814 csr815 csr816 csr817
+                   csr818 csr819 csr81a csr81b csr81c csr81d csr81e csr81f
+                   csr820 csr821 csr822 csr823 csr824 csr825 csr826 csr827
+                   csr828 csr829 csr82a csr82b csr82c csr82d csr82e csr82f
+                   csr830 csr831 csr832 csr833 csr834 csr835 csr836 csr837
+                   csr838 csr839 csr83a csr83b csr83c csr83d csr83e csr83f
+                   csr840 csr841 csr842 csr843 csr844 csr845 csr846 csr847
+                   csr848 csr849 csr84a csr84b csr84c csr84d csr84e csr84f
+                   csr850 csr851 csr852 csr853 csr854 csr855 csr856 csr857
+                   csr858 csr859 csr85a csr85b csr85c csr85d csr85e csr85f
+                   csr860 csr861 csr862 csr863 csr864 csr865 csr866 csr867
+                   csr868 csr869 csr86a csr86b csr86c csr86d csr86e csr86f
+                   csr870 csr871 csr872 csr873 csr874 csr875 csr876 csr877
+                   csr878 csr879 csr87a csr87b csr87c csr87d csr87e csr87f
+                   csr880 csr881 csr882 csr883 csr884 csr885 csr886 csr887
+                   csr888 csr889 csr88a csr88b csr88c csr88d csr88e csr88f
+                   csr890 csr891 csr892 csr893 csr894 csr895 csr896 csr897
+                   csr898 csr899 csr89a csr89b csr89c csr89d csr89e csr89f
+                   csr8a0 csr8a1 csr8a2 csr8a3 csr8a4 csr8a5 csr8a6 csr8a7
+                   csr8a8 csr8a9 csr8aa csr8ab csr8ac csr8ad csr8ae csr8af
+                   csr8b0 csr8b1 csr8b2 csr8b3 csr8b4 csr8b5 csr8b6 csr8b7
+                   csr8b8 csr8b9 csr8ba csr8bb csr8bc csr8bd csr8be csr8bf
+                   csr8c0 csr8c1 csr8c2 csr8c3 csr8c4 csr8c5 csr8c6 csr8c7
+                   csr8c8 csr8c9 csr8ca csr8cb csr8cc csr8cd csr8ce csr8cf
+                   csr8d0 csr8d1 csr8d2 csr8d3 csr8d4 csr8d5 csr8d6 csr8d7
+                   csr8d8 csr8d9 csr8da csr8db csr8dc csr8dd csr8de csr8df
+                   csr8e0 csr8e1 csr8e2 csr8e3 csr8e4 csr8e5 csr8e6 csr8e7
+                   csr8e8 csr8e9 csr8ea csr8eb csr8ec csr8ed csr8ee csr8ef
+                   csr8f0 csr8f1 csr8f2 csr8f3 csr8f4 csr8f5 csr8f6 csr8f7
+                   csr8f8 csr8f9 csr8fa csr8fb csr8fc csr8fd csr8fe csr8ff ];
+attach variables [ csr_90 ]
+                 [ csr900 csr901 csr902 csr903 csr904 csr905 csr906 csr907
+                   csr908 csr909 csr90a csr90b csr90c csr90d csr90e csr90f
+                   csr910 csr911 csr912 csr913 csr914 csr915 csr916 csr917
+                   csr918 csr919 csr91a csr91b csr91c csr91d csr91e csr91f
+                   csr920 csr921 csr922 csr923 csr924 csr925 csr926 csr927
+                   csr928 csr929 csr92a csr92b csr92c csr92d csr92e csr92f
+                   csr930 csr931 csr932 csr933 csr934 csr935 csr936 csr937
+                   csr938 csr939 csr93a csr93b csr93c csr93d csr93e csr93f
+                   csr940 csr941 csr942 csr943 csr944 csr945 csr946 csr947
+                   csr948 csr949 csr94a csr94b csr94c csr94d csr94e csr94f
+                   csr950 csr951 csr952 csr953 csr954 csr955 csr956 csr957
+                   csr958 csr959 csr95a csr95b csr95c csr95d csr95e csr95f
+                   csr960 csr961 csr962 csr963 csr964 csr965 csr966 csr967
+                   csr968 csr969 csr96a csr96b csr96c csr96d csr96e csr96f
+                   csr970 csr971 csr972 csr973 csr974 csr975 csr976 csr977
+                   csr978 csr979 csr97a csr97b csr97c csr97d csr97e csr97f ];
+attach variables [ csr_98 ]
+                 [ csr980 csr981 csr982 csr983 csr984 csr985 csr986 csr987
+                   csr988 csr989 csr98a csr98b csr98c csr98d csr98e csr98f
+                   csr990 csr991 csr992 csr993 csr994 csr995 csr996 csr997
+                   csr998 csr999 csr99a csr99b csr99c csr99d csr99e csr99f
+                   csr9a0 csr9a1 csr9a2 csr9a3 csr9a4 csr9a5 csr9a6 csr9a7
+                   csr9a8 csr9a9 csr9aa csr9ab csr9ac csr9ad csr9ae csr9af
+                   csr9b0 csr9b1 csr9b2 csr9b3 csr9b4 csr9b5 csr9b6 csr9b7
+                   csr9b8 csr9b9 csr9ba csr9bb csr9bc csr9bd csr9be csr9bf ];
+attach variables [ csr_9C ]
+                 [ csr9c0 csr9c1 csr9c2 csr9c3 csr9c4 csr9c5 csr9c6 csr9c7
+                   csr9c8 csr9c9 csr9ca csr9cb csr9cc csr9cd csr9ce csr9cf
+                   csr9d0 csr9d1 csr9d2 csr9d3 csr9d4 csr9d5 csr9d6 csr9d7
+                   csr9d8 csr9d9 csr9da csr9db csr9dc csr9dd csr9de csr9df
+                   csr9e0 csr9e1 csr9e2 csr9e3 csr9e4 csr9e5 csr9e6 csr9e7
+                   csr9e8 csr9e9 csr9ea csr9eb csr9ec csr9ed csr9ee csr9ef
+                   csr9f0 csr9f1 csr9f2 csr9f3 csr9f4 csr9f5 csr9f6 csr9f7
+                   csr9f8 csr9f9 csr9fa csr9fb csr9fc csr9fd csr9fe csr9ff ];
+attach variables [ csr_A0 ]
+                 [ csra00 csra01 csra02 csra03 csra04 csra05 csra06 csra07
+                   csra08 csra09 csra0a csra0b csra0c csra0d csra0e csra0f
+                   csra10 csra11 csra12 csra13 csra14 csra15 csra16 csra17
+                   csra18 csra19 csra1a csra1b csra1c csra1d csra1e csra1f
+                   csra20 csra21 csra22 csra23 csra24 csra25 csra26 csra27
+                   csra28 csra29 csra2a csra2b csra2c csra2d csra2e csra2f
+                   csra30 csra31 csra32 csra33 csra34 csra35 csra36 csra37
+                   csra38 csra39 csra3a csra3b csra3c csra3d csra3e csra3f
+                   csra40 csra41 csra42 csra43 csra44 csra45 csra46 csra47
+                   csra48 csra49 csra4a csra4b csra4c csra4d csra4e csra4f
+                   csra50 csra51 csra52 csra53 csra54 csra55 csra56 csra57
+                   csra58 csra59 csra5a csra5b csra5c csra5d csra5e csra5f
+                   csra60 csra61 csra62 csra63 csra64 csra65 csra66 csra67
+                   csra68 csra69 csra6a csra6b csra6c csra6d csra6e csra6f
+                   csra70 csra71 csra72 csra73 csra74 csra75 csra76 csra77
+                   csra78 csra79 csra7a csra7b csra7c csra7d csra7e csra7f ];
+attach variables [ csr_A8 ]
+                 [ csra80 csra81 csra82 csra83 csra84 csra85 csra86 csra87
+                   csra88 csra89 csra8a csra8b csra8c csra8d csra8e csra8f
+                   csra90 csra91 csra92 csra93 csra94 csra95 csra96 csra97
+                   csra98 csra99 csra9a csra9b csra9c csra9d csra9e csra9f
+                   csraa0 csraa1 csraa2 csraa3 csraa4 csraa5 csraa6 csraa7
+                   csraa8 csraa9 csraaa csraab csraac csraad csraae csraaf
+                   csrab0 csrab1 csrab2 csrab3 csrab4 csrab5 csrab6 csrab7
+                   csrab8 csrab9 csraba csrabb csrabc csrabd csrabe csrabf ];
+attach variables [ csr_AC ]
+                 [ csrac0 csrac1 csrac2 csrac3 csrac4 csrac5 csrac6 csrac7
+                   csrac8 csrac9 csraca csracb csracc csracd csrace csracf
+                   csrad0 csrad1 csrad2 csrad3 csrad4 csrad5 csrad6 csrad7
+                   csrad8 csrad9 csrada csradb csradc csradd csrade csradf
+                   csrae0 csrae1 csrae2 csrae3 csrae4 csrae5 csrae6 csrae7
+                   csrae8 csrae9 csraea csraeb csraec csraed csraee csraef
+                   csraf0 csraf1 csraf2 csraf3 csraf4 csraf5 csraf6 csraf7
+                   csraf8 csraf9 csrafa csrafb csrafc csrafd csrafe csraff ];
+attach variables [ csr_B0 ]
+                 [ mcycle csrb01 minstret mhpmcounter3 mhpmcounter4 mhpmcounter5 mhpmcounter6 mhpmcounter7
+                   mhpmcounter8 mhpmcounter9 mhpmcounter10 mhpmcounter11 mhpmcounter12 mhpmcounter13 mhpmcounter14 mhpmcounter15
+                   mhpmcounter16 mhpmcounter17 mhpmcounter18 mhpmcounter19 mhpmcounter20 mhpmcounter21 mhpmcounter22 mhpmcounter23
+                   mhpmcounter24 mhpmcounter25 mhpmcounter26 mhpmcounter27 mhpmcounter28 mhpmcounter29 mhpmcounter30 mhpmcounter31
+                   csrb20 csrb21 csrb22 csrb23 csrb24 csrb25 csrb26 csrb27
+		   csrb28 csrb29 csrb2a csrb2b csrb2c csrb2d csrb2e csrb2f
+		   csrb30 csrb31 csrb32 csrb33 csrb34 csrb35 csrb36 csrb37
+		   csrb38 csrb39 csrb3a csrb3b csrb3c csrb3d csrb3e csrb3f
+                   csrb40 csrb41 csrb42 csrb43 csrb44 csrb45 csrb46 csrb47
+                   csrb48 csrb49 csrb4a csrb4b csrb4c csrb4d csrb4e csrb4f
+                   csrb50 csrb51 csrb52 csrb53 csrb54 csrb55 csrb56 csrb57
+                   csrb58 csrb59 csrb5a csrb5b csrb5c csrb5d csrb5e csrb5f
+                   csrb60 csrb61 csrb62 csrb63 csrb64 csrb65 csrb66 csrb67
+                   csrb68 csrb69 csrb6a csrb6b csrb6c csrb6d csrb6e csrb6f
+                   csrb70 csrb71 csrb72 csrb73 csrb74 csrb75 csrb76 csrb77
+                   csrb78 csrb79 csrb7a csrb7b csrb7c csrb7d csrb7e csrb7f ];
+attach variables [ csr_B8 ]
+                 [ mcycleh csrb81 minstreth mhpmcounter3h mhpmcounter4h mhpmcounter5h mhpmcounter6h mhpmcounter7h
+                   mhpmcounter8h mhpmcounter9h mhpmcounter10h mhpmcounter11h mhpmcounter12h mhpmcounter13h mhpmcounter14h mhpmcounter15h
+                   mhpmcounter16h mhpmcounter17h mhpmcounter18h mhpmcounter19h mhpmcounter20h mhpmcounter21h mhpmcounter22h mhpmcounter23h
+                   mhpmcounter24h mhpmcounter25h mhpmcounter26h mhpmcounter27h mhpmcounter28h mhpmcounter29h mhpmcounter30h mhpmcounter31h
+                   csrba0 csrba1 csrba2 csrba3 csrba4 csrba5 csrba6 csrba7
+                   csrba8 csrba9 csrbaa csrbab csrbac csrbad csrbae csrbaf
+                   csrbb0 csrbb1 csrbb2 csrbb3 csrbb4 csrbb5 csrbb6 csrbb7
+                   csrbb8 csrbb9 csrbba csrbbb csrbbc csrbbd csrbbe csrbbf ];
+attach variables [ csr_BC ]
+                 [ csrbc0 csrbc1 csrbc2 csrbc3 csrbc4 csrbc5 csrbc6 csrbc7
+                   csrbc8 csrbc9 csrbca csrbcb csrbcc csrbcd csrbce csrbcf
+                   csrbd0 csrbd1 csrbd2 csrbd3 csrbd4 csrbd5 csrbd6 csrbd7
+                   csrbd8 csrbd9 csrbda csrbdb csrbdc csrbdd csrbde csrbdf
+                   csrbe0 csrbe1 csrbe2 csrbe3 csrbe4 csrbe5 csrbe6 csrbe7
+                   csrbe8 csrbe9 csrbea csrbeb csrbec csrbed csrbee csrbef
+                   csrbf0 csrbf1 csrbf2 csrbf3 csrbf4 csrbf5 csrbf6 csrbf7
+                   csrbf8 csrbf9 csrbfa csrbfb csrbfc csrbfd csrbfe csrbff ];
+attach variables [ csr_C0 ]
+                 [ cycle time instret hpmcounter3 hpmcounter4 hpmcounter5 hpmcounter6 hpmcounter7
+                   hpmcounter8 hpmcounter9 hpmcounter10 hpmcounter11 hpmcounter12 hpmcounter13 hpmcounter14 hpmcounter15
+                   hpmcounter16 hpmcounter17 hpmcounter18 hpmcounter19 hpmcounter20 hpmcounter21 hpmcounter22 hpmcounter23
+                   hpmcounter24 hpmcounter25 hpmcounter26 hpmcounter27 hpmcounter28 hpmcounter29 hpmcounter30 hpmcounter31
+                   vl vtype vlenb csrc23 csrc24 csrc25 csrc26 csrc27
+                   csrc28 csrc29 csrc2a csrc2b csrc2c csrc2d csrc2e csrc2f
+                   csrc30 csrc31 csrc32 csrc33 csrc34 csrc35 csrc36 csrc37
+                   csrc38 csrc39 csrc3a csrc3b csrc3c csrc3d csrc3e csrc3f
+                   csrc40 csrc41 csrc42 csrc43 csrc44 csrc45 csrc46 csrc47
+                   csrc48 csrc49 csrc4a csrc4b csrc4c csrc4d csrc4e csrc4f
+                   csrc50 csrc51 csrc52 csrc53 csrc54 csrc55 csrc56 csrc57
+                   csrc58 csrc59 csrc5a csrc5b csrc5c csrc5d csrc5e csrc5f
+                   csrc60 csrc61 csrc62 csrc63 csrc64 csrc65 csrc66 csrc67
+                   csrc68 csrc69 csrc6a csrc6b csrc6c csrc6d csrc6e csrc6f
+                   csrc70 csrc71 csrc72 csrc73 csrc74 csrc75 csrc76 csrc77
+                   csrc78 csrc79 csrc7a csrc7b csrc7c csrc7d csrc7e csrc7f ];
+attach variables [ csr_C8 ]
+                 [ cycleh timeh instreth hpmcounter3h hpmcounter4h hpmcounter5h hpmcounter6h hpmcounter7h
+                   hpmcounter8h hpmcounter9h hpmcounter10h hpmcounter11h hpmcounter12h hpmcounter13h hpmcounter14h hpmcounter15h
+                   hpmcounter16h hpmcounter17h hpmcounter18h hpmcounter19h hpmcounter20h hpmcounter21h hpmcounter22h hpmcounter23h
+                   hpmcounter24h hpmcounter25h hpmcounter26h hpmcounter27h hpmcounter28h hpmcounter29h hpmcounter30h hpmcounter31h
+                   csrca0 csrca1 csrca2 csrca3 csrca4 csrca5 csrca6 csrca7
+                   csrca8 csrca9 csrcaa csrcab csrcac csrcad csrcae csrcaf
+                   csrcb0 csrcb1 csrcb2 csrcb3 csrcb4 csrcb5 csrcb6 csrcb7
+                   csrcb8 csrcb9 csrcba csrcbb csrcbc csrcbd csrcbe csrcbf ];
+attach variables [ csr_CC ]
+                 [ csrcc0 csrcc1 csrcc2 csrcc3 csrcc4 csrcc5 csrcc6 csrcc7
+                   csrcc8 csrcc9 csrcca csrccb csrccc csrccd csrcce csrccf
+                   csrcd0 csrcd1 csrcd2 csrcd3 csrcd4 csrcd5 csrcd6 csrcd7
+                   csrcd8 csrcd9 csrcda csrcdb csrcdc csrcdd csrcde csrcdf
+                   csrce0 csrce1 csrce2 csrce3 csrce4 csrce5 csrce6 csrce7
+                   csrce8 csrce9 csrcea csrceb csrcec csrced csrcee csrcef
+                   csrcf0 csrcf1 csrcf2 csrcf3 csrcf4 csrcf5 csrcf6 csrcf7
+                   csrcf8 csrcf9 csrcfa csrcfb csrcfc csrcfd csrcfe csrcff ];
+attach variables [ csr_D0 ]
+                 [ csrd00 csrd01 csrd02 csrd03 csrd04 csrd05 csrd06 csrd07
+                   csrd08 csrd09 csrd0a csrd0b csrd0c csrd0d csrd0e csrd0f
+                   csrd10 csrd11 csrd12 csrd13 csrd14 csrd15 csrd16 csrd17
+                   csrd18 csrd19 csrd1a csrd1b csrd1c csrd1d csrd1e csrd1f
+                   csrd20 csrd21 csrd22 csrd23 csrd24 csrd25 csrd26 csrd27
+                   csrd28 csrd29 csrd2a csrd2b csrd2c csrd2d csrd2e csrd2f
+                   csrd30 csrd31 csrd32 csrd33 csrd34 csrd35 csrd36 csrd37
+                   csrd38 csrd39 csrd3a csrd3b csrd3c csrd3d csrd3e csrd3f
+                   csrd40 csrd41 csrd42 csrd43 csrd44 csrd45 csrd46 csrd47
+                   csrd48 csrd49 csrd4a csrd4b csrd4c csrd4d csrd4e csrd4f
+                   csrd50 csrd51 csrd52 csrd53 csrd54 csrd55 csrd56 csrd57
+                   csrd58 csrd59 csrd5a csrd5b csrd5c csrd5d csrd5e csrd5f
+                   csrd60 csrd61 csrd62 csrd63 csrd64 csrd65 csrd66 csrd67
+                   csrd68 csrd69 csrd6a csrd6b csrd6c csrd6d csrd6e csrd6f
+                   csrd70 csrd71 csrd72 csrd73 csrd74 csrd75 csrd76 csrd77
+                   csrd78 csrd79 csrd7a csrd7b csrd7c csrd7d csrd7e csrd7f ];
+attach variables [ csr_D8 ]
+                 [ csrd80 csrd81 csrd82 csrd83 csrd84 csrd85 csrd86 csrd87
+                   csrd88 csrd89 csrd8a csrd8b csrd8c csrd8d csrd8e csrd8f
+                   csrd90 csrd91 csrd92 csrd93 csrd94 csrd95 csrd96 csrd97
+                   csrd98 csrd99 csrd9a csrd9b csrd9c csrd9d csrd9e csrd9f
+                   csrda0 csrda1 csrda2 csrda3 csrda4 csrda5 csrda6 csrda7
+                   csrda8 csrda9 csrdaa csrdab csrdac csrdad csrdae csrdaf
+                   csrdb0 csrdb1 csrdb2 csrdb3 csrdb4 csrdb5 csrdb6 csrdb7
+                   csrdb8 csrdb9 csrdba csrdbb csrdbc csrdbd csrdbe csrdbf ];
+attach variables [ csr_DC ]
+                 [ csrdc0 csrdc1 csrdc2 csrdc3 csrdc4 csrdc5 csrdc6 csrdc7
+                   csrdc8 csrdc9 csrdca csrdcb csrdcc csrdcd csrdce csrdcf
+                   csrdd0 csrdd1 csrdd2 csrdd3 csrdd4 csrdd5 csrdd6 csrdd7
+                   csrdd8 csrdd9 csrdda csrddb csrddc csrddd csrdde csrddf
+                   csrde0 csrde1 csrde2 csrde3 csrde4 csrde5 csrde6 csrde7
+                   csrde8 csrde9 csrdea csrdeb csrdec csrded csrdee csrdef
+                   csrdf0 csrdf1 csrdf2 csrdf3 csrdf4 csrdf5 csrdf6 csrdf7
+                   csrdf8 csrdf9 csrdfa csrdfb csrdfc csrdfd csrdfe csrdff ];
+attach variables [ csr_E0 ]
+                 [ csre00 csre01 csre02 csre03 csre04 csre05 csre06 csre07
+                   csre08 csre09 csre0a csre0b csre0c csre0d csre0e csre0f
+                   csre10 csre11 hgeip csre13 csre14 csre15 csre16 csre17
+                   csre18 csre19 csre1a csre1b csre1c csre1d csre1e csre1f
+                   csre20 csre21 csre22 csre23 csre24 csre25 csre26 csre27
+                   csre28 csre29 csre2a csre2b csre2c csre2d csre2e csre2f
+                   csre30 csre31 csre32 csre33 csre34 csre35 csre36 csre37
+                   csre38 csre39 csre3a csre3b csre3c csre3d csre3e csre3f
+                   csre40 csre41 csre42 csre43 csre44 csre45 csre46 csre47
+                   csre48 csre49 csre4a csre4b csre4c csre4d csre4e csre4f
+                   csre50 csre51 csre52 csre53 csre54 csre55 csre56 csre57
+                   csre58 csre59 csre5a csre5b csre5c csre5d csre5e csre5f
+                   csre60 csre61 csre62 csre63 csre64 csre65 csre66 csre67
+                   csre68 csre69 csre6a csre6b csre6c csre6d csre6e csre6f
+                   csre70 csre71 csre72 csre73 csre74 csre75 csre76 csre77
+                   csre78 csre79 csre7a csre7b csre7c csre7d csre7e csre7f ];
+attach variables [ csr_E8 ]
+                 [ csre80 csre81 csre82 csre83 csre84 csre85 csre86 csre87
+                   csre88 csre89 csre8a csre8b csre8c csre8d csre8e csre8f
+                   csre90 csre91 csre92 csre93 csre94 csre95 csre96 csre97
+                   csre98 csre99 csre9a csre9b csre9c csre9d csre9e csre9f
+                   csrea0 csrea1 csrea2 csrea3 csrea4 csrea5 csrea6 csrea7
+                   csrea8 csrea9 csreaa csreab csreac csread csreae csreaf
+                   csreb0 csreb1 csreb2 csreb3 csreb4 csreb5 csreb6 csreb7
+                   csreb8 csreb9 csreba csrebb csrebc csrebd csrebe csrebf ];
+attach variables [ csr_EC ]
+                 [ csrec0 csrec1 csrec2 csrec3 csrec4 csrec5 csrec6 csrec7
+                   csrec8 csrec9 csreca csrecb csrecc csrecd csrece csrecf
+                   csred0 csred1 csred2 csred3 csred4 csred5 csred6 csred7
+                   csred8 csred9 csreda csredb csredc csredd csrede csredf
+                   csree0 csree1 csree2 csree3 csree4 csree5 csree6 csree7
+                   csree8 csree9 csreea csreeb csreec csreed csreee csreef
+                   csref0 csref1 csref2 csref3 csref4 csref5 csref6 csref7
+                   csref8 csref9 csrefa csrefb csrefc csrefd csrefe csreff ];
+attach variables [ csr_F0 ]
+                 [ csrf00 csrf01 csrf02 csrf03 csrf04 csrf05 csrf06 csrf07
+                   csrf08 csrf09 csrf0a csrf0b csrf0c csrf0d csrf0e csrf0f
+                   csrf10 mvendorid marchid mimpid mhartid csrf15 csrf16 csrf17
+                   csrf18 csrf19 csrf1a csrf1b csrf1c csrf1d csrf1e csrf1f
+                   csrf20 csrf21 csrf22 csrf23 csrf24 csrf25 csrf26 csrf27
+                   csrf28 csrf29 csrf2a csrf2b csrf2c csrf2d csrf2e csrf2f
+                   csrf30 csrf31 csrf32 csrf33 csrf34 csrf35 csrf36 csrf37
+                   csrf38 csrf39 csrf3a csrf3b csrf3c csrf3d csrf3e csrf3f
+                   csrf40 csrf41 csrf42 csrf43 csrf44 csrf45 csrf46 csrf47
+                   csrf48 csrf49 csrf4a csrf4b csrf4c csrf4d csrf4e csrf4f
+                   csrf50 csrf51 csrf52 csrf53 csrf54 csrf55 csrf56 csrf57
+                   csrf58 csrf59 csrf5a csrf5b csrf5c csrf5d csrf5e csrf5f
+                   csrf60 csrf61 csrf62 csrf63 csrf64 csrf65 csrf66 csrf67
+                   csrf68 csrf69 csrf6a csrf6b csrf6c csrf6d csrf6e csrf6f
+                   csrf70 csrf71 csrf72 csrf73 csrf74 csrf75 csrf76 csrf77
+                   csrf78 csrf79 csrf7a csrf7b csrf7c csrf7d csrf7e csrf7f ];
+attach variables [ csr_F8 ]
+                 [ csrf80 csrf81 csrf82 csrf83 csrf84 csrf85 csrf86 csrf87
+                   csrf88 csrf89 csrf8a csrf8b csrf8c csrf8d csrf8e csrf8f
+                   csrf90 csrf91 csrf92 csrf93 csrf94 csrf95 csrf96 csrf97
+                   csrf98 csrf99 csrf9a csrf9b csrf9c csrf9d csrf9e csrf9f
+                   csrfa0 csrfa1 csrfa2 csrfa3 csrfa4 csrfa5 csrfa6 csrfa7
+                   csrfa8 csrfa9 csrfaa csrfab csrfac csrfad csrfae csrfaf
+                   csrfb0 csrfb1 csrfb2 csrfb3 csrfb4 csrfb5 csrfb6 csrfb7
+                   csrfb8 csrfb9 csrfba csrfbb csrfbc csrfbd csrfbe csrfbf ];
+attach variables [ csr_FC ]
+                 [ csrfc0 csrfc1 csrfc2 csrfc3 csrfc4 csrfc5 csrfc6 csrfc7
+                   csrfc8 csrfc9 csrfca csrfcb csrfcc csrfcd csrfce csrfcf
+                   csrfd0 csrfd1 csrfd2 csrfd3 csrfd4 csrfd5 csrfd6 csrfd7
+                   csrfd8 csrfd9 csrfda csrfdb csrfdc csrfdd csrfde csrfdf
+                   csrfe0 csrfe1 csrfe2 csrfe3 csrfe4 csrfe5 csrfe6 csrfe7
+                   csrfe8 csrfe9 csrfea csrfeb csrfec csrfed csrfee csrfef
+                   csrff0 csrff1 csrff2 csrff3 csrff4 csrff5 csrff6 csrff7
+                   csrff8 csrff9 csrffa csrffb csrffc csrffd csrffe csrfff ];

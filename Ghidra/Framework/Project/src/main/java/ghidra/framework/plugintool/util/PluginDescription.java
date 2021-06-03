@@ -170,7 +170,7 @@ public class PluginDescription implements Comparable<PluginDescription> {
 
 	/**
 	 * Return the description of the plugin.
-	 * @return "<None>" if no description was specified
+	 * @return {@code "<None>"} if no description was specified
 	 */
 	public String getDescription() {
 		return description;
@@ -284,9 +284,9 @@ public class PluginDescription implements Comparable<PluginDescription> {
 	/**
 	 * Constructs a new PluginDescription for the given plugin class.
 	 * <p>
-	 * Deprecated, use {@link PluginInfo @PluginInfo} instead.
+	 * @deprecated, use {@link PluginInfo &#64;PluginInfo} instead.
 	 *
-	 * @param pluginClass the class of the plugin
+	 * @param pluginClassParam the class of the plugin
 	 * @param status the status, UNSTABLE, STABLE, RELEASED, DEBUG, or EXAMPLE
 	 * @param pluginPackage the package to which the plugin belongs (see {@link PluginPackage}
 	 *        subclasses for examples)

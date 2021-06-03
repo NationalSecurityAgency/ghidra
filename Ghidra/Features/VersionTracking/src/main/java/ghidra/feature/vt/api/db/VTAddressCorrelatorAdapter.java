@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,50 +16,52 @@
 package ghidra.feature.vt.api.db;
 
 import static ghidra.feature.vt.api.db.VTAddressCorrelatorAdapter.AddressCorrelationTableDescriptor.*;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
 import db.*;
-import db.util.TableColumn;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 public abstract class VTAddressCorrelatorAdapter {
 
-	public static class AddressCorrelationTableDescriptor extends db.util.TableDescriptor {
+	public static class AddressCorrelationTableDescriptor
+			extends ghidra.feature.vt.api.db.TableDescriptor {
 
-		public static TableColumn SOURCE_ENTRY_COL = new TableColumn(LongField.class, true);
-		public static TableColumn SOURCE_ADDRESS_COL = new TableColumn(LongField.class);
-		public static TableColumn DESTINATION_ADDRESS_COL = new TableColumn(LongField.class);
-		
-		public static AddressCorrelationTableDescriptor INSTANCE = new AddressCorrelationTableDescriptor();
+		public static TableColumn SOURCE_ENTRY_COL = new TableColumn(LongField.INSTANCE, true);
+		public static TableColumn SOURCE_ADDRESS_COL = new TableColumn(LongField.INSTANCE);
+		public static TableColumn DESTINATION_ADDRESS_COL = new TableColumn(LongField.INSTANCE);
+
+		public static AddressCorrelationTableDescriptor INSTANCE =
+			new AddressCorrelationTableDescriptor();
 	}
-	
+
 	static String TABLE_NAME = "AddressCorrelationTable";
-	static Schema TABLE_SCHEMA = new Schema(0, "Key",
-		INSTANCE.getColumnClasses(), INSTANCE.getColumnNames());
+	static Schema TABLE_SCHEMA =
+		new Schema(0, "Key", INSTANCE.getColumnFields(), INSTANCE.getColumnNames());
 	static int[] TABLE_INDEXES = INSTANCE.getIndexedColumns();
 	private DBHandle dbHandle;
-	
+
 	protected VTAddressCorrelatorAdapter(DBHandle dbHandle) {
 		this.dbHandle = dbHandle;
 	}
-	
+
 	public static VTAddressCorrelatorAdapter createAdapter(DBHandle dbHandle) throws IOException {
 		return new VTAddressCorrelationAdapterV0(dbHandle);
 	}
 
-	public static VTAddressCorrelatorAdapter getAdapter(DBHandle dbHandle, TaskMonitor monitor) 
+	public static VTAddressCorrelatorAdapter getAdapter(DBHandle dbHandle, TaskMonitor monitor)
 			throws VersionException {
 		return new VTAddressCorrelationAdapterV0(dbHandle, monitor);
 	}
 
-	abstract void createAddressRecord(long sourceEntryLong, long sourceLong, long destinationLong) throws IOException;
+	abstract void createAddressRecord(long sourceEntryLong, long sourceLong, long destinationLong)
+			throws IOException;
 
-	abstract List<Record> getAddressRecords(long sourceEntryLong) throws IOException;
+	abstract List<DBRecord> getAddressRecords(long sourceEntryLong) throws IOException;
 
 	void close() {
 		dbHandle.close();
@@ -69,8 +70,9 @@ public abstract class VTAddressCorrelatorAdapter {
 	void save(TaskMonitor monitor) throws CancelledException, IOException {
 		dbHandle.save("", null, monitor);
 	}
+
 	void saveAs(File file, TaskMonitor monitor) throws CancelledException, IOException {
 		dbHandle.saveAs(file, true, monitor);
 	}
-	
+
 }

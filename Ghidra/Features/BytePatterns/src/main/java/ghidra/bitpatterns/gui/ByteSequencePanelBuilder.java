@@ -16,8 +16,6 @@
 package ghidra.bitpatterns.gui;
 
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 import javax.swing.*;
@@ -42,13 +40,14 @@ public class ByteSequencePanelBuilder extends ContextRegisterFilterablePanelBuil
 	private JButton applyLengthFilterButton;
 	private JButton clearLengthFilterButton;
 	private JTextField numSeqsField;
+	private GFilterTable<ByteSequenceRowObject> filterTable;
 	private static final String APPLY_LENGTH_FILTER_BUTTON_TEXT = "Apply Length Filter";
 	private static final String CLEAR_LENGTH_FILTER_BUTTON_TEXT = "Clear Length Filter";
 	private static final String BYTE_SEQUENCE_LENGTH_FILTER_CREATER_TEXT = "Set Length Filter";
 	private static final String NUM_SEQS_LABEL_TEXT = " Number of Sequences ";
 
 	/**
-	 * Creates a {@link ByteSequencePanelBuilder} in a given {@link FunctionBitPatternPlugin} for sequences of a
+	 * Creates a {@link ByteSequencePanelBuilder} in a given {@link FunctionBitPatternsExplorerPlugin} for sequences of a
 	 * given {@PatternType}
 	 * @param plugin plugin
 	 * @param type {@PatternType} of sequences
@@ -59,7 +58,7 @@ public class ByteSequencePanelBuilder extends ContextRegisterFilterablePanelBuil
 	}
 
 	/**
-	 * Returns the last selected {@link ByteSequenceRowObjects}s of the table associated to
+	 * Returns the last selected {@link ByteSequenceRowObject}s of the table associated to
 	 * this panel
 	 * @return the selected objects
 	 */
@@ -121,7 +120,7 @@ public class ByteSequencePanelBuilder extends ContextRegisterFilterablePanelBuil
 
 		mainPanel.add(getButtonPanel(), BorderLayout.SOUTH);
 		byteSeqTable = new DisassembledByteSequenceTableModel(plugin, rowObjects);
-		GFilterTable<ByteSequenceRowObject> filterTable = new GFilterTable<>(byteSeqTable);
+		filterTable = new GFilterTable<>(byteSeqTable);
 		mainPanel.add(filterTable, BorderLayout.CENTER, TABLE_INDEX);
 		addLengthFilterAndAnalysisButtons();
 		mainPanel.setVisible(true);
@@ -133,10 +132,12 @@ public class ByteSequencePanelBuilder extends ContextRegisterFilterablePanelBuil
 	 */
 	public void updateTable() {
 		mainPanel.remove(TABLE_INDEX);
+		filterTable.dispose();
+
 		rowObjects = ByteSequenceRowObject.getFilteredRowObjects(fsReader.getFInfoList(), type,
 			getContextRegisterFilter(), lengthFilter);
 		byteSeqTable = new DisassembledByteSequenceTableModel(plugin, rowObjects);
-		GFilterTable<ByteSequenceRowObject> filterTable = new GFilterTable<>(byteSeqTable);
+		filterTable = new GFilterTable<>(byteSeqTable);
 
 		int totalNumSeqs = 0;
 		for (ByteSequenceRowObject row : rowObjects) {
@@ -149,7 +150,7 @@ public class ByteSequencePanelBuilder extends ContextRegisterFilterablePanelBuil
 	}
 
 	/**
-	 * Sets the {@link FileBitsPatternInfoReader} object to use a data source
+	 * Sets the {@link FileBitPatternInfoReader} object to use a data source
 	 * @param fsReader {@link FileBitPatternInfoReader} object containing the sequences to analyze
 	 */
 	public void setFsReader(FileBitPatternInfoReader fsReader) {
@@ -163,43 +164,40 @@ public class ByteSequencePanelBuilder extends ContextRegisterFilterablePanelBuil
 
 		applyLengthFilterButton = new JButton(APPLY_LENGTH_FILTER_BUTTON_TEXT);
 		getButtonPanel().add(applyLengthFilterButton);
-		applyLengthFilterButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				ByteSequenceLengthFilterInputDialog filterCreator =
-					new ByteSequenceLengthFilterInputDialog(
-						BYTE_SEQUENCE_LENGTH_FILTER_CREATER_TEXT, mainPanel);
-				if (filterCreator.isCanceled()) {
-					return;
-				}
-				lengthFilter = filterCreator.getValue();
-				applyFilterAction();
+		applyLengthFilterButton.addActionListener(e -> {
+			ByteSequenceLengthFilterInputDialog filterCreator =
+				new ByteSequenceLengthFilterInputDialog(
+					BYTE_SEQUENCE_LENGTH_FILTER_CREATER_TEXT, mainPanel);
+			if (filterCreator.isCanceled()) {
+				return;
 			}
+			lengthFilter = filterCreator.getValue();
+			applyFilterAction();
 		});
 
 		clearLengthFilterButton = new JButton(CLEAR_LENGTH_FILTER_BUTTON_TEXT);
 		getButtonPanel().add(clearLengthFilterButton);
-		clearLengthFilterButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				lengthFilter = null;
-				updateTable();
-			}
+		clearLengthFilterButton.addActionListener(e -> {
+			lengthFilter = null;
+			updateTable();
 		});
 	}
 
 	/**
 	 * Enables the "Apply Length Filter" and "Clear Length Filter" buttons based on a boolean input
-	 * @param buttons will be enabled precisely when this parameter is {@code true}
+	 * @param enabled will be enabled precisely when this parameter is {@code true}
 	 */
-	public void enableLengthFilterButtons(boolean x) {
+	public void enableLengthFilterButtons(boolean enabled) {
 		if (applyLengthFilterButton != null) {
-			applyLengthFilterButton.setEnabled(x);
+			applyLengthFilterButton.setEnabled(enabled);
 		}
 		if (clearLengthFilterButton != null) {
-			clearLengthFilterButton.setEnabled(x);
+			clearLengthFilterButton.setEnabled(enabled);
 		}
 		return;
+	}
+
+	public void dispose() {
+		filterTable.dispose();
 	}
 }

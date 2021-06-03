@@ -35,33 +35,21 @@ class MemoryBlockSourceInfoDB implements MemoryBlockSourceInfo {
 		this.subBlock = subBlock;
 	}
 
-	/**
-	 * @return
-	 */
 	@Override
 	public long getLength() {
 		return subBlock.subBlockLength;
 	}
 
-	/**
-	 * @return
-	 */
 	@Override
 	public Address getMinAddress() {
 		return block.getStart().add(subBlock.subBlockOffset);
 	}
 
-	/**
-	 * @return
-	 */
 	@Override
 	public Address getMaxAddress() {
 		return block.getStart().add(subBlock.subBlockOffset + subBlock.subBlockLength - 1);
 	}
 
-	/**
-	 * @return
-	 */
 	@Override
 	public String getDescription() {
 		return subBlock.getDescription();
@@ -74,9 +62,6 @@ class MemoryBlockSourceInfoDB implements MemoryBlockSourceInfo {
 
 	}
 
-	/**
-	 * @return
-	 */
 	@Override
 	public Optional<FileBytes> getFileBytes() {
 		if (subBlock instanceof FileBytesSubMemoryBlock) {
@@ -85,9 +70,6 @@ class MemoryBlockSourceInfoDB implements MemoryBlockSourceInfo {
 		return Optional.empty();
 	}
 
-	/**
-	 * @return
-	 */
 	@Override
 	public long getFileBytesOffset() {
 		if (subBlock instanceof FileBytesSubMemoryBlock) {
@@ -96,10 +78,6 @@ class MemoryBlockSourceInfoDB implements MemoryBlockSourceInfo {
 		return -1;
 	}
 
-	/**
-	 * @param address
-	 * @return
-	 */
 	@Override
 	public long getFileBytesOffset(Address address) {
 		if (subBlock instanceof FileBytesSubMemoryBlock && contains(address)) {
@@ -110,9 +88,6 @@ class MemoryBlockSourceInfoDB implements MemoryBlockSourceInfo {
 		return -1;
 	}
 
-	/**
-	 * @return
-	 */
 	@Override
 	public Optional<AddressRange> getMappedRange() {
 		if (subBlock instanceof BitMappedSubMemoryBlock) {
@@ -126,18 +101,20 @@ class MemoryBlockSourceInfoDB implements MemoryBlockSourceInfo {
 		return Optional.empty();
 	}
 
-	/**
-	 * @return
-	 */
+	@Override
+	public Optional<ByteMappingScheme> getByteMappingScheme() {
+		if (subBlock instanceof ByteMappedSubMemoryBlock) {
+			ByteMappedSubMemoryBlock byteMapped = (ByteMappedSubMemoryBlock) subBlock;
+			return Optional.of(byteMapped.getByteMappingScheme());
+		}
+		return Optional.empty();
+	}
+
 	@Override
 	public MemoryBlock getMemoryBlock() {
 		return block;
 	}
 
-	/**
-	 * @param address
-	 * @return
-	 */
 	@Override
 	public boolean contains(Address address) {
 		return address.compareTo(getMinAddress()) >= 0 && address.compareTo(getMaxAddress()) <= 0;

@@ -70,7 +70,7 @@ public class CreateEHESTypeListBackgroundCmd
 	@Override
 	protected EHESTypeListModel createModel(Program program) {
 		if (model == null) {
-			model = new EHESTypeListModel(program, address, validationOptions);
+			model = new EHESTypeListModel(program, getDataAddress(), validationOptions);
 		}
 		return model;
 	}

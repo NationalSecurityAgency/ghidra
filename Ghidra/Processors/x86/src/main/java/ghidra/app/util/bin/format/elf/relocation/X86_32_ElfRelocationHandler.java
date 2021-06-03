@@ -30,6 +30,11 @@ public class X86_32_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	@Override
+	public int getRelrRelocationType() {
+		return X86_32_ElfRelocationConstants.R_386_RELATIVE;
+	}
+
+	@Override
 	public void relocate(ElfRelocationContext elfRelocationContext, ElfRelocation relocation,
 			Address relocationAddress) throws MemoryAccessException, NotFoundException {
 

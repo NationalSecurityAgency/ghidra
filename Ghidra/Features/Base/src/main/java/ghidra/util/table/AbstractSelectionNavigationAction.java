@@ -32,8 +32,8 @@ import ghidra.util.HelpLocation;
 import resources.Icons;
 
 /**
- * <a name="description"></a>
- * An action used to trigger navigation callback on instances of {@link #JTable}.  Users can 
+ * <a id="description"></a>
+ * An action used to trigger navigation callback on instances of {@link JTable}.  Users can 
  * toggle this action to control navigation that is based upon selection.
  * <p>
  * Subclasses need to implement {@link #navigate()}, which will be called when a navigation is
@@ -74,12 +74,11 @@ public abstract class AbstractSelectionNavigationAction extends ToggleDockingAct
 
 	@Override
 	// overridden to toggle the selection listener when the action is disabled
-	public boolean setEnabled(boolean enable) {
-		boolean oldValue = super.setEnabled(enable);
+	public void setEnabled(boolean enable) {
+		super.setEnabled(enable);
 
 		boolean installListener = enable && isSelected();
 		toggleSelectionListening(installListener);
-		return oldValue;
 	}
 
 	@Override

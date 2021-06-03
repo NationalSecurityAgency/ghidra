@@ -15,16 +15,16 @@
  */
 package ghidra.framework.main.datatree;
 
-import java.awt.Component;
 import java.awt.event.KeyEvent;
 
-import javax.swing.*;
+import javax.swing.KeyStroke;
+import javax.swing.ToolTipManager;
 import javax.swing.tree.TreePath;
 
 import docking.DockingUtils;
 import docking.actions.KeyBindingUtils;
-import docking.widgets.tree.*;
-import docking.widgets.tree.support.GTreeRenderer;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import ghidra.framework.main.FrontEndTool;
 
 /**
@@ -35,11 +35,10 @@ public class DataTree extends GTree {
 	private boolean isActive;
 	private DataTreeDragNDropHandler dragNDropHandler;
 
-	DataTree(FrontEndTool tool, GTreeRootNode root) {
+	DataTree(FrontEndTool tool, GTreeNode root) {
 
 		super(root);
 		setName("Data Tree");
-		setCellRenderer(new DataTreeCellRenderer());
 		setShowsRootHandles(true); // need this to "drill down"
 
 		ToolTipManager.sharedInstance().registerComponent(this);
@@ -89,20 +88,5 @@ public class DataTree extends GTree {
 	@Override
 	public void stopEditing() {
 		getJTree().stopEditing();
-	}
-
-	private class DataTreeCellRenderer extends GTreeRenderer {
-		@Override
-		public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel,
-				boolean expanded, boolean leaf, int row, boolean doesHaveFocus) {
-
-			super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row,
-				doesHaveFocus);
-			if (value instanceof DomainFileNode) {
-				DomainFileNode domainFileNode = (DomainFileNode) value;
-				setText(domainFileNode.getDisplayName());
-			}
-			return this;
-		}
 	}
 }

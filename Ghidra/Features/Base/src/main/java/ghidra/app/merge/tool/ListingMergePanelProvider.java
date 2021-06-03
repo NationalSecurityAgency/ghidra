@@ -55,7 +55,7 @@ public class ListingMergePanelProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(DockingTool dt, ActionContext context) {
+	public List<DockingActionIf> getPopupActions(Tool dt, ActionContext context) {
 		ListingPanel resultPanel = mergePanel.getResultPanel();
 		if (resultPanel != null) {
 			return resultPanel.getHeaderActions(getName());

@@ -31,30 +31,24 @@ import ghidra.util.task.TaskMonitorAdapter;
 public interface Symbol {
 
 	/**
-	 * @returns the address for the symbol.
+	 * @return the address for the symbol.
 	 */
 	public Address getAddress();
 
 	/**
-	 * @returns the name of this symbol.
+	 * @return the name of this symbol.
 	 */
 	public String getName();
 
 	/**
-	 * Check whether this symbol is still valid (i.e., deleted).
-	 * @return true if valid or false if deleted.
-	 */
-	public boolean checkIsValid();
-
-	/**
 	 * Gets the full path name for this symbol as an ordered array of strings ending
 	 * with the symbol name. The global symbol will return an empty array.
-	 * @returns the array indicating the full path name for this symbol.
+	 * @return the array indicating the full path name for this symbol.
 	 */
 	public String[] getPath();
 
 	/**
-	 * @returns the program associated with this symbol.
+	 * @return the program associated with this symbol.
 	 * Null may be returned for global symbols.
 	 */
 	public Program getProgram();
@@ -62,17 +56,19 @@ public interface Symbol {
 	/**
 	 * Returns the symbol name, optionally prepended with the namespace path.
 	 * @param includeNamespace if true, the namespace path is prepended to the name.
-	 * @returns formatted name
+	 * @return formatted name
 	 */
 	public String getName(boolean includeNamespace);
 
 	/**
-	 * @returns the namespace that contains this symbol
+	 * Return the parent namespace for this symbol.
+	 * @return the namespace that contains this symbol.
 	 */
 	public Namespace getParentNamespace();
 
 	/**
 	 * Returns namespace symbol of the namespace containing this symbol
+	 * @return parent namespace symbol
 	 */
 	public Symbol getParentSymbol();
 
@@ -84,38 +80,40 @@ public interface Symbol {
 	public boolean isDescendant(Namespace namespace);
 
 	/**
-	 * Returns whether the given parent is valid for this Symbol.
-	 * @param parent
-	 * @returns true if parent is valid
+	 * Determines if the given parent is valid for this Symbol.  Specified namespace 
+	 * must belong to the same symbol table as this symbol.
+	 * @param parent prospective parent namespace for this symbol
+	 * @return true if parent is valid
 	 */
 	public boolean isValidParent(Namespace parent);
 
 	/**
-	 * Returns the symbol type
+	 * Returns this symbol's type
+	 * @return symbol type
 	 */
 	public SymbolType getSymbolType();
 
 	/**
-	 * @returns the number of References to this symbol.
+	 * @return the number of References to this symbol.
 	 */
 	public int getReferenceCount();
 
 	/**
-	 * @returns true if this symbol has more than one reference to it.
+	 * @return true if this symbol has more than one reference to it.
 	 */
 	public boolean hasMultipleReferences();
 
 	/**
-	 * @returns true if this symbol has at least one reference to it.
+	 * @return true if this symbol has at least one reference to it.
 	 */
 	public boolean hasReferences();
 
 	/**
 	 * Returns all memory references to the address of this symbol.  If you do not have a
 	 * {@link TaskMonitor} instance, then you can pass {@link TaskMonitorAdapter#DUMMY_MONITOR} or
-	 * <tt>null</tt>.
+	 * <code>null</code>.
 	 *
-	 * @returns all memory references to the address of this symbol.
+	 * @return all memory references to the address of this symbol.
 	 *
 	 * @param monitor the monitor that is used to report progress and to cancel this
 	 *        potentially long-running call
@@ -125,13 +123,13 @@ public interface Symbol {
 	/**
 	 * Returns all memory references to the address of this symbol.
 	 *
-	 * @returns all memory references to the address of this symbol
+	 * @return all memory references to the address of this symbol
 	 * @see #getReferences(TaskMonitor)
 	 */
 	public Reference[] getReferences();
 
 	/**
-	 * @returns a program location corresponding to this symbol
+	 * @return a program location corresponding to this symbol
 	 */
 	public ProgramLocation getProgramLocation();
 
@@ -186,7 +184,7 @@ public interface Symbol {
 
 	/**
 	 * Delete the symbol and its associated resources.
-	 * @returns true if successful
+	 * @return true if successful
 	 */
 	public boolean delete();
 
@@ -194,7 +192,7 @@ public interface Symbol {
 	 * Returns true if the symbol is pinned to its current address. If it is pinned, then moving
 	 * or removing the memory associated with that address will not affect this symbol.
 	 *
-	 * @returns true if the symbol is pinned to its current address.
+	 * @return true if the symbol is pinned to its current address.
 	 */
 	public boolean isPinned();
 
@@ -215,7 +213,7 @@ public interface Symbol {
 	public void setPinned(boolean pinned);
 
 	/**
-	 * @returns true if this symbol is a dynamic symbol (not actually defined in the database).
+	 * @return true if this symbol is a dynamic symbol (not actually defined in the database).
 	 */
 	public boolean isDynamic();
 
@@ -228,7 +226,7 @@ public interface Symbol {
 	public boolean isExternal();
 
 	/**
-	 * @returns true if this symbol is primary
+	 * @return true if this symbol is primary
 	 */
 	public boolean isPrimary();
 
@@ -240,37 +238,44 @@ public interface Symbol {
 	public boolean setPrimary();
 
 	/**
-	 * @returns true if the symbol is at an address
+	 * @return true if the symbol is at an address
 	 * set as a external entry point.
 	 */
 	public boolean isExternalEntryPoint();
 
 	/**
-	 * @returns this symbol's ID.
+	 * @return this symbol's ID.
 	 */
 	public long getID();
 
 	/**
-	 * @returns object associated with this symbol or null if symbol has been deleted
+	 * @return object associated with this symbol or null if symbol has been deleted
 	 */
 	public Object getObject();
 
 	/**
-	 * @returns true if the symbol is global
+	 * @return true if the symbol is global
 	 */
 	public boolean isGlobal();
 
 	/**
 	 * Sets the source of this symbol.
-	 * {@link SourceTypes}
+	 * {@link SourceType}
 	 * @param source the new source of this symbol
 	 */
 	public void setSource(SourceType source);
 
 	/**
 	 * Gets the source of this symbol.
-	 * {@link SourceTypes}
+	 * {@link SourceType}
 	 * @return the source of this symbol
 	 */
 	public SourceType getSource();
+
+	/**
+	 * Determine if this symbol object has been deleted.  NOTE: the symbol could be
+	 * deleted at anytime due to asynchronous activity.  
+	 * @return true if symbol has been deleted, false if not.
+	 */
+	public boolean isDeleted();
 }

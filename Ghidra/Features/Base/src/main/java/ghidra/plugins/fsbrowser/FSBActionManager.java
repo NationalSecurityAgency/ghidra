@@ -944,8 +944,9 @@ class FSBActionManager {
 			private void doOpenFileSystem(FSRL containerFSRL, TaskMonitor monitor) {
 				try {
 					monitor.setMessage("Probing " + containerFSRL.getName() + " for filesystems");
-					FileSystemRef ref = FileSystemService.getInstance().probeFileForFilesystem(
-						containerFSRL, monitor, FileSystemProbeConflictResolver.GUI_PICKER);
+					FileSystemRef ref = FileSystemService.getInstance()
+							.probeFileForFilesystem(
+								containerFSRL, monitor, FileSystemProbeConflictResolver.GUI_PICKER);
 					if (ref == null) {
 						Msg.showWarn(this, plugin.getTool().getActiveWindow(), "Open Filesystem",
 							"No filesystem provider for " + containerFSRL.getName());
@@ -1051,7 +1052,7 @@ class FSBActionManager {
 					return;
 				}
 				FSBRootNode node = (FSBRootNode) context.getContextObject();
-				if (node == gTree.getRootNode()) {
+				if (node.equals(gTree.getModelRoot())) {
 					// Close entire window
 					FileSystemRef fsRef = node.getFSRef();
 					if (fsRef != null && !fsRef.isClosed() &&
@@ -1170,30 +1171,29 @@ class FSBActionManager {
 			public void actionPerformed(ActionContext context) {
 				FSRL containerFSRL = FSBUtils.getFileFSRLFromContext(context);
 				if (containerFSRL != null && context.getContextObject() instanceof FSBFileNode) {
-					FSBFileNode fileNode = (FSBFileNode) context.getContextObject();
+					FSBFileNode xfileNode = (FSBFileNode) context.getContextObject();
+					FSBFileNode modelFileNode =
+						(FSBFileNode) gTree.getModelNodeForPath(xfileNode.getTreePath());
+
 					gTree.runTask(monitor -> {
 						try {
 							FileSystemRef fsRef =
-								FileSystemService.getInstance().probeFileForFilesystem(
-									containerFSRL, monitor,
-									FileSystemProbeConflictResolver.GUI_PICKER);
+								FileSystemService.getInstance()
+										.probeFileForFilesystem(
+											containerFSRL, monitor,
+											FileSystemProbeConflictResolver.GUI_PICKER);
 							if (fsRef == null) {
 								Msg.showWarn(this, gTree, "No File System Provider",
 									"No file system provider for " + containerFSRL.getName());
 								return;
 							}
 
-							FSBRootNode nestedRootNode = new FSBRootNode(fsRef, gTree, fileNode);
-							FSBRootNode containingFSBRootNode =
-								FSBNode.findContainingFileSystemFSBRootNode(fileNode);
-							if (containingFSBRootNode != null) {
-								containingFSBRootNode.getSubRootNodes().add(nestedRootNode);
-							}
+							FSBRootNode nestedRootNode = new FSBRootNode(fsRef, modelFileNode);
 							nestedRootNode.setChildren(nestedRootNode.generateChildren(monitor));
 
-							int indexInParent = fileNode.getIndexInParent();
-							GTreeNode parent = fileNode.getParent();
-							parent.removeNode(fileNode);
+							int indexInParent = modelFileNode.getIndexInParent();
+							GTreeNode parent = modelFileNode.getParent();
+							parent.removeNode(modelFileNode);
 							parent.addNode(indexInParent, nestedRootNode);
 							gTree.expandPath(nestedRootNode);
 						}

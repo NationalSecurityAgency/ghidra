@@ -33,7 +33,6 @@ public class AddAllFieldAction extends DockingAction {
 	 * Constructor takes the CodeBrowserPlugin that created it and the header
 	 * component so that it can be repainted when fields are added.
 	 * @param owner the action owner	
-	 * @param model the model this action affects
 	 * @param panel the listing panel.
 	 */
     public AddAllFieldAction(String owner, FieldHeader panel) {

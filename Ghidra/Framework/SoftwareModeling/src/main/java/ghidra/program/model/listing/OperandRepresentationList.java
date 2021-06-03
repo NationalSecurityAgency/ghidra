@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,8 +93,6 @@ public class OperandRepresentationList extends ArrayList<Object> {
 	
 	/**
 	 * Returns a formatted string representation of the specified code unit operand.
-	 * @param cu code unit
-	 * @param opIndex 
 	 * @return formatted code unit representation
 	 */
 	@Override

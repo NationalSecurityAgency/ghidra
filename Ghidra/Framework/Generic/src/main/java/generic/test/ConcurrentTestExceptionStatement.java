@@ -29,6 +29,12 @@ import util.CollectionUtils;
 
 public class ConcurrentTestExceptionStatement extends Statement {
 
+	// set this value to 'true' (ignoring case) to disable the test timeout feature
+	public static final String DISABLE_TEST_TIMEOUT_PROPERTY =
+		"ghidra.test.property.timeout.disable";
+	public static final String TEST_TIMEOUT_MILLIS_PROPERTY =
+		"ghidra.test.property.timeout.milliseconds";
+
 	/** The time period after which a test will be forcibly terminated */
 	private static long TIMEOUT_MILLIS = 10 /*mins*/ * 60 /*secs*/ * 1000 /*millis*/;
 	private static Thread lastTestThread = null;
@@ -40,14 +46,54 @@ public class ConcurrentTestExceptionStatement extends Statement {
 		testStatement = originalStatement;
 		ConcurrentTestExceptionHandler.clear();
 
-		// enable timeout monitor except when running from eclipse to permit extended debugging
-		timoutMonitor =
-			isRunningFromEclipse() ? null : GTimer.scheduleRunnable(TIMEOUT_MILLIS, () -> {
+		// enable timeout monitor by default; disable to permit extended debugging when running 
+		// from eclipse or when set via a system property 
+		if (ignoreTimeout()) {
+			timoutMonitor = null;
+		}
+		else {
+			long testTimeout = getTestTimeout();
+			timoutMonitor = GTimer.scheduleRunnable(testTimeout, () -> {
 				// no-op; we will use the monitor directly
 			});
+		}
 	}
 
-	private static boolean isRunningFromEclipse() {
+	private long getTestTimeout() {
+		String timeoutOverrideString =
+			System.getProperty(TEST_TIMEOUT_MILLIS_PROPERTY, null);
+		if (timeoutOverrideString == null) {
+			return TIMEOUT_MILLIS;
+		}
+
+		try {
+			long timeout = Long.parseLong(timeoutOverrideString);
+			Msg.info(this, "Using test timeout override value " + timeout + "ms");
+			return timeout;
+		}
+		catch (NumberFormatException e) {
+			Msg.error(this,
+				"Unable to parse " + TEST_TIMEOUT_MILLIS_PROPERTY + " Long value '" +
+					timeoutOverrideString + "'");
+		}
+		return TIMEOUT_MILLIS;
+	}
+
+	private boolean isTestTimeoutDisabled() {
+		String disableProperty =
+			System.getProperty(DISABLE_TEST_TIMEOUT_PROPERTY, Boolean.FALSE.toString());
+		return Boolean.parseBoolean(disableProperty.trim());
+	}
+
+	private boolean ignoreTimeout() {
+		if (isTestTimeoutDisabled()) {
+			Msg.info(this, "Test timeout feature disabled");
+			return true;
+		}
+		return isRunningFromEclipse();
+	}
+
+	private boolean isRunningFromEclipse() {
 		// TODO: this may need adjustment for other Eclipse platforms/versions
 		return System.getProperty("java.class.path").endsWith(".cp");
 	}

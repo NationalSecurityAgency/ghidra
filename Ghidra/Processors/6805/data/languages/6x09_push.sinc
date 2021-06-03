@@ -1,0 +1,47 @@
+# sleigh specification file for Motorola 6809/Hitachi 6309
+
+################################################################
+# PSHS helper
+################################################################
+
+pshs0: CC           is CC & imm80=1         { Push1(S, CC); }
+pshs0:              is imm80=0              { }
+pshs1: pshs0" "A    is A & imm81=1 & pshs0  { Push1(S, A); }
+pshs1: pshs0        is imm81=0 & pshs0      { }
+pshs2: pshs1" "B    is B & imm82=1 & pshs1  { Push1(S, B); }
+pshs2: pshs1        is imm82=0 & pshs1      { }
+pshs3: pshs2" "DP   is DP & imm83=1 & pshs2 { Push1(S, DP); }
+pshs3: pshs2        is imm83=0 & pshs2      { }
+pshs4: pshs3" "X    is X & imm84=1 & pshs3  { Push2(S, X); }
+pshs4: pshs3        is imm84=0 & pshs3      { }
+pshs5: pshs4" "Y    is Y & imm85=1 & pshs4  { Push2(S, Y); }
+pshs5: pshs4        is imm85=0 & pshs4      { }
+pshs6: pshs5" "U    is U & imm86=1 & pshs5  { Push2(S, U); }
+pshs6: pshs5        is imm86=0 & pshs5      { }
+pshs7: pshs6" "PC   is PC & imm87=1 & pshs6 { local t:2 = inst_next; Push2(S, t); }
+pshs7: pshs6        is imm87=0 & pshs6      { }
+
+:PSHS pshs7    is op=0x34; pshs7 { }                                                                                           
+################################################################
+# PSHU helper
+################################################################
+
+pshu0: CC           is CC & imm80=1         { Push1(S, CC); }
+pshu0:              is imm80=0              { }
+pshu1: pshu0" "A    is A & imm81=1 & pshu0  { Push1(S, A); }
+pshu1: pshu0        is imm81=0 & pshu0      { }
+pshu2: pshu1" "B    is B & imm82=1 & pshu1  { Push1(S, B); }
+pshu2: pshu1        is imm82=0 & pshu1      { }
+pshu3: pshu2" "DP   is DP & imm83=1 & pshu2 { Push1(U, DP); }
+pshu3: pshu2        is imm83=0 & pshu2      { }
+pshu4: pshu3" "X    is X & imm84=1 & pshu3  { Push2(U, X); }
+pshu4: pshu3        is imm84=0 & pshu3      { }
+pshu5: pshu4" "Y    is Y & imm85=1 & pshu4  { Push2(U, Y); }
+pshu5: pshu4        is imm85=0 & pshu4      { }
+pshu6: pshu5" "S    is S & imm86=1 & pshu5  { Push2(U, S); }
+pshu6: pshu5        is imm86=0 & pshu5      { }
+pshu7: pshu6" "PC   is PC & imm87=1 & pshu6 { local t:2 = inst_next; Push2(U, t); }
+pshu7: pshu6        is imm87=0 & pshu6      { }
+
+:PSHU pshu7    is op=0x36; pshu7 { }
+

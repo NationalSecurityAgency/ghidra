@@ -49,7 +49,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			"analyzer was disabled or not present.";
 
 	private final static String OPTION_FUNCTION_NONRETURN_THRESHOLD =
-		"Function non-return threshold";
+		"Function Non-return Threshold";
 
 	private static final String OPTION_DESCRIPTION_FUNCTION_NONRETURN_THRESHOLD =
 		"Enter the number of indications for a given function before it is considered non-returning.";
@@ -60,23 +60,25 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 
 	private static final String OPTION_NAME_REPAIR_DAMAGE = "Repair Flow Damage";
 	private static final String OPTION_DESCRIPTION_REPAIR_DAMAGE =
-		"If checked, repair any flow after a call to found non-returning functions.";
+		"Signals to repair any flow after a call to found non-returning functions.";
 	private static final boolean OPTION_DEFAULT_REPAIR_DAMAGE_ENABLED = true;
-	
+
 	private static final String OPTION_NAME_CREATE_BOOKMARKS = "Create Analysis Bookmarks";
 	private static final String OPTION_DESCRIPTION_CREATE_BOOKMARKS =
-		"If checked, an analysis bookmark will created on each function marked as non-returning.";
+		"Signals to create an analysis bookmark on each function marked as non-returning.";
 	private static final boolean OPTION_DEFAULT_CREATE_BOOKMARKS_ENABLED = true;
-	
+
 	private boolean repairDamageEnabled = OPTION_DEFAULT_REPAIR_DAMAGE_ENABLED;
 
 	private boolean createBookmarksEnabled = OPTION_DEFAULT_CREATE_BOOKMARKS_ENABLED;
 
 	private Program program;
 	private TaskMonitor monitor;
-	private MessageLog log;
 
 	private List<NoReturnLocations> reasonList = null;
+
+	private Address lastGetNextFuncAddress = null;  // last addr used for getNextFunction()
+	private Address nextFunction = null;            // last return nextFunction
 
 	public FindNoReturnFunctionsAnalyzer() {
 		this(NAME, DESCRIPTION, AnalyzerType.INSTRUCTION_ANALYZER);
@@ -101,20 +103,20 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 		try {
 			this.program = prog;
 			this.monitor = monitor;
-			this.log = log;
 			this.reasonList = new ArrayList<>();
+			lastGetNextFuncAddress = null;
 
 			monitor.setMessage("NoReturn - Finding non-returning functions");
-			
+
 			AddressSet noReturnSet = new AddressSet();
-			
+
 			boolean hadOtherSuspiciousFunctions = detectNoReturn(program, noReturnSet, set);
-			
+
 			// run again with the new known noReturnSet
 			if (hadOtherSuspiciousFunctions) {
 				detectNoReturn(program, noReturnSet, set);
 			}
-			
+
 			// mark all detected non-returning functions
 			AddressIterator noreturns = noReturnSet.getAddresses(true);
 			for (Address address : noreturns) {
@@ -130,19 +132,18 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			}
 
 			// repair the damage for all non-returning functions
-			if (repairDamageEnabled) { 
+			if (repairDamageEnabled) {
 				AddressSet clearInstSet = new AddressSet();
 				noreturns = noReturnSet.getAddresses(true);
 				for (Address address : noreturns) {
 					clearInstSet.add(findPotentialDamagedLocations(program, address));
-				}	
+				}
 				repairDamagedLocations(monitor, clearInstSet);
 			}
 		}
 		finally {
 			this.program = null;
 			this.monitor = null;
-			this.log = log;
 			this.reasonList = null;
 		}
 		return true;
@@ -151,10 +152,10 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 	/**
 	 * repair any damaged locations
 	 * 
-	 * @param monitor for cancellation
+	 * @param taskMonitor for cancellation
 	 * @param clearInstSet locations to clear and repair
 	 */
-	private void repairDamagedLocations(TaskMonitor monitor, AddressSet clearInstSet) {
+	private void repairDamagedLocations(TaskMonitor taskMonitor, AddressSet clearInstSet) {
 		if (clearInstSet == null || clearInstSet.isEmpty()) {
 			return;
 		}
@@ -164,8 +165,9 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 
 		// entries including data flow referenced from instructions will be repaired
 
-		ClearFlowAndRepairCmd cmd = new ClearFlowAndRepairCmd(clearInstSet, protectedSet, true, false, true);
-		cmd.applyTo(program, monitor);
+		ClearFlowAndRepairCmd cmd =
+			new ClearFlowAndRepairCmd(clearInstSet, protectedSet, true, false, true);
+		cmd.applyTo(program, taskMonitor);
 	}
 
 	/**
@@ -213,26 +215,26 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			}
 		}
 	}
-	
+
 	/**
 	 * find locations of potential damage from calls to non-returning functions
 	 * 
-	 * @param program program
+	 * @param prog program
 	 * @param entry address of start of non-returning function
 	 * 
 	 * @return locations of potential instruction damage
 	 */
-	private AddressSet findPotentialDamagedLocations(Program program, Address entry) {
+	private AddressSet findPotentialDamagedLocations(Program prog, Address entry) {
 		String name = entry.toString();
 
-		Function func = program.getFunctionManager().getFunctionAt(entry);
+		Function func = prog.getFunctionManager().getFunctionAt(entry);
 		if (func != null) {
 			name = func.getName();
 		}
 
 		try {
 			monitor.setMessage("NoReturn - Clearing and repairing flows for: " + name);
-			return findRepairLocations(program, entry);
+			return findRepairLocations(prog, entry);
 		}
 		catch (CancelledException e) {
 			// a cancel here implies that the entire script has been cancelled
@@ -278,7 +280,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			if (fallthruAddr == null) {
 				continue;
 			}
-			
+
 			// if location right below is an entry point, don't clear it
 			Address checkAddr = skipNOPS(fallthruAddr);
 			if (program.getSymbolTable().isExternalEntryPoint(checkAddr) ||
@@ -301,21 +303,19 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			// entries that are data should not be cleared, only possible bookmarks
 			ClearFlowAndRepairCmd.clearBadBookmarks(program, clearDataSet, monitor);
 		}
-		
+
 		return clearInstSet;
 	}
 
 	private boolean detectNoReturn(Program cp, AddressSet noReturnSet, AddressSetView checkSet)
 			throws CancelledException {
 
-		SimpleBlockModel blockModel = new SimpleBlockModel(cp);
-
 		AddressSet checkedSet = new AddressSet();
 
 		boolean hadSuspiciousFunctions = false;
-		
+
 		AddressIterator refIter =
-				cp.getReferenceManager().getReferenceSourceIterator(checkSet, true);
+			cp.getReferenceManager().getReferenceSourceIterator(checkSet, true);
 		for (Address address : refIter) {
 			monitor.checkCanceled();
 
@@ -337,14 +337,14 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			}
 
 			// check for indications the called instruction doesn't return
-			if (!checkNonReturningIndicators(inst, noReturnSet, blockModel)) {
+			if (!checkNonReturningIndicators(inst, noReturnSet)) {
 				continue;
 			}
 
 			// detected a calling issue, check other instructions calling the same place
 			Address[] flows = inst.getFlows();
 			for (Address target : flows) {
-				
+
 				int count = 1;
 				ReferenceIterator refsTo = cp.getReferenceManager().getReferencesTo(target);
 				for (Reference reference : refsTo) {
@@ -364,7 +364,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 						continue;
 					}
 					Instruction oinst = cp.getListing().getInstructionAt(fromAddress);
-					if ( oinst == null || !checkNonReturningIndicators(oinst, noReturnSet, blockModel)) {
+					if (oinst == null || !checkNonReturningIndicators(oinst, noReturnSet)) {
 						continue;
 					}
 
@@ -375,7 +375,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 						break;
 					}
 				}
-				
+
 				// was suspicious, but evidence didn't pass threshold
 				if (count < evidenceThresholdFunctions) {
 					// if function only calls non-returning functions
@@ -393,41 +393,43 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 		return hadSuspiciousFunctions;
 	}
 
-	private boolean targetOnlyCallsNoReturn(Program cp, Address target, AddressSet noReturnSet) throws CancelledException {
-		
+	private boolean targetOnlyCallsNoReturn(Program cp, Address target, AddressSet noReturnSet)
+			throws CancelledException {
+
 		SimpleBlockModel model = new SimpleBlockModel(cp);
-		
+
 		// follow the flow of the instructions
 		// if hit return, then no good
 		// if hit call, check noReturn, if is stop following
 		// if hit place that is called, then stop, and return no-good
-		
-		Stack<Address> todo = new Stack<Address>();
+
+		Stack<Address> todo = new Stack<>();
 		todo.push(target);
 		AddressSet visited = new AddressSet();
 		boolean hitNoReturn = false;
-		
+
 		while (!todo.isEmpty()) {
 			Address blockAddr = todo.pop();
 			CodeBlock block = model.getCodeBlockAt(blockAddr, monitor);
-			
+
 			if (block == null) {
 				return false;
-			}		
+			}
 			if (visited.contains(blockAddr)) {
 				continue;
 			}
 			visited.add(blockAddr);
-			
+
 			FlowType flowType = block.getFlowType();
-			if (flowType.isTerminal()) {
+			// terminal block and not a Call_Return that must be checked
+			if (flowType.isTerminal() && !flowType.isCall()) {
 				return false;
 			}
-			
+
 			// if target has a call to it, then can't tell, but suspect...
 			// add all destinations to todo
 			CodeBlockReferenceIterator destinations = block.getDestinations(monitor);
-			
+
 			// no destinations
 			if (!destinations.hasNext()) {
 				return false;
@@ -436,8 +438,9 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 				CodeBlockReference destRef = destinations.next();
 				Address destAddr = destRef.getReference();
 
-				// check call or jump to non-returning destination
 				FlowType destFlowType = destRef.getFlowType();
+
+				// check call or jump to non-returning destination			
 				if (destFlowType.isCall() || destFlowType.isJump()) {
 					// check target
 					// if non-Return, set-hit no return, and continue;
@@ -450,14 +453,22 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 						hitNoReturn = true;
 						continue;
 					}
+					// hit terminal with returning call (could be a JUMP as well)
+					if (flowType.isTerminal() && (destFlowType.isCall() || func != null)) {
+						return false;
+					}
 				}
 				if (destFlowType.isCall()) {
+					continue;
+				}
+				// indirect flows are not part of the function
+				if (destFlowType.isIndirect()) {
 					continue;
 				}
 				todo.push(destAddr);
 			}
 		}
-		
+
 		return hitNoReturn;
 	}
 
@@ -468,13 +479,12 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 	 * 
 	 * @param callInst - instruction to check
 	 * @param noReturnFunctions - set of functions that are already non-returning
-	 * @param blockModel - block model for checking flow
 	 * 
 	 * @return true if there are indications the called function does not return
 	 * @throws CancelledException if monitor cancelled
 	 */
-	private boolean checkNonReturningIndicators(Instruction callInst, AddressSet noReturnFunctions,
-			SimpleBlockModel blockModel) throws CancelledException {
+	private boolean checkNonReturningIndicators(Instruction callInst, AddressSet noReturnFunctions)
+			throws CancelledException {
 
 		// check the address the instruction will return to
 		Address fallThru = callInst.getFallThrough();
@@ -487,15 +497,9 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 		if (flows != null && flows.length > 0) {
 			target = flows[0];
 		}
-		
+
 		// get the address of the next function after this instruction
-		Address nextFuncAddr = null;
-		if (fallThru != null) {
-			FunctionIterator functions = program.getFunctionManager().getFunctions(fallThru,true);
-			if (functions.hasNext()) {
-				nextFuncAddr = functions.next().getEntryPoint();
-			}
-		}
+		Address nextFuncAddr = getFunctionAfter(fallThru);
 
 		Listing listing = program.getListing();
 		while (fallThru != null) {
@@ -507,24 +511,60 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 				return true;
 			}
 			/* code block model detects flow into data */
-			CodeBlock block = blockModel.getFirstCodeBlockContaining(fallThru, monitor);
-			if (block == null) {
-				NoReturnLocations location =
-					new NoReturnLocations(target, fallThru, "Bad block after call");
+			CodeUnit cu = listing.getCodeUnitAt(fallThru);
+			if (cu == null || cu instanceof Data) {
+				NoReturnLocations location = new NoReturnLocations(target, callInst.getMinAddress(),
+					"Falls into data after call");
 				reasonList.add(location);
 				return true;
 			}
-			
+			Instruction instr = (Instruction) cu;
+
 			/* check for codeblock containing a function */
-			if (nextFuncAddr != null && block.contains(nextFuncAddr)) {
-				NoReturnLocations location =
-					new NoReturnLocations(target, fallThru, "Function defined in instruction after call");
+			if (nextFuncAddr != null && cu.contains(nextFuncAddr)) {
+				NoReturnLocations location = new NoReturnLocations(target, fallThru,
+					"Function defined in instruction after call");
 				reasonList.add(location);
 				return true;
 			}
 
-			// check for read/write refs, or call refs right after
-			ReferenceIterator refIterTo = program.getReferenceManager().getReferencesTo(fallThru);
+			// check for inconsistent (data/call) references at fallthru after call
+			if (hasInconsistentRefsTo(fallThru, funcManager, callingFunc, target)) {
+				return true;
+			}
+
+			// check for defined data after
+			Data data = listing.getDefinedDataAt(fallThru);
+			if (data != null) {
+				NoReturnLocations location =
+					new NoReturnLocations(target, fallThru, "Data after call");
+				reasonList.add(location);
+				return true;
+			}
+
+			// get the next instruction in fallthru chain
+			fallThru = null;
+			if (instr.getFlowType().isFallthrough()) {
+				fallThru = instr.getFallThrough();
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Return true if fallThru address has inconsistent (data/call) references to it.
+	 * Adds the reason for non-returning reason to no return locations list.
+	 * 
+	 * @param addr location to check for read/write references
+	 * @param funcManager function manager
+	 * @param callingFunc function containing call that is being checked
+	 * @param calledAddr address being called
+	 * @return true if inconsistent references found in fallthru address chain after call
+	 */
+	private boolean hasInconsistentRefsTo(Address addr, FunctionManager funcManager,
+			Function callingFunc, Address calledAddr) {
+		if (program.getReferenceManager().hasReferencesTo(addr)) {
+			ReferenceIterator refIterTo = program.getReferenceManager().getReferencesTo(addr);
 			while (refIterTo.hasNext()) {
 				Reference reference = refIterTo.next();
 				RefType refType = reference.getReferenceType();
@@ -543,7 +583,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 							funcManager.getFunctionContaining(reference.getFromAddress());
 						if (callingFunc.equals(function)) {
 							NoReturnLocations location =
-								new NoReturnLocations(target, reference.getToAddress(),
+								new NoReturnLocations(calledAddr, reference.getToAddress(),
 									"Data Reference from same function after call");
 							reasonList.add(location);
 							return true;
@@ -551,49 +591,50 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 					}
 					else {
 						// only consider references after call if the call location is not in a function
-						NoReturnLocations location = new NoReturnLocations(target,
+						NoReturnLocations location = new NoReturnLocations(calledAddr,
 							reference.getToAddress(), "Data Reference after call");
 						reasonList.add(location);
 						return true;
 					}
 				}
 				if (refType.isCall()) {
-					NoReturnLocations location = new NoReturnLocations(target,
+					NoReturnLocations location = new NoReturnLocations(calledAddr,
 						reference.getToAddress(), "Call Reference after call");
 					reasonList.add(location);
 					return true;
 				}
 			}
-			// check for defined data after
-			Data data = listing.getDefinedDataContaining(fallThru);
-			if (data != null) {
-				NoReturnLocations location =
-					new NoReturnLocations(target, fallThru, "Data after call");
-				reasonList.add(location);
-				return true;
-			}
-			fallThru = null;
-			if (block.getFlowType().isFallthrough()) {
-				// NOTE: destination block iterator does not handle data/undefined at fallthru
-				// location and returns null block that has a fallthru, should fall into a good block.
-				// This detects a stream of bad disassembly after a call that should have been
-				// data.
-
-				CodeBlockReferenceIterator dests = block.getDestinations(monitor);
-				if (!dests.hasNext()) {
-					NoReturnLocations location = new NoReturnLocations(target,
-						callInst.getMinAddress(), "Falls into data after call");
-					reasonList.add(location);
-					return true;
-				}
-				// Fallthru block has single destination block
-				CodeBlockReference destBlock = dests.next();
-				if (destBlock.getFlowType().isFallthrough()) {
-					fallThru = destBlock.getDestinationAddress();
-				}
-			}
 		}
 		return false;
+	}
+
+	/**
+	 * Get the next defined function after the current address.
+	 * 
+	 * Save the returned function along with the address
+	 * The nextFunction will be valid for any getNextFunction call for
+	 * addresses from lastGetNextFuncAddress to nextFunction,
+	 * which avoids an expensive funcMgr.getNextFunction() call
+	 * 
+	 * @param addr address to find the next defined function after
+	 * @return return the next function if found, or null otherwise
+	 */
+	private Address getFunctionAfter(Address addr) {
+		if (addr == null) {
+			return null;
+		}
+		if (lastGetNextFuncAddress != null && addr.compareTo(lastGetNextFuncAddress) >= 0) {
+			if (nextFunction == null || addr.compareTo(nextFunction) <= 0) {
+				return nextFunction;
+			}
+		}
+		FunctionIterator functions = program.getFunctionManager().getFunctions(addr, true);
+		nextFunction = null;
+		lastGetNextFuncAddress = addr;
+		if (functions.hasNext()) {
+			nextFunction = functions.next().getEntryPoint();
+		}
+		return nextFunction;
 	}
 
 	protected void fixCallingFunctionBody(Program cp, Address entry) throws CancelledException {
@@ -666,19 +707,19 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			if (!instructionAt.getFlowType().isFallthrough()) {
 				return addr;
 			}
-			
+
 			// instruction has PCODE, might not be a NOP
 			PcodeOp[] pcode = instructionAt.getPcode();
 			if (pcode != null && pcode.length != 0) {
 				// must do an operation, or assign to non-unique
 				for (PcodeOp pCode : pcode) {
 					int opcode = pCode.getOpcode();
-					switch(opcode) {
-					case PcodeOp.LOAD:
-					case PcodeOp.STORE:
-					case PcodeOp.CALLOTHER:
-					case PcodeOp.SEGMENTOP:
-						return addr;
+					switch (opcode) {
+						case PcodeOp.LOAD:
+						case PcodeOp.STORE:
+						case PcodeOp.CALLOTHER:
+						case PcodeOp.SEGMENTOP:
+							return addr;
 					}
 					Varnode output = pCode.getOutput();
 					if (output != null && !output.isUnique()) {
@@ -686,7 +727,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 					}
 				}
 			}
-			
+
 			addr = instructionAt.getFallThrough();
 			// this shouldn't happen, to have no fallthru, you should have flow, but could be override
 			if (addr == null) {
@@ -709,16 +750,16 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public void registerOptions(Options options, Program prog) {
-		HelpLocation helpLocation = new HelpLocation("AutoAnalysisPlugin",
-			"Auto_Analysis_Option_Instruction" + getAnalysisType());
+		HelpLocation helpLocation =
+			new HelpLocation("AutoAnalysisPlugin", "Auto_Analysis_Option_Instructions");
 
 		options.registerOption(OPTION_FUNCTION_NONRETURN_THRESHOLD,
 			OPTION_DEFAULT_EVIDENCE_THRESHOLD, helpLocation,
 			OPTION_DESCRIPTION_FUNCTION_NONRETURN_THRESHOLD);
 
 		options.registerOption(OPTION_NAME_REPAIR_DAMAGE, repairDamageEnabled, null,
-				OPTION_DESCRIPTION_REPAIR_DAMAGE);
-		
+			OPTION_DESCRIPTION_REPAIR_DAMAGE);
+
 		options.registerOption(OPTION_NAME_CREATE_BOOKMARKS, createBookmarksEnabled, null,
 			OPTION_DESCRIPTION_CREATE_BOOKMARKS);
 
@@ -730,9 +771,8 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 		evidenceThresholdFunctions =
 			options.getInt(OPTION_FUNCTION_NONRETURN_THRESHOLD, OPTION_DEFAULT_EVIDENCE_THRESHOLD);
 
-		repairDamageEnabled =
-				options.getBoolean(OPTION_NAME_REPAIR_DAMAGE, repairDamageEnabled);
-		
+		repairDamageEnabled = options.getBoolean(OPTION_NAME_REPAIR_DAMAGE, repairDamageEnabled);
+
 		createBookmarksEnabled =
 			options.getBoolean(OPTION_NAME_CREATE_BOOKMARKS, createBookmarksEnabled);
 

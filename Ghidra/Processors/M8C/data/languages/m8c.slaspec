@@ -1,0 +1,977 @@
+# sleigh specification file for Cypress M8C
+
+define endian=big;
+define alignment=1;
+
+
+define space CODE     type=ram_space      size=2  default;
+define space RAM      type=ram_space      size=1;
+define space BANK0    type=ram_space      size=1;
+define space BANK1    type=ram_space      size=1;
+define space register type=register_space size=1;
+
+
+################################################################
+# Registers
+################################################################
+
+define register offset=0x00 size=1 [ A X SP F];
+define register offset=0x10 size=2 [ PC ];
+define register offset=0x30 size=4 [ contextreg ];
+
+# individual bits within Flags Register F
+
+@define XIO		"F[4,1]"		# Extend I/O bank select
+@define S		"F[3,1]"		# Supervisor code
+@define C		"F[2,1]"		# Carry
+@define Z		"F[1,1]"		# Zero
+@define IE		"F[0,1]"		# Global Interrupt Enable
+
+
+define context contextreg
+	regbank=(0,0)
+;
+
+################################################################
+# Tokens
+################################################################
+
+define token opcode (8)
+	op8    = (0,7)
+    op71   = (1,7)	
+    op73   = (3,7)	
+	op74   = (4,7)
+	op20   = (0,2)
+	op10   = (0,1)
+	op0    = (0,0)
+;
+
+define token data8 (8)
+	addr8 = (0,7)
+	imm8  = (0,7)
+	simm8 = (0,7) signed
+	rel   = (0,7) signed
+	rsb   = (4,4)
+	sign  = (7,7)
+;
+
+define token data16 (16)
+	imm16  = (0,15)
+	simm16 = (0,15) signed
+	addr16 = (0,15)
+;
+
+define token relinstr (16)
+	op4    = (12,15)
+	srel12 = (0,11) signed
+;	
+
+################################################################
+# Pseudo Instructions
+################################################################
+
+define pcodeop halt;
+define pcodeop nop;
+define pcodeop syscall;
+
+macro push8(val)
+{
+  *[RAM]:1 SP = val;
+  SP = SP + 1;
+}
+
+macro push16(val)
+{
+  *[RAM]:2 SP = val;
+  SP = SP + 2;
+}
+
+macro pop8(val)
+{
+  SP = SP - 1;
+  val = *[RAM]:1 SP;
+}
+
+macro pop16(val)
+{
+  SP = SP - 2;
+  val = *[RAM]:2 SP;
+}
+
+macro compflags(op1, op2)
+{
+  tmp1:1 = op1;
+  tmp2:1 = op2;
+  $(C) = (tmp1 < tmp2);
+  $(Z) = (tmp1 == tmp2);
+}
+
+macro testflags(op1, op2)
+{
+  $(Z) = ((op1 & op2) == 0);
+}
+
+macro addflags(op1, op2)
+{
+  t1:2 = zext(op1);
+  t2:2 = zext(op2);
+  tmp:2 = t1 + t2;
+  $(C) = tmp > 255;
+  $(Z) = (((op1 + op2) & 0xFF) == 0);
+}
+
+macro resultflags(result)
+{
+  $(C) = result s< 0;
+  $(Z) = result == 0;
+}
+
+macro zeroflag(result)
+{
+  $(Z) = result == 0;
+}
+
+################################################################
+# Addressing tables
+################################################################
+
+regAorX:   A         is op0=0 & A  { export A; }
+regAorX:   X         is op0=1 & X  { export X; }     
+Addr8:     addr8     is addr8      { export *[RAM]:1 addr8; }     
+SAddr8:    addr8     is addr8      { export *[RAM]:1 addr8; }     
+XAddr8:    [X+simm8] is X & simm8 & sign=0  { ptr:1 = X + simm8; export *[RAM]:1 ptr; }
+XAddr8:    [X+simm8] is X & simm8 & sign=1  { ptr:1 = X - ~simm8; export *[RAM]:1 ptr; }
+Addr8Incr: [Addr8]"++" is Addr8      { export Addr8; }
+
+RAddr8:    addr8   is addr8 & regbank=0  { export *[BANK0]:1 addr8; }     
+RAddr8:    addr8   is addr8 & regbank=1  { export *[BANK1]:1 addr8; }     
+RXAddr8:   [X+simm8] is X & simm8 & regbank=0 { ptr:1 = X + simm8; export *[BANK0]:1 ptr; }
+RXAddr8:   [X+simm8] is X & simm8 & regbank=1 { ptr:1 = X + simm8; export *[BANK1]:1 ptr; }
+
+Imm8:		    "#"imm8  is imm8       { export *[const]:1 imm8; }
+
+Addr16:         addr16    is addr16  { export *:2 addr16; }
+RelAddr:        reladdr   is srel12 [ reladdr = inst_start + 1 + srel12; ]  { export *:2 reladdr; }
+CallAddr:       calladdr  is srel12 [ calladdr = inst_start + 2 + srel12; ] { export *:2 calladdr; }
+IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { export *[CODE]:2 indexaddr; } 
+
+################################################################
+# Constructors
+################################################################
+
+:ADC A, Imm8	is op73=0x01 & op20=0x01 & A; Imm8 
+{
+	A = A + Imm8 + $(C);
+	resultflags(A);
+}
+
+:ADC A, Addr8	is op73=0x01 & op20=0x02 & A; Addr8 
+{
+	A = A + Addr8 + $(C);
+	resultflags(A);
+}
+
+:ADC A, XAddr8	is op73=0x01 & op20=0x03 & A; XAddr8 
+{
+	A = A + XAddr8 + $(C);
+	resultflags(A);
+}
+
+:ADC Addr8, A	is op73=0x01 & op20=0x04 & A; Addr8 
+{
+	tmp:1 = Addr8 + A + $(C);
+	Addr8 = tmp;
+	resultflags(tmp);
+}
+
+:ADC XAddr8, A	is op73=0x01 & op20=0x05 & A; XAddr8 
+{
+	tmp:1 = XAddr8 + A + $(C);
+	XAddr8 = tmp;
+	resultflags(tmp);
+}
+
+:ADC Addr8, Imm8 is op73=0x01 & op20=0x06; Addr8; Imm8 
+{
+	tmp:1 = Addr8 + Imm8 + $(C);
+	Addr8 = tmp;
+	resultflags(tmp);
+	
+}
+
+:ADC XAddr8, Imm8	is op73=0x01 & op20=0x07; XAddr8; Imm8 
+{
+	tmp:1 = XAddr8 + Imm8 + $(C);
+	XAddr8 = tmp;
+	resultflags(tmp);
+	
+}
+
+:ADD A, Imm8	is op73=0x00 & op20=0x01 & A; Imm8 
+{
+	addflags(A, Imm8);
+	A = A + Imm8;
+}
+
+:ADD A, Addr8	is op73=0x00 & op20=0x02 & A; Addr8 
+{
+	addflags(A, Addr8);
+	A = A + Addr8;
+}
+
+:ADD A, XAddr8	is op73=0x00 & op20=0x03 & A; XAddr8 
+{
+	addflags(A, XAddr8);
+	A = A + XAddr8;
+}
+
+:ADD Addr8, A	is op73=0x00 & op20=0x04 & A; Addr8 
+{
+	addflags(Addr8, A);
+	Addr8 = Addr8 + A;
+}
+
+:ADD XAddr8, A	is op73=0x00 & op20=0x05 & A; XAddr8 
+{
+	addflags(XAddr8, A);
+	XAddr8 = XAddr8 + A;
+}
+
+:ADD Addr8, Imm8 is op73=0x00 & op20=0x06; Addr8; Imm8 
+{
+	addflags(Addr8, Imm8);
+	Addr8 = Addr8 + Imm8;
+}
+
+:ADD XAddr8, Imm8	is op73=0x00 & op20=0x07; XAddr8; Imm8 
+{
+	addflags(XAddr8, Imm8);
+	XAddr8 = XAddr8 + Imm8;
+}
+
+:ADD SP, simm8	is op8=0x38 & SP; simm8 
+{
+	SP = SP + simm8;
+}
+
+:AND A, Imm8	is op73=0x04 & op20=0x01 & A; Imm8 
+{
+	A = A & Imm8;
+	zeroflag(A);
+}
+
+:AND A, Addr8	is op73=0x04 & op20=0x02 & A; Addr8 
+{
+	A = A & Addr8;
+	zeroflag(A);
+}
+
+:AND A, XAddr8	is op73=0x04 & op20=0x03 & A; XAddr8 
+{
+	A = A & XAddr8;
+	zeroflag(A);
+}
+
+:AND Addr8, A	is op73=0x04 & op20=0x04 & A; Addr8 
+{
+	tmp:1 = Addr8 & A;
+	Addr8 = tmp;
+	zeroflag(tmp);
+}
+
+:AND XAddr8, A	is op73=0x04 & op20=0x05 & A; XAddr8 
+{
+	tmp:1 = XAddr8 & A;
+	XAddr8 = tmp;
+	zeroflag(tmp);
+}
+
+:AND Addr8, Imm8 is op73=0x04 & op20=0x06; Addr8; Imm8 
+{
+	tmp:1 = Addr8 & Imm8;
+	Addr8 = tmp;
+	zeroflag(tmp);
+}
+
+:AND XAddr8, Imm8	is op73=0x04 & op20=0x07; XAddr8; Imm8 
+{
+	tmp:1 = XAddr8 & Imm8;
+	XAddr8 = tmp;
+	zeroflag(tmp);
+}
+
+:AND RAddr8, Imm8 is op8=0x41; RAddr8; Imm8 
+{
+	tmp:1 = RAddr8 & Imm8;
+	RAddr8 = tmp;
+	zeroflag(tmp);
+}
+
+:AND RXAddr8, Imm8	is op8=0x42; RXAddr8; Imm8 
+{
+	tmp:1 = RXAddr8 & Imm8;
+	RXAddr8 = tmp;
+	zeroflag(tmp);
+}
+
+:AND F, imm8 is op8=0x70 & F; imm8 & rsb
+	[ regbank = regbank & rsb; globalset(inst_next, regbank); ]
+{
+	F = F & imm8;
+}
+
+:ASL A	is op8=0x64 & A
+{
+	A = A << 1:1;
+}
+
+:ASL Addr8	is op8=0x65; Addr8
+{
+	Addr8 = Addr8 << 1:1;
+}
+
+:ASL XAddr8	is op8=0x66; XAddr8
+{
+	XAddr8 = XAddr8 << 1:1;
+}
+
+:ASR A	is op8=0x67 &  A
+{
+	A = A >> 1:1;
+}
+
+:ASR Addr8	is op8=0x68; Addr8
+{
+	Addr8 = Addr8 >> 1:1;
+}
+
+:ASR XAddr8	is op8=0x69; XAddr8
+{
+	XAddr8 = XAddr8 >> 1:1;
+}
+
+:CALL CallAddr is op4=0x9 & CallAddr
+{
+	ret:2 = inst_next;
+	push16(ret);
+	call CallAddr;
+}
+
+:CMP A, Imm8	is op8=0x39 & A; Imm8
+{
+	compflags(A, Imm8);
+}
+
+:CMP A, Addr8	is op8=0x3A & A; Addr8
+{
+	
+	compflags(A, Addr8);
+}
+
+:CMP A, XAddr8	is op8=0x3B & A; XAddr8 
+{
+	compflags(A, XAddr8);
+}
+
+:CMP Addr8, Imm8 is op8=0x3C; Addr8; Imm8
+{
+	compflags(Addr8, Imm8);
+}
+
+:CMP XAddr8, Imm8 is op8=0x3D; XAddr8; Imm8
+{
+	temp:1 = XAddr8;
+	compflags(temp, Imm8);
+}
+
+:CPL A		is op8=0x73 & A
+{
+	A = ~A;
+}
+
+:DEC regAorX	is op71=0x3C & regAorX
+{
+	regAorX = regAorX - 1:1;
+	resultflags(regAorX);
+}
+
+:DEC Addr8	is op71=0x3D & op0=0; Addr8
+{
+	Addr8 = Addr8 - 1:1;
+	resultflags(Addr8);
+}
+
+:DEC XAddr8	is op71=0x3D & op0=1; XAddr8
+{
+	XAddr8 = XAddr8 - 1:1;
+	resultflags(XAddr8);
+}
+
+:HALT		is op8=0x30
+{
+	halt();
+}
+
+:INC regAorX	is op71=0x3A & regAorX
+{
+	addflags(regAorX, 1:1);
+	regAorX = regAorX + 1:1;
+}
+
+:INC Addr8	is op71=0x3B & op0=0; Addr8
+{
+	addflags(Addr8, 1:1);
+	Addr8 = Addr8 + 1:1;
+}
+
+:INC XAddr8	is op71=0x3B & op0=1; XAddr8
+{
+	addflags(XAddr8, 1:1);
+	XAddr8 = XAddr8 + 1:1;
+}
+
+:INDEX	IndexAddr	is op4=0xF & IndexAddr & srel12
+{
+    ptr:2 = inst_start + 2 + srel12 + zext(A);
+	A = *[CODE]:1 ptr;
+}
+
+:JACC RelAddr	is op4=0xE & RelAddr
+{
+	tmp:2 = sext(A);
+	target:2 = RelAddr + sext(A);
+	goto [target];
+}
+
+:JC RelAddr		is op4=0xC & RelAddr
+{
+	if ($(C) != 0) goto RelAddr;
+}
+
+:JMP RelAddr	is op4=0x8 & RelAddr
+{
+	goto RelAddr;
+}
+
+:JNC RelAddr	is op4=0xD & RelAddr
+{
+	if ($(C) == 0) goto RelAddr;
+}
+
+:JNZ RelAddr 	is op4=0xB & RelAddr
+{
+	if ($(Z) == 0) goto RelAddr;
+}
+
+:JZ RelAddr		is op4=0xA & RelAddr
+{
+	if ($(Z) == 1) goto RelAddr;
+}
+
+:LCALL Addr16	is op8=0x7C; Addr16
+{
+	ret:2 = inst_next;
+	push16(ret);
+	call Addr16;
+}
+
+:LJMP Addr16	is op8=0x7D; Addr16
+{
+	goto Addr16;
+}
+
+:MOV X, SP		is op8=0x4F & X & SP
+{
+	X = SP;
+}
+
+:MOV A, Imm8	is op8=0x50 & A; Imm8
+{
+	A = Imm8;
+	zeroflag(A);
+}
+
+:MOV A, Addr8	is op8=0x51 & A; Addr8
+{
+	A = Addr8;
+	zeroflag(A);
+}
+
+:MOV A, XAddr8 	is op8=0x52 & A; XAddr8
+{
+	A = XAddr8;	
+	zeroflag(A);
+}
+
+:MOV Addr8, A	is op8=0x53 & A; Addr8
+{
+	Addr8 = A;
+}
+
+:MOV XAddr8, A	is op8=0x54 & A; XAddr8
+{
+	XAddr8 = A;
+}
+
+:MOV Addr8, Imm8 is op8=0x55; Addr8; Imm8
+{
+	Addr8 = Imm8;
+}
+
+:MOV XAddr8, Imm8 is op8=0x56; XAddr8; Imm8
+{
+	XAddr8 = Imm8;
+}
+
+:MOV X, Imm8	is op8=0x57 & X; Imm8
+{
+	X = Imm8;
+}
+
+:MOV X, Addr8	is op8=0x58 & X; Addr8
+{
+	X = Addr8;
+}
+
+:MOV X, XAddr8 	is op8=0x59 & X; XAddr8
+{
+	X = XAddr8;	
+}
+
+:MOV Addr8, X	is op8=0x5A & X; Addr8
+{
+	Addr8 = X;
+}
+
+:MOV A, X  		is op8=0x5B & A & X
+{
+	A = X;
+	zeroflag(A);
+}
+
+:MOV X, A 		is op8=0x5C & A & X
+{
+	X = A;
+}
+
+:MOV A, RAddr8	is op8=0x5D & A; RAddr8
+{
+	A = RAddr8;
+	zeroflag(A);
+}
+
+:MOV A, RXAddr8 	is op8=0x5E & A; RXAddr8
+{
+	A = RXAddr8;	
+	zeroflag(A);
+}
+
+:MOV Addr8, SAddr8	is op8=0x5F; Addr8; SAddr8
+{
+	Addr8 = SAddr8;
+}
+
+:MOV RAddr8, A	is op8=0x60 & A; RAddr8
+{
+	RAddr8 = A;
+}
+
+:MOV RXAddr8, A is op8=0x61 & A; RXAddr8
+{
+	RXAddr8 = A;	
+}
+
+:MOV RAddr8, Imm8	is op8=0x62; RAddr8; Imm8
+{
+	RAddr8 = Imm8;
+}
+
+:MOV RXAddr8, Imm8 is op8=0x63; RXAddr8; Imm8
+{
+	RXAddr8 = Imm8;	
+}
+
+:MVI A, Addr8Incr 	is op8=0x3E & A; Addr8Incr
+{
+	ptr:1 = Addr8Incr;
+	A = *[RAM]:1 ptr;
+	zeroflag(A);
+	Addr8Incr = ptr + 1:1;
+}
+
+:MVI Addr8Incr, A	is op8=0x3F & A; Addr8Incr
+{
+	ptr:1 = Addr8Incr;
+	*[RAM]:1 ptr = A;
+	Addr8Incr = ptr + 1:1;
+}
+
+:NOP		is op8=0x40
+{
+	nop();
+}
+
+:OR A, Imm8	is op73=0x05 & op20=0x01 & A; Imm8 
+{
+	A = A | Imm8;
+	zeroflag(A);
+}
+
+:OR A, Addr8	is op73=0x05 & op20=0x02 & A; Addr8 
+{
+	A = A | Addr8;
+	zeroflag(A);
+}
+
+:OR A, XAddr8	is op73=0x05 & op20=0x03 & A; XAddr8 
+{
+	A = A | XAddr8;
+	zeroflag(A);
+}
+
+:OR Addr8, A	is op73=0x05 & op20=0x04 & A; Addr8 
+{
+	tmp:1 = Addr8 | A;
+	zeroflag(tmp);
+	Addr8 = tmp;
+}
+
+:OR XAddr8, A	is op73=0x05 & op20=0x05 & A; XAddr8 
+{
+	tmp:1 = XAddr8 | A;
+	zeroflag(tmp);
+	XAddr8 = tmp;
+}
+
+:OR Addr8, Imm8 is op73=0x05 & op20=0x06; Addr8; Imm8 
+{
+	tmp:1 = Addr8 | Imm8;
+	zeroflag(tmp);
+	Addr8 = tmp;
+}
+
+:OR XAddr8, Imm8	is op73=0x05 & op20=0x07; XAddr8; Imm8 
+{
+	tmp:1 = XAddr8 | Imm8;
+	zeroflag(tmp);
+	XAddr8 = tmp;
+}
+
+:OR RAddr8, Imm8 is op8=0x43; RAddr8; Imm8 
+{
+	tmp:1 = RAddr8 | Imm8;
+	zeroflag(tmp);
+	RAddr8 = tmp;
+}
+
+:OR RXAddr8, Imm8	is op8=0x44; RXAddr8; Imm8 
+{
+	tmp:1 = RXAddr8 | Imm8;
+	zeroflag(tmp);
+	RXAddr8 = tmp;
+}
+
+:OR F, imm8 is op8=0x71 & F; imm8 & rsb
+	[ regbank = regbank | rsb; globalset(inst_next, regbank); ]
+{
+	F = F | imm8;
+}
+
+:POP X		is op8=0x20 & X
+{
+	pop8(X);
+}
+
+:POP A		is op8=0x18 & A
+{
+	pop8(A);
+}
+
+:PUSH X		is op8=0x10 & X
+{
+	push8(X);
+}
+
+:PUSH A		is op8=0x08 & A
+{
+	push8(A);
+}
+
+:RETI		is op8=0x7E
+{
+	pc:2 = 0;
+	pop16(pc);
+	return[pc];
+}
+
+:RET		is op8=0x7F
+{
+	pc:2 = 0;
+	pop16(pc);
+	return[pc];
+}
+
+:RLC A	is op8=0x6A & A
+{
+	c:1 = (A & 0x80) >> 7:1;
+	A = (A << 1:1) | $(C);
+	$(C) = c;
+}
+
+:RLC Addr8 is op8=0x6B; Addr8
+{
+    tmp:1 = Addr8;
+	c:1 = (tmp & 0x80) >> 7:1;
+	Addr8 = (tmp << 1) | $(C);
+	$(C) = c;
+}
+
+:RLC XAddr8 is op8=0x6C; XAddr8
+{
+    tmp:1 = XAddr8;
+	c:1 = (tmp & 0x80) >> 7:1;
+	XAddr8 = (tmp << 1) | $(C);
+	$(C) = c;
+}
+
+:ROMX		is op8=0x28
+{
+	msb:2 = zext(A) << 8:1;
+	ptr:2 = msb | zext(X);
+	A = *[CODE]:1 ptr;
+	zeroflag(A);
+}
+
+:RRC A	is op8=0x6D & A
+{
+	c:1 = A & 0x01:1;
+	A = (A >> 1) | ($(C) << 7:1);
+	$(C) = c;
+}
+
+:RRC Addr8	is op8=0x6E; Addr8
+{
+	tmp:1 = Addr8;
+	c:1 = tmp & 0x01:1;
+	Addr8 = (tmp >> 1:1) | ($(C) << 7:1);
+	$(C) = c;
+}
+
+:RRC XAddr8	is op8=0x6F; XAddr8
+{
+	tmp:1 = XAddr8;
+	c:1 = tmp & 0x01;
+	XAddr8 = (tmp >> 1:1) | ($(C) << 7:1);
+	$(C) = c;
+}
+
+:SBB A, Imm8	is op73 = 0x03 & op20=0x01 & A; Imm8 
+{
+	A = A - (Imm8 + $(C));
+	resultflags(A);
+}
+
+:SBB A, Addr8	is op73 = 0x03 & op20=0x02 & A; Addr8 
+{
+	A = A - (Addr8 + $(C));
+	resultflags(A);
+}
+
+:SBB A, XAddr8	is op73 = 0x03 & op20=0x03 & A; XAddr8 
+{
+	A = A - (XAddr8 + $(C));
+	resultflags(A);
+}
+
+:SBB Addr8, A	is op73 = 0x03 & op20=0x04 & A; Addr8 
+{
+	tmp:1 = Addr8 - (A + $(C));
+	resultflags(tmp);
+	Addr8 = tmp;
+}
+
+:SBB XAddr8, A	is op73 = 0x03 & op20=0x05 & A; XAddr8 
+{
+	tmp:1 = XAddr8 - (A + $(C));
+	resultflags(tmp);
+	XAddr8 = tmp;
+}
+
+:SBB Addr8, Imm8 is op73 = 0x03 & op20=0x06; Addr8; Imm8 
+{
+	tmp:1 = Addr8 - (Imm8 + $(C));
+	resultflags(tmp);
+	Addr8 = tmp;
+}
+
+:SBB XAddr8, Imm8	is op73 = 0x03 & op20=0x07; XAddr8; Imm8 
+{
+	local tmp = XAddr8 - (Imm8 + $(C));
+	resultflags(tmp);
+	XAddr8 = tmp;
+}
+
+:SSC		is op8=0x00 
+{
+	syscall(A);
+}
+
+:SUB A, Imm8	is op73 = 0x02 & op20=0x01 & A; Imm8 
+{
+	A = A - Imm8;
+	resultflags(A);
+}
+
+:SUB A, Addr8	is op73 = 0x02 & op20=0x02 & A; Addr8 
+{
+	A = A - Addr8;
+	resultflags(A);
+}
+
+:SUB A, XAddr8	is op73 = 0x02 & op20=0x03 & A; XAddr8 
+{
+	A = A - XAddr8;
+	resultflags(A);
+}
+
+:SUB Addr8, A	is op73 = 0x02 & op20=0x04 & A; Addr8 
+{
+	tmp:1 = Addr8 - A;
+	resultflags(tmp);
+	Addr8 = tmp;
+}
+
+:SUB XAddr8, A	is op73 = 0x02 & op20=0x05 & A; XAddr8 
+{
+	tmp:1 = XAddr8 - A;
+	resultflags(tmp);
+	XAddr8 = tmp;
+}
+
+:SUB Addr8, Imm8 is op73 = 0x02 & op20=0x06; Addr8; Imm8 
+{
+	tmp:1 = Addr8 - Imm8;
+	resultflags(tmp);
+	Addr8 = tmp;
+}
+
+:SUB XAddr8, Imm8	is op73 = 0x02 & op20=0x07; XAddr8; Imm8 
+{
+	tmp:1 = XAddr8 - Imm8;
+	resultflags(tmp);
+	XAddr8 = tmp;
+}
+
+:SWAP A, X	is op8=0x4B & A & X
+{
+	tmp:1 = A;
+	A = X;
+	X = tmp;
+}
+
+:SWAP regAorX, Addr8	is op71=0x26 & regAorX; Addr8
+{
+	tmp:1 = regAorX;
+	regAorX = Addr8;
+	Addr8 = tmp;
+}
+
+:SWAP A, SP	is op8=0x4E & A & SP
+{
+	tmp:1 = A;
+	A = SP;
+	SP = tmp;
+}
+
+:TST Addr8, Imm8 is op8=0x47; Addr8; Imm8
+{
+	tmp:1 = Addr8;
+	testflags(tmp, Imm8);
+}
+
+:TST XAddr8, Imm8 is op8=0x48; XAddr8; Imm8
+{
+	tmp:1 = XAddr8;
+	testflags(tmp, Imm8);
+}
+
+:TST RAddr8, Imm8 is op8=0x49; RAddr8; Imm8
+{
+	tmp:1 = RAddr8;
+	testflags(tmp, Imm8);
+}
+
+:TST RXAddr8, Imm8 is op8=0x4A; RXAddr8; Imm8
+{
+	tmp:1 = RXAddr8;
+	testflags(tmp, Imm8);
+}
+
+:XOR A, Imm8	is op73=0x06 & op20=0x01 & A; Imm8 
+{
+	A = A ^ Imm8;
+	zeroflag(A);
+}
+
+:XOR A, Addr8	is op73=0x06 & op20=0x02 & A; Addr8 
+{
+	A = A ^ Addr8;
+	zeroflag(A);
+}
+
+:XOR A, XAddr8	is op73=0x06 & op20=0x03 & A; XAddr8 
+{
+	A = A ^ XAddr8;
+	zeroflag(A);
+}
+
+:XOR Addr8, A	is op73=0x06 & op20=0x04 & A; Addr8 
+{
+	tmp:1 = Addr8 ^ A;
+	zeroflag(Addr8);
+	Addr8 = tmp;
+}
+
+:XOR XAddr8, A	is op73=0x06 & op20=0x05 & A; XAddr8 
+{
+	tmp:1 = XAddr8 ^ A;
+	zeroflag(tmp);
+	XAddr8 = tmp;
+}
+
+:XOR Addr8, Imm8 is op73=0x06 & op20=0x06; Addr8; Imm8 
+{
+	tmp:1 = Addr8 ^ Imm8;
+	zeroflag(tmp);
+	Addr8 = tmp;
+}
+
+:XOR XAddr8, Imm8	is op73=0x06 & op20=0x07; XAddr8; Imm8 
+{
+	tmp:1 = XAddr8 ^ Imm8;
+	zeroflag(tmp);
+	XAddr8 = tmp;
+}
+
+:XOR RAddr8, Imm8 is op8=0x45; RAddr8; Imm8 
+{
+	tmp:1 = RAddr8 ^ Imm8;
+	zeroflag(tmp);
+	RAddr8 = tmp;
+}
+
+:XOR RXAddr8, Imm8	is op8=0x46; RXAddr8; Imm8 
+{
+	tmp:1 = RXAddr8 ^ Imm8;
+	zeroflag(tmp);
+	RXAddr8 = tmp;
+}
+
+:XOR F, imm8 is op8=0x72 & F; imm8 & rsb
+	[ regbank = regbank ^ rsb; globalset(inst_next, regbank); ]
+{
+	tmp:1 = F ^ imm8;
+	resultflags(tmp);
+	F = tmp;
+}
+

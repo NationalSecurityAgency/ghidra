@@ -15,15 +15,11 @@
  */
 package ghidra.file.formats.ext4;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
+
+import ghidra.app.util.bin.*;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
 
 public class Ext4Extent implements StructConverter {
 
@@ -57,6 +53,33 @@ public class Ext4Extent implements StructConverter {
 
 	public int getEe_start_lo() {
 		return ee_start_lo;
+	}
+
+	/**
+	 * Returns the number of blocks this extent contains.
+	 * 
+	 * @return number of blocks in this extent
+	 */
+	public int getExtentBlockCount() {
+		return Short.toUnsignedInt(ee_len);
+	}
+
+	/**
+	 * Returns the stream block number of where this extent starts.
+	 *  
+	 * @return block number (in the constructed stream) of this extent
+	 */
+	public long getStreamBlockNumber() {
+		return Integer.toUnsignedLong(ee_block);
+	}
+
+	/**
+	 * Returns the block number of where the data for this extent is stored.
+	 * 
+	 * @return starting block number of where data for this extent is stored
+	 */
+	public long getExtentStartBlockNumber() {
+		return Short.toUnsignedLong(ee_start_hi) << 32 | Integer.toUnsignedLong(ee_start_lo);
 	}
 
 	@Override

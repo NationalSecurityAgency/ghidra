@@ -28,7 +28,7 @@ public interface AutocompletionModel<T> {
 	 * @param text the prefix, i.e., the text to the left of the user's caret.
 	 * @return a (possibly null or empty) list of suggested completions.
 	 * 
-	 * @note there is no requirement that the returned items actually start with the given prefix;
+	 * NOTE: there is no requirement that the returned items actually start with the given prefix;
 	 * however, by default, the displayed text for the suggested item is inserted at the caret,
 	 * without changing the surrounding text.
 	 */

@@ -219,8 +219,7 @@ public class BuildResultState extends GhidraScript {
 //			}
 //		}
 //		
-		Register[] regs = currentProgram.getLanguage().getRegisters();
-		List<Register> registers = Arrays.asList(regs);
+		List<Register> registers = currentProgram.getLanguage().getRegisters();
 		try {
 			Register reg = askChoice("Results Query", "Select Register:", registers, null);
 			while (reg != null) {

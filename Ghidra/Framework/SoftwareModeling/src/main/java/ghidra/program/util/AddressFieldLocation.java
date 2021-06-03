@@ -33,7 +33,7 @@ public class AddressFieldLocation extends CodeUnitLocation {
 	 * standard string representation
 	 * and a position within that string.
 	 *
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param addr address of the location
 	 * @param componentPath if not null, it is the array of indexes that point
 	 * to a specific data type inside of another data type
@@ -52,7 +52,7 @@ public class AddressFieldLocation extends CodeUnitLocation {
 	/**
 	 * Construct a new default AddressFieldLocation for a given program address.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param addr address of the location
 	 */
 	public AddressFieldLocation(Program program, Address addr) {

@@ -25,7 +25,7 @@ import ghidra.app.nav.NavigationUtils;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramSelection;
@@ -301,8 +301,8 @@ public class QualifiedSelectionPlugin extends Plugin {
 			setHelpLocation(new HelpLocation(HelpTopics.SELECTION, name));
 			setEnabled(false);
 			setMenuBarData(new MenuData(new String[] { ToolConstants.MENU_SELECTION, name }, null,
-				"Select"));
-
+				"Select Group 2"));
+			addToWindowWhen(NavigatableActionContext.class);
 		}
 	}
 

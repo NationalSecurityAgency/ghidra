@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,12 +111,6 @@ public class AddressLabelInfo implements Comparable<AddressLabelInfo> {
 		return processorSymbolType;
 	}
 
-	/**
-	 * Compares this object with the specified object for order.  Returns a
-	 * negative integer, zero, or a positive integer as this object is less
-	 * than, equal to, or greater than the specified object.
-	 * @param o the object to compare with this one
-	 */
 	@Override
 	public int compareTo(AddressLabelInfo info) {
 		if (info == null) {

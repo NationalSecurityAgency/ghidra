@@ -22,9 +22,6 @@ import ghidra.docking.settings.Settings;
  * and convert it to the specified type.   This class is meant to be used when the dynamic 
  * filtering mechanism is not correctly filtering a column, usually because the default filter
  * for the column type does not match what the renderer is displaying in the table.
- * 
- * <P>Columns create one of these classes to be returned from 
- * {@link DynamicTableColumn#getFilterConverter()}.
  *
  * @param <COLUMN_TYPE> the column type
  * @param <FILTER_TYPE> the new type to be used during filter operations

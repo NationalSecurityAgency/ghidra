@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,13 +43,13 @@ public class BookmarkTypeDBAdapterV0 extends BookmarkTypeDBAdapter {
 	}
 
 	@Override
-	Record[] getRecords() throws IOException {
-		ArrayList<Record> list = new ArrayList<Record>();
+	DBRecord[] getRecords() throws IOException {
+		ArrayList<DBRecord> list = new ArrayList<DBRecord>();
 		RecordIterator iter = table.iterator();
 		while (iter.hasNext()) {
 			list.add(iter.next());
 		}
-		Record[] recs = new Record[list.size()];
+		DBRecord[] recs = new DBRecord[list.size()];
 		list.toArray(recs);
 		return recs;
 	}
@@ -58,7 +57,7 @@ public class BookmarkTypeDBAdapterV0 extends BookmarkTypeDBAdapter {
 	@Override
 	void addType(int typeId, String type) throws IOException {
 
-		Record rec = SCHEMA.createRecord(typeId);
+		DBRecord rec = SCHEMA.createRecord(typeId);
 		rec.setString(TYPE_NAME_COL, type);
 		table.putRecord(rec);
 	}

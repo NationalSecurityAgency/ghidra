@@ -17,8 +17,9 @@ package ghidra.framework.project.tool;
 
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGTest;
 import ghidra.framework.model.*;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.ProjectTestUtils;
 
@@ -30,19 +31,11 @@ import ghidra.test.ProjectTestUtils;
  */
 public class DeleteToolTest extends AbstractGhidraHeadedIntegrationTest {
 
-	private final static String PROJECT_DIRECTORY = AbstractGenericTest.getTestDirectoryPath();
+	private final static String PROJECT_DIRECTORY = AbstractGTest.getTestDirectoryPath();
 	private final static String TOOL_NAME = "TestTool";
 
-	private Tool runningTool;
+	private PluginTool runningTool;
 	private Project project;
-
-	/**
-	 * Constructor
-	 * @param arg0
-	 */
-	public DeleteToolTest() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -56,8 +49,8 @@ public class DeleteToolTest extends AbstractGhidraHeadedIntegrationTest {
 		ProjectTestUtils.deleteProject(PROJECT_DIRECTORY, PROJECT_NAME);
 	}
 
-	/**
-	 * This doTest() routine tests the following requirements:
+	/*
+	 * Tsts the following requirements:
 	 * (1) delete a non-running tool from the user's project space
 	 * (2) delete a running tool from the user's project space
 	 *

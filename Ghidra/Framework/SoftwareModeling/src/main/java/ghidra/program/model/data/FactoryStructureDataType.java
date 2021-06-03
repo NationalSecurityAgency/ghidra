@@ -24,7 +24,6 @@ import ghidra.util.exception.DuplicateNameException;
  * a Structure and create a new Dynamic structure each time they are used.
  */
 public abstract class FactoryStructureDataType extends BuiltIn implements FactoryDataType {
-	private final static long serialVersionUID = 1;
 
 	/**
 	 * Constructs a new DynamicStructureDataType with the given name
@@ -34,18 +33,21 @@ public abstract class FactoryStructureDataType extends BuiltIn implements Factor
 		super(null, name, dtm);
 	}
 
+	@Override
 	public abstract DataType clone(DataTypeManager dtm);
 
 	/**
 	 * @see ghidra.program.model.data.DataType#getLength()
 	 */
-	public int getLength() {
+	@Override
+	public final int getLength() {
 		return -1;
 	}
 
 	/**
 	 * @see ghidra.program.model.data.DataType#getValue(ghidra.program.model.mem.MemBuffer, ghidra.docking.settings.Settings, int)
 	 */
+	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		return null;
 	}
@@ -53,6 +55,7 @@ public abstract class FactoryStructureDataType extends BuiltIn implements Factor
 	/**
 	 * @see ghidra.program.model.data.DataType#getRepresentation(ghidra.program.model.mem.MemBuffer, ghidra.docking.settings.Settings, int)
 	 */
+	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		return null;
 	}
@@ -60,10 +63,12 @@ public abstract class FactoryStructureDataType extends BuiltIn implements Factor
 	/**
 	 * @see ghidra.program.model.data.DataType#getDescription()
 	 */
+	@Override
 	public String getDescription() {
 		return "Dynamic Data Type should not be instantiated directly";
 	}
 
+	@Override
 	public DataType getDataType(MemBuffer buf) {
 		Structure struct = new StructureDataType(getName(), 0);
 		if (buf != null) {
@@ -80,7 +85,7 @@ public abstract class FactoryStructureDataType extends BuiltIn implements Factor
 	 * @param buf
 	 * @return Returns a new structure with the correct category.
 	 */
-	private Structure setCategoryPath(Structure struct, MemBuffer buf) {
+	protected Structure setCategoryPath(Structure struct, MemBuffer buf) {
 		CategoryPath path = CategoryPath.ROOT;
 		try {
 			path =
@@ -94,8 +99,9 @@ public abstract class FactoryStructureDataType extends BuiltIn implements Factor
 	}
 
 	private void setCategory(DataType dt, CategoryPath path) {
-		if (dt == null)
+		if (dt == null) {
 			return;
+		}
 
 		try {
 			dt.setCategoryPath(path);
@@ -105,15 +111,15 @@ public abstract class FactoryStructureDataType extends BuiltIn implements Factor
 		if (dt instanceof Structure) {
 			Structure struct = (Structure) dt;
 			DataTypeComponent[] comps = struct.getDefinedComponents();
-			for (int i = 0; i < comps.length; i++) {
-				setCategory(comps[i].getDataType(), path);
+			for (DataTypeComponent comp : comps) {
+				setCategory(comp.getDataType(), path);
 			}
 		}
 		else if (dt instanceof Union) {
 			Union union = (Union) dt;
 			DataTypeComponent[] comps = union.getComponents();
-			for (int i = 0; i < comps.length; i++) {
-				setCategory(comps[i].getDataType(), path);
+			for (DataTypeComponent comp : comps) {
+				setCategory(comp.getDataType(), path);
 			}
 		}
 		else if (dt instanceof TypeDef) {

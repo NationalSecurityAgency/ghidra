@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,35 @@
  */
 package db;
 
-import ghidra.util.exception.AssertException;
-
 import java.io.IOException;
+
+import db.buffers.DataBuffer;
 
 /**
  * <code>LongField</code> provides a wrapper for 8-byte signed long data 
  * which is read or written to a Record. 
  */
-public class LongField extends Field {
+public final class LongField extends Field {
+
+	/**
+	 * Minimum long field value
+	 */
+	public static final LongField MIN_VALUE = new LongField(Long.MIN_VALUE, true);
+
+	/**
+	 * Maximum long field value
+	 */
+	public static final LongField MAX_VALUE = new LongField(Long.MAX_VALUE, true);
+
+	/**
+	 * Zero long field value
+	 */
+	public static final LongField ZERO_VALUE = new LongField(0, true);
+
+	/**
+	 * Instance intended for defining a {@link Table} {@link Schema}
+	 */
+	public static final LongField INSTANCE = ZERO_VALUE;
 
 	private long value;
 
@@ -39,69 +58,68 @@ public class LongField extends Field {
 	 * @param l initial value
 	 */
 	public LongField(long l) {
+		this(l, false);
+	}
+
+	/**
+	 * Construct a long field with an initial value of l.
+	 * @param l initial value
+	 * @param immutable true if field value is immutable
+	 */
+	LongField(long l, boolean immutable) {
+		super(immutable);
 		value = l;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#getLongValue()
-	 */
+	@Override
+	boolean isNull() {
+		return value == 0;
+	}
+
+	@Override
+	void setNull() {
+		checkImmutable();
+		value = 0;
+	}
+
 	@Override
 	public long getLongValue() {
 		return value;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#setLongValue(long)
-	 */
 	@Override
 	public void setLongValue(long value) {
+		checkImmutable();
 		this.value = value;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#length()
-	 */
 	@Override
 	int length() {
 		return 8;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#write(ghidra.framework.store.Buffer, int)
-	 */
 	@Override
 	int write(Buffer buf, int offset) throws IOException {
 		return buf.putLong(offset, value);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#read(ghidra.framework.store.Buffer, int)
-	 */
 	@Override
 	int read(Buffer buf, int offset) throws IOException {
+		checkImmutable();
 		value = buf.getLong(offset);
 		return offset + 8;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#readLength(ghidra.framework.store.Buffer, int)
-	 */
 	@Override
 	int readLength(Buffer buf, int offset) throws IOException {
 		return 8;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#getFieldType()
-	 */
 	@Override
-	protected byte getFieldType() {
+	byte getFieldType() {
 		return LONG_TYPE;
 	}
 
-	/*
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return "LongField: " + Long.toString(value);
@@ -109,53 +127,54 @@ public class LongField extends Field {
 
 	@Override
 	public String getValueAsString() {
-		return Long.toHexString(value);
+		return "0x" + Long.toHexString(value);
 	}
 
-	/*
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof LongField))
+		if (obj == null || !(obj instanceof LongField)) {
 			return false;
+		}
 		return ((LongField) obj).value == value;
 	}
 
-	/*
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
 	@Override
 	public int compareTo(Field o) {
+		if (!(o instanceof LongField)) {
+			throw new UnsupportedOperationException("may only compare similar Field types");
+		}
 		LongField f = (LongField) o;
-		if (value == f.value)
+		if (value == f.value) {
 			return 0;
-		else if (value < f.value)
+		}
+		else if (value < f.value) {
 			return -1;
+		}
 		return 1;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#newField(ghidra.framework.store.db.Field)
-	 */
 	@Override
-	public Field newField(Field fieldValue) {
-		if (fieldValue.isVariableLength())
-			throw new AssertException();
-		return new LongField(fieldValue.getLongValue());
+	int compareTo(DataBuffer buffer, int offset) {
+		long otherValue = buffer.getLong(offset);
+		if (value == otherValue) {
+			return 0;
+		}
+		else if (value < otherValue) {
+			return -1;
+		}
+		return 1;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#newField()
-	 */
 	@Override
-	public Field newField() {
+	public LongField copyField() {
+		return new LongField(getLongValue());
+	}
+
+	@Override
+	public LongField newField() {
 		return new LongField();
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#getBinaryData()
-	 */
 	@Override
 	public byte[] getBinaryData() {
 		return new byte[] { (byte) (value >> 56), (byte) (value >> 48), (byte) (value >> 40),
@@ -163,12 +182,31 @@ public class LongField extends Field {
 			(byte) value };
 	}
 
-	/*
-	 * @see java.lang.Object#hashCode()
-	 */
+	@Override
+	public void setBinaryData(byte[] bytes) {
+		checkImmutable();
+		if (bytes.length != 8) {
+			throw new IllegalFieldAccessException();
+		}
+		value = (((long) bytes[0] & 0xff) << 56) | (((long) bytes[1] & 0xff) << 48) |
+			(((long) bytes[2] & 0xff) << 40) | (((long) bytes[3] & 0xff) << 32) |
+			(((long) bytes[4] & 0xff) << 24) | (((long) bytes[5] & 0xff) << 16) |
+			(((long) bytes[6] & 0xff) << 8) | ((long) bytes[7] & 0xff);
+	}
+
 	@Override
 	public int hashCode() {
 		return (int) (value ^ (value >>> 32));
+	}
+
+	@Override
+	LongField getMinValue() {
+		return MIN_VALUE;
+	}
+
+	@Override
+	LongField getMaxValue() {
+		return MAX_VALUE;
 	}
 
 }

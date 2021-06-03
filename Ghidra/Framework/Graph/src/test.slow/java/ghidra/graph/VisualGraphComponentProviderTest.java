@@ -185,7 +185,7 @@ public class VisualGraphComponentProviderTest extends AbstractVisualGraphTest {
 	}
 
 	private void setSatelliteVisible(boolean visible) {
-		DockingTool tool = provider.getTool();
+		Tool tool = provider.getTool();
 		String name = "Display Satellite View";
 		DockingActionIf action = getAction(tool, name);
 		assertNotNull(name + " not in tool", action);
@@ -195,7 +195,7 @@ public class VisualGraphComponentProviderTest extends AbstractVisualGraphTest {
 	}
 
 	private void setSatelliteDocked(boolean docked) {
-		DockingTool tool = provider.getTool();
+		Tool tool = provider.getTool();
 		String name = "Dock Satellite View";
 		DockingActionIf action = getAction(tool, name);
 		assertNotNull(name + " not in tool", action);
@@ -216,7 +216,7 @@ public class VisualGraphComponentProviderTest extends AbstractVisualGraphTest {
 
 		private JComponent component;
 
-		protected TestProvider(DockingTool tool) {
+		protected TestProvider(Tool tool) {
 			super(tool, "Test VG Provider", "Test Owner");
 
 			component = new JPanel();

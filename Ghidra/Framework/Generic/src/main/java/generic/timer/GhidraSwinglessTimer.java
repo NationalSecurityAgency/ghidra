@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +91,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 	/**
 	 * Creates a new repeating timer with a initial and continual delay with the given delay. 
 	 * @param delay the delay to use for the first and subsequent timer callbacks.
-	 * @callback the callback the be called with the timer fires.
+	 * @param callback the callback the be called with the timer fires.
 	 */
 	public GhidraSwinglessTimer(int delay, TimerCallback callback) {
 		this(delay,delay,callback);
@@ -102,7 +101,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 	 * Creates a new repeating timer with an initial and continual delay. 
 	 * @param initialDelay the delay to use for the first timer callbacks.
 	 * @param delay the delay to use for subsequent timer callbacks.
-	 * @callback the callback the be called with the timer fires.
+	 * @param callback the callback the be called with the timer fires.
 	 */
 	public GhidraSwinglessTimer(int initialDelay, int delay, TimerCallback callback) {
 		this.callback = callback;

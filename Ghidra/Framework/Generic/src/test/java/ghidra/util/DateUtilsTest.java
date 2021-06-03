@@ -15,49 +15,112 @@
  */
 package ghidra.util;
 
-import java.util.Date;
-import java.util.List;
+import static org.junit.Assert.*;
 
-import org.junit.Assert;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.junit.Before;
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
+public class DateUtilsTest {
 
-public class DateUtilsTest extends AbstractGenericTest {
+	private String testDateString;
+	private Date testDate;
 
-	public DateUtilsTest() {
-		// nada
+	@Before
+	public void setUp() throws Exception {
+		SimpleDateFormat format = new SimpleDateFormat("MMM dd, yyyy hh:mm a");
+		testDateString = "Nov 04, 2019 02:43 PM";
+		testDate = format.parse(testDateString);
 	}
 
-	/**
-	 * This test was moved here from DateUtils.main()
-	 */
-	//@Test
-	public void testHolidays() {
-		for (int year = 2012; year < 2020; year++) {
-			List<Date> holidays = DateUtils.getHolidays(year);
-			for (Date date : holidays) {
-				System.out.println(DateUtils.formatDate(date));
-			}
-		}
+	@Test
+	public void testFormatDate() {
+		assertEquals("11/04/2019", DateUtils.formatDate(testDate));
+	}
+
+	@Test
+	public void testFormatDateTime() {
+		assertEquals(testDateString, DateUtils.formatDateTimestamp(testDate));
 	}
 
 	@Test
 	public void testFormatDuration() {
-		Assert.assertEquals("0 secs", DateUtils.formatDuration(100));
-		Assert.assertEquals("0 secs", DateUtils.formatDuration(DateUtils.MS_PER_SEC - 1));
-		Assert.assertEquals("1 secs", DateUtils.formatDuration(DateUtils.MS_PER_SEC));
-		Assert.assertEquals("1 secs", DateUtils.formatDuration(DateUtils.MS_PER_SEC + 1));
-		Assert.assertEquals("59 secs", DateUtils.formatDuration(DateUtils.MS_PER_MIN - 1));
-		Assert.assertEquals("1 mins, 0 secs", DateUtils.formatDuration(DateUtils.MS_PER_MIN));
-		Assert.assertEquals("1 mins, 1 secs",
+		assertEquals("0 secs", DateUtils.formatDuration(100));
+		assertEquals("0 secs", DateUtils.formatDuration(DateUtils.MS_PER_SEC - 1));
+		assertEquals("1 secs", DateUtils.formatDuration(DateUtils.MS_PER_SEC));
+		assertEquals("1 secs", DateUtils.formatDuration(DateUtils.MS_PER_SEC + 1));
+		assertEquals("59 secs", DateUtils.formatDuration(DateUtils.MS_PER_MIN - 1));
+		assertEquals("1 mins, 0 secs", DateUtils.formatDuration(DateUtils.MS_PER_MIN));
+		assertEquals("1 mins, 1 secs",
 			DateUtils.formatDuration(DateUtils.MS_PER_MIN + DateUtils.MS_PER_SEC));
-		Assert.assertEquals("23 hours, 59 mins, 59 secs",
+		assertEquals("23 hours, 59 mins, 59 secs",
 			DateUtils.formatDuration(DateUtils.MS_PER_DAY - 1));
-		Assert.assertEquals("1 days, 0 hours, 0 mins, 0 secs",
+		assertEquals("1 days, 0 hours, 0 mins, 0 secs",
 			DateUtils.formatDuration(DateUtils.MS_PER_DAY));
-		Assert.assertEquals("1 days, 0 hours, 0 mins, 0 secs",
+		assertEquals("1 days, 0 hours, 0 mins, 0 secs",
 			DateUtils.formatDuration(DateUtils.MS_PER_DAY + 1));
 	}
 
+	@Test
+	public void testNormalize() {
+		long time = testDate.getTime();
+		long threeHourOffset = 3 * (60 * 60 * 1000);
+		long future = time + threeHourOffset;
+		Date nowDate = new Date(time);
+		Date futureDate = new Date(future);
+
+		assertNotEquals(nowDate, futureDate);
+		Date nowNormalized = DateUtils.normalizeDate(nowDate);
+		Date futureNormalized = DateUtils.normalizeDate(futureDate);
+		assertEquals(nowNormalized, futureNormalized);
+	}
+
+	@Test
+	public void testGetDaysBetween() {
+
+		long time = testDate.getTime();
+		int days = 3;
+		long threeDaysOffset = days * (24 * 60 * 60 * 1000);
+		long future = time + threeDaysOffset;
+
+		Date nowDate = new Date(time);
+		Date futureDate = new Date(future);
+		int daysBetween = DateUtils.getDaysBetween(nowDate, futureDate);
+		assertEquals(days, daysBetween);
+	}
+
+	@Test
+	public void testGetDaysBetween_SameDay() {
+
+		long time = testDate.getTime();
+		Date date = new Date(time);
+		int daysBetween = DateUtils.getDaysBetween(date, date);
+		assertEquals(0, daysBetween);
+	}
+
+	@Test
+	public void testGetDaysBetween_MostRecentDateFirst() {
+
+		long time = testDate.getTime();
+		int days = 3;
+		long threeDaysOffset = days * (24 * 60 * 60 * 1000);
+		long future = time + threeDaysOffset;
+
+		Date nowDate = new Date(time);
+		Date futureDate = new Date(future);
+		int daysBetween = DateUtils.getDaysBetween(futureDate, nowDate);
+		assertEquals(days, daysBetween);
+	}
+
+	@Test
+	public void testGetBusinessDaysBetween() {
+
+		int november = 10;
+		Date friday = DateUtils.getDate(2019, november, 22);
+		Date monday = DateUtils.getDate(2019, november, 25);
+		int daysBetween = DateUtils.getBusinessDaysBetween(friday, monday);
+		assertEquals(1, daysBetween);
+	}
 }

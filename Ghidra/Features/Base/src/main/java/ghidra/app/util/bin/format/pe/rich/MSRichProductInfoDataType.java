@@ -20,13 +20,13 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
 
 class MSRichProductInfoDataType extends StructureDataType {
-	
+
 	private final CompId compid;
-	
+
 	public MSRichProductInfoDataType(CompId compid) {
 		this(compid, null);
 	}
-	
+
 	public MSRichProductInfoDataType(CompId compid, DataTypeManager dtm) {
 		super(new CategoryPath("/PE"), "ProductInfo", 0, dtm);
 		this.compid = compid;
@@ -34,12 +34,12 @@ class MSRichProductInfoDataType extends StructureDataType {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
+	public boolean hasLanguageDependantLength() {
 		return false;
 	}
 
 	@Override
-	public DataType clone(DataTypeManager dtm) {
+	public MSRichProductInfoDataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;
 		}

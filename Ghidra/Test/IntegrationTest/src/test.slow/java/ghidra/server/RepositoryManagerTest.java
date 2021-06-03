@@ -15,8 +15,7 @@
  */
 package ghidra.server;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.io.File;
 
@@ -61,7 +60,7 @@ public class RepositoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testCreateRepositoryManager() throws Exception {
 
-		mgr = new RepositoryManager(root, false, false, 0, false);
+		mgr = new RepositoryManager(root, false, 0, false);
 		assertNotNull(mgr);
 
 		String[] userNames = mgr.getAllUsers("User_0");
@@ -71,7 +70,7 @@ public class RepositoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testCreateRepositoryManagerWithAnonymous() throws Exception {
 
-		mgr = new RepositoryManager(root, false, false, 0, true);
+		mgr = new RepositoryManager(root, false, 0, true);
 		assertNotNull(mgr);
 
 		String[] userNames = mgr.getAllUsers("User_0");
@@ -83,7 +82,7 @@ public class RepositoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testCreateRepository() throws Exception {
-		mgr = new RepositoryManager(root, false, false, 0, false);
+		mgr = new RepositoryManager(root, false, 0, false);
 
 		Repository rep = mgr.createRepository("User_0", "REPOSITORY_A");
 		assertNotNull(rep);
@@ -91,7 +90,7 @@ public class RepositoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testCreateRepositoryAnonymous() throws Exception {
-		mgr = new RepositoryManager(root, false, false, 0, true);
+		mgr = new RepositoryManager(root, false, 0, true);
 
 		Repository rep = mgr.createRepository("User_0", "REPOSITORY_A");
 		assertNotNull(rep);
@@ -107,7 +106,7 @@ public class RepositoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testCreateDuplicateRepository() throws Exception {
-		mgr = new RepositoryManager(root, false, false, 0, false);
+		mgr = new RepositoryManager(root, false, 0, false);
 		mgr.createRepository("User_0", "REPOSITORY_A");
 		try {
 			mgr.createRepository("User_5", "REPOSITORY_A");
@@ -119,7 +118,7 @@ public class RepositoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testGetRepository() throws Exception {
-		mgr = new RepositoryManager(root, false, false, 0, true);
+		mgr = new RepositoryManager(root, false, 0, true);
 		Repository rep1 = mgr.createRepository("User_0", "REPOSITORY_A");
 		addUsers("User_0", true, rep1);
 
@@ -148,7 +147,7 @@ public class RepositoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testGetRepositoryBadUser() throws Exception {
-		mgr = new RepositoryManager(root, false, false, 0, false);
+		mgr = new RepositoryManager(root, false, 0, false);
 		mgr.createRepository("User_0", "REPOSITORY_A");
 
 		try {

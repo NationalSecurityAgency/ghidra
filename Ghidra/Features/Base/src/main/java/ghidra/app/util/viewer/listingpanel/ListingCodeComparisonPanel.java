@@ -195,6 +195,11 @@ public class ListingCodeComparisonPanel
 
 		repaint(); // Refresh the highlights. (byte, mnemonic, & operand)
 
+		if (programs[LEFT] == null) {
+			// not data is showing; no widgets to update
+			return;
+		}
+
 		// Refresh the area markers for Diff Code Units and Unmatched Code Units.
 		Color unmatchedCodeUnitsBackgroundColor =
 			comparisonOptions.getUnmatchedCodeUnitsBackgroundColor();
@@ -361,15 +366,23 @@ public class ListingCodeComparisonPanel
 	}
 
 	private void updateLeftListingTitle() {
+		titlePanels[LEFT].setTitleName(getLeftProgramName());
+	}
+
+	private String getLeftProgramName() {
 		String leftProgramName =
 			(programs[LEFT] != null) ? programs[LEFT].getDomainFile().toString() : "none";
-		titlePanels[LEFT].setTitleName(leftProgramName);
+		return leftProgramName;
 	}
 
 	private void updateRightListingTitle() {
+		titlePanels[RIGHT].setTitleName(getRightProgramName());
+	}
+
+	private String getRightProgramName() {
 		String rightProgramName =
 			(programs[RIGHT] != null) ? programs[RIGHT].getDomainFile().toString() : "none";
-		titlePanels[RIGHT].setTitleName(rightProgramName);
+		return rightProgramName;
 	}
 
 	private void initializeListingFieldNavigation() {
@@ -466,18 +479,10 @@ public class ListingCodeComparisonPanel
 	public void updateActionEnablement() {
 		boolean isShowing = isShowing();
 		boolean listingDiffActionEnablement = isShowing && listingDiff.hasCorrelation();
-		toggleHoverAction.setEnabled(isShowing);
-		nextPreviousAreaMarkerAction.setEnabled(listingDiffActionEnablement);
-		nextDiffAction.setEnabled(listingDiffActionEnablement);
-		previousDiffAction.setEnabled(listingDiffActionEnablement);
-		optionsAction.setEnabled(listingDiffActionEnablement);
 
-		// Diff actions
+		tool.contextChanged(tool.getActiveComponentProvider());
+
 		diffActionManager.updateActionEnablement(listingDiffActionEnablement);
-
-		// applyFunctionSignature enablement is handled by context.
-
-		// For now don't do anything here with the header or orientation actions.
 	}
 
 	class ToggleHeaderAction extends ToggleDockingAction {
@@ -535,6 +540,11 @@ public class ListingCodeComparisonPanel
 			setHelpLocation(new HelpLocation(DUAL_LISTING_HELP_TOPIC,
 				"Dual Listing Toggle Mouse Hover Popups"));
 			setHover(true);
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			return isShowing();
 		}
 
 		@Override
@@ -685,6 +695,11 @@ public class ListingCodeComparisonPanel
 		}
 
 		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			return isShowing() && listingDiff.hasCorrelation();
+		}
+
+		@Override
 		public void actionStateChanged(ActionState<String> newActionState, EventTrigger trigger) {
 			adjustNextPreviousAreaType();
 		}
@@ -716,6 +731,11 @@ public class ListingCodeComparisonPanel
 		@Override
 		public boolean isValidContext(ActionContext context) {
 			return isValidPanelContext(context);
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			return isShowing() && listingDiff.hasCorrelation();
 		}
 
 		@Override
@@ -758,6 +778,11 @@ public class ListingCodeComparisonPanel
 		}
 
 		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			return isShowing() && listingDiff.hasCorrelation();
+		}
+
+		@Override
 		public void actionPerformed(ActionContext context) {
 			if (isValidContext(context)) {
 				nextAreaDiff(nextPreviousAreaType, false);
@@ -782,6 +807,11 @@ public class ListingCodeComparisonPanel
 			setHelpLocation(
 				new HelpLocation(DUAL_LISTING_HELP_TOPIC, "Listing_Code_Comparison_Options"));
 			setEnabled(true);
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			return isShowing() && listingDiff.hasCorrelation();
 		}
 
 		@Override
@@ -1518,8 +1548,9 @@ public class ListingCodeComparisonPanel
 			comparisonOptions.getUnmatchedCodeUnitsBackgroundColor();
 		if (programs[LEFT] != null) {
 			AddressIndexMap indexMap = listingPanels[LEFT].getAddressIndexMap();
-			listingPanels[LEFT].getFieldPanel().setBackgroundColorModel(
-				new MarkerServiceBackgroundColorModel(markerManagers[LEFT], indexMap));
+			listingPanels[LEFT].getFieldPanel()
+					.setBackgroundColorModel(
+						new MarkerServiceBackgroundColorModel(markerManagers[LEFT], indexMap));
 			markerManagers[LEFT].setProgram(programs[LEFT]);
 			unmatchedCodeMarkers[LEFT] =
 				markerManagers[LEFT].createAreaMarker("Listing1 Unmatched Code",
@@ -1532,8 +1563,10 @@ public class ListingCodeComparisonPanel
 		}
 		if (programs[RIGHT] != null) {
 			AddressIndexMap rightIndexMap = listingPanels[RIGHT].getAddressIndexMap();
-			listingPanels[RIGHT].getFieldPanel().setBackgroundColorModel(
-				new MarkerServiceBackgroundColorModel(markerManagers[RIGHT], rightIndexMap));
+			listingPanels[RIGHT].getFieldPanel()
+					.setBackgroundColorModel(
+						new MarkerServiceBackgroundColorModel(markerManagers[RIGHT],
+							rightIndexMap));
 			markerManagers[RIGHT].setProgram(programs[RIGHT]);
 			unmatchedCodeMarkers[RIGHT] =
 				markerManagers[RIGHT].createAreaMarker("Listing2 Unmatched Code",
@@ -1633,8 +1666,9 @@ public class ListingCodeComparisonPanel
 
 		indexMaps[LEFT] = new AddressIndexMap(addressSets[LEFT]);
 		markerManagers[LEFT].getOverviewProvider().setAddressIndexMap(indexMaps[LEFT]);
-		listingPanels[LEFT].getFieldPanel().setBackgroundColorModel(
-			new MarkerServiceBackgroundColorModel(markerManagers[LEFT], indexMaps[LEFT]));
+		listingPanels[LEFT].getFieldPanel()
+				.setBackgroundColorModel(
+					new MarkerServiceBackgroundColorModel(markerManagers[LEFT], indexMaps[LEFT]));
 	}
 
 	private void updateRightAddressSet(Function rightFunction) {
@@ -1649,8 +1683,9 @@ public class ListingCodeComparisonPanel
 
 		indexMaps[RIGHT] = new AddressIndexMap(addressSets[RIGHT]);
 		markerManagers[RIGHT].getOverviewProvider().setAddressIndexMap(indexMaps[RIGHT]);
-		listingPanels[RIGHT].getFieldPanel().setBackgroundColorModel(
-			new MarkerServiceBackgroundColorModel(markerManagers[RIGHT], indexMaps[RIGHT]));
+		listingPanels[RIGHT].getFieldPanel()
+				.setBackgroundColorModel(
+					new MarkerServiceBackgroundColorModel(markerManagers[RIGHT], indexMaps[RIGHT]));
 	}
 
 	@Override
@@ -1991,6 +2026,11 @@ public class ListingCodeComparisonPanel
 			if (listingPanels[i].getFieldPanel() == comp) {
 				setDualPanelFocus(i);
 			}
+		}
+
+		// Kick the tool so action buttons will be updated
+		if (tool.getActiveComponentProvider() != null) {
+			tool.getActiveComponentProvider().contextChanged();
 		}
 	}
 
@@ -2673,12 +2713,12 @@ public class ListingCodeComparisonPanel
 	}
 
 	@Override
-	protected FieldPanel getLeftFieldPanel() {
+	public FieldPanel getLeftFieldPanel() {
 		return getLeftPanel().getFieldPanel();
 	}
 
 	@Override
-	protected FieldPanel getRightFieldPanel() {
+	public FieldPanel getRightFieldPanel() {
 		return getRightPanel().getFieldPanel();
 	}
 

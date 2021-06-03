@@ -24,7 +24,8 @@ public interface DisambiguateStrategy {
 	/**
 	 * Generate (possibly multiple) hashes that can be used to disambiguate an n-gram and its block from other
 	 * blocks with similar instructions.  Hashes are attached to the block's disambigHash list. 
-	 * @param block is the Block to generate specific disambiguating hashes for
+	 * @param instHash the instruction hash
+	 * @param matchSize the number of instructions to match
 	 * @param store is the HashStore used to store the disambiguating hashes
 	 * @return the list of disambiguating hashes
 	 * @throws CancelledException 

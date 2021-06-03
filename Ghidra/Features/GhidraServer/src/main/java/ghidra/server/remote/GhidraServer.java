@@ -158,11 +158,9 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		}
 
 		boolean supportLocalPasswords = false;
-		boolean requireExplicitPasswordReset = true;
 		switch (authMode) {
 			case PASSWORD_FILE_LOGIN:
 				supportLocalPasswords = true;
-				requireExplicitPasswordReset = false;
 				authModule = new PasswordFileAuthenticationModule(allowUserToSpecifyName);
 				break;
 			case PKI_LOGIN:
@@ -199,8 +197,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			sshAuthModule = new SSHAuthenticationModule(allowUserToSpecifyName);
 		}
 
-		mgr = new RepositoryManager(rootDir, supportLocalPasswords, requireExplicitPasswordReset,
-			defaultPasswordExpirationDays, allowAnonymousAccess);
+		mgr = new RepositoryManager(rootDir, supportLocalPasswords, defaultPasswordExpirationDays,
+			allowAnonymousAccess);
 
 		GhidraServer.server = this;
 
@@ -533,7 +531,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 		// Network name resolution disabled by default
 		InetNameLookup.setLookupEnabled(false);
-		
+
 		// Initialize application
 		try {
 			ApplicationLayout layout = new GhidraServerApplicationLayout();

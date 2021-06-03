@@ -15,20 +15,19 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
-import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
-import ghidra.util.HTMLUtilities;
-
 import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.tree.TreePath;
 
-import resources.ResourceManager;
 import docking.ActionContext;
 import docking.action.ToggleDockingAction;
 import docking.action.ToolBarData;
+import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
+import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
+import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
+import ghidra.util.HTMLUtilities;
+import resources.ResourceManager;
 
 public class FilterArraysAction extends ToggleDockingAction {
 
@@ -41,8 +40,8 @@ public class FilterArraysAction extends ToggleDockingAction {
 
 		this.setToolBarData(new ToolBarData(FILTER_ARRAYS_ICON, "filters"));
 
-		setDescription(HTMLUtilities.toHTML("Toggle whether or not Arrays are\n"
-			+ "displayed in the Data Type Manager tree."));
+		setDescription(HTMLUtilities.toHTML(
+			"Toggle whether or not Arrays are\n" + "displayed in the Data Type Manager tree."));
 		setSelected(true);
 		setEnabled(true);
 	}
@@ -58,7 +57,7 @@ public class FilterArraysAction extends ToggleDockingAction {
 	@Override
 	public void actionPerformed(ActionContext context) {
 		DataTypeArchiveGTree gtree = (DataTypeArchiveGTree) context.getContextObject();
-		List<TreePath> expandedPaths = gtree.getExpandedPaths(gtree.getRootNode());
+		List<TreePath> expandedPaths = gtree.getExpandedPaths(gtree.getViewRoot());
 		TreePath[] selectionPaths = gtree.getSelectionPaths();
 		gtree.enableArrayFilter(isSelected());
 		gtree.expandPaths(expandedPaths);

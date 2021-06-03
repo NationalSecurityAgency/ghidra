@@ -1,0 +1,152 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- 
+
+	This is an XML file intended to be parsed by the Ghidra help system.  It is loosely based 
+	upon the JavaHelp table of contents document format.  The Ghidra help system uses a 
+	TOC_Source.xml file to allow a module with help to define how its contents appear in the 
+	Ghidra help viewer's table of contents.  The main document (in the Base module) 
+	defines a basic structure for the 
+	Ghidra table of contents system.  Other TOC_Source.xml files may use this structure to insert
+	their files directly into this structure (and optionally define a substructure).
+	
+	
+	In this document, a tag can be either a <tocdef> or a <tocref>.  The former is a definition
+	of an XML item that may have a link and may contain other <tocdef> and <tocref> children.  
+	<tocdef> items may be referred to in other documents by using a <tocref> tag with the 
+	appropriate id attribute value.  Using these two tags allows any module to define a place 
+	in the table of contents system (<tocdef>), which also provides a place for 
+	other TOC_Source.xml files to insert content (<tocref>).  
+	
+	During the help build time, all TOC_Source.xml files will be parsed and	validated to ensure
+	that all <tocref> tags point to valid <tocdef> tags.  From these files will be generated
+	<module name>_TOC.xml files, which are table of contents files written in the format 
+	desired by the JavaHelp system.   Additionally, the generated files will be merged together
+	as they are loaded by the JavaHelp system.  In the end, when displaying help in the Ghidra
+	help GUI, there will be one table of contents that has been created from the definitions in 
+	all of the modules' TOC_Source.xml files.
+
+	
+	Tags and Attributes
+	
+	<tocdef>
+	-id          - the name of the definition (this must be unique across all TOC_Source.xml files)	
+	-text        - the display text of the node, as seen in the help GUI
+	-target**    - the file to display when the node is clicked in the GUI
+	-sortgroup   - this is a string that defines where a given node should appear under a given
+	               parent.  The string values will be sorted by the JavaHelp system using
+	               a javax.text.RulesBasedCollator.  If this attribute is not specified, then
+	               the text of attribute will be used.
+
+	<tocref>
+	-id			 - The id of the <tocdef> that this reference points to 
+	
+	**The URL for the target is relative and should start with 'help/topics'.  This text is 
+	used by the Ghidra help system to provide a universal starting point for all links so that
+	they can be resolved at runtime, across modules.
+	
+	
+-->
+
+
+<tocroot>
+	<tocref id="Ghidra Functionality">
+		<tocdef id="Debugger" text="Debugger"  
+		        target="help/topics/Debugger/Debugger.html" >
+		        
+	        <tocdef id="DebuggerGettingStarted" text="Getting Started"
+	        		sortgroup="a" 
+	                target="help/topics/Debugger/GettingStarted.html" >
+	        	<tocdef id="Launching" text="Launching a Target"
+	        	        sortgroup="a"
+	        	        target="help/topics/Debugger/GettingStarted.html#launching" />
+     	    </tocdef>
+
+     	    <tocdef id="DebuggerTroubleshooting" text="Troubleshooting"
+     	    		sortgroup="b"
+     	    		target="help/topics/Debugger/Troubleshooting.html" />
+
+	        <tocdef id="DebuggerTargetsPlugin" text="Targets" 
+	        		sortgroup="c" 
+	                target="help/topics/DebuggerTargetsPlugin/DebuggerTargetsPlugin.html" >
+
+		        <tocdef id="DebuggerModelServicePlugin" text="Tool Actions" 
+		        		sortgroup="a" 
+		                target="help/topics/DebuggerModelServicePlugin/DebuggerModelServicePlugin.html" />
+		    </tocdef>
+
+			<tocdef id="DebuggerConsolePlugin" text="Debug Console"
+					sortgroup="c1"
+					target="help/topics/DebuggerConsolePlugin/DebuggerConsolePlugin.html" />
+
+	        <tocdef id="DebuggerObjectsPlugin" text="Commands and Objects" 
+	        		sortgroup="d" 
+	                target="help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html" />
+
+	        <tocdef id="DebuggerInterpreterPlugin" text="Interpreters" 
+	        		sortgroup="e" 
+	                target="help/topics/DebuggerInterpreterPlugin/DebuggerInterpreterPlugin.html" />
+
+	        <tocdef id="DebuggerThreadsPlugin" text="Threads and Traces" 
+	        		sortgroup="f" 
+	                target="help/topics/DebuggerThreadsPlugin/DebuggerThreadsPlugin.html" />
+
+			<tocdef id="DebuggerTraceManagerServicePlugin" text="Trace Management"
+					sortgroup="g"
+					target="help/topics/DebuggerTraceManagerServicePlugin/DebuggerTraceManagerServicePlugin.html" />
+
+	        <tocdef id="DebuggerRegistersPlugin" text="Registers" 
+	        		sortgroup="h" 
+	                target="help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html" />
+
+	        <tocdef id="DebuggerListingPlugin" text="Dynamic Listing" 
+	        		sortgroup="i" 
+	                target="help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html" />
+
+	        <tocdef id="DebuggerStackPlugin" text="Stack" 
+	        		sortgroup="j" 
+	                target="help/topics/DebuggerStackPlugin/DebuggerStackPlugin.html" />
+
+	        <tocdef id="DebuggerBreakpointsPlugin" text="Breakpoints" 
+	        		sortgroup="k" 
+	                target="help/topics/DebuggerBreakpointsPlugin/DebuggerBreakpointsPlugin.html" >
+	                
+	                <tocdef id="DebuggerBreakpointMarkerPlugin" text="In the Listings"
+	                	    sortgroup="a"
+	                	    target="help/topics/DebuggerBreakpointMarkerPlugin/DebuggerBreakpointMarkerPlugin.html" />
+	        </tocdef>
+
+	        <tocdef id="DebuggerRegionsPlugin" text="Memory Regions" 
+	        		sortgroup="l" 
+	                target="help/topics/DebuggerRegionsPlugin/DebuggerRegionsPlugin.html" />
+
+	        <tocdef id="DebuggerTimePlugin" text="Time" 
+	        		sortgroup="m" 
+	                target="help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html" />
+
+	        <tocdef id="DebuggerModulesPlugin" text="Modules and Sections" 
+	        		sortgroup="n" 
+	                target="help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html" >
+
+		        <tocdef id="DebuggerStaticMappingPlugin" text="Static Mappings" 
+		        		sortgroup="a" 
+		                target="help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html" />
+			</tocdef>
+			
+			<tocdef id="DebuggerWatchesPlugin" text="Watches"
+					sortgroup="n"
+					target="help/topics/DebuggerWatchesPlugin/DebuggerWatchesPlugin.html" />
+			
+			<tocdef id="DebuggerMemviewPlugin" text="Memview Plot"
+					sortgroup="o"
+					target="help/topics/DebuggerMemviewPlugin/DebuggerMemviewPlugin.html" />
+			
+			<tocdef id="DebuggerPcodeStepperPlugin" text="P-code Stepper"
+					sortgroup="p"
+					target="help/topics/DebuggerPcodeStepperPlugin/DebuggerPcodeStepperPlugin.html" />
+			
+	        <tocdef id="DebuggerBots" text="Bots: Workflow Automation" 
+	        		sortgroup="q" 
+	                target="help/topics/DebuggerBots/DebuggerBots.html" />
+	    </tocdef>
+	</tocref>
+</tocroot>

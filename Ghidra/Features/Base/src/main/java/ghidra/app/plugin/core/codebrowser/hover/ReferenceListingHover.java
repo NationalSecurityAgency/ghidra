@@ -18,14 +18,11 @@ package ghidra.app.plugin.core.codebrowser.hover;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.hover.AbstractReferenceHover;
 import ghidra.app.services.CodeFormatService;
-import ghidra.app.util.HelpTopics;
-import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.HelpLocation;
 
 public class ReferenceListingHover extends AbstractReferenceHover implements ListingHoverService {
 
-	protected static final String NAME = "Reference Code Viewer";
+	private static final String NAME = "Reference Code Viewer";
 
 	private static final String DESCRIPTION =
 		"Shows \"referred to\" code and data within the listing.";
@@ -41,23 +38,18 @@ public class ReferenceListingHover extends AbstractReferenceHover implements Lis
 	}
 
 	@Override
-	public void initializeOptions() {
-		options = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_POPUPS);
-
-		options.setOptionsHelpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, "MouseHover"));
-		HelpLocation help = new HelpLocation(HelpTopics.CODE_BROWSER, "ReferenceHover");
-		options.getOptions(NAME).setOptionsHelpLocation(help);
-
-		options.registerOption(NAME, true, help, DESCRIPTION);
-
-		options.registerOption(NAME + Options.DELIMITER + "Dialog Height", 400, help,
-			"Height of the popup window");
-		options.registerOption(NAME + Options.DELIMITER + "Dialog Width", 600, help,
-			"Width of the popup window");
-
-		setOptions(options, NAME);
-		options.addOptionsChangeListener(this);
+	protected String getName() {
+		return NAME;
 	}
 
+	@Override
+	protected String getDescription() {
+		return DESCRIPTION;
+	}
+
+	@Override
+	protected String getOptionsCategory() {
+		return GhidraOptions.CATEGORY_BROWSER_POPUPS;
+	}
 
 }

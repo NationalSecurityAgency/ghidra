@@ -165,7 +165,7 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
 
-			GTreeRootNode root = tree.getRootNode();
+			GTreeNode root = tree.getViewRoot();
 			List<GTreeNode> dtNodes = new ArrayList<>();
 			getDataTypeNodes(root, dtNodes);
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +16,7 @@
 package ghidra.app.decompiler.component;
 
 import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.util.List;
 
 import javax.swing.JComponent;
@@ -44,7 +44,7 @@ public class ClangTextField extends WrappingVerticalLayoutTextField {
 	 *
 	 * @param initialX The original x value passed to the constructor of this class
 	 * @param lineNumberElement he line number element for this field from which we get a width
-	 * @return
+	 * @return the calculated offset
 	 */
 	private static int calculateXPositionWithLineNumberOffset(int initialX,
 			FieldElement lineNumberElement) {
@@ -70,7 +70,7 @@ public class ClangTextField extends WrappingVerticalLayoutTextField {
 			FieldElement lineNumberFieldElement, int x, int width, HighlightFactory hlFactory) {
 		super(createSingleLineElement(fieldElements),
 			calculateXPositionWithLineNumberOffset(x, lineNumberFieldElement),
-			calculateWidthFromXPosition(x, lineNumberFieldElement, width), 30, hlFactory);
+			calculateWidthFromXPosition(x, lineNumberFieldElement, width), 30, hlFactory, false);
 		this.tokenList = tokenList;
 		this.lineNumberFieldElement = lineNumberFieldElement;
 	}
@@ -157,28 +157,29 @@ public class ClangTextField extends WrappingVerticalLayoutTextField {
 	}
 
 	@Override
-	public void paint(JComponent c, Graphics g, PaintContext context,
+	public void paint(JComponent c, Graphics g, PaintContext context, Rectangle clip,
 			FieldBackgroundColorManager selectionMap, RowColLocation cursorLoc, int rowHeight) {
 
 		// Don't print line numbers; don't copy line numbers.  We are assuming that the user only
 		// wants to copy code.
 		if (context.isPrinting() || context.isTextCopying()) {
-			printTextWithoutLineNumbers(c, g, context, selectionMap, cursorLoc, rowHeight);
+			printTextWithoutLineNumbers(c, g, context, clip, selectionMap, cursorLoc, rowHeight);
 			return;
 		}
 
 		// paint our line number
 		lineNumberFieldElement.paint(c, g, 0, 0);
-		super.paint(c, g, context, selectionMap, cursorLoc, rowHeight);
+		super.paint(c, g, context, clip, selectionMap, cursorLoc, rowHeight);
 	}
 
 	private void printTextWithoutLineNumbers(JComponent c, Graphics g, PaintContext context,
-			FieldBackgroundColorManager selectionMap, RowColLocation cursorLoc, int rowHeight) {
+			Rectangle clip, FieldBackgroundColorManager selectionMap, RowColLocation cursorLoc,
+			int rowHeight) {
 		int oringalStartX = startX;
 		try {
 			// strip off the line number padding...
 			stripLineNumbersAndLayoutText();
-			super.paint(c, g, context, selectionMap, cursorLoc, rowHeight);
+			super.paint(c, g, context, clip, selectionMap, cursorLoc, rowHeight);
 		}
 		finally {
 			// ...restore the line number padding

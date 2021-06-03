@@ -17,10 +17,10 @@ package docking.widgets.tree.internal;
 
 import javax.swing.Icon;
 
-import docking.widgets.tree.AbstractGTreeRootNode;
+import docking.widgets.tree.GTreeNode;
 import resources.ResourceManager;
 
-public class InProgressGTreeRootNode extends AbstractGTreeRootNode {
+public class InProgressGTreeRootNode extends GTreeNode {
 
 	private static final Icon ICON = ResourceManager.loadImage("images/magnifier.png");
 

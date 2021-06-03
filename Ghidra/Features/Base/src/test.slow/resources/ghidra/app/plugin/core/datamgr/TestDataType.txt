@@ -21,15 +21,10 @@ public class TestDataType extends StructureDataType implements BuiltInDataType {
     	add(new WordDataType());
     }
 
-    /**
-     * @see ghidra.program.model.data.BuiltInDataType#clone(ghidra.program.model.data.DataTypeManager)
-     */
-    public BuiltInDataType clone(DataTypeManager dataMgr) {
+    public StructureDataType clone(DataTypeManager dataMgr) {
     	return new TestDataType(dataMgr);
     }
-    /**
-     * @see ghidra.program.model.data.BuiltInDataType#getCTypeDeclaration(ghidra.program.model.data.DataOrganization)
-     */
+   
 	public String getCTypeDeclaration(DataOrganization dataOrganization) {
 		return null;
 	}

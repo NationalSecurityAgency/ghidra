@@ -31,7 +31,7 @@ import ghidra.program.model.listing.Program;
  * the existing data will be changed into a pointer to the given dataType.  If the given dataType
  * is a default-pointer, it will become a pointer to the existing type.  
  * 
- * @see DataUtilities#createData(Program, Address, DataType, boolean, ghidra.program.model.data.DataUtilities.ClearDataMode)
+ * @see DataUtilities#createData(Program, Address, DataType, int, boolean, DataUtilities.ClearDataMode)
  */
 public class CreateDataCmd implements Command {
 

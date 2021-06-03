@@ -72,7 +72,7 @@ public abstract class AbstractUnaryExpressionSolver<T extends UnaryExpression>
 	/**
 	 * Compute the input value given that the result is known
 	 * 
-	 * @note Assumes an involution by default
+	 * NOTE: Assumes an involution by default
 	 * @param goal the result
 	 * @return the input value solution
 	 */

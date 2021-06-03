@@ -16,11 +16,10 @@
 package ghidra.app.util.bin.format.pe.cli.streams;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.pe.cli.CliMetadataRoot;
 import ghidra.app.util.bin.format.pe.cli.CliStreamHeader;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -64,15 +63,26 @@ public class CliStreamStrings extends CliAbstractStream {
 	public boolean parse() throws IOException {
 		reader.setPointerIndex(offset);
 
-		// First byte is always 0x00
-		reader.readNextByte();
+		int bytesRead = 0;
+		int stringLength = 0;
+		int prevOffset = 0;
 
-		int bytesRead = 1;
+		// Loop through the data looking for NULL terminators
 		while (bytesRead < header.getSize()) {
-			String str = reader.readNextAsciiString();
-			stringIndexes.add(bytesRead);
-			stringSizes.add(str.length() + 1);
-			bytesRead += str.length() + 1;
+			int currentByte = reader.readNextUnsignedByte();
+			stringLength++;
+			bytesRead++;
+
+			if (currentByte == 0) {
+				stringIndexes.add(prevOffset);
+				prevOffset = bytesRead;
+
+				// Record the length of the UTF-8 string including the NULL terminator
+				stringSizes.add(stringLength);
+
+				// We're moving on to the next string so reset to 0
+				stringLength = 0;
+			}
 		}
 
 		return true;
@@ -81,12 +91,15 @@ public class CliStreamStrings extends CliAbstractStream {
 	/**
 	 * Gets the string at the given index.
 	 * 
-	 * @param The {@link CliMetadataRoot} that may point to the {@link CliStreamStrings}.
 	 * @param index The index of the string to get.
 	 * @return The string at the given index.  Could be null if the index was invalid or there was
 	 *   a problem reading the string.
 	 */
 	public String getString(int index) {
+
+		if (stringIndexes.size() == 0 || stringSizes.size() == 0) {
+			return null;
+		}
 
 		int lastIndex = stringIndexes.get(stringIndexes.size() - 1);
 		int lastSize = stringSizes.get(stringSizes.size() - 1);
@@ -95,8 +108,24 @@ public class CliStreamStrings extends CliAbstractStream {
 			return null;
 		}
 
+		int stringLength = 0;
+		int stringLengthIndex = Collections.binarySearch(stringIndexes, index);
+		if (stringLengthIndex >= 0) {
+			stringLength = stringSizes.get(stringLengthIndex);
+		}
+		else {
+			// Reinterpret to the closest offset of a complete string prior
+			// to the offset, then get the remainder string length
+			stringLengthIndex = (-stringLengthIndex - 1) - 1;
+			stringLength =
+				stringSizes.get(stringLengthIndex) - (index - stringIndexes.get(stringLengthIndex));
+		}
+
 		try {
-			return reader.readAsciiString(offset + index);
+			// Grab an array of bytes at the index and convert to UTF-8, and don't
+			// include the NULL terminator
+			return new String(reader.readByteArray(offset + index, stringLength - 1),
+				StandardCharsets.UTF_8);
 		}
 		catch (IOException e) {
 			return null;
@@ -106,7 +135,7 @@ public class CliStreamStrings extends CliAbstractStream {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure struct = new StructureDataType(new CategoryPath(PATH), header.getName(), 0);
-		struct.add(BYTE, "Reserved", "Always 0");
+
 		for (int i = 0; i < stringSizes.size(); i++) {
 			struct.add(UTF8, stringSizes.get(i),
 				"[" + Integer.toHexString(stringIndexes.get(i)) + "]", null);

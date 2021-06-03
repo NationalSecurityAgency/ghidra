@@ -78,6 +78,8 @@ public:
   static SubtableSymbol *getCurrentSubtable(const list<WithBlock> &stack);
 };
 
+class SleighCompile;
+
 class ConsistencyChecker {
   struct OptimizeRecord {
     int4 writeop;
@@ -91,11 +93,14 @@ class ConsistencyChecker {
     OptimizeRecord(void) {
       writeop = -1; readop = -1; inslot=-1; writecount=0; readcount=0; writesection=-2; readsection=-2; opttype=-1; }
   };
+  SleighCompile *compiler;
   int4 unnecessarypcode;
   int4 readnowrite;
   int4 writenoread;
+  int4 largetemp;
   bool printextwarning;
   bool printdeadwarning;
+  bool printlargetempwarning;
   SubtableSymbol *root_symbol;
   vector<SubtableSymbol *> postorder;
   map<SubtableSymbol *,int4> sizemap; // Sizes associated with tables
@@ -106,6 +111,8 @@ class ConsistencyChecker {
   bool checkOpMisuse(OpTpl *op,Constructor *ct);
   bool sizeRestriction(OpTpl *op,Constructor *ct);
   bool checkConstructorSection(Constructor *ct,ConstructTpl *cttpl);
+  bool hasLargeTemporary(OpTpl *op);
+  bool isTemporaryAndTooBig(VarnodeTpl *vn);
   bool checkVarnodeTruncation(Constructor *ct,int4 slot,OpTpl *op,VarnodeTpl *vn,bool isbigendian);
   bool checkSectionTruncations(Constructor *ct,ConstructTpl *cttpl,bool isbigendian);
   bool checkSubtable(SubtableSymbol *sym);
@@ -122,15 +129,17 @@ class ConsistencyChecker {
   OptimizeRecord *findValidRule(Constructor *ct,map<uintb,OptimizeRecord> &recs) const;
   void applyOptimization(Constructor *ct,const OptimizeRecord &rec);
   void checkUnusedTemps(Constructor *ct,const map<uintb,OptimizeRecord> &recs);
+  void checkLargeTemporaries(Constructor *ct);
   void optimize(Constructor *ct);
 public:
-  ConsistencyChecker(SubtableSymbol *rt,bool unnecessary,bool warndead);
+  ConsistencyChecker(SleighCompile *sleigh, SubtableSymbol *rt,bool unnecessary,bool warndead, bool warnlargetemp);
   bool test(void);
   bool testTruncations(bool isbigendian);
   void optimizeAll(void);
   int4 getNumUnnecessaryPcode(void) const { return unnecessarypcode; }
   int4 getNumReadNoWrite(void) const { return readnowrite; }
   int4 getNumWriteNoRead(void) const { return writenoread; }
+  int4 getNumLargeTemporaries(void) const {return largetemp;}
 };
 
 struct FieldContext {
@@ -140,8 +149,6 @@ struct FieldContext {
   FieldContext(VarnodeSymbol *s,FieldQuality *q) { sym=s; qual=q; }
 };
 
-class SleighCompile;
-
 class MacroBuilder : public PcodeBuilder {
   SleighCompile *slgh;
   bool haserror;
@@ -150,7 +157,7 @@ class MacroBuilder : public PcodeBuilder {
   bool transferOp(OpTpl *op,vector<HandleTpl *> &params);
   virtual void dump( OpTpl *op );
   void free(void);
-  void reportError(const string &val);
+  void reportError(const Location* loc, const string &val);
 public:
   MacroBuilder(SleighCompile *sl,vector<OpTpl *> &ovec,uint4 lbcnt) : PcodeBuilder(lbcnt),outvec(ovec) {
     slgh = sl; haserror = false; }
@@ -166,7 +173,9 @@ public:
 class SleighPcode : public PcodeCompile {
   SleighCompile *compiler;
   virtual uintb allocateTemp(void);
-  virtual void reportError(const string &msg);
+  virtual const Location *getLocation(SleighSymbol *sym) const;
+  virtual void reportError(const Location* loc, const string &msg);
+  virtual void reportWarning(const Location* loc, const string &msg);
   virtual void addSymbol(SleighSymbol *sym);
 public:
   SleighPcode(void) : PcodeCompile() { compiler = (SleighCompile *)0; }
@@ -191,14 +200,20 @@ private:
   vector<string> relpath;	// Relative path (to cwd) for each filename
   vector<string> filename;	// Stack of current files being parsed
   vector<int4> lineno;		// Current line number for each file in stack
+  map<Constructor *, Location> ctorLocationMap;	// Map constructor to its defining parse location
+  map<SleighSymbol *, Location> symbolLocationMap;	// Map symbol to its defining parse location
   int4 userop_count;		// Number of userops defined
   bool warnunnecessarypcode;	// True if we warn of unnecessary ZEXT or SEXT
   bool warndeadtemps;		// True if we warn of temporaries that are written but not read
   bool lenientconflicterrors;	// True if we ignore most pattern conflict errors
+  bool largetemporarywarning;   // True if we warn about temporaries larger than SleighBase::MAX_UNIQUE_SIZE
   bool warnalllocalcollisions;	// True if local export collisions generate individual warnings
   bool warnallnops;		// True if pcode NOPs generate individual warnings
   vector<string> noplist;	// List of individual NOP warnings
+  mutable Location currentLocCache;	// Location for (last) request of current location
   int4 errors;
+
+  const Location* getCurrentLocation(void) const;
   void predefinedSymbols(void);
   int4 calcContextVarLayout(int4 start,int4 sz,int4 numbits);
   void buildDecisionTrees(void);
@@ -220,13 +235,23 @@ private:
   void checkUniqueAllocation(void);
 public:
   SleighCompile(void);
-  void reportError(const string &msg,bool includeline);
-  void reportWarning(const string &msg,bool includeline);
+  const Location *getLocation(Constructor* ctor) const;
+  const Location *getLocation(SleighSymbol *sym) const;
+  string formatStatusMessage(const Location* loc, const string &msg);
+  void reportError(const string &msg);
+  void reportError(const Location *loc, const string &msg);
+  void reportWarning(const string &msg);
+  void reportWarning(const Location *loc, const string &msg);
   int4 numErrors(void) const { return errors; }
+  void reportInfo(const string &msg);
+  void reportInfo(const Location *loc, const string &msg);
+
+
   uintb getUniqueAddr(void);
   void setUnnecessaryPcodeWarning(bool val) { warnunnecessarypcode = val; }
   void setDeadTempWarning(bool val) { warndeadtemps = val; }
   void setEnforceLocalKeyWord(bool val) { pcode.setEnforceLocalKey(val); }
+  void setLargeTemporaryWarning (bool val) {largetemporarywarning = val;}
   void setLenientConflict(bool val) { lenientconflicterrors = val; }
   void setLocalCollisionWarning(bool val) { warnalllocalcollisions = val; }
   void setAllNopWarning(bool val) { warnallnops = val; }
@@ -244,7 +269,7 @@ public:
   bool undefinePreprocValue(const string &nm);
 
   // Parser functions
-  TokenSymbol *defineToken(string *name,uintb *sz);
+  TokenSymbol *defineToken(string *name,uintb *sz,int4 endian);
   void addTokenField(TokenSymbol *sym,FieldQuality *qual);
   bool addContextField(VarnodeSymbol *sym,FieldQuality *qual);
   void newSpace(SpaceQuality *qual);

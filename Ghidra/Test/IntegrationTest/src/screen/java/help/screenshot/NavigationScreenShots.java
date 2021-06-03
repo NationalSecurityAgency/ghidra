@@ -142,7 +142,7 @@ public class NavigationScreenShots extends GhidraScreenShotGenerator {
 		setGotoText(dialog, "LAB*");
 		pressOkOnDialog();
 		Window window =
-			waitForWindowByTitleContaining(null, "Search Limit Exceeded!", DEFAULT_WINDOW_TIMEOUT);
+			waitForWindowByTitleContaining("Search Limit Exceeded!");
 		assertNotNull(window);
 		pressButtonByText(window, "OK");
 		waitForSwing();

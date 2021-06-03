@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,14 @@
  */
 package ghidra.app.plugin.core.byteviewer;
 
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.app.plugin.core.format.ByteBlock;
 import ghidra.app.plugin.core.format.ByteEditInfo;
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.Address;
-
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Helper class to manage changes within byte blocks; determines what offsets
@@ -39,6 +38,8 @@ class ByteBlockChangeManager {
 	private static String BLOCK_OFFSET = "BlockOffset";
 	private static String OLD_VALUE = "OldValue";
 	private static String NEW_VALUE = "NewValue";
+
+	private int dummy = 4;
 
 	/**
 	 * Construct new change manager.
@@ -146,7 +147,8 @@ class ByteBlockChangeManager {
 	private boolean contains(Address blockAddr, BigInteger offset) {
 		for (int i = 0; i < changeList.size(); i++) {
 			ByteEditInfo edit = changeList.get(i);
-			if (edit.getBlockAddress().compareTo(blockAddr) == 0 && edit.getOffset().equals(offset)) {
+			if (edit.getBlockAddress().compareTo(blockAddr) == 0 &&
+				edit.getOffset().equals(offset)) {
 				return true;
 			}
 		}

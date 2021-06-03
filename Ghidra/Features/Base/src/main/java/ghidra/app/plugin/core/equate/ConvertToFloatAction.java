@@ -41,7 +41,7 @@ public class ConvertToFloatAction extends AbstractConvertAction {
 		DataOrganization dataOrganization = program.getDataTypeManager().getDataOrganization();
 		try {
 			FloatFormat format = FloatFormatFactory.getFloatFormat(dataOrganization.getFloatSize());
-			return format.getHostFloat(s.getBigInteger());
+			return format.round(format.getHostFloat(s.getBigInteger()));
 		}
 		catch (UnsupportedFloatFormatException e) {
 			return null;

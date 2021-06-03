@@ -21,39 +21,51 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
 /**
- * The Namespace interface.
+ * The Namespace interface
  */
-
 public interface Namespace {
 	static final long GLOBAL_NAMESPACE_ID = 0;
 	/**
 	 * The delimiter that is used to separate namespace nodes in a namespace
 	 * string.  For example, "Global::child1::symbolName"
 	 */
+	public static final String DELIMITER = "::";
+
+	/**
+	 * Replaced by {@link #DELIMITER}
+	 * @deprecated use {@link #DELIMITER}
+	 */
+	@Deprecated
 	public static final String NAMESPACE_DELIMITER = "::";
 
 	/**
 	 * Get the symbol for this namespace; Note: The global namespace will return null
+	 * @return the symbol for this namespace; Note: The global namespace will return null
 	 */
 	public Symbol getSymbol();
 
 	/**
+	 * Returns true if this namespace is external (i.e., associated with a Library)
 	 * @return true if this namespace is external (i.e., associated with a Library)
 	 */
 	public boolean isExternal();
 
 	/**
-	 * Get the name of the symbol for this scope.
+	 * Get the name of the symbol for this scope
+	 * @return the name of the symbol for this scope
 	 */
 	public String getName();
 
 	/**
-	 * Returns the fully qualified name.
+	 * Returns the fully qualified name
+	 * @param includeNamespacePath true to include the namespace in the returned name
+	 * @return the fully qualified name
 	 */
 	public String getName(boolean includeNamespacePath);
 
 	/**
-	 * Return the namespace id;
+	 * Return the namespace id
+	 * @return the namespace id
 	 */
 	public long getID();
 
@@ -66,6 +78,7 @@ public interface Namespace {
 	/**
 	 * Get the address set for this namespace.  Note: The body of a namespace (currently
 	 * only used by the function namespace) is restricted it Integer.MAX_VALUE.
+	 * @return the address set for this namespace
 	 */
 	public AddressSetView getBody();
 

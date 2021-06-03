@@ -15,23 +15,27 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.services.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.BookmarkType;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
+import ghidra.util.bytesearch.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class EmbeddedMediaAnalyzer extends AbstractAnalyzer {
 	private static final String NAME = "Embedded Media";
 	private static final String DESCRIPTION =
-		"Finds and tries to apply embedded media data types (ie png, gif, jpeg, wav) in current program.";
+		"Finds embedded media data types (ie png, gif, jpeg, wav)";
 
 	private static final String OPTION_NAME_CREATE_BOOKMARKS = "Create Analysis Bookmarks";
 	private static final String OPTION_DESCRIPTION_CREATE_BOOKMARKS =
@@ -52,92 +56,78 @@ public class EmbeddedMediaAnalyzer extends AbstractAnalyzer {
 			throws CancelledException {
 
 		Memory memory = program.getMemory();
-		AddressSetView initializedAddressSet = memory.getLoadedAndInitializedAddressSet();
-		AddressSet initialedSearchSet = set.intersect(initializedAddressSet);
+		AddressSetView validMemorySet = memory.getLoadedAndInitializedAddressSet();
+		AddressSetView searchSet = set.intersect(validMemorySet);
+		if (searchSet.isEmpty()) {
+			return false;  // no valid addresses to search
+		}
+
+		MemoryBytePatternSearcher searcher = new MemoryBytePatternSearcher("Embedded Media");
 
 		List<Address> foundMedia = new ArrayList<>();
 
-		foundMedia = scanForMedia(program, new GifDataType(), "GIF 87", GifDataType.MAGIC_87,
-			GifDataType.GIFMASK, initialedSearchSet, memory, monitor);
+		addByteSearchPattern(searcher, program, foundMedia, new GifDataType(), "GIF 87",
+			GifDataType.MAGIC_87, GifDataType.GIFMASK);
 
-		foundMedia.addAll(scanForMedia(program, new GifDataType(), "GIF 89", GifDataType.MAGIC_89,
-			GifDataType.GIFMASK, initialedSearchSet, memory, monitor));
+		addByteSearchPattern(searcher, program, foundMedia, new GifDataType(), "GIF 89",
+			GifDataType.MAGIC_89, GifDataType.GIFMASK);
 
-		foundMedia.addAll(scanForMedia(program, new PngDataType(), "PNG", PngDataType.MAGIC,
-			PngDataType.MASK, initialedSearchSet, memory, monitor));
+		addByteSearchPattern(searcher, program, foundMedia, new PngDataType(), "PNG",
+			PngDataType.MAGIC, PngDataType.MASK);
 
-		foundMedia.addAll(scanForMedia(program, new JPEGDataType(), "JPEG", JPEGDataType.MAGIC,
-			JPEGDataType.MAGIC_MASK, initialedSearchSet, memory, monitor));
+		addByteSearchPattern(searcher, program, foundMedia, new JPEGDataType(), "JPEG",
+			JPEGDataType.MAGIC, JPEGDataType.MAGIC_MASK);
 
-		foundMedia.addAll(scanForMedia(program, new WAVEDataType(), "WAVE", WAVEDataType.MAGIC,
-			WAVEDataType.MAGIC_MASK, initialedSearchSet, memory, monitor));
+		addByteSearchPattern(searcher, program, foundMedia, new WAVEDataType(), "WAVE",
+			WAVEDataType.MAGIC, WAVEDataType.MAGIC_MASK);
 
-		foundMedia.addAll(scanForMedia(program, new AUDataType(), "AU", AUDataType.MAGIC,
-			AUDataType.MAGIC_MASK, initialedSearchSet, memory, monitor));
+		addByteSearchPattern(searcher, program, foundMedia, new AUDataType(), "AU",
+			AUDataType.MAGIC, AUDataType.MAGIC_MASK);
 
-		foundMedia.addAll(scanForMedia(program, new AIFFDataType(), "AIFF", AIFFDataType.MAGIC,
-			AIFFDataType.MAGIC_MASK, initialedSearchSet, memory, monitor));
+		addByteSearchPattern(searcher, program, foundMedia, new AIFFDataType(), "AIFF",
+			AIFFDataType.MAGIC, AIFFDataType.MAGIC_MASK);
 
-		return true;
+		searcher.search(program, searchSet, monitor);
+
+		return foundMedia.size() > 0;
 	}
 
-	private List<Address> scanForMedia(Program program, DataType dt, String mediaName,
-			byte[] mediaBytes, byte[] mask, AddressSetView addresses, Memory memory,
-			TaskMonitor monitor) {
-
-		monitor.setMessage("Scanning for " + mediaName + " Embedded Media");
-		monitor.initialize(addresses.getNumAddresses());
-
-		List<Address> foundMediaAddresses = new ArrayList<>();
-
-		Iterator<AddressRange> iterator = addresses.iterator();
-		while (iterator.hasNext()) {
-			if (monitor.isCancelled()) {
-				return foundMediaAddresses;
-			}
-
-			AddressRange range = iterator.next();
-			Address start = range.getMinAddress();
-			Address end = range.getMaxAddress();
-
-			Address found = memory.findBytes(start, end, mediaBytes, mask, true, monitor);
-			while (found != null && !monitor.isCancelled()) {
-				//See if it is already an applied media data type
-				Data data = program.getListing().getDefinedDataAt(found);
-				int skipLen = 1;
-				if (data == null) {
-					try {
-						CreateDataCmd cmd = new CreateDataCmd(found, dt);
-						if (cmd.applyTo(program)) {
-							if (createBookmarksEnabled) {
-								program.getBookmarkManager().setBookmark(found,
-									BookmarkType.ANALYSIS, "Embedded Media",
-									"Found " + mediaName + " Embedded Media");
-							}
-							foundMediaAddresses.add(found);
-							//have to get the actual applied data to find the actual length to skip because until then it can't compute the length due to the data type being dynamic
-							skipLen = program.getListing().getDataAt(found).getLength();
-						}
-					}
-					//If media does not apply correctly then it is not really a that media data type or there is other data in the way
-					catch (Exception e) {
-						// Not a valid embedded media or no room to apply it so just ignore it and skip it
-					}
-				}
-				// skip either the valid data that was found or skip one byte
-				// then do the next search
-				try {
-					start = found.add(skipLen);
-					found = memory.findBytes(start, end, mediaBytes, mask, true, monitor);
-				}
-				catch (AddressOutOfBoundsException e) {
-					// If media was at the very end of the address space, we will end up here
-					break;
-				}
-			}
+	private void addByteSearchPattern(MemoryBytePatternSearcher searcher, Program program,
+			List<Address> foundMedia, DataType mediaDT, String mediaName, byte[] bytes,
+			byte[] mask) {
+		if (bytes == null) {
+			return;
 		}
 
-		return foundMediaAddresses;
+		GenericMatchAction<DataType> action = new GenericMatchAction<DataType>(mediaDT) {
+			@Override
+			public void apply(Program prog, Address addr, Match match) {
+				//See if it is already an applied media data type
+				if (!program.getListing().isUndefined(addr, addr)) {
+					return;
+				}
+
+				try {
+					CreateDataCmd cmd = new CreateDataCmd(addr, mediaDT);
+					if (cmd.applyTo(program)) {
+						if (createBookmarksEnabled) {
+							program.getBookmarkManager().setBookmark(addr, BookmarkType.ANALYSIS,
+								"Embedded Media", "Found " + mediaName + " Embedded Media");
+						}
+						foundMedia.add(addr);
+					}
+				}
+				//If media does not apply correctly then it is not really a that media data type or there is other data in the way
+				catch (Exception e) {
+					// Not a valid embedded media or no room to apply it so just ignore it and skip it
+				}
+			}
+		};
+
+		GenericByteSequencePattern<DataType> genericByteMatchPattern =
+			new GenericByteSequencePattern<DataType>(bytes, mask, action);
+
+		searcher.addPattern(genericByteMatchPattern);
 	}
 
 	@Override

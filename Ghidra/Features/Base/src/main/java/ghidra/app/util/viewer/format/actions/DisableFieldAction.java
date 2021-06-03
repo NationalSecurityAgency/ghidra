@@ -46,9 +46,6 @@ public class DisableFieldAction extends DockingAction {
 		setHelpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, "Disable Field"));
 	}
 
-    /**
-     * @see docking.DockingAction#isEnabledForContext(java.lang.Object)
-     */
     @Override
     public boolean isEnabledForContext(ActionContext context) {
     	Object contextObject = context.getContextObject();
@@ -60,9 +57,6 @@ public class DisableFieldAction extends DockingAction {
 		return false;
     }
 
-     /**
-     * Method called when the action is invoked.
-     */
     @Override
     public void actionPerformed(ActionContext context) {
 		FieldFactory factory = loc.getFieldFactory();

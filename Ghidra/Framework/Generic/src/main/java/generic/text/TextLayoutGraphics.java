@@ -158,12 +158,18 @@ public class TextLayoutGraphics extends Graphics2D {
 			//Insert spaces to account for distance past last field in row
 			FontMetrics metrics = COMPONENT.getFontMetrics(sortedTextInfo.font);
 			int spaceWidth = metrics.charWidth(' ');
+			if (spaceWidth == 0) {
+				// some environments report 0 for some fonts
+				spaceWidth = 4;
+			}
+
 			int fillSpaces =
 				Math.round((float) (sortedTextInfo.point.x - lastXPos) / (float) spaceWidth);
 			//Account for the case where there's a very small amount of space between fields
 			if (fillSpaces == 0 && sortedTextInfo.point.x > lastXPos) {
 				fillSpaces = 1;
 			}
+
 			for (int j = 0; j < fillSpaces; j++) {
 				buffer.append(' ');
 			}

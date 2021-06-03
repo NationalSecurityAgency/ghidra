@@ -63,6 +63,7 @@ public class FileCache {
 	private final File cacheDir;
 	private final File newDir;
 	private final File lastMaintFile;
+	private FileCacheMaintenanceDaemon cleanDaemon;
 
 	private int fileAddCount;
 	private int fileReUseCount;
@@ -159,11 +160,12 @@ public class FileCache {
 	 */
 	private void performCacheMaintIfNeeded() throws IOException {
 		lastMaintTS = (lastMaintTS == 0) ? lastMaintFile.lastModified() : lastMaintTS;
-		if (lastMaintTS + MAINT_INTERVAL_MS < System.currentTimeMillis()) {
-			performCacheMaint();
-			lastMaintTS = System.currentTimeMillis();
-			FileUtilities.writeStringToFile(lastMaintFile, "Last maint run at " + (new Date()));
+		if (lastMaintTS + MAINT_INTERVAL_MS > System.currentTimeMillis()) {
+			return;
 		}
+
+		cleanDaemon = new FileCacheMaintenanceDaemon();
+		cleanDaemon.start();
 	}
 
 	/**
@@ -211,8 +213,13 @@ public class FileCache {
 	}
 
 	private boolean isCacheFileName(String s) {
-		byte[] bytes = NumericUtilities.convertStringToBytes(s);
-		return (bytes != null) && bytes.length == MD5_BYTE_LEN;
+		try {
+			byte[] bytes = NumericUtilities.convertStringToBytes(s);
+			return (bytes != null) && bytes.length == MD5_BYTE_LEN;
+		}
+		catch (IllegalArgumentException e) {
+			return false;
+		}
 	}
 
 	/**
@@ -220,7 +227,7 @@ public class FileCache {
 	 * <p>
 	 * The stream is copied into a temp file in the cacheDir/new directory while its md5
 	 * is calculated.  The temp file is then moved into its final location
-	 * based on the md5 of the stream: AA/BB/CC/AABBCCDDEEFF....
+	 * based on the md5 of the stream: AA/BB/AABBCCDDEEFF....
 	 * <p>
 	 * The monitor progress is updated with the number of bytes that are being copied.  No
 	 * message or maximum is set.
@@ -263,7 +270,7 @@ public class FileCache {
 	 *
 	 * @param pusher functional callback that will accept an {@link OutputStream} and write
 	 * to it.
-	 * <pre> (os) -> { os.write(.....); }</pre>
+	 * <pre> (os) -&gt; { os.write(.....); }</pre>
 	 * @param monitor {@link TaskMonitor} that will be checked for cancel and updated with
 	 * file io progress.
 	 * @return a new {@link FileCacheEntry} with the newly added cache file's File and MD5,
@@ -415,5 +422,36 @@ public class FileCache {
 	 */
 	public long getMaxFileAgeMS() {
 		return MAX_FILE_AGE_MS;
+	}
+
+	/**
+	 * Returns true if the background thread has been created to clean old cache files and the
+	 * thread is still working
+	 * @return true if removing expired cache files
+	 */
+	boolean isCleaning() {
+		return cleanDaemon != null && cleanDaemon.isAlive();
+	}
+
+	private class FileCacheMaintenanceDaemon extends Thread {
+
+		FileCacheMaintenanceDaemon() {
+			setDaemon(true);
+		}
+
+		@Override
+		public void run() {
+
+			performCacheMaint();
+
+			// stamp the file after we finish, in case the VM stopped this daemon thread
+			lastMaintTS = System.currentTimeMillis();
+			try {
+				FileUtilities.writeStringToFile(lastMaintFile, "Last maint run at " + (new Date()));
+			}
+			catch (IOException e) {
+				Msg.error(this, "Unable to write file cache maintenance file: " + lastMaintFile, e);
+			}
+		}
 	}
 }

@@ -33,8 +33,8 @@ import ghidra.graph.viewer.*;
  * the graph display in the x and y direction. The default MouseButtonOne modifier can be overridden
  * to cause a different mouse gesture to translate the display.
  * 
- * 
- * 
+ * @param <V> the vertex type
+ * @param <E> the edge type
  */
 public class VisualGraphTranslatingGraphMousePlugin<V extends VisualVertex, E extends VisualEdge<V>>
 		extends AbstractGraphMousePlugin
@@ -43,14 +43,18 @@ public class VisualGraphTranslatingGraphMousePlugin<V extends VisualVertex, E ex
 	private boolean panning;
 	private boolean isHandlingEvent;
 
-	// TODO for deprecated usage note, see the VisualGraphMousePlugin interface
 	public VisualGraphTranslatingGraphMousePlugin() {
-		this(InputEvent.BUTTON1_MASK);
+		this(InputEvent.BUTTON1_DOWN_MASK);
 	}
 
 	public VisualGraphTranslatingGraphMousePlugin(int modifiers) {
 		super(modifiers);
 		this.cursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
+	}
+
+	@Override
+	public boolean checkModifiers(MouseEvent e) {
+		return e.getModifiersEx() == modifiers;
 	}
 
 	@Override
@@ -158,7 +162,7 @@ public class VisualGraphTranslatingGraphMousePlugin<V extends VisualVertex, E ex
 	}
 
 	private boolean checkModifiersForCursor(MouseEvent e) {
-		if (e.getModifiers() == 0) {
+		if (e.getModifiersEx() == 0) {
 			return true;
 		}
 		return false;

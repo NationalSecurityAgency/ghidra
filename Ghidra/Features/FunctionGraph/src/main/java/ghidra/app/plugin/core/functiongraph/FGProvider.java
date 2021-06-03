@@ -22,7 +22,6 @@ import java.util.function.Supplier;
 import javax.swing.*;
 
 import docking.*;
-import docking.action.DockingActionIf;
 import docking.widgets.fieldpanel.FieldPanel;
 import edu.uci.ics.jung.graph.Graph;
 import generic.stl.Pair;
@@ -145,12 +144,6 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		if (clipboardService != null) {
 			clipboardService.registerClipboardContentProvider(clipboardProvider);
 		}
-	}
-
-	@Override
-	protected void addLocalAction(DockingActionIf action) {
-		// overridden just to open package access
-		super.addLocalAction(action);
 	}
 
 	FGController getController() {
@@ -583,6 +576,10 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		if (functionGraphData.hasResults()) {
 			controller.refreshDisplayWithoutRebuilding();
 		}
+	}
+
+	public void optionsChanged() {
+		controller.optionsChanged();
 	}
 
 	@Override
@@ -1194,6 +1191,22 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		AddressSetView functionBody = function.getBody();
 		AddressSet intersection = currentProgramHighlight.intersect(functionBody);
 		return new ProgramSelection(intersection);
+	}
+
+	@Override
+	public String getTextSelection() {
+
+		FGData currentData = controller.getFunctionGraphData();
+		if (!currentData.hasResults()) {
+			return null;
+		}
+
+		FGVertex focusedVertex = controller.getFocusedVertex();
+		if (focusedVertex == null) {
+			return null;
+		}
+
+		return focusedVertex.getTextSelection();
 	}
 
 	@Override

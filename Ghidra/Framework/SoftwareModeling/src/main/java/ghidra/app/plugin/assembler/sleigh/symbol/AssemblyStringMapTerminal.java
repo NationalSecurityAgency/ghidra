@@ -27,7 +27,7 @@ import ghidra.app.plugin.processors.sleigh.symbol.VarnodeListSymbol;
 /**
  * A terminal that accepts only a particular set of strings, mapping each to a numeric value
  * 
- * @see NameSymbol
+ * @see ghidra.app.plugin.processors.sleigh.symbol.NameSymbol NameSymbol
  * @see VarnodeListSymbol
  */
 public class AssemblyStringMapTerminal extends AssemblyTerminal {

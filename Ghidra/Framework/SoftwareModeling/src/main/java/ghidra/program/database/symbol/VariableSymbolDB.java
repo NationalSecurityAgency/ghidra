@@ -17,7 +17,7 @@ package ghidra.program.database.symbol;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.function.FunctionDB;
 import ghidra.program.model.address.Address;
@@ -55,7 +55,7 @@ public class VariableSymbolDB extends SymbolDB {
 	 * @param record the record for the symbol
 	 */
 	public VariableSymbolDB(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, SymbolType type,
-			VariableStorageManagerDB variableMgr, Address address, Record record) {
+			VariableStorageManagerDB variableMgr, Address address, DBRecord record) {
 		super(symbolMgr, cache, address, record);
 		this.type = type;
 		this.variableMgr = variableMgr;
@@ -110,7 +110,7 @@ public class VariableSymbolDB extends SymbolDB {
 	}
 
 	@Override
-	protected boolean refresh(Record rec) {
+	protected boolean refresh(DBRecord rec) {
 		boolean isValid = super.refresh(rec);
 		variableStorage = null;
 		return isValid;
@@ -203,7 +203,7 @@ public class VariableSymbolDB extends SymbolDB {
 	}
 
 	@Override
-	public String getName() {
+	protected String doGetName() {
 		if (!checkIsValid()) {
 			// TODO: SCR
 			return "[Invalid VariableSymbol - Deleted!]";
@@ -213,7 +213,7 @@ public class VariableSymbolDB extends SymbolDB {
 			if (getSource() == SourceType.DEFAULT) {
 				return getParamName();
 			}
-			String storedName = super.getName();
+			String storedName = super.doGetName();
 			if (SymbolUtilities.isDefaultParameterName(storedName)) {
 				return getParamName();
 			}
@@ -232,7 +232,7 @@ public class VariableSymbolDB extends SymbolDB {
 		// TODO: we use to check for a default name and regenerate new default name but we should
 		// not need to do this if source remains at default
 
-		return super.getName();
+		return super.doGetName();
 	}
 
 	@Override

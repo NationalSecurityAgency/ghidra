@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,36 +15,35 @@
  */
 package ghidra.feature.vt.api.db;
 
-import ghidra.feature.vt.api.main.VTMatchInfo;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
 import db.*;
+import ghidra.feature.vt.api.main.VTMatchInfo;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 public abstract class VTMatchTableDBAdapter {
 
 	public enum ColumnDescription {
-		TAG_KEY_COL(LongField.class),
-		MATCH_SET_COL(LongField.class),
-		SIMILARITY_SCORE_COL(StringField.class),
-		CONFIDENCE_SCORE_COL(StringField.class),
-		LENGTH_TYPE(StringField.class),
-		SOURCE_LENGTH_COL(IntField.class),
-		DESTINATION_LENGTH_COL(IntField.class),
-		ASSOCIATION_COL(LongField.class);
+		TAG_KEY_COL(LongField.INSTANCE),
+		MATCH_SET_COL(LongField.INSTANCE),
+		SIMILARITY_SCORE_COL(StringField.INSTANCE),
+		CONFIDENCE_SCORE_COL(StringField.INSTANCE),
+		LENGTH_TYPE(StringField.INSTANCE),
+		SOURCE_LENGTH_COL(IntField.INSTANCE),
+		DESTINATION_LENGTH_COL(IntField.INSTANCE),
+		ASSOCIATION_COL(LongField.INSTANCE);
 
-		private final Class<? extends Field> columnClass;
+		private final Field columnField;
 
-		private ColumnDescription(Class<? extends Field> columnClass) {
-			this.columnClass = columnClass;
+		private ColumnDescription(Field columnField) {
+			this.columnField = columnField;
 		}
 
-		public Class<? extends Field> getColumnClass() {
-			return columnClass;
+		public Field getColumnField() {
+			return columnField;
 		}
 
 		public int column() {
@@ -61,22 +59,19 @@ public abstract class VTMatchTableDBAdapter {
 			return list.toArray(new String[columns.length]);
 		}
 
-		@SuppressWarnings("unchecked")
-		// we know our class types are safe
-		private static Class<? extends Field>[] getColumnClasses() {
+		private static Field[] getColumnFields() {
 			ColumnDescription[] columns = ColumnDescription.values();
-			List<Class<? extends Field>> list = new LinkedList<Class<? extends Field>>();
-			for (ColumnDescription column : columns) {
-				list.add(column.getColumnClass());
+			Field[] fields = new Field[columns.length];
+			for (int i = 0; i < fields.length; i++) {
+				fields[i] = columns[i].getColumnField();
 			}
-			return list.toArray(new Class[columns.length]);
+			return fields;
 		}
 	}
 
 	static String TABLE_NAME = "MatchTable";
-	static Schema TABLE_SCHEMA =
-		new Schema(0, "Key", ColumnDescription.getColumnClasses(),
-			ColumnDescription.getColumnNames());
+	static Schema TABLE_SCHEMA = new Schema(0, "Key", ColumnDescription.getColumnFields(),
+		ColumnDescription.getColumnNames());
 
 	static VTMatchTableDBAdapter createAdapter(DBHandle dbHandle, long tableID) throws IOException {
 		return new VTMatchTableDBAdapterV0(dbHandle, tableID);
@@ -87,16 +82,16 @@ public abstract class VTMatchTableDBAdapter {
 		return new VTMatchTableDBAdapterV0(dbHandle, tableID, openMode, monitor);
 	}
 
-	public abstract Record insertMatchRecord(VTMatchInfo info, VTMatchSetDB matchSet,
+	public abstract DBRecord insertMatchRecord(VTMatchInfo info, VTMatchSetDB matchSet,
 			VTAssociationDB associationDB, VTMatchTagDB tag) throws IOException;
 
 	public abstract RecordIterator getRecords() throws IOException;
 
-	abstract Record getMatchRecord(long matchRecordKey) throws IOException;
+	abstract DBRecord getMatchRecord(long matchRecordKey) throws IOException;
 
 	abstract int getRecordCount();
 
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	abstract boolean deleteRecord(long matchRecordKey) throws IOException;
 

@@ -115,7 +115,7 @@ public class Stack<E> implements Iterable<E> {
 	 * Returns the element at the specified depth in this stack.
 	 * 0 indicates the bottom of the stack.
 	 * size()-1 indicates the top of the stack. 
-	 * @param index the depth in the stack.
+	 * @param depth the depth in the stack.
 	 * @return the element at the specified depth in this stack
 	 */
 	public E get(int depth) {

@@ -24,7 +24,7 @@
              slafile="data-be-64.sla"
              processorspec="data.pspec"
              id="DATA:BE:64:default">
-		<description>Raw Data File (Little Endian)</description>
+		<description>Raw Data File (Big Endian)</description>
 		<compiler name="pointer64" spec="data-ptr64.cspec" id="pointer64"/>
 		<compiler name="pointer32" spec="data-ptr32.cspec" id="pointer32"/>
 		<compiler name="pointer16" spec="data-ptr16.cspec" id="pointer16"/>

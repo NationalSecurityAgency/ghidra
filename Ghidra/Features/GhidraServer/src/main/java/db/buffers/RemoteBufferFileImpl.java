@@ -175,7 +175,7 @@ public class RemoteBufferFileImpl extends UnicastRemoteObject
 	 * Dispose and unexport all RemoteBufferFileImpl instances associated with the 
 	 * specified owner.
 	 * @param owner
-	 * @returns true if one or more buffer files were disposed.
+	 * @return true if one or more buffer files were disposed.
 	 */
 	public static synchronized boolean dispose(Object owner) {
 		boolean found = false;

@@ -253,7 +253,7 @@ public class HashStore {
 	 * @param minLength is the minimum length of an n-gram for these passes
 	 * @param maxLength is the maximum length of an n-gram for these passes
 	 * @param wholeBlock if true, allows blocks that are smaller than the minimum length to be considered as 1 n-gram.
-	 * @param matchBlock if true, only generates n-grams for sequences in previously matched blocks
+	 * @param matchOnly if true, only generates n-grams for sequences in previously matched blocks
 	 * @param hashCalc is the hash function
 	 * @throws MemoryAccessException
 	 */

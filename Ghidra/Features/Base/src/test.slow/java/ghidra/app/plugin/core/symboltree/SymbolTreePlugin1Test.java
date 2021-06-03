@@ -651,7 +651,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		String newNamespace = "bob";
 		String prefix = "MY";
 		String newNameWithoutNamespace = prefix + s.getName();
-		String newName = newNamespace + Namespace.NAMESPACE_DELIMITER + newNameWithoutNamespace;
+		String newName = newNamespace + Namespace.DELIMITER + newNameWithoutNamespace;
 		util.rename(advapi32Node, newName);
 		util.waitForTree();
 		assertEquals(newNameWithoutNamespace, s.getName());
@@ -681,7 +681,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		GTreeNode nsNode = newNsNode;
 		String newNamespace = "OuterNamespace";
 		String newName = "MyNamespace";
-		String newFullName = newNamespace + Namespace.NAMESPACE_DELIMITER + newName;
+		String newFullName = newNamespace + Namespace.DELIMITER + newName;
 		setEditorText(path, nsNode, newFullName);
 
 		namespacesNode = rootNode.getChild("Namespaces");

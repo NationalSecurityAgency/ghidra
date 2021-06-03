@@ -73,7 +73,7 @@ public class CreateEHTryBlockMapBackgroundCmd
 	@Override
 	protected EHTryBlockModel createModel(Program program) {
 		if (model == null) {
-			model = new EHTryBlockModel(program, count, address, validationOptions);
+			model = new EHTryBlockModel(program, count, getDataAddress(), validationOptions);
 		}
 		return model;
 	}

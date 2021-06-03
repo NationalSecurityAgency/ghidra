@@ -32,8 +32,7 @@ import ghidra.framework.plugintool.ModalPluginTool;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.model.listing.DomainObjectChangeSet;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
@@ -461,6 +460,16 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 	}
 
 	/**
+	 * Display error message dialog in a blocking fashion.
+	 * @param originator message originator
+	 * @param title dialog title
+	 * @param msg dialog message
+	 */
+	public static void displayErrorAndWait(Object originator, String title, String msg) {
+		Swing.runNow(() -> Msg.showError(originator, null, title, msg));
+	}
+
+	/**
 	 * Block until the user completes the current merge operation, or 
 	 * cancels the merge process.
 	 *
@@ -606,9 +615,7 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 
 	/**
 	 * Updates the current phase progress area in the default merge panel.
-	 * @param currentProgressPercentage the progress percentage completed for the current phase.
-	 * This should be a value from 0 to 100.
-	 * @param progressMessage a message indicating what is currently occurring in this phase.
+	 * @param description a message describing what is currently occurring in this phase.
 	 * Null indicates to use the default message.
 	 */
 	@Override

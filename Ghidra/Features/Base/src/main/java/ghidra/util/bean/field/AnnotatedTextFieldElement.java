@@ -24,7 +24,7 @@ import ghidra.program.util.ProgramLocation;
 
 /**
  * A subclass of {@link FieldElement} that allows for mouse handling callbacks via the 
- * {@link #handleMouseClicked(ProgramLocation, ServiceProvider)} method.  This class
+ * {@link #handleMouseClicked(Navigatable, ServiceProvider)} method.  This class
  * is based upon {@link Annotation} objects, which are elements that perform actions when the 
  * use clicks an instance of this class in the display.
  */

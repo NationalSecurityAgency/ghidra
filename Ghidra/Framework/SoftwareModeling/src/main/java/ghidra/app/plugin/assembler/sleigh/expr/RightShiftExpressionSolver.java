@@ -24,7 +24,7 @@ import ghidra.app.plugin.processors.sleigh.expression.RightShiftExpression;
 import ghidra.util.Msg;
 
 /**
- * Solves expressions of the form A >> B
+ * {@literal Solves expressions of the form A >> B}
  */
 public class RightShiftExpressionSolver
 		extends AbstractBinaryExpressionSolver<RightShiftExpression> {

@@ -15,13 +15,12 @@
  */
 package docking.widgets.fieldpanel.internal;
 
-import ghidra.util.exception.AssertException;
-
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
 import docking.widgets.fieldpanel.FieldPanel;
+import ghidra.util.exception.AssertException;
 
 /**
  * A LineLockedFieldPanelCoordinator coordinates the scrolling of a set of field panels by sharing 
@@ -63,12 +62,12 @@ public class LineLockedFieldPanelCoordinator extends FieldPanelCoordinator {
 	public void setLockedLines(BigInteger[] lockedLineNumbers) {
 		if (lockedLineNumbers.length != this.lockedLineNumbers.length) {
 			throw new AssertException("The number of lines(" + lockedLineNumbers.length +
-				") must exactly match the number of panels(" + this.lockedLineNumbers.length + ").");
+				") must exactly match the number of panels(" + this.lockedLineNumbers.length +
+				").");
 		}
 		for (int i = 0; i < lockedLineNumbers.length; i++) {
 			if (lockedLineNumbers[i] == null) {
-				throw new AssertException("lockedLineNumber for field panel [" + i +
-					"] was unexpectedly null.");
+				lockedLineNumbers[i] = BigInteger.ZERO;
 			}
 		}
 		for (int i = 0; i < lockedLineNumbers.length; i++) {
@@ -99,7 +98,7 @@ public class LineLockedFieldPanelCoordinator extends FieldPanelCoordinator {
 	 */
 	@Override
 	public void remove(FieldPanel fp) {
-		List<BigInteger> lineNumberList = new ArrayList<BigInteger>(panels.length);
+		List<BigInteger> lineNumberList = new ArrayList<>(panels.length);
 		// Adjust our locked line number array.
 		int length = panels.length;
 		for (int i = 0; i < length; i++) {
@@ -113,9 +112,6 @@ public class LineLockedFieldPanelCoordinator extends FieldPanelCoordinator {
 		super.remove(fp);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.listener.ViewListener#viewChanged(docking.widgets.fieldpanel.FieldPanel, int, int)
-	 */
 	@Override
 	public void viewChanged(FieldPanel fp, BigInteger index, int xPos, int yPos) {
 		if (valuesChanging)

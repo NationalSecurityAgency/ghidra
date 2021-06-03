@@ -15,6 +15,11 @@
  */
 package ghidra.app.tablechooser;
 
+/**
+ * The interface clients must implement to use the {@link TableChooserDialog}.  This class is the
+ * callback that is used to process items from the dialog's table as users select one or more
+ * rows in the table and then press the table's "apply" button.
+ */
 public interface TableChooserExecutor {
 
 	/**
@@ -28,6 +33,9 @@ public interface TableChooserExecutor {
 	/**
 	 * Applies this executors action to the given rowObject.  Return true if the given object 
 	 * should be removed from the table. 
+	 * 
+	 * <P>This method call will be wrapped in a transaction so the client does not have to do so.
+	 * Multiple selected rows will all be processed in a single transaction.
 	 * 
 	 * @param rowObject the AddressRowObject to be executed upon
 	 * @return true if the rowObject should be removed from the table, false otherwise

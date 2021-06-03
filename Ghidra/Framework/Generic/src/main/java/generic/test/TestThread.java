@@ -58,7 +58,7 @@ public class TestThread extends Thread {
 	/**
 	 * Returns true if the given thread name is the test thread name
 	 * 
-	 * @param t the thread name to check
+	 * @param name the thread name to check
 	 * @return true if the given thread name is the test thread name
 	 */
 	public static boolean isTestThreadName(String name) {

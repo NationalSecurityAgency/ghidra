@@ -15,7 +15,7 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.event.ActionListener;
@@ -148,7 +148,7 @@ public class CodeBrowserPluginScreenShots extends GhidraScreenShotGenerator {
 		makeSelection(0x0406be1, 0x0406bf1);
 
 		performAction("Create Table From Selection", "CodeBrowserPlugin", true);
-		Window window = waitForWindowByTitleContaining(null, "Selection Table", 2000);
+		Window window = waitForWindowByTitleContaining("Selection Table");
 		Point loc = plugin.getListingPanel().getLocationOnScreen();
 		Dimension size = window.getSize();
 		window.setBounds(loc.x + 300, loc.y + 150, size.width, 300);
@@ -240,7 +240,7 @@ public class CodeBrowserPluginScreenShots extends GhidraScreenShotGenerator {
 		JWindow popup = (JWindow) waitForWindowByName("ListingHoverProvider");
 		paintFix(popup);
 		captureProvider(CodeViewerProvider.class);
-		
+
 		CodeViewerProvider provider = getProvider(CodeViewerProvider.class);
 		captureProviderWithScreenShot(provider);
 	}

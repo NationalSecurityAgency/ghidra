@@ -29,6 +29,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableColumn;
 
 import docking.event.mouse.GMouseListenerAdapter;
+import docking.widgets.AutoLookup;
 import docking.widgets.GenericDateCellRenderer;
 import docking.widgets.table.*;
 import utilities.util.FileUtilities;
@@ -49,6 +50,7 @@ class DirectoryTable extends GTable implements GhidraFileChooserDirectoryModelIf
 
 	private void build() {
 		setAutoLookupColumn(DirectoryTableModel.FILE_COL);
+
 		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		setShowGrid(false);
 
@@ -134,7 +136,20 @@ class DirectoryTable extends GTable implements GhidraFileChooserDirectoryModelIf
 		column.setCellRenderer(new FileSizeRenderer());
 
 		column = columnModel.getColumn(DirectoryTableModel.TIME_COL);
-		column.setCellRenderer(new GenericDateCellRenderer(GhidraFileChooser.format));
+		column.setCellRenderer(new GenericDateCellRenderer());
+	}
+
+	@Override
+	protected AutoLookup createAutoLookup() {
+		return new GTableAutoLookup(this) {
+			@Override
+			protected boolean canBinarySearchColumn(int column) {
+				if (column == DirectoryTableModel.FILE_COL) {
+					return false;
+				}
+				return super.canBinarySearchColumn(column);
+			}
+		};
 	}
 
 	private void maybeSelectItem(MouseEvent e) {
@@ -275,5 +290,4 @@ class DirectoryTable extends GTable implements GhidraFileChooserDirectoryModelIf
 		}
 
 	}
-
 }

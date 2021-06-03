@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +69,7 @@ public class VarnodeData {
 	
 	// Build this VarnodeData from an \b \<addr\> tag
 	// \param el is the parsed tag
-	// \param trans is the relevent processor translator
+	// \param trans is the relevant processor translator
 	public void restoreXml( Element el, Translate trans ) {
 		String name = el.getAttributeValue( "name" );
 		if (name != null) {

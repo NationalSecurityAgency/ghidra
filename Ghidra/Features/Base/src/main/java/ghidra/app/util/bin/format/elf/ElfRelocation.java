@@ -22,6 +22,8 @@ import ghidra.app.util.bin.ByteArrayConverter;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
+import ghidra.app.util.bin.format.elf.relocation.ElfRelocationContext;
+import ghidra.app.util.bin.format.elf.relocation.ElfRelocationHandler;
 import ghidra.program.model.data.*;
 import ghidra.util.Conv;
 import ghidra.util.DataConverter;
@@ -38,30 +40,35 @@ import ghidra.util.exception.AssertException;
  * 
  * REL entry:
  * 
- * typedef struct {
- *     Elf32_Addr   r_offset;
- *     Elf32_Word   r_info;
- * } Elf32_Rel;
+ *    typedef struct {
+ *        Elf32_Addr   r_offset;
+ *        Elf32_Word   r_info;
+ *    } Elf32_Rel;
  * 
- * typedef struct {
- *     Elf64_Addr   r_offset;
- *     Elf64_Xword  r_info;
- * } Elf64_Rel;
+ *    typedef struct {
+ *        Elf64_Addr   r_offset;
+ *        Elf64_Xword  r_info;
+ *    } Elf64_Rel;
  * 
  * RELA entry with addend:
  * 
- *  * typedef struct {
- *     Elf32_Addr    r_offset;
- *     Elf32_Word    r_info;
- *     Elf32_Sword   r_addend;
- * } Elf32_Rela;
+ *    typedef struct {
+ *        Elf32_Addr    r_offset;
+ *        Elf32_Word    r_info;
+ *        Elf32_Sword   r_addend;
+ *    } Elf32_Rela;
  * 
- * typedef struct {
- *     Elf64_Addr    r_offset;   //Address
- *     Elf64_Xword   r_info;     //Relocation type and symbol index
- *     Elf64_Sxword  r_addend;   //Addend 
- * } Elf64_Rela;
- *
+ *    typedef struct {
+ *        Elf64_Addr    r_offset;   //Address
+ *        Elf64_Xword   r_info;     //Relocation type and symbol index
+ *        Elf64_Sxword  r_addend;   //Addend 
+ *    } Elf64_Rela;
+ * 
+ * RELR entry (see SHT_RELR, DT_RELR):
+ *    NOTE: Relocation type is data <i>relative</i> and must be specified by appropriate relocation handler
+ *    (see {@link ElfRelocationHandler#getRelrRelocationType()}) since it is not contained within the 
+ *    relocation table which only specifies <i>r_offset</i> for each entry.
+ * 
  * </pre>
  */
 public class ElfRelocation implements ByteArrayConverter, StructConverter {
@@ -101,20 +108,24 @@ public class ElfRelocation implements ByteArrayConverter, StructConverter {
 
 	/**
 	 * GenericFactory construction and initialization method for a ELF representative 
-	 * relocation entry (entry data will be 0)
-	 * @param factory instantiation factory.
+	 * relocation entry 
+	 * @param reader binary reader positioned at start of relocation entry.
 	 * @param elfHeader ELF header
 	 * @param relocationIndex index of entry in relocation table
 	 * @param withAddend true if if RELA entry with addend, else false
+	 * @param r_offset The offset for the entry
+	 * @param r_info The info value for the entry
+	 * @param r_addend The addend for the entry
 	 * @return ELF relocation object
 	 */
 	static ElfRelocation createElfRelocation(GenericFactory factory, ElfHeader elfHeader,
-			int relocationIndex, boolean withAddend) {
+			int relocationIndex, boolean withAddend, long r_offset, long r_info, long r_addend) {
 
 		Class<? extends ElfRelocation> elfRelocationClass = getElfRelocationClass(elfHeader);
 		ElfRelocation elfRelocation = (ElfRelocation) factory.create(elfRelocationClass);
 		try {
-			elfRelocation.initElfRelocation(null, elfHeader, relocationIndex, withAddend);
+			elfRelocation.initElfRelocation(elfHeader, relocationIndex, withAddend, r_offset,
+				r_info, r_addend);
 		}
 		catch (IOException e) {
 			// absence of reader should prevent any IOException from occurring
@@ -158,6 +169,38 @@ public class ElfRelocation implements ByteArrayConverter, StructConverter {
 		this.hasAddend = withAddend;
 		if (reader != null) {
 			readEntryData(reader);
+		}
+	}
+
+	/**
+	 * Initialize ELF relocation entry using data provided via the parameters.
+	 * @param elfHeader ELF header
+	 * @param relocationTableIndex index of relocation within relocation table
+	 * @param withAddend true if if RELA entry with addend, else false
+	 * @param r_offset The offset for the entry
+	 * @param r_info The info value for the entry
+	 * @param r_addend The addend for the entry
+	 * @throws IOException
+	 */
+	protected void initElfRelocation(ElfHeader elfHeader, int relocationTableIndex,
+			boolean withAddend, long r_offset, long r_info, long r_addend) throws IOException {
+		this.is32bit = elfHeader.is32Bit();
+		this.relocationIndex = relocationTableIndex;
+		this.hasAddend = withAddend;
+
+		if (is32bit) {
+			this.r_offset = r_offset & Conv.INT_MASK;
+			this.r_info = r_info & Conv.INT_MASK;
+			if (hasAddend) {
+				this.r_addend = r_addend & Conv.INT_MASK;
+			}
+		}
+		else {
+			this.r_offset = r_offset;
+			this.r_info = r_info;
+			if (hasAddend) {
+				this.r_addend = r_addend;
+			}
 		}
 	}
 
@@ -225,6 +268,8 @@ public class ElfRelocation implements ByteArrayConverter, StructConverter {
 
 	/**
 	 * Returns the symbol index where the relocation must be made.
+	 * A value of 0 is generally returned when no symbol is relavent
+	 * to the relocation.
 	 * @return the symbol index
 	 */
 	public int getSymbolIndex() {
@@ -233,11 +278,26 @@ public class ElfRelocation implements ByteArrayConverter, StructConverter {
 
 	/**
 	 * The type of relocation to apply.
-	 * NOTE: Relocation types are processor-specific.
+	 * NOTE 1: Relocation types are processor-specific (see {@link ElfRelocationHandler}).
+	 * NOTE 2: A type of 0 is returned by default for RELR relocations and must be updated 
+	 * during relocation processing (see {@link #setType(long)}).  The appropriate RELR 
+	 * relocation type can be obtained from the appropriate 
+	 * {@link ElfRelocationHandler#getRelrRelocationType()} or 
+	 * {@link ElfRelocationContext#getRelrRelocationType()} if available.
 	 * @return type of relocation to apply
 	 */
 	public int getType() {
 		return (int) (is32bit ? (r_info & Conv.BYTE_MASK) : (r_info & Conv.INT_MASK));
+	}
+
+	/**
+	 * Set the relocation type associated with this relocation.
+	 * Updating the relocation type is required for RELR relocations.
+	 * @param type relocation type to be applied
+	 */
+	public void setType(long type) {
+		long mask = is32bit ? Conv.BYTE_MASK : Conv.INT_MASK;
+		r_info = (r_info & ~mask) + (type & mask);
 	}
 
 	/**
@@ -283,6 +343,19 @@ public class ElfRelocation implements ByteArrayConverter, StructConverter {
 	}
 
 	/**
+	 * Get the standard relocation size when one has notbeen specified
+	 * @param is64bit true if ELF 64-bit 
+	 * @param hasAddend true if relocation has addend
+	 * @return size of relocation entry
+	 */
+	public static int getStandardRelocationEntrySize(boolean is64bit, boolean hasAddend) {
+		if (is64bit) {
+			return hasAddend ? 24 : 16;
+		}
+		return hasAddend ? 12 : 8;
+	}
+
+	/**
 	 * @see ghidra.app.util.bin.ByteArrayConverter#toBytes(ghidra.util.DataConverter)
 	 */
 	@Override
@@ -315,4 +388,5 @@ public class ElfRelocation implements ByteArrayConverter, StructConverter {
 		}
 		return is32bit ? 8 : 16;
 	}
+
 }

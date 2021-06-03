@@ -36,7 +36,7 @@ public interface RowObjectFilterModel<ROW_OBJECT> extends RowObjectTableModel<RO
 	 * <p>The downside of this is that we cache data for every completed filter.  So, in a
 	 * degenerate case, with a large dataset, with many incremental filtering steps, where each
 	 * did not significantly reduce the previous set of data, the table could then consume
-	 * a large amount of memory, roughly equal to <tt>allData.size() * numberOfFilterSteps</tt>
+	 * a large amount of memory, roughly equal to <code>allData.size() * numberOfFilterSteps</code>
 	 *
 	 * <p>Most tables do not have enough data for this to have a significant impact.
 	 */

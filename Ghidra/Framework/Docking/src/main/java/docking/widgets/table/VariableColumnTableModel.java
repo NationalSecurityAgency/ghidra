@@ -52,7 +52,7 @@ public interface VariableColumnTableModel extends TableModel {
 	 * Gets the count of the default columns for this model.  This model may have non-default
 	 * columns added.  This method will return the count of columns that have been setup 
 	 * specifically by the table model.  This method can be used to iterate of the first 
-	 * <tt>n</tt> columns of this model in order to get information for the default columns by
+	 * <code>n</code> columns of this model in order to get information for the default columns by
 	 * calling methods like {@link #getColumnName(int)}. 
 	 *  
 	 * @return Gets the count of the default columns for this model.

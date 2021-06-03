@@ -1,0 +1,260 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Graph Display</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <A name="Default_Graph_Display">
+     
+
+    <H1>Default Graph Display</H1>
+
+    <BLOCKQUOTE>
+      <P>The visualization display will show the graph in a new window or in a new tab of a
+      previously created graph window.</P>
+
+      <CENTER>
+        <TABLE border="0" width="100%">
+          <TR>
+            <TD width="100%" align="center"><IMG alt="" border="1" src=
+            "images/DefaultGraphDisplay.png"></TD>
+          </TR>
+        </TABLE>
+      </CENTER>
+    </BLOCKQUOTE>
+
+    <H2>Manipulating the Graph</H2>
+
+    <UL>
+      <LI>Dragging in the graph or on any unselected vertices will pan the graph (translate the 
+      	display in the x and y axis)</LI>
+
+	  <LI>Dragging a selected vertex will reposition all selected vertices</LI>
+
+      <LI>Using the <CODE>Mouse Wheel</CODE> will zoom the graph in and out</LI>
+
+      <LI><CODE>Control+Mouse Wheel</CODE> will zoom the graph in and out on the X-Axis only</LI>
+
+      <LI><CODE>ALT+Mouse Wheel</CODE> will zoom the graph in and out in the Y-Axis only</LI>
+
+      <LI><CODE>Ctrl+Click</CODE> will select a vertex 
+        <UL>
+          <LI><CODE>Ctrl+Click</CODE> over an unselected vertex will add that vertex to the
+          selection</LI>
+
+          <LI><CODE>Ctrl+Click</CODE> over a previously selected vertex will remove that vertex
+          from the selection</LI>
+        </UL>
+      </LI>
+
+      <LI><CODE>Ctrl+drag</CODE> on an empty area will create a rectangular area and select
+      enclosed vertices</LI>
+
+      
+    </UL>
+
+    <H2>Toolbar Buttons</H2>
+
+    <P><A name="Scroll_To_Selection">
+     The <IMG alt="" src="images/locationIn.gif"> toggle button, when 'set' will cause a focused
+    vertex (the vertex with the red arrow) to be moved to the center of the view</P>
+
+    <P><A name="Free_Form_Selection">
+    The <IMG alt="" src="images/Lasso.png" width="16" height="16"> toggle button, when 'set' will
+    allow the user to draw a free-form shape that encloses the vertices they wish to select.</P>
+
+    <P><A name="SatelliteView">
+    The <IMG alt="" src="images/network-wireless-16.png" width="16" height="16"> toggle button,
+    when 'set' will open a satellite mini view of the graph in the lower right corner. The
+    mini-view can be manipulated with the mouse to affect the main view</P>
+
+    <P><A name="Reset_View">
+    The <IMG alt="" src="images/reload3.png"> button will reset any visual transformations on the
+    graph and center it at a best-effort size</P>
+
+    <P><A name="View_Magnifier">
+    The <IMG alt="" src="images/magnifier.png"> toggle button, when 'set' will open a rectangular
+    magnification lens in the graph view</P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <UL>
+          <LI>MouseButton1 click-drag on the lens center circle to move the magnifier lens</LI>
+
+          <LI>MouseButton1 click-draw on a lens edge diamond to resize the magnifier lens</LI>
+
+          <LI>MouseButton1 click on the upper-right circle-cross to dispose of the magnifier
+          lens</LI>
+
+          <LI>MouseWheel will change the magnification of the lens</LI>
+        </UL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P><A name="Show_Filters">
+    The <IMG alt="" src="Icons.CONFIGURE_FILTER_ICON"> button will open a Filter dialog. Select
+    buttons in the dialog to hide specific vertices or edges in the display. The Filter dialog
+    buttons are created by examining the graph vertex/edge properties to discover candidates for
+    filtering.</P>
+
+    <P><A name="Arrangement">
+    The <IMG alt="" src="images/katomic.png" width="16" height="16"> Arrangement menu is used to
+    select one of several graph layout algorithms.</P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <UL>
+          <LI><A name="Compact Hierarchical"/>
+          <B>Compact Hierarchical</B> is the <B>TidierTree Layout Algorithm</B>. It builds a tree
+          structure and attempts to reduce horizontal space.</LI>
+
+          <LI><A name="Hierarchical"/>
+          <B>Hierarchical</B> is a basic Tree algorithm with the root(s) at the top.</LI>
+
+          <LI><A name="Compact Radial"/>
+          <B>Compact Radial</B> is the <B>TidierTree Layout Algorithm</B> with the root(s) at the
+          center and child vertices radiating outwards.</LI>
+
+          <LI><A name="Hierarchical MinCross"/>
+          <B>Hierarchical MinCross</B> is the <B>Sugiyama Layout Algorithm with optimizations</B>. It attempts to
+          route edges around vertices in order to reduce crossing. There are four layering
+          algorithms (below)</LI>
+
+          <LI><A name="Vertical Hierarchical MinCross"/>
+          <B>Vertical Hierarchical MinCross</B> is the <B>Sugiyama Layout Algorithm with optimizations</B>. It attempts to
+            route edges around vertices in order to reduce crossing. If there is a favored EdgeType, an attempt is made to
+            line up those favored edges so they are vertical in the presentation. There are four layering
+            algorithms:</LI>
+
+          
+            <UL>
+              <LI><B>Top Down</B> - Biases the vertices to the top. Sources on the top row.</LI>
+
+              <LI><B>Longest Path</B> - Biases the vertices to the bottom. Sinks are on the bottom row.</LI>
+
+              <LI><B>Network Simplex</B> - Layers after finding an 'optimal tree' by not considering longer edges.</LI>
+
+              <LI><B>Coffman Graham</B> - Biases the vertices using a scheduling algorithm to minimize
+              length. Tends to balance the graph around the middle.</LI>
+            </UL>
+         
+
+          <LI><A name="Circle"/>
+          <B>Circle</B> will arrange vertices in a Circle. </LI>
+
+          <LI><A name="Force Balanced"/>
+          <B>Force Balanced</B> is a <B>Force Directed Layout Algorithm</B> using the the <B>Kamada
+          Kawai</B> algorithm. It attempts to balance the graph by considering vertices and edge
+          connections.</LI>
+
+          <LI><A name="Force Directed"/>
+          <B>Force Directed</B> is a <B>Force Directed Layout Algorithm</B> using the
+          <B>Fructermann Reingold</B> approach. It pushes unconnected vertices apart and draws
+          connected vertices together.</LI>
+
+          <LI><A name="Radial"/>
+          <B>Radial</B> is a Tree structure with the root(s) at the center and child vertices
+          radiating outwards.</LI>
+
+          <LI><A name="Balloon"/>
+          <B>Balloon</B> is a Tree structure with the root(s) at the centers of circles in a radial
+          pattern</LI>
+
+          <LI><A name="GEM"/>
+          <B>GEM (Graph Embedder)</B> is a Force Directed layout with locally separated components</LI>
+        </UL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>Popup Actions</H2>
+
+    <BLOCKQUOTE>
+      <H3>Standard Popup Actions</H3>
+
+      <UL>
+        <LI><A name="Hide_Selected">
+        <B>Hide Selected</B> - Causes the display to not show selected vertices.</LI>
+
+        <LI><A name="Hide_Unselected">
+        <B>Hide Unselected</B> - Causes the display to not show unselected vertices.</LI>
+
+        <LI><A name="Invert_Selection">
+        <B>Invert Selection</B> - Unselects all selected nodes and selects all unselected
+        nodes.</LI>
+
+        <LI><A name="Grow_Selection From Sources">
+        <B>Grow Selection From Sources</B> - Adds to the selection all vertices that have outgoing
+        edges to the current selection.</LI>
+
+        <LI><A name="Grow_Selection To Targets">
+        <B>Grow Selection To Targets</B> - Adds to the selection all vertices that have incoming
+        edges from the current selection.</LI>
+
+        <LI><A name="Clear_Selection">
+        <B>Clear Selection</B> - Clears all edge and vertex selection.</LI>
+
+        <LI><A name="Create_Subgraph">
+        <B>Display Selected As New Graph</B> - Creates a new graph and display from the currently
+        selected vertices.</LI>
+        
+        <LI><A name="Display_Popup_Windows">
+        <B>Display Popup Windows</B> - When toggled off no tooltip popups will be displayed.</LI>
+
+        <LI><A name="Collapse_Selected">
+        <B>Collapse Selected Vertices</B> - The selected vertices are grouped into a single vertex.</LI>
+
+        <LI><A name="Expand_Selected">
+        <B>Expand Selected Vertices</B> - Any group vertices are reverted back to the vertices that it contains.</LI>
+
+        <LI><A name="Grow_Selection_To_Entire_Component">
+          <B>Grow Selection To Entire Component</B> - Adds to the selection all vertices that are reachable from the
+          currently selected vertices.</LI>
+
+
+      </UL>
+
+      <H3>Vertex Popup Actions</H3>
+
+      <UL>
+        <LI><A name="Select_Vertex">
+        <B>Select Vertex</B> - Selects the vertex that this action was invoked on.</LI>
+
+        <LI><A name="Deselect_Vertex">
+        <B>Deselect Vertex</B> - Deselects the vertex that this action was invoked on.</LI>
+      </UL>
+
+      <H3>Edge Popup Actions</H3>
+
+      <UL>
+        <LI><A name="Edge_Source">
+        <B>Go To Edge Source</B> - Makes this edge's source vertex be the focused vertex.</LI>
+
+        <LI><A name="Edge_Target">
+        <B>Go To Edge Target</B> - Makes this edge's destination vertex be the focused vertex.</LI>
+
+        <LI><A name="Select_Edge">
+        <B>Select Edge</B> - Add this edge and its associated vertices to the selection</LI>
+
+        <LI><A name="Deselect_Edge">
+        <B>Deselect Edge</B> - Removes this edge and its associated vertices from the
+        selection</LI>
+      </UL>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided By:&nbsp; <I>GraphDisplayBrokerPlugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/GraphServices/GraphExport.htm">Graph Export</A></LI>
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>

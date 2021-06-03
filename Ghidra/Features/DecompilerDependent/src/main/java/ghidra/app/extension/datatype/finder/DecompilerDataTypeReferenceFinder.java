@@ -59,7 +59,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		Set<Function> functions = filterFunctions(program, dataType, monitor);
 
 		try {
-			ParallelDecompiler.decompileFunctions(qCallback, program, functions, monitor);
+			ParallelDecompiler.decompileFunctions(qCallback, functions, monitor);
 		}
 		catch (InterruptedException e) {
 			Thread.currentThread().interrupt(); // reset the flag
@@ -83,7 +83,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		Set<Function> functions = filterFunctions(program, dataType, monitor);
 
 		try {
-			ParallelDecompiler.decompileFunctions(qCallback, program, functions, monitor);
+			ParallelDecompiler.decompileFunctions(qCallback, functions, monitor);
 		}
 		catch (InterruptedException e) {
 			Thread.currentThread().interrupt(); // reset the flag
@@ -461,8 +461,14 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 				return false; // should not happen
 			}
 
+			// Note: the field's type is that of the parent structure, not the field.  We want the
+			//       field's type, so we must retrieve that.
+			DataType fieldDt = DecompilerReference.getFieldDataType(field);
+
+			// unusual code: getDataType() on the variable may return the type of the field being
+			//               accessed.  Contrastingly, getDataType() on the field may return the
+			//               type of the parent structure.
 			DataType variableDt = variable.getDataType();
-			DataType fieldDt = field.getDataType();
 			return !DecompilerReference.isEqual(variableDt, fieldDt);
 		}
 

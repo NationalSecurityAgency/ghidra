@@ -197,6 +197,9 @@ public class DataTypeManagerHandler {
 		}
 	}
 
+	/**
+	 * @return all archive search paths (both enabled and disabled are included)
+	 */
 	private Path[] getArchivePaths() {
 		return PathManager.getPathsFromPreferences(DATA_TYPE_ARCHIVE_PATH_KEY, null,
 			DISABLED_DATA_TYPE_ARCHIVE_PATH_KEY);
@@ -230,7 +233,7 @@ public class DataTypeManagerHandler {
 
 		Path[] pathsFromPreferences = getArchivePaths();
 		for (Path path : pathsFromPreferences) {
-			if (!isAllowedArchivePath(path.getPathAsString()) || !path.isEnabled()) {
+			if (!path.isEnabled() || !isAllowedArchivePath(path.getPathAsString())) {
 				continue;
 			}
 			ResourceFile archiveFile = new ResourceFile(path.getPath(), archiveFileName);
@@ -282,6 +285,7 @@ public class DataTypeManagerHandler {
 			Archive archive = new FileArchive(this, file);
 			addArchivePath(new ResourceFile(file));
 			addArchive(archive);
+			userOpenedFileArchiveNames.add(getSaveableArchive(file.getAbsolutePath()));
 			return archive;
 		}
 		catch (Exception e) {
@@ -400,7 +404,8 @@ public class DataTypeManagerHandler {
 			if (path.equals(newPath)) {
 				if (!path.isEnabled()) {
 					path.setEnabled(true);
-					PathManager.savePathsToPreferences(DATA_TYPE_ARCHIVE_PATH_KEY, null, paths);
+					PathManager.savePathsToPreferences(DATA_TYPE_ARCHIVE_PATH_KEY,
+						DISABLED_DATA_TYPE_ARCHIVE_PATH_KEY, paths);
 				}
 				return;
 			}
@@ -438,9 +443,7 @@ public class DataTypeManagerHandler {
 			addArchive(archive);
 		}
 		if (isUserAction && (archive instanceof FileArchive)) {
-			if (file != null) {
-				userOpenedFileArchiveNames.add(getSaveableArchive(file.getAbsolutePath()));
-			}
+			userOpenedFileArchiveNames.add(getSaveableArchive(file.getAbsolutePath()));
 		}
 		return archive;
 	}
@@ -1251,8 +1254,8 @@ public class DataTypeManagerHandler {
 
 	public Set<String> getPossibleEquateNames(long value) {
 		Set<String> equateNames = new HashSet<>();
-		for (int i = 0; i < openArchives.size(); i++) {
-			DataTypeManager dtMgr = openArchives.get(i).getDataTypeManager();
+		for (Archive element : openArchives) {
+			DataTypeManager dtMgr = element.getDataTypeManager();
 			dtMgr.findEnumValueNames(value, equateNames);
 		}
 		return equateNames;

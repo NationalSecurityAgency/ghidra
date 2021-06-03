@@ -22,11 +22,11 @@ import ghidra.util.SystemUtilities;
 /**
  * Class that maps one type of column constraint into another.  Typically, these are created
  * automatically based on {@link ColumnTypeMapper} that are discovered by the system.  For example,
- * if you have a column type of "Foo", and you create a ColumnTypeMapper<Foo,String>, then all the
- * string constraints would now be available that column.
+ * {@literal if you have a column type of "Foo", and you create a ColumnTypeMapper<Foo, String>, 
+ * then all the} string constraints would now be available that column.
  *
- * @param <T> The column type.
- * @param <M> the converted (mapped) type.
+ * @param <T> The column type
+ * @param <M> the converted (mapped) type
  */
 public class MappedColumnConstraint<T, M> implements ColumnConstraint<T> {
 
@@ -94,7 +94,7 @@ public class MappedColumnConstraint<T, M> implements ColumnConstraint<T> {
 
 	/**
 	 * Returns the delegate constraint (current value for this mapped constraint)
-	 * @return  the delegate constraint.
+	 * @return the delegate constraint.
 	 */
 	public ColumnConstraint<M> getDelegate() {
 		return delegate;
@@ -129,8 +129,8 @@ public class MappedColumnConstraint<T, M> implements ColumnConstraint<T> {
 	}
 
 	/**
-	 * Class for converting a ColumnDataSource<T> to a ColumnDataSource<W> to be used when
-	 * getting the editor for the delegate ColumnConstraint<W>.
+	 * {@literal Class for converting a ColumnDataSource<T> to a ColumnDataSource<W> to be used when}
+	 * getting the editor for the delegate{@literal ColumnConstraint<W>.}
 	 */
 	protected class DelegateColumnData implements ColumnData<M> {
 
@@ -138,7 +138,7 @@ public class MappedColumnConstraint<T, M> implements ColumnConstraint<T> {
 
 		/**
 		 * Constructor
-		 * @param columnDataSource the ColumnDataSource<T> whose T data will be converted to
+		 * @param columnDataSource the{@literal ColumnDataSource<T>} whose T data will be converted to
 		 * W data for the delegate editor.
 		 */
 		public DelegateColumnData(ColumnData<T> columnDataSource) {

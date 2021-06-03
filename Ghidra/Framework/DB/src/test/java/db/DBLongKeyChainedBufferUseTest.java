@@ -69,15 +69,15 @@ public class DBLongKeyChainedBufferUseTest extends AbstractGenericTest {
 		long txId = dbh.startTransaction();
 
 		Schema schema = new Schema(0, "Enum ID",
-			new Class[] { StringField.class, StringField.class, LongField.class, ByteField.class,
-				ShortField.class, IntField.class },
+			new Field[] { StringField.INSTANCE, StringField.INSTANCE, LongField.INSTANCE,
+				ByteField.INSTANCE, ShortField.INSTANCE, IntField.INSTANCE },
 			new String[] { "str1", "str2", "long", "byte", "short", "int" });
 
 		Table table = dbh.createTable("TABLE1", schema);
 
 		// Add even keys
 		for (int k = 0; k < 256; k += 2) {
-			Record rec = schema.createRecord(k);
+			DBRecord rec = schema.createRecord(k);
 			rec.setString(0, getBigString("a", k));
 			rec.setString(1, getSmallString("b", k));
 			rec.setLongValue(2, 0x2222222222222222L);
@@ -89,7 +89,7 @@ public class DBLongKeyChainedBufferUseTest extends AbstractGenericTest {
 
 		// Add odd keys
 		for (int k = 1; k < 256; k += 2) {
-			Record rec = schema.createRecord(k);
+			DBRecord rec = schema.createRecord(k);
 			rec.setString(0, getBigString("a", k));
 			rec.setString(1, getSmallString("b", k));
 			rec.setLongValue(2, 0x2222222222222222L);
@@ -108,15 +108,15 @@ public class DBLongKeyChainedBufferUseTest extends AbstractGenericTest {
 		long txId = dbh.startTransaction();
 
 		Schema schema = new Schema(0, "Enum ID",
-			new Class[] { StringField.class, StringField.class, LongField.class, ByteField.class,
-				ShortField.class, IntField.class },
+			new Field[] { StringField.INSTANCE, StringField.INSTANCE, LongField.INSTANCE,
+				ByteField.INSTANCE, ShortField.INSTANCE, IntField.INSTANCE },
 			new String[] { "str1", "str2", "long", "byte", "short", "int" });
 
 		Table table = dbh.createTable("TABLE1", schema);
 
 		// Add even keys
 		for (int k = 0; k < 256; k += 2) {
-			Record rec = schema.createRecord(k);
+			DBRecord rec = schema.createRecord(k);
 			rec.setString(0, getSmallString("a", k));
 			rec.setString(1, getSmallString("b", k));
 			rec.setLongValue(2, 0x2222222222222222L);
@@ -128,7 +128,7 @@ public class DBLongKeyChainedBufferUseTest extends AbstractGenericTest {
 
 		// Add odd keys
 		for (int k = 1; k < 256; k += 2) {
-			Record rec = schema.createRecord(k);
+			DBRecord rec = schema.createRecord(k);
 			rec.setString(0, getSmallString("a", k));
 			rec.setString(1, getSmallString("b", k));
 			rec.setLongValue(2, 0x2222222222222222L);
@@ -143,7 +143,7 @@ public class DBLongKeyChainedBufferUseTest extends AbstractGenericTest {
 		return table;
 	}
 
-	private void assertPrimitiveColumns(Record rec) {
+	private void assertPrimitiveColumns(DBRecord rec) {
 		Assert.assertEquals(0x2222222222222222L, rec.getLongValue(2));
 		Assert.assertEquals((byte) 0x33, rec.getByteValue(3));
 		Assert.assertEquals((short) 0x4444, rec.getShortValue(4));
@@ -156,7 +156,7 @@ public class DBLongKeyChainedBufferUseTest extends AbstractGenericTest {
 		Table table = fillTableBigRecs(256);
 
 		for (int k = 0; k < 256; k += 2) {
-			Record rec = table.getRecord(k);
+			DBRecord rec = table.getRecord(k);
 			Assert.assertEquals(getBigString("a", k), rec.getString(0));
 			Assert.assertEquals(getSmallString("b", k), rec.getString(1));
 			assertPrimitiveColumns(rec);
@@ -170,7 +170,7 @@ public class DBLongKeyChainedBufferUseTest extends AbstractGenericTest {
 		Table table = fillTableSmallRecs(256);
 
 		for (int k = 0; k < 256; k += 2) {
-			Record rec = table.getRecord(k);
+			DBRecord rec = table.getRecord(k);
 			Assert.assertEquals(rec.getString(0), getSmallString("a", k));
 			Assert.assertEquals(rec.getString(1), getSmallString("b", k));
 			assertPrimitiveColumns(rec);
@@ -187,14 +187,14 @@ public class DBLongKeyChainedBufferUseTest extends AbstractGenericTest {
 
 		// Update even keys
 		for (int k = 0; k < 256; k += 2) {
-			Record rec = table.getRecord(k);
+			DBRecord rec = table.getRecord(k);
 			rec.setString(0, getSmallString("a", k));
 			table.putRecord(rec);
 		}
 
 		// Update odd keys
 		for (int k = 1; k < 256; k += 2) {
-			Record rec = table.getRecord(k);
+			DBRecord rec = table.getRecord(k);
 			rec.setString(0, getSmallString("a", k));
 			table.putRecord(rec);
 		}
@@ -202,7 +202,7 @@ public class DBLongKeyChainedBufferUseTest extends AbstractGenericTest {
 		dbh.endTransaction(txId, true);
 
 		for (int k = 0; k < 256; k += 2) {
-			Record rec = table.getRecord(k);
+			DBRecord rec = table.getRecord(k);
 			Assert.assertEquals(rec.getString(0), getSmallString("a", k));
 			Assert.assertEquals(rec.getString(1), getSmallString("b", k));
 			assertPrimitiveColumns(rec);
@@ -219,14 +219,14 @@ public class DBLongKeyChainedBufferUseTest extends AbstractGenericTest {
 
 		// Update even keys
 		for (int k = 0; k < 256; k += 2) {
-			Record rec = table.getRecord(k);
+			DBRecord rec = table.getRecord(k);
 			rec.setString(1, getBigString("b", k, 3));
 			table.putRecord(rec);
 		}
 
 		// Update odd keys
 		for (int k = 1; k < 256; k += 2) {
-			Record rec = table.getRecord(k);
+			DBRecord rec = table.getRecord(k);
 			rec.setString(1, getBigString("b", k, 3));
 			table.putRecord(rec);
 		}
@@ -234,7 +234,7 @@ public class DBLongKeyChainedBufferUseTest extends AbstractGenericTest {
 		dbh.endTransaction(txId, true);
 
 		for (int k = 0; k < 256; k += 2) {
-			Record rec = table.getRecord(k);
+			DBRecord rec = table.getRecord(k);
 			Assert.assertEquals(rec.getString(0), getBigString("a", k));
 			Assert.assertEquals(rec.getString(1), getBigString("b", k, 3));
 			assertPrimitiveColumns(rec);
@@ -253,14 +253,14 @@ public class DBLongKeyChainedBufferUseTest extends AbstractGenericTest {
 
 		// Update even keys
 		for (int k = 0; k < 256; k += 2) {
-			Record rec = table.getRecord(k);
+			DBRecord rec = table.getRecord(k);
 			rec.setString(1, getBigString("b", k, 4));
 			table.putRecord(rec);
 		}
 
 		// Update odd keys
 		for (int k = 1; k < 256; k += 2) {
-			Record rec = table.getRecord(k);
+			DBRecord rec = table.getRecord(k);
 			rec.setString(1, getBigString("b", k, 4));
 			table.putRecord(rec);
 		}
@@ -268,7 +268,7 @@ public class DBLongKeyChainedBufferUseTest extends AbstractGenericTest {
 		dbh.endTransaction(txId, true);
 
 		for (int k = 0; k < 256; k += 2) {
-			Record rec = table.getRecord(k);
+			DBRecord rec = table.getRecord(k);
 			Assert.assertEquals(rec.getString(0), getBigString("a", k));
 			Assert.assertEquals(rec.getString(1), getBigString("b", k, 4));
 			assertPrimitiveColumns(rec);
@@ -285,14 +285,14 @@ public class DBLongKeyChainedBufferUseTest extends AbstractGenericTest {
 
 		// Update even keys
 		for (int k = 0; k < 256; k += 2) {
-			Record rec = table.getRecord(k);
+			DBRecord rec = table.getRecord(k);
 			rec.setString(1, getBigString("b", k));
 			table.putRecord(rec);
 		}
 
 		// Update odd keys
 		for (int k = 1; k < 256; k += 2) {
-			Record rec = table.getRecord(k);
+			DBRecord rec = table.getRecord(k);
 			rec.setString(1, getBigString("b", k));
 			table.putRecord(rec);
 		}
@@ -300,7 +300,7 @@ public class DBLongKeyChainedBufferUseTest extends AbstractGenericTest {
 		dbh.endTransaction(txId, true);
 
 		for (int k = 0; k < 256; k += 2) {
-			Record rec = table.getRecord(k);
+			DBRecord rec = table.getRecord(k);
 			Assert.assertEquals(rec.getString(0), getSmallString("a", k));
 			Assert.assertEquals(rec.getString(1), getBigString("b", k));
 			assertPrimitiveColumns(rec);

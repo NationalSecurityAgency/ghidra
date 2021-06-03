@@ -77,6 +77,8 @@ public:
   Address codeaddr;		// Address of instruction refering to target call
   Address thunkaddr;		// The target call
   uint4 mask;			// Mask associated with this target
+  TargetHit(const Address &func,const Address &code,const Address &thunk,uint4 m) :
+    funcstart(func), codeaddr(code), thunkaddr(thunk) { mask = m; }
   bool operator<(const TargetHit &op2) const { return (funcstart < op2.funcstart); }
 };
 

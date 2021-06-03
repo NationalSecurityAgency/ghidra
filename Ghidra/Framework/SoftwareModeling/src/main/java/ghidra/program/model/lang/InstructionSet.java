@@ -79,7 +79,8 @@ public class InstructionSet implements Iterable<InstructionBlock> {
 	/**
 	 * Find the first block within this InstructionSet which intersects the specified range.
 	 * This method should be used sparingly since it uses a brute-force search.
-	 * @param address 
+	 * @param min the minimum intersection address
+	 * @param max the maximum intersection address
 	 * @return block within this InstructionSet which intersects the specified range or null
 	 * if not found 
 	 */

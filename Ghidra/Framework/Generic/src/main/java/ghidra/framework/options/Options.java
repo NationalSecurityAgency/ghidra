@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,6 @@
  */
 package ghidra.framework.options;
 
-import ghidra.util.HelpLocation;
-
 import java.awt.Color;
 import java.awt.Font;
 import java.beans.PropertyEditor;
@@ -26,6 +23,8 @@ import java.util.Date;
 import java.util.List;
 
 import javax.swing.KeyStroke;
+
+import ghidra.util.HelpLocation;
 
 public interface Options {
 	public static final char DELIMITER = '.';
@@ -59,7 +58,7 @@ public interface Options {
 	 * from the swing thread.
 	 * @return either the PropertyEditor that was registered for this option or a default editor
 	 * for the property type if one can be found; otherwise null.
-	 * @throw IllegalStateException if not called from the swing thread.
+	 * @throws IllegalStateException if not called from the swing thread.
 	 */
 	public PropertyEditor getPropertyEditor(String optionName);
 
@@ -112,7 +111,7 @@ public interface Options {
 	 * @param optionName the name of the option being registered.
 	 * @param defaultValue the defaultValue for the option. The default value must not be
 	 * null so that the OptionType can be determined.  If the default value should be null, use
-	 * {@link #registerOption(String, OptionType, Object, HelpLocation, String)
+	 * {@link #registerOption(String, OptionType, Object, HelpLocation, String)}
 	 * @param help the HelpLocation for this option.
 	 * @param description a description of the option.
 	 * @throws IllegalArgumentException if the defaultValue is null
@@ -151,15 +150,13 @@ public interface Options {
 
 	/**
 	 * Register the options editor that will handle the editing for all the options or a sub group of options.
-	 * @param path the path to the sub group of options or "" for all the options.
 	 * @param editor the custom editor panel to be used to edit the options or sub group of options.
 	 */
 	public abstract void registerOptionsEditor(OptionsEditor editor);
 
 	/**
 	 * Get the editor that will handle editing all the values in this options or sub group of options.
-	 * @param path the path to the sub group of options or "" for all the options.
-	 * @return  null if no options editor was registered
+	 * @return null if no options editor was registered
 	 */
 	public abstract OptionsEditor getOptionsEditor();
 
@@ -268,8 +265,8 @@ public interface Options {
 
 	/**
 	 * Get the Date for the given option name.
-	 * @param optionName option name
-	 * @param defaultValue value that is stored and returned if there is no
+	 * @param pName the property name
+	 * @param date the default date that is stored and returned if there is no
 	 * option with the given name
 	 * @return the Date for the option 
 	 * @throws IllegalArgumentException is a option exists with the given
@@ -376,7 +373,7 @@ public interface Options {
 	/**
 	 * Sets the Date value for the option.
 	 * @param optionName name of the option
-	 * @param value
+	 * @param newSetting the Date to set
 	 */
 	public abstract void setDate(String optionName, Date newSetting);
 
@@ -508,7 +505,7 @@ public interface Options {
 
 	/**
 	 * Returns the value as a string for the given option.
-	 * @param optionName the name of the option for which to retrieve the value as a string
+	 * @param name the name of the option for which to retrieve the value as a string
 	 * @return  the value as a string for the given option.
 	 */
 	public abstract String getValueAsString(String name);
@@ -518,6 +515,6 @@ public interface Options {
 	 * @param optionName the name of the option for which to retrieve the default value as a string
 	 * @return  the default value as a string for the given option.
 	 */
-	public abstract String getDefaultValueAsString(String analyzerName);
+	public abstract String getDefaultValueAsString(String optionName);
 
 }

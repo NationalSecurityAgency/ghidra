@@ -41,10 +41,6 @@ public class NextPrevHighlightRangePlugin extends Plugin {
 	private NextHighlightedRangeAction nextAction;
 	private PreviousHighlightedRangeAction previousAction;
 
-	/**
-	 * Constructor
-	 * @param tool
-	 */
 	public NextPrevHighlightRangePlugin(PluginTool tool) {
 		super(tool);
 		navOptions = new NavigationOptions(tool);

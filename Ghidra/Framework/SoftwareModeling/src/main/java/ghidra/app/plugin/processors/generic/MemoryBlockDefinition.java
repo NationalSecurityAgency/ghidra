@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +22,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
 import ghidra.util.XmlProgramUtilities;
 import ghidra.util.exception.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.XmlAttributeException;
 import ghidra.util.xml.XmlUtilities;
 import ghidra.xml.XmlElement;
@@ -92,13 +91,13 @@ public class MemoryBlockDefinition {
 		if (bitMappedAddress != null) {
 			Address mappedAddr =
 				XmlProgramUtilities.parseAddress(program.getAddressFactory(), bitMappedAddress);
-			block = mem.createBitMappedBlock(blockName, addr, mappedAddr, length);
+			block = mem.createBitMappedBlock(blockName, addr, mappedAddr, length, false);
 		}
 		else if (initialized) {
 			try {
 				block =
 					mem.createInitializedBlock(blockName, addr, length, (byte) 0,
-						TaskMonitorAdapter.DUMMY_MONITOR, false);
+						TaskMonitor.DUMMY, false);
 			}
 			catch (CancelledException e) {
 				throw new AssertException(e); // unexpected

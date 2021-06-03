@@ -1671,7 +1671,6 @@ define pcodeop diag;
 	if (isSS) goto <SGLSGL>;
 	if (isSD) goto <SGLDBL>;
 	if (isDS) goto <DBLSGL>;
-	<DBLDBL>
 	FPRT64 = int2float(FPR264);
 	goto <DONE>;
 	<SGLDBL>

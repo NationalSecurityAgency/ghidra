@@ -1,7 +1,5 @@
 ##VERSION: 2.0
-.project||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 data/languages/HC05-M68HC05TB.pspec||GHIDRA||||END|
 data/languages/HC05.ldefs||GHIDRA||||END|
 data/languages/HC05.pspec||GHIDRA||||END|
@@ -20,6 +18,6 @@ data/languages/HCS_HC.sinc||GHIDRA||||END|
 data/manuals/HC05.idx||GHIDRA||||END|
 data/manuals/HC08.idx||GHIDRA||||END|
 data/manuals/HCS08.idx||GHIDRA||||END|
-data/test-vectors/HC05_tv.s||GHIDRA|exclude|||END|
-data/test-vectors/HC08_tv.s||GHIDRA|exclude|||END|
-data/test-vectors/HCS08_tv.s||GHIDRA|exclude|||END|
+data/test-vectors/HC05_tv.s||GHIDRA||||END|
+data/test-vectors/HC08_tv.s||GHIDRA||||END|
+data/test-vectors/HCS08_tv.s||GHIDRA||||END|

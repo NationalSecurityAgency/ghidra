@@ -40,9 +40,9 @@ import ghidra.util.SystemUtilities;
  * The HelpSet class uses a javax.help.Map object to locate HTML files by javax.help.map.ID objects.
  * This class has overridden that basic usage of the Map object to allow ID lookups to take 
  * place across GHelpSet objects.  We need to do this due to how we merge help set content 
- * across modules.  More specifically, in order to merge, we have to make all <tocitem> xml tags
+ * across modules.  More specifically, in order to merge, we have to make all {@code <tocitem>} xml tags
  * the same, including the target HTML file they may reference.  Well, when a module uses a 
- * <tocitem> tag that references an HTML file <b>not inside of it's module</b>, then JavaHelp 
+ * {@code <tocitem>} tag that references an HTML file <b>not inside of it's module</b>, then JavaHelp 
  * considers this an error and does not correctly merge the HelpSets that share the reference.
  * Further, it does not properly locate the shared HTML file reference.  This class allows lookups
  * across modules by overridden the lookup functionality done by the map object.  More specifically,

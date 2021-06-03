@@ -23,7 +23,7 @@ package utility.function;
 public interface Callback {
 
 	/**
-	 * Creates a dummy callback function.  This is useful to avoid using <tt>null</tt>.
+	 * Creates a dummy callback function.  This is useful to avoid using <code>null</code>.
 	 * @return a dummy callback function
 	 */
 	public static Callback dummy() {
@@ -33,10 +33,10 @@ public interface Callback {
 	}
 
 	/**
-	 * Returns the given callback object if it is not <tt>null</tt>.  Otherwise, a {@link #dummy()} 
-	 * callback is returned.  This is useful to avoid using <tt>null</tt>.
+	 * Returns the given callback object if it is not <code>null</code>.  Otherwise, a {@link #dummy()} 
+	 * callback is returned.  This is useful to avoid using <code>null</code>.
 	 * 
-	 * @param c the callback function to check for <tt>null</tt>
+	 * @param c the callback function to check for <code>null</code>
 	 * @return a non-null callback function
 	 */
 	public static Callback dummyIfNull(Callback c) {

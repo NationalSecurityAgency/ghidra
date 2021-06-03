@@ -52,10 +52,9 @@ public class CliStreamHeader implements StructConverter, PeMarkupable {
 	/**
 	 * Constructs a new CLI Stream Header datatype.
 	 * 
+	 * @param metadataRoot the metadata root.
 	 * @param reader A binary reader set to start reading at the start of this header.
-	 * @param virtualAddress The RVA of this header.
-	 * @param ntHeader The NT header.
-	 * @throws if there is a problem reading the header.
+	 * @throws IOException if there is a problem reading the header.
 	 */
 	public CliStreamHeader(CliMetadataRoot metadataRoot, BinaryReader reader)
 			throws IOException {

@@ -20,18 +20,18 @@ import java.io.InputStream;
 import java.util.*;
 
 import db.DBBuffer;
-import db.Record;
+import db.DBRecord;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.map.AddressMapDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.*;
 import ghidra.util.exception.AssertException;
-import ghidra.util.exception.DuplicateNameException;
 
 public class MemoryBlockDB implements MemoryBlock {
+
 	private MemoryMapDBAdapter adapter;
-	protected Record record;
+	protected DBRecord record;
 	private Address startAddress;
 	private long length;
 	private List<SubMemoryBlock> subBlocks;
@@ -40,7 +40,9 @@ public class MemoryBlockDB implements MemoryBlock {
 	private long id;
 	private SubMemoryBlock lastSubBlock;
 
-	MemoryBlockDB(MemoryMapDBAdapter adapter, Record record, List<SubMemoryBlock> subBlocks) {
+	private List<MemoryBlockDB> mappedBlocks; // list of mapped blocks which map onto this block
+
+	MemoryBlockDB(MemoryMapDBAdapter adapter, DBRecord record, List<SubMemoryBlock> subBlocks) {
 		this.adapter = adapter;
 		this.record = record;
 		this.memMap = adapter.getMemoryMap();
@@ -56,7 +58,7 @@ public class MemoryBlockDB implements MemoryBlock {
 		return id;
 	}
 
-	void refresh(Record lRecord, List<SubMemoryBlock> list) {
+	void refresh(DBRecord lRecord, List<SubMemoryBlock> list) {
 		if (id != lRecord.getKey()) {
 			throw new AssertException("Incorrect block record");
 		}
@@ -74,6 +76,33 @@ public class MemoryBlockDB implements MemoryBlock {
 		lastSubBlock = null;
 		Collections.sort(list);
 		subBlocks = list;
+		mappedBlocks = null;
+	}
+
+	/**
+	 * Add a block which is mapped onto this block
+	 * @param mappedBlock mapped memory block
+	 */
+	void addMappedBlock(MemoryBlockDB mappedBlock) {
+		if (mappedBlocks == null) {
+			mappedBlocks = new ArrayList<>();
+		}
+		mappedBlocks.add(mappedBlock);
+	}
+
+	/**
+	 * Clear list of blocks mapped onto this block
+	 */
+	void clearMappedBlockList() {
+		mappedBlocks = null;
+	}
+
+	/**
+	 * Get collection of blocks which map onto this block.
+	 * @return collection of blocks which map onto this block or null if none identified
+	 */
+	Collection<MemoryBlockDB> getMappedBlocks() {
+		return mappedBlocks;
 	}
 
 	@Override
@@ -125,14 +154,18 @@ public class MemoryBlockDB implements MemoryBlock {
 	}
 
 	@Override
-	public void setName(String name) throws DuplicateNameException, LockException {
+	public void setName(String name) throws LockException {
 		String oldName = getName();
 		memMap.lock.acquire();
 		try {
 			checkValid();
+			if (oldName.equals(name)) {
+				return;
+			}
+			memMap.checkBlockName(name);
 			try {
-				if (getStart().getAddressSpace().isOverlaySpace()) {
-					memMap.overlayBlockRenamed(oldName, name);
+				if (isOverlay()) {
+					memMap.overlayBlockRenamed(startAddress.getAddressSpace().getName(), name);
 				}
 				record.setString(MemoryMapDBAdapter.NAME_COL, name);
 				adapter.updateBlockRecord(record);
@@ -394,10 +427,12 @@ public class MemoryBlockDB implements MemoryBlock {
 
 	@Override
 	public MemoryBlockType getType() {
-		if (startAddress.getAddressSpace().isOverlaySpace()) {
-			return MemoryBlockType.OVERLAY;
-		}
 		return subBlocks.get(0).getType();
+	}
+
+	@Override
+	public boolean isOverlay() {
+		return startAddress.getAddressSpace().isOverlaySpace();
 	}
 
 	public byte getByte(long offset) throws MemoryAccessException {
@@ -585,7 +620,7 @@ public class MemoryBlockDB implements MemoryBlock {
 		throw new IllegalArgumentException("offset " + offset + " not in this block");
 	}
 
-	public void initializeBlock(byte initialValue) throws IOException {
+	void initializeBlock(byte initialValue) throws IOException {
 		lastSubBlock = null;
 		for (SubMemoryBlock subBlock : subBlocks) {
 			subBlock.delete();
@@ -607,7 +642,7 @@ public class MemoryBlockDB implements MemoryBlock {
 	private void createBufferSubBlock(byte initialValue, long blockOffset, int size)
 			throws IOException {
 		DBBuffer buffer = adapter.createBuffer(size, initialValue);
-		Record subBlockRecord = adapter.createSubBlockRecord(id, blockOffset, size,
+		DBRecord subBlockRecord = adapter.createSubBlockRecord(id, blockOffset, size,
 			MemoryMapDBAdapter.SUB_TYPE_BUFFER, buffer.getId(), 0);
 
 		BufferSubMemoryBlock sub = new BufferSubMemoryBlock(adapter, subBlockRecord);
@@ -649,7 +684,7 @@ public class MemoryBlockDB implements MemoryBlock {
 			subBlock.delete();
 		}
 		subBlocks.clear();
-		Record subRecord = adapter.createSubBlockRecord(id, 0, length,
+		DBRecord subRecord = adapter.createSubBlockRecord(id, 0, length,
 			MemoryMapDBAdapter.SUB_TYPE_UNITIALIZED, 0, 0);
 		subBlocks.add(new UninitializedSubMemoryBlock(adapter, subRecord));
 
@@ -685,32 +720,6 @@ public class MemoryBlockDB implements MemoryBlock {
 			}
 		}
 		return false;
-	}
-
-	ByteSourceRangeList getByteSourceRangeList(Address address, long size) {
-		long blockOffset = address.subtract(startAddress);
-		size = Math.min(size, length - blockOffset);
-
-		SubMemoryBlock subBlock = getSubBlock(blockOffset);
-		long subBlockOffset = blockOffset - subBlock.getStartingOffset();
-		long available = subBlock.subBlockLength - subBlockOffset;
-		long subSize = Math.min(size, available);
-		if (subSize == size) {
-			return subBlock.getByteSourceRangeList(this, address, blockOffset, size);
-		}
-		Address start = address;
-		ByteSourceRangeList set =
-			subBlock.getByteSourceRangeList(this, start, blockOffset, subSize);
-
-		long total = subSize;
-		while (total < size) {
-			subBlock = getSubBlock(blockOffset + total);
-			subSize = Math.min(size - total, subBlock.subBlockLength);
-			start = address.add(total);
-			set.add(subBlock.getByteSourceRangeList(this, start, blockOffset + total, subSize));
-			total += subSize;
-		}
-		return set;
 	}
 
 }

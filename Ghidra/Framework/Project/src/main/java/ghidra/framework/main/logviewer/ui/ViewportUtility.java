@@ -31,7 +31,7 @@ import ghidra.util.Msg;
 /**
  * Utility class for managing the viewport in the {@link FVTable}. This viewport must be 
  * adjusted manually whenever {@link Chunk} objects are added to or removed from to the view, 
- * or whenever the {@link FVScrollBar} is moved.
+ * or whenever the {@link FVSlider} is moved.
  *
  */
 public class ViewportUtility implements Observer {
@@ -175,7 +175,6 @@ public class ViewportUtility implements Observer {
 	 * 
 	 * @param rows
 	 * @param selection
-	 * @return
 	 */
 	public void moveViewportUp(int rows, boolean selection) {
 
@@ -254,7 +253,6 @@ public class ViewportUtility implements Observer {
 	 * 
 	 * @param rows
 	 * @param selection
-	 * @return
 	 */
 	public void moveViewportDown(int rows, boolean selection) {
 

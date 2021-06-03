@@ -83,7 +83,7 @@ public class AddressSet implements AddressSetView {
 	 * Creates a new Address set containing a single range
 	 * @param start the start address of the range
 	 * @param end the end address of the range
-	 * @param addressFactory NOT USED.
+	 * @param factory NOT USED.
 	 * @deprecated use {@link #AddressSet(Address, Address)}  (will be kept until at least Ghidra 6.2)
 	 */
 	@Deprecated
@@ -106,8 +106,8 @@ public class AddressSet implements AddressSetView {
 
 	/**
 	 * Create a new Address Set from an existing Address Set.
-	 * @param addrSet Existing Address Set to clone.
-	 * @param addressFactory NOT USED.
+	 * @param set Existing Address Set to clone.
+	 * @param factory NOT USED.
 	 * @deprecated use {@link #AddressSet(AddressSetView)}  (will be kept until at least Ghidra 6.2)
 	 */
 	@Deprecated
@@ -117,7 +117,7 @@ public class AddressSet implements AddressSetView {
 
 	/**
 	 * Create a new Address Set from an existing Address Set.
-	 * @param addrSet Existing Address Set to clone.
+	 * @param set Existing Address Set to clone.
 	 */
 	public AddressSet(AddressSetView set) {
 		add(set);
@@ -126,7 +126,7 @@ public class AddressSet implements AddressSetView {
 	/**
 	 * Create a new Address containing a single address.
 	 * @param addr the address to be included in this address set.
-	 * @param addressFactory NOT USED.
+	 * @param factory NOT USED.
 	 * @deprecated use {@link #AddressSet(Address)}  (will be kept until at least Ghidra 6.2)
 	 */
 	@Deprecated
@@ -1374,5 +1374,42 @@ public class AddressSet implements AddressSetView {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Delete all addresses from the minimum address in the set up to and including toAddr.
+	 * Addresses less-than-or-equal to specified 
+	 * address based upon {@link Address} comparison.
+	 * 
+	 * @param toAddr only addresses greater than toAddr will be left in the set.
+	 */
+	public void deleteFromMin(Address toAddr) {
+		if (isEmpty()) {
+			return;
+		}
+		// check if toAddr is already before the start of the set
+		if (toAddr.compareTo(getMinAddress()) < 0) {
+			return;
+		}
+		delete(getMinAddress(), toAddr);
+	}
+
+	/**
+	 * Delete all addresses starting at the fromAddr to the maximum address in the set.
+	 * Addresses greater-than-or-equal to specified 
+	 * address based upon {@link Address} comparison.
+	 * 
+	 * @param fromAddr only addresses less than fromAddr will be left in the set.
+	 */
+	public void deleteToMax(Address fromAddr) {
+		if (isEmpty()) {
+			return;
+		}
+
+		// check if endAddr is already past the end of the set
+		if (fromAddr.compareTo(getMaxAddress()) > 0) {
+			return;
+		}
+		delete(fromAddr, getMaxAddress());
 	}
 }

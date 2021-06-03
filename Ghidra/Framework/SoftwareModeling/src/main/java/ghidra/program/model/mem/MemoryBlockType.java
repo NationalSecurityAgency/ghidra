@@ -20,8 +20,7 @@ public enum MemoryBlockType {
 	//@formatter:off
 	DEFAULT("Default"),
 	BIT_MAPPED("Bit Mapped"),
-	BYTE_MAPPED("Byte Mapped"),
-	OVERLAY("Overlay");
+	BYTE_MAPPED("Byte Mapped");
 	//@formatter:on
 
 	private String name;

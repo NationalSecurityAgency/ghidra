@@ -217,12 +217,12 @@ public class WindowUtilities {
 	}
 
 	/**
-	 * Creates a point that is centered over the given <tt>parent</tt> component, based upon
-	 * the size of the given <tt>child</tt>.
+	 * Creates a point that is centered over the given <code>parent</code> component, based upon
+	 * the size of the given <code>child</code>.
 	 * @param parent The component over which to center the child.
 	 * @param child The component which will be centered over the parent
-	 * @return a point that is centered over the given <tt>parent</tt> component, based upon
-	 * the size of the given <tt>child</tt>.
+	 * @return a point that is centered over the given <code>parent</code> component, based upon
+	 * the size of the given <code>child</code>.
 	 */
 	public static Point centerOnComponent(Component parent, Component child) {
 		Dimension parentSize = parent.getSize();

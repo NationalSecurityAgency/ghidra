@@ -44,7 +44,7 @@ import ghidra.util.exception.CancelledException;
  * <P>
  * Some examples of valid c++ that would fail due to the current limitations:
  * <P>
- * void foo(myclass<int, float> x) - fails due to comma in x's data type name
+ * {@literal void foo(myclass<int, float> x) - fails due to comma in x's data type name}
  * int operator()(int x) - fails due to parens in function name unsigned int
  * bar(float y) - fails due to space in return type name
  * <P>
@@ -273,7 +273,7 @@ public class FunctionSignatureParser {
 	}
 
 	// The following regex pattern attempts to isolate the parameter name from
-	// the begining of a parameter specification. Since the name is optional,
+	// the beginning of a parameter specification. Since the name is optional,
 	// additional steps must be taken in code to ensure that the trailing word of
 	// a multi-word type-specified is not treated as a name (e.g., unsigned long).
 	//
@@ -345,8 +345,8 @@ public class FunctionSignatureParser {
 	}
 
 	/**
-	 * <code></code> provides a simple caching datatype manager service
-	 * wrapper.  Implementation intended for use with {@link FunctionSignatureParser}
+	 * Provides a simple caching datatype manager service wrapper.<br>
+	 * Implementation intended for use with {@link FunctionSignatureParser}
 	 * and underlying {@link DataTypeParser} and {@link DataTypeUtilities} classes.  
 	 */
 	private static class ParserDataTypeManagerService implements DataTypeQueryService {

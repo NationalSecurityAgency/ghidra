@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * EXCLUDE: YES
  * NOTE: Target command uses BFD stuff which is GPL 3
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -283,7 +282,7 @@ Address CodeDataAnalysis::disassembleBlock(const Address &addr,const Address &en
   }
   for(;;) {
     disengine.disassemble(curaddr,disresult);
-    codevec.push_back(CodeUnit());
+    codevec.emplace_back();
     if (!disresult.success) {
       codevec.back().flags = CodeUnit::notcode;
       codevec.back().size = 1;
@@ -429,16 +428,16 @@ void CodeDataAnalysis::markCrossHits(void)
 void CodeDataAnalysis::addTargetHit(const Address &codeaddr,uintb targethit)
 
 {
-  targethits.push_back(TargetHit());
-  targethits.back().funcstart = findFunctionStart( codeaddr );
-  targethits.back().codeaddr = codeaddr;
-  targethits.back().thunkaddr = Address(glb->translate->getDefaultSpace(),targethit);
+  Address funcstart = findFunctionStart( codeaddr );
+  Address thunkaddr = Address(glb->translate->getDefaultCodeSpace(),targethit);
+  uint4 mask;
   map<Address,TargetFeature>::const_iterator titer;
-  titer = targets.find( targethits.back().thunkaddr );
+  titer = targets.find( thunkaddr );
   if (titer != targets.end())
-    targethits.back().mask = (*titer).second.featuremask;
+    mask = (*titer).second.featuremask;
   else
     throw LowlevelError("Found thunk without a feature mask");
+  targethits.emplace_back(funcstart,codeaddr,thunkaddr,mask);
 }
 
 void CodeDataAnalysis::resolveThunkHit(const Address &codeaddr,uintb targethit)
@@ -525,7 +524,7 @@ bool CodeDataAnalysis::repairJump(const Address &addr,int4 max)
     if (curaddr == (*iter).first) break; // Back on cut
     disengine.disassemble(curaddr,disresult);
     if (!disresult.success) return false;
-    codevec.push_back(CodeUnit());
+    codevec.emplace_back();
     if ((disresult.flags & CodeUnit::jump)!=0) {
       fromto_vec[ AddrLink(curaddr,disresult.jumpaddress) ] = disresult.flags;
     }

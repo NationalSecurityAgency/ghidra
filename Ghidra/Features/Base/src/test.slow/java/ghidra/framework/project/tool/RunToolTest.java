@@ -15,16 +15,13 @@
  */
 package ghidra.framework.project.tool;
 
-import static org.junit.Assert.assertNotNull;
-
-import java.beans.PropertyVetoException;
-
-import javax.swing.SwingUtilities;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGTest;
 import ghidra.framework.model.*;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.ProjectTestUtils;
 
@@ -36,20 +33,12 @@ import ghidra.test.ProjectTestUtils;
  */
 public class RunToolTest extends AbstractGhidraHeadedIntegrationTest {
 
-	private final static String DIRECTORY_NAME = AbstractGenericTest.getTestDirectoryPath();
+	private final static String DIRECTORY_NAME = AbstractGTest.getTestDirectoryPath();
 	private final static String TOOL_NAME = "TestTool";
 
 	private Project project;
-	private Tool runningTool;
-	private Tool tool;
-
-	/**
-	 * Constructor
-	 * @param arg0
-	 */
-	public RunToolTest() {
-		super();
-	}
+	private PluginTool runningTool;
+	private PluginTool tool;
 
 	@Before
 	public void setUp() throws Exception {
@@ -59,7 +48,7 @@ public class RunToolTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@After
 	public void tearDown() throws Exception {
-		SwingUtilities.invokeAndWait(new Runnable() {
+		runSwing(new Runnable() {
 			@Override
 			public void run() {
 				project.save();
@@ -69,7 +58,7 @@ public class RunToolTest extends AbstractGhidraHeadedIntegrationTest {
 		ProjectTestUtils.deleteProject(DIRECTORY_NAME, PROJECT_NAME);
 	}
 
-	/**
+	/*
 	 * Do the test.
 	 * This doTest() routine tests the following requirements:
 	 * (1) Run Project Tool Without Data
@@ -84,22 +73,18 @@ public class RunToolTest extends AbstractGhidraHeadedIntegrationTest {
 		ProjectTestUtils.deleteTool(project, TOOL_NAME);
 
 		// Create tool and save tool config
-		SwingUtilities.invokeAndWait(new Runnable() {
+		runSwing(new Runnable() {
 			@Override
 			public void run() {
 				tool = ProjectTestUtils.getTool(project, null);
-				try {
-					tool.setToolName(TOOL_NAME);
-				}
-				catch (PropertyVetoException e) {
-				}
+				tool.setToolName(TOOL_NAME);
 			}
 		});
 
 		try {
 
 			final ToolTemplate toolConfig = ProjectTestUtils.saveTool(project, tool);
-			SwingUtilities.invokeAndWait(new Runnable() {
+			runSwing(new Runnable() {
 				@Override
 				public void run() {
 					tool.close();
@@ -118,14 +103,14 @@ public class RunToolTest extends AbstractGhidraHeadedIntegrationTest {
 			// use the first one for the test
 			final Workspace activeWorkspace = workspaces[0];
 
-			SwingUtilities.invokeAndWait(new Runnable() {
+			runSwing(new Runnable() {
 				@Override
 				public void run() {
 					runningTool = activeWorkspace.runTool(toolConfig);
 				}
 			});
 			assertNotNull(runningTool);
-			SwingUtilities.invokeAndWait(new Runnable() {
+			runSwing(new Runnable() {
 				@Override
 				public void run() {
 					runningTool.close();
@@ -135,7 +120,7 @@ public class RunToolTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 		finally {
 			// Don't leave the tool in the tool chest
-			SwingUtilities.invokeAndWait(new Runnable() {
+			runSwing(new Runnable() {
 				@Override
 				public void run() {
 					ProjectTestUtils.deleteTool(project, TOOL_NAME);

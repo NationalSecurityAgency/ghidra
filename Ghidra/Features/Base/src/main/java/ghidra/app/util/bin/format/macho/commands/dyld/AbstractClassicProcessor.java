@@ -58,8 +58,7 @@ public abstract class AbstractClassicProcessor {
 
 		Address address = defaultAddressSpace.getAddress(addressValue);
 
-		DataConverter converter =
-			language.isBigEndian() ? new BigEndianDataConverter() : new LittleEndianDataConverter();
+		DataConverter converter = DataConverter.getInstance(language.isBigEndian());
 
 		Symbol symbol = getSymbol(nList);
 

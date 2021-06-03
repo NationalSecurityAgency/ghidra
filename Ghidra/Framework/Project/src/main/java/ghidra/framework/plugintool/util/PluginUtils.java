@@ -119,7 +119,7 @@ public class PluginUtils {
 
 		// Now get all Plugin.class files that have been loaded, and see if any of them
 		// were loaded from one of the jars we just found.
-		Set<Class<? extends Plugin>> plugins = ClassSearcher.getClasses(Plugin.class);
+		List<Class<? extends Plugin>> plugins = ClassSearcher.getClasses(Plugin.class);
 		for (Class<? extends Plugin> plugin : plugins) {
 			URL location = plugin.getResource('/' + plugin.getName().replace('.', '/') + ".class");
 			if (location == null) {

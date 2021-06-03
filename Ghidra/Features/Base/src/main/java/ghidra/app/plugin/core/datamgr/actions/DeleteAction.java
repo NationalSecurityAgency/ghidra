@@ -84,7 +84,7 @@ public class DeleteAction extends DockingAction {
 	private boolean containsUndeletableNodes(TreePath[] selectionPaths) {
 		for (TreePath path : selectionPaths) {
 			DataTypeTreeNode node = (DataTypeTreeNode) path.getLastPathComponent();
-			if (node.isSystemNode() || (node instanceof ArchiveNode)) {
+			if (!node.canDelete() || (node instanceof ArchiveNode)) {
 				return true;
 			}
 		}

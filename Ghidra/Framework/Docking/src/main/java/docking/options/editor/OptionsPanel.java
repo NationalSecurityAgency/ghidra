@@ -32,7 +32,8 @@ import docking.help.HelpService;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.GIconLabel;
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.internal.DefaultGTreeDataTransformer;
 import ghidra.framework.options.*;
 import ghidra.util.*;
@@ -231,7 +232,7 @@ public class OptionsPanel extends JPanel {
 	public void displayCategory(String category, String filterText) {
 		String escapedDelimiter = Pattern.quote(Options.DELIMITER_STRING);
 
-		GTreeRootNode root = gTree.getRootNode();
+		GTreeNode root = gTree.getModelRoot();
 		category = root.getName() + Options.DELIMITER_STRING + category;
 		String[] categories = category.split(escapedDelimiter);
 		gTree.setFilterText(filterText);

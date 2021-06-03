@@ -43,7 +43,7 @@ public class GTreeSelectNodeByNameTask extends GTreeTask {
 	@Override
 	public void run(TaskMonitor monitor) throws CancelledException {
 		monitor.setMessage("Selecting paths");
-		GTreeNode node = tree.getRootNode();
+		GTreeNode node = tree.getViewRoot();
 
 		String rootName = names[0];
 		if (!node.getName().equals(rootName)) {

@@ -129,7 +129,7 @@ class ServerConnectTask extends Task {
 				throw new IOException("User PKI Certificate not installed", e);
 			}
 			// assume user cancelled connect attempt when prompted for cert password
-			// or other cert error occured
+			// or other cert error occurred
 			return true;
 		}
 // TODO: Translate SSL exceptions to more meaningful errors

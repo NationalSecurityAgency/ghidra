@@ -64,16 +64,7 @@ public class ColumnFilterDialogModel<R> {
 		this.columnModel = columnModel;
 		this.currentFilter = currentColumnTableFilter;
 		columnModel.addColumnModelListener(columnModelListener);
-		int columnCount = columnModel.getColumnCount();
-		for (int viewIndex = 0; viewIndex < columnCount; viewIndex++) {
-			int modelIndex = columnModel.getColumn(viewIndex).getModelIndex();
-			Class<?> columnClass = model.getColumnClass(modelIndex);
-			ColumnFilterData<?> columnData =
-				createColumnFilterData(modelIndex, viewIndex, columnClass);
-			if (columnData.isFilterable()) {
-				allFilters.add(columnData);
-			}
-		}
+		allFilters = getAllColumnFilterData(model, columnModel);
 
 		addEntriesFromCurrentTableFilter(currentColumnTableFilter);
 
@@ -86,6 +77,23 @@ public class ColumnFilterDialogModel<R> {
 		}
 	}
 
+	public static <R> List<ColumnFilterData<?>> getAllColumnFilterData(
+			RowObjectFilterModel<R> model,
+			TableColumnModel columnModel) {
+		List<ColumnFilterData<?>> filters = new ArrayList<>();
+		int columnCount = columnModel.getColumnCount();
+		for (int viewIndex = 0; viewIndex < columnCount; viewIndex++) {
+			int modelIndex = columnModel.getColumn(viewIndex).getModelIndex();
+			Class<?> columnClass = model.getColumnClass(modelIndex);
+			ColumnFilterData<?> columnData =
+				createColumnFilterData(model, modelIndex, viewIndex, columnClass);
+			if (columnData.isFilterable()) {
+				filters.add(columnData);
+			}
+		}
+		return filters;
+	}
+
 	/**
 	 * clean up.
 	 */
@@ -94,9 +102,9 @@ public class ColumnFilterDialogModel<R> {
 	}
 
 	/**
-	 * Creates a new filter fow (a new major row in the dialog filter panel)
-	 * @param logicOperation  the logical operation for how this row interacts with the rows before it
-	 * @return the new filter row that represents a major row in the dialog filter panel.
+	 * Creates a new filter row (a new major row in the dialog filter panel)
+	 * @param logicOperation the logical operation for how this row interacts with preceding rows 
+	 * @return the new filter row that represents a major row in the dialog filter panel
 	 */
 	public DialogFilterRow createFilterRow(LogicOperation logicOperation) {
 
@@ -274,7 +282,8 @@ public class ColumnFilterDialogModel<R> {
 		return tableModel;
 	}
 
-	private ColumnFilterData<?> createColumnFilterData(int modelIndex, int viewIndex,
+	private static <R> ColumnFilterData<?> createColumnFilterData(
+			RowObjectFilterModel<R> tableModel, int modelIndex, int viewIndex,
 			Class<?> columnClass) {
 		return new ColumnFilterData<>(tableModel, modelIndex, viewIndex, columnClass);
 	}
@@ -366,7 +375,7 @@ public class ColumnFilterDialogModel<R> {
 			int modelIndex = column.getModelIndex();
 			Class<?> columnClass = tableModel.getColumnClass(modelIndex);
 			ColumnFilterData<?> columnFilterData =
-				createColumnFilterData(modelIndex, viewIndex, columnClass);
+				createColumnFilterData(tableModel, modelIndex, viewIndex, columnClass);
 			if (columnFilterData.isFilterable()) {
 				allFilters.add(columnFilterData);
 			}

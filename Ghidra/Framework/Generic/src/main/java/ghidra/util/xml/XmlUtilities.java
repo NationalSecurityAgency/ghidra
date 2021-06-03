@@ -652,7 +652,7 @@ public class XmlUtilities {
 	 * 
 	 * @param ele the parent element
 	 * @param childName the name of the children elements to return
-	 * @return List<Element> of elements
+	 * @return {@literal List<Element>} of elements
 	 */
 	public static List<Element> getChildren(Element ele, String childName) {
 		return CollectionUtils.asList(ele.getChildren(childName), Element.class);

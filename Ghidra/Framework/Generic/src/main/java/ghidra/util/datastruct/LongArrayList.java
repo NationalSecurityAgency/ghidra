@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +120,7 @@ public class LongArrayList implements List<Long> {
         return longs[index];
     }
 	/**
-	 * @see ghidra.util.datastruct.LongArrayListIf#set(int, long)
+	 * @see LongArraySubList#set(int, long)
 	 */
 	public Long set(int index, Long value) {
     	if (index < 0 || index >= size) {
@@ -133,7 +132,7 @@ public class LongArrayList implements List<Long> {
 	}
 
 	/**
-	 * @see ghidra.util.datastruct.LongArrayListIf#clear()
+	 * @see LongArraySubList#clear()
 	 */
 	public void clear() {
 		size = 0;
@@ -141,14 +140,14 @@ public class LongArrayList implements List<Long> {
 	}
 
 	/**
-	 * @see ghidra.util.datastruct.LongArrayListIf#size()
+	 * @see LongArraySubList#size()
 	 */
 	public int size() {
 		return size;
 	}
 
 	/**
-	 * @see ghidra.util.datastruct.LongArrayListIf#toArray()
+	 * @see LongArraySubList#toArray()
 	 */
 	public Long [] toArray() {
 		Long[] values = new Long[size];

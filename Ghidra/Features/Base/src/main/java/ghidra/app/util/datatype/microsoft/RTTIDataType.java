@@ -37,7 +37,7 @@ public abstract class RTTIDataType extends DynamicDataType {
 	/**
 	 * Determines if the data type is valid for placing at the indicated address in the program.
 	 * @param program the program
-	 * @param address the address
+	 * @param startAddress the start address
 	 * @param overwriteInstructions true indicates that existing instructions can be overwritten 
 	 * by this data type.
 	 * @param overwriteDefinedData true indicates that existing defined data can be overwritten 

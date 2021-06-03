@@ -31,7 +31,7 @@ public interface ConsoleService {
 	 * Appends message to the console text area.
 	 * 
 	 * For example:
-	 *    "originator> message"
+	 *    "originator&gt; message"
 	 * 
 	 * @param originator  a descriptive name of the message creator
 	 * @param message     the message to appear in the console
@@ -108,7 +108,7 @@ public interface ConsoleService {
 	 * implementation. If this method cannot be supported,
 	 * please throw {@link UnsupportedOperationException}.
 	 * 
-	 * @return number of characters >= 0
+	 * @return number of characters &gt;= 0
 	 * 
 	 * @throws UnsupportedOperationException
 	 */
@@ -124,10 +124,10 @@ public interface ConsoleService {
 	 * implementation. If this method cannot be supported,
 	 * please throw {@link UnsupportedOperationException}.
 	 * 
-	 * @param offset  the offset into the console representing the desired start of the text >= 0
-	 * @param length  the length of the desired string >= 0
+	 * @param offset  the offset into the console representing the desired start of the text &gt;= 0
+	 * @param length  the length of the desired string &gt;= 0
 	 * 
-	 * @return the text, in a String of length >= 0
+	 * @return the text, in a String of length &gt;= 0
 	 * 
 	 * @throws UnsupportedOperationException
 	 */

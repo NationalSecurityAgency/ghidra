@@ -18,6 +18,7 @@ package docking.widgets;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.*;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
@@ -30,6 +31,7 @@ public class ListSelectionTableDialog<T> extends DialogComponentProvider {
 
 	private GTable gTable;
 	private T selectedValue;
+	private List<T> selectedValues = new ArrayList<>();
 	private GTableFilterPanel<T> filterPanel;
 	private RowObjectTableModel<T> model;
 
@@ -55,12 +57,23 @@ public class ListSelectionTableDialog<T> extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		int selectedRow = gTable.getSelectedRow();
-		if (selectedRow >= 0) {
-			int modelRow = filterPanel.getModelRow(selectedRow);
-			selectedValue = model.getRowObject(modelRow);
+		int[] selectedRows = gTable.getSelectedRows();
+		if (selectedRows.length > 0) {
+			selectedValues.clear();
+			for (int selectedRow : selectedRows) {
+				int modelRow = filterPanel.getModelRow(selectedRow);
+				T rowObject = model.getRowObject(modelRow);
+				selectedValues.add(rowObject);
+			}
+			selectedValue = selectedValues.isEmpty() ? null : selectedValues.get(0);
 			close();
 		}
+	}
+
+	@Override
+	public void close() {
+		super.close();
+		filterPanel.dispose();
 	}
 
 	private JComponent build() {
@@ -101,18 +114,49 @@ public class ListSelectionTableDialog<T> extends DialogComponentProvider {
 		return selectedValue;
 	}
 
+	public List<T> getSelectedItems() {
+		return selectedValues;
+	}
+
 	public T show(Component parent) {
+		setSelectionMode(false);
 		DockingWindowManager.showDialog(parent, this);
 		return getSelectedItem();
 	}
 
+	public List<T> showSelectMultiple(Component parent) {
+		setSelectionMode(true);
+		DockingWindowManager.showDialog(parent, this);
+		return getSelectedItems();
+	}
+
+	/**
+	 * Calling this method does does not work correctly when used with 
+	 * {@link #show(Component)} or {@link #showSelectMultiple(Component)}.   To use this method, you
+	 * must show the dialog by calling: 
+	 * <pre>
+	 * 	DockingWindowManager.showDialog(parent, dialog);
+	 * </pre>
+	 * 
+	 * <P>There is no need to use this method when using either of the aforementioned 
+	 * {@code show} methods
+	 * 
+	 * @param enable true to allow multiple selection
+	 * 
+	 * @deprecated to be removed sometime after the 9.3 release
+	 */
+	@Deprecated
 	public void setMultiSelectionMode(boolean enable) {
-		if (enable) {
-			gTable.getSelectionModel().setSelectionMode(
-				ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		setSelectionMode(enable);
+	}
+
+	private void setSelectionMode(boolean allowMultipleSelections) {
+		ListSelectionModel selectionModel = gTable.getSelectionModel();
+		if (allowMultipleSelections) {
+			selectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		}
 		else {
-			gTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+			selectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		}
 	}
 

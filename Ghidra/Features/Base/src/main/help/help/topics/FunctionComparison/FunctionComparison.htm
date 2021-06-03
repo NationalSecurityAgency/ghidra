@@ -11,38 +11,21 @@
     <H1><A name="FunctionComparisonPlugin"></A> <A name="Function_Comparison"></A> <A name=
     "FunctionComparison"></A> Function Comparison Window</H1>
 
-    <P>The Function Comparison window can provide different types of panels for visually comparing
-    two or more functions. The Listing View of the Function Comparison window and its capabilities
-    is explained below.</P>
+    <P>The Function Comparison window provides a way to compare two or more
+    functions in a simple side-by-side panel. </P>
 
-    <H2><A name="Compare Selected Functions"></A>Compare Selected Functions</H2>
+    <P>To begin, select a function (or multiple functions) from the listing or
+    the <A HREF="help/topics/FunctionWindowPlugin/function_window.htm">function table</a>. Then right-click and select the <b>Compare Selected
+    Functions</b> option.</P>
 
-    <BLOCKQUOTE>
-      <P>A Function Comparison window can be displayed from a selection containing two or more
-      functions in the CodeBrowser listing.</P>
-    </BLOCKQUOTE>
-
-    <BLOCKQUOTE>
-      <OL>
-        <LI>In the CodeBrowser Listing make a selection containing two or more functions that you
-        want to compare.</LI>
-
-        <LI>Right mouse click and select the <IMG alt="" src="images/page_white_c.png"> <B>Compare
-        Selected Functions...</B> option on the right mouse popup menu.</LI>
-      </OL>
-    </BLOCKQUOTE>
-
-    <P><A name="Dual_Listing"></A>A Function Comparison window will appear.</P>
+    <P><A name="Dual_Listing"></A>A new function comparison window will appear (subsequent
+    invocations of this option will create a new tab in the existing window).</P>
     <BR><BR>
 
     <CENTER>
       <IMG alt="" border="0" src="images/FunctionComparisonWindow.png">
     </CENTER><BR>
      <BR>
-     
-
-    <P>This window can have multiple tabs, one for each type of function comparison view that is
-    available.</P>
 
     <H2><A name="Listing_View"></A>Listing View</H2>
 
@@ -426,87 +409,46 @@
     <H2><A name="Compare Multiple Functions"></A>Comparing Multiple Functions</H2>
 
     <BLOCKQUOTE>
-      <P>When comparing more than two functions, a Function Comparison window will have additional
-      components at the top of it. This window displays two functions side by side again, but has
-      two choice components at the top of the panel, which indicates the current function being
-      displayed in each side (left and right) of the panel. Each choice component can display a
-      list indicating the functions that can be displayed in the listing below it. Only one
-      function at a a time from the list can be displayed below it based on the type of view
-      currently set. You can simply change the current function for either side of the function
-      comparison using the choice component in order to get a different function comparison.</P>
+      <P>There is no limit to the number of functions that can be compared. Users may
+      add and remove functions from each comparison panel as desired. Simply use the pulldowns 
+      above the listing panels to change what is being compared.</P>
 
-      <P>There are two toolbar actions with quick keys that allow you to change to the
-      next/previous function for the side that has focus as indicated by the pink border.</P>
+      <P>The following toolbar options are available:</P>
 
-	  <BR><BR>
-      <CENTER>
-        <IMG alt="" border="0" src="images/MultiFunctionComparisonWindow.png">
-      </CENTER><BR>
-      <BR>
+	<blockquote>
+		<h3><IMG src="images/AddToComparisonIcon.png" border="0">  <a name="Add_To_Comparison"></a>Add To Existing Comparison</h3>
+		<p>Allows the user to add functions to the current comparison window. When
+		selected, the following table containing all functions in the current program is
+		displayed:</p>
+		<p>
+		<IMG src="images/AddFunctionsPanel.png" border="0">
+		</p>
+		<p>Select the functions to be added and hit the <b>OK</b>
+		button; the selected functions will be available in both the left and right
+		sides of the comparison window. 
+		</p>
+		
+		<h3><IMG src="images/RemoveFromComparisonIcon.png" border="0">  <a name="Remove_From_Comparison"></a>&nbsp;Remove Function From Comparison</h3>
+		<p>Removes the function in the focused panel from the comparison. This
+		will remove the function from both the source and target selection pulldowns.</p>
+		
+		<h3><IMG src="images/NavNextIcon.png" border="0">  <a name="Navigate_Next"></a>&nbsp;Go To Next Function</h3>
+		<p>Navigates to the next available function in the selection pulldown</p>
+		
+		<h3><IMG src="images/NavPreviousIcon.png" border="0">  <a name="Navigate_Previous"></a>&nbsp;Go To Previous Function</h3>
+		<p>Navigates to the previous available function in the selection pulldown</p>
+		
+		<h3><IMG src="Icons.NAVIGATE_ON_INCOMING_EVENT_ICON" border="0">  <a name="Navigate_To_Function"></a>&nbsp;Navigate To Selected Function</h3>
+		<p>When toggled <b>on</b>, the function comparison panels become navigable,
+		meaning a mouse click on the panel or change in the function being viewed
+		will result in a GoTo event being generated. This allows other panels 
+		(eg: the listing) to update their views accordingly.</p>
+		
+		<p><IMG src="../../shared/note.png">  The Remove and Go To actions described
+		above will operate on the comparison panel that has focus, identified by the
+		pink border.</p>
+	</blockquote>
        
-
-      <H3>Multi-Function Comparison Actions</H3>
-
-      <BLOCKQUOTE>
-        <P>There are two additional actions that are available when you are comparing more than
-        just two functions. The following describes them.</P>
-
-        <H4><A name="Compare_The_Next_Function"></A>Compare The Next Function</H4>
-
-        <BLOCKQUOTE>
-          <P>The Function Comparison window has an icon (<IMG alt="" src=
-          "images/FunctionScope.gif"><IMG alt="" src="images/arrow_down.png">) on the tool bar to
-          change the function being compared to the next one in the list for the side that
-          currently has focus.</P>
-
-          <OL>
-            <LI>Make sure the side (left or right) has focus for the function you want to change to
-            the next one. The side with focus will have the pink border around it. It if doesn't,
-            you can mouse click in the other side to get the focused side to change or you can use
-            the Tab key to move the focus until it moves the pink border around the correct
-            side.</LI>
-
-            <LI>Right mouse click and select the <IMG alt="" src="images/FunctionScope.gif"><IMG
-            alt="" src="images/arrow_down.png"> <B>Compare The Next Function</B> option, OR select
-            the <IMG alt="" src="images/FunctionScope.gif"><IMG alt="" src="images/arrow_down.png">
-            button on the tool bar.</LI>
-          </OL>
-
-          <P>The function should change to the next one available in the list from the choice
-          component. The differences will be recomputed for the new function comparison that is now
-          displayed. If the currently displayed function is at the end of the list, a message will
-          display in the tool's status area indicating there isn't a next function.</P>
-        </BLOCKQUOTE>
-
-          <H4><A name="Compare_The_Previous_Function"></A>Compare The Previous Function</H4>
-
-          <BLOCKQUOTE>
-            <P>The Function Comparison window has an icon (<IMG alt="" src=
-            "images/FunctionScope.gif"><IMG alt="" src="images/arrow_up.png">) on the tool bar to
-            change the function being compared to the previous one in the list for the side that
-            currently has focus.</P>
-
-            <OL>
-              <LI>Make sure the side (left or right) has focus for the function you want to change
-              to the previous one. The side with focus will have the pink border around it. It if
-              doesn't, you can mouse click in the other side to get the focused side to change or
-              you can use the Tab key to move the focus until it moves the pink border around the
-              correct side.</LI>
-
-              <LI>Right mouse click and select the <IMG alt="" src="images/FunctionScope.gif"><IMG
-              alt="" src="images/arrow_up.png"> <B>Compare The Previous Function</B> option, OR
-              select the <IMG alt="" src="images/FunctionScope.gif"><IMG alt="" src=
-              "images/arrow_up.png"> button on the tool bar.</LI>
-            </OL>
-
-            <P>The function should change to the previous one available in the list from the choice
-            component. The differences will be recomputed for the new function comparison that is
-            now displayed. If the currently displayed function is at the beginning of the list, a
-            message will display in the tool's status area indicating there isn't a previous
-            function.</P>
-          </BLOCKQUOTE>
-      </BLOCKQUOTE>
-
       <H3>Other Function Comparison Actions</H3>
 
       <P>The following are additional actions that are available in the Function Comparison
@@ -582,9 +524,7 @@
         </BLOCKQUOTE>
 
     </BLOCKQUOTE><BR>
-    <BR>
      
-
     <P class="providedbyplugin">Provided By:&nbsp; <I>FunctionComparisonPlugin</I></P>
 
     <P class="relatedtopic">Related Topics:</P>

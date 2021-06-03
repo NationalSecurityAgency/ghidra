@@ -39,6 +39,10 @@ public class VariableAccessDR extends DecompilerReference {
 		super(line, null /* This class does not always have a 'type' token */);
 	}
 
+	protected VariableAccessDR(ClangLine line, ClangFieldToken token) {
+		super(line, token);
+	}
+
 	void setVariable(ClangVariableToken token, List<DecompilerVariable> casts) {
 		if (variable != null) {
 			throw new AssertException("Decompiler variable is already set for this access");
@@ -184,7 +188,7 @@ public class VariableAccessDR extends DecompilerReference {
 		return matches;
 	}
 
-	private DataTypeReference createReference(DecompilerVariable var) {
+	protected DataTypeReference createReference(DecompilerVariable var) {
 
 		DataType dataType = var.getDataType();
 		String context = getContext(var);
@@ -263,11 +267,11 @@ public class VariableAccessDR extends DecompilerReference {
 
 		//@formatter:off
 		return "{\n" +
+			"\tline " + getContext() + ",\n" +
+			"\tfunction: " + getFunction() + "\n" +
 			"\tvariable: " + StringUtilities.toStringWithIndent(variable) + ",\n" +
 			"\tdata type: " + getDataType() + ",\n"+ 
 			subFieldsString +
-			"\tline " + getContext() + ",\n" +
-			"\tfunction: " + getFunction() + "\n" +
 		"}";
 		//@formatter:on
 	}

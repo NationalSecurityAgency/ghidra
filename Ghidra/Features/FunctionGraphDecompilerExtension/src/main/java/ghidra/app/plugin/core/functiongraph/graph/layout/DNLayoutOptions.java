@@ -31,7 +31,12 @@ public class DNLayoutOptions implements FGLayoutOptions {
 		"edges should be routed around any intersecting vertex.  When toggled off, edges will " +
 		"pass through any intersecting vertices.";
 
+	private static final String DIM_RETURN_EDGES_KEY = "Use Dim Return Edges";
+	private static final String DIM_RETURN_EDGES_DESCRIPTION =
+		"Signals to lighten the default return edges.";
+
 	private boolean useEdgeRoutingAroundVertices;
+	private boolean useDimmedReturnEdges = true;
 
 	@Override
 	public void registerOptions(Options options) {
@@ -40,21 +45,32 @@ public class DNLayoutOptions implements FGLayoutOptions {
 
 		options.registerOption(USE_EDGE_ROUTING_AROUND_VERTICES_KEY, useEdgeRoutingAroundVertices,
 			help, USE_EDGE_ROUTING_AROUND_VERTICES_DESCRIPTION);
+
+		options.registerOption(DIM_RETURN_EDGES_KEY, useDimmedReturnEdges, help,
+			DIM_RETURN_EDGES_DESCRIPTION);
 	}
 
 	@Override
 	public void loadOptions(Options options) {
 		useEdgeRoutingAroundVertices =
 			options.getBoolean(USE_EDGE_ROUTING_AROUND_VERTICES_KEY, useEdgeRoutingAroundVertices);
+
+		useDimmedReturnEdges = options.getBoolean(DIM_RETURN_EDGES_KEY, useDimmedReturnEdges);
+
 	}
 
 	public boolean useEdgeRoutingAroundVertices() {
 		return useEdgeRoutingAroundVertices;
 	}
 
+	public boolean useDimmedReturnEdges() {
+		return useDimmedReturnEdges;
+	}
+
 	@Override
 	public boolean optionChangeRequiresRelayout(String optionName) {
 		// format: 'Nested Code Layout.Route Edges....'
-		return optionName.endsWith(USE_EDGE_ROUTING_AROUND_VERTICES_KEY);
+		return optionName.endsWith(USE_EDGE_ROUTING_AROUND_VERTICES_KEY) ||
+			optionName.endsWith(DIM_RETURN_EDGES_KEY);
 	}
 }

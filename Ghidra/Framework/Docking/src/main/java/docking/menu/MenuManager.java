@@ -202,7 +202,7 @@ public class MenuManager implements ManagedMenuItem {
 	}
 
 	/***
-	 * Removes the Mnemonic indicator character (&) from the text
+	 * Removes the Mnemonic indicator character (&amp;) from the text
 	 * @param text the text to strip
 	 * @return the stripped mnemonic
 	 */

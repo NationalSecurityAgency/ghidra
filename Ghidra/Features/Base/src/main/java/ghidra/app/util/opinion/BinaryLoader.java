@@ -95,6 +95,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 		long length = 0;
 		long fileOffset = 0;
 		long origFileLength;
+		boolean isOverlay = false;
 		try {
 			origFileLength = provider.length();
 		}
@@ -174,6 +175,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 					if (!Boolean.class.isAssignableFrom(option.getValueClass())) {
 						return OPTION_NAME_IS_OVERLAY + " must be a boolean";
 					}
+					isOverlay = (boolean) option.getValue();
 				}
 			}
 			catch (Exception e) {
@@ -194,7 +196,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 			return "Invalid length specified";
 		}
 		if (program != null) {
-			if (program.getMemory().intersects(baseAddr, baseAddr.add(length - 1))) {
+			if (program.getMemory().intersects(baseAddr, baseAddr.add(length - 1)) && !isOverlay) {
 				return "Memory Conflict: Use <Options...> to change the base address!";
 			}
 		}
@@ -340,7 +342,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 			FileBytes fileBytes, long length, MessageLog log)
 			throws AddressOverflowException, IOException {
 
-		if (prog.getMemory().intersects(baseAddr, baseAddr.add(length - 1))) {
+		if (prog.getMemory().intersects(baseAddr, baseAddr.add(length - 1)) && !isOverlay) {
 			throw new IOException("Can't load " + length + " bytes at address " + baseAddr +
 				" since it conflicts with existing memory blocks!");
 		}

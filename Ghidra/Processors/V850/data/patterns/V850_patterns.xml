@@ -1,0 +1,37 @@
+<patternlist>
+  <patternpairs totalbits="31" postbits="15">
+   <!-- totalbits = total # of bits pre/post that must be a 0/1 not '.' -->
+   <!-- postbits  = number of bits that are 0/1 not '.' that must come from post pattern bits -->
+    <prepatterns>
+      <data>01111111 00000000</data> <!-- jmp [lp] -->
+    </prepatterns>
+    <postpatterns>
+      <data>10...... 00000111 ...00001 ........</data> <!-- PREPARE list12, imm5 -->
+      <data>10...... 00000111 ...00011 ........</data> <!-- PREPARE list12, imm5, sp -->
+      <data>00000011 00011110 ........ ........</data> <!-- ADDI imm16, sp, sp -->
+      <data>10...... 00000111 ...01011 ........ ........ ........</data> <!-- PREPARE list12, imm5, simm16 -->
+      <data>10...... 00000111 ...10011 ........ ........ ........</data> <!-- PREPARE list12, imm5, imm16 -->
+      <data>10...... 00000111 ...11011 ........ ........ ........ ........ ........</data> <!-- PREPARE list12, imm5, imm32 -->
+      <codeboundary/>
+      <possiblefuncstart/>
+    </postpatterns>
+  </patternpairs>
+  <patternpairs totalbits="25" postbits="15">
+    <prepatterns>
+      <data>01...... 00000110 ........ ........</data> <!-- DISPOSE imm5, list12, [reg1] -->
+      <data>11100000 00000111 01001010 00000001</data> <!-- FERET -->
+      <data>11100000 00000111 01001000 00000001</data> <!-- EIRET -->
+      <data>11100000 00000111 01000100 00000001</data> <!-- CTRET -->
+    </prepatterns>
+    <postpatterns>
+      <data>10...... 00000111 ...00001 ........</data> <!-- PREPARE list12, imm5 -->
+      <data>10...... 00000111 ...00011 ........</data> <!-- PREPARE list12, imm5, sp -->
+      <data>00000011 00011110 ........ ........</data> <!-- ADDI imm16, sp, sp -->
+      <data>10...... 00000111 ...11011 ........ ........ ........ ........ ........</data> <!-- PREPARE list12, imm5, imm32 -->
+      <data>10...... 00000111 ...01011 ........ ........ ........</data> <!-- PREPARE list12, imm5, simm16 -->
+      <data>10...... 00000111 ...10011 ........ ........ ........</data> <!-- PREPARE list12, imm5, imm16 -->
+      <codeboundary/>
+      <possiblefuncstart/>
+    </postpatterns>
+  </patternpairs>
+</patternlist>

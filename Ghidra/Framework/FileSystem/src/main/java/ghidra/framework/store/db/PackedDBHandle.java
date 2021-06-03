@@ -60,9 +60,6 @@ public class PackedDBHandle extends DBHandle {
 		this.contentType = pdb.getContentType();
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.DBHandle#save(java.lang.String, ghidra.framework.model.ChangeSet, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public synchronized void save(String comment, DBChangeSet changeSet, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -125,7 +122,6 @@ public class PackedDBHandle extends DBHandle {
 	 * @throws CancelledException if task monitor cancelled operation.
 	 * @throws IOException
 	 * @throws DuplicateFileException
-	 * @see db.DBHandle#saveAs(java.io.File, java.lang.String, ghidra.util.task.TaskMonitor)
 	 */
 	public synchronized PackedDatabase saveAs(String itemName, File dir, String packedFileName,
 			TaskMonitor monitor) throws IOException, DuplicateFileException, CancelledException {
@@ -154,7 +150,6 @@ public class PackedDBHandle extends DBHandle {
 	 * @throws CancelledException if task monitor cancelled operation.
 	 * @throws IOException
 	 * @throws DuplicateFileException
-	 * @see db.DBHandle#saveAs(java.io.File, java.lang.String, ghidra.util.task.TaskMonitor)
 	 */
 	public synchronized PackedDatabase saveAs(String itemName, File dir, String packedFileName,
 			Long newDatabaseId, TaskMonitor monitor)

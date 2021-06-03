@@ -254,8 +254,8 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 		}
 
 		@Override
-		public void openData(Data data) {
-			models[modelID].openData(data);
+		public boolean openData(Data data) {
+			return models[modelID].openData(data);
 		}
 
 		@Override
@@ -312,6 +312,11 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 		@Override
 		public AddressSet adjustAddressSetToCodeUnitBoundaries(AddressSet addressSet) {
 			return models[modelID].adjustAddressSetToCodeUnitBoundaries(addressSet);
+		}
+
+		@Override
+		public ListingModel copy() {
+			return models[modelID].copy();
 		}
 
 	}

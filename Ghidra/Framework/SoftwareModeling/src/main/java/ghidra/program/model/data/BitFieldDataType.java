@@ -17,18 +17,19 @@ package ghidra.program.model.data;
 
 import java.math.BigInteger;
 
-import ghidra.docking.settings.Settings;
-import ghidra.docking.settings.SettingsDefinition;
+import ghidra.docking.settings.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.scalar.Scalar;
+import ghidra.util.DataConverter;
 import ghidra.util.exception.AssertException;
+import utilities.util.ArrayUtilities;
 
 /**
  * <code>BitFieldDataType</code> provides a means of defining a minimally sized bit-field
  * for use within data structures.  The length (i.e., storage size) of this bitfield datatype is
  * the minimum number of bytes required to contain the bitfield at its specified offset.
  * The effective bit-size of a bitfield will be limited by the size of the base
- * datatype whose size may be controlled by its' associated datatype manager and data organization
+ * datatype whose size may be controlled by its associated datatype manager and data organization
  * (e.g., {@link IntegerDataType}). 
  * <p>
  * NOTE: Instantiation of this datatype implementation is intended for internal use only.  
@@ -151,7 +152,7 @@ public class BitFieldDataType extends AbstractDataType {
 	/**
 	 * Check if a specified baseDataType is valid for use with a bitfield
 	 * @param baseDataType bitfield base data type (Enum, AbstractIntegerDataType and derived TypeDefs permitted)
-	 * @returns true if baseDataType is valid else false
+	 * @return true if baseDataType is valid else false
 	 */
 	public static boolean isValidBaseDataType(DataType baseDataType) {
 		if (baseDataType instanceof TypeDef) {
@@ -354,27 +355,38 @@ public class BitFieldDataType extends AbstractDataType {
 		if (effectiveBitSize == 0) {
 			return new Scalar(0, 0);
 		}
-		BigInteger big = getBigIntegerValue(buf, settings);
+		AbstractIntegerDataType primitiveBaseDataType = getPrimitiveBaseDataType();
+		boolean isSigned = primitiveBaseDataType.isSigned();
+		BigInteger big = getBigIntegerValue(buf, isSigned, settings);
 		if (big == null) {
 			return null;
 		}
 		if (effectiveBitSize <= 64) {
-			return new Scalar(effectiveBitSize, big.longValue(),
-				getPrimitiveBaseDataType().isSigned());
+			return new Scalar(effectiveBitSize, big.longValue(), isSigned);
 		}
 		return big;
 	}
 
-	public BigInteger getBigIntegerValue(MemBuffer buf, Settings settings) {
+	private BigInteger getBigIntegerValue(MemBuffer buf, boolean isSigned, Settings settings) {
 		if (effectiveBitSize == 0) {
 			return BigInteger.ZERO;
 		}
 		try {
+
+			byte[] bytes = new byte[storageSize];
+			if (buf.getBytes(bytes, 0) != storageSize) {
+				return null;
+			}
+
+			if (!EndianSettingsDefinition.ENDIAN.isBigEndian(settings, buf)) {
+				bytes = ArrayUtilities.reverse(bytes);
+			}
+
 			BigInteger big = buf.getBigInteger(0, storageSize, false);
 			BigInteger pow = BigInteger.valueOf(2).pow(effectiveBitSize);
 			BigInteger mask = pow.subtract(BigInteger.ONE);
 			big = big.shiftRight(bitOffset).and(mask);
-			if (big.testBit(effectiveBitSize - 1)) {
+			if (isSigned && big.testBit(effectiveBitSize - 1)) {
 				big = big.subtract(pow);
 			}
 			return big;
@@ -395,7 +407,9 @@ public class BitFieldDataType extends AbstractDataType {
 		if (bitSize == 0) {
 			return "";
 		}
-		BigInteger big = getBigIntegerValue(buf, settings);
+		AbstractIntegerDataType primitiveBaseDataType = getPrimitiveBaseDataType();
+		boolean isSigned = primitiveBaseDataType.isSigned();
+		BigInteger big = getBigIntegerValue(buf, isSigned, settings);
 		if (big == null) {
 			return "??";
 		}
@@ -406,7 +420,19 @@ public class BitFieldDataType extends AbstractDataType {
 		if (dt instanceof Enum) {
 			return ((Enum) dt).getRepresentation(big, settings, effectiveBitSize);
 		}
-		return ((AbstractIntegerDataType) dt).getRepresentation(big, settings, effectiveBitSize);
+		AbstractIntegerDataType intDT = (AbstractIntegerDataType) dt;
+		if (intDT.getFormatSettingsDefinition().getFormat(
+			settings) == FormatSettingsDefinition.CHAR) {
+			if (big.signum() < 0) {
+				big = big.add(BigInteger.valueOf(2).pow(effectiveBitSize));
+			}
+			int bytesLen = BitFieldDataType.getMinimumStorageSize(effectiveBitSize);
+			byte[] bytes = DataConverter.getInstance(buf.isBigEndian()).getBytes(big, bytesLen);
+
+			return StringDataInstance.getCharRepresentation(this, bytes, settings);
+		}
+
+		return intDT.getRepresentation(big, settings, effectiveBitSize);
 	}
 
 	@Override

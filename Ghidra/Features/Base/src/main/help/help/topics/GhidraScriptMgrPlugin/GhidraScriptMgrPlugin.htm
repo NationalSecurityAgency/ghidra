@@ -90,11 +90,12 @@
       <H3><A name="Run"></A>Run Script <IMG src="images/play.png" border="0"></H3>
 
       <BLOCKQUOTE>
-        <P align="left">Runs the selected script.&nbsp;If the script source file is out of date,
-        then it will first be compiled. If the compilation is successful, then the script will be
-        run. If the script does not compile, the compilation errors will be displayed in the <A
-        href="help/topics/ConsolePlugin/console.html">Console</A> and an error icon <IMG src=
-        "Icons.ERROR_ICON" border="0"> will be displayed in the first column of the table.</P>
+        <P align="left">Runs the selected script.&nbsp;If the script source file or any source
+        in its script directory are out of date, then it's all (re)compiled. If the compilation
+        is successful, then the script will be run. If the script does not compile, the
+        compilation errors will be displayed in the <A href="help/topics/ConsolePlugin/console.html">
+        Console</A> and an error icon <IMG src="Icons.ERROR_ICON" border="0"> will be displayed 
+        in the first column of the table.</P>
 
         <P align="center"><IMG src="images/Console.png" border="0"></P>
       </BLOCKQUOTE>
@@ -271,16 +272,20 @@
         </P>
       </BLOCKQUOTE>
 
-      <H3 align="left"><A name="Script_Directories"></A>Script Directories&nbsp;<IMG src=
+      <H3 align="left"><A name="Script_Directories"></A>Script Directories / Bundle Manager&nbsp;<IMG src=
       "images/text_list_bullets.png" alt=""></H3>
 
       <BLOCKQUOTE>
-        <P align="left">Allows you to add and remove directories to search for scripts. The default
-        directories are your home directory and the various system directories (e.g., 
-        <tt>$GHIDRA_HOME/Features/Base/ghidra_scripts</tt>). You
-        can save directories, but ignore them in the Script Manager dialog by selecting/deselecting
-        the "Use" column checkbox.<BR>
-        </P>
+        <P align="left">Allows you to add and remove directories to search for
+        scripts and other dependencies for use by scripts. The default
+        directories are your home directory and the various system directories
+        (e.g., <tt>$GHIDRA_HOME/Features/Base/ghidra_scripts</tt>). You can
+        save directories, but ignore them in the Script Manager dialog by
+        selecting/deselecting the "Enable" column checkbox. </P>
+
+        <P align="left">For more information on Ghidra's dynamic module support, see
+         <a href="../BundleManager/BundleManager.htm">Ghidra Bundles</A>.</p>
+        <BR>
 
         <DIV align="center">
           <IMG src="images/Script_Dirs.png" alt="">

@@ -28,7 +28,7 @@ public class PostCommentFieldLocation extends CommentFieldLocation {
 	/**
 	 * Construct a new PostCommentFieldLocation.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param addr the address of the codeunit.
 	 * @param componentPath the componentPath of the codeUnit
 	 * @param comment comment text for the particular comment indicated by the address, subtype, and reference address.

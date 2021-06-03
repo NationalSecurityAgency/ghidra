@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,6 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
-import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.database.data.ProgramDataTypeManager;
-import ghidra.program.model.data.*;
-import ghidra.program.model.data.Enum;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
-
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
@@ -34,7 +22,17 @@ import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.dialogs.InputDialog;
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
+import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
+import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
+import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.database.data.ProgramDataTypeManager;
+import ghidra.program.model.data.*;
+import ghidra.program.model.data.Enum;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 
 public class CreateEnumFromSelectionAction extends DockingAction {
 	private final DataTypeManagerPlugin plugin;
@@ -131,7 +129,7 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				GTreeRootNode rootNode = gTree.getRootNode();
+				GTreeNode rootNode = gTree.getViewRoot();
 				gTree.setSelectedNodeByNamePath(new String[] { rootNode.getName(), parentNodeName,
 					newNodeName });
 			}
@@ -174,9 +172,9 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 
 		// figure out size of the new enum using the max size of the selected enums
 		int maxEnumSize = 1;
-		for (int i = 0; i < enumArray.length; i++) {
-			if (maxEnumSize < enumArray[i].getLength()) {
-				maxEnumSize = enumArray[i].getLength();
+		for (Enum element : enumArray) {
+			if (maxEnumSize < element.getLength()) {
+				maxEnumSize = element.getLength();
 			}
 		}
 		SourceArchive sourceArchive = category.getDataTypeManager().getLocalSourceArchive();
@@ -184,17 +182,18 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 			new EnumDataType(category.getCategoryPath(), newName, maxEnumSize,
 				category.getDataTypeManager());
 
-		for (int i = 0; i < enumArray.length; i++) {
-			String[] names = enumArray[i].getNames();
-			for (int j = 0; j < names.length; j++) {
-				dataType.add(names[j], enumArray[i].getValue(names[j]));
+		for (Enum element : enumArray) {
+			String[] names = element.getNames();
+			for (String name : names) {
+				dataType.add(name, element.getValue(name));
 
 			}
 		}
 
 		dataType.setSourceArchive(sourceArchive);
 		int id = category.getDataTypeManager().startTransaction("Create New Enum Data Type");
-		category.getDataTypeManager().addDataType(dataType, DataTypeConflictHandler.REPLACE_HANDLER);
+		category.getDataTypeManager()
+				.addDataType(dataType, DataTypeConflictHandler.REPLACE_HANDLER);
 		category.getDataTypeManager().endTransaction(id, true);
 
 	}

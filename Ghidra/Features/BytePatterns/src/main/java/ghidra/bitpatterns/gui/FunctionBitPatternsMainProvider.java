@@ -451,6 +451,8 @@ public class FunctionBitPatternsMainProvider extends ComponentProviderAdapter
 	 * Removes the action from the tool.
 	 */
 	public void dispose() {
+		firstBytesPanel.dispose();
+		clipboard.dispose();
 		tool.removeAction(gatherDataFromProgramAction);
 	}
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,13 @@
  */
 package ghidra.test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ToyProgramBuilder extends ProgramBuilder {
 
@@ -107,7 +106,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	/**
 	 * Get address in default ram space
 	 * @param offset address offset
-	 * @return address
+	 * @return the address
 	 */
 	public Address getAddress(long offset) {
 		return defaultSpace.getAddress(offset);
@@ -293,7 +292,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 
 	/**
 	 * Add move immediate instruction (consumes 2-bytes)
-	 * @param addr instruction address
+	 * @param offset instruction offset
 	 * @param imm immediate byte value
 	 * @throws MemoryAccessException
 	 */
@@ -395,7 +394,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	/**
 	 * Add call (consumes 2-bytes)
 	 * @param addr instruction address
-	 * @param dest call destination address
+	 * @param destAddr call destination address
 	 * @throws MemoryAccessException
 	 */
 	public void addBytesCall(String addr, String destAddr) throws MemoryAccessException {
@@ -418,7 +417,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	/**
 	 * Add call w/ delayslot (consumes 4-bytes)
 	 * @param addr instruction address
-	 * @param dest call destination address
+	 * @param destAddr call destination address
 	 * @throws MemoryAccessException
 	 */
 	public void addBytesCallWithDelaySlot(String addr, String destAddr)

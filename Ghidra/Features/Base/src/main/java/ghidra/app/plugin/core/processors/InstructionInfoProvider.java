@@ -92,7 +92,7 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 	/**
 	 * Define the Main panel.
 	 *
-	 * @return JPanel the completed <CODE>Main Panel<\CODE>
+	 * @return JPanel the completed <CODE>Main Panel</CODE>
 	 */
 	protected JPanel buildMainPanel(boolean isDynamic) {
 

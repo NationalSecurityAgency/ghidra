@@ -1,4 +1,3 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 src/main/resources/images/function_graph_code_flow.png||GHIDRA||reviewed||END|

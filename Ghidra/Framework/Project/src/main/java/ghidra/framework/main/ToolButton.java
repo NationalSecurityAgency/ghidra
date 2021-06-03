@@ -65,7 +65,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 
 	private FrontEndPlugin plugin;
 	private ToolTemplate template;
-	private Tool associatedRunningTool;
+	private PluginTool associatedRunningTool;
 
 	private DefaultToolChangeListener toolChangeListener;
 	private ToolServices toolServices;
@@ -83,7 +83,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	 * Construct a tool label that represents a running tool, using the
 	 * default RUNNING_TOOL icon.
 	 */
-	ToolButton(FrontEndPlugin plugin, Tool tool, ToolTemplate template) {
+	ToolButton(FrontEndPlugin plugin, PluginTool tool, ToolTemplate template) {
 		this(plugin, tool, template, tool.getIconURL());
 		setHelpLocation("Run_Tool");
 	}
@@ -91,7 +91,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	/**
 	 * Construct a tool label that represents a running tool.
 	 */
-	private ToolButton(FrontEndPlugin plugin, Tool tool, ToolTemplate template,
+	private ToolButton(FrontEndPlugin plugin, PluginTool tool, ToolTemplate template,
 			ToolIconURL iconURL) {
 		super(iconURL.getIcon());
 		this.plugin = plugin;
@@ -298,9 +298,9 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 
 	private void addFromToolButton(ToolButton toolButton) {
 		plugin.setToolButtonTransferable(null);
-		Tool tool = null;
+		PluginTool tool = null;
 		if (associatedRunningTool != null && toolButton.associatedRunningTool != null) {
-			final Tool t2 = toolButton.associatedRunningTool;
+			final PluginTool t2 = toolButton.associatedRunningTool;
 			SwingUtilities.invokeLater(() -> connectTools(associatedRunningTool, t2));
 			return;
 		}
@@ -309,14 +309,14 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		if (toolButton.associatedRunningTool == null) {
 			tool = plugin.getActiveWorkspace().runTool(toolButton.template);
 			accepted = tool.acceptDomainFiles(associatedRunningTool.getDomainFiles());
-			final Tool t = tool;
+			final PluginTool t = tool;
 			SwingUtilities.invokeLater(() -> connectTools(t, associatedRunningTool));
 		}
 		else {
 			tool = plugin.getActiveWorkspace().runTool(template);
 			accepted = tool.acceptDomainFiles(toolButton.associatedRunningTool.getDomainFiles());
-			final Tool t = tool;
-			final Tool t2 = toolButton.associatedRunningTool;
+			final PluginTool t = tool;
+			final PluginTool t2 = toolButton.associatedRunningTool;
 			SwingUtilities.invokeLater(() -> connectTools(t, t2));
 		}
 
@@ -328,7 +328,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	/**
 	 * Connect the tools in both directions.
 	 */
-	private void connectTools(Tool t1, Tool t2) {
+	private void connectTools(PluginTool t1, PluginTool t2) {
 		ToolManager tm = plugin.getActiveProject().getToolManager();
 		ToolConnection tc = tm.getConnection(t1, t2);
 		connectAll(tc);
@@ -514,7 +514,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		associatedRunningTool.close();
 	}
 
-	Tool getRunningTool() {
+	PluginTool getRunningTool() {
 		return associatedRunningTool;
 	}
 
@@ -570,7 +570,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 			Msg.debug(this, "Found root frame without a GhidraGlassPane registered!");
 
 			// try to recover without animation
-			Tool newTool = plugin.getActiveWorkspace().runTool(template);
+			PluginTool newTool = plugin.getActiveWorkspace().runTool(template);
 			openDomainFiles(newTool, domainFiles);
 			finishedCallback.run();
 			return;
@@ -621,7 +621,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 				try {
 					// cleanup any residual painting effects
 					toolGlassPane.paintImmediately(toolGlassPane.getBounds());
-					Tool newTool = plugin.getActiveWorkspace().runTool(template);
+					PluginTool newTool = plugin.getActiveWorkspace().runTool(template);
 					openDomainFiles(newTool, domainFiles);
 				}
 				finally {
@@ -640,7 +640,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		zoomRunner.run();
 	}
 
-	private void openDomainFiles(Tool tool, DomainFile[] domainFiles) {
+	private void openDomainFiles(PluginTool tool, DomainFile[] domainFiles) {
 		if (domainFiles == null) {
 			return;
 		}

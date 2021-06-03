@@ -153,7 +153,7 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	/**
 	 * Returns a multi-line string with information about the specified {@link GFile file}.
 	 * <p>
-	 * TODO: this method needs to be refactored to return a Map<String,String> instead of
+	 * TODO:{@literal this method needs to be refactored to return a Map<String, String>; instead of}
 	 * a pre-formatted multi-line string.
 	 * <p>
 	 * @param file {@link GFile} to get info message for.

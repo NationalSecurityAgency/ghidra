@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,17 @@
  */
 package ghidra.program.database.oldfunction;
 
+import java.io.IOException;
+import java.util.*;
+
+import db.Field;
+import db.DBRecord;
 import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
-
-import java.io.IOException;
-import java.util.*;
-
-import db.Record;
 
 /**
  * 
@@ -89,9 +88,9 @@ class OldStackFrameDB implements StackFrame {
 			return;
 		try {
 			variables = new ArrayList<Variable>();
-			long[] keys = adapter.getStackVariableKeys(function.getKey());
+			Field[] keys = adapter.getStackVariableKeys(function.getKey());
 			for (int i = 0; i < keys.length; i++) {
-				Record varRec = adapter.getStackVariableRecord(keys[i]);
+				DBRecord varRec = adapter.getStackVariableRecord(keys[i].getLongValue());
 				variables.add(getStackVariable(varRec));
 			}
 			Collections.sort(variables, StackVariableComparator.get());
@@ -101,7 +100,7 @@ class OldStackFrameDB implements StackFrame {
 		}
 	}
 
-	private Variable getStackVariable(Record record) {
+	private Variable getStackVariable(DBRecord record) {
 
 		int offset = record.getIntValue(OldStackVariableDBAdapter.STACK_VAR_OFFSET_COL);
 		long dataTypeId = record.getLongValue(OldStackVariableDBAdapter.STACK_VAR_DATA_TYPE_ID_COL);
@@ -124,13 +123,11 @@ class OldStackFrameDB implements StackFrame {
 			throw new RuntimeException(e); // unexpected
 		}
 		catch (AddressOutOfBoundsException e) {
-			Msg.error(this,
-				"Invalid stack variable '" + name + "' in function at " + function.getEntryPoint() +
-					": " + e.getMessage());
+			Msg.error(this, "Invalid stack variable '" + name + "' in function at " +
+				function.getEntryPoint() + ": " + e.getMessage());
 			try {
-				var =
-					new LocalVariableImpl(name, 0, dataType, VariableStorage.BAD_STORAGE,
-						functionManager.getProgram());
+				var = new LocalVariableImpl(name, 0, dataType, VariableStorage.BAD_STORAGE,
+					functionManager.getProgram());
 			}
 			catch (InvalidInputException e1) {
 				throw new RuntimeException(e); // unexpected

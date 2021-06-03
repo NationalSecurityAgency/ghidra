@@ -19,8 +19,6 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.print.*;
 import java.math.BigInteger;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import docking.util.GraphicsUtils;
@@ -29,6 +27,7 @@ import docking.widgets.fieldpanel.LayoutModel;
 import docking.widgets.fieldpanel.internal.EmptyLayoutBackgroundColorManager;
 import docking.widgets.fieldpanel.internal.LayoutBackgroundColorManager;
 import docking.widgets.fieldpanel.internal.PaintContext;
+import ghidra.util.DateUtils;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
@@ -60,7 +59,8 @@ public class CodeUnitPrintable implements Printable {
 	}
 
 	public CodeUnitPrintable(LayoutModel lm, int startIndex, int endIndex, double scaleAmount,
-			TaskMonitor monitor, PrintOptionsDialog pod, Book book, PrinterJob job, Date startDate) {
+			TaskMonitor monitor, PrintOptionsDialog pod, Book book, PrinterJob job,
+			Date startDate) {
 		this.lm = lm;
 		this.startIndex = startIndex;
 		this.endIndex = endIndex;
@@ -71,14 +71,17 @@ public class CodeUnitPrintable implements Printable {
 		this.job = job;
 		this.startDate = startDate;
 
-		if (pod.getMonochrome())
+		if (pod.getMonochrome()) {
 			PAINT_CONTEXT.setPrintColor(Color.BLACK);
-		else
+		}
+		else {
 			PAINT_CONTEXT.setPrintColor(null);
+		}
 	}
 
 	public CodeUnitPrintable(LayoutModel lm, java.util.List<Layout> layouts, double scaleAmount,
-			TaskMonitor monitor, PrintOptionsDialog pod, Book book, PrinterJob job, Date startDate) {
+			TaskMonitor monitor, PrintOptionsDialog pod, Book book, PrinterJob job,
+			Date startDate) {
 		this.lm = lm;
 		this.layouts = layouts;
 		this.scaleAmount = scaleAmount;
@@ -88,10 +91,12 @@ public class CodeUnitPrintable implements Printable {
 		this.job = job;
 		this.startDate = startDate;
 
-		if (pod.getMonochrome())
+		if (pod.getMonochrome()) {
 			PAINT_CONTEXT.setPrintColor(Color.BLACK);
-		else
+		}
+		else {
 			PAINT_CONTEXT.setPrintColor(null);
+		}
 	}
 
 	@Override
@@ -107,13 +112,12 @@ public class CodeUnitPrintable implements Printable {
 			return NO_SUCH_PAGE;
 		}
 
-		Rectangle rect =
-			new Rectangle((int) pageFormat.getImageableWidth(),
-				(int) pageFormat.getImageableHeight());
-		if (scaleAmount < 1.0)
-			rect =
-				new Rectangle((int) (pageFormat.getImageableWidth() / scaleAmount),
-					(int) (pageFormat.getImageableHeight() / scaleAmount));
+		Rectangle rect = new Rectangle((int) pageFormat.getImageableWidth(),
+			(int) pageFormat.getImageableHeight());
+		if (scaleAmount < 1.0) {
+			rect = new Rectangle((int) (pageFormat.getImageableWidth() / scaleAmount),
+				(int) (pageFormat.getImageableHeight() / scaleAmount));
+		}
 		LayoutBackgroundColorManager ls =
 			new EmptyLayoutBackgroundColorManager(PAINT_CONTEXT.getBackground());
 
@@ -128,8 +132,7 @@ public class CodeUnitPrintable implements Printable {
 			GraphicsUtils.drawString(null, g2, job.getJobName(), 0, metrics.getMaxAscent());
 		}
 		if (pod.getPrintDate()) {
-			DateFormat format = new SimpleDateFormat("MM/dd/yy h:mm:ss a");
-			String dateTime = format.format(startDate);
+			String dateTime = DateUtils.formatDateTimestamp(startDate);
 			GraphicsUtils.drawString(null, g2, dateTime, 0, (int) bottomPos);
 		}
 		if (pod.getPrintPageNum()) {
@@ -139,16 +142,19 @@ public class CodeUnitPrintable implements Printable {
 				(int) bottomPos);
 		}
 		g2.setFont(originalFont);
-		if (pod.showHeader())
+		if (pod.showHeader()) {
 			g2.translate(0, pod.getHeaderHeight());
+		}
 
-		if (scaleAmount < 1.0)
+		if (scaleAmount < 1.0) {
 			g2.transform(AffineTransform.getScaleInstance(scaleAmount, scaleAmount));
+		}
 
 		if (layouts != null) {
 			//If no layouts, ignore blank page
-			if (layouts.size() == 0)
+			if (layouts.size() == 0) {
 				return NO_SUCH_PAGE;
+			}
 			for (int i = 0; i < layouts.size(); i++) {
 				Layout layout = layouts.get(i);
 				try {

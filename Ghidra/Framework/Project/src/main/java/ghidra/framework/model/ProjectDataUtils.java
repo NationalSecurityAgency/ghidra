@@ -95,7 +95,7 @@ public class ProjectDataUtils {
 		}
 
 		/**
-		 * Recursively traverse the {@link DomainFolders}s under a specific {@link DomainFolder}.
+		 * Recursively traverse the {@link DomainFolder}s under a specific {@link DomainFolder}.
 		 *
 		 * @param startFolder
 		 */
@@ -140,7 +140,7 @@ public class ProjectDataUtils {
 	}
 
 	/**
-	 * Returns a {@link Iterable} sequence of all the {@link DomainFolders}s that exist under
+	 * Returns a {@link Iterable} sequence of all the {@link DomainFolder}s that exist under
 	 * the specified {@link DomainFolder folder}.
 	 * @param folder
 	 * @return

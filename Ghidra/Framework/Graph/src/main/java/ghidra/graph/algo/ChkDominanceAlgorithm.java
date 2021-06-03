@@ -28,9 +28,9 @@ import ghidra.util.task.TaskMonitor;
  * This algorithm is an implementation of the Cooper, Harvey, Kennedy algorithm.  
  * 
  * <P>The algorithm processes the graph in reverse post-order.  The runtime of 
- * this algorithm is approximately <tt>O(V+E*D)</tt> per iteration of the loop, where 
+ * this algorithm is approximately <code>O(V+E*D)</code> per iteration of the loop, where 
  * D is the size of the largest dominator set.  The number of iterations is 
- * bound at <tt>d(G) + 3</tt>, where d(G) is the "loop 
+ * bound at <code>d(G) + 3</code>, where d(G) is the "loop 
  * connectedness" of the graph. 
  * 
  *
@@ -122,7 +122,7 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 
 				while (iterator.hasNext()) {
 					V p = iterator.next();
-					if (p == newIdom) {
+					if (newIdom.equals(p)) {
 						continue;
 					}
 					if (dominatorMap.containsKey(p)) {
@@ -131,7 +131,7 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 				}
 
 				V idom = dominatorMap.get(b);
-				if (idom != newIdom) {
+				if (!newIdom.equals(idom)) {
 					V last = dominatorMap.put(b, newIdom);
 					dominatedMap.get(newIdom).add(b);
 					if (last != null) {
@@ -148,7 +148,7 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 		V finger2 = v2;
 		int finger1Index = map.get(finger1);
 		int finger2Index = map.get(finger2);
-		while (finger1 != finger2) {
+		while (!finger1.equals(finger2)) {
 			while (finger1Index < finger2Index) {
 				finger1 = dominatorMap.get(finger1);
 				finger1Index = map.get(finger1);
@@ -180,9 +180,9 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 		return results;
 	}
 
-	private void doGetDominated(V a, HashSet<V> results) {
+	private void doGetDominated(V a, Set<V> results) {
+		add(a, results); // a node always dominates itself
 		List<V> dominated = dominatedMap.get(a);
-		results.add(a); // a node always dominates itself
 		dominated.forEach(b -> doGetDominated(b, results));
 	}
 
@@ -197,19 +197,21 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 		Set<V> dominators = new HashSet<>();
 		dominators.add(a);
 
-		while (a != root) {
-			a = getImmediateDominator(a);
-			dominators.add(a);
+		while (!root.equals(a)) {
+			a = dominatorMap.get(a); // immediate dominator
+			add(a, dominators);
 		}
 		return dominators;
 	}
 
-	private V getImmediateDominator(V v) {
-		V dom = dominatorMap.get(v);
-		if (mutableGraph.isDummy(dom)) {
-			return null;
+	private void add(V v, Collection<V> set) {
+		if (!isDummy(v)) {
+			set.add(v);
 		}
-		return dom;
+	}
+
+	private boolean isDummy(V v) {
+		return v != null && mutableGraph.isDummy(v);
 	}
 
 	/**
@@ -230,15 +232,23 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 			}
 
 			V dominator = getImmediateDominator(v);
-			if (!dominator.equals(v)) {
+			if (!Objects.equals(dominator, v)) {
 				dg.addEdge(new DefaultGEdge<>(dominator, v));
 			}
 		}
 		return dg;
 	}
 
+	private V getImmediateDominator(V v) {
+		V dom = dominatorMap.get(v);
+		if (isDummy(dom)) {
+			return null;
+		}
+		return dom;
+	}
+
 	/**
-	 * Releases cached values used by internal data structures.
+	 * Releases cached values used by internal data structures
 	 */
 	public void clear() {
 		dominatedMap.clear();

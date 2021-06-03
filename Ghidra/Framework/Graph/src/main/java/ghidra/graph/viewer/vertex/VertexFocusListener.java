@@ -19,7 +19,6 @@ package ghidra.graph.viewer.vertex;
  * A listener called when a vertex is focused.  
  *
  * @param <V> the vertex type
- * @param <E> the edge type
  */
 public interface VertexFocusListener<V> {
 

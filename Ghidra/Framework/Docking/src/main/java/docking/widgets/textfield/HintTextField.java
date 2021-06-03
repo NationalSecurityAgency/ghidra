@@ -41,6 +41,7 @@ public class HintTextField extends JTextField {
 
 	private Color INVALID_COLOR = new Color(255, 225, 225);
 	private Color VALID_COLOR = Color.WHITE;
+	private Color defaultBackgroundColor;
 
 	/**
 	 * Constructor
@@ -56,7 +57,7 @@ public class HintTextField extends JTextField {
 	 *
 	 * @param hint the hint text
 	 * @param required true if the field should be marked as required
-  	 */
+	 */
 	public HintTextField(String hint, boolean required) {
 		this(hint, required, null);
 	}
@@ -81,14 +82,14 @@ public class HintTextField extends JTextField {
 	 * Key listener allows us to check field validity on every key typed
 	 */
 	public void addListeners() {
-	
-		getDocument().addDocumentListener( new DocumentListener() {
+
+		getDocument().addDocumentListener(new DocumentListener() {
 
 			@Override
 			public void removeUpdate(DocumentEvent e) {
 				validateField();
 			}
-			
+
 			@Override
 			public void insertUpdate(DocumentEvent e) {
 				validateField();
@@ -119,18 +120,20 @@ public class HintTextField extends JTextField {
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 
-		if (getText().isEmpty()) {
-			if (g instanceof Graphics2D) {
-				Graphics2D g2 = (Graphics2D) g;
-				g2.setColor(Color.lightGray);
-				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-					RenderingHints.VALUE_ANTIALIAS_ON);
-
-				if (hint != null) {
-					g2.drawString(hint, 7, 19);
-				}
-			}
+		if (!getText().isEmpty() || hint == null) {
+			return;
 		}
+
+		Graphics2D g2 = (Graphics2D) g;
+		g2.setColor(Color.LIGHT_GRAY);
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+			RenderingHints.VALUE_ANTIALIAS_ON);
+
+		Dimension size = getSize();
+		Insets insets = getInsets();
+		int x = 10; // offset
+		int y = size.height - insets.bottom - 1;
+		g2.drawString(hint, x, y);
 	}
 
 	/**
@@ -141,6 +144,15 @@ public class HintTextField extends JTextField {
 	 */
 	public void setRequired(boolean required) {
 		this.required = required;
+	}
+
+	/**
+	 * Allows users to override the background color used by this field when the contents are
+	 * valid.  The invalid color is currently set by this class.
+	 * @param color the color
+	 */
+	public void setDefaultBackgroundColor(Color color) {
+		this.defaultBackgroundColor = color;
 	}
 
 	/**
@@ -175,6 +187,11 @@ public class HintTextField extends JTextField {
 	 * field attributes.
 	 */
 	private void validateField() {
-		setBackground(isFieldValid() ? VALID_COLOR : INVALID_COLOR);
+		if (isFieldValid()) {
+			setBackground(defaultBackgroundColor == null ? VALID_COLOR : defaultBackgroundColor);
+		}
+		else {
+			setBackground(INVALID_COLOR);
+		}
 	}
 }

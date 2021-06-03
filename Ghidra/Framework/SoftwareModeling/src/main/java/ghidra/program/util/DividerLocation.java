@@ -29,7 +29,7 @@ public class DividerLocation extends ProgramLocation {
 	/**
 	  * Create a new DividerLocation.
 	  * 
-	  * @param the program of the location
+	  * @param program the program of the location
 	  * @param addr address of bookmark
 	  * @param groupPath object that uniquely identifies a module or fragment
 	  * by its hierarchy names; this parameter may be null

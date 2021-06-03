@@ -96,6 +96,12 @@ public:
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 
+class OptionForLoops : public ArchOption {
+public:
+  OptionForLoops(void) { name = "analyzeforloops"; }	///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
 class OptionInline : public ArchOption {
 public:
   OptionInline(void) { name = "inline"; }	///< Constructor
@@ -255,6 +261,24 @@ public:
 class OptionToggleRule : public ArchOption {
 public:
   OptionToggleRule(void) { name = "togglerule"; } ///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
+class OptionAliasBlock : public ArchOption {
+public:
+  OptionAliasBlock(void) { name = "aliasblock"; }	///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
+class OptionMaxInstruction : public ArchOption {
+public:
+  OptionMaxInstruction(void) { name="maxinstruction"; }	///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
+class OptionNamespaceStrategy : public ArchOption {
+public:
+  OptionNamespaceStrategy(void) { name = "namespacestrategy"; }	///< Constructor
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 

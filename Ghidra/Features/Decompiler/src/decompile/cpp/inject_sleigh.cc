@@ -293,6 +293,23 @@ int4 PcodeInjectLibrarySleigh::registerDynamicInject(InjectPayload *payload)
   return id;
 }
 
+/// \brief Force a payload to be dynamic for debug purposes
+///
+/// Debug information may include inject information for payloads that aren't dynamic.
+/// We substitute a dynamic payload so that analysis uses the debug info to inject, rather
+/// than the hard-coded payload information.
+/// \param injectid is the id of the payload to treat dynamic
+/// \return the new dynamic payload object
+InjectPayloadDynamic *PcodeInjectLibrarySleigh::forceDebugDynamic(int4 injectid)
+
+{
+  InjectPayload *oldPayload = injection[injectid];
+  InjectPayloadDynamic *newPayload = new InjectPayloadDynamic(glb,oldPayload->getName(),oldPayload->getType());
+  delete oldPayload;
+  injection[injectid] = newPayload;
+  return newPayload;
+}
+
 void PcodeInjectLibrarySleigh::parseInject(InjectPayload *payload)
 
 {
@@ -399,9 +416,10 @@ void PcodeInjectLibrarySleigh::restoreDebug(const Element *el)
     s.unsetf(ios::dec | ios::hex | ios::oct);
     s >> type;
     int4 id = getPayloadId(type,name);
-    InjectPayloadDynamic *payload = (InjectPayloadDynamic *)getPayload(id);
-    if (payload->getSource() != "dynamic")
-      throw LowlevelError("Mismatch with debug inject XML");
+    InjectPayloadDynamic *payload = dynamic_cast<InjectPayloadDynamic *>(getPayload(id));
+    if (payload == (InjectPayloadDynamic *)0) {
+      payload = forceDebugDynamic(id);
+    }
     payload->restoreEntry(subel);
   }
 }

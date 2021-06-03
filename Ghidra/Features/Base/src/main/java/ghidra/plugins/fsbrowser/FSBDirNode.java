@@ -22,7 +22,6 @@ import java.util.List;
 import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
-import docking.widgets.tree.GTreeSlowLoadingNode;
 import ghidra.formats.gfilesystem.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -33,7 +32,7 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  * Visible to just this package.
  */
-public class FSBDirNode extends GTreeSlowLoadingNode implements FSBNode {
+public class FSBDirNode extends FSBNode {
 	private FSRL fsrl;
 
 	FSBDirNode(FSRL fsrl) {

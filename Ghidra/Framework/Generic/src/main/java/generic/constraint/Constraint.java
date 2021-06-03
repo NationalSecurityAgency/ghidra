@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +45,7 @@ public abstract class Constraint<T> {
 
 	/**
 	 * Returns true if the given object satisfies this constraint.
-	 * @param the object to test this constraint on.
+	 * @param t the object to test this constraint on.
 	 * @return true if the given object satisfies this constraint.
 	 */
 	public abstract boolean isSatisfied(T t);

@@ -81,8 +81,9 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 	private long insertOneLongKeyRecord(boolean testStoredDB, boolean testGetRecord,
 			int varDataSize) throws IOException {
 		long txId = dbh.startTransaction();
-		Table table = DBTestUtils.createLongKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false);
-		Record rec = null;
+		Table table =
+			DBTestUtils.createLongKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false, false);
+		DBRecord rec = null;
 		try {
 			rec = DBTestUtils.createLongKeyRecord(table, true, varDataSize, true);
 		}
@@ -261,13 +262,14 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 	 * @param varDataSize size of variable length data fields.
 	 * @return Record[] records which were inserted.
 	 */
-	private Record[] createRandomLongKeyTableRecords(Table table, int recordCnt, int varDataSize)
+	private DBRecord[] createRandomLongKeyTableRecords(Table table, int recordCnt, int varDataSize)
 			throws IOException {
 		long txId = dbh.startTransaction();
 		if (table == null) {
-			table = DBTestUtils.createLongKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false);
+			table = DBTestUtils.createLongKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false,
+				false);
 		}
-		Record[] recs = new Record[recordCnt];
+		DBRecord[] recs = new DBRecord[recordCnt];
 		for (int i = 0; i < recordCnt; i++) {
 			try {
 				recs[i] = DBTestUtils.createLongKeyRecord(table, true, varDataSize, true);
@@ -286,12 +288,13 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 	 * @param varDataSize size of variable length data fields.
 	 * @return Record[] records which were inserted.
 	 */
-	private Record[] createOrderedLongKeyTableRecords(int recordCnt, long keyIncrement,
+	private DBRecord[] createOrderedLongKeyTableRecords(int recordCnt, long keyIncrement,
 			int varDataSize) throws IOException {
 		long txId = dbh.startTransaction();
-		Table table = DBTestUtils.createLongKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false);
+		Table table =
+			DBTestUtils.createLongKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false, false);
 		long key = 0;
-		Record[] recs = new Record[recordCnt];
+		DBRecord[] recs = new DBRecord[recordCnt];
 		for (int i = 0; i < recordCnt; i++) {
 			try {
 				recs[i] = DBTestUtils.createRecord(table, key, varDataSize, true);
@@ -315,7 +318,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 	 */
 	private void iterateLongKeyRecords(boolean testStoredDB, int recordCnt, long keyIncrement,
 			int varDataSize) throws IOException {
-		Record[] recs = null;
+		DBRecord[] recs = null;
 		if (keyIncrement == 0) {
 			recs = createRandomLongKeyTableRecords(null, recordCnt, varDataSize);
 		}
@@ -544,7 +547,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 	 */
 	private void iterateLongKeys(boolean testStoredDB, int recordCnt, long keyIncrement,
 			int varDataSize) throws IOException {
-		Record[] recs = null;
+		DBRecord[] recs = null;
 		if (keyIncrement == 0) {
 			recs = createRandomLongKeyTableRecords(null, recordCnt, varDataSize);
 		}
@@ -720,7 +723,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testForwardDeleteIterator() throws IOException {
 
-		Record[] recs = createOrderedLongKeyTableRecords(SMALL_ITER_REC_CNT, 2, 1);
+		DBRecord[] recs = createOrderedLongKeyTableRecords(SMALL_ITER_REC_CNT, 2, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 		assertEquals(SMALL_ITER_REC_CNT, table.getRecordCount());
@@ -740,7 +743,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testReverseDeleteIterator() throws IOException {
 
-		Record[] recs = createOrderedLongKeyTableRecords(SMALL_ITER_REC_CNT, 2, 1);
+		DBRecord[] recs = createOrderedLongKeyTableRecords(SMALL_ITER_REC_CNT, 2, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 		assertEquals(SMALL_ITER_REC_CNT, table.getRecordCount());
@@ -759,22 +762,22 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetLongKeyRecordAfter() throws IOException {
-		Record[] recs = createRandomLongKeyTableRecords(null, 16000, 1);
+		DBRecord[] recs = createRandomLongKeyTableRecords(null, 16000, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
 		// After test
 		for (int i = 1000; i < 16000; i += 1000) {
-			Record rec = table.getRecordAfter(recs[i].getKey());
+			DBRecord rec = table.getRecordAfter(recs[i].getKey());
 			assertEquals(rec.getKey(), recs[i + 1].getKey());
 		}
 
 		// End test
-		Record rec = table.getRecordAfter(recs[15999].getKey());
+		DBRecord rec = table.getRecordAfter(recs[15999].getKey());
 		assertNull(rec);
 	}
 
-	private int findHoleAfterLongKey(Record[] recs, int startIx) {
+	private int findHoleAfterLongKey(DBRecord[] recs, int startIx) {
 		for (int i = startIx; i < recs.length - 1; i++) {
 			if ((recs[i].getKey() + 1) < recs[i + 1].getKey()) {
 				return i;
@@ -783,7 +786,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		return -1;
 	}
 
-	private int findHoleBeforeLongKey(Record[] recs, int startIx) {
+	private int findHoleBeforeLongKey(DBRecord[] recs, int startIx) {
 		for (int i = startIx; i < recs.length; i++) {
 			if ((recs[i - 1].getKey() + 1) < recs[i].getKey()) {
 				return i;
@@ -794,13 +797,13 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetLongKeyRecordAtOrAfter() throws IOException {
-		Record[] recs = createRandomLongKeyTableRecords(null, 16000, 1);
+		DBRecord[] recs = createRandomLongKeyTableRecords(null, 16000, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
 		// At and After tests
 		for (int i = 1000; i < 16000; i += 1000) {
-			Record rec = table.getRecordAtOrAfter(recs[i].getKey());
+			DBRecord rec = table.getRecordAtOrAfter(recs[i].getKey());
 			assertEquals(rec.getKey(), recs[i].getKey());
 			int ix = findHoleAfterLongKey(recs, i + 500);
 			if (ix < 0) {
@@ -815,7 +818,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		if (lastKey == Long.MAX_VALUE) {
 			Assert.fail("Bad test data");
 		}
-		Record rec = table.getRecordAtOrAfter(lastKey);
+		DBRecord rec = table.getRecordAtOrAfter(lastKey);
 		assertEquals(rec.getKey(), lastKey);
 		rec = table.getRecordAtOrAfter(lastKey + 1);
 		assertNull(rec);
@@ -823,13 +826,13 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetLongKeyRecordAtOrBefore() throws IOException {
-		Record[] recs = createRandomLongKeyTableRecords(null, 16000, 1);
+		DBRecord[] recs = createRandomLongKeyTableRecords(null, 16000, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
 		// At and Before tests
 		for (int i = 1000; i < 16000; i += 1000) {
-			Record rec = table.getRecordAtOrBefore(recs[i].getKey());
+			DBRecord rec = table.getRecordAtOrBefore(recs[i].getKey());
 			assertEquals(rec.getKey(), recs[i].getKey());
 			int ix = findHoleBeforeLongKey(recs, i + 500);
 			if (ix < 0) {
@@ -844,7 +847,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		if (firstKey == Long.MIN_VALUE) {
 			Assert.fail("Bad test data");
 		}
-		Record rec = table.getRecordAtOrBefore(firstKey);
+		DBRecord rec = table.getRecordAtOrBefore(firstKey);
 		assertEquals(rec.getKey(), firstKey);
 		rec = table.getRecordAtOrBefore(firstKey - 1);
 		assertNull(rec);
@@ -853,7 +856,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testDeleteLongKeyRecord() throws IOException {
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
@@ -867,7 +870,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		RecordIterator iter = table.iterator();
 		int recIx = 1;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 			if ((recIx % 1000) == 0) {
 				++recIx;
@@ -879,7 +882,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testForwardDeleteLongKeyRecord() throws IOException {
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
@@ -895,7 +898,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testReverseDeleteLongKeyRecord() throws IOException {
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
@@ -911,7 +914,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 	public void testDeleteAllLongKeyRecords() throws IOException {
 
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
 		Arrays.sort(recs);
 
 		long txId = dbh.startTransaction();
@@ -931,7 +934,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		iter = table.iterator();
 		int recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);
@@ -939,7 +942,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 
 	private void deleteLongKeyRangeRecords(int count, int startIx, int endIx) throws IOException {
 
-		Record[] recs = createRandomLongKeyTableRecords(null, count, 1);
+		DBRecord[] recs = createRandomLongKeyTableRecords(null, count, 1);
 		Arrays.sort(recs);
 
 		long txId = dbh.startTransaction();
@@ -950,7 +953,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		RecordIterator iter = table.iterator();
 		int recIx = startIx != 0 ? 0 : (endIx + 1);
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 			if (recIx == startIx) {
 				recIx = endIx + 1;
@@ -979,7 +982,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testUpdateLongKeyRecord() throws IOException {
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
@@ -993,7 +996,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		RecordIterator iter = table.iterator();
 		int recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);
@@ -1002,7 +1005,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testUpdateBigLongKeyRecord() throws IOException {
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
@@ -1016,7 +1019,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		RecordIterator iter = table.iterator();
 		int recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);
@@ -1031,7 +1034,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		iter = table.iterator();
 		recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);
@@ -1044,7 +1047,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		assertTrue(!dbh.canUndo());
 		assertTrue(!dbh.canRedo());
 
-		Record[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
 
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
@@ -1055,7 +1058,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		// Update records
 		long txId = dbh.startTransaction();
 		for (int i = 0; i < cnt; i += 100) {
-			Record rec = table.getSchema().createRecord(recs[i].getKey());
+			DBRecord rec = table.getSchema().createRecord(recs[i].getKey());
 			DBTestUtils.fillRecord(rec, (BUFFER_SIZE / 8) * BUFFER_SIZE);
 			table.putRecord(rec);
 		}
@@ -1071,7 +1074,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		RecordIterator iter = table.iterator();
 		int recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);
@@ -1093,7 +1096,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		iter = table.iterator();
 		recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);
@@ -1106,7 +1109,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		assertTrue(!dbh.canUndo());
 		assertTrue(!dbh.canRedo());
 
-		Record[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
 
 		assertTrue(dbh.canUndo());
 		assertTrue(!dbh.canRedo());
@@ -1141,13 +1144,13 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		RecordIterator iter = table.iterator();
 		int recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);
 
 		// Add records
-		Record[] newRecs = new Record[recs.length + 100];
+		DBRecord[] newRecs = new DBRecord[recs.length + 100];
 		System.arraycopy(recs, 0, newRecs, 0, recs.length);
 		txId = dbh.startTransaction();
 		for (int i = 0; i < 100; i++) {
@@ -1171,7 +1174,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		iter = table.iterator();
 		recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(recs.length, recIx);

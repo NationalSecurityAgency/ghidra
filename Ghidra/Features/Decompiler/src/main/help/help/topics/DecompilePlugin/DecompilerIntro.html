@@ -1,0 +1,181 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Decompiler</title>
+<link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+<link rel="stylesheet" type="text/css" href="../../shared/languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="Decompiler.html" title="Decompiler">
+<link rel="up" href="Decompiler.html" title="Decompiler">
+<link rel="prev" href="Decompiler.html" title="Decompiler">
+<link rel="next" href="DecompilerConcepts.html" title="Decompiler Concepts">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter">
+<div class="titlepage"><div><div><h1 class="title">
+<a name="DecompilerIntro"></a>Decompiler</h1></div></div></div>
+  
+<div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="images/DecompWindow.png" align="middle" width="1000" height="391"></td></tr></table></div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="Overview"></a>Overview</h2></div></div></div>
+  
+  <p>
+    The Decompiler plug-in is a sophisticated transformation engine
+    which automatically converts the binary representation of
+    individual functions into a high-level C representation. The
+    Decompiler presents a view of a program which is interactive and
+    dynamically updated as the user adds or makes changes to the
+    annotations associated with the program. A Decompiler window
+    maintains the correspondence between the C representation and the
+    assembly representation displayed in the Code Browser window, to
+    the extent possible. The window allows instant visual association
+    and navigation between C language expressions and their
+    corresponding assembly instructions.
+  </p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="EnablePlugin"></a>Enabling the Plug-in</h3></div></div></div>
+  
+  <p>
+    The Decompiler is a full Plug-in within Ghidra and can be configured to be enabled or
+    disabled within any particular tool. Default configurations will have the
+    plug-in enabled, but if its disabled for some reason, it can be enabled from within
+    a Code Browser by selecting the menu option
+    </p>
+<div class="informalexample">
+      <span class="bold"><strong>File -&gt; Configure</strong></span>
+    </div>
+<p>
+    Then click on the <span class="emphasis"><em>Configure</em></span> link under the
+    <span class="bold"><strong>Ghidra Core</strong></span> section and check the box next to
+    <span class="bold"><strong>DecompilePlugin</strong></span>.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="TriggerDecompilation"></a>Decompiling a Function</h3></div></div></div>
+      
+  <p>
+    From the Code Browser, to open a Decompiler window, either:
+    </p>
+<div class="informalexample">
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+	Press the <span class="guiicon">
+	<span class="inlinemediaobject"><img src="images/decompileFunction.gif" width="16" height="16"></span>
+	</span> icon
+	in the tool bar, <span class="emphasis"><em>or</em></span>
+      </li>
+<li class="listitem" style="list-style-type: disc">
+	Select the <span class="bold"><strong>Decompile</strong></span> option from the
+	<span class="bold"><strong>Window</strong></span> menu.
+      </li>
+</ul></div>
+    </div>
+<p>
+  </p>
+  <p>
+    The window automatically decompiles and displays the function at the
+    <span class="emphasis"><em>current address</em></span>. The address is set typically by left-clicking in the Listing window,
+    or invoking the <span class="emphasis"><em>Goto</em></span> command (pressing the 'g' key) and manually entering
+    the address or some other label, but the Decompiler window
+    follows any type of navigation in the Code Browser, triggering decompilation of the new function
+    being displayed.
+  </p>
+  <div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Tip]" src="../../shared/tip.png"></td>
+<th align="left"></th>
+</tr>
+<tr><td align="left" valign="top">
+    Any change to the function or Program made while using Ghidra causes the window to automatically
+    redecompile the function it is displaying, to incorporate the new information. Changes include (but
+    aren't limited to):
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none"><a class="link" href="DecompilerWindow.html#ActionRenameVariable" title="Rename Variable">Renaming Variables</a></li>
+<li class="listitem" style="list-style-type: none"><a class="link" href="DecompilerWindow.html#ActionRetypeVariable" title="Retype Variable">Setting Data-types</a></li>
+<li class="listitem" style="list-style-type: none"><a class="link" href="DecompilerWindow.html#ActionComments" title="Comments">Commenting</a></li>
+<li class="listitem" style="list-style-type: none"><a class="link" href="DecompilerWindow.html#ActionEditSignature" title="Edit Function Signature">Setting a Function's Prototype</a></li>
+</ul></div>
+    Users can control decompilation in a wide variety of ways, see <a class="xref" href="DecompilerAnnotations.html" title="Program Annotations Affecting the Decompiler"><i>Program Annotations Affecting the Decompiler</i></a>.
+  </td></tr>
+</table></div>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="Capabilities"></a>Capabilities</h3></div></div></div>
+  
+  <p>
+    Some of the primary capabilities of the decompiler include:
+
+  </p>
+<div class="informalexample">
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>Recovering Expressions</strong></span></span></dt>
+<dd>
+	<p>
+	  The decompiler does full data-flow analysis which allows it to
+	  perform slicing on functions: complicated expressions, which have been split into
+	  distinct operations/instructions and then mixed together with
+	  other instructions by the compiling/optimizing process, are
+	  reconstituted back into a single line.
+	</p>
+      </dd>
+<dt><span class="term"><span class="bold"><strong>Recovering High-Level Scoped Variables</strong></span></span></dt>
+<dd>
+	<p>
+	  The decompiler understands how compilers
+	  use processor stacks and registers to implement variables with
+	  different scopes within a function. Data-flow analysis allows it to
+	  follow what was originally a single variable as it moves from
+	  the stack, into a register, into a different register, etc. Thus
+	  it can effectively recover the original program's concept of a
+	  variable, minimizing the need to introduce artificial variables
+	  in the output.
+	</p>
+      </dd>
+<dt><span class="term"><span class="bold"><strong>Recovering Function Parameters</strong></span></span></dt>
+<dd>
+	<p>
+	  The decompiler understands the parameter passing conventions of
+	  the compiler and can reconstruct the original form of
+	  function calls.
+	</p>
+      </dd>
+<dt><span class="term"><span class="bold"><strong>Using Data-type, Name, and Signature Annotations</strong></span></span></dt>
+<dd>
+	<p>
+	  The decompiler automatically pulls in
+	  all the different data types and variable names that the user
+	  has applied to functions, and the C output is altered to reflect
+	  this. High-level variables are appropriately named, structure
+	  fields and array indices are calculated and displayed with
+	  correct syntax, constant char pointers are replaced with
+	  appropriate quoted strings, etc.
+	</p>
+      </dd>
+<dt><span class="term"><span class="bold"><strong>Propagating Local Data-types</strong></span></span></dt>
+<dd>
+	<p>
+	  The decompiler infers the data-type of unlabeled variables
+	  by propagating information from other sources throughout a function.
+	</p>
+      </dd>
+<dt><span class="term"><span class="bold"><strong>Recovering Structure Definitions</strong></span></span></dt>
+<dd>
+	<p>
+	  The decompiler can be used to create structures that match the usage
+	  pattern of particular functions and variables, automatically discovering
+	  component offsets and data-types.
+	</p>
+      </dd>
+</dl></div>
+    </div>
+<p>
+  </p>
+</div>
+</div>
+</div></body>
+</html>

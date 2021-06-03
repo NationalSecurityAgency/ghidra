@@ -44,7 +44,7 @@ public class TestSuiteUtilities {
 	/**
 	 * Build JUnit test suite for the specified package.
 	 * TestSuite includes sub-TestSuites for each sub-package.
-	 * @param pkg java package
+	 * @param pkgName the java package name
 	 * @return test suite
 	 */
 	public static TestSuite getTestSuite(String pkgName) {
@@ -53,7 +53,7 @@ public class TestSuiteUtilities {
 	
 	/**
 	 * Build JUnit test suite for the specified package only.
-	 * @param pkg java package
+	 * @param pkgName the java package name
 	 * @return test suite
 	 */
 	public static TestSuite getPkgTestSuite(String pkgName) {
@@ -447,10 +447,10 @@ public class TestSuiteUtilities {
     /**
      * Create the Java source file a JUnit TestSuite which 
      * includes all TestCases within a package directory.
-     * @param baseDir
-     * @param className
-     * @param pkgName
-     * @param recurse
+     * @param baseDir the base package directory
+     * @param className the class name
+     * @param pkgName the java package name
+	 * @throws IOException
      */
     public static void createTestSuites(File baseDir, String className, String pkgName) throws IOException {
     	File dir = makeDir(baseDir, pkgName);
@@ -511,9 +511,9 @@ public class TestSuiteUtilities {
 	 * Command-line utilities.
 	 * <p>
 	 * Parameter usage:
-	 * <pre>
+	 * <pre>{@literal
 	 *    createAllTests <baseDirPath> <className> <topPackage>
-	 * </pre>   
+	 * }</pre>   
 	 * @param args
 	 */
 	public static void main(String[] args) {

@@ -35,11 +35,9 @@ public class StringsTable {
 	static final int CACHE_SIZE = 10000;
 
 	// @formatter:off
-	static final Schema SCHEMA = new Schema(LibrariesTable.VERSION, "String ID", new Class[] {
-			StringField.class
-		}, new String[] {
-			"String Value"
-		});
+	static final Schema SCHEMA = new Schema(LibrariesTable.VERSION, "String ID", 
+			new Field[] { StringField.INSTANCE }, 
+			new String[] { "String Value" });
 	// @formatter:on
 
 	static int[] INDEXED_COLUMNS = new int[] { STRING_VALUE_COL };
@@ -69,29 +67,30 @@ public class StringsTable {
 	 * @throws IOException if the database has a problem
 	 */
 	long obtainStringID(String value) throws IOException {
-		long[] records = table.findRecords(new StringField(value), STRING_VALUE_COL);
+		Field[] records = table.findRecords(new StringField(value), STRING_VALUE_COL);
 		if (records == null || records.length == 0) {
 			// create
-			Record record = SCHEMA.createRecord(UniversalIdGenerator.nextID().getValue());
+			long key = UniversalIdGenerator.nextID().getValue();
+			DBRecord record = SCHEMA.createRecord(key);
 			record.setString(STRING_VALUE_COL, value);
 			table.putRecord(record);
-			return record.getKey();
+			return key;
 		}
-		return records[0];
+		return records[0].getLongValue();
 	}
 
 	/**
 	 * Lookup existing ID or return null for String value.
 	 * @param value the string value
-	 * @return the existing interned string primary key, or null if nonexistent
+	 * @return the existing interned string primary key as LongField, or null if nonexistent
 	 * @throws IOException if the database has a problem
 	 */
 	Long lookupStringID(String value) throws IOException {
-		long[] records = table.findRecords(new StringField(value), STRING_VALUE_COL);
+		Field[] records = table.findRecords(new StringField(value), STRING_VALUE_COL);
 		if (records == null || records.length == 0) {
 			return null;
 		}
-		return records[0];
+		return records[0].getLongValue();
 	}
 
 	/**
@@ -102,7 +101,7 @@ public class StringsTable {
 	StringRecord lookupString(long stringID) {
 		StringRecord stringRecord = stringCache.get(stringID);
 		if (stringRecord == null) {
-			Record record;
+			DBRecord record;
 			try {
 				record = table.getRecord(stringID);
 				if (record != null) {

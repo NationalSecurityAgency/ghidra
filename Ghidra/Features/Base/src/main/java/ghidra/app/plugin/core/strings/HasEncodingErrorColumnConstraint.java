@@ -32,7 +32,7 @@ public class HasEncodingErrorColumnConstraint extends StringDataInstanceColumnCo
 	public boolean accepts(StringDataInstance value, TableFilterContext context) {
 		String s = value.getStringValue();
 		return (s != null) && s.chars().anyMatch(
-			codePoint -> StringUtilities.isUnicodeReplacementCodePoint(codePoint));
+			codePoint -> codePoint == StringUtilities.UNICODE_REPLACEMENT);
 	}
 
 	@Override

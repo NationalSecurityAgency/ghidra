@@ -16,7 +16,7 @@
 package ghidra.app.util.demangler;
 
 /**
- * A simple class to contain the various settings for demangling.
+ * A simple class to contain the various settings for demangling
  */
 public class DemanglerOptions {
 
@@ -35,65 +35,76 @@ public class DemanglerOptions {
 	}
 
 	/**
-	 * True signals to apply function signatures that are demangled.
-	 * 
-	 * @param doSignature True signals to apply function signatures that are demangled. 
+	 * Checks if the apply signature option is currently set
+	 *
+	 * @return true if set to apply function signatures that are demangled
 	 */
 	public boolean applySignature() {
 		return applySignature;
 	}
 
 	/**
-	 * True signals to apply function signatures that are demangled.
-	 * 
-	 * @param doSignature True signals to apply function signatures that are demangled. 
+	 * Set the option to apply function signatures that are demangled
+	 *
+	 * @param applySignature true to apply function signatures that are demangled
 	 */
 	public void setApplySignature(boolean applySignature) {
 		this.applySignature = applySignature;
 	}
 
 	/**
-	 * True signals to perform disassembly for known data structures (like functions) when 
-	 * demangling.
-	 * 
-	 * @param doSignature True signals to perform disassembly 
+	 * Checks if the option to perform disassembly for known data structures (like functions) when
+	 * demangling is set
+	 *
+	 * @return true if the option is set
 	 */
 	public boolean doDisassembly() {
 		return doDisassembly;
 	}
 
 	/**
-	 * True signals to perform disassembly for known data structures (like functions) when 
-	 * demangling.
-	 * 
-	 * @param doSignature True signals to perform disassembly 
+	 * Sets the option to perform disassembly for known data structures (like functions) when
+	 * demangling
+	 *
+	 * @param doDisassembly true to perform disassembly when demangling
 	 */
 	public void setDoDisassembly(boolean doDisassembly) {
 		this.doDisassembly = doDisassembly;
 	}
 
 	/**
-	 * True signals to only demangle symbol names that follow known mangled patterns.  False triggers
-	 * all symbols to be demangled, which results in some symbols getting demangled that were not
-	 * actually mangled symbols.
-	 * 
-	 * @param demangleOnlyKnownPatterns True signals to only demangle symbol names that follow 
-	 * known mangled patterns.
+	 * Checks if the option to only demangle known mangled patterns is set
+	 *
+	 * @return true if only known mangled patterns will be demangled
 	 */
 	public boolean demangleOnlyKnownPatterns() {
 		return demangleOnlyKnownPatterns;
 	}
 
 	/**
-	 * True signals to only demangle symbol names that follow known mangled patterns.  False triggers
-	 * all symbols to be demangled, which results in some symbols getting demangled that were not
-	 * actually mangled symbols.
-	 * 
-	 * @param demangleOnlyKnownPatterns True signals to only demangle symbol names that follow 
-	 * known mangled patterns.
+	 * Sets the option to only demangle known mangled patterns. Setting this to false causes
+	 * most symbols to be demangled, which may result in some symbols getting demangled that were
+	 * not actually mangled symbols.
+	 *
+	 * <P>Generally, a demangler will report an error if a symbol fails to demangle.   Hence,
+	 * clients can use this flag to prevent such errors, signalling to the demangler to only
+	 * attempt those symbols that have a known start pattern.  If the known start pattern list
+	 * becomes comprehensive, then this flag can go away.
+	 *
+	 * @param demangleOnlyKnownPatterns true to only demangle known mangled patterns
 	 */
 	public void setDemangleOnlyKnownPatterns(boolean demangleOnlyKnownPatterns) {
 		this.demangleOnlyKnownPatterns = demangleOnlyKnownPatterns;
 	}
 
+	@Override
+	public String toString() {
+		//@formatter:off
+		return "{\n" +
+			"\tdoDisassembly: " + doDisassembly + ",\n" +
+			"\tapplySignature: " + applySignature + ",\n" +
+			"\tdemangleOnlyKnownPatterns: " + demangleOnlyKnownPatterns + ",\n" +
+		"}";
+		//@formatter:on
+	}
 }

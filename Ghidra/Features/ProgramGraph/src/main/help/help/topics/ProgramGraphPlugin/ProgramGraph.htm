@@ -1,0 +1,507 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Graphing the Program</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Graphing the Program</H1>
+    
+    <H2>Graph Output</H2>
+     
+	<P>To display or export a graph, Ghidra supports multiple graph services. Ghidra has two
+	built-in graph services; one to display a graph and one to export a graph.  Before invoking
+	the graph actions described below, make sure to choose the desired graph service.  This choice
+	will direct the output of the graph function to the active graph service.  To select a graph
+	service, use the <B>Graph<IMG src="../../shared/arrow.gif">Graph Output</B></LI> menu.
+	
+	<H2>Graph types</H2>
+    <P>Program control flow Graphs can be created and then shown using an appropriate graph service.
+    A control flow graph is a representation of the flow from one portion of the code to
+    another. The nodes of the graph represent blocks of code and the edges represent flow between
+    the blocks of code.</P>
+
+    <P>There are two basic flow graph types, <A href="#Graph_Block_Flow">Block Flow</A> and <A href=
+    "#Graph_Calls_Using_Default_Model">Call Graph</A>. Different colors and shapes are used to
+    depict each node and the flow between them.</P>
+    
+    <P><A href="#Data_Reference_Graph">Data graphs</A> show reference relationships between memory 
+    locations. They can be constrained to just <B>"To References"</B>, just <B>"From References"</B>,
+    or both. By default a single hop is graphed with the option to extend from within the 
+    graph.</P>
+    
+    <P>Multiple graphs of any or all types can exist at any time.</P>
+
+    <BLOCKQUOTE>
+      <P>A <I>Call Graph</I> depicts subroutines as nodes. Calls between subroutines are shown as
+      edges. Under normal circumstances all nodes are subroutine entry points (orange triangle) and
+      all edges are calls (orange).</P>
+
+      <P>A Block Flow graph is a little more complicated. Each node is a contiguous set of
+      instructions or Code Block broken by an instruction that causes any type of flow. Move and
+      arithmetic instructions cause no change in flow so they will not break a block. Jump, Call,
+      and return instructions cause flow and will lie at the end of a Code Block. Block Flow graphs
+      are useful for looking at the control flow within a function in compiled code. For embedded
+      systems that have convoluted control flow structure, it may be beneficial to graph the entire
+      program.</P>
+    </BLOCKQUOTE>
+    
+    	<H2>Graph Scope</H2>
+	<P>When creating any of the graphs described below, the scope of the graph is determined by the
+	current location and selection present in the listing. </P>
+	<BLOCKQUOTE>
+	<H3>If there is a selection:</H3>
+		<BLOCKQUOTE><P> The graph will 
+		include all the code that is selected and exclude all the code that is not selected.</P>
+		</BLOCKQUOTE>
+	<H3>If there is no selection:</H3>
+		<BLOCKQUOTE>
+		<P> The scope is determined by the current cursor location and the type of graph:</P>
+		</BLOCKQUOTE>
+	<BLOCKQUOTE>
+		<H4>Current Location is in a Function</H4>
+				<UL>
+					<LI>Block Flow Graphs: The scope is the body of the containing functions</LI>
+					<LI>Call Graphs: The scope is the containing function and all the functions that
+					either call it or it calls</LI>
+				</UL>
+		<H4>Current Location is not in a Function</H4>
+		<UL>
+			<LI>the scope will be the entire program</LI>
+		</UL>
+	</BLOCKQUOTE>
+      <P><IMG src="../../shared/tip.png"> To graph the entire program, press "&lt;ctrl&gt; a" to
+      select all before creating the graph.</P>
+	</BLOCKQUOTE>
+
+    <H2>Synchronization</H2>
+
+	<P>Selection and Location events are synchronized between each
+    graph and the other windows in the tool.
+	<BLOCKQUOTE>
+    <H3>Selection</H3>
+
+    <P>The current selection within the graph display is represented by a red box around selected 
+    nodes as shown below on the node labeled "00408133". A node is selected if any addresses it represents are contained within the
+    selection.</P>
+
+    <P align="center"><IMG src="images/SelectGraphNode.png"></P>
+
+    <P align="left"><BR>
+     When a selection is made in the graph display, all addresses represented by each selected node become
+    the new current selection within Ghidra.</P>
+
+	<BLOCKQUOTE>
+      <P><IMG src="../../shared/note.png"> See the documentation for the specific graph display for
+      descriptions of how to to make selections and navigate the graph.</P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P><IMG src="../../shared/tip.png"> A selection in one graph can be used to create a follow
+      on graph. When a graph is created, only blocks of code that fall within the current selection
+      will be part of the graph. For example, a single subroutine could be selected in a Call
+      Graph. From that selection, a <A href="#Graph_Block_Flow">Block Flow</A> graph can be created
+      from the basic blocks found within the selected subroutine.</P>
+    </BLOCKQUOTE>
+
+    <H3>Location</H3>
+
+    <P>The node containing the current address location is marked with a large red arrow as shown
+    below on the graph node labeled "00408133".</P>
+
+    <P align="center"><IMG src="images/FocusGraphNode.png"></P>
+
+    <P align="left">Whenever the cursor location changes in the Code Browser (or tool that created
+    the graph), the red arrow location on the graph is updated. The current location is also
+    changed when a selection of nodes is made within the graph display. The minimum address of all nodes
+    within the selection will become the current location. If the address of the current location
+    is not part of any node within the graph, the red arrow will not be visible.</P>
+
+    <P align="left">When the option <B><A href="#Show_Location_in_Graph">Graph<IMG border="0"
+    src="../../shared/arrow.gif"> Show Location</A></B> is turned on, the graph will re-orient
+    itself to insure that the red location arrow is always visible.</P>
+
+    <P align="left">Clicking on a node in the graph display causes the
+    current address location within Ghidra to change to the minimum address represented by the
+    graph node.</P>
+	</BLOCKQUOTE>
+    <H2>Graph Representation</H2>
+
+    <P>By Default, the graphs use the following icons and colors to represent the nodes and edges.</P>
+
+    <CENTER>
+      <DIV align="center">
+        <CENTER>
+          <TABLE border="1" width="400" cellspacing="1">
+            <TBODY>
+              <TR>
+                <TD colspan="2" bgcolor="#c0c0c0">
+                  <P align="center"><B>Graph Edge/Link Types</B></P>
+                </TD>
+              </TR>
+
+              <TR>
+                <TD width="200" align="center" bgcolor="#DDDDDD"><B>Edge Type</B></TD>
+                <TD width="200" align="center" bgcolor="#DDDDDD"><B>Color</B></TD>
+              </TR>
+
+              <TR>
+                <TD width="200" align="center" bgcolor="#0066FF">Fall-Through Flow</TD>
+                <TD width="200" align="center" bgcolor="#0066FF">Blue</TD>
+              </TR>
+
+              <TR>
+                <TD width="200" align="center" bgcolor="#00ff00">Unconditional Jump</TD>
+                <TD width="200" align="center" bgcolor="#00ff00">Green</TD>
+              </TR>
+
+              <TR>
+                <TD width="200" align="center" bgcolor="#ffff00">Conditional Jump</TD>
+                <TD width="200" align="center" bgcolor="#ffff00">Yellow</TD>
+              </TR>
+
+              <TR>
+                <TD width="200" align="center" bgcolor="#FF9900">Unconditional Call</TD>
+                <TD width="200" align="center" bgcolor="#FF9900">Orange</TD>
+              </TR>
+
+              <TR>
+                <TD width="200" align="center" bgcolor="#FF9900">Conditional Call</TD>
+                <TD width="200" align="center" bgcolor="#FF9900">Orange</TD>
+              </TR>
+
+              <TR>
+                <TD width="200" align="center" bgcolor="#00ffff">Computed Call or Jump</TD>
+                <TD width="200" align="center" bgcolor="#00ffff">Cyan</TD>
+              </TR>
+
+              <TR>
+                <TD width="200" align="center" bgcolor="#FF66FF">Indirect (i.e., pointer)</TD>
+                <TD width="200" align="center" bgcolor="#FF66FF">Pink</TD>
+              </TR>
+
+              <TR>
+                <TD width="200" align="center">From Entry Nexus</TD>
+                <TD width="200" align="center">White</TD>
+              </TR>
+            </TBODY>
+          </TABLE>
+        </CENTER>
+      </DIV>
+    </CENTER>
+    <BR>
+    <BR>
+
+    <CENTER>
+      <DIV align="center">
+        <CENTER>
+          <TABLE border="1" width="500" cellspacing="1">
+           <TBODY>
+              <TR>
+                <TD colspan="3" bgcolor="#c0c0c0" width="440">
+                  <P align="center"><B>Graph Node/Vertex Types</B></P>
+                </TD>
+              </TR>
+           	  <TR>
+                <TD width="200" align="center" bgcolor="#DDDDDD"><B>Vertex Type</B></TD>
+                <TD width="200" align="center" bgcolor="#DDDDDD"><B>Color</B></TD>
+                <TD width="200" align="center" bgcolor="#DDDDDD"><B>Shape</B></TD>
+              </TR>
+
+              <TR>
+                <TD width="200" align="center" bgcolor="#FF9900">Entry</TD>
+                <TD width="200" align="center" bgcolor="#FF9900">Orange</TD>
+                <TD width="200" align="center" bgcolor="#FF9900">Triangle (down)</TD>
+              </TR>
+              <TR>
+                <TD width="200" align="center" bgcolor="#0000ff">Body</TD>
+                <TD width="200" align="center" bgcolor="#0000ff">Blue</TD>
+                <TD width="200" align="center" bgcolor="#0000ff">Oval</TD>
+              </TR>
+              <TR>
+                <TD width="200" align="center" bgcolor="#9900FF">Terminator</TD>
+                <TD width="200" align="center" bgcolor="#9900FF">Purple</TD>
+                <TD width="200" align="center" bgcolor="#9900FF">Triangle (up)</TD>
+              </TR>
+              <TR>
+                <TD width="200" align="center" bgcolor="#00ffff">Switch</TD>
+                <TD width="200" align="center" bgcolor="#00ffff">Cyan</TD>
+                <TD width="200" align="center" bgcolor="#00ffff">Diamond</TD>
+              </TR>
+              <TR>
+                <TD width="200" align="center" bgcolor="#ff0000">Bad</TD>
+                <TD width="200" align="center" bgcolor="#ff0000">Red</TD>
+                <TD width="200" align="center" bgcolor="#ff0000">Rectangle</TD>
+              </TR>
+              <TR>
+                <TD width="200" align="center" bgcolor="#FF66FF">Data</TD>
+                <TD width="200" align="center" bgcolor="#FF66FF">Pink</TD>
+                <TD width="200" align="center" bgcolor="#FF66FF">Cylinder</TD>
+              </TR>
+              <TR>
+                <TD width="200" align="center" bgcolor="#ffffff">Entry Nexus</TD>
+                <TD width="200" align="center" bgcolor="#ffffff">White</TD>
+                <TD width="200" align="center" bgcolor="#ffffff">Cone</TD>
+              </TR>
+
+                </TBODY>
+          </TABLE>
+        </CENTER>
+      </DIV>
+    </CENTER>
+
+	
+    <H2><A name="Reuse_Graph"></A>Reuse Graph</H2>
+
+    <P>When <I>Reuse Graph</I> is turned on, creating any new graphs will re-use the active graph
+    window. The active graph is the last graph window that was focused. This could be the
+    last graph window created, popped to the top, or interacted with to change the current
+    selection or location. Instead of a new window for each graph, all graphs will be rendered
+    using the same window. When a graph window is re-used the existing graph information is cleared
+    and replaced with the new graph information. If <A href="#Show_Location_in_Graph">Append
+    Graph</A> is also turned on, the information is also appended to the active graph window.</P>
+
+    <BLOCKQUOTE>
+      <P>To Reuse A Graph,</P>
+
+      <OL>
+        <LI>Turn on <B>Reuse Graph<BR>
+        </B> (a check mark will display next to the menu item)</LI>
+
+        <LI>Select an existing graph window to set it to the active window.<BR>
+         (this will pop the graph window to the front)</LI>
+
+        <LI>Create a graph using:<BR>
+         Select <B>Graph<IMG src="../../shared/arrow.gif"> Block Flow</B>, <B>Graph<IMG src=
+        "../../shared/arrow.gif"> Calls</B>, or any of the <B>Graph<IMG src=
+        "../../shared/arrow.gif"> Calls Using Model</B> items</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <H2><A name="Append_Graph"></A>Append Graph</H2>
+
+    <P>When <I>Append Graph</I> is turned on, creating any new graphs will append the graph
+    information to the active graph. The active graph is the last graph window that was
+    focused. This could be the last graph window created, popped to the top, or interacted with to
+    change the current selection or location.</P>
+
+    <BLOCKQUOTE>
+      <P>To append to an existing graph,</P>
+
+      <OL>
+        <LI>Turn on <B>Append Graph</B><BR>
+         (a check mark will display next to the menu item)</LI>
+
+        <LI>Select the Graph window to append to<BR>
+         (this will pop the graph window to the front).</LI>
+
+        <LI>Create a graph using:<BR>
+         Select <B>Graph<IMG src="../../shared/arrow.gif"> Block Flow</B>, <B>Graph<IMG src=
+        "../../shared/arrow.gif"> Calls</B>, or any of the <B>Graph<IMG src=
+        "../../shared/arrow.gif"> Calls Using Model</B> menu items</LI>
+      </OL>
+
+      <P><IMG src="../../shared/note.png"> The <B>Reuse Graph</B> option must be enabled for the
+      <B>Append Graph</B> option to be considered. Toggling on the <B>Append Graph</B> option will
+      automatically turn on the <A href="#Reuse_Graph">Reuse Graph</A> option. Append Graph without
+      Reuse Graph will display new graphs in a new graph window, essentially having no effect.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Show_Location_in_Graph"></A>Show Location</H2>
+
+    <P>When <I>Show Location</I> is turned <I><U>on</U></I>, the current address location will be
+    forced to visibly display within all graph windows. This may cause the graph to change
+    its view scale; resulting in disorientation when looking at a graph that has been carefully
+    arranged (clinically know as graphidisorientitis).</P>
+
+    <P>When Show Location is turned <U><I>off</I></U>, the graph view will not change as the
+    current address location changes.</P>
+	
+
+	<BR>
+	<BR>
+	<BR>
+	<BR>
+	<BR>
+	<BR>
+	<BR>
+	<BR>
+	<HR WIDTH="90%">
+	<BR>
+	<BR>
+
+    <H2><A name="Graph_Block_Flow"></A>Block Flow Graph</H2>
+
+    <P>A Block Flow Graph consists of nodes that represent Basic blocks of contiguous instructions.
+    Basic blocks are broken up by any instruction that causes a change in execution flow. All Jump,
+    Call, Branch, and Return instructions can cause the execution flow to change. Arithmetic and
+    store/load instructions do not break a Basic block because they do not change the execution
+    flow. A labeled instruction will always start a block regardless of the instruction type.</P>
+	
+    <P>For example:</P>
+
+    <P align="center"><IMG src="images/BasicBlockExampleCode.png"></P>
+
+    <P>Would generate the following graph:</P>
+
+    <P align="center"><IMG src="images/BasicBlockGraph.png">
+    </P>
+
+    <BLOCKQUOTE>
+      <P><IMG src="../../shared/note.png"> If there is a current selection, the nodes and edges
+      will be restricted to blocks of code that fall within the selection.</P>
+    </BLOCKQUOTE>
+
+    <P>To Graph Block Flow Using the default model,</P>
+
+    <OL>
+      <LI>Select <B>Graph<IMG src="../../shared/arrow.gif"> Block Flow</B></LI>
+
+      <LI>A new graph window is created</LI>
+    </OL>
+
+	<BLOCKQUOTE>
+    
+    	<H3><A NAME="Rename_Symbol"></A>Rename Symbol</H3>
+    	<BLOCKQUOTE>
+          <P>Allows the user to rename the symbol in the program represented by the given vertex.
+          </P>
+        </BLOCKQUOTE>
+    
+    </BLOCKQUOTE>
+
+
+    <H2><A name="Graph_Code_Flow"></A>Graph Code Flow</H2>
+
+    <P align="left">A Code Flow Graph is an extension of a <A href="#Graph_Block_Flow">Block Flow
+    Graph</A> in which each graph node (i.e., vertex) contains the list of instructions contained
+    within the associated block. The list of instructions are passed to the graph as the vertex
+    label.</P>
+
+    <P align="center"><BR>
+    <BR>
+     <IMG src="images/CodeBlockGraph.png"></P>
+
+    <H2><A name="Graph_Calls_Using_Default_Model"></A>Graph Calls</H2>
+
+    <P>A graph of the call instruction flow from one subroutine to another can be created with
+    <B>Graph<IMG src="../../shared/arrow.gif"> Calls</B>. The graph is created using the default
+    Call Model. Several Subroutine Models are available. Each model provides a slightly 
+    different perspective on what constitutes a subroutine.</P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P><IMG src="../../shared/note.png"> If there is a current selection, the nodes and edges
+        will be restricted to blocks of code that fall within the selection.</P>
+      </BLOCKQUOTE>
+
+      <P>To Graph Calls Using the default model,</P>
+
+      <OL>
+        <LI>Select <B>Graph<IMG src="../../shared/arrow.gif"> Calls</B></LI>
+
+        <LI>A new graph window is created</LI>
+      </OL>
+
+      <P><A name="Graph_Calls_Using_Model"></A>To Graph Calls Using a specific model*,</P>
+
+      <OL>
+        <LI>Select <B>Graph<IMG src="../../shared/arrow.gif"> Calls Using Model<IMG src=
+        "../../shared/arrow.gif"></B> &lt;<I><B>a Call Model</B></I>&gt;</LI>
+
+        <LI>
+          Select one of 
+
+          <UL>
+            <LI>Isolated Entry Model</LI>
+
+            <LI>Multiple Entry Model</LI>
+
+            <LI>Overlapped Code Model</LI>
+
+            <LI>Partitioned Code Model</LI>
+          </UL>
+        </LI>
+
+        <LI>A new graph window is created</LI>
+      </OL>
+
+      <BLOCKQUOTE>
+        <P><IMG src="../../shared/note.png"> *For a more thorough description of each Call Block
+        Model (i.e., Subroutine Model), see <A href="help/topics/BlockModel/Block_Model.htm">Block
+        Models</A>. The specific list of models presented to the user may vary depending upon the
+        set of block models configured into the tool.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+    
+    <H2><A name="Data_Reference_Graph"></A>Graph Data References</H2>
+	<P>A graph of data references can be created with <B>Graph<IMG src="../../shared/arrow.gif"> 
+	Data</B> then selecting <B>To References</B>, <B>From References</B> or <B>To/From References</B>.
+	Only the selected references will be included. By default only a single layer of references will 
+	be graphed, this can be adjusted using the <B>Edit <IMG src="../../shared/arrow.gif"> 
+	Tool Options <IMG src="../../shared/arrow.gif"> Graph <IMG src="../../shared/arrow.gif"> 
+	Max Reference Depth</B> 
+	
+	<BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P><IMG src="../../shared/note.png"> Unlike flow graphs, where only the selection is 
+        included in the graph, the selection and its references are included.</P>
+      </BLOCKQUOTE>
+
+      <P>To graph Data References,</P>
+
+      <OL>
+      	<LI>Select the data to start from in the listing
+      	<LI>Select <B>Graph<IMG src="../../shared/arrow.gif"> Data<IMG src=
+        "../../shared/arrow.gif"></B></LI>
+      <LI>
+          Select one of 
+
+          <UL>
+            <LI>To References - selected data and all references to it</LI>
+
+            <LI>From References - selected data all references from it</LI>
+
+            <LI>To/From References - selected data and all references to and from it</LI>
+          </UL>
+        </LI>
+
+        <LI>A new graph window is created with the selected data and the specified references.
+        By default this includes one layer of references but this may be adjusted in the options
+        as specified above, or dynamically using the <A href="#Add_References">Add References 
+        action</A> on the desired node</LI>
+      </OL>
+    </BLOCKQUOTE>
+    
+    <BLOCKQUOTE>
+    
+    	<H3><A NAME="Add_References"></A>Add References</H3>
+    	<BLOCKQUOTE>
+          <P>Allows the user to add references starting from 
+          the selected nodes, with To References, From References or Bidirectional as selected.
+          </P>
+        </BLOCKQUOTE>
+    
+    </BLOCKQUOTE>
+ 
+    <BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+    </ul>
+       <P class="providedbyplugin">Provided by: <I>Program Graph Plugin</I></P>
+    
+    	<P class="relatedtopic">Related Topics</P>
+    <UL>
+      <LI><A href="help/topics/GraphServices/GraphDisplay.htm">Default Graph Display</A></LI>
+      <LI><A href="help/topics/GraphServices/GraphExport.htm">Graph Export</A></LI>
+    </UL><BR>
+  </BODY>
+</HTML>

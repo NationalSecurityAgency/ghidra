@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   id="SVGRoot"
+   version="1.1"
+   viewBox="0 0 16 16"
+   height="16px"
+   width="16px">
+  <defs
+     id="defs5287" />
+  <metadata
+     id="metadata5290">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1">
+    <path
+       id="path5895"
+       d="M 3.7011719 1.0703125 A 8 8 0 0 0 2 6 A 8 8 0 0 0 10 14 A 8 8 0 0 0 14.964844 12.263672 L 13.726562 10.701172 A 6 6 0 0 1 10 12 A 6 6 0 0 1 4 6 A 6 6 0 0 1 5.2792969 2.3066406 L 3.7011719 1.0703125 z "
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       id="path5852"
+       d="M 9.0000781,1 V 2.1308594 A 4,4 0 0 0 7.1485156,3.1992188 L 6.17,2.6347656 5.17,4.3652344 6.1485156,4.9296875 A 4,4 0 0 0 6.0000781,6 4,4 0 0 0 6.1465625,7.0703125 L 5.17,7.6347656 6.17,9.365234 7.1465625,8.800781 A 4,4 0 0 0 9.0000781,9.867188 V 11 H 11.000078 V 9.869141 a 4,4 0 0 0 1.851562,-1.06836 l 0.978516,0.564453 1,-1.7304684 L 13.85164,7.0703125 A 4,4 0 0 0 14.000078,6 4,4 0 0 0 13.853594,4.9296875 l 0.976562,-0.5644531 -1,-1.7304688 -0.976562,0.5644532 A 4,4 0 0 0 11.000078,2.1328125 V 1 Z m 0.9999999,4 a 1,1 0 0 1 1,1 1,1 0 0 1 -1,1 A 1,1 0 0 1 9.0000781,6 1,1 0 0 1 10.000078,5 Z"
+       style="opacity:1;fill:#2c5aa0;fill-opacity:1;stroke:none;stroke-width:1.14285719;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       d="M 4.0000001,16 2.9999999,13 0,12 l 2.9999999,-1 1,-3 1.0000002,3 L 8,12 5.0000001,13 Z"
+       id="path838"
+       style="opacity:1;fill:#2c5aa0;fill-opacity:1;stroke:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  </g>
+</svg>

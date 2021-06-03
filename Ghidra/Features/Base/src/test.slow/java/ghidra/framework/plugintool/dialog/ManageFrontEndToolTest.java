@@ -18,7 +18,6 @@ package ghidra.framework.plugintool.dialog;
 import static org.junit.Assert.*;
 
 import java.util.List;
-import java.util.Set;
 
 import org.junit.*;
 
@@ -88,7 +87,7 @@ public class ManageFrontEndToolTest extends AbstractGhidraHeadedIntegrationTest 
 			count++;
 		}
 
-		Set<Class<? extends FrontEndable>> classes = ClassSearcher.getClasses(FrontEndable.class);
+		List<Class<? extends FrontEndable>> classes = ClassSearcher.getClasses(FrontEndable.class);
 		assertEquals(count, classes.size());
 	}
 

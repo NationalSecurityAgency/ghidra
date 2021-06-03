@@ -86,7 +86,7 @@ void SymbolTable::addGlobalSymbol(SleighSymbol *a)
   a->scopeid = scope->getId();
   SleighSymbol *res = scope->addSymbol(a);
   if (res != a)
-    throw SleighError("Duplicate symbol name: "+a->getName());
+    throw SleighError("Duplicate symbol name '" + a->getName() + "'");
 }
 
 void SymbolTable::addSymbol(SleighSymbol *a)
@@ -1596,7 +1596,7 @@ void Constructor::saveXml(ostream &s) const
   s << " parent=\"0x" << hex << parent->getId() << "\"";
   s << " first=\"" << dec << firstwhitespace << "\"";
   s << " length=\"" << minimumlength << "\"";
-  s << " line=\"" << lineno << "\">\n";
+  s << " line=\"" << src_index << ":" << lineno << "\">\n";
   for(int4 i=0;i<operands.size();++i)
     s << "<oper id=\"0x" << hex << operands[i]->getId() << "\"/>\n";
   for(int4 i=0;i<printpiece.size();++i) {
@@ -1643,9 +1643,10 @@ void Constructor::restoreXml(const Element *el,SleighBase *trans)
     s >> minimumlength;
   }
   {
-    istringstream s(el->getAttributeValue("line"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> lineno;
+   	string src_and_line = el->getAttributeValue("line");
+    size_t pos = src_and_line.find(":");
+    src_index = stoi(src_and_line.substr(0, pos),NULL,10);
+    lineno = stoi(src_and_line.substr(pos+1,src_and_line.length()),NULL,10);
   }
   const List &list(el->getChildren());
   List::const_iterator iter;
@@ -1803,7 +1804,7 @@ TokenPattern *Constructor::buildPattern(ostream &s)
 	  }
 				// We should also check that recursion is rightmost extreme
 	  recursion = true;
-	  oppattern.push_back(TokenPattern());
+	  oppattern.emplace_back();
 	}
 	else
 	  oppattern.push_back(*subsym->buildPattern(s));
@@ -2017,13 +2018,8 @@ void DecisionProperties::identicalPattern(Constructor *a,Constructor *b)
   if ((!a->isError())&&(!b->isError())) {
     a->setError(true);
     b->setError(true);
-    ostringstream s;
-    s << "Constructors with identical patterns: \n   ";
-    a->printInfo(s);
-    s << "\n   ";
-    b->printInfo(s);
-    s << endl;
-    identerrors.push_back(s.str());
+
+    identerrors.push_back(make_pair(a, b));
   }
 }
 
@@ -2033,13 +2029,8 @@ void DecisionProperties::conflictingPattern(Constructor *a,Constructor *b)
   if ((!a->isError())&&(!b->isError())) {
     a->setError(true);
     b->setError(true);
-    ostringstream s;
-    s << "Constructor patterns cannot be distinguished: \n   ";
-    a->printInfo(s);
-    s << "\n   ";
-    b->printInfo(s);
-    s << endl;
-    conflicterrors.push_back(s.str());
+
+    conflicterrors.push_back(make_pair(a, b));
   }
 }
 

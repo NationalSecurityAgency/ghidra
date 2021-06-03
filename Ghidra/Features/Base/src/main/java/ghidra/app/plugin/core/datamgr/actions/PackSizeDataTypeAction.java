@@ -27,7 +27,6 @@ import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeTreeNode;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
-import ghidra.util.exception.InvalidInputException;
 
 public class PackSizeDataTypeAction extends DockingAction {
 
@@ -73,7 +72,8 @@ public class PackSizeDataTypeAction extends DockingAction {
 			return;
 		}
 
-		NumberInputDialog numberInputDialog = new NumberInputDialog("pack alignment", 0, 0, 16);
+		NumberInputDialog numberInputDialog =
+			new NumberInputDialog("explicit pack value", 0, 0, 16);
 		if (!numberInputDialog.show()) {
 			return;
 		}
@@ -88,9 +88,8 @@ public class PackSizeDataTypeAction extends DockingAction {
 			packDataType(dataType, packSize);
 			commit = true;
 		}
-		catch (InvalidInputException iie) {
-			// TODO Auto-generated catch block
-			iie.printStackTrace();
+		catch (IllegalArgumentException iie) {
+			Msg.showError(this, null, "Invalid Pack Value", iie.getMessage());
 		}
 		finally {
 			// commit the changes
@@ -98,13 +97,13 @@ public class PackSizeDataTypeAction extends DockingAction {
 		}
 	}
 
-	private void packDataType(DataType dataType, int packSize) throws InvalidInputException {
-		if (!(dataType instanceof Structure)) {
+	private void packDataType(DataType dataType, int packSize) throws IllegalArgumentException {
+		if (!(dataType instanceof Composite)) {
 			Msg.error(this,
-				"Can't pack data type " + dataType.getName() + ". It's not a structure.");
+				"Can't pack data type " + dataType.getName() + ". It's not a composite.");
 			return;
 		}
-		((Structure) dataType).pack(packSize);
+		((Composite) dataType).pack(packSize);
 	}
 
 }

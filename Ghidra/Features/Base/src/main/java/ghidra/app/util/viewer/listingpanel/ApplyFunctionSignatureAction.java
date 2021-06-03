@@ -17,7 +17,7 @@ package ghidra.app.util.viewer.listingpanel;
 
 import docking.ActionContext;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
-import ghidra.app.plugin.core.functioncompare.AbstractApplyFunctionSignatureAction;
+import ghidra.app.plugin.core.functioncompare.actions.AbstractApplyFunctionSignatureAction;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
 
 /**

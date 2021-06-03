@@ -80,8 +80,10 @@ public class BuildVersionCommand extends LoadCommand {
 		struct.add(DWORD, "minos", null);
 		struct.add(DWORD, "sdk", null);
 		struct.add(DWORD, "ntools", null);
-		struct.add(new ArrayDataType(buildToolVersionDataType, ntools,
-			buildToolVersionDataType.getLength()), "build_tool_version[]", null);
+		if (ntools > 0) {
+			struct.add(new ArrayDataType(buildToolVersionDataType, ntools,
+				buildToolVersionDataType.getLength()), "build_tool_version[]", null);
+		}
 		struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));
 		return struct;
 	}

@@ -496,6 +496,13 @@ public class AnimationUtils {
 			}
 
 			Rectangle startBounds = component.getBounds();
+			Container parent = component.getParent();
+			if (parent == null) {
+				// the given component is a Window; make it be the root
+				startBounds.x = 0;
+				startBounds.y = 0;
+			}
+
 			Point relativeStartCenter =
 				new Point((int) startBounds.getCenterX(), (int) startBounds.getCenterY());
 			return SwingUtilities.convertPoint(component.getParent(), relativeStartCenter,
@@ -556,11 +563,20 @@ public class AnimationUtils {
 			int scaledWidth = (int) (defaultBounds.width * percentComplete);
 			int scaledHeight = (int) (defaultBounds.height * percentComplete);
 
+			// gains opacity as it gets closer to the end; capped at the given percentage
+			float opacity = (float) Math.min(.65, percentComplete);
+			Composite originalComposite = g2d.getComposite();
+			AlphaComposite alphaComposite = AlphaComposite.getInstance(
+				AlphaComposite.SrcOver.getRule(), opacity);
+			g2d.setComposite(alphaComposite);
+
 			// 
 			// Calculate the position of the image.   At 100% we want to be in the center of
 			// the display; at 0% we want to be at our default location
 			// 
 			g2d.drawImage(image, (int) currentX, (int) currentY, scaledWidth, scaledHeight, null);
+
+			g2d.setComposite(originalComposite);
 		}
 	}
 

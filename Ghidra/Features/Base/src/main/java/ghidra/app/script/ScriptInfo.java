@@ -20,6 +20,7 @@ import static ghidra.util.HTMLUtilities.*;
 import java.io.*;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
@@ -36,20 +37,19 @@ import resources.ResourceManager;
  * This class parses the meta-data about a script.
  */
 public class ScriptInfo {
-
-	private static final Pattern DOCUMENTATION_START = Pattern.compile("/\\*");
-	private static final Pattern DOCUMENTATION_END = Pattern.compile("\\*/");
-
 	/**
-	 * The delimiter used to categories and menu paths.
+	 * The delimiter used in categories and menu paths.
 	 */
 	public static final String DELIMITTER = ".";
 
-	public static final String AT_AUTHOR = "@author";
-	public static final String AT_CATEGORY = "@category";
-	public static final String AT_KEYBINDING = "@keybinding";
-	public static final String AT_MENUPATH = "@menupath";
-	public static final String AT_TOOLBAR = "@toolbar";
+	static final String AT_AUTHOR = "@author";
+	static final String AT_CATEGORY = "@category";
+	static final String AT_KEYBINDING = "@keybinding";
+	static final String AT_MENUPATH = "@menupath";
+	static final String AT_TOOLBAR = "@toolbar";
+
+	// omit from METADATA to avoid pre-populating in new scripts
+	private static final String AT_IMPORTPACKAGE = "@importpackage";
 
 	public static final String[] METADATA =
 		{ AT_AUTHOR, AT_CATEGORY, AT_KEYBINDING, AT_MENUPATH, AT_TOOLBAR, };
@@ -68,13 +68,14 @@ public class ScriptInfo {
 	private String[] menupath = new String[0];
 	private String toolbar;
 	private ImageIcon toolbarImage;
+	private String importpackage;
 
 	/**
 	 * Constructs a new script.
 	 * @param provider the script provider (for example, java or python)
 	 * @param sourceFile the script source file
 	 */
-	public ScriptInfo(GhidraScriptProvider provider, ResourceFile sourceFile) {
+	ScriptInfo(GhidraScriptProvider provider, ResourceFile sourceFile) {
 		this.provider = provider;
 		this.sourceFile = sourceFile;
 
@@ -92,6 +93,7 @@ public class ScriptInfo {
 		menupath = new String[0];
 		toolbar = null;
 		toolbarImage = null;
+		importpackage = null;
 		keybindingErrorMessage = null;
 	}
 
@@ -124,6 +126,7 @@ public class ScriptInfo {
 	 * @return the script author information.
 	 */
 	public String getAuthor() {
+		parseHeader();
 		return author;
 	}
 
@@ -181,37 +184,44 @@ public class ScriptInfo {
 
 		init();
 
-		BufferedReader reader = null;
-		try {
-			StringBuffer buffer = new StringBuffer();
+		String commentPrefix = provider.getCommentCharacter();
+
+		// Note that skipping certification header presumes that the header
+		// is intact with an appropriate start and end
+		String certifyHeaderStart = provider.getCertifyHeaderStart();
+		boolean allowCertifyHeader = (certifyHeaderStart != null);
+
+		try (BufferedReader reader =
+			new BufferedReader(new InputStreamReader(sourceFile.getInputStream()))) {
+			StringBuilder buffer = new StringBuilder();
 			boolean hitAtSign = false;
-			reader = new BufferedReader(new InputStreamReader(sourceFile.getInputStream()));
 			while (true) {
 				String line = reader.readLine();
 				if (line == null) {
 					break;
 				}
 
-				if (DOCUMENTATION_START.matcher(line).find()) {
-					while (line != null && !DOCUMENTATION_END.matcher(line).find()) {
-						line = reader.readLine();
-					}
+				if (allowCertifyHeader && skipCertifyHeader(reader, line)) {
+					allowCertifyHeader = false;
 					continue;
 				}
 
-				String commentPrefix = provider.getCommentCharacter();
+				if (parseBlockComment(reader, line)) {
+					allowCertifyHeader = false;
+					continue; // read block comment; move to next line
+				}
 
 				if (line.startsWith(commentPrefix)) {
-					line = line.substring(commentPrefix.length()).trim();
+					allowCertifyHeader = false;
 
+					line = line.substring(commentPrefix.length()).trim();
 					if (line.startsWith("@")) {
 						hitAtSign = true;
 						parseMetaDataLine(line);
 					}
 					else if (!hitAtSign) {
-						buffer.append(line);
-						buffer.append(' ');
-						buffer.append('\n');
+						// only consume line comments that come before metadata
+						buffer.append(line).append(' ').append('\n');
 					}
 				}
 				else if (line.trim().isEmpty()) {
@@ -225,19 +235,65 @@ public class ScriptInfo {
 			description = buffer.toString();
 			modified = sourceFile.lastModified();
 		}
-		catch (Exception e) {
+		catch (IOException e) {
 			Msg.debug(this, "Unexpected exception reading script: " + sourceFile, e);
 		}
-		finally {
-			if (reader != null) {
-				try {
-					reader.close();
-				}
-				catch (IOException e) {
-					// don't care; we tried
-				}
-			}
+	}
+
+	private boolean skipCertifyHeader(BufferedReader reader, String line) throws IOException {
+
+		// Note that skipping certification header presumes that the header
+		// is intact with an appropriate start and end
+		String certifyHeaderStart = provider.getCertifyHeaderStart();
+		if (certifyHeaderStart == null) {
+			return false;
 		}
+
+		if (!line.startsWith(certifyHeaderStart)) {
+			return false;
+		}
+
+		String certifyHeaderEnd = provider.getCertifyHeaderEnd();
+		String certifyHeaderBodyPrefix = provider.getCertificationBodyPrefix();
+		certifyHeaderBodyPrefix = certifyHeaderBodyPrefix == null ? "" : certifyHeaderBodyPrefix;
+
+		while ((line = reader.readLine()) != null) {
+
+			// Skip past certification header if found
+			String trimLine = line.trim();
+			if (trimLine.startsWith(certifyHeaderEnd)) {
+				return true;
+			}
+
+			if (trimLine.startsWith(certifyHeaderBodyPrefix)) {
+				continue; // skip certification header body
+			}
+
+			// broken certification header - unexpected line
+			Msg.error(this,
+				"Script contains invalid certification header: " + getName());
+		}
+		return false;
+	}
+
+	private boolean parseBlockComment(BufferedReader reader, String line) throws IOException {
+		Pattern blockStart = provider.getBlockCommentStart();
+		Pattern blockEnd = provider.getBlockCommentEnd();
+
+		if (blockStart == null || blockEnd == null) {
+			return false;
+		}
+
+		Matcher startMatcher = blockStart.matcher(line);
+		if (startMatcher.find()) {
+			int lastOffset = startMatcher.end();
+			while (line != null && !blockEnd.matcher(line).find(lastOffset)) {
+				line = reader.readLine();
+				lastOffset = 0;
+			}
+			return true;
+		}
+		return false;
 	}
 
 	private void parseMetaDataLine(String line) {
@@ -270,6 +326,9 @@ public class ScriptInfo {
 			}
 			else if (line.startsWith(AT_TOOLBAR)) {
 				toolbar = getTagValue(AT_TOOLBAR, line);
+			}
+			else if (line.startsWith(AT_IMPORTPACKAGE)) {
+				importpackage = getTagValue(AT_IMPORTPACKAGE, line);
 			}
 		}
 		catch (Exception e) {
@@ -370,7 +429,7 @@ public class ScriptInfo {
 
 	/**
 	 * Returns the script menu path as a string.
-	 * For example, "Path1->Path2->Path3".
+	 * For example,{@literal "Path1->Path2->Path3"}.
 	 * @return the script menu path as a string
 	 */
 	public String getMenuPathAsString() {
@@ -394,6 +453,9 @@ public class ScriptInfo {
 		return keyBinding;
 	}
 
+	/**
+	 * @return an error resulting from parsing keybinding metadata 
+	 */
 	public String getKeyBindingErrorMessage() {
 		return keybindingErrorMessage;
 	}
@@ -404,7 +466,6 @@ public class ScriptInfo {
 	 * @return the script tool bar icon
 	 */
 	public ImageIcon getToolBarImage(boolean scaled) {
-
 		parseHeader();
 		if (toolbar == null) {
 			return null;
@@ -429,10 +490,20 @@ public class ScriptInfo {
 	}
 
 	/**
+	 * Returns the script imports
+	 * @return the script imports
+	 */
+	public String getImportPackage() {
+		parseHeader();
+		return importpackage;
+	}
+
+	/**
 	 * Returns a string designed to be used as a tool tip for describing this script
 	 * @return a string designed to be used as a tool tip
 	 */
 	public String getToolTipText() {
+		parseHeader();
 		String htmlDescription = "No Description";
 		if (description != null) {
 			htmlDescription = escapeHTML(description);
@@ -442,7 +513,6 @@ public class ScriptInfo {
 		String space = HTML_SPACE;
 		String htmlAuthor = bold("Author:") + space + escapeHTML(toString(author));
 		String htmlCategory = bold("Category:") + space + escapeHTML(toString(category));
-
 		String htmlKeyBinding = bold("Key Binding:") + space + getKeybindingToolTip();
 		String htmlMenuPath = bold("Menu Path:") + space + escapeHTML(toString(menupath));
 
@@ -487,13 +557,19 @@ public class ScriptInfo {
 		return StringUtils.defaultString(joined);
 	}
 
+	/**
+	 * @return true if the script either has compiler errors, or is a duplicate
+	 */
 	public boolean hasErrors() {
 		return isCompileErrors() || isDuplicate();
 	}
 
+	/**
+	 * @return a generic error message
+	 */
 	public String getErrorMessage() {
 		if (isCompileErrors()) {
-			return "Script contains compiler errors";
+			return "Error compiling script (see console)";
 		}
 
 		if (isDuplicate()) {

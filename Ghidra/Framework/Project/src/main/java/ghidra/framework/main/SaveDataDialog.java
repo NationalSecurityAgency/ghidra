@@ -25,7 +25,6 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
 import docking.DialogComponentProvider;
-import docking.DockingWindowManager;
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.list.ListPanel;
@@ -120,7 +119,7 @@ public class SaveDataDialog extends DialogComponentProvider {
 		initList();
 
 		if (!files.isEmpty()) {
-			tool.showDialog(this, DockingWindowManager.getActiveInstance().getActiveComponent());
+			tool.showDialog(this);
 		}
 		else {
 			operationCompleted = true;
@@ -238,8 +237,8 @@ public class SaveDataDialog extends DialogComponentProvider {
 	 */
 	private void deselectAll() {
 		clearStatusText();
-		for (int i = 0; i < checkboxes.length; i++) {
-			checkboxes[i].setSelected(false);
+		for (GCheckBox checkboxe : checkboxes) {
+			checkboxe.setSelected(false);
 		}
 		listPanel.repaint();
 	}
@@ -359,13 +358,13 @@ public class SaveDataDialog extends DialogComponentProvider {
 		@Override
 		public void run(TaskMonitor monitor) {
 			try {
-				for (int i = 0; i < domainFiles.length; i++) {
+				for (DomainFile domainFile : domainFiles) {
 					if (monitor.isCancelled()) {
 						break;
 					}
 					monitor.setProgress(0);
-					monitor.setMessage("Saving " + domainFiles[i].getName());
-					domainFiles[i].save(monitor);
+					monitor.setMessage("Saving " + domainFile.getName());
+					domainFile.save(monitor);
 				}
 				operationCompleted = !monitor.isCancelled();
 

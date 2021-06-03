@@ -19,7 +19,6 @@ import java.util.*;
 
 import org.apache.commons.collections4.IteratorUtils;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 
 import ghidra.app.plugin.assembler.sleigh.SleighAssemblerBuilder;
@@ -109,7 +108,7 @@ public class AssemblyTreeResolver {
 
 			if (rc.hasBackfills()) {
 				ret.add(AssemblyResolution.error("Solution is incomplete", "failed backfill",
-					ImmutableList.of(rc)));
+					List.of(rc)));
 				continue;
 			}
 			AssemblyResolvedConstructor ctx =
@@ -117,7 +116,7 @@ public class AssemblyTreeResolver {
 			AssemblyResolvedConstructor check = rc.combine(ctx);
 			if (null == check) {
 				ret.add(AssemblyResolution.error("Incompatible context", "resolving",
-					ImmutableList.of(rc)));
+					List.of(rc)));
 				continue;
 			}
 			rc = check;
@@ -178,12 +177,11 @@ public class AssemblyTreeResolver {
 		intoNext.add(child);
 		while (!path.isEmpty()) {
 			AssemblyConstructorSemantic sem = path.pollLast();
-			ImmutableList<AssemblyParseTreeNode> substs =
-				ImmutableList.of((AssemblyParseTreeNode) branch);
+			List<AssemblyParseTreeNode> substs = List.of((AssemblyParseTreeNode) branch);
 			// 1
 			for (final AssemblyResolvedConstructor res : intoNext) {
-				ImmutableList<AssemblyResolvedConstructor> sel = ImmutableList.of(res);
-				collected.absorb(resolveSelectedChildren(rec, substs, sel, ImmutableList.of(sem)));
+				List<AssemblyResolvedConstructor> sel = List.of(res);
+				collected.absorb(resolveSelectedChildren(rec, substs, sel, List.of(sem)));
 			}
 			intoNext.clear();
 			// 2
@@ -249,7 +247,7 @@ public class AssemblyTreeResolver {
 	 * @return the results
 	 */
 	protected AssemblyResolutionResults resolveSelectedChildren(AssemblyProduction prod,
-			List<AssemblyParseTreeNode> substs, ImmutableList<AssemblyResolvedConstructor> sel,
+			List<AssemblyParseTreeNode> substs, List<AssemblyResolvedConstructor> sel,
 			Collection<AssemblyConstructorSemantic> semantics) {
 
 		try (DbgCtx dc = dbg.start("Selecting: " + IteratorUtils.toString(sel.iterator(),
@@ -503,12 +501,12 @@ public class AssemblyTreeResolver {
 			// This is also where the shifting will happen.
 			Collection<AssemblyConstructorSemantic> semantics = grammar.getSemantics(prod);
 			for (List<AssemblyResolvedConstructor> sel : Sets.cartesianProduct(childRes)) {
-				results.absorb(
-					resolveSelectedChildren(prod, substs, ImmutableList.copyOf(sel), semantics));
+				results.absorb(resolveSelectedChildren(prod, substs,
+					Collections.unmodifiableList(sel), semantics));
 			}
 			if (!childErr.isEmpty()) {
 				results.add(AssemblyResolution.error("Child errors", "Resolving " + prod,
-					ImmutableList.copyOf(childErr)));
+					Collections.unmodifiableList(childErr)));
 			}
 			return results;
 		}

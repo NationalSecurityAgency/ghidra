@@ -31,6 +31,7 @@ import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
@@ -52,12 +53,12 @@ public class DataTypeTestUtils {
 	}
 
 	// copies the default test archive into a local version
-	static File createArchive(String filename) throws Exception {
+	public static File createArchive(String filename) throws Exception {
 		return createLocalArchiveFromExistingArchive(filename, "TestArchive.gdt");
 	}
 
 	// copies the archive from the given filename to a local version
-	static File copyArchive(String filename) throws Exception {
+	public static File copyArchive(String filename) throws Exception {
 		return createLocalArchiveFromExistingArchive(filename, filename);
 	}
 
@@ -92,8 +93,8 @@ public class DataTypeTestUtils {
 		return scratchFile;
 	}
 
-	static ArchiveNode openArchive(String archiveDirPath, String archiveName, boolean checkout,
-			DataTypeManagerPlugin plugin) throws Exception {
+	public static ArchiveNode openArchive(String archiveDirPath, String archiveName,
+			boolean checkout, DataTypeManagerPlugin plugin) throws Exception {
 
 		File file = new File(archiveDirPath, archiveName);
 		DataTypeManagerHandler dataTypeManagerHandler = plugin.getDataTypeManagerHandler();
@@ -103,11 +104,11 @@ public class DataTypeTestUtils {
 		waitForTree(plugin);
 
 		GTree tree = plugin.getProvider().getGTree();
-		GTreeNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getModelRoot();
 		return (ArchiveNode) rootNode.getChild(trimFullArchiveName(archiveName));
 	}
 
-	static ArchiveNode openArchive(String archiveName, boolean checkout,
+	public static ArchiveNode openArchive(String archiveName, boolean checkout,
 			DataTypeManagerPlugin plugin) throws Exception {
 		ArchiveNode openArchive = openArchive(archiveName, checkout, false, plugin);
 		waitForTree(plugin);
@@ -127,8 +128,8 @@ public class DataTypeTestUtils {
 		AbstractGenericTest.waitForPostedSwingRunnables();
 	}
 
-	static ArchiveNode openArchive(String archiveName, boolean checkout, boolean isUserAction,
-			DataTypeManagerPlugin plugin) throws Exception {
+	public static ArchiveNode openArchive(String archiveName, boolean checkout,
+			boolean isUserAction, DataTypeManagerPlugin plugin) throws Exception {
 
 		File tempDir = getTempDir();
 		File file = new File(tempDir, archiveName);
@@ -138,28 +139,26 @@ public class DataTypeTestUtils {
 		dataTypeManagerHandler.openArchive(file, checkout, isUserAction);
 
 		archiveTree = plugin.getProvider().getGTree();
-		GTreeNode rootNode = archiveTree.getRootNode();
+		GTreeNode rootNode = archiveTree.getViewRoot();
 		waitForTree(plugin);
 		return (ArchiveNode) rootNode.getChild(trimFullArchiveName(archiveName));
 	}
 
-	static void closeArchive(final ArchiveNode archiveNode, final boolean deleteFile)
+	public static void closeArchive(final ArchiveNode archiveNode, final boolean deleteFile)
 			throws Exception {
 
-		final Exception[] container = new Exception[1];
-
-		SwingUtilities.invokeAndWait(() -> {
+		Exception exception = Swing.runNow(() -> {
 			try {
 				doCloseArchive(archiveNode, deleteFile);
+				return null;
 			}
 			catch (Exception e) {
-				container[0] = e;
+				return e;
 			}
 		});
 
-		if (container[0] != null) {
-			throw new RuntimeException("Exception closing archive on Swing thread!: ",
-				container[0]);
+		if (exception != null) {
+			throw new RuntimeException("Exception closing archive on Swing thread!: ", exception);
 		}
 	}
 
@@ -191,12 +190,12 @@ public class DataTypeTestUtils {
 	 * @return The archive node associated with the open archive
 	 * @throws Exception If there is any problem finding or opening the archive for the given name
 	 */
-	static ArchiveNode checkOutArchive(String archiveName, final DataTypeManagerPlugin plugin)
-			throws Exception {
+	public static ArchiveNode checkOutArchive(String archiveName,
+			final DataTypeManagerPlugin plugin) throws Exception {
 
 		String archiveNodeName = trimFullArchiveName(archiveName);
 		GTree tree = plugin.getProvider().getGTree();
-		GTreeNode rootNode = tree.getRootNode();
+		GTreeNode rootNode = tree.getModelRoot();
 		ArchiveNode archiveNode = (ArchiveNode) rootNode.getChild(archiveNodeName);
 		if (archiveNode == null) {
 			throw new IllegalArgumentException(
@@ -222,14 +221,14 @@ public class DataTypeTestUtils {
 		return archiveName;
 	}
 
-	static ArchiveNode createOpenAndCheckoutArchive(String archiveName,
+	public static ArchiveNode createOpenAndCheckoutArchive(String archiveName,
 			DataTypeManagerPlugin plugin) throws Exception {
 		createArchive(archiveName);
 		return openArchive(archiveName, true, plugin);
 	}
 
-	static ArchiveNode copyOpenAndCheckoutArchive(String archiveName, DataTypeManagerPlugin plugin)
-			throws Exception {
+	public static ArchiveNode copyOpenAndCheckoutArchive(String archiveName,
+			DataTypeManagerPlugin plugin) throws Exception {
 		copyArchive(archiveName);
 		return openArchive(archiveName, true, plugin);
 	}
@@ -238,7 +237,8 @@ public class DataTypeTestUtils {
 		performAction(action, program, tree, true);
 	}
 
-	static void performAction(DockingActionIf action, Program program, GTree tree, boolean wait) {
+	public static void performAction(DockingActionIf action, Program program, GTree tree,
+			boolean wait) {
 		AbstractGenericTest.runSwing(() -> {
 			ActionContext context =
 				new DataTypesActionContext(null, program, (DataTypeArchiveGTree) tree, null, true);
@@ -266,7 +266,7 @@ public class DataTypeTestUtils {
 		}
 	}
 
-	static void createCategory(Category parent, String categoryName) throws Exception {
+	public static void createCategory(Category parent, String categoryName) throws Exception {
 		DataTypeManager dtm = parent.getDataTypeManager();
 		int id = dtm.startTransaction("create category");
 		try {

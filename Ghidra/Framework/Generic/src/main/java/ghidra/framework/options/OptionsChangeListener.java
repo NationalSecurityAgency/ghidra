@@ -24,19 +24,18 @@ import ghidra.util.bean.opteditor.OptionsVetoException;
  */
 public interface OptionsChangeListener {
 
-    /**
-     * Notification that an option changed.
-     * <p>
-     * Note: to reject an options change, you can throw a 
-     * {@link OptionsVetoException}.
-     * 
-     * @param options options object containing the property that changed
-     * @param optionName name of option that changed
-     * @param oldValue old value of the option
-     * @param newValue new value of the option
-     */
-    public void optionsChanged( ToolOptions options,
-                                String optionName,
-                                Object oldValue,
-                                Object newValue);
+	/**
+	 * Notification that an option changed.
+	 * <p>
+	 * Note: to reject an options change, you can throw a 
+	 * {@link OptionsVetoException}.
+	 * 
+	 * @param options options object containing the property that changed
+	 * @param optionName name of option that changed
+	 * @param oldValue old value of the option
+	 * @param newValue new value of the option
+	 * @throws OptionsVetoException if a change is rejected
+	 */
+	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
+			Object newValue) throws OptionsVetoException;
 }

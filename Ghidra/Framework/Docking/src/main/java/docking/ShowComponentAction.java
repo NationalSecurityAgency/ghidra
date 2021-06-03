@@ -96,6 +96,11 @@ class ShowComponentAction extends DockingAction
 	 * @param provider the provider
 	 */
 	private void synchronizeKeyBinding(ComponentProvider provider) {
+
+		if (!getKeyBindingType().supportsKeyBindings()) {
+			return;
+		}
+
 		DockingActionIf action = provider.getShowProviderAction();
 		KeyBindingData defaultBinding = action.getDefaultKeyBindingData();
 		setKeyBindingData(defaultBinding);

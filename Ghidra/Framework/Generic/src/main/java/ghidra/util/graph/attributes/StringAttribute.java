@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +15,17 @@
  */
 package ghidra.util.graph.attributes;
 
-import ghidra.util.datastruct.LongObjectHashtable;
-import ghidra.util.exception.NoValueException;
+import java.util.*;
+
 import ghidra.util.graph.KeyIndexableSet;
 import ghidra.util.graph.KeyedObject;
-
-import java.util.Arrays;
-import java.util.Comparator;
 
 /** This class provides a storage mechanism for String-valued information about
 *  the elements of a KeyIndexableSet, e.g. the vertices of a DirectedGraph.
 */
 public class StringAttribute<T extends KeyedObject> extends Attribute<T> {
 	//private String[] values;
-	private ghidra.util.datastruct.LongObjectHashtable values;
+	private Map<Long, String> values;
 	private static String attributeType = AttributeManager.STRING_TYPE;
 
 	/** Constructor.
@@ -39,7 +35,7 @@ public class StringAttribute<T extends KeyedObject> extends Attribute<T> {
 	 */
 	public StringAttribute(String name, KeyIndexableSet<T> set) {
 		super(name, set);
-		this.values = new LongObjectHashtable(set.capacity());// String[set.capacity()];
+		this.values = new HashMap<>();
 	}
 
 	/** Set the value of this attribute for the specified KeyedObject.
@@ -50,8 +46,9 @@ public class StringAttribute<T extends KeyedObject> extends Attribute<T> {
 	 * not a member of the owningSet.
 	 */
 	public boolean setValue(T o, String value) {
-		if (value == null)
+		if (value == null) {
 			return false;
+		}
 		if (owningSet().contains(o)) {
 			//values[ owningSet().index( o ) ] = value;
 			values.put(o.key(), value);
@@ -61,14 +58,13 @@ public class StringAttribute<T extends KeyedObject> extends Attribute<T> {
 		return false;
 	}
 
-	/** Return the value associated to the specied KeyedObject.
-	 * @throws NoValueException if the value has not been set or 
-	 * the KeyedObject does not belong to the owningSet.
+	/**
+	 * Return the value associated to the specied KeyedObject.
 	 */
 	public String getValue(KeyedObject o) //throws NoValueException
 	{
 		//return values[ owningSet().index( o ) ];
-		return (String) values.get(o.key());
+		return values.get(o.key());
 	}
 
 //	/** Debug printing. */
@@ -131,8 +127,9 @@ public class StringAttribute<T extends KeyedObject> extends Attribute<T> {
 					else if ((ko1.key() - ko2.key()) > 0) {
 						return +1;
 					}
-					else
+					else {
 						return 0;
+					}
 				}
 				//ko1 is ok, ko2 fails.
 				return -1;
@@ -146,8 +143,9 @@ public class StringAttribute<T extends KeyedObject> extends Attribute<T> {
 			else if ((ko1.key() - ko2.key()) > 0) {
 				return +1;
 			}
-			else
+			else {
 				return 0;
+			}
 		}
 	}
 
@@ -162,7 +160,7 @@ public class StringAttribute<T extends KeyedObject> extends Attribute<T> {
 	/** Removes all assigned values of this attribute. */
 	@Override
 	public void clear() {
-		values.removeAll();
+		values.clear();
 	}
 
 	/** Return the attribute of the specified KeyedObject as a String.

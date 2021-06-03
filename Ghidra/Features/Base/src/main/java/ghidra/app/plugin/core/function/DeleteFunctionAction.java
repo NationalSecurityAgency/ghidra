@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.function;
 
 import java.awt.event.KeyEvent;
 
-import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.app.cmd.function.DeleteFunctionCmd;
@@ -69,11 +68,6 @@ class DeleteFunctionAction extends ListingContextAction {
 			return location.getAddress().equals(((FunctionLocation) location).getFunctionAddress());
 		}
 		return false;
-	}
-
-	@Override
-	public boolean isValidGlobalContext(ActionContext globalContext) {
-		return false;  // only work on active provider context.
 	}
 
 }

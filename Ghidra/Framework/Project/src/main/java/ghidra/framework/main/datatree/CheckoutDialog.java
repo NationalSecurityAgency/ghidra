@@ -37,7 +37,7 @@ public class CheckoutDialog extends DialogComponentProvider {
 	private int actionID = CANCELED;
 
 	public CheckoutDialog() {
-		super("Check-out Versioned File(s)");
+		super("Checkout Versioned File(s)");
 		setHelpLocation(new HelpLocation(GenericHelpTopics.REPOSITORY, "CheckoutDialog"));
 		addWorkPanel(buildMainPanel());
 
@@ -83,13 +83,13 @@ public class CheckoutDialog extends DialogComponentProvider {
 			new GIconLabel(OptionDialog.getIconForMessageType(OptionDialog.QUESTION_MESSAGE)),
 			BorderLayout.WEST);
 
-		MultiLineLabel msgText = new MultiLineLabel("Check out selected file(s)?");
+		MultiLineLabel msgText = new MultiLineLabel("Checkout selected file(s)?");
 		msgText.setMaximumSize(msgText.getPreferredSize());
 		msgPanel.add(msgText, BorderLayout.CENTER);
 
 		innerPanel.add(msgPanel, BorderLayout.CENTER);
 
-		exclusiveCB = new GCheckBox("Request exclusive check out");
+		exclusiveCB = new GCheckBox("Request exclusive checkout");
 
 		JPanel cbPanel = new JPanel(new BorderLayout());
 		cbPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));

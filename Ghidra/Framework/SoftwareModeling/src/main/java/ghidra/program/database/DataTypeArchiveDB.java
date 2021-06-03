@@ -45,14 +45,17 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	 * database schema associated with any of the managers.
 	 * 18-Sep-2008 - version 1 - added fields for synchronizing program data types with project archives.
 	 * 03-Dec-2009 - version 2 - Added source archive updating (consolidating windows.gdt, clib.gdt, ntddk.gdt)
+	 * 14-Nov-2019 - version 3 - Corrected fixed length indexing implementation causing
+	 *                            change in index table low-level storage for newly
+	 *                            created tables. 
 	 */
-	static final int DB_VERSION = 2;
+	static final int DB_VERSION = 3;
 
 	/**
 	 * UPGRADE_REQUIRED_BEFORE_VERSION should be changed to DB_VERSION any time the
 	 * latest version requires a forced upgrade (i.e., Read-only mode not supported
 	 * until upgrade is performed).  It is assumed that read-only mode is supported 
-	 * if the data's version is >= UPGRADE_REQUIRED_BEFORE_VERSION and <= DB_VERSION. 
+	 * if the data's version is &gt;= UPGRADE_REQUIRED_BEFORE_VERSION and &lt;= DB_VERSION. 
 	 */
 	private static final int UPGRADE_REQUIRED_BEFORE_VERSION = 1;
 
@@ -76,10 +79,10 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 
 	private static final String DEFAULT_POINTER_SIZE = "Default Pointer Size";
 
-	private final static Class<?>[] COL_CLASS = new Class[] { StringField.class };
+	private final static Field[] COL_FIELDS = new Field[] { StringField.INSTANCE };
 	private final static String[] COL_TYPES = new String[] { "Value" };
 	private final static Schema SCHEMA =
-		new Schema(0, StringField.class, "Key", COL_CLASS, COL_TYPES);
+		new Schema(0, StringField.INSTANCE, "Key", COL_FIELDS, COL_TYPES);
 
 	private ProjectDataTypeManager dataTypeManager;
 
@@ -195,9 +198,14 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectAdapter#setDomainFile(ghidra.framework.model.DomainFile)
-	 */
+	@Override
+	protected void close() {
+		super.close();
+		if (dataTypeManager != null) {
+			dataTypeManager.dispose();
+		}
+	}
+
 	@Override
 	protected void setDomainFile(DomainFile df) {
 		super.setDomainFile(df);
@@ -223,9 +231,6 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 		changed = origChangeState;
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectAdapterDB#propertyChanged(java.lang.String, java.lang.Object, java.lang.Object)
-	 */
 	@Override
 	protected boolean propertyChanged(String propertyName, Object oldValue, Object newValue) {
 		if (propertyName.endsWith(DEFAULT_POINTER_SIZE) && (newValue instanceof Integer)) {
@@ -258,7 +263,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	}
 
 	/**
-	 * @see ghidra.program.model.listing.Program#getDefaultStoredPointerSize()
+	 * @see ghidra.program.model.listing.Program#getDefaultPointerSize()
 	 */
 	@Override
 	public int getDefaultPointerSize() {
@@ -280,11 +285,15 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	 * notification the a data type has changed
 	 * @param dataTypeID the id of the data type that changed.
 	 * @param type the type of the change (moved, renamed, etc.)
+	 * @param isAutoResponseChange true if change is an auto-response change caused by 
+	 * another datatype's change (e.g., size, alignment), else false in which case this
+	 * change will be added to archive change-set to aid merge conflict detection.
 	 * @param oldValue the old data type.
 	 * @param newValue the new data type.
 	 */
-	public void dataTypeChanged(long dataTypeID, int type, Object oldValue, Object newValue) {
-		if (recordChanges) {
+	public void dataTypeChanged(long dataTypeID, int type, boolean isAutoResponseChange,
+			Object oldValue, Object newValue) {
+		if (recordChanges && !isAutoResponseChange) {
 			((DataTypeArchiveDBChangeSet) changeSet).dataTypeChanged(dataTypeID);
 		}
 		changed = true;
@@ -369,16 +378,10 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 		fireEvent(new DataTypeArchiveChangeRecord(type, affectedObj, oldValue, newValue));
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#setName(java.lang.String)
-	 */
 	@Override
 	public void setName(String newName) {
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#getDescription()
-	 */
 	@Override
 	public String getDescription() {
 		return "Data Type Archive";
@@ -387,7 +390,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	private void createDatabase() throws IOException {
 		table = dbh.createTable(TABLE_NAME, SCHEMA);
 
-		Record record = SCHEMA.createRecord(new StringField(ARCHIVE_DB_VERSION));
+		DBRecord record = SCHEMA.createRecord(new StringField(ARCHIVE_DB_VERSION));
 		record.setString(0, Integer.toString(DB_VERSION));
 		table.putRecord(record);
 	}
@@ -433,13 +436,13 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 
 	private void upgradeDatabase() throws IOException {
 		table = dbh.getTable(TABLE_NAME);
-		Record record = SCHEMA.createRecord(new StringField(ARCHIVE_DB_VERSION));
+		DBRecord record = SCHEMA.createRecord(new StringField(ARCHIVE_DB_VERSION));
 		record.setString(0, Integer.toString(DB_VERSION));
 		table.putRecord(record);
 	}
 
 	private int getStoredVersion() throws IOException {
-		Record record = table.getRecord(new StringField(ARCHIVE_DB_VERSION));
+		DBRecord record = table.getRecord(new StringField(ARCHIVE_DB_VERSION));
 
 		// DB Version
 		// if record does not exist return 1;
@@ -506,9 +509,6 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 		dataTypeManager.archiveReady(openMode, monitor);
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectAdapterDB#clearCache()
-	 */
 	@Override
 	protected void clearCache(boolean all) {
 		lock.acquire();
@@ -530,9 +530,6 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 		fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#isChangeable()
-	 */
 	@Override
 	public boolean isChangeable() {
 		return changeable;
@@ -558,18 +555,18 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 		Options propList = getOptions(Program.PROGRAM_INFO);
 		List<String> propNames = propList.getOptionNames();
 		Collections.sort(propNames);
-		for (String name : propNames) {
-			metadata.put(name, propList.getValueAsString(name));
+		for (String propName : propNames) {
+			if (propName.indexOf(Options.DELIMITER) >= 0) {
+				continue; // ignore second tier options
+			}
+			String valueAsString = propList.getValueAsString(propName);
+			if (valueAsString != null) {
+				metadata.put(propName, propList.getValueAsString(propName));
+			}
 		}
 		return metadata;
 	}
 
-//	private static String getString(Object obj) {
-//		if (obj != null) {
-//			return obj.toString();
-//		}
-//		return null;
-//	}
 	@Override
 	protected void updateMetadata() throws IOException {
 		getMetadata(); // updates metadata map

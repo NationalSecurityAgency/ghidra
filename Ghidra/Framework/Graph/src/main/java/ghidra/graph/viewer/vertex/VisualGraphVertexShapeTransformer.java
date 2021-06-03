@@ -53,7 +53,7 @@ public class VisualGraphVertexShapeTransformer<V extends VisualVertex>
 	 * Returns the full (the actual) shape of a vertex.  This can be used to determine if a 
 	 * mouse point intersects a vertex or to get the real bounding-box of a vertex.
 	 * 
-	 * @param the vertex
+	 * @param v the vertex
 	 * @return the shape
 	 */
 	public Shape transformToFullShape(V v) {

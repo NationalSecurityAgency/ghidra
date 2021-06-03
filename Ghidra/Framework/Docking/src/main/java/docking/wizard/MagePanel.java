@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +24,6 @@ public interface MagePanel<T> extends WizardPanel {
 	 * whether you must, can, or should not be displayed.
 	 * @param state the state object
 	 * @return displayability
-	 * @throws IllegalPanelStateException indicates that something bad has happened and we should
-	 * return to the very first panel - unless we are the first panel in which case we
-	 * should abort the wizard.
 	 */
 	public WizardPanelDisplayability getPanelDisplayabilityAndUpdateState(WizardState<T> state);
 

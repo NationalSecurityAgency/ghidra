@@ -17,7 +17,7 @@
 
     <P>Some of the formats the <I>Exporter</I> supports are:</P>
     <A name="Exporter_Formats">
-     
+
 
     <UL>
       <LI><A href="#ascii">ASCII</A></LI>
@@ -147,7 +147,7 @@
                     <TD><I><B>Comment Prefix</B></I><BR>
                     </TD>
 
-                    <TD valign="top">the string to append on the begining of comments<BR>
+                    <TD valign="top">the string to prepend to the beginning of comments<BR>
                     </TD>
                   </TR>
                 </TBODY>
@@ -252,9 +252,11 @@
         <H3><A name="c_cpp"/><A name="Options_C_C__""/>C/C++</H3>
 
         <BLOCKQUOTE>
-          <P>Create a C/C++ file containing all datatypes from the program's <A href=
-          "help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">data type
-          manager</A> and all of the functions in the program.&nbsp;</P>
+          <P>Create a C/C++ file containing functions decompiled from the program and, optionally,
+          containing definitions of all datatypes from the program's
+          <A href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">
+          data type manager</A>. The datatype definitions and a prototype declaration for each function
+          can be placed in a separate header file.&nbsp;</P>
 
           <H4>C/C++ Options</H4>
 
@@ -266,7 +268,35 @@
             <LI><B>Create C File (.c)</B> - Select to create a .c file.</LI>
 
             <LI><B>Use C++ Style Comments (//)</B> - Select to use // or /* style comments.</LI>
+            
+            <LI><B>Emit Data-type Definitions</B> - Select to export a C/C++ definition for each data-type.</LI>
+            
+            <LI><B>Function Tags to Filter</B> - Optional list of function tags to filter which 
+            functions are exported. Multiple tags must be comma separated.   Any tags listed will
+            be considered a match for purposes of filtering.  The result of filtering, to include
+            or exclude, depends on the <B>Function Tags Excluded/Included</B> setting.
+            <U>If this list is empty, than all functions will be exported</U>.
+            </LI>
+            
+            <LI><B>Function Tags Excluded/Included</B> - Select to exclude from export all 
+            functions with a tag that matches any in the <B>Function Tags to Filter</B> list.   
+            Deselect to include in export only functions with a tag that matches any in the list.
+            </LI>
           </UL>
+        </BLOCKQUOTE>
+        
+        <H3><A name="elf"></A>ELF</H3>
+
+        <BLOCKQUOTE>
+          <P>Writes an ELF program that was imported with the ELF loader back to its original file 
+          layout. Any file-backed bytes that were modified by the user in the program database will 
+          be reflected in the new file.</P>
+
+          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Writing back a modified Memory 
+          Map is not supported. </I></P>
+          
+          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Relocation bytes are always
+          restored to their original values, even if the user modifies them.</I></P>
         </BLOCKQUOTE>
 
         <H3><A name="gzf"></A>Ghidra Zip File (.gzf)</H3>
@@ -304,15 +334,29 @@
 
           <UL>
             <LI><B>Address Space</B> - Specifies which address space to export as Intel Hex format
-            only supports one address space. This option will be intialized to the "default"
+            only supports one address space. This option will be initialized to the "default"
             address space.</LI>
-            <LI><B>Record Size</B> - Specifies the size (in bytes) of each record in the 
+            <LI><B>Record Size</B> - Specifies the size (in bytes) of each record in the
             output file. The default 16.</LI>
             <LI><B>Align To Record Size</B> - If checked, this will ensure that <b>only</b> records matching
-            the record size will be output. eg: if you set the record size to 16 but there are 
-            18 bytes selected, you will see only one line of 16 bytes in the output; the remaining 
+            the record size will be output. eg: if you set the record size to 16 but there are
+            18 bytes selected, you will see only one line of 16 bytes in the output; the remaining
             2 bytes will be dropped.</LI>
           </UL>
+        </BLOCKQUOTE>
+        
+        <H3><A name="pe"></A>PE</H3>
+
+        <BLOCKQUOTE>
+          <P>Writes a PE program that was imported with the PE loader back to its original file 
+          layout. Any file-backed bytes that were modified by the user in the program database will 
+          be reflected in the new file.</P>
+
+          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Writing back a modified Memory 
+          Map is not supported. </I></P>
+          
+          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Relocation bytes are always
+          restored to their original values, even if the user modifies them.</I></P>
         </BLOCKQUOTE>
 
         <H3><A name="xml"/><A name="Options_XML"/>XML</H3>

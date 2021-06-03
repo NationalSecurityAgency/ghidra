@@ -46,23 +46,22 @@ public class HighParamID extends PcodeSyntaxTree {
 	private Address functionaddress;
 	private String modelname; // Name of prototype model
 	private Integer protoextrapop;
-	private List<ParamMeasure> inputlist = new ArrayList<ParamMeasure>();
-	private List<ParamMeasure> outputlist = new ArrayList<ParamMeasure>();
-	private boolean showNamespace = true;
+	private List<ParamMeasure> inputlist = new ArrayList<>();
+	private List<ParamMeasure> outputlist = new ArrayList<>();
 
 	/**
 	 * @param function  function associated with the higher level function abstraction.
-	 * @param langParser language parser used to disassemble/get info on the language
-	 * @param dtManager data type manager
+	 * @param language language parser used to disassemble/get info on the language.
+	 * @param compilerSpec the compiler spec.
+	 * @param dtManager data type manager.
 	 */
 	public HighParamID(Function function, Language language, CompilerSpec compilerSpec,
-			PcodeDataTypeManager dtManager, boolean showNamespace) {
+			PcodeDataTypeManager dtManager) {
 		super(function.getProgram().getAddressFactory(), dtManager);
 		func = function;
 
 		modelname = null;
 		protoextrapop = PrototypeModel.UNKNOWN_EXTRAPOP;
-		this.showNamespace = showNamespace;
 	}
 
 	/**
@@ -108,7 +107,8 @@ public class HighParamID extends PcodeSyntaxTree {
 	}
 
 	/**
-	 * @return the specific of input for functionparams
+	 * @param i is the specific index to return
+	 * @return the specific input for functionparams
 	 */
 	public ParamMeasure getInput(int i) {
 		return inputlist.get(i);
@@ -122,6 +122,7 @@ public class HighParamID extends PcodeSyntaxTree {
 	}
 
 	/**
+	 * @param i is the index of the specific output
 	 * @return the specific of output for functionparams
 	 */
 	public ParamMeasure getOutput(int i) {
@@ -135,15 +136,15 @@ public class HighParamID extends PcodeSyntaxTree {
 	public void readXML(XmlPullParser parser) throws PcodeXMLException {
 		XmlElement start = parser.start("parammeasures");
 		functionname = start.getAttribute("name");
-		if (!func.getName(showNamespace).equals(functionname)) {
-			throw new PcodeXMLException("Function name mismatch: " + func.getName(showNamespace) +
-				" + " + functionname);
+		if (!func.getName().equals(functionname)) {
+			throw new PcodeXMLException(
+				"Function name mismatch: " + func.getName() + " + " + functionname);
 		}
 		while (!parser.peek().isEnd()) {
 			XmlElement subel = parser.peek();
 			if (subel.getName().equals("addr")) {
 				subel = parser.start("addr");
-				functionaddress = Varnode.readXMLAddress(subel, getAddressFactory());
+				functionaddress = AddressXML.readXML(subel, getAddressFactory());
 				parser.end(subel);
 				functionaddress =
 					func.getEntryPoint().getAddressSpace().getOverlayAddress(functionaddress);
@@ -155,10 +156,12 @@ public class HighParamID extends PcodeSyntaxTree {
 				subel = parser.start("proto");
 				modelname = subel.getAttribute("model");
 				String val = subel.getAttribute("extrapop");
-				if (val.equals("unknown"))
+				if (val.equals("unknown")) {
 					protoextrapop = PrototypeModel.UNKNOWN_EXTRAPOP;
-				else
+				}
+				else {
 					protoextrapop = SpecXmlUtils.decodeInt(val);
+				}
 				parser.end(subel);
 			}
 			else if (subel.getName().equals("input")) {
@@ -176,8 +179,10 @@ public class HighParamID extends PcodeSyntaxTree {
 
 	/**
 	 * Read in the inputs or outputs list for this function from an XML rep
-	 * @param el
-	 * @throws PcodeXMLException
+	 * @param parser is the XML parser
+	 * @param pmlist is populated with the resulting list
+	 * @param tag is the name of the tag
+	 * @throws PcodeXMLException for improperly formed XML
 	 */
 	private void parseParamMeasureXML(XmlPullParser parser, List<ParamMeasure> pmlist, String tag)
 			throws PcodeXMLException {
@@ -190,7 +195,8 @@ public class HighParamID extends PcodeSyntaxTree {
 		parser.end(el);
 	}
 
-	public static ErrorHandler getErrorHandler(final Object errOriginator, final String targetName) {
+	public static ErrorHandler getErrorHandler(final Object errOriginator,
+			final String targetName) {
 		return new ErrorHandler() {
 			@Override
 			public void error(SAXParseException exception) throws SAXException {
@@ -215,9 +221,10 @@ public class HighParamID extends PcodeSyntaxTree {
 	 * TODO: this probably doesn't belong here.
 	 * 
 	 * @param xml string to parse
+	 * @param handler is the error handler
 	 * @return an XML tree element
 	 * 
-	 * @throws PcodeXMLException
+	 * @throws PcodeXMLException for improper XML
 	 */
 	static public XmlPullParser stringTree(String xml, ErrorHandler handler)
 			throws PcodeXMLException {
@@ -234,6 +241,7 @@ public class HighParamID extends PcodeSyntaxTree {
 	/**
 	 * Update any parameters for this Function from parameters defined in this map.
 	 * 
+	 * @param storeDataTypes is true if data-types are getting stored
 	 * @param srctype function signature source 
 	 */
 	public void storeReturnToDatabase(boolean storeDataTypes, SourceType srctype) {
@@ -241,23 +249,28 @@ public class HighParamID extends PcodeSyntaxTree {
 		try {
 			//TODO: Currently, only storing one output, so looking for the best to report.  When possible, change this to report all
 			int best_index = 0;
-			if (getNumOutputs() > 1)
-				for (int i = 1; i < getNumOutputs(); i++)
+			if (getNumOutputs() > 1) {
+				for (int i = 1; i < getNumOutputs(); i++) {
 					if (getOutput(i).getRank() < getOutput(best_index).getRank()) {//TODO: create mirror of ranks on high side (instead of using numbers?)
 						best_index = i;
 					}
+				}
+			}
 			if (getNumOutputs() != 0) {
 				ParamMeasure pm = getOutput(best_index);
 				pm.getRank(); //TODO (maybe): this value is not used or stored on the java side at this point
 				Varnode vn = pm.getVarnode();
 				DataType dataType;
-				if (storeDataTypes)
+				if (storeDataTypes) {
 					dataType = pm.getDataType();
-				else
+				}
+				else {
 					dataType = dtManage.findUndefined(vn.getSize());
+				}
 				//Msg.debug(this, "func: " + func.getName() + " -- type: " + dataType.getName());
-				if (!(dataType == null || dataType instanceof VoidDataType))
+				if (!(dataType == null || dataType instanceof VoidDataType)) {
 					func.setReturn(dataType, buildStorage(vn), SourceType.ANALYSIS);
+				}
 			}
 		}
 		catch (InvalidInputException e) {
@@ -269,24 +282,25 @@ public class HighParamID extends PcodeSyntaxTree {
 	 * Update any parameters for this Function from parameters defined in this map.
 	 *   Originally from LocalSymbolMap, but being modified.
 	 * 
+	 * @param storeDataTypes is true if data-types are being stored
 	 * @param srctype function signature source 
 	 */
 	public void storeParametersToDatabase(boolean storeDataTypes, SourceType srctype) {
 		PcodeDataTypeManager dtManage = getDataTypeManager();
 		try {
-			List<Variable> params = new ArrayList<Variable>();
+			List<Variable> params = new ArrayList<>();
 			for (ParamMeasure pm : inputlist) {
 				Varnode vn = pm.getVarnode();
 				DataType dataType;
 				//Msg.debug(this, "function(" + func.getName() + ")--param size: " + vn.getSize() +
 				//	"--type before store: " + pm.getDataType().getName());
-				if (storeDataTypes)
+				if (storeDataTypes) {
 					dataType = pm.getDataType();
-				else
+				}
+				else {
 					dataType = dtManage.findUndefined(vn.getSize());
-				Variable v =
-					new ParameterImpl(null, dataType, buildStorage(vn),
-						func.getProgram());
+				}
+				Variable v = new ParameterImpl(null, dataType, buildStorage(vn), func.getProgram());
 				//Msg.debug(this, "function(" + func.getName() + ")--param: " + v.toString() +
 				//	" -- type: " + dataType.getName());
 				params.add(v);
@@ -294,7 +308,7 @@ public class HighParamID extends PcodeSyntaxTree {
 
 			func.updateFunction(modelname, null, params,
 				FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, srctype);
-			if ( !paramStorageMatches(func, params)) {
+			if (!paramStorageMatches(func, params)) {
 				// try again if dynamic storage assignment does not match decompiler's
 				// force into custom storage mode
 				func.updateFunction(modelname, null, params, FunctionUpdateType.CUSTOM_STORAGE,

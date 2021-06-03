@@ -85,21 +85,22 @@ public class LabelCategoryNode extends SymbolCategoryNode {
 	}
 
 	@Override
-	public void symbolAdded(Symbol symbol) {
-		if (!isChildrenLoadedOrInProgress()) {
-			return;
+	public SymbolNode symbolAdded(Symbol symbol) {
+		if (!isLoaded()) {
+			return null;
 		}
 
 		// only include global symbols
 		if (!symbol.isGlobal()) {
-			return;
+			return null;
 		}
 
 		if (!supportsSymbol(symbol)) {
-			return;
+			return null;
 		}
 
-		GTreeNode newNode = SymbolNode.createNode(symbol, program);
+		SymbolNode newNode = SymbolNode.createNode(symbol, program);
 		doAddNode(this, newNode);
+		return newNode;
 	}
 }

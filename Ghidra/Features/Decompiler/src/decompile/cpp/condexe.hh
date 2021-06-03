@@ -160,7 +160,7 @@ class ConditionalExecution {
   void fixReturnOp(void);
   bool verify(void);				///< Verify that we have a removable \b iblock
 public:
-  ConditionalExecution(Funcdata *f) { fd = f; }	///< Constructor
+  ConditionalExecution(Funcdata *f);		///< Constructor
   bool trial(BlockBasic *ib);			///< Test for a modifiable configuration around the given block
   void execute(void);				///< Eliminate the unnecessary path join at \b iblock
 };

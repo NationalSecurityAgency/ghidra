@@ -208,7 +208,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	}
 
 	/**
-	 * Returns a string->GFile map that holds the contents of a single directory.
+	 * Returns a string-&gt;GFile map that holds the contents of a single directory.
 	 * @param directoryFile
 	 * @return
 	 */

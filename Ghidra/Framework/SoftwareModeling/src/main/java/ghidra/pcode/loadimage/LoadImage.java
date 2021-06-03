@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +22,19 @@ import ghidra.program.model.address.Address;
 // using 1 of possibly many different methods behind the scenes
 public interface LoadImage {
 
-    /**
-     * 
-     * @param ptr
-     * @param size
-     * @param addr
-     * @param bufOffset
-     * @param generateInitializedMask if true the function should return an initialized bit mask
-     * or null if all loaded bytes were known.  If true, uninitialized memory reads should only be 
-     * reflected in the mask and should not be reported via the memory fault handler.
-     * @return initialized bit mask or null (see generateInitializedMask parameter)
-     * @see MemoryPage
-     */
+// TODO this doesn't appear to be used.
+//    /**
+//     * 
+//     * @param ptr
+//     * @param size
+//     * @param addr
+//     * @param bufOffset
+//     * @param generateInitializedMask if true the function should return an initialized bit mask
+//     * or null if all loaded bytes were known.  If true, uninitialized memory reads should only be 
+//     * reflected in the mask and should not be reported via the memory fault handler.
+//     * @return initialized bit mask or null (see generateInitializedMask parameter)
+//     * @see MemoryPage
+//     */
     public byte[] loadFill( byte[] buf, int size, Address addr, int bufOffset, boolean generateInitializedMask );
 
 }

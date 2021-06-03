@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +21,8 @@ package ghidra.util.task;
 * Pass a SwingRunnable to the RunManager if follow on work needs to be done
 * after the <code>run()</code> method completes.
 * 
-* @see RunManager#run(MonitoredRunnable, String)
-* @see ghidra.util.task.RunManager#run(MonitoredRunnable, String, int)
+* @see RunManager#runNext(MonitoredRunnable, String)
+* @see RunManager#runNext(MonitoredRunnable, String, int)
 *  
 */
 

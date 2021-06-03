@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +25,8 @@ public class EditorStateFactory {
 	public EditorStateFactory() {
 	}
 
-	public EditorState getEditorState(Options options, String name, PropertyChangeListener listener) {
+	public EditorState getEditorState(Options options, String name,
+			PropertyChangeListener listener) {
 
 		String optionID = options.getID(name);
 		EditorState editorState = cache.get(optionID);

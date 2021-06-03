@@ -26,6 +26,8 @@ import org.junit.*;
 
 import docking.test.AbstractDockingTest;
 import docking.widgets.OptionDialog;
+import docking.widgets.tree.internal.InProgressGTreeNode;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -39,6 +41,7 @@ public class GTreeSlowLoadingNodeTest extends AbstractDockingTest {
 
 	private JFrame frame;
 	private GTree gTree;
+	private List<GTreeNode> children = null;
 
 	@Before
 	public void setUp() throws Exception {
@@ -66,7 +69,7 @@ public class GTreeSlowLoadingNodeTest extends AbstractDockingTest {
 		waitForTree();
 
 		// make sure we have some children
-		GTreeRootNode rootNode = gTree.getRootNode();
+		GTreeNode rootNode = gTree.getModelRoot();
 		GTreeNode nonLeaf1 = rootNode.getChild(0);
 		assertNotNull(nonLeaf1);
 		GTreeNode leaf1 = rootNode.getChild(1);
@@ -87,7 +90,7 @@ public class GTreeSlowLoadingNodeTest extends AbstractDockingTest {
 
 		waitForTree();
 
-		GTreeRootNode rootNode = gTree.getRootNode();
+		GTreeNode rootNode = gTree.getModelRoot();
 		GTreeNode nonLeaf1 = rootNode.getChild(0);
 		assertNotNull(nonLeaf1);
 
@@ -95,7 +98,7 @@ public class GTreeSlowLoadingNodeTest extends AbstractDockingTest {
 
 		assertProgressPanel(true);
 
-		assertTrue(nonLeaf1.isInProgress());
+		assertTrue(!nonLeaf1.isLoaded());
 
 		// Press the cancel button on the progress monitor
 		pressProgressPanelCancelButton();
@@ -104,6 +107,51 @@ public class GTreeSlowLoadingNodeTest extends AbstractDockingTest {
 
 		// Verify no progress component
 		assertProgressPanel(false);
+	}
+
+	@Test
+	public void testSlowNodeShowsProgressBarFromSwingAccess() {
+		gTree.setRootNode(new TestRootNode(5000));
+
+		waitForTree();
+
+		GTreeNode rootNode = gTree.getModelRoot();
+		GTreeNode nonLeaf1 = rootNode.getChild(0);
+		assertNotNull(nonLeaf1);
+
+		Swing.runNow(() -> children = nonLeaf1.getChildren());
+
+		assertEquals(1, children.size());
+		assertTrue(children.get(0) instanceof InProgressGTreeNode);
+
+		assertProgressPanel(true);
+
+		assertTrue(!nonLeaf1.isLoaded());
+
+		// Press the cancel button on the progress monitor
+		pressProgressPanelCancelButton();
+
+		waitForTree();
+
+		// Verify no progress component
+		assertProgressPanel(false);
+	}
+
+	@Test
+	public void testInProgress() {
+		gTree.setRootNode(new TestRootNode(100));
+
+		waitForTree();
+
+		GTreeNode rootNode = gTree.getModelRoot();
+		GTreeNode nonLeaf1 = rootNode.getChild(0);
+		Swing.runNow(() -> children = nonLeaf1.getChildren());
+		assertEquals(1, children.size());
+		assertTrue(children.get(0) instanceof InProgressGTreeNode);
+		waitForTree();
+		Swing.runNow(() -> children = nonLeaf1.getChildren());
+		assertTrue("Did not find children for: " + nonLeaf1, nonLeaf1.getChildCount() > 1);
+
 	}
 
 //==================================================================================================
@@ -157,7 +205,7 @@ public class GTreeSlowLoadingNodeTest extends AbstractDockingTest {
 // Inner Classes
 //==================================================================================================
 
-	private class EmptyRootNode extends AbstractGTreeRootNode {
+	private class EmptyRootNode extends GTreeNode {
 
 		EmptyRootNode() {
 			setChildren(new ArrayList<GTreeNode>());
@@ -184,7 +232,7 @@ public class GTreeSlowLoadingNodeTest extends AbstractDockingTest {
 		}
 	}
 
-	private class TestRootNode extends AbstractGTreeRootNode {
+	private class TestRootNode extends GTreeNode {
 
 		TestRootNode(int loadDelayMillis) {
 			List<GTreeNode> children = new ArrayList<>();
@@ -232,9 +280,7 @@ public class GTreeSlowLoadingNodeTest extends AbstractDockingTest {
 				return new ArrayList<>();
 			}
 
-			if (monitor.isCancelled()) {
-				return new ArrayList<>();
-			}
+			monitor.checkCanceled();
 
 			sleep(loadDelayMillis);
 
@@ -245,9 +291,7 @@ public class GTreeSlowLoadingNodeTest extends AbstractDockingTest {
 			int childCount = getRandomInt(MIN_CHILD_COUNT, MAX_CHILD_COUNT);
 			List<GTreeNode> children = new ArrayList<>();
 			for (int i = 0; i < childCount; i++) {
-				if (monitor.isCancelled()) {
-					return new ArrayList<>();
-				}
+				monitor.checkCanceled();
 				int value = getRandomInt(0, 1);
 				if (value == 0) {
 					children.add(new TestSlowLoadingNode(loadDelayMillis, depth + 1));
@@ -281,7 +325,7 @@ public class GTreeSlowLoadingNodeTest extends AbstractDockingTest {
 
 	}
 
-	private class TestLeafNode extends AbstractGTreeNode {
+	private class TestLeafNode extends GTreeNode {
 
 		private String name = getClass().getSimpleName() + getRandomString();
 

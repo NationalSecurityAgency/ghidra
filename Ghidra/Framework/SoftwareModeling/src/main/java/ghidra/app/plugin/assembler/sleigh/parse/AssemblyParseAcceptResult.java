@@ -27,7 +27,7 @@ public class AssemblyParseAcceptResult extends AssemblyParseResult {
 	private final AssemblyParseBranch tree;
 
 	/**
-	 * @see {@link AssemblyParseResult#accept(AssemblyParseBranch)}
+	 * @see AssemblyParseResult#accept(AssemblyParseBranch)
 	 */
 	protected AssemblyParseAcceptResult(AssemblyParseBranch tree) {
 		this.tree = tree;

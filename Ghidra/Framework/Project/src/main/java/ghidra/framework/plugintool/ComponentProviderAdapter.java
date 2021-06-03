@@ -16,11 +16,11 @@
 package ghidra.framework.plugintool;
 
 import docking.ComponentProvider;
-import docking.DockingTool;
+import docking.Tool;
 
 /**
  * Extends the {@link ComponentProvider} to fit into the Plugin architecture by taking in a 
- * {@link PluginTool} which extends {@link DockingTool}.  Most implementers will want to extend
+ * {@link PluginTool} which extends {@link Tool}.  Most implementers will want to extend
  * this class instead of the ComponentProvider class because they will want to access the extra
  * methods provided by PluginTool over DockingTool without having to cast the dockingTool variable.
  */
@@ -29,8 +29,9 @@ public abstract class ComponentProviderAdapter extends ComponentProvider {
 	protected PluginTool tool;
 
 	/**
-	 * Creates a new component provider with a default location of {@link PluginTool#WINDOW}.
-	 * @param windowMgr The window manager that will manage and show this provider.
+	 * Creates a new component provider with a default location of
+	 * {@link docking.WindowPosition#WINDOW WindowPosition.WINDOW}.
+	 * @param tool the plugin tool.
 	 * @param name The providers name.  This is used to group similar providers into a tab within
 	 *        the same window.
 	 * @param owner The owner of this provider, usually a plugin name.
@@ -40,11 +41,13 @@ public abstract class ComponentProviderAdapter extends ComponentProvider {
 	}
 
 	/**
-	 * Creates a new component provider with a default location of {@link PluginTool#WINDOW}.
-	 * @param windowMgr The window manager that will manage and show this provider.
+	 * Creates a new component provider with a default location of
+	 * {@link docking.WindowPosition#WINDOW WindowPosition.WINDOW}.
+	 * @param tool the plugin tool.
 	 * @param name The providers name.  This is used to group similar providers into a tab within
 	 *        the same window.
-	 * @param owner The owner of this provider, usually a plugin name.
+	 * @param owner The owner of this provider, usually a plugin name
+	 * @param contextType the type of context supported by this provider; may be null
 	 */
 	public ComponentProviderAdapter(PluginTool tool, String name, String owner,
 			Class<?> contextType) {

@@ -27,7 +27,7 @@ public interface ExceptionalCallback<E extends Exception> {
 	/**
 	 * The method that will be called
 	 * 
-	 * @throws Exception if the call throws an exception
+	 * @throws E if the call throws an exception
 	 */
 	public void call() throws E;
 }

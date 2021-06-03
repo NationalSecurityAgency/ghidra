@@ -1,5 +1,6 @@
 /* ###
  * IP: GHIDRA
+ * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -509,23 +510,6 @@ public class RttiModelTest extends AbstractRttiTest {
 		checkVfTableModel(program, 0x1010031d0L, 0x10100324cL, 0x1010031d8L,
 			new long[] { 0x101001260L, 0x1010012a0L, 0x101001120L });
 
-	}
-
-	@Test
-	public void testInvalidRtti4_64NonVS() throws Exception {
-		ProgramBuilder builder = build64BitX86NonVS();
-		ProgramDB program = builder.getProgram();
-		setupRtti4_32(builder, 0x101001340L, 0, 0, 0, "0x00005364", "0x0000137c");
-		Address address = builder.addr(0x101001340L);
-		Rtti4Model model = new Rtti4Model(program, address, defaultValidationOptions);
-		try {
-			model.validate();
-		}
-		catch (InvalidDataTypeException e) {
-			assertEquals(
-				"RTTICompleteObjectLocator data type model is only valid for Visual Studio windows PE.",
-				e.getMessage());
-		}
 	}
 
 	@Test

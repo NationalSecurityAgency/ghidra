@@ -31,7 +31,6 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
-import ghidra.util.exception.CancelledException;
 import ghidra.util.task.CancelledListener;
 import ghidra.util.task.TaskMonitor;
 import ghidra.xml.XmlPullParser;
@@ -44,7 +43,7 @@ import ghidra.xml.XmlPullParser;
  * to it, and if the underlying decompiler process crashes,
  * it automatically respawns the process and reinitializes
  * it the next time it is needed.  The basic usage pattern
- * is as follows
+ * is as follows<pre>
  * 
  *   // Instantiate the interface
  *   DecompInterface ifc = new DecompInterface();
@@ -76,7 +75,7 @@ import ghidra.xml.XmlPullParser;
  *   HighFunction hfunc = res.getHighFunction();
  *   ...
  *   
- * 
+ * </pre>
  */
 public class DecompInterface {
 
@@ -124,14 +123,14 @@ public class DecompInterface {
 	/**
 	 * Turn on debugging dump for the next decompiled
 	 * function
-	 * @param filename in which to save dump
+	 * @param debugfile the file to enable debug dubp
 	 */
 	public synchronized void enableDebug(File debugfile) {
 		debug = new DecompileDebug(debugfile);
 	}
 
 	/**
-	 * Returns true if debug has been enabled for the current/next decompilation.
+	 * @return true if debug has been enabled for the current/next decompilation.
 	 */
 	public boolean debugEnabled() {
 		return debug != null;
@@ -199,8 +198,8 @@ public class DecompInterface {
 	/**
 	 * This is the main routine for making sure that a decompiler
 	 * process is active and that it is initialized properly
-	 * @throws IOException
-	 * @throws DecompileException
+	 * @throws IOException for any problems with the pipe to the decompiler process
+	 * @throws DecompileException for errors initializing decompiler options etc.
 	 */
 	protected void initializeProcess() throws IOException, DecompileException {
 		if (decompCallback == null) {
@@ -223,7 +222,7 @@ public class DecompInterface {
 			(SleighLanguageDescription) pcodelanguage.getLanguageDescription();
 		ResourceFile pspecfile = sleighdescription.getSpecFile();
 		String pspecxml = fileToString(pspecfile);
-		String cspecxml = compilerSpec.getCompilerSpecString();
+		String cspecxml = compilerSpec.getXMLString();
 
 		decompCallback.setNativeMessage(null);
 		decompProcess.registerProgram(decompCallback, pspecxml, cspecxml, tspec, coretypes);
@@ -233,9 +232,9 @@ public class DecompInterface {
 		}
 		if (xmlOptions != null) {
 			decompProcess.setMaxResultSize(xmlOptions.getMaxPayloadMBytes());
-			decompProcess.setShowNamespace(xmlOptions.isDisplayNamespaces());
-			if (!decompProcess.sendCommand1Param("setOptions",
-				xmlOptions.getXML(this)).toString().equals("t")) {
+			if (!decompProcess.sendCommand1Param("setOptions", xmlOptions.getXML(this))
+					.toString()
+					.equals("t")) {
 				throw new IOException("Did not accept decompiler options");
 			}
 		}
@@ -243,14 +242,16 @@ public class DecompInterface {
 			throw new IOException("Decompile action not specified");
 		}
 		if (!actionname.equals("decompile")) {
-			if (!decompProcess.sendCommand2Params("setAction", actionname, "").toString().equals(
-				"t")) {
+			if (!decompProcess.sendCommand2Params("setAction", actionname, "")
+					.toString()
+					.equals("t")) {
 				throw new IOException("Could not set decompile action");
 			}
 		}
 		if (!printSyntaxTree) {
-			if (!decompProcess.sendCommand2Params("setAction", "", "notree").toString().equals(
-				"t")) {
+			if (!decompProcess.sendCommand2Params("setAction", "", "notree")
+					.toString()
+					.equals("t")) {
 				throw new IOException("Could not turn off syntax tree");
 			}
 		}
@@ -260,14 +261,16 @@ public class DecompInterface {
 			}
 		}
 		if (sendParamMeasures) {
-			if (!decompProcess.sendCommand2Params("setAction", "",
-				"parammeasures").toString().equals("t")) {
+			if (!decompProcess.sendCommand2Params("setAction", "", "parammeasures")
+					.toString()
+					.equals("t")) {
 				throw new IOException("Could not turn on sending of parameter measures");
 			}
 		}
 		if (jumpLoad) {
-			if (!decompProcess.sendCommand2Params("setAction", "", "jumpload").toString().equals(
-				"t")) {
+			if (!decompProcess.sendCommand2Params("setAction", "", "jumpload")
+					.toString()
+					.equals("t")) {
 				throw new IOException("Could not turn on jumptable loads");
 			}
 		}
@@ -411,8 +414,9 @@ public class DecompInterface {
 		}
 		try {
 			verifyProcess();
-			return decompProcess.sendCommand2Params("setAction", actionstring,
-				"").toString().equals("t");
+			return decompProcess.sendCommand2Params("setAction", actionstring, "")
+					.toString()
+					.equals("t");
 		}
 		catch (IOException e) {
 			// don't care
@@ -448,8 +452,9 @@ public class DecompInterface {
 		String printstring = val ? "tree" : "notree";
 		try {
 			verifyProcess();
-			return decompProcess.sendCommand2Params("setAction", "", printstring).toString().equals(
-				"t");
+			return decompProcess.sendCommand2Params("setAction", "", printstring)
+					.toString()
+					.equals("t");
 		}
 		catch (IOException e) {
 			// don't care
@@ -486,8 +491,9 @@ public class DecompInterface {
 		String printstring = val ? "c" : "noc";
 		try {
 			verifyProcess();
-			return decompProcess.sendCommand2Params("setAction", "", printstring).toString().equals(
-				"t");
+			return decompProcess.sendCommand2Params("setAction", "", printstring)
+					.toString()
+					.equals("t");
 		}
 		catch (IOException e) {
 			// don't care
@@ -523,8 +529,9 @@ public class DecompInterface {
 		String printstring = val ? "parammeasures" : "noparammeasures";
 		try {
 			verifyProcess();
-			return decompProcess.sendCommand2Params("setAction", "", printstring).toString().equals(
-				"t");
+			return decompProcess.sendCommand2Params("setAction", "", printstring)
+					.toString()
+					.equals("t");
 		}
 		catch (IOException e) {
 			// don't care
@@ -553,8 +560,9 @@ public class DecompInterface {
 		String jumpstring = val ? "jumpload" : "nojumpload";
 		try {
 			verifyProcess();
-			return decompProcess.sendCommand2Params("setAction", "", jumpstring).toString().equals(
-				"t");
+			return decompProcess.sendCommand2Params("setAction", "", jumpstring)
+					.toString()
+					.equals("t");
 		}
 		catch (IOException e) {
 			// don't care
@@ -590,9 +598,9 @@ public class DecompInterface {
 		try {
 			verifyProcess();
 			decompProcess.setMaxResultSize(xmlOptions.getMaxPayloadMBytes());
-			decompProcess.setShowNamespace(xmlOptions.isDisplayNamespaces());
-			return decompProcess.sendCommand1Param("setOptions",
-				xmloptions.getXML(this)).toString().equals("t");
+			return decompProcess.sendCommand1Param("setOptions", xmloptions.getXML(this))
+					.toString()
+					.equals("t");
 		}
 		catch (IOException e) {
 			// don't care
@@ -685,7 +693,6 @@ public class DecompInterface {
 	 * will be returned and a timeout error set.
 	 * @param monitor optional task monitor which may be used to cancel decompile
 	 * @return decompiled function text
-	 * @throws CancelledException operation was cancelled via monitor
 	 */
 	public synchronized DecompileResults decompileFunction(Function func, int timeoutSecs,
 			TaskMonitor monitor) {
@@ -702,8 +709,7 @@ public class DecompInterface {
 
 		if (program == null) {
 			return new DecompileResults(func, pcodelanguage, null, dtmanage, decompileMessage, null,
-				DecompileProcess.DisposeState.DISPOSED_ON_CANCEL,
-				false /* cancelled--doesn't matter */);
+				DecompileProcess.DisposeState.DISPOSED_ON_CANCEL);
 		}
 
 		try {
@@ -712,9 +718,10 @@ public class DecompInterface {
 				debug.setFunction(func);
 			}
 			decompCallback.setFunction(func, funcEntry, debug);
-			String addrstring = Varnode.buildXMLAddress(funcEntry);
+			StringBuilder addrBuf = new StringBuilder();
+			AddressXML.buildXML(addrBuf, funcEntry);
 			verifyProcess();
-			res = decompProcess.sendCommand1ParamTimeout("decompileAt", addrstring.toString(),
+			res = decompProcess.sendCommand1ParamTimeout("decompileAt", addrBuf.toString(),
 				timeoutSecs);
 			decompileMessage = decompCallback.getNativeMessage();
 		}
@@ -748,7 +755,7 @@ public class DecompInterface {
 			stream = res.getInputStream();
 		}
 		return new DecompileResults(func, pcodelanguage, compilerSpec, dtmanage, decompileMessage,
-			stream, processState, isDisplayNamespace());
+			stream, processState);
 	}
 
 	/**
@@ -797,12 +804,4 @@ public class DecompInterface {
 	public CompilerSpec getCompilerSpec() {
 		return compilerSpec;
 	}
-
-	private boolean isDisplayNamespace() {
-		if (xmlOptions == null) {
-			return false; // not sure if this can happen
-		}
-		return xmlOptions.isDisplayNamespaces();
-	}
-
 }

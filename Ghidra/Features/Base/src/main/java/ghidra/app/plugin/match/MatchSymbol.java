@@ -117,7 +117,7 @@ public class MatchSymbol {
 						SymbolPath namespacePath = aSymbolPath.getParent();
 						if (!aSymbolIdentifier.isExternalSymbol() && namespacePath != null &&
 							!aSymbolPath.equals(bSymbolIdentifier.symbolPath) &&
-							NamespaceUtils.getNamespace(bProgram, namespacePath, null) != null) {
+							NamespaceUtils.getNonFunctionNamespace(bProgram, namespacePath) != null) {
 							// skip match with namespace mismatch when source namespace exists in destination
 							continue;
 						}

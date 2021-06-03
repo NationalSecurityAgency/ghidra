@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,8 @@
  */
 package ghidra.program.database.register;
 
+import db.*;
+import db.util.ErrorHandler;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.util.AddressRangeMapDB;
 import ghidra.program.model.address.*;
@@ -26,14 +27,12 @@ import ghidra.program.util.RangeMapAdapter;
 import ghidra.util.Lock;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import db.*;
-import db.util.ErrorHandler;
 
 public class DatabaseRangeMapAdapter implements RangeMapAdapter {
 
 	static final String NAME_PREFIX = "Register_";
-	static final String CONTEXT_TABLE_PREFIX = AddressRangeMapDB.RANGE_MAP_TABLE_PREFIX +
-		NAME_PREFIX;
+	static final String CONTEXT_TABLE_PREFIX =
+		AddressRangeMapDB.RANGE_MAP_TABLE_PREFIX + NAME_PREFIX;
 
 	private String mapName;
 	private ErrorHandler errorHandler;
@@ -46,9 +45,8 @@ public class DatabaseRangeMapAdapter implements RangeMapAdapter {
 		this.dbh = dbHandle;
 		this.errorHandler = errorHandler;
 		mapName = NAME_PREFIX + register.getName();
-		rangeMap =
-			new AddressRangeMapDB(dbHandle, addrMap, lock, mapName, errorHandler,
-				BinaryField.class, false);
+		rangeMap = new AddressRangeMapDB(dbHandle, addrMap, lock, mapName, errorHandler,
+			BinaryField.INSTANCE, false);
 		addressMap = addrMap;
 	}
 
@@ -152,9 +150,8 @@ public class DatabaseRangeMapAdapter implements RangeMapAdapter {
 			while (AddressRangeMapDB.exists(dbh, tempName)) {
 				tempName = "TEMP_MAP" + (++retry);
 			}
-			tempMap =
-				new AddressRangeMapDB(dbh, addressMap, new Lock("Test"), tempName, errorHandler,
-					BinaryField.class, false);
+			tempMap = new AddressRangeMapDB(dbh, addressMap, new Lock("Test"), tempName,
+				errorHandler, BinaryField.INSTANCE, false);
 
 			// Translate range map data into tempMap
 			monitor.initialize(rangeMap.getRecordCount());

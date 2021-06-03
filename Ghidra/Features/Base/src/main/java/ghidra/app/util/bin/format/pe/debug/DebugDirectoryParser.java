@@ -87,7 +87,7 @@ public class DebugDirectoryParser {
 	 * @param reader the binary reader
 	 * @param ptr the pointer into the binary reader
 	 * @param size the size of the directory
-	 * @param ntHeader 
+	 * @param validator the validator for the directory
 	 * @throws IOException if an I/O error occurs
 	 */
 	public static DebugDirectoryParser createDebugDirectoryParser(

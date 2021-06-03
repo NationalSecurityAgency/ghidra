@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +27,7 @@ import ghidra.util.Msg;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
+
 /**
  * 
  *
@@ -46,28 +46,24 @@ public class ClangVariableDecl extends ClangTokenGroup {
 	}
 
 	public DataType getDataType() {
-		return datatype;	
+		return datatype;
 	}
-	
+
 	public HighVariable getHighVariable() {
 		return typevar;
 	}
-	
+
 	@Override
-    public void restoreFromXML(XmlPullParser parser,PcodeFactory pfactory) {
-	    XmlElement node = parser.peek();
-		super.restoreFromXML(parser,pfactory);
-		int symref = SpecXmlUtils.decodeInt(node.getAttribute(ClangXML.SYMREF));
+	public void restoreFromXML(XmlPullParser parser, PcodeFactory pfactory) {
+		XmlElement node = parser.peek();
+		super.restoreFromXML(parser, pfactory);
+		long symref = SpecXmlUtils.decodeLong(node.getAttribute(ClangXML.SYMREF));
 		HighSymbol sym = pfactory.getSymbol(symref);
 		if (sym == null) {
-			Msg.error(this, "Invalid symbol reference: " + symref);
+			Msg.error(this, "Invalid symbol reference: " + symref + " in " + Parent());
 			return;
 		}
 		typevar = sym.getHighVariable();
 		datatype = sym.getDataType();
-		if (typevar == null) {
-			Msg.error(this, "High variable not found: " + sym.getName());
-			return;
-		}
 	}
 }

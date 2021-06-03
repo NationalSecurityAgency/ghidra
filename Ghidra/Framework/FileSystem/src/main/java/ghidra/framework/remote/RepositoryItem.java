@@ -52,7 +52,6 @@ public class RepositoryItem implements java.io.Serializable {
 	 * @param contentType content type associated with item
 	 * @param version repository item version or -1 if versioning not supported
 	 * @param versionTime version creation time
-	 * @param checkoutList list of checkouts for the associated repository item.
 	 */
 	public RepositoryItem(String folderPath, String itemName, String fileID, int itemType,
 			String contentType, int version, long versionTime) {

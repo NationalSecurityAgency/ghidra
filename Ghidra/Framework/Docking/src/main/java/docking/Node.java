@@ -149,6 +149,10 @@ abstract class Node {
 
 	private String printNodes(StringBuilder buffy, Node node, int level) {
 		String indent = indent(level * 3);
+		if (node == null) {
+			buffy.append("<detached> " + getClass().getSimpleName());
+			return buffy.toString();
+		}
 		String name = node.getDescription();
 		if (this == node) {
 			buffy.append(indent);

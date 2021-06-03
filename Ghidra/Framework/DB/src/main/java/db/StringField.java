@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,27 @@
  */
 package db;
 
-import ghidra.util.exception.AssertException;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+
+import db.buffers.DataBuffer;
+import ghidra.util.exception.AssertException;
 
 /**
  * <code>StringField</code> provides a wrapper for variable length String data which is read or
  * written to a Record. Strings are always encoded as UTF-8.
  */
-public class StringField extends Field {
+public final class StringField extends Field {
+
+	/**
+	 * Null string field value
+	 */
+	public static final StringField NULL_VALUE = new StringField(null, true);
+
+	/**
+	 * Instance intended for defining a {@link Table} {@link Schema}
+	 */
+	public static final StringField INSTANCE = NULL_VALUE;
 
 	private static String ENCODING = "UTF-8";
 
@@ -40,45 +50,60 @@ public class StringField extends Field {
 
 	/**
 	 * Construct a String field with an initial value of s.
-	 * @param s initial value
+	 * @param str initial string value or null
 	 */
-	public StringField(String s) {
-		setString(s);
+	public StringField(String str) {
+		this(str, false);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#getString()
+	/**
+	 * Construct a String field with an initial value of s.
+	 * @param str initial string value or null
+	 * @param immutable true if field value is immutable
 	 */
+	StringField(String str, boolean immutable) {
+		super(immutable);
+		doSetString(str);
+	}
+
+	@Override
+	boolean isNull() {
+		return bytes == null;
+	}
+
+	@Override
+	void setNull() {
+		checkImmutable();
+		str = null;
+		bytes = null;
+	}
+
 	@Override
 	public String getString() {
 		return str;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#setString(java.lang.String)
-	 */
 	@Override
 	public void setString(String str) {
+		checkImmutable();
+		doSetString(str);
+	}
+
+	private void doSetString(String str) {
 		this.str = str;
 		try {
 			bytes = (str != null ? str.getBytes(ENCODING) : null);
 		}
 		catch (UnsupportedEncodingException e) {
-			throw new AssertException();
+			throw new AssertException(e);
 		}
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#length()
-	 */
 	@Override
 	int length() {
 		return (bytes == null) ? 4 : (bytes.length + 4);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#write(ghidra.framework.store.Buffer, int)
-	 */
 	@Override
 	int write(Buffer buf, int offset) throws IOException {
 		if (bytes == null) {
@@ -88,11 +113,9 @@ public class StringField extends Field {
 		return buf.put(offset, bytes);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#read(ghidra.framework.store.Buffer, int)
-	 */
 	@Override
 	int read(Buffer buf, int offset) throws IOException {
+		checkImmutable();
 		int len = buf.getInt(offset);
 		offset += 4;
 		if (len < 0) {
@@ -107,34 +130,22 @@ public class StringField extends Field {
 		return offset;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#readLength(ghidra.framework.store.Buffer, int)
-	 */
 	@Override
 	int readLength(Buffer buf, int offset) throws IOException {
 		int len = buf.getInt(offset);
 		return (len < 0 ? 0 : len) + 4;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#isVariableLength()
-	 */
 	@Override
 	public boolean isVariableLength() {
 		return true;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#getFieldType()
-	 */
 	@Override
-	protected byte getFieldType() {
+	byte getFieldType() {
 		return STRING_TYPE;
 	}
 
-	/*
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return "StringField: " + str;
@@ -142,39 +153,17 @@ public class StringField extends Field {
 
 	@Override
 	public String getValueAsString() {
+		if (str == null) {
+			return "null";
+		}
 		return "\"" + str + "\"";
 	}
 
-//	/**
-//	 * Get first 8 bytes of string as long value.
-//	 * First string byte corresponds to most significant byte
-//	 * of long value.
-//	 * If string is null, Long.MIN_VALUE is returned.
-//	 * @see ghidra.framework.store.db.Field#getLongValue()
-//	 */
-//	public long getLongValue() {
-//		if (str == null)
-//			return Long.MIN_VALUE;
-//		long value = 0;
-//		byte[] data;
-//		try {
-//			data = (str == null) ? new byte[0] : str.getBytes(Buffer.ASCII);
-//		} catch (UnsupportedEncodingException e) {
-//			throw new AssertException();
-//		}
-//		for (int i = 0; i < 8 && i < data.length; i++) {
-//			value = (value << 8) | ((long)data[i] & 0x000000ff);
-//		}
-//		return value;
-//	}
-
-	/*
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof StringField))
+		if (obj == null || !(obj instanceof StringField)) {
 			return false;
+		}
 		StringField f = (StringField) obj;
 		if (str == null) {
 			return (f.str == null);
@@ -182,19 +171,14 @@ public class StringField extends Field {
 		return str.equals(f.str);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#getBinaryData()
-	 */
 	@Override
 	public byte[] getBinaryData() {
 		return bytes;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#setBinaryData(byte[])
-	 */
 	@Override
 	public void setBinaryData(byte[] bytes) {
+		checkImmutable();
 		if (bytes == null) {
 			str = null;
 		}
@@ -204,14 +188,11 @@ public class StringField extends Field {
 				str = new String(bytes, ENCODING);
 			}
 			catch (UnsupportedEncodingException e) {
-				throw new AssertException();
+				throw new AssertException(e);
 			}
 		}
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#truncate(int)
-	 */
 	@Override
 	void truncate(int length) {
 		int maxLen = length - 4;
@@ -220,15 +201,13 @@ public class StringField extends Field {
 		}
 	}
 
-	/*
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
 	@Override
 	public int compareTo(Field o) {
 		StringField f = (StringField) o;
 		if (str == null) {
-			if (f.str == null)
+			if (f.str == null) {
 				return 0;
+			}
 			return -1;
 		}
 		else if (f.str == null) {
@@ -237,36 +216,41 @@ public class StringField extends Field {
 		return str.compareTo(f.str);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#newField(ghidra.framework.store.db.Field)
-	 */
 	@Override
-	public Field newField(Field fieldValue) {
-		if (fieldValue instanceof StringField) {
-			return new StringField(fieldValue.getString());
-		}
+	int compareTo(DataBuffer buffer, int offset) {
+		StringField f = new StringField();
 		try {
-			return new StringField(new String(fieldValue.getBinaryData(), ENCODING));
+			f.read(buffer, offset);
 		}
-		catch (UnsupportedEncodingException e) {
+		catch (IOException e) {
+			throw new AssertException(e); // DataBuffer does not throw IOException
 		}
-		throw new AssertException();
+		return compareTo(f);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#newField()
-	 */
 	@Override
-	public Field newField() {
+	public StringField copyField() {
+		return new StringField(str);
+	}
+
+	@Override
+	public StringField newField() {
 		return new StringField();
 	}
 
-	/*
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		return str.hashCode();
+	}
+
+	@Override
+	StringField getMinValue() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	StringField getMaxValue() {
+		throw new UnsupportedOperationException();
 	}
 
 }

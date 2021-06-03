@@ -46,7 +46,7 @@ import ghidra.util.task.TaskMonitor;
  * are no add/removes in the list, then that step does nothing.
  * <p>
  * Before the job completes, new calls to sort and filter can be called.  If the job is past the
- * stage of the new call, the <tt>monitor</tt> is cancelled, causing the current stage to abort.  
+ * stage of the new call, the <code>monitor</code> is cancelled, causing the current stage to abort.  
  * The next state of this job is set to the appropriate state for the call, the monitor is 
  * reset, and the job begins executing the next stage, based upon the new call.
  *
@@ -401,7 +401,7 @@ public class TableUpdateJob<T> {
 
 	/** 
 	 * Gets any existing data that matches the current filter, if any.
-	 * @returns data that should be the start point for the next filter state; null if there 
+	 * @return data that should be the start point for the next filter state; null if there 
 	 *          is no filter set or if the current data's filter does not match the pending filter
 	 */
 	private TableData<T> getReusableFilteredData() {
@@ -553,31 +553,14 @@ public class TableUpdateJob<T> {
 	 */
 	private void doProcessAddRemoves() throws CancelledException {
 
-		int n = addRemoveList.size();
-		monitor.setMessage("Adding/Removing " + n + " items...");
-		monitor.initialize(n);
-
 		initializeSortCache();
-
-		for (int i = 0; i < n; i++) {
-			AddRemoveListItem<T> item = addRemoveList.get(i);
-			T value = item.getValue();
-			if (item.isChange()) {
-				updatedData.remove(value);
-				updatedData.insert(value);
-			}
-			else if (item.isRemove()) {
-				updatedData.remove(value);
-			}
-			else if (item.isAdd()) {
-				updatedData.insert(value);
-			}
-			monitor.checkCanceled();
-			monitor.setProgress(i);
+		try {
+			TableAddRemoveStrategy<T> strategy = model.getAddRemoveStrategy();
+			strategy.process(addRemoveList, updatedData, monitor);
 		}
-		monitor.setMessage("Done adding/removing");
-
-		clearSortCache();
+		finally {
+			clearSortCache();
+		}
 	}
 
 	/** When sorting we cache column value lookups to increase speed. */

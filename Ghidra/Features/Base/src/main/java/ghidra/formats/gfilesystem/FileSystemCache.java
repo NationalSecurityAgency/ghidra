@@ -104,7 +104,9 @@ public class FileSystemCache implements FileSystemEventListener {
 	public synchronized void add(GFileSystem fs) {
 		FSCacheInfo fsci = new FSCacheInfo(fs);
 		fs.getRefManager().addListener(this);
-		filesystems.put(fs.getFSRL(), fsci);
+		if (filesystems.put(fs.getFSRL(), fsci) != null) {
+			Msg.warn(this, "Added second instance of same filesystem!  " + fs.getFSRL());
+		}
 	}
 
 	/**
@@ -121,7 +123,19 @@ public class FileSystemCache implements FileSystemEventListener {
 			return rootFS.getRefManager().create();
 		}
 		FSCacheInfo fsci = filesystems.get(fsrl);
-		return (fsci != null) ? fsci.ref.dup() : null;
+		if (fsci != null) {
+			return fsci.ref.dup();
+		}
+		// If the query FSRL doesn't have a MD5, do a slow scan 
+		// for filesystems that match by equiv.
+		if (fsrl.getMD5() == null) {
+			for (Entry<FSRLRoot, FSCacheInfo> entry : filesystems.entrySet()) {
+				if (entry.getKey().isEquivalent(fsrl)) {
+					return entry.getValue().ref.dup();
+				}
+			}
+		}
+		return null;
 	}
 
 	/**

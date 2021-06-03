@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +31,10 @@ public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager {
 	 * @param rootName the root name for this data type manager (usually the program name).
 	 * @param composite the composite data type that is being edited. (cannot be null).
 	 */
-	public CompositeViewerDataTypeManager(String rootName, Composite composite, Category category) {
+	public CompositeViewerDataTypeManager(String rootName, Composite composite) {
 		super(rootName);
 		transactionID = startTransaction(""); 
-		originalDTM = category.getDataTypeManager();
+		originalDTM = composite.getDataTypeManager();
 		universalID = originalDTM.getUniversalID(); // mimic original DTM
 		super.resolve(composite, null);
 	}

@@ -18,7 +18,7 @@ package generic.algorithms;
 import java.util.List;
 
 /**
- * An implementation of the {@link ReducingLcs} that takes as its input a list of <T> items, where
+ * An implementation of the {@link ReducingLcs} that takes as its input a list of {@literal <T>}items, where
  * the list is the 'sequence' being checked for the Longest Common Subsequence.
  *
  * @param <T> the type of the item in the sequence of items

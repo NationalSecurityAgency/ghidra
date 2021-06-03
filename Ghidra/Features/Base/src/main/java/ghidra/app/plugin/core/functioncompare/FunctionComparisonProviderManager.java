@@ -15,219 +15,209 @@
  */
 package ghidra.app.plugin.core.functioncompare;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
-import ghidra.app.plugin.ProgramPlugin;
+import docking.ComponentProviderActivationListener;
 import ghidra.framework.model.*;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 
 /**
- * FunctionComparisonProviderManager allows a plugin to display function comparison panels.
- * It responds to program close events and closes any panels that have a function from the
- * closed program. It also updates the displays if needed due to an Undo.
+ * Provides access to all open {@link FunctionComparisonProvider comparison providers}
+ * and allows users to do the following:
+ * <li>create new providers</li>
+ * <li>add comparisons to existing providers</li>
+ * <li>remove comparisons</li>
+ * <li>notify subscribers when providers are opened/closed</li>
  */
 public class FunctionComparisonProviderManager implements FunctionComparisonProviderListener {
 
-	private HashSet<FunctionComparisonProvider> functionComparisonProviders = new HashSet<>();
-	private ProgramPlugin plugin;
-	private PluginTool tool;
+	private Set<FunctionComparisonProvider> providers = new CopyOnWriteArraySet<>();
+	private Set<ComponentProviderActivationListener> listeners = new HashSet<>();
+	private Plugin plugin;
 
 	/**
-	 * Constructs a FunctionComparisonProviderManager.
-	 * @param plugin the plugin that owns this manager.
+	 * Constructor
+	 * 
+	 * @param plugin the parent plugin
 	 */
-	public FunctionComparisonProviderManager(ProgramPlugin plugin) {
+	public FunctionComparisonProviderManager(Plugin plugin) {
 		this.plugin = plugin;
-		tool = plugin.getTool();
-	}
-
-	/**
-	 * This will create a new function comparison panel with the specified functions available for 
-	 * display in both the left and right side of the panel. Initially the function comparison panel 
-	 * will display the first function in the left side and the second function in the right side of 
-	 * the panel. If the manager already has a provider to display the specified functions it will 
-	 * be brought to the front instead of creating a new panel.
-	 * @param functions the functions that are used to populate both the left and right side
-	 * of the function comparison panel.
-	 * @return the FunctionComparisonProvider that is displaying these functions.
-	 */
-	public FunctionComparisonProvider showFunctionComparisonProvider(Function[] functions) {
-		FunctionComparisonProvider functionComparisonProvider =
-			findFunctionComparisonProvider(functions);
-		if (functionComparisonProvider != null) {
-			// If it is already displayed then bring it to the front.
-			tool.toFront(functionComparisonProvider);
-			return functionComparisonProvider;
-		}
-		FunctionComparisonProvider provider =
-			new FunctionComparisonProvider(plugin, functions, this);
-		functionComparisonProviders.add(provider);
-		provider.setVisible(true);
-		return provider;
-	}
-
-	/**
-	 * This creates a new function comparison panel with the specified leftFunctions available for 
-	 * display in the left side of the panel and the rightFunctions available for display in the right side.
-	 * Initially the function comparison panel will display the first leftFunction and the first
-	 * rightFunction. If the manager already has a provider to display the specified leftFunctions
-	 * and rightFunctions it will be brought to the front instead of creating a new panel. 
-	 * @param leftFunctions the functions that are used to populate the left side
-	 * @param rightFunctions the functions that are used to populate the right side
-	 * @return the FunctionComparisonProvider that is displaying these functions.
-	 */
-	public FunctionComparisonProvider showFunctionComparisonProvider(Function[] leftFunctions,
-			Function[] rightFunctions) {
-		FunctionComparisonProvider functionComparisonProvider =
-			findFunctionComparisonProvider(leftFunctions, rightFunctions);
-		if (functionComparisonProvider != null) {
-			// If it is already displayed then bring it to the front.
-			tool.toFront(functionComparisonProvider);
-			return functionComparisonProvider;
-		}
-		FunctionComparisonProvider provider =
-			new FunctionComparisonProvider(plugin, leftFunctions, rightFunctions, this);
-		functionComparisonProviders.add(provider);
-		provider.setVisible(true);
-		return provider;
-	}
-
-	/**
-	 * This creates a new function comparison panel with the specified left functions 
-	 * available for display in the left side of the panel and a list of functions for the 
-	 * right side for each function in the left.
-	 * If the manager already has a provider to display the specified function map it will 
-	 * be brought to the front instead of creating a new panel.
-	 * @param functionMap map of the functions that are used to populate both the left and 
-	 * right side of the function comparison panel.
-	 * @return the FunctionComparisonProvider that is displaying these functions.
-	 */
-	public FunctionComparisonProvider showFunctionComparisonProvider(
-			HashMap<Function, HashSet<Function>> functionMap) {
-		FunctionComparisonProvider functionComparisonProvider =
-			findFunctionComparisonProvider(functionMap);
-		if (functionComparisonProvider != null) {
-			// If it is already displayed then bring it to the front.
-			tool.toFront(functionComparisonProvider);
-			return functionComparisonProvider;
-		}
-		FunctionComparisonProvider provider =
-			new FunctionComparisonProvider(plugin, functionMap, this);
-		functionComparisonProviders.add(provider);
-		provider.setVisible(true);
-		return provider;
-	}
-
-	private FunctionComparisonProvider findFunctionComparisonProvider(Function[] functions) {
-		for (FunctionComparisonProvider functionComparisonProvider : functionComparisonProviders) {
-			FunctionComparisonPanel functionComparisonPanel =
-				functionComparisonProvider.getComponent();
-			if (functionComparisonPanel instanceof MultiFunctionComparisonPanel) {
-				MultiFunctionComparisonPanel multiPanel =
-					(MultiFunctionComparisonPanel) functionComparisonPanel;
-				if (multiPanel.matchesTheseFunctions(functions, functions)) {
-					return functionComparisonProvider;
-				}
-			}
-			else { // basic FunctionComparisonPanel
-				Function[] panelFunctions = functionComparisonPanel.getFunctions();
-				if (Arrays.equals(panelFunctions, functions)) {
-					return functionComparisonProvider;
-				}
-			}
-		}
-		return null;
-	}
-
-	private FunctionComparisonProvider findFunctionComparisonProvider(Function[] functionsL,
-			Function[] functionsR) {
-		for (FunctionComparisonProvider functionComparisonProvider : functionComparisonProviders) {
-			FunctionComparisonPanel functionComparisonPanel =
-				functionComparisonProvider.getComponent();
-			if (!(functionComparisonPanel instanceof MultiFunctionComparisonPanel)) {
-				continue;
-			}
-			MultiFunctionComparisonPanel multiPanel =
-				(MultiFunctionComparisonPanel) functionComparisonPanel;
-			if (multiPanel.matchesTheseFunctions(functionsL, functionsR)) {
-				return functionComparisonProvider;
-			}
-		}
-		return null;
-	}
-
-	private FunctionComparisonProvider findFunctionComparisonProvider(
-			HashMap<Function, HashSet<Function>> functionMap) {
-
-		for (FunctionComparisonProvider functionComparisonProvider : functionComparisonProviders) {
-			FunctionComparisonPanel functionComparisonPanel =
-				functionComparisonProvider.getComponent();
-			if (functionComparisonPanel instanceof MappedFunctionComparisonPanel) {
-				MappedFunctionComparisonPanel mappedPanel =
-					(MappedFunctionComparisonPanel) functionComparisonPanel;
-				if (mappedPanel.matchesTheseFunctions(functionMap)) {
-					return functionComparisonProvider;
-				}
-			}
-		}
-		return null;
 	}
 
 	@Override
 	public void providerClosed(FunctionComparisonProvider provider) {
-		functionComparisonProviders.remove(provider);
+		providers.remove(provider);
+		listeners.stream().forEach(l -> l.componentProviderDeactivated(provider));
+	}
+
+	@Override
+	public void providerOpened(FunctionComparisonProvider provider) {
+		listeners.stream().forEach(l -> l.componentProviderActivated(provider));
 	}
 
 	/**
-	 * Closes all the function comparison providers that have a function from the indicated program.
-	 * This method should be called when a program is closing.
-	 * @param program the program whose function providers need to close.
+	 * Creates a new comparison between the given set of functions
+	 * 
+	 * @param functions the functions to compare
+	 * @return the new comparison provider
+	 */
+	public FunctionComparisonProvider compareFunctions(Set<Function> functions) {
+		if (functions.isEmpty()) {
+			return null;
+		}
+		FunctionComparisonProvider provider = new MultiFunctionComparisonProvider(plugin);
+		provider.addToTool();
+		provider.getModel().compareFunctions(functions);
+		providers.add(provider);
+		provider.setVisible(true);
+		return provider;
+	}
+
+	/**
+	 * Creates a new comparison comparison between two functions
+	 * 
+	 * @param source the source function
+	 * @param target the target function
+	 * @return the new comparison provider
+	 */
+	public FunctionComparisonProvider compareFunctions(Function source,
+			Function target) {
+		FunctionComparisonProvider provider = new MultiFunctionComparisonProvider(plugin);
+		provider.addToTool();
+		provider.getModel().compareFunctions(source, target);
+		providers.add(provider);
+		provider.setVisible(true);
+		return provider;
+	}
+
+	/**
+	 * Adds a set of functions to an existing comparison provider
+	 * 
+	 * @param functions the functions to compare
+	 * @param provider the provider to add the functions to
+	 */
+	public void compareFunctions(Set<Function> functions, FunctionComparisonProvider provider) {
+		if (functions.isEmpty() || provider == null) {
+			return;
+		}
+
+		providers.add(provider);
+		provider.setVisible(true);
+		provider.getModel().compareFunctions(functions);
+	}
+
+	/**
+	 * Adds the given functions to an existing comparison provider
+	 * 
+	 * @param source the source function
+	 * @param target the target function
+	 * @param provider the provider to add the functions to
+	 */
+	public void compareFunctions(Function source, Function target,
+			FunctionComparisonProvider provider) {
+		if (provider == null) {
+			return;
+		}
+
+		providers.add(provider);
+		provider.setVisible(true);
+		provider.getModel().compareFunctions(source, target);
+	}
+
+	/**
+	 * Removes a given function from all comparisons across all providers
+	 * 
+	 * @param function the function to remove
+	 */
+	public void removeFunction(Function function) {
+		providers.stream().forEach(p -> p.getModel().removeFunction(function));
+	}
+
+	/**
+	 * Removes a given function from a specified provider
+	 * 
+	 * @param function the function to remove
+	 * @param provider the provider to remove the function from
+	 */
+	public void removeFunction(Function function, FunctionComparisonProvider provider) {
+		if (provider == null) {
+			return;
+		}
+		provider.getModel().removeFunction(function);
+	}
+
+	/**
+	 * Registers subscribers who wish to know of provider activation status
+	 * 
+	 * @param listener the subscriber to register
+	 */
+	public void addProviderListener(ComponentProviderActivationListener listener) {
+		listeners.add(listener);
+	}
+
+	/**
+	 * Removes a subscriber who no longer wishes to receive provider activation
+	 * events
+	 * 
+	 * @param listener the subscriber to remove
+	 */
+	public void removeProviderListener(ComponentProviderActivationListener listener) {
+		listeners.remove(listener);
+	}
+
+	/**
+	 * Closes all the comparison providers that contain a function from 
+	 * the given program
+	 * 
+	 * @param program the program whose function providers need to close
 	 */
 	public void closeProviders(Program program) {
-		// Get an array of the providers and loop over it to notify them. This is to prevent
-		// causing a ConcurrentModificationException. If a provider closes due to the indicated 
-		// program closing, this manager will get notified via the providerClosed method and 
-		// remove that provider from the functionComparisonProviders hashset.
-		FunctionComparisonProvider[] providers = functionComparisonProviders
-			.toArray(new FunctionComparisonProvider[functionComparisonProviders.size()]);
-		for (FunctionComparisonProvider functionComparisonProvider : providers) {
-			functionComparisonProvider.programClosed(program); // Allow the provider to close itself.
-		}
+		providers.stream().forEach(p -> p.programClosed(program));
 	}
 
 	/**
-	 * Cleans up since this manager is being disposed. All function comparison providers will
-	 * close and be cleaned up.
+	 * Removes any comparisons that contain a function from the given program
+	 * 
+	 * @param program the program whose functions require removal
+	 */
+	public void removeFunctions(Program program) {
+		providers.stream().forEach(p -> p.removeFunctions(program));
+	}
+
+	/**
+	 * Cleans up all providers, setting them invisible and removing any 
+	 * associated ui components (eg: tabs)
 	 */
 	public void dispose() {
-		for (FunctionComparisonProvider functionComparisonProvider : functionComparisonProviders) {
-			FunctionComparisonPanel functionComparisonPanel =
-				functionComparisonProvider.getComponent();
-			functionComparisonPanel.setVisible(false);
-			functionComparisonPanel.dispose();
+		for (FunctionComparisonProvider provider : providers) {
+			FunctionComparisonPanel panel = provider.getComponent();
+			panel.setVisible(false);
+			panel.dispose();
 		}
-		functionComparisonProviders.clear();
+		providers.clear();
 	}
 
 	/**
-	 * Called when there is an Undo/Redo. If a program is being restored, this will notify all the 
-	 * function comparison providers. This allows them to refresh if they are showing a function 
-	 * from the program.
-	 * @param ev the event indicating if this is an Undo/Redo on a program.
+	 * Called when there is an Undo/Redo. If a program is being restored, this 
+	 * will notify all the function comparison providers. This allows them to 
+	 * refresh if they are showing a function from the program
+	 * 
+	 * @param ev the object changed event
 	 */
 	public void domainObjectRestored(DomainObjectChangedEvent ev) {
 		for (DomainObjectChangeRecord domainObjectChangeRecord : ev) {
 			int eventType = domainObjectChangeRecord.getEventType();
-			if (eventType == DomainObject.DO_OBJECT_RESTORED) {
-				Object source = ev.getSource();
-				if (source instanceof Program) {
-					Program program = (Program) source;
-					for (FunctionComparisonProvider functionComparisonProvider : functionComparisonProviders) {
-						functionComparisonProvider.programRestored(program);
-					}
-				}
+			if (eventType != DomainObject.DO_OBJECT_RESTORED) {
+				return;
+			}
+			Object source = ev.getSource();
+			if (source instanceof Program) {
+				Program program = (Program) source;
+				providers.stream().forEach(p -> p.programRestored(program));
 			}
 		}
 	}

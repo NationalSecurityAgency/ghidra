@@ -72,7 +72,7 @@ public class CreateEHIPToStateMapBackgroundCmd
 	@Override
 	protected EHIPToStateModel createModel(Program program) {
 		if (model == null) {
-			model = new EHIPToStateModel(program, count, address, validationOptions);
+			model = new EHIPToStateModel(program, count, getDataAddress(), validationOptions);
 		}
 		return model;
 	}

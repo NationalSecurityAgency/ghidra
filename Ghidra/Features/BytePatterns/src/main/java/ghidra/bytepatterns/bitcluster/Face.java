@@ -24,7 +24,7 @@ import java.util.HashSet;
 public class Face extends DittedBitSequence implements Comparable<Face> {
 	private int weight;					//Typically represents the number of data points this face contains.
 	private double dit_ratio;			// 1 / (2 to the number of dits)
-	private HashSet<Face> children;		//A set of faces this face contains. (Used in the heirarchy of ditted pattern finding.)
+	private HashSet<Face> children;		//A set of faces this face contains. (Used in the hierarchy of ditted pattern finding.)
 	public String strID;				//A unique string ID. Two faces with the same ID ought to be thought of as the same.
 	private Pair<Face, Face> joinOf;	//Keep track of what pair of faces made this face (if it was created as a join).
 
@@ -47,7 +47,7 @@ public class Face extends DittedBitSequence implements Comparable<Face> {
 			this.children = new HashSet<Face>();
 			this.joinOf = new Pair<Face, Face>(f1, f2);			//We'll need to know *how* this edge was made.
 
-			//Set up the children for tracking heirarchy.
+			//Set up the children for tracking hierarchy.
 			for (Face kid : patterns) {
 				DittedBitSequence temp = new DittedBitSequence(this, kid);
 				if (temp.getNumUncertainBits() == this.getNumUncertainBits()) {				//Check to see if kid is a subface of this.

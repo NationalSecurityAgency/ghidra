@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +15,20 @@
  */
 package ghidra.program.database.external;
 
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 class OldExtNameAdapter {
 
 	final static String EXT_NAME_TABLE_NAME = "External Program Names";
 
-	static final Schema EXT_NAME_SCHEMA = new Schema(0, "Key", new Class[] { StringField.class,
-		StringField.class }, new String[] { "External Name", "External Pathname" });
+	static final Schema EXT_NAME_SCHEMA =
+		new Schema(0, "Key", new Field[] { StringField.INSTANCE, StringField.INSTANCE },
+			new String[] { "External Name", "External Pathname" });
 
 	static final int EXT_NAME_COL = 0;
 	static final int EXT_PATHNAME_COL = 1;
@@ -66,8 +65,8 @@ class OldExtNameAdapter {
 		return nameTable.getRecordCount();
 	}
 
-	private void moveTable(DBHandle handle, TaskMonitor monitor) throws IOException,
-			CancelledException {
+	private void moveTable(DBHandle handle, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		DBHandle tmpHandle = handle.getScratchPad();
 		Table newRefTable = tmpHandle.createTable(EXT_NAME_TABLE_NAME, EXT_NAME_SCHEMA);

@@ -20,6 +20,7 @@ import java.io.Serializable;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.*;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
 import org.apache.logging.log4j.core.config.plugins.*;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 
@@ -41,19 +42,20 @@ public class LogPanelAppender extends AbstractAppender {
 	private LogListener logListener;
 
 	protected LogPanelAppender(String name, Filter filter, Layout<? extends Serializable> layout) {
-		super(name, filter, layout);
+		super(name, filter, layout, true, Property.EMPTY_ARRAY);
 	}
 
 	@Override
 	public void append(LogEvent event) {
 
+		if (logListener == null) {
+			return;
+		}
+		
 		// An error is identified as any log that is tagged ERROR or FATAL.
 		boolean isError = event.getLevel().isMoreSpecificThan(Level.ERROR);
 		String message = event.getMessage().getFormattedMessage();
-
-		if (logListener != null) {
-			logListener.messageLogged(message, isError);
-		}
+		logListener.messageLogged(message, isError);
 	}
 
 	@PluginFactory

@@ -29,7 +29,7 @@ import ghidra.util.Msg;
  * 
  * Base abstract data type for a Dynamic structure data type that contains
  * some number of repeated data types.  After each data type, including the header
- * there is a terminator value which specifies wether there are any more data structures
+ * there is a terminator value which specifies whether there are any more data structures
  * following.  TerminatorValue can be 1,2,4,or 8 bytes.
  * 
  * The dynamic structure looks like this:

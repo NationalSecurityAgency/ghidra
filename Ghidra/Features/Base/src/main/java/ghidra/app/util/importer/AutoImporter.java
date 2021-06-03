@@ -17,7 +17,8 @@ package ghidra.app.util.importer;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Predicate;
 
 import generic.stl.Pair;
@@ -202,61 +203,17 @@ public final class AutoImporter {
 
 	private static LoadSpec getLoadSpec(Predicate<Loader> loaderFilter,
 			LoadSpecChooser loadSpecChooser, ByteProvider provider) {
-		Map<Loader, Collection<LoadSpec>> loadMap =
-			LoaderService.getSupportedLoadSpecs(provider, loaderFilter);
+		LoaderMap loaderMap = LoaderService.getSupportedLoadSpecs(provider, loaderFilter);
 
-		List<LoadSpec> allLoadSpecs = new ArrayList<>();
-		for (Collection<LoadSpec> loadSpecs : loadMap.values()) {
-			allLoadSpecs.addAll(loadSpecs);
-		}
-
-		// "count" up our preferred (we really only care about 0, 1, and >1)
-		int preferredCount = 0;
-		LoadSpec preferred = null;
-		for (LoadSpec op : allLoadSpecs) {
-			if (op.isPreferred()) {
-				if (preferred == null) {
-					preferred = op;
-					preferredCount = 1;
-					continue;
-				}
-				preferredCount = 2;
-				break;
-			}
+		LoadSpec loadSpec = loadSpecChooser.choose(loaderMap);
+		if (loadSpec != null) {
+			return loadSpec;
 		}
 
-		// if we had just one load spec, we forcefully consider it preferred
-		if (allLoadSpecs.size() == 1) {
-			preferredCount = 1;
-			preferred = allLoadSpecs.get(0);
-		}
-
-		// not just one preferred loadSpec? ask loadSpec chooser
-		LoadSpec loadSpec;
-		if (loadSpecChooser.usePreferred() && preferredCount == 1) {
-			loadSpec = preferred;
-		}
-		else {
-			loadSpec = loadSpecChooser.choose(allLoadSpecs);
-		}
-
-		// loadSpec chooser tell us it can't pick one? can't import
-		if (loadSpec == null) {
-			File f = provider.getFile();
-			String name = f != null ? f.getAbsolutePath() : provider.getName();
-			Msg.info(AutoImporter.class, "No load spec found for import file: " + name);
-			return null;
-		}
-
-		if (allLoadSpecs.size() > 1) {
-			for (LoadSpec unusedLoadSpec : allLoadSpecs) {
-				if (unusedLoadSpec.getLoader().getTier() != LoaderTier.UNTARGETED_LOADER &&
-					!unusedLoadSpec.equals(loadSpec)) {
-					Msg.trace(AutoImporter.class, "discarding load spec " + unusedLoadSpec);
-				}
-			}
-		}
-		return loadSpec;
+		File f = provider.getFile();
+		String name = f != null ? f.getAbsolutePath() : provider.getName();
+		Msg.info(AutoImporter.class, "No load spec found for import file: " + name);
+		return null;
 	}
 
 	private static List<Program> getPrograms(List<DomainObject> domainObjects) {
@@ -268,85 +225,5 @@ public final class AutoImporter {
 		}
 
 		return programs;
-	}
-
-	public static boolean importAddToProgram(File file, Program program, MessageLog messageLog,
-			TaskMonitor monitor, Predicate<Loader> loaderFilter, LoadSpecChooser loadSpecChooser,
-			OptionChooser optionChooser) throws IOException, CancelledException {
-		if (file == null) {
-			return false;
-		}
-
-		LoadSpec loadSpec = null;
-		try (RandomAccessByteProvider provider = new RandomAccessByteProvider(file)) {
-			Map<Loader, Collection<LoadSpec>> loadMap =
-				LoaderService.getSupportedLoadSpecs(provider, loaderFilter);
-
-			List<LoadSpec> allLoadSpecs = new ArrayList<>();
-			for (Collection<LoadSpec> loadSpecs : loadMap.values()) {
-				allLoadSpecs.addAll(loadSpecs);
-			}
-
-			// "count" up our preferred (we really only care about 0, 1, and >1)
-			int preferredCount = 0;
-			LoadSpec preferred = null;
-			for (LoadSpec op : allLoadSpecs) {
-				if (op.isPreferred()) {
-					if (preferred == null) {
-						preferred = op;
-						preferredCount = 1;
-						continue;
-					}
-					preferredCount = 2;
-					break;
-				}
-			}
-
-			// if we had just one load spec, we forcefully consider it preferred
-			if (allLoadSpecs.size() == 1) {
-				preferredCount = 1;
-				preferred = allLoadSpecs.get(0);
-			}
-
-			// not just one preferred loadSpec? ask loadSpec chooser
-			if (loadSpecChooser.usePreferred() && preferredCount == 1) {
-				loadSpec = preferred;
-			}
-			else {
-				loadSpec = loadSpecChooser.choose(allLoadSpecs);
-			}
-
-			// loadSpec chooser tell us it can't pick one? can't import
-			if (loadSpec == null) {
-				File f = provider.getFile();
-				String name = f != null ? f.getAbsolutePath() : provider.getName();
-				Msg.info(AutoImporter.class, "No load spec found for import file: " + name);
-				return false;
-			}
-
-			LanguageCompilerSpecPair programPair = new LanguageCompilerSpecPair(
-				program.getLanguageID(), program.getCompilerSpec().getCompilerSpecID());
-			// loadSpec doesn't match current program
-			if (!loadSpec.getLanguageCompilerSpec().equals(programPair)) {
-				Msg.info(AutoImporter.class,
-					"Import file load spec does not match add-to program: " +
-						file.getAbsolutePath());
-				return false;
-			}
-		}
-
-		List<Option> options = null;
-		try (RandomAccessByteProvider provider = new RandomAccessByteProvider(file)) {
-			List<Option> optionChoices =
-				loadSpec.getLoader().getDefaultOptions(provider, loadSpec, program, true);
-			options = optionChooser.choose(optionChoices,
-				DefaultLanguageService.getLanguageService().getLanguage(
-					loadSpec.getLanguageCompilerSpec().languageID).getAddressFactory());
-		}
-
-		try (RandomAccessByteProvider provider = new RandomAccessByteProvider(file)) {
-			return loadSpec.getLoader().loadInto(provider, loadSpec, options, messageLog, program,
-				monitor);
-		}
 	}
 }

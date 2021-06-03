@@ -56,9 +56,6 @@ public class AssignedVariableFieldFactory extends FieldFactory {
 		super(FIELD_NAME, model, hsProvider, displayOptions, fieldOptions);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#fieldOptionsChanged(ghidra.framework.options.ToolOptions, java.lang.String, java.lang.Object, java.lang.Object)
-	 */
 	@Override
 	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
@@ -119,9 +116,6 @@ public class AssignedVariableFieldFactory extends FieldFactory {
 			width, elements.length + 1, hlProvider);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getProgramLocation(int, int, ghidra.app.util.viewer.field.ListingField)
-	 */
 	@Override
 	public ProgramLocation getProgramLocation(int row, int col, ListingField bf) {
 		Object obj = bf.getProxy().getObject();
@@ -132,9 +126,6 @@ public class AssignedVariableFieldFactory extends FieldFactory {
 		return new AssignedVariableLocation(cu.getProgram(), cu.getMinAddress(), row, col);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getFieldLocation(ghidra.app.util.viewer.field.ListingField, BigInteger, int, ghidra.program.util.ProgramLocation)
-	 */
 	@Override
 	public FieldLocation getFieldLocation(ListingField bf, BigInteger index, int fieldNum,
 			ProgramLocation programLoc) {
@@ -146,9 +137,6 @@ public class AssignedVariableFieldFactory extends FieldFactory {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#acceptsType(int, java.lang.Class)
-	 */
 	@Override
 	public boolean acceptsType(int category, Class<?> proxyObjectClass) {
 		if (!CodeUnit.class.isAssignableFrom(proxyObjectClass)) {
@@ -164,9 +152,6 @@ public class AssignedVariableFieldFactory extends FieldFactory {
 			fieldOptions);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getDefaultColor()
-	 */
 	@Override
 	public Color getDefaultColor() {
 		return DEFAULT_COLOR;

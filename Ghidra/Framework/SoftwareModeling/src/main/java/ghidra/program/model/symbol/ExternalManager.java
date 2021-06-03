@@ -118,14 +118,26 @@ public interface ExternalManager {
 
 	/**
 	 * Returns a list of External Locations matching the given label name in the given Namespace.
-	 * @param the Namespace to search
+	 * @param namespace the Namespace to search
 	 * @param label the name of the labels to search for.
 	 * @return a list of External Locations matching the given label name in the given Namespace.
 	 */
 	public List<ExternalLocation> getExternalLocations(Namespace namespace, String label);
 
+	/**
+	 * Returns the unique external location associated with the given library name and label
+	 * @param libraryName the library name
+	 * @param label the label of the external location
+	 * @return the unique external location or null
+	 */
 	public ExternalLocation getUniqueExternalLocation(String libraryName, String label);
 
+	/**
+	 * Returns the unique external location associated with the given namespace and label
+	 * @param namespace the namespace
+	 * @param label the label of the external location
+	 * @return the unique external location or null
+	 */
 	public ExternalLocation getUniqueExternalLocation(Namespace namespace, String label);
 
 	/**
@@ -154,10 +166,10 @@ public interface ExternalManager {
 	/**
 	 * Get or create an external location associated with an library/file named extName
 	 * and the label within that file specified by extLabel
-	 * @param extName
-	 * @param extLabel
-	 * @param extAddr
-	 * @param source the source of this external library's symbol
+	 * @param extName the external name
+	 * @param extLabel the external label
+	 * @param extAddr the external address
+	 * @param sourceType the source type of this external library's symbol
 	 * @return external location
 	 * @throws InvalidInputException
 	 * @throws DuplicateNameException
@@ -167,10 +179,10 @@ public interface ExternalManager {
 
 	/**
 	 * Get or create an external location in the indicated parent namespace with the specified name.
-	 * @param extNameSpace
-	 * @param extLabel
-	 * @param extAddr
-	 * @param source the source of this external library's symbol
+	 * @param extNamespace the external namespace
+	 * @param extLabel the external label
+	 * @param extAddr the external address
+	 * @param sourceType the source type of this external library's symbol
 	 * @return external location
 	 * @throws InvalidInputException
 	 * @throws DuplicateNameException
@@ -180,10 +192,10 @@ public interface ExternalManager {
 
 	/**
 	 * Get or create an external location in the indicated parent namespace with the specified name.
-	 * @param extNameSpace
-	 * @param extLabel
-	 * @param extAddr
-	 * @param source the source of this external library's symbol
+	 * @param extNamespace the external namespace
+	 * @param extLabel the external label
+	 * @param extAddr the external address
+	 * @param sourceType the source type of this external library's symbol
 	 * @param reuseExisting if true, this will return an existing matching external
 	 * location instead of creating a new one.
 	 * @return external location
@@ -197,10 +209,10 @@ public interface ExternalManager {
 	/**
 	 * Get or create an external location associated with an library/file named extName
 	 * and the label within that file specified by extLabel
-	 * @param extName
-	 * @param extLabel
-	 * @param extAddr
-	 * @param source the source of this external library's symbol
+	 * @param extName the external name
+	 * @param extLabel the external label
+	 * @param extAddr the external address
+	 * @param sourceType the source type of this external library's symbol
 	 * @return external location
 	 * @throws InvalidInputException
 	 * @throws DuplicateNameException
@@ -211,10 +223,10 @@ public interface ExternalManager {
 	/**
 	 * Get or create an external function location associated with an library/file named extName
 	 * and the label within that file specified by extLabel
-	 * @param extNamespace
-	 * @param extLabel
-	 * @param extAddr
-	 * @param source the source of this external library's symbol
+	 * @param extNamespace the external namespace
+	 * @param extLabel the external label
+	 * @param extAddr the external address
+	 * @param sourceType the source type of this external library's symbol
 	 * @return external location
 	 * @throws InvalidInputException
 	 * @throws DuplicateNameException if another non-Library namespace has the same name
@@ -225,9 +237,9 @@ public interface ExternalManager {
 	/**
 	 * Get or create an external function location associated with an library/file named extName
 	 * and the label within that file specified by extLabel
-	 * @param extNamespace
-	 * @param extLabel
-	 * @param source the source of this external library's symbol
+	 * @param extNamespace the external namespace
+	 * @param extLabel the external label
+	 * @param sourceType the source type of this external library's symbol
 	 * @param reuseExisting if true, will return any existing matching location instead of
 	 * creating a new one. If false, will prefer to create a new one as long as the specified
 	 * address is not null and not used in an existing location.

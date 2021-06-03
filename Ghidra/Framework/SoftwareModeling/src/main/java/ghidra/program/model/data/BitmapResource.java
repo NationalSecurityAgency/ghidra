@@ -319,6 +319,11 @@ public class BitmapResource {
 		public ImageIcon getImageIcon() {
 			return ResourceManager.getImageIconFromImage("Bitmap Data Image", image);
 		}
+
+		@Override
+		public String getImageFileType() {
+			return "bmp";
+		}
 	}
 
 	/**

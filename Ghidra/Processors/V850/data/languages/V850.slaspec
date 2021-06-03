@@ -1,0 +1,37 @@
+#####################################################
+#####						#####
+#####	     V850E2M SLEIGH specification 	#####
+#####						#####
+#####################################################
+
+define endian = little;
+define alignment = 2;
+
+# Size & default are required
+define space  ram       type=ram_space      size=4  default;
+define space  register  type=register_space size=4;
+
+
+
+#####################################################
+#####	     		Helpers 		#####
+#####################################################
+
+@include "./Helpers/Register.sinc"
+@include "./Helpers/Tokens.sinc"
+@include "./Helpers/Variables.sinc"
+@include "./Helpers/Conditions.sinc"
+@include "./Helpers/Macros.sinc"
+@include "./Helpers/Extras.sinc"
+
+
+
+#####################################################
+#####	     	    Instructions		#####
+#####################################################
+
+@include "./Instructions/Arithmetic.sinc"
+@include "./Instructions/Float.sinc"
+@include "./Instructions/Load_Store.sinc"
+@include "./Instructions/Logic.sinc"
+@include "./Instructions/Special.sinc"

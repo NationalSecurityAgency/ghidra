@@ -41,8 +41,21 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		"Edge Color - Unconditional Jump ";
 	private static final String EDGE_COLOR_CONDITIONAL_JUMP_KEY = "Edge Color - Conditional Jump ";
 
+	//@formatter:off
+	private static final String NAVIGATION_HISTORY_KEY = "Navigation History";
+	private static final String NAVIGATION_HISTORY_DESCRIPTION =
+		"Determines how the navigation history will be updated when using the Function Graph. " +
+		"The basic options are:" +
+		"<ul>" +
+	    "<li><b>Navigation Events</b> - save a history entry when a navigation takes place " +
+	    	"(e.g., double-click or Go To event)</li>" +
+	    "<li><b>Vertex Changes</b> - save a history entry each time a new vertex is selected</li>" +
+	    "</ul>" +
+	    "<b><i>See help for more</i></b>";
+	//@formatter:on
+
 	private static final String USE_FULL_SIZE_TOOLTIP_KEY = "Use Full-size Tooltip";
-	private static final String USE_FULL_SIZE_TOOLTIP_DESCRIPTION = "Signals to use the " + "" +
+	private static final String USE_FULL_SIZE_TOOLTIP_DESCRIPTION = "Signals to use the " +
 		"full-size vertex inside of the tooltip popup.  When enabled the tooltip vertex will " +
 		"use the same format size as the Listing.  When disabled, the vertex will use the " +
 		"same format size as in the Function Graph.";
@@ -57,6 +70,10 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		"<li><b>Never</b> - do not automatically relayout the graph</li></ul><br><br>" +
 		"<b><i>See help for more</i></b>";
 
+	private static final String DEFAULT_VERTEX_BACKGROUND_COLOR_KEY = "Default Vertex Color";
+	private static final String DEFAULT_VERTEX_BACKGROUND_COLOR_DESCRPTION =
+		"The default background color applied to each vertex";
+
 	private static final String DEFAULT_GROUP_BACKGROUND_COLOR_KEY = "Default Group Color";
 	private static final String DEFAULT_GROUP_BACKGROUND_COLOR_DESCRPTION =
 		"The default background color applied to newly created group vertices";
@@ -67,10 +84,13 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		"Signals that any user color changes to a group vertex will apply that same color to " +
 			"all grouped vertices as well.";
 
+	public static final Color DEFAULT_VERTEX_BACKGROUND_COLOR = Color.WHITE;
 	public static final Color DEFAULT_GROUP_BACKGROUND_COLOR = new Color(226, 255, 155);
 	private static final Color HOVER_HIGHLIGHT_FALL_THROUGH_COLOR = new Color(255, 127, 127);
 	private static final Color HOVER_HIGHLIGHT_UNCONDITIONAL_COLOR = new Color(127, 127, 255);
 	private static final Color HOVER_HIGHLIGHT_CONDITIONAL_COLOR = Color.GREEN;
+
+	private Color defaultVertexBackgroundColor = DEFAULT_VERTEX_BACKGROUND_COLOR;
 
 	private boolean updateGroupColorsAutomatically = true;
 	private Color defaultGroupBackgroundColor = DEFAULT_GROUP_BACKGROUND_COLOR;
@@ -85,9 +105,15 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 
 	private boolean useFullSizeTooltip = false;
 
-	private RelayoutOption relayoutOption = RelayoutOption.NEVER;
+	private RelayoutOption relayoutOption = RelayoutOption.VERTEX_GROUPING_CHANGES;
+	private NavigationHistoryChoices navigationHistoryChoice =
+		NavigationHistoryChoices.VERTEX_CHANGES;
 
 	private Map<String, FGLayoutOptions> layoutOptionsByName = new HashMap<>();
+
+	public Color getDefaultVertexBackgroundColor() {
+		return defaultVertexBackgroundColor;
+	}
 
 	public Color getDefaultGroupBackgroundColor() {
 		return defaultGroupBackgroundColor;
@@ -125,6 +151,10 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		return relayoutOption;
 	}
 
+	public NavigationHistoryChoices getNavigationHistoryChoice() {
+		return navigationHistoryChoice;
+	}
+
 	public boolean useFullSizeTooltip() {
 		return useFullSizeTooltip;
 	}
@@ -134,8 +164,11 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		HelpLocation help = new HelpLocation(OWNER, "Options");
 		options.setOptionsHelpLocation(help);
 
-		options.registerOption(RELAYOUT_OPTIONS_KEY, RelayoutOption.VERTEX_GROUPING_CHANGES, help,
+		options.registerOption(RELAYOUT_OPTIONS_KEY, relayoutOption, help,
 			RELAYOUT_OPTIONS_DESCRIPTION);
+
+		options.registerOption(NAVIGATION_HISTORY_KEY, navigationHistoryChoice, help,
+			NAVIGATION_HISTORY_DESCRIPTION);
 
 		options.registerOption(SHOW_ANIMATION_OPTIONS_KEY, useAnimation(), help,
 			SHOW_ANIMATION_DESCRIPTION);
@@ -151,6 +184,12 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 
 		options.registerOption(SCROLL_WHEEL_PANS_KEY, getScrollWheelPans(), help,
 			SCROLL_WHEEL_PANS_DESCRIPTION);
+
+		options.registerOption(GRAPH_BACKGROUND_COLOR_KEY, DEFAULT_GRAPH_BACKGROUND_COLOR, help,
+			GRAPH_BACKGROUND_COLOR_DESCRPTION);
+
+		options.registerOption(DEFAULT_VERTEX_BACKGROUND_COLOR_KEY, DEFAULT_VERTEX_BACKGROUND_COLOR,
+			help, DEFAULT_VERTEX_BACKGROUND_COLOR_DESCRPTION);
 
 		options.registerOption(DEFAULT_GROUP_BACKGROUND_COLOR_KEY, DEFAULT_GROUP_BACKGROUND_COLOR,
 			help, DEFAULT_GROUP_BACKGROUND_COLOR_DESCRPTION);
@@ -201,8 +240,10 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		fallthroughEdgeHighlightColor =
 			options.getColor(EDGE_FALLTHROUGH_HIGHLIGHT_COLOR_KEY, fallthroughEdgeHighlightColor);
 
-		relayoutOption =
-			options.getEnum(RELAYOUT_OPTIONS_KEY, RelayoutOption.VERTEX_GROUPING_CHANGES);
+		relayoutOption = options.getEnum(RELAYOUT_OPTIONS_KEY, relayoutOption);
+
+		navigationHistoryChoice =
+			options.getEnum(NAVIGATION_HISTORY_KEY, NavigationHistoryChoices.VERTEX_CHANGES);
 
 		useAnimation = options.getBoolean(SHOW_ANIMATION_OPTIONS_KEY, useAnimation);
 
@@ -217,6 +258,12 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 			options.getEnum(VIEW_RESTORE_OPTIONS_KEY, ViewRestoreOption.START_FULLY_ZOOMED_OUT);
 
 		scrollWheelPans = options.getBoolean(SCROLL_WHEEL_PANS_KEY, scrollWheelPans);
+
+		graphBackgroundColor =
+			options.getColor(GRAPH_BACKGROUND_COLOR_KEY, DEFAULT_GRAPH_BACKGROUND_COLOR);
+
+		defaultVertexBackgroundColor =
+			options.getColor(DEFAULT_VERTEX_BACKGROUND_COLOR_KEY, DEFAULT_VERTEX_BACKGROUND_COLOR);
 
 		defaultGroupBackgroundColor =
 			options.getColor(DEFAULT_GROUP_BACKGROUND_COLOR_KEY, DEFAULT_GROUP_BACKGROUND_COLOR);
@@ -284,5 +331,4 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 	public void setLayoutOptions(String layoutName, FGLayoutOptions options) {
 		layoutOptionsByName.put(layoutName, options);
 	}
-
 }

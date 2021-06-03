@@ -15,8 +15,7 @@
  */
 package db;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
@@ -47,13 +46,14 @@ public class TableConcurrencyTest extends AbstractGenericTest {
 
 		dbh = new DBHandle(BUFFER_SIZE, CACHE_SIZE);
 		txId = dbh.startTransaction();
-		table1 = DBTestUtils.createLongKeyTable(dbh, "TABLE1", DBTestUtils.SINGLE_LONG, false);
+		table1 =
+			DBTestUtils.createLongKeyTable(dbh, "TABLE1", DBTestUtils.SINGLE_LONG, false, false);
 		table2 = DBTestUtils.createBinaryKeyTable(dbh, "TABLE2", DBTestUtils.SINGLE_LONG, false);
 		schema1 = table1.getSchema();
 		schema2 = table2.getSchema();
 		for (byte i = 0; i < 100; i++) {
 
-			Record rec = schema1.createRecord(i);
+			DBRecord rec = schema1.createRecord(i);
 			rec.setLongValue(0, i);
 			table1.putRecord(rec);
 
@@ -226,7 +226,7 @@ public class TableConcurrencyTest extends AbstractGenericTest {
 			table1.deleteRecord(10);// iterator already primed
 
 			assertTrue(iter.hasNext());
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(10, rec.getKey());
 
 			assertTrue(iter.hasNext());
@@ -271,7 +271,7 @@ public class TableConcurrencyTest extends AbstractGenericTest {
 			table1.deleteRecord(10);// iterator already primed
 
 			assertTrue(iter.hasPrevious());
-			Record rec = iter.previous();
+			DBRecord rec = iter.previous();
 			assertEquals(10, rec.getKey());
 
 			assertTrue(iter.hasPrevious());
@@ -458,7 +458,7 @@ public class TableConcurrencyTest extends AbstractGenericTest {
 			table2.deleteRecord(getField((byte) 10));// iterator already primed
 
 			assertTrue(iter.hasNext());
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(getField((byte) 10), rec.getKeyField());
 
 			assertTrue(iter.hasNext());

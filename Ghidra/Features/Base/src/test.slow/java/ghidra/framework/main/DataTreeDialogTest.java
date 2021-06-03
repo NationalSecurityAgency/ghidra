@@ -15,8 +15,7 @@
  */
 package ghidra.framework.main;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -25,7 +24,8 @@ import javax.swing.tree.TreeModel;
 
 import org.junit.*;
 
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import ghidra.framework.main.datatree.ProjectDataTreePanel;
 import ghidra.framework.model.*;
 import ghidra.program.database.ProgramBuilder;
@@ -62,8 +62,8 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		Program p = builder.getProgram();
 		rootFolder.createFile("notepad", p, TaskMonitorAdapter.DUMMY_MONITOR);
 		rootFolder.createFile("XNotepad", p, TaskMonitorAdapter.DUMMY_MONITOR);
-		for (int i = 0; i < names.length; i++) {
-			rootFolder.createFile(names[i], p, TaskMonitorAdapter.DUMMY_MONITOR);
+		for (String name : names) {
+			rootFolder.createFile(name, p, TaskMonitorAdapter.DUMMY_MONITOR);
 		}
 		builder.dispose();
 
@@ -249,7 +249,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		final AtomicBoolean result = new AtomicBoolean(false);
 		final GTree gTree = getGTree();
 		runSwing(() -> {
-			GTreeRootNode node = gTree.getRootNode();
+			GTreeNode node = gTree.getViewRoot();
 			if (node != null) {
 				gTree.expandPath(node);
 				gTree.setSelectedNode(node);
@@ -307,7 +307,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		final AtomicBoolean result = new AtomicBoolean(false);
 		final GTree gTree = getGTree();
 		runSwing(() -> {
-			GTreeRootNode root = gTree.getRootNode();
+			GTreeNode root = gTree.getModelRoot();
 			GTreeNode node = root.getChild(name);
 			if (node != null) {
 				gTree.expandPath(node);

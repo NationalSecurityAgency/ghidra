@@ -72,10 +72,17 @@ public class DefinedStringIteratorTest extends AbstractGhidraHeadlessIntegration
 		builder.createEncodedString("0x500", "This is the last string", StandardCharsets.US_ASCII,
 			false);
 
+		ArrayDataType charArray = new ArrayDataType(new CharDataType(), 50, 1);
+		builder.createString("0x600", "The 600 chararray", StandardCharsets.US_ASCII, true,
+			charArray);
+
 		// create an empty area for tests to do their own thing
-		builder.createUninitializedMemory("uninitialized", "0x3000", 100);
+		builder.createUninitializedMemory("uninitialized", "0x3000", 0x1000);
+		builder.applyDataType("0x3100", charArray);
+		builder.applyFixedLengthDataType("0x3200", new StringDataType(), 10);
 
 		program = builder.getProgram();
+
 	}
 
 	@Test
@@ -116,6 +123,11 @@ public class DefinedStringIteratorTest extends AbstractGhidraHeadlessIntegration
 		foundString = iterator.next();
 		assertEquals(addr(0x500), foundString.getAddress());
 		assertEquals("This is the last string", foundString.getString(program.getMemory()));
+
+		assertTrue(iterator.hasNext());
+		foundString = iterator.next();
+		assertEquals(addr(0x600), foundString.getAddress());
+		assertEquals("The 600 chararray", foundString.getString(program.getMemory()));
 
 		assertFalse(iterator.hasNext());
 	}

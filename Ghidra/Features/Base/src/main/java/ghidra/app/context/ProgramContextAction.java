@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +14,6 @@
  * limitations under the License.
  */
 package ghidra.app.context;
-
-import java.util.Set;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
@@ -51,15 +48,7 @@ public abstract class ProgramContextAction extends DockingAction {
 		}
 		return isValidContext((ProgramActionContext)context);
 	}
-	@Override
-	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-		for (Class<?> class1 : contextTypes) {
-			if (ProgramActionContext.class.isAssignableFrom(class1)) {
-				return true;
-			}
-		}
-		return false;
-	}
+
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
 		if (!(context instanceof ProgramActionContext)) {

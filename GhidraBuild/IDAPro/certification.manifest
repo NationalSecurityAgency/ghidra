@@ -1,11 +1,4 @@
 ##VERSION: 2.0
 Python/6xx/README.html||GHIDRA||||END|
-Python/6xx/loaders/xmlldr.py||GHIDRA||||END|
-Python/6xx/plugins/xmlexp.py||GHIDRA||||END|
 Python/7xx/README.html||GHIDRA||||END|
-Python/7xx/loaders/xml_loader.py||GHIDRA||||END|
-Python/7xx/plugins/xml_exporter.py||GHIDRA||||END|
-Python/7xx/plugins/xml_importer.py||GHIDRA||||END|
-Python/7xx/python/idaxml.py||GHIDRA||||END|
 README.html||GHIDRA||||END|
-build.gradle||GHIDRA||||END|

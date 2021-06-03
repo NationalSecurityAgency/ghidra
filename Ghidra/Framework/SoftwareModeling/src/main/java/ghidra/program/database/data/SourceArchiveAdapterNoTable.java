@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,8 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.SourceArchive;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.VersionException;
 
@@ -26,14 +25,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 
 /**
  * Adapter needed for a read-only version of data type manager that is not going
  * to be upgraded, and there is no Data Type Archive ID table in the data type manager.
  */
 class SourceArchiveAdapterNoTable extends SourceArchiveAdapter {
-	private static Record LOCAL_RECORD;
+	private static DBRecord LOCAL_RECORD;
 	static {
 
 		LOCAL_RECORD = SCHEMA.createRecord(DataTypeManager.LOCAL_ARCHIVE_KEY);
@@ -54,7 +53,7 @@ class SourceArchiveAdapterNoTable extends SourceArchiveAdapter {
 	}
 
 	@Override
-	Record createRecord(SourceArchive sourceArchive) throws IOException {
+	DBRecord createRecord(SourceArchive sourceArchive) throws IOException {
 		throw new UnsupportedOperationException(
 			"Not allowed to update version prior to existence of the Data Type Archive ID table.");
 	}
@@ -64,7 +63,7 @@ class SourceArchiveAdapterNoTable extends SourceArchiveAdapter {
 	}
 
 	@Override
-	Record getRecord(long key) throws IOException {
+	DBRecord getRecord(long key) throws IOException {
 		if (key == DataTypeManager.LOCAL_ARCHIVE_KEY) {
 			return LOCAL_RECORD;
 		}
@@ -72,8 +71,8 @@ class SourceArchiveAdapterNoTable extends SourceArchiveAdapter {
 	}
 
 	@Override
-	List<Record> getRecords() {
-		List<Record> records = new ArrayList<Record>();
+	List<DBRecord> getRecords() {
+		List<DBRecord> records = new ArrayList<DBRecord>();
 		records.add(LOCAL_RECORD);
 		return records;
 	}
@@ -84,7 +83,7 @@ class SourceArchiveAdapterNoTable extends SourceArchiveAdapter {
 	}
 
 	@Override
-	void updateRecord(Record record) throws IOException {
+	void updateRecord(DBRecord record) throws IOException {
 		throw new UnsupportedOperationException("updateRecord not supported");
 	}
 

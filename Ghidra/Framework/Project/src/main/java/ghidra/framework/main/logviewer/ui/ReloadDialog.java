@@ -30,8 +30,9 @@ import ghidra.framework.main.logviewer.event.FVEventListener;
  * Simple warning dialog for letting the user know when the input file has been updated. This 
  * includes an option allowing the user to opt-out of seeing subsequent pop-ups.
  * 
- * Note: The Ghidra {@link OptionPanel} is not sufficient for this as it doesn't allow for
- * custom objects to be displayed (the opt-out checkbox).
+ * Note: The Ghidra {@link docking.options.editor.OptionsPanel OptionsPanel}
+ * is not sufficient for this as it doesn't allow for custom objects to be
+ * displayed (the opt-out checkbox).
  *
  */
 public class ReloadDialog extends JDialog {

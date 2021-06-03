@@ -58,7 +58,7 @@ import ghidra.util.task.SwingUpdateManager;
  * completion is possible, it is automatically activated. This logic is applied again and again,
  * until either no suggestions are given, or more than one suggestion is given (or until the
  * autocompleter detects an infinite loop). This behavior can by modified on an item-by-item basis
- * by overriding the {@link #getCompletionCanDefault(T)} method. This same behavior can be
+ * by overriding the {@link #getCompletionCanDefault(Object) getCompletionCanDefault(T)} method. This same behavior can be
  * activated by calling the {@link #startCompletion(JTextField)} method, which may be useful, e.g.,
  * to bind a different key sequence to start autocompletion.
  * 
@@ -70,21 +70,20 @@ import ghidra.util.task.SwingUpdateManager;
  * The simplest use case is to create a text field, create an autocompleter with a custom model,
  * and then attach and show.
  * 
- * {@code
+ *
  * <pre>
  * JTextField field = new JTextField();
  * 
- * AutocompletionModel<String> model = new AutocompletionModel<String>() {
- *     @Override
- *     public Collection<String> computeCompletions(String text) {
+ * {@code AutocompletionModel<String> model = new AutocompletionModel<String>() }{
+ *     &#64;Override
+ *     {@code public Collection<String> computeCompletions(String text)} {
  *         ... // Populate the completion list based on the given prefix.
  *     }
  * }
- * TextFieldAutocompleter<String> completer = new TextFieldAutocompleter<String>(model);
+ * {@code TextFieldAutocompleter<String> completer = new TextFieldAutocompleter<String>(model);
  * completer.attachTo(field);
  * ... // Add the field to, e.g., a dialog, and show.
- * </pre>
- * }
+ * }</pre>
  * 
  * @param <T> the type of suggestions presented by this autocompleter.
  */
@@ -447,7 +446,7 @@ public class TextFieldAutocompleter<T> {
 	 * 
 	 * A programmer may override this if the various {@code getCompletion...} methods prove
 	 * insufficient for customizing the display of the suggestions. Please remember that
-	 * {@link JLabels} can render HTML, so {@link #getCompletionDisplay(T)} is quite powerful
+	 * {@link JLabel}s can render HTML, so {@link #getCompletionDisplay(Object) getCompletionDisplay(T)} is quite powerful
 	 * with the default {@link AutocompletionCellRenderer}.
 	 * @return a list cell renderer for the completion list.
 	 */
@@ -679,12 +678,12 @@ public class TextFieldAutocompleter<T> {
 	 * Starts the autocompleter on the given text field.
 	 * 
 	 * First, this repeatedly attempts auto-activation. When there are many suggestions, or when
-	 * auto-activation is prevented (see {@link #getCompletionCanDefault(T)}), a list is displayed
+	 * auto-activation is prevented (see {@link #getCompletionCanDefault(Object) getCompletionCanDefault(T)}), a list is displayed
 	 * (usually below the caret) containing the suggestions given the fields current contents. The
 	 * list remains open until either the user cancels it (usually via ESC) or the user activates
 	 * a suggestion. 
 	 * 
-	 * @note The text field must already be attached.
+	 * NOTE: The text field must already be attached.
 	 * @param field the field on which to start autocompletion.
 	 */
 	public void startCompletion(JTextField field) {

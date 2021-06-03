@@ -221,4 +221,5 @@ public abstract class AbstractJavaAnalyzer implements Analyzer {
 	protected Address find(Program program, Address start, byte[] values, TaskMonitor monitor) {
 		return program.getMemory().findBytes(start, values, null, true, monitor);
 	}
+
 }

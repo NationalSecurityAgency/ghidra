@@ -35,7 +35,7 @@ public class TreeTestUtils {
 		if (text.equals(node.getName())) {
 			return node.getTreePath();
 		}
-		List<GTreeNode> allChildren = node.getAllChildren();
+		List<GTreeNode> allChildren = node.getChildren();
 		for (GTreeNode childNode : allChildren) {
 			TreePath treePath = findPathToText(tree, childNode, text);
 			if (treePath != null) {

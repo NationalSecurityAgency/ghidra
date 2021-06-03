@@ -1,0 +1,170 @@
+# sleigh specification file for Motorola 6809/Hitachi 6309
+
+################################################################
+# EXG, TFR helper
+################################################################
+
+@ifdef H6309
+EXG_r0Tmp: D    is reg0_exg=0 & D   { exg16_r0 = D; }
+EXG_r0Tmp: X    is reg0_exg=1 & X   { exg16_r0 = X; }
+EXG_r0Tmp: Y    is reg0_exg=2 & Y   { exg16_r0 = Y; }
+EXG_r0Tmp: U    is reg0_exg=3 & U   { exg16_r0 = U; }
+EXG_r0Tmp: S    is reg0_exg=4 & S   { exg16_r0 = S; }
+EXG_r0Tmp: PC   is reg0_exg=5 & PC  { exg16_r0 = inst_next; }
+EXG_r0Tmp: W    is reg0_exg=6 & W   { exg16_r0 = 0x0; }
+EXG_r0Tmp: V    is reg0_exg=7 & V   { exg16_r0 = 0x0; }
+EXG_r0Tmp: A    is reg0_exg=8 & A   { exg8l_r0 = A; exg8h_r0 = A; }
+EXG_r0Tmp: B    is reg0_exg=9 & B   { exg8l_r0 = B; exg8h_r0 = B; }
+EXG_r0Tmp: CC   is reg0_exg=10 & CC { exg8l_r0 = CC; exg8h_r0 = CC;}
+EXG_r0Tmp: DP   is reg0_exg=12 & DP { exg8l_r0 = DP; exg8h_r0 = DP;}
+EXG_r0Tmp: 0    is reg0_exg=13      { exg16_r0 = 0x0; }
+EXG_r0Tmp: 0    is reg0_exg=14      { exg16_r0 = 0x0; }
+EXG_r0Tmp: E    is reg0_exg=15 & E  { exg8l_r0 = E; exg8h_r0 = E; }
+EXG_r0Tmp: F    is reg0_exg=16 & F  { exg8l_r0 = F; exg8h_r0 = F; }
+
+EXG_r1Tmp: D    is reg1_exg=0 & D   { exg16_r1 = D; }
+EXG_r1Tmp: X    is reg1_exg=1 & X   { exg16_r1 = X; }
+EXG_r1Tmp: Y    is reg1_exg=2 & Y   { exg16_r1 = Y; }
+EXG_r1Tmp: U    is reg1_exg=3 & U   { exg16_r1 = U; }
+EXG_r1Tmp: S    is reg1_exg=4 & S   { exg16_r1 = S; }
+EXG_r1Tmp: PC   is reg1_exg=5 & PC  { exg16_r1 = inst_next; }
+EXG_r1Tmp: W    is reg1_exg=6 & W   { exg16_r1 = 0x0; }
+EXG_r1Tmp: V    is reg1_exg=7 & V   { exg16_r1 = 0x0; }
+EXG_r1Tmp: A    is reg1_exg=8 & A   { exg8l_r1 = A; exg8h_r1 = A; }
+EXG_r1Tmp: B    is reg1_exg=9 & B   { exg8l_r1 = B; exg8h_r1 = B; }
+EXG_r1Tmp: CC   is reg1_exg=10 & CC { exg8l_r1 = CC; exg8h_r1 = CC;}
+EXG_r1Tmp: DP   is reg1_exg=12 & DP { exg8l_r1 = DP; exg8h_r1 = DP;}
+EXG_r1Tmp: 0    is reg1_exg=13      { exg16_r1 = 0x0; }
+EXG_r1Tmp: 0    is reg1_exg=14      { exg16_r1 = 0x0; }
+EXG_r1Tmp: E    is reg1_exg=15 & E  { exg8l_r1 = E; exg8h_r1 = E; }
+EXG_r1Tmp: F    is reg1_exg=16 & F  { exg8l_r1 = F; exg8h_r1 = F; }
+
+EXG_r0Set: D    is reg0_exg=0 & D   { D = exg16_r1; }
+EXG_r0Set: X    is reg0_exg=1 & X   { X = exg16_r1; }
+EXG_r0Set: Y    is reg0_exg=2 & Y   { Y = exg16_r1; }
+EXG_r0Set: U    is reg0_exg=3 & U   { U = exg16_r1; }
+EXG_r0Set: S    is reg0_exg=4 & S   { S = exg16_r1; }
+EXG_r0Set: PC   is reg0_exg=5 & PC  { PC = exg16_r1; } # must GOTO
+EXG_r0Set: W    is reg0_exg=6 & W   { W = exg16_r1; }
+EXG_r0Set: V    is reg0_exg=7 & V   { V = exg16_r1; }
+EXG_r0Set: A    is reg0_exg=8 & A   { A = exg8h_r1; }
+EXG_r0Set: B    is reg0_exg=9 & B   { B = exg8l_r1; }
+EXG_r0Set: CC   is reg0_exg=10 & CC { CC = exg8l_r1; }
+EXG_r0Set: DP   is reg0_exg=11 & DP { DP = exg8h_r1; }
+EXG_r0Set: 0    is reg0_exg=12      {  }
+EXG_r0Set: 0    is reg0_exg=13      {  }
+EXG_r0Set: E    is reg0_exg=14 & E  { E = exg8h_r1; }
+EXG_r0Set: F    is reg0_exg=15 & F  { F = exg8l_r1; }
+
+EXG_r1Set: D    is reg1_exg=0 & D   { D = exg16_r0; }
+EXG_r1Set: X    is reg1_exg=1 & X   { X = exg16_r0; }
+EXG_r1Set: Y    is reg1_exg=2 & Y   { Y = exg16_r0; }
+EXG_r1Set: U    is reg1_exg=3 & U   { U = exg16_r0; }
+EXG_r1Set: S    is reg1_exg=4 & S   { S = exg16_r0; }
+EXG_r1Set: PC   is reg1_exg=5 & PC  { PC = exg16_r0; } # must GOTO
+EXG_r1Set: W    is reg1_exg=6 & W   { W = exg16_r0; }
+EXG_r1Set: V    is reg1_exg=7 & V   { V = exg16_r0; }
+EXG_r1Set: A    is reg1_exg=8 & A   { A = exg8h_r0; }
+EXG_r1Set: B    is reg1_exg=9 & B   { B = exg8l_r0; }
+EXG_r1Set: CC   is reg1_exg=10 & CC { CC = exg8l_r0; }
+EXG_r1Set: DP   is reg1_exg=11 & DP { DP = exg8h_r0; }
+EXG_r1Set: 0    is reg1_exg=12      {  }
+EXG_r1Set: 0    is reg1_exg=13      {  }
+EXG_r1Set: E    is reg1_exg=14 & E  { E = exg8h_r0; }
+EXG_r1Set: F    is reg1_exg=15 & F  { F = exg8l_r0; }
+@endif
+
+@ifdef M6809
+EXG_r0Tmp: D      is reg0_exg=0 & D   { exg16_r0 = D; }
+EXG_r0Tmp: X      is reg0_exg=1 & X   { exg16_r0 = X; }
+EXG_r0Tmp: Y      is reg0_exg=2 & Y   { exg16_r0 = Y; }
+EXG_r0Tmp: U      is reg0_exg=3 & U   { exg16_r0 = U; }
+EXG_r0Tmp: S      is reg0_exg=4 & S   { exg16_r0 = S; }
+EXG_r0Tmp: PC     is reg0_exg=5 & PC  { exg16_r0 = inst_next; }
+EXG_r0Tmp: "inv"  is reg0_exg=6       { exg16_r0 = 0xFFFF; }
+EXG_r0Tmp: "inv"  is reg0_exg=7       { exg16_r0 = 0xFFFF; }
+EXG_r0Tmp: A      is reg0_exg=8 & A   { exg8l_r0 = A; exg8h_r0 = 0xFF; }
+EXG_r0Tmp: B      is reg0_exg=9 & B   { exg8l_r0 = B; exg8h_r0 = 0xFF; }
+EXG_r0Tmp: CC     is reg0_exg=10 & CC { exg8l_r0 = CC; exg8h_r0 = CC;}
+EXG_r0Tmp: DP     is reg0_exg=11 & DP { exg8l_r0 = DP; exg8h_r0 = DP;}
+EXG_r0Tmp: "inv"  is reg0_exg=12      { exg16_r0 = 0xFFFF; }
+EXG_r0Tmp: "inv"  is reg0_exg=13      { exg16_r0 = 0xFFFF; }
+EXG_r0Tmp: "inv"  is reg0_exg=14      { exg16_r0 = 0xFFFF; }
+EXG_r0Tmp: "inv"  is reg0_exg=15      { exg16_r0 = 0xFFFF; }
+
+EXG_r1Tmp: D      is reg1_exg=0 & D   { exg16_r1 = D; }
+EXG_r1Tmp: X      is reg1_exg=1 & X   { exg16_r1 = X; }
+EXG_r1Tmp: Y      is reg1_exg=2 & Y   { exg16_r1 = Y; }
+EXG_r1Tmp: U      is reg1_exg=3 & U   { exg16_r1 = U; }
+EXG_r1Tmp: S      is reg1_exg=4 & S   { exg16_r1 = S; }
+EXG_r1Tmp: PC     is reg1_exg=5 & PC  { exg16_r1 = inst_next; }
+EXG_r1Tmp: "inv"  is reg1_exg=6       { exg16_r1 = 0xFFFF; }
+EXG_r1Tmp: "inv"  is reg1_exg=7       { exg16_r1 = 0xFFFF; }
+EXG_r1Tmp: A      is reg1_exg=8 & A   { exg8l_r1 = A; exg8h_r1 = 0xFF; }
+EXG_r1Tmp: B      is reg1_exg=9 & B   { exg8l_r1 = B; exg8h_r1 = 0xFF; }
+EXG_r1Tmp: CC     is reg1_exg=10 & CC { exg8l_r1 = CC; exg8h_r1 = 0xFF;}
+EXG_r1Tmp: DP     is reg1_exg=11 & DP { exg8l_r1 = DP; exg8h_r1 = 0xFF;}
+EXG_r1Tmp: "inv"  is reg1_exg=12      { exg16_r1 = 0xFFFF; }
+EXG_r1Tmp: "inv"  is reg1_exg=13      { exg16_r1 = 0xFFFF; }
+EXG_r1Tmp: "inv"  is reg1_exg=14      { exg16_r1 = 0xFFFF; }
+EXG_r1Tmp: "inv"  is reg1_exg=15      { exg16_r1 = 0xFFFF; }
+
+EXG_r0Set: D      is reg0_exg=0 & D   { D = exg16_r1; }
+EXG_r0Set: X      is reg0_exg=1 & X   { X = exg16_r1; }
+EXG_r0Set: Y      is reg0_exg=2 & Y   { Y = exg16_r1; }
+EXG_r0Set: U      is reg0_exg=3 & U   { U = exg16_r1; }
+EXG_r0Set: S      is reg0_exg=4 & S   { S = exg16_r1; }
+EXG_r0Set: PC     is reg0_exg=5 & PC  { PC = exg16_r1; } # must GOTO
+EXG_r0Set: "inv"  is reg0_exg=6       {  }
+EXG_r0Set: "inv"  is reg0_exg=7       {  }
+EXG_r0Set: A      is reg0_exg=8 & A   { A = exg8l_r1; }
+EXG_r0Set: B      is reg0_exg=9 & B   { B = exg8l_r1; }
+EXG_r0Set: CC     is reg0_exg=10 & CC { CC = exg8l_r1; }
+EXG_r0Set: DP     is reg0_exg=11 & DP { DP = exg8l_r1; }
+EXG_r0Set: "inv"  is reg0_exg=12      {  }
+EXG_r0Set: "inv"  is reg0_exg=13      {  }
+EXG_r0Set: "inv"  is reg0_exg=14      {  }
+EXG_r0Set: "inv"  is reg0_exg=15      {  }
+
+EXG_r1Set: D      is reg1_exg=0 & D   { D = exg16_r0; } # Must to r1 set first so A,D = A,B switch
+EXG_r1Set: X      is reg1_exg=1 & X   { X = exg16_r0; }
+EXG_r1Set: Y      is reg1_exg=2 & Y   { Y = exg16_r0; }
+EXG_r1Set: U      is reg1_exg=3 & U   { U = exg16_r0; }
+EXG_r1Set: S      is reg1_exg=4 & S   { S = exg16_r0; }
+EXG_r1Set: PC     is reg1_exg=5 & PC  { PC = exg16_r0; } # must GOTO
+EXG_r1Set: "inv"  is reg1_exg=6       {  }
+EXG_r1Set: "inv"  is reg1_exg=7       {  }
+EXG_r1Set: A      is reg1_exg=8 & A   { A = exg8l_r0; }
+EXG_r1Set: B      is reg1_exg=9 & B   { B = exg8l_r0; }
+EXG_r1Set: CC     is reg1_exg=10 & CC { CC = exg8l_r0; }
+EXG_r1Set: DP     is reg1_exg=11 & DP { DP = exg8l_r0; }
+EXG_r1Set: "inv"  is reg1_exg=12      {  }
+EXG_r1Set: "inv"  is reg1_exg=13      {  }
+EXG_r1Set: "inv"  is reg1_exg=14      {  }
+EXG_r1Set: "inv"  is reg1_exg=15      {  }
+@endif
+
+EXG_GOTO: is reg0_exg=5 | reg1_exg=5 { goto [PC]; }
+EXG_GOTO: is reg0_exg & reg1_exg     {  } # PC not set
+
+TFR_GOTO: is reg1_exg=5 { goto [PC]; }
+TFR_GOTO: is reg1_exg   {  } # PC not set
+
+# Exchange two registers
+:EXG EXG_r0Set,EXG_r1Set    is op=0x1E; EXG_r0Set & EXG_r1Set & EXG_r0Tmp & EXG_r1Tmp & EXG_GOTO                               
+{
+    build EXG_r0Tmp;
+    build EXG_r1Tmp;
+    build EXG_r1Set;
+    build EXG_r0Set;
+    build EXG_GOTO;
+}
+
+# Transfer register to another register
+:TFR EXG_r0Set,EXG_r1Set    is op=0x1F; EXG_r0Set & EXG_r1Set & EXG_r0Tmp & TFR_GOTO
+{
+    build EXG_r0Tmp;
+    build EXG_r1Set;
+    build TFR_GOTO;
+}
+

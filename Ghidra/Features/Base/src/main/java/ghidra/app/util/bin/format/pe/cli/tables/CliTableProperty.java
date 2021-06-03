@@ -42,13 +42,13 @@ public class CliTableProperty extends CliAbstractTable {
 		public short flags;
 		public int nameIndex;
 		public int sigIndex;
-		
+
 		public CliPropertyRow(short flags, int nameIndex, int sigIndex) {
 			this.flags = flags;
 			this.nameIndex = nameIndex;
 			this.sigIndex = sigIndex;
 		}
-		
+
 		@Override
 		public String getRepresentation() {
 			String sigRep = Integer.toHexString(sigIndex);
@@ -58,44 +58,50 @@ public class CliTableProperty extends CliAbstractTable {
 				propertySig = new CliSigProperty(blob);
 				sigRep = propertySig.getShortRepresentation(metadataStream);
 			}
-			catch (IOException e) {}
+			catch (IOException e) {
+			}
 			return String.format("Property %s Signature %s Flags %s",
 				metadataStream.getStringsStream().getString(nameIndex), sigRep,
 				CliEnumPropertyAttributes.dataType.getName(flags & 0xffff));
 		}
 	}
-		
-	public CliTableProperty(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId) throws IOException {
+
+	public CliTableProperty(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId)
+			throws IOException {
 		super(reader, stream, tableId);
 		for (int i = 0; i < this.numRows; i++) {
-			CliPropertyRow row = new CliPropertyRow(reader.readNextShort(), readStringIndex(reader), readBlobIndex(reader));
+			CliPropertyRow row = new CliPropertyRow(reader.readNextShort(), readStringIndex(reader),
+				readBlobIndex(reader));
 			rows.add(row);
 			strings.add(row.nameIndex);
 		}
 		reader.setPointerIndex(this.readerOffset);
 	}
-	
+
 	@Override
 	public StructureDataType getRowDataType() {
 		StructureDataType rowDt = new StructureDataType(new CategoryPath(PATH), "Property Row", 0);
-		rowDt.add(CliEnumPropertyAttributes.dataType, "Flags", "Bitmask of type PropertyAttributes");
+		rowDt.add(CliEnumPropertyAttributes.dataType, "Flags",
+			"Bitmask of type PropertyAttributes");
 		rowDt.add(metadataStream.getStringIndexDataType(), "Name", null);
-		rowDt.add(metadataStream.getBlobIndexDataType(), "Type", "Blob index to the signature, not a TypeDef/TypeRef");
+		rowDt.add(metadataStream.getBlobIndexDataType(), "Type",
+			"Blob index to the signature, not a TypeDef/TypeRef");
 		return rowDt;
 	}
-	
+
 	@Override
-	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log, NTHeader ntHeader) 
+	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
+			NTHeader ntHeader)
 			throws DuplicateNameException, CodeUnitInsertionException, IOException {
 		for (CliAbstractTableRow row : rows) {
 			CliPropertyRow property = (CliPropertyRow) row;
 			CliBlob blob = metadataStream.getBlobStream().getBlob(property.sigIndex);
 			Address addr = CliAbstractStream.getStreamMarkupAddress(program, isBinary, monitor, log,
 				ntHeader, metadataStream.getBlobStream(), property.sigIndex);
+
 			// Create PropertySig object
 			CliSigProperty propSig = new CliSigProperty(blob);
 			metadataStream.getBlobStream().updateBlob(propSig, addr, program);
-//			program.getBookmarkManager().setBookmark(addr, BookmarkType.INFO, "Signature!", "PropertySig (Offset "+property.sigIndex+")");
 		}
 	}
 }

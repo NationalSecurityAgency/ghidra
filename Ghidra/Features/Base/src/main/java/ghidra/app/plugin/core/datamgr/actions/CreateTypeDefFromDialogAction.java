@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
@@ -27,6 +26,7 @@ import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.program.model.data.*;
 import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 
 public class CreateTypeDefFromDialogAction extends AbstractTypeDefAction {
 
@@ -67,28 +67,27 @@ public class CreateTypeDefFromDialogAction extends AbstractTypeDefAction {
 
 		final GTreeNode parentNode = categoryNode;
 		final String newNodeName = newTypeDef.getName();
-		SwingUtilities.invokeLater(() -> gTree.setSeletedNodeByName(parentNode, newNodeName));
+		Swing.runLater(() -> gTree.setSeletedNodeByName(parentNode, newNodeName));
 	}
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 		CategoryNode categoryNode = getCategoryNode(context);
-		ArchiveNode archiveNode = getArchiveNode(categoryNode);
-		if (archiveNode instanceof BuiltInArchiveNode) {
-			// these will be put into the program archive
-			return true;
+		if (categoryNode instanceof BuiltInArchiveNode) {
+			return false;
 		}
-
 		return categoryNode != null && categoryNode.isModifiable();
 	}
 
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
 		CategoryNode categoryNode = getCategoryNode(context);
-		if ((categoryNode == null) || !categoryNode.isEnabled()) {
+		if (categoryNode == null || !categoryNode.isEnabled()) {
 			return false;
 		}
-
+		if (categoryNode instanceof BuiltInArchiveNode) {
+			return false;
+		}
 		return true;
 	}
 
@@ -114,16 +113,5 @@ public class CreateTypeDefFromDialogAction extends AbstractTypeDefAction {
 			node = node.getParent();
 		}
 		return (CategoryNode) node;
-	}
-
-	private ArchiveNode getArchiveNode(CategoryNode categoryNode) {
-		GTreeNode node = categoryNode;
-		while (node != null) {
-			if (node instanceof ArchiveNode) {
-				return (ArchiveNode) node;
-			}
-			node = node.getParent();
-		}
-		return null;
 	}
 }

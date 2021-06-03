@@ -28,7 +28,7 @@ import docking.action.DockingActionIf;
  * <b>toolbar buttons and menu items will enable and disable as the user interacts with the system.
  * Further, popup menu items will not be added to popup menus when they report false for 
  * {@link DockingActionIf#isAddToPopup(ActionContext)}; they will appear in the popup, but be 
- * disabled if they report <tt>true</tt> for the above call, but <tt>false</tt> for 
+ * disabled if they report <code>true</code> for the above call, but <code>false</code> for 
  * {@link DockingActionIf#isEnabledForContext(ActionContext)}.</b>
  * When the user executes an action, the current context will be passed to the backing 
  * {@link DockingActionIf}.   Ultimately, context serves to control action enablement and to 
@@ -78,6 +78,7 @@ public class ActionContext {
 	private MouseEvent mouseEvent;
 	private Object contextObject;
 	private Object sourceObject;
+	private ActionContext globalContext;
 
 	// Note: the setting of this object is delayed.  This allows clients to build-up the state
 	//       of this context.  This object will be set when getSourceComponent() is called if it
@@ -241,6 +242,31 @@ public class ActionContext {
 			"\tmouseEvent: " + mouseEvent + "\n" +
 		"}";
 		//@formatter:on
+	}
+
+	/**
+	 * Returns the global action context for the tool.  The global context is the context of
+	 * the default focused component, instead of the normal action context which is the current
+	 * focused component.
+	 * @return  the global action context for the tool
+	 */
+	public ActionContext getGlobalContext() {
+		if (globalContext == null) {
+			Tool tool = getTool();
+			globalContext = tool == null ? new ActionContext() : tool.getDefaultToolContext();
+		}
+		return globalContext;
+	}
+
+	private Tool getTool() {
+		if (provider != null) {
+			return provider.getTool();
+		}
+		DockingWindowManager manager = DockingWindowManager.getActiveInstance();
+		if (manager != null) {
+			return manager.getTool();
+		}
+		return null;
 	}
 
 }

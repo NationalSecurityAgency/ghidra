@@ -21,6 +21,7 @@ import java.awt.Window;
 
 import org.junit.*;
 
+import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
 import docking.util.image.ToolIconURL;
@@ -175,7 +176,8 @@ public class DiffSaveSettingsTest extends DiffApplyTestAdapter {
 		ProgramManagerPlugin pm = getPlugin(tool, ProgramManagerPlugin.class);
 		DockingActionIf closeAllProgramAction = getAction(pm, "Close All");
 		assertNotNull(closeAllProgramAction);
-		performAction(closeAllProgramAction, true);
+		ActionContext defaultContext = tool.getDefaultToolContext();
+		performAction(closeAllProgramAction, defaultContext, true);
 
 		openProgram(p3);
 

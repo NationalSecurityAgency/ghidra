@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.calltree;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Rectangle2D;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,7 +26,7 @@ import javax.swing.tree.TreePath;
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.*;
-import docking.util.GraphicsUtils;
+import docking.resources.icons.NumberIcon;
 import docking.widgets.dialogs.NumberInputDialog;
 import docking.widgets.label.GLabel;
 import docking.widgets.tree.*;
@@ -182,7 +181,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			public void actionPerformed(ActionContext context) {
 				Object contextObject = context.getContextObject();
 				GTree gTree = (GTree) contextObject;
-				GTreeRootNode rootNode = gTree.getRootNode();
+				GTreeNode rootNode = gTree.getViewRoot();
 				List<GTreeNode> children = rootNode.getChildren();
 				for (GTreeNode child : children) {
 					gTree.collapseAll(child);
@@ -283,7 +282,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 					for (TreePath path : selectionPaths) {
 						GTreeNode node = (GTreeNode) path.getLastPathComponent();
-						if (node instanceof GTreeRootNode) {
+						if (node instanceof OutgoingCallsRootNode ||
+							node instanceof IncomingCallsRootNode) {
 							return false;
 						}
 					}
@@ -343,7 +343,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 				for (TreePath path : selectionPaths) {
 					GTreeNode node = (GTreeNode) path.getLastPathComponent();
-					if (node instanceof GTreeRootNode) {
+					if (node.isRoot()) {
 						return false;
 					}
 				}
@@ -496,7 +496,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 					for (TreePath path : selectionPaths) {
 						GTreeNode node = (GTreeNode) path.getLastPathComponent();
-						if (node instanceof GTreeRootNode) {
+						if (node.isRoot()) {
 							return false;
 						}
 					}
@@ -551,7 +551,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 					for (TreePath path : selectionPaths) {
 						GTreeNode node = (GTreeNode) path.getLastPathComponent();
-						if (node instanceof GTreeRootNode) {
+						if (node.isRoot()) {
 							return false;
 						}
 					}
@@ -604,7 +604,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		// Show new call tree action
 		//
 		DockingAction newCallTree =
-			new DockingAction("Show Call Tree For Function", plugin.getName()) {
+			new DockingAction("Show Call Trees For Function", plugin.getName()) {
 				@Override
 				public void actionPerformed(ActionContext context) {
 					GTree gTree = (GTree) context.getContextObject();
@@ -660,7 +660,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 					for (TreePath path : selectionPaths) {
 						GTreeNode node = (GTreeNode) path.getLastPathComponent();
-						if (node instanceof GTreeRootNode) {
+						if (node.isRoot()) {
 							return false;
 						}
 					}
@@ -671,6 +671,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			"Call_Tree_Context_Action_Show_Call_Tree_For_Function"));
 		newCallTree.setPopupMenuData(new MenuData(new String[] { "Show Call Tree For Function" },
 			CallTreePlugin.PROVIDER_ICON, newTreeMenu));
+		newCallTree.setDescription("Show the Function Call Tree window for the function " +
+			"selected in the call tree");
 		tool.addLocalAction(this, newCallTree);
 	}
 
@@ -915,7 +917,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	}
 
 	private void clearTrees() {
-		if (incomingTree.getRootNode() instanceof EmptyRootNode) {
+		if (incomingTree.getModelRoot() instanceof EmptyRootNode) {
 			// already empty
 			return;
 		}
@@ -937,7 +939,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	}
 
 	private void updateIncomingReferencs(Function function) {
-		GTreeRootNode rootNode = null;
+		GTreeNode rootNode = null;
 		if (function == null) {
 			rootNode = new EmptyRootNode();
 		}
@@ -949,7 +951,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	}
 
 	private void updateOutgoingReferences(Function function) {
-		GTreeRootNode rootNode = null;
+		GTreeNode rootNode = null;
 		if (function == null) {
 			rootNode = new EmptyRootNode();
 		}
@@ -1083,16 +1085,21 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	}
 
 	private boolean isEmpty() {
-		GTreeRootNode rootNode = incomingTree.getRootNode();
+		GTreeNode rootNode = incomingTree.getModelRoot();
 		return rootNode instanceof EmptyRootNode;
 	}
 
 	private boolean updateRootNodes(Function function) {
-		CallNode callNode = (CallNode) incomingTree.getRootNode();
-		Function nodeFunction = callNode.getContainingFunction();
-		if (nodeFunction.equals(function)) {
-			reloadUpdateManager.update();
-			return true;
+		GTreeNode root = incomingTree.getModelRoot();
+		// root might be a "PendingRootNode"
+		//TODO do we need to use a PendingRootNode?
+		if (root instanceof CallNode) {
+			CallNode callNode = (CallNode) root;
+			Function nodeFunction = callNode.getRemoteFunction();
+			if (nodeFunction.equals(function)) {
+				reloadUpdateManager.update();
+				return true;
+			}
 		}
 
 		return false;
@@ -1109,7 +1116,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
-			CallNode rootNode = (CallNode) tree.getRootNode();
+			CallNode rootNode = (CallNode) tree.getModelRoot();
 			List<GTreeNode> children = rootNode.getChildren();
 			for (GTreeNode node : children) {
 				updateFunction((CallNode) node);
@@ -1117,14 +1124,14 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		}
 
 		private void updateFunction(CallNode node) {
-			if (!node.isChildrenLoadedOrInProgress()) {
+			if (!node.isLoaded()) {
 				// children not loaded, don't force a load by asking for them
 				return;
 			}
 
 			// first, if the given node represents the function we have, then we don't need to 
 			// go any further
-			if (function.equals(node.getContainingFunction())) {
+			if (function.equals(node.getRemoteFunction())) {
 				GTreeNode parent = node.getParent();
 				parent.removeNode(node);
 				parent.addNode(node.recreate());
@@ -1189,6 +1196,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		this.recurseIcon.setNumber(depth);
 
 		removeFilterCache();
+		incomingTree.refilterLater();
+		outgoingTree.refilterLater();
 
 		saveRecurseDepth();
 	}
@@ -1203,9 +1212,9 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		// you have done.  Normally this is not that big of a problem.  However, if the loading
 		// takes a long time, then you lose some work.
 		//
-		GTreeRootNode rootNode = incomingTree.getRootNode();
+		GTreeNode rootNode = incomingTree.getModelRoot();
 		rootNode.removeAll();
-		rootNode = outgoingTree.getRootNode();
+		rootNode = outgoingTree.getModelRoot();
 		rootNode.removeAll();
 	}
 
@@ -1273,98 +1282,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		}
 	}
 
-	private class NumberIcon implements Icon {
-		private String number;
-		private float bestFontSize = -1;
-
-		NumberIcon(int number) {
-			this.number = Integer.toString(number);
-		}
-
-		void setNumber(int number) {
-			this.number = Integer.toString(number);
-			bestFontSize = -1;
-		}
-
-		@Override
-		public void paintIcon(Component c, Graphics g, int x, int y) {
-			g.setColor(Color.WHITE);
-			g.fillRect(x, y, getIconWidth(), getIconHeight());
-			g.setColor(new Color(0xb5d5ff));
-			g.drawRect(x, y, getIconWidth(), getIconHeight());
-
-			float fontSize = getMaxFontSize(g, getIconWidth() - 1, getIconHeight());
-			Font originalFont = g.getFont();
-			Font textFont = originalFont.deriveFont(fontSize).deriveFont(Font.BOLD);
-			g.setFont(textFont);
-
-			FontMetrics fontMetrics = g.getFontMetrics(textFont);
-			Rectangle2D stringBounds = fontMetrics.getStringBounds(number, g);
-			int textHeight = (int) stringBounds.getHeight();
-			int iconHeight = getIconHeight();
-			int space = y + iconHeight - textHeight;
-			int halfSpace = space >> 1;
-			int baselineY = y + iconHeight - halfSpace;// - halfTextHeight;// + halfTextHeight;
-
-			int textWidth = (int) stringBounds.getWidth();
-			int iconWidth = getIconWidth();
-			int halfWidth = iconWidth >> 1;
-			int halfTextWidth = textWidth >> 1;
-			int baselineX = x + halfWidth - halfTextWidth;
-
-			g.setColor(Color.BLACK);
-			JComponent jc = null;
-			if (c instanceof JComponent) {
-				jc = (JComponent) c;
-			}
-			GraphicsUtils.drawString(jc, g, number, baselineX, baselineY);
-		}
-
-		private float getMaxFontSize(Graphics g, int width, int height) {
-			if (bestFontSize > 0) {
-				return bestFontSize;
-			}
-
-			float size = 12f;
-			Font font = g.getFont().deriveFont(size); // reasonable default
-			if (textFitsInFont(g, font, width, height)) {
-				bestFontSize = size;
-				return bestFontSize;
-			}
-
-			do {
-				size--;
-				font = g.getFont().deriveFont(size);
-			}
-			while (!textFitsInFont(g, font, width, height));
-
-			bestFontSize = Math.max(1f, size);
-			return bestFontSize;
-		}
-
-		private boolean textFitsInFont(Graphics g, Font font, int width, int height) {
-			FontMetrics fontMetrics = g.getFontMetrics(font);
-			int textWidth = fontMetrics.stringWidth(number);
-			if (textWidth > width) {
-				return false;
-			}
-
-			int textHeight = fontMetrics.getHeight();
-			return textHeight < height;
-		}
-
-		@Override
-		public int getIconHeight() {
-			return 16;
-		}
-
-		@Override
-		public int getIconWidth() {
-			return 16;
-		}
-	}
-
-	private class PendingRootNode extends AbstractGTreeRootNode {
+	private class PendingRootNode extends GTreeNode {
 
 		@Override
 		public Icon getIcon(boolean expanded) {
@@ -1387,7 +1305,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		}
 	}
 
-	private class EmptyRootNode extends AbstractGTreeRootNode {
+	private class EmptyRootNode extends GTreeNode {
 
 		@Override
 		public Icon getIcon(boolean expanded) {

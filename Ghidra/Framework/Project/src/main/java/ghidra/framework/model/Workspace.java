@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,7 @@
  */
 package ghidra.framework.model;
 
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -24,47 +24,49 @@ import ghidra.util.exception.DuplicateNameException;
  */
 public interface Workspace {
 
-    /**
-     * Get the workspace name.
-     */
-    public String getName();
+	/**
+	 * Get the workspace name
+	 * @return the name
+	 */
+	public String getName();
 
-    /**
-     * Get the running tools in the workspace.
-     * 
-     * @return list of running tools or zero-length array if there are no tools in the workspace
-     */
-    public Tool[] getTools();
+	/**
+	 * Get the running tools in the workspace.
+	 * 
+	 * @return list of running tools or zero-length array if there are no tools in the workspace
+	 */
+	public PluginTool[] getTools();
 
-    /**
-     * Launch an empty tool.
-     * @return name of empty tool that is launched.
-     */
-    public Tool createTool();
+	/**
+	 * Launch an empty tool.
+	 * @return name of empty tool that is launched.
+	 */
+	public PluginTool createTool();
 
-    /**
-     * Run the tool specified by the tool template object.
-     * @return launched tool that is now running.
-     */
-    public Tool runTool(ToolTemplate template);
+	/**
+	 * Run the tool specified by the tool template object.
+	 * @param template the template
+	 * @return launched tool that is now running.
+	 */
+	public PluginTool runTool(ToolTemplate template);
 
-    /**
-     * Rename this workspace.
-     * 
-     * @param newName new workspace name
-     * 
-     * @throws DuplicateNameException if newName is already the
-     * name of a workspace.
-     */
-    public void setName(String newName)
-        throws DuplicateNameException;
+	/**
+	 * Rename this workspace.
+	 * 
+	 * @param newName new workspace name
+	 * 
+	 * @throws DuplicateNameException if newName is already the
+	 * name of a workspace.
+	 */
+	public void setName(String newName)
+			throws DuplicateNameException;
 
-    /**
-     * Set this workspace to be the active workspace, i.e.,
-     * all tools become visible.
-     * The currently active workspace becomes inactive, and
-     * this workspace becomes active.
-     */
-    public void setActive();
+	/**
+	 * Set this workspace to be the active workspace, i.e.,
+	 * all tools become visible.
+	 * The currently active workspace becomes inactive, and
+	 * this workspace becomes active.
+	 */
+	public void setActive();
 
 }

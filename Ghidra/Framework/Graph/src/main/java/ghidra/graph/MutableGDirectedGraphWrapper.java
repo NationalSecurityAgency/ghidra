@@ -33,7 +33,7 @@ import util.CollectionUtils;
  *  {@link #containsEdge(GEdge)}.
  *
  * <P>Implementation Note: there is some 'magic' in this class to add 'dummy' vertices to the
- * graph.  To facilitate this, the mutated graph in this class does not have the <tt>V</tt>
+ * graph.  To facilitate this, the mutated graph in this class does not have the <code>V</code>
  * type, but rather is typed on Object.   This means that this class can only be used 
  * generically, with templated types (like by algorithms and such).  Any usage of this class
  * that expects concrete implementations to be returned can trigger ClassCastExceptions.

@@ -85,7 +85,7 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 	}
 
 	private void searchForProviders() {
-		Set<LanguageProvider> languageProviders =
+		List<LanguageProvider> languageProviders =
 			ClassSearcher.getInstances(LanguageProvider.class);
 
 		searchCompleted = true;
@@ -338,7 +338,7 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 		throw new LanguageNotFoundException(processor);
 	}
 
-	private void processProviders(Set<LanguageProvider> providers) {
+	private void processProviders(List<LanguageProvider> providers) {
 		for (LanguageProvider provider : providers) {
 			addLanguages(provider);
 		}

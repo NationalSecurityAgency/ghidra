@@ -160,7 +160,7 @@ public class ARMEmulateInstructionStateModifier extends EmulateInstructionStateM
 
 			if ((currentAddress.getOffset() & 0x1) == 1) {
 				throw new LowlevelError(
-					"Flow to odd address occured without setting TB register (Thumb mode)");
+					"Flow to odd address occurred without setting TB register (Thumb mode)");
 			}
 
 			// ARM mode

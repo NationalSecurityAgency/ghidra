@@ -18,7 +18,7 @@ package ghidra.program.database.code;
 import java.util.ArrayList;
 import java.util.List;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -59,7 +59,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	 * @param address min address of this instruction
 	 * @param addr database key
 	 * @param proto instruction prototype
-	 * @param protoID ID for the prototype
+	 * @param flags flow override flags
 	 */
 	public InstructionDB(CodeManager codeMgr, DBObjectCache<? extends CodeUnitDB> cache,
 			Address address, long addr, InstructionPrototype proto, byte flags) {
@@ -71,7 +71,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	}
 
 	@Override
-	protected boolean refresh(Record record) {
+	protected boolean refresh(DBRecord record) {
 		parserContext = null;
 		return super.refresh(record);
 	}
@@ -83,14 +83,16 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	}
 
 	@Override
-	protected boolean hasBeenDeleted(Record rec) {
+	protected boolean hasBeenDeleted(DBRecord rec) {
 		if (rec == null) {
 			rec = codeMgr.getInstructionRecord(addr);
 			if (rec == null) {
 				return true;
 			}
 		}
-		// ensure that record provided corresponds to an InstructionDB record
+		// ensure that record provided corresponds to a DataDB record
+		// since following an undo/redo the record could correspond to
+		// a different type of code unit (hopefully with a different record schema)
 		else if (!rec.hasSameSchema(InstDBAdapter.INSTRUCTION_SCHEMA)) {
 			return true;
 		}

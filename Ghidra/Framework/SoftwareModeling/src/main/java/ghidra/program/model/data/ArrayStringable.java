@@ -47,7 +47,7 @@ public interface ArrayStringable extends DataType {
 	 */
 	public default String getArrayString(MemBuffer buf, Settings settings, int length) {
 		if (hasStringValue(settings) && buf.isInitializedMemory()) {
-			return new StringDataInstance(this, settings, buf, length).getStringValue();
+			return new StringDataInstance(this, settings, buf, length, true).getStringValue();
 		}
 		return null;
 	}
@@ -57,7 +57,7 @@ public interface ArrayStringable extends DataType {
 	 * default label prefix for the array.
 	 * @param buf memory buffer containing the bytes.
 	 * @param settings the Settings object
-	 * @param length the length of the data.
+	 * @param len the length of the data.
 	 * @param options options for how to format the default label prefix.
 	 * @return the default label prefix or null if none specified.
 	 */
@@ -67,13 +67,13 @@ public interface ArrayStringable extends DataType {
 	/**
 	 * For cases where an array of this type exists, get the appropriate string to use as the
 	 * default label prefix, taking into account the fact that there exists a reference to the
-	 * data that references <tt>offcutLength</tt> bytes into this type
+	 * data that references <code>offcutLength</code> bytes into this type
 	 *
 	 * @param buf memory buffer containing the bytes.
-	 * @param settings the Settings object
-	 * @param length the length of the data.
+	 * @param settings the Settings object.
+	 * @param len the length of the data.
 	 * @param options options for how to format the default label prefix.
-	 * @param offcutOffset
+	 * @param offcutLength the length of the offcut label prefix.
 	 * @return the default label prefix or null if none specified.
 	 */
 	public String getArrayDefaultOffcutLabelPrefix(MemBuffer buf, Settings settings, int len,

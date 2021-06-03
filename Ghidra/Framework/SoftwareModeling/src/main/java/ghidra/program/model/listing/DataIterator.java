@@ -15,8 +15,8 @@
  */
 package ghidra.program.model.listing;
 
+import java.util.Arrays;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 import util.CollectionUtils;
 
@@ -25,8 +25,18 @@ import util.CollectionUtils;
  *
  * @see CollectionUtils#asIterable
  */
-public interface DataIterator extends Iterator<Data>, Iterable<Data> {
-	public static final DataIterator EMPTY = createEmptyIterator();
+public interface DataIterator extends Iterator<Data>, Iterable<Data>  {
+	public static final DataIterator EMPTY = of(/*nothing*/);
+
+	/**
+	 * Create a DataIterator that returns a sequence of the specified items.
+	 * 
+	 * @param dataInstances variable length list of items that will be iterated
+	 * @return new Iterator 
+	 */
+	public static DataIterator of(Data... dataInstances) {
+		return new IteratorWrapper(Arrays.asList(dataInstances).iterator());
+	}
 
 	@Override
 	public boolean hasNext();
@@ -40,15 +50,25 @@ public interface DataIterator extends Iterator<Data>, Iterable<Data> {
 	}
 
 	// --------------------------------------------------------------------------------
-	// Helper static methods
+	// Helper static stuff
 	// --------------------------------------------------------------------------------
-	public static DataIterator createEmptyIterator() {
-		return new DataIterator() {
-			//@formatter:off
-			@Override public Data next() { throw new NoSuchElementException(); }
-			@Override public void remove() { throw new IllegalStateException(); }
-			@Override public boolean hasNext() { return false; }
-			//@formatter:on
-		};
+
+	static class IteratorWrapper implements DataIterator {
+		private Iterator<Data> it;
+
+		IteratorWrapper(Iterator<Data> it) {
+			this.it = it;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return it.hasNext();
+		}
+
+		@Override
+		public Data next() {
+			return it.next();
+		}
+
 	}
 }

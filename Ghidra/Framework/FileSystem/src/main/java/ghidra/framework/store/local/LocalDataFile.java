@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,16 +120,12 @@ public class LocalDataFile extends LocalFolderItem implements DataFileItem {
 		return new File(getDataDir(), DATA_FILE);
 	}
 
-	/**
-	 * @see ghidra.framework.store.DataFile#getInputStream()
-	 */
+	@Override
 	public InputStream getInputStream() throws FileNotFoundException {
 		return new FileInputStream(getDataFile());
 	}
 
-	/**
-	 * @see ghidra.framework.store.DataFileItem#getInputStream(int)
-	 */
+	@Override
 	public InputStream getInputStream(int version) throws FileNotFoundException {
 
 // TODO Versions for DataFiles are not supported
@@ -138,16 +133,11 @@ public class LocalDataFile extends LocalFolderItem implements DataFileItem {
 		return new FileInputStream(getDataFile());
 	}
 
-	/**
-	 * @see ghidra.framework.store.DataFile#getOutputStream()
-	 */
+	@Override
 	public OutputStream getOutputStream() throws FileNotFoundException {
 		return new FileOutputStream(getDataFile());
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#updateCheckout(ghidra.framework.store.FolderItem, boolean, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void updateCheckout(FolderItem versionedFolderItem, boolean updateItem,
 			TaskMonitor monitor) throws IOException {
@@ -156,9 +146,6 @@ public class LocalDataFile extends LocalFolderItem implements DataFileItem {
 
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#updateCheckout(ghidra.framework.store.FolderItem, int)
-	 */
 	@Override
 	public void updateCheckout(FolderItem item, int checkoutVersion) throws IOException {
 
@@ -166,9 +153,6 @@ public class LocalDataFile extends LocalFolderItem implements DataFileItem {
 
 	}
 
-	/*
-	 * @see ghidra.framework.store.local.LocalFolderItem#deleteMinimumVersion(java.lang.String)
-	 */
 	@Override
 	void deleteMinimumVersion(String user) throws IOException {
 
@@ -176,9 +160,6 @@ public class LocalDataFile extends LocalFolderItem implements DataFileItem {
 
 	}
 
-	/*
-	 * @see ghidra.framework.store.local.LocalFolderItem#deleteCurrentVersion(java.lang.String)
-	 */
 	@Override
 	void deleteCurrentVersion(String user) throws IOException {
 
@@ -186,33 +167,24 @@ public class LocalDataFile extends LocalFolderItem implements DataFileItem {
 
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#output(java.io.File, int, ghidra.util.task.TaskMonitor)
-	 */
+	@Override
 	public void output(File outputFile, int version, TaskMonitor monitor) throws IOException {
 
 		throw new UnsupportedOperationException("Output not yet supported for DataFiles");
 
 	}
 
-	/*
-	 * @see ghidra.framework.store.local.LocalFolderItem#getMinimumVersion()
-	 */
 	@Override
 	int getMinimumVersion() throws IOException {
 		return -1;
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#getCurrentVersion()
-	 */
+	@Override
 	public int getCurrentVersion() {
 		return -1;
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#canRecover()
-	 */
+	@Override
 	public boolean canRecover() {
 		return false;
 	}

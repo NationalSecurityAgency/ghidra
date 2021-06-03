@@ -20,9 +20,14 @@ import java.awt.Rectangle;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
@@ -33,21 +38,18 @@ import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.widgets.OptionDialog;
-import docking.widgets.filechooser.GhidraFileChooserMode;
-import docking.widgets.pathmanager.PathManager;
-import docking.widgets.pathmanager.PathManagerListener;
 import docking.widgets.table.*;
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.BreadthFirstIterator;
 import generic.jar.ResourceFile;
-import generic.util.Path;
+import ghidra.app.plugin.core.osgi.*;
 import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.listing.Program;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -57,21 +59,21 @@ import util.CollectionUtils;
 import utilities.util.FileUtilities;
 
 public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
+	static final String WINDOW_GROUP = "Script Group";
 
 	private static final double TOP_PREFERRED_RESIZE_WEIGHT = .80;
 	private static final String DESCRIPTION_DIVIDER_LOCATION = "DESCRIPTION_DIVIDER_LOCATION";
 	private static final String FILTER_TEXT = "FILTER_TEXT";
 
-	static final String WINDOW_GROUP = "Script Group";
-
 	private Map<ResourceFile, GhidraScriptEditorComponentProvider> editorMap = new HashMap<>();
-	private GhidraScriptMgrPlugin plugin;
+	private final GhidraScriptMgrPlugin plugin;
 	private JPanel component;
 	private RootNode scriptRoot;
 	private GTree scriptCategoryTree;
 	private DraggableScriptTable scriptTable;
+	private final GhidraScriptInfoManager infoManager;
 	private GhidraScriptTableModel tableModel;
-	private PathManager pathManager;
+	private BundleStatusComponentProvider bundleStatusComponentProvider;
 	private TaskListener taskListener = new ScriptTaskListener();
 	private GhidraScriptActionManager actionManager;
 	private GhidraTableFilterPanel<ResourceFile> tableFilterPanel;
@@ -97,9 +99,22 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 	};
 
-	GhidraScriptComponentProvider(GhidraScriptMgrPlugin plugin) {
+	private final BundleHost bundleHost;
+	private final RefreshingBundleHostListener refreshingBundleHostListener =
+		new RefreshingBundleHostListener();
+	final private SwingUpdateManager refreshUpdateManager = new SwingUpdateManager(this::doRefresh);
+
+	GhidraScriptComponentProvider(GhidraScriptMgrPlugin plugin, BundleHost bundleHost) {
 		super(plugin.getTool(), "Script Manager", plugin.getName());
+
 		this.plugin = plugin;
+		this.bundleHost = bundleHost;
+		this.infoManager = new GhidraScriptInfoManager();
+
+		bundleStatusComponentProvider =
+			new BundleStatusComponentProvider(plugin.getTool(), plugin.getName(), bundleHost);
+
+		bundleHost.addListener(refreshingBundleHostListener);
 
 		setHelpLocation(new HelpLocation(plugin.getName(), plugin.getName()));
 		setIcon(ResourceManager.loadImage("images/play.png"));
@@ -107,649 +122,13 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		setWindowGroup(WINDOW_GROUP);
 
 		build();
+
 		plugin.getTool().addComponentProvider(this, false);
-		actionManager = new GhidraScriptActionManager(this, plugin);
+		actionManager = new GhidraScriptActionManager(this, plugin, infoManager);
 		updateTitle();
 	}
 
-	void dispose() {
-
-		editorMap.clear();
-		scriptCategoryTree.dispose();
-		scriptTable.dispose();
-		tableFilterPanel.dispose();
-		actionManager.dispose();
-		pathManager.dispose();
-	}
-
-	GhidraScriptActionManager getActionManager() {
-		return actionManager;
-	}
-
-	Map<ResourceFile, GhidraScriptEditorComponentProvider> getEditorMap() {
-		return editorMap;
-	}
-
-	void pickPaths() {
-		PickPathsDialog pd = new PickPathsDialog(getComponent(), pathManager);
-		pd.setHelpLocation(actionManager.getPathHelpLocation());
-		pd.show();
-		if (pd.hasChanged()) {
-			plugin.getTool().setConfigChanged(true);
-
-			// Note: do this here, instead of performRefresh() below, as we don't want
-			// initialization refreshes to trigger excessive updating.  Presumably, the
-			// system is in a good state after default initialization.  However, when the *user*
-			// changes the paths, that is a signal to refresh after we have already initialized.
-			GhidraScriptUtil.refreshRequested();
-
-			performRefresh();
-		}
-	}
-
-	private void performRefresh() {
-
-		GhidraScriptUtil.setScriptDirectories(pathManager.getPaths());
-		GhidraScriptUtil.clean();
-		refresh();
-	}
-
-	void assignKeyBinding() {
-		ResourceFile script = getSelectedScript();
-		ScriptAction action = actionManager.createAction(script);
-
-		KeyBindingInputDialog dialog = new KeyBindingInputDialog(getComponent(), script.getName(),
-			action.getKeyBinding(), plugin, actionManager.getKeyBindingHelpLocation());
-		if (dialog.isCancelled()) {
-			plugin.getTool().setStatusInfo("User cancelled keybinding.");
-			return;
-		}
-		action.setKeyBindingData(new KeyBindingData(dialog.getKeyStroke()));
-		scriptTable.repaint();
-	}
-
-	void keyBindingUpdated() {
-		scriptTable.repaint();
-	}
-
-	void renameScript() {
-		ResourceFile script = getSelectedScript();
-		ResourceFile directory = script.getParentFile();
-		Path path = GhidraScriptUtil.getScriptPath(directory);
-		if (path == null || path.isReadOnly()) {
-			Msg.showWarn(getClass(), getComponent(), getName(),
-				"Unable to rename scripts in '" + directory + "'.");
-			return;
-		}
-		if (isEditorOpen(script)) {
-			Msg.showWarn(getClass(), getComponent(), "Unable to rename script",
-				"The script is open for editing.\nPlease close the script and try again.");
-			return;
-		}
-
-		GhidraScriptProvider provider = GhidraScriptUtil.getProvider(script);
-		SaveDialog dialog = new SaveDialog(getComponent(), "Rename Script", this, script,
-			actionManager.getRenameHelpLocation());
-		if (dialog.isCancelled()) {
-			plugin.getTool().setStatusInfo("User cancelled rename.");
-			return;
-		}
-
-		ResourceFile renameFile = dialog.getFile();
-		if (renameFile == null) {
-			return;
-		}
-
-		if (renameFile.exists()) {
-			Msg.showWarn(getClass(), getComponent(), "Unable to rename script",
-				"Destination file already exists.");
-			return;
-		}
-
-		checkNewScriptDirectoryEnablement(renameFile);
-
-		renameScriptByCopying(script, provider, renameFile);
-	}
-
-	private void renameScriptByCopying(ResourceFile script, GhidraScriptProvider provider,
-			ResourceFile renameFile) {
-		String oldClassName = GhidraScriptUtil.getBaseName(script);
-		String newClassName = GhidraScriptUtil.getBaseName(renameFile);
-
-		ResourceFile temp = null;
-		PrintWriter writer = null;
-		BufferedReader reader = null;
-		try {
-
-			ResourceFile parentFile = script.getParentFile();
-			temp = new ResourceFile(parentFile, "ghidraScript.tmp");
-			writer = new PrintWriter(temp.getOutputStream());
-			reader = new BufferedReader(new InputStreamReader(script.getInputStream()));
-			while (true) {
-				String line = reader.readLine();
-				if (line == null) {
-					break;
-				}
-				writer.println(line.replaceAll(oldClassName, newClassName));
-			}
-			reader.close();
-			writer.close();
-
-			FileUtilities.copyFile(temp, renameFile, TaskMonitor.DUMMY);
-
-			if (!renameFile.exists()) {
-				Msg.showWarn(getClass(), getComponent(), "Unable to rename script",
-					"The rename operation failed.\nPlease check file permissions.");
-				return;
-			}
-
-			if (!provider.deleteScript(script)) {
-				Msg.showWarn(getClass(), getComponent(), "Unable to rename script",
-					"Unable to remove original file.\nPlease check file permissions.");
-				renameFile.delete();
-				return;
-			}
-			if (actionManager.hasScriptAction(script)) {
-				KeyStroke ks = actionManager.getKeyBinding(script);
-				actionManager.removeAction(script);
-				ScriptAction action = actionManager.createAction(renameFile);
-				action.setKeyBindingData(new KeyBindingData(ks));
-			}
-
-			tableModel.switchScript(script, renameFile);
-			setSelectedScript(renameFile);
-		}
-		catch (IOException e) {
-			Msg.showError(getClass(), getComponent(), "Unable to rename script", e.getMessage());
-			return;
-		}
-		finally {
-			if (reader != null) {
-				try {
-					reader.close();
-				}
-				catch (IOException e) {
-					// we tried
-				}
-			}
-
-			if (writer != null) {
-				writer.close();
-			}
-
-			if (temp != null) {
-				temp.delete();
-			}
-		}
-	}
-
-	TableModel getTableModel() {
-		return tableModel;
-	}
-
-	JTable getTable() {
-		return scriptTable;
-	}
-
-	int getScriptIndex(ResourceFile scriptFile) {
-		return tableFilterPanel.getViewRow(tableModel.getScriptIndex(scriptFile));
-	}
-
-	ResourceFile getScriptAt(int rowIndex) {
-		return tableModel.getScriptAt(tableFilterPanel.getModelRow(rowIndex));
-	}
-
-	boolean isEditorOpen(ResourceFile script) {
-		GhidraScriptEditorComponentProvider editor = editorMap.get(script);
-		return editor != null && plugin.getTool().isVisible(editor);
-	}
-
-	void deleteScript() {
-		ResourceFile script = getSelectedScript();
-		if (script == null) {
-			return;
-		}
-		ResourceFile directory = script.getParentFile();
-
-		Path path = GhidraScriptUtil.getScriptPath(directory);
-		if (path == null || path.isReadOnly()) {
-			Msg.showWarn(getClass(), getComponent(), getName(),
-				"Unable to delete scripts in '" + directory + "'.");
-			return;
-		}
-
-		int result = OptionDialog.showYesNoDialog(getComponent(), getName(),
-			"Are you sure you want to delete script '" + script.getName() + "'?");
-		if (result == OptionDialog.OPTION_ONE) {
-			if (removeScript(script)) {
-				GhidraScriptProvider provider = GhidraScriptUtil.getProvider(script);
-				if (provider.deleteScript(script)) {
-					restoreSelection(script);
-				}
-				else {
-					Msg.showInfo(getClass(), getComponent(), getName(),
-						"Unable to delete script '" + script.getName() + "'" + "\n" +
-							"Please verify the file permissions.");
-				}
-			}
-		}
-	}
-
-	private void restoreSelection(ResourceFile script) {
-		int selectedRow = scriptTable.getSelectedRow();
-		if (selectedRow < 0) {
-			return;
-		}
-
-		int selectedModelRow = getModelRowForViewRow(selectedRow);
-		if (tableModel.contains(selectedModelRow)) {
-			scriptTable.setRowSelectionInterval(selectedRow, selectedRow);
-			return;
-		}
-
-		if (tableModel.contains(selectedModelRow - 1)) {
-			int viewRow = getViewRowForModelRow(selectedModelRow - 1);
-			scriptTable.setRowSelectionInterval(viewRow, viewRow);
-		}
-	}
-
-	public List<Path> getScriptDirectories() {
-		return pathManager.getPaths();
-	}
-
-	public void checkNewScriptDirectoryEnablement(ResourceFile scriptFile) {
-		if (pathManager.addPath(scriptFile.getParentFile(), true)) {
-			Msg.showInfo(this, getComponent(), "Script Path Added/Enabled",
-				"The directory containing the new script has been automatically enabled for use:\n" +
-					scriptFile.getParentFile().getAbsolutePath());
-		}
-	}
-
-	void newScript() {
-		try {
-			PickProviderDialog providerDialog =
-				new PickProviderDialog(getComponent(), actionManager.getNewHelpLocation());
-			GhidraScriptProvider provider = providerDialog.getSelectedProvider();
-			if (provider == null) {
-				plugin.getTool().setStatusInfo("User cancelled creating a new script.");
-				return;
-			}
-
-			ResourceFile newFile = GhidraScriptUtil.createNewScript(provider,
-				new ResourceFile(GhidraScriptUtil.USER_SCRIPTS_DIR), getScriptDirectories());
-			SaveDialog dialog = new SaveNewScriptDialog(getComponent(), "New Script", this, newFile,
-				actionManager.getNewHelpLocation());
-			if (dialog.isCancelled()) {
-				plugin.getTool().setStatusInfo("User cancelled creating a new script.");
-				return;
-			}
-			newFile = dialog.getFile();
-
-			checkNewScriptDirectoryEnablement(newFile);
-
-			String category = StringUtils.join(getSelectedCategoryPath(), ScriptInfo.DELIMITTER);
-			provider.createNewScript(newFile, category);
-
-			GhidraScriptEditorComponentProvider editor =
-				new GhidraScriptEditorComponentProvider(plugin, this, newFile);
-			editorMap.put(newFile, editor);
-
-			tableModel.insertScript(newFile);
-			int index = getScriptIndex(newFile);
-
-			if (index >= 0) {
-				scriptTable.setRowSelectionInterval(index, index);
-				Rectangle rect = scriptTable.getCellRect(index, 0, true);
-				scriptTable.scrollRectToVisible(rect);
-			}
-		}
-		catch (IOException e) {
-			Msg.showError(this, getComponent(), getName(), e.getMessage(), e);
-		}
-	}
-
-	void runScript(String scriptName, TaskListener listener) {
-		List<Path> dirPaths = pathManager.getPaths();
-		for (Path dir : dirPaths) {
-			ResourceFile scriptSource = new ResourceFile(dir.getPath(), scriptName);
-			if (scriptSource.exists()) {
-				runScript(scriptSource, listener);
-				return;
-			}
-		}
-		throw new IllegalArgumentException("Script does not exist: " + scriptName);
-	}
-
-	void runScript(ResourceFile scriptFile) {
-		runScript(scriptFile, taskListener);
-	}
-
-	void runScript(ResourceFile scriptFile, TaskListener listener) {
-		lastRunScript = scriptFile;
-
-		ConsoleService console = plugin.getConsoleService();
-		GhidraScript script = getScriptInstance(scriptFile, console);
-		if (script == null) {
-			return;
-		}
-
-		RunScriptTask task =
-			new RunScriptTask(scriptFile, script, plugin.getCurrentState(), console);
-		runningScriptTaskSet.add(task);
-		task.addTaskListener(listener);
-		task.addTaskListener(cleanupTaskSetListener);
-		new TaskLauncher(task, plugin.getTool().getToolFrame());
-		tool.contextChanged(this); // some actions change after we run a script
-		actionManager.notifyScriptWasRun();
-	}
-
-	private GhidraScript getScriptInstance(ResourceFile scriptFile, ConsoleService console) {
-		String scriptName = scriptFile.getName();
-		GhidraScriptProvider provider = GhidraScriptUtil.getProvider(scriptFile);
-		try {
-			return provider.getScriptInstance(scriptFile, console.getStdErr());
-		}
-		catch (IllegalAccessException e) {
-			console.addErrorMessage("", "Unable to access script: " + scriptName);
-		}
-		catch (InstantiationException e) {
-			console.addErrorMessage("", "Unable to instantiate script: " + scriptName);
-		}
-		catch (ClassNotFoundException e) {
-			console.addErrorMessage("", "Unable to locate script class: " + e.getMessage());
-		}
-
-		// show the error icon
-		scriptTable.repaint();
-		return null;
-	}
-
-	void runScript() {
-		ResourceFile script = getSelectedScript();
-		if (script != null) {
-			runScript(script);
-		}
-	}
-
-	void runLastScript() {
-		if (lastRunScript != null) {
-			runScript(lastRunScript);
-		}
-	}
-
-	ResourceFile getLastRunScript() {
-		return lastRunScript;
-	}
-
-	void sortScripts() {
-		tableModel.fireTableDataChanged();
-	}
-
-	String[] getSelectedCategoryPath() {
-		TreePath currentPath = scriptCategoryTree.getSelectionPath();
-
-		String[] currentCategory = null;
-
-		if (currentPath != null) {
-			if (currentPath.equals(previousPath)) {
-				return previousCategory;
-			}
-			if (currentPath.getPathCount() > 1) {
-				GTreeNode node = (GTreeNode) currentPath.getLastPathComponent();
-				currentCategory = getCategoryPath(node);
-			}
-		}
-
-		previousPath = currentPath;
-		previousCategory = currentCategory;
-
-		return currentCategory;
-	}
-
-	private String[] getCategoryPath(GTreeNode node) {
-		TreePath treePath = node.getTreePath();
-		Object[] path = treePath.getPath();
-		String[] categoryPath = new String[path.length - 1];
-		for (int i = 0; i < categoryPath.length; i++) {
-			categoryPath[i] = ((GTreeNode) path[i + 1]).getName();
-		}
-		return categoryPath;
-	}
-
-	void refresh() {
-
-		hasBeenRefreshed = true;
-
-		TreePath preRefreshSelectionPath = scriptCategoryTree.getSelectionPath();
-
-		updateAvailableScriptFilesForAllPaths();
-
-		tableModel.fireTableDataChanged();
-
-		trimUnusedTreeCategories();
-
-		scriptRoot.fireNodeStructureChanged(scriptRoot);
-		if (preRefreshSelectionPath != null) {
-			scriptCategoryTree.setSelectionPath(preRefreshSelectionPath);
-		}
-	}
-
-	private void updateAvailableScriptFilesForAllPaths() {
-
-		List<ResourceFile> scriptsToRemove = tableModel.getScripts();
-		List<ResourceFile> scriptAccumulator = new ArrayList<>();
-		List<Path> dirPaths = pathManager.getPaths();
-		for (Path dirPath : dirPaths) {
-			updateAvailableScriptFilesForDirectory(scriptsToRemove, scriptAccumulator,
-				dirPath.getPath());
-		}
-
-		// note: do this after the loop to prevent a flurry of table model update events
-		tableModel.insertScripts(scriptAccumulator);
-
-		for (ResourceFile file : scriptsToRemove) {
-			removeScript(file);
-		}
-
-		GhidraScriptUtil.refreshDuplicates();
-		refreshScriptData();
-	}
-
-	private void updateAvailableScriptFilesForDirectory(List<ResourceFile> scriptsToRemove,
-			List<ResourceFile> scriptAccumulator, ResourceFile directory) {
-		ResourceFile[] files = directory.listFiles();
-		if (files == null) {
-			return;
-		}
-
-		for (ResourceFile scriptFile : files) {
-			if (scriptFile.isFile() && GhidraScriptUtil.hasScriptProvider(scriptFile)) {
-				if (getScriptIndex(scriptFile) == -1) {
-					// note: we don't do this here, so we can prevent a flurry of table events
-					// model.insertScript(element);
-					scriptAccumulator.add(scriptFile);
-				}
-				scriptRoot.insert(scriptFile);
-			}
-			scriptsToRemove.remove(scriptFile);
-		}
-
-	}
-
-	private void refreshScriptData() {
-		List<ResourceFile> scripts = tableModel.getScripts();
-
-		for (ResourceFile script : scripts) {
-			// First get the ScriptInfo object and refresh, which will ensure any
-			// info data (ie: script icons) will be reloaded.
-			ScriptInfo info = GhidraScriptUtil.getScriptInfo(script);
-			info.refresh();
-
-			ScriptAction scriptAction = actionManager.get(script);
-			if (scriptAction != null) {
-				scriptAction.refresh();
-			}
-		}
-	}
-
-	// note: we really should just rebuild the tree instead of using this method
-	private void trimUnusedTreeCategories() {
-
-		/*
-		 			Unusual Algorithm
-		 			
-		 	The tree nodes represent categories, but do not contain nodes for individual 
-		 	scripts.  We wish to remove any of the tree nodes that no longer represent script
-		 	categories.  (This can happen when a script is deleted or its category is changed.)
-		 	This algorithm will assume that all nodes need to be deleted.  Then, each script is
-		 	examined, using its category to mark a given node as 'safe'; that node's parents are
-		 	also marked as safe.   Any nodes remaining unmarked have no reference script and 
-		 	will be deleted. 
-		 */
-
-		// note: turn String[] to List<String> to use hashing
-		Iterator<ScriptInfo> scripts = GhidraScriptUtil.getScriptInfoIterator();
-		Set<List<String>> categories = new HashSet<>();
-		for (ScriptInfo info : CollectionUtils.asIterable(scripts)) {
-			String[] path = info.getCategory();
-			List<String> category = Arrays.asList(path);
-			for (int i = 1; i <= category.size(); i++) {
-				categories.add(category.subList(0, i));
-			}
-		}
-
-		List<GTreeNode> toDelete = new LinkedList<>();
-		Iterator<GTreeNode> nodes = new BreadthFirstIterator(scriptCategoryTree, scriptRoot);
-		for (GTreeNode node : CollectionUtils.asIterable(nodes)) {
-			String[] path = getCategoryPath(node);
-			List<String> category = Arrays.asList(path);
-			if (!categories.contains(category)) {
-				toDelete.add(node);
-			}
-		}
-
-		for (GTreeNode node : toDelete) {
-			GTreeNode parent = node.getParent();
-			if (parent != null) {
-				parent.removeNode(node);
-			}
-		}
-	}
-
-	GhidraScriptEditorComponentProvider getEditor() {
-		ResourceFile script = getSelectedScript();
-		return editorMap.get(script);
-	}
-
-	void editScriptBuiltin() {
-		ResourceFile script = getSelectedScript();
-		if (script == null) {
-			plugin.getTool().setStatusInfo("Script is null.");
-			return;
-		}
-		if (!script.exists()) {
-			plugin.getTool().setStatusInfo("Script " + script.getName() + " does not exist.");
-			return;
-		}
-
-		editScriptInGhidra(script);
-	}
-
-	void editScriptEclipse() {
-		ResourceFile script = getSelectedScript();
-		if (script == null) {
-			plugin.getTool().setStatusInfo("Script is null.");
-			return;
-		}
-		if (!script.exists()) {
-			plugin.getTool().setStatusInfo("Script " + script.getName() + " does not exist.");
-			return;
-		}
-
-		plugin.tryToEditFileInEclipse(script);
-	}
-
-	GhidraScriptEditorComponentProvider editScriptInGhidra(ResourceFile script) {
-		GhidraScriptEditorComponentProvider editor = editorMap.get(script);
-		if (editor == null) {
-			try {
-				editor = new GhidraScriptEditorComponentProvider(plugin, this, script);
-				editorMap.put(script, editor);
-				return editor;
-			}
-			catch (IOException e) {
-				Msg.showError(this, getComponent(), "Error loading script", e.getMessage(), e);
-				return null;
-			}
-		}
-		plugin.getTool().showComponentProvider(editor, true);
-		return editor;
-	}
-
-	void switchEditor(ResourceFile oldScript, ResourceFile newScript) {
-		GhidraScriptEditorComponentProvider editor = editorMap.get(oldScript);
-		editorMap.put(newScript, editor);
-		editorMap.remove(oldScript);
-		tableModel.insertScript(newScript);
-	}
-
-	boolean removeScript(ResourceFile script) {
-		// Always remove the script from the table, as it is no longer on disk.  If the user
-		// has it open in the editor, then they may choose to leave the editor open, but they
-		// will have to save that file if they want to keep the changes.
-		tableModel.removeScript(script);
-
-		if (!removeScriptEditor(script, true)) {
-			return false; // user cancelled the closing of a dirty editor
-		}
-
-		actionManager.removeAction(script);
-		GhidraScriptUtil.unloadScript(script);
-		return true;
-	}
-
-	boolean removeScriptEditor(ResourceFile script, boolean checkForSave) {
-		GhidraScriptEditorComponentProvider editor = editorMap.get(script);
-		if (editor == null) {
-			return true;
-		}
-
-		if (checkForSave && editor.hasChanges()) {
-			JComponent parentComponent = getComponent();
-			if (plugin.getTool().isVisible(editor)) {
-				parentComponent = editor.getComponent();
-			}
-			int result = OptionDialog.showYesNoDialog(parentComponent, getName(),
-				"'" + script.getName() + "' has been modified. Discard changes?");
-			if (result != OptionDialog.OPTION_ONE) {
-				return false;
-			}
-		}
-
-		plugin.getTool().removeComponentProvider(editor);
-		editorMap.remove(script);
-		return true;
-	}
-
-	private void build() {
-		pathManager = new PathManager(GhidraScriptUtil.getDefaultScriptDirectories(), true, false);
-		pathManager.setFileChooserProperties("Select Script Directory", "LastGhidraScriptDirectory",
-			GhidraFileChooserMode.DIRECTORIES_ONLY, false, null);
-
-		pathManager.addListener(new PathManagerListener() {
-			@Override
-			public void pathsChanged() {
-				if (isVisible()) { // we will be refreshed when first shown
-					performRefresh();
-				}
-			}
-
-			@Override
-			public void pathMessage(String message) {
-				// don't care
-			}
-		});
-
+	private void buildCategoryTree() {
 		scriptRoot = new RootNode();
 
 		scriptCategoryTree = new GTree(scriptRoot);
@@ -780,12 +159,16 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			}
 		});
 
-		scriptCategoryTree.getSelectionModel().setSelectionMode(
-			TreeSelectionModel.SINGLE_TREE_SELECTION);
+		scriptCategoryTree.getSelectionModel()
+				.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+	}
 
-		tableModel = new GhidraScriptTableModel(this);
+	private void build() {
+		buildCategoryTree();
 
-		scriptTable = new DraggableScriptTable(this);
+		tableModel = new GhidraScriptTableModel(this, infoManager);
+
+		scriptTable = new DraggableScriptTable(this, tableModel);
 		scriptTable.setName("SCRIPT_TABLE");
 		scriptTable.setAutoLookupColumn(tableModel.getNameColumnIndex());
 		scriptTable.setRowSelectionAllowed(true);
@@ -854,6 +237,727 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		component.add(dataDescriptionSplit, BorderLayout.CENTER);
 	}
 
+	/**
+	 * Restore state for bundles, user actions, and filter.
+	 *
+	 * @param saveState the state object
+	 */
+	public void readConfigState(SaveState saveState) {
+		bundleHost.restoreManagedBundleState(saveState, getTool());
+
+		actionManager.restoreUserDefinedKeybindings(saveState);
+		actionManager.restoreScriptsThatAreInTool(saveState);
+
+		final int descriptionDividerLocation = saveState.getInt(DESCRIPTION_DIVIDER_LOCATION, 0);
+		if (descriptionDividerLocation > 0) {
+
+			ComponentListener listener = new ComponentAdapter() {
+				@Override
+				public void componentResized(ComponentEvent e) {
+					dataDescriptionSplit.setResizeWeight(TOP_PREFERRED_RESIZE_WEIGHT); // give the top pane the most space
+				}
+			};
+			component.addComponentListener(listener);
+
+			dataDescriptionSplit.setDividerLocation(descriptionDividerLocation);
+		}
+
+		String filterText = saveState.getString(FILTER_TEXT, "");
+		tableFilterPanel.setFilterText(filterText);
+	}
+
+	/**
+	 * Save state for bundles, user actions, and filter.
+	 *
+	 * @param saveState the state object
+	 */
+
+	public void writeConfigState(SaveState saveState) {
+		bundleHost.saveManagedBundleState(saveState);
+
+		actionManager.saveUserDefinedKeybindings(saveState);
+		actionManager.saveScriptsThatAreInTool(saveState);
+
+		int dividerLocation = dataDescriptionSplit.getDividerLocation();
+		if (dividerLocation > 0) {
+			saveState.putInt(DESCRIPTION_DIVIDER_LOCATION, dividerLocation);
+		}
+
+		String filterText = tableFilterPanel.getFilterText();
+		saveState.putString(FILTER_TEXT, filterText);
+	}
+
+	void dispose() {
+		bundleHost.removeListener(refreshingBundleHostListener);
+		editorMap.clear();
+		scriptCategoryTree.dispose();
+		scriptTable.dispose();
+		tableFilterPanel.dispose();
+		actionManager.dispose();
+		bundleStatusComponentProvider.dispose();
+	}
+
+	/**
+	 * @return the bundle host used for scripting, ultimately from {@link GhidraScriptUtil#getBundleHost()}
+	 */
+	public BundleHost getBundleHost() {
+		return bundleHost;
+	}
+
+	GhidraScriptActionManager getActionManager() {
+		return actionManager;
+	}
+
+	GhidraScriptInfoManager getInfoManager() {
+		return infoManager;
+	}
+
+	Map<ResourceFile, GhidraScriptEditorComponentProvider> getEditorMap() {
+		return editorMap;
+	}
+
+	void assignKeyBinding() {
+		ResourceFile script = getSelectedScript();
+		ScriptAction action = actionManager.createAction(script);
+
+		KeyBindingInputDialog dialog = new KeyBindingInputDialog(getComponent(), script.getName(),
+			action.getKeyBinding(), plugin, actionManager.getKeyBindingHelpLocation());
+		if (dialog.isCancelled()) {
+			plugin.getTool().setStatusInfo("User cancelled keybinding.");
+			return;
+		}
+		action.setKeyBindingData(new KeyBindingData(dialog.getKeyStroke()));
+		scriptTable.repaint();
+	}
+
+	void keyBindingUpdated() {
+		scriptTable.repaint();
+	}
+
+	void renameScript() {
+		ResourceFile script = getSelectedScript();
+		ResourceFile directory = script.getParentFile();
+
+		if (bundleHost.getExistingGhidraBundle(directory).isSystemBundle()) {
+			Msg.showWarn(getClass(), getComponent(), getName(),
+				"Unable to rename scripts in '" + directory + "'.");
+			return;
+		}
+		if (isEditorOpen(script)) {
+			Msg.showWarn(getClass(), getComponent(), "Unable to rename script",
+				"The script is open for editing.\nPlease close the script and try again.");
+			return;
+		}
+
+		GhidraScriptProvider provider = GhidraScriptUtil.getProvider(script);
+		SaveDialog dialog = new SaveDialog(getComponent(), "Rename Script", this, script,
+			actionManager.getRenameHelpLocation());
+		if (dialog.isCancelled()) {
+			plugin.getTool().setStatusInfo("User cancelled rename.");
+			return;
+		}
+
+		ResourceFile renameFile = dialog.getFile();
+		if (renameFile == null) {
+			return;
+		}
+
+		if (renameFile.exists()) {
+			Msg.showWarn(getClass(), getComponent(), "Unable to rename script",
+				"Destination file already exists.");
+			return;
+		}
+
+		enableScriptDirectory(renameFile.getParentFile());
+
+		renameScriptByCopying(script, provider, renameFile);
+	}
+
+	/**
+	 * Copy a script, renaming references to the class name.
+	 *
+	 * @param sourceScript source script
+	 * @param destinationScript destination script
+	 * @throws IOException if we fail to create temp, write contents, copy, or delete temp
+	 */
+	private void copyScript(ResourceFile sourceScript, ResourceFile destinationScript)
+			throws IOException {
+		String oldClassName = GhidraScriptUtil.getBaseName(sourceScript);
+		String newClassName = GhidraScriptUtil.getBaseName(destinationScript);
+
+		ResourceFile parentFile = sourceScript.getParentFile();
+		ResourceFile temp = new ResourceFile(parentFile, "ghidraScript.tmp");
+		try (PrintWriter writer = new PrintWriter(temp.getOutputStream())) {
+			try (BufferedReader reader =
+				new BufferedReader(new InputStreamReader(sourceScript.getInputStream()))) {
+				while (true) {
+					String line = reader.readLine();
+					if (line == null) {
+						break;
+					}
+					writer.println(line.replaceAll(oldClassName, newClassName));
+				}
+			}
+		}
+		FileUtilities.copyFile(temp, destinationScript, TaskMonitor.DUMMY);
+		temp.delete();
+	}
+
+	private void renameScriptByCopying(ResourceFile script, GhidraScriptProvider provider,
+			ResourceFile renameFile) {
+		try {
+			copyScript(script, renameFile);
+		}
+		catch (IOException e) {
+			Msg.showError(getClass(), getComponent(), "Unable to rename script", e.getMessage());
+			return;
+		}
+
+		if (!renameFile.exists()) {
+			Msg.showWarn(getClass(), getComponent(), "Unable to rename script",
+				"The rename operation failed.\nPlease check file permissions.");
+			return;
+		}
+
+		if (!provider.deleteScript(script)) {
+			Msg.showWarn(getClass(), getComponent(), "Unable to rename script",
+				"Unable to remove original file.\nPlease check file permissions.");
+			renameFile.delete();
+			return;
+		}
+		infoManager.removeMetadata(script);
+
+		if (actionManager.hasScriptAction(script)) {
+			KeyStroke ks = actionManager.getKeyBinding(script);
+			actionManager.removeAction(script);
+			ScriptAction action = actionManager.createAction(renameFile);
+			action.setKeyBindingData(new KeyBindingData(ks));
+		}
+
+		assert !infoManager.containsMetadata(renameFile) : "renamed script already has metadata";
+		infoManager.getScriptInfo(renameFile);
+
+		tableModel.switchScript(script, renameFile);
+		setSelectedScript(renameFile);
+	}
+
+	JTable getTable() {
+		return scriptTable;
+	}
+
+	int getScriptIndex(ResourceFile scriptFile) {
+		return tableFilterPanel.getViewRow(tableModel.getScriptIndex(scriptFile));
+	}
+
+	ResourceFile getScriptAt(int viewRowIndex) {
+		return tableModel.getScriptAt(tableFilterPanel.getModelRow(viewRowIndex));
+	}
+
+	/**
+	 * @return enabled bundle paths from the scripting bundle host
+	 */
+	public List<ResourceFile> getScriptDirectories() {
+		return bundleHost.getGhidraBundles()
+				.stream()
+				.filter(GhidraSourceBundle.class::isInstance)
+				.filter(GhidraBundle::isEnabled)
+				.map(GhidraBundle::getFile)
+				.collect(Collectors.toList());
+	}
+
+	/**
+	 * @return non-system bundle paths from the scripting bundle host
+	 */
+	public List<ResourceFile> getWritableScriptDirectories() {
+		return bundleHost.getGhidraBundles()
+				.stream()
+				.filter(GhidraSourceBundle.class::isInstance)
+				.filter(Predicate.not(GhidraBundle::isSystemBundle))
+				.filter(GhidraBundle::isEnabled)
+				.map(GhidraBundle::getFile)
+				.collect(Collectors.toList());
+	}
+
+	boolean isEditorOpen(ResourceFile script) {
+		GhidraScriptEditorComponentProvider editor = editorMap.get(script);
+		return editor != null && plugin.getTool().isVisible(editor);
+	}
+
+	void deleteScript() {
+		ResourceFile script = getSelectedScript();
+		if (script == null) {
+			return;
+		}
+		ResourceFile directory = script.getParentFile();
+
+		if (bundleHost.getExistingGhidraBundle(directory).isSystemBundle()) {
+			Msg.showWarn(getClass(), getComponent(), getName(),
+				"Unable to delete scripts in '" + directory + "'.");
+			return;
+		}
+
+		int result = OptionDialog.showYesNoDialog(getComponent(), getName(),
+			"Are you sure you want to delete script '" + script.getName() + "'?");
+		if (result == OptionDialog.OPTION_ONE) {
+			if (removeScript(script)) {
+				GhidraScriptProvider provider = GhidraScriptUtil.getProvider(script);
+				if (provider.deleteScript(script)) {
+					infoManager.removeMetadata(script);
+					restoreSelection(script);
+				}
+				else {
+					Msg.showInfo(getClass(), getComponent(), getName(),
+						"Unable to delete script '" + script.getName() + "'\n" +
+							"Please verify the file permissions.");
+				}
+			}
+		}
+	}
+
+	private void restoreSelection(ResourceFile script) {
+		int selectedRow = scriptTable.getSelectedRow();
+		if (selectedRow < 0) {
+			return;
+		}
+
+		int selectedModelRow = getModelRowForViewRow(selectedRow);
+		if (tableModel.contains(selectedModelRow)) {
+			scriptTable.setRowSelectionInterval(selectedRow, selectedRow);
+			return;
+		}
+
+		if (tableModel.contains(selectedModelRow - 1)) {
+			int viewRow = getViewRowForModelRow(selectedModelRow - 1);
+			scriptTable.setRowSelectionInterval(viewRow, viewRow);
+		}
+	}
+
+	void enableScriptDirectory(ResourceFile scriptDir) {
+		bundleHost.enable(scriptDir);
+		Msg.showInfo(this, getComponent(), "Script Path Added/Enabled",
+			"The directory has been automatically enabled for use:\n" +
+				scriptDir.getAbsolutePath());
+	}
+
+	void newScript() {
+		try {
+			PickProviderDialog providerDialog =
+				new PickProviderDialog(getComponent(), actionManager.getNewHelpLocation());
+			GhidraScriptProvider provider = providerDialog.getSelectedProvider();
+			if (provider == null) {
+				plugin.getTool().setStatusInfo("User cancelled creating a new script.");
+				return;
+			}
+
+			ResourceFile newFile = GhidraScriptUtil.createNewScript(provider,
+				new ResourceFile(GhidraScriptUtil.USER_SCRIPTS_DIR), getScriptDirectories());
+			SaveDialog dialog = new SaveNewScriptDialog(getComponent(), "New Script", this, newFile,
+				actionManager.getNewHelpLocation());
+			if (dialog.isCancelled()) {
+				plugin.getTool().setStatusInfo("User cancelled creating a new script.");
+				return;
+			}
+			newFile = dialog.getFile();
+
+			enableScriptDirectory(newFile.getParentFile());
+
+			String category = StringUtils.join(getSelectedCategoryPath(), ScriptInfo.DELIMITTER);
+			provider.createNewScript(newFile, category);
+
+			GhidraScriptEditorComponentProvider editor =
+				new GhidraScriptEditorComponentProvider(plugin, this, newFile);
+			editorMap.put(newFile, editor);
+
+			// create the ScriptInfo object now, before the TableModelEvent handlers
+			// attempt to use it.
+			assert !infoManager.containsMetadata(newFile) : "new source already has metadata?";
+			infoManager.getScriptInfo(newFile);
+
+			tableModel.insertScript(newFile);
+
+			int index = getScriptIndex(newFile);
+
+			if (index >= 0) {
+				scriptTable.setRowSelectionInterval(index, index);
+				Rectangle rect = scriptTable.getCellRect(index, 0, true);
+				scriptTable.scrollRectToVisible(rect);
+			}
+		}
+		catch (IOException e) {
+			Msg.showError(this, getComponent(), getName(), e.getMessage(), e);
+		}
+	}
+
+	void runScript(String scriptName, TaskListener listener) {
+		for (ResourceFile dir : bundleHost.getBundleFiles()) {
+			if (dir.isDirectory()) {
+				ResourceFile scriptSource = new ResourceFile(dir, scriptName);
+				if (scriptSource.exists()) {
+					runScript(scriptSource, listener);
+					return;
+				}
+			}
+		}
+		throw new IllegalArgumentException("Script does not exist: " + scriptName);
+	}
+
+	void runScript(ResourceFile scriptFile) {
+		runScript(scriptFile, taskListener);
+	}
+
+	void runScript(ResourceFile scriptFile, TaskListener listener) {
+		lastRunScript = scriptFile;
+		GhidraScript script = doGetScriptInstance(scriptFile);
+		doRunScript(script, listener);
+	}
+
+	private GhidraScript doGetScriptInstance(ResourceFile scriptFile) {
+
+		Supplier<GhidraScript> scriptSupplier = () -> {
+			ConsoleService console = plugin.getConsoleService();
+			return getScriptInstance(scriptFile, console);
+		};
+
+		if (!Swing.isSwingThread()) {
+			return scriptSupplier.get();
+		}
+
+		AtomicReference<GhidraScript> ref = new AtomicReference<>();
+		TaskBuilder.withRunnable(monitor -> ref.set(scriptSupplier.get()))
+				.setTitle("Compiling Script Directory")
+				.setLaunchDelay(1000)
+				.launchModal();
+
+		return ref.get();
+	}
+
+	private void doRunScript(GhidraScript script, TaskListener listener) {
+
+		ConsoleService console = plugin.getConsoleService();
+		RunScriptTask task = new RunScriptTask(script, plugin.getCurrentState(), console);
+		runningScriptTaskSet.add(task);
+		task.addTaskListener(listener);
+		task.addTaskListener(cleanupTaskSetListener);
+		new TaskLauncher(task, plugin.getTool().getToolFrame());
+		tool.contextChanged(this); // some actions change after we run a script
+		actionManager.notifyScriptWasRun();
+	}
+
+	private GhidraScript getScriptInstance(ResourceFile scriptFile, ConsoleService console) {
+		String scriptName = scriptFile.getName();
+		GhidraScriptProvider provider = GhidraScriptUtil.getProvider(scriptFile);
+		try {
+			return provider.getScriptInstance(scriptFile, console.getStdErr());
+		}
+		catch (IllegalAccessException e) {
+			console.addErrorMessage("", "Unable to access script: " + scriptName);
+		}
+		catch (InstantiationException e) {
+			console.addErrorMessage("", "Unable to instantiate script: " + scriptName);
+		}
+		catch (ClassNotFoundException e) {
+			console.addErrorMessage("", "Unable to locate script class: " + scriptName);
+		}
+
+		// show the error icon
+		scriptTable.repaint();
+		return null;
+	}
+
+	void runScript() {
+		ResourceFile script = getSelectedScript();
+		if (script != null) {
+			runScript(script);
+		}
+	}
+
+	void runLastScript() {
+		if (lastRunScript != null) {
+			runScript(lastRunScript);
+		}
+	}
+
+	ResourceFile getLastRunScript() {
+		return lastRunScript;
+	}
+
+	void sortScripts() {
+		tableModel.fireTableDataChanged();
+	}
+
+	String[] getSelectedCategoryPath() {
+		TreePath currentPath = scriptCategoryTree.getSelectionPath();
+
+		String[] currentCategory = null;
+
+		if (currentPath != null) {
+			if (currentPath.equals(previousPath)) {
+				return previousCategory;
+			}
+			if (currentPath.getPathCount() > 1) {
+				GTreeNode node = (GTreeNode) currentPath.getLastPathComponent();
+				currentCategory = getCategoryPath(node);
+			}
+		}
+
+		previousPath = currentPath;
+		previousCategory = currentCategory;
+
+		return currentCategory;
+	}
+
+	private String[] getCategoryPath(GTreeNode node) {
+		TreePath treePath = node.getTreePath();
+		Object[] path = treePath.getPath();
+		String[] categoryPath = new String[path.length - 1];
+		for (int i = 0; i < categoryPath.length; i++) {
+			categoryPath[i] = ((GTreeNode) path[i + 1]).getName();
+		}
+		return categoryPath;
+	}
+
+	void showBundleStatusComponent() {
+		bundleStatusComponentProvider.setVisible(true);
+	}
+
+	/**
+	 * refresh the list of scripts by listing files in each script directory.
+	 *
+	 * Note: this method can be used off the swing event thread.
+	 */
+	void refresh() {
+		refreshUpdateManager.update();
+	}
+
+	/**
+	 * refresh the list of scripts by listing files in each script directory.
+	 *
+	 * Note: this method MUST NOT BE USED off the swing event thread.
+	 */
+	private void doRefresh() {
+		hasBeenRefreshed = true;
+
+		TreePath preRefreshSelectionPath = scriptCategoryTree.getSelectionPath();
+
+		updateAvailableScriptFilesForAllPaths();
+
+		trimUnusedTreeCategories();
+
+		scriptRoot.fireNodeStructureChanged(scriptRoot);
+		if (preRefreshSelectionPath != null) {
+			scriptCategoryTree.setSelectionPath(preRefreshSelectionPath);
+		}
+	}
+
+	private void updateAvailableScriptFilesForAllPaths() {
+		List<ResourceFile> scriptsToRemove = tableModel.getScripts();
+		List<ResourceFile> scriptAccumulator = new ArrayList<>();
+		for (ResourceFile bundleFile : getScriptDirectories()) {
+			updateAvailableScriptFilesForDirectory(scriptsToRemove, scriptAccumulator, bundleFile);
+		}
+
+		// note: do this after the loop to prevent a flurry of table model update events
+		// scriptinfo was created in updateAvailableScriptfilesForDirectory
+		tableModel.insertScripts(scriptAccumulator);
+
+		for (ResourceFile file : scriptsToRemove) {
+			removeScript(file);
+			infoManager.removeMetadata(file);
+		}
+
+		infoManager.refreshDuplicates();
+		refreshScriptData();
+	}
+
+	private void updateAvailableScriptFilesForDirectory(List<ResourceFile> scriptsToRemove,
+			List<ResourceFile> scriptAccumulator, ResourceFile directory) {
+		ResourceFile[] files = directory.listFiles();
+		if (files == null) {
+			return;
+		}
+
+		for (ResourceFile scriptFile : files) {
+			if (scriptFile.isFile() && GhidraScriptUtil.hasScriptProvider(scriptFile)) {
+				if (getScriptIndex(scriptFile) == -1) {
+					// note: we don't do this here, so we can prevent a flurry of table events
+					// model.insertScript(element);
+					scriptAccumulator.add(scriptFile);
+				}
+				// new ScriptInfo objects are created on performRefresh, e.g. on startup. Other
+				// refresh operations might have old infos.
+				// assert !GhidraScriptUtil.containsMetadata(scriptFile): "info already exists for script during refresh";
+				ScriptInfo info = infoManager.getScriptInfo(scriptFile);
+				String[] categoryPath = info.getCategory();
+				scriptRoot.insert(categoryPath);
+			}
+			scriptsToRemove.remove(scriptFile);
+		}
+
+	}
+
+	private void refreshScriptData() {
+		List<ResourceFile> scripts = tableModel.getScripts();
+
+		for (ResourceFile script : scripts) {
+			// First get the ScriptInfo object and refresh, which will ensure any
+			// info data (ie: script icons) will be reloaded.
+			ScriptInfo info = infoManager.getExistingScriptInfo(script);
+			info.refresh();
+
+			ScriptAction scriptAction = actionManager.get(script);
+			if (scriptAction != null) {
+				scriptAction.refresh();
+			}
+
+		}
+	}
+
+	// note: we really should just rebuild the tree instead of using this method
+	private void trimUnusedTreeCategories() {
+
+		/*
+		 			Unusual Algorithm
+		
+			The tree nodes represent categories, but do not contain nodes for individual
+		 	scripts.  We wish to remove any of the tree nodes that no longer represent script
+		 	categories.  (This can happen when a script is deleted or its category is changed.)
+		 	This algorithm will assume that all nodes need to be deleted.  Then, each script is
+		 	examined, using its category to mark a given node as 'safe'; that node's parents are
+			also marked as safe.   Any nodes remaining unmarked have no reference script and
+			will be deleted.
+		 */
+
+		// note: turn String[] to List<String> to use hashing
+		Set<List<String>> categories = new HashSet<>();
+		for (ScriptInfo info : infoManager.getScriptInfoIterable()) {
+			String[] path = info.getCategory();
+			List<String> category = Arrays.asList(path);
+			for (int i = 1; i <= category.size(); i++) {
+				categories.add(category.subList(0, i));
+			}
+		}
+
+		List<GTreeNode> toDelete = new LinkedList<>();
+		Iterator<GTreeNode> nodes = new BreadthFirstIterator(scriptRoot);
+		for (GTreeNode node : CollectionUtils.asIterable(nodes)) {
+			String[] path = getCategoryPath(node);
+			List<String> category = Arrays.asList(path);
+			if (!categories.contains(category)) {
+				toDelete.add(node);
+			}
+		}
+
+		for (GTreeNode node : toDelete) {
+			GTreeNode parent = node.getParent();
+			if (parent != null) {
+				parent.removeNode(node);
+			}
+		}
+	}
+
+	GhidraScriptEditorComponentProvider getEditor() {
+		ResourceFile script = getSelectedScript();
+		return editorMap.get(script);
+	}
+
+	void editScriptBuiltin() {
+		ResourceFile script = getSelectedScript();
+		if (script == null) {
+			plugin.getTool().setStatusInfo("Script is null.");
+			return;
+		}
+		if (!script.exists()) {
+			plugin.getTool().setStatusInfo("Script " + script.getName() + " does not exist.");
+			return;
+		}
+
+		editScriptInGhidra(script);
+	}
+
+	void editScriptEclipse() {
+		ResourceFile script = getSelectedScript();
+		if (script == null) {
+			plugin.getTool().setStatusInfo("Script is null.");
+			return;
+		}
+		if (!script.exists()) {
+			plugin.getTool().setStatusInfo("Script " + script.getName() + " does not exist.");
+			return;
+		}
+
+		plugin.tryToEditFileInEclipse(script);
+	}
+
+	GhidraScriptEditorComponentProvider editScriptInGhidra(ResourceFile script) {
+		GhidraScriptEditorComponentProvider editor = editorMap.get(script);
+		if (editor == null) {
+			try {
+				editor = new GhidraScriptEditorComponentProvider(plugin, this, script);
+				editorMap.put(script, editor);
+				return editor;
+			}
+			catch (IOException e) {
+				Msg.showError(this, getComponent(), "Error loading script", e.getMessage(), e);
+				return null;
+			}
+		}
+		plugin.getTool().showComponentProvider(editor, true);
+		return editor;
+	}
+
+	/**
+	 * reassign an existing editor component
+	 *
+	 * @param oldScript who the editor is currently assigned to
+	 * @param newScript the new script to assign it to
+	 */
+	void switchEditor(ResourceFile oldScript, ResourceFile newScript) {
+		GhidraScriptEditorComponentProvider editor = editorMap.get(oldScript);
+		editorMap.put(newScript, editor);
+		editorMap.remove(oldScript);
+		// create corresponding info before inserting in table
+		infoManager.getScriptInfo(newScript);
+		tableModel.insertScript(newScript);
+	}
+
+	boolean removeScript(ResourceFile script) {
+		// Always remove the script from the table, as it is no longer on disk.  If the user
+		// has it open in the editor, then they may choose to leave the editor open, but they
+		// will have to save that file if they want to keep the changes.
+		tableModel.removeScript(script);
+
+		if (!removeScriptEditor(script, true)) {
+			return false; // user cancelled the closing of a dirty editor
+		}
+
+		actionManager.removeAction(script);
+		infoManager.removeMetadata(script);
+		return true;
+	}
+
+	boolean removeScriptEditor(ResourceFile script, boolean checkForSave) {
+		GhidraScriptEditorComponentProvider editor = editorMap.get(script);
+		if (editor == null) {
+			return true;
+		}
+
+		if (checkForSave && editor.hasChanges()) {
+			JComponent parentComponent = getComponent();
+			if (plugin.getTool().isVisible(editor)) {
+				parentComponent = editor.getComponent();
+			}
+			int result = OptionDialog.showYesNoDialog(parentComponent, getName(),
+				"'" + script.getName() + "' has been modified. Discard changes?");
+			if (result != OptionDialog.OPTION_ONE) {
+				return false;
+			}
+		}
+
+		plugin.getTool().removeComponentProvider(editor);
+		editorMap.remove(script);
+		return true;
+	}
+
 	private void initializeUnresizableColumn(TableColumn column, int width) {
 		column.setPreferredWidth(width);
 		column.setMinWidth(width);
@@ -885,11 +989,13 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		// the selected script has been changed, update the description panel
 		updateDescriptionPanel();
-		updateCategoryTree(script);
+
+		ScriptInfo info = infoManager.getExistingScriptInfo(script);
+		updateCategoryTree(info.getCategory());
 	}
 
-	private void updateCategoryTree(ResourceFile script) {
-		scriptRoot.insert(script);
+	private void updateCategoryTree(String[] categoryPath) {
+		scriptRoot.insert(categoryPath);
 		trimUnusedTreeCategories();
 	}
 
@@ -901,7 +1007,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 			@Override
 			public List<String> transform(ResourceFile script) {
-				ScriptInfo info = GhidraScriptUtil.getScriptInfo(script);
+				ScriptInfo info = infoManager.getExistingScriptInfo(script);
 				list.clear();
 				list.add(info.getName());
 				list.add(info.getDescription());
@@ -914,10 +1020,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private JComponent buildDescriptionComponent() {
-		JPanel descriptionPanel = new JPanel(new BorderLayout());
 		descriptionTextPane = new JTextPane();
 		descriptionTextPane.setEditable(false);
 		descriptionTextPane.setEditorKit(new HTMLEditorKit());
+		JPanel descriptionPanel = new JPanel(new BorderLayout());
 		descriptionPanel.add(descriptionTextPane);
 		JScrollPane scrollPane = new JScrollPane(descriptionPanel);
 
@@ -932,20 +1038,22 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void updateDescriptionPanel() {
-		descriptionTextPane.setText("");
+		String text = "Error! no script info!";
 		ResourceFile script = getSelectedScript();
-		if (script == null) {
-			return;
+		if (script != null) {
+			ScriptInfo info = infoManager.getExistingScriptInfo(script);
+			if (info != null) {
+				text = info.getToolTipText();
+			}
 		}
+		final String ftext = text;
 
-		ScriptInfo info = GhidraScriptUtil.getScriptInfo(script);
-		if (info != null) {
-			descriptionTextPane.setText(info.getToolTipText());
-
-			// have to do an invokeLater here, since the DefaultCaret class runs in an invokeLater,
-			// which will overwrite our location setting
-			SwingUtilities.invokeLater(() -> descriptionTextPane.setCaretPosition(0));
-		}
+		// have to do an invokeLater here, since the DefaultCaret class runs in an invokeLater,
+		// which will overwrite our location setting
+		SwingUtilities.invokeLater(() -> {
+			descriptionTextPane.setText(ftext);
+			descriptionTextPane.setCaretPosition(0);
+		});
 	}
 
 	private int getModelRowForViewRow(int viewRow) {
@@ -1001,66 +1109,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		return taskListener;
 	}
 
-	private class ScriptTaskListener implements TaskListener {
-		@Override
-		public void taskCancelled(Task task) {
-			taskCompleted(task);
-		}
-
-		@Override
-		public void taskCompleted(Task task) {
-			Rectangle visibleRect = scriptTable.getVisibleRect();
-			scriptTable.repaint(visibleRect);
-		}
-	}
-
-	public void readConfigState(SaveState saveState) {
-		pathManager.restoreState(saveState);
-
-		// pull in the just-loaded paths
-		List<Path> paths = pathManager.getPaths();
-		GhidraScriptUtil.setScriptDirectories(paths);
-		actionManager.restoreUserDefinedKeybindings(saveState);
-		actionManager.restoreScriptsThatAreInTool(saveState);
-
-		final int descriptionDividerLocation = saveState.getInt(DESCRIPTION_DIVIDER_LOCATION, 0);
-		if (descriptionDividerLocation > 0) {
-
-			ComponentListener listener = new ComponentAdapter() {
-				@Override
-				public void componentResized(ComponentEvent e) {
-					dataDescriptionSplit.setResizeWeight(TOP_PREFERRED_RESIZE_WEIGHT); // give the top pane the most space
-				}
-			};
-			component.addComponentListener(listener);
-
-			dataDescriptionSplit.setDividerLocation(descriptionDividerLocation);
-		}
-
-		String filterText = saveState.getString(FILTER_TEXT, "");
-		tableFilterPanel.setFilterText(filterText);
-	}
-
-	public void writeConfigState(SaveState saveState) {
-		pathManager.saveState(saveState);
-		actionManager.saveUserDefinedKeybindings(saveState);
-		actionManager.saveScriptsThatAreInTool(saveState);
-
-		int dividerLocation = dataDescriptionSplit.getDividerLocation();
-		if (dividerLocation > 0) {
-			saveState.putInt(DESCRIPTION_DIVIDER_LOCATION, dividerLocation);
-		}
-
-		String filterText = tableFilterPanel.getFilterText();
-		saveState.putString(FILTER_TEXT, filterText);
-	}
-
-	/********************************************************************/
-
 	@Override
 	public void componentShown() {
 		if (!hasBeenRefreshed) {
-			performRefresh();
+			refresh();
 		}
 	}
 
@@ -1106,16 +1158,90 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 	}
 
-//==================================================================================================
-// Inner Classes
-//==================================================================================================
+	/** passed to runScript, repaints scriptTable when a script completes */
+	private class ScriptTaskListener implements TaskListener {
+		@Override
+		public void taskCancelled(Task task) {
+			taskCompleted(task);
+		}
+
+		@Override
+		public void taskCompleted(Task task) {
+			Rectangle visibleRect = scriptTable.getVisibleRect();
+			scriptTable.repaint(visibleRect);
+		}
+	}
+
+	class RefreshingBundleHostListener implements BundleHostListener {
+
+		@Override
+		public void bundleBuilt(GhidraBundle bundle, String summary) {
+			// on enable, build can happen before the refresh populates the info manager with
+			// this bundle's scripts, so allow for the possibility and create the info here.
+			if (bundle instanceof GhidraSourceBundle) {
+				GhidraSourceBundle sourceBundle = (GhidraSourceBundle) bundle;
+				ResourceFile sourceDirectory = sourceBundle.getFile();
+				if (summary == null) {
+					// a null summary means the build didn't change anything,
+					// so use any errors from the last build
+					for (ResourceFile sourceFile : sourceBundle.getAllErrors().keySet()) {
+						if (sourceFile.getParentFile().equals(sourceDirectory)) {
+							ScriptInfo scriptInfo = infoManager.getScriptInfo(sourceFile);
+							scriptInfo.setCompileErrors(true);
+						}
+					}
+				}
+				else {
+					for (ResourceFile sourceFile : sourceBundle.getNewSources()) {
+						if (sourceFile.getParentFile().equals(sourceDirectory)) {
+							ScriptInfo scriptInfo = infoManager.getScriptInfo(sourceFile);
+							BuildError e = sourceBundle.getErrors(sourceFile);
+							scriptInfo.setCompileErrors(e != null);
+						}
+					}
+				}
+				tableModel.fireTableDataChanged();
+			}
+		}
+
+		@Override
+		public void bundleEnablementChange(GhidraBundle bundle, boolean newEnablment) {
+			if (bundle instanceof GhidraSourceBundle) {
+				refresh();
+			}
+		}
+
+		@Override
+		public void bundleAdded(GhidraBundle bundle) {
+			plugin.getTool().setConfigChanged(true);
+			refresh();
+		}
+
+		@Override
+		public void bundlesAdded(Collection<GhidraBundle> bundles) {
+			plugin.getTool().setConfigChanged(true);
+			refresh();
+		}
+
+		@Override
+		public void bundleRemoved(GhidraBundle bundle) {
+			plugin.getTool().setConfigChanged(true);
+			refresh();
+		}
+
+		@Override
+		public void bundlesRemoved(Collection<GhidraBundle> bundles) {
+			plugin.getTool().setConfigChanged(true);
+			refresh();
+		}
+	}
 
 	/** Table filter that uses the state of the tree to further filter */
 	private class ScriptTableSecondaryFilter implements TableFilter<ResourceFile> {
 
 		@Override
 		public boolean acceptsRow(ResourceFile script) {
-			ScriptInfo info = GhidraScriptUtil.getScriptInfo(script);
+			ScriptInfo info = infoManager.getExistingScriptInfo(script);
 			String[] category = getSelectedCategoryPath();
 
 			if (category == null) { // root node
@@ -1135,7 +1261,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			// with a filter, only things in the available children match the root node (this is
 			// so filtering in the tree will show all matching results when the
 			// root is selected, instead of all results).
-			GTreeRootNode rootNode = scriptCategoryTree.getRootNode();
+			GTreeNode rootNode = scriptCategoryTree.getViewRoot();
 			List<GTreeNode> children = rootNode.getChildren();
 			for (GTreeNode node : children) {
 				String[] path = getCategoryPath(node);

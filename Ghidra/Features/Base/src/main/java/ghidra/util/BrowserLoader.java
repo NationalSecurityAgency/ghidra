@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,15 @@
  */
 package ghidra.util;
 
-import ghidra.framework.options.ToolOptions;
-import ghidra.framework.options.OptionsChangeListener;
-import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.framework.plugintool.util.OptionsService;
-
+import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+
+import ghidra.framework.options.OptionsChangeListener;
+import ghidra.framework.options.ToolOptions;
+import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.framework.plugintool.util.OptionsService;
 
 /** 
  *  BrowserLoader opens a web browser and displays the given url. 
@@ -161,13 +161,13 @@ public class BrowserLoader {
 		String urlString = option.getUrlReplacementString();
 		if (urlString.equals(ManualViewerCommandWrappedOption.HTTP_URL_REPLACEMENT_STRING) ||
 			fileURL == null) {
-			argumentList.add(url.toString());
+			argumentList.add(url.toExternalForm());
 		}
 		else if (urlString.equals(ManualViewerCommandWrappedOption.FILE_URL_REPLACEMENT_STRING)) {
-			argumentList.add(fileURL.toString());
+			argumentList.add(fileURL.toExternalForm());
 		}
 		else {
-			argumentList.add(fileURL.getFile());
+			argumentList.add(new File(fileURL.getFile()).getAbsolutePath());
 		}
 
 		return argumentList.toArray(new String[argumentList.size()]);

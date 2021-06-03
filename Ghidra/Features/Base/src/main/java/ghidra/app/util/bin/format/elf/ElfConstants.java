@@ -45,8 +45,6 @@ public interface ElfConstants {
 	/**Start of padding*/
 	public static final int EI_PAD = 9;
 
-	//ABI - application binary interface
-
 	// ELF Identification - File identification values
 
 	/**The ELF magic number*/
@@ -62,9 +60,9 @@ public interface ElfConstants {
 
 	/**Invalid class*/
 	public static final byte ELF_CLASS_NONE = 0;
-	/**32-bit objects*/
+	/** 32-bit objects */
 	public static final byte ELF_CLASS_32 = 1;
-	/**64-bit objects*/
+	/** 64-bit objects */
 	public static final byte ELF_CLASS_64 = 2;
 	/**?*/
 	public static final byte ELF_CLASS_NUM = 3;
@@ -107,7 +105,7 @@ public interface ElfConstants {
 	public static final byte ELFOSABI_IRIX = 8;
 	/**free bsd*/
 	public static final byte ELFOSABI_FREEBSD = 9;
-	/**compaq tru64 unix*/
+	/** compaq tru64 unix */
 	public static final byte ELFOSABI_TRUE64 = 10;
 	/**novell modesto*/
 	public static final byte ELFOSABI_MODESTO = 11;
@@ -121,6 +119,8 @@ public interface ElfConstants {
 	public static final byte ELFOSABI_AROS = 15;
 	/** FenixOS */
 	public static final byte ELFOSABI_FENIXOS = 16;
+	/** Nuxi CloudABI */
+	public static final byte ELFOSABI_CLOUDABI = 17;
 	/** Bare-metal TMS320C6000 */
 	public static final byte ELFOSABI_C6000_ELFABI = 64;
 	/** Linux TMS320C6000 */
@@ -157,47 +157,49 @@ public interface ElfConstants {
 
 	/**No machine*/
 	public static final short EM_NONE = 0;
-	/**AT&T WE 32100*/
+	/** AT&amp;T WE 32100 */
 	public static final short EM_M32 = 1;
 	/**SUN SPARC */
 	public static final short EM_SPARC = 2;
-	/**Intel 80386 */
+	/** Intel 80386 */
 	public static final short EM_386 = 3;
-	/**Motorola m68k family */
+	/** Motorola m68k family */
 	public static final short EM_68K = 4;
-	/**Motorola m88k family */
+	/** Motorola m88k family */
 	public static final short EM_88K = 5;
-	/**Intel 486 (deprecated)*/
+	/** Intel 486 (deprecated) */
 	public static final short EM_486 = 6;
-	/**Intel 80860 */
+	/** Intel 80860 */
 	public static final short EM_860 = 7;
-	/**MIPS R3000 big-endian */
+	/** MIPS R3000 big-endian */
 	public static final short EM_MIPS = 8;
-	/**IBM System/370 */
+	/** IBM System/370 */
 	public static final short EM_S370 = 9;
-	/**MIPS R3000 little-endian */
+	/** MIPS R3000 little-endian */
 	public static final short EM_MIPS_RS3_LE = 10;
 	// 11 - 14 reserved
 	/**HPPA */
 	public static final short EM_PARISC = 15;
-	/**Fujitsu VPP500 */
+	/** Fujitsu VPP500 */
 	public static final short EM_VPP500 = 17;
-	/**Sun's "v8plus" */
+	/** Sun's "v8plus" */
 	public static final short EM_SPARC32PLUS = 18;
-	/**Intel 80960 */
+	/** Intel 80960 */
 	public static final short EM_960 = 19;
 	/**PowerPC */
 	public static final short EM_PPC = 20;
-	/**PowerPC 64-bit */
+	/** PowerPC 64-bit */
 	public static final short EM_PPC64 = 21;
-	/**IBM S390 */
+	/** IBM S390 */
 	public static final short EM_S390 = 22;
-	//23 - 35  reserved
-	/**NEC V800 series */
+	/** IBM SPU/SPC */
+	public static final short EM_SPU = 23;
+	// 24 - 35 reserved
+	/** NEC V800 series */
 	public static final short EM_V800 = 36;
-	/**Fujitsu FR20 */
+	/** Fujitsu FR20 */
 	public static final short EM_FR20 = 37;
-	/**TRW RH-32 */
+	/** TRW RH-32 */
 	public static final short EM_RH32 = 38;
 	/**Motorola RCE */
 	public static final short EM_RCE = 39;
@@ -207,19 +209,19 @@ public interface ElfConstants {
 	public static final short EM_FAKE_ALPHA = 41;
 	/**Hitachi SH */
 	public static final short EM_SH = 42;
-	/**SPARC v9 64-bit */
+	/** SPARC v9 64-bit */
 	public static final short EM_SPARCV9 = 43;
 	/**Siemens Tricore */
 	public static final short EM_TRICORE = 44;
 	/**Argonaut RISC Core */
 	public static final short EM_ARC = 45;
-	/**Hitachi H8/300 */
+	/** Hitachi H8/300 */
 	public static final short EM_H8_300 = 46;
-	/**Hitachi H8/300H */
+	/** Hitachi H8/300H */
 	public static final short EM_H8_300H = 47;
-	/**Hitachi H8S */
+	/** Hitachi H8S */
 	public static final short EM_H8S = 48;
-	/**Hitachi H8/500 */
+	/** Hitachi H8/500 */
 	public static final short EM_H8_500 = 49;
 	/** Intel Merced */
 	public static final short EM_IA_64 = 50;
@@ -243,14 +245,16 @@ public interface ElfConstants {
 	public static final short EM_ME16 = 59;
 	/** STMicroelectronic ST100 processor */
 	public static final short EM_ST100 = 60;
-	/** Advanced Logic Corp. Tinyj emb.fam*/
+	/** Advanced Logic Corp. Tinyj emb.fam */
 	public static final short EM_TINYJ = 61;
 	/** AMD x86-64 architecture */
 	public static final short EM_X86_64 = 62;
 	/** Sony DSP Processor */
 	public static final short EM_PDSP = 63;
-	// 64 reserved
-	// 65 reserved
+	/** Digital Equipment Corp. PDP-10 */
+	public static final short EM_PDP10 = 64;
+	/** Digital Equipment Corp. PDP-11 */
+	public static final short EM_PDP11 = 65;
 	/** Siemens FX66 microcontroller */
 	public static final short EM_FX66 = 66;
 	/** STMicroelectronics ST9+ 8/16 mc */
@@ -355,12 +359,13 @@ public interface ElfConstants {
 	public static final short EM_C166 = 116;
 	/** Renesas M16C series microprocessors */
 	public static final short EM_M16C = 117;
-	/** Microchip Technology dsPIC30F Digital Signal Controller **/
+	/** Microchip Technology dsPIC30F Digital Signal Controller */
 	public static final short EM_DSPIC30F = 118;
 	/** Freescale Communication Engine RISC core */
 	public static final short EM_CE = 119;
-	/** Renesas M32C series microprocessors*/
+	/** Renesas M32C series microprocessors* */
 	public static final short EM_M32C = 120;
+	// 121 - 130 reserved
 	/** Altium TSK3000 core */
 	public static final short EM_TSK3000 = 131;
 	/** Freescale RS08 embedded processor */
@@ -385,6 +390,7 @@ public interface ElfConstants {
 	public static final short EM_TI_C2000 = 141;
 	/** The Texas Instruments TMS320C55x DSP family */
 	public static final short EM_TI_C5500 = 142;
+	// 143 - 159 reserved
 	/** STMicroelectronics 64bit VLIW Data Signal Processor */
 	public static final short EM_MMDSP_PLUS = 160;
 	/** Cypress M8C microprocessor */
@@ -432,7 +438,7 @@ public interface ElfConstants {
 	/** Intel K10M */
 	public static final short EM_K10M = 181;
 	// 182 reserved
-	/** AARCH64 Architecture **/
+	/** AARCH64 Architecture */
 	public static final short EM_AARCH64 = 183;
 	/** Atmel Corporation 32-bit microprocessor family */
 	public static final short EM_AVR32 = 185;
@@ -470,6 +476,9 @@ public interface ElfConstants {
 	public static final short EM_BA2 = 202;
 	/** XMOS xCORE processor family */
 	public static final short EM_XCORE = 203;
+	/** Microchip 8-bit PIC(r) family */
+	public static final short EM_MCHP_PIC = 204;
+	// 205 - 209 reserved by Intel
 	/** KM211 KM32 32-bit processor */
 	public static final short EM_KM32 = 210;
 	/** KM211 KMX32 32-bit processor */
@@ -490,6 +499,7 @@ public interface ElfConstants {
 	public static final short EM_NORC = 218;
 	/** CSR Kalimba architecture family */
 	public static final short EM_CSR_KALIMBA = 219;
+	// 220 - 223 reserved
 	/** AMD GPU architecture */
 	public static final short EM_AMDGPU = 224;
 	/** RISC-V */

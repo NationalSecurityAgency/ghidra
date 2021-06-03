@@ -24,9 +24,11 @@ package ghidra.framework;
  * part of the version is disregarded in the {@link #compareTo(ApplicationVersion)} method).
  * <p>
  * Examples:
+ * <ul>
  * <li>7.4
  * <li>7.4.1
  * <li>7.4.1-BETA
+ * </ul>
  */
 public class ApplicationVersion implements Comparable<ApplicationVersion> {
 
@@ -193,8 +195,10 @@ public class ApplicationVersion implements Comparable<ApplicationVersion> {
 			patch = parse(versionParts[2], "patch");
 		}
 		else {
+			String plural = version.length() > 1 ? "s" : "";
 			throw new IllegalArgumentException(
-				"Version has " + versionParts.length + " parts but 2 or 3 are required");
+				"Version '" + version + "' has " + versionParts.length +
+					" part" + plural + " but 2 or 3 are required");
 		}
 	}
 

@@ -1,4 +1,6 @@
-
+/* ###
+ * IP: Public Domain
+ */
 // BIN_REPO only useable in full Ghidra source configuration
 project.ext.BIN_REPO = file("../../../ghidra.bin").absolutePath
 

@@ -46,7 +46,6 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 	/**
 	 * Construct a new remote file system which corresponds to a remote repository.
 	 * @param repository remote Repository
-	 * @throws IOException
 	 */
 	public RemoteFileSystem(RepositoryAdapter repository) {
 		this.repository = repository;

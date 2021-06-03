@@ -48,9 +48,9 @@ public interface Saveable {
      * Returns the field classes, in Java types, in the same order as used {@link #save} and
      * {@link #restore}. 
      * <p>
-     * For example, if the save method calls <tt>objStorage.putInt()</tt> and then
-     * <tt>objStorage.putFloat()</tt>, then this method must return 
-     * <tt>Class[]{ Integer.class, Float.class }</tt>. 
+     * For example, if the save method calls <code>objStorage.putInt()</code> and then
+     * <code>objStorage.putFloat()</code>, then this method must return 
+     * <code>Class[]{ Integer.class, Float.class }</code>. 
      * @return
      */
     Class<?>[] getObjectStorageFields();

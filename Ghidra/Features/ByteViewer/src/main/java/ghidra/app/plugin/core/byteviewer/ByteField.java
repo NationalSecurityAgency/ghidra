@@ -62,7 +62,7 @@ public class ByteField extends SimpleTextField {
 
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
-			FieldBackgroundColorManager colorManager, RowColLocation cursorLoc, int rowHeight) {
+			Rectangle clip, FieldBackgroundColorManager colorManager, RowColLocation cursorLoc, int rowHeight) {
 		paintSelection(g, colorManager, 0);
 		paintHighlights(g, hlFactory.getHighlights(this, text, -1));
 		g.setFont(metrics.getFont());

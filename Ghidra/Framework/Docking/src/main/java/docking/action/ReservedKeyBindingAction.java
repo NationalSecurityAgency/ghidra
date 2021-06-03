@@ -21,7 +21,7 @@ import docking.*;
 
 class ReservedKeyBindingAction extends DockingKeyBindingAction {
 
-	ReservedKeyBindingAction(DockingTool tool, DockingActionIf action, KeyStroke keyStroke) {
+	ReservedKeyBindingAction(Tool tool, DockingActionIf action, KeyStroke keyStroke) {
 		super(tool, action, keyStroke);
 	}
 

@@ -145,7 +145,7 @@ public abstract class AbstractMergeTest extends AbstractGhidraHeadedIntegrationT
 
 				List<Dialog> modals =
 					WindowUtilities.getOpenModalDialogsFor(mergeMgr.getMergeTool().getToolFrame());
-				Msg.debug(this, "Open modal dialog: ");
+				Msg.debug(this, "Open modal dialogs: ");
 				for (Dialog dialog : modals) {
 					capture(dialog);
 				}

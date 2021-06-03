@@ -125,8 +125,9 @@ public class InstructionPcodeOverride implements PcodeOverride {
 		if (fixupName == null) {
 			return null;
 		}
-		InjectPayload fixup = program.getCompilerSpec().getPcodeInjectLibrary().getPayload(
-			InjectPayload.CALLFIXUP_TYPE, fixupName, program, null);
+		InjectPayload fixup = program.getCompilerSpec()
+				.getPcodeInjectLibrary()
+				.getPayload(InjectPayload.CALLFIXUP_TYPE, fixupName);
 		if (fixup == null) {
 			Msg.warn(this, "Undefined call-fixup at " + callDestAddr + ": " + fixupName);
 		}

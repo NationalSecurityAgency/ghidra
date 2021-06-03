@@ -38,7 +38,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 		extends BackgroundCommand {
 
 	protected final String name;
-	protected final Address address;
+	private Address address;
 	protected final int count;
 	protected final DataValidationOptions validationOptions;
 	protected final DataApplyOptions applyOptions;
@@ -141,7 +141,8 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	 * @return true if the data type creation completes successfully.
 	 * @throws CancelledException if the user cancels this task.
 	 */
-	private boolean doApplyTo(Program program, TaskMonitor taskMonitor) throws CancelledException {
+	protected boolean doApplyTo(Program program, TaskMonitor taskMonitor)
+			throws CancelledException {
 
 		try {
 			monitor = taskMonitor;
@@ -166,7 +167,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 				return false;
 			}
 
-			createData();
+			boolean dataWasCreated = createData();
 
 			boolean success = true;
 
@@ -181,9 +182,10 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 				success = false;
 			}
 
-			// If following data when applying, create any data referred to by the data just created.
-			if (applyOptions.shouldFollowData() && !createAssociatedData()) {
-				success = false;
+			// If data type didn't exist (was created) and following data when applying,
+			if (dataWasCreated && applyOptions.shouldFollowData()) {
+				// create any data referred to by the data just created
+				success = createAssociatedData();
 			}
 			setStatusMsg(getName() + " completed successfully!");
 			return success;
@@ -199,10 +201,11 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	 * Creates data at this command's address using the data type obtained from the model.
 	 * <br>If you need to create data other than by using the data type returned from getDataType(),
 	 * you should override this method.
+	 * @return false if the data type was not created because it already exists, true otherwise
 	 * @throws CodeUnitInsertionException if the data can't be created.
 	 * @throws CancelledException if the user cancels this task.
 	 */
-	protected void createData() throws CodeUnitInsertionException, CancelledException {
+	protected boolean createData() throws CodeUnitInsertionException, CancelledException {
 
 		Program program = model.getProgram();
 		Memory memory = program.getMemory();
@@ -229,13 +232,15 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 
 		// Is the data type already applied at the address?
 		if (matchingDataExists(dt, program, address)) {
-			return;
+			return false;
 		}
 
 		monitor.checkCanceled();
 
 		// Create data at the address using the datatype.
 		DataUtilities.createData(program, address, dt, dt.getLength(), false, getClearDataMode());
+
+		return true;
 	}
 
 	/**
@@ -352,5 +357,25 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	protected ClearDataMode getClearDataMode() {
 		return (applyOptions.shouldClearDefinedData()) ? ClearDataMode.CLEAR_ALL_CONFLICT_DATA
 				: ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA;
+	}
+
+	/**
+	 * Get the address for the data item to be processed by the base implementation.
+	 * In general this is the initial model address set when the command was created.
+	 * 
+	 * @return the address of the data item being created.
+	 */
+	final protected Address getDataAddress() {
+		return address;
+	}
+
+	/**
+	 * Set the address of the data item to be applied.
+	 * Can be used for sub classes that need to apply multiple data items.
+	 * 
+	 * @param addr set the current data address
+	 */
+	final protected void setDataAddress(Address addr) {
+		address = addr;
 	}
 }

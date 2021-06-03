@@ -25,6 +25,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
+import utility.function.Dummy;
 
 public class DemangledThunk extends DemangledObject {
 
@@ -34,7 +35,9 @@ public class DemangledThunk extends DemangledObject {
 
 	private boolean covariantReturnThunk = false;
 
-	public DemangledThunk(DemangledFunction thunkedFunctionObject) {
+	public DemangledThunk(String mangled, String originalDemangled,
+			DemangledFunction thunkedFunctionObject) {
+		super(mangled, originalDemangled);
 		this.thunkedFunctionObject = thunkedFunctionObject;
 		this.namespace = thunkedFunctionObject.getNamespace();
 		setName(thunkedFunctionObject.getName());
@@ -106,7 +109,7 @@ public class DemangledThunk extends DemangledObject {
 			function = function.getThunkedFunction(false);
 		}
 
-		if (thunkedFunction != null && originalMangled.equals(function.getName()) &&
+		if (thunkedFunction != null && mangled.equals(function.getName()) &&
 			!function.isThunk()) {
 			function.setThunkedFunction(thunkedFunction);
 		}
@@ -115,14 +118,6 @@ public class DemangledThunk extends DemangledObject {
 		return s != null;
 	}
 
-	/**
-	 * Create normal function where thunk resides
-	 * @param prog program
-	 * @param addr thunk function address
-	 * @param doDisassembly
-	 * @param monitor
-	 * @return function
-	 */
 	private Function createPreThunkFunction(Program prog, Address addr, boolean doDisassembly,
 			TaskMonitor monitor) {
 
@@ -147,8 +142,9 @@ public class DemangledThunk extends DemangledObject {
 		while (instr != null) {
 			// This is done in a way to handle potential delay slots
 			InstructionContext instructionContext = instr.getInstructionContext();
-			Address fallThru = instructionContext.getAddress().add(
-				instr.getPrototype().getFallThroughOffset(instructionContext));
+			Address fallThru = instructionContext.getAddress()
+					.add(
+						instr.getPrototype().getFallThroughOffset(instructionContext));
 			Address maxAddr = fallThru.previous();
 			if (maxAddr.compareTo(instr.getMinAddress()) < 0) {
 				// just in case we wrapped
@@ -181,8 +177,7 @@ public class DemangledThunk extends DemangledObject {
 		}
 
 		Symbol s = SymbolUtilities.getExpectedLabelOrFunctionSymbol(program,
-			thunkedFunctionObject.originalMangled, err -> Msg.warn(this, err));
-
+			mangled, Dummy.consumer());
 		if (s == null) {
 			Address thunkedAddr =
 				CreateThunkFunctionCmd.getThunkedAddr(program, thunkAddress, false);
@@ -190,11 +185,13 @@ public class DemangledThunk extends DemangledObject {
 				s = program.getSymbolTable().getPrimarySymbol(thunkedAddr);
 			}
 		}
+
 		if (s == null || !block.contains(s.getAddress())) {
+			Msg.warn(this, "Unable to find or create thunk for " + mangled + " at " + thunkAddress);
 			return null;
 		}
-		Address addr = s.getAddress();
 
+		Address addr = s.getAddress();
 		DemanglerOptions subOptions = new DemanglerOptions(options);
 		subOptions.setApplySignature(true);
 
@@ -202,70 +199,4 @@ public class DemangledThunk extends DemangledObject {
 
 		return program.getFunctionManager().getFunctionAt(addr);
 	}
-//	private Function createAndThunkUnknownExternalFunction(Function function) {
-//
-//		Program program = function.getProgram();
-//		ExternalManager extMgr = program.getExternalManager();
-//		SymbolTable symbolTable = program.getSymbolTable();
-//
-//		try {
-//
-//			Symbol librarySymbol =
-//				symbolTable.getSymbol(Library.UNKNOWN, program.getGlobalNamespace());
-//			if (librarySymbol != null) {
-//				if (librarySymbol.getSymbolType() != SymbolType.LIBRARY) {
-//					return function; // Reserved library name misused - can't create external function
-//				}
-//			}
-//			else {
-//				Library unknownLibrary =
-//					extMgr.addExternalLibraryName(Library.UNKNOWN, SourceType.IMPORTED);
-//				librarySymbol = unknownLibrary.getSymbol();
-//			}
-//
-//			// add namespaces to unknown library
-//			Stack<Namespace> nsStack = new Stack<Namespace>();
-//			Namespace ns = function;
-//			while ((ns = ns.getParentNamespace()).getID() != Namespace.GLOBAL_NAMESPACE_ID) {
-//				nsStack.push(ns);
-//			}
-//			Namespace parent = (Namespace) librarySymbol.getObject();
-//			while (!nsStack.isEmpty()) {
-//				ns = nsStack.pop();
-//				SymbolType type = ns.getSymbol().getSymbolType();
-//				Symbol s = symbolTable.getSymbol(ns.getName(), parent);
-//				if (s != null) {
-//					if (s.getSymbolType() != type) {
-//						// wrong type of namespace - just return original function
-//						return function;
-//					}
-//				}
-//				else if (type == SymbolType.CLASS) {
-//					parent = symbolTable.createClass(parent, ns.getName(), SourceType.IMPORTED);
-//				}
-//				else {
-//					parent = symbolTable.createNameSpace(parent, ns.getName(), SourceType.IMPORTED);
-//				}
-//			}
-//
-//			ExternalLocation extLoc =
-//				extMgr.addExtFunction(parent, function.getName(), null, SourceType.IMPORTED);
-//			Function extFunction = extLoc.getFunction();
-//			extFunction.setCallingConvention(function.getCallingConventionName());
-//			function.setThunkedFunction(extFunction);
-//
-//			// External function will only have this parameter or none
-//
-//			return extFunction;
-//		}
-//		catch (DuplicateNameException e) {
-//			// unexpected
-//		}
-//		catch (InvalidInputException e) {
-//			// unexpected
-//		}
-//
-//		return function; // return original function on failure
-//	}
-
 }

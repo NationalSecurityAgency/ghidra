@@ -52,7 +52,7 @@ public class Annotation {
 		Map<String, AnnotatedStringHandler> map = new HashMap<>();
 
 		// find all instances of AnnotatedString
-		Set<AnnotatedStringHandler> instances =
+		List<AnnotatedStringHandler> instances =
 			ClassSearcher.getInstances(AnnotatedStringHandler.class);
 
 		for (AnnotatedStringHandler instance : instances) {
@@ -67,9 +67,7 @@ public class Annotation {
 
 	/**
 	 * Constructor
-	 * <b>Note</b>: This constructor assumes that the provided annotation text matches the 
-	 * regular expression defined in {@link docking.widgets.fieldpanel.support.FieldUtils#ENCLOSING_ANNOTATION_PATTERN}, which 
-	 * assures that the string starts with "{<pre>@</pre>" and ends with '}'
+	 * <b>Note</b>: This constructor assumes that the string starts with "{<pre>@</pre>" and ends with '}'
 	 * 
 	 * @param annotationText The complete annotation text.
 	 * @param prototypeString An AttributedString that provides the attributes for the display 

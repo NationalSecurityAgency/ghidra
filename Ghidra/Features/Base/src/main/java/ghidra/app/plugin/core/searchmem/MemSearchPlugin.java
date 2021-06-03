@@ -350,7 +350,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 			}
 
 			@Override
-			protected boolean isValidContext(NavigatableActionContext context) {
+			protected boolean isEnabledForContext(NavigatableActionContext context) {
 				return !(context instanceof RestrictedAddressSetContext);
 			}
 		};
@@ -359,6 +359,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 		searchAction.setMenuBarData(new MenuData(menuPath, "search"));
 		searchAction.setKeyBindingData(new KeyBindingData('S', 0));
 		searchAction.setDescription("Search Memory for byte sequence");
+		searchAction.addToWindowWhen(NavigatableActionContext.class);
 		tool.addAction(searchAction);
 
 		searchAgainAction = new NavigatableContextAction("Repeat Memory Search", getName()) {
@@ -369,21 +370,17 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 			}
 
 			@Override
-			public boolean isEnabledForContext(NavigatableActionContext context) {
-				return searchInfo != null;
-			}
-
-			@Override
-			protected boolean isValidContext(NavigatableActionContext context) {
-				return !(context instanceof RestrictedAddressSetContext);
+			protected boolean isEnabledForContext(NavigatableActionContext context) {
+				return !(context instanceof RestrictedAddressSetContext) && searchInfo != null;
 			}
 		};
-		searchAgainAction.setHelpLocation(
-			new HelpLocation(HelpTopics.SEARCH, searchAgainAction.getName()));
+		searchAgainAction
+				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, searchAgainAction.getName()));
 		menuPath = new String[] { "&Search", "Repeat Memory Search" };
 		searchAgainAction.setMenuBarData(new MenuData(menuPath, "search"));
 		searchAgainAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F3, 0));
 		searchAgainAction.setDescription("Search Memory for byte sequence");
+		searchAgainAction.addToWindowWhen(NavigatableActionContext.class);
 		tool.addAction(searchAgainAction);
 	}
 
@@ -755,14 +752,19 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 
 		private Color getHighlightColor(Address highlightStart, int highlightLength) {
 			ProgramLocation location = navigatable != null ? navigatable.getLocation() : null;
-			if (location instanceof BytesFieldLocation) {
-				BytesFieldLocation byteLoc = (BytesFieldLocation) location;
-				Address byteAddress = byteLoc.getAddressForByte();
+			if (!(location instanceof BytesFieldLocation)) {
+				return defaultHighlightColor;
+			}
+
+			BytesFieldLocation byteLoc = (BytesFieldLocation) location;
+			Address byteAddress = byteLoc.getAddressForByte();
+			if (highlightStart.hasSameAddressSpace(byteAddress)) {
 				long diff = byteAddress.subtract(highlightStart);
 				if (diff >= 0 && diff < highlightLength) {
-					return activeHighlightColor;
+					return activeHighlightColor; // the current location is in the highlight
 				}
 			}
+
 			return defaultHighlightColor;
 		}
 

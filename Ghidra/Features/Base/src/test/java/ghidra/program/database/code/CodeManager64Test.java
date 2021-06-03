@@ -15,7 +15,7 @@
  */
 package ghidra.program.database.code;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
@@ -131,14 +131,6 @@ public class CodeManager64Test extends AbstractGenericTest {
 		referencesFrom = data.getComponent(2).getReferencesFrom();
 		assertEquals(0, referencesFrom.length);
 
-	}
-
-	private byte[] bytes(int... v) {
-		byte[] byteArray = new byte[v.length];
-		for (int i = 0; i < v.length; i++) {
-			byteArray[i] = (byte) v[i];
-		}
-		return byteArray;
 	}
 
 	private Address addr(long l) {

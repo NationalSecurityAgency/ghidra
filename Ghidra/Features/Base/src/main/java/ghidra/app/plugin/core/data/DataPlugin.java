@@ -238,31 +238,13 @@ public class DataPlugin extends Plugin implements DataService {
 		dtmService.addDataTypeManagerChangeListener(adapter);
 	}
 
-	boolean isEditDataTypeAllowed(ListingActionContext context) {
-		Data data = getDataUnit(context);
-		if (data == null || dtmService == null) {
-			return false;
-		}
-		if (dtmService.isEditable(data.getBaseDataType())) {
-			return true;
-		}
-		Data pdata = data.getParent();
-		if (pdata != null) {
-			if (dtmService.isEditable(pdata.getBaseDataType())) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	DataType getEditableDataTypeFromContext(ListingActionContext context) {
-		ProgramSelection currentSelection = context.getSelection();
-		Program currentProgram = context.getProgram();
-		DataType editableDataType = null;
+		ProgramSelection selection = context.getSelection();
+		Program program = context.getProgram();
 		Data data = null;
-		if (currentSelection != null && !currentSelection.isEmpty()) {
-			Listing listing = currentProgram.getListing();
-			boolean isDataOnly = !listing.getInstructions(currentSelection, true).hasNext();
+		if (selection != null && !selection.isEmpty()) {
+			Listing listing = program.getListing();
+			boolean isDataOnly = !listing.getInstructions(selection, true).hasNext();
 			if (isDataOnly) {
 				data = getDataUnit(context);
 			}
@@ -270,30 +252,30 @@ public class DataPlugin extends Plugin implements DataService {
 		else {
 			data = getDataUnit(context);
 		}
-		if (data != null) {
-			if (dtmService != null) {
-				DataType baseDt = data.getBaseDataType();
-				if (dtmService.isEditable(baseDt)) {
-					editableDataType = baseDt;
-				}
-				else {
-					Data pdata = data.getParent();
-					if (pdata != null) {
-						baseDt = pdata.getBaseDataType();
-						if (dtmService.isEditable(baseDt)) {
-							editableDataType = baseDt;
-						}
-					}
-				}
-			}
-		}
-		return editableDataType;
+
+		return getEditableDataType(data);
 	}
 
-	/**
-	 * @see ghidra.app.services.DataService#createData(ghidra.program.model.data.DataType,
-	 *      ghidra.app.context.ListingActionContext, boolean)
-	 */
+	private DataType getEditableDataType(Data data) {
+		if (data == null || dtmService == null) {
+			return null;
+		}
+
+		DataType baseDt = data.getBaseDataType();
+		if (dtmService.isEditable(baseDt)) {
+			return baseDt;
+		}
+
+		Data pdata = data.getParent();
+		if (pdata != null) {
+			baseDt = pdata.getBaseDataType();
+			if (dtmService.isEditable(baseDt)) {
+				return baseDt;
+			}
+		}
+		return null;
+	}
+
 	@Override
 	public boolean createData(DataType dt, ListingActionContext context,
 			boolean enableConflictHandling) {
@@ -307,8 +289,7 @@ public class DataPlugin extends Plugin implements DataService {
 	}
 
 	/*
-	 * This version uses the ProgramActionContext and does not depend on any
-	 * plugin's currentProgram
+	 * This version uses the ListingActionContext and does not depend on any plugin's currentProgram
 	 */
 	boolean doCreateData(ListingActionContext context, DataType dt) {
 		ProgramSelection selection = context.getSelection();
@@ -316,7 +297,7 @@ public class DataPlugin extends Plugin implements DataService {
 		Program program = context.getProgram();
 
 		dt = dt.clone(program.getDataTypeManager());
-		boolean didCreateData = true;
+		boolean didCreateData = false;
 		if (selection != null && !selection.isEmpty()) {
 			didCreateData = createDataForSelection(program, dt, selection);
 		}
@@ -375,7 +356,7 @@ public class DataPlugin extends Plugin implements DataService {
 		Listing listing = program.getListing();
 		Data data = listing.getDataAt(start);
 		if (data == null) {
-			tool.setStatusInfo("Invalid data location");
+			tool.setStatusInfo("Invalid data location.  Cannot create data at " + start + '.');
 			return false;
 		}
 
@@ -393,10 +374,13 @@ public class DataPlugin extends Plugin implements DataService {
 			end = start.addNoWrap(newSize - 1);
 		}
 		catch (AddressOverflowException e) {
+			tool.setStatusInfo("Invalid data location.  Not enough space at " + start + " for " +
+				newSize + " bytes.");
 			return false;
 		}
 
 		if (intstrutionExists(listing, dataType, start, end)) {
+			tool.setStatusInfo("Invalid data location.  Instruction exists at " + start + '.');
 			return false;
 		}
 
@@ -415,7 +399,7 @@ public class DataPlugin extends Plugin implements DataService {
 		Data definedData =
 			DataUtilities.getNextNonUndefinedDataAfter(program, start, blockMaxAddress);
 		if (dataExists(program, dataType, definedData, start, end)) {
-			return false;
+			return false; // status updated in 'dataExists()' call
 		}
 
 		return true;
@@ -514,58 +498,6 @@ public class DataPlugin extends Plugin implements DataService {
 		}
 
 		return dataTypeInstance.getLength();
-	}
-
-	boolean doCreateData(Program program, ProgramLocation loc, ProgramSelection sel, DataType dt) {
-		return doCreateData(program, loc, sel, dt, true);
-	}
-
-	boolean doCreateData(Program program, ProgramLocation loc, ProgramSelection sel, DataType dt,
-			boolean convertPointers) {
-
-		// Handle selection case
-		boolean rc = true;
-		if (sel != null && !sel.isEmpty()) {
-			BackgroundCommand cmd;
-			Address start = sel.getMinAddress();
-			InteriorSelection interSel = sel.getInteriorSelection();
-			if (interSel != null) {
-				int[] startPath = interSel.getFrom().getComponentPath();
-				int length = (int) sel.getNumAddresses(); // interior selections can't be that big
-				cmd = new CreateDataInStructureBackgroundCmd(start, startPath, length, dt,
-					convertPointers);
-			}
-			else {
-				cmd = new CreateDataBackgroundCmd(sel, dt, convertPointers);
-			}
-			if (sel.getNumAddresses() < DataPlugin.BACKGROUND_SELECTION_THRESHOLD) {
-				rc = tool.execute(cmd, program);
-			}
-			else {
-				getPluginTool().executeBackgroundCommand(cmd, program);
-			}
-		}
-
-		// Handle single location case
-		else if (loc != null) {
-
-			Address start = loc.getAddress();
-			int[] startPath = loc.getComponentPath();
-			Command cmd;
-			if (startPath != null && startPath.length != 0) {
-				cmd = new CreateDataInStructureCmd(start, startPath, dt, convertPointers);
-			}
-			else {
-				if (!checkEnoughSpace(program, start, dt, convertPointers)) {
-					return false;
-				}
-				cmd = new CreateDataCmd(start, dt, false, convertPointers);
-			}
-			rc = getPluginTool().execute(cmd, program);
-		}
-
-		updateRecentlyUsed(dt);
-		return rc;
 	}
 
 	PluginTool getPluginTool() {
@@ -741,9 +673,6 @@ public class DataPlugin extends Plugin implements DataService {
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.plugintool.Plugin#dispose()
-	 */
 	@Override
 	public void dispose() {
 		favoritesUpdateManager.dispose();
@@ -756,10 +685,6 @@ public class DataPlugin extends Plugin implements DataService {
 		createStructureAction.dispose();
 	}
 
-	/**
-	 * @see ghidra.app.plugin.ProgramPlugin#locationChanged(ghidra.program.util.ProgramLocation)
-	 * @see ghidra.app.plugin.ProgramPlugin#selectionChanged(ghidra.program.util.ProgramSelection)
-	 */
 	Data getDataUnit(ListingActionContext context) {
 		ProgramLocation location = context.getLocation();
 		ProgramSelection selection = context.getSelection();

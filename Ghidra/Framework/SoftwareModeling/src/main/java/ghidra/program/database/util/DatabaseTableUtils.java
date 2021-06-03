@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,13 @@
  */
 package ghidra.program.database.util;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.database.map.*;
 import ghidra.program.model.address.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-
-import db.*;
 
 /**
  * Collection of static functions for upgrading various database tables.
@@ -56,15 +54,14 @@ public class DatabaseTableUtils {
 			throw new IllegalArgumentException("Illegal range: end range overflow");
 		}
 		boolean startFromTop = fromAddr.compareTo(toAddr) > 0;
-		DBLongIterator it =
-			new AddressIndexPrimaryKeyIterator(table, addrCol, addrMap, new AddressSet(fromAddr,
-				fromAddr.add(length - 1)), startFromTop);
+		DBFieldIterator it = new AddressIndexPrimaryKeyIterator(table, addrCol, addrMap,
+			new AddressSet(fromAddr, fromAddr.add(length - 1)), startFromTop);
 		while (startFromTop ? it.hasNext() : it.hasPrevious()) {
 			if (monitor.isCancelled()) {
 				throw new CancelledException();
 			}
-			long key = startFromTop ? it.next() : it.previous();
-			Record rec = table.getRecord(key);
+			Field key = startFromTop ? it.next() : it.previous();
+			DBRecord rec = table.getRecord(key);
 			if (filter == null || filter.matches(rec)) {
 				Address addr = addrMap.decodeAddress(rec.getLongValue(addrCol));
 				addr = toAddr.add(addr.subtract(fromAddr));
@@ -86,8 +83,8 @@ public class DatabaseTableUtils {
 	 * @throws CancelledException thrown if the user cancels the move operation.
 	 */
 	public static void updateAddressKey(Table table, AddressMap addrMap, Address fromAddr,
-			Address toAddr, long length, TaskMonitor monitor) throws IOException,
-			CancelledException {
+			Address toAddr, long length, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		if (length <= 0) {
 			throw new IllegalArgumentException("length must be > 0");
@@ -116,8 +113,8 @@ public class DatabaseTableUtils {
 	 * @throws CancelledException thrown if the user cancels the move operation.
 	 */
 	public static void updateAddressKey(Table table, AddressMap addrMap, Address fromAddr,
-			Address endAddr, Address toAddr, TaskMonitor monitor) throws IOException,
-			CancelledException {
+			Address endAddr, Address toAddr, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		long length = endAddr.subtract(fromAddr);
 		if (length < 0) {
@@ -142,7 +139,7 @@ public class DatabaseTableUtils {
 				if (monitor.isCancelled()) {
 					throw new CancelledException();
 				}
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				Address addr = addrMap.decodeAddress(rec.getKey());
 				long offset = addr.subtract(fromAddr);
 				addr = toAddr.add(offset);
@@ -157,7 +154,7 @@ public class DatabaseTableUtils {
 				if (monitor.isCancelled()) {
 					throw new CancelledException();
 				}
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				table.putRecord(rec);
 			}
 		}

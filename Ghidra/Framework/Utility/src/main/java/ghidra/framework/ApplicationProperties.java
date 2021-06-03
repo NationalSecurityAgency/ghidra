@@ -151,10 +151,14 @@ public class ApplicationProperties extends Properties {
 	 * 
 	 * @param name The application's name.
 	 * @param version The application's version.
+	 * @param releaseName The application's release name.
 	 */
-	public ApplicationProperties(String name, String version) {
+	public ApplicationProperties(String name, String version, String releaseName) {
 		Objects.requireNonNull(name, "Application name cannot be null");
 		setProperty(APPLICATION_NAME_PROPERTY, name);
+
+		Objects.requireNonNull(releaseName, "Release name cannot be null");
+		setProperty(RELEASE_NAME_PROPERTY, releaseName);
 
 		if (version != null) {
 			setProperty(APPLICATION_VERSION_PROPERTY, version);
@@ -245,7 +249,7 @@ public class ApplicationProperties extends Properties {
 		}
 		return appVersion;
 	}
-	
+
 	/**
 	 * Gets the application's release name.
 	 * 

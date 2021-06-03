@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +23,23 @@ package docking;
  */
 public class HiddenDockingFrame extends DockingFrame {
 
+	private boolean showingAllowed;
+
 	public HiddenDockingFrame(String name) {
 		super(name);
 	}
 
-	@Override 
+	void setShowingAllowed(boolean showingAllowed) {
+		this.showingAllowed = showingAllowed;
+	}
+
+	@SuppressWarnings("deprecation")
+	@Override
 	public void show() {
-		// overridden to make sure nobody ever sees this frame when it's hidden
+		// overridden to make sure only some clients can show this frame
+		if (showingAllowed) {
+			super.show();
+		}
 	}
 
 }

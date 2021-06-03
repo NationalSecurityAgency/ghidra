@@ -39,7 +39,7 @@ import utilities.util.FileUtilities;
  * Notes:
  * 1. The viewer consists of a simple JTable and a custom JSlider. The table displays lines of
  *    text described by {@link Chunk} objects. The number of chunks visible at any given time
- *    is restricted by the {@link Chunk#MAX_VISIBLE_CHUNKS} property.
+ *    is restricted by the {@link ChunkModel#MAX_VISIBLE_CHUNKS} property.
  *
  * 2. Because only part of the file is loaded into the viewable table at any given time, the
  *    built-in scrollbar associated with the scrollpane cannot be used. We want the scroll bar

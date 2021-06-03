@@ -98,7 +98,7 @@ public class TransactionLockingTaskMonitorTest extends AbstractGhidraHeadedInteg
 		// wait for all thread to terminate
 		coordinationEndLatch.await(2, TimeUnit.SECONDS);
 
-		assertNull("Error occured in transaction thread", throwable);
+		assertNull("Error occurred in transaction thread", throwable);
 
 	}
 
@@ -146,7 +146,7 @@ public class TransactionLockingTaskMonitorTest extends AbstractGhidraHeadedInteg
 		// wait for all thread to terminate
 		coordinationEndLatch.await(2, TimeUnit.SECONDS);
 
-		assertNull("Error occured in transaction thread", throwable);
+		assertNull("Error occurred in transaction thread", throwable);
 
 	}
 }

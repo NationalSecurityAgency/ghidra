@@ -31,8 +31,8 @@ PRi: PRi_revend is PRi_sel=1 & PRi_revend { tmp:3 = (zext(R7) << 16) | (zext(R6)
 ####################
 
 @ifdef OMIT_RETADDR
-macro push24(val) { }
-macro pop24(val) { }
+macro push24(val) { val = val; }
+macro pop24(val) { val = val; }
 
 @else
 # stack grows up.

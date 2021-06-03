@@ -1,3 +1,6 @@
+## ###
+#  IP: LGPL 2.1
+##
 """Extend introspect.py for Java based Jython classes."""
 
 from introspect import *

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,12 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.UniversalID;
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 import java.util.Date;
 
 import db.*;
+import ghidra.util.UniversalID;
+import ghidra.util.exception.VersionException;
 
 /**
  * Version 1 implementation for accessing the Typedef database table. 
@@ -36,10 +34,11 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter {
 	static final int V1_TYPEDEF_UNIVERSAL_DT_ID_COL = 4;
 	static final int V1_TYPEDEF_SOURCE_SYNC_TIME_COL = 5;
 	static final int V1_TYPEDEF_LAST_CHANGE_TIME_COL = 6;
-	static final Schema V1_SCHEMA = new Schema(VERSION, "Typedef ID", new Class[] {
-		LongField.class, StringField.class, LongField.class, LongField.class, LongField.class,
-		LongField.class, LongField.class }, new String[] { "Data Type ID", "Name", "Category ID",
-		"Source Archive ID", "Universal Data Type ID", "Source Sync Time", "Last Change Time" });
+	static final Schema V1_SCHEMA = new Schema(VERSION, "Typedef ID",
+		new Field[] { LongField.INSTANCE, StringField.INSTANCE, LongField.INSTANCE,
+			LongField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE },
+		new String[] { "Data Type ID", "Name", "Category ID", "Source Archive ID",
+			"Universal Data Type ID", "Source Sync Time", "Last Change Time" });
 	private Table table;
 
 	/**
@@ -49,12 +48,12 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter {
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
 	 */
-	public TypedefDBAdapterV1(DBHandle handle, boolean create) throws VersionException, IOException {
+	public TypedefDBAdapterV1(DBHandle handle, boolean create)
+			throws VersionException, IOException {
 
 		if (create) {
-			table =
-				handle.createTable(TYPEDEF_TABLE_NAME, V1_SCHEMA, new int[] { V1_TYPEDEF_CAT_COL,
-					V1_TYPEDEF_UNIVERSAL_DT_ID_COL });
+			table = handle.createTable(TYPEDEF_TABLE_NAME, V1_SCHEMA,
+				new int[] { V1_TYPEDEF_CAT_COL, V1_TYPEDEF_UNIVERSAL_DT_ID_COL });
 		}
 		else {
 			table = handle.getTable(TYPEDEF_TABLE_NAME);
@@ -63,9 +62,8 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter {
 			}
 			int version = table.getSchema().getVersion();
 			if (version != VERSION) {
-				String msg =
-					"Expected version " + VERSION + " for table " + TYPEDEF_TABLE_NAME +
-						" but got " + table.getSchema().getVersion();
+				String msg = "Expected version " + VERSION + " for table " + TYPEDEF_TABLE_NAME +
+					" but got " + table.getSchema().getVersion();
 				if (version < VERSION) {
 					throw new VersionException(msg, VersionException.OLDER_VERSION, true);
 				}
@@ -80,7 +78,7 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter {
 	}
 
 	@Override
-	public Record createRecord(long dataTypeID, String name, long categoryID, long sourceArchiveID,
+	public DBRecord createRecord(long dataTypeID, String name, long categoryID, long sourceArchiveID,
 			long sourceDataTypeID, long lastChangeTime) throws IOException {
 
 		long tableKey = table.getKey();
@@ -89,7 +87,7 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter {
 //		}
 		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.TYPEDEF, tableKey);
 
-		Record record = V1_SCHEMA.createRecord(key);
+		DBRecord record = V1_SCHEMA.createRecord(key);
 		record.setLongValue(V1_TYPEDEF_DT_ID_COL, dataTypeID);
 		record.setString(V1_TYPEDEF_NAME_COL, name);
 		record.setLongValue(V1_TYPEDEF_CAT_COL, categoryID);
@@ -102,7 +100,7 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter {
 	}
 
 	@Override
-	public Record getRecord(long typedefID) throws IOException {
+	public DBRecord getRecord(long typedefID) throws IOException {
 		return table.getRecord(typedefID);
 	}
 
@@ -112,7 +110,7 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter {
 	}
 
 	@Override
-	public void updateRecord(Record record, boolean setLastChangeTime) throws IOException {
+	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		if (setLastChangeTime) {
 			record.setLongValue(TypedefDBAdapter.TYPEDEF_LAST_CHANGE_TIME_COL,
 				(new Date()).getTime());
@@ -126,22 +124,22 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter {
 	}
 
 	@Override
-	public long[] getRecordIdsInCategory(long categoryID) throws IOException {
+	public Field[] getRecordIdsInCategory(long categoryID) throws IOException {
 		return table.findRecords(new LongField(categoryID), V1_TYPEDEF_CAT_COL);
 	}
 
 	@Override
-	long[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
+	Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
 		return table.findRecords(new LongField(archiveID), V1_TYPEDEF_SOURCE_ARCHIVE_ID_COL);
 	}
 
 	@Override
-	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
-		long[] keys =
+	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
+		Field[] keys =
 			table.findRecords(new LongField(datatypeID.getValue()), V1_TYPEDEF_UNIVERSAL_DT_ID_COL);
 
 		for (int i = 0; i < keys.length; i++) {
-			Record record = table.getRecord(keys[i]);
+			DBRecord record = table.getRecord(keys[i]);
 			if (record.getLongValue(V1_TYPEDEF_SOURCE_ARCHIVE_ID_COL) == sourceID.getValue()) {
 				return record;
 			}

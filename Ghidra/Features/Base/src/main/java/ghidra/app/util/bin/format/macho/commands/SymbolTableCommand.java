@@ -73,10 +73,10 @@ public class SymbolTableCommand extends LoadCommand {
 
 		long index = reader.getPointerIndex();
 
-		reader.setPointerIndex(header.getStartIndexInProvider() + symoff);
+		reader.setPointerIndex(header.getStartIndex() + symoff);
 
 		List<NList> nlistList = new ArrayList<>(nsyms);
-		long startIndex = header.getStartIndexInProvider();
+		long startIndex = header.getStartIndex();
 		boolean is32bit = header.is32bit();
 		reader.setPointerIndex(startIndex + symoff);
 

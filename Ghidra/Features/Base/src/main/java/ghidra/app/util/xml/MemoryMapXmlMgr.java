@@ -149,7 +149,7 @@ class MemoryMapXmlMgr {
 				Address sourceAddr = factory.getAddress(element.getAttribute("SOURCE_ADDRESS"));
 
 				MemoryBlock block = MemoryBlockUtils.createBitMappedBlock(program, overlayName,
-					addr, sourceAddr, length, comment, comment, r, w, x, log);
+					addr, sourceAddr, length, comment, comment, r, w, x, false, log);
 				if (block != null) {
 					block.setVolatile(isVolatile);
 				}
@@ -159,7 +159,7 @@ class MemoryMapXmlMgr {
 				Address sourceAddr = factory.getAddress(element.getAttribute("SOURCE_ADDRESS"));
 
 				MemoryBlock block = MemoryBlockUtils.createByteMappedBlock(program, overlayName,
-					addr, sourceAddr, length, comment, comment, r, w, x, log);
+					addr, sourceAddr, length, comment, comment, r, w, x, false, log);
 				if (block != null) {
 					block.setVolatile(isVolatile);
 				}

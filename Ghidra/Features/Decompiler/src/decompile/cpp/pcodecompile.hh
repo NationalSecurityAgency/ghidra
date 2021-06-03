@@ -18,6 +18,17 @@
 
 #include "slghsymbol.hh"
 
+class Location {
+  string filename;
+  int4 lineno;
+public:
+  Location(void) {}
+  Location(const string &fname, const int4 line) { filename = fname; lineno = line; }
+  string getFilename(void) const { return filename; }
+  int4 getLineno(void) const { return lineno; }
+  string format(void) const;
+};
+
 struct StarQuality {
   ConstTpl id;
   uint4 size;
@@ -53,7 +64,9 @@ public:
   PcodeCompile(void) { defaultspace=(AddrSpace *)0; constantspace=(AddrSpace *)0;
   	  	  	  	  	  uniqspace=(AddrSpace *)0; local_labelcount=0; enforceLocalKey=false; }
   virtual ~PcodeCompile(void) {}
-  virtual void reportError(const string &msg)=0;
+  virtual const Location *getLocation(SleighSymbol *sym) const=0;
+  virtual void reportError(const Location *loc, const string &msg)=0;
+  virtual void reportWarning(const Location *loc, const string &msg)=0;
   void resetLabelCount(void) { local_labelcount=0; }
   void setDefaultSpace(AddrSpace *spc) { defaultspace = spc; }
   void setConstantSpace(AddrSpace *spc) { constantspace = spc; }

@@ -52,7 +52,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	private final static byte MOVW_DS_OPCODE = (byte) 0xba;
 	private static final long MIN_BYTE_LENGTH = 4;
 
-	private DataConverter converter = new LittleEndianDataConverter();
+	private DataConverter converter = LittleEndianDataConverter.INSTANCE;
 
 	@Override
 	public int getTierPriority() {
@@ -225,13 +225,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 						mem.split(block, splitAddr);
 						mem.join(blocks[i - 1], blocks[i]);
 						blocks = mem.getBlocks();
-						try {
-							blocks[i].setName(oldName);
-						}
-						catch (DuplicateNameException e) {
-							throw new AssertException(e);
-						}
-
+						blocks[i].setName(oldName);
 						break;
 					}
 				}

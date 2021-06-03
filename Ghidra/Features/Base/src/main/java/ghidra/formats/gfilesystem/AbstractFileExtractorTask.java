@@ -62,10 +62,9 @@ public abstract class AbstractFileExtractorTask extends Task {
 	 * 
 	 * @param fs the {@link GFileSystem} that holds the files
 	 * @param srcDir the starting directory to extract, if {@code null}, start at root of file system
-	 * @param rootOutputDirectory the destination directory
 	 * @param monitor {@link TaskMonitor} that will be updated with progress and checked for cancel
-	 * @throws CancelledException
-	 * @throws IOException
+	 * @throws CancelledException if the extraction is cancelled.
+	 * @throws IOException if an exception occurs extracting the files.
 	 */
 	protected void startExtract(GFileSystem fs, GFile srcDir, TaskMonitor monitor)
 			throws CancelledException, IOException {

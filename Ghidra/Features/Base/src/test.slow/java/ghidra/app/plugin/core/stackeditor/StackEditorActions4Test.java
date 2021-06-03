@@ -31,10 +31,7 @@ import ghidra.app.plugin.core.compositeeditor.FavoritesAction;
 import ghidra.program.model.data.*;
 
 public class StackEditorActions4Test extends AbstractStackEditorTest {
-	/**
-	 * Constructor for StackEditorActionsTest.
-	 * @param name the testcase name.
-	 */
+
 	public StackEditorActions4Test() {
 		super(false);
 	}
@@ -315,7 +312,7 @@ public class StackEditorActions4Test extends AbstractStackEditorTest {
 		assertEquals(0xa, getOffset(model.getNumComponents() - 1));
 
 		FavoritesAction fav = getFavorite("word");
-		assertTrue(fav.isEnabled());
+		assertTrue(fav.isEnabledForContext(null)); // context not utilized
 		assertEquals("", model.getStatus());
 		invoke(fav);
 		assertEquals("", model.getStatus());

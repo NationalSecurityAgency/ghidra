@@ -20,11 +20,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Stream;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
-
-import com.google.common.collect.Iterables;
 
 import docking.DialogComponentProvider;
 import docking.options.editor.ButtonPanelFactory;
@@ -163,9 +162,8 @@ class ImportGhidraToolsDialog extends DialogComponentProvider {
 		Set<ToolTemplate> defaultTools = ToolUtils.getDefaultApplicationTools();
 		Set<ToolTemplate> extraTools = ToolUtils.getExtraApplicationTools();
 
-		Iterable<String> defaultToolNames =
-			Iterables.transform(defaultTools, ToolTemplate::getPath);
-		Iterable<String> extraToolNames = Iterables.transform(extraTools, ToolTemplate::getPath);
+		Stream<String> defaultToolNames = defaultTools.stream().map(ToolTemplate::getPath);
+		Stream<String> extraToolNames = extraTools.stream().map(ToolTemplate::getPath);
 
 		int elementCount = defaultTools.size() + extraTools.size();
 		tools = new String[elementCount];

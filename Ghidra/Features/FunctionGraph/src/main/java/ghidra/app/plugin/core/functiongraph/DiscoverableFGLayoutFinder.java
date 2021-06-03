@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.functiongraph;
 
-import java.util.Set;
+import java.util.List;
 
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayout;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutProvider;
@@ -27,8 +27,8 @@ import ghidra.util.classfinder.ClassSearcher;
 public class DiscoverableFGLayoutFinder implements FGLayoutFinder {
 
 	@Override
-	public Set<FGLayoutProvider> findLayouts() {
-		Set<FGLayoutProvider> instances = ClassSearcher.getInstances(FGLayoutProvider.class);
+	public List<FGLayoutProvider> findLayouts() {
+		List<FGLayoutProvider> instances = ClassSearcher.getInstances(FGLayoutProvider.class);
 		return instances;
 	}
 

@@ -32,7 +32,7 @@ public class FunctionRepeatableCommentFieldLocation extends FunctionLocation {
 	/**
 	 * Construct a new FunctionRepeatableCommentFieldLocation object.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param locationAddr the address of the listing location (i.e., referent code unit)
 	 * @param functionAddr the function address
 	 * @param comment the function comment array String at this location.
@@ -48,7 +48,7 @@ public class FunctionRepeatableCommentFieldLocation extends FunctionLocation {
 	/**
 	 * Construct a new FunctionRepeatableCommentFieldLocation object.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param functionAddr the function address (must not be an EXTERNAL function)
 	 * @param comment the function comment array String at this location.
 	 * @param row row number (index into the comment array)

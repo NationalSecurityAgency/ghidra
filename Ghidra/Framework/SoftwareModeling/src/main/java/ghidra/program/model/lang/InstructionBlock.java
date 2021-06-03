@@ -92,7 +92,8 @@ public class InstructionBlock implements Iterable<Instruction> {
 	/**
 	 * Find the first instruction within this block which intersects the specified range.
 	 * This method should be used sparingly since it uses a brute-force search.
-	 * @param address 
+	 * @param min the minimum intersection address
+	 * @param max the maximum intersection address
 	 * @return instruction within this block which intersects the specified range or null
 	 * if not found 
 	 */
@@ -254,7 +255,7 @@ public class InstructionBlock implements Iterable<Instruction> {
 	 * @param newInstrAddr new disassembled instruction address
 	 * @param flowFromAddr flow-from address
 	 * @param isInstruction true if conflict is due to offcut-instruction, otherwise data is assumed
-	 * @param isOffcutOrData true if conflict due to offcut instruction
+	 * @param isOffcut true if conflict due to offcut instruction
 	 */
 	public void setCodeUnitConflict(Address codeUnitAddr, Address newInstrAddr,
 			Address flowFromAddr, boolean isInstruction, boolean isOffcut) {

@@ -18,7 +18,7 @@ package ghidra.framework.main.projectdata.actions;
 import java.util.List;
 
 import docking.action.MenuData;
-import ghidra.framework.main.datatable.DomainFileProvider;
+import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.main.datatree.VersionHistoryDialog;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.Plugin;
@@ -44,7 +44,7 @@ public class VersionControlShowHistoryAction extends VersionControlAction {
 	}
 
 	@Override
-	public void actionPerformed(DomainFileProvider context) {
+	public void actionPerformed(DomainFileContext context) {
 		showHistory(context.getSelectedFiles());
 	}
 
@@ -52,7 +52,7 @@ public class VersionControlShowHistoryAction extends VersionControlAction {
 	 * Returns true if a single version controlled domain file is being provided.
 	 */
 	@Override
-	public boolean isEnabledForContext(DomainFileProvider context) {
+	public boolean isEnabledForContext(DomainFileContext context) {
 		List<DomainFile> domainFiles = context.getSelectedFiles();
 		if (domainFiles.size() != 1) {
 			return false;

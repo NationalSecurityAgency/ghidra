@@ -48,7 +48,7 @@ public class LRUMap<K, V> implements Map<K, V> {
 	protected HashMap<K, Entry<K, V>> map;
 	private int cacheSize;
 	private Entry<K, V> head;
-	private long modificationID = 0;
+	private volatile long modificationID = 0;
 
 	public LRUMap(int cacheSize) {
 		this.cacheSize = cacheSize;
@@ -267,7 +267,7 @@ public class LRUMap<K, V> implements Map<K, V> {
 
 	/**
 	 * This is called after an item has been removed from the cache.
-	 * @param eldest the ite being removed
+	 * @param eldest the item being removed
 	 */
 	protected void eldestEntryRemoved(Map.Entry<K, V> eldest) {
 		// this is just a way for subclasses to know when items are removed from the cache

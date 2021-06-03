@@ -32,6 +32,11 @@
 
 
   <pattern>
+     <data>0x8b 0x04 0x24 0xc3 </data> <!-- MOV  EAX,[ESP] / RET -->
+     <funcstart label="__i686.get_pc_thunk.ax" validcode="function"/>
+  </pattern>
+  
+  <pattern>
      <data>0x8b 0x1c 0x24 0xc3 </data> <!-- MOV  EBX,[ESP] / RET -->
      <funcstart label="__i686.get_pc_thunk.bx" validcode="function"/>
   </pattern>
@@ -44,6 +49,11 @@
   <pattern>
      <data>0x8b 0x14 0x24 0xc3 </data> <!-- MOV  EDX,[ESP] / RET -->
      <funcstart label="__i686.get_pc_thunk.dx" validcode="function"/>
+  </pattern>
+  
+  <pattern>
+     <data>0x8b 0x34 0x24 0xc3 </data> <!-- MOV  ESI,[ESP] / RET -->
+     <funcstart label="__i686.get_pc_thunk.si" validcode="function"/>
   </pattern>
 
   <patternpairs totalbits="32" postbits="16">

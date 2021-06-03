@@ -760,9 +760,8 @@ class GhidraFolderData {
 
 	/**
 	 * Check for existence of file.  If folder visited, rely on fileDataCache
-	 * @param fileName
-	 * @param doRealCheck if true do not rely on fileList
-	 * @return
+	 * @param fileName the name of the file to check for
+	 * @return true if this folder contains the fileName
 	 * @throws IOException
 	 */
 	public boolean containsFile(String fileName) throws IOException {

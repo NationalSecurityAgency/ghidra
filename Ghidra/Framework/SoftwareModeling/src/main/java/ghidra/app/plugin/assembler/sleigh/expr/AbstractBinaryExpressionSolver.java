@@ -130,7 +130,7 @@ public abstract class AbstractBinaryExpressionSolver<T extends BinaryExpression>
 	/**
 	 * Compute the right-hand-side value given that the result and the left are known
 	 * 
-	 * @note Assumes commutativity by default
+	 * NOTE: Assumes commutativity by default
 	 * @param lval the left-hand-side value
 	 * @param goal the result
 	 * @return the right-hand-side value solution

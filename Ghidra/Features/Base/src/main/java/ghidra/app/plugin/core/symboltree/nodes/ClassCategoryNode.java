@@ -57,18 +57,17 @@ public class ClassCategoryNode extends SymbolCategoryNode {
 	}
 
 	@Override
-	public void symbolAdded(Symbol symbol) {
-		if (!isChildrenLoadedOrInProgress()) {
-			return;
+	public SymbolNode symbolAdded(Symbol symbol) {
+		if (!isLoaded()) {
+			return null;
 		}
 
 		if (!supportsSymbol(symbol)) {
-			return;
+			return null;
 		}
 
 		if (symbol.getSymbolType() == symbolCategory.getSymbolType()) {
-			doAddSymbol(symbol, this); // add new Class symbol
-			return;
+			return doAddSymbol(symbol, this); // add new Class symbol
 		}
 
 		// see if the symbol is in a class namespace
@@ -77,9 +76,9 @@ public class ClassCategoryNode extends SymbolCategoryNode {
 		SymbolNode key = SymbolNode.createNode(namespaceSymbol, program);
 		GTreeNode parentNode = findSymbolTreeNode(key, false, TaskMonitorAdapter.DUMMY_MONITOR);
 		if (parentNode == null) {
-			return;
+			return null;
 		}
-		doAddSymbol(symbol, parentNode);
+		return doAddSymbol(symbol, parentNode);
 	}
 
 	@Override
@@ -87,6 +86,7 @@ public class ClassCategoryNode extends SymbolCategoryNode {
 			throws CancelledException {
 		List<GTreeNode> list = new ArrayList<GTreeNode>();
 
+		monitor.initialize(symbolTable.getNumSymbols());
 		SymbolType symbolType = symbolCategory.getSymbolType();
 		SymbolIterator it = symbolTable.getDefinedSymbols();
 		while (it.hasNext()) {
@@ -95,6 +95,7 @@ public class ClassCategoryNode extends SymbolCategoryNode {
 				monitor.checkCanceled();
 				list.add(SymbolNode.createNode(s, program));
 			}
+			monitor.incrementProgress(1);
 		}
 		Collections.sort(list, getChildrenComparator());
 		return list;

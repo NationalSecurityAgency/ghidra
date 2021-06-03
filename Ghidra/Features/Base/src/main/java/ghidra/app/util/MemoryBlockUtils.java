@@ -77,7 +77,6 @@ public class MemoryBlockUtils {
 	 * @param isOverlay if true, the block will be created in a new overlay space for that block
 	 * @param name the name of the new block.
 	 * @param start the starting address of the new block.
-	 * @param is source of the data used to fill the block or null for zero initialization.
 	 * @param length the length of the new block
 	 * @param comment the comment text to associate with the new block.
 	 * @param source the source of the block (This field is not well defined - currently another comment)
@@ -122,17 +121,18 @@ public class MemoryBlockUtils {
 	 * @param r the read permission for the new block.
 	 * @param w the write permission for the new block.
 	 * @param x the execute permission for the new block.
+	 * @param overlay create overlay block if true otherwise a normal mapped block will be created
 	 * @param log a {@link StringBuffer} for appending error messages
 	 * @return the new created block
 	 */
 	public static MemoryBlock createBitMappedBlock(Program program, String name, Address start,
 			Address base, int length, String comment, String source, boolean r, boolean w,
-			boolean x, MessageLog log) {
+			boolean x, boolean overlay, MessageLog log) {
 
 		Memory memory = program.getMemory();
 		try {
 
-			MemoryBlock block = memory.createBitMappedBlock(name, start, base, length);
+			MemoryBlock block = memory.createBitMappedBlock(name, start, base, length, overlay);
 
 			setBlockAttributes(block, comment, source, r, w, x);
 			adjustFragment(program, start, name);
@@ -149,7 +149,8 @@ public class MemoryBlockUtils {
 	}
 
 	/**
-	 * Creates a new byte mapped memory block. (A byte mapped block is a block where each byte value
+	 * Creates a new byte mapped memory block with a 1:1 byte mapping scheme. 
+	 * (A byte mapped block is a block where each byte value
 	 * is taken from a byte at some other address in memory)
 	 * 
 	 * @param program the program in which to create the block.
@@ -162,17 +163,18 @@ public class MemoryBlockUtils {
 	 * @param r the read permission for the new block.
 	 * @param w the write permission for the new block.
 	 * @param x the execute permission for the new block.
+	 * @param overlay create overlay block if true otherwise a normal mapped block will be created
 	 * @param log a {@link MessageLog} for appending error messages
 	 * @return the new created block
 	 */
 	public static MemoryBlock createByteMappedBlock(Program program, String name, Address start,
 			Address base, int length, String comment, String source, boolean r, boolean w,
-			boolean x, MessageLog log) {
+			boolean x, boolean overlay, MessageLog log) {
 
 		Memory memory = program.getMemory();
 		try {
 
-			MemoryBlock block = memory.createByteMappedBlock(name, start, base, length);
+			MemoryBlock block = memory.createByteMappedBlock(name, start, base, length, overlay);
 
 			setBlockAttributes(block, comment, source, r, w, x);
 			adjustFragment(program, start, name);
@@ -225,8 +227,9 @@ public class MemoryBlockUtils {
 				block = program.getMemory().createInitializedBlock(name, start, fileBytes, offset,
 					length, isOverlay);
 			}
-			catch (MemoryConflictException | DuplicateNameException e) {
-				block = createBlockNoDuplicateName(program, name, start, fileBytes, offset, length);
+			catch (MemoryConflictException e) {
+				block = program.getMemory()
+						.createInitializedBlock(name, start, fileBytes, offset, length, true);
 				log.appendMsg("Conflict attempting to create memory block: " + name +
 					" at address " + start.toString() + " Created block in new overlay instead");
 			}
@@ -238,22 +241,6 @@ public class MemoryBlockUtils {
 		setBlockAttributes(block, comment, source, r, w, x);
 		adjustFragment(program, block.getStart(), name);
 		return block;
-	}
-
-	private static MemoryBlock createBlockNoDuplicateName(Program program, String blockName,
-			Address start, FileBytes fileBytes, long offset, long length)
-			throws LockException, MemoryConflictException, AddressOverflowException {
-		int count = 1;
-		String name = blockName;
-		while (true) {
-			try {
-				return program.getMemory().createInitializedBlock(name, start, fileBytes, offset,
-					length, true);
-			}
-			catch (DuplicateNameException e) {
-				name = blockName + "_" + count++;
-			}
-		}
 	}
 
 	/**
@@ -298,9 +285,11 @@ public class MemoryBlockUtils {
 			catch (MemoryConflictException e) {
 				block = memory.createInitializedBlock(name, start, dataInput, dataLength, monitor,
 					true);
+				log.appendMsg("Conflict attempting to create memory block: " + name +
+					" at address " + start.toString() + " Created block in new overlay instead");
 			}
 		}
-		catch (LockException | DuplicateNameException | MemoryConflictException e) {
+		catch (LockException | MemoryConflictException e) {
 			throw new RuntimeException(e);
 		}
 		catch (CancelledException e) {

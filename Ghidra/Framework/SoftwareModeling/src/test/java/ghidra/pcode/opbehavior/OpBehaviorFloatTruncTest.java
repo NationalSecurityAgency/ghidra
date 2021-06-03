@@ -15,7 +15,6 @@
  */
 package ghidra.pcode.opbehavior;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.junit.Assert;
@@ -30,8 +29,8 @@ public class OpBehaviorFloatTruncTest extends AbstractOpBehaviorTest {
 		super();
 	}
 
-@Test
-    public void testEvaluateBinaryLong() {
+	@Test
+	public void testEvaluateBinaryLong() {
 
 		OpBehaviorFloatTrunc op = new OpBehaviorFloatTrunc();
 
@@ -59,31 +58,31 @@ public class OpBehaviorFloatTruncTest extends AbstractOpBehaviorTest {
 		Assert.assertEquals(0, result);
 	}
 
-@Test
-    public void testEvaluateBinaryBigInteger() {
+	@Test
+	public void testEvaluateBinaryBigInteger() {
 
 		OpBehaviorFloatTrunc op = new OpBehaviorFloatTrunc();
 
 		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
 
-		BigInteger a = ff.getEncoding(BigDecimal.valueOf(2.5d));
+		BigInteger a = ff.getEncoding(ff.getBigFloat(2.5d));
 		BigInteger result = op.evaluateUnary(8, 8, a);
 		Assert.assertEquals(BigInteger.valueOf(2), result);
 
-		a = ff.getEncoding(BigDecimal.valueOf(-2.5d));
+		a = ff.getEncoding(ff.getBigFloat(-2.5d));
 		result = op.evaluateUnary(8, 8, a);
 		Assert.assertEquals(BigInteger.valueOf(-2), result);
 
-		a = ff.getEncoding(FloatFormat.BIG_POSITIVE_INFINITY);
+		a = ff.getBigInfinityEncoding(false);
 		result = op.evaluateUnary(8, 8, a);
 		Assert.assertEquals(BigInteger.valueOf(Long.MAX_VALUE), result);
 
-		a = ff.getEncoding(FloatFormat.BIG_NEGATIVE_INFINITY);
+		a = ff.getBigInfinityEncoding(true);
 		result = op.evaluateUnary(8, 8, a);
 		Assert.assertEquals(BigInteger.valueOf(Long.MIN_VALUE), result);
 
 		// TODO: What should the correct result be?
-		a = ff.getEncoding(FloatFormat.BIG_NaN);
+		a = ff.getBigNaNEncoding(false);
 		result = op.evaluateUnary(8, 8, a);
 		Assert.assertEquals(BigInteger.ZERO, result);
 	}

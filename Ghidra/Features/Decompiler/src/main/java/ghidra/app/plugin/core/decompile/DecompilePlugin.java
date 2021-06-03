@@ -29,6 +29,7 @@ import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.program.database.SpecExtension;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
@@ -48,7 +49,7 @@ import ghidra.util.task.SwingUpdateManager;
 	servicesRequired = { 
 		GoToService.class, NavigationHistoryService.class, ClipboardService.class, 
 		DataTypeManagerService.class /*, ProgramManager.class */
-	},
+	},	
 	servicesProvided = { DecompilerHighlightService.class },
 	eventsConsumed = { 
 		ProgramActivatedPluginEvent.class, ProgramOpenedPluginEvent.class, 
@@ -102,10 +103,6 @@ public class DecompilePlugin extends Plugin {
 		}
 	}
 
-	/**
-	 * Tells the Plugin to write any data-dependent state to the
-	 * output stream.
-	 */
 	@Override
 	public void writeDataState(SaveState saveState) {
 		if (connectedProvider != null) {
@@ -128,11 +125,6 @@ public class DecompilePlugin extends Plugin {
 		}
 	}
 
-	/**
-	 * Read data state; called after readConfigState(). Events generated
-	 * by plugins we depend on should have been already been thrown by the
-	 * time this method is called.
-	 */
 	@Override
 	public void readDataState(SaveState saveState) {
 		ProgramManager programManagerService = tool.getService(ProgramManager.class);
@@ -240,6 +232,9 @@ public class DecompilePlugin extends Plugin {
 		if (event instanceof ProgramActivatedPluginEvent) {
 			currentProgram = ((ProgramActivatedPluginEvent) event).getActiveProgram();
 			connectedProvider.doSetProgram(currentProgram);
+			if (currentProgram != null) {
+				SpecExtension.registerOptions(currentProgram);
+			}
 		}
 		else if (event instanceof ProgramLocationPluginEvent) {
 			ProgramLocation location = ((ProgramLocationPluginEvent) event).getLocation();

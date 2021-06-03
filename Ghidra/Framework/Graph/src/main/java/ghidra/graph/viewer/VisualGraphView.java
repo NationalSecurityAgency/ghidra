@@ -31,7 +31,6 @@ import ghidra.graph.VisualGraph;
 import ghidra.graph.viewer.event.mouse.VertexTooltipProvider;
 import ghidra.graph.viewer.event.mouse.VisualGraphMousePlugin;
 import ghidra.graph.viewer.layout.LayoutProvider;
-import ghidra.graph.viewer.options.VisualGraphOptions;
 import ghidra.graph.viewer.vertex.VertexClickListener;
 import ghidra.graph.viewer.vertex.VertexFocusListener;
 
@@ -160,6 +159,13 @@ public class VisualGraphView<V extends VisualVertex,
 	}
 
 	/**
+	 * Called when the options used by this graph view have changed
+	 */
+	public void optionsChanged() {
+		graphComponent.optionsChanged();
+	}
+
+	/**
 	 * Sets the given layout provider, <b>but does not actually perform a layout</b>.
 	 * @param newLayoutProvider the new provider
 	 */
@@ -201,7 +207,6 @@ public class VisualGraphView<V extends VisualVertex,
 
 	protected void installGraphViewer() {
 		GraphComponent<V, E, G> newGraphComponent = new GraphComponent<>(graph);
-		newGraphComponent.setGraphOptions(new VisualGraphOptions());
 		setGraphComponent(newGraphComponent);
 	}
 
@@ -522,7 +527,7 @@ public class VisualGraphView<V extends VisualVertex,
 	public MouseEvent translateMouseEventFromVertexToViewSpace(V v, MouseEvent e) {
 		Point viewerPoint = translatePointFromVertexToViewSpace(v, e.getPoint());
 		VisualizationViewer<V, E> newSource = getPrimaryGraphViewer();
-		return new MouseEvent(newSource, e.getID(), e.getWhen(), e.getModifiers(),
+		return new MouseEvent(newSource, e.getID(), e.getWhen(), e.getModifiersEx(),
 			(int) viewerPoint.getX(), (int) viewerPoint.getY(), e.getClickCount(),
 			e.isPopupTrigger(), e.getButton());
 	}

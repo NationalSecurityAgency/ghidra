@@ -15,12 +15,11 @@
  */
 package ghidra.bitpatterns.info;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.Icon;
 
-import docking.widgets.tree.AbstractGTreeNode;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeNode;
 import resources.ResourceManager;
 
@@ -29,7 +28,7 @@ import resources.ResourceManager;
  * An object of this class represents a node in a tree of instruction sequences.
  *
  */
-public class FunctionBitPatternsGTreeNode extends AbstractGTreeNode {
+public class FunctionBitPatternsGTreeNode extends GTreeNode {
 
 	private static final Icon DISABLED_ICON = ResourceManager.loadImage("images/ledred.png");
 
@@ -65,7 +64,7 @@ public class FunctionBitPatternsGTreeNode extends AbstractGTreeNode {
 		for (GTreeNode node : getChildren()) {
 			((FunctionBitPatternsGTreeNode) node).sortAndSetFields();
 		}
-		List<GTreeNode> children = getChildren();
+		List<GTreeNode> children = new ArrayList<>(getChildren());
 		Collections.sort(children);
 		setChildren(children);
 		//now set isLeaf

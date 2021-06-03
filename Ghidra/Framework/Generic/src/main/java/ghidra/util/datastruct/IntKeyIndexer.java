@@ -24,7 +24,7 @@ import ghidra.util.exception.AssertException;
  * the smallest unused index is allocated and associated with that key.
  * Basically hashes the keys into linked lists using the IntListIndexer class,
  * where all values in a list have
- * the same hashcode.  Does most of the work in implementing a seperate chaining
+ * the same hashcode.  Does most of the work in implementing a separate chaining
  * version of a hashtable - the only thing missing is the values which are stored
  * in the individual implementations of the various hashtables.
  */

@@ -25,6 +25,7 @@ import ghidra.util.exception.TimeoutException;
 import ghidra.util.timer.GTimer;
 import ghidra.util.timer.GTimerMonitor;
 import utility.function.Callback;
+import utility.function.Dummy;
 
 /**
  * A task monitor that allows clients the ability to specify a timeout after which this monitor
@@ -105,7 +106,8 @@ public class TimeoutTaskMonitor implements TaskMonitor {
 	 * @param timeoutCallback the callback to call
 	 */
 	public void setTimeoutListener(Callback timeoutCallback) {
-		this.timeoutCallback = Callback.dummyIfNull(timeoutCallback);
+
+		this.timeoutCallback = Dummy.ifNull(timeoutCallback);
 	}
 
 	/**

@@ -15,8 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
-
 /**
  * The listener interface for notification of changes to a DataTypeManager
  */
@@ -112,7 +110,7 @@ public interface DataTypeManagerChangeListener {
 	 * Notification that the information for a particular source archive has changed. Typically,
 	 * this would be because it was renamed or moved.
 	 * @param dataTypeManager data type manager referring to the given source information.
-	 * @param sourceArchiveID the id for the 
+	 * @param sourceArchive the changed data type source information
 	 */
 	public void sourceArchiveChanged(final DataTypeManager dataTypeManager,
 			final SourceArchive sourceArchive);

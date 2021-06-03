@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +71,7 @@ public class OldLanguageMappingService {
 
 	/**
 	 * Parse the language string from an XML language name into the most appropriate LanguageID/CompilerSpec pair.
-	 * The language name may either be an old name (i.e., magicString) or a new <language-id>:<compiler-spec-id> string.
+	 * The language name may either be an old name (i.e., magicString) or a new {@code <language-id>:<compiler-spec-id>} string.
 	 * If an old language name magic-string is provided, its replacement language will be returned if known.
 	 * The returned pair may or may not be available based upon available language implementations.
 	 * @param languageString old or new language string

@@ -107,7 +107,7 @@ public interface DynamicTableColumn<ROW_TYPE, COLUMN_TYPE, DATA_SOURCE> {
 
 	/**
 	 * Determines the column heading that will be displayed.
-	 * @param settings
+	 * @param settings the settings
 	 * @return the field name to display as the column heading.
 	 */
 	public String getColumnDisplayName(Settings settings);

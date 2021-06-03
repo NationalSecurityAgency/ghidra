@@ -70,7 +70,7 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 	 * 
 	 * @param reader A binary reader set to start reading at the start of this header.
 	 * @param rva The RVA of this header.
-	 * @throws if there is a problem reading the header.
+	 * @throws IOException if there is a problem reading the header.
 	 */
 	public CliMetadataRoot(BinaryReader reader, int rva)
 			throws IOException {

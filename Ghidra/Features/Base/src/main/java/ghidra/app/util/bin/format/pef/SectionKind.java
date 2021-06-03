@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +20,7 @@ package ghidra.app.util.bin.format.pef;
  * Section kind values for instantiated sections.
  */
 public enum SectionKind {
-	/** Code, presumed pure & position independent.*/
+	/** Code, presumed pure and position independent.*/
 	Code(0, true),
 	/** Unpacked writeable data.*/
 	UnpackedData(1, true),

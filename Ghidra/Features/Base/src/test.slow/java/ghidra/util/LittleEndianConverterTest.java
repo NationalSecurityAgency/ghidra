@@ -15,14 +15,12 @@
  */
 package ghidra.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 
@@ -36,7 +34,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
  */
 public class LittleEndianConverterTest extends AbstractGhidraHeadedIntegrationTest {
 	private byte[] b;
-	private DataConverter dc;
+	private DataConverter dc = LittleEndianDataConverter.INSTANCE;
 
 	/**
 	 * Constructor for BigEndianConverterTest.
@@ -52,7 +50,6 @@ public class LittleEndianConverterTest extends AbstractGhidraHeadedIntegrationTe
 		for (int i = 0; i < b.length; i++) {
 			b[i] = (byte) i;
 		}
-		dc = new LittleEndianDataConverter();
 	}
 
 	@Test
@@ -73,6 +70,10 @@ public class LittleEndianConverterTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals(0x020100L, dc.getValue(b, 3));
 		assertEquals(0x0706050403020100L, dc.getValue(b, 8));
 
+		assertEquals(0x0100L, dc.getSignedValue(b, 2));
+		assertEquals(0x020100L, dc.getSignedValue(b, 3));
+		assertEquals(0x0706050403020100L, dc.getSignedValue(b, 8));
+
 		assertEquals(0x0302L, dc.getValue(b, 2, 2));
 		assertEquals(0x040302L, dc.getValue(b, 2, 3));
 		assertEquals(0x0908070605040302L, dc.getValue(b, 2, 8));
@@ -90,6 +91,14 @@ public class LittleEndianConverterTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals((short) 0xff03, bint.shortValue());
 		assertEquals(0x0000ff03, bint.intValue());
 
+	}
+
+	@Test
+	public void testGetSignedValues() {
+		assertEquals(Integer.MIN_VALUE, dc.getSignedValue(bytes(0, 00, 00, 0x80), 4));
+		assertEquals(-0x800000L, dc.getSignedValue(bytes(0, 00, 0x80, 00), 3));
+
+		assertEquals(-256, dc.getSignedValue(bytes(0, 0xFF, 00, 00), 2));
 	}
 
 	@Test

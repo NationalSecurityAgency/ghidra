@@ -1,0 +1,21 @@
+##VERSION: 2.0
+Module.manifest||GHIDRA||||END|
+data/languages/Helpers/Conditions.sinc||GHIDRA||||END|
+data/languages/Helpers/Extras.sinc||GHIDRA||||END|
+data/languages/Helpers/Macros.sinc||GHIDRA||||END|
+data/languages/Helpers/Register.sinc||GHIDRA||||END|
+data/languages/Helpers/Tokens.sinc||GHIDRA||||END|
+data/languages/Helpers/Variables.sinc||GHIDRA||||END|
+data/languages/Instructions/Arithmetic.sinc||GHIDRA||||END|
+data/languages/Instructions/Float.sinc||GHIDRA||||END|
+data/languages/Instructions/Load_Store.sinc||GHIDRA||||END|
+data/languages/Instructions/Logic.sinc||GHIDRA||||END|
+data/languages/Instructions/Special.sinc||GHIDRA||||END|
+data/languages/V850.cspec||GHIDRA||||END|
+data/languages/V850.ldefs||GHIDRA||||END|
+data/languages/V850.opinion||GHIDRA||||END|
+data/languages/V850.pspec||GHIDRA||||END|
+data/languages/V850.slaspec||GHIDRA||||END|
+data/manuals/v850.idx||GHIDRA||||END|
+data/patterns/V850_patterns.xml||GHIDRA||||END|
+data/patterns/patternconstraints.xml||GHIDRA||||END|

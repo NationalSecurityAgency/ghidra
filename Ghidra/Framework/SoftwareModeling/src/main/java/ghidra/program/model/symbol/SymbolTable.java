@@ -15,8 +15,7 @@
  */
 package ghidra.program.model.symbol;
 
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -91,7 +90,7 @@ public interface SymbolTable {
 	 * @param namespace the namespace of the symbol.
 	 * @param source the source of this symbol
 	 * <br>Some symbol types, such as function symbols, can set the source to Symbol.DEFAULT.
-	 *
+	 * @return new code or function symbol
 	 * @throws IllegalArgumentException if you try to set the source to DEFAULT for a symbol type
 	 * that doesn't allow it, or an improper addr if specified
 	 */
@@ -158,7 +157,7 @@ public interface SymbolTable {
 	 * @param name the name of the symbol to retrieve
 	 * @param addr the address of the symbol to retrieve
 	 * @param namespace the namespace of the symbol to retrieve. May be null which indicates global namespace.
-	 * @See {@link getGlobalSymbol(String, Address)} for a convenience method if the namespace is the global namespace.
+	 * @see #getGlobalSymbol(String, Address) for a convenience method if the namespace is the global namespace.
 	 */
 	public Symbol getSymbol(String name, Address addr, Namespace namespace);
 
@@ -172,18 +171,18 @@ public interface SymbolTable {
 	 *
 	 * @param name the name of the symbol to retrieve
 	 * @param addr the address of the symbol to retrieve
-	 * @See {@link getSymbol(String, Address, Namespace)}
+	 * @see #getSymbol(String, Address, Namespace)
 	 */
 	public Symbol getGlobalSymbol(String name, Address addr);
 
 	/**
 	 * Returns the first symbol with the given name found in the given namespace. Ghidra now
 	 * allows multiple symbols with the same name in the same namespace, so using this method
-	 * is likely to produce unintended results. Use {@link #getSymbols(Namespace, String)} instead.
+	 * is likely to produce unintended results. Use {@link #getSymbols(String, Namespace)} instead.
 	 * @param name the name of the symbol to retreive
 	 * @param namespace the namespace of the symbol to retrieve (null assumes global namespace)
 	 * @deprecated This method is no longer useful as Ghidra allows duplicate symbol names in
-	 * the same namespace. Use {@link #getSymbols(Namespace, String)} instead.
+	 * the same namespace. Use {@link #getSymbols(String, Namespace)} instead.
 	 * Deprecated in version 7.5, will be removed a few versions later.
 	 */
 	@Deprecated
@@ -213,8 +212,6 @@ public interface SymbolTable {
 	 * @param name the name of the symbols to search for.
 	 * @param namespace the namespace to search.  If null, then the global namespace is assumed.
 	 * @return a list of all the label or function symbols with the given name in the given namespace.
-	 * @throws DuplicateNameException if more than one label or function symbol has the name in
-	 * the given namespace.
 	 */
 	public List<Symbol> getLabelOrFunctionSymbols(String name, Namespace namespace);
 
@@ -269,7 +266,7 @@ public interface SymbolTable {
 	 * Returns a symbol that is either a parameter or local variable.  There can be only
 	 * one because these symbol types have a unique name requirement.
 	 * @param name the naem of the variable.
-	 * @param namespace the namespace (function) to search.
+	 * @param function the function to search.
 	 * @return a parameter or local variable symbol with the given name.
 	 */
 	public Symbol getVariableSymbol(String name, Function function);
@@ -506,7 +503,7 @@ public interface SymbolTable {
 	 * @param name name of the namespace
 	 * @param source the source of this class namespace's symbol
 	 * @return new class namespace
-	 * @throws DuplicateNameException thrown if another non function or lable symbol exists with the given name
+	 * @throws DuplicateNameException thrown if another non function or label symbol exists with the given name
 	 * @throws InvalidInputException throw if the name has invalid characters or is null
 	 * @throws IllegalArgumentException if you try to set the source to 'Symbol.DEFAULT'.
 	 */
@@ -525,7 +522,7 @@ public interface SymbolTable {
 	 * @param source the source of this external library's symbol
 	 * @return the new Library namespace.
 	 * @throws IllegalArgumentException if you try to set the source to 'Symbol.DEFAULT'.
-	 * @throws DuplicateNameException thrown if another non function or lable symbol exists with the given name
+	 * @throws DuplicateNameException thrown if another non function or label symbol exists with the given name
 	 */
 	public Library createExternalLibrary(String name, SourceType source)
 			throws DuplicateNameException, InvalidInputException;
@@ -536,11 +533,39 @@ public interface SymbolTable {
 	 * @param name the name of the new namespace
 	 * @param source the source of this namespace's symbol
 	 * @return the new Namespace object.
-	 * @throws DuplicateNameException thrown if another non function or lable symbol exists with the given name
+	 * @throws DuplicateNameException thrown if another non function or label symbol exists with the given name
 	 * @throws InvalidInputException if the name is invalid.
 	 * @throws IllegalArgumentException if you try to set the source to 'Symbol.DEFAULT'.
 	 */
 	public Namespace createNameSpace(Namespace parent, String name, SourceType source)
 			throws DuplicateNameException, InvalidInputException;
 
+	/**
+	 * Converts the given namespace to a class namespace
+	 * 
+	 * @param namespace the namespace to convert
+	 * @return the new class
+	 * @throws IllegalArgumentException if the given parent namespace is from a different program
+	 *         than that of this symbol table
+	 * @throws ConcurrentModificationException if the given parent namespace has been deleted
+	 */
+	public GhidraClass convertNamespaceToClass(Namespace namespace);
+
+	/**
+	 * Gets an existing namespace with the given name in the given parent.  If no namespace exists,
+	 * then one will be created.
+	 *  
+	 * @param parent the parent namespace
+	 * @param name the namespace name
+	 * @param source the source type for the namespace if one is created
+	 * @return the namespace
+	 * @throws DuplicateNameException thrown if another non function or label symbol exists with 
+	 *         the given name
+	 * @throws InvalidInputException if the name is invalid
+	 * @throws IllegalArgumentException if the given parent namespace is from a different program
+	 *         than that of this symbol table
+	 * @throws ConcurrentModificationException if the given parent namespace has been deleted
+	 */
+	public Namespace getOrCreateNameSpace(Namespace parent, String name, SourceType source)
+			throws DuplicateNameException, InvalidInputException;
 }

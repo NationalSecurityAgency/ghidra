@@ -73,8 +73,8 @@ void OpBehavior::registerInstructions(vector<OpBehavior *> &inst,const Translate
   inst[CPUI_BOOL_OR] = new OpBehaviorBoolOr();
 
   inst[CPUI_CAST] = new OpBehavior(CPUI_CAST,false,true);
-  inst[CPUI_PTRADD] = new OpBehavior(CPUI_PTRADD,false,true);
-  inst[CPUI_PTRSUB] = new OpBehavior(CPUI_PTRSUB,false,true);
+  inst[CPUI_PTRADD] = new OpBehavior(CPUI_PTRADD,false);
+  inst[CPUI_PTRSUB] = new OpBehavior(CPUI_PTRSUB,false);
 
   inst[CPUI_FLOAT_EQUAL] = new OpBehaviorFloatEqual(trans);
   inst[CPUI_FLOAT_NOTEQUAL] = new OpBehaviorFloatNotEqual(trans);
@@ -99,6 +99,9 @@ void OpBehavior::registerInstructions(vector<OpBehavior *> &inst,const Translate
   inst[CPUI_SEGMENTOP] = new OpBehavior(CPUI_SEGMENTOP,false,true);
   inst[CPUI_CPOOLREF] = new OpBehavior(CPUI_CPOOLREF,false,true);
   inst[CPUI_NEW] = new OpBehavior(CPUI_NEW,false,true);
+  inst[CPUI_INSERT] = new OpBehavior(CPUI_INSERT,false);
+  inst[CPUI_EXTRACT] = new OpBehavior(CPUI_EXTRACT,false);
+  inst[CPUI_POPCOUNT] = new OpBehaviorPopcount();
 }
 
 /// \param sizeout is the size of the output in bytes
@@ -378,16 +381,18 @@ uintb OpBehaviorIntOr::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb i
 uintb OpBehaviorIntLeft::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) const
 
 {
-  uintb res = (in1 << in2) & calc_mask(sizeout);
-  return res;
+    if (in2 >= sizeout*8){
+    	return 0;
+    }
+	uintb res = (in1 << in2) & calc_mask(sizeout);
+    return res;
 }
 
 uintb OpBehaviorIntLeft::recoverInputBinary(int4 slot,int4 sizeout,uintb out,int4 sizein,uintb in) const
 
 {
-  if (slot!=0)
+  if ((slot!=0) || (in >= sizeout*8))
     return OpBehavior::recoverInputBinary(slot,sizeout,out,sizein,in);
-  
   int4 sa = in;
   if (((out<<(8*sizeout-sa))&calc_mask(sizeout))!=0)
     throw EvaluationError("Output is not in range of left shift operation");
@@ -397,6 +402,9 @@ uintb OpBehaviorIntLeft::recoverInputBinary(int4 slot,int4 sizeout,uintb out,int
 uintb OpBehaviorIntRight::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) const
 
 {
+  if (in2 >= sizeout*8){
+	 return 0;
+  }
   uintb res = (in1&calc_mask(sizeout)) >> in2;
   return res;
 }
@@ -404,7 +412,7 @@ uintb OpBehaviorIntRight::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uint
 uintb OpBehaviorIntRight::recoverInputBinary(int4 slot,int4 sizeout,uintb out,int4 sizein,uintb in) const
 
 {
-  if (slot!=0)
+  if ((slot!=0) || (in >= sizeout*8))
     return OpBehavior::recoverInputBinary(slot,sizeout,out,sizein,in);
   
   int4 sa = in;
@@ -416,6 +424,10 @@ uintb OpBehaviorIntRight::recoverInputBinary(int4 slot,int4 sizeout,uintb out,in
 uintb OpBehaviorIntSright::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) const
 
 {
+  if (in2 >= 8*sizeout){
+	  return signbit_negative(in1,sizein) ? calc_mask(sizeout) : 0;
+  }
+
   uintb res;
   if (signbit_negative(in1,sizein)) {
     res = in1 >> in2;
@@ -432,7 +444,7 @@ uintb OpBehaviorIntSright::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uin
 uintb OpBehaviorIntSright::recoverInputBinary(int4 slot,int4 sizeout,uintb out,int4 sizein,uintb in) const
 
 {
-  if (slot!=0)
+  if ((slot!=0) || (in >= sizeout*8))
     return OpBehavior::recoverInputBinary(slot,sizeout,out,sizein,in);
   
   int4 sa = in;
@@ -495,7 +507,7 @@ uintb OpBehaviorIntSrem::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb
   intb mod = in2;
   sign_extend(val,8*sizein-1);	// Convert inputs to signed values
   sign_extend(mod,8*sizein-1);
-  intb sres = in1 % in2;	// Do the remainder
+  intb sres = val % mod;	// Do the remainder
   zero_extend(sres,8*sizeout-1); // Convert back to unsigned
   return (uintb)sres;
 }
@@ -723,5 +735,11 @@ uintb OpBehaviorSubpiece::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uint
 {
   uintb res = (in1>>(in2*8)) & calc_mask(sizeout);
   return res;
+}
+
+uintb OpBehaviorPopcount::evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const
+
+{
+  return (uintb)popcount(in1);
 }
 

@@ -42,7 +42,7 @@ public class LabelFieldLocation extends CodeUnitLocation {
 	/**
 	 * Construct a new LabelFieldLocation.
 	 *
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param addr address of the location; should not be null
 	 * @param componentPath array of indexes for each nested data component; the
 	 * index is the data component's index within its parent; may be null

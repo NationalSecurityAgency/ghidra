@@ -28,7 +28,7 @@ import ghidra.program.model.listing.ProgramChangeSet;
 import ghidra.test.TestEnv;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * This model is used by the {@link MergeTestFacilitator} to configure programs needed 
@@ -62,8 +62,8 @@ public abstract class AbstractMTFModel {
 	 * This represents the original checked-out version.
 	 * Program returned will be released by the MergeTestFacilitator 
 	 * when disposed or re-initialized.
+	 * @return the program
 	 */
-
 	public ProgramDB getOriginalProgram() {
 		return originalProgram;
 	}
@@ -73,8 +73,8 @@ public abstract class AbstractMTFModel {
 	 * This represents the current version.
 	 * Program returned will be released by the MergeTestFacilitator 
 	 * when disposed or re-initialized.
+	 * @return the program
 	 */
-
 	public ProgramDB getLatestProgram() {
 		return latestProgram;
 	}
@@ -84,8 +84,8 @@ public abstract class AbstractMTFModel {
 	 * This represents the local program to be checked-in.
 	 * Program returned will be released by the MergeTestFacilitator 
 	 * when disposed or re-initialized.
+	 * @return the program
 	 */
-
 	public ProgramDB getPrivateProgram() {
 		return privateProgram;
 	}
@@ -95,8 +95,8 @@ public abstract class AbstractMTFModel {
 	 * This represents the checkin program containing the merged data.
 	 * Program returned will be released by the MergeTestFacilitator 
 	 * when disposed or re-initialized.
+	 * @return the program
 	 */
-
 	public ProgramDB getResultProgram() {
 		return resultProgram;
 	}
@@ -129,7 +129,7 @@ public abstract class AbstractMTFModel {
 		BufferFile bufferFile = item.open();
 		try {
 			fileSystem.createDatabase(parent.getPathname(), newName, FileIDFactory.createFileID(),
-				bufferFile, null, item.getContentType(), false, TaskMonitorAdapter.DUMMY_MONITOR,
+				bufferFile, null, item.getContentType(), false, TaskMonitor.DUMMY,
 				null);
 		}
 		finally {
@@ -141,6 +141,7 @@ public abstract class AbstractMTFModel {
 	}
 
 	protected void cleanup() {
+
 		if (originalProgram != null) {
 			originalProgram.release(this);
 			originalProgram = null;
@@ -154,6 +155,8 @@ public abstract class AbstractMTFModel {
 			privateProgram = null;
 		}
 		if (resultProgram != null) {
+			resultProgram.flushEvents();
+			AbstractGenericTest.waitForSwing();
 			resultProgram.release(this);
 			resultProgram = null;
 		}

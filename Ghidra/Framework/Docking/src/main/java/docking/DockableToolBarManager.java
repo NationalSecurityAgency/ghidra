@@ -74,7 +74,7 @@ class DockableToolBarManager {
 		String owner = provider.getOwner();
 		ToolBarCloseAction closeAction = new ToolBarCloseAction(owner);
 		closeButtonManager = new ToolBarItemManager(closeAction, winMgr);
-		DockingTool tool = winMgr.getTool();
+		Tool tool = winMgr.getTool();
 
 		// we need to add this action to the tool in order to use key bindings
 		tool.addLocalAction(provider, closeAction);
@@ -166,7 +166,7 @@ class DockableToolBarManager {
 		// this will be null for non-standard use cases
 		if (dockableComponent != null) {
 			DockingWindowManager dwm = dockableComponent.getDockingWindowManager();
-			DockingTool tool = dwm.getTool();
+			Tool tool = dwm.getTool();
 			ComponentProvider provider = dockableComponent.getComponentProvider();
 			tool.removeLocalAction(provider, closeButtonManager.getAction());
 		}

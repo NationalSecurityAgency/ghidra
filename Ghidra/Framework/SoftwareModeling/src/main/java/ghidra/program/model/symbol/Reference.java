@@ -118,7 +118,7 @@ public interface Reference extends Comparable<Reference> {
 	public boolean isShiftedReference();
 
 	/**
-	 * Gets the source of this reference. {@link SourceTypes}
+	 * Gets the source of this reference. {@link SourceType}s
 	 * 
 	 * @return the source of this reference
 	 */

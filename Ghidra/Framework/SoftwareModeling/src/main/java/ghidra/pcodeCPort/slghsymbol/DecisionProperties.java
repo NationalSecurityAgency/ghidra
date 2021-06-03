@@ -16,6 +16,7 @@
 package ghidra.pcodeCPort.slghsymbol;
 
 import generic.stl.VectorSTL;
+import ghidra.pcode.utils.MessageFormattingUtils;
 import ghidra.pcodeCPort.slghpattern.DisjointPattern;
 
 public class DecisionProperties {
@@ -35,7 +36,10 @@ public class DecisionProperties {
 		if ((!a.isError()) && (!b.isError())) {
 			a.setError(true);
 			b.setError(true);
-			identerrors.push_back("Constructors with identical patterns: \n   " + a + "\n   " + b);
+
+			String msg = "Constructors with identical patterns:\n   " + a + "\n   " + b;
+			identerrors.push_back(MessageFormattingUtils.format(a.location, msg));
+			identerrors.push_back(MessageFormattingUtils.format(b.location, msg));
 		}
 	}
 
@@ -45,9 +49,12 @@ public class DecisionProperties {
 		if ((!a.isError()) && (!b.isError())) {
 			a.setError(true);
 			b.setError(true);
-			conflicterrors.push_back("Constructor patterns cannot be distinguished: \n" //
+
+			String msg = "Constructor patterns cannot be distinguished: \n" //
 				+ "   " + pa + " " + a + "\n" //
-				+ "   " + pb + " " + b);
+				+ "   " + pb + " " + b;
+			conflicterrors.push_back(MessageFormattingUtils.format(a.location, msg));
+			conflicterrors.push_back(MessageFormattingUtils.format(b.location, msg));
 		}
 	}
 }

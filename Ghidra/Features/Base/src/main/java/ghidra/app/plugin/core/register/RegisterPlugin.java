@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.register;
 
-import java.awt.Component;
 import java.awt.event.*;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -167,11 +166,6 @@ public class RegisterPlugin extends ProgramPlugin {
 					}
 					return false;
 				}
-
-				@Override
-				public boolean isValidGlobalContext(ActionContext globalContext) {
-					return false;  // only work on active provider context.
-				}
 			};
 		deleteRegisterRangeAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_DELETE, 0));
 
@@ -295,7 +289,7 @@ public class RegisterPlugin extends ProgramPlugin {
 		SetRegisterValueDialog dialog =
 			new SetRegisterValueDialog(context.getProgram(), registers, register, addrSet, false);
 
-		tool.showDialog(dialog, (Component) null);
+		tool.showDialog(dialog);
 
 		Register selectedRegister = dialog.getSelectRegister();
 		if (selectedRegister != null) {
@@ -309,7 +303,7 @@ public class RegisterPlugin extends ProgramPlugin {
 		SetRegisterValueDialog dialog =
 			new SetRegisterValueDialog(context.getProgram(), registers, register, addrSet, true);
 
-		tool.showDialog(dialog, (Component) null);
+		tool.showDialog(dialog);
 
 		BigInteger value = dialog.getRegisterValue();
 		Register selectedRegister = dialog.getSelectRegister();

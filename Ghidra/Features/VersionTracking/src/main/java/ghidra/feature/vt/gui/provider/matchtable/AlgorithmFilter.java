@@ -17,7 +17,8 @@ package ghidra.feature.vt.gui.provider.matchtable;
 
 import java.awt.BorderLayout;
 import java.awt.event.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -98,7 +99,7 @@ public class AlgorithmFilter extends CheckBoxBasedAncillaryFilter<VTMatch> {
 		list.add(ManualMatchProgramCorrelator.NAME);
 		list.add(ImpliedMatchProgramCorrelator.NAME);
 
-		Set<VTAbstractProgramCorrelatorFactory> instances =
+		List<VTAbstractProgramCorrelatorFactory> instances =
 			ClassSearcher.getInstances(VTAbstractProgramCorrelatorFactory.class);
 		for (VTAbstractProgramCorrelatorFactory factory : instances) {
 			list.add(factory.getName());

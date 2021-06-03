@@ -21,7 +21,6 @@ import java.util.*;
 import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
-import docking.widgets.tree.GTreeSlowLoadingNode;
 import ghidra.app.cmd.label.CreateNamespacesCmd;
 import ghidra.app.util.SymbolPath;
 import ghidra.program.model.address.GlobalNamespace;
@@ -34,7 +33,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
-public class SymbolNode extends GTreeSlowLoadingNode implements SymbolTreeNode {
+public class SymbolNode extends SymbolTreeNode {
 
 	protected final Program program;
 	protected final Symbol symbol;
@@ -42,6 +41,7 @@ public class SymbolNode extends GTreeSlowLoadingNode implements SymbolTreeNode {
 	private boolean isCut;
 
 	SymbolNode(Program program, Symbol symbol) {
+		super();
 		this.program = program;
 		this.symbol = symbol;
 	}
@@ -170,7 +170,7 @@ public class SymbolNode extends GTreeSlowLoadingNode implements SymbolTreeNode {
 			return this;
 		}
 
-		return SymbolTreeNode.super.findSymbolTreeNode(key, loadChildren, taskMonitor);
+		return super.findSymbolTreeNode(key, loadChildren, taskMonitor);
 	}
 
 	public static SymbolNode createKeyNode(Symbol symbol, String searchSymbolName,

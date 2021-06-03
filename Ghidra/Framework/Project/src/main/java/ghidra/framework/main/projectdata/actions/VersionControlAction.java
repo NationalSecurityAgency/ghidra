@@ -20,7 +20,7 @@ import java.util.List;
 
 import docking.widgets.OptionDialog;
 import ghidra.framework.client.*;
-import ghidra.framework.main.datatable.DomainFileProvider;
+import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.main.datatable.DomainFileProviderContextAction;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -50,7 +50,7 @@ public abstract class VersionControlAction extends DomainFileProviderContextActi
 	 * or is version controlled.
 	 */
 	@Override
-	public boolean isAddToPopup(DomainFileProvider context) {
+	public boolean isAddToPopup(DomainFileContext context) {
 
 		if (!context.isInActiveProject()) {
 			return false;
@@ -122,8 +122,8 @@ public abstract class VersionControlAction extends DomainFileProviderContextActi
 	 */
 	boolean canCloseDomainFile(DomainFile df) {
 		Project project = tool.getProject();
-		Tool[] tools = project.getToolManager().getRunningTools();
-		for (Tool t : tools) {
+		PluginTool[] tools = project.getToolManager().getRunningTools();
+		for (PluginTool t : tools) {
 			DomainFile[] files = t.getDomainFiles();
 			for (DomainFile domainFile : files) {
 				if (df == domainFile) {

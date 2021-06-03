@@ -1865,13 +1865,21 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		return groupVertex;
 	}
 
-	private boolean isUncollapsed(final FGVertex vertex) {
+	protected boolean isUncollapsed(final FGVertex vertex) {
 		final AtomicReference<Boolean> reference = new AtomicReference<>();
 		runSwing(() -> reference.set(vertex.isUncollapsedGroupMember()));
 		return reference.get();
 	}
 
-	private void pickVertices(final Set<FGVertex> vertices) {
+	protected void pickVertex(FGVertex v) {
+		runSwing(() -> {
+			PickedState<FGVertex> pickedState = getPickedState();
+			pickedState.clear();
+			pickedState.pick(v, true);
+		});
+	}
+
+	protected void pickVertices(final Set<FGVertex> vertices) {
 		runSwing(() -> {
 			PickedState<FGVertex> pickedState = getPickedState();
 			pickedState.clear();
@@ -2158,12 +2166,6 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		Double scale = getGraphScale(getPrimaryGraphViewer());
 		int result = Double.compare(scale, 1.0);
 		assertEquals("Graph not fully zoomed-in; scale: " + scale, 0, result);
-
-		FGVertex v = getFocusedVertex();
-		Rectangle cursorBounds = v.getCursorBounds();
-		Window graphWindow = windowForComponent(getPrimaryGraphViewer());
-		Rectangle windowBounds = graphWindow.getBounds();
-		assertTrue(windowBounds.contains(cursorBounds));
 	}
 
 	protected void assertZoomedOut() {
@@ -2264,9 +2266,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 	protected void goTo(String address) {
 		Address addr = getAddress(address);
-		GoToService goToService = tool.getService(GoToService.class);
-		goToService.goTo(addr);
+		goTo(addr);
+	}
 
+	protected void goTo(Address address) {
+		GoToService goToService = tool.getService(GoToService.class);
+		runSwing(() -> goToService.goTo(address));
 		waitForBusyGraph();
 	}
 
@@ -2280,7 +2285,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void navigateBack() {
-		String name = "Previous in History Buffer";
+		String name = "Previous Location in History";
 
 		DockingActionIf action = getAction(tool, "NextPrevAddressPlugin", name);
 		performAction(action, true);

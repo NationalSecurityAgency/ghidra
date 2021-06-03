@@ -39,9 +39,6 @@ public class RemoveFieldAction extends DockingAction {
 		setHelpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, "Remove Field"));
 	}
 
-	/**
-	 * @see docking.DockingAction#isEnabledForContext(java.lang.Object)
-	 */
 	@Override
     public boolean isEnabledForContext(ActionContext context) {
 	    Object contextObject = context.getContextObject();
@@ -52,9 +49,6 @@ public class RemoveFieldAction extends DockingAction {
 		return false;
 	}
 
-    /**
-     * Method called when the action is invoked.
-     */
     @Override
     public void actionPerformed(ActionContext context) {
     	panel.setTabLock( true );

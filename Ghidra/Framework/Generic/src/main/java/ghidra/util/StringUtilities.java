@@ -15,13 +15,15 @@
  */
 package ghidra.util;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+
+import generic.json.Json;
 
 /**
  * Class with static methods that deal with string manipulation.
@@ -82,6 +84,9 @@ public class StringUtilities {
 	public static final int UNICODE_BE_BYTE_ORDER_MARK = 0xFEFF;
 	public static final int UNICODE_LE16_BYTE_ORDER_MARK = 0x0____FFFE;
 	public static final int UNICODE_LE32_BYTE_ORDER_MARK = 0xFFFE_0000;
+
+	// This is Java's default rendered size of a tab (in spaces) 
+	public static final int DEFAULT_TAB_SIZE = 8;
 
 	private StringUtilities() {
 		// utility class; can't create
@@ -309,7 +314,7 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns true if the given string starts with <tt>prefix</tt> ignoring case.
+	 * Returns true if the given string starts with <code>prefix</code> ignoring case.
 	 * <p>
 	 * Note: This method is equivalent to calling:
 	 * <pre>
@@ -318,7 +323,7 @@ public class StringUtilities {
 	 *
 	 * @param string the string which may contain the prefix
 	 * @param prefix the prefix to test against
-	 * @return true if the given string starts with <tt>prefix</tt> ignoring case.
+	 * @return true if the given string starts with <code>prefix</code> ignoring case.
 	 */
 	public static boolean startsWithIgnoreCase(String string, String prefix) {
 		if ((string == null) || (prefix == null)) {
@@ -328,7 +333,7 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns true if the given string ends with <tt>postfix</tt>, ignoring case.
+	 * Returns true if the given string ends with <code>postfix</code>, ignoring case.
 	 * <p>
 	 * Note: This method is equivalent to calling:
 	 * <pre>
@@ -336,9 +341,9 @@ public class StringUtilities {
 	 * 	string.regionMatches( true, startOffset, postfix, 0, postfix.length() );
 	 * </pre>
 	 *
-	 * @param string the string which may end with <tt>postfix</tt>
+	 * @param string the string which may end with <code>postfix</code>
 	 * @param postfix the string for which to test existence
-	 * @return true if the given string ends with <tt>postfix</tt>, ignoring case.
+	 * @return true if the given string ends with <code>postfix</code>, ignoring case.
 	 */
 	public static boolean endsWithIgnoreCase(String string, String postfix) {
 		if ((string == null) || (postfix == null)) {
@@ -349,11 +354,11 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns true if all the given <tt>searches</tt> are contained in the given string.
+	 * Returns true if all the given <code>searches</code> are contained in the given string.
 	 *
 	 * @param toSearch the string to search
 	 * @param searches the strings to find
-	 * @return true if all the given <tt>searches</tt> are contained in the given string.
+	 * @return true if all the given <code>searches</code> are contained in the given string.
 	 */
 	public static boolean containsAll(CharSequence toSearch, CharSequence... searches) {
 		if (StringUtils.isEmpty(toSearch) || ArrayUtils.isEmpty(searches)) {
@@ -369,15 +374,15 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns true if all the given <tt>searches</tt> are contained in the given string,
+	 * Returns true if all the given <code>searches</code> are contained in the given string,
 	 * ignoring case.
 	 *
 	 * @param toSearch the string to search
 	 * @param searches the strings to find
-	 * @return true if all the given <tt>searches</tt> are contained in the given string.
+	 * @return true if all the given <code>searches</code> are contained in the given string.
 	 */
 	public static boolean containsAllIgnoreCase(CharSequence toSearch, CharSequence... searches) {
-		if (StringUtils.isEmpty(toSearch) || ArrayUtils.isEmpty(searches)) {
+		if (StringUtils.isEmpty(toSearch)) {
 			return false;
 		}
 
@@ -387,6 +392,27 @@ public class StringUtilities {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Returns true if any of the given <code>searches</code> are contained in the given string,
+	 * ignoring case.
+	 *
+	 * @param toSearch the string to search
+	 * @param searches the strings to find
+	 * @return true if any of the given <code>searches</code> are contained in the given string.
+	 */
+	public static boolean containsAnyIgnoreCase(CharSequence toSearch, CharSequence... searches) {
+		if (StringUtils.isEmpty(toSearch)) {
+			return false;
+		}
+
+		for (CharSequence search : searches) {
+			if (StringUtils.containsIgnoreCase(toSearch, search)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -437,6 +463,18 @@ public class StringUtilities {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Convert tabs in the given string to spaces using
+	 * a default tab width of 8 spaces.
+	 *
+	 * @param str
+	 *            string containing tabs
+	 * @return string that has spaces for tabs
+	 */
+	public static String convertTabsToSpaces(String str) {
+		return convertTabsToSpaces(str, DEFAULT_TAB_SIZE);
 	}
 
 	/**
@@ -555,9 +593,9 @@ public class StringUtilities {
 			length *= -1;
 		}
 
-		int numFillers = length - source.length();
-		StringBuffer buffer = new StringBuffer();
-		for (int f = 0; f < numFillers; f++) {
+		int n = length - source.length();
+		StringBuilder buffer = new StringBuilder();
+		for (int i = 0; i < n; i++) {
 			buffer.append(filler);
 		}
 
@@ -632,6 +670,7 @@ public class StringUtilities {
 	}
 
 	public static WordLocation findWordLocation(String s, int index, char[] charsToAllow) {
+
 		int len = s.length();
 		if (index < 0 || index >= len) {
 			return WordLocation.empty(s);
@@ -757,20 +796,15 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Turn the given data into an attractive string, with the separator of your choosing
-	 *
-	 * @param collection the data from which a string will be generated
-	 * @param separator the string used to separate elements
-	 * @return a string representation of the given list
+	 * Creates a JSON string for the given object using all of its fields.  To control the
+	 * fields that are in the result string, see {@link Json}.
+	 * 
+	 * <P>This is here as a marker to point users to the real {@link Json} String utility.  
+	 * @param o the object for which to create a string
+	 * @return the string
 	 */
-	public static String toString(Collection<?> collection, String separator) {
-		if (collection == null) {
-			return null;
-		}
-
-		String asString =
-			collection.stream().map(o -> o.toString()).collect(Collectors.joining(separator));
-		return "[ " + asString + " ]";
+	public static String toStingJson(Object o) {
+		return Json.toString(o);
 	}
 
 	public static String toStringWithIndent(Object o) {
@@ -781,19 +815,6 @@ public class StringUtilities {
 		String asString = o.toString();
 		String indented = indentLines(asString, "\t");
 		return indented;
-	}
-
-	/**
-	 * Reverse the characters in the given string
-	 *
-	 * @param s the string to reverse
-	 * @return the reversed string
-	 */
-	public static String reverse(String s) {
-		if (s == null) {
-			return null;
-		}
-		return new StringBuilder(s).reverse().toString();
 	}
 
 	/**
@@ -838,7 +859,7 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Limits the given string to the given <tt>max</tt> number of characters.  If the string is
+	 * Limits the given string to the given <code>max</code> number of characters.  If the string is
 	 * larger than the given length, then it will be trimmed to fit that length <b>after adding
 	 * ellipses</b>
 	 *
@@ -1092,17 +1113,5 @@ public class StringUtilities {
 			return escaped;
 		}
 		return new String(new int[] { codePoint }, 0, 1);
-	}
-
-	/**
-	 * Returns true if the specified code point is the 'replacement' code point 0xFFFD,
-	 * which is used when decoding bytes into unicode chars and there was a bad or invalid
-	 * sequence that does not have a mapping. (ie. decoding byte char 0x80 as US-ASCII)
-	 *
-	 * @param codePoint to test
-	 * @return boolean true if the char is 0xFFFD (ie. UNICODE REPLACEMENT char)
-	 */
-	public static boolean isUnicodeReplacementCodePoint(int codePoint) {
-		return codePoint == UNICODE_REPLACEMENT;
 	}
 }

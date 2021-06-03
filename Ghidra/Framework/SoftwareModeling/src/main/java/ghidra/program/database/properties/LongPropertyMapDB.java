@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,10 @@
  */
 package ghidra.program.database.properties;
 
+import java.io.IOException;
+
+import db.*;
+import db.util.ErrorHandler;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.util.LongPropertyMap;
@@ -23,11 +26,6 @@ import ghidra.program.util.ChangeManager;
 import ghidra.util.exception.*;
 import ghidra.util.prop.PropertyVisitor;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-
-import db.*;
-import db.util.ErrorHandler;
 
 /**
  * Property manager that deals with properties that are of
@@ -58,24 +56,25 @@ public class LongPropertyMapDB extends PropertyMapDB implements LongPropertyMap 
 	/**
 	 * @see ghidra.program.model.util.LongPropertyMap#add(ghidra.program.model.address.Address, long)
 	 */
+	@Override
 	public void add(Address addr, long value) {
 		Long oldValue = null;
 		lock.acquire();
 		try {
 			long key = addrMap.getKey(addr, true);
 			if (propertyTable == null) {
-				createTable(LongField.class);
+				createTable(LongField.INSTANCE);
 			}
 			else {
 				oldValue = (Long) cache.get(key);
 				if (oldValue == null) {
-					Record rec = propertyTable.getRecord(key);
+					DBRecord rec = propertyTable.getRecord(key);
 					if (rec != null) {
 						oldValue = new Long(rec.getLongValue(PROPERTY_VALUE_COL));
 					}
 				}
 			}
-			Record rec = schema.createRecord(key);
+			DBRecord rec = schema.createRecord(key);
 			rec.setLongValue(PROPERTY_VALUE_COL, value);
 			propertyTable.putRecord(rec);
 			cache.put(key, new Long(value));
@@ -93,6 +92,7 @@ public class LongPropertyMapDB extends PropertyMapDB implements LongPropertyMap 
 	/**
 	 * @see ghidra.program.model.util.LongPropertyMap#getLong(ghidra.program.model.address.Address)
 	 */
+	@Override
 	public long getLong(Address addr) throws NoValueException {
 		if (propertyTable == null) {
 			throw NO_VALUE_EXCEPTION;
@@ -109,7 +109,7 @@ public class LongPropertyMapDB extends PropertyMapDB implements LongPropertyMap 
 				return ((Long) obj).longValue();
 			}
 
-			Record rec = propertyTable.getRecord(key);
+			DBRecord rec = propertyTable.getRecord(key);
 			if (rec == null) {
 				throw NO_VALUE_EXCEPTION;
 			}
@@ -127,6 +127,7 @@ public class LongPropertyMapDB extends PropertyMapDB implements LongPropertyMap 
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#getObject(ghidra.program.model.address.Address)
 	 */
+	@Override
 	public Object getObject(Address addr) {
 		try {
 			return new Long(getLong(addr));
@@ -139,6 +140,7 @@ public class LongPropertyMapDB extends PropertyMapDB implements LongPropertyMap 
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#applyValue(ghidra.util.prop.PropertyVisitor, ghidra.program.model.address.Address)
 	 */
+	@Override
 	public void applyValue(PropertyVisitor visitor, Address addr) {
 		throw new NotYetImplementedException();
 	}

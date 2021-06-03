@@ -68,7 +68,7 @@ public class SummarizeAnalyzers extends GhidraScript {
 
 		Options options = currentProgram.getOptions(Program.ANALYSIS_PROPERTIES);
 
-		Set<Class<? extends Analyzer>> classes = ClassSearcher.getClasses(Analyzer.class);
+		List<Class<? extends Analyzer>> classes = ClassSearcher.getClasses(Analyzer.class);
 		for (Class<? extends Analyzer> element : classes) {
 			Analyzer analyzer;
 			try {

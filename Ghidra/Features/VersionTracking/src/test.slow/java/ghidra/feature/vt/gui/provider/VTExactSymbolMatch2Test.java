@@ -15,8 +15,13 @@
  */
 package ghidra.feature.vt.gui.provider;
 
-import static ghidra.feature.vt.db.VTTestUtils.addr;
+import static ghidra.feature.vt.db.VTTestUtils.*;
 import static org.junit.Assert.*;
+
+import java.util.*;
+
+import org.junit.*;
+
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.feature.vt.api.correlator.program.SymbolNameProgramCorrelatorFactory;
@@ -29,11 +34,7 @@ import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.TaskMonitorAdapter;
-
-import java.util.*;
-
-import org.junit.*;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests to verify that the Exact Symbol Name program correlation determines matches as expected. 
@@ -57,10 +58,6 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 	protected Function sourceFunction;
 	protected Function destinationFunction;
 
-	public VTExactSymbolMatch2Test() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		vtTestEnv = new VTTestEnv();
@@ -73,7 +70,6 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 		session = null;
 		controller = null;
 		correlator = null;
-		vtTestEnv.releaseSession();
 		vtTestEnv.dispose();
 	}
 
@@ -465,7 +461,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 	protected void addProgramCorrelation(VTProgramCorrelatorFactory correlatorFactory) {
 		try {
 			correlator =
-				vtTestEnv.correlate(correlatorFactory, null, TaskMonitorAdapter.DUMMY_MONITOR);
+				vtTestEnv.correlate(correlatorFactory, null, TaskMonitor.DUMMY);
 		}
 		catch (Exception e) {
 			Assert.fail(e.getMessage());
@@ -508,7 +504,8 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 	 * @param sourceAddressString the source address.
 	 * @param destinationAddressString the destination address.
 	 */
-	protected void verifyNoFunctionMatch(String sourceAddressString, String destinationAddressString) {
+	protected void verifyNoFunctionMatch(String sourceAddressString,
+			String destinationAddressString) {
 		sourceAddress = addr(sourceAddressString, sourceProgram);
 		destinationAddress = addr(destinationAddressString, destinationProgram);
 
@@ -595,7 +592,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 	/**
 	 * Adds a symbol with the indicated name at the specified address and makes it primary.
 	 * @param program the program containing the symbol
-	 * @param sourceAddressString the source address of the markup
+	 * @param addressString the source address of the markup
 	 * @param symbolName the name of the symbol being added
 	 * @throws DuplicateNameException if the name exists
 	 * @throws InvalidInputException if name is invalid
@@ -632,7 +629,8 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 		String[] actualSourceSymbols =
 			convertSymbolsToNames(sourceProgram.getSymbolTable().getSymbols(sourceAddress));
 		String[] actualDestSymbols =
-			convertSymbolsToNames(destinationProgram.getSymbolTable().getSymbols(destinationAddress));
+			convertSymbolsToNames(
+				destinationProgram.getSymbolTable().getSymbols(destinationAddress));
 
 		Arrays.sort(actualSourceSymbols);
 		Arrays.sort(actualDestSymbols);

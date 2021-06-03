@@ -199,7 +199,7 @@ macro xch(node1, node2) {
 }
 
 @ifdef SINGLE_REGISTER_BANK
-macro regbank(r) { }
+macro regbank(r) { r = r; }
 macro setbank(bs) {
   BS = bs;
   local tmp:1 = bs;

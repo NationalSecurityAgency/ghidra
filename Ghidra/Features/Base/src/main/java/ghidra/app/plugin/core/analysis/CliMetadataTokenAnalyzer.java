@@ -49,8 +49,11 @@ public class CliMetadataTokenAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean getDefaultEnablement(Program program) {
-		return program.getLanguage().getLanguageDescription().getLanguageID().getIdAsString().contains(
-			"CLI");
+		return program.getLanguage()
+				.getLanguageDescription()
+				.getLanguageID()
+				.getIdAsString()
+				.contains("CLI");
 	}
 
 	@Override
@@ -63,7 +66,7 @@ public class CliMetadataTokenAnalyzer extends AbstractAnalyzer {
 			throws CancelledException {
 
 		Symbol metadataRootSymbol = SymbolUtilities.getExpectedLabelOrFunctionSymbol(program,
-			CliMetadataRoot.NAME, err -> log.error(getName(), err));
+			CliMetadataRoot.NAME, err -> log.appendMsg(getName(), err));
 
 		if (metadataRootSymbol == null) {
 			String message = "CLI Metadata Root Symbol not found.";
@@ -75,93 +78,101 @@ public class CliMetadataTokenAnalyzer extends AbstractAnalyzer {
 		ByteProvider bytes = new MemoryByteProvider(program.getMemory(), metadataRootAddr);
 		BinaryReader reader = new BinaryReader(bytes, !program.getLanguage().isBigEndian());
 
+		boolean success = false;
 		try {
 			CliMetadataRoot metadataRoot = new CliMetadataRoot(reader, 0);
 			metadataRoot.parse();
 
 			CliStreamMetadata metadataStream = metadataRoot.getMetadataStream();
 
-			// Determine if each instruction has something we should fix up.
-			// Note that we use endsWith() instead of equals() because instructions can have prefixes.
-			InstructionIterator instIter = program.getListing().getInstructions(set, true);
-			while (instIter.hasNext()) {
-				try {
-					Instruction inst = instIter.next();
-					/* Base Instructions (Partition II.3) */
-					if (inst.getMnemonicString().endsWith("ldstr")) {
-						processUserString(metadataStream, inst);
-					}
-					else if (inst.getMnemonicString().endsWith("call")) {
-						processControlFlowInstruction(program, metadataStream, inst,
-							RefType.UNCONDITIONAL_CALL);
-					}
-					else if (inst.getMnemonicString().endsWith("calli")) {
-						processControlFlowInstruction(program, metadataStream, inst,
-							RefType.COMPUTED_CALL); // TODO: computed?
-					}
-					else if (inst.getMnemonicString().endsWith("jmp")) {
-						processControlFlowInstruction(program, metadataStream, inst,
-							RefType.UNCONDITIONAL_JUMP);
-					}
-					else if (inst.getMnemonicString().endsWith("ldftn")) {
-						processGenericMetadataToken(metadataStream, inst);
-						// TODO: how to say a method pointer is pushed onto the stack...
-					}
-					/* Object Model Instructions */
-					else if (inst.getMnemonicString().endsWith("box") ||
-						inst.getMnemonicString().endsWith("castclass") ||
-						inst.getMnemonicString().endsWith("cpobj") ||
-						inst.getMnemonicString().endsWith("initobj") ||
-						inst.getMnemonicString().endsWith("isinst") ||
-						inst.getMnemonicString().endsWith("ldelem") ||
-						inst.getMnemonicString().endsWith("ldelema") ||
-						inst.getMnemonicString().endsWith("ldfld") ||
-						inst.getMnemonicString().endsWith("ldflda") ||
-						inst.getMnemonicString().endsWith("ldobj") ||
-						inst.getMnemonicString().endsWith("ldsfld") ||
-						inst.getMnemonicString().endsWith("ldsflda") ||
-						inst.getMnemonicString().endsWith("ldtoken") ||
-						inst.getMnemonicString().endsWith("mkrefany") ||
-						inst.getMnemonicString().endsWith("newarr") ||
-						inst.getMnemonicString().endsWith("newobj") ||
-						inst.getMnemonicString().endsWith("refanyval") ||
-						inst.getMnemonicString().endsWith("sizeof") ||
-						inst.getMnemonicString().endsWith("stelem") ||
-						inst.getMnemonicString().endsWith("stfld") ||
-						inst.getMnemonicString().endsWith("stobj") ||
-						inst.getMnemonicString().endsWith("stsfld") ||
-						inst.getMnemonicString().endsWith("unbox") ||
-						inst.getMnemonicString().endsWith("unbox.any")) {
-						processObjectModelInstruction(program, metadataStream, inst);
-					}
-					else if (inst.getMnemonicString().endsWith("callvirt")) {
-						processControlFlowInstruction(program, metadataStream, inst,
-							RefType.COMPUTED_CALL);
-						// TODO: Computed call because this is a virtual function on an object 
-					}
-					else if (inst.getMnemonicString().endsWith("constrained")) {
-						CliAbstractTableRow tableRow = getRowForMetadataToken(metadataStream, inst);
-						markMetadataRow(inst, tableRow, "Next instr type req'd to be: ", "",
-							metadataStream);
-					}
-					else if (inst.getMnemonicString().endsWith("ldvirtfn")) {
-						processObjectModelInstruction(program, metadataStream, inst);
-						// TODO: ldvirtfn puts virtual method pointer on stack, see above for ldftn
-					}
-				}
-				catch (Exception e) {
-					e.printStackTrace();
-					// TODO:
-				}
-			}
+			success = processManagedInstructions(program, set, monitor, log, metadataRoot);
 		}
 		catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 			String message = e.toString();
 			log.appendMsg(getName(), message);
 			log.setStatus(message);
-			return false;
+			success = false;
+		}
+
+		return success;
+	}
+
+	private boolean processManagedInstructions(Program program, AddressSetView set,
+			TaskMonitor monitor, MessageLog log, CliMetadataRoot metadataRoot)
+			throws CancelledException {
+		// Determine if each instruction has something we should fix up.
+		// Note that we use endsWith() instead of equals() because instructions can have prefixes.
+		CliStreamMetadata metadataStream = metadataRoot.getMetadataStream();
+		InstructionIterator instIter = program.getListing().getInstructions(set, true);
+		while (instIter.hasNext()) {
+			try {
+				Instruction inst = instIter.next();
+				/* Base Instructions (Partition II.3) */
+				if (inst.getMnemonicString().endsWith("ldstr")) {
+					processUserString(metadataStream, inst);
+				}
+				else if (inst.getMnemonicString().endsWith("call")) {
+					processControlFlowInstruction(program, metadataStream, inst,
+						RefType.UNCONDITIONAL_CALL);
+				}
+				else if (inst.getMnemonicString().endsWith("calli")) {
+					processControlFlowInstruction(program, metadataStream, inst,
+						RefType.COMPUTED_CALL); // TODO: computed?
+				}
+				else if (inst.getMnemonicString().endsWith("jmp")) {
+					processControlFlowInstruction(program, metadataStream, inst,
+						RefType.UNCONDITIONAL_JUMP);
+				}
+				else if (inst.getMnemonicString().endsWith("ldftn")) {
+					processGenericMetadataToken(metadataStream, inst);
+					// TODO: how to say a method pointer is pushed onto the stack...
+				}
+				/* Object Model Instructions */
+				else if (inst.getMnemonicString().endsWith("box") ||
+					inst.getMnemonicString().endsWith("castclass") ||
+					inst.getMnemonicString().endsWith("cpobj") ||
+					inst.getMnemonicString().endsWith("initobj") ||
+					inst.getMnemonicString().endsWith("isinst") ||
+					inst.getMnemonicString().endsWith("ldelem") ||
+					inst.getMnemonicString().endsWith("ldelema") ||
+					inst.getMnemonicString().endsWith("ldfld") ||
+					inst.getMnemonicString().endsWith("ldflda") ||
+					inst.getMnemonicString().endsWith("ldobj") ||
+					inst.getMnemonicString().endsWith("ldsfld") ||
+					inst.getMnemonicString().endsWith("ldsflda") ||
+					inst.getMnemonicString().endsWith("ldtoken") ||
+					inst.getMnemonicString().endsWith("mkrefany") ||
+					inst.getMnemonicString().endsWith("newarr") ||
+					inst.getMnemonicString().endsWith("newobj") ||
+					inst.getMnemonicString().endsWith("refanyval") ||
+					inst.getMnemonicString().endsWith("sizeof") ||
+					inst.getMnemonicString().endsWith("stelem") ||
+					inst.getMnemonicString().endsWith("stfld") ||
+					inst.getMnemonicString().endsWith("stobj") ||
+					inst.getMnemonicString().endsWith("stsfld") ||
+					inst.getMnemonicString().endsWith("unbox") ||
+					inst.getMnemonicString().endsWith("unbox.any")) {
+					processObjectModelInstruction(program, metadataStream, inst);
+				}
+				else if (inst.getMnemonicString().endsWith("callvirt")) {
+					processControlFlowInstruction(program, metadataStream, inst,
+						RefType.COMPUTED_CALL);
+					// TODO: Computed call because this is a virtual function on an object
+				}
+				else if (inst.getMnemonicString().endsWith("constrained")) {
+					CliAbstractTableRow tableRow = getRowForMetadataToken(metadataStream, inst);
+					markMetadataRow(inst, tableRow, "Next instr type req'd to be: ", "",
+						metadataStream);
+				}
+				else if (inst.getMnemonicString().endsWith("ldvirtfn")) {
+					processObjectModelInstruction(program, metadataStream, inst);
+					// TODO: ldvirtfn puts virtual method pointer on stack, see above for ldftn
+				}
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+				// TODO:
+			}
 		}
 
 		return true;
@@ -180,7 +191,9 @@ public class CliMetadataTokenAnalyzer extends AbstractAnalyzer {
 
 	private void processUserString(CliStreamMetadata metaStream, Instruction inst) {
 		Scalar strIndexOp = (Scalar) inst.getOpObjects(0)[0];
+
 		int strIndex = (int) strIndexOp.getUnsignedValue();
+
 		inst.setComment(CodeUnit.EOL_COMMENT,
 			"\"" + metaStream.getUserStringsStream().getUserString(strIndex) + "\"");
 	}
@@ -192,7 +205,7 @@ public class CliMetadataTokenAnalyzer extends AbstractAnalyzer {
 		if (tableRow instanceof CliMethodDefRow) {
 			// TODO: Add a control flow reference ideally
 			// Op 0 => table, Op 1 => call destination?
-			// inst.addOperandReference(OP_INDEX, DEST_ADDR, RefType.UNCONDITIONAL_CALL, SourceType.ANALYSIS); // TODO: unconditional call?  
+			// inst.addOperandReference(OP_INDEX, DEST_ADDR, RefType.UNCONDITIONAL_CALL, SourceType.ANALYSIS); // TODO: unconditional call?
 			// program.getReferenceManager().addMemoryReference(INST_ADDR, DEST_ADDR, RefType.UNCONDITIONAL_CALL, SourceType.ANALYSIS, 0);
 			CliMethodDefRow methodDef = (CliMethodDefRow) tableRow;
 			if (methodDef.RVA != 0) {
@@ -203,7 +216,8 @@ public class CliMetadataTokenAnalyzer extends AbstractAnalyzer {
 		}
 	}
 
-	private CliAbstractTableRow getRowForMetadataToken(CliStreamMetadata metaStream, Instruction inst) {
+	private CliAbstractTableRow getRowForMetadataToken(CliStreamMetadata metaStream,
+			Instruction inst) {
 		Object ops[] = inst.getOpObjects(0);
 		Scalar tableOp = (Scalar) ops[0];
 		Scalar indexOp = (Scalar) ops[1];
@@ -213,13 +227,14 @@ public class CliMetadataTokenAnalyzer extends AbstractAnalyzer {
 		return tableRow;
 	}
 
-	private void markMetadataRow(Instruction inst, CliAbstractTableRow tableRow, String prependComment,
-			String appendComment, CliStreamMetadata stream) {
+	private void markMetadataRow(Instruction inst, CliAbstractTableRow tableRow,
+			String prependComment, String appendComment, CliStreamMetadata stream) {
 		inst.setComment(CodeUnit.EOL_COMMENT, String.format("%s%s%s", prependComment,
 			tableRow.getShortRepresentation(stream), appendComment));
 	}
 
-	private void markMetadataRow(Instruction inst, CliAbstractTableRow tableRow, CliStreamMetadata stream) {
+	private void markMetadataRow(Instruction inst, CliAbstractTableRow tableRow,
+			CliStreamMetadata stream) {
 		markMetadataRow(inst, tableRow, "", "", stream);
 	}
 }

@@ -25,7 +25,7 @@ import javax.swing.table.TableModel;
 
 import docking.ActionContext;
 import docking.action.*;
-import docking.tool.ToolConstants;
+import docking.actions.SharedDockingActionPlaceholder;
 import docking.widgets.table.GTable;
 import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.table.threaded.ThreadedTableModel;
@@ -46,7 +46,7 @@ import resources.ResourceManager;
  * not altering the database.
  * <p>
  * Tip: if you are a plugin that uses transient providers, then use 
- * {@link #registerDummy(PluginTool)} at creation time to install a dummy representative of
+ * {@link #registerDummy(PluginTool, String)} at creation time to install a dummy representative of
  * this action in the Tool's options so that user's can update keybindings, regardless of whether
  * they have ever shown one of your transient providers.  
  */
@@ -65,9 +65,10 @@ public class DeleteTableRowAction extends DockingAction {
 	 * at the time the plugin is loaded.
 	 * 
 	 * @param tool the tool whose options will updated with a dummy keybinding
+	 * @param owner the owner of the action that may be installed
 	 */
-	public static void registerDummy(PluginTool tool) {
-		new DummyDeleteAction(tool);
+	public static void registerDummy(PluginTool tool, String owner) {
+		tool.getToolActions().registerSharedActionPlaceholder(new DeleteActionPlaceholder(owner));
 	}
 
 	public DeleteTableRowAction(GTable table, String owner) {
@@ -192,26 +193,27 @@ public class DeleteTableRowAction extends DockingAction {
 // Inner Classes
 //==================================================================================================
 
-	private static class DummyDeleteAction extends DeleteTableRowAction {
+	private static class DeleteActionPlaceholder implements SharedDockingActionPlaceholder {
 
-		public DummyDeleteAction(PluginTool tool) {
-			super(NAME, ToolConstants.TOOL_OWNER, DEFAULT_KEYSTROKE);
+		private String owner;
 
-			// prevent this action from appearing in the toolbar, menus, etc
-			setToolBarData(null);
-			setPopupMenuData(null);
-
-			tool.addAction(this);
+		public DeleteActionPlaceholder(String owner) {
+			this.owner = owner;
 		}
 
 		@Override
-		public void actionPerformed(ActionContext context) {
-			// stub
+		public String getName() {
+			return NAME;
 		}
 
 		@Override
-		public boolean isEnabledForContext(ActionContext context) {
-			return false; // stub
+		public String getOwner() {
+			return owner;
+		}
+
+		@Override
+		public KeyStroke getKeyBinding() {
+			return DEFAULT_KEYSTROKE;
 		}
 	}
 }

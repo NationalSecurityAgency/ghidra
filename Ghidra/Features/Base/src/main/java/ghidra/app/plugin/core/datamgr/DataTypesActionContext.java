@@ -25,11 +25,11 @@ import ghidra.app.context.ProgramActionContext;
 import ghidra.app.plugin.core.datamgr.archive.ProjectArchive;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.app.plugin.core.datamgr.tree.ProjectArchiveNode;
-import ghidra.framework.main.datatable.DomainFileProvider;
+import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.listing.Program;
 
-public class DataTypesActionContext extends ProgramActionContext implements DomainFileProvider {
+public class DataTypesActionContext extends ProgramActionContext implements DomainFileContext {
 	private final GTreeNode clickedNode;
 	private final boolean isToolbarAction;
 	private DataTypeArchiveGTree archiveGTree;
@@ -42,6 +42,7 @@ public class DataTypesActionContext extends ProgramActionContext implements Doma
 
 	public DataTypesActionContext(DataTypesProvider provider, Program program,
 			DataTypeArchiveGTree archiveGTree, GTreeNode clickedNode, boolean isToolbarAction) {
+
 		super(provider, program, archiveGTree);
 		this.archiveGTree = archiveGTree;
 		this.clickedNode = clickedNode;

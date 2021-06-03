@@ -34,6 +34,7 @@ import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.client.*;
 import ghidra.framework.data.ConvertFileSystem;
 import ghidra.framework.model.*;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.local.*;
 import ghidra.util.*;
@@ -456,10 +457,10 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 	}
 
 	private boolean filesAreOpen() {
-		Tool[] tools = project.getToolManager().getRunningTools();
+		PluginTool[] tools = project.getToolManager().getRunningTools();
 
 		if (tools.length > 0) {
-			for (Tool tool : tools) {
+			for (PluginTool tool : tools) {
 				if (tool.getDomainFiles().length > 0) {
 					return true;
 				}

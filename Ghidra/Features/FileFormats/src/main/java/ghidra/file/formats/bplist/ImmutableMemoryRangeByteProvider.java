@@ -15,12 +15,12 @@
  */
 package ghidra.file.formats.bplist;
 
+import java.io.*;
+
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
-
-import java.io.*;
 
 class ImmutableMemoryRangeByteProvider implements ByteProvider {
 
@@ -66,6 +66,7 @@ class ImmutableMemoryRangeByteProvider implements ByteProvider {
 
 	@Override
 	public void close() throws IOException {
+		// nothing to close
 	}
 
 	@Override

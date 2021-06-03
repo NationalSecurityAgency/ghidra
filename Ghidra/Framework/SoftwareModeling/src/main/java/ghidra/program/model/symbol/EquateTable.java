@@ -21,9 +21,9 @@ import java.util.Iterator;
 import java.util.List;
 
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.Enum;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
+
 /**
  * EquateTable manages all equates for program. An equate defines a relationship
  *   between a scalar value and a string whereby the scalar may be represented by
@@ -32,40 +32,25 @@ import ghidra.util.task.TaskMonitor;
  */
 
 public interface EquateTable {
+
 	/**
-	 * Creates equates and/or adds references for scalars
-	 * in the given address set using the given data type.
-	 * The data type given must be an enumeration data type.
-	 * @param addrSet the address set to use.
-	 * @param dataType the data type to use.
-	 * @param monitor task monitor to cancel the remove operation
-	 * @param shouldDoOnSubOps true if the enum should be applied inside sub-operands as well.
-	 * 
-	 * @throws CancelledException if the operation is cancelled
-	 * @throws IllegalArgumentException if the dataType is null or not an enum.
+	 * Creates a new equate
+	 * @param name the name to associate with the given value.
+	 * @param value the value to associate with the given name.
+	 * @return the equate
+	 * @exception DuplicateNameException thrown if name is already in use
+	 *   as an equate.
+	 * @throws InvalidInputException if name contains blank characters,
+	 * is zero length, or is null
 	 */
-	public void applyEnum(AddressSetView addrSet, Enum dataType, TaskMonitor monitor,
-			boolean shouldDoOnSubOps) throws CancelledException;
+	public Equate createEquate(String name, long value)
+			throws DuplicateNameException, InvalidInputException;
 
-    /**
-     * Creates a new equate
-     * @param name the name to associate with the given value.
-     * @param value the value to associate with the given name.
-     * @exception DuplicateNameException thrown if name is already in use
-     *   as an equate.
-     * @throws InvalidInputException if name contains blank characters,
-     * is zero length, or is null
-     */
-    public Equate createEquate(String name,long value)
-    	throws DuplicateNameException, InvalidInputException;
-
-
-
-    /**
-     * Removes the equate from the program.
-     * @param name the name of the equate to remove.
-     * @return true if the equate existed, false otherwise.
-     */
+	/**
+	 * Removes the equate from the program.
+	 * @param name the name of the equate to remove.
+	 * @return true if the equate existed, false otherwise.
+	 */
 	public boolean removeEquate(String name);
 
 	/**
@@ -75,24 +60,25 @@ public interface EquateTable {
 	 * @param monitor task monitor to cancel the remove operation
 	 * @throws CancelledException if the operation was cancelled.
 	 */
-    public void deleteAddressRange(Address start, Address end, TaskMonitor monitor) throws CancelledException; 
+	public void deleteAddressRange(Address start, Address end, TaskMonitor monitor)
+			throws CancelledException;
 
-    /**
-     * Returns the equate with the given name, null if no such equate
-     *   exists.
-     * @param name the of the equate to be retrieved.
-     */
-    public Equate getEquate(String name);
+	/**
+	 * Returns the equate with the given name, null if no such equate exists
+	 * @param name the of the equate to be retrieved
+	 * @return the equate
+	 */
+	public Equate getEquate(String name);
 
-    /**
-     * Returns the first equate found that is associated with the given 
-     * value at the given reference address and operand position;
-     * @param reference address where the equate is used.
-     * @param opndPosition the operand index of the operand where the equate is used.
-     * @param value the value where the equate is used.
+	/**
+	 * Returns the first equate found that is associated with the given 
+	 * value at the given reference address and operand position;
+	 * @param reference address where the equate is used.
+	 * @param opndPosition the operand index of the operand where the equate is used.
+	 * @param value the value where the equate is used.
 	 * @return the equate or null if there is no such equate.
-     */
-    public Equate getEquate(Address reference, int opndPosition, long value);
+	 */
+	public Equate getEquate(Address reference, int opndPosition, long value);
 
 	/**
 	 * Returns the equates (one for each scalar) at the given reference address 
@@ -102,7 +88,7 @@ public interface EquateTable {
 	 * @return the list of equates or empty list if there is no such equate.
 	 */
 	public List<Equate> getEquates(Address reference, int opndPosition);
-	
+
 	/**
 	 * Returns the equates (one for each scalar and opIndex) at the given reference address.
 	 * For an instruction a given operand can have multiple scalars.
@@ -111,39 +97,42 @@ public interface EquateTable {
 	 */
 	public List<Equate> getEquates(Address reference);
 
-    /**
-     * Returns an address iterator over all the addresses where
-     * equates have been set.
-     */
-    public AddressIterator getEquateAddresses();
-    
-    /**
-     * Returns all equates defined for value.
-     * @param value the value to get all equates for.
-     */
-    public List<Equate> getEquates(long value);
-    
-    /**
-     * Returns an iterator over all equates.
-     */
+	/**
+	 * Returns an address iterator over all the addresses where
+	 * equates have been set.
+	 * @return the iterator
+	 */
+	public AddressIterator getEquateAddresses();
+
+	/**
+	 * Returns all equates defined for value.
+	 * @param value the value to get all equates for.
+	 * @return the equates
+	 */
+	public List<Equate> getEquates(long value);
+
+	/**
+	 * Returns an iterator over all equates.
+	 * @return the iterator
+	 */
 	public Iterator<Equate> getEquates();
 
-    /**
-     * Return an address iterator over each address with an
-     * equate reference starting at the start address.
-     *
-     * @param start start address
-     * @return an AddressIterator over addresses with defined equate references
-     */
-    public AddressIterator getEquateAddresses(Address start);
+	/**
+	 * Return an address iterator over each address with an
+	 * equate reference starting at the start address.
+	 *
+	 * @param start start address
+	 * @return an AddressIterator over addresses with defined equate references
+	 */
+	public AddressIterator getEquateAddresses(Address start);
 
-    /**
-     * Return an address iterator over each address with an
-     * equate reference that is in the specified address set.
-     *
-     * @param asv the address set
-     * @return AddressIterator over addresses with defined equate references
-     */
-    public AddressIterator getEquateAddresses(AddressSetView asv);
+	/**
+	 * Return an address iterator over each address with an
+	 * equate reference that is in the specified address set.
+	 *
+	 * @param asv the address set
+	 * @return AddressIterator over addresses with defined equate references
+	 */
+	public AddressIterator getEquateAddresses(AddressSetView asv);
 
 }

@@ -73,6 +73,11 @@ public class FitGraphToViewJob<V extends VisualVertex, E extends VisualEdge<V>>
 
 	@Override
 	public void execute(GraphJobListener listener) {
+		doExecute();
+		listener.jobFinished(this);
+	}
+
+	private void doExecute() {
 		if (isFinished) {
 			return;
 		}
@@ -90,7 +95,6 @@ public class FitGraphToViewJob<V extends VisualVertex, E extends VisualEdge<V>>
 		}
 
 		isFinished = true;
-		listener.jobFinished(this);
 	}
 
 	private boolean graphIsEmpty() {

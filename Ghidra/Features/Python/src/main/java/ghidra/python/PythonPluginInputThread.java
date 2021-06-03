@@ -28,10 +28,11 @@ class PythonPluginInputThread extends Thread {
 
 	private static int generationCount = 0;
 
-	private PythonPlugin plugin;
+	private final PythonPlugin plugin;
+	private final AtomicBoolean moreInputWanted = new AtomicBoolean(false);
+	private final AtomicBoolean shutdownRequested = new AtomicBoolean(false);
+	private final InputStream consoleStdin;
 	private PythonPluginExecutionThread pythonExecutionThread;
-	private AtomicBoolean moreInputWanted;
-	private AtomicBoolean shouldContinue;
 
 	/**
 	 * Creates a new python input thread that gets a line of python input from the given plugin.
@@ -41,8 +42,7 @@ class PythonPluginInputThread extends Thread {
 	PythonPluginInputThread(PythonPlugin plugin) {
 		super("Python plugin input thread (generation " + ++generationCount + ")");
 		this.plugin = plugin;
-		this.moreInputWanted = new AtomicBoolean(false);
-		this.shouldContinue = new AtomicBoolean(true);
+		this.consoleStdin = plugin.getConsole().getStdin();
 	}
 
 	/**
@@ -56,28 +56,13 @@ class PythonPluginInputThread extends Thread {
 
 	@Override
 	public void run() {
-		try (BufferedReader reader =
-			new BufferedReader(new InputStreamReader(plugin.getConsole().getStdin()))) {
-			while (shouldContinue.get()) {
-
-				// Read a line from the console.  Do it non-blocking so we can exit the thread
-				// if we were instructed to not continue.
-				String line;
-				if (plugin.getConsole().getStdin().available() > 0) {
-					line = reader.readLine();
-				}
-				else {
-					try {
-						Thread.sleep(50);
-					}
-					catch (InterruptedException e) {
-						// Nothing to do...just continue.
-					}
-					continue;
-				}
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(consoleStdin))) {
+			String line;
+			while (!shutdownRequested.get() && (line = reader.readLine()) != null) {
 
 				// Execute the line in a new thread
-				pythonExecutionThread = new PythonPluginExecutionThread(plugin, line, moreInputWanted);
+				pythonExecutionThread =
+					new PythonPluginExecutionThread(plugin, line, moreInputWanted);
 				pythonExecutionThread.start();
 
 				try {
@@ -90,9 +75,10 @@ class PythonPluginInputThread extends Thread {
 				}
 
 				// Set the prompt appropriately
-				plugin.getConsole().setPrompt(
-					moreInputWanted.get() ? plugin.getInterpreter().getSecondaryPrompt()
-							: plugin.getInterpreter().getPrimaryPrompt());
+				plugin.getConsole()
+						.setPrompt(
+							moreInputWanted.get() ? plugin.getInterpreter().getSecondaryPrompt()
+									: plugin.getInterpreter().getPrimaryPrompt());
 			}
 		}
 		catch (IOException e) {
@@ -103,9 +89,17 @@ class PythonPluginInputThread extends Thread {
 	}
 
 	/**
-	 * Disposes of the thread by telling it to not continue asking for input.
+	 * Causes the the background thread's run() loop to exit.
+	 * <p>
+	 * Causes background thread's exit by closing the inputstream it is looping on.
 	 */
-	void dispose() {
-		shouldContinue.set(false);
+	void shutdown() {
+		try {
+			shutdownRequested.set(true);
+			consoleStdin.close();
+		}
+		catch (IOException e) {
+			// shouldn't happen, ignore
+		}
 	}
 }

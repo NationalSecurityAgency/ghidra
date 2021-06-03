@@ -101,7 +101,7 @@ public class CommentUtils {
 
 	/**
 	 * Returns the display string for the given raw annotation text.  Annotations are 
-	 * encoded strings that fit this pattern: <code>{@name text}</code>.  This method
+	 * encoded strings that fit this pattern: <code>{@literal {@name text}}</code>.  This method
 	 * will parse the given text, converting any annotations into their display version.
 	 * 
 	 * @param rawCommentText text that may include annotations
@@ -152,7 +152,7 @@ public class CommentUtils {
 			AttributedString prototype, int row) {
 
 		// tabs are converted here instead of the GUI dialogs now
-		text = StringUtilities.convertTabsToSpaces(text, 8);
+		text = StringUtilities.convertTabsToSpaces(text);
 
 		int column = 0;
 		List<Object> parts =

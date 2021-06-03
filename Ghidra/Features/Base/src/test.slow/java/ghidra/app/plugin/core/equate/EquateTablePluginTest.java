@@ -34,7 +34,8 @@ import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.Equate;
+import ghidra.program.model.symbol.EquateTable;
 import ghidra.program.util.OperandFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.test.*;
@@ -140,8 +141,7 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setRowSelection(equatesTable, 1, 1);
 
-		EquateReference ref = (EquateReference) refsModel.getValueAt(0, 0);
-		Address equateAddress = ref.getAddress();
+		Address equateAddress = (Address) refsModel.getValueAt(0, 0);
 		changeSelectionToNavigate(refsTable, 0, 0);
 
 		ProgramLocation location = cb.getCurrentLocation();
@@ -164,18 +164,18 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(
 			"No value found in equates reference table when row selected in the equates table",
 			value);
-		EquateReference reference = (EquateReference) value;
+		Address reference = (Address) value;
 		assertEquals("Did not get expected value in refs table for selection in equates table",
-			"010064c5", reference.getAddress().toString());
+			"010064c5", reference.toString());
 
 		setRowSelection(equatesTable, 2, 2);
 		value = refsTable.getValueAt(0, 0);
 		assertNotNull(
 			"No value found in equates reference table when row selected in the equates table",
 			value);
-		reference = (EquateReference) value;
+		reference = (Address) value;
 		assertEquals("Did not get expected value in refs table for selection in equates table",
-			"01006455", reference.getAddress().toString());
+			"01006455", reference.toString());
 	}
 
 	@Test
@@ -183,23 +183,23 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// add another equate reference; the reference count should update.
 
 		Equate eq = equatesModel.getEquate(2);
-		EquateRenderer renderer = getRenderer();
-		String value = getRenderedValue(renderer, eq, 2, EquateTableModel.REFS_COL);
+		TableCellRenderer renderer = getRenderer(EquateTableModel.REFS_COL);
+		String value = getRenderedValue(renderer, 2, EquateTableModel.REFS_COL);
 		assertEquals("2", value);
 
 		int transactionID = program.startTransaction("test");
 		eq.addReference(getAddr(0x0100248c), 0);
 		endTransaction(transactionID);
 
-		value = getRenderedValue(renderer, eq, 2, EquateTableModel.REFS_COL);
+		value = getRenderedValue(renderer, 2, EquateTableModel.REFS_COL);
 		assertEquals("3", value);
 
 		undo();
-		value = getRenderedValue(renderer, eq, 2, EquateTableModel.REFS_COL);
+		value = getRenderedValue(renderer, 2, EquateTableModel.REFS_COL);
 		assertEquals("2", value);
 
 		redo();
-		value = getRenderedValue(renderer, eq, 2, EquateTableModel.REFS_COL);
+		value = getRenderedValue(renderer, 2, EquateTableModel.REFS_COL);
 		assertEquals("3", value);
 	}
 
@@ -212,18 +212,16 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		eq.removeReference(getAddr(0x0100621d), 1);
 		endTransaction(transactionID);
 
-		EquateRenderer renderer = getRenderer();
-		String value = getRenderedValue(renderer, eq, 3, EquateTableModel.REFS_COL);
+		TableCellRenderer renderer = getRenderer(EquateTableModel.REFS_COL);
+		String value = getRenderedValue(renderer, 3, EquateTableModel.REFS_COL);
 		assertEquals("3", value);
 
 		undo();
-		eq = equatesModel.getEquate(3);
-		value = getRenderedValue(renderer, eq, 3, EquateTableModel.REFS_COL);
+		value = getRenderedValue(renderer, 3, EquateTableModel.REFS_COL);
 		assertEquals("4", value);
 
 		redo();
-		eq = equatesModel.getEquate(3);
-		value = getRenderedValue(renderer, eq, 3, EquateTableModel.REFS_COL);
+		value = getRenderedValue(renderer, 3, EquateTableModel.REFS_COL);
 		assertEquals("3", value);
 	}
 
@@ -234,8 +232,8 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Equate eq = equatesModel.getEquate(0);
 
-		EquateRenderer renderer = getRenderer();
-		String value = getRenderedValue(renderer, eq, 0, EquateTableModel.REFS_COL);
+		TableCellRenderer renderer = getRenderer(EquateTableModel.REFS_COL);
+		String value = getRenderedValue(renderer, 0, EquateTableModel.REFS_COL);
 		assertEquals("1", value);
 		int rowCount = equatesModel.getRowCount();
 
@@ -248,7 +246,6 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("EIGHT", eq.getName());
 
 		undo();
-
 		assertEquals(rowCount, equatesModel.getRowCount());
 		eq = equatesModel.getEquate(0);
 		assertEquals("ANOTHER_ONE", eq.getName());
@@ -338,15 +335,9 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		runSwing(() -> table.setRowSelectionInterval(rowStart, rowEnd));
 	}
 
-	private EquateRenderer getRenderer() {
-		TableCellRenderer renderer = equatesTable.getCellRenderer(0, 0);
-		if (!renderer.getClass().getName().equals(EquateRenderer.class.getName())) {
-			fail("Somebody changed the EquateTable renderer and din't update the test");
-		}
-
-		// user our own instance of the renderer so that the Swing thread does not add 
-		// fudge to our tests!
-		return new EquateRenderer(provider);
+	private TableCellRenderer getRenderer(int column) {
+		TableCellRenderer renderer = equatesTable.getCellRenderer(0, column);
+		return renderer;
 	}
 
 	private Address getAddr(long offset) {
@@ -386,7 +377,9 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Collections.sort(list, (e1, e2) -> e1.getName().compareTo(e2.getName()));
 		assertEquals(list.size(), equatesModel.getRowCount());
 
-		EquateRenderer renderer = getRenderer();
+		TableCellRenderer nameRenderer = getRenderer(EquateTableModel.NAME_COL);
+		TableCellRenderer valueRenderer = getRenderer(EquateTableModel.VALUE_COL);
+		TableCellRenderer refCountRenderer = getRenderer(EquateTableModel.REFS_COL);
 
 		for (int i = 0; i < list.size(); i++) {
 
@@ -394,23 +387,27 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 			Rectangle rect = equatesTable.getCellRect(i, EquateTableModel.NAME_COL, true);
 			runSwing(() -> equatesTable.scrollRectToVisible(rect));
 
-			String value = getRenderedValue(renderer, eq, i, EquateTableModel.NAME_COL);
+			String value = getRenderedValue(nameRenderer, i, EquateTableModel.NAME_COL);
 			assertEquals("Name not equal at index: " + i, eq.getName(), value);
 
-			value = getRenderedValue(renderer, eq, i, EquateTableModel.VALUE_COL);
-			assertEquals("Value not equal at index: " + i, "0x" + Long.toHexString(eq.getValue()),
+			// The value column is default-rendered as hex
+			value = getRenderedValue(valueRenderer, i, EquateTableModel.VALUE_COL);
+			assertEquals("Value not equal at index: " + i, Long.toHexString(eq.getValue()) + "h",
 				value);
 
-			value = getRenderedValue(renderer, eq, i, EquateTableModel.REFS_COL);
+			value = getRenderedValue(refCountRenderer, i, EquateTableModel.REFS_COL);
 			assertEquals("Reference count not equal at index: " + i,
 				Integer.toString(eq.getReferenceCount()), value);
 		}
 	}
 
-	private String getRenderedValue(TableCellRenderer renderer, Equate equate, int i, int nameCol) {
+	private String getRenderedValue(TableCellRenderer renderer, int row, int column) {
 		return runSwing(() -> {
-			return ((JLabel) renderer.getTableCellRendererComponent(equatesTable, equate, false,
-				false, i, nameCol)).getText().trim();
+
+			Object value = equatesTable.getValueAt(row, column);
+
+			return ((JLabel) renderer.getTableCellRendererComponent(equatesTable, value, false,
+				false, row, column)).getText().trim();
 		});
 	}
 

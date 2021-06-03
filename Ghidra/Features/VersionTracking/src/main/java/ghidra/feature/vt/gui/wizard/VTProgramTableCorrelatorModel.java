@@ -60,13 +60,12 @@ public class VTProgramTableCorrelatorModel extends AbstractGTableModel<VTProgram
 	}
 
 	private static List<VTProgramCorrelatorFactory> generateList() {
-		Set<VTAbstractProgramCorrelatorFactory> instances =
+		List<VTAbstractProgramCorrelatorFactory> instances =
 			ClassSearcher.getInstances(VTAbstractProgramCorrelatorFactory.class);
 
-		List<VTProgramCorrelatorFactory> list =
-			new ArrayList<>(instances);
+		List<VTProgramCorrelatorFactory> list = new ArrayList<>(instances);
 
-		Collections.sort(list, comparator);
+		Collections.sort(instances, comparator);
 
 		return list;
 	}

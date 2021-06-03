@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,10 @@
  */
 package ghidra.framework.main.datatree;
 
-import ghidra.framework.model.*;
-
 import java.util.*;
 
 import docking.widgets.tree.GTreeNode;
+import ghidra.framework.model.*;
 
 /**
  * Class to handle changes when a domain folder changes; updates the
@@ -35,7 +33,7 @@ class ChangeManager implements DomainFolderChangeListener {
 	ChangeManager(ProjectDataTreePanel treePanel) {
 		this.treePanel = treePanel;
 		tree = treePanel.getDataTree();
-		root = (DomainFolderRootNode) tree.getRootNode();
+		root = (DomainFolderRootNode) tree.getModelRoot();
 	}
 
 	@Override
@@ -46,7 +44,7 @@ class ChangeManager implements DomainFolderChangeListener {
 			return;
 		}
 
-		List<GTreeNode> children = folderNode.getAllChildren();
+		List<GTreeNode> children = folderNode.getChildren();
 		for (GTreeNode child : children) {
 			if (child instanceof DomainFileNode) {
 				if (child.getName().equals(name)) {
@@ -103,7 +101,7 @@ class ChangeManager implements DomainFolderChangeListener {
 		DomainFolder parent = file.getParent();
 		DomainFolderNode folderNode = findDomainFolderNode(parent, true);
 		if (folderNode != null) {
-			if (folderNode.isChildrenLoadedOrInProgress()) {
+			if (folderNode.isLoaded()) {
 				DomainFileNode newNode = new DomainFileNode(file);
 				addNode(folderNode, newNode);
 			}
@@ -111,7 +109,7 @@ class ChangeManager implements DomainFolderChangeListener {
 	}
 
 	static void addNode(GTreeNode parentNode, GTreeNode newNode) {
-		List<GTreeNode> allChildren = parentNode.getAllChildren();
+		List<GTreeNode> allChildren = parentNode.getChildren();
 		int index = Collections.binarySearch(allChildren, newNode);
 		if (index < 0) {
 			index = -index - 1;
@@ -127,7 +125,7 @@ class ChangeManager implements DomainFolderChangeListener {
 		}
 		DomainFolder parentFolder = folder.getParent();
 		DomainFolderNode folderNode = findDomainFolderNode(parentFolder, true);
-		if (folderNode != null && folderNode.isChildrenLoadedOrInProgress()) {
+		if (folderNode != null && folderNode.isLoaded()) {
 			DomainFolderNode newNode =
 				new DomainFolderNode(folder, folderNode.getDomainFileFilter());
 			addNode(folderNode, newNode);
@@ -175,12 +173,12 @@ class ChangeManager implements DomainFolderChangeListener {
 
 		DomainFolderNode folderNode = root;
 		for (String name : folderPath) {
-			if (lazy && !folderNode.isChildrenLoadedOrInProgress()) {
+			if (lazy && !folderNode.isLoaded()) {
 				return null; // not visited 
 			}
 			// must look at all children since a folder and file may have the same name
 			boolean found = false;
-			for (GTreeNode node : folderNode.getAllChildren()) {
+			for (GTreeNode node : folderNode.getChildren()) {
 				if (!(node instanceof DomainFolderNode)) {
 					continue;
 				}
@@ -217,7 +215,7 @@ class ChangeManager implements DomainFolderChangeListener {
 		if (folderNode == null) {
 			return null;
 		}
-		if (lazy && !folderNode.isChildrenLoadedOrInProgress()) {
+		if (lazy && !folderNode.isLoaded()) {
 			return null; // not visited 
 		}
 
@@ -236,7 +234,7 @@ class ChangeManager implements DomainFolderChangeListener {
 		DomainFolder folder = folderNode.getDomainFolder();
 		// loop through children looking for nodes whose underlying model object
 		// does not have this folder as its parent;
-		List<GTreeNode> children = folderNode.getAllChildren();
+		List<GTreeNode> children = folderNode.getChildren();
 		for (GTreeNode child : children) {
 			if (child instanceof DomainFileNode) {
 				if (folder.getFile(child.getName()) == null) {

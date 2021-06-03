@@ -233,9 +233,7 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 
 	/**
 	 * Show the listing merge panel.
-	 * @param show true indicates to show the Listing merge panel.
-	 * false indicates show the default component.
-	 * @param goToAddress
+	 * @param goToAddress the address to goto.
 	 */
 	public void showListingMergePanel(final Address goToAddress) {
 		SwingUtilities.invokeLater(() -> {
@@ -420,11 +418,22 @@ class MergeNavigatable implements Navigatable {
 
 	@Override
 	public void addNavigatableListener(NavigatableRemovalListener listener) {
+		// stub
+	}
+
+	@Override
+	public ProgramSelection getSelection() {
+		return mergePanel.getFocusedListingPanel().getProgramSelection();
 	}
 
 	@Override
 	public ProgramSelection getHighlight() {
 		return mergePanel.getFocusedListingPanel().getProgramHighlight();
+	}
+
+	@Override
+	public String getTextSelection() {
+		return mergePanel.getFocusedListingPanel().getTextSelection();
 	}
 
 	@Override
@@ -450,11 +459,6 @@ class MergeNavigatable implements Navigatable {
 	@Override
 	public Program getProgram() {
 		return mergePanel.getFocusedProgram();
-	}
-
-	@Override
-	public ProgramSelection getSelection() {
-		return mergePanel.getFocusedListingPanel().getProgramSelection();
 	}
 
 	@Override

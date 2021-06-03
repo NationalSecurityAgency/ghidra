@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,10 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.UniversalID;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.UniversalID;
 
 /**
  * Adapter needed for a read-only version of data type manager that is not going
@@ -36,14 +34,14 @@ class EnumDBAdapterNoTable extends EnumDBAdapter {
 	}
 
 	@Override
-	public Record createRecord(String name, String comments, long categoryID, byte size,
+	public DBRecord createRecord(String name, String comments, long categoryID, byte size,
 			long sourceArchiveID, long sourceDataTypeID, long lastChangeTime) throws IOException {
 		throw new UnsupportedOperationException(
 			"Not allowed to update version prior to existence of Enumeration Data Types table.");
 	}
 
 	@Override
-	public Record getRecord(long enumID) throws IOException {
+	public DBRecord getRecord(long enumID) throws IOException {
 		return null;
 	}
 
@@ -53,7 +51,7 @@ class EnumDBAdapterNoTable extends EnumDBAdapter {
 	}
 
 	@Override
-	public void updateRecord(Record record, boolean setLastChangeTime) throws IOException {
+	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -67,17 +65,17 @@ class EnumDBAdapterNoTable extends EnumDBAdapter {
 	}
 
 	@Override
-	public long[] getRecordIdsInCategory(long categoryID) throws IOException {
-		return new long[0];
+	public Field[] getRecordIdsInCategory(long categoryID) throws IOException {
+		return Field.EMPTY_ARRAY;
 	}
 
 	@Override
-	long[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
-		return new long[0];
+	Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
+		return Field.EMPTY_ARRAY;
 	}
 
 	@Override
-	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
+	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
 		return null;
 	}
 

@@ -19,6 +19,7 @@ import java.awt.Component;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.DropTargetDropEvent;
 import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,8 +85,14 @@ public final class LinuxFileUrlHandler implements DataTreeFlavorHandler, FileOpe
 			try {
 				return new File(new URL(s).toURI());
 			}
-			catch (Exception ex) {
-				Msg.error(this, "Unable to open dropped URL: '" + s + "'", ex);
+			catch (MalformedURLException e) {
+				// this could be the case that this handler is attempting to process an arbitrary
+				// String that is not actually a URL
+				Msg.trace(this, "Not a URL: '" + s + "'", e);
+				return null;
+			}
+			catch (Exception e) {
+				Msg.error(this, "Unable to open dropped URL: '" + s + "'", e);
 				return null;
 			}
 		});

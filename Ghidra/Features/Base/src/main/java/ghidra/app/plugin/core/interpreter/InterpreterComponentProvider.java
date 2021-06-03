@@ -158,6 +158,15 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 		return panel.getErrWriter();
 	}
 
+	/**
+	 * For testing purposes, but should probably be promoted to InterpreterConsole interface
+	 * 
+	 * @return the prompt;
+	 */
+	public String getPrompt() {
+		return panel.getPrompt();
+	}
+
 	@Override
 	public void setPrompt(String prompt) {
 		panel.setPrompt(prompt);
@@ -185,5 +194,34 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 	@Override
 	public void addFirstActivationCallback(Callback activationCallback) {
 		firstActivationCallbacks.add(activationCallback);
+	}
+
+	@Override
+	public boolean isInputPermitted() {
+		return panel.isInputPermitted();
+	}
+
+	@Override
+	public void setInputPermitted(boolean permitted) {
+		panel.setInputPermitted(permitted);
+	}
+
+	@Override
+	public void show() {
+		tool.showComponentProvider(this, true);
+	}
+
+	@Override
+	public void updateTitle() {
+		tool.updateTitle(this);
+	}
+
+	/**
+	 * For testing purposes only
+	 * 
+	 * @return the text in the output buffer
+	 */
+	public String getOutputText() {
+		return panel.getOutputText();
 	}
 }

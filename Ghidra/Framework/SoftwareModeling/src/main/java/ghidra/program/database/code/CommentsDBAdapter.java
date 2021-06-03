@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,9 @@
  */
 package ghidra.program.database.code;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.database.map.AddressKeyIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
@@ -25,14 +27,10 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-import java.io.IOException;
-
-import db.*;
-
 /**
  * Adapter to access the comments table for code units. The primary key
  * for the table is the address. The record contains all of the comment
- * types: Pre, Post, EOL, Plate, & Repeatable.
+ * types: Pre, Post, EOL, Plate, and Repeatable.
  */
 abstract class CommentsDBAdapter {
 
@@ -59,8 +57,8 @@ abstract class CommentsDBAdapter {
 		NAMES[REPEATABLE_COMMENT_COL] = "Repeatable";
 
 		COMMENTS_SCHEMA =
-			new Schema(1, "Address", new Class[] { StringField.class, StringField.class,
-				StringField.class, StringField.class, StringField.class }, NAMES);
+			new Schema(1, "Address", new Field[] { StringField.INSTANCE, StringField.INSTANCE,
+				StringField.INSTANCE, StringField.INSTANCE, StringField.INSTANCE }, NAMES);
 	}
 
 //	/** comment type for end of line */
@@ -112,8 +110,8 @@ abstract class CommentsDBAdapter {
 	}
 
 	private static CommentsDBAdapter upgrade(DBHandle dbHandle, AddressMap addrMap,
-			CommentsDBAdapter oldAdapter, TaskMonitor monitor) throws VersionException,
-			IOException, CancelledException {
+			CommentsDBAdapter oldAdapter, TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
 
 		AddressMap oldAddrMap = addrMap.getOldAddressMap();
 
@@ -129,7 +127,7 @@ abstract class CommentsDBAdapter {
 			RecordIterator iter = oldAdapter.getRecords();
 			while (iter.hasNext()) {
 				monitor.checkCanceled();
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				Address addr = oldAddrMap.decodeAddress(rec.getKey());
 				rec.setKey(addrMap.getKey(addr, true));
 				tmpAdapter.updateRecord(rec);
@@ -142,7 +140,7 @@ abstract class CommentsDBAdapter {
 			iter = tmpAdapter.getRecords();
 			while (iter.hasNext()) {
 				monitor.checkCanceled();
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				newAdapter.updateRecord(rec);
 				monitor.setProgress(++count);
 			}
@@ -163,7 +161,7 @@ abstract class CommentsDBAdapter {
 	 * @param addr key for the record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record getRecord(long addr) throws IOException;
+	abstract DBRecord getRecord(long addr) throws IOException;
 
 	/**
 	 * Create a comment record for the given comment type/
@@ -173,7 +171,7 @@ abstract class CommentsDBAdapter {
 	 * @return new comment record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record createRecord(long addr, int commentCol, String comment) throws IOException;
+	abstract DBRecord createRecord(long addr, int commentCol, String comment) throws IOException;
 
 	/**
 	 * Delete the record at the given address
@@ -196,7 +194,7 @@ abstract class CommentsDBAdapter {
 	 * Update the record with the comments from the given record.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract void updateRecord(Record commentRec) throws IOException;
+	abstract void updateRecord(DBRecord commentRec) throws IOException;
 
 	/**
 	 * @see ghidra.program.database.code.MoveRangeAdapter#getRecords(long, long, boolean)
@@ -226,7 +224,7 @@ abstract class CommentsDBAdapter {
 	 * @param record the record to put.
 	 * @throws IOException if a database io error occurs
 	 */
-	abstract void putRecord(Record record) throws IOException;
+	abstract void putRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Returns a record iterator starting with the record at addr

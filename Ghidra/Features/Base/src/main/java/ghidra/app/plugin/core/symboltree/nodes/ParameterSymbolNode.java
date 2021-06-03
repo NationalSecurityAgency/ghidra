@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,10 @@
  */
 package ghidra.app.plugin.core.symboltree.nodes;
 
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.Symbol;
-
 import javax.swing.Icon;
 
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.Symbol;
 import resources.ResourceManager;
 
 public class ParameterSymbolNode extends SymbolNode {

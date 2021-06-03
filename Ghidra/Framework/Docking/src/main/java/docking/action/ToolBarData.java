@@ -18,6 +18,7 @@ package docking.action;
 import javax.swing.Icon;
 
 import docking.DockingUtils;
+import generic.json.Json;
 import ghidra.util.SystemUtilities;
 
 public class ToolBarData {
@@ -105,5 +106,10 @@ public class ToolBarData {
 		if (ownerAction != null) {
 			ownerAction.firePropertyChanged(DockingActionIf.TOOLBAR_DATA_PROPERTY, oldData, this);
 		}
+	}
+
+	@Override
+	public String toString() {
+		return Json.toString(this, "icon", "toolBarGroup", "toolBarSubGroup");
 	}
 }

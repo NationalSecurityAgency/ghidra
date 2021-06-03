@@ -87,6 +87,7 @@ public class StructureEditorUnlockedActions5Test
 		invoke(applyAction);
 		assertTrue(simpleStructure.isEquivalent(model.viewComposite));
 		assertTrue(simpleStructure.isNotYetDefined());
+		assertTrue(simpleStructure.isZeroLength());
 		assertTrue(viewCopy.isEquivalent(model.viewComposite));
 		// Is now allowed
 		//		assertEquals(
@@ -132,7 +133,7 @@ public class StructureEditorUnlockedActions5Test
 		assertTrue(dt2 instanceof WordDataType);
 
 		// Cancel the array dialog
-		invoke(arrayAction);
+		invoke(arrayAction, false);
 		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		cancelInput(dialog);
@@ -163,7 +164,7 @@ public class StructureEditorUnlockedActions5Test
 		assertEquals(getDataType(3), DataType.DEFAULT);
 		assertEquals(getDataType(4), dt3);
 
-		invoke(action);
+		invoke(action, false);
 		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		cancelInput(dialog);

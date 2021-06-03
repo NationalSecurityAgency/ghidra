@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +40,9 @@ public interface DataBuffer {
      *
      * @return the Data item at offset from the current position.
      *
-	 * @throws AddressOutOfBoundsException if offset exceeds
+	 * @throws ghidra.program.model.address.AddressOutOfBoundsException if offset exceeds
 	 * address space
 	 * @throws IndexOutOfBoundsException if offset is negative
-     * @throws MemoryAccessException if memory cannot be read
      */
     public Data getData(int offset);
 

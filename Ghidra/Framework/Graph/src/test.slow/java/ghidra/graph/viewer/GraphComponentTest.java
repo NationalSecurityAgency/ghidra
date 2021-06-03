@@ -262,8 +262,8 @@ public class GraphComponentTest extends AbstractVisualGraphTest {
 		Shape edgeShape =
 			GraphViewerUtils.getEdgeShapeInGraphSpace(graphComponent.getPrimaryViewer(), e);
 		Rectangle bounds = edgeShape.getBounds();
-		assertTrue("Edge width not initialized", bounds.width > 1);
-		assertTrue("Edge height not initialized", bounds.height > 1);
+		assertTrue("Edge width not initialized - width: " + bounds.width, bounds.width > 1);
+		assertTrue("Edge height not initialized - height: " + bounds.height, bounds.height > 1);
 	}
 
 	@Test

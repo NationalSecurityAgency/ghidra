@@ -119,16 +119,19 @@ public class KeyEntryDialog extends DialogComponentProvider {
 	}
 
 	private JPanel createCollisionPanel() {
-		JPanel p = new JPanel(new BorderLayout());
+		JPanel parent = new JPanel(new BorderLayout());
+
+		JPanel noWrapPanel = new JPanel(new BorderLayout());
 		collisionPane = new JTextPane();
 		collisionPane.setEditable(false);
 		collisionPane.setBackground(bgColor);
 		doc = collisionPane.getStyledDocument();
-		JScrollPane sp = new JScrollPane(collisionPane);
+		noWrapPanel.add(collisionPane, BorderLayout.CENTER);
+		JScrollPane sp = new JScrollPane(noWrapPanel);
 		Dimension d = defaultPanel.getPreferredSize();
 		sp.setPreferredSize(new Dimension(sp.getPreferredSize().width, d.height));
-		p.add(sp, BorderLayout.CENTER);
-		return p;
+		parent.add(sp, BorderLayout.CENTER);
+		return parent;
 	}
 
 	/**
@@ -194,13 +197,19 @@ public class KeyEntryDialog extends DialogComponentProvider {
 			return;
 		}
 
+		list.sort((a1, a2) -> {
+			String s1 = a1.getName() + a1.getOwnerDescription();
+			String s2 = a2.getName() + a2.getOwnerDescription();
+			return s1.compareToIgnoreCase(s2);
+		});
+
 		String ksName = KeyBindingUtils.parseKeyStroke(ks);
 		try {
 			doc.insertString(0, "Actions mapped to " + ksName + "\n\n", textAttrSet);
 			for (int i = 0; i < list.size(); i++) {
 				DockingActionIf a = list.get(i);
 
-				String collisionStr = "\t" + a.getName() + "  (" + a.getOwnerDescription() + ")\n";
+				String collisionStr = "\t" + a.getName() + " (" + a.getOwnerDescription() + ")\n";
 				int offset = doc.getLength();
 				doc.insertString(offset, collisionStr, textAttrSet);
 				doc.setParagraphAttributes(offset, 1, tabAttrSet, false);

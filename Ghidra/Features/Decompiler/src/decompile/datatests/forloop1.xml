@@ -1,0 +1,22 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   Basic for-loop.  Contrived example.
+-->
+<bytechunk space="ram" offset="0x400517" readonly="true">
+              554889e5534883ec18
+897decbb00000000eb0dbf20084000e8
+fcfeffff83c3013b5dec7cee904883c4
+185b5dc3
+</bytechunk>
+<symbol space="ram" offset="0x400517" name="forloop1"/>
+</binaryimage>
+<script>
+  <com>lo fu forloop1</com>
+  <com>parse line extern void forloop1(int4 max);</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="For-loop #1" min="1" max="1">for.*iVar1 = 0; iVar1 &lt; max; iVar1 = iVar1 \+ 1</stringmatch>match>
+</decompilertest>

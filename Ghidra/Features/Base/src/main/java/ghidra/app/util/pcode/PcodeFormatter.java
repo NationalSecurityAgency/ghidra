@@ -15,6 +15,12 @@
  */
 package ghidra.app.util.pcode;
 
+import java.awt.Color;
+import java.awt.FontMetrics;
+import java.util.*;
+
+import docking.widgets.fieldpanel.field.AttributedString;
+import docking.widgets.fieldpanel.field.CompositeAttributedString;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.template.*;
 import ghidra.app.util.viewer.options.OptionsGui;
@@ -26,13 +32,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
-
-import java.awt.Color;
-import java.awt.FontMetrics;
-import java.util.*;
-
-import docking.widgets.fieldpanel.field.AttributedString;
-import docking.widgets.fieldpanel.field.CompositeAttributedString;
 
 public class PcodeFormatter {
 
@@ -195,8 +194,7 @@ public class PcodeFormatter {
 			lineList.add(SPACE);
 		}
 
-		PcodeSpec opSpec = PcodeSpec.getSpec(opcode);
-		if (opSpec == null) {
+		if (opcode >= PcodeOp.PCODE_MAX) {
 			throw new RuntimeException("Unsupported opcode encountered: " + opcode);
 		}
 		VarnodeTpl output = op.getOutput();
@@ -204,9 +202,8 @@ public class PcodeFormatter {
 			formatVarnodeTpl(program, opcode, -1, output, lineList);
 			lineList.add(EQUALS);
 		}
-		Color color =
-			(opSpec.getOpCode() == PcodeOp.UNIMPLEMENTED) ? Color.RED : Color.BLUE.darker();
-		lineList.add(new AttributedString(opSpec.getOpName(), color, metrics));
+		Color color = (opcode == PcodeOp.UNIMPLEMENTED) ? Color.RED : Color.BLUE.darker();
+		lineList.add(new AttributedString(PcodeOp.getMnemonic(opcode), color, metrics));
 		VarnodeTpl[] inputs = op.getInput();
 		for (int i = 0; i < inputs.length; i++) {
 			if (i > 0) {
@@ -264,7 +261,7 @@ public class PcodeFormatter {
 					formatConstant(offset, size, lineList);
 				}
 				else if (space.isUniqueSpace()) {
-					formatUnique(offset, size, opIndex < 0, lineList);
+					formatUnique(offset, size, lineList);
 				}
 				else {
 					formatAddress(program, space.getSpaceId(), offset, size, lineList);
@@ -286,25 +283,21 @@ public class PcodeFormatter {
 	private void formatRaw(AddressSpace space, ConstTpl offset, ConstTpl size,
 			List<AttributedString> lineList) {
 		// same format as the Varnode.toString
-		String str =
-			"(" + space.getName() + ", 0x" + Long.toHexString(offset.getReal()) + ", " +
-				size.getReal() + ")";
+		String str = "(" + space.getName() + ", 0x" + Long.toHexString(offset.getReal()) + ", " +
+			size.getReal() + ")";
 		lineList.add(new AttributedString(str, Color.BLUE, metrics));
 	}
 
-	private void formatUnique(ConstTpl offset, ConstTpl size, boolean isOutput,
-			List<AttributedString> lineList) {
+	private void formatUnique(ConstTpl offset, ConstTpl size, List<AttributedString> lineList) {
 		if (offset.getType() != ConstTpl.REAL) {
 			throw new RuntimeException("Unsupported unique offset type: " + offset.getType());
 		}
 		if (size.getType() != ConstTpl.REAL) {
 			throw new RuntimeException("Unsupported unique size type: " + size.getType());
 		}
-		lineList.add(new AttributedString("$U" + Long.toHexString(offset.getReal()), localColor,
-			metrics));
-		if (isOutput) {
-			formatSize(size, lineList);
-		}
+		lineList.add(
+			new AttributedString("$U" + Long.toHexString(offset.getReal()), localColor, metrics));
+		formatSize(size, lineList);
 	}
 
 	private void formatAddress(Program program, AddressSpace addrSpace, ConstTpl offset,
@@ -316,8 +309,8 @@ public class PcodeFormatter {
 		long offsetValue = offset.getReal();
 		if (addrSpace == null) {
 			lineList.add(STAR);
-			lineList.add(new AttributedString("0x" + Long.toHexString(offsetValue), addressColor,
-				metrics));
+			lineList.add(
+				new AttributedString("0x" + Long.toHexString(offsetValue), addressColor, metrics));
 			if (size.getType() != ConstTpl.J_CURSPACE_SIZE) {
 				formatSize(size, lineList);
 			}
@@ -330,7 +323,8 @@ public class PcodeFormatter {
 			lineList.add(new AttributedString(reg.getName(), registerColor, metrics));
 			if (reg.getMinimumByteSize() > sizeValue) {
 				lineList.add(COLON);
-				lineList.add(new AttributedString(Integer.toString(sizeValue), this.scalarColor, metrics));
+				lineList.add(
+					new AttributedString(Integer.toString(sizeValue), this.scalarColor, metrics));
 			}
 			return;
 		}
@@ -338,7 +332,7 @@ public class PcodeFormatter {
 		lineList.add(LEFT_BRACKET);
 		lineList.add(new AttributedString(addrSpace.getName(), Color.BLUE, metrics));
 		lineList.add(RIGHT_BRACKET);
-		
+
 		long wordOffset = offsetValue / addrSpace.getAddressableUnitSize();
 		long offcut = offsetValue % addrSpace.getAddressableUnitSize();
 		String str = "0x" + Long.toHexString(wordOffset);
@@ -398,7 +392,8 @@ public class PcodeFormatter {
 	}
 
 	private boolean formatLabelInput(VarnodeTpl input0, List<AttributedString> lineList) {
-		if (input0.getSpace().isConstSpace() && input0.getOffset().getType() == ConstTpl.J_RELATIVE) {
+		if (input0.getSpace().isConstSpace() &&
+			input0.getOffset().getType() == ConstTpl.J_RELATIVE) {
 			String label = "<" + input0.getOffset().getReal() + ">";
 			lineList.add(new AttributedString(label, Color.BLUE, metrics));
 			return true;

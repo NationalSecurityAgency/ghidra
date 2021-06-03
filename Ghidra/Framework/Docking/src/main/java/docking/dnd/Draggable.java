@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +61,7 @@ public interface Draggable {
 	 * <li>DnDConstants.ACTION_MOVE
 	 * <li>DnDConstants.ACTION_COPY
 	 * <li>DnDConstants.ACTION_COPY_OR_MOVE
-	 * </li>
+	 * </UL>
 	 * 
 	 * @return the drag actions
 	 */

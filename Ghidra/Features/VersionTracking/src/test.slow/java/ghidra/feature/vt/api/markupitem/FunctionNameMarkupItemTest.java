@@ -570,7 +570,7 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 					assertEquals("Function name should have been applied", sourceName,
 						destinationFunction.getName());
 //					if (destinationFunction.isExternal()) {
-//						// orignal name may get set if symbol type was IMPORTED
+//						// original name may get set if symbol type was IMPORTED
 //					}
 				}
 			}

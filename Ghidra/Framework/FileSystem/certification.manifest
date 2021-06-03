@@ -1,7 +1,6 @@
 ##VERSION: 2.0
 ##MODULE IP: Christian Plattner
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 src/main/java/ghidra/framework/client/package.html||GHIDRA||reviewed||END|
 src/main/java/ghidra/framework/store/db/package.html||GHIDRA||reviewed||END|
 src/main/java/ghidra/framework/store/local/package.html||GHIDRA||reviewed||END|

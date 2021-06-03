@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,11 @@
  */
 package ghidra.program.database.properties;
 
+import java.io.IOException;
+import java.util.NoSuchElementException;
+
+import db.*;
+import db.util.ErrorHandler;
 import ghidra.program.database.map.*;
 import ghidra.program.database.util.DatabaseTableUtils;
 import ghidra.program.model.address.*;
@@ -28,12 +32,6 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
-import java.io.IOException;
-import java.util.NoSuchElementException;
-
-import db.*;
-import db.util.ErrorHandler;
-
 /**
  * Abstract class which defines a map containing properties over a set of addresses.
  * The map is stored within a database table.
@@ -44,7 +42,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 
 	protected static final String[] SCHEMA_FIELD_NAMES = new String[] { "Value" };
 	protected static final String[] NO_SCHEMA_FIELD_NAMES = new String[0];
-	protected static final Class<?>[] NO_SCHEMA_FIELD_CLASSES = new Class<?>[0];
+	protected static final Field[] NO_SCHEMA_FIELDS = new Field[0];
 
 	protected static final int PROPERTY_VALUE_COL = 0;
 
@@ -94,8 +92,8 @@ public abstract class PropertyMapDB implements PropertyMap {
 		}
 	}
 
-	void checkMapVersion(int openMode, TaskMonitor monitor) throws VersionException,
-			CancelledException, IOException {
+	void checkMapVersion(int openMode, TaskMonitor monitor)
+			throws VersionException, CancelledException, IOException {
 		if (propertyTable != null && addrMap.isUpgraded()) {
 			if (openMode == DBConstants.UPGRADE) {
 				upgradeTable(monitor);
@@ -126,7 +124,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 				if (monitor.isCancelled()) {
 					throw new CancelledException();
 				}
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				if (tempTable == null) {
 					// Create table on first entry upgrade
 					tempTable = tmpDb.createTable(getTableName(), schema);
@@ -137,8 +135,9 @@ public abstract class PropertyMapDB implements PropertyMap {
 				monitor.setProgress(++count);
 			}
 
-			if (tempTable == null)
+			if (tempTable == null) {
 				return;
+			}
 
 			// Remove old table
 			dbHandle.deleteTable(getTableName());
@@ -152,7 +151,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 				if (monitor.isCancelled()) {
 					throw new CancelledException();
 				}
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				propertyTable.putRecord(rec);
 				monitor.setProgress(++count);
 			}
@@ -176,15 +175,15 @@ public abstract class PropertyMapDB implements PropertyMap {
 	 * is null.
 	 * @throws IOException
 	 */
-	protected void createTable(Class<?> valueFieldClass) throws IOException {
-		if (valueFieldClass != null) {
+	protected void createTable(Field valueField) throws IOException {
+		if (valueField != null) {
 			// Create default table schema with a value column and an long Address key
-			Class<?>[] classes = new Class<?>[] { valueFieldClass };
-			schema = new Schema(0, "Address", classes, SCHEMA_FIELD_NAMES);
+			Field[] fields = new Field[] { valueField };
+			schema = new Schema(0, "Address", fields, SCHEMA_FIELD_NAMES);
 		}
 		else {
 			// Table contains only a long Address key
-			schema = new Schema(0, "Address", NO_SCHEMA_FIELD_CLASSES, NO_SCHEMA_FIELD_NAMES);
+			schema = new Schema(0, "Address", NO_SCHEMA_FIELDS, NO_SCHEMA_FIELD_NAMES);
 		}
 		propertyTable = dbHandle.createTable(getTableName(), schema);
 	}
@@ -192,6 +191,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#getName()
 	 */
+	@Override
 	public String getName() {
 		return name;
 	}
@@ -221,7 +221,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 		lock.acquire();
 		try {
 			if (propertyTable != null) {
-				cache.clear();
+				cache = null;
 				dbHandle.deleteTable(getTableName());
 				propertyTable = null;
 			}
@@ -234,6 +234,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#intersects(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
 	 */
+	@Override
 	public boolean intersects(Address startAddr, Address endAddr) {
 		if (propertyTable == null) {
 			return false;
@@ -252,6 +253,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#intersects(ghidra.program.model.address.AddressSetView)
 	 */
+	@Override
 	public boolean intersects(AddressSetView set) {
 		if (propertyTable == null) {
 			return false;
@@ -270,6 +272,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#removeRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
 	 */
+	@Override
 	public boolean removeRange(Address startAddr, Address endAddr) {
 		if (propertyTable == null) {
 			return false;
@@ -277,7 +280,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 		lock.acquire();
 		try {
 			if (AddressRecordDeleter.deleteRecords(propertyTable, addrMap, startAddr, endAddr)) {
-				cache.clear();
+				cache = new ObjectCache(DEFAULT_CACHE_SIZE);
 				return true;
 			}
 		}
@@ -293,6 +296,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#remove(ghidra.program.model.address.Address)
 	 */
+	@Override
 	public boolean remove(Address addr) {
 		if (propertyTable == null) {
 			return false;
@@ -317,6 +321,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#hasProperty(ghidra.program.model.address.Address)
 	 */
+	@Override
 	public boolean hasProperty(Address addr) {
 		if (propertyTable == null) {
 			return false;
@@ -341,6 +346,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#getNextPropertyAddress(ghidra.program.model.address.Address)
 	 */
+	@Override
 	public Address getNextPropertyAddress(Address addr) {
 		if (propertyTable == null) {
 			return null;
@@ -360,6 +366,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#getPreviousPropertyAddress(ghidra.program.model.address.Address)
 	 */
+	@Override
 	public Address getPreviousPropertyAddress(Address addr) {
 		if (propertyTable == null) {
 			return null;
@@ -379,6 +386,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#getFirstPropertyAddress()
 	 */
+	@Override
 	public Address getFirstPropertyAddress() {
 		if (propertyTable == null) {
 			return null;
@@ -398,14 +406,14 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#getLastPropertyAddress()
 	 */
+	@Override
 	public Address getLastPropertyAddress() {
 		if (propertyTable == null) {
 			return null;
 		}
 		try {
-			AddressKeyIterator iter =
-				new AddressKeyIterator(propertyTable, addrMap,
-					addrMap.getAddressFactory().getAddressSet().getMaxAddress(), false);
+			AddressKeyIterator iter = new AddressKeyIterator(propertyTable, addrMap,
+				addrMap.getAddressFactory().getAddressSet().getMaxAddress(), false);
 			return addrMap.decodeAddress(iter.previous());
 		}
 		catch (NoSuchElementException e) {
@@ -419,6 +427,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#getSize()
 	 */
+	@Override
 	public int getSize() {
 		return propertyTable != null ? propertyTable.getRecordCount() : 0;
 	}
@@ -434,8 +443,9 @@ public abstract class PropertyMapDB implements PropertyMap {
 	public AddressKeyIterator getAddressKeyIterator(AddressSetView set, boolean atStart)
 			throws IOException {
 
-		if (propertyTable == null)
+		if (propertyTable == null) {
 			return new AddressKeyIterator();
+		}
 		if (atStart) {
 			return new AddressKeyIterator(propertyTable, addrMap, set, set.getMinAddress(), true);
 		}
@@ -452,8 +462,9 @@ public abstract class PropertyMapDB implements PropertyMap {
 	public AddressKeyIterator getAddressKeyIterator(Address start, boolean before)
 			throws IOException {
 
-		if (propertyTable == null)
+		if (propertyTable == null) {
 			return new AddressKeyIterator();
+		}
 		return new AddressKeyIterator(propertyTable, addrMap, start, before);
 	}
 
@@ -469,8 +480,9 @@ public abstract class PropertyMapDB implements PropertyMap {
 	public AddressKeyIterator getAddressKeyIterator(Address start, Address end, boolean atStart)
 			throws IOException {
 
-		if (propertyTable == null)
+		if (propertyTable == null) {
 			return new AddressKeyIterator();
+		}
 		if (atStart) {
 			return new AddressKeyIterator(propertyTable, addrMap, start, end, start, true);
 		}
@@ -480,6 +492,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#getPropertyIterator(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
 	 */
+	@Override
 	public AddressIterator getPropertyIterator(Address start, Address end) {
 		AddressKeyIterator keyIter = null;
 		try {
@@ -494,6 +507,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#getPropertyIterator(ghidra.program.model.address.Address, ghidra.program.model.address.Address, boolean)
 	 */
+	@Override
 	public AddressIterator getPropertyIterator(Address start, Address end, boolean forward) {
 		AddressKeyIterator keyIter = null;
 		try {
@@ -508,6 +522,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#getPropertyIterator()
 	 */
+	@Override
 	public AddressIterator getPropertyIterator() {
 		if (propertyTable == null) {
 			return new EmptyAddressIterator();
@@ -525,6 +540,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#getPropertyIterator(ghidra.program.model.address.AddressSetView)
 	 */
+	@Override
 	public AddressIterator getPropertyIterator(AddressSetView asv) {
 		if (propertyTable == null) {
 			return new EmptyAddressIterator();
@@ -543,6 +559,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#getPropertyIterator(ghidra.program.model.address.AddressSetView, boolean)
 	 */
+	@Override
 	public AddressIterator getPropertyIterator(AddressSetView asv, boolean forward) {
 		if (propertyTable == null) {
 			return new EmptyAddressIterator();
@@ -567,6 +584,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#getPropertyIterator(ghidra.program.model.address.Address, boolean)
 	 */
+	@Override
 	public AddressIterator getPropertyIterator(Address start, boolean forward) {
 		if (propertyTable == null) {
 			return new EmptyAddressIterator();
@@ -588,7 +606,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 		lock.acquire();
 		try {
 			propertyTable = dbHandle.getTable(getTableName());
-			cache.clear();
+			cache = new ObjectCache(DEFAULT_CACHE_SIZE);
 		}
 		finally {
 			lock.release();
@@ -599,10 +617,11 @@ public abstract class PropertyMapDB implements PropertyMap {
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#moveRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address, ghidra.program.model.address.Address)
 	 */
+	@Override
 	public void moveRange(Address start, Address end, Address newStart) {
 		lock.acquire();
 		try {
-			cache.clear();
+			cache = new ObjectCache(DEFAULT_CACHE_SIZE);
 			if (propertyTable != null) {
 				try {
 					DatabaseTableUtils.updateAddressKey(propertyTable, addrMap, start, end,

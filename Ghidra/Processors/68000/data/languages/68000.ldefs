@@ -16,6 +16,7 @@
     <external_name tool="IDA-PRO" name="68000"/>
     <external_name tool="IDA-PRO" name="68040"/>
     <external_name tool="IDA-PRO" name="68K"/>
+    <external_name tool="DWARF.register.mapping.file" name="68000.dwarf"/>
   </language>
   <language processor="68000"
             endian="big"
@@ -30,6 +31,7 @@
     <compiler name="default" spec="68000.cspec" id="default"/>
     <external_name tool="gnu" name="m68k:68030"/>
     <external_name tool="IDA-PRO" name="68030"/>
+    <external_name tool="DWARF.register.mapping.file" name="68000.dwarf"/>
   </language>
   <language processor="68000"
             endian="big"
@@ -46,6 +48,7 @@
     <external_name tool="IDA-PRO" name="68010"/>
     <external_name tool="IDA-PRO" name="68020"/>
     <external_name tool="IDA-PRO" name="68020EX"/>
+    <external_name tool="DWARF.register.mapping.file" name="68000.dwarf"/>
   </language>
   <language processor="68000"
             endian="big"
@@ -59,5 +62,6 @@
     <description>Motorola 32-bit Coldfire</description>
     <compiler name="default" spec="68000.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="colfire"/>
+    <external_name tool="DWARF.register.mapping.file" name="68000.dwarf"/>
   </language>
 </language_definitions>

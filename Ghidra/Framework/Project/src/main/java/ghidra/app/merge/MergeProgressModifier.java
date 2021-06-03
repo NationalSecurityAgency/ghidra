@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +19,10 @@ public interface MergeProgressModifier {
 
 	/**
 	 * Updates the current phase progress area in the default merge panel.
-	 * @param currentProgressPercentage the progress percentage completed for the current phase.
-	 * This should be a value from 0 to 100.
 	 * @param progressMessage a message indicating what is currently occurring in this phase.
 	 * Null indicates to use the default message.
 	 */
-	public void updateProgress(final String description);
+	public void updateProgress(final String progressMessage);
 	
 	/**
 	 * Updates the current phase progress area in the default merge panel.

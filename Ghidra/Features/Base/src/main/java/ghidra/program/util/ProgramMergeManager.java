@@ -549,7 +549,7 @@ public class ProgramMergeManager {
 	}
 
 	/**
-	 * <CODE>mergeCodeUnits</CODE> merges all instructions &/or data
+	 * <CODE>mergeCodeUnits</CODE> merges all instructions and/or data
 	 * (as indicated) in the specified address set from the second program. 
 	 * It merges them into the merge program. When merging
 	 * instructions, the bytes are also moved if they differ.

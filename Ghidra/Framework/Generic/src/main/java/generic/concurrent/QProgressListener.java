@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,18 +25,17 @@ public interface QProgressListener<I> {
 	 * Notification that progress has changed during the processing of an item.
 	 * @param id the id of the item being processed.  Since multiple items can be processed concurrently,
 	 * the id can be used to "demultiplex" the progress and messages being generated.
-	 * @param currentProgress the current value of the progress for this task.
-	 * @param progressMessage the last message set for this task.s
 	 * @param item the item that was being processed when the worker changed the max progress.
+	 * @param currentProgress the current value of the progress for this task.
 	 */
-	void progressChanged(long id, I Item, long currentProgress);
+	void progressChanged(long id, I item, long currentProgress);
 
 	/**
 	 * Notification that a new task has been generated to process an item.
 	 * @param id the id of the item being processed.
 	 * @param item the item that was being processed when the worker changed the max progress.
 	 */
-	void taskStarted(long id, I Item);
+	void taskStarted(long id, I item);
 
 	/**
 	 * Notification that a new task has completed processing for an item.
@@ -46,7 +44,7 @@ public interface QProgressListener<I> {
 	 * @param totalCount the total number of items that have been submitted to the ConcurrentQ
 	 * @param completedCount the total number of items that completed processing.
 	 */
-	void taskEnded(long id, I Item, long totalCount, long completedCount);
+	void taskEnded(long id, I item, long totalCount, long completedCount);
 
 	/**
 	 * Notification that the progress mode has changed from/to indeterminate mode

@@ -32,9 +32,9 @@ public abstract class DockingKeyBindingAction extends AbstractAction {
 	private DockingActionIf docakbleAction;
 
 	protected final KeyStroke keyStroke;
-	protected final DockingTool tool;
+	protected final Tool tool;
 
-	public DockingKeyBindingAction(DockingTool tool, DockingActionIf action, KeyStroke keyStroke) {
+	public DockingKeyBindingAction(Tool tool, DockingActionIf action, KeyStroke keyStroke) {
 		super(KeyBindingUtils.parseKeyStroke(keyStroke));
 		this.tool = tool;
 		this.docakbleAction = action;

@@ -24,40 +24,46 @@ import docking.action.MenuData;
 import docking.widgets.*;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.decompiler.component.*;
+import ghidra.app.decompiler.component.ClangTextField;
+import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.app.util.HelpTopics;
 import ghidra.util.HelpLocation;
 
 public class FindAction extends AbstractDecompilerAction {
 	private FindDialog findDialog;
-	private final DecompilerPanel decompilerPanel;
-	private final PluginTool tool;
 
-	public FindAction(PluginTool tool, DecompilerController controller) {
+	public FindAction() {
 		super("Find");
-		this.tool = tool;
-		this.decompilerPanel = controller.getDecompilerPanel();
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionFind"));
 		setPopupMenuData(new MenuData(new String[] { "Find..." }, "Decompile"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK));
 		setEnabled(true);
 	}
 
-	protected FindDialog getFindDialog() {
+	protected FindDialog getFindDialog(DecompilerPanel decompilerPanel) {
 		if (findDialog == null) {
-			findDialog = new FindDialog("Decompiler Find Text", new DecompilerSearcher()) {
+			findDialog =
+				new FindDialog("Decompiler Find Text", new DecompilerSearcher(decompilerPanel)) {
 				@Override
 				protected void dialogClosed() {
 					// clear the search results when the dialog is closed
 					decompilerPanel.setSearchResults(null);
 				}
 			};
-			findDialog.setHelpLocation(new HelpLocation("DecompilePlugin", "Find"));
+			findDialog
+					.setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionFind"));
 		}
 		return findDialog;
 	}
 
-	private class DecompilerSearcher implements FindDialogSearcher {
+	private static class DecompilerSearcher implements FindDialogSearcher {
+
+		private DecompilerPanel decompilerPanel;
+
+		public DecompilerSearcher(DecompilerPanel dPanel) {
+			decompilerPanel = dPanel;
+		}
 
 		@Override
 		public CursorPosition getCursorPosition() {
@@ -119,13 +125,14 @@ public class FindAction extends AbstractDecompilerAction {
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		FindDialog dialog = getFindDialog();
+		DecompilerPanel decompilerPanel = context.getDecompilerPanel();
+		FindDialog dialog = getFindDialog(decompilerPanel);
 		String text = decompilerPanel.getHighlightedText();
 		if (text != null) {
 			dialog.setSearchText(text);
 		}
 
 		// show over the root frame, so the user can still see the Decompiler window
-		tool.showDialog(dialog);
+		context.getTool().showDialog(dialog);
 	}
 }

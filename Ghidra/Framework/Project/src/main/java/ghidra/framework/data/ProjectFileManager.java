@@ -89,7 +89,7 @@ public class ProjectFileManager implements ProjectData {
 	 * Constructor for existing projects.
 	 * @param localStorageLocator the location of the project
 	 * @param isInWritableProject true if project content is writable, false if project is read-only
-	 * @param inProject true if this is the active project 
+	 * @param resetOwner true to reset the project owner
 	 * @throws IOException if an i/o error occurs
 	 * @throws NotOwnerException if inProject is true and user is not owner
 	 * @throws FileNotFoundException if project directory not found
@@ -673,7 +673,7 @@ public class ProjectFileManager implements ProjectData {
 
 	/**
 	 * Returns the standard user data filename associated with the specified file ID.
-	 * @param associatedFileID
+	 * @param associatedFileID the file id
 	 * @return user data filename
 	 */
 	public static String getUserDataFilename(String associatedFileID) {

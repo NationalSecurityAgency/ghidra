@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,4 +26,13 @@ public class IllegalFieldAccessException extends RuntimeException {
 	IllegalFieldAccessException() {
 		super("Illegal field access");
 	}
+
+	/**
+	 * Construct an illegal field access exception
+	 * with a specific message
+	 */
+	IllegalFieldAccessException(String msg) {
+		super(msg);
+	}
+
 }

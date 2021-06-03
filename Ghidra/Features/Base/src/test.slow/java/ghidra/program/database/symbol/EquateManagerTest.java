@@ -30,51 +30,34 @@ import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
-/**
- * Test the equate manager for the database implementation.
- * 
- * 
- */
 public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	private ProgramDB program;
 	private AddressSpace space;
 	private EquateTable equateTable;
 	private int transactionID;
 
-	/**
-	 * Constructor for EquateManagerTest.
-	 * @param name
-	 */
-	public EquateManagerTest() {
-		super();
-	}
-
-	/* 
-	 * @see TestCase#setUp()
-	 */
-    @Before
-    public void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		program = createDefaultProgram("Test", ProgramBuilder._TOY, this);
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		Memory memory = program.getMemory();
 		transactionID = program.startTransaction("Test");
-		memory.createInitializedBlock("test", addr(0), 5000, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+		memory.createInitializedBlock("test", addr(0), 5000, (byte) 0, TaskMonitor.DUMMY, false);
 
 		equateTable = program.getEquateTable();
 
 	}
 
-    @After
-    public void tearDown() throws Exception {
+	@After
+	public void tearDown() throws Exception {
 		program.endTransaction(transactionID, true);
 		program.release(this);
 	}
 
-@Test
-    public void testCreateEquate() throws Exception {
+	@Test
+	public void testCreateEquate() throws Exception {
 		Equate equate = equateTable.createEquate("Test", 100);
 		assertNotNull(equate);
 
@@ -82,8 +65,8 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(equate);
 	}
 
-@Test
-    public void testCreateEquateDuplicate() throws Exception {
+	@Test
+	public void testCreateEquateDuplicate() throws Exception {
 		equateTable.createEquate("Test", 100);
 		equateTable.createEquate("Test-2", 1000);
 		try {
@@ -91,35 +74,38 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 			Assert.fail("Should have gotten duplicate name exception");
 		}
 		catch (DuplicateNameException e) {
+			// expected
 		}
 	}
 
-@Test
-    public void testBadNameForCreate() throws Exception {
+	@Test
+	public void testBadNameForCreate() throws Exception {
 		try {
 			equateTable.createEquate("", 100);
 			Assert.fail("Should have gotten invalid input exception");
 		}
 		catch (InvalidInputException e) {
+			// expected
 		}
 		try {
 			equateTable.createEquate(null, 100);
 			Assert.fail("Should have gotten invalid input exception");
 		}
 		catch (InvalidInputException e) {
+			// expected
 		}
 	}
 
-@Test
-    public void testBasicEquate() throws Exception {
+	@Test
+	public void testBasicEquate() throws Exception {
 		Equate equate = equateTable.createEquate("Test", 100);
 		assertEquals("Test", equate.getName());
 
 		assertEquals(100, equate.getValue());
 	}
 
-@Test
-    public void testAddReferenceOnEquate() throws Exception {
+	@Test
+	public void testAddReferenceOnEquate() throws Exception {
 		Equate eqTest = equateTable.createEquate("Test", 100);
 		eqTest.addReference(addr(100), 0);
 		EquateReference[] refs = eqTest.getReferences();
@@ -150,8 +136,8 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 //		assertEquals(1, eqTest3.getReferenceCount());
 	}
 
-@Test
-    public void testRemoveReference() throws Exception {
+	@Test
+	public void testRemoveReference() throws Exception {
 		Equate eq = equateTable.createEquate("Test", 1);
 
 		eq.addReference(addr(10), 0);
@@ -185,8 +171,8 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(7, refs.length);
 	}
 
-@Test
-    public void testEquateIterator() throws Exception {
+	@Test
+	public void testEquateIterator() throws Exception {
 
 		for (int i = 10; i < 20; i++) {
 			equateTable.createEquate("Test_" + i, i);
@@ -203,8 +189,8 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
-@Test
-    public void testEquateAddressIterator() throws Exception {
+	@Test
+	public void testEquateAddressIterator() throws Exception {
 		Equate eq = equateTable.createEquate("Test", 1);
 
 		eq.addReference(addr(100), 3);
@@ -228,8 +214,8 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(7, count);// should filter out duplicate ref addrs
 	}
 
-@Test
-    public void testEquateAddressIteratorStart() throws Exception {
+	@Test
+	public void testEquateAddressIteratorStart() throws Exception {
 		Equate eq = equateTable.createEquate("Test", 1);
 
 		eq.addReference(addr(100), 3);
@@ -247,8 +233,8 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(2, count);// should filter out duplicate ref addrs
 	}
 
-@Test
-    public void testEquateAddressIteratorSet() throws Exception {
+	@Test
+	public void testEquateAddressIteratorSet() throws Exception {
 		Equate eq = equateTable.createEquate("Test", 1);
 
 		eq.addReference(addr(100), 3);
@@ -287,8 +273,8 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
-@Test
-    public void testGetEquatesByValue() throws Exception {
+	@Test
+	public void testGetEquatesByValue() throws Exception {
 		// now create equates with the same value
 		for (int i = 0; i < 10; i++) {
 			equateTable.createEquate("EQ_0" + i, 500);
@@ -299,8 +285,8 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(12, equates.size());
 	}
 
-@Test
-    public void testGetEquateByName() throws Exception {
+	@Test
+	public void testGetEquateByName() throws Exception {
 		equateTable.createEquate("Test", 500);
 		equateTable.createEquate("Test2", 1500);
 
@@ -315,8 +301,8 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNull(equateTable.getEquate("foo"));
 	}
 
-@Test
-    public void testRemoveEquate() throws Exception {
+	@Test
+	public void testRemoveEquate() throws Exception {
 		equateTable.createEquate("Test", 500);
 		equateTable.createEquate("Test2", 1500);
 
@@ -325,8 +311,8 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(equateTable.getEquate("Test2"));
 	}
 
-@Test
-    public void testRemoveEquateWithRefs() throws Exception {
+	@Test
+	public void testRemoveEquateWithRefs() throws Exception {
 		Equate eq = equateTable.createEquate("Test", 1);
 
 		eq.addReference(addr(100), 3);
@@ -344,8 +330,8 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(equateTable.getEquate("Test2"));
 	}
 
-@Test
-    public void testRemoveEquatesInRange() throws Exception {
+	@Test
+	public void testRemoveEquatesInRange() throws Exception {
 		Equate eq = equateTable.createEquate("Test1", 100);
 		equateTable.createEquate("Test2", 200);
 		equateTable.createEquate("Test3", 200);
@@ -370,7 +356,7 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 		assertEquals(6, count);
 
-		equateTable.deleteAddressRange(addr(50), addr(500), TaskMonitorAdapter.DUMMY_MONITOR);
+		equateTable.deleteAddressRange(addr(50), addr(500), TaskMonitor.DUMMY);
 		assertNull(equateTable.getEquate("Test1"));
 		assertNotNull(equateTable.getEquate("Test4"));
 		assertEquals(0, equateTable.getEquates(addr(100), 0).size());
@@ -386,8 +372,8 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(5, count);
 	}
 
-@Test
-    public void testRenameEquate() throws Exception {
+	@Test
+	public void testRenameEquate() throws Exception {
 		Equate eq = equateTable.createEquate("Test1", 100);
 		equateTable.createEquate("Test2", 200);
 		equateTable.createEquate("Test3", 200);
@@ -407,8 +393,8 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(eq, temp);
 	}
 
-@Test
-    public void testRenameEquateDuplicate() throws Exception {
+	@Test
+	public void testRenameEquateDuplicate() throws Exception {
 		Equate eq = equateTable.createEquate("Test1", 100);
 		equateTable.createEquate("Test2", 200);
 		equateTable.createEquate("Test3", 200);
@@ -419,6 +405,7 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 			Assert.fail("Should have gotten DuplicateNameException");
 		}
 		catch (DuplicateNameException e) {
+			// expected
 		}
 		eq = equateTable.createEquate("foo", 100);
 		eq.renameEquate("foo");// nothing should happen
@@ -427,23 +414,26 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 			Assert.fail("Should have gotten DuplicateNameException");
 		}
 		catch (DuplicateNameException e) {
+			// expected
 		}
 	}
 
-@Test
-    public void testRenameEquateBadName() throws Exception {
+	@Test
+	public void testRenameEquateBadName() throws Exception {
 		Equate eq = equateTable.createEquate("Test1", 100);
 		try {
 			eq.renameEquate("");
 			Assert.fail("Empty string should be invalid!");
 		}
 		catch (InvalidInputException e) {
+			// expected
 		}
 		try {
 			eq.renameEquate(null);
 			Assert.fail("Empty string should be invalid!");
 		}
 		catch (InvalidInputException e) {
+			// expected
 		}
 	}
 

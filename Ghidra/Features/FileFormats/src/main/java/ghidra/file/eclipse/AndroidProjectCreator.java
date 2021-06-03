@@ -74,8 +74,9 @@ public class AndroidProjectCreator {
 	public void create(TaskMonitor monitor) throws IOException, CancelledException {
 		createEclipseProjectDirectories();
 
-		try (ZipFileSystem fs = FileSystemService.getInstance().mountSpecificFileSystem(
-			apkFile.getFSRL(), ZipFileSystem.class, monitor)) {
+		try (ZipFileSystem fs = FileSystemService.getInstance()
+				.mountSpecificFileSystem(
+					apkFile.getFSRL(), ZipFileSystem.class, monitor)) {
 			List<GFile> listing = fs.getListing(null);
 			processListing(eclipseProjectDirectory, listing, monitor);
 		}
@@ -163,8 +164,9 @@ public class AndroidProjectCreator {
 
 	private void processDex(File outputDirectory, GFile dexFile, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		try (DexToJarFileSystem fs = FileSystemService.getInstance().mountSpecificFileSystem(
-			dexFile.getFSRL(), DexToJarFileSystem.class, monitor)) {
+		try (DexToJarFileSystem fs = FileSystemService.getInstance()
+				.mountSpecificFileSystem(
+					dexFile.getFSRL(), DexToJarFileSystem.class, monitor)) {
 			GFile jarFile = fs.getJarFile();
 			processJar(srcDirectory, jarFile.getFSRL(), monitor);
 		}
@@ -176,7 +178,7 @@ public class AndroidProjectCreator {
 		JarDecompiler decompiler = new JarDecompiler(jarFile, outputDirectory);
 		decompiler.decompile(monitor);
 
-		if (decompiler.getLog().getMsgCount() > 0) {
+		if (decompiler.getLog().hasMessages()) {
 			log.copyFrom(decompiler.getLog());
 		}
 	}
@@ -199,8 +201,9 @@ public class AndroidProjectCreator {
 	private void processXML(File outputDirectory, GFile containerFile, TaskMonitor monitor)
 			throws CancelledException {
 
-		try (AndroidXmlFileSystem fs = FileSystemService.getInstance().mountSpecificFileSystem(
-			containerFile.getFSRL(), AndroidXmlFileSystem.class, monitor)) {
+		try (AndroidXmlFileSystem fs = FileSystemService.getInstance()
+				.mountSpecificFileSystem(
+					containerFile.getFSRL(), AndroidXmlFileSystem.class, monitor)) {
 			GFile xmlFile = fs.getPayloadFile();
 			copyStream(fs.getInputStream(xmlFile, monitor), outputDirectory,
 				containerFile.getName(), monitor);

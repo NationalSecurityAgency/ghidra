@@ -93,6 +93,7 @@ void Funcdata::pushMultiequals(BlockBasic *bb)
     warningHeader("push_multiequal on block with multiple outputs");
   outblock = (BlockBasic *) bb->getOut(0); // Take first output block. If this is a
 				// donothing block, it is the only output block
+  int4 outblock_ind = bb->getOutRevIndex(0);
   for(iter=bb->beginOp();iter!=bb->endOp();++iter) {
     origop = *iter;
     if (origop->code() != CPUI_MULTIEQUAL) continue;
@@ -103,12 +104,22 @@ void Funcdata::pushMultiequals(BlockBasic *bb)
     for(citer=origvn->beginDescend();citer!=origvn->endDescend();++citer) {
       PcodeOp *op = *citer;
       if ((op->code()==CPUI_MULTIEQUAL)&&(op->getParent()==outblock)) {
-	if ((origvn->getAddr() == op->getOut()->getAddr())&&origvn->isAddrTied())
+	bool deadEdge = true;	// Check for reference to origvn NOT thru the dead edge
+	for(int4 i=0;i<op->numInput();++i) {
+	  if (i == outblock_ind) continue;	// Not going thru dead edge
+	  if (op->getIn(i) == origvn) {		// Reference to origvn
+	    deadEdge = false;
+	    break;
+	  }
+	}
+	if (deadEdge) {
+	  if ((origvn->getAddr() == op->getOut()->getAddr())&&origvn->isAddrTied())
 	  // If origvn is addrtied and feeds into a MULTIEQUAL at same address in outblock
 	  // Then any use of origvn beyond outblock that did not go thru this MULTIEQUAL must have
 	  // propagated through some other register.  So we make the new MULTIEQUAL write to a unique register
-	  neednewunique = true;
-	continue;
+	    neednewunique = true;
+	  continue;
+	}
       }
       needreplace = true;
       break;
@@ -141,7 +152,6 @@ void Funcdata::pushMultiequals(BlockBasic *bb)
 
     // Replace obsolete origvn with replacevn
     int4 i;
-    int4 outblock_ind = bb->getOutRevIndex(0);
     list<PcodeOp *>::iterator titer = origvn->descend.begin();
     while(titer != origvn->descend.end()) {
       PcodeOp *op = *titer++;
@@ -485,7 +495,7 @@ int4 Funcdata::stageJumpTable(JumpTable *jt,PcodeOp *op,FlowInfo *flow)
   s1 << name << "@@jump@";
   op->getAddr().printRaw(s1);
 
-  Funcdata partial(s1.str(),localmap->getParent(),baseaddr);
+  Funcdata partial(s1.str(),localmap->getParent(),baseaddr,(FunctionSymbol *)0);
   partial.flags |= jumptablerecovery_on; // Mark that this Funcdata object is dedicated to jumptable recovery
   partial.truncatedFlow(this,flow);
 
@@ -600,8 +610,8 @@ void Funcdata::installSwitchDefaults(void)
     PcodeOp *indop = jt->getIndirectOp();
     BlockBasic *ind = indop->getParent();
 			 // Mark any switch blocks default edge
-    if (jt->getMostCommon() != ~((uint4)0)) // If a mostcommon was found
-      ind->setDefaultSwitch(jt->getMostCommon());
+    if (jt->getDefaultBlock() != -1) // If a default case is present
+      ind->setDefaultSwitch(jt->getDefaultBlock());
   }
 }
 
@@ -783,7 +793,7 @@ void Funcdata::nodeSplitCloneVarnode(PcodeOp *op,PcodeOp *newop)
   uint4 vflags = opvn->getFlags();
   vflags &= (Varnode::externref | Varnode::volatil | Varnode::incidental_copy |
 	     Varnode::readonly | Varnode::persist |
-	     Varnode::addrtied | Varnode::addrforce | Varnode::auto_live);
+	     Varnode::addrtied | Varnode::addrforce);
   newvn->setFlags(vflags);
 }
 

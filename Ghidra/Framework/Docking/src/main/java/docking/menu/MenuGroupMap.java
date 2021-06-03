@@ -31,7 +31,7 @@ public class MenuGroupMap {
 	 * Sets the group for the given menuPath
 	 * @param menuPath the menuPath for which to assign a group
 	 * @param group the name of the group for the action with the given menu path
-	 * @param menuSubGroup the name used for sorting items in the same <tt>group</tt>.  If this 
+	 * @param menuSubGroup the name used for sorting items in the same <code>group</code>.  If this 
 	 *        value is {@link MenuData#NO_SUBGROUP}, then sorting is based upon the name of the
 	 *        menu item.
 	 */

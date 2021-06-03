@@ -84,7 +84,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 
 		this.tableServicePlugin = plugin;
 		this.navigatable = navigatable;
-		this.program = plugin.getProgram();
+		this.program = navigatable.getProgram();
 		this.model = model;
 		this.programName = programName;
 		this.markerService = markerService;
@@ -104,20 +104,10 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		if (markerService != null) {
 			markerSet = markerService.createPointMarker(name, title, program,
 				MarkerService.SEARCH_PRIORITY, true, true, false, markerColor, markerIcon);
-			markerSet.setNavigationListener(new MarkerListener() {
+			markerSet.setMarkerDescriptor(new MarkerDescriptor() {
 				@Override
 				public ProgramLocation getProgramLocation(MarkerLocation loc) {
 					return new BytesFieldLocation(program, loc.getAddr());
-				}
-
-				@Override
-				public String getTooltip(MarkerLocation loc) {
-					return null;
-				}
-
-				@Override
-				public ImageIcon getIcon(MarkerLocation loc) {
-					return null;
 				}
 			});
 
@@ -162,7 +152,6 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		selectAction = new MakeProgramSelectionAction(tableServicePlugin, table) {
 			@Override
 			protected ProgramSelection makeSelection(ActionContext context) {
-
 				ProgramSelection selection = table.getProgramSelection();
 				navigatable.goTo(program, new ProgramLocation(program, selection.getMinAddress()));
 				navigatable.setSelection(selection);
@@ -305,7 +294,8 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 			return;
 		}
 
-		boolean wasEnabled = selectionNavigationAction.setEnabled(false); // disable navigation events from updates
+		boolean wasEnabled = selectionNavigationAction.isEnabled();
+		selectionNavigationAction.setEnabled(false); // disable navigation events from updates
 
 		int[] selectedRows = threadedTable.getSelectedRows();
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,10 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.VersionException;
 
 /**
  * Version 0 implementation for the enumeration tables adapter.
@@ -34,9 +32,9 @@ class EnumValueDBAdapterV0 extends EnumValueDBAdapter {
 	static final int V0_ENUMVAL_VALUE_COL = 1;
 	static final int V0_ENUMVAL_ID_COL = 2;
 
-	static final Schema V0_ENUM_VALUE_SCHEMA = new Schema(0, "Enum Value ID", new Class[] {
-		StringField.class, LongField.class, LongField.class }, new String[] { "Name", "Value",
-		"Enum ID" });
+	static final Schema V0_ENUM_VALUE_SCHEMA = new Schema(0, "Enum Value ID",
+		new Field[] { StringField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE },
+		new String[] { "Name", "Value", "Enum ID" });
 
 	private Table valueTable;
 
@@ -46,14 +44,14 @@ class EnumValueDBAdapterV0 extends EnumValueDBAdapter {
 	 * @param create true if this constructor should create the table.
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
+	 * @throws IOException if IO error occurs
 	 */
-	public EnumValueDBAdapterV0(DBHandle handle, boolean create) throws VersionException,
-			IOException {
+	public EnumValueDBAdapterV0(DBHandle handle, boolean create)
+			throws VersionException, IOException {
 
 		if (create) {
-			valueTable =
-				handle.createTable(ENUM_VALUE_TABLE_NAME, V0_ENUM_VALUE_SCHEMA,
-					new int[] { V0_ENUMVAL_ID_COL });
+			valueTable = handle.createTable(ENUM_VALUE_TABLE_NAME, V0_ENUM_VALUE_SCHEMA,
+				new int[] { V0_ENUMVAL_ID_COL });
 		}
 		else {
 			valueTable = handle.getTable(ENUM_VALUE_TABLE_NAME);
@@ -62,9 +60,8 @@ class EnumValueDBAdapterV0 extends EnumValueDBAdapter {
 			}
 			int version = valueTable.getSchema().getVersion();
 			if (version != VERSION) {
-				String msg =
-					"Expected version " + VERSION + " for table " + ENUM_VALUE_TABLE_NAME +
-						" but got " + valueTable.getSchema().getVersion();
+				String msg = "Expected version " + VERSION + " for table " + ENUM_VALUE_TABLE_NAME +
+					" but got " + valueTable.getSchema().getVersion();
 				if (version < VERSION) {
 					throw new VersionException(msg, VersionException.OLDER_VERSION, true);
 				}
@@ -75,7 +72,7 @@ class EnumValueDBAdapterV0 extends EnumValueDBAdapter {
 
 	@Override
 	public void createRecord(long enumID, String name, long value) throws IOException {
-		Record record = V0_ENUM_VALUE_SCHEMA.createRecord(valueTable.getKey());
+		DBRecord record = V0_ENUM_VALUE_SCHEMA.createRecord(valueTable.getKey());
 		record.setLongValue(V0_ENUMVAL_ID_COL, enumID);
 		record.setString(V0_ENUMVAL_NAME_COL, name);
 		record.setLongValue(V0_ENUMVAL_VALUE_COL, value);
@@ -83,7 +80,7 @@ class EnumValueDBAdapterV0 extends EnumValueDBAdapter {
 	}
 
 	@Override
-	public Record getRecord(long valueID) throws IOException {
+	public DBRecord getRecord(long valueID) throws IOException {
 		return valueTable.getRecord(valueID);
 	}
 
@@ -93,25 +90,12 @@ class EnumValueDBAdapterV0 extends EnumValueDBAdapter {
 	}
 
 	@Override
-	public void updateRecord(Record record) throws IOException {
+	public void updateRecord(DBRecord record) throws IOException {
 		valueTable.putRecord(record);
 	}
 
 	@Override
-	public long[] getValueIdsInEnum(long enumID) throws IOException {
+	public Field[] getValueIdsInEnum(long enumID) throws IOException {
 		return valueTable.findRecords(new LongField(enumID), V0_ENUMVAL_ID_COL);
 	}
-
-//	private void testVersion(Table table, int expectedVersion, String name)
-//			throws DatabaseVersionException {
-//				
-//		if (table == null) {
-//			throw new DatabaseVersionException(name+ " not found");
-//		}
-//		int versionNumber = table.getSchema().getVersion();
-//		if (versionNumber != expectedVersion) {
-//			throw new DatabaseVersionException(
-//				name+": Expected Version "+expectedVersion+ ", got " + versionNumber);
-//		}
-//	}
 }

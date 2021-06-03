@@ -32,15 +32,16 @@ abstract class FromAdapter implements RecordAdapter {
 
 	static final String FROM_REFS_TABLE_NAME = "FROM REFS";
 
-	static final Schema FROM_REFS_SCHEMA = new Schema(0, "From Address", new Class[] {
-		IntField.class, BinaryField.class }, new String[] { "Number of Refs", "Ref Data" });
+	static final Schema FROM_REFS_SCHEMA =
+		new Schema(0, "From Address", new Field[] { IntField.INSTANCE, BinaryField.INSTANCE },
+			new String[] { "Number of Refs", "Ref Data" });
 
 	static final int REF_COUNT_COL = 0;
 	static final int REF_DATA_COL = 1;
 
 	static FromAdapter getAdapter(DBHandle dbHandle, int openMode, AddressMap addrMap,
-			ErrorHandler errHandler, TaskMonitor monitor) throws VersionException,
-			CancelledException, IOException {
+			ErrorHandler errHandler, TaskMonitor monitor)
+			throws VersionException, CancelledException, IOException {
 
 		if (openMode == DBConstants.CREATE) {
 			return new FromAdapterV0(dbHandle, true, addrMap, errHandler);

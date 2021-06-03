@@ -15,7 +15,7 @@
  */
 package util;
 
-import static org.hamcrest.collection.IsIn.isOneOf;
+import static org.hamcrest.collection.IsIn.*;
 import static org.junit.Assert.*;
 
 import java.util.*;

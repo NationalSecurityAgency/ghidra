@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +58,8 @@ public class FieldSelection implements Iterable<FieldRange> {
 
 	/**
 	 * Returns true if the given Field at the given index is in the selection.
-	 * @param index the index of the layout to check if in the selection
-	 * @param field the index of the field in the layout to check if in the selection.
+	 * @param loc the field location.
+	 * @return true if the field selection contains the specified location.
 	 */
 	public boolean contains(FieldLocation loc) {
 		return getRangeContaining(loc) != null;
@@ -69,7 +68,7 @@ public class FieldSelection implements Iterable<FieldRange> {
 	/**
 	 * Returns the range if the given Field at the given index is in the selection.
 	 * Otherwise returns null.
-	 * @param fieldLocation location to find the range for.
+	 * @param loc location to find the range for.
 	 */
 	public FieldRange getRangeContaining(FieldLocation loc) {
 		int insertIndex = Collections.binarySearch(ranges, new FieldRange(loc, FieldLocation.MAX));
@@ -140,10 +139,8 @@ public class FieldSelection implements Iterable<FieldRange> {
 
 	/**
 	 * Adds a field range to this selection.
-	 * @param startIndex the layout index of the start field
-	 * @param startField the index of the field in the start layout.
-	 * @param endIndex the layout index of the end field.
-	 * @param endField the index of the field in the end layout.
+	 * @param start the starting field location.
+	 * @param end the ending field location.
 	 */
 	public void addRange(FieldLocation start, FieldLocation end) {
 		if (start.equals(end)) {
@@ -204,10 +201,8 @@ public class FieldSelection implements Iterable<FieldRange> {
 
 	/**
 	 * Removes the given field range from the current selection.
-	 * @param startIndex the layout index of the startField to remove from the selection
-	 * @param startField the field index of first field to remove from the selection
-	 * @param endIndex the layout index of the endField to remove from the selection.
-	 * @param endField the field index of the last field to remove from the selection.
+	 * @param start the starting field location.
+	 * @param end the ending field location.
 	 */
 	public void removeRange(FieldLocation start, FieldLocation end) {
 		FieldRange deleteRange = new FieldRange(start, end);

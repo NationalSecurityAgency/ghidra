@@ -215,8 +215,8 @@ public abstract class AbstractWorker<T extends Job> {
 	 *  <b>Warning: Calling this method may leave the program in a bad
 	 *  state.  Thus, it is recommended that you only do so when you known that any job that
 	 *  could possibly be scheduled does not manipulate sensitive parts of the program; for 
-	 *  example, opening file handles that should be closed before finishing.  
-	 *  <p>
+	 *  example, opening file handles that should be closed before finishing.</b>  
+	 *  <p><b>
 	 *  If you are unsure 
 	 *  about whether your jobs handle interrupt correctly, then don't use this method.
 	 *  </b> 

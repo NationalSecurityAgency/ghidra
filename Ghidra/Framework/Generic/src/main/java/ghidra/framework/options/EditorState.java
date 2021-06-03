@@ -17,10 +17,9 @@ package ghidra.framework.options;
 
 import java.awt.Component;
 import java.beans.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-import ghidra.util.SystemUtilities;
+import ghidra.framework.Application;
 
 public class EditorState implements PropertyChangeListener {
 
@@ -89,11 +88,32 @@ public class EditorState implements PropertyChangeListener {
 	}
 
 	public boolean isValueChanged() {
-		return !SystemUtilities.isEqual(currentValue, originalValue);
+		return !Objects.equals(currentValue, originalValue);
+	}
+
+	public void applyNonDefaults(Options save) {
+		if (!Objects.equals(currentValue, options.getDefaultValue(name))) {
+			Options sub = save.getOptions(options.getName());
+			sub.putObject(name, currentValue);
+		}
+	}
+
+	public void loadFrom(Options loadFrom) {
+		Options sub = loadFrom.getOptions(options.getName());
+		Object newValue = sub.getObject(name, options.getDefaultValue(name));
+		if (editor != null && !Objects.equals(currentValue, newValue)) {
+			editor.setValue(newValue);
+		}
+	}
+
+	public boolean hasSameValue(Options compareTo) {
+		Options sub = compareTo.getOptions(options.getName());
+		Object newValue = sub.getObject(name, options.getDefaultValue(name));
+		return Objects.equals(newValue, currentValue);
 	}
 
 	public void applyValue() {
-		if (SystemUtilities.isEqual(currentValue, originalValue)) {
+		if (Objects.equals(currentValue, originalValue)) {
 			return;
 		}
 		boolean success = false;
@@ -119,10 +139,16 @@ public class EditorState implements PropertyChangeListener {
 	 * directly, as opposed to using the generic framework.
 	 */
 	public boolean supportsCustomOptionsEditor() {
-		return (editor instanceof CustomOptionsEditor);
+		return editor == null || (editor instanceof CustomOptionsEditor);
 	}
 
 	public Component getEditorComponent() {
+		if (editor == null) {
+			// can occur if support has been dropped for custom state/option
+			editor = new ErrorPropertyEditor(
+				"Ghidra does not know how to render state: " + name, null);
+			return editor.getCustomEditor();
+		}
 		if (editor.supportsCustomEditor()) {
 			return editor.getCustomEditor();
 		}
@@ -146,7 +172,9 @@ public class EditorState implements PropertyChangeListener {
 
 		editor.removePropertyChangeListener(this);
 		editor = new ErrorPropertyEditor(
-			"Ghidra does not know how to use PropertyEditor: " + editor.getClass().getName(), null);
+			Application.getName() + " does not know how to use PropertyEditor: " +
+				editor.getClass().getName(),
+			null);
 		return editor.getCustomEditor();
 	}
 
@@ -157,4 +185,5 @@ public class EditorState implements PropertyChangeListener {
 	public String getDescription() {
 		return options.getDescription(name);
 	}
+
 }

@@ -17,9 +17,6 @@ package ghidra.app.plugin.assembler.sleigh.sem;
 
 import java.util.*;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-
 import ghidra.app.plugin.assembler.sleigh.expr.MaskedLong;
 import ghidra.app.plugin.assembler.sleigh.expr.RecursiveDescentSolver;
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyProduction;
@@ -42,21 +39,20 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 
 	protected final Set<AssemblyResolvedConstructor> patterns = new HashSet<>();
 	protected final Constructor cons;
-	protected final ImmutableList<Integer> indices;
+	protected final List<Integer> indices;
 
 	// A set initialized on first access with forbidden patterns added
-	protected ImmutableSet<AssemblyResolvedConstructor> upatterns;
+	protected Set<AssemblyResolvedConstructor> upatterns;
 
 	/**
 	 * Build a new SLEIGH constructor semantic
-	 * @param pattern the encoding pattern associated with the constructor
 	 * @param cons the SLEIGH constructor
 	 * @param indices the indices of RHS non-terminals in the associated production that represent an
 	 *                operand in the SLEIGH constructor
 	 */
 	public AssemblyConstructorSemantic(Constructor cons, List<Integer> indices) {
 		this.cons = cons;
-		this.indices = ImmutableList.copyOf(indices);
+		this.indices = Collections.unmodifiableList(indices);
 	}
 
 	public void addPattern(DisjointPattern pat) {
@@ -107,7 +103,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 	 * Get the list of operand indices in print piece order
 	 * @return the list
 	 */
-	public ImmutableList<Integer> getOperandIndices() {
+	public List<Integer> getOperandIndices() {
 		return indices;
 	}
 
@@ -136,7 +132,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 			AssemblyResolvedConstructor fpat = withComputedForbids(pat);
 			result.add(fpat);
 		}
-		upatterns = ImmutableSet.copyOf(result);
+		upatterns = Collections.unmodifiableSet(result);
 	}
 
 	/**
@@ -155,8 +151,8 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 	 * This takes a given pattern, and searches the rest of the language for any patterns that
 	 * would take precedence, and combines them as forbidden patterns with the given pattern.
 	 * 
-	 * @param pat2 the given pattern
-	 * @returns the same pattern with forbidden records added 
+	 * @param pat the given pattern
+	 * @return the same pattern with forbidden records added 
 	 */
 	protected AssemblyResolvedConstructor withComputedForbids(AssemblyResolvedConstructor pat) {
 		// Forbid anything more specific (or otherwise takes precedence) over me.

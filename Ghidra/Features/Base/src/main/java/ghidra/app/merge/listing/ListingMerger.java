@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +34,10 @@ interface ListingMerger {
 	 * Performs the automatic merge for all changes in my Checked Out program version.
 	 * It also determines the conflicts requiring manual resolution.
 	 * @param monitor task monitor for informing the user of progress.
-	 * @param progressMin minimum progress value, between 0 & 100, for this auto merge. 
+	 * @param progressMin minimum progress value, between 0 and 100, for this auto merge. 
 	 * The merge manager's progress should be updated from progressMin to progressMax 
 	 * as the autoMerge occurs.
-	 * @param progressMax maximum progress value, between 0 & 100, for this auto merge.
+	 * @param progressMax maximum progress value, between 0 and 100, for this auto merge.
 	 * @throws ProgramConflictException if the programs for different versions are not compatible.
 	 * @throws MemoryAccessException if memory can't be accessed to get/set byte values.
 	 * @throws CancelledException if the user cancels the merge.

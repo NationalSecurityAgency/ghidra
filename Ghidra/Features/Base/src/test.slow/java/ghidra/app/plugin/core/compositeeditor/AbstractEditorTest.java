@@ -47,12 +47,12 @@ import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
-import ghidra.program.model.data.Composite.AlignmentType;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.Msg;
+import utilities.util.reflection.ReflectionUtilities;
 
 public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegrationTest {
 	protected String languageName;
@@ -212,8 +212,7 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	}
 
 	protected CycleGroupAction getCycleGroup(DataType dt) {
-		for (int cycleIndex = 0; cycleIndex < cycles.size(); cycleIndex++) {
-			CycleGroupAction action = cycles.get(cycleIndex);
+		for (CycleGroupAction action : cycles) {
 			CycleGroup group = action.getCycleGroup();
 			DataType[] types = group.getDataTypes();
 			for (DataType type : types) {
@@ -226,13 +225,12 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	}
 
 	protected FavoritesAction getFavorite(String name) {
-		for (int favIndex = 0; favIndex < favorites.size(); favIndex++) {
-			FavoritesAction action = favorites.get(favIndex);
+		for (FavoritesAction action : favorites) {
 			if (action.getDataType().getDisplayName().equals(name)) {
 				return action;
 			}
 		}
-		Assert.fail("Can't find favorite " + name + ".");
+		fail("Can't find favorite " + name + ".");
 		return null;
 	}
 
@@ -245,9 +243,10 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	}
 
 	protected void checkSelection(int[] rows) {
+		waitForSwing();
 		int[] tRows = getTable().getSelectedRows();
 		if (!Arrays.equals(rows, tRows)) {
-			Assert.fail("Expected row selection (" + arrayToString(rows) + ") but was (" +
+			fail("Expected row selection (" + arrayToString(rows) + ") but was (" +
 				arrayToString(tRows) + ").");
 		}
 		assertEquals(createSelection(rows), runSwing(() -> model.getSelection()));
@@ -330,12 +329,17 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	}
 
 	protected void invoke(final DockingActionIf action) {
+		invoke(action, true);
+	}
+
+	protected void invoke(final DockingActionIf action, boolean wait) {
 		assertNotNull(action);
 		boolean isEnabled = runSwing(() -> action.isEnabled());
 		if (!isEnabled) {
-			Msg.debug(this, "Calling actionPerformed() on a disabled action: " + action.getName());
+			Msg.debug(this, "Calling actionPerformed() on a disabled action: " + action.getName(),
+				ReflectionUtilities.createJavaFilteredThrowable());
 		}
-		runSwing(() -> action.actionPerformed(new ActionContext()), false);
+		runSwing(() -> action.actionPerformed(new ActionContext()), wait);
 		waitForSwing();
 	}
 
@@ -467,24 +471,13 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		// no-op?
 	}
 
-	protected void backspace(int repeat) {
-		for (int i = 0; i < repeat; i++) {
-			triggerActionKey(getTable(), 0, KeyEvent.VK_BACK_SPACE);
-		}
+	protected void leftArrow() {
+		triggerActionKey(getTable(), 0, KeyEvent.VK_LEFT);
 		waitForSwing();
 	}
 
-	protected void leftArrowKey(int repeat) {
-		for (int i = 0; i < repeat; i++) {
-			triggerActionKey(getTable(), 0, KeyEvent.VK_LEFT);
-		}
-		waitForSwing();
-	}
-
-	protected void rightArrowKey(int repeat) {
-		for (int i = 0; i < repeat; i++) {
-			triggerActionKey(getTable(), 0, KeyEvent.VK_RIGHT);
-		}
+	protected void rightArrow() {
+		triggerActionKey(getTable(), 0, KeyEvent.VK_RIGHT);
 		waitForSwing();
 	}
 
@@ -771,12 +764,20 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		assertEquals(status, getStatus());
 	}
 
-	private int getRow() {
+	protected int getRow() {
 		return runSwing(() -> model.getRow());
 	}
 
-	private int getColumn() {
+	protected void assertRow(int row) {
+		assertEquals(row, getRow());
+	}
+
+	protected int getColumn() {
 		return runSwing(() -> model.getColumn());
+	}
+
+	protected void assertColumn(int column) {
+		assertEquals(column, getColumn());
 	}
 
 	private String getStatus() {
@@ -811,20 +812,30 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 			actionEnablement);
 	}
 
-	protected void assertIsInternallyAligned(boolean aligned) {
-		assertEquals(aligned, ((CompEditorModel) model).isAligned());
+	protected void assertIsPackingEnabled(boolean aligned) {
+		assertEquals(aligned, ((CompEditorModel) model).isPackingEnabled());
 	}
 
-	protected void assertPackingValue(int value) {
-		assertEquals(value, ((CompEditorModel) model).getPackingValue());
+	protected void assertDefaultPacked() {
+		assertEquals(PackingType.DEFAULT, ((CompEditorModel) model).getPackingType());
 	}
 
-	protected void assertMinimumAlignmentType(AlignmentType alignmentType) {
-		assertEquals(alignmentType, ((CompEditorModel) model).getMinimumAlignmentType());
+	protected void assertPacked(int pack) {
+		assertEquals(PackingType.EXPLICIT, ((CompEditorModel) model).getPackingType());
+		assertEquals(pack, ((CompEditorModel) model).getExplicitPackingValue());
 	}
 
-	protected void assertMinimumAlignmentValue(int value) {
-		assertEquals(value, ((CompEditorModel) model).getMinimumAlignment());
+	protected void assertIsDefaultAligned() {
+		assertEquals(AlignmentType.DEFAULT, ((CompEditorModel) model).getAlignmentType());
+	}
+
+	protected void assertIsMachineAligned() {
+		assertEquals(AlignmentType.MACHINE, ((CompEditorModel) model).getAlignmentType());
+	}
+
+	protected void assertExplicitAlignment(int alignment) {
+		assertEquals(AlignmentType.EXPLICIT, ((CompEditorModel) model).getAlignmentType());
+		assertEquals(alignment, ((CompEditorModel) model).getExplicitMinimumAlignment());
 	}
 
 	protected void assertActualAlignment(int value) {

@@ -327,7 +327,7 @@ public class GenericAddress implements Address {
 	public String toString(boolean showAddressSpace, int minNumDigits) {
 
 		boolean stackFormat = false;
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		if (addrSpace.isStackSpace()) {
 			stackFormat = true;
 			buf.append("Stack[");

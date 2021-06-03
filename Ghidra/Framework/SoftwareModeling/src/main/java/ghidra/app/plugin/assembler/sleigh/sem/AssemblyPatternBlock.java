@@ -39,7 +39,7 @@ import ghidra.util.StringUtilities;
  * It is suitable for the assembler because it is represented byte-by-byte, and it offers a number
  * of useful conversions and operations.
  * 
- * @TODO A lot of this could probably be factored into the {@link PatternBlock} class, but it was
+ * TODO A lot of this could probably be factored into the {@link PatternBlock} class, but it was
  * best to experiment in another class altogether to avoid breaking things.
  */
 public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
@@ -100,7 +100,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Convert the given long to a pattern block (having offset 0 and a full mask)
-	 * @note The result will be 8 bytes in length
+	 * NOTE: The result will be 8 bytes in length
 	 * @param value the value to convert
 	 * @return the pattern block containing the big-endian representation of the value
 	 */
@@ -118,7 +118,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Convert the given masked long to a pattern block (having offset 0)
-	 * @note The result will be 8 bytes in length
+	 * NOTE: The result will be 8 bytes in length
 	 * @param ml the masked long, whose values and mask to convert
 	 * @return the pattern block containing the big-endian representation of the value
 	 */
@@ -139,7 +139,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Convert a string representation to a pattern block
-	 * @see StringUtilities#convertHexStringToMaskedValue(AtomicLong, AtomicLong, String, int, int, String)
+	 * @see NumericUtilities#convertHexStringToMaskedValue(AtomicLong, AtomicLong, String, int, int, String)
 	 * @param str the string to convert
 	 * @return the resulting pattern block
 	 */
@@ -517,7 +517,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	/**
 	 * Encode the given value into a copy of this pattern block as specified by a context operation
 	 * 
-	 * @note this method is given as a special operation, instead of a conversion factory method,
+	 * NOTE: this method is given as a special operation, instead of a conversion factory method,
 	 * because this is a write operation, not a combine operation. As such, the bits (including
 	 * undefined bits) replace the bits in the existing pattern block. Were this a conversion
 	 * method, we would lose the distinction between unknown bits being written, and bits whose
@@ -795,7 +795,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	 * }
 	 * </pre>
 	 * 
-	 * @note A single byte array is instantiated with the call to {@link Iterable#iterator()}. Each
+	 * NOTE: A single byte array is instantiated with the call to {@link Iterable#iterator()}. Each
 	 * call to {@link Iterator#next()} modifies the one byte array and returns it. As such, if you
 	 * intend to preserve the value in the array for later use, you <em>must</em> make a copy.
 	 * @return the iterable.

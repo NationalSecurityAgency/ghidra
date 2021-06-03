@@ -196,6 +196,9 @@ class SymbolTableXmlMgr {
 
 			String addrStr = element.getAttribute("ADDRESS");
 			String namespace = element.getAttribute("NAMESPACE");
+			if (namespace != null && namespace.endsWith("::")) {
+				namespace = namespace.substring(namespace.length() - 2);
+			}
 			String primary = element.getAttribute("PRIMARY");
 			String sourceTypeString = element.getAttribute("SOURCE_TYPE");
 

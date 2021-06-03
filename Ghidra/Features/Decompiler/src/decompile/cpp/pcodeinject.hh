@@ -97,7 +97,7 @@ public:
   InjectPayload(const string &nm,int4 tp) { name=nm; type=tp; paramshift=0; dynamic = false; incidentalCopy = false; }	///< Construct for use with restoreXml
   int4 getParamShift(void) const { return paramshift; }	///< Get the number of parameters shifted
   bool isDynamic(void) const { return dynamic; }	///< Return \b true if p-code in the injection is generated dynamically
-  bool isIncidentalCopy(void) const { return incidentalCopy; }
+  bool isIncidentalCopy(void) const { return incidentalCopy; }	///< Return \b true if any injected COPY is considered \e incidental
   int4 sizeInput(void) const { return inputlist.size(); }	///< Return the number of input parameters
   int4 sizeOutput(void) const { return output.size(); }		///< Return the number of output parameters
   InjectParameter &getInput(int4 i) { return inputlist[i]; }	///< Get the i-th input parameter

@@ -15,17 +15,22 @@
  */
 package ghidra.plugins.fsbrowser;
 
+import java.util.Collections;
+import java.util.List;
+
 import javax.swing.Icon;
 
-import docking.widgets.tree.AbstractGTreeNode;
+import docking.widgets.tree.GTreeNode;
 import ghidra.formats.gfilesystem.FSRL;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * GTreeNode that represents a file on a filesystem.
  * <p>
  * Visible to just this package.
  */
-public class FSBFileNode extends AbstractGTreeNode implements FSBNode {
+public class FSBFileNode extends FSBNode {
 	protected FSRL fsrl;
 
 	FSBFileNode(FSRL fsrl) {
@@ -60,6 +65,11 @@ public class FSBFileNode extends AbstractGTreeNode implements FSBNode {
 	@Override
 	public int hashCode() {
 		return fsrl.hashCode();
+	}
+
+	@Override
+	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
+		return Collections.emptyList();
 	}
 
 }

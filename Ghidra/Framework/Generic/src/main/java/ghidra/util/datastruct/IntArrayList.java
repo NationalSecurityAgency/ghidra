@@ -63,7 +63,7 @@ public class IntArrayList implements Serializable, Saveable {
      * @param value value to store
      * 
      * @throws IndexOutOfBoundsException
-     * 			if the index is negative OR index > size
+     * 			if the index is negative OR index &gt; size
      */
     public void add(int index, int value) {
     	if (index < 0 || index > size) {

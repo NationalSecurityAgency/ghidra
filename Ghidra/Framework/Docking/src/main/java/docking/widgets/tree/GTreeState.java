@@ -56,11 +56,10 @@ public class GTreeState {
 	private GTree tree;
 
 	public GTreeState(GTree tree) {
-		this(tree, tree.getRootNode());
+		this(tree, tree.getViewRoot());
 	}
 
 	public GTreeState(GTree tree, GTreeNode node) {
-
 		this.tree = tree;
 		expandedPaths = tree.getExpandedPaths(node);
 		selectionPaths = getSelectionPaths(node);
@@ -166,7 +165,7 @@ public class GTreeState {
 
 	private List<TreePath> getSelectionPaths(GTreeNode node) {
 		TreePath[] allSelectionPaths = tree.getSelectionPaths();
-		if (node == tree.getRootNode()) {
+		if (node == tree.getViewRoot()) {
 			return CollectionUtils.asList(allSelectionPaths);
 		}
 		if (allSelectionPaths == null) {

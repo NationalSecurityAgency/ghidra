@@ -74,7 +74,7 @@ public class CreateEHCatchHandlerMapBackgroundCmd
 	@Override
 	protected EHCatchHandlerModel createModel(Program program) {
 		if (model == null) {
-			model = new EHCatchHandlerModel(program, count, address, validationOptions);
+			model = new EHCatchHandlerModel(program, count, getDataAddress(), validationOptions);
 		}
 		return model;
 	}

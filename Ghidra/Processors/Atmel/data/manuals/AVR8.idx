@@ -1,7 +1,7 @@
 @atmel-0856-avr-instruction-set-manual.pdf [Atmel AVR Instruction Set Manual, 11/2016 (Rev. 0856L)]
 ADC,       30
 ADD,       32
-ADDIW,     33
+ADIW,      33
 AND,       35
 ANDI,      36
 ASR,       37

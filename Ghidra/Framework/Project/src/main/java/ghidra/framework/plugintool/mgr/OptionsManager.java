@@ -132,7 +132,7 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 	/**
 	 * Deregister the owner from the options; if options are empty, then
 	 * remove the options from the map.
-	 * @param owner owner name
+	 * @param ownerPlugin the owner plugin
 	 */
 	//TODO anyone using this Or should they be?
 	public void deregisterOwner(Plugin ownerPlugin) {

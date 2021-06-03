@@ -166,7 +166,7 @@ public class ElfLoadAdapter {
 
 	/**
 	 * Get the default alignment within the default address space.
-	 * @param load helper object
+	 * @param elfLoadHelper helper object
 	 * @return default alignment within the default address space.
 	 */
 	public int getDefaultAlignment(ElfLoadHelper elfLoadHelper) {
@@ -234,7 +234,7 @@ public class ElfLoadAdapter {
 	 * a more accurate check based upon the actual language utilized.  While the ELF header
 	 * may have stipulated a specific processor via the machine-id, a completely different
 	 * and incompatible language may have been used.
-	 * @param elf elf header
+	 * @param elfLoadHelper elf header
 	 * @return true if this extension can properly support the ELF header and the 
 	 * current program/language.
 	 */
@@ -249,6 +249,22 @@ public class ElfLoadAdapter {
 	 */
 	public String getDataTypeSuffix() {
 		return null;
+	}
+
+	/**
+	 * Perform any required offset adjustment to account for differences between offset 
+	 * values contained within ELF headers and the language modeling of the 
+	 * associated address space.
+	 * <br>
+	 * WARNING: This is an experimental method and is not yet fully supported.
+	 * <br>
+	 * NOTE: This has currently been utilized for symbol address offset adjustment only.
+	 * @param elfOffset memory offset from ELF header
+	 * @param space associated address space
+	 * @return offset appropriate for use in space (does not account for image base alterations)
+	 */
+	public long getAdjustedMemoryOffset(long elfOffset, AddressSpace space) {
+		return elfOffset;
 	}
 
 	/**
@@ -294,6 +310,22 @@ public class ElfLoadAdapter {
 	 */
 	public Address creatingFunction(ElfLoadHelper elfLoadHelper, Address functionAddress) {
 		return functionAddress;
+	}
+
+	/**
+	 * This method allows an extension to override the default address calculation for loading
+	 * a symbol.  This is generally only neccessary when symbol requires handling of processor-specific 
+	 * flags or section index.  This method should return null when default symbol processing 
+	 * is sufficient. {@link Address#NO_ADDRESS} should be returned if the symbol is external
+	 * and is not handled by default processing.
+	 * @param elfLoadHelper load helper object
+	 * @param elfSymbol elf symbol
+	 * @return symbol memory address or null to defer to default implementation
+	 * @throws NoValueException if error logged and address calculation failed
+	 */
+	public Address calculateSymbolAddress(ElfLoadHelper elfLoadHelper, ElfSymbol elfSymbol)
+			throws NoValueException {
+		return null;
 	}
 
 	/**
@@ -425,7 +457,7 @@ public class ElfLoadAdapter {
 	/**
 	 * Return the memory section size in bytes for the specified section header.
 	 * The returned value will be consistent with any byte filtering which may be required.
-	 * @param ElfSectionHeader
+	 * @param section the section header
 	 * @return preferred memory block size in bytes which corresponds to the specified section header
 	 */
 	public long getAdjustedSize(ElfSectionHeader section) {
@@ -471,4 +503,5 @@ public class ElfLoadAdapter {
 	public Class<? extends ElfRelocation> getRelocationClass(ElfHeader elfHeader) {
 		return null;
 	}
+
 }

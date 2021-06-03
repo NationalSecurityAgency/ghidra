@@ -201,9 +201,9 @@ public class DWARFLine {
 
 			// This entry exists only if the length of the string is more than 0
 			if (this.name.length() > 0) {
-				this.directory_index = LEB128.decode(reader, false);
-				this.modification_time = LEB128.decode(reader, false);
-				this.length = LEB128.decode(reader, false);
+				this.directory_index = LEB128.readAsLong(reader, false);
+				this.modification_time = LEB128.readAsLong(reader, false);
+				this.length = LEB128.readAsLong(reader, false);
 			}
 		}
 

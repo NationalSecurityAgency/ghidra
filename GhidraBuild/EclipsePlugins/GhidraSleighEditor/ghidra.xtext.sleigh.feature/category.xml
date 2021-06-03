@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/ghidra.xtext.sleigh.feature_1.0.0.qualifier.jar" id="ghidra.xtext.sleigh.feature" version="1.0.0.qualifier">
-      <category name="ghidra.xtext.sleigh.editor"/>
+   <feature id="ghidra.xtext.sleigh.feature">
+      <category name="GhidraCategory"/>
    </feature>
-   <category-def name="ghidra.xtext.sleigh.editor" label="Ghidra"/>
+   <category-def name="GhidraCategory" label="Ghidra"/>
 </site>

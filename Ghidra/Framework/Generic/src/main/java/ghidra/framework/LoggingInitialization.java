@@ -29,6 +29,8 @@ import resources.ResourceManager;
 public class LoggingInitialization {
 
 	private static final String LOG4J_CONFIGURATION_PROPERTY = "log4j.configuration";
+	private static final String LOG4J2_CONFIGURATION_PROPERTY = "log4j.configurationFile";
+
 	private static final String PRODUCTION_LOGGING_CONFIGURATION_FILE = "generic.log4j.xml";
 	private static final String DEVELOPMENT_LOGGING_CONFIGURATION_FILE = "generic.log4jdev.xml";
 
@@ -47,6 +49,9 @@ public class LoggingInitialization {
 			try {
 				LoggerContext context = (LoggerContext) LogManager.getContext(false);
 				context.setConfigLocation(resource.toURI());
+
+				// make future, unresolved contexts (e.g. from OSGi bundles) use this configuration
+				System.setProperty(LOG4J2_CONFIGURATION_PROPERTY, resource.toURI().toString());
 			}
 			catch (URISyntaxException e) {
 				Msg.error(LoggingInitialization.class, "Unable to convert URL to URI", e);
@@ -58,7 +63,6 @@ public class LoggingInitialization {
 			(resource == null) ? "<no config file found>" : resource.toExternalForm();
 		Msg.info(LoggingInitialization.class, "Using log config file: " + configFilename);
 		Msg.info(LoggingInitialization.class, "Using log file: " + APPLICATION_LOG_FILE);
-
 		INITIALIZED = true;
 	}
 

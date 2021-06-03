@@ -17,6 +17,8 @@ package db;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Random;
 
 import org.junit.Assert;
@@ -31,49 +33,89 @@ public class DBTestUtils {
 
 	// Schema Types
 	static final int EMPTY = 0;
-	static final int SINGLE_BYTE = 1;
-	static final int SINGLE_INT = 2;
-	static final int SINGLE_SHORT = 3;
-	static final int SINGLE_LONG = 4;
-	static final int SINGLE_STRING = 5;
-	static final int SINGLE_BINARY = 6;
-	static final int ALL_TYPES = 7;
+	static final int SINGLE_BOOLEAN = 1;
+	static final int SINGLE_BYTE = 2;
+	static final int SINGLE_INT = 3;
+	static final int SINGLE_SHORT = 4;
+	static final int SINGLE_LONG = 5;
+	static final int SINGLE_STRING = 6;
+	static final int SINGLE_BINARY = 7;
+	static final int SINGLE_FIXED = 8;
+	static final int ALL_FIXED = 9;
+	static final int ALL_TYPES = 10;
 
-	static final int MAX_SCHEMA_TYPE = 7;
+	static final int MAX_SCHEMA_TYPE = 10;
 
-	private static Class<?>[][] schemaFields = { {}, // no columns
-		{ ByteField.class }, { IntField.class }, { ShortField.class }, { LongField.class },
-		{ StringField.class }, { BinaryField.class }, { ByteField.class, IntField.class,
-			ShortField.class, LongField.class, StringField.class, BinaryField.class } };
+	//@formatter:off
+	private static final Field[][] schemaFields = { 
+		{}, // no columns
+		{ BooleanField.INSTANCE },
+		{ ByteField.INSTANCE }, 
+		{ IntField.INSTANCE }, 
+		{ ShortField.INSTANCE },
+		{ LongField.INSTANCE }, 
+		{ StringField.INSTANCE }, 
+		{ BinaryField.INSTANCE },
+		{ FixedField10.INSTANCE },
+		{ BooleanField.INSTANCE, ByteField.INSTANCE, IntField.INSTANCE, ShortField.INSTANCE, 
+			LongField.INSTANCE, FixedField10.INSTANCE },
+		{ BooleanField.INSTANCE, ByteField.INSTANCE, IntField.INSTANCE, ShortField.INSTANCE, 
+			LongField.INSTANCE, StringField.INSTANCE, BinaryField.INSTANCE, FixedField10.INSTANCE } };
+	//@formatter:on
 
-	private static String[][] schemaFieldNames = { {}, // no columns
-		{ "Byte" }, { "Int" }, { "Short" }, { "Long" }, { "String" }, { "Binary" },
-		{ "Byte", "Int", "Short", "Long", "String", "Binary" } };
+	private static final int[][] schemaIndexedColumns =
+		{ {}, {}, {}, { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 2, 3, 4, 5 },
+			{ 2, 3, 4, 5, 6, 7 } };
 
-	private static Schema[] longKeySchemas =
-		{ new Schema(0, "LongKey", schemaFields[0], schemaFieldNames[0]),
-			new Schema(0, "LongKey", schemaFields[1], schemaFieldNames[1]),
-			new Schema(0, "LongKey", schemaFields[2], schemaFieldNames[2]),
-			new Schema(0, "LongKey", schemaFields[3], schemaFieldNames[3]),
-			new Schema(0, "LongKey", schemaFields[4], schemaFieldNames[4]),
-			new Schema(0, "LongKey", schemaFields[5], schemaFieldNames[5]),
-			new Schema(0, "LongKey", schemaFields[6], schemaFieldNames[6]),
-			new Schema(0, "LongKey", schemaFields[7], schemaFieldNames[7]) };
+	//@formatter:off
+	private static final String[][] schemaFieldNames = { 
+		{}, // no columns
+		{ "Boolean" }, { "Byte" }, { "Int" }, { "Short" }, { "Long" }, 
+		{ "String" }, { "Binary" }, { "Fixed" },
+		{ "Boolean", "Byte", "Int", "Short", "Long", "Fixed" },
+		{ "Boolean", "Byte", "Int", "Short", "Long", "String", "Binary", "Fixed" } 
+	};
+	//@formatter:on
 
-	private static Field varKeyType = new BinaryField();
-	private static Class<? extends Field> varKeyClass = varKeyType.getClass();
+	private static final Schema[] longKeySchemas;
+	static {
+		longKeySchemas = new Schema[MAX_SCHEMA_TYPE + 1];
+		for (int i = 0; i < longKeySchemas.length; i++) {
+			longKeySchemas[i] = new Schema(0, "LongKey", schemaFields[i], schemaFieldNames[i]);
+		}
+	}
 
-	private static Schema[] binaryKeySchemas =
-		{ new Schema(0, varKeyClass, "VarKey", schemaFields[0], schemaFieldNames[0]),
-			new Schema(0, varKeyClass, "VarKey", schemaFields[1], schemaFieldNames[1]),
-			new Schema(0, varKeyClass, "VarKey", schemaFields[2], schemaFieldNames[2]),
-			new Schema(0, varKeyClass, "VarKey", schemaFields[3], schemaFieldNames[3]),
-			new Schema(0, varKeyClass, "VarKey", schemaFields[4], schemaFieldNames[4]),
-			new Schema(0, varKeyClass, "VarKey", schemaFields[5], schemaFieldNames[5]),
-			new Schema(0, varKeyClass, "VarKey", schemaFields[6], schemaFieldNames[6]),
-			new Schema(0, varKeyClass, "VarKey", schemaFields[7], schemaFieldNames[7]) };
+	private static final Field fixedKeyType = new FixedField10();
+
+	private static final Schema[] fixedKeySchemas;
+	static {
+		fixedKeySchemas = new Schema[MAX_SCHEMA_TYPE + 1];
+		for (int i = 0; i < fixedKeySchemas.length; i++) {
+			fixedKeySchemas[i] =
+				new Schema(0, fixedKeyType, "FixedKey", schemaFields[i], schemaFieldNames[i]);
+		}
+	}
+
+	private static final Field varKeyType = new BinaryField();
+
+	private static final Schema[] binaryKeySchemas;
+	static {
+		binaryKeySchemas = new Schema[MAX_SCHEMA_TYPE + 1];
+		for (int i = 0; i < binaryKeySchemas.length; i++) {
+			binaryKeySchemas[i] =
+				new Schema(0, varKeyType, "VarKey", schemaFields[i], schemaFieldNames[i]);
+		}
+	}
 
 	static Random random = new Random(0x123456789L);
+
+	static int[] getIndexedColumns(int schemaType) {
+		return schemaIndexedColumns[schemaType];
+	}
+
+	static int getIndexedColumnCount(int schemaType) {
+		return schemaIndexedColumns[schemaType].length;
+	}
 
 	/**
 	 * Create a new long-keyed table within the specified database.
@@ -81,30 +123,106 @@ public class DBTestUtils {
 	 * @param name name of table
 	 * @param schemaType type of schema (use static identifier)
 	 * @param createIndex all fields will be indexed if true
+	 * @param useSparseColumns all fields will use sparse storage if true
 	 * @return Table new table
 	 * @throws IOException
 	 */
-	static Table createLongKeyTable(DBHandle db, String name, int schemaType, boolean createIndex)
+	static Table createLongKeyTable(DBHandle db, String name, int schemaType, boolean createIndex,
+			boolean useSparseColumns)
 			throws IOException {
 		Table t;
 		int indexCnt = 0;
-		if (createIndex) {
-			indexCnt = schemaFields[schemaType].length;
-			int[] indexedColumns = new int[indexCnt];
-			for (int i = 0; i < indexedColumns.length; i++) {
-				indexedColumns[i] = i;
+		int[] indexedColumns = null;
+
+		Schema[] schemas = longKeySchemas;
+		if (useSparseColumns) {
+			for (int i = 0; i < schemas.length; i++) {
+				schemas[i] = createSparseSchema(schemas[i]);
 			}
-			t = db.createTable(name, longKeySchemas[schemaType], indexedColumns);
 		}
-		else {
-			t = db.createTable(name, longKeySchemas[schemaType]);
+
+		if (createIndex) {
+			indexCnt = getIndexedColumnCount(schemaType);
+			indexedColumns = getAllowedIndexColumns(schemaFields[schemaType]);
 		}
+
+		t = db.createTable(name, schemas[schemaType], indexedColumns);
+
 		Assert.assertEquals(name, t.getName());
 		Assert.assertEquals(indexCnt, t.getIndexedColumns().length);
 		Assert.assertEquals(Long.MIN_VALUE, t.getMaxKey());
 		Assert.assertEquals(0, t.getRecordCount());
-		Assert.assertEquals(longKeySchemas[schemaType], t.getSchema());
+		Assert.assertEquals(schemas[schemaType], t.getSchema());
 		Assert.assertTrue(t.useLongKeys());
+		return t;
+	}
+
+	private static Schema createSparseSchema(Schema schema) {
+
+		Field[] fields = schema.getFields();
+		int[] sparseColumnIndexes = new int[fields.length];
+		for (int i = 0; i < sparseColumnIndexes.length; i++) {
+			sparseColumnIndexes[i] = i;
+		}
+		return new Schema(schema.getVersion(), schema.getKeyFieldType(), schema.getKeyName(),
+			fields, schema.getFieldNames(), sparseColumnIndexes);
+	}
+
+	static int[] getAllowedIndexColumns(Field[] columnFields) {
+		ArrayList<Integer> list = new ArrayList<>();
+		for (int i = 0; i < columnFields.length; i++) {
+			if (Field.canIndex(columnFields[i])) {
+				list.add(i);
+			}
+		}
+		int[] columnIndexes = new int[list.size()];
+		for (int i = 0; i < columnIndexes.length; i++) {
+			columnIndexes[i] = list.get(i);
+		}
+		return columnIndexes;
+	}
+
+	/**
+	 * Create a new FixedField-keyed table within the specified database.
+	 * @param db database handle
+	 * @param name name of table
+	 * @param schemaType type of schema (use static identifier)
+	 * @param createIndex all fields will be indexed if true
+	 * @param useSparseColumns all fields will use sparse storage if true
+	 * @return Table new table
+	 * @throws IOException
+	 */
+	static Table createFixedKeyTable(DBHandle db, String name, int schemaType, boolean createIndex,
+			boolean useSparseColumns)
+			throws IOException {
+		Table t;
+		int indexCnt = 0;
+		int[] indexedColumns = null;
+
+		Schema[] schemas = fixedKeySchemas;
+		if (useSparseColumns) {
+			for (int i = 0; i < schemas.length; i++) {
+				schemas[i] = createSparseSchema(schemas[i]);
+			}
+		}
+
+		if (createIndex) {
+			indexCnt = getIndexedColumnCount(schemaType);
+			indexedColumns = getAllowedIndexColumns(schemaFields[schemaType]);
+		}
+
+		t = db.createTable(name, schemas[schemaType], indexedColumns);
+
+		if (createIndex) {
+			Assert.assertArrayEquals(schemaIndexedColumns[schemaType], t.getIndexedColumns());
+		}
+
+		Assert.assertEquals(name, t.getName());
+		Assert.assertEquals(indexCnt, t.getIndexedColumns().length);
+		Assert.assertEquals(Long.MIN_VALUE, t.getMaxKey());
+		Assert.assertEquals(0, t.getRecordCount());
+		Assert.assertEquals(schemas[schemaType], t.getSchema());
+		Assert.assertTrue(!t.useLongKeys());
 		return t;
 	}
 
@@ -122,11 +240,7 @@ public class DBTestUtils {
 		Table t;
 		int indexCnt = 0;
 		if (createIndex) {
-			indexCnt = schemaFields[schemaType].length;
-			int[] indexedColumns = new int[indexCnt];
-			for (int i = 0; i < indexedColumns.length; i++) {
-				indexedColumns[i] = i;
-			}
+			int[] indexedColumns = getAllowedIndexColumns(schemaFields[schemaType]);
 			t = db.createTable(name, binaryKeySchemas[schemaType], indexedColumns);
 		}
 		else {
@@ -157,7 +271,7 @@ public class DBTestUtils {
 	 * @param doInsert insert record into table if true
 	 * @return Record new record
 	 */
-	static Record createLongKeyRecord(Table table, boolean randomKey, int varDataSize,
+	static DBRecord createLongKeyRecord(Table table, boolean randomKey, int varDataSize,
 			boolean doInsert) throws IOException, DuplicateKeyException {
 		long key;
 		if (randomKey) {
@@ -167,7 +281,7 @@ public class DBTestUtils {
 			key = table.getMaxKey() + 1;
 		}
 		try {
-			Record rec = createRecord(table, key, varDataSize, doInsert);
+			DBRecord rec = createRecord(table, key, varDataSize, doInsert);
 			if (!randomKey) {
 				Assert.assertEquals(rec.getKey(), table.getMaxKey());
 			}
@@ -182,6 +296,33 @@ public class DBTestUtils {
 	}
 
 	/**
+	 * Create a new random-FixedField-keyed record.
+	 * @param table
+	 * @param varDataSize
+	 * @param doInsert
+	 * @return Record
+	 * @throws IOException
+	 * @throws DuplicateKeyException
+	 */
+	static DBRecord createFixedKeyRecord(Table table, int varDataSize, boolean doInsert)
+			throws IOException, DuplicateKeyException {
+		int keyLength = 10;
+		byte[] bytes = new byte[keyLength];
+		random.nextBytes(bytes);
+		Field key = fixedKeyType.newField();
+		key.setBinaryData(bytes);
+
+		try {
+			DBRecord rec = createRecord(table, key, varDataSize, doInsert);
+			Assert.assertEquals(key, rec.getKeyField());
+			return rec;
+		}
+		catch (DuplicateKeyException dke) {
+			return createFixedKeyRecord(table, varDataSize, doInsert);
+		}
+	}
+
+	/**
 	 * Create a new random-BinaryField-keyed record.
 	 * @param table
 	 * @param maxKeyLength maximum key length; if < 0 keyLength = -maxKeyLength
@@ -191,7 +332,7 @@ public class DBTestUtils {
 	 * @throws IOException
 	 * @throws DuplicateKeyException
 	 */
-	static Record createBinaryKeyRecord(Table table, int maxKeyLength, int varDataSize,
+	static DBRecord createBinaryKeyRecord(Table table, int maxKeyLength, int varDataSize,
 			boolean doInsert) throws IOException, DuplicateKeyException {
 		int keyLength =
 			(maxKeyLength < 0) ? -maxKeyLength : DBTestUtils.getRandomKeyLength(maxKeyLength);
@@ -201,7 +342,7 @@ public class DBTestUtils {
 		key.setBinaryData(bytes);
 
 		try {
-			Record rec = createRecord(table, key, varDataSize, doInsert);
+			DBRecord rec = createRecord(table, key, varDataSize, doInsert);
 			Assert.assertEquals(key, rec.getKeyField());
 			return rec;
 		}
@@ -220,18 +361,18 @@ public class DBTestUtils {
 	 * @throws IOException
 	 * @throws DuplicateKeyException record with assigned key already exists in table.
 	 */
-	static Record createRecord(Table table, long key, int varDataSize, boolean doInsert)
+	static DBRecord createRecord(Table table, long key, int varDataSize, boolean doInsert)
 			throws IOException, DuplicateKeyException {
 		// Check for duplicate key
 		if (doInsert) {
-			Record oldRec = table.getRecord(key);
+			DBRecord oldRec = table.getRecord(key);
 			if (oldRec != null) {
 				throw new DuplicateKeyException();
 			}
 		}
 
 		// Create record and fill with data
-		Record rec = table.getSchema().createRecord(key);
+		DBRecord rec = table.getSchema().createRecord(key);
 		fillRecord(rec, varDataSize);
 
 		// Insert record if requested
@@ -254,18 +395,18 @@ public class DBTestUtils {
 	 * @throws IOException
 	 * @throws DuplicateKeyException record with assigned key already exists in table.
 	 */
-	static Record createRecord(Table table, Field key, int varDataSize, boolean doInsert)
+	static DBRecord createRecord(Table table, Field key, int varDataSize, boolean doInsert)
 			throws IOException, DuplicateKeyException {
 		// Check for duplicate key
 		if (doInsert) {
-			Record oldRec = table.getRecord(key);
+			DBRecord oldRec = table.getRecord(key);
 			if (oldRec != null) {
 				throw new DuplicateKeyException();
 			}
 		}
 
 		// Create record and fill with data
-		Record rec = table.getSchema().createRecord(key);
+		DBRecord rec = table.getSchema().createRecord(key);
 		fillRecord(rec, varDataSize);
 
 		// Insert record if requested
@@ -276,6 +417,31 @@ public class DBTestUtils {
 		}
 
 		return rec;
+	}
+
+	static FixedField addToFixedField(Field fixedField, long increment) {
+		FixedField f = (FixedField) fixedField;
+		byte[] valueBytes = f.getBinaryData();
+		BigInteger v = new BigInteger(1, valueBytes);
+		v = v.add(BigInteger.valueOf(increment));
+		byte[] resultBytes = v.toByteArray();
+		if (resultBytes.length > valueBytes.length) {
+			if (resultBytes[0] != 0) {
+				throw new UnsupportedOperationException("overflow in test data");
+			}
+			byte[] b = new byte[valueBytes.length];
+			System.arraycopy(resultBytes, 1, b, 0, valueBytes.length);
+			resultBytes = b;
+		}
+		else if (resultBytes.length < valueBytes.length) {
+			byte[] b = new byte[valueBytes.length];
+			System.arraycopy(resultBytes, 0, b, valueBytes.length - resultBytes.length,
+				resultBytes.length);
+			resultBytes = b;
+		}
+		FixedField r = f.newField();
+		r.setBinaryData(resultBytes);
+		return r;
 	}
 
 	/**
@@ -289,18 +455,18 @@ public class DBTestUtils {
 	 * @throws IOException
 	 * @throws DuplicateKeyException record with assigned key already exists in table.
 	 */
-	static Record createMidRangeRecord(Table table, long key, int varDataSize, boolean doInsert)
+	static DBRecord createMidRangeRecord(Table table, long key, int varDataSize, boolean doInsert)
 			throws IOException, DuplicateKeyException {
 		// Check for duplicate key
 		if (doInsert) {
-			Record oldRec = table.getRecord(key);
+			DBRecord oldRec = table.getRecord(key);
 			if (oldRec != null) {
 				throw new DuplicateKeyException();
 			}
 		}
 
 		// Create record and fill with data
-		Record rec = table.getSchema().createRecord(key);
+		DBRecord rec = table.getSchema().createRecord(key);
 		fillMidRangeRecord(rec, varDataSize);
 
 		// Insert record if requested
@@ -324,18 +490,18 @@ public class DBTestUtils {
 	 * @throws IOException
 	 * @throws DuplicateKeyException record with assigned key already exists in table.
 	 */
-	static Record createMidRangeRecord(Table table, Field key, int varDataSize, boolean doInsert)
+	static DBRecord createMidRangeRecord(Table table, Field key, int varDataSize, boolean doInsert)
 			throws IOException, DuplicateKeyException {
 		// Check for duplicate key
 		if (doInsert) {
-			Record oldRec = table.getRecord(key);
+			DBRecord oldRec = table.getRecord(key);
 			if (oldRec != null) {
 				throw new DuplicateKeyException();
 			}
 		}
 
 		// Create record and fill with data
-		Record rec = table.getSchema().createRecord(key);
+		DBRecord rec = table.getSchema().createRecord(key);
 		fillMidRangeRecord(rec, varDataSize);
 
 		// Insert record if requested
@@ -355,11 +521,14 @@ public class DBTestUtils {
 	 * NOTE: The StringField does not strictly follow the varDataSize paramter.
 	 * A value less than 0 results in a null assignment to those fields.
 	 */
-	static void fillRecord(Record rec, int varDataSize) {
+	static void fillRecord(DBRecord rec, int varDataSize) {
 
 		Field[] fields = rec.getFields();
 		for (int i = 0; i < fields.length; i++) {
-			if (fields[i] instanceof ByteField) {
+			if (fields[i] instanceof BooleanField) {
+				rec.setBooleanValue(i, (random.nextInt() % 2) == 0);
+			}
+			else if (fields[i] instanceof ByteField) {
 				rec.setByteValue(i, (byte) random.nextInt());
 			}
 			else if (fields[i] instanceof ShortField) {
@@ -389,7 +558,7 @@ public class DBTestUtils {
 				}
 			}
 			else if (fields[i] instanceof BinaryField) {
-				int size = varDataSize;
+				int size = fields[i].isVariableLength() ? varDataSize : fields[i].length();
 				if (size < 0) {
 					size = random.nextInt(6) - 1;
 				}
@@ -417,7 +586,7 @@ public class DBTestUtils {
 	 * @param varDataSize number of bytes to fill into all variable length fields.
 	 * A value less than 0 results in a null assignment to those fields.
 	 */
-	static void fillMidRangeRecord(Record rec, int varDataSize) {
+	static void fillMidRangeRecord(DBRecord rec, int varDataSize) {
 
 		Field[] fields = rec.getFields();
 		for (int i = 0; i < fields.length; i++) {

@@ -17,8 +17,6 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 
 import java.util.*;
 
-import com.google.common.collect.ImmutableSet;
-
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedConstructor;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
@@ -33,7 +31,7 @@ import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
  * the solution, positioned in the field. If the expression is constant, it checks that the goal
  * agrees. If not, an error is returned.
  * 
- * @TODO This whole mechanism ought to just be factored directly into {@link PatternExpression}.
+ * TODO This whole mechanism ought to just be factored directly into {@link PatternExpression}.
  */
 public class RecursiveDescentSolver {
 	protected static final DbgTimer dbg = DbgTimer.INACTIVE;
@@ -110,7 +108,6 @@ public class RecursiveDescentSolver {
 	 * @param description a description to attached to the encoded solution
 	 * @return the encoded solution
 	 * @throws NeedsBackfillException a solution may exist, but a required symbol is missing
-	 * @throws SolverException a solution does not exist
 	 */
 	protected AssemblyResolution solve(PatternExpression exp, MaskedLong goal,
 			Map<String, Long> vals, Map<Integer, Object> res, AssemblyResolvedConstructor cur,
@@ -141,7 +138,7 @@ public class RecursiveDescentSolver {
 	 * {@link NeedsBackfillException}. The symbols, when known, are provided to the solver via the
 	 * {@code vals} parameter.
 	 * 
-	 * Expressions involving {@link OperandValue}s are a little more complicated, because they
+	 * Expressions involving {@link OperandValueSolver}s are a little more complicated, because they
 	 * specify an offset that affects its encoding in the instruction. To compute this offset, the
 	 * lengths of other surrounding operands must be known. Thus, when solving a context change for
 	 * a given constructor, its resolved subconstructors must be provided to the solver via the
@@ -154,12 +151,11 @@ public class RecursiveDescentSolver {
 	 * @param description a description to attached to the encoded solution
 	 * @return the encoded solution
 	 * @throws NeedsBackfillException a solution may exist, but a required symbol is missing
-	 * @throws SolverException a solution does not exist
 	 */
 	public AssemblyResolution solve(PatternExpression exp, MaskedLong goal, Map<String, Long> vals,
 			Map<Integer, Object> res, AssemblyResolvedConstructor cur, String description)
 			throws NeedsBackfillException {
-		return solve(exp, goal, vals, res, cur, ImmutableSet.of(), description);
+		return solve(exp, goal, vals, res, cur, Set.of(), description);
 	}
 
 	/**
@@ -168,7 +164,7 @@ public class RecursiveDescentSolver {
 	 * @param exp the (sub-)expression to fold
 	 * @param vals any defined symbols (usually {@code inst_start}, and {@code inst_next})
 	 * @param res resolved subconstructors, by operand index (see
-	 *            {@link #solve(PatternExpression, MaskedLong, Map, Map, String)})
+	 *        {@link #solve(PatternExpression, MaskedLong, Map, Map, AssemblyResolvedConstructor, String)})
 	 * @return the masked solution
 	 * @throws NeedsBackfillException it may be folded, but a required symbol is missing
 	 */
@@ -191,7 +187,7 @@ public class RecursiveDescentSolver {
 	 * 
 	 * @param exp the expression, presumably containing a token field
 	 * @param res resolved subconstructors, by operand index (see
-	 *            {@link #solve(PatternExpression, MaskedLong, Map, Map, String)})
+	 *            {@link #solve(PatternExpression, MaskedLong, Map, Map, AssemblyResolvedConstructor, String)})
 	 * @return the anticipated length, in bytes, of the instruction encoding
 	 */
 	public int getInstructionLength(PatternExpression exp, Map<Integer, Object> res) {

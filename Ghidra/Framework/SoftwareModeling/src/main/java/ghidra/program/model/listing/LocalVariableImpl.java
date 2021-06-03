@@ -65,7 +65,7 @@ public class LocalVariableImpl extends VariableImpl implements LocalVariable {
 	 * @param firstUseOffset first use function-relative offset (i.e., start of scope).
 	 * @param dataType a fixed-length datatype.  (NOTE: Should be cloned to program datatype manager
 	 * prior to determining storage elements since their length may change)
-	 * @param the register used for the storage.
+	 * @param register the register used for the storage.
 	 * @param program target program
 	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
 	 * element is specified, or error while resolving storage element for specified datatype
@@ -82,7 +82,7 @@ public class LocalVariableImpl extends VariableImpl implements LocalVariable {
 	 * @param firstUseOffset first use function-relative offset (i.e., start of scope).
 	 * @param dataType a fixed-length datatype.  (NOTE: Should be cloned to program datatype manager
 	 * prior to determining storage elements since their length may change)
-	 * @param the register used for the storage.
+	 * @param register the register used for the storage.
 	 * @param program target program
 	 * @param sourceType name source type
 	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 

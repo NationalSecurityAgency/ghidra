@@ -15,11 +15,12 @@
  */
 package ghidra.framework.project;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
 import ghidra.framework.model.*;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.listing.Program;
@@ -73,7 +74,7 @@ public class CreateDomainObjectTest extends AbstractGhidraHeadedIntegrationTest 
 
 		// test 1 create a program and add it to a project
 		Program program1 = createProgram(project, "Prog1", this);
-		Tool consumer2 = new DummyTool();
+		PluginTool consumer2 = new DummyTool();
 		Program program2 = null;
 		try {
 			// test 2 - get the object from the project and make sure it is the
@@ -213,7 +214,7 @@ public class CreateDomainObjectTest extends AbstractGhidraHeadedIntegrationTest 
 
 	private static void createProgramReadOnly(Project proj, String progName) throws Exception {
 
-		Tool t = new DummyTool();
+		PluginTool t = new DummyTool();
 		Program p = createDefaultProgram(progName, ProgramBuilder._TOY, t);
 
 		try {
@@ -295,7 +296,7 @@ public class CreateDomainObjectTest extends AbstractGhidraHeadedIntegrationTest 
 		DomainFolder f3 = f.createFolder("Y");
 		DomainFolder f4 = f.createFolder("Z");
 
-		Tool t = new DummyTool("Tool1");
+		PluginTool t = new DummyTool("Tool1");
 
 		Program p1 = null;
 		Program p2 = null;
@@ -344,7 +345,7 @@ public class CreateDomainObjectTest extends AbstractGhidraHeadedIntegrationTest 
 		DomainFolder f3 = f.getFolder("Y");
 		DomainFolder f4 = f.getFolder("Z");
 
-		Tool t = new DummyTool("Tool1");
+		PluginTool t = new DummyTool("Tool1");
 
 		if ((f.getFile("AAA") == null) || (f.getFile("BBB") == null) ||
 			(f2.getFile("CCC") == null) || (f3.getFile("DDD") == null) ||

@@ -50,8 +50,7 @@ public class PowerPCDisassembleCommand extends DisassembleCommand {
 
 	/**
 	* Constructor for PowerPCDisassembleCommand.
-	* @param startSet set of addresses to be the start of a disassembly.  The
-	* Command object will attempt to start a disassembly at each address in this set.
+	* @param start address to be the start of a disassembly.
 	* @param restrictedSet addresses that can be disassembled.
 	* a null set implies no restrictions
 	* @param vleMode pass true if the disassembling in PowerISA VLE Mode, otherwise
@@ -62,9 +61,6 @@ public class PowerPCDisassembleCommand extends DisassembleCommand {
 		this.vleMode = vleMode;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Disassemble " + (vleMode ? "PPC-VLE" : "PPC");
@@ -80,10 +76,6 @@ public class PowerPCDisassembleCommand extends DisassembleCommand {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	synchronized public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
 		Program program = (Program) obj;

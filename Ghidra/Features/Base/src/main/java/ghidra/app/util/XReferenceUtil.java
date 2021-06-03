@@ -17,13 +17,23 @@ package ghidra.app.util;
 
 import java.util.*;
 
+import org.apache.commons.collections4.CollectionUtils;
+
+import ghidra.app.nav.Navigatable;
+import ghidra.app.plugin.core.table.TableComponentProvider;
+import ghidra.app.util.query.TableService;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
+import ghidra.program.util.ProgramLocation;
+import ghidra.util.table.ReferencesFromTableModel;
+import ghidra.util.table.field.ReferenceEndpoint;
 
 /**
  * A utility class to handle the generation of
- * direct and offcut cross-reference (XREF) lists
+ * direct and offcut cross-reference (xref) lists
  * on code units and stack variables.
  */
 public class XReferenceUtil {
@@ -36,11 +46,11 @@ public class XReferenceUtil {
 
 	/**
 	 * Returns an array containing all
-	 * direct XREF addresses to the specified code unit.
+	 * direct xref addresses to the specified code unit.
 	 * 
-	 * @param cu the code unit to generate the XREFs
+	 * @param cu the code unit to generate the xrefs
 	 * 
-	 * @return array of all XREFs to the code unit
+	 * @return array of all xrefs to the code unit
 	 */
 	public final static Address[] getXRefList(CodeUnit cu) {
 		return getXRefList(cu, -1); // get all 
@@ -48,13 +58,13 @@ public class XReferenceUtil {
 
 	/**
 	 * Returns an array containing the first <b><code>maxNumber</code></b>
-	 * direct XREF addresses to the specified code unit.
+	 * direct xref addresses to the specified code unit.
 	 *  
-	 * @param cu the code unit to generate the XREFs
-	 * @param maxNumber max number of XREFs to get,
+	 * @param cu the code unit to generate the xrefs
+	 * @param maxNumber max number of xrefs to get,
 	 *                  or -1 to get all references
 	 *  
-	 * @return array first <b><code>maxNumber</code></b> XREFs to the code unit
+	 * @return array first <b><code>maxNumber</code></b> xrefs to the code unit
 	 */
 	public final static Address[] getXRefList(CodeUnit cu, int maxNumber) {
 		Program prog = cu.getProgram();
@@ -62,7 +72,7 @@ public class XReferenceUtil {
 			return EMPTY_ADDR_ARRAY;
 		}
 		List<Address> xrefList = new ArrayList<Address>();
-		//lookup the direct XREFs to the current code unit
+		//lookup the direct xrefs to the current code unit
 		//
 		ReferenceIterator iter = prog.getReferenceManager().getReferencesTo(cu.getMinAddress());
 		while (iter.hasNext()) {
@@ -80,13 +90,13 @@ public class XReferenceUtil {
 
 	/**
 	 * Returns an array containing the first <b><code>maxNumber</code></b>
-	 * direct XREF references to the specified code unit.
+	 * direct xref references to the specified code unit.
 	 *  
-	 * @param cu the code unit to generate the XREFs
-	 * @param maxNumber max number of XREFs to get,
+	 * @param cu the code unit to generate the xrefs
+	 * @param maxNumber max number of xrefs to get,
 	 *                  or -1 to get all references
 	 *  
-	 * @return array first <b><code>maxNumber</code></b> XREFs to the code unit
+	 * @return array first <b><code>maxNumber</code></b> xrefs to the code unit
 	 */
 	public final static Reference[] getXReferences(CodeUnit cu, int maxNumber) {
 		Program prog = cu.getProgram();
@@ -94,7 +104,7 @@ public class XReferenceUtil {
 			return EMPTY_REF_ARRAY;
 		}
 		List<Reference> xrefList = new ArrayList<Reference>();
-		//lookup the direct XREFs to the current code unit
+		//lookup the direct xrefs to the current code unit
 		//
 		ReferenceIterator iter = prog.getReferenceManager().getReferencesTo(cu.getMinAddress());
 		while (iter.hasNext()) {
@@ -121,11 +131,11 @@ public class XReferenceUtil {
 
 	/**
 	 * Returns an array containing all
-	 * offcut XREF addresses to the specified code unit.
+	 * offcut xref addresses to the specified code unit.
 	 * 
-	 * @param cu the code unit to generate the offcut XREFs
+	 * @param cu the code unit to generate the offcut xrefs
 	 * 
-	 * @return array of all offcut XREFs to the code unit
+	 * @return array of all offcut xrefs to the code unit
 	 */
 	public final static Address[] getOffcutXRefList(CodeUnit cu) {
 		return getOffcutXRefList(cu, -1); // get all
@@ -133,13 +143,13 @@ public class XReferenceUtil {
 
 	/**
 	 * Returns an array containing all
-	 * offcut XREF addresses to the specified code unit.
+	 * offcut xref addresses to the specified code unit.
 	 * 
-	 * @param cu the code unit to generate the offcut XREFs
-	 * @param maxXRefs max number of offcut XREFs to get,
+	 * @param cu the code unit to generate the offcut xrefs
+	 * @param maxXRefs max number of offcut xrefs to get,
 	 *                  or -1 to get all offcut references
 	 * 
-	 * @return array of all offcut XREFs to the code unit
+	 * @return array of all offcut xrefs to the code unit
 	 */
 	public final static Address[] getOffcutXRefList(CodeUnit cu, int maxXRefs) {
 		Program prog = cu.getProgram();
@@ -147,7 +157,7 @@ public class XReferenceUtil {
 			return EMPTY_ADDR_ARRAY;
 		}
 		List<Address> offcutList = new ArrayList<Address>();
-		// Lookup the offcut XREFs...
+		// Lookup the offcut xrefs...
 		//
 		if (cu.getLength() > 1) {
 			ReferenceManager refMgr = prog.getReferenceManager();
@@ -173,14 +183,12 @@ public class XReferenceUtil {
 	}
 
 	/**
-	 * Returns an array containing all
-	 * offcut XREF references to the specified code unit.
+	 * Returns an array containing all offcut xref references to the specified code unit
 	 * 
-	 * @param cu the code unit to generate the offcut XREFs
-	 * @param maxXRefs max number of offcut XREFs to get,
-	 *                  or -1 to get all offcut references
+	 * @param cu the code unit to generate the offcut xrefs
+	 * @param maxXRefs max number of offcut xrefs to get, or -1 to get all offcut references
 	 * 
-	 * @return array of all offcut XREFs to the code unit
+	 * @return array of all offcut xrefs to the code unit
 	 */
 	public final static Reference[] getOffcutXReferences(CodeUnit cu, int maxXRefs) {
 		Program prog = cu.getProgram();
@@ -188,7 +196,7 @@ public class XReferenceUtil {
 			return EMPTY_REF_ARRAY;
 		}
 		List<Reference> offcutList = new ArrayList<Reference>();
-		// Lookup the offcut XREFs...
+		// Lookup the offcut xrefs...
 		//
 		if (cu.getLength() > 1) {
 			ReferenceManager refMgr = prog.getReferenceManager();
@@ -214,10 +222,9 @@ public class XReferenceUtil {
 	}
 
 	/**
-	 * Returns the count of all 
-	 * offcut XREF addresses to the specified code unit.
-	 * @param cu the code unit to generate the offcut XREFs
-	 * @return count of all offcut XREFs to the code unit
+	 * Returns the count of all offcut xref addresses to the specified code unit
+	 * @param cu the code unit to generate the offcut xrefs
+	 * @return count of all offcut xrefs to the code unit
 	 */
 	public static int getOffcutXRefCount(CodeUnit cu) {
 		Program prog = cu.getProgram();
@@ -243,18 +250,19 @@ public class XReferenceUtil {
 	}
 
 	/**
-	 * Populates the provided array lists with the direct and
-	 * offcut XREFs to the specified variable.
+	 * Populates the provided lists with the direct and offcut xrefs to the specified variable
 	 * 
 	 * @param var     variable to get references
-	 * @param xrefs   list to put direct references on
-	 * @param offcuts list to put offcut references on
+	 * @param xrefs   list to put direct references in
+	 * @param offcuts list to put offcut references in
 	 */
-	public static void getVariableRefs(Variable var, List<Reference> xrefs, List<Reference> offcuts) {
+	public static void getVariableRefs(Variable var, List<Reference> xrefs,
+			List<Reference> offcuts) {
 		Address addr = var.getMinAddress();
 		if (addr == null) {
 			return;
 		}
+
 		Program program = var.getFunction().getProgram();
 		ReferenceManager refMgr = program.getReferenceManager();
 		Reference[] vrefs = refMgr.getReferencesTo(var);
@@ -269,18 +277,73 @@ public class XReferenceUtil {
 	}
 
 	/**
-	 * Get the reference count to the min address of the given code unit.
-	 * If an external entry exists there, then subtract one from the count.
-	 * @param cu code unit
-	 * @return reference count, excluding an external entry reference
+	 * Returns the direct and offcut xrefs to the specified variable
+	 * 
+	 * @param var variable to get references
+	 * @return the set of references
 	 */
-	public static int getReferenceCount(CodeUnit cu) {
-		Program program = cu.getProgram();
-		Address toAddr = cu.getMinAddress();
-		int count = program.getReferenceManager().getReferenceCountTo(toAddr);
-		if (program.getSymbolTable().isExternalEntryPoint(toAddr)) {
-			--count;
+	public static Set<Reference> getVariableRefs(Variable var) {
+
+		Set<Reference> results = new HashSet<>();
+		Address addr = var.getMinAddress();
+		if (addr == null) {
+			return results;
 		}
-		return count;
+
+		Program program = var.getFunction().getProgram();
+		ReferenceManager refMgr = program.getReferenceManager();
+		Reference[] vrefs = refMgr.getReferencesTo(var);
+		for (Reference vref : vrefs) {
+			results.add(vref);
+		}
+		return results;
+	}
+
+	/**
+	 * Shows all xrefs to the given location in a new table.  These xrefs are retrieved 
+	 * from the given supplier.  Thus, it is up to the client to determine which xrefs to show.
+	 * 
+	 * @param navigatable the navigatable used for navigation from the table
+	 * @param serviceProvider the service provider needed to wire navigation
+	 * @param service the service needed to show the table
+	 * @param location the location for which to find references
+	 * @param xrefs the xrefs to show
+	 */
+	public static void showAllXrefs(Navigatable navigatable, ServiceProvider serviceProvider,
+			TableService service, ProgramLocation location, Set<Reference> xrefs) {
+
+		ReferencesFromTableModel model =
+			new ReferencesFromTableModel(new ArrayList<>(xrefs), serviceProvider,
+				location.getProgram());
+		TableComponentProvider<ReferenceEndpoint> provider = service.showTable(
+			"XRefs to " + location.getAddress().toString(), "XRefs", model, "XRefs", navigatable);
+		provider.installRemoveItemsAction();
+	}
+
+	/**
+	 * Returns all xrefs to the given location.  If in data, then xrefs to the specific data
+	 * component will be returned.  Otherwise, the code unit containing the address of the 
+	 * given location will be used as the source of the xrefs.
+	 * 
+	 * @param location the location for which to get xrefs
+	 * @return the xrefs
+	 */
+	public static Set<Reference> getAllXrefs(ProgramLocation location) {
+
+		CodeUnit cu = DataUtilities.getDataAtLocation(location);
+		if (cu == null) {
+			Address toAddress = location.getAddress();
+			Listing listing = location.getProgram().getListing();
+			cu = listing.getCodeUnitContaining(toAddress);
+		}
+
+		Reference[] xrefs = getXReferences(cu, ALL_REFS);
+		Reference[] offcuts = getOffcutXReferences(cu, ALL_REFS);
+
+		// Remove duplicates
+		Set<Reference> set = new HashSet<>();
+		CollectionUtils.addAll(set, xrefs);
+		CollectionUtils.addAll(set, offcuts);
+		return set;
 	}
 }

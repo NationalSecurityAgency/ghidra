@@ -21,9 +21,9 @@ package ghidra.app.util.datatype.microsoft;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.data.*;
-import ghidra.program.model.lang.ProcessorContext;
 import ghidra.program.model.mem.MemBuffer;
-import ghidra.util.*;
+import ghidra.util.Conv;
+import ghidra.util.DataConverter;
 import ghidra.util.classfinder.ClassTranslator;
 
 /**
@@ -66,65 +66,36 @@ public class GuidDataType extends BuiltIn {
 		super(null, NAME, dtm);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getMnemonic(Settings)
-	 */
+	@Override
 	public String getMnemonic(Settings settings) {
 		return NAME;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getLength()
-	 */
+	@Override
 	public int getLength() {
 		return SIZE;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	public boolean isDynamicallySized() {
-		return false;
-	}
-
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getDescription()
-	 */
+	@Override
 	public String getDescription() {
 		return NAME;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getValue(ghidra.program.model.mem.MemBuffer, ghidra.docking.settings.Settings, int)
-	 */
+	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		return getString(buf, settings);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getRepresentation(MemBuffer, Settings, int)
-	 */
+	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		return getString(buf, settings);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.BuiltIn#getBuiltInSettingsDefinitions()
-	 */
 	@Override
 	protected SettingsDefinition[] getBuiltInSettingsDefinitions() {
 		return SETTINGS_DEFS;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.ByteDataType#getString(ProcessorContext, Settings)
-	 */
 	protected String getString(MemBuffer buf, Settings settings) {
 
 		Object guidName = settings.getValue(KEY);
@@ -134,9 +105,7 @@ public class GuidDataType extends BuiltIn {
 		long[] data = new long[4];
 
 		boolean isBigEndian = ENDIAN.isBigEndian(settings, buf);
-		DataConverter conv =
-			isBigEndian ? (DataConverter) new BigEndianDataConverter()
-					: (DataConverter) new LittleEndianDataConverter();
+		DataConverter conv = DataConverter.getInstance(isBigEndian);
 
 		if (buf.getBytes(bytes, 0) != bytes.length) {
 			if (guidName != null) {
@@ -156,8 +125,9 @@ public class GuidDataType extends BuiltIn {
 		retVal += Conv.toHexString((short) (data[1] >> 16)) + delim;
 		for (int i = 0; i < 4; i++) {
 			retVal += Conv.toHexString((byte) (data[2] >> i * 8));
-			if (i == 1)
+			if (i == 1) {
 				retVal += delim;
+			}
 		}
 		for (int i = 0; i < 4; i++) {
 			retVal += Conv.toHexString((byte) (data[3] >> i * 8));
@@ -192,6 +162,7 @@ public class GuidDataType extends BuiltIn {
 		return NAME;
 	}
 
+	@Override
 	public DataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;

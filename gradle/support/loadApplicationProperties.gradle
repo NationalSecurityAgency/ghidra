@@ -1,8 +1,22 @@
-
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 /*****************************************************************************************
  *
  * Reads the Ghidra/application.properties file and sets properties for the version, 
- *  		release name, and distro prefix (ghidira_<version>)
+ *  		release name, and distro prefix (ghidra_<version>)
  *
  *****************************************************************************************/
 def ghidraProps = new Properties()
@@ -27,4 +41,13 @@ file("Ghidra/application.properties").withReader { reader ->
 		project.ext.BUILD_DATE_SHORT = getCurrentDate()
 		project.ext.BUILD_DATES_NEEDED = true
 	}
+	
+	// If the properties contain an entry for the git revision, then it
+	// must have been set by the extractor, so don't change it. If not, we will
+	// need to set it in the assembleDistribution task
+	project.ext.GIT_REV = ghidraProps.getProperty('application.revision.ghidra')
+	project.ext.GIT_REVS_NEEDED = false;
+	if (GIT_REV == null) {
+        project.ext.GIT_REVS_NEEDED = true
+    }
 }

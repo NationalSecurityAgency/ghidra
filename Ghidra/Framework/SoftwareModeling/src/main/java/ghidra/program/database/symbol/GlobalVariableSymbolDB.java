@@ -15,7 +15,7 @@
  */
 package ghidra.program.database.symbol;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
@@ -32,7 +32,7 @@ public class GlobalVariableSymbolDB extends VariableSymbolDB {
 	 * @param record the record for the symbol
 	 */
 	public GlobalVariableSymbolDB(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache,
-			VariableStorageManagerDB variableMgr, Address address, Record record) {
+			VariableStorageManagerDB variableMgr, Address address, DBRecord record) {
 		super(symbolMgr, cache, SymbolType.GLOBAL_VAR, variableMgr, address, record);
 	}
 
@@ -54,7 +54,7 @@ public class GlobalVariableSymbolDB extends VariableSymbolDB {
 	}
 
 	@Override
-	public String getName() {
+	protected String doGetName() {
 		if (!checkIsValid()) {
 			// TODO: SCR 
 			return "[Invalid VariableSymbol - Deleted!]";
@@ -63,7 +63,7 @@ public class GlobalVariableSymbolDB extends VariableSymbolDB {
 		if (storage == null) {
 			return Function.DEFAULT_LOCAL_PREFIX + "_!BAD!";
 		}
-		return super.getName();
+		return super.doGetName();
 	}
 
 }

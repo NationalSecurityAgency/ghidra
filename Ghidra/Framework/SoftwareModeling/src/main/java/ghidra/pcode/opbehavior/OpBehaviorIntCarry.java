@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,11 @@
  */
 package ghidra.pcode.opbehavior;
 
+import java.math.BigInteger;
+
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.util.exception.AssertException;
-
-import java.math.BigInteger;
 
 public class OpBehaviorIntCarry extends BinaryOpBehavior {
 
@@ -30,16 +29,7 @@ public class OpBehaviorIntCarry extends BinaryOpBehavior {
 
 	@Override
 	public long evaluateBinary(int sizeout, int sizein, long in1, long in2) {
-		// must handle possible 64-bit signed case special
-		if (sizein == 8) {
-			if (in1 < 0) {
-				return ((in2 < 0) || (-in2 <= in1)) ? 1 : 0;
-			}
-			if (in2 < 0) {
-				return (-in1 <= in2) ? 1 : 0;
-			}
-		}
-		return (in1 > ((in1 + in2) & Utils.calc_mask(sizein))) ? 1 : 0;
+		return (Long.compareUnsigned(in1, (in1 + in2) & Utils.calc_mask(sizein)) > 0) ? 1 : 0;
 	}
 
 	@Override

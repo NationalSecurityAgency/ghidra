@@ -50,7 +50,7 @@ class ProjectDataPanel extends JSplitPane {
 	private static final String EXPANDED_PATHS = "EXPANDED_PATHS";
 
 	private FrontEndPlugin frontEndPlugin;
-	private JTabbedPane projectTabPanel;
+	private JTabbedPane projectTab;
 	private JTabbedPane readOnlyTab;
 	private Map<ProjectLocator, ProjectDataTreePanel> readOnlyViews;
 	private FrontEndTool tool;
@@ -70,15 +70,15 @@ class ProjectDataPanel extends JSplitPane {
 		// initialize the table of views being managed
 		readOnlyViews = new HashMap<>(TYPICAL_NUM_VIEWS);
 
-		projectTabPanel = new JTabbedPane(SwingConstants.BOTTOM);
-		projectTabPanel.setBorder(BorderFactory.createTitledBorder(BORDER_PREFIX));
-		projectTabPanel.addChangeListener(e -> frontEndPlugin.getTool().contextChanged(null));
+		projectTab = new JTabbedPane(SwingConstants.BOTTOM);
+		projectTab.setBorder(BorderFactory.createTitledBorder(BORDER_PREFIX));
+		projectTab.addChangeListener(e -> frontEndPlugin.getTool().contextChanged(null));
 
-		projectTabPanel.addTab("Tree View", activePanel);
-		projectTabPanel.addTab("Table View", tablePanel);
+		projectTab.addTab("Tree View", activePanel);
+		projectTab.addTab("Table View", tablePanel);
 		// setup the active data tree panel
-		this.add(projectTabPanel, JSplitPane.LEFT);
-		projectTabPanel.setBorder(BorderFactory.createTitledBorder(BORDER_PREFIX));
+		this.add(projectTab, JSplitPane.LEFT);
+		projectTab.setBorder(BorderFactory.createTitledBorder(BORDER_PREFIX));
 
 		// initialize the read-only project view tabbed pane
 		// create a container panel just to have a title border because of a bug in
@@ -213,7 +213,9 @@ class ProjectDataPanel extends JSplitPane {
 	}
 
 	/**
-	 * Get the project data for the given project view.
+	 * Get the project data for the given project view
+	 * 
+	 * @param projectView the locator for the project to retrieve
 	 * @return null if project view was not found
 	 */
 	ProjectData getProjectData(ProjectLocator projectView) {
@@ -226,6 +228,7 @@ class ProjectDataPanel extends JSplitPane {
 
 	/**
 	 * remove (close) the specified project view
+	 * @param projectView the url for the view to close
 	 */
 	void closeView(URL projectView) {
 		Project activeProject = tool.getProject();
@@ -265,6 +268,7 @@ class ProjectDataPanel extends JSplitPane {
 
 	/**
 	 * returns the ProjectURL for the current active view; null if no views open
+	 * @return the ProjectURL for the current active view; null if no views open
 	 */
 	URL getCurrentView() {
 		return getProjectURL(treePanel);
@@ -312,12 +316,12 @@ class ProjectDataPanel extends JSplitPane {
 	}
 
 	void setBorder(String projectName) {
-		projectTabPanel.setBorder(BorderFactory.createTitledBorder(BORDER_PREFIX + projectName));
+		projectTab.setBorder(BorderFactory.createTitledBorder(BORDER_PREFIX + projectName));
 		treePanel.updateProjectName(projectName);
 	}
 
 	ActionContext getActionContext(ComponentProvider provider, MouseEvent e) {
-		Component comp = e == null ? projectTabPanel.getSelectedComponent() : e.getComponent();
+		Component comp = e == null ? projectTab.getSelectedComponent() : e.getComponent();
 
 		while (comp != null) {
 			if (comp instanceof JTabbedPane) {
@@ -361,11 +365,11 @@ class ProjectDataPanel extends JSplitPane {
 	}
 
 	private void showTable() {
-		projectTabPanel.setSelectedIndex(1);
+		projectTab.setSelectedIndex(1);
 	}
 
 	private boolean isTableShowing() {
-		return projectTabPanel.getSelectedIndex() == 1;
+		return projectTab.getSelectedIndex() == 1;
 	}
 
 }

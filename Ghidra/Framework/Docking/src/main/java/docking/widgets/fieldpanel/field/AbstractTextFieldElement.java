@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,25 +47,16 @@ abstract public class AbstractTextFieldElement implements FieldElement {
 		this.column = column;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.FieldElement#getText()
-	 */
 	@Override
 	public String getText() {
 		return attributedString.getText();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.FieldElement#charAt(int)
-	 */
 	@Override
 	public char charAt(int index) {
 		return attributedString.getText().charAt(index);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.FieldElement#length()
-	 */
 	@Override
 	public int length() {
 		return getText().length();
@@ -76,57 +66,36 @@ abstract public class AbstractTextFieldElement implements FieldElement {
 // font metrics methods
 //==================================================================================================
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.FieldElement#getStringWidth()
-	 */
 	@Override
 	public int getStringWidth() {
 		return attributedString.getStringWidth();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.FieldElement#getHeightAbove()
-	 */
 	@Override
 	public int getHeightAbove() {
 		return attributedString.getHeightAbove();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.FieldElement#getHeightBelow()
-	 */
 	@Override
 	public int getHeightBelow() {
 		return attributedString.getHeightBelow();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.FieldElement#getMaxCharactersForWidth(int)
-	 */
 	@Override
 	public int getMaxCharactersForWidth(int width) {
 		return attributedString.getColumnPosition(width);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.FieldElement#getColor(int)
-	 */
 	@Override
 	public Color getColor(int charIndex) {
 		return attributedString.getColor(charIndex);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.FieldElement#getFieldElement(int)
-	 */
 	@Override
 	public FieldElement getFieldElement(int characterOffset) {
 		return this;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.FieldElement#substring(int)
-	 */
 	@Override
 	public FieldElement substring(int start) {
 		return substring(start, attributedString.length());
@@ -140,9 +109,6 @@ abstract public class AbstractTextFieldElement implements FieldElement {
 //==================================================================================================
 // location info
 //==================================================================================================
-	/**
-	 * @see docking.widgets.fieldpanel.field.FieldElement#getDataLocationForCharacterIndex(int)
-	 */
 	@Override
 	public RowColLocation getDataLocationForCharacterIndex(int characterIndex) {
 		if (characterIndex < 0 || characterIndex > attributedString.getText().length()) {
@@ -151,9 +117,6 @@ abstract public class AbstractTextFieldElement implements FieldElement {
 		return new RowColLocation(row, column + characterIndex);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.FieldElement#getCharacterIndexForDataLocation(int, int)
-	 */
 	@Override
 	public int getCharacterIndexForDataLocation(int dataRow, int dataColumn) {
 		if (dataRow == row && (dataColumn >= column) && (dataColumn <= column + length())) {
@@ -167,9 +130,6 @@ abstract public class AbstractTextFieldElement implements FieldElement {
 // paint methods
 //==================================================================================================
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.FieldElement#paint(java.awt.Graphics, int, int)
-	 */
 	@Override
 	public void paint(JComponent c, Graphics g, int x, int y) {
 		attributedString.paint(c, g, x, y);

@@ -33,6 +33,7 @@ import ghidra.GhidraApplicationLayout;
 import ghidradev.EclipseMessageUtils;
 import ghidradev.ghidraprojectcreator.utils.GhidraScriptUtils;
 import ghidradev.ghidraprojectcreator.wizards.pages.*;
+import utilities.util.FileUtilities;
 
 /**
  * Wizard to create a new Ghidra scripting project.
@@ -147,8 +148,8 @@ public class CreateGhidraScriptProjectWizard extends Wizard implements INewWizar
 	 * @return True if the data returned from the wizard pages are valid; otherwise, false
 	 */
 	private boolean validate() {
-		if (projectPage.getProjectDir().getAbsolutePath().startsWith(
-			ghidraInstallationPage.getGhidraInstallDir().getAbsolutePath())) {
+		if (FileUtilities.isPathContainedWithin(ghidraInstallationPage.getGhidraInstallDir(),
+				projectPage.getProjectDir())) {
 			EclipseMessageUtils.showErrorDialog("Invalid Project Root Directory",
 				"Project root directory cannot reside inside of the selected Ghidra installation directory.");
 			return false;

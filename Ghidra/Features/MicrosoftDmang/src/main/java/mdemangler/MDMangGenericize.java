@@ -68,7 +68,7 @@ public class MDMangGenericize extends MDMang {
 		if (item != null) {
 			item.parse();
 		}
-		numCharsRemaining = iter.getLength() - iter.getIndex();
+		int numCharsRemaining = getNumCharsRemaining();
 		appendRemainder();
 		popContext();
 		// if (errorOnRemainingChars && (numCharsRemaining > 0)) {

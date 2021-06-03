@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +23,10 @@ public class OverlappingFunctionException extends Exception {
 	public OverlappingFunctionException(Address entryPoint, OverlappingNamespaceException e) {
 		super("Unable to create function at " + entryPoint + " due to overlap with range [" +
 			e.getStart() + "," + e.getEnd() + "]");
+	}
+	
+	public OverlappingFunctionException(Address entryPoint) {
+		super("Unable to create function at " + entryPoint + " due to overlap with another namespace");
 	}
 
 	public OverlappingFunctionException(String msg) {

@@ -59,7 +59,7 @@ class EquateRefDBAdapterV0 extends EquateRefDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#getRecord(long)
 	 */
 	@Override
-	Record getRecord(long key) throws IOException {
+	DBRecord getRecord(long key) throws IOException {
 		return convertV0Record(refTable.getRecord(key));
 	}
 
@@ -67,7 +67,7 @@ class EquateRefDBAdapterV0 extends EquateRefDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#createReference(long, short, long, long)
 	 */
 	@Override
-	Record createReference(long addr, short opIndex, long dynamicHash, long equateID) {
+	DBRecord createReference(long addr, short opIndex, long dynamicHash, long equateID) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -75,15 +75,15 @@ class EquateRefDBAdapterV0 extends EquateRefDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#getRecordKeysFrom(long)
 	 */
 	@Override
-	long[] getRecordKeysForAddr(long addr) throws IOException {
+	Field[] getRecordKeysForAddr(long addr) throws IOException {
 		return refTable.findRecords(new LongField(addr), ADDR_COL);
 	}
 
 	/**
-	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#updateRecord(ghidra.framework.store.db.Record)
+	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#updateRecord(ghidra.framework.store.db.DBRecord)
 	 */
 	@Override
-	void updateRecord(Record record) throws IOException {
+	void updateRecord(DBRecord record) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -91,7 +91,7 @@ class EquateRefDBAdapterV0 extends EquateRefDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#getRecordsForEquateID(long)
 	 */
 	@Override
-	long[] getRecordKeysForEquateID(long equateID) throws IOException {
+	Field[] getRecordKeysForEquateID(long equateID) throws IOException {
 		return refTable.findRecords(new LongField(equateID), EQUATE_ID_COL);
 	}
 
@@ -160,11 +160,11 @@ class EquateRefDBAdapterV0 extends EquateRefDBAdapter {
 		return refTable.getRecordCount();
 	}
 
-	private static Record convertV0Record(Record record) {
+	private static DBRecord convertV0Record(DBRecord record) {
 		if (record == null) {
 			return null;
 		}
-		Record newRec = REFS_SCHEMA.createRecord(record.getKey());
+		DBRecord newRec = REFS_SCHEMA.createRecord(record.getKey());
 		newRec.setLongValue(EQUATE_ID_COL, record.getLongValue(V0_EQUATE_ID_COL));
 		newRec.setLongValue(ADDR_COL, record.getLongValue(V0_ADDR_COL));
 		newRec.setShortValue(OP_INDEX_COL, record.getShortValue(V0_OP_INDEX_COL));
@@ -179,7 +179,7 @@ class EquateRefDBAdapterV0 extends EquateRefDBAdapter {
 		}
 
 		@Override
-		protected Record convertRecord(Record record) {
+		protected DBRecord convertRecord(DBRecord record) {
 			return convertV0Record(record);
 		}
 	}

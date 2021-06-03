@@ -86,7 +86,7 @@
           <register name="r0"/>
         </pentry>
         <pentry minsize="5" maxsize="8">
-          <addr space="join" piece1="r0" piece2="r1"/>
+          <addr space="join" piece1="r1" piece2="r0"/>
         </pentry>
       </output>
       <unaffected>

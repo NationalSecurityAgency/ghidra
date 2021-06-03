@@ -27,8 +27,9 @@ public class Lab5Script extends GhidraScript {
 
 	@Override
 	public void run() throws Exception {
-		Instruction instruction = getFirstInstruction();
-		while (instruction != null) {
+
+		for (Instruction instruction = getFirstInstruction(); instruction != null; instruction =
+			getInstructionAfter(instruction)) {
 			if (monitor.isCancelled()) {
 				break;
 			}
@@ -51,7 +52,6 @@ public class Lab5Script extends GhidraScript {
 			String comment =
 				"[" + register.getName() + "]=[" + scalar.toString(16, false, false, "", "") + "]";
 			setEOLComment(instruction.getMinAddress(), comment);
-			instruction = getInstructionAfter(instruction);
 		}
 	}
 }

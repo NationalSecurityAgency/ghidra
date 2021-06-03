@@ -41,7 +41,7 @@ import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
  * This class houses various methods for translating location and size data from the various
  * graph coordinate spaces.
  * 
- * <a name="graph_spaces">Graph Spaces</a>
+ * <a id="graph_spaces">Graph Spaces</a>
  * Size and location information is represented in multiple coordinate spaces, as listed below.
  * To translate from one to the other, use {@link GraphViewerUtils}; for example, to see if a 
  * mouse click is on a given vertex.

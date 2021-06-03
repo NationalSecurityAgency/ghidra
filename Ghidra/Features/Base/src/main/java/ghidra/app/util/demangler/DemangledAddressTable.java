@@ -23,21 +23,26 @@ import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
-import util.demangler.GenericDemangledAddressTable;
 
 public class DemangledAddressTable extends DemangledObject {
 
+	private boolean calculateLength;
 	private int length;
 
-	public DemangledAddressTable(String name, int length) {
+	/**
+	 * Constructor
+	 * 
+	 * @param mangled the source mangled string 
+	 * @param originalDemangled the original demangled string
+	 * @param name the name of the address table
+	 * @param calculateLength true if the length of this address table should be calculdated at 
+	 *        analysis time
+	 */
+	public DemangledAddressTable(String mangled, String originalDemangled, String name,
+			boolean calculateLength) {
+		super(mangled, originalDemangled);
 		setName(name);
-		this.length = length;
-	}
-
-	DemangledAddressTable(GenericDemangledAddressTable generic) {
-		super(generic);
-
-		length = generic.getLength();
+		this.calculateLength = calculateLength;
 	}
 
 	/**
@@ -57,7 +62,7 @@ public class DemangledAddressTable extends DemangledObject {
 			buffer.append(specialPrefix);
 			buffer.append(' ');
 		}
-		String namespaceStr = namespace.toSignature();
+		String namespaceStr = namespace.getNamespaceString();
 		buffer.append(namespaceStr);
 		if (!namespaceStr.endsWith(NAMESPACE_SEPARATOR)) {
 			buffer.append(NAMESPACE_SEPARATOR);
@@ -83,15 +88,16 @@ public class DemangledAddressTable extends DemangledObject {
 			return false;
 		}
 
+		Listing listing = program.getListing();
 		if (MemoryBlock.isExternalBlockAddress(address, program)) {
-			program.getListing().setComment(address, CodeUnit.EOL_COMMENT,
+			listing.setComment(address, CodeUnit.EOL_COMMENT,
 				"WARNING: Unable to apply demangled Address Table");
 			return true; // don't complain
 		}
 
-		if (length == -1) {
+		if (calculateLength) {
 			// determine length of address table
-			Data d = program.getListing().getDefinedDataAt(address);
+			Data d = listing.getDefinedDataAt(address);
 			if (d != null && Undefined.isUndefinedArray(d.getDataType())) {
 				// use length of Undefined array at start of table to indicate length
 				length = d.getLength();
@@ -102,6 +108,7 @@ public class DemangledAddressTable extends DemangledObject {
 					return false;
 				}
 			}
+			calculateLength = false;
 		}
 
 		if (isUndefinedInRange(program, address, address.add(length - 1))) {
@@ -115,7 +122,7 @@ public class DemangledAddressTable extends DemangledObject {
 	/**
 	 * Perform a best guess at the length of an address table assuming that 
 	 * another label (or end of block) can be used to identify the end.
-	 * @param program 
+	 * @param program the program
 	 * @param address start of address table
 	 * @return maximum length of table or -1 if address does not reside 
 	 * within an initialized memory block

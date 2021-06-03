@@ -17,24 +17,53 @@ package ghidra.app.util.bin;
 
 import java.io.*;
 
+import ghidra.formats.gfilesystem.FSRL;
+
 /**
- * Creates a byte provider constrained to a sub-section
- * of an existing byte provider.
+ * Creates a {@link ByteProvider} constrained to a sub-section of an existing {@link ByteProvider}.
  */
 public class ByteProviderWrapper implements ByteProvider {
 	private ByteProvider provider;
 	private long subOffset;
 	private long subLength;
+	private FSRL fsrl;
 
+	/**
+	 * Constructs a {@link ByteProviderWrapper} around the specified {@link ByteProvider}
+	 * 
+	 * @param provider the {@link ByteProvider} to wrap
+	 * @param subOffset the offset in the {@link ByteProvider} of where to start the new
+	 *   {@link ByteProviderWrapper} 
+	 * @param subLength the length of the new {@link ByteProviderWrapper} 
+	 */
 	public ByteProviderWrapper(ByteProvider provider, long subOffset, long subLength) {
+		this(provider, subOffset, subLength, null);
+	}
+
+	/**
+	 * Constructs a {@link ByteProviderWrapper} around the specified {@link ByteProvider}
+	 * 
+	 * @param provider the {@link ByteProvider} to wrap
+	 * @param subOffset the offset in the {@link ByteProvider} of where to start the new
+	 *   {@link ByteProviderWrapper} 
+	 * @param subLength the length of the new {@link ByteProviderWrapper} 
+	 * @param fsrl FSRL identity of the file this ByteProvider represents
+	 */
+	public ByteProviderWrapper(ByteProvider provider, long subOffset, long subLength, FSRL fsrl) {
 		this.provider = provider;
 		this.subOffset = subOffset;
 		this.subLength = subLength;
+		this.fsrl = fsrl;
 	}
 
 	@Override
 	public void close() {
 		// don't do anything for now
+	}
+
+	@Override
+	public FSRL getFSRL() {
+		return fsrl;
 	}
 
 	@Override
@@ -44,7 +73,7 @@ public class ByteProviderWrapper implements ByteProvider {
 
 	@Override
 	public InputStream getInputStream(long index) throws IOException {
-		return provider.getInputStream(subOffset + index);
+		return new ByteProviderInputStream(this, index, subLength - index);
 	}
 
 	@Override

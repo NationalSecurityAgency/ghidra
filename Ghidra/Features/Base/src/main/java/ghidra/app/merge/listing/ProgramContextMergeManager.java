@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,8 @@
  */
 package ghidra.app.merge.listing;
 
+import java.util.*;
+
 import ghidra.app.merge.MergeResolver;
 import ghidra.app.merge.ProgramMultiUserMergeManager;
 import ghidra.app.merge.tool.ListingMergePanel;
@@ -26,9 +27,6 @@ import ghidra.program.util.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * <code>ProgramContextMergeManager</code> merges register value changes 
@@ -70,7 +68,7 @@ public class ProgramContextMergeManager implements MergeResolver, ListingMergeCo
 	ProgramContext latestContext;
 	ProgramContext myContext;
 	ProgramContext resultContext;
-	Register[] registers;
+	List<Register> registers;
 
 	/** Used to determine differences between the original program and latest program. */
 	ProgramDiff diffOriginalLatest;
@@ -187,21 +185,19 @@ public class ProgramContextMergeManager implements MergeResolver, ListingMergeCo
 			mergePanel.setTopComponent(conflictInfoPanel);
 		}
 		try {
-			String[] latestNames = latestContext.getRegisterNames();
-			String[] myNames = myContext.getRegisterNames();
-			Arrays.sort(latestNames);
-			Arrays.sort(myNames);
-			if (!Arrays.equals(latestNames, myNames)) {
+			List<String> latestNames = latestContext.getRegisterNames();
+			List<String> myNames = myContext.getRegisterNames();
+			if (!latestNames.equals(myNames)) {
 				mergeManager.setStatusText("Program Context Registers don't match between the programs.");
 				cancel();
 				return;
 			}
 
-			Register[] regs = latestContext.getRegisters();
+			ArrayList<Register> regs = new ArrayList<>(latestContext.getRegisters());
 			// Sort the registers by size so that largest come first.
 			// This prevents the remove call below from incorrectly clearing 
 			// smaller registers that are part of a larger register.
-			Arrays.sort(regs, new Comparator<Register>() {
+			Collections.sort(regs, new Comparator<Register>() {
 				@Override
 				public int compare(Register r1, Register r2) {
 					return r2.getBitLength() - r1.getBitLength();
@@ -211,15 +207,16 @@ public class ProgramContextMergeManager implements MergeResolver, ListingMergeCo
 			int transactionID = resultPgm.startTransaction(getDescription());
 			boolean commit = false;
 			try {
-				int numRegs = regs.length;
+				int numRegs = regs.size();
 				monitor.initialize(numRegs);
 
 				// Get the conflicts for each register
 				for (int i = 0; i < numRegs; i++) {
-					if (regs[i].isProcessorContext()) {
+					Register reg = regs.get(i);
+					if (reg.isProcessorContext()) {
 						continue; // context register handle by code unit merge
 					}
-					String regName = regs[i].getName();
+					String regName = reg.getName();
 					int currentProgressPercentage = (int) (((float) 100 / numRegs) * i);
 					mergeManager.updateProgress(currentProgressPercentage,
 						"Merging register values for " + regName);

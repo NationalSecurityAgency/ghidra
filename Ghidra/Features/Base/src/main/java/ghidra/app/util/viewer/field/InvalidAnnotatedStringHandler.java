@@ -39,18 +39,12 @@ public class InvalidAnnotatedStringHandler implements AnnotatedStringHandler {
 		this.errorText = errorText;
 	}
 
-	/**
-	 * @see AnnotatedStringHandler#createAnnotatedString(AttributedString, String[], ServiceProvider)
-	 */
 	@Override
 	public AttributedString createAnnotatedString(AttributedString prototypeString, String[] text,
 			Program program) throws AnnotationException {
 		return new AttributedString(errorText, Color.RED, prototypeString.getFontMetrics(0));
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.AnnotatedStringHandler#getSupportedAnnotations()
-	 */
 	@Override
 	public String[] getSupportedAnnotations() {
 		return new String[0];
@@ -62,17 +56,11 @@ public class InvalidAnnotatedStringHandler implements AnnotatedStringHandler {
 		return false; // we don't handle clicks!!!
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.AnnotatedStringHandler#getDisplayString()
-	 */
 	@Override
 	public String getDisplayString() {
 		return "Invalid";
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.AnnotatedStringHandler#getPrototypeString()
-	 */
 	@Override
 	public String getPrototypeString() {
 		return "";

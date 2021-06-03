@@ -28,7 +28,7 @@ import javax.swing.table.TableColumnModel;
 
 /**
  * A GUI that provides a filterable table.  You are required to provide the method names
- * of <TT>T</TT> that should be used to create columns in the table.
+ * of <code>T</code> that should be used to create columns in the table.
  *
  * @param <T> the row object type that will be in the table
  */
@@ -116,6 +116,10 @@ public class GTableWidget<T> extends JPanel {
 		myModel.setTableSortState(TableSortState.createDefaultSortState(column));
 	}
 
+	public void setSortColumn(int column, boolean ascending) {
+		myModel.setTableSortState(TableSortState.createDefaultSortState(column, ascending));
+	}
+
 	protected void processMouseClicked(MouseEvent e) {
 		if (listener == null) {
 			return;
@@ -158,6 +162,10 @@ public class GTableWidget<T> extends JPanel {
 
 	public List<T> getSelectedRowObjects() {
 		return gFilterTable.getSelectedRowObjects();
+	}
+
+	public int getSelectedRowCount() {
+		return table.getSelectedRowCount();
 	}
 
 	public void addSelectionListener(ObjectSelectedListener<T> l) {
@@ -218,5 +226,13 @@ public class GTableWidget<T> extends JPanel {
 
 	public void focusFilter() {
 		gFilterTable.focusFilter();
+	}
+
+	public void setFilterText(String text) {
+		gFilterTable.setFiterText(text);
+	}
+
+	public void dispose() {
+		gFilterTable.dispose();
 	}
 }

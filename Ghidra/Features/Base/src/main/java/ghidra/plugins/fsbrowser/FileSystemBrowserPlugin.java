@@ -40,7 +40,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.plugin.importer.ImporterUtilities;
 import ghidra.plugin.importer.ProgramMappingService;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.task.TaskLauncher;
@@ -127,7 +127,7 @@ public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, Pro
 	 * @param show boolean true if the new browser component should be shown
 	 */
 	/* package */ void createNewFileSystemBrowser(FileSystemRef fsRef, boolean show) {
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> doCreateNewFileSystemBrowser(fsRef, show));
+		Swing.runIfSwingOrRunLater(() -> doCreateNewFileSystemBrowser(fsRef, show));
 	}
 
 	private void doCreateNewFileSystemBrowser(FileSystemRef fsRef, boolean show) {
@@ -157,7 +157,7 @@ public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, Pro
 	 * @param fsFSRL {@link FSRLRoot} of the filesystem to close.
 	 */
 	/* package */ void removeFileSystemBrowser(FSRLRoot fsFSRL) {
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
+		Swing.runIfSwingOrRunLater(() -> {
 			FileSystemBrowserComponentProvider fsbcp = currentBrowsers.get(fsFSRL);
 			if (fsbcp == null) {
 				return;
@@ -173,7 +173,7 @@ public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, Pro
 	 * Close all file system browser windows.
 	 */
 	private void removeAllFileSystemBrowsers() {
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
+		Swing.runIfSwingOrRunLater(() -> {
 			for (FileSystemBrowserComponentProvider fsbcp : new ArrayList<>(
 				currentBrowsers.values())) {
 				fsbcp.removeFromTool();
@@ -196,7 +196,9 @@ public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, Pro
 	@Override
 	public void projectClosed(Project project) {
 		removeAllFileSystemBrowsers();
-		FileSystemService.getInstance().closeUnusedFileSystems();
+		if (FileSystemService.isInitialized()) {
+			FileSystemService.getInstance().closeUnusedFileSystems();
+		}
 	}
 
 	@Override
@@ -252,15 +254,16 @@ public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, Pro
 	private void doOpenFilesystem(FSRL containerFSRL, Component parent, TaskMonitor monitor) {
 		try {
 			monitor.setMessage("Probing " + containerFSRL.getName() + " for filesystems");
-			FileSystemRef ref = FileSystemService.getInstance().probeFileForFilesystem(
-				containerFSRL, monitor, FileSystemProbeConflictResolver.GUI_PICKER);
+			FileSystemRef ref = FileSystemService.getInstance()
+					.probeFileForFilesystem(
+						containerFSRL, monitor, FileSystemProbeConflictResolver.GUI_PICKER);
 			if (ref == null) {
 				Msg.showWarn(this, parent, "Open Filesystem",
 					"No filesystem provider for " + containerFSRL.getName());
 				return;
 			}
 
-			SystemUtilities.runSwingLater(() -> {
+			Swing.runLater(() -> {
 				createNewFileSystemBrowser(ref, true);
 			});
 		}
@@ -275,7 +278,7 @@ public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, Pro
 	 * filesystem browser and then displays that filesystem in a new fsb browser.
 	 */
 	/* package */ void openFileSystem() {
-		SystemUtilities.runSwingLater(() -> doOpenFileSystem());
+		Swing.runLater(this::doOpenFileSystem);
 	}
 
 	private void doOpenFileSystem() {

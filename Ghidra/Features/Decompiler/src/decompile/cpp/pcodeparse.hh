@@ -82,7 +82,9 @@ public:
   void setResult(ConstructTpl *res) { result = res; }
   ConstructTpl *releaseResult(void) { ConstructTpl *res = result; result = (ConstructTpl *)0; return res; }
   virtual ~PcodeSnippet(void);
-  virtual void reportError(const string &msg);
+  virtual const Location *getLocation(SleighSymbol *sym) const { return (const Location *)0; }
+  virtual void reportError(const Location *loc, const string &msg);
+  virtual void reportWarning(const Location *loc, const string &msg) {}
   bool hasErrors(void) const { return (errorcount != 0); }
   const string getErrorMessage(void) const { return firsterror; }
   void setUniqueBase(uintb val) { tempbase = val; }

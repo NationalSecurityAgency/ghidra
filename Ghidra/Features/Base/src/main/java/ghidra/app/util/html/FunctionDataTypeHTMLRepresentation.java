@@ -18,7 +18,7 @@ package ghidra.app.util.html;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.datatype.DataTypeIdUrl;
+import ghidra.app.util.datatype.DataTypeUrl;
 import ghidra.app.util.html.diff.DataTypeDiff;
 import ghidra.app.util.html.diff.DataTypeDiffBuilder;
 import ghidra.program.model.data.*;
@@ -88,7 +88,7 @@ public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentati
 		GenericCallingConvention genericCallingConvention =
 			functionDefinition.getGenericCallingConvention();
 		String modifier = genericCallingConvention != GenericCallingConvention.unknown
-				? (" " + genericCallingConvention.name())
+				? (" " + genericCallingConvention.getDeclarationName())
 				: "";
 		return new TextLine(
 			HTMLUtilities.friendlyEncodeHTML(returnDataType.getDisplayName()) + modifier);
@@ -104,8 +104,8 @@ public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentati
 			String name = var.getName();
 
 			DataType locatableType = getLocatableDataType(dataType);
-			lines.add(new VariableTextLine(HTMLUtilities.friendlyEncodeHTML(displayName), name,
-				locatableType));
+			lines.add(new VariableTextLine(HTMLUtilities.friendlyEncodeHTML(displayName),
+				HTMLUtilities.friendlyEncodeHTML(name), locatableType));
 		}
 
 		return lines;
@@ -114,7 +114,7 @@ public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentati
 	private static String buildHTMLText(TextLine returnType, TextLine functionName,
 			List<ValidatableLine> arguments, TextLine varArgs, TextLine voidArgs) {
 
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 
 		String returnTypeText = returnType.getText();
 		returnTypeText = wrapStringInColor(returnTypeText, returnType.getTextColor());
@@ -185,7 +185,7 @@ public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentati
 		// Markup the name with info for later hyperlink capability, as needed by the client
 		//
 		DataType dataType = line.getDataType();
-		DataTypeIdUrl url = new DataTypeIdUrl(dataType);
+		DataTypeUrl url = new DataTypeUrl(dataType);
 		String wrapped = HTMLUtilities.wrapWithLinkPlaceholder(type, url.toString());
 		return wrapped;
 	}

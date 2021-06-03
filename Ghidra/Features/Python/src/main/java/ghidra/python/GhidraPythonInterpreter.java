@@ -100,7 +100,7 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 		// Store the default python path in case we need to reset it later.
 		defaultPythonPath = new ArrayList<>();
 		for (Object object : systemState.path) {
-			defaultPythonPath.add(Py.newString(object.toString()));
+			defaultPythonPath.add(Py.newStringOrUnicode(object.toString()));
 		}
 
 		// Allow interruption of python code to occur when various code paths are
@@ -135,18 +135,18 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 
 		// Add in Ghidra script source directories
 		for (ResourceFile resourceFile : GhidraScriptUtil.getScriptSourceDirectories()) {
-			systemState.path.append(Py.newString(resourceFile.getFile(false).getAbsolutePath()));
+			systemState.path.append(Py.newStringOrUnicode(resourceFile.getFile(false).getAbsolutePath()));
 		}
 
-		for (ResourceFile resourceFile : GhidraScriptUtil.getScriptBinDirectories()) {
-			systemState.path.append(Py.newString(resourceFile.getFile(false).getAbsolutePath()));
+		for (ResourceFile resourceFile : GhidraScriptUtil.getExplodedCompiledSourceBundlePaths()) {
+			systemState.path.append(Py.newStringOrUnicode(resourceFile.getFile(false).getAbsolutePath()));
 		}
 
 		// Add in the PyDev remote debugger module
 		if (!SystemUtilities.isInDevelopmentMode()) {
 			File pyDevSrcDir = PyDevUtils.getPyDevSrcDir();
 			if (pyDevSrcDir != null) {
-				systemState.path.append(Py.newString(pyDevSrcDir.getAbsolutePath()));
+				systemState.path.append(Py.newStringOrUnicode(pyDevSrcDir.getAbsolutePath()));
 			}
 		}
 	}
@@ -218,8 +218,12 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 					InetAddress localhost = InetAddress.getLocalHost();
 					new Socket(localhost, PyDevUtils.PYDEV_REMOTE_DEBUGGER_PORT).close();
 					Msg.info(this, "Python debugger found");
-					exec("import pydevd; pydevd.settrace(host=\"" + localhost.getHostName() +
+					StringBuilder dbgCmds = new StringBuilder();
+					dbgCmds.append("import pydevd;");
+					dbgCmds.append("pydevd.threadingCurrentThread().__pydevd_main_thread = True;");
+					dbgCmds.append("pydevd.settrace(host=\"" + localhost.getHostName() +
 						"\", port=" + PyDevUtils.PYDEV_REMOTE_DEBUGGER_PORT + ", suspend=False);");
+					exec(dbgCmds.toString());
 					Msg.info(this, "Connected to a python debugger.");
 				}
 				catch (IOException e) {
@@ -245,8 +249,14 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 	 * @param str The string to print.
 	 */
 	void printErr(String str) {
-		getSystemState().stderr.invoke("write", new PyString(str + "\n"));
-		getSystemState().stderr.invoke("flush");
+		try {
+			getSystemState().stderr.invoke("write", new PyString(str + "\n"));
+			getSystemState().stderr.invoke("flush");
+		}
+		catch (PyException e) {
+			// if the python interp state's stdin/stdout/stderr is messed up, it can throw an error 
+			Msg.error(this, "Failed to write to stderr", e);
+		}
 	}
 
 	/**
@@ -343,7 +353,12 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 				}
 			}
 
-			// Add public methods only once. Ignore inner classes.
+			// Add public methods (only once). Ignore inner classes.
+			//
+			// NOTE: We currently do not have a way to safely add protected methods.  Disabling
+			// python.security.respectJavaAccessibility and adding in protected methods in the below
+			// loop caused an InaccessibleObjectException for some users (relating to core Java 
+			// modules, not the GhidraScript class hierarchy).
 			if (!scriptMethodsInjected) {
 				for (Method method : scriptClass.getDeclaredMethods()) {
 					if (!method.getName().contains("$") &&
@@ -467,7 +482,7 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 	}
 
 	/**
-	 * Returns a Map of property->string_substitution pairs.
+	 * Returns a Map of property-&gt;string_substitution pairs.
 	 *
 	 * @param cmd current command
 	 * @param includeBuiltins True if we should include python built-ins; otherwise, false.

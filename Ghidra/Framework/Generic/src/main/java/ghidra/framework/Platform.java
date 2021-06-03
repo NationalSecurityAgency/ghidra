@@ -38,7 +38,7 @@ public enum Platform {
 	/**
 	 * Identifies a Windows OS, the architecture for which we do not know or have not encountered
 	 */
-	WIN_UNKOWN(OperatingSystem.WINDOWS, Architecture.UNKNOWN, "win32", ".dll", ".exe"),
+	WIN_UNKOWN(OperatingSystem.WINDOWS, Architecture.UNKNOWN, "win64", ".dll", ".exe"),
 
 	/**
 	 * Identifies a Linux OS.
@@ -46,14 +46,14 @@ public enum Platform {
 	LINUX(OperatingSystem.LINUX, Architecture.X86, "linux32", ".so", ""),
 
 	/**
-	 * Identifies a Linux OS.
+	 * Identifies a Linux OS x86-64.
 	 */
 	LINUX_64(OperatingSystem.LINUX, Architecture.X86_64, "linux64", ".so", ""),
 
 	/**
 	 * Identifies a Linux OS, the architecture for which we do not know or have not encountered
 	 */
-	LINUX_UKNOWN(OperatingSystem.LINUX, Architecture.UNKNOWN, "linux32", ".so", ""),
+	LINUX_UKNOWN(OperatingSystem.LINUX, Architecture.UNKNOWN, "linux64", ".so", ""),
 
 	/**
 	 * Identifies a Mac OS X for the Intel x86 32-bit platform.

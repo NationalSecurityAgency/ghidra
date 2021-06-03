@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +16,19 @@
 package ghidra.framework.options;
 
 // Support for PropertyEditors that use tags.
-
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.*;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
 
 /**
  * An implementation of a PropertyComponent that is represented as a
  * combo box.
  */
-public class PropertySelector extends JComboBox implements ItemListener {
+public class PropertySelector extends JComboBox<String> implements ItemListener {
 
-	private PropertyEditor editor;
+	private PropertyEditor propertyEditor;
 	private boolean notifyEditorOfChanges = true;
 
 	/**
@@ -38,22 +37,23 @@ public class PropertySelector extends JComboBox implements ItemListener {
 	 * changes in the combo box
 	 */
 	public PropertySelector(PropertyEditor pe) {
-		editor = pe;
-		String tags[] = editor.getTags();
-		for (int i = 0; i < tags.length; i++) {
-			addItem(tags[i]);
+		propertyEditor = pe;
+		String tags[] = propertyEditor.getTags();
+		for (String tag : tags) {
+			addItem(tag);
 		}
 
 		setSelectedIndex(0);
 
 		// This is a no-op if the getAsText is not a tag that we set from getTags() above
-		setSelectedItem(editor.getAsText());
+		setSelectedItem(propertyEditor.getAsText());
 		addItemListener(this);
 		invalidate();
 
-		editor.addPropertyChangeListener(new PropertyChangeListener() {
+		propertyEditor.addPropertyChangeListener(new PropertyChangeListener() {
+			@Override
 			public void propertyChange(PropertyChangeEvent evt) {
-				String value = editor.getAsText();
+				String value = propertyEditor.getAsText();
 				if (!value.equals(getSelectedItem())) {
 					notifyEditorOfChanges = false;
 					try {
@@ -67,14 +67,15 @@ public class PropertySelector extends JComboBox implements ItemListener {
 		});
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
-	 */
+	@Override
 	public void itemStateChanged(ItemEvent evt) {
-		if (notifyEditorOfChanges) {
-			String s = (String) getSelectedItem();
-			editor.setAsText(s);
+		if (!notifyEditorOfChanges) {
+			return;
+		}
+
+		String s = (String) getSelectedItem();
+		if (s != null) {
+			propertyEditor.setAsText(s);
 		}
 	}
 }

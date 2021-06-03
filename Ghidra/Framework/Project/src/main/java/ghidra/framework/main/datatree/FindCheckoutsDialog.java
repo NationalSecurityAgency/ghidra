@@ -18,26 +18,22 @@ package ghidra.framework.main.datatree;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 import javax.swing.BorderFactory;
-import javax.swing.JTable;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
 import docking.ActionContext;
 import docking.DialogComponentProvider;
-import docking.widgets.table.GTableCellRenderer;
-import docking.widgets.table.GTableCellRenderingData;
+import docking.widgets.table.*;
 import docking.widgets.table.threaded.GThreadedTablePanel;
 import docking.widgets.table.threaded.ThreadedTableModelListener;
-import ghidra.framework.main.datatable.ProjectDataActionContext;
+import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.plugintool.Plugin;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 
 /**
  * Dialog that shows all checkouts in a specific folder and all of its subfolders.
@@ -48,8 +44,7 @@ public class FindCheckoutsDialog extends DialogComponentProvider {
 	private FindCheckoutsTableModel model;
 	private Plugin plugin;
 	private DomainFolder folder;
-	private JTable table;
-	private SimpleDateFormat formatter;
+	private GTable table;
 	private boolean showMessage = true;
 	private GThreadedTablePanel<CheckoutInfo> threadedTablePanel;
 
@@ -57,7 +52,6 @@ public class FindCheckoutsDialog extends DialogComponentProvider {
 		super("Find Checkouts");
 		this.plugin = plugin;
 		this.folder = folder;
-		formatter = new SimpleDateFormat("yyyy MMM dd hh:mm aaa");
 		create();
 		setHelpLocation(new HelpLocation("VersionControl", "Find_Checkouts"));
 	}
@@ -127,12 +121,12 @@ public class FindCheckoutsDialog extends DialogComponentProvider {
 	@Override
 	public void close() {
 		super.close();
-		model.dispose();
+		threadedTablePanel.dispose();
 	}
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ProjectDataActionContext(null, folder.getProjectData(), null, null,
+		return new ProjectDataContext(null, folder.getProjectData(), null, null,
 			getFileList(), null, true);
 	}
 
@@ -146,7 +140,7 @@ public class FindCheckoutsDialog extends DialogComponentProvider {
 			Object value = data.getValue();
 
 			if (value instanceof Date) {
-				setText(formatter.format((Date) value));
+				setText(DateUtils.formatDateTimestamp((Date) value));
 			}
 
 			setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));

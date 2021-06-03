@@ -22,6 +22,7 @@ import java.beans.PropertyChangeListener;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -130,9 +131,6 @@ public class OptionsGui extends JPanel {
 		MNEMONIC_OVERRIDE, PARAMETER_CUSTOM, PARAMETER_DYNAMIC, REGISTERS, SEPARATOR, UNDERLINE,
 		VARIABLE, VERSION_TRAK, XREF, XREF_OFFCUT, XREF_READ, XREF_WRITE, XREF_OTHER };
 
-	private String[] fontSizes = { "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16",
-		"17", "18", "20", "22", "24", "30" };
-
 	private Map<Integer, FontMetrics> metricsMap = new HashMap<>();
 
 	private JList<ScreenElement> namesList;
@@ -142,7 +140,7 @@ public class OptionsGui extends JPanel {
 	private JCheckBox boldCheckbox;
 	private JCheckBox italicsCheckbox;
 	private JCheckBox customCheckbox;
-	private JComboBox<String> fontSizeField;
+	private JComboBox<Integer> fontSizeField;
 	private JComboBox<String> fontNameField;
 	private JPanel colorPanel;
 	private int selectedIndex;
@@ -174,7 +172,7 @@ public class OptionsGui extends JPanel {
 		});
 
 		setSelectedFontName(baseFont.getName());
-		fontSizeField.setSelectedItem(Integer.toString(baseFont.getSize()));
+		fontSizeField.setSelectedItem(baseFont.getSize());
 
 		namesList.setSelectedIndex(0);
 		namesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -346,7 +344,7 @@ public class OptionsGui extends JPanel {
 		fontNameField.setRenderer(new FontRenderer());
 		panel1.add(fontNameField);
 
-		fontSizeField = new GComboBox<>(fontSizes);
+		fontSizeField = new GComboBox<>(IntStream.rangeClosed(6, 32).boxed().toArray(Integer[]::new));
 		fontSizeField.setBackground(Color.white);
 		panel1.add(fontSizeField);
 		panel.add(panel1, BorderLayout.NORTH);
@@ -774,7 +772,7 @@ public class OptionsGui extends JPanel {
 		String name = (String) fontNameField.getSelectedItem();
 		int size = baseFont.getSize();
 		try {
-			size = Integer.parseInt((String) fontSizeField.getSelectedItem());
+			size = (Integer) fontSizeField.getSelectedItem();
 		}
 		catch (Exception e) {
 		}

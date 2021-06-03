@@ -15,9 +15,7 @@
  */
 package ghidra.app.plugin.assembler.sleigh.expr;
 
-import java.util.Set;
-
-import com.google.common.collect.ImmutableSet;
+import java.util.*;
 
 /**
  * A type for solver hints
@@ -34,9 +32,8 @@ import com.google.common.collect.ImmutableSet;
  */
 public interface SolverHint {
 	static Set<SolverHint> with(Set<SolverHint> set, SolverHint... plus) {
-		ImmutableSet.Builder<SolverHint> hints = ImmutableSet.builder();
-		hints.addAll(set);
-		hints.add(plus);
-		return hints.build();
+		Set<SolverHint> hints = new HashSet<>(set);
+		hints.addAll(Set.of(plus));
+		return Collections.unmodifiableSet(hints);
 	}
 }

@@ -135,7 +135,7 @@ public class MemoryBlockUtilTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testDuplicateExceptionHandling() throws Exception {
+	public void testDuplicateHandling() throws Exception {
 		ByteProvider byteProvider = new ByteArrayProvider(new byte[1000]);
 		FileBytes fileBytes =
 			MemoryBlockUtils.createFileBytes(prog, byteProvider, TaskMonitor.DUMMY);
@@ -151,8 +151,12 @@ public class MemoryBlockUtilTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(3, blocks.length);
 
 		assertEquals("test", blocks[0].getName());
-		assertEquals("test_1", blocks[1].getName());
-		assertEquals("test_2", blocks[2].getName());
+		assertEquals("test", blocks[1].getName());
+		assertEquals("test", blocks[2].getName());
+
+		assertEquals("test", blocks[0].getStart().getAddressSpace().getName());
+		assertEquals("test.1", blocks[1].getStart().getAddressSpace().getName());
+		assertEquals("test.2", blocks[2].getStart().getAddressSpace().getName());
 
 	}
 

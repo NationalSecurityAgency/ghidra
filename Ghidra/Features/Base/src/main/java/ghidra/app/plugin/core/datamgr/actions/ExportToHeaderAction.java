@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import java.awt.Component;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.util.*;
@@ -112,7 +111,7 @@ public class ExportToHeaderAction extends DockingAction {
 	 */
 	private void exportToC(GTree gTree, DataTypeManager programDataTypeMgr) {
 
-		Set<Class<? extends AnnotationHandler>> classes =
+		List<Class<? extends AnnotationHandler>> classes =
 			ClassSearcher.getClasses(AnnotationHandler.class);
 
 		List<AnnotationHandler> list = new ArrayList<>();
@@ -138,7 +137,7 @@ public class ExportToHeaderAction extends DockingAction {
 		if (!list.isEmpty()) {
 			list.add(0, new DefaultAnnotationHandler());
 			AnnotationHandlerDialog dlg = new AnnotationHandlerDialog(list);
-			plugin.getTool().showDialog(dlg, (Component) null);
+			plugin.getTool().showDialog(dlg);
 			if (!dlg.wasSuccessful()) {
 				return;
 			}
@@ -242,7 +241,7 @@ public class ExportToHeaderAction extends DockingAction {
 		}
 		else if (last instanceof CategoryNode) {
 			CategoryNode node = (CategoryNode) last;
-			List<GTreeNode> children = node.getAllChildren();
+			List<GTreeNode> children = node.getChildren();
 			for (GTreeNode cnode : children) {
 				addToManager(cnode.getTreePath(), managersToDataTypesMap);
 			}

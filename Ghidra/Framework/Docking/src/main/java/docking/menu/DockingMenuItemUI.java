@@ -44,7 +44,7 @@ import docking.util.GraphicsUtils;
  * <pre>
  * [Checkbox][Icon][Menu Item Content][Menu Pull-right/Accelerator Text]
  * </pre>
- * To display the <b>Menu Item Content</b> in a tabular fashion, use the <tt>'\t'</tt> character 
+ * To display the <b>Menu Item Content</b> in a tabular fashion, use the <code>'\t'</code> character 
  * to delimit the data into columns.  This class will align all menu items in the given menu  
  * based upon the largest number of columns in the group and the largest width for each column.
  */
@@ -58,9 +58,8 @@ public class DockingMenuItemUI extends MenuItemUI {
 	protected MenuItemUI ui;
 
 	public static ComponentUI createUI(JComponent c) {
-		LookAndFeel underlying = UIManager.getLookAndFeel();
 		DockingMenuItemUI result = new DockingMenuItemUI();
-		result.ui = (MenuItemUI) underlying.getDefaults().getUI(c);
+		result.ui = (MenuItemUI) UIManager.getDefaults().getUI(c);
 		return result;
 	}
 

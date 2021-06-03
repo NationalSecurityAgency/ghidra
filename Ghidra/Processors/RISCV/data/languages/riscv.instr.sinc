@@ -1,0 +1,1051 @@
+# This is just a top level to include the standards
+
+@if ADDRSIZE == "32" || ADDRSIZE == "64" || ADDRSIZE == "128"
+@include "riscv.rv32i.sinc"
+@include "riscv.rv32a.sinc"
+@include "riscv.rv32m.sinc"
+@include "riscv.rv32b.sinc"
+@include "riscv.rv32p.sinc"
+@include "riscv.rv32k.sinc"
+
+@if FPSIZE == "32" || FPSIZE == "64" || FPSIZE == "128"
+@include "riscv.rv32f.sinc"
+@endif
+
+@if FPSIZE == "64" || FPSIZE == "128"
+@include "riscv.rv32d.sinc"
+@endif
+
+@if FPSIZE == "128"
+@include "riscv.rv32q.sinc"
+@endif
+@endif
+
+@if ADDRSIZE == "64" || ADDRSIZE == "128"
+@include "riscv.rv64i.sinc"
+@include "riscv.rv64a.sinc"
+@include "riscv.rv64m.sinc"
+@include "riscv.rv64b.sinc"
+@include "riscv.rv64p.sinc"
+@include "riscv.rv64k.sinc"
+
+@if FPSIZE == "32" || FPSIZE == "64" || FPSIZE == "128"
+@include "riscv.rv64f.sinc"
+@endif
+
+@if FPSIZE == "64" || FPSIZE == "128"
+@include "riscv.rv64d.sinc"
+@endif
+
+@if FPSIZE == "128"
+@include "riscv.rv64q.sinc"
+@endif
+@endif
+
+@include "riscv.csr.sinc"
+@include "riscv.priv.sinc"
+@include "riscv.rvc.sinc"
+@include "riscv.rvv.sinc"
+@include "riscv.zi.sinc"
+
+@include "riscv.custom.sinc"
+
+# todos that may be possible, mostly just artifacts from my
+# script to generate the initial SELIGH
+
+
+#TODO ALIAS
+# add d,CU,CV 00009002 0000f003 ALIAS (0, 0) 
+#:add crd,crs1,crs2 is crd & crs2 & crs1 & cop0001=0x2 & cop1315=0x4 & cop1212=0x1
+#{
+#}
+
+#TODO ALIAS
+# add d,CV,CU 00009002 0000f003 ALIAS (0, 0) 
+#:add crd,crs2,crs1 is crd & crs1 & crs2 & cop0001=0x2 & cop1315=0x4 & cop1212=0x1
+#{
+#}
+
+#TODO ALIAS
+# add d,CU,Co 00000001 0000e003 ALIAS (0, 0) 
+#:add crd,crs1,cimmI is crd & cimmI & crs1 & cop0001=0x1 & cop1315=0x0
+#{
+#}
+
+#TODO ALIAS
+# add Ct,Cc,CK 00000000 0000e003 ALIAS (0, 0) 
+#:add cr0204s,sp,caddi4spnimm is caddi4spnimm & cr0204s & sp & cop0001=0x0 & cop1315=0x0
+#{
+#}
+
+#TODO ALIAS
+# add Cc,Cc,CL 00006101 0000ef83 ALIAS (0, 0) 
+#TODO  sp,sp,caddi16spimm caddi16spimm & sp & cop0001=0x1 & cop1315=0x3
+#:add sp,sp,caddi16spimm is caddi16spimm & sp & cop0001=0x1 & cop1315=0x3
+#{
+#}
+
+#TODO ALIAS
+# add d,s,j 00000013 0000707f ALIAS (0, 0) 
+#:add rd,rs1,immI is rs1 & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x0
+#{
+#}
+
+#TODO ALIAS
+# addi Ct,Cc,CK 00000000 0000e003 ALIAS (0, 0) 
+#:addi cr0204s,sp,caddi4spnimm is caddi4spnimm & cr0204s & sp & cop0001=0x0 & cop1315=0x0
+#{
+#}
+
+#TODO ALIAS
+# addi d,CU,Cj 00000001 0000e003 ALIAS (0, 0) 
+#:addi crd,crs1,cimmI is crd & cimmI & crs1 & cop0001=0x1 & cop1315=0x0
+#{
+#}
+
+#TODO ALIAS
+# addi d,CU,z 00000001 0000f07f ALIAS (0, 0) 
+#:addi crd,crs1,zero is crd & zero & crs1 & cop0001=0x1 & cop1315=0x0 & cop0206=0x0 & cop1212=0x0
+#{
+#}
+
+#TODO ALIAS
+# addi Cc,Cc,CL 00006101 0000ef83 ALIAS (0, 0) 
+#TODO  sp,sp,caddi16spimm caddi16spimm & sp & cop0001=0x1 & cop1315=0x3
+#:addi sp,sp,caddi16spimm is caddi16spimm & sp & cop0001=0x1 & cop1315=0x3
+#{
+#}
+
+#@if defined(RISCV64I)
+#TODO ALIAS
+# addiw d,CU,Co 00002001 0000e003 ALIAS (64, 0) 
+#TODO  32 64
+#:addiw crd,crs1,cimmI is crd & cimmI & crs1 & cop0001=0x1 & cop1315=0x1
+#{
+#}
+#@endif
+
+#@if defined(RISCV64I)
+#TODO ALIAS
+# addw Cs,Cw,Ct 00009c21 0000fc63 ALIAS (64, 0) 
+#:addw cr0709s,cd0709s,cr0204s is cd0709s & cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x1 & cop1012=0x7
+#{
+#}
+#@endif
+
+#@if defined(RISCV64I)
+#TODO ALIAS
+# addw Cs,Ct,Cw 00009c21 0000fc63 ALIAS (64, 0) 
+#:addw cr0709s,cr0204s,cd0709s is cd0709s & cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x1 & cop1012=0x7
+#{
+#}
+#@endif
+
+#@if defined(RISCV64I)
+#TODO ALIAS
+# addw d,CU,Co 00002001 0000e003 ALIAS (64, 0) 
+#TODO  crd,crs1,cimmI crd & cimmI & crs1 & cop0001=0x1 & cop1315=0x1
+#:addw crd,crs1,cimmI is crd & cimmI & crs1 & cop0001=0x1 & cop1315=0x1
+#{
+#}
+#@endif
+
+#@if defined(RISCV64I)
+#TODO ALIAS
+# addw d,s,j 0000001b 0000707f ALIAS (64, 0) 
+#:addw rd,rs1,immI is rs1 & immI & rd & op0001=0x3 & op0204=0x6 & op0506=0x0 & funct3=0x0
+#{
+#}
+#@endif
+
+#TODO ALIAS
+# and Cs,Cw,Ct 00008c61 0000fc63 ALIAS (0, 0) 
+#:and cr0709s,cd0709s,cr0204s is cd0709s & cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x3 & cop1012=0x3
+#{
+#}
+
+#TODO ALIAS
+# and Cs,Ct,Cw 00008c61 0000fc63 ALIAS (0, 0) 
+#:and cr0709s,cr0204s,cd0709s is cd0709s & cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x3 & cop1012=0x3
+#{
+#}
+
+#TODO ALIAS
+# and Cs,Cw,Co 00008801 0000ec03 ALIAS (0, 0) 
+#:and cr0709s,cd0709s,cimmI is cd0709s & cimmI & cr0709s & cop0001=0x1 & cop1315=0x4 & cop1011=0x2
+#{
+#}
+
+#TODO ALIAS
+# and d,s,j 00007013 0000707f ALIAS (0, 0) 
+#:and rd,rs1,immI is rs1 & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x7
+#{
+#}
+
+#TODO ALIAS
+# andi Cs,Cw,Co 00008801 0000ec03 ALIAS (0, 0) 
+#:andi cr0709s,cd0709s,cimmI is cd0709s & cimmI & cr0709s & cop0001=0x1 & cop1315=0x4 & cop1011=0x2
+#{
+#}
+
+#TODO ALIAS
+# beq Cs,Cz,Cp 0000c001 0000e003 CONDBRANCH|ALIAS (0, 0) 
+#:beq cr0709s,zero,cbimm is cop0206=0 & cbimm & zero & cr0709s & cop0001=0x1 & cop1315=0x6
+#{
+#}
+
+#TODO ALIAS
+# beqz Cs,Cp 0000c001 0000e003 CONDBRANCH|ALIAS (0, 0) 
+#:beqz cr0709s,cbimm is cbimm & cr0709s & cop0001=0x1 & cop1315=0x6
+#{
+#}
+
+#TODO ALIAS
+# beqz s,p 00000063 01f0707f CONDBRANCH|ALIAS (0, 0) 
+#:beqz rs1,immSB is immSB & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x3 & funct3=0x0 & op2024=0x0
+#{
+#}
+
+#TODO ALIAS
+# bgez s,p 00005063 01f0707f CONDBRANCH|ALIAS (0, 0) 
+#:bgez rs1,immSB is immSB & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x3 & funct3=0x5 & op2024=0x0
+#{
+#}
+
+#TODO ALIAS
+# bgt t,s,p 00004063 0000707f CONDBRANCH|ALIAS (0, 0) 
+#:bgt rs2,rs1,immSB is immSB & rs2 & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x3 & funct3=0x4
+#{
+#}
+
+#TODO ALIAS
+# bgtu t,s,p 00006063 0000707f CONDBRANCH|ALIAS (0, 0) 
+#:bgtu rs2,rs1,immSB is immSB & rs2 & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x3 & funct3=0x6
+#{
+#}
+
+#TODO ALIAS
+# bgtz t,p 00004063 000ff07f CONDBRANCH|ALIAS (0, 0) 
+#:bgtz rs2,immSB is immSB & rs2 & op0001=0x3 & op0204=0x0 & op0506=0x3 & funct3=0x4 & op1519=0x0
+#{
+#}
+
+#TODO ALIAS
+# ble t,s,p 00005063 0000707f CONDBRANCH|ALIAS (0, 0) 
+#:ble rs2,rs1,immSB is immSB & rs2 & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x3 & funct3=0x5
+#{
+#}
+
+#TODO ALIAS
+# bleu t,s,p 00007063 0000707f CONDBRANCH|ALIAS (0, 0) 
+#:bleu rs2,rs1,immSB is immSB & rs2 & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x3 & funct3=0x7
+#{
+#}
+
+#TODO ALIAS
+# blez t,p 00005063 000ff07f CONDBRANCH|ALIAS (0, 0) 
+#:blez rs2,immSB is immSB & rs2 & op0001=0x3 & op0204=0x0 & op0506=0x3 & funct3=0x5 & op1519=0x0
+#{
+#}
+
+#TODO ALIAS
+# bltz s,p 00004063 01f0707f CONDBRANCH|ALIAS (0, 0) 
+#:bltz rs1,immSB is immSB & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x3 & funct3=0x4 & op2024=0x0
+#{
+#}
+
+#TODO ALIAS
+# bne Cs,Cz,Cp 0000e001 0000e003 CONDBRANCH|ALIAS (0, 0) 
+#:bne cr0709s,zero,cbimm is cop0206=0 & cbimm & zero & cr0709s & cop0001=0x1 & cop1315=0x7
+#{
+#}
+
+#TODO ALIAS
+# bnez Cs,Cp 0000e001 0000e003 CONDBRANCH|ALIAS (0, 0) 
+#:bnez cr0709s,cbimm is cbimm & cr0709s & cop0001=0x1 & cop1315=0x7
+#{
+#}
+
+#TODO ALIAS
+# bnez s,p 00001063 01f0707f CONDBRANCH|ALIAS (0, 0) 
+#:bnez rs1,immSB is immSB & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x3 & funct3=0x1 & op2024=0x0
+#{
+#}
+
+
+#@if defined(RISCV128I)
+#TODO  128
+#:c.lq
+#@endif
+
+#TODO ALIAS
+# c.nop  00000001 0000ffff ALIAS (0, 0) 
+#:c.nop  is cop0001=0x1 & cop1315=0x0 & cop0212=0x0
+#{
+#}
+
+#TODO ALIAS
+# c.nop Cj 00000001 0000ef83 ALIAS (0, 0) 
+#:c.nop cimmI is cimmI & cop0001=0x1 & cop1315=0x0 & cop0711=0x0
+#{
+#}
+
+#TODO  MACRO
+# call d,c 00030000 00000015 MACRO (0, 64) 
+
+#TODO  MACRO
+# call c 00008080 00000015 MACRO (0, 64) 
+
+#TODO ALIAS
+# csrc E,s 00003073 00007fff ALIAS (0, 0) 
+#:csrc csr,rs1 is csr & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x3 & op0711=0x0
+#{
+#}
+
+#TODO ALIAS
+# csrc E,Z 00007073 00007fff ALIAS (0, 0) 
+#:csrc csr,rs1 is csr & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x7 & op0711=0x0
+#{
+#}
+
+#TODO ALIAS
+# csrci E,Z 00007073 00007fff ALIAS (0, 0) 
+#:csrci csr,rs1 is csr & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x7 & op0711=0x0
+#{
+#}
+
+#TODO ALIAS
+# csrr d,E 00002073 000ff07f ALIAS (0, 0) 
+#:csrr rd,csr is csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1519=0x0
+#{
+#}
+
+#TODO ALIAS
+# csrrc d,E,Z 00007073 0000707f ALIAS (0, 0) 
+#:csrrc rd,csr,rs1 is rs1 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x7
+#{
+#}
+
+#TODO ALIAS
+# csrrs d,E,Z 00006073 0000707f ALIAS (0, 0) 
+#:csrrs rd,csr,rs1 is rs1 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x6
+#{
+#}
+
+#TODO ALIAS
+# csrrw d,E,Z 00005073 0000707f ALIAS (0, 0) 
+#:csrrw rd,csr,rs1 is rs1 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5
+#{
+#}
+
+#TODO ALIAS
+# csrs E,s 00002073 00007fff ALIAS (0, 0) 
+#:csrs csr,rs1 is csr & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op0711=0x0
+#{
+#}
+
+#TODO ALIAS
+# csrs E,Z 00006073 00007fff ALIAS (0, 0) 
+#:csrs csr,rs1 is csr & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x6 & op0711=0x0
+#{
+#}
+
+#TODO ALIAS
+# csrsi E,Z 00006073 00007fff ALIAS (0, 0) 
+#:csrsi csr,rs1 is csr & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x6 & op0711=0x0
+#{
+#}
+
+#TODO ALIAS
+# csrw E,s 00001073 00007fff ALIAS (0, 0) 
+#:csrw csr,rs1 is csr & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op0711=0x0
+#{
+#}
+
+#TODO ALIAS
+# csrw E,Z 00005073 00007fff ALIAS (0, 0) 
+#:csrw csr,rs1 is csr & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5 & op0711=0x0
+#{
+#}
+
+#TODO ALIAS
+# csrwi E,Z 00005073 00007fff ALIAS (0, 0) 
+#:csrwi csr,rs1 is csr & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5 & op0711=0x0
+#{
+#}
+
+
+
+#TODO ALIAS
+# ebreak  00009002 0000ffff ALIAS (0, 0) 
+#:ebreak  is cop0001=0x2 & cop1315=0x4 & cop0212=0x400
+#{
+#}
+
+#TODO ALIAS
+# fabs.q D,U 26002053 fe00707f ALIAS (0, 0) 
+#:fabs.q fr0711,fr1519 is fr1519 & fr0711 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x2 & funct7=0x13 & op2024=0x0
+#{
+#}
+
+#TODO ALIAS
+# fence  0ff0000f ffffffff ALIAS (0, 0) 
+#:fence  is op0001=0x3 & op0204=0x3 & op0506=0x0 & funct3=0x0 & fm=0x0 & op0711=0x0 & op1527=0x1fe0
+#{
+#}
+
+#TODO ALIAS
+# fence.tso  8330000f ffffffff ALIAS (0, 0) 
+#:fence.tso  is op0001=0x3 & op0204=0x3 & op0506=0x0 & funct3=0x0 & fm=0x8 & op0711=0x0 & op1527=0x660
+#{
+#}
+
+#TODO  SEE fle.d
+# fge.d d,T,S a2000053 fe00707f SIMPLE (0, 0) 
+# :fge.d rd,fr2024,fr1519 is fr2024 & fr1519 & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x51
+# {
+# }
+
+#TODO  SEE fle.q
+# fge.q d,T,S a6000053 fe00707f SIMPLE (0, 0) 
+# :fge.q rd,fr2024,fr1519 is fr2024 & fr1519 & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x53
+# {
+# }
+
+#TODO  SEE fle.s
+# fge.s d,T,S a0000053 fe00707f SIMPLE (0, 0) 
+# :fge.s rd,fr2024,fr1519 is fr2024 & fr1519 & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x50
+# {
+# }
+
+#TODO  SEE flt.d
+# fgt.d d,T,S a2001053 fe00707f SIMPLE (0, 0) 
+# :fgt.d rd,fr2024,fr1519 is fr2024 & fr1519 & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x51
+# {
+# }
+
+#TODO  SEE flt.q
+# fgt.q d,T,S a6001053 fe00707f SIMPLE (0, 0) 
+# :fgt.q rd,fr2024,fr1519 is fr2024 & fr1519 & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x53
+# {
+# }
+
+#TODO  SEE flt.s
+# fgt.s d,T,S a0001053 fe00707f SIMPLE (0, 0) 
+# :fgt.s rd,fr2024,fr1519 is fr2024 & fr1519 & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x50
+# {
+# }
+
+#TODO ALIAS
+# fld D,Cn(Cc) 00002002 0000e003 QWORD|DREF|ALIAS (0, 8) 
+#TODO  cfr0711,cldspimm(sp) cldspimm & cfr0711 & sp & cop0001=0x2 & cop1315=0x1
+#:fld cfr0711,cldspimm(sp) is cldspimm & cfr0711 & sp & cop0001=0x2 & cop1315=0x1
+#{
+#}
+
+#TODO ALIAS
+# fld CD,Cl(Cs) 00002000 0000e003 QWORD|DREF|ALIAS (0, 8) 
+#TODO  32 64
+#:fld cfr0204s,cldimm(cr0709s) is cfr0204s & cr0709s & cop0001=0x0 & cop1315=0x1 & cldimm
+#{
+#}
+
+#TODO  MACRO
+# fld D,A,s 00000000 00000010 MACRO (0, 64) 
+
+#TODO  MACRO
+# flq D,A,s 00000000 00000011 MACRO (0, 64) 
+
+
+#@if defined(RISCV32I)
+#TODO ALIAS
+# flw D,Cm(Cc) 00006002 0000e003 DWORD|DREF|ALIAD (32, 4) 
+#TODO  cfr0711,clwspimm(sp) cfr0711 & clwspimm & sp & cop0001=0x2 & cop1315=0x3
+#:flw cfr0711,clwspimm(sp) is cfr0711 & clwspimm & sp & cop0001=0x2 & cop1315=0x3
+#{
+#}
+#@endif
+
+#@if defined(RISCV32I)
+#TODO ALIAS
+# flw CD,Ck(Cs) 00006000 0000e003 DWORD|DREF|ALIAD (32, 4) 
+#:flw cfr0204s,clwimm(cr0709s) is cfr0204s & cr0709s & cop0001=0x0 & cop1315=0x3 & clwimm
+#{
+#}
+#@endif
+
+#TODO  MACRO
+# flw D,A,s 00000000 0000000f MACRO (0, 64) 
+
+#TODO ALIAS
+# fmv.q D,U 26000053 fe00707f ALIAS (0, 0) 
+#:fmv.q fr0711,fr1519 is fr1519 & fr0711 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x13 & op2024=0x0
+#{
+#}
+
+
+#TODO  SEE fmv.w.x
+# fmv.s.x D,s f0000053 fff0707f SIMPLE (0, 0) 
+# :fmv.s.x fr0711,rs1 is fr0711 & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x0
+# {
+# }
+
+#TODO  SEE fmv.x.w
+# fmv.x.s d,S e0000053 fff0707f SIMPLE (0, 0) 
+# :fmv.x.s rd,fr1519 is fr1519 & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x70 & op2024=0x0
+# {
+# }
+
+
+#TODO ALIAS
+# fneg.q D,U 26001053 fe00707f ALIAS (0, 0) 
+#:fneg.q fr0711,fr1519 is fr1519 & fr0711 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x13 & op2024=0x0
+#{
+#}
+
+#TODO  SEE frcsr
+# frsr d 00302073 fffff07f SIMPLE (0, 0) 
+# :frsr rd is rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1531=0x60
+# {
+# }
+
+#TODO ALIAS
+# fsd CT,CN(Cc) 0000a002 0000e003 QWORD|DREF|ALIAS (0, 8) 
+#TODO  cfr0206,csdspimm(sp) csdspimm & cfr0206 & sp & cop0001=0x2 & cop1315=0x5
+#:fsd cfr0206,csdspimm(sp) is csdspimm & cfr0206 & sp & cop0001=0x2 & cop1315=0x5
+#{
+#}
+
+#TODO ALIAS
+# fsd CD,Cl(Cs) 0000a000 0000e003 QWORD|DREF|ALIAS (0, 8) 
+#TODO  32 64
+#:fsd cfr0204s,cldimm(cr0709s) is cfr0204s & cr0709s & cop0001=0x0 & cop1315=0x5 & cldimm
+#{
+#}
+
+#TODO  MACRO
+# fsd T,A,s 00000000 00000013 MACRO (0, 64) 
+
+#TODO  MACRO
+# fsq T,A,s 00000000 00000014 MACRO (0, 64) 
+
+#TODO  SEE fscsr
+# fssr s 00301073 fff07fff SIMPLE (0, 0) 
+# :fssr rs1 is rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op0711=0x0 & op2031=0x3
+# {
+# }
+
+#TODO  SEE fscsr
+# fssr d,s 00301073 fff0707f SIMPLE (0, 0) 
+# :fssr rd,rs1 is rs1 & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op2031=0x3
+# {
+# }
+
+#@if defined(RISCV32I)
+#TODO ALIAS
+# fsw CT,CM(Cc) 0000e002 0000e003 DWORD|DREF|ALIAD (32, 4) 
+#TODO  cfr0206,cswspimm(sp) cswspimm & cfr0206 & sp & cop0001=0x2 & cop1315=0x7
+#:fsw cfr0206,cswspimm(sp) is cswspimm & cfr0206 & sp & cop0001=0x2 & cop1315=0x7
+#{
+#}
+#@endif
+
+#@if defined(RISCV32I)
+#TODO ALIAS
+# fsw CD,Ck(Cs) 0000e000 0000e003 DWORD|DREF|ALIAD (32, 4) 
+#:fsw cfr0204s,clwimm(cr0709s) is cfr0204s & cr0709s & cop0001=0x0 & cop1315=0x7 & clwimm
+#{
+#}
+#@endif
+
+#TODO  MACRO
+# fsw T,A,s 00000000 00000012 MACRO (0, 64) 
+
+
+#TODO ALIAS
+# j Ca 0000a001 0000e003 BRANCH|ALIAS (0, 0) 
+#:j cjimm is cjimm & cop0001=0x1 & cop1315=0x5
+#{
+#}
+
+#@if defined(RISCV32I)
+#TODO ALIAS
+# jal Ca 00002001 0000e003 JSR|ALIAS (32, 0) 
+#:jal cjimm is cjimm & cop0001=0x1 & cop1315=0x1
+#{
+#}
+#@endif
+
+#TODO ALIAS
+# jal a 000000ef 00000fff JSR|ALIAS (0, 0) 
+#:jal immUJ is immUJ & op0001=0x3 & op0204=0x3 & op0506=0x3 & op0711=0x1
+#{
+#}
+
+#TODO ALIAS
+# jalr d 00009002 0000f07f JSR|ALIAS (0, 0) 
+#:jalr crd is crd & cop0001=0x2 & cop1315=0x4 & cop0206=0x0 & cop1212=0x1
+#{
+#}
+
+#TODO ALIAS
+# jalr s 000000e7 fff07fff JSR|ALIAS (0, 0) 
+#:jalr rs1 is rs1 & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0 & op0711=0x1 & op2031=0x0
+#{
+#}
+
+#TODO ALIAS
+# jalr o(s) 000000e7 00007fff JSR|ALIAS (0, 0) 
+#:jalr immI(rs1) is immI & rs1 & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0 & op0711=0x1
+#{
+#}
+
+#TODO ALIAS
+# jalr s,j 000000e7 00007fff JSR|ALIAS (0, 0) 
+#:jalr rs1,immI is immI & rs1 & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0 & op0711=0x1
+#{
+#}
+
+#TODO ALIAS
+# jalr d,s 00000067 fff0707f JSR|ALIAS (0, 0) 
+#:jalr rd,rs1 is rs1 & rd & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0 & op2031=0x0
+#{
+#}
+
+#TODO  SEE jalr
+# jalr d,o(s) 00000067 0000707f JSR (0, 0) 
+# :jalr rd,immI(rs1) is immI & rs1 & rd & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0
+# {
+# }
+
+#TODO ALIAS
+# jr d 00008002 0000f07f BRANCH|ALIAS (0, 0) 
+#:jr crd is crd & cop0001=0x2 & cop1315=0x4 & cop0206=0x0 & cop1212=0x0
+#{
+#}
+
+#TODO ALIAS
+# jr s,j 00000067 00007fff BRANCH|ALIAS (0, 0) 
+#:jr rs1,immI is immI & rs1 & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0 & op0711=0x0
+#{
+#}
+
+#TODO  MACRO
+# jump c,s 00000000 00000015 MACRO (0, 64) 
+
+#TODO  MACRO
+# la d,B 00000000 00000000 MACRO (0, 64) 
+
+#TODO  MACRO
+# la.tls.gd d,A 00000000 00000002 MACRO (0, 64) 
+
+#TODO  MACRO
+# la.tls.ie d,A 00000000 00000003 MACRO (0, 64) 
+
+#TODO  MACRO
+# lb d,A 00000000 00000004 MACRO (0, 64) 
+
+#TODO  MACRO
+# lbu d,A 00000000 00000005 MACRO (0, 64) 
+
+#@if defined(RISCV64I)
+#TODO ALIAS
+# ld d,Cn(Cc) 00006002 0000e003 QWORD|DREF|ALIAS (64, 8) 
+#TODO  crd,cldspimm(sp) crd & cldspimm & sp & cop0001=0x2 & cop1315=0x3
+#:ld crd,cldspimm(sp) is crd & cldspimm & sp & cop0001=0x2 & cop1315=0x3
+#{
+#}
+#@endif
+
+#@if defined(RISCV64I)
+#TODO ALIAS
+# ld Ct,Cl(Cs) 00006000 0000e003 QWORD|DREF|ALIAS (64, 8) 
+#TODO  64 128
+#:ld cr0204s,cldimm(cr0709s) is cr0709s & cr0204s & cop0001=0x0 & cop1315=0x3 & cldimm
+#{
+#}
+#@endif
+
+#@if defined(RISCV64I)
+#TODO  MACRO
+# ld d,A 00000000 0000000a MACRO (64, 64) 
+#@endif
+
+#TODO  MACRO
+# lh d,A 00000000 00000006 MACRO (0, 64) 
+
+#TODO  MACRO
+# lhu d,A 00000000 00000007 MACRO (0, 64) 
+
+#TODO ALIAS
+# li d,Cv 00006001 0000e003 ALIAS (0, 0) 
+#TODO  crd,cbigimm crd & cbigimm & cop0001=0x1 & cop1315=0x3
+#:li crd,cbigimm is crd & cbigimm & cop0001=0x1 & cop1315=0x3
+#{
+#}
+
+#TODO ALIAS
+# li d,Co 00004001 0000e003 ALIAS (0, 0) 
+#:li crd,cimmI is crd & cimmI & cop0001=0x1 & cop1315=0x2
+#{
+#}
+
+#TODO  MACRO
+# li d,I 00000000 00000017 MACRO (0, 64) 
+
+#TODO  MACRO
+# lla d,B 00000000 00000001 MACRO (0, 64) 
+
+#TODO ALIAS
+# lui d,Cu 00006001 0000e003 ALIAS (0, 0) 
+#:lui crd,cbigimm is crd & cbigimm & cop0001=0x1 & cop1315=0x3
+#{
+#}
+
+#TODO ALIAS
+# lw d,Cm(Cc) 00004002 0000e003 DWORD|DREF|ALIAD (0, 4) 
+#:lw crd,clwspimm(sp) is crd & sp & cop0001=0x2 & cop1315=0x2 & clwspimm
+#{
+#}
+
+#TODO ALIAS
+# lw Ct,Ck(Cs) 00004000 0000e003 DWORD|DREF|ALIAD (0, 4) 
+#:lw cr0204s,clwimm(cr0709s) is cr0709s & cr0204s & cop0001=0x0 & cop1315=0x2 & clwimm
+#{
+#}
+
+#TODO  MACRO
+# lw d,A 00000000 00000008 MACRO (0, 64) 
+
+#@if defined(RISCV64I)
+#TODO  MACRO
+# lwu d,A 00000000 00000009 MACRO (64, 64) 
+#@endif
+
+#TODO ALIAS
+# move d,CV 00008002 0000f003 ALIAS (0, 0) 
+#TODO  crd,crs2 crd & crs2 & cop0001=0x2 & cop1315=0x4
+#:move crd,crs2 is crd & crs2 & cop0001=0x2 & cop1315=0x4 & cop1212=0x0
+#{
+#}
+
+#TODO ALIAS
+# move d,s 00000013 fff0707f ALIAS (0, 0) 
+#:move rd,rs1 is rs1 & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x0 & op2031=0x0
+#{
+#}
+
+#TODO ALIAS
+# mv d,CV 00008002 0000f003 ALIAS (0, 0) 
+#:mv crd,crs2 is crd & crs2 & cop0001=0x2 & cop1315=0x4 & cop1212=0x0
+#{
+#}
+
+#TODO ALIAS
+# nop  00000001 0000ffff ALIAS (0, 0) 
+#:nop  is cop0001=0x1 & cop1315=0x0 & cop0212=0x0
+#{
+#}
+
+#TODO ALIAS
+# or Cs,Cw,Ct 00008c41 0000fc63 ALIAS (0, 0) 
+#:or cr0709s,cd0709s,cr0204s is cd0709s & cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x2 & cop1012=0x3
+#{
+#}
+
+#TODO ALIAS
+# or Cs,Ct,Cw 00008c41 0000fc63 ALIAS (0, 0) 
+#:or cr0709s,cr0204s,cd0709s is cd0709s & cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x2 & cop1012=0x3
+#{
+#}
+
+#TODO ALIAS
+# or d,s,j 00006013 0000707f ALIAS (0, 0) 
+#:or rd,rs1,immI is rs1 & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x6
+#{
+#}
+
+#TODO ALIAS
+# rdcycle d c0002073 fffff07f ALIAS (0, 0) 
+#:rdcycle rd is rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1531=0x18000
+#{
+#}
+
+#@if defined(RISCV32I)
+#TODO ALIAS
+# rdcycleh d c8002073 fffff07f ALIAS (32, 0) 
+#:rdcycleh rd is rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1531=0x19000
+#{
+#}
+#@endif
+
+#TODO ALIAS
+# rdinstret d c0202073 fffff07f ALIAS (0, 0) 
+#:rdinstret rd is rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1531=0x18040
+#{
+#}
+
+#@if defined(RISCV32I)
+#TODO ALIAS
+# rdinstreth d c8202073 fffff07f ALIAS (32, 0) 
+#:rdinstreth rd is rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1531=0x19040
+#{
+#}
+#@endif
+
+#TODO ALIAS
+# rdtime d c0102073 fffff07f ALIAS (0, 0) 
+#:rdtime rd is rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1531=0x18020
+#{
+#}
+
+#@if defined(RISCV32I)
+#TODO ALIAS
+# rdtimeh d c8102073 fffff07f ALIAS (32, 0) 
+#:rdtimeh rd is rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1531=0x19020
+#{
+#}
+#@endif
+
+#TODO  MACRO
+# sb t,A,s 00000000 0000000b MACRO (0, 64) 
+
+#@if defined(RISCV64I)
+#TODO ALIAS
+# sd CV,CN(Cc) 0000e002 0000e003 QWORD|DREF|ALIAS (64, 8) 
+#TODO  crs2,csdspimm(sp) csdspimm & crs2 & sp & cop0001=0x2 & cop1315=0x7
+#:sd crs2,csdspimm(sp) is csdspimm & crs2 & sp & cop0001=0x2 & cop1315=0x7
+#{
+#}
+#@endif
+
+#@if defined(RISCV64I)
+#TODO ALIAS
+# sd Ct,Cl(Cs) 0000e000 0000e003 QWORD|DREF|ALIAS (64, 8) 
+#TODO  64 128
+#:sd cr0204s,cldimm(cr0709s) is cr0709s & cr0204s & cop0001=0x0 & cop1315=0x7 & cldimm
+#{
+#}
+#@endif
+
+#@if defined(RISCV64I)
+#TODO  MACRO
+# sd t,A,s 00000000 0000000e MACRO (64, 64) 
+#@endif
+
+#TODO ALIAS
+# seqz d,s 00103013 fff0707f ALIAS (0, 0) 
+#:seqz rd,rs1 is rs1 & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x3 & op2031=0x1
+#{
+#}
+
+#@if defined(RISCV64I)
+#TODO ALIAS
+# sext.w d,CU 00002001 0000f07f ALIAS (64, 0) 
+#TODO  crd,crs1 crd & crs1 & cop0001=0x1 & cop1315=0x1
+#:sext.w crd,crs1 is crd & crs1 & cop0001=0x1 & cop1315=0x1 & cop0206=0x0 & cop1212=0x0
+#{
+#}
+#@endif
+
+#@if defined(RISCV64I)
+#TODO ALIAS
+# sext.w d,s 0000001b fff0707f ALIAS (64, 0) 
+#:sext.w rd,rs1 is rs1 & rd & op0001=0x3 & op0204=0x6 & op0506=0x0 & funct3=0x0 & op2031=0x0
+#{
+#}
+#@endif
+
+#TODO ALIAS
+# sfence.vma  12000073 ffffffff ALIAS (0, 0) 
+#:sfence.vma  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op1531=0x2400
+#{
+#}
+
+#TODO ALIAS
+# sfence.vma s 12000073 fff07fff ALIAS (0, 0) 
+#:sfence.vma rs1 is rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op2031=0x120
+#{
+#}
+
+#TODO ALIAS
+# sgt d,t,s 00002033 fe00707f ALIAS (0, 0) 
+#:sgt rd,rs2,rs1 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x2 & funct7=0x0
+#{
+#}
+
+#TODO ALIAS
+# sgtu d,t,s 00003033 fe00707f ALIAS (0, 0) 
+#:sgtu rd,rs2,rs1 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x3 & funct7=0x0
+#{
+#}
+
+#TODO ALIAS
+# sgtz d,t 00002033 fe0ff07f ALIAS (0, 0) 
+#:sgtz rd,rs2 is rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x2 & funct7=0x0 & op1519=0x0
+#{
+#}
+
+#TODO  MACRO
+# sh t,A,s 00000000 0000000c MACRO (0, 64) 
+
+#TODO ALIAS
+# sll d,CU,C> 00000002 0000e003 ALIAS (0, 0) 
+#:sll crd,crs1,c6imm is crd & c6imm & crs1 & cop0001=0x2 & cop1315=0x0
+#{
+#}
+
+#TODO ALIAS
+# sll d,s,> 00001013 fc00707f ALIAS (0, 0) 
+#:sll rd,rs1,shamt6 is rs1 & shamt6 & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x1 & op2631=0x0
+#{
+#}
+
+#TODO ALIAS
+# slli d,CU,C> 00000002 0000e003 ALIAS (0, 0) 
+#:slli crd,crs1,c6imm is crd & c6imm & crs1 & cop0001=0x2 & cop1315=0x0
+#{
+#}
+
+#@if defined(RISCV64I)
+#TODO ALIAS
+# sllw d,s,< 0000101b fe00707f ALIAS (64, 0) 
+#:sllw rd,rs1,shamt5 is rs1 & shamt5 & rd & op0001=0x3 & op0204=0x6 & op0506=0x0 & funct3=0x1 & op2531=0x0
+#{
+#}
+#@endif
+
+#TODO ALIAS
+# slt d,s,j 00002013 0000707f ALIAS (0, 0) 
+#:slt rd,rs1,immI is rs1 & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x2
+#{
+#}
+
+#TODO ALIAS
+# sltu d,s,j 00003013 0000707f ALIAS (0, 0) 
+#:sltu rd,rs1,immI is rs1 & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x3
+#{
+#}
+
+#TODO ALIAS
+# sltz d,s 00002033 fff0707f ALIAS (0, 0) 
+#:sltz rd,rs1 is rs1 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x2 & funct7=0x0 & op2024=0x0
+#{
+#}
+
+#TODO ALIAS
+# snez d,t 00003033 fe0ff07f ALIAS (0, 0) 
+#:snez rd,rs2 is rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x3 & funct7=0x0 & op1519=0x0
+#{
+#}
+
+#TODO ALIAS
+# sra Cs,Cw,C> 00008401 0000ec03 ALIAS (0, 0) 
+#:sra cr0709s,cd0709s,c6imm is cd0709s & c6imm & cr0709s & cop0001=0x1 & cop1315=0x4 & cop1011=0x1
+#{
+#}
+
+#TODO ALIAS
+# sra d,s,> 40005013 fc00707f ALIAS (0, 0) 
+#:sra rd,rs1,shamt6 is rs1 & shamt6 & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x5 & op2631=0x10
+#{
+#}
+
+#TODO ALIAS
+# srai Cs,Cw,C> 00008401 0000ec03 ALIAS (0, 0) 
+#:srai cr0709s,cd0709s,c6imm is cd0709s & c6imm & cr0709s & cop0001=0x1 & cop1315=0x4 & cop1011=0x1
+#{
+#}
+
+#@if defined(RISCV64I)
+#TODO ALIAS
+# sraw d,s,< 4000501b fe00707f ALIAS (64, 0) 
+#:sraw rd,rs1,shamt5 is rs1 & shamt5 & rd & op0001=0x3 & op0204=0x6 & op0506=0x0 & funct3=0x5 & op2531=0x20
+#{
+#}
+#@endif
+
+
+#TODO ALIAS
+# srl Cs,Cw,C> 00008001 0000ec03 ALIAS (0, 0) 
+#:srl cr0709s,cd0709s,c6imm is cd0709s & c6imm & cr0709s & cop0001=0x1 & cop1315=0x4 & cop1011=0x0
+#{
+#}
+
+#TODO ALIAS
+# srl d,s,> 00005013 fc00707f ALIAS (0, 0) 
+#:srl rd,rs1,shamt6 is rs1 & shamt6 & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x5 & op2631=0x0
+#{
+#}
+
+#TODO ALIAS
+# srli Cs,Cw,C> 00008001 0000ec03 ALIAS (0, 0) 
+#:srli cr0709s,cd0709s,c6imm is cd0709s & c6imm & cr0709s & cop0001=0x1 & cop1315=0x4 & cop1011=0x0
+#{
+#}
+
+#@if defined(RISCV64I)
+#TODO ALIAS
+# srlw d,s,< 0000501b fe00707f ALIAS (64, 0) 
+#:srlw rd,rs1,shamt5 is rs1 & shamt5 & rd & op0001=0x3 & op0204=0x6 & op0506=0x0 & funct3=0x5 & op2531=0x0
+#{
+#}
+#@endif
+
+#TODO ALIAS
+# sub Cs,Cw,Ct 00008c01 0000fc63 ALIAS (0, 0) 
+#:sub cr0709s,cd0709s,cr0204s is cd0709s & cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x0 & cop1012=0x3
+#{
+#}
+
+#@if defined(RISCV64I)
+#TODO ALIAS
+# subw Cs,Cw,Ct 00009c01 0000fc63 ALIAS (64, 0) 
+#:subw cr0709s,cd0709s,cr0204s is cd0709s & cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x0 & cop1012=0x7
+#{
+#}
+#@endif
+
+#TODO ALIAS
+# sw CV,CM(Cc) 0000c002 0000e003 DWORD|DREF|ALIAD (0, 4) 
+#:sw crs2,cswspimm(sp) is crs2 & sp & cop0001=0x2 & cop1315=0x6 & cswspimm
+#{
+#}
+
+#TODO ALIAS
+# sw Ct,Ck(Cs) 0000c000 0000e003 DWORD|DREF|ALIAD (0, 4) 
+#:sw cr0204s,clwimm(cr0709s) is cr0709s & cr0204s & cop0001=0x0 & cop1315=0x6 & clwimm
+#{
+#}
+
+#TODO  MACRO
+# sw t,A,s 00000000 0000000d MACRO (0, 64) 
+
+#TODO  MACRO
+# tail c 00030000 00000015 MACRO (0, 64) 
+
+#TODO ALIAS
+# unimp  00000000 0000ffff ALIAS (0, 0) 
+#:unimp  is cop0001=0x0 & cop1315=0x0 & cop0212=0x0
+#{
+#}
+
+
+#TODO ALIAS
+# xor Cs,Cw,Ct 00008c21 0000fc63 ALIAS (0, 0) 
+#:xor cr0709s,cd0709s,cr0204s is cd0709s & cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x1 & cop1012=0x3
+#{
+#}
+
+#TODO ALIAS
+# xor Cs,Ct,Cw 00008c21 0000fc63 ALIAS (0, 0) 
+#:xor cr0709s,cr0204s,cd0709s is cd0709s & cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x1 & cop1012=0x3
+#{
+#}
+
+#TODO ALIAS
+# xor d,s,j 00004013 0000707f ALIAS (0, 0) 
+#:xor rd,rs1,immI is rs1 & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x4
+#{
+#}
+

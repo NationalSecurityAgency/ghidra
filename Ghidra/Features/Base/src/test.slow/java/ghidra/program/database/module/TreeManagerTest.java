@@ -125,8 +125,8 @@ public class TreeManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(root);
 
 		String[] names = treeManager.getTreeNames();
-		for (int i = 0; i < names.length; i++) {
-			treeManager.removeTree(names[i]);
+		for (String name : names) {
+			treeManager.removeTree(name);
 		}
 		assertNull(treeManager.getRootModule("Test-One"));
 		assertEquals(0, treeManager.getTreeNames().length);
@@ -201,7 +201,7 @@ public class TreeManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(r1FragCount, r2FragCount);
 		assertEquals(2, r1FragCount);
 
-		addBlock("Test Block", 0x5000, 100);
+		addBlock("TestBlock", 0x5000, 100);
 
 		// make sure new fragment was created in all trees
 		ProgramModule r1 = treeManager.getRootModule("Default");
@@ -222,9 +222,9 @@ public class TreeManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		ProgramModule root = treeManager.createRootModule("Test-One");
 		ProgramModule r2 = treeManager.createRootModule("Test-Two");
 
-		addBlock("Test Block", 0x5000, 100);
-		MemoryBlock b2 = addBlock("Test Two Block", 0x6000, 200);
-		addBlock("Test Three Block", 0x6500, 100);
+		addBlock("TestBlock", 0x5000, 100);
+		MemoryBlock b2 = addBlock("TestTwoBlock", 0x6000, 200);
+		addBlock("TestThreeBlock", 0x6500, 100);
 
 		int r1FragCount = root.getChildren().length;
 		int r2FragCount = r2.getChildren().length;
@@ -244,9 +244,9 @@ public class TreeManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		ProgramModule root = treeManager.createRootModule("Test-One");
 		ProgramModule r2 = treeManager.createRootModule("Test-Two");
 
-		addBlock("Test Block", 0x5000, 100);
-		MemoryBlock b2 = addBlock("Test Two Block", 0x6000, 200);
-		addBlock("Test Three Block", 0x6500, 100);
+		addBlock("TestBlock", 0x5000, 100);
+		MemoryBlock b2 = addBlock("TestTwoBlock", 0x6000, 200);
+		addBlock("TestThreeBlock", 0x6500, 100);
 		ProgramFragment fragB2 = treeManager.getFragment("Test-One", getAddr(0x6050));
 		assertEquals(getAddr(0x6000), fragB2.getMinAddress());
 
@@ -286,9 +286,9 @@ public class TreeManagerTest extends AbstractGhidraHeadedIntegrationTest {
     public void testMoveBlockOverlap() throws Exception {
 		treeManager.createRootModule("Test-One");
 
-		MemoryBlock b1 = addBlock("Test Block", 0x5000, 0x100);
-		addBlock("Test Two Block", 0x6000, 0x200);
-		addBlock("Test Three Block", 0x6500, 0x100);
+		MemoryBlock b1 = addBlock("TestBlock", 0x5000, 0x100);
+		addBlock("TestTwoBlock", 0x6000, 0x200);
+		addBlock("TestThreeBlock", 0x6500, 0x100);
 
 		ProgramFragment fragB1 = treeManager.getFragment("Test-One", getAddr(0x5000));
 		assertEquals(getAddr(0x5000), fragB1.getMinAddress());
@@ -309,9 +309,9 @@ public class TreeManagerTest extends AbstractGhidraHeadedIntegrationTest {
     public void testMoveBlockOverlap2() throws Exception {
 		treeManager.createRootModule("Test-One");
 
-		addBlock("Test Block", 0x5000, 0x100);
-		MemoryBlock b2 = addBlock("Test Two Block", 0x6000, 0x200);
-		addBlock("Test Three Block", 0x6500, 0x100);
+		addBlock("TestBlock", 0x5000, 0x100);
+		MemoryBlock b2 = addBlock("TestTwoBlock", 0x6000, 0x200);
+		addBlock("TestThreeBlock", 0x6500, 0x100);
 
 		ProgramFragment fragB2 = treeManager.getFragment("Test-One", getAddr(0x6000));
 		assertEquals(getAddr(0x6000), fragB2.getMinAddress());
@@ -331,9 +331,9 @@ public class TreeManagerTest extends AbstractGhidraHeadedIntegrationTest {
     public void testMoveBlockMultiFragments() throws Exception {
 		ProgramModule root = treeManager.createRootModule("Test-One");
 
-		MemoryBlock b1 = addBlock("Test Block", 0x5000, 0x100);
-		addBlock("Test Two Block", 0x6000, 0x200);
-		addBlock("Test Three Block", 0x6500, 0x100);
+		MemoryBlock b1 = addBlock("TestBlock", 0x5000, 0x100);
+		addBlock("TestTwoBlock", 0x6000, 0x200);
+		addBlock("TestThreeBlock", 0x6500, 0x100);
 
 		ProgramFragment fragB1 = treeManager.getFragment("Test-One", getAddr(0x5000));
 		String fragB1Name = fragB1.getName();

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,6 @@
  */
 package ghidra.util.classfinder;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
 /**
  * NOTE: ExtensionPoint logistics have changed! It is no longer sufficient to
  * implement ExtensionPoint in order for the ClassSearcher to dynamically pick
@@ -35,15 +29,5 @@ import java.lang.annotation.Target;
  * will automatically search for and load.
  */
 public interface ExtensionPoint {
-	@Retention(RetentionPolicy.RUNTIME)
-	@Target(ElementType.TYPE)
-	public static @interface Exclude {
-		String reason();
-	}
-
-	public static class Util {
-		public static boolean isExcluded(Class<?> c) {
-			return c.getAnnotation(Exclude.class) != null;
-		}
-	}
+	// Marker interface
 }

@@ -68,7 +68,7 @@ public class FileByteBlockTest extends AbstractGenericTest {
 	@Test
 	public void testGetInt() throws Exception {
 		block.setBigEndian(true);
-		DataConverter conv = new BigEndianDataConverter();
+		DataConverter conv = BigEndianDataConverter.INSTANCE;
 
 		for (int i = 0; i < 20; i++) {
 			byte[] b = new byte[4];
@@ -77,7 +77,7 @@ public class FileByteBlockTest extends AbstractGenericTest {
 
 		}
 		block.setBigEndian(false);
-		conv = new LittleEndianDataConverter();
+		conv = LittleEndianDataConverter.INSTANCE;
 		for (int i = 0; i < 12; i++) {
 			byte[] b = new byte[4];
 			System.arraycopy(buf, i + 4, b, 0, b.length);
@@ -89,7 +89,7 @@ public class FileByteBlockTest extends AbstractGenericTest {
 	@Test
 	public void testGetLong() throws Exception {
 		block.setBigEndian(true);
-		DataConverter conv = new BigEndianDataConverter();
+		DataConverter conv = BigEndianDataConverter.INSTANCE;
 
 		for (int i = 0; i < 10; i++) {
 			byte[] b = new byte[8];
@@ -104,7 +104,7 @@ public class FileByteBlockTest extends AbstractGenericTest {
 		}
 
 		block.setBigEndian(false);
-		conv = new LittleEndianDataConverter();
+		conv = LittleEndianDataConverter.INSTANCE;
 		for (int i = 0; i < 10; i++) {
 			byte[] b = new byte[8];
 			System.arraycopy(buf, i + 8, b, 0, b.length);
@@ -141,7 +141,7 @@ public class FileByteBlockTest extends AbstractGenericTest {
 	@Test
 	public void testSetInt() throws Exception {
 		block.setBigEndian(true);
-		DataConverter conv = new BigEndianDataConverter();
+		DataConverter conv = BigEndianDataConverter.INSTANCE;
 
 		byte[] b = new byte[4];
 		System.arraycopy(buf, 35, b, 0, b.length);
@@ -158,7 +158,7 @@ public class FileByteBlockTest extends AbstractGenericTest {
 		}
 
 		block.setBigEndian(false);
-		conv = new LittleEndianDataConverter();
+		conv = LittleEndianDataConverter.INSTANCE;
 
 		b = new byte[4];
 		System.arraycopy(buf, 35, b, 0, b.length);
@@ -179,7 +179,7 @@ public class FileByteBlockTest extends AbstractGenericTest {
 	@Test
 	public void testSetLong() throws Exception {
 		block.setBigEndian(true);
-		DataConverter conv = new BigEndianDataConverter();
+		DataConverter conv = BigEndianDataConverter.INSTANCE;
 
 		byte[] b = new byte[8];
 		System.arraycopy(buf, 35, b, 0, b.length);
@@ -196,7 +196,7 @@ public class FileByteBlockTest extends AbstractGenericTest {
 		}
 
 		block.setBigEndian(false);
-		conv = new LittleEndianDataConverter();
+		conv = LittleEndianDataConverter.INSTANCE;
 
 		b = new byte[8];
 		System.arraycopy(buf, 35, b, 0, b.length);

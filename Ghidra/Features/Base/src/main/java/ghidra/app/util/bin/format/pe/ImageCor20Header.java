@@ -23,6 +23,7 @@ import ghidra.app.util.bin.format.pe.cli.CliMetadataDirectory;
 import ghidra.app.util.bin.format.pe.cli.streams.CliStreamMetadata;
 import ghidra.app.util.bin.format.pe.cli.tables.CliTableMethodDef.CliMethodDefRow;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -31,16 +32,15 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * <pre>
  * typedef struct IMAGE_COR20_HEADER
  * {
  *     // Header versioning
- *    DWORD                   cb;                      // Size of the structure              
+ *    DWORD                   cb;                      // Size of the structure
  *    WORD                    MajorRuntimeVersion;     // Version of the CLR Runtime
  *    WORD                    MinorRuntimeVersion;     // Version of the CLR Runtime
  *
  *    // Symbol table and startup information
- *    IMAGE_DATA_DIRECTORY    MetaData;                // A Data Directory giving RVA and Size of MetaData      
+ *    IMAGE_DATA_DIRECTORY    MetaData;                // A Data Directory giving RVA and Size of MetaData
  *    DWORD                   Flags;
  *    union {
  *      DWORD                 EntryPointRVA;           // Points to the .NET native EntryPoint method
@@ -66,18 +66,19 @@ import ghidra.util.task.TaskMonitor;
 public class ImageCor20Header implements StructConverter, PeMarkupable {
 	private static final String NAME = "IMAGE_COR20_HEADER";
 
-    private int                      cb;
-	private short                    majorRuntimeVersion;
-	private short                    minorRuntimeVersion;
+	private int cb;
+	private short majorRuntimeVersion;
+	private short minorRuntimeVersion;
 	private CliMetadataDirectory metadata;
-	private int                      flags;
-	private int                      entryPointToken;
-	private DefaultDataDirectory     resources;
-	private DefaultDataDirectory     strongNameSignature;
-	private DefaultDataDirectory     codeManagerTable;
-	private DefaultDataDirectory     vTableFixups;
-	private DefaultDataDirectory     exportAddressTableJumps;
-	private DefaultDataDirectory     managedNativeHeader;
+	private int flags;
+	private int entryPointToken;
+	private Address entryPointVA;
+	private DefaultDataDirectory resources;
+	private DefaultDataDirectory strongNameSignature;
+	private DefaultDataDirectory codeManagerTable;
+	private DefaultDataDirectory vTableFixups;
+	private DefaultDataDirectory exportAddressTableJumps;
+	private DefaultDataDirectory managedNativeHeader;
 
 	static ImageCor20Header createImageCor20Header(FactoryBundledWithBinaryReader reader,
 			long index, NTHeader ntHeader) throws IOException {
@@ -85,38 +86,39 @@ public class ImageCor20Header implements StructConverter, PeMarkupable {
 			(ImageCor20Header) reader.getFactory().create(ImageCor20Header.class);
 		imageCor20Header.initIMAGE_COR20_HEADER(reader, index, ntHeader);
 		return imageCor20Header;
-    }
-    
+	}
+
 	/**
 	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
 	 */
 	public ImageCor20Header() {
 	}
 
-    private void initIMAGE_COR20_HEADER(FactoryBundledWithBinaryReader reader, long index, NTHeader ntHeader) throws IOException {
+	private void initIMAGE_COR20_HEADER(FactoryBundledWithBinaryReader reader, long index,
+			NTHeader ntHeader) throws IOException {
 		long origIndex = reader.getPointerIndex();
 
 		reader.setPointerIndex(index);
 
-		cb                       = reader.readNextInt();
-		majorRuntimeVersion      = reader.readNextShort();
-		minorRuntimeVersion      = reader.readNextShort();
-		metadata                 = CliMetadataDirectory.createCliMetadataDirectory(ntHeader, reader);
-		flags                    = reader.readNextInt();
-		entryPointToken          = reader.readNextInt();
-		resources                = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
-		strongNameSignature      = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
-		codeManagerTable         = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
-		vTableFixups             = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
-		exportAddressTableJumps  = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
-		managedNativeHeader      = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
+		cb = reader.readNextInt();
+		majorRuntimeVersion = reader.readNextShort();
+		minorRuntimeVersion = reader.readNextShort();
+		metadata = CliMetadataDirectory.createCliMetadataDirectory(ntHeader, reader);
+		flags = reader.readNextInt();
+		entryPointToken = reader.readNextInt();
+		resources = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
+		strongNameSignature = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
+		codeManagerTable = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
+		vTableFixups = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
+		exportAddressTableJumps = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
+		managedNativeHeader = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
 
 		reader.setPointerIndex(origIndex);
 	}
-	
+
 	/**
 	 * Parses this header
-	 * 
+	 *
 	 * @return True if parsing completed successfully; otherwise, false.
 	 * @throws IOException If there was an IO problem while parsing.
 	 */
@@ -150,18 +152,23 @@ public class ImageCor20Header implements StructConverter, PeMarkupable {
 				if ((flags &
 					ImageCor20Flags.COMIMAGE_FLAGS_NATIVE_ENTRYPOINT) == ImageCor20Flags.COMIMAGE_FLAGS_NATIVE_ENTRYPOINT) {
 					// Add new symbol for the native entry point
-					program.getSymbolTable().addExternalEntryPoint(
-						program.getImageBase().add(entryPointToken));
+					program.getSymbolTable()
+							.addExternalEntryPoint(program.getImageBase().add(entryPointToken));
 				}
 				else {
 					// Add a new symbol for the .NET entry point
-					CliStreamMetadata stream =
-						(CliStreamMetadata) metadata.getMetadataRoot().getStreamHeader(
-							CliStreamMetadata.getName()).getStream();
-					CliMethodDefRow row = (CliMethodDefRow) stream.getTable(
-						(entryPointToken & 0xff000000) >> 24).getRow(entryPointToken & 0x00ffffff);
-					program.getSymbolTable().addExternalEntryPoint(
-						program.getImageBase().add(row.RVA));
+					CliStreamMetadata stream = (CliStreamMetadata) metadata.getMetadataRoot()
+							.getStreamHeader(CliStreamMetadata.getName())
+							.getStream();
+
+					CliMethodDefRow row =
+						(CliMethodDefRow) stream.getTable((entryPointToken & 0xff000000) >> 24)
+								.getRow(entryPointToken & 0x00ffffff);
+
+					program.getSymbolTable()
+							.addExternalEntryPoint(program.getImageBase().add(row.RVA));
+
+					entryPointVA = program.getImageBase().add(row.RVA);
 				}
 			}
 			catch (Exception e) {
@@ -178,7 +185,8 @@ public class ImageCor20Header implements StructConverter, PeMarkupable {
 		struct.add(new WordDataType(), "MinorRuntimeVersion", null);
 		struct.add(metadata.toDataType(), "MetaData", "RVA and size of MetaData");
 		struct.add(new ImageCor20Flags(), "Flags", null);
-		struct.add(new DWordDataType(), "EntryPointToken", null);
+		struct.add(new DWordDataType(), "EntryPointToken",
+			"This is a metadata token if not a valid RVA");
 		struct.add(resources.toDataType(), "Resources", null);
 		struct.add(strongNameSignature.toDataType(), "StrongNameSignature", null);
 		struct.add(codeManagerTable.toDataType(), "CodeManagerTable", "Should be 0");
@@ -192,7 +200,7 @@ public class ImageCor20Header implements StructConverter, PeMarkupable {
 
 	/**
 	 * Gets the size of this structure in bytes.
-	 * 
+	 *
 	 * @return The size of this structure in bytes.
 	 */
 	public int getCb() {
@@ -201,7 +209,7 @@ public class ImageCor20Header implements StructConverter, PeMarkupable {
 
 	/**
 	 * Gets the major runtime version.
-	 * 
+	 *
 	 * @return The major runtime version.
 	 */
 	public short getMajorRuntimeVersion() {
@@ -210,7 +218,7 @@ public class ImageCor20Header implements StructConverter, PeMarkupable {
 
 	/**
 	 * Gets the major runtime version.
-	 * 
+	 *
 	 * @return The major runtime version.
 	 */
 	public short getMinorRuntimeVersion() {
@@ -219,7 +227,7 @@ public class ImageCor20Header implements StructConverter, PeMarkupable {
 
 	/**
 	 * Gets the MetaData directory.
-	 * 
+	 *
 	 * @return The MetaData directory.
 	 */
 	public CliMetadataDirectory getMetadata() {
@@ -228,7 +236,7 @@ public class ImageCor20Header implements StructConverter, PeMarkupable {
 
 	/**
 	 * Gets the flags.
-	 * 
+	 *
 	 * @return The flags.
 	 */
 	public int getFlags() {
@@ -236,17 +244,26 @@ public class ImageCor20Header implements StructConverter, PeMarkupable {
 	}
 
 	/**
-	 * Gets the entry point token (or RVA).
-	 * 
-	 * @return The entry point token (or RVA).
+	 * Gets the entry point token.
+	 *
+	 * @return The entry point token.
 	 */
 	public int getEntryPointToken() {
 		return entryPointToken;
 	}
 
 	/**
+	 * Gets the entry point virtual address.
+	 *
+	 * @return The entry point address.
+	 */
+	public Address getEntryPointVA() {
+		return entryPointVA;
+	}
+
+	/**
 	 * Gets the Resources directory.
-	 * 
+	 *
 	 * @return The Resources directory.
 	 */
 	public DefaultDataDirectory getResources() {

@@ -15,22 +15,22 @@
  */
 package ghidra.program.database.map;
 
-import ghidra.program.model.address.*;
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import db.*;
+import ghidra.program.model.address.*;
+import ghidra.util.exception.VersionException;
 
 /**
  * Adapter version 0 (the first real adapter)
  */
 class AddressMapDBAdapterV1 extends AddressMapDBAdapter {
 
-	final Schema SCHEMA = new Schema(CURRENT_VERSION, "Key", new Class[] { StringField.class,
-		IntField.class, BooleanField.class }, new String[] { "Space Name", "Segment", "Deleted" });
+	final Schema SCHEMA = new Schema(CURRENT_VERSION, "Key",
+		new Field[] { StringField.INSTANCE, IntField.INSTANCE, BooleanField.INSTANCE },
+		new String[] { "Space Name", "Segment", "Deleted" });
 
 	final int SPACE_NAME_COL = 0;
 	final int SEGMENT_COL = 1;
@@ -65,7 +65,7 @@ class AddressMapDBAdapterV1 extends AddressMapDBAdapter {
 		addresses = new Address[table.getRecordCount()];
 		RecordIterator it = table.iterator();
 		while (it.hasNext()) {
-			Record rec = it.next();
+			DBRecord rec = it.next();
 			String spaceName = rec.getString(SPACE_NAME_COL);
 			int segment = rec.getIntValue(SEGMENT_COL);
 			boolean deleted = rec.getBooleanValue(DELETED_COL);
@@ -75,9 +75,8 @@ class AddressMapDBAdapterV1 extends AddressMapDBAdapter {
 				if (segment != 0) {
 					spaceName += "_" + segment;
 				}
-				GenericAddressSpace sp =
-					new GenericAddressSpace(deletedName, 32, AddressSpace.TYPE_DELETED,
-						(int) rec.getKey());
+				GenericAddressSpace sp = new GenericAddressSpace(deletedName, 32,
+					AddressSpace.TYPE_DELETED, (int) rec.getKey());
 				sp.setShowSpaceName(true);
 				space = sp;
 				segment = 0;
@@ -107,7 +106,7 @@ class AddressMapDBAdapterV1 extends AddressMapDBAdapter {
 		ArrayList<AddressMapEntry> list = new ArrayList<AddressMapEntry>();
 		RecordIterator it = table.iterator();
 		while (it.hasNext()) {
-			Record rec = it.next();
+			DBRecord rec = it.next();
 			String spaceName = rec.getString(SPACE_NAME_COL);
 			list.add(new AddressMapEntry((int) rec.getKey(), spaceName,
 				rec.getIntValue(SEGMENT_COL), rec.getBooleanValue(DELETED_COL)));
@@ -127,7 +126,7 @@ class AddressMapDBAdapterV1 extends AddressMapDBAdapter {
 			if (entry.index != table.getRecordCount()) {
 				throw new IllegalArgumentException("Bad map entry");
 			}
-			Record rec = SCHEMA.createRecord(entry.index);
+			DBRecord rec = SCHEMA.createRecord(entry.index);
 			rec.setString(SPACE_NAME_COL, entry.name);
 			rec.setIntValue(SEGMENT_COL, entry.segment);
 			rec.setBooleanValue(DELETED_COL, entry.deleted);
@@ -142,7 +141,7 @@ class AddressMapDBAdapterV1 extends AddressMapDBAdapter {
 	@Override
 	Address[] addBaseAddress(Address addr, long normalizedOffset) {
 
-		Record rec = SCHEMA.createRecord(addresses.length);
+		DBRecord rec = SCHEMA.createRecord(addresses.length);
 		AddressSpace space = addr.getAddressSpace();
 		rec.setString(SPACE_NAME_COL, space.getName());
 		int segment = (int) (normalizedOffset >> AddressMapDB.ADDR_OFFSET_SIZE);
@@ -157,8 +156,8 @@ class AddressMapDBAdapterV1 extends AddressMapDBAdapter {
 
 		Address[] newAddrs = new Address[addresses.length + 1];
 		System.arraycopy(addresses, 0, newAddrs, 0, addresses.length);
-		newAddrs[addresses.length] =
-			addr.getAddressSpace().getAddressInThisSpaceOnly(normalizedOffset & ~AddressMapDB.ADDR_OFFSET_MASK);
+		newAddrs[addresses.length] = addr.getAddressSpace().getAddressInThisSpaceOnly(
+			normalizedOffset & ~AddressMapDB.ADDR_OFFSET_MASK);
 		addresses = newAddrs;
 
 		return addresses;
@@ -182,7 +181,7 @@ class AddressMapDBAdapterV1 extends AddressMapDBAdapter {
 	void renameOverlaySpace(String oldName, String newName) throws IOException {
 		RecordIterator it = table.iterator();
 		while (it.hasNext()) {
-			Record rec = it.next();
+			DBRecord rec = it.next();
 			String spaceName = rec.getString(SPACE_NAME_COL);
 			boolean deleted = rec.getBooleanValue(DELETED_COL);
 			if (!deleted && spaceName.equals(oldName)) {
@@ -196,7 +195,7 @@ class AddressMapDBAdapterV1 extends AddressMapDBAdapter {
 	void deleteOverlaySpace(String name) throws IOException {
 		RecordIterator it = table.iterator();
 		while (it.hasNext()) {
-			Record rec = it.next();
+			DBRecord rec = it.next();
 			String spaceName = rec.getString(SPACE_NAME_COL);
 			if (spaceName.equals(name)) {
 				rec.setBooleanValue(DELETED_COL, true);

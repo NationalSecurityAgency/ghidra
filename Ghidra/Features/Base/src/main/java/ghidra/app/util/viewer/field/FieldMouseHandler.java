@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +37,7 @@ public interface FieldMouseHandler {
 	 * @param mouseEvent The mouse event that triggered the click
 	 * @param serviceProvider A service provider used to access system resources.
 	 * @return true if this handler wishes to have exclusive handling rights to processing the
-	 *         <tt>clickedObject</tt>
+	 *         <code>clickedObject</code>
 	 * @see   ListingField#getClickedObject(ghidra.util.bean.field.FieldLocation)
 	 */
 	public boolean fieldElementClicked(Object clickedObject, Navigatable sourceNavigatable,

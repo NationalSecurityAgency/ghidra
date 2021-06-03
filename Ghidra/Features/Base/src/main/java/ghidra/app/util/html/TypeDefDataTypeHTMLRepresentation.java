@@ -70,7 +70,7 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 
 	protected List<String> buildWarnings() {
 		DataType baseType = typeDef.getBaseDataType();
-		if (!(baseType instanceof Composite) || !baseType.isNotYetDefined()) {
+		if (!(baseType instanceof Composite) || !baseType.isZeroLength()) {
 			return Collections.emptyList();
 		}
 		List<String> list = new ArrayList<>();
@@ -81,7 +81,7 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 
 	@Override
 	protected TextLine buildFooterText(DataType dataType) {
-		if (dataType.isNotYetDefined()) {
+		if (dataType.isZeroLength()) {
 			return new TextLine("0");
 		}
 		return super.buildFooterText(dataType);

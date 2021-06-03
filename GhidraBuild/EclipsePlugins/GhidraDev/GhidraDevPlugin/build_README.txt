@@ -6,10 +6,9 @@ NOTE: Only "Eclipse for RCP and RAP Developers" has the ability to do the below 
 following instructions assume that you are using this version of Eclipse.
 
 Importing GhidraDev Eclipse projects (they are deactivated by default):
-  1) Uncomment the line in settings.gradle that includes the GhidraDev project.
-  2) Run "gradle eclipse" to generate the GhidraDev Eclipse projects.
-  3) From Eclipse, File --> Import --> General --> Existing Projects into Workspace
-  4) From the ghidra repo, import "Eclipse GhidraDevFeature" and "Eclipse GhidraDevPlugin".
+  1) Run gradle eclipse -PeclipsePDE
+  2) From Eclipse, File --> Import --> General --> Existing Projects into Workspace
+  3) From the ghidra repo, import "Eclipse GhidraDevFeature" and "Eclipse GhidraDevPlugin".
 
 Changing version number (GhidraDev is versioned independently of Ghidra):
   1) Open plugin.xml in the GhidraDevPlugin project.
@@ -27,7 +26,7 @@ Building from Eclipse:
   2) File --> Export --> Plug-in Development --> Deployable features
   3) Check ghidra.ghidradev (x.y.z.qualifier)
   4) Select "Archive file" and choose a directory to save it to.  It must end up in
-     ghidra.bin/GhidraBuild/Eclipse/GhidraDev/.  Name it GhidraDev-x.y.z.zip.
+     ghidra.bin/GhidraBuild/EclipsePlugins/GhidraDev/.  Name it GhidraDev-x.y.z.zip.
   5) In the "Options" tab make sure things look like this:
      - Export source: UNCHECKED
      - Package as individual JAR archives: CHECKED

@@ -89,7 +89,7 @@ public class LibrarySearchPathManager {
 	 * Call this to restore paths that were previously persisted.  If you really need to change
 	 * the paths <b>for the entire JVM</b>, then call {@link #setLibraryPaths(String[])}.
 	 *
-	 * @param the paths to restore
+	 * @param paths the paths to restore
 	 */
 	public static void restoreLibraryPaths(String[] paths) {
 

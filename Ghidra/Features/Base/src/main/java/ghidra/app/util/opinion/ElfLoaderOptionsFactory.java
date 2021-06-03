@@ -23,9 +23,8 @@ import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.elf.ElfException;
 import ghidra.app.util.bin.format.elf.ElfHeader;
-import ghidra.program.model.address.AddressOutOfBoundsException;
-import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.lang.LanguageNotFoundException;
+import ghidra.program.model.address.*;
+import ghidra.program.model.lang.*;
 import ghidra.util.NumericUtilities;
 import ghidra.util.StringUtilities;
 
@@ -41,6 +40,8 @@ public class ElfLoaderOptionsFactory {
 	public static final String IMAGE_BASE_OPTION_NAME = "Image Base";
 	public static final long IMAGE_BASE_DEFAULT = 0x00010000;
 	public static final long IMAGE64_BASE_DEFAULT = 0x00100000L;
+	
+	public static final String IMAGE_DATA_IMAGE_BASE_OPTION_NAME = "Data Image Base";
 
 	public static final String INCLUDE_OTHER_BLOCKS = "Import Non-Loaded Data";// as OTHER overlay blocks
 	static final boolean INCLUDE_OTHER_BLOCKS_DEFAULT = true;
@@ -66,12 +67,20 @@ public class ElfLoaderOptionsFactory {
 		if (imageBase == 0 && (elf.isRelocatable() || elf.isSharedObject())) {
 			imageBase = elf.is64Bit() ? IMAGE64_BASE_DEFAULT : IMAGE_BASE_DEFAULT;
 		}
-		AddressSpace defaultSpace =
-			loadSpec.getLanguageCompilerSpec().getLanguage().getDefaultSpace();
+		Language language = loadSpec.getLanguageCompilerSpec().getLanguage();
+		AddressSpace defaultSpace = language.getDefaultSpace();
 
-		String baseOffsetStr = getBaseOffsetString(imageBase, defaultSpace);
-		options.add(new Option(IMAGE_BASE_OPTION_NAME, baseOffsetStr, String.class,
+		String hexValueStr = getBaseAddressOffsetString(imageBase, defaultSpace);
+		options.add(new Option(IMAGE_BASE_OPTION_NAME, hexValueStr, String.class,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-imagebase"));
+		
+		if (includeDataImageBaseOption(elf, language)) {
+			long minDataImageBase = getRecommendedMinimumDataImageBase(elf, language);
+			hexValueStr =
+				getBaseAddressOffsetString(minDataImageBase, language.getDefaultDataSpace());
+			options.add(new Option(IMAGE_DATA_IMAGE_BASE_OPTION_NAME, hexValueStr, String.class,
+				Loader.COMMAND_LINE_ARG_PREFIX + "-dataImageBase"));
+		}
 
 		options.add(new Option(INCLUDE_OTHER_BLOCKS, INCLUDE_OTHER_BLOCKS_DEFAULT, Boolean.class,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-includeOtherBlocks"));
@@ -80,14 +89,56 @@ public class ElfLoaderOptionsFactory {
 			new Option(RESOLVE_EXTERNAL_SYMBOLS_OPTION_NAME, RESOLVE_EXTERNAL_SYMBOLS_DEFAULT,
 				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-resolveExternalSymbols"));
 	}
+	
+	private static boolean includeDataImageBaseOption(ElfHeader elf, Language language) {
+		// only include option if all segments and section have a 0 address
+		AddressSpace defaultSpace = language.getDefaultSpace();
+		AddressSpace defaultDataSpace = language.getDefaultDataSpace();
+		if (defaultDataSpace.equals(defaultSpace)) {
+			return false;
+		}
+		return elf.isRelocatable() && elf.getImageBase() == 0;
+	}
+	
+	private static long getRecommendedMinimumDataImageBase(ElfHeader elf, Language language) {
+		
+		String minDataOffset =
+			language.getProperty(GhidraLanguagePropertyKeys.MINIMUM_DATA_IMAGE_BASE);
+		if (minDataOffset != null) {
+			return NumericUtilities.parseHexLong(minDataOffset);
+		}
+		
+		AddressSpace defaultDataSpace = language.getDefaultDataSpace();
+		int unitSize = defaultDataSpace.getAddressableUnitSize();
+		
+		// logic assumes memory mapped registers reside at low-end addresses (e.g., 0)
+		long minOffset = 0;
+		for (Register reg : language.getRegisters()) {
+			Address addr = reg.getAddress();
+			if (defaultDataSpace.equals(addr.getAddressSpace())) {
+				long offset = addr.getOffset();
+				if (offset < 0) {
+					continue;
+				}
+				offset += reg.getMinimumByteSize();
+				if (offset > minOffset) {
+					minOffset = offset;
+				}
+			}
+		}
+		// set minimum align
+		int align = 16 * unitSize;
+		minOffset += align - (minOffset % align);
+		return minOffset / unitSize;
+	}
 
-	private static String getBaseOffsetString(long imageBase, AddressSpace defaultSpace) {
-		long maxOffset = defaultSpace.getMaxAddress().getAddressableWordOffset();
+	private static String getBaseAddressOffsetString(long imageBase, AddressSpace space) {
+		long maxOffset = space.getMaxAddress().getAddressableWordOffset();
 		while (Long.compareUnsigned(imageBase, maxOffset) > 0) {
 			imageBase >>>= 4;
 		}
 		String baseOffsetStr = Long.toHexString(imageBase);
-		int minNibbles = Math.min(8, defaultSpace.getSize() / 4);
+		int minNibbles = Math.min(8, space.getSize() / 4);
 		int baseOffsetStrLen = baseOffsetStr.length();
 		if (baseOffsetStrLen < minNibbles) {
 			baseOffsetStr =
@@ -97,6 +148,12 @@ public class ElfLoaderOptionsFactory {
 	}
 
 	static String validateOptions(LoadSpec loadSpec, List<Option> options) {
+		Language language;
+		try {
+			language = loadSpec.getLanguageCompilerSpec().getLanguage();
+		} catch (LanguageNotFoundException e) {
+			throw new RuntimeException(e);
+		}
 		for (Option option : options) {
 			String name = option.getName();
 			if (name.equals(PERFORM_RELOCATIONS_NAME)) {
@@ -110,25 +167,29 @@ public class ElfLoaderOptionsFactory {
 				}
 			}
 			else if (name.equals(IMAGE_BASE_OPTION_NAME)) {
-				if (!String.class.isAssignableFrom(option.getValueClass())) {
-					return "Invalid type for option: " + name + " - " + option.getValueClass();
-				}
-				String value = (String) option.getValue();
-				try {
-					AddressSpace space =
-						loadSpec.getLanguageCompilerSpec().getLanguage().getDefaultSpace();
-					space.getAddress(Long.parseUnsignedLong(value, 16));// verify valid address
-				}
-				catch (NumberFormatException e) {
-					return "Invalid " + name + " - expecting hexidecimal address offset";
-				}
-				catch (AddressOutOfBoundsException e) {
-					return "Invalid " + name + " - " + e.getMessage();
-				}
-				catch (LanguageNotFoundException e) {
-					throw new RuntimeException(e);
-				}
+				return validateAddressSpaceOffsetOption(option, language.getDefaultSpace());
 			}
+			else if (name.equals(IMAGE_DATA_IMAGE_BASE_OPTION_NAME)) {
+				return validateAddressSpaceOffsetOption(option, language.getDefaultDataSpace());
+			}
+		}
+		return null;
+	}
+
+	private static String validateAddressSpaceOffsetOption(Option option, AddressSpace space) {
+		String name = option.getName();
+		if (!String.class.isAssignableFrom(option.getValueClass())) {
+			return "Invalid type for option: " + name + " - " + option.getValueClass();
+		}
+		String value = (String) option.getValue();
+		try {
+			space.getAddress(Long.parseUnsignedLong(value, 16), true);// verify valid address
+		}
+		catch (NumberFormatException e) {
+			return "Invalid " + name + " - expecting hexidecimal address offset";
+		}
+		catch (AddressOutOfBoundsException e) {
+			return "Invalid " + name + " - " + e.getMessage();
 		}
 		return null;
 	}
@@ -149,4 +210,9 @@ public class ElfLoaderOptionsFactory {
 	public static String getImageBaseOption(List<Option> options) {
 		return OptionUtils.getOption(IMAGE_BASE_OPTION_NAME, options, (String) null);
 	}
+	
+	public static String getDataImageBaseOption(List<Option> options) {
+		return OptionUtils.getOption(IMAGE_DATA_IMAGE_BASE_OPTION_NAME, options, (String) null);
+	}
+
 }

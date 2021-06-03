@@ -76,7 +76,7 @@ public interface LayoutModel {
 	 * Returns an iterator that walks all the Layout items in this model, starting at the
 	 * specified index.
 	 * 
-	 * @param startIndex start index in the model to begining iterating
+	 * @param startIndex start index in the model to beginning iterating
 	 * @return new iterator
 	 */
 	public default LayoutModelIterator iterator(BigInteger startIndex) {
@@ -98,8 +98,6 @@ public interface LayoutModel {
 	/**
 	 * Returns true if the model knows about changes that haven't yet been told to the 
 	 * LayoutModelListeners.
-	 * @return true if changes have occurred, but no one has been notified. False if no changes
-	 * since last listener notification.
 	 */
 	public void flushChanges();
 }

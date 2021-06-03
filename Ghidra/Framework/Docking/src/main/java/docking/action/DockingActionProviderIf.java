@@ -17,7 +17,7 @@ package docking.action;
 
 import java.util.List;
 
-import docking.DockingTool;
+import docking.Tool;
 
 /**
  * An interface for objects (really Components) to implement that signals they provide actions 
@@ -29,7 +29,7 @@ import docking.DockingTool;
  * actions.  Further, in this example, the actions given will be inserted into the popup menu
  * that is shown.
  * 
- * @deprecated use {@link DockingTool}
+ * @deprecated use {@link Tool}
  */
 // Note: this API is not likely used by forward-facing clients and can be removed in the next release
 @Deprecated(since = "9.1", forRemoval = true)

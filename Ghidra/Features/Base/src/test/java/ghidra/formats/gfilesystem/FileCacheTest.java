@@ -27,6 +27,7 @@ import utilities.util.FileUtilities;
 
 public class FileCacheTest extends AbstractGenericTest {
 
+	private FileCache cache;
 	private File cacheDir;
 	private TaskMonitor monitor = TaskMonitor.DUMMY;
 
@@ -35,13 +36,19 @@ public class FileCacheTest extends AbstractGenericTest {
 		cacheDir = createTempDirectory("FileCacheTest");
 	}
 
+	@After
+	public void tearDown() {
+		// keep the cleaner thread from cross-contaminating tests
+		waitForCleanup();
+	}
+
 	public InputStream toIS(String s) {
 		return new ByteArrayInputStream(s.getBytes());
 	}
 
 	@Test
 	public void testPurge() throws IOException, CancelledException {
-		FileCache cache = new FileCache(cacheDir);
+		cache = new FileCache(cacheDir);
 
 		FileCacheEntry cfi = cache.addStream(toIS("This is a test1"), monitor);
 		Assert.assertTrue(cfi.file.exists());
@@ -61,7 +68,8 @@ public class FileCacheTest extends AbstractGenericTest {
 
 	@Test
 	public void testAgeOff() throws IOException, CancelledException {
-		FileCache cache = new FileCache(cacheDir);
+		cache = new FileCache(cacheDir);
+		waitForCleanup(); // don't let the cache delete the file we are about to create
 
 		FileCacheEntry cfi = cache.addStream(toIS("This is a test1"), monitor);
 		Assert.assertTrue(cfi.file.exists());
@@ -72,15 +80,15 @@ public class FileCacheTest extends AbstractGenericTest {
 		File lastMaintFile = new File(cacheDir, ".lastmaint");
 		lastMaintFile.delete();
 
-		new FileCache(cacheDir);
+		cache = new FileCache(cacheDir);
 
 		// the file added before should have been purged by the startup of cache2
-		Assert.assertFalse(cfi.file.exists());
+		waitForCondition(() -> cfi.file.exists());
 	}
 
 	@Test
 	public void testAddFile() throws IOException, CancelledException {
-		FileCache cache = new FileCache(cacheDir);
+		cache = new FileCache(cacheDir);
 
 		File tmpFile = createTempFile("filecacheaddfile");
 		FileUtilities.writeStringToFile(tmpFile, "This is a test1");
@@ -93,7 +101,7 @@ public class FileCacheTest extends AbstractGenericTest {
 
 	@Test
 	public void testAddStream() throws IOException, CancelledException {
-		FileCache cache = new FileCache(cacheDir);
+		cache = new FileCache(cacheDir);
 
 		FileCacheEntry fce = cache.addStream(toIS("This is a test1"), monitor);
 		Assert.assertTrue(fce.file.exists());
@@ -103,13 +111,18 @@ public class FileCacheTest extends AbstractGenericTest {
 
 	@Test
 	public void testAddStreamPush() throws IOException, CancelledException {
-		FileCache cache = new FileCache(cacheDir);
+		cache = new FileCache(cacheDir);
 
 		FileCacheEntry fce = cache.pushStream((os) -> {
 			FileUtilities.copyStreamToStream(toIS("This is a test1"), os, monitor);
-		} , monitor);
+		}, monitor);
 		Assert.assertTrue(fce.file.exists());
 		Assert.assertEquals("10428da10f5aa2793cb73c0b680e1621", fce.md5);
 		Assert.assertEquals(1, cache.getFileAddCount());
 	}
+
+	private void waitForCleanup() {
+		waitForCondition(() -> !cache.isCleaning());
+	}
+
 }

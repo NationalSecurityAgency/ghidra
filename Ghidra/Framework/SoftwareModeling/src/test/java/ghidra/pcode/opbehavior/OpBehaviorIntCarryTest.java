@@ -26,8 +26,8 @@ public class OpBehaviorIntCarryTest extends AbstractOpBehaviorTest {
 		super();
 	}
 
-@Test
-    public void testEvaluateBinaryLong() {
+	@Test
+	public void testEvaluateBinaryLong() {
 
 		OpBehaviorIntCarry op = new OpBehaviorIntCarry();
 
@@ -44,11 +44,15 @@ public class OpBehaviorIntCarryTest extends AbstractOpBehaviorTest {
 		Assert.assertEquals(1, op.evaluateBinary(8, 8, Long.MAX_VALUE, Long.MIN_VALUE + 1));
 		Assert.assertEquals(0, op.evaluateBinary(8, 8, Long.MIN_VALUE, Long.MAX_VALUE));
 		Assert.assertEquals(1, op.evaluateBinary(8, 8, Long.MIN_VALUE + 1, Long.MAX_VALUE));
-
+		Assert.assertEquals(0, op.evaluateBinary(8, 8, 0x7fffffffffffffffL, 1L));
+		Assert.assertEquals(0, op.evaluateBinary(8, 8, 1L, 0x7fffffffffffffffL));
+		Assert.assertEquals(1, op.evaluateBinary(8, 8, 0xffffffffffffffffL, 1L));
+		Assert.assertEquals(1, op.evaluateBinary(8, 8, 1L, 0xffffffffffffffffL));
+		Assert.assertEquals(1, op.evaluateBinary(8, 8, 0xffffffffffffffffL, 0xffffffffffffffffL));
 	}
 
-@Test
-    public void testEvaluateBinaryBigInteger() {
+	@Test
+	public void testEvaluateBinaryBigInteger() {
 
 		OpBehaviorIntCarry op = new OpBehaviorIntCarry();
 
@@ -56,7 +60,8 @@ public class OpBehaviorIntCarryTest extends AbstractOpBehaviorTest {
 		BigInteger BIG_POSITIVE = new BigInteger("7FFFFFFFFFFFFFFF", 16);
 		BigInteger BIG_NEGATIVE = new BigInteger("8000000000000000", 16);
 
-		Assert.assertEquals(BigInteger.ZERO, op.evaluateBinary(8, 8, BigInteger.ZERO, BigInteger.ZERO));
+		Assert.assertEquals(BigInteger.ZERO,
+			op.evaluateBinary(8, 8, BigInteger.ZERO, BigInteger.ZERO));
 		Assert.assertEquals(BigInteger.ONE, op.evaluateBinary(8, 8, BigInteger.ONE, NEGATIVE_ONE));
 		Assert.assertEquals(BigInteger.ONE, op.evaluateBinary(8, 8, NEGATIVE_ONE, BigInteger.ONE));
 		Assert.assertEquals(BigInteger.ZERO, op.evaluateBinary(8, 8, BIG_POSITIVE, BIG_NEGATIVE));

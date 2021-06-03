@@ -17,7 +17,9 @@ package ghidra.app.plugin.core.functionwindow;
 
 import docking.widgets.table.DiscoverableTableUtils;
 import docking.widgets.table.TableColumnDescriptor;
+import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.util.LongIterator;
@@ -27,7 +29,7 @@ import ghidra.util.table.AddressBasedTableModel;
 import ghidra.util.table.field.*;
 import ghidra.util.task.TaskMonitor;
 
-class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject> {
+public class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject> {
 
 	static final int LOCATION_COL_WIDTH = 50;
 
@@ -37,26 +39,25 @@ class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject> {
 
 	private FunctionManager functionMgr;
 
-	FunctionTableModel(PluginTool tool, Program program) {
+	public FunctionTableModel(PluginTool tool, Program program) {
 		super("Functions", tool, program, null);
 	}
 
 	@Override
 	protected TableColumnDescriptor<FunctionRowObject> createTableColumnDescriptor() {
-		TableColumnDescriptor<FunctionRowObject> descriptor =
-			new TableColumnDescriptor<>();
+		TableColumnDescriptor<FunctionRowObject> descriptor = new TableColumnDescriptor<>();
 
-		descriptor.addVisibleColumn(DiscoverableTableUtils.adaptColumForModel(this,
-			new LabelTableColumn()));
+		descriptor.addVisibleColumn(new NameTableColumn());
 		descriptor.addVisibleColumn(
 			DiscoverableTableUtils.adaptColumForModel(this, new AddressTableColumn()), 1, true);
-		descriptor.addVisibleColumn(DiscoverableTableUtils.adaptColumForModel(this,
-			new FunctionSignatureTableColumn()));
-		//make function size a default column so that a user who wants to know the function size
-		//won't add the "Byte Count" column (which only display the number of bytes in the code
-		//unit at the function's entry point).
-		descriptor.addVisibleColumn(DiscoverableTableUtils.adaptColumForModel(this, 
-				new FunctionBodySizeTableColumn()));
+		descriptor.addVisibleColumn(
+			DiscoverableTableUtils.adaptColumForModel(this, new FunctionSignatureTableColumn()));
+
+		// Make function size a default column so that a user who wants to know the function size
+		// won't add the "Byte Count" column (which only display the number of bytes in the code
+		// unit at the function's entry point).
+		descriptor.addVisibleColumn(
+			DiscoverableTableUtils.adaptColumForModel(this, new FunctionBodySizeTableColumn()));
 
 		// Function tag column is not something widely used, so make hidden by default
 		descriptor.addHiddenColumn(
@@ -65,7 +66,7 @@ class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject> {
 		return descriptor;
 	}
 
-	void reload(Program newProgram) {
+	public void reload(Program newProgram) {
 		this.setProgram(newProgram);
 		if (newProgram != null) {
 			functionMgr = newProgram.getFunctionManager();
@@ -91,13 +92,15 @@ class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject> {
 		if (functionMgr != null) {
 			it = new FunctionKeyIterator(functionMgr);
 		}
+
 		monitor.initialize(getKeyCount());
 		int progress = 0;
 		while (it.hasNext()) {
 			monitor.setProgress(progress++);
 			monitor.checkCanceled();
 			long key = it.next();
-			accumulator.add(new FunctionRowObject(key));
+			Function f = functionMgr.getFunction(key);
+			accumulator.add(new FunctionRowObject(f));
 		}
 	}
 
@@ -133,16 +136,16 @@ class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject> {
 		}
 	}
 
-	void functionAdded(Function function) {
-		addObject(new FunctionRowObject(function.getID()));
+	void functionAdded(Function f) {
+		addObject(new FunctionRowObject(f));
 	}
 
-	void functionRemoved(Function function) {
-		removeObject(new FunctionRowObject(function.getID()));
+	void functionRemoved(Function f) {
+		removeObject(new FunctionRowObject(f));
 	}
 
-	void update(Function function) {
-		updateObject(new FunctionRowObject(function.getID()));
+	void update(Function f) {
+		updateObject(new FunctionRowObject(f));
 	}
 
 	@Override
@@ -151,5 +154,26 @@ class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject> {
 		FunctionManager functionManager = program.getFunctionManager();
 		Function function = functionManager.getFunction(rowObject.getKey());
 		return function != null ? function.getEntryPoint() : null;
+	}
+
+	private class NameTableColumn
+			extends AbstractProgramBasedDynamicTableColumn<FunctionRowObject, String> {
+
+		@Override
+		public String getColumnName() {
+			return "Name";
+		}
+
+		@Override
+		public String getValue(FunctionRowObject rowObject, Settings settings, Program data,
+				ServiceProvider sp) throws IllegalArgumentException {
+
+			Function function = rowObject.getFunction();
+			if (function == null) {
+				return null;
+			}
+			return function.getName();
+		}
+
 	}
 }

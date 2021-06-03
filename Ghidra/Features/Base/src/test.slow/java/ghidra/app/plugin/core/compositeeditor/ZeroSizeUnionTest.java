@@ -20,12 +20,11 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.Composite.AlignmentType;
 
 public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 
 	@Test
-    public void testCreateEmptyUnion() throws Exception {
+	public void testCreateEmptyUnion() throws Exception {
 		init(emptyUnion, pgmRootCat, false);
 
 		assertNull(pgmRootCat.getDataType(emptyUnion.getName()));
@@ -39,10 +38,8 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(0, model.getNumSelectedComponentRows());
 		assertEquals(1, model.getNumSelectedRows());
 		checkSelection(new int[] { 0 });
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(0);
 		assertEquals(emptyUnion.getName(), model.getCompositeName());
@@ -55,12 +52,10 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 
 		DataType dt = pgmRootCat.getDataType(emptyUnion.getName());
 		assertNotNull(dt);
-		assertTrue(dt.isNotYetDefined());
+		assertTrue(dt.isZeroLength());
 
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(0);
 		assertEquals(emptyUnion.getName(), model.getCompositeName());
@@ -71,12 +66,12 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 	}
 
 	@Test
-    public void testCanZeroDataTypeIfComponent() throws Exception {
+	public void testCanZeroDataTypeIfComponent() throws Exception {
 		init(simpleUnion, pgmBbCat, false);
 
 		DataType dt = pgmBbCat.getDataType(simpleUnion.getName());
 		assertNotNull(dt);
-		assertFalse(dt.isNotYetDefined());
+		assertFalse(dt.isZeroLength());
 
 		assertEquals(7, model.getNumComponents());
 		assertEquals(8, model.getRowCount());
@@ -87,10 +82,8 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(0, model.getNumSelectedComponentRows());
 		assertEquals(1, model.getNumSelectedRows());
 		checkSelection(new int[] { 7 });
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(8);
 		assertEquals(simpleUnion.getName(), model.getCompositeName());
@@ -110,10 +103,8 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(0, model.getNumSelectedComponentRows());
 		assertEquals(1, model.getNumSelectedRows());
 		checkSelection(new int[] { 0 });
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(0);
 		assertEquals(simpleUnion.getName(), model.getCompositeName());
@@ -125,18 +116,16 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		invoke(applyAction);
 
 		assertTrue(simpleUnion.isEquivalent(model.viewComposite));
-		assertTrue(simpleUnion.isNotYetDefined());
+		assertTrue(simpleUnion.isZeroLength());
 
 		dt = pgmBbCat.getDataType(simpleUnion.getName());
 		assertNotNull(dt);
-		assertTrue(dt.isNotYetDefined());
+		assertTrue(dt.isZeroLength());
 
 		assertTrue(simpleUnion.isEquivalent(model.viewComposite));
 
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(0);
 		assertEquals(simpleUnion.getName(), model.getCompositeName());
@@ -146,7 +135,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 	}
 
 	@Test
-    public void testCanZeroDataTypeIfPointerComponent() throws Exception {
+	public void testCanZeroDataTypeIfPointerComponent() throws Exception {
 
 		Union innerUnionImpl = new UnionDataType("innerUnion");
 		innerUnionImpl.add(DataType.DEFAULT);// component 0
@@ -179,7 +168,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 
 		DataType dt = pgmTestCat.getDataType(innerUnion.getName());
 		assertNotNull(dt);
-		assertFalse(dt.isNotYetDefined());
+		assertFalse(dt.isZeroLength());
 
 		assertEquals(1, model.getNumComponents());
 		assertEquals(2, model.getRowCount());
@@ -190,10 +179,8 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(0, model.getNumSelectedComponentRows());
 		assertEquals(1, model.getNumSelectedRows());
 		checkSelection(new int[] { 1 });
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(1);
 		assertEquals(innerUnion.getName(), model.getCompositeName());
@@ -213,10 +200,8 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(0, model.getNumSelectedComponentRows());
 		assertEquals(1, model.getNumSelectedRows());
 		checkSelection(new int[] { 0 });
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(0);
 		assertEquals(innerUnion.getName(), model.getCompositeName());
@@ -229,12 +214,10 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 
 		dt = pgmTestCat.getDataType(innerUnion.getName());
 		assertNotNull(dt);
-		assertTrue(dt.isNotYetDefined());
+		assertTrue(dt.isZeroLength());
 
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(0);
 		assertEquals(innerUnion.getName(), model.getCompositeName());
@@ -245,7 +228,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 	}
 
 	@Test
-    public void testCannotZeroDataTypeIfNonPointerComponent() throws Exception {
+	public void testCannotZeroDataTypeIfNonPointerComponent() throws Exception {
 
 		Union innerUnionImpl = new UnionDataType("innerUnion");
 		innerUnionImpl.add(DataType.DEFAULT);// component 0
@@ -278,7 +261,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 
 		DataType dt = pgmTestCat.getDataType(innerUnion.getName());
 		assertNotNull(dt);
-		assertFalse(dt.isNotYetDefined());
+		assertFalse(dt.isZeroLength());
 
 		assertEquals(1, model.getNumComponents());
 		assertEquals(2, model.getRowCount());
@@ -289,10 +272,8 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(0, model.getNumSelectedComponentRows());
 		assertEquals(1, model.getNumSelectedRows());
 		checkSelection(new int[] { 1 });
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(1);
 		assertEquals(innerUnion.getName(), model.getCompositeName());
@@ -312,10 +293,8 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(0, model.getNumSelectedComponentRows());
 		assertEquals(1, model.getNumSelectedRows());
 		checkSelection(new int[] { 0 });
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(0);
 		assertEquals(innerUnion.getName(), model.getCompositeName());
@@ -328,15 +307,13 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 
 		dt = pgmTestCat.getDataType(innerUnion.getName());
 		assertNotNull(dt);
-		assertTrue(dt.isNotYetDefined());
+		assertTrue(dt.isZeroLength());
 
 		assertTrue(innerUnion.isEquivalent(model.viewComposite));
-		assertTrue(innerUnion.isNotYetDefined());
+		assertTrue(innerUnion.isZeroLength());
 
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(0);
 		assertEquals(innerUnion.getName(), model.getCompositeName());
@@ -346,7 +323,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 	}
 
 	@Test
-    public void testCannotZeroDataTypeIfInTypedef() throws Exception {
+	public void testCannotZeroDataTypeIfInTypedef() throws Exception {
 
 		Union innerUnionImpl = new UnionDataType("innerUnion");
 		innerUnionImpl.add(DataType.DEFAULT);// component 0
@@ -374,7 +351,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 
 		DataType dt = pgmTestCat.getDataType(innerUnion.getName());
 		assertNotNull(dt);
-		assertFalse(dt.isNotYetDefined());
+		assertFalse(dt.isZeroLength());
 
 		assertEquals(1, model.getNumComponents());
 		assertEquals(2, model.getRowCount());
@@ -385,10 +362,8 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(0, model.getNumSelectedComponentRows());
 		assertEquals(1, model.getNumSelectedRows());
 		checkSelection(new int[] { 1 });
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(1);
 		assertEquals(innerUnion.getName(), model.getCompositeName());
@@ -408,10 +383,8 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(0, model.getNumSelectedComponentRows());
 		assertEquals(1, model.getNumSelectedRows());
 		checkSelection(new int[] { 0 });
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(0);
 		assertEquals(innerUnion.getName(), model.getCompositeName());
@@ -424,15 +397,13 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 
 		dt = pgmTestCat.getDataType(innerUnion.getName());
 		assertNotNull(dt);
-		assertTrue(dt.isNotYetDefined());
+		assertTrue(dt.isZeroLength());
 
 		assertTrue(innerUnion.isEquivalent(model.viewComposite));
-		assertTrue(innerUnion.isNotYetDefined());
+		assertTrue(innerUnion.isZeroLength());
 
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(0);
 		assertEquals(innerUnion.getName(), model.getCompositeName());
@@ -442,7 +413,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 	}
 
 	@Test
-    public void testCannotZeroDataTypeIfInArray() throws Exception {
+	public void testCannotZeroDataTypeIfInArray() throws Exception {
 
 		Union innerUnionImpl = new UnionDataType("innerUnion");
 		innerUnionImpl.add(DataType.DEFAULT);// component 0
@@ -470,7 +441,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 
 		DataType dt = pgmTestCat.getDataType(innerUnion.getName());
 		assertNotNull(dt);
-		assertFalse(dt.isNotYetDefined());
+		assertFalse(dt.isZeroLength());
 
 		assertEquals(1, model.getNumComponents());
 		assertEquals(2, model.getRowCount());
@@ -481,10 +452,8 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(0, model.getNumSelectedComponentRows());
 		assertEquals(1, model.getNumSelectedRows());
 		checkSelection(new int[] { 1 });
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(1);
 		assertEquals(innerUnion.getName(), model.getCompositeName());
@@ -504,10 +473,8 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(0, model.getNumSelectedComponentRows());
 		assertEquals(1, model.getNumSelectedRows());
 		checkSelection(new int[] { 0 });
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(0);
 		assertEquals(innerUnion.getName(), model.getCompositeName());
@@ -520,15 +487,13 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 
 		dt = pgmTestCat.getDataType(innerUnion.getName());
 		assertNotNull(dt);
-		assertTrue(dt.isNotYetDefined());
+		assertTrue(dt.isZeroLength());
 
 		assertTrue(innerUnion.isEquivalent(model.viewComposite));
-		assertTrue(innerUnion.isNotYetDefined());
+		assertTrue(innerUnion.isZeroLength());
 
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertActualAlignment(1);
 		assertLength(0);
 		assertEquals(innerUnion.getName(), model.getCompositeName());
@@ -541,6 +506,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		while (model.getLength() > 0) {
 			model.setSelection(new int[] { 0 });
 			invoke(deleteAction);
+			waitForTasks();
 		}
 	}
 }

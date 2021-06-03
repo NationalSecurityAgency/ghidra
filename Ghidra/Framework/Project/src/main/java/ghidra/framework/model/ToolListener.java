@@ -18,16 +18,16 @@ package ghidra.framework.model;
 import ghidra.framework.plugintool.PluginEvent;
 
 /**
- * Interface to be implemented by objects that want to receive ToolEvents.
+ * Interface to be implemented by objects that want to receive PluginEvents.
  * Tools must be registered for a particular event to actually receive it.
  *
- * @see ToolEvent
+ * @see PluginEvent
  */
 
 public interface ToolListener {
     
     /**
-     * This method is invoked when the registered ToolEvent event occurs.
+     * This method is invoked when the registered PluginEvent event occurs.
      *
      * @param toolEvent The cross-tool PluginEvent.
      */

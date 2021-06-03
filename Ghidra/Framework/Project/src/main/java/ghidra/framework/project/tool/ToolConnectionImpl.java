@@ -19,8 +19,10 @@ import java.util.*;
 
 import org.jdom.Element;
 
-import ghidra.framework.model.*;
+import ghidra.framework.model.ToolConnection;
+import ghidra.framework.model.ToolListener;
 import ghidra.framework.plugintool.PluginEvent;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.StringIntHashtable;
 import ghidra.util.exception.NoValueException;
@@ -32,146 +34,149 @@ import ghidra.util.exception.NoValueException;
  */
 class ToolConnectionImpl implements ToolConnection, ToolListener {
 
-    private Tool producerTool;
-    private Tool consumerTool;
-    private StringIntHashtable connectHt; // maps event -> int value 1 if
-        // tools are connected, int value 0 if tools are not connected
+	private PluginTool producerTool;
+	private PluginTool consumerTool;
+	private StringIntHashtable connectHt; // maps event -> int value 1 if
+	// tools are connected, int value 0 if tools are not connected
 
-    private final static int CONNECTED = 1;
-    private final static int DISCONNECTED = 0;
+	private final static int CONNECTED = 1;
+	private final static int DISCONNECTED = 0;
 
-    private boolean listenerAdded; // set to true the first time a
-        // connection is made for any event
-    private boolean changed; // flag for whether the connection was changed
+	private boolean listenerAdded; // set to true the first time a
+	// connection is made for any event
+	private boolean changed; // flag for whether the connection was changed
 
-    /**
-     * Constructor
-     */
-    ToolConnectionImpl(Tool producerTool, Tool consumerTool) {
-        this.producerTool = producerTool;
-        this.consumerTool = consumerTool;
+	/**
+	 * Constructor
+	 */
+	ToolConnectionImpl(PluginTool producerTool, PluginTool consumerTool) {
+		this.producerTool = producerTool;
+		this.consumerTool = consumerTool;
 
-        connectHt = new StringIntHashtable();
-        updateEventList();
-    }
+		connectHt = new StringIntHashtable();
+		updateEventList();
+	}
 
-    /**
-     * Default constructor used when there is a problem restoring state
-     * on the workspace; want the restore() method to still work.
-     */
-    ToolConnectionImpl() {
-    }
-    
-    /*
+	/**
+	 * Default constructor used when there is a problem restoring state
+	 * on the workspace; want the restore() method to still work.
+	 */
+	ToolConnectionImpl() {
+	}
+
+	/*
 	 * @see ghidra.framework.model.ToolConnection#connect(java.lang.String)
 	 */
-    @Override
+	@Override
 	public void connect(String eventName) {
-        validateEventName(eventName);
-        connectHt.put(eventName, CONNECTED);
-        if (!listenerAdded) {
-            producerTool.addToolListener(this);
-            listenerAdded = true;
-        }
-        changed = true;
-    }
-    
-    /*
+		validateEventName(eventName);
+		connectHt.put(eventName, CONNECTED);
+		if (!listenerAdded) {
+			producerTool.addToolListener(this);
+			listenerAdded = true;
+		}
+		changed = true;
+	}
+
+	/*
 	 * @see ghidra.framework.model.ToolConnection#isConnected(java.lang.String)
 	 */
-    @Override
+	@Override
 	public boolean isConnected(String eventName) {
-        if (!connectHt.contains(eventName)) {
-            return false;
-        }
-        try {
-            int value = connectHt.get(eventName);
-            return (value == CONNECTED);
+		if (!connectHt.contains(eventName)) {
+			return false;
+		}
+		try {
+			int value = connectHt.get(eventName);
+			return (value == CONNECTED);
 
-        } catch (NoValueException e) {
-            return false;
-        }
+		}
+		catch (NoValueException e) {
+			return false;
+		}
 
-    }
-    
-    /*
+	}
+
+	/*
 	 * @see ghidra.framework.model.ToolConnection#getEvents()
 	 */
-    @Override
+	@Override
 	public String[] getEvents() {
-        String []keys = connectHt.getKeys();
-        Arrays.sort(keys);
+		String[] keys = connectHt.getKeys();
+		Arrays.sort(keys);
 
-        return keys;
-    }
-    
-    /*
+		return keys;
+	}
+
+	/*
 	 * @see ghidra.framework.model.ToolConnection#disconnect(java.lang.String)
 	 */
-    @Override
+	@Override
 	public void disconnect(String eventName) {
-        validateEventName(eventName);
-        connectHt.put(eventName, DISCONNECTED);
-        checkConnections();
-        changed = true;
-    }
+		validateEventName(eventName);
+		connectHt.put(eventName, DISCONNECTED);
+		checkConnections();
+		changed = true;
+	}
 
-    /*
+	/*
 	 * @see ghidra.framework.model.ToolConnection#getProducer()
 	 */
-    @Override
-	public Tool getProducer() {
-        return producerTool;
-    }
-    /*
+	@Override
+	public PluginTool getProducer() {
+		return producerTool;
+	}
+
+	/*
 	 * @see ghidra.framework.model.ToolConnection#getConsumer()
 	 */
-    @Override
-	public Tool getConsumer() {
-        return consumerTool;
-    }
+	@Override
+	public PluginTool getConsumer() {
+		return consumerTool;
+	}
 
-    /*
+	/*
 	 * @see ghidra.framework.model.ToolListener#processToolEvent(ghidra.framework.model.ToolEvent)
 	 */
 	@Override
 	public void processToolEvent(PluginEvent toolEvent) {
 
-        if (isConnected(toolEvent.getToolEventName())) {
-            consumerTool.processToolEvent(toolEvent);
-        }
-    }
+		if (isConnected(toolEvent.getToolEventName())) {
+			consumerTool.processToolEvent(toolEvent);
+		}
+	}
 
-    /**
-     * Saves the Tool Connection into an XML element.
-     */
-    public Element saveToXml() {
+	/**
+	 * Saves the Tool Connection into an XML element.
+	 */
+	public Element saveToXml() {
 		Element root = new Element("CONNECTION");
-		root.setAttribute("PRODUCER",producerTool.getName());
-		root.setAttribute("CONSUMER",consumerTool.getName());
-		root.setAttribute("LISTENER_ADDED",""+listenerAdded);
-		String [] keys = connectHt.getKeys();
-		for (int i = 0 ; i < keys.length ; ++i) {
+		root.setAttribute("PRODUCER", producerTool.getName());
+		root.setAttribute("CONSUMER", consumerTool.getName());
+		root.setAttribute("LISTENER_ADDED", "" + listenerAdded);
+		String[] keys = connectHt.getKeys();
+		for (String key : keys) {
 			Element elem = new Element("EVENT");
-			elem.setAttribute("NAME", keys[i]);
+			elem.setAttribute("NAME", key);
 			int val = DISCONNECTED;
 			try {
-				val = connectHt.get(keys[i]);
+				val = connectHt.get(key);
 			}
-			catch (NoValueException nve) {}
+			catch (NoValueException nve) {
+			}
 			elem.setAttribute("CONNECTED", (val == CONNECTED ? "true" : "false"));
 			root.addContent(elem);
 		}
-        changed = false;
-        return root;
-    }
-    
-    /**
-     * restores the ToolConnection from an XML element
-     * 
-     * @param root XML element to restore ToolConnection from.
-     */
-    public void restoreFromXml(Element root) {
+		changed = false;
+		return root;
+	}
+
+	/**
+	 * restores the ToolConnection from an XML element
+	 * 
+	 * @param root XML element to restore ToolConnection from.
+	 */
+	public void restoreFromXml(Element root) {
 		listenerAdded = false;
 
 		Iterator<?> iter = root.getChildren("EVENT").iterator();
@@ -181,144 +186,144 @@ class ToolConnectionImpl implements ToolConnection, ToolListener {
 			String state = elem.getAttributeValue("CONNECTED");
 			boolean connected = (state != null && state.equalsIgnoreCase("true"));
 			connectHt.put(name, (connected ? CONNECTED : DISCONNECTED));
-            if (connected && !listenerAdded) {
-                producerTool.addToolListener(this);
-                listenerAdded = true;
-            }
+			if (connected && !listenerAdded) {
+				producerTool.addToolListener(this);
+				listenerAdded = true;
+			}
 		}
-    }
+	}
 
-    /**
-     * Returns a hash code value for the object. This method is
-     * supported for the benefit of hashtables such as those provided by
-     * <code>java.util.Hashtable</code>.
-     */
-    @Override
-    public int hashCode() {
-        return producerTool.getName().hashCode() +
-            consumerTool.getName().hashCode();
-    }
+	/**
+	 * Returns a hash code value for the object. This method is
+	 * supported for the benefit of hashtables such as those provided by
+	 * <code>java.util.Hashtable</code>.
+	 */
+	@Override
+	public int hashCode() {
+		return producerTool.getName().hashCode() +
+			consumerTool.getName().hashCode();
+	}
 
-    /**
-     * Indicates whether some other object is "equal to" this one.
-     */
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (obj == this) {
-            return true;
-        }
+	/**
+	 * Indicates whether some other object is "equal to" this one.
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (obj == this) {
+			return true;
+		}
 
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
 
-        ToolConnectionImpl tc = (ToolConnectionImpl)obj;
+		ToolConnectionImpl tc = (ToolConnectionImpl) obj;
 
-        return producerTool.getName().equals(tc.producerTool.getName()) &&
-               consumerTool.getName().equals(tc.consumerTool.getName());
-    }
-    
-    /**
-     * Returns a string representation of the object. In general, the
-     * <code>toString</code> method returns a string that
-     * "textually represents" this object. The result should
-     * be a concise but informative representation that is easy for a
-     * person to read.
-     */
-    @Override
-    public String toString() {
-        return "Producer=" + producerTool.getName() +
-            ", Consumer=" + consumerTool.getName();
-    }
+		return producerTool.getName().equals(tc.producerTool.getName()) &&
+			consumerTool.getName().equals(tc.consumerTool.getName());
+	}
 
-    ////////////////////////////////////////////////////////////////
-    // ** package methods
-    ///////////////////////////////////////////////////////////////
-    /**
-     * Return true if the connection changed.
-     */
-    boolean hasChanged() {
-        return changed;
-    }
+	/**
+	 * Returns a string representation of the object. In general, the
+	 * <code>toString</code> method returns a string that
+	 * "textually represents" this object. The result should
+	 * be a concise but informative representation that is easy for a
+	 * person to read.
+	 */
+	@Override
+	public String toString() {
+		return "Producer=" + producerTool.getName() +
+			", Consumer=" + consumerTool.getName();
+	}
 
-    /**
-     * Update the events that are consumed and produced, as the tool
-     * may have added or removed plugins.
-     */
-    void updateEventList() {
+	////////////////////////////////////////////////////////////////
+	// ** package methods
+	///////////////////////////////////////////////////////////////
+	/**
+	 * Return true if the connection changed.
+	 */
+	boolean hasChanged() {
+		return changed;
+	}
 
-        String[] producerEvents = producerTool.getToolEventNames();
-        String[] consumedEvents = consumerTool.getConsumedToolEventNames();
-        List<String> pList = Arrays.asList(producerEvents);
-        List<String> cList = Arrays.asList(consumedEvents);
-        ArrayList<String> producerList = new ArrayList<>(pList);
-        ArrayList<String> consumerList = new ArrayList<>(cList);
+	/**
+	 * Update the events that are consumed and produced, as the tool
+	 * may have added or removed plugins.
+	 */
+	void updateEventList() {
 
-        // get the intersection of the lists
-        producerList.retainAll(consumerList);
-        consumerList.retainAll(producerList);
+		String[] producerEvents = producerTool.getToolEventNames();
+		String[] consumedEvents = consumerTool.getConsumedToolEventNames();
+		List<String> pList = Arrays.asList(producerEvents);
+		List<String> cList = Arrays.asList(consumedEvents);
+		ArrayList<String> producerList = new ArrayList<>(pList);
+		ArrayList<String> consumerList = new ArrayList<>(cList);
 
-        for (int i=0; i<producerList.size(); i++) {
-            String event = producerList.get(i);
-            if (!connectHt.contains(event)) {
-                connectHt.put(event, DISCONNECTED);
-            }
-        }
-        String[] keys = connectHt.getKeys();
-        for (int i=0; i<keys.length; i++) {
-            if (!producerList.contains(keys[i])) {
-                connectHt.remove(keys[i]);
-            }
-        }
-    }
+		// get the intersection of the lists
+		producerList.retainAll(consumerList);
+		consumerList.retainAll(producerList);
 
-    ////////////////////////////////////////////////////////////////
-    // ** private methods
-    ////////////////////////////////////////////////////////////////
+		for (int i = 0; i < producerList.size(); i++) {
+			String event = producerList.get(i);
+			if (!connectHt.contains(event)) {
+				connectHt.put(event, DISCONNECTED);
+			}
+		}
+		String[] keys = connectHt.getKeys();
+		for (String key : keys) {
+			if (!producerList.contains(key)) {
+				connectHt.remove(key);
+			}
+		}
+	}
 
-    /**
-     *  Verify that the given event name is produced by the
-     * producer tool and is consumed by the consumer tool.
-     * 
-     * @throws IllegalArgumentException if the event is not in the
-     * list of events for this producer/consumer pair.
-     */
-    private void validateEventName(String eventName) {
-        if (!connectHt.contains(eventName)) {
-            throw new IllegalArgumentException("Event name " + eventName +
-                " is not valid for producer " +
-                producerTool.getName() + ", consumer " +
-                consumerTool.getName());
-        }
-    }
+	////////////////////////////////////////////////////////////////
+	// ** private methods
+	////////////////////////////////////////////////////////////////
 
-    /**
-     * Check the connections; if there are none, then remove the
-     * consumer tool as a listener on the producer tool; called
-     * when a disconnect is made.
-     */
-    private void checkConnections() {
+	/**
+	 *  Verify that the given event name is produced by the
+	 * producer tool and is consumed by the consumer tool.
+	 * 
+	 * @throws IllegalArgumentException if the event is not in the
+	 * list of events for this producer/consumer pair.
+	 */
+	private void validateEventName(String eventName) {
+		if (!connectHt.contains(eventName)) {
+			throw new IllegalArgumentException("Event name " + eventName +
+				" is not valid for producer " +
+				producerTool.getName() + ", consumer " +
+				consumerTool.getName());
+		}
+	}
 
-        String [] eventNames = connectHt.getKeys();
-        boolean connectionFound = false;
-        for (int i=0; i<eventNames.length; i++) {
-            try {
-                int value = connectHt.get(eventNames[i]);
-                if (value == CONNECTED) {
-                    connectionFound = true;
-                    break;
-                }
-            }
-            catch(NoValueException e) {
-                Msg.showError(this, null, "Error", "Event name not in table: " + e.getMessage());
-            }
-        }
-        if (!connectionFound) {
-            producerTool.removeToolListener(this);
-            listenerAdded = false;
-        }
-    }
+	/**
+	 * Check the connections; if there are none, then remove the
+	 * consumer tool as a listener on the producer tool; called
+	 * when a disconnect is made.
+	 */
+	private void checkConnections() {
+
+		String[] eventNames = connectHt.getKeys();
+		boolean connectionFound = false;
+		for (String eventName : eventNames) {
+			try {
+				int value = connectHt.get(eventName);
+				if (value == CONNECTED) {
+					connectionFound = true;
+					break;
+				}
+			}
+			catch (NoValueException e) {
+				Msg.showError(this, null, "Error", "Event name not in table: " + e.getMessage());
+			}
+		}
+		if (!connectionFound) {
+			producerTool.removeToolListener(this);
+			listenerAdded = false;
+		}
+	}
 }

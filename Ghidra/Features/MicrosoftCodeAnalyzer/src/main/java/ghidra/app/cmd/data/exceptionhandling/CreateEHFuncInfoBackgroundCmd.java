@@ -71,7 +71,7 @@ public class CreateEHFuncInfoBackgroundCmd
 	@Override
 	protected EHFunctionInfoModel createModel(Program program) {
 		if (model == null) {
-			model = new EHFunctionInfoModel(program, address, validationOptions);
+			model = new EHFunctionInfoModel(program, getDataAddress(), validationOptions);
 		}
 		return model;
 	}

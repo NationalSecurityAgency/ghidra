@@ -63,7 +63,7 @@ class CommentHistoryAdapterV0 extends CommentHistoryAdapter {
 	void createRecord(long addr, byte commentType, int pos1, int pos2, String data, long date)
 			throws IOException {
 
-		Record rec = table.getSchema().createRecord(table.getKey());
+		DBRecord rec = table.getSchema().createRecord(table.getKey());
 		rec.setLongValue(HISTORY_ADDRESS_COL, addr);
 		rec.setByteValue(HISTORY_TYPE_COL, commentType);
 		rec.setIntValue(HISTORY_POS1_COL, pos1);
@@ -87,7 +87,7 @@ class CommentHistoryAdapterV0 extends CommentHistoryAdapter {
 	}
 
 	@Override
-	void updateRecord(Record rec) throws IOException {
+	void updateRecord(DBRecord rec) throws IOException {
 		table.putRecord(rec);
 	}
 

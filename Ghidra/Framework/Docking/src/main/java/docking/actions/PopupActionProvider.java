@@ -18,13 +18,13 @@ package docking.actions;
 import java.util.List;
 
 import docking.ActionContext;
-import docking.DockingTool;
+import docking.Tool;
 import docking.action.DockingActionIf;
 
 /**
  * Provides notification when the popup action menu is displayed.   This interface allows 
  * temporary/transient actions (those not registered with the tool via 
- * {@link DockingTool#addAction(DockingActionIf)}) to be used in the popup context menu.   
+ * {@link Tool#addAction(DockingActionIf)}) to be used in the popup context menu.   
  * 
  * <p>
  * Most clients will register actions directly with the tool.   However, clients that have numerous
@@ -32,7 +32,7 @@ import docking.action.DockingActionIf;
  * on demand as the popup is about to be shown, and only if their context is active.   This 
  * mechanism can reduce the tool's action management overhead.    Once you have created an
  * implementation of this class, you must register it with
- * {@link DockingTool#addPopupActionProvider(PopupActionProvider)}.
+ * {@link Tool#addPopupActionProvider(PopupActionProvider)}.
  */
 public interface PopupActionProvider {
 
@@ -46,5 +46,5 @@ public interface PopupActionProvider {
 	 * @param context the ActionContext
 	 * @return list of temporary popup actions; return null if there are no popup actions
 	 */
-	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context);
+	public List<DockingActionIf> getPopupActions(Tool tool, ActionContext context);
 }

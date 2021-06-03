@@ -36,6 +36,18 @@ public class KeyBindingData {
 		this(KeyStroke.getKeyStroke(keyCode, modifiers));
 	}
 
+	public KeyBindingData(String keyStrokeString) {
+		this(parseKeyStrokeString(keyStrokeString));
+	}
+
+	private static KeyStroke parseKeyStrokeString(String keyStrokeString) {
+		KeyStroke keyStroke = KeyBindingUtils.parseKeyStroke(keyStrokeString);
+		if (keyStroke == null) {
+			throw new IllegalArgumentException("Invalid keystroke string: " + keyStrokeString);
+		}
+		return keyStroke;
+	}
+
 	public KeyBindingData(KeyStroke keyStroke, KeyBindingPrecedence precedence) {
 		if (precedence == KeyBindingPrecedence.ReservedActionsLevel) {
 			throw new IllegalArgumentException(
@@ -75,7 +87,7 @@ public class KeyBindingData {
 
 	/**
 	 * Updates the given data with system-independent versions of key modifiers.  For example, 
-	 * the <tt>control</tt> key will be converted to the <tt>command</tt> key on the Mac.
+	 * the <code>control</code> key will be converted to the <code>command</code> key on the Mac.
 	 * @param newKeyBindingData the data to validate
 	 * @return the potentially changed data
 	 */

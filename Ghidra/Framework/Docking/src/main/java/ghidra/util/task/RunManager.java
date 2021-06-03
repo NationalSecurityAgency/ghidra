@@ -45,9 +45,9 @@ import ghidra.util.worker.Worker;
  * If the given runnable has Swing work to perform after the main Runnable.run() method completes
  * (e.g., updating Swing components),
  * the runnable should implement the {@link SwingRunnable} interface and perform this work in
- * {@link SwingRunnable#swingRun()}.
+ * {@link SwingRunnable#swingRun(boolean)}.
  * <p>
- * The progress monitor component, retrieved via {@link #getTaskMonitorComponent()}, can be placed
+ * The progress monitor component, retrieved via {@link #getMonitorComponent()}, can be placed
  * into a Swing widget.  This RunManager will show and hide this progress component as necessary
  * when runnables are being run.
  *
@@ -220,7 +220,7 @@ public class RunManager {
 	/**
 	 * Schedules this runnable to be run after all runnables currently queued.
 	 * <P>
-	 * This method differs from the {@link #runNow(Runnable, String, int)} methods in that it will
+	 * This method differs from the {@link #runNow(MonitoredRunnable, String, int)} methods in that it will
 	 * not cancel any currently running jobs.  This allows you to add new jobs to this run
 	 * manager, which lets them queue up. See header docs for details.
 	 *

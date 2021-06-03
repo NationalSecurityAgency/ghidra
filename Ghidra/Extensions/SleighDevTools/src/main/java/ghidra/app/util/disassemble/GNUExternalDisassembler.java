@@ -18,19 +18,23 @@ package ghidra.app.util.disassemble;
 import java.io.*;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+import org.jdom.*;
+import org.jdom.input.SAXBuilder;
+
 import generic.jar.ResourceFile;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.framework.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.LanguageID;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.Msg;
+import ghidra.util.xml.XmlUtilities;
+import util.CollectionUtils;
 
 public class GNUExternalDisassembler implements ExternalDisassembler {
 
@@ -39,6 +43,7 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 	// magic values for gdis that direct it to read bytes from stdin
 	private static final String READ_FROM_STDIN_PARAMETER = "stdin";
 	private static final String SEPARATOR_CHARACTER = "\n";
+	private static final String OPTIONS_SEPARATOR = "*";
 	private static final String ADDRESS_OUT_OF_BOUNDS = "is out of bounds.";
 	private static final String ENDING_STRING = "EOF";
 	private static final int NUM_BYTES = 32;
@@ -48,6 +53,8 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 	private static final String GDIS_EXE =
 		Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.WINDOWS ? "gdis.exe"
 				: "gdis";
+	private static final String EMPTY_DISASSEMBLER_OPTIONS = "";
+	private static final String GDIS_OPTIONS_FILENAME_PROPERTY = "gdis.disassembler.options.file";
 
 	private static HashMap<String, File> languageGdisMap;
 	private static File defaultGdisExecFile;
@@ -82,6 +89,21 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 		return gdisConfig != null && gdisConfig.architecture != UNSUPPORTED;
 	}
 
+	@Override
+	public String getDisassemblyDisplayPrefix(CodeUnit cu) throws Exception {
+		GdisConfig gdisConfig = checkLanguage(cu.getProgram().getLanguage());
+		if (gdisConfig == null || gdisConfig.architecture == UNSUPPORTED) {
+			return null;
+		}
+		Register contextRegister = gdisConfig.getContextRegister();
+		if (contextRegister == null) {
+			return null;
+		}
+		long value = getContextRegisterValue(cu, contextRegister);
+		String option = gdisConfig.getDisplayPrefixMap().get(value);
+		return option;
+	}
+
 	private static void reportMultipleMappings(Language language) {
 		List<String> externalNames = language.getLanguageDescription().getExternalNames("gnu");
 		if (externalNames != null && externalNames.size() > 1) {
@@ -89,8 +111,9 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 			StringBuilder sb = new StringBuilder();
 			boolean prependSeparator = false;
 			for (String name : externalNames) {
-				if (prependSeparator)
+				if (prependSeparator) {
 					sb.append(", ");
+				}
 				sb.append(name);
 				prependSeparator = true;
 			}
@@ -110,11 +133,17 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 		String machineId;
 		File gdisExecFile;
 		boolean usingDefault;
+		Register contextRegister;
+		Map<Long, String> valueToOptionString;
+		Map<Long, String> valueToDisplayPrefix;
+		Language lang;
+		String globalDisassemblerOptions;
 
 		GdisConfig(Language language, boolean isBigEndian) {
 
 			this.languageId = language.getLanguageID().toString();
 			this.isBigEndian = isBigEndian;
+			this.lang = language;
 
 			List<String> architectures = language.getLanguageDescription().getExternalNames("gnu");
 			//get first non-null
@@ -143,10 +172,121 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 				gdisExecFile = defaultGdisExecFile;
 				usingDefault = true;
 			}
+
+			List<String> gDisOptionsFile =
+				language.getLanguageDescription().getExternalNames(GDIS_OPTIONS_FILENAME_PROPERTY);
+			if (!CollectionUtils.isBlank(gDisOptionsFile)) {
+				try {
+					parseGdisOptionsFile(gDisOptionsFile.get(0));
+				}
+				catch (IOException e) {
+					Msg.error(this, "Error reading gdis options file " + e.getMessage());
+					contextRegister = null;
+					valueToOptionString = null;
+					valueToDisplayPrefix = null;
+				}
+			}
 		}
 
 		GdisConfig(Language lang) {
 			this(lang, lang.isBigEndian());
+		}
+
+		private void parseGdisOptionsFile(String fileName) throws IOException {
+			LanguageDescription desc = lang.getLanguageDescription();
+			if (!(desc instanceof SleighLanguageDescription)) {
+				throw new IOException("Not a Sleigh Language: " + lang.getLanguageID());
+			}
+
+			SleighLanguageDescription sld = (SleighLanguageDescription) desc;
+			ResourceFile defsFile = sld.getDefsFile();
+			ResourceFile parentFile = defsFile.getParentFile();
+			ResourceFile gdisOpts = new ResourceFile(parentFile, fileName);
+			SAXBuilder sax = XmlUtilities.createSecureSAXBuilder(false, false);
+			try (InputStream fis = gdisOpts.getInputStream()) {
+				Document doc = sax.build(fis);
+				Element rootElem = doc.getRootElement();
+				Element globalElement = rootElem.getChild("global");
+				if (globalElement != null) {
+					globalDisassemblerOptions = globalElement.getAttributeValue("optstring");
+				}
+				Element contextRegisterElement = rootElem.getChild("context_register");
+				if (contextRegisterElement == null) {
+					//no context_register element found in the xml file 
+					//this is not necessarily an error - might only be a global optstring
+					//global optstring has already been parsed, so we're done
+					if (globalElement != null) {
+						Msg.info(this,
+							"no context register element in " + gdisOpts.getAbsolutePath());
+						return;
+					}
+					//no context register element or global element, error
+					throw new JDOMException(
+						"No context_register element or global element in gdis options file");
+				}
+				if (contextRegisterElement.getContentSize() == 0) {
+					throw new JDOMException("No context register name provided.");
+				}
+				String contextRegisterName = contextRegisterElement.getContent(0).getValue();
+				contextRegister = lang.getRegister(contextRegisterName);
+				if (contextRegister == null) {
+					//the context register named in the xml file does not exist in the sleigh language
+					//this is an error
+					throw new JDOMException("Unknown context register " + contextRegisterName +
+						" for language " + lang.getLanguageID().getIdAsString());
+				}
+				valueToOptionString = new HashMap<>();
+				valueToDisplayPrefix = new HashMap<>();
+				Element options = rootElem.getChild("options");
+				List<Element> optList = options.getChildren("option");
+				for (Element opt : optList) {
+					Long value = Long.decode(opt.getAttributeValue("value"));
+					String optString = opt.getAttributeValue("optstring");
+					valueToOptionString.put(value, optString);
+					String displayPrefix = opt.getAttributeValue("display_prefix");
+					valueToDisplayPrefix.put(value, displayPrefix);
+				}
+
+			}
+			catch (JDOMException e) {
+				Msg.error(this, "Error reading " + fileName + ": " + e.getMessage());
+				contextRegister = null;
+				valueToOptionString = null;
+				valueToDisplayPrefix = null;
+			}
+		}
+
+		/**
+		 * Returns the global disassembler options
+		 * @return global option string, or {@code null} if the
+		 * global is unspecified.
+		 */
+		public String getGlobalDisassemblerOptions() {
+			return globalDisassemblerOptions;
+		}
+
+		/**
+		 * Return the context register determine by the gdis options file
+		 * @return the context register
+		 */
+		public Register getContextRegister() {
+			return contextRegister;
+		}
+
+		/**
+		 * Returns the map from context register values to gdis disassembler options
+		 * @return map values->options
+		 */
+		public Map<Long, String> getOptionsMap() {
+			return valueToOptionString;
+		}
+
+		/**
+		 * Returns the map from context register values to disassembly display prefixes
+		 * @return map values->prefixes
+		 */
+		public Map<Long, String> getDisplayPrefixMap() {
+			return valueToDisplayPrefix;
 		}
 
 		@Override
@@ -260,7 +400,7 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 
 		String bytes = getBytes(byteProvider, blockSize);
 
-		return runDisassembler(gdisConfig, address, bytes);
+		return runDisassembler(gdisConfig, address, bytes, EMPTY_DISASSEMBLER_OPTIONS);
 	}
 
 	public List<GnuDisassembledInstruction> getBlockDisassembly(Program program, Address addr,
@@ -272,8 +412,8 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 		int blockSize = pow2(blockSizeFactor);
 
 		Address blockAddr = addr.getNewAddress(addr.getOffset() & -blockSize); // block
-																				// aligned
-																				// address
+		// aligned
+		// address
 
 		return getBlockDisassembly(program.getLanguage(), blockAddr, blockSizeFactor,
 			new MemoryByteProvider(program.getMemory(), blockAddr));
@@ -301,7 +441,37 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 			return "";
 		}
 
-		List<GnuDisassembledInstruction> disassembly = runDisassembler(gdisConfig, address, bytes);
+		String disOptions = EMPTY_DISASSEMBLER_OPTIONS;
+		String globalOptions = gdisConfig.getGlobalDisassemblerOptions();
+		boolean hasGlobal = false;
+		if (globalOptions != null) {
+			hasGlobal = true;
+			//set the disOptions to the global options here in case there are global
+			//options but no options for context register values
+			disOptions = globalOptions;
+		}
+		Register contextRegister = gdisConfig.getContextRegister();
+		if (contextRegister != null) {
+			long value = getContextRegisterValue(cu, contextRegister);
+			String contextRegisterValueOption = gdisConfig.getOptionsMap().get(value);
+			if (contextRegisterValueOption == null) {
+				Msg.warn(this, "No option for value " + value + " of context register " +
+					contextRegister.getName());
+			}
+			else {
+				//need to put a comma between the global options and the options
+				//for this context register value
+				if (hasGlobal) {
+					disOptions = globalOptions + "," + contextRegisterValueOption;
+				}
+				//no global options, just send the options for this context register
+				else {
+					disOptions = contextRegisterValueOption;
+				}
+			}
+		}
+		List<GnuDisassembledInstruction> disassembly =
+			runDisassembler(gdisConfig, address, bytes, disOptions);
 
 		if (disassembly == null || disassembly.size() == 0 || disassembly.get(0) == null) {
 			return "(bad)";
@@ -324,7 +494,7 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 		String address = "0x" + Long.toHexString(addressOffset);
 
 		List<GnuDisassembledInstruction> disassembly =
-			runDisassembler(gdisConfig, address, bytesString);
+			runDisassembler(gdisConfig, address, bytesString, EMPTY_DISASSEMBLER_OPTIONS);
 
 		if (disassembly == null || disassembly.isEmpty() || disassembly.get(0) == null) {
 			return "(bad)";
@@ -332,14 +502,26 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 		return disassembly.get(0).toString();
 	}
 
+	private long getContextRegisterValue(CodeUnit cu, Register contextRegister) {
+		ProgramContext context = cu.getProgram().getProgramContext();
+		RegisterValue value = context.getRegisterValue(contextRegister, cu.getAddress());
+		if (value != null) {
+			return value.getUnsignedValue().longValue();
+		}
+		//we tried, return 0 to match SLEIGH default
+		return 0;
+	}
+
 	private String converBytesToString(byte[] bytes) {
 		String byteString = null;
 		for (byte thisByte : bytes) {
 			String thisByteString = Integer.toHexString(thisByte);
-			if (thisByteString.length() == 1)
+			if (thisByteString.length() == 1) {
 				thisByteString = "0" + thisByteString; // pad single digits
-			if (thisByteString.length() > 2)
+			}
+			if (thisByteString.length() > 2) {
 				thisByteString = thisByteString.substring(thisByteString.length() - 2);
+			}
 			// append this byte's hex string to the larger word length string
 			byteString = byteString + thisByteString;
 		}
@@ -402,7 +584,7 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 	}
 
 	private List<GnuDisassembledInstruction> runDisassembler(GdisConfig gdisConfig,
-			String addrString, String bytes) throws IOException {
+			String addrString, String bytes, String disassemblerOptions) throws IOException {
 
 		// if this is the first time running the disassembler process, or a
 		// parameter has changed (notably, not the address--we pass that in
@@ -414,8 +596,9 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 
 		if (disassemblerProcess == null || !sameConfig) {
 
-			if (!setupDisassembler(gdisConfig))
+			if (!setupDisassembler(gdisConfig)) {
 				return null;
+			}
 
 			outputWriter = new OutputStreamWriter(disassemblerProcess.getOutputStream());
 
@@ -432,7 +615,14 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 			return null; // if process previously died return nothing - quickly
 		}
 
-		String disassemblyRequest = addrString + SEPARATOR_CHARACTER + bytes + SEPARATOR_CHARACTER;
+		String disassemblyRequest = addrString + SEPARATOR_CHARACTER + bytes;
+		if (StringUtils.isEmpty(disassemblerOptions)) {
+			disassemblyRequest += '\n';
+		}
+		else {
+			disassemblyRequest += OPTIONS_SEPARATOR + disassemblerOptions + SEPARATOR_CHARACTER;
+		}
+
 		try {
 			outputWriter.write(disassemblyRequest);
 			outputWriter.flush();

@@ -15,8 +15,7 @@
  */
 package ghidra.app.cmd.data.rtti;
 
-import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.getAlignedPack4Structure;
-import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.getReferencedAddress;
+import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.*;
 
 import ghidra.app.cmd.data.EHDataTypeUtilities;
 import ghidra.app.cmd.data.TypeDescriptorModel;
@@ -402,4 +401,17 @@ public class Rtti1Model extends AbstractCreateRttiDataModel {
 		return rtti0Model;
 	}
 
+	/**
+	 * Gets the BaseClassDescriptor (RTTI 3) model associated with this RTTI 1.
+	 * @return the BaseClassDescriptor (RTTI 3) model or null.
+	 */
+	public Rtti3Model getRtti3Model() {
+		try {
+			checkValidity();
+		}
+		catch (InvalidDataTypeException e) {
+			return null;
+		}
+		return rtti3Model;
+	}
 }

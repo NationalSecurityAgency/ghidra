@@ -653,7 +653,7 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 	HL = HL + 1;
 	BC = BC - 1;
 	
-	if (cmp == 0 || BC != 0) goto inst_start;
+	if (cmp != 0 || BC != 0) goto inst_start;
 
 	carries:1 = (~A & val) | (val & cmp) | (cmp & ~A);
 	$(H_flag) = (carries & 0b00001000) != 0;
@@ -683,7 +683,7 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 	HL = HL - 1;
 	BC = BC - 1;
 	
-	if (cmp == 0 || BC != 0) goto inst_start;
+	if (cmp != 0 || BC != 0) goto inst_start;
 	
 	carries:1 = (~A & val) | (val & cmp) | (cmp & ~A);
 	$(H_flag) = (carries & 0b00001000) != 0;

@@ -314,7 +314,7 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 		return mainPanel;
 	}
 
-	private void showFitlerPanel(boolean selected) {
+	private void showFilterPanel(boolean selected) {
 		if (selected) {
 			mainPanel.add(filterPanel, BorderLayout.SOUTH);
 		}
@@ -331,7 +331,7 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 
 				@Override
 				public void actionPerformed(ActionContext context) {
-					showFitlerPanel(isSelected());
+					showFilterPanel(isSelected());
 				}
 			};
 

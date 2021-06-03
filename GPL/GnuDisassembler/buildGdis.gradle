@@ -1,3 +1,6 @@
+/* ###
+ * IP: Public Domain
+ */
 /*******************************************************************************************
  * build.gradle file that applies this script must define two properties
  *     1) binutilsLocation  - the folder where the original binutils.zip lives

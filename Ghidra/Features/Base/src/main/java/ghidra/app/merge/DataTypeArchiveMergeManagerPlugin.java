@@ -34,17 +34,17 @@ import javax.swing.JComponent;
 	status = PluginStatus.HIDDEN,
 	packageName = CorePluginPackage.NAME,
 	category = PluginCategoryNames.UNMANAGED,
-	shortDescription = "Program Merge Manager",
-	description = "Manage merge of Programs"
+	shortDescription = "DataType Archive Merge Manager",
+	description = "Manage merge of DataType Archives"
 )
 //@formatter:on
 public class DataTypeArchiveMergeManagerPlugin extends MergeManagerPlugin {
 
 	/**
-	 * Constructor for plugin that handles multi-user merge of programs.
-	 * @param tool the tool with the active program to be merged
+	 * Constructor for plugin that handles multi-user merge of data type archives.
+	 * @param tool the tool
 	 * @param mergeManager the merge manager that will control the merge process
-	 * @param program the current program
+	 * @param dataTypeArchive the data type archive
 	 */
 	public DataTypeArchiveMergeManagerPlugin(	PluginTool tool, 
 												DataTypeArchiveMergeManager mergeManager, 
@@ -68,9 +68,6 @@ public class DataTypeArchiveMergeManagerPlugin extends MergeManagerPlugin {
 //        }
     }
     
-	/* (non-Javadoc)
-	 * @see ghidra.framework.plugintool.Plugin#dispose()
-	 */ 
 	@Override
     protected void dispose() {
 		provider.dispose();

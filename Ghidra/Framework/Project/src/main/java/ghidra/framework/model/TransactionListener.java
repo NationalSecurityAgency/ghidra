@@ -41,7 +41,7 @@ public interface TransactionListener {
 	void undoStackChanged(DomainObjectAdapterDB domainObj);
 
 	/**
-	 * Notification that undo or redo has occured.
+	 * Notification that undo or redo has occurred.
 	 * @param domainObj the affected domain object
 	 */
 	void undoRedoOccurred(DomainObjectAdapterDB domainObj);

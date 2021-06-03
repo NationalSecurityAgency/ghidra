@@ -15,8 +15,14 @@
  */
 package ghidra.feature.vt.api.correlator.address;
 
-import static ghidra.feature.vt.db.VTTestUtils.addr;
+import static ghidra.feature.vt.db.VTTestUtils.*;
 import static org.junit.Assert.*;
+
+import java.util.Collection;
+import java.util.List;
+
+import org.junit.*;
+
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.feature.vt.api.correlator.program.*;
 import ghidra.feature.vt.api.main.*;
@@ -33,12 +39,6 @@ import ghidra.program.util.AddressCorrelation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
-
-import java.util.Collection;
-import java.util.List;
-
-import org.junit.*;
 
 /**
  * Tests to verify that the correct address correlation is being determined and used for obtaining
@@ -61,27 +61,20 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 	protected Function sourceFunction;
 	protected Function destinationFunction;
 
-	public AddressCorrelationTest() {
-		super();
-	}
-
-    @Before
-    public void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		vtTestEnv = new VTTestEnv();
 	}
 
-    @After
-    public void tearDown() throws Exception {
+	@After
+	public void tearDown() throws Exception {
 		sourceProgram = null;
 		destinationProgram = null;
 		session = null;
 		controller = null;
 		correlator = null;
-		vtTestEnv.releaseSession();
 		vtTestEnv.dispose();
 	}
-
-	/////////////// TESTS ///////////////
 
 	@Test
 	public void testExactMatchBytes() throws Exception {
@@ -152,7 +145,8 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 
 		createSession(languageProgram1, languageProgram2);
 		vtTestEnv.showTool();
-		addComment(CodeUnit.PLATE_COMMENT, "0x00401003", "Similar name plate comment not at entry.");
+		addComment(CodeUnit.PLATE_COMMENT, "0x00401003",
+			"Similar name plate comment not at entry.");
 		addProgramCorrelation(new SimilarSymbolNameProgramCorrelatorFactory());
 		useMatch("0x00401000", "0x00402000");
 		checkAddressCorrelation(LinearFunctionAddressCorrelation.NAME);
@@ -354,7 +348,7 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 	protected void addProgramCorrelation(VTProgramCorrelatorFactory correlatorFactory) {
 		try {
 			correlator =
-				vtTestEnv.correlate(correlatorFactory, null, TaskMonitorAdapter.DUMMY_MONITOR);
+				vtTestEnv.correlate(correlatorFactory, null, TaskMonitor.DUMMY);
 		}
 		catch (Exception e) {
 			Assert.fail(e.getMessage());
@@ -392,7 +386,8 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 	 * @param addressCorrelationName the name of the expected address correlation for determining
 	 * the destination address of non-function entry point markup items.
 	 */
-	private void checkMarkupDestinationSource(String addressCorrelationName, boolean canBeNoAddress) {
+	private void checkMarkupDestinationSource(String addressCorrelationName,
+			boolean canBeNoAddress) {
 		Collection<VTMarkupItem> appliableMarkupItems =
 			controller.getMatchInfo(testMatch).getAppliableMarkupItems(TaskMonitor.DUMMY); // Initialize the cache.
 		for (VTMarkupItem vtMarkupItem : appliableMarkupItems) {
@@ -487,8 +482,9 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 			String sourceAddressString, String comment, String destinationAddressString) {
 		Address srcAddress = addr(sourceAddressString, sourceProgram);
 		Address destAddress =
-			destinationAddressString.equals("NO_ADDRESS") ? Address.NO_ADDRESS : addr(
-				destinationAddressString, destinationProgram);
+			destinationAddressString.equals("NO_ADDRESS") ? Address.NO_ADDRESS
+					: addr(
+						destinationAddressString, destinationProgram);
 
 		Collection<VTMarkupItem> appliableMarkupItems =
 			controller.getMatchInfo(testMatch).getAppliableMarkupItems(TaskMonitor.DUMMY); // Initialize the cache.

@@ -17,6 +17,7 @@ package docking.widgets.dialogs;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.util.NoSuchElementException;
 
 import javax.swing.*;
 
@@ -41,13 +42,13 @@ public class InputWithChoicesDialog extends DialogComponentProvider {
 	 * can check the value of {@link #isCanceled()} to know whether or not 
 	 * the user canceled the operation. To get the user selected value use the
 	 * {@link #getValue()} value(s) entered by the user.  If the user cancelled the operation, then
-	 * null will be returned from <tt>getValue()</tt>.
+	 * null will be returned from <code>getValue()</code>.
 	 * <P>
 	 * 
 	 * @param dialogTitle used as the name of the dialog's title bar
 	 * @param label value to use for the label of the text field
-	 * @param String[] optionValues to populate the combo box
-	 * @param String initial value - can be null
+	 * @param optionValues values to populate the combo box
+	 * @param initialValue the initial value - can be null
 	 * @param messageIcon the icon to display on the dialog--can be null
 	 */
 	public InputWithChoicesDialog(String dialogTitle, String label, String[] optionValues,
@@ -55,10 +56,11 @@ public class InputWithChoicesDialog extends DialogComponentProvider {
 
 		super(dialogTitle, true, false, true, false);
 
-		this.addOKButton();
-		this.addCancelButton();
-		this.setRememberSize(false);
-		this.setRememberLocation(false);
+		setTransient(true);
+		addOKButton();
+		addCancelButton();
+		setRememberSize(false);
+		setRememberLocation(false);
 		buildMainPanel(label, optionValues, initialValue, messageIcon);
 
 		setFocusComponent(combo);
@@ -70,14 +72,14 @@ public class InputWithChoicesDialog extends DialogComponentProvider {
 	 * can check the value of {@link #isCanceled()} to know whether or not 
 	 * the user canceled the operation. To get the user selected value use the
 	 * {@link #getValue()} value(s) entered by the user.  If the user cancelled the operation, then
-	 * null will be returned from <tt>getValue()</tt>.
+	 * null will be returned from <code>getValue()</code>.
 	 * <P>
 	 * 
 	 * @param dialogTitle used as the name of the dialog's title bar
 	 * @param label value to use for the label of the text field
-	 * @param String[] optionValues to populate the combo box
-	 * @param String initial value - can be null
-	 * @param boolean allowEdits true allows the user to add custom entries to the combo box by entering text
+	 * @param optionValues values to populate the combo box
+	 * @param initialValue the initial value - can be null
+	 * @param allowEdits true allows the user to add custom entries to the combo box by entering text
 	 * @param messageIcon the icon to display on the dialog--can be null
 	 */
 	public InputWithChoicesDialog(String dialogTitle, String label, String[] optionValues,
@@ -180,5 +182,18 @@ public class InputWithChoicesDialog extends DialogComponentProvider {
 		}
 		Object selectedItem = combo.getSelectedItem();
 		return selectedItem == null ? null : selectedItem.toString();
+	}
+
+	/**
+	 * Set the current choice to value.
+	 * @param value updated choice
+	 * @throws NoSuchElementException if choice does not permit edits and value is
+	 * not a valid choice. 
+	 */
+	public void setValue(String value) {
+		combo.setSelectedItem(value);
+		if (!combo.isEditable() && !combo.getSelectedItem().equals(value)) {
+			throw new NoSuchElementException();
+		}
 	}
 }

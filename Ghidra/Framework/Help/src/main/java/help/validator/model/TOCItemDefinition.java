@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import help.validator.LinkDatabase;
 
 /**
- * A representation of the <tocdef> tag, which is a way to define a TOC item entry in 
+ * A representation of the {@literal <tocdef>} tag, which is a way to define a TOC item entry in 
  * a TOC_Source.xml file.
  */
 public class TOCItemDefinition extends TOCItem {

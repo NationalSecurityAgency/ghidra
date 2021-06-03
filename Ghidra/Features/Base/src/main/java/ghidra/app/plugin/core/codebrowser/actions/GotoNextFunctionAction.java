@@ -23,8 +23,9 @@ import javax.swing.KeyStroke;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.tool.ToolConstants;
+import ghidra.app.context.NavigatableActionContext;
+import ghidra.app.context.NavigatableContextAction;
 import ghidra.app.nav.Navigatable;
-import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
@@ -33,12 +34,12 @@ import ghidra.program.model.listing.*;
 import ghidra.program.util.FunctionSignatureFieldLocation;
 import ghidra.util.HelpLocation;
 
-public class GotoNextFunctionAction extends CodeViewerContextAction {
+public class GotoNextFunctionAction extends NavigatableContextAction {
 
 	private PluginTool tool;
 
 	public GotoNextFunctionAction(PluginTool tool, String owner) {
-		super("Go to next function", owner);
+		super("Go To Next Function", owner);
 		this.tool = tool;
 
 		MenuData menuData =
@@ -49,6 +50,7 @@ public class GotoNextFunctionAction extends CodeViewerContextAction {
 		KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.CTRL_DOWN_MASK);
 		setKeyBindingData(new KeyBindingData(keyStroke));
 		setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, "Next_Previous_Function"));
+		addToWindowWhen(NavigatableActionContext.class);
 	}
 
 	private Function getNextFunction(Program program, Address address) {
@@ -67,7 +69,7 @@ public class GotoNextFunctionAction extends CodeViewerContextAction {
 	}
 
 	@Override
-	protected void actionPerformed(CodeViewerActionContext context) {
+	protected void actionPerformed(NavigatableActionContext context) {
 		Address address = context.getAddress();
 		Program program = context.getProgram();
 		Function function = getNextFunction(program, address);
@@ -79,7 +81,7 @@ public class GotoNextFunctionAction extends CodeViewerContextAction {
 		if (service != null) {
 			FunctionSignatureFieldLocation location =
 				new FunctionSignatureFieldLocation(program, function.getEntryPoint(), null, 0,
- function.getPrototypeString(false, false));
+					function.getPrototypeString(false, false));
 
 			Navigatable navigatable = context.getNavigatable();
 			service.goTo(navigatable, location, navigatable.getProgram());

@@ -66,14 +66,6 @@ public class GifDataType extends BuiltIn implements Dynamic, Resource {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	@Override
-	public boolean isDynamicallySized() {
-		return true;
-	}
-
 	@Override
 	public DataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
@@ -108,6 +100,11 @@ public class GifDataType extends BuiltIn implements Dynamic, Resource {
 		@Override
 		public ImageIcon getImageIcon() {
 			return new ImageIcon(data, "<GIF-Image>");
+		}
+
+		@Override
+		public String getImageFileType() {
+			return "gif";
 		}
 	}
 

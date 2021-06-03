@@ -30,11 +30,14 @@ public class BlockStartLocation extends CommentFieldLocation {
 	/**
 	  * Create a new BlockStartLocation.
 	  * 
-	  * @param the program of the location
+	  * @param program the program of the location
 	  * @param addr address of block
-	  * @param groupPath object that uniquely identifies a module or fragment
+	  * @param componentPath object that uniquely identifies a module or fragment
 	  * by its hierarchy names; this parameter may be null
+	  *	@param row the component row
 	  * @param charOffset character position of the location
+	  * @param comment the block comments
+	  * @param commentRow the comment row
 	  */
 	public BlockStartLocation(Program program, Address addr, int[] componentPath, int row,
 			int charOffset, String[] comment, int commentRow) {

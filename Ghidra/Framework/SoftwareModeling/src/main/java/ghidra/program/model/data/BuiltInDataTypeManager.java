@@ -16,11 +16,10 @@
 package ghidra.program.model.data;
 
 import java.util.ArrayList;
-import java.util.Set;
+import java.util.List;
 
 import javax.swing.event.ChangeListener;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.framework.ShutdownHookRegistry;
 import ghidra.framework.ShutdownPriority;
 import ghidra.util.*;
@@ -47,12 +46,12 @@ public class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 	public static synchronized BuiltInDataTypeManager getDataTypeManager() {
 		if (manager == null) {
 			manager = new BuiltInDataTypeManager();
-			Runnable cleanupTask = new Thread((Runnable) () -> {
+			Runnable cleanupTask = () -> {
 				if (manager != null) {
-					manager.dispose();
+					manager.closeStaticInstance();
 					manager = null;
 				}
-			}, "Builtin DataType Manager Cleanup Thread");
+			};
 			ShutdownHookRegistry.addShutdownHook(cleanupTask,
 				ShutdownPriority.DISPOSE_DATABASES.before());
 		}
@@ -93,17 +92,9 @@ public class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 		return super.createCategory(path);
 	}
 
-	private synchronized void dispose() {
+	private synchronized void closeStaticInstance() {
 		ClassSearcher.removeChangeListener(classSearcherListener);
 		super.close();
-	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataTypeManager#close()
-	 */
-	@Override
-	public void close() {
-		// static shared instance can't be closed
 	}
 
 	/**
@@ -134,7 +125,7 @@ public class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 		try {
 			ArrayList<DataType> list = new ArrayList<>();
 			ClassFilter filter = new BuiltInDataTypeClassExclusionFilter();
-			Set<BuiltInDataType> datatypes =
+			List<BuiltInDataType> datatypes =
 				ClassSearcher.getInstances(BuiltInDataType.class, filter);
 			for (BuiltInDataType datatype : datatypes) {
 				list.clear();
@@ -202,5 +193,11 @@ public class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 	public DataType replaceDataType(DataType existingDt, DataType replacementDt,
 			boolean updateCategoryPath) throws DataTypeDependencyException {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void close() {
+		// do nothing - cannot close a built-in data type manager
+		// close performed automatically during shutdown
 	}
 }

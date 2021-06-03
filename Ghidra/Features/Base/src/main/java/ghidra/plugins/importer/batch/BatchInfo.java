@@ -357,10 +357,9 @@ public class BatchInfo {
 
 		try (ByteProvider provider =
 			FileSystemService.getInstance().getByteProvider(fsrl, monitor)) {
-			Map<Loader, Collection<LoadSpec>> loadMap =
-				pollLoadersForLoadSpecs(provider, fsrl, monitor);
-			for (Loader loader : loadMap.keySet()) {
-				Collection<LoadSpec> loadSpecs = loadMap.get(loader);
+			LoaderMap loaderMap = pollLoadersForLoadSpecs(provider, fsrl, monitor);
+			for (Loader loader : loaderMap.keySet()) {
+				Collection<LoadSpec> loadSpecs = loaderMap.get(loader);
 				BatchSegregatingCriteria bsc =
 					new BatchSegregatingCriteria(loader, loadSpecs, provider);
 				BatchGroup batchGroup = groupsByCriteria.get(bsc);
@@ -371,7 +370,7 @@ public class BatchInfo {
 				batchGroup.add(provider, loadSpecs, fsrl, currentUASI);
 			}
 
-			return loadMap.keySet().size() > 0;
+			return loaderMap.keySet().size() > 0;
 		}
 		catch (IOException ioe) {
 			Msg.warn(this, "Error while probing file " + fsrl + " for loader applications: " +
@@ -380,8 +379,7 @@ public class BatchInfo {
 		}
 	}
 
-	private Map<Loader, Collection<LoadSpec>> pollLoadersForLoadSpecs(ByteProvider provider,
-			FSRL fsrl, TaskMonitor monitor) {
+	private LoaderMap pollLoadersForLoadSpecs(ByteProvider provider, FSRL fsrl, TaskMonitor monitor) {
 		monitor.setMessage(fsrl.getName());
 		return LoaderService.getSupportedLoadSpecs(provider,
 			loader -> !(loader instanceof BinaryLoader));

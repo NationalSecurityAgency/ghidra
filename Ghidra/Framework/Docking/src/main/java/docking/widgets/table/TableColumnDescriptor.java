@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +18,11 @@ package docking.widgets.table;
 import java.util.*;
 
 public class TableColumnDescriptor<ROW_TYPE> {
-	private List<TableColumnInfo> columns = new ArrayList<TableColumnInfo>();
+	private List<TableColumnInfo> columns = new ArrayList<>();
 
 	public List<DynamicTableColumn<ROW_TYPE, ?, ?>> getAllColumns() {
 		List<DynamicTableColumn<ROW_TYPE, ?, ?>> list =
-			new ArrayList<DynamicTableColumn<ROW_TYPE, ?, ?>>();
+			new ArrayList<>();
 		for (TableColumnInfo info : columns) {
 			list.add(info.column);
 		}
@@ -32,7 +31,7 @@ public class TableColumnDescriptor<ROW_TYPE> {
 
 	public List<DynamicTableColumn<ROW_TYPE, ?, ?>> getDefaultVisibleColumns() {
 		List<DynamicTableColumn<ROW_TYPE, ?, ?>> list =
-			new ArrayList<DynamicTableColumn<ROW_TYPE, ?, ?>>();
+			new ArrayList<>();
 		for (TableColumnInfo info : columns) {
 			if (info.isVisible) {
 				list.add(info.column);
@@ -44,7 +43,7 @@ public class TableColumnDescriptor<ROW_TYPE> {
 	public TableSortState getDefaultTableSortState(DynamicColumnTableModel<ROW_TYPE> model) {
 		TableSortStateEditor editor = new TableSortStateEditor();
 
-		List<TableColumnInfo> sortedColumns = new ArrayList<TableColumnInfo>(columns);
+		List<TableColumnInfo> sortedColumns = new ArrayList<>(columns);
 		Collections.sort(sortedColumns);
 
 		for (TableColumnInfo info : sortedColumns) {
@@ -59,6 +58,22 @@ public class TableColumnDescriptor<ROW_TYPE> {
 		}
 
 		return editor.createTableSortState();
+	}
+
+	private int remove(DynamicTableColumn<ROW_TYPE, ?, ?> column) {
+		for (int i = 0; i < columns.size(); i++) {
+			TableColumnDescriptor<ROW_TYPE>.TableColumnInfo info = columns.get(i);
+			if (info.column == column) {
+				columns.remove(i);
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	public void setHidden(DynamicTableColumn<ROW_TYPE, ?, ?> column) {
+		int index = remove(column);
+		columns.add(index, new TableColumnInfo(column));
 	}
 
 	public void addHiddenColumn(DynamicTableColumn<ROW_TYPE, ?, ?> column) {

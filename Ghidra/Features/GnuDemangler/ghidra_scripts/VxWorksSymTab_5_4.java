@@ -95,8 +95,9 @@ public class VxWorksSymTab_5_4 extends GhidraScript {
 			Address vxSymTbl = vxNumSymEntriesAddr.subtract(vxNumSymEntries * SYM_ENTRY_SIZE);
 			for (int i = 0; i < vxNumSymEntries; i++) {
 
-				if (monitor.isCancelled())
+				if (monitor.isCancelled()) {
 					return; // check for cancel button
+				}
 				println("i=" + i); // visual counter
 
 				// Extract symbol table entry values
@@ -112,15 +113,19 @@ public class VxWorksSymTab_5_4 extends GhidraScript {
 				Address a;
 				String symName;
 				for (a = symNameAddr; mem.getByte(a) != 0; a = a.add(1)) {
-					if (getDataAt(a) != null)
+					if (getDataAt(a) != null) {
 						removeDataAt(a);
-					if (getInstructionAt(a) != null)
+					}
+					if (getInstructionAt(a) != null) {
 						removeInstructionAt(a);
+					}
 				}
-				if (getDataAt(a) != null)
+				if (getDataAt(a) != null) {
 					removeDataAt(a);
-				if (getInstructionAt(a) != null)
+				}
+				if (getInstructionAt(a) != null) {
 					removeInstructionAt(a);
+				}
 
 				// Turn *symNameAddr into a string and store it in symName
 				try {
@@ -137,7 +142,7 @@ public class VxWorksSymTab_5_4 extends GhidraScript {
 				String symDemangledName = null;
 				try {
 					// if successful, symDemangledName will be non-NULL
-					symDemangledName = demangler.demangle(symName, true).getSignature(false);
+					symDemangledName = demangler.demangle(symName).getSignature(false);
 				}
 				catch (DemangledException e) {
 					// if symName wasn't a mangled name, silently continue

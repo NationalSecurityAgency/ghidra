@@ -18,9 +18,7 @@ package ghidra.formats.gfilesystem;
 import java.io.File;
 import java.io.IOException;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -75,5 +73,4 @@ public class FileSystemServiceTest extends AbstractGhidraHeadedIntegrationTest {
 			Assert.assertTrue(ioe.getMessage().contains("Exact file no longer exists"));
 		}
 	}
-
 }

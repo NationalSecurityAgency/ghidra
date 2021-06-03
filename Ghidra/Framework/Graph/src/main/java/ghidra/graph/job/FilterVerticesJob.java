@@ -15,8 +15,7 @@
  */
 package ghidra.graph.job;
 
-import static util.CollectionUtils.asSet;
-import static util.CollectionUtils.asStream;
+import static util.CollectionUtils.*;
 
 import java.util.Iterator;
 import java.util.Set;
@@ -108,7 +107,7 @@ public class FilterVerticesJob<V extends VisualVertex, E extends VisualEdge<V>>
 		passedVertices = matching;
 
 		// 2)
-		failedVertices = findCurrentVerticesFailingTheFitler(matching);
+		failedVertices = findCurrentVerticesFailingTheFilter(matching);
 		failedEdges = filterGraph.getAllEdges(failedVertices);
 
 		Set<E> allRelatedEdges = filterGraph.getAllEdges(passedVertices);
@@ -119,7 +118,7 @@ public class FilterVerticesJob<V extends VisualVertex, E extends VisualEdge<V>>
 		filterGraph.unfilterVertices(passedVertices);
 	}
 
-	private Set<V> findCurrentVerticesFailingTheFitler(Set<V> validVertices) {
+	private Set<V> findCurrentVerticesFailingTheFilter(Set<V> validVertices) {
 
 		UnmodifiableIterator<V> nonMatchingIterator =
 			Iterators.filter(filterGraph.getUnfilteredVertices(), v -> !validVertices.contains(v));

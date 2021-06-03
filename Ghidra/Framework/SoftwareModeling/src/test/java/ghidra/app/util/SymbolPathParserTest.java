@@ -15,7 +15,7 @@
  */
 package ghidra.app.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,10 +68,10 @@ public class SymbolPathParserTest extends AbstractGTest {
 
 	@Test
 	public void testNamespaceInFunctionArgument() {
-		List<String> list = SymbolPathParser.parse(	"Foo7::Bar5(class Foo1d::Bar1,int)");
-			List<String> expected = new ArrayList<>();
-			expected.add("Foo7");
-			expected.add("Bar5(class Foo1d::Bar1,int)");
+		List<String> list = SymbolPathParser.parse("Foo7::Bar5(class Foo1d::Bar1,int)");
+		List<String> expected = new ArrayList<>();
+		expected.add("Foo7");
+		expected.add("Bar5(class Foo1d::Bar1,int)");
 		assertListEqualOrdered(expected, list);
 	}
 
@@ -115,6 +115,34 @@ public class SymbolPathParserTest extends AbstractGTest {
 			"(enum C::B const &),0>,bool,enum C::B const &> >");
 		expected.add("F<class E::D::G<struct E::D::H<bool (__cdecl*const)(enum C::B const &),0>," +
 			"bool,enum C::B const &> ><class E::D::A<bool,enum C::B const &> >");
+		assertListEqualOrdered(expected, list);
+	}
+
+	@Test
+	public void testSpecialCharAfterDelimiter1() {
+		String name = "A::B::C<wchar_t,A::B::D<wchar_t>,A::B::E<wchar_t> >::<unnamed-tag>";
+		List<String> list = SymbolPathParser.parse(name);
+		List<String> expected = new ArrayList<>();
+		expected.add("A");
+		expected.add("B");
+		expected.add("C<wchar_t,A::B::D<wchar_t>,A::B::E<wchar_t> >");
+		expected.add("<unnamed-tag>");
+		assertListEqualOrdered(expected, list);
+	}
+
+	@Test
+	public void testUnmatchedAngleBracketFallback1() {
+		// Contrived example to test naive parsing going into fallback mode due to unmatched
+		//  angle brackets.  The expected result here is not an accurate result that we would
+		//  expect from a more sophisticated parser.
+		String name = "A::operator<=::B<C<int>::<unnamed-tag>>::E";
+		List<String> list = SymbolPathParser.parse(name);
+		List<String> expected = new ArrayList<>();
+		expected.add("A");
+		expected.add("operator<=");
+		expected.add("B<C<int>");
+		expected.add("<unnamed-tag>>");
+		expected.add("E");
 		assertListEqualOrdered(expected, list);
 	}
 

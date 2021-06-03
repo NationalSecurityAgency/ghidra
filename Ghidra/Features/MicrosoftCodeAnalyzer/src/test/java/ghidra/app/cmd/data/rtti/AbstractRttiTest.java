@@ -269,7 +269,7 @@ class AbstractRttiTest extends AbstractCreateDataTypeModelTest {
 		vfTableModel.validate();
 		assertEquals(addressVfTable, vfTableModel.getAddress());
 		int numVfTableEntries = vfAddresses.length;
-		assertEquals(numVfTableEntries, vfTableModel.getCount());
+		assertEquals(numVfTableEntries, vfTableModel.getElementCount());
 		for (int i = 0; i < numVfTableEntries; i++) {
 			assertEquals(addr(program, vfAddresses[i]), vfTableModel.getVirtualFunctionPointer(i));
 		}

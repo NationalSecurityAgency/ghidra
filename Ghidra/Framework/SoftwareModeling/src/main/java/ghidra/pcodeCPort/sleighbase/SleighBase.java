@@ -16,6 +16,7 @@
 package ghidra.pcodeCPort.sleighbase;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 import generic.stl.*;
 import ghidra.pcodeCPort.context.SleighError;
@@ -26,13 +27,22 @@ import ghidra.pcodeCPort.space.AddrSpace;
 import ghidra.pcodeCPort.space.spacetype;
 import ghidra.pcodeCPort.translate.Translate;
 import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.sleigh.grammar.SourceFileIndexer;
 
 public abstract class SleighBase extends Translate implements NamedSymbolProvider {
 
-	// NOTE: restoreXml method removed as it is only used by the decompiler's implementation
+	// NOTE: restoreXml method removed as it is only used by the decompiler's
+	// implementation
 
-	public static final int SLA_FORMAT_VERSION = 2;	// What format of the .sla file this produces
-													// This value should always match SleighLanguage.SLA_FORMAT_VERSION
+	/**
+	 * Note: The values of {@link #SLA_FORMAT_VERSION} and {@link #MAX_UNIQUE_SIZE} 
+	 * must match the corresponding values defined by sleighbase.cc
+	 */
+	public static final int SLA_FORMAT_VERSION = 3;
+
+	public static final long MAX_UNIQUE_SIZE = 128;  //Maximum size of a varnode in the unique space.  
+	                                                 //Should match value in sleighbase.cc
+
 	private VectorSTL<String> userop = new VectorSTL<>();
 	private address_set varnode_xref = new address_set(); // Cross-reference registers by address
 	protected SubtableSymbol root;
@@ -40,6 +50,8 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 	protected int maxdelayslotbytes;	// Maximum number of bytes in a delayslot directive
 	protected int unique_allocatemask;	// Bits that are guaranteed to be zero in the unique allocation scheme
 	protected int numSections;		// Number of named sections
+	protected SourceFileIndexer indexer;  //indexer for source files
+										//used to provide source file info for constructors
 
 	@Override
 	public SleighSymbol findSymbol(String nm) {
@@ -59,34 +71,25 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 		maxdelayslotbytes = 0;
 		unique_allocatemask = 0;
 		numSections = 0;
+		indexer = new SourceFileIndexer();
 	}
 
 	public boolean isInitialized() {
 		return (root != null);
 	}
 
-	protected void buildXrefs() {
+	protected void buildXrefs(ArrayList<SleighSymbol> errorPairs) {
 		SymbolScope glb = symtab.getGlobalScope();
-		int errors = 0;
 		glb.begin();
 		IteratorSTL<SleighSymbol> iter;
-		StringBuffer buffer = new StringBuffer();
 		for (iter = glb.begin(); !iter.isEnd(); iter.increment()) {
 			SleighSymbol sym = iter.get();
 			if (sym.getType() == symbol_type.varnode_symbol) {
 				Pair<IteratorSTL<VarnodeSymbol>, Boolean> res =
 					varnode_xref.insert((VarnodeSymbol) sym);
 				if (!res.second) {
-					buffer.append("Duplicate (offset,size) pair for registers: ");
-					buffer.append(sym.getName());
-					buffer.append(" (");
-					buffer.append(sym.getLocation());
-					buffer.append(") and ");
-					buffer.append(res.first.get().getName());
-					buffer.append(" (");
-					buffer.append(res.first.get().getLocation());
-					buffer.append(")\n");
-					errors += 1;
+					errorPairs.add(sym);
+					errorPairs.add(res.first.get());
 				}
 			}
 			else if (sym.getType() == symbol_type.userop_symbol) {
@@ -103,9 +106,6 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 				int endbit = field.getEndBit();
 				registerContext(csym.getName(), startbit, endbit);
 			}
-		}
-		if (errors > 0) {
-			throw new SleighError(buffer.toString(), null);
 		}
 	}
 
@@ -137,10 +137,10 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 	public VarnodeData getRegister(String nm) {
 		VarnodeSymbol sym = (VarnodeSymbol) findSymbol(nm);
 		if (sym == null) {
-			throw new SleighError("Unknown register name: " + nm, null);
+			throw new SleighError("Unknown register name '" + nm + "'", null);
 		}
 		if (sym.getType() != symbol_type.varnode_symbol) {
-			throw new SleighError("Symbol is not a register: " + nm, null);
+			throw new SleighError("Symbol is not a register '" + nm + "'", sym.location);
 		}
 		return sym.getFixedVarnode();
 	}
@@ -203,6 +203,7 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 			XmlUtils.a_v_u(s, "numsections", numSections);
 		}
 		s.append(">\n");
+		indexer.saveXml(s);
 		s.append("<spaces");
 		XmlUtils.a_v(s, "defaultspace", getDefaultSpace().getName());
 		s.append(">\n");

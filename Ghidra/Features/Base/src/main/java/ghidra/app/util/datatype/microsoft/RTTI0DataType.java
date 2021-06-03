@@ -346,7 +346,7 @@ public class RTTI0DataType extends RTTIDataType {
 	 * Gets the total length of the data created when this data type is placed at the indicated
 	 * address in memory.
 	 * @param memory the program memory for this data.
-	 * @param address the start address of the data.
+	 * @param startAddress the start address of the data.
 	 * @return the length of the data. zero is returned if valid data can't be created at the
 	 * indicated address using this data type.
 	 */

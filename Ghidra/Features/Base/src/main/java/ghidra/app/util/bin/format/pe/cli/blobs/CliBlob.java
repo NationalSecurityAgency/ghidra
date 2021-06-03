@@ -27,8 +27,8 @@ import ghidra.util.exception.AssertException;
  * <p>
  * Paraphrasing from ISO 23271:2012 11.24.2.4 (p272):
  * - If the first one byte of the 'blob' is 0bbbbbbb_2: size is bbbbbbb_2 bytes.
- * - If the first two bytes are 10bbbbbb_2 and x: size is (bbbbbb_2 << 8 + x) bytes.
- * - If the first four bytes are 110bbbbb_2, x, y, and z: size is (bbbbb_2<<24 + x<<16 + y<<8 + z) bytes.
+ * - {@literal If the first two bytes are 10bbbbbb_2 and x: size is (bbbbbb_2 << 8 + x) bytes.}
+ * - {@literal If the first four bytes are 110bbbbb_2, x, y, and z: size is (bbbbb_2<<24 + x<<16 + y<<8 + z) bytes.}
  * The first entry in the heap is the empty 'blob' consisting of a single zero byte.
  */
 public class CliBlob implements StructConverter {

@@ -20,7 +20,6 @@ import java.util.*;
 
 import javax.swing.Icon;
 
-import docking.widgets.tree.AbstractGTreeNode;
 import docking.widgets.tree.GTreeNode;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.util.datastruct.IntArray;
@@ -32,7 +31,7 @@ import resources.ResourceManager;
  * See {@link #computeChildren(List, int, GTreeNode, int, TaskMonitor)} for details on 
  * how this class works.
  */
-public class OrganizationNode extends AbstractGTreeNode implements SymbolTreeNode {
+public class OrganizationNode extends SymbolTreeNode {
 	static final Comparator<GTreeNode> COMPARATOR = new OrganizationNodeComparator();
 
 	private static Icon OPEN_FOLDER_GROUP_ICON =
@@ -44,27 +43,28 @@ public class OrganizationNode extends AbstractGTreeNode implements SymbolTreeNod
 
 	/**
 	 * You cannot instantiate this class directly, instead use the factory method below
-	 * {@link #organize(List, int)}.
-	 * @throws CancelledException
+	 * {@link #organize(List, int, TaskMonitor)}
+	 * @throws CancelledException if the operation is cancelled
 	 */
-	private OrganizationNode(List<GTreeNode> list, int max, int parentLevel, GTreeNode parent,
-			int indexInParent, TaskMonitor monitor) throws CancelledException {
+	private OrganizationNode(List<GTreeNode> list, int max, int parentLevel, TaskMonitor monitor)
+			throws CancelledException {
 
-		setChildren(computeChildren(list, max, this, parentLevel, monitor));
+		doSetChildren(computeChildren(list, max, this, parentLevel, monitor));
 
 		GTreeNode child = getChild(0);
-		baseName = child.getName().substring(0, getPrefixSizeForGrouping(getAllChildren(), 1) + 1);
+		baseName = child.getName().substring(0, getPrefixSizeForGrouping(getChildren(), 1) + 1);
 	}
 
 	/**
-	 * A factory method for creating OrganizationNode objects. See
-	 *  {@link #computeChildren(List, int, GTreeNode, int)} for details .
+	 * A factory method for creating OrganizationNode objects. 
+	 * See {@link #computeChildren(List, int, GTreeNode, int, TaskMonitor)}
 	 *
 	 * @param nodes the original list of child nodes to be subdivided.
 	 * @param max The max number of child nodes per parent node at any node level.
+	 * @param monitor the task monitor used to cancel this operation
 	 * @return A list of nodes that is based upon the given list, but subdivided as needed.
-	 * @throws CancelledException
-	 * @see #computeChildren(List, int, GTreeNode, int)
+	 * @throws CancelledException if the operation is cancelled
+	 * @see #computeChildren(List, int, GTreeNode, int, TaskMonitor)
 	 */
 	public static List<GTreeNode> organize(List<GTreeNode> nodes, int max, TaskMonitor monitor)
 			throws CancelledException {
@@ -106,19 +106,14 @@ public class OrganizationNode extends AbstractGTreeNode implements SymbolTreeNod
 	 * @param maxNodes The max number of child nodes per parent node at any node level.
 	 * @param parent The parent of the given <tt>children</tt>
 	 * @param parentLevel node depth in the tree of <b>Organization</b> nodes.
-	 * @return the given <tt>list</tt> subgrouped as outlined above.
-	 * @throws CancelledException
+	 * @return the given <tt>list</tt> sub-grouped as outlined above.
+	 * @throws CancelledException if the operation is cancelled
 	 */
 	private static List<GTreeNode> computeChildren(List<GTreeNode> list, int maxNodes,
 			GTreeNode parent, int parentLevel, TaskMonitor monitor) throws CancelledException {
 		List<GTreeNode> children;
 		if (list.size() <= maxNodes) {
 			children = new ArrayList<>(list);
-			Iterator<GTreeNode> it = list.iterator();
-			while (it.hasNext()) {
-				monitor.checkCanceled();
-				parent.addNode(it.next());
-			}
 		}
 		else {
 			int characterOffset = getPrefixSizeForGrouping(list, maxNodes);
@@ -133,13 +128,12 @@ public class OrganizationNode extends AbstractGTreeNode implements SymbolTreeNod
 				monitor.checkCanceled();
 				String str = list.get(i).getName();
 				if (stringsDiffer(prevStr, str, characterOffset)) {
-					addNode(children, list, start, i - 1, maxNodes, parent, characterOffset,
-						monitor);
+					addNode(children, list, start, i - 1, maxNodes, characterOffset, monitor);
 					start = i;
 				}
 				prevStr = str;
 			}
-			addNode(children, list, start, end - 1, maxNodes, parent, characterOffset, monitor);
+			addNode(children, list, start, end - 1, maxNodes, characterOffset, monitor);
 		}
 		return children;
 	}
@@ -148,22 +142,18 @@ public class OrganizationNode extends AbstractGTreeNode implements SymbolTreeNod
 		if (s1.length() <= diffLevel || s2.length() <= diffLevel) {
 			return true;
 		}
-		return s1.substring(0, diffLevel + 1).compareToIgnoreCase(
-			s2.substring(0, diffLevel + 1)) != 0;
+		return s1.substring(0, diffLevel + 1)
+				.compareToIgnoreCase(s2.substring(0, diffLevel + 1)) != 0;
 	}
 
 	private static void addNode(List<GTreeNode> children, List<GTreeNode> list, int start, int end,
-			int max, GTreeNode parent, int diffLevel, TaskMonitor monitor)
-			throws CancelledException {
+			int max, int diffLevel, TaskMonitor monitor) throws CancelledException {
 		if (end - start > 0) {
-			children.add(new OrganizationNode(list.subList(start, end + 1), max, diffLevel, parent,
-				children.size(), monitor));
+			children.add(
+				new OrganizationNode(list.subList(start, end + 1), max, diffLevel, monitor));
 		}
 		else {
 			GTreeNode node = list.get(start);
-			if (parent != null) {
-				parent.addNode(node);
-			}
 			children.add(node);
 		}
 	}
@@ -292,7 +282,7 @@ public class OrganizationNode extends AbstractGTreeNode implements SymbolTreeNod
 	 * @param newNode the node to insert.
 	 */
 	public void insertNode(GTreeNode newNode) {
-		int index = Collections.binarySearch(getAllChildren(), newNode, getChildrenComparator());
+		int index = Collections.binarySearch(getChildren(), newNode, getChildrenComparator());
 		if (index >= 0) {
 			// found a match
 			GTreeNode matchingNode = getChild(index);
@@ -326,7 +316,7 @@ public class OrganizationNode extends AbstractGTreeNode implements SymbolTreeNod
 		//       the old name will find the right parent, but not the actual current node, as
 		//       it has a new name.  
 		//
-		return SymbolTreeNode.super.findSymbolTreeNode(key, loadChildren, taskMonitor);
+		return super.findSymbolTreeNode(key, loadChildren, taskMonitor);
 	}
 
 	@Override
@@ -365,4 +355,9 @@ public class OrganizationNode extends AbstractGTreeNode implements SymbolTreeNod
 		}
 	}
 
+	@Override
+	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
+		// not used, children generated in constructor
+		return null;
+	}
 }

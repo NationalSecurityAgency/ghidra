@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +74,7 @@ public interface ColorizingService {
 	 * @param set The address at which the given color will be applied
 	 * @param color The color to apply
 	 * 
-	 * @see #clearBackgroundColor(AddressSetView))
+	 * @see #clearBackgroundColor(AddressSetView)
 	 * @see #getBackgroundColor(Address)
 	 */
 	public void setBackgroundColor(AddressSetView set, Color color);

@@ -35,10 +35,8 @@ public class SubtableSymbol extends TripleSymbol {
 
 	private TokenPattern pattern;
 	private boolean beingbuilt, errors;
-	private VectorSTL<Constructor> construct = new VectorSTL<Constructor>(); // All
-																				// the
-	// Constructors in
-	// this table
+	// All the Constructors in this table
+	private VectorSTL<Constructor> construct = new VectorSTL<Constructor>();
 	private DecisionNode decisiontree;
 
 	public SubtableSymbol(Location location) {

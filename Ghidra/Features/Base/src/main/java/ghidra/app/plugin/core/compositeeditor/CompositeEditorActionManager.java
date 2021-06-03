@@ -17,11 +17,7 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.util.*;
 
-import javax.swing.KeyStroke;
-
-import docking.action.KeyBindingData;
 import ghidra.app.services.DataTypeManagerService;
-import ghidra.framework.options.Options;
 import ghidra.program.model.data.*;
 
 /**
@@ -247,26 +243,4 @@ public class CompositeEditorActionManager {
 			listeners.get(i).actionsRemoved(cea);
 		}
 	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.framework.options.OptionsChangeListener#optionsChanged(ghidra.framework.options.Options, java.lang.String, java.lang.Object, java.lang.Object)
-	 */
-	public void optionsChanged(Options options, String name, Object oldValue, Object newValue) {
-		// Update the editor actions here.
-		// The favorites and cycle groups get handled by stateChanged() and cyclegroupChanged().
-		CompositeEditorTableAction[] actions = getEditorActions();
-		for (CompositeEditorTableAction action : actions) {
-			String actionName = action.getFullName();
-			if (actionName.equals(name)) {
-				KeyStroke actionKs = action.getKeyBinding();
-				KeyStroke oldKs = (KeyStroke) oldValue;
-				KeyStroke newKs = (KeyStroke) newValue;
-				if (actionKs == oldKs) {
-					action.setUnvalidatedKeyBindingData(new KeyBindingData(newKs));
-				}
-				break;
-			}
-		}
-	}
-
 }

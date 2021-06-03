@@ -52,7 +52,8 @@ public class CreateEquateCmd extends BackgroundCommand {
 	 */
 	public CreateEquateCmd(Scalar scalar, CodeUnitIterator iter, String equateName,
 			boolean overwriteExisting, ListingActionContext context) {
-		super("Create New Equate", false, true, false);
+		super("Create New Equate", true /* has progress */, true /* can cancel */,
+			false /* is modal */);
 		this.targetScalarValue = scalar.getValue();
 		this.iterator = iter;
 		this.equateName = equateName;
@@ -69,7 +70,8 @@ public class CreateEquateCmd extends BackgroundCommand {
 	 */
 	public CreateEquateCmd(Scalar scalar, CodeUnitIterator iter, Enum enoom,
 			boolean overwriteExisting, ListingActionContext context) {
-		super("Create New Equate", false, true, false);
+		super("Create New Equate", true /* has progress */, true /* can cancel */,
+			false /* is modal */);
 		this.targetScalarValue = scalar.getValue();
 		this.iterator = iter;
 		this.overwriteExisting = overwriteExisting;
@@ -79,6 +81,9 @@ public class CreateEquateCmd extends BackgroundCommand {
 
 	@Override
 	public boolean applyTo(DomainObject domain, TaskMonitor monitor) {
+
+		monitor.setIndeterminate(true);
+		monitor.setMessage("Creating Equate");
 
 		while (iterator.hasNext() && !monitor.isCancelled()) {
 			CodeUnit cu = iterator.next();

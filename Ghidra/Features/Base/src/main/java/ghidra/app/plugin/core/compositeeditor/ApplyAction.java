@@ -27,13 +27,13 @@ import resources.ResourceManager;
  */
 public class ApplyAction extends CompositeEditorTableAction {
 
+	public final static String ACTION_NAME = "Apply Editor Changes";
 	private final static String GROUP_NAME = BASIC_ACTION_GROUP;
-	private final static ImageIcon APPLY_ICON = ResourceManager.loadImage("images/disk.png");
-	private final static String[] popupPath = new String[] { "Apply Edits" };
+	private final static ImageIcon ICON = ResourceManager.loadImage("images/disk.png");
+	private final static String[] POPUP_PATH = new String[] { "Apply Edits" };
 
 	public ApplyAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + "Apply Editor Changes", GROUP_NAME, popupPath, null,
-			APPLY_ICON);
+		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
 
 		setDescription("Apply editor changes");
 		adjustEnablement();

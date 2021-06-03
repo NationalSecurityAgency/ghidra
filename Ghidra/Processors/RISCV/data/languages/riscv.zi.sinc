@@ -1,0 +1,7 @@
+# RV32/RV64  Zifencei Standard Extension
+
+# fence.i  0000100f ffffffff SIMPLE (0, 0) 
+:fence.i  is op0001=0x3 & op0204=0x3 & op0506=0x0 & funct3=0x1 & fm=0x0 & op0711=0x0 & op1527=0x0
+{
+	fence.i();
+}

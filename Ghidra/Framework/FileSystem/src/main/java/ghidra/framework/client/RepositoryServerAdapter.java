@@ -182,7 +182,7 @@ public class RepositoryServerAdapter {
 				cause = t;
 			}
 			Msg.showError(this, null, "Server Error",
-				"An error occured on the server (" + serverInfoStr + ").\n" + msg, e);
+				"An error occurred on the server (" + serverInfoStr + ").\n" + msg, e);
 		}
 		catch (IOException e) {
 			String err = e.getMessage();
@@ -191,7 +191,7 @@ public class RepositoryServerAdapter {
 			}
 			String msg = err != null ? err : e.toString();
 			Msg.showError(this, null, "Server Error",
-				"An error occured while connecting to the server (" + serverInfoStr + ").\n" + msg,
+				"An error occurred while connecting to the server (" + serverInfoStr + ").\n" + msg,
 				e);
 		}
 		throw new NotConnectedException("Not connected to repository server", cause);
@@ -283,7 +283,7 @@ public class RepositoryServerAdapter {
 //		serverHandle = null;
 //		fireStateChanged();
 //		if (error != null) {
-//			Err.show(null, "Server Error", "A server communications error occured!", error);
+//			Err.show(null, "Server Error", "A server communications error occurred!", error);
 //			error = null;
 //			throw new NotConnectedException("Not connected to repository server");
 //		}
@@ -299,7 +299,7 @@ public class RepositoryServerAdapter {
 	 * @throws UserAccessException
 	 * @throws IOException
 	 * @throws NotConnectedException if server connection is down (user already informed)
-	 * @see ghidra.framework.remote.RemoteRepositoryServerHandle#createRepository(java.lang.String, long)
+	 * @see ghidra.framework.remote.RemoteRepositoryServerHandle#createRepository(String)
 	 */
 	public synchronized RepositoryAdapter createRepository(String name)
 			throws DuplicateNameException, UserAccessException, IOException, NotConnectedException {
@@ -398,7 +398,7 @@ public class RepositoryServerAdapter {
 	}
 
 	/**
-	 * @returns true if server allows anonymous access.
+	 * @return true if server allows anonymous access.
 	 * Individual repositories must grant anonymous access separately.
 	 * @throws IOException
 	 * @throws NotConnectedException if server connection is down (user already informed)
@@ -418,7 +418,7 @@ public class RepositoryServerAdapter {
 	}
 
 	/**
-	 * @returns true if user has restricted read-only access to server (e.g., anonymous user)
+	 * @return true if user has restricted read-only access to server (e.g., anonymous user)
 	 * @throws IOException
 	 * @throws NotConnectedException if server connection is down (user already informed)
 	 * @see ghidra.framework.remote.RemoteRepositoryServerHandle#isReadOnly()
@@ -469,7 +469,7 @@ public class RepositoryServerAdapter {
 	 * @throws IOException if user data can't be written to file
 	 * @throws NotConnectedException if server connection is down (user already informed)
 	 * @see ghidra.framework.remote.RemoteRepositoryServerHandle#setPassword(char[])
-	 * @see HashUtilities#getSaltedHash("SHA-256", char[])
+	 * @see ghidra.util.HashUtilities#getSaltedHash(String, char[])  HashUtilities.getSaltedHash("SHA-256", char[])
 	 */
 	public synchronized boolean setPassword(char[] saltedSHA256PasswordHash)
 			throws IOException, NotConnectedException {
@@ -487,8 +487,6 @@ public class RepositoryServerAdapter {
 
 	/**
 	 * Returns true if this server allows the user to change their password.
-	 * @throws IOException
-	 * @throws NotConnectedException if server connection is down (user already informed)
 	 * @see ghidra.framework.remote.RemoteRepositoryServerHandle#canSetPassword()
 	 */
 	public synchronized boolean canSetPassword() {

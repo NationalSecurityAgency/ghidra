@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +15,22 @@
  */
 package ghidra.app.plugin.core.symboltree.nodes;
 
-import ghidra.app.util.SelectionTransferData;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.Symbol;
-
 import java.awt.datatransfer.DataFlavor;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import ghidra.app.util.SelectionTransferData;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.Namespace;
+import ghidra.program.model.symbol.Symbol;
 import resources.ResourceManager;
 
 public class NamespaceSymbolNode extends SymbolNode {
-	static final DataFlavor LOCAL_DATA_FLAVOR = new SymbolTreeDataFlavor(
-		"Symbol Tree Data Flavor - Local Namespaces");
-	static final DataFlavor GLOBAL_DATA_FLAVOR = new SymbolTreeDataFlavor(
-		"Symbol Tree Data Flavor - Global Namespaces");
+	static final DataFlavor LOCAL_DATA_FLAVOR =
+		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Local Namespaces");
+	static final DataFlavor GLOBAL_DATA_FLAVOR =
+		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Global Namespaces");
 
 	public static final Icon NAMESPACE_ICON = ResourceManager.loadImage("images/Namespace.gif");
 	public static final Icon DISABLED_NAMESPACE_ICON =

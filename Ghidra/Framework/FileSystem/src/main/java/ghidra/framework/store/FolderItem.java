@@ -258,9 +258,7 @@ public interface FolderItem {
 
 	/**
 	 * Get all current checkouts for this item.
-	 * @param parentPath
-	 * @param itemName
-	 * @return list of checkouts
+	 * @return array of checkouts
 	 * @throws IOException if an IO error occurs or this item is not versioned
 	 */
 	ItemCheckoutStatus[] getCheckouts() throws IOException;

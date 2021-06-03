@@ -493,11 +493,10 @@ public class PackedDatabase extends Database {
 
 	/**
 	 * Create a new Database with data provided by an ItemDeserializer.
-	 * @param dir the parent directory which contains the "Hidden" database directory.
-	 * @param dbName the unmangled database name
-	 * @param checkinId
-	 * @param packedFile
-	 * @param monitor
+	 * @param bfMgr the buffer manager for the database
+	 * @param checkinId the check-in id
+	 * @param packedFile the file to unpack
+	 * @param monitor the task monitor
 	 * @throws CancelledException
 	 */
 	public static void unpackDatabase(BufferFileManager bfMgr, long checkinId, File packedFile,

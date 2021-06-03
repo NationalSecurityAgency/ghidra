@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,11 @@
  */
 package ghidra.program.database.module;
 
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
 
-import db.Record;
+import db.Field;
+import db.DBRecord;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Adapter to access the module, fragment, and parent/child database tables.
@@ -35,7 +34,7 @@ interface GroupDBAdapter {
 	 * @return record for the root module; should never be null
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	Record createRootModule(String name) throws IOException;
+	DBRecord createRootModule(String name) throws IOException;
 
 	/**
 	 * Create a new module.
@@ -46,8 +45,8 @@ interface GroupDBAdapter {
 	 * @throws DuplicateNameException if a module or fragment already exists
 	 * having the given name
 	 */
-	Record createModule(long parentModuleID, String name) throws IOException,
-			DuplicateNameException;
+	DBRecord createModule(long parentModuleID, String name)
+			throws IOException, DuplicateNameException;
 
 	/**
 	 * Get the record for the module with the given key.
@@ -55,7 +54,7 @@ interface GroupDBAdapter {
 	 * @return record for the module; null if the record was not found
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	Record getModuleRecord(long moduleID) throws IOException;
+	DBRecord getModuleRecord(long moduleID) throws IOException;
 
 	/**
 	 * Get the module record with the given name.
@@ -63,13 +62,13 @@ interface GroupDBAdapter {
 	 * @return module record; null if no module exists with the given name
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	Record getModuleRecord(String name) throws IOException;
+	DBRecord getModuleRecord(String name) throws IOException;
 
 	/**
 	 * Update the module table with the given record.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	void updateModuleRecord(Record record) throws IOException;
+	void updateModuleRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Create a new fragment
@@ -80,8 +79,8 @@ interface GroupDBAdapter {
 	 * @throws DuplicateNameException if a module or fragment already exists
 	 * having the given name
 	 */
-	Record createFragment(long parentModuleID, String name) throws IOException,
-			DuplicateNameException;
+	DBRecord createFragment(long parentModuleID, String name)
+			throws IOException, DuplicateNameException;
 
 	/**
 	 * Get the record for the fragment with the given key.
@@ -89,7 +88,7 @@ interface GroupDBAdapter {
 	 * @return
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	Record getFragmentRecord(long fragID) throws IOException;
+	DBRecord getFragmentRecord(long fragID) throws IOException;
 
 	/**
 	 * Get the fragment record with the given name.
@@ -98,13 +97,13 @@ interface GroupDBAdapter {
 	 * name
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	Record getFragmentRecord(String name) throws IOException;
+	DBRecord getFragmentRecord(String name) throws IOException;
 
 	/**
 	 * Update the fragment table with the given record.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	void updateFragmentRecord(Record record) throws IOException;
+	void updateFragmentRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Get the record in the Parent/Child table.
@@ -113,7 +112,7 @@ interface GroupDBAdapter {
 	 * @return record; null if the record was not found
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	Record getParentChildRecord(long parentID, long childID) throws IOException;
+	DBRecord getParentChildRecord(long parentID, long childID) throws IOException;
 
 	/**
 	 * Get the keys in the Parent/Child table that are indexed on the given
@@ -123,14 +122,14 @@ interface GroupDBAdapter {
 	 * @return zero-length array if no records were found
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	long[] getParentChildKeys(long ID, int indexedCol) throws IOException;
+	Field[] getParentChildKeys(long ID, int indexedCol) throws IOException;
 
 	/**
 	 * Get the Parent/Child record with the given key.
 	 * @return record or null if the record does not exist
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	Record getParentChildRecord(long key) throws IOException;
+	DBRecord getParentChildRecord(long key) throws IOException;
 
 	/**
 	 * Create a new Parent/Child record.
@@ -139,7 +138,7 @@ interface GroupDBAdapter {
 	 * @return record or nul if the record does not exist
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	Record addParentChildRecord(long parentID, long childID) throws IOException;
+	DBRecord addParentChildRecord(long parentID, long childID) throws IOException;
 
 	/**
 	 * Remove the record with the given key in the Parent/Child table.
@@ -152,7 +151,7 @@ interface GroupDBAdapter {
 	 * Update the Parent/Child table with the given record.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	void updateParentChildRecord(Record record) throws IOException;
+	void updateParentChildRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Remove the fragment record.

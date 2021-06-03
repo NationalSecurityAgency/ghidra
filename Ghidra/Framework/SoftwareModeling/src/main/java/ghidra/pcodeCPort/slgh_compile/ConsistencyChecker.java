@@ -23,17 +23,22 @@ import ghidra.pcodeCPort.opcodes.OpCode;
 import ghidra.pcodeCPort.semantics.*;
 import ghidra.pcodeCPort.semantics.ConstTpl.const_type;
 import ghidra.pcodeCPort.semantics.ConstTpl.v_field;
+import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slghsymbol.*;
 import ghidra.pcodeCPort.space.AddrSpace;
-import ghidra.util.Msg;
 
 class ConsistencyChecker {
 
 	int unnecessarypcode;
 	int readnowrite;
 	int writenoread;
+	// number of constructors using a temporary varnode larger than SleighBase.MAX_UNIQUE_SIZE
+	int largetemp;           
 	boolean printextwarning;
 	boolean printdeadwarning;
+	//if true, print information about constructors using temporary varnodes larger than SleighBase.MAX_UNIQUE_SIZE 
+	boolean printlargetempwarning; 
+	SleighCompile compiler;
 	SubtableSymbol root_symbol;
 	VectorSTL<SubtableSymbol> postorder = new VectorSTL<>();
 
@@ -97,7 +102,8 @@ class ConsistencyChecker {
 				if ((vnout == 0) || (vn0 == 0)) {
 					return true;
 				}
-				printOpError(op, ct, -1, 0, "Input and output sizes must match");
+				printOpError(op, ct, -1, 0, "Input and output sizes must match; " +
+						op.getIn(0).getSize() + " != " + op.getOut().getSize());
 				return false;
 			case CPUI_INT_ADD:
 			case CPUI_INT_SUB:
@@ -324,7 +330,7 @@ class ConsistencyChecker {
 				if ((vnout == 0) || (vn0 == 0)) {
 					return true;
 				}
-				if ((vnout == vn0) && (vn1 == 0)) { // No actual truncation is occuring
+				if ((vnout == vn0) && (vn1 == 0)) { // No actual truncation is occurring
 					dealWithUnnecessaryTrunc(op, ct);
 					return true;
 				}
@@ -489,24 +495,30 @@ class ConsistencyChecker {
 		else {
 			op2 = null;
 		}
-		Msg.error(this, "Size restriction error in table \"" + sym.getName() +
-			"\" in constructor at " + ct.location + " from operation located at " + op.location);
 
 		StringBuilder sb = new StringBuilder();
+		sb.append("Size restriction error in table '")
+		.append(sym.getName())
+		.append("' in constructor at ").append(ct.location)
+		.append("\n");
+
+
 		sb.append("  Problem");
 		if ((op1 != null) && (op2 != null)) {
-			sb.append(" with \"" + op1.getName() + "\" and \"" + op2.getName() + "\"");
+			sb.append(" with '" + op1.getName() + "' and '" + op2.getName() + "'");
 		}
 		else if (op1 != null) {
-			sb.append(" with \"" + op1.getName() + "\"");
+			sb.append(" with '" + op1.getName() + "'");
 		}
 		else if (op2 != null) {
-			sb.append(" with \"" + op2.getName() + "\"");
+			sb.append(" with '" + op2.getName() + "'");
 		}
-		sb.append(" in \"" + getOpName(op) + "\" operator");
-		Msg.error(this, sb.toString());
+		sb.append(" in '" + getOpName(op) + "' operator");
 
-		Msg.error(this, "  " + message);
+		sb.append("\n  ").append(message);
+
+		compiler.reportError(op.location, sb.toString());
+
 	}
 
 	int recoverSize(ConstTpl sizeconst, Constructor ct) {
@@ -544,7 +556,7 @@ class ConsistencyChecker {
 	}
 
 	private void handle(String msg, Constructor ct) {
-		Msg.error(this, "Unsigned comparison with " + msg + " in constructor at " + ct.location);
+		compiler.reportWarning(ct.location, " Unsigned comparison with " + msg + " in constructor");
 	}
 
 	private void handleZero(String trueOrFalse, Constructor ct) {
@@ -630,6 +642,38 @@ class ConsistencyChecker {
 		return testresult;
 	}
 
+	/**
+	 * Returns true precisely when {@code opTpl} uses a {@link VarnodeTpl} in 
+	 * the unique space whose size is larger than {@link SleighBase#MAX_UNIQUE_SIZE}.  
+	 * Note that this method returns as soon as one large {@link VarnodeTpl} is found.
+	 * @param opTpl the op to check
+	 * @return true if {@code opTpl} uses a large temporary varnode
+	 */
+	boolean hasLargeTemporary(OpTpl opTpl) {
+		VarnodeTpl out = opTpl.getOut();
+		if (out != null && isTemporaryAndTooBig(out)) {
+			return true;
+		}
+		for (int i = 0; i < opTpl.numInput(); ++i) {
+			VarnodeTpl in = opTpl.getIn(i);
+			if (isTemporaryAndTooBig(in)) {
+				return true;
+			}
+		}	
+		return false;
+	}
+
+	/**
+	 * Returns true precisely when {@code vn} is in the unique space
+	 * and has a size larger than {@link SleighBase#MAX_UNIQUE_SIZE}.
+	 * @param vn varnode template to check
+	 * @return true if it uses a large temporary
+	 */
+	boolean isTemporaryAndTooBig(VarnodeTpl vn) {
+		return vn.getSpace().isUniqueSpace() && 
+				vn.getSize().getReal() > SleighBase.MAX_UNIQUE_SIZE;
+	}
+
 	boolean checkVarnodeTruncation(Constructor ct,int slot,OpTpl op,VarnodeTpl vn,boolean isbigendian) {
 		ConstTpl off = vn.getOffset();
 		if (off.getType() != const_type.handle) {
@@ -708,8 +752,9 @@ class ConsistencyChecker {
 			HandleTpl exportres = ct.getTempl().getResult();
 			if (exportres != null) {
 				if (seenemptyexport && (!seennonemptyexport)) {
-					Msg.error(this, "Table " + sym.getName() + " exports inconsistently");
-					Msg.error(this, "Constructor at " + ct.location + " is first inconsistency");
+					compiler.reportError(ct.location, String.format(
+						"Table '%s' exports inconsistently; Constructor at %s is first inconsitency",
+						sym.getName(), ct.location));
 					testresult = false;
 				}
 				seennonemptyexport = true;
@@ -718,15 +763,17 @@ class ConsistencyChecker {
 					tablesize = exsize;
 				}
 				if ((exsize != 0) && (exsize != tablesize)) {
-					Msg.error(this, "Table " + sym.getName() + " has inconsistent export size.");
-					Msg.error(this, "Constructor at " + ct.location + " is first conflict");
+					compiler.reportError(ct.location, String.format(
+						"Table '%s' has inconsistent export size; Constructor at %s is first conflict",
+						sym.getName(), ct.location));
 					testresult = false;
 				}
 			}
 			else {
 				if (seennonemptyexport && (!seenemptyexport)) {
-					Msg.error(this, "Table " + sym.getName() + " exports inconsistently");
-					Msg.error(this, "Constructor at " + ct.location + " is first inconsistency");
+					compiler.reportError(ct.location, String.format(
+						"Table '%s' exports inconsistently; Constructor at %s is first inconsitency",
+						sym.getName(), ct.location));
 					testresult = false;
 				}
 				seenemptyexport = true;
@@ -734,7 +781,9 @@ class ConsistencyChecker {
 		}
 		if (seennonemptyexport) {
 			if (tablesize == 0) {
-				Msg.error(this, "Warning: Table " + sym.getName() + " exports size 0");
+				compiler.reportWarning(sym.location,
+					"Table '" + sym.getName() + "' exports size 0");
+
 			}
 			sizemap.put(sym, tablesize);	// Remember recovered size
 		}
@@ -749,8 +798,7 @@ class ConsistencyChecker {
 	// input size is the same as the output size
 	void dealWithUnnecessaryExt(OpTpl op, Constructor ct) {
 		if (printextwarning) {
-			Msg.error(this, "Unnecessary \"" + getOpName(op) + "\" in constructor from " +
-				ct.getFilename() + " starting at line " + ct.getLineno());
+			compiler.reportWarning(op.location, "Unnecessary '" + getOpName(op) + "'");
 		}
 		op.setOpcode(OpCode.CPUI_COPY); // Equivalent to copy
 		unnecessarypcode += 1;
@@ -758,8 +806,7 @@ class ConsistencyChecker {
 
 	void dealWithUnnecessaryTrunc(OpTpl op, Constructor ct) {
 		if (printextwarning) {
-			Msg.error(this, "Unnecessary \"" + getOpName(op) + "\" in constructor from " +
-				ct.getFilename() + " starting at line " + ct.getLineno());
+			compiler.reportWarning(op.location, "Unnecessary '" + getOpName(op) + "'");
 		}
 		op.setOpcode(OpCode.CPUI_COPY); // Equivalent to copy
 		op.removeInput(1);
@@ -853,14 +900,8 @@ class ConsistencyChecker {
 		}
 	}
 
-	static boolean possibleIntersection(VarnodeTpl vn1, VarnodeTpl vn2) { // Conservatively
-		// test
-		// whether
-		// vn1
-		// and
-		// vn2
-		// can
-		// intersect
+	static boolean possibleIntersection(VarnodeTpl vn1, VarnodeTpl vn2) {
+		// Conservatively test whether vn1 and vn2 can intersect
 		if (vn1.getSpace().isConstSpace()) {
 			return false;
 		}
@@ -1116,18 +1157,37 @@ class ConsistencyChecker {
 			OptimizeRecord currec = pair.second;
 			if (currec.readcount == 0) {
 				if (printdeadwarning) {
-					Msg.error(this,
-						"Warning: temporary is written but not read in constructor at " +
-							ct.location);
+					compiler.reportWarning(ct.location, "Temporary is written but not read");
 				}
 				writenoread += 1;
 			}
 			else if (currec.writecount == 0) {
-				Msg.error(this,
-					"Error: temporary is read but not written in constructor at " + ct.location);
+				compiler.reportError(ct.location, "Temporary is read but not written");
 				readnowrite += 1;
 			}
 			iter.increment();
+		}
+	}
+	
+	/**
+	 * Checks {@code ct} to see whether it contains an {@link OpTpl} which
+	 * uses a varnode in the unique space which is larger than {@link SleighBase#MAX_UNIQUE_SIZE}.
+	 * @param ct constructor to check
+	 */
+	void checkLargeTemporaries(Constructor ct) {
+		ConstructTpl ctTpl = ct.getTempl();
+		if (ctTpl == null) {
+			return;
+		}
+		VectorSTL<OpTpl> ops = ctTpl.getOpvec();
+		for (IteratorSTL<OpTpl> iter = ops.begin(); !iter.isEnd(); iter.increment()) {
+			if (hasLargeTemporary(iter.get())) {
+			    if (printlargetempwarning) {
+			    	compiler.reportWarning(ct.location, "Constructor uses temporary varnode larger than " + SleighBase.MAX_UNIQUE_SIZE + " bytes.");
+			    }
+				largetemp++;
+				return;		    
+			}		
 		}
 	}
 
@@ -1148,15 +1208,21 @@ class ConsistencyChecker {
 		}
 		while (currec != null);
 		checkUnusedTemps(ct, recs);
+		checkLargeTemporaries(ct);
 	}
 
-	ConsistencyChecker(SubtableSymbol rt, boolean unnecessary, boolean warndead) {
+	ConsistencyChecker(SleighCompile cp, SubtableSymbol rt, boolean unnecessary, boolean warndead, boolean warnlargetemp) {
+		compiler = cp;
 		root_symbol = rt;
 		unnecessarypcode = 0;
 		readnowrite = 0;
 		writenoread = 0;
+		//number of constructors which reference a temporary varnode larger than SleighBase.MAX_UNIQUE_SIZE
+		largetemp = 0;      
 		printextwarning = unnecessary;
 		printdeadwarning = warndead;
+		//whether to print information about constructors which reference large temporary varnodes
+		printlargetempwarning = warnlargetemp;
 	}
 
 	// Main entry point for size consistency check
@@ -1226,5 +1292,14 @@ class ConsistencyChecker {
 
 	int getNumWriteNoRead() {
 		return writenoread;
+	}
+	
+	/**
+	 * Returns the number of constructors which reference a varnode in the
+	 * unique space with size larger than {@link SleighBase#MAX_UNIQUE_SIZE}.
+	 * @return num constructors with large temp varnodes
+	 */
+	int getNumLargeTemporaries() {
+		return largetemp;
 	}
 }

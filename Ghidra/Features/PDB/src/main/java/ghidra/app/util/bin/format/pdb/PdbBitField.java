@@ -22,7 +22,7 @@ import ghidra.util.exception.AssertException;
  * <code>PdbBitField</code> provides ability to hang onto bitfield as a datatype.
  * This will be transformed to a normal BitFieldDataType when cloned.
  */
-class PdbBitField extends BitFieldDataType {
+public class PdbBitField extends BitFieldDataType {
 
 	private int bitOffsetWithinBaseType;
 

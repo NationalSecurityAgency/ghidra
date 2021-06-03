@@ -79,11 +79,11 @@ public:
   void clear(void);			///< Called for each additional hash (after the first)
   void calcHash(const Varnode *root,uint4 method);	///< Calculate the hash for given Varnode and method
   void uniqueHash(const Varnode *root,Funcdata *fd);	///< Select a unique hash for the given Varnode
-  Varnode *findVarnode(Funcdata *fd,const Address &addr,uint8 h);
+  Varnode *findVarnode(const Funcdata *fd,const Address &addr,uint8 h);
   uint8 getHash(void) const { return hash; }		///< Get the (current) hash
   
   const Address &getAddress(void) const { return addrresult; }	///< Get the (current) address
-  static void gatherFirstLevelVars(vector<Varnode *> &varlist,Funcdata *fd,const Address &addr,uint8 h);
+  static void gatherFirstLevelVars(vector<Varnode *> &varlist,const Funcdata *fd,const Address &addr,uint8 h);
   static int4 getSlotFromHash(uint8 h);			///< Retrieve the encoded slot from a hash
   static uint4 getMethodFromHash(uint8 h);		///< Retrieve the encoded method from a hash
   static OpCode getOpCodeFromHash(uint8 h);		///< Retrieve the encoded op-code from a hash

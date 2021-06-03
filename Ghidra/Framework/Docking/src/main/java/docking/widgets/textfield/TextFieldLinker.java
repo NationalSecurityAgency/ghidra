@@ -36,7 +36,7 @@ import org.apache.commons.lang3.StringUtils;
  * 
  * This fulfills a similar purpose to formatted text fields, except the individual parts may be
  * placed independent of the other components. Granted, they ought to appear in an intuitive order.
- * The input string is split among a collection of {@link JTextFields} each according to a given
+ * The input string is split among a collection of {@link JTextField}s each according to a given
  * pattern -- excluding the final field. Cursor navigation, insertion, deletion, etc. are all
  * applied as if the linked text fields were part of a single composite text field.
  * 
@@ -492,7 +492,7 @@ public class TextFieldLinker {
 	 * {@link #linkLastField(JTextField)}. Thus, before linking is actually activated, at least one
 	 * field must be present. To be meaningful, at least two fields should be linked.
 	 * 
-	 * @note {@code exp} must match {@code sep}.
+	 * NOTE: {@code exp} must match {@code sep}.
 	 * 
 	 * @param field the field to link
 	 * @param exp the separator following the field

@@ -40,9 +40,11 @@ abstract class AbstractAddMemoryBlockCmd implements Command {
 	protected final boolean write;
 	protected final boolean execute;
 	protected final boolean isVolatile;
+	protected final boolean isOverlay;
 
 	AbstractAddMemoryBlockCmd(String name, String comment, String source, Address start,
-			long length, boolean read, boolean write, boolean execute, boolean isVolatile) {
+			long length, boolean read, boolean write, boolean execute, boolean isVolatile,
+			boolean isOverlay) {
 		this.name = name;
 		this.comment = comment;
 		this.source = source;
@@ -52,6 +54,7 @@ abstract class AbstractAddMemoryBlockCmd implements Command {
 		this.write = write;
 		this.execute = execute;
 		this.isVolatile = isVolatile;
+		this.isOverlay = isOverlay;
 	}
 
 	@Override
@@ -66,7 +69,7 @@ abstract class AbstractAddMemoryBlockCmd implements Command {
 
 	protected abstract MemoryBlock createMemoryBlock(Memory memory)
 			throws LockException, MemoryConflictException, AddressOverflowException,
-			DuplicateNameException, CancelledException;
+			CancelledException;
 
 	@Override
 	public boolean applyTo(DomainObject obj) {
@@ -91,9 +94,6 @@ abstract class AbstractAddMemoryBlockCmd implements Command {
 		}
 		catch (MemoryConflictException e) {
 			message = e.getMessage();
-		}
-		catch (DuplicateNameException e) {
-			message = "Duplicate Name: " + e.getMessage();
 		}
 		catch (IllegalStateException e) {
 			message = e.getMessage();

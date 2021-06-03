@@ -75,9 +75,6 @@ class VersionHistoryTableModel extends AbstractSortedTableModel<Version> {
 		return columnNames[column];
 	}
 
-	/**
-	 * Refresh the table model.
-	 */
 	void refresh(Version[] newVersions) {
 		List<Version> newVersionList = new ArrayList<>();
 		for (Version version : newVersions) {
@@ -98,7 +95,7 @@ class VersionHistoryTableModel extends AbstractSortedTableModel<Version> {
 	public Object getColumnValueForRow(Version version, int columnIndex) {
 		switch (columnIndex) {
 			case VERSION_COL:
-				return new Integer(version.getVersion());
+				return version.getVersion();
 			case DATE_COL:
 				return new Date(version.getCreateTime());
 			case USER_COL:

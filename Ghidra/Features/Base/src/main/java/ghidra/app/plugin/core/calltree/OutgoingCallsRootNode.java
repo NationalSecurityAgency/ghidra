@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +15,15 @@
  */
 package ghidra.app.plugin.core.calltree;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.Icon;
 
-import docking.widgets.tree.GTree;
-import docking.widgets.tree.GTreeRootNode;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 
-public class OutgoingCallsRootNode extends OutgoingCallNode implements GTreeRootNode {
-
-	private GTree tree;
+public class OutgoingCallsRootNode extends OutgoingCallNode {
 
 	OutgoingCallsRootNode(Program program, Function function, Address sourceAddress,
 			boolean filterDuplicates, AtomicInteger filterDepth) {
@@ -61,15 +55,5 @@ public class OutgoingCallsRootNode extends OutgoingCallNode implements GTreeRoot
 	@Override
 	public String getToolTip() {
 		return null;
-	}
-
-	@Override
-	public GTree getGTree() {
-		return tree;
-	}
-
-	@Override
-	public void setGTree(GTree tree) {
-		this.tree = tree;
 	}
 }

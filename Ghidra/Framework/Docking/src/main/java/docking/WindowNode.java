@@ -38,6 +38,8 @@ public abstract class WindowNode extends Node {
 
 	abstract Container getContentPane();
 
+	abstract boolean isVisible();
+
 	void setToolBar(JComponent toolBar) {
 		Container rootPane = getContentPane();
 		if (rootPane == null) {
@@ -98,6 +100,7 @@ public abstract class WindowNode extends Node {
 		contextTypes = null;
 	}
 
+	@Override
 	void dispose() {
 		toolBarPanel = null;
 

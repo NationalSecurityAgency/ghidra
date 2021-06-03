@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,10 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.VersionException;
 
 /**
  * Version 0 implementation for accessing the Component database table. 
@@ -37,10 +35,11 @@ class ComponentDBAdapterV0 extends ComponentDBAdapter {
 	static final int V0_COMPONENT_SIZE_COL = 5;
 	static final int V0_COMPONENT_ORDINAL_COL = 6;
 
-	static final Schema V0_COMPONENT_SCHEMA = new Schema(0, "Data Type ID", new Class[] {
-		LongField.class, IntField.class, LongField.class, StringField.class, StringField.class,
-		IntField.class, IntField.class }, new String[] { "Parent", "Offset", "Data Type ID",
-		"Field Name", "Comment", "Component Size", "Ordinal" });
+	static final Schema V0_COMPONENT_SCHEMA = new Schema(0, "Data Type ID",
+		new Field[] { LongField.INSTANCE, IntField.INSTANCE, LongField.INSTANCE,
+			StringField.INSTANCE, StringField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE },
+		new String[] { "Parent", "Offset", "Data Type ID", "Field Name", "Comment",
+			"Component Size", "Ordinal" });
 	private Table componentTable;
 
 	/**
@@ -50,12 +49,12 @@ class ComponentDBAdapterV0 extends ComponentDBAdapter {
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
 	 */
-	public ComponentDBAdapterV0(DBHandle handle, int openMode) throws VersionException, IOException {
+	public ComponentDBAdapterV0(DBHandle handle, boolean create)
+			throws VersionException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
-			componentTable =
-				handle.createTable(COMPONENT_TABLE_NAME, V0_COMPONENT_SCHEMA,
-					new int[] { V0_COMPONENT_PARENT_ID_COL });
+		if (create) {
+			componentTable = handle.createTable(COMPONENT_TABLE_NAME, V0_COMPONENT_SCHEMA,
+				new int[] { V0_COMPONENT_PARENT_ID_COL });
 		}
 		else {
 			componentTable = handle.getTable(COMPONENT_TABLE_NAME);
@@ -64,9 +63,8 @@ class ComponentDBAdapterV0 extends ComponentDBAdapter {
 			}
 			int version = componentTable.getSchema().getVersion();
 			if (version != VERSION) {
-				String msg =
-					"Expected version " + VERSION + " for table " + COMPONENT_TABLE_NAME +
-						" but got " + componentTable.getSchema().getVersion();
+				String msg = "Expected version " + VERSION + " for table " + COMPONENT_TABLE_NAME +
+					" but got " + componentTable.getSchema().getVersion();
 				if (version < VERSION) {
 					throw new VersionException(msg, VersionException.OLDER_VERSION, true);
 				}
@@ -76,7 +74,7 @@ class ComponentDBAdapterV0 extends ComponentDBAdapter {
 	}
 
 	@Override
-	public Record createRecord(long dataTypeID, long parentID, int length, int ordinal, int offset,
+	public DBRecord createRecord(long dataTypeID, long parentID, int length, int ordinal, int offset,
 			String name, String comment) throws IOException {
 
 		long tableKey = componentTable.getKey();
@@ -84,7 +82,7 @@ class ComponentDBAdapterV0 extends ComponentDBAdapter {
 //			tableKey = DataManager.VOID_DATATYPE_ID +1;
 //		}
 		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.COMPONENT, tableKey);
-		Record record = ComponentDBAdapter.COMPONENT_SCHEMA.createRecord(key);
+		DBRecord record = ComponentDBAdapter.COMPONENT_SCHEMA.createRecord(key);
 		record.setLongValue(ComponentDBAdapter.COMPONENT_PARENT_ID_COL, parentID);
 		record.setLongValue(ComponentDBAdapter.COMPONENT_OFFSET_COL, offset);
 		record.setLongValue(ComponentDBAdapter.COMPONENT_DT_ID_COL, dataTypeID);
@@ -97,12 +95,12 @@ class ComponentDBAdapterV0 extends ComponentDBAdapter {
 	}
 
 	@Override
-	public Record getRecord(long componentID) throws IOException {
+	public DBRecord getRecord(long componentID) throws IOException {
 		return componentTable.getRecord(componentID);
 	}
 
 	@Override
-	public void updateRecord(Record record) throws IOException {
+	public void updateRecord(DBRecord record) throws IOException {
 		componentTable.putRecord(record);
 	}
 
@@ -112,7 +110,7 @@ class ComponentDBAdapterV0 extends ComponentDBAdapter {
 	}
 
 	@Override
-	public long[] getComponentIdsInComposite(long compositeID) throws IOException {
+	public Field[] getComponentIdsInComposite(long compositeID) throws IOException {
 		return componentTable.findRecords(new LongField(compositeID),
 			ComponentDBAdapter.COMPONENT_PARENT_ID_COL);
 	}

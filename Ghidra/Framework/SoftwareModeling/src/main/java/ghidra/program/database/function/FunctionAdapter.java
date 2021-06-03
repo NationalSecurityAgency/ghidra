@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.program.database.function;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-
-import db.*;
 
 /**
  * Database adapter for functions.
@@ -51,11 +49,11 @@ abstract class FunctionAdapter {
 
 	static final int FUNCTION_SIGNATURE_SOURCE_SHIFT = 4; // bit shift for flag storage of "signature SourceType"
 
-	final static Schema FUNCTION_SCHEMA =
-		new Schema(CURRENT_VERSION, "ID", new Class[] { LongField.class, IntField.class,
-			IntField.class, IntField.class, ByteField.class, ByteField.class, StringField.class },
-			new String[] { "Return DataType ID", "StackPurge", "StackReturnOffset",
-				"StackLocalSize", "Flags", "Calling Convention ID", "Return Storage" });
+	final static Schema FUNCTION_SCHEMA = new Schema(CURRENT_VERSION, "ID",
+		new Field[] { LongField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE,
+			ByteField.INSTANCE, ByteField.INSTANCE, StringField.INSTANCE },
+		new String[] { "Return DataType ID", "StackPurge", "StackReturnOffset", "StackLocalSize",
+			"Flags", "Calling Convention ID", "Return Storage" });
 
 	protected AddressMap addrMap;
 
@@ -136,7 +134,7 @@ abstract class FunctionAdapter {
 			RecordIterator it = oldAdapter.iterateFunctionRecords();
 			while (it.hasNext()) {
 				monitor.checkCanceled();
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				tmpAdapter.updateFunctionRecord(rec);
 				monitor.setProgress(++count);
 			}
@@ -145,7 +143,7 @@ abstract class FunctionAdapter {
 			it = tmpAdapter.iterateFunctionRecords();
 			while (it.hasNext()) {
 				monitor.checkCanceled();
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				newAdapter.updateFunctionRecord(rec);
 				monitor.setProgress(++count);
 			}
@@ -182,17 +180,17 @@ abstract class FunctionAdapter {
 	 * @param functionKey
 	 * @return Record
 	 */
-	abstract Record getFunctionRecord(long functionKey) throws IOException;
+	abstract DBRecord getFunctionRecord(long functionKey) throws IOException;
 
 	/**
 	 * Update/Insert the specified function record.
 	 * @param functionRecord
 	 */
-	abstract void updateFunctionRecord(Record functionRecord) throws IOException;
+	abstract void updateFunctionRecord(DBRecord functionRecord) throws IOException;
 
-	abstract Record createFunctionRecord(long symbolID, long returnDataTypeId) throws IOException;
+	abstract DBRecord createFunctionRecord(long symbolID, long returnDataTypeId) throws IOException;
 
-	abstract Record translateRecord(Record record);
+	abstract DBRecord translateRecord(DBRecord record);
 
 	class TranslatedRecordIterator implements RecordIterator {
 		private RecordIterator it;
@@ -212,12 +210,12 @@ abstract class FunctionAdapter {
 		}
 
 		@Override
-		public Record next() throws IOException {
+		public DBRecord next() throws IOException {
 			return translateRecord(it.next());
 		}
 
 		@Override
-		public Record previous() throws IOException {
+		public DBRecord previous() throws IOException {
 			return translateRecord(it.previous());
 		}
 

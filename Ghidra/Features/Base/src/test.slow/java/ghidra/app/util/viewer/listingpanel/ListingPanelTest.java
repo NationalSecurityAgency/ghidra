@@ -18,6 +18,7 @@ package ghidra.app.util.viewer.listingpanel;
 import static org.junit.Assert.*;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.*;
 
@@ -50,10 +51,8 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 	private Program program;
 	private AddressFactory addrFactory;
 	private AddressSpace space;
-
-	public ListingPanelTest() {
-		super();
-	}
+	private CodeViewerService cvs;
+	private ListingModel listingModel;
 
 	@Before
 	public void setUp() throws Exception {
@@ -64,7 +63,12 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 		cb = env.getPlugin(CodeBrowserPlugin.class);
 		loadProgram("notepad");
 		resetFormatOptions();
+		cvs = tool.getService(CodeViewerService.class);
+		listingModel = cvs.getListingModel();
+	}
 
+	private Layout getLayout(Address addr) {
+		return listingModel.getLayout(addr, false);
 	}
 
 	@After
@@ -106,20 +110,18 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetLayout() {
 //		env.showTool();
-		CodeViewerService cvs = tool.getService(CodeViewerService.class);
-		assertNull(cvs.getLayout(addr(0)));
-		Layout l = cvs.getLayout(addr(0x1001000));
+		assertNull(getLayout(addr(0)));
+		Layout l = getLayout(addr(0x1001000));
 		assertNotNull(l);
 		assertEquals(6, l.getNumFields());
 
-		assertNull(cvs.getLayout(addr(0x1001001)));
+		assertNull(getLayout(addr(0x1001001)));
 	}
 
 	@Test
 	public void testGetStringsFromLayout() {
 		env.showTool();
-		CodeViewerService cvs = tool.getService(CodeViewerService.class);
-		Layout l = cvs.getLayout(addr(0x1001008));
+		Layout l = getLayout(addr(0x1001008));
 
 		int n = l.getNumFields();
 		assertEquals(7, n);
@@ -136,8 +138,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetStringsFromLayout1() {
 		env.showTool();
-		CodeViewerService cvs = tool.getService(CodeViewerService.class);
-		Layout l = cvs.getLayout(addr(0x1004772));
+		Layout l = getLayout(addr(0x1004772));
 
 		int n = l.getNumFields();
 		assertEquals(4, n);
@@ -150,8 +151,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testProgramLocation1() {
-		CodeViewerService cvs = tool.getService(CodeViewerService.class);
-		Layout l = cvs.getLayout(addr(0x1004772));
+		Layout l = getLayout(addr(0x1004772));
 
 		ListingField f = (ListingField) l.getField(1);
 		assertEquals("bf 00 01 00 00", f.getText());
@@ -180,8 +180,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 		inst.setComment(CodeUnit.EOL_COMMENT, comment);
 		program.endTransaction(id, true);
 		cb.updateNow();
-		CodeViewerService cvs = tool.getService(CodeViewerService.class);
-		Layout l = cvs.getLayout(addr(0x1004772));
+		Layout l = getLayout(addr(0x1004772));
 		env.showTool();
 
 		ListingField f = (ListingField) l.getField(4);
@@ -216,8 +215,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 		opt.setBoolean("EOL Comments Field.Enable Word Wrapping", true);
 
 		cb.updateNow();
-		CodeViewerService cvs = tool.getService(CodeViewerService.class);
-		Layout l = cvs.getLayout(addr(0x1004772));
+		Layout l = getLayout(addr(0x1004772));
 		env.showTool();
 
 		ListingField f = (ListingField) l.getField(4);
@@ -255,8 +253,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 		opt.setBoolean("EOL Comments Field.Enable Word Wrapping", true);
 
 		cb.updateNow();
-		CodeViewerService cvs = tool.getService(CodeViewerService.class);
-		Layout l = cvs.getLayout(addr(0x1004772));
+		Layout l = getLayout(addr(0x1004772));
 		env.showTool();
 
 		ListingField f = (ListingField) l.getField(4);
@@ -293,8 +290,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 //		opt.putBoolean("test", "EOL Comments Field.Enable Word Wrapping", true);
 
 		cb.updateNow();
-		CodeViewerService cvs = tool.getService(CodeViewerService.class);
-		Layout l = cvs.getLayout(addr(0x1004772));
+		Layout l = getLayout(addr(0x1004772));
 		env.showTool();
 
 		ListingField f = (ListingField) l.getField(4);
@@ -305,12 +301,37 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
+	@Test
+	public void testListingDisplayListener() {
+		showTool(tool);
+
+		AtomicReference<AddressSetView> addresses = new AtomicReference<>();
+		CodeViewerService cvs = tool.getService(CodeViewerService.class);
+		cvs.addListingDisplayListener(new ListingDisplayListener() {
+			@Override
+			public void visibleAddressesChanged(AddressSetView visibleAddresses) {
+				addresses.set(visibleAddresses);
+			}
+		});
+
+		assertNull(addresses.get());
+		cvs.goTo(new ProgramLocation(program, addr(0x1008000)), false);
+		assertNotNull(addresses.get());
+		assertTrue(addresses.get().contains(addr(0x1008000)));
+		assertFalse(addresses.get().contains(addr(0x1001000)));
+
+		cvs.goTo(new ProgramLocation(program, addr(0x1001000)), false);
+		assertNotNull(addresses.get());
+		assertFalse(addresses.get().contains(addr(0x1008000)));
+		assertTrue(addresses.get().contains(addr(0x1001000)));
+
+	}
+
 	private void resetFormatOptions() {
 		Options fieldOptions = cb.getFormatManager().getFieldOptions();
 		List<String> names = fieldOptions.getOptionNames();
 
-		for (int i = 0; i < names.size(); i++) {
-			String name = names.get(i);
+		for (String name : names) {
 			if (!name.startsWith("Format Code")) {
 				continue;
 			}

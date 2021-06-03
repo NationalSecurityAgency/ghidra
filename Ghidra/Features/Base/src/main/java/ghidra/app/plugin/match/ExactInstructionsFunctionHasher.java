@@ -46,8 +46,12 @@ public class ExactInstructionsFunctionHasher extends AbstractFunctionHasher {
 		Pair<Integer, ArrayList<CodeUnit>> bCodeUnitsPair =
 			getAllCodeUnits(monitor, funcB.getProgram(), funcB.getBody());
 		if (aCodeUnitsPair.second.size() != bCodeUnitsPair.second.size()) {
-			throw new RuntimeException("different number of codeunits");
+			// This code was expecting the client to validate that the number of instructions in
+			// each function is the same.   There is no easy way to do that.  Rather than force
+			// the client to do that, just handle it here.  (This code is not currently used.)
+			return 0;
 		}
+
 		for (int ii = 0; ii < aCodeUnitsPair.second.size(); ++ii) {
 			CodeUnit aUnit = aCodeUnitsPair.second.get(ii);
 			CodeUnit bUnit = aCodeUnitsPair.second.get(ii);

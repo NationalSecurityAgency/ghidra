@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package ghidra.program.database.oldfunction;
 
-import ghidra.program.database.map.AddressMap;
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.program.database.map.AddressMap;
+import ghidra.util.exception.VersionException;
 
 /**
  * Database adapter for register variables.
@@ -55,14 +53,14 @@ abstract class OldRegisterVariableDBAdapter {
 	 * @param key
 	 * @return Record
 	 */
-	abstract Record getRegisterVariableRecord(long key) throws IOException;
+	abstract DBRecord getRegisterVariableRecord(long key) throws IOException;
 
 	/**
 	 * Get all register variable keys which correspond to a function.
 	 * @param functionKey
-	 * @return array of register variable keys.
-	 * @throws IOException
+	 * @return array of register variable keys as LongField values within Field array.
+	 * @throws IOException if IO error occurs
 	 */
-	abstract long[] getRegisterVariableKeys(long functionKey) throws IOException;
+	abstract Field[] getRegisterVariableKeys(long functionKey) throws IOException;
 
 }

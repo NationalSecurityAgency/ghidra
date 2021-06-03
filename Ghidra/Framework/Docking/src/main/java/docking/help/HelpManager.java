@@ -74,13 +74,12 @@ public class HelpManager implements HelpService {
 	private boolean isValidHelp;
 	private boolean hasBeenDisplayed;
 
-	private Set<Object> excludedFromHelp = new HashSet<>();
+	private Set<Object> excludedFromHelp = Collections.newSetFromMap(new WeakHashMap<>());
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param url url for the main HelpSet file for the application.
-	 * @param helpActionManager The HelpActionManager with which help location will be registered
 	 * @throws HelpSetException if HelpSet could not be created
 	 */
 	protected HelpManager(URL url) throws HelpSetException {

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <data_organization>
+	<absolute_max_alignment value="0" />
+	<machine_alignment value="4" />
+	<default_alignment value="1" />
+	<default_pointer_alignment value="4" />
+	<pointer_size value="4" />
+	<short_size value="2" />
+	<integer_size value="4" />
+	<long_size value="4" />
+	<long_long_size value="8" />
+	<size_alignment_map>
+		<entry size="1" alignment="1" />
+		<entry size="2" alignment="2" />
+		<entry size="4" alignment="4" />
+		<entry size="8" alignment="4" />
+	</size_alignment_map>
+  </data_organization>
+  <spacebase name="gp" register="gp" space="ram"/>
+  <global>
+    <range space="ram"/>
+    <register name="gp"/>
+    <register name="tp"/>
+  </global>
+  <returnaddress>
+    <register name="ra"/>
+  </returnaddress>
+  <stackpointer register="sp" space="ram"/>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="0" stackshift="0" strategy="register">
+      <input>
+	<pentry minsize="1" maxsize="4">
+	  <register name="a0"/>
+        </pentry>
+	<pentry minsize="1" maxsize="4">
+	  <register name="a1"/>
+        </pentry>
+	<pentry minsize="1" maxsize="4">
+	  <register name="a2"/>
+        </pentry>
+	<pentry minsize="1" maxsize="4">
+	  <register name="a3"/>
+        </pentry>
+	<pentry minsize="1" maxsize="4">
+	  <register name="a4"/>
+        </pentry>
+	<pentry minsize="1" maxsize="4">
+	  <register name="a5"/>
+        </pentry>
+	<pentry minsize="1" maxsize="4">
+	  <register name="a6"/>
+        </pentry>
+	<pentry minsize="1" maxsize="4">
+	  <register name="a7"/>
+        </pentry>
+	<pentry minsize="1" maxsize="500" align="4">
+	  <addr offset="16" space="ram"/>
+	</pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="4">
+          <register name="a0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="a1"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="sp"/>
+	<register name="gp"/>
+	<register name="tp"/>
+        <register name="s0"/>
+      	<register name="s1"/>
+	<register name="s2"/>
+	<register name="s3"/>
+	<register name="s4"/>
+	<register name="s5"/>
+	<register name="s6"/>
+	<register name="s7"/>
+	<register name="s8"/>
+	<register name="s9"/>
+	<register name="s10"/>
+	<register name="s11"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+</compiler_spec>

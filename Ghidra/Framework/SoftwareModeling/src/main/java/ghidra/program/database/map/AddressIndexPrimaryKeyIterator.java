@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +15,23 @@
  */
 package ghidra.program.database.map;
 
-import ghidra.program.model.address.*;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 import db.*;
+import ghidra.program.model.address.*;
 
 /**
  * Long iterator over indexed addresses. The longs are primary keys returned ordered and restrained
  * by the address field they contain
  */
-public class AddressIndexPrimaryKeyIterator implements DBLongIterator {
+public class AddressIndexPrimaryKeyIterator implements DBFieldIterator {
 
 	private Table table;
 
 	private List<KeyRange> keyRangeList;
-	private DBLongIterator it;
+	private DBFieldIterator it;
 	private int keyRangeIndex = -1;
 	private int indexCol;
 
@@ -113,16 +111,14 @@ public class AddressIndexPrimaryKeyIterator implements DBLongIterator {
 		if (atStart) {
 			keyRangeIndex = 0;
 			KeyRange keyRange = keyRangeList.get(keyRangeIndex);
-			it =
-				table.indexKeyIterator(indexCol, new LongField(keyRange.minKey), new LongField(
-					keyRange.maxKey), true);
+			it = table.indexKeyIterator(indexCol, new LongField(keyRange.minKey),
+				new LongField(keyRange.maxKey), true);
 		}
 		else {
 			keyRangeIndex = keyRangeList.size() - 1;
 			KeyRange keyRange = keyRangeList.get(keyRangeIndex);
-			it =
-				table.indexKeyIterator(indexCol, new LongField(keyRange.minKey), new LongField(
-					keyRange.maxKey), false);
+			it = table.indexKeyIterator(indexCol, new LongField(keyRange.minKey),
+				new LongField(keyRange.maxKey), false);
 		}
 	}
 
@@ -169,15 +165,13 @@ public class AddressIndexPrimaryKeyIterator implements DBLongIterator {
 			keyRangeIndex = -keyRangeIndex - 1;
 			if (keyRangeIndex == 0) {
 				KeyRange keyRange = keyRangeList.get(keyRangeIndex);
-				it =
-					table.indexKeyIterator(indexCol, new LongField(keyRange.minKey), new LongField(
-						keyRange.maxKey), true);
+				it = table.indexKeyIterator(indexCol, new LongField(keyRange.minKey),
+					new LongField(keyRange.maxKey), true);
 			}
 			else {
 				KeyRange keyRange = keyRangeList.get(--keyRangeIndex);
-				it =
-					table.indexKeyIterator(indexCol, new LongField(keyRange.minKey), new LongField(
-						keyRange.maxKey), false);
+				it = table.indexKeyIterator(indexCol, new LongField(keyRange.minKey),
+					new LongField(keyRange.maxKey), false);
 			}
 		}
 		else {
@@ -185,15 +179,12 @@ public class AddressIndexPrimaryKeyIterator implements DBLongIterator {
 			KeyRange keyRange = keyRangeList.get(keyRangeIndex);
 			long startKey =
 				absolute ? addrMap.getAbsoluteEncoding(start, false) : addrMap.getKey(start, false);
-			it =
-				table.indexKeyIterator(indexCol, new LongField(keyRange.minKey), new LongField(
-					keyRange.maxKey), new LongField(startKey), before);
+			it = table.indexKeyIterator(indexCol, new LongField(keyRange.minKey),
+				new LongField(keyRange.maxKey), new LongField(startKey), before);
 		}
 	}
 
-	/**
-	 * @see db.DBLongIterator#hasNext()
-	 */
+	@Override
 	public boolean hasNext() throws IOException {
 		if (it == null) {
 			return false;
@@ -201,9 +192,8 @@ public class AddressIndexPrimaryKeyIterator implements DBLongIterator {
 		else if (!it.hasNext()) {
 			while (keyRangeIndex < (keyRangeList.size() - 1)) {
 				KeyRange keyRange = keyRangeList.get(++keyRangeIndex);
-				it =
-					table.indexKeyIterator(indexCol, new LongField(keyRange.minKey), new LongField(
-						keyRange.maxKey), true);
+				it = table.indexKeyIterator(indexCol, new LongField(keyRange.minKey),
+					new LongField(keyRange.maxKey), true);
 				if (it.hasPrevious()) {
 					it.previous();
 				}
@@ -216,9 +206,7 @@ public class AddressIndexPrimaryKeyIterator implements DBLongIterator {
 		return true;
 	}
 
-	/**
-	 * @see db.DBLongIterator#hasPrevious()
-	 */
+	@Override
 	public boolean hasPrevious() throws IOException {
 		if (it == null) {
 			return false;
@@ -226,9 +214,8 @@ public class AddressIndexPrimaryKeyIterator implements DBLongIterator {
 		else if (!it.hasPrevious()) {
 			while (keyRangeIndex > 0) {
 				KeyRange keyRange = keyRangeList.get(--keyRangeIndex);
-				it =
-					table.indexKeyIterator(indexCol, new LongField(keyRange.minKey), new LongField(
-						keyRange.maxKey), false);
+				it = table.indexKeyIterator(indexCol, new LongField(keyRange.minKey),
+					new LongField(keyRange.maxKey), false);
 				if (it.hasNext()) {
 					it.next();
 				}
@@ -241,29 +228,23 @@ public class AddressIndexPrimaryKeyIterator implements DBLongIterator {
 		return true;
 	}
 
-	/**
-	 * @see db.DBLongIterator#next()
-	 */
-	public long next() throws IOException {
+	@Override
+	public Field next() throws IOException {
 		if (hasNext()) {
 			return it.next();
 		}
 		throw new NoSuchElementException();
 	}
 
-	/**
-	 * @see db.DBLongIterator#previous()
-	 */
-	public long previous() throws IOException {
+	@Override
+	public Field previous() throws IOException {
 		if (hasPrevious()) {
 			return it.previous();
 		}
 		throw new NoSuchElementException();
 	}
 
-	/**
-	 * @see db.DBLongIterator#delete()
-	 */
+	@Override
 	public boolean delete() throws IOException {
 		if (it != null) {
 			return it.delete();

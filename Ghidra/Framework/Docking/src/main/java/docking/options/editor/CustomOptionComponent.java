@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,10 @@
  */
 package docking.options.editor;
 
-import ghidra.framework.options.EditorState;
-
 import java.awt.Dimension;
+
+import ghidra.framework.options.EditorState;
+import ghidra.util.layout.HorizontalLayout;
 
 /**
  * A custom OptionComponent that controls it's own display using the editor component of the
@@ -26,15 +26,18 @@ import java.awt.Dimension;
  */
 public class CustomOptionComponent extends GenericOptionsComponent {
 
-    protected CustomOptionComponent( EditorState editorState ) {
-        super( editorState );
+	protected CustomOptionComponent(EditorState editorState) {
+		super(editorState);
 
-        // this class is designed to let the editor component handle the display and editing
-        add( editorState.getEditorComponent() );
-    }
+		// this layout allows us to easily left-align the single component in this container
+		setLayout(new HorizontalLayout(0));
 
-    @Override
-    protected Dimension getPreferredAlignmentSize() {
-        return new Dimension( 0, 0 );
-    }
+		// this class is designed to let the editor component handle the display and editing
+		add(editorState.getEditorComponent());
+	}
+
+	@Override
+	protected Dimension getPreferredAlignmentSize() {
+		return new Dimension(0, 0);
+	}
 }

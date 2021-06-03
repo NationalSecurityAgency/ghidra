@@ -117,10 +117,10 @@ public class CascadedDropTarget extends DropTarget {
 	/**
 	 * Removes the given drop target from anywhere within the tree of CascadedDropTargets.  
 	 * 
-	 * If the given <tt>dropTarget</tt> is an immediate child of this CascadedDropTarget (CDT), then 
+	 * If the given <code>dropTarget</code> is an immediate child of this CascadedDropTarget (CDT), then 
 	 * the other child is returned.  Otherwise, a reference to this CDT will be returned with the 
-	 * given <tt>dropTarget</tt> having been removed from one of this CDT's children.  This method 
-	 * effectively removes the given <tt>dropTarget</tt> from the hierarchy and collapses the tree 
+	 * given <code>dropTarget</code> having been removed from one of this CDT's children.  This method 
+	 * effectively removes the given <code>dropTarget</code> from the hierarchy and collapses the tree 
 	 * structure as needed.
 	 *   
 	 * @param dropTarget The target to remove

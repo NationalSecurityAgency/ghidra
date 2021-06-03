@@ -4,19 +4,18 @@
 package generic.json;
 
 public class JSONToken {
-
-	/**
-	 * JSON token description.
-	 * @param		type	type (object, array, string etc.)
-	 * @param		start	start position in JSON data string
-	 * @param		end		end position in JSON data string
-	 */
 	
 	public JSONType type;
 	public int start;
 	public int end;
 	public int size;
-	
+
+	/**
+	 * JSON token description.
+	 * @param type	the token type (object, array, string etc.)
+	 * @param start	the start position in JSON data string
+	 * @param end   the end position in JSON data string
+	 */
 	public JSONToken(JSONType type, int start, int end) {
 		setType(type);
 		setStart(start);

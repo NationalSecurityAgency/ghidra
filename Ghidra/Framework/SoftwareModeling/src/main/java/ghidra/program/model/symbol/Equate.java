@@ -104,9 +104,9 @@ public interface Equate {
     public void removeReference(Address refAddr, int opndPosition);
     
     /**
-	 * Remove the reference at the given operand position.
-	 * @param refAddr the address that was using this equate
-	 * @param opndPosition the operand index of the operand that was using this eqate.
+	 * Remove the reference at the given address
+	 * @param dynamicHash the hash of the reference
+	 * @param refAddr the reference's address
 	 */
     public void removeReference(long dynamicHash, Address refAddr);
     

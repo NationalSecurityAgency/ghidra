@@ -51,27 +51,27 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	public boolean contains(AddressSetView rangeSet);
 
 	/**
-	 * Returns true if this set is empty.
+	 * @return true if this set is empty.
 	 */
 	public boolean isEmpty();
 
 	/**
-	 * Return the minimum address for this set. Returns null if the set is empty.
+	 * @return the minimum address for this set. Returns null if the set is empty.
 	 */
 	public Address getMinAddress();
 
 	/**
-	 * Return the maximum address for this set. Returns null if the set is empty.
+	 * @return the maximum address for this set. Returns null if the set is empty.
 	 */
 	public Address getMaxAddress();
 
 	/**
-	 * Return the number of address ranges in this set.
+	 * @return the number of address ranges in this set.
 	 */
 	public int getNumAddressRanges();
 
 	/**
-	 * Returns an iterator over the address ranges in this address set.
+	 * @return an iterator over the address ranges in this address set.
 	 */
 	public AddressRangeIterator getAddressRanges();
 
@@ -120,7 +120,7 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	public Iterator<AddressRange> iterator(Address start, boolean forward);
 
 	/**
-	 * Returns the number of addresses in this set.
+	 * @return the number of addresses in this set.
 	 */
 	public long getNumAddresses();
 
@@ -128,6 +128,7 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	 * Returns an iterator over all addresses in this set.
 	 * @param forward if true the address are return in increasing order, otherwise in
 	 * decreasing order.
+	 * @return an iterator over all addresses in this set.
 	 */
 	public AddressIterator getAddresses(boolean forward);
 
@@ -136,6 +137,8 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	 * starting at the start address
 	 * @param start address to start iterating at in the address set
 	 * @param forward if true address are return from lowest to highest, else from highest to lowest
+	 * @return an iterator over the addresses in this address set
+	 * starting at the start address
 	 */
 	public AddressIterator getAddresses(Address start, boolean forward);
 
@@ -143,6 +146,7 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	 * Determine if this address set intersects with the specified address set.
 	 *
 	 * @param addrSet address set to check intersection with.
+	 * @return true if this set intersects the specified addrSet else false
 	 */
 	public boolean intersects(AddressSetView addrSet);
 
@@ -196,7 +200,7 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	/**
 	 * Computes the exclusive-or of this address set with the given set. This
 	 * method does not modify this address set.
-	 * @param addrSet
+	 * @param addrSet address set to exclusive-or with.
 	 * @return AddressSet a new address set containing all addresses that are in
 	 * either this set or the given set, but not in both sets
 	 */
@@ -235,4 +239,57 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	 * @return the first address that is contained in this set and the given set.
 	 */
 	public Address findFirstAddressInCommon(AddressSetView set);
+
+	/**
+	 * Trim address set removing all addresses less-than-or-equal to specified 
+	 * address based upon {@link Address} comparison.
+	 * The address set may contain address ranges from multiple 
+	 * address spaces.
+	 * @param set address set to be trimmed
+	 * @param addr trim point.  Only addresses greater than this address will be returned.
+	 * @return trimmed address set view
+	 */
+	public static AddressSetView trimStart(AddressSetView set, Address addr) {
+		AddressSet trimmedSet = new AddressSet();
+		AddressRangeIterator addressRanges = set.getAddressRanges();
+		while (addressRanges.hasNext()) {
+			AddressRange range = addressRanges.next();
+			Address rangeMin = range.getMinAddress();
+			Address rangeMax = range.getMaxAddress();
+			if (rangeMin.compareTo(addr) > 0) {
+				trimmedSet.add(range);
+			}
+			else if (rangeMax.compareTo(addr) > 0) {
+				trimmedSet.add(addr.next(), rangeMax);
+
+			}
+		}
+		return trimmedSet;
+	}
+
+	/**
+	 * Trim address set removing all addresses greater-than-or-equal to specified 
+	 * address based upon {@link Address} comparison.  
+	 * The address set may contain address ranges from multiple 
+	 * address spaces.
+	 * @param set address set to be trimmed
+	 * @param addr trim point.  Only addresses less than this address will be returned.
+	 * @return trimmed address set view
+	 */
+	public static AddressSetView trimEnd(AddressSetView set, Address addr) {
+		AddressSet trimmedSet = new AddressSet();
+		AddressRangeIterator addressRanges = set.getAddressRanges();
+		while (addressRanges.hasNext()) {
+			AddressRange range = addressRanges.next();
+			Address rangeMin = range.getMinAddress();
+			Address rangeMax = range.getMaxAddress();
+			if (rangeMax.compareTo(addr) < 0) {
+				trimmedSet.add(range);
+			}
+			else if (rangeMin.compareTo(addr) < 0) {
+				trimmedSet.add(rangeMin, addr.previous());
+			}
+		}
+		return trimmedSet;
+	}
 }

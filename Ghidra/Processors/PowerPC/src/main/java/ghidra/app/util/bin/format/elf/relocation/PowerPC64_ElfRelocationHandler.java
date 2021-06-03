@@ -103,6 +103,10 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 		}
 
 		switch (type) {
+			case PowerPC64_ElfRelocationConstants.R_PPC64_COPY:
+				markAsWarning(program, relocationAddress, "R_PPC64_COPY", sym.getNameAsString(),
+					symbolIndex, "Runtime copy not supported", elfRelocationContext.getLog());
+				break;
 			case PowerPC64_ElfRelocationConstants.R_PPC64_ADDR32:
 				newValue = (int) (symbolValue + addend);
 				memory.setInt(relocationAddress, newValue);

@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.demangler;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.program.model.address.Address;
@@ -27,8 +29,6 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.TaskMonitor;
-import util.demangler.GenericDemangledDataType;
-import util.demangler.GenericDemangledVariable;
 
 /**
  * An interface to represent a demangled global variable.
@@ -36,17 +36,9 @@ import util.demangler.GenericDemangledVariable;
 public class DemangledVariable extends DemangledObject {
 	private DemangledDataType datatype;
 
-	public DemangledVariable(String name) {
+	public DemangledVariable(String mangled, String originalDemangled, String name) {
+		super(mangled, originalDemangled);
 		setName(name);
-	}
-
-	DemangledVariable(GenericDemangledVariable other) {
-		super(other);
-
-		GenericDemangledDataType otherDatatype = other.getDataType();
-		if (otherDatatype != null) {
-			datatype = (DemangledDataType) DemangledObjectFactory.convert(otherDatatype);
-		}
 	}
 
 	public void setDatatype(DemangledDataType datatype) {
@@ -70,7 +62,7 @@ public class DemangledVariable extends DemangledObject {
 
 	@Override
 	public String getSignature(boolean format) {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		buffer.append(specialPrefix == null ? EMPTY_STRING : specialPrefix + SPACE);
 		buffer.append(
 			visibility == null || "global".equals(visibility) ? EMPTY_STRING : visibility + SPACE);
@@ -80,15 +72,15 @@ public class DemangledVariable extends DemangledObject {
 		buffer.append(isVirtual ? "virtual" + SPACE : EMPTY_STRING);
 
 		String n = getDemangledName();
-		boolean hasName = (n != null) && !n.isEmpty();
+		boolean hasName = !StringUtils.isBlank(n);
 
-		StringBuffer datatypeBuffer = new StringBuffer();
+		StringBuilder datatypeBuffer = new StringBuilder();
 		String spacer = EMPTY_STRING;
 		if (!(datatype instanceof DemangledFunctionPointer) &&
 			!(datatype instanceof DemangledFunctionReference) &&
 			!(datatype instanceof DemangledFunctionIndirect)) {
 			if (datatype != null) {
-				datatypeBuffer.append(datatype.toSignature());
+				datatypeBuffer.append(datatype.getSignature());
 				spacer = SPACE;
 			}
 		}
@@ -139,11 +131,10 @@ public class DemangledVariable extends DemangledObject {
 			datatypeBuffer.append(spacer);
 			spacer = EMPTY_STRING;
 
-			datatypeBuffer.append(namespace.toNamespace());
+			datatypeBuffer.append(namespace.getNamespaceString());
 
-			if (!hasName) {
-				int end = buffer.length();
-				datatypeBuffer.delete(end - 2, end); // strip off the last namespace characters
+			if (hasName) {
+				datatypeBuffer.append(NAMESPACE_SEPARATOR);
 			}
 		}
 
@@ -153,22 +144,16 @@ public class DemangledVariable extends DemangledObject {
 			datatypeBuffer.append(getName());
 		}
 
-		datatypeBuffer.append(specialMidfix == null ? EMPTY_STRING : specialMidfix + SPACE);
-		datatypeBuffer.append(specialSuffix == null ? EMPTY_STRING : SPACE + specialSuffix);
-
 		if (datatype instanceof DemangledFunctionPointer) {
 			DemangledFunctionPointer funcPtr = (DemangledFunctionPointer) datatype;
-			//return funcPtr.toSignature(buffer.toString());
 			return buffer.append(funcPtr.toSignature(datatypeBuffer.toString())).toString();
 		}
 		else if (datatype instanceof DemangledFunctionReference) {
 			DemangledFunctionReference funcRef = (DemangledFunctionReference) datatype;
-			//return funcRef.toSignature(buffer.toString());
 			return buffer.append(funcRef.toSignature(datatypeBuffer.toString())).toString();
 		}
 		else if (datatype instanceof DemangledFunctionIndirect) {
 			DemangledFunctionIndirect funcDef = (DemangledFunctionIndirect) datatype;
-			//return funcDef.toSignature(buffer.toString());
 			return buffer.append(funcDef.toSignature(datatypeBuffer.toString())).toString();
 		}
 
@@ -199,9 +184,6 @@ public class DemangledVariable extends DemangledObject {
 		}
 
 		Symbol demangledSymbol = applyDemangledName(address, true, true, program);
-
-		//TODO replace existing datatype?
-
 		DataType demangledDT = getProgramDataType(program);
 
 		if (address.isExternalAddress()) {

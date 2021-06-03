@@ -11,6 +11,11 @@
   <register_data>
     <register name="SP" group="Alt"/>
   </register_data>
+
+  <inferptrbounds>
+    <range space="ram" first="0" last="0"/>   <!-- Don't try to infer pointers from constants in the body of a function -->
+  </inferptrbounds>
+  
   <jumpassist name="switchAssist">
     <!-- pcode to describe how to get case values from an index 0...size-1 -->
     <case_pcode>  

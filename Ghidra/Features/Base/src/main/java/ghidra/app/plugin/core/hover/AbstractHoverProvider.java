@@ -139,6 +139,13 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 			return;
 		}
 
+		Component component = event.getComponent();
+		if (!component.isShowing()) {
+			// This can happen since we are using a timer.  When the timer fires, the source 
+			// component may have been hidden.
+			return;
+		}
+
 		ProgramLocation loc = getHoverLocation(fieldLocation, field, fieldBounds, event);
 		for (HoverService hoverService : hoverServices) {
 			JComponent comp = hoverService.getHoverComponent(program, loc, fieldLocation, field);

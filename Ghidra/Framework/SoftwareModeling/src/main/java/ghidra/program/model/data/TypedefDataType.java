@@ -15,7 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.data.DataTypeUtilities;
@@ -59,9 +58,14 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 
 	/**
 	 * Construct a new typedef.
-	 * @param name name to use as the alias
-	 * @param dt data type that is being typedef'ed
-	 * @param dataTypeManager the data type manager associated with this data type. This can be null. 
+	 * @param path the category path indicating where this data type is located.
+	 * @param name the name of the new structure
+	 * @param universalID the id for the data type
+	 * @param sourceArchive the source archive for this data type
+	 * @param lastChangeTime the last time this data type was changed
+	 * @param lastChangeTimeInSourceArchive the last time this data type was changed in
+	 * its source archive.
+	 * @param dtm the data type manager associated with this data type. This can be null. 
 	 * Also, the data type manager may not contain this actual data type.
 	 */
 	public TypedefDataType(CategoryPath path, String name, DataType dt, UniversalID universalID,
@@ -100,8 +104,8 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
-		return dataType.isDynamicallySized();
+	public boolean hasLanguageDependantLength() {
+		return dataType.hasLanguageDependantLength();
 	}
 
 	@Override
@@ -135,6 +139,11 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	@Override
 	public String getDescription() {
 		return dataType.getDescription();
+	}
+
+	@Override
+	public boolean isZeroLength() {
+		return dataType.isZeroLength();
 	}
 
 	@Override
@@ -175,6 +184,13 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	public void dataTypeSizeChanged(DataType dt) {
 		if (dt == dataType) {
 			notifySizeChanged();
+		}
+	}
+
+	@Override
+	public void dataTypeAlignmentChanged(DataType dt) {
+		if (dt == dataType) {
+			notifyAlignmentChanged();
 		}
 	}
 
@@ -226,6 +242,11 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	public boolean dependsOn(DataType dt) {
 		DataType myDt = getDataType();
 		return (myDt == dt || myDt.dependsOn(dt));
+	}
+
+	@Override
+	public String toString() {
+		return "typedef " + getName() + " " + dataType.getName();
 	}
 
 }

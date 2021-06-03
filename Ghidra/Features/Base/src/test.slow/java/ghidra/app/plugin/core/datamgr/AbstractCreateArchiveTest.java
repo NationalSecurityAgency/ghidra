@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.datamgr;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 import java.io.*;
 
@@ -180,7 +179,7 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 		tree = provider.getGTree();
 		treeModelModListener = new TreeModelModCounter();
 		tree.addGTModelListener(treeModelModListener);
-		archiveRootNode = (ArchiveRootNode) tree.getRootNode();
+		archiveRootNode = (ArchiveRootNode) tree.getViewRoot();
 
 		tool.showComponentProvider(provider, true);
 	}

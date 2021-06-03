@@ -19,18 +19,18 @@ import java.awt.datatransfer.DataFlavor;
 
 import ghidra.framework.main.datatree.*;
 
+/**
+ * A class used to initialize the handling of files that are dropped onto the tool
+ */
 public class GhidraFileOpenDataFlavorHandlerService {
 
 	public GhidraFileOpenDataFlavorHandlerService() {
 
-		try {
-			DataFlavor linuxFileUrlFlavor =
-				new DataFlavor("application/x-java-serialized-object;class=java.lang.String");
-			FileOpenDropHandler.addDataFlavorHandler(linuxFileUrlFlavor, new LinuxFileUrlHandler());
-		}
-		catch (ClassNotFoundException cnfe) {
-			// should never happen as it is using java.lang.String
-		}
+		//
+		// Note: the order of the file drop flavors/handlers is intentional.  We wish to process
+		//       objects first which we know to be transfered from within the current JVM.  After
+		//       that, then process objects given to us from the OS or another JVM.
+		//
 
 		LocalTreeNodeHandler localHandler = new LocalTreeNodeHandler();
 		FileOpenDropHandler.addDataFlavorHandler(DataTreeDragNDropHandler.localDomainFileFlavor,
@@ -40,7 +40,13 @@ public class GhidraFileOpenDataFlavorHandlerService {
 
 		FileOpenDropHandler.addDataFlavorHandler(VersionInfoTransferable.localVersionInfoFlavor,
 			new LocalVersionInfoHandler());
+
 		FileOpenDropHandler.addDataFlavorHandler(DataFlavor.javaFileListFlavor,
 			new JavaFileListHandler());
+
+		DataFlavor linuxFileUrlFlavor =
+			new DataFlavor("application/x-java-serialized-object;class=java.lang.String",
+				"String file URL");
+		FileOpenDropHandler.addDataFlavorHandler(linuxFileUrlFlavor, new LinuxFileUrlHandler());
 	}
 }

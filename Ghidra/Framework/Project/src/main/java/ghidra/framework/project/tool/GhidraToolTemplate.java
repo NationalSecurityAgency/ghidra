@@ -22,7 +22,9 @@ import javax.swing.ImageIcon;
 import org.jdom.Element;
 
 import docking.util.image.ToolIconURL;
-import ghidra.framework.model.*;
+import ghidra.framework.model.Project;
+import ghidra.framework.model.ToolTemplate;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 
@@ -46,6 +48,7 @@ public class GhidraToolTemplate implements ToolTemplate {
 	/**
 	 * Constructor.
 	 * @param root XML element that contains the tool template data
+	 * @param path the path of the template
 	 */
 	public GhidraToolTemplate(Element root, String path) {
 		this.path = path;
@@ -208,7 +211,7 @@ public class GhidraToolTemplate implements ToolTemplate {
 	}
 
 	@Override
-	public Tool createTool(Project project) {
+	public PluginTool createTool(Project project) {
 		return new GhidraTool(project, this);
 	}
 }

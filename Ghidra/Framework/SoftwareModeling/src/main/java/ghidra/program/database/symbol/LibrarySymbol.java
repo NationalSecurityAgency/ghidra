@@ -15,7 +15,7 @@
  */
 package ghidra.program.database.symbol;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CircularDependencyException;
@@ -47,7 +47,7 @@ public class LibrarySymbol extends SymbolDB {
 	 * @param record the record for this symbol
 	 */
 	public LibrarySymbol(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, Address address,
-			Record record) {
+			DBRecord record) {
 		super(symbolMgr, cache, address, record);
 
 	}
@@ -82,9 +82,6 @@ public class LibrarySymbol extends SymbolDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#setSymbolData3(java.lang.String)
-	 */
 	@Override
 	public void setSymbolData3(String newPath) {
 		String oldPath = getSymbolData3();
@@ -95,9 +92,6 @@ public class LibrarySymbol extends SymbolDB {
 			oldPath, newPath);
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getSymbolType()
-	 */
 	public SymbolType getSymbolType() {
 		return SymbolType.LIBRARY;
 	}
@@ -107,9 +101,7 @@ public class LibrarySymbol extends SymbolDB {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getObject()
-	 */
+	@Override
 	public Object getObject() {
 		if (library == null) {
 			library = new LibraryDB(this, symbolMgr.getProgram().getNamespaceManager());
@@ -117,9 +109,6 @@ public class LibrarySymbol extends SymbolDB {
 		return library;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#isPrimary()
-	 */
 	@Override
 	public boolean isPrimary() {
 		return true;
@@ -133,9 +122,6 @@ public class LibrarySymbol extends SymbolDB {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#isValidParent(ghidra.program.model.symbol.Namespace)
-	 */
 	@Override
 	public boolean isValidParent(Namespace parent) {
 		return SymbolType.LIBRARY.isValidParent(symbolMgr.getProgram(), parent, address,

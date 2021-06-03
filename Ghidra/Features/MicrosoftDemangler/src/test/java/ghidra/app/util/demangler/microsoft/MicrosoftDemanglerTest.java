@@ -33,10 +33,6 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 
 	private ProgramDB program;
 
-	public MicrosoftDemanglerTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		ToyProgramBuilder builder = new ToyProgramBuilder("test", true);
@@ -49,7 +45,7 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		String mangled = "?Te@NS1@BobsStuff@@0QAY0BAA@$$CBIA";
 
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
-		DemangledObject demangledObject = demangler.demangle(mangled, true);
+		DemangledObject demangledObject = demangler.demangle(mangled);
 
 		int txID = program.startTransaction("Test");
 
@@ -67,7 +63,7 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		String mangled = "??0_LocaleUpdate@@QAE@PAUlocaleinfo_struct@@@Z";
 
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
-		DemangledObject demangledObj = demangler.demangle(mangled, true);
+		DemangledObject demangledObj = demangler.demangle(mangled);
 		assertNotNull(demangledObj);
 	}
 
@@ -78,7 +74,7 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
 		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled, true);
+			demangledObj = demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected
@@ -94,7 +90,7 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
 		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled, true);
+			demangledObj = demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected
@@ -110,7 +106,7 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
 		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled, true);
+			demangledObj = demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected
@@ -126,7 +122,7 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
 		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled, true);
+			demangledObj = demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected
@@ -142,7 +138,7 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
 		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled, true);
+			demangledObj = demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected
@@ -158,7 +154,7 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
 		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled, true);
+			demangledObj = demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected
@@ -174,7 +170,7 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
 		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled, true);
+			demangledObj = demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected
@@ -190,7 +186,7 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
 		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled, true);
+			demangledObj = demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected
@@ -206,7 +202,7 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
 		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled, true);
+			demangledObj = demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected

@@ -42,10 +42,10 @@ import ghidra.util.task.TaskMonitor;
  * Threadsafe.
  * <p>
  * The current implementation searches current open Ghidra Programs and maintains a
- * short-lived, in-memory only mapping of FSRL->DomainFile paths
+ * short-lived, in-memory only mapping of FSRL-&gt;DomainFile paths
  * (manually updated by users of the ProgramMappingService when
  * they do an import or other operation that creates a Ghidra DomainFile by calling
- * {@link #createAssociation(FSLR, DomainFile)} and friends.)
+ * {@link #createAssociation(FSRL, DomainFile)} and friends.)
  * <p>
  * [1] - best-effort (adverb): meaning a dirty hack.
  */
@@ -293,7 +293,7 @@ public class ProgramMappingService {
 	 * <p>
 	 * (ie. an open program has a MD5 or FSRL metadata value that matches the file)
 	 * <p>
-	 * See also {@link #isFileOpen(GFile)}.
+	 * See also {@link #isFileOpen(FSRL)}.
 	 * <p>
 	 * @param fsrl {@link FSRL} to use when inspecting each open Program's metadata.
 	 * @param consumer Object that will be used to pin the matching Program open.  Caller

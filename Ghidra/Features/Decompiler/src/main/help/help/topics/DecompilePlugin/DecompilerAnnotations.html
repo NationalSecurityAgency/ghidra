@@ -1,0 +1,1373 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Program Annotations Affecting the Decompiler</title>
+<link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+<link rel="stylesheet" type="text/css" href="../../shared/languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="Decompiler.html" title="Decompiler">
+<link rel="up" href="Decompiler.html" title="Decompiler">
+<link rel="prev" href="DecompilerConcepts.html" title="Decompiler Concepts">
+<link rel="next" href="DecompilerOptions.html" title="Decompiler Options">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter">
+<div class="titlepage"><div><div><h1 class="title">
+<a name="DecompilerAnnotations"></a>Program Annotations Affecting the Decompiler</h1></div></div></div>
+  
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="AnnoteFunctionBody"></a>Machine Instructions</h2></div></div></div>
+  
+  <p>
+    Individual <span class="bold"><strong>machine instructions</strong></span>
+    make up the biggest source of information when the
+    decompiler analyzes a function.  Instructions are translated from their
+    processor specific form into Ghidra's IR language (see <a class="xref" href="DecompilerConcepts.html#ConceptPcode" title="P-code">&#8220;P-code&#8221;</a>),
+    which provides both the control-flow behavior of the instruction and the detailed
+    semantics describing how the processor and memory state is affected. The translation is controlled by
+    the underlying processor model and, except in limited circumstances, cannot be directly altered
+    from the tool. Flow Overrides (see below) can change how certain control-flow is translated,
+    and, depending on the processor, context registers may affect p-code (see <a class="xref" href="DecompilerAnnotations.html#AnnoteContextRegister" title="Context Registers">&#8220;Context Registers&#8221;</a>).
+  </p>
+  <p>
+    Outside of the tool, users <span class="emphasis"><em>can</em></span> modify the model specification itself.
+    See the document "SLEIGH: A Language for Rapid Processor Specification".
+  </p>
+  <p>
+    Decompiling a function starts by analyzing control-flow starting from the function's
+    first instruction. Control-flow is traced to additional instructions using flow information
+    from the underlying processor model.  All paths are traced through instructions with
+    <span class="emphasis"><em>fall through</em></span>, <span class="emphasis"><em>conditional jump</em></span>, and other
+    semantics until an instruction with <span class="emphasis"><em>terminator</em></span> semantics is
+    reached, which is usually a "return from subroutine"
+    instruction.  Flow is not traced into called functions, in this situation.  Instructions
+    with <span class="emphasis"><em>call</em></span> semantics are treated only as if they fall through.
+  </p>
+  <p>
+    An <span class="bold"><strong>entry point</strong></span> is the address of the function's first instruction.
+  </p>
+  <p>
+    A <span class="bold"><strong>function body</strong></span> is the set of addresses reached by control-flow
+    analysis (and the machine instructions at those addresses).
+  </p>
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="AnnoteEntryPoint"></a>Entry Point</h3></div></div></div>
+    
+    <p>
+      The <span class="emphasis"><em>entry point</em></span> address for a function plays a pivotal role for
+      analysis using the Ghidra decompiler. Ghidra generally associates
+      a formal <span class="emphasis"><em>Function Symbol</em></span> and an underlying
+      <span class="emphasis"><em>Function</em></span> object at this address, which are the key elements that
+      need to be present to trigger decompilation.
+      (See <a class="ulink" href="help/topics/FunctionPlugin/Functions.htm" target="_top">Functions</a>)
+      The Function object stores the function body, parameters, local variables, and
+      other information critical to the decompilation process.
+    </p>
+    <p>
+      Function Symbols and Function objects are generally created automatically by a Ghidra
+      analyzer when initially importing a binary executable and running auto-analysis.
+      If necessary however, a user can manually create a Function object from the Listing window
+      by using <span class="emphasis"><em>Create Function</em></span> command (pressing the 'f' key), when the cursor
+      is placed on the function's entry point.
+      (See <a class="ulink" href="help/topics/FunctionPlugin/Functions.htm#Create_Function" target="_top">Create Function</a>)
+    </p>
+  </div>
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="AnnoteFormalFunctionBody"></a>Formal Function Body</h3></div></div></div>
+    
+    <p>
+      When a function is created, Ghidra stores its function body as a set of addresses in the
+      Program database. This <span class="emphasis"><em>formal</em></span> function body delineates the function
+      from all the other kinds of data within the Program and lets Ghidra immediately link addresses
+      in the middle of the function to the entry point and the Function object.  Decompiler windows
+      in particular use the formal function body to know which function to decompile in response
+      to a navigation event to an arbitrary address.
+    </p>
+    <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
+<th align="left"></th>
+</tr>
+<tr><td align="left" valign="top">
+      The decompiler does <span class="emphasis"><em>not</em></span> use the formal function body when it computes
+      control-flow; it recomputes its own idea of the function body starting from the entry point
+      it is handed.  If the formal function body was created manually, using a selection for instance,
+      or in other extreme circumstances, the decompiler's view of the function body may not match
+      the formal view. This can lead to confusing behavior, where clicking in a decompiler window
+      may unexpectedly navigate the window away from the function.
+    </td></tr>
+</table></div>
+  </div>
+
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="AnnoteFlowOverride"></a>Flow Overrides</h3></div></div></div>
+    
+    <p>
+      Control-flow behavior for a machine instruction is generally determined by its underlying
+      p-code (see <a class="xref" href="DecompilerConcepts.html#ConceptControlFlow" title="P-code Control Flow">&#8220;P-code Control Flow&#8221;</a>), but this can be changed by applying a Flow Override.
+      A <span class="bold"><strong>Flow Override</strong></span> maintains the overall semantics of a branching instruction
+      but changes how the branch is interpreted.  For instance, a <code class="code">JMP</code> instruction, which traditionally
+      represents a branch within a single function, can be overridden to represent a call to a new function.
+      Flow Overrides are applied by Analyzers or manually by the user.
+    </p>
+    <p>
+      The decompiler automatically incorporates any relevant Flow Overrides into its
+      analysis of a function. This can have a significant impact on results. The
+      types of possible Flow Overrides include:
+      </p>
+<div class="informalexample">
+      <div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>BRANCH Override</strong></span></span></dt>
+<dd>
+	  <p>
+	    Treats the primary <span class="emphasis"><em>CALL</em></span> or <span class="emphasis"><em>RETURN</em></span>
+	    behavior of the instruction as if it were a <span class="emphasis"><em>BRANCH</em></span>
+	    within the function.  For <span class="emphasis"><em>CALL</em></span> instructions,
+	    the call target becomes the branch destination,
+	    and the instruction is no longer assumed
+	    to fall through. <span class="emphasis"><em>RETURN</em></span> instructions become an
+	    indirect branch, and the decompiler will attempt to recover branch
+	    destinations using <span class="emphasis"><em>switch</em></span> analysis.
+	  </p>
+	</dd>
+<dt><span class="term"><span class="bold"><strong>CALL Override</strong></span></span></dt>
+<dd>
+	  <p>
+	    Treats the primary <span class="emphasis"><em>BRANCH</em></span> or <span class="emphasis"><em>RETURN</em></span>
+	    behavior of the instruction as if it were a <span class="emphasis"><em>CALL</em></span>.
+	    A <span class="emphasis"><em>BRANCH</em></span> becomes a fall through instruction, and the destination address becomes
+	    the call target, which may no longer be considered part of the function.  The computed
+	    address for an indirect <span class="emphasis"><em>BRANCH</em></span> or <span class="emphasis"><em>RETURN</em></span> instruction becomes
+	    the target address of an indirect <span class="emphasis"><em>CALL</em></span>.
+	  </p>
+	</dd>
+<dt><span class="term"><span class="bold"><strong>CALL_RETURN Override</strong></span></span></dt>
+<dd>
+	  <p>
+	    Treats the primary <span class="emphasis"><em>BRANCH</em></span> or <span class="emphasis"><em>RETURN</em></span>
+	    behavior of the instruction as if it executed a <span class="emphasis"><em>CALL</em></span> followed
+	    by a <span class="emphasis"><em>RETURN</em></span> operation.
+	    The destination address of a <span class="emphasis"><em>BRANCH</em></span> becomes the call target,
+	    which may no longer be considered part of the function.  The computed address for
+	    an indirect <span class="emphasis"><em>BRANCH</em></span> or <span class="emphasis"><em>RETURN</em></span> instruction becomes
+	    the target address of an indirect <span class="emphasis"><em>CALL</em></span>.
+	  </p>
+	</dd>
+<dt><span class="term"><span class="bold"><strong>RETURN Override</strong></span></span></dt>
+<dd>
+	  <p>
+	    Treats an indirect <span class="emphasis"><em>BRANCH</em></span> or <span class="emphasis"><em>CALL</em></span>
+	    instruction as if it were a <span class="emphasis"><em>RETURN</em></span> instruction, terminating
+	    the control-flow path within the function. The computed destination address is
+	    considered part of the return mechanism of the function and may no longer be
+	    explicitly displayed in the output.
+	    An indirect <span class="emphasis"><em>BRANCH</em></span> no longer invokes switch analysis during
+	    decompilation.
+	  </p>
+	</dd>
+</dl></div>
+      </div>
+<p>
+    </p>
+  </div>
+</div>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="AnnoteComments"></a>Comments</h2></div></div></div>
+  
+  <p>
+    The decompiler automatically incorporates comments from the Program database into its
+    output.  Comments in Ghidra are centralized and can be created and displayed by multiple
+    Program views, including the decompiler.  Comments created from a decompiler window will
+    show up in the Listing window for instance, and vice versa.
+  </p>
+  <p>
+    For the purposes of understanding comments within the decompiler, keep in mind that:
+    </p>
+<div class="informalexample">
+      <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+	  An individual comment is associated with a specific <span class="emphasis"><em>address</em></span> in the Program.
+	</li>
+<li class="listitem" style="list-style-type: disc">
+	  There are 5 different kinds of comments.
+	  <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: circle; ">
+<li class="listitem" style="list-style-type: circle">
+	      <span class="emphasis"><em>Plate</em></span>
+	    </li>
+<li class="listitem" style="list-style-type: circle">
+	      <span class="emphasis"><em>Pre</em></span>
+	    </li>
+<li class="listitem" style="list-style-type: circle">
+	      <span class="emphasis"><em>Post</em></span>
+	    </li>
+<li class="listitem" style="list-style-type: circle">
+	      <span class="emphasis"><em>End-of-line (EOL)</em></span>
+	    </li>
+<li class="listitem" style="list-style-type: circle">
+	      <span class="emphasis"><em>Repeatable</em></span>
+	    </li>
+</ul></div>
+	</li>
+</ul></div>
+    </div>
+<p>
+  </p>
+  <p>
+    For general documentation on creating and editing comments within Ghidra, see
+    <a class="ulink" href="help/topics/CommentsPlugin/Comments.htm" target="_top">Comments</a>.
+  </p>
+
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="CommentDisplay"></a>Display</h3></div></div></div>
+    
+  <p>
+    The decompiler collects and displays comments associated with any address in the
+    formal <span class="emphasis"><em>function body</em></span> currently decompiling.
+    The comments are integrated line by line into the decompiled code, and an
+    individual comment is displayed on the line <span class="emphasis"><em>before</em></span> the
+    line of code incorporating the instruction associated with the comment's
+    address.
+  </p>
+  <p>
+    Because a single line of code typically encompasses multiple machine instructions,
+    there is a possibility that multiple comments at different addresses apply to
+    the same line.  In this case, the decompiler displays each comment on its
+    own line, in address order, directly before the line of code.
+  </p>
+  <p>
+    Because the output of the decompiler can be a heavily transformed version compared
+    to the original machine instructions, its possible that individual instructions
+    no longer have explicit tokens representing them in the output.  Comments attached
+    to these instruction will still be displayed in the decompiler output with the
+    closest associated line of code, usually within the same basic block.
+  </p>
+  <p>
+    By default, the decompiler displays only the <span class="emphasis"><em>Pre</em></span> comments
+    within the body of the function.  It also displays <span class="emphasis"><em>Plate</em></span>
+    comments, but only if they are attached to the <span class="emphasis"><em>entry point</em></span>
+    of the function. In this case, they are displayed first in the decompiler output,
+    along with WARNING comments, before the function declaration.  Other comment
+    types can be configured to display in decompiler output, by changing the
+    decompiler Display options (See <a class="xref" href="DecompilerOptions.html#CommentOptions"><span class="bold"><strong>Display &lt;kind-of&gt; Comments</strong></span></a>).
+  </p>
+  <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
+<th align="left"></th>
+</tr>
+<tr><td align="left" valign="top">
+    Unlike the Listing window, the decompiler does not alter how a comment is
+    displayed based on its type.
+    All enabled types of comment are displayed in the same way, on
+    a separate line before the line of code associated with the address.
+  </td></tr>
+</table></div>
+  </div>
+
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="CommentUnreachable"></a>Unreachable Blocks</h3></div></div></div>
+    
+    <p>
+      The decompiler may decide as part of its analysis that individual
+      <span class="emphasis"><em>basic blocks</em></span> are unreachable and not display them in the output.
+      In this case, any comments associated with addresses in the unreachable block
+      will also not be displayed.
+    </p>
+  </div>
+
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="CommentWarnings"></a>Warning Comments</h3></div></div></div>
+    
+    <p>
+      The decompiler can generate internal warnings during its analysis and will incorporate
+      them into the output as comments in the same way as the user defined
+      comments described above. They are not part of Ghidra's comment system however and
+      cannot be edited.  They can be distinguished from normal comments by the word
+      'WARNING' at the beginning of the comment.
+      </p>
+<div class="informalexample">
+	<code class="code">/* WARNING: ... */</code>
+      </div>
+<p>
+    </p>
+  </div>
+</div>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="AnnoteVariables"></a>Variable Annotations</h2></div></div></div>
+  
+  <p>
+    Variable annotations are the most important way to get names and data-types
+    that are meaningful to the user incorporated into the decompiler's output.
+    A <span class="bold"><strong>variable</strong></span> in this context is loosely defined
+    as any piece of memory that code in the Program treats as a logical entity.
+    The decompiler works to incorporate all forms of annotation into its output
+    for any variable pertinent to the function being analyzed.
+  </p>
+  <p>
+    At a minimum, a variable annotation in Ghidra provides a:
+    </p>
+<div class="informalexample">
+      <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+	  <span class="bold"><strong>Symbol name</strong></span>,
+	</li>
+<li class="listitem" style="list-style-type: disc">
+	  <span class="bold"><strong>Data-type</strong></span>, and
+	</li>
+<li class="listitem" style="list-style-type: disc">
+	  <span class="bold"><strong>Storage location</strong></span>.
+	</li>
+</ul></div>
+    </div>
+<p>
+  </p>
+  
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="VariableCreate"></a>Creating Variable Annotations</h3></div></div></div>
+    
+  <p>
+    Ghidra provides various ways that a name and other attributes can be ascribed
+    to a variable.  These break up roughly into <span class="emphasis"><em>global</em></span> variables,
+    defined directly on memory in the Program image, and variables that are
+    <span class="emphasis"><em>local</em></span> to a function.
+  </p>
+  <p>
+    Global variables annotations are created from the tool by applying a data-type to a memory
+    location in the Listing window, either by invoking a command from the <span class="emphasis"><em>Data</em></span>
+    pop-up menu, or dragging a data-type from the <span class="emphasis"><em>Data Type Manager</em></span>
+    window directly onto the memory location.  Refer to the documentation:
+    </p>
+<div class="informalexample">
+      <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; "><li class="listitem" style="list-style-type: none">
+	  <a class="ulink" href="help/topics/DataPlugin/Data.htm#ApplyDataType" target="_top">Applying Data Type</a>
+	</li></ul></div>
+    </div>
+<p>
+  </p>
+  <p>
+    Local variables annotations are created from the Listing from various editor dialogs. See in particular:
+    </p>
+<div class="informalexample">
+      <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none">
+	  <a class="ulink" href="help/topics/FunctionPlugin/Variables.htm#Edit_Function" target="_top">Function Signature Dialog</a>
+	</li>
+<li class="listitem" style="list-style-type: none">
+	  <a class="ulink" href="help/topics/StackEditor/StackEditor.html" target="_top">Stack Frame Editor</a>
+	</li>
+<li class="listitem" style="list-style-type: none">
+	  <a class="ulink" href="help/topics/ReferencesPlugin/References_from.htm#Create_Default_Reference" target="_top">Creating a Default Reference</a>
+	</li>
+</ul></div>
+    </div>
+<p>
+  </p>
+  <p>
+    The <span class="emphasis"><em>Decompiler</em></span> window also provides numerous ways of annotating variables, both local and global. In particular,
+    see the commands:
+    </p>
+<div class="informalexample">
+      <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none">
+	  <a class="xref" href="DecompilerWindow.html#ActionRenameVariable" title="Rename Variable">&#8220;Rename Variable&#8221;</a>
+	</li>
+<li class="listitem" style="list-style-type: none">
+	  <a class="xref" href="DecompilerWindow.html#ActionRetypeVariable" title="Retype Variable">&#8220;Retype Variable&#8221;</a>
+	</li>
+<li class="listitem" style="list-style-type: none">
+	  <a class="xref" href="DecompilerWindow.html#ActionCommitParams" title="Commit Params/Return">&#8220;Commit Params/Return&#8221;</a>
+	</li>
+<li class="listitem" style="list-style-type: none">
+	  <a class="xref" href="DecompilerWindow.html#ActionCommitLocals" title="Commit Local Names">&#8220;Commit Local Names&#8221;</a>
+	</li>
+</ul></div>
+    </div>
+<p>
+  </p>
+  </div>
+  
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="VariableSymbol"></a>Variable Symbols</h3></div></div></div>
+    
+    <p>
+      Ghidra maintains its own symbol table that supports namespaces and function
+      scopes, and variable names are automatically incorporated into this.
+      In order to widely accommodate different use cases, Ghidra's symbol
+      table has extremely lax naming rules.  Ghidra
+      may allow names that conflict with the stricter rules of the language
+      the decompiler is attempting to produce. The decompiler does not currently
+      have an option that checks for this. Users should be aware of:
+      </p>
+<div class="informalexample">
+	<div class="variablelist"><dl class="variablelist">
+<dt><span class="term">Illegal Characters</span></dt>
+<dd>
+	    <p>
+	      Ghidra symbols allow almost every printable character except
+	      a space in a symbol name; punctuation and keywords can be incorporated.
+	    </p>
+	  </dd>
+<dt><span class="term">Duplicate Symbols</span></dt>
+<dd>
+	    <p>
+	      Ghidra allows different functions to have the same name, even within the same
+	      namespace, in order to model languages that support <span class="emphasis"><em>function overloading</em></span>.
+	      In most languages, such functions would be expected to have distinct prototypes to allow
+	      the symbols to be distinguished in context.   Ghidra and the decompiler however do not check
+	      for this, as prototypes may not be known.
+	    </p>
+	  </dd>
+</dl></div>
+      </div>
+<p>
+    </p>
+    
+    <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="SymbolScope"></a>Variable Scope</h4></div></div></div>
+      
+    <p>
+      All variables belong either to a <span class="emphasis"><em>global</em></span> or <span class="emphasis"><em>local</em></span>
+      scope, which directly affects how the variable is treated in the decompiler's data-flow
+      analysis.
+      Annotations created by applying a data-type directly to a memory location in the listing
+      are automatically added to the formal <span class="emphasis"><em>global</em></span> namespace.
+      Ghidra can create other custom namespaces that are considered global in this sense, and
+      renaming actions provide options that let individual global annotations be moved into
+      these namespaces.
+      Dialogs that are brought up in the context of a function, like the Function Signature Editor,
+      create variable annotations that are local to that function.
+    </p>
+    <p>
+      A global variable annotation forces the decompiler to treat the memory location as if its value
+      persists beyond the end of the function. The variable must <span class="emphasis"><em>exist</em></span>
+      at all points of the function body, generally at the same memory location.
+    </p>
+    <p>
+      Local variables,
+      in contrast, do not generally exist across the whole function, but come into scope
+      at the instruction that first writes to them, and then exist only up to the last
+      instruction that reads them.  The memory location storing a local variable
+      at one point of the function may be reused for different variables at other points.
+      This can cause ambiguity in how the decompiler should treat a given memory location used
+      for storing local variables, which the user may want to steer. See the discussion
+      in <a class="xref" href="DecompilerAnnotations.html#AnnoteStorage" title="Variable Storage">&#8220;Variable Storage&#8221;</a>.
+    </p>
+    <p>
+    </p>
+    </div>
+    
+  </div>
+
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="AnnoteDatatype"></a>Variable Data-types</h3></div></div></div>
+    
+    <p>
+      Ghidra provides extensive support for naming and describing
+      <span class="bold"><strong>data-types</strong></span> that are tailored for the Program
+      being analyzed. Data-types that are explicitly part of a variable annotation
+      are, to the extent possible, automatically incorporated
+      into the decompiler's analysis.
+    </p>
+    <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="DecompilerDataTypes"></a>Data-types Supported by the Decompiler</h4></div></div></div>
+      
+      <p>
+	The decompiler understands traditional primitive data-types, in all their various sizes,
+	like integers, floating-point numbers, booleans, and characters. It also understands
+	pointers, structures, and arrays, letting it support
+	arbitrarily complicated composite data-types. Ghidra provides
+	some data-types with specialized display capabilities that don't have a natural representation
+	in the high-level language output by the decompiler. The decompiler treats these as
+	black-box data-types, preserving the name, but treating the underlying data either as an integer
+	or simply as an array of bytes.
+      </p>
+
+      <div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="TypeUndefined"></a>Undefined</h5></div></div></div>
+	
+	<p>
+	  The <span class="emphasis"><em>undefined</em></span> data-types are supported, in their various sizes:
+	  <span class="bold"><strong>undefined1</strong></span>, <span class="bold"><strong>undefined2</strong></span>,
+	  <span class="bold"><strong>undefined4</strong></span>, etc.  In Ghidra, the undefined
+	  data-types, let the user specify the size of a variable, while formally declaring that
+	  other details about the data-type are unknown.
+	</p>
+	<p>
+	  For the decompiler, undefined data-types as an annotation have the important special meaning
+	  that the decompiler should let its analysis determine the final data-type presented in the
+	  output for the variable (See <a class="xref" href="DecompilerAnnotations.html#AnnoteForcing" title="Forcing Data-types">&#8220;Forcing Data-types&#8221;</a> below).
+	</p>
+      </div>
+      <div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="TypeVoid"></a>Void</h5></div></div></div>
+	
+	<p>
+	  The <span class="bold"><strong>void</strong></span> data-type is supported but treated specially by
+	  the decompiler, as does Ghidra in general.  A <span class="bold"><strong>void</strong></span> can be
+	  used to indicate the absence of a return value in function prototypes, but cannot be used
+	  as a general annotation on variables.  A void pointer, <span class="bold"><strong>void *</strong></span>,
+	  is possible; the decompiler treats it as a pointer to an unknown data-type.
+	</p>
+      </div>
+      <div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="TypeInteger"></a>Integer</h5></div></div></div>
+	
+	<p>
+	  Integer data-types, both signed and unsigned, are supported up to a size of 8 bytes. Larger
+	  sizes are supported internally but are generally represented as an array of bytes in
+	  decompiler output.  Odd integer sizes are also supported.
+	</p>
+	<p>
+	  The standard C data-type names: <span class="bold"><strong>int</strong></span>, <span class="bold"><strong>short</strong></span>,
+	  <span class="bold"><strong>long</strong></span>, and <span class="bold"><strong>long long</strong></span> are mapped to specific sizes
+	  based on the processor and compiler selected when importing the Program.
+	</p>
+      </div>
+      <div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="TypeBoolean"></a>Boolean</h5></div></div></div>
+	
+	<p>
+	  A 1-byte boolean data-type is supported. 
+	</p>
+      </div>
+      <div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="TypeFloat"></a>Floating-point</h5></div></div></div>
+	
+	<p>
+	  Floating-point sizes of 4, 8, 10, and 16 are supported, mapping in all cases currently to the
+	  <span class="bold"><strong>float</strong></span>, <span class="bold"><strong>double</strong></span>,
+	  <span class="bold"><strong>float10</strong></span>, and <span class="bold"><strong>float16</strong></span>
+	  data-types respectively.  The decompiler currently cannot display floating-point constants
+	  that are bigger than 8 bytes.
+	</p>
+      </div>
+      <div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="TypeChar"></a>Character</h5></div></div></div>
+	
+	<p>
+	  ASCII or Unicode encoded character data-types are supported for sizes of 1, 2, and 4.  The size effectively
+	  chooses between the UTF8, UTF16, and UTF32 character encodings respectively. The standard
+	  C data-type names <span class="bold"><strong>char</strong></span> and <span class="bold"><strong>wchar_t</strong></span> are
+	  mapped to one of these sizes based on the
+	  processor and compiler selected when importing the Program.
+	</p>
+      </div>
+      <div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="TypeString"></a>String</h5></div></div></div>
+	
+	<p>
+	  Terminated strings, encoded either in ASCII or Unicode, are supported.  The decompiler converts
+	  Ghidra's dedicated string data-types like <span class="bold"><strong>string</strong></span> to
+	  an "array of characters" data-type, such as <span class="bold"><strong>char[]</strong></span>,
+	  where the character size matches the encoding.
+	  A "pointer to character" data-type like
+	  </p>
+<div class="informalexample">
+	    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none">
+		<code class="code">char *</code> or
+	      </li>
+<li class="listitem" style="list-style-type: none">
+		<code class="code">wchar_t *</code>
+	      </li>
+</ul></div>
+	  </div>
+<p>
+	  is also treated as a potential string reference. The decompiler can infer terminated strings if this
+	  kind of data-type propagates to constant values during its analysis.
+	</p>
+	<p>
+	  Strings should be fully rendered in decompiler output,
+	  with non-printable characters escaped using either traditional sequences like '\r', '\n' or using Unicode
+	  escape sequences like '\xFF'.
+	</p>
+      </div>
+      <div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="TypePointer"></a>Pointer</h5></div></div></div>
+	
+	<p>
+	  Pointer data-types are fully supported.  A pointer to any other supported data-type is
+	  possible.  The data-type being pointed to, whether its a primitive, structure, or another pointer,
+	  informs how the decompiler renders a dereferenced pointer.
+	  The decompiler assumes that a pointer variable may refer to an array of
+	  the underlying data-type and will use array notation if there is evidence of more than
+	  one element.
+	</p>
+	<p>
+	  The default pointer size is set based on the processor and compiler selected when the Program is
+	  imported and generally matches the size of the <span class="bold"><strong>ram</strong></span> (or equivalent)
+	  address space. Different pointer sizes within the same Program are possible. The decompiler generally
+	  expects the pointer size to match the size of the address space being pointed to, but individual
+	  architectures can model different size pointers into the space (such as <span class="emphasis"><em>near</em></span> pointers).
+	</p>
+	<p>
+	  For processors with more than one memory address space, pointer data-types currently cannot be directly
+	  annotated to indicate a preferred address space.  Where there is ambiguity, the decompiler attempts to
+	  determine the correct address space from the context of its use within the function.
+	</p>
+      </div>
+      <div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="TypeArray"></a>Array</h5></div></div></div>
+	
+	<p>
+	  Array data-types are fully supported. The array element can be any other supported data-type
+	  with a fixed size.
+	</p>
+      </div>
+      <div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="TypeStructure"></a>Structure</h5></div></div></div>
+	
+	<p>
+	  Structured data-types are fully supported. The decompiler does not automatically infer structures
+	  when analyzing a function; it propagates structured data-types into the function from explicitly
+	  annotated sources, like input parameters or global variables.  Decompiler directed creation of
+	  structures can be triggered by the user, see <a class="xref" href="DecompilerWindow.html#ActionAutoStructure" title="Auto Create Structure">&#8220;Auto Create Structure&#8221;</a>.
+	</p>
+      </div>
+      <div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="TypeEnum"></a>Enumeration</h5></div></div></div>
+	
+	<p>
+	  Enumerations are fully supported. The decompiler can propagate enumerations from explicitly
+	  annotated sources throughout a function onto constants, which are then displayed with the
+	  appropriate label from the definition of the enumeration.  If the constant does not match a
+	  single value in the enumeration definition, the decompiler attempts to build a matching
+	  value by <span class="emphasis"><em>or</em></span>-ing together multiple labels.  
+	  The decompiler can be made to break out constants representing packed <span class="emphasis"><em>flags</em></span>,
+	  for instance, by labeling individual bit values within an enumeration.
+	</p>
+      </div>
+      <div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="TypeFunction"></a>Function Definition</h5></div></div></div>
+	
+	<p>
+	  A <span class="bold"><strong>Function Definition</strong></span> in Ghidra is a data-type that encodes
+	  information about the parameters and return value for a generic/unspecified function. 
+	  A formal <span class="bold"><strong>function pointer</strong></span> is supported by the decompiler as a pointer
+	  data-type that points to a Function Definition. A Function Definition specifically encodes:
+	  </p>
+<div class="informalexample">
+	    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+		The name and data-type of each parameter.
+	      </li>
+<li class="listitem" style="list-style-type: disc">
+		Whether the function takes a variable number of parameters.
+	      </li>
+<li class="listitem" style="list-style-type: disc">
+		The data-type associated with the return value.
+	      </li>
+<li class="listitem" style="list-style-type: disc">
+		An indicator of the <span class="emphasis"><em>prototype model</em></span> that should be
+		associated with the function.
+	      </li>
+</ul></div>
+	  </div>
+<p>
+	</p>
+	<p>
+	  The Function Definition itself does not encode any storage information.  Once the Function
+	  Definition is associated with a Program, the indicator maps to one of the prototype models for the
+	  specific processor and compiler.  A Function Definition is currently limited to a prototype model
+	  with one of the following names:
+	  </p>
+<div class="informalexample">
+	    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+		__stdcall
+	      </li>
+<li class="listitem" style="list-style-type: disc">
+		__thiscall
+	      </li>
+<li class="listitem" style="list-style-type: disc">
+		__fastcall
+	      </li>
+<li class="listitem" style="list-style-type: disc">
+		__cdecl
+	      </li>
+<li class="listitem" style="list-style-type: disc">
+		__vectorcall
+	      </li>
+</ul></div>
+	  </div>
+<p>
+	</p>
+      </div>
+    </div>
+
+    <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="AnnoteForcing"></a>Forcing Data-types</h4></div></div></div>
+      
+      <p>
+	The decompiler performs <span class="bold"><strong>type propagation</strong></span> as part of its analysis
+	on functions. Data-type information is collected from variable annotations (and other sources),
+	which is then propagated via data-flow throughout the function to other variables and
+	constants where the data-type may not be immediately apparent.  
+      </p>
+      <p>
+	With few exceptions, a variable annotation is <span class="emphasis"><em>forcing</em></span> on the decompiler in the sense
+	that the storage location being annotated is considered an unalterable data-type source.  During
+	type propagation, the data-type may propagate to other variables,
+	but the variable representing the storage location being annotated is guaranteed to have
+	the given name and that data-type; it will not be overridden.
+      </p>
+      <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
+<th align="left"></th>
+</tr>
+<tr><td align="left" valign="top">
+	Users should be aware that variable annotations are forcing on the decompiler and may directly
+	override aspects of its analysis.  Because of this, variable annotations are the most powerful way
+	for the user to affect decompiler output, but setting an incomplete (or incorrect) data-type as
+	part of an annotation may produce poorer decompiler output.
+      </td></tr>
+</table></div>
+      <p>
+	The major exception to forcing annotations is if the data-type in the annotation is <span class="emphasis"><em>undefined</em></span>.
+	Ghidra reserves the following names to represent formally undefined data-types:
+	</p>
+<div class="informalexample">
+	  <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc"><span class="bold"><strong>undefined1</strong></span></li>
+<li class="listitem" style="list-style-type: disc"><span class="bold"><strong>undefined2</strong></span></li>
+<li class="listitem" style="list-style-type: disc"><span class="bold"><strong>undefined4</strong></span></li>
+<li class="listitem" style="list-style-type: disc"><span class="bold"><strong>undefined8</strong></span></li>
+<li class="listitem" style="list-style-type: disc">...</li>
+</ul></div>
+	</div>
+<p>
+	These allow annotations to be made even when the user doesn't have information about a variable's data-type.
+	The number in the name only specifies the number of bytes in the variable.
+      </p>
+      <p>
+	The decompiler views a variable annotation with an undefined data-type only as an indication of what name
+	should be used if a variable at that storage address exists.  The data-type for the variable is filled in,
+	using type propagation from other sources.
+      </p>
+      <p>
+	For annotations that specifically label a function's formal parameters or return value, 
+	the <a class="link" href="DecompilerAnnotations.html#PrototypeSignatureSource" title="Signature Source">Signature Source</a> also affects how they're treated by the decompiler.
+	If the Signature Source is set to anything other than <span class="emphasis"><em>DEFAULT</em></span>, there is a forced
+	one-to-one correspondence between variable annotations and actual parameters in the decompiler's
+	view of the function.  This is stronger than just forcing the data-type; the existence (or not) of
+	the variable itself is forced by the annotation in this case.  If the Signature Source is forcing and
+	there are no parameter annotations, a <span class="emphasis"><em>void</em></span> prototype is forced on the function.
+      </p>
+      <p>
+	A forcing Signature Source is set typically if debug symbols for the function are read in during
+	Program import (<span class="emphasis"><em>IMPORTED</em></span>), or if the user manually edits the function prototype
+	directly (<span class="emphasis"><em>USER_DEFINED</em></span>).
+      </p>
+      <p>
+	If an annotation and the Signature Source force a parameter to exist, specifying an
+	<span class="emphasis"><em>undefined</em></span> data-type in the annotation still directs the decompiler to fill in
+	the variable's data-type using type propagation.  The same holds true for the return value; an
+	<span class="emphasis"><em>undefined</em></span> annotation fixes the size of the return value, but the decompiler
+	fills in its own data-type.
+      </p>
+      <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../shared/note.png"></td>
+<th align="left"></th>
+</tr>
+<tr><td align="left" valign="top">
+	The decompiler may still use an <span class="emphasis"><em>undefined</em></span> data-type to label a variable,
+	even after type propagation.  If a variable is simply copied around within a function and there
+	are no other substantive operations or annotations on the variable, the decompiler may decide the undefined
+	data-type is appropriate.
+      </td></tr>
+</table></div>
+    </div>
+    
+  </div>
+
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="AnnoteStorage"></a>Variable Storage</h3></div></div></div>
+    
+    <p>
+      Every variable annotation is associated with a single <span class="emphasis"><em>storage location</em></span>, where the
+      value of the variable is stored during execution: generally a register, stack location, or an address
+      in the load image of the Program.  The storage location does not necessarily hold the value for that
+      variable at all points of execution, and its possible for the variable value to be held in
+      <span class="emphasis"><em>different</em></span> storage locations at different points of execution.  The set of execution
+      points where the storage location <span class="emphasis"><em>does</em></span> hold the variable value is called the annotation
+      <span class="bold"><strong>scope</strong></span>; this is distinct from (but influenced by) the scope of the
+      variable itself. The different types of storage location are listed below.
+    </p>
+    <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="VariableStorageImage"></a>Load-image Address</h4></div></div></div>
+      
+      <p>
+	A <span class="bold"><strong>load-image address</strong></span> is a concrete address in the load image of the Program,
+	typically in the <span class="bold"><strong>ram</strong></span> address space. This kind of
+	storage must be backed by a formal memory block for the Program, which typically corresponds to a specific
+	program section (such as the <code class="code">.text</code> or <code class="code">.bss</code> section).  Because it is in the
+	load image directly, an annotation with this storage shows up directly in the <span class="emphasis"><em>Listing</em></span>
+	window and can be directly manipulated there. In much of the Ghidra documentation, these annotations
+	are referred to as <span class="bold"><strong>Data</strong></span>. See the section
+	<a class="ulink" href="help/topics/DataPlugin/Data.htm" target="_top">Data</a> in particular.
+      </p>
+      <p>
+	Although specific architectures may vary, generally a storage location at a load image address
+	represents a formal <span class="emphasis"><em>global</em></span> variable, and the annotation is in scope
+	across all Program execution. For the decompiler, the storage location is treated as a
+	a single <span class="emphasis"><em>persistent</em></span> variable in all functions that reference it. Within a
+	function, all distinct references to the storage location (varnodes) are merged. The decompiler
+	expects a value at the storage location to exist from <span class="emphasis"><em>before</em></span> the start of
+	the function, and any change to the value must be explicitly represented as an assignment to
+	the variable in decompiler output.
+      </p>
+    </div>
+    <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="VariableStorageStack"></a>Stack Address</h4></div></div></div>
+      
+      <p>
+	A <span class="bold"><strong>stack address</strong></span> is an address in the <span class="emphasis"><em>stack frame</em></span>
+	of a particular function in the Program.  Formally, a stack address is defined as an offset relative to the
+	incoming value of the <span class="emphasis"><em>stack pointer</em></span> and exists in the
+	<span class="bold"><strong>stack</strong></span> address space associated with the function. See the discussion
+	in <a class="xref" href="DecompilerConcepts.html#ConceptAddressSpace" title="Address Space">&#8220;Address Space&#8221;</a>. A <span class="bold"><strong>stack annotation</strong></span> then is a variable annotation
+	with a stack address as its storage location. It exists only in the scope of a
+	single function and the variable must be <span class="emphasis"><em>local</em></span> to that function. 
+      </p>
+      <p>
+	Within the <span class="emphasis"><em>Listing</em></span> window, a stack annotation is displayed as part of the function header
+	(at the entry point address of the function), with a syntax similar to:
+	</p>
+<div class="informalexample">
+	  <code class="code">undefined4 Stack[-0x14]:4 local_14</code>
+	</div>
+<p>
+	The middle field (the <span class="emphasis"><em>Variable Location</em></span> field) indicates that the storage location is on the
+	stack, and the value in brackets indicates the offset of the storage location, relative to the incoming
+	stack pointer. The value after the colon indicates the number of bytes in the storage location.
+      </p>
+      <p>
+	Currently, the entire body of the function is included
+	in the scope of any stack annotation, and the decompiler will allow only a single variable to exist
+	at the stack address. A stack annotation can be a formal parameter to the function, but otherwise the
+	decompiler does not expect to see a value that exists before the start of the function.
+      </p>
+      <p>
+	The decompiler will continue to perform <span class="emphasis"><em>copy propagation</em></span> and other transforms on
+	stack locations associated with a variable annotation. In particular, within decompiler output,
+	a specific write operation to a stack address may not show up as an explicit assignment to its variable,
+	if the value is simply copied to another location.
+      </p>
+    </div>
+    <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="VariableStorageRegister"></a>Register</h4></div></div></div>
+      
+      <p>
+	A variable annotation can refer to a specific <span class="emphasis"><em>register</em></span> for the processor associated
+	with the Program. In general, such an annotation will be for a variable local to a particular function.
+	Within the <span class="emphasis"><em>Listing</em></span> window, this annotation is displayed as part of the function header, with
+	syntax like:
+	</p>
+<div class="informalexample">
+	  <code class="code">int EAX:4 iVar1</code>
+	</div>
+<p>
+	The <span class="emphasis"><em>Variable Location</em></span> field displays the name of the particular register attached to
+	the annotation, and the value after the colon indicates the number of bytes in the register.
+      </p>
+      <p>
+	For a local variable annotations with a register storage location, there is an expectation that the
+	register may be reused for different variables at different points of execution within the function.
+	There may be more than one annotation, for different variables, that share the same register
+	storage location.
+	An annotation is associated with a <span class="emphasis"><em>first use point</em></span> that describes where
+	the register first holds a value for the particular variable.  (See the discussion - <a class="xref" href="DecompilerConcepts.html#ConceptVarnodeSSA" title="Varnodes in the Decompiler">&#8220;Varnodes in the Decompiler&#8221;</a>)
+	The entire scope of the annotation is limited to the address regions between the first use point
+	and any points where the value is read. The decompiler may extend the scope as part of its
+	<span class="emphasis"><em>merging</em></span> process, but the full extent is not stored in the annotation.
+      </p>
+    </div>
+    <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="VariableStorageTemp"></a>Temporary Registers</h4></div></div></div>
+      
+      <p>
+	Variable annotations can have a <span class="emphasis"><em>temporary register</em></span> as a storage location.
+	A temporary register is not specific to a processor but is produced at various stages of
+	the decompilation process. See the discussion of the <span class="bold"><strong>unique</strong></span>
+	space in <a class="xref" href="DecompilerConcepts.html#ConceptAddressSpace" title="Address Space">&#8220;Address Space&#8221;</a>. These registers do not have a meaningful name, and
+	the specific storage address may change on successive decompilations. So within the
+	<span class="emphasis"><em>Listing</em></span> window, this annotation is displayed as part of the function header,
+	with syntax like:
+	</p>
+<div class="informalexample">
+	  <code class="code">int HASH:5f96367122:4 iVar2</code>
+	</div>
+<p>
+	The <span class="emphasis"><em>Variable Location</em></span> field displays the internal hash used to uniquely
+	identify the temporary register within the data-flow of the function.
+      </p>
+      <p>
+	A temporary register annotation must be for a local variable, and as with an ordinary register,
+	the annotation is associated with a <span class="emphasis"><em>first use point</em></span> that describes
+	where the temporary register first holds a value for the variable.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="AnnotePrototype"></a>Function Prototypes</h2></div></div></div>
+  
+  <p>
+    Every formal Function in Ghidra is associated with a set of variable annotations and other properties that
+    make up the <span class="bold"><strong>function prototype</strong></span>. Due to the nature of reverse engineering,
+    the function prototype may only include partial information and may be built up over time. Individual
+    elements include:
+    </p>
+<div class="informalexample">
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>Input Parameters</strong></span></span></dt>
+<dd>
+	<p>
+	  Each formal input to the function can have a Variable Annotation that describes its name, data-type,
+	  and storage location, at the moment control-flow enters the function.  If annotations exist, they are shown
+	  in the Listing Window as part of the Function header, and they usually correspond directly with symbols in the
+	  <span class="emphasis"><em>function declaration</em></span> produced by the decompiler.
+	</p>
+      </dd>
+<dt><span class="term"><span class="bold"><strong>Return Value</strong></span></span></dt>
+<dd>
+	<p>
+	  The value returned by a function can have a special Variable Annotation that describes its data-type
+	  and storage location, at the moment control-flow exits the function. If it exists, the annotation is shown
+	  in the Listing Window as part of the Function header with the name <code class="code">&lt;RETURN&gt;</code>, and it usually
+	  corresponds directly with the return value in the <span class="emphasis"><em>function declaration</em></span> produced by
+	  the decompiler.
+	</p>
+      </dd>
+<dt><span class="term"><span class="bold"><strong>Calling Convention</strong></span></span></dt>
+<dd>
+	<p>
+	  The calling convention used by the function can be specified as part of the function prototype. The convention
+	  is specified by name, referring to the formal <a class="xref" href="DecompilerConcepts.html#ConceptPrototypeModel" title="Prototype Model">&#8220;Prototype Model&#8221;</a> that describes how storage
+	  locations are selected for individual parameters along with other information about how the compiler treats
+	  the function. Available models are determined by the processor and compiler, but can be extended by the user.
+	  See <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">&#8220;Specification Extensions&#8221;</a>.
+	</p>
+	<p>
+	  In the absence of parameter and return value annotations, the decompiler will use the prototype model as
+	  part of its analysis to <span class="emphasis"><em>discover</em></span> the input parameters and the return value of the function.
+	</p>
+	<p>
+	  The name "unknown" is reserved to indicate that nothing is known about the calling convention.  If
+	  set to "unknown", depending on context, the decompiler may assign the calling convention based on
+	  the <span class="emphasis"><em>Prototype Evaluation</em></span> option (See <a class="xref" href="DecompilerOptions.html#OptionProtoEval"><span class="bold"><strong>Prototype Evaluation</strong></span></a>), or it
+	  may use the default calling convention for the architecture.
+	</p>
+      </dd>
+<dt><span class="term"><span class="bold"><strong>Variable Arguments</strong></span></span></dt>
+<dd>
+	<p>
+	  Functions have a boolean property called <span class="bold"><strong>variable arguments</strong></span>, which can be turned on
+	  if the function is capable of being passed a variable number of inputs.  This property informs the decompiler that
+	  the function may take additional parameters beyond any with an explicit variable annotation.
+	  This affects decompilation of any function which calls the <span class="emphasis"><em>variable arguments</em></span> function, allowing
+	  the decompiler to discover unlisted parameters at a given call site.
+	</p>
+      </dd>
+<dt><span class="term"><span class="bold"><strong>No Return</strong></span></span></dt>
+<dd>
+	<p>
+	  A function can be marked explicitly as <span class="bold"><strong>not returning</strong></span>, meaning that once
+	  a call is made to the function, execution will never return to the caller. The decompiler uses this to
+	  compute the correct control-flow in any calling functions.
+	</p>
+      </dd>
+<dt><span class="term"><span class="bold"><strong>In-Line</strong></span></span></dt>
+<dd>
+	<p>
+	  If the boolean property <span class="bold"><strong>in-line</strong></span> is turned on for a particular function,
+	  it directs the decompiler to inline the effects of the function into the decompilation of any of its calling functions.
+	  The function will no longer appear as a direct function call in the decompilation, but all of its data-flow
+	  will be incorporated into the calling function.
+	</p>
+	<p>
+	  This is useful for <span class="emphasis"><em>bookkeeping</em></span> functions, where its important for the decompiler to
+	  <span class="emphasis"><em>see</em></span> its effects on the calling function.  Functions that set up the stack frame for a caller or
+	  functions that look up or dispatch a switch destination are typical examples that should be marked <span class="emphasis"><em>in-line</em></span>.
+	</p>
+      </dd>
+<dt><span class="term"><span class="bold"><strong>Call-fixup</strong></span></span></dt>
+<dd>
+	<p>
+	  This property is similar in spirit to marking a function as <span class="emphasis"><em>in-line</em></span>.
+	  A <span class="bold"><strong>call-fixup</strong></span> directs the decompiler to replace any call to the function with a specific
+	  chunk of raw p-code.  The decompilation of any calling function no longer shows the function call, but the chunk
+	  of p-code incorporates the called function's effects.
+	</p>
+	<p>
+	  Call-fixups are more flexible than just inlining a function.  The call-fixup chunk can be tailored to incorporate all of,
+	  just a part of, or something different to the behavior of the function.
+	</p>
+	<p>
+	  Call-fixups are specified by name.  The name and associated p-code chunk are typically defined in the
+	  <span class="emphasis"><em>compiler specification</em></span> for the Program. Users can extend the available set
+	  of call-fixups.  See <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">&#8220;Specification Extensions&#8221;</a>.
+	</p>
+      </dd>
+</dl></div>
+    </div>
+<p>
+  </p>
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="PrototypeSignatureSource"></a>Signature Source</h3></div></div></div>
+    
+    <p>
+      Ghidra records a <span class="bold"><strong>Signature Source</strong></span> for every function,
+      indicating the origin of its prototype information.  This is
+      similar to the <span class="emphasis"><em>Symbol Source</em></span> attached to Ghidra's symbol annotations
+      (See the documentation for
+      <a class="ulink" href="help/topics/SymbolTablePlugin/symbol_table.htm#Set_Filter" target="_top">Filtering</a>
+      in the Symbol Table).  The possible types are:
+      </p>
+<div class="informalexample">
+	<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none">
+<span class="emphasis"><em>DEFAULT</em></span> - for basic or no information</li>
+<li class="listitem" style="list-style-type: none">
+<span class="emphasis"><em>ANALYSIS</em></span> - for information derived by an Analyzer</li>
+<li class="listitem" style="list-style-type: none">
+<span class="emphasis"><em>IMPORTED</em></span> - for information imported from an external source</li>
+<li class="listitem" style="list-style-type: none">
+<span class="emphasis"><em>USER_DEFINED</em></span> - for information set by the user</li>
+</ul></div>
+      </div>
+<p>
+    </p>
+    <p>
+      Upon import of the Program, if there are debugging symbols available, Ghidra will build
+      annotations of the function's parameters and set the Symbol Source type to <span class="emphasis"><em>IMPORTED</em></span>.
+      Otherwise, it will generally be set to <span class="emphasis"><em>DEFAULT</em></span>.
+    </p>
+    <p>
+      However, Ghidra adjusts the Signature Source for a function if there is any change to the
+      prototype.  In particular, if the user adds, removes, or edits variable annotations
+      for the function's parameters or return value, Ghidra automatically converts the Signature
+      Source to be <span class="emphasis"><em>USER_DEFINED</em></span>.
+    </p>
+    <p>
+      If the Signature Source is set to anything other than <span class="emphasis"><em>DEFAULT</em></span>, the
+      function's prototype information is forcing on the decompiler.  See the discussion
+      in <a class="xref" href="DecompilerAnnotations.html#AnnoteForcing" title="Forcing Data-types">&#8220;Forcing Data-types&#8221;</a>
+    </p>
+  </div>
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="PrototypeDiscover"></a>Discovering Parameters</h3></div></div></div>
+    
+    <p>
+      The input parameter and return value annotations of the function prototype, like
+      any variable annotations, can be forcing on the decompiler.
+      See the complete discussion in <a class="xref" href="DecompilerAnnotations.html#AnnoteForcing" title="Forcing Data-types">&#8220;Forcing Data-types&#8221;</a>.
+      But keep in mind:
+    </p>
+    <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
+<th align="left"></th>
+</tr>
+<tr><td align="left" valign="top">
+      The input parameters and return value are all forced on the decompiler as a unit based on the
+      <span class="emphasis"><em>Signature Source</em></span>. They are all forced if the type is set to anything
+      other than <span class="emphasis"><em>DEFAULT</em></span>; otherwise none of them are forced.
+    </td></tr>
+</table></div>
+    <p>
+      If the function prototype's annotations are not forced, the decompiler will attempt to discover the parameters
+      and return value using the calling convention.  The prototype model underlying the calling convention
+      dictates which storage locations can be considered as parameters and their formal ordering.
+    </p>
+  </div>
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="PrototypeCustom"></a>Custom Storage</h3></div></div></div>
+    
+    <p>
+      If there are parameter or return value annotations that do not agree with the calling convention that
+      has been set, the function prototype is said to be using <span class="bold"><strong>custom storage</strong></span>.
+      Using the <a class="ulink" href="help/topics/FunctionPlugin/Variables.htm#Edit_Function" target="_top">Function Editor Dialog</a>
+      for instance, any storage location can be specified as a parameter, and a completely custom prototype
+      can be built for the function.
+    </p>
+    <p>
+      The decompiler will disregard the calling convention's rules in this situation and use the custom storage
+      locations for parameters and the return value.  Other aspects of the calling convention, like the
+      <span class="emphasis"><em>unaffected</em></span> list, will still be used.
+    </p>
+  </div>
+</div>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="AnnoteMutability"></a>Data Mutability</h2></div></div></div>
+  
+  <p>
+    <span class="bold"><strong>Mutability</strong></span> is a description of how values in a specific memory region
+    (either a single variable or a larger block) can change during Program execution, based either on
+    properties or established rules.  Ghidra recognizes the mutability settings:
+    </p>
+<div class="informalexample">
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">Normal</li>
+<li class="listitem" style="list-style-type: disc">Constant - (read-only)</li>
+<li class="listitem" style="list-style-type: disc">Volatile</li>
+</ul></div>	
+    </div>
+<p>
+    Mutability affects decompiler analysis and can have a large impact the output.
+  </p>
+  <p>
+    Most memory has <span class="bold"><strong>normal</strong></span> mutability, meaning:
+    the value at the memory location may change over the course of executing the Program, but for a given
+    section of code, the value will not change unless an instruction explicitly writes to it.
+  </p>
+  <p>
+    Mutability can be set on an entire block of memory in the Program, typically from the
+    <a class="ulink" href="help/topics/MemoryMapPlugin/Memory_Map.htm#View_Memory_Map" target="_top">Memory Map</a>.
+    It can also be set as part of a single Variable Annotation.  From the Listing Window for instance,
+    use the <a class="ulink" href="help/topics/DataPlugin/Data.htm#Data_Settings" target="_top">Settings</a> dialog.
+  </p>
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="MutabilityReadOnly"></a>Read-only</h3></div></div></div>
+    
+    <p>
+      The <span class="bold"><strong>constant</strong></span> mutability setting indicates that values within
+      the memory region are read-only and don't change during Program execution.  If a read-only variable is
+      accessed in a function being analyzed by the decompiler, its constant value, if present in the
+      Program's <span class="emphasis"><em>load image</em></span>, replaces the variable within data-flow for the
+      function.  The decompiler may propagate the constant and fold it in to other operations, which
+      can have a substantial impact on the final output.
+    </p>
+  </div>
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="MutabilityVolatile"></a>Volatile</h3></div></div></div>
+    
+    <p>
+      The <span class="bold"><strong>volatile</strong></span> mutability setting indicates that values within
+      the memory region may change unexpectedly, even if the code currently executing does not directly
+      write to it.  If a volatile variable is accessed in a function being analyzed by the decompiler,
+      each specific access is replaced with a built-in function call, which prevents constant propagation
+      and other transforms across the access. The built-in functions are named based on
+      whether the access is a <span class="emphasis"><em>read</em></span> or <span class="emphasis"><em>write</em></span> and then the size
+      of the access.  Within decompiler output, the first parameter to a built-in function is a symbol
+      indicating the volatile variable.  The function returns a value in the case of a volatile read or
+      takes a second parameter in the case of a volatile write.
+      </p>
+<div class="informalexample">
+	<pre class="programlisting">
+	  write_volatile_1(DAT_mem_002b,0x20);
+	  X = read_volatile_2(SREG);
+	</pre>
+      </div>
+<p>
+    </p>
+  </div>
+</div>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="AnnoteConstants"></a>Constant Annotations</h2></div></div></div>
+  
+  <p>
+    Ghidra provides some ways to control how specific constants shown in disassembly are formatted or displayed.
+    These annotations are attached to constants as operands of specific machine instructions. To the extent
+    possible, the decompiler applies these annotations to the matching constant in the decompiler output.
+    The constant may be transformed from its value in the original machine instruction during the decompiler's
+    analysis.  The decompiler will follow the constant through simple transformations, but if the transformed
+    is too far from the original value, the annotation will not be applied.  The transforms followed are:
+    </p>
+<div class="informalexample">
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">Signed or zero extension</li>
+<li class="listitem" style="list-style-type: disc">Bitwise negation</li>
+<li class="listitem" style="list-style-type: disc">Integer negation - Two's complement</li>
+<li class="listitem" style="list-style-type: disc">Add or subtract 1</li>
+</ul></div>
+    </div>
+<p>
+  </p>
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ConstantEquates"></a>Equates</h3></div></div></div>
+    
+    <p>
+      Ghidra can create an association between a name and a constant, called an <span class="bold"><strong>equate</strong></span>.
+      The constant must be a constant operand of a specific machine instruction, and the equate
+      is applied directly to the operand from the Listing Window using the
+      <a class="ulink" href="help/topics/EquatePlugin/Equates.htm#Set_Equate" target="_top">Set Equate</a> menu.
+      Once applied, the equate's name is displayed instead of the numeric representation of the constant.
+      Equates across the entire Program can be viewed from the
+      <a class="ulink" href="help/topics/EquatePlugin/Equates.htm#Equate_Table" target="_top">Equate Table</a>.
+    </p>
+    <p>
+      When analyzing a function, the decompiler attempts to follow any constant in the function with an attached
+      equate to the matching constant in the final output.  If successful, the equate's name is printed instead of
+      the numeric form of the matching constant. If the constant was transformed from its original value, the
+      matching constant is printed as an expression, where the transforming operations are applied to the equate
+      symbol (representing the original constant).
+    </p>
+  </div>
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ConstantConversions"></a>Format Conversions</h3></div></div></div>
+    
+    <p>
+      Ghidra can apply a <span class="bold"><strong>format conversion</strong></span> to override how an integer operand
+      is displayed in a specific machine instruction.  Conversions are generally applied from the Listing Window using the
+      <a class="ulink" href="help/topics/EquatePlugin/Equates.htm#Convert" target="_top">Convert</a> menu option. When analyzing a
+      function containing a machine instruction that has a format conversion applied, the decompiler will attempt
+      to trace the constant to a matching constant in the final output. If successful, the format conversion is also
+      applied to the matching constant.
+    </p>
+    <p>
+      Conversions applied by the decompiler are currently limited to:
+      </p>
+<div class="informalexample">
+      <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">Binary - 0b10100111</li>
+<li class="listitem" style="list-style-type: disc">Decimal- 167</li>
+<li class="listitem" style="list-style-type: disc">Hexadecimal - 0xa7</li>
+<li class="listitem" style="list-style-type: disc">Octal - 0247</li>
+</ul></div>
+      </div>
+<p>
+      An appropriate header matching the format is prepended to the representation string, either "0b", "0x" or just
+      "0".  The decompiler will not switch the signedness of the constant but preserves the signed or unsigned data-type
+      as determined by analysis.
+    </p>
+  </div>
+</div>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="AnnoteRegister"></a>Register Values</h2></div></div></div>
+  
+  <p>
+    A <span class="bold"><strong>register value</strong></span> in this context is a region of code in the Program
+    where a specific register holds a known constant value.  Ghidra maintains an explicit list of these values for
+    the Program (see the documentation for <a class="ulink" href="help/topics/RegisterPlugin/Registers.htm" target="_top">Register Values</a>),
+    which the decompiler can use when analyzing a function.
+    A register value benefits decompiler analysis, especially if the original compiler was aware
+    of the constant value, as the decompiler can recover address references calculated as offsets relative to the register
+    and otherwise propagate the constant.
+  </p>
+  <p>
+    A <span class="emphasis"><em>register value</em></span> is set by highlighting the region of code in the Listing Window and then invoking the
+    <a class="ulink" href="help/topics/RegisterPlugin/Registers.htm#SetRegisterValues" target="_top">Set Register Values ...</a> command
+    from the pop-up menu.  The beginning and end of a region is indicated in the Listing Window with
+    <code class="code">assume</code> directives, and regions can be generally viewed from the
+    <a class="ulink" href="help/topics/RegisterPlugin/Registers.htm#Register_Manager" target="_top">Register Manager</a> window.
+  </p>
+  <p>
+    In order for a particular register value to affect decompilation, the region of code associated with the
+    value must contain the entry point of the function, and of course the function must read from the register.
+    Only the initial reads of the register are replaced with the constant value.
+    The decompiler will continue to respect later instructions that write to the register (even if the
+    instruction is inside the register value's region)
+    If a register value's region starts in the middle of a function, decompilation is <span class="emphasis"><em>not</em></span>
+    affected at all.
+  </p>
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="AnnoteContextRegister"></a>Context Registers</h3></div></div></div>
+    
+    <p>
+      There is a special class of registers, called <span class="bold"><strong>context registers</strong></span> whose
+      values have a different affect on analysis and decompilation than described above.
+    </p>
+    <div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Tip]" src="../../shared/tip.png"></td>
+<th align="left"></th>
+</tr>
+<tr><td align="left" valign="top">
+      <span class="emphasis"><em>Context registers</em></span> are inputs to the disassembly decoding process and directly affect which
+      machine instructions are created.
+    </td></tr>
+</table></div>
+    <p>
+      The value in a context register is examined when Ghidra decodes machine instructions from the underlying
+      bytes in the Program. A specific value generally corresponds to a specific <span class="emphasis"><em>execution mode</em></span>
+      of the processor. The ARM processor <span class="emphasis"><em>T bit</em></span> for instance, which selects whether the
+      processor is executing ARM or THUMB instructions, is modeled as a context register in Ghidra.
+      The same set of bytes in the Program can be decoded to machine instructions in more than one way,
+      depending on context register values.
+    </p>
+    <p>
+      Bytes are typically decoded once using context register values
+      established at the time of disassembly. From Ghidra's more static view of execution, a context register holds
+      only a single value at any point in the code, but the same context register can hold different values for
+      different regions of code. Setting a new value on a region of the Program will affect any subsequent disassembly
+      of code within that region.  
+    </p>
+    <p>
+      If a context register value is changed for a region that has already been disassembled, in order to see
+      the affect of the change, the machine instructions in the region need to be cleared, and disassembly needs
+      to be triggered again.  See the documentation on the
+      <a class="ulink" href="help/topics/ClearPlugin/Clear.htm#Clear_Code_Bytes" target="_top">Clear Plugin</a>.
+    </p>
+    <p>
+      Values for a context register are set in the same way as any other register, using the
+      <a class="ulink" href="help/topics/RegisterPlugin/Registers.htm#SetRegisterValues" target="_top">Set Register Values ...</a> command
+      described above.  Within the
+      <a class="ulink" href="help/topics/RegisterPlugin/Registers.htm#Register_Manager" target="_top">Register Manager</a> window,
+      context registers are generally grouped together under the (pseudo-register) heading, <span class="emphasis"><em>contextreg</em></span>.
+      For details about how context registers are used in processor modeling, see
+      the document "SLEIGH: A Language for Rapid Processor Specification".
+    </p>
+    <p>
+      Because context registers affect machine instructions, they also affect the underlying p-code and
+      have a substantial impact on decompilation.  Although details vary by processor, context register
+      values are typically established during the initial import and analysis of a Program and aren't changed
+      frequently.
+    </p>
+  </div>
+</div>
+
+</div></body>
+</html>

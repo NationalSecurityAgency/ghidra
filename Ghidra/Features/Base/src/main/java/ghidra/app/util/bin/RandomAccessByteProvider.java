@@ -15,9 +15,10 @@
  */
 package ghidra.app.util.bin;
 
-import ghidra.formats.gfilesystem.FSRL;
-
 import java.io.*;
+
+import ghidra.formats.gfilesystem.FSRL;
+import ghidra.util.Msg;
 
 /**
  * An implementation of ByteProvider where the underlying
@@ -33,39 +34,45 @@ public class RandomAccessByteProvider implements ByteProvider {
 	protected File file;
 	protected GhidraRandomAccessFile randomAccessFile;
 	private FSRL fsrl;
+	private long fileLength;
 
 	/**
-	 * Constructs a byte provider using the specified file
-	 * @param file the file to open for random access
-	 * @throws FileNotFoundException if the file does not exist
+	 * Constructs a {@link ByteProvider} using the specified {@link File}.
+	 * 
+	 * @param file the {@link File} to open for random access
+	 * @throws IOException if the {@link File} does not exist or other error
 	 */
 	public RandomAccessByteProvider(File file) throws IOException {
-		this.file = file;
-		this.randomAccessFile = new GhidraRandomAccessFile(file, "r");
+		this(file, "r");
 	}
 
 	/**
-	 * Constructs a byte provider using the specified file and FSRL.
+	 * Constructs a {@link ByteProvider} using the specified {@link File} and {@link FSRL}
 	 *
-	 * @param file the file to open for random access
-	 * @param fsrl the FSRL to use for the file's path
-	 * @throws FileNotFoundException if the file does not exist
+	 * @param file the {@link File} to open for random access
+	 * @param fsrl the {@link FSRL} to use for the {@link File}'s path
+	 * @throws IOException if the {@link File} does not exist or other error
 	 */
 	public RandomAccessByteProvider(File file, FSRL fsrl) throws IOException {
-		this.file = file;
-		this.fsrl = fsrl;
-		this.randomAccessFile = new GhidraRandomAccessFile(file, "r");
+		this(file, fsrl, "r");
 	}
 
 	/**
-	 * Constructs a byte provider using the specified file and permissions string
-	 * @param file the file to open for random access
-	 * @param string indicating permissions used for open
-	 * @throws FileNotFoundException if the file does not exist
+	 * Constructs a {@link ByteProvider} using the specified {@link File} and permissions
+	 * 
+	 * @param file the {@link File} to open for random access
+	 * @param permissions indicating permissions used for open
+	 * @throws IOException if the {@link File} does not exist or other error
 	 */
 	public RandomAccessByteProvider(File file, String permissions) throws IOException {
+		this(file, null, permissions);
+	}
+
+	private RandomAccessByteProvider(File file, FSRL fsrl, String permissions) throws IOException {
 		this.file = file;
+		this.fsrl = fsrl;
 		this.randomAccessFile = new GhidraRandomAccessFile(file, permissions);
+		this.fileLength = randomAccessFile.length();
 	}
 
 	@Override
@@ -74,25 +81,19 @@ public class RandomAccessByteProvider implements ByteProvider {
 	}
 
 	/**
-	 * Sets the {@link FSRL} of this byte provider.
+	 * Sets the {@link FSRL} of this {@link ByteProvider}
 	 *
-	 * @param fsrl the FSRL to assign to this byte provider
+	 * @param fsrl the {@link FSRL} to assign to this byte provider
 	 */
 	public void setFSRL(FSRL fsrl) {
 		this.fsrl = fsrl;
 	}
 
-	/**
-	 * @see ghidra.app.util.bin.ByteProvider#getFile()
-	 */
 	@Override
 	public File getFile() {
 		return file;
 	}
 
-	/**
-	 * @see ghidra.app.util.bin.ByteProvider#getName()
-	 */
 	@Override
 	public String getName() {
 		return fsrl == null ? file.getName() : fsrl.getName();
@@ -103,9 +104,6 @@ public class RandomAccessByteProvider implements ByteProvider {
 		return fsrl == null ? file.getAbsolutePath() : fsrl.getPath();
 	}
 
-	/**
-	 * @see ghidra.app.util.bin.ByteProvider#getInputStream(long)
-	 */
 	@Override
 	public InputStream getInputStream(long index) throws IOException {
 		FileInputStream is = new FileInputStream(file);
@@ -113,53 +111,50 @@ public class RandomAccessByteProvider implements ByteProvider {
 		return is;
 	}
 
-	/**
-	 * Closes the underlying random-access file.
-	 * @throws IOException if an I/O error occurs
-	 */
 	@Override
 	public void close() throws IOException {
 		randomAccessFile.close();
 	}
 
-	/**
-	 * @see ghidra.app.util.bin.ByteProvider#length()
-	 */
 	@Override
-	public long length() throws IOException {
-		return randomAccessFile.length();
+	public long length() {
+		return fileLength;
 	}
 
 	@Override
 	public boolean isValidIndex(long index) {
-		try {
-			return index >= 0 && index < randomAccessFile.length();
-		}
-		catch (IOException e) {
-		}
-		return false;
+		return 0 <= index && index < fileLength;
 	}
 
-	/**
-	 * @see ghidra.app.util.bin.ByteProvider#readByte(long)
-	 */
 	@Override
 	public byte readByte(long index) throws IOException {
 		randomAccessFile.seek(index);
 		return randomAccessFile.readByte();
 	}
 
-	/**
-	 * @see ghidra.app.util.bin.ByteProvider#readBytes(long, long)
-	 */
 	@Override
 	public byte[] readBytes(long index, long length) throws IOException {
-		randomAccessFile.seek(index);
 		byte[] b = new byte[(int) length];
+		if (index > fileLength) {
+			throw new EOFException(
+				"Invalid file offset " + index + " while reading " + file.getName());
+		}
+		if (index + length > fileLength) {
+			Msg.trace(this, "Read at EOF, can't return partial buffer, throwing IOException: " +
+				file.getName());
+			throw new EOFException("EOF: unable to read " + length + " bytes at " + index);
+		}
+		randomAccessFile.seek(index);
 		int nRead = randomAccessFile.read(b);
 		if (nRead != length) {
 			throw new IOException("Unable to read " + length + " bytes");
 		}
 		return b;
 	}
+	
+	@Override
+	public String toString() {
+		return "RandomAccessByteProvider [\n  file=" + file + ",\n  fsrl=" + fsrl +
+			",\n  fileLength=" + fileLength + "\n]";
+	}	
 }

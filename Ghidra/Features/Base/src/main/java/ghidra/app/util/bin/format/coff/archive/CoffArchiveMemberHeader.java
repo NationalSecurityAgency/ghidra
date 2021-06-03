@@ -50,6 +50,7 @@ public class CoffArchiveMemberHeader implements StructConverter {
 	private static final String CAMH_EOH_MAGIC = "`\n";
 
 	private static final int CAMH_PAYLOAD_OFF = 60;
+	public static final int CAMH_MIN_SIZE = CAMH_PAYLOAD_OFF;
 
 	/**
 	 * Reads a COFF archive member header from the specified {@link BinaryReader reader},
@@ -162,8 +163,9 @@ public class CoffArchiveMemberHeader implements StructConverter {
 			try {
 				long offset = Long.parseLong(name.substring(1));
 				name = longNames.getStringAtOffset(reader.getByteProvider(), offset);
-				if (name.endsWith("/"))
+				if (name.endsWith("/")) {
 					name = name.substring(0, name.length() - 1);
+				}
 			}
 			catch (NumberFormatException nfe) {
 				throw new IOException("Bad long name offset: " + name);

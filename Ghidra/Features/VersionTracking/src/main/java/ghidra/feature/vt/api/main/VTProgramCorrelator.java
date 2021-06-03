@@ -29,7 +29,7 @@ public interface VTProgramCorrelator {
 	 * @param session An existing manager that may contain previous results that may 
 	 *        influence this correlation.
 	 * @param monitor a task monitor for reporting progress during the correlation.
-	 * @returns the match set created by this correlator used to store results.
+	 * @return the match set created by this correlator used to store results.
 	 * 
 	 * @throws CancelledException if the user cancels the correlation via the task monitor.
 	 */

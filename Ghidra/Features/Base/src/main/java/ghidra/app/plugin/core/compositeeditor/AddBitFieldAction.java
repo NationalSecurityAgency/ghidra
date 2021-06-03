@@ -16,9 +16,6 @@
 package ghidra.app.plugin.core.compositeeditor;
 
 import java.awt.Component;
-import java.awt.Window;
-
-import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
 import docking.DockingWindowManager;
@@ -31,14 +28,14 @@ import ghidra.util.exception.AssertException;
  */
 public class AddBitFieldAction extends CompositeEditorTableAction {
 
-	private final static String ACTION_NAME = "Add Bitfield";
+	public final static String ACTION_NAME = "Add Bitfield";
 	private final static String GROUP_NAME = BITFIELD_ACTION_GROUP;
 	private final static String DESCRIPTION =
 		"Add a bitfield at the position of a selected component";
-	private static String[] popupPath = new String[] { ACTION_NAME };
+	private static String[] POPUP_PATH = new String[] { ACTION_NAME };
 
 	public AddBitFieldAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, popupPath, null, null);
+		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, null, null);
 		setDescription(DESCRIPTION);
 		if (!(model instanceof CompEditorModel)) {
 			throw new AssertException("unsupported use");
@@ -57,11 +54,10 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 
 		BitFieldEditorDialog dlg =
 			new BitFieldEditorDialog(editorModel.viewComposite, provider.dtmService,
-				-(rowIndex + 1), ordinal -> refreshTableAndSelection(editorModel, ordinal));
+				-(rowIndex + 1), model.showHexNumbers,
+				ordinal -> refreshTableAndSelection(editorModel, ordinal));
 		Component c = provider.getComponent();
-		Window w = SwingUtilities.windowForComponent(c);
-		DockingWindowManager.showDialog(w, dlg, c);
-
+		DockingWindowManager.showDialog(c, dlg);
 		requestTableFocus();
 	}
 
@@ -73,8 +69,8 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 	public void adjustEnablement() {
 		boolean enabled = true;
 		CompEditorModel editorModel = (CompEditorModel) model;
-		// Union do not support unaligned placement of bitfields
-		if (!(editorModel.viewComposite instanceof Structure) || editorModel.isAligned() ||
+		// Union do not support non-packed placement of bitfields
+		if (!(editorModel.viewComposite instanceof Structure) || editorModel.isPackingEnabled() ||
 			editorModel.getNumSelectedRows() != 1 || editorModel.isFlexibleArraySelection()) {
 			enabled = false;
 		}

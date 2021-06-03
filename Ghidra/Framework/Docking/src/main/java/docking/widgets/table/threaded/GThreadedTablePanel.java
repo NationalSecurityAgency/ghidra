@@ -23,6 +23,7 @@ import javax.swing.*;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
+import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorComponent;
 import resources.Icons;
@@ -30,6 +31,8 @@ import resources.Icons;
 /**
  * A convenience component designed specifically for rendering threaded table models.
  * This panel will automatically create a threaded table and a task monitor component.
+ * 
+ * @param <T> the type
  */
 public class GThreadedTablePanel<T> extends JPanel {
 
@@ -134,7 +137,6 @@ public class GThreadedTablePanel<T> extends JPanel {
 	}
 
 	public void dispose() {
-		threadedModel.dispose();
 		table.dispose();
 	}
 
@@ -162,22 +164,23 @@ public class GThreadedTablePanel<T> extends JPanel {
 	}
 
 	/**
-	 * Returns the underlying table.
+	 * Returns the underlying table
+	 * @return the table
 	 */
 	public GTable getTable() {
 		return table;
 	}
 
 	private void handleUpdatePending() {
-		SwingUtilities.invokeLater(showPendingRunnable);
+		Swing.runLater(showPendingRunnable);
 	}
 
 	private void handleUpdating() {
-		SwingUtilities.invokeLater(showProgressRunnable);
+		Swing.runLater(showProgressRunnable);
 	}
 
 	private void handleUpdateComplete() {
-		SwingUtilities.invokeLater(updateCompleteRunnable);
+		Swing.runLater(updateCompleteRunnable);
 	}
 
 	private void doUpdateComplete() {

@@ -20,19 +20,19 @@ import java.io.InputStream;
 import java.util.List;
 
 import ghidra.framework.store.LockException;
-import ghidra.program.database.mem.AddressSourceInfo;
-import ghidra.program.database.mem.FileBytes;
+import ghidra.program.database.mem.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
-class MyTestMemory extends AddressSet implements Memory {
+public class MyTestMemory extends AddressSet implements Memory {
 	byte[] myMemoryBytes;
 	MemoryBlock myMemoryBlock;
 
-	MyTestMemory(byte[] bytes) {
+	public MyTestMemory(byte[] bytes) {
 		super();
 		this.myMemoryBytes = bytes;
 		AddressSpace space = new GenericAddressSpace("Mem", 32, AddressSpace.TYPE_RAM, 0);
@@ -103,13 +103,14 @@ class MyTestMemory extends AddressSet implements Memory {
 
 	@Override
 	public MemoryBlock createBitMappedBlock(String name, Address start, Address overlayAddress,
-			long length) throws MemoryConflictException, AddressOverflowException {
+			long length, boolean overlay) throws MemoryConflictException, AddressOverflowException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public MemoryBlock createByteMappedBlock(String name, Address start, Address overlayAddress,
-			long length) throws MemoryConflictException, AddressOverflowException {
+	public MemoryBlock createByteMappedBlock(String name, Address start, Address mappedAddress,
+			long length, ByteMappingScheme byteMappingScheme, boolean overlay) throws LockException,
+			MemoryConflictException, AddressOverflowException, IllegalArgumentException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -376,8 +377,7 @@ class MyTestMemory extends AddressSet implements Memory {
 
 	@Override
 	public MemoryBlock createInitializedBlock(String name, Address start, FileBytes fileBytes,
-			long offset, long size, boolean overlay) throws LockException, DuplicateNameException,
-			MemoryConflictException, AddressOverflowException {
+			long offset, long size, boolean overlay) {
 		throw new UnsupportedOperationException();
 	}
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,15 @@
  */
 package ghidra.program.model.listing;
 
+import java.awt.Color;
+import java.util.Iterator;
+
+import javax.swing.ImageIcon;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.awt.Color;
-import java.io.IOException;
-import java.util.Iterator;
-
-import javax.swing.ImageIcon;
 
 /**
  * Interface for managing bookmarks.
@@ -62,13 +60,15 @@ public interface BookmarkManager {
 	 * @param type bookmark type
 	 * @param icon marker icon which may get scaled
 	 * @param color marker color
+	 * @param priority the bookmark priority
 	 * @return bookmark type object
-	 * @throws IOException if a database error occurs while adding the new type.
+	 * @throws IllegalArgumentException if any of the arguments are null or if the type is empty 
 	 */
 	BookmarkType defineType(String type, ImageIcon icon, Color color, int priority);
 
 	/**
-	 * Returns list of known bookmark types.
+	 * Returns list of known bookmark types
+	 * @return list of known bookmark types
 	 */
 	BookmarkType[] getBookmarkTypes();
 
@@ -92,6 +92,7 @@ public interface BookmarkManager {
 	 * @param type the name of the bookmark type.
 	 * @param category the category for the bookmark.
 	 * @param comment the comment to associate with the bookmark.
+	 * @return the new bookmark
 	 */
 	Bookmark setBookmark(Address addr, String type, String category, String comment);
 
@@ -129,7 +130,7 @@ public interface BookmarkManager {
 	/**
 	 * Removes all bookmarks over the given address set.
 	 * @param set the set of addresses from which to remove all bookmarks.
-	 * @param monitor a taskmonitor to report the progress.
+	 * @param monitor a task monitor to report the progress.
 	 * @throws CancelledException if the user (via the monitor) cancelled the operation.
 	 */
 	void removeBookmarks(AddressSetView set, TaskMonitor monitor) throws CancelledException;
@@ -138,7 +139,7 @@ public interface BookmarkManager {
 	 * Removes all bookmarks of the given type over the given address set
 	 * @param set the set of addresses from which to remove all bookmarks of the given type.
 	 * @param type the type of bookmarks to remove.
-	 * @param monitor a taskmonitor to report the progress.
+	 * @param monitor a task monitor to report the progress.
 	 * @throws CancelledException if the user (via the monitor) cancelled the operation.
 	 */
 	void removeBookmarks(AddressSetView set, String type, TaskMonitor monitor)
@@ -149,7 +150,7 @@ public interface BookmarkManager {
 	 * @param set the set of addresses from which to remove all bookmarks of the given type and category.
 	 * @param type the type of bookmarks to remove.
 	 * @param category the category of bookmarks to remove.
-	 * @param monitor a taskmonitor to report the progress.
+	 * @param monitor a task monitor to report the progress.
 	 * @throws CancelledException if the user (via the monitor) cancelled the operation.
 	 */
 	void removeBookmarks(AddressSetView set, String type, String category, TaskMonitor monitor)
@@ -185,7 +186,8 @@ public interface BookmarkManager {
 	Iterator<Bookmark> getBookmarksIterator(String type);
 
 	/**
-	 * Returns an iterator over all bookmarks.
+	 * Returns an iterator over all bookmarks
+	 * @return an iterator over all bookmarks
 	 */
 	Iterator<Bookmark> getBookmarksIterator();
 
@@ -204,23 +206,27 @@ public interface BookmarkManager {
 	/**
 	 * Returns the bookmark that has the given id or null if no such bookmark exists.
 	 * @param id the id of the bookmark to be retrieved.
+	 * @return the bookmark
 	 */
 	Bookmark getBookmark(long id);
 
 	/**
-	 * Returns true if program contains one or more bookmarks of the given type.
+	 * Returns true if program contains one or more bookmarks of the given type
 	 * @param type the type of bookmark to check for.
+	 * @return true if program contains one or more bookmarks of the given type
 	 */
 	boolean hasBookmarks(String type);
 
 	/**
-	 * Return the number of bookmarks of the given type.
-	 * @param type the type of bookmarks to count.
+	 * Return the number of bookmarks of the given type
+	 * @param type the type of bookmarks to count
+	 * @return the number of bookmarks of the given type
 	 */
 	int getBookmarkCount(String type);
 
 	/**
-	 * Returns the total number of bookmarks in the program.
+	 * Returns the total number of bookmarks in the program
+	 * @return the total number of bookmarks in the program
 	 */
 	int getBookmarkCount();
 

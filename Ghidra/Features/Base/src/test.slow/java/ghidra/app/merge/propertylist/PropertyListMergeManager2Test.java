@@ -892,6 +892,9 @@ public class PropertyListMergeManager2Test extends AbstractMergeTest {
 
 			printOpenWindows();
 
+			// 12/87/20 -  put in to find intermittent test failure when the button cannot be found
+			capture(window, "missing.button." + text);
+
 			fail("Unable to find radio button '" + text + "'; see console for details");
 		}
 
@@ -918,6 +921,14 @@ public class PropertyListMergeManager2Test extends AbstractMergeTest {
 	}
 
 	private AbstractButton findButton(Container container, String text) {
+
+		// note: there may be some timing issue with accessing swing components from the test
+		//       thread.   This waitForSwing() will cause registers to get flushed, making swing
+		//       changes visible to this thread.  
+		//
+		//       The correct change would probably be to put this code and the similar code from 
+		//       the test framework onto the swing thread when attempting to find swing widgets.
+		waitForSwing();
 		Component[] comp = container.getComponents();
 		for (Component element : comp) {
 			if ((element instanceof AbstractButton && element.isVisible()) &&

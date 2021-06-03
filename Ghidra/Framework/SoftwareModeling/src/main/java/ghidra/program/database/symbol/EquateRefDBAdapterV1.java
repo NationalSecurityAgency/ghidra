@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,9 @@
  */
 package ghidra.program.database.symbol;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.database.map.AddressIndexKeyIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.util.DatabaseTableUtils;
@@ -24,10 +26,6 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-
-import db.*;
 
 /**
  * Implementation for Version 0 of the equate references table.
@@ -43,13 +41,12 @@ class EquateRefDBAdapterV1 extends EquateRefDBAdapter {
 	 * Constructor
 	 * 
 	 */
-	EquateRefDBAdapterV1(DBHandle handle, AddressMap addrMap, boolean create) throws IOException,
-			VersionException {
+	EquateRefDBAdapterV1(DBHandle handle, AddressMap addrMap, boolean create)
+			throws IOException, VersionException {
 		this.addrMap = addrMap;
 		if (create) {
-			refTable =
-				handle.createTable(EQUATE_REFS_TABLE_NAME, REFS_SCHEMA, new int[] { EQUATE_ID_COL,
-					ADDR_COL });
+			refTable = handle.createTable(EQUATE_REFS_TABLE_NAME, REFS_SCHEMA,
+				new int[] { EQUATE_ID_COL, ADDR_COL });
 		}
 		else {
 			refTable = handle.getTable(EQUATE_REFS_TABLE_NAME);
@@ -70,7 +67,7 @@ class EquateRefDBAdapterV1 extends EquateRefDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#getRecord(long)
 	 */
 	@Override
-	Record getRecord(long key) throws IOException {
+	DBRecord getRecord(long key) throws IOException {
 		return refTable.getRecord(key);
 	}
 
@@ -78,9 +75,9 @@ class EquateRefDBAdapterV1 extends EquateRefDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#createReference(long, short, long, long)
 	 */
 	@Override
-	Record createReference(long addr, short opIndex, long dynamicHash, long equateID)
+	DBRecord createReference(long addr, short opIndex, long dynamicHash, long equateID)
 			throws IOException {
-		Record rec = refTable.getSchema().createRecord(refTable.getKey());
+		DBRecord rec = refTable.getSchema().createRecord(refTable.getKey());
 		rec.setLongValue(ADDR_COL, addr);
 		rec.setShortValue(OP_INDEX_COL, opIndex);
 		rec.setLongValue(HASH_COL, dynamicHash);
@@ -93,15 +90,15 @@ class EquateRefDBAdapterV1 extends EquateRefDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#getRecordKeysFrom(long)
 	 */
 	@Override
-	long[] getRecordKeysForAddr(long addr) throws IOException {
+	Field[] getRecordKeysForAddr(long addr) throws IOException {
 		return refTable.findRecords(new LongField(addr), ADDR_COL);
 	}
 
 	/**
-	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#updateRecord(ghidra.framework.store.db.Record)
+	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#updateRecord(ghidra.framework.store.db.DBRecord)
 	 */
 	@Override
-	void updateRecord(Record record) throws IOException {
+	void updateRecord(DBRecord record) throws IOException {
 		refTable.putRecord(record);
 	}
 
@@ -109,7 +106,7 @@ class EquateRefDBAdapterV1 extends EquateRefDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#getRecordsForEquateID(long)
 	 */
 	@Override
-	long[] getRecordKeysForEquateID(long equateID) throws IOException {
+	Field[] getRecordKeysForEquateID(long equateID) throws IOException {
 		return refTable.findRecords(new LongField(equateID), EQUATE_ID_COL);
 	}
 

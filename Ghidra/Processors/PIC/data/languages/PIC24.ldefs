@@ -48,6 +48,7 @@
             id="dsPIC30F:LE:24:default">
     <description>dsPIC30F</description>
     <compiler name="default" spec="PIC24.cspec" id="default"/>
+    <external_name tool="DWARF.register.mapping.file" name="PIC30.dwarf"/>
   </language>
   <language processor="dsPIC33F"
             endian="little"
@@ -60,6 +61,7 @@
             id="dsPIC33F:LE:24:default">
     <description>dsPIC33F</description>
     <compiler name="default" spec="PIC24.cspec" id="default"/>
+    <external_name tool="DWARF.register.mapping.file" name="PIC30.dwarf"/>
   </language>
   <language processor="dsPIC33E"
             endian="little"
@@ -72,5 +74,19 @@
             id="dsPIC33E:LE:24:default">
     <description>dsPIC33E</description>
     <compiler name="default" spec="PIC24.cspec" id="default"/>
+    <external_name tool="DWARF.register.mapping.file" name="PIC33.dwarf"/>
+  </language>
+  <language processor="dsPIC33C"
+            endian="little"
+            size="24"
+            variant="default"
+            version="1.4"
+            slafile="dsPIC33C.sla"
+            processorspec="PIC24.pspec"
+            manualindexfile="../manuals/PIC24.idx"
+            id="dsPIC33C:LE:24:default">
+    <description>dsPIC33C</description>
+    <compiler name="default" spec="PIC24.cspec" id="default"/>
+    <external_name tool="DWARF.register.mapping.file" name="PIC33.dwarf"/>
   </language>
 </language_definitions>

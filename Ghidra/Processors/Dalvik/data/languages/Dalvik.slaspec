@@ -806,7 +806,8 @@ define pcodeop switchAssist;
 :packed_switch registerA8,B_BITS_0_31_S is inst0=0x2b ; registerA8 ; B_BITS_0_31_S
 {
 	distance:4   =  B_BITS_0_31_S * 2;
-	ident:4      =  *[ram] ( inst_start + distance );
+	# ident:2      =  *[ram] ( inst_start + distance );
+	# if (ident != 0x0100) goto inst_next;
 	size2:2      =  *[ram] ( inst_start + distance + 2 );
 	sze:4       =  zext( size2 );
 	first_key:4  =  *[ram] ( inst_start + distance + 2 + 2 );

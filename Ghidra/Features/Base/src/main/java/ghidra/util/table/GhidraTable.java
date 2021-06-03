@@ -34,7 +34,7 @@ import ghidra.program.util.ProgramSelection;
  * Navigation is only supported if the underlying table model
  * implements <code>ProgramTableModel</code> and the <code>setGoToService()</code> method
  * has been called with a valid reference.  When both of these conditions are met, then the 
- * table will navigate on a user's double-click or on an <tt>Enter</tt> key press.  Also, if 
+ * table will navigate on a user's double-click or on an <code>Enter</code> key press.  Also, if 
  * selection navigation is enabled, then this table will navigate <b>any time the selection of
  * the table changes</b>.  To prevent this feature call 
  * {@link #setNavigateOnSelectionEnabled(boolean)} with a value of false.
@@ -175,7 +175,7 @@ public class GhidraTable extends GTable {
 	/**
 	 * Does nothing if no {@link GoToService} has been installed from 
 	 * {@link #installNavigation(GoToService, Navigatable)}.  Also, this method will do 
-	 * nothing if this table's <tt>TableModel</tt> is not an instance of {@link ProgramTableModel}.  
+	 * nothing if this table's <code>TableModel</code> is not an instance of {@link ProgramTableModel}.  
 	 * Otherwise, this method will attempt to go to the program location denoted by the 
 	 * given row and column.
 	 * 
@@ -212,7 +212,7 @@ public class GhidraTable extends GTable {
 	 * to go to the program location denoted by the given row and column.
 	 * <p>
 	 * This method differs from {@link #navigate(int, int)} in that this method will not 
-	 * navigate if {@link #navigateOnSelection} is <tt>false</tt>.
+	 * navigate if {@link #navigateOnSelection} is <code>false</code>.
 	 */
 	private void navigateOnCurrentSelection(int row, int column) {
 		if (!navigateOnSelection) {

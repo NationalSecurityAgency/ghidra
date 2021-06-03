@@ -363,7 +363,7 @@ public key files may be made without restarting the Ghidra Server.
 			Example: "-dmydomain.com"</LI>
 			<br>
 			<LI><typewriter>-e#</typewriter><br>Allows the reset password expiration to be set to a 
-			specified number of days (default is 1-day).</LI>
+			specified number of days (default is 1-day).  A value of 0 prevents expiration.</LI>
 			<br>
 			<LI><typewriter>-jaas &lt;config_file&gt;</typewriter><br>Specifies the path to the JAAS
 			config file (when using -a4), relative to the ghidra/server directory (if not absolute).
@@ -581,9 +581,9 @@ to run as <i>root</i> and monitor/manage the Java process.
 
     <PRE>
     svrAdmin [&lt;server-root-path&gt;]
-             [-add &lt;user_sid&gt;] 
+             [-add &lt;user_sid&gt; [--p]] 
              [-remove &lt;user_sid&gt;] 
-             [-reset &lt;user_sid&gt;] 
+             [-reset &lt;user_sid&gt; [--p]] 
              [-dn &lt;user_sid&gt; &quot;&lt;user_dn&gt;&quot;]
              [-admin &lt;user_sid&gt; &quot;&lt;repository_name&gt;&quot;]
              [-list]
@@ -605,11 +605,14 @@ to run as <i>root</i> and monitor/manage the Java process.
     be permitted.  If Ghidra password authentication is used [<typewriter>-a0</typewriter>], the 
     initial password is set to <typewriter>changeme</typewriter>. This password must be changed by 
     the user within 24-hours to avoid its expiration (password expiration period can be extended as 
-    a server option, see <typewriter>-e</typewriter> <a href="#serverOptions">server option</a>).
+    a server option, see <typewriter>-e</typewriter> <a href="#serverOptions">server option</a>).  
+    Alternatively, the initial password may be specified by including the optional <typewriter>--p</typewriter>
+    parameter which will prompt for an initial password.
     <br><br>
-    Example:
+    Examples:
     <PRE>
         svrAdmin -add mySID
+        svrAdmin -add mySID --p
     </PRE>
     </LI>
     <LI><typewriter>-remove</typewriter>&nbsp;&nbsp;<b>(Removing a User)</b><br>
@@ -627,10 +630,13 @@ to run as <i>root</i> and monitor/manage the Java process.
     If a user&apos;s password has expired, or has simply been forgotten, the password may be reset 
     to <typewriter>changeme</typewriter>.  After resetting, this password must be changed by the user within 
     24-hours to avoid its expiration (password expiration period can be extended as a server option).
+    Alternatively, the new password may be specified by including the optional <typewriter>--p</typewriter>
+    parameter which will prompt for an initial password.
     <br><br>
     Example:
     <PRE>
         svrAdmin -reset mySID
+        svrAdmin -reset mySID --p
     </PRE>
     </LI>
     <LI><typewriter>-dn</typewriter>&nbsp;&nbsp;<b>(Assign User&apos;s Distinguished Name)</b><br>

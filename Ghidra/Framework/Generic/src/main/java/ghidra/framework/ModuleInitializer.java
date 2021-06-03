@@ -36,7 +36,7 @@ public interface ModuleInitializer
 //@formatter:on
 
 	/**
-	 * @returns initializer name
+	 * @return initializer name
 	 */
 	public String getName();
 }

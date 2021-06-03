@@ -15,8 +15,7 @@
  */
 package ghidra.program.database.map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.Iterator;
 
@@ -67,7 +66,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	@Test
-    public void testAdd() {
+	public void testAdd() {
 		set.addRange(addr(0), addr(10));
 		AddressSet addrSet = set.intersect(new AddressSet(addr(5), addr(15)));
 		assertEquals(6, addrSet.getNumAddresses());
@@ -76,14 +75,14 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	@Test
-    public void testAddBig() {
+	public void testAddBig() {
 		set.addRange(addr(0xfffffff0l), addr(0xffffffffl));
 		assertEquals(addr(0xfffffff0l), set.getMinAddress());
 		assertEquals(addr(0xffffffffl), set.getMaxAddress());
 	}
 
 	@Test
-    public void testUnionNonOverlap() {
+	public void testUnionNonOverlap() {
 		set.addRange(addr(0), addr(0));
 		set.addRange(addr(5), addr(5));
 		set.addRange(addr(0xffffffffL), addr(0xffffffffL));
@@ -106,7 +105,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	@Test
-    public void testUnionWithOverlap() {
+	public void testUnionWithOverlap() {
 		set.addRange(addr(0), addr(22));
 		set.addRange(addr(42), addr(75));
 		set.addRange(addr(0xfffffe10L), addr(0xfffffe20L));
@@ -129,7 +128,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	@Test
-    public void testUnionPosFirst() {
+	public void testUnionPosFirst() {
 		set.addRange(addr(0), addr(0));
 		set.addRange(addr(5), addr(5));
 		set.addRange(addr(40), addr(45));
@@ -152,7 +151,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	@Test
-    public void testUnionNegFirst() {
+	public void testUnionNegFirst() {
 		set.addRange(addr(0xffffffffL), addr(0xffffffffL));
 		set.addRange(addr(0xfffffe0cL), addr(0xfffffe70L));
 		set.addRange(addr(0xffffffecL), addr(0xfffffffdL));
@@ -185,7 +184,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	@Test
-    public void testIntersectNonOverlap() {
+	public void testIntersectNonOverlap() {
 		set.addRange(addr(0), addr(0));
 		set.addRange(addr(5), addr(5));
 		set.addRange(addr(0xffffffffL), addr(0xffffffffL));
@@ -204,7 +203,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	@Test
-    public void testIntersectWithOverlap() {
+	public void testIntersectWithOverlap() {
 		set.addRange(addr(0), addr(22));
 		set.addRange(addr(42), addr(75));
 		set.addRange(addr(0xfffffe10L), addr(0xfffffe20L));
@@ -239,7 +238,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	@Test
-    public void testDelete() {
+	public void testDelete() {
 		set.addRange(addr(0), addr(22));
 		set.addRange(addr(42), addr(75));
 		set.addRange(addr(0xfffffe10L), addr(0xfffffe20L));
@@ -261,7 +260,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	@Test
-    public void testSubtract() {
+	public void testSubtract() {
 		set.addRange(addr(0), addr(22));
 		set.addRange(addr(42), addr(75));
 		set.addRange(addr(0xfffffe10L), addr(0xfffffe20L));
@@ -283,7 +282,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	@Test
-    public void testXor() {
+	public void testXor() {
 		set.addRange(addr(0), addr(22));
 		set.addRange(addr(42), addr(75));
 		set.addRange(addr(0xfffffe10L), addr(0xfffffe20L));
@@ -308,7 +307,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	@Test
-    public void testContains() {
+	public void testContains() {
 		set.addRange(addr(0), addr(22));
 		set.addRange(addr(42), addr(75));
 		set.addRange(addr(0xfffffe10L), addr(0xfffffe20L));
@@ -348,7 +347,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	@Test
-    public void testContains2() {
+	public void testContains2() {
 		set.addRange(addr(0), addr(0xffffffffL));
 
 		assertEquals(true, set.contains(addr(0)));
@@ -384,7 +383,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	@Test
-    public void testForwardIterator() {
+	public void testForwardIterator() {
 		set.addRange(addr(0), addr(22));
 		set.addRange(addr(42), addr(75));
 		set.addRange(addr(0xfffffe10L), addr(0xfffffe20L));
@@ -418,7 +417,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	@Test
-    public void testBackwardIterator() {
+	public void testBackwardIterator() {
 		set.addRange(addr(0), addr(22));
 		set.addRange(addr(42), addr(75));
 		set.addRange(addr(0xfffffe10L), addr(0xfffffe20L));
@@ -429,7 +428,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 		AddressIterator iter = set.getAddresses(false);
 		while (iter.hasNext()) {
 			Address addr = iter.next();
-			System.out.println(addr.toString(true));
+
 			assertEquals(checkAddress, addr);
 			if (checkAddress.equals(addr(0xffffffccL))) {
 				checkAddress = addr(0xffffffbbL);

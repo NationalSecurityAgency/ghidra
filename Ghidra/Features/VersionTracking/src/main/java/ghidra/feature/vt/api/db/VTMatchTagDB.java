@@ -19,7 +19,7 @@ import static ghidra.feature.vt.api.db.VTMatchTagDBAdapter.ColumnDescription.TAG
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.feature.vt.api.main.VTMatchTag;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
@@ -30,9 +30,9 @@ import ghidra.program.database.DatabaseObject;
 public class VTMatchTagDB extends DatabaseObject implements VTMatchTag {
 
 	private VTSessionDB sessionDB;
-	private Record record;
+	private DBRecord record;
 
-	VTMatchTagDB(VTSessionDB sessionDB, DBObjectCache<VTMatchTagDB> cache, Record record) {
+	VTMatchTagDB(VTSessionDB sessionDB, DBObjectCache<VTMatchTagDB> cache, DBRecord record) {
 		super(cache, record.getKey());
 		this.sessionDB = sessionDB;
 		this.record = record;
@@ -47,7 +47,7 @@ public class VTMatchTagDB extends DatabaseObject implements VTMatchTag {
 	 * Update associated record
 	 * @param rec the new record information
 	 */
-	void setRecord(Record rec) {
+	void setRecord(DBRecord rec) {
 		if (rec.getKey() != key) {
 			throw new IllegalArgumentException("Key mismatch");
 		}
@@ -56,7 +56,7 @@ public class VTMatchTagDB extends DatabaseObject implements VTMatchTag {
 
 	@Override
 	protected boolean refresh() {
-		Record rec = null;
+		DBRecord rec = null;
 		try {
 			rec = sessionDB.getTagRecord(key);
 		}
@@ -74,7 +74,7 @@ public class VTMatchTagDB extends DatabaseObject implements VTMatchTag {
 	 * Returns record associated with this match tag or
 	 * null if the match tag has been deleted.
 	 */
-	Record getRecord() {
+	DBRecord getRecord() {
 		return checkIsValid() ? record : null;
 	}
 

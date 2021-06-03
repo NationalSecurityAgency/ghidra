@@ -22,6 +22,7 @@ import java.util.*;
 
 import generic.test.AbstractGenericTest;
 import ghidra.framework.model.*;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.lang.*;
@@ -155,18 +156,18 @@ public class ProjectTestUtils {
 			return dir.delete();
 		}
 
-		for (int i = 0; i < files.length; i++) {
-			if (files[i].isDirectory()) {
+		for (File file : files) {
+			if (file.isDirectory()) {
 				// use a dummy monitor as not to ruin our progress
-				if (!deleteDir(files[i])) {
-					Msg.debug(ProjectTestUtils.class, "Unable to delete directory: " + files[i]);
+				if (!deleteDir(file)) {
+					Msg.debug(ProjectTestUtils.class, "Unable to delete directory: " + file);
 					return false;
 				}
 			}
 			else {
-				if (!files[i].delete()) {
-					if (!ignoredDeleteNames.contains(files[i].getName())) {
-						Msg.debug(ProjectTestUtils.class, "Unable to delete file: " + files[i]);
+				if (!file.delete()) {
+					if (!ignoredDeleteNames.contains(file.getName())) {
+						Msg.debug(ProjectTestUtils.class, "Unable to delete file: " + file);
 						return false;
 					}
 
@@ -181,10 +182,15 @@ public class ProjectTestUtils {
 	 * Create an empty program file within the specified project folder.
 	 * @param proj active project.
 	 * @param progName name of program and domain file to be created.
-	 * @param langType a specified language, or 0 if it does not matter.
+	 * @param language a specified language, or 0 if it does not matter.
+	 * @param compilerSpec the compiler spec
 	 * @param folder domain folder within the specified project which the
 	 * user has permission to write.  If null, the root data folder will be used.
 	 * @return new domain file.
+	 * @throws InvalidNameException if the filename is invalid
+	 * @throws CancelledException if the opening is cancelled 
+	 * @throws LanguageNotFoundException if the language cannot be found
+	 * @throws IOException if there is an exception creating the program or domain file
 	 */
 	public static DomainFile createProgramFile(Project proj, String progName, Language language,
 			CompilerSpec compilerSpec, DomainFolder folder) throws InvalidNameException,
@@ -209,8 +215,9 @@ public class ProjectTestUtils {
 	 * @param project the project to which the tool belongs
 	 * @param toolName name of the tool to get from the active workspace.
 	 * If null, launch a new empty tool in the active workspace.
+	 * @return the tool
 	 */
-	public static Tool getTool(Project project, String toolName) {
+	public static PluginTool getTool(Project project, String toolName) {
 
 		ToolManager tm = project.getToolManager();
 
@@ -221,7 +228,7 @@ public class ProjectTestUtils {
 		// use the first one for the testing
 		Workspace activeWorkspace = workspaces[0];
 
-		Tool tool = null;
+		PluginTool tool = null;
 		if (toolName == null) {
 			// create a new empty tool
 			tool = activeWorkspace.createTool();
@@ -242,9 +249,8 @@ public class ProjectTestUtils {
 	 * @param project The project which with the tool is associated.
 	 * @param tool The tool to be saved
 	 * @return The tool template for the given tool.
-	 * @throws DuplicateNameException
 	 */
-	public static ToolTemplate saveTool(Project project, Tool tool) {
+	public static ToolTemplate saveTool(Project project, PluginTool tool) {
 		// save the tool to the project tool chest
 		ToolChest toolChest = project.getLocalToolChest();
 		ToolTemplate toolTemplate = tool.saveToolToToolTemplate();
@@ -254,8 +260,8 @@ public class ProjectTestUtils {
 
 	/**
 	 * Remove the specified tool if it exists.
-	 * @param project
-	 * @param toolName
+	 * @param project the project
+	 * @param toolName the tool name
 	 * @return true if it existed and was removed from the local tool chest.
 	 */
 	public static boolean deleteTool(Project project, String toolName) {

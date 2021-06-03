@@ -139,7 +139,7 @@ class DetachedWindowNode extends WindowNode {
 	}
 
 	private void setFrameIcon(Frame frame, Image image) {
-		List<Image> list = new ArrayList<Image>();
+		List<Image> list = new ArrayList<>();
 		list.add(image);
 		setFrameIcon(frame, list);
 	}
@@ -222,7 +222,7 @@ class DetachedWindowNode extends WindowNode {
 	}
 
 	private String getTitleOfChildren() {
-		List<ComponentPlaceholder> placeholders = new ArrayList<ComponentPlaceholder>();
+		List<ComponentPlaceholder> placeholders = new ArrayList<>();
 
 		child.populateActiveComponents(placeholders);
 
@@ -253,12 +253,12 @@ class DetachedWindowNode extends WindowNode {
 		// the same provider.
 		//
 		Map<String, List<ComponentPlaceholder>> providerNameToPlacholdersMap =
-			new HashMap<String, List<ComponentPlaceholder>>();
+			new HashMap<>();
 		for (ComponentPlaceholder placeholder : placeholders) {
 			String providerName = placeholder.getProvider().getName();
 			List<ComponentPlaceholder> list = providerNameToPlacholdersMap.get(providerName);
 			if (list == null) {
-				list = new ArrayList<ComponentPlaceholder>();
+				list = new ArrayList<>();
 				providerNameToPlacholdersMap.put(providerName, list);
 			}
 			list.add(placeholder);
@@ -267,13 +267,13 @@ class DetachedWindowNode extends WindowNode {
 		//
 		// Turn the created mapping into a mapping of providers names to sub-titles
 		//
-		Map<String, List<String>> providerNameToTitlesMap = new HashMap<String, List<String>>();
+		Map<String, List<String>> providerNameToTitlesMap = new HashMap<>();
 		Set<Entry<String, List<ComponentPlaceholder>>> entrySet =
 			providerNameToPlacholdersMap.entrySet();
 		for (Entry<String, List<ComponentPlaceholder>> entry : entrySet) {
 			String providerName = entry.getKey();
 			List<ComponentPlaceholder> placeholdersList = entry.getValue();
-			List<String> titles = new ArrayList<String>();
+			List<String> titles = new ArrayList<>();
 			if (placeholdersList.size() == 1) {
 				titles.add(placeholdersList.get(0).getTitle());
 			}
@@ -290,7 +290,7 @@ class DetachedWindowNode extends WindowNode {
 		// Use the created mapping to create an individual title based on a single provider
 		// or a group of providers.
 		//
-		List<String> finalTitles = new ArrayList<String>();
+		List<String> finalTitles = new ArrayList<>();
 		Set<Entry<String, List<String>>> providersEntrySet = providerNameToTitlesMap.entrySet();
 		for (Entry<String, List<String>> entry : providersEntrySet) {
 			String providerName = entry.getKey();
@@ -361,6 +361,17 @@ class DetachedWindowNode extends WindowNode {
 			}
 		});
 
+		adjustBounds();
+
+		window.setBounds(bounds);
+		window.setVisible(true);
+	}
+
+	/**
+	 * Ensures the bounds of this window have a valid location and size 
+	 */
+	private void adjustBounds() {
+
 		if (bounds.height == 0 || bounds.width == 0) {
 			window.pack();
 			Dimension d = window.getSize();
@@ -368,9 +379,14 @@ class DetachedWindowNode extends WindowNode {
 			bounds.width = d.width;
 		}
 
-		WindowUtilities.ensureOnScreen(winMgr.getRootFrame(), bounds);
-		window.setBounds(bounds);
-		window.setVisible(true);
+		Window activeWindow = winMgr.getActiveWindow();
+		Point p = bounds.getLocation();
+		if (p.x == 0 && p.y == 0) {
+			p = WindowUtilities.centerOnScreen(activeWindow, bounds.getSize());
+			bounds.setLocation(p);
+		}
+
+		WindowUtilities.ensureOnScreen(activeWindow, bounds);
 	}
 
 	private JFrame createFrame() {
@@ -403,6 +419,11 @@ class DetachedWindowNode extends WindowNode {
 		if (window != null) {
 			window.setVisible(state);
 		}
+	}
+
+	@Override
+	boolean isVisible() {
+		return window != null && window.isVisible();
 	}
 
 	void updateDialog() {
@@ -450,12 +471,9 @@ class DetachedWindowNode extends WindowNode {
 		((RootNode) parent).notifyWindowChanged(this);
 	}
 
-	/**
-	 * Releases all resources and makes this node unusable.
-	 *
-	 */
 	@Override
 	void dispose() {
+
 		if (dropTargetHandler != null) {
 			dropTargetHandler.dispose();
 		}
@@ -468,8 +486,11 @@ class DetachedWindowNode extends WindowNode {
 			window = null;
 		}
 
-		child.parent = null;
-		child = null;
+		if (child != null) {
+			child.parent = null;
+			child.dispose();
+			child = null;
+		}
 	}
 
 	@Override
@@ -511,10 +532,8 @@ class DetachedWindowNode extends WindowNode {
 		if (window != null) {
 			bounds = window.getBounds();
 		}
+
 		Element root = new Element("WINDOW_NODE");
-//		if (title != null) {
-//			root.setAttribute("TITLE", title);
-//		}
 		root.setAttribute("X_POS", "" + bounds.x);
 		root.setAttribute("Y_POS", "" + bounds.y);
 		root.setAttribute("WIDTH", "" + bounds.width);
@@ -534,12 +553,11 @@ class DetachedWindowNode extends WindowNode {
 
 	/**
 	 * Set the status text
-	 * @param text
+	 * @param text the text
 	 */
 	public void setStatusText(String text) {
 		if (statusBar != null) {
-			boolean isActive = window == null ? false : window.isActive();
-			statusBar.setStatusText(text, isActive);
+			statusBar.setStatusText(text);
 		}
 	}
 

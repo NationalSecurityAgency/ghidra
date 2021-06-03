@@ -4,12 +4,12 @@
             endian="little"
             size="64"
             variant="v8A"
-            version="1.4"
+            version="1.5"
             slafile="AARCH64.sla"
             processorspec="AARCH64.pspec"
             manualindexfile="../manuals/AARCH64.idx"
             id="AARCH64:LE:64:v8A">
-    <description>Generic ARM v8.3-A, Little endian instructions, Little endian data</description>
+    <description>Generic ARM v8.5-A LE instructions, LE data, missing some 8.5 vector</description>
     <compiler name="default" spec="AARCH64.cspec" id="default"/>
     <compiler name="Visual Studio" spec="AARCH64_win.cspec" id="windows"/>
     <external_name tool="gnu" name="aarch64"/>
@@ -20,12 +20,12 @@
             instructionEndian="little"
             size="64"
             variant="v8A"
-            version="1.4"
+            version="1.5"
             slafile="AARCH64BE.sla"
             processorspec="AARCH64.pspec"
             manualindexfile="../manuals/AARCH64.idx"
             id="AARCH64:BE:64:v8A">
-    <description>Generic ARM v8.3-A, Little endian instruction, Big endian data</description>
+    <description>Generic ARM v8.5-A LE instructions, BE data, missing some 8.5 vector</description>
     <compiler name="default" spec="AARCH64.cspec" id="default"/>
     <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>
   </language>

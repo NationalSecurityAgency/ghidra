@@ -26,28 +26,28 @@ public interface FunctionTagChangeSet extends ChangeSet {
 	/**
 	 * Indicates that a tag has been changed (edited/deleted).
 	 * 
-	 * @param id the id of the tag (from {@link FunctionTagAdapter})
+	 * @param id the id of the tag (from {@link ghidra.program.database.function.FunctionTagAdapter FunctionTagAdapter})
 	 */
 	void tagChanged(long id);
 
 	/**
 	 * Indicates that a tag has been created.
 	 * 
-	 * @param id id the id of the tag (from {@link FunctionTagAdapter})
+	 * @param id id the id of the tag (from {@link ghidra.program.database.function.FunctionTagAdapter FunctionTagAdapter})
 	 */
 	void tagCreated(long id);
 
 	/**
 	 * Returns a list of all tag ids that have been changed (edited/deleted).
 	 * 
-	 * @return the list of tag ids (from {@link FunctionTagAdapter})
+	 * @return the list of tag ids (from {@link ghidra.program.database.function.FunctionTagAdapter FunctionTagAdapter})
 	 */
 	long[] getTagChanges();
 	
 	/**
 	 * Returns a list of all tag ids that have been created.
 	 * 
-	 * @return the list of tag ids (from {@link FunctionTagAdapter})
+	 * @return the list of tag ids (from {@link ghidra.program.database.function.FunctionTagAdapter FunctionTagAdapter})
 	 */
 	long[] getTagCreations();
 

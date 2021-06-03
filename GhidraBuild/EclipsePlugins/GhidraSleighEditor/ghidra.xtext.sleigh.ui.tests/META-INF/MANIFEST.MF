@@ -13,6 +13,7 @@ Require-Bundle: ghidra.xtext.sleigh.ui,
  org.eclipse.xtext.junit4,
  org.eclipse.xtext.xbase.junit,
  org.eclipse.core.runtime,
- org.eclipse.ui.workbench;resolution:=optional
+ org.eclipse.ui.workbench;resolution:=optional,
+ org.eclipse.xtext.ui.testing
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: ghidra.xtext.sleigh.ui.tests;x-internal=true

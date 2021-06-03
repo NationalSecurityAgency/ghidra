@@ -22,7 +22,6 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.util.MemoryByteIterator;
-import ghidra.util.classfinder.ExtensionPoint;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -30,8 +29,7 @@ import ghidra.util.task.TaskMonitor;
  * This class is used for the computation of various digest checksums that are provided 
  * by java. These checksums do not have options associated with them.
  */
-@ExtensionPoint.Exclude(reason = "Subclasses will get picked up by extension points.")
-public class DigestChecksumAlgorithm extends ChecksumAlgorithm {
+public abstract class DigestChecksumAlgorithm extends ChecksumAlgorithm {
 
 	MessageDigest digester;
 

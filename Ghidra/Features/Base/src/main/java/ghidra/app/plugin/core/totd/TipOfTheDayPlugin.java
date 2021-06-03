@@ -15,9 +15,10 @@
  */
 package ghidra.app.plugin.core.totd;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
@@ -31,6 +32,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
+import utilities.util.FileUtilities;
 
 //@formatter:off
 @PluginInfo(
@@ -80,23 +82,10 @@ public class TipOfTheDayPlugin extends Plugin implements FrontEndOnly {
 	}
 
 	private List<String> loadTips() throws IOException {
-		List<String> tips = new ArrayList<>();
-		InputStream in = getClass().getResourceAsStream("tips.txt");
-		if (in == null) {
-			return tips;
+		try (InputStream in = getClass().getResourceAsStream("tips.txt")) {
+			List<String> tips = in == null ? Collections.emptyList() : FileUtilities.getLines(in);
+			return tips.stream().filter(s -> s.length() > 0).collect(Collectors.toList());
 		}
-		BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-		while (true) {
-			String tip = reader.readLine();
-			if (tip == null) {
-				break;
-			}
-			if (tip.length() == 0) {
-				continue;
-			}
-			tips.add(tip);
-		}
-		return tips;
 	}
 
 	@Override

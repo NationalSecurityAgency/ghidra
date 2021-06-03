@@ -368,6 +368,9 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 			return null;
 		}
 
+		ElfDefaultGotPltMarkup.setConstant(refPtr);
+		ElfDefaultGotPltMarkup.setConstant(tocPtr);
+
 		Function function = program.getListing().getFunctionAt(refAddr);
 		if (function == null) {
 			// Check for potential pointer table (unsure a non-function would be referenced by OPD section)

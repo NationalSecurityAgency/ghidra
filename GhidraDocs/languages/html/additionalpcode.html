@@ -301,6 +301,135 @@ This operator is intended specifically for when the value doesn't change but its
 interpretation as a data-type changes at this point.
 </p>
 </div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="cpui_insert"></a>INSERT</h3></div></div></div>
+<div class="informalexample"><div class="table">
+<a name="insert.htmltable"></a><table frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Parameters</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right">input0</td>
+  <td></td>
+  <td>Varnode where the value will be inserted.</td>
+</tr>
+<tr>
+  <td align="right">input1</td>
+  <td></td>
+  <td>Integer varnode containing the value to insert.</td>
+</tr>
+<tr>
+  <td align="right">position</td>
+  <td>(<span class="bold"><strong>constant</strong></span>)</td>
+  <td>Constant indicating the bit position to insert at.</td>
+</tr>
+<tr>
+  <td align="right">size</td>
+  <td>(<span class="bold"><strong>constant</strong></span>)</td>
+  <td>Constant indicating the number of bits to insert.</td>
+</tr>
+<tr>
+  <td align="right">output</td>
+  <td></td>
+  <td>Varnode result containing input0 with input1 inserted.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Semantic statement</strong></span></td>
+  <td></td>
+</tr>
+<tr>
+  <td></td>
+  <td colspan="2"><span class="emphasis"><em>Cannot be explicitly coded.</em></span></td>
+</tr>
+</tfoot>
+</table>
+</div></div>
+<p>
+The values <span class="emphasis"><em>position</em></span> and <span class="emphasis"><em>size</em></span> must be constants.
+The least significant <span class="emphasis"><em>size</em></span> bits from input1 are
+inserted into input0, overwriting a range of bits of the same size,
+but leaving any other bits in input0 unchanged. The least significant bit of the overwritten
+range is given by <span class="emphasis"><em>position</em></span>, where bits in index0 are labeled from least significant
+to most significant, starting at 0. The value obtained after this overwriting is returned
+as output.
+Varnodes input0 and output must be the same size and are intended to be the same varnode. 
+The value <span class="emphasis"><em>size</em></span> must be not be bigger than the varnode input1, and
+<span class="emphasis"><em>size</em></span> + <span class="emphasis"><em>position</em></span> must not be bigger than the varnode input0.
+</p>
+<p>
+This operation is never generated as raw p-code, even though it is equivalent
+to SLEIGH <span class="bold"><strong>bitrange</strong></span> syntax such as input0[10,1] = input1.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="cpui_extract"></a>EXTRACT</h3></div></div></div>
+<div class="informalexample"><div class="table">
+<a name="extract.htmltable"></a><table frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Parameters</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right">input0</td>
+  <td></td>
+  <td>Varnode to extract a value from.</td>
+</tr>
+<tr>
+  <td align="right">position</td>
+  <td>(<span class="bold"><strong>constant</strong></span>)</td>
+  <td>Constant indicating the bit position to extract from.</td>
+</tr>
+<tr>
+  <td align="right">size</td>
+  <td>(<span class="bold"><strong>constant</strong></span>)</td>
+  <td>Constant indicating the number of bits to extract.</td>
+</tr>
+<tr>
+  <td align="right">output</td>
+  <td></td>
+  <td>Varnode result containing the extracted value.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Semantic statement</strong></span></td>
+  <td></td>
+</tr>
+<tr>
+  <td></td>
+  <td colspan="2"><span class="emphasis"><em>Cannot be explicitly coded.</em></span></td>
+</tr>
+</tfoot>
+</table>
+</div></div>
+<p>
+The values <span class="emphasis"><em>position</em></span> and <span class="emphasis"><em>size</em></span> must be constants.
+The operation extracts <span class="emphasis"><em>size</em></span> bits from input0 and returns it in output.
+The <span class="emphasis"><em>position</em></span> indicates the least significant bit in the range being extracted, with
+the bits in input0 labeled from least to most significant, starting at 0. The varnodes input0 and output
+can be different sizes, and the extracted value is zero extended into output.
+The value <span class="emphasis"><em>size</em></span> must not be bigger than the varnode output, and
+<span class="emphasis"><em>size</em></span> + <span class="emphasis"><em>position</em></span> must not be bigger
+than the varnode input0.
+</p>
+<p>
+This operation is never generated as raw p-code, even though it is equivalent
+to SLEIGH <span class="bold"><strong>bitrange</strong></span> syntax such as output = input0[10,1].
+</p>
+</div>
 </div>
 <div class="navfooter">
 <hr>

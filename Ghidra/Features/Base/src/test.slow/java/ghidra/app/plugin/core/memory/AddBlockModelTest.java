@@ -143,7 +143,10 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		model.setLength(100);
 		assertTrue(model.isValidInfo());
 
-		model.setBlockType(MemoryBlockType.OVERLAY);
+		model.setBlockType(MemoryBlockType.DEFAULT);
+		assertTrue(model.isValidInfo());
+
+		model.setOverlay(true);
 		assertTrue(model.isValidInfo());
 
 		model.setBaseAddress(getAddr(0x2000));
@@ -181,7 +184,8 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		model.setBlockName(".test");
 		model.setStartAddress(getAddr(0x100));
 		model.setLength(100);
-		model.setBlockType(MemoryBlockType.OVERLAY);
+		model.setBlockType(MemoryBlockType.DEFAULT);
+		model.setOverlay(true);
 		model.setInitializedType(InitializedType.INITIALIZED_FROM_VALUE);
 		model.setInitialValue(0xa);
 		assertTrue(model.execute());
@@ -206,7 +210,8 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		model.setBlockName(".test");
 		model.setStartAddress(getAddr(0x01001000));
 		model.setLength(100);
-		model.setBlockType(MemoryBlockType.OVERLAY);
+		model.setBlockType(MemoryBlockType.DEFAULT);
+		model.setOverlay(true);
 		model.setInitializedType(InitializedType.INITIALIZED_FROM_VALUE);
 		model.setInitialValue(0xa);
 		assertTrue(model.execute());
@@ -257,8 +262,8 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 	}
 
 	@Test
-	public void testDuplicateNameSetting() {
-		model.setBlockName(".data");
+	public void testInvalidNameSetting() {
+		model.setBlockName("");
 		assertTrue(!model.isValidInfo());
 		assertTrue(model.getMessage().length() > 0);
 	}
@@ -266,11 +271,12 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 	@Test
 	public void testDuplicateName() {
 		model.setBlockName(".data");
+		model.setOverlay(false);
 		model.setStartAddress(getAddr(0x100));
 		model.setLength(100);
 		model.setBlockType(MemoryBlockType.DEFAULT);
 		model.setInitialValue(0xa);
-		assertFalse(model.execute());
+		assertTrue(model.execute());
 	}
 
 	@Test

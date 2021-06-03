@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +116,7 @@ abstract class BookmarkDBAdapter {
 					if (monitor.isCancelled()) {
 						throw new IOException("Upgrade Cancelled");
 					}
-					Record rec = it.next();
+					DBRecord rec = it.next();
 					int typeId = getTypeId(rec);
 					tmpAdapter.addType(typeId);
 					Address addr = oldAddrMap.decodeAddress(rec.getLongValue(ADDRESS_COL));
@@ -138,7 +137,7 @@ abstract class BookmarkDBAdapter {
 					if (monitor.isCancelled()) {
 						throw new IOException("Upgrade Cancelled");
 					}
-					Record rec = it.next();
+					DBRecord rec = it.next();
 					newAdapter.updateRecord(rec);
 					monitor.setProgress(++cnt);
 				}
@@ -151,7 +150,7 @@ abstract class BookmarkDBAdapter {
 		}
 	}
 
-	static int getTypeId(Record rec) {
+	static int getTypeId(DBRecord rec) {
 		long key = rec.getKey();
 		return (int) (key >> 48);
 	}
@@ -181,7 +180,7 @@ abstract class BookmarkDBAdapter {
 	 * @return
 	 * @throws IOException 
 	 */
-	Record createBookmark(int typeId, String category, long index, String comment)
+	DBRecord createBookmark(int typeId, String category, long index, String comment)
 			throws IOException {
 		throw new UnsupportedOperationException("Bookmarks are read-only and may not be created");
 	}
@@ -191,7 +190,7 @@ abstract class BookmarkDBAdapter {
 	 * @param rec modified bookmark record
 	 * @throws IOException
 	 */
-	void updateRecord(Record rec) throws IOException {
+	void updateRecord(DBRecord rec) throws IOException {
 		throw new UnsupportedOperationException("Bookmarks are read-only and may not be modified");
 	}
 
@@ -209,7 +208,7 @@ abstract class BookmarkDBAdapter {
 	 * @param id bookmark ID
 	 * @return bookmark record or null if not found.
 	 */
-	abstract Record getRecord(long id) throws IOException;
+	abstract DBRecord getRecord(long id) throws IOException;
 
 	/**
 	 * Get all bookmark records associated with a specific type and address.

@@ -28,8 +28,7 @@ import org.junit.Test;
 
 import docking.DockingUtils;
 import docking.action.DockingActionIf;
-import docking.actions.KeyBindingUtils;
-import docking.actions.ToolActions;
+import docking.actions.*;
 
 public class GhidraScriptMgrPlugin1Test extends AbstractGhidraScriptMgrPluginTest {
 
@@ -47,7 +46,7 @@ public class GhidraScriptMgrPlugin1Test extends AbstractGhidraScriptMgrPluginTes
 		//
 		String initialScriptName = "HelloWorldScript.java";
 		selectScript(initialScriptName);
-		String fullOutput = runScript(initialScriptName);
+		String fullOutput = runSelectedScript(initialScriptName);
 		String expectedOutput = "Hello World";
 		assertTrue("Script did not run - output: " + fullOutput,
 			fullOutput.indexOf(expectedOutput) != -1);
@@ -64,7 +63,7 @@ public class GhidraScriptMgrPlugin1Test extends AbstractGhidraScriptMgrPluginTes
 		//
 		String secondScriptName = "FormatExampleScript.java";
 		selectScript(secondScriptName);
-		fullOutput = runScript(secondScriptName);
+		fullOutput = runSelectedScript(secondScriptName);
 		expectedOutput = "jumped over the";
 		assertTrue("Script did not run - output: " + fullOutput,
 			fullOutput.indexOf(expectedOutput) != -1);
@@ -85,7 +84,7 @@ public class GhidraScriptMgrPlugin1Test extends AbstractGhidraScriptMgrPluginTes
 		//
 		String scriptName = "HelloWorldScript.java";
 		selectScript(scriptName);
-		String fullOutput = runScript(scriptName);
+		String fullOutput = runSelectedScript(scriptName);
 		String expectedOutput = "Hello World";
 		assertTrue("Script did not run - output: " + fullOutput,
 			fullOutput.indexOf(expectedOutput) != -1);
@@ -106,7 +105,7 @@ public class GhidraScriptMgrPlugin1Test extends AbstractGhidraScriptMgrPluginTes
 		//
 		String scriptName = "HelloWorldScript.java";
 		selectScript(scriptName);
-		String fullOutput = runScript(scriptName);
+		String fullOutput = runSelectedScript(scriptName);
 		String expectedOutput = "Hello World";
 		assertTrue("Script did not run - output: " + fullOutput,
 			fullOutput.indexOf(expectedOutput) != -1);
@@ -116,7 +115,7 @@ public class GhidraScriptMgrPlugin1Test extends AbstractGhidraScriptMgrPluginTes
 		//
 		// Run the script again
 		//
-		fullOutput = runGlobalLastScriptAction(scriptName);
+		fullOutput = runLastScript(scriptName);
 		assertTrue("Did not rerun last run script", fullOutput.indexOf(expectedOutput) != -1);
 	}
 
@@ -147,7 +146,7 @@ public class GhidraScriptMgrPlugin1Test extends AbstractGhidraScriptMgrPluginTes
 		KeyStroke actionKs = toolAction.getKeyBinding();
 		assertEquals(newKs, actionKs);
 
-		ToolActions toolActions = plugin.getTool().getToolActions();
+		ToolActions toolActions = (ToolActions) plugin.getTool().getToolActions();
 		Action toolActionByKeyStroke = toolActions.getAction(newKs);
 		assertNotNull(toolActionByKeyStroke);
 	}

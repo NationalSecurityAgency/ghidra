@@ -28,7 +28,7 @@ import java.math.BigInteger;
  * @since 2000-02-16
  */
 
-public interface AddressRange extends Comparable<AddressRange> {
+public interface AddressRange extends Comparable<AddressRange>, Iterable<Address> {
 
 	/**
 	 * Returns the number of addresses in the range.

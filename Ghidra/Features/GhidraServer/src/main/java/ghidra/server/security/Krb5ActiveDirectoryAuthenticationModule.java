@@ -115,10 +115,10 @@ public class Krb5ActiveDirectoryAuthenticationModule implements AuthenticationMo
 					throw new IOException("Missing username or password values");
 				}
 
-				NameCallback destNcb = AuthenticationModule.getFirstCallbackOfType(
-					NameCallback.class, loginmodule_callbacks);
-				PasswordCallback destPcb = AuthenticationModule.getFirstCallbackOfType(
-					PasswordCallback.class, loginmodule_callbacks);
+				NameCallback destNcb = AuthenticationModule
+						.getFirstCallbackOfType(NameCallback.class, loginmodule_callbacks);
+				PasswordCallback destPcb = AuthenticationModule
+						.getFirstCallbackOfType(PasswordCallback.class, loginmodule_callbacks);
 
 				if (destNcb != null) {
 					destNcb.setName(tmpName);

@@ -363,7 +363,8 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 		if (!externalAddressStart.equals(externalAddress)) {
 			long size = externalAddress.subtract(externalAddressStart);
 			try {
-				MemoryBlock block = program.getMemory().createUninitializedBlock("EXTERNAL",
+				MemoryBlock block = program.getMemory()
+						.createUninitializedBlock(MemoryBlock.EXTERNAL_BLOCK_NAME,
 					externalAddressStart, size, false);
 
 				// assume any value in external is writable.

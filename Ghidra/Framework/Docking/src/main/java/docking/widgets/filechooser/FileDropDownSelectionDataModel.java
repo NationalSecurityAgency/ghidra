@@ -25,6 +25,7 @@ import javax.swing.filechooser.FileSystemView;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.DropDownTextFieldDataModel;
 import docking.widgets.list.GListCellRenderer;
+import ghidra.util.DateUtils;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.exception.AssertException;
 
@@ -130,7 +131,7 @@ public class FileDropDownSelectionDataModel implements DropDownTextFieldDataMode
 			"<b>" + HTMLUtilities.escapeHTML(file.getName()) + "</b>" + "</td></tr>" +
 			"<tr><td>Size:</td><td>" + (isDir ? "0" : file.length()) + " bytes" + "</td></tr>" +
 			"<tr><td>Last modified:</td><td>" +
-			GhidraFileChooser.format.format(new Date(file.lastModified())) + "</td></tr>" +
+			DateUtils.formatDateTimestamp(new Date(file.lastModified())) + "</td></tr>" +
 			"</table>";
 	}
 

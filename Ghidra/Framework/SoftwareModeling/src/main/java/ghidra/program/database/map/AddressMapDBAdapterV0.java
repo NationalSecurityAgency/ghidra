@@ -15,22 +15,22 @@
  */
 package ghidra.program.database.map;
 
-import ghidra.program.model.address.*;
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import db.*;
+import ghidra.program.model.address.*;
+import ghidra.util.exception.VersionException;
 
 /**
  * Adapter version 0 (the first real adapter)
  */
 class AddressMapDBAdapterV0 extends AddressMapDBAdapter {
 
-	final Schema SCHEMA = new Schema(0, "Key", new Class[] { StringField.class, IntField.class,
-		ShortField.class }, new String[] { "Space Name", "Segment", "Not Used" });
+	final Schema SCHEMA = new Schema(0, "Key",
+		new Field[] { StringField.INSTANCE, IntField.INSTANCE, ShortField.INSTANCE },
+		new String[] { "Space Name", "Segment", "Not Used" });
 
 	final int SPACE_NAME_COL = 0;
 	final int SEGMENT_COL = 1;
@@ -40,8 +40,8 @@ class AddressMapDBAdapterV0 extends AddressMapDBAdapter {
 	private AddressFactory factory;
 	private Address[] addresses;
 
-	AddressMapDBAdapterV0(DBHandle handle, AddressFactory factory) throws VersionException,
-			IOException {
+	AddressMapDBAdapterV0(DBHandle handle, AddressFactory factory)
+			throws VersionException, IOException {
 		this.handle = handle;
 		this.factory = factory;
 		table = handle.getTable(TABLE_NAME);
@@ -60,14 +60,13 @@ class AddressMapDBAdapterV0 extends AddressMapDBAdapter {
 		RecordIterator it = table.iterator();
 		int deletedID = 1;
 		while (it.hasNext()) {
-			Record rec = it.next();
+			DBRecord rec = it.next();
 			String spaceName = rec.getString(SPACE_NAME_COL);
 			int segment = rec.getIntValue(SEGMENT_COL);
 			AddressSpace space = factory.getAddressSpace(spaceName);
 			if (space == null) {
-				GenericAddressSpace sp =
-					new GenericAddressSpace("Deleted_" + spaceName, 32, AddressSpace.TYPE_UNKNOWN,
-						deletedID++);
+				GenericAddressSpace sp = new GenericAddressSpace("Deleted_" + spaceName, 32,
+					AddressSpace.TYPE_UNKNOWN, deletedID++);
 				sp.setShowSpaceName(true);
 				space = sp;
 			}
@@ -99,7 +98,7 @@ class AddressMapDBAdapterV0 extends AddressMapDBAdapter {
 		ArrayList<AddressMapEntry> list = new ArrayList<AddressMapEntry>();
 		RecordIterator it = table.iterator();
 		while (it.hasNext()) {
-			Record rec = it.next();
+			DBRecord rec = it.next();
 			String spaceName = rec.getString(SPACE_NAME_COL);
 			boolean deleted = (factory.getAddressSpace(spaceName) == null);
 			list.add(new AddressMapEntry((int) rec.getKey(), spaceName,

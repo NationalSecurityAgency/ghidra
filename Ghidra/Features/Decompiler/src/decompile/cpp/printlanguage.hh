@@ -162,6 +162,13 @@ public:
     blanktoken			///< For anonymous types
   };
 
+  /// \brief Strategies for displaying namespace tokens
+  enum namespace_strategy {
+    MINIMAL_NAMESPACES = 0,	///< (default) Print just enough namespace info to fully resolve symbol
+    NO_NAMESPACES = 1,		///< Never print namespace information
+    ALL_NAMESPACES = 2		///< Always print all namespace information
+  };
+
   /// \brief An entry on the reverse polish notation (RPN) stack
   struct ReversePolish {
     const OpToken *tok;		///< The operator token
@@ -230,8 +237,7 @@ public:
 private:
   string name;				///< The name of the high-level language
   vector<uint4> modstack;		///< Printing modification stack
-  vector<Scope *> scopestack;		///< The symbol scope stack
-  Scope *curscope;			///< The current symbol scope
+  vector<const Scope *> scopestack;	///< The symbol scope stack
   vector<ReversePolish> revpol;		///< The Reverse Polish Notation (RPN) token stack
   vector<NodePending> nodepend;		///< Data-flow nodes waiting to be pushed onto the RPN stack
   int4 pending;				///< Number of data-flow nodes waiting to be pushed
@@ -240,19 +246,21 @@ private:
   string commentend;			///< Delimiter characters (if any) for the end of a comment
 protected:
   Architecture *glb;			///< The Architecture owning the language emitter
+  const Scope *curscope;		///< The current symbol scope
   CastStrategy *castStrategy;		///< The strategy for emitting explicit \e case operations
   EmitXml *emit;			///< The low-level token emitter
   uint4 mods;				///< Currently active printing modifications
   uint4 instr_comment_type;		///< Type of instruction comments to display
   uint4 head_comment_type;		///< Type of header comments to display
+  namespace_strategy namespc_strategy;	///< How should namespace tokens be displayed
 #ifdef CPUI_DEBUG
   bool isStackEmpty(void) const { return (nodepend.empty()&&revpol.empty()); }	///< Return \b true if the RPN stack is empty
   bool isModStackEmpty(void) const { return modstack.empty(); }			///< Return \b true if the printing modification stack is empty
 #endif
   // Routines that are probably consistent across languages
   bool isSet(uint4 m) const { return ((mods & m)!=0); }				///< Is the given printing modification active
-  void pushScope(Scope *sc) { scopestack.push_back(sc); curscope = sc; }	///< Push a new symbol scope
-  void popScope(void) { scopestack.pop_back(); curscope = scopestack.back(); }	///< Pop to the previous symbol scope
+  void pushScope(const Scope *sc) { scopestack.push_back(sc); curscope = sc; }	///< Push a new symbol scope
+  void popScope(void);								///< Pop to the previous symbol scope
   void pushMod(void) { modstack.push_back(mods); }				///< Push current printing modifications to the stack
   void popMod(void) { mods = modstack.back(); modstack.pop_back(); }		///< Pop to the previous printing modifications
   void setMod(uint4 m) { mods |= m; }						///< Activate the given printing modification
@@ -267,14 +275,13 @@ protected:
   void emitOp(const ReversePolish &entry);				///< Send an operator token from the RPN to the emitter
   void emitAtom(const Atom &atom);					///< Send an variable token from the RPN to the emitter
   static bool unicodeNeedsEscape(int4 codepoint);			///< Determine if the given codepoint needs to be escaped
-  static void writeUtf8(ostream &s,int4 codepoint);			///< Write unicode character to stream in UTF8 encoding
-  static int4 readUtf16(const uint1 *buf,bool bigend);			///< Read a 2-byte UTF16 element from a byte array
-  static int4 getCodepoint(const uint1 *buf,int4 charsize,bool bigend,int4 &skip);
   bool escapeCharacterData(ostream &s,const uint1 *buf,int4 count,int4 charsize,bool bigend) const;
   void recurse(void);							///< Emit from the RPN stack as much as possible
   void opBinary(const OpToken *tok,const PcodeOp *op);			///< Push a binary operator onto the RPN stack
   void opUnary(const OpToken *tok,const PcodeOp *op);			///< Push a unary operator onto the RPN stack
   int4 getPending(void) const { return pending; }			///< Get the number of pending nodes yet to be put on the RPN stack
+  void resetDefaultsInternal(void);					///< Reset options to default for PrintLanguage
+
 
   /// \brief Print a single unicode character as a \e character \e constant for the high-level language
   ///
@@ -406,7 +413,6 @@ public:
   CastStrategy *getCastStrategy(void) const { return castStrategy; }	///< Get the casting strategy for the language
   ostream *getOutputStream(void) const { return emit->getOutputStream(); }	///< Get the output stream being emitted to
   void setOutputStream(ostream *t) { emit->setOutputStream(t); }	///< Set the output stream to emit to
-  void setScope(Scope *sc) { curscope = sc; }				///< Set the current Symbol scope
   void setMaxLineSize(int4 mls) { emit->setMaxLineSize(mls); }		///< Set the maximum number of characters per line
   void setIndentIncrement(int4 inc) { emit->setIndentIncrement(inc); }	///< Set the number of characters to indent per level of code nesting
   void setLineCommentIndent(int4 val);					///< Set the number of characters to indent comment lines
@@ -414,6 +420,7 @@ public:
 			   bool usecommentfill);			///< Establish comment delimiters for the language
   uint4 getInstructionComment(void) const { return instr_comment_type; }	///< Get the type of comments suitable within the body of a function
   void setInstructionComment(uint4 val) { instr_comment_type = val; }	///< Set the type of comments suitable within the body of a function
+  void setNamespaceStrategy(namespace_strategy strat) { namespc_strategy = strat; }	///< Set how namespace tokens are displayed
   uint4 getHeaderComment(void) const { return head_comment_type; }	///< Get the type of comments suitable for a function header
   void setHeaderComment(uint4 val) { head_comment_type = val; }		///< Set the type of comments suitable for a function header
   bool emitsXml(void) const { return emit->emitsXml(); }		///< Does the low-level emitter, emit XML markup
@@ -421,6 +428,7 @@ public:
   void setFlat(bool val);						///< Set whether nesting code structure should be emitted
 
   virtual void adjustTypeOperators(void)=0;				///< Set basic data-type information for p-code operators
+  virtual void resetDefaults(void);					///< Set printing options to their default value
   virtual void clear(void);						///< Clear the RPN stack and the low-level emitter
   virtual void setIntegerFormat(const string &nm);			///< Set the default integer format
 
@@ -430,14 +438,6 @@ public:
   /// then it will choose from among the schemes it knows
   /// \param nm is the configuration description
   virtual void setCommentStyle(const string &nm)=0;
-
-  /// \brief Decide is the given byte array looks like a character string
-  ///
-  /// This looks for encodings and/or a terminator that is appropriate for the high-level language
-  /// \param buf is a pointer to the byte array
-  /// \param size is the number of bytes in the array
-  /// \param charsize is the size in bytes of the encoding element (i.e. UTF8, UTF16, etc.) to assume
-  virtual bool isCharacterConstant(const uint1 *buf,int4 size,int4 charsize) const=0;
 
   /// \brief Emit definitions of data-types
   ///
@@ -486,8 +486,8 @@ public:
   virtual void opIntSlessEqual(const PcodeOp *op)=0;			///< Emit a INT_SLESSEQUAL operator
   virtual void opIntLess(const PcodeOp *op)=0;				///< Emit a INT_LESS operator
   virtual void opIntLessEqual(const PcodeOp *op)=0;			///< Emit a INT_LESSEQUAL operator
-  virtual void opIntZext(const PcodeOp *op)=0;				///< Emit a INT_ZEXT operator
-  virtual void opIntSext(const PcodeOp *op)=0;				///< Emit a INT_SEXT operator
+  virtual void opIntZext(const PcodeOp *op,const PcodeOp *readOp)=0;	///< Emit a INT_ZEXT operator
+  virtual void opIntSext(const PcodeOp *op,const PcodeOp *readOp)=0;	///< Emit a INT_SEXT operator
   virtual void opIntAdd(const PcodeOp *op)=0;				///< Emit a INT_ADD operator
   virtual void opIntSub(const PcodeOp *op)=0;				///< Emit a INT_SUB operator
   virtual void opIntCarry(const PcodeOp *op)=0;				///< Emit a INT_CARRY operator
@@ -538,6 +538,9 @@ public:
   virtual void opSegmentOp(const PcodeOp *op)=0;			///< Emit a SEGMENTOP operator
   virtual void opCpoolRefOp(const PcodeOp *op)=0;			///< Emit a CPOOLREF operator
   virtual void opNewOp(const PcodeOp *op)=0;				///< Emit a NEW operator
+  virtual void opInsertOp(const PcodeOp *op)=0;				///< Emit an INSERT operator
+  virtual void opExtractOp(const PcodeOp *op)=0;			///< Emit an EXTRACT operator
+  virtual void opPopcountOp(const PcodeOp *op)=0;			///< Emit a POPCOUNT operator
 
   static int4 mostNaturalBase(uintb val); 			///< Determine the most natural base for an integer
   static void formatBinary(ostream &s,uintb val);		///< Print a number in binary form

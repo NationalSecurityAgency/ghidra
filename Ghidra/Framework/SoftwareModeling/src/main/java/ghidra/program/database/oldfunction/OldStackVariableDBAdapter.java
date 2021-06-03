@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package ghidra.program.database.oldfunction;
 
-import ghidra.program.database.map.AddressMap;
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.program.database.map.AddressMap;
+import ghidra.util.exception.VersionException;
 
 /**
  * Database adapter for stack variables.
@@ -56,23 +54,26 @@ abstract class OldStackVariableDBAdapter {
 	}
 
 	/**
-	 * 
+	 * Delete associated database table
+	 * @param handle database handle
+	 * @throws IOException if IO error occurs
 	 */
 	abstract void deleteTable(DBHandle handle) throws IOException;
 
 	/**
 	 * Get a stack variable record.
-	 * @param key
-	 * @return Record
+	 * @param key stack variable record
+	 * @return Record record or null
+	 * @throws IOException if IO error occurs
 	 */
-	abstract Record getStackVariableRecord(long key) throws IOException;
+	abstract DBRecord getStackVariableRecord(long key) throws IOException;
 
 	/**
 	 * Get all stack variable keys which correspond to a function.
-	 * @param functionKey
-	 * @return array of stack variable keys.
-	 * @throws IOException
+	 * @param functionKey parent function ID
+	 * @return array of stack variable keys as LongField values within Field array.
+	 * @throws IOException if IO error occurs
 	 */
-	abstract long[] getStackVariableKeys(long functionKey) throws IOException;
+	abstract Field[] getStackVariableKeys(long functionKey) throws IOException;
 
 }

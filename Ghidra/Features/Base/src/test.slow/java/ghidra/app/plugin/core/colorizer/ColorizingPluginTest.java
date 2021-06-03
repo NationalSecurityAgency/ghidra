@@ -400,8 +400,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		ActionContext context = getActionContext();
 		performAction(setColorAction, context, false);
 
-		Window chooserWindow = waitForWindow(null, ColorizingServiceProvider.COLOR_CHOOSER_TITLE,
-			DEFAULT_WINDOW_TIMEOUT);
+		Window chooserWindow = waitForWindow(ColorizingServiceProvider.COLOR_CHOOSER_TITLE);
 		assertNotNull("Did not find Color Chooser", chooserWindow);
 		GhidraColorChooser colorChooser = findComponent(chooserWindow, GhidraColorChooser.class);
 		JButton okButton = findButtonByText(chooserWindow, "OK");

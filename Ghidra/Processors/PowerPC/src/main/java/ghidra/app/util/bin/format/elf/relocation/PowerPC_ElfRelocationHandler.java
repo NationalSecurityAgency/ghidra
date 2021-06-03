@@ -82,6 +82,10 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 		int newValue = 0;
 
 		switch (type) {
+			case PowerPC_ElfRelocationConstants.R_PPC_COPY:
+				markAsWarning(program, relocationAddress, "R_PPC_COPY", sym.getNameAsString(),
+					symbolIndex, "Runtime copy not supported", elfRelocationContext.getLog());
+				break;
 			case PowerPC_ElfRelocationConstants.R_PPC_ADDR32:
 			case PowerPC_ElfRelocationConstants.R_PPC_UADDR32:
 			case PowerPC_ElfRelocationConstants.R_PPC_GLOB_DAT:

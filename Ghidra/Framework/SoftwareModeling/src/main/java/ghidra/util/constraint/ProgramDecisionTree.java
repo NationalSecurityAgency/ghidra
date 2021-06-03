@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +15,18 @@
  */
 package ghidra.util.constraint;
 
+import java.util.List;
+
 import generic.constraint.DecisionTree;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 
-import java.util.Set;
-
 public class ProgramDecisionTree extends DecisionTree<Program> {
 	public ProgramDecisionTree() {
 		super();
 
-		Set<Class<? extends ProgramConstraint>> classes =
+		List<Class<? extends ProgramConstraint>> classes =
 			ClassSearcher.getClasses(ProgramConstraint.class);
 		for (Class<? extends ProgramConstraint> constraintClass : classes) {
 			try {

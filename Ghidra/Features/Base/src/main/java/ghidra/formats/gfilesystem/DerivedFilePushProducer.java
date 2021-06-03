@@ -22,13 +22,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * Used by {@link FileSystemService#getDerivedFilePushInfo(FSRL, String, DerivedFilePushProducer, TaskMonitor)}
+ * Used by {@link FileSystemService#getDerivedFilePush(FSRL, String, DerivedFilePushProducer, TaskMonitor)}
  * to produce a derived file from a source file.
  */
 public interface DerivedFilePushProducer {
 	/**
 	 * Callback method intended to be implemented by the caller to
-	 * {@link FileSystemService#getDerivedFilePushInfo(FSRL, String, DerivedFileProducer, TaskMonitor)}.
+	 * {@link FileSystemService#getDerivedFilePush(FSRL, String, DerivedFilePushProducer, TaskMonitor)}.
 	 * <p>
 	 * The implementation needs to write bytes to the supplied {@link OutputStream}.
 	 * <p>

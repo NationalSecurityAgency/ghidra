@@ -15,8 +15,7 @@
  */
 package ghidra.program.database.code;
 
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
@@ -80,12 +79,12 @@ public class DefaultDataCacheTest extends AbstractGenericTest {
 		assertTrue(cu instanceof Data);
 		DataDB data = (DataDB) cu;
 		assertTrue(!data.isDefined());
-		assertTrue(!data.isInvalid());
+		assertTrue(!((Boolean) invokeInstanceMethod("isInvalid", data)));
 		AddressSet restrictedSet = new AddressSet(addr(0x1000), addr(0x1003));
 		Disassembler disassembler = Disassembler.getDisassembler(program, TaskMonitor.DUMMY, null);
 		AddressSetView disAddrs = disassembler.disassemble(addr(0x1000), restrictedSet);
 		assertTrue(!disAddrs.isEmpty());
-		assertTrue(!data.checkIsValid());
+		assertTrue(!((Boolean) invokeInstanceMethod("checkIsValid", data)));
 		assertNull(listing.getCodeUnitAt(addr(0x1001)));
 	}
 

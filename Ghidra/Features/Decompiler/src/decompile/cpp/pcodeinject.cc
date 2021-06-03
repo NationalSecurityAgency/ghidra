@@ -117,13 +117,13 @@ void ExecutablePcode::build(void)
   icontext.clear();
   uintb uniqReserve = 0x10;			// Temporary register space reserved for inputs and output
   Architecture *glb = emulator.getArch();
-  AddrSpace *codeSpace = glb->getDefaultSpace();
+  AddrSpace *codeSpace = glb->getDefaultCodeSpace();
   AddrSpace *uniqSpace = glb->getUniqueSpace();
   icontext.baseaddr = Address(codeSpace,0x1000);	// Fake address
   icontext.nextaddr = icontext.baseaddr;
   for(int4 i=0;i<sizeInput();++i) {	// Skip the first operand containing the injectid
     InjectParameter &param( getInput(i) );
-    icontext.inputlist.push_back(VarnodeData());
+    icontext.inputlist.emplace_back();
     icontext.inputlist.back().space = uniqSpace;
     icontext.inputlist.back().offset = uniqReserve;
     icontext.inputlist.back().size = param.getSize();
@@ -132,7 +132,7 @@ void ExecutablePcode::build(void)
   }
   for(int4 i=0;i<sizeOutput();++i) {
     InjectParameter &param( getOutput(i) );
-    icontext.output.push_back(VarnodeData());
+    icontext.output.emplace_back();
     icontext.output.back().space = uniqSpace;
     icontext.output.back().offset = uniqReserve;
     icontext.output.back().size = param.getSize();

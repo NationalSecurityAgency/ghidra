@@ -99,7 +99,7 @@ public class m68kEmulateInstructionStateModifier extends EmulateInstructionState
 
                     if ((currentAddress.getOffset() & 0x1) == 1) {
                             throw new LowlevelError(
-                                    "Flow to odd address occured without setting ISM register (16-bit mode)");
+                                    "Flow to odd address occurred without setting ISM register (16-bit mode)");
                     }
 
                     // MIPS mode

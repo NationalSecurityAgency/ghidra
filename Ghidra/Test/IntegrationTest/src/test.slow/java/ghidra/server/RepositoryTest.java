@@ -49,7 +49,7 @@ public class RepositoryTest extends AbstractGhidraHeadedIntegrationTest {
 		FileUtilities.deleteDir(serverRoot);
 		serverRoot.mkdir();
 
-		mgr = new RepositoryManager(serverRoot, false, false, 0, false);
+		mgr = new RepositoryManager(serverRoot, false, 0, false);
 		mgr.getUserManager().addUser(userName);
 
 		repository = mgr.createRepository(userName, REPOSITORY_NAME);

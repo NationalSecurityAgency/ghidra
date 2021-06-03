@@ -1091,8 +1091,9 @@ class FGActionManager {
 		AddressSet subtraction = provider.getCurrentProgramSelection().subtract(functionBody);
 
 		ProgramSelection programSelectionWithoutGraphBody = new ProgramSelection(subtraction);
-		plugin.getTool().firePluginEvent(new ProgramSelectionPluginEvent("Spoof!",
-			programSelectionWithoutGraphBody, provider.getCurrentProgram()));
+		plugin.getTool()
+				.firePluginEvent(new ProgramSelectionPluginEvent("Spoof!",
+					programSelectionWithoutGraphBody, provider.getCurrentProgram()));
 	}
 
 	private Set<FGVertex> getAllVertices() {
@@ -1161,8 +1162,10 @@ class FGActionManager {
 
 	private void makeSelectionFromAddresses(AddressSet addresses) {
 		ProgramSelection selection = new ProgramSelection(addresses);
-		plugin.getTool().firePluginEvent(
-			new ProgramSelectionPluginEvent("Spoof!", selection, provider.getCurrentProgram()));
+		plugin.getTool()
+				.firePluginEvent(
+					new ProgramSelectionPluginEvent("Spoof!", selection,
+						provider.getCurrentProgram()));
 	}
 
 	private void ungroupVertices(Set<GroupedFunctionGraphVertex> groupVertices) {

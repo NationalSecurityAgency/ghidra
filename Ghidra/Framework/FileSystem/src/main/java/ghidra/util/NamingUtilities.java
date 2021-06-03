@@ -116,7 +116,7 @@ public final class NamingUtilities {
 	 * @see #isValidName(String)
 	 * @deprecated this method may be removed in a subsequent release due to 
 	 * limited use and applicability (project names and project file names have
-	 * different naming resrictions).
+	 * different naming restrictions).
 	 */
 	@Deprecated
 	public static char findInvalidChar(String name) {
@@ -169,7 +169,7 @@ public final class NamingUtilities {
 	 * chars in a row are replace by a single MANGLE_CHAR.
 	 * 
 	 * @param mangledName mangled name string
-	 * @return demagle name
+	 * @return demangle name
 	 */
 	public static String demangle(String mangledName) {
 		int len = mangledName.length();

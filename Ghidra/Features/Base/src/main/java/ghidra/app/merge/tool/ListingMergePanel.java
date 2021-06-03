@@ -364,7 +364,8 @@ public class ListingMergePanel extends JPanel
 	}
 
 	/**
-	 * @param navigator
+	 * Adds a button press listener.
+	 * @param listener the listener to add.
 	 */
 	public void addButtonPressedListener(ButtonPressedListener listener) {
 		for (ListingPanel listingPanel : listingPanels) {

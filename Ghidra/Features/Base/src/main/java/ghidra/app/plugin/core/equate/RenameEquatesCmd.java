@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +22,7 @@ import ghidra.program.model.symbol.*;
 import ghidra.util.exception.*;
 
 /**
- * Command for renaming all references to an equate to some other equate. The an equate
+ * Command for moving all references to an equate to some other equate. If an equate
  * for the new name does not exist, it will be created and all references will be moved
  * to it before deleting the original equate.  If an equate already exists with that
  * name (it better have the correct value or we shouldn't have gotten this far!), its
@@ -52,6 +51,7 @@ class RenameEquatesCmd implements Command {
 	/**
 	 * The name of the edit action.
 	 */
+	@Override
 	public String getName() {
 		return "Rename Equates";
 	}
@@ -59,6 +59,7 @@ class RenameEquatesCmd implements Command {
 	/**
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.plugintool.PluginTool, ghidra.framework.model.DomainObject)
 	 */
+	@Override
 	public boolean applyTo(DomainObject obj) {
 		EquateTable etable = ((Program) obj).getEquateTable();
 
@@ -89,8 +90,8 @@ class RenameEquatesCmd implements Command {
 		// Finally, move all references to the old equate to the new one.
 		EquateReference[] refList = fromEquate.getReferences();
 		etable.removeEquate(oldEquateName);
-		for (int i = 0; i < refList.length; i++) {
-			toEquate.addReference(refList[i].getAddress(), refList[i].getOpIndex());
+		for (EquateReference element : refList) {
+			toEquate.addReference(element.getAddress(), element.getOpIndex());
 		}
 		return true;
 	}
@@ -98,6 +99,7 @@ class RenameEquatesCmd implements Command {
 	/**
 	 * @see ghidra.framework.cmd.Command#getStatusMsg()
 	 */
+	@Override
 	public String getStatusMsg() {
 		return msg;
 	}

@@ -72,6 +72,7 @@ void XmlArchitecture::buildLoader(DocumentStorage &store)
 void XmlArchitecture::postSpecFile(void)
 
 {
+  Architecture::postSpecFile();
   ((LoadImageXml *)loader)->open(translate);
   if (adjustvma != 0)
     loader->adjustVma(adjustvma);
@@ -122,6 +123,12 @@ void XmlArchitecture::restoreXml(DocumentStorage &store)
   iter = list.begin();
   if (iter!=list.end()) {
     if ((*iter)->getName() == "binaryimage") {
+      store.registerTag(*iter);
+      ++iter;
+    }
+  }
+  if (iter != list.end()) {
+    if ((*iter)->getName() == "specextensions") {
       store.registerTag(*iter);
       ++iter;
     }

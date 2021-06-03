@@ -1,0 +1,30 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+    Contrived example that seems to set up multiple return value sizes.
+    This used to make the decompiler enter an infinite loop.
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+4883ec1864488b042528000000488944
+240831c083fe01744f83fe02742a897c
+2404488d7c2404e8dc0f00008b442404
+488b542408644833142528000000753d
+4883c418c3000000488d7c2404b8e903
+00006689442404e8ac0f00008b442404
+ebce000000000000488d7c2404c64424
+0461e8910f00008b442404ebb3e88e0f
+0000
+</bytechunk>
+</binaryimage>
+<script>
+  <com>map fun r0x100000 getval</com>
+  <com>override flow r0x10007d callreturn</com>
+  <com>lo fu getval</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Multi-size return #1" min="1" max="1">Stack20 = CONCAT31.*0x61</stringmatch>
+<stringmatch name="Multi-size return #2" min="1" max="1">Stack20 = CONCAT22.*0x3e9</stringmatch>
+<stringmatch name="Multi-size return #3" min="1" max="1">Stack20 = param_1</stringmatch>
+</decompilertest>

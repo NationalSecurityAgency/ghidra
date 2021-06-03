@@ -15,12 +15,23 @@
  */
 package ghidra.app.decompiler.component;
 
-import docking.widgets.fieldpanel.LayoutModel;
-
+/**
+ * A poorly designed interface that does not correctly allow for modifying highlights
+ */
+@Deprecated // this will be removed after 9.2
 public interface DecompilerHighlightService {
-	
-	public LayoutModel getLayoutModel();
-	
+
+	/**
+	 * Returns the layout model of the Decompiler
+	 * @return the layout model
+	 */
+	@Deprecated
+	public ClangLayoutController getLayoutModel();
+
+	/**
+	 * Clears the <b>primary</b> highlights in the Decompiler
+	 */
+	@Deprecated
 	public void clearHighlights();
 
 }

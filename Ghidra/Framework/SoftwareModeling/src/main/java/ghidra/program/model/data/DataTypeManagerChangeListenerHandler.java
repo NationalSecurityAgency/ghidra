@@ -15,7 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 
@@ -51,9 +50,6 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		listenerList.remove(l);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#categoryAdded(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void categoryAdded(final DataTypeManager dtm, final CategoryPath path) {
 		if (listenerList.isEmpty()) {
@@ -70,9 +66,6 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		invokeRunnable(r);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#categoryMoved(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void categoryMoved(final DataTypeManager dtm, final CategoryPath oldPath,
 			final CategoryPath newPath) {
@@ -90,9 +83,6 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		invokeRunnable(r);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#categoryRemoved(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void categoryRemoved(final DataTypeManager dtm, final CategoryPath path) {
 		if (listenerList.isEmpty()) {
@@ -109,9 +99,6 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		invokeRunnable(r);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#categoryRenamed(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void categoryRenamed(final DataTypeManager dtm, final CategoryPath oldPath,
 			final CategoryPath newPath) {
@@ -130,9 +117,6 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		invokeRunnable(r);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#dataTypeAdded(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void dataTypeAdded(final DataTypeManager dtm, final DataTypePath path) {
 
@@ -150,9 +134,6 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		invokeRunnable(r);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#dataTypeChanged(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void dataTypeChanged(final DataTypeManager dtm, final DataTypePath path) {
 
@@ -170,9 +151,6 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		invokeRunnable(r);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#dataTypeMoved(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void dataTypeMoved(final DataTypeManager dtm, final DataTypePath oldPath,
 			final DataTypePath newPath) {
@@ -191,9 +169,6 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		invokeRunnable(r);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#dataTypeRemoved(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void dataTypeRemoved(final DataTypeManager dtm, final DataTypePath path) {
 
@@ -211,9 +186,6 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		invokeRunnable(r);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#dataTypeRenamed(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void dataTypeRenamed(final DataTypeManager dtm, final DataTypePath oldPath,
 			final DataTypePath newPath) {
@@ -247,9 +219,6 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 //		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#dataTypeReplaced(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void dataTypeReplaced(final DataTypeManager dtm, final DataTypePath oldPath,
 			final DataTypePath newPath, final DataType newDataType) {
@@ -268,9 +237,6 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		invokeRunnable(r);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#favoritesChanged(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath, boolean)
-	 */
 	@Override
 	public void favoritesChanged(final DataTypeManager dtm, final DataTypePath path,
 			final boolean isFavorite) {

@@ -192,7 +192,7 @@ public class NamespacePath implements Comparable<NamespacePath> {
 	public String asNamespaceString() {
 		StringBuilder sb = new StringBuilder();
 		doInOrderTraversal(
-			nsp -> sb.append(sb.length() != 0 ? Namespace.NAMESPACE_DELIMITER : "").append(
+			nsp -> sb.append(sb.length() != 0 ? Namespace.DELIMITER : "").append(
 				nsp.isRoot() ? "ROOT" : nsp.name));
 		return sb.toString();
 	}
@@ -207,7 +207,7 @@ public class NamespacePath implements Comparable<NamespacePath> {
 
 		doInOrderTraversal(nsp -> {
 			if (!nsp.isRoot()) {
-				sb.append(sb.length() != 0 ? Namespace.NAMESPACE_DELIMITER : "").append(nsp.name);
+				sb.append(sb.length() != 0 ? Namespace.DELIMITER : "").append(nsp.name);
 			}
 
 		});
@@ -219,7 +219,7 @@ public class NamespacePath implements Comparable<NamespacePath> {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		doInOrderTraversal(
-			nsp -> sb.append(sb.length() != 0 ? Namespace.NAMESPACE_DELIMITER : "").append(
+			nsp -> sb.append(sb.length() != 0 ? Namespace.DELIMITER : "").append(
 				nsp.isRoot() ? "ROOT" : nsp.name).append(
 					"(" + (nsp.getType() != null ? nsp.getType() : "unknown type") + ")"));
 		return sb.toString();

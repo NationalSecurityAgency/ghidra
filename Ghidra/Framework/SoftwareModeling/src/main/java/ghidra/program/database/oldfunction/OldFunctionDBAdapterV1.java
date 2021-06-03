@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package ghidra.program.database.oldfunction;
 
-import ghidra.program.database.map.AddressMap;
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.program.database.map.AddressMap;
+import ghidra.util.exception.VersionException;
 
 /**
  * 
@@ -41,9 +39,10 @@ class OldFunctionDBAdapterV1 extends OldFunctionDBAdapter {
 	static final int V1_REPEATABLE_COMMENT_COL = 5;
 
 	final static Schema V1_FUNCTIONS_SCHEMA = new Schema(SCHEMA_VERSION, "Entry Point",
-		new Class[] { LongField.class, IntField.class, IntField.class, IntField.class,
-			IntField.class, StringField.class }, new String[] { "Return DataType ID", "StackDepth",
-			"StackParamOffset", "StackReturnOffset", "StackLocalSize", "RepeatableComment" });
+		new Field[] { LongField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE,
+			IntField.INSTANCE, StringField.INSTANCE },
+		new String[] { "Return DataType ID", "StackDepth", "StackParamOffset", "StackReturnOffset",
+			"StackLocalSize", "RepeatableComment" });
 	protected Table table;
 
 	OldFunctionDBAdapterV1(DBHandle dbHandle, AddressMap addrMap) throws VersionException {
@@ -65,7 +64,7 @@ class OldFunctionDBAdapterV1 extends OldFunctionDBAdapter {
 	 * @see ghidra.program.database.function.FunctionDBAdapter#getFunctionRecord(long)
 	 */
 	@Override
-	public Record getFunctionRecord(long functionKey) throws IOException {
+	public DBRecord getFunctionRecord(long functionKey) throws IOException {
 		return table.getRecord(functionKey);
 	}
 
@@ -78,9 +77,9 @@ class OldFunctionDBAdapterV1 extends OldFunctionDBAdapter {
 	}
 
 	/**
-	 * @see ghidra.program.database.function.FunctionDBAdapter#translateRecord(ghidra.framework.store.db.Record)
+	 * @see ghidra.program.database.function.FunctionDBAdapter#translateRecord(ghidra.framework.store.db.DBRecord)
 	 */
-	public Record translateRecord(Record oldRecord) {
+	public DBRecord translateRecord(DBRecord oldRecord) {
 		throw new UnsupportedOperationException();
 	}
 

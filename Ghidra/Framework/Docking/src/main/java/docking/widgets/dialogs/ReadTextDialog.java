@@ -55,8 +55,9 @@ public class ReadTextDialog extends DialogComponentProvider {
 	}
 
 	private void init(JPanel workPanelToInit) {
-		this.addWorkPanel(workPanelToInit);
-		this.addOKButton();
+		setTransient(true);
+		addWorkPanel(workPanelToInit);
+		addOKButton();
 		setRememberLocation(false);
 		setRememberSize(false);
 	}

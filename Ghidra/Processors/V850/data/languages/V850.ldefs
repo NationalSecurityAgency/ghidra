@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="V850"
+            endian="little"
+            size="32"
+            variant="E1, E2, E2M"
+            version="1.0"
+            slafile="V850.sla"
+            processorspec="V850.pspec"
+            manualindexfile="../manuals/v850.idx"
+            id="V850:LE:32:default">
+    <description>Renesas V850 family</description>
+    <compiler name="default" spec="V850.cspec" id="default"/>
+  </language>
+</language_definitions>

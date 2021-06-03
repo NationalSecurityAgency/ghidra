@@ -249,7 +249,7 @@ public class AVR32_ElfRelocationHandler extends ElfRelocationHandler {
 				    memory.setInt(relocationAddress, newValue);
 				    System.out.println("  HANDLED AVR relocation: R_AVR32_21S at "+relocationAddress + ", New = " + newValue);
 				    break;
-				case AVR32_ElfRelocationConstants.R_AVR32_16U: //Use long to accomodate the Unsignedness...
+				case AVR32_ElfRelocationConstants.R_AVR32_16U: //Use long to accommodate the Unsignedness...
 				    long newValueLong = ((symbolValue + addend) & 0x0000ffff);
 				    memory.setLong(relocationAddress, newValueLong);
 				    System.out.println("  HANDLED AVR relocation: R_AVR32_16U at "+relocationAddress + ", NewLong = " + newValueLong);

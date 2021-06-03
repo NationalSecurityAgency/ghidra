@@ -128,7 +128,7 @@ public class Handler extends URLStreamHandler {
 
 	private static void loadGhidraProtocolHandlers() {
 		protocolHandlers = new ArrayList<>();
-		Set<Class<? extends GhidraProtocolHandler>> classes =
+		List<Class<? extends GhidraProtocolHandler>> classes =
 			ClassSearcher.getClasses(GhidraProtocolHandler.class);
 		for (Class<?> c : classes) {
 			try {

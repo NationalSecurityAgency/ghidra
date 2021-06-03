@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,42 +15,51 @@
  */
 package ghidra.app.plugin.core.functionwindow;
 
-class FunctionRowObject implements Comparable<FunctionRowObject> {
+import ghidra.program.model.listing.Function;
 
-	private final long key;
+public class FunctionRowObject implements Comparable<FunctionRowObject> {
 
-	FunctionRowObject(long key) {
-		this.key = key;
+	private final Function function;
+
+	public FunctionRowObject(Function function) {
+		this.function = function;
+	}
+
+	public Function getFunction() {
+		return function;
 	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (int) (key ^ (key >>> 32));
-		return result;
+		return (int) function.getID();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
+
+		long key = function.getID();
 		FunctionRowObject other = (FunctionRowObject) obj;
-		if (key != other.key)
+		if (key != other.function.getID()) {
 			return false;
+		}
 		return true;
 	}
 
-	long getKey() {
-		return key;
+	public long getKey() {
+		return function.getID();
 	}
 
 	@Override
 	public int compareTo(FunctionRowObject o) {
-		return ((Long) key).compareTo(o.key);
+		return ((Long) function.getID()).compareTo(o.function.getID());
 	}
 }

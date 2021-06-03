@@ -19,14 +19,13 @@ import static org.junit.Assert.*;
 
 import java.awt.Window;
 
-import javax.swing.SwingUtilities;
-
 import org.junit.Assert;
 import org.junit.Test;
 
 import docking.ActionContext;
 import ghidra.framework.options.Options;
 import ghidra.program.model.data.*;
+import ghidra.util.Swing;
 import ghidra.util.exception.UsrException;
 
 public class UnionEditorProviderTest extends AbstractUnionEditorTest {
@@ -87,10 +86,8 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 			program.addListener(restoreListener);
 
 			// Change the union.
-			SwingUtilities.invokeLater(() -> {
-				getTable().requestFocus();
-				model.setSelection(new int[] { 4, 5 });
-				deleteAction.actionPerformed(new ActionContext());
+			Swing.runLater(() -> {
+				delete(4, 5);
 				try {
 					model.add(new WordDataType());
 				}
@@ -98,41 +95,42 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 					Assert.fail(e.getMessage());
 				}
 			});
-			waitForSwing();
-			assertTrue(!complexUnion.isEquivalent(model.viewComposite));
+
+			waitForTasks();
+			assertFalse(complexUnion.isEquivalent(model.viewComposite));
 
 			// Apply the changes
 			invoke(applyAction);
 			assertTrue(complexUnion.isEquivalent(model.viewComposite));
 
 			// Change the union again.
-			SwingUtilities.invokeLater(() -> {
-				getTable().requestFocus();
-				model.setSelection(new int[] { 1 });
-				deleteAction.actionPerformed(new ActionContext());
+			Swing.runLater(() -> {
+				delete(1);
 			});
 			waitForSwing();
-			assertTrue(!complexUnion.isEquivalent(model.viewComposite));
+			assertFalse(complexUnion.isEquivalent(model.viewComposite));
 
 			// Undo the apply
 			undo(program, false);
+
 			// Verify the Reload Union Editor? dialog is displayed.
-			dialog = env.waitForWindow("Reload Union Editor?", 4000);
+			dialog = waitForWindow("Reload Union Editor?");
 			assertNotNull(dialog);
 			pressButton(dialog, "No");
 			dialog.dispose();
 			dialog = null;
-			assertTrue(!complexUnion.isEquivalent(model.viewComposite));
+			assertFalse(complexUnion.isEquivalent(model.viewComposite));
 
 			// Redo the apply
 			redo(program, false);
+
 			// Verify the Reload Union Editor? dialog is displayed.
-			dialog = env.waitForWindow("Reload Union Editor?", 4000);
+			dialog = waitForWindow("Reload Union Editor?");
 			assertNotNull(dialog);
 			pressButton(dialog, "No");
 			dialog.dispose();
 			dialog = null;
-			assertTrue(!complexUnion.isEquivalent(model.viewComposite));
+			assertFalse(complexUnion.isEquivalent(model.viewComposite));
 		}
 		finally {
 			dialog = null;
@@ -150,10 +148,8 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 			program.addListener(restoreListener);
 
 			// Change the union.
-			SwingUtilities.invokeLater(() -> {
-				getTable().requestFocus();
-				model.setSelection(new int[] { 4, 5 });
-				deleteAction.actionPerformed(new ActionContext());
+			Swing.runLater(() -> {
+				delete(4, 5);
 				try {
 					model.add(new WordDataType());
 				}
@@ -161,14 +157,18 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 					Assert.fail(e.getMessage());
 				}
 			});
-			waitForSwing();
-			assertTrue(!complexUnion.isEquivalent(model.viewComposite));
+
+			waitForTasks();
+			assertFalse(complexUnion.isEquivalent(model.viewComposite));
+
 			// Apply the changes
 			invoke(applyAction);
 			assertTrue(complexUnion.isEquivalent(model.viewComposite));
+
 			// Undo the apply
 			undo(program);
 			assertTrue(complexUnion.isEquivalent(model.viewComposite));
+
 			// Redo the apply
 			redo(program);
 			assertTrue(complexUnion.isEquivalent(model.viewComposite));
@@ -191,7 +191,7 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 		runSwing(() -> provider.closeComponent());
 		waitForSwing();
 
-		assertTrue(!tool.isVisible(provider));
+		assertFalse(tool.isVisible(provider));
 		assertTrue(complexUnion.isEquivalent(dt));
 	}
 
@@ -202,10 +202,8 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 		DataType oldDt = model.viewComposite.clone(null);
 
 		// Change the union.
-		SwingUtilities.invokeLater(() -> {
-			getTable().requestFocus();
-			model.setSelection(new int[] { 4, 5 });
-			deleteAction.actionPerformed(new ActionContext());
+		Swing.runLater(() -> {
+			delete(4, 5);
 			try {
 				model.add(new WordDataType());
 			}
@@ -213,23 +211,24 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 				Assert.fail(e.getMessage());
 			}
 		});
-		waitForSwing();
+
+		waitForTasks();
 		DataType newDt = model.viewComposite.clone(null);
-		assertTrue(!complexUnion.isEquivalent(model.viewComposite));
+		assertFalse(complexUnion.isEquivalent(model.viewComposite));
 
 		assertTrue(complexUnion.isEquivalent(oldDt));
-		SwingUtilities.invokeLater(() -> provider.closeComponent());
+		Swing.runLater(() -> provider.closeComponent());
 		waitForSwing();
 
-		dialog = env.waitForWindow("Save Union Editor Changes?", 1000);
+		dialog = waitForWindow("Save Union Editor Changes?");
 		assertNotNull(dialog);
 		pressButton(dialog, "Yes");
 		dialog.dispose();
 		dialog = null;
 		provider = null;
-		assertTrue(!tool.isVisible(provider));
+		assertFalse(tool.isVisible(provider));
 		assertTrue(complexUnion.isEquivalent(newDt));
-		assertTrue(!complexUnion.isEquivalent(oldDt));
+		assertFalse(complexUnion.isEquivalent(oldDt));
 	}
 
 	@Test
@@ -239,10 +238,8 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 		DataType oldDt = model.viewComposite.clone(null);
 
 		// Change the union.
-		SwingUtilities.invokeLater(() -> {
-			getTable().requestFocus();
-			model.setSelection(new int[] { 4, 5 });
-			deleteAction.actionPerformed(new ActionContext());
+		Swing.runLater(() -> {
+			delete(4, 5);
 			try {
 				model.add(new WordDataType());
 			}
@@ -250,22 +247,24 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 				Assert.fail(e.getMessage());
 			}
 		});
-		waitForSwing();
+
+		waitForTasks();
+
 		DataType newDt = model.viewComposite.clone(null);
-		assertTrue(!complexUnion.isEquivalent(model.viewComposite));
+		assertFalse(complexUnion.isEquivalent(model.viewComposite));
 
 		assertTrue(complexUnion.isEquivalent(oldDt));
-		SwingUtilities.invokeLater(() -> provider.closeComponent());
+		Swing.runLater(() -> provider.closeComponent());
 		waitForSwing();
 
-		dialog = env.waitForWindow("Save Union Editor Changes?", 1000);
+		dialog = waitForWindow("Save Union Editor Changes?");
 		assertNotNull(dialog);
 		pressButton(dialog, "Yes");
 		dialog.dispose();
 		dialog = null;
-		assertTrue(!tool.isVisible(provider));
+		assertFalse(tool.isVisible(provider));
 		assertTrue(complexUnion.isEquivalent(newDt));
-		assertTrue(!complexUnion.isEquivalent(oldDt));
+		assertFalse(complexUnion.isEquivalent(oldDt));
 	}
 
 	@Test
@@ -274,10 +273,8 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 		init(complexUnion, pgmTestCat, false);
 
 		// Change the union.
-		SwingUtilities.invokeLater(() -> {
-			getTable().requestFocus();
-			model.setSelection(new int[] { 4, 5 });
-			deleteAction.actionPerformed(new ActionContext());
+		Swing.runLater(() -> {
+			delete(4, 5);
 			try {
 				model.add(new WordDataType());
 			}
@@ -285,20 +282,21 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 				Assert.fail(e.getMessage());
 			}
 		});
-		waitForSwing();
+
+		waitForTasks();
 		DataType newDt = model.viewComposite.clone(null);
-		assertTrue(!complexUnion.isEquivalent(model.viewComposite));
+		assertFalse(complexUnion.isEquivalent(model.viewComposite));
 
-		SwingUtilities.invokeLater(() -> provider.closeComponent());
+		Swing.runLater(() -> provider.closeComponent());
 		waitForSwing();
 
-		dialog = env.waitForWindow("Save Union Editor Changes?", 1000);
+		dialog = waitForWindow("Save Union Editor Changes?");
 		assertNotNull(dialog);
 		pressButton(dialog, "Cancel");
 		dialog.dispose();
 		dialog = null;
 		assertTrue(tool.isVisible(provider));
-		assertTrue(!complexUnion.isEquivalent(model.viewComposite));
+		assertFalse(complexUnion.isEquivalent(model.viewComposite));
 		assertTrue(newDt.isEquivalent(model.viewComposite));
 	}
 
@@ -330,10 +328,10 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 		assertEquals("87", model.getLengthAsString());
 
 		// Close the editor
-		SwingUtilities.invokeLater(() -> provider.closeComponent());
+		Swing.runLater(() -> provider.closeComponent());
 		waitForSwing();
 		// Editor should be closed.
-		assertTrue(!tool.isVisible(provider));
+		assertFalse(tool.isVisible(provider));
 		assertTrue(complexUnion.isEquivalent(oldDt));
 		// Re-open the editor
 		init(complexUnion, pgmTestCat, true);
@@ -358,11 +356,12 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 		assertEquals("0x57", model.getLengthAsString());
 
 		// Close the editor
-		SwingUtilities.invokeLater(() -> provider.closeComponent());
+		Swing.runLater(() -> provider.closeComponent());
 		waitForSwing();
 		// Editor should be closed.
-		assertTrue(!tool.isVisible(provider));
+		assertFalse(tool.isVisible(provider));
 		assertTrue(complexUnion.isEquivalent(oldDt));
+
 		// Re-open the editor
 		init(complexUnion, pgmTestCat, false);
 
@@ -375,4 +374,10 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 		assertEquals("87", model.getLengthAsString());
 	}
 
+	private void delete(int... rows) {
+
+		getTable().requestFocus();
+		model.setSelection(rows);
+		deleteAction.actionPerformed(new ActionContext());
+	}
 }

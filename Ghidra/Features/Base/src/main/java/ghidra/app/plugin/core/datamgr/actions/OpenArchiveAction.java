@@ -91,8 +91,8 @@ public class OpenArchiveAction extends DockingAction {
 	}
 
 	private GTreeNode getNodeForArchive(GTree tree, Archive archive) {
-		GTreeNode rootNode = tree.getRootNode();
-		List<GTreeNode> allChildren = rootNode.getAllChildren();
+		GTreeNode rootNode = tree.getModelRoot();
+		List<GTreeNode> allChildren = rootNode.getChildren();
 		for (GTreeNode node : allChildren) {
 			ArchiveNode archiveNode = (ArchiveNode) node;
 			if (archiveNode.getArchive() == archive) {

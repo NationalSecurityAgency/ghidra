@@ -15,7 +15,7 @@
  */
 package ghidra.program.database.code;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
 
 /**
  * Container object that holds a start and end position within a string. A list of StringDiffs 
@@ -105,7 +105,7 @@ public class StringDiff {
 		}
 
 		StringDiff other = (StringDiff) obj;
-		if (!Objects.equal(text, other.text)) {
+		if (!Objects.equals(text, other.text)) {
 			return false;
 		}
 		if (start != other.start) {

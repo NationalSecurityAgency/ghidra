@@ -112,8 +112,10 @@ public class FixupNoReturnFunctionsScript extends GhidraScript {
 			@Override
 			public String getColumnValue(AddressableRowObject rowObject) {
 				NoReturnLocations entry = (NoReturnLocations) rowObject;
-				Function func = entry.getProgram().getFunctionManager().getFunctionContaining(
-					entry.getAddress());
+				Function func = entry.getProgram()
+						.getFunctionManager()
+						.getFunctionContaining(
+							entry.getAddress());
 				if (func == null) {
 					return "";
 				}
@@ -283,20 +285,13 @@ public class FixupNoReturnFunctionsScript extends GhidraScript {
 					return false;
 				}
 
-				// gonna change something, have to open a transaction
-				int trans = cp.startTransaction("Fixup No Return at " + entry);
-				try {
-					addBookMark(cp, entry, "Non Returning Function");
+				addBookMark(cp, entry, "Non Returning Function");
 
-					if (!noRetLoc.isFixed()) {
-						repairDamage(cp, func, entry);
-					}
+				if (!noRetLoc.isFixed()) {
+					repairDamage(cp, func, entry);
+				}
 
-					addBookMark(cp, noRetLoc.getWhyAddr(), noRetLoc.getExplanation());
-				}
-				finally {
-					cp.endTransaction(trans, true);
-				}
+				addBookMark(cp, noRetLoc.getWhyAddr(), noRetLoc.getExplanation());
 
 				return false; // don't remove row
 			}

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +21,9 @@ import ghidra.program.model.mem.MemBuffer;
  * 
  *
  * To change this generated comment edit the template variable "typecomment":
- * Window>Preferences>Java>Templates.
+ * {@literal Window>Preferences>Java>Templates.}
  * To enable and disable the creation of type comments go to
- * Window>Preferences>Java>Code Generation.
+ * {@literal Window>Preferences>Java>Code Generation.}
  */
 public class Label implements ExpressionValue {
 

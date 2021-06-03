@@ -23,12 +23,16 @@ import javax.swing.text.html.HTMLEditorKit;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.framework.DockingApplicationConfiguration;
+import docking.framework.DockingApplicationLayout;
 import docking.widgets.label.GDLabel;
+import ghidra.framework.Application;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
 import ghidra.util.layout.VerticalLayout;
 import resources.ResourceManager;
 import utilities.util.FileUtilities;
+import utility.application.ApplicationLayout;
 
 public class UserAgreementDialog extends DialogComponentProvider {
 	private static final String USER_AGREEMENT_FILENAME = "UserAgreement.html";
@@ -108,7 +112,10 @@ public class UserAgreementDialog extends DialogComponentProvider {
 		close();
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
+		ApplicationLayout layout = new DockingApplicationLayout("User Agreement Main", "1.0");
+		DockingApplicationConfiguration config = new DockingApplicationConfiguration();
+		Application.initializeApplication(layout, config);
 		UserAgreementDialog dialog = new UserAgreementDialog(true, true);
 		DockingWindowManager.showDialog(null, dialog);
 	}

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +15,55 @@
  */
 package docking.widgets.table;
 
+/**
+ * An object that represents and add, remove or change operation for one row of a table
+ *
+ * @param <T> the row type
+ */
 public class AddRemoveListItem<T> {
-	private boolean isAdd;
-	private boolean isRemove;
-	private T value;
 
-	public AddRemoveListItem(boolean isAdd, boolean isRemove, T value) {
-		this.isAdd = isAdd;
-		this.isRemove = isRemove;
+	public enum Type {
+		ADD,
+		REMOVE,
+		CHANGE
+	}
+
+	private T value;
+	private Type type;
+
+	public AddRemoveListItem(Type type, T value) {
+		this.type = type;
 		this.value = value;
 	}
 
 	public boolean isAdd() {
-		return isAdd;
+		return type == Type.ADD;
 	}
 
 	public boolean isRemove() {
-		return isRemove;
+		return type == Type.REMOVE;
 	}
+
 	public boolean isChange() {
-		return isAdd && isRemove;
+		return type == Type.CHANGE;
+	}
+
+	public Type getType() {
+		return type;
 	}
 
 	public T getValue() {
 		return value;
+	}
+
+	@Override
+	public String toString() {
+
+		//@formatter:off
+		return "{\n" + 
+			"\tvalue: " + value +",\n" +
+			"\ttype: " + type +",\n" +
+		"}";
+		//@formatter:on
 	}
 }

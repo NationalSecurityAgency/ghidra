@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,14 @@
  */
 package ghidra.app.plugin.processors.generic;
 
-import ghidra.program.model.address.*;
-import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.model.pcode.*;
+import java.util.ArrayList;
+import java.util.Hashtable;
 
-import java.util.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.mem.MemBuffer;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
 
 /**
  * 
@@ -50,7 +52,7 @@ public class BinaryExpression implements OperandValue, ExpressionValue {
 		right = r;
 		wordSize = c.getSize()/8;
 //		wordMask = c.getMaxOffset();
-		spaceID = c.getBaseSpaceID();
+		spaceID = c.getSpaceID();
 		constantSpace = c;
 		switch (opType) {
 			case ADD:
@@ -65,11 +67,12 @@ public class BinaryExpression implements OperandValue, ExpressionValue {
 	}
 
 	public void setSpace(AddressSpace space) {
-		spaceID = space.getBaseSpaceID();
+		spaceID = space.getSpaceID();
 		wordSize = space.getSize()/8;
 //		wordMask = space.getMaxOffset();
 	}
 
+	@Override
 	public int length(MemBuffer buf,int off) throws Exception {
 		int leftLen = left.length(buf,off);
 		int rightLen = right.length(buf, off);
@@ -77,10 +80,12 @@ public class BinaryExpression implements OperandValue, ExpressionValue {
 		return (leftLen > rightLen ? leftLen : rightLen);
 	}
 
+	@Override
 	public ConstructorInfo getInfo(MemBuffer buf, int off) throws Exception {
 		return new ConstructorInfo(length(buf,off),0);
 	}	
 
+	@Override
 	public long longValue(MemBuffer buf, int off) throws Exception {
 
 		long l = left.longValue(buf, off);
@@ -98,9 +103,12 @@ public class BinaryExpression implements OperandValue, ExpressionValue {
 		}
 	}
 
+	@Override
 	public String toString(MemBuffer buf, int off) throws Exception {
 		long val = longValue(buf, off);
-		if (val >= 0) return "0x" + Long.toString(val,16);
+		if (val >= 0) {
+			return "0x" + Long.toString(val,16);
+		}
         return "-0x" + Long.toString(-val,16);
 	}
 
@@ -113,6 +121,7 @@ public class BinaryExpression implements OperandValue, ExpressionValue {
 		right.linkRelativeOffsets(opHash);
 	}
 
+	@Override
 	public Handle getHandle(Position position, int off) throws Exception {
 		long val = /* wordMask & */ longValue(position.buffer(),off);
 		Address a = constantSpace.getAddress(val);
@@ -120,10 +129,12 @@ public class BinaryExpression implements OperandValue, ExpressionValue {
 		return new Handle(v,spaceID,wordSize);
 	}
 
+	@Override
 	public Handle getHandle(ArrayList<PcodeOp> pcode, Position position, int off) throws Exception {
 		return getHandle(position,off); // a binary expression never has any associated pcode
 	}
 
+	@Override
 	public void getAllHandles(ArrayList<Handle> handles,Position position,int off) throws Exception {
 		handles.add(getHandle(position,off));
 	}
@@ -131,6 +142,7 @@ public class BinaryExpression implements OperandValue, ExpressionValue {
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.processors.generic.OperandValue#toList(java.util.ArrayList, ghidra.program.model.mem.MemBuffer, int)
 	 */
+	@Override
 	public void toList(ArrayList<Handle> list, Position position, int off) throws Exception {
 		list.add(getHandle(position, off));
 	}
@@ -138,6 +150,7 @@ public class BinaryExpression implements OperandValue, ExpressionValue {
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.processors.generic.OperandValue#getSize()
 	 */
+	@Override
 	public int getSize() {
 		return wordSize * 8;
 	}

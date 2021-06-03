@@ -36,19 +36,17 @@ public class LoaderService {
 	 * 
 	 * @param provider The {@link ByteProvider} to load.
 	 * @param loaderFilter A {@link Predicate} that will filter out undesired {@link Loader}s.
-	 * @return A {@link Map} of {@link Loader}s to their respective {@link LoadSpec}s.  It is safe
-	 *   to assume that every {@link Loader} in the {@link Map} will have at least one 
-	 *   {@link LoadSpec}.    
+	 * @return All supported {@link LoadSpec}s in the form of a {@link LoaderMap}.
 	 */
-	public static Map<Loader, Collection<LoadSpec>> getSupportedLoadSpecs(ByteProvider provider,
+	public static LoaderMap getSupportedLoadSpecs(ByteProvider provider,
 			Predicate<Loader> loaderFilter) {
-		Map<Loader, Collection<LoadSpec>> loadMap = new LinkedHashMap<>(); // maintain loader order
+		LoaderMap loaderMap = new LoaderMap();
 		for (Loader loader : getAllLoaders()) {
 			if (loaderFilter.test(loader)) {
 				try {
 					Collection<LoadSpec> loadSpecs = loader.findSupportedLoadSpecs(provider);
 					if (loadSpecs != null && !loadSpecs.isEmpty()) { // shouldn't be null, but protect against rogue loaders
-						loadMap.put(loader, loadSpecs);
+						loaderMap.put(loader, loadSpecs);
 					}
 				}
 				catch (IOException e) {
@@ -60,34 +58,32 @@ public class LoaderService {
 				}
 			}
 		}
-		return loadMap;
+		return loaderMap;
 	}
 
 	/**
 	 * Gets all supported {@link LoadSpec}s for loading the given {@link ByteProvider}.
 	 * 
 	 * @param provider The {@link ByteProvider} to load.
-	 * @return A {@link Map} of {@link Loader}s to their respective {@link LoadSpec}s.  It is safe
-	 *   to assume that every {@link Loader} in the {@link Map} will have at least one 
-	 *   {@link LoadSpec}.    
+	 * @return All supported {@link LoadSpec}s in the form of a {@link LoaderMap}.
 	 */
-	public static Map<Loader, Collection<LoadSpec>> getAllSupportedLoadSpecs(
-			ByteProvider provider) {
+	public static LoaderMap getAllSupportedLoadSpecs(ByteProvider provider) {
 		return getSupportedLoadSpecs(provider, ACCEPT_ALL);
 	}
 
 	/**
 	 * Gets all known {@link Loader}s' names.
 	 * 
-	 * @return All known {@link Loader}s' names.
+	 * @return All known {@link Loader}s' names.  The {@link Loader} names are sorted
+	 * according to their corresponding {@link Loader}s {@link Loader#compareTo(Loader) natural 
+	 * ordering}. 
 	 */
 	public static Collection<String> getAllLoaderNames() {
-		//@formatter:off
 		return getAllLoaders()
 			.stream()
+			.sorted()
 			.map(loader -> loader.getName())
 			.collect(Collectors.toList());
-		//@formatter:on
 	}
 
 	/**
@@ -99,20 +95,19 @@ public class LoaderService {
 	 *   name.
 	 */
 	public static Class<? extends Loader> getLoaderClassByName(String name) {
-		//@formatter:off
 		return getAllLoaders()
 			.stream()
 			.filter(loader -> loader.getClass().getSimpleName().equals(name))
 			.findFirst()
 			.map(loader -> loader.getClass())
 			.orElse(null);
-		//@formatter:on
 	}
 
 	/**
 	 * Gets an instance of every known {@link Loader}.
 	 * 
-	 * @return An instance of every known {@link Loader}.
+	 * @return An instance of every known {@link Loader}.  The {@link Loader} instances are sorted
+	 *   according to their {@link Loader#compareTo(Loader) natural ordering}. 
 	 */
 	private synchronized static Collection<Loader> getAllLoaders() {
 		List<Loader> loaders = new ArrayList<>(ClassSearcher.getInstances(Loader.class));

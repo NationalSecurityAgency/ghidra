@@ -15,7 +15,7 @@
  */
 package ghidra.program.database.bookmark;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.address.Address;
@@ -28,9 +28,9 @@ import ghidra.program.model.listing.BookmarkType;
 public class BookmarkDB extends DatabaseObject implements Bookmark {
 
 	private BookmarkDBManager mgr;
-	private Record record;
+	private DBRecord record;
 
-	BookmarkDB(BookmarkDBManager mgr, DBObjectCache<BookmarkDB> cache, Record record) {
+	BookmarkDB(BookmarkDBManager mgr, DBObjectCache<BookmarkDB> cache, DBRecord record) {
 		super(cache, record.getKey());
 		this.mgr = mgr;
 		this.record = record;
@@ -46,7 +46,7 @@ public class BookmarkDB extends DatabaseObject implements Bookmark {
 	 * Update associated record
 	 * @param rec
 	 */
-	void setRecord(Record rec) {
+	void setRecord(DBRecord rec) {
 		if (rec.getKey() != key) {
 			throw new IllegalArgumentException("Key mismatch");
 		}
@@ -121,7 +121,7 @@ public class BookmarkDB extends DatabaseObject implements Bookmark {
 	}
 
 	@Override
-	protected boolean refresh(Record rec) {
+	protected boolean refresh(DBRecord rec) {
 		if (rec == null) {
 			rec = mgr.getRecord(key);
 		}
@@ -136,7 +136,7 @@ public class BookmarkDB extends DatabaseObject implements Bookmark {
 	 * Returns record associated with this bookmark or
 	 * null if bookmark has been deleted.
 	 */
-	Record getRecord() {
+	DBRecord getRecord() {
 		return checkIsValid() ? record : null;
 	}
 

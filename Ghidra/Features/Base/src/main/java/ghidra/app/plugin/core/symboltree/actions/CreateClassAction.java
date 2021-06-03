@@ -33,9 +33,11 @@ import ghidra.util.exception.InvalidInputException;
 
 public class CreateClassAction extends SymbolTreeContextAction {
 
-	public CreateClassAction(SymbolTreePlugin plugin) {
+	public CreateClassAction(SymbolTreePlugin plugin, String group, String subGroup) {
 		super("Create Class", plugin.getName());
-		setPopupMenuData(new MenuData(new String[] { "Create Class" }, "0Create"));
+		MenuData menuData = new MenuData(new String[] { "Create Class" }, group);
+		menuData.setMenuSubGroup(subGroup);
+		setPopupMenuData(menuData);
 		setEnabled(false);
 	}
 
@@ -54,23 +56,25 @@ public class CreateClassAction extends SymbolTreeContextAction {
 	protected boolean isEnabledForContext(SymbolTreeActionContext context) {
 
 		TreePath[] selectionPaths = context.getSelectedSymbolTreePaths();
-		if (selectionPaths.length == 1) {
-			Object object = selectionPaths[0].getLastPathComponent();
-			if (object instanceof ClassCategoryNode) {
-				return true;
+		if (selectionPaths.length != 1) {
+			return false;
+		}
+
+		Object object = selectionPaths[0].getLastPathComponent();
+		if (object instanceof ClassCategoryNode) {
+			return true;
+		}
+		else if (object instanceof SymbolNode) {
+			SymbolNode symbolNode = (SymbolNode) object;
+			Symbol symbol = symbolNode.getSymbol();
+			SymbolType symbolType = symbol.getSymbolType();
+			if (symbolType == SymbolType.NAMESPACE) {
+				// allow SymbolType to perform additional checks
+				Namespace parentNamespace = (Namespace) symbol.getObject();
+				return SymbolType.CLASS.isValidParent(context.getProgram(), parentNamespace,
+					Address.NO_ADDRESS, parentNamespace.isExternal());
 			}
-			else if (object instanceof SymbolNode) {
-				SymbolNode symbolNode = (SymbolNode) object;
-				Symbol symbol = symbolNode.getSymbol();
-				SymbolType symbolType = symbol.getSymbolType();
-				if (symbolType == SymbolType.NAMESPACE) {
-					// allow SymbolType to perform additional checks
-					Namespace parentNamespace = (Namespace) symbol.getObject();
-					return SymbolType.CLASS.isValidParent(context.getProgram(), parentNamespace,
-						Address.NO_ADDRESS, parentNamespace.isExternal());
-				}
-				return (symbolType == SymbolType.CLASS || symbolType == SymbolType.LIBRARY);
-			}
+			return (symbolType == SymbolType.CLASS || symbolType == SymbolType.LIBRARY);
 		}
 		return false;
 	}

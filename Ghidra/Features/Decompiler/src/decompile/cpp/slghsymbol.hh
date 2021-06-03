@@ -477,6 +477,7 @@ class Constructor {		// This is NOT a symbol
   int4 firstwhitespace;		// Index of first whitespace piece in -printpiece-
   int4 flowthruindex;		// if >=0 then print only a single operand no markup
   int4 lineno;
+  int4 src_index;           //source file index
   mutable bool inerror;                 // An error is associated with this Constructor
   void orderOperands(void);
 public:
@@ -491,6 +492,8 @@ public:
   uintm getId(void) const { return id; }
   void setLineno(int4 ln) { lineno = ln; }
   int4 getLineno(void) const { return lineno; }
+  void setSrcIndex(int4 index) {src_index = index;}
+  int4 getSrcIndex(void) {return src_index;}
   void addContext(const vector<ContextChange *> &vec) { context = vec; }
   void addOperand(OperandSymbol *sym);
   void addInvisibleOperand(OperandSymbol *sym);
@@ -525,13 +528,13 @@ public:
 };
 
 class DecisionProperties {
-  vector<string> identerrors;
-  vector<string> conflicterrors;
+  vector<pair<Constructor *, Constructor *> > identerrors;
+  vector<pair<Constructor *, Constructor *> > conflicterrors;
 public:
   void identicalPattern(Constructor *a,Constructor *b);
   void conflictingPattern(Constructor *a,Constructor *b);
-  const vector<string> &getIdentErrors(void) const { return identerrors; }
-  const vector<string> &getConflictErrors(void) const { return conflicterrors; }
+  const vector<pair<Constructor *, Constructor *> > &getIdentErrors(void) const { return identerrors; }
+  const vector<pair<Constructor *, Constructor *> > &getConflictErrors(void) const { return conflicterrors; }
 };
 
 class DecisionNode {

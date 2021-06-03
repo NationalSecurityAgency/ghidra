@@ -60,6 +60,7 @@ aligndef
 
 tokendef
 	:	^(OP_TOKEN n=identifier i=integer { out("define token " + $n.value + "(" + $i.value + ")"); } fielddefs)
+	|   ^(OP_TOKEN_ENDIAN n=identifier i=integer s=endian { out("define token endian" + $n.value + "(" + $i.value + ")"); } fielddefs)
 	;
 
 fielddefs

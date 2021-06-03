@@ -125,8 +125,8 @@ public class GhidraTool extends PluginTool {
 	}
 
 	@Override
-	public void restoreWindowingDataFromXml(Element windowData) {
-		winMgr.restoreWindowDataFromXml(windowData);
+	public void restoreWindowingDataFromXml(Element rootElement) {
+		winMgr.restoreWindowDataFromXml(rootElement);
 	}
 
 	@Override

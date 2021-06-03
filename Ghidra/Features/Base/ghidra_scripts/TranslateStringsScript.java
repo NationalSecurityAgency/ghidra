@@ -21,6 +21,7 @@ import ghidra.program.model.data.StringDataInstance;
 import ghidra.program.model.data.TranslationSettingsDefinition;
 import ghidra.program.model.listing.Data;
 import ghidra.program.util.DefinedDataIterator;
+import util.CollectionUtils;
 
 public class TranslateStringsScript extends GhidraScript {
 
@@ -39,7 +40,8 @@ public class TranslateStringsScript extends GhidraScript {
 		int count = 0;
 		monitor.initialize(currentProgram.getListing().getNumDefinedData());
 		monitor.setMessage("Translating strings");
-		for (Data data : DefinedDataIterator.definedStrings(currentProgram, currentSelection)) {
+		for (Data data : CollectionUtils.asIterable(
+			DefinedDataIterator.definedStrings(currentProgram, currentSelection))) {
 			if (monitor.isCancelled()) {
 				break;
 			}

@@ -34,7 +34,7 @@ import ghidra.program.util.XRefHeaderFieldLocation;
  * Field for display XRef headers.
  */
 public class XRefHeaderFieldFactory extends XRefFieldFactory {
-	private static final String XREF_FIELD_NAME = "XRef Header";
+	public static final String XREF_FIELD_NAME = "XRef Header";
 
 	public XRefHeaderFieldFactory() {
 		super(XREF_FIELD_NAME);

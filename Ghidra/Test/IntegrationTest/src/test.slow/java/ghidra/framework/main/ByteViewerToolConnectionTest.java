@@ -30,7 +30,6 @@ import docking.action.DockingActionIf;
 import docking.test.AbstractDockingTest;
 import ghidra.app.plugin.core.byteviewer.ByteViewerPlugin;
 import ghidra.app.services.ProgramManager;
-import ghidra.framework.model.Tool;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
@@ -62,7 +61,7 @@ public class ByteViewerToolConnectionTest extends AbstractGhidraHeadedIntegratio
 			pressButtonByText(dialog, "OK");
 		}
 
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 		env.dispose();
 	}
 
@@ -265,8 +264,8 @@ public class ByteViewerToolConnectionTest extends AbstractGhidraHeadedIntegratio
 		DockingActionIf runAction = getAction(toolName, "Run Tool");
 		assertNotNull(runAction);// if action is null, the name of the tool changed
 		performAction(runAction, toolName, true);
-		Tool[] tools = frontEndTool.getToolServices().getRunningTools();
-		return (PluginTool) tools[tools.length - 1];
+		PluginTool[] tools = frontEndTool.getToolServices().getRunningTools();
+		return tools[tools.length - 1];
 	}
 
 	private void performAction(final DockingActionIf action, String name, boolean doWait)

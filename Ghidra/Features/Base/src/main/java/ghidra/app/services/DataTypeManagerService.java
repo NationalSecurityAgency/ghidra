@@ -144,7 +144,7 @@ public interface DataTypeManagerService extends DataTypeQueryService {
 			throws IOException, DuplicateIdException;
 
 	/**
-	 * Selects the given data type in the display of data types.  A null <tt>dataType</tt>
+	 * Selects the given data type in the display of data types.  A null <code>dataType</code>
 	 * value will clear the current selection.
 	 * 
 	 * @param dataType The data type to select.

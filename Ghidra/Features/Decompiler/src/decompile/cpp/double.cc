@@ -494,6 +494,7 @@ void SplitVarnode::createJoinedWhole(Funcdata &data)
 									    lo->getAddr(),lo->getSize());
   }
   whole = data.newVarnode(wholesize,newaddr);
+  whole->setWriteMask();
 }
 
 void SplitVarnode::buildLoFromWhole(Funcdata &data)
@@ -519,10 +520,12 @@ void SplitVarnode::buildLoFromWhole(Funcdata &data)
   else if (loop->code() == CPUI_INDIRECT) {
     // When converting an INDIRECT to a SUBPIECE, we need to reinsert the op AFTER the affector
     PcodeOp *affector = PcodeOp::getOpFromConst(loop->getIn(1)->getAddr());
-    data.opUninsert(loop);
+    if (!affector->isDead())
+      data.opUninsert(loop);
     data.opSetOpcode(loop,CPUI_SUBPIECE);
     data.opSetAllInput(loop,inlist);
-    data.opInsertAfter(loop,affector);
+    if (!affector->isDead())
+      data.opInsertAfter(loop,affector);
   }
   else {
     data.opSetOpcode(loop,CPUI_SUBPIECE);
@@ -553,10 +556,12 @@ void SplitVarnode::buildHiFromWhole(Funcdata &data)
   else if (hiop->code() == CPUI_INDIRECT) {
     // When converting the INDIRECT to a SUBPIECE, we need to reinsert AFTER the affector
     PcodeOp *affector = PcodeOp::getOpFromConst(hiop->getIn(1)->getAddr());
-    data.opUninsert(hiop);
+    if (!affector->isDead())
+      data.opUninsert(hiop);
     data.opSetOpcode(hiop,CPUI_SUBPIECE);
     data.opSetAllInput(hiop,inlist);
-    data.opInsertAfter(hiop,affector);
+    if (!affector->isDead())
+      data.opInsertAfter(hiop,affector);
   }
   else {
     data.opSetOpcode(hiop,CPUI_SUBPIECE);
@@ -1960,6 +1965,7 @@ bool LessThreeWay::normalizeMid(void)
   }
   midconstform = false;
   if (vnhie2->isConstant()) {
+    if (!hiconstform) return false;	// If mid is constant, both mid and hi must be constant
     midconstform = true;
     midval = vnhie2->getOffset();
     if (vnhie2->getSize() == in.getSize()) {
@@ -2820,6 +2826,7 @@ bool IndirectForm::verify(Varnode *h,Varnode *l,PcodeOp *ind)
   indhi = ind;
   if (indhi->getIn(1)->getSpace()->getType()!=IPTR_IOP) return false;
   affector = PcodeOp::getOpFromConst(indhi->getIn(1)->getAddr());
+  if (affector->isDead()) return false;
   reshi = indhi->getOut();
   if (reshi->getSpace()->getType() == IPTR_INTERNAL) return false;		// Indirect must not be through a temporary
 

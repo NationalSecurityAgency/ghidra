@@ -15,7 +15,6 @@
  */
 package ghidra.pcode.opbehavior;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.junit.Assert;
@@ -75,35 +74,35 @@ public class OpBehaviorFloatSubTest extends AbstractOpBehaviorTest {
 
 		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
 
-		BigInteger a = ff.getEncoding(BigDecimal.valueOf(1.5d));
-		BigInteger b = ff.getEncoding(BigDecimal.valueOf(1.25d));
+		BigInteger a = ff.getEncoding(ff.getBigFloat(1.5d));
+		BigInteger b = ff.getEncoding(ff.getBigFloat(1.25d));
 		BigInteger result = op.evaluateBinary(8, 8, a, b);// 1.5 - 1.25
-		Assert.assertEquals(BigDecimal.valueOf(0.25d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(0.25d), ff.getHostFloat(result));
 
-		a = ff.getEncoding(BigDecimal.valueOf(-1.25d));
+		a = ff.getEncoding(ff.getBigFloat(-1.25d));
 		result = op.evaluateBinary(8, 8, a, b);// -1.25 - 1.25
-		Assert.assertEquals(BigDecimal.valueOf(-2.5d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(-2.5d), ff.getHostFloat(result));
 
-		a = ff.getEncoding(FloatFormat.BIG_POSITIVE_INFINITY);
+		a = ff.getBigInfinityEncoding(false);
 		result = op.evaluateBinary(8, 8, a, b);// +INFINITY - 1.25
-		Assert.assertEquals(FloatFormat.BIG_POSITIVE_INFINITY, ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(false), ff.getHostFloat(result));
 
-		a = ff.getEncoding(FloatFormat.BIG_NEGATIVE_INFINITY);
+		a = ff.getBigInfinityEncoding(true);
 		result = op.evaluateBinary(8, 8, a, b);// -INFINITY - 1.25
-		Assert.assertEquals(FloatFormat.BIG_NEGATIVE_INFINITY, ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(true), ff.getHostFloat(result));
 
-		b = ff.getEncoding(FloatFormat.BIG_NEGATIVE_INFINITY);
+		b = ff.getBigInfinityEncoding(true);
 		result = op.evaluateBinary(8, 8, a, b);// -INFINITY - -INFINITY
-		Assert.assertEquals(FloatFormat.BIG_NaN, ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(result));
 
-		b = ff.getEncoding(FloatFormat.BIG_POSITIVE_INFINITY);
+		b = ff.getBigInfinityEncoding(false);
 		result = op.evaluateBinary(8, 8, a, b);// -INFINITY - +INFINITY
-		Assert.assertEquals(FloatFormat.BIG_NEGATIVE_INFINITY, ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(true), ff.getHostFloat(result));
 
-		a = ff.getEncoding(FloatFormat.BIG_NaN);
-		b = ff.getEncoding(BigDecimal.valueOf(1.25d));
+		a = ff.getBigNaNEncoding(false);
+		b = ff.getEncoding(ff.getBigFloat(1.25d));
 		result = op.evaluateBinary(8, 8, a, b);// NaN - 1.25
-		Assert.assertEquals(FloatFormat.BIG_NaN, ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(result));
 
 	}
 

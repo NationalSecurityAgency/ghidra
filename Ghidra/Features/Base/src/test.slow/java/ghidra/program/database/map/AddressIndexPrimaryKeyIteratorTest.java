@@ -15,8 +15,7 @@
  */
 package ghidra.program.database.map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
@@ -62,12 +61,12 @@ public class AddressIndexPrimaryKeyIteratorTest extends AbstractGhidraHeadedInte
 		// Create fragmented memory
 		memMap.createInitializedBlock("Block1", addr(0x8000), 0x10, (byte) 0, null, false);// startKey: 0x0
 		memMap.createUninitializedBlock("Block2", addr(0x5000), 0x10, false);// startKey: 0x10000
-		memMap.createBitMappedBlock("Block3", addr(0x9000), addr(0x5000), 0x10);// startKey: 0x20000
+		memMap.createBitMappedBlock("Block3", addr(0x9000), addr(0x5000), 0x10, false);// startKey: 0x20000
 		memMap.createUninitializedBlock("Block4", addr(0x3000), 0x10, false);// startKey: 0x30000
 
 		// Create table with indexed address column
 		Schema schema =
-			new Schema(0, "id", new Class[] { LongField.class }, new String[] { "addr" });
+			new Schema(0, "id", new Field[] { LongField.INSTANCE }, new String[] { "addr" });
 		DBHandle handle = program.getDBHandle();
 		myTable = handle.createTable("MyTable", schema, new int[] { 0 });
 
@@ -85,7 +84,7 @@ public class AddressIndexPrimaryKeyIteratorTest extends AbstractGhidraHeadedInte
 			Address maxAddr = r.getMaxAddress();
 			while (a.compareTo(maxAddr) <= 0) {
 				long addrKey = addrMap.getKey(a, true);
-				Record rec = schema.createRecord(myTable.getKey());
+				DBRecord rec = schema.createRecord(myTable.getKey());
 				rec.setLongValue(0, addrKey);
 				myTable.putRecord(rec);
 				a = a.add(1);
@@ -112,7 +111,7 @@ public class AddressIndexPrimaryKeyIteratorTest extends AbstractGhidraHeadedInte
 			new AddressIndexPrimaryKeyIterator(myTable, 0, addrMap, true);
 		long key = 0;
 		while (iter.hasNext()) {
-			assertEquals(key++, iter.next());
+			assertEquals(key++, iter.next().getLongValue());
 		}
 		assertEquals(0x40, key);
 	}
@@ -125,14 +124,14 @@ public class AddressIndexPrimaryKeyIteratorTest extends AbstractGhidraHeadedInte
 			new AddressIndexPrimaryKeyIterator(myTable, 0, addrMap, minAddr, maxAddr, true);
 		long key = 18;
 		while (iter.hasNext()) {
-			assertEquals(key++, iter.next());
+			assertEquals(key++, iter.next().getLongValue());
 		}
 		assertEquals(37, key);
 
 		iter = new AddressIndexPrimaryKeyIterator(myTable, 0, addrMap, minAddr, maxAddr, false);
 		key = 36;
 		while (iter.hasPrevious()) {
-			assertEquals(key--, iter.previous());
+			assertEquals(key--, iter.previous().getLongValue());
 		}
 		assertEquals(17, key);
 	}
@@ -144,14 +143,14 @@ public class AddressIndexPrimaryKeyIteratorTest extends AbstractGhidraHeadedInte
 			new AddressIndexPrimaryKeyIterator(myTable, 0, addrMap, a, true);
 		long key = 18;
 		while (iter.hasNext()) {
-			assertEquals(key++, iter.next());
+			assertEquals(key++, iter.next().getLongValue());
 		}
 		assertEquals(0x40, key);
 
 		iter = new AddressIndexPrimaryKeyIterator(myTable, 0, addrMap, a, false);
 		key = 18;
 		while (iter.hasPrevious()) {
-			assertEquals(key--, iter.previous());
+			assertEquals(key--, iter.previous().getLongValue());
 		}
 		assertEquals(-1, key);
 	}
@@ -162,25 +161,25 @@ public class AddressIndexPrimaryKeyIteratorTest extends AbstractGhidraHeadedInte
 		set.addRange(addr(0x3002), addr(0x3004));
 		AddressIndexPrimaryKeyIterator iter =
 			new AddressIndexPrimaryKeyIterator(myTable, 0, addrMap, set, true);
-		assertEquals(2, iter.next());
-		assertEquals(3, iter.next());
-		assertEquals(4, iter.next());
+		assertEquals(2, iter.next().getLongValue());
+		assertEquals(3, iter.next().getLongValue());
+		assertEquals(4, iter.next().getLongValue());
 		long key = 18;
 		while (iter.hasNext()) {
-			assertEquals(key++, iter.next());
+			assertEquals(key++, iter.next().getLongValue());
 		}
 		assertEquals(37, key);
 
 		iter = new AddressIndexPrimaryKeyIterator(myTable, 0, addrMap, set, false);
 		key = 36;
 		while (iter.hasPrevious()) {
-			assertEquals(key--, iter.previous());
+			assertEquals(key--, iter.previous().getLongValue());
 			if (key == 17) {
 				break;
 			}
 		}
-		assertEquals(4, iter.previous());
-		assertEquals(3, iter.previous());
-		assertEquals(2, iter.previous());
+		assertEquals(4, iter.previous().getLongValue());
+		assertEquals(3, iter.previous().getLongValue());
+		assertEquals(2, iter.previous().getLongValue());
 	}
 }

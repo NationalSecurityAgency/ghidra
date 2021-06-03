@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +39,7 @@ public abstract class MergeManagerPlugin extends Plugin implements ProgramaticUs
 	 * Constructor for plugin that handles multi-user merge of programs.
 	 * @param tool the tool with the active program to be merged
 	 * @param mergeManager the merge manager that will control the merge process
-	 * @param program the current program
+	 * @param domainObject the current domain object
 	 */
 	public MergeManagerPlugin(PluginTool tool, MergeManager mergeManager,
 			UndoableDomainObject domainObject) {

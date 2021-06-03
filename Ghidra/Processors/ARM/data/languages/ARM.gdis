@@ -1,0 +1,41 @@
+<!-- 
+     This file determines the disassembler options sent to the GNU external disassembler.
+     You can see which options are available for all architectures in the objdump man page.
+     Given a version of objdump compiled for a specific architecture, you can see what options
+     are available with "objdump -i -m" 
+     
+      The options for ARM are:
+       "reg-names-std" (the default)
+       "reg-names-apcs"
+       "reg-names-raw"
+       "reg-names-apcs"
+       "reg-names-special-apcs"
+       "force-thumb"      (force thumb disassembly)
+       "no-force-thumb"   (force arm disassembly)
+       (see the objdump manpage for the precise details about the different register 
+       naming options)
+     
+     "optstring" is the string of options, and "display_prefix" is an optional prefix prepended to the 
+     external disassembly field.  In this file, "A: " is prepended to ARM disassembly, and
+     "T: " is prepended to Thumb disassembly. 
+     
+     To send multiple options, concatenate them into a CSV list.  For example, "no-force-thumb,reg-names-raw"
+     is a valid optstring. You can also have a "global" element whose "optstring" attribute is 
+     always sent to the GNU disassembler.
+    
+     If there is not a context register defined, the global optstring is sent by itself (see x86-16.gdis for
+     an example).  If there is a context register defined, the global optstring is prepended to the 
+     optstring determined by a context register value.  
+     
+     This file must be listed in the .ldefs file for the processor, e.g.
+     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
+-->
+
+<gdis> 
+    <context_register>TMode</context_register>
+    <options>
+        <option value="0x0" optstring="no-force-thumb" display_prefix = "A: "/>
+        <option value="0x1" optstring="force-thumb" display_prefix = "T: "/>
+    </options>
+</gdis>
+

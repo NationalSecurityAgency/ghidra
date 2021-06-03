@@ -23,7 +23,6 @@ import ghidra.program.model.mem.MemBuffer;
  * a function has no return value.
  */
 public class VoidDataType extends BuiltIn {
-	private final static long serialVersionUID = 1;
 
 	/** A statically defined DefaultDataType used when an Undefined byte is needed.*/
 	public static VoidDataType dataType = new VoidDataType();
@@ -40,6 +39,7 @@ public class VoidDataType extends BuiltIn {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getMnemonic(Settings)
 	 */
+	@Override
 	public String getMnemonic(Settings settings) {
 		return "void";
 	}
@@ -48,21 +48,16 @@ public class VoidDataType extends BuiltIn {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getLength()
 	 */
+	@Override
 	public int getLength() {
 		return 0;
-	}
-
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	public boolean isDynamicallySized() {
-		return false;
 	}
 
 	/**
 	 * 
 	 * @see ghidra.program.model.data.DataType#getDescription()
 	 */
+	@Override
 	public String getDescription() {
 		return "void datatype";
 	}
@@ -71,6 +66,7 @@ public class VoidDataType extends BuiltIn {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getRepresentation(MemBuffer, Settings, int)
 	 */
+	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		return "";
 	}
@@ -79,10 +75,12 @@ public class VoidDataType extends BuiltIn {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getValue(ghidra.program.model.mem.MemBuffer, ghidra.docking.settings.Settings, int)
 	 */
+	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		return null;
 	}
 
+	@Override
 	public DataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;

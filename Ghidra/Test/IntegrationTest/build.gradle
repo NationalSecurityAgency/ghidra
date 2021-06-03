@@ -1,3 +1,18 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
 apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply plugin: 'eclipse'
@@ -18,6 +33,10 @@ sourceSets {
    }
 }
 
+processIntegrationTestResources {
+	duplicatesStrategy = 'exclude'
+}
+
 dependencies {
 	// integrationtest module may depend on other projects in this repo; add them
 	// here 
@@ -31,15 +50,16 @@ dependencies {
 				projectPath.contains("/Features/") ||
 				projectPath.contains("/Processors/"))) {
 
-				compile p
+				api p
 			}
 		}	
 	}
 
-	// some tests use classes in Base/src/test and test.slow
-	testCompile project(path: ':Base', configuration: 'testArtifacts')
-	testCompile project(path: ':Base', configuration: 'integrationTestArtifacts')	
-	testCompile project(path: ':FunctionGraph', configuration: 'testArtifacts')	
+	// some tests use classes in Base, FunctionGraph and PDB
+	testImplementation project(path: ':Base', configuration: 'testArtifacts')
+	testImplementation project(path: ':Base', configuration: 'integrationTestArtifacts')	
+	testImplementation project(path: ':FunctionGraph', configuration: 'testArtifacts')	
+	testImplementation project(path: ':PDB', configuration: 'testArtifacts')
 }
 
 // For Java 9, we must explicitly export references to the internal classes we are using.

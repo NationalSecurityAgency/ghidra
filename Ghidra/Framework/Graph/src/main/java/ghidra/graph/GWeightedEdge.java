@@ -18,7 +18,7 @@ package ghidra.graph;
 /**
  * An edge having a natural weight
  * 
- * param <V> the type of vertices
+ * @param <V> the type of vertices
  */
 public interface GWeightedEdge<V> extends GEdge<V> {
 	/**

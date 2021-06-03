@@ -45,7 +45,7 @@ public class AssemblyResolutionResults extends AbstractSetDecorator<AssemblyReso
 	/**
 	 * Construct an immutable single-entry set consisting of the one given resolution
 	 * 
-	 * @param res the single resolution entry
+	 * @param rc the single resolution entry
 	 * @return the new resolution set
 	 */
 	public static AssemblyResolutionResults singleton(AssemblyResolvedConstructor rc) {

@@ -441,8 +441,8 @@ inline Address EmulatePcodeCache::getExecuteAddress(void) const
   \code
     void setupMemoryState(Translate &trans,LoadImage &loader) {
       // Set up memory state object
-      MemoryImage loadmemory(trans.getDefaultSpace(),8,4096,&loader);
-      MemoryPageOverlay ramstate(trans.getDefaultSpace(),8,4096,&loadmemory);
+      MemoryImage loadmemory(trans.getDefaultCodeSpace(),8,4096,&loader);
+      MemoryPageOverlay ramstate(trans.getDefaultCodeSpace(),8,4096,&loadmemory);
       MemoryHashOverlay registerstate(trans.getSpaceByName("register"),8,4096,4096,(MemoryBank *)0);
       MemoryHashOverlay tmpstate(trans.getUniqueSpace(),8,4096,4096,(MemoryBank *)0);
 
@@ -518,10 +518,10 @@ inline Address EmulatePcodeCache::getExecuteAddress(void) const
 
     // Set up the initial stack pointer
     memstate.setValue("ESP",0xbffffffc);
-    emulator.setExecuteAddress(Address(trans.getDefaultSpace(),0x1D00114));  // Initial execution address
+    emulator.setExecuteAddress(Address(trans.getDefaultCodeSpace(),0x1D00114));  // Initial execution address
     
     PutsCallBack putscallback;
-    breaktable.registerAddressCallback(Address(trans.getDefaultSpace(),0x1D00130),&putscallback);
+    breaktable.registerAddressCallback(Address(trans.getDefaultCodeSpace(),0x1D00130),&putscallback);
 
     AssemblyRaw assememit;
     for(;;) {

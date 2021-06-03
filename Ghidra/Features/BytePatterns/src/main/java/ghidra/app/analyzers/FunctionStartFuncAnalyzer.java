@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +44,11 @@ public class FunctionStartFuncAnalyzer extends FunctionStartAnalyzer {
 			getOrCreatePotentialMatchPropertyMap(program).getAddressSet();
 		set = set.intersect(potentialPreMatches);
 
+		// no previous no-function existing pre-requisites to check
+		if (set.isEmpty()) {
+			return true;
+		}
+		
 		return super.added(program, set, monitor, log);
 	}
 

@@ -24,7 +24,7 @@ set VMARG_LIST=-XX:ParallelGCThreads=2
 set VMARG_LIST=%VMARG_LIST% -XX:CICompilerCount=2
 
 :: store current path
-set filepath=%~dp0
+set "filepath=%~dp0"
 
 :: Loop through parameters (if there aren't any, just continue) and store
 ::   in params variable.

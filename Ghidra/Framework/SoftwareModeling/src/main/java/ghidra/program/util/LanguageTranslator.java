@@ -39,7 +39,7 @@ public interface LanguageTranslator extends ExtensionPoint {
 	 * Validate translator to complete initialization and ensure language compatibility.
 	 * This method will be invoked by the LanguageTranslatorFactory before handing out this
 	 * translator.
-	 * @returns true if translator successfully validated
+	 * @return true if translator successfully validated
 	 */
 	public boolean isValid();
 	

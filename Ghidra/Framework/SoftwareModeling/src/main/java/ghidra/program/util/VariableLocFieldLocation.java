@@ -33,10 +33,10 @@ public class VariableLocFieldLocation extends VariableLocation {
 
 	/**
 	 * Construct a new VariableLocFieldLocation object.
+	 * @param program the program of the location
 	 * @param locationAddr the address of the listing location (i.e., referent code unit)
 	 * @param var the variable which has its location (stack offset) in the field.
 	 * @param charOffset the position within the variable location (stack offset) string for this location.
-	 * @param the program of the location
 	 */
 	public VariableLocFieldLocation(Program program, Address locationAddr, Variable var,
 			int charOffset) {
@@ -49,9 +49,9 @@ public class VariableLocFieldLocation extends VariableLocation {
 	 * Construct a new VariableLocFieldLocation object.
 	 * Variable function entry point is the assumed listing location (i.e., referent code unit).
 	 * Care should be taken if variable corresponds to an EXTERNAL function.
+	 * @param program the program of the location
 	 * @param var the variable which has its location (stack offset) in the field.
-	 * @param the program of the location
-	 * @param col the position within the variable location (stack offset) string for this location.
+	 * @param charOffset the position within the variable location (stack offset) string for this location.
 	 */
 	public VariableLocFieldLocation(Program program, Variable var, int charOffset) {
 

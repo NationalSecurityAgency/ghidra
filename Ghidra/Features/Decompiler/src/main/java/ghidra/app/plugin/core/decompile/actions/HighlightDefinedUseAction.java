@@ -15,45 +15,49 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
-import java.util.HashSet;
+import java.util.Set;
 
 import docking.action.MenuData;
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.component.*;
+import ghidra.app.decompiler.component.DecompilerPanel;
+import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
+import ghidra.util.HelpLocation;
 
 public class HighlightDefinedUseAction extends AbstractDecompilerAction {
-	private final DecompilerController controller;
 
-	public HighlightDefinedUseAction(DecompilerController controller) {
+	public HighlightDefinedUseAction() {
 		super("Highlight Defined Use");
-		this.controller = controller;
-		setPopupMenuData(new MenuData(new String[] { "Highlight Def-use" }, "Decompile"));
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionHighlight"));
+		setPopupMenuData(new MenuData(new String[] { "Highlight", "Def-use" }, "Decompile"));
 	}
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
+		ClangToken tokenAtCursor = context.getTokenAtCursor();
 		Varnode varnode = DecompilerUtils.getVarnodeRef(tokenAtCursor);
 		return varnode != null;
 	}
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
+		ClangToken tokenAtCursor = context.getTokenAtCursor();
 		Varnode varnode = DecompilerUtils.getVarnodeRef(tokenAtCursor);
-		if (varnode != null) {
-			HashSet<Varnode> varnodes = new HashSet<Varnode>();
-			varnodes.add(varnode);
-			decompilerPanel.clearHighlights();
-			decompilerPanel.addVarnodeHighlights(varnodes,
-				decompilerPanel.getDefaultHighlightColor(), varnode, varnode.getDef(),
-				decompilerPanel.getDefaultSpecialColor());
-			decompilerPanel.repaint();
+		if (varnode == null) {
+			return;
 		}
+
+		DecompilerPanel decompilerPanel = context.getDecompilerPanel();
+		decompilerPanel.clearPrimaryHighlights();
+
+		Set<Varnode> varnodes = Set.of(varnode);
+		PcodeOp op = varnode.getDef();
+		SliceHighlightColorProvider colorProvider =
+			new SliceHighlightColorProvider(decompilerPanel, varnodes, varnode, op);
+		decompilerPanel.addVarnodeHighlights(varnodes, colorProvider);
 	}
 
 }

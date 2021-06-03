@@ -52,7 +52,6 @@ public class CreateLabelsFromEnumsTest extends AbstractGhidraHeadedIntegrationTe
 	private static final String EVEN_MORE_COLORS_NAME = "EvenMoreColors";
 	private static final String MORE_COLORS_NAME = "MoreColors";
 	private static final String COLORS_NAME = "Colors";
-	private static final String PROGRAM_FILENAME = "notepad";
 	private static final String NO_STATUS_MESSAGE = " ";
 
 	private PluginTool tool;
@@ -63,10 +62,6 @@ public class CreateLabelsFromEnumsTest extends AbstractGhidraHeadedIntegrationTe
 	private DataTypeArchiveGTree tree;
 	private ArchiveRootNode archiveRootNode;
 	private ArchiveNode programNode;
-
-	public CreateLabelsFromEnumsTest() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -89,7 +84,7 @@ public class CreateLabelsFromEnumsTest extends AbstractGhidraHeadedIntegrationTe
 		provider = plugin.getProvider();
 		tree = provider.getGTree();
 		waitForTree();
-		archiveRootNode = (ArchiveRootNode) tree.getRootNode();
+		archiveRootNode = (ArchiveRootNode) tree.getModelRoot();
 		programNode = (ArchiveNode) archiveRootNode.getChild(testName.getMethodName());
 		assertNotNull("Did not successfully wait for the program node to load", programNode);
 
@@ -109,7 +104,7 @@ public class CreateLabelsFromEnumsTest extends AbstractGhidraHeadedIntegrationTe
 		});
 
 		// this handles the save changes dialog and potential analysis dialogs
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 		env.release(program);
 		env.dispose();
 	}
@@ -375,6 +370,9 @@ public class CreateLabelsFromEnumsTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	private void checkStatusMessage(String expectedMessage) {
+
+		waitForSwing();
+
 		PluginTool pluginTool = plugin.getTool();
 		DockingWindowManager windowManager = pluginTool.getWindowManager();
 		Object rootNode = TestUtils.invokeInstanceMethod("getRootNode", windowManager);
@@ -393,7 +391,7 @@ public class CreateLabelsFromEnumsTest extends AbstractGhidraHeadedIntegrationTe
 
 		// make sure things have settled down
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		List<GTreeNode> nodes = new ArrayList<>();
 		for (String name : names) {
@@ -449,7 +447,7 @@ public class CreateLabelsFromEnumsTest extends AbstractGhidraHeadedIntegrationTe
 			}
 		});
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		waitForTree();
 	}
 

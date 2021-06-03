@@ -34,14 +34,14 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 		super();
 	}
 
-    @Before
-    public void setUp() throws Exception {
-		
+	@Before
+	public void setUp() throws Exception {
+
 		space = new GenericAddressSpace("xx", 32, AddressSpace.TYPE_RAM, 0);
 	}
 
-@Test
-    public void testIntersect() {
+	@Test
+	public void testIntersect() {
 		AddressRange r2 = new AddressRangeImpl(addr(0), addr(30));
 		AddressRange r1 = new AddressRangeImpl(addr(5), addr(20));
 		AddressRange r3 = r1.intersect(r2);
@@ -63,8 +63,8 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 
 	}
 
-@Test
-    public void testAddressRangeChunker_SameStartAndEndAddress() {
+	@Test
+	public void testAddressRangeChunker_SameStartAndEndAddress() {
 		Address start = addr(0);
 		Address end = addr(0);
 
@@ -79,8 +79,8 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 		assertFalse(it.hasNext());
 	}
 
-@Test
-    public void testAddressRangeChunker_AddressRangeConstructor() {
+	@Test
+	public void testAddressRangeChunker_AddressRangeConstructor() {
 		Address start = addr(0);
 		Address end = addr(2);
 
@@ -105,8 +105,8 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 		assertFalse(it.hasNext());
 	}
 
-@Test
-    public void testAddressRangeChunker_LastRangeSmallerThanChunkSize() {
+	@Test
+	public void testAddressRangeChunker_LastRangeSmallerThanChunkSize() {
 		Address start = addr(0);
 		Address end = addr(30);
 
@@ -134,8 +134,8 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 		assertFalse(it.hasNext());
 	}
 
-@Test
-    public void testAddressRangeChunker_LastRangeEqualToChunkSize() {
+	@Test
+	public void testAddressRangeChunker_LastRangeEqualToChunkSize() {
 		Address start = addr(0);
 		Address end = addr(29);
 
@@ -159,8 +159,8 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 		assertFalse(it.hasNext());
 	}
 
-@Test
-    public void testAddressRangeChunker_NullAddresses() {
+	@Test
+	public void testAddressRangeChunker_NullAddresses() {
 		try {
 			new AddressRangeChunker(null, addr(0), 10);
 			Assert.fail("Did not get exception when passing null address to chunker.");
@@ -178,8 +178,8 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 		}
 	}
 
-@Test
-    public void testAddressRangeChunker_BadChunkSize() {
+	@Test
+	public void testAddressRangeChunker_BadChunkSize() {
 		try {
 			new AddressRangeChunker(addr(0), addr(1), -1);
 			Assert.fail("Did not get exception when passing bad chunk size to chunker.");
@@ -197,8 +197,8 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 		}
 	}
 
-@Test
-    public void testAddressRangeChunker_StartLessThanEnd() {
+	@Test
+	public void testAddressRangeChunker_StartLessThanEnd() {
 		try {
 			new AddressRangeChunker(addr(1), addr(0), 10);
 			Assert.fail("Did not get exception when passing start less than end to chunker.");
@@ -210,8 +210,8 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 		new AddressRangeChunker(addr(0), addr(0), 10); // this is OK
 	}
 
-@Test
-    public void testAddressRangeChunker_DifferentAddressSpaces() {
+	@Test
+	public void testAddressRangeChunker_DifferentAddressSpaces() {
 		AddressSpace space1 = new GenericAddressSpace("xx", 32, AddressSpace.TYPE_RAM, 0);
 		AddressSpace space2 = new GenericAddressSpace("yy", 32, AddressSpace.TYPE_RAM, 0);
 
@@ -221,11 +221,64 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 		try {
 			new AddressRangeChunker(a1, a2, 10);
 			Assert.fail("Did not get exception when passing addresses from different address "
-				+ "spaces to chunker.");
+					+ "spaces to chunker.");
 		}
 		catch (IllegalArgumentException e) {
 			// good!
 		}
+	}
+
+	@Test
+	public void testAddressRange_BoundsOrdering() {
+
+		int size = 15;
+		Address start = addr(5);
+		Address limit = start.add(size);
+
+		AddressRange r1 = new AddressRangeImpl(start, limit);
+		assertTrue(r1.getMinAddress().compareTo(r1.getMaxAddress()) < 0);
+
+		AddressRange r2 = new AddressRangeImpl(limit, start);
+		assertTrue(r2.getMinAddress().compareTo(r2.getMaxAddress()) < 0);
+
+		assertTrue(r1.compareTo(r2) == 0);
+	}
+
+	@Test
+	public void testAddressRangeIteration_RangeEnumeration() {
+		int size = 15;
+		Address start = addr(5);
+		Address limit = start.add(size);
+
+		AddressRange r1 = new AddressRangeImpl(start, limit);
+		int addrCount = 0;
+		Iterator<Address> addrItr = r1.iterator();
+		while (addrItr.hasNext()) {
+			addrItr.next();
+			addrCount++;
+		}
+
+		assertTrue(
+			"Address Iterator does not properly enumerate address range: " +
+					String.format("%s (%d long) -- found %d", r1.toString(), r1.getLength(), addrCount),
+					addrCount == (size + 1));
+	}
+
+	@Test
+	public void testAddressRangeIteration_Extent() {
+		int size = 15;
+		Address start = addr(5);
+		Address limit = start.add(size);
+
+		AddressRange r1 = new AddressRangeImpl(start, limit);
+
+		Iterator<Address> addrItr = r1.iterator();
+		Address lastAddr = Address.NO_ADDRESS;
+		while (addrItr.hasNext()) {
+			lastAddr = addrItr.next();
+		}
+
+		assertTrue("Address Iterator extent does not match end of range", lastAddr.equals(limit));
 	}
 
 	private Address addr(int a) {

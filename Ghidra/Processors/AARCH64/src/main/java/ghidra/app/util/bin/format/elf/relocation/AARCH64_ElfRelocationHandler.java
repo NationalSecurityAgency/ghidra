@@ -30,6 +30,11 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	@Override
+	public int getRelrRelocationType() {
+		return AARCH64_ElfRelocationConstants.R_AARCH64_RELATIVE;
+	}
+
+	@Override
 	public void relocate(ElfRelocationContext elfRelocationContext, ElfRelocation relocation,
 			Address relocationAddress) throws MemoryAccessException, NotFoundException {
 

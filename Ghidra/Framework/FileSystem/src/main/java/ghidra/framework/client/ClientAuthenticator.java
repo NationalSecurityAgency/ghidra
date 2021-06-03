@@ -38,14 +38,14 @@ public interface ClientAuthenticator extends KeyStorePasswordProvider {
 	 * @param serverType type of server (label associated with serverName)
 	 * @param serverName name of server
 	 * @param nameCb provides storage for user login name.  A null indicates
-	 * that the default user name will be used, @see ClientUtil#getUserName().
+	 * that the default user name will be used, @see ClientUtil#getUserName()
 	 * @param passCb provides storage for user password, @see PasswordCallback#setPassword(char[])
 	 * @param choiceCb specifies choice between NT Domain authentication (index=0) and local password
 	 * file authentication (index=1).  Set selected index to specify authenticator to be used, 
 	 * @param anonymousCb may be used to request anonymous read-only access to 
 	 * the server.  A null is specified if anonymous access has not been enabed on the server.
 	 * @param loginError previous login error message or null for first attempt
-	 * @see ChoiceCallback#setSelectedIndex(int).
+	 * @see ChoiceCallback#setSelectedIndex(int)
 	 * A null is specified if no choice is available (password authenticator determined by server configuration).
 	 * @see AnonymousCallback#setAnonymousAccessRequested(boolean)
 	 * @return

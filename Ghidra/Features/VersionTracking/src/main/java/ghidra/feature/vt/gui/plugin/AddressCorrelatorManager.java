@@ -62,7 +62,7 @@ public class AddressCorrelatorManager {
 
 	private List<AddressCorrelator> initializeAddressCorrelators() {
 
-		Set<DiscoverableAddressCorrelator> instances =
+		List<DiscoverableAddressCorrelator> instances =
 			ClassSearcher.getInstances(DiscoverableAddressCorrelator.class);
 		List<AddressCorrelator> addressCorrelatorList = new ArrayList<AddressCorrelator>(instances);
 

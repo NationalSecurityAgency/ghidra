@@ -25,9 +25,9 @@ import ghidra.program.model.pcode.Varnode;
  * 
  *
  * To change this generated comment edit the template variable "typecomment":
- * Window>Preferences>Java>Templates.
+ * {@literal Window>Preferences>Java>Templates.}
  * To enable and disable the creation of type comments go to
- * Window>Preferences>Java>Code Generation.
+ * {@literal Window>Preferences>Java>Code Generation.}
  */
 public class VarnodeTemplate implements Serializable {
 
@@ -92,9 +92,11 @@ public class VarnodeTemplate implements Serializable {
 	}
 
 	/**
-	 * @param position
-	 * @param off
-	 * @return Varnode
+	 * Resolves a varnode at the given position and buffer offset
+	 * @param position the position
+	 * @param bufoff the buffer offset
+	 * @return the resolved {@link Varnode raw varnode}. (<b>Only</b> contains an address and size)
+	 * @throws Exception if an error occurs resolving the varnode
 	 */
 	public Varnode resolve(Position position, int bufoff) throws Exception {
 		int spaceID = (int) space.resolve(position, bufoff);

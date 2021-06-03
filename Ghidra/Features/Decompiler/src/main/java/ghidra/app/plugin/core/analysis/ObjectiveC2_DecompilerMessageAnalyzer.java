@@ -108,7 +108,7 @@ public class ObjectiveC2_DecompilerMessageAnalyzer extends AbstractAnalyzer {
 		};
 
 		try {
-			ParallelDecompiler.decompileFunctions(callback, program, functions, monitor);
+			ParallelDecompiler.decompileFunctions(callback, functions, monitor);
 		}
 		finally {
 			callback.dispose();
@@ -500,7 +500,13 @@ public class ObjectiveC2_DecompilerMessageAnalyzer extends AbstractAnalyzer {
 			}
 			else if (dataValue instanceof Address) {
 				offset = ((Address) dataValue).getOffset();
-				name = getNameFromOffset(program, offset, input, isClass, isMethod);
+				if (offset == address.getOffset()) {
+					// Self-referencing pointer
+					name = null;  
+				}
+				else {
+					name = getNameFromOffset(program, offset, input, isClass, isMethod);
+				}
 			}
 			else {
 				name = getClassName(program, address);

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +44,7 @@ public class ShutdownHookRegistry {
 	/**
 	 * Remove a shutdown hook previously registered.
 	 * Hooks with a higher priority value will run first
-	 * @param r shutdown hook runnable
-	 * @param priority relative priority
+	 * @param hook shutdown hook
 	 */
 	public static synchronized void removeShutdownHook(ShutdownHook hook) {
 		hooks.remove(hook);

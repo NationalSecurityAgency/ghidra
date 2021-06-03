@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,16 @@
  */
 package help;
 
-import help.validator.LinkDatabase;
-import help.validator.model.*;
-
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+import help.validator.LinkDatabase;
+import help.validator.model.*;
+
 /**
- * A class that will take in a group of help directories and create a tree of 
+ * A class that will take in a group of help directories and create a tree of
  * help Table of Contents (TOC) items.  Ideally, this tree can be used to create a single
  * TOC document, or individual TOC documents, one for each help directory (this allows
  * for better modularity).
@@ -33,7 +32,6 @@ import java.util.*;
  * We call this class an <b>overlay</b> tree to drive home the idea that each
  * help directory's TOC data is put into the tree, with any duplicate paths overlayed
  * on top of those from other help directories.
- *
  */
 public class OverlayHelpTree {
 
@@ -44,10 +42,11 @@ public class OverlayHelpTree {
 
 	public OverlayHelpTree(TOCItemProvider tocItemProvider, LinkDatabase linkDatabase) {
 		this.linkDatabase = linkDatabase;
-		for (TOCItemExternal external : tocItemProvider.getTOCItemExternalsByDisplayMapping().values()) {
+		for (TOCItemExternal external : tocItemProvider.getExternalTocItemsById().values()) {
 			addExternalTOCItem(external);
 		}
-		for (TOCItemDefinition definition : tocItemProvider.getTOCItemDefinitionsByIDMapping().values()) {
+
+		for (TOCItemDefinition definition : tocItemProvider.getTocDefinitionsByID().values()) {
 			addSourceTOCItem(definition);
 		}
 	}
@@ -61,7 +60,7 @@ public class OverlayHelpTree {
 
 				//
 				// We will have equivalent items in the generated TOC files, as that is how we
-				// enable merging of TOC files in the JavaHelp system.  So, multiple roots are 
+				// enable merging of TOC files in the JavaHelp system.  So, multiple roots are
 				// OK.
 				//
 
@@ -86,7 +85,7 @@ public class OverlayHelpTree {
 		if (parentID == null) {
 			// must be the root, since the root has no parent
 			if (rootItem != null) {
-				// when loading source items, it is only an error when there is more than one 
+				// when loading source items, it is only an error when there is more than one
 				// root item defined *in the same file*
 				if (rootItem.getSourceFile().equals(item.getSourceFile())) {
 					throw new IllegalArgumentException(
@@ -125,7 +124,7 @@ public class OverlayHelpTree {
 		PrintWriter writer = new PrintWriter(new BufferedWriter(osw));
 		printTreeForID(writer, sourceFileID);
 
-		// debug 
+		// debug
 		// writer = new PrintWriter(System.err);
 		// printTreeForID(writer, sourceFileID);
 	}
@@ -167,17 +166,19 @@ public class OverlayHelpTree {
 			return false;
 		}
 
-// TODO delete this debug		
-//		Set<Entry<String, Set<TOCItem>>> entrySet = parentToChildrenMap.entrySet();
-//		for (Entry<String, Set<TOCItem>> entry : entrySet) {
-//			System.out.println(entry.getKey() + " -> " + entry.getValue());
-//		}
-
 		OverlayNode newRootNode = new OverlayNode(null, rootItem);
 		buildChildren(newRootNode);
 
+		//
+		// The parent to children map is cleared as nodes are created.   The map is populated by
+		// adding any references to the 'parent' key as they are loaded from the help files.
+		// As we build nodes, starting at the root, will will create child nodes for those that
+		// reference the 'parent' key.   If the map is empty, then it means we never built a
+		// node for the 'parent' key, which means we never found a help file containing the
+		// definition for that key.
+		//
 		if (!parentToChildrenMap.isEmpty()) {
-			throw new RuntimeException("Unresolved definitions in tree!");
+			throw new RuntimeException("Unresolved definitions in tree! - " + parentToChildrenMap);
 		}
 		rootNode = newRootNode;
 		return true;
@@ -255,6 +256,7 @@ public class OverlayHelpTree {
 		}
 	}
 
+	// TODO LOOKIE
 	private static final Comparator<OverlayNode> CHILD_SORT_COMPARATOR =
 		new Comparator<OverlayNode>() {
 			@Override
@@ -266,7 +268,7 @@ public class OverlayHelpTree {
 					return o1.getSortPreference().compareTo(o2.getSortPreference());
 				}
 
-				// if sort preference is the same, then sort alphabetically by display name            
+				// if sort preference is the same, then sort alphabetically by display name
 				String text1 = o1.getTextAttribute();
 				String text2 = o2.getTextAttribute();
 
@@ -283,7 +285,16 @@ public class OverlayHelpTree {
 					return -1;
 				}
 
-				return text1.compareTo(text2);
+				int result = text1.compareTo(text2);
+				if (result != 0) {
+					return result;
+				}
+
+				// At this point we have 2 nodes that have the same text attribute as children of
+				// a <TOCDEF> tag.  This is OK, as we use text only for sorting, but not for the
+				// display text.   Use the ID as a tie-breaker for sorting, which should provide
+				// sorting consistency.
+				return o1.getIDAttribute().compareTo(o2.getIDAttribute()); // ID should not be null
 			}
 		};
 }

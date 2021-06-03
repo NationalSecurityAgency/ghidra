@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +77,7 @@ public class SimpleDestReferenceIterator implements CodeBlockReferenceIterator {
      * @throws CancelledException if the monitor cancels the operation.
      * @deprecated this method should be avoided since it repeats the work of the iterator
      */
+	@Deprecated
     public static int getNumDestinations(CodeBlock block, boolean followIndirectFlows, TaskMonitor monitor) throws CancelledException {
     	return getDestinations(block, null, followIndirectFlows, monitor);
     }

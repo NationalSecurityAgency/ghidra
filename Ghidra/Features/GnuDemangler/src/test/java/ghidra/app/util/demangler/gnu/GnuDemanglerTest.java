@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,12 +17,14 @@ package ghidra.app.util.demangler.gnu;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
-import ghidra.app.cmd.label.DemanglerCmd;
-import ghidra.app.util.demangler.*;
+import ghidra.app.util.demangler.DemangledException;
+import ghidra.app.util.demangler.DemangledObject;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.TerminatedStringDataType;
@@ -30,6 +32,7 @@ import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.symbol.*;
 import ghidra.test.ToyProgramBuilder;
+import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 public class GnuDemanglerTest extends AbstractGenericTest {
@@ -52,7 +55,12 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		demangler.canDemangle(program);// this perform initialization
 
 		// this throws an exception with the bug in place
-		demangler.demangle(mangled, true);
+		try {
+			demangler.demangle(mangled);
+		}
+		catch (DemangledException e) {
+			assertTrue(e.isInvalidMangledName());
+		}
 	}
 
 	@Test
@@ -63,8 +71,10 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		GnuDemangler demangler = new GnuDemangler();
 		demangler.canDemangle(program);// this perform initialization
 
+		GnuDemanglerOptions options = new GnuDemanglerOptions();
+		options.setDemangleOnlyKnownPatterns(false);
 		try {
-			demangler.demangle(mangled, false);
+			demangler.demangle(mangled, options);
 			fail("Demangle should have failed attempting to demangle a non-mangled string");
 		}
 		catch (DemangledException e) {
@@ -80,7 +90,7 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		GnuDemangler demangler = new GnuDemangler();
 		demangler.canDemangle(program);// this perform initialization
 
-		DemangledObject result = demangler.demangle(mangled, true);
+		DemangledObject result = demangler.demangle(mangled);
 		assertNull("Demangle did not skip a name that does not match a known mangled pattern",
 			result);
 	}
@@ -97,13 +107,13 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		symbolTable.createLabel(addr("01001000"), mangled, SourceType.IMPORTED);
 
 		GnuDemangler demangler = new GnuDemangler();
-		DemangledObject obj = demangler.demangle(mangled, true);
+		DemangledObject obj = demangler.demangle(mangled);
 		assertNotNull(obj);
 
 		//assertEquals("typeinfo for AP_HAL::HAL::Callbacks", obj.getSignature(false));
 
 		assertTrue(
-			obj.applyTo(program, addr("01001000"), new DemanglerOptions(), TaskMonitor.DUMMY));
+			obj.applyTo(program, addr("01001000"), new GnuDemanglerOptions(), TaskMonitor.DUMMY));
 
 		Symbol s = symbolTable.getPrimarySymbol(addr("01001000"));
 		assertNotNull(s);
@@ -130,17 +140,17 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		symbolTable.createLabel(addr("01001000"), mangled, SourceType.IMPORTED);
 
 		GnuDemangler demangler = new GnuDemangler();
-		DemangledObject obj = demangler.demangle(mangled, true);
+		DemangledObject obj = demangler.demangle(mangled);
 		assertNotNull(obj);
 
 		assertEquals("typeinfo name for AP_HAL::HAL::Callbacks", obj.getSignature(false));
 
 		assertTrue(
-			obj.applyTo(program, addr("01001000"), new DemanglerOptions(), TaskMonitor.DUMMY));
+			obj.applyTo(program, addr("01001000"), new GnuDemanglerOptions(), TaskMonitor.DUMMY));
 
 		Symbol s = symbolTable.getPrimarySymbol(addr("01001000"));
 		assertNotNull(s);
-		assertEquals("typeinfo_name", s.getName());
+		assertEquals("typeinfo-name", s.getName());
 		assertEquals("AP_HAL::HAL::Callbacks", s.getParentNamespace().getName(true));
 
 		assertEquals("typeinfo name for AP_HAL::HAL::Callbacks",
@@ -153,29 +163,15 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDemangler_Format_EDG_DemangleOnlyKnownPatterns_False()
-			throws DemangledException {
-
-		String mangled = "_$_10MyFunction";
-
-		GnuDemangler demangler = new GnuDemangler();
-		demangler.canDemangle(program);// this perform initialization
-
-		DemangledObject result = demangler.demangle(mangled, false);
-		assertNotNull(result);
-		assertEquals("undefined MyFunction::~MyFunction(void)", result.getSignature(false));
-	}
-
-	@Test
 	public void testDemangler_Format_EDG_DemangleOnlyKnownPatterns_True()
 			throws DemangledException {
 
 		/*
 		 						Note:
-			This test is less of a requirement and more of an observation.   This symbol was 
+			This test is less of a requirement and more of an observation.   This symbol was
 			seen in the wild and is claimed to be of the Edison Design Group (EDG) format.
 			It fails our parsing due to its resemblance to non-mangled text (see
-			the test testNonMangledSymbol()).   If we update the code that checks for this 
+			the test testNonMangledSymbol()).   If we update the code that checks for this
 			noise, then this test and it's parter should be consolidated.
 		 */
 
@@ -184,8 +180,76 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		GnuDemangler demangler = new GnuDemangler();
 		demangler.canDemangle(program);// this perform initialization
 
-		DemangledObject result = demangler.demangle(mangled, true);
+		GnuDemanglerOptions options = new GnuDemanglerOptions(GnuDemanglerFormat.EDG);
+		DemangledObject result = demangler.demangle(mangled, options);
 		assertNull(result);
+	}
+
+	@Test
+	public void testDemangler_Format_EDG_DemangleOnlyKnownPatterns_False()
+			throws DemangledException {
+
+		String mangled = "_$_10MyFunction";
+
+		GnuDemangler demangler = new GnuDemangler();
+		demangler.canDemangle(program);// this perform initialization
+
+		GnuDemanglerOptions options = new GnuDemanglerOptions(GnuDemanglerFormat.AUTO, true);
+		options.setDemangleOnlyKnownPatterns(false);
+		DemangledObject result = demangler.demangle(mangled, options);
+		assertNotNull(result);
+		assertEquals("undefined MyFunction::~MyFunction(void)", result.getSignature(false));
+	}
+
+	@Test
+	public void testDemangler_Format_CodeWarrior_MacOS8or9() throws DemangledException {
+		// NOTE: mangled CodeWarrior format symbols with templates will fail
+		// This is because the GNU demangler does not support CodeWarrior
+		// .scroll__10TTextPanelFUcsi
+
+		String mangled = ".scroll__10TTextPanelFUcsi";
+
+		GnuDemangler demangler = new GnuDemangler();
+		demangler.canDemangle(program);// this perform initialization
+
+		GnuDemanglerOptions options = new GnuDemanglerOptions(GnuDemanglerFormat.AUTO, true);
+		options.setDemangleOnlyKnownPatterns(false);
+		DemangledObject result = demangler.demangle(mangled, options);
+		assertNotNull(result);
+		assertEquals("undefined TTextPanel::scroll(unsigned char,short,int)",
+			result.getSignature(false));
+	}
+
+	@Test
+	public void testGnuNativeProcessWithValidArguments() {
+
+		String demanglerName = GnuDemanglerOptions.GNU_DEMANGLER_DEFAULT;
+		String applicationArguments = "-s auto";
+		try {
+			GnuDemanglerNativeProcess.getDemanglerNativeProcess(demanglerName,
+				applicationArguments);
+		}
+		catch (IOException e) {
+			fail("Expected an exception when passing unknown arguments to the native demangler");
+		}
+	}
+
+	@Test
+	public void testGnuNativeProcessWithUnknownArguments() {
+
+		String demanglerName = GnuDemanglerOptions.GNU_DEMANGLER_DEFAULT;
+		String applicationArguments = "-s MrBob";
+		try {
+			setErrorsExpected(true);
+			GnuDemanglerNativeProcess.getDemanglerNativeProcess(demanglerName,
+				applicationArguments);
+			fail("Expected an exception when passing unknown arguments to the native demangler");
+		}
+		catch (IOException e) {
+			// expected
+			Msg.error(this, "Test error", e);
+		}
+		setErrorsExpected(false);
 	}
 
 	private Address addr(String address) {

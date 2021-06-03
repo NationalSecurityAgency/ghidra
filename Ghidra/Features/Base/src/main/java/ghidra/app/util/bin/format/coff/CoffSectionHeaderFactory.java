@@ -23,10 +23,13 @@ final class CoffSectionHeaderFactory {
 
 	static CoffSectionHeader createSectionHeader(BinaryReader reader, CoffFileHeader header) throws IOException {
 		switch (header.getMagic()) {
-			case CoffMachineType.TICOFF2MAGIC:
-				return new CoffSectionHeader2(reader, header);
 			case CoffMachineType.TICOFF1MAGIC:
 				return new CoffSectionHeader1(reader, header);
+			case CoffMachineType.TICOFF2MAGIC:
+				return new CoffSectionHeader2(reader, header);
+			case CoffMachineType.IMAGE_FILE_MACHINE_I960ROMAGIC:
+			case CoffMachineType.IMAGE_FILE_MACHINE_I960RWMAGIC:
+				return new CoffSectionHeader3(reader, header);
 			default:
 				return new CoffSectionHeader(reader, header);
 		}

@@ -39,7 +39,7 @@ public class FileSystemListenerList implements FileSystemListener {
 
 	/**
 	 * Construct FileSystemListenerList
-	 * @param enableAsyncronousDispatching if true a seperate dispatch thread will be used
+	 * @param enableAsynchronousDispatching if true a separate dispatch thread will be used
 	 * to notify listeners.  If false, blocking notification will be performed.
 	 */
 	public FileSystemListenerList(boolean enableAsynchronousDispatching) {
@@ -83,7 +83,7 @@ public class FileSystemListenerList implements FileSystemListener {
 
 	/**
 	 * Forwards itemMoved callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#itemMoved(java.lang.String, java.lang.String, java.lang.String)
+	 * @see ghidra.framework.store.FileSystemListener#itemMoved(String, String, String, String)
 	 */
 	@Override
 	public void itemMoved(String parentPath, String name, String newParentPath, String newName) {
@@ -99,7 +99,7 @@ public class FileSystemListenerList implements FileSystemListener {
 
 	/**
 	 * Forwards itemRenamed callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#itemRenamed(java.lang.String, java.lang.String, java.lang.String)
+	 * @see ghidra.framework.store.FileSystemListener#itemRenamed(String, String, String)
 	 */
 	@Override
 	public void itemRenamed(String parentPath, String itemName, String newName) {
@@ -115,7 +115,7 @@ public class FileSystemListenerList implements FileSystemListener {
 
 	/**
 	 * Forwards itemDeleted callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#itemDeleted(java.lang.String, java.lang.String)
+	 * @see ghidra.framework.store.FileSystemListener#itemDeleted(String, String)
 	 */
 	@Override
 	public void itemDeleted(String parentPath, String itemName) {
@@ -131,7 +131,7 @@ public class FileSystemListenerList implements FileSystemListener {
 
 	/**
 	 * Forwards folderRenamed callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#folderRenamed(java.lang.String, java.lang.String, java.lang.String)
+	 * @see ghidra.framework.store.FileSystemListener#folderRenamed(String, String, String)
 	 */
 	@Override
 	public void folderRenamed(String parentPath, String folderName, String newFolderName) {
@@ -147,7 +147,7 @@ public class FileSystemListenerList implements FileSystemListener {
 
 	/**
 	 * Forwards folderMoved callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#folderMoved(java.lang.String, java.lang.String, java.lang.String)
+	 * @see ghidra.framework.store.FileSystemListener#folderMoved(String, String, String)
 	 */
 	@Override
 	public void folderMoved(String parentPath, String folderName, String newParentPath) {
@@ -163,7 +163,7 @@ public class FileSystemListenerList implements FileSystemListener {
 
 	/**
 	 * Forwards folderDeleted callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#folderDeleted(java.lang.String, java.lang.String)
+	 * @see ghidra.framework.store.FileSystemListener#folderDeleted(String, String)
 	 */
 	@Override
 	public void folderDeleted(String parentPath, String folderName) {
@@ -179,7 +179,7 @@ public class FileSystemListenerList implements FileSystemListener {
 
 	/**
 	 * Forwards itemCreated callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#itemCreated(java.lang.String, java.lang.String)
+	 * @see ghidra.framework.store.FileSystemListener#itemCreated(String, String)
 	 */
 	@Override
 	public void itemCreated(String parentPath, String itemName) {
@@ -195,7 +195,7 @@ public class FileSystemListenerList implements FileSystemListener {
 
 	/**
 	 * Forwards folderCreated callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#folderCreated(java.lang.String, java.lang.String)
+	 * @see ghidra.framework.store.FileSystemListener#folderCreated(String, String)
 	 */
 	@Override
 	public void folderCreated(String parentPath, String folderName) {
@@ -211,7 +211,7 @@ public class FileSystemListenerList implements FileSystemListener {
 
 	/**
 	 * Forwards itemChanged callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#itemChanged(java.lang.String, java.lang.String)
+	 * @see ghidra.framework.store.FileSystemListener#itemChanged(String, String)
 	 */
 	@Override
 	public void itemChanged(String parentPath, String itemName) {

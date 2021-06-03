@@ -20,7 +20,6 @@ import java.util.*;
 import ghidra.program.model.address.GlobalNamespace;
 import ghidra.program.model.listing.Library;
 import ghidra.program.model.symbol.*;
-import ghidra.util.SystemUtilities;
 
 /**
  * A convenience object for parsing a namespace path to a symbol.
@@ -28,9 +27,11 @@ import ghidra.util.SystemUtilities;
  * For example, if a SymbolPath is constructed with "foo::bar::baz", then "baz" is the
  * name of a symbol in the "bar" namespace, which is in the "foo" namespace.
  * <P>
+ * <UL>
  * <LI>{@link #getName()} will return "baz".
  * <LI>{@link #getParentPath()} will return "foo:bar".
  * <LI>{@link #getPath()} will return "foo::bar::baz".
+ * </UL>
  *
  */
 public class SymbolPath implements Comparable<SymbolPath> {
@@ -171,7 +172,7 @@ public class SymbolPath implements Comparable<SymbolPath> {
 	 */
 	public String getPath() {
 		if (parentPath != null) {
-			return parentPath.getPath() + Namespace.NAMESPACE_DELIMITER + symbolName;
+			return parentPath.getPath() + Namespace.DELIMITER + symbolName;
 		}
 		return symbolName;
 	}
@@ -186,6 +187,16 @@ public class SymbolPath implements Comparable<SymbolPath> {
 		List<String> list = asList();
 		list.addAll(path.asList());
 		return new SymbolPath(list);
+	}
+
+	/**
+	 * Returns true if this path contains any path entry matching the given text
+	 * 
+	 * @param text the text for which to search
+	 * @return true if any path entry matches the given text
+	 */
+	public boolean containsPathEntry(String text) {
+		return asList().contains(text);
 	}
 
 	@Override
@@ -209,13 +220,23 @@ public class SymbolPath implements Comparable<SymbolPath> {
 			return false;
 		}
 		SymbolPath other = (SymbolPath) obj;
-		if (!SystemUtilities.isEqual(parentPath, other.parentPath)) {
+		if (!Objects.equals(parentPath, other.parentPath)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(symbolName, other.symbolName)) {
+		if (!Objects.equals(symbolName, other.symbolName)) {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * A convenience method to check if the given symbol's symbol path matches this path
+	 * 
+	 * @param s the symbol to check
+	 * @return true if the symbol paths match
+	 */
+	public boolean matchesPathOf(Symbol s) {
+		return equals(new SymbolPath(s));
 	}
 
 	/**

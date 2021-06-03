@@ -42,6 +42,8 @@ public class UserAdmin {
 	static final String SET_USER_DN_COMMAND = "-dn";
 	static final String SET_ADMIN_COMMAND = "-admin";
 
+	static final String PASSWORD_OPTION = "--p"; // applies to add and reset commands
+
 	static final String ADMIN_CMD_DIR = LocalFileSystem.HIDDEN_DIR_PREFIX + "admin";
 	static final String COMMAND_FILE_EXT = ".cmd";
 
@@ -116,8 +118,12 @@ public class UserAdmin {
 		String[] args = splitCommand(cmd);
 		if (ADD_USER_COMMAND.equals(args[0])) {  // add user
 			String sid = args[1];
+			char[] pwdHash = null;
+			if (args.length == 4 && args[2].contentEquals(PASSWORD_OPTION)) {
+				pwdHash = args[3].toCharArray();
+			}
 			try {
-				userMgr.addUser(sid);
+				userMgr.addUser(sid, pwdHash);
 				log.info("User '" + sid + "' added");
 			}
 			catch (DuplicateNameException e) {
@@ -131,8 +137,15 @@ public class UserAdmin {
 		}
 		else if (RESET_USER_COMMAND.equals(args[0])) { // reset user
 			String sid = args[1];
-			if (!userMgr.resetPassword(sid)) {
+			char[] pwdHash = null;
+			if (args.length == 4 && args[2].contentEquals(PASSWORD_OPTION)) {
+				pwdHash = args[3].toCharArray();
+			}
+			if (!userMgr.resetPassword(sid, pwdHash)) {
 				log.info("Failed to reset password for user '" + sid + "'");
+			}
+			else if (pwdHash != null) {
+				log.info("User '" + sid + "' password reset to specified password");
 			}
 			else {
 				log.info("User '" + sid + "' password reset to default password");

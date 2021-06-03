@@ -195,9 +195,7 @@ public class FollowFlowProgramBuilder extends ProgramBuilder {
 
 	private void setupProgram() throws Exception {
 
-		dataConverter =
-			(getProgram().getMemory().isBigEndian()) ? new BigEndianDataConverter()
-					: new LittleEndianDataConverter();
+		dataConverter = DataConverter.getInstance(getProgram().getMemory().isBigEndian());
 
 		createMemory(".text", "0x0", 0x1000);
 		createMemory(".data", "0x5000", 0x1000);

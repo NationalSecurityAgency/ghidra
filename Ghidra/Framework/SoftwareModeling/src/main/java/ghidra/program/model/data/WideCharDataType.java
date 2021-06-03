@@ -26,8 +26,6 @@ public class WideCharDataType extends BuiltIn implements ArrayStringable, DataTy
 	final static SettingsDefinition[] DEFAULT_WIDE_CHAR_SETTINGS = new SettingsDefinition[] {
 		EndianSettingsDefinition.DEF, RenderUnicodeSettingsDefinition.RENDER };
 
-	private final static long serialVersionUID = 1;
-
 	/** A statically defined WideCharDataType instance.*/
 	public final static WideCharDataType dataType = new WideCharDataType();
 
@@ -45,7 +43,7 @@ public class WideCharDataType extends BuiltIn implements ArrayStringable, DataTy
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
+	public boolean hasLanguageDependantLength() {
 		return true;
 	}
 
@@ -83,7 +81,7 @@ public class WideCharDataType extends BuiltIn implements ArrayStringable, DataTy
 		try {
 			switch (getLength()) {
 				case 2:
-					return new Character((char) buf.getShort(0));
+					return Character.valueOf((char) buf.getShort(0));
 				case 4:
 					return new Scalar(32, buf.getInt(0), true);
 			}
@@ -114,7 +112,7 @@ public class WideCharDataType extends BuiltIn implements ArrayStringable, DataTy
 			return "WCHAR_??";
 		}
 
-		StringBuffer strBuf = new StringBuffer();
+		StringBuilder strBuf = new StringBuilder();
 		strBuf.append("WCHAR_");
 		try {
 			int val = (int) buf.getVarLengthUnsignedInt(0, length);
@@ -151,7 +149,7 @@ public class WideCharDataType extends BuiltIn implements ArrayStringable, DataTy
 	@Override
 	public String getArrayDefaultLabelPrefix(MemBuffer buf, Settings settings, int len,
 			DataTypeDisplayOptions options) {
-		return new StringDataInstance(this, settings, buf, len).getLabel(
+		return new StringDataInstance(this, settings, buf, len, true).getLabel(
 			AbstractStringDataType.DEFAULT_UNICODE_ABBREV_PREFIX + "_",
 			AbstractStringDataType.DEFAULT_UNICODE_LABEL_PREFIX,
 			AbstractStringDataType.DEFAULT_UNICODE_LABEL, options);
@@ -160,7 +158,7 @@ public class WideCharDataType extends BuiltIn implements ArrayStringable, DataTy
 	@Override
 	public String getArrayDefaultOffcutLabelPrefix(MemBuffer buf, Settings settings, int len,
 			DataTypeDisplayOptions options, int offcutOffset) {
-		return new StringDataInstance(this, settings, buf, len).getOffcutLabelString(
+		return new StringDataInstance(this, settings, buf, len, true).getOffcutLabelString(
 			AbstractStringDataType.DEFAULT_UNICODE_ABBREV_PREFIX + "_",
 			AbstractStringDataType.DEFAULT_UNICODE_LABEL_PREFIX,
 			AbstractStringDataType.DEFAULT_UNICODE_LABEL, options, offcutOffset);

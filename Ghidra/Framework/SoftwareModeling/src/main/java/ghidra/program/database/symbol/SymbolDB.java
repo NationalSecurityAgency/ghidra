@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.*;
 import ghidra.program.database.external.ExternalLocationDB;
 import ghidra.program.database.external.ExternalManagerDB;
@@ -34,21 +34,25 @@ import ghidra.util.Lock;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.*;
+import ghidra.util.task.TaskMonitor;
+import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
 
 /**
  * Base class for symbols
  */
 public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
-	private Record record;
+	private DBRecord record;
 	private boolean isDeleting = false;
 	protected Address address;
 	protected SymbolManager symbolMgr;
 	protected Lock lock;
 
+	private volatile String cachedName;
+	private volatile long cachedNameModCount;
+
 	SymbolDB(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, Address address,
-			Record record) {
+			DBRecord record) {
 		super(cache, record.getKey());
 		this.symbolMgr = symbolMgr;
 		this.address = address;
@@ -64,6 +68,17 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	@Override
+	public boolean isDeleted() {
+		return isDeleted(lock);
+	}
+
+	@Override
+	protected void checkDeleted() {
+		// expose method to symbol package
+		super.checkDeleted();
+	}
+
+	@Override
 	public String toString() {
 		return getName();
 	}
@@ -74,7 +89,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	@Override
-	protected boolean refresh(Record rec) {
+	protected boolean refresh(DBRecord rec) {
 		if (record != null) {
 			if (rec == null) {
 				rec = symbolMgr.getSymbolRecord(key);
@@ -85,8 +100,9 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				return false;
 			}
 			record = rec;
-			address = symbolMgr.getAddressMap().decodeAddress(
-				rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL));
+			address = symbolMgr.getAddressMap()
+					.decodeAddress(
+						rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL));
 			return true;
 		}
 		return false;
@@ -141,19 +157,42 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	@Override
-	public String getName() {
+	public final String getName() {
+		String name = cachedName;
+		if (hasValidCachedName(name)) {
+			return name;
+		}
+
 		lock.acquire();
 		try {
 			checkIsValid();
-			if (record != null) {
-				return record.getString(SymbolDatabaseAdapter.SYMBOL_NAME_COL);
-			}
-
-			return SymbolUtilities.getDynamicName(symbolMgr.getProgram(), address);
+			cachedName = doGetName();
+			cachedNameModCount = symbolMgr.getProgram().getModificationNumber();
+			return cachedName;
 		}
 		finally {
 			lock.release();
 		}
+	}
+
+	private boolean hasValidCachedName(String name) {
+		if (name == null) {
+			return false;
+		}
+		return symbolMgr.getProgram().getModificationNumber() == cachedNameModCount;
+	}
+
+	/**
+	 * The code for creating the name content for this symbol.  This code will be called 
+	 * with the symbol's lock.
+	 * 
+	 * @return the name
+	 */
+	protected String doGetName() {
+		if (record != null) {
+			return record.getString(SymbolDatabaseAdapter.SYMBOL_NAME_COL);
+		}
+		return SymbolUtilities.getDynamicName(symbolMgr.getProgram(), address);
 	}
 
 	@Override
@@ -171,7 +210,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				Namespace ns = getParentNamespace();
 				if (!(ns instanceof GlobalNamespace)) {
 					String nsPath = ns.getName(true);
-					symName = nsPath + Namespace.NAMESPACE_DELIMITER + symName;
+					symName = nsPath + Namespace.DELIMITER + symName;
 				}
 			}
 			return symName;
@@ -238,7 +277,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		try {
 			checkIsValid();
 			if (monitor == null) {
-				monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+				monitor = TaskMonitor.DUMMY;
 			}
 
 			if (monitor.getMaximum() == 0) {
@@ -275,7 +314,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	@Override
 	public Reference[] getReferences() {
-		return getReferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		return getReferences(TaskMonitor.DUMMY);
 	}
 
 	@Override
@@ -470,14 +509,18 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	/**
 	 * Allow symbol implementations to validate the source when setting the name of
-	 * this symbol.
+	 * this symbol
+	 * 
+	 * @param newName the new name 
+	 * @param source the source type
+	 * @return the validated source type
 	 */
 	protected SourceType validateNameSource(String newName, SourceType source) {
 		return source;
 	}
 
-	@Override
-	public void setNameAndNamespace(String newName, Namespace newNamespace, SourceType source)
+	public void doSetNameAndNamespace(String newName, Namespace newNamespace, SourceType source,
+			boolean checkForDuplicates)
 			throws DuplicateNameException, InvalidInputException, CircularDependencyException {
 
 		lock.acquire();
@@ -512,13 +555,16 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				newName = "";
 			}
 			else {
-				SymbolUtilities.validateName(newName, address, getSymbolType(),
-					symbolMgr.getAddressMap().getAddressFactory());
+				SymbolUtilities.validateName(newName);
 				nameChange = !oldName.equals(newName);
 				if (!namespaceChange && !nameChange) {
 					return;
 				}
-				symbolMgr.checkDuplicateSymbolName(address, newName, newNamespace, getSymbolType());
+
+				if (checkForDuplicates) {
+					symbolMgr.checkDuplicateSymbolName(address, newName, newNamespace,
+						getSymbolType());
+				}
 			}
 
 			if (record != null) {
@@ -537,7 +583,8 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				record.setString(SymbolDatabaseAdapter.SYMBOL_NAME_COL, newName);
 				updateSymbolSource(record, source);
 				updateRecord();
-
+				cachedName = null;  // we can't clear it until now, since any call to getName()
+									// will cause the cached name to reset to the old name
 				if (namespaceChange) {
 					symbolMgr.symbolNamespaceChanged(this, oldNamespace);
 				}
@@ -571,6 +618,13 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		}
 	}
 
+	@Override
+	public void setNameAndNamespace(String newName, Namespace newNamespace, SourceType source)
+			throws DuplicateNameException, InvalidInputException, CircularDependencyException {
+
+		doSetNameAndNamespace(newName, newNamespace, source, true);
+	}
+
 	protected List<SymbolDB> getSymbolsDynamicallyRenamedByMyRename() {
 		return null;
 	}
@@ -585,7 +639,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		}
 	}
 
-	private void updateSymbolSource(Record symbolRecord, SourceType source) {
+	private void updateSymbolSource(DBRecord symbolRecord, SourceType source) {
 		byte flags = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL);
 		flags &= ~SymbolDatabaseAdapter.SYMBOL_SOURCE_BITS;
 		flags |= (byte) source.ordinal();
@@ -613,10 +667,16 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		if (obj == this) {
 			return true;
 		}
+
 		Symbol s = (Symbol) obj;
+		if (hasSameId(s)) {
+			return true;
+		}
+
 		if (!getName().equals(s.getName())) {
 			return false;
 		}
+
 		if (!getAddress().equals(s.getAddress())) {
 			return false;
 		}
@@ -627,6 +687,13 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		Symbol otherParent = s.getParentSymbol();
 
 		return SystemUtilities.isEqual(myParent, otherParent);
+	}
+
+	private boolean hasSameId(Symbol s) {
+		if (getID() == s.getID()) {
+			return getProgram() == s.getProgram();
+		}
+		return false;
 	}
 
 	@Override
@@ -776,6 +843,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	/**
 	 * gets the generic symbol data 2 data.
+	 * @return the symbol data
 	 */
 	public int getSymbolData2() {
 		lock.acquire();
@@ -852,9 +920,9 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	/**
 	 * Change the record and key associated with this symbol
-	 * @param the record.
+	 * @param record the record
 	 */
-	void setRecord(Record record) {
+	void setRecord(DBRecord record) {
 		this.record = record;
 		keyChanged(record.getKey());
 	}

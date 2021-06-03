@@ -28,7 +28,7 @@ import java.io.InputStream;
  * See Apple's -- PEFBinaryFormat
  * <pre>
  * struct PEFSectionHeader {
- *     SInt32   nameOffset;             // Offset of name within the section name table, -1 => none.
+ *     SInt32   nameOffset;             // Offset of name within the section name table, -1 =&gt; none.
  *     UInt32   defaultAddress;         // Default address, affects relocations.
  *     UInt32   totalLength;            // Fully expanded size in bytes of the section contents.
  *     UInt32   unpackedLength;         // Size in bytes of the "initialized" part of the contents.

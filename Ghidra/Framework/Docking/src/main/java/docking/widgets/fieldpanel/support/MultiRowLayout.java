@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,10 +73,6 @@ public class MultiRowLayout implements Layout {
 		offsets[layouts.length] = soFar;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#getHeight()
-	 */
 	@Override
 	public int getHeight() {
 		return heightAbove + heightBelow;
@@ -96,19 +91,11 @@ public class MultiRowLayout implements Layout {
 		return max;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#getNumFields()
-	 */
 	@Override
 	public int getNumFields() {
 		return numFields;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#getField(int)
-	 */
 	@Override
 	public Field getField(int index) {
 		for (int i = 0; i < layouts.length; i++) {
@@ -119,9 +106,6 @@ public class MultiRowLayout implements Layout {
 		return null;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.Layout#paint(java.awt.Graphics, docking.widgets.fieldpanel.internal.PaintContext, java.awt.Rectangle, ghidra.util.bean.field.LayoutSelection, ghidra.util.bean.field.LayoutSelection, int, int, int)
-	 */
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context, Rectangle rect,
 			LayoutBackgroundColorManager colorManager, FieldLocation cursorLocation) {
@@ -151,10 +135,6 @@ public class MultiRowLayout implements Layout {
 		rect.y += totalShift;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#setCursor(docking.widgets.fieldpanel.support.FieldLocation, int, int)
-	 */
 	@Override
 	public int setCursor(FieldLocation cursorLoc, int x, int y) {
 		int offset = 0;
@@ -169,10 +149,6 @@ public class MultiRowLayout implements Layout {
 		return layouts[0].setCursor(cursorLoc, x, y);
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#getCursorRect(int, int, int)
-	 */
 	@Override
 	public Rectangle getCursorRect(int fieldNum, int row, int col) {
 		int offset = 0;
@@ -189,10 +165,6 @@ public class MultiRowLayout implements Layout {
 		return null;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#cursorUp(docking.widgets.fieldpanel.support.FieldLocation, int)
-	 */
 	@Override
 	public boolean cursorUp(FieldLocation cursorLoc, int lastX) {
 		int row = findRow(cursorLoc);
@@ -210,10 +182,6 @@ public class MultiRowLayout implements Layout {
 		return result;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#cursorDown(docking.widgets.fieldpanel.support.FieldLocation, int)
-	 */
 	@Override
 	public boolean cursorDown(FieldLocation cursorLoc, int lastX) {
 		int row = findRow(cursorLoc);
@@ -232,10 +200,6 @@ public class MultiRowLayout implements Layout {
 		return result;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#cursorBeginning(docking.widgets.fieldpanel.support.FieldLocation)
-	 */
 	@Override
 	public int cursorBeginning(FieldLocation cursorLoc) {
 		int row = findRow(cursorLoc);
@@ -245,10 +209,6 @@ public class MultiRowLayout implements Layout {
 		return lastX;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#cursorEnd(docking.widgets.fieldpanel.support.FieldLocation)
-	 */
 	@Override
 	public int cursorEnd(FieldLocation cursorLoc) {
 		int row = findRow(cursorLoc);
@@ -258,10 +218,6 @@ public class MultiRowLayout implements Layout {
 		return lastX;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#cursorLeft(docking.widgets.fieldpanel.support.FieldLocation)
-	 */
 	@Override
 	public int cursorLeft(FieldLocation cursorLoc) {
 		int row = findRow(cursorLoc);
@@ -279,10 +235,6 @@ public class MultiRowLayout implements Layout {
 		return returnVal;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#cursorRight(docking.widgets.fieldpanel.support.FieldLocation)
-	 */
 	@Override
 	public int cursorRight(FieldLocation cursorLoc) {
 		int row = findRow(cursorLoc);
@@ -300,10 +252,6 @@ public class MultiRowLayout implements Layout {
 		return returnVal;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#enterLayout(docking.widgets.fieldpanel.support.FieldLocation, int, boolean)
-	 */
 	@Override
 	public boolean enterLayout(FieldLocation cursorLoc, int lastX, boolean fromTop) {
 		if (fromTop) {
@@ -315,10 +263,6 @@ public class MultiRowLayout implements Layout {
 		return result;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#getScrollableUnitIncrement(int, int)
-	 */
 	@Override
 	public int getScrollableUnitIncrement(int topOfScreen, int direction) {
 		int searchPoint = topOfScreen;
@@ -337,10 +281,6 @@ public class MultiRowLayout implements Layout {
 			direction);
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.Layout#contains(int)
-	 */
 	@Override
 	public boolean contains(int yPos) {
 		if ((yPos >= 0) && (yPos < heightAbove + heightBelow)) {
@@ -420,9 +360,6 @@ public class MultiRowLayout implements Layout {
 		}
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.Layout#getPrimaryOffset()
-	 */
 	@Override
 	public int getPrimaryOffset() {
 		if (primaryOffset == -1) {
@@ -442,9 +379,6 @@ public class MultiRowLayout implements Layout {
 		primaryOffset = 0;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.Layout#getFieldBounds(int)
-	 */
 	@Override
 	public Rectangle getFieldBounds(int index) {
 		int offset = 0;
@@ -460,18 +394,12 @@ public class MultiRowLayout implements Layout {
 
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.Layout#insertSpaceAbove(int)
-	 */
 	@Override
 	public void insertSpaceAbove(int size) {
 		layouts[0].insertSpaceAbove(size);
 		heightAbove += size;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.Layout#insertSpaceBelow(int)
-	 */
 	@Override
 	public void insertSpaceBelow(int size) {
 		layouts[layouts.length - 1].insertSpaceBelow(size);

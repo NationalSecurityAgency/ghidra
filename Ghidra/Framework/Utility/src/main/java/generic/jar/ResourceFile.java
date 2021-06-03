@@ -225,7 +225,7 @@ public class ResourceFile implements Comparable<ResourceFile> {
 	 * Returns a File object.  If this ResourceFile represents a standard filesystem, then no
 	 * copy is necessary to return a file.  If this ResourceFile represents a compressed 
 	 * filesystem, then a copy from that filesystem to the real filesystem is needed to create
-	 * a File object.  <tt>copyIfNeeded</tt> allows you to dictate whether a copy should take 
+	 * a File object.  <code>copyIfNeeded</code> allows you to dictate whether a copy should take 
 	 * place, if needed.
 	 * <p>
 	 * If you just want the contents of a file, then call {@link #getInputStream()}.

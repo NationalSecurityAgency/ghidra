@@ -59,7 +59,6 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 	private DropDownSelectionTextField<DataType> selectionField;
 	private JButton browseButton;
 	private DataTypeManagerService dataTypeManagerService;
-	private int maxSize = -1;
 	private DataTypeManager dataTypeManager;
 	private DataTypeParser.AllowedDataTypes allowedDataTypes;
 
@@ -69,12 +68,12 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 	// optional path to initially select in the data type chooser tree
 	private TreePath initiallySelectedTreePath;
 
-	public DataTypeSelectionEditor(ServiceProvider serviceProvider, int maxSize,
+	public DataTypeSelectionEditor(ServiceProvider serviceProvider,
 			DataTypeParser.AllowedDataTypes allowedDataTypes) {
-		this(serviceProvider.getService(DataTypeManagerService.class), maxSize, allowedDataTypes);
+		this(serviceProvider.getService(DataTypeManagerService.class), allowedDataTypes);
 	}
 
-	public DataTypeSelectionEditor(DataTypeManagerService service, int maxSize,
+	public DataTypeSelectionEditor(DataTypeManagerService service,
 			DataTypeParser.AllowedDataTypes allowedDataTypes) {
 
 		if (service == null) {
@@ -82,7 +81,6 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		}
 
 		this.dataTypeManagerService = service;
-		this.maxSize = maxSize;
 		this.allowedDataTypes = allowedDataTypes;
 
 		init();
@@ -102,7 +100,10 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 	}
 
 	/**
+	 * Sets whether this editor should consumer Enter key presses
 	 * @see DropDownSelectionTextField#setConsumeEnterKeyPress(boolean)
+	 * 
+	 * @param consume true to consume
 	 */
 	public void setConsumeEnterKeyPress(boolean consume) {
 		selectionField.setConsumeEnterKeyPress(consume);
@@ -276,6 +277,7 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 	/**
 	 * Returns the direction of the user triggered navigation; null if the user did not trigger
 	 * navigation out of this component.
+	 * @return the direction
 	 */
 	public NavigationDirection getNavigationDirection() {
 		return navigationDirection;
@@ -362,10 +364,8 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		catch (CancelledException e) {
 			return false;
 		}
+
 		if (newDataType != null) {
-			if (maxSize >= 0 && newDataType.getLength() > newDataType.getLength()) {
-				throw new InvalidDataTypeException("data-type larger than " + maxSize + " bytes");
-			}
 			selectionField.setSelectedValue(newDataType);
 			return true;
 		}

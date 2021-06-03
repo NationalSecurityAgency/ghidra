@@ -21,7 +21,7 @@ import org.junit.Test;
 
 import ghidra.program.database.*;
 import ghidra.program.model.data.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Data type merge tests for aligned data types.
@@ -31,9 +31,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	private void setupStructureMachineAlignedVsValue() throws Exception {
 
 		mtf.initialize("notepad", new OriginalProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.OriginalProgramModifierListener#modifyOriginal(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -45,7 +43,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 					assertEquals(15, s.getLength());
 					assertEquals(1, s.getAlignment());
-					s.setInternallyAligned(true);
+					s.setToDefaultPacking();
+
 					// Offsets change to 0,2,4,8.
 					assertEquals(0, s.getComponent(0).getOffset());
 					assertEquals(2, s.getComponent(1).getOffset());
@@ -60,9 +59,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -72,7 +68,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				try {
 					Structure s = (Structure) dtm.getDataType(
 						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					s.setToMachineAlignment();
+					s.setToMachineAligned();
+
 					// Offsets change to 0,2,4,8.
 					assertEquals(0, s.getComponent(0).getOffset());
 					assertEquals(2, s.getComponent(1).getOffset());
@@ -87,9 +84,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -99,7 +93,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				try {
 					Structure s = (Structure) dtm.getDataType(
 						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					s.setMinimumAlignment(4);
+					s.setExplicitMinimumAlignment(4);
+
 					// Offsets change to 0,2,4,8.
 					assertEquals(0, s.getComponent(0).getOffset());
 					assertEquals(2, s.getComponent(1).getOffset());
@@ -117,7 +112,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureMachineAlignedVsValuePickLatest() throws Exception {
+	public void testStructureMachineAlignedVsValuePickLatest() throws Exception {
 
 		setupStructureMachineAlignedVsValue();
 		executeMerge();
@@ -129,11 +124,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 		Structure s = (Structure) c.getDataType("IntStruct");
-		assertEquals(true, s.isInternallyAligned());
-		assertEquals(false, s.isDefaultAligned());
-		assertEquals(true, s.isMachineAligned());
-		assertEquals(8, s.getMinimumAlignment());
-		assertEquals(Composite.NOT_PACKING, s.getPackingValue());
+		assertTrue(s.hasDefaultPacking());
+		assertTrue(s.isMachineAligned());
+
 		assertEquals(0, s.getComponent(0).getOffset());
 		assertEquals(2, s.getComponent(1).getOffset());
 		assertEquals(4, s.getComponent(2).getOffset());
@@ -143,7 +136,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureMachineAlignedVsValuePickMy() throws Exception {
+	public void testStructureMachineAlignedVsValuePickMy() throws Exception {
 
 		setupStructureMachineAlignedVsValue();
 		executeMerge();
@@ -155,11 +148,10 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 		Structure s = (Structure) c.getDataType("IntStruct");
-		assertEquals(true, s.isInternallyAligned());
-		assertEquals(false, s.isDefaultAligned());
-		assertEquals(false, s.isMachineAligned());
-		assertEquals(4, s.getMinimumAlignment());
-		assertEquals(Composite.NOT_PACKING, s.getPackingValue());
+		assertTrue(s.hasDefaultPacking());
+		assertTrue(s.hasExplicitMinimumAlignment());
+		assertEquals(4, s.getExplicitMinimumAlignment());
+
 		assertEquals(0, s.getComponent(0).getOffset());
 		assertEquals(2, s.getComponent(1).getOffset());
 		assertEquals(4, s.getComponent(2).getOffset());
@@ -169,7 +161,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureMachineAlignedVsValuePickOriginal() throws Exception {
+	public void testStructureMachineAlignedVsValuePickOriginal() throws Exception {
 
 		setupStructureMachineAlignedVsValue();
 		executeMerge();
@@ -181,11 +173,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 		Structure s = (Structure) c.getDataType("IntStruct");
-		assertEquals(true, s.isInternallyAligned());
-		assertEquals(true, s.isDefaultAligned());
-		assertEquals(false, s.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, s.getMinimumAlignment());
-		assertEquals(Composite.NOT_PACKING, s.getPackingValue());
+		assertTrue(s.hasDefaultPacking());
+		assertTrue(s.isDefaultAligned());
+
 		assertEquals(0, s.getComponent(0).getOffset());
 		assertEquals(2, s.getComponent(1).getOffset());
 		assertEquals(4, s.getComponent(2).getOffset());
@@ -197,9 +187,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	private void setupStructurePack1VsPack2() throws Exception {
 
 		mtf.initialize("notepad", new OriginalProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.OriginalProgramModifierListener#modifyOriginal(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -211,7 +199,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 					assertEquals(15, s.getLength());
 					assertEquals(1, s.getAlignment());
-					s.setInternallyAligned(true);
+					s.setToDefaultPacking();
 
 					// Offsets change to 0,2,4,8.
 					assertEquals(0, s.getComponent(0).getOffset());
@@ -220,7 +208,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 					assertEquals(8, s.getComponent(3).getOffset());
 					assertEquals(16, s.getLength());
 					assertEquals(4, s.getAlignment());
-					assertEquals(Composite.NOT_PACKING, s.getPackingValue());
+
 					commit = true;
 				}
 				finally {
@@ -228,9 +216,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -240,7 +225,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				try {
 					Structure s = (Structure) dtm.getDataType(
 						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					s.setPackingValue(1);
+					s.pack(1);
 
 					// Offsets change to 0,2,4,8.
 					assertEquals(0, s.getComponent(0).getOffset());
@@ -249,7 +234,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 					assertEquals(7, s.getComponent(3).getOffset());
 					assertEquals(15, s.getLength());
 					assertEquals(1, s.getAlignment());
-					assertEquals(1, s.getPackingValue());
+
 					commit = true;
 				}
 				finally {
@@ -257,9 +242,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -269,7 +251,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				try {
 					Structure s = (Structure) dtm.getDataType(
 						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					s.setPackingValue(2);
+					s.pack(2);
 
 					// Offsets change to 0,2,4,8.
 					assertEquals(0, s.getComponent(0).getOffset());
@@ -278,7 +260,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 					assertEquals(8, s.getComponent(3).getOffset());
 					assertEquals(16, s.getLength());
 					assertEquals(2, s.getAlignment());
-					assertEquals(2, s.getPackingValue());
+
 					commit = true;
 				}
 				finally {
@@ -289,7 +271,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructurePack1VsPack2PickLatest() throws Exception {
+	public void testStructurePack1VsPack2PickLatest() throws Exception {
 
 		setupStructurePack1VsPack2();
 		executeMerge();
@@ -302,11 +284,10 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		Structure s =
 			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 				"IntStruct");
-		assertEquals(true, s.isInternallyAligned());
-		assertEquals(true, s.isDefaultAligned());
-		assertEquals(false, s.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, s.getMinimumAlignment());
-		assertEquals(1, s.getPackingValue());
+		assertTrue(s.hasExplicitPackingValue());
+		assertEquals(1, s.getExplicitPackingValue());
+		assertTrue(s.isDefaultAligned());
+
 		assertEquals(0, s.getComponent(0).getOffset());
 		assertEquals(1, s.getComponent(1).getOffset());
 		assertEquals(3, s.getComponent(2).getOffset());
@@ -316,7 +297,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructurePack1VsPack2PickMy() throws Exception {
+	public void testStructurePack1VsPack2PickMy() throws Exception {
 
 		setupStructurePack1VsPack2();
 		executeMerge();
@@ -329,11 +310,10 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		Structure s =
 			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 				"IntStruct");
-		assertEquals(true, s.isInternallyAligned());
-		assertEquals(true, s.isDefaultAligned());
-		assertEquals(false, s.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, s.getMinimumAlignment());
-		assertEquals(2, s.getPackingValue());
+		assertTrue(s.hasExplicitPackingValue());
+		assertEquals(2, s.getExplicitPackingValue());
+		assertTrue(s.isDefaultAligned());
+
 		assertEquals(0, s.getComponent(0).getOffset());
 		assertEquals(2, s.getComponent(1).getOffset());
 		assertEquals(4, s.getComponent(2).getOffset());
@@ -343,7 +323,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructurePack1VsPack2PickOriginal() throws Exception {
+	public void testStructurePack1VsPack2PickOriginal() throws Exception {
 
 		setupStructurePack1VsPack2();
 		executeMerge();
@@ -355,11 +335,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 		Structure s = (Structure) c.getDataType("IntStruct");
-		assertEquals(true, s.isInternallyAligned());
-		assertEquals(true, s.isDefaultAligned());
-		assertEquals(false, s.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, s.getMinimumAlignment());
-		assertEquals(Composite.NOT_PACKING, s.getPackingValue());
+		assertTrue(s.hasDefaultPacking());
+		assertTrue(s.isDefaultAligned());
+
 		assertEquals(0, s.getComponent(0).getOffset());
 		assertEquals(2, s.getComponent(1).getOffset());
 		assertEquals(4, s.getComponent(2).getOffset());
@@ -371,9 +349,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	private void setupStructureMinAlignVsPack() throws Exception {
 
 		mtf.initialize("notepad", new OriginalProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.OriginalProgramModifierListener#modifyOriginal(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -385,7 +361,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 					assertEquals(15, s.getLength());
 					assertEquals(1, s.getAlignment());
-					s.setInternallyAligned(true);
+					s.setToDefaultPacking();
 
 					// Offsets change to 0,2,4,8.
 					assertEquals(0, s.getComponent(0).getOffset());
@@ -394,7 +370,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 					assertEquals(8, s.getComponent(3).getOffset());
 					assertEquals(16, s.getLength());
 					assertEquals(4, s.getAlignment());
-					assertEquals(Composite.NOT_PACKING, s.getPackingValue());
+
 					commit = true;
 				}
 				finally {
@@ -402,9 +378,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -414,7 +387,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				try {
 					Structure s = (Structure) dtm.getDataType(
 						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					s.setToMachineAlignment();
+					s.setToMachineAligned();
 
 					// Offsets change to 0,2,4,8.
 					assertEquals(0, s.getComponent(0).getOffset());
@@ -430,9 +403,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -442,7 +412,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				try {
 					Structure s = (Structure) dtm.getDataType(
 						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					s.setPackingValue(1);
+					s.pack(1);
 
 					assertEquals(0, s.getComponent(0).getOffset());
 					assertEquals(1, s.getComponent(1).getOffset());
@@ -450,7 +420,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 					assertEquals(7, s.getComponent(3).getOffset());
 					assertEquals(15, s.getLength());
 					assertEquals(1, s.getAlignment());
-					assertEquals(1, s.getPackingValue());
+
 					commit = true;
 				}
 				finally {
@@ -461,7 +431,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureMinAlignVsPackPickLatest() throws Exception {
+	public void testStructureMinAlignVsPackPickLatest() throws Exception {
 
 		setupStructureMinAlignVsPack();
 		executeMerge();
@@ -474,11 +444,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		Structure s =
 			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 				"IntStruct");
-		assertEquals(true, s.isInternallyAligned());
-		assertEquals(false, s.isDefaultAligned());
-		assertEquals(true, s.isMachineAligned());
-		assertEquals(8, s.getMinimumAlignment());
-		assertEquals(Composite.NOT_PACKING, s.getPackingValue());
+		assertTrue(s.hasDefaultPacking());
+		assertTrue(s.isMachineAligned());
+
 		assertEquals(0, s.getComponent(0).getOffset());
 		assertEquals(2, s.getComponent(1).getOffset());
 		assertEquals(4, s.getComponent(2).getOffset());
@@ -488,7 +456,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureMinAlignVsPackPickMy() throws Exception {
+	public void testStructureMinAlignVsPackPickMy() throws Exception {
 
 		setupStructureMinAlignVsPack();
 		executeMerge();
@@ -501,11 +469,10 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		Structure s =
 			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 				"IntStruct");
-		assertEquals(true, s.isInternallyAligned());
-		assertEquals(true, s.isDefaultAligned());
-		assertEquals(false, s.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, s.getMinimumAlignment());
-		assertEquals(1, s.getPackingValue());
+		assertTrue(s.hasExplicitPackingValue());
+		assertEquals(1, s.getExplicitPackingValue());
+		assertTrue(s.isDefaultAligned());
+
 		assertEquals(0, s.getComponent(0).getOffset());
 		assertEquals(1, s.getComponent(1).getOffset());
 		assertEquals(3, s.getComponent(2).getOffset());
@@ -517,9 +484,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	private void setupStructureAddVsAlign() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -534,6 +499,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 					s.add(new IntegerDataType());
 
 					// Offsets change to 0,2,4,8.
+					assertFalse(s.isPackingEnabled());
 					assertEquals(0, s.getComponent(0).getOffset());
 					assertEquals(1, s.getComponent(1).getOffset());
 					assertEquals(3, s.getComponent(2).getOffset());
@@ -541,7 +507,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 					assertEquals(15, s.getComponent(4).getOffset());
 					assertEquals(19, s.getLength());
 					assertEquals(1, s.getAlignment());
-					assertEquals(Composite.NOT_PACKING, s.getPackingValue());
 					commit = true;
 				}
 				finally {
@@ -549,9 +514,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -563,7 +525,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 					assertEquals(15, s.getLength());
 					assertEquals(1, s.getAlignment());
-					s.setInternallyAligned(true);
+					s.setToDefaultPacking();
 
 					// Offsets change to 0,2,4,8.
 					assertEquals(0, s.getComponent(0).getOffset());
@@ -572,7 +534,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 					assertEquals(8, s.getComponent(3).getOffset());
 					assertEquals(16, s.getLength());
 					assertEquals(4, s.getAlignment());
-					assertEquals(Composite.NOT_PACKING, s.getPackingValue());
+
 					commit = true;
 				}
 				finally {
@@ -583,7 +545,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureAddVsAlignPickLatest() throws Exception {
+	public void testStructureAddVsAlignPickLatest() throws Exception {
 
 		setupStructureAddVsAlign();
 		executeMerge();
@@ -596,11 +558,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		Structure s =
 			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 				"IntStruct");
-		assertEquals(false, s.isInternallyAligned());
-		assertEquals(true, s.isDefaultAligned());
-		assertEquals(false, s.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, s.getMinimumAlignment());
-		assertEquals(Composite.NOT_PACKING, s.getPackingValue());
+		assertFalse(s.isPackingEnabled());
+		assertTrue(s.isDefaultAligned());
+
 		assertEquals(0, s.getComponent(0).getOffset());
 		assertEquals(1, s.getComponent(1).getOffset());
 		assertEquals(3, s.getComponent(2).getOffset());
@@ -611,7 +571,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureAddVsAlignPickMy() throws Exception {
+	public void testStructureAddVsAlignPickMy() throws Exception {
 
 		setupStructureAddVsAlign();
 		executeMerge();
@@ -624,11 +584,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		Structure s =
 			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 				"IntStruct");
-		assertEquals(true, s.isInternallyAligned());
-		assertEquals(true, s.isDefaultAligned());
-		assertEquals(false, s.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, s.getMinimumAlignment());
-		assertEquals(Composite.NOT_PACKING, s.getPackingValue());
+		assertTrue(s.hasDefaultPacking());
+		assertTrue(s.isDefaultAligned());
+
 		assertEquals(0, s.getComponent(0).getOffset());
 		assertEquals(2, s.getComponent(1).getOffset());
 		assertEquals(4, s.getComponent(2).getOffset());
@@ -640,9 +598,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	private void setupStructureFieldNameVsPack() throws Exception {
 
 		mtf.initialize("notepad", new OriginalProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.OriginalProgramModifierListener#modifyOriginal(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -654,7 +610,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 					assertEquals(15, s.getLength());
 					assertEquals(1, s.getAlignment());
-					s.setInternallyAligned(true);
+					s.setToDefaultPacking();
+
 					// Offsets change to 0,2,4,8.
 					assertEquals(0, s.getComponent(0).getOffset());
 					assertEquals(2, s.getComponent(1).getOffset());
@@ -669,9 +626,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -685,6 +639,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 					assertEquals(4, s.getAlignment());
 					s.getComponent(1).setFieldName("MyComponentOne");
 
+					assertTrue(s.hasDefaultPacking());
+					assertTrue(s.isDefaultAligned());
+
 					assertEquals(0, s.getComponent(0).getOffset());
 					assertEquals(2, s.getComponent(1).getOffset());
 					assertEquals("MyComponentOne", s.getComponent(1).getFieldName());
@@ -692,7 +649,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 					assertEquals(8, s.getComponent(3).getOffset());
 					assertEquals(16, s.getLength());
 					assertEquals(4, s.getAlignment());
-					assertEquals(Composite.NOT_PACKING, s.getPackingValue());
+
 					commit = true;
 				}
 				finally {
@@ -700,9 +657,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -714,7 +668,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 					assertEquals(16, s.getLength());
 					assertEquals(4, s.getAlignment());
-					s.setPackingValue(1);
+					s.pack(1);
 
 					assertEquals(0, s.getComponent(0).getOffset());
 					assertEquals(1, s.getComponent(1).getOffset());
@@ -722,7 +676,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 					assertEquals(7, s.getComponent(3).getOffset());
 					assertEquals(15, s.getLength());
 					assertEquals(1, s.getAlignment());
-					assertEquals(1, s.getPackingValue());
+
 					commit = true;
 				}
 				finally {
@@ -733,7 +687,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureNameVsPackPickLatest() throws Exception {
+	public void testStructureNameVsPackPickLatest() throws Exception {
 
 		setupStructureFieldNameVsPack();
 		executeMerge();
@@ -746,11 +700,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		Structure s =
 			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 				"IntStruct");
-		assertEquals(true, s.isInternallyAligned());
-		assertEquals(true, s.isDefaultAligned());
-		assertEquals(false, s.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, s.getMinimumAlignment());
-		assertEquals(Composite.NOT_PACKING, s.getPackingValue());
+		assertTrue(s.hasDefaultPacking());
+		assertTrue(s.isDefaultAligned());
+
 		assertEquals(0, s.getComponent(0).getOffset());
 		assertEquals(2, s.getComponent(1).getOffset());
 		assertEquals(4, s.getComponent(2).getOffset());
@@ -760,7 +712,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureNameVsPackPickMy() throws Exception {
+	public void testStructureNameVsPackPickMy() throws Exception {
 
 		setupStructureFieldNameVsPack();
 		executeMerge();
@@ -773,11 +725,10 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		Structure s =
 			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 				"IntStruct");
-		assertEquals(true, s.isInternallyAligned());
-		assertEquals(true, s.isDefaultAligned());
-		assertEquals(false, s.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, s.getMinimumAlignment());
-		assertEquals(1, s.getPackingValue());
+		assertTrue(s.hasExplicitPackingValue());
+		assertEquals(1, s.getExplicitPackingValue());
+		assertTrue(s.isDefaultAligned());
+
 		assertEquals(0, s.getComponent(0).getOffset());
 		assertEquals(1, s.getComponent(1).getOffset());
 		assertEquals(3, s.getComponent(2).getOffset());
@@ -789,9 +740,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	private void setupStructureRemoveVsPack() throws Exception {
 
 		mtf.initialize("notepad", new OriginalProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.OriginalProgramModifierListener#modifyOriginal(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -803,7 +752,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 					assertEquals(15, s.getLength());
 					assertEquals(1, s.getAlignment());
-					s.setInternallyAligned(true);
+					s.setToDefaultPacking();
 
 					// Offsets change to 0,2,4,8.
 					assertEquals(0, s.getComponent(0).getOffset());
@@ -812,7 +761,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 					assertEquals(8, s.getComponent(3).getOffset());
 					assertEquals(16, s.getLength());
 					assertEquals(4, s.getAlignment());
-					assertEquals(Composite.NOT_PACKING, s.getPackingValue());
+
 					commit = true;
 				}
 				finally {
@@ -820,9 +769,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -832,7 +778,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				try {
 					Structure s = (Structure) dtm.getDataType(
 						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(s, TaskMonitor.DUMMY);
 
 					// Offsets change to 0,2,4,8.
 					Structure intStruct = (Structure) dtm.getDataType(
@@ -845,9 +791,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -857,7 +800,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				try {
 					Structure s = (Structure) dtm.getDataType(
 						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					s.setPackingValue(1);
+					s.pack(1);
 
 					assertEquals(0, s.getComponent(0).getOffset());
 					assertEquals(1, s.getComponent(1).getOffset());
@@ -865,7 +808,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 					assertEquals(7, s.getComponent(3).getOffset());
 					assertEquals(15, s.getLength());
 					assertEquals(1, s.getAlignment());
-					assertEquals(1, s.getPackingValue());
+
 					commit = true;
 				}
 				finally {
@@ -876,7 +819,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureRemoveVsPackPickLatest() throws Exception {
+	public void testStructureRemoveVsPackPickLatest() throws Exception {
 
 		setupStructureRemoveVsPack();
 		executeMerge();
@@ -893,7 +836,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureRemoveVsPackPickMy() throws Exception {
+	public void testStructureRemoveVsPackPickMy() throws Exception {
 
 		setupStructureRemoveVsPack();
 		executeMerge();
@@ -906,11 +849,10 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		Structure s =
 			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 				"IntStruct");
-		assertEquals(true, s.isInternallyAligned());
-		assertEquals(true, s.isDefaultAligned());
-		assertEquals(false, s.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, s.getMinimumAlignment());
-		assertEquals(1, s.getPackingValue());
+		assertTrue(s.hasExplicitPackingValue());
+		assertEquals(1, s.getExplicitPackingValue());
+		assertTrue(s.isDefaultAligned());
+
 		assertEquals(0, s.getComponent(0).getOffset());
 		assertEquals(1, s.getComponent(1).getOffset());
 		assertEquals(3, s.getComponent(2).getOffset());
@@ -922,9 +864,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	private void setupStructureInUnionAndViceVersa() throws Exception {
 
 		mtf.initialize("notepad", new OriginalProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.OriginalProgramModifierListener#modifyOriginal(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -934,11 +874,11 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				try {
 					Structure s = (Structure) dtm.getDataType(
 						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					s.setInternallyAligned(true);
+					s.setPackingEnabled(true);
 
 					Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
 						"CoolUnion");
-					union.setInternallyAligned(true);
+					union.setPackingEnabled(true);
 
 					commit = true;
 				}
@@ -947,9 +887,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -975,9 +912,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1006,10 +940,12 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureInUnionAndViceVersa() throws Exception {
+	public void testStructureInUnionAndViceVersa() throws Exception {
 
 		setupStructureInUnionAndViceVersa();
 		executeMerge();
+
+		close(waitForWindow("Union Update Failed")); // expected dependency error on CoolUnion
 
 		waitForCompletion();
 
@@ -1017,11 +953,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		Structure intStruct =
 			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 				"IntStruct");
-		assertEquals(true, intStruct.isInternallyAligned());
-		assertEquals(true, intStruct.isDefaultAligned());
-		assertEquals(false, intStruct.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, intStruct.getMinimumAlignment());
-		assertEquals(Composite.NOT_PACKING, intStruct.getPackingValue());
+		assertTrue(intStruct.hasDefaultPacking());
+		assertTrue(intStruct.isDefaultAligned());
+
 		assertEquals(5, intStruct.getNumComponents());
 		assertEquals(0, intStruct.getComponent(0).getOffset());
 		assertEquals(2, intStruct.getComponent(1).getOffset());
@@ -1034,11 +968,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 
 		Union coolUnion =
 			(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-		assertEquals(true, coolUnion.isInternallyAligned());
-		assertEquals(true, coolUnion.isDefaultAligned());
-		assertEquals(false, coolUnion.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, coolUnion.getMinimumAlignment());
-		assertEquals(Composite.NOT_PACKING, coolUnion.getPackingValue());
+		assertTrue(coolUnion.hasDefaultPacking());
+		assertTrue(coolUnion.isDefaultAligned());
+
 		assertEquals(6, coolUnion.getNumComponents());
 		assertEquals("qword", coolUnion.getComponent(0).getDataType().getDisplayName());
 		assertEquals("word", coolUnion.getComponent(1).getDataType().getDisplayName());
@@ -1059,9 +991,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	public void setupUnionMachineAlignedVsValue() throws Exception {
 
 		mtf.initialize("notepad", new OriginalProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.OriginalProgramModifierListener#modifyOriginal(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1073,7 +1003,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 						"CoolUnion");
 					assertEquals(96, union.getLength());
 					assertEquals(1, union.getAlignment());
-					union.setInternallyAligned(true);
+					union.setPackingEnabled(true);
 
 					assertEquals(8, union.getComponent(0).getLength());
 					assertEquals(2, union.getComponent(1).getLength());
@@ -1089,9 +1019,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1101,7 +1028,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				try {
 					Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
 						"CoolUnion");
-					union.setToMachineAlignment();
+					union.setToMachineAligned();
 
 					assertEquals(8, union.getComponent(0).getLength());
 					assertEquals(2, union.getComponent(1).getLength());
@@ -1117,9 +1044,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1129,7 +1053,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				try {
 					Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
 						"CoolUnion");
-					union.setMinimumAlignment(4);
+					union.setExplicitMinimumAlignment(4);
 
 					assertEquals(8, union.getComponent(0).getLength());
 					assertEquals(2, union.getComponent(1).getLength());
@@ -1148,7 +1072,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testUnionMachineAlignedVsValuePickLatest() throws Exception {
+	public void testUnionMachineAlignedVsValuePickLatest() throws Exception {
 
 		setupUnionMachineAlignedVsValue();
 		executeMerge();
@@ -1160,11 +1084,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 		Union union = (Union) c.getDataType("CoolUnion");
-		assertEquals(true, union.isInternallyAligned());
-		assertEquals(false, union.isDefaultAligned());
-		assertEquals(true, union.isMachineAligned());
-		assertEquals(8, union.getMinimumAlignment());
-		assertEquals(Composite.NOT_PACKING, union.getPackingValue());
+		assertTrue(union.hasDefaultPacking());
+		assertTrue(union.isMachineAligned());
+
 		assertEquals(8, union.getComponent(0).getLength());
 		assertEquals(2, union.getComponent(1).getLength());
 		assertEquals(4, union.getComponent(2).getLength());
@@ -1175,7 +1097,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testUnionMachineAlignedVsValuePickMy() throws Exception {
+	public void testUnionMachineAlignedVsValuePickMy() throws Exception {
 
 		setupUnionMachineAlignedVsValue();
 		executeMerge();
@@ -1187,11 +1109,10 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 		Union union = (Union) c.getDataType("CoolUnion");
-		assertEquals(true, union.isInternallyAligned());
-		assertEquals(false, union.isDefaultAligned());
-		assertEquals(false, union.isMachineAligned());
-		assertEquals(4, union.getMinimumAlignment());
-		assertEquals(Composite.NOT_PACKING, union.getPackingValue());
+		assertTrue(union.hasDefaultPacking());
+		assertTrue(union.hasExplicitMinimumAlignment());
+		assertEquals(4, union.getExplicitMinimumAlignment());
+
 		assertEquals(8, union.getComponent(0).getLength());
 		assertEquals(2, union.getComponent(1).getLength());
 		assertEquals(4, union.getComponent(2).getLength());
@@ -1202,7 +1123,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testUnionMachineAlignedVsValuePickOriginal() throws Exception {
+	public void testUnionMachineAlignedVsValuePickOriginal() throws Exception {
 
 		setupUnionMachineAlignedVsValue();
 		executeMerge();
@@ -1214,11 +1135,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 		Union union = (Union) c.getDataType("CoolUnion");
-		assertEquals(true, union.isInternallyAligned());
-		assertEquals(true, union.isDefaultAligned());
-		assertEquals(false, union.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, union.getMinimumAlignment());
-		assertEquals(Composite.NOT_PACKING, union.getPackingValue());
+		assertTrue(union.hasDefaultPacking());
+		assertTrue(union.isDefaultAligned());
+
 		assertEquals(8, union.getComponent(0).getLength());
 		assertEquals(2, union.getComponent(1).getLength());
 		assertEquals(4, union.getComponent(2).getLength());
@@ -1231,9 +1150,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	public void setupUnionPack1VsPack2() throws Exception {
 
 		mtf.initialize("notepad", new OriginalProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.OriginalProgramModifierListener#modifyOriginal(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1245,7 +1162,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 						"CoolUnion");
 					assertEquals(96, union.getLength());
 					assertEquals(1, union.getAlignment());
-					union.setInternallyAligned(true);
+					union.setPackingEnabled(true);
 
 					assertEquals(8, union.getComponent(0).getLength());
 					assertEquals(2, union.getComponent(1).getLength());
@@ -1261,9 +1178,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1273,7 +1187,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				try {
 					Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
 						"CoolUnion");
-					union.setPackingValue(1);
+					union.pack(1);
 
 					assertEquals(8, union.getComponent(0).getLength());
 					assertEquals(2, union.getComponent(1).getLength());
@@ -1289,9 +1203,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1301,7 +1212,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				try {
 					Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
 						"CoolUnion");
-					union.setPackingValue(2);
+					union.pack(2);
 
 					assertEquals(8, union.getComponent(0).getLength());
 					assertEquals(2, union.getComponent(1).getLength());
@@ -1320,7 +1231,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testUnionPack1VsPack2PickLatest() throws Exception {
+	public void testUnionPack1VsPack2PickLatest() throws Exception {
 
 		setupUnionPack1VsPack2();
 		executeMerge();
@@ -1332,11 +1243,10 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 		Union union = (Union) c.getDataType("CoolUnion");
-		assertEquals(true, union.isInternallyAligned());
-		assertEquals(true, union.isDefaultAligned());
-		assertEquals(false, union.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, union.getMinimumAlignment());
-		assertEquals(1, union.getPackingValue());
+		assertTrue(union.hasExplicitPackingValue());
+		assertEquals(1, union.getExplicitPackingValue());
+		assertTrue(union.isDefaultAligned());
+
 		assertEquals(8, union.getComponent(0).getLength());
 		assertEquals(2, union.getComponent(1).getLength());
 		assertEquals(4, union.getComponent(2).getLength());
@@ -1347,7 +1257,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testUnionPack1VsPack2PickMy() throws Exception {
+	public void testUnionPack1VsPack2PickMy() throws Exception {
 
 		setupUnionPack1VsPack2();
 		executeMerge();
@@ -1359,11 +1269,10 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 		Union union = (Union) c.getDataType("CoolUnion");
-		assertEquals(true, union.isInternallyAligned());
-		assertEquals(true, union.isDefaultAligned());
-		assertEquals(false, union.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, union.getMinimumAlignment());
-		assertEquals(2, union.getPackingValue());
+		assertTrue(union.hasExplicitPackingValue());
+		assertEquals(2, union.getExplicitPackingValue());
+		assertTrue(union.isDefaultAligned());
+
 		assertEquals(8, union.getComponent(0).getLength());
 		assertEquals(2, union.getComponent(1).getLength());
 		assertEquals(4, union.getComponent(2).getLength());
@@ -1374,7 +1283,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testUnionPack1VsPack2PickOriginal() throws Exception {
+	public void testUnionPack1VsPack2PickOriginal() throws Exception {
 
 		setupUnionMachineAlignedVsValue();
 		executeMerge();
@@ -1386,11 +1295,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 		Union union = (Union) c.getDataType("CoolUnion");
-		assertEquals(true, union.isInternallyAligned());
-		assertEquals(true, union.isDefaultAligned());
-		assertEquals(false, union.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, union.getMinimumAlignment());
-		assertEquals(Composite.NOT_PACKING, union.getPackingValue());
+		assertTrue(union.hasDefaultPacking());
+		assertTrue(union.isDefaultAligned());
+
 		assertEquals(8, union.getComponent(0).getLength());
 		assertEquals(2, union.getComponent(1).getLength());
 		assertEquals(4, union.getComponent(2).getLength());
@@ -1401,7 +1308,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureAddSameNameDiffCompsPickMy() throws Exception {
+	public void testStructureAddSameNameDiffCompsPickMy() throws Exception {
 
 		final StructureDataType struct1 =
 			new StructureDataType(new CategoryPath("/Category1"), "ABCStructure", 0);
@@ -1414,9 +1321,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		struct2.add(new StringDataType(), 4);
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1442,12 +1347,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				assertTrue(new PointerDataType(new FloatDataType()).isEquivalent(
 					s.getComponent(0).getDataType()));
 				assertTrue(new FloatDataType().isEquivalent(s.getComponent(1).getDataType()));
-				assertEquals(Composite.NOT_PACKING, s.getPackingValue());
+
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1472,7 +1374,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				assertEquals(4, s.getComponent(1).getLength());
 				assertTrue(new CharDataType().isEquivalent(s.getComponent(0).getDataType()));
 				assertTrue(new StringDataType().isEquivalent(s.getComponent(1).getDataType()));
-				assertEquals(Composite.NOT_PACKING, s.getPackingValue());
 			}
 		});
 
@@ -1493,7 +1394,6 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		assertTrue(new PointerDataType(new FloatDataType()).isEquivalent(
 			s1.getComponent(0).getDataType()));
 		assertTrue(new FloatDataType().isEquivalent(s1.getComponent(1).getDataType()));
-		assertEquals(Composite.NOT_PACKING, s1.getPackingValue());
 
 		Structure s2 =
 			(Structure) dtm.getDataType(new CategoryPath("/Category1"), "ABCStructure.conflict");
@@ -1506,6 +1406,5 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		assertEquals(4, s2.getComponent(1).getLength());
 		assertTrue(new CharDataType().isEquivalent(s2.getComponent(0).getDataType()));
 		assertTrue(new StringDataType().isEquivalent(s2.getComponent(1).getDataType()));
-		assertEquals(Composite.NOT_PACKING, s2.getPackingValue());
 	}
 }

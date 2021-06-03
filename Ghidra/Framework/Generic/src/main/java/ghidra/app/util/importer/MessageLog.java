@@ -15,117 +15,118 @@
  */
 package ghidra.app.util.importer;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.util.Msg;
-import ghidra.util.exception.AssertException;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
- * A simple class to handle logging messages and exceptions.
- * A maximum message count size constraint can be set to clip
- * messages after a certain number, but still keep incrementing
+ * A simple class to handle logging messages and exceptions.  A maximum message count size 
+ * constraint can be set to clip messages after a certain number, but still keep incrementing
  * a running total.
- *
+ * 
+ * <p>In addition to logging messages, clients can also set a status message.  This message may
+ * later used as the primary error message when reporting to the user.
  */
 public class MessageLog {
 	/**
-	 * The default number of messages to store before clipping.
+	 * The default number of messages to store before clipping
 	 */
-	public final static int MAX_COUNT = 500;
+	private final static int MAX_COUNT = 500;
 
-	private StringBuffer buffer = new StringBuffer();
-	private int maxSize;
+	private List<String> messages = new ArrayList<>();
+	private int maxSize = MAX_COUNT;
 	private int count;
-	private int pos = -1;
-	private String statusMsg;
+	private String statusMsg = StringUtils.EMPTY;
 
 	/**
-	 * Constructs a new message log using the default message count.
-	 */
-	public MessageLog() {
-		this(MAX_COUNT);
-	}
-
-	/**
-	 * Constructs a new message log using the sepcified message count.
-	 * @param maxSize the maximum number of messages
-	 */
-	public MessageLog(int maxSize) {
-		this.maxSize = maxSize;
-		clearStatus();
-	}
-
-	/**
-	 * Copies the contents of one message log into this one.
+	 * Copies the contents of one message log into this one
 	 * @param log the log to copy from
 	 */
 	public void copyFrom(MessageLog log) {
-		this.buffer = new StringBuffer(log.buffer);
-		this.maxSize = log.maxSize;
-		this.count = log.count;
-		this.pos = log.pos;
+		for (String otherMessage : log.messages) {
+			add(otherMessage);
+		}
 	}
 
 	/**
-	 * Appends the message to the log.
-	 * @param msg the message
+	 * Appends the message to the log
+	 * @param message the message
 	 */
-	public void appendMsg(String msg) {
-		msg(msg);
+	public void appendMsg(String message) {
+		add(message);
 	}
 
-	public void appendMsg(String originator, String msg) {
+	/**
+	 * Appends the message to the log
+	 *
+	 * @param originator the originator of the message 
+	 * @param message the message
+	 */
+	public void appendMsg(String originator, String message) {
 		if (originator == null) {
-			msg(msg);
+			add(message);
 		}
 		else {
-			msg(originator + "> " + msg);
+			add(originator + "> " + message);
 		}
 	}
 
 	/**
-	 * Appends the message and line number to the log.
+	 * Appends the message and line number to the log
 	 * @param lineNum the line number that generated the message
-	 * @param msg     the message
+	 * @param message the message
 	 */
-	public void appendMsg(int lineNum, String msg) {
-		msg("Line #" + lineNum + " - " + msg);
+	public void appendMsg(int lineNum, String message) {
+		add("Line #" + lineNum + " - " + message);
 	}
 
 	/**
-	 * Appends the exception to the log.
-	 * @param t the exeception to append to the log
+	 * Appends the exception to the log
+	 * @param t the exception to append to the log
 	 */
 	public void appendException(Throwable t) {
-		if (t instanceof NullPointerException || t instanceof AssertException) {
-			Msg.error(this, "Exception appended to MessageLog", t);
-		}
-		else {
-			Msg.debug(this, "Exception appended to MessageLog", t);
-		}
-		String msg = t.toString();
-		msg(msg);
+		String asString = ReflectionUtilities.stackTraceToString(t);
+		add(asString);
 	}
 
 	/**
-	 * Returns the message count.
-	 * @return the message count
+	 * Readable method for appending error messages to the log.
+	 *
+	 * <p>Currently does nothing different than {@link #appendMsg(String, String)}.
+	 *
+	 *
+	 * @param originator the originator of the message 
+	 * @param message the message
+	 * @deprecated use {@link #appendMsg(String)}
 	 */
-	public int getMsgCount() {
-		return count;
+	@Deprecated
+	public void error(String originator, String message) {
+		appendMsg(originator, message);
 	}
 
 	/**
-	 * Clears all messages from this log
-	 * and resets the count.
+	 * Returns true if this log has messages
+	 * @return true if this log has messages
+	 */
+	public boolean hasMessages() {
+		return count > 0;
+	}
+
+	/**
+	 * Clears all messages from this log and resets the count
 	 */
 	public void clear() {
-		buffer = new StringBuffer();
+		messages = new ArrayList<>();
 		count = 0;
-		pos = -1;
 	}
 
 	/**
 	 * Stores a status message that can be used elsewhere (i.e., populate warning dialogs)
-	 * @param status
+	 * @param status the status message
 	 */
 	public void setStatus(String status) {
 		statusMsg = status;
@@ -135,7 +136,7 @@ public class MessageLog {
 	 * Clear status message
 	 */
 	public void clearStatus() {
-		statusMsg = "";
+		statusMsg = StringUtils.EMPTY;
 	}
 
 	/**
@@ -146,45 +147,42 @@ public class MessageLog {
 		return statusMsg;
 	}
 
-	/**
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
-		if (count > maxSize) {
-			if (pos > -1) {
-				buffer.delete(pos, buffer.length());
-			}
-			pos = buffer.length();
-			buffer.append("\n \n");
-			buffer.append("There were too many messages to display.\n");
-			buffer.append("" + (count - maxSize) + " messages have been truncated.");
-			buffer.append("\n \n");
-		}
-		return buffer.toString();
-	}
-
-	private void msg(String msg) {
-		if (msg == null || msg.length() == 0) {//discard if null...
-			return;
-		}
-		if (count++ < maxSize) {
-			buffer.append(msg);
-			buffer.append("\n");
-		}
+		return toStringWithWarning();
 	}
 
 	/**
-	 * Readable method for appending error messages to the log.
-	 *
-	 * Currently does nothing different that {@link #appendMsg(String, String)}
-	 *
-	 *
-	 * @param originator
-	 * @param message
-	 *
+	 * Writes this log's contents to the application log
+	 * @param owner the owning class whose name will appear in the log message
+	 * @param messageHeader the message header that will appear before the log messages
 	 */
-	public void error(String originator, String message) {
-		appendMsg(originator, message);
+	public void write(Class<?> owner, String messageHeader) {
+		String header = StringUtils.defaultIfBlank(messageHeader, "Log Messages");
+		Msg.info(owner, header + '\n' + toStringWithWarning());
+	}
+
+	private String toStringWithWarning() {
+		StringBuilder output = new StringBuilder();
+		if (count > maxSize) {
+			output.append("There were too many messages to display.\n");
+			output.append((count - maxSize)).append(" messages have been truncated.\n");
+			output.append('\n');
+		}
+
+		for (String s : messages) {
+			output.append(s).append('\n');
+		}
+		return output.toString();
+	}
+
+	private void add(String msg) {
+		if (StringUtils.isBlank(msg)) {
+			return;
+		}
+
+		if (count++ < maxSize) {
+			messages.add(msg);
+		}
 	}
 }

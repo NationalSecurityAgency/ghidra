@@ -41,7 +41,7 @@ public abstract class GhidraProtocolHandler implements ExtensionPoint {
 	/**
 	 * Get the Ghidra protocol connector for a Ghidra URL which requires this
 	 * extension.
-	 * @param url Ghidra protocol URL
+	 * @param ghidraUrl Ghidra protocol URL
 	 * @return Ghidra protocol connector
 	 * @throws MalformedURLException if URL is invalid
 	 */

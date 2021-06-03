@@ -33,10 +33,10 @@ public class VariableCommentFieldLocation extends VariableLocation {
 
 	/**
 	 * Construct a new VariableCommentFieldLocation object.
+	 * @param program the program of the location
 	 * @param locationAddr the address of the listing location (i.e., referent code unit)
 	 * @param var the variable which has its comment in the field.
 	 * @param charOffset the position within the variable comment string for this location.
-	 * @param the program of the location
 	 */
 	public VariableCommentFieldLocation(Program program, Address locationAddr, Variable var,
 			int charOffset) {
@@ -49,7 +49,7 @@ public class VariableCommentFieldLocation extends VariableLocation {
 	 * Construct a new VariableCommentFieldLocation object.
 	 * Variable function entry point is the assumed listing location (i.e., referent code unit).
 	 * Care should be taken if variable corresponds to an EXTERNAL function.
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param var the variable which has its comment in the field.
 	 * @param charOffset the position within the variable comment string for this location.
 	 */

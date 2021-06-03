@@ -16,13 +16,22 @@
 package ghidra.app.plugin.core.functioncompare;
 
 /**
- * Listener for a FunctionComparisonProvider.
+ * Allows subscribers to register for function comparison provider changes 
+ * (eg: when the provider is opened/closed)
  */
 public interface FunctionComparisonProviderListener {
 
 	/**
-	 * Notification method that will get called when the provider is being closed.
-	 * @param provider the provider that is being closed.
+	 * Invoked when the provider is being closed
+	 * 
+	 * @param provider the closed provider
 	 */
 	public void providerClosed(FunctionComparisonProvider provider);
+
+	/**
+	 * Invoked when the provider is being opened
+	 * 
+	 * @param provider the opened provider
+	 */
+	public void providerOpened(FunctionComparisonProvider provider);
 }

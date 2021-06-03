@@ -15,7 +15,6 @@
  */
 package docking;
 
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -94,7 +93,7 @@ public class EmptyBorderToggleButton extends EmptyBorderButton {
 		return isSelected();
 	}
 
-	/** This method only functions if this class was created with an action */
+	// This method only functions if this class was created with an action
 	protected void doActionPerformed(ActionEvent e) {
 		setSelected(!isSelected()); // toggle
 
@@ -105,7 +104,7 @@ public class EmptyBorderToggleButton extends EmptyBorderButton {
 		buttonAction.actionPerformed(e);
 	}
 
-	private void doPropertyChange(PropertyChangeEvent e) {
+	protected void doPropertyChange(PropertyChangeEvent e) {
 		String name = e.getPropertyName();
 		if (name.equals("enabled")) {
 			setEnabled(((Boolean) e.getNewValue()).booleanValue());
@@ -165,14 +164,14 @@ public class EmptyBorderToggleButton extends EmptyBorderButton {
 			return b;
 		}
 
-		DefaultButtonModel model = (DefaultButtonModel) bm;
-		ButtonGroup group = model.getGroup();
+		DefaultButtonModel buttonModel = (DefaultButtonModel) bm;
+		ButtonGroup group = buttonModel.getGroup();
 		if (group == null) {
 			return b;
 		}
 
-		group.setSelected(model, b);
-		boolean isSelected = group.isSelected(model);
+		group.setSelected(buttonModel, b);
+		boolean isSelected = group.isSelected(buttonModel);
 		return isSelected;
 	}
 

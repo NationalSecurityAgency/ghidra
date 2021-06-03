@@ -105,7 +105,7 @@ public final class CryptoKeyFactory {
 				}
 			}
 			catch (Exception e) {
-				Msg.showWarn(CryptoKeyFactory.class, null, "Error Parsing Crypto Keys File",
+				Msg.showError(CryptoKeyFactory.class, null, "Error Parsing Crypto Keys File",
 					"Unable to process crypto keys files.", e);
 			}
 		}

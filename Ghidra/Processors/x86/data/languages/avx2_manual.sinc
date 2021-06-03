@@ -1,6 +1,6 @@
 # VINSERTI128/VINSERTI32x4/VINSERTI64x2/VINSERTI32x8/VINSERTI64x4 5-314 PAGE 2138 LINE 109785
 define pcodeop vinserti128 ;
-:VINSERTI128 YmmReg1, vexVVVV_YmmReg, XmmReg2_m128, imm8 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0) & vexVVVV_YmmReg & vexVVVV_YmmReg_DQa & vexVVVV_YmmReg_DQb; byte=0x38; (YmmReg1 & YmmReg1_DQa & YmmReg1_DQb) ... & XmmReg2_m128; imm8 & imm8_0 {
+:VINSERTI128 YmmReg1, vexVVVV_YmmReg, XmmReg2_m128, imm8 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x38; YmmReg1 ... & XmmReg2_m128; imm8 & imm8_0 {
 	local tmp:16 = XmmReg2_m128;
 
 	# ignoring all but the least significant bit
@@ -8,13 +8,13 @@ define pcodeop vinserti128 ;
 	if (imm8_0:1 == 1) goto <case1>;
 
  <case0>
-	YmmReg1_DQa = tmp;
-	YmmReg1_DQb = vexVVVV_YmmReg_DQb;
+	YmmReg1[0,128] = tmp;
+	YmmReg1[128,128] = vexVVVV_YmmReg[128,128];
 	goto <done>;
 
  <case1>
-	YmmReg1_DQa = vexVVVV_YmmReg_DQa;
-	YmmReg1_DQb = tmp;
+	YmmReg1[0,128] = vexVVVV_YmmReg[0,128];
+	YmmReg1[128,128] = tmp;
 
  <done>
 }

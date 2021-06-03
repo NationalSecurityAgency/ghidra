@@ -81,6 +81,35 @@ PcodeOp::PcodeOp(int4 s,const SeqNum &sq) : start(sq),inrefs(s)
     inrefs[i] = (Varnode *)0;
 }
 
+/// \brief Find the slot for a given Varnode, which may be take up multiple input slots
+///
+/// In the rare case that \b this PcodeOp takes the same Varnode as input multiple times,
+/// use the specific descendant iterator producing \b this PcodeOp to work out the corresponding slot.
+/// Every slot containing the given Varnode will be produced exactly once over the course of iteration.
+/// \param vn is the given Varnode
+/// \param firstSlot is the first instance of the Varnode in \b this input list
+/// \param iter is the specific descendant iterator producing \b this
+/// \return the slot corresponding to the iterator
+int4 PcodeOp::getRepeatSlot(const Varnode *vn,int4 firstSlot,list<PcodeOp *>::const_iterator iter) const
+
+{
+  int4 count = 1;
+  for(list<PcodeOp *>::const_iterator oiter=vn->beginDescend();oiter != iter;++oiter) {
+    if ((*oiter) == this)
+      count += 1;
+  }
+  if (count == 1) return firstSlot;
+  int4 recount = 1;
+  for(int4 i=firstSlot+1;i<inrefs.size();++i) {
+    if (inrefs[i] == vn) {
+      recount += 1;
+      if (recount == count)
+	return i;
+    }
+  }
+  return -1;
+}
+
 /// Can this be collapsed to a copy op, i.e. are all inputs constants
 /// \return \b true if this op can be callapsed
 bool PcodeOp::isCollapsible(void) const
@@ -139,6 +168,106 @@ bool PcodeOp::isCseMatch(const PcodeOp *op) const
       continue;
     return false;
   }
+  return true;
+}
+
+/// Its possible for the order of operations to be rearranged in some instances but still keep
+/// equivalent data-flow.  Test if \b this operation can be moved to occur immediately after
+/// a specified \e point operation. This currently only tests for movement within a basic block.
+/// \param point is the specified point to move \b this after
+/// \return \b true if the move is possible
+bool PcodeOp::isMoveable(const PcodeOp *point) const
+
+{
+  if (this == point) return true;	// No movement necessary
+  bool movingLoad = false;
+  if (getEvalType() == PcodeOp::special) {
+    if (code() == CPUI_LOAD)
+      movingLoad = true;	// Allow LOAD to be moved with additional restrictions
+    else
+      return false;	// Don't move special ops
+  }
+  if (parent != point->parent) return false;	// Not in the same block
+  if (output != (Varnode *)0) {
+    // Output cannot be moved past an op that reads it
+    list<PcodeOp *>::const_iterator iter = output->beginDescend();
+    list<PcodeOp *>::const_iterator enditer = output->endDescend();
+    while(iter != enditer) {
+      PcodeOp *readOp = *iter;
+      ++iter;
+      if (readOp->parent != parent) continue;
+      if (readOp->start.getOrder() <= point->start.getOrder())
+	return false;		// Is in the block and is read before (or at) -point-
+    }
+  }
+  // Only allow this op to be moved across a CALL in very restrictive circumstances
+  bool crossCalls = false;
+  if (getEvalType() != PcodeOp::special) {
+    // Check for a normal op where all inputs and output are not address tied
+    if (output != (Varnode *)0 && !output->isAddrTied() && !output->isPersist()) {
+      int4 i;
+      for(i=0;i<numInput();++i) {
+	const Varnode *vn = getIn(i);
+	if (vn->isAddrTied() || vn->isPersist())
+	  break;
+      }
+      if (i == numInput())
+	crossCalls = true;
+    }
+  }
+  vector<const Varnode *> tiedList;
+  for(int4 i=0;i<numInput();++i) {
+    const Varnode *vn = getIn(i);
+    if (vn->isAddrTied())
+      tiedList.push_back(vn);
+  }
+  list<PcodeOp *>::iterator biter = basiciter;
+  do {
+    ++biter;
+    PcodeOp *op = *biter;
+    if (op->getEvalType() == PcodeOp::special) {
+      switch (op->code()) {
+	case CPUI_LOAD:
+	  if (output != (Varnode *)0) {
+	    if (output->isAddrTied()) return false;
+	  }
+	  break;
+	case CPUI_STORE:
+	  if (movingLoad)
+	    return false;
+	  else {
+	    if (!tiedList.empty()) return false;
+	    if (output != (Varnode *)0) {
+	      if (output->isAddrTied()) return false;
+	    }
+	  }
+	  break;
+	case CPUI_INDIRECT:		// Let thru, deal with what's INDIRECTed around separately
+	case CPUI_SEGMENTOP:
+	case CPUI_CPOOLREF:
+	  break;
+	case CPUI_CALL:
+	case CPUI_CALLIND:
+	case CPUI_NEW:
+	  if (!crossCalls) return false;
+	  break;
+	default:
+	  return false;
+      }
+    }
+    if (op->output != (Varnode *)0) {
+      if (movingLoad) {
+	if (op->output->isAddrTied()) return false;
+      }
+      for(int4 i=0;i<tiedList.size();++i) {
+	const Varnode *vn = tiedList[i];
+	if (vn->overlap(*op->output)>=0)
+	  return false;
+	if (op->output->overlap(*vn)>=0)
+	  return false;
+      }
+    }
+  } while(biter != point->basiciter);
   return true;
 }
 
@@ -493,9 +622,29 @@ uintb PcodeOp::getNZMaskLocal(bool cliploop) const
     val = (getIn(1)->getNZMask()-1); // Result is less than modulus
     resmask = coveringmask(val);
     break;
+  case CPUI_POPCOUNT:
+    sz1 = popcount(getIn(0)->getNZMask());
+    resmask = coveringmask((uintb)sz1);
+    resmask &= fullmask;
+    break;
   case CPUI_SUBPIECE:
     resmask = getIn(0)->getNZMask();
-    resmask >>= 8*getIn(1)->getOffset();
+    sz1 = (int4)getIn(1)->getOffset();
+    if ((int4)getIn(0)->getSize() <= sizeof(uintb)) {
+      if (sz1 < sizeof(uintb))
+	resmask >>= 8*sz1;
+      else
+	resmask = 0;
+    }
+    else {			// Extended precision
+      if (sz1 < sizeof(uintb)) {
+	resmask >>= 8*sz1;
+	if (sz1 > 0)
+	  resmask |= fullmask << (8*(sizeof(uintb)-sz1));
+      }
+      else
+	resmask = fullmask;
+    }
     resmask &= fullmask;
     break;
   case CPUI_PIECE:
@@ -506,11 +655,11 @@ uintb PcodeOp::getNZMaskLocal(bool cliploop) const
   case CPUI_INT_MULT:
     val = getIn(0)->getNZMask();
     resmask = getIn(1)->getNZMask();
-    sz1 = mostsigbit_set(val);
+    sz1 = (size > sizeof(uintb)) ? 8*size-1 : mostsigbit_set(val);
     if (sz1 == -1)
       resmask = 0;
     else {
-      sz2 = mostsigbit_set(resmask);
+      sz2 = (size > sizeof(uintb)) ? 8*size-1 : mostsigbit_set(resmask);
       if (sz2 == -1)
 	resmask = 0;
       else {
@@ -593,6 +742,9 @@ void PcodeOpBank::addToCodeList(PcodeOp *op)
   case CPUI_STORE:
     op->codeiter = storelist.insert(storelist.end(),op);
     break;
+  case CPUI_LOAD:
+    op->codeiter = loadlist.insert(loadlist.end(), op);
+    break;
   case CPUI_RETURN:
     op->codeiter = returnlist.insert(returnlist.end(),op);
     break;
@@ -614,6 +766,9 @@ void PcodeOpBank::removeFromCodeList(PcodeOp *op)
   case CPUI_STORE:
     storelist.erase(op->codeiter);
     break;
+  case CPUI_LOAD:
+    loadlist.erase(op->codeiter);
+    break;
   case CPUI_RETURN:
     returnlist.erase(op->codeiter);
     break;
@@ -629,6 +784,7 @@ void PcodeOpBank::clearCodeLists(void)
 
 {
   storelist.clear();
+  loadlist.clear();
   returnlist.clear();
   useroplist.clear();
 }
@@ -862,6 +1018,8 @@ list<PcodeOp *>::const_iterator PcodeOpBank::begin(OpCode opc) const
   switch(opc) {
   case CPUI_STORE:
     return storelist.begin();
+  case CPUI_LOAD:
+    return loadlist.begin();
   case CPUI_RETURN:
     return returnlist.begin();
   case CPUI_CALLOTHER:
@@ -878,6 +1036,8 @@ list<PcodeOp *>::const_iterator PcodeOpBank::end(OpCode opc) const
   switch(opc) {
   case CPUI_STORE:
     return storelist.end();
+  case CPUI_LOAD:
+    return loadlist.end();
   case CPUI_RETURN:
     return returnlist.end();
   case CPUI_CALLOTHER:

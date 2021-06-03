@@ -15,11 +15,30 @@
  */
 package ghidra.program.model.lang;
 
-import ghidra.app.plugin.processors.sleigh.SleighException;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
+import ghidra.util.xml.SpecXmlUtils;
+import ghidra.xml.*;
 
 public class InjectPayloadCallother extends InjectPayloadSleigh {
+
+	/**
+	 * Constructor for a partial clone of a payload whose p-code failed to parse.
+	 * @param pcode is the p-code to substitute
+	 * @param failedPayload is the failed callfixup
+	 */
+	protected InjectPayloadCallother(ConstructTpl pcode, InjectPayloadCallother failedPayload) {
+		super(pcode, failedPayload);
+	}
+
+	/**
+	 * Constructor for a dummy payload
+	 * @param pcode is the dummy p-code to use
+	 * @param nm is the name of the payload
+	 */
+	protected InjectPayloadCallother(ConstructTpl pcode, String nm) {
+		super(pcode, CALLOTHERFIXUP_TYPE, nm);
+	}
 
 	public InjectPayloadCallother(String sourceName) {
 		super(sourceName);
@@ -27,19 +46,22 @@ public class InjectPayloadCallother extends InjectPayloadSleigh {
 	}
 
 	@Override
-	public InjectPayloadSleigh clone() {
-		InjectPayloadSleigh res = new InjectPayloadCallother(source);
-		res.copy(this);
-		return res;
+	public void saveXml(StringBuilder buffer) {
+		buffer.append("<callotherfixup");
+		SpecXmlUtils.encodeStringAttribute(buffer, "targetop", name);
+		buffer.append(">\n");
+		super.saveXml(buffer);
+		buffer.append("</callotherfixup>\n");
 	}
 
 	@Override
-	public void restoreXml(XmlPullParser parser) {
+	public void restoreXml(XmlPullParser parser, SleighLanguage language) throws XmlParseException {
 		XmlElement fixupEl = parser.start("callotherfixup");
 		name = fixupEl.getAttribute("targetop");
-		if (!parser.peek().isStart() || !parser.peek().getName().equals("pcode"))
-			throw new SleighException("<callotherfixup> does not contain a <pcode> tag");
-		super.restoreXml(parser);
+		if (!parser.peek().isStart() || !parser.peek().getName().equals("pcode")) {
+			throw new XmlParseException("<callotherfixup> does not contain a <pcode> tag");
+		}
+		super.restoreXml(parser, language);
 		parser.end(fixupEl);
 	}
 }

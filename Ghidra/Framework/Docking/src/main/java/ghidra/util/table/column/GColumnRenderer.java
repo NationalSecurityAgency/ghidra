@@ -36,12 +36,12 @@ import ghidra.util.exception.AssertException;
  *      columns.  The specifics of how the text filter works are defined by the 
  *      {@link RowFilterTransformer}, which is controlled by the user via the button at the right
  *      of the filter field.  (In the absence of this button, filters are typically a 'contains'
- *      filter.
+ *      filter.)
  *      
  *      <P>The default transformer turns items to strings by, in order,:
  *      <OL>
- *      	<LI>checking the the renderer's {@link #getFilterString(Object, Settings)}, 
- *      		if a renderer is installed
+ *      	<LI>checking the the <b>column</b> renderer's 
+ *      		{@link #getFilterString(Object, Settings)},if a column renderer is installed
  *      	</LI>
  *      	<LI>checking to see if the column value is an instance of {@link DisplayStringProvider}
  *      	</LI>
@@ -68,6 +68,10 @@ import ghidra.util.exception.AssertException;
  *  </LI>
  * </OL>
  * 
+ * <P><B>Note: The default filtering behavior of this class is to only filter on the aforementioned
+ *       filter text field.  That is, column constraints will not be enabled by default. To
+ *       change this, change the value returned by {@link #getColumnConstraintFilterMode()}.</B>
+ * 
  * @param <T> the column type
  */
 public interface GColumnRenderer<T> extends TableCellRenderer {
@@ -79,21 +83,14 @@ public interface GColumnRenderer<T> extends TableCellRenderer {
 	public enum ColumnConstraintFilterMode {
 		//@formatter:off
 		
-		/** 
-		 * Signals that the programmer didn't make a decision about how filtering for this
-		 * column should work.  This currently will treat all filtering as if 
-		 * {@link #USE_COLUMN_RENDERER_FITLER_STRING_ONLY} was chosen.
-		 */
-		DEFAULT,
-		
 		/** Use only {@link GColumnRenderer#getFilterString(Object, Settings)} value; no constraints */
-		USE_COLUMN_RENDERER_FITLER_STRING_ONLY,
+		ALLOW_RENDERER_STRING_FILTER_ONLY,
 		
 		/** Use only column constraints when filtering */
-		USE_COLUMN_CONSTRAINTS_ONLY,
+		ALLOW_CONSTRAINTS_FILTER_ONLY,
 		
 		/** Use both the rendered filter String and any found column constraints */
-		USE_BOTH_COLUMN_RENDERER_FITLER_STRING_AND_CONSTRAINTS,
+		ALLOW_ALL_FILTERS,
 		//@formatter:on
 	}
 
@@ -107,7 +104,7 @@ public interface GColumnRenderer<T> extends TableCellRenderer {
 	 * @return the mode
 	 */
 	public default ColumnConstraintFilterMode getColumnConstraintFilterMode() {
-		return ColumnConstraintFilterMode.DEFAULT;
+		return ColumnConstraintFilterMode.ALLOW_RENDERER_STRING_FILTER_ONLY;
 	}
 
 	/**

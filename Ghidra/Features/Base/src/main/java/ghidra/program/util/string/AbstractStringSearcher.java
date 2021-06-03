@@ -91,8 +91,10 @@ public abstract class AbstractStringSearcher {
 	 * Searches the given addressSet for strings. 
 	 * <p>
 	 * Note: The address set searched will be modified before searching in the following ways:
+	 * <ul>
 	 * <li> if the given set is null, it will be re-initialized to encompass all of program memory</li>
 	 * <li> the set will be further culled to only include loaded memory blocks, if specified</li>
+	 * </ul>
 	 * <p>
 	 * @param addressSet the address set to search over; if null, will initialized to all memory
 	 * @param callback the callback invoked when a string is found

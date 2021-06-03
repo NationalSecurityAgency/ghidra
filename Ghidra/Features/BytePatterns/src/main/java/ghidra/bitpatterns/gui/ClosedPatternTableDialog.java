@@ -41,8 +41,9 @@ public class ClosedPatternTableDialog extends DialogComponentProvider {
 	private DockingAction sendToClipboardAction;
 	private static final String TITLE = "Closed Patterns";
 	private ClosedPatternTableModel closedPatternTableModel;
-	private FunctionBitPatternsExplorerPlugin plugin;
+	private GThreadedTablePanel<ClosedPatternRowObject> tablePanel;
 	private JPanel mainPanel;
+	private FunctionBitPatternsExplorerPlugin plugin;
 	private PatternType type;
 	private ContextRegisterFilter cRegFilter;
 
@@ -77,9 +78,8 @@ public class ClosedPatternTableDialog extends DialogComponentProvider {
 
 	private JPanel createMainPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		GThreadedTablePanel<ClosedPatternRowObject> table =
-			new GThreadedTablePanel<>(closedPatternTableModel);
-		panel.add(table, BorderLayout.CENTER);
+		tablePanel = new GThreadedTablePanel<>(closedPatternTableModel);
+		panel.add(tablePanel, BorderLayout.CENTER);
 		return panel;
 	}
 
@@ -122,4 +122,9 @@ public class ClosedPatternTableDialog extends DialogComponentProvider {
 		this.addAction(sendToClipboardAction);
 	}
 
+	@Override
+	public void close() {
+		super.close();
+		tablePanel.dispose();
+	}
 }

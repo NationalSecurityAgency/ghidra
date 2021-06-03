@@ -78,23 +78,23 @@ public class TreeManager implements ManagerDB {
 	static final Schema PARENT_CHILD_SCHEMA = createParentChildSchema();
 
 	private static Schema createTreeSchema() {
-		return new Schema(0, "Key", new Class[] { StringField.class, LongField.class },
+		return new Schema(0, "Key", new Field[] { StringField.INSTANCE, LongField.INSTANCE },
 			new String[] { "Name", "Modification Number" });
 	}
 
 	private static Schema createModuleSchema() {
-		return new Schema(0, "Key", new Class[] { StringField.class, StringField.class },
+		return new Schema(0, "Key", new Field[] { StringField.INSTANCE, StringField.INSTANCE },
 			new String[] { "Name", "Comments" });
 	}
 
 	private static Schema createFragmentSchema() {
-		return new Schema(0, "Key", new Class[] { StringField.class, StringField.class },
+		return new Schema(0, "Key", new Field[] { StringField.INSTANCE, StringField.INSTANCE },
 			new String[] { "Name", "Comments" });
 	}
 
 	private static Schema createParentChildSchema() {
 		return new Schema(0, "Key",
-			new Class[] { LongField.class, LongField.class, IntField.class },
+			new Field[] { LongField.INSTANCE, LongField.INSTANCE, IntField.INSTANCE },
 			new String[] { "Parent ID", "Child ID", "Child Index" });
 	}
 
@@ -180,7 +180,7 @@ public class TreeManager implements ManagerDB {
 	private void addressUpgrade(TaskMonitor monitor) throws CancelledException, IOException {
 		RecordIterator iter = adapter.getRecords();
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			long key = rec.getKey();
 			String treeName = rec.getString(TREE_NAME_COL);
 			ModuleManager.addressUpgrade(this, key, treeName, addrMap, monitor);
@@ -216,7 +216,7 @@ public class TreeManager implements ManagerDB {
 				throw new DuplicateNameException(
 					"Root module named " + treeName + " already exists");
 			}
-			Record record = adapter.createRecord(treeName);
+			DBRecord record = adapter.createRecord(treeName);
 			ModuleManager m = new ModuleManager(this, record, program, true);
 			treeMap.put(treeName, m);
 			addMemoryBlocks(m);
@@ -267,7 +267,7 @@ public class TreeManager implements ManagerDB {
 		try {
 			RecordIterator iter = adapter.getRecords();
 			while (iter.hasNext()) {
-				Record record = iter.next();
+				DBRecord record = iter.next();
 				String name = record.getString(TREE_NAME_COL);
 				return getRootModule(name);
 			}
@@ -289,7 +289,7 @@ public class TreeManager implements ManagerDB {
 
 			int index = 0;
 			while (iter.hasNext()) {
-				Record record = iter.next();
+				DBRecord record = iter.next();
 				names[index] = record.getString(TREE_NAME_COL);
 				++index;
 			}
@@ -340,7 +340,7 @@ public class TreeManager implements ManagerDB {
 		lock.acquire();
 		try {
 			if (treeMap.containsKey(treeName)) {
-				Record rec = adapter.getRecord(treeName);
+				DBRecord rec = adapter.getRecord(treeName);
 				adapter.deleteRecord(rec.getKey());
 				ModuleManager mm = treeMap.remove(treeName);
 				mm.dispose();
@@ -486,8 +486,12 @@ public class TreeManager implements ManagerDB {
 
 	/**
 	 * Move a memory block to new place.
-	 * @param fromRange old place
-	 * @param toRange new place
+	 * @param fromAddr old place
+	 * @param toAddr new place
+	 * @param length the length of the address range to move
+	 * @param monitor the current task monitor
+	 * @throws AddressOverflowException if an address overflow occurs.
+	 * @throws CancelledException if the task is cancelled.
 	 */
 	@Override
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
@@ -526,7 +530,7 @@ public class TreeManager implements ManagerDB {
 
 	String getTreeName(long treeID) {
 		try {
-			Record record = adapter.getRecord(treeID);
+			DBRecord record = adapter.getRecord(treeID);
 			if (record != null) {
 				return record.getString(TREE_NAME_COL);
 			}
@@ -586,7 +590,7 @@ public class TreeManager implements ManagerDB {
 
 		RecordIterator iter = adapter.getRecords();
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			long key = rec.getKey();
 			String treeName = rec.getString(TREE_NAME_COL);
 			long modNumber = rec.getLongValue(MODIFICATION_NUM_COL);
@@ -642,7 +646,7 @@ public class TreeManager implements ManagerDB {
 		}
 	}
 
-	void updateTreeRecord(Record record) {
+	void updateTreeRecord(DBRecord record) {
 		updateTreeRecord(record, true);
 	}
 
@@ -652,7 +656,7 @@ public class TreeManager implements ManagerDB {
 	 * @param updateModificationNumber true means to update the
 	 * modification number
 	 */
-	void updateTreeRecord(Record record, boolean updateModificationNumber) {
+	void updateTreeRecord(DBRecord record, boolean updateModificationNumber) {
 		try {
 			if (updateModificationNumber) {
 				record.setLongValue(MODIFICATION_NUM_COL,
@@ -665,7 +669,7 @@ public class TreeManager implements ManagerDB {
 		}
 	}
 
-	Record getTreeRecord(long treeID) {
+	DBRecord getTreeRecord(long treeID) {
 		try {
 			return adapter.getRecord(treeID);
 		}
@@ -685,7 +689,7 @@ public class TreeManager implements ManagerDB {
 
 	/**
 	 * Get the root module for the tree that has the given ID.
-	 * @param ID of the tree
+	 * @param treeID ID of the tree
 	 * @return root module
 	 */
 	public ProgramModule getRootModule(long treeID) {

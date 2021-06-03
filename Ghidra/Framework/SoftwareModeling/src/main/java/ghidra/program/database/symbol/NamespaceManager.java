@@ -54,9 +54,7 @@ public class NamespaceManager implements ManagerDB {
 	 * @param openMode the open mode
 	 * @param lock the program synchronization lock
 	 * @param monitor the task monitor.
-	 * @throws IOException if a database error occurs.
 	 * @throws VersionException if the table version is different from this adapter.
-	 * @throws CancelledException if the user cancels the upgrade.
 	 */
 	public NamespaceManager(DBHandle handle, ErrorHandler errHandler, AddressMap addrMap,
 			int openMode, Lock lock, TaskMonitor monitor) throws VersionException {
@@ -70,13 +68,10 @@ public class NamespaceManager implements ManagerDB {
 		}
 
 		namespaceMap = new AddressRangeMapDB(handle, addrMap, lock, NAMESPACE_MAP_NAME, errHandler,
-			LongField.class, true);
+			LongField.INSTANCE, true);
 
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#deleteAddressRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
@@ -95,26 +90,17 @@ public class NamespaceManager implements ManagerDB {
 		lastBody = null;
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#invalidateCache(boolean)
-	 */
 	@Override
 	public void invalidateCache(boolean all) throws IOException {
 		clearCache();
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#setProgram(ghidra.program.database.ProgramDB)
-	 */
 	@Override
 	public void setProgram(ProgramDB program) {
 		this.symbolMgr = (SymbolManager) program.getSymbolTable();
 		globalNamespace = program.getGlobalNamespace();
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#programReady(int, int, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -138,8 +124,7 @@ public class NamespaceManager implements ManagerDB {
 	 * @param namespace the namespace whose body is to be modified.
 	 * @param set the address set for the new body.
 	 */
-	public void setBody(Namespace namespace, AddressSetView set)
-			throws OverlappingNamespaceException {
+	public void setBody(Namespace namespace, AddressSetView set) throws OverlappingNamespaceException {
 		if (set.getNumAddresses() > Integer.MAX_VALUE) {
 			throw new IllegalArgumentException(
 				"Namespace body size must be less than 0x7fffffff byte addresses");
@@ -147,12 +132,10 @@ public class NamespaceManager implements ManagerDB {
 		lock.acquire();
 		try {
 			AddressSetView oldBody = removeBody(namespace);
-			try {
-				overlapsNamespace(set);
-			}
-			catch (OverlappingNamespaceException e) {
+			AddressRange range = overlapsNamespace(set);
+			if (range != null) {
 				doSetBody(namespace, oldBody);
-				throw e;
+				throw new OverlappingNamespaceException(range.getMinAddress(), range.getMaxAddress());
 			}
 			doSetBody(namespace, set);
 		}
@@ -214,19 +197,20 @@ public class NamespaceManager implements ManagerDB {
 
 	/**
 	 * Checks if an existing namespace's address set intersects with
-	 * the given set. If so, then it throws an OverlappingNamespaceException.
-	 * @throws if the address set to test overlaps a namespace body.
+	 * the given set. If so, return the first overlapping range.
+	 * @returns null if no overlaps, or an address range of the first overlap
 	 */
-	public void overlapsNamespace(AddressSetView set) throws OverlappingNamespaceException {
-		AddressRangeIterator iter =
-			namespaceMap.getAddressRanges(set.getMinAddress(), set.getMaxAddress());
-		while (iter.hasNext()) {
-			AddressRange range = iter.next();
-			if (set.intersects(range.getMinAddress(), range.getMaxAddress())) {
-				throw new OverlappingNamespaceException(range.getMinAddress(),
-					range.getMaxAddress());
+	public AddressRange overlapsNamespace(AddressSetView set) {
+		AddressRangeIterator addressRanges = set.getAddressRanges();
+		for (AddressRange addressRange : addressRanges) {
+			AddressRangeIterator namesSpaceRanges = namespaceMap.getAddressRanges(
+				addressRange.getMinAddress(), addressRange.getMaxAddress());
+			AddressRange existingRange = namesSpaceRanges.next();
+			if (existingRange != null) {
+				return existingRange;
 			}
 		}
+		return null;
 	}
 
 	/**
@@ -312,9 +296,6 @@ public class NamespaceManager implements ManagerDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#moveAddressRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address, long, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws AddressOverflowException, CancelledException {

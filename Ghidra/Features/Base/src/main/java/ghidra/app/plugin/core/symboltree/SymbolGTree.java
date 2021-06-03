@@ -21,7 +21,8 @@ import java.awt.Component;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeRenderer;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
 import ghidra.app.util.SymbolInspector;
@@ -34,7 +35,7 @@ public class SymbolGTree extends GTree {
 	private GTreeNode armedNode;
 	private SymbolInspector symbolInspector;
 
-	public SymbolGTree(GTreeRootNode root, SymbolTreePlugin plugin) {
+	public SymbolGTree(GTreeNode root, SymbolTreePlugin plugin) {
 		super(root);
 		symbolInspector = new SymbolInspector(plugin.getTool(), this);
 		setShowsRootHandles(true);

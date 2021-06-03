@@ -323,7 +323,7 @@ public class DefaultProject implements Project {
 	/**
 	 * Get the local tool chest for the user logged in.
 	 * 
-	 * @returns the tool chest
+	 * @return the tool chest
 	 */
 	@Override
 	public ToolChest getLocalToolChest() {

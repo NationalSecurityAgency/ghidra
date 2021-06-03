@@ -24,7 +24,6 @@ import ghidra.app.util.bin.format.pdb.PdbParser.PdbXmlMember;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.graph.*;
 import ghidra.graph.algo.GraphNavigator;
-import ghidra.graph.jung.JungDirectedGraph;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.symbol.SymbolUtilities;
@@ -67,8 +66,8 @@ public class ApplyDataTypes {
 	private List<CompositeDefinition> getCompositeDefinitionsInPostDependencyOrder(
 			TaskMonitor monitor) {
 
-		JungDirectedGraph<CompositeDefinition, GEdge<CompositeDefinition>> graph =
-			new JungDirectedGraph<>();
+		GDirectedGraph<CompositeDefinition, GEdge<CompositeDefinition>> graph =
+			GraphFactory.createDirectedGraph();
 		for (CompositeDefinition compositeDefinition : compositeQueue.values()) {
 			graph.addVertex(compositeDefinition);
 			for (PdbMember m : compositeDefinition.memberList) {

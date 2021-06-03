@@ -15,7 +15,7 @@
  */
 package ghidra.app.cmd.data.rtti;
 
-import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.getAbsoluteAddress;
+import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.*;
 
 import ghidra.app.cmd.data.*;
 import ghidra.app.util.datatype.microsoft.DataApplyOptions;
@@ -70,7 +70,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 	@Override
 	protected VfTableModel createModel(Program program) {
 		if (model == null || program != model.getProgram()) {
-			model = new VfTableModel(program, address, validationOptions);
+			model = new VfTableModel(program, getDataAddress(), validationOptions);
 		}
 		return model;
 	}
@@ -105,7 +105,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 			return false;
 		}
 		long displacement = dataType.getLength();
-		Address terminatorAddress = address.add(displacement);
+		Address terminatorAddress = getDataAddress().add(displacement);
 		try {
 			Address referencedAddress = getAbsoluteAddress(program, terminatorAddress);
 			if (referencedAddress == null || referencedAddress.getOffset() != 0) {
@@ -118,7 +118,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 				monitor.checkCanceled();
 				String demangledTypeDescriptor = rtti0Model.getDemangledTypeDescriptor();
 				String prefixString = ((demangledTypeDescriptor != null)
-						? (demangledTypeDescriptor + Namespace.NAMESPACE_DELIMITER)
+						? (demangledTypeDescriptor + Namespace.DELIMITER)
 						: "");
 				data.setComment(CodeUnit.EOL_COMMENT,
 					"terminator for " + prefixString + VF_TABLE_LABEL);
@@ -136,7 +136,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 	private boolean createMetaPointer() {
 
 		Program program = model.getProgram();
-		Address metaAddress = address.subtract(program.getDefaultPointerSize());
+		Address metaAddress = getDataAddress().subtract(program.getDefaultPointerSize());
 
 		// Create a pointer to the RTTI4 associated with the vf table.
 		DataType metaPointer = new PointerDataType(program.getDataTypeManager());
@@ -162,28 +162,30 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 
 	private boolean createVfTableMarkup() throws CancelledException, InvalidDataTypeException {
 
-		Address vfTableAddress = address;
+		Address vfTableAddress = getDataAddress();
 		Program program = model.getProgram();
 
 		monitor.checkCanceled();
 
 		TypeDescriptorModel rtti0Model = model.getRtti0Model();
 
-		if (rtti0Model != null) {
-
-			// Plate Comment
-			EHDataTypeUtilities.createPlateCommentIfNeeded(program,
-				RttiUtil.CONST_PREFIX + RttiUtil.getDescriptorTypeNamespace(rtti0Model) +
-					Namespace.NAMESPACE_DELIMITER,
-				VF_TABLE_LABEL, null, vfTableAddress, applyOptions);
-
-			monitor.checkCanceled();
-
-			// Label
-			if (applyOptions.shouldCreateLabel()) {
-				RttiUtil.createSymbolFromDemangledType(program, vfTableAddress, rtti0Model,
+		if (rtti0Model == null) {
+			return true;
+		}
+		
+		// Label
+		boolean shouldCreateComment = true;
+		if (applyOptions.shouldCreateLabel()) {
+			shouldCreateComment = RttiUtil.createSymbolFromDemangledType(program, vfTableAddress, rtti0Model,
 					VF_TABLE_LABEL);
-			}
+		}
+
+		// Plate Comment
+		if (shouldCreateComment) {
+			// comment created if a label was created, or createLabel option off
+			EHDataTypeUtilities.createPlateCommentIfNeeded(program, RttiUtil.CONST_PREFIX +
+					RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER,
+					VF_TABLE_LABEL, null, vfTableAddress, applyOptions);
 		}
 
 		// Create functions that are referred to by the vf table.
@@ -210,21 +212,26 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 
 		TypeDescriptorModel rtti0Model = model.getRtti0Model();
 
-		if (rtti0Model != null) {
+		if (rtti0Model == null) {
+			return true;
+		}
+		
+		monitor.checkCanceled();
 
-			// Plate Comment
-			EHDataTypeUtilities.createPlateCommentIfNeeded(
-				program, META_LABEL + " pointer for " +
-					RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.NAMESPACE_DELIMITER,
-				VF_TABLE_LABEL, null, metaAddress, applyOptions);
-
-			monitor.checkCanceled();
-
-			// Label
-			if (applyOptions.shouldCreateLabel()) {
-				RttiUtil.createSymbolFromDemangledType(program, metaAddress, rtti0Model,
+		// Label
+		boolean shouldCreateComment = true;
+		if (applyOptions.shouldCreateLabel()) {
+			shouldCreateComment = RttiUtil.createSymbolFromDemangledType(program, metaAddress, rtti0Model,
 					VF_TABLE_LABEL + NAME_SEPARATOR + META_LABEL + "_ptr");
-			}
+		}
+
+		// Plate Comment
+		if (shouldCreateComment) {
+			// comment created if a label was created, or createLabel option off
+			EHDataTypeUtilities.createPlateCommentIfNeeded(
+					program, META_LABEL + " pointer for " +
+						RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER,
+					VF_TABLE_LABEL, null, metaAddress, applyOptions);
 		}
 
 		return true;
@@ -238,7 +245,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 	 * the vftable.
 	 */
 	private Address getMetaAddress(Program program) {
-		return address.subtract(program.getDefaultPointerSize());
+		return getDataAddress().subtract(program.getDefaultPointerSize());
 	}
 
 }

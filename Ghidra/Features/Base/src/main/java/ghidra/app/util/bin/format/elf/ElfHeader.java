@@ -23,6 +23,7 @@ import generic.continues.GenericFactory;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.Writeable;
+import ghidra.app.util.bin.format.elf.ElfRelocationTable.TableFormat;
 import ghidra.app.util.bin.format.elf.extend.ElfExtensionFactory;
 import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.program.model.data.*;
@@ -40,6 +41,8 @@ public class ElfHeader implements StructConverter, Writeable {
 
 	private static final int MAX_HEADERS_TO_CHECK_FOR_IMAGEBASE = 20;
 
+	private static final int PAD_LENGTH = 7;
+
 	private HashMap<Integer, ElfProgramHeaderType> programHeaderTypeMap;
 	private HashMap<Integer, ElfSectionHeaderType> sectionHeaderTypeMap;
 	private HashMap<Integer, ElfDynamicType> dynamicTypeMap;
@@ -52,6 +55,8 @@ public class ElfHeader implements StructConverter, Writeable {
 	private byte e_ident_class; //file class
 	private byte e_ident_data; //data encoding
 	private byte e_ident_version; //file version
+	private byte e_ident_osabi; //operating system and abi
+	private byte e_ident_abiversion; //abi version
 	private byte[] e_ident_pad; //padding
 	private short e_type; //object file type
 	private short e_machine; //target architecture
@@ -136,7 +141,9 @@ public class ElfHeader implements StructConverter, Writeable {
 			e_ident_class = reader.readNextByte();
 			e_ident_data = reader.readNextByte();
 			e_ident_version = reader.readNextByte();
-			e_ident_pad = reader.readNextByteArray(9);
+			e_ident_osabi = reader.readNextByte();
+			e_ident_abiversion = reader.readNextByte();
+			e_ident_pad = reader.readNextByteArray(PAD_LENGTH);
 			e_type = reader.readNextShort();
 			e_machine = reader.readNextShort();
 			e_version = reader.readNextInt();
@@ -346,6 +353,31 @@ public class ElfHeader implements StructConverter, Writeable {
 		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_RELA,
 			ElfDynamicType.DT_RELAENT, ElfDynamicType.DT_RELASZ, true);
 
+		if (dynamicTable != null && dynamicTable.containsDynamicValue(ElfDynamicType.DT_PLTREL)) {
+			try {
+				boolean isRela = (dynamicTable
+						.getDynamicValue(ElfDynamicType.DT_PLTREL) == ElfDynamicType.DT_RELA.value);
+				parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_JMPREL, null,
+					ElfDynamicType.DT_PLTRELSZ, isRela);
+			}
+			catch (NotFoundException e) {
+				// ignore - skip (required dynamic table value is missing)
+			}
+		}
+
+		// Android versions
+		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_ANDROID_REL, null,
+			ElfDynamicType.DT_ANDROID_RELSZ, false);
+
+		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_ANDROID_RELA, null,
+			ElfDynamicType.DT_ANDROID_RELASZ, true);
+
+		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_RELR,
+			ElfDynamicType.DT_RELRENT, ElfDynamicType.DT_RELRSZ, false);
+
+		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_ANDROID_RELR,
+			ElfDynamicType.DT_ANDROID_RELRENT, ElfDynamicType.DT_ANDROID_RELRSZ, false);
+
 		parseJMPRelocTable(relocationTableList);
 
 		// In general the above dynamic relocation tables should cover most cases, we will
@@ -363,7 +395,11 @@ public class ElfHeader implements StructConverter, Writeable {
 		try {
 			int sectionHeaderType = section.getType();
 			if (sectionHeaderType == ElfSectionHeaderConstants.SHT_REL ||
-				sectionHeaderType == ElfSectionHeaderConstants.SHT_RELA) {
+				sectionHeaderType == ElfSectionHeaderConstants.SHT_RELA ||
+				sectionHeaderType == ElfSectionHeaderConstants.SHT_RELR ||
+				sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_REL ||
+				sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA ||
+				sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELR) {
 
 				for (ElfRelocationTable relocTable : relocationTableList) {
 					if (relocTable.getFileOffset() == section.getOffset()) {
@@ -379,11 +415,24 @@ public class ElfHeader implements StructConverter, Writeable {
 					sectionToBeRelocated != null ? sectionToBeRelocated.getNameAsString()
 							: "PT_LOAD";
 
-				ElfSectionHeader symbolTableSection = getLinkedSection(link,
-					ElfSectionHeaderConstants.SHT_DYNSYM, ElfSectionHeaderConstants.SHT_SYMTAB);
-				ElfSymbolTable symbolTable = getSymbolTable(symbolTableSection);
+				ElfSectionHeader symbolTableSection;
+				if (link == 0) {
+					// dynamic symbol table assumed when link section value is 0
+					symbolTableSection = getSection(ElfSectionHeaderConstants.dot_dynsym);
+				}
+				else {
+					symbolTableSection = getLinkedSection(link,
+						ElfSectionHeaderConstants.SHT_DYNSYM, ElfSectionHeaderConstants.SHT_SYMTAB);
+				}
 
-				boolean addendTypeReloc = (sectionHeaderType == ElfSectionHeaderConstants.SHT_RELA);
+				ElfSymbolTable symbolTable = getSymbolTable(symbolTableSection);
+				if (symbolTable == null) {
+					throw new NotFoundException("Referenced relocation symbol section not found.");
+				}
+
+				boolean addendTypeReloc =
+					(sectionHeaderType == ElfSectionHeaderConstants.SHT_RELA ||
+						sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA);
 
 				Msg.debug(this,
 					"Elf relocation table section " + section.getNameAsString() +
@@ -394,9 +443,22 @@ public class ElfHeader implements StructConverter, Writeable {
 					return;
 				}
 
-				relocationTableList.add(ElfRelocationTable.createElfRelocationTable(reader, this,
-					section, section.getOffset(), section.getAddress(), section.getSize(),
-					section.getEntrySize(), addendTypeReloc, symbolTable, sectionToBeRelocated));
+				ElfRelocationTable.TableFormat format = TableFormat.DEFAULT;
+				if (sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_REL ||
+					sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA) {
+					format = TableFormat.ANDROID;
+				}
+				else if (sectionHeaderType == ElfSectionHeaderConstants.SHT_RELR ||
+					sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELR) {
+					format = TableFormat.RELR;
+				}
+
+				ElfRelocationTable relocTable = ElfRelocationTable.createElfRelocationTable(reader,
+					this, section, section.getOffset(), section.getAddress(), section.getSize(),
+					section.getEntrySize(), addendTypeReloc, symbolTable, sectionToBeRelocated,
+					format);
+
+				relocationTableList.add(relocTable);
 			}
 		}
 		catch (NotFoundException e) {
@@ -468,13 +530,24 @@ public class ElfHeader implements StructConverter, Writeable {
 			}
 
 			long relocTableOffset = relocTableLoadHeader.getOffset(relocTableAddr);
-			long tableEntrySize = dynamicTable.getDynamicValue(relocEntrySizeType);
+			long tableEntrySize =
+				relocEntrySizeType != null ? dynamicTable.getDynamicValue(relocEntrySizeType) : -1;
 			long tableSize = dynamicTable.getDynamicValue(relocTableSizeType);
 
-			relocationTableList.add(ElfRelocationTable.createElfRelocationTable(reader, this, null,
-				relocTableOffset, relocTableAddr, tableSize, tableEntrySize, addendTypeReloc,
-				dynamicSymbolTable, null));
+			ElfRelocationTable.TableFormat format = TableFormat.DEFAULT;
+			if (relocTableAddrType == ElfDynamicType.DT_ANDROID_REL ||
+				relocTableAddrType == ElfDynamicType.DT_ANDROID_RELA) {
+				format = TableFormat.ANDROID;
+			}
+			else if (relocTableAddrType == ElfDynamicType.DT_RELR ||
+				relocTableAddrType == ElfDynamicType.DT_ANDROID_RELR) {
+				format = TableFormat.RELR;
+			}
 
+			ElfRelocationTable relocTable = ElfRelocationTable.createElfRelocationTable(reader,
+				this, null, relocTableOffset, relocTableAddr, tableSize, tableEntrySize,
+				addendTypeReloc, dynamicSymbolTable, null, format);
+			relocationTableList.add(relocTable);
 		}
 		catch (NotFoundException e) {
 			// ignore - skip (required dynamic table value is missing)
@@ -585,12 +658,11 @@ public class ElfHeader implements StructConverter, Writeable {
 		}
 
 		ArrayList<ElfStringTable> stringTableList = new ArrayList<>();
-		for (int i = 0; i < sectionHeaders.length; ++i) {
-			if (sectionHeaders[i].getType() == ElfSectionHeaderConstants.SHT_STRTAB) {
-				ElfSectionHeader stringTableSectionHeader = sectionHeaders[i];
+		for (ElfSectionHeader stringTableSectionHeader : sectionHeaders) {
+			if (stringTableSectionHeader.getType() == ElfSectionHeaderConstants.SHT_STRTAB) {
 				ElfStringTable stringTable = ElfStringTable.createElfStringTable(reader, this,
 					stringTableSectionHeader, stringTableSectionHeader.getOffset(),
-					sectionHeaders[i].getAddress(), stringTableSectionHeader.getSize());
+					stringTableSectionHeader.getAddress(), stringTableSectionHeader.getSize());
 				stringTableList.add(stringTable);
 				if (stringTable.getAddressOffset() == dynamicStringTableAddr) {
 					dynamicStringTable = stringTable;
@@ -658,10 +730,9 @@ public class ElfHeader implements StructConverter, Writeable {
 
 		// Add section based symbol tables
 		ArrayList<ElfSymbolTable> symbolTableList = new ArrayList<>();
-		for (int i = 0; i < sectionHeaders.length; ++i) {
-			if (sectionHeaders[i].getType() == ElfSectionHeaderConstants.SHT_SYMTAB ||
-				sectionHeaders[i].getType() == ElfSectionHeaderConstants.SHT_DYNSYM) {
-				ElfSectionHeader symbolTableSectionHeader = sectionHeaders[i];
+		for (ElfSectionHeader symbolTableSectionHeader : sectionHeaders) {
+			if (symbolTableSectionHeader.getType() == ElfSectionHeaderConstants.SHT_SYMTAB ||
+				symbolTableSectionHeader.getType() == ElfSectionHeaderConstants.SHT_DYNSYM) {
 				if (symbolTableSectionHeader.getOffset() < 0) {
 					continue;
 				}
@@ -675,8 +746,8 @@ public class ElfHeader implements StructConverter, Writeable {
 						" linked to string table section " +
 						stringTableSectionHeader.getNameAsString());
 
-				boolean isDyanmic = ElfSectionHeaderConstants.dot_dynsym.equals(
-					symbolTableSectionHeader.getNameAsString());
+				boolean isDyanmic = ElfSectionHeaderConstants.dot_dynsym
+						.equals(symbolTableSectionHeader.getNameAsString());
 
 				ElfSymbolTable symbolTable = ElfSymbolTable.createElfSymbolTable(reader, this,
 					symbolTableSectionHeader, symbolTableSectionHeader.getOffset(),
@@ -851,15 +922,15 @@ public class ElfHeader implements StructConverter, Writeable {
 		// HACK: 07/01/2013 - Added hack for malformed ELF file with only program header sections
 		ElfProgramHeader[] pheaders = getProgramHeaders();
 		long size = 0;
-		for (int i = 0; i < pheaders.length; i++) {
-			size += pheaders[i].getFileSize();
+		for (ElfProgramHeader pheader : pheaders) {
+			size += pheader.getFileSize();
 		}
 		if (size == fileLength) {
 			// adjust program section file offset to be based on relative read offset
 			long relOffset = 0;
-			for (int i = 0; i < pheaders.length; i++) {
-				pheaders[i].setOffset(relOffset);
-				relOffset += pheaders[i].getFileSize();
+			for (ElfProgramHeader pheader : pheaders) {
+				pheader.setOffset(relOffset);
+				relOffset += pheader.getFileSize();
 			}
 		}
 	}
@@ -896,6 +967,16 @@ public class ElfHeader implements StructConverter, Writeable {
 		return e_ident_class == ElfConstants.ELF_CLASS_64;
 	}
 
+	private long getMinBase(long addr, long minBase) {
+		if (is32Bit()) {
+			addr &= Conv.INT_MASK;
+		}
+		if (Long.compareUnsigned(addr, minBase) < 0) {
+			minBase = addr;
+		}
+		return minBase;
+	}
+
 	/**
 	 * Inspect the Elf image and determine the default image base prior 
 	 * to the {@link #parse()} method being invoked (i.e., only the main Elf
@@ -910,10 +991,9 @@ public class ElfHeader implements StructConverter, Writeable {
 		// FIXME! This needs to be consistent with the getImageBase() method
 		// which currently considers prelink. 
 
-		int n = Math.min(e_phnum, MAX_HEADERS_TO_CHECK_FOR_IMAGEBASE);
-
 		long minBase = -1;
 
+		int n = Math.min(e_phnum, MAX_HEADERS_TO_CHECK_FOR_IMAGEBASE);
 		for (int i = 0; i < n; ++i) {
 			long index = e_phoff + (i * e_phentsize);
 			reader.setPointerIndex(index);
@@ -921,14 +1001,7 @@ public class ElfHeader implements StructConverter, Writeable {
 				int headerType = reader.peekNextInt();
 				if (headerType == ElfProgramHeaderConstants.PT_LOAD) {
 					ElfProgramHeader header = ElfProgramHeader.createElfProgramHeader(reader, this);
-					long addr = header.getVirtualAddress();
-					// TODO: not sure why we need to mask value
-					if (is32Bit()) {
-						addr &= Conv.INT_MASK;
-					}
-					if (Long.compareUnsigned(addr, minBase) < 0) {
-						minBase = addr;
-					}
+					minBase = getMinBase(header.getVirtualAddress(), minBase);
 				}
 			}
 			catch (IOException e) {
@@ -962,15 +1035,9 @@ public class ElfHeader implements StructConverter, Writeable {
 			int n = Math.min(programHeaders.length, MAX_HEADERS_TO_CHECK_FOR_IMAGEBASE);
 			long minBase = -1;
 			for (int i = 0; i < n; i++) {
+				ElfProgramHeader header = programHeaders[i];
 				if (programHeaders[i].getType() == ElfProgramHeaderConstants.PT_LOAD) {
-					long addr = programHeaders[i].getVirtualAddress();
-					// TODO: not sure why we need to mask value
-					if (is32Bit()) {
-						addr &= Conv.INT_MASK;
-					}
-					if (Long.compareUnsigned(addr, minBase) < 0) {
-						minBase = addr;
-					}
+					minBase = getMinBase(header.getVirtualAddress(), minBase);
 				}
 			}
 			elfImageBase = (minBase == -1 ? 0 : minBase);
@@ -1128,6 +1195,22 @@ public class ElfHeader implements StructConverter, Writeable {
 	}
 
 	/**
+	 * This member identifies the target operating system and ABI.
+	 * @return the target operating system and ABI
+	 */
+	public byte e_ident_osabi() {
+		return e_ident_osabi;
+	}
+
+	/**
+	 * This member identifies the target ABI version.
+	 * @return the target ABI version
+	 */
+	public byte e_ident_abiversion() {
+		return e_ident_abiversion;
+	}
+
+	/**
 	 * This member holds the size in bytes of one entry in the file's program header table;
 	 * all entries are the same size.
 	 * @return the size in bytes of one program header table entry 
@@ -1261,9 +1344,9 @@ public class ElfHeader implements StructConverter, Writeable {
 	 */
 	public ElfSectionHeader[] getSections(int type) {
 		ArrayList<ElfSectionHeader> list = new ArrayList<>();
-		for (int i = 0; i < sectionHeaders.length; i++) {
-			if (sectionHeaders[i].getType() == type) {
-				list.add(sectionHeaders[i]);
+		for (ElfSectionHeader sectionHeader : sectionHeaders) {
+			if (sectionHeader.getType() == type) {
+				list.add(sectionHeader);
 			}
 		}
 		ElfSectionHeader[] sections = new ElfSectionHeader[list.size()];
@@ -1279,15 +1362,17 @@ public class ElfHeader implements StructConverter, Writeable {
 	 */
 	public ElfSectionHeader getSection(String name) {
 		List<ElfSectionHeader> list = new ArrayList<>();
-		for (int i = 0; i < sectionHeaders.length; i++) {
-			if (name != null && name.equals(sectionHeaders[i].getNameAsString())) {
-				list.add(sectionHeaders[i]);
+		for (ElfSectionHeader sectionHeader : sectionHeaders) {
+			if (name != null && name.equals(sectionHeader.getNameAsString())) {
+				list.add(sectionHeader);
 			}
 		}
-		if (list.size() == 0)
+		if (list.size() == 0) {
 			return null;
-		if (list.size() > 1)
+		}
+		if (list.size() > 1) {
 			throw new RuntimeException(">1 section with name of " + name);
+		}
 		return list.get(0);
 	}
 
@@ -1298,9 +1383,9 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return the section header with the specified address
 	 */
 	public ElfSectionHeader getSectionAt(long address) {
-		for (int i = 0; i < sectionHeaders.length; i++) {
-			if (sectionHeaders[i].getAddress() == address) {
-				return sectionHeaders[i];
+		for (ElfSectionHeader sectionHeader : sectionHeaders) {
+			if (sectionHeader.getAddress() == address) {
+				return sectionHeader;
 			}
 		}
 		return null;
@@ -1314,14 +1399,14 @@ public class ElfHeader implements StructConverter, Writeable {
 	 */
 	public ElfSectionHeader getSectionLoadHeaderContaining(long address) {
 // FIXME: verify 
-		for (int i = 0; i < sectionHeaders.length; i++) {
-			if (!sectionHeaders[i].isAlloc()) {
+		for (ElfSectionHeader sectionHeader : sectionHeaders) {
+			if (!sectionHeader.isAlloc()) {
 				continue;
 			}
-			long start = sectionHeaders[i].getAddress();
-			long end = start + sectionHeaders[i].getSize();
+			long start = sectionHeader.getAddress();
+			long end = start + sectionHeader.getSize();
 			if (start <= address && address <= end) {
-				return sectionHeaders[i];
+				return sectionHeader;
 			}
 		}
 		return null;
@@ -1386,9 +1471,9 @@ public class ElfHeader implements StructConverter, Writeable {
 	 */
 	public ElfProgramHeader[] getProgramHeaders(int type) {
 		ArrayList<ElfProgramHeader> list = new ArrayList<>();
-		for (int i = 0; i < programHeaders.length; i++) {
-			if (programHeaders[i].getType() == type) {
-				list.add(programHeaders[i]);
+		for (ElfProgramHeader programHeader : programHeaders) {
+			if (programHeader.getType() == type) {
+				list.add(programHeader);
 			}
 		}
 		ElfProgramHeader[] arr = new ElfProgramHeader[list.size()];
@@ -1426,9 +1511,9 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return the program header with the specified address
 	 */
 	public ElfProgramHeader getProgramHeaderAt(long virtualAddr) {
-		for (int i = 0; i < programHeaders.length; i++) {
-			if (programHeaders[i].getVirtualAddress() == virtualAddr) {
-				return programHeaders[i];
+		for (ElfProgramHeader programHeader : programHeaders) {
+			if (programHeader.getVirtualAddress() == virtualAddr) {
+				return programHeader;
 			}
 		}
 		return null;
@@ -1441,15 +1526,15 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return the program header with the specified address
 	 */
 	public ElfProgramHeader getProgramLoadHeaderContaining(long virtualAddr) {
-		for (int i = 0; i < programHeaders.length; i++) {
-			if (programHeaders[i] == null ||
-				programHeaders[i].getType() != ElfProgramHeaderConstants.PT_LOAD) {
+		for (ElfProgramHeader programHeader : programHeaders) {
+			if (programHeader == null ||
+				programHeader.getType() != ElfProgramHeaderConstants.PT_LOAD) {
 				continue;
 			}
-			long start = programHeaders[i].getVirtualAddress();
-			long end = programHeaders[i].getAdjustedMemorySize() - 1 + start;
+			long start = programHeader.getVirtualAddress();
+			long end = programHeader.getAdjustedMemorySize() - 1 + start;
 			if (virtualAddr >= start && virtualAddr <= end) {
-				return programHeaders[i];
+				return programHeader;
 			}
 		}
 		return null;
@@ -1462,15 +1547,15 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return the program header with the specified file offset
 	 */
 	public ElfProgramHeader getProgramLoadHeaderContainingFileOffset(long offset) {
-		for (int i = 0; i < programHeaders.length; i++) {
-			if (programHeaders[i] == null ||
-				programHeaders[i].getType() != ElfProgramHeaderConstants.PT_LOAD) {
+		for (ElfProgramHeader programHeader : programHeaders) {
+			if (programHeader == null ||
+				programHeader.getType() != ElfProgramHeaderConstants.PT_LOAD) {
 				continue;
 			}
-			long start = programHeaders[i].getOffset();
-			long end = start + (programHeaders[i].getFileSize() - 1);
+			long start = programHeader.getOffset();
+			long end = start + (programHeader.getFileSize() - 1);
 			if (offset >= start && offset <= end) {
-				return programHeaders[i];
+				return programHeader;
 			}
 		}
 		return null;
@@ -1506,9 +1591,9 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return the string table associated to the specified section header
 	 */
 	public ElfStringTable getStringTable(ElfSectionHeader section) {
-		for (int i = 0; i < stringTables.length; i++) {
-			if (stringTables[i].getFileOffset() == section.getOffset()) {
-				return stringTables[i];
+		for (ElfStringTable stringTable : stringTables) {
+			if (stringTable.getFileOffset() == section.getOffset()) {
+				return stringTable;
 			}
 		}
 		return null;
@@ -1536,9 +1621,12 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return the symbol table associated to the specified section header
 	 */
 	public ElfSymbolTable getSymbolTable(ElfSectionHeader symbolTableSection) {
-		for (int i = 0; i < symbolTables.length; i++) {
-			if (symbolTables[i].getFileOffset() == symbolTableSection.getOffset()) {
-				return symbolTables[i];
+		if (symbolTableSection == null) {
+			return null;
+		}
+		for (ElfSymbolTable symbolTable : symbolTables) {
+			if (symbolTable.getFileOffset() == symbolTableSection.getOffset()) {
+				return symbolTable;
 			}
 		}
 		return null;
@@ -1569,9 +1657,9 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return the relocation table located at the specified fileOffset or null
 	 */
 	public ElfRelocationTable getRelocationTableAtOffset(long fileOffset) {
-		for (int i = 0; i < relocationTables.length; i++) {
-			if (relocationTables[i].getFileOffset() == fileOffset) {
-				return relocationTables[i];
+		for (ElfRelocationTable relocationTable : relocationTables) {
+			if (relocationTable.getFileOffset() == fileOffset) {
+				return relocationTable;
 			}
 		}
 		return null;
@@ -1609,7 +1697,9 @@ public class ElfHeader implements StructConverter, Writeable {
 		headerStructure.add(BYTE, "e_ident_class", null);
 		headerStructure.add(BYTE, "e_ident_data", null);
 		headerStructure.add(BYTE, "e_ident_version", null);
-		headerStructure.add(new ArrayDataType(BYTE, e_ident_pad.length, 1), "e_ident_pad", null);
+		headerStructure.add(BYTE, "e_ident_osabi", null);
+		headerStructure.add(BYTE, "e_ident_abiversion", null);
+		headerStructure.add(new ArrayDataType(BYTE, PAD_LENGTH, 1), "e_ident_pad", null);
 		headerStructure.add(WORD, "e_type", null);
 		headerStructure.add(WORD, "e_machine", null);
 		headerStructure.add(DWORD, "e_version", null);
@@ -1641,7 +1731,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return e_entry component ordinal 
 	 */
 	public int getEntryComponentOrdinal() {
-		return 9;
+		return 11;
 	}
 
 	/**
@@ -1650,7 +1740,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return e_phoff component ordinal 
 	 */
 	public int getPhoffComponentOrdinal() {
-		return 10;
+		return 12;
 	}
 
 	/**
@@ -1659,7 +1749,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return e_shoff component ordinal 
 	 */
 	public int getShoffComponentOrdinal() {
-		return 11;
+		return 13;
 	}
 
 	private void addSection(ElfSectionHeader newSection) {
@@ -1772,6 +1862,8 @@ public class ElfHeader implements StructConverter, Writeable {
 		raf.writeByte(e_ident_class);
 		raf.writeByte(e_ident_data);
 		raf.writeByte(e_ident_version);
+		raf.writeByte(e_ident_osabi);
+		raf.writeByte(e_ident_abiversion);
 		raf.write(e_ident_pad);
 		raf.write(dc.getBytes(e_type));
 		raf.write(dc.getBytes(e_machine));

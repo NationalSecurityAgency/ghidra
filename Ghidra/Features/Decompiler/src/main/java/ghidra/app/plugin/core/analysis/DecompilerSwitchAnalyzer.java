@@ -162,7 +162,7 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 		callback.setTimeout(decompilerTimeoutSecondsOption);
 
 		try {
-			ParallelDecompiler.decompileFunctions(callback, program, functions, monitor);
+			ParallelDecompiler.decompileFunctions(callback, functions, monitor);
 		}
 		finally {
 			callback.dispose();

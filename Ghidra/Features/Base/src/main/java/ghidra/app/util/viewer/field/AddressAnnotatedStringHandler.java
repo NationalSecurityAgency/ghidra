@@ -36,9 +36,6 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 		+ "string";
 	private static final String[] SUPPORTED_ANNOTATIONS = { "address", "addr" };
 
-	/**
-	 * @see AnnotatedStringHandler#createAnnotatedString(AttributedString, String[], ServiceProvider)
-	 */
 	@Override
 	public AttributedString createAnnotatedString(AttributedString prototypeString, String[] text,
 			Program program) throws AnnotationException {
@@ -81,18 +78,12 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 		return new AttributedString(buffer.toString(), Color.LIGHT_GRAY,
 			prototypeString.getFontMetrics(0));
 	}
-
-	/**
-	 * @see ghidra.app.util.viewer.field.AnnotatedStringHandler#getSupportedAnnotations()
-	 */
 	@Override
 	public String[] getSupportedAnnotations() {
 		return SUPPORTED_ANNOTATIONS;
 	}
 
-	/**
-	 * @see AnnotatedStringHandler#handleMouseClick(String[], Navigatable, ServiceProvider)
-	 */
+	@Override
 	public boolean handleMouseClick(String[] annotationParts, Navigatable sourceNavigatable,
 			ServiceProvider serviceProvider) {
 		GoToService goToService = serviceProvider.getService(GoToService.class);
@@ -109,17 +100,11 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.AnnotatedStringHandler#getDisplayString()
-	 */
 	@Override
 	public String getDisplayString() {
 		return "Address";
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.AnnotatedStringHandler#getPrototypeString()
-	 */
 	@Override
 	public String getPrototypeString() {
 		return "{@address 0x00}";

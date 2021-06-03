@@ -196,7 +196,7 @@ public class GTableHeader extends JTableHeader {
 
 		int realIndex = gTable.convertColumnIndexToModel(columnIndex);
 
-		String columnFilterToolTip = getColumnFilterToolTip(model, columnIndex);
+		String columnFilterToolTip = getColumnFilterToolTip(model, realIndex);
 		VariableColumnTableModel variableModel = VariableColumnTableModel.from(model);
 		if (variableModel != null) {
 			String description = variableModel.getColumnDescription(realIndex);
