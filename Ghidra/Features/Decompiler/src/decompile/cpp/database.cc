@@ -1969,6 +1969,12 @@ void ScopeInternal::clearUnlocked(void)
       if (sym->isSizeTypeLocked())
 	resetSizeLockType(sym);
     }
+    else if (sym->getCategory() == 1) {
+      // Note we treat EquateSymbols as locked for purposes of this method
+      // as a typelock (which traditionally prevents a symbol from being cleared)
+      // does not make sense for an equate
+      continue;
+    }
     else
       removeSymbol(sym);
   }
