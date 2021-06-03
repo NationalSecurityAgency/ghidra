@@ -25,10 +25,16 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.Timer;
 
+import docking.widgets.shapes.*;
 import generic.util.WindowUtilities;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.bean.GGlassPanePainter;
 
+/**
+ * A generic window intended to be used as a temporary window to show information.  This window is
+ * designed to stay open as long as the user mouses over the window.   Once the user mouses away,
+ * the window will be closed. 
+ */
 public class PopupWindow {
 	private static final int X_PADDING = 25;
 	private static final int Y_PADDING = 25;
@@ -302,15 +308,12 @@ public class PopupWindow {
 //		painters.add(painter);
 	}
 
-	// for debug
-//	private static List<GGlassPanePainter> painters = new ArrayList<>();
-
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
 
 	// for debug
-	//private static List<GGlassPanePainter> painters = new ArrayList<>();
+//	private static List<GGlassPanePainter> painters = new ArrayList<>();
 
 	/** Paints shapes used by this class (useful for debugging) */
 	@SuppressWarnings("unused")

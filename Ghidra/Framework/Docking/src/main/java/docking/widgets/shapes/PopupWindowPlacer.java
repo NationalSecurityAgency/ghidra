@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.widgets;
+package docking.widgets.shapes;
 
 import java.awt.*;
 
@@ -134,6 +134,8 @@ import ghidra.util.exception.AssertException;
  * This last placer, when chosen, serves as an assert condition, which is helpful
  * in circumstances where the developer believes such an assertion is not possible,
  * such as when allowing an overlapping placement solution.
+ * 
+ * @see PopupWindowPlacerBuilder
  */
 public abstract class PopupWindowPlacer {
 
@@ -144,10 +146,10 @@ public abstract class PopupWindowPlacer {
 	private PopupWindowPlacer next = null;
 
 	/**
-	 * Constructor only for classes that do you use Preferences
+	 * Constructor only for classes that do not use placement preferences
 	 */
 	public PopupWindowPlacer() {
-		// Only for implementations that do not use Preferences
+		// Only for implementations that do not use placement preferences
 	}
 
 	/**
@@ -156,6 +158,8 @@ public abstract class PopupWindowPlacer {
 	 * @param major edge
 	 * @param minorBegin start location on edge
 	 * @param minorEnd end location on edge
+	 * 
+	 * @see PopupWindowPlacerBuilder
 	 */
 	public PopupWindowPlacer(Location major, Location minorBegin, Location minorEnd) {
 		if (major == Location.CENTER) {
@@ -263,7 +267,7 @@ public abstract class PopupWindowPlacer {
 	 * and the minor axis being vertical; the major axis being vertical, and the minor axis being
 	 * horizontal.  These two situations are independent, but the same algorithm is used.
 	 * <p>
-	 * <B>Algorithm Design...</B><p>
+	 * <B>Algorithm Design</B><p>
 	 * Note: smaller values are up and bigger values are down, in the presentation below.
 	 * <p>
 	 * In trying to allay some confusion (yes it can be confusing), note that for any given major
@@ -283,7 +287,7 @@ public abstract class PopupWindowPlacer {
 	 * Keeping with the original right edge scenario begun above, we are trying to find a minor
 	 * axis placement on the right (major) edge.  For this placement, one can refer to
 	 * documentation elsewhere in this class, but essentially, we are trying to place a popup
-	 * area against a context rectangle without exceeded the outer bounds (screen) rectangle.  But,
+	 * area against a context rectangle without exceeding the outer bounds (screen) rectangle.  But,
 	 * again, we are only considering the placement against the right edge already chosen and only
 	 * trying to fit in the vertical dimension against this edge.  Thus, this algorithm only needs
 	 * values for this one dimension.  These are the length of the placement area in this one
@@ -348,7 +352,7 @@ public abstract class PopupWindowPlacer {
 	 *             else
 	 *                 no solution
 	 * </pre>
-	 * ... or...
+	 *  or
 	 * <pre>
 	 *         <B>lesserLocation</B>
 	 *             <B>&rarr;</B> <B>lesserBoundedLocation</B> (&ge; <B>lesserLocation</B>)
@@ -369,7 +373,7 @@ public abstract class PopupWindowPlacer {
 	 *         else
 	 *             solution is centerLocation
 	 * </pre>
-	 * ... or...
+	 *  or
 	 * <pre>
 	 *         <B>lesserLocation</B>
 	 *         <B>centerLocation</B>

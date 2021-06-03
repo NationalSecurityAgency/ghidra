@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.widgets;
+package docking.widgets.shapes;
 
-import docking.widgets.PopupWindowPlacer.*;
+import docking.widgets.shapes.PopupWindowPlacer.*;
 
 /**
  * This class builds a PopWindowPlacer that can have subsequent PopWindowPlacers.
@@ -24,7 +24,11 @@ import docking.widgets.PopupWindowPlacer.*;
  * placers, and a clean-up <B>assert</B> placer.  Additionally, there are <B>rotational</B> placers
  * that are composed of edge placers.
  * <p>
- * <B>EDGE PLACERS</B>
+ * <BR>
+ * <BR> 
+ * 
+ * <H1>Edge Placers</H1>
+ *  
  * <p>
  * The <B>edge</B> placers are the leftEdge, rightEdge, topEdge, and bottomEdge methods that take
  * Location arguments that one can think of as "cells" for optimal placement, but which have some
@@ -38,7 +42,10 @@ import docking.widgets.PopupWindowPlacer.*;
  * same way for each method, though some arguments are not valid for some edges; for instance,
  * <code>Location.TOP</code> is only valid for left and right edges.
  * <p>
- * <B>Two or More Location Arguments</B><p>
+ * 
+ * <H2>Two or More Location Arguments</H2>
+ * 
+ * <p>
  * When two or more arguments are used, the first argument specifies the nominal placement cell
  * and the second argument specifies how far the solution is allowed to shift.  If a solution is
  * not found and if there are more than two arguments, another placement attempt is made where
@@ -46,7 +53,10 @@ import docking.widgets.PopupWindowPlacer.*;
  * far the solution is allowed to shift. To specify a "no-shift" solution, one specifies the same
  * placement cell twice (e.g., <code>rightEdge(Location.TOP, Location.TOP)</code>).
  * <p>
- * <B>One Location Argument</B><p>
+ * 
+ * <H2>One Location Argument</H2>
+ * 
+ * <p>
  * When one argument is used, the solution is the same as when two arguments are specified except
  * that the second argument is automatically set to the nearest neighboring cell.  Thus,
  * <code>rightEdge(Location.TOP)</code> is the same as
@@ -54,11 +64,17 @@ import docking.widgets.PopupWindowPlacer.*;
  * <code>Location.CENTER</code>, two attempts are built, the first being the BOTTOM or RIGHT cell
  * and the second being the TOP or LEFT cell.
  * <p>
- * <B>No Arguments</B><p>
+ * 
+ * <H2>No Arguments</H2>
+ * 
+ * <p>
  * When no arguments are specified, two arguments to the underlying placer are automatically set
  * to BOTTOM or RIGHT for the first and TOP or LEFT for the second.
  * <p>
- * <B>Examples</B><p>
+ * 
+ * <H2>Examples</H2>
+ * 
+ * <p>
  * Builds a placer that first attempts a placement at the bottom of the right edge with no
  * shift, then tries the top of the right edge with no shift, then top center with no shift:
  * <pre>
@@ -77,7 +93,11 @@ import docking.widgets.PopupWindowPlacer.*;
  *            .topEdge(Location.CENTER);
  *            .build();</pre>
  * <p>
- * <B>ROTATIONAL PLACERS</B>
+ * <BR>
+ * <BR>
+ * 
+ * <H1>Rotational Placers</H1>
+ * 
  * <p>
  * There are clockwise and counter-clockwise rotational placers that built up from edge placers.
  * These are:
@@ -96,7 +116,11 @@ import docking.widgets.PopupWindowPlacer.*;
  * except that they start at the "beginning" cell where the most previous placer had left off.  If
  * there was not a previous placer, then the BOTTOM RIGHT cell is chosen as the starting cell.
  * <p>
- * <B>OVERLAPPING CORNER PLACER</B>
+ * <BR>
+ * <BR>
+ * 
+ * <H1>Overlapping Corner Placer</H1>
+ * 
  * <p>
  * There is one corner placer, <code>leastOverlapCorner()</code>.  This placer tries to make a
  * placement at each of the corners of the context area and shifts into the context region as much
@@ -106,7 +130,11 @@ import docking.widgets.PopupWindowPlacer.*;
  * top left.  Unless ill-constructed (sized of context area, screen, and pop-up dimension), this
  * placer should always find a solution.
  * <p>
- * <B>ASSERT PLACER</B>
+ * <BR>
+ * <BR>
+ * 
+ * <H1>Assert Placer</H1>
+ * 
  * <p>
  * The <code>throwsAssertException()</code> placer is available, which automatically throws an
  * AssertException.  This placer is only intended to be used by the client in such as case when
@@ -114,7 +142,12 @@ import docking.widgets.PopupWindowPlacer.*;
  * <code>leastOverlapCorner()</code> placer.  This just throws an exception instead of returning
  * the <code>null</code> return value that would be returned from previous placement attempts.
  * <p>
- * <B>COMPOSITE EXAMPLES</B><p>
+ * <BR>
+ * <BR>
+ * 
+ * <H1>Composite Placer</H1>
+ * 
+ * <p>
  * Builds a placer that first attempts a placement at the right edge from bottom to top, then
  * left edge from bottom to top, then top edge from right to left, then bottom edge from right to
  * left, followed by a least-overlap-corner solution, followed by a failure assert:
