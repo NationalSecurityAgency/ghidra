@@ -162,7 +162,9 @@ public class VisualGraphView<V extends VisualVertex,
 	 * Called when the options used by this graph view have changed
 	 */
 	public void optionsChanged() {
-		graphComponent.optionsChanged();
+		if (graphComponent != null) { // will be null after being closed
+			graphComponent.optionsChanged();
+		}
 	}
 
 	/**
