@@ -15,6 +15,7 @@
  */
 package ghidra.program.util;
 
+import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
@@ -62,7 +63,11 @@ public class FunctionMerge {
 					originEntryPoint, expectedToNamespace);
 				if (existingSymbol != null) {
 					if (!existingSymbol.isPrimary()) {
-						existingSymbol.setPrimary();
+						SetLabelPrimaryCmd cmd =
+							new SetLabelPrimaryCmd(originEntryPoint, fromName, expectedToNamespace);
+						if (cmd.applyTo(toProgram)) {
+							existingSymbol = cmd.getSymbol();
+						}
 					}
 					return existingSymbol;
 				}
@@ -86,15 +91,9 @@ public class FunctionMerge {
 					fromNamespace, conflictSymbolIDMap);
 			}
 
-			// Move it to the new namespace.
-			if (currentToNamespace != desiredToNamespace) {
-				toFunction.setParentNamespace(desiredToNamespace);
-			}
-
-			// Rename the function so that we will be able to move it.
-			boolean hasDifferentName = !fromName.equals(toName);
-			if (hasDifferentName) {
-				toFunction.setName(fromName, fromSource);
+			if (fromSource != toSource || !fromName.equals(toName) ||
+				currentToNamespace != desiredToNamespace) {
+				toSymbol.setNameAndNamespace(fromName, desiredToNamespace, fromSource);
 			}
 
 			// TODO May want to save the symbol info if the function didn't get desired pathname. // FIXME
@@ -127,7 +126,11 @@ public class FunctionMerge {
 					toProgram.getSymbolTable().getSymbol(fromName, entryPoint, expectedToNamespace);
 				if (existingSymbol != null) {
 					if (!existingSymbol.isPrimary()) {
-						existingSymbol.setPrimary();
+						SetLabelPrimaryCmd cmd =
+							new SetLabelPrimaryCmd(entryPoint, fromName, expectedToNamespace);
+						if (cmd.applyTo(toProgram)) {
+							existingSymbol = cmd.getSymbol();
+						}
 					}
 					return existingSymbol;
 				}
@@ -151,15 +154,9 @@ public class FunctionMerge {
 					fromNamespace, conflictSymbolIDMap);
 			}
 
-			// Move it to the new namespace.
-			if (currentToNamespace != desiredToNamespace) {
-				toFunction.setParentNamespace(desiredToNamespace);
-			}
-
-			// Rename the function so that we will be able to move it.
-			boolean hasDifferentName = !fromName.equals(toName);
-			if (hasDifferentName) {
-				toFunction.setName(fromName, fromSource);
+			if (fromSource != toSource || !fromName.equals(toName) ||
+				currentToNamespace != desiredToNamespace) {
+				toSymbol.setNameAndNamespace(fromName, desiredToNamespace, fromSource);
 			}
 
 			// TODO May want to save the symbol info if the function didn't get desired pathname. // FIXME
