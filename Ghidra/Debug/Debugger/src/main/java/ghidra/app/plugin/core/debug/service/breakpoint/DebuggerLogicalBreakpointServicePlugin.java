@@ -52,27 +52,26 @@ import ghidra.util.Swing;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
 
-@PluginInfo( //
-	shortDescription = "Debugger logical breakpoints service plugin", //
-	description = "Aggregates breakpoints from open programs and live traces", //
-	category = PluginCategoryNames.DEBUGGER, //
-	packageName = DebuggerPluginPackage.NAME, //
-	status = PluginStatus.RELEASED, //
-	eventsConsumed = { //
-		ProgramOpenedPluginEvent.class, //
-		ProgramClosedPluginEvent.class, //
-		TraceOpenedPluginEvent.class, //
-		TraceClosedPluginEvent.class, //
-	}, //
-	servicesRequired = { //
-		DebuggerTraceManagerService.class, //
-		DebuggerModelService.class, //
-		DebuggerStaticMappingService.class, //
-	}, //
-	servicesProvided = { //
-		DebuggerLogicalBreakpointService.class, //
-	} //
-)
+@PluginInfo(
+	shortDescription = "Debugger logical breakpoints service plugin",
+	description = "Aggregates breakpoints from open programs and live traces",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
+		ProgramOpenedPluginEvent.class,
+		ProgramClosedPluginEvent.class,
+		TraceOpenedPluginEvent.class,
+		TraceClosedPluginEvent.class,
+	},
+	servicesRequired = {
+		DebuggerTraceManagerService.class,
+		DebuggerModelService.class,
+		DebuggerStaticMappingService.class,
+	},
+	servicesProvided = {
+		DebuggerLogicalBreakpointService.class,
+	})
 public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		implements DebuggerLogicalBreakpointService {
 
@@ -154,8 +153,9 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 	protected class TrackMappingsListener implements DebuggerStaticMappingChangeListener {
 		@Override
 		public void mappingsChanged(Set<Trace> affectedTraces, Set<Program> affectedPrograms) {
-			Msg.debug(this, "Mappings changed: " + affectedTraces + "," + affectedPrograms);
+			// Msg.debug(this, "Mappings changed: " + affectedTraces + "," + affectedPrograms);
 			synchronized (lock) {
+				// Msg.debug(this, "Processing map change");
 				Set<Trace> additionalTraces = new HashSet<>(affectedTraces);
 				Set<Program> additionalPrograms = new HashSet<>(affectedPrograms);
 				try (RemoveCollector r = new RemoveCollector(changeListeners.fire)) {
@@ -209,20 +209,21 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		private void objectRestored() {
-			Msg.debug(this, "Restored: " + info.trace);
+			// Msg.debug(this, "Restored: " + info.trace);
 			synchronized (lock) {
 				info.reloadBreakpoints();
 			}
 		}
 
 		private void breakpointAdded(TraceBreakpoint breakpoint) {
-			Msg.debug(this, "Breakpoint added: " + breakpoint);
+			// Msg.debug(this, "Breakpoint added: " + breakpoint);
 			if (!breakpoint.getLifespan().contains(info.recorder.getSnap())) {
 				// NOTE: User/script probably added historical breakpoint
 				return;
 			}
 			try (AddCollector c = new AddCollector(changeListeners.fire)) {
 				synchronized (lock) {
+					// Msg.debug(this, "Processing breakpoint add");
 					info.trackTraceBreakpoint(breakpoint, c, false);
 				}
 			}
@@ -241,7 +242,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 
 		private void breakpointLifespanChanged(TraceAddressSpace spaceIsNull,
 				TraceBreakpoint breakpoint, Range<Long> oldSpan, Range<Long> newSpan) {
-			Msg.debug(this, "Breakpoint span: " + breakpoint);
+			// Msg.debug(this, "Breakpoint span: " + breakpoint);
 			// NOTE: User/script probably modified historical breakpoint
 			boolean isInOld = oldSpan.contains(info.recorder.getSnap());
 			boolean isInNew = newSpan.contains(info.recorder.getSnap());
@@ -265,7 +266,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		private void breakpointDeleted(TraceBreakpoint breakpoint) {
-			Msg.debug(this, "Breakpoint deleted: " + breakpoint);
+			// Msg.debug(this, "Breakpoint deleted: " + breakpoint);
 			if (!breakpoint.getLifespan().contains(info.recorder.getSnap())) {
 				// NOTE: User/script probably removed historical breakpoint
 				assert false;
@@ -295,7 +296,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		private void objectRestored() {
-			Msg.debug(this, "Restored: " + info.program);
+			// Msg.debug(this, "Restored: " + info.program);
 			synchronized (lock) {
 				info.reloadBreakpoints();
 				// NOTE: logical breakpoints should know which traces are affected
@@ -315,8 +316,10 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		private void breakpointBookmarkAdded(Bookmark bookmark) {
+			// Msg.debug(this, "Breakpoint bookmark added: " + bookmark);
 			try (AddCollector c = new AddCollector(changeListeners.fire)) {
 				synchronized (lock) {
+					// Msg.debug(this, "Processing breakpoint bookmark add");
 					info.trackProgramBreakpoint(bookmark, c);
 				}
 			}
@@ -821,7 +824,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 	}
 
 	private void programOpened(Program program) {
-		Msg.debug(this, "Opened Program: " + program);
+		// Msg.debug(this, "Opened Program: " + program);
 		synchronized (lock) {
 			if (program instanceof TraceProgramView) {
 				// TODO: Not a good idea for user/script, but not prohibited

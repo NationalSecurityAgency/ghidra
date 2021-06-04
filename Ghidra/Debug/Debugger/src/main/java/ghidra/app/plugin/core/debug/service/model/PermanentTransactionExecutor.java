@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.service.model;
 
 import java.util.HashMap;
 import java.util.concurrent.*;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 
@@ -73,5 +74,13 @@ public class PermanentTransactionExecutor {
 			Msg.error(this, "Trouble recording " + description, e);
 			return null;
 		});
+	}
+
+	public CompletableFuture<Void> flush() {
+		Runnable nop = () -> {
+		};
+		return CompletableFuture.allOf(Stream.of(threads)
+				.map(t -> CompletableFuture.runAsync(nop, t))
+				.toArray(CompletableFuture[]::new));
 	}
 }

@@ -51,7 +51,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 
 	@Override
 	public String toString() {
-		return String.format("<MappedLogicalBreakpoint prog=%s, traces=%s>", progBreak,
+		return String.format("<%s prog=%s, traces=%s>", getClass().getSimpleName(), progBreak,
 			traceBreaks.values());
 	}
 
