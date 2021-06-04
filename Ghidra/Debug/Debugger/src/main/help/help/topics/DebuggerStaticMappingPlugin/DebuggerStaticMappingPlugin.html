@@ -28,7 +28,7 @@
     automation, e.g., the <A href="help/topics/DebuggerBots/DebuggerBots.html#map_modules">Map
     Modules</A> bot, or by higher-level user actions, e.g., the <A href=
     "help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html#map_modules">Map Modules</A>
-    action. This under-the-hood static mapping window dislays the mappings table, allowing users or
+    action. This under-the-hood static mapping window displays the mappings table, allowing users or
     developers to diagnose image mapping issues and manually add mappings, regardless of reported
     modules and/or sections. For most users, there is no reason to access this window.</P>
 
@@ -63,10 +63,11 @@
 
     <H3><A name="add"></A>Add Mapping</H3>
 
-    <P>This action is available when one primary listing (dynamic or static) has a selection, and
-    the other's cursor is at a valid location. It will add a mapping, using the selection's size
-    and minimum address, and the cursor as the corresponding minimum address. The lifespan given is
-    "from now on out", i.e., the current time to infinity.</P>
+    <P>This action is always available. It presents a dialog to manually add a mapping. When one
+    primary listing (dynamic or static) has a selection, and the other's cursor is at a valid
+    location, it will populate the dialog, using the selection's size and minimum address, and the
+    cursor as the corresponding minimum address. The default lifespan is "from now on out", i.e.,
+    the current snap to infinity.</P>
 
     <H3><A name="remove"></A>Remove Mapping</H3>
 
