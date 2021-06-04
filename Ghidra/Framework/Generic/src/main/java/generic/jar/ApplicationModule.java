@@ -65,6 +65,10 @@ public class ApplicationModule implements Comparable<ApplicationModule> {
 		return moduleDir.getParentFile().getName().equalsIgnoreCase("Framework");
 	}
 
+	public boolean isDebug() {
+		return moduleDir.getParentFile().getName().equalsIgnoreCase("Debug");
+	}
+
 	public boolean isProcessor() {
 		return moduleDir.getParentFile().getName().equalsIgnoreCase("Processors");
 	}
