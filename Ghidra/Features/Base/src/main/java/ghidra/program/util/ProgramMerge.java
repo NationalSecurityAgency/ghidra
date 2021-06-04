@@ -2836,7 +2836,9 @@ public class ProgramMerge implements PropertyVisitor {
 			return resultFunction;
 		}
 
+		boolean isDefaultThunk = false;
 		if (originFunction.isThunk()) {
+			isDefaultThunk = originFunction.getSymbol().getSource() == SourceType.DEFAULT;
 			Function thunkedFunction = originFunction.getThunkedFunction(false);
 			Address thunkedEntryPoint = thunkedFunction.getEntryPoint();
 			Address resultThunkedEntryPoint =
@@ -2869,15 +2871,17 @@ public class ProgramMerge implements PropertyVisitor {
 //        VariableReference[] restoreRefs = new VariableReference[0];
 		String originName = originFunction.getName();
 		Namespace desiredToNamespace = resultProgram.getGlobalNamespace();
-		try {
-			desiredToNamespace = symbolMerge.resolveNamespace(originFunction.getParentNamespace(),
-				conflictSymbolIDMap);
-		}
-		catch (DuplicateNameException e1) {
-			Msg.error(this, "Unexpected Exception: " + e1.getMessage(), e1);
-		}
-		catch (InvalidInputException e1) {
-			Msg.error(this, "Unexpected Exception: " + e1.getMessage(), e1);
+		if (!isDefaultThunk) {
+			try {
+				desiredToNamespace = symbolMerge
+						.resolveNamespace(originFunction.getParentNamespace(), conflictSymbolIDMap);
+			}
+			catch (DuplicateNameException e1) {
+				Msg.error(this, "Unexpected Exception: " + e1.getMessage(), e1);
+			}
+			catch (InvalidInputException e1) {
+				Msg.error(this, "Unexpected Exception: " + e1.getMessage(), e1);
+			}
 		}
 
 		AddressSetView oldResultBody = (resultFunction == null) ? null : resultFunction.getBody();

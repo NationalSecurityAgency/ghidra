@@ -935,8 +935,14 @@ class SymbolMerger extends AbstractListingMerger {
 	}
 
 	private void processModifiedFunctionNamespace(long id, Symbol mySym, Symbol resultSym) {
-		Namespace myNs = mySym.getParentNamespace();
-		Namespace resultNs = resultSym.getParentNamespace();
+		SourceType mySource = mySym.getSource();
+		Namespace myNs = // default thunks may lie about their namespace
+			mySource == SourceType.DEFAULT ? mySym.getProgram().getGlobalNamespace()
+					: mySym.getParentNamespace();
+		SourceType resultSource = resultSym.getSource();
+		Namespace resultNs = // default thunks may lie about their namespace
+			resultSource == SourceType.DEFAULT ? resultSym.getProgram().getGlobalNamespace()
+					: resultSym.getParentNamespace();
 		try {
 			Namespace desiredNs = resolveNamespace(myPgm, myNs);
 			// Is the result namespace the one we actually want it to be?

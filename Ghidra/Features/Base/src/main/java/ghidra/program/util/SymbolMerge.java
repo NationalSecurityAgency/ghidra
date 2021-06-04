@@ -460,7 +460,9 @@ class SymbolMerge {
 		Symbol fromSymbol = fromFunc.getSymbol();
 		SourceType fromSource = fromSymbol.getSource();
 		String fromName = fromSymbol.getName();
-		Namespace fromNamespace = fromSymbol.getParentNamespace();
+		Namespace fromNamespace =
+			fromSource == SourceType.DEFAULT ? fromFunc.getProgram().getGlobalNamespace()
+					: fromSymbol.getParentNamespace();
 
 		Symbol toSymbol;
 		if (toFunc == null) {
@@ -478,6 +480,7 @@ class SymbolMerge {
 		}
 		else {
 			toSymbol = toFunc.getSymbol();
+
 			// Replacing the function name.
 			if (toSymbol.equals(fromSymbol)) {
 				if (fromSource != SourceType.DEFAULT && toSymbol.getSource() != fromSource) {
@@ -494,18 +497,18 @@ class SymbolMerge {
 				}
 				return; // Symbols aren't different.
 			}
-			String toName = toSymbol.getName();
+
 			Namespace newToNamespace = resolveNamespace(fromNamespace, conflictSymbolIDMap);
-
-			if (!toName.equals(fromName)) {
-				toFunc.setName(fromName, fromSource);
-			}
-
 			try {
 				toFunc.setParentNamespace(newToNamespace);
 			}
 			catch (CircularDependencyException | InvalidInputException e) {
 				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
+			}
+
+			String toName = toSymbol.getName();
+			if (toSymbol.getSource() != fromSource || !toName.equals(fromName)) {
+				toFunc.setName(fromName, fromSource);
 			}
 		}
 
@@ -545,43 +548,45 @@ class SymbolMerge {
 		if (fromFunc != null) {
 			Symbol fromSymbol = fromFunc.getSymbol();
 			String fromName = fromSymbol.getName();
-			boolean fromDefault =
-				fromName.equals(SymbolUtilities.getDefaultFunctionName(fromEntryPoint));
-			Namespace fromNamespace = fromSymbol.getParentNamespace();
+			boolean fromDefault = fromSymbol.getSource() == SourceType.DEFAULT;
+			Namespace fromNamespace = // default thunk may lie about its namespace 
+				fromDefault ? fromFunc.getProgram().getGlobalNamespace()
+					: fromSymbol.getParentNamespace();
 			Namespace resolveNamespace = resolveNamespace(fromNamespace, conflictSymbolIDMap);
 			if ((toFunc != null) && replacePrimary && !fromDefault) {
 				// Save "to" function name and namespace.
 				String toName = toFunc.getName();
-				Namespace toNamespace = toFunc.getParentNamespace();
-				SourceType source = toFunc.getSymbol().getSource();
+				SourceType toSource = toFunc.getSymbol().getSource();
+				boolean toDefault = toSource == SourceType.DEFAULT;
+				Namespace toNamespace = // default thunk may lie about its namespace
+					toDefault ? toFunc.getProgram().getGlobalNamespace()
+							: toFunc.getParentNamespace();
+
 				// Merging function name into function as primary.
 				replaceFunctionSymbol(fromEntryPoint, toEntryPoint, conflictSymbolIDMap, monitor);
-				if (!toName.equals(fromName) &&
-					!toName.equals(SymbolUtilities.getDefaultFunctionName(toEntryPoint))) {
+				if (!toDefault && !toName.equals(fromName)) {
 					// Merge "to" function name and namespace as label.
-					addFunctionAsLabel(toEntryPoint, conflictSymbolIDMap, toSymTab, source, toName,
+					addFunctionAsLabel(toEntryPoint, conflictSymbolIDMap, toSymTab, toSource,
+						toName,
 						toNamespace, -1L);
 				}
 			}
-			else {
-				if (toFunc != null) {
-					if (toFunc.getName()
-						.equals(SymbolUtilities.getDefaultFunctionName(toEntryPoint))) {
-						// Default "to" function so replace
-						replaceFunctionSymbol(fromEntryPoint, toEntryPoint, conflictSymbolIDMap,
-							monitor);
-					}
-					else if (!fromDefault) {
-						// No "to" function or not merging primary.
-						addFunctionAsLabel(toEntryPoint, conflictSymbolIDMap, toSymTab,
-							fromSymbol.getSource(), fromName, resolveNamespace, fromSymbol.getID());
-					}
+			else if (toFunc != null) {
+				if (toFunc.getSymbol().getSource() == SourceType.DEFAULT) {
+					// Default "to" function so replace
+					replaceFunctionSymbol(fromEntryPoint, toEntryPoint, conflictSymbolIDMap,
+						monitor);
 				}
-				else {
+				else if (!fromDefault) {
 					// No "to" function or not merging primary.
 					addFunctionAsLabel(toEntryPoint, conflictSymbolIDMap, toSymTab,
 						fromSymbol.getSource(), fromName, resolveNamespace, fromSymbol.getID());
 				}
+			}
+			else {
+				// No "to" function or not merging primary.
+				addFunctionAsLabel(toEntryPoint, conflictSymbolIDMap, toSymTab,
+					fromSymbol.getSource(), fromName, resolveNamespace, fromSymbol.getID());
 			}
 		}
 	}
