@@ -459,10 +459,10 @@ class SymbolMerge {
 
 		Symbol fromSymbol = fromFunc.getSymbol();
 		SourceType fromSource = fromSymbol.getSource();
+		boolean isFromDefaultThunk = FunctionMerge.isDefaultThunk(fromFunc);
 		String fromName = fromSymbol.getName();
-		Namespace fromNamespace =
-			fromSource == SourceType.DEFAULT ? fromFunc.getProgram().getGlobalNamespace()
-					: fromSymbol.getParentNamespace();
+		Namespace fromNamespace = // default thunks will lie about their namespace
+				isFromDefaultThunk ? fromProgram.getGlobalNamespace() : fromSymbol.getParentNamespace();
 
 		Symbol toSymbol;
 		if (toFunc == null) {
@@ -549,29 +549,31 @@ class SymbolMerge {
 			Symbol fromSymbol = fromFunc.getSymbol();
 			String fromName = fromSymbol.getName();
 			boolean fromDefault = fromSymbol.getSource() == SourceType.DEFAULT;
-			Namespace fromNamespace = // default thunk may lie about its namespace 
-				fromDefault ? fromFunc.getProgram().getGlobalNamespace()
-					: fromSymbol.getParentNamespace();
+			boolean isFromDefaultThunk = FunctionMerge.isDefaultThunk(fromFunc);
+			Namespace fromNamespace = // default thunks will lie about their namespace
+					isFromDefaultThunk ? fromProgram.getGlobalNamespace() : fromSymbol.getParentNamespace();
+
 			Namespace resolveNamespace = resolveNamespace(fromNamespace, conflictSymbolIDMap);
 			if ((toFunc != null) && replacePrimary && !fromDefault) {
 				// Save "to" function name and namespace.
 				String toName = toFunc.getName();
 				SourceType toSource = toFunc.getSymbol().getSource();
 				boolean toDefault = toSource == SourceType.DEFAULT;
-				Namespace toNamespace = // default thunk may lie about its namespace
-					toDefault ? toFunc.getProgram().getGlobalNamespace()
-							: toFunc.getParentNamespace();
+				Namespace toNamespace = toFunc.getParentNamespace();
 
 				// Merging function name into function as primary.
 				replaceFunctionSymbol(fromEntryPoint, toEntryPoint, conflictSymbolIDMap, monitor);
 				if (!toDefault && !toName.equals(fromName)) {
 					// Merge "to" function name and namespace as label.
 					addFunctionAsLabel(toEntryPoint, conflictSymbolIDMap, toSymTab, toSource,
-						toName,
-						toNamespace, -1L);
+						toName, toNamespace, -1L);
 				}
 			}
 			else if (toFunc != null) {
+				if (isFromDefaultThunk && FunctionMerge.isDefaultThunk(toFunc)) {
+					return;
+				}
+				
 				if (toFunc.getSymbol().getSource() == SourceType.DEFAULT) {
 					// Default "to" function so replace
 					replaceFunctionSymbol(fromEntryPoint, toEntryPoint, conflictSymbolIDMap,
@@ -583,7 +585,7 @@ class SymbolMerge {
 						fromSymbol.getSource(), fromName, resolveNamespace, fromSymbol.getID());
 				}
 			}
-			else {
+			else if (!isFromDefaultThunk) {
 				// No "to" function or not merging primary.
 				addFunctionAsLabel(toEntryPoint, conflictSymbolIDMap, toSymTab,
 					fromSymbol.getSource(), fromName, resolveNamespace, fromSymbol.getID());
