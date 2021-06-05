@@ -23,13 +23,13 @@
     </TABLE>
 
     <P>The concept of a module may vary from platform to platform, but in most cases, it refers to
-    a binary image which is loaded or mapped into memory. Likely, these are the same files that
-    Ghidra can import for static analysis. Similarly, the concept of a section may vary, but in
-    most cases, it refers to a portion of a module, possibly backed by its binary image. This
-    window displays information about modules, and sometimes their sections, known to the connected
-    debugger. Information in this window reflects what has been recorded into the current trace,
-    which in turn comes from a target. The top table displays module information, and the bottom
-    table displays section information.</P>
+    a binary image which is loaded or mapped into memory comprising some portion of the target's
+    executable code. Likely, these are the same files that Ghidra can import for static analysis.
+    Similarly, the concept of a section may vary, but in most cases, it refers to a portion of a
+    module, possibly backed by its binary image. This window displays information about modules,
+    and sometimes their sections, known to the connected debugger. Information in this window
+    reflects what has been recorded into the current trace, which in turn comes from a target. The
+    top table displays module information, while the bottom table displays section information.</P>
 
     <H2>Table Columns</H2>
 
@@ -41,6 +41,8 @@
 
       <LI>Max Address - if available, the maximum address where the module is mapped in the
       target's memory. Double-clicking this field navigates to the address.</LI>
+
+      <LI>Name - a short name for the module, typically its file name.</LI>
 
       <LI>Module Name - the name of the module, ideally its full path on the target's
       filesystem.</LI>
@@ -147,12 +149,12 @@
 
     <H3><A name="import_missing_module"></A>Import Missing Module</H3>
 
-    <P>This action is offered to resolve a "Missing Module" console message. It is equivalent to <A
+    <P>This action is offered to resolve a "missing module" console message. It is equivalent to <A
     href="#import_from_fs">Import From File System</A> on the missing module.</P>
 
     <H3><A name="map_missing_module"></A>Map Missing Module</H3>
 
-    <P>This action is offered to resolve a "Missing Module" console message. It is equivalent to <A
+    <P>This action is offered to resolve a "missing module" console message. It is equivalent to <A
     href="#map_module_to">Map Module To</A> on the missing module.</P>
 
     <H3><A name="filter_by_module"></A>Filter Sections by Module</H3>

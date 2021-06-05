@@ -23,15 +23,15 @@
     </TABLE>
 
     <P>The stack window displays the current trace's execution stack, as unwound and reported by
-    the target. Not all debuggers will unwind the stack, in which case, this window displays a
-    synthetic innermost frame. When emulation was used to generate the current machine state, only
-    a synthetic frame is shown. Level 0 always refers to the innermost frame, and each incremental
-    level refers to the next caller in the chain &mdash; most of the time. The current frame
-    comprises one element of the tool's current "coordinates." Selecting a frame changes those
-    coordinates, potentially causing other windows to display different information. Namely, the <A
-    href="help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html">Registers</A> window
-    will show registers for the current frame, assuming they can be retrieved. The Listings may
-    also navigate to the current frame's program counter.</P>
+    the target. Not all debuggers will unwind the stack, in which case, this window displays only
+    the innermost frame. When emulation is used to generate the current machine state, only a
+    single synthetic frame is shown. Level 0 always refers to the innermost frame, and each
+    incremental level refers to the next caller in the chain &mdash; most of the time. The current
+    frame comprises one element of the tool's current "coordinates." Selecting a frame changes
+    those coordinates, potentially causing other windows to display different information. Namely,
+    the <A href="help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html">Registers</A>
+    window will show registers for the current frame, assuming they can be retrieved. The Listings
+    may also navigate to the current frame's program counter.</P>
 
     <H2>Table Columns</H2>
 

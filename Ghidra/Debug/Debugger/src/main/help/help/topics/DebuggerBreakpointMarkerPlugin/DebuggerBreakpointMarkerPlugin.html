@@ -48,9 +48,9 @@
     cursor, this will prompt to set one, giving a reasonable set of default parameters based on the
     context at the cursor. At an instruction, it will prefer to set a Software Execution
     breakpoint. At defined data, it will prefer to set a Read/Write breakpoint of the size of data.
-    At undefined data, or if the target does not support the suggested default, an error dialog is
-    presented. Please use one of the Set Breakpoint actions to force specific commands. Please
-    beware: the default parameters are not always acceptable to the connected debugger.</P>
+    At undefined data, or if the target does not support the suggested default, the default kind is
+    left unselected. Please use one of the Set Breakpoint actions to force specific commands.
+    Please beware: the default parameters are not always acceptable to the connected debugger.</P>
 
     <H3><A name="set_breakpoint"></A><IMG alt="" src="images/breakpoint-enable.png"> Set
     Breakpoint</H3>
@@ -78,7 +78,7 @@
       the instruction or data at the cursor.</LI>
 
       <LI>Length - the length in bytes of the breakpoint. Some debuggers for some kinds of
-      breakpoints, may not allow a value other than 1. For execution breakpoints, this defaults to
+      breakpoints may not allow a value other than 1. For execution breakpoints, this defaults to
       1; for access breakpoints, this defaults to the size of the data at the cursor.</LI>
 
       <LI>Kinds - the kind(s) of breakpoint. Only the reasonable combinations are presented, but
@@ -106,8 +106,9 @@
 
     <H2><A name="colors"></A>Tool Options: Colors</H2>
 
-    <P>The background coloring of enabled and disabled breakpoints can be configured in the tool's
-    options. By default, enabled breakpoints are colored a de-saturated red, while disabled
-    breakpoints have no background color at all.</P>
+    <P>The background coloring of enabled and disabled, effective and ineffective breakpoints can
+    be configured in the tool's options. By default, enabled breakpoints are colored a desaturated
+    red, ineffective breakpoints are colored grey, and disabled breakpoints have no background at
+    all.</P>
   </BODY>
 </HTML>

@@ -25,10 +25,10 @@
     <P><A name="Toggle_Header"></A>The dynamic listing is analogous to Ghidra's listing for static
     analysis, but in the dynamic context. That is, it displays memory contents from a target. More
     precisely, it displays recorded memory contents in a trace. In most use cases, that trace is
-    "at the present", meaning it is the most recent memory from a live target. Multiple listings
+    "at the present," meaning it is the most recent memory from a live target. Multiple listings
     can be displayed simultaneously, using the same pattern as many other Ghidra windows. The
     "primary" listing is always displayed and generally tracks with the rest of the tool. Any
-    listing can be "snapshotted", i.e., duplicated. This is where dynamic listings differ from
+    listing can be "snapshotted," i.e., duplicated. This is where dynamic listings differ from
     static listings. Static snapshots remain in place; they do not automatically navigate. Dynamic
     snapshots can still be configured to navigate, following the rest of the tool. A common use is
     to configure a "snapshot" to follow the stack pointer. Still, you can disable a listing's
@@ -43,20 +43,20 @@
     mark-up is added to the listing, it exists "from this time on". That is, its time interval is
     from the current time to infinity, i.e., it has been created but never destroyed. When mark-up
     is removed from the listing, its "destruction time" is set to just before the current time. If
-    this would cause the mark-up to "never exist", i.e., its destruction time is equal to its
-    creation time, then the record is deleted altogether. This yields a mostly-intuitive mechanism
-    for marking things up "in time," but the fact that mark-up is bound in time can still be
+    this would cause the mark-up to "never exist," i.e., its destruction time precedes its creation
+    time, then the record is deleted altogether. This yields a mostly-intuitive mechanism for
+    marking things up "in time," but the fact that mark-up is bound in time can still be
     surprising. For example, disassembling some instructions and then stepping back in time will
     cause that disassembly to disappear.</P>
 
     <P>Because not all memory is captured, some background coloring is used to indicate the state
     of attempted memory reads. Regardless of state, the most-recent contents, as recorded in the
-    trace, or 0s are displayed in the listing. "Stale" memory, that is ranges of memory which have
-    not been read at the current time, are displayed with a darker background. Where that memory is
-    marked "read-only" and has been successfully read previously, that coloring is subdued, since
-    the contents are unlikely to have changed. Where a read was attempted but failed, the range is
-    displayed with a pink background. Otherwise, up-to-date contents are displayed with the default
-    background color.</P>
+    trace, are displayed in the listing, defaulting to 00. "Stale" memory, that is ranges of memory
+    which have not been read at the current time, are displayed with a darker background. Where
+    that memory is marked "read-only" and has been successfully read previously, that coloring is
+    subdued, since the contents are not likely to have changed. Where a read was attempted but
+    failed, the first address in the failed range is displayed with a pink background. Otherwise,
+    up-to-date contents are displayed with the default background color.</P>
 
     <H2>Actions</H2>
 
@@ -110,9 +110,9 @@
 
     <P>This action is available whenever a trace is active in the listing. It prompts the user for
     an address, which can be expressed in Sleigh, then attempts to navigate to it. The expression
-    is evaluated in the context of the current thread and point in time. If the current trace is
-    live and at the present, the target may be queried to retrieve any machine state required to
-    evaluate the expression.</P>
+    is evaluated in the context of the current thread, frame, and point in time. If the current
+    trace is live and at the present, the target may be queried to retrieve any machine state
+    required to evaluate the expression.</P>
 
     <TABLE width="100%">
       <TBODY>
@@ -134,6 +134,13 @@
     window. When you navigate to a location contained by a module, but there is no corresponding
     static location, the listing logs a "missing module" to the console, offering either to import
     the module or map it to an existing program.</P>
+
+    <H3><A name="open_program"></A>Open Program</H3>
+
+    <P>This action is offered as a resolution whenever a module cannot be automatically opened.
+    This typically happens when the module's program database has crash data that can be recovered
+    and/or needs a version upgrade. It will attempt to open the program, allowing Ghidra to prompt
+    you about the situation.</P>
 
     <H3><A name="capture_memory"></A>Capture Memory</H3>
 
