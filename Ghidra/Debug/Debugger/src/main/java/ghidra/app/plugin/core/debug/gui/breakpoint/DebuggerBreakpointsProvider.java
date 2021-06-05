@@ -768,7 +768,6 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	@Override
 	public void breakpointsRemoved(Collection<LogicalBreakpoint> clb) {
 		Swing.runIfSwingOrRunLater(() -> {
-			Msg.debug(this, "LBs removed: " + clb);
 			breakpointTableModel.deleteAllItems(clb);
 			contextChanged();
 		});
