@@ -15,23 +15,25 @@
  */
 package pdb.symbolserver.ui;
 
+import java.util.List;
+
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
-import docking.widgets.OptionDialog;
-import pdb.symbolserver.SymbolServerInstanceCreatorRegistry;
-import pdb.symbolserver.SymbolServerService;
+import pdb.symbolserver.*;
 
 /**
  * Dialog that allows the user to configure the Pdb search locations and symbol directory
  */
 public class ConfigPdbDialog extends DialogComponentProvider {
 
-	public static void showSymbolServerConfig() {
+	public static boolean showSymbolServerConfig() {
 		ConfigPdbDialog choosePdbDialog = new ConfigPdbDialog();
 		DockingWindowManager.showDialog(choosePdbDialog);
+		return choosePdbDialog.wasSuccess;
 	}
 
 	private SymbolServerPanel symbolServerConfigPanel;
+	private boolean wasSuccess;
 
 	public ConfigPdbDialog() {
 		super("Configure Symbol Server Search", true, false, true, false);
@@ -46,12 +48,10 @@ public class ConfigPdbDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		if (symbolServerConfigPanel.isConfigChanged() &&
-			OptionDialog.showYesNoDialog(getComponent(),
-				"Save Configuration",
-				"Symbol server configuration changed.  Save?") == OptionDialog.YES_OPTION) {
+		if (symbolServerConfigPanel.isConfigChanged()) {
 			symbolServerConfigPanel.saveConfig();
 		}
+		wasSuccess = true;
 		close();
 	}
 
@@ -75,5 +75,24 @@ public class ConfigPdbDialog extends DialogComponentProvider {
 		addOKButton();
 		addCancelButton();
 		setDefaultButton(cancelButton);
+	}
+
+	/**
+	 * Screen shot usage only
+	 */
+	public void pushAddLocationButton() {
+		symbolServerConfigPanel.pushAddLocationButton();
+	}
+
+	/**
+	 * Screen shot only
+	 *  
+	 * @param fakeDirectoryText fake text to display in the storage directory text field
+	 * @param symbolServers list of symbol servers to force set
+	 */
+	public void setSymbolServerService(String fakeDirectoryText,
+			List<SymbolServer> symbolServers) {
+		symbolServerConfigPanel.setSymbolServers(symbolServers);
+		symbolServerConfigPanel.setSymbolStorageDirectoryTextOnly(fakeDirectoryText);
 	}
 }

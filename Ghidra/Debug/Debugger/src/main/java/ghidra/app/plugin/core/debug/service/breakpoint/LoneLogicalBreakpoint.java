@@ -45,6 +45,11 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
+	public String toString() {
+		return String.format("<%s trace=%s>", getClass().getSimpleName(), breaks);
+	}
+
+	@Override
 	public boolean isEmpty() {
 		return breaks.isEmpty();
 	}

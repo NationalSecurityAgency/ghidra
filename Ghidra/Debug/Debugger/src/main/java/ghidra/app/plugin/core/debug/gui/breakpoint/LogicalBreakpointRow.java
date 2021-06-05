@@ -34,6 +34,11 @@ public class LogicalBreakpointRow {
 		this.lb = lb;
 	}
 
+	@Override
+	public String toString() {
+		return "<Row " + lb + ">";
+	}
+
 	public LogicalBreakpoint getLogicalBreakpoint() {
 		return lb;
 	}

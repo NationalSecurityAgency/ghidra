@@ -57,7 +57,7 @@
     <BLOCKQUOTE><UL>
     
     <li>Debugging user-mode Windows applications on x64 hosts via dbgeng.dll/WinDbg (including 32-bit x86 applications via WoW64)</li>
-    <li>Debugging user-mode Linux applicaitons on amd64/x86_64 hosts via GDB (including 32-bit i686/x86 applications)</li>
+    <li>Debugging user-mode Linux applications on amd64/x86_64 hosts via GDB (including 32-bit i686/x86 applications)</li>
     <li>Quick launch to locally debug the current program</li>
     <li>Recording of observations from a live debug session into a Ghidra Trace database</li>
        <BLOCKQUOTE><UL>
@@ -94,7 +94,7 @@
             NOTE: Dependent registers and memory are captured to the Trace, if recording from a live target
             </BLOCKQUOTE>
         <li>Stack / Frame Table for navigating frame contexts</li>
-        <li>Threads Timeline for listng threads and for navigating thread and time contexts</li>
+        <li>Threads Timeline for listing threads and for navigating thread and time contexts</li>
         <li>Modules Table for viewing modules and sections, and for mapping live Trace addresses to static Program database addresses</li>
         <li>P-code Stepper/Emulator for debugging SLEIGH language specifications in-situ</li>
         <li>Memory/Time plotter for viewing trace events</li>
@@ -124,7 +124,7 @@
         <P>Ghidra 10.0 adds support for user-defined extensions to the <b>compiler specification</b> assigned to a specific Program.  In particular,
             users can now define their own:</P>
         <BLOCKQUOTE><UL>
-            <LI><B>Calling Conventions</B> - which inform analyis and decompilation how parameters are passed between functions,</LI>
+            <LI><B>Calling Conventions</B> - which inform analysis and decompilation how parameters are passed between functions,</LI>
             <LI><B>Call-Fixups</B> - which substitute behavior for specific CALLs when analyzing a function that makes them, and</LI>
             <LI><B>Callother-Fixups</B> - which substitute behavior for certain Instructions when analyzing a function that contains them.</LI>
         </UL></BLOCKQUOTE>
@@ -136,9 +136,10 @@
     <BR />
     
     <H2>Prototype Class Recovery From RTTI</H2>
-    <P> A new prototype script <B>RecoverClassesFromRTTIScript</B> to recover class information using RTTI structures and PDB information has been added.  The script recovers class hierarchy, inheritance types,
-    constructors and destructors, class data types, and more. If available, pdb information is used to help fill in class structures with known names and types for class
-    member data.  If PDB is unavailable, the decompiler structure recovery is utilized to populate class data structure members.<P>
+    <P>A new prototype script <B>RecoverClassesFromRTTIScript</B> which recovers class information using RTTI structures has been added. 
+    The script recovers class hierarchy, inheritance types, constructors and destructors, class data types, and more. If available, PDB information 
+    is used to help fill in class structures with known names and types for class member data. If PDB is unavailable, the decompiler structure 
+    recovery is utilized to populate class data structure members.</P>
     <BLOCKQUOTE><UL>
         <P> NOTE: As this is a prototype script, the location, names, layout of data types, and default virtual function names created by this script are
         likely to change in the future once an official design for Object Oriented representation is determined.<P>
@@ -187,7 +188,7 @@
     structure so that components may be placed at specific offsets.  Only when there is a complete understanding 
     of all components, as conveyed by a source header file, should
     this be enabled with the appropriate <B>pack</B> and <B>align</B> settings specified.  In addition, when <B>pack</B>
-    is enabled it is important that the component datatypes eimit the correct alignment to ensure proper 
+    is enabled it is important that the component datatypes emit the correct alignment to ensure proper 
     placement during packing.</P> 
     
     <P>The <B>align</B> setting may know be used when packing is disabled with the composite adopting 
@@ -198,7 +199,7 @@
     
     <P>The various pack and align methods of the <I>Composite</I> (i.e., <I>Structure</I> and <I>Union</I>) 
     API have been changed extensively. Since these changes were primarily intended to "cleanup" the
-    interface we decided to eliminate (i.e., not depricate) the old methods.  It was felt leaving them in
+    interface we decided to eliminate (i.e., not deprecate) the old methods.  It was felt leaving them in
     place would only confuse matters when attempting to understand the new interface.  It is also believed that 
     most uses of the API generally do not utilize the pack and align settings which should minimize the 
     impact to existing user code.<P>
@@ -287,7 +288,7 @@
              If an explicit minimum alignment is set (1..n), non-packed composites will have an alignment 
              which equals this value, while packed structures 
              will have an alignment which is a multiple of this value.
-             Old constant <CODE>DEFAULT_ALIGNMENT_VALUE</CODE> has been elliminated.
+             Old constant <CODE>DEFAULT_ALIGNMENT_VALUE</CODE> has been eliminated.
            </TD>
        </TR><TR>
            <TD><CODE>getMinimumAlignment()</CODE></TD>
@@ -307,7 +308,7 @@
     </P>
     
     <H2>Gradle</H2>
-    <P>The build infrastructure has been moved to version gradle 6.8 or later.  If you wish to build Ghidra, you will need to move to at least gradle 6.8.x<P>
+    <P>The build infrastructure has been upgraded to support both Gradle 6 and 7. Gradle 5 is no longer supported.<P>
 
     <H2>New Processors</H2>
     <P>We are working on .NET/CIL that may make it into the final 10.0 release, but most likely into 10.1</P>

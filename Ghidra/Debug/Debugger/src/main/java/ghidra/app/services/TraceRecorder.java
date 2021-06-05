@@ -40,7 +40,6 @@ import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
-import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -480,5 +479,16 @@ public interface TraceRecorder {
 	@Internal
 	TraceEventListener getListenerForRecord();
 
-	ListenerSet<TraceRecorderListener> getListeners();
+	/**
+	 * Wait for pending transactions finish execution.
+	 * 
+	 * <p>
+	 * The returned future will complete when queued transactions have been executed. There are no
+	 * guarantees regarding transactions submitted after this future is returned. Furthermore, it
+	 * may still be necessary to wait for the trace to finish invoking its domain object change
+	 * listeners.
+	 * 
+	 * @return the future which completes when pending transactions finish execution.
+	 */
+	CompletableFuture<Void> flushTransactions();
 }

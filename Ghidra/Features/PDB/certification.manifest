@@ -16,13 +16,14 @@ src/main/help/help/shared/redo.png||GHIDRA||||END|
 src/main/help/help/shared/tip.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/help/help/shared/undo.png||GHIDRA||||END|
 src/main/help/help/shared/warning.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
-src/main/help/help/topics/Pdb/LoadPDBNew.html||GHIDRA||||END|
+src/main/help/help/topics/Pdb/LoadPDB.html||GHIDRA||||END|
 src/main/help/help/topics/Pdb/PDB.htm||GHIDRA||||END|
 src/main/help/help/topics/Pdb/images/LoadPdb_Advanced_NeedsConfig.png||GHIDRA||||END|
 src/main/help/help/topics/Pdb/images/LoadPdb_Advanced_Screenshot.png||GHIDRA||||END|
 src/main/help/help/topics/Pdb/images/LoadPdb_Initial_Screenshot.png||GHIDRA||||END|
 src/main/help/help/topics/Pdb/images/Plus2.png||GHIDRA||||END|
 src/main/help/help/topics/Pdb/images/SymbolServerConfig_AddButtonMenu.png||GHIDRA||||END|
+src/main/help/help/topics/Pdb/images/SymbolServerConfig_Configured.png||GHIDRA||||END|
 src/main/help/help/topics/Pdb/images/SymbolServerConfig_Screenshot.png||GHIDRA||||END|
 src/main/help/help/topics/Pdb/images/disk.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/help/help/topics/Pdb/images/down.png||GHIDRA||||END|

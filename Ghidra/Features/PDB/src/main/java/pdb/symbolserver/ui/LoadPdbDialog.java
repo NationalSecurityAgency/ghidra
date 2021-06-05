@@ -107,10 +107,10 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	private List<Supplier<StatusText>> statusTextSuppliers = new ArrayList<>();
 	private Set<FindOption> lastSearchOptions;
 	private boolean searchCanceled;
+	private boolean hasShownAdvanced;
 
 	private Program program;
 
-	private SymbolServerPanel symbolServerConfigPanel;
 	private SymbolFilePanel symbolFilePanel;
 
 	private JTextField programNameTextField;
@@ -123,6 +123,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	private HintTextField pdbLocationTextField;
 	private GIconLabel exactMatchIconLabel;
 
+	private JButton configButton;
 	private JToggleButton advancedToggleButton;
 
 	private GhidraFileChooser chooser;
@@ -153,12 +154,15 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		if (programSymbolFileInfo == null) {
 			programSymbolFileInfo = SymbolFileInfo.unknown("missing");
 		}
-		this.symbolServerInstanceCreatorContext =
-			SymbolServerInstanceCreatorRegistry.getInstance().getContext(program);
-		this.symbolServerService =
-			PdbPlugin.getSymbolServerService(symbolServerInstanceCreatorContext);
-
+		updateSymbolServerServiceInstanceFromPreferences();
 		build();
+	}
+
+	private void updateSymbolServerServiceInstanceFromPreferences() {
+		symbolServerInstanceCreatorContext =
+			SymbolServerInstanceCreatorRegistry.getInstance().getContext(program);
+		symbolServerService =
+			PdbPlugin.getSymbolServerService(symbolServerInstanceCreatorContext);
 	}
 
 	@Override
@@ -169,32 +173,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		programNameTextField.setText(program.getName());
 		cancelButton.requestFocusInWindow();
 
-		executeMonitoredRunnable("Search for PDB using built-in locations", true, true, 0,
-			this::doInitialDefaultSearch);
-	}
-
-	private void doInitialDefaultSearch(TaskMonitor monitor) {
-		try {
-			List<SymbolFileLocation> results =
-				symbolServerService.find(programSymbolFileInfo, FindOption.NO_OPTIONS, monitor);
-			if (!results.isEmpty()) {
-				SymbolFileLocation symbolFileLocation =
-					symbolServerService.getLocalSymbolFileLocation(results.get(0), monitor);
-				File symbolFile = getLocalSymbolFile(symbolFileLocation);
-				Swing.runLater(() -> {
-					setSearchResults(results, null);
-					setPdbLocationValue(symbolFileLocation, symbolFile);
-					setSelectedPdbFile(symbolFileLocation);
-					selectRowByLocation(symbolFileLocation);
-					updateStatusText();
-					updateButtonEnablement();
-					updateParserOptionEnablement(true);
-				});
-			}
-		}
-		catch (CancelledException | IOException e) {
-			// ignore
-		}
+		searchForPdbs(false);
 	}
 
 	@Override
@@ -212,33 +191,9 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		symbolFilePanel.setFindOptions(options);
 	}
 
-	/**
-	 * For screenshot use only
-	 * 
-	 * @param pathStr path of symbol storage directory
-	 */
-	public void setSymbolStorageDirectoryTextOnly(String pathStr) {
-		symbolServerConfigPanel.setSymbolStorageDirectoryTextOnly(pathStr);
-	}
-
-	/**
-	 * For screenshot use only
-	 * 
-	 * @param symbolServers list of symbol servers
-	 */
-	public void setSymbolServers(List<SymbolServer> symbolServers) {
-		symbolServerConfigPanel.setSymbolServers(symbolServers);
-	}
-
-	/**
-	 * For screenshot use only
-	 */
-	public void pushAddLocationBution() {
-		symbolServerConfigPanel.pushAddLocationButton();
-	}
-
 	private void setSelectedPdbFile(SymbolFileLocation symbolFileLocation) {
 		this.selectedSymbolFile = symbolFileLocation;
+		setPdbLocationValue(symbolFileLocation, getLocalSymbolFile(symbolFileLocation));
 	}
 
 	/**
@@ -247,6 +202,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	 * Public only for screenshot usage, treat as private otherwise.
 	 * 
 	 * @param results list of {@link SymbolFileLocation}s to add to results
+	 * @param findOptions the options used to search
 	 */
 	public void setSearchResults(List<SymbolFileLocation> results, Set<FindOption> findOptions) {
 		lastSearchOptions = findOptions;
@@ -304,13 +260,11 @@ public class LoadPdbDialog extends DialogComponentProvider {
 
 	private void updateButtonEnablement() {
 		boolean hasLocation = selectedSymbolFile != null;
+		boolean hasGoodService = symbolServerService.isValid();
 		loadPdbButton.setEnabled(hasLocation);
-	}
-
-	private void setSymbolServerService(SymbolServerService symbolServerService) {
-		this.symbolServerService = symbolServerService;
-		symbolFilePanel.setEnablement(symbolServerService != null);
-		updateStatusText();
+		configButton.setIcon(hasGoodService ? null : MATCH_BAD_ICON);
+		configButton.setToolTipText(hasGoodService ? null : "Missing configuration");
+		symbolFilePanel.setEnablement(hasGoodService);
 	}
 
 	private SymbolFileInfo getCurrentSymbolFileInfo() {
@@ -322,9 +276,6 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	}
 
 	private void searchForPdbs(boolean allowRemote) {
-		if (symbolServerService == null || !symbolServerService.isValid()) {
-			return;
-		}
 		if (pdbAgeTextField.getText().isBlank() ||
 			pdbAgeTextField.getValue() > NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG) {
 			Msg.showWarn(this, null, "Bad PDB Age", "Invalid PDB Age value");
@@ -347,11 +298,12 @@ public class LoadPdbDialog extends DialogComponentProvider {
 					symbolServerService.find(symbolFileInfo, findOptions, monitor);
 				Swing.runLater(() -> {
 					setSearchResults(results, findOptions);
-					if (results.size() == 1) {
+					if (!results.isEmpty()) {
 						selectRowByLocation(results.get(0));
 					}
 					updateStatusText();
 					updateButtonEnablement();
+					updateParserOptionEnablement(true);
 				});
 			}
 			catch (CancelledException e1) {
@@ -364,17 +316,15 @@ public class LoadPdbDialog extends DialogComponentProvider {
 
 	private void build() {
 		buildSymbolFilePanel();
-		buildSSConfigPanel();
 		buildPdbLocationPanel();
 		buildProgramPdbPanel();
 		buildParserOptionsPanel();
 		setHelpLocation(new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC, "Load PDB File"));
 
 		addStatusTextSupplier(() -> lastSearchOptions != null && advancedToggleButton.isSelected()
-				? symbolServerConfigPanel.getSymbolServerWarnings()
+				? SymbolServerPanel.getSymbolServerWarnings(symbolServerService.getSymbolServers())
 				: null);
 		addStatusTextSupplier(this::getSelectedPdbNoticeText);
-		addStatusTextSupplier(this::getConfigChangedWarning);
 		addStatusTextSupplier(this::getAllowRemoteWarning);
 		addStatusTextSupplier(this::getFoundCountInfo);
 
@@ -386,11 +336,6 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		// later dialogShow() will be called 
 	}
 
-	private void buildSSConfigPanel() {
-		symbolServerConfigPanel =
-			new SymbolServerPanel(this::setSymbolServerService, symbolServerInstanceCreatorContext);
-	}
-
 	private void buildSymbolFilePanel() {
 		// panel will be added in layoutAdvanced()
 		symbolFilePanel = new SymbolFilePanel(this::searchForPdbs);
@@ -398,7 +343,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		symbolFilePanel.getTable()
 				.getSelectionModel()
 				.addListSelectionListener(e -> updateSelectedRow());
-		symbolFilePanel.addMouseListener(new GMouseListenerAdapter() {
+		symbolFilePanel.getTable().addMouseListener(new GMouseListenerAdapter() {
 			@Override
 			public void doubleClickTriggered(MouseEvent e) {
 				if (loadPdbButton.isEnabled()) {
@@ -618,6 +563,17 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		addCancelButton();
 		setDefaultButton(cancelButton);
 
+		configButton = new JButton("Config...");
+		configButton.addActionListener(e -> {
+			if (ConfigPdbDialog.showSymbolServerConfig()) {
+				updateSymbolServerServiceInstanceFromPreferences();
+				updateButtonEnablement();
+				updateStatusText();
+				searchForPdbs(false);
+			}
+		});
+		addButton(configButton);
+
 		advancedToggleButton = new JToggleButton("Advanced >>");
 		advancedToggleButton.addActionListener(e -> toggleAdvancedSearch());
 		buttonPanel.add(advancedToggleButton);
@@ -625,7 +581,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 
 	private void prepareSelectedSymbolFileAndClose(TaskMonitor monitor) {
 		try {
-			if (selectedSymbolFile != null && symbolServerService != null) {
+			if (selectedSymbolFile != null) {
 				selectedSymbolFile =
 					symbolServerService.getLocalSymbolFileLocation(selectedSymbolFile, monitor);
 			}
@@ -640,17 +596,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		}
 	}
 
-	private StatusText getConfigChangedWarning() {
-		return advancedToggleButton.isSelected() && symbolServerConfigPanel.isConfigChanged()
-				? new StatusText(
-					"Symbol Server Search Config Changed.  Click \"Save Configuration\" button to save.",
-					MessageType.INFO, false)
-				: null;
-	}
-
 	private StatusText getAllowRemoteWarning() {
-		int remoteSymbolServerCount =
-			symbolServerService != null ? symbolServerService.getRemoteSymbolServerCount() : 0;
+		int remoteSymbolServerCount = symbolServerService.getRemoteSymbolServerCount();
 		return lastSearchOptions != null && advancedToggleButton.isSelected() &&
 			remoteSymbolServerCount != 0 && !lastSearchOptions.contains(FindOption.ALLOW_REMOTE)
 					? new StatusText(
@@ -681,31 +628,21 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		overridePdbAgeCheckBox.setVisible(isAdvanced);
 		overridePdbPathCheckBox.setVisible(isAdvanced);
 		overridePdbUniqueIdCheckBox.setVisible(isAdvanced);
-		setPdbLocationValue(null, null);
 
 		if (isAdvanced) {
-			if (symbolServerService == null || !symbolServerService.isValid()) {
-				setSelectedPdbFile(null);
-			}
 			layoutAdvanced();
 		}
 		else {
-			if (selectedSymbolFile != null) {
-				File localSymbolFile = getLocalSymbolFile(selectedSymbolFile);
-				if (localSymbolFile != null) {
-					setPdbLocationValue(selectedSymbolFile, localSymbolFile);
-				}
-			}
-			else {
-				setSelectedPdbFile(null);
-			}
 			layoutSimple();
 		}
 
 		updateStatusText();
 		updateButtonEnablement();
 		updateParserOptionEnablement(false);
-		repack();
+		if (isAdvanced && !hasShownAdvanced) {
+			hasShownAdvanced = true;
+			repack();
+		}
 	}
 
 	private void layoutSimple() {
@@ -720,21 +657,17 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		overrideWorkPanel(panel);
 	}
 
-	private void overrideWorkPanel(JComponent workComp) {
+	private void overrideWorkPanel(JComponent newWorkComp) {
 		if (this.workComp != null && this.workComp.getParent() != null) {
 			this.workComp.getParent().remove(this.workComp);
 		}
-		this.workComp = workComp;
-		addWorkPanel(workComp);
+		this.workComp = newWorkComp;
+		addWorkPanel(newWorkComp);
 	}
 
 	private void layoutAdvanced() {
-		Box topPanel = Box.createHorizontalBox();
-		topPanel.add(programPdbPanel);
-		topPanel.add(symbolServerConfigPanel);
-
 		JPanel mainPanel = new JPanel(new BorderLayout());
-		mainPanel.add(topPanel, BorderLayout.NORTH);
+		mainPanel.add(programPdbPanel, BorderLayout.NORTH);
 		mainPanel.add(symbolFilePanel, BorderLayout.CENTER);
 		mainPanel.add(parserOptionsPanel, BorderLayout.SOUTH);
 

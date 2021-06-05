@@ -15,9 +15,8 @@
  */
 package pdb.symbolserver;
 
-import java.util.*;
-
 import java.io.*;
+import java.util.*;
 
 import ghidra.util.task.TaskMonitor;
 
@@ -25,8 +24,6 @@ import ghidra.util.task.TaskMonitor;
  * A Pdb symbol server / symbol store, similar to the {@link LocalSymbolStore}, 
  * but limited to searching just the single directory that the original executable is located in.
  * <p>
- * Matches symbol files that have a similar name to the requested symbol file (but the identifier
- * info - guid/id & age must still match as per the find options specified).  
  * 
  */
 public class SameDirSymbolStore implements SymbolStore {
@@ -105,8 +102,8 @@ public class SameDirSymbolStore implements SymbolStore {
 
 	@Override
 	public String getDescriptiveName() {
-		return String.format(PROGRAMS_IMPORT_LOCATION_DESCRIPTION_STR + " - %s",
-			isValid() ? rootDir.getPath() : "unspecified");
+		return PROGRAMS_IMPORT_LOCATION_DESCRIPTION_STR +
+			(isValid() ? " - " + rootDir.getPath() : "");
 	}
 
 	@Override

@@ -204,26 +204,22 @@ public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStor
 
 		List<SymbolFileLocation> matches = new ArrayList<>();
 
-		// search for exact matches using the built-in logic in AbstractSymbolServer
 		if (storageLevel != 0) {
+			// search for exact matches using the built-in logic in AbstractSymbolServer
 			matches.addAll(super.find(symbolFileInfo, options, monitor));
-		}
 
-		if (storageLevel == 0 || options.contains(FindOption.ANY_AGE) ||
-			options.contains(FindOption.ANY_ID)) {
-
-			try {
-				if (storageLevel == 0) {
-					searchLevel0(rootDir, this, symbolFileInfo, options, matches, monitor);
-				}
-				else {
+			if (options.contains(FindOption.ANY_AGE) || options.contains(FindOption.ANY_ID)) {
+				try {
 					searchLevelN(symbolFileInfo, options, matches, monitor);
 				}
+				catch (IOException ioe) {
+					Msg.warn(this,
+						"Error searching for " + symbolFileInfo.getName() + " in " + rootDir, ioe);
+				}
 			}
-			catch (IOException ioe) {
-				Msg.warn(this, "Error searching for " + symbolFileInfo.getName() + " in " + rootDir,
-					ioe);
-			}
+		}
+		else {
+			searchLevel0(rootDir, this, symbolFileInfo, options, matches, monitor);
 		}
 
 		return matches;
@@ -232,18 +228,14 @@ public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStor
 	static void searchLevel0(File rootDir, SymbolStore symbolStore, SymbolFileInfo symbolFileInfo,
 			Set<FindOption> options, List<SymbolFileLocation> matches, TaskMonitor monitor) {
 
-		// if its a "0 level" bag-of-files, we have to open each Pdb to find its UID and
-		// AGE (after filtering for similar filenames as requested pdb file)
-		for (File f : list(rootDir,
-			ff -> ff.isFile() && isFilenameStartsWithMatch(symbolFileInfo, ff))) {
-			if (monitor.isCancelled()) {
-				break;
-			}
-			SymbolFileInfo fileInfo = SymbolFileInfo.fromFile(f, monitor);
-			if (fileInfo != null) {
-				if (hasSymbolFileInfoMatch(symbolFileInfo, fileInfo, options)) {
-					matches.add(new SymbolFileLocation(f.getName(), symbolStore, fileInfo));
-				}
+		File f = new File(rootDir, symbolFileInfo.getName());
+		if (!f.isFile()) {
+			return;
+		}
+		SymbolFileInfo fileInfo = SymbolFileInfo.fromFile(f, monitor);
+		if (fileInfo != null) {
+			if (hasSymbolFileInfoMatch(symbolFileInfo, fileInfo, options)) {
+				matches.add(new SymbolFileLocation(f.getName(), symbolStore, fileInfo));
 			}
 		}
 	}
@@ -400,24 +392,6 @@ public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStor
 	static File[] list(File dir, FileFilter filter) {
 		File[] files = dir.listFiles(filter);
 		return files != null ? files : new File[] {};
-	}
-
-	static boolean isFilenameStartsWithMatch(SymbolFileInfo symbolFileInfo, File file) {
-		String symbolFilenameNoExtension = FilenameUtils.getBaseName(symbolFileInfo.getName());
-		String fileNoExtension = FilenameUtils.getBaseName(file.getName());
-
-		// use case-insensitive compare since these are PDB files, which
-		// come from a Windows env
-		if (!fileNoExtension.toLowerCase().startsWith(symbolFilenameNoExtension.toLowerCase())) {
-			return false;
-		}
-
-		// match on ext ("pdb"), compressed ext ("pd_")
-		String symbolFilenameExtension =
-			FilenameUtils.getExtension(symbolFileInfo.getName()).toLowerCase();
-		String fileExtension = FilenameUtils.getExtension(file.getName()).toLowerCase();
-		return fileExtension.equals(symbolFilenameExtension) ||
-			fileExtension.equals(makeCompressedExtension(symbolFilenameExtension));
 	}
 
 	static boolean hasSymbolFileInfoMatch(SymbolFileInfo symbolFileInfo,
