@@ -32,6 +32,7 @@ import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.ExternalLocation;
 import ghidra.program.model.symbol.Symbol;
+import ghidra.util.StringUtilities;
 
 /**
  * A utility class that creates tool tip text for given data types.
@@ -41,12 +42,21 @@ import ghidra.program.model.symbol.Symbol;
  */
 public class ToolTipUtils {
 
-	private static Color PARAM_NAME_COLOR = new Color(155, 50, 155);
-	private static Color PARAM_CUSTOM_STORAGE_COLOR = OptionsGui.PARAMETER_CUSTOM.getDefaultColor();
-	private static Color PARAM_DYNAMIC_STORAGE_COLOR =
+	private static final Color PARAM_NAME_COLOR = new Color(155, 50, 155);
+	private static final Color PARAM_CUSTOM_STORAGE_COLOR =
+		OptionsGui.PARAMETER_CUSTOM.getDefaultColor();
+	private static final Color PARAM_DYNAMIC_STORAGE_COLOR =
 		OptionsGui.PARAMETER_DYNAMIC.getDefaultColor();
 
-	private static int PARAM_LENGTH_WRAP_THRESHOLD = 80;
+	private static final String ELLIPSES = "...";
+	public static final int LINE_LENGTH = 80;
+	private static final int PARAM_LENGTH_WRAP_THRESHOLD = LINE_LENGTH;
+
+	// shorten the length, since the params may get wrapped and tabbed
+	private static final int PARAM_MAX_CHAR_LENGTH = LINE_LENGTH - 20;
+
+	// 13 params + plus the other function signature lines for around 15 lines
+	private static final int PARAM_COUNT_THRESHOLD = 13;
 
 	private ToolTipUtils() {
 		// utils class--no instance construction
@@ -56,12 +66,31 @@ public class ToolTipUtils {
 	 * Examines the give <code>dataType</code> and creates a tool tip for it, 
 	 * depending upon its actual class type.
 	 * 
+	 * <P>Note: the text returned here will be truncated as needed for the type of data.  To
+	 * get the full tool tip text, use {@link #getFullToolTipText(DataType)}.
+	 * 
 	 * @param  dataType The data type from which a tool tip will be 
 	 *         created.
 	 * @return tool tip text for the given data type.
 	 */
 	public static String getToolTipText(DataType dataType) {
 		return getHTMLRepresentation(dataType).getHTMLString();
+	}
+
+	/**
+	 * Examines the give <code>dataType</code> and creates a tool tip for it, 
+	 * depending upon its actual class type.
+	 * 
+	 * <P>Note: the text returned here will not be truncated.  This can result in tool tip windows
+	 * that are too large to fit in the screen.  For truncated tool tip text, use
+	 * {@link #getToolTipText(DataType)}.
+	 * 
+	 * @param  dataType The data type from which a tool tip will be 
+	 *         created.
+	 * @return tool tip text for the given data type.
+	 */
+	public static String getFullToolTipText(DataType dataType) {
+		return getHTMLRepresentation(dataType).getFullHTMLString();
 	}
 
 	/**
@@ -164,7 +193,9 @@ public class ToolTipUtils {
 		if (includeSymbolDetails) {
 			buf.append("Function");
 			buf.append(HTML_SPACE).append("-").append(HTML_SPACE);
-			buf.append(friendlyEncodeHTML(function.getSymbol().getName(true)));
+			String functionName = function.getSymbol().getName(true);
+			functionName = StringUtilities.trimMiddle(functionName, LINE_LENGTH);
+			buf.append(friendlyEncodeHTML(functionName));
 			if (extLoc != null) {
 				Address addr = extLoc.getAddress();
 				if (addr != null) {
@@ -180,16 +211,19 @@ public class ToolTipUtils {
 
 		buf.append("<table cellspacing=0 callpadding=0 border=0>");
 
-		buf.append(getParameterDetailRow(function.getReturn()));
+		buf.append(generateParameterDetailRow(function.getReturn()));
 		for (Parameter p : function.getParameters()) {
-			buf.append(getParameterDetailRow(p));
+			buf.append(generateParameterDetailRow(p));
 		}
 
 		if (extLoc != null) {
 			String originalImportedName = extLoc.getOriginalImportedName();
 			if (originalImportedName != null) {
-				buf.append("Imported").append(HTML_SPACE).append("Name:").append(HTML_SPACE).append(
-					friendlyEncodeHTML(originalImportedName));
+				buf.append("Imported")
+						.append(HTML_SPACE)
+						.append("Name:")
+						.append(HTML_SPACE)
+						.append(friendlyEncodeHTML(originalImportedName));
 			}
 		}
 
@@ -197,11 +231,34 @@ public class ToolTipUtils {
 		return buf.toString();
 	}
 
-	private static String getParameterDetailRow(Parameter param) {
+	private static String generateParameterDetailRow(Parameter param) {
+
+		String type = param.getDataType().getName();
+		String name = param.getName();
+		int length = type.length() + 1 + name.length();
+
+		//
+		// Bound the max width of the tooltip 
+		//
+		if (length > PARAM_MAX_CHAR_LENGTH) {
+			int half = PARAM_MAX_CHAR_LENGTH / 2;
+			int available = half;
+			if (type.length() > half) {
+				type = type.substring(0, half - 3) + ELLIPSES;
+			}
+			else {
+				available = PARAM_MAX_CHAR_LENGTH - type.length();
+			}
+
+			if (name.length() > available) {
+				name = name.substring(0, available - 3) + ELLIPSES;
+			}
+		}
+
 		StringBuilder buf = new StringBuilder();
 		buf.append("<tr><td width=10>&nbsp;</td>"); // indent
 		buf.append("<td width=\"1%\">");
-		buf.append(colorString(Color.BLACK, friendlyEncodeHTML(param.getDataType().getName())));
+		buf.append(colorString(Color.BLACK, friendlyEncodeHTML(type)));
 		buf.append("</td><td width=\"1%\">");
 		Color paramColor =
 			param.getFunction().hasCustomVariableStorage() ? PARAM_CUSTOM_STORAGE_COLOR
@@ -209,7 +266,7 @@ public class ToolTipUtils {
 		buf.append(
 			colorString(paramColor, friendlyEncodeHTML(param.getVariableStorage().toString())));
 		buf.append("</td><td width=\"1%\">");
-		buf.append(colorString(PARAM_NAME_COLOR, friendlyEncodeHTML(param.getName())));
+		buf.append(colorString(PARAM_NAME_COLOR, friendlyEncodeHTML(name)));
 
 		// consume remaining space and compact other columns
 		buf.append("</td><td width=\"100%\">&nbsp;</td></tr>");
@@ -227,23 +284,25 @@ public class ToolTipUtils {
 		 *  for pretty-printing; otherwise, they are merged into one string and emitted.  
 		 */
 
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buffy = new StringBuilder();
 		if (function.hasNoReturn()) {
-			buf.append("noreturn").append(HTML_SPACE);
+			buffy.append("noreturn").append(HTML_SPACE);
 		}
-		buf.append(friendlyEncodeHTML(function.getReturnType().getName()));
-		buf.append(HTML_SPACE);
+		buffy.append(friendlyEncodeHTML(function.getReturnType().getName()));
+		buffy.append(HTML_SPACE);
 		PrototypeModel callingConvention = function.getCallingConvention();
 		if (isNonDefaultCallingConvention(callingConvention)) {
-			buf.append(friendlyEncodeHTML(callingConvention.getName()));
-			buf.append(HTML_SPACE);
+			buffy.append(friendlyEncodeHTML(callingConvention.getName()));
+			buffy.append(HTML_SPACE);
 		}
-		buf.append(colorString(Color.BLUE, friendlyEncodeHTML(function.getName())));
-		buf.append(HTML_SPACE).append("(");
 
-		buildParameterPreview(function, buf);
+		String functionName = StringUtilities.trimMiddle(function.getName(), LINE_LENGTH);
+		buffy.append(colorString(Color.BLUE, friendlyEncodeHTML(functionName)));
+		buffy.append(HTML_SPACE).append("(");
 
-		return buf.toString();
+		buildParameterPreview(function, buffy);
+
+		return buffy.toString();
 	}
 
 	private static boolean isNonDefaultCallingConvention(PrototypeModel callingConvention) {
@@ -254,22 +313,13 @@ public class ToolTipUtils {
 		return !Function.DEFAULT_CALLING_CONVENTION_STRING.equals(callingConvention.getName());
 	}
 
-	private static void buildParameterPreview(Function function, StringBuffer bufffy) {
-		int rawTextLength = 0;
+	private static void buildParameterPreview(Function function, StringBuilder buffy) {
 
+		int rawTextLength = 0;
 		Parameter[] parameters = function.getParameters();
 		List<String> params = new ArrayList<>();
 		for (Parameter param : parameters) {
-			StringBuilder pb = new StringBuilder();
-			String type = param.getDataType().getName();
-			pb.append(colorString(Color.BLACK, friendlyEncodeHTML(type)));
-			pb.append(HTML_SPACE);
-
-			String name = param.getName();
-			pb.append(colorString(PARAM_NAME_COLOR, friendlyEncodeHTML(name)));
-			params.add(pb.toString());
-
-			rawTextLength += type.length() + 1 + name.length();
+			rawTextLength += generateParameterHtml(param, params);
 		}
 
 		if (function.hasVarArgs()) {
@@ -284,28 +334,73 @@ public class ToolTipUtils {
 		}
 
 		if (rawTextLength > PARAM_LENGTH_WRAP_THRESHOLD) {
-
-			StringBuilder psb = new StringBuilder("<table cellspacing=0 callpadding=0 border=0>");
-			for (int i = 0; i < params.size(); i++) {
-				String param = params.get(i);
-
-				// The first parameter is appended directly after the declaration
-				if (i == 0) {
-					bufffy.append(param).append(",");
-				}
-				else {
-					psb.append("<tr><td width=75px></td><td>");
-					psb.append(param).append(i < (params.size() - 1) ? ',' : ')');
-					psb.append("</td></tr>");
-				}
-			}
-			bufffy.append(psb.toString());
-			bufffy.append("</table>");
+			generateParameterTable(buffy, params);
 		}
 		else {
-			bufffy.append(StringUtils.join(params, "," + HTML_SPACE));
-			bufffy.append(')');
+			// inline parameter string
+			buffy.append(StringUtils.join(params, "," + HTML_SPACE));
+			buffy.append(')');
 		}
+	}
+
+	private static void generateParameterTable(StringBuilder buffy, List<String> params) {
+		StringBuilder psb = new StringBuilder("<table cellspacing=0 callpadding=0 border=0>");
+		for (int i = 0; i < params.size(); i++) {
+
+			String param = params.get(i);
+
+			// The first parameter is appended directly after the declaration
+			if (i == 0) {
+				buffy.append(param).append(",");
+			}
+			else {
+				psb.append("<tr><td width=75px></td><td>");
+				if (i == PARAM_COUNT_THRESHOLD) {
+					psb.append(ELLIPSES).append(')');
+					i = params.size(); // break
+				}
+				else {
+					psb.append(param).append(i < (params.size() - 1) ? ',' : ')');
+				}
+
+				psb.append("</td></tr>");
+			}
+		}
+		buffy.append(psb.toString());
+		buffy.append("</table>");
+	}
+
+	private static int generateParameterHtml(Parameter param, List<String> params) {
+		String type = param.getDataType().getName();
+		String name = param.getName();
+		int length = type.length() + 1 + name.length();
+		int rawTextLength = length;
+
+		//
+		// Bound the max width of the tooltip 
+		//
+		if (length > PARAM_MAX_CHAR_LENGTH) {
+			int half = PARAM_MAX_CHAR_LENGTH / 2;
+			int available = half;
+			if (type.length() > half) {
+				type = type.substring(0, half - 3) + ELLIPSES;
+			}
+			else {
+				available = PARAM_MAX_CHAR_LENGTH - type.length();
+			}
+
+			if (name.length() > available) {
+				name = name.substring(0, available - 3) + ELLIPSES;
+			}
+		}
+
+		StringBuilder pb = new StringBuilder();
+		pb.append(colorString(Color.BLACK, friendlyEncodeHTML(type)));
+		pb.append(HTML_SPACE);
+
+		pb.append(colorString(PARAM_NAME_COLOR, friendlyEncodeHTML(name)));
+		params.add(pb.toString());
+		return rawTextLength;
 	}
 
 }

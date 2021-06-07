@@ -530,7 +530,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			return;
 		}
 
-		String toolTipText = ToolTipUtils.getToolTipText(dataType);
+		String toolTipText = ToolTipUtils.getFullToolTipText(dataType);
 		String updated = HTMLUtilities.convertLinkPlaceholdersToHyperlinks(toolTipText);
 		previewPane.setText(updated);
 		previewPane.setCaretPosition(0);
