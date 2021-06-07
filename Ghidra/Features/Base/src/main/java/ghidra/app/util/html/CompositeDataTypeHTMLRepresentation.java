@@ -15,19 +15,22 @@
  */
 package ghidra.app.util.html;
 
-import static ghidra.util.HTMLUtilities.friendlyEncodeHTML;
+import static ghidra.util.HTMLUtilities.*;
 
 import java.awt.Color;
 import java.util.*;
 
+import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.datatype.DataTypeUrl;
 import ghidra.app.util.html.diff.*;
 import ghidra.program.model.data.*;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.StringUtilities;
 
 public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 
-	private static final int MAX_COMPONENT_COUNT = 100;
+	private static final int MAX_COMPONENT_COUNT = 1000;
+	private static final int MAX_LINE_COUNT = 15;
 
 	protected List<String> warningLines;
 	protected List<ValidatableLine> headerContent;
@@ -38,6 +41,8 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 	protected TextLine alignmentValueText;
 
 	protected static final String ALIGNMENT_VALUE_PREFIX = "Alignment: ";
+
+	private String truncatedHtmlData;
 
 	// private constructor for making diff copies
 	protected CompositeDataTypeHTMLRepresentation(List<String> warningLines,
@@ -52,8 +57,8 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 		this.alignmentText = alignmentText;
 		this.alignmentValueText = alignmentValue;
 
-		originalHTMLData = buildHTMLText(warningLines, header, displayName, bodyContent,
-			alignmentText, footerText, alignmentValueText);
+		originalHTMLData = buildHTMLText(false);
+		truncatedHtmlData = buildHTMLText(true);
 	}
 
 	public CompositeDataTypeHTMLRepresentation(Composite comp) {
@@ -72,8 +77,8 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 		displayName = new TextLine(type + comp.getDisplayName() + " ");
 		alignmentValueText = buildAlignmentValueText(comp);
 
-		originalHTMLData = buildHTMLText(warningLines, headerContent, displayName, bodyContent,
-			alignmentText, footerText, alignmentValueText);
+		originalHTMLData = buildHTMLText(false);
+		truncatedHtmlData = buildHTMLText(true);
 	}
 
 	protected List<String> buildWarnings(Composite comp) {
@@ -153,7 +158,7 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 			list.add(new DataTypeLine(fieldName, type, comment, locatableType, false));
 			if (count++ >= MAX_COMPONENT_COUNT) {
 				// Prevent a ridiculous number of components from consuming all memory.
-				list.add(new DataTypeLine("Warning: Too many components to display...", "", "",
+				list.add(new DataTypeLine("", "Warning: Too many components to display...", "",
 					null, false));
 				break;
 			}
@@ -174,104 +179,194 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 		return list;
 	}
 
-	private static String buildHTMLText(List<String> warningLines,
-			List<ValidatableLine> headerLines, TextLine displayName,
-			List<ValidatableLine> bodyLines, List<ValidatableLine> alignmentLines,
-			TextLine footerLine, TextLine alignmentValueLine) {
+	/**
+	 * Full html is not limited by the number of lines to display; the truncated html line
+	 * count is limited.  Truncated data will only be returned when the text is being trimmed.
+	 * @param trim true signals to truncate lines that are too long and to cap the maximum number
+	 *        of lines that can be displayed
+	 * @return the text
+	 */
+	private String buildHTMLText(boolean trim) {
 
-		StringBuilder buffy = new StringBuilder();
+		StringBuilder fullHtml = new StringBuilder();
+		StringBuilder truncatedHtml = new StringBuilder();
+		int lineCount = 0;
 
 		// warnings
 		Iterator<String> warnings = warningLines.iterator();
 		for (; warnings.hasNext();) {
 			String warning = warnings.next();
 			String warningLine = wrapStringInColor(warning, Color.RED);
-			buffy.append(warningLine).append(BR);
+
+			//@formatter:off
+			append(fullHtml, truncatedHtml, lineCount, warningLine, 
+                                                       BR,
+                                                       BR);
+			//@formatter:on
+			lineCount++;
 		}
 
+		//@formatter:off
+		append(fullHtml, truncatedHtml, lineCount, ALIGNMENT_VALUE_PREFIX,
+												   alignmentValueText.getText(), 
+												   BR);
+		append(fullHtml, truncatedHtml, lineCount, LENGTH_PREFIX,
+												   footerText.getText(), 
+												   BR);
+		append(fullHtml, truncatedHtml, lineCount, BR, BR);
+		//@formatter:on
+
 		// header
-		Iterator<ValidatableLine> iterator = headerLines.iterator();
+		Iterator<ValidatableLine> iterator = headerContent.iterator();
 		for (; iterator.hasNext();) {
 			TextLine line = (TextLine) iterator.next();
-			String headerLine = wrapStringInColor(line.getText(), line.getTextColor());
-			buffy.append(headerLine);
+			String text = line.getText();
+			if (trim) {
+				text = truncateAsNecessary(text);
+			}
+			String headerLine = wrapStringInColor(text, line.getTextColor());
+			append(fullHtml, truncatedHtml, lineCount, headerLine);
+			lineCount++;
 		}
 
 		// "<TT> displayName</TT> { "
-		String displayNameText = friendlyEncodeHTML(displayName.getText());
+		String name = displayName.getText();
+		if (trim) {
+			name = StringUtilities.trimMiddle(name, ToolTipUtils.LINE_LENGTH);
+		}
+		String displayNameText = friendlyEncodeHTML(name);
 		displayNameText = wrapStringInColor(displayNameText, displayName.getTextColor());
-		buffy.append(TT_OPEN).append(displayNameText).append(TT_CLOSE).append(HTML_SPACE).append(
-			"{").append(HTML_SPACE);
 
-		buffy.append("<TABLE BORDER=0 CELLSPACING=5 CELLPADDING=0>");
+		//@formatter:off
+		append(fullHtml, truncatedHtml, lineCount, TT_OPEN, 
+                                                   displayNameText,
+                                                   TT_CLOSE,
+                                                   HTML_SPACE,
+                                                   "{",
+                                                   HTML_SPACE);
+		//@formatter:on
+		lineCount++;
 
-		iterator = bodyLines.iterator();
-		for (int i = 0; iterator.hasNext(); i++) {
+		String tableOpen = "<TABLE BORDER=0 CELLSPACING=5 CELLPADDING=0>";
+		fullHtml.append(tableOpen);
+		truncatedHtml.append(tableOpen);
+
+		iterator = bodyContent.iterator();
+		for (; iterator.hasNext(); lineCount++) {
+
+			iterator.hasNext();
+
+			StringBuilder lineBuffer = new StringBuilder();
 			DataTypeLine line = (DataTypeLine) iterator.next();
-
-			String typeName = generateTypeName(line);
+			String typeName = generateTypeName(line, trim);
 			if (line.isFlexibleArray()) {
 				typeName += "[0]";
 			}
 
-			String fieldName = friendlyEncodeHTML(line.getName());
+			int fieldLength = ToolTipUtils.LINE_LENGTH / 2;
+			String fieldName = line.getName();
+			if (trim) {
+				fieldName = StringUtilities.trimMiddle(fieldName, fieldLength);
+			}
+			fieldName = friendlyEncodeHTML(fieldName);
 			fieldName = wrapStringInColor(fieldName, line.getNameColor());
 
-			int commentLength = MAX_CHARACTER_LENGTH; // give a little extra room for comments
-			String typeComment = truncateAsNecessary(line.getComment(), commentLength);
+			String typeComment = line.getComment();
+			if (trim) {
+				typeComment = truncateAsNecessary(typeComment, fieldLength);
+			}
 			typeComment = friendlyEncodeHTML(typeComment);
 			typeComment = wrapStringInColor(typeComment, line.getCommentColor());
 
 			// start the table row
-			buffy.append(TR_OPEN);
+			lineBuffer.append(TR_OPEN);
 
 			// the name column within the current row
-			buffy.append(TD_OPEN).append(TT_OPEN).append(TAB).append(typeName).append(
-				TT_CLOSE).append(TD_CLOSE);
+			lineBuffer.append(TD_OPEN)
+					.append(TT_OPEN)
+					.append(TAB)
+					.append(typeName)
+					.append(
+						TT_CLOSE)
+					.append(TD_CLOSE);
 
 			// data type name column
-			buffy.append(TD_OPEN).append(HTML_SPACE).append(fieldName).append(TD_CLOSE);
+			lineBuffer.append(TD_OPEN).append(HTML_SPACE).append(fieldName).append(TD_CLOSE);
 
 			// data type comment
-			buffy.append(TD_OPEN).append(HTML_SPACE).append(typeComment).append(HTML_SPACE).append(
-				TD_CLOSE);
+			lineBuffer.append(TD_OPEN)
+					.append(HTML_SPACE)
+					.append(typeComment)
+					.append(HTML_SPACE)
+					.append(
+						TD_CLOSE);
 
 			// close the row
-			buffy.append(TR_CLOSE);
+			lineBuffer.append(TR_CLOSE);
 
-			if (i > MAX_COMPONENTS) {
-// TODO: change to diff color if any of the ellipsed-out args are diffed                
-				// if ( cointains unmatching lines ( arguments, i ) )
-				// then make the ellipses the diff color                
+			String lineString = lineBuffer.toString();
+			append(fullHtml, truncatedHtml, lineCount, lineString);
+		}
 
-				buffy.append(TAB).append(ELLIPSES).append(BR);
-				break;
-			}
+		// show ellipses if needed; the truncated html is much shorter than the full html
+		if (lineCount >= MAX_LINE_COUNT) {
+			truncatedHtml.append(TAB).append(ELLIPSES).append(BR);
 		}
 
 		// Alignment
 		String alignmentLine = "";
-		Iterator<ValidatableLine> alignmentIterator = alignmentLines.iterator();
+		Iterator<ValidatableLine> alignmentIterator = alignmentText.iterator();
 		for (; alignmentIterator.hasNext();) {
 			TextLine line = (TextLine) alignmentIterator.next();
 			alignmentLine += HTML_SPACE + wrapStringInColor(line.getText(), line.getTextColor());
 		}
 
 		// close the table, the structure and then the HTML
-		buffy.append(TABLE_CLOSE).append("}").append(TT_OPEN).append(alignmentLine).append(
-			TT_CLOSE).append(BR);
+		StringBuilder trailingLines = new StringBuilder();
+		trailingLines.append(TABLE_CLOSE)
+				.append("}")
+				.append(TT_OPEN)
+				.append(alignmentLine)
+				.append(
+					TT_CLOSE)
+				.append(BR);
 
-		addAlignmentValue(alignmentValueLine.getText(), buffy);
-		addDataTypeLength(footerLine.getText(), buffy);
+		String trailingString = trailingLines.toString();
+		fullHtml.append(trailingString);
+		truncatedHtml.append(trailingString);
 
-		buffy.append(BR);
-
-		return buffy.toString();
+		if (trim) {
+			return truncatedHtml.toString();
+		}
+		return fullHtml.toString();
 	}
 
-	private static String generateTypeName(DataTypeLine line) {
+	private static void append(StringBuilder fullHtml, StringBuilder truncatedHtml,
+			int lineCount, String... content) {
 
-		String type = truncateAsNecessary(line.getType());
+		for (String string : content) {
+			fullHtml.append(string);
+		}
+
+		maybeAppend(truncatedHtml, lineCount, content);
+	}
+
+	private static void maybeAppend(StringBuilder buffer, int lineCount, String... content) {
+		if (lineCount > MAX_LINE_COUNT) {
+			return;
+		}
+
+		for (String string : content) {
+			buffer.append(string);
+		}
+	}
+
+	private static String generateTypeName(DataTypeLine line, boolean trim) {
+
+		String type = line.getType();
+		if (true) {
+			type = truncateAsNecessary(line.getType());
+		}
 		type = friendlyEncodeHTML(type);
 		type = wrapStringInColor(type, line.getTypeColor());
 
@@ -295,6 +390,18 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 		buffer.append(ALIGNMENT_VALUE_PREFIX + alignmentValueString);
 
 		return buffer;
+	}
+
+	// overridden to return truncated text by default
+	@Override
+	public String getHTMLString() {
+		return HTML_OPEN + truncatedHtmlData + HTML_CLOSE;
+	}
+
+	// overridden to return truncated text by default
+	@Override
+	public String getHTMLContentString() {
+		return truncatedHtmlData;
 	}
 
 	@Override
