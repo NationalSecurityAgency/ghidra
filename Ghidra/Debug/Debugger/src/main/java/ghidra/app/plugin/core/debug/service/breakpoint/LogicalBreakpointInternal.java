@@ -382,7 +382,7 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 				if (loc == null) {
 					continue;
 				}
-				actions.add(new EnableBreakpointActionItem(loc.getSpecification()));
+				actions.planEnable(loc);
 			}
 		}
 
@@ -401,7 +401,7 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 				if (!Objects.equals(spec.getKinds(), tKinds)) {
 					continue;
 				}
-				actions.add(new DisableBreakpointActionItem(spec));
+				actions.planDisable(loc);
 			}
 		}
 
@@ -420,10 +420,7 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 				if (!Objects.equals(spec.getKinds(), tKinds)) {
 					continue;
 				}
-				if (!(spec instanceof TargetDeletable)) {
-					continue;
-				}
-				actions.add(new DeleteBreakpointActionItem(spec));
+				actions.planDelete(loc);
 			}
 		}
 	}

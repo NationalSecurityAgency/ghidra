@@ -19,12 +19,63 @@ import java.util.LinkedHashSet;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.async.AsyncFence;
+import ghidra.dbg.target.*;
 
 /**
  * A de-duplicated collection of target breakpoint actions necessary to implement a logical
  * breakpoint action.
  */
 public class BreakpointActionSet extends LinkedHashSet<BreakpointActionItem> {
+
+	public EnableBreakpointActionItem planEnable(TargetBreakpointLocation loc) {
+		if (loc instanceof TargetTogglable) {
+			EnableBreakpointActionItem action =
+				new EnableBreakpointActionItem((TargetTogglable) loc);
+			add(action);
+			return action;
+		}
+		TargetBreakpointSpec spec = loc.getSpecification();
+		if (spec instanceof TargetTogglable) {
+			EnableBreakpointActionItem action = new EnableBreakpointActionItem(spec);
+			add(action);
+			return action;
+		}
+		return null;
+	}
+
+	public DisableBreakpointActionItem planDisable(TargetBreakpointLocation loc) {
+		if (loc instanceof TargetTogglable) {
+			DisableBreakpointActionItem action =
+				new DisableBreakpointActionItem((TargetTogglable) loc);
+			add(action);
+			return action;
+		}
+		TargetBreakpointSpec spec = loc.getSpecification();
+		if (spec instanceof TargetTogglable) {
+			DisableBreakpointActionItem action = new DisableBreakpointActionItem(spec);
+			add(action);
+			return action;
+		}
+		return null;
+	}
+
+	public DeleteBreakpointActionItem planDelete(TargetBreakpointLocation loc) {
+		if (loc instanceof TargetDeletable) {
+			DeleteBreakpointActionItem action =
+				new DeleteBreakpointActionItem((TargetDeletable) loc);
+			add(action);
+			return action;
+		}
+		TargetBreakpointSpec spec = loc.getSpecification();
+		if (spec instanceof TargetTogglable) {
+			DeleteBreakpointActionItem action =
+				new DeleteBreakpointActionItem((TargetDeletable) spec);
+			add(action);
+			return action;
+		}
+		return null;
+	}
+
 	/**
 	 * Carry out the actions in the order they were added
 	 * 

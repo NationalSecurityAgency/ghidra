@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.service.breakpoint;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.apache.commons.collections4.IteratorUtils;
@@ -32,6 +33,9 @@ import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.plugin.core.debug.service.breakpoint.LogicalBreakpointInternal.ProgramBreakpoint;
 import ghidra.app.services.*;
+import ghidra.dbg.target.TargetBreakpointLocation;
+import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.util.PathUtils;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.plugintool.*;
@@ -52,27 +56,26 @@ import ghidra.util.Swing;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
 
-@PluginInfo( //
-	shortDescription = "Debugger logical breakpoints service plugin", //
-	description = "Aggregates breakpoints from open programs and live traces", //
-	category = PluginCategoryNames.DEBUGGER, //
-	packageName = DebuggerPluginPackage.NAME, //
-	status = PluginStatus.RELEASED, //
-	eventsConsumed = { //
-		ProgramOpenedPluginEvent.class, //
-		ProgramClosedPluginEvent.class, //
-		TraceOpenedPluginEvent.class, //
-		TraceClosedPluginEvent.class, //
-	}, //
-	servicesRequired = { //
-		DebuggerTraceManagerService.class, //
-		DebuggerModelService.class, //
-		DebuggerStaticMappingService.class, //
-	}, //
-	servicesProvided = { //
-		DebuggerLogicalBreakpointService.class, //
-	} //
-)
+@PluginInfo(
+	shortDescription = "Debugger logical breakpoints service plugin",
+	description = "Aggregates breakpoints from open programs and live traces",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
+		ProgramOpenedPluginEvent.class,
+		ProgramClosedPluginEvent.class,
+		TraceOpenedPluginEvent.class,
+		TraceClosedPluginEvent.class,
+	},
+	servicesRequired = {
+		DebuggerTraceManagerService.class,
+		DebuggerModelService.class,
+		DebuggerStaticMappingService.class,
+	},
+	servicesProvided = {
+		DebuggerLogicalBreakpointService.class,
+	})
 public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		implements DebuggerLogicalBreakpointService {
 
@@ -1028,52 +1031,74 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 			(t, a) -> placeBreakpointAt(t, a, length, kinds));
 	}
 
-	@Override
-	public CompletableFuture<Void> enableAll(Collection<LogicalBreakpoint> col, Trace trace) {
+	protected CompletableFuture<Void> actOnAll(Collection<LogicalBreakpoint> col, Trace trace,
+			Consumer<LogicalBreakpoint> consumerForProgram,
+			BiConsumer<BreakpointActionSet, LogicalBreakpointInternal> consumerForTarget) {
 		BreakpointActionSet actions = new BreakpointActionSet();
 		for (LogicalBreakpoint lb : col) {
 			if (trace == null) {
-				lb.enableForProgram();
+				consumerForProgram.accept(lb);
 			}
 			if (!(lb instanceof LogicalBreakpointInternal)) {
 				continue;
 			}
 			LogicalBreakpointInternal lbi = (LogicalBreakpointInternal) lb;
-			lbi.planEnable(actions, trace);
+			consumerForTarget.accept(actions, lbi);
 		}
 		return actions.execute();
+	}
+
+	@Override
+	public CompletableFuture<Void> enableAll(Collection<LogicalBreakpoint> col, Trace trace) {
+		return actOnAll(col, trace, LogicalBreakpoint::enableForProgram,
+			(actions, lbi) -> lbi.planEnable(actions, trace));
 	}
 
 	@Override
 	public CompletableFuture<Void> disableAll(Collection<LogicalBreakpoint> col, Trace trace) {
+		return actOnAll(col, trace, LogicalBreakpoint::disableForProgram,
+			(actions, lbi) -> lbi.planDisable(actions, trace));
+	}
+
+	@Override
+	public CompletableFuture<Void> deleteAll(Collection<LogicalBreakpoint> col, Trace trace) {
+		return actOnAll(col, trace, LogicalBreakpoint::deleteForProgram,
+			(actions, lbi) -> lbi.planDelete(actions, trace));
+	}
+
+	protected CompletableFuture<Void> actOnLocs(Collection<TraceBreakpoint> col,
+			BiConsumer<BreakpointActionSet, TargetBreakpointLocation> consumer) {
 		BreakpointActionSet actions = new BreakpointActionSet();
-		for (LogicalBreakpoint lb : col) {
-			if (trace == null) {
-				lb.disableForProgram();
-			}
-			if (!(lb instanceof LogicalBreakpointInternal)) {
+		for (TraceBreakpoint tb : col) {
+			TraceRecorder recorder = modelService.getRecorder(tb.getTrace());
+			if (recorder == null) {
 				continue;
 			}
-			LogicalBreakpointInternal lbi = (LogicalBreakpointInternal) lb;
-			lbi.planDisable(actions, trace);
+			List<String> path = PathUtils.parse(tb.getPath());
+			TargetObject object = recorder.getTarget().getModel().getModelObject(path);
+			if (!(object instanceof TargetBreakpointLocation)) {
+				Msg.error(this, tb.getPath() + " is not a target breakpoint location");
+				continue;
+			}
+			TargetBreakpointLocation loc = (TargetBreakpointLocation) object;
+			consumer.accept(actions, loc);
 		}
 		return actions.execute();
 	}
 
 	@Override
-	public CompletableFuture<Void> deleteAll(Collection<LogicalBreakpoint> col, Trace trace) {
-		BreakpointActionSet actions = new BreakpointActionSet();
-		for (LogicalBreakpoint lb : col) {
-			if (trace == null) {
-				lb.deleteForProgram();
-			}
-			if (!(lb instanceof LogicalBreakpointInternal)) {
-				continue;
-			}
-			LogicalBreakpointInternal lbi = (LogicalBreakpointInternal) lb;
-			lbi.planDelete(actions, trace);
-		}
-		return actions.execute();
+	public CompletableFuture<Void> enableLocs(Collection<TraceBreakpoint> col) {
+		return actOnLocs(col, BreakpointActionSet::planEnable);
+	}
+
+	@Override
+	public CompletableFuture<Void> disableLocs(Collection<TraceBreakpoint> col) {
+		return actOnLocs(col, BreakpointActionSet::planDisable);
+	}
+
+	@Override
+	public CompletableFuture<Void> deleteLocs(Collection<TraceBreakpoint> col) {
+		return actOnLocs(col, BreakpointActionSet::planDelete);
 	}
 
 	@Override
