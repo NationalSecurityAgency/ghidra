@@ -26,6 +26,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.program.TraceProgramView;
 
@@ -181,6 +182,27 @@ public interface DebuggerLogicalBreakpointService {
 		return computeEnablement(col, loc);
 	}
 
+	default boolean anyMapped(Collection<LogicalBreakpoint> col, Trace trace) {
+		if (trace == null) {
+			return anyMapped(col);
+		}
+		for (LogicalBreakpoint lb : col) {
+			if (lb.getMappedTraces().contains(trace)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	default boolean anyMapped(Collection<LogicalBreakpoint> col) {
+		for (LogicalBreakpoint lb : col) {
+			if (!lb.getMappedTraces().isEmpty()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Create an enabled breakpoint at the given program location and each mapped live trace
 	 * location.
@@ -274,4 +296,28 @@ public interface DebuggerLogicalBreakpointService {
 	 * @return a future which completes when all associated specifications have been deleted
 	 */
 	CompletableFuture<Void> deleteAll(Collection<LogicalBreakpoint> col, Trace trace);
+
+	/**
+	 * Presuming the given locations are live, enable them
+	 * 
+	 * @param col the trace breakpoints
+	 * @return a future which completes when the command has been processed
+	 */
+	CompletableFuture<Void> enableLocs(Collection<TraceBreakpoint> col);
+
+	/**
+	 * Presuming the given locations are live, disable them
+	 * 
+	 * @param col the trace breakpoints
+	 * @return a future which completes when the command has been processed
+	 */
+	CompletableFuture<Void> disableLocs(Collection<TraceBreakpoint> col);
+
+	/**
+	 * Presuming the given locations are live, delete them
+	 * 
+	 * @param col the trace breakpoints
+	 * @return a future which completes when the command has been processed
+	 */
+	CompletableFuture<Void> deleteLocs(Collection<TraceBreakpoint> col);
 }

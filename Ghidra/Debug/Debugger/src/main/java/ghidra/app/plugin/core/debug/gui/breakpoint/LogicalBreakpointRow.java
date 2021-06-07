@@ -122,4 +122,16 @@ public class LogicalBreakpointRow {
 		}
 		return lb.getTraceBreakpoints().size();
 	}
+
+	/**
+	 * Check if it has mapped locations, regardless of whether those locations are present
+	 * 
+	 * @return true if mapped (or mappable), false if not.
+	 */
+	public boolean isMapped() {
+		if (provider.isFilterByCurrentTrace()) {
+			return lb.getMappedTraces().contains(provider.currentTrace);
+		}
+		return !lb.getMappedTraces().isEmpty();
+	}
 }
