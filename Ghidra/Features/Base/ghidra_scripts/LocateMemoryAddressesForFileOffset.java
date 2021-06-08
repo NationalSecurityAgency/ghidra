@@ -22,7 +22,7 @@
 //Ghidra comment)
 //@category Examples
 
-import java.util.Set;
+import java.util.List;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
@@ -36,12 +36,12 @@ public class LocateMemoryAddressesForFileOffset extends GhidraScript {
 	public void run() throws Exception {
 		long myFileOffset = getFileOffset();
 		Memory mem = currentProgram.getMemory();
-		Set<Address> addressSet = mem.locateAddressesForFileOffset(myFileOffset);
-		if (addressSet.isEmpty()) {
+		List<Address> addressList = mem.locateAddressesForFileOffset(myFileOffset);
+		if (addressList.isEmpty()) {
 			println("No memory address found for: " + Long.toHexString(myFileOffset));
 		}
-		else if (addressSet.size() == 1) {
-			Address address = addressSet.iterator().next();
+		else if (addressList.size() == 1) {
+			Address address = addressList.get(0);
 			processAddress(address, mem.getBlock(address).getName(), myFileOffset);
 
 		}
@@ -49,7 +49,7 @@ public class LocateMemoryAddressesForFileOffset extends GhidraScript {
 		//Let the user decide which address they want.
 		else {
 			println("Possible memory block:address are:");
-			for (Address addr : addressSet) {
+			for (Address addr : addressList) {
 				println(mem.getBlock(addr).getName() + ":" + addr.toString());
 			}
 		}
