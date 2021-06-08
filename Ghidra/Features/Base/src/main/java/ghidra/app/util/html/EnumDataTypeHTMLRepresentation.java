@@ -29,6 +29,8 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 
 	private static final int MAX_LINE_COUNT = 15;
 
+	private final Enum enumDataType;
+
 	protected List<ValidatableLine> headerContent;
 	protected List<ValidatableLine> bodyContent;
 	protected TextLine footerLine;
@@ -37,26 +39,34 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 	private static String truncatedHtmlData;
 
 	// private constructor for making diff copies
-	private EnumDataTypeHTMLRepresentation(List<ValidatableLine> headerLines, TextLine displayName,
+	private EnumDataTypeHTMLRepresentation(Enum enumDataType, List<ValidatableLine> headerLines,
+			TextLine displayName,
 			List<ValidatableLine> bodyContent, TextLine footerLine) {
+		this.enumDataType = enumDataType;
 		this.headerContent = headerLines;
 		this.displayName = displayName;
 		this.bodyContent = bodyContent;
 		this.footerLine = footerLine;
 
-		originalHTMLData = buildHTMLText(headerLines, displayName, bodyContent, footerLine, false);
+		originalHTMLData =
+			buildHTMLText(headerContent, displayName, bodyContent, footerLine, false);
+
+		List<ValidatableLine> trimmedBodyContent = buildContent(true);
+		truncatedHtmlData =
+			buildHTMLText(headerContent, displayName, trimmedBodyContent, footerLine, true);
 	}
 
 	public EnumDataTypeHTMLRepresentation(Enum enumDataType) {
+		this.enumDataType = enumDataType;
 		headerContent = buildHeaderText(enumDataType);
-		bodyContent = buildContent(enumDataType, false);
+		bodyContent = buildContent(false);
 		footerLine = buildFooterText(enumDataType);
 		displayName = new TextLine("enum " + enumDataType.getDisplayName());
 
 		originalHTMLData =
 			buildHTMLText(headerContent, displayName, bodyContent, footerLine, false);
 
-		List<ValidatableLine> trimmedBodyContent = buildContent(enumDataType, true);
+		List<ValidatableLine> trimmedBodyContent = buildContent(true);
 		truncatedHtmlData =
 			buildHTMLText(headerContent, displayName, trimmedBodyContent, footerLine, true);
 	}
@@ -83,7 +93,7 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 		return new EmptyTextLine(stringLength);
 	}
 
-	private List<ValidatableLine> buildContent(Enum enumDataType, boolean trim) {
+	private List<ValidatableLine> buildContent(boolean trim) {
 		long[] values = enumDataType.getValues();
 		Arrays.sort(values);
 
@@ -213,16 +223,16 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 			return completelyDifferentDiff(otherRepresentation);
 		}
 
-		EnumDataTypeHTMLRepresentation compositeRepresentation =
+		EnumDataTypeHTMLRepresentation enumRepresentation =
 			(EnumDataTypeHTMLRepresentation) otherRepresentation;
 
 		List<ValidatableLine> header = copyLines(headerContent);
 		List<ValidatableLine> body = copyLines(bodyContent);
 		TextLine diffDisplayName = new TextLine(displayName.getText());
 
-		List<ValidatableLine> otherHeader = copyLines(compositeRepresentation.headerContent);
-		List<ValidatableLine> otherBody = copyLines(compositeRepresentation.bodyContent);
-		TextLine otherDiffDisplayName = new TextLine(compositeRepresentation.displayName.getText());
+		List<ValidatableLine> otherHeader = copyLines(enumRepresentation.headerContent);
+		List<ValidatableLine> otherBody = copyLines(enumRepresentation.bodyContent);
+		TextLine otherDiffDisplayName = new TextLine(enumRepresentation.displayName.getText());
 
 		DataTypeDiff headerDiff =
 			DataTypeDiffBuilder.diffHeader(getDiffInput(header), getDiffInput(otherHeader));
@@ -233,10 +243,12 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 		diffTextLine(diffDisplayName, otherDiffDisplayName);
 
 		return new HTMLDataTypeRepresentation[] {
-			new EnumDataTypeHTMLRepresentation(headerDiff.getLeftLines(), diffDisplayName,
-				bodyDiff.getLeftLines(), footerLine),
-			new EnumDataTypeHTMLRepresentation(headerDiff.getRightLines(), otherDiffDisplayName,
-				bodyDiff.getRightLines(), compositeRepresentation.footerLine), };
+			new EnumDataTypeHTMLRepresentation(enumDataType, headerDiff.getLeftLines(),
+				diffDisplayName, bodyDiff.getLeftLines(), footerLine),
+			new EnumDataTypeHTMLRepresentation(enumRepresentation.enumDataType,
+				headerDiff.getRightLines(), otherDiffDisplayName, bodyDiff.getRightLines(),
+				enumRepresentation.footerLine)
+		};
 	}
 
 }

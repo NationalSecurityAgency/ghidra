@@ -30,7 +30,6 @@ import ghidra.util.exception.AssertException;
 
 public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 
-	private static final int MAX_CHAR_COUNT = 30;
 	private static final int MAX_LINE_COUNT = 10;
 
 	protected TextLine returnType;
@@ -50,7 +49,10 @@ public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentati
 		this.arguments = arguments;
 		this.varArgs = varArgs;
 		this.voidArgs = voidArgs;
+
 		originalHTMLData =
+			buildHTMLText(returnType, functionName, arguments, varArgs, voidArgs, false);
+		truncatedHtmlData =
 			buildHTMLText(returnType, functionName, arguments, varArgs, voidArgs, true);
 	}
 
@@ -235,19 +237,6 @@ public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentati
 		for (String string : content) {
 			fullHtml.append(string);
 			truncatedHtml.append(string);
-		}
-
-		//maybeAppend(truncatedHtml, lineCount, content);
-	}
-
-	private static void maybeAppend(StringBuilder buffer, int charCount, String... content) {
-		if (charCount > MAX_LINE_COUNT) {
-			return;
-		}
-
-		for (String string : content) {
-			String trimmed = StringUtilities.trimMiddle(string, MAX_CHAR_COUNT);
-			buffer.append(trimmed);
 		}
 	}
 

@@ -43,7 +43,10 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 		this.headerContent = headerLines;
 		this.bodyContent = bodyLines;
 
-		originalHTMLData = buildHTMLText(typeDef, warningLines, headerLines, bodyLines, false);
+		List<ValidatableLine> trimmedHeaderContent = buildHeaderText(typeDef, true);
+		List<ValidatableLine> trimmedBodyContent = buildBodyText(getBaseDataType(), true);
+		truncatedHtmlData =
+			buildHTMLText(typeDef, warningLines, trimmedHeaderContent, trimmedBodyContent, true);
 	}
 
 	public TypeDefDataTypeHTMLRepresentation(TypeDef typeDef) {
@@ -249,14 +252,14 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 		List<ValidatableLine> body = new ArrayList<>();
 
 		if (diffs != null) {
-			body.add(new TextLine(diffs[0].getHTMLContentString()));
+			body.add(new TextLine(diffs[0].getFullHTMLContentString()));
 		}
 
 		List<ValidatableLine> otherHeader = new ArrayList<>(typeDefRepresentation.headerContent);
 		List<ValidatableLine> otherBody = new ArrayList<>();
 
 		if (diffs != null) {
-			otherBody.add(new TextLine(diffs[1].getHTMLContentString()));
+			otherBody.add(new TextLine(diffs[1].getFullHTMLContentString()));
 		}
 
 		DataTypeDiff headerDiff =
