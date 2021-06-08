@@ -54,6 +54,9 @@ public class ArrayDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation 
 		this.footerContent = footerContent;
 
 		originalHTMLData = buildHTMLText(headerContent, bodyHtml, footerContent, false);
+
+		String trimmedBodyHtml = buildBodyHTML(true);
+		truncatedHtmlData = buildHTMLText(headerContent, trimmedBodyHtml, footerContent, true);
 	}
 
 	private DataType getBaseDataType() {
