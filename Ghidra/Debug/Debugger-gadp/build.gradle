@@ -94,3 +94,5 @@ sourceSets {
 		}
 	}
 }
+zipSourceSubproject.dependsOn generateProto
+

@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncLazyMap;
 import ghidra.async.AsyncLazyMap.KeyedFuture;
 import ghidra.async.AsyncUtils;
@@ -32,7 +31,7 @@ import ghidra.util.TriConsumer;
 
 public class RecorderComposedRegisterSet {
 
-	private TraceRecorder recorder;
+	private DefaultTraceRecorder recorder;
 
 	protected final TriConsumer<Boolean, Boolean, Void> listenerRegAccChanged =
 		this::registerAccessibilityChanged;
@@ -61,7 +60,7 @@ public class RecorderComposedRegisterSet {
 		});
 	}
 
-	public RecorderComposedRegisterSet(TraceRecorder recorder) {
+	public RecorderComposedRegisterSet(DefaultTraceRecorder recorder) {
 		this.recorder = recorder;
 	}
 

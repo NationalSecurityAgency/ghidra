@@ -19,6 +19,8 @@ apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
 apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
 apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javadoc.gradle"
+
 apply plugin: 'eclipse'
 
 eclipse.project.name = 'Features Decompiler'

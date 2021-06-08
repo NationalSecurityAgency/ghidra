@@ -17,24 +17,17 @@ package ghidra.pcodeCPort.slgh_compile;
 
 import java.io.*;
 import java.util.*;
-import java.util.Map.Entry;
 
-import org.antlr.runtime.*;
-import org.antlr.runtime.tree.CommonTreeNodeStream;
+import org.antlr.runtime.RecognitionException;
 import org.jdom.JDOMException;
 
 import generic.jar.ResourceFile;
-import generic.stl.IteratorSTL;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
-import ghidra.pcodeCPort.context.SleighError;
-import ghidra.sleigh.grammar.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
-import utilities.util.FileResolutionResult;
-import utilities.util.FileUtilities;
 
 /**
  * <code>SleighCompileLauncher</code> Sleigh compiler launch provider
@@ -45,24 +38,6 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 	public static final String FILE_OUT_DEFAULT_EXT = ".sla";
 	private static final FileFilter SLASPEC_FILTER =
 		pathname -> pathname.getName().endsWith(".slaspec");
-
-	private static void initCompiler(SleighCompile compiler, Map<String, String> preprocs,
-			boolean unnecessaryPcodeWarning, boolean lenientConflict, boolean allCollisionWarning,
-			boolean allNopWarning, boolean deadTempWarning, boolean unusedFieldWarning,
-			boolean enforceLocalKeyWord, boolean largeTemporaryWarning) {
-		Set<Entry<String, String>> entrySet = preprocs.entrySet();
-		for (Entry<String, String> entry : entrySet) {
-			compiler.setPreprocValue(entry.getKey(), entry.getValue());
-		}
-		compiler.setUnnecessaryPcodeWarning(unnecessaryPcodeWarning);
-		compiler.setLenientConflict(lenientConflict);
-		compiler.setLocalCollisionWarning(allCollisionWarning);
-		compiler.setAllNopWarning(allNopWarning);
-		compiler.setDeadTempWarning(deadTempWarning);
-		compiler.setUnusedFieldWarning(unusedFieldWarning);
-		compiler.setEnforceLocalKeyWord(enforceLocalKeyWord);
-		compiler.setLargeTemporaryWarning(largeTemporaryWarning);
-	}
 
 	@Override
 	public void launch(GhidraApplicationLayout layout, String[] args)
@@ -80,9 +55,9 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 	 * 
 	 * @param args sleigh compiler command line arguments
 	 * @return exit code (TODO: exit codes are not well defined)
-	 * @throws JDOMException
-	 * @throws IOException
-	 * @throws RecognitionException
+	 * @throws JDOMException for XML errors
+	 * @throws IOException for file access errors
+	 * @throws RecognitionException for parse errors
 	 */
 	public static int runMain(String[] args)
 			throws JDOMException, IOException, RecognitionException {
@@ -113,6 +88,7 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 			Msg.info(SleighCompile.class, "   -c                print warnings for all constructors with colliding operands");
 			Msg.info(SleighCompile.class, "   -f                print warnings for unused token fields");
 			Msg.info(SleighCompile.class, "   -o                print warnings for temporaries which are too large");
+			Msg.info(SleighCompile.class,  "  -s                treat register names as case sensitive");
 			Msg.info(SleighCompile.class, "   -DNAME=VALUE      defines a preprocessor macro NAME with value VALUE (option may be repeated)");
 			Msg.info(SleighCompile.class, "   -dMODULE          defines a preprocessor macro MODULE with a value of its module path (option may be repeated)");
 			Msg.info(SleighCompile.class, "   -i <options-file> inject options from specified file");
@@ -128,6 +104,7 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 		boolean enforceLocalKeyWord = false;
 		boolean unusedFieldWarning = false;
 		boolean largeTemporaryWarning = false;
+		boolean caseSensitiveRegisterNames = false;
 
 		int i;
 		for (i = 0; i < args.length; ++i) {
@@ -191,6 +168,9 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 			else if (args[i].charAt(1) == 'o') {
 				largeTemporaryWarning = true;
 			}
+			else if (args[i].charAt(1) == 's') {
+				caseSensitiveRegisterNames = true;
+			}
 			else if (args[i].charAt(1) == 'x') {
 				SleighCompile.yydebug = true; // Debug option
 			}
@@ -223,14 +203,14 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 			for (File input : visitor) {
 				System.out.println("Compiling " + input + ":");
 				SleighCompile compiler = new SleighCompile();
-				initCompiler(compiler, preprocs, unnecessaryPcodeWarning, lenientConflict,
+				compiler.setAllOptions(preprocs, unnecessaryPcodeWarning, lenientConflict,
 					allCollisionWarning, allNopWarning, deadTempWarning, unusedFieldWarning,
-					enforceLocalKeyWord, largeTemporaryWarning);
+					enforceLocalKeyWord, largeTemporaryWarning, caseSensitiveRegisterNames);
 
 				String outname = input.getName().replace(".slaspec", ".sla");
 				File output = new File(input.getParent(), outname);
 				retval =
-					run_compilation(input.getAbsolutePath(), output.getAbsolutePath(), compiler);
+					compiler.run_compilation(input.getAbsolutePath(), output.getAbsolutePath());
 				System.out.println();
 				if (retval != 0) {
 					++totalFailures;
@@ -252,9 +232,9 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 
 		// single file compile
 		SleighCompile compiler = new SleighCompile();
-		initCompiler(compiler, preprocs, unnecessaryPcodeWarning, lenientConflict,
+		compiler.setAllOptions(preprocs, unnecessaryPcodeWarning, lenientConflict,
 			allCollisionWarning, allNopWarning, deadTempWarning, unusedFieldWarning,
-			enforceLocalKeyWord, largeTemporaryWarning);
+			enforceLocalKeyWord, largeTemporaryWarning, caseSensitiveRegisterNames);
 		if (i == args.length) {
 			Msg.error(SleighCompile.class, "Missing input file name");
 			return 1;
@@ -280,7 +260,7 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 		}
 		fileout = baseOutName + FILE_OUT_DEFAULT_EXT;
 
-		return run_compilation(filein, fileout, compiler);
+		return compiler.run_compilation(filein, fileout);
 	}
 
 	private static String[] injectOptionsFromFile(String[] args, int index) {
@@ -324,133 +304,6 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 			list.add(args[i]);
 		}
 		return list.toArray(new String[list.size()]);
-	}
-
-	private static int run_compilation(String filein, String fileout, SleighCompile compiler)
-			throws IOException, RecognitionException {
-//        try {
-//            compiler.parseFromNewFile(filein);
-		//FileInputStream yyin = new FileInputStream(new File(filein));
-//		StringWriter output = new StringWriter();
-
-//            System.out.println(output.toString());
-//		UGLY_STATIC_GLOBAL_COMPILER = null; // Set global pointer up for parser
-
-//            SleighCompiler realCompiler = new SleighCompiler(new StringReader(output.toString()));
-
-		// too late for this because we snarf a token or two on constructor time?
-//            if (yydebug) {
-//                realCompiler.enable_tracing();
-//            } else {
-//                realCompiler.disable_tracing();
-//            }
-
-		LineArrayListWriter writer = new LineArrayListWriter();
-		ParsingEnvironment env = new ParsingEnvironment(writer);
-		try {
-			final SleighCompilePreprocessorDefinitionsAdapater definitionsAdapter =
-				new SleighCompilePreprocessorDefinitionsAdapater(compiler);
-			final File inputFile = new File(filein);
-			FileResolutionResult result = FileUtilities.existsAndIsCaseDependent(inputFile);
-			if (!result.isOk()) {
-				throw new BailoutException("input file \"" + inputFile +
-					"\" is not properly case dependent: " + result.getMessage());
-			}
-			SleighPreprocessor sp = new SleighPreprocessor(definitionsAdapter, inputFile);
-			sp.process(writer);
-
-			CharStream input = new ANTLRStringStream(writer.toString());
-			SleighLexer lex = new SleighLexer(input);
-			lex.setEnv(env);
-			UnbufferedTokenStream tokens = new UnbufferedTokenStream(lex);
-			SleighParser parser = new SleighParser(tokens);
-			parser.setEnv(env);
-			parser.setLexer(lex);
-			SleighParser.spec_return root = parser.spec();
-			/*ANTLRUtil.debugTree(root.getTree(),
-				new PrintStream(new FileOutputStream("blargh.tree")));*/
-			CommonTreeNodeStream nodes = new CommonTreeNodeStream(root.getTree());
-			nodes.setTokenStream(tokens);
-			// ANTLRUtil.debugNodeStream(nodes, System.out);
-			SleighCompiler walker = new SleighCompiler(nodes);
-
-			int parseres = -1;
-			try {
-				parseres = walker.root(env, compiler); // Try to parse
-			}
-			catch (SleighError e) {
-				compiler.reportError(e.location, e.getMessage());
-			}
-//                yyin.close();
-			if (parseres == 0) {
-				if (compiler.noplist.size() > 0) {
-					if (compiler.warnallnops) {
-						IteratorSTL<String> iter;
-						for (iter = compiler.noplist.begin(); !iter.isEnd(); iter.increment()) {
-							Msg.warn(SleighCompile.class, iter.get());
-						}
-					}
-					Msg.warn(SleighCompile.class,
-						compiler.noplist.size() + " NOP constructors found");
-					if (!compiler.warnallnops) {
-						Msg.warn(SleighCompile.class, "Use -n switch to list each individually");
-					}
-				}
-				compiler.process(); // Do all the post-processing
-			}
-			if ((parseres == 0) && (compiler.numErrors() == 0)) {
-				// If no errors
-//                    try {
-				PrintStream s = new PrintStream(new FileOutputStream(new File(fileout)));
-				compiler.saveXml(s); // Dump output xml
-				s.close();
-//                    }
-//                    catch (Exception e) {
-//                        throw new SleighError("Unable to open output file: "
-//                                + fileout);
-//                    }
-			}
-			else {
-				Msg.error(SleighCompile.class, "No output produced");
-				return 2;
-			}
-		}
-		catch (BailoutException e) {
-			Msg.error(SleighCompile.class, "Unrecoverable error(s), halting compilation", e);
-			return 3;
-		}
-		catch (NullPointerException e) {
-			Msg.error(SleighCompile.class, "Unrecoverable error(s), halting compilation", e);
-			return 4;
-		}
-		catch (PreprocessorException e) {
-			Msg.error(SleighCompile.class, e.getMessage());
-			Msg.error(SleighCompile.class, "Errors during preprocessing, halting compilation");
-			return 5;
-		}
-//            catch (LowlevelError err) {
-//                Msg.info(this, "Unrecoverable error: " + err.getMessage());
-//                err.printStackTrace();
-//                return 2;
-//            }
-//            catch (IOException e) {
-//                Msg.info(this, "Couldn't close file: " + e.getMessage());
-//                return 1;
-//            }
-//        }
-//        catch (FileNotFoundException e) {
-//            Msg.info(this, "Unable to open specfile: " + filein);
-//            return 2;
-//        }
-//        catch (IOException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        }
-//        catch (ParseException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        }
-		return 0;
 	}
 
 }

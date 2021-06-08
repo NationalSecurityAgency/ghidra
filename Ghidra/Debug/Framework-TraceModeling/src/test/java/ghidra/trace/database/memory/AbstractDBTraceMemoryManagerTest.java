@@ -719,7 +719,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 	@Test
 	public void testFindBytes() {
 		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			assertEquals(4, memory.putBytes(3, addr(0x4000), buf(1, 2, 3, 4)));
+			assertEquals(5, memory.putBytes(3, addr(0x4000), buf(1, 2, 3, 4, 5)));
 		}
 
 		try {
@@ -748,6 +748,11 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		// Too high
 		assertNull(
 			memory.findBytes(3, range(0x4001, 0x4004), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
+				true, TaskMonitor.DUMMY));
+
+		// Too high, into unknown
+		assertNull(
+			memory.findBytes(3, range(0x4001, 0x4005), buf(1, 2, 3, 4, 5), buf(-1, -1, -1, -1, -1),
 				true, TaskMonitor.DUMMY));
 
 		// Too low

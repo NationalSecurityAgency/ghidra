@@ -284,11 +284,13 @@ public class OptionalHeaderImpl implements OptionalHeader {
 
 	@Override
 	public void processDataDirectories(TaskMonitor monitor) throws IOException {
-		monitor.setMessage("Parsing exports...");
-
 		dataDirectory = new DataDirectory[numberOfRvaAndSizes];
-		int ndata = 0;
+		if (numberOfRvaAndSizes == 0) {
+			return;
+		}
 
+		int ndata = 0;
+		monitor.setMessage("Parsing exports...");
 		try {
 			dataDirectory[ndata] = ExportDataDirectory.createExportDataDirectory(ntHeader, reader);
 		}

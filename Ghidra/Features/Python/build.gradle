@@ -18,6 +18,7 @@ apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
 apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
 apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
 apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javadoc.gradle"
 apply plugin: 'eclipse'
 
 eclipse.project.name = 'Features Python'

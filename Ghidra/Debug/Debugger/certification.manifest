@@ -38,6 +38,7 @@ src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-mixed-ed.p
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoints-clear-all.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoints-disable-all.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoints-enable-all.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoints-make-effective.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerConsolePlugin/DebuggerConsolePlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerConsolePlugin/images/DebuggerConsolePlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerInterpreterPlugin/DebuggerInterpreterPlugin.html||GHIDRA||||END|

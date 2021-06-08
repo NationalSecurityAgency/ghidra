@@ -49,6 +49,7 @@ jar {
 }
 
 task configureNodepJar {
+	dependsOn(configurations.default)
 	doLast {
 		configurations.default.files.forEach {
 			if (filterJar(it)) {
@@ -69,6 +70,11 @@ task nodepJar(type: Jar) {
 	}
 
 	from(zipTree(jar.archivePath))
+	// TODO: This kind of stinks. I could probably apply some judicious excludes
+	// images I don't care.
+	// I probably must include duplicate LICENSE files, so that all are included
+	// IDK why the duplicate OSGi framework classes, but I probably don't care.
+	duplicatesStrategy = 'include'
 }
 
 test {

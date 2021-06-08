@@ -191,7 +191,7 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 			Collection<TraceBreakpointKind> kinds) {
 		for (TargetBreakpointLocation bl : bpts) {
 			String path = PathUtils.toString(bl.getPath());
-			recorder.parTx.execute("Breakpoint " + path + " toggled", () -> {
+			recorder.parTx.execute("Breakpoint " + path + " changed", () -> {
 				TraceBreakpoint traceBpt = recorder.getTraceBreakpoint(bl);
 				if (traceBpt == null) {
 					Msg.warn(this, "Cannot find toggled trace breakpoint for " + path);
@@ -210,7 +210,7 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 		spec.getLocations().thenAccept(bpts -> {
 			doBreakpointSpecChanged(snap, bpts, enabled, kinds);
 		}).exceptionally(ex -> {
-			Msg.error(this, "Error recording toggled breakpoint spec: " + spec.getJoinedPath("."),
+			Msg.error(this, "Error recording changed breakpoint spec: " + spec.getJoinedPath("."),
 				ex);
 			return null;
 		});

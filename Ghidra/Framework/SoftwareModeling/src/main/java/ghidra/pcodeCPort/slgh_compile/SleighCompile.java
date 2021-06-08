@@ -15,14 +15,13 @@
  */
 package ghidra.pcodeCPort.slgh_compile;
 
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import org.antlr.runtime.RecognitionException;
+import org.antlr.runtime.*;
+import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.jdom.JDOMException;
 
 import generic.stl.*;
@@ -39,8 +38,10 @@ import ghidra.pcodeCPort.space.*;
 import ghidra.pcodeCPort.utils.Utils;
 import ghidra.pcodeCPort.xml.DocumentStorage;
 import ghidra.program.model.lang.BasicCompilerSpec;
-import ghidra.sleigh.grammar.Location;
+import ghidra.sleigh.grammar.*;
 import ghidra.util.Msg;
+import utilities.util.FileResolutionResult;
+import utilities.util.FileUtilities;
 
 /**
  * <code>SleighCompile</code> provides the ability to compile Sleigh language module (e.g., *.slaspec)
@@ -50,7 +51,7 @@ public class SleighCompile extends SleighBase {
 
 	static boolean yydebug = false;
 
-	static boolean isLocationIsh(Object o) {
+	private static boolean isLocationIsh(Object o) {
 		if (o instanceof Location) {
 			return true;
 		}
@@ -225,48 +226,45 @@ public class SleighCompile extends SleighBase {
 	}
 
 	// Defines for the preprocessor
-	MapSTL<String, String> preproc_defines = new MapSTL<>(new SelfComparator<String>());
-	VectorSTL<FieldContext> contexttable = new VectorSTL<>();
-	Integer firstContextField = null;
-	VectorSTL<ConstructTpl> macrotable = new VectorSTL<>();
-	VectorSTL<ghidra.pcodeCPort.context.Token> tokentable = new VectorSTL<>();
-	VectorSTL<SubtableSymbol> tables = new VectorSTL<>();
-	VectorSTL<SectionSymbol> sections = new VectorSTL<>();
-	Constructor curct; // Current constructor being defined
-	MacroSymbol curmacro; // Current macro being defined
+	private MapSTL<String, String> preproc_defines = new MapSTL<>(new SelfComparator<String>());
+	private VectorSTL<FieldContext> contexttable = new VectorSTL<>();
+	private Integer firstContextField = null;
+	private VectorSTL<ConstructTpl> macrotable = new VectorSTL<>();
+	private VectorSTL<ghidra.pcodeCPort.context.Token> tokentable = new VectorSTL<>();
+	private VectorSTL<SubtableSymbol> tables = new VectorSTL<>();
+	private VectorSTL<SectionSymbol> sections = new VectorSTL<>();
+	private Constructor curct; // Current constructor being defined
+	private MacroSymbol curmacro; // Current macro being defined
 
 	// If the context layout has been established yet
-	boolean contextlock;
+	private boolean contextlock;
 
 	// Stack of current files being parsed
 //    VectorSTL<String> filename = new VectorSTL<String>();
-	String filename;
 
 	// Current line number for each file in stack
 //    VectorSTL<Integer> lineno = new VectorSTL<Integer>(); 
-	int lineno;
-	int linenoDifferential;
 
-	int userop_count; // Number of userops defined
+	private int userop_count; // Number of userops defined
 
-	boolean warnunnecessarypcode;	// True if we warn of unnecessary ZEXT or SEXT
-	boolean warndeadtemps;		// True if we warn of temporaries that are written but not read
-	boolean warnunusedfields;   // True if fields are defined but not used
-	boolean enforcelocalkeyword;  // Force slaspec to use 'local' keyword when defining temporary varnodes
-	boolean lenientconflicterrors; // True if we ignore most pattern conflict errors
-	boolean largetemporarywarning; // True if we warn about temporaries larger than SleighBase.MAX_UNIQUE_SIZE
-	public boolean warnalllocalcollisions;
-	public boolean warnallnops;
-	public VectorSTL<String> noplist = new VectorSTL<>();
+	private boolean warnunnecessarypcode;	// True if we warn of unnecessary ZEXT or SEXT
+	private boolean warndeadtemps;		// True if we warn of temporaries that are written but not read
+	private boolean warnunusedfields;   // True if fields are defined but not used
+	private boolean lenientconflicterrors; // True if we ignore most pattern conflict errors
+	private boolean largetemporarywarning; // True if we warn about temporaries larger than SleighBase.MAX_UNIQUE_SIZE
+	private boolean warnalllocalcollisions;	// True if local export collisions generate individual warnings
+	private boolean warnallnops;		// True if pcode NOPs generate individual warnings
+	private boolean failinsensitivedups;	// True if case insensitive register duplicates cause error
+	private VectorSTL<String> noplist = new VectorSTL<>();
 
-	public Deque<WithBlock> withstack = new LinkedList<>();
+	private Deque<WithBlock> withstack = new LinkedList<>();
 
-	int errors;
-	int warnings;
+	private int errors;
+	private int warnings;
 
 	// Define the "pre" defined spaces and symbols
 	// This must happen after endian has been defined
-	void predefinedSymbols() {
+	private void predefinedSymbols() {
 		entry("predefinedSymbols");
 		symtab.addScope(); // Create global scope
 
@@ -327,14 +325,14 @@ public class SleighCompile extends SleighBase {
 		return res;
 	}
 
-	SectionVector standaloneSection(ConstructTpl main) {
+	protected SectionVector standaloneSection(ConstructTpl main) {
 		entry("standaloneSection", main);
 		// Create SectionVector for just the main rtl section with no named sections
 		SectionVector res = new SectionVector(main, symtab.getCurrentScope());
 		return res;
 	}
 
-	SectionVector firstNamedSection(ConstructTpl main, SectionSymbol sym) {
+	protected SectionVector firstNamedSection(ConstructTpl main, SectionSymbol sym) {
 		entry("firstNamedSection", main);
 		// Start the first named p-code section after the main p-code section
 		sym.incrementDefineCount();
@@ -349,7 +347,8 @@ public class SleighCompile extends SleighBase {
 		return res;
 	}
 
-	SectionVector nextNamedSection(SectionVector vec, ConstructTpl section, SectionSymbol sym) {
+	protected SectionVector nextNamedSection(SectionVector vec, ConstructTpl section,
+			SectionSymbol sym) {
 		entry("nextNamedSection", vec, section, sym);
 		// Add additional named p-code sections
 		sym.incrementDefineCount();
@@ -365,7 +364,7 @@ public class SleighCompile extends SleighBase {
 		return vec;
 	}
 
-	SectionVector finalNamedSection(SectionVector vec, ConstructTpl section) {
+	protected SectionVector finalNamedSection(SectionVector vec, ConstructTpl section) {
 		entry("finalNamedSection", vec, section);
 		// Fill-in final named section to match the previous SectionSymbol
 		vec.append(section, symtab.getCurrentScope());
@@ -373,7 +372,7 @@ public class SleighCompile extends SleighBase {
 		return vec;
 	}
 
-	int calcContextVarLayout(int start, int sz, int numbits) {
+	private int calcContextVarLayout(int start, int sz, int numbits) {
 		entry("calcContextVarLayout", start, sz, numbits);
 		VarnodeSymbol sym = contexttable.get(start).sym;
 		FieldQuality qual;
@@ -390,7 +389,7 @@ public class SleighCompile extends SleighBase {
 		i = 0;
 		while (i < sz) {
 
-			qual = contexttable.get(i).qual;
+			qual = contexttable.get(i + start).qual;
 			int min = qual.low;
 			int max = qual.high;
 			if (max - min > (8 * 4)) {
@@ -409,7 +408,7 @@ public class SleighCompile extends SleighBase {
 			j = i + 1;
 			// Find union of fields overlapping with first field
 			while (j < sz) {
-				qual = contexttable.get(j).qual;
+				qual = contexttable.get(j + start).qual;
 				if (qual.low <= max) { // We have overlap of context variables
 					if (qual.high > max) {
 						max = qual.high;
@@ -434,7 +433,7 @@ public class SleighCompile extends SleighBase {
 			numbits += alloc;
 
 			for (; i < j; ++i) {
-				qual = contexttable.get(i).qual;
+				qual = contexttable.get(i + start).qual;
 				int l = qual.low - min + low;
 				int h = numbits - 1 - (max - qual.high);
 				ContextField field = new ContextField(qual.location, qual.signext, l, h);
@@ -450,7 +449,7 @@ public class SleighCompile extends SleighBase {
 		return numbits;
 	}
 
-	void buildDecisionTrees() {
+	private void buildDecisionTrees() {
 		entry("buildDecisionTrees");
 		DecisionProperties props = new DecisionProperties();
 		root.buildDecisionTree(props);
@@ -474,7 +473,7 @@ public class SleighCompile extends SleighBase {
 		}
 	}
 
-	void buildPatterns() {
+	private void buildPatterns() {
 		entry("buildPatterns");
 		if (root == null) {
 			reportError(null, "No patterns to match--could not find any constructors");
@@ -496,16 +495,16 @@ public class SleighCompile extends SleighBase {
 		}
 	}
 
-	void checkConsistency() {
+	private void checkConsistency() {
 		entry("checkConsistency");
-		ConsistencyChecker checker =
-			new ConsistencyChecker(this, root, warnunnecessarypcode, warndeadtemps, largetemporarywarning);
+		ConsistencyChecker checker = new ConsistencyChecker(this, root, warnunnecessarypcode,
+			warndeadtemps, largetemporarywarning);
 
-		if (!checker.test()) {
+		if (!checker.testSizeRestrictions()) {
 			errors += 1;
 			return;
 		}
-		if (!checker.testTruncations(isBigEndian())) {
+		if (!checker.testTruncations()) {
 			errors += 1;
 			return;
 		}
@@ -524,14 +523,17 @@ public class SleighCompile extends SleighBase {
 				" operations wrote to temporaries that were not read");
 			reportWarning(null, "Use -t switch to list each individually");
 		}
+		checker.testLargeTemporary();
 		if ((!largetemporarywarning) && checker.getNumLargeTemporaries() > 0) {
-			reportWarning(null, checker.getNumLargeTemporaries() + 
-				" constructors contain temporaries larger than " + SleighBase.MAX_UNIQUE_SIZE + " bytes.");
+			reportWarning(null,
+				checker.getNumLargeTemporaries() +
+					" constructors contain temporaries larger than " + SleighBase.MAX_UNIQUE_SIZE +
+					" bytes.");
 			reportWarning(null, "Use -o switch to list each individually.");
-		} 
+		}
 	}
 
-	static int findCollision(Map<Long, Integer> local2Operand, ArrayList<Long> locals,
+	private static int findCollision(Map<Long, Integer> local2Operand, ArrayList<Long> locals,
 			int operand) {
 		Integer boxOperand = Integer.valueOf(operand);
 		for (Long local : locals) {
@@ -545,7 +547,7 @@ public class SleighCompile extends SleighBase {
 		return -1;
 	}
 
-	boolean checkLocalExports(Constructor ct) {
+	private boolean checkLocalExports(Constructor ct) {
 		if (ct.getTempl() == null) {
 			return true;		// No template, collisions impossible
 		}
@@ -556,9 +558,9 @@ public class SleighCompile extends SleighBase {
 			return true;		// Collisions can only happen with multiple operands
 		}
 		boolean noCollisions = true;
-		Map<Long, Integer> collect = new TreeMap<Long, Integer>();
+		Map<Long, Integer> collect = new TreeMap<>();
 		for (int i = 0; i < ct.getNumOperands(); ++i) {
-			ArrayList<Long> newCollect = new ArrayList<Long>();
+			ArrayList<Long> newCollect = new ArrayList<>();
 			ct.getOperand(i).collectLocalValues(newCollect);
 			if (newCollect.isEmpty()) {
 				continue;
@@ -578,7 +580,7 @@ public class SleighCompile extends SleighBase {
 		return noCollisions;
 	}
 
-	void checkLocalCollisions() {
+	private void checkLocalCollisions() {
 		int collisionCount = 0;
 		SubtableSymbol sym = root;	// Start with the instruction table
 		int i = -1;
@@ -604,8 +606,53 @@ public class SleighCompile extends SleighBase {
 		}
 	}
 
+	private void checkNops() {
+		if (noplist.size() > 0) {
+			if (warnallnops) {
+				IteratorSTL<String> iter;
+				for (iter = noplist.begin(); !iter.isEnd(); iter.increment()) {
+					Msg.warn(SleighCompile.class, iter.get());
+				}
+			}
+			Msg.warn(SleighCompile.class, noplist.size() + " NOP constructors found");
+			if (!warnallnops) {
+				Msg.warn(SleighCompile.class, "Use -n switch to list each individually");
+			}
+		}
+	}
+
+	private void checkCaseSensitivity() {
+		if (!failinsensitivedups) {
+			return;		// Case insensitive duplicates don't cause error
+		}
+		HashMap<String, SleighSymbol> registerMap = new HashMap<>();
+		SymbolScope scope = symtab.getGlobalScope();
+		IteratorSTL<SleighSymbol> iter;
+		for (iter = scope.begin(); !iter.isEnd(); iter.increment()) {
+			SleighSymbol sym = iter.get();
+			if (!(sym instanceof VarnodeSymbol)) {
+				continue;
+			}
+			VarnodeSymbol vsym = (VarnodeSymbol) sym;
+			AddrSpace space = vsym.getFixedVarnode().space;
+			if (space.getType() != spacetype.IPTR_PROCESSOR) {
+				continue;
+			}
+			String nm = sym.getName().toUpperCase();
+			SleighSymbol oldsym = registerMap.putIfAbsent(nm, sym);
+			if (oldsym != null) {	// Name already existed
+				StringBuilder buffer = new StringBuilder();
+				buffer.append("Name collision: ").append(sym.getName()).append(" --- ");
+				Location oldLocation = oldsym.getLocation();
+				buffer.append("Duplicate symbol ").append(oldsym.getName()).append(" defined at ");
+				buffer.append(oldLocation);
+				reportError(sym.getLocation(), buffer.toString());
+			}
+		}
+	}
+
 	// Make sure label symbols are used properly
-	String checkSymbols(SymbolScope scope) {
+	private String checkSymbols(SymbolScope scope) {
 		entry("checkSymbols", scope);
 		List<String> symbolErrors = new ArrayList<>();
 		IteratorSTL<SleighSymbol> iter;
@@ -628,7 +675,7 @@ public class SleighCompile extends SleighBase {
 	}
 
 	// Make sure symbol table errors are caught
-	int addSymbol(SleighSymbol sym) {
+	protected int addSymbol(SleighSymbol sym) {
 		entry("addSymbol", sym);
 		int id = -1;
 		try {
@@ -648,7 +695,9 @@ public class SleighCompile extends SleighBase {
 		errors = 0;
 		warnunnecessarypcode = false;
 		lenientconflicterrors = true;
+		largetemporarywarning = false;
 		warnallnops = false;
+		failinsensitivedups = true;
 		root = null;
 		pcode.resetLabelCount();
 	}
@@ -689,63 +738,69 @@ public class SleighCompile extends SleighBase {
 		return warnings;
 	}
 
-	long getUniqueAddr() {
+	protected long getUniqueAddr() {
 		entry("getUniqueAddr");
 		long base = getUniqueBase();
-		setUniqueBase(base + MAX_UNIQUE_SIZE); 
+		setUniqueBase(base + MAX_UNIQUE_SIZE);
 		return base;
 	}
 
-	void setUnnecessaryPcodeWarning(boolean val) {
+	public void setUnnecessaryPcodeWarning(boolean val) {
 		entry("setUnecessaryPcodeWarning", val);
 		warnunnecessarypcode = val;
 	}
 
-	void setDeadTempWarning(boolean val) {
+	public void setDeadTempWarning(boolean val) {
 		entry("setDeadTempWarning", val);
 		warndeadtemps = val;
 	}
 
-	void setUnusedFieldWarning(boolean val) {
+	public void setUnusedFieldWarning(boolean val) {
 		entry("setUnusedFieldWarning", val);
 		warnunusedfields = val;
 	}
 
-	void setEnforceLocalKeyWord(boolean val) {
+	public void setEnforceLocalKeyWord(boolean val) {
 		entry("setEnforceLocalKeyWord", val);
-		enforcelocalkeyword = val;
 		pcode.setEnforceLocalKey(val);
 	}
-	
+
 	/**
 	 * Sets whether or not to print out warning info about
 	 * {@link Constructor}s which reference varnodes in the
 	 * unique space larger than {@link SleighBase#MAX_UNIQUE_SIZE}.
 	 * @param val whether to print info about contructors using large varnodes
 	 */
-	void setLargeTemporaryWarning(boolean val) {
-		entry("setLargeTemporaryWarning",val);
+	public void setLargeTemporaryWarning(boolean val) {
+		entry("setLargeTemporaryWarning", val);
 		largetemporarywarning = val;
 	}
 
-	void setLenientConflict(boolean val) {
+	public void setLenientConflict(boolean val) {
 		entry("setLenientConflict", val);
 		lenientconflicterrors = val;
 	}
 
-	void setLocalCollisionWarning(boolean val) {
+	public void setLocalCollisionWarning(boolean val) {
 		entry("setLocalCollisionWarning", val);
 		warnalllocalcollisions = val;
 	}
 
-	void setAllNopWarning(boolean val) {
+	public void setAllNopWarning(boolean val) {
 		entry("setAllNopWarning", val);
 		warnallnops = val;
 	}
 
+	public void setInsensitiveDuplicateError(boolean val) {
+		entry("setInsensitiveDuplicateError", val);
+		failinsensitivedups = val;
+	}
+
 	// Do all post processing on the parsed data structures
-	public void process() {
+	private void process() {
 		entry("process");
+		checkNops();
+		checkCaseSensitivity();
 		if (getDefaultSpace() == null) {
 			reportError(null, "No default space specified");
 		}
@@ -768,7 +823,7 @@ public class SleighCompile extends SleighBase {
 		if (errors > 0) {
 			return;
 		}
-		ArrayList<SleighSymbol> errorPairs = new ArrayList<SleighSymbol>();
+		ArrayList<SleighSymbol> errorPairs = new ArrayList<>();
 		buildXrefs(errorPairs);			// Make sure we can build crossrefs properly
 		if (!errorPairs.isEmpty()) {
 			for (int i = 0; i < errorPairs.size(); i += 2) {
@@ -816,25 +871,7 @@ public class SleighCompile extends SleighBase {
 		contexttable.clear();
 	}
 
-	private static final Pattern PREPROCPOS = Pattern.compile("%%%(.*)\b(\\d+)%%%");
-
-	public void setPosition(String pos, int presumedLineno) {
-		Matcher m;
-		if ((m = PREPROCPOS.matcher(pos)).matches()) {
-			filename = m.group(1);
-			lineno = Integer.parseInt(m.group(2));
-			this.linenoDifferential = lineno - presumedLineno;
-		}
-		else {
-			throw new RuntimeException("couldn't parse position '" + pos + "'");
-		}
-	}
-
-	public void setLineno(int presumedLineno) {
-		lineno = presumedLineno + linenoDifferential;
-	}
-
-	Pair<Boolean, String> getPreprocValue(String nm) {
+	public Pair<Boolean, String> getPreprocValue(String nm) {
 		IteratorSTL<Pair<String, String>> iter = preproc_defines.find(nm);
 		if (iter.isEnd()) {
 			return new Pair<>(false, null);
@@ -842,11 +879,11 @@ public class SleighCompile extends SleighBase {
 		return new Pair<>(true, iter.get().second);
 	}
 
-	void setPreprocValue(String nm, String value) {
+	public void setPreprocValue(String nm, String value) {
 		preproc_defines.put(nm, value);
 	}
 
-	boolean undefinePreprocValue(String nm) {
+	public boolean undefinePreprocValue(String nm) {
 		IteratorSTL<Pair<String, String>> iter = preproc_defines.find(nm);
 		if (iter.isEnd()) {
 			return false;
@@ -1281,7 +1318,7 @@ public class SleighCompile extends SleighBase {
 
 	// Match up any qualities of the macro's OperandSymbols with
 	// any OperandSymbol passed into the macro
-	void compareMacroParams(MacroSymbol sym, VectorSTL<ExprTree> param) {
+	public void compareMacroParams(MacroSymbol sym, VectorSTL<ExprTree> param) {
 		entry("compareMacroParams", sym, param);
 		for (int i = 0; i < param.size(); ++i) {
 			VarnodeTpl outvn = param.get(i).outvn;
@@ -1352,7 +1389,7 @@ public class SleighCompile extends SleighBase {
 	}
 
 	// Reset set state after a an error in previous constructor
-	void resetConstructors() {
+	protected void resetConstructors() {
 		entry("resetConstructors");
 		symtab.setCurrentScope(symtab.getGlobalScope()); // Purge any
 		// dangling local
@@ -1361,7 +1398,7 @@ public class SleighCompile extends SleighBase {
 
 	// Find a defining instance of the local variable
 	// with given -offset-
-	private static VarnodeTpl find_size(ConstTpl offset, ConstructTpl ct) {
+	private static VarnodeTpl findSize(ConstTpl offset, ConstructTpl ct) {
 		entry("find_size", offset, ct);
 		VectorSTL<OpTpl> ops = ct.getOpvec();
 		VarnodeTpl vn;
@@ -1386,7 +1423,7 @@ public class SleighCompile extends SleighBase {
 	}
 
 	// Look for zero size temps in export statement
-	private static boolean force_exportsize(ConstructTpl ct) {
+	private static boolean forceExportSize(ConstructTpl ct) {
 		entry("force_exportsize", ct);
 		HandleTpl result = ct.getResult();
 		if (result == null) {
@@ -1396,14 +1433,14 @@ public class SleighCompile extends SleighBase {
 		VarnodeTpl vt;
 
 		if (result.getPtrSpace().isUniqueSpace() && result.getPtrSize().isZero()) {
-			vt = find_size(result.getPtrOffset(), ct);
+			vt = findSize(result.getPtrOffset(), ct);
 			if (vt == null) {
 				return false;
 			}
 			result.setPtrSize(vt.getSize());
 		}
 		else if (result.getSpace().isUniqueSpace() && result.getSize().isZero()) {
-			vt = find_size(result.getPtrOffset(), ct);
+			vt = findSize(result.getPtrOffset(), ct);
 			if (vt == null) {
 				return false;
 			}
@@ -1412,7 +1449,7 @@ public class SleighCompile extends SleighBase {
 		return true;
 	}
 
-	boolean expandMacros(ConstructTpl ctpl) {
+	private boolean expandMacros(ConstructTpl ctpl) {
 		VectorSTL<OpTpl> vec = ctpl.getOpvec();
 		VectorSTL<OpTpl> newvec = new VectorSTL<>();
 		IteratorSTL<OpTpl> iter;
@@ -1442,7 +1479,7 @@ public class SleighCompile extends SleighBase {
 		return true;
 	}
 
-	boolean finalizeSections(Constructor big, SectionVector vec) {
+	private boolean finalizeSections(Constructor big, SectionVector vec) {
 		entry("finalizeSections", big, vec);
 		// Do all final checks, expansions, and linking for p-code sections
 		VectorSTL<String> myErrors = new VectorSTL<>();
@@ -1485,7 +1522,7 @@ public class SleighCompile extends SleighBase {
 					if (big.getParent() == root) {
 						myErrors.push_back("   Cannot have export statement in root constructor");
 					}
-					else if (!force_exportsize(cur.section)) {
+					else if (!forceExportSize(cur.section)) {
 						myErrors.push_back("   Size of export is unknown");
 					}
 				}
@@ -1523,7 +1560,7 @@ public class SleighCompile extends SleighBase {
 		return true;
 	}
 
-	void shiftUniqueVn(VarnodeTpl vn, int sa) {
+	private static void shiftUniqueVn(VarnodeTpl vn, int sa) {
 		entry("shiftUniqueVn", vn, sa);
 		// If the varnode is in the unique space, shift its offset up by -sa- bits
 		if (vn.getSpace().isUniqueSpace() &&
@@ -1534,7 +1571,7 @@ public class SleighCompile extends SleighBase {
 		}
 	}
 
-	void shiftUniqueOp(OpTpl op, int sa) {
+	private static void shiftUniqueOp(OpTpl op, int sa) {
 		entry("shiftUniqueOp", op, sa);
 		// Shift the offset up by -sa- bits for any varnode used by this -op- in the unique space
 		VarnodeTpl outvn = op.getOut();
@@ -1546,7 +1583,7 @@ public class SleighCompile extends SleighBase {
 		}
 	}
 
-	void shiftUniqueHandle(HandleTpl hand, int sa) {
+	private static void shiftUniqueHandle(HandleTpl hand, int sa) {
 		entry("shiftUniqueHandle", hand, sa);
 		// Shift the offset up by -sa- bits, for either the dynamic or static varnode aspects that are in the unique space
 		if (hand.getSpace().isUniqueSpace() &&
@@ -1571,7 +1608,7 @@ public class SleighCompile extends SleighBase {
 		}
 	}
 
-	void shiftUniqueConstruct(ConstructTpl tpl, int sa) {
+	private static void shiftUniqueConstruct(ConstructTpl tpl, int sa) {
 		entry("shiftUniqueConstruct", tpl, sa);
 		// Shift the offset up by -sa- bits, for any varnode in the unique space associated with this template
 		HandleTpl result = tpl.getResult();
@@ -1584,7 +1621,7 @@ public class SleighCompile extends SleighBase {
 		}
 	}
 
-	void checkUniqueAllocation() {
+	private void checkUniqueAllocation() {
 		// With crossbuilds,  temporaries may need to survive across instructions in a packet, so here we
 		// provide space in the offset of the temporary (within the unique space) so that the run-time sleigh
 		// engine can alter the value to prevent collisions with other nearby instructions
@@ -1623,7 +1660,7 @@ public class SleighCompile extends SleighBase {
 		setUniqueBase(ubase);
 	}
 
-	void checkFieldUsage() {
+	private void checkFieldUsage() {
 		if (warnunusedfields) {
 			VectorSTL<SleighSymbol> unsoughtSymbols = symtab.getUnsoughtSymbols();
 			IteratorSTL<SleighSymbol> siter;
@@ -1715,6 +1752,93 @@ public class SleighCompile extends SleighBase {
 
 	@Override
 	public int printAssembly(PrintStream s, int size, Address baseaddr) {
+		return 0;
+	}
+
+	public void setAllOptions(Map<String, String> preprocs, boolean unnecessaryPcodeWarning,
+			boolean lenientConflict, boolean allCollisionWarning, boolean allNopWarning,
+			boolean deadTempWarning, boolean unusedFieldWarning, boolean enforceLocalKeyWord,
+			boolean largeTemporaryWarning, boolean caseSensitiveRegisterNames) {
+		Set<Entry<String, String>> entrySet = preprocs.entrySet();
+		for (Entry<String, String> entry : entrySet) {
+			setPreprocValue(entry.getKey(), entry.getValue());
+		}
+		setUnnecessaryPcodeWarning(unnecessaryPcodeWarning);
+		setLenientConflict(lenientConflict);
+		setLocalCollisionWarning(allCollisionWarning);
+		setAllNopWarning(allNopWarning);
+		setDeadTempWarning(deadTempWarning);
+		setUnusedFieldWarning(unusedFieldWarning);
+		setEnforceLocalKeyWord(enforceLocalKeyWord);
+		setLargeTemporaryWarning(largeTemporaryWarning);
+		setInsensitiveDuplicateError(!caseSensitiveRegisterNames);
+	}
+
+	public int run_compilation(String filein, String fileout)
+			throws IOException, RecognitionException {
+		LineArrayListWriter writer = new LineArrayListWriter();
+		ParsingEnvironment env = new ParsingEnvironment(writer);
+		try {
+			final SleighCompilePreprocessorDefinitionsAdapater definitionsAdapter =
+				new SleighCompilePreprocessorDefinitionsAdapater(this);
+			final File inputFile = new File(filein);
+			FileResolutionResult result = FileUtilities.existsAndIsCaseDependent(inputFile);
+			if (!result.isOk()) {
+				throw new BailoutException("input file \"" + inputFile +
+					"\" is not properly case dependent: " + result.getMessage());
+			}
+			SleighPreprocessor sp = new SleighPreprocessor(definitionsAdapter, inputFile);
+			sp.process(writer);
+
+			CharStream input = new ANTLRStringStream(writer.toString());
+			SleighLexer lex = new SleighLexer(input);
+			lex.setEnv(env);
+			UnbufferedTokenStream tokens = new UnbufferedTokenStream(lex);
+			SleighParser parser = new SleighParser(tokens);
+			parser.setEnv(env);
+			parser.setLexer(lex);
+			SleighParser.spec_return parserRoot = parser.spec();
+			/*ANTLRUtil.debugTree(root.getTree(),
+				new PrintStream(new FileOutputStream("blargh.tree")));*/
+			CommonTreeNodeStream nodes = new CommonTreeNodeStream(parserRoot.getTree());
+			nodes.setTokenStream(tokens);
+			// ANTLRUtil.debugNodeStream(nodes, System.out);
+			SleighCompiler walker = new SleighCompiler(nodes);
+
+			int parseres = -1;
+			try {
+				parseres = walker.root(env, this); // Try to parse
+			}
+			catch (SleighError e) {
+				reportError(e.location, e.getMessage());
+			}
+			if (parseres == 0) {
+				process(); // Do all the post-processing
+			}
+			if ((parseres == 0) && (numErrors() == 0)) {
+				// If no errors
+				PrintStream s = new PrintStream(new FileOutputStream(new File(fileout)));
+				saveXml(s); // Dump output xml
+				s.close();
+			}
+			else {
+				Msg.error(SleighCompile.class, "No output produced");
+				return 2;
+			}
+		}
+		catch (BailoutException e) {
+			Msg.error(SleighCompile.class, "Unrecoverable error(s), halting compilation", e);
+			return 3;
+		}
+		catch (NullPointerException e) {
+			Msg.error(SleighCompile.class, "Unrecoverable error(s), halting compilation", e);
+			return 4;
+		}
+		catch (PreprocessorException e) {
+			Msg.error(SleighCompile.class, e.getMessage());
+			Msg.error(SleighCompile.class, "Errors during preprocessing, halting compilation");
+			return 5;
+		}
 		return 0;
 	}
 

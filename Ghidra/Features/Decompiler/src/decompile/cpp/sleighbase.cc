@@ -124,13 +124,6 @@ void SleighBase::reregisterContext(void)
   }
 }
 
-void SleighBase::addRegister(const string &nm,AddrSpace *base,uintb offset,int4 size)
-
-{
-  VarnodeSymbol *sym = new VarnodeSymbol(nm,base,offset,size);
-  symtab.addSymbol(sym);
-}
-
 const VarnodeData &SleighBase::getRegister(const string &nm) const
 
 {

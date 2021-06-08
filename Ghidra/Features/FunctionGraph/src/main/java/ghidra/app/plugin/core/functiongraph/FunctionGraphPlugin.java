@@ -186,6 +186,7 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 
 		connectedProvider.getComponent().repaint();
 		for (FGProvider provider : disconnectedProviders) {
+			provider.optionsChanged();
 			provider.getComponent().repaint();
 		}
 	}

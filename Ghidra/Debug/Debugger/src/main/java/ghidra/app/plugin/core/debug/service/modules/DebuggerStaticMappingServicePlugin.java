@@ -457,7 +457,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		}
 
 		private void staticMappingAdded(TraceStaticMapping mapping) {
-			Msg.debug(this, "Trace Mapping added: " + mapping);
+			// Msg.debug(this, "Trace Mapping added: " + mapping);
 			synchronized (lock) {
 				MappingEntry me = new MappingEntry(mapping);
 				putOutboundAndInboundEntries(me);

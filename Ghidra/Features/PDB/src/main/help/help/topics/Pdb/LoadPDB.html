@@ -33,7 +33,7 @@
 					<LI><CODE><FONT COLOR="BLUE">myprogram.pdb</FONT>/<FONT COLOR="RED">012345670123012301230123456789AB</FONT><FONT COLOR="GREEN">1</FONT>/<FONT COLOR="BLUE">myprogram.pdb</FONT></CODE>.</LI>
 					<LI><CODE><FONT COLOR="BLUE">myprogram.pdb</FONT></CODE> is the name of the file and the name of the initial subdirectory off the root of the server.</LI>
 					<LI><CODE><FONT COLOR="RED">012345670123012301230123456789AB</FONT></CODE> is the 32 character hexadecimal value (made up for this example) of the GUID 
-					"012345678-0123-0123-0123-0123456789AB" of the PDB file.</LI>
+					"01234567-0123-0123-0123-0123456789AB" of the PDB file.</LI>
 					<UL><LI>This value might instead be a 8 character hexadecimal value of the ID of the symbol file if it was created by an older version of the tool chain.</LI></UL>
 					<LI><CODE><FONT COLOR="GREEN">1</FONT></CODE> is the hexadecimal value of the 'age' (build number) of the PDB file. Note: most PDB files will have an age value of 1.</LI>
 				</UL>
@@ -56,14 +56,8 @@
 			</UL>
 			<LI><A name="Unorganized_SymbolDirectory"></A>Unorganized directories:</LI>
 			<UL>
-				<LI>Symbol files are are found by matching the leading part of the filename found in the unorganized directory with the sought-after symbol
-				file's name.</LI>
-				<UL>
-					<LI><CODE>helloworld.pdb</CODE> and <CODE>hellokitty.pdb</CODE> would both be found as possible matches when searching for
-					<CODE>hello.pdb</CODE>.</LI>
-					<LI>During searches, each possible matching PDB symbol file will be opened and partially parsed to extract its GUID and age values to determine if
-					it matches the user's full search criteria.</LI>
-				</UL>
+				<LI>Symbol files are matched by their filename and the GUID / ID / age values extracted from
+				the information inside the PDB symbol file.</LI>
 			</UL>
 		</UL>
 	</BLOCKQUOTE>
@@ -88,16 +82,10 @@
 				which PDB file to choose.</LI>
 				<LI>If needed, click the <B>Advanced</B> button:
 				<BLOCKQUOTE><IMG border="0" src="images/LoadPdb_Advanced_NeedsConfig.png"></BLOCKQUOTE></LI>
-				<LI>The <b>Local Symbol Storage</b> location is required to enable searching.  If missing, set it to a directory where Ghidra can store PDB files.</LI>
-				<UL>
-					<LI>For example, <CODE>/home/your_id/Symbols</CODE> or <CODE>C:\Users\your_name\Symbols</CODE>.</LI>
-					<LI>If the location is a new empty directory, the user will be prompted to initialize the directory as a Microsoft symbol storage directory.</LI>
-				</UL>
-				<LI><A href="#SymbolServerConfig_Add">Add</A> additional search locations by clicking the <img border="0" src="images/Plus2.png"> button.
-				  The Microsoft symbol server and <b>Program's Import Location</b> are good defaults.</LI>
-				<LI>Save any changes to the configuration by clicking the <img border="0" src="images/disk.png"> button.</LI>
+				<LI>The <b>Local Symbol Storage</b> location (in the <A href="#Symbol_Server_Config">Symbol Server Config</A> screen) is required
+				to enable searching.  If missing, click the <B>Config...</B> button.</LI>
 				<LI>Set <A href="#PDB_Search_Search_Options">search options</A> as needed.</LI>
-				<LI>Click the <b>Search</b> button to search the configured locations.</LI>
+				<LI>Click the <b>Search Local</b> or <b>Search All</b> button to search the configured locations.</LI>
 				<BLOCKQUOTE><IMG border="0" src="images/LoadPdb_Advanced_Screenshot.png"></BLOCKQUOTE></LI>
 				<LI>The <b>Local Symbol Storage</b> location is searched first, followed by any locations listed in the
 				<b>Additional Search Paths</b> list, in listed order.</LI>
@@ -111,7 +99,7 @@
 		<H3><A name="Symbol_Server_Config"></A>Symbol Server Config</H3>
 		<BLOCKQUOTE>
 			<P>Allows the user to configure the location where PDB symbol files are stored and additional locations to search for
-			existing PDB files.  This is also available in the <b>Load PDB File</b>, <b>Advanced</b> screen.</P>
+			existing PDB files.</P>
 			<H4>Steps:</H4>
 			<UL>
 				<LI>Invoke <b>Edit &rarr; Symbol Server Config</b>
@@ -125,6 +113,7 @@
 				<LI><a href="#SymbolServerConfig_Add">Add</a> additional search locations by clicking the <img border="0" src="images/Plus2.png"> button.</LI>
 				<LI>Save any changes to the configuration by clicking the <img border="0" src="images/disk.png"> button.</LI>
 				<LI>Search locations can be disabled by toggling the <b>enabled</b> checkbox at the beginning of the row.</LI>
+				<LI>A typical configuration: <BLOCKQUOTE><IMG border="0" src="images/SymbolServerConfig_Configured.png"></BLOCKQUOTE></LI>
 			</UL>
 		
 			<H4><A name="SymbolServerConfig_Add"></A><img border="0" src="images/Plus2.png">&nbsp;(Add)</H4>
