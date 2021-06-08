@@ -27,6 +27,7 @@ public class Attributed {
 	 * cache of the html rendering of the vertex attributes
 	 */
 	private String htmlString;
+	private static final String DESCRIPTION = "Description";
 
 	/**
 	 * the {@link HashMap} to contain attribute mappings
@@ -146,6 +147,27 @@ public class Attributed {
 	}
 
 	/**
+	 * Sets a description for this Attributed object
+	 *
+	 * @param value text that provides a description for this Attributed object. 
+	 * The text can be either a plain string or an HTML string.
+	 * @return the previously set description
+	 */
+	public String setDescription(String value) {
+		htmlString = null;
+		return attributes.put(DESCRIPTION, value);
+	}
+
+	/**
+	 * gets the description of this Attributed object.
+	 *
+	 * @return the description of this Attributed object.
+	 */
+	public String getDescription() {
+		return getAttribute(DESCRIPTION);
+	}
+
+	/**
 	 * parse (one time) then cache the attributes to html
 	 * @return the html string
 	 */
@@ -155,22 +177,25 @@ public class Attributed {
 			return htmlString;
 		}
 
-		Set<Entry<String, String>> entries = entrySet();
-		if (entries.isEmpty()) {
-			return ""; // empty so tooltip clients can handle empty data
+		htmlString = getDescription();
+		if (htmlString == null) { // if no description is set, create a default one
+			Set<Entry<String, String>> entries = entrySet();
+			if (entries.isEmpty()) {
+				return ""; // empty so tooltip clients can handle empty data
+			}
+			StringBuilder buf = new StringBuilder();
+			for (Map.Entry<String, String> entry : entries) {
+				buf.append(entry.getKey());
+				buf.append(":");
+				String value = entry.getValue();
+				value = StringEscapeUtils.escapeHtml4(value);
+				String split = String.join("<br>", Splitter.on('\n').split(value));
+				split = split.replaceAll("\\s", "&nbsp;");
+				buf.append(split);
+				buf.append("<br>");
+			}
+			htmlString = buf.toString();
 		}
-
-		StringBuilder buf = new StringBuilder("<html>");
-		for (Map.Entry<String, String> entry : entries) {
-			buf.append(entry.getKey());
-			buf.append(":");
-			String value = StringEscapeUtils.escapeHtml4(entry.getValue());
-			String split = String.join("<br>", Splitter.on('\n').split(value));
-			buf.append(split);
-			buf.append("<br>");
-		}
-		htmlString = buf.toString();
 		return htmlString;
 	}
-
 }
