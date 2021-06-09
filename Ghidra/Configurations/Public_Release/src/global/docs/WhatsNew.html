@@ -117,6 +117,108 @@
         <li>Support for tracing the following architectures via GDB: arm, m68k, mips, powerpc (depending on versions and variants)</li>
         <li>Support for tracing the following architectures via JDI: Java, Dalvik (depending on versions and variants)</li>
         </UL></BLOCKQUOTE>
+    <H3>Support in progress for the following:</H3>
+        <BLOCKQUOTE><UL>
+        <li>Pure program emulation, i.e., simulating a trace from a program, without an actual target</li>
+        <li>Connection to LLDB for macOS and iOS targets. This will likely support other targets and platforms, too.</li>
+        </UL></BLOCKQUOTE>
+    <H3>Known Issues:</H3>
+        <BLOCKQUOTE>
+        <P>
+        While the debugger is quite usable, as this is its initial release, it is not as mature as the other features of Ghidra.
+        The following are areas where we've seen the most recurring problem tickets, for which we've not been able to produce quick fixes.
+        We don't necessarily have answers for these problems, so we're listing them here so people are aware, and to open up some discussion.
+        </P>
+        
+        <H4>1. The breakpoints interface is complicated</H4>
+        <P>
+        We attempt to present an abstract view of breakpoints and save them to the program databases, but we also didn't want to hide the raw breakpoint locations listed for each target.
+        This is the basis of our "logical breakpoint" concept, but it has introduced some complexity and confusion, which is obviously not what we intended.
+        One common misconception is that placing a breakpoint in the program image then launching the program should cause an initial break at that spot.
+        This is a totally reasonable expectation, but one which cannot necessarily be implemented, depending on the capabilities of the connected debugger.
+        Typically, the user must launch the target, take the initial break provided by the debugger, then place the desired breakpoints.
+        While we've made some changes recently to try to communicate actual breakpoint state, it has not alleviated this confusion.
+        We're also not sure if this is just a learning curve thing, or a real problem regarding UI intuition.
+        </P>
+        
+        <H4>2. Loading the correct dbgeng DLL for Windows debugging is a kludge</H4>
+        <P>
+        It turns out the OpenJDK 11 JVM is already linked to <code>dbgeng.dll</code> in order to implement its service agent.
+        This created two potential issues:
+        </P>
+        <BLOCKQUOTE><OL>
+          <li>It's difficult/impossible to link an alternative DLL. It always gets <code>C:\windows\system32\dbgeng.dll</code>.</li>
+          <li>The JVM's debugging session and Ghidra's debugging session could potentially conflict.</li>
+        </OL></BLOCKQUOTE>
+        <P>
+        While we figured that out some time ago, we worked around it by copying the desired DLL(s) into the JRE running Ghidra.
+        This moved things along nicely, allowing us to postpone a better solution, while coding up the connector.
+        Furthermore, issue (2) did not seem to be a problem, presumably because we never tried triggering the issue.
+        Regarding issue (1), we could (or so we thought) ignore it, since the system copy had the required features.
+        It was almost the same as WinDbg's, but with some disabled bits, e.g., the <code>.server</code> command.
+        However, it seems there are more nuances than that.
+        Ideally, we'd find an environment variable to override the JVM's link to <code>dbgeng.dll</code>, so that we can link to a configured WinDbg installation.
+        Furthermore, we have some configuration management to do in cataloging and deciding which versions of WinDbg to prescribe.
+        </P>
+        
+        <H4>3. Errors due to configuration / installation issues are not clear</H4>
+        <P>
+        While we've done our best to document version requirements, when those requirements are not met, we don't fail fast.
+        This typically leads to cryptic error messages.
+        We neglected such checks in part, because we weren't sure what the requirements were until we had tested, and partly because we didn't want to limit the user.
+        We now find ourselves in the pickle of needing to go back and code in some reasonable checks, while perhaps allowing for optional bypasses.
+        That would allow for issues from configuration to be more quickly diagnosed.
+        </P>
+        <P>
+        However, there's also the case of unexpected user configurations even within the prescribed versions.
+        For example, connecting GDB to a remote or system stub may prevent <code>proc info mappings</code> or <code>maint info sections</code> from returning anything useful, and we rely on them for the memory and module maps.
+        Granted, some of these situations are outside the prescribed use cases, not all are.
+        While this can be addressed in support forums or FAQs, we really ought to put in some better diagnostics.
+        </P>
+        
+        <H4>4. A trace database is required to accomplish even basic operations, and it's becoming a burden.</H4>
+        <P>
+        The trace database was a bit serendipitous.
+        We originally connected machine-state UI components directly to the debugging interfaces, but this created some problems:
+        </P>
+        <BLOCKQUOTE><OL>
+        <li>If a request was never answered on a blocking call, we risked hanging the UI.</li>
+        <li>Our caches (used to reduce queries  to the debugger connection) grew in size.</li>
+        </OL></BLOCKQUOTE>
+        <P>
+        While converting the debugging API to asynchronous queries helped us avoid a good portion of UI hangs, we still needed something to mediate between the UI's synchronous calls and the debugging API's asynchronous calls.
+        This was accomplished by introducing a database.
+        This allowed us to answer synchronous callbacks from the UI immediately, and later emit update once aysnchronous debugger API requests were completed.
+        Additionally, because the database is stored on disk, using in place of some in-memory caches alleviated memory requirements.
+        Our first attempt used an extension of a standard ProgramDB, but that proved insufficient.
+        Thus, we needed a new kind of database for storing target machine state.
+        We thought this an opportunity to build something new, and aware of other research efforts in "time-travel" or "timeless" debugging, we introduced a "trace database."
+        </P>
+        <P>
+        Currently, a trace database (even if just an ephemeral one) is required for the UI to interact with a target's machine state.
+        While we anticipated some risk, we were perhaps a little too excited about traces to give it proper credence.
+        There are a good bit of dependencies and resource needs to get a trace going.
+        Notably, the system must know the target architecture, and usually also its ABI.
+        Additionally, all combined &mdash; the debugging API, the GADP server and client, the trace database, and the UI &mdash; there's still plenty of unchecked in-memory caching going on, risking resource exhaustion.
+        Regarding target architecture recognition: if it's not on the (currently small) list, the target cannot be traced, and so its state cannot be viewed.
+        This precludes the user from viewing the target's memory in the UI, even if disassembly is not desired.
+        Furthermore, a table of register names and values could easily be presented without first recognizing the architecture.
+        The latter is mitigated somewhat by the "Objects" viewer's table mode, using the Registers container as the root, but this is not an intuitive solution until the user is familiar with that viewer.
+        We need either/both to support simpler forms of tracing that have fewer dependencies and/or to implement some state viewers outside of tracing &mdash; but without taking us back to our original problems.
+        </P>
+        
+        <H4>5. The threads timeline view has not been receiving enough TLC</H4>
+        <P>
+        This particular view was meant to expose the time axis of the trace database in a sort of "cool" fashion by plotting the lifetimes of every observed thread.
+        Some work was put in to get that plot working, but it has been the source of some pernicious bugs that are simply no fun to work on.
+        One of the more annoying ones deals with caret placement, which is essentially the "scroll bar" for time.
+        It seems the range of that widget does not always match the range of the timeline plot, causing confusion surrounding a critical parameter in navigating the trace: time.
+        It would seem an easy issue to fix, except that we're no longer sure a single caret is really the best way to navigate time.
+        We're honestly looking at dropping that timeline pane altogether and just accomplishing the same plot using a custom cell editor on the threads table.
+        However, the only other means we have of navigating time is the "Time" table, which generally just lists events.
+        We'd like to devise something more cogent, perhaps allowing queries or establishing visual cues to identify interesting points in time.
+        </P>
+        </BLOCKQUOTE>
 	<BR />
         
     <H2>User-defined Compiler Specification Extensions</H2>
