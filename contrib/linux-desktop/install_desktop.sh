@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 # Desc: customise and install a Ghidra desktop file
 # Author: m3gat0nn4ge <m3gat0nn4ge@gmail.com>
-# License: GPLv3+
+# License: Apache License 2.0
 
 function usage {
   cat <<EOH
