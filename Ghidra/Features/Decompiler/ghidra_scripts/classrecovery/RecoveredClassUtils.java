@@ -33,6 +33,7 @@ package classrecovery;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import ghidra.app.cmd.function.ApplyFunctionDataTypesCmd;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.plugin.core.analysis.ReferenceAddressPair;
@@ -41,6 +42,7 @@ import ghidra.app.plugin.core.decompile.actions.FillOutStructureCmd.OffsetPcodeO
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReference;
 import ghidra.app.plugin.core.navigation.locationreferences.ReferenceUtils;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -51,6 +53,7 @@ import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramMemoryUtil;
+import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.bytesearch.*;
 import ghidra.util.datastruct.ListAccumulator;
@@ -62,6 +65,7 @@ public class RecoveredClassUtils {
 	public static final String DTM_CLASS_DATA_FOLDER_NAME = "ClassDataTypes";
 	private static final String CLASS_DATA_STRUCT_NAME = "_data";
 	private static final String DEFAULT_VFUNCTION_PREFIX = "vfunction";
+	private static final String VFUNCTION_COMMENT = "virtual function #";
 	private static final String CLASS_VFUNCTION_STRUCT_NAME = "_vftable";
 
 	public static final String VFTABLE_LABEL = "vftable";
@@ -152,7 +156,7 @@ public class RecoveredClassUtils {
 	boolean useShortTemplates;
 	boolean nameVfunctions;
 
-	RecoveredClassUtils(Program program, ProgramLocation location, PluginTool tool,
+	public RecoveredClassUtils(Program program, ProgramLocation location, PluginTool tool,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
 			boolean nameVfunctions, TaskMonitor monitor) {
 
@@ -746,6 +750,32 @@ public class RecoveredClassUtils {
 		return referenceToParentMap;
 	}
 
+	/**
+	 * Get the list of incorrect FID functions
+	 * @return the list of incorrect FID functions
+	 */
+	public List<Function> getBadFIDFunctions() {
+		return badFIDFunctions;
+	}
+
+	/**
+	 * Get the list of resolved functions that had multiple FID possibilities before but could 
+	 * be resolved to the correct name.
+	 * @return the list of resolved FID functions
+	 */
+	public List<Function> getResolvedFIDFunctions() {
+		return badFIDFunctions;
+	}
+
+	/**
+	 * Get the fixed functions that had incorrect data types due to incorrect FID (includes those
+	 * incorrect due to decompiler propagation of bad types from bad FID)
+	 * @return the fixed functions that had incorrect data types due to incorrect FID
+	 */
+	public List<Function> getFixedFIDFunctions() {
+		return badFIDFunctions;
+	}
+
 	private Map<Address, RecoveredClass> dedupeMap(Map<Address, RecoveredClass> map)
 			throws CancelledException {
 
@@ -863,7 +893,7 @@ public class RecoveredClassUtils {
 	/**
 	 * Method to get a list of addresses that are references from the given address
 	 * @param address the given address
-	 * @return a list of addresses that are references from the given address
+	 * @return a list of addresses that are references from the given address 
 	 */
 	private List<Address> getReferenceFromAddresses(Address address) {
 
@@ -1181,7 +1211,7 @@ public class RecoveredClassUtils {
 	 * @throws CancelledException if cancelled
 	 */
 	//TODO: update to make sure it is getting any global memory variables
-	//TODO: Can I refactor to use the same methodology as getAssignedAddressFrompcode or getStoredVftableAddress
+	//TODO: Possibly refactor to use the same methodology as getAssignedAddressFrompcode or getStoredVftableAddress
 	private List<HighVariable> getVariableThatStoresVftablePointer(HighFunction highFunction,
 			Address vftableReference) throws CancelledException {
 
@@ -1271,7 +1301,6 @@ public class RecoveredClassUtils {
 	 * @return true if ancestor of one of the listed classes, false otherwise
 	 * @throws Exception if one of the classes has empty class hierarchy
 	 */
-	// TODO: update with new exception once created
 	public boolean isClassAnAncestorOfAnyOnList(List<RecoveredClass> recoveredClasses,
 			RecoveredClass possibleAncestor) throws Exception {
 
@@ -1294,7 +1323,6 @@ public class RecoveredClassUtils {
 	 * @return true if possibleAncestorClass is an ancestor of recoveredClass, false otherwise
 	 * @throws Exception if class hierarchy is empty
 	 */
-	// TODO: make my own exception here
 	private boolean isClassAnAncestor(RecoveredClass recoveredClass,
 			RecoveredClass possibleAncestorClass) throws Exception {
 
@@ -1659,6 +1687,7 @@ public class RecoveredClassUtils {
 	 * Method to retrieve a list of possible parent class constructors to the given function
 	 * @param function the given function
 	 * @return a list of possible parent class constructors to the given function
+	 * @throws CancelledException if cancelled
 	 */
 	public List<Function> getPossibleParentConstructors(Function function)
 			throws CancelledException {
@@ -1767,7 +1796,7 @@ public class RecoveredClassUtils {
 	 * Method to determine the constructors/destructors using known parent
 	 * @param recoveredClass RecoveredClass object
 	 * @param parentClass possible parent class of the given RecoveredClass
-	 * @return 
+	 * @return true if processed successfully, else false
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if issue setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
@@ -1938,8 +1967,6 @@ public class RecoveredClassUtils {
 		}
 
 		// If not already, make function a thiscall
-		// TODO: rethink doing this here -change to when creating constructor in class
-		// since some later get changed to inlines
 		extraUtils.makeFunctionThiscall(constructorFunction);
 
 		recoveredClass.addConstructor(constructorFunction);
@@ -2094,6 +2121,7 @@ public class RecoveredClassUtils {
 	 * Method to process a found inlined constructor
 	 * @param recoveredClass the class being processed
 	 * @param inlinedConstructorFunction the function containing an inlined ancestor constructor
+	 * @param referenceToClassMap the map of references to classes
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if issue setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
@@ -2157,7 +2185,7 @@ public class RecoveredClassUtils {
 	 * Method to process an inlinedDestructor function
 	 * @param recoveredClass the class the inlinedDestructor is in
 	 * @param inlinedDestructorFunction the inlined function
-	 * @param referenceToClassMap 
+	 * @param referenceToClassMap the map of references to classes
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if issue setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
@@ -2924,7 +2952,6 @@ public class RecoveredClassUtils {
 	 * @return the created array of pointers Data or null
 	 * @throws CancelledException if cancelled
 	 */
-	// TODO: put in classutils?
 	private int createVftable(Address vftableAddress, boolean allowNullFunctionPtrs,
 			boolean allowDefaultRefsInMiddle) throws CancelledException {
 
@@ -3023,7 +3050,7 @@ public class RecoveredClassUtils {
 						program.getListing().getInstructionContaining(vftableReference);
 					if (instructionContaining != null) {
 						boolean functionCreated =
-							extraUtils.createFunction(program, vftableReference, monitor);
+							extraUtils.createFunction(program, vftableReference);
 
 						if (!functionCreated) {
 							notInFunctionVftableRefs.add(vftableReference);
@@ -3079,7 +3106,7 @@ public class RecoveredClassUtils {
 					}
 					else {
 						boolean functionCreated =
-							extraUtils.createFunction(prog, addr, taskMonitor);
+							extraUtils.createFunction(prog, addr);
 						if (!functionCreated) {
 							notInFunctionVftableRefs.add(addr);
 						}
@@ -3152,7 +3179,6 @@ public class RecoveredClassUtils {
 
 		List<RecoveredClass> parentClasses = recoveredClass.getClassHierarchy();
 
-		//TODO: make my own exception type
 		if (parentClasses.isEmpty()) {
 			throw new Exception(
 				recoveredClass.getName() + " should not have an empty class hierarchy");
@@ -3199,6 +3225,7 @@ public class RecoveredClassUtils {
 	/**
 	 * Method to name class constructors and add them to class namespace
 	 * @param recoveredClass current class
+	 * @param classStruct the given class structure
 	 * @throws Exception when cancelled
 	 */
 	public void addConstructorsToClassNamespace(RecoveredClass recoveredClass,
@@ -3221,12 +3248,9 @@ public class RecoveredClassUtils {
 			//deleteEmptyClassStructure(constructorFunction, className);
 			replaceEmptyClassStructure(constructorFunction, className, classStruct);
 
-			// if current non-FID decompiler function return type is a pointer then set the return type
+			// if current decompiler function return type is a pointer then set the return type
 			// to a pointer to the class structure, otherwise if it is a void, make it a void so the
 			// listing has void too, otherwise, leave it as is, probably a void
-			//	boolean isFidFunction = isFidFunction(constructorFunction);
-
-			//	if (!isFidFunction) {
 			String returnType = getReturnTypeFromDecompiler(constructorFunction);
 
 			if (returnType.equals("void")) {
@@ -3238,10 +3262,6 @@ public class RecoveredClassUtils {
 				constructorFunction.setReturnType(classPointerDataType, SourceType.ANALYSIS);
 			}
 
-			//}
-
-			//TODO: temporary until someone fixes thunk display of namespace
-			putThunksInClass(constructorFunction, classNamespace);
 		}
 	}
 
@@ -3282,37 +3302,7 @@ public class RecoveredClassUtils {
 				true);
 
 			destructorFunction.setReturnType(DataType.VOID, SourceType.ANALYSIS);
-			putThunksInClass(destructorFunction, classNamespace);
 		}
-	}
-
-	/**
-	 * Method to put all thunk functions for current function in given namespace
-	 * @param function the given function
-	 * @param namespace the given namespace
-	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws InvalidInputException if invalid input
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
-	 * @throws CancelledException if cancelled
-	 */
-	private void putThunksInClass(Function function, Namespace namespace)
-			throws DuplicateNameException, InvalidInputException, CircularDependencyException,
-			CancelledException {
-		Address[] functionThunkAddresses = function.getFunctionThunkAddresses();
-
-		if (functionThunkAddresses == null) {
-			return;
-		}
-
-		for (Address functionThunkAddress : functionThunkAddresses) {
-			monitor.checkCanceled();
-
-			Function thunkFunction = api.getFunctionAt(functionThunkAddress);
-			if (thunkFunction != null && !thunkFunction.isExternal()) {
-				thunkFunction.setParentNamespace(namespace);
-			}
-		}
-
 	}
 
 	/**
@@ -3335,8 +3325,6 @@ public class RecoveredClassUtils {
 
 			createNewSymbolAtFunction(destructorFunction, destructorName, classNamespace, false,
 				false);
-
-			putThunksInClass(destructorFunction, classNamespace);
 		}
 	}
 
@@ -3358,7 +3346,6 @@ public class RecoveredClassUtils {
 				true);
 
 			vbaseDestructorFunction.setReturnType(DataType.VOID, SourceType.ANALYSIS);
-			putThunksInClass(vbaseDestructorFunction, classNamespace);
 		}
 
 	}
@@ -3366,6 +3353,7 @@ public class RecoveredClassUtils {
 	/**
 	 * Method to name the class vbtable, if one exists, and add it to the class namespace
 	 * @param recoveredClass the given class
+	 * @throws Exception if exception thrown
 	 */
 	public void addVbtableToClassNamespace(RecoveredClass recoveredClass) throws Exception {
 
@@ -4375,7 +4363,7 @@ public class RecoveredClassUtils {
 		}
 
 		classStruct.setDescription(createParentStringBuffer(recoveredClass).toString());
-		//TODO: do I still need to add it since I changed to pass in dtman in new Struct
+
 		classStruct = (Structure) dataTypeManager.addDataType(classStruct,
 			DataTypeConflictHandler.DEFAULT_HANDLER);
 
@@ -4386,6 +4374,7 @@ public class RecoveredClassUtils {
 	 * @param recoveredClass the current class to be processed
 	 * @param vftableToStructureMap the map from the class's vftables to the correct vftable structure data type
 	 * @throws CancelledException when cancelled
+	 * @throws Exception if other exception
 	 */
 	public void fillInAndApplyVftableStructAndNameVfunctions(RecoveredClass recoveredClass,
 			Map<Address, DataType> vftableToStructureMap) throws CancelledException, Exception {
@@ -4406,17 +4395,19 @@ public class RecoveredClassUtils {
 
 			DataType vftableDataType = vftablePointerDataType.getDataType();
 
+			String vftableStructureName = vftableDataType.getName();
 			vftableDataType = dataTypeManager.getDataType(vftableDataType.getCategoryPath(),
-				vftableDataType.getName());
+				vftableStructureName);
 
 			Structure vftableStruct = (Structure) vftableDataType;
 
 			if (nameVfunctions) {
 				// if no pdb info, name all the vfunctions for this vftable and put in class namespace
-				nameVfunctions(recoveredClass, vftableAddress, vftableDataType.getName());
+				nameVfunctions(recoveredClass, vftableAddress, vftableStructureName);
 			}
 
 			List<Function> vFunctions = recoveredClass.getVirtualFunctions(vftableAddress);
+			int vfunctionNumber = 1;
 			Iterator<Function> vfIterator = vFunctions.iterator();
 
 			while (vfIterator.hasNext()) {
@@ -4437,30 +4428,56 @@ public class RecoveredClassUtils {
 				Symbol vfunctionSymbol = symbolTable.getPrimarySymbol(vfunction.getEntryPoint());
 				Namespace parentNamespace = vfunctionSymbol.getParentNamespace();
 
-				String classFieldName = new String();
+				String classCommentPrefix = "";
+
 				if (!parentNamespace.equals(globalNamespace)) {
 					RecoveredClass vfunctionClass = getClass(parentNamespace);
 
 					// this is null when there is a class from somewhere other than RTTI so it is
 					// not stored in the map. Just use the parent namespace name in this case
-					// TODO: can check against other program namespace names to see if I cna shorten
+					// TODO: can check against other program namespace names to see if it can be shortened
 					if (vfunctionClass == null) {
-						classFieldName = parentNamespace.getName();
+						classCommentPrefix = parentNamespace.getName();
 					}
 					else if (vfunctionClass.getShortenedTemplateName() != null &&
 						useShortTemplates && !vfunctionClass.getShortenedTemplateName().isEmpty()) {
-						classFieldName = vfunctionClass.getShortenedTemplateName();
+						classCommentPrefix = vfunctionClass.getShortenedTemplateName();
 					}
 					else {
-						classFieldName = vfunctionClass.getName();
+						classCommentPrefix = vfunctionClass.getName();
 					}
 
 				}
 
+				// Create comment to indicate it is a virtual function and which number in the table
+				String comment = VFUNCTION_COMMENT + vfunctionNumber;
+
+				// add suffix for multi classes to distinguish which vftable it is for
+				String commentSuffix = getForClassSuffix(vftableStructureName);
+				if (!commentSuffix.isEmpty()) {
+					int index = commentSuffix.indexOf("for_");
+					if (index > 0) {
+						commentSuffix = " for parent class " + commentSuffix.substring(index + 4);
+					}
+					comment = comment + commentSuffix;
+				}
+
+				// if function is "purecall" function make the class field name "vfunction #n" instead
+				// of using the function name of "purecall" and prepend "pure" to the comment so
+				// they know it is pure virtual function, ie not actually implemented in the parent class
+				String nameField = vfunction.getName();
+				if (nameField.contains("purecall")) {
+					nameField = DEFAULT_VFUNCTION_PREFIX + vfunctionNumber;
+					comment = recoveredClass.getName() + " pure " + comment;
+					
+				}
+
 				PointerDataType functionPointerDataType =
 					createFunctionSignaturePointerDataType(vfunction, classPath);
-				vftableStruct.add(functionPointerDataType, vfunction.getName(),
-					classFieldName + " " + vfunction.getName());
+
+				vftableStruct.add(functionPointerDataType, nameField,
+					classCommentPrefix + " " + comment);
+				vfunctionNumber++;
 			}
 
 			// align the structure then add it to the data type manager
@@ -4472,7 +4489,6 @@ public class RecoveredClassUtils {
 			// apply the structure. It has to be one or the other and the correct length
 			// because of the check at the beginning of the script that checked for either
 			// array or structure of pointers and got size from them initially
-
 			api.clearListing(vftableAddress);
 			api.createData(vftableAddress, vftableStruct);
 
@@ -4503,6 +4519,11 @@ public class RecoveredClassUtils {
 
 		String vfunctionName;
 		int tableEntry = 1;
+
+		// get the "_for_<className> suffix for classes with multiple vftables or empty
+		// string for those with single vftable
+		String vfunctionSuffix = getForClassSuffix(vftableStructureName);
+
 		while (vfIterator.hasNext()) {
 			monitor.checkCanceled();
 			Function vfunction = vfIterator.next();
@@ -4515,20 +4536,20 @@ public class RecoveredClassUtils {
 			boolean isDeletingDestructor = false;
 
 			if (deletingDestructors.contains(vfunction)) {
-				vfunctionName = DELETING_DESTRUCTOR_LABEL;
+				vfunctionName = DELETING_DESTRUCTOR_LABEL + vfunctionSuffix;
 				setPrimary = true;
 				removeBadFID = true;
 				isDeletingDestructor = true;
 			}
 
 			else if (cloneFunctions.contains(vfunction)) {
-				vfunctionName = CLONE_LABEL;
+				vfunctionName = CLONE_LABEL + vfunctionSuffix;
 				setPrimary = true;
 				removeBadFID = true;
 			}
 
 			else {
-				vfunctionName = DEFAULT_VFUNCTION_PREFIX + entryNumber;
+				vfunctionName = DEFAULT_VFUNCTION_PREFIX + entryNumber + vfunctionSuffix;
 			}
 
 			// can't put external functions into a namespace from this program
@@ -4563,13 +4584,33 @@ public class RecoveredClassUtils {
 				if (originalSourceType == SourceType.DEFAULT || setPrimary) {
 					createNewSymbolAtFunction(vfunction, vfunctionName, classNamespace, setPrimary,
 						removeBadFID);
-
-					//TODO: remove this once the thunk namespace issue is fixed
-					putThunksInClass(vfunction, classNamespace);
-
 				}
 			}
 		}
+	}
+
+	private String getForClassSuffix(String vftableStructureName) {
+
+		String vfunctionSuffix = "";
+		if (vftableStructureName.contains("_for_")) {
+			int index = vftableStructureName.indexOf("for_");
+			if (index > 0) {
+				vfunctionSuffix = "_" + vftableStructureName.substring(index);
+			}
+		}
+		return vfunctionSuffix;
+	}
+
+	private String getParentClassNameFromForClassSuffix(String commentSuffix) {
+
+		if (!commentSuffix.isEmpty()) {
+			int index = commentSuffix.indexOf("for_");
+			if (index > 0) {
+				return commentSuffix.substring(index + 4);
+			}
+
+		}
+		return null;
 	}
 
 	private boolean hasDeletingDestructorInNamespace(Address address, Namespace namespace)
@@ -4734,7 +4775,7 @@ public class RecoveredClassUtils {
 
 				Address markupAddress = listOfClassRefsInFunction.get(0);
 				String markupString = classNamespace.getName(true) + "::" + className;
-				//TODO: might need to append to existing comment
+
 				String existingComment = api.getPreComment(markupAddress);
 				if (existingComment != null) {
 					existingComment = existingComment + "\n";
@@ -5176,7 +5217,7 @@ public class RecoveredClassUtils {
 			// This is to distinguish between class items and parent items in classes that 
 			// have individual components of the parent split out and added to them and not just 
 			// the whole parent structure added to them 
-			// TODO: figure out how to get the class object from the nameof the structure
+			// TODO: add method to get class obj using from the name of the structure
 			// so i can get the shortened class name if a template and put that here instead
 			String fieldname = structureToAdd.getName() + "_" + dataTypeComponent.getFieldName();
 
@@ -5589,7 +5630,7 @@ public class RecoveredClassUtils {
 
 				// get the addresses in the function that refer to classes either by 
 				// referencing a vftable in a class or by calling a function in a class
-				// TODO: add the atexit refs and then check them - make a map of atexit call to class map if I don't havei it already
+				// TODO: add the atexit refs and then check them - make a map of atexit call to class map if not already
 				Map<Address, RecoveredClass> referenceToClassMap =
 					getReferenceToClassMap(recoveredClass, inlineFunction);
 				List<Address> referencesToFunctions =
@@ -5798,8 +5839,6 @@ public class RecoveredClassUtils {
 				if (decompilerReturnType != null) {
 
 					String returnDataName = decompilerReturnType.getDisplayName();
-					// TODO: update to check that isn't FID with diff name or should I assume
-					// that if it is a FID that wasn't found by traditional means it is an inline?
 					if (returnDataName.contains("*") && !isFidFunction(indeterminateFunction)) {
 
 						addConstructorToClass(recoveredClass, indeterminateFunction);
@@ -5901,7 +5940,7 @@ public class RecoveredClassUtils {
 			Function function = extraUtils.getFunctionContaining(fromAddress);
 			if (function == null) {
 				AddressSet subroutineAddresses =
-					extraUtils.getSubroutineAddresses(program, fromAddress, monitor);
+					extraUtils.getSubroutineAddresses(program, fromAddress);
 				Address minAddress = subroutineAddresses.getMinAddress();
 
 				function = extraUtils.createFunction(minAddress, null);
@@ -6415,8 +6454,6 @@ public class RecoveredClassUtils {
 	public void findDeletingDestructors(List<RecoveredClass> recoveredClasses)
 			throws CancelledException, InvalidInputException, DuplicateNameException, Exception {
 
-		AddressSetView beforeChanges = program.getChanges().getAddressSet();
-
 		findFirstDeletingDestructors(recoveredClasses);
 		findMoreDeletingDestructors(recoveredClasses);
 		findDeletingDestructorsWithCallToDestructorWithNoVftableReference(recoveredClasses);
@@ -6454,6 +6491,10 @@ public class RecoveredClassUtils {
 	/**
 	 * Method to create <class_name>_data structure for given class
 	 * @param recoveredClass the class
+	 * @param classStructure the given class structure
+	 * @param dataLen the length of data
+	 * @param dataOffset the offset of data
+	 * @return the <class_name>_data structure containing the given classes data members
 	 * @throws CancelledException if cancelled
 	 */
 	public Structure createClassMemberDataStructure(RecoveredClass recoveredClass,
@@ -6662,6 +6703,960 @@ public class RecoveredClassUtils {
 			}
 		}
 		return listOfUniqueAddresses;
+	}
+
+	public List<Object> applyNewFunctionSignatures(Namespace classNamespace,
+			List<Symbol> classVftableSymbols) throws CancelledException, DuplicateNameException,
+			DataTypeDependencyException, InvalidInputException {
+
+		List<Object> changedItems = new ArrayList<Object>();
+
+		Iterator<Symbol> vftableIterator = classVftableSymbols.iterator();
+		while (vftableIterator.hasNext()) {
+			monitor.checkCanceled();
+			Symbol vftableSymbol = vftableIterator.next();
+			Address vftableAddress = vftableSymbol.getAddress();
+			Data data = api.getDataAt(vftableAddress);
+			if (data == null) {
+				continue;
+			}
+			DataType baseDataType = data.getBaseDataType();
+			if (!(baseDataType instanceof Structure)) {
+				continue;
+			}
+
+			Structure vfunctionStructure = (Structure) baseDataType;
+
+			Category category = getDataTypeCategory(vfunctionStructure);
+
+			if (category == null) {
+				continue;
+			}
+
+			String classNameWithNamespace = classNamespace.getName(true);
+			CategoryPath classPath = extraUtils.createDataTypeCategoryPath(
+				classDataTypesCategoryPath, classNameWithNamespace);
+
+			// check that the given vftable data type is in the right ClassDataTypes/<class_folder>
+			// path
+			if (!category.getCategoryPath().equals(classPath)) {
+				continue;
+			}
+
+			if (vfunctionStructure.getName().startsWith(classNamespace.getName() + "_vftable")) {
+				List<Object> newChangedItems =
+					updateVfunctionDataTypes(data, vfunctionStructure, vftableAddress);
+				changedItems = updateList(changedItems, newChangedItems);
+			}
+		}
+		return changedItems;
+	}
+
+	/**
+	 * Method to find any function signatures in the given vfunction structure that have changed
+	 * and update the corresponding function definition data types
+	 * @throws DuplicateNameException if duplicate name
+	 * @throws DataTypeDependencyException if data dependency exception
+	 * @throws InvalidInputException if invalid input in setName of function
+	 * @throws CancelledException if cancelled
+	 */
+	private List<Object> updateVfunctionDataTypes(Data structureAtAddress,
+			Structure vfunctionStructure,
+			Address vftableAddress) throws DuplicateNameException, DataTypeDependencyException,
+			InvalidInputException, CancelledException {
+
+		List<Object> changedItems = new ArrayList<Object>();
+
+		int numVfunctions = structureAtAddress.getNumComponents();
+
+		for (int vfunctionIndex = 0; vfunctionIndex < numVfunctions; vfunctionIndex++) {
+			Data dataComponent = structureAtAddress.getComponent(vfunctionIndex);
+
+			Reference[] referencesFrom = dataComponent.getReferencesFrom();
+			if (referencesFrom.length != 1) {
+				continue;
+			}
+			Address functionAddress = referencesFrom[0].getToAddress();
+			Function vfunction = api.getFunctionAt(functionAddress);
+			if (vfunction == null) {
+				continue;
+			}
+			if (vfunction.isThunk()) {
+				Function thunkedFunction = vfunction.getThunkedFunction(true);
+				vfunction = thunkedFunction;
+			}
+
+			FunctionSignature listingFunctionSignature = vfunction.getSignature();
+
+			DataTypeComponent structureComponent = vfunctionStructure.getComponent(vfunctionIndex);
+
+			FunctionDefinition componentFunctionDefinition =
+				getComponentFunctionDefinition(structureComponent);
+			if (componentFunctionDefinition == null) {
+				return null;
+			}
+
+			// change to pass into method as fd
+			FunctionDefinition newFunctionDefinition =
+				(FunctionDefinition) listingFunctionSignature;
+
+			if (!areEquivalentFunctionSignatures(componentFunctionDefinition,
+				listingFunctionSignature)) {
+
+				List<Object> changedStructs =
+					applyNewFunctionDefinitionToComponents(structureComponent,
+						newFunctionDefinition);
+				if (changedStructs.isEmpty()) {
+					continue;
+				}
+
+				changedItems = updateList(changedItems, changedStructs);
+
+				// now update the listing function signatures for the items on the changed list
+				List<Object> newChangedItems =
+					updateFunctionSignaturesForChangedDefinitions(changedItems);
+				changedItems = updateList(changedItems, newChangedItems);
+
+			}
+		}
+
+
+		return changedItems;
+
+	}
+
+	private List<Object> updateFunctionSignaturesForChangedDefinitions(List<Object> changedItems)
+			throws CancelledException {
+
+		List<Object> newChangedItems = new ArrayList<>();
+
+		if (changedItems.isEmpty()) {
+			return newChangedItems;
+		}
+
+		for (Object changedItem : changedItems) {
+			monitor.checkCanceled();
+			if (changedItem instanceof DataTypeComponent) {
+				DataTypeComponent changedStructureComponent = (DataTypeComponent) changedItem;
+
+				DataType changedDataType = changedStructureComponent.getParent();
+				if (!(changedDataType instanceof Structure)) {
+					continue;
+				}
+				Structure changedStructure = (Structure) changedDataType;
+				if (!changedStructure.getName().contains(VFTABLE_LABEL)) {
+					continue;
+				}
+
+				Address vftableAddr;
+				try {
+					vftableAddr = getVftableAddress(changedStructure);
+					if (vftableAddr == null) {
+						continue;
+					}
+
+					Data vftableData = program.getListing().getDataAt(vftableAddr);
+					if (vftableData == null) {
+						continue;
+					}
+
+					changedItem = updateListingVfunctionSignature(vftableData,
+						changedStructureComponent, vftableAddr);
+					if (changedItem != null && !newChangedItems.contains(changedItem)) {
+						newChangedItems.add(changedItem);
+					}
+				}
+
+				catch (DuplicateNameException e) {
+					continue;
+				}
+				catch (InvalidInputException e) {
+					continue;
+				}
+				catch (DataTypeDependencyException e) {
+					continue;
+				}
+
+			}
+
+		}
+		return newChangedItems;
+	}
+
+	private FunctionDefinition getComponentFunctionDefinition(
+			DataTypeComponent structureComponent) {
+
+		DataType componentDataType = structureComponent.getDataType();
+		if (!(componentDataType instanceof Pointer)) {
+			return null;
+		}
+
+		Pointer pointer = (Pointer) componentDataType;
+		DataType pointedToDataType = pointer.getDataType();
+
+		if (!(pointedToDataType instanceof FunctionDefinition)) {
+			return null;
+		}
+		FunctionDefinition componentFunctionDefinition = (FunctionDefinition) pointedToDataType;
+		return componentFunctionDefinition;
+	}
+
+	//TODO: use the below to find the dt's I need in the other methods
+	//dataTypeManager.findDataTypes(name, list, caseSensitive, monitor);
+	private Address getVftableAddress(Structure vftableStructure) throws CancelledException {
+
+		SymbolIterator symbolIterator =
+			symbolTable.getSymbolIterator("*" + VFTABLE_LABEL + "*", true);
+		while (symbolIterator.hasNext()) {
+			monitor.checkCanceled();
+			Symbol symbol = symbolIterator.next();
+			Address address = symbol.getAddress();
+			Data dataAt = program.getListing().getDataAt(address);
+			if (dataAt.getDataType().equals(vftableStructure)) {
+				return address;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Method to get the FunctionDefinition data type pointed to by the given structure component
+	 * @param structureComponent the given structure component
+	 * @return the FunctionDefinition data type pointed to by the given structure component or null
+	 * @throws DataTypeDependencyException if any data type dependency issues
+	 * @throws CancelledException if cancelled
+	 * @throws DuplicateNameException if duplicate data name
+	 */
+	private List<Object> applyNewFunctionDefinitionToComponents(
+			DataTypeComponent structureComponent, FunctionDefinition newFunctionDefinition)
+			throws DataTypeDependencyException, DuplicateNameException, CancelledException {
+
+		List<Object> changedItems = new ArrayList<Object>();
+
+		DataTypeComponent topParentComponent = getTopParentComponent(structureComponent);
+		if (topParentComponent == null) {
+			return changedItems;
+		}
+
+		try {
+			List<Object> newItems =
+				updateComponentFieldName(topParentComponent, newFunctionDefinition);
+			if (newItems != null) {
+				changedItems = updateList(changedItems, newItems);
+			}
+		}
+		catch (DuplicateNameException e) {
+			// do nothing
+		}
+
+		List<Object> newChangedItems =
+			applyNewFunctionDefinition(topParentComponent, newFunctionDefinition);
+		changedItems = updateList(changedItems, newChangedItems);
+
+		Structure topParentVftableStructure = (Structure) topParentComponent.getParent();
+
+		List<Object> updatedChildComponents = updateChildComponents(topParentVftableStructure,
+			topParentComponent.getOrdinal(), newFunctionDefinition);
+
+		changedItems = updateList(changedItems, updatedChildComponents);
+
+		return changedItems;
+
+	}
+
+	private List<Object> updateChildComponents(Structure parentVftableStructure,
+			int componentOrdinal, FunctionDefinition newFunctionDefinition)
+			throws CancelledException {
+
+		List<Object> changedItems = new ArrayList<Object>();
+		List<Structure> childClassStructures = getChildClassStructures(parentVftableStructure);
+		// get child classes only in this purecall case (other child cases will be handled below)
+		// since they are the ones that have real function signature pointers then recursively 
+		// call this method for them
+		if (childClassStructures.isEmpty()) {
+			return changedItems;
+		}
+		Structure parentClassStructure = getClassStructure(parentVftableStructure);
+		for (Structure childClassStructure : childClassStructures) {
+			monitor.checkCanceled();
+
+			// use the category path to get the vftables in child class
+			List<Structure> childVftableStructures =
+				getVftableStructuresInClass(childClassStructure.getCategoryPath());
+
+			Structure childVftableStruct =
+				getCorrectChildVftableStruct(parentClassStructure, childVftableStructures);
+			if (childVftableStruct == null) {
+				continue;
+			}
+
+			// should always be big enough since it is inherited child but check anyway
+
+			if (childVftableStruct.getNumComponents() - 1 < componentOrdinal) {
+				continue;
+			}
+			DataTypeComponent childComponent = childVftableStruct.getComponent(componentOrdinal);
+			List<Object> newChangedItems =
+				applyNewFunctionDefinition(childComponent, newFunctionDefinition);
+			changedItems = updateList(changedItems, newChangedItems);
+
+//			try {
+//				List<Object> newItems =
+//					updateComponentFieldName(childComponent, newFunctionDefinition);
+//				if (newItems != null) {
+//					changedItems = updateList(changedItems, newItems);
+//				}
+//			}
+//			catch (DuplicateNameException e) {
+//				// do nothing
+//			}
+
+			// recursively call same method for children of child
+			List<Object> newChildChangedItems =
+				updateChildComponents(childVftableStruct, componentOrdinal, newFunctionDefinition);
+			changedItems = updateList(changedItems, newChildChangedItems);
+		}
+		return changedItems;
+	}
+
+	private List<Object> applyNewFunctionDefinition(DataTypeComponent structureComponent,
+			FunctionDefinition newFunctionDefinition) {
+
+		List<Object> changedItems = new ArrayList<Object>();
+
+		DataType componentDataType = structureComponent.getDataType();
+		if (!(componentDataType instanceof Pointer)) {
+			return changedItems;
+		}
+
+		Pointer pointer = (Pointer) componentDataType;
+		DataType pointedToDataType = pointer.getDataType();
+
+		if (!(pointedToDataType instanceof FunctionDefinition)) {
+			return changedItems;
+		}
+		FunctionDefinition componentFunctionDefinition = (FunctionDefinition) pointedToDataType;
+
+		if (!componentFunctionDefinition.isEquivalent(newFunctionDefinition)) {
+			// if it is a purecall then don't update the function definition as it will always point
+			// to the purecall function and we don't want to rename that function to the new name
+			// since anyone calling purecall will call it
+			if (!componentFunctionDefinition.getName().contains("purecall")) {
+				// otherwise update data type with new new signature
+				boolean changed =
+					updateFunctionDefinition(componentFunctionDefinition, newFunctionDefinition);
+				if (changed) {
+					changedItems.add(componentFunctionDefinition);
+				}
+			}
+		}
+
+		// even if function defs are equal, the field name needs to be checked and updated
+		String newFieldName = newFunctionDefinition.getName();
+		if (!structureComponent.getFieldName().equals(newFieldName)) {
+			try {
+				structureComponent.setFieldName(newFieldName);
+				Structure parentVftableStructure = (Structure) structureComponent.getParent();
+				changedItems.add(parentVftableStructure);
+				changedItems.add(structureComponent);
+			}
+			catch (DuplicateNameException e) {
+				// don't add changed item
+			}
+		}
+
+		if (componentFunctionDefinition.isEquivalent(newFunctionDefinition)) {
+			return changedItems;
+		}
+
+		return changedItems;
+	}
+
+	private boolean updateFunctionDefinition(FunctionDefinition functionDefinition,
+			FunctionDefinition newFunctionDefinition) {
+
+		boolean changed = false;
+
+		if (!functionDefinition.getName().equals(newFunctionDefinition.getName())) {
+			try {
+				functionDefinition.setName(newFunctionDefinition.getName());
+				changed = true;
+			}
+			catch (InvalidNameException | DuplicateNameException e) {
+				// don't update if an exception
+			}
+
+		}
+
+		ParameterDefinition[] currentArgs = functionDefinition.getArguments();
+		ParameterDefinition[] changedArgs = newFunctionDefinition.getArguments();
+
+		// only update if there are differences and the func sigs have same length
+		// if they don't have same length then something was possibly overridden in a child and
+		// it needs to stay the same as it was except the name 
+
+		if (!currentArgs.equals(changedArgs) && (currentArgs.length == changedArgs.length)) {
+			ParameterDefinition[] newArgs = new ParameterDefinition[currentArgs.length];
+			for (int i = 0; i < currentArgs.length; i++) {
+				if (currentArgs[i].getName().equals("this") ||
+					currentArgs[i].equals(changedArgs[i])) {
+					newArgs[i] = currentArgs[i];
+				}
+				else {
+					newArgs[i] = changedArgs[i];
+					changed = true;
+				}
+			}
+			if (changed) {
+				functionDefinition.setArguments(newArgs);
+			}
+
+		}
+
+		if (!functionDefinition.getReturnType().equals(newFunctionDefinition.getReturnType())) {
+			functionDefinition.setReturnType(newFunctionDefinition.getReturnType());
+			changed = true;
+		}
+		return changed;
+
+	}
+
+	/**
+	 * Method to get the correct child vftable structure corresponding to the given parent structure
+	 * @param parentStructure the given parent structure
+	 * @param childVftableStructs the list of possible childVftable structures
+	 * @return the child vftable structure corresponding to the given parent structure
+	 * @throws CancelledException if cancelled
+	 */
+	private Structure getCorrectChildVftableStruct(Structure parentStructure,
+			List<Structure> childVftableStructs) throws CancelledException {
+
+		if (childVftableStructs.isEmpty()) {
+			return null;
+		}
+		if (childVftableStructs.size() == 1) {
+			return childVftableStructs.get(0);
+		}
+		// otherwise, use the name of the vftableStructure to verify parent
+		for (Structure vftableStructure : childVftableStructs) {
+			monitor.checkCanceled();
+			String vftableSuffix = getForClassSuffix(vftableStructure.getName());
+			String parentName = getParentClassNameFromForClassSuffix(vftableSuffix);
+
+			if (parentStructure.getName().equals(parentName)) {
+				return vftableStructure;
+			}
+		}
+		return null;
+
+	}
+
+	private List<Structure> getChildClassStructures(Structure parentVftableStructure)
+			throws CancelledException {
+
+		Structure parentClassStructure = getClassStructure(parentVftableStructure);
+		List<Structure> childClassStructures = new ArrayList<Structure>();
+
+		Iterator<Structure> allStructures = dataTypeManager.getAllStructures();
+		while (allStructures.hasNext()) {
+			monitor.checkCanceled();
+
+			Structure structure = allStructures.next();
+			List<String> parentNames =
+				getParentNamesFromClassStructureDescription(structure.getDescription());
+			if (parentNames.isEmpty()) {
+				continue;
+			}
+			if (parentNames.contains(parentClassStructure.getName())) {
+				childClassStructures.add(structure);
+			}
+
+		}
+		return childClassStructures;
+	}
+
+	/**
+	 * Method to get the vftable structures in the given data type manager category path
+	 * @param categoryPath the given data type manager category path
+	 * @return the vftable structures in the given data type manager category path
+	 * @throws CancelledException if cancelled
+	 */
+	private List<Structure> getVftableStructuresInClass(CategoryPath categoryPath)
+			throws CancelledException {
+
+		List<Structure> vftableStructures = new ArrayList<Structure>();
+		Iterator<Structure> allStructures = dataTypeManager.getAllStructures();
+		while (allStructures.hasNext()) {
+			monitor.checkCanceled();
+			Structure structure = allStructures.next();
+			if (structure.getCategoryPath().equals(categoryPath) &&
+				structure.getName().contains(VFTABLE_LABEL)) {
+				vftableStructures.add(structure);
+			}
+		}
+		return vftableStructures;
+	}
+
+	/**
+	 * Method to get the class structure given a class's vftableStructure
+	 * @param vftableStructure the given vftable structure
+	 * @return the class structure associated with the given vftableStructure
+	 */
+	private Structure getClassStructure(Structure vftableStructure) {
+		CategoryPath categoryPath = vftableStructure.getCategoryPath();
+		int endingIndex = vftableStructure.getName().indexOf('_');
+		String className = vftableStructure.getName().substring(0, endingIndex);
+		Structure classStructure = (Structure) dataTypeManager.getDataType(categoryPath, className);
+		return classStructure;
+
+	}
+
+	private DataTypeComponent getTopParentComponent(DataTypeComponent component)
+			throws CancelledException {
+
+		DataTypeComponent currentTopComponent = getParentComponent(component);
+		if (currentTopComponent == null) {
+			return component;
+		}
+
+		DataTypeComponent nextTopComponent = currentTopComponent;
+		// if the first one is null return that null
+		// otherwise, return the last one before a null is reached
+		while (true) {
+			monitor.checkCanceled();
+			if (nextTopComponent == null) {
+				return currentTopComponent;
+			}
+			nextTopComponent = getParentComponent(currentTopComponent);
+		}
+
+	}
+
+	/**
+	 * Method to get the parent component associated with the given component or null if there isn't one
+	 * @param component the given vftable component
+	 * @return the associated parent vftable component or null if doesn't exist or cannot be determined
+	 * @throws CancelledException if cancelled
+	 */
+	private DataTypeComponent getParentComponent(DataTypeComponent component)
+			throws CancelledException {
+
+		DataType vftableDataType = component.getParent();
+		if (!vftableDataType.getName().contains(VFTABLE_LABEL)) {
+			return null;
+		}
+
+		if (!(vftableDataType instanceof Structure)) {
+			return null;
+		}
+
+		Structure vftableStructure = (Structure) vftableDataType;
+
+		Structure classStructure = getClassStructure(vftableStructure);
+
+		if (classStructure == null) {
+			return null;
+		}
+
+		// parse the description to get class parent names
+		List<String> parentNames =
+			getParentNamesFromClassStructureDescription(classStructure.getDescription());
+		if (parentNames.isEmpty()) {
+			return null;
+		}
+
+		String parentName = new String();
+		if (parentNames.size() == 1) {
+			parentName = parentNames.get(0);
+		}
+		else {
+			// otherwise, use the name of the vftableStructure to get the correct parent
+			String vftableSuffix = getForClassSuffix(vftableStructure.getName());
+			String possibleParentName = getParentClassNameFromForClassSuffix(vftableSuffix);
+			if (parentNames.contains(possibleParentName)) {
+				parentName = possibleParentName;
+			}
+		}
+
+		if (parentName.isEmpty()) {
+			return null;
+		}
+
+		Structure parentStructure = getParentClassStructure(classStructure, parentName);
+
+		CategoryPath parentCategoryPath = parentStructure.getCategoryPath();
+
+		List<Structure> parentVftableStructs = getVftableStructuresInClass(parentCategoryPath);
+		if (parentVftableStructs.size() != 1) {
+			// either no vftable so can't get a component or more than one and we can't determine
+			// which is the correct vftable
+			// TODO: investigate how to determine correct vftable if parent has more than one
+			return null;
+		}
+
+		if (parentVftableStructs.get(0).getNumComponents() - 1 >= component.getOrdinal()) {
+			return parentVftableStructs.get(0).getComponent(component.getOrdinal());
+		}
+		return null;
+
+	}
+
+	/**
+	 * Method to get parent names out of class structure description field
+	 * @param description the string containing the class structure description field contents
+	 * @return a list of parent names contained in the class structure description
+	 * @throws CancelledException if cancelled
+	 */
+	private List<String> getParentNamesFromClassStructureDescription(String description)
+			throws CancelledException {
+
+		List<String> parentNames = new ArrayList<String>();
+		while (description.contains(":")) {
+			monitor.checkCanceled();
+
+			int indexOfColon = description.indexOf(":", 0);
+
+			description = description.substring(indexOfColon + 1);
+
+			int endOfBlock = description.indexOf(":", 0);
+			if (endOfBlock == -1) {
+				endOfBlock = description.length();
+			}
+
+			String parentName = description.substring(0, endOfBlock);
+
+			description = description.substring(endOfBlock);
+
+			parentName = parentName.replace("virtual", "");
+			parentName = parentName.replace(" ", "");
+			parentNames.add(parentName);
+		}
+		return parentNames;
+	}
+
+	private Structure getParentClassStructure(Structure childClassStructure, String nameOfParent)
+			throws CancelledException {
+		
+		DataTypeComponent[] components = childClassStructure.getComponents();
+		for (DataTypeComponent component : components) {
+			monitor.checkCanceled();
+			DataType componentDataType = component.getDataType();
+			if(componentDataType.getName().equals(nameOfParent)) {
+				return (Structure) componentDataType;
+			}
+		}
+		return null;
+	}
+
+	private List<Object> updateList(List<Object> mainList, List<Object> itemsToAdd)
+			throws CancelledException {
+
+		if (itemsToAdd.isEmpty()) {
+			return mainList;
+		}
+
+		for (Object item : itemsToAdd) {
+			monitor.checkCanceled();
+			if (!mainList.contains(item)) {
+				mainList.add(item);
+			}
+		}
+		return mainList;
+	}
+
+	public List<Structure> getStructuresOnList(List<Object> list) throws CancelledException {
+
+		List<Structure> structures = new ArrayList<Structure>();
+		for (Object item : list) {
+			monitor.checkCanceled();
+			if (item instanceof Structure) {
+				structures.add((Structure) item);
+			}
+		}
+		return structures;
+	}
+
+	public List<FunctionDefinition> getFunctionDefinitionsOnList(List<Object> list)
+			throws CancelledException {
+
+		List<FunctionDefinition> functionDefs = new ArrayList<FunctionDefinition>();
+		for (Object item : list) {
+			monitor.checkCanceled();
+			if (item instanceof FunctionDefinition) {
+				functionDefs.add((FunctionDefinition) item);
+			}
+		}
+		return functionDefs;
+	}
+
+	public List<Function> getFunctionsOnList(List<Object> list) throws CancelledException {
+
+		List<Function> functions = new ArrayList<Function>();
+		for (Object item : list) {
+			monitor.checkCanceled();
+			if (item instanceof Function) {
+				functions.add((Function) item);
+			}
+		}
+		return functions;
+	}
+
+	public List<Object> applyNewFunctionDefinitions(Namespace classNamespace,
+			List<Symbol> classVftableSymbols) throws CancelledException, DuplicateNameException,
+			DataTypeDependencyException, InvalidInputException {
+
+		List<Object> changedItems = new ArrayList<Object>();
+
+		Iterator<Symbol> vftableIterator = classVftableSymbols.iterator();
+		while (vftableIterator.hasNext()) {
+			monitor.checkCanceled();
+			Symbol vftableSymbol = vftableIterator.next();
+			Address vftableAddress = vftableSymbol.getAddress();
+			Data data = api.getDataAt(vftableAddress);
+			if (data == null) {
+				continue;
+			}
+			DataType baseDataType = data.getBaseDataType();
+			if (!(baseDataType instanceof Structure)) {
+				continue;
+			}
+
+			Structure vfunctionStructure = (Structure) baseDataType;
+
+			Category category = getDataTypeCategory(vfunctionStructure);
+
+			if (category == null) {
+				continue;
+			}
+
+			// check that the structure name starts with <classname>_vtable and that it is in 
+			// the dt folder with name <classname>
+			if (category.getName().equals(classNamespace.getName()) &&
+				vfunctionStructure.getName().startsWith(classNamespace.getName() + "_vftable")) {
+
+				DataTypeComponent[] vfunctionComponents = vfunctionStructure.getComponents();
+				for (DataTypeComponent vfunctionComponent : vfunctionComponents) {
+					monitor.checkCanceled();
+					Object changedItem = updateListingVfunctionSignature(data, vfunctionComponent, vftableAddress);
+					if(changedItem != null && !changedItems.contains(changedItem)) {
+						changedItems.add(changedItem);
+
+						FunctionDefinition newFunctionDefinition = getComponentFunctionDefinition(vfunctionComponent);
+						if(newFunctionDefinition == null) {
+							continue;
+						}
+						
+						List<Object> changedStructs =
+								applyNewFunctionDefinitionToComponents(vfunctionComponent,
+									newFunctionDefinition);
+						if (changedStructs.isEmpty()) {
+							continue;
+						}
+							
+						changedItems = updateList(changedItems, changedStructs);
+					}
+				}
+			}
+		}
+		List<Object> newChangedItems = updateFunctionSignaturesForChangedDefinitions(changedItems);
+		changedItems = updateList(changedItems, newChangedItems);
+
+		return changedItems;
+
+	}
+
+	/**
+	 * Method to find any function definitions in the given vfunction structure that have changed
+	 * and update the function signature data types
+	 * @throws DuplicateNameException if try to rename with a duplicate name
+	 * @throws DataTypeDependencyException if data type dependency error
+	 * @throws InvalidInputException  if invalid name input
+	 * @throws CancelledException if cancelled
+	 */
+	private Object updateListingVfunctionSignature(Data listingVftable,
+			DataTypeComponent structureComponent,
+			Address vftableAddress) throws DuplicateNameException, DataTypeDependencyException,
+			InvalidInputException, CancelledException {
+
+		int numVfunctions = listingVftable.getNumComponents();
+
+		int newComponentOrdinal = structureComponent.getOrdinal();
+		if (newComponentOrdinal > numVfunctions - 1) {
+			return null;
+		}
+
+		Data dataComponent = listingVftable.getComponent(newComponentOrdinal);
+
+		Reference[] referencesFrom = dataComponent.getReferencesFrom();
+		if (referencesFrom.length != 1) {
+			return null;
+		}
+		Address functionAddress = referencesFrom[0].getToAddress();
+		Function vfunction = api.getFunctionAt(functionAddress);
+		if (vfunction == null) {
+			return null;
+		}
+
+		if (vfunction.isThunk()) {
+			vfunction = vfunction.getThunkedFunction(true);
+		}
+
+		FunctionSignature listingFunctionSignature = vfunction.getSignature();
+
+		DataType componentDataType = structureComponent.getDataType();
+		if (!(componentDataType instanceof Pointer)) {
+			return null;
+		}
+
+		Pointer pointer = (Pointer) componentDataType;
+		DataType pointedToDataType = pointer.getDataType();
+
+		if (!(pointedToDataType instanceof FunctionDefinition)) {
+			return null;
+		}
+
+		FunctionDefinition newFunctionDefinition = (FunctionDefinition) pointedToDataType;
+
+		if (areEquivalentFunctionSignatures(newFunctionDefinition, listingFunctionSignature)) {
+			return null;
+		}
+
+
+		boolean changed = updateFunctionSignature(vfunction, newFunctionDefinition);
+		if (changed) {
+			return vfunction;
+		}
+
+		return null;
+
+	}
+
+	private boolean updateFunctionSignature(Function function,
+			FunctionDefinition newFunctionDefinition) {
+
+		if (!newFunctionDefinition.getName().equals(function.getName())) {
+			try {
+				function.setName(newFunctionDefinition.getName(), SourceType.USER_DEFINED);
+				return true;
+			}
+			catch (DuplicateNameException | InvalidInputException e) {
+				return false;
+			}
+		}
+
+		// update function signature at vfunction address with the function signature in the structure
+		AddressSet functionStart =
+			new AddressSet(function.getEntryPoint(), function.getEntryPoint());
+		List<DataTypeManager> dataTypeManagers = new ArrayList<>();
+		dataTypeManagers.add(program.getDataTypeManager());
+		ApplyFunctionDataTypesCmd cmd = new ApplyFunctionDataTypesCmd(dataTypeManagers,
+			functionStart,
+			SourceType.USER_DEFINED, true, false);
+		cmd.applyTo(program);
+		return true;
+	}
+
+	/**
+	 * Method to compare the given FunctionDefinition data type with the given FunctionSignature to
+	 * see if they are equivalent (ie same name, same return type, same param types, same param names, 
+	 * same calling convention, same hasVarArgs flag ...
+	 * @param definition the given FunctionDefinition data type
+	 * @param signature the given FunctionSignature
+	 * @return true if the two are equivalent, false other wise
+	 */
+	public boolean areEquivalentFunctionSignatures(FunctionDefinition definition,
+			FunctionSignature signature) {
+
+		if ((DataTypeUtilities.equalsIgnoreConflict(signature.getName(), definition.getName())) &&
+			DataTypeUtilities.isSameOrEquivalentDataType(definition.getReturnType(),
+				signature.getReturnType()) &&
+			(definition.getGenericCallingConvention() == signature.getGenericCallingConvention()) &&
+			(definition.hasVarArgs() == signature.hasVarArgs())) {
+			ParameterDefinition[] sigargs = signature.getArguments();
+			ParameterDefinition[] defArgs = definition.getArguments();
+			if (sigargs.length == defArgs.length) {
+				for (int i = 0; i < sigargs.length; i++) {
+					if (!defArgs[i].isEquivalent(sigargs[i])) {
+						return false;
+					}
+					if (!defArgs[i].getName().equals(sigargs[i].getName())) {
+						return false;
+					}
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private List<Object> updateComponentFieldName(DataTypeComponent structureComponent,
+			FunctionDefinition newFunctionSignature)
+			throws DuplicateNameException {
+
+		List<Object> changedItems = new ArrayList<Object>();
+		if (!structureComponent.getFieldName().equals(newFunctionSignature.getName())) {
+			structureComponent.setFieldName(newFunctionSignature.getName());
+			changedItems.add(structureComponent);
+			changedItems.add(structureComponent.getParent());
+			return changedItems;
+		}
+		return null;
+	}
+
+	public List<Symbol> getClassVftableSymbols(Namespace classNamespace)
+			throws CancelledException {
+
+		List<Symbol> vftableSymbols = new ArrayList<Symbol>();
+
+		SymbolIterator symbols = symbolTable.getSymbols(classNamespace);
+		while (symbols.hasNext()) {
+
+			monitor.checkCanceled();
+			Symbol symbol = symbols.next();
+			if (symbol.getName().equals("vftable") ||
+				symbol.getName().substring(1).startsWith("vftable")) {
+				vftableSymbols.add(symbol);
+			}
+
+		}
+		return vftableSymbols;
+	}
+
+	public Namespace getClassNamespace(Address address) {
+		Symbol primarySymbol = symbolTable.getPrimarySymbol(address);
+
+		if (primarySymbol == null) {
+			Function functionContaining = api.getFunctionContaining(address);
+			if (functionContaining != null) {
+				primarySymbol =
+					program.getSymbolTable().getPrimarySymbol(functionContaining.getEntryPoint());
+			}
+			else {
+				Data dataContaining = api.getDataContaining(address);
+				if (dataContaining != null) {
+					primarySymbol =
+						program.getSymbolTable().getPrimarySymbol(dataContaining.getMinAddress());
+				}
+			}
+			if (primarySymbol == null) {
+				return null;
+			}
+		}
+
+		Namespace classNamespace = primarySymbol.getParentNamespace();
+		if (classNamespace.isGlobal()) {
+			return null;
+		}
+
+		return classNamespace;
+	}
+
+	private Category getDataTypeCategory(DataType dataType) {
+
+		CategoryPath originalPath = dataType.getCategoryPath();
+		Category category = dataTypeManager.getCategory(originalPath);
+
+		return category;
 	}
 
 }
