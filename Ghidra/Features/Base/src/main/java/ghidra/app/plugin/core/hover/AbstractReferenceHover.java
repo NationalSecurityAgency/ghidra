@@ -91,14 +91,15 @@ public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 
 		String hoverName = getName();
 		options.getOptions(hoverName).setOptionsHelpLocation(help);
+
 		options.registerOption(hoverName, true, null, getDescription());
+		enabled = options.getBoolean(hoverName, true);
 
 		options.registerOption(hoverName + Options.DELIMITER + "Dialog Height", 400, help,
 			"Height of the popup window");
 		options.registerOption(hoverName + Options.DELIMITER + "Dialog Width", 600, help,
 			"Width of the popup window");
 
-		setOptions(options, hoverName);
 		options.addOptionsChangeListener(this);
 	}
 
@@ -152,10 +153,18 @@ public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 			return;
 		}
 
+		toolTip = new JToolTip();
+
 		panel = new ListingPanel(codeFormatService.getFormatManager());// share the manager from the code viewer
 		panel.setTextBackgroundColor(BACKGROUND_COLOR);
 
-		toolTip = new JToolTip();
+		String name = getName();
+		String widthOptionName = name + Options.DELIMITER + "Dialog Width";
+		String heightOptionName = name + Options.DELIMITER + "Dialog Height";
+		int dialogWidth = options.getInt(widthOptionName, 600);
+		int dialogHeight = options.getInt(heightOptionName, 400);
+		Dimension d = new Dimension(dialogWidth, dialogHeight);
+		panel.setPreferredSize(d);
 	}
 
 	@Override
