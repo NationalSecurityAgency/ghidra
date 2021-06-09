@@ -1316,7 +1316,7 @@ public class DecompileCallback {
 		}
 		Data data = program.getListing().getDataContaining(addr);
 		Settings settings = SettingsImpl.NO_SETTINGS;
-		StringDataInstance stringInstance = null;
+		StringDataInstance stringInstance = StringDataInstance.NULL_INSTANCE;
 		int length = 0;
 		if (data != null) {
 			if (data.getDataType() instanceof AbstractStringDataType
