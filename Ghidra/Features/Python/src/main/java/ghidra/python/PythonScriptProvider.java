@@ -62,6 +62,21 @@ public class PythonScriptProvider extends GhidraScriptProvider {
 	}
 
 	@Override
+	protected String getCertifyHeaderStart() {
+		return "## ###";
+	}
+
+	@Override
+	protected String getCertificationBodyPrefix() {
+		return "#";
+	}
+
+	@Override
+	protected String getCertifyHeaderEnd() {
+		return "##";
+	}
+
+	@Override
 	public String getDescription() {
 		return "Python";
 	}

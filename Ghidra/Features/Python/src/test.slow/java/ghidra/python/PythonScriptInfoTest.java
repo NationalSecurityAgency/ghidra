@@ -137,15 +137,15 @@ public class PythonScriptInfoTest extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			//@formatter:off
 			scriptFile = createTempPyScriptFileWithLines(
-				"## ###" +
-				"# IP: GHIDRA" + 
-				"# " +
-				"# Some license text..." + 
-				"# you may not use this file except in compliance with the License." + 
-				"# " +
-				"# blah blah blah" +
-				"##" + 
-				"" +
+				"## ###",
+				"# IP: GHIDRA", 
+				"# ",
+				"# Some license text...", 
+				"# you may not use this file except in compliance with the License.", 
+				"# ",
+				"# blah blah blah",
+				"##",
+				"",
 				"'''",
 				"This is a test block comment. It will be ignored.",
 				"@category NotTheRealCategory",

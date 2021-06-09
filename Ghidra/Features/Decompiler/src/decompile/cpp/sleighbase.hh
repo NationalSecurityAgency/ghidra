@@ -73,7 +73,6 @@ public:
   SleighBase(void);		///< Construct an uninitialized translator
   bool isInitialized(void) const { return (root != (SubtableSymbol *)0); }	///< Return \b true if \b this is initialized
   virtual ~SleighBase(void) {}	///< Destructor
-  virtual void addRegister(const string &nm,AddrSpace *base,uintb offset,int4 size);
   virtual const VarnodeData &getRegister(const string &nm) const;
   virtual string getRegisterName(AddrSpace *base,uintb off,int4 size) const;
   virtual void getAllRegisters(map<VarnodeData,string> &reglist) const;

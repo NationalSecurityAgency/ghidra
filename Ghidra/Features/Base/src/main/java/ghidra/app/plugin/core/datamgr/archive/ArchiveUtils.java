@@ -123,7 +123,7 @@ public class ArchiveUtils {
 		if (file == null) {
 			return null;
 		}
-		if (file.equals(archive.getFile())) {
+		if (file.equals(archive.getFile().getFile(false))) {
 			return file;
 		}
 

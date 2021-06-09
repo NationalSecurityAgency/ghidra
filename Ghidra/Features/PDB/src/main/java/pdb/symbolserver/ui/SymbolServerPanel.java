@@ -52,7 +52,7 @@ import utilities.util.FileUtilities;
 class SymbolServerPanel extends JPanel {
 	private static final String MS_SYMBOLSERVER_ENVVAR = "_NT_SYMBOL_PATH";
 
-	private List<WellKnownSymbolServerLocation> knownSymbolServers =
+	private static List<WellKnownSymbolServerLocation> knownSymbolServers =
 		WellKnownSymbolServerLocation.loadAll();
 
 	private SymbolStore localSymbolStore;
@@ -295,23 +295,6 @@ class SymbolServerPanel extends JPanel {
 		deleteLocationButton.setEnabled(hasLocalSymbolStore && table.getSelectedRowCount() > 0);
 		saveSearchLocationsButton.setEnabled(hasLocalSymbolStore && isConfigChanged());
 		updateLayout(hasLocalSymbolStore);
-	}
-
-	StatusText getSymbolServerWarnings() {
-		Map<String, String> warningsByLocation = new HashMap<>();
-		for (WellKnownSymbolServerLocation ssloc : knownSymbolServers) {
-			if (ssloc.getWarning() != null && !ssloc.getWarning().isBlank()) {
-				warningsByLocation.put(ssloc.getLocation(), ssloc.getWarning());
-			}
-		}
-		String warning = tableModel.getDataSource()
-				.stream()
-				.map(row -> warningsByLocation.get(row.getSymbolServer().getName()))
-				.filter(Objects::nonNull)
-				.distinct()
-				.collect(Collectors.joining("<br>\n"));
-
-		return !warning.isEmpty() ? new StatusText(warning, MessageType.WARNING, false) : null;
 	}
 
 	private void setSymbolStorageLocation(File symbolStorageDir, boolean allowGUIPrompt) {
@@ -600,6 +583,23 @@ class SymbolServerPanel extends JPanel {
 		button.setPreferredSize(preferredSize);
 
 		return button;
+	}
+	
+	static StatusText getSymbolServerWarnings(List<SymbolServer> symbolServers) {
+		Map<String, String> warningsByLocation = new HashMap<>();
+		for (WellKnownSymbolServerLocation ssloc : knownSymbolServers) {
+			if (ssloc.getWarning() != null && !ssloc.getWarning().isBlank()) {
+				warningsByLocation.put(ssloc.getLocation(), ssloc.getWarning());
+			}
+		}
+		String warning = symbolServers
+				.stream()
+				.map(symbolServer -> warningsByLocation.get(symbolServer.getName()))
+				.filter(Objects::nonNull)
+				.distinct()
+				.collect(Collectors.joining("<br>\n"));
+
+		return !warning.isEmpty() ? new StatusText(warning, MessageType.WARNING, false) : null;
 	}
 
 }

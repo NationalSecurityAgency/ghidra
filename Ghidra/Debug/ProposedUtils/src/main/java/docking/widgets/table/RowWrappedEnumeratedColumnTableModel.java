@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import ghidra.util.Msg;
 
 /**
  * A table model where the columns are enumerated, and the rows are wrappers on the objects being
@@ -44,11 +45,16 @@ public class RowWrappedEnumeratedColumnTableModel<C extends Enum<C> & Enumerated
 		this.wrapper = wrapper;
 	}
 
-	protected synchronized R rowFor(T t) {
-		return map.computeIfAbsent(keyFunc.apply(t), k -> wrapper.apply(t));
+	protected synchronized R addRowFor(T t) {
+		R row = wrapper.apply(t);
+		R exists = map.put(keyFunc.apply(t), row);
+		if (exists != null) {
+			Msg.warn(this, "Replaced existing row! row=" + exists);
+		}
+		return row;
 	}
 
-	protected synchronized R delFor(T t) {
+	protected synchronized R delRowFor(T t) {
 		return delKey(keyFunc.apply(t));
 	}
 
@@ -56,50 +62,75 @@ public class RowWrappedEnumeratedColumnTableModel<C extends Enum<C> & Enumerated
 		return map.remove(k);
 	}
 
-	protected synchronized List<R> rowsFor(Stream<? extends T> s) {
-		return s.map(this::rowFor).collect(Collectors.toList());
+	protected synchronized List<R> addRowsFor(Stream<? extends T> s) {
+		return s.map(this::addRowFor).collect(Collectors.toList());
 	}
 
-	protected synchronized List<R> rowsFor(Collection<? extends T> c) {
-		return rowsFor(c.stream());
+	protected synchronized List<R> addRowsFor(Collection<? extends T> c) {
+		return addRowsFor(c.stream());
 	}
 
 	public synchronized R getRow(T t) {
 		return map.get(keyFunc.apply(t));
 	}
 
+	protected synchronized List<R> getRows(Stream<? extends T> s) {
+		return s.map(this::getRow).filter(r -> r != null).collect(Collectors.toList());
+	}
+
+	protected synchronized List<R> getRows(Collection<? extends T> c) {
+		return getRows(c.stream());
+	}
+
 	public synchronized void addItem(T t) {
 		if (map.containsKey(keyFunc.apply(t))) {
 			return;
 		}
-		add(rowFor(t));
+		add(addRowFor(t));
 	}
 
 	public synchronized void addAllItems(Collection<? extends T> c) {
-		Stream<? extends T> s = c.stream().filter(t -> !map.containsKey(keyFunc.apply(t)));
-		addAll(rowsFor(s));
+		Stream<? extends T> s = c.stream().filter(t -> {
+			K k = keyFunc.apply(t);
+			if (map.containsKey(k)) {
+				return false;
+			}
+			return true;
+		});
+		addAll(addRowsFor(s));
 	}
 
 	public void updateItem(T t) {
-		notifyUpdated(rowFor(t));
+		R row = getRow(t);
+		if (row == null) {
+			return;
+		}
+		notifyUpdated(row);
 	}
 
 	public void updateAllItems(Collection<T> c) {
-		notifyUpdatedWith(rowsFor(c)::contains);
+		notifyUpdatedWith(getRows(c)::contains);
 	}
 
 	public void deleteItem(T t) {
-		delete(delFor(t));
+		R row = delRowFor(t);
+		if (row == null) {
+			return;
+		}
+		delete(row);
 	}
 
 	public R deleteKey(K k) {
 		R r = delKey(k);
+		if (r == null) {
+			return null;
+		}
 		delete(r);
 		return r;
 	}
 
 	public synchronized void deleteAllItems(Collection<T> c) {
-		deleteWith(rowsFor(c)::contains);
+		deleteWith(getRows(c)::contains);
 		map.keySet().removeAll(c.stream().map(keyFunc).collect(Collectors.toList()));
 	}
 

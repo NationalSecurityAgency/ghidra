@@ -153,13 +153,22 @@ task generateDevGhidraServerClasspath {
 		outfile.withPrintWriter { out ->
 			int idx = 0
 			configurations.runGhidraServer.each { jarFile ->
-				def JAR_PATH = rootProject.relativePath(jarFile.absolutePath).replace('\\','/')
-				def index = JAR_PATH.indexOf("build/")
+				def JAR_PATH = jarFile.absolutePath
+				
+				// There might be dependencies in the gradle cache, which could be anywhere
+				// (including a different drive). We can only use relative paths if the jar is in 
+				// the root project repo or bin repo. 
+				if (JAR_PATH.startsWith(rootProject.getProjectDir().absolutePath) || JAR_PATH.startsWith(BIN_REPO)) {
+					JAR_PATH = "\${ghidra_home}/" + rootProject.relativePath(JAR_PATH)
+				}
+				JAR_PATH = JAR_PATH.replace('\\','/') // necessary for windows
+				def index = JAR_PATH.indexOf("/build/")
 				if (index != -1) {
-					JAR_PATH = JAR_PATH.substring(0, index) + "bin/main"
+					// Use Module's bin/ class directory (produced by Eclipse) instead of jar 
+					JAR_PATH = JAR_PATH.substring(0, index) + "/bin/main"
 				}
 				if (!jarFile.path.contains("/libsForBuild/")) {
-					out.println("wrapper.java.classpath.${++idx}=\${ghidra_home}/${JAR_PATH}")
+					out.println("wrapper.java.classpath.${++idx}=${JAR_PATH}")
 				}
 			}
 		}

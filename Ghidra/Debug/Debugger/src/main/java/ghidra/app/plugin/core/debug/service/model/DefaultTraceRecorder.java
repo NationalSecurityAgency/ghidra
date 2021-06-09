@@ -502,7 +502,6 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		return objectManager.getEventListener();
 	}
 
-	@Override
 	public ListenerSet<TraceRecorderListener> getListeners() {
 		return objectManager.getListeners();
 	}
@@ -564,4 +563,8 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		return true;
 	}
 
+	@Override
+	public CompletableFuture<Void> flushTransactions() {
+		return parTx.flush();
+	}
 }

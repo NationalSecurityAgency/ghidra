@@ -111,6 +111,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForPass(() -> {
 			runSwing(() -> listingProvider.goTo(location.getProgram(), location));
 			ProgramLocation confirm = listingProvider.getLocation();
+			assertNotNull(confirm);
 			assertEquals(location.getAddress(), confirm.getAddress());
 		});
 	}

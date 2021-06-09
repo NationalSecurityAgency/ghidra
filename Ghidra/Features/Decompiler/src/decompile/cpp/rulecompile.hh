@@ -61,7 +61,6 @@ public:
 class DummyTranslate : public Translate {
 public:
   virtual void initialize(DocumentStorage &store) {}
-  virtual void addRegister(const string &nm,AddrSpace *base,uintb offset,int4 size) {}
   virtual const VarnodeData &getRegister(const string &nm) const { throw LowlevelError("Cannot add register to DummyTranslate"); }
   virtual string getRegisterName(AddrSpace *base,uintb off,int4 size) const { return ""; }
   virtual void getAllRegisters(map<VarnodeData,string> &reglist) const {}
