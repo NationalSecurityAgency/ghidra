@@ -59,12 +59,15 @@ public class X86_32_ElfRelocationHandler extends ElfRelocationHandler {
 
 		ElfSymbol sym = null;
 		long symbolValue = 0;
+		Address symbolAddr = null;
 		String symbolName = null;
+
 		if (symbolIndex != 0) {
 			sym = elfRelocationContext.getSymbol(symbolIndex);
 		}
 
 		if (sym != null) {
+			symbolAddr = elfRelocationContext.getSymbolAddress(sym);
 			symbolValue = elfRelocationContext.getSymbolValue(sym);
 			symbolName = sym.getNameAsString();
 		}
@@ -79,6 +82,10 @@ public class X86_32_ElfRelocationHandler extends ElfRelocationHandler {
 
 		switch (type) {
 			case X86_32_ElfRelocationConstants.R_386_32:
+				if (addend != 0 && isUnsupportedExternalRelocation(program, relocationAddress,
+					symbolAddr, symbolName, addend, elfRelocationContext.getLog())) {
+					addend = 0; // prefer bad fixup for EXTERNAL over really-bad fixup
+				}
 				value = (int) (symbolValue + addend);
 				memory.setInt(relocationAddress, value);
 				break;
