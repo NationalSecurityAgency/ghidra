@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Ghidra
+GenericName=Reverse Engineering Framework
+Comment=Analyse binary files
+Keywords=binary;disassemble;
+Exec=PLACEHOLDER
+Terminal=false
+Type=Application
+Icon=PLACEHOLDER
+Categories=Development;Debugger;
