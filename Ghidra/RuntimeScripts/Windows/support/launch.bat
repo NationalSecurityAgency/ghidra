@@ -161,10 +161,9 @@ exit /B 1
 
 set CMD_ARGS=%FORCE_JAVA_VERSION% %JAVA_USER_HOME_DIR_OVERRIDE% %VMARG_LIST% -cp "%CPATH%" ghidra.GhidraLauncher %CLASSNAME% %ARGS%
 
-setlocal enabledelayedexpansion
+set JAVAW_CMD=%JAVA_CMD%w
 if "%BACKGROUND%"=="y" (
-	set JAVA_CMD=!JAVA_CMD!w
-	start "%APPNAME%" /I /B "!JAVA_CMD!" !CMD_ARGS!
+	start "%APPNAME%" /I /B "%JAVAW_CMD%" %CMD_ARGS%
 	
 	REM If our process dies immediately, output something so the user knows to run in debug mode.
 	REM Otherwise they'll never see any error output from background mode.
@@ -177,10 +176,9 @@ if "%BACKGROUND%"=="y" (
 		echo Exited with error.  Run in foreground ^(fg^) mode for more details.
 	)
 	goto exit1
+) else (
+	"%JAVA_CMD%" %CMD_ARGS%
 )
-setlocal disabledelayedexpansion
-"%JAVA_CMD%" %CMD_ARGS%
-
 
 :exit1
 if not %ERRORLEVEL% == 0 (
