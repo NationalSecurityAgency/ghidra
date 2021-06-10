@@ -41,6 +41,7 @@ import ghidra.app.plugin.core.decompile.actions.FillOutStructureCmd;
 import ghidra.app.plugin.core.decompile.actions.FillOutStructureCmd.OffsetPcodeOpPair;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReference;
 import ghidra.app.plugin.core.navigation.locationreferences.ReferenceUtils;
+import ghidra.app.util.NamespaceUtils;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.flatapi.FlatProgramAPI;
@@ -84,6 +85,8 @@ public class RecoveredClassUtils {
 	private static final int NONE = -1;
 
 	private static int MIN_OPERATOR_NEW_REFS = 10;
+
+	private static final boolean DEBUG = false;
 
 	private Map<Address, RecoveredClass> vftableToClassMap = new HashMap<Address, RecoveredClass>();
 
@@ -1012,7 +1015,9 @@ public class RecoveredClassUtils {
 
 		List<RecoveredClass> functionClasses = getClasses(function);
 		if (functionClasses == null) {
-			Msg.debug(this, "no function to class map for " + function.getEntryPoint());
+			if (DEBUG) {
+				Msg.debug(this, "no function to class map for " + function.getEntryPoint());
+			}
 			return true;
 		}
 		Iterator<RecoveredClass> functionClassesIterator = functionClasses.iterator();
@@ -1098,8 +1103,10 @@ public class RecoveredClassUtils {
 
 		List<Address> vftableReferenceList = getVftableReferences(function);
 		if (vftableReferenceList == null) {
-			Msg.debug(this, "In update maps: function to class map doesn't exist for " +
-				function.getEntryPoint().toString());
+			if (DEBUG) {
+				Msg.debug(this, "In update maps: function to class map doesn't exist for " +
+					function.getEntryPoint().toString());
+			}
 			return;
 		}
 		Collections.sort(vftableReferenceList);
@@ -1113,10 +1120,11 @@ public class RecoveredClassUtils {
 		RecoveredClass vftableClass = getVftableClass(vftableAddress);
 		if (!vftableClass.equals(recoveredClass)) {
 
-			Msg.debug(this,
-				"updating struct for " + recoveredClass.getName() +
+			if (DEBUG) {
+				Msg.debug(this, "updating struct for " + recoveredClass.getName() +
 					" but first vftable in function " + function.getEntryPoint().toString() +
 					" is in class " + vftableClass.getName());
+			}
 
 			return;
 		}
@@ -1196,8 +1204,10 @@ public class RecoveredClassUtils {
 				return;
 			}
 
-			Msg.debug(this, "Could not find variable pointing to vftable in " +
-				function.getEntryPoint().toString());
+			if (DEBUG) {
+				Msg.debug(this, "Could not find variable pointing to vftable in " +
+					function.getEntryPoint().toString());
+			}
 
 		}
 
@@ -2046,8 +2056,10 @@ public class RecoveredClassUtils {
 		}
 
 		if (vftableAddresses.size() != classOffsetToVftableMap.size()) {
-			Msg.debug(this, recoveredClass.getName() + " has " + vftableAddresses.size() +
-				" vftables but " + classOffsetToVftableMap.size() + " offset to vftable maps");
+			if (DEBUG) {
+				Msg.debug(this, recoveredClass.getName() + " has " + vftableAddresses.size() +
+					" vftables but " + classOffsetToVftableMap.size() + " offset to vftable maps");
+			}
 		}
 
 		List<Integer> offsetList = new ArrayList<Integer>(classOffsetToVftableMap.keySet());
@@ -2717,20 +2729,19 @@ public class RecoveredClassUtils {
 			// Get class name from class vftable is in
 			Namespace vftableNamespace = vftableSymbol.getParentNamespace();
 			if (vftableNamespace.equals(globalNamespace)) {
-				Msg.debug(this,
-					"vftable is in the global namespace, ie not in a class namespace, so cannot process");
+				if (DEBUG) {
+					Msg.debug(this,
+						"vftable is in the global namespace, ie not in a class namespace, so cannot process");
+				}
 				continue;
 			}
 
-			SymbolType namespaceType = vftableNamespace.getSymbol().getSymbolType();
-			if (namespaceType != SymbolType.CLASS) {
-				// if it is a namespace but not a class we need to promote it to a class namespace
-				if (namespaceType == SymbolType.NAMESPACE) {
-
-					//vftableNamespace = promoteToClassNamespace(vftableNamespace);
-
-					// else just leave the old one as a namepace
-
+			// promote any non-class namespaces in the vftableNamespace path to class namespaces
+			boolean success = promoteNamespaces(vftableNamespace.getSymbol());
+			if (!success) {
+				if (DEBUG) {
+					Msg.debug(this, "Unable to promote all non-class namespaces for " +
+						vftableNamespace.getName(true));
 				}
 			}
 
@@ -2806,6 +2817,60 @@ public class RecoveredClassUtils {
 
 		} // end of looping over vfTables
 		return recoveredClasses;
+	}
+
+	private boolean promoteNamespaces(Symbol symbol) throws CancelledException {
+
+		Namespace namespace = symbol.getParentNamespace();
+		while (!namespace.isGlobal()) {
+
+			monitor.checkCanceled();
+			SymbolType namespaceType = namespace.getSymbol().getSymbolType();
+			if (namespaceType != SymbolType.CLASS) {
+				// if it is a namespace but not a class we need to promote it to a class namespace
+				if (namespaceType == SymbolType.NAMESPACE) {
+					namespace = promoteToClassNamespace(namespace);
+					if (namespace == null) {
+						return false;
+					}
+					if (DEBUG) {
+						Msg.debug(this,
+							"Promoted namespace " + namespace.getName() + " to a class namespace");
+					}
+				}
+			}
+			else {
+				namespace = namespace.getParentNamespace();
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Method to promote the namespace is a class namespace. 
+	 * @return true if namespace is (now) a class namespace or false if it could not be promoted.
+	 */
+	private Namespace promoteToClassNamespace(Namespace namespace) {
+
+		try {
+			Namespace newClass = NamespaceUtils.convertNamespaceToClass(namespace);
+
+			SymbolType symbolType = newClass.getSymbol().getSymbolType();
+			if (symbolType == SymbolType.CLASS) {
+				return newClass;
+			}
+			if (DEBUG) {
+				Msg.debug(this,
+					"Could not promote " + namespace.getName() + " to a class namespace");
+			}
+			return null;
+		}
+		catch (InvalidInputException e) {
+
+			Msg.debug(this, "Could not promote " + namespace.getName() +
+				" to a class namespace because " + e.getMessage());
+			return null;
+		}
 	}
 
 	/**
@@ -3397,8 +3462,10 @@ public class RecoveredClassUtils {
 		if (symbolsByNameAtAddress.size() == 0) {
 			AddLabelCmd lcmd = new AddLabelCmd(address, name, namespace, SourceType.ANALYSIS);
 			if (!lcmd.applyTo(program)) {
-				Msg.debug(this,
-					"ERROR: Could not add new symbol " + name + " to " + address.toString());
+				if (DEBUG) {
+					Msg.debug(this,
+						"ERROR: Could not add new symbol " + name + " to " + address.toString());
+				}
 			}
 		}
 		//put the same name one in the namespace
@@ -3491,8 +3558,10 @@ public class RecoveredClassUtils {
 			AddLabelCmd lcmd =
 				new AddLabelCmd(function.getEntryPoint(), name, namespace, SourceType.ANALYSIS);
 			if (!lcmd.applyTo(program)) {
-				Msg.debug(this, "ERROR: Could not add new function label " + name + " to " +
-					function.getEntryPoint().toString());
+				if (DEBUG) {
+					Msg.debug(this, "ERROR: Could not add new function label " + name + " to " +
+						function.getEntryPoint().toString());
+				}
 				return;
 			}
 
@@ -3501,8 +3570,10 @@ public class RecoveredClassUtils {
 				SetLabelPrimaryCmd scmd =
 					new SetLabelPrimaryCmd(function.getEntryPoint(), name, namespace);
 				if (!scmd.applyTo(program)) {
-					Msg.debug(this, "ERROR: Could not make function label " + name +
-						" primary at " + function.getEntryPoint().toString());
+					if (DEBUG) {
+						Msg.debug(this, "ERROR: Could not make function label " + name +
+							" primary at " + function.getEntryPoint().toString());
+					}
 				}
 			}
 		}
@@ -3756,8 +3827,10 @@ public class RecoveredClassUtils {
 					}
 
 					else {
-						Msg.debug(this, "ERROR: " + function.getEntryPoint().toString() +
-							" Could not replace parameter " + i + " with undefined pointer.");
+						if (DEBUG) {
+							Msg.debug(this, "ERROR: " + function.getEntryPoint().toString() +
+								" Could not replace parameter " + i + " with undefined pointer.");
+						}
 					}
 				}
 			}
@@ -4818,9 +4891,11 @@ public class RecoveredClassUtils {
 
 			//TODO: remove after testing
 			if (!classVftableRef.equals(otherWayRef)) {
-				Msg.debug(this, recoveredClass.getName() + " function " +
-					destructorFunction.getEntryPoint().toString() + " first ref: " +
-					classVftableRef.toString() + " other way ref: " + otherWayRef.toString());
+				if (DEBUG) {
+					Msg.debug(this, recoveredClass.getName() + " function " +
+						destructorFunction.getEntryPoint().toString() + " first ref: " +
+						classVftableRef.toString() + " other way ref: " + otherWayRef.toString());
+				}
 			}
 
 			String markupString = classNamespace.getName(true) + "::~" + className;
@@ -4857,10 +4932,12 @@ public class RecoveredClassUtils {
 			}
 			//TODO: remove after testing
 			if (!classVftableRef.equals(otherWayRef)) {
+				if (DEBUG) {
 				Msg.debug(this,
 					recoveredClass.getName() + " function " +
 					functionContainingInline.getEntryPoint().toString() + " first ref: " +
 					classVftableRef.toString() + " other way ref: " + otherWayRef.toString());
+				}
 			}
 
 			String markupString = "inlined constructor or destructor (approx location) for " +
@@ -5070,11 +5147,12 @@ public class RecoveredClassUtils {
 			return;
 		}
 		if (!vftableReference.equals(otherWayRef)) {
-			Msg.debug(this,
-				recoveredClass.getName() + " function " +
+			if (DEBUG) {
+				Msg.debug(this, recoveredClass.getName() + " function " +
 					virtualFunction.getEntryPoint().toString() + " first ref: " +
 					vftableReference.toString() + " other way ref (with ances): " +
 					otherWayRef.toString());
+			}
 		}
 
 		List<Function> possibleParentDestructors = getPossibleParentDestructors(virtualFunction);
@@ -5108,7 +5186,9 @@ public class RecoveredClassUtils {
 
 				recoveredClass.addDeletingDestructor(virtualFunction);
 				if (recoveredClass.getDestructorList().contains(virtualFunction)) {
-					Msg.debug(this, "Already created vfunction as a destructor");
+					if (DEBUG) {
+						Msg.debug(this, "Already created vfunction as a destructor");
+					}
 				}
 				recoveredClass.removeFromConstructorDestructorList(virtualFunction);
 				recoveredClass.removeIndeterminateConstructorOrDestructor(virtualFunction);
@@ -6053,8 +6133,10 @@ public class RecoveredClassUtils {
 		Function operatorDeleteFunction =
 			findOperatorDeleteUsingKnownDeletingDestructors(recoveredClasses);
 		if (operatorDeleteFunction == null) {
-			Msg.debug(this,
-				"Could not find operator delete function. Cannot process more deleting destructors.");
+			if (DEBUG) {
+				Msg.debug(this,
+					"Could not find operator delete function. Cannot process more deleting destructors.");
+			}
 			return;
 		}
 
@@ -6645,7 +6727,9 @@ public class RecoveredClassUtils {
 				}
 				// if they ever don't match return 
 				else if (!possiblePureCall.equals(sameFunction)) {
-					Msg.debug(this, "Could not identify pure call. ");
+					if (DEBUG) {
+						Msg.debug(this, "Could not identify pure call. ");
+					}
 					return;
 				}
 			}
