@@ -44,7 +44,7 @@ class FileChooserActionManager {
 	}
 
 	private void createActions() {
-		renameAction = new DockingAction("Rename", OWNER) {
+		renameAction = new DockingAction("Rename", OWNER, false) {
 
 			@Override
 			public void actionPerformed(ActionContext context) {
@@ -87,7 +87,7 @@ class FileChooserActionManager {
 		renameAction.markHelpUnnecessary();
 		chooser.addAction(renameAction);
 
-		removeRecentAction = new DockingAction("Remove Recent", OWNER) {
+		removeRecentAction = new DockingAction("Remove Recent", OWNER, false) {
 
 			@Override
 			public void actionPerformed(ActionContext context) {

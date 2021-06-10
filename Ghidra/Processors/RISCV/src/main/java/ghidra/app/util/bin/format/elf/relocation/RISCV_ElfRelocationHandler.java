@@ -51,6 +51,7 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 		long base = elfRelocationContext.getImageBaseWordAdjustmentOffset();
 		ElfSymbol sym = null;
 		long symbolValue = 0;
+		Address symbolAddr = null;
 		String symbolName = null;
 
 		int symbolIndex = relocation.getSymbolIndex();
@@ -59,6 +60,7 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 		}
 
 		if (null != sym) {
+			symbolAddr = elfRelocationContext.getSymbolAddress(sym);
 			symbolValue = elfRelocationContext.getSymbolValue(sym);
 			symbolName = sym.getNameAsString();
 		}
@@ -94,6 +96,10 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 
 		case RISCV_ElfRelocationConstants.R_RISCV_64:
 			// Runtime relocation word64 = S + A
+			if (addend != 0 && isUnsupportedExternalRelocation(program, relocationAddress,
+				symbolAddr, symbolName, addend, elfRelocationContext.getLog())) {
+				addend = 0; // prefer bad fixup for EXTERNAL over really-bad fixup
+			}
 			value64 = symbolValue + addend;
 			memory.setLong(relocationAddress, value64);
 			break;

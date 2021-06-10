@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
+import ghidra.app.util.ToolTipUtils;
 import ghidra.program.model.data.*;
 import ghidra.service.graph.*;
 import ghidra.util.Msg;
@@ -37,7 +38,6 @@ public class TypeGraphTask extends Task {
 	public static final String TYPE_ATTRIBUTE = "Type";
 	public static final String EMBEDDED = "Composite";
 	public static final String POINTER = "Reference";
-	public static final String CONTENTS_ATTRIBUTE = "Contents";
 
 	/*
 	 * Constructor
@@ -87,7 +87,8 @@ public class TypeGraphTask extends Task {
 			AttributedVertex lastVertex, String edgeType, TaskMonitor monitor)
 			throws CancelledException {
 		AttributedVertex newVertex = new AttributedVertex(struct.getName());
-		newVertex.setAttribute(CONTENTS_ATTRIBUTE, struct.toString());
+		newVertex.setDescription(ToolTipUtils.getToolTipText(struct));
+
 		if (lastVertex == null) {
 			graph.addVertex(newVertex);
 		}

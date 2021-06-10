@@ -364,8 +364,10 @@ public class GadpClientServerTest implements AsyncTestUtils {
 		public TestGadpTargetMethod(TestTargetObject<?, ?> parent, String key) {
 			super(parent.getModel(), parent, key, "Method");
 
-			setAttributes(Map.of(PARAMETERS_ATTRIBUTE_NAME, PARAMS, RETURN_TYPE_ATTRIBUTE_NAME,
-				Integer.class), "Initialized");
+			setAttributes(Map.of(
+				PARAMETERS_ATTRIBUTE_NAME, PARAMS,
+				RETURN_TYPE_ATTRIBUTE_NAME, Integer.class),
+				"Initialized");
 		}
 
 		@Override
@@ -378,6 +380,37 @@ public class GadpClientServerTest implements AsyncTestUtils {
 					"greet() invoked");
 				return obj;
 			}));
+		}
+	}
+
+	private static final TargetParameterMap ORDERED_PARAMS = TargetMethod.makeParameters(
+		ParameterDescription.create(String.class, "H", true, "", "H", "H"),
+		ParameterDescription.create(String.class, "e", true, "", "e", "e"),
+		ParameterDescription.create(String.class, "l", true, "", "l", "l"),
+		ParameterDescription.create(String.class, "m", true, "", "l", "l"),
+		ParameterDescription.create(String.class, "o", true, "", "o", "o"),
+		ParameterDescription.create(String.class, "W", true, "", "W", "W"),
+		ParameterDescription.create(String.class, "p", true, "", "o", "o"),
+		ParameterDescription.create(String.class, "r", true, "", "r", "r"),
+		ParameterDescription.create(String.class, "n", true, "", "l", "l"),
+		ParameterDescription.create(String.class, "d", true, "", "d", "d"));
+
+	public class TestGadpTargetMethodWithManyParameters
+			extends TestTargetObject<TargetObject, TestTargetObject<?, ?>> implements TargetMethod {
+
+		public TestGadpTargetMethodWithManyParameters(TestTargetObject<?, ?> parent, String key) {
+			super(parent.getModel(), parent, key, "MethodPlus");
+
+			setAttributes(Map.of(
+				PARAMETERS_ATTRIBUTE_NAME, ORDERED_PARAMS,
+				RETURN_TYPE_ATTRIBUTE_NAME, Integer.class),
+				"Initialized");
+		}
+
+		@Override
+		public CompletableFuture<Object> invoke(Map<String, ?> arguments) {
+			fail("I wasn't expecting that");
+			return AsyncUtils.nil();
 		}
 	}
 
@@ -473,8 +506,10 @@ public class GadpClientServerTest implements AsyncTestUtils {
 		public TestGadpTargetAvailableContainer(TestGadpTargetSession session) {
 			super(session.getModel(), session, "Available", "AvailableContainer");
 
-			setAttributes(List.of(new TestGadpTargetMethod(this, "greet")), Map.of(),
-				"Initialized");
+			setAttributes(List.of(
+				new TestGadpTargetMethod(this, "greet"),
+				new TestGadpTargetMethodWithManyParameters(this, "bigGreet")),
+				Map.of(), "Initialized");
 		}
 
 		@Override
@@ -812,6 +847,32 @@ public class GadpClientServerTest implements AsyncTestUtils {
 			assertEquals("Hello, World?", waitOn(future2));
 
 			waitOn(client.close());
+		}
+	}
+
+	@Test
+	public void testMethodParametersOrderPreserved() throws Throwable {
+		AsynchronousSocketChannel socket = socketChannel();
+		try (ServerRunner runner = new ServerRunner()) {
+			GadpClient client = new GadpClient("Test", socket);
+			waitOn(AsyncUtils.completable(TypeSpec.VOID, socket::connect,
+				runner.server.getLocalAddress()));
+			waitOn(client.connect());
+			TargetObject greet =
+				waitOn(client.fetchModelObject(PathUtils.parse("Available.bigGreet")));
+			assertTrue(greet.getInterfaceNames().contains("Method"));
+			TargetMethod method = greet.as(TargetMethod.class);
+
+			TargetParameterMap params = method.getParameters();
+			assertEquals(ORDERED_PARAMS, params);
+
+			assertEquals("HelmoWprnd",
+				params.values().stream().map(p -> p.name).collect(Collectors.joining()));
+
+			waitOn(client.close());
+		}
+		finally {
+			socket.close();
 		}
 	}
 

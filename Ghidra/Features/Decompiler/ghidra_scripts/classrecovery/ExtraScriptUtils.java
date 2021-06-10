@@ -29,7 +29,7 @@ package classrecovery;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS. 
+//DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS.  
 import java.util.*;
 
 import ghidra.app.cmd.function.CreateFunctionCmd;
@@ -506,20 +506,19 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 	 * Method to create a function in the given program at the given address
 	 * @param prog the given program
 	 * @param addr the given address
-	 * @param tMonitor a cancellable task monitor
 	 * @return true if the function was created, false otherwise
 	 */
-	public boolean createFunction(Program prog, Address addr, TaskMonitor tMonitor) {
+	public boolean createFunction(Program prog, Address addr) {
 
 		try {
-			AddressSet subroutineAddresses = getSubroutineAddresses(prog, addr, tMonitor);
+			AddressSet subroutineAddresses = getSubroutineAddresses(prog, addr);
 			if (subroutineAddresses.isEmpty()) {
 				return false;
 			}
 
 			CreateFunctionCmd cmd = new CreateFunctionCmd(null, subroutineAddresses.getMinAddress(),
 				null, SourceType.DEFAULT);
-			if (cmd.applyTo(prog, tMonitor)) {
+			if (cmd.applyTo(prog, monitor)) {
 				return true;
 			}
 
@@ -535,12 +534,11 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 	 * Method to figure out a subroutine address set given an address contained in it
 	 * @param program the given program
 	 * @param address address in the potential subroutine
-	 * @param monitor allows canceling
 	 * @return address set of the subroutine to be created
 	 * @throws CancelledException if cancelled
 	 */
-	public static AddressSet getSubroutineAddresses(Program program, Address address,
-			TaskMonitor monitor) throws CancelledException {
+	public AddressSet getSubroutineAddresses(Program program, Address address)
+			throws CancelledException {
 
 		// Create a new address set to hold the entire selection.
 		AddressSet subroutineAddresses = new AddressSet();
