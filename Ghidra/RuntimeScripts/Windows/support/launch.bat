@@ -175,7 +175,6 @@ if "%BACKGROUND%"=="y" (
 	if not "!ERRORLEVEL!"=="0" (
 		echo Exited with error.  Run in foreground ^(fg^) mode for more details.
 	)
-	goto exit1
 ) else (
 	"%JAVA_CMD%" %CMD_ARGS%
 )
