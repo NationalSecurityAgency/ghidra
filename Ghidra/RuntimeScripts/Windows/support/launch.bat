@@ -24,9 +24,6 @@ exit /B 1
 
 :continue
 
-:: Delay the expansion of our loop items below since the value is being updated as the loop works
-setlocal enabledelayedexpansion
-
 :: See if we were doubled clicked or run from a command prompt
 set DOUBLE_CLICKED=n
 for /f "tokens=2" %%# in ("%cmdcmdline%") do if /i "%%#" equ "/c" set DOUBLE_CLICKED=y
@@ -44,6 +41,7 @@ set "SUPPORT_DIR=%~dp0"
 set VMARG_LIST=
 set ARGS=
 set INDEX=0
+setlocal enabledelayedexpansion
 for %%A in (%*) do (
 	set /A INDEX=!INDEX!+1
 	if "!INDEX!"=="1" ( set MODE=%%A
@@ -53,6 +51,7 @@ for %%A in (%*) do (
 	) else if "!INDEX!"=="5" ( set CLASSNAME=%%~A
 	) else set ARGS=!ARGS! %%A
 )
+setlocal disabledelayedexpansion
 
 if %INDEX% geq 5 goto continue1
 echo Incorrect launch usage - missing argument^(s^)
@@ -162,9 +161,10 @@ exit /B 1
 
 set CMD_ARGS=%FORCE_JAVA_VERSION% %JAVA_USER_HOME_DIR_OVERRIDE% %VMARG_LIST% -cp "%CPATH%" ghidra.GhidraLauncher %CLASSNAME% %ARGS%
 
+setlocal enabledelayedexpansion
 if "%BACKGROUND%"=="y" (
 	set JAVA_CMD=!JAVA_CMD!w
-	start "%APPNAME%" /I /B "!JAVA_CMD!" %CMD_ARGS%
+	start "%APPNAME%" /I /B "!JAVA_CMD!" !CMD_ARGS!
 	
 	REM If our process dies immediately, output something so the user knows to run in debug mode.
 	REM Otherwise they'll never see any error output from background mode.
