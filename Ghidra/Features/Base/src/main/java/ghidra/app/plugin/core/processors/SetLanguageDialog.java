@@ -102,10 +102,6 @@ public class SetLanguageDialog extends DialogComponentProvider {
 		return dialogCompilerSpecDescID;
 	}
 
-	void dispose() {
-		close();
-	}
-
 	@Override
 	protected void okCallback() {
 		LanguageCompilerSpecPair selectedLcsPair = selectLangPanel.getSelectedLcsPair();

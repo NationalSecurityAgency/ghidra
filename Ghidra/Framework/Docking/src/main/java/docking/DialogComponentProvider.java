@@ -15,10 +15,9 @@
  */
 package docking;
 
-import java.util.*;
-
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -878,9 +877,21 @@ public class DialogComponentProvider
 	}
 
 	public void close() {
-		if (dialog != null) {
+		if (isShowing()) {
 			dialog.close();
 		}
+
+	}
+
+	public void dispose() {
+		cancelCurrentTask();
+		close();
+		popupManager.dispose();
+
+		dialogActions.forEach(DockingActionIf::dispose);
+
+		actionMap.clear();
+		dialogActions.clear();
 	}
 
 	/**

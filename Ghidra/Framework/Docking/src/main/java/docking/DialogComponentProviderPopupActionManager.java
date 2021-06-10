@@ -35,6 +35,11 @@ public class DialogComponentProviderPopupActionManager {
 		this.provider = provider;
 	}
 
+	void dispose() {
+		provider = null;
+		popupActions.clear();
+	}
+
 	void addAction(DockingActionIf action) {
 		MenuData popupMenuData = action.getPopupMenuData();
 		if (popupMenuData == null) {
