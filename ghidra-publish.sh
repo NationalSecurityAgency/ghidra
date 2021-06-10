@@ -11,7 +11,7 @@ SONATYPE_URL=https://oss.sonatype.org/service/local/staging/deploy/maven2/
 # the server id from your local ~/.m2/settings.xml
 REPO_ID=sonatype-nexus-staging
 
-download and unzip ghidra distribution
+echo "download and unzip ghidra distribution"
 wget https://ghidra-sre.org/ghidra_${VERSION}.zip
 unzip ghidra_$VERSION.zip
 rm ghidra_$VERSION.zip
