@@ -70,11 +70,8 @@ public class DebuggerBreakpointEnablementTableCellEditor extends AbstractCellEdi
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		// TODO: Consider the current trace if "current trace only" filter is on?
-		boolean curEn = row.getLogicalBreakpoint().getMappedTraces().isEmpty()
-				? value.enabled // Toggle when no traces are mappable
-				: value == Enablement.ENABLED; // Make consistent as enabled if mappable
-		value = curEn ? Enablement.DISABLED : Enablement.ENABLED;
+		boolean mapped = row.isMapped();
+		value = value.getToggled(mapped);
 		fireEditingStopped();
 	}
 }

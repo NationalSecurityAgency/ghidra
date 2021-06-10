@@ -58,12 +58,15 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 	@Override
 	public void recordStack() {
 		long snap = recorder.getSnap();
-		Map<Integer, Address> pcsByLevel = stack.entrySet()
-				.stream()
-				.collect(Collectors.toMap(e -> e.getKey(), e -> {
-					return recorder.getMemoryMapper()
-							.targetToTrace(e.getValue().getProgramCounter());
-				}));
+		DebuggerMemoryMapper mm = recorder.getMemoryMapper();
+		Map<Integer, Address> pcsByLevel;
+		synchronized (stack) {
+			pcsByLevel = stack.entrySet()
+					.stream()
+					.collect(Collectors.toMap(e -> e.getKey(), e -> {
+						return mm.targetToTrace(e.getValue().getProgramCounter());
+					}));
+		}
 		recorder.parTx.execute("Stack changed", () -> {
 			TraceStack traceStack = stackManager.getStack(thread, snap, true);
 			traceStack.setDepth(stackDepth(), false);
@@ -88,7 +91,9 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 
 	public void recordFrame(TargetStackFrame frame) {
 		long snap = recorder.getSnap();
-		stack.put(getFrameLevel(frame), frame);
+		synchronized (stack) {
+			stack.put(getFrameLevel(frame), frame);
+		}
 		recorder.parTx.execute("Stack frame added", () -> {
 			DebuggerMemoryMapper memoryMapper = recorder.getMemoryMapper();
 			if (memoryMapper == null) {
@@ -102,44 +107,48 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 	}
 
 	protected int stackDepth() {
-		return stack.isEmpty() ? 0 : stack.lastKey() + 1;
+		synchronized (stack) {
+			return stack.isEmpty() ? 0 : stack.lastKey() + 1;
+		}
 	}
 
 	@Override
 	public int getSuccessorFrameLevel(TargetObject successor) {
-		NavigableSet<Integer> observedPathLengths = new TreeSet<>();
-		for (TargetStackFrame frame : stack.values()) {
-			observedPathLengths.add(frame.getPath().size());
-		}
-		List<String> path = successor.getPath();
-		for (int l : observedPathLengths.descendingSet()) {
-			if (l > path.size()) {
-				continue;
+		for (TargetObject p = successor; p != null; p = p.getParent()) {
+			if (p instanceof TargetStackFrame) {
+				if (!PathUtils.isIndex(p.getPath())) {
+					return 0;
+				}
+				int index = Integer.decode(p.getIndex());
+				TargetStackFrame frame;
+				synchronized (stack) {
+					frame = stack.get(index);
+				}
+				if (!Objects.equals(p, frame)) {
+					return 0;
+				}
+				return index;
 			}
-			List<String> sub = path.subList(0, l);
-			if (!PathUtils.isIndex(sub)) {
-				continue;
-			}
-			int index = Integer.decode(PathUtils.getIndex(sub));
-			TargetStackFrame frame = stack.get(index);
-			if (frame == null || !Objects.equals(sub, frame.getPath())) {
-				continue;
-			}
-			return index;
 		}
 		return 0;
 	}
 
 	protected boolean checkStackFrameRemoved(TargetObject invalid) {
-		if (stack.values().remove(invalid)) {
-			popStack();
-			return true;
+		boolean removed;
+		synchronized (stack) {
+			removed = stack.values().remove(invalid);
 		}
-		return false;
+		if (removed) {
+			popStack();
+		}
+		return removed;
 	}
 
 	public Address pcFromStack() {
-		TargetStackFrame frame = stack.get(0);
+		TargetStackFrame frame;
+		synchronized (stack) {
+			frame = stack.get(0);
+		}
 		if (frame == null) {
 			return null;
 		}
@@ -157,7 +166,9 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 
 	@Override
 	public TargetStackFrame getTargetStackFrame(int frameLevel) {
-		return stack.get(frameLevel);
+		synchronized (stack) {
+			return stack.get(frameLevel);
+		}
 	}
 
 }

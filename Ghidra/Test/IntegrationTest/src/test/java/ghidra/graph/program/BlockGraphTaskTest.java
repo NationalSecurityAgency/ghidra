@@ -21,6 +21,8 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import ghidra.graph.TestGraphDisplay;
+import ghidra.graph.TestGraphService;
 import ghidra.program.model.block.CodeBlockModel;
 import ghidra.program.util.ProgramSelection;
 import ghidra.service.graph.*;

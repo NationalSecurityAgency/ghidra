@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import com.google.common.collect.*;
 
 import ghidra.framework.model.DomainObjectClosedListener;
+import ghidra.framework.model.DomainObjectException;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
@@ -30,6 +31,7 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.*;
 import ghidra.util.*;
 import ghidra.util.datastruct.ListenerSet;
+import ghidra.util.exception.ClosedException;
 
 /**
  * Computes and tracks the "viewport" resulting from forking patterns encoded in snapshot schedules
@@ -50,9 +52,26 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	protected class ForSnapshotsListener extends TraceDomainObjectListener
 			implements DomainObjectClosedListener {
 		{
-			listenFor(TraceSnapshotChangeType.ADDED, this::snapshotAdded);
-			listenFor(TraceSnapshotChangeType.CHANGED, this::snapshotChanged);
-			listenFor(TraceSnapshotChangeType.DELETED, this::snapshotDeleted);
+			listenFor(TraceSnapshotChangeType.ADDED, ignoringClosed(this::snapshotAdded));
+			listenFor(TraceSnapshotChangeType.CHANGED, ignoringClosed(this::snapshotChanged));
+			listenFor(TraceSnapshotChangeType.DELETED, ignoringClosed(this::snapshotDeleted));
+		}
+
+		private AffectedObjectOnlyHandler<? super TraceSnapshot> ignoringClosed(
+				AffectedObjectOnlyHandler<? super TraceSnapshot> handler) {
+			return snapshot -> {
+				try {
+					handler.handle(snapshot);
+				}
+				catch (DomainObjectException e) {
+					if (e.getCause() instanceof ClosedException) {
+						Msg.warn(this, "Ignoring ClosedException in trace viewport update");
+					}
+					else {
+						throw e;
+					}
+				}
+			};
 		}
 
 		private void snapshotAdded(TraceSnapshot snapshot) {

@@ -19,6 +19,7 @@ import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -103,12 +104,17 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		codeViewer = tool.getService(CodeViewerService.class);
 	}
 
-	protected boolean goToDyn(Address address) {
-		return goToDyn(new ProgramLocation(traceManager.getCurrentView(), address));
+	protected void goToDyn(Address address) {
+		goToDyn(new ProgramLocation(traceManager.getCurrentView(), address));
 	}
 
-	protected boolean goToDyn(ProgramLocation location) {
-		return listingProvider.goTo(location.getProgram(), location);
+	protected void goToDyn(ProgramLocation location) {
+		waitForPass(() -> {
+			runSwing(() -> listingProvider.goTo(location.getProgram(), location));
+			ProgramLocation confirm = listingProvider.getLocation();
+			assertNotNull(confirm);
+			assertEquals(location.getAddress(), confirm.getAddress());
+		});
 	}
 
 	protected static byte[] incBlock() {
@@ -569,12 +575,23 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		ProgramLocation oneBack = new ProgramLocation(panel.getProgram(), addr.previous());
 		runSwing(() -> panel.goTo(addr));
 		runSwing(() -> panel.goTo(oneBack, false));
-		Robot robot = new Robot();
 		waitForPass(() -> {
+			Rectangle r = panel.getBounds();
+			// Capture off screen, so that focus/stacking doesn't matter
+			BufferedImage image = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
+			Graphics g = image.getGraphics();
+			try {
+				runSwing(() -> panel.paint(g));
+			}
+			finally {
+				g.dispose();
+			}
+			Point locP = panel.getLocationOnScreen();
+			Point locFP = panel.getLocationOnScreen();
+			locFP.translate(-locP.x, -locP.y);
 			Rectangle cursor = panel.getCursorBounds();
-			Point panelLoc = panel.getFieldPanel().getLocationOnScreen();
-			Color actual = robot.getPixelColor(panelLoc.x + cursor.x - 1,
-				panelLoc.y + cursor.y + cursor.height * 3 / 2 + yAdjust);
+			Color actual = new Color(image.getRGB(locFP.x + cursor.x - 1,
+				locFP.y + cursor.y + cursor.height * 3 / 2 + yAdjust));
 			assertEquals(expected, actual);
 		});
 	}
@@ -680,19 +697,14 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			trace.getMemoryManager().getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
 		assertArrayEquals(zero, buf.array());
 
-		runSwing(() -> goToDyn(addr(trace, 0x55550800)));
+		goToDyn(addr(trace, 0x55550800));
 		waitForDomainObject(trace);
 		buf.clear();
 		assertEquals(data.length,
 			trace.getMemoryManager().getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
 		assertArrayEquals(zero, buf.array());
 
-		runSwing(() -> goToDyn(addr(trace, 0x55551800)));
-		waitForPass(() -> {
-			ProgramLocation location = listingProvider.getLocation();
-			assertNotNull(location);
-			assertEquals(addr(trace, 0x55551800), location.getAddress());
-		});
+		goToDyn(addr(trace, 0x55551800));
 		waitForDomainObject(trace);
 		buf.clear();
 		assertEquals(data.length,
@@ -713,13 +725,16 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		/**
 		 * We're now moving to the written block
 		 */
-		runSwing(() -> goToDyn(addr(trace, 0x55550800)));
+		goToDyn(addr(trace, 0x55550800));
 		waitForSwing();
 		waitForDomainObject(trace);
-		buf.clear();
-		assertEquals(data.length,
-			trace.getMemoryManager().getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
-		assertArrayEquals(data, buf.array());
+		// NB. Recorder can delay writing in a thread / queue
+		waitForPass(() -> {
+			buf.clear();
+			assertEquals(data.length, trace.getMemoryManager()
+					.getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
+			assertArrayEquals(data, buf.array());
+		});
 	}
 
 	@Test
@@ -845,7 +860,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(trackPc, listingProvider.actionTrackLocation.getCurrentUserData());
 		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
 
-		runSwing(() -> goToDyn(tb.addr(0x00400000)));
+		goToDyn(tb.addr(0x00400000));
 		// Ensure it's changed so we know the action is effective
 		waitForSwing();
 		assertEquals(tb.addr(0x00400000), listingProvider.getLocation().getAddress());

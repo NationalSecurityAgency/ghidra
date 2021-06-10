@@ -201,9 +201,15 @@ public class DebuggerCallbackReordererTest implements DebuggerModelTestUtils {
 
 		assertEquals(toA1, waitOn(listener.get(PathUtils.parse("A[1]"))));
 		assertEquals(toB2, waitOn(listener.get(PathUtils.parse("B[2]"))));
-		// TODO: Not sure I can rely on add order where there's no dependency
-		// E.g., will toA always precede toB, just because it was listed first?
-		assertEquals(List.of(root, toA, toB, toA1, toB2), listener.getAdded());
+
+		// Note the order is not unique, but there are constraints.
+		// It's similar to a topological sort.
+		List<TargetObject> order = List.copyOf(listener.getAdded());
+		assertEquals(0, order.indexOf(root));
+		assertTrue(order.indexOf(root) < order.indexOf(toA));
+		assertTrue(order.indexOf(root) < order.indexOf(toB));
+		assertTrue(order.indexOf(toA) < order.indexOf(toA1));
+		assertTrue(order.indexOf(toB) < order.indexOf(toB2));
 	}
 
 	@Test

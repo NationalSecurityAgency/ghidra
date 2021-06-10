@@ -17,35 +17,70 @@ package ghidra.app.util.html;
 
 import java.util.*;
 
+import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.html.diff.DataTypeDiff;
 import ghidra.app.util.html.diff.DataTypeDiffBuilder;
 import ghidra.program.model.data.Enum;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.StringUtilities;
 import ghidra.util.exception.AssertException;
 
 public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
+
+	private static final int MAX_LINE_COUNT = 15;
+
+	private final Enum enumDataType;
 
 	protected List<ValidatableLine> headerContent;
 	protected List<ValidatableLine> bodyContent;
 	protected TextLine footerLine;
 	protected TextLine displayName;
 
+	private static String truncatedHtmlData;
+
 	// private constructor for making diff copies
-	private EnumDataTypeHTMLRepresentation(List<ValidatableLine> headerLines, TextLine displayName,
+	private EnumDataTypeHTMLRepresentation(Enum enumDataType, List<ValidatableLine> headerLines,
+			TextLine displayName,
 			List<ValidatableLine> bodyContent, TextLine footerLine) {
+		this.enumDataType = enumDataType;
 		this.headerContent = headerLines;
 		this.displayName = displayName;
 		this.bodyContent = bodyContent;
 		this.footerLine = footerLine;
-		originalHTMLData = buildHTMLText(headerLines, displayName, bodyContent, footerLine);
+
+		originalHTMLData =
+			buildHTMLText(headerContent, displayName, bodyContent, footerLine, false);
+
+		List<ValidatableLine> trimmedBodyContent = buildContent(true);
+		truncatedHtmlData =
+			buildHTMLText(headerContent, displayName, trimmedBodyContent, footerLine, true);
 	}
 
 	public EnumDataTypeHTMLRepresentation(Enum enumDataType) {
+		this.enumDataType = enumDataType;
 		headerContent = buildHeaderText(enumDataType);
-		bodyContent = buildContent(enumDataType);
+		bodyContent = buildContent(false);
 		footerLine = buildFooterText(enumDataType);
-		displayName = new TextLine(enumDataType.getDisplayName());
-		originalHTMLData = buildHTMLText(headerContent, displayName, bodyContent, footerLine);
+		displayName = new TextLine("enum " + enumDataType.getDisplayName());
+
+		originalHTMLData =
+			buildHTMLText(headerContent, displayName, bodyContent, footerLine, false);
+
+		List<ValidatableLine> trimmedBodyContent = buildContent(true);
+		truncatedHtmlData =
+			buildHTMLText(headerContent, displayName, trimmedBodyContent, footerLine, true);
+	}
+
+	// overridden to return truncated text by default
+	@Override
+	public String getHTMLString() {
+		return HTML_OPEN + truncatedHtmlData + HTML_CLOSE;
+	}
+
+	// overridden to return truncated text by default
+	@Override
+	public String getHTMLContentString() {
+		return truncatedHtmlData;
 	}
 
 	@Override
@@ -58,14 +93,18 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 		return new EmptyTextLine(stringLength);
 	}
 
-	private List<ValidatableLine> buildContent(Enum enumDataType) {
+	private List<ValidatableLine> buildContent(boolean trim) {
 		long[] values = enumDataType.getValues();
 		Arrays.sort(values);
 
 		int n = enumDataType.getLength();
 		List<ValidatableLine> list = new ArrayList<>(values.length);
 		for (long value : values) {
+
 			String name = enumDataType.getName(value);
+			if (trim) {
+				name = StringUtilities.trimMiddle(name, ToolTipUtils.LINE_LENGTH);
+			}
 
 			String hexString = Long.toHexString(value);
 			if (value < 0) {
@@ -81,9 +120,11 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 	}
 
 	private static String buildHTMLText(List<ValidatableLine> headerLines, TextLine displayName,
-			List<ValidatableLine> bodyLines, TextLine footerLine) {
+			List<ValidatableLine> bodyLines, TextLine infoLine, boolean trim) {
 
-		StringBuilder buffy = new StringBuilder();
+		StringBuilder fullHtml = new StringBuilder();
+		StringBuilder truncatedHtml = new StringBuilder();
+		int lineCount = 0;
 
 		// header
 		Iterator<ValidatableLine> iterator = headerLines.iterator();
@@ -91,46 +132,84 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 			TextLine line = (TextLine) iterator.next();
 			String encodedHeaderLine = line.getText();
 			String headerLine = wrapStringInColor(encodedHeaderLine, line.getTextColor());
-			buffy.append(headerLine);
+			append(fullHtml, truncatedHtml, lineCount, headerLine);
+			lineCount++;
 		}
 
+		append(fullHtml, truncatedHtml, lineCount, LENGTH_PREFIX, infoLine.getText());
+		append(fullHtml, truncatedHtml, lineCount, BR, BR);
+
 		// "<TT> displayName { "
-		String encodedDisplayName = HTMLUtilities.friendlyEncodeHTML(displayName.getText());
-		String displayNameText = wrapStringInColor(encodedDisplayName, displayName.getTextColor());
-		buffy.append(TT_OPEN)
-				.append(displayNameText)
-				.append(TT_CLOSE)
-				.append(HTML_SPACE)
-				.append(
-					"{")
-				.append(HTML_SPACE)
-				.append(BR);
+		String displayNameText = displayName.getText();
+		if (trim) {
+			displayNameText = StringUtilities.trimMiddle(displayNameText, ToolTipUtils.LINE_LENGTH);
+		}
+		displayNameText = HTMLUtilities.friendlyEncodeHTML(displayNameText);
+		displayNameText = wrapStringInColor(displayNameText, displayName.getTextColor());
+		//@formatter:off
+		append(fullHtml, truncatedHtml, lineCount, TT_OPEN, 
+                                                   displayNameText,
+                                                   TT_CLOSE,
+                                                   HTML_SPACE,
+                                                   "{",
+                                                   HTML_SPACE,
+                                                   BR);
+		//@formatter:on
+		lineCount++;
 
 		int length = bodyLines.size();
-		for (int i = 0; i < length; i++) {
+		for (int i = 0; i < length; i++, lineCount++) {
 			TextLine textLine = (TextLine) bodyLines.get(i);
 			String text = textLine.getText();
 			String encodedBodyLine = HTMLUtilities.friendlyEncodeHTML(text);
 			text = wrapStringInColor(encodedBodyLine, textLine.getTextColor());
 
-			buffy.append(TAB).append(text).append(HTML_SPACE);
+			StringBuilder lineBuffer = new StringBuilder();
+			lineBuffer.append(TAB).append(text).append(HTML_SPACE);
 			if (i < length - 1) {
-				buffy.append(BR);
+				lineBuffer.append(BR);
 			}
-			if (i > MAX_COMPONENTS) {
-// TODO: change to diff color if any of the ellipsed-out args are diffed                
-				// if ( cointains unmatching lines ( arguments, i ) )
-				// then make the ellipses the diff color                
-				buffy.append(TAB).append(ELLIPSES).append(BR);
-				break;
-			}
+
+			String lineString = lineBuffer.toString();
+			append(fullHtml, truncatedHtml, lineCount, lineString);
 		}
 
-		buffy.append(BR).append("}").append(BR).append(TT_CLOSE);
+		// show ellipses if needed; the truncated html is much shorter than the full html
+		if (lineCount >= MAX_LINE_COUNT) {
+			truncatedHtml.append(TAB).append(ELLIPSES).append(BR);
+		}
 
-		addDataTypeLength(footerLine.getText(), buffy);
+		StringBuilder trailingLines = new StringBuilder();
+		trailingLines.append(BR).append("}").append(BR).append(TT_CLOSE);
 
-		return buffy.toString();
+		String trailingString = trailingLines.toString();
+		fullHtml.append(trailingString);
+		truncatedHtml.append(trailingString);
+
+		if (trim) {
+			return truncatedHtml.toString();
+		}
+		return fullHtml.toString();
+	}
+
+	private static void append(StringBuilder fullHtml, StringBuilder truncatedHtml,
+			int lineCount, String... content) {
+
+		for (String string : content) {
+			fullHtml.append(string);
+		}
+
+		maybeAppend(truncatedHtml, lineCount, content);
+	}
+
+	private static void maybeAppend(StringBuilder buffer, int lineCount, String... content) {
+		if (lineCount > MAX_LINE_COUNT) {
+			return;
+		}
+
+		for (String string : content) {
+			buffer.append(string);
+		}
 	}
 
 	@Override
@@ -144,16 +223,16 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 			return completelyDifferentDiff(otherRepresentation);
 		}
 
-		EnumDataTypeHTMLRepresentation compositeRepresentation =
+		EnumDataTypeHTMLRepresentation enumRepresentation =
 			(EnumDataTypeHTMLRepresentation) otherRepresentation;
 
 		List<ValidatableLine> header = copyLines(headerContent);
 		List<ValidatableLine> body = copyLines(bodyContent);
 		TextLine diffDisplayName = new TextLine(displayName.getText());
 
-		List<ValidatableLine> otherHeader = copyLines(compositeRepresentation.headerContent);
-		List<ValidatableLine> otherBody = copyLines(compositeRepresentation.bodyContent);
-		TextLine otherDiffDisplayName = new TextLine(compositeRepresentation.displayName.getText());
+		List<ValidatableLine> otherHeader = copyLines(enumRepresentation.headerContent);
+		List<ValidatableLine> otherBody = copyLines(enumRepresentation.bodyContent);
+		TextLine otherDiffDisplayName = new TextLine(enumRepresentation.displayName.getText());
 
 		DataTypeDiff headerDiff =
 			DataTypeDiffBuilder.diffHeader(getDiffInput(header), getDiffInput(otherHeader));
@@ -164,10 +243,12 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 		diffTextLine(diffDisplayName, otherDiffDisplayName);
 
 		return new HTMLDataTypeRepresentation[] {
-			new EnumDataTypeHTMLRepresentation(headerDiff.getLeftLines(), diffDisplayName,
-				bodyDiff.getLeftLines(), footerLine),
-			new EnumDataTypeHTMLRepresentation(headerDiff.getRightLines(), otherDiffDisplayName,
-				bodyDiff.getRightLines(), compositeRepresentation.footerLine), };
+			new EnumDataTypeHTMLRepresentation(enumDataType, headerDiff.getLeftLines(),
+				diffDisplayName, bodyDiff.getLeftLines(), footerLine),
+			new EnumDataTypeHTMLRepresentation(enumRepresentation.enumDataType,
+				headerDiff.getRightLines(), otherDiffDisplayName, bodyDiff.getRightLines(),
+				enumRepresentation.footerLine)
+		};
 	}
 
 }

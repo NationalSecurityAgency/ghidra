@@ -256,7 +256,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 					"bx r6"));          // 4 bytes
 
 			byte[] mov = asm.assembleLine(tb.addr(0x00401000),
-				"mov r0, #123", thumbPat); // #123 is decimal
+				"movs r0, #123", thumbPat); // #123 is decimal
 			try (UndoableTransaction tid = tb.startTransaction()) {
 				asm.patchProgram(mov, tb.addr(0x00401000));
 			}

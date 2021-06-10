@@ -64,12 +64,17 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 		boolean isBigEndianInstructions =
 			program.getLanguage().getLanguageDescription().getInstructionEndian().isBigEndian();
 
+		Address symbolAddr = elfRelocationContext.getSymbolAddress(sym);
 		long symbolValue = elfRelocationContext.getSymbolValue(sym);
 		long newValue = 0;
 
 		switch (type) {
 			// .xword: (S+A)
 			case AARCH64_ElfRelocationConstants.R_AARCH64_ABS64: {
+				if (addend != 0 && isUnsupportedExternalRelocation(program, relocationAddress,
+					symbolAddr, symbolName, addend, elfRelocationContext.getLog())) {
+					addend = 0; // prefer bad fixup for EXTERNAL over really-bad fixup
+				}
 				newValue = (symbolValue + addend);
 				memory.setLong(relocationAddress, newValue);
 				break;

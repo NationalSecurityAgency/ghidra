@@ -37,6 +37,17 @@
 // NOTE: Windows class recovery is more complete and tested than gcc class recovery, which is still 
 // in early stages of development. Gcc class data types have not been recovered yet but if the program
 // has DWARF, there will be some amount of data recovered by the DWARF analyzer in the DWARF data folder.
+// NOTE: For likely the best results, run this script on freshly analyzed programs. No testing has been 
+// done on user marked-up programs. 
+// NOTE: After running this script if you edit function signatures in the listing for a particular
+// class and wish to update the corresponding class data (function definition data types, vftable 
+// structure field names, ...) then you can run the ApplyClassFunctionSignatureUpdatesScript.java 
+// to have it do so for you.
+// Conversely, if you update a particular class's function definitions in the data type manager and  
+// wish to have related function signatures in the listing updated, as well as other data types that 
+// are related, then run the ApplyClassFunctionDefinitionsUpdatesScript.java to do so. At some point, 
+// the Ghidra API will be updated to do this all automatically instead of needing the scripts to do so. 
+
 //@category C++
 
 import java.io.File;
@@ -124,8 +135,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 	int defaultPointerSize;
 
-	RecoveredClassUtils classUtils;
-
 	RTTIClassRecoverer recoverClassesFromRTTI;
 
 	ExtraScriptUtils extraUtils;
@@ -143,25 +152,18 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 
 		if (isWindows()) {
-
-			// TODO: check for typeinfo using the other way i had then pull the hasRTTI in and if first
-			// is true and second isn't then run the analyzer - move all this into a method
 			isPDBLoaded = isPDBLoadedInProgram();
 			nameVfunctions = !isPDBLoaded;
 			recoverClassesFromRTTI = new RTTIWindowsClassRecoverer(currentProgram,
 				currentLocation, state.getTool(), this, BOOKMARK_FOUND_FUNCTIONS,
 				USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS, nameVfunctions, isPDBLoaded, monitor);
-
 		}
 		else if (isGcc()) {
-
-			// for now assume gcc has named vfunctions
+			// for now assume gcc has named vfunctions until a way to check is developed
 			nameVfunctions = true;
 			recoverClassesFromRTTI = new RTTIGccClassRecoverer(currentProgram, currentLocation,
 				state.getTool(), this, BOOKMARK_FOUND_FUNCTIONS,
 				USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS, nameVfunctions, monitor);
-			
-			
 		}
 		else {
 			println("This script will not work on this program type");
@@ -184,9 +186,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			println("This program is not a valid program address size.");
 			return;
 		}
-
-
-
 
 		decompilerUtils = recoverClassesFromRTTI.getDecompilerUtils();
 		DecompInterface decompInterface = decompilerUtils.getDecompilerInterface();
@@ -962,12 +961,12 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		println("Total number of indetermined constructor/destructors: " +
 			remainingIndeterminates.size());
 
-		//TODO: need to get from the new class
-//		println("Total fixed incorrect FID functions: " + badFIDFunctions.size());
-//		println("Total resolved functions that had multiple FID possiblities: " +
-//			resolvedFIDFunctions.size());
-//		println("Total fixed functions that had incorrect data types due to incorrect FID: " +
-//			fixedFIDFunctions.size());
+		println("Total fixed incorrect FID functions: " +
+			recoverClassesFromRTTI.getBadFIDFunctions().size());
+		println("Total resolved functions that had multiple FID possiblities: " +
+			recoverClassesFromRTTI.getResolvedFIDFunctions().size());
+		println("Total fixed functions that had incorrect data types due to incorrect FID: " +
+			recoverClassesFromRTTI.getFixedFIDFunctions().size());
 
 	}
 

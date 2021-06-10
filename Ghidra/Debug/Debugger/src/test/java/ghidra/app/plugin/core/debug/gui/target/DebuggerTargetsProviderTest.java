@@ -139,15 +139,20 @@ public class DebuggerTargetsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		modelService.addModel(secondModel);
 		waitForSwing();
 
-		clickTreeNode(targetsProvider.tree,
-			targetsProvider.rootNode.findNodeForObject(mb.testModel), MouseEvent.BUTTON1);
-		waitForSwing();
-		assertEquals(mb.testModel, modelService.getCurrentModel());
+		// NB. Expansion is run in background task
+		waitForPass(noExc(() -> {
+			clickTreeNode(targetsProvider.tree,
+				targetsProvider.rootNode.findNodeForObject(mb.testModel), MouseEvent.BUTTON1);
+			waitForSwing();
+			assertEquals(mb.testModel, modelService.getCurrentModel());
+		}));
 
-		clickTreeNode(targetsProvider.tree,
-			targetsProvider.rootNode.findNodeForObject(secondModel), MouseEvent.BUTTON1);
-		waitForSwing();
-		assertEquals(secondModel, modelService.getCurrentModel());
+		waitForPass(noExc(() -> {
+			clickTreeNode(targetsProvider.tree,
+				targetsProvider.rootNode.findNodeForObject(secondModel), MouseEvent.BUTTON1);
+			waitForSwing();
+			assertEquals(secondModel, modelService.getCurrentModel());
+		}));
 	}
 
 	@Test

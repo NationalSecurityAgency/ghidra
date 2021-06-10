@@ -27,17 +27,17 @@
     <P>This group of actions is available whenever there exists a debug launcher that knows how to
     run the current program. Various launchers may all make offers to run the current program, each
     of which is presented as a item in this group. Not all offers are guaranteed to work. For
-    example, an offer to launch the program remotely via SSH depends on the host's availability and
-    the user's credentials. The offers are ordered by most recent activation. The most recent offer
-    used is the default one-click launcher for the current program. Each launcher may check various
-    conditions before making an offer. Most commonly, it will check that there is a suitable
-    debugger for the current program's architecture (language) on the local system, that the
-    program's original executable image still exists on disk, and that the user has permission to
-    execute it. A launcher may take any arbitrary action to run the program. Most commonly, it
-    starts a new connection suitable for the target, and then launches the program on that
-    connection. If <A href=
+    example, an offer to launch the program remotely via SSH depends on the host's availability,
+    the user's credentials, and the presence of the target binary on the host. The offers are
+    ordered by most recent activation. The most recent offer used is the default launcher for the
+    current program. Each launcher may check various conditions before making an offer. Most
+    commonly, it will check that there is a suitable debugger for the current program's
+    architecture (language) on the local system, that the program's original executable image still
+    exists on disk, and that the user has permission to execute it. A launcher may take any
+    arbitrary action to run the program. Most commonly, it starts a new connection suitable for the
+    target, and then launches the program on that connection. If <A href=
     "help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html#record_automatically">Record
-    Automatically</A> is enabled, this will provide a one-click action to debug the current
+    Automatically</A> is enabled, this will provide a single-click action to debug the current
     program. This is similar to the <A href=
     "help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html#quick_launch">Quick Launch</A>
     action in the Commands and Objects window, except this one does not require an existing
@@ -53,6 +53,9 @@
     <H3><A name="disconnect_all"></A> Disconnect All</H3>
 
     <P>This action is always available from the main application window. It closes all debugger
-    connections, no matter what tool created them. This is a sort of panic and reset action.</P>
+    connections, no matter what tool created them. This is a sort of panic and reset action. NOTE:
+    A complete and total reset is not always possible. Some connectors may load native libraries
+    into Ghidra's JVM. Unless that connector is careful to reset that library's state, subsequent
+    connections could be affected.</P>
   </BODY>
 </HTML>

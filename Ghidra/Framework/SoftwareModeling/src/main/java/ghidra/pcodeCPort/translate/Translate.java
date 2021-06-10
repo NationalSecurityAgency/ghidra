@@ -220,8 +220,6 @@ public abstract class Translate implements BasicSpaceProvider {
 	public void setContextDefault(String name, int val) {
 	}
 
-	public abstract void addRegister(String nm, AddrSpace base, long offset, int size);
-
 	public abstract VarnodeData getRegister(String nm);
 
 	public abstract String getRegisterName(AddrSpace base, long off, int size);
@@ -291,15 +289,6 @@ public abstract class Translate implements BasicSpaceProvider {
 			}
 		}
 		return null;
-	}
-
-	void addRegisterList(String[] nms, int num, AddrSpace base, long offset, int size, int skip) { // Add names assigning indices in order
-		// allocating -size- space for each starting at -offset-
-		int i;
-
-		for (i = 0; i < num; ++i) {
-			addRegister(nms[i], base, offset + skip * i, size);
-		}
 	}
 
 	// Associate a particular register or memory location with an address space
@@ -542,8 +531,8 @@ public abstract class Translate implements BasicSpaceProvider {
 
 	public AddrSpace getSpaceBySpacebase(Address loc, int size) { // Get space associated with spacebase register
 		AddrSpace id;
-		for (int i = 0; i < baselist.size(); ++i) {
-			id = baselist.get(i);
+		for (AddrSpace element : baselist) {
+			id = element;
 			int numspace = numSpacebase(id);
 			for (int j = 0; j < numspace; ++j) {
 				VarnodeData point = getSpacebase(id, j);

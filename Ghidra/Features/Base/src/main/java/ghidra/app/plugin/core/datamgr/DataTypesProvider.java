@@ -530,7 +530,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			return;
 		}
 
-		String toolTipText = ToolTipUtils.getToolTipText(dataType);
+		String toolTipText = ToolTipUtils.getFullToolTipText(dataType);
 		String updated = HTMLUtilities.convertLinkPlaceholdersToHyperlinks(toolTipText);
 		previewPane.setText(updated);
 		previewPane.setCaretPosition(0);
@@ -564,6 +564,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			return false;
 		}
 		tree.restoreTreeState(state);
+
 		return true;
 	}
 
@@ -831,6 +832,31 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 
 	void programClosed() {
 		archiveGTree.cancelWork();
+	}
+
+	void archiveClosed(DataTypeManager dtm) {
+		dataTypeManagerChanged(dtm);
+	}
+
+	void archiveChanged(Archive archive) {
+		DataTypeManager dtm = archive.getDataTypeManager();
+		dataTypeManagerChanged(dtm);
+	}
+
+	private void dataTypeManagerChanged(DataTypeManager dtm) {
+
+		if (lastPreviewNode == null || !(lastPreviewNode instanceof DataTypeNode)) {
+			return;
+		}
+
+		DataTypeNode dtNode = (DataTypeNode) lastPreviewNode;
+		DataType dt = dtNode.getDataType();
+		DataTypeManager dtManager = dt.getDataTypeManager();
+
+		// note: compare using name; an equality check will fail if the manager is reloaded
+		if (dtm.getName().equals(dtManager.getName())) {
+			lastPreviewNode = null;
+		}
 	}
 
 	void programRenamed() {

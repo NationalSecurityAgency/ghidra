@@ -346,16 +346,6 @@ public:
   /// \param val is \b true to allow context changes, \b false prevents changes
   virtual void allowContextSet(bool val) const {}
 
-  /// \brief Add a named register to the model for this processor
-  ///
-  /// \deprecated All registers used to be formally added to the
-  /// processor model through this method.
-  /// \param nm is the name of the new register
-  /// \param base is the address space containing the register
-  /// \param offset is the offset of the register
-  /// \param size is the number of bytes in the register
-  virtual void addRegister(const string &nm,AddrSpace *base,uintb offset,int4 size)=0;
-
   /// \brief Get a register as VarnodeData given its name
   ///
   /// Retrieve the location and size of a register given its name

@@ -31,6 +31,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
@@ -2048,6 +2049,36 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals("byte fum(int p1, int p2, int p3, int p4)",
 			f1.getPrototypeString(false, false));
 
+		assertEquals(f2.getName(true), f1.getName(true));
+
+		SymbolTable symbolTable = program.getSymbolTable();
+		GhidraClass myClass = symbolTable.createClass(null, "MyClass", SourceType.USER_DEFINED);
+		f1.setParentNamespace(myClass);
+
+		f1.setParentNamespace(myClass);
+
+		assertEquals(f2.getName(true), f1.getName(true));
+
+		f1.setCallingConvention(CompilerSpec.CALLING_CONVENTION_thiscall);
+
+		assertEquals("byte fum(MyClass * this, int p1, int p2, int p3, int p4)",
+			f2.getPrototypeString(false, false));
+		assertEquals("byte fum(MyClass * this, int p1, int p2, int p3, int p4)",
+			f1.getPrototypeString(false, false));
+
+		assertEquals(f1.getSymbol(), symbolTable.getSymbol("fum", f1.getEntryPoint(), myClass));
+		assertNull(symbolTable.getSymbol("fum", f2.getEntryPoint(), myClass));
+
+		SymbolIterator symbols = symbolTable.getSymbols(myClass);
+		assertEquals(f1.getSymbol(), symbols.next());
+		assertFalse(symbols.hasNext());
+
+		symbols = symbolTable.getSymbols(program.getGlobalNamespace());
+		while (symbols.hasNext()) {
+			Symbol sym = symbols.next();
+			assertFalse(f2.getSymbol() == sym);
+			assertFalse(f2.getSymbol().equals(sym));
+		}
 	}
 
 	@Test

@@ -69,11 +69,30 @@ public class PdbScreenShots extends GhidraScreenShotGenerator {
 		ConfigPdbDialog configPdbDialog = new ConfigPdbDialog();
 		showDialogWithoutBlocking(tool, configPdbDialog);
 		waitForSwing();
-		captureDialog(ConfigPdbDialog.class);
+		captureDialog(ConfigPdbDialog.class, 410, 280);
 	}
 
 	@Test
-	public void testLoadPdb_Initial_Screenshot() throws IOException {
+	public void testSymbolServerConfig_Configured() throws IOException {
+		File localSymbolStore1Root = new File(temporaryDir, "symbols");
+		LocalSymbolStore.create(localSymbolStore1Root, 1);
+		LocalSymbolStore localSymbolStore1 = new LocalSymbolStore(localSymbolStore1Root);
+		SameDirSymbolStore sameDirSymbolStore = new SameDirSymbolStore(null);
+		List<SymbolServer> symbolServers = List.of(sameDirSymbolStore,
+			new HttpSymbolServer(URI.create("https://msdl.microsoft.com/download/symbols/")));
+		SymbolServerService symbolServerService =
+			new SymbolServerService(localSymbolStore1, symbolServers);
+		PdbPlugin.saveSymbolServerServiceConfig(symbolServerService);
+
+		ConfigPdbDialog configPdbDialog = new ConfigPdbDialog();
+		configPdbDialog.setSymbolServerService("/home/user/symbols", symbolServers);
+		showDialogWithoutBlocking(tool, configPdbDialog);
+		waitForSwing();
+		captureDialog(ConfigPdbDialog.class, 410, 280);
+	}
+
+	@Test
+	public void testLoadPdb_Initial_Screenshot() {
 		LoadPdbDialog loadPdbDialog = new LoadPdbDialog(program);
 		showDialogWithoutBlocking(tool, loadPdbDialog);
 		captureDialog(loadPdbDialog);
@@ -84,32 +103,30 @@ public class PdbScreenShots extends GhidraScreenShotGenerator {
 	public void testSymbolServerConfig_AddButtonMenu() throws IOException {
 		File localSymbolStore1Root = new File(temporaryDir, "symbols");
 		LocalSymbolStore.create(localSymbolStore1Root, 1);
-		LocalSymbolStore localSymbolStore1 =
-			new LocalSymbolStoreWithFakePath(localSymbolStore1Root, "/home/user/symbols");
+		LocalSymbolStore localSymbolStore1 = new LocalSymbolStore(localSymbolStore1Root);
 		SymbolServerService symbolServerService =
 			new SymbolServerService(localSymbolStore1, List.of());
 		PdbPlugin.saveSymbolServerServiceConfig(symbolServerService);
 
-		LoadPdbDialog choosePdbDialog = new LoadPdbDialog(program);
-		showDialogWithoutBlocking(tool, choosePdbDialog);
+		ConfigPdbDialog configPdbDialog = new ConfigPdbDialog();
+		showDialogWithoutBlocking(tool, configPdbDialog);
 		waitForSwing();
-		pressButtonByText(choosePdbDialog, "Advanced >>");
 		runSwing(() -> {
-			choosePdbDialog.pushAddLocationBution();
+			configPdbDialog.pushAddLocationButton();
 		});
 		waitForSwing();
 		captureMenu();
 	}
 
 	@Test
-	public void testLoadPdb_Advanced_NeedsConfig() throws IOException {
+	public void testLoadPdb_Advanced_NeedsConfig() {
 		PdbPlugin.saveSymbolServerServiceConfig(null);
 		LoadPdbDialog choosePdbDialog = new LoadPdbDialog(program);
 		showDialogWithoutBlocking(tool, choosePdbDialog);
 		waitForSwing();
 		pressButtonByText(choosePdbDialog, "Advanced >>");
 		waitForSwing();
-		captureDialog(LoadPdbDialog.class);
+		captureDialog(LoadPdbDialog.class, 600, 500);
 		pressButtonByText(choosePdbDialog, "Cancel");
 	}
 
@@ -140,19 +157,15 @@ public class PdbScreenShots extends GhidraScreenShotGenerator {
 			new SymbolFileLocation("HelloWorld.pdb/" + GUID1_STR + "2/HelloWorld.pdb",
 				localSymbolStore1, SymbolFileInfo.fromValues("HelloWorld.pdb", GUID1_STR, 2)),
 			new SymbolFileLocation("HelloWorld.pdb", sameDirSymbolStoreWithFakePath,
-				SymbolFileInfo.fromValues("HelloWorld.pdb", GUID1_STR, 1)),
-			new SymbolFileLocation("HelloWorld_ver2.pdb", sameDirSymbolStoreWithFakePath,
-				SymbolFileInfo.fromValues("HelloWorld.pdb", GUID1_STR, 2)));
+				SymbolFileInfo.fromValues("HelloWorld.pdb", GUID1_STR, 1)));
 		Set<FindOption> findOptions = FindOption.of(FindOption.ALLOW_REMOTE, FindOption.ANY_AGE);
 		runSwing(() -> {
 			loadPdbDialog.setSearchOptions(findOptions);
-			loadPdbDialog.setSymbolServers(symbolServers);
-			loadPdbDialog.setSymbolStorageDirectoryTextOnly("/home/user/symbols");
 			loadPdbDialog.setSearchResults(symbolFileLocations, findOptions);
 			loadPdbDialog.selectRowByLocation(symbolFileLocations.get(0));
 		});
 		waitForSwing();
-		captureDialog(LoadPdbDialog.class);
+		captureDialog(LoadPdbDialog.class, 600, 600);
 		pressButtonByText(loadPdbDialog, "Cancel");
 	}
 
