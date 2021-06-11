@@ -198,6 +198,11 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	 */
 	public PcodeOp[] getPatchedPcode();
 
+	/**
+	 * Remove the patched pcode, use original pcode
+	 */
+	public void removePatchedPcode();
+
 	default boolean hasPatch() {
 		return getPatchedPcode() != null;
 	}

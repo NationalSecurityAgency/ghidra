@@ -709,4 +709,8 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	@Override
 	public void patchPcode(PcodeOp[] pcodeOps) {
 	}
+
+	@Override
+	public void removePatchedPcode() {
+	}
 }

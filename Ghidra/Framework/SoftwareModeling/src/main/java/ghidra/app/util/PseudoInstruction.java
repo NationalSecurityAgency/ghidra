@@ -639,4 +639,9 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 	public PcodeOp[] getPatchedPcode() {
 		return patchedPcode;
 	}
+
+	@Override
+	public void removePatchedPcode() {
+		this.patchedPcode = null;
+	}
 }

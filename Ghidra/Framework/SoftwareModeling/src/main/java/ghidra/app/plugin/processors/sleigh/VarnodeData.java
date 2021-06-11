@@ -44,11 +44,15 @@ public class VarnodeData {
 	}
 
 	public static VarnodeData of(Varnode varnode) {
+		if (varnode == null) {
+			return null;
+		}
+
 		Address addr = varnode.getAddress();
 		VarnodeData data = new VarnodeData(
 			addr.getAddressSpace(),
 			addr.getOffset(),
-			addr.getSize()
+			varnode.getSize()
 		);
 		return data;
 	}

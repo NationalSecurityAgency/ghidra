@@ -820,11 +820,15 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	@Override
 	public void patchPcode(PcodeOp[] pcodeOps) {
 		this.patchPcode = pcodeOps;
-		
 	}
 
 	@Override
 	public PcodeOp[] getPatchedPcode() {
 		return patchPcode;
+	}
+
+	@Override
+	public void removePatchedPcode() {
+		this.patchPcode = null;
 	}
 }

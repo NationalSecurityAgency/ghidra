@@ -534,4 +534,8 @@ public class InstructionStub implements Instruction {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public void removePatchedPcode() {
+		throw new UnsupportedOperationException();
+	}
 }
