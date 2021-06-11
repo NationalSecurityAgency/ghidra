@@ -77,8 +77,14 @@ abstract public class AbstractDyldInfoState {
 
 	private Symbol getSymbol() {
 		SymbolIterator symbolIterator = program.getSymbolTable().getSymbols(symbolName);
-		if (symbolIterator.hasNext()) {
-			return symbolIterator.next();
+		while (symbolIterator.hasNext()) {
+			Symbol symbol = symbolIterator.next();
+			// In some situation, a imported symbol could appear both in `Binding Info` and `IndSym Table`.
+			// We select the one which is in the global name space.
+			if (symbol.getParentNamespace().isGlobal()
+				|| symbolIterator.hasNext() == false) {
+				return symbol;
+			}
 		}
 		return null;
 	}
