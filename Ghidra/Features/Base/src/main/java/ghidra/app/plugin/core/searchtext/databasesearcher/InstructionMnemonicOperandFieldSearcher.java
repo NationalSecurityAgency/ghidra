@@ -169,10 +169,12 @@ public class InstructionMnemonicOperandFieldSearcher extends ProgramDatabaseFiel
 			}
 		}
 		// check for separator before first operand
-		if (nOperands > 0) {
-			String separator = instruction.getSeparator(0);
-			if (separator != null) {
+		String separator = instruction.getSeparator(0);
+		if (separator != null) {
+			if (nOperands > 0) {
 				opStrings[0] = separator + opStrings[0];
+			} else {
+				return new String[] {separator};
 			}
 		}
 		return opStrings;
