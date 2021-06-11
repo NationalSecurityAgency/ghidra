@@ -815,7 +815,8 @@ Datatype *TypeOpReturn::getInputLocal(const PcodeOp *op,int4 slot) const
 
   //  if (!fp->isOutputLocked()) return TypeOp::getInputLocal(op,slot);
   ct = fp->getOutputType();
-  if (ct->getMetatype() == TYPE_VOID) return TypeOp::getInputLocal(op,slot);
+  if (ct->getMetatype() == TYPE_VOID || (ct->getSize() != op->getIn(slot)->getSize()))
+    return TypeOp::getInputLocal(op,slot);
   return ct;
 }
 
