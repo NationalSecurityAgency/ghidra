@@ -163,6 +163,7 @@
     <target name="_alloca_probe2"/>
     <target name="__chkstk"/>
     <target name="__chkstk2"/>
+    <target name="___chkstk_ms"/>
     <pcode>
      <body><![CDATA[
        RSP = RSP + 0;
