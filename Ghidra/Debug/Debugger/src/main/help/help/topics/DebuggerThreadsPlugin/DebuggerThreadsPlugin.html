@@ -26,7 +26,7 @@
     each thread carries its own execution context, so this window provides a means of navigating
     those contexts. Furthermore, this window provides a means of navigating and managing open
     traces, much like the static listing provides a means of navigating open programs. The window
-    also provides a timeline showing thread lifespans, and displays a caret which can be used to
+    also plots a timeline showing thread lifespans, and displays a caret which can be used to
     navigate the current point in time. This window, the <A href=
     "help/topics/DebuggerStackPlugin/DebuggerStackPlugin.html">Stack</A> window, and the <A href=
     "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Dynamic Listing</A> window
@@ -50,13 +50,13 @@
 
     <H2>Navigating Threads</H2>
 
-    <P>Selecting a thread in the timeline or the table will navigate to (or "activate" or "focus")
+    <P>Selecting a thread in the table will navigate to (or "activate" or "focus")
     that thread. Windows which are sensitive to the current thread will update. Notably, the <A
     href="help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html">Registers</A> window
     will display the activated thread's register values. <A href=
     "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Listing</A> windows with
     configured location tracking will re-compute that location with the thread's context and
-    navigate to it. The thread timeline displays all recorded threads. Threads which are alive will
+    navigate to it. The thread timeline plots all recorded threads. Threads which are alive will
     appear to extend "to the end of time." The threads table displays more detailed information in
     the following columns:</P>
 
@@ -77,12 +77,15 @@
       The state always reflects the present, or latest known, state.</LI>
 
       <LI>Comment - a user-modifiable comment about the thread.</LI>
+      
+      <LI>Plot - a graphical representation of the thread's lifespan. Unlike other column headers, clicking and dragging
+      in this one will navigate through time. To rearrange this column, hold SHIFT while dragging.</LI>
     </UL>
 
     <H2>Navigating Time</H2>
 
-    <P>The user can navigate through time within the current trace by using the caret above the
-    threads timeline. There are also actions for "stepping the trace" forward and backward. See the
+    <P>The user can navigate through time within the current trace by using the caret in the plot
+    column header. There are also actions for "stepping the trace" forward and backward. See the
     <A href="help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html">Time</A> window for a way to
     display and navigate to specific events in the trace's timeline. Note that stepping away from
     the present will prevent most windows from interacting with the live target. While some
