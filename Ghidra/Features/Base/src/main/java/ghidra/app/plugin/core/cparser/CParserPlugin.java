@@ -277,7 +277,7 @@ public class CParserPlugin extends ProgramPlugin {
 	 */
 	protected void parse(String[] filenames, String options, String dataFilename) {
 		CParserTask parseTask = new CParserTask(this, filenames, options, dataFilename);
-		this.getTool().execute(parseTask, 500);
+		parseDialog.executeProgressTask(parseTask, 500);
 	}
 
 	/*
@@ -286,6 +286,7 @@ public class CParserPlugin extends ProgramPlugin {
 	protected void parse(String[] filenames, String options, DataTypeManager dtMgr,
 			TaskMonitor monitor) throws ghidra.app.util.cparser.C.ParseException,
 			ghidra.app.util.cparser.CPP.ParseException {
+		monitor.initialize(filenames.length + 1);
 		String[] args = parseOptions(options);
 
 		DataTypeManager openDTmanagers[] = null;
@@ -313,7 +314,8 @@ public class CParserPlugin extends ProgramPlugin {
 					"</ul>" + "<p><b>The new archive will become dependent on these archives<br>" +
 					"for any datatypes already defined in them </b>(only unique <br>" +
 					"data types will be added to the new archive).",
-				"Continue?", OptionDialog.QUESTION_MESSAGE) != OptionDialog.OPTION_ONE) {
+				"Continue", OptionDialog.QUESTION_MESSAGE) != OptionDialog.OPTION_ONE) {
+				monitor.cancel();
 				return;
 			}
 		}
@@ -349,15 +351,18 @@ public class CParserPlugin extends ProgramPlugin {
 					if (children == null) {
 						continue;
 					}
+					monitor.setMaximum(monitor.getMaximum() + children.length);
 					for (String element : children) {
 						File child = new File(file.getAbsolutePath() + "/" + element);
 						if (child.getName().endsWith(".h")) {
 							parseFile(child.getAbsolutePath(), monitor, cpp);
 						}
+						monitor.incrementProgress(1);
 					}
 				}
 				else {
 					parseFile(filename, monitor, cpp);
+					monitor.incrementProgress(1);
 				}
 			}
 		}
@@ -395,6 +400,7 @@ public class CParserPlugin extends ProgramPlugin {
 					parseDialog.setDialogText("Successfully parsed header file(s).");
 				}
 			});
+			monitor.incrementProgress(1);
 		}
 
 	}
@@ -429,7 +435,7 @@ public class CParserPlugin extends ProgramPlugin {
 		CParserTask parseTask =
 			new CParserTask(this, filenames, options, currentProgram.getDataTypeManager());
 
-		tool.execute(parseTask);
+		parseDialog.executeProgressTask(parseTask, 500);
 	}
 
 	ParseDialog getDialog() {
