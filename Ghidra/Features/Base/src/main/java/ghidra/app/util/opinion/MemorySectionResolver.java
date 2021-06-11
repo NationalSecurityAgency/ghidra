@@ -608,7 +608,7 @@ public abstract class MemorySectionResolver {
 				}
 
 				Address rangeStartAddr =
-					fileRange.rangeStartAddress.add(filePos - fileRange.rangeStartFileOffset);
+					fileRange.rangeStartAddress.addWrap(filePos - fileRange.rangeStartFileOffset);
 
 				// Ignore use of overlay and compare physical address for match to avoid duplication
 				if (!expectedRangeStart.getPhysicalAddress().equals(
