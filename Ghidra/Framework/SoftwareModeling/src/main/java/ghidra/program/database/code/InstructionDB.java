@@ -52,6 +52,8 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 
 	private ParserContext parserContext;
 
+	private PcodeOp[] patchPcode = null;
+
 	/**
 	 * Construct a new InstructionDB.
 	 * @param codeMgr code manager
@@ -583,17 +585,6 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	}
 
 	@Override
-	public void setPcode(PcodeOp[] pcodeOps) {
-		lock.acquire();
-		try {
-			checkIsValid();
-			proto.setPcode(pcodeOps);
-		} finally {
-			lock.release();
-		}
-	}
-
-	@Override
 	public PcodeOp[] getPcode() {
 		return getPcode(false);
 	}
@@ -824,5 +815,16 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 				"Instruction has incompatible prototype at: " + instructionAddress);
 		}
 		return instr.getParserContext();
+	}
+
+	@Override
+	public void patchPcode(PcodeOp[] pcodeOps) {
+		this.patchPcode = pcodeOps;
+		
+	}
+
+	@Override
+	public PcodeOp[] getPatchedPcode() {
+		return patchPcode;
 	}
 }

@@ -186,11 +186,21 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	public void setFlowOverride(FlowOverride flowOverride);
 
 	/**
-	 * Set the expected pcodes to this instructions.
+	 * Set the expected pcodes to this instructions, patch the original ones.
 	 * 
 	 * @param pcodes expected pcodes to be returned
 	 */
-	public void setPcode(PcodeOp[] pcodeOps);
+	public void patchPcode(PcodeOp[] pcodeOps);
+
+	/**
+	 * Get patching pcode associated with this instruction
+	 * @return patching pcode, null if no patching pcode in this instruction
+	 */
+	public PcodeOp[] getPatchedPcode();
+
+	default boolean hasPatch() {
+		return getPatchedPcode() != null;
+	}
 
 	/**
 	 * Get an array of PCode operations (micro code) that this instruction

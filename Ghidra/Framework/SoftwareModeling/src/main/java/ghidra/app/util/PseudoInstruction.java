@@ -54,6 +54,8 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 	private Address fallThroughOverride = null; // NO_ADDRESS indicate fall-through removed
 	private FlowOverride flowOverride = FlowOverride.NONE;
 
+	private PcodeOp[] patchedPcode = null;
+
 	/** 
 	 * Construct a new PseudoInstruction within a program.
 	 * @param program
@@ -392,11 +394,6 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 	}
 
 	@Override
-	public void setPcode(PcodeOp[] pcodeOps) {
-		instrProto.setPcode(pcodeOps);
-	}
-
-	@Override
 	public PcodeOp[] getPcode() {
 		return instrProto.getPcode(this, null, null);
 	}
@@ -631,5 +628,15 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 
 	public void setInstructionBlock(InstructionBlock bl) {
 		block = bl;
+	}
+
+	@Override
+	public void patchPcode(PcodeOp[] pcodeOps) {
+		this.patchedPcode = pcodeOps;
+	}
+
+	@Override
+	public PcodeOp[] getPatchedPcode() {
+		return patchedPcode;
 	}
 }

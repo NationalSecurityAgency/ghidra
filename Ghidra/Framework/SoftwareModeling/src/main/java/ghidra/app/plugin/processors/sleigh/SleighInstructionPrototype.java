@@ -92,8 +92,6 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	private final static Object[] emptyObject = new Object[0];
 	private final static Address[] emptyFlow = new Address[0];
 
-	private PcodeOp[] overwritePcodes = null; // the pcodes that overwrites the original ones
-
 	private ContextCache contextCache;
 //	private InstructionContext instructionContextCache;
 	private int length;
@@ -946,18 +944,8 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	@Override
-	public void setPcode(PcodeOp[] pcodeOps) {
-		overwritePcodes = pcodeOps;
-	}
-
-	@Override
 	public PcodeOp[] getPcode(InstructionContext context, PcodeOverride override,
 			UniqueAddressFactory uniqueFactory) {
-
-		if (overwritePcodes != null) {
-			return overwritePcodes;
-		}
-
 		try {
 			SleighParserContext protoContext = (SleighParserContext) context.getParserContext();
 			int fallOffset = getLength();
@@ -1000,28 +988,6 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	@Override
 	public PackedBytes getPcodePacked(InstructionContext context, PcodeOverride override,
 			UniqueAddressFactory uniqueFactory) {
-
-		if (overwritePcodes != null) {
-			PcodeEmitPacked emit = new PcodeEmitPacked();
-
-			for (var op : overwritePcodes) {
-				VarnodeData[] inputVarnodeDatum = Arrays.stream(op.getInputs())
-					.map(VarnodeData::Of)
-					.toArray(VarnodeData[]::new);
-				VarnodeData outVarnodeData = VarnodeData.Of(op.getOutput());
-
-				emit.dump(
-					op.getSeqnum().getTarget(),
-					op.getOpcode(),
-					inputVarnodeDatum,
-					inputVarnodeDatum.length,
-					outVarnodeData
-				);
-			}
-
-			return emit.getPackedBytes();
-		}
-
 		int fallOffset = getLength();
 		try {
 			SleighParserContext protoContext = (SleighParserContext) context.getParserContext();
@@ -1074,10 +1040,6 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 
 	@Override
 	public PcodeOp[] getPcode(InstructionContext context, int opIndex) {
-
-		if (overwritePcodes != null) {
-			throw new UnsupportedOperationException("getPcode(InstructionContext, opIndex) not implemented!");
-		}
 
 		if (opIndex < 0 || opIndex >= opresolve.length) {
 			return emptyPCode;

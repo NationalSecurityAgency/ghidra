@@ -20,6 +20,7 @@
 package ghidra.app.plugin.processors.sleigh;
 
 import java.util.ArrayList;
+import java.util.stream.Stream;
 
 import ghidra.app.plugin.processors.sleigh.symbol.*;
 import ghidra.app.plugin.processors.sleigh.template.*;
@@ -29,6 +30,7 @@ import ghidra.program.model.listing.FlowOverride;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.PcodeOverride;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.RefType;
 import ghidra.util.exception.NotYetImplementedException;
 
@@ -668,6 +670,20 @@ public abstract class PcodeEmit {
 		if (construct == null) {
 			throw new NotYetImplementedException(
 				"Semantics for this instruction are not implemented");
+		}
+
+		PcodeOp[] patchedPcode = instcontext.getPatchedPcode();
+
+		if (patchedPcode != null) {
+			for (var op : patchedPcode) {
+				var inputs = Stream.of(op.getInputs())
+					.map(varnode -> VarnodeData.of(varnode))
+					.toArray(VarnodeData[]::new);
+				var output = VarnodeData.of(op.getOutput());
+				dump(startAddress, op.getOpcode(), inputs, op.getNumInputs(), output);
+			}
+
+			return;
 		}
 
 		int oldbase = labelbase;	// Recursively save old labelbase

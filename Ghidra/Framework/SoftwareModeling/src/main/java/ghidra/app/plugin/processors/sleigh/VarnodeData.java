@@ -43,7 +43,7 @@ public class VarnodeData {
 		this.size = size;
 	}
 
-	public static VarnodeData Of(Varnode varnode) {
+	public static VarnodeData of(Varnode varnode) {
 		Address addr = varnode.getAddress();
 		VarnodeData data = new VarnodeData(
 			addr.getAddressSpace(),

@@ -18,6 +18,7 @@ package ghidra.program.model.lang;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.pcode.PcodeOp;
 
 /**
  * <code>InstructionContext</code> is utilized by a shared instruction prototype to
@@ -72,5 +73,12 @@ public interface InstructionContext {
 	 */
 	public ParserContext getParserContext(Address instructionAddress)
 			throws UnknownContextException, MemoryAccessException;
+
+	/**
+	 * If the target instruction context has the pcode patched by the user, this should
+	 * return the patched pcode operations.
+	 * @return the patched pcode operations, null if not patched
+	 */
+	public PcodeOp[] getPatchedPcode();
 
 }

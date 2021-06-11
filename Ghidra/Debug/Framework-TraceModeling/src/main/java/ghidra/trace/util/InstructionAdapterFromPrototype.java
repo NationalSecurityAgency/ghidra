@@ -152,11 +152,6 @@ public interface InstructionAdapterFromPrototype extends Instruction {
 	}
 
 	@Override
-	default void setPcode(PcodeOp[] pcodeOps) {
-		getPrototype().setPcode(pcodeOps);
-	}
-
-	@Override
 	default PcodeOp[] getPcode() {
 		return getPcode(false);
 	}

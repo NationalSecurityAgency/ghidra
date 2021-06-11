@@ -151,10 +151,6 @@ public class InvalidPrototype implements InstructionPrototype, ParserContext {
 	}
 
 	@Override
-	public void setPcode(PcodeOp[] pcodeOps) {
-	}
-
-	@Override
 	public PcodeOp[] getPcode(InstructionContext context, PcodeOverride override,
 			UniqueAddressFactory uniqueFactory) {
 		return new PcodeOp[] { new PcodeOp(context.getAddress(), 0, PcodeOp.UNIMPLEMENTED) };
