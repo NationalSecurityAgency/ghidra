@@ -573,6 +573,22 @@ public interface DebuggerResources {
 		}
 	}
 
+	abstract class AbstractStepLastAction extends DockingAction {
+		public static final String NAME = "Step Last";
+		public static final Icon ICON = ICON_STEP_FINISH; // TODO: Draw one
+		public static final String HELP_ANCHOR = "step_last";
+
+		public static HelpLocation help(Plugin owner) {
+			return new HelpLocation(owner.getName(), HELP_ANCHOR);
+		}
+
+		public AbstractStepLastAction(Plugin owner) {
+			super(NAME, owner.getName());
+			setDescription("Repeat the last stepping action");
+			setHelpLocation(help(owner));
+		}
+	}
+
 	abstract class AbstractInterruptAction extends DockingAction {
 		public static final String NAME = "Interrupt";
 		public static final Icon ICON = ICON_TERMINATE;
@@ -956,12 +972,14 @@ public interface DebuggerResources {
 	interface SelectNoneAction {
 		String NAME = "Select None";
 		String GROUP = "Select";
+		String HELP_ANCHOR = "select_none";
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
 			return new ActionBuilder(NAME, ownerName)
 					.popupMenuGroup(GROUP)
-					.popupMenuPath(NAME);
+					.popupMenuPath(NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 

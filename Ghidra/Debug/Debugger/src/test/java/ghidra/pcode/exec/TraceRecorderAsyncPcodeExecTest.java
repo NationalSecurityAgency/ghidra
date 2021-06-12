@@ -15,7 +15,7 @@
  */
 package ghidra.pcode.exec;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -24,6 +24,7 @@ import java.util.Map;
 import org.junit.Test;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.model.TestTargetRegisterBankInThread;
@@ -45,9 +46,9 @@ public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebugge
 		mb.testProcess1.regs.addRegistersFromLanguage(getToyBE64Language(),
 			Register::isBaseRegister);
 		TestTargetRegisterBankInThread regs = mb.testThread1.addRegisterBank();
-		regs.writeRegistersNamed(Map.of(
+		waitOn(regs.writeRegistersNamed(Map.of(
 			"r0", new byte[] { 5 },
-			"r1", new byte[] { 6 }));
+			"r1", new byte[] { 6 })));
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
 			new TestDebuggerTargetTraceMapper(mb.testProcess1));
@@ -59,11 +60,24 @@ public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebugge
 		SleighExpression expr = SleighProgramCompiler
 				.compileExpression((SleighLanguage) language, "r0 + r1");
 
+		Register r0 = language.getRegister("r0");
+		Register r1 = language.getRegister("r1");
+		waitForPass(() -> {
+			// TODO: A little brittle: Depends on a specific snap advancement strategy
+			assertEquals(3, trace.getTimeManager().getSnapshotCount());
+			DebuggerRegisterMapper rm = recorder.getRegisterMapper(thread);
+			assertNotNull(rm);
+			assertNotNull(rm.getTargetRegister("r0"));
+			assertNotNull(rm.getTargetRegister("r1"));
+			assertTrue(rm.getRegistersOnTarget().contains(r0));
+			assertTrue(rm.getRegistersOnTarget().contains(r1));
+		});
+
 		AsyncPcodeExecutor<byte[]> executor =
 			new AsyncPcodeExecutor<>(language, AsyncWrappedPcodeArithmetic.forLanguage(language),
 				new TraceRecorderAsyncPcodeExecutorState(recorder, recorder.getSnap(), thread, 0));
-		byte[] result = waitOn(expr.evaluate(executor));
 
+		byte[] result = waitOn(expr.evaluate(executor));
 		assertEquals(11, Utils.bytesToLong(result, result.length, language.isBigEndian()));
 	}
 
@@ -75,9 +89,9 @@ public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebugge
 		mb.testProcess1.regs.addRegistersFromLanguage(getToyBE64Language(),
 			Register::isBaseRegister);
 		TestTargetRegisterBankInThread regs = mb.testThread1.addRegisterBank();
-		regs.writeRegistersNamed(Map.of(
+		waitOn(regs.writeRegistersNamed(Map.of(
 			"r0", new byte[] { 5 },
-			"r1", new byte[] { 6 }));
+			"r1", new byte[] { 6 })));
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
 			new TestDebuggerTargetTraceMapper(mb.testProcess1));
@@ -89,10 +103,24 @@ public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebugge
 		PcodeProgram prog = SleighProgramCompiler.compileProgram((SleighLanguage) language, "test",
 			List.of("r2 = r0 + r1;"), SleighUseropLibrary.NIL);
 
+		Register r0 = language.getRegister("r0");
+		Register r1 = language.getRegister("r1");
+		waitForPass(() -> {
+			// TODO: A little brittle: Depends on a specific snap advancement strategy
+			assertEquals(3, trace.getTimeManager().getSnapshotCount());
+			DebuggerRegisterMapper rm = recorder.getRegisterMapper(thread);
+			assertNotNull(rm);
+			assertNotNull(rm.getTargetRegister("r0"));
+			assertNotNull(rm.getTargetRegister("r1"));
+			assertTrue(rm.getRegistersOnTarget().contains(r0));
+			assertTrue(rm.getRegistersOnTarget().contains(r1));
+		});
+
 		TraceRecorderAsyncPcodeExecutorState asyncState =
 			new TraceRecorderAsyncPcodeExecutorState(recorder, recorder.getSnap(), thread, 0);
 		AsyncPcodeExecutor<byte[]> executor = new AsyncPcodeExecutor<>(
 			language, AsyncWrappedPcodeArithmetic.forLanguage(language), asyncState);
+
 		waitOn(executor.executeAsync(prog, SleighUseropLibrary.nil()));
 		waitOn(asyncState.getVar(language.getRegister("r2")));
 

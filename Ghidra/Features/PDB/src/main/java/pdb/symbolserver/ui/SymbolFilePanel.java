@@ -117,7 +117,7 @@ class SymbolFilePanel extends JPanel {
 	private JPanel buildWelcomePanel() {
 		welcomePanel = new JPanel();
 		welcomePanel.add(new GHtmlLabel(
-			"<html><br><center><font color=red>Local Symbol Storage location must be set first!"));
+			"<html><br><center><font color=red>Configuration must be set first!"));
 		welcomePanel.setPreferredSize(tablePanel.getPreferredSize());
 
 		return welcomePanel;

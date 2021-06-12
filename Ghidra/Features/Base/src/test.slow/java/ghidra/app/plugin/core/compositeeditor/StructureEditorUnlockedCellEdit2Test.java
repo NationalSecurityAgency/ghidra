@@ -559,7 +559,7 @@ public class StructureEditorUnlockedCellEdit2Test
 		setText(str);
 		enter();
 
-		assertEquals("factory data-type not allowed", model.getStatus());
+		assertEquals("Factory data-type not allowed", model.getStatus());
 		escape();
 
 		assertEquals(1, model.getNumSelectedRows());
@@ -762,6 +762,7 @@ public class StructureEditorUnlockedCellEdit2Test
 		assertEquals(350, model.getLength());
 	}
 
+	@Override
 	protected void setText(String s) {
 		JTextField tf = getActiveEditorTextField();
 		setText(tf, s);

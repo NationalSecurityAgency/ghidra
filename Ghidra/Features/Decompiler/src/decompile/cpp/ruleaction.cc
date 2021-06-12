@@ -9208,3 +9208,51 @@ int4 RuleXorSwap::applyOp(PcodeOp *op,Funcdata &data)
   }
   return 0;
 }
+
+/// \class RulePieceExpand
+/// \brief Expand the piece (which previously translated to CONCAT) to shifting and adds
+///
+/// Example:
+/// CONCAT44(a, b) ==> ((undefined 8)a << 4) + b
+void RulePieceExpand::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_PIECE);
+}
+
+int4 RulePieceExpand::applyOp(PcodeOp *op, Funcdata &data)
+
+{
+  Varnode *mostSig = op->getIn(0);
+  Varnode *leastSig = op->getIn(1);
+  Varnode *originalOut = op->getOut();
+
+  PcodeOp *extOp = data.newOp(1, op->getAddr()); 
+
+  data.opSetOpcode(extOp, CPUI_INT_SEXT);
+  data.opSetInput(extOp, mostSig, 0);
+  Varnode *extOut = data.newUniqueOut(originalOut->getSize(), extOp);
+
+
+  PcodeOp *shiftOp = data.newOp(2, op->getAddr());
+  Varnode *shiftSize = data.newConstant(originalOut->getSize(), leastSig->getSize() * 8);
+  data.opSetOpcode(shiftOp, CPUI_INT_LEFT);
+  data.opSetInput(shiftOp, extOut, 0);
+  data.opSetInput(shiftOp, shiftSize, 1);
+  Varnode *shiftOut = data.newUniqueOut(originalOut->getSize(), shiftOp);
+
+  // insert as:
+  //   - SEXT
+  //   - LEFT
+  //   - ADD (original)
+  data.opInsertBefore(extOp, op);
+  data.opInsertBefore(shiftOp, op);
+
+  // modify original op => add
+
+  data.opSetOpcode(op, CPUI_INT_ADD);
+  data.opSetInput(op, shiftOut, 0);
+  data.opSetInput(op, leastSig, 1);
+
+  return 1;
+}

@@ -24,15 +24,15 @@
 
     <P>Watches refer to expressions which are evaluated each pause in order to monitor the value of
     variables in the target machine state. The watch variables are expressed in Sleigh and
-    evaluated in the current thread's and trace's context at the current point in time. If the
-    current trace is live and at the present, then the target state is read and recorded as
-    necessary. The watch can be assigned a data type so that the raw data is rendered in a
-    meaningful way. When applicable, that data type can optionally be applied to the trace
-    database. Some metadata about the watch is also given, e.g., the address of the value.</P>
+    evaluated in the current thread's context at the current point in time. If the current trace is
+    live and at the present, then the necessary target state is queried and recorded. The watch can
+    be assigned a data type so that the raw data is rendered in a meaningful way. When applicable,
+    that data type can optionally be applied to the trace database. Some metadata about the watch
+    is also given, e.g., the address of the value.</P>
 
     <H2>Examples</H2>
 
-    <P>For those less familar with Sleigh, here are some example expressions:</P>
+    <P>For those less familiar with Sleigh, here are some example expressions:</P>
 
     <UL>
       <LI><CODE>*:4 (RSP+8)</CODE>: Display 4 bytes of [ram] starting 8 bytes after the offset
@@ -68,15 +68,15 @@
       trace. Clicking the Apply Data Type action will apply it to the current trace, if
       possible.</LI>
 
-      <LI>Representation - the value of the watch as interpreted the selected data type.</LI>
+      <LI>Representation - the value of the watch as interpreted by the selected data type.</LI>
 
       <LI>Error - if an error occurs during compilation or evaluation of the expression, that error
       is rendered here. Double-clicking the row will display the stack trace. Note that errors
       during evaluation can be a very common occurrence, especially as contexts change, and should
-      not cause alarm. An expression devised for one context may not have meaning under another,
-      even if it evaluates without error. E.g., <CODE>RIP</CODE> will disappear when switching to a
-      32-bit trace, or <CODE>*:8 (*:8 (RSP+8))</CODE> may cause an invalid dereference if an x86
-      <CODE>PUSH</CODE> causes <CODE>*:8 (RSP+8)</CODE> to become 0.</LI>
+      not necessarily cause alarm. An expression devised for one context may not have meaning under
+      another, even if it evaluates without error. E.g., <CODE>RIP</CODE> will disappear when
+      switching to a 32-bit trace, or <CODE>*:8 (*:8 (RSP+8))</CODE> may cause an invalid
+      dereference if an x86 <CODE>PUSH</CODE> causes <CODE>*:8 (RSP+8)</CODE> to become 0.</LI>
     </UL>
 
     <H2>Actions</H2>
@@ -85,14 +85,14 @@
 
     <H3><A name="apply_data_type"></A>Apply Data to Listing</H3>
 
-    <P>This action is available when there's an active trace and at least one watch with an address
-    and data type is selected. If so, it applies that data type to the value in the listing. That
-    is, it attempts to apply the selected data type to the evaluated address, sizing it to the
-    value's size.</P>
+    <P>This action is available when there's an active trace, and at least one watch with an
+    address and data type is selected. If so, it applies that data type to the value in the
+    listing. That is, it attempts to apply the selected data type to the evaluated address, sizing
+    it to the value's size.</P>
 
     <H3><A name="select_addresses"></A>Select Range</H3>
 
-    <P>This action is available when there's an active trace and at least one watch with memory
+    <P>This action is available when there's an active trace, and at least one watch with memory
     addresses is selected. It selects the memory range comprising the resulting value. This only
     works when the outermost operator of the expression is a memory dereference. It selects the
     range at the address of that dereference having the size of the dereference. For example, the
@@ -101,7 +101,7 @@
 
     <H3><A name="select_reads"></A>Select Reads</H3>
 
-    <P>This action is available when there's an active trace and at least one watch with memory
+    <P>This action is available when there's an active trace, and at least one watch with memory
     reads is selected. It selects all memory ranges dereferenced in the course of expression
     evaluation. This can be useful when examining a watch whose value seems unusual. For example,
     the expression <CODE>*:8 RSP</CODE> would cause 8 bytes of memory, starting at the offset given
@@ -111,7 +111,8 @@
 
     <H3><A name="add"></A>Add</H3>
 
-    <P>This action is always available. It adds a blank watch to the table.</P>
+    <P>This action is always available. It adds a blank watch to the table. Modify the expression
+    to make the entry useful.</P>
 
     <H3><A name="remove"></A>Remove</H3>
 

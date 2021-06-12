@@ -36,6 +36,7 @@ import ghidra.app.services.*;
 import ghidra.dbg.model.TestDebuggerModelBuilder;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetBreakpointSpecContainer;
+import ghidra.dbg.target.TargetTogglable;
 import ghidra.dbg.testutil.DebuggerModelTestUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -44,6 +45,7 @@ import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.model.DefaultTraceLocation;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
@@ -86,6 +88,17 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 
 	@After
 	public void tearDownMine() {
+		Msg.debug(this, "Tearing down");
+		Msg.debug(this, "Service breakpoints:");
+		for (LogicalBreakpoint lb : breakpointService.getAllBreakpoints()) {
+			Msg.debug(this, "  bp: " + lb);
+		}
+		DebuggerBreakpointsProvider provider =
+			waitForComponentProvider(DebuggerBreakpointsProvider.class);
+		Msg.debug(this, "Provider breakpoints:");
+		for (LogicalBreakpointRow row : provider.breakpointTableModel.getModelData()) {
+			Msg.debug(this, "  bp: " + row.getLogicalBreakpoint());
+		}
 		if (program != null) {
 			program.release(this);
 		}
@@ -112,9 +125,9 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 		traceManager.openTrace(trace1);
 		traceManager.openTrace(trace3);
 
-		mb.testProcess1.addRegion("echo:.text", mb.rng(0x00400000, 0x0040fff), "rx");
-		mb.testProcess1.addRegion("echo:.data", mb.rng(0x00600000, 0x0060fff), "rw");
-		mb.testProcess3.addRegion("echo:.text", mb.rng(0x7fac0000, 0x7facfff), "rx");
+		mb.testProcess1.addRegion("echo:.text", mb.rng(0x00400000, 0x00400fff), "rx");
+		mb.testProcess1.addRegion("echo:.data", mb.rng(0x00600000, 0x00600fff), "rw");
+		mb.testProcess3.addRegion("echo:.text", mb.rng(0x7fac0000, 0x7fac0fff), "rx");
 
 		try (UndoableTransaction tid = UndoableTransaction.start(trace1, "Add mapping", true)) {
 			mappingService.addMapping(
@@ -137,14 +150,13 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 			waitFor(() -> Unique.assertAtMostOne(recorder3.collectBreakpointContainers(null)),
 				"No container");
 		waitOn(bc3.placeBreakpoint(mb.addr(0x7fac1234), Set.of(TargetBreakpointKind.SW_EXECUTE)));
+		TargetTogglable bp3 = (TargetTogglable) waitForValue(
+			() -> Unique.assertAtMostOne(bc3.getCachedElements().values()));
+		waitOn(bp3.disable());
 
 		TraceBreakpoint bpt = waitForValue(() -> Unique.assertAtMostOne(
 			trace3.getBreakpointManager()
 					.getBreakpointsAt(recorder3.getSnap(), addr(trace3, 0x7fac1234))));
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace3, "Disable breakpoint", true)) {
-			bpt.setEnabled(false);
-		}
 
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add breakpoint", true)) {
 			program.getBookmarkManager()
@@ -156,8 +168,19 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 		}
 
 		waitForPass(() -> {
-			assertEquals(3, breakpointService.getAllBreakpoints().size());
+			Set<LogicalBreakpoint> allBreakpoints = breakpointService.getAllBreakpoints();
+			assertEquals(3, allBreakpoints.size());
+		});
+		waitForPass(() -> {
 			assertFalse(bpt.isEnabled());
+		});
+		/**
+		 * TODO: Might be necessary to debounce and wait for service callbacks to settle. Sometimes,
+		 * there are 3 for just a moment, and then additional callbacks mess things up.
+		 */
+		waitForPass(() -> {
+			assertEquals(3, provider.breakpointTable.getRowCount());
+			assertEquals(3, provider.locationTable.getRowCount());
 		});
 
 		captureIsolatedProvider(provider, 600, 600);

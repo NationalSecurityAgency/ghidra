@@ -22,13 +22,13 @@
       </TBODY>
     </TABLE>
 
-    <P>This window displays all recorded "snapshots" in the current trace. Typically, there is one
-    snapshot per event recorded. Other tables often display the times of various events or use time
-    ranges to describe lifespans of various records. Those times refer to the "snap," which is a
-    0-up counter of snapshot records. Thus, a snapshot is a collection of observations of a
-    target's state, usually while suspended, along with any user mark up. Selecting a snapshot
-    navigates to the selected point in time. Note that browsing the past may prevent other windows
-    from interacting with a live target.</P>
+    <P>This window displays all recorded snapshots in the current trace. Typically, there is one
+    snapshot per event recorded. Other windows often display the times of various events or use
+    time ranges to describe lifespans of various records. Those times refer to the "snap," which is
+    a 0-up counter of snapshot records. Thus, a snapshot is a collection of observations of a
+    target's state, usually while suspended, along with any mark up. Selecting a snapshot navigates
+    to the selected point in time. Note that browsing the past may prevent other windows from
+    interacting with a live target.</P>
 
     <H2>Table Columns</H2>
 
@@ -44,8 +44,11 @@
       <LI>Event Thread - the thread that caused the event, if applicable. In the case of thread
       creation, this should probably be the spawned thread, not the parent.</LI>
 
-      <LI>Ticks - the number of ticks until the next snapshot, if known. If not known, or if
-      nothing cared to record or compute this, it is 0.</LI>
+      <LI>Schedule - if applicable, a source snap and the stepping schedule which produces this
+      snapshot. This always applies to "scratch" snapshots produced by emulation, but may also
+      apply if the stepping schedule between recorded events is somehow known. Typically, it is
+      just the number of steps of the source snapshot's event thread; however, the notation does
+      allow other threads to be stepped, too.</LI>
 
       <LI>Description - a user-modifiable description of the snapshot or event. This defaults to
       the debugger's description of the event.</LI>
@@ -58,7 +61,7 @@
     <H3><A name="hide_scratch"></A>Hide Scratch</H3>
 
     <P>This toggle action is always available. It is enabled by default. The emulation service,
-    which enabled trace extrapolation and interpolation, writes emulated state into the trace's
+    which enables trace extrapolation and interpolation, writes emulated state into the trace's
     "scratch space," which comprises all negative snaps. When this toggle is enabled, those
     snapshots are hidden. They can be displayed by disabling this toggle. Note that navigating into
     scratch space may cause temporary undefined behavior in some windows, and may prevent

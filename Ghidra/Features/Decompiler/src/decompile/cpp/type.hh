@@ -415,7 +415,7 @@ class TypeFactory {
 protected:
   Architecture *glb;		///< The Architecture object that owns this TypeFactory
   Datatype *findByIdLocal(const string &nm,uint8 id) const;	///< Search locally by name and id
-  virtual Datatype *findById(const string &n,uint8 id);		///< Search by name and id
+  virtual Datatype *findById(const string &n,uint8 id,int4 sz);		///< Search by \e name and/or \e id
 public:
   TypeFactory(Architecture *g);	///< Construct a factory
   void setupSizes(void);	///< Derive some size information from Architecture

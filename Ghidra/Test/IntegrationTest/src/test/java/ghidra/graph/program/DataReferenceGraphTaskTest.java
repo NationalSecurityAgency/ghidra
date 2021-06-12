@@ -19,6 +19,8 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import ghidra.graph.TestGraphDisplay;
+import ghidra.graph.TestGraphService;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.service.graph.AttributedEdge;
@@ -202,8 +204,8 @@ public class DataReferenceGraphTaskTest extends AbstractDataReferenceGraphTest {
 
 		AttributedVertex vertex = graph.getVertex(graph.makeName(addr(0x0100001d)));
 		assertEquals("pointer_thing", vertex.getAttribute(DataReferenceGraph.DATA_ATTRIBUTE));
-		assertEquals("0100001d\npointer_thing",
-			vertex.getAttribute(DataReferenceGraph.LABEL_ATTRIBUTE));
+		assertEquals("0100001d", vertex.getAttribute(DataReferenceGraph.ADDRESS_ATTRIBUTE));
+		assertNull(vertex.getAttribute(DataReferenceGraph.LABEL_ATTRIBUTE)); // no label at address
 	}
 
 	@Test

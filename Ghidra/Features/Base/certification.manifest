@@ -46,6 +46,8 @@ data/symbols/win32/mfc140.exports||GHIDRA||||END|
 data/symbols/win32/mfc140u.exports||GHIDRA||||END|
 data/symbols/win32/mfc42.exports||GHIDRA||||END|
 data/symbols/win32/mfc42u.exports||GHIDRA||||END|
+data/symbols/win32/mfc71.exports||GHIDRA||||END|
+data/symbols/win32/mfc71u.exports||GHIDRA||||END|
 data/symbols/win32/mfc80.exports||GHIDRA||||END|
 data/symbols/win32/mfc80u.exports||GHIDRA||||END|
 data/symbols/win32/mfc90.exports||GHIDRA||||END|
@@ -452,7 +454,6 @@ src/main/help/help/topics/ImporterPlugin/images/down.png||GHIDRA||||END|
 src/main/help/help/topics/ImporterPlugin/images/edit-delete.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/help/help/topics/ImporterPlugin/images/up.png||GHIDRA||||END|
 src/main/help/help/topics/ImporterPlugin/importer.htm||GHIDRA||||END|
-src/main/help/help/topics/ImporterPlugin/load_pdb.html||GHIDRA||||END|
 src/main/help/help/topics/Intro/GhidraFunctionality.htm||GHIDRA||reviewed||END|
 src/main/help/help/topics/Intro/GhidraSupport.htm||GHIDRA||||END|
 src/main/help/help/topics/Intro/Intro.htm||GHIDRA||||END|

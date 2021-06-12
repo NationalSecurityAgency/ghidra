@@ -25,27 +25,27 @@ import java.util.zip.ZipOutputStream;
 import org.junit.Before;
 import org.junit.Test;
 
+import docking.test.AbstractDockingTest;
 import generic.jar.ResourceFile;
-import generic.test.AbstractGenericTest;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.dialog.*;
 import utilities.util.FileUtilities;
 import utility.application.ApplicationLayout;
 
 /**
- * Tests for the {@link ExtensionUtils} class. 
+ * Tests for the {@link ExtensionUtils} class.
  *
  */
-public class ExtensionUtilsTest extends AbstractGenericTest {
+public class ExtensionUtilsTest extends AbstractDockingTest {
 
-	// Name used in all tests when creating extensions. 
+	// Name used in all tests when creating extensions.
 	private String DEFAULT_EXT_NAME = "test";
 
 	private ApplicationLayout gLayout;
 
-	/**
+	/*
 	 * Create dummy archive and installation folders in the temp space that we can populate
-	 * with extensions. 	 
+	 * with extensions.
 	 */
 	@Before
 	public void setup() throws IOException {
@@ -64,7 +64,7 @@ public class ExtensionUtilsTest extends AbstractGenericTest {
 		createExtensionDirs();
 	}
 
-	/**
+	/*
 	 * Verifies that we can install an extension from a .zip file.
 	 */
 	@Test
@@ -78,11 +78,11 @@ public class ExtensionUtilsTest extends AbstractGenericTest {
 		checkDirtyInstall(DEFAULT_EXT_NAME);
 	}
 
-	/**
+	/*
 	 * Verifies that we can install an extension from a folder.
 	 */
 	@Test
-	public void testInstallExtensionFromFolder() throws ExtensionException, IOException {
+	public void testInstallExtensionFromFolder() throws IOException {
 
 		// Create an extension and install it.
 		ResourceFile rFile = createExtensionFolder();
@@ -92,7 +92,7 @@ public class ExtensionUtilsTest extends AbstractGenericTest {
 		checkDirtyInstall(DEFAULT_EXT_NAME);
 	}
 
-	/**
+	/*
 	 * Verifies that we can uninstall an extension.
 	 */
 	@Test
@@ -104,7 +104,7 @@ public class ExtensionUtilsTest extends AbstractGenericTest {
 
 		checkDirtyInstall(DEFAULT_EXT_NAME);
 
-		// Get the extension object that we need to uninstall - there will only 
+		// Get the extension object that we need to uninstall - there will only
 		// be one in the set.
 		Set<ExtensionDetails> extensions = ExtensionUtils.getExtensions();
 		assertTrue(extensions.size() == 1);
@@ -117,10 +117,10 @@ public class ExtensionUtilsTest extends AbstractGenericTest {
 		checkCleanInstall();
 	}
 
-	/**
+	/*
 	 * Verifies that trying to install an extension when there's already one with the same
 	 * name installed will overwrite the existing and not throw an exception
-	 * 
+	 *
 	 * @throws Exception if there's a problem creating the temp extension folder
 	 */
 	@Test
@@ -131,15 +131,15 @@ public class ExtensionUtilsTest extends AbstractGenericTest {
 		ExtensionUtils.install(rFile);
 
 		// Now create another extension with the same name and try
-		// to install it. 
+		// to install it.
 		rFile = new ResourceFile(createExtensionZip(DEFAULT_EXT_NAME));
 
 		boolean install = ExtensionUtils.install(rFile);
 		assertEquals(install, true);
 	}
 
-	/**
-	 * Verifies that we can properly recognize a valid .zip file. 
+	/*
+	 * Verifies that we can properly recognize a valid .zip file.
 	 */
 	@Test
 	public void testIsZip() throws IOException, ExtensionException {
@@ -147,7 +147,7 @@ public class ExtensionUtilsTest extends AbstractGenericTest {
 		assertTrue(ExtensionUtils.isZip(zipFile));
 	}
 
-	/**
+	/*
 	 * Verifies that we can identify when a .zip is a valid extension archive vs.
 	 * just a regular old zip (ROZ).
 	 * <p>
@@ -162,7 +162,7 @@ public class ExtensionUtilsTest extends AbstractGenericTest {
 		assertTrue(!ExtensionUtils.isExtension(new ResourceFile(zipFile2)));
 	}
 
-	/**
+	/*
 	 * Verifies that we can recognize when a directory represents an extension.
 	 * <p>
 	 * Note: The presence of an extensions.properties file is the difference.
@@ -177,18 +177,18 @@ public class ExtensionUtilsTest extends AbstractGenericTest {
 		assertTrue(!ExtensionUtils.isExtension(new ResourceFile(nonExtDir)));
 	}
 
-	/**
+	/*
 	 * Verifies that the we can retrieve all unique extensions in the archive and
 	 * install folders.
 	 * <p>
 	 * Note: This test eliminates the need to test the methods for retrieving archived vs. installed
-	 * extensions individually. 
+	 * extensions individually.
 	 */
 	@Test
 	public void testGetExtensions() throws ExtensionException, IOException {
 
-		// First create an extension and install it, so we have 2 extensions: one in 
-		// the archive folder, and one in the install folder. 
+		// First create an extension and install it, so we have 2 extensions: one in
+		// the archive folder, and one in the install folder.
 		File zipFile = createExtensionZip(DEFAULT_EXT_NAME);
 		ExtensionUtils.install(new ResourceFile(zipFile));
 
@@ -209,8 +209,8 @@ public class ExtensionUtilsTest extends AbstractGenericTest {
 		assertTrue(extensions.size() == 3);
 	}
 
-	/**
-	 * Catch-all test for verifying that 'bad' inputs to utility functions are 
+	/*
+	 * Catch-all test for verifying that 'bad' inputs to utility functions are
 	 * handled properly.
 	 */
 	@Test
@@ -233,14 +233,16 @@ public class ExtensionUtilsTest extends AbstractGenericTest {
 		assertTrue(foundError == false);
 	}
 
-	//==============================================================================
+//==================================================================================================
+// Private Methods
+//==================================================================================================
 
-	/**
+	/*
 	 * Creates the extension archive and installation directories.
-	 * 
+	 *
 	 * @throws IOException if there's an error creating the directories
 	 */
-	public final void createExtensionDirs() throws IOException {
+	private void createExtensionDirs() throws IOException {
 
 		ResourceFile extensionDir = gLayout.getExtensionArchiveDir();
 		if (!extensionDir.exists()) {
@@ -248,7 +250,7 @@ public class ExtensionUtilsTest extends AbstractGenericTest {
 				throw new IOException("Failed to create extension archive directory for test");
 			}
 		}
-		
+
 		ResourceFile installDir = gLayout.getExtensionInstallationDirs().get(0);
 		if (!installDir.exists()) {
 			if (!installDir.mkdir()) {
@@ -257,7 +259,7 @@ public class ExtensionUtilsTest extends AbstractGenericTest {
 		}
 	}
 
-	/**
+	/*
 	 * Verifies that the installation folder is empty.
 	 */
 	private boolean checkCleanInstall() {
@@ -265,10 +267,10 @@ public class ExtensionUtilsTest extends AbstractGenericTest {
 		return (files == null || files.length == 0);
 	}
 
-	/**
+	/*
 	 * Verifies that the installation folder is not empty and contains a folder
 	 * with the given name.
-	 * 
+	 *
 	 * @param name the name of the installed extension
 	 */
 	private void checkDirtyInstall(String name) {
@@ -277,10 +279,10 @@ public class ExtensionUtilsTest extends AbstractGenericTest {
 		assertTrue(files[0].getName().equals(name));
 	}
 
-	/**
+	/*
 	 * Creates a valid extension in the archive folder. This extension is not a
 	 * .zip, but a folder.
-	 * 
+	 *
 	 * @return the file representing the extension
 	 * @throws IOException if there's an error creating the extension
 	 */
@@ -296,9 +298,9 @@ public class ExtensionUtilsTest extends AbstractGenericTest {
 		return root;
 	}
 
-	/**
-	 * Create a generic zip that is a valid extension archive. 
-	 * 
+	/*
+	 * Create a generic zip that is a valid extension archive.
+	 *
 	 * @param zipName name of the zip to create
 	 * @return a zip file
 	 * @throws IOException if there's an error creating the zip
@@ -320,10 +322,10 @@ public class ExtensionUtilsTest extends AbstractGenericTest {
 		return f;
 	}
 
-	/**
+	/*
 	 * Create a generic zip that is NOT a valid extension archive (because it doesn't
 	 * have an extension.properties file).
-	 * 
+	 *
 	 * @param zipName name of the zip to create
 	 * @return a zip file
 	 * @throws IOException if there's an error creating the zip
