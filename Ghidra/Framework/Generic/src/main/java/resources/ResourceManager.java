@@ -329,7 +329,7 @@ public class ResourceManager {
 
 	/**
 	 * Creates a scaled ImageIcon from the given icon with scaling of 
-	 * {@link Image#SCALE_AREA_AVERAGING}
+	 * {@link Image#SCALE_SMOOTH}
 	 *  
 	 * @param icon the icon to scale
 	 * @param width the width of the new icon
@@ -466,11 +466,43 @@ public class ResourceManager {
 	 * @return the scaled image.
 	 */
 	public static ImageIcon loadImage(String filename, int width, int height) {
-		ImageIcon loadImage = loadImage(filename);
+
+		ImageIcon icon = iconMap.get(filename);
+		if (icon != null) {
+			return icon;
+		}
+		File imageFile = new File(filename);
+		if (imageFile.exists()) {
+			try {
+				icon = new ScaledImageIconWrapper(imageFile.toURI().toURL(), width, height);
+				iconMap.put(filename, icon);
+				return icon;
+			}
+			catch (MalformedURLException e) {
+				// handled below
+			}
+		}
+		URL url = getResource(filename);
+		if (url != null) {
+			icon = new ScaledImageIconWrapper(url, width, height);
+			iconMap.put(filename, icon);
+			return icon;
+		}
+		return getDefaultIcon();
+	}
+
+	/**
+	 * Load and scale the image specified by filename; returns null if problems occur trying to load
+	 * the file. The height and width of the picture are fixed, 16*16.
+	 * @param filename name of file to load, e.g., "images/home.gif"
+	 * @return the scaled image.
+	 */
+	public static ImageIcon loadImage(String filename) {
+		ImageIcon loadImage = loadImage(filename, 16, 16);
 		if (loadImage == null) {
 			return null;
 		}
-		return getScaledIcon(loadImage, width, height);
+		return loadImage;
 	}
 
 	/**
@@ -481,6 +513,8 @@ public class ResourceManager {
 	 * @param filename name of file to load, e.g., "images/home.gif"
 	 * @return the image icon stored in the bytes
 	 */
+
+	 /*
 	public static ImageIcon loadImage(String filename) {
 
 		// use the wrapper so that images are not loaded until they are needed
@@ -509,7 +543,7 @@ public class ResourceManager {
 		}
 
 		return getDefaultIcon();
-	}
+	}*/
 
 	/**
 	 * Load the images specified by filenames; substitutes the default bomb icon
@@ -547,7 +581,7 @@ public class ResourceManager {
 				Msg.error(ResourceManager.class,
 					"Could not find default icon: " + DEFAULT_ICON_FILENAME);
 			}
-			DEFAULT_ICON = new ImageIconWrapper(url);
+			DEFAULT_ICON = new ScaledImageIconWrapper(url, 16, 16);
 		}
 		return DEFAULT_ICON;
 	}

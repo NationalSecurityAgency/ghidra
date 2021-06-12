@@ -107,7 +107,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 		panel = new ByteViewerPanel(this);
 		bytesPerLine = DEFAULT_BYTES_PER_LINE;
-		setIcon(ResourceManager.loadImage("images/binaryData.gif"));
+		setIcon(ResourceManager.loadImage("images/binaryData.png"));
 		setOptions();
 
 		createActions();

@@ -49,7 +49,7 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 	private static ImageIcon bookmarkErrorIcon =
 		ResourceManager.loadImage("images/edit-delete.png");
 	private static ImageIcon bookmarkInfoIcon = ResourceManager.loadImage("images/information.png");
-	private static ImageIcon bookmarkNoteIcon = ResourceManager.loadImage("images/notes.gif");
+	private static ImageIcon bookmarkNoteIcon = ResourceManager.loadImage("images/notes.png");
 	private static ImageIcon bookmarkWarningIcon = ResourceManager.loadImage("images/warning.png");
 	private static ImageIcon bookmarkUnknownIcon = ResourceManager.loadImage("images/unknown.gif");
 

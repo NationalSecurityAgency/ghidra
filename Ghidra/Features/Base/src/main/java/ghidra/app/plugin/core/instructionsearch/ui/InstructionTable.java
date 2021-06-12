@@ -54,7 +54,7 @@ public class InstructionTable extends AbstractInstructionTable {
 	private static final String UNDEFINED_ICON_OVERLAY = "images/DOSA_D.png";
 	private static final String CLEAR_ICON_OVERLAY = "images/edit-clear.png";
 	private static final String RELOAD_ICON_OVERLAY = "images/reload.png";
-	private static final String MANUAL_ENTRY_ICON_OVERLAY = "images/editbytes.gif";
+	private static final String MANUAL_ENTRY_ICON_OVERLAY = "images/editbytes.png";
 
 	// Need to keep track of the column in case the user clicks on the column header and we 
 	// need to display the context menu.

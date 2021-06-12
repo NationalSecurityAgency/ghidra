@@ -32,7 +32,7 @@ public class ListingDiffActionManager {
 
 	private static final String HELP_TOPIC = "FunctionComparison";
 	private static final Icon NOT_ICON = ResourceManager.loadImage("images/no_small.png");
-	private static final Icon BYTE_DIFFS_ICON = ResourceManager.loadImage("images/binaryData.gif");
+	private static final Icon BYTE_DIFFS_ICON = ResourceManager.loadImage("images/binaryData.png");
 	private static final Icon NO_BYTE_DIFFS_ICON = new MultiIcon(BYTE_DIFFS_ICON, NOT_ICON);
 	private static final Icon DIFF_CONSTANTS_ICON =
 		ResourceManager.loadImage("images/class.png");

@@ -53,8 +53,8 @@
 	Press the <guiicon>
 	<inlinemediaobject>
 	  <imageobject>
-	    <imagedata condition="noscaling" fileref="images/decompileFunction.gif" contentwidth="16px" contentdepth="16px"/>
-	    <imagedata condition="withscaling" fileref="images/decompileFunction.gif" contentwidth="0.15in" contentdepth="0.15in"/>
+	    <imagedata condition="noscaling" fileref="images/decompileFunction.png" contentwidth="16px" contentdepth="16px"/>
+	    <imagedata condition="withscaling" fileref="images/decompileFunction.png" contentwidth="0.15in" contentdepth="0.15in"/>
 	  </imageobject>
 	</inlinemediaobject>
 	</guiicon>&#xA0;icon
@@ -3435,8 +3435,8 @@
     <guiicon>
       <inlinemediaobject>
 	<imageobject>
-	  <imagedata condition="noscaling" fileref="images/decompileFunction.gif" contentwidth="16px" contentdepth="16px"/>
-	  <imagedata condition="withscaling" fileref="images/decompileFunction.gif" contentwidth="0.15in" contentdepth="0.15in"/>
+	  <imagedata condition="noscaling" fileref="images/decompileFunction.png" contentwidth="16px" contentdepth="16px"/>
+	  <imagedata condition="withscaling" fileref="images/decompileFunction.png" contentwidth="0.15in" contentdepth="0.15in"/>
 	</imageobject>
       </inlinemediaobject>
       </guiicon>&#xA0;icon from the tool bar, or the
@@ -3507,8 +3507,8 @@
     <guiicon>
       <inlinemediaobject>
 	<imageobject>
-	  <imagedata condition="noscaling" fileref="images/decompileFunction.gif" contentwidth="16px" contentdepth="16px"/>
-	  <imagedata condition="withscaling" fileref="images/decompileFunction.gif" contentwidth="0.15in" contentdepth="0.15in"/>
+	  <imagedata condition="noscaling" fileref="images/decompileFunction.png" contentwidth="16px" contentdepth="16px"/>
+	  <imagedata condition="withscaling" fileref="images/decompileFunction.png" contentwidth="0.15in" contentdepth="0.15in"/>
 	</imageobject>
       </inlinemediaobject>
       </guiicon>&#xA0;or selecting

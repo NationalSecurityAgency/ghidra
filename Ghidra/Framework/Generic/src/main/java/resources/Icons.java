@@ -46,8 +46,8 @@ public class Icons {
 	public static final ImageIcon DELETE_ICON = get("images/error.png");
 	public static final ImageIcon ERROR_ICON = get("images/emblem-important.png");
 
-	public static final ImageIcon NAVIGATE_ON_INCOMING_EVENT_ICON = get("images/locationIn.gif");
-	public static final ImageIcon NAVIGATE_ON_OUTGOING_EVENT_ICON = get("images/locationOut.gif");
+	public static final ImageIcon NAVIGATE_ON_INCOMING_EVENT_ICON = get("images/locationIn.png");
+	public static final ImageIcon NAVIGATE_ON_OUTGOING_EVENT_ICON = get("images/locationOut.png");
 
 	public static final ImageIcon NOT_ALLOWED_ICON = get("images/no.png");
 	public static final ImageIcon OPEN_FOLDER_ICON = get("images/openSmallFolder.png");

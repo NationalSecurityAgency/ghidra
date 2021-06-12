@@ -61,7 +61,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	private static Icon REFRESH_ICON = Icons.REFRESH_ICON;
 	static final ImageIcon C_SOURCE_ICON =
-		ResourceManager.loadImage("images/decompileFunction.gif");
+		ResourceManager.loadImage("images/decompileFunction.png");
 
 	private DockingAction defUseHighlightAction;
 	private DockingAction forwardSliceAction;

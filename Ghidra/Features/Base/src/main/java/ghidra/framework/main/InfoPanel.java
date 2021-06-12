@@ -151,13 +151,13 @@ class InfoPanel extends JPanel {
 	private Component createSouthPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
-		ImageIcon cloudRevImage = ResourceManager.loadImage(CLOUD_REV_FILENAME);
+		ImageIcon cloudRevImage = ResourceManager.loadImage(CLOUD_REV_FILENAME, 440, 3);
 		if (cloudRevImage != null) {
 			JLabel cloudRevLabel = new GIconLabel(cloudRevImage);
 			panel.add(cloudRevLabel, BorderLayout.NORTH);
 		}
 
-		ImageIcon cloudImage = ResourceManager.loadImage(CLOUD_FILENAME);
+		ImageIcon cloudImage = ResourceManager.loadImage(CLOUD_FILENAME, 440, 3);
 		if (cloudImage != null) {
 			JLabel cloudLabel = new GIconLabel(cloudImage);
 			panel.add(cloudLabel, BorderLayout.SOUTH);
@@ -183,7 +183,7 @@ class InfoPanel extends JPanel {
 		//imagePanel.setBackground(bgColor);
 
 		imagePanel.setLayout(new BorderLayout());
-		ImageIcon ghidraSplashImage = ResourceManager.loadImage(GHIDRA_FILENAME);
+		ImageIcon ghidraSplashImage = ResourceManager.loadImage(GHIDRA_FILENAME, 500, 500);
 
 		JLabel l = new GIconLabel(ghidraSplashImage);
 		imagePanel.add(l, BorderLayout.CENTER);

@@ -37,7 +37,7 @@ import resources.ResourceManager;
  */
 public class FunctionWindowProvider extends ComponentProviderAdapter {
 
-	public static final ImageIcon icon = ResourceManager.loadImage("images/functions.gif");
+	public static final ImageIcon icon = ResourceManager.loadImage("images/functions.png");
 
 	private FunctionWindowPlugin plugin;
 	private GhidraTable functionTable;
