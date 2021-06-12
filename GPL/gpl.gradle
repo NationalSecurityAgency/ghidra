@@ -44,10 +44,7 @@ ext.getCurrentPlatformName = {
 	else if (osName.startsWith("Mac OS X")) {
 		if (isX86_64) {
 			return 'osx64'
-		}
-	}
-	else if (osName.startsWith("Mac OS X")) {
-		if (isAARCH_64) {
+		} else if (isAARCH64) {
 			return 'aarch64'
 		}
 	}
