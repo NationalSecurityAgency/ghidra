@@ -103,7 +103,7 @@ abstract class InstDBAdapter {
 			monitor.initialize(oldAdapter.getRecordCount() * 2);
 			int count = 0;
 
-			InstDBAdapter tmpAdapter = new InstDBAdapterV2(tmpHandle, addrMap, true);
+			InstDBAdapter tmpAdapter = new InstDBAdapterV1(tmpHandle, addrMap, true);
 			RecordIterator iter = oldAdapter.getRecords();
 			while (iter.hasNext()) {
 				monitor.checkCanceled();
@@ -121,7 +121,12 @@ abstract class InstDBAdapter {
 			while (iter.hasNext()) {
 				monitor.checkCanceled();
 				DBRecord rec = iter.next();
-				newAdapter.putRecord(rec);
+
+				long addr = rec.getKey();
+				int protoId = rec.getIntValue(PROTO_ID_COL);
+				byte flags = rec.getByteValue(FLAGS_COL);
+				newAdapter.createInstruction(addr, protoId, flags, null);
+
 				monitor.setProgress(++count);
 			}
 			return newAdapter;

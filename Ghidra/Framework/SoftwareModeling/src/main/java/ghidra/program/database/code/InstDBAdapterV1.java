@@ -33,6 +33,11 @@ import db.*;
  * Version 0 adapter for the instruction table.
  */
 class InstDBAdapterV1 extends InstDBAdapter {
+
+	static final Schema INSTRUCTION_SCHEMA_V1 =
+		new Schema(2, "Address", new Field[] { IntField.INSTANCE, ByteField.INSTANCE },
+			new String[] { "Proto ID", "Flags" });
+
 	private static final int VERSION = 1;
 	private Table instTable;
 	private AddressMap addrMap;
@@ -45,7 +50,7 @@ class InstDBAdapterV1 extends InstDBAdapter {
 			VersionException {
 		this.addrMap = addrMap;
 		if (create) {
-			instTable = handle.createTable(INSTRUCTION_TABLE_NAME, INSTRUCTION_SCHEMA);
+			instTable = handle.createTable(INSTRUCTION_TABLE_NAME, INSTRUCTION_SCHEMA_V1);
 		}
 		else {
 			instTable = handle.getTable(INSTRUCTION_TABLE_NAME);
