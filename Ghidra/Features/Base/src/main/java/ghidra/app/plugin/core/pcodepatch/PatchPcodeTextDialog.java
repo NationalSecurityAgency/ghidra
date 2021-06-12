@@ -78,11 +78,7 @@ public class PatchPcodeTextDialog extends DialogComponentProvider {
                 @Override
                 public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
                     try {
-                        Disassembler disassembler = Disassembler.getDisassembler(
-                            program, monitor, DisassemblerMessageListener.IGNORE);
                         action.doPatch(patchPcode);
-                        Address addr = action.instruction.getAddress();
-                        disassembler.disassemble(addr, new AddressSet(addr));
                         return true;
                     } catch (Exception e) {
                         Msg.showError(this, null, "Can't Patch Pcode", e.toString());

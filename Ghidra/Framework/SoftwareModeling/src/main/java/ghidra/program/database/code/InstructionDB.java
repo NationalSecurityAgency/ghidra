@@ -827,6 +827,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	public void patchPcode(PcodeDataLike[] pcodeOps) {
 		this.patchPcode = pcodeOps;
 		codeMgr.setPcodes(addr, pcodeOps);
+		program.setChanged(ChangeManager.DOCR_CODE_UNIT_PROPERTY_CHANGED, this, this);
 	}
 
 	@Override
@@ -838,5 +839,6 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	public void removePatchedPcode() {
 		this.patchPcode = null;
 		codeMgr.setPcodes(addr, null);
+		program.setChanged(ChangeManager.DOCR_CODE_UNIT_PROPERTY_CHANGED, this, this);
 	}
 }
