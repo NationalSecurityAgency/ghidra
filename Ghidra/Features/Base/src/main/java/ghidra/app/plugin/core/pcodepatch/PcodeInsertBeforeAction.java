@@ -2,10 +2,10 @@ package ghidra.app.plugin.core.pcodepatch;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.SequenceNumber;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.PcodeData;
+import ghidra.program.model.pcode.PcodeDataLike;
 
 public class PcodeInsertBeforeAction extends AbstractPcodePatchAction {
 
@@ -23,17 +23,11 @@ public class PcodeInsertBeforeAction extends AbstractPcodePatchAction {
     }
 
     @Override
-    public void doPatch(int opcode, Varnode[] in, Varnode out) {
-        PcodeOp[] pcode = instruction.getPcode();
-        SequenceNumber seqNum = pcode[row].getSeqnum();
-        List<PcodeOp> pcodeAfter = Arrays.asList(pcode);
-        PcodeOp inserting = new PcodeOp(seqNum, opcode, in, out);
-        // reset all times after insertion
-        for (int i = row; i < pcode.length; ++i) {
-            pcode[i].setTime(seqNum.getTime() + i - row + 1);
-        }
-        pcodeAfter.add(row, inserting);
-        instruction.patchPcode(pcodeAfter.toArray(PcodeOp[]::new));
+    public void doPatch(PcodeData patchPcode) {
+        PcodeDataLike[] pcodes = Stream.of(instruction.getPcode()).toArray(PcodeDataLike[]::new);
+        List<PcodeDataLike> pcodeAfter = Arrays.asList(pcodes);
+        pcodeAfter.add(row, patchPcode);
+        instruction.patchPcode(pcodeAfter.toArray(PcodeDataLike[]::new));
     }
     
 }

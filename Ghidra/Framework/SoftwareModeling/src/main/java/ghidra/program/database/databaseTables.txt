@@ -1,21 +1,27 @@
 
 	Instructions Table
 	
-	--------------------------------------
-	|  address  |  instruction proto ID  |
-	--------------------------------------
+	-----------------------------------------------
+	|  address  |  instruction proto ID  | pcodes |
+	-----------------------------------------------
 
 	Used By: ghidra.program.database.code.CodeManager
 				
 	key:	long	address					- address of the instruction represented by this row
 	col 0:	int	instruction proto ID	- ID of the instruction at this address
+	col 1:  string pcodes				- the raw string representation of the pcodes when user patched
+										  custom pcodes to the instruction.
 				
 	This table is used to keep track of instructions in the program.  The table is keyed
-	by address since there can only be one instruction at a given address.  The only field
+	by address since there can only be one instruction at a given address.  One field
 	is the proto ID field which is used as a key into map of instruction prototypes.  The
 	instruction prototypes are not stored in the database.  If the prototype map does not
 	have a prototype for a ID which has been stored in this table, the prototype can easily
-	be reconstructed by disassembling at the address.
+	be reconstructed by disassembling at the address. Another field is the pcodes, which is
+	set when user patched custom pcodes to the instruction. The string can be multiple lines,
+	each line is a raw representation of the pcode, for example
+	"(unique, 0x1234, 1) = COPY (const, 0x0, 0)". "(unique, 0x1234, 1)" is a varnode of unique
+	address space, offset is 0x1234 with size 1.
 	
 
 

@@ -28,6 +28,7 @@ import ghidra.program.model.listing.ContextChangeException;
 import ghidra.program.model.listing.FlowOverride;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.pcode.PcodeDataLike;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTraceUtils;
@@ -702,12 +703,12 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	}
 
 	@Override
-	public PcodeOp[] getPatchedPcode() {
+	public PcodeDataLike[] getPatchedPcode() {
 		return null;
 	}
 
 	@Override
-	public void patchPcode(PcodeOp[] pcodeOps) {
+	public void patchPcode(PcodeDataLike[] pcodeOps) {
 	}
 
 	@Override

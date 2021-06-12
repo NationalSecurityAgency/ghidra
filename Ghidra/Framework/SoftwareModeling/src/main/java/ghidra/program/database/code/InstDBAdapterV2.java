@@ -32,8 +32,9 @@ import db.*;
 /**
  * Version 0 adapter for the instruction table.
  */
-class InstDBAdapterV1 extends InstDBAdapter {
-	private static final int VERSION = 1;
+class InstDBAdapterV2 extends InstDBAdapter {
+	// version 1 => 2: add pcodes (patched pcodes)
+	private static final int VERSION = 2;
 	private Table instTable;
 	private AddressMap addrMap;
 
@@ -41,7 +42,7 @@ class InstDBAdapterV1 extends InstDBAdapter {
 	 * Constructor
 	 * @param handle database handle
 	 */
-	public InstDBAdapterV1(DBHandle handle, AddressMap addrMap, boolean create) throws IOException,
+	public InstDBAdapterV2(DBHandle handle, AddressMap addrMap, boolean create) throws IOException,
 			VersionException {
 		this.addrMap = addrMap;
 		if (create) {
@@ -70,6 +71,7 @@ class InstDBAdapterV1 extends InstDBAdapter {
 		DBRecord record = INSTRUCTION_SCHEMA.createRecord(addr);
 		record.setIntValue(PROTO_ID_COL, protoID);
 		record.setByteValue(FLAGS_COL, flags);
+		record.setString(PCODES_COL, pcodes);
 		instTable.putRecord(record);
 	}
 
@@ -244,7 +246,9 @@ class InstDBAdapterV1 extends InstDBAdapter {
 
 	@Override
 	void updatePcodes(long addr, String pcodes) throws IOException {
-		throw new UnsupportedOperationException();
+		DBRecord rec = instTable.getRecord(addr);
+		rec.setString(PCODES_COL, pcodes);
+		instTable.putRecord(rec);
 	}
 
 }

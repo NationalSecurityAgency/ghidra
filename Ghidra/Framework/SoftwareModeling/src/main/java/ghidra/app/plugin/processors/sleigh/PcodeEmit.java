@@ -28,9 +28,9 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.FlowOverride;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.pcode.PcodeDataLike;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.PcodeOverride;
-import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.RefType;
 import ghidra.util.exception.NotYetImplementedException;
 
@@ -672,7 +672,7 @@ public abstract class PcodeEmit {
 				"Semantics for this instruction are not implemented");
 		}
 
-		PcodeOp[] patchedPcode = instcontext.getPatchedPcode();
+		PcodeDataLike[] patchedPcode = instcontext.getPatchedPcode();
 
 		if (patchedPcode != null) {
 			for (var op : patchedPcode) {
@@ -680,7 +680,7 @@ public abstract class PcodeEmit {
 					.map(varnode -> VarnodeData.of(varnode))
 					.toArray(VarnodeData[]::new);
 				var output = VarnodeData.of(op.getOutput());
-				dump(startAddress, op.getOpcode(), inputs, op.getNumInputs(), output);
+				dump(startAddress, op.getOpcode(), inputs, inputs.length, output);
 			}
 
 			return;

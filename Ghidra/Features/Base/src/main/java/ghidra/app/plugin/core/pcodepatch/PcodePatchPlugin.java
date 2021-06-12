@@ -30,6 +30,7 @@ public class PcodePatchPlugin extends ProgramPlugin {
     private DockingAction pcodePatchAction;
     private DockingAction pcodeInsertBeforeAction;
     private DockingAction pcodeInsertAfterAction;
+    private DockingAction pcodePatchRemoveAction;
 
     public PcodePatchPlugin(PluginTool tool) {
         super(tool, false, false, false);
@@ -51,14 +52,20 @@ public class PcodePatchPlugin extends ProgramPlugin {
         pcodeInsertAfterAction.setPopupMenuData(
             new MenuData(new String[] { SUBMENU_NAME, "Insert After..."})
         );
+        pcodePatchRemoveAction = new PcodePatchRemoveAction("Remove Patch", getName(), this);
+        pcodePatchRemoveAction.setPopupMenuData(
+            new MenuData(new String[] { SUBMENU_NAME, "Remove Patch At..."})
+        );
 
         pcodePatchAction.setEnabled(true);
         pcodeInsertBeforeAction.setEnabled(true);
         pcodeInsertAfterAction.setEnabled(true);
+        pcodePatchRemoveAction.setEnabled(true);
 
         tool.addAction(pcodePatchAction);
         tool.addAction(pcodeInsertBeforeAction);
         tool.addAction(pcodeInsertAfterAction);
+        tool.addAction(pcodePatchRemoveAction);
     }
 
     @Override
@@ -66,5 +73,6 @@ public class PcodePatchPlugin extends ProgramPlugin {
         pcodePatchAction.dispose();
         pcodeInsertBeforeAction.dispose();
         pcodeInsertAfterAction.dispose();
+        pcodePatchRemoveAction.dispose();
     }
 }

@@ -25,7 +25,9 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.pcode.PcodeDataLike;
 import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.PcodeRawParser;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ChangeManager;
@@ -52,7 +54,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 
 	private ParserContext parserContext;
 
-	private PcodeOp[] patchPcode = null;
+	private PcodeDataLike[] patchPcode = null;
 
 	/**
 	 * Construct a new InstructionDB.
@@ -62,12 +64,14 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	 * @param addr database key
 	 * @param proto instruction prototype
 	 * @param flags flow override flags
+	 * @param patchPcode pcode patches to this instruction
 	 */
 	public InstructionDB(CodeManager codeMgr, DBObjectCache<? extends CodeUnitDB> cache,
-			Address address, long addr, InstructionPrototype proto, byte flags) {
+			Address address, long addr, InstructionPrototype proto, byte flags, PcodeDataLike[] patchPcode) {
 		super(codeMgr, cache, addr, address, addr, proto.getLength());
 		this.proto = proto;
 		this.flags = flags;
+		this.patchPcode = patchPcode;
 		flowOverride =
 			FlowOverride.getFlowOverride((flags & FLOWOVERRIDE_MASK) >> FLOWOVERRIDE_SHIFT);
 	}
@@ -109,6 +113,8 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 		}
 		length = proto.getLength();
 		flags = rec.getByteValue(InstDBAdapter.FLAGS_COL);
+		String rawPcodeText = rec.getString(InstDBAdapter.PCODES_COL);
+		patchPcode = PcodeRawParser.parseRawPcode(getProgram().getAddressFactory(), rawPcodeText);
 		flowOverride =
 			FlowOverride.getFlowOverride((flags & FLOWOVERRIDE_MASK) >> FLOWOVERRIDE_SHIFT);
 		return false;
@@ -818,17 +824,19 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	}
 
 	@Override
-	public void patchPcode(PcodeOp[] pcodeOps) {
+	public void patchPcode(PcodeDataLike[] pcodeOps) {
 		this.patchPcode = pcodeOps;
+		codeMgr.setPcodes(addr, pcodeOps);
 	}
 
 	@Override
-	public PcodeOp[] getPatchedPcode() {
+	public PcodeDataLike[] getPatchedPcode() {
 		return patchPcode;
 	}
 
 	@Override
 	public void removePatchedPcode() {
 		this.patchPcode = null;
+		codeMgr.setPcodes(addr, null);
 	}
 }

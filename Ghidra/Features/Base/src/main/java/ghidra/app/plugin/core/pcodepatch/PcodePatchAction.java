@@ -1,8 +1,10 @@
 package ghidra.app.plugin.core.pcodepatch;
 
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.SequenceNumber;
-import ghidra.program.model.pcode.Varnode;
+import java.util.stream.Stream;
+
+import ghidra.program.model.pcode.PcodeData;
+import ghidra.program.model.pcode.PcodeDataLike;
+
 
 public class PcodePatchAction extends AbstractPcodePatchAction {
 
@@ -20,12 +22,9 @@ public class PcodePatchAction extends AbstractPcodePatchAction {
     }
 
     @Override
-    public void doPatch(int opcode, Varnode[] in, Varnode out) {
-        PcodeOp[] pcode = instruction.getPcode();
-        SequenceNumber seqNum = pcode[row].getSeqnum();
-
-        pcode[row] = new PcodeOp(seqNum, opcode, in, out);
-
-        instruction.patchPcode(pcode);
+    public void doPatch(PcodeData patchPcode) {
+        PcodeDataLike[] pcodes = Stream.of(instruction.getPcode()).toArray(PcodeDataLike[]::new);
+        pcodes[row] = patchPcode;
+        instruction.patchPcode(pcodes);
     }
 }

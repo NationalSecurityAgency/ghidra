@@ -20,6 +20,7 @@ import java.util.List;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.UniqueAddressFactory;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.pcode.PcodeDataLike;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.symbol.FlowType;
 import ghidra.program.model.symbol.RefType;
@@ -190,13 +191,13 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	 * 
 	 * @param pcodes expected pcodes to be returned
 	 */
-	public void patchPcode(PcodeOp[] pcodeOps);
+	public void patchPcode(PcodeDataLike[] pcodes);
 
 	/**
 	 * Get patching pcode associated with this instruction
 	 * @return patching pcode, null if no patching pcode in this instruction
 	 */
-	public PcodeOp[] getPatchedPcode();
+	public PcodeDataLike[] getPatchedPcode();
 
 	/**
 	 * Remove the patched pcode, use original pcode

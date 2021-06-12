@@ -7,23 +7,10 @@ import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.program.util.PcodeFieldLocation;
 import ghidra.program.util.ProgramLocation;
 
-/**
- * Root abstract action, parent for:
- * 
- * - pcode patch (including patch, insert before, insert after)
- * - remove patch
- * 
- * The action happens in two steps:
- * 
- * 1. initialAction(): show dialog if needed or do the job if no dialog needed
- * 2. second stage (doPatch() in subclasses): job to do after dialog returns information
- * 
- * The second stage is implemented in {@link AbstractPcodePatchAction} only which
- * implementes actions that require the second stage.
- */
 public abstract class AbstractPcodeManipulationAction extends ListingContextAction {
 
     protected Instruction instruction;
@@ -34,6 +21,12 @@ public abstract class AbstractPcodeManipulationAction extends ListingContextActi
     public AbstractPcodeManipulationAction(String name, String owner, PcodePatchPlugin plugin) {
         super(name, owner);
         this.plugin = plugin;
+    }
+
+    private void initFromContext(ListingActionContext context) {
+        PcodeFieldLocation location = (PcodeFieldLocation) context.getLocation();
+        instruction = (Instruction) context.getCodeUnit();
+        row = location.getRow();
     }
 
     @Override
@@ -67,16 +60,14 @@ public abstract class AbstractPcodeManipulationAction extends ListingContextActi
             return false;
         }
 
+        initFromContext(context);
+
         return true;
     }
 
     @Override
     public void actionPerformed(ListingActionContext context) {
-        PcodeFieldLocation location = (PcodeFieldLocation) context.getLocation();
-
-        instruction = (Instruction) context.getCodeUnit();
-        row = location.getRow();
-
+        initFromContext(context);
         initialAction();
     }
 

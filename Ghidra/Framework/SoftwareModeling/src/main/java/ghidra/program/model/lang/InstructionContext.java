@@ -18,7 +18,7 @@ package ghidra.program.model.lang;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.PcodeDataLike;
 
 /**
  * <code>InstructionContext</code> is utilized by a shared instruction prototype to
@@ -79,6 +79,6 @@ public interface InstructionContext {
 	 * return the patched pcode operations.
 	 * @return the patched pcode operations, null if not patched
 	 */
-	public PcodeOp[] getPatchedPcode();
+	public PcodeDataLike[] getPatchedPcode();
 
 }

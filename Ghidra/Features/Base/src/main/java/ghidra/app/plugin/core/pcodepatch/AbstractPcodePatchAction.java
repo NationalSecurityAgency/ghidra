@@ -1,6 +1,6 @@
 package ghidra.app.plugin.core.pcodepatch;
 
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.PcodeData;
 
 public abstract class AbstractPcodePatchAction extends AbstractPcodeManipulationAction {
 
@@ -22,8 +22,8 @@ public abstract class AbstractPcodePatchAction extends AbstractPcodeManipulation
      * - insert before
      * - insert after
      * 
-     * @param pcode the pcode user specifies, note that the address is temporary as
+     * @param patchPcode the pcode user specifies, note that the address is temporary as
      * the user should not specify one
      */
-    public abstract void doPatch(int opcode, Varnode[] in, Varnode out);
+    public abstract void doPatch(PcodeData patchPcode);
 }

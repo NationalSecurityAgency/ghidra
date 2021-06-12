@@ -1,10 +1,5 @@
 package ghidra.app.plugin.core.pcodepatch;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
-
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -13,14 +8,19 @@ import javax.swing.JTextField;
 import docking.DialogComponentProvider;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
+import ghidra.framework.cmd.BackgroundCommand;
+import ghidra.framework.model.DomainObject;
+import ghidra.program.disassemble.Disassembler;
+import ghidra.program.disassemble.DisassemblerMessageListener;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.lang.UnknownInstructionException;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.pcode.PcodeData;
+import ghidra.program.model.pcode.PcodeRawParser;
 import ghidra.util.Msg;
 import ghidra.util.layout.PairLayout;
+import ghidra.util.task.TaskMonitor;
 
 public class PatchPcodeTextDialog extends DialogComponentProvider {
 
@@ -30,8 +30,6 @@ public class PatchPcodeTextDialog extends DialogComponentProvider {
 	private JLabel label;
 
     private AbstractPcodePatchAction action;
-    private Pattern hexNumPattern = Pattern.compile(".*[abcdefABCDEF].*");
-
 
     public PatchPcodeTextDialog(PcodePatchPlugin plugin, AbstractPcodePatchAction action) {
         super("Patch Pcode", false, false, true, false);
@@ -67,86 +65,45 @@ public class PatchPcodeTextDialog extends DialogComponentProvider {
         this.plugin.getTool().showDialog(this);
     }
 
-    private long parseLong(String longString) {
-        if (longString.startsWith("0x")) {
-            return Long.parseLong(longString.substring(2), 16);
-        } else if (hexNumPattern.matcher(longString).matches()) {
-            return Long.parseLong(longString, 16);
-        } else {
-            return Long.parseLong(longString);
-        }
-    }
-
-    private int parseInt(String intString) {
-        if (intString.startsWith("0x")) {
-            return Integer.parseInt(intString.substring(2), 16);
-        } else if (hexNumPattern.matcher(intString).matches()) {
-            return Integer.parseInt(intString, 16);
-        } else {
-            return Integer.parseInt(intString);
-        }
-    }
-
-    private Varnode parseVarnode(String varnodeText) throws Exception {
-        // form: (space, offset, size)
-            String[] parts = Stream.of(
-                varnodeText
-                .trim()
-                .replace("(", "")
-                .replace(")", "")
-                .split(","))
-                .map(part -> part.trim())
-                .toArray(String[]::new);
-            String space = parts[0];
-
-            long offset = parseLong(parts[1]);
-            int size = parseInt(parts[2]);
-
-            if (space.equals("null")) {
-                return null;
-            }
-
-            AddressFactory addressFactory = this.plugin.getCurrentProgram().getAddressFactory();
-
-            AddressSpace addrSpace = addressFactory.getAddressSpace(space);
-            if (addrSpace == null) {
-                String msg = String.format("Invalid address space name %s", space);
-                throw new Exception(msg);
-            }
-
-            Address addr = addressFactory.getAddress(addrSpace.getSpaceID(), offset);
-            return new Varnode(addr, size);
-    }
-
     private void parsePcodeOpThenDoPatch(String pcodeText) {
         // form: varnode_out = OP varnode_in1 varnode_in2 ...
         try {
-            String[] parts = Stream.of(pcodeText.split("=")).map(x -> x.trim()).toArray(String[]::new);
-            Varnode varnodeOut = parseVarnode(parts[0]);
+            AddressFactory addressFactory = this.plugin.getCurrentProgram().getAddressFactory();
 
-            if (varnodeOut == null) {
-                return;
-            }
+            PcodeData patchPcode = PcodeRawParser.parseSingleRawPcode(addressFactory, pcodeText);
+            Program program = this.plugin.getCurrentProgram();
 
-            String[] rhs_parts = parts[1].trim().split(" ");
-            int pcodeOpCode = PcodeOp.getOpcode(rhs_parts[0]);
-            rhs_parts = Arrays.copyOfRange(rhs_parts, 1, rhs_parts.length);
+            this.plugin.getTool().execute(new BackgroundCommand() {
 
-            String inVarnodeText = String.join("", rhs_parts)
-                .replace(")", ") "); // spaces only between varnodes
+                @Override
+                public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+                    try {
+                        Disassembler disassembler = Disassembler.getDisassembler(
+                            program, monitor, DisassemblerMessageListener.IGNORE);
+                        action.doPatch(patchPcode);
+                        Address addr = action.instruction.getAddress();
+                        disassembler.disassemble(addr, new AddressSet(addr));
+                        return true;
+                    } catch (Exception e) {
+                        Msg.showError(this, null, "Can't Patch Pcode", e.toString());
+                        return false;
+                    }
+                }
 
-            ArrayList<Varnode> varnodeIns = new ArrayList<>();
+                @Override
+                public String getStatusMsg() {
+                    return null;
+                }
 
-            for (var varnodeText : inVarnodeText.split(" ")) {
-                varnodeIns.add(parseVarnode(varnodeText));
-            }
+                @Override
+                public String getName() {
+                    return "PcodePatch";
+                }
 
-            action.doPatch(pcodeOpCode, varnodeIns.toArray(Varnode[]::new), varnodeOut);
+            }, program);
             close();
-        } catch (UnknownInstructionException e) {
-            Msg.showError(this, null, "Pcode Error", "pcode opcode unknown");
-        } catch (Exception e) {
-            Msg.showError(this, null, "Pcode Error", "Invalid pcode expression: " + e.toString());
+        } catch (RuntimeException e) {
+            Msg.showError(this, null, "Pcode Error", "pcode opcode unknown: " + e.toString());
         }
     }
 
