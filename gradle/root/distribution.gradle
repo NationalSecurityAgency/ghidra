@@ -478,7 +478,7 @@ task createInstallationZip(type: Zip) { t ->
 	
 	group 'private'
 	description "Creates local installation zip (does not clean up artifacts) [gradle/root/distribution.gradle]"
-
+	
 	dependsOn assembleDistribution
 	dependsOn assembleSource
 	dependsOn "assembleDistribution_$currentPlatform"
