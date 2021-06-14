@@ -107,6 +107,9 @@ task buildDecompilerHelpHtml(type: Exec) {
 
 	workingDir 'src/main/doc'
 
+	// Rebuild when anything in this directory changes. Crude, but effective.
+	inputs.dir(workingDir)
+
 	// 'which' returns the number of failed arguments
 	// Using the 'which' command first will allow the task to fail if the required
 	// executables are not installed.
@@ -166,6 +169,9 @@ task buildDecompilerHelpPdf(type: Exec) {
 	}
 
 	workingDir 'src/main/doc'
+
+	// Rebuild when anything in this directory changes. Crude, but effective.
+	inputs.dir(workingDir)
 
 	// 'which' returns the number of failed arguments
 	// Using 'which' first will allow the entire command to fail if the required 
@@ -229,6 +235,9 @@ task buildDecompilerDocumentationPdfs(type: Exec) {
 	}
 
 	workingDir 'src/main/doc'
+
+	// Rebuild when anything in this directory changes. Crude, but effective.
+	inputs.dir(workingDir)
 
 	// Gradle will provide a cleanBuildDecompilerDocumentationPdfs task that will remove these
 	// declared outputs.
@@ -303,6 +312,9 @@ task buildDecompilerDocumentationPdfs(type: Exec) {
 task buildDecompilerDocumentationHtml(type: Exec) {
 
 	workingDir 'src/main/doc'
+
+	// Rebuild when anything in this directory changes. Crude, but effective.
+	inputs.dir(workingDir)
 
 	// Gradle will provide a cleanBuildDecompilerDocumentationHtml task that will remove these
 	// declared outputs.
@@ -690,8 +702,8 @@ Task createLexTask(String filename, String binaryName) {
 
 rootProject.createInstallationZip {
 	dependsOn buildDecompilerDocumentationPdfs
-	
-	
+
+
 	def decompilerPdfZipPath = rootProject.ext.ZIP_DIR_PREFIX + "/docs/languages/"
 
 	// Add decompiler pdf files to zip. If the pdf files do not exist during execution time 
