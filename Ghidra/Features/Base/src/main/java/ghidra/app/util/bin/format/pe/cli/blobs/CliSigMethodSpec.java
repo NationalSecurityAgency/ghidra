@@ -20,27 +20,33 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.pe.cli.streams.CliStreamMetadata;
 import ghidra.program.model.data.*;
+import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
 
 public class CliSigMethodSpec extends CliAbstractSig {
-
-	public static final byte identifier = 0x0a;
-	
-	private byte firstByte;
 	private int genArgCount;
 	private int genArgCountBytes;
 	private CliSigType types[];
-	
+
+	private static final byte CLISIGMETHODSPEC_PROLOG = 0x0A;
+
 	public CliSigMethodSpec(CliBlob blob) throws IOException {
 		super(blob);
 
 		BinaryReader reader = getContentsReader();
-		firstByte = reader.readNextByte();
-		if (firstByte != identifier)
-			return; // TODO: Do something worse?
+
+		// Check that the identifier is correct
+		byte prolog = reader.readNextByte();
+		if (prolog != CLISIGMETHODSPEC_PROLOG) {
+			Msg.warn(this,
+				"MethodSpec had unexpected prolog (0x" + Integer.toHexString(prolog) + ").");
+			return;
+		}
+
 		long origIndex = reader.getPointerIndex();
 		genArgCount = decodeCompressedUnsignedInt(reader);
 		genArgCountBytes = (int) (reader.getPointerIndex() - origIndex);
+
 		types = new CliSigType[genArgCount];
 		for (int i = 0; i < genArgCount; i++) {
 			try {
@@ -56,7 +62,7 @@ public class CliSigMethodSpec extends CliAbstractSig {
 	public String getContentsName() {
 		return "MethodSpecSig";
 	}
-	
+
 	@Override
 	public String getContentsComment() {
 		return "Specifies a generic method with GenArgCount types";
@@ -65,10 +71,11 @@ public class CliSigMethodSpec extends CliAbstractSig {
 	@Override
 	public DataType getContentsDataType() {
 		StructureDataType struct = new StructureDataType(new CategoryPath(PATH), getName(), 0);
-		struct.add(BYTE, "GenericInstByte", "GenericInst");
-		struct.add(getDataTypeForBytes(genArgCountBytes), "GenArgCount", "Number types to follow");
+		struct.add(BYTE, "GENRICINST", "Magic (0x0a)");
+		struct.add(getDataTypeForBytes(genArgCountBytes), "GenArgCount",
+			"Number of types to follow");
 		for (int i = 0; i < types.length; i++) {
-			struct.add(types[i].getDefinitionDataType(), "Type"+i, null);
+			struct.add(types[i].getDefinitionDataType(), "Type" + i, null);
 		}
 		return struct;
 	}
@@ -77,15 +84,18 @@ public class CliSigMethodSpec extends CliAbstractSig {
 	public String getRepresentationCommon(CliStreamMetadata stream, boolean isShort) {
 		String typesRep = "";
 		for (CliSigType type : types) {
-			if (type == null) 
+			if (type == null) {
 				typesRep += "unidentified_param_type, ";
-			else
+			}
+			else {
 				typesRep += getRepresentationOf(type, stream, isShort) + ", ";
+			}
 		}
-		if (types.length > 0)
-			typesRep = typesRep.substring(0, typesRep.length()-2); // Take off last comma+space
+		if (types.length > 0) {
+			typesRep = typesRep.substring(0, typesRep.length() - 2); // Take off last comma+space
+		}
 		String rep = String.format("GenericInst %d %s", genArgCount, typesRep);
 		return rep;
 	}
-	
+
 }

@@ -35,7 +35,7 @@ public class VisualGraphSatelliteTranslatingGraphMousePlugin<V extends VisualVer
 
 	// Note: for ideas on resizing instead of moving, see LensTranslatingGraphMousePlugin     
 	public VisualGraphSatelliteTranslatingGraphMousePlugin() {
-		super(InputEvent.BUTTON1_MASK);
+		super(InputEvent.BUTTON1_DOWN_MASK);
 		this.cursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
 	}
 

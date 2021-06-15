@@ -24,6 +24,8 @@ import org.junit.*;
 
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.console.ConsolePlugin;
+import ghidra.app.plugin.core.osgi.BundleHost;
+import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.GhidraState;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.Application;
@@ -45,12 +47,14 @@ public class PythonScriptTest extends AbstractGhidraHeadedIntegrationTest {
 	public void setUp() throws Exception {
 		env = new TestEnv();
 		tool = env.getTool();
+		GhidraScriptUtil.initialize(new BundleHost(), null);
 		tool.addPlugin(ConsolePlugin.class.getName());
 		console = tool.getService(ConsoleService.class);
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		GhidraScriptUtil.dispose();
 		env.dispose();
 	}
 

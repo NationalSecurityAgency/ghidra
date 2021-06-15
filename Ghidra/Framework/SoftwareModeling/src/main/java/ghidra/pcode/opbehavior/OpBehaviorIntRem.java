@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,10 @@
  */
 package ghidra.pcode.opbehavior;
 
+import java.math.BigInteger;
+
 import ghidra.pcode.error.LowlevelError;
 import ghidra.program.model.pcode.PcodeOp;
-
-import java.math.BigInteger;
 
 public class OpBehaviorIntRem extends BinaryOpBehavior {
 
@@ -29,17 +28,17 @@ public class OpBehaviorIntRem extends BinaryOpBehavior {
 
 	@Override
 	public long evaluateBinary(int sizeout, int sizein, long in1, long in2) {
-		if (in2 == 0)
+		if (in2 == 0) {
 			throw new LowlevelError("Remainder by 0");
-
-		long res = in1 % in2;
-		return res;
+		}
+		return Long.remainderUnsigned(in1, in2);
 	}
 
 	@Override
 	public BigInteger evaluateBinary(int sizeout, int sizein, BigInteger in1, BigInteger in2) {
-		if (in2.signum() == 0)
+		if (in2.signum() == 0) {
 			throw new LowlevelError("Remainder by 0");
+		}
 		BigInteger res = in1.remainder(in2);
 		return res;
 	}

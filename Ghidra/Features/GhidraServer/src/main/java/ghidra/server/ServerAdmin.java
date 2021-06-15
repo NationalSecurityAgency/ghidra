@@ -16,8 +16,7 @@
 package ghidra.server;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Properties;
+import java.util.*;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -26,8 +25,7 @@ import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
-import ghidra.util.Msg;
-import ghidra.util.NamingUtilities;
+import ghidra.util.*;
 
 public class ServerAdmin implements GhidraLaunchable {
 
@@ -54,7 +52,7 @@ public class ServerAdmin implements GhidraLaunchable {
 	 * The following properties may be set:
 	 * <pre>
 	 *   UserAdmin.invocation - identifies the name of the application used when displaying usage text.
-	 *   UserAdmin.serverDir - identifies the server directory instead of passing on command line.
+	 *   UserAdmin.config - identifies the config file instead of passing on command line.
 	 * </pre>
 	 * @param args command line arguments
 	 */
@@ -77,22 +75,18 @@ public class ServerAdmin implements GhidraLaunchable {
 	 * The following properties may be set:
 	 * <pre>
 	 *   UserAdmin.invocation - identifies the name of the application used when displaying usage text.
-	 *   UserAdmin.serverDir - identifies the server directory instead of passing on command line.
+	 *   UserAdmin.config - identifies the config file instead of passing on command line.
 	 * </pre>
 	 * @param args command line arguments
 	 */
 	public void execute(String[] args) {
 
-		File serverDir = null;
-
 		int ix = 0;
-		if (args.length != 0 && !args[0].startsWith("-")) {
-			serverDir = new File(args[ix++]);
-		}
-		else {
-			serverDir = getServerDirFromConfig();
-		}
 
+		String configFilePath = args.length != 0 && !args[0].startsWith("-") ? args[ix++]
+				: System.getProperty(CONFIG_FILE_PROPERTY);
+
+		File serverDir = getServerDirFromConfig(configFilePath);
 		if (serverDir == null || (args.length - ix) == 0) {
 			displayUsage("");
 			System.exit(-1);
@@ -107,9 +101,7 @@ public class ServerAdmin implements GhidraLaunchable {
 			System.exit(-1);
 		}
 
-		if (propertyUsed) {
-			System.out.println("Using server directory: " + serverDir);
-		}
+		System.out.println("Using server directory: " + serverDir);
 
 		File userFile = new File(serverDir, UserManager.USER_PASSWORD_FILE);
 		if (!serverDir.isDirectory() || !userFile.isFile()) {
@@ -132,9 +124,14 @@ public class ServerAdmin implements GhidraLaunchable {
 		int cmdLen = 1;
 		for (; ix < args.length; ix += cmdLen) {
 			boolean queueCmd = true;
+			String pwdHash = null;
 			if (UserAdmin.ADD_USER_COMMAND.equals(args[ix])) {  // add user
 				cmdLen = 2;
 				validateSID(args, ix + 1);
+				if (hasOptionalArg(args, ix + 2, UserAdmin.PASSWORD_OPTION)) {
+					++cmdLen;
+					pwdHash = promptForPasswordAndGetSaltedHash(args[ix + 1]);
+				}
 			}
 			else if (UserAdmin.REMOVE_USER_COMMAND.equals(args[ix])) { // remove user
 				cmdLen = 2;
@@ -143,6 +140,10 @@ public class ServerAdmin implements GhidraLaunchable {
 			else if (UserAdmin.RESET_USER_COMMAND.equals(args[ix])) { // reset user
 				cmdLen = 2;
 				validateSID(args, ix + 1);
+				if (hasOptionalArg(args, ix + 2, UserAdmin.PASSWORD_OPTION)) {
+					++cmdLen;
+					pwdHash = promptForPasswordAndGetSaltedHash(args[ix + 1]);
+				}
 			}
 			else if (UserAdmin.SET_USER_DN_COMMAND.equals(args[ix])) { // set/add user with DN for PKI
 				cmdLen = 3;
@@ -198,7 +199,7 @@ public class ServerAdmin implements GhidraLaunchable {
 				System.exit(-1);
 			}
 			if (queueCmd) {
-				addCommand(cmdList, args, ix, cmdLen);
+				addCommand(cmdList, args, ix, cmdLen, pwdHash);
 			}
 		}
 
@@ -220,19 +221,121 @@ public class ServerAdmin implements GhidraLaunchable {
 		System.out.println();
 	}
 
+	private String promptForPasswordAndGetSaltedHash(String userSID) {
+		char[] pwd1 = null;
+		char[] pwd2 = null;
+		try {
+			while (true) {
+				System.out.println("Enter password for user '" + userSID + "'");
+				pwd1 = getPassword("New password: ", true);
+				pwd2 = getPassword("Retype new password: ", false);
+				if (Arrays.equals(pwd1, pwd2)) {
+					break;
+				}
+				System.out.println("Password entries do not match! Please try again...");
+				Arrays.fill(pwd1, (char) 0);
+				Arrays.fill(pwd2, (char) 0);
+			}
+			char[] saltedHash = HashUtilities.getSaltedHash(HashUtilities.SHA256_ALGORITHM, pwd1);
+			return new String(saltedHash);
+		}
+		catch (IOException e) {
+			System.err.println("Password entry error: " + e.getMessage());
+			System.exit(-1);
+			return null;
+		}
+		finally {
+			if (pwd1 != null) {
+				Arrays.fill(pwd1, (char) 0);
+			}
+			if (pwd2 != null) {
+				Arrays.fill(pwd2, (char) 0);
+			}
+		}
+	}
+
+	private char[] getPassword(String prompt, boolean echoWarn) throws IOException {
+
+		boolean success = false;
+		char[] password = null;
+		int c;
+		try {
+			Console cons = System.console();
+			if (cons != null) {
+				password = cons.readPassword(prompt);
+			}
+			else {
+				if (echoWarn) {
+					System.out.println("*** WARNING! Password entry will NOT be masked ***");
+				}
+
+				System.out.print(prompt);
+
+				while (true) {
+					c = System.in.read();
+					if (c <= 0 || c == '\n') {
+						break;
+					}
+					if (c == '\r') {
+						continue;
+					}
+					if (password == null) {
+						password = new char[1];
+					}
+					else {
+						char[] newPass = new char[password.length + 1];
+						// copy prior entry into expanded array and clear old array
+						for (int i = 0; i < password.length; i++) {
+							newPass[i] = password[i];
+							password[i] = 0;
+						}
+						password = newPass;
+					}
+					password[password.length - 1] = (char) c;
+				}
+			}
+			success = true;
+			return password;
+
+		}
+		finally {
+			if (!success && password != null) {
+				Arrays.fill(password, (char) 0);
+			}
+		}
+	}
+
 	/**
-	 * @param serverDir
-	 * @param args
-	 * @param i
+	 * Determine if option specified as args[argOffset]
+	 * @param args command line args
+	 * @param argOffset index within args array of option
+	 * @param option option string
+	 * @return true if option specified
+	 */
+	private boolean hasOptionalArg(String[] args, int argOffset, String option) {
+		return (argOffset < args.length && args[argOffset].contentEquals(option));
+	}
+
+	/**
+	 * Add command args as next command in cmdList.
+	 * @param cmdList command list
+	 * @param args command line args
+	 * @param argOffset args index of command start
+	 * @param argCnt number of args to consume
+	 * @param pwdHash optional password has to append to end of command
 	 */
 	private static void addCommand(ArrayList<String> cmdList, String[] args, int argOffset,
-			int argCnt) {
-		StringBuffer buf = new StringBuffer();
+			int argCnt, String pwdHash) {
+		StringBuilder buf = new StringBuilder();
 		for (int i = 0; i < argCnt; i++) {
 			if (i > 0) {
 				buf.append(' ');
 			}
 			buf.append(args[argOffset + i]);
+		}
+		if (pwdHash != null) {
+			buf.append(' ');
+			buf.append(pwdHash);
 		}
 		cmdList.add(buf.toString());
 	}
@@ -314,17 +417,31 @@ public class ServerAdmin implements GhidraLaunchable {
 		}
 	}
 
-	private File getServerDirFromConfig() {
-		String p = System.getProperty(CONFIG_FILE_PROPERTY);
-		if (p == null) {
+	/**
+	 * Parse contents of specified configFilePath as server.conf to determine
+	 * repositories root directory.  If configFilePath corresponds to a directory,
+	 * that directory will be treated as the repositories root directory.
+	 * @param configFilePath path to server.conf or repositories root directory
+	 * @return repositories root directory
+	 */
+	private File getServerDirFromConfig(String configFilePath) {
+
+		if (configFilePath == null) {
 			return null;
 		}
-		propertyUsed = true;
-		File configFile = new File(p);
 
+		File configFile = new File(configFilePath);
 		if (!configFile.exists()) {
 			System.out.println("Config file not found: " + configFile.getAbsolutePath());
+			return null;
 		}
+
+		if (configFile.isDirectory()) {
+			// If specified path is a directory treat as the server root
+			return configFile;
+		}
+
+		System.out.println("Using config file: " + configFilePath);
 
 		Properties config = new Properties();
 		InputStream in = null;
@@ -346,8 +463,9 @@ public class ServerAdmin implements GhidraLaunchable {
 			}
 		}
 
-		p = config.getProperty(SERVER_DIR_CONFIG_PROPERTY);
+		String p = config.getProperty(SERVER_DIR_CONFIG_PROPERTY);
 		if (p == null) {
+			System.out.println("Failed to find property: " + SERVER_DIR_CONFIG_PROPERTY);
 			return null;
 		}
 		File dir = new File(p);
@@ -373,15 +491,17 @@ public class ServerAdmin implements GhidraLaunchable {
 		}
 		String invocationName = System.getProperty(INVOCATION_NAME_PROPERTY);
 		System.err.println("Usage: " +
-			(invocationName != null ? invocationName : "java " + UserAdmin.class.getName()) +
-			(propertyUsed ? "" : " <serverPath>") + " [<command>] [<command>] ...");
+			(invocationName != null ? invocationName : "java " + ServerAdmin.class.getName()) +
+			(invocationName != null ? "" : " <configPath>") + " [<command>] [<command>] ...");
 		System.err.println("\nSupported commands:");
-		System.err.println("  -add <sid>");
-		System.err.println("      Add a new user to the server identified by their sid identifier");
+		System.err.println("  -add <sid> [--p]");
+		System.err.println(
+			"      Add a new user to the server identified by their sid identifier [--p prompt for password]");
 		System.err.println("  -remove <sid>");
 		System.err.println("      Remove the specified user from the server's user list");
-		System.err.println("  -reset <sid>");
-		System.err.println("      Reset the specified user's server login password");
+		System.err.println("  -reset <sid> [--p]");
+		System.err.println(
+			"      Reset the specified user's server login password [--p prompt for password]");
 		System.err.println("  -dn <sid> \"<dname>\"");
 		System.err.println(
 			"      When PKI authentication is used, add the specified X500 Distinguished Name for a user");

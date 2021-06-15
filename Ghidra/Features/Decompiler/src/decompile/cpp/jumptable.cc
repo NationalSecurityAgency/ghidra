@@ -506,39 +506,33 @@ uintb JumpBasic::backup2Switch(Funcdata *fd,uintb output,Varnode *outvn,Varnode 
 void JumpBasic::findDeterminingVarnodes(PcodeOp *op,int4 slot)
 
 {
-  vector<PcodeOp *> path;
-  vector<int4> slotpath;
-  PcodeOp *curop;
-  Varnode *curvn;
+  vector<PcodeOpNode> path;
   bool firstpoint = false;	// Have not seen likely switch variable yet
 
-  path.push_back(op);
-  slotpath.push_back(slot);
+  path.push_back(PcodeOpNode(op,slot));
 
   do {	// Traverse through tree of inputs to final address
-    curop = path.back();
-    curvn = curop->getIn(slotpath.back());
+    PcodeOpNode &node(path.back());
+    Varnode *curvn = node.op->getIn(node.slot);
     if (isprune(curvn)) {	// Here is a node of the tree
       if (ispoint(curvn)) {	// Is it a possible switch variable
 	if (!firstpoint) {	// If it is the first possible
-	  pathMeld.set(path,slotpath);	// Take the current path as the result
+	  pathMeld.set(path);	// Take the current path as the result
 	  firstpoint = true;
 	}
 	else			// If we have already seen at least one possible
-	  pathMeld.meld(path,slotpath);
+	  pathMeld.meld(path);
       }
 
-      slotpath.back() += 1;
-      while(slotpath.back() >= path.back()->numInput()) {
+      path.back().slot += 1;
+      while(path.back().slot >= path.back().op->numInput()) {
 	path.pop_back();
-	slotpath.pop_back();
 	if (path.empty()) break;
-	slotpath.back() += 1;
+	path.back().slot += 1;
       }
     }
     else {			// This varnode is not pruned
-      path.push_back(curvn->getDef());
-      slotpath.push_back(0);
+      path.push_back(PcodeOpNode(curvn->getDef(),0));
     }
   } while(path.size() > 1);
   if (pathMeld.empty()) {	// Never found a likely point, which means that
@@ -785,7 +779,7 @@ void PathMeld::internalIntersect(vector<int4> &parentMap)
 /// \param cutOff is the number of PcodeOps with an input in the common path
 /// \param parentMap is the map from old common Varnodes to the new common Varnodes
 /// \return the index of the last (earliest) Varnode in the common path or -1
-int4 PathMeld::meldOps(const vector<PcodeOp *> &path,int4 cutOff,const vector<int4> &parentMap)
+int4 PathMeld::meldOps(const vector<PcodeOpNode> &path,int4 cutOff,const vector<int4> &parentMap)
 
 {
   // First update opMeld.rootVn with new intersection information
@@ -804,7 +798,7 @@ int4 PathMeld::meldOps(const vector<PcodeOp *> &path,int4 cutOff,const vector<in
   int4 meldPos = 0;				// Ops moved from old opMeld into newMeld
   const BlockBasic *lastBlock = (const BlockBasic *)0;
   for(int4 i=0;i<cutOff;++i) {
-    PcodeOp *op = path[i];			// Current op in the new path
+    PcodeOp *op = path[i].op;			// Current op in the new path
     PcodeOp *curOp = (PcodeOp *)0;
     while(meldPos < opMeld.size()) {
       PcodeOp *trialOp = opMeld[meldPos].op;	// Current op in the old opMeld
@@ -874,15 +868,14 @@ void PathMeld::set(const PathMeld &op2)
 }
 
 /// This container is initialized to hold a single data-flow path.
-/// \param path is the list of PcodeOps in the path (in reverse execution order)
-/// \param slot is the list of each Varnode presented as an input slot in the corresponding PcodeOp
-void PathMeld::set(const vector<PcodeOp *> &path,const vector<int4> &slot)
+/// \param path is the list of PcodeOpNode edges in the path (in reverse execution order)
+void PathMeld::set(const vector<PcodeOpNode> &path)
 
 {
   for(int4 i=0;i<path.size();++i) {
-    PcodeOp *op = path[i];
-    Varnode *vn = op->getIn(slot[i]);
-    opMeld.push_back(RootedOp(op,i));
+    const PcodeOpNode &node(path[i]);
+    Varnode *vn = node.op->getIn(node.slot);
+    opMeld.push_back(RootedOp(node.op,i));
     commonVn.push_back(vn);
   }
 }
@@ -921,23 +914,23 @@ void PathMeld::clear(void)
 /// Add the new path, recalculating the set of Varnodes common to all paths.
 /// Paths are trimmed to ensure that any path that splits from the common intersection
 /// must eventually rejoin.
-/// \param path is the new path of PcodeOps to meld, in reverse execution order
-/// \param slot is the set of Varnodes in the new path presented as input slots to the corresponding PcodeOp
-void PathMeld::meld(vector<PcodeOp *> &path,vector<int4> &slot)
+/// \param path is the new path of PcodeOpNode edges to meld, in reverse execution order
+void PathMeld::meld(vector<PcodeOpNode> &path)
 
 {
   vector<int4> parentMap;
 
   for(int4 i=0;i<path.size();++i) {
-    Varnode *vn = path[i]->getIn(slot[i]);
-    vn->setMark();		// Mark varnodes in the new path, so its easy to see intersection
+    PcodeOpNode &node(path[i]);
+    node.op->getIn(node.slot)->setMark();	// Mark varnodes in the new path, so its easy to see intersection
   }
   internalIntersect(parentMap);	// Calculate varnode intersection, and map from old intersection -> new
   int4 cutOff = -1;
 
   // Calculate where the cutoff point is in the new path
   for(int4 i=0;i<path.size();++i) {
-    Varnode *vn = path[i]->getIn(slot[i]);
+    PcodeOpNode &node(path[i]);
+    Varnode *vn = node.op->getIn(node.slot);
     if (!vn->isMark()) {	// If mark already cleared, we know it is in intersection
       cutOff = i + 1;		// Cut-off must at least be past this -vn-
     }
@@ -948,7 +941,6 @@ void PathMeld::meld(vector<PcodeOp *> &path,vector<int4> &slot)
   if (newCutoff >= 0)					// If not all ops could be ordered
     truncatePaths(newCutoff);				// Cut off at the point where we couldn't order
   path.resize(cutOff);
-  slot.resize(cutOff);
 }
 
 /// The starting Varnode, common to all paths, is provided as an index.
@@ -1321,12 +1313,18 @@ void JumpBasic::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addr
   if (loadpoints != (vector<LoadTable> *)0)
     emul.setLoadCollect(true);
 
+  uintb mask = ~((uintb)0);
+  int4 bit = fd->getArch()->funcptr_align;
+  if (bit != 0) {
+    mask = (mask >> bit) << bit;
+  }
   AddrSpace *spc = indop->getAddr().getSpace();
   bool notdone = jrange->initializeForReading();
   while(notdone) {
     val = jrange->getValue();
     addr = emul.emulatePath(val,pathMeld,jrange->getStartOp(),jrange->getStartVarnode());
     addr = AddrSpace::addressToByte(addr,spc->getWordSize());
+    addr &= mask;
     addresstable.push_back(Address(spc,addr));
     notdone = jrange->next();
   }
@@ -2008,9 +2006,15 @@ void JumpAssisted::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &a
   for(int4 i=0;i<numInputs;++i)
     inputs.push_back(assistOp->getIn(i+1)->getOffset());
 
+  uintb mask = ~((uintb)0);
+  int4 bit = fd->getArch()->funcptr_align;
+  if (bit != 0) {
+    mask = (mask >> bit) << bit;
+  }
   for(int4 index=0;index<sizeIndices;++index) {
     inputs[0] = index;
     uintb output = pcodeScript->evaluate(inputs);
+    output &= mask;
     addresstable.push_back(Address(spc,output));
   }
   ExecutablePcode *defaultScript = (ExecutablePcode *)fd->getArch()->pcodeinjectlib->getPayload(userop->getDefaultAddr());
@@ -2656,7 +2660,7 @@ void JumpTable::restoreXml(const Element *el)
 	missedlabel = true;	// No following entries are allowed to have a label attribute
     }
     else if (subel->getName() == "loadtable") {
-      loadpoints.push_back(LoadTable());
+      loadpoints.emplace_back();
       loadpoints.back().restoreXml(subel,glb);
     }
     else if (subel->getName() == "basicoverride") {

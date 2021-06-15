@@ -34,7 +34,6 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.LanguageTranslator;
 import ghidra.util.Lock;
 import ghidra.util.Msg;
-import ghidra.util.datastruct.LongObjectHashtable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -122,12 +121,12 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		monitor.initialize(oldNameAdapter.getRecordCount());
 		int cnt = 0;
 
-		LongObjectHashtable<String> nameMap = new LongObjectHashtable<>();
+		Map<Long, String> nameMap = new HashMap<>();
 
 		RecordIterator iter = oldNameAdapter.getRecords();
 		while (iter.hasNext()) {
 			monitor.checkCanceled();
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 
 			String name = rec.getString(OldExtNameAdapter.EXT_NAME_COL);
 			try {
@@ -154,7 +153,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		iter = oldExtRefAdapter.getRecords();
 		while (iter.hasNext()) {
 			monitor.checkCanceled();
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 
 			Address fromAddr =
 				oldAddrMap.decodeAddress(rec.getLongValue(OldExtRefAdapter.FROM_ADDR_COL));
@@ -262,7 +261,6 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		SourceType locSourceType = checkExternalLabel(extLabel, extAddr, sourceType);
 		lock.acquire();
 		try {
-			// FIXME:
 			Namespace libraryScope = getLibraryScope(extLibraryName);
 			if (libraryScope == null) {
 				libraryScope = addExternalName(extLibraryName, null,

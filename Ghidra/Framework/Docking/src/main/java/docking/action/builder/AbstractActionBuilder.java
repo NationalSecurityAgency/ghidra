@@ -160,7 +160,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	/**
 	 * Predicate for determining if an action is enabled for a given context
 	 */
-	private Predicate<C> enabledPredicate = ALWAYS_TRUE;
+	private Predicate<C> enabledPredicate = null;
 
 	/**
 	 * Predicate for determining if an action should be included on the pop-up menu
@@ -176,7 +176,23 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * Set to true if the action supports using the default tool context if the local context is invalid
 	 */
 	private boolean supportsDefaultToolContext;
+	
+	/**
+	 * Specifies when the action should appear in a window.
+	 */
+	private When windowWhen;
 
+	/**
+	 * For use with the {@link AbstractActionBuilder#inWindow(When)} method to specify which windows (main window
+	 * or secondary windows) a global tool bar or menu action will appear in.
+	 *
+	 */
+	public enum When {
+		MAIN_WINDOW, 	// action should only appear in the main window
+		ALWAYS, 	    // action should appear in all windows
+		CONTEXT_MATCHES // action should appear if and only if the window has
+	}					// has a provider that generates the appropriate context.
+	
 	/**
 	 * Builder constructor
 	 * @param name the name of the action to be built
@@ -197,7 +213,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	/**
 	 * Builds the action.  To build and install the action in one step, use 
 	 * {@link #buildAndInstall(Tool)} or {@link #buildAndInstallLocal(ComponentProvider)}.
-	 * 
+	 * {@link #inWindow(When)}
 	 * @return the newly build action 
 	 */
 	public abstract T build();
@@ -516,7 +532,8 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * 
 	 * <p>If this predicate is not set, the action's enable state must be controlled 
 	 * directly using the {@link DockingAction#setEnabled(boolean)} method.  We do not recommend
-	 * controlling enablement directly.
+	 * controlling enablement directly. And, of course, if you do set this predicate, you should 
+	 * not later call {@link DockingAction#setEnabled(boolean)} to manually manage enablement.
 	 *  
 	 * @param predicate the predicate that will be used to dynamically determine an action's 
 	 *        enabled state
@@ -556,6 +573,9 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * 
 	 * <p>Note: most actions will not use this method, but rely instead on 
 	 * {@link #enabledWhen(Predicate)}. 
+	 * 
+	 * <p>Note: this triggers automatic action enablement so you should not later call 
+	 * {@link DockingAction#setEnabled(boolean)} to manually manage action enablement.
 	 *  
 	 * @param predicate the predicate that will be used to dynamically determine an action's 
 	 * validity for a given {@link ActionContext}
@@ -563,6 +583,13 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 */
 	public B validContextWhen(Predicate<C> predicate) {
 		validContextPredicate = Objects.requireNonNull(predicate);
+
+		// automatic enablement management triggered, make sure there is a existing enablement 
+		// predicate. The default behavior of manual management interferes with automatic management.
+		if (enabledPredicate == null) {
+			enabledPredicate = ALWAYS_TRUE;
+		}
+
 		return self();
 	}
 
@@ -579,6 +606,29 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 */
 	public B supportsDefaultToolContext(boolean b) {
 		supportsDefaultToolContext = b;
+		return self();
+	}
+	
+	/**
+	 * Specifies when a global action should appear in a window (main or secondary).
+	 * <P>
+	 * Global menu or toolbar actions can be configured to appear in 1) only the main 
+	 * window, or 2) all windows, or 3) any window that has a provider that
+	 * generates an action context that matches the context that this action
+	 * consumes. If the "context matches" options is chosen, then the 
+	 * {@link #withContext(Class)} method must also be called to specify the matching
+	 * context; otherwise an exception will be thrown when the action is built.
+	 * <P>
+	 *  
+	 *  The default is that the action will only appear in the main window.
+	 *
+	 * @param when use the {@link When} enum to specify the windowing behavior
+	 * of the action.
+	 * 
+	 * @return this builder (for chaining)
+	 */
+	public B inWindow(When when) {
+		this.windowWhen = when;
 		return self();
 	}
 
@@ -614,6 +664,10 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * {@literal builder.enabledWhen(context -> return context.isAwesome() }}
 	 * </pre>
 	 *
+	 * <p>Note: this triggers automatic action enablement so you should not later call 
+	 * {@link DockingAction#setEnabled(boolean)} to manually manage action enablement.
+	 *  
+	
 	 * @param newActionContextClass the more specific ActionContext type.
 	 * @param <AC2> The new ActionContext type (as determined by the newActionContextClass) that
 	 * the returned builder will have.
@@ -627,6 +681,12 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 
 		if (actionContextClass != ActionContext.class) {
 			throw new IllegalStateException("Can't set the ActionContext type more than once");
+		}
+
+		// automatic enablement management triggered, make sure there is a existing enablement 
+		// predicate. The default behavior of manual management interferes with automatic management.
+		if (enabledPredicate == null) {
+			enabledPredicate = ALWAYS_TRUE;
 		}
 
 		// To make this work, we need to return a builder whose ActionContext is AC2 and not AC
@@ -648,6 +708,11 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 			throw new IllegalStateException(
 				"Can't build a DockingAction without an action callback");
 		}
+		if (windowWhen == When.CONTEXT_MATCHES && actionContextClass == null) {
+			throw new IllegalStateException("The InWindow state was set to "
+					+ "\"CONTEXT_MATCHES\", but no context class was set. Use"
+					+ " the \"withContext\" method"); 
+		}
 	}
 
 	protected void decorateAction(DockingAction action) {
@@ -664,9 +729,20 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 			action.setHelpLocation(helpLocation);
 		}
 
-		action.enabledWhen(adaptPredicate(enabledPredicate));
+		if (enabledPredicate != null) {
+			action.enabledWhen(adaptPredicate(enabledPredicate));
+		}
+
 		action.validContextWhen(adaptPredicate(validContextPredicate));
 		action.popupWhen(adaptPredicate(popupPredicate));
+		
+		if (windowWhen == When.ALWAYS) {
+			action.setAddToAllWindows(true);
+		}
+		else if (windowWhen == When.CONTEXT_MATCHES) {
+			action.addToWindowWhen(actionContextClass);
+		}
+		// else action defaults to main window only
 	}
 
 	/**

@@ -17,6 +17,7 @@ package ghidra.util.table.field;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.CodeUnitFormatOptions.ShowBlockName;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
@@ -117,7 +118,7 @@ public class AddressBasedLocation implements Comparable<AddressBasedLocation> {
 		if (address.isConstantAddress()) {
 			return getConstantAddressRepresentation(address);
 		}
-		if (address.isRegisterAddress()) {
+		if (isRegisterAddress(program, address)) {
 			return getRegisterAddressRepresentation(program, address);
 		}
 
@@ -164,6 +165,16 @@ public class AddressBasedLocation implements Comparable<AddressBasedLocation> {
 		return addrStr;
 	}
 
+	private static boolean isRegisterAddress(Program program, Address address) {
+
+		if (!address.isRegisterAddress()) {
+			return false;
+		}
+
+		Register register = program.getRegister(address);
+		return register != null;
+	}
+
 	private static String getExternalAddressRepresentation(Program program, Address address) {
 		Symbol symbol = program.getSymbolTable().getPrimarySymbol(address);
 		if (symbol == null) {
@@ -178,7 +189,8 @@ public class AddressBasedLocation implements Comparable<AddressBasedLocation> {
 	}
 
 	private static String getRegisterAddressRepresentation(Program program, Address address) {
-		String regName = program.getRegister(address).getName();
+		Register register = program.getRegister(address);
+		String regName = register.getName();
 		return "Register[" + regName + "]";
 	}
 

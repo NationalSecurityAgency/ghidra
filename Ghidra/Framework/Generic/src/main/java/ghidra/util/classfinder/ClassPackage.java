@@ -78,7 +78,7 @@ class ClassPackage extends ClassLocation {
 				pkg = packageName + "." + pkg;
 			}
 
-			monitor.setMessage("scanning package: " + pkg);
+			monitor.setMessage("Scanning package: " + pkg);
 			children.add(new ClassPackage(rootDir, pkg, monitor));
 		}
 	}

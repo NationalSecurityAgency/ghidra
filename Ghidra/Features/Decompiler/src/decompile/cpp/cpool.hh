@@ -55,9 +55,8 @@ public:
     check_cast=7	///< Pointer to object, new name in \b token, new data-type in \b type
   };
   enum {
-    has_thisptr = 0x1,		///< Referenced method has a \b this pointer
-    is_constructor = 0x2,	///< Referenced method is a constructor
-    is_destructor = 0x4		///< Referenced method is a destructor
+    is_constructor = 0x1,	///< Referenced method is a constructor
+    is_destructor = 0x2		///< Referenced method is a destructor
   };
 private:
   friend class ConstantPool;
@@ -77,7 +76,6 @@ public:
   int4 getByteDataLength(void) const { return byteDataLen; }			///< Number of bytes of string literal data
   Datatype *getType(void) const { return type; }				///< Get the data-type associated with \b this
   uintb getValue(void) const { return value; }					///< Get the constant value associated with \b this
-  bool hasThisPointer(void) const { return ((flags & has_thisptr)!=0); }	///< Is object a method with a \b this pointer
   bool isConstructor(void) const { return ((flags & is_constructor)!=0); }	///< Is object a constructor method
   bool isDestructor(void) const { return ((flags & is_destructor)!=0); }	///< Is object a destructor method
   void saveXml(ostream &s) const;						///< Save object to an XML stream

@@ -30,7 +30,7 @@ import org.junit.*;
 import docking.ActionContext;
 import docking.test.AbstractDockingTest;
 import docking.widgets.OptionDialog;
-import ghidra.framework.main.datatable.ProjectDataActionContext;
+import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.model.*;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskListener;
@@ -463,7 +463,7 @@ public class DeleteProjectFilesTaskTest extends AbstractDockingTest {
 		ProjectDataDeleteAction action = new ProjectDataDeleteAction("Owner", "Group") {
 
 			@Override
-			DeleteProjectFilesTask createDeleteTask(ProjectDataActionContext context,
+			DeleteProjectFilesTask createDeleteTask(ProjectDataContext context,
 					Set<DomainFile> myFiles, Set<DomainFolder> myFolders, int fileCount) {
 
 				task = new DeleteProjectFilesTask(myFolders, myFiles, fileCount, null);
@@ -488,7 +488,7 @@ public class DeleteProjectFilesTaskTest extends AbstractDockingTest {
 
 	private void runAction() {
 
-		ActionContext context = new ProjectDataActionContext(/*provider*/null, /*project data*/null,
+		ActionContext context = new ProjectDataContext(/*provider*/null, /*project data*/null,
 			/*context object*/ null, CollectionUtils.asList(folders), CollectionUtils.asList(files),
 			null, true);
 		performAction(deleteAction, context, false);

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +74,7 @@ class BookmarkDBAdapterV1 extends BookmarkDBAdapter {
 		AddressSet set = new AddressSet();
 		RecordIterator recordIter = getRecordsByType(typeId);
 		while (recordIter.hasNext()) {
-			Record rec = recordIter.next();
+			DBRecord rec = recordIter.next();
 			Address addr = addrMap.decodeAddress(rec.getLongValue(V1_ADDRESS_COL));
 			set.addRange(addr, addr);
 		}
@@ -88,7 +87,7 @@ class BookmarkDBAdapterV1 extends BookmarkDBAdapter {
 		Field fv = new LongField(typeId);
 		RecordIterator recordIter = table.indexIterator(V1_TYPE_ID_COL, fv, fv, true);
 		while (recordIter.hasNext()) {
-			Record rec = recordIter.next();
+			DBRecord rec = recordIter.next();
 			String cat = demangleTypeCategory(rec.getString(V1_TYPE_CATEGORY_COL));
 			set.add(cat);
 		}
@@ -99,13 +98,13 @@ class BookmarkDBAdapterV1 extends BookmarkDBAdapter {
 	}
 
 	@Override
-	Record getRecord(long id) throws IOException {
+	DBRecord getRecord(long id) throws IOException {
 		return convertV1Record(table.getRecord(id));
 	}
 
-	private static Record convertV1Record(Record record) {
+	private static DBRecord convertV1Record(DBRecord record) {
 		long key = record.getLongValue(V1_TYPE_ID_COL) << 48 | (record.getKey() & 0xffffffffL);
-		Record rec = BookmarkDBAdapter.SCHEMA.createRecord(key);
+		DBRecord rec = BookmarkDBAdapter.SCHEMA.createRecord(key);
 		rec.setLongValue(BookmarkDBAdapter.ADDRESS_COL, record.getLongValue(V1_ADDRESS_COL));
 		rec.setString(BookmarkDBAdapter.CATEGORY_COL,
 			demangleTypeCategory(record.getString(V1_TYPE_CATEGORY_COL)));
@@ -177,10 +176,10 @@ class BookmarkDBAdapterV1 extends BookmarkDBAdapter {
 //==================================================================================================	
 
 	private class BatchRecordIterator implements RecordIterator {
-		private ListIterator<Record> iter;
+		private ListIterator<DBRecord> iter;
 
 		BatchRecordIterator(int typeId, long start, long end) throws IOException {
-			ArrayList<Record> list = new ArrayList<Record>();
+			ArrayList<DBRecord> list = new ArrayList<DBRecord>();
 			Field sf = new LongField(start);
 			Field ef = new LongField(end);
 			RecordIterator recIter = table.indexIterator(V1_ADDRESS_COL, sf, ef, true);
@@ -201,12 +200,12 @@ class BookmarkDBAdapterV1 extends BookmarkDBAdapter {
 		}
 
 		@Override
-		public Record next() throws IOException {
+		public DBRecord next() throws IOException {
 			return iter.next();
 		}
 
 		@Override
-		public Record previous() throws IOException {
+		public DBRecord previous() throws IOException {
 			return iter.previous();
 		}
 
@@ -223,7 +222,7 @@ class BookmarkDBAdapterV1 extends BookmarkDBAdapter {
 		}
 
 		@Override
-		protected Record convertRecord(Record record) {
+		protected DBRecord convertRecord(DBRecord record) {
 			return convertV1Record(record);
 		}
 	}

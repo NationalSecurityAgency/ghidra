@@ -108,7 +108,7 @@ public class MDTypeInfoParser {
 				break;
 			case '8':
 				// All but the RTTI except RTT4 seem to show up here
-				//  under case '8'; RTTI4 is co-mingled under case '6' with VFTable. 
+				//  under case '8'; RTTI4 is co-mingled under case '6' with VFTable.
 				// TODO: UINFO: metatype (we had isVBTable = true, but I now believe
 				// that
 				// is wrong).
@@ -324,6 +324,7 @@ public class MDTypeInfoParser {
 					default:
 						throw new MDException("Access Level $$, unknown case: " + ch2);
 				}
+				typeInfo.setSpecialHandlingCode(ch2);
 				break;
 			// TODO: see following UINFO.
 			// UINFO:

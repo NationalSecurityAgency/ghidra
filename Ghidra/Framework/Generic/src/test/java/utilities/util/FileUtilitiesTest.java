@@ -140,6 +140,38 @@ public class FileUtilitiesTest {
 		assertNull(relative);
 	}
 
+	@Test
+	public void testRelativizePath_ResourceFiles() {
+		ResourceFile f1 = new ResourceFile(new File("/a/b"));
+		ResourceFile f2 = new ResourceFile(new File("/a/b/c"));
+		String relative = FileUtilities.relativizePath(f1, f2);
+		assertEquals("c", relative);
+	}
+
+	@Test
+	public void testRelativizePath_ResourceFiles2() {
+		ResourceFile f1 = new ResourceFile(new File("/a/b"));
+		ResourceFile f2 = new ResourceFile(new File("/a/b/c/d"));
+		String relative = FileUtilities.relativizePath(f1, f2);
+		assertEquals("c/d", relative);
+	}
+
+	@Test
+	public void testRelativizePath_ResourceFiles_NotRelated() {
+		ResourceFile f1 = new ResourceFile(new File("/a/b"));
+		ResourceFile f2 = new ResourceFile(new File("/c/d"));
+		String relative = FileUtilities.relativizePath(f1, f2);
+		assertNull(relative);
+	}
+
+	@Test
+	public void testRelativizePath_ResourceFiles_Same() {
+		ResourceFile f1 = new ResourceFile(new File("/a/b"));
+		ResourceFile f2 = new ResourceFile(new File("/a/b"));
+		String relative = FileUtilities.relativizePath(f1, f2);
+		assertNull(relative);
+	}
+
 	private ResourceFile createNestedTempFile(String path) throws Exception {
 
 		String tmpdir = AbstractGenericTest.getTestDirectoryPath();

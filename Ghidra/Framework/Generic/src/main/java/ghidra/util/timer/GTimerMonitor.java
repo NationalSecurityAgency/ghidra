@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +16,32 @@
 package ghidra.util.timer;
 
 /**
- * Monitor object returned from a GTimer.schedule() call 
- *
+ * Monitor object returned from a GTimer.schedule() call
  */
 public interface GTimerMonitor {
+
+	/**
+	 * A dummy implementation of this interface
+	 */
+	public static GTimerMonitor DUMMY =
+		new GTimerMonitor() {
+
+			@Override
+			public boolean wasCancelled() {
+				return false;
+			}
+
+			@Override
+			public boolean didRun() {
+				return false;
+			}
+
+			@Override
+			public boolean cancel() {
+				return false;
+			}
+		};
+
 	/**
 	 * Cancels the scheduled runnable associated with this GTimerMonitor if it has not already run.
 	 * @return true if the scheduled runnable was cancelled before it had a chance to execute.
@@ -35,7 +56,7 @@ public interface GTimerMonitor {
 
 	/**
 	 * Return true if the scheduled runnable was cancelled before it had a chance to run.
-	 * @return
+	 * @return true if the scheduled runnable was cancelled before it had a chance to run.
 	 */
 	public boolean wasCancelled();
 }

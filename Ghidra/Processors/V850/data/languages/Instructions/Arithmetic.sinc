@@ -1,0 +1,336 @@
+# (3) Multiply instructions
+# (4) Multiply-accumulate instructions
+# (5) Arithmetic instructions
+# (7) Saturated operation instructions
+# (11) Divide instructions
+# (12) High-speed divide instructions
+
+
+
+#####################################################
+#####		       Multiply			#####
+#####################################################
+
+
+# MUL reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01000100000
+:mul R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0x220 & R2731
+{
+	local res:8 = sext(R1115) * sext(R0004);
+	R1115 = res:4;
+	R2731 = res[32,32];
+}
+
+# MUL imm9, reg2, reg3 - rrrrr111111iiiii|wwwww01001IIII00
+:mul imm9, R1115, R2731 is op0510=0x3F & op0004 & R1115; op2226=0x9 & op1617=0x0 & s1821 & R2731 
+[ imm9 = (s1821 << 5) | op0004; ] 
+{
+	local res:8 = sext(R1115) * imm9;
+	R1115 = res:4;
+	R2731 = res[32,32];
+}
+
+# MULH reg1, reg2 - rrrrr000111RRRRR
+:mulh R0004, R1115 is op0510=0x07 & R0004 & R1115 & op1115!=0
+{
+	R1115 = sext(R1115:2) * sext(R0004:2);
+}
+
+# MULH imm5, reg2 - rrrrr010111iiiii
+:mulh s0004, R1115 is op0510=0x17 & s0004 & R1115
+{
+	R1115 = sext(R1115:2) * s0004;
+}
+
+# MULHI imm16, reg1, reg2 - rrrrr110111RRRRR|iiiiiiiiiiiiiiii
+:mulhi s1631, R0004, R1115 is op0510=0x37 & R1115 & R0004; s1631
+{
+	R1115 = R0004 * s1631;
+}
+
+# MULU reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01000100010
+:mulu R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0x222 & R2731
+{
+	local res:8 = zext(R1115) * zext(R0004);
+	R1115 = res:4;
+	R2731 = res[32,32];
+}
+
+# MULU imm9, reg2, reg3 - rrrrr111111iiiii|wwwww01001IIII10
+:mulu imm9, R1115, R2731 is op0510=0x3F & op0004 & R1115; op2226=0x9 & op1617=0x2 & op1821 & R2731 
+[ imm9 = (op1821 << 5) | op0004; ]
+{
+	local res:8 = zext(R1115) * imm9;
+	R1115 = res:4;
+	R2731 = res[32,32];
+}
+
+
+
+#####################################################
+#####		  MultiplyAccumulate		#####
+#####################################################
+
+
+# MAC reg1, reg2, reg3, reg4 - rrrrr111111RRRRR wwww0011110mmmm0
+:mac R0004, R1115, R2731x2, R1620x2 is op0510=0x3F & R0004 & R1115; op2126=0x1E & op1616=0 & R1620x2 & R2731x2 
+{
+	R1620x2 = sext(R1115) * sext(R0004) + R2731x2;
+}
+
+# MACU reg1, reg2, reg3, reg4 - rrrrr111111RRRRR|wwww0011111mmmm0
+:macu R0004, R1115, R2731x2, R1620x2 is op0510=0x3F & R0004 & R1115; op2126=0x1F & op1616=0 & R1620x2 & R2731x2
+{
+	R1620x2 = zext(R1115) * zext(R0004) + R2731x2;
+}
+
+
+
+#####################################################
+##### 		     Arithmetic			#####
+#####################################################
+
+
+# ADD reg1, reg2 - rrrrr001110RRRRR
+:add R0004, R1115 is op0510=0x0E & R0004 & R1115 
+{
+	set_general_flags_pos(R0004, R1115);
+	R1115 = R1115 + R0004;
+}
+
+# ADD imm5, reg2 - rrrrr010010iiiii
+:add s0004, R1115 is op0510=0x12 & s0004 & R1115 
+{
+	set_general_flags_pos(s0004, R1115);
+	R1115 = R1115 + s0004;
+}
+
+# ADDI imm16, reg1, reg2 - rrrrr110000RRRRR|iiiiiiiiiiiiiiii
+:addi s1631, R0004, R1115 is op0510=0x30 & R1115 & R0004; s1631
+{
+	set_general_flags_pos(R0004, s1631);
+	R1115 = R0004 + s1631;
+}
+
+# CMP reg1, reg2 - rrrrr001111RRRRR
+:cmp R0004, R1115 is op0510=0x0F & R0004 & R1115
+{
+	set_general_flags_neg(R1115, R0004);
+}
+
+# CMP imm5, reg2 - rrrrr010011iiiii
+:cmp s0004, R1115 is op0510=0x13 & s0004 & R1115
+{
+	set_general_flags_neg(R1115, s0004);
+}
+
+# MOV reg1, reg2 - rrrrr000000RRRRR
+:mov R0004, R1115 is op0510=0x00 & R0004 & R1115
+{
+	R1115 = R0004;
+}
+
+# MOV imm5, reg2 - rrrrr010000iiiii
+:mov s0004, R1115 is op0510=0x10 & s0004 & R1115 & op1115!=0
+{
+	R1115 = s0004;
+}
+
+# MOV imm32, reg1 - 00000110001RRRRR|iiiiiiiiiiiiiiii|IIIIIIIIIIIIIIII
+:mov imm32, R0004 is op0515=0x031 & R0004; op1631; op3247
+[ imm32 = (op3247 << 16) | op1631; ] 
+{
+	R0004 = imm32;
+}
+
+# MOVEA imm16, reg1, reg2 - rrrrr110001RRRRR|iiiiiiiiiiiiiiii
+:movea s1631, R0004, R1115 is op0510=0x31 & op1115!=0 & R0004 & R1115; s1631
+{
+	R1115 = R0004 + s1631;
+}
+
+# MOVHI imm16, reg1, reg2 - rrrrr110010RRRRR|iiiiiiiiiiiiiiii
+:movhi s1631, R0004, R1115 is op0510=0x32 & op1115!=0 & R0004 & R1115; s1631
+{
+	R1115 = R0004 + (s1631 << 16);
+}
+
+# SUB reg1, reg2 - rrrrr001101RRRRR
+:sub R0004, R1115 is op0510=0x0D & R0004 & R1115 
+{
+	set_general_flags_neg(R1115, R0004);
+	R1115 = R1115 - R0004;
+}
+
+# SUBR reg1, reg2 - rrrrr001100RRRRR
+:subr R0004, R1115 is op0510=0x0C & R0004 & R1115
+{
+	set_general_flags_neg(R0004, R1115);
+	R1115 = R0004 - R1115;
+}
+
+
+
+#####################################################
+#####		       Saturated		#####
+#####################################################
+
+
+define pcodeop __saturate;
+
+# SATADD reg1, reg2 - rrrrr000110RRRRR
+:satadd R0004, R1115 is op0510=0x06 & R0004 & R1115 & op1115!=0
+{
+	set_general_flags_pos(R1115, R0004);
+	$(SAT) = $(SAT) || $(OV);
+	R1115 = R1115 + R0004;
+	__saturate(R1115);
+}
+
+#SATADD imm5, reg2 - rrrrr010001iiiii
+:satadd s0004, R1115 is op0510=0x11 & s0004 & R1115 & op1115!=0
+{
+	set_general_flags_pos(R1115, s0004);
+	$(SAT) = $(SAT) || $(OV);
+	R1115 = R1115 + s0004;
+	__saturate(R1115);
+}
+
+# SATADD reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01110111010
+:satadd R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0x3BA & R2731
+{
+	set_general_flags_pos(R1115, R0004);
+	$(SAT) = $(SAT) || $(OV);
+	R2731 = R1115 + R0004;
+	__saturate(R2731);
+}
+
+# SATSUB reg1, reg2 - rrrrr000101RRRRR
+:satsub R0004, R1115 is op0510=0x05 & R0004 & R1115 & op1115!=0 
+{
+	set_general_flags_neg(R1115, R0004);
+	$(SAT) = $(SAT) || $(OV);
+	R1115 = R1115 - R0004;
+	__saturate(R1115);
+}
+
+# SATSUB reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01110011010
+:satsub R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0x39A & R2731
+{
+	set_general_flags_neg(R1115, R0004);
+	$(SAT) = $(SAT) || $(OV);
+	R2731 = R1115 - R0004;
+	__saturate(R2731);
+}
+
+# SATSUBI imm16, reg1, reg2
+:satsubi s1631, R0004, R1115 is op0510=0x33 & op1115!=0 & R0004 & R1115; s1631
+{
+	set_general_flags_neg(R0004, s1631);
+	$(SAT) = $(SAT) || $(OV);
+	R1115 = R0004 - s1631;
+	__saturate(R1115);
+}
+
+# SATSUBR reg1, reg2
+:satsubr R0004, R1115 is op0510=0x04 & R0004 & R1115 & op1115!=0
+{
+	set_general_flags_neg(R0004, R1115);
+	$(SAT) = $(SAT) || $(OV);
+	R1115 = R0004 - R1115;
+	__saturate(R1115);
+}
+
+
+
+#####################################################
+#####                  Divide			#####
+#####################################################
+
+
+# DIV reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01011000000
+:div R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0x2C0 & R2731
+{
+	local quot:4 = R1115 s/ R0004;
+	local mod:4 = R1115 s% R0004;
+	$(OV) = ((R1115 == 0x80000000 && R0004 == 0xFFFFFFFF) || R0004 == 0x0);
+	set_Z(R1115);
+	set_S(R1115);
+	R1115 = quot;
+ 	R2731 = mod;
+}
+
+# DIVH reg1, reg2 - rrrrr000010RRRRR
+:divh R0004, R1115 is op0510=0x02 & R0004 & R1115
+{
+	$(OV) = ((R1115 == 0x80000000 && R0004 == 0xFFFFFFFF) || R0004 == 0x0);
+	R1115 = R1115 / R0004;
+	set_Z(R1115);
+	set_S(R1115);
+}
+
+# DIVH reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01010000000
+:divh R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0x280 & R2731
+{
+	local quot:4 = R1115 s/ sext(R0004:2);
+	local mod:4 = R1115 s% sext(R0004:2);
+	$(OV) = ((R1115 == 0x80000000 && R0004 == 0xFFFFFFFF) || R0004 == 0x0);
+	set_Z(R1115);
+	set_S(R1115);
+	R1115 = quot;
+	R2731 = mod;
+}
+
+# DIVHU reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01010000010
+:divhu R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0x282 & R2731
+{
+	local quot:4 = R1115 / sext(R0004:2);
+	local mod:4 = R1115 % sext(R0004:2);
+	$(OV) = (R0004 == 0);
+	set_Z(R1115);
+	set_S(R1115);
+	R1115 = quot;
+	R2731 = mod;
+}
+
+# DIVU reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01011000010
+:divu R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0x2C2 & R2731
+{
+	local quot:4 = R1115 / R0004;
+	local mod:4 = R1115 % R0004;
+	$(OV) = (R0004 == 0);
+	set_Z(R1115);
+	set_S(R1115);
+	R1115 = quot;
+	R2731 = mod;
+}
+
+
+
+#####################################################
+#####		    HighSpeedDivide		#####
+#####################################################
+
+
+# DIVQ reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01011111100
+:divq R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0x2FC & R2731
+{
+	local quot:4 = R1115 s/ R0004;
+	local mod:4 = R1115 s% R0004;
+	$(OV) = ((R1115 == 0x80000000 && R0004 == 0xFFFFFFFF) || R0004 == 0x0);
+	set_Z(R1115);
+	set_S(R1115);
+	R2731 = mod;
+	R1115 = quot;
+}
+
+# DIVQU reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01011111110
+:divqu R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0x2FE & R2731
+{
+	local quot:4 = R1115 / R0004;
+	local mod:4 = R1115 % R0004;
+	$(OV) = (R0004 == 0);
+	set_Z(R1115);
+	set_S(R1115);
+	R2731 = mod;
+	R1115 = quot;
+}

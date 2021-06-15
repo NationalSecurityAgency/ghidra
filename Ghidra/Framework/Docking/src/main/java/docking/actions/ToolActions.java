@@ -91,6 +91,10 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		keyBindingsManager.addReservedAction(new HelpAction(false, ReservedKeyBindings.HELP_KEY2));
 		keyBindingsManager.addReservedAction(
 			new HelpAction(true, ReservedKeyBindings.HELP_INFO_KEY));
+		keyBindingsManager.addReservedAction(
+			new ShowContextMenuAction(ReservedKeyBindings.CONTEXT_MENU_KEY1));
+		keyBindingsManager.addReservedAction(
+			new ShowContextMenuAction(ReservedKeyBindings.CONTEXT_MENU_KEY2));
 
 		// these are diagnostic
 		if (SystemUtilities.isInDevelopmentMode()) {
@@ -399,17 +403,14 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		}
 
 		KeyBindingData newKeyBindingData = (KeyBindingData) evt.getNewValue();
-		KeyStroke newKeyStroke = null;
+		KeyStroke newKs = null;
 		if (newKeyBindingData != null) {
-			newKeyStroke = newKeyBindingData.getKeyBinding();
+			newKs = newKeyBindingData.getKeyBinding();
 		}
 
-		KeyStroke optKeyStroke = keyBindingOptions.getKeyStroke(action.getFullName(), null);
-		if (newKeyStroke == null) {
-			keyBindingOptions.removeOption(action.getFullName());
-		}
-		else if (!newKeyStroke.equals(optKeyStroke)) {
-			keyBindingOptions.setKeyStroke(action.getFullName(), newKeyStroke);
+		KeyStroke currentKs = keyBindingOptions.getKeyStroke(action.getFullName(), null);
+		if (!Objects.equals(currentKs, newKs)) {
+			keyBindingOptions.setKeyStroke(action.getFullName(), newKs);
 			keyBindingsChanged();
 		}
 	}

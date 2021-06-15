@@ -101,7 +101,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 		model = new DTPPTableModel();
 		table = new DTPPTable(model);
 		component = new DTPPScrollPane(table);
-		dataTypeManager = new LayeredDataTypeManager();
+		dataTypeManager = new LayeredDataTypeManager(activeProgram);
 
 		addDataType(new ByteDataType());
 		addDataType(new WordDataType());
@@ -177,27 +177,29 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 
 	private void updateModel() {
 
+		LayeredDataTypeManager newDtm = new LayeredDataTypeManager(activeProgram);
+
+		int transactionId = newDtm.startTransaction("add datatypes");
+		try {
+			Iterator<DataType> allDataTypes = dataTypeManager.getAllDataTypes();
+			while (allDataTypes.hasNext()) {
+				newDtm.resolve(allDataTypes.next(), null);
+			}
+		}
+		finally {
+			newDtm.endTransaction(transactionId, true);
+		}
+
 		// NOTE: data types do not respond to switching the data organization object
 		// since this is cached internal to the data type at time of construction.
 		// We must purge old datatypes and have them re-instantiated by the 
 		// datatype manager
 		List<DataTypePath> dtPaths = getModelDataTypePaths();
 		model.removeAll();
-		dataTypeManager.invalidate();
 
-		int transactionId = dataTypeManager.startTransaction("realign");
-		try {
-			Iterator<Composite> allComposites = dataTypeManager.getAllComposites();
-			while (allComposites.hasNext()) {
-				Composite composite = allComposites.next();
-				if (composite.isInternallyAligned()) {
-					composite.realign();
-				}
-			}
-		}
-		finally {
-			dataTypeManager.endTransaction(transactionId, true);
-		}
+		LayeredDataTypeManager oldDtm = dataTypeManager;
+		dataTypeManager = newDtm;
+		oldDtm.close();
 
 		for (DataTypePath dtPath : dtPaths) {
 			DataType dataType = dataTypeManager.getDataType(dtPath);
@@ -538,14 +540,11 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 		}
 
 		private void add(Composite c, DataTypeComponentPreview parent) {
-			DataTypeComponent[] comps = c.getComponents();
+			DataTypeComponent[] comps = c.getDefinedComponents();
 			for (DataTypeComponent element : comps) {
 				DataTypeComponentPreview preview = new DataTypeComponentPreview(c, element);
 				preview.setParent(parent);
 				DataType dataType = element.getDataType();
-				if (dataType == DataType.DEFAULT) {
-					continue;
-				}
 				if (dataType instanceof Composite) {
 					add((Composite) element.getDataType(), preview);
 				}
@@ -714,21 +713,22 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 
 	private class LayeredDataTypeManager extends StandAloneDataTypeManager {
 
-		public LayeredDataTypeManager() {
+		DataOrganization layeredDataOrganization1;
+
+		public LayeredDataTypeManager(Program program) {
 			super("DataTypePreviewer");
+			this.layeredDataOrganization1 =
+				program != null ? program.getDataTypeManager().getDataOrganization() : null;
 		}
 
 		@Override
 		public DataOrganization getDataOrganization() {
-			if (currentProgram != null) {
-				return currentProgram.getDataTypeManager().getDataOrganization();
+			if (layeredDataOrganization1 == null) {
+				return super.getDataOrganization();
 			}
-			return super.getDataOrganization();
-		}
-
-		void invalidate() {
-			invalidateCache();
+			return layeredDataOrganization1;
 		}
 
 	}
+
 }

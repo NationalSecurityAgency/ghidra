@@ -267,7 +267,7 @@ class WorkspacePanel extends JPanel implements WorkspaceChangeListener {
 		// query the user for the name of the workspace
 		InputDialog nameDialog = new InputDialog("Create New Workspace", "Workspace Name",
 			ToolManager.DEFAULT_WORKSPACE_NAME);
-		plugin.getTool().showDialog(nameDialog, (Component) null);
+		plugin.getTool().showDialog(nameDialog);
 		if (nameDialog.isCanceled()) {
 			return; // user canceled
 		}
@@ -342,7 +342,7 @@ class WorkspacePanel extends JPanel implements WorkspaceChangeListener {
 			String workspaceName = activeWorkspace.getName();
 			InputDialog nameDialog =
 				new InputDialog("Rename Workspace", "Workspace Name", workspaceName);
-			plugin.getTool().showDialog(nameDialog, (Component) null);
+			plugin.getTool().showDialog(nameDialog);
 			if (nameDialog.isCanceled()) {
 				return;
 			}

@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Export-Package: com.mystuff.exports
+Import-Package: org.other.lib,ghidra.app.script,ghidra.app.plugin.core.osgi
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=11))"
+Bundle-SymbolicName: examples.scripts_with_manifest
+Bundle-Name: Example Ghidra script directory with manifest.
+Bundle-Version: 1.0

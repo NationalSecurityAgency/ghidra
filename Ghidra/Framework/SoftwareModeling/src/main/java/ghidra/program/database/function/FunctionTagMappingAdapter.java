@@ -32,7 +32,7 @@ abstract class FunctionTagMappingAdapter {
 	static final String TABLE_NAME = "Function Tag Map";
 
 	static final int CURRENT_VERSION = 0;
-	
+
 	static final int FUNCTION_ID_COL = 0;
 	static final int TAG_ID_COL = 1;
 
@@ -74,7 +74,7 @@ abstract class FunctionTagMappingAdapter {
 	 * 
 	 * @param functionID index into the {@link SymbolTable} table
 	 * @return iterator of database records
-	 * @throws IOException
+	 * @throws IOException if database error occurs
 	 */
 	abstract RecordIterator getRecordsByFunctionID(long functionID) throws IOException;
 
@@ -84,19 +84,19 @@ abstract class FunctionTagMappingAdapter {
 	 * @param functionID index into the {@link SymbolTable} table
 	 * @param tagID index into the {@link FunctionTagAdapter} table
 	 * @return null if not found
-	 * @throws IOException
+	 * @throws IOException if database error occurs
 	 */
-	abstract Record getRecord(long functionID, long tagID) throws IOException;
+	abstract DBRecord getRecord(long functionID, long tagID) throws IOException;
 
 	/**
 	 * Creates a new record with the given function and tag ID's.
 	 * 
-	 * @param functionID
-	 * @param tagID
+	 * @param functionID the function's database id
+	 * @param tagID the FunctionTags database id
 	 * @return newly-created database record
-	 * @throws IOException
+	 * @throws IOException if database error occurs
 	 */
-	abstract Record createFunctionTagRecord(long functionID, long tagID)
+	abstract DBRecord createFunctionTagRecord(long functionID, long tagID)
 			throws IOException;
 
 	/**
@@ -106,7 +106,7 @@ abstract class FunctionTagMappingAdapter {
 	 * @param functionID index into the {@link SymbolTable} table
 	 * @param tagID index into the {@link FunctionTagAdapter} table
 	 * @return true if the remove was performed
-	 * @throws IOException
+	 * @throws IOException if database error occurs
 	 */
 	abstract boolean removeFunctionTagRecord(long functionID, long tagID)
 			throws IOException;
@@ -116,16 +116,22 @@ abstract class FunctionTagMappingAdapter {
 	 * whenever a tag is being deleted from the system.
 	 * 
 	 * @param tagID index into the {@link FunctionTagAdapter} table
-	 * @throws IOException 
+	 * @throws IOException if database error occurs
 	 */
 	abstract void removeFunctionTagRecord(long tagID) throws IOException;
 
 	/**
 	 * Determine if the specified tag ID has been applied to a function
-	 * @param tagId tag ID
+	 * @param id tag ID
 	 * @return true if tag applied to one or more functions
-	 * @throws IOException
+	 * @throws IOException if database error occurs
 	 */
 	abstract boolean isTagAssigned(long id) throws IOException;
 
+	/**
+	 * Returns a RecordIterator over all the records in this table
+	 * @return  a RecordIterator over all the records in this table
+	 * @throws IOException if database error occurs
+	 */
+	protected abstract RecordIterator getRecords() throws IOException;
 }

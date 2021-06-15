@@ -44,10 +44,17 @@
 }
 
 # MOVUPS 4-130 PAGE 1250 LINE 64874
-# TODO in general, what do we do with the zext of only the register case; needs investigation
-:VMOVUPS XmmReg2_m128, XmmReg1 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x11; XmmReg1 ... & XmmReg2_m128
+# break this into two constructors to handle the zext for the register destination case
+:VMOVUPS XmmReg2, XmmReg1 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x11; XmmReg1 & (mod = 3 & XmmReg2 & YmmReg2) 
 {
-	XmmReg2_m128 = XmmReg1;
+	XmmReg2 = XmmReg1;
+	YmmReg2 = zext(XmmReg2);
+}
+
+# MOVUPS 4-130 PAGE 1250 LINE 64874
+:VMOVUPS m128, XmmReg1 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x11; XmmReg1 ... & m128
+{
+	m128 = XmmReg1;
 }
 
 # MOVUPS 4-130 PAGE 1250 LINE 64876

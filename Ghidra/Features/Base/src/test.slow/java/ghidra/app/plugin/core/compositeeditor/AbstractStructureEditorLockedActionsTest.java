@@ -28,7 +28,7 @@ public abstract class AbstractStructureEditorLockedActionsTest extends AbstractS
 		try {
 			DataTypeManager dataTypeManager = cat.getDataTypeManager();
 			if (dt.getDataTypeManager() != dataTypeManager) {
-				dt = (Structure) dt.clone(dataTypeManager);
+				dt = dt.clone(dataTypeManager);
 			}
 			CategoryPath categoryPath = cat.getCategoryPath();
 			if (!dt.getCategoryPath().equals(categoryPath)) {

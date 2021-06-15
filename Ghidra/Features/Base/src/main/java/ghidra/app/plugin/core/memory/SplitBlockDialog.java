@@ -85,12 +85,8 @@ class SplitBlockDialog extends DialogComponentProvider {
 			newBlockName = block.getName() + ".split";
 			blockTwoNameField.setText(newBlockName);
 		}
-		if (!Memory.isValidAddressSpaceName(newBlockName)) {
+		if (!Memory.isValidMemoryBlockName(newBlockName)) {
 			setStatusText("Invalid Block Name: " + newBlockName);
-			return;
-		}
-		if (plugin.getMemoryMapManager().isDuplicateName(newBlockName)) {
-			setStatusText("Address space/overlay named " + newBlockName + " already exists.");
 			return;
 		}
 		setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));

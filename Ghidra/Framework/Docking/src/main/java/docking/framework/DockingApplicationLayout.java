@@ -16,12 +16,12 @@
 package docking.framework;
 
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Objects;
+import java.util.*;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.ApplicationProperties;
 import ghidra.util.SystemUtilities;
+import util.CollectionUtils;
 import utility.application.ApplicationLayout;
 import utility.application.ApplicationUtilities;
 import utility.module.ModuleUtilities;
@@ -33,16 +33,6 @@ import utility.module.ModuleUtilities;
 public class DockingApplicationLayout extends ApplicationLayout {
 
 	private static final String NO_RELEASE_NAME = "NO_RELEASE";
-
-	/**
-	 * Constructs a new docking application layout object with the given name.
-	 * 
-	 * @param name The name of the application.
-	 * @throws FileNotFoundException if there was a problem getting a user directory.
-	 */
-	public DockingApplicationLayout(String name) throws FileNotFoundException {
-		this(name, "0.1");
-	}
 
 	/**
 	 * Constructs a new docking application layout object with the given name and version.
@@ -57,24 +47,31 @@ public class DockingApplicationLayout extends ApplicationLayout {
 
 	/**
 	 * Constructs a new docking application layout object with the given set of application
-	 * properties.
+	 * properties.  The default Ghidra application root directory(s) will be used.
 	 * 
 	 * @param applicationProperties The properties object that will be read system properties.
 	 * @throws FileNotFoundException if there was a problem getting a user directory.
 	 */
 	public DockingApplicationLayout(ApplicationProperties applicationProperties)
 			throws FileNotFoundException {
+		this(getDefaultApplicationRootDirs(), applicationProperties);
+	}
+
+	/**
+	 * Constructs a new docking application layout object with the given set of application
+	 * properties.
+	 * 
+	 * @param applicationRootDirs list of application root directories which should be
+	 * used to idenitfy modules and resources.  The first entry will be treated as the 
+	 * installation root.
+	 * @param applicationProperties The properties object that will be read system properties.
+	 * @throws FileNotFoundException if there was a problem getting a user directory.
+	 */
+	public DockingApplicationLayout(Collection<ResourceFile> applicationRootDirs,
+			ApplicationProperties applicationProperties) throws FileNotFoundException {
 
 		this.applicationProperties = Objects.requireNonNull(applicationProperties);
-
-		// Application root directories
-		if (SystemUtilities.isInDevelopmentMode()) {
-			applicationRootDirs = ApplicationUtilities.findDefaultApplicationRootDirs();
-		}
-		else {
-			applicationRootDirs = new ArrayList<>();
-			applicationRootDirs.add(new ResourceFile(System.getProperty("user.dir")));
-		}
+		this.applicationRootDirs = applicationRootDirs;
 
 		// Application installation directory
 		applicationInstallationDir = applicationRootDirs.iterator().next().getParentFile();
@@ -97,4 +94,18 @@ public class DockingApplicationLayout extends ApplicationLayout {
 			applicationInstallationDir);
 	}
 
+	/**
+	 * Get the default list of Application directories.  In repo-based 
+	 * development mode this includes the root Ghidra directory within each repo.
+	 * When not in development mode, the requirement is that the current working 
+	 * directory correspond to the installation root.  The first entry will be 
+	 * the primary root in both cases.
+	 * @return root directories
+	 */
+	public static Collection<ResourceFile> getDefaultApplicationRootDirs() {
+		if (SystemUtilities.isInDevelopmentMode()) {
+			return ApplicationUtilities.findDefaultApplicationRootDirs();
+		}
+		return CollectionUtils.asList(new ResourceFile(System.getProperty("user.dir")));
+	}
 }

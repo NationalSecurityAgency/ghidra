@@ -25,9 +25,7 @@ import org.junit.Test;
 
 import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.program.model.data.*;
-import ghidra.util.InvalidNameException;
-import ghidra.util.exception.*;
-import ghidra.util.task.TaskMonitor;
+import ghidra.util.exception.UsrException;
 
 public class StructureEditorUnlockedActions4Test
 		extends AbstractStructureEditorUnlockedActionsTest {
@@ -57,7 +55,7 @@ public class StructureEditorUnlockedActions4Test
 		invoke(applyAction);
 		assertTrue(complexStructure.isEquivalent(model.viewComposite));
 		assertEquals(1, complexStructure.getLength());
-		assertTrue(complexStructure.isNotYetDefined());
+		assertTrue(complexStructure.isZeroLength());
 	}
 
 	@Test
@@ -75,8 +73,8 @@ public class StructureEditorUnlockedActions4Test
 		assertEquals(2, model.getComponent(5).getLength());
 
 		// Make array of 3 pointers
-		invoke(arrayAction);
-		dialog = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		invoke(arrayAction, false);
+		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 3);
 		dialog = null;
@@ -103,25 +101,12 @@ public class StructureEditorUnlockedActions4Test
 	}
 
 	@Test
-	public void testDuplicateAction() throws Exception {
+	public void testDuplicateAction() throws Throwable {
 		init(complexStructure, pgmTestCat);
-		runSwing(() -> {
-			try {
-				model.setComponentName(1, "comp1");
-				model.setComponentComment(1, "comment 1");
-				model.clearComponent(2);
-			}
-			catch (InvalidInputException e) {
-				failWithException("Unexpected error", e);
-			}
-			catch (InvalidNameException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			catch (DuplicateNameException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		runSwingWithException(() -> {
+			model.setComponentName(1, "comp1");
+			model.setComponentComment(1, "comment 1");
+			model.clearComponent(2);
 		});
 		int len = model.getLength();
 		int num = model.getNumComponents();
@@ -150,7 +135,7 @@ public class StructureEditorUnlockedActions4Test
 
 	@Test
 	public void testEditComponentAction() throws Exception {
-		//		init(complexStructure, pgmTestCat);
+
 		runSwing(() -> {
 			installProvider(new StructureEditorProvider(plugin, complexStructure, false));
 			model = provider.getModel();
@@ -159,12 +144,46 @@ public class StructureEditorUnlockedActions4Test
 		getActions();
 
 		assertEquals("", model.getStatus());
-		setSelection(new int[] { 21 });
+		setSelection(new int[] { 21 }); // 'simpleStructure'
 		String complexSubTitle = getProviderSubTitle(complexStructure);
 		String simpleSubTitle = getProviderSubTitle(simpleStructure);
 		assertTrue("Couldn't find editor = " + complexSubTitle,
 			isProviderShown(tool.getToolFrame(), "Structure Editor", complexSubTitle));
-		assertTrue(!isProviderShown(tool.getToolFrame(), "Structure Editor", simpleSubTitle));
+		assertFalse(isProviderShown(tool.getToolFrame(), "Structure Editor", simpleSubTitle));
+
+		invoke(editComponentAction);
+		assertEquals("", model.getStatus());
+		assertTrue("Couldn't find editor = " + complexSubTitle,
+			isProviderShown(tool.getToolFrame(), "Structure Editor", complexSubTitle));
+		assertTrue("Couldn't find editor = " + simpleSubTitle,
+			isProviderShown(tool.getToolFrame(), "Structure Editor", simpleSubTitle));
+
+		runSwing(() -> provider.closeComponent());
+	}
+
+	@Test
+	public void testEditComponentAction_ComplexStructure() throws Exception {
+
+		//
+		// Test that the Edit Component action will work when the type is multi-layered, like
+		// a pointer to a pointer to a structure
+		//
+
+		runSwing(() -> {
+			installProvider(new StructureEditorProvider(plugin, complexStructure, false));
+			model = provider.getModel();
+		});
+		waitForSwing();
+		getActions();
+
+		assertEquals("", model.getStatus());
+		setSelection(new int[] { 20 }); // 'simpleStructureTypedef * *[2][3]'		
+		String complexSubTitle = getProviderSubTitle(complexStructure);
+		String simpleSubTitle = getProviderSubTitle(simpleStructure);
+		assertTrue("Couldn't find editor = " + complexSubTitle,
+			isProviderShown(tool.getToolFrame(), "Structure Editor", complexSubTitle));
+		assertFalse(isProviderShown(tool.getToolFrame(), "Structure Editor", simpleSubTitle));
+
 		invoke(editComponentAction);
 		assertEquals("", model.getStatus());
 		assertTrue("Couldn't find editor = " + complexSubTitle,
@@ -194,58 +213,6 @@ public class StructureEditorUnlockedActions4Test
 		assertEquals(num + 13, model.getNumComponents());
 	}
 
-	//	public void testCancelPointerOnFixedDt() throws Exception {
-	//      // FUTURE
-	//		init(complexStructure,  pgmTestCat);
-	//		NumberInputDialog dialog;
-	//		int num = model.getNumComponents();
-	//
-	//		setSelection(new int[] {2});
-	//		DataType dt2 = getDataType(2);
-	//		assertTrue(getDataType(2).isEquivalent(new WordDataType()));
-	//		invoke(pointerAction);
-	//		dialog = (NumberInputDialog)env.waitForDialog(NumberInputDialog.class, 1000);
-	//		assertNotNull(dialog);
-	//		cancelInput(dialog);
-	//		dialog.dispose();
-	//		dialog = null;
-	//		assertEquals(num, model.getNumComponents());
-	//		assertEquals("word", getDataType(2).getDisplayName());
-	//		assertTrue(getDataType(2).isEquivalent(dt2));
-	//		assertEquals(4, model.getComponent(2).getLength());
-	//	}
-
-	//	@Test
-	//	public void testCreatePointerOnArray() throws Exception {
-	//		init(complexStructure, pgmTestCat);
-	//		int num = model.getNumComponents();
-	//
-	//		setSelection(new int[] { 14 });
-	//		DataType dt14 = getDataType(14);
-	//		assertEquals("byte[7]", dt14.getDisplayName());
-	//		invoke(pointerAction);
-	//		assertEquals(num + 3, model.getNumComponents());
-	//		assertEquals("byte[7] *", getDataType(14).getDisplayName());
-	//		assertTrue(((Pointer) getDataType(14)).getDataType().isEquivalent(dt14));
-	//		assertEquals(4, getDataType(14).getLength());
-	//		assertEquals(4, model.getComponent(14).getLength());
-	//	}
-	//
-	//	@Test
-	//	public void testCreatePointerOnTypedef() throws Exception {
-	//		init(complexStructure, pgmTestCat);
-	//		int num = model.getNumComponents();
-	//
-	//		setSelection(new int[] { 19 });
-	//		DataType dt19 = getDataType(19);
-	//		assertEquals("simpleStructureTypedef", dt19.getDisplayName());
-	//		invoke(pointerAction);
-	//		assertEquals(num + 25, model.getNumComponents());
-	//		assertEquals("simpleStructureTypedef *", getDataType(19).getDisplayName());
-	//		assertTrue(((Pointer) getDataType(19)).getDataType().isEquivalent(dt19));
-	//		assertEquals(4, model.getComponent(19).getLength());
-	//	}
-
 	@Test
 	public void testApplyComponentChange() throws Exception {
 		init(complexStructure, pgmTestCat);
@@ -254,7 +221,7 @@ public class StructureEditorUnlockedActions4Test
 		runSwing(() -> {
 			try {
 				model.clearSelectedComponents();
-				model.deleteSelectedComponents(TaskMonitor.DUMMY);
+				model.deleteSelectedComponents();
 			}
 			catch (UsrException e) {
 				failWithException("Unexpected error", e);
@@ -262,7 +229,7 @@ public class StructureEditorUnlockedActions4Test
 		});
 		DataType viewCopy = model.viewComposite.clone(null);
 
-		assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+		assertFalse(complexStructure.isEquivalent(model.viewComposite));
 		assertTrue(viewCopy.isEquivalent(model.viewComposite));
 		invoke(applyAction);
 		assertTrue(viewCopy.isEquivalent(complexStructure));

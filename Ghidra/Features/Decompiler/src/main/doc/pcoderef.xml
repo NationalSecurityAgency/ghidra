@@ -411,7 +411,7 @@ input0 and output must be the same.
 This instruction loads data from a dynamic location into the output
 variable by dereferencing a pointer. The “pointer” comes in two
 pieces. One piece, input1, is a normal variable containing the offset
-of the object being pointed at. The other piece, input1, is a constant
+of the object being pointed at. The other piece, input0, is a constant
 indicating the space into which the offset applies. The data in input1
 is interpreted as an unsigned offset and should have the same size as
 the space referred to by the ID, i.e. a 4-byte address space requires
@@ -926,7 +926,7 @@ This is a truncation operator that understands the endianess of the
 data. Input1 indicates the number of least significant bytes of input0
 to be thrown away. Output is then filled with any remaining bytes of
 input0 <emphasis>up to the size of output</emphasis>. If the size of
-output is smaller than the size of input0 plus the constant input1,
+output is smaller than the size of input0 minus the constant input1,
 then the additional most significant bytes of input0 will also be
 truncated.
 </para>

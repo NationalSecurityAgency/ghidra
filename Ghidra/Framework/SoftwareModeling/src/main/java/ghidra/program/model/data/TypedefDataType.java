@@ -15,7 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.data.DataTypeUtilities;
@@ -105,8 +104,8 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
-		return dataType.isDynamicallySized();
+	public boolean hasLanguageDependantLength() {
+		return dataType.hasLanguageDependantLength();
 	}
 
 	@Override
@@ -140,6 +139,11 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	@Override
 	public String getDescription() {
 		return dataType.getDescription();
+	}
+
+	@Override
+	public boolean isZeroLength() {
+		return dataType.isZeroLength();
 	}
 
 	@Override
@@ -180,6 +184,13 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	public void dataTypeSizeChanged(DataType dt) {
 		if (dt == dataType) {
 			notifySizeChanged();
+		}
+	}
+
+	@Override
+	public void dataTypeAlignmentChanged(DataType dt) {
+		if (dt == dataType) {
+			notifyAlignmentChanged();
 		}
 	}
 
@@ -231,6 +242,11 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	public boolean dependsOn(DataType dt) {
 		DataType myDt = getDataType();
 		return (myDt == dt || myDt.dependsOn(dt));
+	}
+
+	@Override
+	public String toString() {
+		return "typedef " + getName() + " " + dataType.getName();
 	}
 
 }

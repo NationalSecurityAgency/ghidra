@@ -1,0 +1,98 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*plugins {
+	id 'com.google.protobuf' version '0.8.10'
+}*/
+
+apply from: "${rootProject.projectDir}/gradle/javaProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/jacocoProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/javaTestProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/distributableGhidraModule.gradle"
+
+apply plugin: 'eclipse'
+eclipse.project.name = 'Debug Debugger-gadp'
+
+configurations {
+	allProtocArtifacts
+	protocArtifact
+}
+
+def os = org.gradle.internal.os.OperatingSystem.current()
+
+dependencies {
+	allProtocArtifacts 'com.google.protobuf:protoc:3.11.1:windows-x86_64@exe'
+    allProtocArtifacts 'com.google.protobuf:protoc:3.11.1:linux-x86_64@exe'
+    allProtocArtifacts 'com.google.protobuf:protoc:3.11.1:osx-x86_64@exe'
+
+	if (os.isWindows()) {
+    	protocArtifact 'com.google.protobuf:protoc:3.11.1:windows-x86_64@exe'
+	}
+	if (os.isLinux()) {
+    	protocArtifact 'com.google.protobuf:protoc:3.11.1:linux-x86_64@exe'
+	}
+	if (os.isMacOsX()) {
+    	protocArtifact 'com.google.protobuf:protoc:3.11.1:osx-x86_64@exe'
+    }
+
+	api 'com.google.protobuf:protobuf-java:3.11.1'
+	api project(':Framework-AsyncComm')
+	api project(':Framework-Debugging')
+	api project(':ProposedUtils')
+	
+	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
+}
+
+/*protobuf {
+	protoc {
+		artifact = 'com.google.protobuf:protoc:3.11.1'
+	}
+}*/
+
+task generateProto {
+	ext.srcdir = file("src/main/proto")
+	ext.src = fileTree(srcdir) {
+		include "**/*.proto"
+	}
+	ext.outdir = file("build/generated/source/proto/main/java")
+	outputs.dir(outdir)
+	inputs.files(src)
+	dependsOn(configurations.protocArtifact)
+	doLast {
+		def exe = configurations.protocArtifact.first()
+		if (!os.isWindows()) {
+			exe.setExecutable(true)
+		}
+		exec {
+			commandLine exe, "--java_out=$outdir", "-I$srcdir"
+			args src
+		}
+	}
+}
+
+tasks.compileJava.dependsOn(tasks.generateProto)
+tasks.eclipse.dependsOn(tasks.generateProto)
+rootProject.tasks.prepDev.dependsOn(tasks.generateProto)
+
+sourceSets {
+	main {
+		java {
+			srcDir tasks.generateProto.outdir
+		}
+	}
+}
+zipSourceSubproject.dependsOn generateProto
+

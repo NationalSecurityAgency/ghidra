@@ -41,6 +41,10 @@ import ghidra.util.exception.AssertException;
  * The Options Dialog shows the hierarchy in tree format.
  */
 public class ToolOptions extends AbstractOptions {
+	private static final String CLASS_ATTRIBUTE = "CLASS";
+	private static final String NAME_ATTRIBUTE = "NAME";
+	private static final String WRAPPED_OPTION_NAME = "WRAPPED_OPTION";
+	private static final String CLEARED_VALUE_ELEMENT_NAME = "CLEARED_VALUE";
 	public static final Set<Class<?>> PRIMITIVE_CLASSES = buildPrimitiveClassSet();
 	public static final Set<Class<?>> WRAPPABLE_CLASSES = buildWrappableClassSet();
 
@@ -81,34 +85,57 @@ public class ToolOptions extends AbstractOptions {
 	 * @param root XML that contains the set of options to restore
 	 */
 	public ToolOptions(Element root) {
-		this(root.getAttributeValue("NAME"));
+		this(root.getAttributeValue(NAME_ATTRIBUTE));
 
 		SaveState saveState = new SaveState(root);
 
+		readNonWrappedOptions(saveState);
+
+		try {
+			readWrappedOptions(root);
+		}
+		catch (ReflectiveOperationException exc) {
+			Msg.error(this, "Unexpected Exception: " + exc.getMessage(), exc);
+		}
+	}
+
+	private void readNonWrappedOptions(SaveState saveState) {
 		for (String optionName : saveState.getNames()) {
 			Object object = saveState.getObject(optionName);
 			Option option =
 				createUnregisteredOption(optionName, OptionType.getOptionType(object), null);
 			option.doSetCurrentValue(object);  // use doSet versus set so that it is not registered
 			valueMap.put(optionName, option);
-
 		}
+	}
 
-		Iterator<?> iter = root.getChildren("WRAPPED_OPTION").iterator();
-		while (iter.hasNext()) {
-			try {
-				Element elem = (Element) iter.next();
-				String optionName = elem.getAttributeValue("NAME");
-				Class<?> c = Class.forName(elem.getAttributeValue("CLASS"));
-				Constructor<?> constructor = c.getDeclaredConstructor();
-				WrappedOption wo = (WrappedOption) constructor.newInstance();
-				wo.readState(new SaveState(elem));
-				Option option = createUnregisteredOption(optionName, wo.getOptionType(), null);
-				option.doSetCurrentValue(wo.getObject());// use doSet versus set so that it is not registered
-				valueMap.put(optionName, option);
+	private void readWrappedOptions(Element root) throws ReflectiveOperationException {
+
+		Iterator<?> it = root.getChildren(WRAPPED_OPTION_NAME).iterator();
+		while (it.hasNext()) {
+
+			Element element = (Element) it.next();
+			List<?> children = element.getChildren();
+			if (children.isEmpty()) {
+				continue; // shouldn't happen
 			}
-			catch (Exception exc) {
-				Msg.error(this, "Unexpected Exception: " + exc.getMessage(), exc);
+
+			String optionName = element.getAttributeValue(NAME_ATTRIBUTE);
+			Class<?> c = Class.forName(element.getAttributeValue(CLASS_ATTRIBUTE));
+			Constructor<?> constructor = c.getDeclaredConstructor();
+			WrappedOption wo = (WrappedOption) constructor.newInstance();
+			Option option = createUnregisteredOption(optionName, wo.getOptionType(), null);
+			valueMap.put(optionName, option);
+
+			Element child = (Element) children.get(0);
+			String elementName = child.getName();
+			if (CLEARED_VALUE_ELEMENT_NAME.equals(elementName)) {
+				// a signal that the default option value has been cleared
+				option.doSetCurrentValue(null); // use doSet so that it is not registered
+			}
+			else {
+				wo.readState(new SaveState(element));
+				option.doSetCurrentValue(wo.getObject()); // use doSet so that it is not registered
 			}
 		}
 	}
@@ -122,8 +149,20 @@ public class ToolOptions extends AbstractOptions {
 	 * @return the xml root element
 	 */
 	public Element getXmlRoot(boolean includeDefaultBindings) {
+
 		SaveState saveState = new SaveState(XML_ELEMENT_NAME);
 
+		writeNonWrappedOptions(includeDefaultBindings, saveState);
+
+		Element root = saveState.saveToXml();
+		root.setAttribute(NAME_ATTRIBUTE, name);
+
+		writeWrappedOptions(includeDefaultBindings, root);
+
+		return root;
+	}
+
+	private void writeNonWrappedOptions(boolean includeDefaultBindings, SaveState saveState) {
 		for (String optionName : valueMap.keySet()) {
 			Option optionValue = valueMap.get(optionName);
 			if (includeDefaultBindings || !optionValue.isDefault()) {
@@ -133,27 +172,43 @@ public class ToolOptions extends AbstractOptions {
 				}
 			}
 		}
+	}
 
-		Element root = saveState.saveToXml();
-		root.setAttribute("NAME", name);
-
+	private void writeWrappedOptions(boolean includeDefaultBindings, Element root) {
 		for (String optionName : valueMap.keySet()) {
-			Option optionValue = valueMap.get(optionName);
-			if (includeDefaultBindings || !optionValue.isDefault()) {
-				Object value = optionValue.getValue(null);
-				if (value != null && !isSupportedBySaveState(value)) {
-					WrappedOption wrappedOption = wrapOption(value);
-					SaveState ss = new SaveState("WRAPPED_OPTION");
-					wrappedOption.writeState(ss);
-					Element elem = ss.saveToXml();
-					elem.setAttribute("NAME", optionName);
-					elem.setAttribute("CLASS", wrappedOption.getClass().getName());
-					root.addContent(elem);
+			Option option = valueMap.get(optionName);
+			if (includeDefaultBindings || !option.isDefault()) {
+
+				Object value = option.getCurrentValue();
+				if (isSupportedBySaveState(value)) {
+					// handled above
+					continue;
 				}
+
+				WrappedOption wrappedOption = wrapOption(option);
+				if (wrappedOption == null) {
+					// cannot write an option without a value to determine its type
+					continue;
+				}
+
+				SaveState ss = new SaveState(WRAPPED_OPTION_NAME);
+				Element elem = null;
+				if (value == null) {
+					// Handle the null case ourselves, not using the wrapped option (and when 
+					// reading from xml) so that the logic does not need to in each wrapped option
+					elem = ss.saveToXml();
+					elem.addContent(new Element(CLEARED_VALUE_ELEMENT_NAME));
+				}
+				else {
+					wrappedOption.writeState(ss);
+					elem = ss.saveToXml();
+				}
+
+				elem.setAttribute(NAME_ATTRIBUTE, optionName);
+				elem.setAttribute(CLASS_ATTRIBUTE, wrappedOption.getClass().getName());
+				root.addContent(elem);
 			}
 		}
-
-		return root;
 	}
 
 	private boolean isSupportedBySaveState(Object obj) {
@@ -170,7 +225,19 @@ public class ToolOptions extends AbstractOptions {
 
 	}
 
-	private WrappedOption wrapOption(Object value) {
+	private WrappedOption wrapOption(Option option) {
+
+		Object value = null;
+		value = option.getCurrentValue();
+		if (value == null) {
+			value = option.getDefaultValue();
+		}
+
+		if (value == null) {
+			// nothing to wrap
+			return null;
+		}
+
 		if (value instanceof CustomOption) {
 			return new WrappedCustomOption((CustomOption) value);
 		}
@@ -230,44 +297,6 @@ public class ToolOptions extends AbstractOptions {
 				removeOption(optionName);
 			}
 		}
-	}
-
-	////////////////////////////////////////////////////////////////
-
-	private class NotifyListenersRunnable implements Runnable {
-		private String optionName;
-		private Object oldValue;
-		private Object newValue;
-		private boolean vetoed;
-
-		NotifyListenersRunnable(String optionName, Object oldValue, Object newValue) {
-			this.optionName = optionName;
-			this.oldValue = oldValue;
-			this.newValue = newValue;
-		}
-
-		@Override
-		public void run() {
-			List<OptionsChangeListener> notifiedListeners = new ArrayList<>();
-			try {
-				for (OptionsChangeListener listener : listeners) {
-					listener.optionsChanged(ToolOptions.this, optionName, oldValue, newValue);
-					notifiedListeners.add(listener);
-				}
-			}
-			catch (OptionsVetoException e) {
-				vetoed = true;
-				for (OptionsChangeListener notifiedListener : notifiedListeners) {
-					notifiedListener.optionsChanged(ToolOptions.this, optionName, newValue,
-						oldValue);
-				}
-			}
-		}
-
-		public boolean wasVetoed() {
-			return vetoed;
-		}
-
 	}
 
 	/**
@@ -356,6 +385,8 @@ public class ToolOptions extends AbstractOptions {
 		ToolOption(String name, OptionType type, String description, HelpLocation helpLocation,
 				Object defaultValue, boolean isRegistered, PropertyEditor editor) {
 			super(name, type, description, helpLocation, defaultValue, isRegistered, editor);
+
+			this.currentValue = defaultValue;
 		}
 
 		@Override
@@ -385,7 +416,44 @@ public class ToolOptions extends AbstractOptions {
 	protected boolean notifyOptionChanged(String optionName, Object oldValue, Object newValue) {
 		NotifyListenersRunnable runnable =
 			new NotifyListenersRunnable(optionName, oldValue, newValue);
-		SystemUtilities.runSwingNow(runnable);
+		Swing.runNow(runnable);
 		return !runnable.wasVetoed();
 	}
+
+	private class NotifyListenersRunnable implements Runnable {
+		private String optionName;
+		private Object oldValue;
+		private Object newValue;
+		private boolean vetoed;
+
+		NotifyListenersRunnable(String optionName, Object oldValue, Object newValue) {
+			this.optionName = optionName;
+			this.oldValue = oldValue;
+			this.newValue = newValue;
+		}
+
+		@Override
+		public void run() {
+			List<OptionsChangeListener> notifiedListeners = new ArrayList<>();
+			try {
+				for (OptionsChangeListener listener : listeners) {
+					listener.optionsChanged(ToolOptions.this, optionName, oldValue, newValue);
+					notifiedListeners.add(listener);
+				}
+			}
+			catch (OptionsVetoException e) {
+				vetoed = true;
+				for (OptionsChangeListener notifiedListener : notifiedListeners) {
+					notifiedListener.optionsChanged(ToolOptions.this, optionName, newValue,
+						oldValue);
+				}
+			}
+		}
+
+		public boolean wasVetoed() {
+			return vetoed;
+		}
+
+	}
+
 }

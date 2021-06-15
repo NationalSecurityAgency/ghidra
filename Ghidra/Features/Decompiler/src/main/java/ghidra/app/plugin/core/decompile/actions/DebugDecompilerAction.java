@@ -24,6 +24,8 @@ import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.app.decompiler.component.DecompilerController;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
+import ghidra.util.HelpLocation;
 import ghidra.util.filechooser.ExtensionFileFilter;
 
 public class DebugDecompilerAction extends AbstractDecompilerAction {
@@ -32,6 +34,7 @@ public class DebugDecompilerAction extends AbstractDecompilerAction {
 
 	public DebugDecompilerAction(DecompilerController controller) {
 		super("Debug Function Decompilation");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ToolBarDebug"));
 		this.controller = controller;
 		setMenuBarData(new MenuData(new String[] { "Debug Function Decompilation" }, "xDebug"));
 	}

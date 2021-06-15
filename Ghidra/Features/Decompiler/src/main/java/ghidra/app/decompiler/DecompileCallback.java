@@ -18,6 +18,7 @@ package ghidra.app.decompiler;
 import java.io.IOException;
 import java.io.StringReader;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 
 import javax.xml.parsers.SAXParser;
@@ -27,14 +28,15 @@ import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
 import ghidra.app.cmd.function.CallDepthChangeInfo;
+import ghidra.docking.settings.Settings;
+import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.lang.ConstantPool.Record;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
@@ -52,6 +54,16 @@ import ghidra.util.xml.XmlUtilities;
  */
 public class DecompileCallback {
 
+	public final static int MAX_SYMBOL_COUNT = 16;
+
+	/**
+	 * Data returned for a query about strings
+	 */
+	public static class StringData {
+		boolean isTruncated;		// Did we truncate the string
+		public byte[] byteData;		// The UTF8 encoding of the string
+	}
+
 	private DecompileDebug debug;
 	private Program program;
 	private Listing listing;
@@ -59,14 +71,15 @@ public class DecompileCallback {
 	private Function cachedFunction;
 	private AddressSet undefinedBody;
 	private Address funcEntry;
+	private AddressSpace overlaySpace;		// non-null if function being decompiled is in an overlay
 	private int default_extrapop;
 	private Language pcodelanguage;
 	private CompilerSpec pcodecompilerspec;
 	private AddressFactory addrfactory;
 	private ConstantPool cpool;
 	private PcodeDataTypeManager dtmanage;
+	private Charset utf8Charset;
 	private String nativeMessage;
-	private boolean showNamespace;
 
 	private InstructionBlock lastPseudoInstructionBlock;
 	private Disassembler pseudoDisassembler;
@@ -84,6 +97,7 @@ public class DecompileCallback {
 		cpool = null;
 		nativeMessage = null;
 		debug = null;
+		utf8Charset = Charset.availableCharsets().get(CharsetInfo.UTF8);
 	}
 
 	private static SAXParser getSAXParser() throws PcodeXMLException {
@@ -113,6 +127,8 @@ public class DecompileCallback {
 			undefinedBody = new AddressSet(func.getBody());
 		}
 		funcEntry = entry;
+		AddressSpace spc = funcEntry.getAddressSpace();
+		overlaySpace = spc.isOverlaySpace() ? spc : null;
 		debug = dbg;
 		if (debug != null) {
 			debug.setPcodeDataTypeManager(dtmanage);
@@ -141,23 +157,6 @@ public class DecompileCallback {
 		nativeMessage = msg;
 	}
 
-	public void setShowNamespace(boolean showNamespace) {
-		this.showNamespace = showNamespace;
-	}
-
-	public synchronized int readXMLSize(String addrxml) {
-		int attrstart = addrxml.indexOf("size=\"");
-		if (attrstart >= 4) {
-			attrstart += 6;
-			int attrend = addrxml.indexOf('\"', attrstart);
-			if (attrend > attrstart) {
-				int size = SpecXmlUtils.decodeInt(addrxml.substring(attrstart, attrend));
-				return size;
-			}
-		}
-		return 0;
-	}
-
 	public synchronized ArrayList<String> readXMLNameList(String xml) throws PcodeXMLException {
 		try {
 			NameListHandler nmHandler = new NameListHandler();
@@ -174,9 +173,11 @@ public class DecompileCallback {
 
 	public byte[] getBytes(String addrxml) {
 		try {
-			int size = readXMLSize(addrxml);
-			Address addr;
-			addr = Varnode.readXMLAddress(addrxml, addrfactory, funcEntry.getAddressSpace());
+			Address addr = AddressXML.readXML(addrxml, addrfactory);
+			int size = AddressXML.readXMLSize(addrxml);
+			if (overlaySpace != null) {
+				addr = overlaySpace.getOverlayAddress(addr);
+			}
 			if (addr == Address.NO_ADDRESS) {
 				throw new PcodeXMLException("Address does not physically map");
 			}
@@ -222,7 +223,10 @@ public class DecompileCallback {
 		Address addr;
 		int flags;
 		try {
-			addr = Varnode.readXMLAddress(addrstring, addrfactory, funcEntry.getAddressSpace());
+			addr = AddressXML.readXML(addrstring, addrfactory);
+			if (overlaySpace != null) {
+				addr = overlaySpace.getOverlayAddress(addr);
+			}
 		}
 		catch (PcodeXMLException e) {
 			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
@@ -262,7 +266,10 @@ public class DecompileCallback {
 	public PackedBytes getPcodePacked(String addrstring) {
 		Address addr = null;
 		try {
-			addr = Varnode.readXMLAddress(addrstring, addrfactory, funcEntry.getAddressSpace());
+			addr = AddressXML.readXML(addrstring, addrfactory);
+			if (overlaySpace != null) {
+				addr = overlaySpace.getOverlayAddress(addr);
+			}
 		}
 		catch (PcodeXMLException e) {
 			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
@@ -285,8 +292,9 @@ public class DecompileCallback {
 				}
 			}
 
-			PackedBytes pcode = instr.getPrototype().getPcodePacked(instr.getInstructionContext(),
-				new InstructionPcodeOverride(instr), uniqueFactory);
+			PackedBytes pcode = instr.getPrototype()
+					.getPcodePacked(instr.getInstructionContext(),
+						new InstructionPcodeOverride(instr), uniqueFactory);
 
 			return pcode;
 		}
@@ -338,7 +346,7 @@ public class DecompileCallback {
 	public String getPcodeInject(String nm, String context, int type) {
 		PcodeInjectLibrary snippetLibrary = pcodecompilerspec.getPcodeInjectLibrary();
 
-		InjectPayload payload = snippetLibrary.getPayload(type, nm, program, context);
+		InjectPayload payload = snippetLibrary.getPayload(type, nm);
 		if (payload == null) {
 			Msg.warn(this, "Decompiling " + funcEntry + ", no pcode inject with name: " + nm);
 			return null; // No fixup associated with this name
@@ -373,8 +381,8 @@ public class DecompileCallback {
 				con.nextAddr = con.baseAddr.add(fallThruOffset);
 
 				con.refAddr = null;
-				for (Reference ref : program.getReferenceManager().getReferencesFrom(
-					con.baseAddr)) {
+				for (Reference ref : program.getReferenceManager()
+						.getReferencesFrom(con.baseAddr)) {
 					if (ref.isPrimary() && ref.getReferenceType().isCall()) {
 						con.refAddr = ref.getToAddress();
 						break;
@@ -479,7 +487,10 @@ public class DecompileCallback {
 	public String getSymbol(String addrstring) { // Return first symbol name at this address
 		Address addr;
 		try {
-			addr = Varnode.readXMLAddress(addrstring, addrfactory, funcEntry.getAddressSpace());
+			addr = AddressXML.readXML(addrstring, addrfactory);
+			if (overlaySpace != null) {
+				addr = overlaySpace.getOverlayAddress(addr);
+			}
 		}
 		catch (PcodeXMLException e) {
 			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
@@ -492,7 +503,7 @@ public class DecompileCallback {
 			}
 			String res = getSymbolName(sym);
 			if (debug != null) {
-				debug.getSymbol(addr, res);
+				debug.getCodeSymbol(addr, sym.getID(), res, sym.getParentNamespace());
 			}
 
 			return res;
@@ -516,6 +527,18 @@ public class DecompileCallback {
 		return sym.getName();
 	}
 
+	private Namespace getNameSpaceByID(long id) {
+		Symbol namespaceSym = program.getSymbolTable().getSymbol(id);
+		if (namespaceSym == null) {
+			return null;
+		}
+		Object namespace = namespaceSym.getObject();
+		if (namespace instanceof Namespace) {
+			return (Namespace) namespace;
+		}
+		return null;
+	}
+
 	private String getNamespacePrefix(Namespace ns) {
 		if (ns.getID() == Namespace.GLOBAL_NAMESPACE_ID) {
 			return null;
@@ -531,6 +554,75 @@ public class DecompileCallback {
 		return name;
 	}
 
+	/**
+	 * Decide if a given name is used by any namespace between a starting namespace
+	 * and a stopping namespace.  I.e. check for a name collision along a specific namespace path.
+	 * Currently, Ghidra is inefficient at calculating this perfectly, so this routine calculates
+	 * an approximation that can occasionally indicate a collision when there isn't.
+	 * @param name is the given name to check for collisions
+	 * @param startId is the id specifying the starting namespace
+	 * @param stopId is the id specifying the stopping namespace
+	 * @return true if the name (likely) occurs in one of the namespaces on the path
+	 */
+	public boolean isNameUsed(String name, long startId, long stopId) {
+		Namespace namespace = getNameSpaceByID(startId);
+		int pathSize = 0;
+		Namespace curspace = namespace;
+		long curId = namespace.getID();
+		while (curId != stopId && curId != 0 && !HighFunction.collapseToGlobal(curspace)) {
+			pathSize += 1;
+			curspace = curspace.getParentNamespace();
+			curId = curspace.getID();
+		}
+		long path[] = new long[pathSize];
+		curspace = namespace;
+		path[0] = startId;
+		for (int i = 1; i < pathSize; ++i) {
+			curspace = curspace.getParentNamespace();
+			path[i] = curspace.getID();
+		}
+		int count = 0;
+		SymbolIterator iter = program.getSymbolTable().getSymbols(name);
+		for (;;) {
+			if (!iter.hasNext()) {
+				break;
+			}
+			count += 1;
+			if (count > MAX_SYMBOL_COUNT) {
+				break;
+			}
+			Namespace symSpace = iter.next().getParentNamespace();
+			long id = symSpace.getID();
+			if (id == Namespace.GLOBAL_NAMESPACE_ID) {
+				continue;	// Common case we know can't match anything in path
+			}
+			for (int i = 0; i < pathSize; ++i) {
+				if (path[i] == id) {
+					if (debug != null) {
+						debug.nameIsUsed(symSpace, name);
+					}
+					return true;
+				}
+			}
+		}
+		return (count > MAX_SYMBOL_COUNT);
+	}
+
+	/**
+	 * Return an XML description of the formal namespace path to the given namespace
+	 * @param id is the ID of the given namespace
+	 * @return a parent XML tag
+	 */
+	public String getNamespacePath(long id) {
+		Namespace namespace = getNameSpaceByID(id);
+		StringBuilder buf = new StringBuilder();
+		HighFunction.createNamespaceTag(buf, namespace);
+		if (debug != null) {
+			debug.getNamespacePath(namespace);
+		}
+		return buf.toString();
+	}
+
 	private void generateHeaderCommentXML(Function func, StringBuilder buf) {
 		Address addr = func.getEntryPoint();
 		String text = listing.getComment(CodeUnit.PLATE_COMMENT, addr);
@@ -538,8 +630,8 @@ public class DecompileCallback {
 			buf.append("<comment");
 			SpecXmlUtils.encodeStringAttribute(buf, "type", "header");
 			buf.append(">\n");
-			buf.append(Varnode.buildXMLAddress(addr));
-			buf.append(Varnode.buildXMLAddress(addr));
+			AddressXML.buildXML(buf, addr);
+			AddressXML.buildXML(buf, addr);
 			buf.append("\n<text>");
 			SpecXmlUtils.xmlEscape(buf, text);
 			buf.append("</text>\n");
@@ -591,8 +683,8 @@ public class DecompileCallback {
 				buf.append("<comment");
 				SpecXmlUtils.encodeStringAttribute(buf, "type", typename);
 				buf.append(">\n");
-				buf.append(Varnode.buildXMLAddress(addr));
-				buf.append(Varnode.buildXMLAddress(commaddr));
+				AddressXML.buildXML(buf, addr);
+				AddressXML.buildXML(buf, commaddr);
 				buf.append("\n<text>");
 				SpecXmlUtils.xmlEscape(buf, text);
 				buf.append("</text>\n");
@@ -612,7 +704,10 @@ public class DecompileCallback {
 	public String getMappedSymbolsXML(String addrstring) { // Return XML describing data or functions at addr
 		Address addr;
 		try {
-			addr = Varnode.readXMLAddress(addrstring, addrfactory, funcEntry.getAddressSpace());
+			addr = AddressXML.readXML(addrstring, addrfactory);
+			if (overlaySpace != null) {
+				addr = overlaySpace.getOverlayAddress(addr);
+			}
 			if (addr == Address.NO_ADDRESS) {
 				// Unknown spaces may result from "spacebase" registers defined in cspec
 				return null;
@@ -654,7 +749,10 @@ public class DecompileCallback {
 	public String getExternalRefXML(String addrstring) { // Return any external reference at addr
 		Address addr;
 		try {
-			addr = Varnode.readXMLAddress(addrstring, addrfactory, funcEntry.getAddressSpace());
+			addr = AddressXML.readXML(addrstring, addrfactory);
+			if (overlaySpace != null) {
+				addr = overlaySpace.getOverlayAddress(addr);
+			}
 		}
 		catch (PcodeXMLException e) {
 			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
@@ -671,8 +769,17 @@ public class DecompileCallback {
 				if (extRef != null) {
 					func = listing.getFunctionAt(extRef.getToAddress());
 					if (func == null) {
+						Symbol symbol = extRef.getExternalLocation().getSymbol();
+						long extId;
+						if (symbol != null) {
+							extId = symbol.getID();
+						}
+						else {
+							extId = program.getSymbolTable().getDynamicSymbolID(addr);
+
+						}
 						HighSymbol shellSymbol =
-							new HighFunctionShellSymbol(0, extRef.getLabel(), addr, dtmanage);
+							new HighFunctionShellSymbol(extId, extRef.getLabel(), addr, dtmanage);
 						return buildResult(shellSymbol, null);
 					}
 				}
@@ -685,16 +792,16 @@ public class DecompileCallback {
 				return null;
 			}
 
-			HighFunction hfunc =
-				new HighFunction(func, pcodelanguage, pcodecompilerspec, dtmanage, showNamespace);
+			HighFunction hfunc = new HighFunction(func, pcodelanguage, pcodecompilerspec, dtmanage);
 
 			int extrapop = getExtraPopOverride(func, addr);
 			hfunc.grabFromFunction(extrapop, false, (extrapop != default_extrapop));
 
 			HighSymbol funcSymbol = new HighFunctionSymbol(addr, 2, hfunc);
-			Namespace namespc = func.getParentNamespace();
+			Namespace namespc = funcSymbol.getNamespace();
 			if (debug != null) {
 				debug.getFNTypes(hfunc);
+				debug.addPossiblePrototypeExtension(func);
 			}
 			return buildResult(funcSymbol, namespc);
 		}
@@ -714,7 +821,6 @@ public class DecompileCallback {
 		resBuf.append("\n"); // Make into official XML document
 		String res = resBuf.toString();
 		if (debug != null) {
-			debug.getType(name, res);
 			debug.getType(type);
 		}
 		return res;
@@ -733,8 +839,8 @@ public class DecompileCallback {
 	public String getRegisterName(String addrstring) {
 		try {
 
-			Address addr = Varnode.readXMLAddress(addrstring, addrfactory, null);
-			int size = readXMLSize(addrstring);
+			Address addr = AddressXML.readXML(addrstring, addrfactory);
+			int size = AddressXML.readXMLSize(addrstring);
 			Register reg = pcodelanguage.getRegister(addr, size);
 			if (reg == null) {
 				return null;
@@ -751,23 +857,23 @@ public class DecompileCallback {
 	public String getTrackedRegisters(String addrstring) {
 		Address addr;
 		try {
-			addr = Varnode.readXMLAddress(addrstring, addrfactory, funcEntry.getAddressSpace());
+			addr = AddressXML.readXML(addrstring, addrfactory);
+			if (overlaySpace != null) {
+				addr = overlaySpace.getOverlayAddress(addr);
+			}
 		}
 		catch (PcodeXMLException e) {
 			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
 			return null;
 		}
 		ProgramContext context = program.getProgramContext();
-		Register[] regs = context.getRegisters();
-		if (regs == null || regs.length == 0) {
-			return null;
-		}
+
 		StringBuilder stringBuf = new StringBuilder();
 
 		stringBuf.append("<tracked_pointset");
-		Varnode.appendSpaceOffset(stringBuf, addr);
+		AddressXML.appendAttributes(stringBuf, addr);
 		stringBuf.append(">\n");
-		for (Register reg : regs) {
+		for (Register reg : context.getRegisters()) {
 			if (reg.isProcessorContext()) {
 				continue;
 			}
@@ -791,16 +897,17 @@ public class DecompileCallback {
 	}
 
 	private String buildResult(HighSymbol highSymbol, Namespace namespc) {
-		StringBuilder res = new StringBuilder();
-		res.append("<result>\n");
-		res.append("<parent>\n");
-		if (namespc == null) {
-			res.append("<val/>"); // Assume global scope
+		long namespaceId;
+		if (namespc == null || namespc instanceof Library) {
+			namespaceId = Namespace.GLOBAL_NAMESPACE_ID;
 		}
 		else {
-			HighFunction.createNamespaceTag(res, namespc);
+			namespaceId = namespc.getID();
 		}
-		res.append("</parent>\n");
+		StringBuilder res = new StringBuilder();
+		res.append("<result");
+		SpecXmlUtils.encodeUnsignedIntegerAttribute(res, "id", namespaceId);
+		res.append(">\n");
 		if (debug != null) {
 			StringBuilder res2 = new StringBuilder();
 			HighSymbol.buildMapSymXML(res2, highSymbol);
@@ -926,17 +1033,18 @@ public class DecompileCallback {
 		if (entry.getAddressSpace().equals(addr.getAddressSpace())) {
 			long diff = addr.getOffset() - entry.getOffset();
 			if ((diff >= 0) && (diff < 8)) {
-				HighFunction hfunc = new HighFunction(func, pcodelanguage, pcodecompilerspec,
-					dtmanage, showNamespace);
+				HighFunction hfunc =
+					new HighFunction(func, pcodelanguage, pcodecompilerspec, dtmanage);
 
 				int extrapop = getExtraPopOverride(func, addr);
 				hfunc.grabFromFunction(extrapop, includeDefaultNames,
 					(extrapop != default_extrapop));
 
 				HighSymbol functionSymbol = new HighFunctionSymbol(entry, (int) (diff + 1), hfunc);
-				Namespace namespc = func.getParentNamespace();
+				Namespace namespc = functionSymbol.getNamespace();
 				if (debug != null) {
 					debug.getFNTypes(hfunc);
+					debug.addPossiblePrototypeExtension(func);
 				}
 				return buildResult(functionSymbol, namespc);
 			}
@@ -1175,6 +1283,132 @@ public class DecompileCallback {
 			return listing.getFunctionAt(extRef.getToAddress());
 		}
 		return listing.getFunctionAt(addr);
+	}
+
+	/**
+	 * Return true if there are no "replacement" characters in the string
+	 * @param string is the string to test
+	 * @return true if no replacements
+	 */
+	private boolean isValidChars(String string) {
+		char replaceChar = '\ufffd';
+		for (int i = 0; i < string.length(); ++i) {
+			char c = string.charAt(i);
+			if (c == replaceChar) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Check for a string at an address and return a UTF8 encoded byte array.
+	 * If there is already data present at the address, use this to determine the
+	 * string encoding. Otherwise use the data-type info passed in to determine the encoding.
+	 * Check that the bytes at the address represent a valid string encoding that doesn't
+	 * exceed the maximum character limit passed in.  Return null if the string is invalid.
+	 * Return the string translated into a UTF8 byte array otherwise.  A (valid) empty
+	 * string is returned as a zero length array.
+	 * @param addrString is the XML encoded address and maximum byte limit
+	 * @param dtName is the name of a character data-type
+	 * @param dtId is the id associated with the character data-type
+	 * @return the UTF8 encoded byte array or null
+	 */
+	public StringData getStringData(String addrString, String dtName, String dtId) {
+		Address addr;
+		int maxChars;
+		try {
+			addr = AddressXML.readXML(addrString, addrfactory);
+			maxChars = AddressXML.readXMLSize(addrString);
+			if (overlaySpace != null) {
+				addr = overlaySpace.getOverlayAddress(addr);
+			}
+			if (addr == Address.NO_ADDRESS) {
+				throw new PcodeXMLException("Address does not physically map");
+			}
+		}
+		catch (PcodeXMLException e) {
+			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
+			return null;
+		}
+		Data data = program.getListing().getDataContaining(addr);
+		Settings settings = SettingsImpl.NO_SETTINGS;
+		AbstractStringDataType dataType = null;
+		StringDataInstance stringInstance = null;
+		int length = 0;
+		if (data != null) {
+			if (data.getDataType() instanceof AbstractStringDataType) {
+				// There is already a string here.  Use its configuration to
+				// set up the StringDataInstance
+				settings = data;
+				dataType = (AbstractStringDataType) data.getDataType();
+				length = data.getLength();
+				if (length <= 0) {
+					return null;
+				}
+				long diff = addr.subtract(data.getAddress()) *
+					addr.getAddressSpace().getAddressableUnitSize();
+				if (diff < 0 || diff >= length) {
+					return null;
+				}
+				length -= diff;
+				MemoryBufferImpl buf = new MemoryBufferImpl(program.getMemory(), addr, 64);
+				stringInstance = dataType.getStringDataInstance(buf, settings, length);
+			}
+		}
+		if (stringInstance == null) {
+			// There is no string and/or something else at the address.
+			// Setup StringDataInstance based on raw memory
+			DataType dt = dtmanage.findBaseType(dtName, dtId);
+			if (dt instanceof AbstractStringDataType) {
+				dataType = (AbstractStringDataType) dt;
+			}
+			else {
+				if (dt != null) {
+					int size = dt.getLength();
+					if (size == 2) {
+						dataType = TerminatedUnicodeDataType.dataType;
+					}
+					else if (size == 4) {
+						dataType = TerminatedUnicode32DataType.dataType;
+					}
+					else {
+						dataType = TerminatedStringDataType.dataType;
+					}
+				}
+				else {
+					dataType = TerminatedStringDataType.dataType;
+				}
+			}
+			MemoryBufferImpl buf = new MemoryBufferImpl(program.getMemory(), addr, 64);
+			stringInstance = dataType.getStringDataInstance(buf, settings, maxChars);
+			length = stringInstance.getStringLength();
+			if (length < 0 || length > maxChars) {
+				return null;
+			}
+		}
+		String stringVal;
+		if (stringInstance.isShowTranslation() && stringInstance.getTranslatedValue() != null) {
+			stringVal = stringInstance.getTranslatedValue();
+		}
+		else {
+			stringVal = stringInstance.getStringValue();
+		}
+
+		if (!isValidChars(stringVal)) {
+			return null;
+		}
+		StringData stringData = new StringData();
+		stringData.isTruncated = false;
+		if (stringVal.length() > maxChars) {
+			stringData.isTruncated = true;
+			stringVal = stringVal.substring(0, maxChars);
+		}
+		stringData.byteData = stringVal.getBytes(utf8Charset);
+		if (debug != null) {
+			debug.getStringData(addr, stringData);
+		}
+		return stringData;
 	}
 
 //==================================================================================================

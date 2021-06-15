@@ -382,6 +382,7 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 	}
 
 	private void doSetBackgroundColor(Color color) {
+		setBackground(color);
 		contentPanel.setBackground(color);
 		userTextArea.setBackground(color);
 		controller.removeColor(vertex);
@@ -539,6 +540,11 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 	}
 
 	@Override
+	String getTextSelection() {
+		return null; // can't select text in a group vertex
+	}
+
+	@Override
 	void setProgramHighlight(ProgramSelection highlight) {
 		Set<FGVertex> vertices = groupVertex.getVertices();
 		for (FGVertex v : vertices) {
@@ -561,9 +567,23 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 
 	@Override
 	void refreshDisplay() {
+
+		updateDefaultBackgroundColor();
+
 		Set<FGVertex> vertices = groupVertex.getVertices();
 		for (FGVertex v : vertices) {
 			v.refreshDisplay();
+		}
+	}
+
+	private void updateDefaultBackgroundColor() {
+		FunctionGraphOptions options = controller.getFunctionGraphOptions();
+		Color newBgColor = options.getDefaultGroupBackgroundColor();
+		if (!defaultBackgroundColor.equals(newBgColor)) {
+			defaultBackgroundColor = newBgColor;
+			if (userDefinedColor == null) {
+				doSetBackgroundColor(defaultBackgroundColor);
+			}
 		}
 	}
 

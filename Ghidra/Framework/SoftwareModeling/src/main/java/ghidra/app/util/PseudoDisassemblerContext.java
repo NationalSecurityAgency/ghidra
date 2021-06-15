@@ -16,6 +16,7 @@
 package ghidra.app.util;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import ghidra.program.disassemble.DisassemblerContextImpl;
 import ghidra.program.model.address.Address;
@@ -56,7 +57,7 @@ public class PseudoDisassemblerContext implements DisassemblerContext {
 	}
 
 	@Override
-	public Register[] getRegisters() {
+	public List<Register> getRegisters() {
 		return disContext.getRegisters();
 	}
 

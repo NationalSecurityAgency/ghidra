@@ -165,8 +165,8 @@ public class StructureEditorUnlockedActions2Test
 		assertEquals(getDataType(3), DataType.DEFAULT);
 		assertEquals(getDataType(4), dt3);
 
-		invoke(action);
-		dialog = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		invoke(action, false);
+		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 2);
 		dialog = null;
@@ -179,8 +179,8 @@ public class StructureEditorUnlockedActions2Test
 		assertEquals(getDataType(3), dt3);
 
 		setSelection(new int[] { 2 });
-		invoke(action);
-		dialog = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		invoke(action, false);
+		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 2);
 		dialog = null;
@@ -223,7 +223,7 @@ public class StructureEditorUnlockedActions2Test
 		assertEquals(getDataType(1), dt1);
 		assertEquals(getDataType(2), dt2);
 		assertEquals(getDataType(3), dt3);
-		assertTrue(!"".equals(model.getStatus()));
+		assertNotEquals("", model.getStatus());
 	}
 
 	@Test

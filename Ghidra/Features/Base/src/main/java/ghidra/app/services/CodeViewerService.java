@@ -19,7 +19,6 @@ import javax.swing.JComponent;
 
 import docking.action.DockingAction;
 import docking.widgets.fieldpanel.FieldPanel;
-import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.field.Field;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -29,7 +28,6 @@ import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.framework.plugintool.ServiceInfo;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -164,12 +162,6 @@ public interface CodeViewerService {
 	 * @param comp component to place in the North area of the CodeViewer
 	 */
 	public void setNorthComponent(JComponent comp);
-
-	/**
-	 * Returns the Layout of Fields for the given Address.
-	 * @param addr the address at which to get a Layout
-	 */
-	public Layout getLayout(Address addr);
 
 	/**
 	 * tells the browser to rebuild the display.

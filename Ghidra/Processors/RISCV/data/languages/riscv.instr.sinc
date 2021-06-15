@@ -1,27 +1,54 @@
 # This is just a top level to include the standards
 
+@if ADDRSIZE == "32" || ADDRSIZE == "64" || ADDRSIZE == "128"
 @include "riscv.rv32i.sinc"
 @include "riscv.rv32a.sinc"
-@include "riscv.rv32d.sinc"
-@include "riscv.rv32f.sinc"
 @include "riscv.rv32m.sinc"
-@include "riscv.rv32q.sinc"
+@include "riscv.rv32b.sinc"
+@include "riscv.rv32p.sinc"
+@include "riscv.rv32k.sinc"
 
-@if ADDRSIZE == "64"
+@if FPSIZE == "32" || FPSIZE == "64" || FPSIZE == "128"
+@include "riscv.rv32f.sinc"
+@endif
+
+@if FPSIZE == "64" || FPSIZE == "128"
+@include "riscv.rv32d.sinc"
+@endif
+
+@if FPSIZE == "128"
+@include "riscv.rv32q.sinc"
+@endif
+@endif
+
+@if ADDRSIZE == "64" || ADDRSIZE == "128"
 @include "riscv.rv64i.sinc"
 @include "riscv.rv64a.sinc"
-@include "riscv.rv64d.sinc"
-@include "riscv.rv64f.sinc"
 @include "riscv.rv64m.sinc"
+@include "riscv.rv64b.sinc"
+@include "riscv.rv64p.sinc"
+@include "riscv.rv64k.sinc"
+
+@if FPSIZE == "32" || FPSIZE == "64" || FPSIZE == "128"
+@include "riscv.rv64f.sinc"
+@endif
+
+@if FPSIZE == "64" || FPSIZE == "128"
+@include "riscv.rv64d.sinc"
+@endif
+
+@if FPSIZE == "128"
 @include "riscv.rv64q.sinc"
+@endif
 @endif
 
 @include "riscv.csr.sinc"
 @include "riscv.priv.sinc"
 @include "riscv.rvc.sinc"
+@include "riscv.rvv.sinc"
 @include "riscv.zi.sinc"
 
-
+@include "riscv.custom.sinc"
 
 # todos that may be possible, mostly just artifacts from my
 # script to generate the initial SELIGH

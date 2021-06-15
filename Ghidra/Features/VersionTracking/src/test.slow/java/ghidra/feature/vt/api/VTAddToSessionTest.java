@@ -24,7 +24,6 @@ import javax.swing.table.TableModel;
 
 import org.junit.*;
 
-import docking.widgets.MultiLineLabel;
 import docking.wizard.WizardManager;
 import docking.wizard.WizardPanel;
 import generic.test.TestUtils;
@@ -46,8 +45,8 @@ import ghidra.util.table.GhidraTable;
 
 public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 
-	private static final String TEST_SOURCE_PROGRAM_NAME = "VersionTracking/WallaceSrc";
-	private static final String TEST_DESTINATION_PROGRAM_NAME = "VersionTracking/WallaceVersion2";
+	private static String TEST_SOURCE_PROGRAM_NAME = "VersionTracking/WallaceSrc";
+	private static String TEST_DESTINATION_PROGRAM_NAME = "VersionTracking/WallaceVersion2";
 
 	private enum VTWizardPanelAction {
 		BACK, NEXT, FINISH, CANCEL;
@@ -130,7 +129,7 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 
 		createWizardManager();
 
-		SystemUtilities.runSwingLater(
+		runSwingLater(
 			() -> wizardManager.showWizard(controller.getParentComponent()));
 
 		waitForDialogComponent(WizardManager.class);
@@ -186,7 +185,7 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 
 		createWizardManager();
 
-		SystemUtilities.runSwingLater(
+		runSwingLater(
 			() -> wizardManager.showWizard(controller.getParentComponent()));
 
 		waitForDialogComponent(WizardManager.class);
@@ -248,7 +247,7 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 
 		createWizardManager();
 
-		SystemUtilities.runSwingLater(
+		runSwingLater(
 			() -> wizardManager.showWizard(controller.getParentComponent()));
 
 		waitForDialogComponent(WizardManager.class);
@@ -310,7 +309,7 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 
 		createWizardManager();
 
-		SystemUtilities.runSwingLater(
+		runSwingLater(
 			() -> wizardManager.showWizard(controller.getParentComponent()));
 
 		waitForDialogComponent(WizardManager.class);
@@ -387,7 +386,7 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 
 		createWizardManager();
 
-		SystemUtilities.runSwingLater(
+		runSwingLater(
 			() -> wizardManager.showWizard(controller.getParentComponent()));
 
 		waitForDialogComponent(WizardManager.class);
@@ -451,7 +450,7 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 
 		createWizardManager();
 
-		SystemUtilities.runSwingLater(
+		runSwingLater(
 			() -> wizardManager.showWizard(controller.getParentComponent()));
 
 		waitForDialogComponent(WizardManager.class);
@@ -515,7 +514,7 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 
 		createWizardManager();
 
-		SystemUtilities.runSwingLater(
+		runSwingLater(
 			() -> wizardManager.showWizard(controller.getParentComponent()));
 
 		waitForDialogComponent(WizardManager.class);
@@ -592,7 +591,7 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 
 		createWizardManager();
 
-		SystemUtilities.runSwingLater(
+		runSwingLater(
 			() -> wizardManager.showWizard(controller.getParentComponent()));
 
 		waitForDialogComponent(WizardManager.class);
@@ -694,7 +693,7 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 
 		createWizardManager();
 
-		SystemUtilities.runSwingLater(
+		runSwingLater(
 			() -> wizardManager.showWizard(controller.getParentComponent()));
 
 		waitForDialogComponent(WizardManager.class);
@@ -725,12 +724,12 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 		String msgContains = "Data Reference Match";
 		JDialog dialog = waitForJDialog("Version Tracking: Add To Session");
 		assertNotNull("Info dialog not found", dialog);
-		MultiLineLabel label = (MultiLineLabel) findComponentByName(dialog, "MESSAGE-COMPONENT");
-		assertNotNull("Expected server error dialog", label);
+
+		String message = getMessageText(dialog);
 		assertTrue("Expected Server Error message starting with: " + msgStart,
-			label.getLabel().startsWith(msgStart));
+			message.startsWith(msgStart));
 		assertTrue("Expected Server Error message containing: " + msgContains,
-			label.getLabel().contains(msgContains));
+			message.contains(msgContains));
 		pressButtonByText(dialog, "OK");
 		waitForSwing();
 
@@ -747,17 +746,13 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("Number of matches", 0, vtMatchSet2.getMatchCount());
 	}
 
-	//********************************************
-	// Private Work/Validation methods.
-	//********************************************
-
-	private void chooseFromCorrelationPanel(final String correlatorName,
-			final VTWizardPanelAction wizardAction) {
+	private void chooseFromCorrelationPanel(String correlatorName,
+			VTWizardPanelAction wizardAction) {
 
 		WizardPanel currentWizardPanel = wizardManager.getCurrentWizardPanel();
 		assertNotNull(currentWizardPanel);
 		assertTrue(currentWizardPanel instanceof CorrelatorPanel);
-		final CorrelatorPanel correlatorPanel = (CorrelatorPanel) currentWizardPanel;
+		CorrelatorPanel correlatorPanel = (CorrelatorPanel) currentWizardPanel;
 		SystemUtilities.runSwingNow(() -> {
 			GhidraTable table = (GhidraTable) TestUtils.getInstanceField("table", correlatorPanel);
 			TableModel model = table.getModel();
@@ -771,7 +766,7 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void changeCorrelatorOptionsPanel(Object correlatorOptionsObject,
-			final VTWizardPanelAction wizardAction) {
+			VTWizardPanelAction wizardAction) {
 
 		// Options Panel
 		WizardPanel currentWizardPanel = wizardManager.getCurrentWizardPanel();
@@ -837,7 +832,7 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void changeAddressSetOptionsPanel(boolean excludeAccepted, boolean limitAddressSets,
-			final VTWizardPanelAction wizardAction) {
+			VTWizardPanelAction wizardAction) {
 
 		// Address Set Options Panel
 		WizardPanel currentWizardPanel = wizardManager.getCurrentWizardPanel();
@@ -1002,22 +997,22 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	private void changeAddressSetViaListRemoveRange(final boolean isSource,
-			final AddressSetPanel addressSetPanel, final AddressSetView desiredAddressSet) {
+	private void changeAddressSetViaListRemoveRange(boolean isSource,
+			AddressSetPanel addressSetPanel, AddressSetView desiredAddressSet) {
 		ChooseAddressSetEditorPanel panel =
 			(ChooseAddressSetEditorPanel) TestUtils.getInstanceField("panel", addressSetPanel);
 		assertNotNull(panel);
 
-		final JButton addRangeButton =
+		JButton addRangeButton =
 			(JButton) TestUtils.getInstanceField("addRangeButton", panel);
 		assertNotNull("Couldn't get button for adding address range.", addRangeButton);
 		JButton listRemoveRangeButton =
 			(JButton) TestUtils.getInstanceField("removeRangeButton", panel);
 		assertNotNull("Couldn't get button for removing address range for list selection.",
 			listRemoveRangeButton);
-		final JList list = (JList) TestUtils.getInstanceField("list", panel);
+		JList<?> list = (JList<?>) TestUtils.getInstanceField("list", panel);
 		SystemUtilities.runSwingNow(() -> {
-			ListModel model = list.getModel();
+			ListModel<?> model = list.getModel();
 			int size = model.getSize();
 			list.setSelectionInterval(0, size - 1);// Select all items in the list.
 		});
@@ -1033,17 +1028,16 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	private void changeAddressSetViaSubtractDialog(final boolean isSource,
-			final AddressSetPanel addressSetPanel, final AddressSetView desiredAddressSet) {
+	private void changeAddressSetViaSubtractDialog(boolean isSource,
+			AddressSetPanel addressSetPanel, AddressSetView desiredAddressSet) {
 		ChooseAddressSetEditorPanel panel =
 			(ChooseAddressSetEditorPanel) TestUtils.getInstanceField("panel", addressSetPanel);
 		assertNotNull(panel);
 
-		final JButton addRangeButton =
+		JButton addRangeButton =
 			(JButton) TestUtils.getInstanceField("addRangeButton", panel);
-		final JButton subtractRangeButton =
+		JButton subtractRangeButton =
 			(JButton) TestUtils.getInstanceField("subtractRangeButton", panel);
-		JList list = (JList) TestUtils.getInstanceField("list", panel);
 
 		Runnable r = () -> subtractRangeButton.doClick();
 		runSwing(r, false);
@@ -1057,11 +1051,11 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	private void enterAddressRange(final boolean isSource, final String buttonText,
-			final String minAddress, final String maxAddress) {
+	private void enterAddressRange(boolean isSource, String buttonText,
+			String minAddress, String maxAddress) {
 
-		final AddRemoveAddressRangeDialog addRemoveDialog =
-			env.waitForDialogComponent(AddRemoveAddressRangeDialog.class, 2000);
+		AddRemoveAddressRangeDialog addRemoveDialog =
+			waitForDialogComponent(AddRemoveAddressRangeDialog.class);
 		assertNotNull(addRemoveDialog);
 		waitForSwing();
 
@@ -1069,20 +1063,20 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals((isSource ? "Source" : "Destination") + " Address Range",
 			addRemoveDialog.getTitle());
 
-		final AddressInput minAddressField =
+		AddressInput minAddressField =
 			(AddressInput) TestUtils.getInstanceField("minAddressField", addRemoveDialog);
 		assertNotNull(minAddressField);
 
-		SystemUtilities.runSwingLater(() -> {
+		runSwingLater(() -> {
 			Address address = isSource ? sourceAddress(minAddress) : destinationAddress(minAddress);
 			minAddressField.setAddress(address);
 		});
 		waitForSwing();
 
-		final AddressInput maxAddressField =
+		AddressInput maxAddressField =
 			(AddressInput) TestUtils.getInstanceField("maxAddressField", addRemoveDialog);
 		assertNotNull(maxAddressField);
-		SystemUtilities.runSwingLater(() -> {
+		runSwingLater(() -> {
 			Address address = isSource ? sourceAddress(maxAddress) : destinationAddress(maxAddress);
 			maxAddressField.setAddress(address);
 		});
@@ -1093,11 +1087,11 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue("Dialog not closed after pressing: " + buttonText, !addRemoveDialog.isShowing());
 	}
 
-	private void enterAddressRange(final boolean isSource, final String buttonText,
-			final Address minAddress, final Address maxAddress) {
+	private void enterAddressRange(boolean isSource, String buttonText,
+			Address minAddress, Address maxAddress) {
 
-		final AddRemoveAddressRangeDialog addRemoveDialog =
-			env.waitForDialogComponent(AddRemoveAddressRangeDialog.class, 2000);
+		AddRemoveAddressRangeDialog addRemoveDialog =
+			waitForDialogComponent(AddRemoveAddressRangeDialog.class);
 		assertNotNull(addRemoveDialog);
 		waitForSwing();
 
@@ -1105,18 +1099,18 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals((isSource ? "Source" : "Destination") + " Address Range",
 			addRemoveDialog.getTitle());
 
-		final AddressInput minAddressField =
+		AddressInput minAddressField =
 			(AddressInput) TestUtils.getInstanceField("minAddressField", addRemoveDialog);
 		assertNotNull(minAddressField);
 
-		SystemUtilities.runSwingLater(() -> minAddressField.setAddress(minAddress));
+		runSwingLater(() -> minAddressField.setAddress(minAddress));
 
 		waitForSwing();
 
-		final AddressInput maxAddressField =
+		AddressInput maxAddressField =
 			(AddressInput) TestUtils.getInstanceField("maxAddressField", addRemoveDialog);
 		assertNotNull(maxAddressField);
-		SystemUtilities.runSwingLater(() -> {
+		runSwingLater(() -> {
 			maxAddressField.setAddress(maxAddress);
 		});
 
@@ -1133,7 +1127,7 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void changeAddressSetsPanel(AddressSetChoice sourceChoice,
-			AddressSetChoice destinationChoice, final VTWizardPanelAction wizardAction) {
+			AddressSetChoice destinationChoice, VTWizardPanelAction wizardAction) {
 
 		changeAddressSetChoices(sourceChoice, destinationChoice);
 
@@ -1154,8 +1148,8 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 		setSelectionInTool(destinationTool, destinationSelection);
 	}
 
-	private void checkSummaryPanel(final String labelString, final String summaryString,
-			final VTWizardPanelAction wizardAction) {
+	private void checkSummaryPanel(String labelString, String summaryString,
+			VTWizardPanelAction wizardAction) {
 
 		// Address Set Options Panel
 		WizardPanel currentWizardPanel = wizardManager.getCurrentWizardPanel();
@@ -1174,7 +1168,8 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(labelString, labelText);
 		assertEquals(summaryString, summaryText);
 
-		SystemUtilities.runSwingNow(() -> invoke(wizardAction));
+		runSwingLater(() -> invoke(wizardAction));
+		waitForSwing();
 	}
 
 	private int getRowWithFieldValueInColumn(String string, TableModel model, int column) {

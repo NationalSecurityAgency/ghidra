@@ -17,15 +17,18 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import docking.action.MenuData;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighFunctionDBUtil;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.util.HelpLocation;
 
 public class CommitLocalsAction extends AbstractDecompilerAction {
 
 	public CommitLocalsAction() {
 		super("Commit Locals");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionCommitLocals"));
 		setPopupMenuData(new MenuData(new String[] { "Commit Local Names" }, "Commit"));
 		setDescription(
 			"Save Local variable names from Decompiler window to Program");

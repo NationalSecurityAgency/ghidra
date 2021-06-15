@@ -25,6 +25,7 @@ import ghidra.app.context.ListingContextAction;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.options.Options;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.lang.GhidraLanguagePropertyKeys;
 import ghidra.program.model.listing.Function;
@@ -118,10 +119,11 @@ class AnalyzeStackRefsAction extends ListingContextAction {
 		if (context.hasSelection()) {
 			return true;
 		}
-		Function func = funcPlugin.getFunction(context);
-		if (func != null) {
-			return !func.isExternal();
+		Program program = context.getProgram();
+		Address addr = context.getAddress();
+		if (program == null || addr == null) {
+			return false;
 		}
-		return false;
+		return program.getListing().getFunctionContaining(addr) != null;
 	}
 }

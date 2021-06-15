@@ -1,0 +1,53 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Stack</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Stack</H1>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/DebuggerStackPlugin.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>The stack window displays the current trace's execution stack, as unwound and reported by
+    the target. Not all debuggers will unwind the stack, in which case, this window displays only
+    the innermost frame. When emulation is used to generate the current machine state, only a
+    single synthetic frame is shown. Level 0 always refers to the innermost frame, and each
+    incremental level refers to the next caller in the chain &mdash; most of the time. The current
+    frame comprises one element of the tool's current "coordinates." Selecting a frame changes
+    those coordinates, potentially causing other windows to display different information. Namely,
+    the <A href="help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html">Registers</A>
+    window will show registers for the current frame, assuming they can be retrieved. The Listings
+    may also navigate to the current frame's program counter.</P>
+
+    <H2>Table Columns</H2>
+
+    <P>The stack table has the following columns:</P>
+
+    <UL>
+      <LI>Level - the level of the frame, counting 0-up starting at the innermost frame.</LI>
+
+      <LI>PC - the address of the instruction to execute next, or upon return of the callee for
+      non-0 frames. Different platforms may have different subtleties in how they report PC.
+      Double-clicking this field will navigate to the address.</LI>
+
+      <LI>Function - the name of the containing function, if Ghidra has the corresponding module
+      image imported and analyzed.</LI>
+
+      <LI>Comment - a user-modifiable comment.</LI>
+    </UL>
+  </BODY>
+</HTML>

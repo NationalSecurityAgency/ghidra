@@ -129,9 +129,12 @@ public class GTreeModel implements TreeModel {
 			if (node == null) {
 				return;
 			}
+
 			if (node != changedNode) {
+				// Note: calling setChildren() here triggers another call to this method.  But, 
+				//       the 'isFiringNodeStructureChanged' flag prevents that notification from
+				//       happening.  So, we still have to fire the event below.
 				node.setChildren(null);
-				return;	// the previous call will generate the proper event, so bail
 			}
 
 			TreeModelEvent event = new TreeModelEvent(this, node.getTreePath());
@@ -158,7 +161,15 @@ public class GTreeModel implements TreeModel {
 		SystemUtilities.assertThisIsTheSwingThread(
 			"GTreeModel.fireNodeDataChanged() must be " + "called from the AWT thread");
 
-		TreeModelEvent event = new TreeModelEvent(this, (TreePath) null);
+		GTreeNode viewNode = convertToViewNode(changedNode);
+		if (viewNode == null) {
+			return;
+		}
+		// Note - we are passing in the treepath of the node that changed.  The javadocs in 
+		// TreemodelListener seems to imply that you need to pass in the treepath of the parent
+		// of the node that changed and then the indexes of the children that changed. But this 
+		// works and is cheaper then computing the index of the node that changed.
+		TreeModelEvent event = new TreeModelEvent(this, viewNode.getTreePath());
 
 		for (TreeModelListener listener : listeners) {
 			listener.treeNodesChanged(event);
@@ -223,27 +234,6 @@ public class GTreeModel implements TreeModel {
 
 	public void setEventsEnabled(boolean b) {
 		eventsEnabled = b;
-	}
-
-	private TreeModelEvent getChangedNodeEvent(GTreeNode changedNode) {
-		GTreeNode parentNode = changedNode.getParent();
-		if (parentNode == null) { // tree requires different event form when it is the root that changes
-			return new TreeModelEvent(this, root.getTreePath(), null, null);
-		}
-
-		GTreeNode node = convertToViewNode(changedNode);
-		if (node == null) {
-			return null;
-		}
-
-		int indexInParent = node.getIndexInParent();
-		if (indexInParent < 0) {
-			return null;
-		}
-
-		return new TreeModelEvent(this, node.getParent().getTreePath(), new int[] { indexInParent },
-			new Object[] { changedNode });
-
 	}
 
 	private GTreeNode convertToViewNode(GTreeNode node) {

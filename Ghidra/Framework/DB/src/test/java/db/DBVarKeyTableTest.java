@@ -86,7 +86,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 		long txId = dbh.startTransaction();
 		Table table =
 			DBTestUtils.createBinaryKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false);
-		Record rec = null;
+		DBRecord rec = null;
 		try {
 			rec = DBTestUtils.createBinaryKeyRecord(table, -MAX_VAR_KEY_LENGTH, varDataSize, true);
 		}
@@ -271,13 +271,13 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 	 * @param varDataSize size of variable length data fields.
 	 * @return Record[] records which were inserted.
 	 */
-	private Record[] createRandomVarKeyTableRecords(Table table, int recordCnt, int varDataSize)
+	private DBRecord[] createRandomVarKeyTableRecords(Table table, int recordCnt, int varDataSize)
 			throws IOException {
 		long txId = dbh.startTransaction();
 		if (table == null) {
 			table = DBTestUtils.createBinaryKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false);
 		}
-		Record[] recs = new Record[recordCnt];
+		DBRecord[] recs = new DBRecord[recordCnt];
 		for (int i = 0; i < recordCnt; i++) {
 			try {
 				recs[i] =
@@ -297,7 +297,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 	 * @param varDataSize size of variable length data fields.
 	 * @return Record[] records which were inserted.
 	 */
-	private Record[] createOrderedVarKeyTableRecords(int recordCnt, long keyIncrement,
+	private DBRecord[] createOrderedVarKeyTableRecords(int recordCnt, long keyIncrement,
 			int varDataSize) throws IOException {
 		long txId = dbh.startTransaction();
 		Table table =
@@ -305,7 +305,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 		long key = 0;
 		Field keyField = new LongField();
 
-		Record[] recs = new Record[recordCnt];
+		DBRecord[] recs = new DBRecord[recordCnt];
 		for (int i = 0; i < recordCnt; i++) {
 			try {
 				keyField.setLongValue(key);
@@ -331,7 +331,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 	 */
 	private void iterateVarKeyRecords(boolean testStoredDB, int recordCnt, long keyIncrement,
 			int varDataSize) throws IOException {
-		Record[] recs = null;
+		DBRecord[] recs = null;
 		if (keyIncrement == 0) {
 			recs = createRandomVarKeyTableRecords(null, recordCnt, varDataSize);
 		}
@@ -349,7 +349,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 		int recIx = 0;
 		RecordIterator iter = table.iterator();
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(recordCnt, recIx);
@@ -358,7 +358,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 		recIx = recordCnt / 2;
 		iter = table.iterator(recs[recIx].getKeyField());
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(recordCnt, recIx);
@@ -367,7 +367,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 		recIx = recordCnt - 1;
 		iter = table.iterator(DBTestUtils.getMaxValue(MAX_VAR_KEY_LENGTH));
 		while (iter.hasPrevious()) {
-			Record rec = iter.previous();
+			DBRecord rec = iter.previous();
 			assertEquals(recs[recIx--], rec);
 		}
 		assertEquals(-1, recIx);
@@ -376,7 +376,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 		recIx = recordCnt / 2;
 		iter = table.iterator(recs[recIx].getKeyField());
 		while (iter.hasPrevious()) {
-			Record rec = iter.previous();
+			DBRecord rec = iter.previous();
 			assertEquals(recs[recIx--], rec);
 		}
 		assertEquals(-1, recIx);
@@ -388,7 +388,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 			recs[minIx].getKeyField());
 		recIx = minIx;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(recIx, maxIx + 1);
@@ -398,7 +398,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 			recs[maxIx].getKeyField());
 		recIx = maxIx;
 		while (iter.hasPrevious()) {
-			Record rec = iter.previous();
+			DBRecord rec = iter.previous();
 			assertEquals(recs[recIx--], rec);
 		}
 		assertEquals(recIx, minIx - 1);
@@ -515,7 +515,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 	 */
 	private void iterateVarKeys(boolean testStoredDB, int recordCnt, long keyIncrement,
 			int varDataSize) throws IOException {
-		Record[] recs = null;
+		DBRecord[] recs = null;
 		if (keyIncrement == 0) {
 			recs = createRandomVarKeyTableRecords(null, recordCnt, varDataSize);
 		}
@@ -692,7 +692,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testForwardDeleteIterator() throws IOException {
 
-		Record[] recs = createOrderedVarKeyTableRecords(SMALL_ITER_REC_CNT, 2, 1);
+		DBRecord[] recs = createOrderedVarKeyTableRecords(SMALL_ITER_REC_CNT, 2, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 		assertEquals(SMALL_ITER_REC_CNT, table.getRecordCount());
@@ -711,7 +711,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testReverseDeleteIterator() throws IOException {
 
-		Record[] recs = createOrderedVarKeyTableRecords(SMALL_ITER_REC_CNT, 2, 1);
+		DBRecord[] recs = createOrderedVarKeyTableRecords(SMALL_ITER_REC_CNT, 2, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 		assertEquals(SMALL_ITER_REC_CNT, table.getRecordCount());
@@ -729,22 +729,22 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetVarKeyRecordAfter() throws IOException {
-		Record[] recs = createRandomVarKeyTableRecords(null, 16000, 1);
+		DBRecord[] recs = createRandomVarKeyTableRecords(null, 16000, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
 		// After test
 		for (int i = 1000; i < 16000; i += 1000) {
-			Record rec = table.getRecordAfter(recs[i].getKeyField());
+			DBRecord rec = table.getRecordAfter(recs[i].getKeyField());
 			assertEquals(rec.getKeyField(), recs[i + 1].getKeyField());
 		}
 
 		// End test
-		Record rec = table.getRecordAfter(recs[15999].getKeyField());
+		DBRecord rec = table.getRecordAfter(recs[15999].getKeyField());
 		assertNull(rec);
 	}
 
-	private int findHoleAfterVarKey(Record[] recs, int startIx) {
+	private int findHoleAfterVarKey(DBRecord[] recs, int startIx) {
 		for (int i = startIx; i < recs.length - 1; i++) {
 			if (DBTestUtils.increment((BinaryField) recs[i].getKeyField(),
 				MAX_VAR_KEY_LENGTH).compareTo(recs[i + 1].getKeyField()) < 0) {
@@ -754,7 +754,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 		return -1;
 	}
 
-	private int findHoleBeforeVarKey(Record[] recs, int startIx) {
+	private int findHoleBeforeVarKey(DBRecord[] recs, int startIx) {
 		for (int i = startIx; i < recs.length; i++) {
 			if (DBTestUtils.increment((BinaryField) recs[i - 1].getKeyField(),
 				MAX_VAR_KEY_LENGTH).compareTo(recs[i].getKeyField()) < 0) {
@@ -766,13 +766,13 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetVarKeyRecordAtOrAfter() throws IOException {
-		Record[] recs = createRandomVarKeyTableRecords(null, 16000, 1);
+		DBRecord[] recs = createRandomVarKeyTableRecords(null, 16000, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
 		// At and After tests
 		for (int i = 1000; i < 16000; i += 1000) {
-			Record rec = table.getRecordAtOrAfter(recs[i].getKeyField());
+			DBRecord rec = table.getRecordAtOrAfter(recs[i].getKeyField());
 			assertEquals(rec.getKeyField(), recs[i].getKeyField());
 			int ix = findHoleAfterVarKey(recs, i + 500);
 			if (ix < 0) {
@@ -785,7 +785,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 
 		// End tests
 		Field lastKey = recs[15999].getKeyField();
-		Record rec = table.getRecordAtOrAfter(lastKey);
+		DBRecord rec = table.getRecordAtOrAfter(lastKey);
 		assertEquals(rec.getKeyField(), lastKey);
 		rec = table.getRecordAtOrAfter(
 			DBTestUtils.increment((BinaryField) lastKey, MAX_VAR_KEY_LENGTH));
@@ -794,13 +794,13 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetVarKeyRecordAtOrBefore() throws IOException {
-		Record[] recs = createRandomVarKeyTableRecords(null, 16000, 1);
+		DBRecord[] recs = createRandomVarKeyTableRecords(null, 16000, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
 		// At and Before tests
 		for (int i = 1000; i < 16000; i += 1000) {
-			Record rec = table.getRecordAtOrBefore(recs[i].getKeyField());
+			DBRecord rec = table.getRecordAtOrBefore(recs[i].getKeyField());
 			assertEquals(rec.getKeyField(), recs[i].getKeyField());
 			int ix = findHoleBeforeVarKey(recs, i + 500);
 			if (ix < 0) {
@@ -813,7 +813,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 
 		// End tests
 		Field firstKey = recs[0].getKeyField();
-		Record rec = table.getRecordAtOrBefore(firstKey);
+		DBRecord rec = table.getRecordAtOrBefore(firstKey);
 		assertEquals(rec.getKeyField(), firstKey);
 		rec = table.getRecordAtOrBefore(
 			DBTestUtils.decrement((BinaryField) firstKey, MAX_VAR_KEY_LENGTH));
@@ -823,7 +823,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testDeleteVarKeyRecord() throws IOException {
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomVarKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomVarKeyTableRecords(null, cnt, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
@@ -837,7 +837,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 		RecordIterator iter = table.iterator();
 		int recIx = 1;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 			if ((recIx % 1000) == 0) {
 				++recIx;
@@ -849,7 +849,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testForwardDeleteVarKeyRecord() throws IOException {
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomVarKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomVarKeyTableRecords(null, cnt, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
@@ -865,7 +865,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testReverseDeleteVarKeyRecord() throws IOException {
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomVarKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomVarKeyTableRecords(null, cnt, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
@@ -881,7 +881,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 	public void testDeleteAllVarKeyRecords() throws IOException {
 
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomVarKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomVarKeyTableRecords(null, cnt, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
@@ -901,7 +901,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 		iter = table.iterator();
 		int recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);
@@ -909,7 +909,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 
 	private void deleteVarKeyRangeRecords(int count, int startIx, int endIx) throws IOException {
 
-		Record[] recs = createRandomVarKeyTableRecords(null, count, 1);
+		DBRecord[] recs = createRandomVarKeyTableRecords(null, count, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
@@ -920,7 +920,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 		RecordIterator iter = table.iterator();
 		int recIx = startIx != 0 ? 0 : (endIx + 1);
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 			if (recIx == startIx) {
 				recIx = endIx + 1;
@@ -943,7 +943,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testUpdateVarKeyRecord() throws IOException {
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomVarKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomVarKeyTableRecords(null, cnt, 1);
 //Record[] recs = createOrderedVarKeyTableRecords(cnt, 1, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
@@ -958,7 +958,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 		RecordIterator iter = table.iterator();
 		int recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);
@@ -967,7 +967,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testUpdateBigVarKeyRecord() throws IOException {
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomVarKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomVarKeyTableRecords(null, cnt, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
@@ -981,7 +981,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 		RecordIterator iter = table.iterator();
 		int recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);
@@ -996,7 +996,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 		iter = table.iterator();
 		recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);

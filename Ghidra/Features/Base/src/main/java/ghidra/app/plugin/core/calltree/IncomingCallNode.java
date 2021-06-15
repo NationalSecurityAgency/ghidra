@@ -17,8 +17,11 @@ package ghidra.app.plugin.core.calltree;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import javax.swing.Icon;
+
+import org.apache.commons.collections4.map.LazyMap;
 
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.navigation.locationreferences.ReferenceUtils;
@@ -70,7 +73,7 @@ public class IncomingCallNode extends CallNode {
 	}
 
 	@Override
-	public Function getContainingFunction() {
+	public Function getRemoteFunction() {
 		return function;
 	}
 
@@ -86,7 +89,8 @@ public class IncomingCallNode extends CallNode {
 			new FunctionSignatureFieldLocation(program, functionAddress);
 
 		Set<Address> addresses = ReferenceUtils.getReferenceAddresses(location, monitor);
-		List<GTreeNode> nodes = new ArrayList<>();
+		LazyMap<Function, List<GTreeNode>> nodesByFunction =
+			LazyMap.lazyMap(new HashMap<>(), k -> new ArrayList<>());
 		FunctionManager functionManager = program.getFunctionManager();
 		for (Address fromAddress : addresses) {
 			monitor.checkCanceled();
@@ -97,12 +101,17 @@ public class IncomingCallNode extends CallNode {
 
 			IncomingCallNode node = new IncomingCallNode(program, callerFunction, fromAddress,
 				filterDuplicates, filterDepth);
-			addNode(nodes, node);
+			addNode(nodesByFunction, node);
 		}
 
-		Collections.sort(nodes, new CallNodeComparator());
+		List<GTreeNode> children =
+			nodesByFunction.values()
+					.stream()
+					.flatMap(list -> list.stream())
+					.collect(Collectors.toList());
+		Collections.sort(children, new CallNodeComparator());
 
-		return nodes;
+		return children;
 	}
 
 	@Override

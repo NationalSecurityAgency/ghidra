@@ -17,7 +17,7 @@ package ghidra.feature.vt.api.db;
 
 import static ghidra.feature.vt.api.db.VTMatchMarkupItemTableDBAdapter.MarkupTableDescriptor.*;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.feature.vt.api.impl.MarkupItemStorage;
 import ghidra.feature.vt.api.impl.MarkupItemStorageImpl;
 import ghidra.feature.vt.api.main.VTAssociation;
@@ -36,9 +36,9 @@ public class MarkupItemStorageDB extends DatabaseObject implements MarkupItemSto
 	private final VTAssociation association;
 	private final VTSessionDB session;
 
-	private Record record;
+	private DBRecord record;
 
-	MarkupItemStorageDB(Record record, DBObjectCache<MarkupItemStorageDB> cache,
+	MarkupItemStorageDB(DBRecord record, DBObjectCache<MarkupItemStorageDB> cache,
 			AssociationDatabaseManager associationManager) {
 		super(cache, record.getKey());
 		this.record = record;
@@ -166,7 +166,7 @@ public class MarkupItemStorageDB extends DatabaseObject implements MarkupItemSto
 	}
 
 	@Override
-	protected boolean refresh(Record matchRecord) {
+	protected boolean refresh(DBRecord matchRecord) {
 		if (matchRecord == null) {
 			matchRecord = associationManager.getMarkupItemRecord(key);
 		}

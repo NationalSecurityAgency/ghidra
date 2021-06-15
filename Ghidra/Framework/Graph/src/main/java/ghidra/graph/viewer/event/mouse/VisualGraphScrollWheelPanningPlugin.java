@@ -16,8 +16,7 @@
 package ghidra.graph.viewer.event.mouse;
 
 import java.awt.Point;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
+import java.awt.event.*;
 
 import docking.DockingUtils;
 import edu.uci.ics.jung.visualization.control.AbstractGraphMousePlugin;
@@ -33,6 +32,11 @@ public class VisualGraphScrollWheelPanningPlugin<V extends VisualVertex,
 
 	public VisualGraphScrollWheelPanningPlugin() {
 		super(0);
+	}
+
+	@Override
+	public boolean checkModifiers(MouseEvent e) {
+		return e.getModifiersEx() == modifiers;
 	}
 
 	@Override
@@ -91,7 +95,7 @@ public class VisualGraphScrollWheelPanningPlugin<V extends VisualVertex,
 		VisualGraphOptions options = viewer.getOptions();
 		boolean scrollWheelPans = options.getScrollWheelPans();
 		int scrollWheelModifierToggle = DockingUtils.CONTROL_KEY_MODIFIER_MASK;
-		int eventModifiers = e.getModifiers();
+		int eventModifiers = e.getModifiersEx();
 		if (scrollWheelPans) {
 			// scrolling will pan if *not* modified (modified in this case means to zoom)
 			return !((scrollWheelModifierToggle & eventModifiers) == scrollWheelModifierToggle);

@@ -22,8 +22,10 @@ import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
+import ghidra.util.HelpLocation;
 
 public class BackwardsSliceAction extends AbstractDecompilerAction {
 
@@ -31,6 +33,7 @@ public class BackwardsSliceAction extends AbstractDecompilerAction {
 
 	public BackwardsSliceAction() {
 		super("Highlight Backward Slice");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionHighlight"));
 		setPopupMenuData(new MenuData(new String[] { "Highlight", "Backward Slice" }, "Decompile"));
 	}
 

@@ -219,11 +219,10 @@ public class SymbolUtilities {
 	/**
 	 * Validate the given symbol name: cannot be null, cannot be an empty string, cannot contain blank
 	 * characters, cannot be a reserved name.
-	 * NOTE: This is not infallible since default data labels can start with any data-type name
+	 * @param name symbol name to be validated
 	 * @throws InvalidInputException invalid or reserved name has been specified
 	 */
-	public static void validateName(String name, Address address, SymbolType symbolType,
-			AddressFactory addrFactory) throws InvalidInputException {
+	public static void validateName(String name) throws InvalidInputException {
 
 		if (name == null) {
 			throw new InvalidInputException("Symbol name can't be null");
@@ -238,18 +237,12 @@ public class SymbolUtilities {
 		if (containsInvalidChars(name)) {
 			throw new InvalidInputException("Symbol name contains invalid characters: " + name);
 		}
-		if (address.isMemoryAddress() && isReservedDynamicLabelName(name, addrFactory)) {
-			if (symbolType == SymbolType.FUNCTION && getDefaultFunctionName(address).equals(name)) {
-				return;
-			}
-			throw new InvalidInputException(
-				"Symbol name matches possible default symbol name: " + name);
-		}
 	}
 
 	/**
 	 * Returns true if the given name starts with a possible default symbol prefix.
 	 * @param name the name string to test.
+	 * @return true if name starts with a know dynamic prefix
 	 */
 	public static boolean startsWithDefaultDynamicPrefix(String name) {
 		for (String element : DYNAMIC_PREFIX_ARRAY) {
@@ -286,9 +279,11 @@ public class SymbolUtilities {
 	/**
 	 * Tests if the given name is a possible dynamic symbol name.
 	 * WARNING! This method should be used carefully since it will return true for
-	 * any name which ends with an '_' followed by a valid hex value
+	 * any name which starts with a known dynamic label prefix or ends with an '_' 
+	 * followed by a valid hex value.
 	 * @param name the name to test
 	 * @param caseSensitive true if case matters.
+	 * @return true if name is a possible dynamic symbol name, else false
 	 */
 	public static boolean isDynamicSymbolPattern(String name, boolean caseSensitive) {
 
@@ -337,6 +332,7 @@ public class SymbolUtilities {
 	 * Returns true if the specified char
 	 * is not valid for use in a symbol name
 	 * @param c the character to be tested as a valid symbol character.
+	 * @return return true if c is an invalid char within a symbol name, else false
 	 */
 	public static boolean isInvalidChar(char c) {
 		if (c < ' ') { // non-printable ASCII
@@ -361,6 +357,7 @@ public class SymbolUtilities {
 	 * @param str the string to have invalid chars converted to underscores or removed.
 	 * @param replaceWithUnderscore - true means replace the invalid
 	 * chars with underscore. if false, then just drop the invalid chars
+	 * @return modified string
 	 */
 	public static String replaceInvalidChars(String str, boolean replaceWithUnderscore) {
 		if (str == null) {
@@ -383,8 +380,9 @@ public class SymbolUtilities {
 	}
 
 	/**
-	 * Create a name for an offcut reference.
+	 * Create a dynamic label name for an offcut reference.
 	 * @param addr the address at which to create an offcut reference name.
+	 * @return dynamic offcut label name
 	 */
 	public static String getDynamicOffcutName(Address addr) {
 		if (addr != null) {
@@ -394,9 +392,13 @@ public class SymbolUtilities {
 	}
 
 	/**
-	 * Create a name for a dynamic symbol
+	 * Create a name for a dynamic symbol with a 3-letter prefix based upon reference level
+	 * and an address.  Acceptable referenceLevel's are: 
+	 * {@link #UNK_LEVEL}, {@link #DAT_LEVEL}, {@link #LAB_LEVEL}, {@link #SUB_LEVEL}, 
+	 * {@link #EXT_LEVEL}, {@link #FUN_LEVEL}.
 	 * @param referenceLevel the type of reference for which to create a dynamic name.
 	 * @param addr the address at which to create a dynamic name.
+	 * @return dynamic symbol name
 	 */
 	public static String getDynamicName(int referenceLevel, Address addr) {
 		if (addr != null) {
@@ -565,9 +567,18 @@ public class SymbolUtilities {
 
 	/**
 	 * Parse a dynamic name and return its address or null if unable to parse.
+	 * @param factory address factory
 	 * @param name the dynamic label name to parse into an address.
+	 * @return address corresponding to symbol name if it satisfies possible dynamic naming
+	 * or null if unable to parse address fro name
 	 */
 	public static Address parseDynamicName(AddressFactory factory, String name) {
+
+		// assume dynamic names will naver start with an underscore
+		if (name.startsWith(UNDERSCORE)) {
+			return null;
+		}
+
 		String[] pieces = name.split(UNDERSCORE);
 		if (pieces.length < 2) { // if we have less than two pieces, then this is not a dynamic name.
 			return null;
@@ -920,6 +931,7 @@ public class SymbolUtilities {
 	 * @param program the program to search.
 	 * @param symbolName the name of the global label or function symbol to search.
 	 * @param errorConsumer the object to use for reporting errors via it's accept() method.
+	 * @return symbol if a unique label/function symbol with name is found or null
 	 */
 	public static Symbol getExpectedLabelOrFunctionSymbol(Program program, String symbolName,
 			Consumer<String> errorConsumer) {
@@ -945,6 +957,7 @@ public class SymbolUtilities {
 	 * @param program the program to search.
 	 * @param symbolName the name of the global label or function symbol to search.
 	 * @param errorConsumer the object to use for reporting errors via it's accept() method.
+	 * @return symbol if a unique label/function symbol with name is found or null
 	 */
 	public static Symbol getLabelOrFunctionSymbol(Program program, String symbolName,
 			Consumer<String> errorConsumer) {
@@ -965,7 +978,7 @@ public class SymbolUtilities {
 	 * may be returned.  If attempting to create a global symbol and the name already exists 
 	 * at the address no symbol will be created and null will be returned.  
 	 * If attempting to create a non-global symbol, which does not exist,
-	 * and a global symbol does exist with same name its' namespace will be changed. 
+	 * and a global symbol does exist with same name its namespace will be changed. 
 	 * @param program program within which the symbol should be created
 	 * @param address memory address where symbol should be created
 	 * @param namespace symbol namespace or null for global

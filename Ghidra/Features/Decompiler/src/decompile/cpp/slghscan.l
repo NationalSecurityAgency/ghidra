@@ -16,7 +16,7 @@
  */
 %{
 #include "slgh_compile.hh"
-#include "slghparse.tab.hh"
+#include "slghparse.hh"
 #define yywrap() 1
 #define YY_SKIP_YYWRAP
 
@@ -494,7 +494,7 @@ int4 scan_number(char *numtext,YYSTYPE *lval,bool signednum)
 [(),\-] { yylval.ch = yytext[0]; return yytext[0]; }
 \:    { BEGIN(print); slgh->calcContextLayout(); yylval.ch = yytext[0]; return yytext[0]; }
 \{    { BEGIN(sem); yylval.ch = yytext[0]; return yytext[0]; }
-#.*$
+#.*
 [\r\ \t\v]+
 \n             { slgh->nextLine(); }
 macro  { BEGIN(macroblock); return MACRO_KEY; }
@@ -540,7 +540,7 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 <defblock>values    { return VALUES_KEY; }
 <defblock>variables { return VARIABLES_KEY; }
 <defblock>pcodeop   { return PCODEOP_KEY; }
-<defblock>#.*$
+<defblock>#.*
 <defblock>[a-zA-Z_.][a-zA-Z0-9_.]* {  return find_symbol();  }
 <defblock>[0-9]|[1-9][0-9]+	{ return scan_number(yytext,&yylval,false); }
 <defblock>0x[0-9a-fA-F]+	{ return scan_number(yytext,&yylval,false); }
@@ -582,7 +582,7 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 <pattern>\|         { yylval.ch = yytext[0];  return (actionon==0) ? yytext[0] : OP_OR; }
 <pattern>\^         { return OP_XOR; }
 <pattern>[=(),:;+\-*/~<>]   { yylval.ch = yytext[0]; return yytext[0]; }
-<pattern>#.*$
+<pattern>#.*
 <pattern>[a-zA-Z_.][a-zA-Z0-9_.]*   { return find_symbol();   }
 <pattern>[0-9]|[1-9][0-9]+ { return scan_number(yytext,&yylval,true); }
 <pattern>0x[0-9a-fA-F]+  { return scan_number(yytext,&yylval,true); }
@@ -648,7 +648,7 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 <sem>build         { return BUILD_KEY; }
 <sem>local         { return LOCAL_KEY; }
 <sem>[=(),:\[\];!&|^+\-*/%~<>]   { yylval.ch = yytext[0]; return yytext[0]; }
-<sem>#.*$
+<sem>#.*
 <sem>[a-zA-Z_.][a-zA-Z0-9_.]*   { return find_symbol();   }
 <sem>[0-9]|[1-9][0-9]+ { return scan_number(yytext,&yylval,false); }
 <sem>0x[0-9a-fA-F]+  { return scan_number(yytext,&yylval,false); }

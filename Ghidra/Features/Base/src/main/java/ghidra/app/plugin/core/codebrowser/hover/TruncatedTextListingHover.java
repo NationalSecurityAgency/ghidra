@@ -21,15 +21,12 @@ import javax.swing.JToolTip;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.GhidraOptions;
-import ghidra.app.plugin.core.hover.AbstractTruncatedTextHover;
-import ghidra.app.util.HelpTopics;
+import ghidra.app.plugin.core.hover.AbstractConfigurableHover;
 import ghidra.app.util.viewer.field.ListingTextField;
-import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HTMLUtilities;
-import ghidra.util.HelpLocation;
 
 /**
  * A hover service to show tool tip text for hovering over a truncated field, containing a "...",
@@ -38,16 +35,32 @@ import ghidra.util.HelpLocation;
  * This provides the hover capability for the TruncatedTextHoverPlugin and can
  * also be used to directly provide this hover capability to a listing.
  */
-public class TruncatedTextListingHover extends AbstractTruncatedTextHover
+public class TruncatedTextListingHover extends AbstractConfigurableHover
 		implements ListingHoverService {
 
 	private static final String NAME = "Truncated Text Display";
+	private static final String DESCRIPTION =
+		"Toggle whether truncated text is displayed in a tooltip " +
+			"when the mouse hovers over a field that is truncated.";
 	private static final int POPUP_PRIORITY = 10;
-
-	///////////////////////////////////////////////////////////
 
 	public TruncatedTextListingHover(PluginTool tool) {
 		super(tool, POPUP_PRIORITY);
+	}
+
+	@Override
+	protected String getName() {
+		return NAME;
+	}
+
+	@Override
+	protected String getDescription() {
+		return DESCRIPTION;
+	}
+
+	@Override
+	protected String getOptionsCategory() {
+		return GhidraOptions.CATEGORY_BROWSER_POPUPS;
 	}
 
 	@Override
@@ -67,22 +80,5 @@ public class TruncatedTextListingHover extends AbstractTruncatedTextHover
 		}
 
 		return null;
-	}
-
-	@Override
-	public void initializeOptions() {
-		options = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_POPUPS);
-		options.setOptionsHelpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, "MouseHover"));
-		options.registerOption(NAME, true,
-			new HelpLocation(HelpTopics.CODE_BROWSER, "TruncatedTextPopup"),
-			"Toggle whether truncated text is displayed in a tooltip " +
-				"when the mouse hovers over a field that is truncated.");
-		setOptions(options, NAME);
-		options.addOptionsChangeListener(this);
-	}
-
-	@Override
-	public void setOptions(Options options, String name) {
-		enabled = options.getBoolean(NAME, true);
 	}
 }

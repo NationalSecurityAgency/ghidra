@@ -157,7 +157,7 @@ public interface ElfConstants {
 
 	/**No machine*/
 	public static final short EM_NONE = 0;
-	/** AT&T WE 32100 */
+	/** AT&amp;T WE 32100 */
 	public static final short EM_M32 = 1;
 	/**SUN SPARC */
 	public static final short EM_SPARC = 2;

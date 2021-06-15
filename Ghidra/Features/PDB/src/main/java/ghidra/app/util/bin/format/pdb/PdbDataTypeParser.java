@@ -79,12 +79,9 @@ class PdbDataTypeParser {
 		return programDataTypeMgr;
 	}
 
-	void flushDataTypeCache(TaskMonitor monitor) throws CancelledException {
-		for (DataType dt : dataTypeCache.values()) {
-			monitor.checkCanceled();
-			programDataTypeMgr.resolve(dt,
-				DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
-		}
+	void flushDataTypeCache() throws CancelledException {
+		programDataTypeMgr.addDataTypes(dataTypeCache.values(),
+			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER, monitor);
 	}
 
 	/**

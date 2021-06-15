@@ -11,6 +11,16 @@
     <property key="assemblyRating:AARCH64:LE:64:v8A" value="PLATINUM"/>
   </properties>
   <programcounter register="pc"/>
+<!-- The context_data's context_set initializes the given registers to the given values. -->
+  <context_data>
+    <context_set space="ram">
+<!-- These context registers are only modified by the user, e.g. with the "Set Registers..." command. -->
+      <set name="ShowPAC" val="0" description="1 to show PAC operations in decompiler"/>
+      <set name="PAC_clobber" val="0" description="1 to let PAC operations overwrite their operands in decompiler"/>
+      <set name="ShowBTI" val="0" description="1 to show BTI effects in decompiler"/>
+      <set name="ShowMemTag" val="0" description="1 to show memory tag checks in decompiler"/>
+    </context_set>
+  </context_data>
   
   <default_symbols>
     <symbol name="Reset" address="ram:0x0" entry="true"/>

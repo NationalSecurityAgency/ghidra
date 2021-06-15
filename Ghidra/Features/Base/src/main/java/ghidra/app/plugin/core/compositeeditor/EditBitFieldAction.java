@@ -16,10 +16,8 @@
 package ghidra.app.plugin.core.compositeeditor;
 
 import java.awt.Component;
-import java.awt.Window;
 
 import javax.swing.JTable;
-import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
 import docking.DockingWindowManager;
@@ -50,7 +48,7 @@ public class EditBitFieldAction extends CompositeEditorTableAction {
 	private DataTypeComponent getUnalignedBitFieldComponent() {
 		CompEditorModel editorModel = (CompEditorModel) model;
 		if ((editorModel.viewComposite instanceof Structure) &&
-			!editorModel.viewComposite.isInternallyAligned() &&
+			!editorModel.viewComposite.isPackingEnabled() &&
 			editorModel.getNumSelectedRows() == 1) {
 			int rowIndex = model.getSelectedRows()[0];
 			if (rowIndex < model.getNumComponents()) {
@@ -74,11 +72,10 @@ public class EditBitFieldAction extends CompositeEditorTableAction {
 		}
 
 		BitFieldEditorDialog dlg = new BitFieldEditorDialog(editorModel.viewComposite,
-			provider.dtmService, dtComponent.getOrdinal(),
+			provider.dtmService, dtComponent.getOrdinal(), model.showHexNumbers,
 			ordinal -> refreshTableAndSelection(editorModel, ordinal));
 		Component c = provider.getComponent();
-		Window w = SwingUtilities.windowForComponent(c);
-		DockingWindowManager.showDialog(w, dlg, c);
+		DockingWindowManager.showDialog(c, dlg);
 		requestTableFocus();
 	}
 

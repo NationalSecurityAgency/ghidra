@@ -2,7 +2,6 @@
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 Module.manifest||GHIDRA||reviewed||END|
-build.gradle||GHIDRA||||END|
 data/README.txt||GHIDRA||||END|
 extension.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|

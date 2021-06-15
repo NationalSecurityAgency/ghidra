@@ -33,7 +33,7 @@ import generic.test.AbstractGTest;
 import generic.test.AbstractGenericTest;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.main.SharedProjectUtil;
-import ghidra.framework.main.datatable.ProjectDataActionContext;
+import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.main.datatree.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -307,6 +307,7 @@ public class FrontEndTestEnv {
 		AbstractDockingTest.performAction(terminateCheckoutAction, context, false);
 		OptionDialog optDialog = AbstractDockingTest.waitForDialogComponent(OptionDialog.class);
 		AbstractGenericTest.pressButtonByText(optDialog.getComponent(), "Yes", true);
+		waitForTasks();
 		waitForSwing();
 	}
 
@@ -322,7 +323,7 @@ public class FrontEndTestEnv {
 			}
 		}
 
-		return new ProjectDataActionContext(null, rootFolder.getProjectData(), nodes[0], folderList,
+		return new ProjectDataContext(null, rootFolder.getProjectData(), nodes[0], folderList,
 			fileList, tree, true);
 
 	}

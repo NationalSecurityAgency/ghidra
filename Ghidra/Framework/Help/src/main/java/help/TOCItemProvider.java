@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +15,25 @@
  */
 package help;
 
+import java.util.Map;
+
 import help.validator.model.TOCItemDefinition;
 import help.validator.model.TOCItemExternal;
 
-import java.util.Map;
-
 /**
- * An interface that allows us to perform dependency injection in the testing
- * environment.
+ * An interface that allows us to perform dependency injection in the testing environment
  */
 public interface TOCItemProvider {
 
-	public Map<String, TOCItemExternal> getTOCItemExternalsByDisplayMapping();
+	/**
+	 * Returns all external TOC items referenced by this provider
+	 * @return the items
+	 */
+	public Map<String, TOCItemExternal> getExternalTocItemsById();
 
-	public Map<String, TOCItemDefinition> getTOCItemDefinitionsByIDMapping();
+	/**
+	 * Returns all TOC items defined by this provider
+	 * @return the items
+	 */
+	public Map<String, TOCItemDefinition> getTocDefinitionsByID();
 }

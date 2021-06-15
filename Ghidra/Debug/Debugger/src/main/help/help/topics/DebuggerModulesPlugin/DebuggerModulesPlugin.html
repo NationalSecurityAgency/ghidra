@@ -1,0 +1,177 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Modules and Sections</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Modules and Sections</H1>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/DebuggerModulesPlugin.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>The concept of a module may vary from platform to platform, but in most cases, it refers to
+    a binary image which is loaded or mapped into memory comprising some portion of the target's
+    executable code. Likely, these are the same files that Ghidra can import for static analysis.
+    Similarly, the concept of a section may vary, but in most cases, it refers to a portion of a
+    module, possibly backed by its binary image. This window displays information about modules,
+    and sometimes their sections, known to the connected debugger. Information in this window
+    reflects what has been recorded into the current trace, which in turn comes from a target. The
+    top table displays module information, while the bottom table displays section information.</P>
+
+    <H2>Table Columns</H2>
+
+    <P>The top table, which lists modules, has the following columns:</P>
+
+    <UL>
+      <LI>Base Address - if available, the minimum address where the module is mapped in the
+      target's memory. Double-clicking this field navigates to the address.</LI>
+
+      <LI>Max Address - if available, the maximum address where the module is mapped in the
+      target's memory. Double-clicking this field navigates to the address.</LI>
+
+      <LI>Name - a short name for the module, typically its file name.</LI>
+
+      <LI>Module Name - the name of the module, ideally its full path on the target's
+      filesystem.</LI>
+
+      <LI>Lifespan - denotes the recorded load and unload times of the module, i.e., the span of
+      time for which the module record is applicable.</LI>
+
+      <LI>Length - the length from base address to max address, inclusive. Note that not every page
+      in the range is necessarily mapped.</LI>
+    </UL>
+
+    <P>The bottom table, which lists sections, has the following columns:</P>
+
+    <UL>
+      <LI>Start Address - the minimum virtual memory address of the section. Double-clicking this
+      field navigates to the address.</LI>
+
+      <LI>End Address - the maximum virtual memory address of the section. Double-clicking this
+      field navigates to the address.</LI>
+
+      <LI>Section Name - the name of the section given by the debugger, usually the same as the
+      name given in the module's header.</LI>
+
+      <LI>Module Name - the name of the module containing this section.</LI>
+
+      <LI>Length - the number of bytes in the section.</LI>
+    </UL>
+
+    <H2>Actions</H2>
+
+    <P>This window provides several actions, some of which are only accessible via pop-up
+    menus.</P>
+
+    <H3><A name="import_from_fs"></A>Import From File System</H3>
+
+    <P>This action is available from a module's or section's pop-up menu. It prompts the user to
+    import the module from the local file system into Ghidra as a static image.</P>
+
+    <H3><A name="capture_symbols"></A>Capture Symbols</H3>
+
+    <P>This action is available when the current trace is associated with a live target and "at the
+    present," and at least one module is selected. It commands the recorder to copy all symbols
+    (that the debugger knows about) for the selected modules into the trace. These are often the
+    same symbols that Ghidra imports from the static image, anyway.</P>
+
+    <H3><A name="capture_types"></A>Capture Types</H3>
+
+    <P>This action is available when the current trace is associated with a live target and "at the
+    present," the target presents type information, and at least one module is selected. It
+    commands the recorder to copy and convert all types (that the debugger knows about) for the
+    selected modules to Ghidra data types in the trace. These are often the same types that Ghidra
+    imports from the static image, anyway.</P>
+
+    <H3><A name="map_modules"></A>Map Modules</H3>
+
+    <P>This action is available from the modules' or sections' pop-up menu. It searches the tool's
+    open programs for the selected modules and proposes new mappings. The user can examine and
+    tweak the proposal before confirming or canceling it. Typically, this is done automatically by
+    the <A href="help/topics/DebuggerBots/DebuggerBots.html#map_modules">Map Modules</A> debugger
+    bot.</P>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" src=
+          "images/DebuggerModuleMapProposalDialog.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <H3><A name="map_module_to"></A>Map Module to Current Program</H3>
+
+    <P>This action is available from a single module's pop-up menu, when there is an open program.
+    It behaves like Map Modules, except that it will propose the selected module be mapped to the
+    current program.</P>
+
+    <H3><A name="map_sections"></A>Map Sections</H3>
+
+    <P>This action is analogous to the Map Modules action. It searches the tool's open programs for
+    blocks matching the selected sections and proposes new mappings. Users who prefer this to Map
+    Modules should also consider using the <A href=
+    "help/topics/DebuggerBots/DebuggerBots.html#map_sections">Map Sections</A> debugger bot.</P>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" src=
+          "images/DebuggerSectionMapProposalDialog.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <H3><A name="map_sections_to"></A>Map Sections to Current Program</H3>
+
+    <P>This action is available from the pop-up menu, when the current selection indicates a single
+    module and there is an open program. It behaves like Map Sections, except that it will attempt
+    to map sections from the indicated module to blocks in the current program.</P>
+
+    <H3><A name="map_section_to"></A>Map Section to Current Block</H3>
+
+    <P>This action is available from a single section's pop-up menu, when there is an open program.
+    It behaves like Map Sections, except that it will propose the selected section be mapped to the
+    block containing the cursor in the static listing.</P>
+
+    <H3><A name="import_missing_module"></A>Import Missing Module</H3>
+
+    <P>This action is offered to resolve a "missing module" console message. It is equivalent to <A
+    href="#import_from_fs">Import From File System</A> on the missing module.</P>
+
+    <H3><A name="map_missing_module"></A>Map Missing Module</H3>
+
+    <P>This action is offered to resolve a "missing module" console message. It is equivalent to <A
+    href="#map_module_to">Map Module To</A> on the missing module.</P>
+
+    <H3><A name="filter_by_module"></A>Filter Sections by Module</H3>
+
+    <P>This action is always available. By default the bottom table displays all sections in the
+    current trace. When this toggle is enabled, and at least one module is selected, the bottom
+    table will only include sections contained by a selected module.</P>
+
+    <H3><A name="select_addresses"></A>Select Addresses</H3>
+
+    <P>This action is available when at least one module or section is selected. It selects all
+    addresses in the dynamic listing contained by the selected modules or sections.</P>
+
+    <H3><A name="select_rows"></A>Select Rows</H3>
+
+    <P>This action is available when the dynamic listing's cursor is at a valid location. It
+    selects the module and section, if applicable, containing that cursor. If the dynamic listing
+    has a selection, it selects all modules and sections intersecting that selection.</P>
+  </BODY>
+</HTML>

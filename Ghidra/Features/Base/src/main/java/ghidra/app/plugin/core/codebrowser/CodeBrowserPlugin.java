@@ -43,7 +43,6 @@ import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.*;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.codebrowser.actions.*;
 import ghidra.app.plugin.core.codebrowser.hover.ListingHoverService;
 import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.services.*;
@@ -109,8 +108,8 @@ public class CodeBrowserPlugin extends Plugin
 	// - Icon -
 	private ImageIcon CURSOR_LOC_ICON =
 		ResourceManager.loadImage("images/cursor_arrow_flipped.gif");
-	private CodeViewerProvider connectedProvider;
-	private List<CodeViewerProvider> disconnectedProviders = new ArrayList<>();
+	protected final CodeViewerProvider connectedProvider;
+	protected List<CodeViewerProvider> disconnectedProviders = new ArrayList<>();
 	private FormatManager formatMgr;
 	private ViewManagerService viewManager;
 	private MarkerService markerService;
@@ -149,7 +148,7 @@ public class CodeBrowserPlugin extends Plugin
 		formatMgr = new FormatManager(displayOptions, fieldOptions);
 		formatMgr.addFormatModelListener(this);
 		formatMgr.setServiceProvider(tool);
-		connectedProvider = new CodeViewerProvider(this, formatMgr, true);
+		connectedProvider = createProvider(formatMgr, true);
 		tool.showComponentProvider(connectedProvider, true);
 		initOptions(fieldOptions);
 		initDisplayOptions(displayOptions);
@@ -164,21 +163,46 @@ public class CodeBrowserPlugin extends Plugin
 		createActions();
 	}
 
-	private void createActions() {
-		DockingAction selectAllAction = new SelectAllAction(getName());
-		selectAllAction.getMenuBarData().setMenuSubGroup("a");
-		tool.addAction(selectAllAction);
-
-		DockingAction selectNoneAction = new ClearSelectionAction(getName());
-		selectNoneAction.getMenuBarData().setMenuSubGroup("a");
-		tool.addAction(selectNoneAction);
-
-		DockingAction selectComplementAction = new SelectComplementAction(getName());
-		selectComplementAction.getMenuBarData().setMenuSubGroup("b");
-		tool.addAction(selectComplementAction);
+	protected CodeViewerProvider createProvider(FormatManager formatManager, boolean isConnected) {
+		return new CodeViewerProvider(this, formatManager, isConnected);
 	}
 
-	void viewChanged(AddressSetView addrSet) {
+	private void createActions() {
+		new ActionBuilder("Select All", getName())
+				.menuPath(ToolConstants.MENU_SELECTION, "&All in View")
+				.menuGroup("Select Group", "a")
+				.keyBinding("ctrl A")
+				.supportsDefaultToolContext(true)
+				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select All"))
+				.withContext(CodeViewerActionContext.class)
+				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectAll())
+				.buildAndInstall(tool);
+
+		new ActionBuilder("Clear Selection", getName())
+				.menuPath(ToolConstants.MENU_SELECTION, "&Clear Selection")
+				.menuGroup("Select Group", "b")
+				.supportsDefaultToolContext(true)
+				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Clear Selection"))
+				.withContext(CodeViewerActionContext.class)
+				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider())
+						.setSelection(new ProgramSelection()))
+				.buildAndInstall(tool);
+
+		new ActionBuilder("Select Complement", getName())
+				.menuPath(ToolConstants.MENU_SELECTION, "&Complement")
+				.menuGroup("Select Group", "c")
+				.supportsDefaultToolContext(true)
+				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select Complement"))
+				.withContext(CodeViewerActionContext.class)
+				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectComplement())
+				.buildAndInstall(tool);
+
+	}
+
+	protected void viewChanged(AddressSetView addrSet) {
 		ProgramLocation currLoc = getCurrentLocation();
 		currentView = addrSet;
 		if (addrSet != null && !addrSet.isEmpty()) {
@@ -217,7 +241,7 @@ public class CodeBrowserPlugin extends Plugin
 		}
 	}
 
-	private void updateBackgroundColorModel() {
+	protected void updateBackgroundColorModel() {
 		ListingPanel listingPanel = connectedProvider.getListingPanel();
 		if (markerService != null) {
 			AddressIndexMap indexMap = connectedProvider.getListingPanel().getAddressIndexMap();
@@ -234,7 +258,7 @@ public class CodeBrowserPlugin extends Plugin
 	@Override
 	public CodeViewerProvider createNewDisconnectedProvider() {
 		CodeViewerProvider newProvider =
-			new CodeViewerProvider(this, formatMgr.createClone(), false);
+			createProvider(formatMgr.createClone(), false);
 		newProvider.setClipboardService(tool.getService(ClipboardService.class));
 		disconnectedProviders.add(newProvider);
 		if (dndProvider != null) {
@@ -425,7 +449,7 @@ public class CodeBrowserPlugin extends Plugin
 		}
 	}
 
-	private void programClosed(Program closedProgram) {
+	protected void programClosed(Program closedProgram) {
 		Iterator<CodeViewerProvider> iterator = disconnectedProviders.iterator();
 		while (iterator.hasNext()) {
 			CodeViewerProvider provider = iterator.next();
@@ -1008,6 +1032,7 @@ public class CodeBrowserPlugin extends Plugin
 
 	/**
 	 * Positions the cursor to the given location
+	 * 
 	 * @param address the address to goto
 	 * @param fieldName the name of the field to
 	 * @param row the row within the given field
@@ -1020,6 +1045,7 @@ public class CodeBrowserPlugin extends Plugin
 
 	/**
 	 * Positions the cursor to the given location
+	 * 
 	 * @param addr the address to goto
 	 * @param fieldName the name of the field to
 	 * @param occurrence specifies the which occurrence for multiple fields of same type
@@ -1242,13 +1268,8 @@ public class CodeBrowserPlugin extends Plugin
 	}
 
 	@Override
-	public Layout getLayout(Address addr) {
-		return connectedProvider.getListingPanel().getLayout(addr);
-	}
-
-	@Override
 	public ListingModel getListingModel() {
-		return connectedProvider.getListingPanel().getListingModel();
+		return connectedProvider.getListingPanel().getListingModel().copy();
 	}
 
 	@Override

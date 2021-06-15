@@ -33,7 +33,7 @@ import utilities.util.FileUtilities;
 public class PackedDatabaseTest extends AbstractGenericTest {
 
 	private static final Schema TEST_SCHEMA =
-		new Schema(1, "Key", new Class[] { StringField.class }, new String[] { "Col1" });
+		new Schema(1, "Key", new Field[] { StringField.INSTANCE }, new String[] { "Col1" });
 
 	private File packedDbFile;
 	private PackedDatabase db;
@@ -84,7 +84,7 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 		dbh = new PackedDBHandle("MyContent");
 		long txId = dbh.startTransaction();
 		Table table = dbh.createTable("MyTable", TEST_SCHEMA);
-		Record rec = TEST_SCHEMA.createRecord(1);
+		DBRecord rec = TEST_SCHEMA.createRecord(1);
 		rec.setString(0, "String1");
 		table.putRecord(rec);
 		dbh.endTransaction(txId, true);
@@ -115,7 +115,7 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 		assertNotNull(table);
 		assertEquals(1, table.getRecordCount());
 
-		Record rec = table.getRecord(1);
+		DBRecord rec = table.getRecord(1);
 		assertNotNull(rec);
 		assertEquals("String1", rec.getString(0));
 

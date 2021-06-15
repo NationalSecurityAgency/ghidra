@@ -27,6 +27,7 @@ import ghidra.util.Msg;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
+
 /**
  * 
  *
@@ -45,21 +46,21 @@ public class ClangVariableDecl extends ClangTokenGroup {
 	}
 
 	public DataType getDataType() {
-		return datatype;	
+		return datatype;
 	}
-	
+
 	public HighVariable getHighVariable() {
 		return typevar;
 	}
-	
+
 	@Override
-    public void restoreFromXML(XmlPullParser parser,PcodeFactory pfactory) {
-	    XmlElement node = parser.peek();
-		super.restoreFromXML(parser,pfactory);
+	public void restoreFromXML(XmlPullParser parser, PcodeFactory pfactory) {
+		XmlElement node = parser.peek();
+		super.restoreFromXML(parser, pfactory);
 		long symref = SpecXmlUtils.decodeLong(node.getAttribute(ClangXML.SYMREF));
 		HighSymbol sym = pfactory.getSymbol(symref);
 		if (sym == null) {
-			Msg.error(this, "Invalid symbol reference: " + symref);
+			Msg.error(this, "Invalid symbol reference: " + symref + " in " + Parent());
 			return;
 		}
 		typevar = sym.getHighVariable();

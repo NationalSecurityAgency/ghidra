@@ -26,18 +26,14 @@ class ParentChildDBAdapterV0 extends ParentChildAdapter {
 
 	private static final int PARENT_COL = 0;
 	private static final int CHILD_COL = 1;
-	static final Schema V0_SCHEMA = new Schema(0, "KEY",
-		new Class[] { LongField.class, LongField.class }, new String[] { "Parent ID", "Child ID" });
+	static final Schema V0_SCHEMA =
+		new Schema(0, "KEY", new Field[] { LongField.INSTANCE, LongField.INSTANCE },
+			new String[] { "Parent ID", "Child ID" });
 
 	private Table table;
 	private boolean needsInitializing = false;
 
-	/**
-	 * @param handle
-	 * @param b
-	 */
-	public ParentChildDBAdapterV0(DBHandle handle, boolean create)
-			throws VersionException, IOException {
+	ParentChildDBAdapterV0(DBHandle handle, boolean create) throws VersionException, IOException {
 
 		if (create) {
 			table = handle.createTable(TABLE_NAME, V0_SCHEMA, new int[] { PARENT_COL, CHILD_COL });
@@ -54,35 +50,21 @@ class ParentChildDBAdapterV0 extends ParentChildAdapter {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ParentChildAdapter#getVersion()
-	 */
-	@Override
-	public int getVersion() {
-		return VERSION;
-	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.data.EnumDBAdapter#createEnumRecord(java.lang.String, java.lang.String, long, byte)
-	 */
 	@Override
 	public void createRecord(long parentID, long childID) throws IOException {
 		long key = table.getKey();
-		Record record = V0_SCHEMA.createRecord(key);
+		DBRecord record = V0_SCHEMA.createRecord(key);
 		record.setLongValue(PARENT_COL, parentID);
 		record.setLongValue(CHILD_COL, childID);
 		table.putRecord(record);
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ParentChildAdapter#removeRecord(long, long)
-	 */
 	@Override
 	void removeRecord(long parentID, long childID) throws IOException {
 
-		long[] ids = table.findRecords(new LongField(childID), CHILD_COL);
-		for (long id : ids) {
-			Record rec = table.getRecord(id);
+		Field[] ids = table.findRecords(new LongField(childID), CHILD_COL);
+		for (Field id : ids) {
+			DBRecord rec = table.getRecord(id);
 			if (rec.getLongValue(PARENT_COL) == parentID) {
 				table.deleteRecord(id);
 				return;
@@ -90,15 +72,12 @@ class ParentChildDBAdapterV0 extends ParentChildAdapter {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ParentChildAdapter#getParentIds(long)
-	 */
 	@Override
 	long[] getParentIds(long childID) throws IOException {
-		long[] ids = table.findRecords(new LongField(childID), CHILD_COL);
+		Field[] ids = table.findRecords(new LongField(childID), CHILD_COL);
 		long[] parentIds = new long[ids.length];
 		for (int i = 0; i < ids.length; i++) {
-			Record rec = table.getRecord(ids[i]);
+			DBRecord rec = table.getRecord(ids[i]);
 			parentIds[i] = rec.getLongValue(PARENT_COL);
 		}
 		return parentIds;
@@ -108,29 +87,23 @@ class ParentChildDBAdapterV0 extends ParentChildAdapter {
 		needsInitializing = true;
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ParentChildAdapter#needsInitializing()
-	 */
 	@Override
 	boolean needsInitializing() {
 		return needsInitializing;
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ParentChildAdapter#removeAllRecordsForParent(long)
-	 */
 	@Override
 	void removeAllRecordsForParent(long parentID) throws IOException {
-		long[] ids = table.findRecords(new LongField(parentID), PARENT_COL);
-		for (long id : ids) {
+		Field[] ids = table.findRecords(new LongField(parentID), PARENT_COL);
+		for (Field id : ids) {
 			table.deleteRecord(id);
 		}
 	}
 
 	@Override
 	void removeAllRecordsForChild(long childID) throws IOException {
-		long[] ids = table.findRecords(new LongField(childID), CHILD_COL);
-		for (long id : ids) {
+		Field[] ids = table.findRecords(new LongField(childID), CHILD_COL);
+		for (Field id : ids) {
 			table.deleteRecord(id);
 		}
 	}

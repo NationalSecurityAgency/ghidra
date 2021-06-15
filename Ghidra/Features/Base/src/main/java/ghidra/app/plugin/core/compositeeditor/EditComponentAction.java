@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.compositeeditor;
 
 import docking.ActionContext;
+import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
@@ -43,27 +44,41 @@ public class EditComponentAction extends CompositeEditorTableAction {
 	@Override
 	public void actionPerformed(ActionContext context) {
 		int row = model.getRow();
-		if (row < model.getNumComponents()) {
-			DataTypeComponent comp = model.getComponent(row);
-			DataType dt = DataTypeHelper.getBaseType(comp.getDataType());
-			if ((dt instanceof Structure) || (dt instanceof Union) || (dt instanceof Enum)) {
-				DataTypeManager dtm = model.getOriginalDataTypeManager();
-				if (dtm != null) {
-					dt = dtm.getDataType(dt.getDataTypePath());
-					if (dt != null) {
-						this.dtmService.edit(dt);
-						return;
-					}
-				}
-				String name =
-					(dt != null) ? dt.getDisplayName() : comp.getDataType().getDisplayName();
-				model.setStatus("Can't edit \"" + name + "\".");
-			}
-			else {
-				model.setStatus("Can only edit a structure, union or enum.");
-			}
+		if (row >= model.getNumComponents()) {
+			requestTableFocus();
+			return;
+		}
+
+		DataTypeComponent comp = model.getComponent(row);
+		DataType clickedType = comp.getDataType();
+		DataType dt = DataTypeUtils.getBaseDataType(clickedType);
+		boolean isEditableType =
+			(dt instanceof Structure) || (dt instanceof Union) || (dt instanceof Enum);
+		if (isEditableType) {
+			edit(dt, clickedType.getName());
+		}
+		else {
+			model.setStatus("Can only edit a structure, union or enum.");
 		}
 		requestTableFocus();
+	}
+
+	private void edit(DataType dt, String clickedName) {
+
+		DataTypeManager dtm = model.getOriginalDataTypeManager();
+		if (dtm == null) {
+			// shouldn't happen
+			model.setStatus("No Data Type Manager found for '" + clickedName + "'");
+			return;
+		}
+
+		DataType actualType = dtm.getDataType(dt.getDataTypePath());
+		if (actualType == null) {
+			model.setStatus("Can't edit '" + dt.getDisplayName() + "' - type not found.");
+			return;
+		}
+
+		dtmService.edit(actualType);
 	}
 
 	@Override

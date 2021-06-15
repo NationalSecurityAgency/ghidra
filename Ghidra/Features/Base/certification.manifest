@@ -1,22 +1,23 @@
 ##VERSION: 2.0
+##MODULE IP: Apache License 2.0
 ##MODULE IP: BSD
 ##MODULE IP: Copyright Distribution Permitted
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
 ##MODULE IP: LGPL 2.1
+##MODULE IP: MIT
 ##MODULE IP: Modified Nuvola Icons - LGPL 2.1
 ##MODULE IP: Nuvola Icons - LGPL 2.1
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
 .gitignore||GHIDRA||||END|
+.launch/Ghidra Code Coverage.launch||GHIDRA||||END|
 .launch/Ghidra.launch||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 data/ElfFunctionsThatDoNotReturn||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/MachOFunctionsThatDoNotReturn||GHIDRA||||END|
 data/PEFunctionsThatDoNotReturn||GHIDRA||||END|
 data/file_extension_icons.xml||GHIDRA||||END|
-data/formats/clamp.properties||GHIDRA||||END|
 data/functionTags.xml||GHIDRA||||END|
 data/ms_pe_rich_products.xml||GHIDRA||||END|
 data/noReturnFunctionConstraints.xml||GHIDRA||||END|
@@ -45,6 +46,8 @@ data/symbols/win32/mfc140.exports||GHIDRA||||END|
 data/symbols/win32/mfc140u.exports||GHIDRA||||END|
 data/symbols/win32/mfc42.exports||GHIDRA||||END|
 data/symbols/win32/mfc42u.exports||GHIDRA||||END|
+data/symbols/win32/mfc71.exports||GHIDRA||||END|
+data/symbols/win32/mfc71u.exports||GHIDRA||||END|
 data/symbols/win32/mfc80.exports||GHIDRA||||END|
 data/symbols/win32/mfc80u.exports||GHIDRA||||END|
 data/symbols/win32/mfc90.exports||GHIDRA||||END|
@@ -76,8 +79,6 @@ data/typeinfo/win32/windows_vs12_64.gdt||GHIDRA||||END|
 data/x64_linux_syscall_numbers||GHIDRA||||END|
 data/x86_linux_syscall_numbers||GHIDRA||||END|
 ghidra_scripts/AskScript.properties||GHIDRA||||END|
-ghidra_scripts/RecursiveStringFinder.py||GHIDRA||||END|
-ghidra_scripts/mark_in_out.py||GHIDRA||reviewed||END|
 ghidra_scripts/world.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/shared/arrow.gif||GHIDRA||||END|
@@ -116,6 +117,7 @@ src/main/help/help/topics/BookmarkPlugin/images/BookmarksFilter.png||GHIDRA||||E
 src/main/help/help/topics/BookmarkPlugin/images/MarkerForBookmark.png||GHIDRA||||END|
 src/main/help/help/topics/BookmarkPlugin/images/NextSelectionBlock16.gif||GHIDRA||||END|
 src/main/help/help/topics/BookmarkPlugin/images/PreviousSelectionBlock16.gif||GHIDRA||||END|
+src/main/help/help/topics/BundleManager/BundleManager.htm||GHIDRA||||END|
 src/main/help/help/topics/CParserPlugin/CParser.htm||GHIDRA||||END|
 src/main/help/help/topics/CParserPlugin/images/ParseCSource.png||GHIDRA||||END|
 src/main/help/help/topics/CParserPlugin/images/ParseError.png||GHIDRA||||END|
@@ -203,10 +205,10 @@ src/main/help/help/topics/DataTypeEditors/images/NumElementsPrompt.png||GHIDRA||
 src/main/help/help/topics/DataTypeEditors/images/Plus.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/StructureEditBitfield.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/StructureEditor.png||GHIDRA||||END|
-src/main/help/help/topics/DataTypeEditors/images/StructureEditorAligned.png||GHIDRA||||END|
+src/main/help/help/topics/DataTypeEditors/images/StructureEditorPacked.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/StructureEditorWithFlexArray.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/UnionEditor.png||GHIDRA||||END|
-src/main/help/help/topics/DataTypeEditors/images/UnionEditorAligned.png||GHIDRA||||END|
+src/main/help/help/topics/DataTypeEditors/images/UnionEditorPacked.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/Unpackage.gif||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/cstruct.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/DataTypeEditors/images/disk.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
@@ -439,6 +441,8 @@ src/main/help/help/topics/GhidraServer/GhidraServer.htm||GHIDRA||||END|
 src/main/help/help/topics/Glossary/glossary.htm||GHIDRA||||END|
 src/main/help/help/topics/Glossary/images/BigEndian.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/Glossary/images/LittleEndian.png||GHIDRA||reviewed||END|
+src/main/help/help/topics/Graph/GraphIntro.html||GHIDRA||||END|
+src/main/help/help/topics/Graph/GraphServicesIntro.html||GHIDRA||||END|
 src/main/help/help/topics/HeadlessAnalyzer/HeadlessAnalyzer.htm||GHIDRA||||END|
 src/main/help/help/topics/ImporterPlugin/images/About_pdb.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/ImporterPlugin/images/BatchImportDialog.png||GHIDRA||||END|
@@ -450,7 +454,6 @@ src/main/help/help/topics/ImporterPlugin/images/down.png||GHIDRA||||END|
 src/main/help/help/topics/ImporterPlugin/images/edit-delete.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/help/help/topics/ImporterPlugin/images/up.png||GHIDRA||||END|
 src/main/help/help/topics/ImporterPlugin/importer.htm||GHIDRA||||END|
-src/main/help/help/topics/ImporterPlugin/load_pdb.html||GHIDRA||||END|
 src/main/help/help/topics/Intro/GhidraFunctionality.htm||GHIDRA||reviewed||END|
 src/main/help/help/topics/Intro/GhidraSupport.htm||GHIDRA||||END|
 src/main/help/help/topics/Intro/Intro.htm||GHIDRA||||END|
@@ -652,6 +655,7 @@ src/main/help/help/topics/Repository/images/label.png||GHIDRA||||END|
 src/main/help/help/topics/Repository/images/lock.gif||GHIDRA||||END|
 src/main/help/help/topics/Repository/images/right.png||GHIDRA||||END|
 src/main/help/help/topics/Repository/images/unlock.gif||GHIDRA||||END|
+src/main/help/help/topics/ResourceActionsPlugin/ResourceActions.html||GHIDRA||||END|
 src/main/help/help/topics/ScalarSearchPlugin/The_Scalar_Table.htm||GHIDRA||||END|
 src/main/help/help/topics/ScalarSearchPlugin/images/ScalarWindow.png||GHIDRA||||END|
 src/main/help/help/topics/ScalarSearchPlugin/images/SearchAllScalarsDialog.png||GHIDRA||||END|

@@ -1,3 +1,6 @@
+## ###
+#  IP: LGPL 2.1
+##
 """
 Provides a variety of introspective-type support functions for
 things like call tips and command auto completion.

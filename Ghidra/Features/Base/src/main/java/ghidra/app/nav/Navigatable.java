@@ -35,6 +35,7 @@ public interface Navigatable {
 
 	/**
 	 * Commands this navigatable to goto (display) the given program and location
+	 * @param program the program
 	 * 
 	 * @param location the location in that program to display
 	 * @return true if the goto was successful
@@ -121,6 +122,12 @@ public interface Navigatable {
 	 * @return the current highlight of this Navigatable
 	 */
 	public ProgramSelection getHighlight();
+
+	/**
+	 * Returns the current text selection or null
+	 * @return the text selection
+	 */
+	public String getTextSelection();
 
 	/**
 	 * Adds a listener to be notified if this Navigatable is terminated

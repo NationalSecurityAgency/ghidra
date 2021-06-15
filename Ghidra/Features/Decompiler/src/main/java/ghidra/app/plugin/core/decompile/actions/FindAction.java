@@ -27,6 +27,7 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.decompiler.component.ClangTextField;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.util.HelpLocation;
 
 public class FindAction extends AbstractDecompilerAction {
@@ -34,6 +35,7 @@ public class FindAction extends AbstractDecompilerAction {
 
 	public FindAction() {
 		super("Find");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionFind"));
 		setPopupMenuData(new MenuData(new String[] { "Find..." }, "Decompile"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK));
 		setEnabled(true);
@@ -49,7 +51,8 @@ public class FindAction extends AbstractDecompilerAction {
 					decompilerPanel.setSearchResults(null);
 				}
 			};
-			findDialog.setHelpLocation(new HelpLocation("DecompilePlugin", "Find"));
+			findDialog
+					.setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionFind"));
 		}
 		return findDialog;
 	}

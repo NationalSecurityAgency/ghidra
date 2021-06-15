@@ -65,8 +65,8 @@ abstract class FunctionDefinitionDBAdapter {
 	 * @throws VersionException if the database handle's version doesn't match the expected version.
 	 * @throws IOException if there is trouble accessing the database.
 	 */
-	static FunctionDefinitionDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
-			throws VersionException, IOException {
+	static FunctionDefinitionDBAdapter getAdapter(DBHandle handle, int openMode,
+			TaskMonitor monitor) throws VersionException, IOException {
 		if (openMode == DBConstants.CREATE) {
 			return new FunctionDefinitionDBAdapterV1(handle, true);
 		}
@@ -91,7 +91,8 @@ abstract class FunctionDefinitionDBAdapter {
 	 * @return the read only Function Definition data type table adapter
 	 * @throws VersionException if a read only adapter can't be obtained for the database handle's version.
 	 */
-	static FunctionDefinitionDBAdapter findReadOnlyAdapter(DBHandle handle) throws VersionException {
+	static FunctionDefinitionDBAdapter findReadOnlyAdapter(DBHandle handle)
+			throws VersionException {
 		try {
 			return new FunctionDefinitionDBAdapterV0(handle);
 		}
@@ -123,7 +124,7 @@ abstract class FunctionDefinitionDBAdapter {
 			tmpAdapter = new FunctionDefinitionDBAdapterV1(tmpHandle, true);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec, false);
 			}
 			oldAdapter.deleteTable(handle);
@@ -131,7 +132,7 @@ abstract class FunctionDefinitionDBAdapter {
 				new FunctionDefinitionDBAdapterV1(handle, true);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec, false);
 			}
 			return newAdapter;
@@ -156,7 +157,7 @@ abstract class FunctionDefinitionDBAdapter {
 	 * @return the database record for this data type.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract Record createRecord(String name, String comments, long categoryID, long returnDtID,
+	abstract DBRecord createRecord(String name, String comments, long categoryID, long returnDtID,
 			boolean hasVarArgs, GenericCallingConvention genericCallingConvention,
 			long sourceArchiveID, long sourceDataTypeID, long lastChangeTime) throws IOException;
 
@@ -166,7 +167,7 @@ abstract class FunctionDefinitionDBAdapter {
 	 * @return the record for the function definition data type.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract Record getRecord(long functionDefID) throws IOException;
+	abstract DBRecord getRecord(long functionDefID) throws IOException;
 
 	/**
 	 * Gets an iterator over all function signature definition data type records.
@@ -190,7 +191,7 @@ abstract class FunctionDefinitionDBAdapter {
 	 * current time before putting the record in the database.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract void updateRecord(Record record, boolean setLastChangeTime) throws IOException;
+	abstract void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException;
 
 	/**
 	 * Deletes the function definition data type table from the database with the specified database handle.
@@ -205,7 +206,7 @@ abstract class FunctionDefinitionDBAdapter {
 	 * @return an array of IDs for the function definition data types in the category.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract long[] getRecordIdsInCategory(long categoryID) throws IOException;
+	abstract Field[] getRecordIdsInCategory(long categoryID) throws IOException;
 
 	/**
 	 * Gets an array with the IDs of all data types in the function definition table that were derived
@@ -214,9 +215,16 @@ abstract class FunctionDefinitionDBAdapter {
 	 * @return the array data type IDs.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract long[] getRecordIdsForSourceArchive(long archiveID) throws IOException;
+	abstract Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException;
 
-	abstract Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
+	/**
+	 * Get function definition record whoose sourceID and datatypeID match the specified Universal IDs.
+	 * @param sourceID universal source archive ID
+	 * @param datatypeID universal datatype ID
+	 * @return function definition record found or null
+	 * @throws IOException if IO error occurs
+	 */
+	abstract DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
 			throws IOException;
 
 }

@@ -55,7 +55,7 @@ import util.CollectionUtils;
  *      feature will be unable to find the correct nodes, since the default <code>equals()</code>
  *      method on <code>GTreeNode</code> performs a comparison based upon instances.  To fix this problem,
  *      the {@link #equals(Object)} method has been implemented such that nodes are considered equal if they have
- *      the same name. The {@link #hashCode()} method will return the hash of the name.  The name
+ *      the same name (see {@link #getName()}). The {@link #hashCode()} method will return the hash of the name.  The name
  *      attribute was chosen because it should be the most unique and descriptive piece of information
  *      available in a generic GTreeNode.
  *      <p><br>
@@ -78,7 +78,24 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	}
 
 	/**
-	 * Returns the name of the node to be displayed in the tree
+	 * Returns the display text for the node.  By default, this is the same as the name of the node.
+	 * The name of the node usually serves two purposes: 1) to uniquely identify the node (the 
+	 * identity) and 2) the display text (what you see in the tree). Sometimes, it is useful to 
+	 * display more information in the tree without affecting the nodes identity.  In this case,
+	 * you can override this method to return the "display" name, while {@link #getName()} will
+	 * still return the name used to identify the node. 
+	 * @return the display text for the node.
+	 */
+	public String getDisplayText() {
+		return getName();
+	}
+
+	/**
+	 * Returns the name of the node.  If {@link #getDisplayText()} is not overridden, then this is
+	 * also the text that will be displayed in the tree for that node. In general, the name of a node
+	 * should not change. If the text displayed in the tree changes over time, override
+	 * {@link #getDisplayText()}. 
+	 * 
 	 * @return the name of the node
 	 */
 	public abstract String getName();

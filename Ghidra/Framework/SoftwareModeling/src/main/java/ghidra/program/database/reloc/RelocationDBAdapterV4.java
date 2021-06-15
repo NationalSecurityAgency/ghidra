@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +56,7 @@ public class RelocationDBAdapterV4 extends RelocationDBAdapter {
 	@Override
 	void add(long addrKey, int type, long[] values, byte[] bytes, String symbolName)
 			throws IOException {
-		Record r = SCHEMA.createRecord(addrKey);
+		DBRecord r = SCHEMA.createRecord(addrKey);
 		r.setIntValue(TYPE_COL, type);
 		r.setField(VALU_COL, new BinaryCodedField(values));
 		r.setBinaryData(BYTES_COL, bytes);
@@ -66,7 +65,7 @@ public class RelocationDBAdapterV4 extends RelocationDBAdapter {
 	}
 
 	@Override
-	Record get(long addrKey) throws IOException {
+	DBRecord get(long addrKey) throws IOException {
 		return relocTable.getRecord(addrKey);
 	}
 
@@ -101,7 +100,7 @@ public class RelocationDBAdapterV4 extends RelocationDBAdapter {
 	}
 
 	@Override
-	Record adaptRecord(Record rec) {
+	DBRecord adaptRecord(DBRecord rec) {
 		// my guess is that we don't need to do this until there is a version newer than us
 		throw new UnsupportedOperationException("Don't know how to adapt to the new version");
 	}

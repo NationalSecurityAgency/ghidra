@@ -349,8 +349,11 @@ void Funcdata::opInsertAfter(PcodeOp *op,PcodeOp *prev)
   if (prev->isMarker()) {
     if (prev->code() == CPUI_INDIRECT) {
       Varnode *invn = prev->getIn(1);
-      if (invn->getSpace()->getType()==IPTR_IOP)
-	prev = PcodeOp::getOpFromConst(invn->getAddr()); // Store or call
+      if (invn->getSpace()->getType()==IPTR_IOP) {
+	PcodeOp *targOp = PcodeOp::getOpFromConst(invn->getAddr()); // Store or call
+	if (!targOp->isDead())
+	  prev = targOp;
+      }
     }
   }
   list<PcodeOp *>::iterator iter = prev->getBasicIter();
@@ -700,12 +703,10 @@ void Funcdata::markIndirectCreation(PcodeOp *indop,bool possibleOutput)
 /// \brief Generate raw p-code for the function
 ///
 /// Follow flow from the entry point generating PcodeOps for each instruction encountered.
-/// The caller can provide a bounding range that constrains where control can flow to
-/// and can also provide a maximum number of instructions that will be followed.
+/// The caller can provide a bounding range that constrains where control can flow to.
 /// \param baddr is the beginning of the constraining range
 /// \param eaddr is the end of the constraining range
-/// \param insn_max is the maximum number of instructions to follow
-void Funcdata::followFlow(const Address &baddr,const Address &eaddr,uint4 insn_max)
+void Funcdata::followFlow(const Address &baddr,const Address &eaddr)
 
 {
   if (!obank.empty()) {
@@ -719,8 +720,7 @@ void Funcdata::followFlow(const Address &baddr,const Address &eaddr,uint4 insn_m
   FlowInfo flow(*this,obank,bblocks,qlst);
   flow.setRange(baddr,eaddr);
   flow.setFlags(fl);
-  if (insn_max != 0)
-    flow.setMaximumInstructions(insn_max);
+  flow.setMaximumInstructions(glb->max_instructions);
   flow.generateOps();
   size = flow.getSize();
   // Cannot keep track of function sizes in general because of non-contiguous functions
@@ -926,7 +926,7 @@ void Funcdata::overrideFlow(const Address &addr,uint4 type)
   else if (type == Override::CALL)
     op = findPrimaryBranch(iter,enditer,true,false,true);
   else if (type == Override::CALL_RETURN)
-    op = findPrimaryBranch(iter,enditer,true,false,true);
+    op = findPrimaryBranch(iter,enditer,true,true,true);
   else if (type == Override::RETURN)
     op = findPrimaryBranch(iter,enditer,true,true,false);
 
@@ -972,10 +972,9 @@ void Funcdata::overrideFlow(const Address &addr,uint4 type)
 ///   - `c <= x`   with  `c-1 < x`   OR
 ///   - `x <= c`   with  `x < c+1`
 ///
-/// \param data is the function being analyzed
 /// \param op is comparison PcodeOp
 /// \return true if a valid replacement was performed
-bool Funcdata::replaceLessequal(Funcdata &data,PcodeOp *op)
+bool Funcdata::replaceLessequal(PcodeOp *op)
 
 {
   Varnode *vn;
@@ -998,17 +997,105 @@ bool Funcdata::replaceLessequal(Funcdata &data,PcodeOp *op)
   if (op->code() == CPUI_INT_SLESSEQUAL) {
     if ((val<0)&&(val+diff>0)) return false; // Check for sign overflow
     if ((val>0)&&(val+diff<0)) return false;
-    data.opSetOpcode(op,CPUI_INT_SLESS);
+    opSetOpcode(op,CPUI_INT_SLESS);
   }
   else {			// Check for unsigned overflow
     if ((diff==-1)&&(val==0)) return false;
     if ((diff==1)&&(val==-1)) return false;
-    data.opSetOpcode(op,CPUI_INT_LESS);
+    opSetOpcode(op,CPUI_INT_LESS);
   }
   uintb res = (val+diff) & calc_mask(vn->getSize());
-  Varnode *newvn = data.newConstant(vn->getSize(),res);
+  Varnode *newvn = newConstant(vn->getSize(),res);
   newvn->copySymbol(vn);	// Preserve data-type (and any Symbol info)
-  data.opSetInput(op,newvn,i);
+  opSetInput(op,newvn,i);
+  return true;
+}
+
+/// If a term has a multiplicative coefficient, but the underlying term is still additive,
+/// in some situations we may need to distribute the coefficient before simplifying further.
+/// The given PcodeOp is a INT_MULT where the second input is a constant. We also
+/// know the first input is formed with INT_ADD. Distribute the coefficient to the INT_ADD inputs.
+/// \param op is the given PcodeOp
+/// \return \b true if the action was performed
+bool Funcdata::distributeIntMultAdd(PcodeOp *op)
+
+{
+  Varnode *newvn0,*newvn1;
+  PcodeOp *addop = op->getIn(0)->getDef();
+  Varnode *vn0 = addop->getIn(0);
+  Varnode *vn1 = addop->getIn(1);
+  if ((vn0->isFree())&&(!vn0->isConstant())) return false;
+  if ((vn1->isFree())&&(!vn1->isConstant())) return false;
+  uintb coeff = op->getIn(1)->getOffset();
+  int4 size = op->getOut()->getSize();
+				// Do distribution
+  if (vn0->isConstant()) {
+    uintb val = coeff * vn0->getOffset();
+    val &= calc_mask(size);
+    newvn0 = newConstant(size,val);
+  }
+  else {
+    PcodeOp *newop0 = newOp(2,op->getAddr());
+    opSetOpcode(newop0,CPUI_INT_MULT);
+    newvn0 = newUniqueOut(size,newop0);
+    opSetInput(newop0, vn0, 0); // To first input of original add
+    Varnode *newcvn = newConstant(size,coeff);
+    opSetInput(newop0, newcvn, 1);
+    opInsertBefore(newop0, op);
+  }
+
+  if (vn1->isConstant()) {
+    uintb val = coeff * vn1->getOffset();
+    val &= calc_mask(size);
+    newvn1 = newConstant(size,val);
+  }
+  else {
+    PcodeOp *newop1 = newOp(2,op->getAddr());
+    opSetOpcode(newop1,CPUI_INT_MULT);
+    newvn1 = newUniqueOut(size,newop1);
+    opSetInput(newop1, vn1, 0); // To second input of original add
+    Varnode *newcvn = newConstant(size,coeff);
+    opSetInput(newop1, newcvn, 1);
+    opInsertBefore(newop1, op);
+  }
+
+  opSetInput( op, newvn0, 0); // new ADD's inputs are outputs of new MULTs
+  opSetInput( op, newvn1, 1);
+  opSetOpcode(op, CPUI_INT_ADD);
+
+  return true;
+}
+
+/// If:
+///   - The given Varnode is defined by a CPUI_INT_MULT.
+///   - The second input to the INT_MULT is a constant.
+///   - The first input is defined by another CPUI_INT_MULT,
+///   - This multiply is also by a constant.
+///
+/// The constants are combined and \b true is returned.
+/// Otherwise no change is made and \b false is returned.
+/// \param vn is the given Varnode
+/// \return \b true if a change was made
+bool Funcdata::collapseIntMultMult(Varnode *vn)
+
+{
+  if (!vn->isWritten()) return false;
+  PcodeOp *op = vn->getDef();
+  if (op->code() != CPUI_INT_MULT) return false;
+  Varnode *constVnFirst = op->getIn(1);
+  if (!constVnFirst->isConstant()) return false;
+  if (!op->getIn(0)->isWritten()) return false;
+  PcodeOp *otherMultOp = op->getIn(0)->getDef();
+  if (otherMultOp->code() != CPUI_INT_MULT) return false;
+  Varnode *constVnSecond = otherMultOp->getIn(1);
+  if (!constVnSecond->isConstant()) return false;
+  Varnode *invn = otherMultOp->getIn(0);
+  if (invn->isFree()) return false;
+  int4 size = invn->getSize();
+  uintb val = (constVnFirst->getOffset() * constVnSecond->getOffset()) & calc_mask(size);
+  Varnode *newvn = newConstant(size,val);
+  opSetInput(op,newvn,1);
+  opSetInput(op,invn,0);
   return true;
 }
 
@@ -1109,7 +1196,7 @@ void opFlipInPlaceExecute(Funcdata &data,vector<PcodeOp *> &fliplist)
 	data.opSwapInput(op,0,1);
 
 	if ((opc == CPUI_INT_LESSEQUAL)||(opc == CPUI_INT_SLESSEQUAL))
-	  Funcdata::replaceLessequal(data,op);
+	  data.replaceLessequal(op);
       }
     }
   }
@@ -1273,4 +1360,55 @@ void cseEliminateList(Funcdata &data,vector< pair<uintm,PcodeOp *> > &list,vecto
     liter1++;
     liter2++;
   }
+}
+
+/// This routine should be called only after Varnode merging and explicit/implicit attributes have
+/// been calculated.  Determine if the given op can be moved (only within its basic block) to
+/// after \e lastOp.  The output of any PcodeOp moved across must not be involved, directly or
+/// indirectly, with any variable in the expression rooted at the given op.
+/// If the move is possible, perform the move.
+/// \param op is the given PcodeOp
+/// \param lastOp is the PcodeOp to move past
+/// \return \b true if the move is possible
+bool Funcdata::moveRespectingCover(PcodeOp *op,PcodeOp *lastOp)
+
+{
+  if (op == lastOp) return true;	// Nothing to move past
+  if (op->isCall()) return false;
+  PcodeOp *prevOp = (PcodeOp *)0;
+  if (op->code() == CPUI_CAST) {
+    Varnode *vn = op->getIn(0);
+    if (!vn->isExplicit()) {		// If CAST is part of expression, we need to move the previous op as well
+      if (!vn->isWritten()) return false;
+      prevOp = vn->getDef();
+      if (prevOp->isCall()) return false;
+      if (op->previousOp() != prevOp) return false;	// Previous op must exist and feed into the CAST
+    }
+  }
+  Varnode *rootvn = op->getOut();
+  vector<HighVariable *> highList;
+  int4 typeVal = HighVariable::markExpression(rootvn, highList);
+  PcodeOp *curOp = op;
+  do {
+    PcodeOp *nextOp = curOp->nextOp();
+    OpCode opc = nextOp->code();
+    if (opc != CPUI_COPY && opc != CPUI_CAST) break;	// Limit ourselves to only crossing COPY and CAST ops
+    if (rootvn == nextOp->getIn(0)) break;	// Data-flow order dependence
+    Varnode *copyVn = nextOp->getOut();
+    if (copyVn->getHigh()->isMark()) break;	// Direct interference: COPY writes what original op reads
+    if (typeVal != 0 && copyVn->isAddrTied()) break;	// Possible indirect interference
+    curOp = nextOp;
+  } while(curOp != lastOp);
+  for(int4 i=0;i<highList.size();++i)		// Clear marks on expression
+    highList[i]->clearMark();
+  if (curOp == lastOp) {			// If we are able to cross everything
+    opUninsert(op);				// Move -op-
+    opInsertAfter(op, lastOp);
+    if (prevOp != (PcodeOp *)0) {		// If there was a CAST, move both ops
+      opUninsert(prevOp);
+      opInsertAfter(prevOp, lastOp);
+    }
+    return true;
+  }
+  return false;
 }

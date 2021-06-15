@@ -20,25 +20,38 @@ import javax.swing.JFrame;
 import ghidra.util.bean.GGlassPane;
 
 /**
- * Base JFrame to be used by the root window and detached windows if they are using frames
- *
- * Also fixed:
- * <ol>
- *  <li>Swing problem of setting bounds before the frame is visible causes slow paints
- * 	if the bounds position is not on the primary display, </li>
- * </ol>
+ * Base frame used by the root window and detached windows
  */
 public class DockingFrame extends JFrame {
 
+	private boolean isTransient;
+
 	public DockingFrame(String name) {
 		super(name);
+
 		GGlassPane ghidraGlassPane = new GGlassPane();
 		setGlassPane(ghidraGlassPane);
 		ghidraGlassPane.setVisible(true);
 	}
 
+	/**
+	 * Marks this frame as transient.  A transient frame is one that is show temporarily.
+	 */
+	public void setTransient() {
+		this.isTransient = true;
+	}
+
+	/**
+	 * REturns whether this frame is transient.  A transient frame is one that is show temporarily.
+	 * @return true if transient
+	 */
+	public boolean isTransient() {
+		return isTransient;
+	}
+
 	@Override
 	public String toString() {
-		return getTitle();
+		return getTitle() + (isTransient ? " - transient" : "") + " (" +
+			System.identityHashCode(this) + ")";
 	}
 }

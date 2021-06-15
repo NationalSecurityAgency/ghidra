@@ -22,9 +22,11 @@ import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Test;
 
+import docking.options.editor.BooleanEditor;
 import ghidra.app.cmd.label.AddLabelCmd;
-import ghidra.app.util.demangler.gnu.GnuDemanglerOptions;
+import ghidra.app.util.demangler.gnu.GnuDemanglerFormat;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.framework.options.EnumEditor;
 import ghidra.framework.options.Options;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
@@ -34,7 +36,6 @@ import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.util.Msg;
-import ghidra.util.StringUtilities;
 import ghidra.util.task.TaskMonitor;
 
 public class GnuDemanglerAnalyzerTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -99,6 +100,7 @@ public class GnuDemanglerAnalyzerTest extends AbstractGhidraHeadlessIntegrationT
 		Address addr = addr("0x110");
 		createSymbol(addr, mangled);
 
+		setFormat(GnuDemanglerFormat.AUTO);
 		setOption(GnuDemanglerAnalyzer.OPTION_NAME_USE_DEPRECATED_DEMANGLER, true);
 
 		analyze();
@@ -117,7 +119,7 @@ public class GnuDemanglerAnalyzerTest extends AbstractGhidraHeadlessIntegrationT
 		Address addr = addr("0x110");
 		createSymbol(addr, mangled);
 
-		setOption(GnuDemanglerAnalyzer.OPTION_NAME_DEMANGLER_PARAMETERS, "-s rust");
+		setFormat(GnuDemanglerFormat.RUST);
 
 		analyze();
 
@@ -135,7 +137,7 @@ public class GnuDemanglerAnalyzerTest extends AbstractGhidraHeadlessIntegrationT
 		Address addr = addr("0x110");
 		createSymbol(addr, mangled);
 
-		setOption(GnuDemanglerAnalyzer.OPTION_NAME_DEMANGLER_PARAMETERS, "-s dlang");
+		setFormat(GnuDemanglerFormat.DLANG);
 
 		analyze();
 
@@ -143,104 +145,22 @@ public class GnuDemanglerAnalyzerTest extends AbstractGhidraHeadlessIntegrationT
 	}
 
 	@Test
-	public void testMangledString_WithArguments_Invalid() {
+	public void testUseDeprecatedOptionUpdatesAvailableFormats() {
 
-		//
-		// The below demangles to std::io::Read::read_to_end
-		//
-		String mangled = "_ZN3std2io4Read11read_to_end17hb85a0f6802e14499E";
+		setOption_UseDeprecatedDemangler(false);
+		assertFormatAvailable(GnuDemanglerFormat.RUST, true);
 
-		Address addr = addr("0x110");
-		createSymbol(addr, mangled);
-
-		setOption(GnuDemanglerAnalyzer.OPTION_NAME_DEMANGLER_PARAMETERS, "-s badformatname");
-
-		analyze();
-
-		assertNotDemangled(addr, "read_to_end");
-		assertMessageLogLine("java.io.IOException: Error starting demangler with command");
-		assertMessageLogLine("Invalid options", GnuDemanglerOptions.GNU_DEMANGLER_V2_33_1);
-	}
-
-	@Test
-	public void testDeprecatedMangledString_WithArguments_Invalid() {
-
-		//
-		// The below demangles to std::io::Read::read_to_end
-		//
-		String mangled = "_ZN3std2io4Read11read_to_end17hb85a0f6802e14499E";
-
-		Address addr = addr("0x110");
-		createSymbol(addr, mangled);
-
-		setOption(GnuDemanglerAnalyzer.OPTION_NAME_USE_DEPRECATED_DEMANGLER, true);
-		setOption(GnuDemanglerAnalyzer.OPTION_NAME_DEMANGLER_PARAMETERS, "-s badformatname");
-
-		analyze();
-
-		assertNotDemangled(addr, "read_to_end");
-		assertMessageLogLine("java.io.IOException: Error starting demangler with command");
-		assertMessageLogLine("Invalid options", GnuDemanglerOptions.GNU_DEMANGLER_V2_33_1);
-		assertMessageLogLine("Invalid options", GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
-	}
-
-	@Test
-	public void testDeprecatedMangledString_WithArguments_InvalidModernArguments_ValidDeprecatedArguments() {
-
-		//
-		// The below demangles to std::io::Read::read_to_end
-		//
-		String mangled = "_ZN3std2io4Read11read_to_end17hb85a0f6802e14499E";
-
-		Address addr = addr("0x110");
-		createSymbol(addr, mangled);
-
-		setOption(GnuDemanglerAnalyzer.OPTION_NAME_USE_DEPRECATED_DEMANGLER, true);
-		setOption(GnuDemanglerAnalyzer.OPTION_NAME_DEMANGLER_PARAMETERS, "-s arm");
-
-		analyze();
-
-		assertNotDemangled(addr, "read_to_end");
-		assertMessageLogLine("java.io.IOException: Error starting demangler with command");
-		assertMessageLogLine("Invalid options", GnuDemanglerOptions.GNU_DEMANGLER_V2_33_1);
-		assertMessageNotInLogLine("Invalid options", GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
+		setOption_UseDeprecatedDemangler(true);
+		assertFormatAvailable(GnuDemanglerFormat.RUST, false);
 	}
 
 	// things missed:
 	// -demangle error case in base class...this is OK
 	// -error case in applyTo method in base class
 
-	// -use deprecated demangler case in validateOptions
-
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
-
-	private void assertMessageLogLine(String... expected) {
-
-		String allMessages = log.toString();
-		String[] logLines = allMessages.split("\n");
-		for (String line : logLines) {
-			if (StringUtilities.containsAllIgnoreCase(line, expected)) {
-				return;
-			}
-		}
-
-		fail("The folllowing source text did not have a line containing:\n" +
-			Arrays.toString(expected) + "\n\nActual Text:\n" + allMessages);
-	}
-
-	private void assertMessageNotInLogLine(String... expected) {
-
-		String allMessages = log.toString();
-		String[] logLines = allMessages.split("\n");
-		for (String line : logLines) {
-			if (StringUtilities.containsAllIgnoreCase(line, expected)) {
-				fail("The folllowing source text unexpectedly has a line containing:\n" +
-					Arrays.toString(expected) + "\n\nActual Text:\n" + allMessages);
-			}
-		}
-	}
+//==================================================================================================
 
 	private void analyze() {
 		tx(program, () -> analyzer.added(program, program.getMemory(), TaskMonitor.DUMMY, log));
@@ -270,6 +190,32 @@ public class GnuDemanglerAnalyzerTest extends AbstractGhidraHeadlessIntegrationT
 		fail("Unable to find demangled symbol '" + name + "'");
 	}
 
+	private void assertFormatAvailable(GnuDemanglerFormat format, boolean isAvailable) {
+
+		Options options = program.getOptions("Analyzers");
+		Options analyzerOptions = options.getOptions(analyzer.getName());
+
+		EnumEditor enumEditor =
+			(EnumEditor) runSwing(() -> analyzerOptions.getPropertyEditor("Demangler Format"));
+		assertNotNull(enumEditor);
+
+		Enum<?>[] values = enumEditor.getEnums();
+		for (Enum<?> enum1 : values) {
+			if (format.equals(enum1)) {
+				if (isAvailable) {
+					return;
+				}
+				fail("Found bad enum in list of choices: " + format + ".\nFound: " +
+					Arrays.toString(values));
+			}
+		}
+
+		if (isAvailable) {
+			fail("Did not find enum in list of choices: " + format + ".\nInstead found: " +
+				Arrays.toString(values));
+		}
+	}
+
 	private void setOption(String optionName, boolean doUse) {
 
 		String fullOptionName = analyzer.getName() + Options.DELIMITER_STRING + optionName;
@@ -288,14 +234,27 @@ public class GnuDemanglerAnalyzerTest extends AbstractGhidraHeadlessIntegrationT
 		fail("Could not find option '" + optionName + "'");
 	}
 
-	private void setOption(String optionName, String value) {
+	private void setOption_UseDeprecatedDemangler(boolean use) {
 
+		Options options = program.getOptions("Analyzers");
+		Options analyzerOptions = options.getOptions(analyzer.getName());
+
+		BooleanEditor enumEditor = (BooleanEditor) runSwing(
+			() -> analyzerOptions.getPropertyEditor("Use Deprecated Demangler"));
+		assertNotNull(enumEditor);
+
+		runSwing(() -> enumEditor.setValue(use));
+	}
+
+	private void setFormat(GnuDemanglerFormat format) {
+
+		String optionName = GnuDemanglerAnalyzer.OPTION_NAME_DEMANGLER_FORMAT;
 		String fullOptionName = analyzer.getName() + Options.DELIMITER_STRING + optionName;
 		Options options = program.getOptions("Analyzers");
 
 		for (String name : options.getOptionNames()) {
 			if (name.equals(fullOptionName)) {
-				tx(program, () -> options.setString(optionName, value));
+				tx(program, () -> options.setEnum(optionName, format));
 
 				// we must call this manually, since we are not using a tool
 				analyzer.optionsChanged(options, program);

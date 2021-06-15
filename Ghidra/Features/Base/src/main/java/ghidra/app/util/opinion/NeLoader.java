@@ -362,7 +362,9 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				buf.append("Handle:         " + Conv.toHexString(resource.getHandle()) + "\n");
 				buf.append("Usage:          " + Conv.toHexString(resource.getUsage()) + "\n");
 				CodeUnit cu = listing.getCodeUnitAt(addr);
-				cu.setComment(CodeUnit.PRE_COMMENT, buf.toString());
+				if (cu != null) {
+					cu.setComment(CodeUnit.PRE_COMMENT, buf.toString());
+				}
 
 				//if this resource is a string table,
 				//then go and create the strings...
@@ -435,7 +437,8 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				Function refFunction = null;
 				try {
 					ExternalLocation loc;
-					loc = externalManager.addExtFunction(moduleName, callname, null, SourceType.IMPORTED);
+					loc = externalManager.addExtFunction(moduleName, callname, null,
+						SourceType.IMPORTED);
 					refFunction = loc.getFunction();
 				}
 				catch (DuplicateNameException e) {

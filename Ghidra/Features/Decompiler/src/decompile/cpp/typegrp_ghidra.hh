@@ -29,7 +29,7 @@
 /// converted into a Datatype object and cached in this object.
 class TypeFactoryGhidra : public TypeFactory {
 protected:
-  virtual Datatype *findById(const string &n,uint8 id);
+  virtual Datatype *findById(const string &n,uint8 id,int4 sz);
 public:
   TypeFactoryGhidra(ArchitectureGhidra *g) : TypeFactory(g) {}	///< Constructor
   virtual ~TypeFactoryGhidra(void) {}

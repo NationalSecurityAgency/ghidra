@@ -22,6 +22,7 @@ import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
@@ -29,8 +30,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.util.Msg;
-import ghidra.util.UndefinedFunction;
+import ghidra.util.*;
 import ghidra.util.exception.*;
 
 /**
@@ -54,6 +54,7 @@ public class RetypeLocalAction extends AbstractDecompilerAction {
 
 	public RetypeLocalAction() {
 		super("Retype Variable");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionRetypeVariable"));
 		setPopupMenuData(new MenuData(new String[] { "Retype Variable" }, "Decompile"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK));
 	}

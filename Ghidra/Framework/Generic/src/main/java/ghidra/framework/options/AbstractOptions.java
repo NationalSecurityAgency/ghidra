@@ -29,6 +29,7 @@ import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
+import ghidra.util.exception.AssertException;
 import utilities.util.reflection.ReflectionUtilities;
 
 public abstract class AbstractOptions implements Options {
@@ -116,8 +117,8 @@ public abstract class AbstractOptions implements Options {
 				"Attempted to register an unsupported object: " + defaultValue.getClass());
 		}
 
-		registerOption(optionName, OptionType.getOptionType(defaultValue), defaultValue, help,
-			description);
+		OptionType type = OptionType.getOptionType(defaultValue);
+		registerOption(optionName, type, defaultValue, help, description);
 	}
 
 	@Override
@@ -143,40 +144,51 @@ public abstract class AbstractOptions implements Options {
 				ReflectionUtilities.createJavaFilteredThrowable());
 		}
 
-		Option currentOption = valueMap.get(optionName);
-		if (currentOption == null) {
-			Option option =
-				createRegisteredOption(optionName, type, description, help, defaultValue, editor);
-			valueMap.put(optionName, option);
-			return;
-		}
-		else if (!currentOption.isRegistered()) {
-			Option option =
-				createRegisteredOption(optionName, type, description, help, defaultValue, editor);
-			option.setCurrentValue(currentOption.getCurrentValue());
-			valueMap.put(optionName, option);
+		Option currentOption = getExistingComptibleOption(optionName, type, defaultValue);
+		if (currentOption != null) {
+			currentOption.updateRegistration(description, help, defaultValue, editor);
 			return;
 		}
 
-		// TODO: We probably don't need to do anything special if we are re-registering an
-		// option, which is what the below code handles.
-		String oldDescription = currentOption.getDescription();
-		HelpLocation oldHelp = currentOption.getHelpLocation();
-		Object oldDefaultValue = currentOption.getDefaultValue();
-		PropertyEditor oldEditor = currentOption.getPropertyEditor();
+		Option option =
+			createRegisteredOption(optionName, type, description, help, defaultValue, editor);
 
-		String newDescripiton = oldDescription == null ? description : oldDescription;
-		HelpLocation newHelpLocation = oldHelp == null ? help : oldHelp;
-		Object newDefaultValue = oldDefaultValue == null ? defaultValue : oldDefaultValue;
-		PropertyEditor newEditor = oldEditor == null ? editor : oldEditor;
+		valueMap.put(optionName, option);
+	}
 
-		Option newOption = createRegisteredOption(optionName, type, newDescripiton, newHelpLocation,
-			newDefaultValue, newEditor);
-		Object currentValue = currentOption.getCurrentValue();
-		if (currentValue != null) {
-			newOption.setCurrentValue(currentValue);
+	private Option getExistingComptibleOption(String optionName, OptionType type,
+			Object defaultValue) {
+
+		// There are several cases where an existing option may exist when registering an option
+		// 1) the option was accessed before it was registered
+		// 2) the option was loaded from a store (database or toolstate)
+		// 3) the option was registered more than once.
+		//
+		// The only time this is a problem is if the exiting option type is not compatible with
+		// the type being registered.  If we encounter an incompatible option, we just log a
+		// warning and return null so that the new option will replace it. Otherwise, we return
+		// the existing option so it can be updated with the data from the registration.
+
+		Option option = valueMap.get(optionName);
+		if (option == null) {
+			return null;
 		}
-		valueMap.put(optionName, newOption);
+
+		if (!isCompatibleOption(option, type, defaultValue)) {
+			Msg.error(this, "Registered option incompatible with existing option: " + optionName,
+				new AssertException());
+			return null;
+		}
+		return option;
+	}
+
+	private boolean isCompatibleOption(Option option, OptionType type, Object defaultValue) {
+		if (option.getOptionType() != type) {
+			return false;
+		}
+		Object optionValue = option.getValue(null);
+		return optionValue == null || defaultValue == null ||
+			optionValue.getClass().equals(defaultValue.getClass());
 	}
 
 	@Override
@@ -249,6 +261,10 @@ public abstract class AbstractOptions implements Options {
 		}
 
 		OptionType type = option.getOptionType();
+		return isNullable(type);
+	}
+
+	private boolean isNullable(OptionType type) {
 		switch (type) {
 
 			// objects can be null
@@ -296,86 +312,156 @@ public abstract class AbstractOptions implements Options {
 	public boolean getBoolean(String optionName, boolean defaultValue) {
 		Option option =
 			getOption(optionName, OptionType.BOOLEAN_TYPE, Boolean.valueOf(defaultValue));
-		return (Boolean) option.getValue(defaultValue);
+		try {
+			return (Boolean) option.getValue(defaultValue);
+		}
+		catch (ClassCastException e) {
+			return defaultValue;
+		}
 	}
 
 	@Override
 	public byte[] getByteArray(String optionName, byte[] defaultValue) {
 		Option option = getOption(optionName, OptionType.BYTE_ARRAY_TYPE, defaultValue);
-		return (byte[]) option.getValue(defaultValue);
+		try {
+			return (byte[]) option.getValue(defaultValue);
+		}
+		catch (ClassCastException e) {
+			return defaultValue;
+		}
 	}
 
 	@Override
 	public int getInt(String optionName, int defaultValue) {
 		Option option = getOption(optionName, OptionType.INT_TYPE, defaultValue);
-		return (Integer) option.getValue(defaultValue);
+		try {
+			return (Integer) option.getValue(defaultValue);
+		}
+		catch (ClassCastException e) {
+			return defaultValue;
+		}
 	}
 
 	@Override
 	public double getDouble(String optionName, double defaultValue) {
 		Option option = getOption(optionName, OptionType.DOUBLE_TYPE, defaultValue);
-		return (Double) option.getValue(defaultValue);
+		try {
+			return (Double) option.getValue(defaultValue);
+		}
+		catch (ClassCastException e) {
+			return defaultValue;
+		}
 	}
 
 	@Override
 	public float getFloat(String optionName, float defaultValue) {
 		Option option = getOption(optionName, OptionType.FLOAT_TYPE, defaultValue);
-		return (Float) option.getValue(defaultValue);
+		try {
+			return (Float) option.getValue(defaultValue);
+		}
+		catch (ClassCastException e) {
+			return defaultValue;
+		}
 	}
 
 	@Override
 	public long getLong(String optionName, long defaultValue) {
 		Option option = getOption(optionName, OptionType.LONG_TYPE, defaultValue);
-		return (Long) option.getValue(defaultValue);
+		try {
+			return (Long) option.getValue(defaultValue);
+		}
+		catch (ClassCastException e) {
+			return defaultValue;
+		}
 	}
 
 	@Override
 	public CustomOption getCustomOption(String optionName, CustomOption defaultValue) {
 		Option option = getOption(optionName, OptionType.CUSTOM_TYPE, defaultValue);
-		return (CustomOption) option.getValue(defaultValue);
+		try {
+			return (CustomOption) option.getValue(defaultValue);
+		}
+		catch (ClassCastException e) {
+			return defaultValue;
+		}
 	}
 
 	@Override
 	public Color getColor(String optionName, Color defaultValue) {
 		Option option = getOption(optionName, OptionType.COLOR_TYPE, defaultValue);
-		return (Color) option.getValue(defaultValue);
+		try {
+			return (Color) option.getValue(defaultValue);
+		}
+		catch (ClassCastException e) {
+			return defaultValue;
+		}
 	}
 
 	@Override
 	public File getFile(String optionName, File defaultValue) {
 		Option option = getOption(optionName, OptionType.FILE_TYPE, defaultValue);
-		return (File) option.getValue(defaultValue);
+		try {
+			return (File) option.getValue(defaultValue);
+		}
+		catch (ClassCastException e) {
+			return defaultValue;
+		}
 	}
 
 	@Override
 	public Font getFont(String optionName, Font defaultValue) {
 		Option option = getOption(optionName, OptionType.FONT_TYPE, defaultValue);
-		return (Font) option.getValue(defaultValue);
+		try {
+			return (Font) option.getValue(defaultValue);
+		}
+		catch (ClassCastException e) {
+			return defaultValue;
+		}
 	}
 
 	@Override
 	public Date getDate(String optionName, Date defaultValue) {
 		Option option = getOption(optionName, OptionType.DATE_TYPE, defaultValue);
-		return (Date) option.getValue(defaultValue);
+		try {
+			return (Date) option.getValue(defaultValue);
+		}
+		catch (ClassCastException e) {
+			return defaultValue;
+		}
 	}
 
 	@Override
 	public KeyStroke getKeyStroke(String optionName, KeyStroke defaultValue) {
 		Option option = getOption(optionName, OptionType.KEYSTROKE_TYPE, defaultValue);
-		return (KeyStroke) option.getValue(defaultValue);
+		try {
+			return (KeyStroke) option.getValue(defaultValue);
+		}
+		catch (ClassCastException e) {
+			return defaultValue;
+		}
 	}
 
 	@Override
 	public String getString(String optionName, String defaultValue) {
 		Option option = getOption(optionName, OptionType.STRING_TYPE, defaultValue);
-		return (String) option.getValue(defaultValue);
+		try {
+			return (String) option.getValue(defaultValue);
+		}
+		catch (ClassCastException e) {
+			return defaultValue;
+		}
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T extends Enum<T>> T getEnum(String optionName, T defaultValue) {
 		Option option = getOption(optionName, OptionType.ENUM_TYPE, defaultValue);
-		return (T) option.getValue(defaultValue);
+		try {
+			return (T) option.getValue(defaultValue);
+		}
+		catch (ClassCastException e) {
+			return defaultValue;
+		}
 	}
 
 	@Override

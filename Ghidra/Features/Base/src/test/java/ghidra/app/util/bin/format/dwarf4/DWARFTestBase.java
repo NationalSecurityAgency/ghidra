@@ -16,7 +16,7 @@
 package ghidra.app.util.bin.format.dwarf4;
 
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 
@@ -32,6 +32,8 @@ import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.NullSectionProvide
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.data.DataTypeManagerDB;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -44,7 +46,10 @@ import ghidra.util.task.TaskMonitor;
  */
 public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 
+	protected static final long BaseAddress = 0x400;
+
 	protected ProgramDB program;
+	protected AddressSpace space;
 	protected DataTypeManagerDB dataMgr;
 	protected DataTypeManager builtInDTM;
 	protected int transactionID;
@@ -62,9 +67,15 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 	 */
 	@Before
 	public void setUp() throws Exception {
-		program = createDefaultProgram(testName.getMethodName(), ProgramBuilder._TOY, this);
+		program = createDefaultProgram(testName.getMethodName(), ProgramBuilder._X64, this);
+		space = program.getAddressFactory().getDefaultAddressSpace();
+
 		dataMgr = program.getDataTypeManager();
 		startTransaction();
+
+		program.getMemory()
+				.createInitializedBlock("test", addr(BaseAddress), 500, (byte) 0, TaskMonitor.DUMMY,
+					false);
 
 		AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
 		DataTypeManagerService dtms = mgr.getDataTypeManagerService();
@@ -111,6 +122,16 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 	protected void importAllDataTypes() throws CancelledException, IOException, DWARFException {
 		dwarfProg.checkPreconditions(monitor);
 		dwarfDTM.importAllDataTypes(monitor);
+	}
+
+	protected void importFunctions() throws CancelledException, IOException, DWARFException {
+		dwarfProg.checkPreconditions(monitor);
+		dwarfDTM.importAllDataTypes(monitor);
+		
+		DWARFImportSummary importSummary = new DWARFImportSummary();
+		DWARFFunctionImporter dfi =
+			new DWARFFunctionImporter(dwarfProg, dwarfDTM, importOptions, importSummary, monitor);
+		dfi.importFunctions();
 	}
 
 	protected DIEAggregate getAggregate(DebugInfoEntry die)
@@ -243,9 +264,16 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 			DebugInfoEntry dataType, int offset) {
 		assertTrue(
 			dataType == null || dataType.getCompilationUnit() == parentStruct.getCompilationUnit());
+		return newMember(parentStruct, fieldName, dataType.getOffset(), offset);
+	}
+
+	protected DIECreator newMember(DebugInfoEntry parentStruct, String fieldName,
+			long memberDIEOffset, int offset) {
 		DIECreator field =
-			new DIECreator(DWARFTag.DW_TAG_member).addString(DW_AT_name, fieldName).addRef(
-				DW_AT_type, dataType).setParent(parentStruct);
+			new DIECreator(DWARFTag.DW_TAG_member).addString(DW_AT_name, fieldName)
+					.addRef(
+						DW_AT_type, memberDIEOffset)
+					.setParent(parentStruct);
 		if (offset != -1) {
 			field.addInt(DW_AT_data_member_location, offset);
 		}
@@ -264,11 +292,11 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 
 	protected DebugInfoEntry newArray(MockDWARFCompilationUnit dcu, DebugInfoEntry baseTypeDIE,
 			boolean elideEmptyDimRangeValue, int... dimensions) {
-		DebugInfoEntry arrayType = new DIECreator(DWARFTag.DW_TAG_array_type) //
+		DebugInfoEntry arrayType = new DIECreator(DWARFTag.DW_TAG_array_type)
 			.addRef(DW_AT_type, baseTypeDIE).create(dcu);
 		for (int dimIndex = 0; dimIndex < dimensions.length; dimIndex++) {
 			int dim = dimensions[dimIndex];
-			DIECreator dimDIE = new DIECreator(DWARFTag.DW_TAG_subrange_type) //
+			DIECreator dimDIE = new DIECreator(DWARFTag.DW_TAG_subrange_type)
 				.setParent(arrayType);
 			if (dim != -1 || !elideEmptyDimRangeValue) {
 				dimDIE.addInt(DW_AT_upper_bound, dimensions[dimIndex]);
@@ -278,4 +306,19 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 		return arrayType;
 	}
 
+	protected DebugInfoEntry newArrayUsingCount(MockDWARFCompilationUnit dcu,
+			DebugInfoEntry baseTypeDIE, int count) {
+		DebugInfoEntry arrayType = new DIECreator(DWARFTag.DW_TAG_array_type)
+				.addRef(DW_AT_type, baseTypeDIE)
+				.create(dcu);
+		DIECreator dimDIE = new DIECreator(DWARFTag.DW_TAG_subrange_type)
+				.setParent(arrayType);
+		dimDIE.addInt(DW_AT_count, count);
+		dimDIE.create(dcu);
+		return arrayType;
+	}
+
+	protected Address addr(long l) {
+		return space.getAddress(l);
+	}
 }

@@ -1,0 +1,8 @@
+##VERSION: 2.0
+Module.manifest||GHIDRA||||END|
+data/build.xml||GHIDRA||||END|
+data/languages/m8c.cspec||GHIDRA||||END|
+data/languages/m8c.ldefs||GHIDRA||||END|
+data/languages/m8c.opinion||GHIDRA||||END|
+data/languages/m8c.pspec||GHIDRA||||END|
+data/languages/m8c.slaspec||GHIDRA||||END|

@@ -1,11 +1,9 @@
 ##VERSION: 2.0
 ##MODULE IP: Copyright Distribution Permitted
 Common/server/jaas.conf||GHIDRA||||END|
-Common/server/jaas_external_program.example.sh||GHIDRA||||END|
 Common/server/server.conf||GHIDRA||||END|
 Common/server/svrREADME.html||GHIDRA||||END|
 Common/support/analyzeHeadlessREADME.html||GHIDRA||||END|
-Common/support/buildExtension.gradle||GHIDRA||||END|
 Common/support/buildGhidraJarREADME.txt||GHIDRA||||END|
 Common/support/debug.log4j.xml||GHIDRA||||END|
 Common/support/launch.properties||GHIDRA||||END|
@@ -18,7 +16,6 @@ Linux/support/analyzeHeadless||GHIDRA||||END|
 Linux/support/buildGhidraJar||GHIDRA||||END|
 Linux/support/convertStorage||GHIDRA||||END|
 Linux/support/ghidraDebug||GHIDRA||||END|
-Linux/support/launch.sh||GHIDRA||||END|
 Linux/support/pythonRun||GHIDRA||||END|
 Linux/support/sleigh||GHIDRA||||END|
 Windows/ghidraRun.bat||GHIDRA||||END|
@@ -36,4 +33,3 @@ Windows/support/ghidraDebug.bat||GHIDRA||||END|
 Windows/support/launch.bat||GHIDRA||||END|
 Windows/support/pythonRun.bat||GHIDRA||||END|
 Windows/support/sleigh.bat||GHIDRA||||END|
-build.gradle||GHIDRA||||END|

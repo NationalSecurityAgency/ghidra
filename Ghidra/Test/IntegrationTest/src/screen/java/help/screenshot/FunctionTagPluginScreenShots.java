@@ -15,7 +15,7 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.awt.Rectangle;
 
@@ -26,43 +26,30 @@ import org.junit.Test;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.InputDialog;
-import ghidra.app.plugin.core.function.tags.FunctionTagButtonPanel;
-import ghidra.app.plugin.core.function.tags.FunctionTagTableModel;
-import ghidra.app.plugin.core.function.tags.FunctionTagTable;
-import ghidra.app.plugin.core.function.tags.FunctionTagsComponentProvider;
-import ghidra.app.plugin.core.function.tags.SourceTagsPanel;
+import ghidra.app.plugin.core.function.tags.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionIterator;
 import ghidra.program.util.ProgramLocation;
-import ghidra.util.exception.UsrException;
+import ghidra.util.Swing;
 
 public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 
 	@Test
 	public void testFullWindow() {
-		showProvider(FunctionTagsComponentProvider.class);
+		showProvider(FunctionTagProvider.class);
 		waitForSwing();
 		addTableData();
-		captureIsolatedProvider(FunctionTagsComponentProvider.class, 950, 400);
+		captureIsolatedProvider(FunctionTagProvider.class, 950, 400);
 	}
 
 	@Test
 	public void testInputField() {
-		showProvider(FunctionTagsComponentProvider.class);
+		showProvider(FunctionTagProvider.class);
 		waitForSwing();
-		FunctionTagsComponentProvider provider = getProvider(FunctionTagsComponentProvider.class);
-		final JPanel inputPanel = (JPanel) getInstanceField("inputPanel", provider);
+		FunctionTagProvider provider = getProvider(FunctionTagProvider.class);
+		final JPanel inputPanel = provider.getInputPanel();
 		captureComponent(inputPanel);
-	}
-
-	@Test
-	public void testFilterField() {
-		showProvider(FunctionTagsComponentProvider.class);
-		waitForSwing();
-		FunctionTagsComponentProvider provider = getProvider(FunctionTagsComponentProvider.class);
-		final JPanel filterPanel = (JPanel) getInstanceField("filterPanel", provider);
-		captureComponent(filterPanel);
 	}
 
 	/**
@@ -71,22 +58,21 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 	 */
 	@Test
 	public void testEditTag() {
-		showProvider(FunctionTagsComponentProvider.class);
+		showProvider(FunctionTagProvider.class);
 		waitForSwing();
 		addTableData();
 
-		FunctionTagsComponentProvider provider = getProvider(FunctionTagsComponentProvider.class);
-		SourceTagsPanel sourcePanel = (SourceTagsPanel) getInstanceField("sourcePanel", provider);
-		FunctionTagTable table = (FunctionTagTable) getInstanceField("table", sourcePanel);
+		FunctionTagProvider provider = getProvider(FunctionTagProvider.class);
+		SourceTagsPanel sourcePanel = provider.getSourcePanel();
+		FunctionTagTable table = sourcePanel.getTable();
 		Rectangle bounds = table.getCellRect(7, 0, false); // Cell 7 is an editable item
 		doubleClick(table, bounds.x, bounds.y);
-		
-		InputDialog warningDialog = waitForDialogComponent(InputDialog.class);
 
-		captureDialog(warningDialog);
+		InputDialog editDialog = waitForDialogComponent(InputDialog.class);
+		captureDialog(editDialog);
 	}
 
-	/**
+	/*
 	 * Captures the warning dialog when trying to delete a tag. Note that this assumes the 
 	 * tag in row 1 is NOT read-only. If that's the not the case, modify the function_tags.xml
 	 * file to remove any tags that may be interfering with this.
@@ -94,12 +80,12 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 	 * @throws UsrException
 	 */
 	@Test
-	public void testDeleteWarning() throws UsrException {
-		showProvider(FunctionTagsComponentProvider.class);
+	public void testDeleteWarning() {
+		showProvider(FunctionTagProvider.class);
 		waitForSwing();
 		addTableData();
 
-		FunctionTagsComponentProvider provider = getProvider(FunctionTagsComponentProvider.class);
+		FunctionTagProvider provider = getProvider(FunctionTagProvider.class);
 		SourceTagsPanel sourcePanel = (SourceTagsPanel) getInstanceField("sourcePanel", provider);
 		FunctionTagTable table = (FunctionTagTable) getInstanceField("table", sourcePanel);
 		table.setRowSelectionInterval(7, 7);
@@ -110,20 +96,20 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 		captureDialog(warningDialog);
 	}
 
-	/**
+	/*
 	 * Captures the read-only warning when trying to edit a tag
 	 * 
 	 * @throws UsrException
 	 */
 	@Test
-	public void testEditNotAllowedWarning() throws UsrException {
-		showProvider(FunctionTagsComponentProvider.class);
+	public void testEditNotAllowedWarning() {
+		showProvider(FunctionTagProvider.class);
 		waitForSwing();
 		addTableData();
 
-		FunctionTagsComponentProvider provider = getProvider(FunctionTagsComponentProvider.class);
-		SourceTagsPanel sourcePanel = (SourceTagsPanel) getInstanceField("sourcePanel", provider);
-		FunctionTagTable table = (FunctionTagTable) getInstanceField("table", sourcePanel);
+		FunctionTagProvider provider = getProvider(FunctionTagProvider.class);
+		SourceTagsPanel sourcePanel = provider.getSourcePanel();
+		FunctionTagTable table = sourcePanel.getTable();
 		doubleClickItem(table, "LIBRARY"); // pick a known read-only tag
 
 		OptionDialog warningDialog = waitForDialogComponent(OptionDialog.class);
@@ -138,7 +124,7 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 
 		FunctionTagTableModel model = (FunctionTagTableModel) table.getModel();
 		int row = -1;
-		for (int i=0; i<model.getRowCount(); i++) { 
+		for (int i = 0; i < model.getRowCount(); i++) {
 			String name = (String) table.getValueAt(i, 0);
 			if (name.equals(text)) {
 				row = i;
@@ -154,12 +140,14 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 
 	private void addTableData() {
 
-		FunctionTagsComponentProvider provider = getProvider(FunctionTagsComponentProvider.class);
-		provider.programActivated(program);
+		FunctionTagProvider provider = getProvider(FunctionTagProvider.class);
 
-		navigateToFunction(provider);
+		Swing.runNow(() -> {
+			provider.programActivated(program);
+			navigateToFunction(provider);
+		});
 
-		JTextField inputField = (JTextField) getInstanceField("tagInputTF", provider);
+		JTextField inputField = (JTextField) getInstanceField("tagInputField", provider);
 		setText(inputField, "Tag 2, Tag 3");
 		triggerEnter(inputField);
 
@@ -172,7 +160,7 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 	 * 
 	 * @param provider the component provider
 	 */
-	private void navigateToFunction(FunctionTagsComponentProvider provider) {
+	private void navigateToFunction(FunctionTagProvider provider) {
 		FunctionIterator iter = program.getFunctionManager().getFunctions(true);
 		while (iter.hasNext()) {
 			Function func = iter.next();

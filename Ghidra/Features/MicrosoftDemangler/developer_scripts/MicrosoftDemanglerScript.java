@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 //Developer script
-//@category Developer Scripts
+//@category Symbol
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.demangler.DemangledObject;
 import ghidra.app.util.demangler.microsoft.MicrosoftDemangler;

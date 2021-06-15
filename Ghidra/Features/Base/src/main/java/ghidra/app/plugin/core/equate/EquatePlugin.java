@@ -41,8 +41,7 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Equate;
 import ghidra.program.model.symbol.EquateTable;
 import ghidra.program.util.*;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.task.*;
 
 /**
@@ -770,7 +769,7 @@ public class EquatePlugin extends Plugin {
 
 		@Override
 		public void run(TaskMonitor monitor) {
-			dialog = new SetEquateDialog(tool, program, scalar);
+			dialog = Swing.runNow(() -> new SetEquateDialog(tool, program, scalar));
 		}
 
 		SetEquateDialog getDialog() {

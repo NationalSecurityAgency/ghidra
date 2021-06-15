@@ -1,0 +1,109 @@
+# RV64 Bitmanip Extension
+
+#TODO  fix op2031
+:addiwu rd, rs1, op2031 is op0006=0x1b & op1214=0x4 & rd & op2031 & rs1 unimpl
+
+:addu.w rd, rs1, rs2 is op0006=0x3b & op1214=0x0 & op2531=0x4 & rd & rs1 & rs2 unimpl
+
+:addwu rd, rs1, rs2 is op0006=0x3b & op1214=0x0 & op2531=0x5 & rd & rs1 & rs2 unimpl
+
+:bdepw rd, rs1, rs2 is op0006=0x3b & op1214=0x6 & op2531=0x24 & rd & rs1 & rs2 unimpl
+
+:bextw rd, rs1, rs2 is op0006=0x3b & op1214=0x6 & op2531=0x4 & rd & rs1 & rs2 unimpl
+
+:bfpw rd, rs1, rs2 is op0006=0x3b & op1214=0x7 & op2531=0x24 & rd & rs1 & rs2 unimpl
+
+:bmatflip rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x3 & op2531=0x30 & rd & rs1 unimpl
+
+:bmator rd, rs1, rs2 is op0006=0x33 & op1214=0x3 & op2531=0x4 & rd & rs1 & rs2 unimpl
+
+:bmatxor rd, rs1, rs2 is op0006=0x33 & op1214=0x3 & op2531=0x24 & rd & rs1 & rs2 unimpl
+
+:clmulhw rd, rs1, rs2 is op0006=0x3b & op1214=0x3 & op2531=0x5 & rd & rs1 & rs2 unimpl
+
+:clmulrw rd, rs1, rs2 is op0006=0x3b & op1214=0x2 & op2531=0x5 & rd & rs1 & rs2 unimpl
+
+:clmulw  rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x5 & rd & rs1 & rs2 unimpl
+
+:clzw rd, rs1 is op0006=0x1b & op1214=0x1 & op2024=0x0 & op2531=0x30 & rd & rs1 unimpl
+
+:crc32.d rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x13 & op2531=0x30 & rd & rs1 unimpl
+
+:crc32c.d rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x1b & op2531=0x30 & rd & rs1 unimpl
+
+:ctzw rd, rs1 is op0006=0x1b & op1214=0x1 & op2024=0x1 & op2531=0x30 & rd & rs1 unimpl
+
+:fslw  rd, rs1, rs3, rs2 is op0006=0x3b & op1214=0x1 & op2526=0x2 & rd & rs1 & rs2 & rs3 unimpl
+
+#TODO fix op2024
+:fsriw rd, rs1, rs3, op2024 is op0006=0x1b & op1214=0x5 & op2526=0x2 & op2024 & rd & rs1 & rs3 unimpl
+
+:fsrw  rd, rs1, rs3, rs2 is op0006=0x3b & op1214=0x5 & op2526=0x2 & rd & rs1 & rs2 & rs3 unimpl
+
+#TODO  fix op2024
+:gorciw rd, rs1, op2024 is op0006=0x1b & op1214=0x5 & op2531=0x14 & op2024 & rd & rs1 unimpl
+
+:gorcw  rd, rs1, rs2 is op0006=0x3b & op1214=0x5 & op2531=0x14 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2024
+:greviw rd, rs1, op2024 is op0006=0x1b & op1214=0x5 & op2531=0x34 & op2024 & rd & rs1 unimpl
+
+:grevw  rd, rs1, rs2 is op0006=0x3b & op1214=0x5 & op2531=0x34 & rd & rs1 & rs2 unimpl
+
+:packuw rd, rs1, rs2 is op0006=0x3b & op1214=0x4 & op2531=0x24 & rd & rs1 & rs2 unimpl
+
+:packw  rd, rs1, rs2 is op0006=0x3b & op1214=0x4 & op2531=0x4 & rd & rs1 & rs2 unimpl
+
+:pcntw rd, rs1 is op0006=0x1b & op1214=0x1 & op2024=0x2 & op2531=0x30 & rd & rs1 unimpl
+
+:rolw  rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x30 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2024
+:roriw rd, rs1, op2024 is op0006=0x1b & op1214=0x5 & op2531=0x30 & op2024 & rd & rs1 unimpl
+
+:rorw  rd, rs1, rs2 is op0006=0x3b & op1214=0x5 & op2531=0x30 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2024
+:sbclriw rd, rs1, op2024 is op0006=0x1b & op1214=0x1 & op2531=0x24 & op2024 & rd & rs1 unimpl
+
+:sbclrw  rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x24 & rd & rs1 & rs2 unimpl
+
+:sbextw  rd, rs1, rs2 is op0006=0x3b & op1214=0x5 & op2531=0x24 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2024
+:sbinviw rd, rs1, op2024 is op0006=0x1b & op1214=0x1 & op2531=0x34 & op2024 & rd & rs1 unimpl
+
+:sbinvw  rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x34 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2024
+:sbsetiw rd, rs1, op2024 is op0006=0x1b & op1214=0x1 & op2531=0x14 & op2024 & rd & rs1 unimpl
+
+:sbsetw  rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x14 & rd & rs1 & rs2 unimpl
+
+:sh1addu.w rd, rs1, rs2 is op0006=0x3b & op1214=0x2 & op2531=0x10 & rd & rs1 & rs2 unimpl
+
+:sh2addu.w rd, rs1, rs2 is op0006=0x3b & op1214=0x4 & op2531=0x10 & rd & rs1 & rs2 unimpl
+
+:sh3addu.w rd, rs1, rs2 is op0006=0x3b & op1214=0x6 & op2531=0x10 & rd & rs1 & rs2 unimpl
+
+:shflw    rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x4 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2026
+:slliu.w rd, rs1, op2026 is op0006=0x1b & op1214=0x1 & op2731=0x1 & op2026 & rd & rs1 unimpl
+
+#TODO  fix op2024
+:sloiw rd, rs1, op2024 is op0006=0x1b & op1214=0x1 & op2531=0x10 & op2024 & rd & rs1 unimpl
+
+:slow  rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x10 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2024
+:sroiw rd, rs1, op2024 is op0006=0x1b & op1214=0x5 & op2531=0x10 & op2024 & rd & rs1 unimpl
+
+:srow  rd, rs1, rs2 is op0006=0x3b & op1214=0x5 & op2531=0x10 & rd & rs1 & rs2 unimpl
+
+:subu.w rd, rs1, rs2 is op0006=0x3b & op1214=0x0 & op2531=0x24 & rd & rs1 & rs2 unimpl
+
+:subwu rd, rs1, rs2 is op0006=0x3b & op1214=0x0 & op2531=0x25 & rd & rs1 & rs2 unimpl
+
+:unshflw  rd, rs1, rs2 is op0006=0x3b & op1214=0x5 & op2531=0x4 & rd & rs1 & rs2 unimpl
+

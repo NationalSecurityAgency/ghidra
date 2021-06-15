@@ -60,16 +60,15 @@ public class GTreeStartEditingTask extends GTreeTask {
 
 	private void edit() {
 
+		if (tree.isFiltered()) {
+			Msg.showWarn(getClass(), tree, "Cannot Edit Tree Node",
+				"Can't edit tree node \"" + childName + "\" while tree is filtered.");
+			return;
+		}
+
 		GTreeNode editNode = parent.getChild(childName);
 		if (editNode == null) {
-			if (tree.isFiltered()) {
-				Msg.showWarn(getClass(), tree, "Cannot Edit Tree Node",
-					"Can't edit tree node \"" + childName + "\" while tree is filtered.");
-			}
-			else {
-				Msg.debug(this,
-					"Can't find node \"" + childName + "\" to edit.");
-			}
+			Msg.debug(this, "Can't find node \"" + childName + "\" to edit.");
 			return;
 		}
 

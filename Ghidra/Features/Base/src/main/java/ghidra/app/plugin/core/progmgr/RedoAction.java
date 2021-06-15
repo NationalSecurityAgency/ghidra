@@ -46,6 +46,10 @@ public class RedoAction extends ProgramContextAction {
 		setToolBarData(new ToolBarData(icon, group));
 		setKeyBindingData(new KeyBindingData("ctrl shift Z"));
 		setDescription("Redo");
+		setSupportsDefaultToolContext(true);
+
+		// we want this action to appear in all windows that can produce a program context
+		addToWindowWhen(ProgramActionContext.class);
 	}
 
 	@Override

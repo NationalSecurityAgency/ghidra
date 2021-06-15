@@ -20,14 +20,12 @@ import java.util.Set;
 
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.util.NamespaceUtils;
-import ghidra.app.util.datatype.microsoft.GUID;
 import ghidra.app.util.datatype.microsoft.GuidDataType;
+import ghidra.app.util.datatype.microsoft.GuidUtil;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.DumbMemBufferImpl;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
@@ -37,11 +35,9 @@ import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
 class ApplySymbols {
-	private static final String MS_VF_TABLE_PREFIX = "??_7";
-	private static final String MS_VB_TABLE_PREFIX = "??_8";
-	private static final String MS_STRING_PREFIX = "??_C@_";
-
-	private static final String MS_GUID_PREFIX = "_GUID_";
+//	private static final String MS_VF_TABLE_PREFIX = "??_7";
+//	private static final String MS_VB_TABLE_PREFIX = "??_8";
+//	private static final String MS_STRING_PREFIX = "??_C@_";
 
 	private ApplySymbols() {
 		// static use only
@@ -146,11 +142,11 @@ class ApplySymbols {
 //				}
 //			}
 //			else 
-			if (name.startsWith(MS_STRING_PREFIX)) {
+//			if (name.startsWith(MS_STRING_PREFIX)) {
 // TODO: Should this be handled by the demangler instead of here?
-				boolean isUnicode = isUnicode(name);
-				pdbParser.createString(isUnicode, address, log);
-			}
+//				boolean isUnicode = isUnicode(name);
+//				pdbParser.createString(isUnicode, address, log);
+//			}
 			////////////
 			// Commented out the following for now, because it appears to be doing things it 
 			// shouldn't. Many of the things are very loosely speculative.
@@ -170,7 +166,7 @@ class ApplySymbols {
 //					pdbParser.createData(address, DoubleDataType.dataType, log, monitor);
 //				}
 //			}
-			else if (isGuidLabel(name, address, program)) {
+			if (GuidUtil.isGuidLabel(program, address, name)) {
 				pdbParser.createData(address, new GuidDataType(), log);
 			}
 			else if (tag.equals("Data")) {
@@ -193,23 +189,6 @@ class ApplySymbols {
 
 	}
 
-	private static boolean isGuidLabel(String name, Address address, Program program) {
-		if (!name.startsWith(MS_GUID_PREFIX)) {
-			return false;
-		}
-		String guidString = name.substring(MS_GUID_PREFIX.length()).replace("_", "-");
-		try {
-			new GUID(guidString);
-		}
-		catch (Exception e) {
-			return false;
-		}
-		GuidDataType dt = new GuidDataType();
-		String guidRep = dt.getRepresentation(new DumbMemBufferImpl(program.getMemory(), address),
-			new SettingsImpl(), -1);
-		return guidRep.endsWith(guidString);
-	}
-
 	private static boolean shouldForcePrimarySymbol(Program program, Address address) {
 		Symbol primarySymbol = program.getSymbolTable().getPrimarySymbol(address);
 		if (primarySymbol != null) {
@@ -222,13 +201,13 @@ class ApplySymbols {
 		return false;
 	}
 
-	private static boolean isUnicode(String name) {
-		if (name.startsWith(MS_STRING_PREFIX)) {
-			if (name.charAt(MS_STRING_PREFIX.length()) == '1') {
-				return true;
-			}
-		}
-		return false;
-	}
+//	private static boolean isUnicode(String name) {
+//		if (name.startsWith(MS_STRING_PREFIX)) {
+//			if (name.charAt(MS_STRING_PREFIX.length()) == '1') {
+//				return true;
+//			}
+//		}
+//		return false;
+//	}
 
 }

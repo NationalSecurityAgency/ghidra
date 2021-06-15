@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.clipboard;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.awt.Point;
 import java.awt.event.MouseEvent;
@@ -26,6 +25,7 @@ import javax.swing.SwingUtilities;
 
 import org.junit.*;
 
+import docking.action.DockingAction;
 import docking.action.DockingActionIf;
 import docking.widgets.fieldpanel.FieldPanel;
 import ghidra.app.cmd.function.SetVariableCommentCmd;
@@ -53,11 +53,8 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
 
 /**
- * Test copy/paste function information.
- *
- *
+ * Test copy/paste function information
  */
-
 public class CopyPasteFunctionInfoTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private TestEnv env;
@@ -71,14 +68,6 @@ public class CopyPasteFunctionInfoTest extends AbstractGhidraHeadedIntegrationTe
 	private FieldPanel fieldPanel2;
 	private Options fieldOptions2;
 	private CodeBrowserPlugin cb1;
-
-	/**
-	 * Constructor for CopyPasteFunctionInfoTest.
-	 * @param arg0
-	 */
-	public CopyPasteFunctionInfoTest() {
-		super();
-	}
 
 	private Program buildNotepad(String name) throws Exception {
 		ToyProgramBuilder builder = new ToyProgramBuilder(name, true, ProgramBuilder._TOY);
@@ -133,9 +122,6 @@ public class CopyPasteFunctionInfoTest extends AbstractGhidraHeadedIntegrationTe
 		resetOptions();
 	}
 
-	/*
-	 * @see TestCase#tearDown()
-	 */
 	@After
 	public void tearDown() throws Exception {
 		env.dispose();
@@ -174,12 +160,7 @@ public class CopyPasteFunctionInfoTest extends AbstractGhidraHeadedIntegrationTe
 		goToAddr(toolTwo, 0x1004700);
 		click2();
 
-		// paste
-		plugin = getPlugin(toolTwo, ClipboardPlugin.class);
-		DockingActionIf pasteAction = getAction(plugin, "Paste");
-		assertEnabled(pasteAction);
-		performAction(pasteAction, true);
-		waitForSwing();
+		paste(toolTwo);
 
 		// function FUN_01004700 should be renamed to "ghidra"
 		CodeBrowserPlugin cb = getPlugin(toolTwo, CodeBrowserPlugin.class);
@@ -219,12 +200,7 @@ public class CopyPasteFunctionInfoTest extends AbstractGhidraHeadedIntegrationTe
 		goToAddr(toolTwo, entryAddr);
 		click2();
 
-		// paste
-		plugin = getPlugin(toolTwo, ClipboardPlugin.class);
-		DockingActionIf pasteAction = getAction(plugin, "Paste");
-		assertEnabled(pasteAction);
-		performAction(pasteAction, true);
-		waitForSwing();
+		paste(toolTwo);
 
 		CodeBrowserPlugin cb = getPlugin(toolTwo, CodeBrowserPlugin.class);
 		cb.goToField(entryAddr, PlateFieldFactory.FIELD_NAME, 0, 0);
@@ -283,12 +259,7 @@ public class CopyPasteFunctionInfoTest extends AbstractGhidraHeadedIntegrationTe
 		goToAddr(toolTwo, addr);
 		click2();
 
-		// paste
-		plugin = getPlugin(toolTwo, ClipboardPlugin.class);
-		DockingActionIf pasteAction = getAction(plugin, "Paste");
-		assertEnabled(pasteAction);
-		performAction(pasteAction, true);
-		waitForSwing();
+		paste(toolTwo);
 
 		// verify the code browser field shows the comment
 		func = programTwo.getListing().getFunctionAt(addr);
@@ -338,12 +309,8 @@ public class CopyPasteFunctionInfoTest extends AbstractGhidraHeadedIntegrationTe
 		addr = getAddr(programTwo, 0x01004260);
 		goToAddr(toolTwo, addr);
 		click2();
-		// paste
-		plugin = getPlugin(toolTwo, ClipboardPlugin.class);
-		DockingActionIf pasteAction = getAction(plugin, "Paste");
-		assertEnabled(pasteAction);
-		performAction(pasteAction, true);
-		waitForSwing();
+
+		paste(toolTwo);
 
 		// verify the code browser field shows the comment
 		func = programTwo.getListing().getFunctionAt(addr);
@@ -416,12 +383,7 @@ public class CopyPasteFunctionInfoTest extends AbstractGhidraHeadedIntegrationTe
 		goToAddr(toolTwo, 0x0100176f);
 		click2();
 
-		// paste
-		plugin = getPlugin(toolTwo, ClipboardPlugin.class);
-		DockingActionIf pasteAction = getAction(plugin, "Paste");
-		assertEnabled(pasteAction);
-		performAction(pasteAction, true);
-		waitForSwing();
+		paste(toolTwo);
 
 		addr = getAddr(programTwo, 0x0100176f);
 		// nothing should happen with the stack variable comments
@@ -433,7 +395,36 @@ public class CopyPasteFunctionInfoTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals(1, f.getNumRows());
 	}
 
-	/////////////////////////////////////////////////////////////////////////
+//==================================================================================================
+// Private Methods
+//==================================================================================================	
+
+	private void paste(PluginTool tool) {
+
+		ClipboardPlugin plugin = getPlugin(tool, ClipboardPlugin.class);
+		ClipboardContentProviderService service =
+			getCodeBrowserClipboardContentProviderService(plugin);
+		DockingActionIf pasteAction = getClipboardAction(plugin, service, "Paste");
+		assertEnabled(pasteAction);
+		performAction(pasteAction, true);
+		waitForSwing();
+	}
+
+	private DockingActionIf getClipboardAction(ClipboardPlugin plugin,
+			ClipboardContentProviderService service, String actionName) {
+
+		@SuppressWarnings("unchecked")
+		Map<ClipboardContentProviderService, List<DockingAction>> map =
+			(Map<ClipboardContentProviderService, List<DockingAction>>) getInstanceField(
+				"serviceActionMap", plugin);
+		List<DockingAction> list = map.get(service);
+		for (DockingAction pluginAction : list) {
+			if (pluginAction.getName().equals(actionName)) {
+				return pluginAction;
+			}
+		}
+		return null;
+	}
 
 	private void setupTool(PluginTool tool) throws Exception {
 		tool.addPlugin(ClipboardPlugin.class.getName());
@@ -511,10 +502,9 @@ public class CopyPasteFunctionInfoTest extends AbstractGhidraHeadedIntegrationTe
 			ClipboardPlugin clipboardPlugin) {
 		Map<?, ?> serviceMap = (Map<?, ?>) getInstanceField("serviceActionMap", clipboardPlugin);
 		Set<?> keySet = serviceMap.keySet();
-		for (Object name : keySet) {
-			ClipboardContentProviderService service = (ClipboardContentProviderService) name;
-			if (service instanceof CodeBrowserClipboardProvider) {
-				return service;
+		for (Object service : keySet) {
+			if (service.getClass().equals(CodeBrowserClipboardProvider.class)) {
+				return (ClipboardContentProviderService) service;
 			}
 		}
 		return null;

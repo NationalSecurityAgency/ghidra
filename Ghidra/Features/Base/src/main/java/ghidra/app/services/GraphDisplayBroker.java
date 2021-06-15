@@ -15,11 +15,12 @@
  */
 package ghidra.app.services;
 
+import java.util.*;
+
 import ghidra.app.plugin.core.graph.GraphDisplayBrokerListener;
 import ghidra.app.plugin.core.graph.GraphDisplayBrokerPlugin;
 import ghidra.framework.plugintool.ServiceInfo;
-import ghidra.service.graph.GraphDisplay;
-import ghidra.service.graph.GraphDisplayProvider;
+import ghidra.service.graph.*;
 import ghidra.util.exception.GraphException;
 import ghidra.util.task.TaskMonitor;
 
@@ -59,7 +60,25 @@ public interface GraphDisplayBroker {
 	 * @return a {@link GraphDisplay} object to sends graphs to be displayed or exported.
 	 * @throws GraphException thrown if an error occurs trying to get a graph display
 	 */
-	public GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, TaskMonitor monitor)
+	public default GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, TaskMonitor monitor)
+			throws GraphException {
+		return getDefaultGraphDisplay(reuseGraph, Collections.emptyMap(), monitor);
+	}
+
+	/**
+	 * A convenience method for getting a {@link GraphDisplay} from the currently active provider
+	 * 
+	 * <p>This method allows users to override default graph properties for the graph provider 
+	 * being created.  See the graph provider implementation for a list of supported properties
+	 * 
+	 * @param reuseGraph if true, the provider will attempt to re-use a current graph display
+	 * @param properties a {@code Map} of property key/values that can be used to customize the display
+	 * @param monitor the {@link TaskMonitor} that can be used to cancel the operation
+	 * @return a {@link GraphDisplay} object to sends graphs to be displayed or exported.
+	 * @throws GraphException thrown if an error occurs trying to get a graph display
+	 */
+	public GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, Map<String, String> properties,
+			TaskMonitor monitor)
 			throws GraphException;
 
 	/**
@@ -74,4 +93,21 @@ public interface GraphDisplayBroker {
 	 * @return the GraphDisplayProvider with the given name or null if none with that name exists.
 	 */
 	public GraphDisplayProvider getGraphDisplayProvider(String name);
+
+	/**
+	 * Returns a list of all discovered {@link AttributedGraphExporter}.
+	 * @return  a list of all discovered {@link AttributedGraphExporter}.
+	 */
+	public List<AttributedGraphExporter> getGraphExporters();
+
+	/**
+	 * Returns the {@link AttributedGraphExporter} with the given name or null in no exporter with
+	 * that name is known
+	 * 
+	 * @param name the name of the exporter to retrieve
+	 * @return  the {@link AttributedGraphExporter} with the given name or null if no exporter with
+	 * that name is known
+	 */
+	public AttributedGraphExporter getGraphExporters(String name);
+
 }

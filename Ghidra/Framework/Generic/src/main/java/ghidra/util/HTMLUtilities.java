@@ -17,7 +17,6 @@ package ghidra.util;
 
 import java.awt.*;
 import java.util.List;
-import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -271,7 +270,7 @@ public class HTMLUtilities {
 	 * @param text the text to check
 	 * @return true if the text cannot be correctly broken into lines
 	 */
-	private static boolean isUnbreakableHTML(String text) {
+	public static boolean isUnbreakableHTML(String text) {
 		if (text.contains(HTML_SPACE) && !text.contains(" ")) {
 			// this can happen if the client has called a method on this class that turns spaces
 			// to the HTML_SPACE
@@ -797,21 +796,11 @@ public class HTMLUtilities {
 		// formatting tags (like <B>, <FONT>, etc).   So, just normalize the text, not
 		// preserving any of the line breaks.
 		//
-		String condensed = condense(updated);
-		return condensed;
-	}
-
-	private static String condense(String text) {
-		// replace newlines, as they are sometimes inserted where two words were expected to
-		// contain no whitespace
-		String updated = text.replaceAll("\\n", "");
-		StringTokenizer tokenizer = new StringTokenizer(updated);
-		StringBuilder buffy = new StringBuilder();
-		while (tokenizer.hasMoreTokens()) {
-			buffy.append(tokenizer.nextToken()).append(" ");
-		}
-
-		return buffy.toString().trim();
+		// Note: Calling this method here causes unwanted removal of newlines.  If the original 
+		//       need for this call is found, this can be revisited. 
+		//       (see history for condense() code)
+		// String condensed = condense(updated);
+		return updated;
 	}
 
 	/**

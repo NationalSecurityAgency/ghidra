@@ -43,10 +43,6 @@ public class OptionsTest extends AbstractGenericTest {
 
 	private ToolOptions options;
 
-	public OptionsTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		options = new ToolOptions("Test");

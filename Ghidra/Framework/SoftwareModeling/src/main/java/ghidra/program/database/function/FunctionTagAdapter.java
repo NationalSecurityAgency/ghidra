@@ -97,7 +97,7 @@ abstract class FunctionTagAdapter {
 	 * @return Record, or null if not found
 	 * @throws IOException
 	 */
-	abstract Record getRecord(String tag) throws IOException;
+	abstract DBRecord getRecord(String tag) throws IOException;
 
 	/**
 	 * Returns the tag record with the given id.
@@ -106,24 +106,24 @@ abstract class FunctionTagAdapter {
 	 * @return Record, or null if not found
 	 * @throws IOException
 	 */
-	abstract Record getRecord(long id) throws IOException;
+	abstract DBRecord getRecord(long id) throws IOException;
 
 	/**
-	 * Creates a {@link Record} with the given tag name.
+	 * Creates a {@link DBRecord} with the given tag name.
 	 * 
 	 * @param tag the tag name to create
 	 * @param comment tag comment
 	 * @return
 	 * @throws IOException
 	 */
-	abstract Record createTagRecord(String tag, String comment) throws IOException;
+	abstract DBRecord createTagRecord(String tag, String comment) throws IOException;
 
 	/**
 	 * Updates the database record for a tag.
 	 * @param record tag record
 	 * @throws IOException
 	 */
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 	
 	/**
 	 * Removes the tag with the given name from the database.

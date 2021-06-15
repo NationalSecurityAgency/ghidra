@@ -15,9 +15,7 @@
  */
 package ghidra.app.cmd.data;
 
-import java.util.List;
-
-import ghidra.app.plugin.prototype.MicrosoftCodeAnalyzerPlugin.RttiAnalyzer;
+import ghidra.app.cmd.data.rtti.RttiUtil;
 import ghidra.app.util.datatype.microsoft.DataValidationOptions;
 import ghidra.app.util.datatype.microsoft.MSDataTypeUtils;
 import ghidra.app.util.demangler.DemangledObject;
@@ -27,11 +25,12 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.UndefinedValueException;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.*;
+import ghidra.program.model.mem.DumbMemBufferImpl;
+import ghidra.program.model.mem.Memory;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.util.ProgramMemoryUtil;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import mdemangler.*;
@@ -253,25 +252,16 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	 * @return true if the data type has a vf table pointer. Otherwise, it has a hash value.
 	 */
 	private static boolean hasVFPointer(Program program) {
-		// Should be true when 64 bit or RTTI.
-		if (MSDataTypeUtils.is64Bit(program)) {
-			return true;
-		}
-		Memory memory = program.getMemory();
+
+		Address typeInfoVftableAddress = null;
 		try {
-			List<MemoryBlock> dataBlocks = ProgramMemoryUtil.getMemoryBlocksStartingWithName(
-				program, program.getMemory(), ".data", TaskMonitor.DUMMY);
-			for (MemoryBlock memoryBlock : dataBlocks) {
-				Address typeInfoAddress =
-					memory.findBytes(memoryBlock.getStart(), memoryBlock.getEnd(),
-						RttiAnalyzer.TYPE_INFO_STRING.getBytes(), null, true, TaskMonitor.DUMMY);
-				if (typeInfoAddress != null) {
-					return true; // RTTI has type info string in the data section.
-				}
-			}
+			typeInfoVftableAddress = RttiUtil.findTypeInfoVftableAddress(program, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
-			// Shouldn't happen since using dummy monitor. Do nothing.
+			throw new AssertException(e);
+		}
+		if (typeInfoVftableAddress != null) {
+			return true;
 		}
 		return false;
 	}
@@ -367,9 +357,11 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 			throw new UndefinedValueException(
 				"No vf table pointer is defined for this TypeDescriptor model.");
 		}
+		
+		Address vfTableAddress;
 		// component 0 is either vf table pointer or hash value.
-		Address vfTableAddress =
-			EHDataTypeUtilities.getAddress(getDataType(), VF_TABLE_OR_HASH_ORDINAL, getMemBuffer());
+		vfTableAddress = EHDataTypeUtilities.getAddress(getDataType(), VF_TABLE_OR_HASH_ORDINAL, getMemBuffer());
+
 		return vfTableAddress.getOffset() != 0 ? vfTableAddress : null;
 	}
 
@@ -622,7 +614,7 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 		if (nsSymbol == null) {
 			return false; // global namespace.
 		}
-		return !nsSymbol.checkIsValid();
+		return nsSymbol.isDeleted();
 	}
 
 	/**

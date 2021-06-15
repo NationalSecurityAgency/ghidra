@@ -62,6 +62,11 @@ public class VisualGraphHoverMousePlugin<V extends VisualVertex, E extends Visua
 	}
 
 	@Override
+	public boolean checkModifiers(MouseEvent e) {
+		return e.getModifiersEx() == modifiers;
+	}
+
+	@Override
 	public void mouseMoved(MouseEvent e) {
 		lastMouseEvent = e;
 		mouseHoverUpdater.update();

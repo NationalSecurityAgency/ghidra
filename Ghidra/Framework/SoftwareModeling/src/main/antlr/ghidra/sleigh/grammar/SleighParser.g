@@ -74,6 +74,7 @@ aligndef
 
 tokendef
 	:	lc=KEY_DEFINE KEY_TOKEN identifier LPAREN integer rp=RPAREN fielddefs[$rp] -> ^(OP_TOKEN[$lc, "define token"] identifier integer fielddefs)
+	|   lc=KEY_DEFINE KEY_TOKEN identifier LPAREN integer RPAREN rp=KEY_ENDIAN ASSIGN endian fielddefs[$rp] -> ^(OP_TOKEN_ENDIAN[$lc, "define token"] identifier integer endian fielddefs)
 	;
 
 fielddefs[Token lc]

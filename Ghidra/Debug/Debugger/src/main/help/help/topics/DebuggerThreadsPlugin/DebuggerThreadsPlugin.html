@@ -1,0 +1,144 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Threads and Traces</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Threads and Traces</H1>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/DebuggerThreadsPlugin.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>In general, a thread refers to a unit of concurrent execution within a target. Typically,
+    each thread carries its own execution context, so this window provides a means of navigating
+    those contexts. Furthermore, this window provides a means of navigating and managing open
+    traces, much like the static listing provides a means of navigating open programs. The window
+    also provides a timeline showing thread lifespans, and displays a caret which can be used to
+    navigate the current point in time. This window, the <A href=
+    "help/topics/DebuggerStackPlugin/DebuggerStackPlugin.html">Stack</A> window, and the <A href=
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Dynamic Listing</A> window
+    provide a complete trace navigation system.</P>
+
+    <H2>Trace Tabs</H2>
+
+    <P>The trace tab bar is displayed when at least one trace is open. It displays the name of each
+    open trace in a button, where the "current" or "focused" trace is selected. Clicking a tab will
+    select its trace and focus the tool onto it. A trace associated with a live target has a red
+    "recording" icon at its left. If that icon is not present, or has disappeared, the trace is
+    dead or terminated. A "dead" trace can still be manipulated and marked up, but it will not
+    record any new target information.</P>
+
+    <P>In most cases, a trace is ephemeral, but occasionally, interesting behavior is observed that
+    is difficult to store as static mark-up. When a trace is no longer needed, it can be closed by
+    right-clicking the tab and selecting "Close Trace." <FONT color="red">Warning:</FONT> closing a
+    trace that has not been saved <EM>cannot</EM> be undone. If you accumulate many unwanted
+    traces, use one of the "Close Others," "Close Dead," or "Close All" actions from the pop-up
+    menu.</P>
+
+    <H2>Navigating Threads</H2>
+
+    <P>Selecting a thread in the timeline or the table will navigate to (or "activate" or "focus")
+    that thread. Windows which are sensitive to the current thread will update. Notably, the <A
+    href="help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html">Registers</A> window
+    will display the activated thread's register values. <A href=
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Listing</A> windows with
+    configured location tracking will re-compute that location with the thread's context and
+    navigate to it. The thread timeline displays all recorded threads. Threads which are alive will
+    appear to extend "to the end of time." The threads table displays more detailed information in
+    the following columns:</P>
+
+    <UL>
+      <LI>Name - the name of the thread given by the debugger. Often, this is just an index or
+      unique id assigned to the thread. This field can be modified, but it has no effect on the
+      target.</LI>
+
+      <LI>Created - the snapshot when this thread was first observed. If the thread's creation was
+      observed, then it is its creation time.</LI>
+
+      <LI>Destroyed - if destroyed, the snapshot when this thread was last observed. If the
+      thread's destruction was observed, then it is its destruction time.</LI>
+
+      <LI>State - the thread's current state. For a dead trace, this is either ALIVE or TERMINATED,
+      and depends solely on whether or not a destruction time was recorded. For a live trace, this
+      may also take RUNNING, STOPPED, or UNKNOWN, depending on what is reported by the debugger.
+      The state always reflects the present, or latest known, state.</LI>
+
+      <LI>Comment - a user-modifiable comment about the thread.</LI>
+    </UL>
+
+    <H2>Navigating Time</H2>
+
+    <P>The user can navigate through time within the current trace by using the caret above the
+    threads timeline. There are also actions for "stepping the trace" forward and backward. See the
+    <A href="help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html">Time</A> window for a way to
+    display and navigate to specific events in the trace's timeline. Note that stepping away from
+    the present will prevent most windows from interacting with the live target. While some
+    components and scripts may interact with the target and record things "into the present," such
+    updates may not appear on screen until the user steps back to the present. Stepping the trace
+    does not affect the target, except that viewing the present requires querying the live target,
+    which can perturb its state.</P>
+
+    <H3><A name="step_trace_snap_backward"></A><IMG alt="" src="images/arrow_up.png">Step Trace
+    Snap Backward</H3>
+
+    <P>This action is available when there exists a snapshot previous to the current. It steps the
+    trace backward to the previous snapshot, causing most windows to display the recorded data from
+    the new point in time.</P>
+
+    <H3><A name="step_trace_snap_forward"></A><IMG alt="" src="images/arrow_down.png">Step Trace
+    Snap Forward</H3>
+
+    <P>This action is available when there exists a snapshot ahead of the current. It steps the
+    trace forward to the next snapshot, causing most windows to display the recorded data from the
+    new point in time.</P>
+
+    <H3><A name="step_trace_tick_backward"></A><IMG alt="" src="images/stepback.png">Step Trace
+    Tick Backward</H3>
+
+    <P>This action is available when the current point in time includes emulated steps. It steps
+    the trace backward to the previous tick.</P>
+
+    <H3><A name="step_trace_tick_forward"></A><IMG alt="" src="images/stepinto.png">Step Trace Tick
+    Forward</H3>
+
+    <P>This action is available when a thread is selected. It steps the current thread forward to
+    the next tick, using emulation. Note that emulation does not affect the target. Furthermore,
+    emulation may halt early if it encounters certain instructions or causes an exception.</P>
+
+    <H3><A name="seek_trace_present"></A><IMG alt="" src="images/continue.png">Seek Trace to
+    Present</H3>
+
+    <P>This toggle is always available and is enabled by default. When first enabled, if the
+    current trace is live, it immediately steps the trace to the present. Furthermore, as long as
+    it is enabled and the current trace is live, whenever the recorder steps forward, the tool
+    steps with it. In most cases, this option should remain on, otherwise stepping the target will
+    not cause any windows to update. Toggling it off then on is a quick way to return to the
+    present after browsing the past.</P>
+
+    <H2>Other Actions</H2>
+
+    <H3><A name="sync_focus"></A>Synchronize Trace and Target Focus</H3>
+
+    <P>This toggle is always available and is enabled by default. While enabled, any changes in
+    navigation coordinates are translated, to the extent possible, and sent to the connected
+    debugger. This may, for example, issue <CODE>thread</CODE> and/or <CODE>frame</CODE> commands
+    to GDB so that commands typed into its CLI will refer to the same thread and frame as is
+    focused in Ghidra. Conversely, any debugger events which indicate a change in focus are
+    translated, to the extent possible, into navigation coordinates and activated in Ghidra. For
+    example, if the user issues a <CODE>frame</CODE> command to the CLI of a GDB connection, then
+    Ghidra will navigate to that same frame.</P>
+  </BODY>
+</HTML>

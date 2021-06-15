@@ -101,6 +101,11 @@ abstract class LongKeyNode implements BTreeNode {
 	 */
 	abstract long getKey(int index);
 
+	@Override
+	public final Field getKeyField(int index) throws IOException {
+		return new LongField(getKey(index));
+	}
+
 	/**
 	 * Get the leaf node which contains the specified key.
 	 * @param key key value

@@ -1,0 +1,1288 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Decompiler Concepts</title>
+<link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+<link rel="stylesheet" type="text/css" href="../../shared/languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="Decompiler.html" title="Decompiler">
+<link rel="up" href="Decompiler.html" title="Decompiler">
+<link rel="prev" href="DecompilerIntro.html" title="Decompiler">
+<link rel="next" href="DecompilerAnnotations.html" title="Program Annotations Affecting the Decompiler">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter">
+<div class="titlepage"><div><div><h1 class="title">
+<a name="DecompilerConcepts"></a>Decompiler Concepts</h1></div></div></div>
+  
+  
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="ConceptPcode"></a>P-code</h2></div></div></div>
+  
+  <p>
+    P-code is Ghidra's Intermediate Representation (IR) language. When analyzing a function,
+    the decompiler translates every machine instruction into p-code first and performs its
+    analysis directly on the operators and variables of the language. Output of the decompiler
+    is also best understood in terms of p-code. This section presents the key concepts of
+    p-code. For a more detailed discussion see the document "P-Code Reference Manual".
+  </p>
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ConceptAddressSpace"></a>Address Space</h3></div></div></div>
+    
+    <p>
+      P-code defines all data in terms of an address space. An <span class="bold"><strong>address space</strong></span>
+      is defined simply as an indexed sequence of bytes that can be read and written by p-code operations.
+      For a specific byte, the unique index that labels it is called the byte's <span class="bold"><strong>address</strong></span>.
+      Each address space has a:
+      </p>
+<div class="informalexample">
+      <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+	    <span class="bold"><strong>name</strong></span> - a formal name for the space
+	</li>
+<li class="listitem" style="list-style-type: disc">
+	    <span class="bold"><strong>size</strong></span> - the maximum number of bytes that can be addressed
+	</li>
+<li class="listitem" style="list-style-type: disc">
+	    <span class="bold"><strong>endianness</strong></span> - how groups of bytes are interpreted as integers
+	</li>
+</ul></div>
+      </div>
+<p>
+    </p>
+    <p>
+      For a p-code model of a specific processor, all elements of the processor state (including RAM, registers,
+      flags, etc.) must be contained in some address space. The model will define multiple address spaces
+      to accomplish this, and beyond the raw translation of machine instructions to p-code, the decompiler
+      can add additional spaces. Address space definitions that are common across many different processors include:
+      </p>
+<div class="informalexample">
+	<div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>ram</strong></span></span></dt>
+<dd>
+	    <p>
+	      A space that models memory accessible via the processor's main data bus. Depending on
+	      the architecture, different spaces might be substituted for <span class="emphasis"><em>ram</em></span>,
+	      such as separate <span class="emphasis"><em>code</em></span> and <span class="emphasis"><em>data</em></span> spaces.
+	    </p>
+	  </dd>
+<dt><span class="term"><span class="bold"><strong>register</strong></span></span></dt>
+<dd>
+	    <p>
+	      A space that models the processor's general purpose registers.  Ghidra still uses
+	      the standard names to refer to registers for the processor, but internally each register maps to a
+	      specific address in this space.
+	    </p>
+	  </dd>
+<dt><span class="term"><span class="bold"><strong>unique</strong></span></span></dt>
+<dd>
+	    <p>
+	      A space dedicated to <span class="emphasis"><em>temporary</em></span> registers.
+	      It is used to hold intermediate values when modeling instruction behavior, and the decompiler
+	      uses it to allocate space for variables that don't directly correspond to the low level
+	      processor state.  The name <span class="emphasis"><em>unique</em></span> is reserved for this purpose and
+	      is present in all processor models.
+	    </p>
+	  </dd>
+<dt><span class="term"><span class="bold"><strong>stack</strong></span></span></dt>
+<dd>
+	    <p>
+	      A space that represents bytes explicitly indexed through a <span class="emphasis"><em>stack pointer</em></span>.
+	      This is an example of an address space added by the decompiler beyond what the raw processor
+	      model defines.  The <span class="emphasis"><em>stack</em></span> space is a logical construction representing the set of bytes a
+	      single function might access through its stack pointer.  Each stack address represents
+	      the offset of a byte in some underlying space (usually <span class="emphasis"><em>ram</em></span>) relative
+	      to the initial value of the stack pointer upon entry to the function. The stack space is
+	      always referenced in the context of a single function, and in this sense, each function
+	      can be viewed as having its own distinct stack space.
+	    </p>
+	  </dd>
+<dt><span class="term"><span class="bold"><strong>constant</strong></span></span></dt>
+<dd>
+	    <p>
+	      A special space for encoding constants in p-code.
+	      For complete generality, even constants that the processor might manipulate are
+	      assigned to their own address space.  For an address in the constant
+	      space, the index itself represents the constant.
+	    </p>
+	  </dd>
+</dl></div>
+      </div>
+<p>
+    </p>
+  </div>
+
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ConceptVarnode"></a>Varnodes</h3></div></div></div>
+    
+    <p>
+      A <span class="bold"><strong>varnode</strong></span> is defined as a sequence of bytes in
+      an address space.  It represents the storage for a single value (variable) being
+      acted on by the processor.
+      All manipulation of data by p-code operations occurs on varnodes.
+      A varnode can always be represented as the formal triple:
+      </p>
+<div class="informalexample">
+	<code class="code">(address space,offset,size)</code>
+      </div>
+<p>
+      Both <span class="emphasis"><em>offset</em></span> and <span class="emphasis"><em>size</em></span> are integer values
+      specified in terms of bytes.
+      The first two elements, address space and offset, taken together represent the
+      <span class="emphasis"><em>address</em></span> of the varnode.
+    </p>
+    <p>
+      Varnodes by themselves do not necessarily have a data-type associated with them.
+      The decompiler ultimately assigns a formal data-type, but at the lowest level of p-code,
+      varnodes inherit one the building block data-types from the p-code operations that
+      act on them:
+      </p>
+<div class="informalexample">
+	<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+	    <span class="bold"><strong>Integer</strong></span>
+	  </li>
+<li class="listitem" style="list-style-type: disc">
+	    <span class="bold"><strong>Boolean</strong></span>
+	  </li>
+<li class="listitem" style="list-style-type: disc">
+	    <span class="bold"><strong>Floating Point</strong></span>
+	  </li>
+</ul></div>
+      </div>
+<p>
+      The integer data-type assumes a two's complement encoding in the endianness of the
+      address space containing the varnode.  Similarly, the floating point data-type assumes
+      an IEEE 754 standard encoding.  The precision of the integer or floating point value is
+      determined by the varnode's size.  A boolean data-type assumes the varnode has a size
+      of 1 byte and takes either a value of 0, for <span class="emphasis"><em>false</em></span>, or a value of
+      1 for <span class="emphasis"><em>true</em></span>.
+    </p>
+
+  </div>
+
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ConceptPcodeOps"></a>P-code Operations</h3></div></div></div>
+    
+    <p>
+      A <span class="bold"><strong>p-code operation</strong></span> is defined as a formal operator,
+      labeled by its <span class="emphasis"><em>opcode</em></span>, acting on 1 or more varnodes as input and
+      storing a result in at most 1 varnode. Each p-code operation is associated with an
+      address, which is usually the address of the machine instruction from which the p-code
+      operation was translated. As most instructions require more than one p-code operation
+      to fully model it, a separate 1-up counter is used to distinguish p-code operations
+      associated with the same address. Together the address and the counter are referred
+      to as the operation's <span class="bold"><strong>sequence number</strong></span>.
+    </p>
+    <p>
+      The formal opcodes break up into categories similar to many programming languages.
+      </p>
+<div class="informalexample">
+      <div class="table">
+<a name="ops.htmltable"></a><p class="title"><b>Table . P-code Operations</b></p>
+<div class="table-contents"><table width="90%" frame="box" rules="all" id="ops.htmltable">
+        
+        <col width="40%">
+        <col width="60%">
+      <thead>
+      <tr>
+	<td><span class="bold"><strong>Category</strong></span></td>
+	<td><span class="bold"><strong>Operations</strong></span></td>
+      </tr>
+      </thead>
+      <tbody>
+	<tr>
+	  <td>Data Moving</td>
+	  <td><code class="code">COPY, LOAD, STORE</code></td>
+	</tr>
+	<tr>
+	  <td>Integer Arithmetic</td>
+	  <td><code class="code">INT_ADD, INT_SUB, 
+	  INT_2COMP, INT_MULT, INT_DIV, INT_SDIV, INT_REM, INT_SREM</code></td>
+	</tr>
+	<tr>
+	  <td>Integer Shifts</td>
+	  <td><code class="code">INT_LEFT, INT_RIGHT, INT_SRIGHT</code></td>
+	</tr>
+	<tr>
+	  <td>Integer Comparison</td>
+	  <td><code class="code">INT_EQUAL, INT_NOTEQUAL, INT_SLESS, INT_SLESSEQUAL, INT_LESS, INT_LESSEQUAL</code></td>
+	</tr>
+	<tr>
+	  <td>Logical</td>
+	  <td><code class="code">INT_NEGATE, INT_XOR, INT_AND, INT_OR, POPCOUNT</code></td>
+	</tr>
+	<tr>
+	  <td>Boolean</td>
+	  <td><code class="code">BOOL_NEGATE, BOOL_XOR, BOOL_AND, BOOL_OR</code></td>
+	</tr>
+	<tr>
+	  <td>Floating Point Arithmetic</td>
+	  <td><code class="code">FLOAT_ADD, FLOAT_SUB, FLOAT_MULT, FLOAT_DIV, FLOAT_NEG,
+	  FLOAT_ABS, FLOAT_SQRT</code></td>
+	</tr>
+	<tr>
+	  <td>Floating Point Comparison</td>
+	  <td><code class="code">FLOAT_EQUAL, FLOAT_NOTEQUAL, FLOAT_LESS, FLOAT_LESSEQUAL</code></td>
+	</tr>
+	<tr>
+	  <td>Floating Point Conversion</td>
+	  <td><code class="code">INT2FLOAT, FLOAT2FLOAT, TRUNC, CEIL, FLOOR, ROUND</code></td>
+	</tr>
+	<tr>
+	  <td>Branching</td>
+	  <td><code class="code">BRANCH, CBRANCH, BRANCHIND, CALL, CALLIND, RETURN</code></td>
+	</tr>
+	<tr>
+	  <td>Extension/Truncation</td>
+	  <td><code class="code">INT_ZEXT, INT_SEXT, PIECE, SUBPIECE</code></td>
+	</tr>
+	<tr>
+	  <td>Overflow Tests</td>
+	  <td><code class="code">INT_CARRY, INT_SCARRY, INT_SBORROW, FLOAT_NAN</code></td>
+	</tr>
+	<tr>
+	  <td>Managed Code</td>
+	  <td><code class="code">CPOOLREF, NEW</code></td>
+	</tr>
+      </tbody>
+      </table></div>
+</div>
+<br class="table-break">
+      </div>
+<p>
+    </p>
+    
+    <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="ConceptOperatorTokens"></a>Operator Tokens</h4></div></div></div>
+      
+    <p>
+      Most opcodes naturally correspond to a particular C operator token,
+      and in decompiler output, many of the operator tokens displayed correspond
+      directly to a p-code operation present in the decompiler's internal
+      representation.  The biggest exception are the <span class="emphasis"><em>Branching</em></span>
+      operations; the decompiler uses standard high-level language control-flow
+      structures, like <span class="emphasis"><em>if/else</em></span>, <span class="emphasis"><em>switch</em></span>, and
+      <span class="emphasis"><em>do/while</em></span> blocks, instead of the
+      low-level branching operations. But even here, there is some correspondence
+      between operations and keywords in the high-level language.
+    </p>
+    <p>
+      Operations in the <span class="emphasis"><em>Extension/Truncation</em></span> and
+      <span class="emphasis"><em>Floating Point Conversion</em></span> categories tend to be
+      represented as <span class="emphasis"><em>cast</em></span> operations in the high-level language,
+      and so don't have an explicit operator token representing them.  Many p-code
+      operations share the same operator token, such as the integer and floating-point
+      addition operations <span class="bold"><strong>INT_ADD</strong></span> and
+      <span class="bold"><strong>FLOAT_ADD</strong></span>. The high-level language distinguishes
+      between them via the underlying data-type of the variables.
+    </p>
+    <div class="informalexample">
+      <div class="table">
+<a name="ref.htmltable"></a><table width="90%" frame="box" rules="rows" id="ref.htmltable">
+	<col width="25%">
+	<col width="25%">
+	<col width="50%">
+	<thead>
+	  <tr>
+	    <td><span class="bold"><strong>Name</strong></span></td>
+	    <td><span class="bold"><strong>Operator Token</strong></span></td>
+	    <td><span class="bold"><strong>Description</strong></span></td>
+	  </tr>
+	</thead>
+	<tbody>
+	  <tr>
+	    <td>COPY</td>
+	    <td><code class="code">=</code></td>
+	    <td>Copy one varnode into another.</td>
+	  </tr>
+	  <tr>
+	    <td>LOAD</td>
+	    <td>
+<code class="code">*</code> or <code class="code">-&gt;</code>
+</td>
+	    <td>Dereference a pointer, or load a value from memory.</td>
+	  </tr>
+	  <tr>
+	    <td>STORE</td>
+	    <td>
+<code class="code">*</code> or <code class="code">-&gt;</code>
+</td>
+	    <td>Store a value to memory, through a pointer.</td>
+	  </tr>
+	  <tr>
+	    <td>BRANCH</td>
+	    <td><code class="code">goto</code></td>
+	    <td>Branch execution to a specific address.</td>
+	  </tr>
+	  <tr>
+	    <td>CBRANCH</td>
+	    <td><code class="code">if (...) goto</code></td>
+	    <td>Branch execution to an address if the condition is true.</td>
+	  </tr>
+	  <tr>
+	    <td>BRANCHIND</td>
+	    <td><code class="code">switch(...)</code></td>
+	    <td>Branch execution to a computed address.</td>
+	  </tr>
+	  <tr>
+	    <td>CALL</td>
+	    <td><code class="code">funcname(...)</code></td>
+	    <td>Branch to a function, as a call.</td>
+	  </tr>
+	  <tr>
+	    <td>CALLIND</td>
+	    <td><code class="code">(*funcptr)(...)</code></td>
+	    <td>Branch through a pointer to a function, as a call.</td>
+	  </tr>
+	  <tr>
+	    <td>RETURN</td>
+	    <td><code class="code">return</code></td>
+	    <td>Return execution to the calling function.</td>
+	  </tr>
+	  <tr>
+	    <td>PIECE</td>
+	    <td><code class="code">CONCAT</code></td>
+	    <td>Concatenate two varnodes.</td>
+	  </tr>
+	  <tr>
+	    <td>SUBPIECE</td>
+	    <td><code class="code">SUB</code></td>
+	    <td>Extract a subset of bytes.</td>
+	  </tr>
+	  <tr>
+	    <td>POPCOUNT</td>
+	    <td><code class="code">POPCOUNT</code></td>
+	    <td>Count the 1 bits.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_EQUAL</td>
+	    <td><code class="code">==</code></td>
+	    <td>True if input varnodes are equal.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_NOTEQUAL</td>
+	    <td><code class="code">!=</code></td>
+	    <td>True if input varnodes are not equal.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_LESS</td>
+	    <td>
+<code class="code">&lt;</code> or <code class="code">&gt;</code>
+</td>
+	    <td>True if one varnode is less than the other as unsigned integers.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_SLESS</td>
+	    <td>
+<code class="code">&lt;</code> or <code class="code">&gt;</code>
+</td>
+	    <td>True if one varnode is less than the other as signed integers.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_LESSEQUAL</td>
+	    <td>
+<code class="code">&lt;=</code> or <code class="code">&gt;=</code>
+</td>
+	    <td>True if one varnode is less than or equal to the other as unsigned integers.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_SLESSEQUAL</td>
+	    <td>
+<code class="code">&lt;=</code> or <code class="code">&gt;=</code>
+</td>
+	    <td>True if one varnode is less than or equal to the other as signed integers.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_ZEXT</td>
+	    <td><code class="code">ZEXT</code></td>
+	    <td>Zero extension.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_SEXT</td>
+	    <td><code class="code">SEXT</code></td>
+	    <td>Signed extension.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_ADD</td>
+	    <td><code class="code">+</code></td>
+	    <td>Add as integers.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_SUB</td>
+	    <td><code class="code">-</code></td>
+	    <td>Subtract as integers.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_CARRY</td>
+	    <td><code class="code">CARRY</code></td>
+	    <td>True if adding produces an unsigned carry.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_SCARRY</td>
+	    <td><code class="code">SCARRY</code></td>
+	    <td>True if adding produces a signed carry.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_SBORROW</td>
+	    <td><code class="code">SBORROW</code></td>
+	    <td>True if subtracting produces a signed borrow.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_2COMP</td>
+	    <td><code class="code">-</code></td>
+	    <td>Two's complement.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_NEGATE</td>
+	    <td><code class="code">~</code></td>
+	    <td>Bitwise negation.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_XOR</td>
+	    <td><code class="code">^</code></td>
+	    <td>Bitwise exclusive-or.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_AND</td>
+	    <td><code class="code">&amp;</code></td>
+	    <td>Bitwise logical-and.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_OR</td>
+	    <td><code class="code">|</code></td>
+	    <td>Bitwise logical-or.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_LEFT</td>
+	    <td><code class="code">&lt;&lt;</code></td>
+	    <td>Left shift.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_RIGHT</td>
+	    <td><code class="code">&gt;&gt;</code></td>
+	    <td>Unsigned (logical) right shift.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_SRIGHT</td>
+	    <td><code class="code">&gt;&gt;</code></td>
+	    <td>Signed (arithmetic) right shift.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_MULT</td>
+	    <td><code class="code">*</code></td>
+	    <td>Integer multiplication.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_DIV</td>
+	    <td><code class="code">/</code></td>
+	    <td>Unsigned integer division.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_REM</td>
+	    <td><code class="code">%</code></td>
+	    <td>Unsigned remainder.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_SDIV</td>
+	    <td><code class="code">/</code></td>
+	    <td>Signed division.</td>
+	  </tr>
+	  <tr>
+	    <td>INT_SREM</td>
+	    <td><code class="code">%</code></td>
+	    <td>Signed remainder.</td>
+	  </tr>
+	  <tr>
+	    <td>BOOL_NEGATE</td>
+	    <td><code class="code">!</code></td>
+	    <td>Boolean negation.</td>
+	  </tr>
+	  <tr>
+	    <td>BOOL_XOR</td>
+	    <td><code class="code">^^</code></td>
+	    <td>Boolean exclusive-or.</td>
+	  </tr>
+	  <tr>
+	    <td>BOOL_AND</td>
+	    <td><code class="code">&amp;&amp;</code></td>
+	    <td>Boolean logical-and.</td>
+	  </tr>
+	  <tr>
+	    <td>BOOL_OR</td>
+	    <td><code class="code">||</code></td>
+	    <td>Boolean logical-or.</td>
+	  </tr>
+	  <tr>
+	    <td>FLOAT_EQUAL</td>
+	    <td><code class="code">==</code></td>
+	    <td>True if inputs are equal as floating-point numbers.</td>
+	  </tr>
+	  <tr>
+	    <td>FLOAT_NOTEQUAL</td>
+	    <td><code class="code">!=</code></td>
+	    <td>True if inputs are not equal as floating-point numbers.</td>
+	  </tr>
+	  <tr>
+	    <td>FLOAT_LESS</td>
+	    <td>
+<code class="code">&lt;</code> or <code class="code">&gt;</code>
+</td>
+	    <td>True if one input is less than the other as floating-point numbers.</td>
+	  </tr>
+	  <tr>
+	    <td>FLOAT_LESSEQUAL</td>
+	    <td>
+<code class="code">&lt;=</code> or <code class="code">&gt;=</code>
+</td>
+	    <td>True if one input is less than or equal to the other as floating-point numbers.</td>
+	  </tr>
+	  <tr>
+	    <td>FLOAT_ADD</td>
+	    <td><code class="code">+</code></td>
+	    <td>Add as floating-point numbers.</td>
+	  </tr>
+	  <tr>
+	    <td>FLOAT_SUB</td>
+	    <td><code class="code">-</code></td>
+	    <td>Subtract as floating-point numbers.</td>
+	  </tr>
+	  <tr>
+	    <td>FLOAT_MULT</td>
+	    <td><code class="code">*</code></td>
+	    <td>Multiply as floating-point numbers.</td>
+	  </tr>
+	  <tr>
+	    <td>FLOAT_DIV</td>
+	    <td><code class="code">/</code></td>
+	    <td>Divide as floating-point numbers.</td>
+	  </tr>
+	  <tr>
+	    <td>FLOAT_NEG</td>
+	    <td><code class="code">-</code></td>
+	    <td>Negate a floating-point number.</td>
+	  </tr>
+	  <tr>
+	    <td>FLOAT_ABS</td>
+	    <td><code class="code">ABS</code></td>
+	    <td>Absolute value of a floating-point number.</td>
+	  </tr>
+	  <tr>
+	    <td>FLOAT_SQRT</td>
+	    <td><code class="code">SQRT</code></td>
+	    <td>Square root of a floating-point number.</td>
+	  </tr>
+	  <tr>
+	    <td>FLOAT_CEIL</td>
+	    <td><code class="code">CEIL</code></td>
+	    <td>Ceiling function.</td>
+	  </tr>
+	  <tr>
+	    <td>FLOAT_FLOOR</td>
+	    <td><code class="code">FLOOR</code></td>
+	    <td>Floor function.</td>
+	  </tr>
+	  <tr>
+	    <td>FLOAT_ROUND</td>
+	    <td><code class="code">ROUND</code></td>
+	    <td>Nearest integral value.</td>
+	  </tr>
+	  <tr>
+	    <td>FLOAT_NAN</td>
+	    <td><code class="code">NAN</code></td>
+	    <td>True if input is not a valid floating-point number (NaN).</td>
+	  </tr>
+	  <tr>
+	    <td>INT2FLOAT</td>
+	    <td><code class="code">&lt;na&gt;</code></td>
+	    <td>Convert integer to floating-point.</td>
+	  </tr>
+	  <tr>
+	    <td>FLOAT2FLOAT</td>
+	    <td><code class="code">&lt;na&gt;</code></td>
+	    <td>Convert between different floating-point precisions.</td>
+	  </tr>
+	  <tr>
+	    <td>TRUNC</td>
+	    <td><code class="code">&lt;na&gt;</code></td>
+	    <td>Convert floating-point to integer.</td>
+	  </tr>
+	  <tr>
+	    <td>CPOOLREF</td>
+	    <td><code class="code">&lt;na&gt;</code></td>
+	    <td>Obtain constant pool value.</td>
+	  </tr>
+	  <tr>
+	    <td>NEW</td>
+	    <td><code class="code">new</code></td>
+	    <td>Allocate an object or an array of objects.</td>
+	  </tr>
+	  <tr>
+	    <td>MULTIEQUAL</td>
+	    <td><code class="code">&lt;na&gt;</code></td>
+	    <td>Compiler phi-node: merge values from multiple control-flow paths.</td>
+	  </tr>
+	  <tr>
+	    <td>INDIRECT</td>
+	    <td><code class="code">&lt;na&gt;</code></td>
+	    <td>Indirect effect on a varnode.</td>
+	  </tr>
+	  <tr>
+	    <td>CAST</td>
+	    <td><code class="code">&lt;na&gt;</code></td>
+	    <td>Copy a value, changing its data-type.</td>
+	  </tr>
+	  <tr>
+	    <td>PTRADD</td>
+	    <td><code class="code">+</code></td>
+	    <td>Add an offset to a pointer.</td>
+	  </tr>
+	  <tr>
+	    <td>PTRSUB</td>
+	    <td>
+<code class="code">.</code> or <code class="code">-&gt;</code>
+</td>
+	    <td>Dereference a subfield from a pointer.</td>
+	  </tr>
+	  <tr>
+	    <td>INSERT</td>
+	    <td><code class="code">&lt;na&gt;</code></td>
+	    <td>Insert a bit-range.</td>
+	  </tr>
+	  <tr>
+	    <td>EXTRACT</td>
+	    <td><code class="code">&lt;na&gt;</code></td>
+	    <td>Extract a bit-range.</td>
+	  </tr>
+	</tbody>
+      </table>
+</div>
+    </div>
+  </div>
+
+  <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="ConceptControlFlow"></a>P-code Control Flow</h4></div></div></div>
+    
+    <p>
+      P-code has natural <span class="bold"><strong>control-flow</strong></span>, with the subtlety that flow
+      happens both within and across machine instructions.  Most p-code operators have
+      <span class="bold"><strong>fall-through</strong></span> semantics, meaning that flow moves to the
+      next operator in the sequence associated with the instruction, or, if the operator is the
+      last in the sequence, flow moves to the first operator in the p-code associated with the next instruction.
+      The p-code operators with <span class="bold"><strong>branching</strong></span> semantics, such as
+      CBRANCH and BRANCH, can jump to a target operator which is internal to the current instruction, or they can
+      jump to the first p-code operator corresponding to a new instruction at a different address.
+    </p>
+    <p>
+      Ghidra labels a machine instruction with one of the following <span class="bold"><strong>Flow Types</strong></span> that describe
+      its overall control-flow.  The Flow Type is derived directly from the control-flow of the p-code for the instruction,
+      with the basic types corresponding directly with a specific branching p-code operator.
+      </p>
+<div class="informalexample">
+	<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none"><span class="bold"><strong>FALL_THROUGH</strong></span></li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>UNCONDITIONAL_CALL</strong></span> - CALL</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>UNCONDITIONAL_JUMP</strong></span> - BRANCH</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>CONDITIONAL_JUMP</strong></span> - CBRANCH</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>COMPUTED_JUMP</strong></span> - BRANCHIND</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>COMPUTED_CALL</strong></span> - CALLIND</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>TERMINATOR</strong></span> - RETURN</li>
+</ul></div>
+      </div>
+<p>
+      Other Flow Types occur due to a combination of multiple p-code branching operators within the same instruction.
+      </p>
+<div class="informalexample">
+	<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>CONDITIONAL_CALL</strong></span> - CALL with CBRANCH</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>CONDITIONAL_TERMINATOR</strong></span> - RETURN with CBRANCH</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>COMPUTED_CALL_TERMINATOR</strong></span> - CALLIND with RETURN</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>CONDITIONAL_COMPUTED_JUMP</strong></span> - CBRANCH with BRANCHIND</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>CONDITIONAL_COMPUTED_CALL</strong></span> - CBRANCH with CALLIND</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>JUMP_TERMINATOR</strong></span> - BRANCH with RETURN</li>
+</ul></div>
+      </div>
+<p>
+    </p>
+  </div>
+
+  <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="ConceptCallother"></a>User-defined P-code Operations - CALLOTHER</h4></div></div></div>
+    
+    <p>
+      P-code allows for additional, processor specific, operations referred to
+      as <span class="emphasis"><em>user-defined</em></span> or CALLOTHER operations.
+      These may be defined as part of a Ghidra's specification for the processor and
+      are typically used as placeholders for what is otherwise unmodeled processor behavior.
+      Each CALLOTHER must have a unique name, and as a p-code operation, it still takes
+      varnode inputs and may produce a varnode output. But the exact affect of the operation is
+      not specified.
+    </p>
+    <p>
+      The decompiler treats a CALLOTHER operation as a black box. It will keep track of data
+      flowing into and out of the operation but won't simplify or transform it. In decompiler
+      output, a CALLOTHER is usually displayed using its unique name, with functional syntax
+      showing its inputs and output.
+    </p>
+    <p>
+      Ghidra or a user can provide the behavior details for a named CALLOTHER operation.  The
+      details are provided as a sequence of p-code operations, referred to as a
+      <span class="bold"><strong>Callother-Fixup</strong></span>, which is substituted for the
+      CALLOTHER operation during decompilation, or by other Analyzers that use p-code.
+      Callother-Fixups are applied by Ghidra for specific processor or compiler variants,
+      and a user can choose to apply them to an individual Program. (See <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">&#8220;Specification Extensions&#8221;</a>)
+    </p>
+  </div>
+
+  <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="ConceptInternalFunctions"></a>Internal Decompiler Functions</h4></div></div></div>
+    
+    <p>
+      Certain p-code operations can show up in decompiler output that cannot be represented
+      as either an operator token, a cast operation, or other depiction that is natural to
+      the language.  The decompiler generally tries to eliminate these, but this isn't always
+      possible. The decompiler resorts to a functional syntax for these kinds
+      of p-code operations, displaying them as if they were built-in functions for the language.
+    </p>
+    <div class="informalexample">
+      <div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><code class="code">SUB41(x,c)</code> - Truncation operation - SUBPIECE</span></dt>
+<dd>
+	  <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">The digit '4' indicates the size of the input operand 'x' in bytes.</li>
+<li class="listitem" style="list-style-type: disc">The digit '1' indicates the size of the output value in bytes.</li>
+<li class="listitem" style="list-style-type: disc">The parameter 'x' is the value being truncated.</li>
+<li class="listitem" style="list-style-type: disc">The parameter 'c' is the number of least significant bytes being truncated.</li>
+</ul></div>
+	  <pre class="programlisting">
+	    SUB42(0xaabbccdd,1) = 0xbbcc
+	  </pre>
+	  <p>
+	    Extract a contiguous subset of the bytes from 'x'.
+	    When 'c' is 0, the operation is a simple integer truncation.
+	  </p>
+	  <p>
+	  </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none">
+	      <code class="code">SUB41(x,0)</code>
+	      truncates from a 4-byte integer to a 1-byte (<span class="bold"><strong>char</strong></span>
+	      or <span class="bold"><strong>byte</strong></span>) integer.
+	    </li>
+<li class="listitem" style="list-style-type: none">
+	      <code class="code">SUB42(x,0)</code>
+	      truncates from a 4-byte integer to a 2-byte (<span class="bold"><strong>short</strong></span>) integer.
+	    </li>
+<li class="listitem" style="list-style-type: none">
+	      <code class="code">SUB84(x,4)</code> extracts the high 4 bytes from the 8 byte integer.
+	    </li>
+</ul></div>
+<p>
+	  </p>
+	</dd>
+<dt><span class="term"><code class="code">CONCAT31(x,y)</code> - Concatenation operator - PIECE</span></dt>
+<dd>
+	  <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">The digit '3' indicates the size of the input operand 'x' in bytes.</li>
+<li class="listitem" style="list-style-type: disc">The digit '1' indicates the size of the input operand 'y' in bytes.</li>
+<li class="listitem" style="list-style-type: disc">The parameters 'x' and 'y' hold the values being concatenated.</li>
+</ul></div>
+	  <pre class="programlisting">
+	    CONCAT31(0xaabbcc,0xdd) = 0xaabbccdd 
+	  </pre>
+	  <p>
+	    Concatenate the bytes in 'x' with the bytes in 'y'.  'x' becomes the most significant
+	    bytes, and 'y' the least significant bytes, in the result.
+	  </p>
+	</dd>
+<dt><span class="term"><code class="code">ZEXT14(x)</code> - Zero-extension operator - INT_ZEXT</span></dt>
+<dd>
+	  <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">The digit '1' indicates the size of the input operand 'x' in bytes.</li>
+<li class="listitem" style="list-style-type: disc">The digit '4' indicates the size of the output in bytes.</li>
+</ul></div>
+	  <pre class="programlisting">
+	    ZEXT24(0xaabb) = 0x0000aabb
+	  </pre>
+	  <p>
+	    Extend the operand 'x' to a larger size by appending zero bytes, which become the most
+	    significant bytes of the result.
+	  </p>
+	</dd>
+<dt><span class="term"><code class="code">SEXT14(x)</code> - Sign-extension operator - INT_SEXT</span></dt>
+<dd>
+	  <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">The digit '1' indicates the size of the input operand 'x' in bytes.</li>
+<li class="listitem" style="list-style-type: disc">The digit '4' indicates the size of the output in bytes.</li>
+</ul></div>
+	  <pre class="programlisting">
+	    SEXT48(0xaabbccdd) = 0xffffffffaabbccdd
+	  </pre>
+	  <p>
+	    Extend the operand 'x' to a larger size by duplicating the <span class="emphasis"><em>sign</em></span>
+	    bit of 'x' into the most significant bytes of the result.
+	  </p>
+	</dd>
+<dt><span class="term"><code class="code">SBORROW4(x,y)</code> - Test for signed borrow operator - INT_SBORROW</span></dt>
+<dd>
+	  <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; "><li class="listitem" style="list-style-type: disc">The digit '4' indicates the size of both input operands 'x' and 'y' in bytes.</li></ul></div>
+	  <p>
+	    Return <span class="emphasis"><em>true</em></span> if there is an arithmetic overflow when subtracting 'y' from 'x'
+	    as signed integers.
+	  </p>
+	</dd>
+<dt><span class="term"><code class="code">CARRY4(x,y)</code> - Test for unsigned overflow operator - INT_CARRY</span></dt>
+<dd>
+	  <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; "><li class="listitem" style="list-style-type: disc">The digit '4' indicates the size of both input operands 'x' and 'y' in bytes.</li></ul></div>
+	  <p>
+	    Return <span class="emphasis"><em>true</em></span> if there is an arithmetic overflow when adding 'x' and 'y'
+	    as unsigned integers.
+	  </p>
+	</dd>
+<dt><span class="term"><code class="code">SCARRY4(x,y)</code> - Test for signed overflow operator - INT_SCARRY</span></dt>
+<dd>
+	  <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; "><li class="listitem" style="list-style-type: disc">The digit '4' indicates the size of both input operands 'x' and 'y' in bytes.</li></ul></div>
+	  <p>
+	    Return <span class="emphasis"><em>true</em></span> if there is an arithmetic overflow when adding 'x' and 'y'
+	    as signed integers.
+	  </p>
+	</dd>
+</dl></div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="ConceptHighFunction"></a>The HighFunction</h2></div></div></div>
+  
+  <p>
+    A <span class="bold"><strong>HighFunction</strong></span> is the collection of specific information
+    produced by the decompiler about a function, referring to the root class in the Ghidra
+    source which holds this information.
+    The HighFunction is made up of the following explicit objects:
+    </p>
+<div class="informalexample">
+	<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+	    A <span class="bold"><strong>control-flow</strong></span> representation of the function
+	    in terms of <span class="emphasis"><em>basic blocks</em></span>.
+	  </li>
+<li class="listitem" style="list-style-type: disc">
+	    A <span class="bold"><strong>data-flow</strong></span> representation of the function
+	    in terms of <span class="emphasis"><em>varnodes</em></span> and <span class="emphasis"><em>p-code operations</em></span>.
+	  </li>
+<li class="listitem" style="list-style-type: disc">
+	    A <span class="bold"><strong>symbol-table</strong></span> of variables accessed by the function.
+	  </li>
+</ul></div>
+    </div>
+<p>
+  </p>
+  <p>
+    The decompiler's output provides a standalone view of the function which is distinct
+    from any annotations about the function that are present in the Program database
+    and displayed in the Listing view (although the output may be informed by these annotations).
+    The terms <span class="emphasis"><em>HighFunction</em></span>, <span class="emphasis"><em>HighVariable</em></span>, and
+    <span class="emphasis"><em>HighSymbol</em></span> refer to this decompiler specific view of the function.
+  </p>
+
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ConceptHighSymbol"></a>HighSymbol</h3></div></div></div>
+    
+    <p>
+	A <span class="bold"><strong>HighSymbol</strong></span> is one of the explicit symbols recovered by the
+	decompiler.  It is made up of a name and data-type and can describe either:
+	</p>
+<div class="informalexample">
+	  <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none">
+	      a formal <span class="bold"><strong>parameter</strong></span> of the function,
+	    </li>
+<li class="listitem" style="list-style-type: none">
+	      a <span class="bold"><strong>local variable</strong></span> of the function, or 
+	    </li>
+<li class="listitem" style="list-style-type: none">
+	      a <span class="bold"><strong>global variable</strong></span> accessed by the function.
+	    </li>
+</ul></div>
+	</div>
+<p>
+    </p>
+    <p>
+	An important aspect of HighSymbols is that they are distinct from 
+	the standard Ghidra symbols stored in the Program database and are part of
+	the decompiler's separate view of the function. When the decompiler displays
+	declarations for symbols in its output for instance, it is displaying
+	HighSymbols, which may not directly match up with database symbols.
+	The decompiler is generally
+	<span class="emphasis"><em>informed</em></span> by annotations in the database and may
+	copy specific symbols from the database into its view, but it is
+	generally free to invent new symbols discovered during its analysis. 
+    </p>
+    <p>
+	Various actions within Ghidra allow the user to <span class="emphasis"><em>commit</em></span>
+	specific HighSymbols to the database as a permanent annotation, but this
+	does not happen by default.
+    </p>
+  </div>
+
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ConceptVarnodeSSA"></a>Varnodes in the Decompiler</h3></div></div></div>
+    
+  <p>
+    Varnodes are the central <span class="emphasis"><em>variable</em></span> concept for the decompiler.
+    They form the individual nodes in the decompiler's data-flow representation
+    of functions and are used during all stages of analysis.  During the initial stages
+    of analysis, varnodes simply represent specific storage locations that are accessed
+    in sequence by individual p-code operations. The decompiler immediately converts
+    the p-code into a graph based data-flow representation, called Static Single
+    Assignment (SSA) form.  In this form, the varnodes take on some additional attributes.
+  </p>
+  <p>
+    In SSA form, each write of an operation to a storage location defines a new varnode.
+    Write operations at different points in the code to the same storage location, still
+    produce different varnodes.  In this context, each varnode has a <span class="emphasis"><em>lifetime</em></span>
+    or <span class="emphasis"><em>scope</em></span> within the function. The scope starts at:
+    </p>
+<div class="informalexample">
+	<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none">
+	    <p>
+	      The <span class="bold"><strong>defining</strong></span> p-code operation which has the
+	      varnode as its output. <span class="emphasis"><em>Or</em></span>
+	    </p>
+	  </li>
+<li class="listitem" style="list-style-type: none">
+	    <p>
+	      The beginning of the function, if the varnode is an <span class="bold"><strong>input</strong></span>
+	      to the function.
+	    </p>
+	  </li>
+</ul></div>
+    </div>
+<p>
+    The scope extends via control-flow to each p-code operation that <span class="emphasis"><em>reads</em></span> the
+    specific varnode as an operand.  The value of the varnode between the defining p-code operation
+    and the reading operations does not change. The scope of a varnode can be thought of as a set
+    of addresses within the function's body connected by control-flow.  The address of the defining
+    p-code operation is referred to as the varnode's <span class="bold"><strong>first use point</strong></span>
+    or <span class="bold"><strong>first use offset</strong></span>.
+  </p>
+  <p>
+    In the decompiler output for a specific high-level language like C or Java,
+    a varnode still has a <span class="emphasis"><em>scope</em></span> and represents a variable
+    in the high-level language only across this connected region of the code.
+    A set of varnodes, with disjoint scopes, provides a complete
+    description of a high-level variable that can be written to at more than one point
+    in the function.
+  </p>
+  </div>
+  
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ConceptHighVariable"></a>HighVariable</h3></div></div></div>
+    
+    <p>
+	A <span class="bold"><strong>HighVariable</strong></span> is a set varnodes that, taken
+	together, represent the storage of an entire variable in the high-level language
+	being output by the decompiler.  Each varnode describes where the variable's
+	value is stored across some section of code.
+    </p>
+    <p>
+	There is generally a one-to-one correspondence between HighVariables and
+	HighSymbols. HighVariables can be thought of as the detailed storage description
+	of the high-level variable, while the HighSymbol provides its name and data-type.
+	However, there are some technical caveats to this correspondence to keep in mind.
+    </p>
+    <p>
+	A HighVariable always describes <span class="emphasis"><em>explicit</em></span> manipulation of
+	data by instructions in the function.  In some cases, a HighVariable may only describe part
+	of the storage for a HighSymbol. Particularly for structured or composite data-types, a
+	function may operate on different parts of the variable at different points of the code,
+	so a HighVariable may only encompass one field of the structure.
+    </p>
+    <p>
+	A symbol may be referenced in a function, but the symbol's value may not be explicitly
+	manipulated.  Constant pointers may refer to variables either
+	on the stack or in main memory, but the variable's value is neither read nor written
+	within the function. In this case, the HighSymbol exists, but there
+	is no corresponding HighVariable.
+    </p>
+
+    <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="ConceptMerging"></a>Merging</h4></div></div></div>
+	
+	<p>
+	  <span class="bold"><strong>Merging</strong></span> is the part of the analysis process where
+	  the decompiler decides what varnodes get grouped together to create the final
+	  HighVariables in the output.  Each varnode's scope (see the discussion in
+	  <a class="xref" href="DecompilerConcepts.html#ConceptVarnodeSSA" title="Varnodes in the Decompiler">&#8220;Varnodes in the Decompiler&#8221;</a>) provides the fundamental restriction on this process.
+	  Two varnodes cannot be merged if their scopes intersect.  But this leaves a lot of
+	  leeway in what varnodes <span class="emphasis"><em>can</em></span> be merged.
+	</p>
+	<p>
+	  Certain varnodes must be merged; if they use the same storage but in different
+	  control-flow paths that come together, for instance, or if it is explicitly
+	  known that the varnodes must represent the same variable.  This is referred
+	  to as <span class="bold"><strong>forced merging</strong></span>.
+	</p>
+	<p>
+	  The decompiler may also merge varnodes that could just as easily exist as separate
+	  variables.  This is called <span class="bold"><strong>speculative merging</strong></span>.
+	  In addition to the intersection condition on varnode scopes, the decompiler only
+	  speculatively merges variables that share the same data-type. Beyond this, the decompiler
+	  prioritizes variable pairs that are read and written within the same instruction and
+	  then pairs that are "near" each other in the control-flow of the function.
+	  To a limited extent, users are able to control this kind of merging
+	  (See <a class="xref" href="DecompilerWindow.html#ActionIsolate" title="Split Out As New Variable">&#8220;Split Out As New Variable&#8221;</a>).
+	</p>
+    </div>
+  </div>
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ConceptPrototypeModel"></a>Prototype Model</h3></div></div></div>
+    
+    <p>
+      Functions in high-level languages manipulate symbols like parameters and return values that
+      are implicitly stored in a way that doesn't collide with other functions and variables.  To
+      actually map these symbols to physical registers and memory locations, compilers establish a
+      <span class="emphasis"><em>calling convention</em></span> for the function.
+      Loosely, this is a set of memory resources, whether it is registers or stack locations,
+      and a procedure for sequentially assigning resources to parameters based on their properties.
+      A <span class="bold"><strong>prototype model</strong></span> is the formal object in Ghidra that represents
+      a calling convention and holds its specific rules and resource details.
+    </p>
+    <p>
+      Prototype models are architecture specific, and depending on the compiler, a single Program may make
+      use of multiple models.  Subsequently, each distinct model has a name like <code class="code">__stdcall</code> or
+      <code class="code">__thiscall</code>. The decompiler makes use of the prototype model, as assigned to the function by the user or
+      discovered in some other way, when performing its analysis of parameters.
+      It is possible for users to extend the set of prototype models available to a Program,
+      see <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">&#8220;Specification Extensions&#8221;</a>.
+    </p>
+    <p>
+      A prototype model is typically used as a whole and is assigned by name to individual functions.  But some of
+      the sub-concepts of the model may be relevant to reverse engineers. Concepts that a prototype
+      model encapsulates include:
+    </p>
+    <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="ConceptPrototypeStorage"></a>Incoming and Outgoing Storage Locations</h4></div></div></div>
+      
+      <p>
+	A formal input parameter is always assigned a specific memory location to hold its value coming into the function.
+	The storage location can be a register, a stack location, or other memory location.  The storage
+	location may be reused later by other variables in the function; only the incoming value stored there is guaranteed
+	to be that of input parameter.
+      </p>
+      <p>
+	If the parameter
+	is stored on the stack, the storage location is viewed as a constant offset in the <span class="bold"><strong>stack</strong></span>
+	space, where the offset is relative to the incoming value of <span class="emphasis"><em>stack pointer</em></span>
+	(See the discussion in <a class="xref" href="DecompilerConcepts.html#ConceptAddressSpace" title="Address Space">&#8220;Address Space&#8221;</a>).
+      </p>
+      <p>
+	The <span class="emphasis"><em>return value</em></span> for the function, similarly, is stored at a single memory location.  It
+	is guaranteed to be at that location only at points where the function is exited.  There may be multiple exit
+	points, but they all share the same return value storage location.
+      </p>
+    </div>
+    <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="ConceptPrototypeUnaffected"></a>Unaffected</h4></div></div></div>
+      
+      <p>
+	Prototype models can specify a set of <span class="bold"><strong>unaffected</strong></span> memory locations,
+	whose value must be <span class="emphasis"><em>preserved</em></span> across the function. I.e. each location 
+	must hold the same value at a function's exit that it held coming into the function.
+	These encompass a calling convention's <span class="emphasis"><em>saved registers</em></span>, where a calling function
+        can store values it doesn't want to change unexpectedly, but also may include other registers that are
+	known not to change, like the stack pointer.
+	The decompiler uses the information to determine which locations can be safely propagated across
+	a called function.
+      </p>
+    </div>
+    <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="ConceptPrototypeKilledByCall"></a>Killed by Call</h4></div></div></div>
+      
+      <p>
+	In contrast to <span class="emphasis"><em>unaffected</em></span> memory locations, a prototype model may specify
+	<span class="bold"><strong>killed by call</strong></span> locations that are guaranteed <span class="emphasis"><em>not</em></span>
+	to be used to hold a value across the function.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="ConceptSpecification"></a>SLEIGH Specification Files</h2></div></div></div>
+  
+  <p>
+    SLEIGH is Ghidra's specification language for describing processor instructions.
+    Specification files are read in for a Program, and once configured, Ghidra's SLEIGH engine can:
+    </p>
+<div class="informalexample">
+      <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+	  Disassemble machine instructions from the underlying bytes and
+	</li>
+<li class="listitem" style="list-style-type: disc">
+	  Produce the raw p-code consumed by the decompiler and other analyzers.
+      </li>
+</ul></div>
+    </div>
+<p>
+  </p>
+  <p>
+    Specification files are selected based on the <span class="emphasis"><em>Language Id</em></span>
+    assigned to the Program at the time it is imported into Ghidra.
+    (See <a class="ulink" href="help/topics/ImporterPlugin/importer.htm" target="_top">Import Program</a>)
+    </p>
+<div class="informalexample">
+      <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none"><code class="code">x86:LE:32:default:windows</code></li>
+<li class="listitem" style="list-style-type: none"><code class="code">AARCH64:LE:64:default:v8A:default</code></li>
+<li class="listitem" style="list-style-type: none"><code class="code">MIPS:BE:32:micro:default</code></li>
+</ul></div>
+    </div>
+<p>
+    A <span class="bold"><strong>Language Id</strong></span> is a label with these 5 formal fields, separated
+    by a ':' character:
+    </p>
+<div class="informalexample">
+      <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: disc; ">
+<li class="listitem">Processor family</li>
+<li class="listitem">Endianess</li>
+<li class="listitem">Size of the address bus</li>
+<li class="listitem">Process variant</li>
+<li class="listitem">Compiler producing the Program</li>
+</ul></div>
+    </div>
+<p>
+    A field with the value 'default' indicates either the preferred processor variant or the preferred compiler.
+  </p>
+  <p>
+    Within the Ghidra installation, specification files are stored based on the overarching
+    processor family, such as 'MIPS' or 'x86'.  For a specific family, files are located under
+    </p>
+<div class="informalexample">
+      <code class="code">&lt;Root&gt;/Ghidra/Processors/&lt;Family&gt;/data/languages</code>
+    </div>
+<p>
+    where <code class="code">&lt;Root&gt;</code> represents the root directory of the Ghidra installation and
+    <code class="code">&lt;Family&gt;</code> is the processor family.
+  </p>
+  <p>
+    There are several types of specification files that are distinguishable by their suffix.
+    These include:
+    </p>
+<div class="informalexample">
+      <div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>SLEIGH files</strong></span> - *.slaspec or *.sinc</span></dt>
+<dd>
+	  <p>
+	    These are the human readable SLEIGH language files. A single specification is
+	    rooted in one of the <code class="code">*.slaspec</code> files, which may recursively include
+	    one or more <code class="code">*.sinc</code> files.  The format of these files is described
+	    in the document "SLEIGH: A Language for Rapid Processor Specification".
+	  </p>
+	</dd>
+<dt><span class="term"><span class="bold"><strong>Compiled SLEIGH files</strong></span> - *.sla</span></dt>
+<dd>
+	  <p>
+	    This is a compiled form of a single SLEIGH specification.  It is produced
+	    automatically by Ghidra from the corresponding <code class="code">*.slaspec</code>.
+	  </p>
+	</dd>
+<dt><span class="term"><span class="bold"><strong>Compiler specification files</strong></span> - *.cspec</span></dt>
+<dd>
+	  <p>
+	    These files contain configuration for a specific compiler.  Analysis of Programs whose
+	    executable content was produced using this compiler benefits from this information.
+	    The file is an XML document with tags describing details of data organization and
+	    other conventions used by the compiler.  In particular, the compiler specification
+	    contains tags:
+	  </p>
+	  <p>
+	    </p>
+<div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none">&lt;prototype&gt; - describing a specific calling convention</li>
+<li class="listitem" style="list-style-type: none">&lt;callfixup&gt; - describing a Call-fixup</li>
+<li class="listitem" style="list-style-type: none">&lt;callotherfixup&gt; - describing a Callother-fixup</li>
+</ul></div>
+<p>
+	  </p>
+	</dd>
+<dt><span class="term"><span class="bold"><strong>Processor specification files</strong></span> - *.pspec</span></dt>
+<dd>
+	  <p>
+	    These files contain configuration information that is specific to a particular
+	    processor variant.
+	  </p>
+	</dd>
+</dl></div>
+    </div>
+<p>
+  </p>
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ConceptModifySpec"></a>Modifying Specification Files</h3></div></div></div>
+    
+    <p>
+      Changing any of the specification files described here is not recommended.
+      To make additions to either the <span class="emphasis"><em>compiler specification</em></span>
+      or the <span class="emphasis"><em>processor specification</em></span> files, see
+      <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">&#8220;Specification Extensions&#8221;</a>, which describes a safe and portable way
+      to add specific elements.
+    </p>
+    <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
+<th align="left"></th>
+</tr>
+<tr><td align="left" valign="top">
+      Making modifications to specification files within a Ghidra installation is possible,
+      but any analysis results obtained will likely not be portable to other installations.
+      In particular, saving a Program from a modified Ghidra and then reopening it using
+      an unmodified installation may corrupt the Program database.
+    </td></tr>
+</table></div>
+    <p>
+      When Ghidra starts, it checks for changes to <code class="code">*.slaspec</code>
+      and <code class="code">*.sinc</code> files and will rebuild the corresponding
+      <code class="code">*.sla</code> file automatically.  Also, specification files are read again when
+      Ghidra restarts. So analysts can and do make changes to these files.
+      However they need to be prepared to view any results as temporary and
+      should backup their installation and specific Programs being analyzed.
+    </p>
+  </div>
+</div>
+
+</div></body>
+</html>

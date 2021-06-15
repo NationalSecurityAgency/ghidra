@@ -15,13 +15,12 @@
  */
 package ghidra.app.plugin.core.function.tags;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.junit.Test;
 
@@ -117,10 +116,14 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testLoadTags_EmptyFile() throws Exception {
 		// Create file without contents 
 		File xxeFile = createTempFileForTest();
-		List<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
 
-		List<FunctionTag> expectedTags = new ArrayList<>();
-		assertEquals(tags, expectedTags);
+		try {
+			FunctionTagLoader.loadTags(xxeFile);
+			fail("Did not get expected exception");
+		}
+		catch (Exception e) {
+			// good
+		}
 	}
 
 	@Test
@@ -128,9 +131,9 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 		// Create file with contents
 		File xxeFile = createTempFileForTest();
 		Files.write(xxeFile.toPath(), FUNCTION_TAGS_EMPTY_TAGS.getBytes());
-		List<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
+		Set<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
 
-		List<FunctionTag> expectedTags = new ArrayList<>();
+		Set<FunctionTag> expectedTags = new HashSet<>();
 		assertEquals(tags, expectedTags);
 	}
 
@@ -140,10 +143,13 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 		File xxeFile = createTempFileForTest();
 		xxeFile.delete();
 
-		List<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
-
-		List<FunctionTag> expectedTags = new ArrayList<>();
-		assertEquals(tags, expectedTags);
+		try {
+			FunctionTagLoader.loadTags(xxeFile);
+			fail("Did not get expected exception");
+		}
+		catch (Exception e) {
+			// good
+		}
 	}
 
 	@Test
@@ -151,10 +157,14 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 		// Create file with contents
 		File xxeFile = createTempFileForTest();
 		Files.write(xxeFile.toPath(), FUNCTION_TAGS_MALFORMED_XML.getBytes());
-		List<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
 
-		List<FunctionTag> expectedTags = new ArrayList<>();
-		assertEquals(tags, expectedTags);
+		try {
+			FunctionTagLoader.loadTags(xxeFile);
+			fail("Did not get expected exception");
+		}
+		catch (Exception e) {
+			// good
+		}
 	}
 
 	@Test
@@ -163,84 +173,84 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 	 * located in Base/data/functionTags.xml
 	 * @throws IOException
 	 */
-	public void testLoadTags_XmlDefault() throws IOException {
+	public void testLoadTags_XmlDefault() throws Exception {
 
 		// Create file with contents
 		File xxeFile = createTempFileForTest();
 		Files.write(xxeFile.toPath(), FUNCTION_TAGS_DEFAULT.getBytes());
-		List<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
+		Set<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
 
-		List<FunctionTag> expectedTags = new ArrayList<>();
-		expectedTags.add(new FunctionTagTemp("COMPRESSION", ""));
-		expectedTags.add(new FunctionTagTemp("CONSTRUCTOR", ""));
-		expectedTags.add(new FunctionTagTemp("CRYPTO", ""));
-		expectedTags.add(new FunctionTagTemp("DESTRUCTOR", ""));
-		expectedTags.add(new FunctionTagTemp("IO", ""));
-		expectedTags.add(new FunctionTagTemp("LIBRARY", ""));
-		expectedTags.add(new FunctionTagTemp("NETWORK", ""));
-		expectedTags.add(new FunctionTagTemp("UNPACKER", ""));
+		Set<FunctionTag> expectedTags = new HashSet<>();
+		expectedTags.add(new InMemoryFunctionTag("COMPRESSION", ""));
+		expectedTags.add(new InMemoryFunctionTag("CONSTRUCTOR", ""));
+		expectedTags.add(new InMemoryFunctionTag("CRYPTO", ""));
+		expectedTags.add(new InMemoryFunctionTag("DESTRUCTOR", ""));
+		expectedTags.add(new InMemoryFunctionTag("IO", ""));
+		expectedTags.add(new InMemoryFunctionTag("LIBRARY", ""));
+		expectedTags.add(new InMemoryFunctionTag("NETWORK", ""));
+		expectedTags.add(new InMemoryFunctionTag("UNPACKER", ""));
 
 		assertEquals(tags, expectedTags);
 	}
 
 	@Test
-	public void testLoadTags_XmlHasBlankNameValue() throws IOException {
+	public void testLoadTags_XmlHasBlankNameValue() throws Exception {
 
 		// Create file with contents
 		File xxeFile = createTempFileForTest();
 		Files.write(xxeFile.toPath(), FUNCTION_TAGS_HAS_BLANK_NAME_VALUE.getBytes());
-		List<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
+		Set<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
 
-		List<FunctionTag> expectedTags = new ArrayList<>();
-		expectedTags.add(new FunctionTagTemp("COMPRESSION", ""));
-		expectedTags.add(new FunctionTagTemp("CONSTRUCTOR", ""));
-		expectedTags.add(new FunctionTagTemp("CRYPTO", ""));
-		expectedTags.add(new FunctionTagTemp("IO", ""));
-		expectedTags.add(new FunctionTagTemp("LIBRARY", ""));
-		expectedTags.add(new FunctionTagTemp("NETWORK", ""));
-		expectedTags.add(new FunctionTagTemp("UNPACKER", ""));
+		Set<FunctionTag> expectedTags = new HashSet<>();
+		expectedTags.add(new InMemoryFunctionTag("COMPRESSION", ""));
+		expectedTags.add(new InMemoryFunctionTag("CONSTRUCTOR", ""));
+		expectedTags.add(new InMemoryFunctionTag("CRYPTO", ""));
+		expectedTags.add(new InMemoryFunctionTag("IO", ""));
+		expectedTags.add(new InMemoryFunctionTag("LIBRARY", ""));
+		expectedTags.add(new InMemoryFunctionTag("NETWORK", ""));
+		expectedTags.add(new InMemoryFunctionTag("UNPACKER", ""));
 
 		assertEquals(tags, expectedTags);
 	}
 
 	@Test
-	public void testLoadTags_XmlHasCommentValue() throws IOException {
+	public void testLoadTags_XmlHasCommentValue() throws Exception {
 
 		// Create file with contents
 		File xxeFile = createTempFileForTest();
 		Files.write(xxeFile.toPath(), FUNCTION_TAGS_HAS_COMMENT_VALUE.getBytes());
-		List<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
+		Set<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
 
-		List<FunctionTag> expectedTags = new ArrayList<>();
-		expectedTags.add(new FunctionTagTemp("COMPRESSION", ""));
-		expectedTags.add(new FunctionTagTemp("CONSTRUCTOR", ""));
-		expectedTags.add(new FunctionTagTemp("CRYPTO", ""));
-		expectedTags.add(new FunctionTagTemp("DESTRUCTOR", "IM A COMMENT"));
-		expectedTags.add(new FunctionTagTemp("IO", ""));
-		expectedTags.add(new FunctionTagTemp("LIBRARY", ""));
-		expectedTags.add(new FunctionTagTemp("NETWORK", ""));
-		expectedTags.add(new FunctionTagTemp("UNPACKER", ""));
+		Set<FunctionTag> expectedTags = new HashSet<>();
+		expectedTags.add(new InMemoryFunctionTag("COMPRESSION", ""));
+		expectedTags.add(new InMemoryFunctionTag("CONSTRUCTOR", ""));
+		expectedTags.add(new InMemoryFunctionTag("CRYPTO", ""));
+		expectedTags.add(new InMemoryFunctionTag("DESTRUCTOR", "IM A COMMENT"));
+		expectedTags.add(new InMemoryFunctionTag("IO", ""));
+		expectedTags.add(new InMemoryFunctionTag("LIBRARY", ""));
+		expectedTags.add(new InMemoryFunctionTag("NETWORK", ""));
+		expectedTags.add(new InMemoryFunctionTag("UNPACKER", ""));
 
 		assertEquals(tags, expectedTags);
 	}
 
 	@Test
-	public void testLoadTags_XmlNoCommentTag() throws IOException {
+	public void testLoadTags_XmlNoCommentTag() throws Exception {
 
 		// Create file with contents
 		File xxeFile = createTempFileForTest();
 		Files.write(xxeFile.toPath(), FUNCTION_TAGS_NO_COMMENT_TAG.getBytes());
-		List<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
+		Set<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
 
-		List<FunctionTag> expectedTags = new ArrayList<>();
-		expectedTags.add(new FunctionTagTemp("COMPRESSION", ""));
-		expectedTags.add(new FunctionTagTemp("CONSTRUCTOR", ""));
-		expectedTags.add(new FunctionTagTemp("CRYPTO", ""));
-		expectedTags.add(new FunctionTagTemp("DESTRUCTOR", ""));
-		expectedTags.add(new FunctionTagTemp("IO", ""));
-		expectedTags.add(new FunctionTagTemp("LIBRARY", ""));
-		expectedTags.add(new FunctionTagTemp("NETWORK", ""));
-		expectedTags.add(new FunctionTagTemp("UNPACKER", ""));
+		Set<FunctionTag> expectedTags = new HashSet<>();
+		expectedTags.add(new InMemoryFunctionTag("COMPRESSION", ""));
+		expectedTags.add(new InMemoryFunctionTag("CONSTRUCTOR", ""));
+		expectedTags.add(new InMemoryFunctionTag("CRYPTO", ""));
+		expectedTags.add(new InMemoryFunctionTag("DESTRUCTOR", ""));
+		expectedTags.add(new InMemoryFunctionTag("IO", ""));
+		expectedTags.add(new InMemoryFunctionTag("LIBRARY", ""));
+		expectedTags.add(new InMemoryFunctionTag("NETWORK", ""));
+		expectedTags.add(new InMemoryFunctionTag("UNPACKER", ""));
 
 		assertEquals(tags, expectedTags);
 	}
@@ -252,21 +262,21 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 	 *   
 	 * @throws IOException
 	 */
-	public void testLoadTags_XmlNoNameTag() throws IOException {
+	public void testLoadTags_XmlNoNameTag() throws Exception {
 
 		// Create file with contents
 		File xxeFile = createTempFileForTest();
 		Files.write(xxeFile.toPath(), FUNCTION_TAGS_HAS_NO_NAME_VALUE.getBytes());
-		List<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
+		Set<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
 
-		List<FunctionTag> expectedTags = new ArrayList<>();
-		expectedTags.add(new FunctionTagTemp("COMPRESSION", ""));
-		expectedTags.add(new FunctionTagTemp("CONSTRUCTOR", ""));
-		expectedTags.add(new FunctionTagTemp("CRYPTO", ""));
-		expectedTags.add(new FunctionTagTemp("IO", ""));
-		expectedTags.add(new FunctionTagTemp("LIBRARY", ""));
-		expectedTags.add(new FunctionTagTemp("NETWORK", ""));
-		expectedTags.add(new FunctionTagTemp("UNPACKER", ""));
+		Set<FunctionTag> expectedTags = new HashSet<>();
+		expectedTags.add(new InMemoryFunctionTag("COMPRESSION", ""));
+		expectedTags.add(new InMemoryFunctionTag("CONSTRUCTOR", ""));
+		expectedTags.add(new InMemoryFunctionTag("CRYPTO", ""));
+		expectedTags.add(new InMemoryFunctionTag("IO", ""));
+		expectedTags.add(new InMemoryFunctionTag("LIBRARY", ""));
+		expectedTags.add(new InMemoryFunctionTag("NETWORK", ""));
+		expectedTags.add(new InMemoryFunctionTag("UNPACKER", ""));
 
 		assertEquals(tags, expectedTags);
 	}

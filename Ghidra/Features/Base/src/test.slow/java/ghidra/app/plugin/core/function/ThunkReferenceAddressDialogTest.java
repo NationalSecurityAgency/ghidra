@@ -17,14 +17,13 @@ package ghidra.app.plugin.core.function;
 
 import static org.junit.Assert.*;
 
-import javax.swing.JDialog;
 import javax.swing.JTextField;
 
 import org.junit.*;
 
+import docking.AbstractErrDialog;
 import docking.ActionContext;
 import docking.action.DockingActionIf;
-import docking.widgets.MultiLineLabel;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.util.viewer.field.FunctionSignatureFieldFactory;
 import ghidra.framework.plugintool.PluginTool;
@@ -70,30 +69,25 @@ public class ThunkReferenceAddressDialogTest extends AbstractGhidraHeadedIntegra
 	@Test
 	public void testSetThunkedFunction() throws Exception {
 
-		ThunkReferenceAddressDialog dialog = popupSetThunkDialog(addr(0x100194b));
+		ThunkReferenceAddressDialog dialog = showThunkDialog(addr(0x100194b));
 
 		JTextField textEntryField = findComponent(dialog, JTextField.class);
 		assertNotNull(textEntryField);
 
 		// Invalid Entry
-
 		setText(textEntryField, "bar");
 
 		pressButtonByText(dialog, "OK", false);
 
-		JDialog errorDialog = waitForJDialog("Invalid Entry Error");
-		MultiLineLabel errorLabel =
-			(MultiLineLabel) findComponentByName(errorDialog, "MESSAGE-COMPONENT");
-		assertNotNull(errorLabel);
-
-		assertEquals("Invalid thunk reference address or name specified: bar",
-			errorLabel.getLabel());
+		AbstractErrDialog errorDialog = waitForErrorDialog();
+		assertEquals("Invalid Entry Error", errorDialog.getTitle());
+		assertEquals(
+			"Invalid thunk reference address or name specified: bar",
+			errorDialog.getMessage());
 		pressButtonByText(errorDialog, "OK");
 
 		// Try again
-
 		setText(textEntryField, "IsTextUnicode");
-
 		pressButtonByText(dialog, "OK");
 		waitForBusyTool(tool);
 
@@ -110,7 +104,7 @@ public class ThunkReferenceAddressDialogTest extends AbstractGhidraHeadedIntegra
 	@Test
 	public void testSetThunkedFunctionWithNamespace() throws Exception {
 
-		ThunkReferenceAddressDialog dialog = popupSetThunkDialog(addr(0x100194b));
+		ThunkReferenceAddressDialog dialog = showThunkDialog(addr(0x100194b));
 
 		JTextField textEntryField = findComponent(dialog, JTextField.class);
 		assertNotNull(textEntryField);
@@ -130,19 +124,10 @@ public class ThunkReferenceAddressDialogTest extends AbstractGhidraHeadedIntegra
 
 	}
 
-//	@Test
-//	public void testClearThunkedFunction() throws Exception {
-//
-//		testSetThunkedFunctionWithNamespace(); // sets thunk
-//
-//		revertThunk.actionPerformed(context);
-//
-//	}
-
 	@Test
 	public void testSetThunkedFunctionWithOriginalName() throws Exception {
 
-		ThunkReferenceAddressDialog dialog = popupSetThunkDialog(addr(0x100194b));
+		ThunkReferenceAddressDialog dialog = showThunkDialog(addr(0x100194b));
 
 		JTextField textEntryField = findComponent(dialog, JTextField.class);
 		assertNotNull(textEntryField);
@@ -166,54 +151,38 @@ public class ThunkReferenceAddressDialogTest extends AbstractGhidraHeadedIntegra
 	@Test
 	public void testSetThunkedFunctionWithOriginalNameConflict() throws Exception {
 
-		int txId = program.startTransaction("add label");
-		try {
+		tx(program, () -> {
 			program.getSymbolTable().createLabel(addr(0x1001900), "_Zxyz", SourceType.USER_DEFINED);
-		}
-		finally {
-			program.endTransaction(txId, true);
-		}
+		});
 
-		ThunkReferenceAddressDialog dialog = popupSetThunkDialog(addr(0x100194b));
-
+		ThunkReferenceAddressDialog dialog = showThunkDialog(addr(0x100194b));
 		JTextField textEntryField = findComponent(dialog, JTextField.class);
 		assertNotNull(textEntryField);
-
-		// Multiple Symbols
-
 		setText(textEntryField, "_Zxyz");
-
 		pressButtonByText(dialog, "OK", false);
 
-		JDialog errorDialog = waitForJDialog("Ambiguous Symbol Name");
-		MultiLineLabel errorLabel =
-			(MultiLineLabel) findComponentByName(errorDialog, "MESSAGE-COMPONENT");
-		assertNotNull(errorLabel);
-
+		AbstractErrDialog errorDialog = waitForErrorDialog();
+		assertEquals("Ambiguous Symbol Name", errorDialog.getTitle());
 		assertEquals(
 			"Specified symbol is ambiguous.  Try full namespace name, mangled name or address.",
-			errorLabel.getLabel());
+			errorDialog.getMessage());
 		pressButtonByText(errorDialog, "OK");
-
 		waitForBusyTool(tool);
 
 		Function f = program.getFunctionManager().getFunctionAt(addr(0x100194b));
 		assertFalse(f.isThunk());
 
 		setText(textEntryField, "LibFoo::xyz");
-
 		pressButtonByText(dialog, "OK", false);
-
 		waitForBusyTool(tool);
 
 		Function thunkedFunction = f.getThunkedFunction(false);
 		assertNotNull(thunkedFunction);
 		assertTrue(thunkedFunction.isExternal());
 		assertEquals("LibFoo::xyz", thunkedFunction.getName(true));
-
 	}
 
-	private ThunkReferenceAddressDialog popupSetThunkDialog(Address address) {
+	private ThunkReferenceAddressDialog showThunkDialog(Address address) {
 		codeBrowserPlugin.goToField(address, FunctionSignatureFieldFactory.FIELD_NAME, 0, 0);
 		waitForBusyTool(tool);
 

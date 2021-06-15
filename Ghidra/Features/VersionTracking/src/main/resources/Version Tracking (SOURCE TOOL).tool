@@ -34,18 +34,18 @@
                                     <SPLIT_NODE WIDTH="1475" HEIGHT="551" DIVIDER_LOCATION="632" ORIENTATION="HORIZONTAL">
                                         <SPLIT_NODE WIDTH="950" HEIGHT="985" DIVIDER_LOCATION="894" ORIENTATION="HORIZONTAL">
                                             <COMPONENT_NODE TOP_INFO="0">
-                                                <COMPONENT_INFO NAME="Listing" OWNER="CodeBrowserPlugin" TITLE="Listing: WallaceSrc" ACTIVE="true" GROUP="" INSTANCE_ID="2769903913093334120" />
+                                                <COMPONENT_INFO NAME="Listing" OWNER="CodeBrowserPlugin" TITLE="Listing" ACTIVE="true" GROUP="Core" INSTANCE_ID="2769903913093334120" />
                                                 <COMPONENT_INFO NAME="Test Listing" OWNER="Test Listing" TITLE="Test Listing" ACTIVE="false" GROUP="" INSTANCE_ID="2733632016422332683" />
                                             </COMPONENT_NODE>
                                             <COMPONENT_NODE TOP_INFO="0">
-                                                <COMPONENT_INFO NAME="Listing" OWNER="CodeBrowserPlugin" TITLE="[Listing: notepad.exe]" ACTIVE="false" GROUP="disconnected" INSTANCE_ID="2738354194536315852" />
+                                                <COMPONENT_INFO NAME="Listing" OWNER="CodeBrowserPlugin" TITLE="Listing" ACTIVE="false" GROUP="disconnected" INSTANCE_ID="2738354194536315852" />
                                             </COMPONENT_NODE>
                                         </SPLIT_NODE>
                                         <SPLIT_NODE WIDTH="355" HEIGHT="1097" DIVIDER_LOCATION="542" ORIENTATION="VERTICAL">
                                             <SPLIT_NODE WIDTH="541" HEIGHT="551" DIVIDER_LOCATION="546" ORIENTATION="VERTICAL">
                                                 <SPLIT_NODE WIDTH="541" HEIGHT="551" DIVIDER_LOCATION="546" ORIENTATION="VERTICAL">
                                                     <COMPONENT_NODE TOP_INFO="0">
-                                                        <COMPONENT_INFO NAME="Decompiler" OWNER="DecompilePlugin" TITLE="Decompile: Gadget" ACTIVE="true" GROUP="" INSTANCE_ID="2769903892362986615" />
+                                                        <COMPONENT_INFO NAME="Decompiler" OWNER="DecompilePlugin" TITLE="Decompile" ACTIVE="true" GROUP="" INSTANCE_ID="2769903892362986615" />
                                                     </COMPONENT_NODE>
                                                     <COMPONENT_NODE TOP_INFO="0">
                                                         <COMPONENT_INFO NAME="Version Tracking Matches for Source" OWNER="VTPlugin" TITLE="Version Tracking Matches for Source" ACTIVE="true" GROUP="VTResults" INSTANCE_ID="2769903913525347441" />
@@ -61,8 +61,7 @@
                                         </SPLIT_NODE>
                                     </SPLIT_NODE>
                                     <COMPONENT_NODE TOP_INFO="0">
-                                        <COMPONENT_INFO NAME="Decompiler" OWNER="Decompiler" TITLE="Decompile" ACTIVE="false" GROUP="" INSTANCE_ID="0" />
-                                        <COMPONENT_INFO NAME="References from " OWNER="ReferencesPlugin" TITLE="References from notepad.exe@01001004" ACTIVE="false" GROUP="" INSTANCE_ID="0" />
+                                         <COMPONENT_INFO NAME="References from " OWNER="ReferencesPlugin" TITLE="References" ACTIVE="false" GROUP="" INSTANCE_ID="0" />
                                         <COMPONENT_INFO NAME="Label References Provider" OWNER="LocationReferencesPlugin" TITLE="References to s__0100a000" ACTIVE="false" GROUP="" INSTANCE_ID="2738698427373098901" />
                                     </COMPONENT_NODE>
                                 </SPLIT_NODE>
@@ -191,7 +190,7 @@
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="454" Y_POS="326" WIDTH="464" HEIGHT="513">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="References Editor " OWNER="ReferencesPlugin" TITLE="References Editor @ 0100566d  (notepad.exe)" ACTIVE="false" GROUP="" INSTANCE_ID="2738698427373098900" />
+                    <COMPONENT_INFO NAME="References Editor " OWNER="ReferencesPlugin" TITLE="References Editor" ACTIVE="false" GROUP="" INSTANCE_ID="2738698427373098900" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="0" Y_POS="0" WIDTH="0" HEIGHT="0">
@@ -201,7 +200,7 @@
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="397" Y_POS="209" WIDTH="597" HEIGHT="433">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Structure Editor" OWNER="DataTypeManagerPlugin" TITLE="Structure Editor: IMAGE_RESOURCE_DIRECTORY_ENTRY_NameStruct.conflict (notepad.exe)" ACTIVE="false" GROUP="" INSTANCE_ID="2739607423924196364" />
+                    <COMPONENT_INFO NAME="Structure Editor" OWNER="DataTypeManagerPlugin" TITLE="Structure Editor" ACTIVE="false" GROUP="" INSTANCE_ID="2739607423924196364" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="171" Y_POS="155" WIDTH="940" HEIGHT="642">
@@ -216,17 +215,17 @@
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="-1287" Y_POS="271" WIDTH="1069" HEIGHT="677">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Enum Editor" OWNER="DataTypeManagerPlugin" TITLE="enum (notepad.exe)" ACTIVE="false" GROUP="" INSTANCE_ID="2736721927148945968" />
+                    <COMPONENT_INFO NAME="Enum Editor" OWNER="DataTypeManagerPlugin" TITLE="enum " ACTIVE="false" GROUP="" INSTANCE_ID="2736721927148945968" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="385" Y_POS="260" WIDTH="488" HEIGHT="350">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Union Editor" OWNER="DataTypeManagerPlugin" TITLE="Union Editor: union (calc.exe)" ACTIVE="false" GROUP="" INSTANCE_ID="2650648146038267899" />
+                    <COMPONENT_INFO NAME="Union Editor" OWNER="DataTypeManagerPlugin" TITLE="Union Editor: union" ACTIVE="false" GROUP="" INSTANCE_ID="2650648146038267899" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="-752" Y_POS="237" WIDTH="753" HEIGHT="554">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Bytes" OWNER="ByteViewerPlugin" TITLE="Bytes : WallaceSrc" ACTIVE="false" GROUP="" INSTANCE_ID="2769903913093334115" />
+                    <COMPONENT_INFO NAME="Bytes" OWNER="ByteViewerPlugin" TITLE="Bytes" ACTIVE="false" GROUP="" INSTANCE_ID="2769903913093334115" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="443" Y_POS="383" WIDTH="477" HEIGHT="374">

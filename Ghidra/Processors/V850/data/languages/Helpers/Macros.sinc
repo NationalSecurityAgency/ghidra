@@ -1,0 +1,254 @@
+#####################################################
+#####		 	Macros			#####
+#####################################################
+
+
+##### CARRY-Flag #####
+
+macro set_CY_pos(var1, var2)
+{
+	$(CY) = carry(var1, var2);
+}
+
+macro set_CY_pos2(var1, var2, var3)
+{
+	local var12 = var1 + var2;
+	$(CY) = carry(var1, var2) || carry(var12, var3);
+}
+
+macro set_CY_neg(var1, var2)
+{
+	$(CY) = var1 < var2;
+}
+
+macro set_CY_neg2(var1, var2, var3)
+{
+	local var23 = var2 + var3;
+	$(CY) = (var1 < var23);
+}
+
+
+
+##### Overflow-Flag #####
+
+macro set_OV_pos(var1, var2)
+{
+	$(OV) = scarry(var1, var2);
+}
+
+macro set_OV_pos2(var1, var2, var3)
+{
+	local var12 = var1 + var2;
+	$(OV) = scarry(var1, var2) || scarry(var12, var3);
+}
+
+macro set_OV_neg(var1, var2)
+{	
+	local A:4 = var1;
+	local B:4 = var2;
+	local R = A - B;
+
+	local A1 = A[31,1];
+	local B1 = B[31,1];
+	local R1 = R[31,1];
+
+	$(OV) = (A1 != B1) && (B1 == R1);
+
+	#OV = 1 if:
+	#pos - neg = neg
+	#neg - pos = pos
+}
+
+macro set_OV_neg2(var1, var2, var3)
+{
+	local A:4 = var1;
+	local B:4 = var2;
+	local C:4 = var3;
+	local R = A - B - C;
+
+	local A1 = A[31,1];
+	local B1 = B[31,1];
+	local R1 = R[31,1];
+
+	$(OV) = (A1 != B1) && (B1 == R1);
+}
+
+
+
+##### S/Z-Flags #####
+
+macro set_S(flag)
+{
+	$(S) = flag s< 0;
+}
+
+macro set_Z(var)
+{
+	$(Z) = var == 0;
+}
+
+
+
+##### General-Flag-Macros #####
+
+macro set_general_flags_pos(var1, var2)
+{
+	local res = var1 + var2;
+	set_CY_pos(var1, var2);
+	set_OV_pos(var1, var2);
+	set_S(res);
+	set_Z(res);
+}
+
+macro set_general_flags_neg(var1, var2)
+{
+	local res = var1 - var2;
+	set_CY_neg(var1, var2);
+	set_OV_neg(var1, var2);
+	set_S(res);
+	set_Z(res);
+}
+
+macro set_OV0_S_Z(var)
+{
+	$(OV) = 0;
+	set_S(var);
+	set_Z(var);
+}
+
+
+
+##### General-Macros #####
+
+# if condition is != 0
+macro either_or(res, cond, true, false)	
+{
+	res = (true * zext(cond != 0)) + (false * zext(cond == 0));
+}
+
+# if condition is == 1
+macro either_or1(res, cond, true, false)
+{
+	res = (true * zext(cond == 1)) + (false * zext(cond != 1));
+}
+
+macro shift_right_logic(res, var, shift_)
+{
+	local shift = shift_ & 0x1f;
+	local mask = (zext(shift != 0) * var) & (1 << (shift - 1));
+	res = var >> shift;
+	set_OV0_S_Z(res);
+	$(CY) = ((mask != 0) && (shift != 0));
+}
+
+macro shift_right_arith(res, var, shift_)
+{
+	local shift = shift_ & 0x1f;
+	local mask = (zext(shift != 0) * var) & (1 << (shift - 1));
+	res = var s>> shift;
+	set_OV0_S_Z(res);
+	$(CY) = ((mask != 0) && (shift != 0));
+}
+
+macro shift_left_logic(res, var, shift_) 
+{
+	local shift = shift_ & 0x1f;
+	local mask = (zext(shift != 0) * var) & (1 << (32 - shift));
+	res = var << shift;
+	set_OV0_S_Z(res);
+	$(CY) = ((mask != 0) && (shift != 0));
+}
+
+
+
+##### Prep/Disp Macros #####
+
+macro push(reg)
+{
+	sp = sp - 4;
+	*:4 sp = reg;
+}
+
+macro pop(reg)
+{
+	reg = *:4 sp;
+	sp = sp + 4;
+}
+
+
+
+##### Search Macros #####
+
+macro SearchRight(res, var, char)
+{
+	local var_:4 = var;
+	res = 0;
+
+	<loop>
+	if ((var_ & 0x1) == char)
+		goto <end>;
+
+	var_ = var_ >> 1;
+	res = res + 1;
+
+	if (res < 32)
+		goto <loop>;
+	
+	res = 0;
+
+	<end>
+}
+
+macro SearchLeft(res, var, char)
+{
+	local var_:4 = var;
+	res = 0;
+
+	<loop>
+	if ((var_ >> 31) == char) 
+		goto <end>;
+
+	var_ = var_ << 1;
+	res = res + 1;
+
+	if (res < 32) 
+		goto <loop>;
+
+	res = 0;
+
+	<end>
+}
+
+# macro saturate(var) 
+# {
+# 	if (var s> 0x7FFFFFFF) 
+#         	goto <pos_sat>;
+    
+# 	if (var s< -0x80000000) 
+#         	goto <neg_sat>;
+
+# 	goto <end>;
+
+# 	<pos_sat> 
+#     var =  0x7FFFFFFF; 
+#     goto <end>;
+
+# 	<neg_sat> 
+#     var = -0x80000000; 
+#     goto <end>;
+	
+#     <end>
+# }
+
+
+##### Float-Macros #####
+
+macro compare_float(res, fcond, reg1, reg2)
+{
+	local un = ((fcond & 1) == 1)	&    (nan(reg2) || nan(reg1));
+	local eq = ((fcond & 2) == 2)   &  (!(nan(reg2) || nan(reg1)))  &  (reg2 f== reg1);
+	local le = ((fcond & 4) == 4)	&  (!(nan(reg2) || nan(reg1)))  &  (reg2 f<  reg1);
+	#local ex = (fcond & 8)		&   ((nan(reg2) || nan(reg1)));
+	
+	res = zext(un|eq|le);
+}

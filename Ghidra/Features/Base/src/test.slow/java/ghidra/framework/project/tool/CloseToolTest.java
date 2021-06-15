@@ -41,10 +41,6 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private TestEnv env;
 
-	public CloseToolTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 

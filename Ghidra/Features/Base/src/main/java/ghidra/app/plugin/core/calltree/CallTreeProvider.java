@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.calltree;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Rectangle2D;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,7 +26,7 @@ import javax.swing.tree.TreePath;
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.*;
-import docking.util.GraphicsUtils;
+import docking.resources.icons.NumberIcon;
 import docking.widgets.dialogs.NumberInputDialog;
 import docking.widgets.label.GLabel;
 import docking.widgets.tree.*;
@@ -283,7 +282,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 					for (TreePath path : selectionPaths) {
 						GTreeNode node = (GTreeNode) path.getLastPathComponent();
-						if (node instanceof GTreeNode) {
+						if (node instanceof OutgoingCallsRootNode ||
+							node instanceof IncomingCallsRootNode) {
 							return false;
 						}
 					}
@@ -1090,11 +1090,16 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	}
 
 	private boolean updateRootNodes(Function function) {
-		CallNode callNode = (CallNode) incomingTree.getModelRoot();
-		Function nodeFunction = callNode.getContainingFunction();
-		if (nodeFunction.equals(function)) {
-			reloadUpdateManager.update();
-			return true;
+		GTreeNode root = incomingTree.getModelRoot();
+		// root might be a "PendingRootNode"
+		//TODO do we need to use a PendingRootNode?
+		if (root instanceof CallNode) {
+			CallNode callNode = (CallNode) root;
+			Function nodeFunction = callNode.getRemoteFunction();
+			if (nodeFunction.equals(function)) {
+				reloadUpdateManager.update();
+				return true;
+			}
 		}
 
 		return false;
@@ -1126,7 +1131,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 			// first, if the given node represents the function we have, then we don't need to 
 			// go any further
-			if (function.equals(node.getContainingFunction())) {
+			if (function.equals(node.getRemoteFunction())) {
 				GTreeNode parent = node.getParent();
 				parent.removeNode(node);
 				parent.addNode(node.recreate());
@@ -1274,97 +1279,6 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			}
 
 			super.expandNode(node, monitor);
-		}
-	}
-
-	private class NumberIcon implements Icon {
-		private String number;
-		private float bestFontSize = -1;
-
-		NumberIcon(int number) {
-			this.number = Integer.toString(number);
-		}
-
-		void setNumber(int number) {
-			this.number = Integer.toString(number);
-			bestFontSize = -1;
-		}
-
-		@Override
-		public void paintIcon(Component c, Graphics g, int x, int y) {
-			g.setColor(Color.WHITE);
-			g.fillRect(x, y, getIconWidth(), getIconHeight());
-			g.setColor(new Color(0xb5d5ff));
-			g.drawRect(x, y, getIconWidth(), getIconHeight());
-
-			float fontSize = getMaxFontSize(g, getIconWidth() - 1, getIconHeight());
-			Font originalFont = g.getFont();
-			Font textFont = originalFont.deriveFont(fontSize).deriveFont(Font.BOLD);
-			g.setFont(textFont);
-
-			FontMetrics fontMetrics = g.getFontMetrics(textFont);
-			Rectangle2D stringBounds = fontMetrics.getStringBounds(number, g);
-			int textHeight = (int) stringBounds.getHeight();
-			int iconHeight = getIconHeight();
-			int space = y + iconHeight - textHeight;
-			int halfSpace = space >> 1;
-			int baselineY = y + iconHeight - halfSpace;// - halfTextHeight;// + halfTextHeight;
-
-			int textWidth = (int) stringBounds.getWidth();
-			int iconWidth = getIconWidth();
-			int halfWidth = iconWidth >> 1;
-			int halfTextWidth = textWidth >> 1;
-			int baselineX = x + halfWidth - halfTextWidth;
-
-			g.setColor(Color.BLACK);
-			JComponent jc = null;
-			if (c instanceof JComponent) {
-				jc = (JComponent) c;
-			}
-			GraphicsUtils.drawString(jc, g, number, baselineX, baselineY);
-		}
-
-		private float getMaxFontSize(Graphics g, int width, int height) {
-			if (bestFontSize > 0) {
-				return bestFontSize;
-			}
-
-			float size = 12f;
-			Font font = g.getFont().deriveFont(size); // reasonable default
-			if (textFitsInFont(g, font, width, height)) {
-				bestFontSize = size;
-				return bestFontSize;
-			}
-
-			do {
-				size--;
-				font = g.getFont().deriveFont(size);
-			}
-			while (!textFitsInFont(g, font, width, height));
-
-			bestFontSize = Math.max(1f, size);
-			return bestFontSize;
-		}
-
-		private boolean textFitsInFont(Graphics g, Font font, int width, int height) {
-			FontMetrics fontMetrics = g.getFontMetrics(font);
-			int textWidth = fontMetrics.stringWidth(number);
-			if (textWidth > width) {
-				return false;
-			}
-
-			int textHeight = fontMetrics.getHeight();
-			return textHeight < height;
-		}
-
-		@Override
-		public int getIconHeight() {
-			return 16;
-		}
-
-		@Override
-		public int getIconWidth() {
-			return 16;
 		}
 	}
 

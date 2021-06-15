@@ -35,6 +35,7 @@ import ghidra.app.events.OpenProgramPluginEvent;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.plugin.core.script.GhidraScriptMgrPlugin;
+import ghidra.app.script.GhidraScript;
 import ghidra.app.script.JavaScriptProvider;
 import ghidra.app.services.ProgramManager;
 import ghidra.base.project.GhidraProject;
@@ -532,7 +533,7 @@ public class TestEnv {
 			Workspace workspace = toolManager.getActiveWorkspace();
 
 			AbstractDockingTest.setErrorGUIEnabled(wasErrorGUIEnabled);
-			return (PluginTool) workspace.runTool(toolTemplate);
+			return workspace.runTool(toolTemplate);
 		});
 	}
 
@@ -549,29 +550,32 @@ public class TestEnv {
 		});
 	}
 
-	public ScriptTaskListener runScript(File script) throws PluginException {
+	public ScriptTaskListener runScript(File scriptFile) throws PluginException {
+		GhidraScriptMgrPlugin scriptManagerPlugin = getPlugin(GhidraScriptMgrPlugin.class);
+		if (scriptManagerPlugin == null) {
+			lazyTool().addPlugin(GhidraScriptMgrPlugin.class.getName());
+			scriptManagerPlugin = getPlugin(GhidraScriptMgrPlugin.class);
+		}
 
 		JavaScriptProvider scriptProvider = new JavaScriptProvider();
 		PrintWriter writer = new PrintWriter(System.out);
-		ResourceFile resourceFile = new ResourceFile(script);
-		Boolean result = (Boolean) AbstractGenericTest.invokeInstanceMethod("compile",
-			scriptProvider, new Class<?>[] { ResourceFile.class, PrintWriter.class },
-			new Object[] { resourceFile, writer });
+		ResourceFile resourceFile = new ResourceFile(scriptFile);
+		GhidraScript script = null;
+		try {
+			script = scriptProvider.getScriptInstance(resourceFile, writer);
+		}
+		catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
 
-		if (!result) {
+		}
+		if (script == null) {
 			writer.flush();
-			throw new RuntimeException("Failed to compile script " + script.getAbsolutePath());
+			throw new RuntimeException("Failed to compile script " + scriptFile.getAbsolutePath());
 		}
 
-		GhidraScriptMgrPlugin sm = getPlugin(GhidraScriptMgrPlugin.class);
-		if (sm == null) {
-			lazyTool().addPlugin(GhidraScriptMgrPlugin.class.getName());
-			sm = getPlugin(GhidraScriptMgrPlugin.class);
-		}
-
-		String scriptName = script.getName();
+		String scriptName = scriptFile.getName();
 		ScriptTaskListener listener = new ScriptTaskListener(scriptName);
-		sm.runScript(scriptName, listener);
+		scriptManagerPlugin.runScript(scriptName, listener);
 		return listener;
 	}
 
@@ -881,7 +885,7 @@ public class TestEnv {
 
 			Project project = frontEndToolInstance.getProject();
 			ToolServices toolServices = project.getToolServices();
-			PluginTool newTool = (PluginTool) toolServices.launchTool(toolName, null);
+			PluginTool newTool = toolServices.launchTool(toolName, null);
 			if (newTool == null) {
 				// couldn't find the tool in the workspace...check the test area
 				newTool = launchDefaultToolByName(toolName);
@@ -922,19 +926,6 @@ public class TestEnv {
 		});
 	}
 
-	/**
-	 * Import a program as binary.
-	 * @param programName resource name that is the name of the program
-	 * @param language language
-	 * @param compilerSpec compiler spec
-	 * @return program
-	 * @throws IOException
-	 * @throws LanguageNotFoundException
-	 * @throws VersionException
-	 * @throws InvalidNameException
-	 * @throws DuplicateNameException
-	 * @throws CancelledException
-	 */
 	public Program loadResourceProgramAsBinary(String programName, Language language,
 			CompilerSpec compilerSpec) throws LanguageNotFoundException, IOException,
 			CancelledException, DuplicateNameException, InvalidNameException, VersionException {
@@ -945,18 +936,6 @@ public class TestEnv {
 		return gp.importProgram(file, language, compilerSpec);
 	}
 
-	/**
-	 * Import a program as binary.
-	 * @param programName resource name that is the name of the program
-	 * @param processor processor
-	 * @return program
-	 * @throws IOException
-	 * @throws LanguageNotFoundException
-	 * @throws VersionException
-	 * @throws InvalidNameException
-	 * @throws DuplicateNameException
-	 * @throws CancelledException
-	 */
 	public Program loadResourceProgramAsBinary(String programName, Processor processor)
 			throws CancelledException, DuplicateNameException, InvalidNameException,
 			VersionException, IOException {

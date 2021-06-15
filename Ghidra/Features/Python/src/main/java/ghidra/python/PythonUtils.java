@@ -27,7 +27,7 @@ import utilities.util.FileUtilities;
  */
 public class PythonUtils {
 
-	public static final String PYTHON_NAME = "jython-2.7.1";
+	public static final String PYTHON_NAME = "jython-2.7.2";
 	public static final String PYTHON_CACHEDIR = "jython_cachedir";
 	public static final String PYTHON_SRC = "python-src";
 
@@ -66,8 +66,9 @@ public class PythonUtils {
 	public static File setupPythonCacheDir(TaskMonitor monitor)
 			throws CancelledException, IOException {
 
-		File cacheDir = new File(Application.getUserTempDirectory(), PYTHON_CACHEDIR);
-		if (!FileUtilities.createDir(cacheDir)) {
+		File devDir = new File(Application.getUserSettingsDirectory(), "dev");
+		File cacheDir = new File(devDir, PYTHON_CACHEDIR);
+		if (!FileUtilities.mkdirs(cacheDir)) {
 			throw new IOException("Failed to create the python cache directory at: " + cacheDir);
 		}
 

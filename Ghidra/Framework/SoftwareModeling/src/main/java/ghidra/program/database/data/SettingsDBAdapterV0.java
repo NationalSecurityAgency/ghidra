@@ -15,18 +15,13 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.VersionException;
 
 /**
- *
- * To change the template for this generated type comment go to
- * {@literal Window>Preferences>Java>Code Generation>Code and Comments}
- * 
- * 
+ * Version 0 implementation for the accessing the data type settings database table.
  */
 class SettingsDBAdapterV0 extends SettingsDBAdapter {
 
@@ -38,21 +33,17 @@ class SettingsDBAdapterV0 extends SettingsDBAdapter {
 	static final int V0_SETTINGS_BYTE_VALUE_COL = 4;
 
 	static final Schema V0_SETTINGS_SCHEMA = new Schema(0, "DT Settings ID",
-		new Class[] { LongField.class, StringField.class, LongField.class, StringField.class,
-			BinaryField.class }, new String[] { "Data Type ID", "Settings Name", "Long Value",
-			"String Value", "Byte Value" });
+		new Field[] { LongField.INSTANCE, StringField.INSTANCE, LongField.INSTANCE,
+			StringField.INSTANCE, BinaryField.INSTANCE },
+		new String[] { "Data Type ID", "Settings Name", "Long Value", "String Value",
+			"Byte Value" });
 	private Table settingsTable;
 
-	/**
-	 * Constructor
-	 * 
-	 */
 	SettingsDBAdapterV0(DBHandle handle, boolean create) throws VersionException, IOException {
 
 		if (create) {
-			settingsTable =
-				handle.createTable(SETTINGS_TABLE_NAME, V0_SETTINGS_SCHEMA,
-					new int[] { V0_SETTINGS_DT_ID_COL });
+			settingsTable = handle.createTable(SETTINGS_TABLE_NAME, V0_SETTINGS_SCHEMA,
+				new int[] { V0_SETTINGS_DT_ID_COL });
 		}
 		else {
 			settingsTable = handle.getTable(SETTINGS_TABLE_NAME);
@@ -66,14 +57,11 @@ class SettingsDBAdapterV0 extends SettingsDBAdapter {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.data.SettingsDBAdapter#createSettingsRecord(long, java.lang.String, java.lang.String, long, byte[])
-	 */
 	@Override
-	public Record createSettingsRecord(long dataTypeID, String name, String strValue,
+	public DBRecord createSettingsRecord(long dataTypeID, String name, String strValue,
 			long longValue, byte[] byteValue) throws IOException {
 
-		Record record = V0_SETTINGS_SCHEMA.createRecord(settingsTable.getKey());
+		DBRecord record = V0_SETTINGS_SCHEMA.createRecord(settingsTable.getKey());
 		record.setLongValue(V0_SETTINGS_DT_ID_COL, dataTypeID);
 		record.setString(V0_SETTINGS_NAME_COL, name);
 		record.setString(V0_SETTINGS_STRING_VALUE_COL, strValue);
@@ -83,41 +71,26 @@ class SettingsDBAdapterV0 extends SettingsDBAdapter {
 		return record;
 	}
 
-	/**
-	 * @see ghidra.program.database.data.SettingsDBAdapter#getSettingsKeys(long)
-	 */
 	@Override
-	public long[] getSettingsKeys(long dataTypeID) throws IOException {
+	public Field[] getSettingsKeys(long dataTypeID) throws IOException {
 		return settingsTable.findRecords(new LongField(dataTypeID), V0_SETTINGS_DT_ID_COL);
 	}
 
-	/**
-	 * @see ghidra.program.database.data.SettingsDBAdapter#removeSettingsRecord(long)
-	 */
 	@Override
 	public boolean removeSettingsRecord(long settingsID) throws IOException {
 		return settingsTable.deleteRecord(settingsID);
 	}
 
-	/**
-	 * @see ghidra.program.database.data.SettingsDBAdapter#getSettingsRecord(long)
-	 */
 	@Override
-	public Record getSettingsRecord(long settingsID) throws IOException {
+	public DBRecord getSettingsRecord(long settingsID) throws IOException {
 		return settingsTable.getRecord(settingsID);
 	}
 
-	/**
-	 * @see ghidra.program.database.data.SettingsDBAdapter#updateSettingsRecord(ghidra.framework.store.db.Record)
-	 */
 	@Override
-	public void updateSettingsRecord(Record record) throws IOException {
+	public void updateSettingsRecord(DBRecord record) throws IOException {
 		settingsTable.putRecord(record);
 	}
 
-	/*
-	 * @see ghidra.program.database.data.SettingsDBAdapter#getRecordCount()
-	 */
 	@Override
 	int getRecordCount() {
 		return settingsTable.getRecordCount();

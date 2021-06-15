@@ -1,0 +1,136 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Watches</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Watches</H1>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/DebuggerWatchesPlugin.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>Watches refer to expressions which are evaluated each pause in order to monitor the value of
+    variables in the target machine state. The watch variables are expressed in Sleigh and
+    evaluated in the current thread's context at the current point in time. If the current trace is
+    live and at the present, then the necessary target state is queried and recorded. The watch can
+    be assigned a data type so that the raw data is rendered in a meaningful way. When applicable,
+    that data type can optionally be applied to the trace database. Some metadata about the watch
+    is also given, e.g., the address of the value.</P>
+
+    <H2>Examples</H2>
+
+    <P>For those less familiar with Sleigh, here are some example expressions:</P>
+
+    <UL>
+      <LI><CODE>*:4 (RSP+8)</CODE>: Display 4 bytes of [ram] starting 8 bytes after the offset
+      given by register RSP.</LI>
+
+      <LI><CODE>*:4 0x7fff0004:8</CODE>: Display 4 bytes starting at ram:7fff0004. The extraneous,
+      but required, size specifier on constant derefs is a known issue. Just use the target's
+      pointer size in bytes.</LI>
+
+      <LI><CODE>*:8 RSP</CODE>: Display 8 bytes of [ram] starting at the offset given by register
+      RSP.</LI>
+
+      <LI><CODE>RSP</CODE>: Display the value of register RSP.</LI>
+    </UL>
+
+    <H2>Table Columns</H2>
+
+    <P>The table displays and allows modification of each watch. It has the following columns:</P>
+
+    <UL>
+      <LI>Expression - the user-modifiable Sleigh expression defining this watch.</LI>
+
+      <LI>Address - when evaluation succeeds, the address of the watch's value. This field is
+      really only meaningful when the outermost operator of the expression is a memory dereference.
+      Double-clicking a row will navigate the primary dynamic listing to this address, if
+      possible.</LI>
+
+      <LI>Value - the raw bytes of the watched buffer. If the expression is a register, then this
+      is its hexadecimal value. If the value has changed since the last navigation event, this cell
+      is rendered in <FONT color="red">red</FONT>.</LI>
+
+      <LI>Type - the user-modifiable type of the watch. Note the type is not marked up in the
+      trace. Clicking the Apply Data Type action will apply it to the current trace, if
+      possible.</LI>
+
+      <LI>Representation - the value of the watch as interpreted by the selected data type.</LI>
+
+      <LI>Error - if an error occurs during compilation or evaluation of the expression, that error
+      is rendered here. Double-clicking the row will display the stack trace. Note that errors
+      during evaluation can be a very common occurrence, especially as contexts change, and should
+      not necessarily cause alarm. An expression devised for one context may not have meaning under
+      another, even if it evaluates without error. E.g., <CODE>RIP</CODE> will disappear when
+      switching to a 32-bit trace, or <CODE>*:8 (*:8 (RSP+8))</CODE> may cause an invalid
+      dereference if an x86 <CODE>PUSH</CODE> causes <CODE>*:8 (RSP+8)</CODE> to become 0.</LI>
+    </UL>
+
+    <H2>Actions</H2>
+
+    <P>The watches window provides the following actions:</P>
+
+    <H3><A name="apply_data_type"></A>Apply Data to Listing</H3>
+
+    <P>This action is available when there's an active trace, and at least one watch with an
+    address and data type is selected. If so, it applies that data type to the value in the
+    listing. That is, it attempts to apply the selected data type to the evaluated address, sizing
+    it to the value's size.</P>
+
+    <H3><A name="select_addresses"></A>Select Range</H3>
+
+    <P>This action is available when there's an active trace, and at least one watch with memory
+    addresses is selected. It selects the memory range comprising the resulting value. This only
+    works when the outermost operator of the expression is a memory dereference. It selects the
+    range at the address of that dereference having the size of the dereference. For example, the
+    expression <CODE>*:8 RSP</CODE> would cause 8 bytes of memory, starting at the offset given by
+    RSP, to be selected in the dynamic listing.</P>
+
+    <H3><A name="select_reads"></A>Select Reads</H3>
+
+    <P>This action is available when there's an active trace, and at least one watch with memory
+    reads is selected. It selects all memory ranges dereferenced in the course of expression
+    evaluation. This can be useful when examining a watch whose value seems unusual. For example,
+    the expression <CODE>*:8 RSP</CODE> would cause 8 bytes of memory, starting at the offset given
+    by RSP, to be selected in the dynamic listing -- the same result as Select Range. However, the
+    expression <CODE>*:4 (*:8 RSP)</CODE> would cause two ranges to be selected: 8 bytes starting
+    at RSP and 4 bytes starting at the offset given by <CODE>*:8 RSP</CODE>.</P>
+
+    <H3><A name="add"></A>Add</H3>
+
+    <P>This action is always available. It adds a blank watch to the table. Modify the expression
+    to make the entry useful.</P>
+
+    <H3><A name="remove"></A>Remove</H3>
+
+    <P>This action is available when at least one watch is selected. It removes those watches.</P>
+
+    <H2><A name="colors"></A>Tool Options: Colors</H2>
+
+    <P>The watch window uses colors to hint about changes in and freshness of displayed values.
+    They can be configured in the tool's options. By default, changed values are displayed in red,
+    and stale values are displayed in dark grey. A "stale" value is one which depends on any
+    register or memory whose contents are not known. The value displayed is that computed from the
+    last recorded contents, defaulting to 0 when never recorded. Simply, a "changed" watch is one
+    whose value has just changed. For example, if a value changes as result of stepping, then that
+    watch is changed. However, given the possibility of rewinding, changing thread focus, etc.,
+    "changed" is actually subtly more flexible. The watch remembers the evaluation from the user's
+    last coordinates (time, thread, frame, etc.) as well as the current coordinates. So, "changed"
+    more precisely refers to a watch whose value differs between those two coordinates. This
+    permits the user to switch focus between different coordinates and quickly identify what is
+    different.</P>
+  </BODY>
+</HTML>

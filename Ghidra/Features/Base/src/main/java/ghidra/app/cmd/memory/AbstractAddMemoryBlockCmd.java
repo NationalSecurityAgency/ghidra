@@ -69,7 +69,7 @@ abstract class AbstractAddMemoryBlockCmd implements Command {
 
 	protected abstract MemoryBlock createMemoryBlock(Memory memory)
 			throws LockException, MemoryConflictException, AddressOverflowException,
-			DuplicateNameException, CancelledException;
+			CancelledException;
 
 	@Override
 	public boolean applyTo(DomainObject obj) {
@@ -94,9 +94,6 @@ abstract class AbstractAddMemoryBlockCmd implements Command {
 		}
 		catch (MemoryConflictException e) {
 			message = e.getMessage();
-		}
-		catch (DuplicateNameException e) {
-			message = "Duplicate Name: " + e.getMessage();
 		}
 		catch (IllegalStateException e) {
 			message = e.getMessage();

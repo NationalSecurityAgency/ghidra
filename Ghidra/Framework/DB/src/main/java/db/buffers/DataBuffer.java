@@ -143,34 +143,22 @@ public class DataBuffer implements Buffer, Externalizable {
 		empty = state;
 	}
 
-	/*
-	 * @see ghidra.framework.store.Buffer#length()
-	 */
 	@Override
 	public int length() {
 		return data.length;
 	}
 
-	/*
-	 * @see ghidra.framework.store.Buffer#get(int, byte[], int, int)
-	 */
 	@Override
 	public void get(int offset, byte[] bytes, int dataOffset, int length)
 			throws ArrayIndexOutOfBoundsException {
 		System.arraycopy(data, offset, bytes, dataOffset, length);
 	}
 
-	/*
-	 * @see ghidra.framework.store.Buffer#get(int, byte[])
-	 */
 	@Override
 	public void get(int offset, byte[] bytes) {
 		System.arraycopy(data, offset, bytes, 0, bytes.length);
 	}
 
-	/*
-	 * @see ghidra.framework.store.Buffer#get(int, int)
-	 */
 	@Override
 	public byte[] get(int offset, int length) throws ArrayIndexOutOfBoundsException {
 		byte[] bytes = new byte[length];
@@ -178,34 +166,22 @@ public class DataBuffer implements Buffer, Externalizable {
 		return bytes;
 	}
 
-	/*
-	 * @see ghidra.framework.store.Buffer#getByte(int)
-	 */
 	@Override
 	public byte getByte(int offset) {
 		return data[offset];
 	}
 
-	/*
-	 * @see ghidra.framework.store.Buffer#getInt(int)
-	 */
 	@Override
 	public int getInt(int offset) {
 		return ((data[offset] & 0xff) << 24) | ((data[++offset] & 0xff) << 16) |
 			((data[++offset] & 0xff) << 8) | (data[++offset] & 0xff);
 	}
 
-	/*
-	 * @see ghidra.framework.store.Buffer#getShort(int)
-	 */
 	@Override
 	public short getShort(int offset) {
 		return (short) (((data[offset] & 0xff) << 8) | (data[++offset] & 0xff));
 	}
 
-	/*
-	 * @see ghidra.framework.store.Buffer#getLong(int)
-	 */
 	@Override
 	public long getLong(int offset) {
 		return (((long) data[offset] & 0xff) << 56) | (((long) data[++offset] & 0xff) << 48) |
@@ -214,9 +190,6 @@ public class DataBuffer implements Buffer, Externalizable {
 			(((long) data[++offset] & 0xff) << 8) | ((long) data[++offset] & 0xff);
 	}
 
-	/*
-	 * @see ghidra.framework.store.Buffer#put(int, byte[], int, int)
-	 */
 	@Override
 	public int put(int offset, byte[] bytes, int dataOffset, int length) {
 		dirty = true;
@@ -224,9 +197,6 @@ public class DataBuffer implements Buffer, Externalizable {
 		return offset + length;
 	}
 
-	/*
-	 * @see ghidra.framework.store.Buffer#put(int, byte[])
-	 */
 	@Override
 	public int put(int offset, byte[] bytes) {
 		dirty = true;
@@ -234,9 +204,6 @@ public class DataBuffer implements Buffer, Externalizable {
 		return offset + bytes.length;
 	}
 
-	/*
-	 * @see ghidra.framework.store.Buffer#putByte(int, byte)
-	 */
 	@Override
 	public int putByte(int offset, byte b) {
 		dirty = true;
@@ -244,9 +211,6 @@ public class DataBuffer implements Buffer, Externalizable {
 		return ++offset;
 	}
 
-	/*
-	 * @see ghidra.framework.store.Buffer#putInt(int, int)
-	 */
 	@Override
 	public int putInt(int offset, int v) {
 		dirty = true;
@@ -257,9 +221,6 @@ public class DataBuffer implements Buffer, Externalizable {
 		return ++offset;
 	}
 
-	/*
-	 * @see ghidra.framework.store.Buffer#putShort(int, short)
-	 */
 	@Override
 	public int putShort(int offset, short v) {
 		dirty = true;
@@ -268,9 +229,6 @@ public class DataBuffer implements Buffer, Externalizable {
 		return ++offset;
 	}
 
-	/*
-	 * @see ghidra.framework.store.Buffer#putLong(int, long)
-	 */
 	@Override
 	public int putLong(int offset, long v) {
 		dirty = true;
@@ -380,9 +338,8 @@ public class DataBuffer implements Buffer, Externalizable {
 		int compressedDataOffset = 0;
 
 		while (!deflate.finished() && compressedDataOffset < compressedData.length) {
-			compressedDataOffset +=
-				deflate.deflate(compressedData, compressedDataOffset, compressedData.length -
-					compressedDataOffset, Deflater.SYNC_FLUSH);
+			compressedDataOffset += deflate.deflate(compressedData, compressedDataOffset,
+				compressedData.length - compressedDataOffset, Deflater.SYNC_FLUSH);
 		}
 
 		if (!deflate.finished()) {
@@ -421,6 +378,30 @@ public class DataBuffer implements Buffer, Externalizable {
 				in.readFully(data);
 			}
 		}
+	}
+
+	/**
+	 * Perform an unsigned data comparison 
+	 * @param otherData other data to be compared
+	 * @param offset offset within this buffer
+	 * @param len length of data within this buffer
+	 * @return unsigned comparison result
+	 * @throws ArrayIndexOutOfBoundsException if specified region is not 
+	 * contained within this buffer.
+	 */
+	public int unsignedCompareTo(byte[] otherData, int offset, int len) {
+
+		int otherLen = otherData.length;
+		int otherOffset = 0;
+		int n = Math.min(len, otherLen);
+		while (n-- != 0) {
+			int b = data[offset++] & 0xff;
+			int otherByte = otherData[otherOffset++] & 0xff;
+			if (b != otherByte) {
+				return b - otherByte;
+			}
+		}
+		return len - otherLen;
 	}
 
 	/**

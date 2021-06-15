@@ -46,7 +46,7 @@ public class VisualGraphSatelliteScalingGraphMousePlugin<V extends VisualVertex,
 		VisualGraphOptions options = viewer.getOptions();
 		boolean scrollWheelPans = options.getScrollWheelPans();
 		int scrollWheelModifierToggle = DockingUtils.CONTROL_KEY_MODIFIER_MASK;
-		int eventModifiers = e.getModifiers();
+		int eventModifiers = e.getModifiersEx();
 		if (scrollWheelPans) {
 			// scrolling will zoom if modified (unmodified in this case means to pan)
 			return (scrollWheelModifierToggle & eventModifiers) == scrollWheelModifierToggle;

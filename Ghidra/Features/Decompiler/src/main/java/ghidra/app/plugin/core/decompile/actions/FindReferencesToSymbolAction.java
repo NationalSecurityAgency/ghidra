@@ -42,10 +42,9 @@ public class FindReferencesToSymbolAction extends AbstractDecompilerAction {
 
 	public FindReferencesToSymbolAction() {
 		super(NAME);
-
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionFindReferences"));
 		setPopupMenuData(
 			new MenuData(new String[] { LocationReferencesService.MENU_GROUP, MENU_ITEM_TEXT }));
-		setHelpLocation(new HelpLocation(HelpTopics.FIND_REFERENCES, HelpTopics.FIND_REFERENCES));
 	}
 
 	private Symbol getSymbol(DecompilerActionContext context) {

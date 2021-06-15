@@ -309,8 +309,7 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 
 		Program program = function.getProgram();
 		Address entryPoint = function.getEntryPoint();
-		SymbolUtilities.validateName(name, entryPoint, SymbolType.FUNCTION,
-			program.getAddressMap().getAddressFactory());
+		SymbolUtilities.validateName(name);
 
 		SymbolTable symbolTable = program.getSymbolTable();
 		Symbol sym = symbolTable.getPrimarySymbol(entryPoint);

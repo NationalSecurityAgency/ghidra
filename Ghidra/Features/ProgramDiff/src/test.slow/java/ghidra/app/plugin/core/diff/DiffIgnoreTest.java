@@ -27,22 +27,18 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.symbol.Equate;
 
 /**
- * Tests the Ignore function of the Diff Tool, such that the current 
- * difference is ignored and the next difference is selected.
+ * Tests the Ignore function of the Diff Tool, such that the current difference is ignored and
+ * the next difference is selected
  */
 public class DiffIgnoreTest extends DiffApplyTestAdapter {
-	public DiffIgnoreTest() {
-		super();
-	}
 
-	/**
-	 * Tests to see if a difference is ignored and the next difference is selected
-	 * @throws Exception
+	/*
+	 * Tests that a difference is ignored and the next difference is selected
 	 */
 	@Test
 	public void testIgnoreDiffsNextActionFirst() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
 		waitForPostedSwingRunnables();
 
@@ -61,14 +57,13 @@ public class DiffIgnoreTest extends DiffApplyTestAdapter {
 		assertEquals((byte) 0xac, bytes[0]);
 	}
 
-	/**
-	 * Tests to see if Equate Tables are properly ignored and the next difference is properly selected
-	 * @throws Exception
+	/*
+	 * Test that Equate Tables are properly ignored and the next difference is properly selected
 	 */
 	@Test
 	public void testIgnoreDiffsNextActionMiddle() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
 		waitForPostedSwingRunnables();
 
@@ -86,14 +81,13 @@ public class DiffIgnoreTest extends DiffApplyTestAdapter {
 		assertEquals(0, eqs.size());
 	}
 
-	/**
-	 * Tests to see if the ignore button is disabled after ignoring the last difference
-	 * @throws Exception
+	/*
+	 * Tests that the ignore button is disabled after ignoring the last difference
 	 */
 	@Test
 	public void testIgnoreDiffsNextActionLast() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
 		waitForPostedSwingRunnables();
 

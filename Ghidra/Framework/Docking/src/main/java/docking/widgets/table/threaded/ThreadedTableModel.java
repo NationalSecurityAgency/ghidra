@@ -15,6 +15,8 @@
  */
 package docking.widgets.table.threaded;
 
+import static docking.widgets.table.AddRemoveListItem.Type.*;
+
 import java.util.*;
 
 import javax.swing.SwingUtilities;
@@ -24,6 +26,7 @@ import docking.widgets.table.*;
 import docking.widgets.table.sort.DefaultColumnComparator;
 import generic.concurrent.ConcurrentListenerSet;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.util.Swing;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.*;
 import ghidra.util.exception.*;
@@ -89,6 +92,8 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	private volatile Worker worker; // only created as needed (if we are incremental)
 	private int minUpdateDelayMillis;
 	private int maxUpdateDelayMillis;
+	private TableAddRemoveStrategy<ROW_OBJECT> binarySearchAddRemoveStrategy =
+		new DefaultAddRemoveStrategy<>();
 
 	protected ThreadedTableModel(String modelName, ServiceProvider serviceProvider) {
 		this(modelName, serviceProvider, null);
@@ -123,7 +128,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 			TaskMonitor monitor, boolean loadIncrementally) {
 		super(serviceProvider);
 
-		if (!SwingUtilities.isEventDispatchThread()) {
+		if (!Swing.isSwingThread()) {
 			throw new AssertException(
 				"You must create the ThreadedTableModel in the AWT Event Dispatch Thread");
 		}
@@ -143,7 +148,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		// We are expecting to be in the swing thread.  We want the reload to happen after our
 		// constructor is fully completed since the reload will cause our initialize method to
 		// be called in another thread, thereby creating a possible race condition.
-		SwingUtilities.invokeLater(() -> updateManager.reload());
+		Swing.runLater(() -> updateManager.reload());
 	}
 
 	public boolean isLoadIncrementally() {
@@ -496,7 +501,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * @param obj the object for which to schedule the update
 	 */
 	public void updateObject(ROW_OBJECT obj) {
-		updateManager.addRemove(new AddRemoveListItem<>(true, true, obj));
+		updateManager.addRemove(new AddRemoveListItem<>(CHANGE, obj));
 	}
 
 	/**
@@ -504,15 +509,26 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * @param obj the object to add
 	 */
 	public void addObject(ROW_OBJECT obj) {
-		updateManager.addRemove(new AddRemoveListItem<>(true, false, obj));
+		updateManager.addRemove(new AddRemoveListItem<>(ADD, obj));
 	}
 
 	/**
 	 * Removes the specified object from this model and schedules an update.
+	 * 
+	 * <P>Note: for this method to function correctly, the given object must compare as 
+	 * {@link #equals(Object)} and have the same {@link #hashCode()} as the object to be removed 
+	 * from the table data.   This allows clients to create proxy objects to pass into this method,
+	 * as long as they honor those requirements.    
+	 * 
+	 * <P>If this model's data is sorted, then a binary search will be used to locate the item
+	 * to be removed.  However, for this to work, all field used to sort the data must still be 
+	 * available from the original object and must be the same values.   If this is not true, then
+	 * the binary search will not work and a brute force search will be used.
+	 * 
 	 * @param obj the object to remove
 	 */
 	public void removeObject(ROW_OBJECT obj) {
-		updateManager.addRemove(new AddRemoveListItem<>(false, true, obj));
+		updateManager.addRemove(new AddRemoveListItem<>(REMOVE, obj));
 	}
 
 	protected void updateNow() {
@@ -617,12 +633,11 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 */
 	@Override
 	public void fireTableChanged(TableModelEvent e) {
-		if (SwingUtilities.isEventDispatchThread()) {
+		if (Swing.isSwingThread()) {
 			super.fireTableChanged(e);
 			return;
 		}
-		final TableModelEvent e1 = e;
-		SwingUtilities.invokeLater(() -> ThreadedTableModel.super.fireTableChanged(e1));
+		Swing.runLater(() -> ThreadedTableModel.super.fireTableChanged(e));
 	}
 
 	/**
@@ -636,6 +651,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 			worker.dispose();
 		}
 		doClearData();
+		disposeDynamicColumnData();
 	}
 
 	/**
@@ -783,6 +799,23 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 	void setDefaultTaskMonitor(TaskMonitor monitor) {
 		updateManager.setTaskMonitor(monitor);
+	}
+
+	/**
+	 * Returns the strategy to use for performing adds and removes to this table.   Subclasses can
+	 * override this method to customize this process for their particular type of data.   See
+	 * the implementations of {@link TableAddRemoveStrategy} for details.
+	 * 
+	 * <P>Note: The default add/remove strategy assumes that objects to be removed will be the 
+	 * same instance that is in the list of this model.   This allows the {@link #equals(Object)} 
+	 * and {@link #hashCode()} to be used when removing the object from the list.   If you model 
+	 * does not pass the same instance into {@link #removeObject(Object)}, then you will need to 
+	 * update your add/remove strategy accordingly.
+	 * 
+	 * @return the strategy
+	 */
+	protected TableAddRemoveStrategy<ROW_OBJECT> getAddRemoveStrategy() {
+		return binarySearchAddRemoveStrategy;
 	}
 
 	public void setIncrementalTaskMonitor(TaskMonitor monitor) {

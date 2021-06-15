@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,12 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.program.database.util.EmptyRecordIterator;
-import ghidra.program.model.data.GenericCallingConvention;
-import ghidra.util.UniversalID;
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.program.database.util.EmptyRecordIterator;
+import ghidra.program.model.data.GenericCallingConvention;
+import ghidra.util.UniversalID;
 
 /**
  * Adapter needed for a read-only version of data type manager that is not going
@@ -34,14 +31,13 @@ class FunctionDefinitionDBAdapterNoTable extends FunctionDefinitionDBAdapter {
 	/**
 	 * Gets a pre-table version of the adapter for the Function Definition database table.
 	 * @param handle handle to the database which doesn't contain the table.
-	 * @throws VersionException if the the table's version does not match the expected version
-	 * for this adapter.
 	 */
 	public FunctionDefinitionDBAdapterNoTable(DBHandle handle) {
+		// no table required
 	}
 
 	@Override
-	public Record createRecord(String name, String comments, long categoryID, long returnDtID,
+	public DBRecord createRecord(String name, String comments, long categoryID, long returnDtID,
 			boolean hasVarArgs, GenericCallingConvention genericCallingConvention,
 			long sourceArchiveID, long sourceDataTypeID, long lastChangeTime) throws IOException {
 		throw new UnsupportedOperationException(
@@ -49,7 +45,7 @@ class FunctionDefinitionDBAdapterNoTable extends FunctionDefinitionDBAdapter {
 	}
 
 	@Override
-	public Record getRecord(long functionDefID) throws IOException {
+	public DBRecord getRecord(long functionDefID) throws IOException {
 		return null;
 	}
 
@@ -59,7 +55,7 @@ class FunctionDefinitionDBAdapterNoTable extends FunctionDefinitionDBAdapter {
 	}
 
 	@Override
-	public void updateRecord(Record record, boolean setLastChangeTime) throws IOException {
+	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -70,20 +66,21 @@ class FunctionDefinitionDBAdapterNoTable extends FunctionDefinitionDBAdapter {
 
 	@Override
 	protected void deleteTable(DBHandle handle) {
+		// do nothing
 	}
 
 	@Override
-	public long[] getRecordIdsInCategory(long categoryID) throws IOException {
-		return new long[0];
+	public Field[] getRecordIdsInCategory(long categoryID) throws IOException {
+		return Field.EMPTY_ARRAY;
 	}
 
 	@Override
-	long[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
-		return new long[0];
+	Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
+		return Field.EMPTY_ARRAY;
 	}
 
 	@Override
-	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
+	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
 		return null;
 	}
 

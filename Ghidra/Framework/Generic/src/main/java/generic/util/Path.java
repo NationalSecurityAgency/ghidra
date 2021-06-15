@@ -15,11 +15,11 @@
  */
 package generic.util;
 
+import java.io.File;
+
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
 import ghidra.framework.OperatingSystem;
-
-import java.io.File;
 
 /**
  * A class to represent a PATH item.
@@ -27,7 +27,7 @@ import java.io.File;
 public class Path implements Comparable<Path> {
 	public static final String GHIDRA_HOME = "$GHIDRA_HOME";
 	public static final String USER_HOME = "$USER_HOME";
-	private ResourceFile path;
+	private ResourceFile file;
 	private boolean isEnabled;
 	private boolean isEditable;
 	private boolean isReadOnly;
@@ -39,10 +39,10 @@ public class Path implements Comparable<Path> {
 	 * <li>isEditable = true</li>
 	 * <li>isReadOnly = false</li>
 	 * </ul>
-	 * @param path absolute directory path
+	 * @param file absolute directory path
 	 */
-	public Path(File path) {
-		this(new ResourceFile(path), true, true, false);
+	public Path(File file) {
+		this(new ResourceFile(file), true, true, false);
 	}
 
 	/**
@@ -52,21 +52,21 @@ public class Path implements Comparable<Path> {
 	 * <li>isEditable = true</li>
 	 * <li>isReadOnly = false</li>
 	 * </ul>
-	 * @param path absolute directory path
+	 * @param file absolute directory path
 	 */
-	public Path(ResourceFile path) {
-		this(path, true, true, false);
+	public Path(ResourceFile file) {
+		this(file, true, true, false);
 	}
 
 	/**
 	 * Identifies an absolute directory path with the specified attributes.
-	 * @param path absolute directory path
+	 * @param file absolute directory path
 	 * @param isEnabled directory path will be searched if true
 	 * @param isEditable if true files contained within directory are considered editable
 	 * @param isReadOnly if true files contained within directory are considered read-only
 	 */
-	public Path(ResourceFile path, boolean isEnabled, boolean isEditable, boolean isReadOnly) {
-		this.path = path;
+	public Path(ResourceFile file, boolean isEnabled, boolean isEditable, boolean isReadOnly) {
+		this.file = file;
 		this.isEnabled = isEnabled;
 		this.isEditable = isEditable;
 		this.isReadOnly = isReadOnly;
@@ -106,27 +106,14 @@ public class Path implements Comparable<Path> {
 	 * @param isReadOnly if true files contained within directory are considered read-only
 	 */
 	public Path(String path, boolean isEnabled, boolean isEditable, boolean isReadOnly) {
-		if (path.startsWith(GHIDRA_HOME)) {
-			this.path = resolveGhidraHome(path);
-		}
-		else if (path.startsWith(USER_HOME)) {
-			String userHome = System.getProperty("user.home");
-			int length = USER_HOME.length();
-			String relativePath = path.substring(length);
-			this.path = new ResourceFile(new File(userHome + relativePath));
-		}
-		else {
-			this.path = new ResourceFile(path);
-		}
-		if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS) {
-			this.path = this.path.getCanonicalFile();
-		}
+		this.file = fromPathString(path);
+
 		this.isEnabled = isEnabled;
 		this.isEditable = isEditable;
 		this.isReadOnly = isReadOnly;
 	}
 
-	private ResourceFile resolveGhidraHome(String scriptPath) {
+	static private ResourceFile resolveGhidraHome(String scriptPath) {
 		ResourceFile pathFile = null;
 		for (ResourceFile root : Application.getApplicationRootDirectories()) {
 			int length = GHIDRA_HOME.length();
@@ -145,12 +132,12 @@ public class Path implements Comparable<Path> {
 			return false;
 		}
 		Path that = (Path) obj;
-		return this.path.equals(that.path);
+		return this.file.equals(that.file);
 	}
 
 	@Override
 	public int hashCode() {
-		return path.hashCode();
+		return file.hashCode();
 	}
 
 	/**
@@ -184,18 +171,47 @@ public class Path implements Comparable<Path> {
 	}
 
 	public ResourceFile getPath() {
-		return path;
+		return file;
+	}
+
+	/**
+	 * Parse the path string <b>with path element placeholders</b>, such as 
+	 * {@link #GHIDRA_HOME}.
+	 * @param path the path
+	 * 
+	 * @return the path as a ResourceFile.
+	 */
+	public static ResourceFile fromPathString(String path) {
+		ResourceFile resourceFile = null;
+		if (path.startsWith(GHIDRA_HOME)) {
+			resourceFile = resolveGhidraHome(path);
+		}
+		else if (path.startsWith(USER_HOME)) {
+			String userHome = System.getProperty("user.home");
+			int length = USER_HOME.length();
+			String relativePath = path.substring(length);
+			resourceFile = new ResourceFile(new File(userHome + relativePath));
+		}
+		else {
+			resourceFile = new ResourceFile(path);
+		}
+		if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS) {
+			resourceFile = resourceFile.getCanonicalFile();
+		}
+
+		return resourceFile;
 	}
 
 	/**
 	 * Returns the path as a string <b>with path element placeholders</b>, such as 
 	 * {@link #GHIDRA_HOME}.
 	 * 
+	 * @param file the file to translate
 	 * @return the path as a string .
 	 */
-	public String getPathAsString() {
+	static public String toPathString(ResourceFile file) {
 		String userHome = System.getProperty("user.home");
-		String absolutePath = path.getAbsolutePath();
+		String absolutePath = file.getAbsolutePath();
 		for (ResourceFile appRoot : Application.getApplicationRootDirectories()) {
 			String ghidraHome = appRoot.getAbsolutePath();
 			if (absolutePath.startsWith(ghidraHome)) {
@@ -216,6 +232,16 @@ public class Path implements Comparable<Path> {
 		return absolutePath.replace('\\', '/');
 	}
 
+	/**
+	 * Returns the path as a string <b>with path element placeholders</b>, such as 
+	 * {@link #GHIDRA_HOME}.
+	 * 
+	 * @return the path as a string .
+	 */
+	public String getPathAsString() {
+		return toPathString(file);
+	}
+
 	/** 
 	 * Returns true if the given path is a file inside of the current Ghidra application.
 	 * @return true if the given path is a file inside of the current Ghidra application.
@@ -227,24 +253,24 @@ public class Path implements Comparable<Path> {
 
 	public void setPath(String path) {
 		if (isEditable) {
-			this.path = new ResourceFile(path);
+			this.file = new ResourceFile(path);
 		}
 		else {
 			throw new IllegalStateException("Path is not editable - " + path);
 		}
 	}
 
-	public void setPath(ResourceFile path) {
+	public void setPath(ResourceFile file) {
 		if (isEditable) {
-			this.path = path;
+			this.file = file;
 		}
 		else {
-			throw new IllegalStateException("Path is not editable - " + path);
+			throw new IllegalStateException("Path is not editable - " + file);
 		}
 	}
 
 	public boolean exists() {
-		return path.exists();
+		return file.exists();
 	}
 
 	@Override

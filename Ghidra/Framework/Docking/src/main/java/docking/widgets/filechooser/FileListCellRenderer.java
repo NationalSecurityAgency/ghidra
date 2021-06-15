@@ -16,7 +16,6 @@
 package docking.widgets.filechooser;
 
 import java.awt.Component;
-import java.awt.Font;
 import java.io.File;
 
 import javax.swing.JList;
@@ -29,8 +28,7 @@ class FileListCellRenderer extends GListCellRenderer<File> {
 	private GhidraFileChooser chooser;
 	private GhidraFileChooserModel model;
 
-	public FileListCellRenderer(Font font, GhidraFileChooser chooser) {
-		super(font);
+	public FileListCellRenderer(GhidraFileChooser chooser) {
 		this.chooser = chooser;
 		this.model = chooser.getModel();
 		setShouldAlternateRowBackgroundColors(false);

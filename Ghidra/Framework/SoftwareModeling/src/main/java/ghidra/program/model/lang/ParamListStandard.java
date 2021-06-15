@@ -23,6 +23,7 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
+import ghidra.util.SystemUtilities;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
@@ -48,51 +49,65 @@ public class ParamListStandard implements ParamList {
 	 */
 	private int findEntry(Address loc, int size) {
 		for (int i = 0; i < entry.length; ++i) {
-			if (entry[i].getMinSize() > size)
+			if (entry[i].getMinSize() > size) {
 				continue;
-			if (entry[i].justifiedContain(loc, size) == 0)	// Make sure the range is properly justified in entry
+			}
+			if (entry[i].justifiedContain(loc, size) == 0) {
 				return i;
+			}
 		}
 		return -1;
 	}
 
 	/**
 	 * Assign next available memory chunk to type
+	 * @param program is the Program
 	 * @param tp type being assigned storage
 	 * @param status  status from previous assignments
+	 * @param ishiddenret is true if the parameter is a hidden return value
+	 * @param isindirect is true if parameter is really a pointer to the real parameter value
 	 * @return Address of assigned memory chunk
 	 */
 	protected VariableStorage assignAddress(Program program, DataType tp, int[] status,
 			boolean ishiddenret, boolean isindirect) {
-		if (tp == null)
+		if (tp == null) {
 			tp = DataType.DEFAULT;
+		}
 		DataType baseType = tp;
-		if (baseType instanceof TypeDef)
+		if (baseType instanceof TypeDef) {
 			baseType = ((TypeDef) baseType).getBaseDataType();
-		if (baseType instanceof VoidDataType)
+		}
+		if (baseType instanceof VoidDataType) {
 			return VariableStorage.VOID_STORAGE;
+		}
 		int sz = tp.getLength();
-		if (sz == 0)
+		if (sz == 0) {
 			return VariableStorage.UNASSIGNED_STORAGE;
+		}
 		for (ParamEntry element : entry) {
 			int grp = element.getGroup();
-			if (status[grp] < 0)
+			if (status[grp] < 0) {
 				continue;
+			}
 			if ((element.getType() != ParamEntry.TYPE_UNKNOWN) &&
-				(ParamEntry.getMetatype(tp) != element.getType()))
+				(ParamEntry.getMetatype(tp) != element.getType())) {
 				continue;		// Wrong type
+			}
 
 			VarnodeData res = new VarnodeData();
 			status[grp] = element.getAddrBySlot(status[grp], tp.getLength(), res);
-			if (res.space == null)
+			if (res.space == null) {
 				continue;	// -tp- does not fit in this entry
+			}
 			if (element.isExclusion()) {
 				int maxgrp = grp + element.getGroupSize();
-				for (int j = grp; j < maxgrp; ++j)
+				for (int j = grp; j < maxgrp; ++j) {
 					// For an exclusion entry
 					status[j] = -1;			// some number of groups are taken up
-				if (element.isFloatExtended())		// If this is a small float datatype in a bigger container
+				}
+				if (element.isFloatExtended()) {
 					sz = element.getSize();			// Still use the entire container size, when assigning storage
+				}
 			}
 			VariableStorage store;
 			try {
@@ -120,8 +135,8 @@ public class ParamListStandard implements ParamList {
 			return store;
 		}
 		if (ishiddenret) {
-			return DynamicVariableStorage.getUnassignedDynamicStorage(
-				AutoParameterType.RETURN_STORAGE_PTR);
+			return DynamicVariableStorage
+					.getUnassignedDynamicStorage(AutoParameterType.RETURN_STORAGE_PTR);
 		}
 		return DynamicVariableStorage.getUnassignedDynamicStorage(isindirect);
 	}
@@ -130,8 +145,9 @@ public class ParamListStandard implements ParamList {
 	public void assignMap(Program prog, DataType[] proto, boolean isinput,
 			ArrayList<VariableStorage> res, boolean addAutoParams) {
 		int[] status = new int[numgroup];
-		for (int i = 0; i < numgroup; ++i)
+		for (int i = 0; i < numgroup; ++i) {
 			status[i] = 0;
+		}
 
 		if (isinput) {
 			if (addAutoParams && res.size() == 2) {	// Check for hidden parameters defined by the output list
@@ -149,8 +165,9 @@ public class ParamListStandard implements ParamList {
 					Pointer pointer = dtm.getPointer(proto[i]);
 					store = assignAddress(prog, pointer, status, false, true);
 				}
-				else
+				else {
 					store = assignAddress(prog, proto[i], status, false, false);
+				}
 				res.add(store);
 			}
 		}
@@ -165,8 +182,9 @@ public class ParamListStandard implements ParamList {
 		ArrayList<VariableStorage> res = new ArrayList<>();
 		for (ParamEntry element : entry) {
 			ParamEntry pe = element;
-			if (!pe.isExclusion())
+			if (!pe.isExclusion()) {
 				continue;
+			}
 			if (pe.getSpace().isRegisterSpace()) {
 				VariableStorage var = null;
 				try {
@@ -176,8 +194,9 @@ public class ParamListStandard implements ParamList {
 				catch (InvalidInputException e) {
 					// Skip this particular storage location
 				}
-				if (var != null)
+				if (var != null) {
 					res.add(var);
+				}
 			}
 		}
 		VariableStorage[] arres = new VariableStorage[res.size()];
@@ -186,8 +205,24 @@ public class ParamListStandard implements ParamList {
 	}
 
 	@Override
-	public void restoreXml(XmlPullParser parser, CompilerSpec cspec, boolean normalstack)
-			throws XmlParseException {
+	public void saveXml(StringBuilder buffer, boolean isInput) {
+		buffer.append(isInput ? "<input" : "<output");
+		if (pointermax != 0) {
+			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "pointermax", pointermax);
+		}
+		if (thisbeforeret) {
+			SpecXmlUtils.encodeStringAttribute(buffer, "thisbeforeretpointer", "yes");
+		}
+		buffer.append(">\n");
+		for (ParamEntry el : entry) {
+			el.saveXml(buffer);
+			buffer.append('\n');
+		}
+		buffer.append(isInput ? "</input>" : "</output>");
+	}
+
+	@Override
+	public void restoreXml(XmlPullParser parser, CompilerSpec cspec) throws XmlParseException {
 		ArrayList<ParamEntry> pe = new ArrayList<>();
 		int lastgroup = -1;
 		numgroup = 0;
@@ -200,30 +235,37 @@ public class ParamListStandard implements ParamList {
 			pointermax = SpecXmlUtils.decodeInt(attribute);
 		}
 		attribute = mainel.getAttribute("thisbeforeretpointer");
-		if (attribute != null)
+		if (attribute != null) {
 			thisbeforeret = SpecXmlUtils.decodeBoolean(attribute);
+		}
 		boolean seennonfloat = false;			// Have we seen any integer slots yet
 		for (;;) {
 			XmlElement el = parser.peek();
-			if (!el.isStart())
+			if (!el.isStart()) {
 				break;
+			}
 			ParamEntry pentry = new ParamEntry(numgroup);
-			pentry.restoreXml(parser, cspec, normalstack);
+			pentry.restoreXml(parser, cspec);
 			pe.add(pentry);
 			if (pentry.getType() == ParamEntry.TYPE_FLOAT) {
-				if (seennonfloat)
+				if (seennonfloat) {
 					throw new XmlParseException(
 						"parameter list floating-point entries must come first");
+				}
 			}
-			else
+			else {
 				seennonfloat = true;
-			if (pentry.getSpace().isStackSpace())
+			}
+			if (pentry.getSpace().isStackSpace()) {
 				spacebase = pentry.getSpace();
+			}
 			int maxgroup = pentry.getGroup() + pentry.getGroupSize();
-			if (maxgroup > numgroup)
+			if (maxgroup > numgroup) {
 				numgroup = maxgroup;
-			if (pentry.getGroup() < lastgroup)
+			}
+			if (pentry.getGroup() < lastgroup) {
 				throw new XmlParseException("pentrys must come in group order");
+			}
 			lastgroup = pentry.getGroup();
 		}
 		parser.end(mainel);
@@ -245,13 +287,16 @@ public class ParamListStandard implements ParamList {
 	public Long getStackParameterOffset() {
 		for (ParamEntry element : entry) {
 			ParamEntry pentry = element;
-			if (pentry.isExclusion())
+			if (pentry.isExclusion()) {
 				continue;
-			if (!pentry.getSpace().isStackSpace())
+			}
+			if (!pentry.getSpace().isStackSpace()) {
 				continue;
+			}
 			long res = pentry.getAddressBase();
-			if (pentry.isReverseStack())
+			if (pentry.isReverseStack()) {
 				res += pentry.getSize();
+			}
 			res = pentry.getSpace().truncateOffset(res);
 			return res;
 		}
@@ -260,18 +305,54 @@ public class ParamListStandard implements ParamList {
 
 	@Override
 	public boolean possibleParamWithSlot(Address loc, int size, WithSlotRec res) {
-		if (loc == null)
+		if (loc == null) {
 			return false;
+		}
 		int num = findEntry(loc, size);
-		if (num == -1)
+		if (num == -1) {
 			return false;
+		}
 		ParamEntry curentry = entry[num];
 		res.slot = curentry.getSlot(loc, 0);
-		if (curentry.isExclusion())
+		if (curentry.isExclusion()) {
 			res.slotsize = curentry.getGroupSize();
-		else
+		}
+		else {
 			res.slotsize = ((size - 1) / curentry.getAlign()) + 1;
+		}
 		return true;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		ParamListStandard op2 = (ParamListStandard) obj;
+		if (!SystemUtilities.isArrayEqual(entry, op2.entry)) {
+			return false;
+		}
+		if (numgroup != op2.numgroup || pointermax != op2.pointermax) {
+			return false;
+		}
+		if (!SystemUtilities.isEqual(spacebase, op2.spacebase)) {
+			return false;
+		}
+		if (thisbeforeret != op2.thisbeforeret) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = numgroup;
+		hash = 79 * hash + pointermax;
+		hash = 79 * hash + (thisbeforeret ? 27 : 19);
+		for (ParamEntry param : entry) {
+			hash = 79 * hash + param.hashCode();
+		}
+		if (spacebase == null) {
+			hash = 79 * hash + spacebase.hashCode();
+		}
+		return hash;
 	}
 
 	@Override

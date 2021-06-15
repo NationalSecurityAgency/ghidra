@@ -124,7 +124,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 	// a cache to prevent unnecessary layout calculations
 	private Dimension lastSize;
 
-	private VisualGraphOptions options = new VisualGraphOptions();
+	protected VisualGraphOptions options = new VisualGraphOptions();
 
 	public GraphComponent(G graph) {
 
@@ -208,9 +208,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		renderContext.setVertexFillPaintTransformer(
 			new PickableVertexPaintTransformer<>(pickedVertexState, Color.WHITE, Color.YELLOW));
 
-		viewer.setBackground(Color.WHITE);
-
-		viewer.setGraphOptions(new VisualGraphOptions());
+		viewer.setGraphOptions(options);
 
 		return viewer;
 	}
@@ -296,6 +294,8 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 			VisualGraphLayout<V, E> layout, Dimension viewerSize) {
 
 		SatelliteGraphViewer<V, E> viewer = createSatelliteGraphViewer(masterViewer, viewerSize);
+
+		viewer.setGraphOptions(options);
 
 		viewer.setMinimumSize(viewerSize);
 		viewer.setMaximumSize(viewerSize);
@@ -454,7 +454,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		mainStalePanel.setOpaque(false);
 
 		String tooltip = HTMLUtilities.toWrappedHTML("The block model of the function " +
-			"for this graph has changed.  Press the relyout button to refresh the layout." +
+			"for this graph has changed.  Press the relayout button to refresh the layout." +
 			"\n\n") + "<b>Note: </b>You can edit the graph " +
 			"options to have the graph update automatically.";
 
@@ -525,6 +525,15 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 	public void setGraphOptions(VisualGraphOptions options) {
 		this.options = options;
+
+		// the viewers may be null if called during initialization
+		if (primaryViewer != null) {
+			primaryViewer.setGraphOptions(options);
+		}
+
+		if (satelliteViewer != null) {
+			satelliteViewer.setGraphOptions(options);
+		}
 	}
 
 	public boolean isUninitialized() {
@@ -560,6 +569,11 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 	public JComponent getComponent() {
 		return mainPanel;
+	}
+
+	public void optionsChanged() {
+		primaryViewer.optionsChanged();
+		satelliteViewer.optionsChanged();
 	}
 
 	public void repaint() {
@@ -1128,9 +1142,13 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 		private V selectedVertex;
 
-		@SuppressWarnings("deprecation") // deprecated until we fix the checkModifiers() code
 		public VertexClickMousePlugin() {
-			super(InputEvent.BUTTON1_MASK);
+			super(InputEvent.BUTTON1_DOWN_MASK);
+		}
+
+		@Override
+		public boolean checkModifiers(MouseEvent e) {
+			return e.getModifiersEx() == modifiers;
 		}
 
 		@Override
@@ -1203,6 +1221,5 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		public void mouseExited(MouseEvent e) {
 			// stub
 		}
-
 	}
 }

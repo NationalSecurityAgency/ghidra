@@ -17,29 +17,28 @@ package ghidra.graph.visualization;
 
 import static ghidra.graph.visualization.LayoutFunction.*;
 
-import java.awt.Shape;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
-import org.jgrapht.Graph;
 import org.jungrapht.visualization.RenderContext;
 import org.jungrapht.visualization.VisualizationServer;
 import org.jungrapht.visualization.layout.algorithms.*;
-import org.jungrapht.visualization.layout.algorithms.util.*;
-import org.jungrapht.visualization.layout.model.LayoutModel;
-import org.jungrapht.visualization.util.Context;
+import org.jungrapht.visualization.layout.algorithms.util.VertexBoundsFunctionConsumer;
+import org.jungrapht.visualization.layout.model.Rectangle;
+import org.jungrapht.visualization.util.LayoutAlgorithmTransition;
+import org.jungrapht.visualization.util.LayoutPaintable;
 
-import docking.menu.MultiActionDockingAction;
-import ghidra.service.graph.*;
+import ghidra.service.graph.AttributedEdge;
+import ghidra.service.graph.AttributedVertex;
 
 /**
  * Manages the selection and transition from one {@link LayoutAlgorithm} to another
  */
 class LayoutTransitionManager {
 
-	LayoutFunction layoutFunction = new LayoutFunction();
+	LayoutFunction layoutFunction;
 	/**
 	 * the {@link VisualizationServer} used to display graphs using the requested {@link LayoutAlgorithm}
 	 */
@@ -51,160 +50,118 @@ class LayoutTransitionManager {
 	Predicate<AttributedVertex> rootPredicate;
 
 	/**
-	 * a {@link Predicate} to allow different handling of specific edge types
+	 * a {@link Function} to provide {@link Rectangle} (and thus bounds} for vertices
 	 */
-	Predicate<AttributedEdge> edgePredicate;
-
-	/**
-	 * a {@link Comparator} to sort edges during layout graph traversal
-	 */
-	Comparator<AttributedEdge> edgeComparator = (e1, e2) -> 0;
-
-	/**
-	 * a {@link MultiActionDockingAction} to allow the user to select a layout algorithm
-	 */
-	MultiActionDockingAction multiActionDockingAction;
-
-	/**
-	 * the currently active {@code LayoutAlgorithm.Builder}
-	 */
-	LayoutAlgorithm.Builder<AttributedVertex, ?, ?> activeBuilder;
-
-	/**
-	 * a {@link Function} to provide {@link Shape} (and thus bounds} for vertices
-	 */
-	Function<AttributedVertex, Shape> vertexShapeFunction;
+	Function<AttributedVertex, Rectangle> vertexBoundsFunction;
 
 	/**
 	 * the {@link RenderContext} used to draw the graph
 	 */
 	RenderContext<AttributedVertex, AttributedEdge> renderContext;
 
-	/**
-	 * a LayoutAlgorithm may change the edge shape function (Sugiyama for articulated edges)
-	 * This is a reference to the original edge shape function so that it can be returned to
-	 * the original edge shape function for subsequent LayoutAlgorithm requests
-	 */
-	private Function<Context<Graph<AttributedVertex, AttributedEdge>, AttributedEdge>, Shape> originalEdgeShapeFunction;
+	LayoutPaintable.BalloonRings<AttributedVertex, AttributedEdge> balloonLayoutRings;
 
+	LayoutPaintable.RadialRings<AttributedVertex> radialLayoutRings;
 
 	/**
 	 * Create an instance with passed parameters
 	 * @param visualizationServer displays the graph
 	 * @param rootPredicate selects root vertices
-	 * @param edgePredicate differentiates edges
+	 * @param edgeTypePriorityList a {@code List} of EdgeType names in priority order
+	 * @param favoredEdgePredicate q {@code Predicate} that will cause certain EdgeTypes to be favored during layout
 	 */
 	public LayoutTransitionManager(
 			VisualizationServer<AttributedVertex, AttributedEdge> visualizationServer,
-			Predicate<AttributedVertex> rootPredicate, Predicate<AttributedEdge> edgePredicate) {
+			Predicate<AttributedVertex> rootPredicate,
+			List<String> edgeTypePriorityList,
+			Predicate<AttributedEdge> favoredEdgePredicate) {
 		this.visualizationServer = visualizationServer;
 		this.rootPredicate = rootPredicate;
-		this.edgePredicate = edgePredicate;
-
 		this.renderContext = visualizationServer.getRenderContext();
-		this.vertexShapeFunction = visualizationServer.getRenderContext().getVertexShapeFunction();
-		this.originalEdgeShapeFunction =
-			visualizationServer.getRenderContext().getEdgeShapeFunction();
-
-	}
-
-	public void setGraph(AttributedGraph graph) {
-		edgeComparator = new EdgeComparator(graph, "EdgeType", DefaultGraphDisplay.FAVORED_EDGE);
+		this.vertexBoundsFunction = visualizationServer.getRenderContext().getVertexBoundsFunction();
+		this.layoutFunction = new LayoutFunction(new EdgeComparator(edgeTypePriorityList),
+				favoredEdgePredicate);
 	}
 
 	/**
 	 * set the layout in order to configure the requested {@link LayoutAlgorithm}
 	 * @param layoutName the name of the layout algorithm to use
 	 */
-	@SuppressWarnings("unchecked")
 	public void setLayout(String layoutName) {
 		LayoutAlgorithm.Builder<AttributedVertex, ?, ?> builder = layoutFunction.apply(layoutName);
-		visualizationServer.getRenderContext().getMultiLayerTransformer().setToIdentity();
 		LayoutAlgorithm<AttributedVertex> layoutAlgorithm = builder.build();
-
-		if (layoutAlgorithm instanceof RenderContextAware) {
-			((RenderContextAware<AttributedVertex, AttributedEdge>) layoutAlgorithm)
-				.setRenderContext(visualizationServer.getRenderContext());
+		// layout algorithm considers the size of vertices
+		if (layoutAlgorithm instanceof VertexBoundsFunctionConsumer) {
+			((VertexBoundsFunctionConsumer<AttributedVertex>) layoutAlgorithm)
+				.setVertexBoundsFunction(vertexBoundsFunction);
 		}
-		else {
-			visualizationServer.getRenderContext().setEdgeShapeFunction(originalEdgeShapeFunction);
+		// mincross layouts are 'layered'. put some bounds on the number of
+		// iterations of the level cross function based on the size of the graph
+		// very large graphs do not improve enough to out-weigh the cost of
+		// repeated iterations
+		if (layoutAlgorithm instanceof Layered) {
+			((Layered<AttributedVertex, AttributedEdge>) layoutAlgorithm)
+					.setMaxLevelCrossFunction(g ->
+							Math.max(1, Math.min(10, 500 / g.vertexSet().size())));
 		}
-		if (layoutAlgorithm instanceof VertexShapeAware) {
-			((VertexShapeAware<AttributedVertex>) layoutAlgorithm)
-				.setVertexShapeFunction(vertexShapeFunction);
-		}
+		// tree layouts need a way to determine which vertices are roots
+		// especially when the graph is not a DAG
 		if (layoutAlgorithm instanceof TreeLayout) {
 			((TreeLayout<AttributedVertex>) layoutAlgorithm).setRootPredicate(rootPredicate);
 		}
-		if (layoutAlgorithm instanceof EdgeSorting) {
-			((EdgeSorting<AttributedEdge>) layoutAlgorithm).setEdgeComparator(edgeComparator);
+		// remove any previously added layout paintables
+		// and apply paintables to these 2 algorithms
+		removePaintable(radialLayoutRings);
+		removePaintable(balloonLayoutRings);
+		if (layoutAlgorithm instanceof BalloonLayoutAlgorithm) {
+			balloonLayoutRings =
+					new LayoutPaintable.BalloonRings<>(
+					visualizationServer,
+					(BalloonLayoutAlgorithm<AttributedVertex>) layoutAlgorithm);
+			visualizationServer.addPreRenderPaintable(balloonLayoutRings);
 		}
-		if (layoutAlgorithm instanceof EdgePredicated) {
-			((EdgePredicated<AttributedEdge>) layoutAlgorithm).setEdgePredicate(edgePredicate);
+		if (layoutAlgorithm instanceof RadialTreeLayout) {
+			radialLayoutRings =
+					new LayoutPaintable.RadialRings<>(
+					visualizationServer, (RadialTreeLayout<AttributedVertex>) layoutAlgorithm);
+			visualizationServer.addPreRenderPaintable(radialLayoutRings);
 		}
-		if (!(layoutAlgorithm instanceof TreeLayout)) {
-			LayoutModel<AttributedVertex> layoutModel =
-				visualizationServer.getVisualizationModel().getLayoutModel();
-			int preferredWidth = layoutModel.getPreferredWidth();
-			int preferredHeight = layoutModel.getPreferredHeight();
-			layoutModel.setSize(preferredWidth, preferredHeight);
-		}
-		if (layoutAlgorithm instanceof RenderContextAware) {
-			((RenderContextAware<AttributedVertex, AttributedEdge>) layoutAlgorithm)
-				.setRenderContext(renderContext);
-		}
-		if (layoutAlgorithm instanceof AfterRunnable) {
-			((AfterRunnable) layoutAlgorithm).setAfter(visualizationServer::scaleToLayout);
-		}
-		LayoutAlgorithmTransition.apply(visualizationServer, layoutAlgorithm,
-			visualizationServer::scaleToLayout);
+
+		// apply the layout algorithm
+		LayoutAlgorithmTransition.apply(visualizationServer,
+				layoutAlgorithm);
 	}
 
-	@SuppressWarnings("unchecked")
-	public LayoutAlgorithm<AttributedVertex> getInitialLayoutAlgorithm(
-			AttributedGraph graph) {
-		Set<AttributedVertex> roots = getRoots(graph);
-
-		// if there are no roots, don't attempt to create a Tree layout
-		if (roots.size() == 0) {
-			return layoutFunction.apply(FRUCTERMAN_REINGOLD).build();
+	private void removePaintable(VisualizationServer.Paintable paintable) {
+		if (paintable != null) {
+			visualizationServer.removePreRenderPaintable(paintable);
 		}
+	}
 
+	/**
+	 * Supplies the {@code LayoutAlgorithm} to be used for the initial @{code Graph} visualization
+	 * @return
+	 */
+	public LayoutAlgorithm<AttributedVertex> getInitialLayoutAlgorithm() {
 		LayoutAlgorithm<AttributedVertex> initialLayoutAlgorithm =
-			layoutFunction.apply(EDGE_AWARE_TREE).build();
+			layoutFunction.apply(TIDIER_TREE).build();
 
 		if (initialLayoutAlgorithm instanceof TreeLayout) {
 			((TreeLayout<AttributedVertex>) initialLayoutAlgorithm)
 					.setRootPredicate(rootPredicate);
-			((TreeLayout<AttributedVertex>) initialLayoutAlgorithm)
-					.setVertexShapeFunction(vertexShapeFunction);
 		}
-		if (initialLayoutAlgorithm instanceof EdgeSorting) {
-			((EdgeSorting<AttributedEdge>) initialLayoutAlgorithm)
-					.setEdgeComparator(edgeComparator);
-		}
-		if (initialLayoutAlgorithm instanceof EdgePredicated) {
-			((EdgePredicated<AttributedEdge>) initialLayoutAlgorithm)
-					.setEdgePredicate(edgePredicate);
-		}
-		if (initialLayoutAlgorithm instanceof ShapeFunctionAware) {
-			((ShapeFunctionAware<AttributedVertex>) initialLayoutAlgorithm)
-					.setVertexShapeFunction(vertexShapeFunction);
+		if (initialLayoutAlgorithm instanceof VertexBoundsFunctionConsumer) {
+			((VertexBoundsFunctionConsumer<AttributedVertex>) initialLayoutAlgorithm)
+					.setVertexBoundsFunction(vertexBoundsFunction);
 		}
 		return initialLayoutAlgorithm;
 	}
 
-	private Set<AttributedVertex> getRoots(AttributedGraph graph) {
-		return graph.edgeSet()
-				.stream()
-				.sorted(edgeComparator)
-				.map(graph::getEdgeSource)
-				.filter(rootPredicate)
-				.collect(Collectors.toCollection(LinkedHashSet::new));
-	}
-
+	/**
+	 * Supplies a {@code String[]} array of the supported layout names
+	 * @return
+	 */
 	public String[] getLayoutNames() {
 		return layoutFunction.getNames();
 	}
-
 }

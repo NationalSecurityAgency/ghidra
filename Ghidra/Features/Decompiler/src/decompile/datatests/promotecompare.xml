@@ -1,0 +1,20 @@
+<decompilertest>
+<binaryimage arch="x86:LE:32:default:gcc">
+<bytechunk space="ram" offset="0x80662e0" readonly="true">
+5589e58b55080fb60284c0750eeb17
+</bytechunk>
+<bytechunk space="ram" offset="0x80662f0" readonly="true">
+0fb6420184c0740e83c20183e8303c09
+76ee5d31c0c35db801000000c3
+</bytechunk>
+<symbol space="ram" offset="0x80662e0" name="promote_compare"/>
+</binaryimage>
+<script>
+  <com>lo fu promote_compare</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Promotion on compare #1" min="1" max="1">9.*uint1..cVar.*0x30</stringmatch>
+<stringmatch name="Promotion on compare #2" min="1" max="1">uint1</stringmatch>
+</decompilertest>

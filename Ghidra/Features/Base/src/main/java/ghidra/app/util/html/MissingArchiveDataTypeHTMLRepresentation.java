@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.html;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
+import ghidra.program.model.data.SourceArchive;
 import ghidra.util.HTMLUtilities;
 
 public class MissingArchiveDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {

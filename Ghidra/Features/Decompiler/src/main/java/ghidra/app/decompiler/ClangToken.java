@@ -245,9 +245,6 @@ public class ClangToken implements ClangNode {
 
 	@Override
 	public String toString() {
-		if (lineparent != null) {
-			return lineparent.getLineNumber() + ": " + text;
-		}
 		return text;
 	}
 

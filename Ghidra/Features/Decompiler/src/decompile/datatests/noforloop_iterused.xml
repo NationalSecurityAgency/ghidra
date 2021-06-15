@@ -1,0 +1,32 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   A loop that should not recover as a for-loop as the loop variable is used after the iterate statement. Contrived example.
+-->
+<bytechunk space="ram" offset="0x40063e" readonly="true">
+                            5548
+89e5534883ec18897decbb0a000000eb
+1d89debf50084000b800000000e8defd
+ffff83c3016bc3648905c20920003b5d
+ec7cde904883c4185b5dc3
+</bytechunk>
+<bytechunk space="ram" offset="0x400850" readonly="true">
+  4265666f7265203d2025640a00
+</bytechunk>
+<symbol space="ram" offset="0x40063e" name="noforloop_iterused"/>
+<symbol space="ram" offset="0x400440" name="printf"/>
+</binaryimage>
+<script>
+  <com>parse line extern void printf(char *,...);</com>
+  <com>parse line extern void noforloop_iterused(int4 max);</com>
+  <com>map addr r0x601030 int4 globvar</com>
+  <com>lo fu noforloop_iterused</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="No for-loop iterator used #1" min="1" max="1">while \(.*uVar1 &lt; max\)</stringmatch>
+<stringmatch name="No for-loop iterator used #2" min="1" max="1">uVar1 = 10;</stringmatch>
+<stringmatch name="No for-loop iterator used #3" min="1" max="1">uVar1 = uVar1 \+ 1;</stringmatch>
+<stringmatch name="No for-loop iterator used #4" min="1" max="1">globvar = uVar1 \* 100;</stringmatch>
+</decompilertest>

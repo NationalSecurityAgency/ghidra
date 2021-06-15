@@ -18,13 +18,12 @@ package ghidra.app.cmd.function;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionManager;
 
 /**
- * Command for removing a tag from a function.
- * 
+ * Command for removing a tag from a function
  */
 public class RemoveFunctionTagCmd implements Command {
 
@@ -32,6 +31,8 @@ public class RemoveFunctionTagCmd implements Command {
 	private String tagName;
 
 	/**
+	 * Constructor
+	 * 
 	 * @param tagName the name of the tag to remove
 	 * @param entryPoint the address of the function
 	 */
@@ -40,19 +41,12 @@ public class RemoveFunctionTagCmd implements Command {
 		this.entryPoint = entryPoint;
 	}
 
-	/******************************************************************************
-	 * PUBLIC METHODS
-	 ******************************************************************************/
-
 	@Override
 	public boolean applyTo(DomainObject obj) {
 		ProgramDB program = (ProgramDB) obj;
-		FunctionManagerDB functionManagerDB = (FunctionManagerDB) program.getFunctionManager();
-		Function function = functionManagerDB.getFunctionAt(entryPoint);
+		FunctionManager functionManager = program.getFunctionManager();
+		Function function = functionManager.getFunctionAt(entryPoint);
 		function.removeTag(tagName);
-
-		// The remove function does not return a success/fail statutus, so just return 
-		// and move on.
 		return true;
 	}
 

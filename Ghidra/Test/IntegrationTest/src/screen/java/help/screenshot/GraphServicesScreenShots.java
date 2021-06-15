@@ -72,10 +72,11 @@ public class GraphServicesScreenShots extends GhidraScreenShotGenerator {
 		AttributedEdge e2 = graph.addEdge(v1, v3);
 		e2.setAttribute("EdgeType", "Unconditional-Call");
 
-		display.setGraph(graph, "test", false, TaskMonitor.DUMMY);
+		display.setGraph(graph, "Program Graph", false, TaskMonitor.DUMMY);
 		waitForSwing();
 		setGraphWindowSize(700, 500);
-		((DefaultGraphDisplay) display).centerAndScale();
+		runSwing(() -> ((DefaultGraphDisplay) display).centerAndScale());
+		waitForSwing();
 
 		captureProvider(DefaultGraphDisplayComponentProvider.class);
 	}
@@ -95,7 +96,7 @@ public class GraphServicesScreenShots extends GhidraScreenShotGenerator {
 			provider.getComponent().requestFocus();
 			paintFix(window);
 		});
-
+		waitForSwing();
 	}
 
 }

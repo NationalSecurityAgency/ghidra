@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,7 +31,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 		try {
 			DataTypeManager dataTypeManager = cat.getDataTypeManager();
 			if (dt.getDataTypeManager() != dataTypeManager) {
-				dt = (Structure) dt.clone(dataTypeManager);
+				dt = dt.clone(dataTypeManager);
 			}
 			CategoryPath categoryPath = cat.getCategoryPath();
 			if (!dt.getCategoryPath().equals(categoryPath)) {
@@ -336,7 +335,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 		assertEquals("word", getDataType(3).getDisplayName());
 		assertTrue(!editBitFieldAction.isEnabled());
 
-		structureModel.setAligned(true);
+		structureModel.setPackingType(PackingType.DEFAULT, 0);
 
 		// Edit Bitfield action not enabled for Aligned mode
 		setSelection(new int[] { 1 });

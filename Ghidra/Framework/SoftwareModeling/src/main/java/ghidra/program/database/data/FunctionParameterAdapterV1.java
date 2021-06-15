@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,10 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.VersionException;
 
 /**
  * Version 1 implementation for accessing the Function Definition Parameters database table. 
@@ -36,10 +34,11 @@ class FunctionParameterAdapterV1 extends FunctionParameterAdapter {
 	static final int V1_PARAMETER_ORDINAL_COL = 4;
 	static final int V1_PARAMETER_DT_LENGTH_COL = 5;
 
-	static final Schema V1_PARAMETER_SCHEMA = new Schema(VERSION, "Parameter ID", new Class[] {
-		LongField.class, LongField.class, StringField.class, StringField.class, IntField.class,
-		IntField.class }, new String[] { "Parent ID", "Data Type ID", "Name", "Comment", "Ordinal",
-		"Data Type Length" });
+	static final Schema V1_PARAMETER_SCHEMA = new Schema(VERSION, "Parameter ID",
+		new Field[] { LongField.INSTANCE, LongField.INSTANCE, StringField.INSTANCE,
+			StringField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE },
+		new String[] { "Parent ID", "Data Type ID", "Name", "Comment", "Ordinal",
+			"Data Type Length" });
 
 	private Table table;
 
@@ -50,13 +49,12 @@ class FunctionParameterAdapterV1 extends FunctionParameterAdapter {
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
 	 */
-	public FunctionParameterAdapterV1(DBHandle handle, boolean create) throws VersionException,
-			IOException {
+	public FunctionParameterAdapterV1(DBHandle handle, boolean create)
+			throws VersionException, IOException {
 
 		if (create) {
-			table =
-				handle.createTable(PARAMETER_TABLE_NAME, V1_PARAMETER_SCHEMA,
-					new int[] { V1_PARAMETER_PARENT_ID_COL });
+			table = handle.createTable(PARAMETER_TABLE_NAME, V1_PARAMETER_SCHEMA,
+				new int[] { V1_PARAMETER_PARENT_ID_COL });
 		}
 		else {
 			table = handle.getTable(PARAMETER_TABLE_NAME);
@@ -65,9 +63,8 @@ class FunctionParameterAdapterV1 extends FunctionParameterAdapter {
 			}
 			int version = table.getSchema().getVersion();
 			if (version != VERSION) {
-				String msg =
-					"Expected version " + VERSION + " for table " + PARAMETER_TABLE_NAME +
-						" but got " + table.getSchema().getVersion();
+				String msg = "Expected version " + VERSION + " for table " + PARAMETER_TABLE_NAME +
+					" but got " + table.getSchema().getVersion();
 				if (version < VERSION) {
 					throw new VersionException(msg, VersionException.OLDER_VERSION, true);
 				}
@@ -77,7 +74,7 @@ class FunctionParameterAdapterV1 extends FunctionParameterAdapter {
 	}
 
 	@Override
-	public Record createRecord(long dataTypeID, long parentID, int ordinal, String name,
+	public DBRecord createRecord(long dataTypeID, long parentID, int ordinal, String name,
 			String comment, int dtLength) throws IOException {
 
 		long tableKey = table.getKey();
@@ -85,7 +82,7 @@ class FunctionParameterAdapterV1 extends FunctionParameterAdapter {
 //			tableKey = DataManager.VOID_DATATYPE_ID +1;
 //		}
 		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.PARAMETER, tableKey);
-		Record record = V1_PARAMETER_SCHEMA.createRecord(key);
+		DBRecord record = V1_PARAMETER_SCHEMA.createRecord(key);
 		record.setLongValue(V1_PARAMETER_PARENT_ID_COL, parentID);
 		record.setLongValue(V1_PARAMETER_DT_ID_COL, dataTypeID);
 		record.setString(V1_PARAMETER_NAME_COL, name);
@@ -97,7 +94,7 @@ class FunctionParameterAdapterV1 extends FunctionParameterAdapter {
 	}
 
 	@Override
-	public Record getRecord(long parameterID) throws IOException {
+	public DBRecord getRecord(long parameterID) throws IOException {
 		return table.getRecord(parameterID);
 	}
 
@@ -107,7 +104,7 @@ class FunctionParameterAdapterV1 extends FunctionParameterAdapter {
 	}
 
 	@Override
-	public void updateRecord(Record record) throws IOException {
+	public void updateRecord(DBRecord record) throws IOException {
 		table.putRecord(record);
 	}
 
@@ -122,7 +119,7 @@ class FunctionParameterAdapterV1 extends FunctionParameterAdapter {
 	}
 
 	@Override
-	public long[] getParameterIdsInFunctionDef(long functionDefID) throws IOException {
+	public Field[] getParameterIdsInFunctionDef(long functionDefID) throws IOException {
 		return table.findRecords(new LongField(functionDefID), V1_PARAMETER_PARENT_ID_COL);
 	}
 

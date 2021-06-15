@@ -17,8 +17,7 @@ package ghidra.program.model.pcode;
 
 import java.util.*;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressIterator;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Undefined;
 import ghidra.program.model.listing.*;
@@ -184,16 +183,18 @@ public class LocalSymbolMap {
 			if (symbol != null) {
 				id = symbol.getID();
 			}
-			Address defAddr = null;
-			if (!storage.isStackStorage()) {
-				defAddr = dbFunction.getEntryPoint().addWrap(local.getFirstUseOffset());
-			}
 			HighSymbol sym;
 			if (storage.isHashStorage()) {
+				Address defAddr = dbFunction.getEntryPoint().addWrap(local.getFirstUseOffset());
 				sym =
 					newDynamicSymbol(id, name, dt, storage.getFirstVarnode().getOffset(), defAddr);
 			}
 			else {
+				Address defAddr = null;
+				int addrType = storage.getFirstVarnode().getAddress().getAddressSpace().getType();
+				if (addrType != AddressSpace.TYPE_STACK && addrType != AddressSpace.TYPE_RAM) {
+					defAddr = dbFunction.getEntryPoint().addWrap(local.getFirstUseOffset());
+				}
 				sym = newMappedSymbol(id, name, dt, storage, defAddr, -1);
 			}
 			sym.setTypeLock(istypelock);
@@ -325,31 +326,35 @@ public class LocalSymbolMap {
 	}
 
 	/**
-	 * @return an XML document string representing this local variable map.
+	 * Output an XML document representing this local variable map.
+	 * @param resBuf is the buffer to write to
+	 * @param namespace if the namespace of the function
 	 */
-	public String buildLocalDbXML() {		// Get memory mapped local variables
-		StringBuilder res = new StringBuilder();
-		res.append("<localdb");
-		SpecXmlUtils.encodeBooleanAttribute(res, "lock", false);
-		SpecXmlUtils.encodeStringAttribute(res, "main", spacename);
-		res.append(">\n");
-		res.append("<scope");
-		SpecXmlUtils.xmlEscapeAttribute(res, "name", func.getFunction().getName());
-		res.append(">\n");
-		res.append("<parent>\n");
-		HighFunction.createNamespaceTag(res, func.getFunction().getParentNamespace());
-		res.append("</parent>\n");
-		res.append("<rangelist/>\n");	// Empty address range
-		res.append("<symbollist>\n");
+	public void buildLocalDbXML(StringBuilder resBuf, Namespace namespace) {		// Get memory mapped local variables
+		resBuf.append("<localdb");
+		SpecXmlUtils.encodeBooleanAttribute(resBuf, "lock", false);
+		SpecXmlUtils.encodeStringAttribute(resBuf, "main", spacename);
+		resBuf.append(">\n");
+		resBuf.append("<scope");
+		SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", func.getFunction().getName());
+		resBuf.append(">\n");
+		resBuf.append("<parent");
+		long parentid = Namespace.GLOBAL_NAMESPACE_ID;
+		if (!HighFunction.collapseToGlobal(namespace)) {
+			parentid = namespace.getID();
+		}
+		SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "id", parentid);
+		resBuf.append("/>\n");
+		resBuf.append("<rangelist/>\n");	// Empty address range
+		resBuf.append("<symbollist>\n");
 		Iterator<HighSymbol> iter = symbolMap.values().iterator();
 		while (iter.hasNext()) {
 			HighSymbol sym = iter.next();
-			HighSymbol.buildMapSymXML(res, sym);
+			HighSymbol.buildMapSymXML(resBuf, sym);
 		}
-		res.append("</symbollist>\n");
-		res.append("</scope>\n");
-		res.append("</localdb>\n");
-		return res.toString();
+		resBuf.append("</symbollist>\n");
+		resBuf.append("</scope>\n");
+		resBuf.append("</localdb>\n");
 	}
 
 	/**
@@ -471,12 +476,9 @@ public class LocalSymbolMap {
 		symbolMap.put(uniqueId, sym);
 	}
 
-	private void newEquateSymbol(long uniqueId, String nm, long val, long hash, Address addr,
-			TreeMap<String, HighSymbol> constantSymbolMap) {
-		HighSymbol eqSymbol = constantSymbolMap.get(nm);
-		if (eqSymbol != null) {
-			return;			// New reference to same symbol
-		}
+	private EquateSymbol newEquateSymbol(long uniqueId, String nm, long val, long hash,
+			Address addr) {
+		EquateSymbol eqSymbol;
 		if (uniqueId == 0) {
 			uniqueId = getNextId();
 		}
@@ -489,7 +491,7 @@ public class LocalSymbolMap {
 			eqSymbol = new EquateSymbol(uniqueId, conv, val, func, addr, hash);
 		}
 		//Do NOT setTypeLock
-		constantSymbolMap.put(nm, eqSymbol);
+		return eqSymbol;
 	}
 
 	/**
@@ -497,7 +499,6 @@ public class LocalSymbolMap {
 	 * @param dbFunction is the function to pull equates for
 	 */
 	private void grabEquates(Function dbFunction) {
-		TreeMap<String, HighSymbol> constantSymbolMap = null;
 		// Find named constants via Equates
 		Program program = dbFunction.getProgram();
 		EquateTable equateTable = program.getEquateTable();
@@ -511,34 +512,21 @@ public class LocalSymbolMap {
 					continue;
 				}
 				long hash[] = DynamicHash.calcConstantHash(instr, eq.getValue());
-				for (long element : hash) {
-					if (constantSymbolMap == null) {
-						constantSymbolMap = new TreeMap<String, HighSymbol>();
-					}
-					newEquateSymbol(0, eq.getDisplayName(), eq.getValue(), element, defAddr,
-						constantSymbolMap);
+				if (hash.length == 0) {
+					continue;
 				}
-			}
-		}
+				Arrays.sort(hash);		// Sort in preparation for deduping
+				String displayName = eq.getDisplayName();
+				long eqValue = eq.getValue();
 
-// TODO: Find typed constants via DataTypeReferences
-//		-- for each datatype reference within the scope of the function
-//		MappedVarKey key = new MappedVarKey(AddressSpace.HASH_SPACE.getAddress(hash),defAddr);
-//		DynamicSymbol sym = constantSymbolMap.get(key);
-//		String name = sym != null ? sym.getName() : null;
-//		sym = new DynamicSymbol(name, dt, dt.getLength(), hash, defAddr, func, 0); // format??
-//		if (name != null) {
-//			sym.setTypeLock(true);
-//		}
-//		sym.setTypeLock(true);
-//		sym.setReadOnly(true);
-//		
-
-// Add constant dynamic symbols to map
-		if (constantSymbolMap != null) {
-			for (HighSymbol sym : constantSymbolMap.values()) {
-				long id = getNextId();
-				symbolMap.put(id, sym);
+				EquateSymbol eqSymbol;
+				for (int i = 0; i < hash.length; ++i) {
+					if (i != 0 && hash[i - 1] == hash[i]) {
+						continue;		// Found a duplicate, skip it
+					}
+					eqSymbol = newEquateSymbol(0, displayName, eqValue, hash[i], defAddr);
+					symbolMap.put(eqSymbol.getId(), eqSymbol);
+				}
 			}
 		}
 	}

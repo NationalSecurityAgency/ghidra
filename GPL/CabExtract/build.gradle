@@ -1,3 +1,6 @@
+/* ###
+ * IP: Public Domain
+ */
 apply from: file("../gpl.gradle").getCanonicalPath()
 
 if (findProject(':Generic') != null) {
@@ -14,6 +17,10 @@ eclipse.project.name = 'GPL CabExtract'
 
 project.ext.cabextract = "cabextract-1.6"
 
+/*********************************************************************************
+ * Deprecated - will be removed
+ *********************************************************************************/
+ 
 /*********************************************************************************
  * CabExtract platform specific tasks
  *

@@ -35,18 +35,19 @@ public class TableTest extends AbstractGenericTest {
 	private static final int BUFFER_SIZE = 256;
 	private static final int CACHE_SIZE = 4 * 1024 * 1024;
 
-	private static final Class<?>[] FIXED_SIZE_SCHEMA_FIELD_CLASSES =
-		new Class[] { LongField.class, IntField.class, ShortField.class };
-	private static final Class<?>[] VARIABLE_SIZE_SCHEMA_FIELD_CLASSES =
-		new Class[] { StringField.class, };
+	private static final Field[] FIXED_SIZE_SCHEMA_FIELDS = new Field[] { LongField.INSTANCE,
+		IntField.INSTANCE, ShortField.INSTANCE, FixedField10.INSTANCE };
+	private static final Field[] VARIABLE_SIZE_SCHEMA_FIELDS =
+		new Field[] { StringField.INSTANCE, };
 
-	private static final String[] FIXED_SIZE_SCHEMA_COLUMN_NAMES = { "Long1", "Int2", "Short3" };
+	private static final String[] FIXED_SIZE_SCHEMA_COLUMN_NAMES =
+		{ "Long1", "Int2", "Short3", "Fixed4" };
 	private static final String[] VARIABLE_SIZE_SCHEMA_COLUMN_NAMES = { "String" };
 
 	private static final Schema FIXED_SIZE_SCHEMA =
-		new Schema(0, "LongKey", FIXED_SIZE_SCHEMA_FIELD_CLASSES, FIXED_SIZE_SCHEMA_COLUMN_NAMES);
-	private static final Schema VARIABLE_SIZE_SCHEMA = new Schema(0, "LongKey",
-		VARIABLE_SIZE_SCHEMA_FIELD_CLASSES, VARIABLE_SIZE_SCHEMA_COLUMN_NAMES);
+		new Schema(0, "LongKey", FIXED_SIZE_SCHEMA_FIELDS, FIXED_SIZE_SCHEMA_COLUMN_NAMES);
+	private static final Schema VARIABLE_SIZE_SCHEMA =
+		new Schema(0, "LongKey", VARIABLE_SIZE_SCHEMA_FIELDS, VARIABLE_SIZE_SCHEMA_COLUMN_NAMES);
 	private static final int BUFFER_COUNT = 5;
 	private static final int FIRST_KEY = 0;
 	private static final int END_KEY = BUFFER_COUNT * 100 - 10;
@@ -226,10 +227,10 @@ public class TableTest extends AbstractGenericTest {
 //    		
 //    	}
 //    }
-	private Record generateRandomStringRecord(Schema schema, List<Long> keyList) {
+	private DBRecord generateRandomStringRecord(Schema schema, List<Long> keyList) {
 		long key = (long) (Math.random() * 1000000000F);
 		keyList.add(key);
-		Record record = schema.createRecord(key);
+		DBRecord record = schema.createRecord(key);
 		record.setString(0, getRandomSizeString(200));// this size string causes 10 records per buffer
 		return record;
 	}
@@ -269,9 +270,12 @@ public class TableTest extends AbstractGenericTest {
 
 		int n = bufferCount * RECORD_KEY_SPACING;
 		for (int i = 0; i < n; i++) {
-			Record rec = schema.createRecord(i * RECORD_KEY_SPACING);
+			DBRecord rec = schema.createRecord(i * RECORD_KEY_SPACING);
 			if (fixedSize) {
 				rec.setLongValue(0, i);
+				rec.setIntValue(1, i);
+				rec.setShortValue(2, (short) i);
+				rec.setField(3, FixedField10.INSTANCE.getMaxValue());
 			}
 			else {
 				rec.setString(0, "abcdef");

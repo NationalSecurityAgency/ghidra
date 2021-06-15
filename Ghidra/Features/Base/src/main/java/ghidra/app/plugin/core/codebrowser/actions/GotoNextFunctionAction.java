@@ -39,7 +39,7 @@ public class GotoNextFunctionAction extends NavigatableContextAction {
 	private PluginTool tool;
 
 	public GotoNextFunctionAction(PluginTool tool, String owner) {
-		super("Go to next function", owner);
+		super("Go To Next Function", owner);
 		this.tool = tool;
 
 		MenuData menuData =
@@ -50,6 +50,7 @@ public class GotoNextFunctionAction extends NavigatableContextAction {
 		KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.CTRL_DOWN_MASK);
 		setKeyBindingData(new KeyBindingData(keyStroke));
 		setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, "Next_Previous_Function"));
+		addToWindowWhen(NavigatableActionContext.class);
 	}
 
 	private Function getNextFunction(Program program, Address address) {

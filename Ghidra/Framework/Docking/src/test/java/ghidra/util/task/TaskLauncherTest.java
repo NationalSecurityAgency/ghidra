@@ -52,7 +52,7 @@ public class TaskLauncherTest extends AbstractTaskTest {
 		FastModalTask task = new FastModalTask();
 		launchTaskFromBackground(task);
 		waitForTask();
-		assertRanInSwingThread();
+		assertDidNotRunInSwing();
 	}
 
 	@Test
@@ -93,11 +93,36 @@ public class TaskLauncherTest extends AbstractTaskTest {
 		assertDidNotRunInSwing();
 	}
 
+	@Test
+	public void testLaunchFromSwingThreadWithModalTaskDoesNotBlockForFullDelay() throws Exception {
+
+		//
+		// Tests that a short-lived task does not block for the full dialog delay
+		//
+
+		FastModalTask task = new FastModalTask();
+		int dialogDelay = 3000;
+		long start = System.nanoTime();
+		launchTaskFromSwing(task, dialogDelay);
+		waitForTask();
+		long end = System.nanoTime();
+		long totalTime = TimeUnit.NANOSECONDS.toMillis(end - start);
+
+		assertSwingThreadBlockedForTask();
+		assertTrue(
+			"Time waited is longer that the dialog delay: " + totalTime + " vs " + dialogDelay,
+			totalTime < dialogDelay);
+	}
+
+//==================================================================================================
+// Private Methods
+//==================================================================================================
+
 	private int getWaitTimeoutInSeconds() {
 		return (int) TimeUnit.SECONDS.convert(DEFAULT_WAIT_TIMEOUT, TimeUnit.MILLISECONDS) * 2;
 	}
 
-	protected void launchTaskFromBackground(Task task) throws InterruptedException {
+	private void launchTaskFromBackground(Task task) throws InterruptedException {
 
 		CountDownLatch start = new CountDownLatch(1);
 		new Thread("Test Task Launcher Background Client") {
@@ -114,7 +139,7 @@ public class TaskLauncherTest extends AbstractTaskTest {
 			start.await(getWaitTimeoutInSeconds(), TimeUnit.SECONDS));
 	}
 
-	protected void launchTaskFromTask() throws InterruptedException {
+	private void launchTaskFromTask() throws InterruptedException {
 
 		TaskLaunchingTask task = new TaskLaunchingTask();
 
@@ -132,6 +157,10 @@ public class TaskLauncherTest extends AbstractTaskTest {
 		assertTrue("Background thread did not start in " + getWaitTimeoutInSeconds() + " seconds",
 			start.await(getWaitTimeoutInSeconds(), TimeUnit.SECONDS));
 	}
+
+//==================================================================================================
+// Inner Classes
+//==================================================================================================
 
 	private class TaskLaunchingTask extends Task {
 

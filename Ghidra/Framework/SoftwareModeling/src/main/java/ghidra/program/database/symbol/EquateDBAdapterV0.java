@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,10 @@
  */
 package ghidra.program.database.symbol;
 
-import ghidra.util.exception.*;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.*;
 
 /**
  * Implementation for Version 0 of the adapter that accesses the 
@@ -54,10 +52,10 @@ class EquateDBAdapterV0 extends EquateDBAdapter {
 	}
 
 	/**
-	 * @see ghidra.program.database.symbol.EquateDBAdapter#updateRecord(ghidra.framework.store.db.Record)
+	 * @see ghidra.program.database.symbol.EquateDBAdapter#updateRecord(ghidra.framework.store.db.DBRecord)
 	 */
 	@Override
-	void updateRecord(Record record) throws IOException {
+	void updateRecord(DBRecord record) throws IOException {
 		equateTable.putRecord(record);
 	}
 
@@ -74,20 +72,20 @@ class EquateDBAdapterV0 extends EquateDBAdapter {
 	 */
 	@Override
 	long getRecordKey(String name) throws IOException, NotFoundException {
-		long[] keys = equateTable.findRecords(new StringField(name), NAME_COL);
+		Field[] keys = equateTable.findRecords(new StringField(name), NAME_COL);
 		if (keys.length == 0) {
 			throw new NotFoundException("Equate named " + name + " was not found");
 		}
 		if (keys.length > 1) {
-			throw new AssertException("Expected one record for " + name + " but found " +
-				keys.length);
+			throw new AssertException(
+				"Expected one record for " + name + " but found " + keys.length);
 		}
-		return keys[0];
+		return keys[0].getLongValue();
 	}
 
 	@Override
 	boolean hasRecord(String name) throws IOException {
-		long[] keys = equateTable.findRecords(new StringField(name), NAME_COL);
+		Field[] keys = equateTable.findRecords(new StringField(name), NAME_COL);
 		return keys.length > 0;
 	}
 
@@ -95,8 +93,8 @@ class EquateDBAdapterV0 extends EquateDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateDBAdapter#createEquate(java.lang.String, long)
 	 */
 	@Override
-	Record createEquate(String name, long value) throws IOException {
-		Record rec = equateTable.getSchema().createRecord(equateTable.getKey());
+	DBRecord createEquate(String name, long value) throws IOException {
+		DBRecord rec = equateTable.getSchema().createRecord(equateTable.getKey());
 		rec.setString(NAME_COL, name);
 		rec.setLongValue(VALUE_COL, value);
 		equateTable.putRecord(rec);
@@ -107,7 +105,7 @@ class EquateDBAdapterV0 extends EquateDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateDBAdapter#getRecord(long)
 	 */
 	@Override
-	Record getRecord(long key) throws IOException {
+	DBRecord getRecord(long key) throws IOException {
 		return equateTable.getRecord(key);
 	}
 

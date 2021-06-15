@@ -26,14 +26,14 @@ import ghidra.util.Msg;
  * Handles processing for .properties files associated with a GhidraScript (.properties file and
  * script should share the same basename).
  * 
- * This should only be called/used by the GhidraScript class. 
+ * <p>This should only be called/used by the GhidraScript class. 
  */
 public class GhidraScriptProperties {
 
 	private HashMap<String, String> propertiesMap;
 	private String baseName;
 
-	public GhidraScriptProperties() {
+	GhidraScriptProperties() {
 		propertiesMap = new HashMap<>();
 	}
 
@@ -73,6 +73,9 @@ public class GhidraScriptProperties {
 		}
 	}
 
+	/**
+	 * @return the properties file name
+	 */
 	public String getFilename() {
 		return baseName + ".properties";
 	}
@@ -138,6 +141,10 @@ public class GhidraScriptProperties {
 		return propertiesMap.put(key.trim(), value);
 	}
 
+	/**
+	 * @param keyString the property name
+	 * @return the value of the key in the properties file, or an empty string if no property exists
+	 */
 	public String getValue(String keyString) {
 
 		if (propertiesMap.size() == 0) {
@@ -151,10 +158,19 @@ public class GhidraScriptProperties {
 		return "";
 	}
 
+	/**
+	 * @return true if there are no properties
+	 */
 	public boolean isEmpty() {
 		return (propertiesMap.size() == 0);
 	}
 
+	/**
+	 * Remove the named property
+	 * 
+	 * @param keyString the property name
+	 * @return the previous value or null
+	 */
 	protected String remove(String keyString) {
 		return propertiesMap.remove(keyString);
 	}
@@ -163,14 +179,25 @@ public class GhidraScriptProperties {
 		propertiesMap.clear();
 	}
 
+	/**
+	 * @param keyString a property name
+	 * @return true if the key exists in the property file
+	 */
 	public boolean containsKey(String keyString) {
 		return propertiesMap.containsKey(keyString);
 	}
 
+	/**
+	 * @param valueString a value string
+	 * @return true if any property has the given value
+	 */
 	public boolean containsValue(String valueString) {
 		return propertiesMap.containsValue(valueString);
 	}
 
+	/**
+	 * @return the property names for all properties
+	 */
 	public Set<String> keySet() {
 		return propertiesMap.keySet();
 	}

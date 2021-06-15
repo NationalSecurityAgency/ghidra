@@ -22,11 +22,11 @@ import docking.action.MenuData;
 import ghidra.app.decompiler.ClangFieldToken;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.Structure;
 import ghidra.program.model.listing.Function;
-import ghidra.util.Msg;
-import ghidra.util.UndefinedFunction;
+import ghidra.util.*;
 
 /**
  * Action triggered from a specific token in the decompiler window to rename a field within
@@ -39,6 +39,7 @@ public class RenameFieldAction extends AbstractDecompilerAction {
 
 	public RenameFieldAction() {
 		super("Rename Field");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionRenameField"));
 		setPopupMenuData(new MenuData(new String[] { "Rename Field" }, "Decompile"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, 0));
 	}

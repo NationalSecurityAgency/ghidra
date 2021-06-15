@@ -37,15 +37,16 @@ public class AVR8_51_GCC_O3_EmulatorTest extends ProcessorEmulatorTestAdapter {
 		return "AVR8_51_GCC_O3";
 	}
 
-	protected void initializeState(EmulatorTestRunner testRunner, Program program) throws Exception {
+	@Override
+	protected void initializeState(EmulatorTestRunner testRunner, Program program)
+			throws Exception {
 		// These eliminate "uninitialized register" errors. Not strictly needed, but helps find actual problems.
 		testRunner.setRegister("SP", 0x0);
 		testRunner.setRegister("R1", 0x0);
 		testRunner.setRegister("Y", 0x0);
-		testRunner.setRegister("W", 0x0);		
-		testRunner.setRegister("SREG", 0x0);
+		testRunner.setRegister("W", 0x0);
 	}
-	
+
 	@Override
 	protected void setAnalysisOptions(Options analysisOptions) {
 		super.setAnalysisOptions(analysisOptions);
@@ -54,6 +55,7 @@ public class AVR8_51_GCC_O3_EmulatorTest extends ProcessorEmulatorTestAdapter {
 	}
 
 	public static Test suite() {
-		return ProcessorEmulatorTestAdapter.buildEmulatorTestSuite(AVR8_51_GCC_O3_EmulatorTest.class);
+		return ProcessorEmulatorTestAdapter.buildEmulatorTestSuite(
+			AVR8_51_GCC_O3_EmulatorTest.class);
 	}
 }

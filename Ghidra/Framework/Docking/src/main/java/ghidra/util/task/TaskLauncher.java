@@ -17,8 +17,6 @@ package ghidra.util.task;
 
 import java.awt.Component;
 
-import ghidra.util.Swing;
-
 /**
  * Class to initiate a Task in a new Thread, and to show a progress dialog that indicates
  * activity <b>if the task takes too long</b>.  The progress dialog will show an 
@@ -125,8 +123,8 @@ public class TaskLauncher {
 	 * A convenience method to directly run a {@link Runnable} in a separate
 	 * thread as a {@link Task}, displaying a non-modal progress dialog.
 	 *
-	 * <p>This modal will be launched immediately, without delay.  Typically this launcher will
-	 * delay showing the modal dialog in order to prevent the dialog from being show, just
+	 * <p>This modal will be launched immediately, without delay.  Typically the launcher will
+	 * delay showing the modal dialog in order to prevent the dialog from being shown, just
 	 * to have it immediately go away.  If you desire this default behavior, then do not use
 	 * this convenience method.
 	 *
@@ -227,20 +225,6 @@ public class TaskLauncher {
 	protected TaskRunner createTaskRunner(Task task, Component parent, int delayMs,
 			int dialogWidth) {
 		return new TaskRunner(task, parent, delayMs, dialogWidth);
-	}
-
-	/**
-	 * Runs the given task in the current thread, which <b>cannot be the Swing thread</b>
-	 * 
-	 * @param task the task to run
-	 * @throws IllegalStateException if the given thread is the Swing thread
-	 */
-	protected void runInThisBackgroundThread(Task task) {
-		if (Swing.isSwingThread()) {
-			throw new IllegalStateException("Must not call this method from the Swing thread");
-		}
-
-		task.monitoredRun(TaskMonitor.DUMMY);
 	}
 
 	private static Component getParent(Component parent) {

@@ -29,7 +29,7 @@ import utilities.util.ArrayUtilities;
  * for use within data structures.  The length (i.e., storage size) of this bitfield datatype is
  * the minimum number of bytes required to contain the bitfield at its specified offset.
  * The effective bit-size of a bitfield will be limited by the size of the base
- * datatype whose size may be controlled by its' associated datatype manager and data organization
+ * datatype whose size may be controlled by its associated datatype manager and data organization
  * (e.g., {@link IntegerDataType}). 
  * <p>
  * NOTE: Instantiation of this datatype implementation is intended for internal use only.  
@@ -355,18 +355,19 @@ public class BitFieldDataType extends AbstractDataType {
 		if (effectiveBitSize == 0) {
 			return new Scalar(0, 0);
 		}
-		BigInteger big = getBigIntegerValue(buf, settings);
+		AbstractIntegerDataType primitiveBaseDataType = getPrimitiveBaseDataType();
+		boolean isSigned = primitiveBaseDataType.isSigned();
+		BigInteger big = getBigIntegerValue(buf, isSigned, settings);
 		if (big == null) {
 			return null;
 		}
 		if (effectiveBitSize <= 64) {
-			return new Scalar(effectiveBitSize, big.longValue(),
-				getPrimitiveBaseDataType().isSigned());
+			return new Scalar(effectiveBitSize, big.longValue(), isSigned);
 		}
 		return big;
 	}
 
-	private BigInteger getBigIntegerValue(MemBuffer buf, Settings settings) {
+	private BigInteger getBigIntegerValue(MemBuffer buf, boolean isSigned, Settings settings) {
 		if (effectiveBitSize == 0) {
 			return BigInteger.ZERO;
 		}
@@ -385,7 +386,7 @@ public class BitFieldDataType extends AbstractDataType {
 			BigInteger pow = BigInteger.valueOf(2).pow(effectiveBitSize);
 			BigInteger mask = pow.subtract(BigInteger.ONE);
 			big = big.shiftRight(bitOffset).and(mask);
-			if (big.testBit(effectiveBitSize - 1)) {
+			if (isSigned && big.testBit(effectiveBitSize - 1)) {
 				big = big.subtract(pow);
 			}
 			return big;
@@ -406,7 +407,9 @@ public class BitFieldDataType extends AbstractDataType {
 		if (bitSize == 0) {
 			return "";
 		}
-		BigInteger big = getBigIntegerValue(buf, settings);
+		AbstractIntegerDataType primitiveBaseDataType = getPrimitiveBaseDataType();
+		boolean isSigned = primitiveBaseDataType.isSigned();
+		BigInteger big = getBigIntegerValue(buf, isSigned, settings);
 		if (big == null) {
 			return "??";
 		}

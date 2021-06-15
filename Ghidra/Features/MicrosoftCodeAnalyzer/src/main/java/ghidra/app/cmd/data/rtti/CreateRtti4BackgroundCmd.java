@@ -244,22 +244,25 @@ public class CreateRtti4BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 		Program program = model.getProgram();
 		TypeDescriptorModel rtti0Model = model.getRtti0Model();
 
+		if (rtti0Model == null) {
+			return true;
+		}
+		
 		monitor.checkCanceled();
-
-		if (rtti0Model != null) {
-
-			// Plate Comment
-			// Plate Comment
-			EHDataTypeUtilities.createPlateCommentIfNeeded(program, RttiUtil.CONST_PREFIX +
-				RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER, RTTI_4_NAME,
-				null, getDataAddress(), applyOptions);
-			monitor.checkCanceled();
-
-			// Label
-			if (applyOptions.shouldCreateLabel()) {
-				RttiUtil.createSymbolFromDemangledType(program, getDataAddress(), rtti0Model,
+		
+		// Label
+		boolean shouldCreateComment = true;
+		if (applyOptions.shouldCreateLabel()) {
+			shouldCreateComment = RttiUtil.createSymbolFromDemangledType(program, getDataAddress(), rtti0Model,
 					RTTI_4_NAME);
-			}
+		}
+
+		// Plate Comment
+		if (shouldCreateComment) {
+			// comment created if a label was created, or createLabel option off
+			EHDataTypeUtilities.createPlateCommentIfNeeded(program, RttiUtil.CONST_PREFIX +
+					RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER, RTTI_4_NAME,
+					null, getDataAddress(), applyOptions);
 		}
 
 		return true;

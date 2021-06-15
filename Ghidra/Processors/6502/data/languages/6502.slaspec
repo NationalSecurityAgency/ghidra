@@ -233,7 +233,7 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	local op1 = OP1;
 	local tmp = A - op1;
 	resultFlags(tmp);
-	C = (A < op1);
+	C = (A >= op1);
 }
 
 :CPX OP2     is (op=0xE0 | op=0xE4 | op=0xEC) ... & OP2
@@ -241,7 +241,7 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	local op1 = OP2;
 	local tmp = X - op1;
 	resultFlags(tmp);
-	C = (A < op1);
+	C = (X >= op1);
 }
 
 :CPY OP2     is (op=0xC0 | op=0xC4 | op=0xCC) ... & OP2
@@ -249,7 +249,7 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	local op1 = OP2;
 	local tmp = Y - op1;
 	resultFlags(tmp);
-	C = (A < op1);
+	C = (Y >= op1);
 }
 
 :DEC OP2     is (op=0xC6 | op=0xCE | op=0xD6 | op=0xDE) ... & OP2

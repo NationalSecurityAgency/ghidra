@@ -119,9 +119,12 @@ public abstract class AbstractCreateDataTypeModel {
 	 */
 	final protected boolean isWindows() {
 		CompilerSpecID compilerSpecID = program.getCompilerSpec().getCompilerSpecID();
-		return compilerSpecID.getIdAsString().equals("windows") &&
+		String compilerIdString = compilerSpecID.getIdAsString();
+		String compilerString = program.getCompiler();
+		return ("windows".equals(compilerIdString) || "clangwindows".equals(compilerIdString)) &&
 			program.getExecutableFormat().equals(PeLoader.PE_NAME) &&
-			program.getCompiler().equals(CompilerEnum.VisualStudio.toString());
+			(compilerString.equals(CompilerEnum.VisualStudio.toString()) ||
+				compilerString.equals(CompilerEnum.Clang.toString()));
 	}
 
 	/**

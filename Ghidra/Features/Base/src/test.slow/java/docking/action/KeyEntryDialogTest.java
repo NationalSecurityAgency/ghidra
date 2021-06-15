@@ -19,19 +19,20 @@ import static org.junit.Assert.*;
 
 import java.awt.event.KeyEvent;
 import java.util.Map;
+import java.util.Set;
 
 import javax.swing.*;
 
 import org.junit.*;
 
 import docking.*;
-import docking.actions.DockingToolActions;
-import docking.actions.KeyEntryDialog;
+import docking.actions.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import util.CollectionUtils;
 
 public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -89,6 +90,39 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		acceleratorKey = boundAction.getKeyBinding();
 		assertNotNull(acceleratorKey);
 		assertEquals(acceleratorKey.getKeyCode(), KeyEvent.VK_Q);
+	}
+
+	@Test
+	public void testClearDefaultKeyBinding() throws Exception {
+
+		DockingAction boundAction = getBoundAction_Shared();
+		showDialog(boundAction);
+
+		assertEquals("OPEN_BRACKET", keyEntryField.getText());
+		triggerBackspaceKey(keyEntryField);
+
+		pressDialogOK();
+		KeyStroke ks = boundAction.getKeyBinding();
+		assertNull(ks);
+	}
+
+	@Test
+	public void testClearDefaultKeyBinding_SharedKeybinding() throws Exception {
+
+		DockingAction boundAction = getBoundAction_Shared();
+		showDialog(boundAction);
+
+		KeyStroke oldKs = boundAction.getKeyBinding();
+		assertEquals("OPEN_BRACKET", keyEntryField.getText());
+		triggerBackspaceKey(keyEntryField);
+
+		pressDialogOK();
+		KeyStroke ks = boundAction.getKeyBinding();
+		assertNull(ks);
+
+		ToolActions toolActions = (ToolActions) tool.getToolActions();
+		Action toolAction = toolActions.getAction(oldKs);
+		assertNull("Shared actions' keybinding not cleared", toolAction);
 	}
 
 	@Test
@@ -183,6 +217,13 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	private DockingAction getBoundAction() {
 		GoToAddressLabelPlugin goToPlugin = env.getPlugin(GoToAddressLabelPlugin.class);
 		return (DockingAction) getInstanceField("action", goToPlugin);
+	}
+
+	private DockingAction getBoundAction_Shared() {
+		Set<DockingActionIf> sharedActions =
+			getActionsByOwnerAndName(tool, "Shared", "Define Array");
+		assertFalse(sharedActions.isEmpty());
+		return (DockingAction) CollectionUtils.any(sharedActions);
 	}
 
 	private void pressDialogOK() {

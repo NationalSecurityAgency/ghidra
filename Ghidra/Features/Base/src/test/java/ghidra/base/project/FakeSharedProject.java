@@ -15,10 +15,11 @@
  */
 package ghidra.base.project;
 
-import static generic.test.AbstractGenericTest.*;
-import static generic.test.TestUtils.argTypes;
-import static generic.test.TestUtils.args;
-import static org.junit.Assert.assertTrue;
+import static generic.test.AbstractGTest.*;
+import static generic.test.AbstractGenericTest.getInstanceField;
+import static generic.test.AbstractGenericTest.invokeInstanceMethod;
+import static generic.test.TestUtils.*;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -68,7 +69,7 @@ public class FakeSharedProject {
 
 		LocalFileSystem fs = repo.getSharedFileSystem();
 		if (fs != null) {
-			// first project will keeps its' versioned file system
+			// first project will keeps its versioned file system
 			setVersionedFileSystem(fs);
 		}
 	}

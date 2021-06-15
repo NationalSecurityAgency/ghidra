@@ -18,6 +18,7 @@ package ghidra.program.model.address;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import ghidra.program.model.lang.BasicCompilerSpec;
 import ghidra.util.datastruct.IntObjectHashtable;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -59,9 +60,9 @@ public class DefaultAddressFactory implements AddressFactory {
 	 */
 	public DefaultAddressFactory(AddressSpace[] addrSpaces, AddressSpace defaultSpace) {
 		memoryAddressSet = new AddressSet();
-		spaces = new ArrayList<AddressSpace>(addrSpaces.length);
-		spaceLookup = new IntObjectHashtable<AddressSpace>();
-		spaceNameTable = new HashMap<String, AddressSpace>();
+		spaces = new ArrayList<>(addrSpaces.length);
+		spaceLookup = new IntObjectHashtable<>();
+		spaceNameTable = new HashMap<>();
 
 		for (AddressSpace space : addrSpaces) {
 			checkReservedSpace(space);
@@ -71,15 +72,12 @@ public class DefaultAddressFactory implements AddressFactory {
 				this.defaultSpace = space;
 			}
 			spaceNameTable.put(space.getName(), space);
-			spaceLookup.put(space.getUniqueSpaceID(), space);
+			spaceLookup.put(space.getSpaceID(), space);
 			if (space.getType() == AddressSpace.TYPE_CONSTANT) {
 				constantSpace = space;
 			}
 			else if (space.getType() == AddressSpace.TYPE_UNIQUE) {
 				uniqueSpace = space;
-			}
-			else if (space.getType() == AddressSpace.TYPE_STACK) {
-				throw new IllegalArgumentException("Stack space should not be specified");
 			}
 			else if (space.getType() == AddressSpace.TYPE_REGISTER) {
 				if (registerSpace != null || !space.getName().equalsIgnoreCase("register")) {
@@ -88,9 +86,6 @@ public class DefaultAddressFactory implements AddressFactory {
 						"Ghidra can only support a single Register space named 'register'");
 				}
 				registerSpace = space;
-			}
-			else if (space.getType() == AddressSpace.TYPE_VARIABLE) {
-				throw new IllegalArgumentException("Variable space must be defined by language");
 			}
 			// build up an address set for all possible "real" addresses
 			if (space.isMemorySpace()) {
@@ -118,17 +113,40 @@ public class DefaultAddressFactory implements AddressFactory {
 	}
 
 	private void checkReservedSpace(AddressSpace space) {
+		checkReservedVariable(space);
+		checkReservedJoin(space);
+		checkReservedExternal(space);
+		checkReservedStack(space);
+	}
+
+	private void checkReservedVariable(AddressSpace space) {
 		if (space.getType() == AddressSpace.TYPE_VARIABLE ||
-			space.getName().equalsIgnoreCase(AddressSpace.VARIABLE_SPACE.getName()) ||
-			space.getName().equals("join")) {
+			space.getName().equalsIgnoreCase(AddressSpace.VARIABLE_SPACE.getName())) {
 			throw new IllegalArgumentException("Variable space should not be specified");
 		}
+	}
+
+	private void checkReservedJoin(AddressSpace space) {
+		if (space.getType() == AddressSpace.TYPE_JOIN ||
+			space.getName().equals(BasicCompilerSpec.JOIN_SPACE_NAME)) {
+			throw new IllegalArgumentException("Join space should not be specified");
+		}
+	}
+
+	private void checkReservedExternal(AddressSpace space) {
 		if (space.getType() == AddressSpace.TYPE_EXTERNAL ||
 			space.getName().equalsIgnoreCase(AddressSpace.EXTERNAL_SPACE.getName())) {
 			throw new IllegalArgumentException("External space should not be specified");
 		}
 	}
-	
+
+	private void checkReservedStack(AddressSpace space) {
+		if (space.getType() == AddressSpace.TYPE_STACK ||
+			space.getName().equalsIgnoreCase(BasicCompilerSpec.STACK_SPACE_NAME)) {
+			throw new IllegalArgumentException("Stack space should not be specified");
+		}
+	}
+
 	/**
 	 * @see ghidra.program.model.address.AddressFactory#getAddress(java.lang.String)
 	 */
@@ -141,6 +159,7 @@ public class DefaultAddressFactory implements AddressFactory {
 			}
 		}
 		catch (AddressFormatException e) {
+			// ignore
 		}
 
 		for (AddressSpace space : spaces) {
@@ -155,11 +174,12 @@ public class DefaultAddressFactory implements AddressFactory {
 				}
 			}
 			catch (AddressFormatException e) {
+				// ignore
 			}
 		}
 		return null;
 	}
-	
+
 	@Override
 	public Address[] getAllAddresses(String addrString) {
 		return getAllAddresses(addrString, true);
@@ -167,8 +187,8 @@ public class DefaultAddressFactory implements AddressFactory {
 
 	@Override
 	public Address[] getAllAddresses(String addrString, boolean caseSensitive) {
-		ArrayList<Address> loadedMemoryList = new ArrayList<Address>();
-		ArrayList<Address> otherList = new ArrayList<Address>();
+		ArrayList<Address> loadedMemoryList = new ArrayList<>();
+		ArrayList<Address> otherList = new ArrayList<>();
 
 		for (AddressSpace space : spaces) {
 			// Only parse against true physical spaces first
@@ -209,7 +229,6 @@ public class DefaultAddressFactory implements AddressFactory {
 	public AddressSpace getDefaultAddressSpace() {
 		return defaultSpace;
 	}
-
 
 	@Override
 	public AddressSpace[] getAddressSpaces() {
@@ -270,7 +289,7 @@ public class DefaultAddressFactory implements AddressFactory {
 	@Override
 	public long getIndex(Address addr) {
 		AddressSpace space = addr.getAddressSpace();
-		int id = space.getUniqueSpaceID();
+		int id = space.getSpaceID();
 		if (spaceLookup.get(id) == null) {
 			spaceLookup.put(id, space);
 		}
@@ -385,24 +404,35 @@ public class DefaultAddressFactory implements AddressFactory {
 		}
 		spaces.add(space);
 		spaceNameTable.put(space.getName(), space);
-		spaceLookup.put(space.getUniqueSpaceID(), space);
+		spaceLookup.put(space.getSpaceID(), space);
 
 		if (space.isMemorySpace()) {
 			memoryAddressSet.addRange(space.getMinAddress(), space.getMaxAddress());
 		}
 	}
 
-	protected void renameOverlaySpace(String oldName, String newName)
+	/**
+	 * Rename overlay with newName.
+	 * @param oldOverlaySpaceName the existing overlay address space name
+	 * @param newName the new name of the overlay address space.  
+	 * @return new name applied to existing overlay space
+	 * @throws DuplicateNameException if space with newName already exists
+	 * @throws IllegalArgumentException if specified oldOverlaySpaceName was not found as
+	 * an existing overlay space
+	 */
+	protected String renameOverlaySpace(String oldOverlaySpaceName, String newName)
 			throws DuplicateNameException {
 		if (getAddressSpace(newName) != null) {
 			throw new DuplicateNameException("AddressSpace named " + newName + " already exists!");
 		}
-		AddressSpace space = getAddressSpace(oldName);
+		AddressSpace space = getAddressSpace(oldOverlaySpaceName);
 		if (space != null && space.isOverlaySpace()) {
 			((OverlayAddressSpace) space).setName(newName);
-			spaceNameTable.remove(oldName);
+			spaceNameTable.remove(oldOverlaySpaceName);
 			spaceNameTable.put(space.getName(), space);
+			return newName;
 		}
+		throw new IllegalArgumentException("No such overlay space: " + oldOverlaySpaceName);
 	}
 
 	/**
@@ -415,7 +445,7 @@ public class DefaultAddressFactory implements AddressFactory {
 		if (deletedSpace != null) {
 			spaces.remove(deletedSpace);
 			spaceNameTable.remove(deletedSpace.getName());
-			spaceLookup.remove(deletedSpace.getUniqueSpaceID());
+			spaceLookup.remove(deletedSpace.getSpaceID());
 			if (deletedSpace.getType() == AddressSpace.TYPE_RAM ||
 				deletedSpace.getType() == AddressSpace.TYPE_CODE) {
 				memoryAddressSet.deleteRange(deletedSpace.getMinAddress(),

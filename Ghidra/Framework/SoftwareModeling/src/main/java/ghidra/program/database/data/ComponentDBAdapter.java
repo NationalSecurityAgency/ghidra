@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Adapter to access the Component database table.
@@ -52,7 +50,7 @@ abstract class ComponentDBAdapter {
 	 */
 	static ComponentDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
 			throws VersionException, IOException {
-		return new ComponentDBAdapterV0(handle, openMode);
+		return new ComponentDBAdapterV0(handle, openMode == DBConstants.CREATE);
 	}
 
 	/**
@@ -67,7 +65,7 @@ abstract class ComponentDBAdapter {
 	 * @return the component data type record.
 	 * @throws IOException if there is a problem accessing the database.
 	 */
-	abstract Record createRecord(long dataTypeID, long parentID, int length, int ordinal,
+	abstract DBRecord createRecord(long dataTypeID, long parentID, int length, int ordinal,
 			int offset, String name, String comment) throws IOException;
 
 	/**
@@ -76,7 +74,7 @@ abstract class ComponentDBAdapter {
 	 * @return the component record
 	 * @throws IOException if there is a problem accessing the database.
 	 */
-	abstract Record getRecord(long componentID) throws IOException;
+	abstract DBRecord getRecord(long componentID) throws IOException;
 
 	/**
 	 * Removes the component data type record with the specified ID.
@@ -91,13 +89,13 @@ abstract class ComponentDBAdapter {
 	 * @param record the new record
 	 * @throws IOException if there is a problem accessing the database.
 	 */
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Gets an array with all of the IDs of the defined components within the composite data type indicated.
 	 * @param compositeID the ID of the composite data type whose components are desired.
-	 * @return an array of the defined component IDs.
+	 * @return an array of the defined component IDs as LongField values within Field array.
 	 * @throws IOException if there is a problem accessing the database.
 	 */
-	abstract long[] getComponentIdsInComposite(long compositeID) throws IOException;
+	abstract Field[] getComponentIdsInComposite(long compositeID) throws IOException;
 }

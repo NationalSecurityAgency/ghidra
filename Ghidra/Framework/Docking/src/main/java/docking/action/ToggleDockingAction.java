@@ -19,7 +19,6 @@ import javax.swing.JButton;
 import javax.swing.JMenuItem;
 
 import docking.*;
-import docking.menu.DockingCheckboxMenuItemUI;
 
 public abstract class ToggleDockingAction extends DockingAction implements ToggleDockingActionIf {
 	private boolean isSelected;
@@ -43,6 +42,9 @@ public abstract class ToggleDockingAction extends DockingAction implements Toggl
 
 	@Override
 	public void setSelected(boolean newValue) {
+		if (isSelected == newValue) {
+			return;
+		}
 		isSelected = newValue;
 		firePropertyChanged(SELECTED_STATE_PROPERTY, !isSelected, isSelected);
 	}
@@ -56,9 +58,7 @@ public abstract class ToggleDockingAction extends DockingAction implements Toggl
 
 	@Override
 	protected JMenuItem doCreateMenuItem() {
-		DockingCheckBoxMenuItem menuItem = new DockingCheckBoxMenuItem(isSelected);
-		menuItem.setUI((DockingCheckboxMenuItemUI) DockingCheckboxMenuItemUI.createUI(menuItem));
-		return menuItem;
+		return new DockingCheckBoxMenuItem(isSelected);
 	}
 
 	@Override

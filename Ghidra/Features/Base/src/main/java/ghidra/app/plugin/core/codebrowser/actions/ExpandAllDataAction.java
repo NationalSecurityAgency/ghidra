@@ -45,6 +45,9 @@ public class ExpandAllDataAction extends ProgramLocationContextAction {
 		setHelpLocation(new HelpLocation("CodeBrowserPlugin", "ExpandCollapseActions"));
 
 		setEnabled(true);
+
+		// make sure the action is in all windows that can provide the needed context
+		addToWindowWhen(ProgramLocationActionContext.class);
 	}
 
 	@Override

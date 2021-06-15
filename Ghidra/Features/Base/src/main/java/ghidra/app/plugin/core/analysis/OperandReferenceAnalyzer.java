@@ -192,7 +192,7 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 
 		processorAlignment = program.getLanguage().getInstructionAlignment();
 
-		externalBlock = program.getMemory().getBlock("EXTERNAL");
+		externalBlock = program.getMemory().getBlock(MemoryBlock.EXTERNAL_BLOCK_NAME);
 
 		newCodeFound = false;
 		int count = NOTIFICATION_INTERVAL;

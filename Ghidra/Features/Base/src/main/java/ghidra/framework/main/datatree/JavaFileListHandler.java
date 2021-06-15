@@ -29,6 +29,7 @@ import ghidra.app.util.FileOpenDataFlavorHandler;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import util.CollectionUtils;
 
 /**
@@ -67,12 +68,14 @@ public final class JavaFileListHandler implements DataTreeFlavorHandler, FileOpe
 	private void doImport(FileImporterService importer, DomainFolder folder, Object files) {
 
 		List<File> fileList = CollectionUtils.asList((List<?>) files, File.class);
-		if (fileList.size() == 1 && fileList.get(0).isFile()) {
-			importer.importFile(folder, fileList.get(0));
-		}
-		else {
-			importer.importFiles(folder, fileList);
-		}
+		Swing.runLater(() -> {
+			if (fileList.size() == 1 && fileList.get(0).isFile()) {
+				importer.importFile(folder, fileList.get(0));
+			}
+			else {
+				importer.importFiles(folder, fileList);
+			}
+		});
 	}
 
 	private DomainFolder getDomainFolder(GTreeNode destinationNode) {

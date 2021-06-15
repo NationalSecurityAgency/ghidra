@@ -153,7 +153,7 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	private boolean launchBitFieldEditor(int modelColumn, int editingRow) {
 		if (model.viewComposite instanceof Structure &&
-			!model.viewComposite.isInternallyAligned() &&
+			!model.viewComposite.isPackingEnabled() &&
 			model.getDataTypeColumn() == modelColumn && editingRow < model.getNumComponents()) {
 			// check if we are attempting to edit a bitfield
 			DataTypeComponent dtComponent = model.getComponent(editingRow);
@@ -161,12 +161,11 @@ public abstract class CompositeEditorPanel extends JPanel
 				table.getCellEditor().cancelCellEditing();
 
 				BitFieldEditorDialog dlg = new BitFieldEditorDialog(model.viewComposite,
-					provider.dtmService, editingRow, ordinal -> {
+					provider.dtmService, editingRow, model.showHexNumbers, ordinal -> {
 						model.notifyCompositeChanged();
 					});
 				Component c = provider.getComponent();
-				Window w = SwingUtilities.windowForComponent(c);
-				DockingWindowManager.showDialog(w, dlg, c);
+				DockingWindowManager.showDialog(c, dlg);
 				return true;
 			}
 		}
@@ -1256,7 +1255,7 @@ public abstract class CompositeEditorPanel extends JPanel
 
 			Plugin plugin = provider.getPlugin();
 			final PluginTool tool = plugin.getTool();
-			editor = new DataTypeSelectionEditor(tool, maxLength,
+			editor = new DataTypeSelectionEditor(tool,
 				bitfieldAllowed ? AllowedDataTypes.SIZABLE_DYNAMIC_AND_BITFIELD
 						: AllowedDataTypes.SIZABLE_DYNAMIC);
 			editor.setTabCommitsEdit(true);
@@ -1288,12 +1287,7 @@ public abstract class CompositeEditorPanel extends JPanel
 				}
 			};
 
-			dataTypeChooserButton.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					Swing.runLater(() -> stopEdit(tool));
-				}
-			});
+			dataTypeChooserButton.addActionListener(e -> Swing.runLater(() -> stopEdit(tool)));
 
 			textField.addFocusListener(new FocusAdapter() {
 				@Override

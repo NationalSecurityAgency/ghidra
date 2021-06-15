@@ -46,7 +46,7 @@ void print_data(ostream &s,uint1 *buffer,int4 size,const Address &baseaddr)
 	s << "   ";
       else
 	s << setfill('0') << setw(2) << hex << (uint4) buffer[start+i-addr] << ' ';
-      
+
     }
     s << "  ";
     for(i=0;i<16;++i)
@@ -61,6 +61,20 @@ void print_data(ostream &s,uint1 *buffer,int4 size,const Address &baseaddr)
     s << endl;
     start += 16;
   }
+}
+
+/// If \b this and the other given data-type are both variable length and come from the
+/// the same base data-type, return \b true.
+/// \param ct is the other given data-type to compare with \b this
+/// \return \b true if they are the same variable length data-type.
+bool Datatype::hasSameVariableBase(const Datatype *ct) const
+
+{
+  if (!isVariableLength()) return false;
+  if (!ct->isVariableLength()) return false;
+  uint8 thisId = hashSize(id, size);
+  uint8 themId = hashSize(ct->id, ct->size);
+  return (thisId == themId);
 }
 
 /// Print a raw description of the type to stream. Intended for debugging.
@@ -90,7 +104,33 @@ Datatype *Datatype::getSubType(uintb off,uintb *newoff) const
   return (Datatype *)0;
 }
 
-/// Compare \b this with another data-type.
+/// Find the first component data-type after the given offset that is (or contains)
+/// an array, and pass back the difference between the component's start and the given offset.
+/// Return the component data-type or null if no array is found.
+/// \param off is the given offset into \b this data-type
+/// \param newoff is used to pass back the offset difference
+/// \param elSize is used to pass back the array element size
+/// \return the component data-type or null
+Datatype *Datatype::nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const
+
+{
+  return (TypeArray *)0;
+}
+
+/// Find the first component data-type before the given offset that is (or contains)
+/// an array, and pass back the difference between the component's start and the given offset.
+/// Return the component data-type or null if no array is found.
+/// \param off is the given offset into \b this data-type
+/// \param newoff is used to pass back the offset difference
+/// \param elSize is used to pass back the array element size
+/// \return the component data-type or null
+Datatype *Datatype::nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const
+
+{
+  return (TypeArray *)0;
+}
+
+// Compare \b this with another data-type.
 /// 0 (equality) means the data-types are functionally equivalent (even if names differ)
 /// Smaller types come earlier. More specific types come earlier.
 /// \param op is the data-type to compare with \b this
@@ -240,8 +280,13 @@ void Datatype::saveXmlBasic(ostream &s) const
 
 {
   a_v(s,"name",name);
-  if (id != 0) {
-    s << " id=\"0x" << hex << id << '\"';
+  uint8 saveId;
+  if (isVariableLength())
+    saveId = hashSize(id, size);
+  else
+    saveId = id;
+  if (saveId != 0) {
+    s << " id=\"0x" << hex << saveId << '\"';
   }
   a_v_i(s,"size",size);
   string metastring;
@@ -249,6 +294,10 @@ void Datatype::saveXmlBasic(ostream &s) const
   a_v(s,"metatype",metastring);
   if ((flags & coretype)!=0)
     a_v_b(s,"core",true);
+  if (isVariableLength())
+    a_v_b(s,"varlength",true);
+  if ((flags & opaque_string)!=0)
+    a_v_b(s,"opaquestring",true);
 }
 
 /// Write a simple reference to \b this data-type as an XML \<typeref> tag,
@@ -260,11 +309,47 @@ void Datatype::saveXmlRef(ostream &s) const
   if ((id!=0)&&(metatype != TYPE_VOID)) {
     s << "<typeref";
     a_v(s,"name",name);
-    s << " id=\"0x" << hex << id << '\"';
+    if (isVariableLength()) {			// For a type with a "variable length" base
+      uintb origId = hashSize(id, size);	// Emit the size independent version of the id
+      s << " id=\"0x" << hex << origId << '\"';
+      s << " size=\"" << dec << size << '\"';	// but also emit size of this instance
+    }
+    else {
+      s << " id=\"0x" << hex << id << '\"';
+    }
     s << "/>";
   }
   else
     saveXml(s);
+}
+
+/// A CPUI_PTRSUB must act on a pointer data-type where the given offset addresses a component.
+/// Perform this check.
+/// \param offset is the given offset
+/// \return \b true if \b this is a suitable PTRSUB data-type
+bool Datatype::isPtrsubMatching(uintb offset) const
+
+{
+  if (metatype != TYPE_PTR)
+    return false;
+
+  Datatype *basetype = ((TypePointer *)this)->getPtrTo();
+  uint4 wordsize = ((TypePointer *)this)->getWordSize();
+  if (basetype->metatype==TYPE_SPACEBASE) {
+    uintb newoff = AddrSpace::addressToByte(offset,wordsize);
+    basetype->getSubType(newoff,&newoff);
+    if (newoff != 0)
+      return false;
+  }
+  else {
+    int4 size = offset;
+    int4 typesize = basetype->getSize();
+    if ((basetype->metatype != TYPE_ARRAY)&&(basetype->metatype != TYPE_STRUCT))
+      return false;	// Not a pointer to a structured type
+    else if ((typesize <= AddrSpace::addressToByteInt(size,wordsize))&&(typesize!=0))
+      return false;
+  }
+  return true;
 }
 
 /// Restore the basic properties (name,size,id) of a data-type from an XML element
@@ -283,18 +368,31 @@ void Datatype::restoreXmlBasic(const Element *el)
   metatype = string2metatype( el->getAttributeValue("metatype") );
   id = 0;
   for(int4 i=0;i<el->getNumAttributes();++i) {
-    if (el->getAttributeName(i) == "core") {
+    const string &attribName( el->getAttributeName(i) );
+    if (attribName == "core") {
       if (xml_readbool(el->getAttributeValue(i)))
 	flags |= coretype;
     }
-    else if (el->getAttributeName(i) == "id") {
+    else if (attribName == "id") {
       istringstream i1(el->getAttributeValue(i));
       i1.unsetf(ios::dec | ios::hex | ios::oct);
       i1 >> id;
     }
+    else if (attribName == "varlength") {
+      if (xml_readbool(el->getAttributeValue(i)))
+	flags |= variable_length;
+    }
+    else if (attribName == "opaquestring") {
+      if (xml_readbool(el->getAttributeValue(i)))
+	flags |= opaque_string;
+    }
   }
   if ((id==0)&&(name.size()>0))	// If there is a type name
     id = hashName(name);	// There must be some kind of id
+  if (isVariableLength()) {
+    // Id needs to be unique compared to another data-type with the same name
+    id = hashSize(id, size);
+  }
 }
 
 /// Restore a Datatype object from an XML element
@@ -324,6 +422,21 @@ uint8 Datatype::hashName(const string &nm)
   tmp <<= 63;
   res |= tmp;	// Make sure the hash is negative (to distinguish it from database id's)
   return res;
+}
+
+/// This allows IDs for variable length structures to be uniquefied based on size.
+/// A base ID is given and a size of the specific instance. A unique ID is returned.
+/// The hashing is reversible by feeding the output ID back into this function with the same size.
+/// \param id is the given ID to (de)uniquify
+/// \param size is the instance size of the structure
+/// \return the (de)uniquified id
+uint8 Datatype::hashSize(uint8 id,int4 size)
+
+{
+  uint8 sizeHash = size;
+  sizeHash *= 0x98251033aecbabaf;	// Hash the size
+  id ^= sizeHash;
+  return id;
 }
 
 void TypeChar::saveXml(ostream &s) const
@@ -510,7 +623,7 @@ void TypeArray::saveXml(ostream &s) const
   s << "<type";
   saveXmlBasic(s);
   a_v_i(s,"arraysize",arraysize);
-  s << '>'; 
+  s << '>';
   arrayof->saveXmlRef(s);
   s << "</type>";
 }
@@ -563,7 +676,7 @@ void TypeEnum::setNameMap(const map<uintb,string> &nmap)
     fieldisempty = true;
     while(curmask != lastmask) {	// Repeat until there is no change in the current mask
       lastmask = curmask;		// Note changes from last time through
-      
+
       for(iter=namemap.begin();iter!=namemap.end();++iter) { // For every named enumeration value
 	uintb val = (*iter).first;
 	if ((val & curmask) != 0) {	// If the value shares ANY bits in common with the current mask
@@ -577,7 +690,7 @@ void TypeEnum::setNameMap(const map<uintb,string> &nmap)
       int4 msb = mostsigbit_set(curmask);
       if (msb > curmaxbit)
 	curmaxbit = msb;
-      
+
       uintb mask1 = 1;
       mask1 = (mask1 << lsb) - 1;     // every bit below lsb is set to 1
       uintb mask2 = 1;
@@ -658,6 +771,9 @@ int4 TypeEnum::compareDependency(const Datatype &op) const
   const TypeEnum *te = (const TypeEnum *) &op;
   map<uintb,string>::const_iterator iter1,iter2;
 
+  if (namemap.size() != te->namemap.size()) {
+    return (namemap.size() < te->namemap.size()) ? -1 : 1;
+  }
   iter1 = namemap.begin();
   iter2 = te->namemap.begin();
   while(iter1 != namemap.end()) {
@@ -740,7 +856,7 @@ void TypeStruct::setFields(const vector<TypeField> &fd)
 /// \return the index into the field list or -1
 int4 TypeStruct::getFieldIter(int4 off) const
 
-{				// Find subfield of given offset
+{
   int4 min = 0;
   int4 max = field.size()-1;
 
@@ -755,6 +871,30 @@ int4 TypeStruct::getFieldIter(int4 off) const
       min = mid + 1;
     }
   }
+  return -1;
+}
+
+/// The field returned may or may not contain the offset.  If there are no fields
+/// that occur earlier than the offset, return -1.
+/// \param off is the given offset
+/// \return the index of the nearest field or -1
+int4 TypeStruct::getLowerBoundField(int4 off) const
+
+{
+  if (field.empty()) return -1;
+  int4 min = 0;
+  int4 max = field.size()-1;
+
+  while(min < max) {
+    int4 mid = (min + max + 1)/2;
+    if (field[mid].offset > off)
+      max = mid - 1;
+    else {			// curfield.offset <= off
+      min = mid;
+    }
+  }
+  if (min == max && field[min].offset <= off)
+    return min;
   return -1;
 }
 
@@ -784,12 +924,67 @@ Datatype *TypeStruct::getSubType(uintb off,uintb *newoff) const
 
 {				// Go down one level to field that contains offset
   int4 i;
-  
+
   i = getFieldIter(off);
   if (i < 0) return Datatype::getSubType(off,newoff);
   const TypeField &curfield( field[i] );
   *newoff = off - curfield.offset;
   return curfield.type;
+}
+
+Datatype *TypeStruct::nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const
+
+{
+  int4 i = getLowerBoundField(off);
+  while(i >= 0) {
+    const TypeField &subfield( field[i] );
+    int4 diff = (int4)off - subfield.offset;
+    if (diff > 128) break;
+    Datatype *subtype = subfield.type;
+    if (subtype->getMetatype() == TYPE_ARRAY) {
+      *newoff = (intb)diff;
+      *elSize = ((TypeArray *)subtype)->getBase()->getSize();
+      return subtype;
+    }
+    else {
+      uintb suboff;
+      Datatype *res = subtype->nearestArrayedComponentBackward(subtype->getSize(), &suboff, elSize);
+      if (res != (Datatype *)0) {
+	*newoff = (intb)diff;
+	return subtype;
+      }
+    }
+    i -= 1;
+  }
+  return (Datatype *)0;
+}
+
+Datatype *TypeStruct::nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const
+
+{
+  int4 i = getLowerBoundField(off);
+  i += 1;
+  while(i<field.size()) {
+    const TypeField &subfield( field[i] );
+    int4 diff = subfield.offset - off;
+    if (diff > 128) break;
+    Datatype *subtype = subfield.type;
+    if (subtype->getMetatype() == TYPE_ARRAY) {
+      *newoff = (intb)-diff;
+      *elSize = ((TypeArray *)subtype)->getBase()->getSize();
+      return subtype;
+    }
+    else {
+      uintb suboff;
+      Datatype *res = subtype->nearestArrayedComponentForward(0, &suboff, elSize);
+      if (res != (Datatype *)0) {
+	*newoff = (intb)-diff;
+	return subtype;
+      }
+    }
+    i += 1;
+  }
+  return (Datatype *)0;
 }
 
 int4 TypeStruct::compare(const Datatype &op,int4 level) const
@@ -907,15 +1102,18 @@ void TypeStruct::restoreXml(const Element *el,TypeFactory &typegrp)
 }
 
 /// Turn on the data-type's function prototype
+/// \param tfact is the factory that owns \b this
 /// \param model is the prototype model
 /// \param outtype is the return type of the prototype
 /// \param intypes is the list of input parameters
 /// \param dotdotdot is true if the prototype takes variable arguments
 /// \param voidtype is the reference "void" data-type
-void TypeCode::set(ProtoModel *model,
+void TypeCode::set(TypeFactory *tfact,ProtoModel *model,
 		    Datatype *outtype,const vector<Datatype *> &intypes,
 		    bool dotdotdot,Datatype *voidtype)
 {
+  factory = tfact;
+  flags |= variable_length;
   if (proto != (FuncProto *)0)
     delete proto;
   proto = new FuncProto();
@@ -938,6 +1136,7 @@ TypeCode::TypeCode(const TypeCode &op) : Datatype(op)
 
 {
   proto = (FuncProto *)0;
+  factory = op.factory;
   if (op.proto != (FuncProto *)0) {
     proto = new FuncProto();
     proto->copy(*op.proto);
@@ -948,6 +1147,7 @@ TypeCode::TypeCode(const string &nm) : Datatype(1,TYPE_CODE,nm)
 
 {
   proto = (FuncProto *)0;
+  factory = (TypeFactory *)0;
 }
 
 TypeCode::~TypeCode(void)
@@ -968,13 +1168,11 @@ void TypeCode::printRaw(ostream &s) const
 }
 
 /// Assuming \b this has an underlying function prototype, set some of its boolean properties
-/// \param hasThisPtr toggles whether prototype has takes a "this" pointer
 /// \param isConstructor toggles whether the function is a constructor
 /// \param isDestructor toggles whether the function is a destructor
-void TypeCode::setProperties(bool hasThisPtr,bool isConstructor,bool isDestructor)
+void TypeCode::setProperties(bool isConstructor,bool isDestructor)
 
 {
-  proto->setThisPointer(hasThisPtr);
   proto->setConstructor(isConstructor);
   proto->setDestructor(isDestructor);
 }
@@ -1019,6 +1217,14 @@ int4 TypeCode::compareBasic(const TypeCode *op) const
     return (flags < opflags) ? -1 : 1;
 
   return 2;			// Carry on with comparison of parameters
+}
+
+Datatype *TypeCode::getSubType(uintb off,uintb *newoff) const
+
+{
+  if (factory == (TypeFactory *)0) return (Datatype *)0;
+  *newoff = 0;
+  return factory->getBase(1, TYPE_CODE);	// Return code byte unattached to function prototype
 }
 
 int4 TypeCode::compare(const Datatype &op,int4 level) const
@@ -1091,16 +1297,21 @@ void TypeCode::saveXml(ostream &s) const
 void TypeCode::restoreXml(const Element *el,TypeFactory &typegrp)
 
 {
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  if (iter != list.end()) {
+    // Traditionally a <prototype> tag implies variable length, without a "varlength" attribute
+    flags |= variable_length;
+  }
   restoreXmlBasic(el);
   if (proto != (FuncProto *)0) {
     delete proto;
     proto = (FuncProto *)0;
   }
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  iter = list.begin();
   if (iter == list.end()) return; // No underlying prototype
   Architecture *glb = typegrp.getArch();
+  factory = &typegrp;
   proto = new FuncProto();
   proto->setInternal( glb->defaultfp, typegrp.getTypeVoid() );
   proto->restoreXml(*iter,glb);
@@ -1135,13 +1346,81 @@ Datatype *TypeSpacebase::getSubType(uintb off,uintb *newoff) const
   // Assume symbol being referenced is address tied so we use a null point of context
   // FIXME: A valid point of context may be necessary in the future
   smallest = scope->queryContainer(addr,1,nullPoint);
-  
+
   if (smallest == (SymbolEntry *)0) {
     *newoff = 0;
     return glb->types->getBase(1,TYPE_UNKNOWN);
   }
   *newoff = (addr.getOffset() - smallest->getAddr().getOffset()) + smallest->getOffset();
   return smallest->getSymbol()->getType();
+}
+
+Datatype *TypeSpacebase::nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const
+
+{
+  Scope *scope = getMap();
+  off = AddrSpace::byteToAddress(off, spaceid->getWordSize());	// Convert from byte offset to address unit
+  // It should always be the case that the given offset represents a full encoding of the
+  // pointer, so the point of context is unused and the size is given as -1
+  Address nullPoint;
+  uintb fullEncoding;
+  Address addr = glb->resolveConstant(spaceid, off, -1, nullPoint, fullEncoding);
+  SymbolEntry *smallest = scope->queryContainer(addr,1,nullPoint);
+  Address nextAddr;
+  Datatype *symbolType;
+  if (smallest == (SymbolEntry *)0 || smallest->getOffset() != 0)
+    nextAddr = addr + 32;
+  else {
+    symbolType = smallest->getSymbol()->getType();
+    if (symbolType->getMetatype() == TYPE_STRUCT) {
+      uintb structOff = addr.getOffset() - smallest->getAddr().getOffset();
+      uintb dummyOff;
+      Datatype *res = symbolType->nearestArrayedComponentForward(structOff, &dummyOff, elSize);
+      if (res != (Datatype *)0) {
+	*newoff = structOff;
+	return symbolType;
+      }
+    }
+    int4 size = AddrSpace::byteToAddressInt(smallest->getSize(), spaceid->getWordSize());
+    nextAddr = smallest->getAddr() + size;
+  }
+  if (nextAddr < addr)
+    return (Datatype *)0;		// Don't let the address wrap
+  smallest = scope->queryContainer(nextAddr,1,nullPoint);
+  if (smallest == (SymbolEntry *)0 || smallest->getOffset() != 0)
+    return (Datatype *)0;
+  symbolType = smallest->getSymbol()->getType();
+  *newoff = addr.getOffset() - smallest->getAddr().getOffset();
+  if (symbolType->getMetatype() == TYPE_ARRAY) {
+    *elSize = ((TypeArray *)symbolType)->getBase()->getSize();
+    return symbolType;
+  }
+  if (symbolType->getMetatype() == TYPE_STRUCT) {
+    uintb dummyOff;
+    Datatype *res = symbolType->nearestArrayedComponentForward(0, &dummyOff, elSize);
+    if (res != (Datatype *)0)
+      return symbolType;
+  }
+  return (Datatype *)0;
+}
+
+Datatype *TypeSpacebase::nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const
+
+{
+  Datatype *subType = getSubType(off, newoff);
+  if (subType == (Datatype *)0)
+    return (Datatype *)0;
+  if (subType->getMetatype() == TYPE_ARRAY) {
+    *elSize = ((TypeArray *)subType)->getBase()->getSize();
+    return subType;
+  }
+  if (subType->getMetatype() == TYPE_STRUCT) {
+    uintb dummyOff;
+    Datatype *res = subType->nearestArrayedComponentBackward(*newoff,&dummyOff,elSize);
+    if (res != (Datatype *)0)
+      return subType;
+  }
+  return (Datatype *)0;
 }
 
 int4 TypeSpacebase::compare(const Datatype &op,int4 level) const
@@ -1384,13 +1663,20 @@ Datatype *TypeFactory::findByIdLocal(const string &n,uint8 id) const
   return *iter;
 }
 
-/// Search for a Datatype by \b name and/or \b id. Derived classes may search outside this container.
+/// The id is expected to resolve uniquely.  Internally, different length instances
+/// of a variable length data-type are stored as separate Datatype objects. A non-zero
+/// size can be given to distinguish these cases.
+/// Derived classes may search outside this container.
 /// \param n is the name of the data-type
 /// \param id is the type id of the data-type
+/// \param sz is the given distinguishign size if non-zero
 /// \return the matching Datatype object
-Datatype *TypeFactory::findById(const string &n,uint8 id)
+Datatype *TypeFactory::findById(const string &n,uint8 id,int4 sz)
 
 {
+  if (sz > 0) {				// If the id is for a "variable length" base data-type
+    id = Datatype::hashSize(id, sz);	// Construct the id for the "sized" variant
+  }
   return findByIdLocal(n,id);
 }
 
@@ -1400,7 +1686,7 @@ Datatype *TypeFactory::findById(const string &n,uint8 id)
 Datatype *TypeFactory::findByName(const string &n)
 
 {
-  return findById(n,0);
+  return findById(n,0,0);
 }
 
 /// Find data-type without reference to name, using the functional comparators
@@ -1427,7 +1713,7 @@ Datatype *TypeFactory::findAdd(Datatype &ct)
 
 {
   Datatype *newtype,*res;
-  
+
   if (ct.name.size()!=0) {	// If there is a name
     if (ct.id == 0)		// There must be an id
       throw LowlevelError("Datatype must have a valid id");
@@ -1458,7 +1744,7 @@ Datatype *TypeFactory::findAdd(Datatype &ct)
     nametree.insert(newtype);
   return newtype;
 }
-  
+
 /// This routine renames a Datatype object and fixes up cross-referencing
 /// \param ct is the data-type to rename
 /// \param n is the new name
@@ -1483,8 +1769,9 @@ Datatype *TypeFactory::setName(Datatype *ct,const string &n)
 /// \param fd is the list of fields to set
 /// \param ot is the TypeStruct object to modify
 /// \param fixedsize is 0 or the forced size of the structure
+/// \param flags are other flags to set on the structure
 /// \return true if modification was successful
-bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize)
+bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,uint4 flags)
 
 {
   int4 offset,cursize,curalign;
@@ -1529,6 +1816,7 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize)
 
   tree.erase(ot);
   ot->setFields(fd);
+  ot->flags |= (flags & (Datatype::opaque_string | Datatype::variable_length));
   if (fixedsize > 0) {		// If the caller is trying to force a size
     if (fixedsize > ot->size)	// If the forced size is bigger than the size required for fields
       ot->size = fixedsize;	//     Force the bigger size
@@ -1746,22 +2034,18 @@ TypeCode *TypeFactory::getTypeCode(const string &nm)
   return (TypeCode *) findAdd(tmp);
 }
 
-/// This creates a pointer to a given data-type.  It doesn't allow
-/// a "pointer to array" to be created however and will drill-down to
-/// the first non-array data-type
+/// This creates a pointer to a given data-type.  If the given data-type is
+/// an array, the TYPE_ARRAY property is stripped off, and a pointer to
+/// the array element data-type is returned.
 /// \param s is the size of the pointer
 /// \param pt is the pointed-to data-type
 /// \param ws is the wordsize associated with the pointer
 /// \return the TypePointer object
-TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws)
+TypePointer *TypeFactory::getTypePointerStripArray(int4 s,Datatype *pt,uint4 ws)
 
-{				// Create pointer to type -pt-
-  if (pt->getMetatype() == TYPE_ARRAY) {
-    // Do no allow pointers to array
-    do {
-      pt = ((TypeArray *)pt)->getBase();
-    } while(pt->getMetatype() == TYPE_ARRAY);
-  }
+{
+  if (pt->getMetatype() == TYPE_ARRAY)
+    pt = ((TypeArray *)pt)->getBase();		// Strip the first ARRAY type
   TypePointer tmp(s,pt,ws);
   return (TypePointer *) findAdd(tmp);
 }
@@ -1771,7 +2055,7 @@ TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws)
 /// \param pt is the pointed-to data-type
 /// \param ws is the wordsize associated with the pointer
 /// \return the TypePointer object
-TypePointer *TypeFactory::getTypePointerAbsolute(int4 s,Datatype *pt,uint4 ws)
+TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws)
 
 {
   TypePointer tmp(s,pt,ws);
@@ -1858,7 +2142,7 @@ TypeCode *TypeFactory::getTypeCode(ProtoModel *model,Datatype *outtype,
 				   bool dotdotdot)
 {
   TypeCode tc("");		// getFuncdata type with no name
-  tc.set(model,outtype,intypes,dotdotdot,getTypeVoid());
+  tc.set(this,model,outtype,intypes,dotdotdot,getTypeVoid());
   return (TypeCode *) findAdd(tc);
 }
 
@@ -1890,9 +2174,13 @@ Datatype *TypeFactory::downChain(Datatype *ptrtype,uintb &off)
   if (ptrtype->metatype != TYPE_PTR) return (Datatype *)0;
   TypePointer *ptype = (TypePointer *)ptrtype;
   Datatype *pt = ptype->ptrto;
+  // If we know we have exactly one of an array, strip the array to get pointer to element
+  bool doStrip = (pt->getMetatype() != TYPE_ARRAY);
   pt = pt->getSubType(off,&off);
   if (pt == (Datatype *)0)
     return (Datatype *)0;
+  if (doStrip)
+    return getTypePointerStripArray(ptype->size, pt, ptype->getWordSize());
   return getTypePointer(ptype->size,pt,ptype->getWordSize());
 }
 
@@ -1923,18 +2211,25 @@ Datatype *TypeFactory::restoreXmlType(const Element *el)
   Datatype *ct;
   if (el->getName() == "typeref") {
     uint8 newid = 0;
+    int4 size = -1;
     int4 num = el->getNumAttributes();
     for(int4 i=0;i<num;++i) {
-      if (el->getAttributeName(i) == "id") {
+      const string &nm(el->getAttributeName(i));
+      if (nm == "id") {
 	istringstream s(el->getAttributeValue(i));
 	s.unsetf(ios::dec | ios::hex | ios::oct);
 	s >> newid;
+      }
+      else if (nm == "size") {		// A "size" attribute indicates a "variable length" base
+	istringstream s(el->getAttributeValue(i));
+	s.unsetf(ios::dec | ios::hex | ios::oct);
+	s >> size;
       }
     }
     const string &newname( el->getAttributeValue("name"));
     if (newid == 0)		// If there was no id, use the name hash
       newid = Datatype::hashName(newname);
-    ct = findById(newname,newid);
+    ct = findById(newname,newid,size);
     if (ct == (Datatype *)0)
       throw LowlevelError("Unable to resolve type: "+newname);
     return ct;
@@ -1946,11 +2241,10 @@ Datatype *TypeFactory::restoreXmlType(const Element *el)
 ///
 /// Kludge to get flags into code pointer types, when they can't come through XML
 /// \param el is the XML element describing the Datatype
-/// \param hasThisPtr toggles "this" pointer property on "function" datatypes
 /// \param isConstructor toggles "constructor" property on "function" datatypes
 /// \param isDestructor toggles "destructor" property on "function" datatypes
 /// \return the restored Datatype object
-Datatype *TypeFactory::restoreXmlTypeWithCodeFlags(const Element *el,bool hasThisPtr,bool isConstructor,bool isDestructor)
+Datatype *TypeFactory::restoreXmlTypeWithCodeFlags(const Element *el,bool isConstructor,bool isDestructor)
 
 {
   TypePointer tp;
@@ -1971,8 +2265,8 @@ Datatype *TypeFactory::restoreXmlTypeWithCodeFlags(const Element *el,bool hasThi
     throw LowlevelError("Special type restoreXml does not see code");
   TypeCode tc("");
   tc.restoreXml(subel,*this);
-  tc.setProperties(hasThisPtr,isConstructor,isDestructor);	// Add in flags
-  tp.ptrto = findAdd(tc);					// THEN add to container
+  tc.setProperties(isConstructor,isDestructor);		// Add in flags
+  tp.ptrto = findAdd(tc);				// THEN add to container
   return findAdd(tp);
 }
 
@@ -2073,20 +2367,27 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
       int4 num = el->getNumAttributes();
       uint8 newid = 0;
       int4 structsize = 0;
+      bool isVarLength = false;
       for(int4 i=0;i<num;++i) {
-	if (el->getAttributeName(i) == "id") {
+	const string &attribName(el->getAttributeName(i));
+	if (attribName == "id") {
 	  istringstream s(el->getAttributeValue(i));
 	  s.unsetf(ios::dec | ios::hex | ios::oct);
 	  s >> newid;
 	}
-	else if (el->getAttributeName(i) == "size") {
+	else if (attribName == "size") {
 	  istringstream s(el->getAttributeValue(i));
 	  s.unsetf(ios::dec | ios::hex | ios::oct);
 	  s >> structsize;
 	}
+	else if (attribName == "varlength") {
+	  isVarLength = xml_readbool(el->getAttributeValue(i));
+	}
       }
       if (newid == 0)
 	newid = Datatype::hashName(structname);
+      if (isVarLength)
+	newid = Datatype::hashSize(newid, structsize);
       ct = findByIdLocal(structname,newid);
       bool stubfirst = false;
       if (ct == (Datatype *)0) {
@@ -2105,7 +2406,7 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
 	  throw LowlevelError("Redefinition of structure: "+structname);
       }
       else			// If structure is a placeholder stub
-	if (!setFields(ts.field,(TypeStruct *)ct,ts.size)) // Define structure now by copying fields
+	if (!setFields(ts.field,(TypeStruct *)ct,ts.size,ts.flags)) // Define structure now by copying fields
 	  throw LowlevelError("Bad structure definition");
     }
     break;

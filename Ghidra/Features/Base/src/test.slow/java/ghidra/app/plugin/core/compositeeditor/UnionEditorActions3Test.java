@@ -35,8 +35,8 @@ public class UnionEditorActions3Test extends AbstractUnionEditorTest {
 		DataType dt11 = getDataType(11);
 
 		// Make array of 2 arrays
-		invoke(arrayAction);
-		dialog = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		invoke(arrayAction, false);
+		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 2);
 		dialog = null;
@@ -58,8 +58,8 @@ public class UnionEditorActions3Test extends AbstractUnionEditorTest {
 		DataType dt3 = getDataType(3);
 
 		// Make array of 5 quadwords
-		invoke(arrayAction);
-		dialog = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		invoke(arrayAction, false);
+		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 5);
 		dialog = null;

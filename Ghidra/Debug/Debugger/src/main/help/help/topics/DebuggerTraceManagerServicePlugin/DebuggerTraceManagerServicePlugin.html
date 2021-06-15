@@ -1,0 +1,74 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Trace Service</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Trace Management</H1>
+
+    <P>This service plugin manages the collection of open traces, and it is controlled primarily
+    via the <A href="help/topics/DebuggerThreadsPlugin/DebuggerThreadsPlugin.html">Threads</A>
+    window. It maintains a list of open traces, the active trace coordinates (trace, time, thread,
+    frame), and permits saving, opening, and closing traces. To some extent, it also tracks which
+    traces are being actively recorded.</P>
+
+    <H2>Actions</H2>
+
+    <P>The plugin provides the following actions and toggles:</P>
+
+    <H3><A name="open_trace"></A>Open Trace</H3>
+
+    <P>This action is always available. It prompts for a trace in the current project and opens
+    that trace in the tool.</P>
+
+    <H3><A name="save_trace"></A>Save Trace</H3>
+
+    <P>This action is available whenever at least one trace is open and active. It saves the
+    current trace. If the current trace is not in any project, it saves it under "New Traces" of
+    the current project.</P>
+
+    <H3><A name="close_trace"></A>Close Trace</H3>
+
+    <P>This action is available whenever at least one trace is open and active. It closes the
+    current trace. <FONT color="red">WARNING:</FONT> If the trace has not been saved, it will be
+    lost, even when Save by Default is active.</P>
+
+    <H3><A name="close_all_traces"></A>Close All Traces</H3>
+
+    <P>This action is available whenever at least one trace is open. It closes all traces in this
+    tool. <FONT color="red">WARNING:</FONT> Any trace that has not been saved will be lost, even
+    when Save by Default is active.</P>
+
+    <H3><A name="close_other_traces"></A>Close Other Traces</H3>
+
+    <P>This action is available whenever there is an open trace other than the active one. It
+    closes all traces in this tool, except the active trace. <FONT color="red">WARNING:</FONT> Any
+    closed trace that has not been saved will be lost, even when Save by Default is active.</P>
+
+    <H3><A name="close_dead_traces"></A>Close Dead Traces</H3>
+
+    <P>This action is available whenever at least one trace is open. It closes all dead traces in
+    this tool. <FONT color="red">WARNING:</FONT> Any closed trace that has not been saved will be
+    lost, even when Save by Default is active.</P>
+
+    <H3><A name="save_by_default"></A>Save by Default</H3>
+
+    <P>This toggle is always available. If the tool is closed with this toggle enabled, all open
+    traces are immediately saved. Note that if Ghidra is abruptly terminated (a rare occurrence
+    under normal use), traces may not be saved. When the tool is re-opened, the open traces are
+    also restored.</P>
+
+    <H3><A name="auto_close_terminated"></A>Close Traces on Termination</H3>
+
+    <P>This toggle is always available. If a target terminates with this toggle enabled, and it was
+    being recorded into a trace, that trace is automatically closed. If Save by Default is active,
+    the trace is saved.</P>
+  </BODY>
+</HTML>

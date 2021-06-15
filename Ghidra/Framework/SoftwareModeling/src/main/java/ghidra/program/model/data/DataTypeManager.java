@@ -17,9 +17,9 @@ package ghidra.program.model.data;
 
 import java.util.*;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -96,6 +96,21 @@ public interface DataTypeManager {
 	 * @return an equivalent dataType that "belongs" to this dataTypeManager.
 	 */
 	public DataType addDataType(DataType dataType, DataTypeConflictHandler handler);
+
+	/**
+	 * Sequentially adds a collection of datatypes to this data manager.  
+	 * This method provides the added benefit of equivalence caching
+	 * for improved performance.
+	 * <br>
+	 * WARNING: This is an experimental method whoose use may cause the GUI and
+	 * task monitor to become unresponsive due to extended hold times on the manager lock.
+	 * @param dataTypes collection of datatypes
+	 * @param handler conflict handler
+	 * @param monitor task monitor
+	 * @throws CancelledException if monitor is cancelled
+	 */
+	public void addDataTypes(Collection<DataType> dataTypes, DataTypeConflictHandler handler,
+			TaskMonitor monitor) throws CancelledException;
 
 	/**
 	 * Returns an iterator over all the dataTypes in this manager
@@ -227,15 +242,17 @@ public interface DataTypeManager {
 	 * Get the category that has the given path
 	 * 
 	 * @param path the path
-	 * @return the category
+	 * @return the category if defined, otherwise null
 	 */
 	public Category getCategory(CategoryPath path);
 
 	/**
 	 * Notification when data type is changed.
 	 * @param dataType data type that is changed
+	 * @param isAutoChange true if change was an automatic change in response to 
+	 * another datatype's change (e.g., size, alignment).
 	 */
-	public void dataTypeChanged(DataType dataType);
+	public void dataTypeChanged(DataType dataType, boolean isAutoChange);
 
 	/**
 	 * Add a listener that is notified when the dataTypeManger changes.

@@ -17,6 +17,8 @@ package ghidra.util.task;
 
 import static org.junit.Assert.*;
 
+import java.util.concurrent.CountDownLatch;
+
 import org.junit.After;
 import org.junit.Test;
 
@@ -51,7 +53,7 @@ public class TaskDialogTest extends AbstractTaskTest {
 
 		waitForTask();
 
-		assertFalse(dialogSpy.wasShown());
+		assertFalse(taskDialog.wasShown());
 		assertSwingThreadBlockedForTask();
 	}
 
@@ -76,7 +78,7 @@ public class TaskDialogTest extends AbstractTaskTest {
 
 		waitForTask();
 
-		assertFalse(dialogSpy.wasShown());
+		assertFalse(taskDialog.wasShown());
 		assertNoDialogShown();
 	}
 
@@ -98,16 +100,16 @@ public class TaskDialogTest extends AbstractTaskTest {
 	 */
 	@Test
 	public void testTaskCancel() throws Exception {
-		SlowModalTask task = new SlowModalTask();
-		launchTask(task);
+		CountDownLatch latch = new CountDownLatch(1);
+		LatchedModalTask task = new LatchedModalTask(latch);
+		launchTaskWithoutBlocking(task);
 
-		dialogSpy.doShow();
+		taskDialog.doShow();
+		latch.countDown();
 
-		waitForTask();
-
-		assertFalse(dialogSpy.isCancelled());
-		dialogSpy.cancel();
-		assertTrue(dialogSpy.isCancelled());
+		assertFalse(taskDialog.isCancelled());
+		taskDialog.cancel();
+		assertTrue(taskDialog.isCancelled());
 	}
 
 	/*
@@ -119,11 +121,11 @@ public class TaskDialogTest extends AbstractTaskTest {
 		SlowModalTask task = new SlowModalTask();
 		launchTask(task);
 
-		dialogSpy.doShow();
-		dialogSpy.setCancelEnabled(false);
+		taskDialog.doShow();
+		taskDialog.setCancelEnabled(false);
 
 		waitForTask();
 
-		assertFalse(dialogSpy.isCancelEnabled());
+		assertFalse(taskDialog.isCancelEnabled());
 	}
 }

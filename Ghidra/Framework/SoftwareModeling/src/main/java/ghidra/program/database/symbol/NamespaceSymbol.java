@@ -15,7 +15,7 @@
  */
 package ghidra.program.database.symbol;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.*;
@@ -36,7 +36,7 @@ public class NamespaceSymbol extends SymbolDB {
 	 * @param addr the address for this symbol.
 	 * @param record the record for this symbol.
 	 */
-	NamespaceSymbol(SymbolManager mgr, DBObjectCache<SymbolDB> cache, Address addr, Record record) {
+	NamespaceSymbol(SymbolManager mgr, DBObjectCache<SymbolDB> cache, Address addr, DBRecord record) {
 		super(mgr, cache, addr, record);
 	}
 

@@ -20,6 +20,8 @@
  */
 package ghidra.program.model.pcode;
 
+import java.util.List;
+
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Program;
@@ -50,8 +52,9 @@ public class VarnodeTranslator {
 	 * @return Register or null if node is not a register
 	 */
 	public Register getRegister(Varnode node) {
-		if (node == null)
+		if (node == null) {
 			return null;
+		}
 
 		return language.getRegister(node.getAddress(), node.getSize());
 	}
@@ -72,9 +75,9 @@ public class VarnodeTranslator {
 	 * Get all defined registers for the program this translator was created
 	 * with.
 	 * 
-	 * @return all defined registers
+	 * @return all defined registers as unmodifiable list
 	 */
-	public Register[] getRegisters() {
+	public List<Register> getRegisters() {
 		return language.getRegisters();
 	}
 }

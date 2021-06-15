@@ -1,8 +1,7 @@
 # RV64A  Standard Extension (in addition to RV32A)
 
-
 # amoadd.d d,t,0(s) 0000302f fe00707f QWORD|DREF (64, 8) 
-:amoadd.d^aqrl rdL,rs2L,(rs1) is RV64 & RVA & rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x0 & aqrl
+:amoadd.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x0 & aqrl
 {
 	local tmprs1 = rs1;
 	local tmprs2 = rs2L;
@@ -14,7 +13,7 @@
 
 
 # amoand.d d,t,0(s) 6000302f fe00707f QWORD|DREF (64, 8) 
-:amoand.d^aqrl rdL,rs2L,(rs1) is RV64 & RVA & rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0xc & aqrl
+:amoand.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0xc & aqrl
 {
 	local tmprs1 = rs1;
 	local tmprs2 = rs2L;
@@ -26,7 +25,7 @@
 
 
 # amomax.d d,t,0(s) a000302f fe00707f QWORD|DREF (64, 8) 
-:amomax.d^aqrl rdL,rs2L,(rs1) is RV64 & RVA & rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x14 & aqrl
+:amomax.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x14 & aqrl
 {
 	local tmprs1 = rs1;
 	local tmprs2 = rs2L;
@@ -38,7 +37,7 @@
 
 
 # amomaxu.d d,t,0(s) e000302f fe00707f QWORD|DREF (64, 8) 
-:amomaxu.d^aqrl rdL,rs2L,(rs1) is RV64 & RVA & rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x1c & aqrl
+:amomaxu.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x1c & aqrl
 {
 	local tmprs1 = rs1;
 	local tmprs2 = rs2L;
@@ -50,7 +49,7 @@
 
 
 # amomin.d d,t,0(s) 8000302f fe00707f QWORD|DREF (64, 8) 
-:amomin.d^aqrl rdL,rs2L,(rs1) is RV64 & RVA & rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x10 & aqrl
+:amomin.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x10 & aqrl
 {
 	local tmprs1 = rs1;
 	local tmprs2 = rs2L;
@@ -62,7 +61,7 @@
 
 
 # amominu.d d,t,0(s) c000302f fe00707f QWORD|DREF (64, 8) 
-:amominu.d^aqrl rdL,rs2L,(rs1) is RV64 & RVA & rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x18 & aqrl
+:amominu.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x18 & aqrl
 {
 	local tmprs1 = rs1;
 	local tmprs2 = rs2L;
@@ -74,7 +73,7 @@
 
 
 # amoor.d d,t,0(s) 4000302f fe00707f QWORD|DREF (64, 8) 
-:amoor.d^aqrl rdL,rs2L,(rs1) is RV64 & RVA & rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x8 & aqrl
+:amoor.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x8 & aqrl
 {
 	local tmprs1 = rs1;
 	local tmprs2 = rs2L;
@@ -86,7 +85,7 @@
 
 
 # amoswap.d d,t,0(s) 0800302f fe00707f QWORD|DREF (64, 8) 
-:amoswap.d^aqrl rdL,rs2L,(rs1) is RV64 & RVA & rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x1 & aqrl
+:amoswap.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x1 & aqrl
 {
 	local tmprs1 = rs1;
 	local tmprs2 = rs2L;
@@ -97,7 +96,7 @@
 
 
 # amoxor.d d,t,0(s) 2000302f fe00707f QWORD|DREF (64, 8) 
-:amoxor.d^aqrl rdL,rs2L,(rs1) is RV64 & RVA & rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x4 & aqrl
+:amoxor.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x4 & aqrl
 {
 	local tmprs1 = rs1;
 	local tmprs2 = rs2L;
@@ -109,7 +108,7 @@
 
 
 # lr.d d,0(s) 1000302f fff0707f QWORD|DREF (64, 8) 
-:lr.d^aqrl rdL,(rs1) is RV64 & RVA & rs1 & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x2 & op2024=0x0 & aqrl
+:lr.d^aqrl rdL,(rs1) is rs1 & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x2 & op2024=0x0 & aqrl
 {
 	RESERVE_ADDRESS = rs1;
 	RESERVE = 1;
@@ -119,14 +118,12 @@
 
 
 # sc.d d,t,0(s) 1800302f fe00707f QWORD|DREF (64, 8) 
-:sc.d^aqrl rdL,rs2L,(rs1) is RV64 & RVA & rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x3 & aqrl
+:sc.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x3 & aqrl
 {
 	local tmprs2 = rs2L;
 	local tmprs1 = rs1;
 	rdL = 1;
-	if (RESERVE == 0) goto inst_next;
-	if (RESERVE_ADDRESS != rs1) goto inst_next;
-	if (RESERVE_LENGTH != 8) goto inst_next;
+	if ((RESERVE == 0)||(RESERVE_ADDRESS != tmprs1)||(RESERVE_LENGTH != 8)) goto inst_next;
 	*[ram]:8 tmprs1 = tmprs2;
 	rdL = 0;
 	RESERVE_ADDRESS = 0;

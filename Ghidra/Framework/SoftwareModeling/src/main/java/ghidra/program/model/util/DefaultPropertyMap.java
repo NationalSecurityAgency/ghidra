@@ -306,27 +306,9 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 	 * @throws ClassNotFoundException if the class for the object being
 	 * read is not in the class path
 	 */
-	public void restoreProperties(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+	public void restoreProperties(ObjectInputStream ois)
+			throws IOException, ClassNotFoundException {
 		propertyMgr.restoreProperties(ois);
-	}
-
-	/**
-	 * Write all properties in the map to the given output stream.
-	 * @throws IOException if there is a problem writing to the stream
-	 */
-	public void saveAll(ObjectOutputStream out) throws IOException {
-		propertyMgr.saveAll(out);
-	}
-
-	/**
-	 * Restore properties read from the given input stream.
-	 * @param in input stream 
-	 * @throws IOException if there is a problem reading from the stream
-	 * @throws ClassNotFoundException if the class for the object being
-	 * read is not in the class path
-	 */
-	public void restoreAll(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		propertyMgr.restoreAll(in);
 	}
 
 	private class AddressPropertyIterator implements AddressIterator {
@@ -350,7 +332,8 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 
 		AddressPropertyIterator(Address start, Address end, boolean forward) {
 			iter =
-				propertyMgr.getPropertyIterator(addrMap.getKey(start), addrMap.getKey(end), forward);
+				propertyMgr.getPropertyIterator(addrMap.getKey(start), addrMap.getKey(end),
+					forward);
 			this.forward = forward;
 
 		}

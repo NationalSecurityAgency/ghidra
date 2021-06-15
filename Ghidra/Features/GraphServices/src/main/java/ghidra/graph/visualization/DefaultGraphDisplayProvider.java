@@ -15,10 +15,13 @@
  */
 package ghidra.graph.visualization;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import ghidra.framework.options.Options;
+import ghidra.framework.options.PreferenceState;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.service.graph.GraphDisplay;
 import ghidra.service.graph.GraphDisplayProvider;
@@ -28,10 +31,14 @@ import ghidra.util.task.TaskMonitor;
 
 public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 
-	private Set<DefaultGraphDisplay> displays = new HashSet<>();
+	private static final String PREFERENCES_KEY = "GRAPH_DISPLAY_SERVICE";
+	private static final String DEFAULT_SATELLITE_STATE = "DEFAULT_SATELLITE_STATE";
+	private final Set<DefaultGraphDisplay> displays = new HashSet<>();
 	private PluginTool pluginTool;
 	private Options options;
-	private int displayCounter;
+	private int displayCounter = 1;
+	private boolean defaultSatelliteState;
+	private PreferenceState preferences;
 
 	@Override
 	public String getName() {
@@ -47,15 +54,22 @@ public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 	}
 
 	@Override
-	public GraphDisplay getGraphDisplay(boolean reuseGraph,
+	public GraphDisplay getGraphDisplay(boolean reuseGraph,  TaskMonitor monitor) {
+		return getGraphDisplay(reuseGraph, Collections.emptyMap(), monitor);
+	}
+
+		@Override
+	public GraphDisplay getGraphDisplay(boolean reuseGraph, Map<String, String> properties,
 			TaskMonitor monitor) {
 
 		if (reuseGraph && !displays.isEmpty()) {
-			return getVisibleGraph();
+			DefaultGraphDisplay visibleGraph = getVisibleGraph();
+			visibleGraph.restoreToDefaultSetOfActions();
+			return visibleGraph;
 		}
 
 		DefaultGraphDisplay display =
-			Swing.runNow(() -> new DefaultGraphDisplay(this, displayCounter++));
+			Swing.runNow(() -> new DefaultGraphDisplay(this, properties, displayCounter++));
 		displays.add(display);
 		return display;
 	}
@@ -64,6 +78,12 @@ public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 	public void initialize(PluginTool tool, Options graphOptions) {
 		this.pluginTool = tool;
 		this.options = graphOptions;
+		preferences = pluginTool.getWindowManager().getPreferenceState(PREFERENCES_KEY);
+		if (preferences == null) {
+			preferences = new PreferenceState();
+			pluginTool.getWindowManager().putPreferenceState(PREFERENCES_KEY, preferences);
+		}
+		defaultSatelliteState = preferences.getBoolean(DEFAULT_SATELLITE_STATE, false);
 	}
 
 	/**
@@ -73,9 +93,11 @@ public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 	 * return one from the Set via its iterator
 	 * @return a display that is showing
 	 */
-	private GraphDisplay getVisibleGraph() {
-		return displays.stream().filter(d -> d.getComponent().isShowing())
-				.findAny().orElse(displays.iterator().next());
+	private DefaultGraphDisplay getVisibleGraph() {
+		return displays.stream()
+				.filter(d -> d.getComponent().isShowing())
+				.findAny()
+				.orElse(displays.iterator().next());
 	}
 
 	@Override
@@ -100,4 +122,15 @@ public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 	public void remove(DefaultGraphDisplay defaultGraphDisplay) {
 		displays.remove(defaultGraphDisplay);
 	}
+
+	boolean getDefaultSatelliteState() {
+		return defaultSatelliteState;
+	}
+
+	void setDefaultSatelliteState(boolean b) {
+		defaultSatelliteState = b;
+		preferences.putBoolean(DEFAULT_SATELLITE_STATE, b);
+
+	}
+
 }

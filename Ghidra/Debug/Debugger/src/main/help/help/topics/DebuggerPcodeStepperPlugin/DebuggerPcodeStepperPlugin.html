@@ -1,0 +1,78 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: P-code Stepper</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: P-code Stepper</H1>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/DebuggerPcodeStepperPlugin.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>P-code is the "microcode" of Ghidra's processor specifications, compiled from its SLEIGH
+    specification. Originally designed to facilitate static analysis, it is easily applied to
+    emulation as well. Stepping each p-code operation is an effective means of debugging the
+    SLEIGH. The plugin provides two panes: 1) The p-code listing, and 2) Temporary ("Unique")
+    variables. The listing works similarly to the dynamic listing. It displays each p-code
+    operation, highlighting the current "counter", which is the next operation to be executed.
+    There is also a cursor, allowing selection of an operation. The variables view operates
+    similarly to the registers view, displaying the current value of each unique variable.</P>
+
+    <P>P-code stepping is built into the emulation framework, and so the other UI elements
+    (listing, registers, etc.) will display machine state from emulated p-code operations, i.e.,
+    partially executed machine instructions. The p-code stepper provides a means of navigating time
+    at the p-code-level and displaying p-code-level details of the machine state.</P>
+
+    <H2>Table Columns</H2>
+
+    <P>The unique variables table displays information about temporary variables, including their
+    values and user-assigned types. It has the following columns:</P>
+
+    <UL>
+      <LI>Ref - describes how the selected p-code operation uses the variable. Blank indicates no
+      reference. A left arrow &larr; indicates read. A right arrow &rarr; indicates write.</LI>
+
+      <LI>Unique - the name (address and size) of the variable.</LI>
+
+      <LI>Bytes - the value displayed as bytes in the machine's endianness.</LI>
+
+      <LI>Value - the value displayed in hexadecimal.</LI>
+
+      <LI>Type - the user-assigned, ephemeral type of the variable.</LI>
+
+      <LI>Representation - the value of the variable as interpreted by its data type.</LI>
+    </UL>
+
+    <H2>Actions</H2>
+
+    <P>The p-code stepper provides the following actions. Regarding other windows' ability to
+    interact with the target, stepping at the p-code level implies you are no longer "at the
+    present."</P>
+
+    <H3><A name="step_trace_pcode_backward"></A>Step Trace p-code Backward</H3>
+
+    <P>This action is available when the current coordinates have some positive number of p-code
+    ticks. It steps the trace backward to the previous p-code tick.</P>
+
+    <H3><A name="step_trace_pcode_forward"></A>Step Trace p-code Forward</H3>
+
+    <P>This action is available when a thread is selected. It steps the current thread forward to
+    the next p-code tick, using emulation. Note that emulation does not affect the target.
+    Furthermore, emulation of p-code user-ops, including those indicating a system call, is
+    generally not possible. Pluggable mechanisms for emulating user-ops and/or simulating a more
+    complete system is a work in progress.</P>
+  </BODY>
+</HTML>

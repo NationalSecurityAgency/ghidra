@@ -27,11 +27,9 @@ import ghidra.program.model.symbol.*;
 import ghidra.util.DataConverter;
 
 /**
- * Basic implementation for a pointer dataType 
+ * Basic implementation for a pointer dataType
  */
 public class PointerDataType extends BuiltIn implements Pointer {
-
-	private final static long serialVersionUID = 1;
 
 	public final static PointerDataType dataType = new PointerDataType();
 
@@ -48,26 +46,27 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	private String displayName;
 
 	/**
-	 * <code>isEquivalentActive</code> is used to break cyclical recursion
-	 * when performing an {@link #isEquivalent(DataType)} checks on pointers
-	 * which must also check the base datatype equivelency.
+	 * <code>isEquivalentActive</code> is used to break cyclical recursion when
+	 * performing an {@link #isEquivalent(DataType)} checks on pointers which must
+	 * also check the base datatype equivelency.
 	 */
 	private ThreadLocal<Boolean> isEquivalentActive = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
 	/**
-	 * Creates a dynamically-sized default pointer data type.
-	 * A dynamic pointer size of 4-bytes will be in used, but will adapt to a data type manager's 
-	 * data organization when resolved.
+	 * Creates a dynamically-sized default pointer data type. A dynamic pointer size
+	 * of 4-bytes will be in used, but will adapt to a data type manager's data
+	 * organization when resolved.
 	 */
 	public PointerDataType() {
 		this(null, -1, null);
 	}
 
 	/**
-	 * Creates a dynamically-sized default pointer data type.
-	 * The pointer size is established dynamically based upon the data organization 
-	 * associated with the specified dtm but can adapt to another data type manager's 
-	 * data organization when resolved.
+	 * Creates a dynamically-sized default pointer data type. The pointer size is
+	 * established dynamically based upon the data organization associated with the
+	 * specified dtm but can adapt to another data type manager's data organization
+	 * when resolved.
+	 * 
 	 * @param dtm data-type manager whose data organization should be used
 	 */
 	public PointerDataType(DataTypeManager dtm) {
@@ -75,9 +74,10 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	}
 
 	/**
-	 * Construct a dynamically-sized pointer to a referencedDataType
-	 * A dynamic pointer size of 4-bytes will be in used, but will adapt to a data type manager's 
-	 * data organization when resolved.
+	 * Construct a dynamically-sized pointer to a referencedDataType A dynamic
+	 * pointer size of 4-bytes will be in used, but will adapt to a data type
+	 * manager's data organization when resolved.
+	 * 
 	 * @param referencedDataType data type this pointer points to
 	 */
 	public PointerDataType(DataType referencedDataType) {
@@ -85,37 +85,44 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	}
 
 	/**
-	 * Construct a pointer of a specified length to a referencedDataType.
-	 * Note: It is preferred to use default sized pointers when possible (i.e., length=-1, 
-	 * see {@link #PointerDataType(DataType)}) instead of explicitly specifying 
-	 * the pointer length value.
+	 * Construct a pointer of a specified length to a referencedDataType. Note: It
+	 * is preferred to use default sized pointers when possible (i.e., length=-1,
+	 * see {@link #PointerDataType(DataType)}) instead of explicitly specifying the
+	 * pointer length value.
+	 * 
 	 * @param referencedDataType data type this pointer points to
-	 * @param length pointer length (values &lt;= 0 will result in dynamically-sized pointer)
+	 * @param length             pointer length (values &lt;= 0 will result in
+	 *                           dynamically-sized pointer)
 	 */
 	public PointerDataType(DataType referencedDataType, int length) {
 		this(referencedDataType, length, null);
 	}
 
 	/**
-	 * Construct a dynamically-sized pointer to the given data type.
-	 * The pointer size is established dynamically based upon the data organization 
-	 * associated with the specified dtm but can adapt to another data type manager's 
-	 * data organization when resolved.
+	 * Construct a dynamically-sized pointer to the given data type. The pointer
+	 * size is established dynamically based upon the data organization associated
+	 * with the specified dtm but can adapt to another data type manager's data
+	 * organization when resolved.
+	 * 
 	 * @param referencedDataType data type this pointer points to
-	 * @param dtm data-type manager whose data organization should be used
+	 * @param dtm                data-type manager whose data organization should be
+	 *                           used
 	 */
 	public PointerDataType(DataType referencedDataType, DataTypeManager dtm) {
 		this(referencedDataType, -1, dtm);
 	}
 
 	/**
-	 * Construct a pointer of a specified length to a referencedDataType.
-	 * Note: It is preferred to use default sized pointers when possible (i.e., length=-1, 
-	 * see {@link #PointerDataType(DataType, DataTypeManager)}) instead of explicitly specifying 
-	 * the pointer length value.
-	 * @param referencedDataType
-	 * @param length pointer length (-1 will result in dynamically-sized pointer)
-	 * @param dtm associated data type manager whose data organization will be used
+	 * Construct a pointer of a specified length to a referencedDataType. Note: It
+	 * is preferred to use default sized pointers when possible (i.e., length=-1,
+	 * see {@link #PointerDataType(DataType, DataTypeManager)}) instead of
+	 * explicitly specifying the pointer length value.
+	 * 
+	 * @param referencedDataType data type this pointer points to
+	 * @param length             pointer length (-1 will result in dynamically-sized
+	 *                           pointer)
+	 * @param dtm                associated data type manager whose data
+	 *                           organization will be used
 	 */
 	public PointerDataType(DataType referencedDataType, int length, DataTypeManager dtm) {
 		super(referencedDataType != null ? referencedDataType.getCategoryPath() : null,
@@ -133,7 +140,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	}
 
 	@Override
-	public final DataType clone(DataTypeManager dtm) {
+	public final Pointer clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;
 		}
@@ -147,7 +154,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
+	public boolean hasLanguageDependantLength() {
 		return length <= 0;
 	}
 
@@ -208,7 +215,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	private enum PointerReferenceClassification {
 		// NORMAL - use recursive name generation (e.g., PTR_PTR_BYTE)
 		NORMAL,
-		// LOOP - references loop back - use label prefix PTR_LOOP  
+		// LOOP - references loop back - use label prefix PTR_LOOP
 		LOOP,
 		// DEEP - references are too deep - use simple default label prefix
 		DEEP
@@ -330,9 +337,11 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	}
 
 	/**
-	 * Generate an address value based upon bytes stored at the specified buf location
-	 * @param buf memory buffer and stored pointer location
-	 * @param size pointer size in bytes
+	 * Generate an address value based upon bytes stored at the specified buf
+	 * location
+	 * 
+	 * @param buf         memory buffer and stored pointer location
+	 * @param size        pointer size in bytes
 	 * @param targetSpace address space for returned pointer
 	 * @return pointer value or null if unusable buf or data
 	 */
@@ -377,13 +386,13 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	}
 
 	/**
-	 * Read segmented address from memory.
-	 * NOTE: little-endian memory assumed.
-	 * @param buf memory buffer associated with a segmented-address space 
-	 * positioned at start of address value to be read
+	 * Read segmented address from memory. NOTE: little-endian memory assumed.
+	 * 
+	 * @param buf     memory buffer associated with a segmented-address space
+	 *                positioned at start of address value to be read
 	 * @param dataLen pointer-length (2 and 4-byte pointers supported)
-	 * @return address value returned as segmented Address object or null
-	 * for unsupported pointer length or meory access error occurs.
+	 * @return address value returned as segmented Address object or null for
+	 *         unsupported pointer length or meory access error occurs.
 	 */
 	private static Address getSegmentedAddressValue(MemBuffer buf, int dataLen) {
 		SegmentedAddress a = (SegmentedAddress) buf.getAddress();
@@ -392,11 +401,12 @@ public class PointerDataType extends BuiltIn implements Pointer {
 		try {
 			switch (dataLen) {
 				case 2: // near pointer
-					offset = (int) buf.getVarLengthUnsignedInt(0, dataLen);
+					offset = buf.getUnsignedShort(0);
 					break;
 				case 4: // far pointer
-					segment = buf.getUnsignedShort(0);
-					offset = buf.getUnsignedShort(2);
+					long value = buf.getUnsignedInt(0);
+					segment = (int) (value >> 16);
+					offset = (int) (value & 0xffff);
 					break;
 				default:
 					return null;
@@ -448,10 +458,10 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		Pointer p = (Pointer) dt;
 		DataType otherDataType = p.getDataType();
-		if (isDynamicallySized() != p.isDynamicallySized()) {
+		if (hasLanguageDependantLength() != p.hasLanguageDependantLength()) {
 			return false;
 		}
-		if (!isDynamicallySized() && (getLength() != p.getLength())) {
+		if (!hasLanguageDependantLength() && (getLength() != p.getLength())) {
 			return false;
 		}
 		if (referencedDataType == null) {
@@ -461,7 +471,8 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			return false;
 		}
 
-		// if they contain datatypes that have same ids, then we are essentially equivalent.
+		// if they contain datatypes that have same ids, then we are essentially
+		// equivalent.
 		if (DataTypeUtilities.isSameDataType(referencedDataType, otherDataType)) {
 			return true;
 		}
@@ -470,6 +481,15 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			otherDataType.getPathName())) {
 			return false;
 		}
+
+		// TODO: The pointer deep-dive equivalence checking on the referenced datatype can 
+		// cause types containing pointers (composites, functions) to conflict when in
+		// reality the referenced type simply has multiple implementations which differ.
+		// Although without doing this Ghidra may fail to resolve dependencies which differ
+		// from those already contained within a datatype manager.
+		// Ghidra's rigid datatype relationships prevent the flexibility to handle 
+		// multiple implementations of a named datatype without inducing a conflicted
+		// datatype hierarchy.
 
 		if (isEquivalentActive.get()) {
 			return true;
@@ -538,9 +558,10 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 	/**
 	 * Get a pointer data-type instance with a default size
-	 * @param dt data-type referenced by pointer
-	 * @param dtm program data-type manager (required)
-	 * a generic data-type will be returned if possible.
+	 * 
+	 * @param dt  data-type referenced by pointer
+	 * @param dtm program data-type manager (required) a generic data-type will be
+	 *            returned if possible.
 	 * @return signed integer data type
 	 */
 	public static Pointer getPointer(DataType dt, DataTypeManager dtm) {
@@ -548,14 +569,14 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	}
 
 	/**
-	 * Get a pointer data-type instance of the requested size.
-	 * NOTE: The returned data-type will not be associated with any 
-	 * particular data-type-manager and may therefore not utilize 
-	 * dynamically-sized-pointers when a valid pointerSize is specified.
-	 * If an invalid pointerSize is specified, a dynamically-size pointer
-	 * will be returned whose length is based upon the default-data-organization.
+	 * Get a pointer data-type instance of the requested size. NOTE: The returned
+	 * data-type will not be associated with any particular data-type-manager and
+	 * may therefore not utilize dynamically-sized-pointers when a valid pointerSize
+	 * is specified. If an invalid pointerSize is specified, a dynamically-size
+	 * pointer will be returned whose length is based upon the
+	 * default-data-organization.
 	 * 
-	 * @param dt data-type referenced by pointer
+	 * @param dt          data-type referenced by pointer
 	 * @param pointerSize pointer size
 	 * @return signed integer data type
 	 */
@@ -578,7 +599,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	@Override
 	public String getName() {
 		if (referencedDataType != null) {
-			// referencedDataType may have had name set, so re-create this pointer name. 
+			// referencedDataType may have had name set, so re-create this pointer name.
 			name = constructUniqueName(referencedDataType, length);
 		}
 		return super.getName();

@@ -17,48 +17,42 @@ package ghidra.program.model.listing;
 
 /**
  * Represents a function tag object that can be associated with 
- * functions. This maps to the
- * {@link ghidra.program.database.function.FunctionTagAdapter FunctionTagAdapter} table.
+ * functions. This maps to the  {@code FunctionTagAdapter} table.
  */
 public interface FunctionTag extends Comparable<FunctionTag> {
 
 	/**
-	 * Returns the id of the item. 
-	 * 
-	 * @return
+	 * Returns the id of the item
+	 * @return the id of the item
 	 */
 	public long getId();
 
 	/**
-	 * Returns the tag name.
-	 * 
-	 * @return
+	 * Returns the tag name
+	 * @return the tag name
 	 */
 	public String getName();
 
 	/**
-	 * Returns the tag comment.
-	 * 
-	 * @return
+	 * Returns the tag comment
+	 * @return the tag comment
 	 */
 	public String getComment();
 
 	/**
-	 * Sets the name of the tag.
-	 * 
+	 * Sets the name of the tag
 	 * @param name the tag name
 	 */
-	void setName(String name);
+	public void setName(String name);
 
 	/**
-	 * Sets the comment for this tag.
-	 * 
+	 * Sets the comment for this tag
 	 * @param comment the tag comment
 	 */
-	void setComment(String comment);
+	public void setComment(String comment);
 
 	/**
-	 * Deletes this tag from the program. 
+	 * Deletes this tag from the program 
 	 */
-	void delete();
+	public void delete();
 }

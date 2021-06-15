@@ -50,11 +50,9 @@
 
 <tocroot>
 
-	<tocref id="Graphing">
-		<tocdef id="Graph Services" text="Graph Services"> 
-			<tocdef id="Default Graph Display" text="Default Graph Display"  target="help/topics/GraphServices/GraphDisplay.htm" />
-			<tocdef id="Exporting a Graph" text="Exporting a Graph"  target="help/topics/GraphServices/GraphExport.htm" />
-		</tocdef>
+	<tocref id="Graph Services">
+		<tocdef id="Default Graph Display" text="Default Graph Display"  target="help/topics/GraphServices/GraphDisplay.htm" />			
+		<tocdef id="Exporting a Graph" text="Exporting a Graph"  target="help/topics/GraphServices/GraphExport.htm" />
 	</tocref>
 	
 </tocroot>             

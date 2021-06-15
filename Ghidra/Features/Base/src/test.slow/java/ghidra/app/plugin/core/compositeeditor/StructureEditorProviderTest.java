@@ -755,8 +755,4 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		assertEquals("325", model.getLengthAsString());
 	}
 
-	private void runSwingLater(Runnable r) {
-		runSwing(r, false);
-	}
-
 }

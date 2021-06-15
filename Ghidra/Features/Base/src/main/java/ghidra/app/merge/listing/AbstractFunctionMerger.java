@@ -39,7 +39,6 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.DiffUtility;
 import ghidra.program.util.ProgramMerge;
 import ghidra.util.*;
-import ghidra.util.datastruct.LongObjectHashtable;
 import ghidra.util.datastruct.ObjectIntHashtable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -122,9 +121,9 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 
 	protected AddressFactory resultAddressFactory;
 
-	protected LongObjectHashtable<DataType> latestResolvedDts; // maps data type ID -> resolved Data type
-	protected LongObjectHashtable<DataType> myResolvedDts; // maps data type ID -> resolved Data type
-	protected LongObjectHashtable<DataType> origResolvedDts;
+	protected Map<Long, DataType> latestResolvedDts; // maps data type ID -> resolved Data type
+	protected Map<Long, DataType> myResolvedDts; // maps data type ID -> resolved Data type
+	protected Map<Long, DataType> origResolvedDts;
 
 	// mergePanel is a panel for listing merge conflicts. 
 	// listings in CENTER, conflictInfoPanel in NORTH, mergeConflicts in SOUTH.
@@ -267,9 +266,10 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 				// See if both changed to same value.
 				switch (type) {
 					case FUNC_RETURN_ADDRESS_OFFSET:
-						return (latestStack.getReturnAddressOffset() == myStack.getReturnAddressOffset())
-								? 0
-								: type;
+						return (latestStack.getReturnAddressOffset() == myStack
+								.getReturnAddressOffset())
+										? 0
+										: type;
 // For now, we are not allowing you to set the parameter offset or local size outright.
 //					case FUNC_PARAMETER_OFFSET:
 //						return (latestStack.getParameterOffset() == myStack.getParameterOffset()) ? 0
@@ -277,9 +277,10 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 //					case FUNC_LOCAL_SIZE:
 //						return (latestStack.getLocalSize() == myStack.getLocalSize()) ? 0 : type;
 					case FUNC_STACK_PURGE_SIZE:
-						return (functions[LATEST].getStackPurgeSize() == functions[MY].getStackPurgeSize())
-								? 0
-								: type;
+						return (functions[LATEST].getStackPurgeSize() == functions[MY]
+								.getStackPurgeSize())
+										? 0
+										: type;
 					case FUNC_NAME:
 						return hasUnresolvedFunctionNameConflict(functions, monitor) ? type : 0;
 					case FUNC_INLINE:
@@ -292,12 +293,14 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 //						return (functions[LATEST].hasCustomVariableStorage() == functions[MY].hasCustomVariableStorage()) ? 0
 //								: type;
 					case FUNC_CALLING_CONVENTION:
-						return (functions[LATEST].getCallingConventionName().equals(
-							functions[MY].getCallingConventionName())) ? 0 : type;
+						return (functions[LATEST].getCallingConventionName()
+								.equals(
+									functions[MY].getCallingConventionName())) ? 0 : type;
 					case FUNC_SIGNATURE_SOURCE:
-						return (functions[LATEST].getSignatureSource() == functions[MY].getSignatureSource())
-								? 0
-								: type;
+						return (functions[LATEST].getSignatureSource() == functions[MY]
+								.getSignatureSource())
+										? 0
+										: type;
 					default:
 						throw new IllegalArgumentException("type = " + type);
 				}

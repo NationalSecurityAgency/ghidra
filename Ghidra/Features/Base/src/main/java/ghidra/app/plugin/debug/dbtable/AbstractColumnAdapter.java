@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,15 @@
  */
 package ghidra.app.plugin.debug.dbtable;
 
-import db.Record;
+import db.DBRecord;
 
 abstract class AbstractColumnAdapter {
 
 	abstract Class<?> getValueClass();
 
-	abstract Object getKeyValue(Record rec);
+	abstract Object getKeyValue(DBRecord rec);
 
-	abstract Object getValue(Record rec, int col);
+	abstract Object getValue(DBRecord rec, int col);
 
 	protected String getByteString(byte b) {
 		String str = Integer.toHexString(b);

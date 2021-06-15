@@ -28,12 +28,14 @@ import docking.widgets.tree.*;
 import docking.widgets.tree.internal.DefaultGTreeDataTransformer;
 import docking.widgets.tree.support.GTreeRenderer;
 import ghidra.app.plugin.core.datamgr.*;
-import ghidra.app.plugin.core.datamgr.archive.*;
+import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
+import ghidra.app.plugin.core.datamgr.archive.FileArchive;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.listing.Program;
 import ghidra.util.UniversalID;
 import ghidra.util.task.TaskMonitor;
 import resources.MultiIcon;
@@ -155,6 +157,10 @@ public class DataTypeArchiveGTree extends GTree {
 		reloadTree();
 	}
 
+	public Program getProgram() {
+		return plugin.getProgram();
+	}
+
 	private void reloadTree() {
 		GTreeState treeState = getTreeState();
 
@@ -269,7 +275,7 @@ public class DataTypeArchiveGTree extends GTree {
 		}
 
 		private void addCompositeStrings(Composite composite, List<String> results) {
-			DataTypeComponent[] components = composite.getComponents();
+			DataTypeComponent[] components = composite.getDefinedComponents();
 			for (DataTypeComponent component : components) {
 				String fieldName = component.getFieldName();
 				if (fieldName != null) {
@@ -332,8 +338,8 @@ public class DataTypeArchiveGTree extends GTree {
 			multiIcon.addIcon(new CenterVerticalIcon(icon, ICON_HEIGHT));
 
 			if (value instanceof DataTypeNode) {
-				String displayName = ((DataTypeNode) value).getDisplayName();
-				label.setText(displayName);
+				String displayText = ((DataTypeNode) value).getDisplayText();
+				label.setText(displayText);
 			}
 			else if (value instanceof DomainFileArchiveNode) {
 				DomainFileArchiveNode node = (DomainFileArchiveNode) value;

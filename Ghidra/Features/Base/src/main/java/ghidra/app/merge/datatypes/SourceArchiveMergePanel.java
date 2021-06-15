@@ -28,8 +28,8 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GIconLabel;
 import ghidra.app.merge.MergeConstants;
 import ghidra.app.merge.util.ConflictCountPanel;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.framework.data.DomainObjectMergeManager;
+import ghidra.program.model.data.SourceArchive;
 import resources.ResourceManager;
 
 /**

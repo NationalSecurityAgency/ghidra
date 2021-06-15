@@ -1,6 +1,5 @@
-define endian=big;
-define alignment=2;
-
+@define ENDIAN "big"
+@define ALIGN "2"
 @define SIZE "4"
 @define WORDSIZE "2"
 

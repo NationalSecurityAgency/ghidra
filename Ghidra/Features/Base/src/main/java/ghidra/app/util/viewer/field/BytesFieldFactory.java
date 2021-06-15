@@ -292,7 +292,7 @@ public class BytesFieldFactory extends FieldFactory {
 			return null; // e.g., union
 		}
 		Structure struct = (Structure) baseDataType;
-		if (!struct.isInternallyAligned()) {
+		if (!struct.isPackingEnabled()) {
 			return null;
 		}
 

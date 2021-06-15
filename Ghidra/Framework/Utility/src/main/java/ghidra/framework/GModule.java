@@ -161,6 +161,12 @@ public class GModule {
 				}
 			}
 			else {
+
+				// Ignore ._ resource fork files
+				if (child.getName().startsWith("._")) {
+					continue;
+				}
+
 				if (child.getName().endsWith(extension)) {
 					accumulator.add(child);
 				}

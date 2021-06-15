@@ -119,4 +119,10 @@ public interface ListingModel {
 	public void dispose();
 
 	public AddressSet adjustAddressSetToCodeUnitBoundaries(AddressSet addressSet);
+
+	/**
+	 * Makes a copy of this model.
+	 * @return a copy of this model.
+	 */
+	public ListingModel copy();
 }

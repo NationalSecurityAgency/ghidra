@@ -15,8 +15,7 @@
  */
 package ghidra.util.state;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.math.BigInteger;
 
@@ -133,7 +132,7 @@ public class ContextStateTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testStoreConstantWithEntryContext() {
 
-		ProgramContextImpl ctx = new ProgramContextImpl(lang.getRegisters());
+		ProgramContextImpl ctx = new ProgramContextImpl(lang);
 		ctx.setDefaultValue(
 			new RegisterValue(lang.getRegister("EAX"), new BigInteger("fedcba98", 16)), addr(1000),
 			addr(1000));
@@ -281,30 +280,30 @@ public class ContextStateTest extends AbstractGhidraHeadedIntegrationTest {
 			new Varnode[] { regEAX, new Varnode(addrFactory.getConstantAddress(16), 4) }, regEBX);
 		VarnodeOperation addEAX16op = new VarnodeOperation(addEAX16, addEAX16.getInputs());
 
-		state1.store(addrFactory.getDefaultAddressSpace().getUniqueSpaceID(), addEAX16op,
+		state1.store(addrFactory.getDefaultAddressSpace().getSpaceID(), addEAX16op,
 			new Varnode(addrFactory.getConstantAddress(0x12345678), 4), 4);
 
 		assertEquals(new Varnode(addrFactory.getConstantAddress(0x12345678), 4),
-			state1.get(addrFactory.getDefaultAddressSpace().getUniqueSpaceID(), addEAX16op, 4));
+			state1.get(addrFactory.getDefaultAddressSpace().getSpaceID(), addEAX16op, 4));
 
 		assertEquals(new Varnode(addrFactory.getConstantAddress(0x345678), 3),
-			state1.get(addrFactory.getDefaultAddressSpace().getUniqueSpaceID(), addEAX16op, 3));
+			state1.get(addrFactory.getDefaultAddressSpace().getSpaceID(), addEAX16op, 3));
 
 		assertEquals(new Varnode(addrFactory.getConstantAddress(0x5678), 2),
-			state1.get(addrFactory.getDefaultAddressSpace().getUniqueSpaceID(), addEAX16op, 2));
+			state1.get(addrFactory.getDefaultAddressSpace().getSpaceID(), addEAX16op, 2));
 
 		assertEquals(new Varnode(addrFactory.getConstantAddress(0x78), 1),
-			state1.get(addrFactory.getDefaultAddressSpace().getUniqueSpaceID(), addEAX16op, 1));
+			state1.get(addrFactory.getDefaultAddressSpace().getSpaceID(), addEAX16op, 1));
 
 		PcodeOp addEAX18 = new PcodeOp(addr(1000), 0, PcodeOp.INT_ADD,
 			new Varnode[] { regEAX, new Varnode(addrFactory.getConstantAddress(18), 4) }, regEBX);
 		VarnodeOperation addEAX18op = new VarnodeOperation(addEAX18, addEAX18.getInputs());
 
 		assertEquals(new Varnode(addrFactory.getConstantAddress(0x1234), 2),
-			state1.get(addrFactory.getDefaultAddressSpace().getUniqueSpaceID(), addEAX18op, 2));
+			state1.get(addrFactory.getDefaultAddressSpace().getSpaceID(), addEAX18op, 2));
 
 		assertEquals(new Varnode(addrFactory.getConstantAddress(0x34), 1),
-			state1.get(addrFactory.getDefaultAddressSpace().getUniqueSpaceID(), addEAX18op, 1));
+			state1.get(addrFactory.getDefaultAddressSpace().getSpaceID(), addEAX18op, 1));
 
 	}
 

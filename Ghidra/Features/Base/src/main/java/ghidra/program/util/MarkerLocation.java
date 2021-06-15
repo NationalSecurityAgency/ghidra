@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,37 +15,47 @@
  */
 package ghidra.program.util;
 
+import java.io.Serializable;
+import java.util.Objects;
+
 import ghidra.app.services.MarkerSet;
 import ghidra.program.model.address.Address;
-
-import java.io.Serializable;
+import ghidra.program.model.listing.Program;
 
 /**
- * Object generated when pointer is over a particular marker in the browser
- * navigation bars.
- * 
- * 
- *
+ * Marker location in the tool navigation bars
  */
 public class MarkerLocation implements Serializable {
-	
+
 	private int x;
 	private int y;
 	private Address addr;
-	private MarkerSet mgr;
-    
+	private MarkerSet markers;
+	private final Program program;
+
 	/**
 	 * Construct a new MarkerLocation.
-	 * @param mgr marker manager service
+	 * @param markers marker manager service
+	 * @param program program containing the address
 	 * @param addr address of the location
 	 * @param x x position of the popup point on the screen
 	 * @param y y position of the popup point on the screen
 	 */
-	public MarkerLocation(MarkerSet mgr, Address addr, int x, int y) {
-		this.mgr = mgr;
+	public MarkerLocation(MarkerSet markers, Program program, Address addr, int x, int y) {
+		this.markers = markers;
+		this.program = program;
 		this.addr = addr;
 		this.x = x;
 		this.y = y;
+	}
+
+	/**
+	 * Returns the program.
+	 * 
+	 * @return the program for this marker location
+	 */
+	public Program getProgram() {
+		return program;
 	}
 
 	/**
@@ -64,7 +73,7 @@ public class MarkerLocation implements Serializable {
 	 * @return the marker manager
 	 */
 	public MarkerSet getMarkerManager() {
-		return mgr;
+		return markers;
 	}
 
 	/**
@@ -84,29 +93,45 @@ public class MarkerLocation implements Serializable {
 	public int getY() {
 		return y;
 	}
-    
-    /**
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
+
 	@Override
-    public boolean equals(Object obj) {
-		if(obj == null) {
-			return false;
-		}
-		if(this == obj) {
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((addr == null) ? 0 : addr.hashCode());
+		result = prime * result + ((markers == null) ? 0 : markers.hashCode());
+		result = prime * result + x;
+		result = prime * result + y;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
 			return true;
 		}
-        if (getClass() != obj.getClass()) {
+		if (obj == null) {
 			return false;
 		}
-        MarkerLocation ml = (MarkerLocation) obj;
-        if (addr.equals(ml.addr)) {
-        	if (x == ml.x && y == ml.y) {
-        		if (mgr == ml.mgr) {
-        			return true;
-        		}
-        	}
-        }
-        return false;
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+
+		MarkerLocation other = (MarkerLocation) obj;
+		if (!Objects.equals(addr, other.addr)) {
+			return false;
+		}
+
+		if (!Objects.equals(markers, other.markers)) {
+			return false;
+		}
+
+		if (x != other.x) {
+			return false;
+		}
+		if (y != other.y) {
+			return false;
+		}
+		return true;
 	}
 }

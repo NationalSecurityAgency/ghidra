@@ -393,21 +393,22 @@ public class RowObjectSelectionManager<T> extends DefaultListSelectionModel
 			return; // either no previous selection, or selection has been filtered out
 		}
 
-		restoreSelectedRows(selectedViewRows);
+		if (restoreSelectedRows(selectedViewRows)) {
 
-		// scroll to the beginning of the selection
-		Rectangle cellRect = table.getCellRect(selectedViewRows[0], 0, true);
-		if (cellRect != null) {
-			table.scrollRectToVisible(cellRect);
+			// scroll to the beginning of the selection
+			Rectangle cellRect = table.getCellRect(selectedViewRows[0], 0, true);
+			if (cellRect != null) {
+				table.scrollRectToVisible(cellRect);
+			}
 		}
 	}
 
-	private void restoreSelectedRows(int[] rows) {
+	private boolean restoreSelectedRows(int[] rows) {
 		traceRows("restoreSelectedRows(): ", rows);
 		if (ArrayUtilities.isArrayPrimativeEqual(rows, table.getSelectedRows())) {
 			trace("\tselection hasn't changed--nothing to do");
 			// the selection is the same, nothing to change; don't send out excess events
-			return;
+			return false;
 		}
 
 		trace("\tpreparing to restore selection");
@@ -425,6 +426,7 @@ public class RowObjectSelectionManager<T> extends DefaultListSelectionModel
 		restoringSelection = false;
 		notifyRestoringSelection(false);
 		trace("\tdone restoring selection");
+		return true;
 	}
 
 	private void notifyRestoringSelection(boolean isPreRestore) {

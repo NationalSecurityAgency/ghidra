@@ -1,9 +1,3 @@
-grammar.cc
-pcodeparse.cc
-slghparse.cc
-slghparse.tab.hh
-slghscan.cc
-xml.cc
 coreext_*
 ghidraext_*
 consoleext_*
@@ -13,9 +7,11 @@ decomp_dbg
 decomp_opt
 ghidra_dbg
 ghidra_opt
+ghidra_test_dbg
 sleigh_dbg
 com_dbg
 com_opt
+test_dbg
 ghi_dbg
 ghi_opt
 sla_dbg

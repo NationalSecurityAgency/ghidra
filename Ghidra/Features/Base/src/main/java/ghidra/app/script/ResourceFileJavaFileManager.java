@@ -26,17 +26,26 @@ import generic.jar.ResourceFile;
 import ghidra.util.exception.AssertException;
 
 /**
- * A {@link JavaFileManager} that works with Ghidra's {@link ResourceFile}'s.
- * <p>
- * This class is used to dynamically compile Ghidra scripts.
+ * A {@link JavaFileManager} that works with Ghidra's {@link ResourceFile}s.
+ * 
+ * <p>This class is used to dynamically compile Ghidra scripts.
  */
 public class ResourceFileJavaFileManager implements JavaFileManager {
 
 	private StandardJavaFileManager fileManager;
 	private List<ResourceFile> sourceDirs;
+	private Set<ResourceFile> filesToAvoid;
 
-	public ResourceFileJavaFileManager(List<ResourceFile> sourceDirs) {
+	/**
+	 * Create a {@link JavaFileManager} for use by the {@link JavaCompiler}.
+	 * 
+	 * @param sourceDirs the directories containing source
+	 * @param filesToAvoid known "bad" files to hide from the compiler
+	 */
+	public ResourceFileJavaFileManager(List<ResourceFile> sourceDirs,
+			Set<ResourceFile> filesToAvoid) {
 		this.sourceDirs = sourceDirs;
+		this.filesToAvoid = filesToAvoid;
 		JavaCompiler javaCompiler = ToolProvider.getSystemJavaCompiler();
 		if (javaCompiler == null) {
 			throw new AssertException("Can't find java compiler");
@@ -59,7 +68,6 @@ public class ResourceFileJavaFileManager implements JavaFileManager {
 	public Iterable<JavaFileObject> list(Location location, String packageName, Set<Kind> kinds,
 			boolean recurse) throws IOException {
 
-		Iterable<JavaFileObject> result = fileManager.list(location, packageName, kinds, recurse);
 		if (location.equals(StandardLocation.SOURCE_PATH)) {
 			String relativePath = packageName.replace('.', '/');
 			List<JavaFileObject> newResult = new ArrayList<>();
@@ -70,15 +78,15 @@ public class ResourceFileJavaFileManager implements JavaFileManager {
 					gatherFiles(sourceDir, packageDir, newResult, kinds, recurse);
 				}
 			}
-			result.forEach(newResult::add);
-			result = newResult;
+			return newResult;
 		}
-		return result;
+		return fileManager.list(location, packageName, kinds, recurse);
 	}
 
 	private void gatherFiles(ResourceFile root, ResourceFile file, List<JavaFileObject> accumulator,
 			Set<Kind> kinds, boolean recurse) {
-		ResourceFile[] listFiles = file.listFiles();
+		List<ResourceFile> listFiles = new ArrayList<>(Arrays.asList(file.listFiles()));
+		listFiles.removeAll(filesToAvoid);
 		for (ResourceFile resourceFile : listFiles) {
 			if (resourceFile.isDirectory()) {
 				if (recurse) {
@@ -153,7 +161,7 @@ public class ResourceFileJavaFileManager implements JavaFileManager {
 	@Override
 	public JavaFileObject getJavaFileForInput(Location location, String className, Kind kind)
 			throws IOException {
-		if (!location.equals(StandardLocation.SOURCE_PATH) || className.equals("module-info")) {
+		if (!location.equals(StandardLocation.SOURCE_PATH) || "module-info".equals(className)) {
 			// Our Ghidra scripts will not use Java 9's module definition file (module-info.java).
 			return fileManager.getJavaFileForInput(location, className, kind);
 		}

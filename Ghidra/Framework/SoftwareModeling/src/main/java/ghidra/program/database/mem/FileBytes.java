@@ -39,7 +39,7 @@ public class FileBytes {
 	private DBBuffer[] layeredBuffers;
 	private boolean invalid = false;
 
-	public FileBytes(FileBytesAdapter adapter, Record record) throws IOException {
+	public FileBytes(FileBytesAdapter adapter, DBRecord record) throws IOException {
 		this.adapter = adapter;
 		this.id = record.getKey();
 		this.filename = record.getString(FileBytesAdapter.FILENAME_COL);
@@ -48,7 +48,7 @@ public class FileBytes {
 		refresh(record);
 	}
 
-	synchronized boolean refresh(Record record) throws IOException {
+	synchronized boolean refresh(DBRecord record) throws IOException {
 
 		String f = record.getString(FileBytesAdapter.FILENAME_COL);
 		long offset = record.getLongValue(FileBytesAdapter.OFFSET_COL);

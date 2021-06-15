@@ -24,7 +24,8 @@ import ghidra.feature.vt.gui.plugin.*;
 import ghidra.feature.vt.gui.task.CreateManualMatchTask;
 import ghidra.program.model.listing.Function;
 import ghidra.util.Msg;
-import ghidra.util.task.*;
+import ghidra.util.task.Task;
+import ghidra.util.task.TaskListener;
 
 public abstract class AbstractManualMatchFromToolsAction extends DockingAction {
 
@@ -54,7 +55,7 @@ public abstract class AbstractManualMatchFromToolsAction extends DockingAction {
 			return;
 		}
 
-		final CreateManualMatchTask task = getTask(controller, sourceFunction, destinationFunction);
+		CreateManualMatchTask task = getTask(controller, sourceFunction, destinationFunction);
 
 		task.addTaskListener(new TaskListener() {
 			@Override
@@ -68,7 +69,7 @@ public abstract class AbstractManualMatchFromToolsAction extends DockingAction {
 			}
 		});
 
-		TaskLauncher.launch(task);
+		plugin.getController().runVTTask(task);
 	}
 
 	protected abstract CreateManualMatchTask getTask(VTController controller,

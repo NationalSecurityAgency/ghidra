@@ -26,8 +26,7 @@ import ghidra.app.services.GraphDisplayBroker;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.service.graph.GraphDisplay;
-import ghidra.service.graph.GraphDisplayProvider;
+import ghidra.service.graph.*;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.GraphException;
 import ghidra.util.task.TaskMonitor;
@@ -50,6 +49,7 @@ public class GraphDisplayBrokerPlugin extends Plugin
 	private GraphDisplayProvider defaultGraphDisplayProvider;
 	private List<GraphDisplayBrokerListener> listeners = new ArrayList<>();
 	private List<GraphSelectionAction> actions = new ArrayList<>();
+	private List<AttributedGraphExporter> exporters;
 
 	public GraphDisplayBrokerPlugin(PluginTool tool) {
 		super(tool);
@@ -147,10 +147,10 @@ public class GraphDisplayBrokerPlugin extends Plugin
 	}
 
 	@Override
-	public GraphDisplay getDefaultGraphDisplay(boolean reuseGraph,
-			TaskMonitor monitor) throws GraphException {
+	public GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, Map<String, String> properties,
+											   TaskMonitor monitor) throws GraphException {
 		if (defaultGraphDisplayProvider != null) {
-			return defaultGraphDisplayProvider.getGraphDisplay(reuseGraph, monitor);
+			return defaultGraphDisplayProvider.getGraphDisplay(reuseGraph, properties, monitor);
 		}
 		return null;
 	}
@@ -201,6 +201,25 @@ public class GraphDisplayBrokerPlugin extends Plugin
 		for (GraphDisplayProvider provider : graphDisplayProviders) {
 			if (provider.getName().equals(providerName)) {
 				return provider;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public List<AttributedGraphExporter> getGraphExporters() {
+		if (exporters == null) {
+			exporters = ClassSearcher.getInstances(AttributedGraphExporter.class);
+		}
+		return Collections.unmodifiableList(exporters);
+	}
+
+	@Override
+	public AttributedGraphExporter getGraphExporters(String exporterName) {
+		List<AttributedGraphExporter> graphExporters = getGraphExporters();
+		for (AttributedGraphExporter exporter : graphExporters) {
+			if (exporter.getName().equals(exporterName)) {
+				return exporter;
 			}
 		}
 		return null;

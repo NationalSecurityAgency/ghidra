@@ -26,7 +26,6 @@ import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.data.ProgramDataTypeManager;

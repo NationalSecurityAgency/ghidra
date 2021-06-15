@@ -57,6 +57,7 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionErrorTooManyInstructions());
   registerOption(new OptionDefaultPrototype());
   registerOption(new OptionInferConstPtr());
+  registerOption(new OptionForLoops());
   registerOption(new OptionInline());
   registerOption(new OptionNoReturn());
   registerOption(new OptionStructAlign());
@@ -80,6 +81,8 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionJumpLoad());
   registerOption(new OptionToggleRule());
   registerOption(new OptionAliasBlock());
+  registerOption(new OptionMaxInstruction());
+  registerOption(new OptionNamespaceStrategy());
 }
 
 OptionDatabase::~OptionDatabase(void)
@@ -240,6 +243,24 @@ string OptionInferConstPtr::apply(Architecture *glb,const string &p1,const strin
     res = "Constant pointers must now be set explicitly";
     glb->infer_pointers = false;
   }
+  return res;
+}
+
+/// \class OptionForLoops
+/// \brief Toggle whether the decompiler attempts to recover \e for-loop variables
+///
+/// Setting the first parameter to "on" causes the decompiler to search for a suitable loop variable
+/// controlling iteration of a \e while-do block.  The \e for-loop displays the following on a single line:
+///    - loop variable initializer (optional)
+///    - loop condition
+///    - loop variable incrementer
+///
+string OptionForLoops::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  glb->analyze_for_loops = onOrOff(p1);
+
+  string res = "Recovery of for-loops is " + p1;
   return res;
 }
 
@@ -815,4 +836,44 @@ string OptionAliasBlock::apply(Architecture *glb,const string &p1,const string &
   if (oldVal == glb->alias_block_level)
     return "Alias block level unchanged";
   return "Alias block level set to " + p1;
+}
+
+/// \class OptionMaxInstruction
+/// \brief Maximum number of instructions that can be processed in a single function
+///
+/// The first parameter is an integer specifying the maximum.
+string OptionMaxInstruction::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  if (p1.size() == 0)
+    throw ParseError("Must specify number of instructions");
+
+  int4 newMax = -1;
+  istringstream s1(p1);
+  s1.unsetf(ios::dec | ios::hex | ios::oct); // Let user specify base
+  s1 >> newMax;
+  if (newMax < 0)
+    throw ParseError("Bad maxinstruction parameter");
+  glb->max_instructions = newMax;
+  return "Maximum instructions per function set";
+}
+
+/// \class OptionNamespaceStrategy
+/// \brief How should namespace tokens be displayed
+///
+/// The first parameter gives the strategy identifier, mapping to PrintLanguage::namespace_strategy.
+string OptionNamespaceStrategy::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  PrintLanguage::namespace_strategy strategy;
+  if (p1 == "minimal")
+    strategy = PrintLanguage::MINIMAL_NAMESPACES;
+  else if (p1 == "all")
+    strategy = PrintLanguage::ALL_NAMESPACES;
+  else if (p1 == "none")
+    strategy = PrintLanguage::NO_NAMESPACES;
+  else
+    throw ParseError("Must specify a valid strategy");
+  glb->print->setNamespaceStrategy(strategy);
+  return "Namespace strategy set";
 }

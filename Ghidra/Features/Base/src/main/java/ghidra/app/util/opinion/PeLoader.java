@@ -27,6 +27,8 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.app.util.bin.format.pe.*;
+import ghidra.app.util.bin.format.pe.ImageCor20Header.ImageCor20Flags;
+import ghidra.app.util.bin.format.pe.ImageRuntimeFunctionEntries._IMAGE_RUNTIME_FUNCTION_ENTRY;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.bin.format.pe.debug.DebugDirectoryParser;
@@ -34,6 +36,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
+import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -140,11 +143,13 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 			processExports(optionalHeader, program, monitor, log);
 			processImports(optionalHeader, program, monitor, log);
+			processDelayImports(optionalHeader, program, monitor, log);
 			processRelocations(optionalHeader, program, monitor, log);
 			processDebug(optionalHeader, fileHeader, sectionToAddress, program, monitor);
 			processProperties(optionalHeader, program, monitor);
 			processComments(program.getListing(), monitor);
 			processSymbols(fileHeader, sectionToAddress, program, monitor, log);
+			processImageRuntimeFunctionEntries(fileHeader, program, monitor, log);
 
 			processEntryPoints(ntHeader, program, monitor);
 			String compiler = CompilerOpinion.getOpinion(pe, provider).toString();
@@ -182,7 +187,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
 		if (options != null) {
 			for (Option option : options) {
 				String name = option.getName();
@@ -244,21 +250,44 @@ public class PeLoader extends AbstractPeDebugLoader {
 				setComment(CodeUnit.EOL_COMMENT, start, section.getName());
 				start = start.add(dt.getLength());
 			}
-
-//			for (int i = 0; i < datadirs.length; ++i) {
-//				if (datadirs[i] == null || datadirs[i].getSize() == 0) {
-//					continue;
-//				}
-//
-//				if (datadirs[i].hasParsedCorrectly()) {
-//					start = datadirs[i].getMarkupAddress(program, true);
-//					dt = datadirs[i].toDataType();
-//					DataUtilities.createData(program, start, dt, true, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-//				}
-//			}
 		}
 		catch (Exception e1) {
 			Msg.error(this, "Error laying down header structures " + e1);
+		}
+	}
+
+	private void processImageRuntimeFunctionEntries(FileHeader fileHeader, Program program,
+			TaskMonitor monitor, MessageLog log) {
+
+		// Check to see that we have exception data to process
+		SectionHeader irfeHeader = null;
+		for (SectionHeader header : fileHeader.getSectionHeaders()) {
+			if (header.getName().contains(".pdata")) {
+				irfeHeader = header;
+				break;
+			}
+		}
+
+		if (irfeHeader == null) {
+			return;
+		}
+
+		Address start = program.getImageBase().add(irfeHeader.getVirtualAddress());
+
+		List<_IMAGE_RUNTIME_FUNCTION_ENTRY> irfes = fileHeader.getImageRuntimeFunctionEntries();
+
+		if (irfes.isEmpty()) {
+			return;
+		}
+
+		// TODO: This is x86-64 architecture-specific and needs to be generalized.
+		ImageRuntimeFunctionEntries.createData(program, start, irfes);
+
+		// Each RUNTIME_INFO contains an address to an UNWIND_INFO structure
+		// which also needs to be laid out. When they contain chaining data
+		// they're recursive but the toDataType() function handles that.
+		for (_IMAGE_RUNTIME_FUNCTION_ENTRY entry : irfes) {
+			entry.createData(program);
 		}
 	}
 
@@ -444,6 +473,83 @@ public class PeLoader extends AbstractPeDebugLoader {
 		}
 	}
 
+	private void processDelayImports(OptionalHeader optionalHeader, Program program,
+			TaskMonitor monitor, MessageLog log) {
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("[" + program.getName() + "]: processing delay imports...");
+
+		DataDirectory[] dataDirectories = optionalHeader.getDataDirectories();
+		if (dataDirectories.length <= OptionalHeader.IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT) {
+			return;
+		}
+
+		DelayImportDataDirectory didd =
+			(DelayImportDataDirectory) dataDirectories[OptionalHeader.IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT];
+		if (didd == null) {
+			return;
+		}
+
+		log.appendMsg("Delay imports detected...");
+
+		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
+		Listing listing = program.getListing();
+		ReferenceManager refManager = program.getReferenceManager();
+		FunctionManager funcManager = program.getFunctionManager();
+
+		DelayImportDescriptor[] descriptors = didd.getDelayImportDescriptors();
+		for (DelayImportDescriptor descriptor : descriptors) {
+			if (monitor.isCancelled()) {
+				return;
+			}
+
+			// Get address of the first entry in the import address table
+			Address iatBaseAddr = space.getAddress(descriptor.isUsingRVA()
+					? descriptor.getAddressOfIAT() + optionalHeader.getImageBase()
+					: descriptor.getAddressOfIAT());
+
+			for (ImportInfo importInfo : descriptor.getImportList()) {
+
+				// Get the offset from the import list. -1 is the default (no offset)
+				long offset = importInfo.getAddress();
+				if (offset < 0) {
+					break;
+				}
+
+				// Get address of current position in the import address table
+				Address iatAddr = iatBaseAddr.add(offset);
+				Data iatData = listing.getDataAt(iatAddr);
+				if (iatData == null || !(iatData.getValue() instanceof Address)) {
+					continue;
+				}
+
+				// Create external reference
+				try {
+					refManager.addExternalReference(iatAddr, importInfo.getDLL(),
+						importInfo.getName(), null, SourceType.IMPORTED, 0, RefType.DATA);
+				}
+				catch (DuplicateNameException | InvalidInputException e) {
+					log.appendMsg("Failed to create Delay Load external function at: " + iatAddr);
+				}
+
+				// Create delay load proxy function
+				Address proxyFuncAddr = (Address) iatData.getValue();
+				if (funcManager.getFunctionAt(proxyFuncAddr) == null) {
+					try {
+						funcManager.createFunction("DelayLoad_" + importInfo.getName(),
+							proxyFuncAddr, new AddressSet(proxyFuncAddr), SourceType.IMPORTED);
+					}
+					catch (InvalidInputException | OverlappingFunctionException e) {
+						log.appendMsg(
+							"Failed to create Delay Load proxy function at: " + proxyFuncAddr);
+					}
+				}
+			}
+		}
+	}
+
 	/**
 	 * Mark this location as code in the CodeMap.
 	 * The analyzers will pick this up and disassemble the code.
@@ -482,8 +588,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 				}
 				RegisterValue thumbMode = new RegisterValue(tmodeReg, BigInteger.ONE);
 				AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
-				program.getProgramContext().setRegisterValue(space.getMinAddress(),
-					space.getMaxAddress(), thumbMode);
+				program.getProgramContext()
+						.setRegisterValue(space.getMinAddress(), space.getMaxAddress(), thumbMode);
 			}
 		}
 		catch (ContextChangeException e) {
@@ -513,7 +619,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 		AddressFactory af = program.getAddressFactory();
 		AddressSpace space = af.getDefaultAddressSpace();
 		SymbolTable symTable = program.getSymbolTable();
-		Memory memory = program.getMemory();
 		Listing listing = program.getListing();
 		ReferenceManager refManager = program.getReferenceManager();
 
@@ -591,7 +696,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 	private Map<SectionHeader, Address> processMemoryBlocks(PortableExecutable pe, Program prog,
 			FileBytes fileBytes, TaskMonitor monitor, MessageLog log)
-			throws AddressOverflowException, IOException {
+			throws AddressOverflowException {
 
 		AddressFactory af = prog.getAddressFactory();
 		AddressSpace space = af.getDefaultAddressSpace();
@@ -641,8 +746,9 @@ public class PeLoader extends AbstractPeDebugLoader {
 					SectionFlags.IMAGE_SCN_MEM_EXECUTE.getMask()) != 0x0);
 
 				int rawDataSize = sections[i].getSizeOfRawData();
+				int rawDataPtr = sections[i].getPointerToRawData();
 				virtualSize = sections[i].getVirtualSize();
-				if (rawDataSize != 0) {
+				if (rawDataSize != 0 && rawDataPtr != 0) {
 					int dataSize =
 						((rawDataSize > virtualSize && virtualSize > 0) || rawDataSize < 0)
 								? virtualSize
@@ -653,10 +759,12 @@ public class PeLoader extends AbstractPeDebugLoader {
 							Msg.warn(this, "OptionalHeader.SizeOfImage < size of " +
 								sections[i].getName() + " section");
 						}
-						long offset = sections[i].getPointerToRawData();
-						MemoryBlockUtils.createInitializedBlock(prog, false,
-							sections[i].getReadableName(), address, fileBytes, offset, dataSize, "",
-							"", r, w, x, log);
+						String sectionName = sections[i].getReadableName();
+						if (sectionName.isBlank()) {
+							sectionName = "SECTION." + i;
+						}
+						MemoryBlockUtils.createInitializedBlock(prog, false, sectionName, address,
+							fileBytes, rawDataPtr, dataSize, "", "", r, w, x, log);
 						sectionToAddress.put(sections[i], address);
 					}
 					if (rawDataSize == virtualSize) {
@@ -751,14 +859,73 @@ public class PeLoader extends AbstractPeDebugLoader {
 		long imageBase = optionalHeader.getImageBase();
 		Address entryAddr = baseAddr.addWrap(imageBase);
 		entry += optionalHeader.getImageBase();
+
+		// get IL entry if it has one
+		Address ILEntryPointVA = getILEntryPoint(optionalHeader);
+		if (ILEntryPointVA != null) {
+			// The OptionalHeader can specify a single-instruction native code
+			// entry point even in IL-only binaries for backwards compatibility
+			if (entry > 0) {
+				try {
+					symTable.createLabel(entryAddr, "__x86_CIL_", SourceType.IMPORTED);
+					markAsCode(prog, entryAddr);
+					symTable.addExternalEntryPoint(entryAddr);
+				}
+				catch (InvalidInputException e) {
+					Msg.warn(this,
+						"Backwards compatible native entry point in the CIL binary couldn't be processed");
+				}
+			}
+
+			// Replace native entry point address with IL entry point
+			entryAddr = ILEntryPointVA;
+		}
+
 		try {
+			// mark up entry (either Native or IL)
 			symTable.createLabel(entryAddr, "entry", SourceType.IMPORTED);
 			markAsCode(prog, entryAddr);
 		}
 		catch (InvalidInputException e) {
 			// ignore
 		}
+
 		symTable.addExternalEntryPoint(entryAddr);
+	}
+
+	// @return IL entry point, or null if the binary has a native Entry point
+	private Address getILEntryPoint(OptionalHeader optionalHeader) {
+		// Check to see if this binary has a COMDescriptorDataDirectory in it. If so,
+		// it might be a .NET binary, and if it is and only has a managed code entry point
+		// the value at entry is actually a table index and and row index that we parse in
+		// the ImageCor20Header class. Use that to create the entry label instead later.
+
+		DataDirectory[] dataDirectories = optionalHeader.getDataDirectories();
+		for (DataDirectory element : dataDirectories) {
+			if (element == null) {
+				continue;
+			}
+			if (!(element instanceof COMDescriptorDataDirectory)) {
+				continue;
+			}
+
+			COMDescriptorDataDirectory comDescriptorDataDirectory =
+				(COMDescriptorDataDirectory) element;
+			ImageCor20Header imageCor20Header = comDescriptorDataDirectory.getHeader();
+			if (imageCor20Header == null) {
+				continue;
+			}
+
+			if ((imageCor20Header.getFlags() &
+				ImageCor20Flags.COMIMAGE_FLAGS_NATIVE_ENTRYPOINT) != ImageCor20Flags.COMIMAGE_FLAGS_NATIVE_ENTRYPOINT) {
+				continue;
+			}
+			// Check the flag to see if there's a native code entry point, and if
+			// not this binary has an IL entry that we should label
+			return imageCor20Header.getEntryPointVA();
+		}
+
+		return null;
 	}
 
 	private void processDebug(OptionalHeader optionalHeader, FileHeader fileHeader,
@@ -797,16 +964,20 @@ public class PeLoader extends AbstractPeDebugLoader {
 			"This program must be run under Win32\r\n$".toCharArray();
 		static final char[] errString_GCC_VS =
 			"This program cannot be run in DOS mode.\r\r\n$".toCharArray();
+		static final char[] errString_Clang =
+			"This program cannot be run in DOS mode.$".toCharArray();
 		static final int[] asm16_Borland = { 0xBA, 0x10, 0x00, 0x0E, 0x1F, 0xB4, 0x09, 0xCD, 0x21,
 			0xB8, 0x01, 0x4C, 0xCD, 0x21, 0x90, 0x90 };
-		static final int[] asm16_GCC_VS =
+		static final int[] asm16_GCC_VS_Clang =
 			{ 0x0e, 0x1f, 0xba, 0x0e, 0x00, 0xb4, 0x09, 0xcd, 0x21, 0xb8, 0x01, 0x4c, 0xcd, 0x21 };
 
 		public enum CompilerEnum {
 
 			VisualStudio("visualstudio:unknown"),
 			GCC("gcc:unknown"),
+			Clang("clang:unknown"),
 			GCC_VS("visualstudiogcc"),
+			GCC_VS_Clang("visualstudiogccclang"),
 			BorlandPascal("borland:pascal"),
 			BorlandCpp("borland:c++"),
 			BorlandUnk("borland:unknown"),
@@ -892,6 +1063,9 @@ public class PeLoader extends AbstractPeDebugLoader {
 			if (dh.e_lfanew() == 0x80) {
 				offsetChoice = CompilerEnum.GCC_VS;
 			}
+			else if (dh.e_lfanew() == 0x78) {
+				offsetChoice = CompilerEnum.Clang;
+			}
 			else if (dh.e_lfanew() < 0x80) {
 				offsetChoice = CompilerEnum.Unknown;
 			}
@@ -931,13 +1105,13 @@ public class PeLoader extends AbstractPeDebugLoader {
 				asmChoice = CompilerEnum.BorlandUnk;
 			}
 			else {
-				for (counter = 0; counter < asm16_GCC_VS.length; counter++) {
-					if ((asm[counter] & 0xff) != (asm16_GCC_VS[counter] & 0xff)) {
+				for (counter = 0; counter < asm16_GCC_VS_Clang.length; counter++) {
+					if ((asm[counter] & 0xff) != (asm16_GCC_VS_Clang[counter] & 0xff)) {
 						break;
 					}
 				}
-				if (counter == asm16_GCC_VS.length) {
-					asmChoice = CompilerEnum.GCC_VS;
+				if (counter == asm16_GCC_VS_Clang.length) {
+					asmChoice = CompilerEnum.GCC_VS_Clang;
 				}
 				else {
 					asmChoice = CompilerEnum.Unknown;
@@ -948,6 +1122,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			for (int i = 10; i < asm.length - 3; i++) {
 				if (asm[i] == 'T' && asm[i + 1] == 'h' && asm[i + 2] == 'i' && asm[i + 3] == 's') {
 					errStringOffset = i;
+					break;
 				}
 			}
 
@@ -966,13 +1141,16 @@ public class PeLoader extends AbstractPeDebugLoader {
 				else if (compareBytesToChars(asm, errStringOffset, errString_GCC_VS)) {
 					errStringChoice = CompilerEnum.GCC_VS;
 				}
+				else if (compareBytesToChars(asm, errStringOffset, errString_Clang)) {
+					errStringChoice = CompilerEnum.Clang;
+				}
 				else {
 					errStringChoice = CompilerEnum.Unknown;
 				}
 			}
 
 			// Check for AddressOfStart and PointerToSymbol
-			if (errStringChoice == CompilerEnum.GCC_VS && asmChoice == CompilerEnum.GCC_VS &&
+			if (errStringChoice == CompilerEnum.GCC_VS && asmChoice == CompilerEnum.GCC_VS_Clang &&
 				dh.e_lfanew() == 0x80) {
 				// Trying to determine if we have gcc or old VS
 
@@ -996,6 +1174,11 @@ public class PeLoader extends AbstractPeDebugLoader {
 					compilerType = CompilerEnum.GCC;
 					return compilerType;
 				}
+			}
+			else if ((offsetChoice == CompilerEnum.Clang ||
+				errStringChoice == CompilerEnum.Clang) && asmChoice == CompilerEnum.GCC_VS_Clang) {
+				compilerType = CompilerEnum.Clang;
+				return compilerType;
 			}
 			else if (errStringChoice == CompilerEnum.Unknown || asmChoice == CompilerEnum.Unknown) {
 				compilerType = CompilerEnum.Unknown;

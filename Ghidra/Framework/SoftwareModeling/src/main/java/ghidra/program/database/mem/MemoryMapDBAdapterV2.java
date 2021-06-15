@@ -84,7 +84,7 @@ class MemoryMapDBAdapterV2 extends MemoryMapDBAdapter {
 
 		RecordIterator it = table.iterator();
 		while (it.hasNext()) {
-			Record rec = it.next();
+			DBRecord rec = it.next();
 			int permissions = rec.getByteValue(V2_PERMISSIONS_COL);
 
 			long startAddr = rec.getLongValue(V2_START_ADDR_COL);
@@ -92,8 +92,8 @@ class MemoryMapDBAdapterV2 extends MemoryMapDBAdapter {
 			int bufID = rec.getIntValue(V2_CHAIN_BUF_COL);
 			int segment = rec.getIntValue(V2_SEGMENT_COL);
 
-			Record blockRecord = BLOCK_SCHEMA.createRecord(key);
-			Record subBlockRecord = SUB_BLOCK_SCHEMA.createRecord(key);
+			DBRecord blockRecord = BLOCK_SCHEMA.createRecord(key);
+			DBRecord subBlockRecord = SUB_BLOCK_SCHEMA.createRecord(key);
 
 			blockRecord.setString(NAME_COL, rec.getString(V2_NAME_COL));
 			blockRecord.setString(COMMENTS_COL, rec.getString(V2_COMMENTS_COL));
@@ -119,7 +119,7 @@ class MemoryMapDBAdapterV2 extends MemoryMapDBAdapter {
 
 	}
 
-	private SubMemoryBlock getSubBlock(int bufID, Record record, int type, long overlayAddr)
+	private SubMemoryBlock getSubBlock(int bufID, DBRecord record, int type, long overlayAddr)
 			throws IOException {
 		switch (type) {
 			case MemoryMapDBAdapterV2.BIT_MAPPED:
@@ -178,7 +178,7 @@ class MemoryMapDBAdapterV2 extends MemoryMapDBAdapter {
 	}
 
 	@Override
-	void updateBlockRecord(Record record) throws IOException {
+	void updateBlockRecord(DBRecord record) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -211,12 +211,12 @@ class MemoryMapDBAdapterV2 extends MemoryMapDBAdapter {
 	}
 
 	@Override
-	protected void updateSubBlockRecord(Record record) throws IOException {
+	protected void updateSubBlockRecord(DBRecord record) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	Record createSubBlockRecord(long memBlockId, long startingOffset, long length, byte subType,
+	DBRecord createSubBlockRecord(long memBlockId, long startingOffset, long length, byte subType,
 			int data1, long data2) throws IOException {
 		throw new UnsupportedOperationException();
 	}

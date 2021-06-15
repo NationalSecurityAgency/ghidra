@@ -13,11 +13,15 @@
      - NOTE: The settings within this file may be specific to a particular 
      - processor variant and will likely need to be changed to reflect 
      - the specific target processor.
+     The RAMPx, EIND, SREG registers are not marked volatile, even though they could be changed
+     indirectly with memory references.  If they are made volatile, then the addressing
+     won't work in decompiler or reference recovery.
+	 Some registers only appear in newer avr8's, or with large memory spaces
     --> 
     
   <volatile outputop="write_volatile" inputop="read_volatile">
-    <range space="mem" first="0x20" last="0x5b"/>
-    <range space="mem" first="0x5f" last="0xff"/>
+    <range space="mem" first="0x20" last="0x57"/>
+    <range space="mem" first="0x60" last="0xff"/>
   </volatile>
   
   <default_symbols>
@@ -42,7 +46,6 @@
     <symbol name="TWI" address="code:0x11" entry="true"/>
     <symbol name="SPM_RDY" address="code:0x12" entry="true"/>
  
-   <symbol name="SREG" address="mem:0x5f"/>
     
     <!-- See /usr/lib/avr/include/avr/iom64.h -->
     <symbol name="PINF" address="mem:0x20"/>

@@ -15,8 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
-
 /**
  * The listener interface for notification of changes to a DataTypeManager
  */

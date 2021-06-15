@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,14 @@
  */
 package ghidra.program.database.function;
 
+import java.util.*;
+
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
-
-import java.util.*;
 
 class FunctionStackFrame implements StackFrame {
 
@@ -46,17 +45,17 @@ class FunctionStackFrame implements StackFrame {
 	}
 
 	boolean checkIsValid() {
-		if (function.checkIsValid()) {
-			if (invalid) {
-				stackGrowsNegative =
-					function.getFunctionManager().getProgram().getCompilerSpec().stackGrowsNegative();
-				variables = function.getVariables(VariableFilter.COMPOUND_STACK_VARIABLE_FILTER);
-				Arrays.sort(variables, StackVariableComparator.get());
-				invalid = false;
-			}
-			return true;
+		if (function.isDeleted()) {
+			return false;
 		}
-		return false;
+		if (invalid) {
+			stackGrowsNegative =
+				function.getFunctionManager().getProgram().getCompilerSpec().stackGrowsNegative();
+			variables = function.getVariables(VariableFilter.COMPOUND_STACK_VARIABLE_FILTER);
+			Arrays.sort(variables, StackVariableComparator.get());
+			invalid = false;
+		}
+		return true;
 	}
 
 	void checkDeleted() {
@@ -101,9 +100,9 @@ class FunctionStackFrame implements StackFrame {
 					}
 				}
 				else {
-					for (int i = 0; i < params.length; i++) {
-						if (offset >= params[i].getLastStorageVarnode().getOffset()) {
-							ordinal = params[i].getOrdinal();
+					for (Parameter param : params) {
+						if (offset >= param.getLastStorageVarnode().getOffset()) {
+							ordinal = param.getOrdinal();
 						}
 					}
 				}
@@ -159,9 +158,9 @@ class FunctionStackFrame implements StackFrame {
 		try {
 			checkIsValid();
 			ArrayList<Variable> list = new ArrayList<Variable>();
-			for (int i = 0; i < variables.length; i++) {
-				if (!(variables[i] instanceof Parameter)) {
-					list.add(variables[i]);
+			for (Variable variable : variables) {
+				if (!(variable instanceof Parameter)) {
+					list.add(variable);
 				}
 			}
 			Variable[] vars = new Variable[list.size()];
@@ -182,9 +181,9 @@ class FunctionStackFrame implements StackFrame {
 		try {
 			checkIsValid();
 			ArrayList<Parameter> list = new ArrayList<Parameter>();
-			for (int i = 0; i < variables.length; i++) {
-				if (variables[i] instanceof Parameter) {
-					list.add((Parameter) variables[i]);
+			for (Variable variable : variables) {
+				if (variable instanceof Parameter) {
+					list.add((Parameter) variable);
 				}
 			}
 			Parameter[] vars = new Parameter[list.size()];
@@ -329,8 +328,8 @@ class FunctionStackFrame implements StackFrame {
 		try {
 			checkIsValid();
 			int cnt = 0;
-			for (int i = 0; i < variables.length; i++) {
-				if (variables[i] instanceof Parameter) {
+			for (Variable variable : variables) {
+				if (variable instanceof Parameter) {
 					++cnt;
 				}
 			}

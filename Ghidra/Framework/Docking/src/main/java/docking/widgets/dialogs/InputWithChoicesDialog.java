@@ -17,6 +17,7 @@ package docking.widgets.dialogs;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.util.NoSuchElementException;
 
 import javax.swing.*;
 
@@ -55,10 +56,11 @@ public class InputWithChoicesDialog extends DialogComponentProvider {
 
 		super(dialogTitle, true, false, true, false);
 
-		this.addOKButton();
-		this.addCancelButton();
-		this.setRememberSize(false);
-		this.setRememberLocation(false);
+		setTransient(true);
+		addOKButton();
+		addCancelButton();
+		setRememberSize(false);
+		setRememberLocation(false);
 		buildMainPanel(label, optionValues, initialValue, messageIcon);
 
 		setFocusComponent(combo);
@@ -180,5 +182,18 @@ public class InputWithChoicesDialog extends DialogComponentProvider {
 		}
 		Object selectedItem = combo.getSelectedItem();
 		return selectedItem == null ? null : selectedItem.toString();
+	}
+
+	/**
+	 * Set the current choice to value.
+	 * @param value updated choice
+	 * @throws NoSuchElementException if choice does not permit edits and value is
+	 * not a valid choice. 
+	 */
+	public void setValue(String value) {
+		combo.setSelectedItem(value);
+		if (!combo.isEditable() && !combo.getSelectedItem().equals(value)) {
+			throw new NoSuchElementException();
+		}
 	}
 }

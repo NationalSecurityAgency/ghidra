@@ -56,7 +56,7 @@ public class DmgClientFileSystemFactory
 			return false;
 		}
 
-		return isEncrypted(containerFile);
+		return hasUDIF(byteProvider) || isEncrypted(containerFile);
 	}
 
 	private static boolean isEncrypted(byte[] startBytes) {
@@ -73,6 +73,17 @@ public class DmgClientFileSystemFactory
 		}
 		catch (IOException ioe) {
 			// ignore, fall thru to return false
+		}
+		return false;
+	}
+
+	private static boolean hasUDIF(ByteProvider bp) {
+		try {
+			UDIFHeader udif = UDIFHeader.read(bp);
+			return udif.isValid() && udif.hasGoodOffsets(bp);
+		}
+		catch (IOException e) {
+			// ignore, fall thru
 		}
 		return false;
 	}

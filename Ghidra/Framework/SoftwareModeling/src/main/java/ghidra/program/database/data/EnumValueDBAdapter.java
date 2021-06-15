@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +21,11 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Adapter to access the Enumeration data type values tables.
@@ -63,22 +61,12 @@ abstract class EnumValueDBAdapter {
 			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
 				throw e;
 			}
-			EnumValueDBAdapter adapter = findReadOnlyAdapter(handle);
+			EnumValueDBAdapter adapter = new EnumValueDBAdapterNoTable(handle);
 			if (openMode == DBConstants.UPGRADE) {
 				adapter = upgrade(handle, adapter);
 			}
 			return adapter;
 		}
-	}
-
-	/**
-	 * Tries to get a read only adapter for the database whose handle is passed to this method.
-	 * @param handle handle to prior version of the database.
-	 * @return the read only Enumeration Data Type Values table adapter
-	 * @throws VersionException if a read only adapter can't be obtained for the database handle's version.
-	 */
-	static EnumValueDBAdapter findReadOnlyAdapter(DBHandle handle) {
-		return new EnumValueDBAdapterNoTable(handle);
 	}
 
 	/**
@@ -95,9 +83,22 @@ abstract class EnumValueDBAdapter {
 		return new EnumValueDBAdapterV0(handle, true);
 	}
 
+	/**
+	 * Create new enum value record corresponding to specified enum datatype ID
+	 * @param enumID enum datatype ID
+	 * @param name value name
+	 * @param value numeric value 
+	 * @throws IOException if IO error occurs
+	 */
 	abstract void createRecord(long enumID, String name, long value) throws IOException;
 
-	abstract Record getRecord(long valueID) throws IOException;
+	/**
+	 * Get enum value record which corresponds to specified value record ID
+	 * @param valueID value record ID
+	 * @return value record or null
+	 * @throws IOException if IO error occurs
+	 */
+	abstract DBRecord getRecord(long valueID) throws IOException;
 
 	/**
 	 * Remove the record for the given enum Value ID.
@@ -111,8 +112,14 @@ abstract class EnumValueDBAdapter {
 	 * @param record the new record
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
-	abstract long[] getValueIdsInEnum(long enumID) throws IOException;
+	/**
+	 * Get enum value record IDs which correspond to specified enum datatype ID
+	 * @param enumID enum datatype ID
+	 * @return enum value record IDs as LongField values within Field array
+	 * @throws IOException if IO error occurs
+	 */
+	abstract Field[] getValueIdsInEnum(long enumID) throws IOException;
 
 }

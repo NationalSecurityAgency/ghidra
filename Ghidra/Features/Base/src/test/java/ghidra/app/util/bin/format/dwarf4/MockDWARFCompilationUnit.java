@@ -18,13 +18,14 @@ package ghidra.app.util.bin.format.dwarf4;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.dwarf4.encoding.DWARFIdentifierCase;
+import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
 import ghidra.util.task.TaskMonitor;
 
 public class MockDWARFCompilationUnit extends DWARFCompilationUnit {
 
 	private List<DebugInfoEntry> mockEntries = new ArrayList<>();
+	private DebugInfoEntry compUnitDIE;
 
 	public MockDWARFCompilationUnit(DWARFProgram dwarfProgram, long startOffset, long endOffset,
 			long length, int format, short version, long abbreviationOffset, byte pointerSize,
@@ -35,11 +36,18 @@ public class MockDWARFCompilationUnit extends DWARFCompilationUnit {
 		setCompileUnit(
 			new DWARFCompileUnit("Mock Comp Unit", "Mock Comp Unit Producer", "Mock Comp Unit Dir",
 				0, 0, 0, 0, DWARFIdentifierCase.DW_ID_case_insensitive, false, null));
+		compUnitDIE = new DIECreator(DWARFTag.DW_TAG_compile_unit)
+				.addString(DWARFAttribute.DW_AT_name, "MockCompUnit" + compUnitNumber)
+				.create(this);
 	}
 
 	@Override
 	public void readDIEs(List<DebugInfoEntry> dies, TaskMonitor unused_monitor) {
 		dies.addAll(mockEntries);
+	}
+
+	public DebugInfoEntry getCompileUnitDIE() {
+		return compUnitDIE;
 	}
 
 	public void addMockEntry(DebugInfoEntry die) {

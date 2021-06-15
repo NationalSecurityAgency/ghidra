@@ -1,0 +1,1209 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Decompiler Window</title>
+<link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+<link rel="stylesheet" type="text/css" href="../../shared/languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="Decompiler.html" title="Decompiler">
+<link rel="up" href="Decompiler.html" title="Decompiler">
+<link rel="prev" href="DecompilerOptions.html" title="Decompiler Options">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter">
+<div class="titlepage"><div><div><h1 class="title">
+<a name="DecompilerWindow"></a>Decompiler Window</h1></div></div></div>
+  
+  <p>
+    To display the decompiler window, position the cursor on a
+    function in the Code Browser, then select the
+    <span class="guiicon">
+      <span class="inlinemediaobject"><img src="images/decompileFunction.gif" width="16" height="16"></span>
+      </span> icon from the tool bar, or the
+    <span class="bold"><strong>Decompile</strong></span> option from the
+    <span class="bold"><strong>Window</strong></span> menu in the tool.
+  </p>
+  <p>
+    A decompiler window always displays one <span class="emphasis"><em>function</em></span> at a time.
+    The initial window that comes up in the Code Browser is called the <span class="bold"><strong>Main</strong></span>
+    window (See <a class="xref" href="DecompilerWindow.html#MainWindow" title="Main Window">&#8220;Main Window&#8221;</a>), and it automatically decompiles and displays the function at the
+    <span class="emphasis"><em>current address</em></span>, following the user's navigation.  Other
+    <span class="bold"><strong>Snapshot</strong></span> windows can also
+    be opened that show different functions at the same time (See <a class="xref" href="DecompilerWindow.html#Snapshot" title="Snapshot Windows">&#8220;Snapshot Windows&#8221;</a>). But any window
+    only shows one function at a time.
+  </p>
+  <p>
+    Decompilation for a window is performed "on-the-fly". It automatically
+    incorporates the most recent labels, data-types, comments, and other annotations applied by the user.  Any change
+    to the Program annotations (renaming, setting data-types, etc.) automatically causes each window to redecompile
+    its function.
+  </p>
+  <p>
+    The time it takes to decompile a single function is generally proportional to the number of instructions that make
+    up the body of the function.  Large functions may require a significant amount of time to decompile, and because
+    decompilation is performed on-the-fly, closing a window or navigating away from a function
+    runs the risk of losing results that took a long time to compute.
+  </p>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="DecompilerDisplay"></a>Display</h2></div></div></div>
+  
+  <p>
+    The window shows the decompiled output for the function associated with the window in C or some other
+    high-level programming language.  The output is tokenized following conventions of the language. Possible
+    token types include:
+    </p>
+<div class="informalexample">
+      <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc"><span class="bold"><strong>Data-type Name</strong></span></li>
+<li class="listitem" style="list-style-type: disc"><span class="bold"><strong>Variable Name</strong></span></li>
+<li class="listitem" style="list-style-type: disc"><span class="bold"><strong>Variable Sub-field Name</strong></span></li>
+<li class="listitem" style="list-style-type: disc"><span class="bold"><strong>Function Name</strong></span></li>
+<li class="listitem" style="list-style-type: disc"><span class="bold"><strong>Operator</strong></span></li>
+<li class="listitem" style="list-style-type: disc"><span class="bold"><strong>Label</strong></span></li>
+<li class="listitem" style="list-style-type: disc"><span class="bold"><strong>Comment</strong></span></li>
+<li class="listitem" style="list-style-type: disc"><span class="bold"><strong>Syntax</strong></span></li>
+</ul></div>
+    </div>
+<p>
+  </p>
+  <p>
+    The type of token provides context for the pop-up menus, which can trigger
+    highlighting, navigation, renaming, and other actions within the window.
+  </p>
+
+  <p>
+    If the window starts to decompile but ultimately fails to complete the decompilation, due
+    to an error or cancellation, it displays a brief description of what caused the failure
+    instead of the normal output.  Decompilation may also successfully produce output but issue
+    one or more warnings during the process.  These warnings are integrated into the output as
+    source code comments starting with label <code class="code">WARNING:</code>.  They occur either at the
+    beginning of the function as part of the function header or at the point in the code directly
+    associated with the warning. (See <a class="xref" href="DecompilerAnnotations.html#CommentWarnings" title="Warning Comments">&#8220;Warning Comments&#8221;</a>)
+  </p>
+</div>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="MainWindow"></a>Main Window</h2></div></div></div>
+  
+  <p>
+    Initially pushing
+    <span class="guiicon">
+      <span class="inlinemediaobject"><img src="images/decompileFunction.gif" width="16" height="16"></span>
+      </span> or selecting
+    <span class="bold"><strong>Decompile</strong></span> from the <span class="bold"><strong>Window</strong></span> menu in the tool
+    brings up the <span class="emphasis"><em>main</em></span> window.  The main window always displays the function
+    at the <span class="emphasis"><em>current address</em></span> within the Code Browser and follows as the user navigates
+    within the Program.  Any mouse click, menu option, or other action causing the cursor to move to a new
+    address in the Listing also causes the main window to display the function containing that address.
+    Navigation to new functions is also possible from within the window by double-clicking on function
+    tokens (See <a class="xref" href="DecompilerWindow.html#MouseActions" title="Mouse Actions">&#8220;Mouse Actions&#8221;</a>).
+  </p>
+
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="CrossHighlighting"></a>Cross Highlighting</h3></div></div></div>
+    
+    <p>
+      The main window maintains a map between the individual variable and operator tokens displayed in
+      the window and the machine instructions which correspond to them. This can give the user instant
+      feedback about the correspondence between the decompiler and disassembly views of the function,
+      and it is frequently useful to have both the Listing window and the Decompiler window side
+      by side.  Clicking on tokens in the Decompiler window causes the Listing window to navigate
+      to the corresponding instruction, and clicking instructions in the Listing window
+      causes the Decompiler window to navigate to the corresponding line.  Highlighting a region of
+      code in either window causes the corresponding region in the other window to be highlighted.
+    </p>
+    <p>
+      <span class="emphasis"><em>Variable Name</em></span> and <span class="emphasis"><em>Variable Sub-field Name</em></span> tokens
+      map to the machine instruction which wrote to the variable at that point in function.
+    </p>
+    <p>
+      <span class="emphasis"><em>Operator</em></span> tokens map to the machine instruction which performed that operation.
+    </p>
+    <p>
+      <span class="emphasis"><em>Function Name</em></span> tokens, if they represent a call to another function, map to the
+      machine instruction executing the call.
+    </p>
+    <p>
+      <span class="emphasis"><em>Comment</em></span> tokens map to the machine address associated with the comment.
+    </p>
+    <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
+<th align="left"></th>
+</tr>
+<tr><td align="left" valign="top">
+      In general, the map between machine instructions and tokens is not one to one because the decompiler
+      transforms its underlying representation of the function.
+      An instruction may no longer have any operator that corresponds to it in the decompiled result.
+      Tokens may be transformed from the natural operation of the machine instruction they are associated
+      with or may represent the effect of multiple instructions.
+    </td></tr>
+</table></div>
+  </div>
+</div>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="Snapshot"></a>Snapshot Windows</h2></div></div></div>
+  
+  <p>
+    Pressing the
+    <span class="guiicon">
+      <span class="inlinemediaobject"><img src="images/camera-photo.png" width="16" height="16"></span>
+    </span> icon
+    in another Decompiler window's toolbar causes a <span class="emphasis"><em>Snapshot</em></span> window
+    to be created, which initially shows decompilation of the same function. Multiple
+    Snapshot windows can be brought up to show decompilation of different functions
+    simultaneously. Snapshot
+    windows are visually distinguished from the <span class="emphasis"><em>main</em></span> Decompiler window
+    by their colored outline.
+  </p>
+  <p>
+    The Snapshot
+    window, unlike the <span class="emphasis"><em>main</em></span> window, is not linked to the Listing window
+    and does not change the function it displays in response to external navigation events.
+    A Snapshot window can be used to hold a function fixed while the user navigates to
+    different functions in the Listing or other windows.
+  </p>
+  <p>
+    Navigating to new functions within a Snapshot window is possible when the window is
+    <span class="emphasis"><em>active</em></span>.  The window responds to the actions
+    </p>
+<div class="informalexample">
+      <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">Go To ... <span class="emphasis"><em>(pressing the 'g' key)</em></span>
+</li>
+<li class="listitem" style="list-style-type: disc">Go to previous location <span class="emphasis"><em>(Back)</em></span>
+</li>
+<li class="listitem" style="list-style-type: disc">Go to next location <span class="emphasis"><em>(Forward)</em></span>
+</li>
+</ul></div>
+    </div>
+<p>
+  </p>
+</div>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="UndefinedFunction"></a>Undefined Functions</h2></div></div></div>
+  
+  <p>
+    If the current location within the Code Browser is in disassembled code, but that code
+    is not contained in a <a class="link" href="DecompilerAnnotations.html#AnnoteFormalFunctionBody" title="Formal Function Body">Formal Function Body</a>,
+    then the decompiler window invents a function body on the fly called an
+    <span class="bold"><strong>Undefined Function</strong></span>.  The background color of the window
+    is changed to gray to indicate this special state.
+    </p>
+<div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="images/Undefined.png" align="middle" width="579" height="143"></td></tr></table></div>
+<p>
+  </p>
+  <p>
+    The <span class="emphasis"><em>entry point</em></span> address of the Undefined Function is chosen by
+    backtracking through the code's control-flow from the current location to the start of
+    a basic block that has no flow coming in except possibly from <span class="emphasis"><em>call</em></span> instructions.
+    During decompilation, a function body is computed from the selected entry point (as with any function)
+    based on control-flow up to instructions with <span class="emphasis"><em>terminator</em></span> semantics.
+  </p>
+  <p>
+    The current address, as indicated by the cursor in the Listing Window for instance, is
+    generally <span class="emphasis"><em>not</em></span> the entry of the invented function, but the current address will be
+    contained somewhere in the body.
+  </p>
+  <p>
+    For display purposes in the window, the invented function is given a name based on the
+    computed entry point address with the prefix <code class="code">UndefinedFunction</code>. The function
+    is assigned the default calling convention, and parameters are discovered as part of
+    the decompiler's analysis.
+  </p>
+</div>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="ToolBar"></a>Tool Bar</h2></div></div></div>
+  
+  <p>
+    This is a group of actions that can be triggered by pressing a button in the tool/title
+    bar at the top of individual decompiler windows, both <span class="emphasis"><em>main</em></span> and
+    <span class="emphasis"><em>Snapshot</em></span>.  The action applies to the function and decompiler results
+    displayed in that particular window.
+  </p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ToolBarExport"></a>Export to C</h3></div></div></div>
+  
+  <p>
+    <span class="guiicon">
+      <span class="inlinemediaobject"><img src="images/page_edit.png" width="16" height="16"></span>
+      </span> - button
+  </p>
+  <p>
+    Exports the decompiled result of the current function to a file. A file chooser
+    dialog is displayed to select the name of the output file. If a file extension
+    is not specified, a ".c" is appended to the filename.  If the file already exists,
+    a final dialog is presented to confirm that the file should be overwritten.
+  </p>
+  <p>
+    This action exports a single function at a time.  The user can export all functions
+    simultaneously from the Code Browser, by selecting the menu
+    <span class="bold"><strong>File -&gt; Export Program ...</strong></span> and then choosing
+    <a class="ulink" href="help/topics/ExporterPlugin/exporter.htm#c_cpp" target="_top">C/C++</a>
+    from the drop-down menu. See the full documentation for
+    the <a class="ulink" href="help/topics/ExporterPlugin/exporter.htm" target="_top">Export</a> dialog.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ToolBarSnapshot"></a>Snapshot</h3></div></div></div>
+  
+  <p>
+    <span class="guiicon">
+      <span class="inlinemediaobject"><img src="images/camera-photo.png" width="16" height="16"></span>
+      </span> - button
+  </p>
+  <p>
+    Creates a new <span class="emphasis"><em>Snapshot</em></span> window.  The <span class="emphasis"><em>Snapshot</em></span> window
+    initially displays the same function as the decompiler window on which the action was triggered,
+    but if that window navigates to other functions, the <span class="emphasis"><em>Snapshot</em></span> does not
+    follow and continues to display the original function. (See <a class="xref" href="DecompilerWindow.html#Snapshot" title="Snapshot Windows">&#8220;Snapshot Windows&#8221;</a>)
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ToolBarRedecompile"></a>Re-decompile</h3></div></div></div>
+  
+  <p>
+    <span class="guiicon">
+      <span class="inlinemediaobject"><img src="images/reload3.png" width="16" height="16"></span>
+      </span> - button
+  </p>
+  <p>
+    Triggers a re-decompilation of the current function displayed in the window.
+    Any cached results are discarded, and a full decompile is performed.
+  </p>
+  <div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Tip]" src="../../shared/tip.png"></td>
+<th align="left"></th>
+</tr>
+<tr><td align="left" valign="top">
+    This action is <span class="bold"><strong>not</strong></span> necessary for normal reverse
+    engineering tasks. Re-decompilation is <span class="emphasis"><em>automatically</em></span> triggered for all
+    decompiler windows by any change to the Program, so the most up-to-date decompilation is
+    always available to the user without this action. This action is a primarily a debugging
+    aid for plug-in developers.
+  </td></tr>
+</table></div>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ToolBarCopy"></a>Copy</h3></div></div></div>
+  
+  <p>
+    <span class="guiicon">
+      <span class="inlinemediaobject"><img src="images/page_white_copy.png" width="16" height="16"></span>
+      </span> - button
+  </p>
+  <p>
+    Copies the currently selected text in the decompiler window to the clipboard.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ToolBarDebug"></a>Debug Function Decompilation</h3></div></div></div>
+  
+  <p>
+    This action is located in the drop-down menu on the right side of the decompiler
+    window tool/title bar.
+  </p>
+  <p>
+    Information suitable for debugging the decompilation process for
+    the current function is collected and saved to an output file in
+    XML format. A file chooser dialog is presented to the user to
+    choose the output file. The file is useful when submitting bug reports
+    about the decompiler as it is generally much smaller than
+    the entire Program and only contains information specific to the
+    function. Information is generated by performing the full
+    decompilation of the function and collecting all the data and
+    annotations required during the process, including instruction
+    bytes, symbols, data-types, and other settings affecting
+    decompilation.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ToolBarGraph"></a>Graph AST Control Flow</h3></div></div></div>
+  
+  <p>
+    Generate a control-flow graph based upon the results in the active Decompiler Window,
+    and render it using the current Graph Service.
+  </p>
+  <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
+<th align="left"></th>
+</tr>
+<tr><td align="left" valign="top">
+    If no Graph Service is available then this action will not be present.
+  </td></tr>
+</table></div>
+</div>
+
+</div>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="MouseActions"></a>Mouse Actions</h2></div></div></div>
+  
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="MouseLeft"></a>Left Click</h3></div></div></div>
+  
+  <p>
+    Moves the decompiler window cursor and highlights the token. Within the
+    <span class="emphasis"><em>main</em></span> window, if a token has a machine address
+    associated with it, a left click generates a
+    <span class="emphasis"><em>navigation</em></span> event to that address, which may cause other
+    windows to display code near that address.
+    (See <a class="xref" href="DecompilerWindow.html#CrossHighlighting" title="Cross Highlighting">&#8220;Cross Highlighting&#8221;</a>)
+  </p>
+  <p>
+    Selecting a '(' or ')' token causes it and its matching parenthesis to be
+    highlighted along with the entire expression they surround.
+  </p>
+  <p>
+    Selecting a '{' or '}' token causes it and its matching brace to be highlighted.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="MouseRight"></a>Right Click</h3></div></div></div>
+  
+  <p>
+    Moves the decompiler window cursor, highlights the token, and brings up the menu of
+    context sensitive actions.  Any highlighting and navigation is identical to a
+    left click.  The menu actions presented depend primarily on the token type and
+    are tailored to the context at that point in the code.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="MouseDouble"></a>Double Click</h3></div></div></div>
+  
+  <p>
+    Navigates based on the selected symbol or other token (See below). If the selected token represents a formal symbol,
+    such as a function name or a global variable, double clicking causes a
+    <span class="emphasis"><em>navigation</em></span> event to the address associated with the symbol.
+    </p>
+<div class="informalexample">
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>Function Symbols</strong></span></span></dt>
+<dd><p>
+	Double clicking a called function name causes the
+	window itself to navigate away from its current function to the called function, triggering
+	a new decompilation if necessary and changing its display.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Global Variables</strong></span></span></dt>
+<dd><p>
+	Double clicking a global
+	variable name does <span class="emphasis"><em>not</em></span> have any effect on the decompiler window itself,
+	but <span class="emphasis"><em>other</em></span> windows, like the Listing window, may navigate to the
+	storage address of the global variable.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Constants</strong></span></span></dt>
+<dd><p>
+	Double clicking a token representing a constant causes the constant to be treated
+	as an address, and a navigation event to that address is generated. The decompiler
+	window itself navigates depending again on whether the address represents a new function or not.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Labels</strong></span></span></dt>
+<dd><p>
+	Double clicking the label within a <span class="emphasis"><em>goto</em></span> statement causes the window to navigate
+	to the target of the goto, within the function. The cursor is set and the window view is adjusted if
+	necessary to ensure that the target is visible.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Braces</strong></span></span></dt>
+<dd><p>
+	Double clicking a '{' or '}' token, causes the window to navigate to the <span class="emphasis"><em>matching</em></span> brace
+	within the window. The cursor is set and the window view is adjusted if
+	necessary to ensure that the matching brace is visible.
+      </p></dd>
+</dl></div>
+    </div>
+<p>
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="MouseControlDouble"></a>Control Double Click</h3></div></div></div>
+  
+  <p>
+    Opens a new <span class="emphasis"><em>Snapshot</em></span> window, navigating it to the selected symbol.
+    This is a convenience for immediately decompiling and displaying a called function in a
+    new window, without disturbing the active window.  The behavior is similar to the
+    Double Click action, the selected token must represent a function name symbol or possibly
+    a constant address, but the navigation occurs in the new Snapshot window.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="MouseControlShift"></a>Control Shift Click</h3></div></div></div>
+  
+  <p>
+    Generates a navigation event to the address, within the current function, associated with
+    the clicked token.  This allows <span class="emphasis"><em>Snapshot</em></span> windows to do basic
+    cross-highlighting in the same way as the <span class="emphasis"><em>main</em></span> decompiler window.
+    A Control double-click causes the Listing and other windows to navigate to and display the same
+    portion of code currently being displayed in the Snapshot window. (See <a class="xref" href="DecompilerWindow.html#CrossHighlighting" title="Cross Highlighting">&#8220;Cross Highlighting&#8221;</a>)
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="MouseMiddle"></a>Middle Click</h3></div></div></div>
+  
+  <p>
+    Highlights every occurrence of a variable, constant, or operator under the current
+    cursor location, within the decompiler window.
+  </p>
+</div>
+
+</div>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="MenuActions"></a>Pop-up Menu Actions</h2></div></div></div>
+  
+  <p>
+    All the actions described in this section can be activated from the menu that pops up
+    when right-clicking on a token within the decompiler window. The pop-up menu is context sensitive and
+    the type of token in particular (See <a class="xref" href="DecompilerWindow.html#DecompilerDisplay" title="Display">&#8220;Display&#8221;</a>) determines what actions are available.
+    The token clicked provides a local context for the action and may be used to pinpoint the exact
+    variable or operation affected. 
+  </p>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionAutoStructure"></a>Auto Create Structure</h3></div></div></div>
+  
+  <p>
+    Automatically create a <span class="emphasis"><em>structure</em></span> data-type for a selected variable
+    based on its use within the current function and possibly child functions.
+  </p>
+  <p>
+    The <span class="emphasis"><em>structure</em></span> definition is filled in by examining how the variable
+    is used, assuming it is a pointer to the <span class="emphasis"><em>structure</em></span>, tracing
+    data-flow to all the expressions the variable is used in. LOAD and STORE operations
+    trigger new <span class="emphasis"><em>fields</em></span> and additive offsets are traced to calculate
+    the offset of the fields within the <span class="emphasis"><em>structure</em></span> definition.
+  </p>
+  <p>
+    Once the new <span class="emphasis"><em>structure</em></span> is created, the selected variable is
+    retyped to be a pointer to the <span class="emphasis"><em>structure</em></span>. Within the window,
+    the function is decompiled again and references to new fields in the structure
+    should be immediately apparent.  These can be renamed or retyped from the window
+    to further refine the new <span class="emphasis"><em>structure</em></span> definition.
+    (See <a class="xref" href="DecompilerWindow.html#ActionRenameVariable" title="Rename Variable">&#8220;Rename Variable&#8221;</a>)
+  </p>
+  <div class="informalexample">
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>Auto Fill in Structure</strong></span></span></dt>
+<dd><p>
+	If the selected variable is already a pointer to a <span class="emphasis"><em>structure</em></span>,
+	this action fills in new information about the structure on top of the existing
+	structure definition. Depending on how the pointer is used in the current function,
+	new fields may be added and the data-type of <span class="emphasis"><em>undefined</em></span> fields
+	may be changed, but other existing parts of the structure definition are preserved.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Auto Fill in Class Structure</strong></span></span></dt>
+<dd><p>
+	If the selected variable is the <span class="bold"><strong>this</strong></span> parameter for
+	a class method, the menu title for this action reflects this, but the action is the same.
+	The class's structure definition is filled in with any new information.
+      </p></dd>
+</dl></div>
+  </div>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionComments"></a>Comments</h3></div></div></div>
+  
+  <p>Set or change a comment at the address of the selected token.
+  </p>
+  <p>
+    These actions bring up the general Comment dialog (See <a class="ulink" href="help/topics/CommentsPlugin/Comments.htm" target="_top">Comments</a>),
+    which associates the comment with a specific <span class="emphasis"><em>address</em></span> in the Program. For the
+    decompiler actions, this address is of the machine instruction most closely linked to the selected token.
+    Comments will be visible in the Listing and other Ghidra windows viewing the same
+    section of code.
+  </p>
+  <p>
+    The decompiler windows can display all comment types, but this may be affected by the Display options
+    (See <a class="xref" href="DecompilerAnnotations.html#AnnoteComments" title="Comments">&#8220;Comments&#8221;</a>).
+  </p>
+  <div class="informalexample">
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>Set Plate Comment ...</strong></span></span></dt>
+<dd><p>
+	Brings up the dialog for setting or editing a <span class="emphasis"><em>Plate</em></span> comment.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Set Pre Comment ...</strong></span></span></dt>
+<dd><p>
+	Brings up the dialog for setting or editing a <span class="emphasis"><em>Pre</em></span> comment.
+      </p></dd>
+</dl></div>
+  </div>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionCommitLocals"></a>Commit Local Names</h3></div></div></div>
+  
+  <p>
+    Commit the names of any local variables discovered during the decompiler's analysis
+    to the Program database as new Variable Annotations.  The recovered data-type is
+    not committed as part of the annotation, only the name and storage location.
+  </p>
+  <p>
+    Parameters are not affected by this command, see <a class="xref" href="DecompilerWindow.html#ActionCommitParams" title="Commit Params/Return">&#8220;Commit Params/Return&#8221;</a>.
+    The purpose of the command is to synchronize the local variables in the
+    decompiler's view of a function with the formal Variable Annotations in the disassembly view,
+    without otherwise affecting the decompilation.  After executing this command, additional changes
+    to local variable can be performed directly on the corresponding annotations in the Listing Window,
+    using various methods (See <a class="xref" href="DecompilerAnnotations.html#AnnoteVariables" title="Variable Annotations">&#8220;Variable Annotations&#8221;</a>).
+    Data-types are not forced for new annotations, they are created with
+    an <span class="emphasis"><em>undefined</em></span> data-type, which allows the decompiler to refine
+    its view of the variable's data-type as new information becomes available
+    (See <a class="xref" href="DecompilerAnnotations.html#AnnoteForcing" title="Forcing Data-types">&#8220;Forcing Data-types&#8221;</a>).
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionCommitParams"></a>Commit Params/Return</h3></div></div></div>
+  
+  <p>
+    Commit the decompiler's analysis of the input parameters and return value of the current
+    function as annotations to the Program database.
+  </p>
+  <p>
+    In the absence of either <span class="emphasis"><em>imported</em></span> or <span class="emphasis"><em>user defined</em></span>
+    information about a function's prototype, the decompiler performs its own analysis of what
+    the prototype is, determining the storage location and data-type of all parameters and the
+    return value.  This action commits this analysis permanently for the current function
+    displayed in the window, creating a matching <span class="emphasis"><em>Variable Annotation</em></span> for each input
+    parameter and the return value. The new annotations will be displayed in the
+    Listing Window as part of the function header, and the action effectively
+    <span class="emphasis"><em>synchronizes</em></span> the disassembly view and decompiler's view of the function prototype.
+  </p>
+  <p>
+    Committed prototype information is used both when decompiling the function itself and when
+    decompiling other functions that call it.
+    The committed annotations are <span class="emphasis"><em>forcing</em></span> on the decompiler, and it will
+    no longer perform prototype recovery analysis for that function. The decompiler assumes the committed parameters,
+    and only the committed parameters, exist and will not modify their data-types, with the
+    exception of parameters that are explicitly marked as having an <span class="emphasis"><em>undefined</em></span>
+    data-type. The user must manually modify individual variables or clear the entire prototype
+    if they want a change (See <a class="xref" href="DecompilerAnnotations.html#AnnoteVariables" title="Variable Annotations">&#8220;Variable Annotations&#8221;</a>).
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionCopy"></a>Copy/Copy Special ...</h3></div></div></div>
+  
+  <p>
+    Copy selected code from the decompiler window into the clipboard.
+  </p>
+  <p>
+    This is part of the standard copy
+    capabilities for all Ghidra windows and is suitable for copying (sections of) decompiler output
+    into other documents.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionEditDataType"></a>Edit Data Type</h3></div></div></div>
+  
+  <p>
+    Bring up a dialog for editing the definition of the data-type under the cursor.
+  </p>
+  <p>
+    The cursor must be on the data-type <span class="emphasis"><em>name</em></span> token,
+    not on a variable or other syntax. The action is only available for
+    <span class="emphasis"><em>structures</em></span> and <span class="emphasis"><em>unions</em></span>,
+    which will bring up the <a class="ulink" href="help/topics/DataTypeEditors/StructureEditor.htm" target="_top">Structure Editor</a>,
+    and for <span class="emphasis"><em>enumerations</em></span>, which will bring up the
+    <a class="ulink" href="help/topics/DataTypeEditors/EnumEditor.htm" target="_top">Enum Editor</a>.
+  </p>
+  <p>
+    Any change to the definition of the data-type is automatically incorporated by the decompiler into its output
+    (see <a class="xref" href="DecompilerAnnotations.html#AnnoteDatatype" title="Variable Data-types">&#8220;Variable Data-types&#8221;</a>).
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionEditSignature"></a>Edit Function Signature</h3></div></div></div>
+  
+  <p>
+    Bring up a dialog for editing the <span class="emphasis"><em>prototype</em></span> of a selected function and other
+    details about how it passes parameters.
+  </p>
+  <p>
+    The action is available from any token in the decompiler window.  Most tokens trigger editing
+    of the current function itself, but a called function can be edited by putting the cursor on
+    its name specifically.
+  </p>
+  <p>
+    </p>
+<div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="images/EditFunctionSignature.png" align="middle" width="688" height="534"></td></tr></table></div>
+<p>
+    The dialog provides detailed control over elements like
+    </p>
+<div class="informalexample">
+      <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none">
+	  <span class="bold"><strong>Parameters</strong></span> - including name, data-type, and storage
+	</li>
+<li class="listitem" style="list-style-type: none">
+	  <span class="bold"><strong>Return Type</strong></span> - including data-type and storage
+	</li>
+<li class="listitem" style="list-style-type: none">
+	  <span class="bold"><strong>Variable Arguments</strong></span> and
+	</li>
+<li class="listitem" style="list-style-type: none">
+	  <span class="bold"><strong>Inlining</strong></span>
+	</li>
+</ul></div>
+    </div>
+<p>
+  </p>
+  <p>
+    See documentation for the
+    <a class="ulink" href="help/topics/FunctionPlugin/Variables.htm#Edit_Function" target="_top">Function Editor Dialog</a>.
+    The decompiler automatically incorporates any changes into its output.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionFind"></a>Find ...</h3></div></div></div>
+  
+  <p>
+    Search for strings within the active window, in the current decompiler output.
+  </p>
+  <p>
+    The command brings up a dialog where a search pattern can entered as a raw string or regular expression.
+    The search is performed directly on the text of the decompiled function, from the current cursor; forward
+    each time the <span class="bold"><strong>Next</strong></span> button is hit, or backward for the
+    <span class="bold"><strong>Previous</strong></span> button. Any match is highlighted in the window,
+    and the cursor is set to the start of the match.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionHighlight"></a>Highlight</h3></div></div></div>
+  
+  <p>
+    All these actions highlight a specific set of variable tokens tracing the data-flow
+    of the selected variable within the current function.  Data-flow is the directed flow
+    of data from input variables through operations that manipulate their value to their
+    output variables.  The operations and variables chain together to form data-flow
+    <span class="emphasis"><em>paths</em></span>.
+  </p>
+  <div class="informalexample">
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>Def-Use</strong></span></span></dt>
+<dd>
+<p>
+      Highlight the single token where the selected variable was last written (def),
+      and highlight all the tokens where that single value is read (use). The written token,
+      generally where the variable is on the left-hand side of an assignment expression,
+      is highlighted in a different color.  If the variable is written on multiple merging
+      control-flow paths, no written token is highlighted.
+      </p>
+      <p>
+	In the following example, the token representing the first write to the
+	variable <span class="emphasis"><em>a</em></span> is selected when Def-Use is chosen.
+	</p>
+<div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="images/Defuse.png" align="middle" width="400" height="297"></td></tr></table></div>
+<p>
+      </p>
+</dd>
+<dt><span class="term"><span class="bold"><strong>Forward Slice</strong></span></span></dt>
+<dd>
+<p>
+      Highlight all variable tokens where the value at that point in the function is
+      directly affected by the value at the selected variable token.
+      A token is highlighted if there is a direct data-flow path
+      starting from the selected point and ending at the token. A call operation is not
+      considered a direct data-flow path from its input parameters to its output value.
+      </p>
+      <p>
+      In the following example, the token <span class="emphasis"><em>b</em></span>, the output of
+      <span class="emphasis"><em>max_alpha</em></span>, is selected when Forward Slice is chosen.
+      </p>
+<div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="images/ForwardSlice.png" align="middle" width="500" height="280"></td></tr></table></div>
+<p>
+      </p>
+</dd>
+<dt><span class="term"><span class="bold"><strong>Backward Slice</strong></span></span></dt>
+<dd><p>
+      Highlight all variable tokens where the value at that point in the function
+      directly affects the value at the selected variable token.
+      A token is highlighted if there is a direct data-flow path
+      starting from the token and ending at the selected point.
+      A call operation is not considered a direct data-flow path from its input parameters
+      to its output value.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Forward Operator Slice</strong></span></span></dt>
+<dd><p>
+	Highlight every operator token that manipulates a value directly affected by the
+	value at the selected variable token.  Along each direct data-flow path that
+	<span class="emphasis"><em>starts</em></span>
+	at the selected point, each token representing an operation is highlighted, along with
+	any explicit variable read or written by the operation.  A call operation is not
+	considered a direct data-flow path from its input parameters to its output value.
+	This is an alternate presentation of the slice displayed by the Forward Slice action.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Backward Operator Slice</strong></span></span></dt>
+<dd><p>
+	Highlight every operator token that manipulates a value that directly affects the
+	value at the selected variable token.  Along each direct data-flow path that
+	<span class="emphasis"><em>ends</em></span>
+	at the selected point, each token representing an operation is highlighted, along with
+	any explicit variable read or written by the operation. A call operation is not
+	considered a direct data-flow path from its input parameters to its output value.
+	This is an alternate presentation of the slice displayed by the Backward Slice action.
+      </p></dd>
+</dl></div>
+  </div>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionSecondaryHighlight"></a>Secondary Highlight</h3></div></div></div>
+  
+  <p>
+    A <span class="emphasis"><em>secondary highlight</em></span> is a semi-permanent token highlight in the decompiler
+    window that, unlike normal highlights, will not go away as the user clicks other tokens.
+    The color and text being highlighted is controlled by the user and will persist for
+    <span class="bold"><strong>for the duration of the Ghidra session</strong></span> or until the user
+    explicitly removes the highlight.
+  </p>
+  <div class="informalexample">
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>Set Highlight</strong></span></span></dt>
+<dd><p>
+	Apply a secondary highlight to all text matching the text of the token under
+	the cursor.  A color is chosen randomly for the Ghidra session.  If the same highlight
+	is removed and then reactivated later in the session, the same color will be used.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Set Highlight...</strong></span></span></dt>
+<dd><p>
+	Apply a secondary highlight to all text matching the text of the token under
+	the cursor, as in the <span class="emphasis"><em>Set Highlight</em></span> action above.
+	A Color Chooser dialog is shown allowing the user to select the specific color
+	for the highlight. The dialog is initialized with a random color or with the color
+	previously applied to the same token.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Remove Highlight</strong></span></span></dt>
+<dd><p>
+	Remove the existing secondary highlight applied to the token under the cursor.
+	Other highlights are not affected.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Remove All Highlights</strong></span></span></dt>
+<dd><p>
+	Remove all secondary highlights in the current function. Highlights in other
+	functions are not affected.
+      </p></dd>
+</dl></div>
+  </div>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionOverrideSignature"></a>Override Signature</h3></div></div></div>
+  
+  <p>
+    Override the function prototype corresponding to the function under the cursor.
+  </p>
+  <p>
+    This action can be triggered at <span class="emphasis"><em>call sites</em></span>, where the function
+    being decompiled is calling into another function. Users must select either the token representing
+    the called function's name or the tokens representing the function pointer at the call site.
+    A dialog is brought up where the a complete <span class="emphasis"><em>function declaration</em></span>, specifying
+    the return data-type along with the name and data-type for each input parameter.  Additionally,
+    the "Calling Convention", "In Line", and "No Return" properties of the function prototype
+    can be set (See <a class="xref" href="DecompilerAnnotations.html#AnnotePrototype" title="Function Prototypes">&#8220;Function Prototypes&#8221;</a>).
+  </p>
+  <p>
+    Confirming the dialog forces the new function prototype on the decompiler's view of the called function,
+    but only for the single selected call site.
+  </p>
+  <p>
+    This action is suitable for either indirect calls or direct calls to functions taking a variable number
+    of arguments; situations where a complete description of all parameters is not available.
+    For direct calls with a fixed number of arguments, it is almost always better to provide
+    parameter information by setting the function's prototype directly.  See the
+    <a class="xref" href="DecompilerWindow.html#ActionCommitParams" title="Commit Params/Return">&#8220;Commit Params/Return&#8221;</a> command for instance.  In this situation, the "Override Signature"
+    command is still possible, but it will bring up a confirmation dialog.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionReference"></a>Reference ...</h3></div></div></div>
+  
+  <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="ActionFindUses"></a>Find Uses of &lt;data-type&gt;</h4></div></div></div>
+    
+    <p>
+      Calculate locations in the Program that reference the <span class="bold"><strong>data-type</strong></span>
+      of the token under the cursor. Results are collected in a
+      <a class="ulink" href="help/topics/LocationReferencesPlugin/Location_References.html" target="_top">Location References Dialog</a>,
+      which displays a row for each reference with its address and other context.
+    </p>
+    <p>
+      Uses (references) specifically are to <span class="emphasis"><em>variables</em></span> that have been assigned the data-type.
+      References to parameters and global variables are always listed.
+      If the <span class="emphasis"><em>Dynamic Data Type Discovery</em></span> option is on
+      (see <a class="ulink" href="help/topics/LocationReferencesPlugin/Location_References.html#Data_Types" target="_top">To Find Location References to Data Types</a>),
+      the decompiler's propagation analysis is invoked on all functions to discover local
+      variables as well.
+    </p>
+  </div>
+  <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="ActionFindReferences"></a>Find References to &lt;function&gt;</h4></div></div></div>
+    
+    <p>
+      Display locations in the Program that reference the <span class="bold"><strong>function</strong></span>
+      associated with the token under the cursor. Results are collected in a
+      <a class="ulink" href="help/topics/LocationReferencesPlugin/Location_References.html" target="_top">Location References Dialog</a>,
+      which displays a row for each reference with its address and other context.
+    </p>
+    <p>
+      References include both instructions and data referring to the <span class="emphasis"><em>entry point</em></span>
+      address of the function.
+    </p>
+  </div>
+  <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="ActionShowReferences"></a>Show References to Address</h4></div></div></div>
+    
+    <p>
+      Display locations in the Program that reference the <span class="bold"><strong>address</strong></span>
+      associated with the token under the cursor.  Results are collected in a
+      <a class="ulink" href="help/topics/LocationReferencesPlugin/Location_References.html" target="_top">Location References Dialog</a>,
+      which displays a row for each reference with its address and other context.
+    </p>
+    <p>
+      The selected address is of the instruction most closely associated with the
+      variable or operator represented by the token.
+    </p>
+  </div>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionRemoveOverride"></a>Remove Signature Override</h3></div></div></div>
+  
+  <p>
+    Remove the overriding function prototype applied previously to the called function under the cursor.
+  </p>
+  <p>
+    This action can only be triggered at <span class="emphasis"><em>call sites</em></span>, where an overriding
+    prototype was previously placed by the <a class="xref" href="DecompilerWindow.html#ActionOverrideSignature" title="Override Signature">&#8220;Override Signature&#8221;</a> command. As with
+    this command, users must select either the token representing the called function's name or the
+    tokens representing the function pointer at the call site.  The action causes the
+    override to be removed immediately. Parameter information will be drawn from the decompiler's
+    normal analysis.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionRenameFunction"></a>Rename Function</h3></div></div></div>
+  
+  <p>
+    Rename the function corresponding to the token under the cursor.
+  </p>
+  <p>
+    The current function can be renamed by selecting the name token within the function's
+    declaration at the top of the decompiler window, or individual called functions
+    can be renamed by selecting their name token within a call expression.  
+    This action brings up a dialog containing a text field prepopulated with the
+    name to be changed. The current namespace (and any parent namespaces) is
+    presented in a drop-down menu.  Editing the text field changes the <span class="emphasis"><em>base</em></span>
+    name of the function, and selecting within the drop-down menu allows
+    the function to be moved into a parent namespace.
+  </p>
+  <p>
+    A new or child namespace can
+    be specified by prepending the base name with the namespace using the C++ '::'
+    separator characters. Any namespace path entered this way is considered relative
+    to the namespace set in the drop-down menu, so the <span class="bold"><strong>Global</strong></span>
+    namespace may need to be selected if the user wants to specify an absolute path. If
+    any path element of the namespace does not exist, it is created.
+  </p>
+  <p>
+    The change will be immediately visible across all references to the function
+    (including in any Decompiler, Listing, and Functions windows).
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionRenameField"></a>Rename Field</h3></div></div></div>
+  
+  <p>
+    Rename the field currently under the cursor within its <span class="emphasis"><em>structure</em></span>
+    data-type definition.
+  </p>
+  <p>
+    The action brings up a dialog prepopulated with the
+    current name of the field.  Editing and confirming this dialog immediately changes the
+    field's name in its corresponding structure definition. The dialog enforces unique field names.
+  </p>
+  <p>
+    If the initial name looks like <code class="code">field_0x..</code>, it may be that the field offset was
+    discovered by the decompiler, and the field does not exist in the structure definition.
+    In this case, a new field is created at that offset, with the new name and a data-type of "undefined".
+  </p>
+  <p>
+    The change to the definition is visible globally
+    throughout the Program, anywhere the data-type is referenced. Decompilation
+    is triggered again to incorporate the new name, but the output is otherwise unaffected.
+  </p>
+  <p>
+    Within a decompiler window, field name tokens are presented <span class="emphasis"><em>in context</em></span>,
+    showing how they are used within the code flow of the current function.
+    Combined with <a class="xref" href="DecompilerWindow.html#ActionAutoStructure" title="Auto Create Structure">&#8220;Auto Create Structure&#8221;</a> and
+    <a class="xref" href="DecompilerWindow.html#ActionRetypeField" title="Retype Field">&#8220;Retype Field&#8221;</a>, this action allows a
+    <span class="emphasis"><em>structure</em></span> to be created and filled in based on this context.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionRenameGlobal"></a>Rename Global</h3></div></div></div>
+  
+  <p>
+    Rename the global variable corresponding to the token under the cursor.
+  </p>
+  <p>
+    This action brings up a dialog containing a text field prepopulated with the
+    current name of the variable. The current namespace (and any parent namespaces) is
+    presented in a drop-down menu.  Editing the text field changes the <span class="emphasis"><em>base</em></span>
+    name of the variable, and selecting within the drop-down menu allows
+    the variable to be moved into a parent namespace.
+  </p>
+  <p>
+    A new or child namespace can
+    be specified by prepending the base name with the namespace using the C++ '::'
+    separator characters. Any namespace path entered this way is considered relative
+    to the namespace set in the drop-down menu, so the <span class="bold"><strong>Global</strong></span>
+    namespace may need to be selected if the user wants to specify an absolute path. If
+    any path element of the namespace does not exist, it is created.
+  </p>
+  <p>
+    The change will be immediately visible across all references to the variable,
+    including the Decompiler and Listing windows. A new decompilation is triggered
+    to incorporate the new name, but the output is otherwise unaffected.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionRenameVariable"></a>Rename Variable</h3></div></div></div>
+  
+  <p>
+    Rename the local variable or parameter currently under the cursor.
+  </p>
+  <p>
+    The action brings up a dialog prepopulated with the current name of the variable.
+    Editing and confirming this dialog immediately changes the name, unless there is a
+    conflict with another variable.
+  </p>
+  <p>
+    Decompilation is triggered again to incorporate the
+    new name, causing local variable declarations to be reordered and line breaks to
+    change, but otherwise the the output is unaffected.
+  </p>
+  <p>
+    Local variables and parameters presented by the decompiler may be invented on-the-fly
+    and don't necessarily have a formal annotation in Ghidra
+    (see <a class="xref" href="DecompilerAnnotations.html#AnnoteVariables" title="Variable Annotations">&#8220;Variable Annotations&#8221;</a>). Performing this action on
+    a variable will create an annotation if one didn't exist previously, which will
+    generally be visible as part of the function header in the Listing window.
+    A new annotation will <span class="emphasis"><em>not</em></span> commit the data-type of the variable,
+    and data-types applied later, and elsewhere in the function, can still propagate into
+    the variable.
+  </p>
+  <p>
+    Performing this action on a function parameter causes a formal annotation to be created
+    for <span class="emphasis"><em>all</em></span> parameters, although the names of any other parameters
+    will not be changed.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionRetypeField"></a>Retype Field</h3></div></div></div>
+  
+  <p>
+    Change the data-type of the field currently under the cursor within its
+    <span class="emphasis"><em>structure</em></span> data-type definition.
+  </p>
+  <p>
+    The action brings up a dialog prepopulated with the current data-type associated
+    with the field.  The user can select any fixed length data-type in the Program,
+    although selecting a larger data-type may cause an error if there is not enough room
+    for it with other existing fields.
+    Editing and confirming this dialog immediately changes the
+    corresponding data-type definition.
+  </p>
+  <p>
+    The change to the definition is visible globally throughout the Program,
+    anywhere the data-type is referenced, and is <span class="emphasis"><em>forcing</em></span>
+    on the decompiler (see <a class="xref" href="DecompilerAnnotations.html#AnnoteForcing" title="Forcing Data-types">&#8220;Forcing Data-types&#8221;</a>). Decompilation is triggered
+    again, and the new data-type is propagated from the point of the field reference(s).
+    Changes to the output may be large and indirect.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionRetypeGlobal"></a>Retype Global</h3></div></div></div>
+  
+  <p>
+    Change the data-type of the global variable currently under the cursor.
+  </p>
+  <p>
+    This action brings up a dialog prepopulated with the current data-type of the variable.
+    The user can select any fixed length data-type in the Program that matches
+    the size of the variable. Editing and confirming this dialog immediately changes
+    the data-type.
+  </p>
+  <p>
+    The change is visible globally throughout the Program, anywhere the variable is
+    referenced, and is <span class="emphasis"><em>forcing</em></span> on the decompiler
+    (see <a class="xref" href="DecompilerAnnotations.html#AnnoteForcing" title="Forcing Data-types">&#8220;Forcing Data-types&#8221;</a>). Decompilation is triggered
+    again, and the new data-type is propagated from the variable reference(s).
+    Changes to the output may be large and indirect.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionRetypeReturn"></a>Retype Return</h3></div></div></div>
+  
+  <p>
+    Change the data-type of the current function's <span class="emphasis"><em>return value</em></span>.
+  </p>
+  <p>
+    This action is only available from the data-type token in the function declaration, at the
+    top of the decompiler's output.  It brings up a dialog prepopulated with the current
+    data-type returned by the function.  The user can select any fixed length data-type in the Program.
+    Editing and confirming this dialog immediately changes the data-type. If an annotation for
+    the return value (named <code class="code">&lt;RETURN&gt;</code>) did not exist previously, one is created.
+  </p>
+  <p>
+    As input parameter annotations and the return value annotation must be committed as a whole
+    (see the discussion of function prototype's in <a class="xref" href="DecompilerAnnotations.html#AnnoteForcing" title="Forcing Data-types">&#8220;Forcing Data-types&#8221;</a>), if
+    no prototype existed previously, this action also causes variable annotations for all
+    input parameters to be created as well.  In this situation, the action is equivalent to
+    <a class="xref" href="DecompilerWindow.html#ActionCommitParams" title="Commit Params/Return">&#8220;Commit Params/Return&#8221;</a>, and a confirmation dialog comes up to notify the user.
+  </p>
+  <p>
+    Setting a data-type on the return value using this action affects decompilation for the
+    function itself and, additionally, any function that calls this function.  Within a calling
+    function, the decompiler propagates the data-type into the variable or expression incorporating
+    the return value at each call site.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionRetypeVariable"></a>Retype Variable</h3></div></div></div>
+  
+  <p>
+    Change the data-type of the local variable or parameter currently under the cursor.
+  </p>
+  <p>
+    This action brings up a dialog prepopulated with the current data-type of the variable.
+    The user can select any fixed length data-type in the Program that matches
+    the size of the variable. Editing and confirming this dialog immediately changes
+    the data-type.
+  </p>
+  <p>
+    The change to the data-type is <span class="emphasis"><em>forcing</em></span> on the decompiler
+    (see <a class="xref" href="DecompilerAnnotations.html#AnnoteForcing" title="Forcing Data-types">&#8220;Forcing Data-types&#8221;</a>). Decompilation is triggered again, and the new
+    data-type is propagated from the variable reference(s). Changes to the output may be
+    large and indirect.
+  </p>
+  <p>
+    Local variables and parameters presented by the decompiler may be invented on-the-fly
+    and don't necessarily have a formal annotation in Ghidra
+    (see <a class="xref" href="DecompilerAnnotations.html#AnnoteVariables" title="Variable Annotations">&#8220;Variable Annotations&#8221;</a>). Performing this action on a variable
+    will create an annotation if one didn't exist previously, which will generally be
+    visible as part of the function header in the Listing window.
+  </p>
+  <p>
+    Performing this action on a function parameter causes a formal annotation to
+    be created for <span class="emphasis"><em>all</em></span> parameters to the function, and the number
+    of parameters and their memory locations become fixed.  If the annotation of another
+    parameter did not exist previously, then its data-type is <span class="emphasis"><em>not</em></span>
+    forced by this action.
+  </p>
+  <p>
+    Data-type information applied to parameters using this action is especially impactful
+    because it affects decompilation for the function owning the parameter and, additionally,
+    any function that calls this owning function.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionIsolate"></a>Split Out As New Variable</h3></div></div></div>
+  
+  <p>
+    Split a high-level variable so that the selected token becomes a new variable with the smallest
+    possible range.
+  </p>
+  <p>
+    The decompiler defines high-level variables in terms of <a class="link" href="DecompilerConcepts.html#ConceptVarnode" title="Varnodes">varnodes</a> that
+    are merged together to produce the final variable.  Some merging is speculative, which reduces the
+    number of variables overall, but is not strictly necessary for valid decompilation.  The merged
+    variable can be represented with two or more variables that have a smaller range. See the
+    documentation on <a class="xref" href="DecompilerConcepts.html#ConceptHighVariable" title="HighVariable">&#8220;HighVariable&#8221;</a>.
+  </p>
+  <p>
+    This command is only available if the selected token is part of a high-level variable that has
+    been speculatively merged.  The part of the variable that is directly represented by the
+    token is split out as its own variable, retaining the name of the original variable.
+    Any other pieces become a separate variable with a new name.
+  </p>
+</div>
+
+</div>
+
+</div></body>
+</html>

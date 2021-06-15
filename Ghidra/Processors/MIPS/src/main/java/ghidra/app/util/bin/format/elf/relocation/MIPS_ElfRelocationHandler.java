@@ -121,8 +121,8 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 
 		ElfSymbol elfSymbol = mipsRelocationContext.getSymbol(symbolIndex);
 
+		Address symbolAddr = mipsRelocationContext.getSymbolAddress(elfSymbol);
 		long symbolValue = mipsRelocationContext.getSymbolValue(elfSymbol);
-
 		String symbolName = elfSymbol.getNameAsString();
 
 		long addend = 0;
@@ -152,7 +152,6 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 			}
 		}
 
-		mipsRelocationContext.useSavedAddend = saveValue;
 		mipsRelocationContext.savedAddendHasError = false;
 		mipsRelocationContext.savedAddend = 0;
 
@@ -407,7 +406,13 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 					symbolValue = mipsRelocationContext.getImageBaseWordAdjustmentOffset();
 				}
 				value = (int) symbolValue;
-				value += mipsRelocationContext.extractAddend() ? oldValue : addend;
+				int a = (int) (mipsRelocationContext.extractAddend() ? oldValue : addend);
+				// NOTE: this may not detect correctly for all combound relocations
+				if (a != 0 && isUnsupportedExternalRelocation(program, relocationAddress,
+					symbolAddr, symbolName, a, log)) {
+					a = 0; // prefer bad fixup for EXTERNAL over really-bad fixup
+				}
+				value += a;
 
 				newValue = value;
 				writeNewValue = true;
@@ -719,6 +724,8 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 					shuffle(newValue, relocType, mipsRelocationContext));
 			}
 		}
+
+		mipsRelocationContext.useSavedAddend = saveValue;
 
 	}
 

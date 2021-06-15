@@ -30,6 +30,11 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	@Override
+	public int getRelrRelocationType() {
+		return X86_64_ElfRelocationConstants.R_X86_64_RELATIVE;
+	}
+
+	@Override
 	public void relocate(ElfRelocationContext elfRelocationContext, ElfRelocation relocation,
 			Address relocationAddress) throws MemoryAccessException, NotFoundException {
 
@@ -54,16 +59,17 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 
 		ElfSymbol sym = null;
 		long symbolValue = 0;
-		long st_value = 0;
+		Address symbolAddr = null;
 		String symbolName = null;
 		long symbolSize = 0;
+
 		if (symbolIndex != 0) {
 			sym = elfRelocationContext.getSymbol(symbolIndex);
 		}
 
 		if (sym != null) {
+			symbolAddr = elfRelocationContext.getSymbolAddress(sym);
 			symbolValue = elfRelocationContext.getSymbolValue(sym);
-			st_value = sym.getValue();
 			symbolName = sym.getNameAsString();
 			symbolSize = sym.getSize();
 		}
@@ -81,6 +87,10 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 					"Runtime copy not supported", elfRelocationContext.getLog());
 				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_64:
+				if (addend != 0 && isUnsupportedExternalRelocation(program, relocationAddress,
+					symbolAddr, symbolName, addend, elfRelocationContext.getLog())) {
+					addend = 0; // prefer bad fixup for EXTERNAL over really-bad fixup
+				}
 				value = symbolValue + addend;
 				memory.setLong(relocationAddress, value);
 				break;
@@ -202,11 +212,8 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setLong(relocationAddress, value);
 				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_IRELATIVE:
-				// NOTE: We don't support this since the code actually uses a function to 
-				// compute the relocation value (i.e., indirect)
-				appliedSymbol = false;
-				markAsError(program, relocationAddress, "R_X86_64_IRELATIVE", symbolName,
-					"indirect computed relocation not supported", elfRelocationContext.getLog());
+				value = addend + elfRelocationContext.getImageBaseWordAdjustmentOffset();
+				memory.setLong(relocationAddress, value);
 				break;
 
 //			case ElfRelocationConstants.R_X86_64_TLSGD:

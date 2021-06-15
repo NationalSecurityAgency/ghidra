@@ -15,6 +15,7 @@
  */
 package docking.help;
 
+import java.awt.Desktop;
 import java.awt.Image;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -52,6 +53,8 @@ import utilities.util.FileUtilities;
 public class GHelpHTMLEditorKit extends HTMLEditorKit {
 
 	private static final String G_HELP_STYLE_SHEET = "help/shared/Frontpage.css";
+
+	private static final Pattern EXTERNAL_URL_PATTERN = Pattern.compile("https?://.*");
 
 	/** A pattern to strip the font size value from a line of CSS */
 	private static final Pattern FONT_SIZE_PATTERN = Pattern.compile("font-size:\\s*(\\d{1,2})");
@@ -116,6 +119,10 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 			}
 
 			if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+				if (isExternalLink(e)) {
+					browseExternalLink(e);
+					return;
+				}
 				Msg.trace(this, "Link activated: " + e.getURL());
 				e = validateURL(e);
 				Msg.trace(this, "Validated event: " + e.getURL());
@@ -124,6 +131,28 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 			for (HyperlinkListener listener : delegateListeners) {
 				listener.hyperlinkUpdate(e);
 			}
+		}
+	}
+
+	private boolean isExternalLink(HyperlinkEvent e) {
+		String description = e.getDescription();
+		return description != null && EXTERNAL_URL_PATTERN.matcher(description).matches();
+	}
+
+	private void browseExternalLink(HyperlinkEvent e) {
+		String description = e.getDescription();
+		if (!Desktop.isDesktopSupported()) {
+			Msg.info(this, "Unable to launch external browser for " + description);
+			return;
+		}
+
+		try {
+			//  use an external browser
+			URI uri = e.getURL().toURI();
+			Desktop.getDesktop().browse(uri);
+		}
+		catch (URISyntaxException | IOException e1) {
+			Msg.error(this, "Error browsing to external URL " + description, e1);
 		}
 	}
 

@@ -21,9 +21,8 @@ package ghidra.program.database;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.KeyRange;
 
 /**
@@ -82,13 +81,13 @@ public class DBObjectCache<T extends DatabaseObject> {
 	 * Retrieves the database object with the given record and associated key from the cache.
 	 * This form should be used in conjunction with record iterators to avoid unnecessary
 	 * record query during a possible object refresh.  To benefit from the record the cached
-	 * object must implement the {@link DatabaseObject#refresh(Record)} method which by default
+	 * object must implement the {@link DatabaseObject#refresh(DBRecord)} method which by default
 	 * ignores the record and simply calls {@link DatabaseObject#refresh()}.
 	 * @param objectRecord the valid record corresponding to the object to be retrieved and possibly
 	 * used to refresh the associated object if found in cache
 	 * @return the cached object or null if the object with that key is not currently cached.
 	 */
-	public synchronized T get(Record objectRecord) {
+	public synchronized T get(DBRecord objectRecord) {
 		long key = objectRecord.getKey();
 		KeyedSoftReference ref = map.get(key);
 		if (ref != null) {
@@ -159,6 +158,7 @@ public class DBObjectCache<T extends DatabaseObject> {
 	 * within the specified keyRanges.
 	 * @param keyRanges key ranges to delete
 	 */
+//TODO: Discourage large cases by only allowing a single range to be specified
 	public synchronized void delete(List<KeyRange> keyRanges) {
 		hardCache.clear();
 		processQueue();
@@ -199,18 +199,21 @@ public class DBObjectCache<T extends DatabaseObject> {
 	 * @param keyRanges key ranges to delete
 	 */
 	private void deleteLargeKeyRanges(List<KeyRange> keyRanges) {
-		map.keySet()
-				.stream()
-				.filter(key -> keyRangesContain(keyRanges, key))
-				.collect(Collectors.toList())
-				.forEach(key -> {
-					KeyedSoftReference ref = map.remove(key);
-					DatabaseObject obj = ref.get();
-					if (obj != null) {
-						obj.setDeleted();
-						ref.clear();
-					}
-				});
+		map.values().removeIf(ref -> checkRef(ref, keyRanges));
+	}
+
+	private boolean checkRef(KeyedSoftReference ref, List<KeyRange> keyRanges) {
+		long key = ref.getKey();
+		if (keyRangesContain(keyRanges, key)) {
+			DatabaseObject obj = ref.get();
+			if (obj != null) {
+				obj.setDeleted();
+				ref.clear();
+			}
+			return true;
+		}
+		return false;
+
 	}
 
 	/**
@@ -268,27 +271,6 @@ public class DBObjectCache<T extends DatabaseObject> {
 	}
 
 	/**
-	 * Invalidates a range of objects in the cache.
-	 * @param startKey the first key in the range to invalidate.
-	 * @param endKey the last key in the range to invalidate.
-	 */
-	public synchronized void invalidate(long startKey, long endKey) {
-		processQueue();
-		if (endKey - startKey < map.size()) {
-			for (long i = startKey; i <= endKey; i++) {
-				doInvalidate(i);
-			}
-		}
-		else {
-			map.keySet()
-					.stream()
-					.filter(key -> (key >= startKey && key <= endKey))
-					.collect(Collectors.toList())
-					.forEach(key -> doInvalidate(key));
-		}
-	}
-
-	/**
 	 * Removes the object with the given key from the cache.
 	 * @param key the key of the object to remove.
 	 */
@@ -302,25 +284,6 @@ public class DBObjectCache<T extends DatabaseObject> {
 				ref.clear();
 			}
 			map.remove(key);
-		}
-	}
-
-	/**
-	 * Invalidates the object with given key.
-	 * @param key the key of the object to invalidate.
-	 */
-	public synchronized void invalidate(long key) {
-		processQueue();
-		doInvalidate(key);
-	}
-
-	private void doInvalidate(long key) {
-		KeyedSoftReference ref = map.get(key);
-		if (ref != null) {
-			T obj = ref.get();
-			if (obj != null) {
-				obj.setInvalid();
-			}
 		}
 	}
 

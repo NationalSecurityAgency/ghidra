@@ -15,7 +15,7 @@
  */
 package docking.widgets.fieldpanel;
 
-import static docking.widgets.EventTrigger.*;
+import static docking.widgets.EventTrigger.INTERNAL_ONLY;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -129,14 +129,12 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Makes sure the location is completely visible on the screen. If it
-	 * already is visible, this routine will do nothing. If the location is
-	 * above the screen (at an index less than the first line on the
-	 * screen), the view will be scrolled such that the location will appear
-	 * at the top of the screen. If the location is below the screen, the view
-	 * will be scrolled such that the location will appear at the bottom the
-	 * screen. The layouts[] array will be updated to reflect the current
-	 * view.
+	 * Makes sure the location is completely visible on the screen. If it already is visible, this
+	 * routine will do nothing. If the location is above the screen (at an index less than the first
+	 * line on the screen), the view will be scrolled such that the location will appear at the top
+	 * of the screen. If the location is below the screen, the view will be scrolled such that the
+	 * location will appear at the bottom the screen. The layouts[] array will be updated to reflect
+	 * the current view.
 	 */
 	private void doScrollTo(FieldLocation location) {
 		if (layouts.isEmpty()) {
@@ -299,7 +297,7 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Returns true if the given field location is rendered on the screen; false if scrolled 
+	 * Returns true if the given field location is rendered on the screen; false if scrolled
 	 * offscreen
 	 * 
 	 * @param location the location to check
@@ -409,8 +407,7 @@ public class FieldPanel extends JPanel
 	/**
 	 * Sets the default background color
 	 *
-	 * @param c
-	 *            the color to use for the background.
+	 * @param c the color to use for the background.
 	 */
 	public void setBackgroundColor(Color c) {
 		backgroundColorModel.setDefaultBackgroundColor(c);
@@ -582,8 +579,7 @@ public class FieldPanel extends JPanel
 	/**
 	 * Add a new hover provider to be managed.
 	 *
-	 * @param hoverProvider
-	 *            the new hover provider to be managed.
+	 * @param hoverProvider the new hover provider to be managed.
 	 */
 	public void setHoverProvider(HoverProvider hoverProvider) {
 		hoverHandler.setHoverProvider(hoverProvider);
@@ -591,6 +587,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the class responsible for triggering popups for this field panel.
+	 * 
 	 * @return the hover handler.
 	 */
 	public HoverHandler getHoverHandler() {
@@ -598,16 +595,13 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Returns the Field at the given x,y coordinates. Note the x,y must
-	 * currently be visible on the screen or else this method will return null.
+	 * Returns the Field at the given x,y coordinates. Note the x,y must currently be visible on the
+	 * screen or else this method will return null.
 	 *
-	 * @param x
-	 *            the x mouse coordinate in the component.
-	 * @param y
-	 *            the y mouse coordinate in the component.
-	 * @param loc
-	 *            will be filled in with the FieldLocation for the given point.
-	 *            Values will be undefined if the Field return value is null.
+	 * @param x the x mouse coordinate in the component.
+	 * @param y the y mouse coordinate in the component.
+	 * @param loc will be filled in with the FieldLocation for the given point. Values will be
+	 *            undefined if the Field return value is null.
 	 * @return Field the Field object the point is over.
 	 */
 	public Field getFieldAt(int x, int y, FieldLocation loc) {
@@ -644,9 +638,7 @@ public class FieldPanel extends JPanel
 	/**
 	 * Sets the cursor color for when this component has focus.
 	 *
-	 * @param color
-	 *            Color to use for the cursor when this component has keyboard
-	 *            focus.
+	 * @param color Color to use for the cursor when this component has keyboard focus.
 	 */
 	public void setFocusedCursorColor(Color color) {
 		paintContext.setFocusedCursorColor(color);
@@ -659,9 +651,7 @@ public class FieldPanel extends JPanel
 	/**
 	 * Sets the cursor color for when this component does not have focus.
 	 *
-	 * @param color
-	 *            Color to use for the cursor when this component does not have
-	 *            keyboard focus.
+	 * @param color Color to use for the cursor when this component does not have keyboard focus.
 	 */
 	public void setNonFocusCursorColor(Color color) {
 		paintContext.setNotFocusedCursorColor(color);
@@ -688,8 +678,7 @@ public class FieldPanel extends JPanel
 	/**
 	 * Sets the current selection.
 	 *
-	 * @param sel
-	 *            the selection to set.
+	 * @param sel the selection to set.
 	 */
 	public void setSelection(FieldSelection sel) {
 		if (!selectionHandler.isSelectionOn()) {
@@ -703,8 +692,7 @@ public class FieldPanel extends JPanel
 	/**
 	 * Sets the current highlight to the specified field selection.
 	 *
-	 * @param sel
-	 *            the selection to set as the highlight.
+	 * @param sel the selection to set as the highlight.
 	 */
 	public void setHighlight(FieldSelection sel) {
 		highlight = new FieldSelection(sel);
@@ -716,8 +704,7 @@ public class FieldPanel extends JPanel
 	 * Sets the cursorPosition to the given location.
 	 *
 	 * @param index the index of the Layout on which to place the cursor.
-	 * @param fieldNum the index of the field within its layout on which to place the
-	 *        cursor.
+	 * @param fieldNum the index of the field within its layout on which to place the cursor.
 	 * @param row the row within the field to place the cursor.
 	 * @param col the col within the row to place the cursor.
 	 * @return true if the cursor changed
@@ -727,7 +714,17 @@ public class FieldPanel extends JPanel
 	}
 
 	// for subclasses to control the event trigger
-	protected boolean setCursorPosition(BigInteger index, int fieldNum, int row, int col,
+	/**
+	 * Sets the cursorPosition to the given location with the given trigger.
+	 * 
+	 * @param index the index of the Layout on which to place the cursor.
+	 * @param fieldNum the index of the field within its layout on which to place the cursor.
+	 * @param row the row within the field to place the cursor.
+	 * @param col the col within the row to place the cursor.
+	 * @param trigger a caller-specified event trigger.
+	 * @return true if the cursor changed
+	 */
+	public boolean setCursorPosition(BigInteger index, int fieldNum, int row, int col,
 			EventTrigger trigger) {
 		if (cursorHandler.doSetCursorPosition(index, fieldNum, row, col, trigger)) {
 			repaint();
@@ -737,11 +734,10 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Sets the cursor on or off. When the cursor is turned off, there is no
-	 * visible cursor displayed on the screen.
+	 * Sets the cursor on or off. When the cursor is turned off, there is no visible cursor
+	 * displayed on the screen.
 	 *
-	 * @param cursorOn
-	 *            true turns the cursor on, false turns it off.
+	 * @param cursorOn true turns the cursor on, false turns it off.
 	 */
 	public void setCursorOn(boolean cursorOn) {
 		cursorHandler.setCursorOn(cursorOn);
@@ -759,20 +755,15 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Sets the cursor to the given Field location and attempts to show that
-	 * location in the center of the screen.
+	 * Sets the cursor to the given Field location and attempts to show that location in the center
+	 * of the screen.
 	 *
-	 * @param index
-	 *            the index of the line to go to.
-	 * @param fieldNum
-	 *            the field on the line to go to.
-	 * @param row
-	 *            the row in the field to go to.
-	 * @param col
-	 *            the column in the field to go to.
-	 * @param alwaysCenterCursor
-	 *            if true, centers cursor on screen. Otherwise, only centers
-	 *            cursor if cursor is offscreen.
+	 * @param index the index of the line to go to.
+	 * @param fieldNum the field on the line to go to.
+	 * @param row the row in the field to go to.
+	 * @param col the column in the field to go to.
+	 * @param alwaysCenterCursor if true, centers cursor on screen. Otherwise, only centers cursor
+	 *            if cursor is offscreen.
 	 */
 	public void goTo(BigInteger index, int fieldNum, int row, int col, boolean alwaysCenterCursor) {
 		goTo(index, fieldNum, row, col, alwaysCenterCursor, EventTrigger.API_CALL);
@@ -804,12 +795,10 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Scrolls the view so that the cursor is at the given offset from the top
-	 * of the screen
+	 * Scrolls the view so that the cursor is at the given offset from the top of the screen
 	 *
-	 * @param offset
-	 *            the pixel distance from the top of the screen at which to
-	 *            scroll the display such that the cursor is at that offset.
+	 * @param offset the pixel distance from the top of the screen at which to scroll the display
+	 *            such that the cursor is at that offset.
 	 */
 	public void positionCursor(int offset) {
 		if (offset < 0) {
@@ -831,8 +820,7 @@ public class FieldPanel extends JPanel
 	/**
 	 * Sets the selection color
 	 *
-	 * @param color
-	 *            the color to use for selection.
+	 * @param color the color to use for selection.
 	 */
 	public void setSelectionColor(Color color) {
 		paintContext.setSelectionColor(color);
@@ -841,20 +829,18 @@ public class FieldPanel extends JPanel
 	/**
 	 * Sets the highlight color
 	 *
-	 * @param color
-	 *            the color to use for highlights.
+	 * @param color the color to use for highlights.
 	 */
 	public void setHighlightColor(Color color) {
 		paintContext.setHighlightColor(color);
 	}
 
 	/**
-	 * Returns a ViewerPosition object which contains the top of screen
-	 * information. The ViewerPosition will have the index of the layout at the
-	 * top of the screen and the yPos of that layout. For example, if the layout
-	 * is completely displayed, yPos will be 0. If part of the layout is off the
-	 * top off the screen, then yPos will have a negative value (indicating that
-	 * it begins above the displayable part of the screen.
+	 * Returns a ViewerPosition object which contains the top of screen information. The
+	 * ViewerPosition will have the index of the layout at the top of the screen and the yPos of
+	 * that layout. For example, if the layout is completely displayed, yPos will be 0. If part of
+	 * the layout is off the top off the screen, then yPos will have a negative value (indicating
+	 * that it begins above the displayable part of the screen.
 	 */
 	public ViewerPosition getViewerPosition() {
 		if (layouts.size() > 0) {
@@ -864,15 +850,12 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Scrolls the display to show the layout specified by index at the vertical
-	 * position specified by yPos. Generally, the index will be layout at the
-	 * top of the screen and the yPos will be &lt;= 0, meaning the layout may be
-	 * partially off the top of the screen.
+	 * Scrolls the display to show the layout specified by index at the vertical position specified
+	 * by yPos. Generally, the index will be layout at the top of the screen and the yPos will be
+	 * &lt;= 0, meaning the layout may be partially off the top of the screen.
 	 *
-	 * @param index
-	 *            the index of the layout to show at the top of the screen.
-	 * @param yPos
-	 *            the position to show the layout.
+	 * @param index the index of the layout to show at the top of the screen.
+	 * @param yPos the position to show the layout.
 	 */
 	public void setViewerPosition(BigInteger index, int xPos, int yPos) {
 		if (index.compareTo(BigInteger.ZERO) >= 0 && index.compareTo(model.getNumIndexes()) < 0) {
@@ -894,8 +877,7 @@ public class FieldPanel extends JPanel
 	/**
 	 * Sets the layout model for this field panel
 	 *
-	 * @param model
-	 *            the layout model to use.
+	 * @param model the layout model to use.
 	 */
 	public void setLayoutModel(LayoutModel model) {
 		invalidate();
@@ -1663,18 +1645,18 @@ public class FieldPanel extends JPanel
 		}
 
 		/**
-		 * Basically checks if the the "shift" modifier is on and the "control"
-		 * modifier is not. Note that "control" is operating system dependent.
-		 * It is <control> on windows, and <command> on mac.
+		 * Basically checks if the the "shift" modifier is on and the "control" modifier is not.
+		 * Note that "control" is operating system dependent. It is <control> on windows, and
+		 * <command> on mac.
 		 */
 		private boolean isAddToContiguousSelectionActivator(MouseEvent e) {
 			return (e.isShiftDown() && !DockingUtils.isControlModifier(e));
 		}
 
 		/**
-		 * Basically checks if the the "control" modifier is on and the shift
-		 * modifier is not. Note that "control" is operating system dependent.
-		 * It is <control> on windows, and <command> on mac.
+		 * Basically checks if the the "control" modifier is on and the shift modifier is not. Note
+		 * that "control" is operating system dependent. It is <control> on windows, and <command>
+		 * on mac.
 		 */
 		private boolean isAddRemoveDisjointSelectionActivator(MouseEvent e) {
 			return DockingUtils.isControlModifier(e) && !e.isShiftDown();
@@ -1896,10 +1878,8 @@ public class FieldPanel extends JPanel
 		/**
 		 * Sets the cursor as close to the given point as possible.
 		 *
-		 * @param x
-		 *            the horizontal coordinate.
-		 * @param y
-		 *            the vertical coordinate.
+		 * @param x the horizontal coordinate.
+		 * @param y the vertical coordinate.
 		 */
 		private void setCursorPos(int x, int y, EventTrigger trigger) {
 			currentField = null;

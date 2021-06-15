@@ -252,6 +252,22 @@ public class ElfLoadAdapter {
 	}
 
 	/**
+	 * Perform any required offset adjustment to account for differences between offset 
+	 * values contained within ELF headers and the language modeling of the 
+	 * associated address space.
+	 * <br>
+	 * WARNING: This is an experimental method and is not yet fully supported.
+	 * <br>
+	 * NOTE: This has currently been utilized for symbol address offset adjustment only.
+	 * @param elfOffset memory offset from ELF header
+	 * @param space associated address space
+	 * @return offset appropriate for use in space (does not account for image base alterations)
+	 */
+	public long getAdjustedMemoryOffset(long elfOffset, AddressSpace space) {
+		return elfOffset;
+	}
+
+	/**
 	 * Perform extension specific processing of Elf image during program load.
 	 * The following loading steps will have already been completed:
 	 * <pre>
@@ -294,6 +310,22 @@ public class ElfLoadAdapter {
 	 */
 	public Address creatingFunction(ElfLoadHelper elfLoadHelper, Address functionAddress) {
 		return functionAddress;
+	}
+
+	/**
+	 * This method allows an extension to override the default address calculation for loading
+	 * a symbol.  This is generally only neccessary when symbol requires handling of processor-specific 
+	 * flags or section index.  This method should return null when default symbol processing 
+	 * is sufficient. {@link Address#NO_ADDRESS} should be returned if the symbol is external
+	 * and is not handled by default processing.
+	 * @param elfLoadHelper load helper object
+	 * @param elfSymbol elf symbol
+	 * @return symbol memory address or null to defer to default implementation
+	 * @throws NoValueException if error logged and address calculation failed
+	 */
+	public Address calculateSymbolAddress(ElfLoadHelper elfLoadHelper, ElfSymbol elfSymbol)
+			throws NoValueException {
+		return null;
 	}
 
 	/**
@@ -471,4 +503,5 @@ public class ElfLoadAdapter {
 	public Class<? extends ElfRelocation> getRelocationClass(ElfHeader elfHeader) {
 		return null;
 	}
+
 }

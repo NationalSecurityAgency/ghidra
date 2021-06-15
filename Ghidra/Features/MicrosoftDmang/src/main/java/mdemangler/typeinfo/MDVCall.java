@@ -49,13 +49,11 @@ public class MDVCall extends MDMemberFunctionInfo {
 
 	public MDVCall(MDMang dmang) {
 		super(dmang);
-		MDFunctionType functionType = new MDFunctionType(dmang);
+		MDFunctionType functionType = new MDFunctionType(dmang, false, false);
 		mdtype = functionType;
 		// TODO: consider what to do... from what I understand, this is
 		// also "virtual" but "virtual" does not get printed.
 		setThunk();
-		functionType.setNoReturn();
-		functionType.setNoArgs();
 		callIndex = new MDEncodedNumber(dmang);
 	}
 

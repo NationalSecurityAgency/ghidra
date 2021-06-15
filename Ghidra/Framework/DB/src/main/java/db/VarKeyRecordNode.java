@@ -25,19 +25,19 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * <code>LongKeyRecordNode</code> is an implementation of a BTree leaf node
+ * <code>VarKeyRecordNode</code> is an implementation of a BTree leaf node
  * which utilizes variable-length key values and stores variable-length records.
  * This type of node has the following layout within a single DataBuffer 
  * (field size in bytes):
  * <pre>
  *   |   NodeType(1) | KeyType(1) | KeyCount(4) | PrevLeafId(4) | NextLeafId(4) | KeyOffset0(4) | IndFlag0(1) |...      
  * 
- *   | KeyOffsetN(4) | IndFlagN(1) |...<FreeSpace>... | KeyN | RecN |... | Key0 | Rec0 |
+ *   | KeyOffsetN(4) | IndFlagN(1) |...&lt;FreeSpace&gt;... | KeyN | RecN |... | Key0 | Rec0 |
  * </pre>
  * IndFlag - if not zero the record has been stored within a chained DBBuffer 
  * whose 4-byte integer buffer ID has been stored within this leaf at the record offset.
  */
-class VarKeyRecordNode extends VarKeyNode {
+class VarKeyRecordNode extends VarKeyNode implements FieldKeyRecordNode {
 
 	private static final int ID_SIZE = 4;
 
@@ -94,7 +94,7 @@ class VarKeyRecordNode extends VarKeyNode {
 
 	void logConsistencyError(String tableName, String msg, Throwable t) throws IOException {
 		Msg.debug(this, "Consistency Error (" + tableName + "): " + msg);
-		Msg.debug(this, "  bufferID=" + getBufferId() + " key[0]=" + getKey(0));
+		Msg.debug(this, "  bufferID=" + getBufferId() + " key[0]=" + getKeyField(0));
 		if (t != null) {
 			Msg.error(this, "Consistency Error (" + tableName + ")", t);
 		}
@@ -107,7 +107,7 @@ class VarKeyRecordNode extends VarKeyNode {
 		Field prevKey = null;
 		for (int i = 0; i < keyCount; i++) {
 			// Compare each key entry with the previous key
-			Field key = getKey(i);
+			Field key = getKeyField(i);
 			if (i != 0) {
 				if (key.compareTo(prevKey) <= 0) {
 					consistent = false;
@@ -119,14 +119,14 @@ class VarKeyRecordNode extends VarKeyNode {
 			prevKey = key;
 		}
 
-		if ((parent == null || parent.isLeftmostKey(getKey(0))) && getPreviousLeaf() != null) {
+		if ((parent == null || parent.isLeftmostKey(getKeyField(0))) && getPreviousLeaf() != null) {
 			consistent = false;
 			logConsistencyError(tableName, "previous-leaf should not exist", null);
 		}
 
 		VarKeyRecordNode node = getNextLeaf();
 		if (node != null) {
-			if (parent == null || parent.isRightmostKey(getKey(0))) {
+			if (parent == null || parent.isRightmostKey(getKeyField(0))) {
 				consistent = false;
 				logConsistencyError(tableName, "next-leaf should not exist", null);
 			}
@@ -138,7 +138,7 @@ class VarKeyRecordNode extends VarKeyNode {
 				}
 			}
 		}
-		else if (parent != null && !parent.isRightmostKey(getKey(0))) {
+		else if (parent != null && !parent.isRightmostKey(getKeyField(0))) {
 			consistent = false;
 			logConsistencyError(tableName, "this leaf is not linked to next-leaf", null);
 		}
@@ -146,27 +146,27 @@ class VarKeyRecordNode extends VarKeyNode {
 		return consistent;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.VarKeyNode#getLeafNode(long)
-	 */
 	@Override
-	VarKeyRecordNode getLeafNode(Field key) throws IOException {
+	public VarKeyRecordNode getLeafNode(Field key) throws IOException {
 		return this;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db2.VarKeyNode#getLeftmostLeafNode()
-	 */
 	@Override
-	VarKeyRecordNode getLeftmostLeafNode() throws IOException {
+	public VarKeyRecordNode getLeftmostLeafNode() throws IOException {
 		VarKeyRecordNode leaf = getPreviousLeaf();
 		return leaf != null ? leaf.getLeftmostLeafNode() : this;
 	}
 
 	@Override
-	VarKeyRecordNode getRightmostLeafNode() throws IOException {
+	public VarKeyRecordNode getRightmostLeafNode() throws IOException {
 		VarKeyRecordNode leaf = getNextLeaf();
 		return leaf != null ? leaf.getRightmostLeafNode() : this;
+	}
+
+	@Override
+	public boolean hasNextLeaf() throws IOException {
+		int nextLeafId = buffer.getInt(NEXT_LEAF_ID_OFFSET);
+		return (nextLeafId >= 0);
 	}
 
 	/**
@@ -174,7 +174,8 @@ class VarKeyRecordNode extends VarKeyNode {
 	 * @return this leaf node's right sibling or null if right sibling does not exist.
 	 * @throws IOException thrown if an IO error occurs
 	 */
-	VarKeyRecordNode getNextLeaf() throws IOException {
+	@Override
+	public VarKeyRecordNode getNextLeaf() throws IOException {
 		VarKeyRecordNode leaf = null;
 		int nextLeafId = buffer.getInt(NEXT_LEAF_ID_OFFSET);
 		if (nextLeafId >= 0) {
@@ -183,40 +184,40 @@ class VarKeyRecordNode extends VarKeyNode {
 		return leaf;
 	}
 
+	@Override
+	public boolean hasPreviousLeaf() throws IOException {
+		int prevLeafId = buffer.getInt(PREV_LEAF_ID_OFFSET);
+		return (prevLeafId >= 0);
+	}
+
 	/**
 	 * Get this leaf node's left sibling
 	 * @return this leaf node's left sibling or null if left sibling does not exist.
-	 * @throws IOException thrown if an IO error occurs
+	 * @throws IOException if an IO error occurs
 	 */
-	VarKeyRecordNode getPreviousLeaf() throws IOException {
+	@Override
+	public VarKeyRecordNode getPreviousLeaf() throws IOException {
 		VarKeyRecordNode leaf = null;
-		int nextLeafId = buffer.getInt(PREV_LEAF_ID_OFFSET);
-		if (nextLeafId >= 0) {
-			leaf = (VarKeyRecordNode) nodeMgr.getVarKeyNode(nextLeafId);
+		int prevLeafId = buffer.getInt(PREV_LEAF_ID_OFFSET);
+		if (prevLeafId >= 0) {
+			leaf = (VarKeyRecordNode) nodeMgr.getVarKeyNode(prevLeafId);
 		}
 		return leaf;
 	}
 
-	/**
-	 * Perform a binary search to locate the specified key and derive an index
-	 * into the Buffer ID storage.
-	 * @param key
-	 * @return int buffer ID index.
-	 * @throws IOException thrown if an IO error occurs
-	 */
-	int getKeyIndex(Field key) throws IOException {
+	@Override
+	public int getKeyIndex(Field key) throws IOException {
 
 		int min = 0;
 		int max = keyCount - 1;
 
 		while (min <= max) {
 			int i = (min + max) / 2;
-			Field k = getKey(i);
-			int rc = k.compareTo(key);
+			int rc = compareKeyField(key, i);
 			if (rc == 0) {
 				return i;
 			}
-			else if (rc < 0) {
+			else if (rc > 0) {
 				min = i + 1;
 			}
 			else {
@@ -256,14 +257,14 @@ class VarKeyRecordNode extends VarKeyNode {
 		}
 
 		// New parent node becomes root
-		return new VarKeyInteriorNode(nodeMgr, getKey(0), buffer.getId(), newLeaf.getKey(0),
-			newBufId);
+		return new VarKeyInteriorNode(nodeMgr, getKeyField(0), buffer.getId(),
+			newLeaf.getKeyField(0), newBufId);
 	}
 
 	/**
 	 * Append a leaf which contains one or more keys and update tree.  Leaf is inserted
 	 * as the new right sibling of this leaf.
-	 * @param newLeaf new right sibling leaf (must be same node type as this leaf)
+	 * @param leaf new right sibling leaf (must be same node type as this leaf)
 	 * @return root node which may have changed.
 	 * @throws IOException thrown if an IO error occurs
 	 */
@@ -290,17 +291,12 @@ class VarKeyRecordNode extends VarKeyNode {
 		}
 
 		// New parent node becomes root
-		return new VarKeyInteriorNode(nodeMgr, getKey(0), buffer.getId(), leaf.getKey(0), newBufId);
+		return new VarKeyInteriorNode(nodeMgr, getKeyField(0), buffer.getId(), leaf.getKeyField(0),
+			newBufId);
 	}
 
-	/**
-	 * Insert or Update a record.
-	 * @param record data record with long key
-	 * @param table table which will be notified when record is inserted or updated.
-	 * @return root node which may have changed.
-	 * @throws IOException thrown if IO error occurs
-	 */
-	VarKeyNode putRecord(Record record, Table table) throws IOException {
+	@Override
+	public VarKeyNode putRecord(DBRecord record, Table table) throws IOException {
 
 		Field key = record.getKeyField();
 		int index = getKeyIndex(key);
@@ -318,7 +314,7 @@ class VarKeyRecordNode extends VarKeyNode {
 		index = -index - 1;
 		if (insertRecord(index, record)) {
 			if (index == 0 && parent != null) {
-				parent.keyChanged(getKey(1), key, this);
+				parent.keyChanged(getKeyField(1), key, this);
 			}
 			if (table != null) {
 				table.insertedRecord(record);
@@ -346,7 +342,7 @@ class VarKeyRecordNode extends VarKeyNode {
 	 * @return root node which may have changed.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	VarKeyNode appendNewLeaf(Record record) throws IOException {
+	VarKeyNode appendNewLeaf(DBRecord record) throws IOException {
 		VarKeyRecordNode newLeaf = createNewLeaf(-1, -1);
 		newLeaf.insertRecord(0, record);
 		return appendLeaf(newLeaf);
@@ -359,7 +355,8 @@ class VarKeyRecordNode extends VarKeyNode {
 	 * @return root node which may have changed.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	VarKeyNode deleteRecord(Field key, Table table) throws IOException {
+	@Override
+	public VarKeyNode deleteRecord(Field key, Table table) throws IOException {
 
 		// Handle non-existent key - do nothing
 		int index = getKeyIndex(key);
@@ -382,20 +379,14 @@ class VarKeyRecordNode extends VarKeyNode {
 
 		// Notify parent of leftmost key change
 		if (index == 0 && parent != null) {
-			parent.keyChanged(key, getKey(0), this);
+			parent.keyChanged(key, getKeyField(0), this);
 		}
 
 		return getRoot();
 	}
 
-	/**
-	 * Get the first record whoose key is less than the specified key.
-	 * @param key record key
-	 * @param schema record data schema
-	 * @return Record requested or null if record not found.
-	 * @throws IOException thrown if IO error occurs
-	 */
-	Record getRecordBefore(Field key, Schema schema) throws IOException {
+	@Override
+	public DBRecord getRecordBefore(Field key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
 		if (index < 0) {
 			index = -index - 2;
@@ -410,14 +401,8 @@ class VarKeyRecordNode extends VarKeyNode {
 		return getRecord(schema, index);
 	}
 
-	/**
-	 * Get the first record whoose key is greater than the specified key.
-	 * @param key record key
-	 * @param schema record data schema
-	 * @return Record requested or null if record not found.
-	 * @throws IOException thrown if IO error occurs
-	 */
-	Record getRecordAfter(Field key, Schema schema) throws IOException {
+	@Override
+	public DBRecord getRecordAfter(Field key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
 		if (index < 0) {
 			index = -(index + 1);
@@ -432,15 +417,8 @@ class VarKeyRecordNode extends VarKeyNode {
 		return getRecord(schema, index);
 	}
 
-	/**
-	 * Get the first record whoose key is less than or equal to the specified
-	 * key.
-	 * @param key record key
-	 * @param schema record data schema
-	 * @return Record requested or null if record not found.
-	 * @throws IOException thrown if IO error occurs
-	 */
-	Record getRecordAtOrBefore(Field key, Schema schema) throws IOException {
+	@Override
+	public DBRecord getRecordAtOrBefore(Field key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
 		if (index < 0) {
 			index = -index - 2;
@@ -452,15 +430,8 @@ class VarKeyRecordNode extends VarKeyNode {
 		return getRecord(schema, index);
 	}
 
-	/**
-	 * Get the first record whoose key is greater than or equal to the specified
-	 * key.
-	 * @param key record key
-	 * @param schema record data schema
-	 * @return Record requested or null if record not found.
-	 * @throws IOException thrown if IO error occurs
-	 */
-	Record getRecordAtOrAfter(Field key, Schema schema) throws IOException {
+	@Override
+	public DBRecord getRecordAtOrAfter(Field key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
 		if (index < 0) {
 			index = -(index + 1);
@@ -484,14 +455,16 @@ class VarKeyRecordNode extends VarKeyNode {
 		return new VarKeyRecordNode(nodeMgr, prevLeafId, nextLeafId, keyType);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.VarKeyNode#getKey(int)
-	 */
 	@Override
-	Field getKey(int index) throws IOException {
+	public Field getKeyField(int index) throws IOException {
 		Field key = keyType.newField();
-		key.read(buffer, buffer.getInt(HEADER_SIZE + (index * ENTRY_SIZE)));
+		key.read(buffer, getKeyOffset(index));
 		return key;
+	}
+
+	@Override
+	public int getKeyOffset(int index) {
+		return buffer.getInt(HEADER_SIZE + (index * ENTRY_SIZE));
 	}
 
 	/**
@@ -500,7 +473,7 @@ class VarKeyRecordNode extends VarKeyNode {
 	 * @return record data offset
 	 */
 	private int getRecordDataOffset(int index) throws IOException {
-		int offset = buffer.getInt(HEADER_SIZE + (index * ENTRY_SIZE));
+		int offset = getKeyOffset(index);
 		return offset + keyType.readLength(buffer, offset);
 	}
 
@@ -552,13 +525,13 @@ class VarKeyRecordNode extends VarKeyNode {
 
 	/**
 	 * Get the length of a stored record with key.
-	 * @param keyIndex key index associated with record.
+	 * @param index key index associated with record.
 	 */
-	private int getFullRecordLength(int keyIndex) {
-		if (keyIndex == 0) {
+	private int getFullRecordLength(int index) {
+		if (index == 0) {
 			return buffer.length() - getRecordKeyOffset(0);
 		}
-		return getRecordKeyOffset(keyIndex - 1) - getRecordKeyOffset(keyIndex);
+		return getRecordKeyOffset(index - 1) - getRecordKeyOffset(index);
 	}
 
 	/**
@@ -600,9 +573,10 @@ class VarKeyRecordNode extends VarKeyNode {
 	 * @param index key index
 	 * @return Record
 	 */
-	Record getRecord(Schema schema, int index) throws IOException {
-		Field key = getKey(index);
-		Record record = schema.createRecord(key);
+	@Override
+	public DBRecord getRecord(Schema schema, int index) throws IOException {
+		Field key = getKeyField(index);
+		DBRecord record = schema.createRecord(key);
 		if (hasIndirectStorage(index)) {
 			int bufId = buffer.getInt(getRecordDataOffset(index));
 			ChainedBuffer chainedBuffer = new ChainedBuffer(nodeMgr.getBufferMgr(), bufId);
@@ -614,14 +588,16 @@ class VarKeyRecordNode extends VarKeyNode {
 		return record;
 	}
 
-	/**
-	 * Get the record identified by the specified key.
-	 * @param key record key
-	 * @param schema record data schema
-	 * @return Record requested or null if record not found.
-	 * @throws IOException thrown if IO error occurs
-	 */
-	Record getRecord(Field key, Schema schema) throws IOException {
+	@Override
+	public int getRecordOffset(int index) throws IOException {
+		if (hasIndirectStorage(index)) {
+			return -buffer.getInt(getRecordDataOffset(index));
+		}
+		return getRecordDataOffset(index);
+	}
+
+	@Override
+	public DBRecord getRecord(Field key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
 		if (index < 0)
 			return null;
@@ -658,7 +634,7 @@ class VarKeyRecordNode extends VarKeyNode {
 	/**
 	 * Split the contents of this leaf node; placing the right half of the records into the
 	 * empty leaf node provided.
-	 * @param newRightLeaf empty right sibling leaf
+	 * @param rightNode empty right sibling leaf
 	 */
 	private void splitData(VarKeyRecordNode rightNode) {
 
@@ -693,7 +669,7 @@ class VarKeyRecordNode extends VarKeyNode {
 	 * @return root node which may have changed.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	private VarKeyNode updateRecord(int index, Record record) throws IOException {
+	private VarKeyNode updateRecord(int index, DBRecord record) throws IOException {
 
 		Field key = record.getKeyField();
 		int keyLen = key.length();
@@ -752,12 +728,12 @@ class VarKeyRecordNode extends VarKeyNode {
 	/**
 	 * Inserts the record at the given index if there is sufficient space in
 	 * the buffer. 
-	 * @param keyIndex insertion index
+	 * @param index insertion index
 	 * @param record record to be inserted
 	 * @return true if the record was successfully inserted.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	private boolean insertRecord(int keyIndex, Record record) throws IOException {
+	private boolean insertRecord(int index, DBRecord record) throws IOException {
 
 		Field key = record.getKeyField();
 		int keyLen = key.length();
@@ -776,11 +752,11 @@ class VarKeyRecordNode extends VarKeyNode {
 			return false;  // insufficient space for record storage
 
 		// Make room for new record
-		int offset = moveRecords(keyIndex, -(len + keyLen));
+		int offset = moveRecords(index, -(len + keyLen));
 
 		// Make room for new key/offset entry
-		int start = HEADER_SIZE + (keyIndex * ENTRY_SIZE);
-		len = (keyCount - keyIndex) * ENTRY_SIZE;
+		int start = HEADER_SIZE + (index * ENTRY_SIZE);
+		len = (keyCount - index) * ENTRY_SIZE;
 		buffer.move(start, start + ENTRY_SIZE, len);
 
 		// Store new record key/offset
@@ -798,7 +774,7 @@ class VarKeyRecordNode extends VarKeyNode {
 		else {
 			record.write(buffer, offset + keyLen);
 		}
-		enableIndirectStorage(keyIndex, useIndirect);
+		enableIndirectStorage(index, useIndirect);
 
 		return true;
 	}
@@ -809,7 +785,8 @@ class VarKeyRecordNode extends VarKeyNode {
 	 * @param index record index
 	 * @throws IOException thrown if IO error occurs
 	 */
-	void remove(int index) throws IOException {
+	@Override
+	public void remove(int index) throws IOException {
 
 		if (index < 0 || index >= keyCount)
 			throw new AssertException();
@@ -833,7 +810,8 @@ class VarKeyRecordNode extends VarKeyNode {
 	 * @return root node which may have changed.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	VarKeyNode removeLeaf() throws IOException {
+	@Override
+	public VarKeyNode removeLeaf() throws IOException {
 
 		// Remove all chained buffers associated with this leaf
 		for (int index = 0; index < keyCount; ++index) {
@@ -842,7 +820,7 @@ class VarKeyRecordNode extends VarKeyNode {
 			}
 		}
 
-		Field key = getKey(0);
+		Field key = getKeyField(0);
 		int prevBufferId = buffer.getInt(PREV_LEAF_ID_OFFSET);
 		int nextBufferId = buffer.getInt(NEXT_LEAF_ID_OFFSET);
 		if (prevBufferId >= 0) {
@@ -870,9 +848,6 @@ class VarKeyRecordNode extends VarKeyNode {
 		chainedBuffer.delete();
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.VarKeyNode#delete()
-	 */
 	@Override
 	public void delete() throws IOException {
 
@@ -890,9 +865,6 @@ class VarKeyRecordNode extends VarKeyNode {
 		nodeMgr.deleteNode(this);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.BTreeNode#getBufferReferences()
-	 */
 	@Override
 	public int[] getBufferReferences() {
 		IntArrayList idList = new IntArrayList();
@@ -903,6 +875,7 @@ class VarKeyRecordNode extends VarKeyNode {
 					idList.add(buffer.getInt(offset));
 				}
 				catch (IOException e) {
+					// ignore
 				}
 			}
 		}

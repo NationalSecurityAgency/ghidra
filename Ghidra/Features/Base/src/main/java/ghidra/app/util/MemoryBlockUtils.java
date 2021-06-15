@@ -227,8 +227,9 @@ public class MemoryBlockUtils {
 				block = program.getMemory().createInitializedBlock(name, start, fileBytes, offset,
 					length, isOverlay);
 			}
-			catch (MemoryConflictException | DuplicateNameException e) {
-				block = createBlockNoDuplicateName(program, name, start, fileBytes, offset, length);
+			catch (MemoryConflictException e) {
+				block = program.getMemory()
+						.createInitializedBlock(name, start, fileBytes, offset, length, true);
 				log.appendMsg("Conflict attempting to create memory block: " + name +
 					" at address " + start.toString() + " Created block in new overlay instead");
 			}
@@ -240,22 +241,6 @@ public class MemoryBlockUtils {
 		setBlockAttributes(block, comment, source, r, w, x);
 		adjustFragment(program, block.getStart(), name);
 		return block;
-	}
-
-	private static MemoryBlock createBlockNoDuplicateName(Program program, String blockName,
-			Address start, FileBytes fileBytes, long offset, long length)
-			throws LockException, MemoryConflictException, AddressOverflowException {
-		int count = 1;
-		String name = blockName;
-		while (true) {
-			try {
-				return program.getMemory().createInitializedBlock(name, start, fileBytes, offset,
-					length, true);
-			}
-			catch (DuplicateNameException e) {
-				name = blockName + "_" + count++;
-			}
-		}
 	}
 
 	/**
@@ -300,9 +285,11 @@ public class MemoryBlockUtils {
 			catch (MemoryConflictException e) {
 				block = memory.createInitializedBlock(name, start, dataInput, dataLength, monitor,
 					true);
+				log.appendMsg("Conflict attempting to create memory block: " + name +
+					" at address " + start.toString() + " Created block in new overlay instead");
 			}
 		}
-		catch (LockException | DuplicateNameException | MemoryConflictException e) {
+		catch (LockException | MemoryConflictException e) {
 			throw new RuntimeException(e);
 		}
 		catch (CancelledException e) {

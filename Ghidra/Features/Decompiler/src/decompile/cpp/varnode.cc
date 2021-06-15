@@ -399,7 +399,7 @@ void Varnode::setSymbolEntry(SymbolEntry *entry)
 /// This used when there is a constant address reference to the Symbol and the Varnode holds the
 /// reference, not the actual value of the Symbol.
 /// \param entry is a mapping to the given Symbol
-/// \off is the byte offset into the Symbol of the reference
+/// \param off is the byte offset into the Symbol of the reference
 void Varnode::setSymbolReference(SymbolEntry *entry,int4 off)
 
 {
@@ -634,10 +634,6 @@ int4 Varnode::printRawNoMarkup(ostream &s) const
 void Varnode::printRaw(ostream &s) const
 
 {
-  if (this == (const Varnode *)0) {
-    s << "<null>";
-    return;
-  }
   int4 expect = printRawNoMarkup(s);
 
   if (expect != size)
@@ -834,6 +830,20 @@ void Varnode::saveXml(ostream &s) const
   if (isInput())
     s << " input=\"true\"";
   s << "/>";
+}
+
+/// Invoke the printRaw method on the given Varnode pointer, but take into account that it
+/// might be null.
+/// \param s is the output stream to write to
+/// \param vn is the given Varnode pointer (may be null)
+void Varnode::printRaw(ostream &s,const Varnode *vn)
+
+{
+  if (vn == (const Varnode *)0) {
+    s << "<null>";
+    return;
+  }
+  vn->printRaw(s);
 }
 
 /// \param m is the underlying address space manager

@@ -2,26 +2,6 @@
 ##MODULE IP: Jython License
 ##MODULE IP: LGPL 2.1
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
-ghidra_scripts/AddCommentToProgramScriptPy.py||GHIDRA||||END|
-ghidra_scripts/AskScriptPy.py||GHIDRA||||END|
-ghidra_scripts/CallAnotherScriptForAllProgramsPy.py||GHIDRA||||END|
-ghidra_scripts/CallAnotherScriptPy.py||GHIDRA||||END|
-ghidra_scripts/ChooseDataTypeScriptPy.py||GHIDRA||||END|
-ghidra_scripts/ExampleColorScriptPy.py||GHIDRA||||END|
-ghidra_scripts/FormatExampleScriptPy.py||GHIDRA||||END|
-ghidra_scripts/ImportSymbolsScript.py||GHIDRA||||END|
-ghidra_scripts/PrintNonZeroPurge.py||GHIDRA||reviewed||END|
-ghidra_scripts/ToolPropertiesExampleScriptPy.py||GHIDRA||||END|
-ghidra_scripts/external_module_callee.py||GHIDRA||||END|
-ghidra_scripts/external_module_caller.py||GHIDRA||||END|
-ghidra_scripts/ghidra_basics.py||GHIDRA||||END|
-ghidra_scripts/jython_basics.py||GHIDRA||||END|
-ghidra_scripts/python_basics.py||GHIDRA||||END|
-python-src/ghidradoc.py||GHIDRA||||END|
-python-src/introspect.py||LGPL 2.1||||END|
-python-src/jintrospect.py||LGPL 2.1||||END|
-python-src/sitecustomize.py||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/Python/images/erase16.png||GHIDRA||||END|
 src/main/help/help/topics/Python/interpreter.html||GHIDRA||||END|

@@ -18,17 +18,19 @@ package ghidra.graph.program;
 import java.awt.Color;
 import java.util.*;
 
+import docking.action.builder.ActionBuilder;
+import docking.widgets.EventTrigger;
 import ghidra.app.plugin.core.colorizer.ColorizingService;
+import ghidra.app.util.AddEditDialog;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.block.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
+import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.service.graph.*;
-import ghidra.util.HTMLUtilities;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.GraphException;
 import ghidra.util.task.Task;
@@ -103,31 +105,33 @@ public class BlockGraphTask extends Task {
 	private final static String ENTRY_NEXUS_NAME = "Entry Points";
 	private CodeBlockModel blockModel;
 	private AddressSetView selection;
-	private GraphDisplayProvider graphService;
+	private ProgramLocation location;
+	private GraphDisplayProvider graphProvider;
 	private boolean reuseGraph;
 	private boolean appendGraph;
 	private PluginTool tool;
-	private String actionName;
 	private Program program;
-
+	private AddressSetView graphScope;
+	private String graphTitle;
 
 	public BlockGraphTask(String actionName, boolean graphEntryPointNexus, boolean showCode,
-			boolean reuseGraph,
-			boolean appendGraph, PluginTool tool, ProgramSelection selection,
-			CodeBlockModel blockModel, GraphDisplayProvider graphService) {
-		super("Graph Program", true, false, true);
-		this.actionName = actionName;
+			boolean reuseGraph, boolean appendGraph, PluginTool tool, ProgramSelection selection,
+			ProgramLocation location, CodeBlockModel blockModel,
+			GraphDisplayProvider graphProvider) {
 
+		super("Graph Program", true, false, true);
 		this.graphEntryPointNexus = graphEntryPointNexus;
 		this.showCode = showCode;
 		this.reuseGraph = reuseGraph;
 		this.appendGraph = appendGraph;
 		this.tool = tool;
 		this.blockModel = blockModel;
-		this.graphService = graphService;
+		this.graphProvider = graphProvider;
 		this.colorizingService = tool.getService(ColorizingService.class);
 		this.selection = selection;
+		this.location = location;
 		this.program = blockModel.getProgram();
+		this.graphTitle = actionName + ": ";
 	}
 
 	/**
@@ -135,24 +139,72 @@ public class BlockGraphTask extends Task {
 	 */
 	@Override
 	public void run(TaskMonitor monitor) throws CancelledException {
+		this.graphScope = getGraphScopeAndGenerateGraphTitle();
 		AttributedGraph graph = createGraph();
 		monitor.setMessage("Generating Graph...");
 		try {
-			GraphDisplay display = graphService.getGraphDisplay(reuseGraph, monitor);
-			display.setGraphDisplayListener(
-				new BlockModelGraphDisplayListener(tool, blockModel, display));
+			GraphDisplay display = graphProvider.getGraphDisplay(reuseGraph, monitor);
+			BlockModelGraphDisplayListener listener =
+				new BlockModelGraphDisplayListener(tool, blockModel, display);
+			addActions(display, v -> listener.getAddress(v));
+			display.setGraphDisplayListener(listener);
+
 			if (showCode) {
 				display.defineVertexAttribute(CODE_ATTRIBUTE);
 				display.defineVertexAttribute(SYMBOLS_ATTRIBUTE);
-				display.setVertexLabel(CODE_ATTRIBUTE, GraphDisplay.ALIGN_LEFT, 12, true,
+				display.setVertexLabelAttribute(CODE_ATTRIBUTE, GraphDisplay.ALIGN_LEFT, 12, true,
 					codeLimitPerBlock + 1);
 			}
-			display.setGraph(graph, actionName, appendGraph, monitor);
+			display.setGraph(graph, graphTitle, appendGraph, monitor);
+
+			if (location != null) {
+				// initialize the graph location, but don't have the graph send an event
+				AttributedVertex vertex = listener.getVertex(location.getAddress());
+				display.setFocusedVertex(vertex, EventTrigger.INTERNAL_ONLY);
+			}
+			if (selection != null && !selection.isEmpty()) {
+				Set<AttributedVertex> selectedVertices = listener.getVertices(selection);
+				if (selectedVertices != null) {
+					// initialize the graph selection, but don't have the graph send an event
+					display.selectVertices(selectedVertices, EventTrigger.INTERNAL_ONLY);
+				}
+			}
 		}
 		catch (GraphException e) {
 			if (!monitor.isCancelled()) {
 				Msg.showError(this, null, "Graphing Error", e.getMessage());
 			}
+		}
+	}
+
+	private void addActions(GraphDisplay display,
+			java.util.function.Function<AttributedVertex, Address> addressFunction) {
+
+		display.addAction(new ActionBuilder("Rename Symbol", "Block Graph")
+				.popupMenuPath("Rename Symbol")
+				.withContext(VertexGraphActionContext.class)
+				.helpLocation(new HelpLocation("ProgramGraphPlugin", "Rename_Symbol"))
+				// only enable action when vertex corresponds to an address
+				.enabledWhen(c -> addressFunction.apply(c.getClickedVertex()) != null)
+				.onAction(c -> updateVertexName(addressFunction, c))
+				.build());
+	}
+
+	private void updateVertexName(
+			java.util.function.Function<AttributedVertex, Address> addressFunction,
+			VertexGraphActionContext context) {
+
+		AttributedVertex vertex = context.getClickedVertex();
+		Address address = addressFunction.apply(vertex);
+		Symbol symbol = program.getSymbolTable().getPrimarySymbol(address);
+
+		if (symbol == null) {
+			AddEditDialog dialog = new AddEditDialog("Create Label", tool);
+			dialog.addLabel(address, program, context.getComponentProvider());
+		}
+		else {
+			AddEditDialog dialog = new AddEditDialog("Edit Label", tool);
+			dialog.editLabel(symbol, program, context.getComponentProvider());
 		}
 	}
 
@@ -190,15 +242,67 @@ public class BlockGraphTask extends Task {
 		return graph;
 	}
 
-
 	private CodeBlockIterator getBlockIterator() throws CancelledException {
-		if (selection == null || selection.isEmpty()) {
-			return blockModel.getCodeBlocks(taskMonitor);
-		}
-		return blockModel.getCodeBlocksContaining(selection, taskMonitor);
+		return blockModel.getCodeBlocksContaining(graphScope, taskMonitor);
 	}
 
-	private Address graphBlock(AttributedGraph graph, CodeBlock curBB, List<AttributedVertex> entries)
+	private AddressSetView getGraphScopeAndGenerateGraphTitle() {
+		if (selection != null && !selection.isEmpty()) {
+			graphTitle += selection.getMinAddress().toString();
+			return selection;
+		}
+		Function function = getContainingFunction(location);
+		if (function != null) {
+			graphTitle += function.getName();
+			if (isCallGraph()) {
+				return getScopeForCallGraph(function);
+			}
+			return function.getBody();
+		}
+		graphTitle += "(Entire Program)";
+		return blockModel.getProgram().getMemory();
+	}
+
+	private boolean isCallGraph() {
+		return blockModel instanceof SubroutineBlockModel;
+	}
+
+	private AddressSetView getScopeForCallGraph(Function function) {
+		AddressSet set = new AddressSet();
+		set.add(function.getBody());
+		try {
+			CodeBlock block = blockModel.getCodeBlockAt(function.getEntryPoint(), taskMonitor);
+			CodeBlockReferenceIterator it = blockModel.getDestinations(block, taskMonitor);
+			while (it.hasNext()) {
+				CodeBlockReference next = it.next();
+				set.add(next.getDestinationBlock());
+			}
+			it = blockModel.getSources(block, taskMonitor);
+			while (it.hasNext()) {
+				CodeBlockReference next = it.next();
+				set.add(next.getSourceBlock());
+			}
+		}
+		catch (CancelledException e) {
+			// just return, the task is being cancelled.
+		}
+
+		return set;
+	}
+
+	private Function getContainingFunction(ProgramLocation cursorLocation) {
+		if (cursorLocation == null) {
+			return null;
+		}
+		Address address = cursorLocation.getAddress();
+		if (address == null) {
+			return null;
+		}
+		return blockModel.getProgram().getFunctionManager().getFunctionContaining(address);
+	}
+
+	private Address graphBlock(AttributedGraph graph, CodeBlock curBB,
+			List<AttributedVertex> entries)
 			throws CancelledException {
 
 		Address[] startAddrs = curBB.getStartAddresses();
@@ -235,7 +339,6 @@ public class BlockGraphTask extends Task {
 		}
 	}
 
-
 	protected AttributedVertex graphBasicBlock(AttributedGraph graph, CodeBlock curBB)
 			throws CancelledException {
 
@@ -248,15 +351,13 @@ public class BlockGraphTask extends Task {
 			CodeBlockReference cbRef = refIter.next();
 
 			CodeBlock db = cbRef.getDestinationBlock();
-
-			// must be a reference to a data block
 			if (db == null) {
-				continue;
+				continue; // must be a reference to a data block
 			}
 
 			// don't include destination if it does not overlap selection
 			// always include if selection is empty
-			if (selection != null && !selection.isEmpty() && !selection.intersects(db)) {
+			if (graphScope != null && !graphScope.isEmpty() && !graphScope.intersects(db)) {
 				continue;
 			}
 
@@ -266,7 +367,6 @@ public class BlockGraphTask extends Task {
 			}
 
 			//	put the edge in the graph
-			String edgeAddr = cbRef.getReferent().toString();
 			AttributedEdge newEdge = graph.addEdge(fromVertex, toVertex);
 
 			// set it's attributes (really its name)
@@ -277,7 +377,8 @@ public class BlockGraphTask extends Task {
 		return fromVertex;
 	}
 
-	private void setEdgeColor(AttributedEdge edge, AttributedVertex fromVertex, AttributedVertex toVertex) {
+	private void setEdgeColor(AttributedEdge edge, AttributedVertex fromVertex,
+			AttributedVertex toVertex) {
 		// color the edge: first on the 'from' vertex, then try to 'to' vertex
 		String fromColor = fromVertex.getAttribute("Color");
 		String toColor = toVertex.getAttribute("Color");
@@ -289,7 +390,7 @@ public class BlockGraphTask extends Task {
 				edge.setAttribute("Color", toColor);
 			}
 		}
-		
+
 	}
 
 	private String getVertexId(CodeBlock bb) {

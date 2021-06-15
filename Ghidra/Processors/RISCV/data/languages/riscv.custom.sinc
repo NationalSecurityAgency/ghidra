@@ -1,0 +1,155 @@
+# custom
+
+define pcodeop custom0;
+define pcodeop custom0.rs1;
+define pcodeop custom0.rs1.rs2;
+define pcodeop custom0.rd;
+define pcodeop custom0.rd.rs1;
+define pcodeop custom0.rd.rs1.rs2;
+
+define pcodeop custom1;
+define pcodeop custom1.rs1;
+define pcodeop custom1.rs1.rs2;
+define pcodeop custom1.rd;
+define pcodeop custom1.rd.rs1;
+define pcodeop custom1.rd.rs1.rs2;
+
+define pcodeop custom2;
+define pcodeop custom2.rs1;
+define pcodeop custom2.rs1.rs2;
+define pcodeop custom2.rd;
+define pcodeop custom2.rd.rs1;
+define pcodeop custom2.rd.rs1.rs2;
+
+define pcodeop custom3;
+define pcodeop custom3.rs1;
+define pcodeop custom3.rs1.rs2;
+define pcodeop custom3.rd;
+define pcodeop custom3.rd.rs1;
+define pcodeop custom3.rd.rs1.rs2;
+
+:custom0 is op0001=0x3 & op0204=0x2 & op0506=0x0 & op1214=0x0
+{
+	custom0();
+}
+
+:custom0.rs1 rs1 is op0001=0x3 & op0204=0x2 & op0506=0x0 & op1214=0x2 & rs1
+{
+	custom0.rs1(rs1);
+}
+
+:custom0.rs1.rs2 rs1,rs2 is op0001=0x3 & op0204=0x2 & op0506=0x0 & op1214=0x3 & rs1 & rs2
+{
+	custom0.rs1.rs2(rs1, rs2);
+}
+
+:custom0.rd rd is op0001=0x3 & op0204=0x2 & op0506=0x0 & op1214=0x4 & rd
+{
+	rd = custom0.rd();
+}
+
+:custom0.rd.rs1 rd,rs1 is op0001=0x3 & op0204=0x2 & op0506=0x0 & op1214=0x6 & rd & rs1
+{
+	rd = custom0.rd.rs1(rs1);
+}
+
+:custom0.rd.rs1.rs2 rd,rs1,rs2 is op0001=0x3 & op0204=0x2 & op0506=0x0 & op1214=0x7 & rd & rs1 & rs2
+{
+	rd = custom0.rd.rs1.rs2(rs1, rs2);
+}
+
+
+:custom1 is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x0
+{
+	custom1();
+}
+
+:custom1.rs1 rs1 is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x2 & rs1
+{
+	custom1.rs1(rs1);
+}
+
+:custom1.rs1.rs2 rs1,rs2 is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x3 & rs1 & rs2
+{
+	custom1.rs1.rs2(rs1, rs2);
+}
+
+:custom1.rd rd is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x4 & rd
+{
+	rd = custom1.rd();
+}
+
+:custom1.rd.rs1 rd,rs1 is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x6 & rd & rs1
+{
+	rd = custom1.rd.rs1(rs1);
+}
+
+:custom1.rd.rs1.rs2 rd,rs1,rs2 is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x7 & rd & rs1 & rs2
+{
+	rd = custom1.rd.rs1.rs2(rs1, rs2);
+}
+
+
+#TODO handle RV128 for custom-2/custom-3
+
+:custom2 is op0001=0x3 & op0204=0x6 & op0506=0x2 & op1214=0x0
+{
+	custom2();
+}
+
+:custom2.rs1 rs1 is op0001=0x3 & op0204=0x6 & op0506=0x2 & op1214=0x2 & rs1
+{
+	custom2.rs1(rs1);
+}
+
+:custom2.rs1.rs2 rs1,rs2 is op0001=0x3 & op0204=0x6 & op0506=0x2 & op1214=0x3 & rs1 & rs2
+{
+	custom2.rs1.rs2(rs1, rs2);
+}
+
+:custom2.rd rd is op0001=0x3 & op0204=0x6 & op0506=0x2 & op1214=0x4 & rd
+{
+	rd = custom2.rd();
+}
+
+:custom2.rd.rs1 rd,rs1 is op0001=0x3 & op0204=0x6 & op0506=0x2 & op1214=0x6 & rd & rs1
+{
+	rd = custom2.rd.rs1(rs1);
+}
+
+:custom2.rd.rs1.rs2 rd,rs1,rs2 is op0001=0x3 & op0204=0x6 & op0506=0x2 & op1214=0x7 & rd & rs1 & rs2
+{
+	rd = custom2.rd.rs1.rs2(rs1, rs2);
+}
+
+
+:custom3 is op0001=0x3 & op0204=0x6 & op0506=0x3 & op1214=0x0
+{
+	custom3();
+}
+
+:custom3.rs1 rs1 is op0001=0x3 & op0204=0x6 & op0506=0x3 & op1214=0x2 & rs1
+{
+	custom3.rs1(rs1);
+}
+
+:custom3.rs1.rs2 rs1,rs2 is op0001=0x3 & op0204=0x6 & op0506=0x3 & op1214=0x3 & rs1 & rs2
+{
+	custom3.rs1.rs2(rs1, rs2);
+}
+
+:custom3.rd rd is op0001=0x3 & op0204=0x6 & op0506=0x3 & op1214=0x4 & rd
+{
+	rd = custom3.rd();
+}
+
+:custom3.rd.rs1 rd,rs1 is op0001=0x3 & op0204=0x6 & op0506=0x3 & op1214=0x6 & rd & rs1
+{
+	rd = custom3.rd.rs1(rs1);
+}
+
+:custom3.rd.rs1.rs2 rd,rs1,rs2 is op0001=0x3 & op0204=0x6 & op0506=0x3 & op1214=0x7 & rd & rs1 & rs2
+{
+	rd = custom3.rd.rs1.rs2(rs1, rs2);
+}
+

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,15 @@
  */
 package ghidra.program.database.symbol;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-
-import db.*;
 
 /**
  * Adapter to access records in the equate references table.
@@ -36,9 +34,10 @@ abstract class EquateRefDBAdapter {
 
 	static final String EQUATE_REFS_TABLE_NAME = "Equate References";
 
-	static final Schema REFS_SCHEMA = new Schema(1, "Key", new Class[] { LongField.class,
-		LongField.class, ShortField.class, LongField.class }, new String[] { "Equate ID",
-		"Equate Reference", "Operand Index", "Varnode Hash" });
+	static final Schema REFS_SCHEMA = new Schema(1, "Key",
+		new Field[] { LongField.INSTANCE, LongField.INSTANCE, ShortField.INSTANCE,
+			LongField.INSTANCE },
+		new String[] { "Equate ID", "Equate Reference", "Operand Index", "Varnode Hash" });
 
 	static final int EQUATE_ID_COL = 0;
 	static final int ADDR_COL = 1;
@@ -84,8 +83,8 @@ abstract class EquateRefDBAdapter {
 	}
 
 	private static EquateRefDBAdapter upgrade(DBHandle dbHandle, AddressMap addrMap,
-			EquateRefDBAdapter oldAdapter, TaskMonitor monitor) throws VersionException,
-			IOException {
+			EquateRefDBAdapter oldAdapter, TaskMonitor monitor)
+			throws VersionException, IOException {
 
 		AddressMap oldAddrMap = addrMap.getOldAddressMap();
 
@@ -99,7 +98,7 @@ abstract class EquateRefDBAdapter {
 			EquateRefDBAdapter tmpAdapter = new EquateRefDBAdapterV1(tmpHandle, addrMap, true);
 			RecordIterator iter = oldAdapter.getRecords();
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				Address addr = oldAddrMap.decodeAddress(rec.getLongValue(ADDR_COL));
 				rec.setLongValue(ADDR_COL, addrMap.getKey(addr, true));
 				rec.setLongValue(HASH_COL, 0);
@@ -111,7 +110,7 @@ abstract class EquateRefDBAdapter {
 
 			iter = tmpAdapter.getRecords();
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				newAdapter.updateRecord(rec);
 			}
 			return newAdapter;
@@ -130,7 +129,7 @@ abstract class EquateRefDBAdapter {
 	 * @return new record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record createReference(long addr, short opIndex, long dynamicHash, long equateNameID)
+	abstract DBRecord createReference(long addr, short opIndex, long dynamicHash, long equateNameID)
 			throws IOException;
 
 	/**
@@ -138,7 +137,7 @@ abstract class EquateRefDBAdapter {
 	 * @param the key of the record to retrieve.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record getRecord(long key) throws IOException;
+	abstract DBRecord getRecord(long key) throws IOException;
 
 	/**
 	 * Get an iterator over all the equate reference records.
@@ -156,20 +155,20 @@ abstract class EquateRefDBAdapter {
 	 * @param addr the address to find equates for.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract long[] getRecordKeysForAddr(long addr) throws IOException;
+	abstract Field[] getRecordKeysForAddr(long addr) throws IOException;
 
 	/**
 	 * Update the table with the given record.
 	 * @param record the record to update.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Get the records that have the given equateID.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract long[] getRecordKeysForEquateID(long equateID) throws IOException;
+	abstract Field[] getRecordKeysForEquateID(long equateID) throws IOException;
 
 	/**
 	 * Get an iterator over the addresses.

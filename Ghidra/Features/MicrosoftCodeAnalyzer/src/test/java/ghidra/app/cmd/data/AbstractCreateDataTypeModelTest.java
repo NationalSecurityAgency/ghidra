@@ -20,8 +20,8 @@ import static org.junit.Assert.*;
 import org.junit.Assert;
 
 import generic.test.AbstractGenericTest;
+import ghidra.app.cmd.data.rtti.RttiUtil;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
-import ghidra.app.plugin.prototype.MicrosoftCodeAnalyzerPlugin.RttiAnalyzer;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.microsoft.DataApplyOptions;
 import ghidra.app.util.datatype.microsoft.DataValidationOptions;
@@ -139,7 +139,7 @@ public class AbstractCreateDataTypeModelTest extends AbstractGenericTest {
 		builder.createMemory(".rdata", "0x01003000", 0x2000);
 		builder.createMemory(".data", "0x01005000", 0x2000);
 		setupDTMService(builder.getProgram());
-		builder.setBytes("0x01005008", RttiAnalyzer.TYPE_INFO_STRING.getBytes());
+		setupDummy32TypeInfo(builder);
 		return builder;
 	}
 
@@ -157,7 +157,25 @@ public class AbstractCreateDataTypeModelTest extends AbstractGenericTest {
 		builder.createMemory(".rdata", "0x101003000", 0x2000);
 		builder.createMemory(".data", "0x101005000", 0x2000);
 		setupDTMService(builder.getProgram());
-		builder.setBytes("0x101005010", RttiAnalyzer.TYPE_INFO_STRING.getBytes());
+		setupDummy64TypeInfo(builder);
+		return builder;
+	}
+
+	/**
+	 * Creates a 64 bit program builder that can be used for testing.
+	 * @return the program builder for a 64 bit VisualStudio x86 PE program.
+	 * @throws Exception if it fails to create the ProgramBuilder
+	 */
+	protected ProgramBuilder build64BitX86Clang() throws Exception {
+		ProgramBuilder builder =
+			new ProgramBuilder("test64BitX86", ProgramBuilder._X64, "clangwindows", null);
+		setExecFormatAndCompiler(builder, PeLoader.PE_NAME, "clang:unknown");
+		setImageBase(builder, 0x101000000L);
+		builder.createMemory(".text", "0x101001000", 0x2000);
+		builder.createMemory(".rdata", "0x101003000", 0x2000);
+		builder.createMemory(".data", "0x101005000", 0x2000);
+		setupDTMService(builder.getProgram());
+		setupDummy64TypeInfo(builder);
 		return builder;
 	}
 
@@ -168,14 +186,30 @@ public class AbstractCreateDataTypeModelTest extends AbstractGenericTest {
 	 */
 	protected ProgramBuilder build64BitX86NonVS() throws Exception {
 		ProgramBuilder builder =
-			new ProgramBuilder("test64BitX86", ProgramBuilder._X64, "windows", null);
+			new ProgramBuilder("test64BitX86Unknown", ProgramBuilder._X64, "windows", null);
 		setExecFormatAndCompiler(builder, PeLoader.PE_NAME, null);
 		setImageBase(builder, 0x101000000L);
 		builder.createMemory(".text", "0x101001000", 0x2000);
 		builder.createMemory(".rdata", "0x101003000", 0x2000);
 		builder.createMemory(".data", "0x101005000", 0x2000);
-		builder.setBytes("0x101005010", RttiAnalyzer.TYPE_INFO_STRING.getBytes());
+		setupDummy64TypeInfo(builder);
 		return builder;
+	}
+	
+	
+	protected void setupDummy32TypeInfo(ProgramBuilder builder) throws Exception {
+		builder.setBytes("0x01005000", getHexAddress32AsByteString("0x01004000", false));
+		builder.setBytes("0x01005004", getHexAddress32AsByteString("0x00000000", false));
+		builder.setBytes("0x01005008", RttiUtil.TYPE_INFO_STRING.getBytes());
+		
+		builder.setBytes("0x01004000", getHexAddress32AsByteString("0x01008000", false));
+	}
+	
+	protected void setupDummy64TypeInfo(ProgramBuilder builder) throws Exception {
+		builder.setBytes("0x101005000", getHexAddress64AsByteString("0x101006000", false));
+		builder.setBytes("0x101005008", getHexAddress64AsByteString("0x00000000", false));
+		builder.setBytes("0x101005010", RttiUtil.TYPE_INFO_STRING.getBytes());
+		builder.setBytes("0x101006000", getHexAddress64AsByteString("0x101006080", false));
 	}
 
 	protected void setupCode32Bytes(ProgramBuilder builder, String address) throws Exception {

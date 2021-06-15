@@ -183,10 +183,20 @@ tokendef
 				if (sym != null) {
 					redefinedError(sym, n, "token");
 				} else {
-					$tokendef::tokenSymbol = sc.defineToken(find(n), $n.value.getText(), $i.value.intValue());
+					$tokendef::tokenSymbol = sc.defineToken(find(n), $n.value.getText(), $i.value.intValue(), 0);
 				}
 			}
 		} fielddefs)
+	|   ^(OP_TOKEN_ENDIAN n=specific_identifier["token definition"] i=integer s=endian {
+			if (n != null) {
+			    SleighSymbol sym = sc.findSymbol($n.value.getText());
+			    if (sym != null) {
+			        redefinedError(sym, n, "token");
+			    } else {
+			        $tokendef::tokenSymbol = sc.defineToken(find(n), $n.value.getText(), $i.value.intValue(), $s.value ==0 ? -1 : 1);
+			    }
+			}
+	    } fielddefs)
 	;
 
 fielddefs

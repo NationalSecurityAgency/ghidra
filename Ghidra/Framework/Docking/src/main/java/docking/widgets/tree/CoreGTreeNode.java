@@ -183,9 +183,7 @@ abstract class CoreGTreeNode implements Cloneable {
 	 * @param node the node to add as a child to this node
 	 */
 	protected synchronized void doAddNode(GTreeNode node) {
-		children().add(node);
-		node.setParent((GTreeNode) this);
-		doFireNodeAdded(node);
+		doAddNode(children().size(), node);
 	}
 
 	/**
@@ -196,6 +194,9 @@ abstract class CoreGTreeNode implements Cloneable {
 	 */
 	protected synchronized void doAddNode(int index, GTreeNode node) {
 		List<GTreeNode> kids = children();
+		if (kids.contains(node)) {
+			return;
+		}
 		int insertIndex = Math.min(kids.size(), index);
 		kids.add(insertIndex, node);
 		node.setParent((GTreeNode) this);
@@ -259,6 +260,11 @@ abstract class CoreGTreeNode implements Cloneable {
 		}
 	}
 
+	/**
+	 * This is used to dispose filtered "clone" nodes. When a filter is applied to the tree,
+	 * the nodes that matched are "shallow" cloned, so when the filter is removed, we don't
+	 * want to do a full dispose on the nodes, just clean up the parent-child references.
+	 */
 	final void disposeClones() {
 		List<GTreeNode> oldChildren;
 		synchronized (this) {

@@ -537,7 +537,7 @@ public class UnionEditorCellEditTest extends AbstractUnionEditorTest {
 		waitForSwing();
 
 		assertIsEditingField(1, column);
-		assertEquals("factory data-type not allowed", model.getStatus());
+		assertEquals("Factory data-type not allowed", model.getStatus());
 		escape();
 
 		assertEquals(1, model.getNumSelectedRows());

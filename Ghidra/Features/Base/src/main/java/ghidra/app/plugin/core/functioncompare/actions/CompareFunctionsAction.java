@@ -53,6 +53,7 @@ public abstract class CompareFunctionsAction extends DockingAction {
 	private static final Icon CREATE_NEW_COMPARISON_ICON =
 		new MultiIcon(COMPARISON_ICON, TRANSLATED_NEW_ICON);
 	private static final String CREATE_COMPARISON_GROUP = "A9_CreateComparison";
+	static final String POPUP_MENU_NAME = "Compare Selected Functions";
 
 	/**
 	 * Constructor

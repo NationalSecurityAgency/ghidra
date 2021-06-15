@@ -17,6 +17,7 @@ package ghidra.framework.plugintool.dialog;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +34,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.task.TaskMonitor;
+import utilities.util.FileUtilities;
 
 /**
  * Model for the {@link ExtensionTablePanel}. This defines 5 columns for displaying information in
@@ -95,12 +97,20 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
-		if (Application.inSingleJarMode()) {
+		if (Application.inSingleJarMode() || SystemUtilities.isInDevelopmentMode()) {
 			return false;
 		}
 
 		ExtensionDetails extension = getSelectedExtension(rowIndex);
 		if (!isValidVersion(extension)) {
+			return false;
+		}
+
+		// Do not allow GUI uninstallation of extensions manually installed in installation 
+		// directory
+		if (extension.getInstallPath() != null && FileUtilities.isPathContainedWithin(
+			Application.getApplicationLayout().getApplicationInstallationDir().getFile(false),
+			new File(extension.getInstallPath()))) {
 			return false;
 		}
 
@@ -123,7 +133,13 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 
 		// If the user does not have write permissions on the installation dir, they cannot 
 		// install.
-		ResourceFile installDir = Application.getApplicationLayout().getExtensionInstallationDir();
+		ResourceFile installDir =
+			Application.getApplicationLayout().getExtensionInstallationDirs().get(0);
+		if (!installDir.exists() && !installDir.mkdir()) {
+			Msg.showError(this, null, "Directory Error",
+				"Cannot install/uninstall extensions: Failed to create extension installation directory.\n" +
+					"See the \"Ghidra Extension Notes\" section of the Ghidra Installation Guide for more information.");
+		}
 		if (!installDir.canWrite()) {
 			Msg.showError(this, null, "Permissions Error",
 				"Cannot install/uninstall extensions: Invalid write permissions on installation directory.\n" +

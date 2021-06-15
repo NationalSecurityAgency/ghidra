@@ -48,10 +48,11 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 	 * @param dataType the dataType of the elements in the array.
 	 * @param numElements the number of elements in the array.
 	 * @param elementLength the length of an individual element in the array.
+	 * @param dtm datatype manager or null
 	 */
 	public ArrayDataType(DataType dataType, int numElements, int elementLength,
 			DataTypeManager dtm) {
-		super(CategoryPath.ROOT, "array", dtm);
+		super(dataType.getCategoryPath(), "array", dtm);
 		validate(dataType);
 		if (dataType.getDataTypeManager() != dtm) {
 			dataType = dataType.clone(dtm);
@@ -87,8 +88,8 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
-		return dataType.isDynamicallySized();
+	public boolean hasLanguageDependantLength() {
+		return dataType.hasLanguageDependantLength();
 	}
 
 	@Override
@@ -100,9 +101,6 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 
 	@Override
 	public boolean isEquivalent(DataType obj) {
-		if (obj == null) {
-			return false;
-		}
 		if (obj == this) {
 			return true;
 		}
@@ -130,6 +128,11 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 	@Override
 	public String getMnemonic(Settings settings) {
 		return DataTypeUtilities.getMnemonic(this, false, settings);
+	}
+
+	@Override
+	public boolean isZeroLength() {
+		return dataType.isZeroLength();
 	}
 
 	@Override
@@ -162,8 +165,15 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
-		if (dt.equals(dataType)) {
+		if (dt == dataType) {
 			notifySizeChanged();
+		}
+	}
+
+	@Override
+	public void dataTypeAlignmentChanged(DataType dt) {
+		if (dt == dataType) {
+			notifyAlignmentChanged();
 		}
 	}
 

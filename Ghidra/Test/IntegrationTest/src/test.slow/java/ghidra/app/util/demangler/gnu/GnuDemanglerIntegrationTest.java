@@ -61,10 +61,66 @@ public class GnuDemanglerIntegrationTest extends AbstractGhidraHeadlessIntegrati
 
 		GnuDemanglerOptions options = new GnuDemanglerOptions();
 		options.setDemangleOnlyKnownPatterns(false);
-		options = options.withDeprecatedDemangler();
+		options = options.withDemanglerFormat(GnuDemanglerFormat.AUTO, true);
 		DemangledObject result = demangler.demangle(mangled, options);
 		assertNotNull(result);
 		assertEquals("undefined MyNamespace::MyFunction($ParamNamespace::paramName *)",
+			result.getSignature(false));
+
+		DemanglerCmd cmd = new DemanglerCmd(addr("01001000"), mangled, options);
+
+		// this used to trigger an exception
+		boolean success = applyCmd(program, cmd);
+		assertTrue("Demangler command failed: " + cmd.getStatusMsg(), success);
+
+		assertNotNull(cmd.getDemangledObject());
+	}
+
+	@Test
+	public void testParsingReturnType_UnnamedType() throws Exception {
+
+		String mangled = "_ZN13SoloGimbalEKFUt_C2Ev";
+
+		GnuDemangler demangler = new GnuDemangler();
+		demangler.canDemangle(program);// this performs initialization
+
+		GnuDemanglerOptions options = new GnuDemanglerOptions();
+		options.setDemangleOnlyKnownPatterns(false);
+		options = options.withDemanglerFormat(GnuDemanglerFormat.AUTO, true);
+		DemangledObject result = demangler.demangle(mangled, options);
+		assertNotNull(result);
+		assertEquals("undefined SoloGimbalEKF::{unnamed_type#1}::SoloGimbalEKF(void)",
+			result.getSignature(false));
+
+		DemanglerCmd cmd = new DemanglerCmd(addr("01001000"), mangled, options);
+
+		// this used to trigger an exception
+		boolean success = applyCmd(program, cmd);
+		assertTrue("Demangler command failed: " + cmd.getStatusMsg(), success);
+
+		assertNotNull(cmd.getDemangledObject());
+	}
+
+	@Test
+	public void testParsingFunctionWithLambdaParameter() throws Exception {
+
+		//
+		// This shows a bug when applying a function that has as one of its parameters a lambda function
+		//
+
+		String mangled =
+			"_ZN3JSC9Structure3addILNS0_9ShouldPinE1EZNS_8JSObject35prepareToPutDirectWithoutTransitionERNS_2VMENS_12PropertyNameEjjPS0_EUlRKNS_24GCSafeConcurrentJSLockerEiiE_EEiS5_S6_jRKT0_";
+
+		GnuDemangler demangler = new GnuDemangler();
+		demangler.canDemangle(program);// this performs initialization
+
+		GnuDemanglerOptions options = new GnuDemanglerOptions();
+		options.setDemangleOnlyKnownPatterns(false);
+		options = options.withDemanglerFormat(GnuDemanglerFormat.AUTO, true);
+		DemangledObject result = demangler.demangle(mangled, options);
+		assertNotNull(result);
+		assertEquals(
+			"int JSC::Structure::add<(JSC::Structure::ShouldPin)1,JSC::JSObject::prepareToPutDirectWithoutTransition(JSC::VM&,JSC::PropertyName,unsigned_int,unsigned_int,JSC::Structure*)::{lambda(JSC::GCSafeConcurrentJSLocker_const&,int,int)#1}>(JSC::VM &,JSC::PropertyName,unsigned int,JSC::JSObject::prepareToPutDirectWithoutTransition(JSC::VM&,JSC::PropertyName,unsigned_int,unsigned_int,JSC::Structure*)::{lambda(JSC::GCSafeConcurrentJSLocker const&, int, int)#1} const &)",
 			result.getSignature(false));
 
 		DemanglerCmd cmd = new DemanglerCmd(addr("01001000"), mangled, options);

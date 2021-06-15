@@ -15,18 +15,12 @@
  */
 package ghidra.service.graph;
 
-import java.util.Map;
-
 /**
  * Graph vertex with attributes
  */
 public class AttributedVertex extends Attributed {
 
 	private final String id;
-	/**
-	 * cache of the html rendering of the vertex attributes
-	 */
-	private String htmlString;
 
 	/**
 	 * Constructs a new GhidraVertex with the given id and name
@@ -72,24 +66,6 @@ public class AttributedVertex extends Attributed {
 	@Override
 	public String toString() {
 		return getName() + " (" + id + ")";
-	}
-
-	/**
-	 * parse (one time) then cache the attributes to html
-	 * @return the html string
-	 */
-	public String getHtmlString() {
-		if (htmlString == null) {
-			StringBuilder buf = new StringBuilder("<html>");
-			for (Map.Entry<String, String> entry : entrySet()) {
-				buf.append(entry.getKey());
-				buf.append(":");
-				buf.append(entry.getValue());
-				buf.append("<br>");
-			}
-			htmlString = buf.toString();
-		}
-		return htmlString;
 	}
 
 	@Override

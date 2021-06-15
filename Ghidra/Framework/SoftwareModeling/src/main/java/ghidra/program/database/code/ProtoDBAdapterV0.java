@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,15 +89,15 @@ class ProtoDBAdapterV0 implements ProtoDBAdapter {
 	/**
 	 * @see ghidra.program.database.code.ProtoDBAdapter#getRecord(int)
 	 */
-	public Record getRecord(int protoId) throws IOException {
+	public DBRecord getRecord(int protoId) throws IOException {
 		return convertRecord(table.getRecord(protoId));
 	}
 
-	private Record convertRecord(Record oldRec) {
+	private DBRecord convertRecord(DBRecord oldRec) {
 		long key = oldRec.getKey();
 		if (key < 0)
 			key = -key;
-		Record newRec = PrototypeManager.PROTO_SCHEMA.createRecord(key);
+		DBRecord newRec = PrototypeManager.PROTO_SCHEMA.createRecord(key);
 		newRec.setBinaryData(0, oldRec.getBinaryData(0));
 		newRec.setLongValue(1, oldRec.getLongValue(1));
 		newRec.setBooleanValue(2, false);
@@ -131,16 +130,16 @@ class ProtoDBAdapterV0 implements ProtoDBAdapter {
 			return it.hasPrevious();
 		}
 
-		public Record next() throws IOException {
+		public DBRecord next() throws IOException {
 			return convertRecord(it.next());
 		}
 
-		public Record previous() throws IOException {
-			Record rec = it.previous();
+		public DBRecord previous() throws IOException {
+			DBRecord rec = it.previous();
 			long key = rec.getKey();
 			if (key < 0)
 				key = -key;
-			Record newRec = PrototypeManager.PROTO_SCHEMA.createRecord(key);
+			DBRecord newRec = PrototypeManager.PROTO_SCHEMA.createRecord(key);
 			newRec.setBinaryData(0, rec.getBinaryData(0));
 			newRec.setLongValue(1, rec.getLongValue(1));
 			newRec.setBooleanValue(2, false);

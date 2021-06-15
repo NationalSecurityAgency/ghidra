@@ -40,6 +40,14 @@ struct A2 {
         int e:6;
 };
 
+struct A3 {
+        char a[5]; // test for alignment overlap (gcc)
+        int b:3;
+        int c:8;
+        int d:85;  // test oversized bitfield
+        int e:6;
+};
+
 struct B1 {
 	char a;
 	unsigned short b:6; // gcc groups with previous non-bitfield

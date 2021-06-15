@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.demangler;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.program.model.symbol.Namespace;
 
 /**
@@ -53,6 +55,10 @@ public class DemangledType implements Demangled {
 
 	@Override
 	public void setName(String name) {
+		if (StringUtils.isBlank(name)) {
+			throw new IllegalArgumentException("Name cannot be blank");
+		}
+
 		demangledName = name;
 		this.name = name;
 		if (name != null) {

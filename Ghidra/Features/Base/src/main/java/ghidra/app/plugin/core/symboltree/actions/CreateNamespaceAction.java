@@ -32,9 +32,11 @@ import ghidra.util.exception.InvalidInputException;
 
 public class CreateNamespaceAction extends SymbolTreeContextAction {
 
-	public CreateNamespaceAction(SymbolTreePlugin plugin) {
+	public CreateNamespaceAction(SymbolTreePlugin plugin, String group, String subGroup) {
 		super("Create Namespace", plugin.getName());
-		setPopupMenuData(new MenuData(new String[] { "Create Namespace" }, "0Create"));
+		MenuData menuData = new MenuData(new String[] { "Create Namespace" }, group);
+		menuData.setMenuSubGroup(subGroup);
+		setPopupMenuData(menuData);
 		setEnabled(false);
 	}
 

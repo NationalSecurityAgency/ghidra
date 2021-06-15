@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +14,11 @@
  * limitations under the License.
  */
 // Performs database consistency check on the current program
+import db.DBHandle;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.model.listing.Program;
-import db.DBHandle;
 
 public class ConsistencyCheck extends GhidraScript {
 
@@ -56,6 +54,8 @@ public class ConsistencyCheck extends GhidraScript {
 			return;
 		}
 
+		monitor.checkCanceled();
+
 		if (!df.canSave() || !currentProgram.hasExclusiveAccess()) {
 			popup("Program database is NOT consistent!\nRebuild requires exclusive checkout.");
 			return;
@@ -67,19 +67,22 @@ public class ConsistencyCheck extends GhidraScript {
 		}
 
 		end(false);
+
+		ProgramDB program = (ProgramDB) df.getDomainObject(this, false, false, monitor);
+
 		programMgr.closeProgram(currentProgram, true);
 
-		currentProgram = (Program) df.getDomainObject(this, false, false, monitor);
-		dbh = ((ProgramDB) currentProgram).getDBHandle();
+		monitor.clearCanceled(); // compensate for Script Manager cancelling task on program close
 
+		dbh = program.getDBHandle();
 		try {
 			boolean success = false;
-			long txId = dbh.startTransaction();
+			int txId = program.startTransaction("Rebuild DB Indexes");
 			try {
 				success = dbh.rebuild(monitor);
 			}
 			finally {
-				dbh.endTransaction(txId, success);
+				program.endTransaction(txId, success);
 			}
 
 			if (!success) {
@@ -92,11 +95,12 @@ public class ConsistencyCheck extends GhidraScript {
 				return;
 			}
 
-			currentProgram.save("DB Rebuild", monitor);
+			program.save("DB Rebuild", monitor);
 		}
 		finally {
-			currentProgram.release(this);
-			currentProgram = programMgr.openProgram(df);
+			programMgr.openProgram(program);
+			program.release(this);
+			currentProgram = program;
 			start();
 		}
 	}

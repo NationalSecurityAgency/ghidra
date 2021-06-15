@@ -33,6 +33,7 @@ public class SelectLanguageDialog extends DialogComponentProvider {
 
 		languagePanel = new NewLanguagePanel();
 
+		setTransient(true);
 		addWorkPanel(languagePanel);
 		addOKButton();
 		addCancelButton();
@@ -47,6 +48,7 @@ public class SelectLanguageDialog extends DialogComponentProvider {
 	protected void okCallback() {
 		if (checkInput()) {
 			actionComplete = true;
+			selectedLcsPair = languagePanel.getSelectedLcsPair();
 			close();
 		}
 	}
@@ -77,16 +79,13 @@ public class SelectLanguageDialog extends DialogComponentProvider {
 
 	public LanguageCompilerSpecPair getSelectedLanguage() {
 
-		SystemUtilities.runSwingNow(() -> doSelect());
+		SystemUtilities.runSwingNow(() -> showDialog());
 		return selectedLcsPair;
 	}
 
-	private void doSelect() {
+	private void showDialog() {
 		selectedLcsPair = null;
 		actionComplete = false;
 		DockingWindowManager.showDialog(null, this);
-		if (actionComplete) {
-			selectedLcsPair = languagePanel.getSelectedLcsPair();
-		}
 	}
 }

@@ -17,12 +17,11 @@ package ghidra.program.database.code;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ConcurrentModificationException;
-import java.util.Iterator;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
@@ -54,7 +53,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	protected ReferenceManager refMgr;
 	protected ProgramDB program;
 
-	private Record commentRec;
+	private DBRecord commentRec;
 	private boolean checkedComments;
 	protected byte[] bytes;
 	private ProgramContext programContext;
@@ -90,7 +89,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	}
 
 	@Override
-	protected boolean refresh(Record record) {
+	protected boolean refresh(DBRecord record) {
 		address = codeMgr.getAddressMap().decodeAddress(addr);
 		endAddr = null;
 		commentRec = null;
@@ -122,7 +121,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	 * does NOT indicate existence and a record query may be required.
 	 * @return true if removal of code unit has been confirmed
 	 */
-	abstract protected boolean hasBeenDeleted(Record record);
+	abstract protected boolean hasBeenDeleted(DBRecord record);
 
 	@Override
 	public void addMnemonicReference(Address refAddr, RefType refType, SourceType sourceType) {
@@ -753,7 +752,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	}
 
 	@Override
-	public Register[] getRegisters() {
+	public List<Register> getRegisters() {
 		return programContext.getRegisters();
 	}
 
@@ -795,7 +794,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	@Override
 	public abstract String toString();
 
-	Record getCommentRecord() {
+	DBRecord getCommentRecord() {
 		return commentRec;
 	}
 

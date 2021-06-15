@@ -218,7 +218,12 @@ public class PIC30_ElfExtension extends ElfExtension {
 		Language language = elfLoadHelper.getProgram().getLanguage();
 		return language.getDefaultDataSpace().equals(start.getAddressSpace().getPhysicalSpace());
 	}
-	
+
+	@Override
+	public int getDefaultAlignment(ElfLoadHelper elfLoadHelper) {
+		return 4; // alignment for external symbol allocation
+	}
+
 	private static class PIC30FilteredDataInputStream extends FilterInputStream {
 
 		// BYTES:  <byte> <pad>

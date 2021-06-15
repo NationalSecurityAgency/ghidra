@@ -3,7 +3,5 @@
 ##MODULE IP: LGPL 2.1
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
-data/jaas-modules-src-1.0.3.zip||LGPL 2.1|||File corresponds to original distribution with all binary product files removed.|END|
 os/readme.txt||GHIDRA||||END|
 src/main/java/ghidra/server/remote/ServerHelp.txt||GHIDRA||||END|

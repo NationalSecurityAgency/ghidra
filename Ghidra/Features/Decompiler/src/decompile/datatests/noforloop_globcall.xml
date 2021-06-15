@@ -1,0 +1,27 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   A loop that should not recover as a for-loop as the loop variable is global and may change
+   in a subfunction after the iteration statement.
+-->
+<bytechunk space="ram" offset="0x4006ed" readonly="true">
+                          554889
+e54883ec0848897df8c7052d09200000
+000000eb1b8b052509200083c0018905
+1c092000488b45f84889c7e85bffffff
+8b050a09200083f8097eda90c9c3
+</bytechunk>
+<symbol space="ram" offset="0x4006ed" name="noforloop_globcall"/>
+</binaryimage>
+<script>
+  <com>parse line extern void noforloop_globcall(int4 *ptr);</com>
+  <com>map addr r0x601030 int4 globvar</com>
+  <com>lo fu noforloop_globcall</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="No for-loop global call #1" min="1" max="1">while \(globvar &lt; 10\)</stringmatch>
+<stringmatch name="No for-loop global call #2" min="1" max="1">globvar = 0;</stringmatch>
+<stringmatch name="No for-loop global call #3" min="1" max="1">globvar = globvar \+ 1;</stringmatch>
+</decompilertest>

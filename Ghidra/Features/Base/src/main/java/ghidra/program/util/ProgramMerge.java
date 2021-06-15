@@ -239,11 +239,11 @@ public class ProgramMerge implements PropertyVisitor {
 
 		ProgramContext resultContext = resultProgram.getProgramContext();
 		ProgramContext originContext = originProgram.getProgramContext();
-		Register[] originRegs = originContext.getRegisters();
+		ArrayList<Register> originRegs = new ArrayList<>(originContext.getRegisters());
 		// Sort the registers by size so that largest come first.
 		// This prevents the remove call below from incorrectly clearing
 		// smaller registers that are part of a larger register.
-		Arrays.sort(originRegs, (r1, r2) -> r2.getBitLength() - r1.getBitLength());
+		Collections.sort(originRegs, (r1, r2) -> r2.getBitLength() - r1.getBitLength());
 		AddressRangeIterator originRangeIter = originAddressSet.getAddressRanges();
 		while (originRangeIter.hasNext() && !monitor.isCancelled()) {
 			AddressRange originRange = originRangeIter.next();
@@ -2836,7 +2836,9 @@ public class ProgramMerge implements PropertyVisitor {
 			return resultFunction;
 		}
 
+		boolean isDefaultThunk = false;
 		if (originFunction.isThunk()) {
+			isDefaultThunk = originFunction.getSymbol().getSource() == SourceType.DEFAULT;
 			Function thunkedFunction = originFunction.getThunkedFunction(false);
 			Address thunkedEntryPoint = thunkedFunction.getEntryPoint();
 			Address resultThunkedEntryPoint =
@@ -2869,15 +2871,17 @@ public class ProgramMerge implements PropertyVisitor {
 //        VariableReference[] restoreRefs = new VariableReference[0];
 		String originName = originFunction.getName();
 		Namespace desiredToNamespace = resultProgram.getGlobalNamespace();
-		try {
-			desiredToNamespace = symbolMerge.resolveNamespace(originFunction.getParentNamespace(),
-				conflictSymbolIDMap);
-		}
-		catch (DuplicateNameException e1) {
-			Msg.error(this, "Unexpected Exception: " + e1.getMessage(), e1);
-		}
-		catch (InvalidInputException e1) {
-			Msg.error(this, "Unexpected Exception: " + e1.getMessage(), e1);
+		if (!isDefaultThunk) {
+			try {
+				desiredToNamespace = symbolMerge
+						.resolveNamespace(originFunction.getParentNamespace(), conflictSymbolIDMap);
+			}
+			catch (DuplicateNameException e1) {
+				Msg.error(this, "Unexpected Exception: " + e1.getMessage(), e1);
+			}
+			catch (InvalidInputException e1) {
+				Msg.error(this, "Unexpected Exception: " + e1.getMessage(), e1);
+			}
 		}
 
 		AddressSetView oldResultBody = (resultFunction == null) ? null : resultFunction.getBody();

@@ -130,7 +130,10 @@ public class SymbolTreeRootNode extends SymbolCategoryNode {
 		Symbol functionSymbol = searchSymbol.getParentSymbol();
 		SymbolNode parentKey = SymbolNode.createNode(functionSymbol, program);
 		GTreeNode functionNode = findFunctionSymbolNode(parentKey, loadChildren, monitor);
-		return ((SymbolTreeNode) functionNode).findSymbolTreeNode(key, loadChildren, monitor);
+		if (functionNode != null) {
+			return ((SymbolTreeNode) functionNode).findSymbolTreeNode(key, loadChildren, monitor);
+		}
+		return null;
 	}
 
 	private GTreeNode findFunctionSymbolNode(SymbolNode key, boolean loadChildren,

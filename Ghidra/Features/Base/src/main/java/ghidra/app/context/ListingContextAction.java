@@ -15,8 +15,6 @@
  */
 package ghidra.app.context;
 
-import java.util.Set;
-
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.KeyBindingType;
@@ -75,15 +73,4 @@ public abstract class ListingContextAction extends DockingAction {
 	protected void actionPerformed(ListingActionContext context) {
 		// clients need to override this method
 	}
-
-	@Override
-	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-		for (Class<?> class1 : contextTypes) {
-			if (ListingActionContext.class.isAssignableFrom(class1)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 }

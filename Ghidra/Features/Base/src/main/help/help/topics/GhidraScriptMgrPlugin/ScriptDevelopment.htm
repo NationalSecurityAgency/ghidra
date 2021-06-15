@@ -48,15 +48,15 @@
       	This is highly recommended if you plan to do more than simple edits to scripts.</P>
     </BLOCKQUOTE>
 
-    <H2><A name="meta_data">Meta-data</H2>	
+    <H2><A name="meta_data" />Meta-data</H2>	
 	
     <BLOCKQUOTE>
-      <P>The scripting framework supports special meta-data comments. This comment is treated
-      specially by the script manager.</P>
+      <P>The scripting framework supports special meta-data comments. These comments are
+      treated specially by the script manager.</P>
 
       <OL>
         <LI>Each line of meta-data should start with the scripting language comment character. For
-        example, "//".</LI>
+        example, in Java line comments start with "//".</LI>
 
         <LI>The first portion is the description.</LI>
 
@@ -83,6 +83,29 @@
           <P>For example, <CODE>"@category categoryA.categoryB"</CODE>.<BR>
           </P>
         </BLOCKQUOTE>
+
+        <P><B><CODE>@importpackage</CODE></B></P>
+
+        <BLOCKQUOTE>
+          <P>This tag is used to declare <A href="../BundleManager/BundleManager.htm#inter-bundle-dependency">
+          inter-bundle dependencies</A> as a comma separated list of Java packages. The complete syntax is that
+          of the <a
+          href="https://osgi.org/specification/osgi.core/7.0.0/framework.module.html#framework.module.importpackage">
+          <CODE>Import-Package</CODE> attribute</a> in an OSGi bundle manifest.  </P>
+
+          <P>For example:</P>
+
+          <BLOCKQUOTE>
+            <P><TT>
+              @importpackage org.my.script.library<BR>
+              @importpackage org.my.script.library,org.your.script.library<BR>
+              @importpackage org.apache.commons.collections.properties;version=4.4<BR>
+              @importpackage org.ghidra.analysis;version="[1.1,2)"<BR>
+            </TT></P>
+          </BLOCKQUOTE>
+
+        </BLOCKQUOTE>
+
 
         <P><B><CODE>@keybinding</CODE></B></P>
 

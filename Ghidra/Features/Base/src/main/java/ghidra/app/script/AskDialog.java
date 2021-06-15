@@ -28,7 +28,6 @@ import docking.widgets.label.GDLabel;
 import generic.util.WindowUtilities;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.NumericUtilities;
-import ghidra.util.SystemUtilities;
 
 public class AskDialog<T> extends DialogComponentProvider {
 	public final static int STRING = 0;
@@ -97,12 +96,13 @@ public class AskDialog<T> extends DialogComponentProvider {
 			panel.add(comboField, BorderLayout.CENTER);
 		}
 
+		setTransient(true);
 		addWorkPanel(panel);
 		addOKButton();
 		addCancelButton();
 		setDefaultButton(okButton);
 		setRememberSize(false);
-		SystemUtilities.runSwingNow(() -> DockingWindowManager.showDialog(parent, AskDialog.this));
+		DockingWindowManager.showDialog(parent, AskDialog.this);
 	}
 
 	private void saveCurrentDimensions() {

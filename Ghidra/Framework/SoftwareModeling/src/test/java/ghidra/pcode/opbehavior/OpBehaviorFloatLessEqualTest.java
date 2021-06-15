@@ -15,14 +15,12 @@
  */
 package ghidra.pcode.opbehavior;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import ghidra.pcode.floatformat.FloatFormat;
-import ghidra.pcode.floatformat.FloatFormatFactory;
+import ghidra.pcode.floatformat.*;
 
 public class OpBehaviorFloatLessEqualTest extends AbstractOpBehaviorTest {
 
@@ -30,92 +28,80 @@ public class OpBehaviorFloatLessEqualTest extends AbstractOpBehaviorTest {
 		super();
 	}
 
-@Test
-    public void testEvaluateBinaryLong() {
+	@Test
+	public void testEvaluateBinaryLong() {
 
 		OpBehaviorFloatLessEqual op = new OpBehaviorFloatLessEqual();
 
 		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
 
-		Assert.assertEquals(1, op.evaluateBinary(8, 8, ff.getEncoding(1.234), ff.getEncoding(1.234)));
-		Assert.assertEquals(1, op.evaluateBinary(8, 8, ff.getEncoding(-1.234), ff.getEncoding(-1.234)));
+		Assert.assertEquals(1,
+			op.evaluateBinary(8, 8, ff.getEncoding(1.234), ff.getEncoding(1.234)));
+		Assert.assertEquals(1,
+			op.evaluateBinary(8, 8, ff.getEncoding(-1.234), ff.getEncoding(-1.234)));
 
-		Assert.assertEquals(0, op.evaluateBinary(8, 8, ff.getEncoding(1.234), ff.getEncoding(-1.234)));
+		Assert.assertEquals(0,
+			op.evaluateBinary(8, 8, ff.getEncoding(1.234), ff.getEncoding(-1.234)));
 		Assert.assertEquals(0, op.evaluateBinary(8, 8, ff.getEncoding(0), ff.getEncoding(-1.234)));
 
 		Assert.assertEquals(1, op.evaluateBinary(8, 8, ff.getEncoding(0), ff.getEncoding(1.234)));
-		Assert.assertEquals(1, op.evaluateBinary(8, 8, ff.getEncoding(-1.234), ff.getEncoding(1.234)));
+		Assert.assertEquals(1,
+			op.evaluateBinary(8, 8, ff.getEncoding(-1.234), ff.getEncoding(1.234)));
 
-		Assert.assertEquals(
-			0,
-			op.evaluateBinary(8, 8, ff.getEncoding(Double.POSITIVE_INFINITY), ff.getEncoding(1.234)));
-		Assert.assertEquals(
-			1,
-			op.evaluateBinary(8, 8, ff.getEncoding(Double.NEGATIVE_INFINITY), ff.getEncoding(1.234)));
-		Assert.assertEquals(
-			1,
-			op.evaluateBinary(8, 8, ff.getEncoding(1.234), ff.getEncoding(Double.POSITIVE_INFINITY)));
-		Assert.assertEquals(
-			0,
-			op.evaluateBinary(8, 8, ff.getEncoding(1.234), ff.getEncoding(Double.NEGATIVE_INFINITY)));
+		Assert.assertEquals(0, op.evaluateBinary(8, 8, ff.getEncoding(Double.POSITIVE_INFINITY),
+			ff.getEncoding(1.234)));
+		Assert.assertEquals(1, op.evaluateBinary(8, 8, ff.getEncoding(Double.NEGATIVE_INFINITY),
+			ff.getEncoding(1.234)));
+		Assert.assertEquals(1, op.evaluateBinary(8, 8, ff.getEncoding(1.234),
+			ff.getEncoding(Double.POSITIVE_INFINITY)));
+		Assert.assertEquals(0, op.evaluateBinary(8, 8, ff.getEncoding(1.234),
+			ff.getEncoding(Double.NEGATIVE_INFINITY)));
 
-		Assert.assertEquals(
-			1,
-			op.evaluateBinary(8, 8, ff.getEncoding(Double.POSITIVE_INFINITY),
-				ff.getEncoding(Double.POSITIVE_INFINITY)));
-		Assert.assertEquals(
-			1,
-			op.evaluateBinary(8, 8, ff.getEncoding(Double.NEGATIVE_INFINITY),
-				ff.getEncoding(Double.POSITIVE_INFINITY)));
+		Assert.assertEquals(1, op.evaluateBinary(8, 8, ff.getEncoding(Double.POSITIVE_INFINITY),
+			ff.getEncoding(Double.POSITIVE_INFINITY)));
+		Assert.assertEquals(1, op.evaluateBinary(8, 8, ff.getEncoding(Double.NEGATIVE_INFINITY),
+			ff.getEncoding(Double.POSITIVE_INFINITY)));
 
 	}
 
-@Test
-    public void testEvaluateBinaryBigInteger() {
+	@Test
+	public void testEvaluateBinaryBigInteger() {
 
 		OpBehaviorFloatLessEqual op = new OpBehaviorFloatLessEqual();
 
 		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
 
-		BigDecimal a = BigDecimal.valueOf(1.234d);
-		BigDecimal b = BigDecimal.valueOf(-1.234d);
-
-		Assert.assertEquals(BigInteger.ONE, op.evaluateBinary(8, 8, ff.getEncoding(a), ff.getEncoding(a)));
-		Assert.assertEquals(BigInteger.ONE, op.evaluateBinary(8, 8, ff.getEncoding(b), ff.getEncoding(b)));
-
-		Assert.assertEquals(BigInteger.ZERO, op.evaluateBinary(8, 8, ff.getEncoding(a), ff.getEncoding(b)));
-		Assert.assertEquals(BigInteger.ZERO,
-			op.evaluateBinary(8, 8, ff.getEncoding(BigDecimal.ZERO), ff.getEncoding(b)));
+		BigFloat a = ff.getBigFloat(1.234d);
+		BigFloat b = ff.getBigFloat(-1.234d);
 
 		Assert.assertEquals(BigInteger.ONE,
-			op.evaluateBinary(8, 8, ff.getEncoding(BigDecimal.ZERO), ff.getEncoding(a)));
-		Assert.assertEquals(BigInteger.ONE, op.evaluateBinary(8, 8, ff.getEncoding(b), ff.getEncoding(a)));
+			op.evaluateBinary(8, 8, ff.getEncoding(a), ff.getEncoding(a)));
+		Assert.assertEquals(BigInteger.ONE,
+			op.evaluateBinary(8, 8, ff.getEncoding(b), ff.getEncoding(b)));
 
-		Assert.assertEquals(
-			BigInteger.ZERO,
-			op.evaluateBinary(8, 8, ff.getEncoding(FloatFormat.BIG_POSITIVE_INFINITY),
-				ff.getEncoding(a)));
-		Assert.assertEquals(
-			BigInteger.ONE,
-			op.evaluateBinary(8, 8, ff.getEncoding(FloatFormat.BIG_NEGATIVE_INFINITY),
-				ff.getEncoding(a)));
-		Assert.assertEquals(
-			BigInteger.ONE,
-			op.evaluateBinary(8, 8, ff.getEncoding(a),
-				ff.getEncoding(FloatFormat.BIG_POSITIVE_INFINITY)));
-		Assert.assertEquals(
-			BigInteger.ZERO,
-			op.evaluateBinary(8, 8, ff.getEncoding(a),
-				ff.getEncoding(FloatFormat.BIG_NEGATIVE_INFINITY)));
+		Assert.assertEquals(BigInteger.ZERO,
+			op.evaluateBinary(8, 8, ff.getEncoding(a), ff.getEncoding(b)));
+		Assert.assertEquals(BigInteger.ZERO,
+			op.evaluateBinary(8, 8, ff.getBigZeroEncoding(false), ff.getEncoding(b)));
 
-		Assert.assertEquals(
-			BigInteger.ONE,
-			op.evaluateBinary(8, 8, ff.getEncoding(FloatFormat.BIG_POSITIVE_INFINITY),
-				ff.getEncoding(FloatFormat.BIG_POSITIVE_INFINITY)));
-		Assert.assertEquals(
-			BigInteger.ONE,
-			op.evaluateBinary(8, 8, ff.getEncoding(FloatFormat.BIG_NEGATIVE_INFINITY),
-				ff.getEncoding(FloatFormat.BIG_POSITIVE_INFINITY)));
+		Assert.assertEquals(BigInteger.ONE,
+			op.evaluateBinary(8, 8, ff.getBigZeroEncoding(false), ff.getEncoding(a)));
+		Assert.assertEquals(BigInteger.ONE,
+			op.evaluateBinary(8, 8, ff.getEncoding(b), ff.getEncoding(a)));
+
+		Assert.assertEquals(BigInteger.ZERO,
+			op.evaluateBinary(8, 8, ff.getBigInfinityEncoding(false), ff.getEncoding(a)));
+		Assert.assertEquals(BigInteger.ONE,
+			op.evaluateBinary(8, 8, ff.getBigInfinityEncoding(true), ff.getEncoding(a)));
+		Assert.assertEquals(BigInteger.ONE,
+			op.evaluateBinary(8, 8, ff.getEncoding(a), ff.getBigInfinityEncoding(false)));
+		Assert.assertEquals(BigInteger.ZERO,
+			op.evaluateBinary(8, 8, ff.getEncoding(a), ff.getBigInfinityEncoding(true)));
+
+		Assert.assertEquals(BigInteger.ONE, op.evaluateBinary(8, 8,
+			ff.getBigInfinityEncoding(false), ff.getBigInfinityEncoding(false)));
+		Assert.assertEquals(BigInteger.ONE, op.evaluateBinary(8, 8, ff.getBigInfinityEncoding(true),
+			ff.getBigInfinityEncoding(false)));
 
 	}
 

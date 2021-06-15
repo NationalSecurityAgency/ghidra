@@ -56,7 +56,9 @@ public class SecurityDataDirectory extends DataDirectory implements ByteArrayCon
 	private void initSecurityDataDirectory(NTHeader ntHeader, FactoryBundledWithBinaryReader reader) throws IOException {
 		processDataDirectory(ntHeader, reader);
 
-        if (certificates == null) certificates = new SecurityCertificate[0];
+        if (certificates == null) {
+			certificates = new SecurityCertificate[0];
+		}
 	}
 
 	/**
@@ -99,7 +101,7 @@ public class SecurityDataDirectory extends DataDirectory implements ByteArrayCon
 
 	@Override
 	public boolean parse() throws IOException {
-		List<SecurityCertificate> list = new ArrayList<SecurityCertificate>();
+		List<SecurityCertificate> list = new ArrayList<>();
 
         // Sanity check...
         // Sometimes the cert address is not valid
@@ -114,16 +116,21 @@ public class SecurityDataDirectory extends DataDirectory implements ByteArrayCon
 
         int certOffset = getVirtualAddress();
         int certSize   = getSize();
+		if (certOffset + certSize > reader.length()) {
+			Msg.warn(this, "Certificate length " + certSize + " exceeds EOF.");
+			return false;
+		}
 
         while (certSize > 0 && certSize < NTHeader.MAX_SANE_COUNT) {
-            SecurityCertificate cert = SecurityCertificate.createSecurityCertificate(reader, certOffset);
-            if (cert.getLength() < 0) {
+			SecurityCertificate cert = SecurityCertificate.read(reader, certOffset, certSize);
+			if (cert == null) {
             	return false;
             }
             list.add(cert);
 
-            certOffset += cert.getNumberOfBytesConsumed();
-            certSize   -= cert.getNumberOfBytesConsumed();
+			int certBytesUsed = cert.getNumberOfBytesConsumed();
+			certOffset += certBytesUsed;
+			certSize -= certBytesUsed;
         }
 
         certificates = new SecurityCertificate[list.size()];
@@ -147,6 +154,7 @@ public class SecurityDataDirectory extends DataDirectory implements ByteArrayCon
 	/**
 	 * @see ghidra.app.util.bin.ByteArrayConverter#toBytes(ghidra.util.DataConverter)
 	 */
+	@Override
 	public byte [] toBytes(DataConverter dc) {
 		try {
 			return reader.readByteArray( virtualAddress, size );

@@ -15,7 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 

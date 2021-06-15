@@ -18,7 +18,8 @@ package ghidra.program.database.map;
 import java.util.*;
 
 import ghidra.program.model.address.*;
-import ghidra.util.datastruct.*;
+import ghidra.util.datastruct.Range;
+import ghidra.util.datastruct.SortedRangeList;
 
 /**
  * AddressSetView implementation that handles image base changes. NOTE: THIS IMPLEMENTATION
@@ -33,8 +34,7 @@ public class NormalizedAddressSet implements AddressSetView {
 
 	private AddressMap addrMap;
 
-	private LongObjectHashtable<SortedRangeList> baseLists =
-		new LongObjectHashtable<SortedRangeList>();
+	private Map<Long, SortedRangeList> baseLists = new HashMap<>();
 	private ArrayList<Long> bases = new ArrayList<Long>();
 
 	private Comparator<Long> baseComparator = new Comparator<Long>() {
@@ -108,7 +108,7 @@ public class NormalizedAddressSet implements AddressSetView {
 	 * Removes all addresses from this set.
 	 */
 	public void clear() {
-		baseLists = new LongObjectHashtable<SortedRangeList>();
+		baseLists = new HashMap<>();
 		bases = new ArrayList<Long>();
 	}
 
@@ -251,9 +251,9 @@ public class NormalizedAddressSet implements AddressSetView {
 	@Override
 	public int getNumAddressRanges() {
 		int n = 0;
-		long[] keys = baseLists.getKeys();
-		for (int i = 0; i < keys.length; i++) {
-			SortedRangeList list = baseLists.get(keys[i]);
+
+		for (long key : baseLists.keySet()) {
+			SortedRangeList list = baseLists.get(key);
 			n += list.getNumRanges();
 		}
 		return n;
@@ -286,9 +286,8 @@ public class NormalizedAddressSet implements AddressSetView {
 	@Override
 	public long getNumAddresses() {
 		long n = 0;
-		long[] keys = baseLists.getKeys();
-		for (int i = 0; i < keys.length; i++) {
-			SortedRangeList list = baseLists.get(keys[i]);
+		for (long key : baseLists.keySet()) {
+			SortedRangeList list = baseLists.get(key);
 			n += list.getNumValues();
 		}
 		return n;

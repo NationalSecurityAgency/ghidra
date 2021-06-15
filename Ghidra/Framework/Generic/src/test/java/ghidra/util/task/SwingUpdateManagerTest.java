@@ -25,7 +25,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
-import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 
 public class SwingUpdateManagerTest extends AbstractGenericTest {
@@ -52,7 +51,7 @@ public class SwingUpdateManagerTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testOneCallFroUpdateNow() {
+	public void testOneCallFromUpdateNow() {
 		manager.updateNow();
 		waitForManager();
 		assertEquals("Expected only 1 callback", 1, runnableCalled);
@@ -105,6 +104,19 @@ public class SwingUpdateManagerTest extends AbstractGenericTest {
 		waitForManager();
 		assertEquals("Expected one immediate callback and one max delay callback (2 total)", 2,
 			runnableCalled);
+	}
+
+	@Test
+	public void testFlush() {
+		manager.flush();
+		waitForSwing();
+		assertFalse(manager.isBusy());
+		assertEquals("Did not expect the callback after stop()", 0, runnableCalled);
+
+		manager.updateLater();
+		manager.flush();
+		waitForManager();
+		assertEquals("Expected only 1 callback", 1, runnableCalled);
 	}
 
 	@Test
@@ -236,9 +248,26 @@ public class SwingUpdateManagerTest extends AbstractGenericTest {
 		assertEquals("Expected exactly 2 callbacks", 2, runnableCalled);
 	}
 
-//==============================================================================================
+	@Test
+	public void testNotFiringTooOften() throws InterruptedException {
+		Thread t = new Thread(() -> {
+			for (int i = 0; i < 50; i++) {
+				manager.update();
+				manager.update();
+				manager.update();
+				manager.update();
+				sleep(10);
+			}
+		});
+		t.start();
+		t.join();
+		waitForManager();
+		assertEquals(2, runnableCalled);
+	}
+
+//==================================================================================================
 // Private Methods
-//==============================================================================================
+//==================================================================================================
 	private void waitForManager() {
 
 		// let all swing updates finish, which may trigger the update manager
@@ -258,7 +287,6 @@ public class SwingUpdateManagerTest extends AbstractGenericTest {
 			@Override
 			public void run() {
 				runnableCalled++;
-				Msg.debug(this, "run() called - count: " + runnableCalled);
 			}
 		});
 	}

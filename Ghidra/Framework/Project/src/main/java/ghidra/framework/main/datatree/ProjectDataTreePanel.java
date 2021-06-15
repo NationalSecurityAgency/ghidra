@@ -338,12 +338,14 @@ public class ProjectDataTreePanel extends JPanel {
 			}
 		}
 
-		ProjectDataTreeActionContext context =
-			new ProjectDataTreeActionContext(provider, projectData, selectionPaths,
-				domainFolderList, domainFileList, tree, isActiveProject);
-		boolean isTransient = tool == null; // null for stand-alone dialog, not the project's tree
-		context.setTransient(isTransient);
-		return context;
+		// provider is null when called from the DataTreeDialog, use different context
+		if (provider == null) {
+			return new DialogProjectTreeContext(projectData, selectionPaths, domainFolderList,
+				domainFileList, tree);
+		}
+
+		return new FrontEndProjectTreeContext(provider, projectData, selectionPaths,
+			domainFolderList, domainFileList, tree, isActiveProject);
 	}
 
 	public DataTree getDataTree() {
@@ -357,14 +359,6 @@ public class ProjectDataTreePanel extends JPanel {
 	 */
 	public void setTreeFilterEnabled(boolean enabled) {
 		tree.setFilterVisible(enabled);
-	}
-
-	boolean domainFolderListenerAdded() {
-		return changeMgr != null;
-	}
-
-	DomainFolderChangeListener getFolderChangeListener() {
-		return changeMgr;
 	}
 
 	public String[] getExpandedPathsByNodeName() {
@@ -426,14 +420,6 @@ public class ProjectDataTreePanel extends JPanel {
 			}
 		}
 		return null;
-	}
-
-	FrontEndTool getFrontEndTool() {
-		return tool;
-	}
-
-	boolean isInActiveProject() {
-		return isActiveProject;
 	}
 
 	private void create(String projectName) {

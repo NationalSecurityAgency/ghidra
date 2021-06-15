@@ -15,8 +15,7 @@
  */
 package ghidra.app.cmd.disassemble;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 import java.math.BigInteger;
 
@@ -338,8 +337,7 @@ public class DisassembleContextTest extends AbstractGhidraHeadedIntegrationTest 
     public void testFlowWithNoSaveIntoContextImpl() {
 
 		// Simple context does not contain default values
-		ProgramContext retainedContext =
-			new ProgramContextImpl(program.getLanguage().getRegisters());
+		ProgramContext retainedContext = new ProgramContextImpl(program.getLanguage());
 
 		Address addr = space.getAddress(0x0);
 

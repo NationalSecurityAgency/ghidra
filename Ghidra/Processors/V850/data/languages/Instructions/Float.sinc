@@ -1,0 +1,474 @@
+#####################################################
+#####		       Float			#####
+#####################################################
+
+
+# ABSF.D reg2, reg3 - rrrr011111100000|wwww010001011000
+:absf.d R1115x2, R2731x2 is R1115x2 & op0510=0x3F & op0004=0b00000; R2731x2 & op2126=0b100010 & op1620=0b11000
+{
+	R2731x2 = abs(R1115x2);
+}
+
+# ABSF.S reg2, reg3 - rrrrr11111100000|wwwww10001001000
+:absf.s R1115, R2731 is R1115 & op0510=0x3F & op0004=0b00000; R2731 & op2126=0b100010 & op1620=0b01000
+{
+	R2731 = abs(R1115);
+}
+
+# ADDF.D reg1, reg2, reg3 - rrrr0111111RRRR0|wwww010001110000
+:addf.d R0004x2, R1115x2, R2731x2 is R1115x2 & op0510=0x3F & R0004x2 ; R2731x2 & op2126=0b100011 & op1620=0b10000
+{
+	R2731x2 = R1115x2 f+ R0004x2;
+}
+
+# ADDF.S reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww10001100000
+:addf.s R0004, R1115, R2731 is R1115 & op0510=0x3F & R0004 ; R2731 & op2126=0b100011 & op1620=0b00000
+{
+	R2731 = R1115 f+ R0004;
+}
+
+# CEILF.DL reg2, reg3 - rrrr011111100010|wwww010001010100
+:ceilf.dl R1115x2, R2731x2 is R1115x2 & op0510=0x3F & op0004=0b00010; R2731x2 & op2126=0b100010 & op1620=0b10100
+{
+	local var:8 = ceil(float2float(R1115x2));
+	R2731x2 = trunc(var);
+}
+
+# CEILF.DUL reg2, reg3 - rrrr011111110010|wwww010001010100
+:ceilf.dul R1115x2, R2731x2 is R1115x2 & op0510=0x3F & op0004=0b10010; R2731x2 & op2126=0b100010 & op1620=0b10100
+{
+	local var:8 = ceil(float2float(R1115x2));
+	R2731x2 = trunc(var);
+}
+
+# CEILF.DUW reg2, reg3 - rrrrr11111110010|wwwww10001010000
+:ceilf.duw R1115x2, R2731 is R1115x2 & op0510=0x3F & op0004=0b10010; R2731 & op2126=0b100010 & op1620=0b10000
+{
+	R2731 = trunc(ceil(R1115x2));
+}
+
+# CEILF.DW reg2, reg3 - rrrrr11111100010|wwwww10001010000
+:ceilf.dw R1115x2, R2731 is R1115x2 & op0510=0x3F & op0004=0b00010; R2731 & op2126=0b100010 & op1620=0b10000
+{
+	R2731 = trunc(ceil(R1115x2));
+}
+
+# CEILF.SL reg2, reg3 - rrrrr11111100010|wwww010001000100
+:ceilf.sl R1115, R2731x2 is R1115 & op0510=0x3F & op0004=0b00010; R2731x2 & op2126=0b100010 & op1620=0b00100
+{
+	local var:8 = ceil(float2float(R1115));
+	R2731x2 = trunc(var);
+}
+
+# CEILF.SUL reg2, reg3 - rrrrr11111110010|wwwww10001000100
+:ceilf.sul R1115, R2731x2 is R1115 & op0510=0x3F & op0004=0b10010; R2731x2 & op2126=0b100010 & op1620=0b00100
+{
+	local var:8 = ceil(float2float(R1115));
+	R2731x2 = trunc(var);
+}
+
+# CEILF.SUW reg2, reg3 - rrrrr11111110010|wwwww10001000000
+:ceilf.sul R1115, R2731 is R1115 & op0510=0x3F & op0004=0b10010; R2731 & op2126=0b100010 & op1620=0b00000
+{
+	R2731 = trunc(ceil(R1115));
+}
+
+# CEILF.SW reg2, reg3 - rrrrr11111100010|wwwww10001000000
+:ceilf.sw R1115, R2731 is R1115 & op0510=0x3F & op0004=0b00010; R2731 & op2126=0b100010 & op1620=0b00000
+{
+	R2731 = trunc(ceil(R1115));
+}
+
+# CMOVF.D fcbit, reg1, reg2, reg3 - rrrr0111111RRRR0|wwww01000001fff0
+:cmovf.d fcbit1719, R1115x2, R0004x2, R2731x2 is R1115x2 & op0510=0x3F & R0004x2; R2731x2 & op2126=0b100000 & op2020=1 & fcbit1719 & op1616=0
+{
+	#CC0 = Bit 24
+	local bit = (FPSR >> (fcbit1719 + 24:1)) & 0x1;
+	either_or1(R2731x2, bit, R0004x2, R1115x2);
+}
+
+# CMOVF.S fcbit, reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww1000000fff0
+:cmovf.s fcbit1719, R1115, R0004, R2731 is R1115 & op0510=0x3F & R0004; R2731 & op2126=0b100000 & op2020=0 & fcbit1719 & op1616=0
+{
+	local bit = (FPSR >> (fcbit1719 + 24:1)) & 0x1;
+	either_or1(R2731, bit, R0004, R1115);
+}
+
+# CMPF.D fcond, reg2, reg1, fcbit - rrrr0111111RRRRR|0FFFF1000011fff0
+:cmpf.d fcond2730, R1115x2, R0004x2, fcbit1719 is R1115x2 & op0510=0x3F & R0004x2; op3131=0 & fcond2730 & op2126=0b100001 & op2020=1 & fcbit1719 & op1616=0
+{
+	#0 = Unordered
+	#1 = Equal to
+	#2 = Less than
+	#3 = Exeption
+	#bits = ex le eq un 
+
+	local bit:4 = 0;
+	compare_float(bit, fcond2730:1, R0004x2, R1115x2);
+
+	local pos:4 = bit << (fcbit1719 + 24);	#find position of the calculated bit
+	local mask:4 = 1 << (fcbit1719 + 24);	#create mask to clean old bit in FPSR register
+	FPSR = (FPSR & ~mask) | pos;			#set the new bit at the right position
+}
+
+# CMPF.S fcond, reg2, reg1, fcbit - rrrrr111111RRRRR|0FFFF1000010fff0
+:cmpf.s fcond2730, R1115, R0004, fcbit1719 is R1115 & op0510=0x3F & R0004; op3131=0 & fcond2730 & op2126=0b100001 & op2020=0 & fcbit1719 & op1616=0
+{
+	local bit:4 = 0;
+	compare_float(bit, fcond2730:1, R0004, R1115);
+
+	local pos:4 = bit << (fcbit1719 + 24);	#find position of the calculated bit
+	local mask:4 = 1 << (fcbit1719 + 24);	#create mask to clean old bit in FPSR register
+	FPSR = (FPSR & ~mask) | pos;			#set the new bit at the right position
+}
+
+# CVTF.DL reg2, reg3 - rrrr011111100100|wwww010001010100
+:cvtf.dl R1115x2, R2731x2 is R1115x2 & op0510=0x3F & op0004=0b00100; R2731x2 & op2126=0b100010 & op1620=0b10100
+{
+	R2731x2 = int2float(R1115x2);
+}
+
+# CVTF.DS reg2, reg3 - rrrr011111100011|wwww010001010010
+:cvtf.ds R1115x2, R2731 is R1115x2 & op0510=0x3F & op0004=0b00011; R2731 & op2126=0b100010 & op1620=0b10010
+{
+	R2731 = float2float(R1115x2);
+}
+
+# CVTF.DUL reg2, reg3 - rrrr011111110100|wwww010001010100
+:cvtf.dul R1115x2, R2731x2 is R1115x2 & op0510=0x3F & op0004=0b10100; R2731x2 & op2126=0b100010 & op1620=0b10100
+{
+	R2731x2 = trunc(R1115x2);
+}
+
+# CVTF.DUW reg2, reg3 - rrrrr11111110100|wwwww10001010000
+:cvtf.duw R1115x2, R2731 is R1115x2 & op0510=0x3F & op0004=0b10100; R2731 & op2126=0b100010 & op1620=0b10000
+{
+	R2731 = trunc(R1115x2);
+}
+
+# CVTF.DW reg2, reg3 - rrrrr11111100100|wwwww10001010000
+:cvtf.sw R1115x2, R2731 is R1115x2 & op0510=0x3F & op0004=0b00100; R2731 & op2126=0b100010 & op1620=0b10000
+{
+	R2731 = trunc(R1115x2);
+}
+
+# CVTF.LD reg2, reg3 - rrrr011111100001|wwww010001010010
+:cvtf.ls R1115x2, R2731x2 is R1115x2 & op0510=0x3F & op0004=0b00001; R2731x2 & op2126=0b100010 & op1620=0b10010
+{
+	R2731x2 = int2float(R1115x2);
+}
+
+# CVTF.LS reg2, reg3 - rrrr011111100001|wwwww10001000010
+:cvtf.ls R1115x2, R2731 is R1115x2 & op0510=0x3F & op0004=0b00001; R2731 & op2126=0b100010 & op1620=0b00010
+{
+	R2731 = int2float(R1115x2);
+}
+
+# CVTF.SD reg2, reg3 - rrrrr11111100010|wwww010001010010
+:cvtf.sd R1115, R2731x2 is R1115 & op0510=0x3F & op0004=0b00010; R2731x2 & op2126=0b100010 & op1620=0b10010
+{
+	R2731x2 = float2float(R1115);
+}
+
+# CVTF.SL reg2, reg3 - rrrrr11111100100|wwwww10001000100
+:cvtf.sl R1115, R2731x2 is R1115 & op0510=0x3F & op0004=0b00100; R2731x2 & op2126=0b100010 & op1620=0b00100
+{
+	R2731x2 = trunc(R1115);
+}
+
+# CVTF.SUL reg2, reg3 - rrrrr11111110100|wwwww10001000100
+:cvtf.sul R1115, R2731x2 is R1115 & op0510=0x3F & op0004=0b10100; R2731x2 & op2126=0b100010 & op1620=0b00100
+{
+	R2731x2 = trunc(R1115);
+}
+
+# CVTF.SUW reg2, reg3 - rrrrr11111110100|wwwww10001000000
+:cvtf.suw R1115, R2731 is R1115 & op0510=0x3F & op0004=0b10100; R2731 & op2126=0b100010 & op1620=0b00000
+{
+	R2731 = trunc(R1115);
+}
+
+# CVTF.SW reg2, reg3 - rrrrr11111100100|wwwww10001000000
+:cvtf.sw R1115, R2731 is R1115 & op0510=0x3F & op0004=0b00100; R2731 & op2126=0b100010 & op1620=0b00000
+{
+	R2731 = trunc(R1115);
+}
+
+# CVTF.ULD reg2, reg3 - rrrr011111100001|wwww010001010010
+:cvtf.uls R1115x2, R2731x2 is R1115x2 & op0510=0x3F & op0004=0b10001; R2731x2 & op2126=0b100010 & op1620=0b10010
+{
+	R2731x2 = int2float(R1115x2);
+}
+
+# CVTF.ULS reg2, reg3 - rrrr011111110001|wwwww10001000010
+:cvtf.uls R1115x2, R2731 is R1115x2 & op0510=0x3F & op0004=0b10001; R2731 & op2126=0b100010 & op1620=0b00010
+{
+	R2731 = int2float(R1115x2);
+}
+
+# CVTF.UWD reg2, reg3 - rrrrr11111110000|wwwww10001010010
+:cvtf.uwd R1115, R2731x2 is R1115 & op0510=0x3F & op0004=0b10000; R2731x2 & op2126=0b100010 & op1620=0b10010
+{
+	R2731x2 = int2float(R1115);
+}
+
+# CVTF.UWS reg2, reg3 - rrrrr11111110000|wwwww10001000010
+:cvtf.uws R1115, R2731 is R1115 & op0510=0x3F & op0004=0b10000; R2731 & op2126=0b100010 & op1620=0b00010
+{
+	R2731 = int2float(R1115);
+}
+
+# CVTF.WD reg2, reg3 - rrrrr11111100000|wwwww10001010010
+:cvtf.wd R1115, R2731x2 is R1115 & op0510=0x3F & op0004=0b00000; R2731x2 & op2126=0b100010 & op1620=0b10010
+{
+	R2731x2 = int2float(R1115);
+}
+
+# CVTF.WS reg2, reg3 - rrrrr11111100000|wwwww10001000010
+:cvtf.ws R1115, R2731 is R1115 & op0510=0x3F & op0004=0b00000; R2731 & op2126=0b100010 & op1620=0b00010
+{
+	R2731 = int2float(R1115);
+}
+
+# DIVF.D reg1, reg2, reg3 - rrrr0111111RRRR0|wwww010001111110
+:divf.s R0004x2, R1115x2, R2731x2 is R0004x2 & op0510=0x3F & R1115x2; R2731x2 & op2126=0b100011 & op1620=0b11110
+{
+	R2731x2 = R1115x2 f/ R0004x2;
+}
+
+# DIVF.S reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww10001101110
+:divf.s R0004, R1115, R2731 is R0004 & op0510=0x3F & R1115; R2731 & op2126=0b100011 & op1620=0b01110
+{
+	R2731 = R1115 f/ R0004;
+}
+
+# FLOORF.DL reg2, reg3 - rrrr011111100011|wwww010001010100
+:floorf.dl R1115x2, R2731x2 is R1115x2 & op0510=0x3F & op0004=0b00011; R2731x2 & op2126=0b100010 & op1620=0b10100
+{
+	local var:8 = floor(float2float(R1115x2));
+	R2731x2 = trunc(var);
+}
+
+# FLOORF.DUL reg2, reg3 - rrrr011111110011|wwww010001010100
+:floorf.dul R1115x2, R2731x2 is R1115x2 & op0510=0x3F & op0004=0b10011; R2731x2 & op2126=0b100010 & op1620=0b10100
+{
+	local var:8 = floor(float2float(R1115x2));
+	R2731x2 = trunc(var);
+}
+
+# FLOORF.DUW reg2, reg3 - rrrrr11111110011|wwwww10001010000
+:floorf.duw R1115x2, R2731 is R1115x2 & op0510=0x3F & op0004=0b10011; R2731 & op2126=0b100010 & op1620=0b10000
+{
+	R2731 = trunc(floor(R1115x2));
+}
+
+# FLOORF.DW reg2, reg3 - rrrrr11111100011|wwwww10001010000
+:floorf.dw R1115x2, R2731 is R1115x2 & op0510=0x3F & op0004=0b00011; R2731 & op2126=0b100010 & op1620=0b10000
+{
+	R2731 = trunc(floor(R1115x2));
+}
+
+# FLOORF.SL reg2, reg3 - rrrrr11111100011|wwww010001000100
+:floorf.sl R1115, R2731x2 is R1115 & op0510=0x3F & op0004=0b00011; R2731x2 & op2126=0b100010 & op1620=0b00100
+{
+	local var:8 = floor(float2float(R1115));
+	R2731x2 = trunc(var);
+}
+
+# FLOORF.SUL reg2, reg3 - rrrrr11111110011|wwwww10001000100
+:floorf.sul R1115, R2731x2 is R1115 & op0510=0x3F & op0004=0b10011; R2731x2 & op2126=0b100010 & op1620=0b00100
+{
+	local var:8 = floor(float2float(R1115));
+	R2731x2 = trunc(var);
+}
+
+# FLOORF.SUW reg2, reg3 - rrrrr11111110011|wwwww10001000000
+:floorf.suw R1115, R2731 is R1115 & op0510=0x3F & op0004=0b10011; R2731 & op2126=0b100010 & op1620=0b00000
+{
+	R2731 = trunc(floor(R1115));
+}
+
+# FLOORF.SW reg2, reg3 - rrrrr11111100011|wwwww10001000000
+:floorf.suw R1115, R2731 is R1115 & op0510=0x3F & op0004=0b00011; R2731 & op2126=0b100010 & op1620=0b00000
+{
+	R2731 = trunc(floor(R1115));
+}
+
+# MADDF.S reg1, reg2, reg3, reg4 - rrrrr111111RRRRR|wwwww101W00WWWW0
+:maddf.s R0004, R1115, R2731, reg4 is R0004 & op0510=0x3F & R1115; R2731 & op2426=0b101 & op2122=0b00 & op1616=0 & reg4
+{
+	reg4 = (R1115 f* R0004) f+ R2731;
+}
+
+# MAXF.D reg1, reg2, reg3 - rrrr0111111RRRR0|wwww010001111000
+:maxf.d R0004x2, R1115x2, R2731x2 is R0004x2 & op0510=0x3F & R1115x2; R2731x2 & op2126=0b100011 & op1620=0b11000
+{
+	local bigger:1 = R1115x2 f> R0004x2;
+	either_or(R2731x2, bigger, R1115x2, R0004x2);
+}
+
+# MAXF.S reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww10001101000
+:maxf.s R0004, R1115, R2731 is R0004 & op0510=0x3F & R1115; R2731 & op2126=0b100011 & op1620=0b01000
+{
+	local bigger:1 = R1115 f> R0004;
+	either_or(R2731, bigger, R1115, R0004);
+}
+
+# MINF.D reg1, reg2, reg3 - rrrr0111111RRRR0|wwww010001111010
+:minf.d R0004x2, R1115x2, R2731x2 is R0004x2 & op0510=0x3F & R1115x2; R2731x2 & op2126=0b100011 & op1620=0b11010
+{
+	local bigger:1 = R1115x2 f< R0004x2;
+	either_or(R2731x2, bigger, R1115x2, R0004x2);
+}
+
+# MINF.S reg1, reg2, reg3 - rrrr0111111RRRRR|wwwww10001101010
+:minf.s R0004, R1115, R2731 is R0004 & op0510=0x3F & R1115; R2731 & op2126=0b100011 & op1620=0b01010
+{
+	local bigger:1 = R1115 f< R0004;
+	either_or(R2731, bigger, R1115, R0004);
+}
+
+# MSUBF.S reg1, reg2, reg3, reg4 - rrrrr111111RRRRR|wwwww101W01WWWW0
+:msubf.s R0004, R1115, R2731, reg4 is R0004 & op0510=0x3F & R1115; R2731 & op2426=0b101 & op2122=0b01 & op1616=0 & reg4
+{
+	reg4 = (R1115 f* R0004) f- R2731;
+}
+
+# MULF.D reg1, reg2, reg3 - rrrr0111111RRRR0|wwww010001110100
+:mulf.d R0004x2, R1115x2, R2731x2 is R0004x2 & op0510=0x3F & R1115x2; R2731x2 & op2126=0b100011 & op1620=0b10100
+{
+	R2731x2 = R1115x2 f* R0004x2;
+}
+
+# MULF.S reg1, reg2, reg3 - rrrr0111111RRRRR|wwwww10001100100
+:mulf.s R0004, R1115, R2731 is R0004 & op0510=0x3F & R1115; R2731 & op2126=0b100011 & op1620=0b00100
+{
+	R2731 = R1115 f* R0004;
+}
+
+# NEGF.D reg2, reg3 - rrrr011111100001|wwww010001011000
+:negf.d R1115x2, R2731x2 is R1115x2 & op0510=0x3F & op0004=0b00001; R2731x2 & op2126=0b100010 & op1620=0b11000
+{
+	R2731x2 = f- R1115x2;
+}
+
+# NEGF.S reg2, reg3 - rrrrr11111100001|wwwww10001001000
+:negf.s R1115, R2731 is R1115 & op0510=0x3F & op0004=0b00001; R2731 & op2126=0b100010 & op1620=0b01000
+{
+	R2731 = f- R1115;
+}
+
+# NMADDF.S reg1, reg2, reg3, reg4 - rrrrr111111RRRRR|wwwww101W10WWWW0
+:nmaddf.s R0004, R1115, R2731, reg4 is R0004 & op0510=0x3F & R1115; R2731 & op2426=0b101 & op2122=0b10 & op1616=0 & reg4
+{
+	reg4 = f-((R1115 f* R0004) f+ R2731);
+}
+
+# NMSUBF.S reg1, reg2, reg3, reg4 - rrrrr111111RRRRR|wwwww101W11WWWW0
+:nmsubf.s R0004, R1115, R2731, reg4 is R0004 & op0510=0x3F & R1115; R2731 & op2426=0b101 & op2122=0b11 & op1616=0 & reg4
+{
+	reg4 = f-((R1115 f* R0004) f- R2731);
+}
+
+# RECIPF.D reg2, reg3 - rrrr011111100001|wwww010001011110
+:recipf.d R1115x2, R2731x2 is R1115x2 & op0510=0x3F & op0004=0b00001; R2731x2 & op2126=0b100010 & op1620=0b11110
+{
+	R2731x2 = 1 f/ R1115x2;
+}
+
+# RECIPF.S reg2, reg3 - rrrrr11111100001|wwwww10001001110
+:recipf.s R1115, R2731 is R1115 & op0510=0x3F & op0004=0b00001; R2731 & op2126=0b100010 & op1620=0b01110
+{
+	R2731 = 1 f/ R1115;
+}
+
+# RSQRTF.D reg2, reg3 - rrrr011111100010|wwwww10001011110
+:rsqrtf.d R1115x2, R2731x2 is R1115x2 & op0510=0x3F & op0004=0b00010; R2731x2 & op2126=0b100010 & op1620=0b11110
+{
+	R2731x2 = 1 f/ sqrt(R1115x2);
+}
+
+# RSQRTF.S reg2, reg3 - rrrrr11111100010|wwwww10001001110
+:rsqrtf.s R1115, R2731 is R1115 & op0510=0x3F & op0004=0b00010; R2731 & op2126=0b100010 & op1620=0b01110
+{
+	R2731 = 1 f/ sqrt(R1115);
+}
+
+# SQRTF.D reg2, reg3 - rrrr011111100000|wwww010001011110
+:sqrtf.d R1115x2, R2731x2 is R1115x2 & op0510=0x3F & op0004=0b00000; R2731x2 & op2126=0b100010 & op1620=0b11110
+{
+	R2731x2 = sqrt(R1115x2);
+}
+
+# SQRTF.S reg2, reg3 - rrrrr11111100000|wwwww10001001110
+:sqrtf.s R1115, R2731 is R1115 & op0510=0x3F & op0004=0b00000; R2731 & op2126=0b100010 & op1620=0b01110
+{
+	R2731 = sqrt(R1115);
+}
+
+# SUBF.D reg1, reg2, reg3 - rrrr0111111RRRR0|wwww010001110010
+:subf.d R0004x2, R1115x2, R2731x2 is R0004x2 & op0510=0x3F & R1115x2; R2731x2 & op2126=0b100011 & op1620=0b10010
+{
+	R2731x2 = R1115x2 f- R0004x2;
+}
+
+# SUBF.S reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww10001100010
+:subf.s R0004, R1115, R2731 is R0004 & op0510=0x3F & R1115; R2731 & op2126=0b100011 & op1620=0b00010
+{
+	R2731 = R1115 f- R0004;
+}
+
+# TRFSR fcbit - 0000011111100000|000001000000fff0
+:trfsr fcbit1719 is op1115=0 & op0510=0x3F & op0004=0; op2731=0 & op2126=0b100000 & op2020=0 & fcbit1719 & op1616=0
+{
+	local var:4 = FPSR & (1 << (fcbit1719 + 24));
+	$(Z) = (var != 0);
+}
+
+# TRNCF.DL reg2, reg3 - rrrr011111100001|wwww010001010100
+:trncf.dl R1115x2, R2731x2 is R1115x2 & op0510=0x3F & op0004=0b00001; R2731x2 & op2126=0b100010 & op1620=0b10100
+{
+	R2731x2 = trunc(R1115x2);
+}
+
+# TRNCF.DUL reg2, reg3 - rrrr011111110001|wwww010001010100
+:trncf.dul R1115x2, R2731x2 is R1115x2 & op0510=0x3F & op0004=0b10001; R2731x2 & op2126=0b100010 & op1620=0b10100
+{
+	R2731x2 = trunc(R1115x2);
+}
+
+# TRNCF.DUW reg2, reg3 - rrrrr11111110001|wwwww10001010000
+:trncf.duw R1115x2, R2731 is R1115x2 & op0510=0x3F & op0004=0b10001; R2731 & op2126=0b100010 & op1620=0b10000
+{
+	R2731 = trunc(R1115x2);
+}
+
+# TRNCF.DW reg2, reg3 - rrrrr11111100001|wwwww10001010000
+:trncf.dw R1115x2, R2731 is R1115x2 & op0510=0x3F & op0004=0b00001; R2731 & op2126=0b100010 & op1620=0b10000
+{
+	R2731 = trunc(R1115x2);
+}
+
+# TRNCF.SL reg2, reg3 - rrrrr11111100001|wwww010001000100
+:trncf.sl R1115, R2731x2 is R1115 & op0510=0x3F & op0004=0b00001; R2731x2 & op2126=0b100010 & op1620=0b00100
+{
+	R2731x2 = trunc(R1115);
+}
+
+# TRNCF.SUL reg2, reg3 - rrrrr11111110001|wwww010001000100
+:trncf.sul R1115, R2731x2 is R1115 & op0510=0x3F & op0004=0b10001; R2731x2 & op2126=0b100010 & op1620=0b00100
+{
+	R2731x2 = trunc(R1115);
+}
+
+# TRNCF.SUW reg2, reg3 - rrrrr11111110001|wwwww10001000000
+:trncf.suw R1115, R2731 is R1115 & op0510=0x3F & op0004=0b10001; R2731 & op2126=0b100010 & op1620=0b00000
+{
+	R2731 = trunc(R1115);
+}
+
+# TRNCF.SW reg2, reg3 - rrrrr11111100001|wwwww10001000000
+:trncf.sw R1115, R2731 is R1115 & op0510=0x3F & op0004=0b00001; R2731 & op2126=0b100010 & op1620=0b00000
+{
+	R2731 = trunc(R1115);
+}

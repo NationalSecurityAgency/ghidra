@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.string;
 
-import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 import java.nio.charset.StandardCharsets;
@@ -25,6 +25,7 @@ import javax.swing.*;
 
 import org.junit.*;
 
+import docking.AbstractErrDialog;
 import docking.action.*;
 import docking.widgets.OptionDialog;
 import docking.widgets.textfield.IntegerTextField;
@@ -81,9 +82,9 @@ public class StringTableProviderTest extends AbstractGhidraHeadedIntegrationTest
 
 		CodeBrowserPlugin cb = env.getPlugin(CodeBrowserPlugin.class);
 		CodeViewerProvider cbProvider = cb.getProvider();
-		SwingUtilities.invokeLater(
+		runSwingLater(
 			() -> searchAction.actionPerformed(cbProvider.getActionContext(null)));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		return getDialogComponent(SearchStringDialog.class);
 	}
 
@@ -98,17 +99,17 @@ public class StringTableProviderTest extends AbstractGhidraHeadedIntegrationTest
 
 		// first no selection, should be disabled
 		assertEquals(0, table.getSelectedRowCount());
-		assertTrue(!makeStringsButton.isEnabled());
-		assertTrue(!makeCharArrayButton.isEnabled());
-		assertTrue(!makeStringAction.isEnabledForContext(null));
-		assertTrue(!makeCharArrayAction.isEnabledForContext(null));
+		assertFalse(makeStringsButton.isEnabled());
+		assertFalse(makeCharArrayButton.isEnabled());
+		assertFalse(makeStringAction.isEnabledForContext(null));
+		assertFalse(makeCharArrayAction.isEnabledForContext(null));
 
 		// select a conflicting string, should be disabled
 		selectRows(addr(0x300));
-		assertTrue(!makeStringsButton.isEnabled());
-		assertTrue(!makeCharArrayButton.isEnabled());
-		assertTrue(!makeStringAction.isEnabledForContext(null));
-		assertTrue(!makeCharArrayAction.isEnabledForContext(null));
+		assertFalse(makeStringsButton.isEnabled());
+		assertFalse(makeCharArrayButton.isEnabled());
+		assertFalse(makeStringAction.isEnabledForContext(null));
+		assertFalse(makeCharArrayAction.isEnabledForContext(null));
 
 		// select a non-defined string, should be enabled
 		selectRows(addr(0x100));
@@ -119,10 +120,10 @@ public class StringTableProviderTest extends AbstractGhidraHeadedIntegrationTest
 
 		// select a defined String, should be disabled
 		selectRows(addr(0x200));
-		assertTrue(!makeStringsButton.isEnabled());
-		assertTrue(!makeCharArrayButton.isEnabled());
-		assertTrue(!makeStringAction.isEnabledForContext(null));
-		assertTrue(!makeCharArrayAction.isEnabledForContext(null));
+		assertFalse(makeStringsButton.isEnabled());
+		assertFalse(makeCharArrayButton.isEnabled());
+		assertFalse(makeStringAction.isEnabledForContext(null));
+		assertFalse(makeCharArrayAction.isEnabledForContext(null));
 
 		// select both defined and undefined, should be enabled
 		selectRows(addr(0x100), addr(0x200));
@@ -133,10 +134,10 @@ public class StringTableProviderTest extends AbstractGhidraHeadedIntegrationTest
 
 		// clear selection, should be disabled
 		table.clearSelection();
-		assertTrue(!makeStringsButton.isEnabled());
-		assertTrue(!makeCharArrayButton.isEnabled());
-		assertTrue(!makeStringAction.isEnabledForContext(null));
-		assertTrue(!makeCharArrayAction.isEnabledForContext(null));
+		assertFalse(makeStringsButton.isEnabled());
+		assertFalse(makeCharArrayButton.isEnabled());
+		assertFalse(makeStringAction.isEnabledForContext(null));
+		assertFalse(makeCharArrayAction.isEnabledForContext(null));
 	}
 
 	@Test
@@ -291,7 +292,7 @@ public class StringTableProviderTest extends AbstractGhidraHeadedIntegrationTest
 		setErrorsExpected(false);
 
 		data = program.getListing().getDataAt(address.add(offset));
-		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
+		AbstractErrDialog dialog = waitForErrorDialog();
 		String title = dialog.getTitle();
 		assertThat(title, containsString("Failed"));
 		close(dialog);
@@ -303,7 +304,7 @@ public class StringTableProviderTest extends AbstractGhidraHeadedIntegrationTest
 	public void testMakeStringThatBumpsIntoDefinedTruncateNotAllowed() throws Exception {
 		JCheckBox truncationCheckbox =
 			(JCheckBox) getInstanceField("allowTruncationCheckbox", provider);
-		assertTrue(!truncationCheckbox.isSelected());
+		assertFalse(truncationCheckbox.isSelected());
 
 		DockingAction makeStringAction =
 			(DockingAction) getInstanceField("makeStringAction", provider);
@@ -317,7 +318,7 @@ public class StringTableProviderTest extends AbstractGhidraHeadedIntegrationTest
 		selectRows(address);		// string abcefg is here
 
 		performAction(makeStringAction, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		OptionDialog dialogProvider = getDialogComponent(OptionDialog.class);
 		assertNotNull(dialogProvider);
@@ -435,13 +436,9 @@ public class StringTableProviderTest extends AbstractGhidraHeadedIntegrationTest
 	}
 
 	private void createDataAt(Address addr) throws Exception {
-		int id = program.startTransaction("test");
-		try {
+		tx(program, () -> {
 			program.getListing().createData(addr, new ByteDataType());
-		}
-		finally {
-			program.endTransaction(id, true);
-		}
+		});
 	}
 
 	private void setCheckbox(final JCheckBox checkbox, final boolean selected) {
@@ -526,15 +523,6 @@ public class StringTableProviderTest extends AbstractGhidraHeadedIntegrationTest
 		assertTrue(showUndefinedAction.isSelected());
 
 	}
-
-//	protected void waitForTable() throws Exception {
-//		int nWaits = 0;
-//		while (model.isBusy() && nWaits++ < 500) {
-//			Thread.sleep(50);
-//		}
-//
-//		assertTrue("Timed-out waiting for table model to update.", nWaits < 500);
-//	}
 
 	private void toggleDefinedStateButtons(final boolean defined, final boolean undefined,
 			final boolean partial, final boolean conflicting) {

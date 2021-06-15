@@ -108,6 +108,8 @@ public class ElfSectionHeaderConstants {
 	public static final int SHT_GROUP = 17;
 	/**Extended section indeces*/
 	public static final int SHT_SYMTAB_SHNDX = 18;
+	/**Experimental support - see proposal at https://groups.google.com/forum/#!topic/generic-abi/bX460iggiKg */
+	public static final int SHT_RELR = 19;
 
 	// OS Specific Section Types
 
@@ -115,6 +117,9 @@ public class ElfSectionHeaderConstants {
 	public static final int SHT_ANDROID_REL = 0x60000001;
 	/**Android relocation entries with explicit addends*/
 	public static final int SHT_ANDROID_RELA = 0x60000002;
+
+	/**Android's experimental support for SHT_RELR sections (see above) */
+	public static final int SHT_ANDROID_RELR = 0x6fffff00;
 
 	/**Object attributes */
 	public static final int SHT_GNU_ATTRIBUTES = 0x6ffffff5;
@@ -186,4 +191,14 @@ public class ElfSectionHeaderConstants {
 	public static final short SHN_XINDEX = (short) 0xffff;
 	/**upper bound on range of reserved indexes*/
 	public static final short SHN_HIRESERVE = (short) 0xffff;
+	
+	/**
+	 * @param symbolSectionIndex symbol section index (st_shndx)
+	 * @return true if specified symbol section index corresponds to a processor
+	 * specific value in the range SHN_LOPROC..SHN_HIPROC, else false
+	 */
+	public static boolean isProcessorSpecificSymbolSectionIndex(short symbolSectionIndex) {
+		return symbolSectionIndex >= ElfSectionHeaderConstants.SHN_LOPROC &&
+			symbolSectionIndex <= ElfSectionHeaderConstants.SHN_HIPROC;
+	}
 }

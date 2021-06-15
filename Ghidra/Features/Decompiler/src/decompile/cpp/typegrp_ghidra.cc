@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,10 @@
  */
 #include "typegrp_ghidra.hh"
 
-Datatype *TypeFactoryGhidra::findById(const string &n,uint8 id)
+Datatype *TypeFactoryGhidra::findById(const string &n,uint8 id,int4 sz)
 
 {
-  Datatype *ct = TypeFactory::findById(n,id); // Try internal find
+  Datatype *ct = TypeFactory::findById(n,id,sz); // Try internal find
   if (ct != (Datatype *)0) return ct;
 
   Document *doc;

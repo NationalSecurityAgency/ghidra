@@ -28,50 +28,30 @@ class ParentChildDBAdapterNoTable extends ParentChildAdapter {
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
 	 */
-	public ParentChildDBAdapterNoTable(DBHandle handle) {
+	ParentChildDBAdapterNoTable(DBHandle handle) {
+		// no table required
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ParentChildAdapter#getVersion()
-	 */
-	@Override
-	public int getVersion() {
-		return -1;
-	}
-
-	/**
-	 * @see ghidra.program.database.data.ParentChildAdapter#createRecord(long, long)
-	 */
 	@Override
 	void createRecord(long parentID, long childID) throws IOException {
+		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ParentChildAdapter#removeRecord(long, long)
-	 */
 	@Override
 	void removeRecord(long parentID, long childID) throws IOException {
+		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ParentChildAdapter#getParentIds(long)
-	 */
 	@Override
 	long[] getParentIds(long childID) throws IOException {
 		return new long[0];
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ParentChildAdapter#needsInitializing()
-	 */
 	@Override
 	boolean needsInitializing() {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ParentChildAdapter#removeAllRecordsForParent(long)
-	 */
 	@Override
 	void removeAllRecordsForParent(long parentID) throws IOException {
 		// stub

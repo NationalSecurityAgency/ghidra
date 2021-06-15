@@ -50,7 +50,7 @@ public class DemangledString extends DemangledObject {
 
 	@Override
 	public String getSignature(boolean format) {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		if (specialPrefix != null) {
 			buffer.append(specialPrefix);
 		}

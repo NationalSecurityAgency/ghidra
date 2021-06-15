@@ -1,0 +1,131 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/* This extension is different from the others.  It produces a zip containing
+ * directories of source bundles and jar bundles.
+ * - Each source directory is added as a sourceset so that the eclipse plugin
+ * can add them to the generated project.
+ * - the source destined to be included as jars are compiled.
+ */
+
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply plugin: 'eclipse'
+
+// there is no main jar
+jar.enabled=false
+
+eclipse.project.name = 'Xtra Bundle Examples'
+
+
+dependencies {
+	api project(':Base')
+}
+
+
+def srcDirs =  []
+file(project.projectDir).eachDirMatch(~/.*scripts_.*/) { srcDirs << it.name }
+
+srcDirs.each {dirName ->
+	sourceSets.create(dirName) {
+		java {
+			srcDir {
+				dirName
+			}
+		}
+	}
+}
+
+// create and return a jar task for the given source directory
+def makeJarTask(dirName) {
+	return tasks.create("build${dirName}", Jar) {
+		archiveBaseName =  dirName
+		archiveFileName = "${dirName}.jar"
+		ext.dirName=dirName
+
+
+		from(sourceSets[dirName].output) {
+			include "**"
+		}
+		manifest {
+			def manifestFile=file("${dirName}/META-INF/MANIFEST.MF")
+			// if there is a source manifest, use it
+			if(manifestFile.exists())
+				from manifestFile
+			else // otherwise, use a default manifest
+				attributes \
+						"Bundle-Name": dirName,
+						"Bundle-SymbolicName": dirName
+		}
+	}
+}
+
+
+def jarTasks=[
+	makeJarTask("scripts_jar1"),
+	makeJarTask("scripts_jar2")
+]
+
+eclipse {
+	classpath {
+		// jar1 and jar2 implement the same classes (with different OSGi package versions)
+		// adding both as source directories would cause errors in eclipse, so remove jar2.
+		sourceSets-=[sourceSets.scripts_jar2]
+	}
+}
+
+
+
+// we need a alternative to the zipExtensions task from
+// "$rootProject.projectDir/gradle/support/extensionCommon.gradle"
+task zipExtensions(type: Zip, dependsOn:jarTasks) {
+	def p = this.project
+	archiveFileName = "${rootProject.ext.ZIP_NAME_PREFIX}_${p.name}.zip"
+	destinationDirectory = rootProject.ext.DISTRIBUTION_DIR
+
+	duplicatesStrategy 'exclude'
+
+	from '.'
+
+	srcDirs.each { f ->
+		include f + '/**'
+	}
+
+	include "scripts_*.jar"
+
+	for(jarTask in jarTasks) {
+		from relativePath(jarTask.archivePath)
+		exclude jarTask.dirName
+	}
+
+	into p.name
+}
+
+// Registratino with rootProject.createInstallationZip is ususally done in
+// "$rootProject.projectDir/gradle/distributableGhidraExtension.gradle", but
+// since we define a custom zipExtensions task (and can't overwrite it), we do
+// the registration here.
+rootProject.createInstallationZip {
+	from (this.project.zipExtensions) {
+		into  {
+			ZIP_DIR_PREFIX + "/Extensions/Ghidra"
+		}
+	}
+	doLast {
+		this.project.zipExtensions.outputs.each {
+			delete it
+		}
+	}
+}
+

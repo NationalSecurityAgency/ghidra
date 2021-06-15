@@ -1,24 +1,43 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
 apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
 apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
 apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javadoc.gradle"
 apply plugin: 'eclipse'
 
 eclipse.project.name = 'Framework Graph'
 
 dependencies {
-	compile project(':Docking')
+	api project(':Docking')
 	
 	// these are not used by the project, but indirectly by the jars listed below
-	compile "net.sf.jung:jung-api:2.1.1"        // used by jung-graph-impl
-	compile "net.sf.jung:jung-algorithms:2.1.1" // used by jung-visualization
+	api "net.sf.jung:jung-api:2.1.1"        // used by jung-graph-impl
+	api "net.sf.jung:jung-algorithms:2.1.1" // used by jung-visualization
 	
 	// this project uses these directly
-	compile "net.sf.jung:jung-graph-impl:2.1.1"
-	compile "net.sf.jung:jung-visualization:2.1.1"
+	api "net.sf.jung:jung-graph-impl:2.1.1"
+	api "net.sf.jung:jung-visualization:2.1.1"
 	
-	compile "org.jgrapht:jgrapht-core:1.4.0"
+	api "org.jgrapht:jgrapht-core:1.5.1"
+	
+	// not using jgrapht-io code that depends on antlr, so exclude antlr
+	api ("org.jgrapht:jgrapht-io:1.5.1") { exclude group: "org.antlr", module: "antlr4-runtime" }
 	
 	// These have abstract test classes and stubs needed by this module	
-	testCompile project(path: ':Docking', configuration: 'testArtifacts')
+	testImplementation project(path: ':Docking', configuration: 'testArtifacts')
 }

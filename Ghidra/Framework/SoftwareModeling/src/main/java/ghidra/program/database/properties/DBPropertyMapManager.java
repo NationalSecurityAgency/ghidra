@@ -68,8 +68,8 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 
 	static {
 
-		PROPERTIES_SCHEMA = new Schema(CURRENT_PROPERTIES_TABLE_VERSION, StringField.class, "Name",
-			new Class[] { ByteField.class, StringField.class, IntField.class },
+		PROPERTIES_SCHEMA = new Schema(CURRENT_PROPERTIES_TABLE_VERSION, StringField.INSTANCE,
+			"Name", new Field[] { ByteField.INSTANCE, StringField.INSTANCE, IntField.INSTANCE },
 			new String[] { "Type", "Object Class", "Version" });
 
 	}
@@ -144,7 +144,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			VersionException ve = null;
 			RecordIterator iter = propertiesDBAdapter.getRecords();
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				String name = rec.getKeyField().getString();
 				byte propertyType = rec.getByteValue(PROPERTY_TYPE_COL);
 				PropertyMap pm = null;

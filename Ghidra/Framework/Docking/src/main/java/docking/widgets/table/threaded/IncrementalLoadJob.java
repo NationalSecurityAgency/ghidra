@@ -15,7 +15,7 @@
  */
 package docking.widgets.table.threaded;
 
-import static org.apache.commons.lang3.exception.ExceptionUtils.hasCause;
+import static org.apache.commons.lang3.exception.ExceptionUtils.*;
 
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
@@ -48,11 +48,15 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 		this.threadedModel = threadedModel;
 		this.listener = listener;
 		this.updateManager = threadedModel.getUpdateManager();
-		this.incrementalAccumulator = new IncrementalUpdatingAccumulator();
 	}
 
 	@Override
 	public void run(TaskMonitor monitor) {
+
+		// Do not create this in the constructor.  Some jobs never get started and thus are never
+		// cancelled.  In that case, the accumulator's SwingUpdateManager never gets disposed.
+		this.incrementalAccumulator = new IncrementalUpdatingAccumulator();
+
 		notifyStarted(monitor);
 
 		try {

@@ -300,16 +300,22 @@ public class SimpleDiffUtility {
 			Program otherProgram) {
 		AddressSpace otherSpace =
 			otherProgram.getAddressFactory().getAddressSpace(addrSpace.getName());
-		if (otherSpace != null && otherSpace.getType() == addrSpace.getType() &&
-			otherSpace.getBaseSpaceID() == addrSpace.getBaseSpaceID()) {
-			if (otherSpace.isOverlaySpace()) {
-				long addrOffset = addrSpace.getMinAddress().getOffset();
-				long otherOffset = otherSpace.getMinAddress().getOffset();
-				if (addrOffset != otherOffset) {
-					return null; // Overlays didn't begin at same address.
+		if (otherSpace != null && otherSpace.getType() == addrSpace.getType()) {
+			int id = addrSpace.isOverlaySpace() ? ((OverlayAddressSpace) addrSpace).getBaseSpaceID()
+					: addrSpace.getSpaceID();
+			int otherid =
+				otherSpace.isOverlaySpace() ? ((OverlayAddressSpace) otherSpace).getBaseSpaceID()
+						: otherSpace.getSpaceID();
+			if (id == otherid) {
+				if (otherSpace.isOverlaySpace()) {
+					long addrOffset = addrSpace.getMinAddress().getOffset();
+					long otherOffset = otherSpace.getMinAddress().getOffset();
+					if (addrOffset != otherOffset) {
+						return null; // Overlays didn't begin at same address.
+					}
 				}
+				return otherSpace;
 			}
-			return otherSpace;
 		}
 		return null;
 	}

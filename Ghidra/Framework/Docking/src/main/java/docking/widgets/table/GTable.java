@@ -217,6 +217,10 @@ public class GTable extends JTable {
 	@Override
 	// overridden to install our SelectionManager
 	public void setModel(TableModel dataModel) {
+		// we are going to create a new selection model, save off the old selectionMode and
+		// restore it at the end.
+		int selectionMode = selectionModel.getSelectionMode();
+
 		if (selectionManager != null) {
 			selectionManager.dispose();
 		}
@@ -225,7 +229,16 @@ public class GTable extends JTable {
 
 		initializeRowHeight();
 
-		selectionManager = createSelectionManager(dataModel);
+		selectionManager = createSelectionManager();
+		selectionModel.setSelectionMode(selectionMode);
+	}
+
+	protected <T> SelectionManager createSelectionManager() {
+		RowObjectTableModel<Object> rowModel = getRowObjectTableModel();
+		if (rowModel != null) {
+			return new RowObjectSelectionManager<>(this, rowModel);
+		}
+		return null;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -233,9 +246,10 @@ public class GTable extends JTable {
 	// an arbitrary type T defined here.  So, T doesn't really exist and therefore the cast isn't
 	// really casting to anything.  The SelectionManager will take on the type of the given model.
 	// The T is just there on the SelectionManager to make its internal methods consistent.
-	protected <T> SelectionManager createSelectionManager(TableModel model) {
+	private <T> RowObjectTableModel<T> getRowObjectTableModel() {
+		TableModel model = getModel();
 		if (model instanceof RowObjectTableModel) {
-			return new RowObjectSelectionManager<>(this, (RowObjectTableModel<T>) model);
+			return (RowObjectTableModel<T>) model;
 		}
 
 		return null;
@@ -270,13 +284,15 @@ public class GTable extends JTable {
 	 * Call this when the table will no longer be used
 	 */
 	public void dispose() {
-		if (dataModel instanceof AbstractGTableModel) {
-			((AbstractGTableModel<?>) dataModel).dispose();
+		TableModel unwrappedeModel = getUnwrappedTableModel();
+		if (unwrappedeModel instanceof AbstractGTableModel) {
+			((AbstractGTableModel<?>) unwrappedeModel).dispose();
 		}
 
 		if (columnModel instanceof GTableColumnModel) {
 			((GTableColumnModel) columnModel).dispose();
 		}
+		columnRenderingDataMap.clear();
 	}
 
 	/**
@@ -479,6 +495,10 @@ public class GTable extends JTable {
 	private int calculatePreferredRowHeight() {
 		if (userDefinedRowHeight != 16) { // default size
 			return userDefinedRowHeight; // prefer user-defined settings
+		}
+
+		if (getColumnCount() == 0) {
+			return userDefinedRowHeight; // no columns yet defined
 		}
 
 		TableCellRenderer defaultRenderer = getDefaultRenderer(String.class);
@@ -994,14 +1014,26 @@ public class GTable extends JTable {
 	 */
 	@Override
 	public Object getValueAt(int row, int column) {
-		Object value = super.getValueAt(row, column);
-
 		if (!copying) {
-			return value;
+			return super.getValueAt(row, column);
 		}
 
+		Object value = getCellValue(row, column);
 		Object updated = maybeConvertValue(value);
 		return updated;
+	}
+
+	private Object getCellValue(int row, int viewColumn) {
+		RowObjectTableModel<Object> rowModel = getRowObjectTableModel();
+		if (rowModel == null) {
+			Object value = super.getValueAt(row, viewColumn);
+			return maybeConvertValue(value);
+		}
+
+		Object rowObject = rowModel.getRowObject(row);
+		int modelColumn = convertColumnIndexToModel(viewColumn);
+		String stringValue = TableUtils.getTableCellStringValue(rowModel, rowObject, modelColumn);
+		return maybeConvertValue(stringValue);
 	}
 
 	private Object maybeConvertValue(Object value) {
@@ -1201,8 +1233,7 @@ public class GTable extends JTable {
 		GTableToCSV.writeCSVUsingColunns(file, GTable.this, columnList);
 	}
 
-	public static void createSharedActions(Tool tool, ToolActions toolActions,
-			String owner) {
+	public static void createSharedActions(Tool tool, ToolActions toolActions, String owner) {
 
 		String actionMenuGroup = "zzzTableGroup";
 		tool.setMenuGroup(new String[] { "Copy" }, actionMenuGroup, "1");

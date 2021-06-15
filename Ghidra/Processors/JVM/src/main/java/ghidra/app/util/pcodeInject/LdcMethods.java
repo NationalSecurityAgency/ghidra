@@ -34,16 +34,16 @@ public class LdcMethods {
 	}
 
 	/**
-	 * Generates a String of pcode modeling an ldc, ldc_w, or ldc2_w bytecode ops, which refer to constants
+	 * Generates pcode modeling an ldc, ldc_w, or ldc2_w bytecode ops, which refer to constants
 	 * in the constant pool.  
-	 *  
+	 *
+	 * @param pCode is the pcode accumulator
 	 * @param constantPoolIndex - the index of item in the constant pool.
 	 * @param constantPool - the constant pool
-	 * @return - String of pcode.
 	 */
-	public static String getPcodeForLdc(int constantPoolIndex, AbstractConstantPoolInfoJava[] constantPool){
+	public static void getPcodeForLdc(PcodeOpEmitter pCode, int constantPoolIndex,
+			AbstractConstantPoolInfoJava[] constantPool) {
 		byte tag = constantPool[constantPoolIndex].getTag();
-		StringBuilder pCode = new StringBuilder();
 		switch (tag){
 		case ConstantPoolTagsJava.CONSTANT_Class: 
 		case ConstantPoolTagsJava.CONSTANT_Float:
@@ -51,18 +51,19 @@ public class LdcMethods {
 		case ConstantPoolTagsJava.CONSTANT_MethodHandle:
 		case ConstantPoolTagsJava.CONSTANT_MethodType:
 		case ConstantPoolTagsJava.CONSTANT_String:
-			PcodeTextEmitter.emitAssignVarnodeFromPcodeOpCall(pCode, VALUE, 4, ConstantPoolJava.CPOOL_OP, "0", Integer.toString(constantPoolIndex),ConstantPoolJava.CPOOL_LDC);
-			PcodeTextEmitter.emitPushCat1Value(pCode,VALUE);
+				pCode.emitAssignVarnodeFromPcodeOpCall(VALUE, 4, ConstantPoolJava.CPOOL_OP, "0",
+					Integer.toString(constantPoolIndex), ConstantPoolJava.CPOOL_LDC);
+				pCode.emitPushCat1Value(VALUE);
 			break;
 		case ConstantPoolTagsJava.CONSTANT_Double:
 		case ConstantPoolTagsJava.CONSTANT_Long:
-			PcodeTextEmitter.emitAssignVarnodeFromPcodeOpCall(pCode, VALUE, 8, ConstantPoolJava.CPOOL_OP, "0", Integer.toString(constantPoolIndex),ConstantPoolJava.CPOOL_LDC2_W);
-			PcodeTextEmitter.emitPushCat2Value(pCode,VALUE);
+				pCode.emitAssignVarnodeFromPcodeOpCall(VALUE, 8, ConstantPoolJava.CPOOL_OP, "0",
+					Integer.toString(constantPoolIndex), ConstantPoolJava.CPOOL_LDC2_W);
+				pCode.emitPushCat2Value(VALUE);
 			break;
 		default:
 			throw new IllegalArgumentException("Invalid load from constant pool: tag " + tag);
 
 		}
-		return pCode.toString();
 	}			
 }

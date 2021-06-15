@@ -32,10 +32,6 @@ import ghidra.program.model.listing.Variable;
 
 public class StackEditorCellEditTest extends AbstractStackEditorTest {
 
-	/**
-	 * Constructor for UnionEditorCellEditTest.
-	 * @param name the testcase name.
-	 */
 	public StackEditorCellEditTest() {
 		super(false);
 	}

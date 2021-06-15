@@ -15,7 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.DuplicateNameException;
@@ -24,8 +23,6 @@ import ghidra.util.exception.DuplicateNameException;
  * Base implementation for a generic data type.
  */
 public abstract class GenericDataType extends DataTypeImpl {
-
-	protected boolean packed = false;
 
 	protected GenericDataType(CategoryPath path, String name, DataTypeManager dataMgr) {
 		super(path, name, dataMgr);
@@ -73,8 +70,9 @@ public abstract class GenericDataType extends DataTypeImpl {
 	}
 
 	private void doSetCategoryPath(CategoryPath path) {
-		if (path == null)
+		if (path == null) {
 			path = CategoryPath.ROOT;
+		}
 		categoryPath = path;
 	}
 

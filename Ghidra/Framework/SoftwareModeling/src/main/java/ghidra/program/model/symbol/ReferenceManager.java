@@ -46,8 +46,8 @@ public interface ReferenceManager {
 	 * @param type reference type - how the location is being referenced.
 	 * @param source the source of this reference
 	 */
-	public Reference addStackReference(Address fromAddr, int opIndex, int stackOffset,
-			RefType type, SourceType source);
+	public Reference addStackReference(Address fromAddr, int opIndex, int stackOffset, RefType type,
+			SourceType source);
 
 	/**
 	 * Add a reference to a register. If a reference already
@@ -63,7 +63,9 @@ public interface ReferenceManager {
 			RefType type, SourceType source);
 
 	/**
-	 * Adds a memory reference.  
+	 * Adds a memory reference.  Only first the first memory reference placed on
+	 * an operand will be made primary by default.  All non-memory references 
+	 * will be removed from the specified operand.
 	 * @param fromAddr address of the codeunit where the reference occurs
 	 * @param toAddr address of the location being referenced.  
 	 * Memory, stack, and register addresses are all permitted.
@@ -76,7 +78,9 @@ public interface ReferenceManager {
 			SourceType source, int opIndex);
 
 	/**
-	 * Add an offset memory reference.
+	 * Add an offset memory reference.  Only first the first memory reference placed on
+	 * an operand will be made primary by default.  All non-memory references 
+	 * will be removed from the specified operand.
 	 * @param fromAddr address for the "from"
 	 * @param toAddr address of the "to" 
 	 * @param offset value added to a base address to get the toAddr
@@ -90,7 +94,9 @@ public interface ReferenceManager {
 	/**
 	 * Add a shifted memory reference; the "to" address is computed as the value
 	 * at the operand at opIndex shifted by some number of bits, specified in the 
-	 * shiftValue parameter.
+	 * shiftValue parameter.  Only first the first memory reference placed on
+	 * an operand will be made primary by default.  All non-memory references 
+	 * will be removed from the specified operand.
 	 * @param fromAddr address for the "from"
 	 * @param toAddr computed as the value of the operand at opIndex shifted
 	 * by the number of bits specified by shiftValue 
@@ -103,7 +109,9 @@ public interface ReferenceManager {
 			RefType type, SourceType source, int opIndex);
 
 	/**
-	 * Adds an external reference.
+	 * Adds an external reference.  If a reference already
+	 * exists for the fromAddr and opIndex, the existing reference is replaced
+	 * with the new reference.
 	 * @param fromAddr from address (source of the reference)
 	 * @param libraryName name of external program
 	 * @param extLabel label within the external program, may be null if extAddr is not null
@@ -119,7 +127,9 @@ public interface ReferenceManager {
 			throws InvalidInputException, DuplicateNameException;
 
 	/**
-	 * Adds an external reference.
+	 * Adds an external reference.  If a reference already
+	 * exists for the fromAddr and opIndex, the existing reference is replaced
+	 * with the new reference.
 	 * @param fromAddr from address (source of the reference)
 	 * @param extNamespace external namespace containing the named external label.
 	 * @param extLabel label within the external program, may be null if extAddr is not null
@@ -130,12 +140,14 @@ public interface ReferenceManager {
 	 * @throws InvalidInputException
 	 * @throws DuplicateNameException 
 	 */
-	public Reference addExternalReference(Address fromAddr, Namespace extNamespace,
-			String extLabel, Address extAddr, SourceType source, int opIndex, RefType type)
+	public Reference addExternalReference(Address fromAddr, Namespace extNamespace, String extLabel,
+			Address extAddr, SourceType source, int opIndex, RefType type)
 			throws InvalidInputException, DuplicateNameException;
 
 	/**
-	 * Adds an external reference.
+	 * Adds an external reference.  If a reference already
+	 * exists for the fromAddr and opIndex, the existing reference is replaced
+	 * with the new reference.
 	 * @param fromAddr from address (source of the reference)
 	 * @param opIndex operand index
 	 * @param location external location

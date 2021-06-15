@@ -42,7 +42,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	private static final int MAX_HEADERS_TO_CHECK_FOR_IMAGEBASE = 20;
 
 	private static final int PAD_LENGTH = 7;
-	
+
 	private HashMap<Integer, ElfProgramHeaderType> programHeaderTypeMap;
 	private HashMap<Integer, ElfSectionHeaderType> sectionHeaderTypeMap;
 	private HashMap<Integer, ElfDynamicType> dynamicTypeMap;
@@ -353,12 +353,30 @@ public class ElfHeader implements StructConverter, Writeable {
 		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_RELA,
 			ElfDynamicType.DT_RELAENT, ElfDynamicType.DT_RELASZ, true);
 
+		if (dynamicTable != null && dynamicTable.containsDynamicValue(ElfDynamicType.DT_PLTREL)) {
+			try {
+				boolean isRela = (dynamicTable
+						.getDynamicValue(ElfDynamicType.DT_PLTREL) == ElfDynamicType.DT_RELA.value);
+				parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_JMPREL, null,
+					ElfDynamicType.DT_PLTRELSZ, isRela);
+			}
+			catch (NotFoundException e) {
+				// ignore - skip (required dynamic table value is missing)
+			}
+		}
+
 		// Android versions
 		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_ANDROID_REL, null,
 			ElfDynamicType.DT_ANDROID_RELSZ, false);
 
 		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_ANDROID_RELA, null,
 			ElfDynamicType.DT_ANDROID_RELASZ, true);
+
+		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_RELR,
+			ElfDynamicType.DT_RELRENT, ElfDynamicType.DT_RELRSZ, false);
+
+		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_ANDROID_RELR,
+			ElfDynamicType.DT_ANDROID_RELRENT, ElfDynamicType.DT_ANDROID_RELRSZ, false);
 
 		parseJMPRelocTable(relocationTableList);
 
@@ -378,8 +396,10 @@ public class ElfHeader implements StructConverter, Writeable {
 			int sectionHeaderType = section.getType();
 			if (sectionHeaderType == ElfSectionHeaderConstants.SHT_REL ||
 				sectionHeaderType == ElfSectionHeaderConstants.SHT_RELA ||
+				sectionHeaderType == ElfSectionHeaderConstants.SHT_RELR ||
 				sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_REL ||
-				sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA) {
+				sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA ||
+				sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELR) {
 
 				for (ElfRelocationTable relocTable : relocationTableList) {
 					if (relocTable.getFileOffset() == section.getOffset()) {
@@ -427,6 +447,10 @@ public class ElfHeader implements StructConverter, Writeable {
 				if (sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_REL ||
 					sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA) {
 					format = TableFormat.ANDROID;
+				}
+				else if (sectionHeaderType == ElfSectionHeaderConstants.SHT_RELR ||
+					sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELR) {
+					format = TableFormat.RELR;
 				}
 
 				ElfRelocationTable relocTable = ElfRelocationTable.createElfRelocationTable(reader,
@@ -514,6 +538,10 @@ public class ElfHeader implements StructConverter, Writeable {
 			if (relocTableAddrType == ElfDynamicType.DT_ANDROID_REL ||
 				relocTableAddrType == ElfDynamicType.DT_ANDROID_RELA) {
 				format = TableFormat.ANDROID;
+			}
+			else if (relocTableAddrType == ElfDynamicType.DT_RELR ||
+				relocTableAddrType == ElfDynamicType.DT_ANDROID_RELR) {
+				format = TableFormat.RELR;
 			}
 
 			ElfRelocationTable relocTable = ElfRelocationTable.createElfRelocationTable(reader,
@@ -718,8 +746,8 @@ public class ElfHeader implements StructConverter, Writeable {
 						" linked to string table section " +
 						stringTableSectionHeader.getNameAsString());
 
-				boolean isDyanmic = ElfSectionHeaderConstants.dot_dynsym.equals(
-					symbolTableSectionHeader.getNameAsString());
+				boolean isDyanmic = ElfSectionHeaderConstants.dot_dynsym
+						.equals(symbolTableSectionHeader.getNameAsString());
 
 				ElfSymbolTable symbolTable = ElfSymbolTable.createElfSymbolTable(reader, this,
 					symbolTableSectionHeader, symbolTableSectionHeader.getOffset(),
@@ -939,6 +967,16 @@ public class ElfHeader implements StructConverter, Writeable {
 		return e_ident_class == ElfConstants.ELF_CLASS_64;
 	}
 
+	private long getMinBase(long addr, long minBase) {
+		if (is32Bit()) {
+			addr &= Conv.INT_MASK;
+		}
+		if (Long.compareUnsigned(addr, minBase) < 0) {
+			minBase = addr;
+		}
+		return minBase;
+	}
+
 	/**
 	 * Inspect the Elf image and determine the default image base prior 
 	 * to the {@link #parse()} method being invoked (i.e., only the main Elf
@@ -953,10 +991,9 @@ public class ElfHeader implements StructConverter, Writeable {
 		// FIXME! This needs to be consistent with the getImageBase() method
 		// which currently considers prelink. 
 
-		int n = Math.min(e_phnum, MAX_HEADERS_TO_CHECK_FOR_IMAGEBASE);
-
 		long minBase = -1;
 
+		int n = Math.min(e_phnum, MAX_HEADERS_TO_CHECK_FOR_IMAGEBASE);
 		for (int i = 0; i < n; ++i) {
 			long index = e_phoff + (i * e_phentsize);
 			reader.setPointerIndex(index);
@@ -964,14 +1001,7 @@ public class ElfHeader implements StructConverter, Writeable {
 				int headerType = reader.peekNextInt();
 				if (headerType == ElfProgramHeaderConstants.PT_LOAD) {
 					ElfProgramHeader header = ElfProgramHeader.createElfProgramHeader(reader, this);
-					long addr = header.getVirtualAddress();
-					// TODO: not sure why we need to mask value
-					if (is32Bit()) {
-						addr &= Conv.INT_MASK;
-					}
-					if (Long.compareUnsigned(addr, minBase) < 0) {
-						minBase = addr;
-					}
+					minBase = getMinBase(header.getVirtualAddress(), minBase);
 				}
 			}
 			catch (IOException e) {
@@ -1005,15 +1035,9 @@ public class ElfHeader implements StructConverter, Writeable {
 			int n = Math.min(programHeaders.length, MAX_HEADERS_TO_CHECK_FOR_IMAGEBASE);
 			long minBase = -1;
 			for (int i = 0; i < n; i++) {
+				ElfProgramHeader header = programHeaders[i];
 				if (programHeaders[i].getType() == ElfProgramHeaderConstants.PT_LOAD) {
-					long addr = programHeaders[i].getVirtualAddress();
-					// TODO: not sure why we need to mask value
-					if (is32Bit()) {
-						addr &= Conv.INT_MASK;
-					}
-					if (Long.compareUnsigned(addr, minBase) < 0) {
-						minBase = addr;
-					}
+					minBase = getMinBase(header.getVirtualAddress(), minBase);
 				}
 			}
 			elfImageBase = (minBase == -1 ? 0 : minBase);
@@ -1169,7 +1193,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	public short e_machine() {
 		return e_machine;
 	}
-	
+
 	/**
 	 * This member identifies the target operating system and ABI.
 	 * @return the target operating system and ABI
@@ -1177,7 +1201,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	public byte e_ident_osabi() {
 		return e_ident_osabi;
 	}
-	
+
 	/**
 	 * This member identifies the target ABI version.
 	 * @return the target ABI version

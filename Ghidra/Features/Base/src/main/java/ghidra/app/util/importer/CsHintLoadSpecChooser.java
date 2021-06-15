@@ -49,8 +49,9 @@ public class CsHintLoadSpecChooser implements LoadSpecChooser {
 		return loaderMap.values()
 				.stream()
 				.flatMap(loadSpec -> loadSpec.stream())
-				.filter(loadSpec -> loadSpec.getLanguageCompilerSpec().compilerSpecID
-						.equals(compilerSpecID))
+				.filter(
+					loadSpec -> loadSpec != null && loadSpec.getLanguageCompilerSpec() != null &&
+						loadSpec.getLanguageCompilerSpec().compilerSpecID.equals(compilerSpecID))
 				.findFirst()
 				.orElse(null);
 	}

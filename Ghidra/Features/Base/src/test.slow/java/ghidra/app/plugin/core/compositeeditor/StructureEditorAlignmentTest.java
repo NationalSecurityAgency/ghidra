@@ -23,7 +23,6 @@ import javax.swing.JTextField;
 import org.junit.Test;
 
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.Composite.AlignmentType;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Library;
 import ghidra.program.model.symbol.ExternalLocation;
@@ -32,7 +31,7 @@ import ghidra.program.model.symbol.SourceType;
 public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 
 	@Test
-	public void testUnalignedStructure() {
+	public void testNonPackedStructure() {
 		init(emptyStructure, pgmRootCat, false);
 
 		assertTrue(structureModel.hasChanges());// initial unsaved empty structure
@@ -44,10 +43,8 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 			structureModel.getOriginalCategoryPath().getPath());
 		assertEquals(0, structureModel.getNumComponents());// no components
 		assertEquals(1, structureModel.getRowCount());// blank row
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertLength(0);
 		assertActualAlignment(1);
 		assertEquals(0, structureModel.getNumSelectedComponentRows());
@@ -102,7 +99,9 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		assertLength(10);
 		assertActualAlignment(1);
 
-		pressButtonByName(getPanel(), "Internally Aligned");
+		pressButtonByName(getPanel(), "Packing Enablement"); // toggle -> enable packing
+		assertIsPackingEnabled(true);
+		assertDefaultPacked();
 
 		assertEquals(3, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
@@ -115,7 +114,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 
 	@Test
 	public void testEnablementDefaultAlignedStructure() throws Exception {
-		emptyStructure.setInternallyAligned(true);
+		emptyStructure.setPackingEnabled(true);
 		init(emptyStructure, pgmRootCat, false);
 
 		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
@@ -159,8 +158,12 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 
 		waitForSwing();
 
-		pressButtonByName(getPanel(), "Internally Aligned");
-		pressButtonByName(getPanel(), "Machine Minimum Alignment");
+		pressButtonByName(getPanel(), "Packing Enablement"); // toggle -> enable packing
+		assertIsPackingEnabled(true);
+		assertDefaultPacked();
+
+		pressButtonByName(getPanel(), "Machine Alignment");
+		assertIsMachineAligned();
 
 		assertEquals(3, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
@@ -184,19 +187,24 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 
 		waitForSwing();
 
-		pressButtonByName(editorPanel, "Internally Aligned");
+		pressButtonByName(getPanel(), "Packing Enablement"); // toggle -> enable packing
+		assertIsPackingEnabled(true);
+		assertDefaultPacked();
+
 		JTextField minAlignField =
-			(JTextField) getInstanceField("minAlignValueTextField", editorPanel);
+			(JTextField) getInstanceField("explicitAlignTextField", editorPanel);
 		assertNotNull(minAlignField);
-		JRadioButton byValueMinAlignButton =
-			(JRadioButton) getInstanceField("byValueMinAlignButton", editorPanel);
-		assertNotNull(byValueMinAlignButton);
-		pressButton(byValueMinAlignButton);
-		assertEquals("4", minAlignField.getText());
+		JRadioButton explicitAlignButton =
+			(JRadioButton) getInstanceField("explicitAlignButton", editorPanel);
+		assertNotNull(explicitAlignButton);
+		pressButton(explicitAlignButton);
+		assertEquals("8", minAlignField.getText()); // toy.cspec machine alignment is default value
 
 		assertEquals(false, structureModel.viewComposite.isDefaultAligned());
 		assertEquals(false, structureModel.viewComposite.isMachineAligned());
-		assertEquals(4, structureModel.getMinimumAlignment());
+		assertEquals(8, structureModel.getExplicitMinimumAlignment());
+
+		assertActualAlignment(8);
 
 		assertEquals(3, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
@@ -204,7 +212,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		checkRow(1, 4, 4, "float", new FloatDataType(), "", "");
 		checkRow(2, 8, 5, "char[5]", arrayDt, "", "");
 		assertLength(16);
-		assertActualAlignment(4);
+		assertActualAlignment(8);
 	}
 
 	@Test
@@ -232,10 +240,10 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		checkByValueAlignedStructure(16, 16, 16);
 	}
 
-	public void checkByValueAlignedStructure(int value, int alignment, int length)
+	public void checkByValueAlignedStructure(int minAlignment, int alignment, int length)
 			throws Exception {
-		emptyStructure.setInternallyAligned(true);
-		emptyStructure.setMinimumAlignment(value);
+		emptyStructure.setPackingEnabled(true);
+		emptyStructure.setExplicitMinimumAlignment(minAlignment);
 
 		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
 		emptyStructure.add(new ByteDataType());
@@ -245,19 +253,20 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		init(emptyStructure, pgmRootCat, false);
 		CompEditorPanel editorPanel = (CompEditorPanel) getPanel();
 
-		JRadioButton byValueMinAlignButton =
-			(JRadioButton) getInstanceField("byValueMinAlignButton", editorPanel);
-		assertNotNull(byValueMinAlignButton);
-		assertEquals(true, byValueMinAlignButton.isSelected());
+		JRadioButton explicitAlignButton =
+			(JRadioButton) getInstanceField("explicitAlignButton", editorPanel);
+		assertNotNull(explicitAlignButton);
+		assertEquals(true, explicitAlignButton.isSelected());
 
 		JTextField minAlignField =
-			(JTextField) getInstanceField("minAlignValueTextField", editorPanel);
+			(JTextField) getInstanceField("explicitAlignTextField", editorPanel);
 		assertNotNull(minAlignField);
-		assertEquals("" + value, minAlignField.getText());
+		assertEquals("" + minAlignment, minAlignField.getText());
 
 		assertEquals(false, structureModel.viewComposite.isDefaultAligned());
 		assertEquals(false, structureModel.viewComposite.isMachineAligned());
-		assertEquals(value, structureModel.getMinimumAlignment());
+
+		assertExplicitAlignment(minAlignment);
 
 		assertEquals(3, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
@@ -270,9 +279,9 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 
 	@Test
 	public void testDefaultAlignedPacked1Structure() throws Exception {
-		int value = 1;
-		emptyStructure.setInternallyAligned(true);
-		emptyStructure.setPackingValue(value);
+		int pack = 1;
+		emptyStructure.setPackingEnabled(true);
+		emptyStructure.pack(pack);
 
 		init(emptyStructure, pgmRootCat, false);
 		CompEditorPanel editorPanel = (CompEditorPanel) getPanel();
@@ -283,17 +292,18 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		addDataType(arrayDt);
 
 		JRadioButton byValuePackingButton =
-			(JRadioButton) findComponentByName(editorPanel, "By Value Packing");
+			(JRadioButton) findComponentByName(editorPanel, "Explicit Packing");
 		assertNotNull(byValuePackingButton);
 		JTextField packingValueField =
 			(JTextField) findComponentByName(editorPanel, "Packing Value");
 		assertNotNull(packingValueField);
 		assertEquals(true, byValuePackingButton.isSelected());
-		assertEquals("" + value, packingValueField.getText());
+		assertEquals(Integer.toString(pack), packingValueField.getText());
 
 		assertEquals(true, structureModel.viewComposite.isDefaultAligned());
 		assertEquals(false, structureModel.viewComposite.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, structureModel.getMinimumAlignment());
+
+		assertIsDefaultAligned();
 
 		assertEquals(3, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
@@ -306,7 +316,6 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 
 	@Test
 	public void testAlignedEditToFunctionDefinitionDataType() throws Exception {
-		int value = 1;
 
 		startTransaction("addExternal");
 		ExternalLocation extLoc = program.getExternalManager().addExtFunction(Library.UNKNOWN,
@@ -321,8 +330,8 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		boolean commit = false;
 		txId = program.startTransaction("Modify Program");
 		try {
-			simpleStructure.setInternallyAligned(true);
-			simpleStructure.setPackingValue(value);
+			simpleStructure.setPackingEnabled(true);
+			simpleStructure.pack(1);
 
 			programDTM = program.getListing().getDataTypeManager();
 			functionDefinition =
@@ -358,7 +367,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 	}
 
 	@Test
-	public void testSelectionOnGoFromUnalignedToAlignedStructure() throws Exception {
+	public void testSelectionOnGoFromNonPackedToDefaultPackedStructure() throws Exception {
 		init(emptyStructure, pgmRootCat, false);
 
 		CompEditorPanel editorPanel = (CompEditorPanel) getPanel();
@@ -372,10 +381,8 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 			structureModel.getOriginalCategoryPath().getPath());
 		assertEquals(0, structureModel.getNumComponents());// no components
 		assertEquals(1, structureModel.getRowCount());// blank row
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertLength(0);
 		assertActualAlignment(1);
 		assertEquals(0, structureModel.getNumSelectedComponentRows());
@@ -388,7 +395,9 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 
 		checkSelection(new int[] { 3 });
 
-		pressButtonByName(editorPanel, "Internally Aligned");
+		pressButtonByName(getPanel(), "Packing Enablement"); // toggle -> enable packing
+		assertIsPackingEnabled(true);
+		assertDefaultPacked();
 
 		assertEquals(0, structureModel.getNumComponents());
 		assertEquals(1, structureModel.getRowCount());
@@ -397,368 +406,383 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		checkSelection(new int[] { 0 });
 	}
 
-//	public void testTurnOffAlignmentInStructure() throws Exception {
-//		emptyStructure.setInternallyAligned(true);
-//		emptyStructure.setMinimumAlignment(8);
-//		
-//		DataType arrayDt = new ArrayDataType(new AsciiDataType(), 5, 1);
-//		emptyStructure.add(new ByteDataType());
-//		emptyStructure.add(new FloatDataType());
-//		emptyStructure.add(arrayDt);
-//		
-//		init(emptyStructure, pgmRootCat, false);
-//		
-//		JRadioButton byValueButton = (JRadioButton)findComponentByName(getPanel(), "By Value Minimum Alignment");
-//		assertEquals(true, byValueButton.isSelected());
-//		JTextField minAlignField = (JTextField)findComponentByName(getPanel(), "Minimum Alignment Value");
-//		assertEquals("8", minAlignField.getText());
-//		
-//		assertEquals(false, structureModel.viewComposite.isDefaultAligned());
-//		assertEquals(false, structureModel.viewComposite.isMachineAligned());
-//		assertEquals(8, structureModel.getMinimumAlignment());
-//		
-//		assertEquals(3, structureModel.getNumComponents());
-//		assertEquals(4, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 5, "char[5]", arrayDt, "", "");
-//		assertLength(8);
-//		assertActualAlignment(8);
-//		assertEquals(true, structureModel.isAligned());
-//		
-//		pressButtonByName(getPanel(), "Internally Aligned");
-//
-//		assertEquals(false, structureModel.isAligned());
-//		assertEquals(true, structureModel.viewComposite.isDefaultAligned());
-//		assertEquals(false, structureModel.viewComposite.isMachineAligned());
-//		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, structureModel.getMinimumAlignment());
-//		
-//		assertEquals(3, structureModel.getNumComponents());
-//		assertEquals(4, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 5, "char[5]", arrayDt, "", "");
-//		assertLength(5);
-//		assertActualAlignment(1);
-//	}
-//	
-//	public void testInsertUnaligned1() throws Exception {
-//		emptyStructure.setInternallyAligned(false);
-//		
-//		DataType arrayDt = new ArrayDataType(new AsciiDataType(), 5, 1);
-//		emptyStructure.add(new ByteDataType());
-//		emptyStructure.add(new FloatDataType());
-//		emptyStructure.add(arrayDt);
-//		
-//		init(emptyStructure, pgmRootCat, false);
-//		
-//		assertEquals(3, structureModel.getNumComponents());
-//		assertEquals(4, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 5, "char[5]", arrayDt, "", "");
-//		assertLength(5);
-//		assertActualAlignment(1);
-//		
-//		DataType asciiDt = model.getOriginalDataTypeManager().findDataType("/char");
-//		assertNotNull(asciiDt);
-//		insertAtPoint(asciiDt,0,0);
-//		
-//		assertEquals(4, structureModel.getNumComponents());
-//		assertEquals(5, structureModel.getRowCount());
-//		checkRow(0, 1, "ch", asciiDt, "", "");
-//		checkRow(1, 1, "db", new ByteDataType(), "", "");
-//		checkRow(2, 4, "float", new FloatDataType(), "", "");
-//		checkRow(3, 5, "char[5]", arrayDt, "", "");
-//		assertLength(5);
-//		assertActualAlignment(1);
-//	}
-//	
-//	public void testInsertUnaligned2() throws Exception {
-//		emptyStructure.setInternallyAligned(false);
-//		
-//		DataType arrayDt = new ArrayDataType(new AsciiDataType(), 5, 1);
-//		emptyStructure.add(new ByteDataType());
-//		emptyStructure.add(new FloatDataType());
-//		emptyStructure.add(arrayDt);
-//		
-//		init(emptyStructure, pgmRootCat, false);
-//		
-//		assertEquals(3, structureModel.getNumComponents());
-//		assertEquals(4, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 5, "char[5]", arrayDt, "", "");
-//		assertLength(5);
-//		assertActualAlignment(1);
-//		
-//		DataType asciiDt = model.getOriginalDataTypeManager().findDataType("/char");
-//		assertNotNull(asciiDt);
-//		insertAtPoint(asciiDt,2,3);
-//		
-//		assertEquals(4, structureModel.getNumComponents());
-//		assertEquals(5, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 1, "ch", asciiDt, "", "");
-//		checkRow(3, 5, "char[5]", arrayDt, "", "");
-//		assertLength(5);
-//		assertActualAlignment(1);
-//	}
-//	
-//	public void testInsertUnaligned3() throws Exception {
-//		emptyStructure.setInternallyAligned(false);
-//		
-//		DataType arrayDt = new ArrayDataType(new AsciiDataType(), 5, 1);
-//		emptyStructure.add(new ByteDataType());
-//		emptyStructure.add(new FloatDataType());
-//		emptyStructure.add(arrayDt);
-//		
-//		init(emptyStructure, pgmRootCat, false);
-//		
-//		assertEquals(3, structureModel.getNumComponents());
-//		assertEquals(4, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 5, "char[5]", arrayDt, "", "");
-//		assertLength(5);
-//		assertActualAlignment(1);
-//		
-//		DataType doubleDt = model.getOriginalDataTypeManager().findDataType("/double");
-//		assertNotNull(doubleDt);
-//		insertAtPoint(doubleDt,3,3);
-//		
-//		assertEquals(4, structureModel.getNumComponents());
-//		assertEquals(5, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 5, "char[5]", arrayDt, "", "");
-//		checkRow(3, 8, "double", doubleDt, "", "");
-//		assertLength(8);
-//		assertActualAlignment(1);
-//	}
-//	
-//	public void testReplaceUnaligned1() throws Exception {
-//		emptyStructure.setInternallyAligned(false);
-//		
-//		DataType arrayDt = new ArrayDataType(new AsciiDataType(), 5, 1);
-//		emptyStructure.add(new ByteDataType());
-//		emptyStructure.add(new FloatDataType());
-//		emptyStructure.add(arrayDt);
-//		
-//		init(emptyStructure, pgmRootCat, false);
-//		
-//		assertEquals(3, structureModel.getNumComponents());
-//		assertEquals(4, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 5, "char[5]", arrayDt, "", "");
-//		assertLength(5);
-//		assertActualAlignment(1);
-//		
-//		DataType asciiDt = model.getOriginalDataTypeManager().findDataType("/char");
-//		assertNotNull(asciiDt);
-//		addAtPoint(asciiDt,2,3);
-//		
-//		assertEquals(3, structureModel.getNumComponents());
-//		assertEquals(4, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 1, "ch", asciiDt, "", "");
-//		assertLength(4);
-//		assertActualAlignment(1);
-//	}
-//	
-//	public void testReplaceUnaligned2() throws Exception {
-//		emptyStructure.setInternallyAligned(false);
-//		
-//		DataType arrayDt = new ArrayDataType(new AsciiDataType(), 5, 1);
-//		emptyStructure.add(new ByteDataType());
-//		emptyStructure.add(new FloatDataType());
-//		emptyStructure.add(arrayDt);
-//		
-//		init(emptyStructure, pgmRootCat, false);
-//		
-//		assertEquals(3, structureModel.getNumComponents());
-//		assertEquals(4, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 5, "char[5]", arrayDt, "", "");
-//		assertLength(5);
-//		assertActualAlignment(1);
-//		
-//		DataType doubleDt = model.getOriginalDataTypeManager().findDataType("/double");
-//		assertNotNull(doubleDt);
-//		addAtPoint(doubleDt,3,3);
-//		
-//		assertEquals(4, structureModel.getNumComponents());
-//		assertEquals(5, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 5, "char[5]", arrayDt, "", "");
-//		checkRow(3, 8, "double", doubleDt, "", "");
-//		assertLength(8);
-//		assertActualAlignment(1);
-//	}
-//	
-//	public void testInsertAligned1() throws Exception {
-//		emptyStructure.setInternallyAligned(true);
-//		
-//		DataType arrayDt = new ArrayDataType(new AsciiDataType(), 5, 1);
-//		emptyStructure.add(new ByteDataType());
-//		emptyStructure.add(new FloatDataType());
-//		emptyStructure.add(arrayDt);
-//		
-//		init(emptyStructure, pgmRootCat, false);
-//		
-//		assertEquals(3, structureModel.getNumComponents());
-//		assertEquals(4, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 5, "char[5]", arrayDt, "", "");
-//		assertLength(8);
-//		assertActualAlignment(4);
-//		
-//		DataType asciiDt = model.getOriginalDataTypeManager().findDataType("/char");
-//		assertNotNull(asciiDt);
-//		insertAtPoint(asciiDt,0,0);
-//		
-//		assertEquals(4, structureModel.getNumComponents());
-//		assertEquals(5, structureModel.getRowCount());
-//		checkRow(0, 1, "ch", asciiDt, "", "");
-//		checkRow(1, 1, "db", new ByteDataType(), "", "");
-//		checkRow(2, 4, "float", new FloatDataType(), "", "");
-//		checkRow(3, 5, "char[5]", arrayDt, "", "");
-//		assertLength(8);
-//		assertActualAlignment(4);
-//	}
-//	
-//	public void testInsertAligned2() throws Exception {
-//		emptyStructure.setInternallyAligned(true);
-//		
-//		DataType arrayDt = new ArrayDataType(new AsciiDataType(), 5, 1);
-//		emptyStructure.add(new ByteDataType());
-//		emptyStructure.add(new FloatDataType());
-//		emptyStructure.add(arrayDt);
-//		
-//		init(emptyStructure, pgmRootCat, false);
-//		
-//		assertEquals(3, structureModel.getNumComponents());
-//		assertEquals(4, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 5, "char[5]", arrayDt, "", "");
-//		assertLength(8);
-//		assertActualAlignment(4);
-//		
-//		DataType asciiDt = model.getOriginalDataTypeManager().findDataType("/char");
-//		assertNotNull(asciiDt);
-//		insertAtPoint(asciiDt,2,3);
-//		
-//		assertEquals(4, structureModel.getNumComponents());
-//		assertEquals(5, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 1, "ch", asciiDt, "", "");
-//		checkRow(3, 5, "char[5]", arrayDt, "", "");
-//		assertLength(8);
-//		assertActualAlignment(4);
-//	}
-//	
-//	public void testInsertAligned3() throws Exception {
-//		emptyStructure.setInternallyAligned(true);
-//		
-//		DataType arrayDt = new ArrayDataType(new AsciiDataType(), 5, 1);
-//		emptyStructure.add(new ByteDataType());
-//		emptyStructure.add(new FloatDataType());
-//		emptyStructure.add(arrayDt);
-//		
-//		init(emptyStructure, pgmRootCat, false);
-//		
-//		assertEquals(3, structureModel.getNumComponents());
-//		assertEquals(4, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 5, "char[5]", arrayDt, "", "");
-//		assertLength(8);
-//		assertActualAlignment(4);
-//		
-//		DataType doubleDt = model.getOriginalDataTypeManager().findDataType("/double");
-//		assertNotNull(doubleDt);
-//		insertAtPoint(doubleDt,3,3);
-//		
-//		assertEquals(4, structureModel.getNumComponents());
-//		assertEquals(5, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 5, "char[5]", arrayDt, "", "");
-//		checkRow(3, 8, "double", doubleDt, "", "");
-//		assertLength(8);
-//		assertActualAlignment(8);
-//	}
-//	
-//	public void testReplaceAligned1() throws Exception {
-//		emptyStructure.setInternallyAligned(true);
-//		
-//		DataType arrayDt = new ArrayDataType(new AsciiDataType(), 5, 1);
-//		emptyStructure.add(new ByteDataType());
-//		emptyStructure.add(new FloatDataType());
-//		emptyStructure.add(arrayDt);
-//		
-//		init(emptyStructure, pgmRootCat, false);
-//		
-//		assertEquals(3, structureModel.getNumComponents());
-//		assertEquals(4, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 5, "char[5]", arrayDt, "", "");
-//		assertLength(8);
-//		assertActualAlignment(4);
-//		
-//		DataType asciiDt = model.getOriginalDataTypeManager().findDataType("/char");
-//		assertNotNull(asciiDt);
-//		addAtPoint(asciiDt,2,3);
-//		
-//		assertEquals(3, structureModel.getNumComponents());
-//		assertEquals(4, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 1, "ch", asciiDt, "", "");
-//		assertLength(4);
-//		assertActualAlignment(4);
-//	}
-//	
-//	public void testReplaceAligned2() throws Exception {
-//		emptyStructure.setInternallyAligned(true);
-//		
-//		DataType arrayDt = new ArrayDataType(new AsciiDataType(), 5, 1);
-//		emptyStructure.add(new ByteDataType());
-//		emptyStructure.add(new FloatDataType());
-//		emptyStructure.add(arrayDt);
-//		
-//		init(emptyStructure, pgmRootCat, false);
-//		
-//		assertEquals(3, structureModel.getNumComponents());
-//		assertEquals(4, structureModel.getRowCount());
-//		checkRow(0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 5, "char[5]", arrayDt, "", "");
-//		assertLength(8);
-//		assertActualAlignment(4);
-//		
-//		DataType doubleDt = model.getOriginalDataTypeManager().findDataType("/double");
-//		assertNotNull(doubleDt);
-//		addAtPoint(doubleDt,3,3);
-//		
-//		assertEquals(4, structureModel.getNumComponents());
-//		assertEquals(5, structureModel.getRowCount());
-//		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
-//		checkRow(1, 1, 4, "float", new FloatDataType(), "", "");
-//		checkRow(2, 5, 5, "char[5]", arrayDt, "", "");
-//		checkRow(3, 10, 8, "double", doubleDt, "", "");
-//		assertLength(18);
-//		assertActualAlignment(8);
-//	}
+	@Test
+	public void testTurnOffAlignmentInStructure() throws Exception {
+		emptyStructure.setPackingEnabled(true);
+		emptyStructure.setExplicitMinimumAlignment(8);
+
+		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
+		emptyStructure.add(new ByteDataType());
+		emptyStructure.add(new FloatDataType());
+		emptyStructure.add(arrayDt);
+
+		init(emptyStructure, pgmRootCat, false);
+
+		CompEditorPanel editorPanel = (CompEditorPanel) getPanel();
+
+		JRadioButton byValueButton =
+			(JRadioButton) findComponentByName(getPanel(), "Explicit Alignment");
+		assertEquals(true, byValueButton.isSelected());
+		JTextField minAlignField =
+			(JTextField) findComponentByName(getPanel(), "Explicit Alignment Value");
+		assertEquals("8", minAlignField.getText());
+
+		assertEquals(false, structureModel.viewComposite.isDefaultAligned());
+		assertEquals(false, structureModel.viewComposite.isMachineAligned());
+		assertEquals(8, structureModel.getExplicitMinimumAlignment());
+
+		assertEquals(3, structureModel.getNumComponents());
+		assertEquals(4, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 4, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 8, 5, "char[5]", arrayDt, "", "");
+		assertLength(16);
+		assertActualAlignment(8);
+		assertEquals(true, structureModel.isPackingEnabled());
+
+		pressButtonByName(editorPanel, "Packing Enablement"); // toggle -> disable packing
+
+		assertEquals(false, structureModel.isPackingEnabled());
+		assertEquals(true, structureModel.viewComposite.isDefaultAligned());
+		assertEquals(false, structureModel.viewComposite.isMachineAligned());
+		assertEquals(false, structureModel.viewComposite.hasExplicitMinimumAlignment());
+
+		assertEquals(9, structureModel.getNumComponents());
+		assertEquals(10, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(4, 4, 4, "float", new FloatDataType(), "", "");
+		checkRow(5, 8, 5, "char[5]", arrayDt, "", "");
+		assertLength(16);
+		assertActualAlignment(1);
+	}
+
+	@Test
+	public void testInsertUnaligned1() throws Exception {
+		emptyStructure.setPackingEnabled(false);
+
+		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
+		emptyStructure.add(new ByteDataType());
+		emptyStructure.add(new FloatDataType());
+		emptyStructure.add(arrayDt);
+
+		init(emptyStructure, pgmRootCat, false);
+
+		assertEquals(3, structureModel.getNumComponents());
+		assertEquals(4, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 1, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 5, 5, "char[5]", arrayDt, "", "");
+		assertLength(10);
+		assertActualAlignment(1);
+
+		DataType asciiDt = model.getOriginalDataTypeManager().getDataType("/char");
+		assertNotNull(asciiDt);
+		insertAtPoint(asciiDt, 0, 0);
+
+		assertEquals(4, structureModel.getNumComponents());
+		assertEquals(5, structureModel.getRowCount());
+		checkRow(0, 0, 1, "char", asciiDt, "", "");
+		checkRow(1, 1, 1, "db", new ByteDataType(), "", "");
+		checkRow(2, 2, 4, "float", new FloatDataType(), "", "");
+		checkRow(3, 6, 5, "char[5]", arrayDt, "", "");
+		assertLength(11);
+		assertActualAlignment(1);
+	}
+
+	@Test
+	public void testInsertUnaligned2() throws Exception {
+		emptyStructure.setPackingEnabled(false);
+
+		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
+		emptyStructure.add(new ByteDataType());
+		emptyStructure.add(new FloatDataType());
+		emptyStructure.add(arrayDt);
+
+		init(emptyStructure, pgmRootCat, false);
+
+		assertEquals(3, structureModel.getNumComponents());
+		assertEquals(4, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 1, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 5, 5, "char[5]", arrayDt, "", "");
+		assertLength(10);
+		assertActualAlignment(1);
+
+		DataType asciiDt = model.getOriginalDataTypeManager().getDataType("/char");
+		assertNotNull(asciiDt);
+		insertAtPoint(asciiDt, 2, 3);
+
+		assertEquals(4, structureModel.getNumComponents());
+		assertEquals(5, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 1, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 5, 1, "char", asciiDt, "", "");
+		checkRow(3, 6, 5, "char[5]", arrayDt, "", "");
+		assertLength(11);
+		assertActualAlignment(1);
+	}
+
+	@Test
+	public void testInsertUnaligned3() throws Exception {
+		emptyStructure.setPackingEnabled(false);
+
+		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
+		emptyStructure.add(new ByteDataType());
+		emptyStructure.add(new FloatDataType());
+		emptyStructure.add(arrayDt);
+
+		init(emptyStructure, pgmRootCat, false);
+
+		assertEquals(3, structureModel.getNumComponents());
+		assertEquals(4, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 1, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 5, 5, "char[5]", arrayDt, "", "");
+		assertLength(10);
+		assertActualAlignment(1);
+
+		DataType doubleDt = model.getOriginalDataTypeManager().getDataType("/double");
+		assertNotNull(doubleDt);
+		insertAtPoint(doubleDt, 3, 3);
+
+		assertEquals(4, structureModel.getNumComponents());
+		assertEquals(5, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 1, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 5, 5, "char[5]", arrayDt, "", "");
+		checkRow(3, 10, 8, "double", doubleDt, "", "");
+		assertLength(18);
+		assertActualAlignment(1);
+	}
+
+	@Test
+	public void testReplaceUnaligned1() throws Exception {
+		emptyStructure.setPackingEnabled(false);
+
+		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
+		emptyStructure.add(new ByteDataType());
+		emptyStructure.add(new FloatDataType());
+		emptyStructure.add(arrayDt);
+
+		init(emptyStructure, pgmRootCat, false);
+
+		assertEquals(3, structureModel.getNumComponents());
+		assertEquals(4, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 1, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 5, 5, "char[5]", arrayDt, "", "");
+		assertLength(10);
+		assertActualAlignment(1);
+
+		DataType asciiDt = model.getOriginalDataTypeManager().getDataType("/char");
+		assertNotNull(asciiDt);
+		addAtPoint(asciiDt, 2, 3);
+
+		assertEquals(3, structureModel.getNumComponents());
+		assertEquals(4, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 1, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 5, 1, "char", asciiDt, "", "");
+		assertLength(6);
+		assertActualAlignment(1);
+	}
+
+	@Test
+	public void testReplaceUnaligned2() throws Exception {
+		emptyStructure.setPackingEnabled(false);
+
+		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
+		emptyStructure.add(new ByteDataType());
+		emptyStructure.add(new FloatDataType());
+		emptyStructure.add(arrayDt);
+
+		init(emptyStructure, pgmRootCat, false);
+
+		assertEquals(3, structureModel.getNumComponents());
+		assertEquals(4, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 1, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 5, 5, "char[5]", arrayDt, "", "");
+		assertLength(10);
+		assertActualAlignment(1);
+
+		DataType doubleDt = model.getOriginalDataTypeManager().getDataType("/double");
+		assertNotNull(doubleDt);
+		addAtPoint(doubleDt, 3, 3);
+
+		assertEquals(4, structureModel.getNumComponents());
+		assertEquals(5, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 1, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 5, 5, "char[5]", arrayDt, "", "");
+		checkRow(3, 10, 8, "double", doubleDt, "", "");
+		assertLength(18);
+		assertActualAlignment(1);
+	}
+
+	@Test
+	public void testInsertAligned1() throws Exception {
+		emptyStructure.setPackingEnabled(true);
+
+		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
+		emptyStructure.add(new ByteDataType());
+		emptyStructure.add(new FloatDataType());
+		emptyStructure.add(arrayDt);
+
+		init(emptyStructure, pgmRootCat, false);
+
+		assertEquals(3, structureModel.getNumComponents());
+		assertEquals(4, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 4, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 8, 5, "char[5]", arrayDt, "", "");
+		assertLength(16);
+		assertActualAlignment(4);
+
+		DataType asciiDt = model.getOriginalDataTypeManager().getDataType("/char");
+		assertNotNull(asciiDt);
+		insertAtPoint(asciiDt, 0, 0);
+
+		assertEquals(4, structureModel.getNumComponents());
+		assertEquals(5, structureModel.getRowCount());
+		checkRow(0, 0, 1, "char", asciiDt, "", "");
+		checkRow(1, 1, 1, "db", new ByteDataType(), "", "");
+		checkRow(2, 4, 4, "float", new FloatDataType(), "", "");
+		checkRow(3, 8, 5, "char[5]", arrayDt, "", "");
+		assertLength(16);
+		assertActualAlignment(4);
+	}
+
+	@Test
+	public void testInsertAligned2() throws Exception {
+		emptyStructure.setPackingEnabled(true);
+
+		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
+		emptyStructure.add(new ByteDataType());
+		emptyStructure.add(new FloatDataType());
+		emptyStructure.add(arrayDt);
+
+		init(emptyStructure, pgmRootCat, false);
+
+		assertEquals(3, structureModel.getNumComponents());
+		assertEquals(4, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 4, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 8, 5, "char[5]", arrayDt, "", "");
+		assertLength(16);
+		assertActualAlignment(4);
+
+		DataType asciiDt = model.getOriginalDataTypeManager().getDataType("/char");
+		assertNotNull(asciiDt);
+		insertAtPoint(asciiDt, 2, 3);
+
+		assertEquals(4, structureModel.getNumComponents());
+		assertEquals(5, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 4, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 8, 1, "char", asciiDt, "", "");
+		checkRow(3, 9, 5, "char[5]", arrayDt, "", "");
+		assertLength(16);
+		assertActualAlignment(4);
+	}
+
+	@Test
+	public void testInsertAligned3() throws Exception {
+		emptyStructure.setPackingEnabled(true);
+
+		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
+		emptyStructure.add(new ByteDataType());
+		emptyStructure.add(new FloatDataType());
+		emptyStructure.add(arrayDt);
+
+		init(emptyStructure, pgmRootCat, false);
+
+		assertEquals(3, structureModel.getNumComponents());
+		assertEquals(4, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 4, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 8, 5, "char[5]", arrayDt, "", "");
+		assertLength(16);
+		assertActualAlignment(4);
+
+		DataType doubleDt = model.getOriginalDataTypeManager().getDataType("/double");
+		assertNotNull(doubleDt);
+		insertAtPoint(doubleDt, 3, 3);
+
+		assertEquals(4, structureModel.getNumComponents());
+		assertEquals(5, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 4, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 8, 5, "char[5]", arrayDt, "", "");
+		checkRow(3, 16, 8, "double", doubleDt, "", ""); // alignment is 4
+		assertLength(24);
+		assertActualAlignment(4);
+	}
+
+	@Test
+	public void testReplaceAligned1() throws Exception {
+		emptyStructure.setPackingEnabled(true);
+
+		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
+		emptyStructure.add(new ByteDataType());
+		emptyStructure.add(new FloatDataType());
+		emptyStructure.add(arrayDt);
+
+		init(emptyStructure, pgmRootCat, false);
+
+		assertEquals(3, structureModel.getNumComponents());
+		assertEquals(4, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 4, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 8, 5, "char[5]", arrayDt, "", "");
+		assertLength(16);
+		assertActualAlignment(4);
+
+		DataType asciiDt = model.getOriginalDataTypeManager().getDataType("/char");
+		assertNotNull(asciiDt);
+		addAtPoint(asciiDt, 2, 3);
+
+		assertEquals(3, structureModel.getNumComponents());
+		assertEquals(4, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 4, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 8, 1, "char", asciiDt, "", "");
+		assertLength(12);
+		assertActualAlignment(4);
+	}
+
+	@Test
+	public void testReplaceAligned2() throws Exception {
+		emptyStructure.setPackingEnabled(true);
+
+		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
+		emptyStructure.add(new ByteDataType());
+		emptyStructure.add(new FloatDataType());
+		emptyStructure.add(arrayDt);
+
+		init(emptyStructure, pgmRootCat, false);
+
+		assertEquals(3, structureModel.getNumComponents());
+		assertEquals(4, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 4, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 8, 5, "char[5]", arrayDt, "", "");
+		assertLength(16);
+		assertActualAlignment(4);
+
+		DataType doubleDt = model.getOriginalDataTypeManager().getDataType("/double");
+		assertNotNull(doubleDt);
+		addAtPoint(doubleDt, 3, 3); // same as insert on last row
+
+		assertEquals(4, structureModel.getNumComponents());
+		assertEquals(5, structureModel.getRowCount());
+		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
+		checkRow(1, 4, 4, "float", new FloatDataType(), "", "");
+		checkRow(2, 8, 5, "char[5]", arrayDt, "", "");
+		checkRow(3, 16, 8, "double", doubleDt, "", "");
+		assertLength(24);
+		assertActualAlignment(4);
+	}
 
 	////////////////////////////
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,10 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.VersionException;
 
 /**
  *
@@ -57,51 +55,36 @@ class ArrayDBAdapterV0 extends ArrayDBAdapter {
 
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ArrayDBAdapter#createRecord(long, int)
-	 */
 	@Override
-	public Record createRecord(long dataTypeID, int numberOfElements, int length, long catID)
+	public DBRecord createRecord(long dataTypeID, int numberOfElements, int length, long catID)
 			throws IOException {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ArrayDBAdapter#getRecord(long)
-	 */
 	@Override
-	public Record getRecord(long arrayID) throws IOException {
+	public DBRecord getRecord(long arrayID) throws IOException {
 		return translateRecord(table.getRecord(arrayID));
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ArrayDBAdapter#getRecords()
-	 */
 	@Override
 	public RecordIterator getRecords() throws IOException {
 		return new TranslatedRecordIterator(table.iterator());
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ArrayDBAdapter#removeRecord(long)
-	 */
 	@Override
 	public boolean removeRecord(long dataID) throws IOException {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ArrayDBAdapter#updateRecord(ghidra.framework.store.db.Record)
-	 */
 	@Override
-	public void updateRecord(Record record) throws IOException {
+	public void updateRecord(DBRecord record) throws IOException {
 	}
 
-	private Record translateRecord(Record oldRec) {
+	private DBRecord translateRecord(DBRecord oldRec) {
 		if (oldRec == null) {
 			return null;
 		}
-		Record rec = ArrayDBAdapter.SCHEMA.createRecord(oldRec.getKey());
+		DBRecord rec = ArrayDBAdapter.SCHEMA.createRecord(oldRec.getKey());
 		rec.setLongValue(ArrayDBAdapter.ARRAY_DT_ID_COL, oldRec.getLongValue(V0_ARRAY_DT_ID_COL));
 		rec.setIntValue(ArrayDBAdapter.ARRAY_DIM_COL, oldRec.getIntValue(V0_ARRAY_DIM_COL));
 		rec.setIntValue(ArrayDBAdapter.ARRAY_LENGTH_COL, oldRec.getIntValue(V0_ARRAY_LENGTH_COL));
@@ -116,43 +99,42 @@ class ArrayDBAdapterV0 extends ArrayDBAdapter {
 			this.it = it;
 		}
 
+		@Override
 		public boolean delete() throws IOException {
 			throw new UnsupportedOperationException();
 		}
 
+		@Override
 		public boolean hasNext() throws IOException {
 			return it.hasNext();
 		}
 
+		@Override
 		public boolean hasPrevious() throws IOException {
 			return it.hasPrevious();
 		}
 
-		public Record next() throws IOException {
-			Record rec = it.next();
+		@Override
+		public DBRecord next() throws IOException {
+			DBRecord rec = it.next();
 			return translateRecord(rec);
 		}
 
-		public Record previous() throws IOException {
-			Record rec = it.previous();
+		@Override
+		public DBRecord previous() throws IOException {
+			DBRecord rec = it.previous();
 			return translateRecord(rec);
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ArrayDBAdapter#deleteTable(ghidra.framework.store.db.DBHandle)
-	 */
 	@Override
 	void deleteTable(DBHandle handle) throws IOException {
 		handle.deleteTable(ARRAY_TABLE_NAME);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.data.ArrayDBAdapter#getRecordIdsInCategory(long)
-	 */
 	@Override
-	long[] getRecordIdsInCategory(long categoryID) throws IOException {
-		return new long[0];
+	Field[] getRecordIdsInCategory(long categoryID) throws IOException {
+		return Field.EMPTY_ARRAY;
 	}
 
 }

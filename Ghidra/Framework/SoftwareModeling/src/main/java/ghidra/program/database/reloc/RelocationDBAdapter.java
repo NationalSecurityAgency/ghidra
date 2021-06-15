@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.program.database.reloc;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-
-import db.*;
 
 abstract class RelocationDBAdapter {
 
@@ -35,13 +33,10 @@ abstract class RelocationDBAdapter {
 
 	final static String TABLE_NAME = "Relocations";
 
-	//@formatter:off
-	final static Schema SCHEMA = new Schema(RelocationDBAdapterV4.VERSION, "Address", 
-		new Class[] {
-					IntField.class, BinaryField.class, BinaryField.class, StringField.class }, 
-		new String[] {
-					"Type", 			"Values", 		  "Bytes", 			 "Symbol Name" });
-	//@formatter:on
+	final static Schema SCHEMA = new Schema(
+		RelocationDBAdapterV4.VERSION, "Address", new Field[] { IntField.INSTANCE,
+			BinaryField.INSTANCE, BinaryField.INSTANCE, StringField.INSTANCE },
+		new String[] { "Type", "Values", "Bytes", "Symbol Name" });
 
 	static RelocationDBAdapter getAdapter(DBHandle dbHandle, int openMode, AddressMap addrMap,
 			TaskMonitor monitor) throws VersionException, IOException {
@@ -93,8 +88,8 @@ abstract class RelocationDBAdapter {
 	}
 
 	private static RelocationDBAdapter upgrade(DBHandle dbHandle, AddressMap addrMap,
-			RelocationDBAdapter oldAdapter, TaskMonitor monitor) throws VersionException,
-			IOException {
+			RelocationDBAdapter oldAdapter, TaskMonitor monitor)
+			throws VersionException, IOException {
 
 		AddressMap oldAddrMap = addrMap.getOldAddressMap();
 
@@ -105,7 +100,7 @@ abstract class RelocationDBAdapter {
 			RelocationDBAdapter tmpAdapter = new RelocationDBAdapterV4(tmpHandle, addrMap, true);
 			RecordIterator iter = oldAdapter.iterator();
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				Address addr = oldAddrMap.decodeAddress(rec.getKey());
 				BinaryCodedField values =
 					new BinaryCodedField((BinaryField) rec.getFieldValue(VALU_COL));
@@ -118,7 +113,7 @@ abstract class RelocationDBAdapter {
 
 			iter = tmpAdapter.iterator();
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				BinaryCodedField values =
 					new BinaryCodedField((BinaryField) rec.getFieldValue(VALU_COL));
 				newAdapter.add(rec.getKey(), rec.getIntValue(TYPE_COL), values.getLongArray(),
@@ -140,7 +135,7 @@ abstract class RelocationDBAdapter {
 
 	abstract void remove(long addrKey) throws IOException;
 
-	abstract Record get(long addrKey) throws IOException;
+	abstract DBRecord get(long addrKey) throws IOException;
 
 	abstract RecordIterator iterator() throws IOException;
 
@@ -152,7 +147,7 @@ abstract class RelocationDBAdapter {
 
 	abstract int getRecordCount();
 
-	abstract Record adaptRecord(Record rec);
+	abstract DBRecord adaptRecord(DBRecord rec);
 
 //==================================================================================================
 // Inner Classes
@@ -181,14 +176,14 @@ abstract class RelocationDBAdapter {
 		}
 
 		@Override
-		public Record next() throws IOException {
-			Record rec = it.next();
+		public DBRecord next() throws IOException {
+			DBRecord rec = it.next();
 			return adaptRecord(rec);
 		}
 
 		@Override
-		public Record previous() throws IOException {
-			Record rec = it.previous();
+		public DBRecord previous() throws IOException {
+			DBRecord rec = it.previous();
 			return adaptRecord(rec);
 		}
 

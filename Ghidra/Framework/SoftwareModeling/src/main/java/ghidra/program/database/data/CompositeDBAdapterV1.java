@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,12 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.UniversalID;
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.program.model.data.CompositeInternal;
+import ghidra.util.UniversalID;
+import ghidra.util.exception.VersionException;
 
 /**
  * Version 1 implementation for accessing the Composite database table. 
@@ -39,12 +38,13 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 	static final int V1_COMPOSITE_SOURCE_SYNC_TIME_COL = 8;
 	static final int V1_COMPOSITE_LAST_CHANGE_TIME_COL = 9;
 
-	static final Schema V1_COMPOSITE_SCHEMA = new Schema(VERSION, "Data Type ID", new Class[] {
-		StringField.class, StringField.class, BooleanField.class, LongField.class, IntField.class,
-		IntField.class, LongField.class, LongField.class, LongField.class, LongField.class },
-		new String[] { "Name", "Comment", "Is Union", "Category ID", "Length",
-			"Number Of Components", "Source Archive ID", "Source Data Type ID", "Source Sync Time",
-			"Last Change Time" });
+//	static final Schema V1_COMPOSITE_SCHEMA = new Schema(VERSION, "Data Type ID",
+//		new Field[] { StringField.INSTANCE, StringField.INSTANCE, BooleanField.INSTANCE,
+//			LongField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE, LongField.INSTANCE,
+//			LongField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE },
+//		new String[] { "Name", "Comment", "Is Union", "Category ID", "Length",
+//			"Number Of Components", "Source Archive ID", "Source Data Type ID", "Source Sync Time",
+//			"Last Change Time" });
 
 	private Table compositeTable;
 
@@ -62,9 +62,8 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 		}
 		int version = compositeTable.getSchema().getVersion();
 		if (version != VERSION) {
-			String msg =
-				"Expected version " + VERSION + " for table " + COMPOSITE_TABLE_NAME + " but got " +
-					compositeTable.getSchema().getVersion();
+			String msg = "Expected version " + VERSION + " for table " + COMPOSITE_TABLE_NAME +
+				" but got " + compositeTable.getSchema().getVersion();
 			if (version < VERSION) {
 				throw new VersionException(msg, VersionException.OLDER_VERSION, true);
 			}
@@ -73,15 +72,15 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 	}
 
 	@Override
-	public Record createRecord(String name, String comments, boolean isUnion, long categoryID,
-			int length, long sourceArchiveID, long sourceDataTypeID, long lastChangeTime,
-			int internalAlignment, int externalAlignment) throws IOException {
+	public DBRecord createRecord(String name, String comments, boolean isUnion, long categoryID,
+			int length, int computedAlignment, long sourceArchiveID, long sourceDataTypeID,
+			long lastChangeTime, int packValue, int minAlignment) throws IOException {
 		throw new UnsupportedOperationException("Not allowed to update prior version #" + VERSION +
 			" of " + COMPOSITE_TABLE_NAME + " table.");
 	}
 
 	@Override
-	public Record getRecord(long dataTypeID) throws IOException {
+	public DBRecord getRecord(long dataTypeID) throws IOException {
 		return translateRecord(compositeTable.getRecord(dataTypeID));
 	}
 
@@ -91,13 +90,14 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 	}
 
 	@Override
-	public void updateRecord(Record record, boolean setLastChangeTime) throws IOException {
+	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public boolean removeRecord(long compositeID) throws IOException {
-		return compositeTable.deleteRecord(compositeID);
+		throw new UnsupportedOperationException("Not allowed to update prior version #" + VERSION +
+			" of " + COMPOSITE_TABLE_NAME + " table.");
 	}
 
 	@Override
@@ -106,13 +106,13 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 	}
 
 	@Override
-	public long[] getRecordIdsInCategory(long categoryID) throws IOException {
+	public Field[] getRecordIdsInCategory(long categoryID) throws IOException {
 		return compositeTable.findRecords(new LongField(categoryID),
 			CompositeDBAdapter.COMPOSITE_CAT_COL);
 	}
 
 	@Override
-	long[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
+	Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
 		return compositeTable.findRecords(new LongField(archiveID),
 			V1_COMPOSITE_SOURCE_ARCHIVE_ID_COL);
 	}
@@ -120,17 +120,19 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 	/* (non-Javadoc)
 	 * @see db.RecordTranslator#translateRecord(db.Record)
 	 */
-	public Record translateRecord(Record oldRec) {
+	@Override
+	public DBRecord translateRecord(DBRecord oldRec) {
 		if (oldRec == null) {
 			return null;
 		}
-		Record rec = CompositeDBAdapter.COMPOSITE_SCHEMA.createRecord(oldRec.getKey());
+		DBRecord rec = CompositeDBAdapter.COMPOSITE_SCHEMA.createRecord(oldRec.getKey());
 		rec.setString(COMPOSITE_NAME_COL, oldRec.getString(V1_COMPOSITE_NAME_COL));
 		rec.setString(COMPOSITE_COMMENT_COL, oldRec.getString(V1_COMPOSITE_COMMENT_COL));
 		rec.setBooleanValue(COMPOSITE_IS_UNION_COL,
 			oldRec.getBooleanValue(V1_COMPOSITE_IS_UNION_COL));
 		rec.setLongValue(COMPOSITE_CAT_COL, oldRec.getLongValue(V1_COMPOSITE_CAT_COL));
 		rec.setIntValue(COMPOSITE_LENGTH_COL, oldRec.getIntValue(V1_COMPOSITE_LENGTH_COL));
+		rec.setIntValue(COMPOSITE_ALIGNMENT_COL, oldRec.getIntValue(-1));
 		rec.setIntValue(COMPOSITE_NUM_COMPONENTS_COL,
 			oldRec.getIntValue(V1_COMPOSITE_NUM_COMPONENTS_COL));
 		rec.setLongValue(COMPOSITE_SOURCE_ARCHIVE_ID_COL,
@@ -141,19 +143,18 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 			oldRec.getLongValue(V1_COMPOSITE_SOURCE_SYNC_TIME_COL));
 		rec.setLongValue(COMPOSITE_LAST_CHANGE_TIME_COL,
 			oldRec.getLongValue(V1_COMPOSITE_LAST_CHANGE_TIME_COL));
-		rec.setIntValue(COMPOSITE_INTERNAL_ALIGNMENT_COL, CompositeDBAdapter.UNALIGNED);
-		rec.setIntValue(COMPOSITE_EXTERNAL_ALIGNMENT_COL, CompositeDBAdapter.DEFAULT_ALIGNED);
+		rec.setIntValue(COMPOSITE_PACKING_COL, CompositeInternal.NO_PACKING);
+		rec.setIntValue(COMPOSITE_MIN_ALIGN_COL, CompositeInternal.DEFAULT_ALIGNMENT);
 		return rec;
 	}
 
 	@Override
-	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
-		long[] keys =
-			compositeTable.findRecords(new LongField(datatypeID.getValue()),
-				V1_COMPOSITE_UNIVERSAL_DT_ID_COL);
+	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
+		Field[] keys = compositeTable.findRecords(new LongField(datatypeID.getValue()),
+			V1_COMPOSITE_UNIVERSAL_DT_ID_COL);
 
-		for (int i = 0; i < keys.length; i++) {
-			Record record = compositeTable.getRecord(keys[i]);
+		for (Field key : keys) {
+			DBRecord record = compositeTable.getRecord(key);
 			if (record.getLongValue(V1_COMPOSITE_SOURCE_ARCHIVE_ID_COL) == sourceID.getValue()) {
 				return translateRecord(record);
 			}

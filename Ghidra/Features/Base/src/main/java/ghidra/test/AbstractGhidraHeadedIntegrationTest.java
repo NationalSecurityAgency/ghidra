@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import docking.DialogComponentProvider;
 import docking.action.DockingActionIf;
@@ -179,8 +178,8 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 	 * @return the new tool
 	 */
 	public static PluginTool saveTool(final Project project, final PluginTool tool) {
-		AtomicReference<PluginTool> ref = new AtomicReference<>();
-		runSwing(() -> {
+
+		PluginTool newTool = runSwing(() -> {
 			ToolChest toolChest = project.getLocalToolChest();
 			ToolTemplate toolTemplate = tool.saveToolToToolTemplate();
 			toolChest.replaceToolTemplate(toolTemplate);
@@ -188,10 +187,10 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 			ToolManager toolManager = project.getToolManager();
 			Workspace workspace = toolManager.getActiveWorkspace();
 			tool.close();
-			ref.set((PluginTool) workspace.runTool(toolTemplate));
+			return workspace.runTool(toolTemplate);
 		});
 
-		return ref.get();
+		return newTool;
 	}
 
 	/**

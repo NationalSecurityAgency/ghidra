@@ -42,7 +42,7 @@ public class ConvertToDoubleAction extends AbstractConvertAction {
 		try {
 			FloatFormat format =
 				FloatFormatFactory.getFloatFormat(dataOrganization.getDoubleSize());
-			return format.getHostFloat(s.getBigInteger());
+			return format.round(format.getHostFloat(s.getBigInteger()));
 		}
 		catch (UnsupportedFloatFormatException e) {
 			return null;

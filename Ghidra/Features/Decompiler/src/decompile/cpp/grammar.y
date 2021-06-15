@@ -524,7 +524,7 @@ uint4 GrammarLexer::moveState(char lookahead)
     }
     else if ((lookahead>='a')&&(lookahead<='z')) {
     }
-    else if (lookahead == '_') {
+    else if (lookahead == '_' || lookahead == ':') {
     }
     else {
       state = start;
@@ -654,7 +654,7 @@ Datatype *PointerModifier::modType(Datatype *base,const TypeDeclarator *decl,Arc
 {
   int4 addrsize = glb->getDefaultDataSpace()->getAddrSize();
   Datatype *restype;
-  restype = glb->types->getTypePointerAbsolute(addrsize,base,glb->getDefaultDataSpace()->getWordSize());
+  restype = glb->types->getTypePointer(addrsize,base,glb->getDefaultDataSpace()->getWordSize());
   return restype;
 }
 
@@ -1037,7 +1037,7 @@ Datatype *CParse::newStruct(const string &ident,vector<TypeDeclarator *> *declis
     sublist.back().offset = -1;	// Let typegrp figure out offset
   }
 
-  if (!glb->types->setFields(sublist,res,-1)) {
+  if (!glb->types->setFields(sublist,res,-1,0)) {
     setError("Bad structure definition");
     glb->types->destroyType(res);
     return (Datatype *)0;

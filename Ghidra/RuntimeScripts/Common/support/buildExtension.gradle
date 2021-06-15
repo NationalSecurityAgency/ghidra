@@ -1,8 +1,23 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import org.apache.tools.ant.filters.ReplaceTokens
 
 defaultTasks 'buildExtension'
 
-apply plugin: 'java'
+apply plugin: 'java-library'
 
 /*****************************************************************************************
  *
@@ -27,10 +42,17 @@ artifacts {
 	helpPath jar
 }
 
+compileJava {
+    sourceCompatibility = ghidraProps.getProperty('application.java.compiler')
+    targetCompatibility = ghidraProps.getProperty('application.java.compiler')
+}
+
 dependencies {
-	compile fileTree(dir: 'lib', include: "*.jar")
-	compile fileTree(dir: ghidraDir + '/Framework', include: "**/*.jar")
-	compile fileTree(dir: ghidraDir + '/Features', include: "**/*.jar")
+	api fileTree(dir: 'lib', include: "*.jar")
+	api fileTree(dir: ghidraDir + '/Framework', include: "**/*.jar")
+	api fileTree(dir: ghidraDir + '/Features', include: "**/*.jar")
+	api fileTree(dir: ghidraDir + '/Debug', include: "**/*.jar")
+	api fileTree(dir: ghidraDir + '/Processors', include: "**/*.jar")
 	helpPath fileTree(dir: ghidraDir + '/Features/Base', include: "**/Base.jar")
 }
 	
@@ -55,8 +77,8 @@ task zipSource (type: Zip) {
 				
 task buildExtension (type: Zip) {
 				
-	baseName "${ZIP_NAME_PREFIX}_${project.name}"
-	extension 'zip'
+	archiveBaseName = "${ZIP_NAME_PREFIX}_${project.name}"
+	archiveExtension = 'zip'
 	destinationDir DISTRIBUTION_DIR
 	version ''
 	
@@ -92,6 +114,10 @@ task buildExtension (type: Zip) {
 		exclude '.settings/**'
 		exclude 'developer_scripts'
 		exclude '.antProperties.xml'
+		exclude 'gradlew'
+		exclude 'gradlew.bat'
+		exclude 'gradle/wrapper/gradle-wrapper.jar'
+		exclude 'gradle/wrapper/gradle-wrapper.properties'
 		
 		into pathInZip
 	}
@@ -128,7 +154,7 @@ task buildExtension (type: Zip) {
 	}
 
 	doLast {
-		println "\nCreated " + baseName + "." + extension + " in " + destinationDir
+		println "\nCreated " + archiveBaseName + "." + archiveExtension + " in " + destinationDir
 	}
 }
 

@@ -1,0 +1,372 @@
+# (10) Bit search instructions
+# (13) Branch instructions
+# (15) Special instructions
+
+
+
+#####################################################
+#####		     BitSearch			#####
+#####################################################
+
+
+# SCH0L reg2, reg3 - rrrrr11111100000|wwwww01101100100
+:sch0l R1115, R2731 is op0010=0x7E0 & R1115; op1626=0x364 & R2731
+{
+	SearchLeft(R2731, R1115, 0);
+	$(CY) = (R1115 != 0xFFFFFFFF);		# zero bit found
+	$(Z)  = (R1115 == 0xFFFFFFFF);		# zero bit not found
+}
+
+# SCH0R reg2, reg3 - rrrrr11111100000|wwwww01101100000
+:sch0r R1115, R2731 is op0010=0x7E0 & R1115; op1626=0x360 & R2731
+{
+	SearchRight(R2731, R1115, 0);
+	$(CY) = (R1115 != 0xFFFFFFFF);		# zero bit found
+	$(Z)  = (R1115 == 0xFFFFFFFF);		# zero bit not found
+}
+
+# SCH1L reg2, reg3 - rrrrr11111100000|wwwww01101100110
+:sch1l R1115, R2731 is op0010=0x7E0 & R1115; op1626=0x366 & R2731
+{
+	SearchLeft(R2731, R1115, 1);
+	$(CY) = (R1115 != 0x0);		# one bit found
+	$(Z)  = (R1115 == 0x0);		# one bit not found
+}
+
+# SCH1R reg2, reg3
+:sch1r R1115, R2731 is op0010=0x7E0 & R1115; op1626=0x362 & R2731
+{
+	SearchRight(R2731, R1115, 1);
+	$(CY) = (R1115 != 0x0);		# one bit found
+	$(Z)  = (R1115 == 0x0);		# one bit not found
+}
+
+
+
+#####################################################
+#####		       Branch			#####
+#####################################################
+
+
+#Bcond adr9 - ddddd1011dddcccc
+:b^c0003 adr9 is op0710=0xB & c0003 & adr9
+{
+	if (c0003) 
+		goto adr9;
+}
+:br adr9 is op0710=0xB & op0003=0x5 & adr9
+{
+	goto adr9;
+}
+
+# JARL disp22, reg2 - rrrrr11110dddddd|ddddddddddddddd0
+:jarl adr22, R1115 is (op0610=0x1E & R1115) ... & adr22
+{
+	R1115 = inst_next;
+	call adr22;
+}
+
+# JARL disp32, reg1 - 00000010111RRRRR|ddddddddddddddd0|DDDDDDDDDDDDDDDD
+:jarl adr32, R0004 is op0515=0x017 & R0004; adr32
+{
+	R0004 = inst_next;
+	call adr32;
+}
+
+# JMP [reg1] - 00000000011RRRRR
+:jmp [R0004] is op0515=0x03 & R0004 & op0004=0x1F
+{
+	return [R0004];
+}
+:jmp [R0004] is op0515=0x03 & R0004 & op0004!=0x1F
+{
+	call [R0004];
+}
+
+# JMP disp32[reg1] - 00000110111RRRRR|ddddddddddddddd0|DDDDDDDDDDDDDDDD
+:jmp adr32i[R0004] is op0515=0x037 & R0004; adr32i
+{
+	local adr = adr32i + R0004;
+	goto [adr];
+}
+
+# JR disp22 - 00000111110ddddd|ddddddddddddddd0
+:jr adr22 is op0615=0x1E ... & adr22
+{
+	goto adr22;
+}
+
+# JR disp32 - 0000001011100000|ddddddddddddddd0|DDDDDDDDDDDDDDDD
+:jr adr32 is op0015=0x2E0; adr32
+{
+	goto adr32;
+}
+
+
+
+#####################################################
+#####		       Special			#####
+#####################################################
+
+
+# CALLT imm6 - 0000001000iiiiii
+:callt op0005 is op0615=0x8 & op0005 
+{
+	CTPC = inst_next;
+	CTPSW = PSW;
+	local adr:4 = CTBP + (op0005 << 1);
+	PC = CTBP + zext(*:2 adr);
+	call [PC];
+}
+
+# CAXI [reg1], reg2, reg3 - rrrrr111111RRRRR|wwwww00011101110
+:caxi [R0004], R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0xEE & R2731
+{
+	local tkn = *:4 (R0004 & ~(0x3));
+	local result = R1115 - tkn;
+	*:4 R0004 = tkn * zext(result != 0) + R2731 * zext(result == 0);
+	R2731 = tkn;
+	set_general_flags_neg(R1115, tkn);
+}
+
+# CTRET - 0000011111100000|0000000101000100
+:ctret is op0515=0x3F; op1631=0x144
+{
+	PC = CTPC;
+	PSW = CTPSW;
+	return [PC];
+}
+
+# DI - 0000011111100000|0000000101100000
+define pcodeop __disable_irq;
+:di is op0015=0x7E0; op1631=0x160
+{
+	$(ID) = 1;
+	__disable_irq();
+}
+
+# DISPOSE imm5, list12 - 0000011001iiiiiL|LLLLLLLLLLL00000
+:dispose prep0105, DispList is prep0615=0x19 & prep1620=0x0 & prep0105 & DispList
+{
+	sp = sp + (prep0105 << 2);
+	build DispList;
+}
+
+# DISPOSE imm5, list12, [reg1] - 0000011001iiiiiL|LLLLLLLLLLLRRRRR
+:dispose prep0105, DispList, [prep1620] is prep0615=0x19 & prep1620 & prep0105 & DispList
+{
+	sp = sp + (prep0105 << 2);
+	build DispList;
+	PC = prep1620;
+	return [PC];
+}
+
+# EI - 1000011111100000|0000000101100000
+define pcodeop __enable_irq;
+:ei is op0015=0x87E0; op1631=0x160
+{
+	$(ID) = 0;
+	__enable_irq();
+}
+
+# EIRET - 0000011111100000|0000000101001000
+:eiret is op0515=0x3F; op1631=0x148
+{
+	PC = EIPC;
+	PSW = EIPSW;
+	return [PC];
+}
+
+# FERET - 0000011111100000|0000000101001010
+:feret is op0515=0x3F; op1631=0x14A
+{
+	PC = FEPC;
+	PSW = FEPSW;
+	return [PC];
+}
+
+# FETRAP vector4 - 0vvvv00001000000
+:fetrap op1114 is op0010=0x40 & op1515=0 & op1114 & op1115!=0
+{
+	FEPC = inst_next;
+	FEPSW = PSW;
+	$(FECC) = op1114 + 0x30;	# exception code 0x30..0x3F
+	FEIC = op1114 + 0x30;		# exception code 0x30..0x3F
+	$(EP) = 1;
+	$(ID) = 1;
+	$(NP) = 1;
+	PC = 0x30;
+	goto [PC];
+}
+
+# HALT - 0000011111100000|0000000100100000
+define pcodeop __halt;
+:halt is op0015=0x7E0; op1631=0x120
+{
+	__halt();
+}
+
+# LDSR reg2, regID - rrrrr111111RRRRR|0000000000100000
+:ldsr R0004, SR1115 is op0510=0x3F & SR1115 & R0004; op1631=0x20
+{
+	SR1115 = R0004;
+}
+
+# NOP - 0000000000000000
+:nop is op0015=0x0
+{
+	PC = inst_next;
+}
+
+# PREPARE list12, imm5 - 0000011110iiiiiL|LLLLLLLLLLL00001
+:prepare PrepList, prep0105 is prep0615=0x1E & prep0105 & prep1620=0x1 & PrepList
+{
+	build PrepList;
+	sp = sp - (prep0105 << 2);
+}
+
+# PREPARE list12, imm5, sp - 0000011110iiiiiL|LLLLLLLLLLL00011
+:prepare PrepList, prep0105, sp is prep0615=0x1E & prep0105 & prep1620=0x3 & PrepList & sp
+{
+	build PrepList;
+	sp = sp - (prep0105 << 2);
+	ep = sp;
+}
+
+# PREPARE list12, imm5, imm16 (low) - 0000011110iiiiiL|LLLLLLLLLLL01011|iiiiiiiiiiiiiiii
+:prepare PrepList, prep0105, s3247 is prep0615=0x1E & prep0105 & prep1620=0xB & PrepList; s3247
+{
+	build PrepList;
+	sp = sp - (prep0105 << 2);
+	ep = s3247;
+}
+
+# PREPARE list12, imm5, imm16 (high) - 0000011110iiiiiL|LLLLLLLLLLL10011|iiiiiiiiiiiiiiii
+:prepare PrepList, prep0105, s3247 is prep0615=0x1E & prep0105 & prep1620=0x13 & PrepList; s3247
+{
+	build PrepList;
+	sp = sp - (prep0105 << 2);
+	ep = s3247 << 16;
+}
+
+# PREPARE list12, imm5, imm32 - 0000011110iiiiiL|LLLLLLLLLLL11011|iiiiiiiiiiiiiiii|iiiiiiiiiiiiiiii
+:prepare PrepList, prep0105, imm32 is prep0615=0x1E & prep0105 & prep1620=0x1B & PrepList; op3247; op4863
+[ imm32 = (op4863 << 16) | op3247; ]
+{
+	build PrepList;
+	sp = sp - (prep0105 << 2);
+	ep = imm32;
+}
+
+# RETI - 0000011111100000|0000000101000000
+:reti is op0515=0x3F; op1631=0x140
+{
+	if($(EP)!=1)
+		goto <false>;
+
+	PC = EIPC;
+	PSW = EIPSW;
+	goto <end>;
+
+	<false>
+	if($(NP)!=1)
+		goto <false2>;
+
+	PC = FEPC;
+	PSW = FEPSW;
+	goto <end>;
+
+	<false2>
+	PC = EIPC;
+	PSW = EIPSW;
+
+	<end>
+	return[PC];
+}
+
+# RIE - 0000000001000000
+:rie is op0015=0x40 
+{
+	FEPC = PC;
+	FEPSW = PSW;
+	$(NP) = 1;
+	$(EP) = 1;
+	$(ID) = 1;
+	PC = 0x30;
+	goto [PC];
+}
+
+# RIE imm5, imm4 - iiiii1111111IIII|0000000000000000
+:rie op1115, op0003 is op0410=0x7F & op1115 & op0003; op1631=0x0
+{
+	FEPC = PC;
+	FEPSW = PSW;
+	$(NP) = 1;
+	$(EP) = 1;
+	$(ID) = 1;
+	PC = 0x30;
+	goto [PC];
+}
+
+# STSR regID, reg2 - rrrrr111111RRRRR|0000000001000000
+:stsr SR0004, R1115 is op0510=0x3F & R1115 & SR0004; op1631=0x40
+{
+	R1115 = SR0004;
+}
+
+# SWITCH reg1 - 00000000010RRRRR
+:switch R0004 is op0515=0x2 & R0004
+{
+	local adr:4 = inst_next + (R0004 << 1);
+	PC = inst_next + (sext(*:2 adr) << 1);
+	goto [PC];
+}
+
+# SYNCE - 0000000000011101
+define pcodeop __synchronize;
+:synce is op0015=0x1D 
+{
+	__synchronize();
+}
+
+# SYNCM - 0000000000011110
+:syncm is op0015=0x1E
+{
+	__synchronize();
+}
+
+# SYNCP - 0000000000011111
+:syncp is op0015=0x1F
+{
+	__synchronize();
+}
+
+# SYSCALL vector8 - 11010111111vvvvv|00VVV00101100000
+:syscall vector8 is op0515=0x6BF & op0004; op3031=0 & op2729 & op1626=0x160 
+[ vector8 = (op2729 << 5) | op0004; ]
+{
+	EIPC = inst_next;
+	EIPSW = PSW;
+	EIIC = vector8 + 0x8000;		# exception code 0x8000..0x80FF
+	$(EICC) = vector8 + 0x8000;		# exception code 0x8000..0x80FF
+	$(EP) = 1;
+	$(ID) = 1;
+	local adr:4;
+	either_or(adr, (vector8 <= SCCFG), SCBP + (vector8 << 2), SCBP);
+	PC = SCBP + (*:4 adr);
+	call [PC];
+}
+
+# TRAP imm5 - 00000111111vvvvv|0000000100000000
+:trap op0004 is op0515=0x3F & op0004; op1631=0x100
+{
+	local vector5:4 = op0004;
+	EIPC = inst_next;
+	EIPSW = PSW;
+	EIIC = vector5 + 0x40;			# exception code 0x40..0x5F
+	$(EICC) = vector5:2 + 0x40;		# exception code 0x40..0x5F
+	$(EP) = 1;
+	$(ID) = 1;
+	either_or(PC, (vector5 <= 15), 0x40, 0x50);
+	call [PC];
+}

@@ -21,16 +21,19 @@ import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.services.DataTypeManagerService;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.Function;
+import ghidra.util.HelpLocation;
 import ghidra.util.UndefinedFunction;
 
 public class EditDataTypeAction extends AbstractDecompilerAction {
 
 	public EditDataTypeAction() {
 		super("Edit Data Type");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionEditDataType"));
 		setPopupMenuData(new MenuData(new String[] { "Edit Data Type" }, "Decompile"));
 	}
 

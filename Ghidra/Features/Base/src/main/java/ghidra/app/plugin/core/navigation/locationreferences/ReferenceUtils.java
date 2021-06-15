@@ -20,7 +20,6 @@ import java.util.Stack;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.app.services.DataTypeReference;
 import ghidra.app.services.DataTypeReferenceFinder;
 import ghidra.program.model.address.*;
@@ -819,7 +818,7 @@ public final class ReferenceUtils {
 		}
 
 		Composite composite = (Composite) baseParent;
-		DataTypeComponent[] components = composite.getComponents();
+		DataTypeComponent[] components = composite.getDefinedComponents();
 		String name = path.pop();
 		for (DataTypeComponent component : components) {
 			if (component.getFieldName().equals(name)) {
@@ -1021,7 +1020,7 @@ public final class ReferenceUtils {
 		}
 
 		Composite c = (Composite) dt;
-		DataTypeComponent[] components = c.getComponents();
+		DataTypeComponent[] components = c.getDefinedComponents();
 		for (DataTypeComponent component : components) {
 			if (SystemUtilities.isEqual(component.getFieldName(), fieldName)) {
 				return component;

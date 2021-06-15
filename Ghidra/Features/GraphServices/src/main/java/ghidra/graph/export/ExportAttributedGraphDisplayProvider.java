@@ -52,8 +52,7 @@ public class ExportAttributedGraphDisplayProvider implements GraphDisplayProvide
 	public GraphDisplay getGraphDisplay(boolean reuseGraph,
 			TaskMonitor monitor) {
 
-		ExportAttributedGraphDisplay display = new ExportAttributedGraphDisplay(this);
-		return display;
+		return new ExportAttributedGraphDisplay(this);
 	}
 
 	@Override
@@ -74,6 +73,6 @@ public class ExportAttributedGraphDisplayProvider implements GraphDisplayProvide
 
 	@Override
 	public HelpLocation getHelpLocation() {
-		return new HelpLocation("GraphServices", "Default_Graph_Exporter");
+		return new HelpLocation("GraphServices", "Graph_Exporter");
 	}
 }

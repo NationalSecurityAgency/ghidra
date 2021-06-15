@@ -48,7 +48,7 @@ public class Section implements StructConverter {
 
 	private FactoryBundledWithBinaryReader reader;
 	private boolean is32bit;
-	private List<RelocationInfo> relocations = new ArrayList<RelocationInfo>();
+	private List<RelocationInfo> relocations = new ArrayList<>();
 
 	public static Section createSection(FactoryBundledWithBinaryReader reader, boolean is32bit)
 			throws IOException {
@@ -71,8 +71,8 @@ public class Section implements StructConverter {
 		sectname = reader.readNextAsciiString(MachConstants.NAME_LENGTH);
 		segname = reader.readNextAsciiString(MachConstants.NAME_LENGTH);
 		if (is32bit) {
-			addr = reader.readNextInt() & 0xffffffffL;
-			size = reader.readNextInt() & 0xffffffffL;
+			addr = reader.readNextUnsignedInt();
+			size = reader.readNextUnsignedInt();
 		}
 		else {
 			addr = reader.readNextLong();
@@ -93,7 +93,7 @@ public class Section implements StructConverter {
 		long index = reader.getPointerIndex();
 		reader.setPointerIndex(reloff);
 		for (int i = 0; i < nrelocs; ++i) {
-			relocations.add(RelocationFactory.readRelocation(reader, is32bit));
+			relocations.add(RelocationInfo.createRelocationInfo(reader));
 		}
 		reader.setPointerIndex(index);
 	}
@@ -171,7 +171,7 @@ public class Section implements StructConverter {
 			header.getFileType() == MachHeaderFileTypes.MH_EXECUTE) {
 			return new SectionInputStream(getSize(), (byte) 0xf4);
 		}
-		return reader.getByteProvider().getInputStream(header.getStartIndexInProvider() + offset);
+		return reader.getByteProvider().getInputStream(header.getStartIndex() + offset);
 	}
 
 	public String getSectionName() {

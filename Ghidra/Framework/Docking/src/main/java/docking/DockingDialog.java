@@ -38,6 +38,9 @@ import ghidra.util.bean.GGlassPane;
 public class DockingDialog extends JDialog implements HelpDescriptor {
 	private static Component focusComponent; // allow only one scheduled focus component. See above.
 
+	private static Map<String, BoundsInfo> dialogBoundsMap =
+		LazyMap.lazyMap(new HashMap<>(), () -> new BoundsInfo());
+
 	private WindowListener windowAdapter;
 	private DialogComponentProvider component;
 	private boolean hasBeenFocused;
@@ -47,11 +50,7 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 			hasBeenFocused = true;
 		}
 	};
-
-	private static Map<String, BoundsInfo> dialogBoundsMap =
-		LazyMap.lazyMap(new HashMap<>(), () -> new BoundsInfo());
 	private DockingWindowManager owningWindowManager;
-
 	private WindowAdapter modalFixWindowAdapter;
 
 	/**
@@ -220,6 +219,12 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 				component.escapeCallback();
 			}
 
+			@Override
+			public void windowClosed(WindowEvent e) {
+				// this call is needed to handle the case where the dialog is closed by Java and
+				// not by the user closing the dialog or calling close() through the API
+				cleanup();
+			}
 		};
 		this.addWindowListener(windowAdapter);
 		modalFixWindowAdapter = new WindowAdapter() {
@@ -249,6 +254,10 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 	}
 
 	void close() {
+		cleanup();
+	}
+
+	private void cleanup() {
 		if (component.getRemberSize() || component.getRememberLocation()) {
 			String key = getKey();
 			Rectangle rect = getBounds();
@@ -258,7 +267,10 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 
 		component.setDialog(null);
 		removeWindowListener(windowAdapter);
+
+		// this will do nothing if already closed
 		setVisible(false);
+
 		component.dialogClosed();
 		component = null;
 		getContentPane().removeAll();

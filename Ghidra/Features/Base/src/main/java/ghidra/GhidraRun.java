@@ -35,10 +35,10 @@ import ghidra.framework.project.DefaultProjectManager;
 import ghidra.framework.remote.InetNameLookup;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramDB;
-import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 import ghidra.util.exception.UsrException;
-import ghidra.util.task.*;
+import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Main Ghidra application class. Creates
@@ -64,7 +64,6 @@ import ghidra.util.task.*;
  * @see ghidra.GhidraLauncher
  */
 public class GhidraRun implements GhidraLaunchable {
-	private final String MASTER_HELP_SET_HS = "Base_HelpSet.hs";
 
 	private Logger log; // intentionally load later, after initialization
 
@@ -179,14 +178,12 @@ public class GhidraRun implements GhidraLaunchable {
 		}
 	}
 
-	private void openProject(final FrontEndTool tool, final ProjectLocator projectLocator,
-			final boolean reopen) {
+	private void openProject(FrontEndTool tool, ProjectLocator projectLocator, boolean reopen) {
 		SplashScreen.updateSplashScreenStatus(
 			(reopen ? "Reopening" : "Opening") + " project: " + projectLocator.getName());
-		final Runnable r = () -> doOpenProject(tool, projectLocator, reopen);
 
-		InvokeInSwingTask task = new InvokeInSwingTask("Opening Project", r);
-		new TaskLauncher(task, tool.getToolFrame(), 0);
+		Runnable r = () -> doOpenProject(tool, projectLocator, reopen);
+		TaskLauncher.launchModal("Opening Project", () -> Swing.runNow(r));
 	}
 
 	private void doOpenProject(FrontEndTool tool, ProjectLocator projectLocator, boolean reopen) {

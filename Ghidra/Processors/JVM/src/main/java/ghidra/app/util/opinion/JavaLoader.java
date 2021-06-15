@@ -145,16 +145,15 @@ public class JavaLoader extends AbstractLibrarySupportLoader {
 		try {
 			block = memory.createInitializedBlock("method_lookup", address,
 				JavaClassUtil.METHOD_INDEX_SIZE, (byte) 0xff, monitor, false);
+			block.setRead(true);
+			block.setWrite(false);
+			block.setExecute(false);
 		}
-		catch (LockException | DuplicateNameException | MemoryConflictException
+		catch (LockException | MemoryConflictException
 				| AddressOverflowException | CancelledException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		block.setRead(true);
-		block.setWrite(false);
-		block.setExecute(false);
-
 	}
 
 	private void createMethodMemoryBlocks(Program program, ByteProvider provider,

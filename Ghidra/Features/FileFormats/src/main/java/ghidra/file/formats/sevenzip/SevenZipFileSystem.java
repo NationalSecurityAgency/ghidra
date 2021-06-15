@@ -15,8 +15,11 @@
  */
 package ghidra.file.formats.sevenzip;
 
-import java.io.*;
 import java.util.*;
+
+import java.io.*;
+
+import org.apache.commons.io.FilenameUtils;
 
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
@@ -70,7 +73,13 @@ public class SevenZipFileSystem implements GFileSystem {
 					throw new CancelledException();
 				}
 
-				fsIndexHelper.storeFile(item.getPath(), item.getItemIndex(), item.isFolder(),
+				String itemPath = item.getPath();
+				if (items.length == 1 && itemPath.isBlank()) {
+					// special case when there is a single unnamed file.
+					// use the name of the 7zip file itself, minus the extension
+					itemPath = FilenameUtils.getBaseName(fsrl.getContainer().getName());
+				}
+				fsIndexHelper.storeFile(itemPath, item.getItemIndex(), item.isFolder(),
 					getSize(item), item);
 			}
 			preCacheAll(monitor);
@@ -252,6 +261,9 @@ public class SevenZipFileSystem implements GFileSystem {
 			}
 			case UNKNOWN_OPERATION_RESULT: {
 				throw new IOException("Unexpected: 7-Zip returned unknown operation result");
+			}
+			case WRONG_PASSWORD: {
+				throw new IOException("7-Zip wrong password");
 			}
 			case OK:
 			default: {

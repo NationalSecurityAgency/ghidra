@@ -15,13 +15,13 @@
  */
 package ghidra.file.formats.ext4;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.util.NumericUtilities;
@@ -113,8 +113,8 @@ public class Ext4FileSystem implements GFileSystem {
 			if (parent == null) {
 				parent = fsih.getRootDir();
 			}
-			parent = fsih.storeFileWithParent(name, parent, -1, true,
-				(inode.getI_size_high() << 32) | inode.getI_size_lo(), new Ext4File(name, inode));
+			parent = fsih.storeFileWithParent(name, parent, -1, true, inode.getSize(),
+				new Ext4File(name, inode));
 		}
 		if ((inode.getI_flags() & Ext4Constants.EXT4_EXTENTS_FL) == 0) {
 			return;
@@ -142,10 +142,7 @@ public class Ext4FileSystem implements GFileSystem {
 			for (int i = 0; i < numEntries; i++) {
 				monitor.checkCanceled();
 				Ext4Extent extent = entries.get(i);
-				long low = extent.getEe_start_lo() & 0xffffffffL;
-				long high = extent.getEe_start_hi() & 0xffffffffL;
-				long blockNumber = (high << 16) | low;
-				long offset = blockNumber * blockSize;
+				long offset = extent.getExtentStartBlockNumber() * blockSize;
 				reader.setPointerIndex(offset);
 				if (isDirEntry2) {
 					processDirEntry2(reader, superBlock, inodes, parent, monitor, extent, offset);
@@ -241,10 +238,9 @@ public class Ext4FileSystem implements GFileSystem {
 	private void storeFile(Ext4Inode[] inodes, Ext4DirEntry dirEnt, GFile parent) {
 		int fileInodeNum = dirEnt.getInode();
 		Ext4Inode fileInode = inodes[fileInodeNum];
-		long fileSize = (fileInode.getI_size_high() << 32) | fileInode.getI_size_lo();
 		fsih.storeFileWithParent(dirEnt.getName(), parent, -1,
-			(fileInode.getI_mode() & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFDIR, fileSize,
-			new Ext4File(dirEnt.getName(), fileInode));
+			(fileInode.getI_mode() & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFDIR,
+			fileInode.getSize(), new Ext4File(dirEnt.getName(), fileInode));
 		inodes[fileInodeNum] = null;
 	}
 
@@ -254,9 +250,8 @@ public class Ext4FileSystem implements GFileSystem {
 		if (fileInode == null) {
 			return;//TODO
 		}
-		long fileSize = (fileInode.getI_size_high() << 32) | fileInode.getI_size_lo();
 		fsih.storeFileWithParent(dirEnt2.getName(), parent, -1,
-			dirEnt2.getFile_type() == Ext4Constants.FILE_TYPE_DIRECTORY, fileSize,
+			dirEnt2.getFile_type() == Ext4Constants.FILE_TYPE_DIRECTORY, fileInode.getSize(),
 			new Ext4File(dirEnt2.getName(), fileInode));
 		inodes[fileInodeNum] = null;
 	}
@@ -284,7 +279,7 @@ public class Ext4FileSystem implements GFileSystem {
 		}
 		Ext4Inode inode = ext4File.getInode();
 		String info = "";
-		long size = (inode.getI_size_high() << 32) | inode.getI_size_lo();
+		long size = inode.getSize();
 		if ((inode.getI_mode() & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFLNK) {
 			Ext4IBlock block = inode.getI_block();
 			byte[] extra = block.getExtra();
@@ -299,27 +294,8 @@ public class Ext4FileSystem implements GFileSystem {
 	@Override
 	public InputStream getInputStream(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		Ext4File extFile = fsih.getMetadata(file);
-		if (extFile == null) {
-			return null;
-		}
-		Ext4Inode inode = extFile.getInode();
-		if (inode == null) {
-			return null;
-		}
-
-		if ((inode.getI_mode() & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFDIR) {
-			throw new IOException(extFile.getName() + " is a directory.");
-		}
-
-		if ((inode.getI_mode() & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFLNK) {
-			inode = resolveSymLink(file);
-			if (inode == null) {
-				throw new IOException(extFile.getName() + " is a broken symlink.");
-			}
-		}
-
-		return getInputStream(inode);
+		ByteProvider bp = getByteProvider(file, monitor);
+		return (bp != null) ? new ByteProviderInputStream(bp, 0, bp.length()) : null;
 	}
 
 	private static final int MAX_SYMLINK_LOOKUP_COUNT = 100;
@@ -351,57 +327,76 @@ public class Ext4FileSystem implements GFileSystem {
 		return null;
 	}
 
-	private InputStream getInputStream(Ext4Inode inode) throws IOException {
-		int i_size_lo = inode.getI_size_lo();
-		int i_size_high = inode.getI_size_high();
-		long size = (i_size_high << 32) | i_size_lo;
+	private Ext4Inode getInodeFor(GFile file) throws IOException {
+		Ext4File extFile = fsih.getMetadata(file);
+		if (extFile == null) {
+			return null;
+		}
+		Ext4Inode inode = extFile.getInode();
+		if (inode == null) {
+			return null;
+		}
 
-		boolean usesExtents = (inode.getI_flags() & Ext4Constants.EXT4_EXTENTS_FL) != 0;
-		if (usesExtents) {
-			Ext4IBlock i_block = inode.getI_block();
-			Ext4ExtentHeader header = i_block.getHeader();
-			if (header.getEh_depth() == 0) {
-				List<Ext4Extent> entries = i_block.getExtentEntries();
-				return concatenateExtents(entries, size);
+		if ((inode.getI_mode() & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFLNK) {
+			inode = resolveSymLink(file);
+			if (inode == null) {
+				throw new IOException(extFile.getName() + " is a broken symlink.");
 			}
 		}
-		return null;
+		return inode;
 	}
 
 	/**
-	 * The file is spread throughout the ext4 file, so
-	 * concatenate each extent into one contiguous stream.
+	 * Returns a {@link ByteProvider} that supplies the bytes of the requested file.
 	 * 
-	 * TODO better memory management? currently loads entire file into memory.
+	 * @param file {@link GFile} to get
+	 * @param monitor {@link TaskMonitor} to cancel
+	 * @return {@link ByteProvider} containing the bytes of the requested file, caller is
+	 * responsible for closing the ByteProvider
+	 * @throws IOException if error
 	 */
-	private InputStream concatenateExtents(List<Ext4Extent> entries, long actualSize)
-			throws IOException {
-		if (actualSize > Integer.MAX_VALUE) {
-			throw new IOException(
-				"File is >2GB, too large to extract.  Please report to Ghidra team.");
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) throws IOException {
+		Ext4Inode inode = getInodeFor(file);
+		if (inode == null) {
+			return null;
 		}
 
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-		for (int i = 0; i < entries.size(); ++i) {
-			Ext4Extent extent = entries.get(i);
-
-			long low = extent.getEe_start_lo() & 0xffffffffL;
-			long high = extent.getEe_start_hi() & 0xffffffffL;
-			long blockNumber = (high << 16) | low;
-			long extentOffset = blockNumber * blockSize;
-			long extentSize = (extent.getEe_len() & 0xffffL) * blockSize;
-
-			try {
-				byte[] extentBytes = provider.readBytes(extentOffset, extentSize);
-				baos.write(extentBytes);
-			}
-			catch (IOException e) {
-				// ignore
-			}
+		if ((inode.getI_mode() & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFDIR) {
+			throw new IOException(file.getName() + " is a directory.");
 		}
 
-		return new ByteArrayInputStream(baos.toByteArray(), 0, (int) actualSize);
+		boolean usesExtents = (inode.getI_flags() & Ext4Constants.EXT4_EXTENTS_FL) != 0;
+		if (!usesExtents) {
+			throw new IOException("Unsupported file storage: not EXT4_EXTENTS: " + file.getPath());
+		}
+
+		Ext4IBlock i_block = inode.getI_block();
+		Ext4ExtentHeader header = i_block.getHeader();
+		if (header.getEh_depth() != 0) {
+			throw new IOException("Unsupported file storage: eh_depth: " + file.getPath());
+		}
+
+		long fileSize = inode.getSize();
+		ExtentsByteProvider ebp = new ExtentsByteProvider(provider, file.getFSRL());
+		for (Ext4Extent extent : i_block.getExtentEntries()) {
+			long startPos = extent.getStreamBlockNumber() * blockSize;
+			long providerOfs = extent.getExtentStartBlockNumber() * blockSize;
+			long extentLen = extent.getExtentBlockCount() * blockSize;
+			if (ebp.length() < startPos) {
+				ebp.addSparseExtent(startPos - ebp.length());
+			}
+			if (ebp.length() + extentLen > fileSize) {
+				// the last extent may have a trailing partial block
+				extentLen = fileSize - ebp.length();
+			}
+
+			ebp.addExtent(providerOfs, extentLen);
+		}
+		if (ebp.length() < fileSize) {
+			// trailing sparse.  not sure if possible.
+			ebp.addSparseExtent(fileSize - ebp.length());
+		}
+		return ebp;
 	}
 
 	private Ext4Inode[] getInodes(BinaryReader reader, Ext4SuperBlock superBlock,

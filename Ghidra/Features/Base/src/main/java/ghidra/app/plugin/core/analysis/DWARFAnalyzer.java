@@ -34,6 +34,8 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class DWARFAnalyzer extends AbstractAnalyzer {
+	private static final String DWARF_LOADED_OPTION_NAME = "DWARF Loaded";
+
 	private static final String OPTION_IMPORT_DATATYPES = "Import data types";
 	private static final String OPTION_IMPORT_DATATYPES_DESC =
 		"Import data types defined in the DWARF debug info.";
@@ -84,6 +86,7 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 		"Automatically extracts DWARF info from an ELF file.";
 
 	private DWARFImportOptions importOptions = new DWARFImportOptions();
+	private long lastTxId = -1;
 
 	public DWARFAnalyzer() {
 		super(DWARF_ANALYZER_NAME, DWARF_ANALYZER_DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
@@ -105,22 +108,24 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 
-		if (!canAnalyze(program)) {
-			// Check again because external DWARF data (ie. dSYM files) could have been moved
-			// between the time canAnalyze() was called the first time and when this method
-			// is called
-			log.appendMsg("Unable to find DWARF information, skipping DWARF analysis");
-			return false;
+		long txId = program.getCurrentTransaction().getID();
+		if (txId == lastTxId) {
+			// Only run once per analysis session - as denoted by being in the same transaction
+			return true;
 		}
+		lastTxId = txId;
 
-		if (DWARFProgram.alreadyDWARFImported(program)) {
-			Msg.warn(this, "DWARF already imported, skipping.  (Detected DWARF program module)");
+		Options propList = program.getOptions(Program.PROGRAM_INFO);
+		boolean alreadyLoaded = propList.getBoolean(DWARF_LOADED_OPTION_NAME, false) ||
+			oldCheckIfDWARFImported(program);
+		if (alreadyLoaded) {
+			Msg.info(this, "DWARF already imported, skipping.");
 			return false;
 		}
 
 		DWARFSectionProvider dsp = DWARFSectionProviderFactory.createSectionProviderFor(program);
 		if (dsp == null) {
-			// silently return, canAnalyze() was false positive
+			log.appendMsg("Unable to find DWARF information, skipping DWARF analysis");
 			return false;
 		}
 
@@ -139,6 +144,7 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 				DWARFImportSummary parseResults = dp.parse();
 				parseResults.logSummaryResults();
 			}
+			propList.setBoolean(DWARF_LOADED_OPTION_NAME, true);
 			return true;
 		}
 		catch (CancelledException ce) {
@@ -157,9 +163,16 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 		return false;
 	}
 
+	private boolean oldCheckIfDWARFImported(Program prog) {
+		// this was the old way of checking if the DWARF analyzer had already been run.  Keep
+		// it around for a little bit so existing programs that have already imported DWARF data
+		// don't get re-run.  Remove after a release or two. 
+		return DWARFFunctionImporter.hasDWARFProgModule(prog, DWARFProgram.DWARF_ROOT_NAME);
+	}
+
 	@Override
 	public boolean canAnalyze(Program program) {
-		return DWARFProgram.isDWARF(program, null);
+		return DWARFProgram.isDWARF(program);
 	}
 
 	@Override

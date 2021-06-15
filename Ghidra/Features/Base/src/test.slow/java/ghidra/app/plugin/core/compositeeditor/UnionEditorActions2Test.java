@@ -46,8 +46,8 @@ public class UnionEditorActions2Test extends AbstractUnionEditorTest {
 		assertTrue(getDataType(2).isEquivalent(new CharDataType()));
 		assertEquals(getDataType(3), dt3);
 
-		invoke(action);
-		dialog = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		invoke(action, false);
+		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 7);
 		dialog = null;
@@ -59,8 +59,8 @@ public class UnionEditorActions2Test extends AbstractUnionEditorTest {
 		assertTrue(getDataType(2).isEquivalent(new StringDataType()));
 		assertEquals(getDataType(3), dt3);
 
-		invoke(action);
-		dialog = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		invoke(action, false);
+		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 10);
 		dialog = null;

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Database adapter for managing built-in data types.
@@ -55,7 +53,7 @@ public abstract class BuiltinDBAdapter {
 	 * @return new record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record createRecord(String name, String className, long categoryID) throws IOException;
+	abstract DBRecord createRecord(String name, String className, long categoryID) throws IOException;
 
 	/**
 	 * Gets the Built-in data type record with the indicated ID.
@@ -63,32 +61,36 @@ public abstract class BuiltinDBAdapter {
 	 * @return the record for the Built-in data type.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record getRecord(long dataTypeID) throws IOException;
+	abstract DBRecord getRecord(long dataTypeID) throws IOException;
 
 	/** 
 	 * Returns an array containing the data type IDs for the given category ID
-	 * @return an array of the data type IDs; 
-	 * empty array if no built-in data types.
+	 * @param categoryID category ID
+	 * @return an array of the data type IDs as LongFields within Field array; 
+	 * empty array if no built-in data types found.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract long[] getRecordIdsInCategory(long categoryID) throws IOException;
+	abstract Field[] getRecordIdsInCategory(long categoryID) throws IOException;
 
 	/**
 	 * Update the built-ins table with the given record.
 	 * @param record the new record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Remove the record with the given dataID.
 	 * @param dataID key
+	 *  @return true if record was deleted successfully.
 	 * @throws IOException if there was a problem accessing the database
 	 */
 	abstract boolean removeRecord(long dataID) throws IOException;
 
 	/**
 	 * Returns an iterator over all records for built-in data types.
+	 * @return record iterator
+	 * @throws IOException if IO error occurs
 	 */
 	abstract RecordIterator getRecords() throws IOException;
 }

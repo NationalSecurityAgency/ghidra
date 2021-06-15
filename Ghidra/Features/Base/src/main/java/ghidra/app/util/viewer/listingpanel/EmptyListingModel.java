@@ -122,4 +122,9 @@ public class EmptyListingModel implements ListingModel {
 	public AddressSet adjustAddressSetToCodeUnitBoundaries(AddressSet addressSet) {
 		return new AddressSet();
 	}
+
+	@Override
+	public ListingModel copy() {
+		return new EmptyListingModel();
+	}
 }

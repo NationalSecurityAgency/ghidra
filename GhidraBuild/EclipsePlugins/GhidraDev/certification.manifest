@@ -1,6 +1,5 @@
 ##VERSION: 2.0
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
-GhidraDevFeature/build.gradle||GHIDRA||||END|
 GhidraDevFeature/build.properties||GHIDRA||||END|
 GhidraDevFeature/category.xml||GHIDRA||||END|
 GhidraDevFeature/feature.xml||GHIDRA||||END|
@@ -8,7 +7,6 @@ GhidraDevPlugin/.launch/GhidraDev.launch||GHIDRA||||END|
 GhidraDevPlugin/GhidraDev.target||GHIDRA||||END|
 GhidraDevPlugin/GhidraDev_README.html||GHIDRA||||END|
 GhidraDevPlugin/META-INF/MANIFEST.MF||GHIDRA||||END|
-GhidraDevPlugin/build.gradle||GHIDRA||||END|
 GhidraDevPlugin/build.properties||GHIDRA||||END|
 GhidraDevPlugin/build_README.txt||GHIDRA||||END|
 GhidraDevPlugin/icons/GhidraIcon16.png||GHIDRA||||END|

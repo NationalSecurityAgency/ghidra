@@ -24,7 +24,6 @@ import java.util.regex.Pattern;
 import javax.swing.ImageIcon;
 
 import docking.*;
-import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import docking.widgets.fieldpanel.support.Highlight;
@@ -63,8 +62,7 @@ import ghidra.util.task.*;
 import resources.ResourceManager;
 
 /**
- * Plugin to search text as it is displayed in the fields of the
- * Code Browser.
+ * Plugin to search text as it is displayed in the fields of the Code Browser.
  */
 //@formatter:off
 @PluginInfo(
@@ -96,8 +94,6 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	private static final String DESCRIPTION = "Search program text for string";
 	private final static int DEFAULT_SEARCH_LIMIT = 500;
 	private final static Highlight[] NO_HIGHLIGHTS = new Highlight[0];
-	private DockingAction searchAction;
-	private DockingAction searchAgainAction;
 
 	private boolean waitingForSearchAll;
 	private SearchTextDialog searchDialog;
@@ -117,6 +113,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 
 	/**
 	 * The constructor for the SearchTextPlugin.
+	 * 
 	 * @param plugintool The tool required by this plugin.
 	 */
 	public SearchTextPlugin(PluginTool plugintool) {
@@ -263,10 +260,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	}
 
 	private ProgramLocation getStartLocation() {
-		if (currentLocation == null) {
-			currentLocation = navigatable.getLocation();
-		}
-		return currentLocation;
+		return currentLocation = navigatable.getLocation();
 	}
 
 	private void searchNext(Program program, Navigatable searchNavigatable, Searcher textSearcher) {
@@ -379,13 +373,14 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	private void createActions() {
 		String subGroup = getClass().getName();
 
-		searchAction = new ActionBuilder("Search Text", getName())
+		new ActionBuilder("Search Text", getName())
 				.menuPath("&Search", "Program &Text...")
 				.menuGroup("search", subGroup)
 				.keyBinding("ctrl shift E")
 				.description(DESCRIPTION)
 				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Search Text"))
 				.withContext(NavigatableActionContext.class)
+				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.supportsDefaultToolContext(true)
 				.onAction(c -> {
 					setNavigatable(c.getNavigatable());
@@ -393,7 +388,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				})
 				.buildAndInstall(tool);
 
-		searchAgainAction = new ActionBuilder("Repeat Text Search", getName())
+		new ActionBuilder("Repeat Text Search", getName())
 				.menuPath("&Search", "Repeat Text Search")
 				.menuGroup("search", subGroup)
 				.keyBinding("ctrl shift F3")
@@ -401,6 +396,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				.supportsDefaultToolContext(true)
 				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Repeat Text Search"))
 				.withContext(NavigatableActionContext.class)
+				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.enabledWhen(c -> searchedOnce)
 				.onAction(c -> {
 					setNavigatable(c.getNavigatable());
@@ -478,10 +474,9 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 			searchDialog.setHasSelection(context.hasSelection());
 		}
 
-		CodeViewerService codeViewerService = tool.getService(CodeViewerService.class);
-		String textSelection = codeViewerService.getCurrentFieldTextSelection();
-		ProgramLocation textField = codeViewerService.getCurrentLocation();
-		Address address = textField.getAddress();
+		String textSelection = navigatable.getTextSelection();
+		ProgramLocation location = navigatable.getLocation();
+		Address address = location.getAddress();
 		Listing listing = context.getProgram().getListing();
 		CodeUnit codeUnit = listing.getCodeUnitAt(address);
 		boolean isInstruction = false;
@@ -493,15 +488,16 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				else {
 					isInstruction = false;
 				}
-				searchDialog.setValueFieldText(textSelection);
-				searchDialog.setCurrentField(textField, isInstruction);
+				searchDialog.setCurrentField(location, isInstruction);
 			}
+			searchDialog.setValueFieldText(textSelection);
 		}
 		searchDialog.show(context.getComponentProvider());
 	}
 
 	/**
 	 * Get the address set for the selection.
+	 * 
 	 * @return null if there is no selection
 	 */
 	private AddressSetView getAddressSet(Navigatable searchNavigatable, SearchOptions options) {

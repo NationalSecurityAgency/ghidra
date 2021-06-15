@@ -66,7 +66,7 @@ class ToAdapterV0 extends ToAdapter {
 	@Override
 	public RefList getRefList(ProgramDB program, DBObjectCache<RefList> cache, Address to,
 			long toAddr) throws IOException {
-		Record rec = translateRecord(table.getRecord(toAddr));
+		DBRecord rec = translateRecord(table.getRecord(toAddr));
 		if (rec != null) {
 			return new RefListV0(rec, this, addrMap, program, cache, false);
 		}
@@ -79,18 +79,18 @@ class ToAdapterV0 extends ToAdapter {
 	}
 
 	@Override
-	public Record createRecord(long key, int numRefs, byte refLevel, byte[] refData)
+	public DBRecord createRecord(long key, int numRefs, byte refLevel, byte[] refData)
 			throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Record getRecord(long key) throws IOException {
+	public DBRecord getRecord(long key) throws IOException {
 		return translateRecord(table.getRecord(key));
 	}
 
 	@Override
-	public void putRecord(Record record) throws IOException {
+	public void putRecord(DBRecord record) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -127,18 +127,18 @@ class ToAdapterV0 extends ToAdapter {
 		return table.getRecordCount();
 	}
 
-	private Record translateRecord(Record oldRec) {
+	private DBRecord translateRecord(DBRecord oldRec) {
 		if (oldRec == null) {
 			return null;
 		}
-		Record rec = TO_REFS_SCHEMA.createRecord(oldRec.getKey());
+		DBRecord rec = TO_REFS_SCHEMA.createRecord(oldRec.getKey());
 		rec.setIntValue(REF_COUNT_COL, oldRec.getIntValue(REF_COUNT_COL));
 		rec.setBinaryData(REF_DATA_COL, oldRec.getBinaryData(REF_DATA_COL));
 		rec.setByteValue(REF_LEVEL_COL, getRefLevel(rec));
 		return rec;
 	}
 
-	private byte getRefLevel(Record newRec) {
+	private byte getRefLevel(DBRecord newRec) {
 		try {
 			RefList refList = new RefListV0(newRec, this, addrMap, null, null, false);
 			Reference[] refs = refList.getAllRefs();
@@ -179,14 +179,14 @@ class ToAdapterV0 extends ToAdapter {
 		}
 
 		@Override
-		public Record next() throws IOException {
-			Record rec = it.next();
+		public DBRecord next() throws IOException {
+			DBRecord rec = it.next();
 			return translateRecord(rec);
 		}
 
 		@Override
-		public Record previous() throws IOException {
-			Record rec = it.previous();
+		public DBRecord previous() throws IOException {
+			DBRecord rec = it.previous();
 			return translateRecord(rec);
 		}
 	}

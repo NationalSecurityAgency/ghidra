@@ -25,6 +25,7 @@ import javax.swing.*;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
 
+import docking.AbstractErrDialog;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import docking.wizard.WizardManager;
@@ -300,10 +301,9 @@ public class ProjectInfoDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		pressButtonByText(opt, "Update");
 		waitForTasks();
 
-		opt = waitForDialogComponent(OptionDialog.class);
-		assertNotNull(opt);
-		assertEquals("Failed to Update Shared Project Info", opt.getTitle());
-		opt.close();
+		AbstractErrDialog errorDialog = waitForErrorDialog();
+		assertEquals("Failed to Update Shared Project Info", errorDialog.getTitle());
+		close(errorDialog);
 	}
 
 	private void checkProjectInfo(String expectedRepName) {

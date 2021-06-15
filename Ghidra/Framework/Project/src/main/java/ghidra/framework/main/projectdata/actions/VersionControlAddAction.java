@@ -30,6 +30,7 @@ import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
@@ -80,7 +81,7 @@ public class VersionControlAddAction extends VersionControlAction {
 		if (!checkRepositoryConnected()) {
 			return;
 		}
-		List<DomainFile> unversioned = new ArrayList<DomainFile>();
+		List<DomainFile> unversioned = new ArrayList<>();
 		for (DomainFile domainFile : domainFiles) {
 			if (domainFile.isVersionControlSupported() && !domainFile.isVersioned()) {
 				unversioned.add(domainFile);
@@ -89,8 +90,8 @@ public class VersionControlAddAction extends VersionControlAction {
 		if (unversioned.isEmpty()) {
 			return;
 		}
-		ArrayList<DomainFile> list = new ArrayList<DomainFile>();
-		ArrayList<DomainFile> changedList = new ArrayList<DomainFile>();
+		ArrayList<DomainFile> list = new ArrayList<>();
+		ArrayList<DomainFile> changedList = new ArrayList<>();
 		for (DomainFile domainFile : unversioned) {
 			if (domainFile.isBusy()) {
 				Msg.showWarn(getClass(), null, "Add To Version Control Failed!",
@@ -140,8 +141,7 @@ public class VersionControlAddAction extends VersionControlAction {
 		public void run(TaskMonitor monitor) {
 			checkFilesInUse();
 			try {
-				for (int i = 0; i < list.size(); i++) {
-					DomainFile df = list.get(i);
+				for (DomainFile df : list) {
 					String name = df.getName();
 					monitor.setMessage("Adding " + name + " to Version Control");
 
@@ -152,21 +152,14 @@ public class VersionControlAddAction extends VersionControlAction {
 						return;
 					}
 
-					if (i != 0) {
-						try {
-							// Give Swing a chance to update
-							Thread.sleep(200);
-						}
-						catch (InterruptedException e2) {
-							// don't care??
-						}
-					}
+					// Note: this used to be a sleep(200) 
+					Swing.allowSwingToProcessEvents();
 
 					df.addToVersionControl(comments, keepCheckedOut, monitor);
 				}
 			}
 			catch (CancelledException e) {
-				System.out.println("Add to Version Control was canceled");
+				Msg.info(this, "Add to Version Control was canceled");
 			}
 			catch (IOException e) {
 				ClientUtil.handleException(repository, e, "Add to Version Control",

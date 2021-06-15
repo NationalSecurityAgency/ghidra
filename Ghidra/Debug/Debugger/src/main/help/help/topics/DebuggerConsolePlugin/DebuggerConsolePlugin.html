@@ -1,0 +1,72 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Memory Regions</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Console</H1>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/DebuggerConsolePlugin.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>The console logs messages from Ghidra related to the debugger. Depending on the exact
+    configuration, this can comprise a wide range of components, including all GUI views, active
+    connectors, and running agents. Currently, it implements an appender to gather all Log4J
+    messages emitted by Ghidra and filters for debugger-related packages and a level in the range
+    INFO through FATAL, inclusive. That feature will likely be removed as more components are
+    programmed to work directly with the console. Soon, it may also provide a command-line
+    interface to control Ghidra's debugging sessions and interact with traces.</P>
+
+    <P>Some log messages include an action context, allowing plug-ins to offer actions on that
+    message. These are said to be "actionable" messages. A noteworthy example is when navigating to
+    a module that could not be automatically mapped from the current project. Instead of displaying
+    a prompt, it will log a message and suggest actions to resolve the issue. A successful
+    resolution typically removes the message from the log. Note that additional actions may be
+    available from the context menu.</P>
+
+    <P>By default, the log is sorted so that actionable messages appear at the top. Then, it is
+    sorted by descending date, so that the most recent messages appear at the top. Like any other
+    Ghidra table, it can customized and filtered. Note that the filter box is at the top, because
+    we anticipate a command-line input in the future, which we'd like to place at the bottom.</P>
+
+    <H2>Table Columns</H2>
+
+    <P>The table has the following columns:</P>
+
+    <UL>
+      <LI>Icon - an icon to identify the type, topic, or source of a message.</LI>
+
+      <LI>Message - the message itself.</LI>
+
+      <LI>Actions - if actionable, a row of buttons for available actions.</LI>
+
+      <LI>Time - the time the message was generated in 24-hour HH:mm:ss.SSS format.</LI>
+    </UL>
+
+    <H2>Actions</H2>
+
+    <P>Not considering extension actions from other plugins, the console provides the
+    following:</P>
+
+    <H3><A name="clear"></A>Clear</H3>
+
+    <P>Removes all messages, including actionable messages, from the log.</P>
+
+    <H3><A name="select_none"></A>Select None</H3>
+
+    <P>Resets the selection, usually so table scrolling can be restored to "normal."</P>
+  </BODY>
+</HTML>

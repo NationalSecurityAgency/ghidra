@@ -191,7 +191,7 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 				if (monitor.isCancelled()) {
 					throw new CancelledException();
 				}
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				ObjectStorageAdapterDB oldObjStorage = new ObjectStorageAdapterDB(rec);
 				ObjectStorageAdapterDB newObjStorage = new ObjectStorageAdapterDB();
 				if (!tokenInstance.upgrade(oldObjStorage, schema.getVersion(), newObjStorage)) {
@@ -204,7 +204,7 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 					tempTable = tmpDb.createTable(getTableName(), newSchema);
 				}
 				Address addr = oldAddressMap.decodeAddress(rec.getKey());
-				Record newRecord = newSchema.createRecord(addrMap.getKey(addr, true));
+				DBRecord newRecord = newSchema.createRecord(addrMap.getKey(addr, true));
 				newObjStorage.save(newRecord);
 				if (tempTable != null) {
 					tempTable.putRecord(newRecord);
@@ -231,7 +231,7 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 				if (monitor.isCancelled()) {
 					throw new CancelledException();
 				}
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				propertyTable.putRecord(rec);
 				monitor.setProgress(++count);
 			}
@@ -258,7 +258,7 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 
 			String tableName = getTableName();
 			Schema s;
-			Record rec;
+			DBRecord rec;
 			if (saveableObjectClass != GenericSaveable.class) {
 				ObjectStorageAdapterDB objStorage = new ObjectStorageAdapterDB();
 				value.save(objStorage);
@@ -270,7 +270,7 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 			}
 			else { // GenericSaveable
 				GenericSaveable genericSaveable = ((GenericSaveable) value);
-				Record originalRec = genericSaveable.record;
+				DBRecord originalRec = genericSaveable.record;
 				s = genericSaveable.schema;
 				checkSchema(s);
 				createPropertyTable(tableName, s);
@@ -339,7 +339,7 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 				return obj;
 			}
 
-			Record rec = propertyTable.getRecord(key);
+			DBRecord rec = propertyTable.getRecord(key);
 			if (rec == null) {
 				return null;
 			}

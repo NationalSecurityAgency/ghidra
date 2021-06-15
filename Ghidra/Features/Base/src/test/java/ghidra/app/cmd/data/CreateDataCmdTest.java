@@ -25,6 +25,7 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
@@ -43,14 +44,6 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 	private Program program;
 	private Listing listing;
 	private ProgramBuilder builder;
-
-	/**
-	 * Constructor for CreateDataCmdTest.
-	 * @param arg0
-	 */
-	public CreateDataCmdTest() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -130,7 +123,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 		assertTrue(d.getDataType() instanceof ByteDataType);
 
 		// Byte becomes Word and consumes next Default data byte
-		cmd = new CreateDataCmd(addr, new WordDataType());
+		cmd = new CreateDataCmd(addr, new WordDataType(), false, ClearDataMode.CLEAR_SINGLE_DATA);
 		cmd.applyTo(program);
 
 		d = listing.getDataAt(addr);
@@ -161,7 +154,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 		assertTrue(d.getDataType() instanceof WordDataType);
 
 		// Word becomes Byte immediately followed by Default data
-		cmd = new CreateDataCmd(addr, new ByteDataType());
+		cmd = new CreateDataCmd(addr, new ByteDataType(), false, ClearDataMode.CLEAR_SINGLE_DATA);
 		cmd.applyTo(program);
 
 		d = listing.getDataAt(addr);
@@ -356,6 +349,36 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 		cmd.applyTo(program);
 
 		// Byte becomes Byte*
+		cmd = new CreateDataCmd(addr, false, true, new PointerDataType());
+		cmd.applyTo(program);
+
+		Data d = listing.getDataAt(addr);
+		assertNotNull(d);
+		assertTrue(d.isDefined());
+		assertEquals(4, d.getLength());
+		DataType dt = d.getDataType();
+		assertTrue(dt instanceof Pointer);
+		assertEquals(addr.getPointerSize(), dt.getLength());
+		Pointer pdt = (Pointer) dt;
+		assertNull(pdt.getDataType());
+
+		d = listing.getDataAfter(addr);
+		assertNotNull(d);
+		assertTrue(!d.isDefined());
+		assertEquals(4, d.getMinAddress().getOffset() - UNDEFINED_AREA);
+
+	}
+
+	@Test
+	public void testCreatePointerOnMultipleUndefined1Data() {
+
+		Address addr = addr(UNDEFINED_AREA);
+		CreateDataCmd cmd = new CreateDataCmd(addr, new Undefined1DataType());
+		cmd.applyTo(program);
+		cmd = new CreateDataCmd(addr.next(), new Undefined1DataType());
+		cmd.applyTo(program);
+
+		// two Undefined1 data becomes Pointer
 		cmd = new CreateDataCmd(addr, false, true, new PointerDataType());
 		cmd.applyTo(program);
 
@@ -606,8 +629,9 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 		cmd.applyTo(program);
 
 		// Add external reference from pointer
-		program.getReferenceManager().addExternalReference(addr, "OtherFile", "ExtLabel", null,
-			SourceType.USER_DEFINED, 0, RefType.DATA);
+		program.getReferenceManager()
+				.addExternalReference(addr, "OtherFile", "ExtLabel", null,
+					SourceType.USER_DEFINED, 0, RefType.DATA);
 
 		// Undefined* becomes Byte*
 		cmd = new CreateDataCmd(addr, false, true, new ByteDataType());
@@ -693,7 +717,8 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 		assertEquals(10, dt.getLength());
 
 		// Byte[] becomes Byte
-		CreateDataCmd cmd = new CreateDataCmd(addr, new ByteDataType());
+		CreateDataCmd cmd =
+			new CreateDataCmd(addr, new ByteDataType(), false, ClearDataMode.CLEAR_SINGLE_DATA);
 		cmd.applyTo(program);
 
 		d = listing.getDataAt(addr);
@@ -761,7 +786,8 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 		assertEquals(10, dt.getLength());
 
 		// struct becomes Byte
-		CreateDataCmd cmd = new CreateDataCmd(addr, new ByteDataType());
+		CreateDataCmd cmd =
+			new CreateDataCmd(addr, new ByteDataType(), false, ClearDataMode.CLEAR_SINGLE_DATA);
 		cmd.applyTo(program);
 
 		d = listing.getDataAt(addr);

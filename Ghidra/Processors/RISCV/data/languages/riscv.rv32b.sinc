@@ -1,0 +1,131 @@
+# RV32 Bitmanip Extension
+
+:andn rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x20 & rd & rs1 & rs2 unimpl
+
+:bdep rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x24 & rd & rs1 & rs2 unimpl
+
+:bext rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x4 & rd & rs1 & rs2 unimpl
+
+:bfp rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x24 & rd & rs1 & rs2 unimpl
+
+:clmul  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x5 & rd & rs1 & rs2 unimpl
+
+:clmulh rd, rs1, rs2 is op0006=0x33 & op1214=0x3 & op2531=0x5 & rd & rs1 & rs2 unimpl
+
+:clmulr rd, rs1, rs2 is op0006=0x33 & op1214=0x2 & op2531=0x5 & rd & rs1 & rs2 unimpl
+
+:clz rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x0 & op2531=0x30 & rd & rs1 unimpl
+
+:cmix rd, rs2, rs1, rs3 is op0006=0x33 & op1214=0x1 & op2526=0x3 & rd & rs1 & rs2 & rs3 unimpl
+
+:cmov rd, rs2, rs1, rs3 is op0006=0x33 & op1214=0x5 & op2526=0x3 & rd & rs1 & rs2 & rs3 unimpl
+
+:crc32.b rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x10 & op2531=0x30 & rd & rs1 unimpl
+
+:crc32.h rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x11 & op2531=0x30 & rd & rs1 unimpl
+
+:crc32.w rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x12 & op2531=0x30 & rd & rs1 unimpl
+
+:crc32c.b rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x18 & op2531=0x30 & rd & rs1 unimpl
+
+:crc32c.h rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x19 & op2531=0x30 & rd & rs1 unimpl
+
+:crc32c.w rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x1a & op2531=0x30 & rd & rs1 unimpl
+
+:ctz rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x1 & op2531=0x30 & rd & rs1 unimpl
+
+:fsl  rd, rs1, rs3, rs2 is op0006=0x33 & op1214=0x1 & op2526=0x2 & rd & rs1 & rs2 & rs3 unimpl
+
+:fsr  rd, rs1, rs3, rs2 is op0006=0x33 & op1214=0x5 & op2526=0x2 & rd & rs1 & rs2 & rs3 unimpl
+
+#TODO  fix op2025
+#TODO  this looks like a typo in 0.92
+:fsri rd, rs1, rs3, op2025 is op0006=0x33 & op1214=0x5 & op2626=0x1 & op2025 & rd & rs1 & rs3 unimpl
+
+:gorc  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x14 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2026
+:gorci rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0x5 & op2026 & rd & rs1 unimpl
+
+:grev  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x34 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2026
+:grevi rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0xd & op2026 & rd & rs1 unimpl
+
+:max  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x5 & rd & rs1 & rs2 unimpl
+
+:maxu rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x5 & rd & rs1 & rs2 unimpl
+
+:min  rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x5 & rd & rs1 & rs2 unimpl
+
+:minu rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x5 & rd & rs1 & rs2 unimpl
+
+:orn  rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x20 & rd & rs1 & rs2 unimpl
+
+:pack  rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x4 & rd & rs1 & rs2 unimpl
+
+:packh rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x4 & rd & rs1 & rs2 unimpl
+
+:packu rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x24 & rd & rs1 & rs2 unimpl
+
+:pcnt rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x2 & op2531=0x30 & rd & rs1 unimpl
+
+:rol  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x30 & rd & rs1 & rs2 unimpl
+
+:ror  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x30 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2026
+:rori rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0xc & op2026 & rd & rs1 unimpl
+
+:sbclr  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x24 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2026
+:sbclri rd, rs1, op2026 is op0006=0x13 & op1214=0x1 & op2731=0x9 & op2026 & rd & rs1 unimpl
+
+:sbext  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x24 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2026
+:sbexti rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0x9 & op2026 & rd & rs1 unimpl
+
+:sbinv  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x34 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2026
+:sbinvi rd, rs1, op2026 is op0006=0x13 & op1214=0x1 & op2731=0xd & op2026 & rd & rs1 unimpl
+
+:sbset  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x14 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2026
+:sbseti rd, rs1, op2026 is op0006=0x13 & op1214=0x1 & op2731=0x5 & op2026 & rd & rs1 unimpl
+
+:sext.b rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x4 & op2531=0x30 & rd & rs1 unimpl
+
+:sext.h rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x5 & op2531=0x30 & rd & rs1 unimpl
+
+:sh1add rd, rs1, rs2 is op0006=0x33 & op1214=0x2 & op2531=0x10 & rd & rs1 & rs2 unimpl
+
+:sh2add rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x10 & rd & rs1 & rs2 unimpl
+
+:sh3add rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x10 & rd & rs1 & rs2 unimpl
+
+:shfl    rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x4 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2025
+:shfli   rd, rs1, op2025 is op0006=0x13 & op1214=0x1 & op2631=0x2 & op2025 & rd & rs1 unimpl
+
+:slo  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x10 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2026
+:sloi rd, rs1, op2026 is op0006=0x13 & op1214=0x1 & op2731=0x4 & op2026 & rd & rs1 unimpl
+
+:sro  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x10 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2026
+:sroi rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0x4 & op2026 & rd & rs1 unimpl
+
+:unshfl  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x4 & rd & rs1 & rs2 unimpl
+
+#TODO  fix op2025
+:unshfli rd, rs1, op2025 is op0006=0x13 & op1214=0x5 & op2631=0x2 & op2025 & rd & rs1 unimpl
+
+:xnor rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x20 & rd & rs1 & rs2 unimpl
+

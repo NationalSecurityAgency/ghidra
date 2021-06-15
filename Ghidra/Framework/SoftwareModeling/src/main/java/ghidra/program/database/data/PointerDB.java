@@ -17,7 +17,7 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.DBObjectCache;
@@ -40,21 +40,22 @@ class PointerDB extends DataTypeDB implements Pointer {
 	private String displayName;
 
 	/**
-	 * <code>isEquivalentActive</code> is used to break cyclical recursion
-	 * when performing an {@link #isEquivalent(DataType)} checks on pointers
-	 * which must also check the base datatype equivelency.
+	 * <code>isEquivalentActive</code> is used to break cyclical recursion when
+	 * performing an {@link #isEquivalent(DataType)} checks on pointers which must
+	 * also check the base datatype equivelency.
 	 */
 	private ThreadLocal<Boolean> isEquivalentActive = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
 	/**
 	 * Constructor
+	 * 
 	 * @param dataMgr
 	 * @param cache
 	 * @param adapter
 	 * @param record
 	 */
 	public PointerDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
-			PointerDBAdapter adapter, Record record) {
+			PointerDBAdapter adapter, DBRecord record) {
 		super(dataMgr, cache, record);
 		this.adapter = adapter;
 	}
@@ -107,7 +108,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 	@Override
 	protected boolean refresh() {
 		try {
-			Record rec = adapter.getRecord(key);
+			DBRecord rec = adapter.getRecord(key);
 			if (rec != null) {
 				record = rec;
 				return super.refresh();
@@ -125,7 +126,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 			return this;
 		}
 		// don't clone referenced data-type to avoid potential circular reference
-		return new PointerDataType(getDataType(), isDynamicallySized() ? -1 : getLength(), dtm);
+		return new PointerDataType(getDataType(), hasLanguageDependantLength() ? -1 : getLength(), dtm);
 	}
 
 	@Override
@@ -135,23 +136,31 @@ class PointerDB extends DataTypeDB implements Pointer {
 
 	@Override
 	public String getDisplayName() {
-		// NOTE: Pointer display name only specifies length if null base type
-		validate(lock);
 		String localDisplayName = displayName;
-		if (localDisplayName == null) {
-			DataType dt = getDataType();
-			if (dt == null) {
-				localDisplayName = PointerDataType.POINTER_NAME;
-				if (!isDynamicallySized()) {
-					localDisplayName += Integer.toString(getLength() * 8);
+		if (localDisplayName != null && !isInvalid()) {
+			return localDisplayName;
+		}
+		lock.acquire();
+		try {
+			checkIsValid();
+			if ( displayName == null ) {
+				// NOTE: Pointer display name only specifies length if null base type
+				DataType dt = getDataType();
+				if (dt == null) {
+					displayName = PointerDataType.POINTER_NAME;
+					if (!hasLanguageDependantLength()) {
+						displayName += Integer.toString(getLength() * 8);
+					}
+				}
+				else {
+					displayName = dt.getDisplayName() + " *";
 				}
 			}
-			else {
-				localDisplayName = dt.getDisplayName() + " *";
-			}
-			displayName = localDisplayName;
+			return displayName;
 		}
-		return localDisplayName;
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override
@@ -171,7 +180,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
+	public boolean hasLanguageDependantLength() {
 		lock.acquire();
 		try {
 			checkIsValid();
@@ -204,7 +213,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 		try {
 			checkIsValid();
 			StringBuffer sbuf = new StringBuffer();
-			if (!isDynamicallySized()) {
+			if (!hasLanguageDependantLength()) {
 				sbuf.append(Integer.toString(getLength() * 8));
 				sbuf.append("-bit ");
 			}
@@ -282,10 +291,10 @@ class PointerDB extends DataTypeDB implements Pointer {
 
 		Pointer p = (Pointer) dt;
 		DataType otherDataType = p.getDataType();
-		if (isDynamicallySized() != p.isDynamicallySized()) {
+		if (hasLanguageDependantLength() != p.hasLanguageDependantLength()) {
 			return false;
 		}
-		if (!isDynamicallySized() && (getLength() != p.getLength())) {
+		if (!hasLanguageDependantLength() && (getLength() != p.getLength())) {
 			return false;
 		}
 
@@ -306,6 +315,15 @@ class PointerDB extends DataTypeDB implements Pointer {
 			otherDataType.getPathName())) {
 			return false;
 		}
+
+		// TODO: The pointer deep-dive equivalence checking on the referenced datatype can 
+		// cause types containing pointers (composites, functions) to conflict when in
+		// reality the referenced type simply has multiple implementations which differ.
+		// Although without doing this Ghidra may fail to resolve dependencies which differ
+		// from those already contained within a datatype manager.
+		// Ghidra's rigid datatype relationships prevent the flexibility to handle 
+		// multiple implementations of a named datatype without inducing a conflicted
+		// datatype hierarchy.
 
 		if (isEquivalentActive.get()) {
 			return true;
@@ -359,11 +377,12 @@ class PointerDB extends DataTypeDB implements Pointer {
 	/**
 	 * @see ghidra.program.model.data.DataType#setCategoryPath(ghidra.program.model.data.CategoryPath)
 	 *
-	 * Note: this does get called, but in a tricky way.  If externally, someone calls
-	 * setCategoryPath, nothing happens because it is overridden in this class to do nothing.
-	 * However, if updatePath is called, then this method calls super.setCategoryPath which
-	 * bypasses the "overriddenness" of setCategoryPath, resulting in this method getting called.
-	
+	 *      Note: this does get called, but in a tricky way. If externally, someone
+	 *      calls setCategoryPath, nothing happens because it is overridden in this
+	 *      class to do nothing. However, if updatePath is called, then this method
+	 *      calls super.setCategoryPath which bypasses the "overriddenness" of
+	 *      setCategoryPath, resulting in this method getting called.
+	 * 
 	 */
 	@Override
 	protected void doSetCategoryPathRecord(long categoryID) throws IOException {
@@ -428,7 +447,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 
 	@Override
 	public Pointer newPointer(DataType dataType) {
-		if (isDynamicallySized()) {
+		if (hasLanguageDependantLength()) {
 			return new PointerDataType(dataType, dataMgr);
 		}
 		return new PointerDataType(dataType, getLength(), dataMgr);

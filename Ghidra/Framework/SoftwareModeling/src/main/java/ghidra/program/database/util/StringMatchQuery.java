@@ -21,7 +21,7 @@ package ghidra.program.database.util;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.util.UserSearchUtils;
 
 /**
@@ -45,7 +45,7 @@ public class StringMatchQuery implements Query {
 	}
 
 	@Override
-	public boolean matches(Record record) {
+	public boolean matches(DBRecord record) {
 
 		String value = record.getString(col);
 		Matcher matcher = pattern.matcher(value);

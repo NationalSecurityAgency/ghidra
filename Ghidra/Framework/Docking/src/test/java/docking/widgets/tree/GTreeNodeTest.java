@@ -412,19 +412,11 @@ public class GTreeNodeTest {
 		events.clear();
 		node.unloadChildren();
 		assertFalse(node.isLoaded());
-		assertTrue(events.isEmpty());
-	}
 
-	@Test
-	public void testReloadOnLazyNode() throws CancelledException {
-		GTreeLazyNode node = new LazyTestNode("test", 2);
-		node.loadAll(TaskMonitor.DUMMY);
-		assertTrue(node.isLoaded());
-
-		events.clear();
-		node.reload();
-		assertFalse(node.isLoaded());
-		assertFalse(events.isEmpty());
+		assertEquals(1, events.size());
+		TestEvent event = events.get(0);
+		assertEquals(EventType.STRUCTURE_CHANGED, event.type);
+		assertEquals(node, event.node);
 	}
 
 	@Test
@@ -465,6 +457,24 @@ public class GTreeNodeTest {
 	}
 
 	@Test
+	public void testCantAddNodeTwice() {
+		node0 = new TestNode("No Dups");
+
+		int childCount = root.getChildCount();
+		root.addNode(node0);
+		assertEquals(childCount + 1, root.getChildCount());
+
+		// now make sure the count doesn't grow again
+		root.addNode(node0);
+		assertEquals(childCount + 1, root.getChildCount());
+
+		// try adding it with an index, still shouldn't get added
+		root.addNode(0, node0);
+		assertEquals(childCount + 1, root.getChildCount());
+
+	}
+
+	@Test
 	public void testCloneEquals() throws CloneNotSupportedException {
 		GTreeNode nodeA = new TestNode("AAA");
 		assertEquals(nodeA, nodeA.clone());
@@ -481,7 +491,7 @@ public class GTreeNodeTest {
 
 		@Override
 		public boolean acceptsNode(GTreeNode node) {
-			return node.getName().contains(text);
+			return node.getDisplayText().contains(text);
 		}
 
 		@Override
@@ -543,7 +553,6 @@ public class GTreeNodeTest {
 			events.add(new TestEvent(EventType.NODE_REMOVED, this, removedNode, -1));
 		}
 	}
-
 
 	enum EventType {
 		STRUCTURE_CHANGED, NODE_CHANGED, NODE_ADDED, NODE_REMOVED

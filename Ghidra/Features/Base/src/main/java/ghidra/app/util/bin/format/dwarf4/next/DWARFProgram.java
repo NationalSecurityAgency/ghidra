@@ -33,6 +33,7 @@ import ghidra.app.util.opinion.MachoLoader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.Msg;
@@ -53,12 +54,8 @@ public class DWARFProgram implements Closeable {
 	private static final int NAME_HASH_REPLACEMENT_SIZE = 8 + 2 + 2;
 	private static final String ELLIPSES_STR = "...";
 
-	public static boolean alreadyDWARFImported(Program prog) {
-		return DWARFFunctionImporter.hasDWARFProgModule(prog, DWARF_ROOT_NAME);
-	}
-
 	/**
-	 * Returns true if the {@link Program program} probably DWARF information.
+	 * Returns true if the {@link Program program} probably has DWARF information.
 	 * <p>
 	 * If the program is an Elf binary, it must have (at least) ".debug_info" and ".debug_abbr" program sections.
 	 * <p>
@@ -66,17 +63,17 @@ public class DWARFProgram implements Closeable {
 	 * original binary file on the native filesystem.  (ie. outside of Ghidra).  See the DSymSectionProvider
 	 * for more info.
 	 * <p>
-	 * @param program
-	 * @param monitor
-	 * @return
+	 * @param program {@link Program} to test
+	 * @return boolean true if program has DWARF info, false if not
 	 */
-	public static boolean isDWARF(Program program, TaskMonitor monitor) {
+	public static boolean isDWARF(Program program) {
 		String format = program.getExecutableFormat();
 
-		if (ElfLoader.ELF_NAME.equals(format)) {
+		if (ElfLoader.ELF_NAME.equals(format) &&
+			DWARFSectionProviderFactory.createSectionProviderFor(program) != null) {
 			return true;
 		}
-		else if (MachoLoader.MACH_O_NAME.equals(format) &&
+		if (MachoLoader.MACH_O_NAME.equals(format) &&
 			DSymSectionProvider.getDSYMForProgram(program) != null) {
 			return true;
 		}
@@ -187,11 +184,10 @@ public class DWARFProgram implements Closeable {
 		this.nameLengthCutoffSize = Math.max(MIN_NAME_LENGTH_CUTOFF,
 			Math.min(importOptions.getNameLengthCutoff(), MAX_NAME_LENGTH_CUTOFF));
 
-
 		monitor.setMessage("Reading DWARF debug string table");
 		this.debugStrings = StringTable.readStringTable(
 			sectionProvider.getSectionAsByteProvider(DWARFSectionNames.DEBUG_STR));
-		Msg.info(this, "Read DWARF debug string table, " + debugStrings.getByteCount() + " bytes.");
+//		Msg.info(this, "Read DWARF debug string table, " + debugStrings.getByteCount() + " bytes.");
 
 		this.attributeFactory = new DWARFAttributeFactory(this);
 
@@ -392,7 +388,7 @@ public class DWARFProgram implements Closeable {
 
 		// Name was not found
 		if (isAnonDWARFName(name)) {
-			name = "anon_" + DWARFUtil.getContainerTypeName(diea);
+			name = createAnonName("anon_" + DWARFUtil.getContainerTypeName(diea), diea);
 			isAnon = true;
 		}
 
@@ -416,19 +412,25 @@ public class DWARFProgram implements Closeable {
 		try {
 			int dwarfSize = diea.parseInt(DWARFAttribute.DW_AT_byte_size, 0);
 			int dwarfEncoding = (int) diea.getUnsignedLong(DWARFAttribute.DW_AT_encoding, -1);
-			String name =
-				"anon_basetype_" + DWARFEncoding.getTypeName(dwarfEncoding) + "_" + dwarfSize;
+			String name = createAnonName(
+				"anon_basetype_" + DWARFEncoding.getTypeName(dwarfEncoding) + "_" + dwarfSize,
+				diea);
 			return name;
 		}
 		catch (IOException | DWARFExpressionException e) {
-			return "anon_basetype_unknown";
+			return createAnonName("anon_basetype_unknown", diea);
 		}
 	}
 
 	private String getAnonEnumName(DIEAggregate diea) {
 		int enumSize = Math.max(1, (int) diea.getUnsignedLong(DWARFAttribute.DW_AT_byte_size, 1));
-		String name = "anon_enum_" + (enumSize * 8);
+		String name = createAnonName("anon_enum_" + (enumSize * 8), diea);
 		return name;
+	}
+
+	private static String createAnonName(String baseName, DIEAggregate diea) {
+		return baseName + DataType.CONFLICT_SUFFIX + diea.getHexOffset();
+
 	}
 
 	/**
@@ -764,8 +766,7 @@ public class DWARFProgram implements Closeable {
 				if (refdOffset == -1) {
 					continue;
 				}
-				DWARFCompilationUnit targetCU = getCompilationUnitFor(refdOffset);
-				if (targetCU != null && targetCU != die.getCompilationUnit()) {
+				if (!die.getCompilationUnit().containsOffset(refdOffset)) {
 					return true;
 				}
 			}

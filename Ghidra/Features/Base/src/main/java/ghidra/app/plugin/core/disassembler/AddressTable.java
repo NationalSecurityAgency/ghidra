@@ -217,7 +217,7 @@ public class AddressTable {
 	 * @param end end index (inclusive)
 	 * @param createIndex don't create index if false
 	 * @param autoLabel true if labels should be created on the table
-	 * @return
+	 * @return true if tablecreated else false
 	 */
 	public boolean makeTable(Program program, int start, int end, boolean createIndex,
 			boolean autoLabel) {
@@ -236,13 +236,17 @@ public class AddressTable {
 
 		//TODO: Do I need to do something special for the 3 byte pointers or will it know
 		// how to make it automatically?
+		DataTypeManager dtm = program.getDataTypeManager();
 		if (shiftedAddr) {
 			adt = ShiftedAddressDataType.dataType;
 		}
-		else {
-			adt = new PointerDataType(DataType.DEFAULT, addrSize);
+		else if (addrSize == program.getDefaultPointerSize()) {
+			adt = new PointerDataType(DataType.DEFAULT, dtm);
 		}
-		adt = program.getDataTypeManager().resolve(adt, null);
+		else {
+			adt = new PointerDataType(DataType.DEFAULT, addrSize, dtm);
+		}
+		adt = dtm.resolve(adt, null);
 
 		Address newAddress = currentAddress;
 

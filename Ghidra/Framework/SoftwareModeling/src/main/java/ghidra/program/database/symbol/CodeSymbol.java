@@ -15,7 +15,7 @@
  */
 package ghidra.program.database.symbol;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.external.ExternalManagerDB;
 import ghidra.program.model.address.Address;
@@ -46,7 +46,7 @@ public class CodeSymbol extends SymbolDB {
 	 * @param record the record for this symbol
 	 */
 	public CodeSymbol(SymbolManager mgr, DBObjectCache<SymbolDB> cache, Address addr,
-			Record record) {
+			DBRecord record) {
 		super(mgr, cache, addr, record);
 	}
 
@@ -70,7 +70,7 @@ public class CodeSymbol extends SymbolDB {
 	}
 
 	@Override
-	protected boolean refresh(Record rec) {
+	protected boolean refresh(DBRecord rec) {
 		if (!isDynamic()) {
 			return super.refresh(rec);
 		}

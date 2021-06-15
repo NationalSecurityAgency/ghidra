@@ -24,6 +24,7 @@ public interface HoverProvider {
 
 	/**
 	 * Returns true if this service's popup window is currently visible
+	 * @return true if this service's popup window is currently visible
 	 */
 	public boolean isShowing();
 

@@ -1,0 +1,10 @@
+@define ENDIAN "big"
+@define SIZE "8"
+
+@define INSTR_PHASE "" # not used by basic toy language
+
+@include "toy.sinc"
+
+define space data type=ram_space size=$(SIZE) wordsize=$(WORDSIZE);
+
+@include "toyInstructions.sinc"

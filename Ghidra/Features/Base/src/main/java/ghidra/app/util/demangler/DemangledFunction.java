@@ -22,6 +22,8 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.*;
 import ghidra.app.util.NamespaceUtils;
+import ghidra.app.util.PseudoDisassembler;
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
@@ -127,9 +129,9 @@ public class DemangledFunction extends DemangledObject {
 		return callingConvention;
 	}
 
-	/** 
-	 * Special constructor where it has a templated type before the parameter list 
-	 * @param type the type 
+	/**
+	 * Special constructor where it has a templated type before the parameter list
+	 * @param type the type
 	 */
 	public void setTemplatedConstructorType(String type) {
 		this.templatedConstructorType = type;
@@ -207,7 +209,6 @@ public class DemangledFunction extends DemangledObject {
 			if (!isTypeCast()) {
 				buffer.append(returnType == null ? "" : returnType.getSignature() + " ");
 			}
-//			buffer.append(returnType == null ? "" : returnType.toSignature() + " ");
 		}
 
 		buffer.append(callingConvention == null ? "" : callingConvention + " ");
@@ -229,25 +230,8 @@ public class DemangledFunction extends DemangledObject {
 			buffer.append('<').append(templatedConstructorType).append('>');
 		}
 
-		Iterator<DemangledDataType> paramIterator = parameters.iterator();
-		buffer.append('(');
-		String pad = format ? pad(buffer.length()) : "";
-		if (!paramIterator.hasNext()) {
-			buffer.append("void");
-		}
+		addParameters(buffer, format);
 
-		while (paramIterator.hasNext()) {
-			buffer.append(paramIterator.next().getSignature());
-			if (paramIterator.hasNext()) {
-				buffer.append(',');
-				if (format) {
-					buffer.append('\n');
-				}
-				buffer.append(pad);
-			}
-		}
-
-		buffer.append(')');
 		buffer.append(storageClass == null ? "" : " " + storageClass);
 
 		if (returnType instanceof DemangledFunctionPointer) {
@@ -303,6 +287,29 @@ public class DemangledFunction extends DemangledObject {
 		return buffer.toString();
 	}
 
+	protected void addParameters(StringBuilder buffer, boolean format) {
+		Iterator<DemangledDataType> paramIterator = parameters.iterator();
+		buffer.append('(');
+		int padLength = format ? buffer.length() : 0;
+		String pad = StringUtils.rightPad("", padLength);
+		if (!paramIterator.hasNext()) {
+			buffer.append("void");
+		}
+
+		while (paramIterator.hasNext()) {
+			buffer.append(paramIterator.next().getSignature());
+			if (paramIterator.hasNext()) {
+				buffer.append(',');
+				if (format) {
+					buffer.append('\n');
+				}
+				buffer.append(pad);
+			}
+		}
+
+		buffer.append(')');
+	}
+
 	@Override
 	public String getNamespaceName() {
 		return getName() + getParameterString();
@@ -335,32 +342,83 @@ public class DemangledFunction extends DemangledObject {
 		return super.isAlreadyDemangled(program, address);
 	}
 
+	/**
+	 * This method assumes preconditions test has been run.
+	 */
+	private boolean shouldDisassemble(Program program, Address address, DemanglerOptions options) {
+		CodeUnit codeUnit = program.getListing().getCodeUnitAt(address);
+		return (codeUnit instanceof Data); // preconditions check guarantees data is undefined data.
+	}
+
+	private boolean passesPreconditions(Program program, Address address) throws Exception {
+
+		if (!demangledNameSuccessfully()) {
+			throw new DemangledException("Symbol did not demangle at address: " + address);
+		}
+
+		if (isAlreadyDemangled(program, address)) {
+			return false; // not an error, but signifies that we should not continue to process
+		}
+
+		if (address.isMemoryAddress()) {
+			CodeUnit codeUnit = program.getListing().getCodeUnitAt(address);
+			if (codeUnit == null) {
+				throw new IllegalArgumentException(
+					"Address not in memory or is off-cut data/instruction: " + address);
+			}
+			if (codeUnit instanceof Data) {
+				if (((Data) codeUnit).isDefined()) {
+					throw new IllegalArgumentException("Defined data at address: " + address);
+				}
+			}
+		}
+		return true;
+	}
+
 	@Override
 	public boolean applyTo(Program program, Address address, DemanglerOptions options,
 			TaskMonitor monitor) throws Exception {
 
-		if (isAlreadyDemangled(program, address)) {
-			return true;
+		// Account for register context.  This class may trigger disassembly, so we need to make
+		// sure that the context is correctly set before that happens.  Also, be sure to apply
+		// the function to the correct address.
+		address = PseudoDisassembler.setTargeContextForDisassembly(program, address);
+
+		if (!passesPreconditions(program, address)) {
+			return true; // eventually will not return anything 
 		}
 
 		if (!super.applyTo(program, address, options, monitor)) {
 			return false;
 		}
 
-		Function function = createFunction(program, address, options.doDisassembly(), monitor);
+		boolean disassemble = shouldDisassemble(program, address, options);
+		Function function = createFunction(program, address, disassemble, monitor);
 		if (function == null) {
-			// no function whose signature we need to update
-			// NOTE: this does not make much sense
-			// renameExistingSymbol(program, address, symbolTable);
-			// maybeCreateUndefined(program, address);
+			// No function whose signature we need to update
 			return false;
 		}
 
-		//if existing function signature is user defined - add demangled label only
+		if (function.isThunk()) {
+			// If thunked function has same mangled name we can discard our
+			// symbol if no other symbols at this address (i.e., rely entirely on
+			// thunked function).
+			// NOTE: mangled name on external may be lost once it is demangled.
+			if (shouldThunkBePreserved(function)) {
+				// Preserve thunk and remove mangled symbol.  Allow to proceed normally by returning true.
+				function.getSymbol().setName(null, SourceType.DEFAULT);
+				return true;
+			}
+
+			// Break thunk relationship and continue applying demangle function below
+			function.setThunkedFunction(null);
+		}
+
+		// If existing function signature is user defined - add demangled label only
 		boolean makePrimary = (function.getSignatureSource() != SourceType.USER_DEFINED);
 
-		Symbol demangledSymbol = applyDemangledName(function.getEntryPoint(), makePrimary,
-			false, program);
+		Symbol demangledSymbol =
+			applyDemangledName(function.getEntryPoint(), makePrimary, false, program);
 		if (demangledSymbol == null) {
 			return false;
 		}
@@ -379,7 +437,7 @@ public class DemangledFunction extends DemangledObject {
 			signature.setVarArgs(true);
 		}
 		if (!function.isExternal() && isParameterMismatch(function, signature)) {
-			bookmarkParameterMismatch(program, function.getEntryPoint(), args);
+			bookmarkParameterMismatch(program, function.getEntryPoint());
 			return true;
 		}
 
@@ -393,6 +451,65 @@ public class DemangledFunction extends DemangledObject {
 		cmd.applyTo(program);
 
 		return true;
+	}
+
+	/**
+	 * Determine if existing thunk relationship should be preserved and mangled symbol
+	 * discarded.  This is the case when the thunk function mangled name matches
+	 * the thunked function since we want to avoid duplicate symbol names.
+	 * @param thunkFunction thunk function with a mangled symbol which is currently
+	 * being demangled.
+	 * @return true if thunk should be preserved and mangled symbol discarded, otherwise
+	 * false if thunk relationship should be eliminated and demangled function information
+	 * should be applied as normal.
+	 */
+	private boolean shouldThunkBePreserved(Function thunkFunction) {
+		Program program = thunkFunction.getProgram();
+		SymbolTable symbolTable = program.getSymbolTable();
+		if (thunkFunction.getSymbol().isExternalEntryPoint()) {
+			return false; // entry point should retain its own symbol
+		}
+		Symbol[] symbols = symbolTable.getSymbols(thunkFunction.getEntryPoint());
+		if (symbols.length > 1) {
+			return false; // too many symbols present to preserve thunk
+		}
+		// NOTE: order of demangling unknown - thunked function may, or may not, have
+		// already been demangled
+		Function thunkedFunction = thunkFunction.getThunkedFunction(true);
+		if (mangled.equals(thunkedFunction.getName())) {
+			// thunked function has matching mangled name
+			return true;
+		}
+		if (thunkedFunction.isExternal()) {
+			if (thunkedFunction.getParentNamespace() instanceof Library) {
+				// Thunked function does not have mangled name, if it did it would have
+				// matched name check above or now reside in a different namespace
+				return false;
+			}
+			// assume external contained with specific namespace
+			ExternalLocation externalLocation =
+				program.getExternalManager().getExternalLocation(thunkedFunction.getSymbol());
+			String originalImportedName = externalLocation.getOriginalImportedName();
+			if (originalImportedName == null) {
+				// assume external manually manipulated without use of mangled name
+				return false;
+			}
+			if (mangled.equals(externalLocation.getOriginalImportedName())) {
+				// matching mangled name also resides at thunked function location
+				return true;
+			}
+
+			// TODO: carefully compare signature in absence of matching mangled name
+			return false;
+		}
+
+		if (symbolTable.getSymbol(mangled, thunkedFunction.getEntryPoint(),
+			program.getGlobalNamespace()) != null) {
+			// matching mangled name also resides at thunked function location
+			return true;
+		}
+
+		return false;
 	}
 
 	private boolean hasVarArgs() {
@@ -412,26 +529,15 @@ public class DemangledFunction extends DemangledObject {
 		return false;
 	}
 
-	private void bookmarkParameterMismatch(Program program, Address address,
-			List<ParameterDefinitionImpl> args) {
+	private void bookmarkParameterMismatch(Program program, Address address) {
 
 		if (parameters.isEmpty()) {
 			return;
 		}
 
-		int pointerSize = program.getDefaultPointerSize();
 		BookmarkManager bookmarkManager = program.getBookmarkManager();
-		for (int i = 0; i < args.size(); i++) {
-			if (args.get(i).getLength() > pointerSize) {
-				bookmarkManager.setBookmark(address, BookmarkType.ANALYSIS, "Demangler",
-					"Couldn't apply demangled signature - probably due to datatype that is too " +
-						"large to fit in a parameter");
-			}
-		}
-
 		bookmarkManager.setBookmark(address, BookmarkType.ANALYSIS, "Demangler",
-			"Couldn't apply demangled signature - bad parameter number match (" + args.size() +
-				") in a function in a namespace");
+			"Couldn't apply demangled signature - mismatch with existing signature");
 	}
 
 	static void maybeCreateUndefined(Program program, Address address) {
@@ -472,8 +578,12 @@ public class DemangledFunction extends DemangledObject {
 		// If returnType is null check for constructor or destructor names
 		if (THIS_CALL.equals(function.getCallingConventionName())) {
 			String n = getName();
-			if (n.equals("~" + namespace.getName()) || n.equals(namespace.getName())) {
-				// constructor && destructor
+			if (n.equals(namespace.getName())) {
+				// constructor
+				return DataType.DEFAULT;
+			}
+			if (n.equals("~" + namespace.getName())) {
+				// destructor
 				return VoidDataType.dataType;
 			}
 		}
@@ -511,7 +621,7 @@ public class DemangledFunction extends DemangledObject {
 		if (program.getCompilerSpec().getCallingConvention(callingConvention) == null) {
 			// warn that calling convention not found.  Datatypes are still good,
 			// the real calling convention can be figured out later
-			//   For example X64 can have __cdecl, __fastcall, __stdcall, that 
+			//   For example X64 can have __cdecl, __fastcall, __stdcall, that
 			//   are accepted but ignored
 			BookmarkManager bm = program.getBookmarkManager();
 			Address entry = function.getEntryPoint();
@@ -543,13 +653,13 @@ public class DemangledFunction extends DemangledObject {
 	}
 
 	private boolean isParameterMismatch(Function func, FunctionSignature signature) {
-		int existingParameterCount = func.getParameterCount();
 
-		// If this function is not in a namespace, we don't care if the parameters mismatch,
-		// just apply them.
-		if (namespace == null || namespace.getName().startsWith("__")) {
+		// Default source types can be overridden
+		if (func.getSignatureSource() == SourceType.DEFAULT) {
 			return false;
 		}
+
+		int existingParameterCount = func.getParameterCount();
 
 		// If we don't know the parameters, and have already decided on This calling
 		// convention. is not a problem.
@@ -558,8 +668,14 @@ public class DemangledFunction extends DemangledObject {
 			return false;
 		}
 
-		// Default source types can be overridden
-		if (func.getSignatureSource() == SourceType.DEFAULT) {
+		// are the data types already on the signature better than analysis provided ones
+		if (isDefinedFunctionDataTypes(func)) {
+			return true;
+		}
+
+		// If this function is not in a namespace, we don't care if the parameters mismatch,
+		// just apply them.
+		if (namespace == null || namespace.getName().startsWith("__")) {
 			return false;
 		}
 
@@ -596,6 +712,43 @@ public class DemangledFunction extends DemangledObject {
 			}
 
 			// no params defined, can't tell if detected is different
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * check if the return/param data types were defined by better than analysis (user, import)
+	 *
+	 * @param func the function to check
+	 * @return true if the parameters are not undefined, or are of a higher source type.
+	 */
+	protected boolean isDefinedFunctionDataTypes(Function func) {
+		Parameter[] funcParams = func.getParameters();
+
+		for (Parameter parameter : funcParams) {
+			if (parameter.isAutoParameter()) {
+				// automatic parameter, is OK.
+				continue;
+			}
+			// check for default type of data type
+			DataType dt = parameter.getDataType();
+			dt = DataTypeUtilities.getBaseDataType(dt);
+			if (dt == null || Undefined.isUndefined(dt)) {
+				continue;
+			}
+			// if the parameters source is higher than
+			if (parameter.getSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
+				return true;
+			}
+		}
+
+		// if already a return type and this one has a return type
+		DataType returnDT = func.getReturnType();
+		returnDT = DataTypeUtilities.getBaseDataType(returnDT);
+		if (!(returnDT == null || Undefined.isUndefined(returnDT)) &&
+			this.getReturnType() != null) {
 			return true;
 		}
 
@@ -726,16 +879,15 @@ public class DemangledFunction extends DemangledObject {
 
 		Structure structure = (Structure) existingType;
 		if (structure == null) {
-			structure = DemangledDataType.createPlaceHolderStructure(className,
-				classNamespace);
+			structure = DemangledDataType.createPlaceHolderStructure(className, classNamespace);
 		}
-		structure = (Structure) dataTypeManager.resolve(structure,
-			DataTypeConflictHandler.DEFAULT_HANDLER);
+		structure =
+			(Structure) dataTypeManager.resolve(structure, DataTypeConflictHandler.DEFAULT_HANDLER);
 		return structure;
 	}
 
 	protected Function createFunction(Program prog, Address addr, boolean doDisassembly,
-			TaskMonitor monitor) {
+			TaskMonitor monitor) throws DemangledException {
 		Listing listing = prog.getListing();
 		Function func = listing.getFunctionAt(addr);
 		if (func != null) {
@@ -745,7 +897,9 @@ public class DemangledFunction extends DemangledObject {
 		if (addr.isExternalAddress()) {
 			Symbol extSymbol = prog.getSymbolTable().getPrimarySymbol(addr);
 			CreateExternalFunctionCmd cmd = new CreateExternalFunctionCmd(extSymbol);
-			cmd.applyTo(prog);
+			if (!cmd.applyTo(prog)) {
+				throw new DemangledException("Unable to create function: " + cmd.getStatusMsg());
+			}
 		}
 		else {
 			if (doDisassembly) {
@@ -757,7 +911,9 @@ public class DemangledFunction extends DemangledObject {
 				}
 			}
 			CreateFunctionCmd cmd = new CreateFunctionCmd(addr);
-			cmd.applyTo(prog, monitor);
+			if (!cmd.applyTo(prog, monitor)) {
+				throw new DemangledException("Unable to create function: " + cmd.getStatusMsg());
+			}
 		}
 		return listing.getFunctionAt(addr);
 	}

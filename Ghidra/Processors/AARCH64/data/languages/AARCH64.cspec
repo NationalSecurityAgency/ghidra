@@ -10,7 +10,7 @@
      <wchar_size value="4" />
      <short_size value="2" />
      <integer_size value="4" />
-     <long_size value="4" />
+     <long_size value="8" />
      <long_long_size value="8" />
      <float_size value="4" />
      <double_size value="8" />

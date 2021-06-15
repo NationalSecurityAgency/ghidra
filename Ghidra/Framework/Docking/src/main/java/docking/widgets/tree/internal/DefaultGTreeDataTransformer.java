@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package docking.widgets.tree.internal;
 
-import ghidra.util.FilterTransformer;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import docking.widgets.tree.GTreeNode;
+import ghidra.util.FilterTransformer;
 
 public class DefaultGTreeDataTransformer implements FilterTransformer<GTreeNode> {
 	private ThreadLocal<List<String>> localizedResults = new ThreadLocal<List<String>>() {
@@ -35,7 +33,7 @@ public class DefaultGTreeDataTransformer implements FilterTransformer<GTreeNode>
 	public List<String> transform(GTreeNode node) {
 		List<String> results = localizedResults.get();
 		results.clear();
-		results.add(node.getName());
+		results.add(node.getDisplayText());
 		return results;
 	}
 }

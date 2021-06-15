@@ -64,7 +64,8 @@ public class CliStreamUserStrings extends CliStreamBlob {
 	 */
 	public String getUserString(int index) {
 		byte[] bytes = blobMap.get(index).getContents();
-		return new String(bytes, 0, bytes.length - 1, StandardCharsets.UTF_16);
+		// Must explicitly specify UTF_16LE or the string gets mangled
+		return new String(bytes, 0, bytes.length - 1, StandardCharsets.UTF_16LE);
 	}
 
 	@Override
@@ -78,8 +79,7 @@ public class CliStreamUserStrings extends CliStreamBlob {
 			if (blob.getContentsSize() > 0) {
 				if (blob.getContentsSize() - 1 > 0) {
 					struct.add(UTF16, blob.getContentsSize() - 1,
-						"[" + Integer.toHexString(index) + "]",
-						null);
+						"[" + Integer.toHexString(index) + "]", null);
 				}
 				struct.add(BYTE, "Extra byte", "0x01 if string contains non-ASCII");
 			}

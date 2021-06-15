@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,7 @@
 package ghidra.app.plugin.debug.dbtable;
 
 import db.BooleanField;
-import db.Record;
+import db.DBRecord;
 
 public class BooleanColumnAdapter extends AbstractColumnAdapter {
 
@@ -27,12 +26,12 @@ public class BooleanColumnAdapter extends AbstractColumnAdapter {
 	}
 
 	@Override
-	Object getKeyValue(Record rec) {
+	Object getKeyValue(DBRecord rec) {
 		return new Boolean(((BooleanField) rec.getKeyField()).getBooleanValue());
 	}
 
 	@Override
-	Object getValue(Record rec, int col) {
+	Object getValue(DBRecord rec, int col) {
 		return Boolean.valueOf(rec.getBooleanValue(col));
 	}
 

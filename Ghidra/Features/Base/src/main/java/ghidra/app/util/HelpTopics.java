@@ -72,6 +72,11 @@ public interface HelpTopics {
 	public final static String DATA_TYPE_EDITORS = "DataTypeEditors";
 
 	/**
+	 * Help Topic for the decompiler
+	 */
+	public final static String DECOMPILER = "DecompilePlugin";
+
+	/**
 	 * Help Topic for doing diffs between programs.
 	 */
 	public final static String DIFF = "Diff";

@@ -45,6 +45,10 @@ public class UndoAction extends ProgramContextAction {
 		setToolBarData(new ToolBarData(icon, "Undo"));
 		setDescription("Undo");
 		setKeyBindingData(new KeyBindingData("ctrl Z"));
+		setSupportsDefaultToolContext(true);
+
+		// we want this action to appear in all windows that can produce a program context
+		addToWindowWhen(ProgramActionContext.class);
 	}
 
 	@Override

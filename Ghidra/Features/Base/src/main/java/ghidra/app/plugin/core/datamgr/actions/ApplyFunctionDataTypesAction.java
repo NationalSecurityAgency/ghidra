@@ -50,6 +50,10 @@ public class ApplyFunctionDataTypesAction extends DockingAction {
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
+		if (plugin.getProgram() == null) {
+			return false;
+		}
+
 		if (!(context instanceof DataTypesActionContext)) {
 			return false;
 		}

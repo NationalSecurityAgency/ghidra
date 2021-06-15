@@ -21,7 +21,6 @@ import java.util.*;
 
 import org.junit.*;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
@@ -111,14 +110,10 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("SubCat-B", sub2.getName());
 	}
 
-	@Test
+	@Test(expected = InvalidNameException.class)
 	public void testCreateCategoryBadName() throws Exception {
-		try {
-			root.createCategory("");
-			Assert.fail("Should not create category with empty name");
-		}
-		catch (InvalidNameException e) {
-		}
+		root.createCategory("");
+		Assert.fail("Should not create category with empty name");
 	}
 
 	@Test
@@ -152,7 +147,10 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testSetName() throws Exception {
 		Category sub1 = root.createCategory("SubCat-A");
+		assertEquals("/SubCat-A", sub1.getCategoryPath().getPath());
+
 		sub1.setName("MyCategory");
+		assertEquals("/MyCategory", sub1.getCategoryPath().getPath());
 
 		assertNotNull(root.getCategory("MyCategory"));
 		Category sub2 = root.createCategory("NewCategory");
@@ -161,16 +159,12 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(root.getCategory("new name"));
 	}
 
-	@Test
+	@Test(expected = InvalidNameException.class)
 	public void testSetBadName() throws Exception {
 
 		Category sub1 = root.createCategory("SubCat-A");
-		try {
-			sub1.setName(null);
-			Assert.fail("Should not have set name to null");
-		}
-		catch (InvalidNameException e) {
-		}
+		sub1.setName(null);
+		Assert.fail("Should not have set name to null");
 	}
 
 	@Test
@@ -278,6 +272,18 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testCategoryPathUpdateAfterMoveParent() throws Exception {
+		Category catA = root.createCategory("A");
+		Category catB = catA.createCategory("B");
+		Category catC = catB.createCategory("C");
+		assertEquals("/A/B/C", catC.getCategoryPath().getPath());
+
+		root.moveCategory(catB, monitor);
+
+		assertEquals("/B/C", catC.getCategoryPath().getPath());
+	}
+
+	@Test
 	public void testMoveParentCategory() throws Exception {
 		Category catA = root.createCategory("A");
 		Category catB = catA.createCategory("B");
@@ -285,6 +291,8 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		catC.createCategory("D");
 		long idB = catB.getID();
 		long idC = catC.getID();
+		assertEquals("/A/B/C", catC.getCategoryPath().getPath());
+
 		root.moveCategory(catB, monitor);
 
 		assertTrue(dataMgr.containsCategory(new CategoryPath("/B/C")));
@@ -440,7 +448,7 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		Category sub2 = sub1.createCategory("sub2");
 		sub2.addDataType(str, null);
 
-		ArrayList<DataType> list = new ArrayList<DataType>();
+		ArrayList<DataType> list = new ArrayList<>();
 		dataMgr.findDataTypes(name, list);
 		assertEquals(3, list.size());
 
@@ -702,17 +710,17 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(dt.isEquivalent(ev.dt));
 		assertEquals(null, ev.parent);
 
-		ev = getEvent(4);
-		assertEquals("DT Changed", ev.evName);
-		assertTrue(dt.isEquivalent(ev.dt));
-		assertEquals(null, ev.parent);
+//		ev = getEvent(4);  // eliminated size change event during creation
+//		assertEquals("DT Changed", ev.evName);
+//		assertTrue(dt.isEquivalent(ev.dt));
+//		assertEquals(null, ev.parent);
 
-		ev = getEvent(5);
+		ev = getEvent(4);
 		assertEquals("DT Added", ev.evName);
 		assertTrue(dt.isEquivalent(ev.dt));
 		assertEquals(sub1.getCategoryPath(), ev.parent);
 
-		assertEquals(6, getEventCount());
+		assertEquals(5, getEventCount());
 
 	}
 
@@ -804,8 +812,8 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		struct2 = (Structure) newDt.insert(3, struct2).getDataType();
 
-		assertEquals(5, getEventCount());
-		Event ev = getEvent(4);
+		assertEquals(4, getEventCount());
+		Event ev = getEvent(3);
 		assertEquals("DT Changed", ev.evName);
 		assertEquals(newDt, ev.dt);
 	}

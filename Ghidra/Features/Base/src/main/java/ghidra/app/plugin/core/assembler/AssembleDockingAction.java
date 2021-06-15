@@ -35,18 +35,18 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
-import ghidra.app.plugin.assembler.sleigh.util.GhidraDBTransaction;
 import ghidra.app.plugin.core.assembler.AssemblyDualTextField.*;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
-import ghidra.app.util.PluginConstants;
 import ghidra.app.util.viewer.field.ListingField;
 import ghidra.app.util.viewer.listingpanel.ListingModelAdapter;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.database.util.ProgramTransaction;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -77,7 +77,7 @@ public class AssembleDockingAction extends DockingAction {
 	private Language lang;
 	private Assembler assembler;
 	private final MyListener listener = new MyListener();
-	private PluginTool tool;
+	//private PluginTool tool;
 
 	// Callback to keep the autocompleter positioned under the fields
 	private FieldPanelOverLayoutListener autoCompleteMover = (FieldPanelOverLayoutEvent ev) -> {
@@ -106,8 +106,8 @@ public class AssembleDockingAction extends DockingAction {
 	/*
 	 * A class for all my callbacks
 	 * 
-	 * For autocompletion, this causes activation of an assembled instruction to actually patch
-	 * the instruction in.
+	 * For autocompletion, this causes activation of an assembled instruction to actually patch the
+	 * instruction in.
 	 * 
 	 * For keyboard, it causes the escape key, if not already consumed by the autocompleter, to
 	 * cancel the assembly action altogether.
@@ -117,8 +117,8 @@ public class AssembleDockingAction extends DockingAction {
 		public void completionActivated(AutocompletionEvent<AssemblyCompletion> ev) {
 			if (ev.getSelection() instanceof AssemblyInstruction) {
 				AssemblyInstruction ins = (AssemblyInstruction) ev.getSelection();
-				try (GhidraDBTransaction trans =
-					new GhidraDBTransaction(prog, "Assemble @" + addr + ": " + input.getText())) {
+				try (ProgramTransaction trans =
+					ProgramTransaction.open(prog, "Assemble @" + addr + ": " + input.getText())) {
 					assembler.patchProgram(ins.getData(), addr);
 					trans.commit();
 					cancel(); // Not really, since I've committed. Just hides the editors.
@@ -158,23 +158,7 @@ public class AssembleDockingAction extends DockingAction {
 	 */
 	public AssembleDockingAction(PluginTool tool, String name, String owner) {
 		this(name, owner);
-		this.tool = tool;
-	}
-
-	@Override
-	public void dispose() {
-		super.dispose();
-		input.dispose();
-	}
-
-	protected void onFirstInvocation() {
-		ComponentProvider prov = tool.getComponentProvider(PluginConstants.CODE_BROWSER);
-		cv = (CodeViewerProvider) prov;
-		listpane = cv.getListingPanel();
-		codepane = listpane.getFieldPanel();
-
-		fieldLayoutManager = new FieldPanelOverLayoutManager(codepane);
-		codepane.setLayout(fieldLayoutManager);
+		//this.tool = tool;
 
 		// If I lose focus, cancel the assembly
 		input.addFocusListener(new FocusListener() {
@@ -188,14 +172,37 @@ public class AssembleDockingAction extends DockingAction {
 				cancel();
 			}
 		});
+
 		input.getMnemonicField().setBorder(BorderFactory.createLineBorder(Color.RED, 2));
 		input.getOperandsField().setBorder(BorderFactory.createLineBorder(Color.RED, 2));
 		input.getAssemblyField().setBorder(BorderFactory.createLineBorder(Color.RED, 2));
 
 		input.getAutocompleter().addAutocompletionListener(listener);
 		input.addKeyListener(listener);
+	}
 
-		fieldLayoutManager.addLayoutListener(autoCompleteMover);
+	@Override
+	public void dispose() {
+		super.dispose();
+		input.dispose();
+	}
+
+	protected void prepareLayout(ActionContext context) {
+		ComponentProvider prov = context.getComponentProvider();
+		if (cv != prov) {
+			if (cv != null) {
+				codepane.setLayout(null);
+				fieldLayoutManager.removeLayoutListener(autoCompleteMover);
+			}
+
+			cv = (CodeViewerProvider) prov;
+			listpane = cv.getListingPanel();
+			codepane = listpane.getFieldPanel();
+
+			fieldLayoutManager = new FieldPanelOverLayoutManager(codepane);
+			codepane.setLayout(fieldLayoutManager);
+			fieldLayoutManager.addLayoutListener(autoCompleteMover);
+		}
 	}
 
 	/**
@@ -219,6 +226,7 @@ public class AssembleDockingAction extends DockingAction {
 	/**
 	 * Retrieve the location in the code viewer's {@link FieldPanel} for the field at the given
 	 * address having the given header text
+	 * 
 	 * @param addr the address
 	 * @param fieldName the name of the field
 	 * @return if found, the {@link FieldLocation}, otherwise {@code null}
@@ -263,14 +271,20 @@ public class AssembleDockingAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		if (cv == null) {
-			onFirstInvocation();
+		if (!(context instanceof ListingActionContext)) {
+			return;
 		}
+		prepareLayout(context);
+		ListingActionContext lac = (ListingActionContext) context;
 
-		ProgramLocation cur = cv.getLocation();
+		ProgramLocation cur = lac.getLocation();
 
 		prog = cur.getProgram();
 		addr = cur.getAddress();
+		MemoryBlock block = prog.getMemory().getBlock(addr);
+		if (block == null || !block.isInitialized()) {
+			return;
+		}
 		lang = prog.getLanguage();
 
 		AssemblyRating rating =
@@ -350,11 +364,22 @@ public class AssembleDockingAction extends DockingAction {
 
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
-		// currently on work on the listing
-		Object obj = context.getContextObject();
-		if (obj instanceof ListingActionContext) {
-			return true;
+
+		// currently only works on a listing
+		if (!(context instanceof ListingActionContext)) {
+			return false;
 		}
-		return false;
+
+		ListingActionContext lac = (ListingActionContext) context;
+
+		Program program = lac.getProgram();
+		if (program == null) {
+			return false;
+		}
+		MemoryBlock block = program.getMemory().getBlock(lac.getAddress());
+		if (block == null || !block.isInitialized()) {
+			return false;
+		}
+		return true;
 	}
 }

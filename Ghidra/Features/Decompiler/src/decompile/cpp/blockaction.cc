@@ -729,7 +729,7 @@ TraceDAG::BlockTrace *TraceDAG::selectBadEdge(void)
     if ((*aiter)->isTerminal()) continue;
     if (((*aiter)->top->top == (FlowBlock *)0)&&((*aiter)->bottom==(FlowBlock *)0))
       continue;	// Never remove virtual edges
-    badedgelist.push_back(BadEdgeScore());
+    badedgelist.emplace_back();
     BadEdgeScore &score( badedgelist.back() );
     score.trace = *aiter;
     score.exitproto = score.trace->destnode;
@@ -1125,7 +1125,7 @@ void CollapseStructure::labelLoops(vector<LoopBody *> &looporder)
     for(int4 j=0;j<sizein;++j) {
       if (bl->isBackEdgeIn(j)) { // back-edge coming in must be from the bottom of a loop
 	FlowBlock *loopbottom = bl->getIn(j);
-	loopbody.push_back(LoopBody(bl));
+	loopbody.emplace_back(bl);
 	LoopBody &curbody( loopbody.back() );
 	curbody.addTail(loopbottom);
 	looporder.push_back( & curbody );
@@ -2095,6 +2095,13 @@ void ConditionalJoin::clear(void)
   mergeneed.clear();
 }
 
+int4 ActionStructureTransform::apply(Funcdata &data)
+
+{
+  data.getStructure().finalTransform(data);
+  return 0;
+}
+
 int4 ActionNormalizeBranches::apply(Funcdata &data)
 
 {
@@ -2170,7 +2177,7 @@ int4 ActionFinalStructure::apply(Funcdata &data)
   BlockGraph &graph(data.getStructure());
 
   graph.orderBlocks();
-  graph.orderSwitchCases();
+  graph.finalizePrinting(data);
   graph.scopeBreak(-1,-1);	// Put in \e break statements
   graph.markUnstructured();	// Put in \e gotos
   graph.markLabelBumpUp(false); // Fix up labeling

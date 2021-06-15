@@ -34,6 +34,7 @@ public class MultiStateActionBuilder<T> extends
 		AbstractActionBuilder<MultiStateDockingAction<T>, ActionContext, MultiStateActionBuilder<T>> {
 
 	private BiConsumer<ActionState<T>, EventTrigger> actionStateChangedCallback;
+	private boolean useCheckboxForIcons;
 	private boolean performActionOnButtonClick = false;
 
 	private List<ActionState<T>> states = new ArrayList<>();
@@ -76,6 +77,20 @@ public class MultiStateActionBuilder<T> extends
 	 */
 	public MultiStateActionBuilder<T> performActionOnButtonClick(boolean b) {
 		this.performActionOnButtonClick = b;
+		return self();
+	}
+
+	/**
+	 * Overrides the default icons for actions shown in popup menu of the multi-state action.  By
+	 * default, the popup menu items will use the icons as provided by the {@link ActionState}.
+	 * By passing true to this method, icons will not be used in the popup menu.  Instead, a 
+	 * checkbox icon will be used to show the active action state.
+	 * 
+	 * @param b true to use a checkbox
+	 * @return this MultiActionDockingActionBuilder (for chaining)
+	 */
+	public MultiStateActionBuilder<T> useCheckboxForIcons(boolean b) {
+		this.useCheckboxForIcons = b;
 		return self();
 	}
 
@@ -140,6 +155,7 @@ public class MultiStateActionBuilder<T> extends
 
 		decorateAction(action);
 		action.setPerformActionOnPrimaryButtonClick(performActionOnButtonClick);
+		action.setUseCheckboxForIcons(useCheckboxForIcons);
 		return action;
 	}
 

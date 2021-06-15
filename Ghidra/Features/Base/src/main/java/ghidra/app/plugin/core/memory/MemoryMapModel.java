@@ -37,7 +37,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
 import ghidra.util.Msg;
-import ghidra.util.exception.DuplicateNameException;
 
 class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 
@@ -267,14 +266,9 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 					if (name.equals(block.getName())) {
 						break;
 					}
-					if (!Memory.isValidAddressSpaceName(name)) {
+					if (!Memory.isValidMemoryBlockName(name)) {
 						Msg.showError(this, provider.getComponent(), "Invalid Name",
 							"Invalid Memory Block Name: " + name);
-						break;
-					}
-					if (provider.getMemoryMapManager().isDuplicateName(name)) {
-						Msg.showError(this, provider.getComponent(), "Duplicate Name",
-							"Address space/overlay named " + name + " already exists.");
 						break;
 					}
 					if (!name.equals(block.getName())) {
@@ -284,11 +278,6 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 							program.endTransaction(id, true);
 						}
 						catch (LockException e) {
-							program.endTransaction(id, false);
-							this.provider.setStatusText(e.getMessage());
-							return;
-						}
-						catch (DuplicateNameException e) {
 							program.endTransaction(id, false);
 							this.provider.setStatusText(e.getMessage());
 							return;

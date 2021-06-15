@@ -19,7 +19,6 @@ import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.mem.*;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Command for adding uninitialized memory blocks
@@ -47,7 +46,7 @@ public class AddUninitializedMemoryBlockCmd extends AbstractAddMemoryBlockCmd {
 
 	@Override
 	protected MemoryBlock createMemoryBlock(Memory memory) throws LockException,
-			MemoryConflictException, AddressOverflowException, DuplicateNameException {
+			MemoryConflictException, AddressOverflowException {
 		return memory.createUninitializedBlock(name, start, length, isOverlay);
 	}
 

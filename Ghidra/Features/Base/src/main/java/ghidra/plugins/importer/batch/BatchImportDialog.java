@@ -231,10 +231,15 @@ public class BatchImportDialog extends DialogComponentProvider {
 		});
 
 		removeSourceButton.addActionListener(e -> {
-			int index = sourceList.getSelectedIndex();
-			if (index >= 0 && index < batchInfo.getUserAddedSources().size()) {
-				UserAddedSourceInfo uasi = batchInfo.getUserAddedSources().get(index);
-				batchInfo.remove(uasi.getFSRL());
+			List<FSRL> sourcesToRemove = new ArrayList<>();
+			for (int index : sourceList.getSelectedIndices()) {
+				if (index >= 0 && index < batchInfo.getUserAddedSources().size()) {
+					UserAddedSourceInfo uasi = batchInfo.getUserAddedSources().get(index);
+					sourcesToRemove.add(uasi.getFSRL());
+				}
+			}
+			for (FSRL fsrl : sourcesToRemove) {
+				batchInfo.remove(fsrl);
 			}
 			refreshData();
 		});
@@ -344,9 +349,8 @@ public class BatchImportDialog extends DialogComponentProvider {
 
 		ListSelectionTableDialog<String> dialog =
 			new ListSelectionTableDialog<>("Application Files", names);
-		dialog.setMultiSelectionMode(true);
 		dialog.hideOkButton();
-		dialog.show(table);
+		dialog.showSelectMultiple(table);
 	}
 
 	private void setOpenAfterImporting(boolean b) {

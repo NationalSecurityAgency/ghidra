@@ -60,7 +60,7 @@ multiple constructors into a single table are addressed in <a class="xref" href=
 </p>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140016193117504"></a>7.1. The Five Sections of a Constructor</h3></div></div></div>
+<a name="idm140526920750848"></a>7.1. The Five Sections of a Constructor</h3></div></div></div>
 <p>
 A single complex statement in the specification file describes a
 constructor. This statement is always made up of five distinct
@@ -92,7 +92,7 @@ in turn.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140016193112928"></a>7.2. The Table Header</h3></div></div></div>
+<a name="idm140526920746272"></a>7.2. The Table Header</h3></div></div></div>
 <p>
 Every constructor must be part of a table, which is the element with
 an actual family symbol identifier associated with it. So each
@@ -230,7 +230,7 @@ no such requirement.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="idm140016193083344"></a>7.3.2. The '^' character</h4></div></div></div>
+<a name="idm140526920716688"></a>7.3.2. The '^' character</h4></div></div></div>
 <p>
 The &#8216;^&#8217; character in the display section is used to separate
 identifiers from other characters where there shouldn&#8217;t be white space
@@ -278,7 +278,7 @@ to <span class="emphasis"><em>match</em></span> the constructor being defined.
 </p>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="idm140016193071904"></a>7.4.1. Constraints</h4></div></div></div>
+<a name="idm140526920705248"></a>7.4.1. Constraints</h4></div></div></div>
 <p>
 The patterns required for processor specifications can almost always
 be described as a mask and value pair. Given a specific instruction
@@ -337,7 +337,7 @@ requires two or more mask/value style checks to correctly implement.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="idm140016193057968"></a>7.4.3. Defining Operands and Invoking Subtables</h4></div></div></div>
+<a name="idm140526920691312"></a>7.4.3. Defining Operands and Invoking Subtables</h4></div></div></div>
 <p>
 The principle way of defining a constructor operand, left undefined
 from the display section, is done in the bit pattern section. If an
@@ -396,7 +396,7 @@ statement of the grouping of old symbols into the new constructor.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="idm140016193046560"></a>7.4.4. Variable Length Instructions</h4></div></div></div>
+<a name="idm140526920679904"></a>7.4.4. Variable Length Instructions</h4></div></div></div>
 <p>
 There are some additional complexities to designing a specification
 for a processor with variable length instructions. Some initial
@@ -419,7 +419,7 @@ designer control over how tokens fit together.
 </p>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="idm140016193043088"></a>7.4.4.1. The ';' Operator</h5></div></div></div>
+<a name="idm140526920676432"></a>7.4.4.1. The ';' Operator</h5></div></div></div>
 <p>
 The most important operator for patterns defining variable length
 instructions is the concatenation operator &#8216;;&#8217;. When building a
@@ -481,7 +481,7 @@ operator, so parentheses may be necessary to get the intended meaning.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="idm140016193027776"></a>7.4.4.2. The '...' Operator</h5></div></div></div>
+<a name="idm140526920661120"></a>7.4.4.2. The '...' Operator</h5></div></div></div>
 <p>
 The ellipsis operator &#8216;...&#8217; is used to satisfy the token matching
 requirements of the &#8216;&amp;&#8217; and &#8216;|&#8217; operators (described in the previous
@@ -557,7 +557,7 @@ don&#8217;t quite match the assembly.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="idm140016193007488"></a>7.4.6. Empty Patterns</h4></div></div></div>
+<a name="idm140526920640560"></a>7.4.6. Empty Patterns</h4></div></div></div>
 <p>
 Occasionally there is a need for an empty pattern when building
 tables. An empty pattern matches everything. There is a predefined
@@ -567,7 +567,7 @@ to indicate an empty pattern.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="idm140016193005648"></a>7.4.7. Advanced Constraints</h4></div></div></div>
+<a name="idm140526920638720"></a>7.4.7. Advanced Constraints</h4></div></div></div>
 <p>
 A constraint does not have to be of the form &#8220;field = constant&#8221;,
 although this is almost always what is needed. In certain situations,
@@ -821,7 +821,7 @@ assignment to such a variable changes the context in which the current
 instruction is being disassembled and can potentially have a drastic
 effect on how the rest of the instruction is disassembled. An
 assignment of this form is considered local to the instruction and
-will not effect how other instructions are parsed. The context
+will not affect how other instructions are parsed. The context
 variable is reset to its original value before parsing other
 instructions. The disassembly action may also contain one or
 more <span class="bold"><strong>globalset</strong></span> directives, which
@@ -939,7 +939,7 @@ varnode is <span class="emphasis"><em>r1</em></span>.
 </p>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="idm140016192898096"></a>7.7.1. Expressions</h4></div></div></div>
+<a name="idm140526920530304"></a>7.7.1. Expressions</h4></div></div></div>
 <p>
 Expressions are built out of symbols and the binary and unary
 operators listed in <a class="xref" href="sleigh_ref.html#syntaxref.htmltable" title="Table 5. Semantic Expression Operators and Syntax">Table 5, &#8220;Semantic Expression Operators and Syntax&#8221;</a> in the
@@ -954,7 +954,7 @@ within expressions to affect this order.
 </p>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="idm140016192895760"></a>7.7.1.1. Arithmetic, Logical and Boolean Operators</h5></div></div></div>
+<a name="idm140526920527872"></a>7.7.1.1. Arithmetic, Logical and Boolean Operators</h5></div></div></div>
 <p>
 For the most part these operators should be familiar to software
 developers. The only real differences arise from the fact that
@@ -1017,7 +1017,7 @@ set to something other than one.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="idm140016192883312"></a>7.7.1.3. Extension</h5></div></div></div>
+<a name="idm140526920515552"></a>7.7.1.3. Extension</h5></div></div></div>
 <p>
 Most processors have instructions that extend small values into big
 values, and many instructions do these minor data manipulations
@@ -1039,7 +1039,7 @@ the <span class="bold"><strong>sext</strong></span> operator.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="idm140016192876752"></a>7.7.1.4. Truncation</h5></div></div></div>
+<a name="idm140526920508832"></a>7.7.1.4. Truncation</h5></div></div></div>
 <p>
 There are two forms of syntax indicating a truncation of the input
 varnode. In one the varnode is followed by a colon &#8216;:&#8217; and an integer
@@ -1169,7 +1169,7 @@ the offset portion of the address, and to copy the desired value, the
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="idm140016192851952"></a>7.7.1.7. Managed Code Operations</h5></div></div></div>
+<a name="idm140526920484032"></a>7.7.1.7. Managed Code Operations</h5></div></div></div>
 <p>
 SLEIGH provides basic support for instructions where encoding and context
 don't provide a complete description of the semantics. This is the case
@@ -1231,7 +1231,7 @@ define pcodeop arctan;
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="idm140016192839392"></a>7.7.2. Statements</h4></div></div></div>
+<a name="idm140526920471120"></a>7.7.2. Statements</h4></div></div></div>
 <p>
 We describe the types of semantic statements that are allowed in SLEIGH.
 </p>
@@ -1305,7 +1305,7 @@ and may be enforced in future compiler versions.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="idm140016192826448"></a>7.7.2.2. Storage Statements</h5></div></div></div>
+<a name="idm140526920458176"></a>7.7.2.2. Storage Statements</h5></div></div></div>
 <p>
 SLEIGH supports fairly standard <span class="emphasis"><em>storage statement</em></span>
 syntax to complement the load operator. The left-hand side of an
@@ -1336,7 +1336,7 @@ attribute is set to something other than one.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="idm140016192820512"></a>7.7.2.3. Exports</h5></div></div></div>
+<a name="idm140526920452240"></a>7.7.2.3. Exports</h5></div></div></div>
 <p>
 The semantic section doesn&#8217;t just specify how to generate p-code for a
 constructor. Except for those constructors in the root table, this
@@ -1366,7 +1366,7 @@ the table symbol <span class="emphasis"><em>mode</em></span>. When this construc
 matched, as part of a more complicated instruction, the
 symbol <span class="emphasis"><em>mode</em></span> will represent the original semantic
 value of <span class="emphasis"><em>reg</em></span> but with the standard post-increment
-side effect.
+side-effect.
 </p>
 <p>
 The table symbol associated with the constructor becomes
@@ -1388,7 +1388,7 @@ varnode being modified to be exported as an integer constant.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="idm140016192809280"></a>7.7.2.4. Dynamic References</h5></div></div></div>
+<a name="idm140526920441008"></a>7.7.2.4. Dynamic References</h5></div></div></div>
 <p>
 The only other operator allowed as part of
 an <span class="bold"><strong>export</strong></span> statement, is the &#8216;*&#8217;
@@ -1447,7 +1447,7 @@ levels.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="idm140016192795680"></a>7.7.2.5. Branching Statements</h5></div></div></div>
+<a name="idm140526920427360"></a>7.7.2.5. Branching Statements</h5></div></div></div>
 <p>
 This section discusses statements that generate p-code branching
 operations. These are listed in <a class="xref" href="sleigh_ref.html#branchref.htmltable" title="Table 7. Branching Statements">Table 7, &#8220;Branching Statements&#8221;</a>, in the Appendix.
@@ -1802,7 +1802,7 @@ each followed by a variation which corrects the error.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="idm140016192728656"></a>7.7.4. Unimplemented Semantics</h4></div></div></div>
+<a name="idm140526920360336"></a>7.7.4. Unimplemented Semantics</h4></div></div></div>
 <p>
 The semantic section must be present for every constructor in the
 specification. But the designer can leave the semantics explicitly
@@ -1962,7 +1962,7 @@ should generally be avoided.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="idm140016192701504"></a>7.8.2. Specific Symbol Trees</h4></div></div></div>
+<a name="idm140526920333184"></a>7.8.2. Specific Symbol Trees</h4></div></div></div>
 <p>
 When the SLEIGH parser analyzes an instruction, it starts with the
 root symbol <span class="emphasis"><em>instruction</em></span>, and decides which of the
@@ -2045,7 +2045,7 @@ and p-code for these encodings by walking the trees.
 </p>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="idm140016192682592"></a>7.8.2.1. Disassembly Trees</h5></div></div></div>
+<a name="idm140526920314640"></a>7.8.2.1. Disassembly Trees</h5></div></div></div>
 <p>
 If the nodes of each tree are replaced with the display information of
 the corresponding specific symbol, we see how the disassembly
@@ -2068,7 +2068,7 @@ statements corresponding to the original instruction encodings.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="idm140016192676208"></a>7.8.2.2. P-code Trees</h5></div></div></div>
+<a name="idm140526920308256"></a>7.8.2.2. P-code Trees</h5></div></div></div>
 <p>
 A similar procedure produces the resulting p-code translation of the
 instruction. If each node in the specific symbol tree is replaced with
@@ -2147,7 +2147,7 @@ directive however should not be used in a macro.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140016192659536"></a>7.10. Build Directives</h3></div></div></div>
+<a name="idm140526920290640"></a>7.10. Build Directives</h3></div></div></div>
 <p>
 Because the nodes of a specific symbol tree are traversed in a
 depth-first order, the p-code for a child node in general comes before
@@ -2202,7 +2202,7 @@ normal action of the instruction.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140016192651168"></a>7.11. Delay Slot Directives</h3></div></div></div>
+<a name="idm140526920281024"></a>7.11. Delay Slot Directives</h3></div></div></div>
 <p>
 For processors with a pipe-lined architecture, multiple instructions
 are typically executing simultaneously. This can lead to processor

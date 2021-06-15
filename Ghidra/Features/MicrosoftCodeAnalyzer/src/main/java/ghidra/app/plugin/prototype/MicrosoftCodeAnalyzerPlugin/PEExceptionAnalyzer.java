@@ -24,12 +24,9 @@ import ghidra.app.services.*;
 import ghidra.app.util.datatype.microsoft.DataApplyOptions;
 import ghidra.app.util.datatype.microsoft.DataValidationOptions;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.PeLoader;
-import ghidra.app.util.opinion.PeLoader.CompilerOpinion.CompilerEnum;
 import ghidra.framework.cmd.Command;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.InvalidDataTypeException;
-import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramMemoryUtil;
@@ -64,10 +61,7 @@ public class PEExceptionAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		CompilerSpecID compilerSpecID = program.getCompilerSpec().getCompilerSpecID();
-		return compilerSpecID.getIdAsString().equals("windows") &&
-			program.getExecutableFormat().equals(PeLoader.PE_NAME) &&
-			program.getCompiler().equals(CompilerEnum.VisualStudio.toString());
+		return PEUtil.isVisualStudioOrClangPe(program);
 	}
 
 	@Override
@@ -87,8 +81,8 @@ public class PEExceptionAnalyzer extends AbstractAnalyzer {
 			"[\\x20,\\x21,\\x22]\\x05\\x93[\\x19,\\x39,\\x59,\\x79,\\x99,\\xb9,\\xd9,\\xf9]";
 		String bePattern =
 			"[\\x19,\\x39,\\x59,\\x79,\\x99,\\xb9,\\xd9,\\xf9]\\x93\\x05[\\x20,\\x21,\\x22]";
-		RegExSearchData regExSearchData = RegExSearchData
-			.createRegExSearchData(program.getLanguage().isBigEndian() ? bePattern : lePattern);
+		RegExSearchData regExSearchData = RegExSearchData.createRegExSearchData(
+			program.getLanguage().isBigEndian() ? bePattern : lePattern);
 		int alignment = 4;
 		SearchInfo searchInfo = new SearchInfo(regExSearchData, MATCH_LIMIT, false, true, alignment,
 			false, new CodeUnitSearchInfo(false, true, true), null);

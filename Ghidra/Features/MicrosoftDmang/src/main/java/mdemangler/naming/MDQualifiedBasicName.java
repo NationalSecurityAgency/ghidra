@@ -37,16 +37,10 @@ public class MDQualifiedBasicName extends MDParsableItem {
 	}
 
 	public boolean isConstructor() {
-		if (basicName == null) {
-			return false;
-		}
 		return basicName.isConstructor();
 	}
 
 	public boolean isDestructor() {
-		if (basicName == null) {
-			return false;
-		}
 		return basicName.isDestructor();
 	}
 
@@ -55,10 +49,7 @@ public class MDQualifiedBasicName extends MDParsableItem {
 	 * @return int RTTI number:{0-4, or -1 if not an RTTI}
 	 */
 	public int getRTTINumber() {
-		if (basicName != null) {
-			return basicName.getRTTINumber();
-		}
-		return -1;
+		return basicName.getRTTINumber();
 	}
 
 	/**
@@ -66,9 +57,6 @@ public class MDQualifiedBasicName extends MDParsableItem {
 	 *  @return {@code true} if Basic Name is of {@link MDString} type.
 	 */
 	public boolean isString() {
-		if (basicName == null) {
-			return false;
-		}
 		return basicName.isString();
 	}
 
@@ -91,6 +79,10 @@ public class MDQualifiedBasicName extends MDParsableItem {
 			dmang.insertString(builder, "::");
 			qualification.insert(builder);
 		}
+	}
+
+	public void setCastTypeString(String castTypeString) {
+		basicName.setCastTypeString(castTypeString);
 	}
 
 	public MDBasicName getBasicName() {

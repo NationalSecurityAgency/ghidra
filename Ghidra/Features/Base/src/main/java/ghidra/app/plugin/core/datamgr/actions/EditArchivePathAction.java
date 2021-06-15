@@ -15,15 +15,12 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import java.util.List;
-
 import docking.ActionContext;
 import docking.DialogComponentProvider;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.pathmanager.PathManager;
-import generic.util.Path;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.framework.preferences.Preferences;
@@ -82,10 +79,6 @@ public class EditArchivePathAction extends DockingAction {
 		public void close() {
 			super.close();
 			pathManager.dispose();
-		}
-
-		List<Path> getPaths() {
-			return pathManager.getPaths();
 		}
 	}
 

@@ -1,0 +1,208 @@
+##VERSION: 2.0
+##MODULE IP: FAMFAMFAM Icons - CC 2.5
+##MODULE IP: Modified Nuvola Icons - LGPL 2.1
+##MODULE IP: Nuvola Icons - LGPL 2.1
+##MODULE IP: Oxygen Icons - LGPL 3.0
+##MODULE IP: Tango Icons - Public Domain
+Module.manifest||GHIDRA||||END|
+data/ExtensionPoint.manifest||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/shared/arrow.gif||GHIDRA||||END|
+src/main/help/help/shared/close16.gif||GHIDRA||||END|
+src/main/help/help/shared/menu16.gif||GHIDRA||||END|
+src/main/help/help/shared/note-red.png||Oxygen Icons - LGPL 3.0||||END|
+src/main/help/help/shared/note.png||Oxygen Icons - LGPL 3.0||||END|
+src/main/help/help/shared/note.yellow.png||Oxygen Icons - LGPL 3.0||||END|
+src/main/help/help/shared/redo.png||GHIDRA||||END|
+src/main/help/help/shared/tip.png||Oxygen Icons - LGPL 3.0||||END|
+src/main/help/help/shared/undo.png||GHIDRA||||END|
+src/main/help/help/shared/warning.png||Oxygen Icons - LGPL 3.0||||END|
+src/main/help/help/topics/Debugger/Debugger.html||GHIDRA||||END|
+src/main/help/help/topics/Debugger/GettingStarted.html||GHIDRA||||END|
+src/main/help/help/topics/Debugger/Troubleshooting.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBots/DebuggerBots.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/DebuggerBreakpointMarkerPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/DebuggerBreakpointMarkerPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/DebuggerPlaceBreakpointDialog.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/breakpoint-clear.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/breakpoint-disable.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/breakpoint-enable.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/DebuggerBreakpointsPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/DebuggerBreakpointsPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-disable.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-enable.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-ineffective-d.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-ineffective-e.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-mixed-de.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-mixed-ed.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoints-clear-all.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoints-disable-all.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoints-enable-all.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoints-make-effective.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerConsolePlugin/DebuggerConsolePlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerConsolePlugin/images/DebuggerConsolePlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerInterpreterPlugin/DebuggerInterpreterPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerListingPlugin/images/DebuggerGoToDialog.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerListingPlugin/images/DebuggerListingPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerMemviewPlugin/DebuggerMemviewPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerMemviewPlugin/images/DebuggerMemviewPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerMemviewPlugin/images/DebuggerMemviewPlugin_old.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerMemviewPlugin/images/filter_off.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerMemviewPlugin/images/sync_enabled.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerMemviewPlugin/images/view-refresh.png||Tango Icons - Public Domain|||tango icon set|END|
+src/main/help/help/topics/DebuggerMemviewPlugin/images/zoom_in.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/help/help/topics/DebuggerMemviewPlugin/images/zoom_out.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/help/help/topics/DebuggerModelServicePlugin/DebuggerModelServicePlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerModulesPlugin/images/DebuggerModuleMapProposalDialog.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerModulesPlugin/images/DebuggerModulesPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerModulesPlugin/images/DebuggerSectionMapProposalDialog.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/DebuggerBreakpointDialog.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/DebuggerMethodInvocationDialog_ForLaunch.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/DebuggerObjectsPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/attach.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/blank.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/breakpoint-set.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/console.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/continue.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/debugger.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/detach.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/display_as_graph.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/display_as_table.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/display_as_tree.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/display_as_xml.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/display_filtered_graph.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/display_filtered_table.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/display_filtered_tree.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/display_filtered_xml.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/export_as_facts.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/export_as_xml.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/import_from_facts.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/import_from_xml.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/kill.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/launch.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/record.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/reload.png||Nuvola Icons - LGPL 2.1||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/stepinto.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/stepout.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/stepover.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerObjectsPlugin/images/stop.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerPcodeStepperPlugin/DebuggerPcodeStepperPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerPcodeStepperPlugin/images/DebuggerPcodeStepperPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerRegionsPlugin/DebuggerRegionsPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerRegionsPlugin/images/DebuggerRegionsPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerRegistersPlugin/images/DebuggerAvailableRegistersDialog.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerRegistersPlugin/images/DebuggerRegistersPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerRegistersPlugin/images/select-registers.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerStackPlugin/DebuggerStackPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerStackPlugin/images/DebuggerStackPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerStaticMappingPlugin/images/DebuggerStaticMappingPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerTargetsPlugin/DebuggerTargetsPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerTargetsPlugin/images/DebuggerConnectDialog.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerTargetsPlugin/images/DebuggerTargetsPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerTargetsPlugin/images/connect.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerTargetsPlugin/images/disconnect.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerThreadsPlugin/DebuggerThreadsPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerThreadsPlugin/images/DebuggerThreadsPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerThreadsPlugin/images/continue.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerThreadsPlugin/images/stepback.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerThreadsPlugin/images/stepinto.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerTimePlugin/images/DebuggerTimePlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerTraceManagerServicePlugin/DebuggerTraceManagerServicePlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerWatchesPlugin/DebuggerWatchesPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerWatchesPlugin/images/DebuggerWatchesPlugin.png||GHIDRA||||END|
+src/main/resources/defaultTools/Debugger.tool||GHIDRA||||END|
+src/main/resources/define_info_proc_mappings||GHIDRA||||END|
+src/main/resources/images/add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/attach.png||GHIDRA||||END|
+src/main/resources/images/autoread.png||GHIDRA||||END|
+src/main/resources/images/blank.png||GHIDRA||||END|
+src/main/resources/images/breakpoint-clear.png||GHIDRA||||END|
+src/main/resources/images/breakpoint-disable.png||GHIDRA||||END|
+src/main/resources/images/breakpoint-enable.png||GHIDRA||||END|
+src/main/resources/images/breakpoint-ineffective-d.png||GHIDRA||||END|
+src/main/resources/images/breakpoint-ineffective-e.png||GHIDRA||||END|
+src/main/resources/images/breakpoint-mixed-de.png||GHIDRA||||END|
+src/main/resources/images/breakpoint-mixed-ed.png||GHIDRA||||END|
+src/main/resources/images/breakpoint-set.png||GHIDRA||||END|
+src/main/resources/images/breakpoints-clear-all.png||GHIDRA||||END|
+src/main/resources/images/breakpoints-disable-all.png||GHIDRA||||END|
+src/main/resources/images/breakpoints-enable-all.png||GHIDRA||||END|
+src/main/resources/images/breakpoints-make-effective.png||GHIDRA||||END|
+src/main/resources/images/breakpoints.png||GHIDRA||||END|
+src/main/resources/images/closedFolder.png||Modified Nuvola Icons - LGPL 2.1||||END|
+src/main/resources/images/connect.png||GHIDRA||||END|
+src/main/resources/images/console.png||GHIDRA||||END|
+src/main/resources/images/continue.png||GHIDRA||||END|
+src/main/resources/images/debugger.png||GHIDRA||||END|
+src/main/resources/images/debugger32.png||GHIDRA||||END|
+src/main/resources/images/delete.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/detach.png||GHIDRA||||END|
+src/main/resources/images/disconnect.png||GHIDRA||||END|
+src/main/resources/images/kill.png||GHIDRA||||END|
+src/main/resources/images/launch.png||GHIDRA||||END|
+src/main/resources/images/modules.png||GHIDRA||||END|
+src/main/resources/images/object-populated.png||GHIDRA||||END|
+src/main/resources/images/object-running.png||GHIDRA||||END|
+src/main/resources/images/object-terminated.png||GHIDRA||||END|
+src/main/resources/images/object-unpopulated.png||GHIDRA||||END|
+src/main/resources/images/process.png||GHIDRA||||END|
+src/main/resources/images/record.png||GHIDRA||||END|
+src/main/resources/images/register-marker.png||GHIDRA||||END|
+src/main/resources/images/registers.png||GHIDRA||||END|
+src/main/resources/images/select-registers.png||GHIDRA||||END|
+src/main/resources/images/skipover.png||GHIDRA||||END|
+src/main/resources/images/stack.png||GHIDRA||||END|
+src/main/resources/images/stepback.png||GHIDRA||||END|
+src/main/resources/images/stepinto.png||GHIDRA||||END|
+src/main/resources/images/stepout.png||GHIDRA||||END|
+src/main/resources/images/stepover.png||GHIDRA||||END|
+src/main/resources/images/stop.png||GHIDRA||||END|
+src/main/resources/images/sync_enabled.png||GHIDRA||||END|
+src/main/resources/images/table.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/text-xml.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/thread.png||GHIDRA||||END|
+src/main/resources/images/time.png||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/svg/attach.svg||GHIDRA||||END|
+src/main/svg/blank.svg||GHIDRA||||END|
+src/main/svg/breakpoint-clear.svg||GHIDRA||||END|
+src/main/svg/breakpoint-disable.svg||GHIDRA||||END|
+src/main/svg/breakpoint-enable.svg||GHIDRA||||END|
+src/main/svg/breakpoint-ineffective-d.svg||GHIDRA||||END|
+src/main/svg/breakpoint-ineffective-e.svg||GHIDRA||||END|
+src/main/svg/breakpoint-mixed-de.svg||GHIDRA||||END|
+src/main/svg/breakpoint-mixed-ed.svg||GHIDRA||||END|
+src/main/svg/breakpoint-set.svg||GHIDRA||||END|
+src/main/svg/breakpoints-clear-all.svg||GHIDRA||||END|
+src/main/svg/breakpoints-disable-all.svg||GHIDRA||||END|
+src/main/svg/breakpoints-enable-all.svg||GHIDRA||||END|
+src/main/svg/breakpoints-make-effective.svg||GHIDRA||||END|
+src/main/svg/breakpoints.svg||GHIDRA||||END|
+src/main/svg/connect.svg||GHIDRA||||END|
+src/main/svg/console.svg||GHIDRA||||END|
+src/main/svg/continue.svg||GHIDRA||||END|
+src/main/svg/debugger.svg||GHIDRA||||END|
+src/main/svg/detach.svg||GHIDRA||||END|
+src/main/svg/disconnect.svg||GHIDRA||||END|
+src/main/svg/kill.svg||GHIDRA||||END|
+src/main/svg/launch.svg||GHIDRA||||END|
+src/main/svg/memory.svg||GHIDRA||||END|
+src/main/svg/object-terminated.svg||GHIDRA||||END|
+src/main/svg/process.svg||GHIDRA||||END|
+src/main/svg/recording.svg||GHIDRA||||END|
+src/main/svg/register-marker.svg||GHIDRA||||END|
+src/main/svg/registers.svg||GHIDRA||||END|
+src/main/svg/select-registers.svg||GHIDRA||||END|
+src/main/svg/skipover.svg||GHIDRA||||END|
+src/main/svg/stack.svg||GHIDRA||||END|
+src/main/svg/stepback.svg||GHIDRA||||END|
+src/main/svg/stepinto.svg||GHIDRA||||END|
+src/main/svg/stepout.svg||GHIDRA||||END|
+src/main/svg/stepover.svg||GHIDRA||||END|
+src/main/svg/stop.svg||GHIDRA||||END|
+src/main/svg/thread.svg||GHIDRA||||END|

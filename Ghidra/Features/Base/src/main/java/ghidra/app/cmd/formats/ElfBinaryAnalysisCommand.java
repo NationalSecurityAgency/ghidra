@@ -414,7 +414,14 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 			//		elf.getSection(relocationTable.getFileOffset()); // may be null
 			Address relocationTableAddress = addr(relocationTable.getFileOffset());
 			try {
-				createData(relocationTableAddress, relocationTable.toDataType());
+				DataType dataType = relocationTable.toDataType();
+				if (dataType != null) {
+					createData(relocationTableAddress, dataType);
+				}
+				else {
+					listing.setComment(relocationTableAddress, CodeUnit.PRE_COMMENT,
+						"ELF Relocation Table (markup not yet supported)");
+				}
 			}
 			catch (Exception e) {
 				messages.appendMsg(

@@ -1,0 +1,167 @@
+# (6) Conditional arithmetic instructions
+# (8) Logical instructions
+# (14) Bit manipulation instructions
+
+
+
+#####################################################
+#####	             Conditional		#####
+#####################################################
+
+
+# ADF cccc, reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww011101cccc0
+:adf^c1720 R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op2126=0x1D & op1616=0 & c1720 & R2731
+{
+	local cond = zext(c1720);
+	set_OV_pos2(R1115, R0004, cond);
+	set_CY_pos2(R1115, R0004, cond);
+	R2731 = R1115 + R0004 + cond;
+	set_S(R2731);
+	set_Z(R2731);
+}
+
+# SBF cccc, reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww011100cccc0
+:sbf^c1720 R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op2126=0x1C & op1616=0 & c1720 & R2731
+{
+	local cond = zext(c1720);
+	set_OV_neg2(R1115, R0004, cond);
+	set_CY_neg2(R1115, R0004, cond);
+	R2731 = R1115 - R0004 - cond;
+	set_S(R2731);
+	set_Z(R2731);
+}
+
+
+
+#####################################################
+#####		 	Logic			#####
+#####################################################
+
+
+# AND reg1, reg2 - rrrrr001010RRRRR
+:and R0004, R1115 is op0510=0x0A & R0004 & R1115
+{
+	R1115 = R1115 & R0004;
+	set_OV0_S_Z(R1115);
+}
+
+# ANDI imm16, reg1, reg2 - rrrrr110110RRRRR|iiiiiiiiiiiiiiii
+:andi op1631, R0004, R1115 is op0510=0x36 & R1115 & R0004; op1631
+{
+	R1115 = R0004 & op1631;
+	set_OV0_S_Z(R1115);
+}
+
+# NOT reg1, reg2 - rrrrr000001RRRRR
+:not R0004, R1115 is op0510=0x01 & R0004 & R1115
+{
+	R1115 = ~R0004;
+	set_OV0_S_Z(R1115);
+}
+
+# OR reg1, reg2 - rrrrr001000RRRRR
+:or R0004, R1115 is op0510=0x08 & R0004 & R1115
+{
+	R1115 = R1115 | R0004;
+	set_OV0_S_Z(R1115);
+}
+
+# ORI imm16, reg1, reg2 - rrrrr110100RRRRR|iiiiiiiiiiiiiiii
+:ori op1631, R0004, R1115 is op0510=0x34 & R1115 & R0004; op1631
+{
+	R1115 = R0004 | op1631;
+	set_OV0_S_Z(R1115);
+}
+
+# TST reg1, reg2 - rrrrr001011RRRRR
+:tst R0004, R1115 is op0510=0x0B & R0004 & R1115
+{
+	set_OV0_S_Z(R1115 & R0004);
+}
+
+# XOR reg1, reg2 - rrrrr001001RRRRR
+:xor R0004, R1115 is op0510=0x09 & R0004 & R1115
+{
+	R1115 = R1115 ^ R0004;
+	set_OV0_S_Z(R1115);
+}
+
+# XORI imm16, reg1, reg2 - rrrrr110101RRRRR|iiiiiiiiiiiiiiii
+:xori op1631, R0004, R1115 is op0510=0x35 & R1115 & R0004; op1631
+{
+	R1115 = R0004 ^ op1631;
+	set_OV0_S_Z(R1115);
+}
+
+
+
+#####################################################
+#####		    BitManipulation		#####
+#####################################################
+
+
+# CLR1 bit#3, disp16[reg1] - 10bbb111110RRRRR|dddddddddddddddd
+:clr1 op1113, s1631[R0004] is op0510=0x3E & op1415=2 & op1113 & R0004; s1631
+{
+	local adr:4 = R0004 + s1631;
+	local tkn = *:1 adr;
+	*:1 adr = tkn & ~(1 << op1113);
+	set_Z(tkn & (1 << op1113));
+}
+
+# CLR1 reg2, [reg1] - rrrrr111111RRRRR|0000000011100100
+:clr1 R1115, [R0004] is op0510=0x3F & R0004 & R1115; op1631=0xE4
+{
+	local tkn = *:1 R0004;
+	*:1 R0004 = tkn & ~(1 << R1115);
+	set_Z(tkn & (1 << R1115));
+}
+
+# NOT1 bit#3, disp16[reg1] - 01bbb111110RRRRR|dddddddddddddddd
+:not1 op1113, s1631[R0004] is op0510=0x3E & op1415=1 & op1113 & R0004; s1631
+{
+	local adr:4 = R0004 + s1631;
+	local tkn = *:1 adr;
+	*:1 adr = tkn ^ (1 << op1113);
+	set_Z(tkn & (1 << op1113));
+}
+
+# NOT1 reg2, [reg1] - rrrrr111111RRRRR|0000000011100010
+:not1 R1115, [R0004] is op0510=0x3F & R0004 & R1115; op1631=0xE2
+{
+	local tkn = *:1 R0004;
+	*:1 R0004 = tkn ^ (1 << R1115);
+	set_Z(tkn & (1 << R1115));
+}
+
+# SET1 bit#3, disp16[reg1] - 00bbb111110RRRRR|dddddddddddddddd
+:set1 op1113, s1631[R0004] is op0510=0x3E & op1415=0 & op1113 & R0004; s1631
+{
+	local adr:4 = R0004 + s1631;
+	local tkn = *:1 adr;
+	*:1 adr = tkn | (1 << op1113);
+	set_Z(tkn & (1 << op1113));
+}
+
+# SET1 reg2, [reg1] - rrrrr111111RRRRR|0000000011100000
+:set1 R1115, [R0004] is op0510=0x3F & R0004 & R1115; op1631=0xE0
+{
+	local tkn = *:1 R0004;
+	*:1 R0004 = tkn | (1 << R1115);
+	set_Z(tkn & (1 << R1115));
+}
+
+# TST1 bit#3, disp16[reg1] - 11bbb111110RRRRR|dddddddddddddddd
+:tst1 op1113, s1631[R0004] is op0510=0x3E & op1415=3 & op1113 & R0004; s1631
+{
+	local adr:4 = R0004 + s1631;
+	local tkn = *:1 adr;
+	set_Z(tkn & (1 << op1113));
+}
+
+# TST1 reg2, [reg1] - rrrrr111111RRRRR|0000000011100110
+:tst1 R0004, [R1115] is op0510=0x3F & R0004 & R1115; op1631=0xE6
+{
+	local tkn = *:1 R0004;
+	set_Z(tkn & (1 << R1115));
+}

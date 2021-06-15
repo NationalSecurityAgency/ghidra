@@ -24,6 +24,7 @@ import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.Border;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jdesktop.animation.timing.Animator;
 
 import docking.util.AnimationUtils;
@@ -153,14 +154,40 @@ public class StatusBar extends JPanel {
 		statusAreaPanel.remove(c.getParent());
 	}
 
-	public void setStatusText(String text, boolean isActiveWindow) {
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> doSetStatusText(text, isActiveWindow));
+	/**
+	 * Returns the current text in this status bar
+	 * @return the text
+	 */
+	public String getStatusText() {
+		return statusLabel.getText();
 	}
 
-	private void doSetStatusText(String text, boolean isActiveWindow) {
+	/**
+	 * Deprecated.  Call {@link #setStatusText(String)} instead.
+	 * 
+	 * @param text the text
+	 * @param isActiveWindow this parameter is ignored
+	 * @deprecated Call {@link #setStatusText(String)} instead.  Remove after 9.3
+	 */
+	@Deprecated
+	public void setStatusText(String text, boolean isActiveWindow) {
+		setStatusText(text);
+	}
+
+	/**
+	 * Sets the status text
+	 * @param text the text
+	 */
+	public void setStatusText(String text) {
+		// Run this later in case we are in the midst of a Java focus transition, such as when a
+		// dialog is closing.  If we don't let the focus transition finish, then we will not 
+		// correctly locate the active window.
+		Swing.runLater(() -> doSetStatusText(text));
+	}
+
+	private void doSetStatusText(String text) {
 		if (text == null) {
-			// not sure what do do here, do nothing for now so that the previous message
-			// stays around
+			// do nothing for now so that the previous message stays around
 			return;
 		}
 
@@ -171,11 +198,12 @@ public class StatusBar extends JPanel {
 		statusLabel.setToolTipText(getToolTipText());
 		statusLabel.setForeground(Color.BLACK);
 
-		if (!isActiveWindow) {
+		if (StringUtils.isBlank(updatedText)) {
 			return;
 		}
 
-		if (updatedText.trim().isEmpty()) {
+		Window window = WindowUtilities.windowForComponent(statusLabel);
+		if (!window.isActive()) {
 			return;
 		}
 
@@ -369,7 +397,7 @@ public class StatusBar extends JPanel {
 		}
 	}
 
-	class StatusPanel extends JPanel {
+	static class StatusPanel extends JPanel {
 		Dimension prefSize;
 
 		StatusPanel(Component c, boolean addBorder) {

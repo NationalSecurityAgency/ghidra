@@ -1,0 +1,657 @@
+define endian=big;
+define alignment=2;
+define space ram type=ram_space wordsize=2 size=2 default;
+define space register type=register_space size=2;
+
+define register offset=0x00 size=2 [ R0 R1 R2 R3 R4 R5 R6 R7 ];
+define register offset=0x10 size=1 [ I C O Z S ];
+define register offset=0x20 size=4 [ contextreg ];
+
+define token opcode_word (16)
+	target3_5          = (3, 5)
+	reg3_5             = (3, 5)
+	target0_2          = (0, 2)
+	reg0_2             = (0, 2)
+	reg0_1             = (0, 1)
+	operation_size     = (2, 2)
+	
+	branch_sign        = (5, 5)
+	branch_external    = (4, 4)
+	branch_condition   = (0, 3)
+	external_condition = (0, 3)
+	
+	opcode6_9          = (6, 9)
+	opcode3_9          = (3, 9)
+	opcode2_9          = (2, 9)
+	opcode1_9          = (1, 9)
+	opcode0_9          = (0, 9)
+;
+
+define token jump_token (32)
+	target24_25 = (24, 25)
+	reg24_25    = (24, 25)
+	address_hi  = (18, 23)
+	jump_type   = (16, 17)
+	address_lo  = (0, 9)
+;
+
+define token double16 (32)
+	value_lo  = (16, 23)
+	value_hi  = (0, 7)
+;
+
+define token immediate16 (16)
+	imm16  = (0, 15)
+	addr16 = (0, 15)
+;
+
+define context contextreg
+	doublebyte = (0, 0) noflow
+;
+
+attach variables [ reg0_1        ] [ R0 R1 R2 R3             ];
+attach variables [ reg0_2 reg3_5 ] [ R0 R1 R2 R3 R4 R5 R6 R7 ];
+attach variables [ reg24_25      ] [ R4 R5 R6 R7             ];
+
+################################################################
+
+jmpdest16:     reloc is address_hi & address_lo [ reloc = (address_hi << 10) + address_lo;   ] { export *:2 reloc;                         }
+branchdest16:  reloc is branch_sign=0 ; imm16   [ reloc = inst_start + 2 + imm16;            ] { export *:2 reloc;                         }
+branchdest16:  reloc is branch_sign=1 ; imm16   [ reloc = inst_start + 2 + (imm16 ^ 0xFFFF); ] { export *:2 reloc;                         }
+splitimm16:    split is value_hi & value_lo     [ split = (value_hi << 8) + value_lo;        ] { local tmp:2 = split & 0xFFFF; export tmp; }
+
+impliedval16: reg3_5 is reg3_5 & (target3_5=0 | target3_5=1 | target3_5=2 | target3_5=3 | target3_5=7) & doublebyte=0 {
+	local tmp:2 = *:2 reg3_5;
+	export tmp;
+}
+
+impliedval16: reg3_5 is reg3_5 & (target3_5=4 | target3_5=5) & doublebyte=0 {
+	local tmp:2 = *:2 reg3_5;
+	reg3_5 = reg3_5 + 1;
+	export tmp;
+}
+
+impliedval16: reg3_5 is reg3_5 & target3_5=6 & doublebyte=0 {
+	reg3_5 = reg3_5 - 1;
+	local tmp:2 = *:2 reg3_5;
+	export tmp;
+}
+
+impliedval16: reg3_5 is reg3_5 & (target3_5=4 | target3_5=5) & doublebyte=1 {
+	local val:4 = *:4 reg3_5;
+	local low:1 = val(2);
+	local high:1 = val(0);
+	local tmp:2 = (zext(high) << 8) | zext(low);
+	reg3_5 = reg3_5 + 2;
+	export tmp;
+}
+
+impliedval16: reg3_5 is reg3_5 & target3_5=6 & doublebyte=1 {
+	reg3_5 = reg3_5 - 2;
+	local val:4 = *:4 reg3_5;
+	local low:1 = val(2);
+	local high:1 = val(0);
+	local tmp:2 = (zext(high) << 8) | zext(low);
+	export tmp;
+}
+
+impliedval16: reg3_5 is reg3_5 & (target3_5=0 | target3_5=1 | target3_5=2 | target3_5=3 | target3_5=7) & doublebyte=1 {
+	local val:2 = *:1 reg3_5;
+	val = (zext(val) << 8) | zext(val);
+	export val;
+}
+
+checkbranch:  is reg0_2=7 { goto [R7]; }
+checkbranch:  is reg0_2 {}
+regval0_2:    is reg0_2=7 {
+	local tmp:2 = inst_next / 2;
+	export tmp;
+}
+regval0_2:    is reg0_2 { export reg0_2; }
+
+cc: ""    is branch_external=0 & branch_condition=0  { local tmp:1 = 1; export tmp; }
+cc: "C"   is branch_external=0 & branch_condition=1  { export C; }
+cc: "OV"  is branch_external=0 & branch_condition=2  { export O; }
+cc: "PL"  is branch_external=0 & branch_condition=3  { local tmp = !S; export tmp; }
+cc: "EQ"  is branch_external=0 & branch_condition=4  { export Z; }
+cc: "LT"  is branch_external=0 & branch_condition=5  { local tmp = S != O; export tmp; }
+cc: "LE"  is branch_external=0 & branch_condition=6  { local tmp = (Z == 1) || (S != O); export tmp; }
+cc: "USC" is branch_external=0 & branch_condition=7  { local tmp = S != C; export tmp; }
+cc: "NC"  is branch_external=0 & branch_condition=9  { local tmp = !C; export tmp; }
+cc: "NOV" is branch_external=0 & branch_condition=10 { local tmp = !O; export tmp; }
+cc: "MI"  is branch_external=0 & branch_condition=11 { export S; }
+cc: "NEQ" is branch_external=0 & branch_condition=12 { local tmp = !Z; export tmp; }
+cc: "GE"  is branch_external=0 & branch_condition=13 { local tmp = S == O; export tmp; }
+cc: "GT"  is branch_external=0 & branch_condition=14 { local tmp = (Z == 0) || (S == O); export tmp; }
+cc: "ESC" is branch_external=0 & branch_condition=15 { local tmp = S == C; export tmp; }
+
+################################################################
+
+macro resultFlags(value) {
+	Z = value == 0;
+	S = value s< 0; 
+}
+
+macro addition(first_w, first_r, second) {
+	local tmpC = carry(first_r, second);
+	local tmpO = scarry(first_r, second);
+	first_w = first_r + second;
+	C = tmpC;
+	O = tmpO;
+	resultFlags(first_w);
+}
+
+macro comparison(first, second) {
+	local __val__ = first - second;
+	O = sborrow(first, second);
+	C = first < second; 
+	resultFlags(__val__);
+}
+
+macro subtraction(first_w, first_r, second) {
+	local __val__ = first_r - second;
+	O = sborrow(first_r, second);
+	C = first_r < second; 
+	resultFlags(__val__);
+	first_w = __val__;
+}
+
+################################################################
+
+define pcodeop TerminateCurrentInterrupt;
+define pcodeop SoftwareInterrupt;
+
+################################################################
+
+:ADD addr16, reg0_2 is opcode3_9=0x0058 & reg0_2 & regval0_2 & checkbranch ; addr16 {
+	local ptr:2 = addr16;
+	addition(reg0_2, regval0_2, *:2 ptr);
+	build checkbranch;
+}
+
+:ADD@ impliedval16, reg0_2 is opcode6_9=0x000B & reg0_2 & regval0_2 & checkbranch & impliedval16 {
+	addition(reg0_2, regval0_2, impliedval16);
+	build checkbranch;
+}
+
+:ADCR reg0_2 is opcode3_9=0x0005 & reg0_2 & regval0_2 & checkbranch {
+	local oldC = zext(C);
+	addition(reg0_2, regval0_2, oldC);
+	build checkbranch;
+}
+
+:ADDR reg3_5, reg0_2 is opcode6_9=0x0003 & reg3_5 & reg0_2 & regval0_2 & checkbranch {
+	addition(reg0_2, regval0_2, reg3_5);
+	build checkbranch;
+}
+
+:AND addr16, reg0_2 is opcode3_9=0x0070 & reg0_2 & regval0_2 & checkbranch ; addr16 {
+	local ptr:2 = addr16;
+	reg0_2 = regval0_2 & *:2 ptr;
+	resultFlags(reg0_2);
+	build checkbranch;
+}
+
+:AND@ impliedval16, reg0_2 is opcode6_9=0x000E & reg0_2 & regval0_2 & checkbranch & impliedval16 {
+	reg0_2 = regval0_2 & impliedval16;
+	resultFlags(reg0_2);
+	build checkbranch;
+}
+
+:ANDR reg3_5, reg0_2 is opcode6_9=0x0006 & reg3_5 & reg0_2 & regval0_2 & checkbranch {
+	reg0_2 = regval0_2 & reg3_5;
+	resultFlags(reg0_2);
+	build checkbranch;
+}
+
+:B^cc branchdest16 is (opcode6_9=0x0008 & cc) ... & branchdest16 {
+	if (cc) goto branchdest16;
+}
+
+:BEXT branchdest16, external_condition is (opcode6_9=0x0008 & branch_external=1 & external_condition) ... & branchdest16 {
+	goto branchdest16;
+}  
+
+:CLRC is opcode0_9=0x0006 {
+	C = 0;
+}
+
+:CLRR reg0_2 is opcode6_9=0x0007 & reg0_2 & (target0_2=target3_5) & checkbranch {
+	reg0_2 = 0;
+	resultFlags(reg0_2);
+	build checkbranch;
+}
+
+:CMP addr16, reg0_2 is opcode3_9=0x0068 & reg0_2 ; addr16  {
+	local ptr:2 = addr16;
+	comparison(reg0_2, *:2 ptr);
+}
+
+:CMP@ impliedval16, reg0_2 is opcode6_9=0x000D & reg0_2 & impliedval16 {
+	comparison(reg0_2, impliedval16);
+}
+
+:CMPR reg3_5, reg0_2 is opcode6_9=0x0005 & reg3_5 & reg0_2 {
+	comparison(reg0_2, reg3_5);
+}
+
+:COMR reg0_2 is opcode3_9=0x0003 & reg0_2 & regval0_2 & checkbranch {
+	reg0_2 = ~regval0_2;
+	resultFlags(reg0_2);
+	build checkbranch;
+}
+
+:DECR reg0_2 is opcode3_9=0x0002 & reg0_2 & regval0_2 & checkbranch {
+	reg0_2 = regval0_2 - 1;
+	resultFlags(reg0_2);
+	build checkbranch;
+}
+
+:DIS is opcode0_9=0x0003 {
+	I = 0;
+}
+
+:EIS is opcode0_9=0x0002 {
+	I = 1;
+}
+
+:GSWD reg0_1 is opcode2_9=0x000C & reg0_1 {
+	local mask:2 = (zext(S) << 7) + (zext(Z) << 6) + (zext(O) << 5) + (zext(C) << 4);
+	reg0_1 = (mask << 8) + mask; 
+}
+
+:HLT is opcode0_9=0x0000 {
+	goto inst_start;
+}
+
+:INCR reg0_2 is opcode3_9=0x0001 & reg0_2 & regval0_2 & checkbranch {
+	reg0_2 = regval0_2 + 1;
+	resultFlags(reg0_2);
+	build checkbranch;
+}
+
+:J jmpdest16 is opcode0_9=0x0004 ; jump_type=0 & target24_25=3 & jmpdest16 {
+	goto jmpdest16;
+}
+
+:JD jmpdest16 is opcode0_9=0x0004 ; jump_type=2 & target24_25=3 & jmpdest16 {
+	I = 0;
+	goto jmpdest16;
+}
+
+:JE jmpdest16 is opcode0_9=0x0004 ; jump_type=1 & target24_25=3 & jmpdest16 {
+	I = 1;
+	goto jmpdest16;
+}
+
+:JR reg3_5 is opcode6_9=0x0002 & reg3_5 & reg0_2 & reg0_2=7 {
+	reg0_2 = reg3_5;
+	resultFlags(reg0_2);
+	return [reg0_2];
+}
+
+:JSR reg24_25, jmpdest16 is opcode0_9=0x0004 ; jump_type=0 & reg24_25 & jmpdest16 {
+	reg24_25 = inst_next;
+	call jmpdest16;
+}
+
+:JSRD reg24_25, jmpdest16 is opcode0_9=0x0004 ; jump_type=2 & reg24_25 & jmpdest16 {
+	I = 0;
+	reg24_25 = inst_next;
+	call jmpdest16;
+}
+
+:JSRE reg24_25, jmpdest16 is opcode0_9=0x0004 ; jump_type=1 & reg24_25 & jmpdest16 {
+	I = 1;
+	reg24_25 = inst_next;
+	call jmpdest16;
+}
+
+:MOVR reg3_5, reg0_2 is opcode6_9=0x0002 & reg0_2 & reg3_5 & checkbranch {
+	reg0_2 = reg3_5;
+	resultFlags(reg0_2);
+	build checkbranch;
+}
+
+:MVI addr16, reg0_2 is opcode3_9=0x0050 & reg0_2 & checkbranch ; addr16 {
+	local ptr:2 = addr16;
+	reg0_2 = *(*:2 ptr);
+	build checkbranch;
+}
+
+:MVI@ impliedval16, reg0_2 is opcode6_9=0x000A & reg0_2 & impliedval16 & checkbranch {
+	reg0_2 = impliedval16;
+	build checkbranch;
+}
+
+:MVO reg0_2, addr16 is opcode3_9=0x0048 & reg0_2 ; addr16 {
+	local ptr:2 = addr16;
+	*ptr = reg0_2;
+}
+
+:MVO@ reg0_2, reg3_5 is opcode6_9=0x0009 & reg0_2 & reg3_5 & (reg3_5=4 | reg3_5=5) & checkbranch {
+	local ptr:2 = reg3_5; 
+	*ptr = reg0_2;
+	reg3_5 = reg3_5 + 1;
+	build checkbranch;
+}
+
+:MVO@ reg0_2, reg3_5 is opcode6_9=0x0009 & reg0_2 & reg3_5 & checkbranch {
+	local ptr:2 = reg3_5; 
+	*ptr = reg0_2;
+	build checkbranch;
+}
+
+:MVOI reg0_2 is opcode3_9=0x004F & reg0_2 ; imm16 {
+	local tmp:2 = inst_start + 2;
+	*tmp = reg0_2;
+}
+
+:NEGR reg0_2 is opcode3_9=0x0004 & reg0_2 & regval0_2 & checkbranch {
+	local tmp = regval0_2 ^ 0xFFFF;
+	local tmpC = carry(tmp, 1);
+	local tmpO = scarry(tmp, 1);
+	reg0_2 = -regval0_2;
+	C = tmpC;
+	O = tmpO;
+	resultFlags(reg0_2);
+	build checkbranch;
+}
+
+:NOP is opcode1_9=0x001A {
+}
+
+:NOPP is opcode6_9=0x0008 & branch_external=0 & branch_condition=8 ; imm16 {
+}
+
+:PSHR reg0_2 is opcode6_9=0x0009 & reg0_2 & reg3_5 & reg3_5=6 {
+	local ptr:2 = reg3_5;
+	*ptr = reg0_2;
+	reg3_5 = reg3_5 + 1;
+}
+
+:PULR reg0_2 is opcode6_9=0x000A & impliedval16 & reg0_2 & reg3_5=6 {
+	reg0_2 = impliedval16;
+}
+
+:RSWD reg0_2 is opcode3_9=0x0007 & reg0_2 {
+	C = (reg0_2 & 0b00001000) != 0;
+	O = (reg0_2 & 0b00010000) != 0;
+	Z = (reg0_2 & 0b00100000) != 0;
+	S = (reg0_2 & 0b01000000) != 0;
+}
+
+:SDBD is opcode0_9=0x0001 [ doublebyte=1; globalset(inst_next, doublebyte); ] {
+}
+
+:SETC is opcode0_9=0x0007 {
+	C = 1;
+}
+
+:SIN is opcode1_9=0x001B {
+	SoftwareInterrupt();
+}
+
+:SUB addr16, reg0_2 is opcode3_9=0x0060 & reg0_2 & regval0_2 & checkbranch ; addr16 {
+	local ptr:2 = addr16;
+	subtraction(reg0_2, regval0_2, *:2 ptr);
+	build checkbranch;
+}
+
+:SUB@ impliedval16, reg0_2 is opcode6_9=0x000C & reg0_2 & regval0_2 & checkbranch & impliedval16 {
+	subtraction(reg0_2, regval0_2, impliedval16);
+	build checkbranch;
+}
+
+:SUBR reg3_5, reg0_2 is opcode6_9=0x0004 & reg3_5 & reg0_2 & regval0_2 & checkbranch {
+	subtraction(reg0_2, regval0_2, reg3_5);
+	build checkbranch;
+}
+
+:TCI is opcode0_9=0x0005 {
+	TerminateCurrentInterrupt();
+}
+
+:TSTR reg0_2 is opcode6_9=0x0002 & reg0_2 & (target0_2=target3_5) {
+	resultFlags(reg0_2);
+}
+
+:XOR addr16, reg0_2 is opcode3_9=0x0078 & reg0_2 & regval0_2 & checkbranch ; addr16 {
+	local ptr:2 = addr16;
+	reg0_2 = regval0_2 ^ *:2 ptr;
+	resultFlags(reg0_2);
+	build checkbranch;
+}
+
+:XOR@ impliedval16, reg0_2 is opcode6_9=0x000F & reg0_2 & regval0_2 & checkbranch & impliedval16 {
+	reg0_2 = regval0_2 ^ impliedval16;
+	resultFlags(reg0_2);
+	build checkbranch;
+}
+
+:XORR reg3_5, reg0_2 is opcode6_9=0x0007 & reg3_5 & reg0_2 & regval0_2 & checkbranch {
+	reg0_2 = regval0_2 ^ reg3_5;
+	resultFlags(reg0_2);
+	build checkbranch;
+}
+
+:RLC reg0_2, 1 is opcode3_9=0x000A & reg0_2 & regval0_2 & checkbranch {
+	local tmpC = (regval0_2 & 0x8000) != 0;
+	local tmpS = (regval0_2 & 0x4000) != 0;
+	reg0_2 = (regval0_2 << 1) + zext(C);
+	C = tmpC;
+	S = tmpS;
+	Z = reg0_2 == 0;
+	build checkbranch;
+}
+
+:RRC reg0_2, 1 is opcode3_9=0x000E & reg0_2 & regval0_2 & checkbranch {
+	local tmpC = (regval0_2 & 0x0001) != 0;
+	local tmpS = (regval0_2 & 0x0100) != 0;
+	reg0_2 = (regval0_2 >> 1) | (zext(C) << 15);
+	C = tmpC;
+	S = tmpS;
+	Z = reg0_2 == 0;
+	build checkbranch;
+}
+
+:SAR reg0_2, 1 is opcode3_9=0x000D & reg0_2 & regval0_2 & checkbranch {
+	local tmpS = (regval0_2 & 0x0100) != 0;
+	reg0_2 = regval0_2 s>> 1;
+	S = tmpS;
+	Z = reg0_2 == 0;
+	build checkbranch;
+}
+
+:SARC reg0_2, 1 is opcode3_9=0x000F & reg0_2 & regval0_2 & checkbranch {
+	local tmpC = (regval0_2 & 0x0001) != 0;
+	local tmpS = (regval0_2 & 0x0100) != 0;
+	reg0_2 = regval0_2 s>> 1;
+	C = tmpC;
+	S = tmpS;
+	Z = reg0_2 == 0;
+	build checkbranch;
+}
+
+:SLL reg0_2, 1 is opcode3_9=0x0009 & reg0_2 & regval0_2 & checkbranch {
+	local tmpS = (regval0_2 & 0x4000) != 0;
+	reg0_2 = regval0_2 << 1;
+	S = tmpS;
+	Z = reg0_2 == 0;
+	build checkbranch;
+}
+
+:SLLC reg0_2, 1 is opcode3_9=0x000B & reg0_2 & regval0_2 & checkbranch {
+	local tmpC = (regval0_2 & 0x8000) != 0;
+	local tmpS = (regval0_2 & 0x4000) != 0;
+	reg0_2 = regval0_2 << 1;
+	C = tmpC;
+	S = tmpS;
+	Z = reg0_2 == 0;
+	build checkbranch;
+} 
+
+:SLR reg0_2, 1 is opcode3_9=0x000C & reg0_2 & regval0_2 & checkbranch {
+	local tmpS = (regval0_2 & 0x0100) != 0;
+	reg0_2 = regval0_2 >> 1;
+	S = tmpS;
+	Z = reg0_2 == 0;
+	build checkbranch;
+} 
+
+:SWAP reg0_2, 1 is opcode3_9=0x0008 & reg0_2 & regval0_2 & checkbranch {
+	local tmpS = (regval0_2 & 0x8000) != 0;
+	local tmp = (regval0_2 << 8) & 0xFF00;
+	reg0_2 = tmp | ((regval0_2 >> 8) & 0x00FF);
+	S = tmpS;
+	build checkbranch;
+}
+
+with : operation_size=1 {
+
+:RLC reg0_2, 2 is opcode3_9=0x000A & reg0_2 & regval0_2 & checkbranch {
+	local tmpC = (regval0_2 & 0x8000) != 0;
+	local tmpO = (regval0_2 & 0x4000) != 0;
+	local tmpS = (regval0_2 & 0x2000) != 0;
+	reg0_2 = (regval0_2 << 2) + (zext(C) << 1) + zext(O);
+	C = tmpC;
+	O = tmpO;
+	S = tmpS;
+	Z = reg0_2 == 0;
+	build checkbranch;
+}
+
+:RRC reg0_2, 2 is opcode3_9=0x000E & reg0_2 & regval0_2 & checkbranch {
+	local tmpC = (regval0_2 & 0x0001) != 0;
+	local tmpO = (regval0_2 & 0x0002) != 0;
+	local tmpS = (regval0_2 & 0x0200) != 0;
+	reg0_2 = (regval0_2 >> 2) | (zext(C) << 14) | (zext(O) << 15);
+	C = tmpC;
+	O = tmpO;
+	S = tmpS;
+	Z = reg0_2 == 0;
+	build checkbranch;
+}
+
+:SAR reg0_2, 2 is opcode3_9=0x000D & reg0_2 & regval0_2 & checkbranch {
+	local tmpS = (regval0_2 & 0x0200) != 0;
+	reg0_2 = regval0_2 s>> 2;
+	S = tmpS;
+	Z = reg0_2 == 0;
+	build checkbranch;
+}
+
+:SARC reg0_2, 2 is opcode3_9=0x000F & reg0_2 & regval0_2 & checkbranch {
+	local tmpC = (regval0_2 & 0x0001) != 0;
+	local tmpO = (regval0_2 & 0x0002) != 0;
+	local tmpS = (regval0_2 & 0x0200) != 0;
+	reg0_2 = regval0_2 s>> 2;
+	C = tmpC;
+	O = tmpO;
+	S = tmpS;
+	Z = reg0_2 == 0;
+	build checkbranch;
+}
+
+:SLL reg0_2, 2 is opcode3_9=0x0009 & reg0_2 & regval0_2 & checkbranch {
+	local tmpS = (regval0_2 & 0x2000) != 0;
+	reg0_2 = regval0_2 << 2;
+	S = tmpS;
+	Z = reg0_2 == 0;
+	build checkbranch;
+}
+
+:SLLC reg0_2, 2 is opcode3_9=0x000B & reg0_2 & regval0_2 & checkbranch {
+	local tmpC = (regval0_2 & 0x8000) != 0;
+	local tmpO = (regval0_2 & 0x4000) != 0;
+	local tmpS = (regval0_2 & 0x2000) != 0;
+	reg0_2 = regval0_2 << 2;
+	C = tmpC;
+	O = tmpO;
+	S = tmpS;
+	Z = reg0_2 == 0;
+	build checkbranch;
+}
+
+:SLR reg0_2, 2 is opcode3_9=0x000C & reg0_2 & regval0_2 & checkbranch {
+	local tmpS = (regval0_2 & 0x0200) != 0;
+	reg0_2 = regval0_2 >> 2;
+	S = tmpS;
+	Z = reg0_2 == 0;
+	build checkbranch;
+}
+
+:SWAP reg0_2, 2 is opcode3_9=0x0008 & reg0_2 & regval0_2 & checkbranch {
+	local tmpS = (regval0_2 & 0x0080) != 0;
+	reg0_2 = (regval0_2 << 8) | (regval0_2 & 0x00FF);
+	S = tmpS;
+	build checkbranch;
+}
+
+}
+
+:ADDI "#"imm16, reg0_2 is opcode3_9=0x005F & reg0_2 & regval0_2 & checkbranch ; imm16 {
+	addition(reg0_2, regval0_2, imm16);
+	build checkbranch;
+}
+
+:ANDI "#"imm16, reg0_2 is opcode3_9=0x0077 & reg0_2 & regval0_2 & checkbranch ; imm16 {
+	reg0_2 = reg0_2 & imm16;
+	resultFlags(reg0_2);
+	build checkbranch;
+}
+
+:CMPI "#"imm16, reg0_2 is opcode3_9=0x006F & reg0_2 ; imm16 {
+	comparison(reg0_2, imm16);
+}
+
+:MVII "#"imm16, reg0_2 is opcode3_9=0x0057 & reg0_2 & checkbranch ; imm16 {
+	reg0_2 = imm16;
+	build checkbranch;
+}
+
+:SUBI "#"imm16, reg0_2 is opcode3_9=0x0067 & reg0_2 & regval0_2 & checkbranch ; imm16 {
+	subtraction(reg0_2, regval0_2, imm16);
+	build checkbranch;
+}
+
+:XORI "#"imm16, reg0_2 is opcode3_9=0x007F & reg0_2 & regval0_2 & checkbranch ; imm16 {
+	reg0_2 = regval0_2 ^ imm16;
+	resultFlags(reg0_2);
+	build checkbranch;
+}
+
+with : doublebyte=1 {
+
+:ADDI "#"splitimm16, reg0_2 is opcode3_9=0x005F & reg0_2 & regval0_2 & checkbranch ; splitimm16 {
+	addition(reg0_2, regval0_2, splitimm16);
+	build checkbranch;
+}
+
+:ANDI "#"splitimm16, reg0_2 is opcode3_9=0x0077 & reg0_2 & regval0_2 & checkbranch ; splitimm16 {
+	reg0_2 = regval0_2 & splitimm16;
+	resultFlags(reg0_2);
+	build checkbranch;
+}
+
+:CMPI "#"splitimm16, reg0_2 is opcode3_9=0x006F & reg0_2 ; splitimm16 {
+	comparison(reg0_2, splitimm16);
+}
+
+:MVII "#"splitimm16, reg0_2 is opcode3_9=0x0057 & reg0_2 & checkbranch ; splitimm16 {
+	reg0_2 = splitimm16;
+	build checkbranch;
+}
+
+:SUBI "#"splitimm16, reg0_2 is opcode3_9=0x0067 & reg0_2 & regval0_2 & checkbranch ; splitimm16 {
+	subtraction(reg0_2, regval0_2, splitimm16);
+	build checkbranch;
+}
+
+:XORI "#"splitimm16, reg0_2 is opcode3_9=0x007F & reg0_2 & regval0_2 & checkbranch ; splitimm16 {
+	reg0_2 = regval0_2 ^ splitimm16;
+	resultFlags(reg0_2);
+	build checkbranch;
+}
+
+}

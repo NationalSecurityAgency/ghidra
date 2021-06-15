@@ -43,7 +43,7 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 	public void setUp() throws Exception {
 		ProgramBuilder builder = new ToyProgramBuilder("test", false);
 		StructureDataType s = new StructureDataType("StructA", 0);
-		s.setInternallyAligned(true);
+		s.setPackingEnabled(true);
 		s.add(IntegerDataType.dataType);
 		builder.addDataType(s);
 		program = builder.getProgram();
@@ -241,7 +241,7 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 		int txId = program.startTransaction("Add Struct");
 		try {
 			StructureDataType s = new StructureDataType(new CategoryPath("/Test"), "StructA", 0);
-			s.setInternallyAligned(true);
+			s.setPackingEnabled(true);
 			s.add(ByteDataType.dataType);
 			program.getDataTypeManager().addDataType(s, null);
 		}

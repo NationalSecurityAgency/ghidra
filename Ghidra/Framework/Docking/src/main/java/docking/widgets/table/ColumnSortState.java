@@ -55,6 +55,9 @@ public class ColumnSortState {
 	private int sortOrder_OneBased = -1;
 
 	ColumnSortState(int columnModelIndex, SortDirection sortDirection, int sortOrder) {
+		if (columnModelIndex < 0) {
+			throw new IllegalArgumentException("Column index cannot be negative");
+		}
 		this.columnModelIndex = columnModelIndex;
 		this.sortDirection = sortDirection;
 		this.sortOrder_OneBased = sortOrder;

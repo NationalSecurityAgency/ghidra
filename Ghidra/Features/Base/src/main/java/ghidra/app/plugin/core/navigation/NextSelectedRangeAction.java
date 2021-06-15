@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.navigation;
 
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import docking.DockingUtils;
@@ -44,7 +45,8 @@ public class NextSelectedRangeAction extends NextRangeAction {
 			ResourceManager.loadImage("images/NextSelectionBlock16.gif"),
 			ToolConstants.TOOLBAR_GROUP_THREE, NextPrevSelectedRangePlugin.ACTION_SUB_GROUP));
 		setKeyBindingData(
-			new KeyBindingData(KeyEvent.VK_BRACERIGHT, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
+			new KeyBindingData(KeyEvent.VK_OPEN_BRACKET, DockingUtils.CONTROL_KEY_MODIFIER_MASK |
+				InputEvent.SHIFT_DOWN_MASK));
 
 		setDescription("Go to next selected range");
 		setHelpLocation(new HelpLocation(HelpTopics.SELECTION, getName()));

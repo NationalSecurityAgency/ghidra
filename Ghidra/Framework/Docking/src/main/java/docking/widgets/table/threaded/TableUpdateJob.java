@@ -553,31 +553,14 @@ public class TableUpdateJob<T> {
 	 */
 	private void doProcessAddRemoves() throws CancelledException {
 
-		int n = addRemoveList.size();
-		monitor.setMessage("Adding/Removing " + n + " items...");
-		monitor.initialize(n);
-
 		initializeSortCache();
-
-		for (int i = 0; i < n; i++) {
-			AddRemoveListItem<T> item = addRemoveList.get(i);
-			T value = item.getValue();
-			if (item.isChange()) {
-				updatedData.remove(value);
-				updatedData.insert(value);
-			}
-			else if (item.isRemove()) {
-				updatedData.remove(value);
-			}
-			else if (item.isAdd()) {
-				updatedData.insert(value);
-			}
-			monitor.checkCanceled();
-			monitor.setProgress(i);
+		try {
+			TableAddRemoveStrategy<T> strategy = model.getAddRemoveStrategy();
+			strategy.process(addRemoveList, updatedData, monitor);
 		}
-		monitor.setMessage("Done adding/removing");
-
-		clearSortCache();
+		finally {
+			clearSortCache();
+		}
 	}
 
 	/** When sorting we cache column value lookups to increase speed. */

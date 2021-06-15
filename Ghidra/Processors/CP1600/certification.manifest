@@ -1,0 +1,7 @@
+##VERSION: 2.0
+Module.manifest||GHIDRA||||END|
+data/languages/CP1600.cspec||GHIDRA||||END|
+data/languages/CP1600.ldefs||GHIDRA||||END|
+data/languages/CP1600.opinion||GHIDRA||||END|
+data/languages/CP1600.pspec||GHIDRA||||END|
+data/languages/CP1600.slaspec||GHIDRA||||END|

@@ -4,7 +4,6 @@
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
 Sleigh.launch||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/charset_info.xml||GHIDRA||||END|
 data/languages/Steps to creation of Format Opinion.txt||GHIDRA||||END|
@@ -29,7 +28,6 @@ src/main/java/ghidra/program/database/package.html||GHIDRA||||END|
 src/main/java/ghidra/program/model/address/package.html||GHIDRA||||END|
 src/main/java/ghidra/program/model/block/package.html||GHIDRA||||END|
 src/main/java/ghidra/program/model/data/package.html||GHIDRA||||END|
-src/main/java/ghidra/program/model/graph/package.html||GHIDRA||||END|
 src/main/java/ghidra/program/model/lang/package.html||GHIDRA||||END|
 src/main/java/ghidra/program/model/listing/package.html||GHIDRA||||END|
 src/main/java/ghidra/program/model/mem/package.html||GHIDRA||||END|

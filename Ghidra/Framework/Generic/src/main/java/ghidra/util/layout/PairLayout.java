@@ -86,7 +86,14 @@ public class PairLayout implements LayoutManager {
 
 	@Override
 	public Dimension minimumLayoutSize(Container parent) {
-		return preferredLayoutSize(parent);
+		// resulting min width equals the label column's (leftColumnWidth) width
+		computeSizes(parent);
+		int rowCount = (parent.getComponentCount() + 1) / 2;
+		Insets insets = parent.getInsets();
+		Dimension d = new Dimension(0, 0);
+		d.width = leftColumnWidth + hgap + insets.left + insets.right;
+		d.height = rowHeight * rowCount + vgap * (rowCount - 1) + insets.top + insets.bottom;
+		return d;
 	}
 
 	@Override

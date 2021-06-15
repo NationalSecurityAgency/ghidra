@@ -1,0 +1,156 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+apply from: "${rootProject.projectDir}/gradle/javaProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/jacocoProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/javaTestProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/nativeProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/distributableGhidraModule.gradle"
+
+apply plugin: 'eclipse'
+eclipse.project.name = 'Debug Framework-Debugging'
+
+dependencies {
+	api project(':Framework-AsyncComm')
+	api project(':Generic')
+	api project(':SoftwareModeling')
+	api project(':ProposedUtils')
+
+	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
+}
+
+task testSpecimenWin64 {
+	dependsOn 'expCreateProcessWin64Executable'
+	dependsOn 'expCreateThreadExitWin64Executable'
+	//dependsOn 'expCreateThreadSpinWin64Executable'
+	dependsOn 'expPrintWin64Executable'
+	//dependsOn 'expSpinWin64Executable'
+	dependsOn 'expRegistersWin64Executable'
+	dependsOn 'expStackWin64Executable'
+}
+
+task testSpecimenLinux64 {
+	dependsOn 'expCloneExecExecutable'//Linux64Executable'
+	dependsOn 'expCloneExitExecutable'//Linux64Executable'
+	//dependsOn 'expCloneSpinExecutable'//Linux64Executable'
+	dependsOn 'expForkExecutable'//Linux64Executable'
+	dependsOn 'expPrintLinux64Executable'
+	//dependsOn 'expTypesExecutable'//Linux64Executable'
+	dependsOn 'expRegistersLinux64Executable'
+	dependsOn 'expStackLinux64Executable'
+}
+
+model {
+	platforms {
+		/*linux32 {
+			architecture "x86"
+			operatingSystem "linux"
+		}*/
+	}
+
+	components {
+		expCreateProcess(NativeExecutableSpec) {
+			targetPlatform "win64"
+			targetPlatform "win32" // TODO: Test on these
+		}
+		expCreateThreadExit(NativeExecutableSpec) {
+			targetPlatform "win64"
+			targetPlatform "win32" // TODO: Test on these
+		}
+		expCreateThreadSpin(NativeExecutableSpec) {
+			targetPlatform "win64"
+			targetPlatform "win32" // TODO: Test on these
+		}
+		expCloneExec(NativeExecutableSpec) {
+			targetPlatform "linux64"
+			//targetPlatform "linux32" // TODO: Test on these
+		}
+		expCloneExit(NativeExecutableSpec) {
+			targetPlatform "linux64"
+			//targetPlatform "linux32" // TODO: Test on these
+		}
+		expCloneSpin(NativeExecutableSpec) {
+			targetPlatform "linux64"
+			//targetPlatform "linux32" // TODO: Test on these
+		}
+		expFork(NativeExecutableSpec) {
+			targetPlatform "linux64"
+			//targetPlatform "linux32" // TODO: Test on these
+		}
+		expPrint(NativeExecutableSpec) {
+			targetPlatform "linux64"
+			//targetPlatform "linux32" // TODO: Test on these
+			targetPlatform "win64"
+			targetPlatform "win32" // TODO: Test on these
+		}
+		expSpin(NativeExecutableSpec) {
+			targetPlatform "win64"
+			targetPlatform "win32" // TODO: Test on these
+		}
+		expTypes(NativeExecutableSpec) {
+			targetPlatform "linux64"
+			//targetPlatform "linux32" // TODO: Test on these
+			binaries {
+				withType(NativeExecutableBinarySpec) {
+					if (toolChain in Gcc) {
+						cCompiler.args("-gdwarf-2")
+					}
+				}
+			}
+		}
+		expRegisters(NativeExecutableSpec) {
+			targetPlatform "linux64"
+			//targetPlatform "linux32" // TODO: Test on these
+			targetPlatform "win64"
+			targetPlatform "win32" // TODO: Test on these
+		}
+		expStack(NativeExecutableSpec) {
+			targetPlatform "linux64"
+			//targetPlatform "linux32" // TODO: Test on these
+			targetPlatform "win64"
+			targetPlatform "win32" // TODO: Test on these
+		}
+	}
+
+	binaries {
+		withType(NativeExecutableBinarySpec) {
+			if (toolChain in Gcc) {
+				cCompiler.args("-std=c99")
+				linker.args("-lpthread")
+				linker.args("-lutil")
+			}
+			if (toolChain in VisualCpp) {
+				cppCompiler.define("VS_PROJECT")
+				// NB. No /SUBSYSTEM:CONSOLE
+				// that creates a subprocess
+				linker.args("/SUBSYSTEM:windows", "/DYNAMICBASE", "/NXCOMPAT")
+				linker.args("shell32.lib");
+			}
+			if (targetPlatform.name.startsWith("win")) {
+				cppCompiler.define("WIN32")
+				cCompiler.define("WIN32")
+
+				cppCompiler.define("_WINDOWS")
+				cCompiler.define("_WINDOWS")
+
+				cppCompiler.define("UNICODE")
+				cCompiler.define("_UNICODE")
+
+				cppCompiler.define("_UNICODE")
+				cCompiler.define("UNICODE")
+			}
+		}
+	}
+}

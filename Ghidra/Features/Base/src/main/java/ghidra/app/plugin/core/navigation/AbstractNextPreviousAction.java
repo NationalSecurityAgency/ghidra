@@ -21,9 +21,8 @@ import docking.action.KeyBindingData;
 import docking.action.ToolBarData;
 import docking.tool.ToolConstants;
 import ghidra.app.context.NavigatableActionContext;
+import ghidra.app.context.NavigatableContextAction;
 import ghidra.app.nav.Navigatable;
-import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
-import ghidra.app.plugin.core.codebrowser.actions.CodeViewerContextAction;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
@@ -34,7 +33,7 @@ import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
-public abstract class AbstractNextPreviousAction extends CodeViewerContextAction {
+public abstract class AbstractNextPreviousAction extends NavigatableContextAction {
 
 	private boolean isForward = true;
 	private PluginTool tool;
@@ -51,6 +50,7 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 		setKeyBindingData(new KeyBindingData(getKeyStroke()));
 		setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, name));
 		setDescription(getDescriptionString());
+		addToWindowWhen(NavigatableActionContext.class);
 	}
 
 	protected abstract Icon getIcon();
@@ -58,7 +58,7 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 	protected abstract KeyStroke getKeyStroke();
 
 	@Override
-	public void actionPerformed(final CodeViewerActionContext context) {
+	public void actionPerformed(final NavigatableActionContext context) {
 		Task t = new Task("Searching for " + getNavigationTypeName() + "...", true, false, true) {
 			@Override
 			public void run(TaskMonitor monitor) {
@@ -68,7 +68,7 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 		new TaskLauncher(t, tool.getToolFrame(), 500);
 	}
 
-	void gotoNextPrevious(TaskMonitor monitor, final CodeViewerActionContext context) {
+	void gotoNextPrevious(TaskMonitor monitor, final NavigatableActionContext context) {
 
 		try {
 			final Address address =
@@ -84,6 +84,7 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 
 		}
 		catch (CancelledException e) {
+			// cancelled
 		}
 	}
 

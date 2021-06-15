@@ -24,10 +24,6 @@ import ghidra.program.model.data.*;
 
 public class StackEditorDnDTest extends AbstractStackEditorTest {
 
-	/**
-	 * Constructor for StackEditorDnDTest.
-	 * @param name the testcase name.
-	 */
 	public StackEditorDnDTest() {
 		super(false);
 	}

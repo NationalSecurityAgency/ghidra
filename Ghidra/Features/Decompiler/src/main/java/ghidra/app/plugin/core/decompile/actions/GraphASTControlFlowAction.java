@@ -20,16 +20,19 @@ import static ghidra.app.plugin.core.decompile.actions.ASTGraphTask.GraphType.*;
 import docking.action.MenuData;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.services.GraphDisplayBroker;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.pcode.HighFunction;
+import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskLauncher;
 public class GraphASTControlFlowAction extends AbstractDecompilerAction {
 
 	public GraphASTControlFlowAction() {
 		super("Graph AST Control Flow");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ToolBarGraph"));
 		setMenuBarData(new MenuData(new String[] { "Graph AST Control Flow" }, "graph"));
 	}
 

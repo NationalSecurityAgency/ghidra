@@ -256,4 +256,29 @@ public class PathManagerTest extends AbstractDockingTest {
 		runSwing(() -> table.setRowSelectionInterval(row, row));
 	}
 
+	@Test
+	public void testPathPreferenceRetention() {
+
+		Preferences.setProperty("ENABLED_PATHS", null);
+		Preferences.setProperty("DISABLED_PATHS", null);
+
+		Path[] defaultPaths = new Path[] {
+			new Path("/foo"), new Path("/bar")
+		};
+
+		Path[] restoredPaths =
+			PathManager.getPathsFromPreferences("ENABLED_PATHS", defaultPaths, "DISABLED_PATHS");
+		assertArrayEquals(defaultPaths, restoredPaths);
+
+		Path[] paths = new Path[] {
+			new Path("/jim", false), new Path("/joe", false), new Path("/bob", true),
+			new Path("/sam", false), new Path("/tom", true), new Path("/tim", false)
+		};
+		PathManager.savePathsToPreferences("ENABLED_PATHS", "DISABLED_PATHS", paths);
+
+		restoredPaths =
+			PathManager.getPathsFromPreferences("ENABLED_PATHS", defaultPaths, "DISABLED_PATHS");
+		assertArrayEquals(paths, restoredPaths);
+	}
+
 }

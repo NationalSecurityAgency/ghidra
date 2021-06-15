@@ -1,0 +1,25 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   Hand coded routine where the offset into a structure to reach an array field
+   is contained inside the index expression for the array.  The decompiler must
+   distribute the constant multiple scaling the array index to "see" the offset.
+-->
+<bytechunk space="ram" offset="0x400517" readonly="true">
+              554889e5488d441602
+488d04878b005dc3
+</bytechunk>
+<symbol space="ram" offset="0x400517" name="readstruct"/>
+</binaryimage>
+<script>
+  <com>parse line struct twostruct { int4 field1; int4 array[5]; };</com>
+  <com>parse line extern int4 readstruct(twostruct *ptr,int8 a,int8 b);</com>
+  <com>lo fu readstruct</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Nested offset #1" min="1" max="1">return ptr-&gt;array\[b \+ a\];</stringmatch>
+<stringmatch name="Nested offset #2" min="0" max="0">field</stringmatch>
+<stringmatch name="Nested offset #3" min="0" max="0">\* 4</stringmatch>  
+</decompilertest>

@@ -15,6 +15,11 @@
  */
 package ghidra.app.util.viewer.listingpanel;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.Icon;
+
 import ghidra.app.nav.*;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.HighlightProvider;
@@ -23,11 +28,6 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.UniversalIdGenerator;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.Icon;
-
 /**
  * Navigator for the listings contained in a ListingCodeComparisonPanel.
  */
@@ -35,7 +35,7 @@ class DualListingNavigator implements Navigatable {
 
 	private final ListingPanel listingPanel;
 	private List<NavigatableRemovalListener> listeners =
-		new ArrayList<NavigatableRemovalListener>();
+		new ArrayList<>();
 	private long id;
 	private GoToService goToService;
 
@@ -59,8 +59,18 @@ class DualListingNavigator implements Navigatable {
 	}
 
 	@Override
+	public ProgramSelection getSelection() {
+		return listingPanel.getProgramSelection();
+	}
+
+	@Override
 	public ProgramSelection getHighlight() {
 		return listingPanel.getProgramHighlight();
+	}
+
+	@Override
+	public String getTextSelection() {
+		return listingPanel.getTextSelection();
 	}
 
 	@Override
@@ -86,11 +96,6 @@ class DualListingNavigator implements Navigatable {
 	@Override
 	public Program getProgram() {
 		return listingPanel.getProgram();
-	}
-
-	@Override
-	public ProgramSelection getSelection() {
-		return listingPanel.getProgramSelection();
 	}
 
 	@Override

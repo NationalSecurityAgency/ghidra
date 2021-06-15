@@ -82,7 +82,7 @@
           <register name="r0"/>
         </pentry>
         <pentry minsize="5" maxsize="8">
-          <addr space="join" piece1="r0" piece2="r1"/>
+          <addr space="join" piece1="r1" piece2="r0"/>
         </pentry>
       </output>
       <unaffected>
@@ -158,8 +158,7 @@
             tmpptr = lr & 0xfffffffe;
 
             offset = *:1 (tmpptr + r0);
-            offset = offset * 2;
-            lr = lr + zext(offset);
+            lr = lr + 2 * zext(offset);
  
             ISAModeSwitch = (lr & 1) != 0;
             TB = ISAModeSwitch;
@@ -177,8 +176,7 @@
             tmpptr = lr & 0xfffffffe;
 
             offset = *:1 (tmpptr + r0);
-            offset = offset * 2;
-            lr = lr + sext(offset);
+            lr = lr + 2 * sext(offset);
  
             ISAModeSwitch = (lr & 1) != 0;
             TB = ISAModeSwitch;
@@ -197,8 +195,7 @@
             
             index = r0 * 2;
             offset = *:2 (tmpptr + index);
-            offset = offset * 2;
-            lr = lr + sext(offset);
+            lr = lr + 2 * sext(offset);
  
             ISAModeSwitch = (lr & 1) != 0;
             TB = ISAModeSwitch;
@@ -217,8 +214,7 @@
             
             index = r0 * 2;
             offset = *:2 (tmpptr + index);
-            offset = offset * 2;
-            lr = lr + zext(offset);
+            lr = lr + 2 * zext(offset);
  
             ISAModeSwitch = (lr & 1) != 0;
             TB = ISAModeSwitch;

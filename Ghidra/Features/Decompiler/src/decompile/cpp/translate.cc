@@ -421,6 +421,16 @@ void AddrSpaceManager::insertResolver(AddrSpace *spc,AddressResolver *rsolv)
   resolvelist[ind] = rsolv;
 }
 
+/// This method establishes for a single address space, what range of constants are checked
+/// as possible symbol starts, when it is not known apriori that a constant is a pointer.
+/// \param range is the range of values for a single address space
+void AddrSpaceManager::setInferPtrBounds(const Range &range)
+
+{
+  range.getSpace()->pointerLowerBound = range.getFirst();
+  range.getSpace()->pointerUpperBound = range.getLast();
+}
+
 /// Base destructor class, cleans up AddrSpace pointers which
 /// must be explicited created via \e new
 AddrSpaceManager::~AddrSpaceManager(void)
@@ -728,7 +738,7 @@ Address AddrSpaceManager::constructFloatExtensionAddress(const Address &realaddr
   if (logicalsize == realsize)
     return realaddr;
   vector<VarnodeData> pieces;
-  pieces.push_back(VarnodeData());
+  pieces.emplace_back();
   pieces.back().space = realaddr.getSpace();
   pieces.back().offset = realaddr.getOffset();
   pieces.back().size = realsize;
@@ -780,8 +790,8 @@ Address AddrSpaceManager::constructJoinAddress(const Translate *translate,
   }
   // Otherwise construct a formal JoinRecord
   vector<VarnodeData> pieces;
-  pieces.push_back(VarnodeData());
-  pieces.push_back(VarnodeData());
+  pieces.emplace_back();
+  pieces.emplace_back();
   pieces[0].space = hiaddr.getSpace();
   pieces[0].offset = hiaddr.getOffset();
   pieces[0].size = hisz;

@@ -61,7 +61,7 @@ public class ExternalCallNode extends CallNode {
 	}
 
 	@Override
-	public Function getContainingFunction() {
+	public Function getRemoteFunction() {
 		return function;
 	}
 

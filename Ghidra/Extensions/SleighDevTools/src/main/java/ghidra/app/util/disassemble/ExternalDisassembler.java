@@ -23,6 +23,8 @@ public interface ExternalDisassembler extends ExtensionPoint {
 
 	public String getDisassembly(CodeUnit cu) throws Exception;
 
+	public String getDisassemblyDisplayPrefix(CodeUnit cu) throws Exception;
+
 	public String getDisassemblyOfBytes(Language language, boolean isBigEndian, long address,
 			byte[] byteString) throws Exception;
 

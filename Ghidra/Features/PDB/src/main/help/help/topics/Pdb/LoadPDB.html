@@ -1,0 +1,218 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+	<HEAD>
+		<meta name="generator" content="Bluefish 2.2.11" >
+		<TITLE>Load PDB</TITLE>
+		<LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+	</HEAD>
+
+	<BODY lang="EN-US">
+	
+	<H1>Load PDB</H1>
+	
+	
+	<H2><A name="SymbolServers"></A>Symbol Servers and Symbol Storage</H2>
+
+	<BLOCKQUOTE>
+		<P>In an effort to manage large collections of symbol files, Microsoft specified a scheme to organize
+		symbol files into directory structures.</P>
+		
+		<P>Ghidra can search Microsoft-style symbol servers (web-based HTTP/HTTPS) or local file system symbol 
+		storage directories as well as unorganized, non-MS symbol storage directories for the PE executable's
+		matching PDB symbol file.</P>
+		
+		<UL>
+			<LI>Microsoft symbol servers / symbol storage directories:</LI>
+			<UL>
+				<LI>Organize symbol files (typically PDB files) into a directory hierarchy using information
+				from the symbol file being stored.</LI>
+				<LI><A name="OneLevel_SymbolDirectory"></A>In a single-level symbol server directory hierarchy, a symbol file named <CODE>myprogram.pdb</CODE> might be stored 
+				as:</LI>
+				<UL>
+					<LI><CODE><FONT COLOR="BLUE">myprogram.pdb</FONT>/<FONT COLOR="RED">012345670123012301230123456789AB</FONT><FONT COLOR="GREEN">1</FONT>/<FONT COLOR="BLUE">myprogram.pdb</FONT></CODE>.</LI>
+					<LI><CODE><FONT COLOR="BLUE">myprogram.pdb</FONT></CODE> is the name of the file and the name of the initial subdirectory off the root of the server.</LI>
+					<LI><CODE><FONT COLOR="RED">012345670123012301230123456789AB</FONT></CODE> is the 32 character hexadecimal value (made up for this example) of the GUID 
+					"01234567-0123-0123-0123-0123456789AB" of the PDB file.</LI>
+					<UL><LI>This value might instead be a 8 character hexadecimal value of the ID of the symbol file if it was created by an older version of the tool chain.</LI></UL>
+					<LI><CODE><FONT COLOR="GREEN">1</FONT></CODE> is the hexadecimal value of the 'age' (build number) of the PDB file. Note: most PDB files will have an age value of 1.</LI>
+				</UL>
+				<LI><A name="TwoLevel_SymbolDirectory"></A>In a two-level symbol server directory hierarchy, the same symbol file would be stored
+				as: <CODE>my/myprogram.pdb/012345670123012301230123456789AB1/myprogram.pdb</CODE>, where the
+				first two letters of the symbol file's name are used to create a bucketing directory called "my" where all symbol files starting with
+				"my" are stored.</LI>
+				<UL><LI>A two-level symbol server directory hierarchy is indicated by the presence of a file called <CODE>index2.txt</CODE> in the root directory of
+				the hierarchy.</LI></UL> 
+				<LI>Symbol storage directories are expected to have a <CODE>pingme.txt</CODE> file and a special directory called <CODE>000admin</CODE>.</LI>
+				<LI>Compressed symbol files (<CODE>*.pd_</CODE>):</LI>
+				<UL>
+					<LI>Microsoft symbol server tools can compress symbol files to save space.  The compressed file is stored in place of the original file, renamed
+					to have a trailing underscore ("_") character in the file extension.</LI>
+					<LI>Before use, Ghidra will decompress the file into the <b>Local Symbol Storage</b> directory, using whatever organization scheme
+					that directory is configured with to store the uncompressed version of the file.</LI>
+				</UL>
+				<LI>Remote symbol files hosted on a HTTP server will be copied to and stored in the configured <b>Local Symbol Storage</b> directory before they
+				can be used.</LI>
+			</UL>
+			<LI><A name="Unorganized_SymbolDirectory"></A>Unorganized directories:</LI>
+			<UL>
+				<LI>Symbol files are matched by their filename and the GUID / ID / age values extracted from
+				the information inside the PDB symbol file.</LI>
+			</UL>
+		</UL>
+	</BLOCKQUOTE>
+
+	<H2>Menu Actions</H2>
+
+	<BLOCKQUOTE>
+		<H3><A name="Load_PDB_File"></A>Load PDB File</H3>
+		<BLOCKQUOTE>
+			<P>Allows the user to pick a PDB file or search for a PDB file and apply it to the currently open program in the CodeBrowser.</P>
+			<P>Use this action instead of the <b>PDB Analyzer</b> if the PDB file can't be found automatically with the currently configured
+			symbol server search locations, if you need to force load a non-exact PDB file, or you need to use other PDB options.</P>
+			<H4>Steps:</H4>
+			<UL>
+				<LI>Invoke <b>File &rarr; Load PDB File...</b>
+				<BLOCKQUOTE><IMG border="0" src="images/LoadPdb_Initial_Screenshot.png"></BLOCKQUOTE></LI>
+				<LI>The <B>PDB Location</B> field will either have the path of an existing matching PDB file, or
+				it will prompt the user to use the browse button to select a file or use the
+				<b>Advanced</b> screen to search for the file.</LI>
+				<UL><LI>A <CODE>PDB.XML</CODE> file can be selected using the browse button.  This will limit the selected parser to be the MSDIA parser.</LI></UL>
+				<LI>Use the information displayed in the <B>Program PDB Information</B> panel to help you decide
+				which PDB file to choose.</LI>
+				<LI>If needed, click the <B>Advanced</B> button:
+				<BLOCKQUOTE><IMG border="0" src="images/LoadPdb_Advanced_NeedsConfig.png"></BLOCKQUOTE></LI>
+				<LI>The <b>Local Symbol Storage</b> location (in the <A href="#Symbol_Server_Config">Symbol Server Config</A> screen) is required
+				to enable searching.  If missing, click the <B>Config...</B> button.</LI>
+				<LI>Set <A href="#PDB_Search_Search_Options">search options</A> as needed.</LI>
+				<LI>Click the <b>Search Local</b> or <b>Search All</b> button to search the configured locations.</LI>
+				<BLOCKQUOTE><IMG border="0" src="images/LoadPdb_Advanced_Screenshot.png"></BLOCKQUOTE></LI>
+				<LI>The <b>Local Symbol Storage</b> location is searched first, followed by any locations listed in the
+				<b>Additional Search Paths</b> list, in listed order.</LI>
+				<LI>Select one of the found PDB files and click the <b>Load</b> button to start the import process.</LI>
+				<LI>Remote symbol files will be downloaded to your <b>Local Symbol Storage</b> location before continuing.</LI>
+			</UL>
+		</BLOCKQUOTE>
+	</BLOCKQUOTE>
+   
+	<BLOCKQUOTE>
+		<H3><A name="Symbol_Server_Config"></A>Symbol Server Config</H3>
+		<BLOCKQUOTE>
+			<P>Allows the user to configure the location where PDB symbol files are stored and additional locations to search for
+			existing PDB files.</P>
+			<H4>Steps:</H4>
+			<UL>
+				<LI>Invoke <b>Edit &rarr; Symbol Server Config</b>
+				<BLOCKQUOTE><IMG border="0" src="images/SymbolServerConfig_Screenshot.png"></BLOCKQUOTE></LI>
+				<LI>The <b>Local Symbol Storage</b> location is required to be able to search.  If missing, set it to
+				a directory where Ghidra can store PDB files.</LI>
+				<UL>
+					<LI>For example, <CODE>/home/your_id/Symbols</CODE> or <CODE>C:\Users\your_name\Symbols</CODE>.</LI>
+					<LI>If the location is a new empty directory, the user will be prompted to initialize the directory as a Microsoft symbol storage directory.</LI>
+				</UL>
+				<LI><a href="#SymbolServerConfig_Add">Add</a> additional search locations by clicking the <img border="0" src="images/Plus2.png"> button.</LI>
+				<LI>Save any changes to the configuration by clicking the <img border="0" src="images/disk.png"> button.</LI>
+				<LI>Search locations can be disabled by toggling the <b>enabled</b> checkbox at the beginning of the row.</LI>
+				<LI>A typical configuration: <BLOCKQUOTE><IMG border="0" src="images/SymbolServerConfig_Configured.png"></BLOCKQUOTE></LI>
+			</UL>
+		
+			<H4><A name="SymbolServerConfig_Add"></A><img border="0" src="images/Plus2.png">&nbsp;(Add)</H4>
+			<BLOCKQUOTE>
+				<P>Allows the user to add a location to the search path list.  Pick from the offered types of locations, or pick
+				a predefined location.</P>
+				<BLOCKQUOTE><IMG border="0" src="images/SymbolServerConfig_AddButtonMenu.png"></BLOCKQUOTE>
+				<UL>
+					<LI><B>Directory</B> - allows the user to pick an existing directory that will be searched for symbol files.  
+					See <A href="#OneLevel_SymbolDirectory">level 1</A>/<A href="#TwoLevel_SymbolDirectory">level 2</A> or 
+					<A href="#Unorganized_SymbolDirectory">unorganized</A> directory descriptions.</LI>
+					<LI><B>URL</B> - allows the user to enter a HTTP or HTTPS URL to a web-based symbol server.</LI>
+					<LI><B>Program's Import Location</B> - automatically references the directory from which the program was imported.</LI>
+					<LI><B>Import _NT_SYMBOL_PATH</B> - parses the current value of the <code>_NT_SYMBOL_PATH</code> system environment variable to extract
+					URLs and symbol directory locations to be added to the Ghidra configuration.  If no environment value is present,
+					the user can paste their own value into the text field.</LI>
+				</UL>
+				<P>All items listed after the menu dividing line are automatically added from resource files that have a 
+				<CODE>*.pdburl</CODE> extension.  The default file included with Ghidra is called <CODE>PDB_SYMBOL_SERVER_URLS.pdburl</CODE> and
+				is located in the <CODE>Ghidra/Configurations/Public_Release/data</CODE> directory under the Ghidra install directory.</P>
+			</BLOCKQUOTE>
+	
+			<H4><A name="SymbolServerConfig_Delete"></A><img border="0" src="images/error.png">&nbsp;(Delete)</H4>
+			<BLOCKQUOTE>
+				<P>Deletes the currently selected locations from the <b>Additional Search Paths</b> table.</P>
+			</BLOCKQUOTE>
+
+			<H4><A name="SymbolServerConfig_MoveUpDown"></A><img border="0" src="images/up.png"><img border="0" src="images/down.png">&nbsp;(Up/Down)</H4>
+			<BLOCKQUOTE>
+				<P>Moves the currently selected item up or down in the <b>Additional Search Paths</b> table.</P>
+			</BLOCKQUOTE>
+			
+			<H4><A name="SymbolServerConfig_Refresh_Status"></A><img border="0" src="images/reload3.png">&nbsp;(Refresh)</H4>
+			<BLOCKQUOTE>
+				<P>Updates the status column of the locations listed in the <b>Additional Search Paths</b>
+				table.  Symbol servers or storage locations that are unreachable or misconfigured will show an error status in that column.</P>
+			</BLOCKQUOTE>
+			
+			<H4><A name="SymbolServerConfig_Save"></A><img border="0" src="images/disk.png">&nbsp;(Save)</H4>
+			<BLOCKQUOTE>
+				<P>Saves the currently displayed search and storage locations to the preferences file.  This is shared between all Ghidra tools.</P>
+			</BLOCKQUOTE>
+		</BLOCKQUOTE>
+	</BLOCKQUOTE>
+
+	<BLOCKQUOTE>
+		<H3><A name="PDB_Search_Search_Options"></A>PDB Search - Search Options</H3>
+		<BLOCKQUOTE>
+			<P>These options control how PDB symbol files are found.</P>
+			<UL>
+				<LI><B>Ignore Age</B> - allows matching symbol files with the correct GUID, but incorrect age value.  Only affects searches of local symbol directories.</LI>
+				<LI><B>Ignore GUID/ID</B> - allows matching symbol files with the correct name, but incorrect GUID or age.  Only affects searches of local symbol directories.</LI>
+			</UL>
+			<P>Additionally, there are <b>override</b> checkboxes in the <b>Program PDB Information</b> panel in the <b>Advanced</b> screen. These override values only
+			change the search criteria, they are not persisted to your program's metadata.</P>
+			<UL>
+				<LI><B>PDB Name Checkbox</B> - this checkbox allows entering a custom value for the desired PDB file name.</LI>
+				<LI><B>PDB Unique ID Checkbox</B> - this checkbox allows entering a custom GUID or ID value.</LI>
+				<LI><B>PDB Age Checkbox</B> - this checkbox allows entering a custom age value.</LI>
+			</UL>
+			<P>After changing a search option, you will need to perform another search to use the new options.</P>
+		</BLOCKQUOTE>
+	</BLOCKQUOTE>
+
+	<BLOCKQUOTE>
+		<H3><A name="PDB_Parser_Panel"></A>PDB Parser</H3>
+		<BLOCKQUOTE>
+			<P>These options control which PDB parser will be used and any options used during parsing after the <b>Load</b> button is pressed.</P>
+			<UL>
+				<LI><B>Universal</B> - Platform-independent PDB analyzer (No PDB.XML support).</LI>
+				<LI><B>MSDIA</B> - Legacy PDB Analyzer.  Requires MS DIA-SDK for raw PDB processing (Windows only), or preprocessed PDB.XML file.</LI>
+			</UL>
+			<P><B>Control</B> (Universal only) - Controls how the PDB is applied to the Program</P>
+			<UL>
+				<LI><B>Process All</B>: Applies Data Types and Public, Global, and Module Symbols.</LI>
+				<LI><B>Data Types Only</B>: Applies Data Types and Typedefs found in the Global Symbols.</LI>
+				<LI><B>Public Symbols Only</B>: Applies only Public symbols to the program.  It ignores Global symbols and Module symbols.</LI>
+			</UL>
+		</BLOCKQUOTE>
+	</BLOCKQUOTE>
+
+	<H2>Troubleshooting</H2>
+		<BLOCKQUOTE>
+			<UL>
+				<LI>If you are connecting to a Symbol Server that requires user authentication using PKI,
+				you must first set your PKI Certificate before attempting to download from the server. See
+				<A href="../../../help/topics/FrontEndPlugin/Ghidra_Front_end_Menus.htm#Set_PKI_Certificate">
+				PKI Certificate</A> for more details.</LI>
+			</UL>
+		</BLOCKQUOTE>
+		
+	<BR><BR><BR>
+     
+	<P class="relatedtopic">Related Topics:</P>
+	<UL>
+		<LI><P class="relatedtopic"><A href="PDB.htm">PDB (general)</A></P></LI>
+	</UL>
+    
+	<BR><BR><BR>
+
+	</BODY>
+</HTML>

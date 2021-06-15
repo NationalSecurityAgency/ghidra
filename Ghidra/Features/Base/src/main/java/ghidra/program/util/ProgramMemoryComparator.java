@@ -15,11 +15,12 @@
  */
 package ghidra.program.util;
 
+import java.util.Arrays;
+import java.util.List;
+
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramContext;
-
-import java.util.Arrays;
 
 /**
  * <CODE>ProgramMemoryComparator</CODE> is a class for comparing two programs and
@@ -120,15 +121,17 @@ public class ProgramMemoryComparator {
      * @return true if the programs are alike (their language name or address spaces are the same).
      */
 	public static boolean similarPrograms(Program p1, Program p2) {
-		if (p1 == null || p2 == null)
+		if (p1 == null || p2 == null) {
 			return false;
+		}
 		if (p1.getLanguageID().equals(p2.getLanguageID())) {
 			return true;
 		}
 		AddressSpace[] spaces1 = p1.getLanguage().getAddressFactory().getAddressSpaces();
 		AddressSpace[] spaces2 = p2.getLanguage().getAddressFactory().getAddressSpaces();
-		if (spaces1.length != spaces2.length)  
+		if (spaces1.length != spaces2.length) {
 			return false;
+		}
 		Arrays.sort(spaces1);
 		Arrays.sort(spaces2);
 		for (int i=0; i<spaces1.length; i++) {
@@ -279,14 +282,9 @@ public class ProgramMemoryComparator {
 	static public boolean sameProgramContextRegisterNames(Program program1, Program program2) {
 		ProgramContext pc1 = program1.getProgramContext();
 		ProgramContext pc2 = program2.getProgramContext();
-		String[] names1 = pc1.getRegisterNames();
-		String[] names2 = pc2.getRegisterNames();
-		Arrays.sort(names1);
-		Arrays.sort(names2);
-		if (!Arrays.equals(names1, names2)) {
-			return false;
-		}
-		return true;
+		List<String> names1 = pc1.getRegisterNames();
+		List<String> names2 = pc2.getRegisterNames();
+		return names1.equals(names2);
 	}
 	
 }

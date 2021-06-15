@@ -17,7 +17,7 @@ package ghidra.program.database.mem;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.mem.MemoryAccessException;
 
 /**
@@ -25,7 +25,7 @@ import ghidra.program.model.mem.MemoryAccessException;
  */
 class UninitializedSubMemoryBlock extends SubMemoryBlock {
 
-	UninitializedSubMemoryBlock(MemoryMapDBAdapter adapter, Record record) {
+	UninitializedSubMemoryBlock(MemoryMapDBAdapter adapter, DBRecord record) {
 		super(adapter, record);
 	}
 
@@ -78,7 +78,7 @@ class UninitializedSubMemoryBlock extends SubMemoryBlock {
 		record.setLongValue(MemoryMapDBAdapter.SUB_LENGTH_COL, subBlockLength);
 		adapter.updateSubBlockRecord(record);
 
-		Record newSubRecord = adapter.createSubBlockRecord(-1, 0, newLength,
+		DBRecord newSubRecord = adapter.createSubBlockRecord(-1, 0, newLength,
 			MemoryMapDBAdapter.SUB_TYPE_UNITIALIZED, 0, 0);
 
 		return new UninitializedSubMemoryBlock(adapter, newSubRecord);

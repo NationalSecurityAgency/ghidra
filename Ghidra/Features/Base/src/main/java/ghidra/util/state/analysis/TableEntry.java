@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -204,7 +203,7 @@ public class TableEntry extends Switch {
 			return null;
 		}
 		AddressFactory addrFactory = program.getAddressFactory();
-		if (addrFactory.getDefaultAddressSpace().getUniqueSpaceID() != inputValues[0].getOffset()) {
+		if (addrFactory.getDefaultAddressSpace().getSpaceID() != inputValues[0].getOffset()) {
 			// TableEntryAddress class assumes default address space for tables
 			return null;
 		}

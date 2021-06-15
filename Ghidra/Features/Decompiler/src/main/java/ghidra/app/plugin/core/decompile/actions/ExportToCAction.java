@@ -25,7 +25,9 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.preferences.Preferences;
+import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.ExtensionFileFilter;
 import resources.ResourceManager;
@@ -36,6 +38,7 @@ public class ExportToCAction extends AbstractDecompilerAction {
 
 	public ExportToCAction() {
 		super("Export to C");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ToolBarExport"));
 		setToolBarData(new ToolBarData(EXPORT_ICON, "Local"));
 		setDescription("Export the current function to C");
 	}

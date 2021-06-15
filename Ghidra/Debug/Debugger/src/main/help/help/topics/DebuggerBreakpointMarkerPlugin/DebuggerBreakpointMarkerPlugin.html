@@ -1,0 +1,114 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Breakpoints in the Listings</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Breakpoints in the Listings</H1>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/DebuggerBreakpointMarkerPlugin.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>For a description of how breakpoints are managed logically in Ghidra, please read about the
+    <A href="help/topics/DebuggerBreakpointsPlugin/DebuggerBreakpointsPlugin.html">Breakpoints</A>
+    window. Each individual breakpoint location is placed in its respective listing. By default,
+    disabled breakpoints are not readily visible in the dynamic listing. Breakpoints are best
+    controlled using the static program listing, where they are stored as bookmarks. When this
+    plugin is active, additional actions are available for managing those bookmarks and their
+    mapped breakpoints on target, when applicable. The actions in the listing manipulate the
+    logical breakpoint as a whole, not just the individual location. Furthermore, depending on the
+    target, locations' states may be bound to others' via a common breakpoint specification.</P>
+
+    <H2>Actions</H2>
+
+    <P>The following actions are added to all listings by the breakpoint marker plugin. They allow
+    the placement and toggling of breakpoints by address, kind, and length. To set breakpoints on
+    arbitrary expressions, use the <A href=
+    "help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html#set_breakpoint">Set
+    Breakpoint</A> action of the Commands and Objects window.</P>
+
+    <H3><A name="toggle_breakpoint"></A><IMG alt="" src="images/breakpoint-enable.png"> Toggle
+    Breakpoint (K)</H3>
+
+    <P>This action is always available, and it is suitable for almost all cases. If there is a
+    breakpoint at the cursor, this simply toggles its state. If there is no breakpoint at the
+    cursor, this will prompt to set one, giving a reasonable set of default parameters based on the
+    context at the cursor. At an instruction, it will prefer to set a Software Execution
+    breakpoint. At defined data, it will prefer to set a Read/Write breakpoint of the size of data.
+    At undefined data, or if the target does not support the suggested default, the default kind is
+    left unselected. Please use one of the Set Breakpoint actions to force specific commands.
+    Please beware: the default parameters are not always acceptable to the connected debugger.</P>
+
+    <H3><A name="set_breakpoint"></A><IMG alt="" src="images/breakpoint-enable.png"> Set
+    Breakpoint</H3>
+
+    <P>This action is available on the dynamic listing when the target supports at least one
+    breakpoint kind. This menu is always available on the static listing. It displays set
+    breakpoint actions for each reasonable combination of kinds supported by the target. In the
+    static listing, all reasonable combinations are available, regardless of target support;
+    however, only those kinds supported by the target will be included in the resulting command.
+    <B>NOTE:</B> Breakpoints in the static listing can only be mapped to targets which are recorded
+    into a trace. Selecting one of the actions will display a prompt allowing adjustments to the
+    parameters before issuing the command.</P>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" src=
+          "images/DebuggerPlaceBreakpointDialog.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <UL>
+      <LI>Address - the starting address of the breakpoint. It defaults to the starting address of
+      the instruction or data at the cursor.</LI>
+
+      <LI>Length - the length in bytes of the breakpoint. Some debuggers for some kinds of
+      breakpoints may not allow a value other than 1. For execution breakpoints, this defaults to
+      1; for access breakpoints, this defaults to the size of the data at the cursor.</LI>
+
+      <LI>Kinds - the kind(s) of breakpoint. Only the reasonable combinations are presented, but
+      the user may type any desired combination. A connected debugger may not support the desired
+      combination.</LI>
+    </UL>
+
+    <H3><A name="enable_breakpoint"></A><IMG alt="" src="images/breakpoint-enable.png"> Enable
+    Breakpoint</H3>
+
+    <P>This action is available when there is at least one disabled breakpoint at the cursor. It
+    enables those logical breakpoints.</P>
+
+    <H3><A name="disable_breakpoint"></A><IMG alt="" src="images/breakpoint-disable.png"> Disable
+    Breakpoint</H3>
+
+    <P>This action is available when there is at least one enabled breakpoint at the cursor. It
+    disables those logical breakpoints.</P>
+
+    <H3><A name="clear_breakpoint"></A><IMG alt="" src="images/breakpoint-clear.png"> Clear
+    (Delete) Breakpoint</H3>
+
+    <P>This action is available when there is at least one breakpoint (in any state) at the cursor.
+    It deletes those logical breakpoints.</P>
+
+    <H2><A name="colors"></A>Tool Options: Colors</H2>
+
+    <P>The background coloring of enabled and disabled, effective and ineffective breakpoints can
+    be configured in the tool's options. By default, enabled breakpoints are colored a desaturated
+    red, ineffective breakpoints are colored grey, and disabled breakpoints have no background at
+    all.</P>
+  </BODY>
+</HTML>

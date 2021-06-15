@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//This script asks for a name and value for an equate and applies it at all scalar operands in the current selection (if applicable) or the entire program if
-//no selection is made
+//This script asks for a name and value for an equate and applies it at all scalar operands 
+// in the current selection (if applicable) or the entire program if no selection is made
 //@author
-//@category _NEW_ 
+//@category 
 //@keybinding 
 //@menupath 
 //@toolbar 

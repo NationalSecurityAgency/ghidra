@@ -15,20 +15,20 @@
  */
 package ghidra.program.database.symbol;
 
-import ghidra.program.database.map.AddressMap;
-import ghidra.util.exception.*;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.program.database.map.AddressMap;
+import ghidra.util.exception.*;
+import ghidra.util.task.TaskMonitor;
 
 abstract class VariableStorageDBAdapter {
 
 	static final String VARIABLE_STORAGE_TABLE_NAME = "Variable Storage";
 
-	static final Schema VARIABLE_STORAGE_SCHEMA = new Schema(2, "Key", new Class[] {
-		LongField.class, StringField.class }, new String[] { "Hash", "Storage" });
+	static final Schema VARIABLE_STORAGE_SCHEMA =
+		new Schema(2, "Key", new Field[] { LongField.INSTANCE, StringField.INSTANCE },
+			new String[] { "Hash", "Storage" });
 
 	static final int HASH_COL = 0;
 	static final int STORAGE_COL = 1;
@@ -75,9 +75,9 @@ abstract class VariableStorageDBAdapter {
 		throw new AssertException("Variable storage table is from newer version");
 	}
 
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
-	abstract Record getRecord(long key) throws IOException;
+	abstract DBRecord getRecord(long key) throws IOException;
 
 	/**
 	 * Locate the record key which corresponds to the specified hash value.

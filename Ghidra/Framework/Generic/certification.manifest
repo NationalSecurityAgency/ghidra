@@ -13,7 +13,6 @@
 .classpath||GHIDRA||||END|
 .gitignore||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 src/main/java/ghidra/framework/options/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/datastruct/package.html||GHIDRA||||END|

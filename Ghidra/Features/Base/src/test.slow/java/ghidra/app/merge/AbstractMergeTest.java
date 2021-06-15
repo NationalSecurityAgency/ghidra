@@ -145,7 +145,7 @@ public abstract class AbstractMergeTest extends AbstractGhidraHeadedIntegrationT
 
 				List<Dialog> modals =
 					WindowUtilities.getOpenModalDialogsFor(mergeMgr.getMergeTool().getToolFrame());
-				Msg.debug(this, "Open modal dialog: ");
+				Msg.debug(this, "Open modal dialogs: ");
 				for (Dialog dialog : modals) {
 					capture(dialog);
 				}
@@ -159,7 +159,7 @@ public abstract class AbstractMergeTest extends AbstractGhidraHeadedIntegrationT
 
 	private void capture(Dialog dialog) {
 		String title = WindowUtilities.getTitle(dialog);
-		String name = title.replaceAll("\\s", "_");
+		String name = title.replaceAll("\\W", "_");
 		try {
 			Image image = createScreenImage(dialog);
 			writeImage(image, "modal.dialog." + name);

@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import java.awt.Component;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.util.*;
@@ -138,7 +137,7 @@ public class ExportToHeaderAction extends DockingAction {
 		if (!list.isEmpty()) {
 			list.add(0, new DefaultAnnotationHandler());
 			AnnotationHandlerDialog dlg = new AnnotationHandlerDialog(list);
-			plugin.getTool().showDialog(dlg, (Component) null);
+			plugin.getTool().showDialog(dlg);
 			if (!dlg.wasSuccessful()) {
 				return;
 			}
@@ -210,9 +209,8 @@ public class ExportToHeaderAction extends DockingAction {
 				finally {
 					writer.close();
 				}
-				plugin.getTool()
-						.setStatusInfo(
-							"Successfully exported data type(s) to " + file.getAbsolutePath());
+				plugin.getTool().setStatusInfo(
+					"Successfully exported data type(s) to " + file.getAbsolutePath());
 			}
 			catch (CancelledException e) {
 				// user cancelled; ignore

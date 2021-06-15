@@ -23,7 +23,6 @@ import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.NamingUtilities;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Interface that defines a block in memory.
@@ -90,12 +89,11 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	 * Set the name for this block (See {@link NamingUtilities#isValidName(String)} for
 	 * naming rules).  Specified name must not conflict with an address space name.
 	 * @param name the new name for this block.
-	 * @throws DuplicateNameException if name conflicts with an address space name
 	 * @throws IllegalArgumentException if invalid name specified
 	 * @throws LockException renaming an Overlay block without exclusive access
 	 */
 	public void setName(String name)
-			throws IllegalArgumentException, DuplicateNameException, LockException;
+			throws IllegalArgumentException, LockException;
 
 	/**
 	 * Get the comment associated with this block.

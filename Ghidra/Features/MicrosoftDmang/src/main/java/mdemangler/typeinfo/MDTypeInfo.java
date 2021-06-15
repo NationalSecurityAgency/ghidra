@@ -18,7 +18,7 @@ package mdemangler.typeinfo;
 import mdemangler.*;
 
 /**
- * 
+ *
  */
 public class MDTypeInfo extends MDParsableItem {
 	private static final String PRIVATE = "private: ";
@@ -48,6 +48,7 @@ public class MDTypeInfo extends MDParsableItem {
 	private boolean isThunk = false;
 	private boolean isMember = true;
 	private boolean isExternC = false;
+	private char specialHandlingCode = '\0';
 
 	protected MDType mdtype;
 	protected boolean isTypeCast;
@@ -116,6 +117,14 @@ public class MDTypeInfo extends MDParsableItem {
 
 	public boolean isExternC() {
 		return isExternC;
+	}
+
+	public void setSpecialHandlingCode(char code) {
+		specialHandlingCode = code;
+	}
+
+	public char getSpecialHandlingCode() {
+		return specialHandlingCode;
 	}
 
 	public void setNonMember() {

@@ -316,6 +316,27 @@ public class MDDataTypeParser {
 						//  is a "ModifiedType")--investigate further
 						dt = new MDArrayBasicType(dmang);
 						break;
+					case 'P':
+						dt = new MDUnknownPExtendedDataType(dmang);
+						break;
+					case 'Q':
+						dt = new MDChar8DataType(dmang);
+						break;
+					case 'R':
+						dt = new MDUnknownRExtendedDataType(dmang);
+						break;
+					case 'S':
+						dt = new MDChar16DataType(dmang);
+						break;
+					case 'T':
+						dt = new MDUnknownTExtendedDataType(dmang);
+						break;
+					case 'U':
+						dt = new MDChar32DataType(dmang);
+						break;
+					case 'V':
+						dt = new MDUnknownVExtendedDataType(dmang);
+						break;
 					case 'W':
 						dt = new MDWcharDataType(dmang);
 						break;

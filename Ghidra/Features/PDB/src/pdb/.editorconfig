@@ -1,8 +1,0 @@
-
-[*.cpp]
-indent_style = tab
-indent_size = 4
-
-[*.h]
-indent_style = tab
-indent_size = 4

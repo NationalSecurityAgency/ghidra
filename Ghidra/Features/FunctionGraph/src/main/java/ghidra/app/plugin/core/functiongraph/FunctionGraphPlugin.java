@@ -172,6 +172,8 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 
 		functionGraphOptions.loadOptions(options);
 
+		connectedProvider.optionsChanged();
+
 		if (functionGraphOptions.optionChangeRequiresRelayout(optionName)) {
 			connectedProvider.refreshAndKeepPerspective();
 		}
@@ -184,6 +186,7 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 
 		connectedProvider.getComponent().repaint();
 		for (FGProvider provider : disconnectedProviders) {
+			provider.optionsChanged();
 			provider.getComponent().repaint();
 		}
 	}

@@ -382,7 +382,7 @@ public class StringUtilities {
 	 * @return true if all the given <code>searches</code> are contained in the given string.
 	 */
 	public static boolean containsAllIgnoreCase(CharSequence toSearch, CharSequence... searches) {
-		if (StringUtils.isEmpty(toSearch) || ArrayUtils.isEmpty(searches)) {
+		if (StringUtils.isEmpty(toSearch)) {
 			return false;
 		}
 
@@ -392,6 +392,27 @@ public class StringUtilities {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Returns true if any of the given <code>searches</code> are contained in the given string,
+	 * ignoring case.
+	 *
+	 * @param toSearch the string to search
+	 * @param searches the strings to find
+	 * @return true if any of the given <code>searches</code> are contained in the given string.
+	 */
+	public static boolean containsAnyIgnoreCase(CharSequence toSearch, CharSequence... searches) {
+		if (StringUtils.isEmpty(toSearch)) {
+			return false;
+		}
+
+		for (CharSequence search : searches) {
+			if (StringUtils.containsIgnoreCase(toSearch, search)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

@@ -17,7 +17,6 @@ package ghidra.program.model.data;
 
 import java.net.URL;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.mem.MemBuffer;
@@ -44,7 +43,7 @@ public class TestDoubleDataType implements DataType {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
+	public boolean hasLanguageDependantLength() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -130,6 +129,11 @@ public class TestDoubleDataType implements DataType {
 	}
 
 	@Override
+	public boolean isZeroLength() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public String getDescription() {
 		throw new UnsupportedOperationException();
 	}
@@ -193,6 +197,11 @@ public class TestDoubleDataType implements DataType {
 
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void dataTypeAlignmentChanged(DataType dt) {
 		throw new UnsupportedOperationException();
 	}
 

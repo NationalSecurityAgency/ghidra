@@ -1,0 +1,27 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+  Contrived routine that indexes into an array as a subfield of a structure.  The
+  original source code had a negative offset added to the index, which got folded into
+  the stack offset for the start of the array. The offset pulls the base reference
+  entirely out of the mapped structure, so the decompiler must search forward in
+  the local map to find it.
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+534889fb4881ec900000004889e7e8ed
+0f00008b449cf84881c4900000005bc3
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="access_array1"/>
+<symbol space="ram" offset="0x101000" name="populate_mystruct"/>
+</binaryimage>
+<script>
+  <com>parse line struct mystruct { int8 firstfield; int4 array[32]; };</com>
+  <com>parse line extern void populate_mystruct(mystruct *ptr);</com>
+  <com>lo fu access_array1</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Wayoff array #1" min="1" max="1">return mStack.*array\[param_1 \+ -4\]</stringmatch>
+<stringmatch name="Wayoff array #2" min="0" max="0">firstfield</stringmatch>
+</decompilertest>

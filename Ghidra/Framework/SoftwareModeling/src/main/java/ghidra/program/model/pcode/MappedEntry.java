@@ -65,7 +65,7 @@ public class MappedEntry extends SymbolEntry {
 				"Invalid symbol 0-sized data-type: " + symbol.type.getName());
 		}
 		try {
-			Address varAddr = Varnode.readXMLAddress(addrel, addrFactory);
+			Address varAddr = AddressXML.readXML(addrel, addrFactory);
 			AddressSpace spc = varAddr.getAddressSpace();
 			if ((spc == null) || (spc.getType() != AddressSpace.TYPE_VARIABLE)) {
 				storage = new VariableStorage(program, varAddr, sz);
@@ -89,8 +89,7 @@ public class MappedEntry extends SymbolEntry {
 		if (typeLength != storage.size() && symbol.type instanceof AbstractFloatDataType) {
 			logicalsize = typeLength; // Force a logicalsize
 		}
-		String addrRes = Varnode.buildXMLAddress(storage.getVarnodes(), logicalsize);
-		buf.append(addrRes);
+		AddressXML.buildXML(buf, storage.getVarnodes(), logicalsize);
 		buildRangelistXML(buf);
 	}
 

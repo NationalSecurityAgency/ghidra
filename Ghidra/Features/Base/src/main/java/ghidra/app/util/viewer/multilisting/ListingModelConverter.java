@@ -192,4 +192,9 @@ public class ListingModelConverter implements ListingModel {
 		this.translator = translator;
 	}
 
+	@Override
+	public ListingModel copy() {
+		return new ListingModelConverter(primaryModel.copy(), model.copy());
+	}
+
 }

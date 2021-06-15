@@ -635,6 +635,10 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 		viewSettings.setLocation(location);
 	}
 
+	public void optionsChanged() {
+		view.optionsChanged();
+	}
+
 	public void refreshDisplayWithoutRebuilding() {
 		view.refreshDisplayWithoutRebuilding();
 	}
@@ -694,14 +698,16 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 			vertex = view.getEntryPointVertex();
 		}
 
+		PluginTool tool = plugin.getTool();
 		SetFormatDialogComponentProvider setFormatDialog =
 			new SetFormatDialogComponentProvider(getDefaultFormatManager(), minimalFormatManager,
-				plugin.getTool(), provider.getProgram(), vertex.getAddresses());
-		plugin.getTool().showDialogOnActiveWindow(setFormatDialog);
+				tool, provider.getProgram(), vertex.getAddresses());
+		tool.showDialog(setFormatDialog);
 		FormatManager newFormatManager = setFormatDialog.getNewFormatManager();
 		if (newFormatManager == null) {
 			return;
 		}
+
 		SaveState saveState = new SaveState();
 		newFormatManager.saveState(saveState);
 		minimalFormatManager.readState(saveState);

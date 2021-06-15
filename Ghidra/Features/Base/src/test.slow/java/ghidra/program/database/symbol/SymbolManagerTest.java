@@ -1389,7 +1389,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Listing listing = program.getListing();
 
 		Symbol s = createSymbol(addr(100), "fred");
-		assertTrue(s.checkIsValid());
+		assertFalse(s.isDeleted());
 
 		AddressSet set = new AddressSet();
 		set.addRange(addr(100), addr(150));
@@ -1400,11 +1400,11 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Parameter p = f.addParameter(new ParameterImpl(null, ByteDataType.dataType, program),
 			SourceType.DEFAULT);
 		Symbol paramSym = p.getSymbol();
-		assertTrue(paramSym.checkIsValid());
+		assertFalse(paramSym.isDeleted());
 
 		listing.removeFunction(addr(100));
 
-		assertTrue(!paramSym.checkIsValid());
+		assertTrue(paramSym.isDeleted());
 
 		Symbol s1 = st.getPrimarySymbol(addr(100));
 		assertNotNull(s1);

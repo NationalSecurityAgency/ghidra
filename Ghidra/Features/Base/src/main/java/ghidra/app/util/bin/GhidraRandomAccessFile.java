@@ -27,7 +27,7 @@ import ghidra.util.Msg;
  * This implementation relies on java.net.RandomAccessFile,
  * but adds buffering to limit the amount.
  */
-public class GhidraRandomAccessFile {
+public class GhidraRandomAccessFile implements AutoCloseable {
 	private static final byte[] EMPTY = new byte[0];
 	private static final int BUFFER_SIZE = 0x100000;
 
@@ -112,6 +112,7 @@ public class GhidraRandomAccessFile {
 	 * If this file has an associated channel then the channel is closed as well.
 	 * @exception  IOException  if an I/O error occurs.
 	 */
+	@Override
 	public void close() throws IOException {
 		checkOpen();
 		open = false;
@@ -291,8 +292,11 @@ public class GhidraRandomAccessFile {
 
 				buffer = new byte[BUFFER_SIZE];
 				randomAccessFile.seek(bufferFileStartIndex);
-				randomAccessFile.read(buffer);
+				int bytesRead = randomAccessFile.read(buffer);
 				bufferOffset = 0;
+				if (bytesRead <= 0) {
+					throw new EOFException();
+				}
 			}
 			else {
 				bufferOffset = newBufferOffset;

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <properties>
+    <property key="addressesDoNotAppearDirectlyInCode" value="true"/>
+    <property key="allowOffcutReferencesToFunctionStarts" value="true"/>
+    <property key="useNewFunctionStackAnalysis" value="true"/>
+    <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.ARMEmulateInstructionStateModifier"/>
+    <property key="assemblyRating:ARM:BE:32:v7" value="PLATINUM"/>
+    <property key="assemblyRating:ARM:LE:32:v7" value="PLATINUM"/>
+  </properties>
+  <programcounter register="pc"/>
+  <context_data>
+    <context_set space="ram">
+      <set name="TMode" val="0" description="0 for ARM 32-bit, 1 for THUMB 16-bit"/>
+      <set name="LRset" val="0" description="0 lr reg not set, 1 for LR set, affects BX as a call"/>
+    </context_set>
+    <tracked_set space="ram">
+      <set name="spsr" val="0"/>
+    </tracked_set>
+  </context_data>
+  
+  <default_symbols>
+    <symbol name="Reset" address="ram:0x0" entry="true"/>
+    <symbol name="UndefinedInstruction" address="ram:0x4" entry="true"/>
+    <symbol name="SupervisorCall" address="ram:0x8" entry="true"/>
+    <symbol name="PrefetchAbort" address="ram:0xC" entry="true"/>
+    <symbol name="DataAbort" address="ram:0x10" entry="true"/>
+    <symbol name="NotUsed" address="ram:0x14" entry="true"/>
+    <symbol name="IRQ" address="ram:0x18" entry="true"/>
+    <symbol name="FIQ" address="ram:0x1c" entry="true"/>
+    
+    <symbol name="H_Reset" address="ram:0xFFFF0000" entry="true"/>
+    <symbol name="H_UndefinedInstruction" address="ram:0xFFFF0004" entry="true"/>
+    <symbol name="H_SupervisorCall" address="ram:0xFFFF0008" entry="true"/>
+    <symbol name="H_PrefetchAbort" address="ram:0xFFFF000C" entry="true"/>
+    <symbol name="H_DataAbort" address="ram:0xFFFF0010" entry="true"/>
+    <symbol name="H_NotUsed" address="ram:0xFFFF0014" entry="true"/>
+    <symbol name="H_IRQ" address="ram:0xFFFF0018" entry="true"/>
+    <symbol name="H_FIQ" address="ram:0xFFFF001c" entry="true"/>
+  </default_symbols>
+
+</processor_spec>

@@ -3,9 +3,9 @@ stages:
 
 trigger-ext-u:
   stage: test
-  script:
-    - "curl -X POST -F token=$REPO_TOKEN -F ref=master -F variables[JOB_TYPE]=$JOB_TYPE -F variables[INITIATOR]=$GITLAB_USER_LOGIN -F variables[COMMIT]=$CI_COMMIT_SHORT_SHA -F variables[BRANCH]=$CI_COMMIT_REF_NAME $REPO_URL"
-  tags:
-    - docker
-    - ghidratest
-  image: ghidra/ubuntu
+  variables:
+    JOB_TYPE: $JOB_TYPE
+    INITIATOR: $GITLAB_USER_LOGIN
+    COMMIT: $CI_COMMIT_SHORT_SHA
+    BRANCH: $CI_COMMIT_REF_NAME
+  trigger: ghidra/ghidra.ext-u

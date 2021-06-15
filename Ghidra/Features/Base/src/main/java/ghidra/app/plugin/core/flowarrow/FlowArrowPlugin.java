@@ -544,7 +544,7 @@ public class FlowArrowPlugin extends Plugin implements MarginProvider, OptionsCh
 		if (bottomAddr != null) {
 			AddressSpace testSpace = bottomAddr.getAddressSpace();
 			validState = (program.getAddressFactory().getAddressSpace(
-				testSpace.getUniqueSpaceID()) == testSpace);
+						testSpace.getSpaceID()) == testSpace);
 		}
 	}
 

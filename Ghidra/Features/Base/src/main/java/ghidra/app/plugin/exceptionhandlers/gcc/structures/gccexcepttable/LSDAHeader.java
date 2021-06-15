@@ -95,7 +95,7 @@ public class LSDAHeader extends GccAnalysisClass {
 		AddressFactory addrFactory = program.getAddressFactory();
 		AddressSpace ram = addrFactory.getDefaultAddressSpace();
 
-		return addrFactory.getAddress(ram.getBaseSpaceID(), offset);
+		return addrFactory.getAddress(ram.getSpaceID(), offset);
 	}
 
 	private Address createLPStartPointer(Address addr) throws MemoryAccessException {

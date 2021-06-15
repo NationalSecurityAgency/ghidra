@@ -74,12 +74,11 @@ public abstract class AbstractSelectionNavigationAction extends ToggleDockingAct
 
 	@Override
 	// overridden to toggle the selection listener when the action is disabled
-	public boolean setEnabled(boolean enable) {
-		boolean oldValue = super.setEnabled(enable);
+	public void setEnabled(boolean enable) {
+		super.setEnabled(enable);
 
 		boolean installListener = enable && isSelected();
 		toggleSelectionListening(installListener);
-		return oldValue;
 	}
 
 	@Override

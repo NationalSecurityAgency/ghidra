@@ -15,17 +15,18 @@
  */
 package ghidra.graph.visualization;
 
-import com.google.common.base.Splitter;
-import ghidra.service.graph.Attributed;
-import ghidra.service.graph.AttributedEdge;
-import org.jungrapht.visualization.util.ShapeFactory;
+import static org.jungrapht.visualization.layout.util.PropertyLoader.*;
 
-import java.awt.BasicStroke;
-import java.awt.Shape;
-import java.awt.Stroke;
+import java.awt.*;
 import java.util.Map;
 
-import static org.jungrapht.visualization.VisualizationServer.PREFIX;
+import org.apache.commons.text.StringEscapeUtils;
+import org.jungrapht.visualization.util.ShapeFactory;
+
+import com.google.common.base.Splitter;
+
+import ghidra.service.graph.Attributed;
+import ghidra.service.graph.AttributedEdge;
 
 /**
  * a container for various functions used by ProgramGraph
@@ -40,8 +41,7 @@ abstract class ProgramGraphFunctions {
 	/**
 	 * a default implementation of a {@link ShapeFactory} to supply shapes for attributed vertices and edges
 	 */
-	private static ShapeFactory<Attributed> shapeFactory =
-		new ShapeFactory<>(n -> 50, n -> 1.0f);
+	private static ShapeFactory<Attributed> shapeFactory = new ShapeFactory<>(n -> 50, n -> 1.0f);
 
 	/**
 	 * return various 'Shapes' based on an attribute name
@@ -78,33 +78,35 @@ abstract class ProgramGraphFunctions {
 		}
 	}
 
+	/*
+	 * Gets the Shape object to use when drawing this vertex. If "Icon" attribute
+	 * is set it will use that, otherwise "VertexType" to will translate a code flow
+	 * name to a shape
+	 *
+	 * @param vertex the Attributed object to get a shape for
+	 * @return a Shape object to use when displaying the object
+	 */
 	public static Shape getVertexShape(Attributed vertex) {
-		try {
-			String vertexType = vertex.getAttribute("VertexType");
-			Shape shape = byShapeName(vertex, vertex.getAttribute("Icon"));
-			if (shape != null) {
-				return shape;
-			}
-			if (vertexType == null) {
-				return shapeFactory.getRectangle(vertex);
-			}
-			switch (vertexType) {
-				case "Entry":
-					return shapeFactory.getRegularPolygon(vertex, 3, Math.PI);
-				case "Exit":
-					return shapeFactory.getRegularPolygon(vertex, 3);
-				case "Switch":
-					return shapeFactory.getRectangle(vertex, Math.PI / 4);
-				case "Body":
-				case "External":
-					return shapeFactory.getRectangle(vertex);
-				default:
-					return shapeFactory.getEllipse(vertex);
-			}
+		Shape shape = byShapeName(vertex, vertex.getAttribute("Icon"));
+		if (shape != null) {
+			return shape;
 		}
-		catch (Exception ex) {
-			// just return a rectangle
+		String vertexType = vertex.getAttribute("VertexType");
+		if (vertexType == null) {
 			return shapeFactory.getRectangle(vertex);
+		}
+		switch (vertexType) {
+			case "Entry":
+				return shapeFactory.getRegularPolygon(vertex, 3, Math.PI);
+			case "Exit":
+				return shapeFactory.getRegularPolygon(vertex, 3);
+			case "Switch":
+				return shapeFactory.getRectangle(vertex, Math.PI / 4);
+			case "Body":
+			case "External":
+				return shapeFactory.getRectangle(vertex);
+			default:
+				return shapeFactory.getEllipse(vertex);
 		}
 	}
 
@@ -124,14 +126,15 @@ abstract class ProgramGraphFunctions {
 	/**
 	 * gets a display label from an {@link Attributed} object (vertex)
 	 * @param attributed the attributed object to get a label for
+	 * @param preferredLabelAttribute the attribute to use for the label, if available
 	 * @return the label for the given {@link Attributed}
 	 */
-	public static String getLabel(Attributed attributed) {
+	public static String getLabel(Attributed attributed, String preferredLabelAttribute) {
 		Map<String, String> map = attributed.getAttributeMap();
-		if (map.get("Code") != null) {
-			String code = map.get("Code");
-			return "<html>" + String.join("<p>", Splitter.on('\n').split(code));
+		String name = StringEscapeUtils.escapeHtml4(map.get("Name"));
+		if (map.containsKey(preferredLabelAttribute)) {
+			name = StringEscapeUtils.escapeHtml4(map.get(preferredLabelAttribute));
 		}
-		return map.get("Name");
+		return "<html>" + String.join("<p>", Splitter.on('\n').split(name));
 	}
 }

@@ -35,12 +35,12 @@ class FunctionTagMappingAdapterNoTable extends FunctionTagMappingAdapter {
 	 ******************************************************************************/
 
 	@Override
-	Record getRecord(long functionID, long tagID) throws IOException {
+	DBRecord getRecord(long functionID, long tagID) throws IOException {
 		return null;
 	}
 
 	@Override
-	Record createFunctionTagRecord(long functionID, long tagID)
+	DBRecord createFunctionTagRecord(long functionID, long tagID)
 			throws IOException {
 		throw new UnsupportedOperationException("create record not supported");
 	}
@@ -64,5 +64,10 @@ class FunctionTagMappingAdapterNoTable extends FunctionTagMappingAdapter {
 	@Override
 	boolean isTagAssigned(long id) throws IOException {
 		return false;
+	}
+
+	@Override
+	protected RecordIterator getRecords() throws IOException {
+		return new EmptyRecordIterator();
 	}
 }

@@ -482,9 +482,9 @@ bool FlowInfo::setFallthruBound(Address &bound)
   if (iter!=visited.begin()) {
     --iter;			// Last range less than or equal to us
     if (addr == (*iter).first) { // If we have already visited this address
-      addrlist.pop_back();	// Throw it away
       PcodeOp *op = target(addr); // But make sure the address
       data.opMarkStartBasic(op); // starts a basic block
+      addrlist.pop_back();	// Throw it away
       return false;
     }
     if (addr < (*iter).first + (*iter).second.size)
@@ -1203,14 +1203,14 @@ void FlowInfo::injectUserOp(PcodeOp *op)
   icontext.nextaddr = icontext.baseaddr;
   for(int4 i=1;i<op->numInput();++i) {		// Skip the first operand containing the injectid
     Varnode *vn = op->getIn(i);
-    icontext.inputlist.push_back(VarnodeData());
+    icontext.inputlist.emplace_back();
     icontext.inputlist.back().space = vn->getSpace();
     icontext.inputlist.back().offset = vn->getOffset();
     icontext.inputlist.back().size = vn->getSize();
   }
   Varnode *outvn = op->getOut();
   if (outvn != (Varnode *)0) {
-    icontext.output.push_back(VarnodeData());
+    icontext.output.emplace_back();
     icontext.output.back().space = outvn->getSpace();
     icontext.output.back().offset = outvn->getOffset();
     icontext.output.back().size = outvn->getSize();

@@ -54,7 +54,7 @@ import ghidra.program.model.lang.LanguageNotFoundException;
 import ghidra.util.*;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
-import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.TaskBuilder;
 import resources.ResourceManager;
 
 /**
@@ -345,10 +345,16 @@ public class ImporterDialog extends DialogComponentProvider {
 			DomainFolder importFolder = getOrCreateImportFolder(destinationFolder, programPath);
 			String programName = FilenameUtils.getName(programPath);
 			options = getOptions(loadSpec);  // make sure you get the options now, before the ByteProvider is closed.
-			TaskLauncher.launchNonModal("Import File", monitor -> {
+
+			//@formatter:off
+			new TaskBuilder("Import File", monitor -> {
 				ImporterUtilities.importSingleFile(tool, programManager, fsrl, importFolder,
 					loadSpec, programName, options, monitor);
-			});
+			})
+			.setLaunchDelay(0)
+			.launchNonModal();
+			//@formatter:on
+
 			close();
 		}
 	}

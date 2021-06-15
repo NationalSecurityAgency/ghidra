@@ -17,6 +17,7 @@ package ghidra.program.database.code;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.List;
 import java.util.StringTokenizer;
 
 import db.*;
@@ -67,16 +68,15 @@ class PrototypeManager {
 	final static Schema REGISTER_SCHEMA = createRegisterSchema();
 
 	private static Schema createPrototypeSchema() {
-		Schema schema =
-			new Schema(1, "Keys", new Class[] { BinaryField.class, LongField.class,
-				BooleanField.class }, new String[] { "Bytes", "Address", "InDelaySlot" });
+		Schema schema = new Schema(1, "Keys",
+			new Field[] { BinaryField.INSTANCE, LongField.INSTANCE, BooleanField.INSTANCE },
+			new String[] { "Bytes", "Address", "InDelaySlot" });
 		return schema;
 	}
 
 	private static Schema createRegisterSchema() {
-		Schema schema =
-			new Schema(1, "Keys", new Class[] { StringField.class },
-				new String[] { "Register Context" });
+		Schema schema = new Schema(1, "Keys", new Field[] { StringField.INSTANCE },
+			new String[] { "Register Context" });
 		return schema;
 	}
 
@@ -130,9 +130,10 @@ class PrototypeManager {
 			RecordIterator it = contextTable.iterator();
 			while (it.hasNext()) {
 				monitor.setProgress(++count);
-				if (monitor.isCancelled())
+				if (monitor.isCancelled()) {
 					throw new IOException("Upgrade Cancelled");
-				Record rec = it.next();
+				}
+				DBRecord rec = it.next();
 				String oldValue = rec.getString(0);
 				rec.setString(0, convertString(oldValue));
 				tempTable.putRecord(rec);
@@ -143,9 +144,10 @@ class PrototypeManager {
 			it = tempTable.iterator();
 			while (it.hasNext()) {
 				monitor.setProgress(++count);
-				if (monitor.isCancelled())
+				if (monitor.isCancelled()) {
 					throw new IOException("Upgrade Cancelled");
-				Record rec = it.next();
+				}
+				DBRecord rec = it.next();
 				contextTable.putRecord(rec);
 			}
 		}
@@ -187,9 +189,10 @@ class PrototypeManager {
 			RecordIterator it = protoAdapter.getRecords();
 			while (it.hasNext()) {
 				monitor.setProgress(++count);
-				if (monitor.isCancelled())
+				if (monitor.isCancelled()) {
 					throw new IOException("Upgrade Cancelled");
-				Record rec = it.next();
+				}
+				DBRecord rec = it.next();
 				tempAdapter.createRecord((int) rec.getKey(), rec.getLongValue(ADDR_COL),
 					rec.getBinaryData(BYTES_COL), rec.getBooleanValue(DELAY_COL));
 			}
@@ -201,9 +204,10 @@ class PrototypeManager {
 			it = tempAdapter.getRecords();
 			while (it.hasNext()) {
 				monitor.setProgress(++count);
-				if (monitor.isCancelled())
+				if (monitor.isCancelled()) {
 					throw new IOException("Upgrade Cancelled");
-				Record rec = it.next();
+				}
+				DBRecord rec = it.next();
 				protoAdapter.createRecord((int) rec.getKey(), rec.getLongValue(ADDR_COL),
 					rec.getBinaryData(BYTES_COL), rec.getBooleanValue(DELAY_COL));
 
@@ -275,7 +279,7 @@ class PrototypeManager {
 				String valueStr =
 					registerValue != null ? registerValue.getUnsignedValueIgnoreMask().toString()
 							: "0";
-				Record record = REGISTER_SCHEMA.createRecord(protoID);
+				DBRecord record = REGISTER_SCHEMA.createRecord(protoID);
 				record.setString(0, valueStr);
 				contextTable.putRecord(record);
 			}
@@ -287,19 +291,10 @@ class PrototypeManager {
 		return 0;
 	}
 
-//	private boolean shouldSave(BigInteger value, BigInteger defaultValue) {
-//    	if (value == null) {
-//    		return false;
-//    	}
-//    	if (defaultValue == null) {
-//    		return true;
-//    	}
-//    	return !value.equals(defaultValue);
-//
-//	}
-
 	/**
 	 * Get the prototype with the given ID.
+	 * @param protoID prototype ID
+	 * @return instruction prototype or null if not found
 	 */
 	InstructionPrototype getPrototype(int protoID) {
 		if (protoID < 0) {
@@ -315,7 +310,7 @@ class PrototypeManager {
 
 			RecordIterator iter = protoAdapter.getRecords();
 			while (iter.hasNext()) {
-				Record record = iter.next();
+				DBRecord record = iter.next();
 
 				int protoID = (int) record.getKey();
 
@@ -349,7 +344,7 @@ class PrototypeManager {
 
 	int getOriginalPrototypeLength(int protoId) {
 		try {
-			Record record = protoAdapter.getRecord(protoId);
+			DBRecord record = protoAdapter.getRecord(protoId);
 			if (record != null) {
 				byte[] bytes = record.getBinaryData(BYTES_COL);
 				return bytes.length;
@@ -364,7 +359,7 @@ class PrototypeManager {
 	RegisterValue getOriginalPrototypeContext(InstructionPrototype prototype,
 			Register baseContextReg) throws NoValueException {
 		try {
-			Record record = contextTable.getRecord(protoHt.get(prototype));
+			DBRecord record = contextTable.getRecord(protoHt.get(prototype));
 			if (record != null) {
 				String s = record.getString(0);
 				BigInteger value = s != null ? new BigInteger(s) : BigInteger.ZERO;
@@ -377,7 +372,7 @@ class PrototypeManager {
 		return null;
 	}
 
-	private InstructionPrototype createPrototype(long protoID, Record record) {
+	private InstructionPrototype createPrototype(long protoID, DBRecord record) {
 		Address address = addrMap.decodeAddress(record.getLongValue(ADDR_COL));
 		byte[] bytes = record.getBinaryData(BYTES_COL);
 		MemBuffer memBuffer = new ByteMemBufferImpl(address, bytes, language.isBigEndian());
@@ -416,8 +411,8 @@ class PrototypeManager {
 		}
 	}
 
-	private void loadContextTable(DBHandle dbHandle, int openMode) throws VersionException,
-			IOException {
+	private void loadContextTable(DBHandle dbHandle, int openMode)
+			throws VersionException, IOException {
 		contextTable = dbHandle.getTable(CONTEXT_TABLE_NAME);
 		if (contextTable == null) {
 			contextTable = dbHandle.createTable(CONTEXT_TABLE_NAME, REGISTER_SCHEMA);
@@ -449,25 +444,16 @@ class PrototypeManager {
 			this.address = address;
 		}
 
-		/**
-		 * @see ghidra.program.model.lang.ProcessorContext#getRegister(java.lang.String)
-		 */
 		@Override
 		public Register getRegister(String name) {
 			return programContext.getRegister(name);
 		}
 
-		/**
-		 * @see ghidra.program.model.lang.ProcessorContext#getRegisters()
-		 */
 		@Override
-		public Register[] getRegisters() {
+		public List<Register> getRegisters() {
 			return programContext.getRegisters();
 		}
 
-		/**
-		 * @see ghidra.program.model.lang.ProcessorContext#hasValue(ghidra.program.model.lang.Register)
-		 */
 		@Override
 		public boolean hasValue(Register register) {
 			return false;
@@ -479,7 +465,7 @@ class PrototypeManager {
 				return null;
 			}
 			try {
-				Record record = contextTable.getRecord(protoID);
+				DBRecord record = contextTable.getRecord(protoID);
 				if (record != null) {
 					String s = record.getString(0);
 					BigInteger value = s != null ? new BigInteger(s) : BigInteger.ZERO;
@@ -498,7 +484,7 @@ class PrototypeManager {
 				return null;
 			}
 			try {
-				Record record = contextTable.getRecord(protoID);
+				DBRecord record = contextTable.getRecord(protoID);
 				if (record != null) {
 					String s = record.getString(0);
 					BigInteger value = new BigInteger(s);

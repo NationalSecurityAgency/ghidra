@@ -120,6 +120,11 @@ class OldLanguage implements Language {
 	}
 
 	@Override
+	public List<Register> getContextRegisters() {
+		return registerMgr.getContextRegisters();
+	}
+
+	@Override
 	public Register getRegister(Address addr, int size) {
 		return registerMgr.getRegister(addr, size);
 	}
@@ -135,8 +140,13 @@ class OldLanguage implements Language {
 	}
 
 	@Override
-	public Register[] getRegisters() {
+	public List<Register> getRegisters() {
 		return registerMgr.getRegisters();
+	}
+
+	@Override
+	public List<String> getRegisterNames() {
+		return registerMgr.getRegisterNames();
 	}
 
 	@Override
@@ -737,7 +747,7 @@ class OldLanguage implements Language {
 	}
 
 	@Override
-	public Register[] getSortedVectorRegisters() {
+	public List<Register> getSortedVectorRegisters() {
 		throw new UnsupportedOperationException(
 			"Language for upgrade use only (getSortedVectorRegisters)");
 	}

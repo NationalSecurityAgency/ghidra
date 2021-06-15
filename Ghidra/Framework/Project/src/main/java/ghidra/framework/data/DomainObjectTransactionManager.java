@@ -208,7 +208,7 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 
 	@Override
 	synchronized boolean canRedo() {
-		if (redoList.size() > 0) {
+		if (transaction == null && redoList.size() > 0) {
 			return domainObj.dbh.canRedo();
 		}
 		return false;
@@ -216,7 +216,7 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 
 	@Override
 	synchronized boolean canUndo() {
-		if (undoList.size() > 0) {
+		if (transaction == null && undoList.size() > 0) {
 			return domainObj.dbh.canUndo();
 		}
 		return false;
@@ -224,7 +224,7 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 
 	@Override
 	synchronized String getRedoName() {
-		if (redoList.size() > 0) {
+		if (transaction == null && redoList.size() > 0) {
 			Transaction t = redoList.getLast();
 			return t.getDescription();
 		}
@@ -233,7 +233,7 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 
 	@Override
 	synchronized String getUndoName() {
-		if (undoList.size() > 0) {
+		if (transaction == null && undoList.size() > 0) {
 			Transaction t = undoList.getLast();
 			return t.getDescription();
 		}

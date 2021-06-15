@@ -31,8 +31,7 @@ import org.junit.*;
 import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.tool.ToolConstants;
-import docking.widgets.MultiLineLabel;
-import docking.widgets.OptionDialog;
+import docking.widgets.OkDialog;
 import docking.widgets.table.GTable;
 import docking.widgets.table.threaded.GThreadedTablePanel;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -954,12 +953,9 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void closeMaxSearchResultsDialog() throws Exception {
-		final OptionDialog d = waitForDialogComponent(OptionDialog.class);
-		assertNotNull(d);
-		String msg = findMessage(d.getComponent());
-		assertNotNull(msg);
-		assertTrue(msg.indexOf("Stopped search") >= 0);
-		runSwing(() -> d.close());
+		OkDialog d = waitForInfoDialog();
+		assertTrue(d.getMessage().contains("Stopped search"));
+		close(d);
 		waitForSwing();
 	}
 
@@ -1065,22 +1061,6 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 				JTextField tf = findTextField((Container) element);
 				if (tf != null) {
 					return tf;
-				}
-			}
-		}
-		return null;
-	}
-
-	private String findMessage(Container container) {
-		Component[] c = container.getComponents();
-		for (Component element : c) {
-			if (element instanceof MultiLineLabel) {
-				return ((MultiLineLabel) element).getLabel();
-			}
-			if (element instanceof Container) {
-				String str = findMessage((Container) element);
-				if (str != null) {
-					return str;
 				}
 			}
 		}

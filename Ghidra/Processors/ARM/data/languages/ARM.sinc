@@ -279,15 +279,15 @@ ItCond:  "."thfcc    is TMode=1 & itmode=0 & cond_mask=8 & thfcc
 # certain Thumb instructions don't affect all flags in the IT block
 CheckInIT_CZNO:     is TMode=1 & itmode=1 & cond_mask  	        { }   # Do nothing to the flag bits
 CheckInIT_CZNO:     is TMode=1 & itmode=0 & cond_mask  	        { }   # Do nothing to the flag bits
-CheckInIT_CZNO:     is TMode=1 & itmode=0 & cond_mask=0  	    { CY = tmpCY; ZR = tmpZR; NG = tmpNG; OV = tmpOV; }
+CheckInIT_CZNO: "s"    is TMode=1 & itmode=0 & cond_mask=0  	    { CY = tmpCY; ZR = tmpZR; NG = tmpNG; OV = tmpOV; }
 
 CheckInIT_CZN:     is TMode=1 & itmode=1 & cond_mask  	        { }   # Do nothing to the flag bits
 CheckInIT_CZN:     is TMode=1 & itmode=0 & cond_mask  	        { }   # Do nothing to the flag bits
-CheckInIT_CZN:     is TMode=1 & itmode=0 & cond_mask=0  	    { CY = tmpCY; ZR = tmpZR; NG = tmpNG; }
+CheckInIT_CZN: "s"    is TMode=1 & itmode=0 & cond_mask=0  	    { CY = tmpCY; ZR = tmpZR; NG = tmpNG; }
 
 CheckInIT_ZN:     is TMode=1 & itmode=1 & cond_mask  	        { }   # Do nothing to the flag bits
 CheckInIT_ZN:     is TMode=1 & itmode=0 & cond_mask  	        { }   # Do nothing to the flag bits
-CheckInIT_ZN:     is TMode=1 & itmode=0 & cond_mask=0			{ ZR = tmpZR; NG = tmpNG; }
+CheckInIT_ZN:  "s"   is TMode=1 & itmode=0 & cond_mask=0			{ ZR = tmpZR; NG = tmpNG; }
 
 
 :^instruction  is itmode=1 & cond_mask=8 & instruction  [ condit=0; ] {}

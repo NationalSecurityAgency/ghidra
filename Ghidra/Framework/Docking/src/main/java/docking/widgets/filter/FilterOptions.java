@@ -41,7 +41,7 @@ public class FilterOptions {
 		DELIMITER_NAME_MAP.put(' ', "Space");
 		DELIMITER_NAME_MAP.put('~', "Tilde");
 		DELIMITER_NAME_MAP.put('`', "Back quote");
-		DELIMITER_NAME_MAP.put('@', "Exclamation point");
+		DELIMITER_NAME_MAP.put('!', "Exclamation point");
 		DELIMITER_NAME_MAP.put('@', "At sign");
 		DELIMITER_NAME_MAP.put('#', "Pound sign");
 		DELIMITER_NAME_MAP.put('$', "Dollar sign");

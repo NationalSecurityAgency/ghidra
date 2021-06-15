@@ -22,9 +22,10 @@ import java.awt.datatransfer.Clipboard;
  * Provides a place for clients to retrieve the Clipboard they should be using.  This class
  * provides a level of indirection that allows us to inject clipboards as needed.
  * 
- * <P>Note: if a test needs to check the contents of a native Java action, which will use the
- * system clipboard, then that cannot rely on the contents of the system clipboard.  That test
- * will have to use some other mechanism to know that the native action was executed.
+ * <P>Note: if a test needs to check the contents of the native clipboard, such as after 
+ * executing a native Java action that uses the system clipboard, then that test must use some 
+ * other mechanism to know that the native action was executed.   This is due to the fact that 
+ * the system clipboard is potentially used by multiple Java test processes at once.
  */
 public class GClipboard {
 

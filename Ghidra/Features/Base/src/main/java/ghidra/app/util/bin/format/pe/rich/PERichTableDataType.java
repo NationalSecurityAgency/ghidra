@@ -128,7 +128,7 @@ public class PERichTableDataType extends DynamicDataType {
 		}
 
 		@Override
-		public boolean isDynamicallySized() {
+		public boolean hasLanguageDependantLength() {
 			return false;
 		}
 
@@ -193,7 +193,7 @@ public class PERichTableDataType extends DynamicDataType {
 		}
 
 		@Override
-		public boolean isDynamicallySized() {
+		public boolean hasLanguageDependantLength() {
 			return false;
 		}
 
@@ -259,7 +259,7 @@ public class PERichTableDataType extends DynamicDataType {
 		}
 
 		@Override
-		public boolean isDynamicallySized() {
+		public boolean hasLanguageDependantLength() {
 			return false;
 		}
 

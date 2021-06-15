@@ -36,8 +36,9 @@ abstract class SymbolDatabaseAdapter {
 	static final String SYMBOL_TABLE_NAME = "Symbols";
 
 	static final Schema SYMBOL_SCHEMA = new Schema(2, "Key",
-		new Class[] { StringField.class, LongField.class, LongField.class, ByteField.class,
-			LongField.class, IntField.class, StringField.class, ByteField.class },
+		new Field[] { StringField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE,
+			ByteField.INSTANCE, LongField.INSTANCE, IntField.INSTANCE, StringField.INSTANCE,
+			ByteField.INSTANCE },
 		new String[] { "Name", "Address", "Parent", "Symbol Type", "SymbolData1", "SymbolData2",
 			"SymbolData3", "Flags" });
 
@@ -130,7 +131,7 @@ abstract class SymbolDatabaseAdapter {
 	 * @throws IllegalArgumentException if you try to set the source to DEFAULT for a symbol type
 	 * that doesn't allow it.
 	 */
-	abstract Record createSymbol(String name, Address address, long parentSymbolID,
+	abstract DBRecord createSymbol(String name, Address address, long parentSymbolID,
 			SymbolType symbolType, long data1, int data2, String data3, SourceType source)
 			throws IOException;
 
@@ -140,7 +141,7 @@ abstract class SymbolDatabaseAdapter {
 	 * @return record with the given symbolID
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record getSymbolRecord(long symbolID) throws IOException;
+	abstract DBRecord getSymbolRecord(long symbolID) throws IOException;
 
 	/**
 	 * Remove the record for the given symbol ID
@@ -161,10 +162,10 @@ abstract class SymbolDatabaseAdapter {
 	/**
 	 * Get the symbolIDs at the given address.
 	 * @param addr address to filter on
-	 * @return array of database keys
+	 * @return array of database LongField keys contained within a Field array.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract long[] getSymbolIDs(Address addr) throws IOException;
+	abstract Field[] getSymbolIDs(Address addr) throws IOException;
 
 	/**
 	 * Get the number of symbols.
@@ -191,7 +192,7 @@ abstract class SymbolDatabaseAdapter {
 	 * @param record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract void updateSymbolRecord(Record record) throws IOException;
+	abstract void updateSymbolRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Get all of the symbols.

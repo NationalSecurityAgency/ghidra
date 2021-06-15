@@ -59,6 +59,31 @@ public class MenuDataTest {
 	 */
 	@Test(expected = IllegalArgumentException.class)
 	public void testBreakMenuPath2() {
-		MenuData menuData = new MenuData(new String[] {});
+		new MenuData(new String[] {});
+	}
+
+	@Test
+	public void testSetMenuItemName() {
+
+		MenuData menuData = new MenuData(new String[] { "One", "Two", "T&hree" });
+		assertEquals("Three", menuData.getMenuItemName());
+		assertEquals(menuData.getMnemonic(), 'h');
+
+		String newName = "Completely New Name";
+		menuData.setMenuItemName(newName);
+		assertEquals(menuData.getMnemonic(), MenuData.NO_MNEMONIC);
+	}
+
+	@Test
+	public void testSetMenuPath() {
+
+		MenuData menuData = new MenuData(new String[] { "One", "Two", "T&hree" });
+		assertEquals("Three", menuData.getMenuItemName());
+		assertEquals(menuData.getMnemonic(), 'h');
+
+		String newName = "Completely New Name";
+		String[] newPath = { "Four", newName };
+		menuData.setMenuPath(newPath);
+		assertEquals(menuData.getMnemonic(), MenuData.NO_MNEMONIC);
 	}
 }

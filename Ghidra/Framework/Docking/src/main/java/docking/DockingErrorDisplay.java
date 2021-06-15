@@ -17,16 +17,29 @@ package docking;
 
 import java.awt.Component;
 import java.awt.Window;
-import java.io.*;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.WordUtils;
 
 import docking.widgets.OkDialog;
 import docking.widgets.OptionDialog;
 import ghidra.util.*;
 import ghidra.util.exception.MultipleCauses;
+import ghidra.util.html.HtmlLineSplitter;
 
 public class DockingErrorDisplay implements ErrorDisplay {
 
-	private static final int TRACE_BUFFER_SIZE = 250;
+	/**
+	 * Error dialog used to append exceptions.
+	 *
+	 * <p>While this dialog is showing all new exceptions will be added to the dialog.  When
+	 * this dialog is closed, this reference will be cleared.
+	 *
+	 * <p>Note: all use of this variable <b>must be on the Swing thread</b> to avoid thread
+	 * visibility issues.
+	 */
+	private static AbstractErrDialog activeDialog;
 
 	ConsoleErrorDisplay consoleDisplay = new ConsoleErrorDisplay();
 
@@ -50,32 +63,68 @@ public class DockingErrorDisplay implements ErrorDisplay {
 			throwable);
 	}
 
+	private static String wrap(String text) {
+
+		StringBuilder buffy = new StringBuilder();
+		List<String> lines = HtmlLineSplitter.split(text, 100, true);
+		String newline = "\n";
+		for (String line : lines) {
+
+			if (buffy.length() != 0) {
+				buffy.append(newline);
+			}
+
+			if (StringUtils.isBlank(line)) {
+				// this will trim all leading blank lines, but preserve internal blank lines, 
+				// which clients may be providing for visual line separation
+				continue;
+			}
+
+			// wrap any poorly formatted text that gets displayed in the label; 80-100 chars is
+			// a reasonable line length based on historical print margins
+			String wrapped = WordUtils.wrap(line, 100, null, true);
+			buffy.append(wrapped);
+		}
+		return buffy.toString();
+	}
+
 	private void displayMessage(MessageType messageType, ErrorLogger errorLogger, Object originator,
 			Component parent, String title, Object message, Throwable throwable) {
+
 		int dialogType = OptionDialog.PLAIN_MESSAGE;
 
 		String messageString = message != null ? message.toString() : null;
-		String rawMessage = HTMLUtilities.fromHTML(messageString);
+		if (messageString != null) {
+			// prevent excessive message degenerate cases
+			int maxChars = 1000;
+			String safeMessage = StringUtilities.trimMiddle(messageString, maxChars);
+
+			// wrap any poorly formatted text that gets displayed in the label; 80-100 chars is
+			// a reasonable line length based on historical print margins
+			messageString = wrap(safeMessage);
+		}
+
+		String unformattedMessage = HTMLUtilities.fromHTML(messageString);
 		switch (messageType) {
 			case INFO:
 				dialogType = OptionDialog.INFORMATION_MESSAGE;
 				consoleDisplay.displayInfoMessage(errorLogger, originator, parent, title,
-					rawMessage);
+					unformattedMessage);
 				break;
 			case WARNING:
 			case ALERT:
 				dialogType = OptionDialog.WARNING_MESSAGE;
 				consoleDisplay.displayWarningMessage(errorLogger, originator, parent, title,
-					rawMessage, throwable);
+					unformattedMessage, throwable);
 				break;
 			case ERROR:
 				consoleDisplay.displayErrorMessage(errorLogger, originator, parent, title,
-					rawMessage, throwable);
+					unformattedMessage, throwable);
 				dialogType = OptionDialog.ERROR_MESSAGE;
 				break;
 		}
 
-		showDialog(title, message, throwable, dialogType, messageString, getWindow(parent));
+		showDialog(title, throwable, dialogType, messageString, getWindow(parent));
 	}
 
 	private Component getWindow(Component component) {
@@ -85,33 +134,45 @@ public class DockingErrorDisplay implements ErrorDisplay {
 		return component;
 	}
 
-	private void showDialog(final String title, final Object message, final Throwable throwable,
-			final int dialogType, final String messageString, final Component parent) {
-		SystemUtilities.runIfSwingOrPostSwingLater(
-			() -> doShowDialog(title, message, throwable, dialogType, messageString, parent));
+	private void showDialog(final String title, final Throwable throwable, final int dialogType,
+			final String messageString, final Component parent) {
+
+		Swing.runIfSwingOrRunLater(() -> {
+
+			if (dialogType == OptionDialog.ERROR_MESSAGE) {
+				showDialogOnSwing(title, throwable, dialogType, messageString, parent);
+			}
+			else {
+				DockingWindowManager.showDialog(parent,
+					new OkDialog(title, messageString, dialogType));
+			}
+		});
 	}
 
-	private void doShowDialog(final String title, final Object message, final Throwable throwable,
-			int dialogType, String messageString, Component parent) {
-		DialogComponentProvider dialog = null;
-		if (throwable != null) {
-			dialog = createErrorDialog(title, message, throwable, messageString);
+	private void showDialogOnSwing(String title, Throwable throwable, int dialogType,
+			String messageString, Component parent) {
+
+		if (activeDialog != null) {
+			activeDialog.addException(messageString, throwable);
+			return;
 		}
-		else {
-			dialog = new OkDialog(title, messageString, dialogType);
-		}
-		DockingWindowManager.showDialog(parent, dialog);
+
+		activeDialog = createErrorDialog(title, throwable, messageString);
+		activeDialog.setClosedCallback(() -> {
+			activeDialog.setClosedCallback(null);
+			activeDialog = null;
+		});
+		DockingWindowManager.showDialog(parent, activeDialog);
 	}
 
-	private DialogComponentProvider createErrorDialog(final String title, final Object message,
-			final Throwable throwable, String messageString) {
+	private AbstractErrDialog createErrorDialog(String title, Throwable throwable,
+			String messageString) {
 
 		if (containsMultipleCauses(throwable)) {
 			return new ErrLogExpandableDialog(title, messageString, throwable);
 		}
 
-		return ErrLogDialog.createExceptionDialog(title, messageString,
-			buildStackTrace(throwable, message == null ? throwable.getMessage() : messageString));
+		return ErrLogDialog.createExceptionDialog(title, messageString, throwable);
 	}
 
 	private boolean containsMultipleCauses(Throwable throwable) {
@@ -124,35 +185,5 @@ public class DockingErrorDisplay implements ErrorDisplay {
 		}
 
 		return containsMultipleCauses(throwable.getCause());
-	}
-
-	/**
-	 * Build a displayable stack trace from a Throwable 
-	 * 
-	 * @param t the throwable
-	 * @param msg message prefix
-	 * @return multi-line stack trace
-	 */
-	private String buildStackTrace(Throwable t, String msg) {
-		StringBuffer sb = new StringBuffer(TRACE_BUFFER_SIZE);
-
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		PrintStream ps = new PrintStream(baos);
-
-		if (msg != null) {
-			ps.println(msg);
-		}
-
-		t.printStackTrace(ps);
-		sb.append(baos.toString());
-		ps.close();
-		try {
-			baos.close();
-		}
-		catch (IOException e) {
-			// shouldn't happen--not really connected to the system
-		}
-
-		return sb.toString();
 	}
 }

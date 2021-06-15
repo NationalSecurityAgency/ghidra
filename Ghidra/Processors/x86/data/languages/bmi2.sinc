@@ -3,7 +3,7 @@
 ####
 
 
-:BZHI Reg32, rm32, vexVVVV_r32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf5; Reg32 ... & rm32
+:BZHI Reg32, rm32, vexVVVV_r32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf5; Reg32 ... & check_Reg32_dest ... & rm32
 {
   indexTmp:1 = vexVVVV_r32:1;
 
@@ -12,6 +12,7 @@
 
   # clear the upper bits
   Reg32 = (rm32 << shift) >> shift;
+  build check_Reg32_dest;
 
   ZF = (Reg32 == 0);
   SF = (Reg32 s< 0);
@@ -40,12 +41,14 @@
 @endif
 
 
-:MULX Reg32, vexVVVV_r32, rm32 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf6; Reg32 ... & rm32
+:MULX Reg32, vexVVVV_r32, rm32 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf6; Reg32 ... & check_Reg32_dest ... &  check_vexVVVV_r32_dest ... & rm32
 {
   temp:8 = zext(EDX) * zext(rm32);
 
   vexVVVV_r32 = temp:4;
+  build check_vexVVVV_r32_dest;
   Reg32 = temp(4);
+  build check_Reg32_dest;
 }
 
 @ifdef IA64
@@ -59,7 +62,7 @@
 @endif
 
 
-:PDEP Reg32, vexVVVV_r32, rm32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf5; Reg32 ... & rm32
+:PDEP Reg32, vexVVVV_r32, rm32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf5; Reg32 ... & check_Reg32_dest ... & rm32
 {
   sourceTmp:4 = vexVVVV_r32;
 
@@ -78,6 +81,7 @@
   if (indexTmp != 0) goto <loop>;
 
   Reg32 = resultTmp;
+  build check_Reg32_dest;
 }
 
 @ifdef IA64
@@ -104,7 +108,7 @@
 @endif
 
 
-:PEXT Reg32, vexVVVV_r32, rm32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf5; Reg32 ... & rm32
+:PEXT Reg32, vexVVVV_r32, rm32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf5; Reg32 ... & check_Reg32_dest ... & rm32
 {
   indexTmp:4 = 0x80000000;
   resultTmp:4 = 0;
@@ -119,6 +123,7 @@
   indexTmp = indexTmp >> 1;
   if (indexTmp != 0) goto <loop>;
 
+  build check_Reg32_dest;
   Reg32 = resultTmp;
 }
 
@@ -143,11 +148,12 @@
 @endif
 
 
-:RORX Reg32, rm32, imm8 is $(VEX_NONE) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F3A) & $(VEX_W0); byte=0xf0; Reg32 ... & rm32; imm8
+:RORX Reg32, rm32, imm8 is $(VEX_NONE) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F3A) & $(VEX_W0); byte=0xf0; Reg32 ... & check_Reg32_dest ... & rm32; imm8
 {
   shiftTmp:1 = (imm8:1 & 0x1F);
 
   Reg32 = (rm32 >> shiftTmp) | ( rm32 << (32 - shiftTmp));
+  build check_Reg32_dest;
 }
 
 @ifdef IA64
@@ -160,9 +166,10 @@
 @endif
 
 
-:SARX Reg32, rm32, vexVVVV_r32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf7; Reg32 ... & rm32
+:SARX Reg32, rm32, vexVVVV_r32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf7; Reg32 ... & check_Reg32_dest ... & rm32
 {
   Reg32 = rm32 s>> (vexVVVV_r32 & 0x0000001F);
+  build check_Reg32_dest;
 }
 
 @ifdef IA64
@@ -173,9 +180,10 @@
 @endif
 
 
-:SHLX Reg32, rm32, vexVVVV_r32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf7; Reg32 ... & rm32
+:SHLX Reg32, rm32, vexVVVV_r32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf7; Reg32 ... & check_Reg32_dest ... & rm32
 {
   Reg32 = rm32 << (vexVVVV_r32 & 0x0000001F);
+  build check_Reg32_dest;
 }
 
 @ifdef IA64
@@ -186,9 +194,10 @@
 @endif
 
 
-:SHRX Reg32, rm32, vexVVVV_r32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf7; Reg32 ... & rm32
+:SHRX Reg32, rm32, vexVVVV_r32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf7; Reg32 ... & check_Reg32_dest ... & rm32
 {
   Reg32 = rm32 >> (vexVVVV_r32 & 0x0000001F);
+  build check_Reg32_dest;
 }
 
 @ifdef IA64

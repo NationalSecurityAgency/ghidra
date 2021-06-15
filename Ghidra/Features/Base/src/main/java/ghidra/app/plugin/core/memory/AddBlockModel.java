@@ -25,7 +25,6 @@ import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
-import ghidra.util.NamingUtilities;
 import ghidra.util.datastruct.StringKeyIndexer;
 import ghidra.util.exception.AssertException;
 
@@ -151,6 +150,8 @@ class AddBlockModel {
 
 	void setOverlay(boolean b) {
 		this.isOverlay = b;
+		validateInfo();
+		listener.stateChanged(null);
 	}
 
 	void setInitializedType(InitializedType type) {
@@ -292,7 +293,7 @@ class AddBlockModel {
 	private void validateInfo() {
 		message = "";
 		isValid = hasValidName() && hasValidStartAddress() && hasValidLength() &&
-			hasNoMemoryConflicts() && hasMappedAddressIfNeeded() && hasUniqueNameIfOverlay() &&
+			hasNoMemoryConflicts() && hasMappedAddressIfNeeded() &&
 			hasInitialValueIfNeeded() && hasFileBytesInfoIfNeeded() && isOverlayIfOtherSpace();
 	}
 
@@ -333,21 +334,6 @@ class AddBlockModel {
 		return false;
 	}
 
-	private boolean hasUniqueNameIfOverlay() {
-		if (!isOverlay) {
-			return true;
-		}
-		AddressFactory factory = program.getAddressFactory();
-		AddressSpace[] spaces = factory.getAddressSpaces();
-		for (AddressSpace space : spaces) {
-			if (space.getName().equals(blockName)) {
-				message = "Address Space named " + blockName + " already exists";
-				return false;
-			}
-		}
-		return true;
-	}
-
 	private boolean isOverlayIfOtherSpace() {
 		if (startAddr.getAddressSpace().equals(AddressSpace.OTHER_SPACE)) {
 			if (!isOverlay) {
@@ -364,20 +350,40 @@ class AddBlockModel {
 			return true;
 		}
 		if (baseAddr == null) {
-			String blockTypeStr =
-				(blockType == MemoryBlockType.BIT_MAPPED) ? "bit-mapped" : "byte-mapped";
-			message = "Please enter a source address for the " + blockTypeStr + " block";
+			message = "Please enter a valid mapped region Source Address";
 			return false;
 		}
+
 		if (blockType == MemoryBlockType.BYTE_MAPPED) {
 			if (schemeDestByteCount <= 0 || schemeDestByteCount > Byte.MAX_VALUE ||
 				schemeSrcByteCount <= 0 || schemeSrcByteCount > Byte.MAX_VALUE) {
-				message = "Mapping ratio values must be within range: 1 to 127";
+				message = "Mapping Ratio values must be within range: 1 to 127";
 				return false;
 			}
 			if (schemeDestByteCount > schemeSrcByteCount) {
 				message =
-					"Mapping ratio destination byte count (left-value) must be less than or equal the source byte count (right-value)";
+					"Mapping Ratio destination byte count (left-value) must be less than or equal the source byte count (right-value)";
+				return false;
+			}
+			try {
+				long lastOffset = length - 1;
+				long sourceOffset = (schemeSrcByteCount * (lastOffset / schemeDestByteCount)) +
+					(lastOffset % schemeDestByteCount);
+				baseAddr.addNoWrap(sourceOffset);
+			}
+			catch (AddressOverflowException e) {
+				message =
+					"Insufficient space in byte-mapped source region at " + baseAddr.toString(true);
+				return false;
+			}
+		}
+		else if (blockType == MemoryBlockType.BIT_MAPPED) {
+			try {
+				baseAddr.addNoWrap((length - 1) / 8);
+			}
+			catch (AddressOverflowException e) {
+				message =
+					"Insufficient space in bit-mapped source region at " + baseAddr.toString(true);
 				return false;
 			}
 		}
@@ -399,11 +405,15 @@ class AddBlockModel {
 	}
 
 	private boolean hasValidLength() {
-		long sizeLimit = Memory.MAX_BLOCK_SIZE;
-		if (length > 0 && length <= sizeLimit) {
+		long limit = Memory.MAX_BLOCK_SIZE;
+		long spaceLimit = startAddr.getAddressSpace().getMaxAddress().subtract(startAddr);
+		if (spaceLimit >= 0) {
+			limit = Math.min(limit, spaceLimit + 1);
+		}
+		if (length > 0 && length <= limit) {
 			return true;
 		}
-		message = "Please enter a valid length between 0 and 0x" + Long.toHexString(sizeLimit);
+		message = "Please enter a valid Length: 1 to 0x" + Long.toHexString(limit);
 		return false;
 	}
 
@@ -411,22 +421,21 @@ class AddBlockModel {
 		if (startAddr != null) {
 			return true;
 		}
-		message = "Please enter a valid starting address";
+		message = "Please enter a valid Start Address";
 		return false;
 	}
 
 	private boolean hasValidName() {
 		if (blockName == null || blockName.length() == 0) {
-			message = "Please enter a name";
+			message = "Please enter a Block Name";
+			return false;
+		}
+		if (!Memory.isValidMemoryBlockName(blockName)) {
+			message = "Block Name is invalid";
 			return false;
 		}
 		if (nameExists(blockName)) {
-			message = "Block name already exists";
-			return false;
-		}
-		if (!NamingUtilities.isValidName(blockName)) {
-			message = "Block name is invalid";
-			return false;
+			message = "Warning! Duplicate Block Name";
 		}
 		return true;
 	}

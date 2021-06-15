@@ -13,56 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// List function names and entry point addresses to a file
+// List function names and entry point addresses to a file in JSON format
 //@category Functions
 
-import ghidra.app.plugin.core.script.Ingredient;
-import ghidra.app.plugin.core.script.IngredientDescription;
-import ghidra.app.script.GatherParamPanel;
+import java.io.File;
+import java.io.FileWriter;
+
+import com.google.gson.*;
+import com.google.gson.stream.JsonWriter;
+
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 
-import java.io.*;
+public class ExportFunctionInfoScript extends GhidraScript {
 
-public class ExportFunctionInfoScript extends GhidraScript implements Ingredient {
+	private static final String NAME = "name";
+	private static final String ENTRY = "entry";
 
 	@Override
 	public void run() throws Exception {
-		IngredientDescription[] ingredients = getIngredientDescriptions();
-		for (int i = 0; i < ingredients.length; i++) {
-			state.addParameter(ingredients[i].getID(), ingredients[i].getLabel(),
-				ingredients[i].getType(), ingredients[i].getDefaultValue());
-		}
-		if (!state.displayParameterGatherer("Script Options")) {
-			return;
-		}
-		File outputNameFile = (File) state.getEnvironmentVar("FunctionNameOutputFile");
-		PrintWriter pWriter = new PrintWriter(new FileOutputStream(outputNameFile));
+
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+		File outputFile = askFile("Please Select Output File", "Choose");
+		JsonWriter jsonWriter = new JsonWriter(new FileWriter(outputFile));
+		jsonWriter.beginArray();
+
 		Listing listing = currentProgram.getListing();
 		FunctionIterator iter = listing.getFunctions(true);
 		while (iter.hasNext() && !monitor.isCancelled()) {
 			Function f = iter.next();
-			String fName = f.getName();
+
+			String name = f.getName();
 			Address entry = f.getEntryPoint();
-			if (entry == null) {
-				pWriter.println("/* FUNCTION_NAME_ " + fName + " FUNCTION_ADDR_ " +
-					"NO_ENTRY_POINT" + " */");
-				println("WARNING: no entry point for " + fName);
-			}
-			else {
-				pWriter.println("/* FUNCTION_NAME_ " + fName + " FUNCTION_ADDR_ " + entry + " */");
-			}
+
+			JsonObject json = new JsonObject();
+			json.addProperty(NAME, name);
+			json.addProperty(ENTRY, entry.toString());
+
+			gson.toJson(json, jsonWriter);
 		}
-		pWriter.close();
-	}
 
-	@Override
-	public IngredientDescription[] getIngredientDescriptions() {
-		IngredientDescription[] retVal =
-			new IngredientDescription[] { new IngredientDescription("FunctionNameOutputFile",
-				"Output Function Name File", GatherParamPanel.FILE, "") };
-		return retVal;
-	}
+		jsonWriter.endArray();
+		jsonWriter.close();
 
+		println("Wrote functions to " + outputFile);
+	}
 }

@@ -15,11 +15,12 @@
  */
 package ghidra.app.plugin.core.graph;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import docking.widgets.EventTrigger;
 import ghidra.app.events.*;
+import ghidra.app.nav.NavigationUtils;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.framework.plugintool.PluginTool;
@@ -28,8 +29,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
-import ghidra.service.graph.GraphDisplay;
-import ghidra.service.graph.GraphDisplayListener;
+import ghidra.service.graph.*;
 import ghidra.util.Swing;
 
 /**
@@ -38,8 +38,8 @@ import ghidra.util.Swing;
 public abstract class AddressBasedGraphDisplayListener
 		implements GraphDisplayListener, PluginEventListener, DomainObjectListener {
 
-	private PluginTool tool;
-	private GraphDisplay graphDisplay;
+	protected PluginTool tool;
+	protected GraphDisplay graphDisplay;
 	protected Program program;
 	private SymbolTable symbolTable;
 	private String name;
@@ -62,8 +62,8 @@ public abstract class AddressBasedGraphDisplayListener
 	}
 
 	@Override
-	public void locationChanged(String vertexId) {
-		Address address = getAddressForVertexId(vertexId);
+	public void locationFocusChanged(AttributedVertex vertex) {
+		Address address = getAddress(vertex);
 		if (address != null) {
 			ProgramLocation location = new ProgramLocation(program, address);
 			tool.firePluginEvent(new ProgramLocationPluginEvent(name, location, program));
@@ -71,8 +71,8 @@ public abstract class AddressBasedGraphDisplayListener
 	}
 
 	@Override
-	public void selectionChanged(List<String> vertexIds) {
-		AddressSet addressSet = getAddressSetForVertices(vertexIds);
+	public void selectionChanged(Set<AttributedVertex> vertices) {
+		AddressSet addressSet = getAddresses(vertices);
 		if (addressSet != null) {
 			ProgramSelection selection = new ProgramSelection(addressSet);
 			ProgramSelectionPluginEvent event =
@@ -98,22 +98,37 @@ public abstract class AddressBasedGraphDisplayListener
 			ProgramLocationPluginEvent ev = (ProgramLocationPluginEvent) event;
 			if (isMyProgram(ev.getProgram())) {
 				ProgramLocation location = ev.getLocation();
-				graphDisplay.setLocation(getVertexIdForAddress(location.getAddress()));
+				AttributedVertex vertex = getVertex(location.getAddress());
+				// update graph location, but tell it not to send out event
+				graphDisplay.setFocusedVertex(vertex, EventTrigger.INTERNAL_ONLY);
 			}
 		}
 		else if (event instanceof ProgramSelectionPluginEvent) {
 			ProgramSelectionPluginEvent ev = (ProgramSelectionPluginEvent) event;
 			if (isMyProgram(ev.getProgram())) {
 				ProgramSelection selection = ev.getSelection();
-				List<String> selectedVertices = getVertices(selection);
+				Set<AttributedVertex> selectedVertices = getVertices(selection);
 				if (selectedVertices != null) {
-					graphDisplay.selectVertices(selectedVertices);
+					// since we are responding to an event, tell the GraphDisplay not to send event
+					graphDisplay.selectVertices(selectedVertices, EventTrigger.INTERNAL_ONLY);
 				}
 			}
 		}
 	}
 
-	protected String getVertexIdForAddress(Address address) {
+	public AttributedVertex getVertex(Address address) {
+		if (address == null) {
+			return null;
+		}
+		String id = getVertexId(address);
+		if (id == null) {
+			return null;
+		}
+
+		return graphDisplay.getGraph().getVertex(id);
+	}
+
+	protected String getVertexId(Address address) {
 		// vertex ids for external locations use symbol names since they don't have meaningful addresses.
 		if (address.isExternalAddress()) {
 			Symbol s = symbolTable.getPrimarySymbol(address);
@@ -144,18 +159,34 @@ public abstract class AddressBasedGraphDisplayListener
 		if (symbols.isEmpty()) {
 			return null;
 		}
-		// there should only be one external symbol with the same name, so just assume the first one is good
-		return symbols.get(0).getAddress();
 
+		// There should only be one external symbol with the same name.
+		// Since externals are not shown in the listing, we are going to do a hack and try
+		// and navigate to a "fake" function if one exists. A "fake" function in Ghidra is just
+		// an indirect pointer to the external function. If such a pointer exists, Ghidra marks
+		// up the location with the function signature.
+		Address symbolAddress = symbols.get(0).getAddress();
+		if (symbolAddress.isExternalAddress()) {
+			Address[] externalLinkageAddresses =
+				NavigationUtils.getExternalLinkageAddresses(program, symbolAddress);
+			// If this is a "fake" function situation, then there should only be one address
+			if (externalLinkageAddresses.length == 1) {
+				symbolAddress = externalLinkageAddresses[0];
+			}
+		}
+		return symbolAddress;
 	}
 
-	protected Address getAddressForVertexId(String vertexId) {
-		return getAddress(vertexId);
+	protected Address getAddress(AttributedVertex vertex) {
+		if (vertex == null) {
+			return null;
+		}
+		return getAddress(vertex.getId());
 	}
 
-	protected abstract List<String> getVertices(AddressSetView selection);
+	protected abstract Set<AttributedVertex> getVertices(AddressSetView selection);
 
-	protected abstract AddressSet getAddressSetForVertices(List<String> vertexIds);
+	protected abstract AddressSet getAddresses(Set<AttributedVertex> vertexIds);
 
 	private boolean isMyProgram(Program p) {
 		return p == program;
@@ -163,26 +194,50 @@ public abstract class AddressBasedGraphDisplayListener
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (!ev.containsEvent(ChangeManager.DOCR_SYMBOL_RENAMED)) {
+		if (!(ev.containsEvent(ChangeManager.DOCR_SYMBOL_ADDED) ||
+			ev.containsEvent(ChangeManager.DOCR_SYMBOL_RENAMED) ||
+			ev.containsEvent(ChangeManager.DOCR_SYMBOL_REMOVED))) {
 			return;
 		}
+
 		for (DomainObjectChangeRecord record : ev) {
-			if (record.getEventType() == ChangeManager.DOCR_SYMBOL_RENAMED) {
+			if (record instanceof ProgramChangeRecord) {
 				ProgramChangeRecord programRecord = (ProgramChangeRecord) record;
-				handleSymbolRenamed(programRecord);
+				Address address = programRecord.getStart();
+
+				if (record.getEventType() == ChangeManager.DOCR_SYMBOL_RENAMED) {
+					handleSymbolAddedOrRenamed(address, (Symbol) programRecord.getObject());
+				}
+				else if (record.getEventType() == ChangeManager.DOCR_SYMBOL_ADDED) {
+					handleSymbolAddedOrRenamed(address, (Symbol) programRecord.getNewValue());
+				}
+				else if (record.getEventType() == ChangeManager.DOCR_SYMBOL_REMOVED) {
+					handleSymbolRemoved(address);
+				}
 			}
 		}
 	}
 
-	private void handleSymbolRenamed(ProgramChangeRecord programRecord) {
-		Symbol symbol = (Symbol) programRecord.getObject();
-		String newName = symbol.getName();
-		Address address = symbol.getAddress();
-		String id = getVertexIdForAddress(address);
-		graphDisplay.updateVertexName(id, newName);
+	private void handleSymbolAddedOrRenamed(Address address, Symbol symbol) {
+		AttributedVertex vertex = getVertex(address);
+		if (vertex == null) {
+			return;
+		}
+		graphDisplay.updateVertexName(vertex, symbol.getName());
 	}
 
-	private void dispose() {
+	private void handleSymbolRemoved(Address address) {
+		AttributedVertex vertex = getVertex(address);
+		if (vertex == null) {
+			return;
+		}
+		Symbol symbol = program.getSymbolTable().getPrimarySymbol(address);
+		String displayName = symbol == null ? address.toString() : symbol.getName();
+		graphDisplay.updateVertexName(vertex, displayName);
+	}
+
+	@Override
+	public void dispose() {
 		Swing.runLater(() -> tool.removeListenerForAllPluginEvents(this));
 		program.removeListener(this);
 	}

@@ -53,7 +53,7 @@ public class InputDialog extends DialogComponentProvider {
 	 * @param label value to use for the label of the text field
 	 */
 	public InputDialog(String dialogTitle, String label) {
-		this(dialogTitle, new String[] { label }, new String[] { DEFAULT_VALUE }, true, null);
+		this(dialogTitle, new String[] { label }, new String[] { DEFAULT_VALUE }, null);
 	}
 
 	/**
@@ -68,7 +68,7 @@ public class InputDialog extends DialogComponentProvider {
 	 * @param initialValue initial value to use for the text field
 	 */
 	public InputDialog(String dialogTitle, String label, String initialValue) {
-		this(dialogTitle, new String[] { label }, new String[] { initialValue }, true, null);
+		this(dialogTitle, new String[] { label }, new String[] { initialValue }, null);
 	}
 
 	/**
@@ -85,7 +85,7 @@ public class InputDialog extends DialogComponentProvider {
 	 */
 	public InputDialog(String dialogTitle, String label, String initialValue,
 			InputDialogListener listener) {
-		this(dialogTitle, new String[] { label }, new String[] { initialValue }, true, listener);
+		this(dialogTitle, new String[] { label }, new String[] { initialValue }, listener);
 	}
 
 	/**
@@ -101,7 +101,7 @@ public class InputDialog extends DialogComponentProvider {
 	 * @param isModal whether or not the dialog is to be modal
 	 */
 	public InputDialog(String dialogTitle, String label, String initialValue, boolean isModal) {
-		this(dialogTitle, new String[] { label }, new String[] { initialValue }, isModal, null);
+		this(dialogTitle, new String[] { label }, new String[] { initialValue }, null);
 	}
 
 	/**
@@ -116,7 +116,7 @@ public class InputDialog extends DialogComponentProvider {
 	 * @param initialValues initial values to use for the text fields
 	 */
 	public InputDialog(String dialogTitle, String[] labels, String[] initialValues) {
-		this(dialogTitle, labels, initialValues, true, null);
+		this(dialogTitle, labels, initialValues, null);
 	}
 
 	/**
@@ -129,12 +129,11 @@ public class InputDialog extends DialogComponentProvider {
 	 * @param dialogTitle used as the name of the dialog's title bar
 	 * @param labels values to use for the labels of the text fields
 	 * @param initialValues initial values to use for the text fields
-	 * @param isModal whether or not the dialog is to be modal
 	 * @param listener listener that is called when the OK button is hit
 	 */
-	public InputDialog(String dialogTitle, String[] labels, String[] initialValues, boolean isModal,
+	public InputDialog(String dialogTitle, String[] labels, String[] initialValues,
 			InputDialogListener listener) {
-		super(dialogTitle, isModal, (listener != null) /* status */, true /* buttons */,
+		super(dialogTitle, true, (listener != null) /* status */, true /* buttons */,
 			false /* no tasks */);
 		this.listener = listener;
 
@@ -152,8 +151,9 @@ public class InputDialog extends DialogComponentProvider {
 		// put the rest of the dialog together
 		inputLabels = labels;
 		this.initialValues = initialValues;
-		this.addOKButton();
-		this.addCancelButton();
+		setTransient(true);
+		addOKButton();
+		addCancelButton();
 		buildMainPanel();
 
 		if (initialValues != null && initialValues[0] != null && initialValues[0].length() > 0) {
@@ -245,7 +245,16 @@ public class InputDialog extends DialogComponentProvider {
 	 * @param text the text
 	 */
 	public void setValue(String text) {
-		textFields[0].setText(text);
+		setValue(text, 0);
+	}
+
+	/**
+	 * Sets the text of the text field at the given index
+	 * @param text the text
+	 * @param index the index of the text field
+	 */
+	public void setValue(String text, int index) {
+		textFields[index].setText(text);
 	}
 
 	/**
