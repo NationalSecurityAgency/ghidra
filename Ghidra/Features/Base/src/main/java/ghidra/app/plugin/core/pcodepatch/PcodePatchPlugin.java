@@ -46,7 +46,8 @@ public class PcodePatchPlugin extends ProgramPlugin {
     private DockingAction pcodePatchAction;
     private DockingAction pcodeInsertBeforeAction;
     private DockingAction pcodeInsertAfterAction;
-    private DockingAction pcodePatchRemoveAction;
+    private DockingAction pcodePatchResetAction;
+    private DockingAction pcodeRemoveAction;
 
     public PcodePatchPlugin(PluginTool tool) {
         super(tool, false, false, false);
@@ -68,20 +69,26 @@ public class PcodePatchPlugin extends ProgramPlugin {
         pcodeInsertAfterAction.setPopupMenuData(
             new MenuData(new String[] { SUBMENU_NAME, "Insert After..."})
         );
-        pcodePatchRemoveAction = new PcodePatchResetAction("Reset Pcode", getName(), this);
-        pcodePatchRemoveAction.setPopupMenuData(
-            new MenuData(new String[] { SUBMENU_NAME, "Reset Pcode At..."})
+        pcodeRemoveAction = new PcodeRemoveAction("Remove Pcode", getName(), this);
+        pcodeRemoveAction.setPopupMenuData(
+            new MenuData(new String[] { SUBMENU_NAME, "Remove Pcode At..."})
+        );
+        pcodePatchResetAction = new PcodePatchResetAction("Reset Pcode", getName(), this);
+        pcodePatchResetAction.setPopupMenuData(
+            new MenuData(new String[] { SUBMENU_NAME, "Reset Pcode"})
         );
 
         pcodePatchAction.setEnabled(true);
         pcodeInsertBeforeAction.setEnabled(true);
         pcodeInsertAfterAction.setEnabled(true);
-        pcodePatchRemoveAction.setEnabled(true);
+        pcodeRemoveAction.setEnabled(true);
+        pcodePatchResetAction.setEnabled(true);
 
         tool.addAction(pcodePatchAction);
         tool.addAction(pcodeInsertBeforeAction);
         tool.addAction(pcodeInsertAfterAction);
-        tool.addAction(pcodePatchRemoveAction);
+        tool.addAction(pcodeRemoveAction);
+        tool.addAction(pcodePatchResetAction);
     }
 
     @Override
@@ -89,6 +96,7 @@ public class PcodePatchPlugin extends ProgramPlugin {
         pcodePatchAction.dispose();
         pcodeInsertBeforeAction.dispose();
         pcodeInsertAfterAction.dispose();
-        pcodePatchRemoveAction.dispose();
+        pcodeRemoveAction.dispose();
+        pcodePatchResetAction.dispose();
     }
 }
