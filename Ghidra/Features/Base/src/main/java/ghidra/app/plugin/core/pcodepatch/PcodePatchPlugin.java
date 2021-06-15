@@ -68,9 +68,9 @@ public class PcodePatchPlugin extends ProgramPlugin {
         pcodeInsertAfterAction.setPopupMenuData(
             new MenuData(new String[] { SUBMENU_NAME, "Insert After..."})
         );
-        pcodePatchRemoveAction = new PcodePatchRemoveAction("Remove Patch", getName(), this);
+        pcodePatchRemoveAction = new PcodePatchResetAction("Reset Pcode", getName(), this);
         pcodePatchRemoveAction.setPopupMenuData(
-            new MenuData(new String[] { SUBMENU_NAME, "Remove Patch At..."})
+            new MenuData(new String[] { SUBMENU_NAME, "Reset Pcode At..."})
         );
 
         pcodePatchAction.setEnabled(true);

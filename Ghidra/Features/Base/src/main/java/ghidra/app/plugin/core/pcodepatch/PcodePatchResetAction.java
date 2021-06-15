@@ -27,9 +27,9 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.Msg;
 
-public class PcodePatchRemoveAction extends AbstractPcodeManipulationAction {
+public class PcodePatchResetAction extends AbstractPcodeManipulationAction {
 
-    public PcodePatchRemoveAction(String name, String owner, PcodePatchPlugin plugin) {
+    public PcodePatchResetAction(String name, String owner, PcodePatchPlugin plugin) {
         super(name, owner, plugin);
     }
 
@@ -55,7 +55,7 @@ public class PcodePatchRemoveAction extends AbstractPcodeManipulationAction {
                         disassembler.disassemble(addr, new AddressSet(addr));
                         return true;
                     } catch (Exception e) {
-                        Msg.showError(this, null, "Can't Remove Pcode Patch", e.toString());
+                        Msg.showError(this, null, "Can't Reset Pcode Patch", e.toString());
                         return false;
                     }
                 }
@@ -67,7 +67,7 @@ public class PcodePatchRemoveAction extends AbstractPcodeManipulationAction {
 
                 @Override
                 public String getName() {
-                    return "PcodePatchRemove";
+                    return "Reset Pcode";
                 }
 
             }, program);

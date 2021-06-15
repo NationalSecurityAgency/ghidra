@@ -16,8 +16,8 @@
 
 package ghidra.app.plugin.core.pcodepatch;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import ghidra.program.model.pcode.PcodeData;
@@ -40,10 +40,9 @@ public class PcodeInsertAfterAction extends AbstractPcodePatchAction {
 
     @Override
     public void doPatch(PcodeData patchPcode) {
-        PcodeDataLike[] pcode = Stream.of(instruction.getPcode()).toArray(PcodeDataLike[]::new);
-        List<PcodeDataLike> pcodeAfter = Arrays.asList(pcode);
-        pcodeAfter.add(row + 1, patchPcode);
-        instruction.patchPcode(pcodeAfter.toArray(PcodeDataLike[]::new));
+        List<PcodeDataLike> pcode = Stream.of(instruction.getPcode()).collect(Collectors.toList());
+        pcode.add(row + 1, patchPcode);
+        instruction.patchPcode(pcode.toArray(PcodeDataLike[]::new));
     }
     
 }
