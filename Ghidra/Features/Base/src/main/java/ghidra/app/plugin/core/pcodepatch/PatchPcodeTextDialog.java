@@ -26,11 +26,7 @@ import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
-import ghidra.program.disassemble.Disassembler;
-import ghidra.program.disassemble.DisassemblerMessageListener;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.PcodeData;
 import ghidra.program.model.pcode.PcodeRawParser;
@@ -81,8 +77,18 @@ public class PatchPcodeTextDialog extends DialogComponentProvider {
         this.plugin.getTool().showDialog(this);
     }
 
+    /**
+     * show the dialog with initial text set with the raw Pcode at pointed instruction
+     * 
+     * @param initialText the initial text displayed in the patching dialog
+     */
+    public void show(String initialText) {
+        JTextField patchingTextField = (JTextField) patchingTextComboBox.getEditor().getEditorComponent();
+        patchingTextField.setText(initialText);
+        show();
+    }
+
     private void parsePcodeOpThenDoPatch(String pcodeText) {
-        // form: varnode_out = OP varnode_in1 varnode_in2 ...
         try {
             AddressFactory addressFactory = this.plugin.getCurrentProgram().getAddressFactory();
 

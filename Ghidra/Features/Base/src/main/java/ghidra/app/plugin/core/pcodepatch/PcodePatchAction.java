@@ -20,6 +20,8 @@ import java.util.stream.Stream;
 
 import ghidra.program.model.pcode.PcodeData;
 import ghidra.program.model.pcode.PcodeDataLike;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.PcodeRawFormatter;
 
 
 public class PcodePatchAction extends AbstractPcodePatchAction {
@@ -34,7 +36,8 @@ public class PcodePatchAction extends AbstractPcodePatchAction {
 
     @Override
     protected void showDialog() {
-        this.dialog.show();
+        PcodeOp curPcode = instruction.getPcode()[row];
+        this.dialog.show(PcodeRawFormatter.formatSingleRaw(curPcode));
     }
 
     @Override

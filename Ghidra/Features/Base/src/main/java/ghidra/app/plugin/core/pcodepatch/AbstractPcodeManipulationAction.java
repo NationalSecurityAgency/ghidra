@@ -23,7 +23,6 @@ import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.pcode.Varnode;
 import ghidra.program.util.PcodeFieldLocation;
 import ghidra.program.util.ProgramLocation;
 
