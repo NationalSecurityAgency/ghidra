@@ -82,7 +82,7 @@ public abstract class AbstractDoubleRangeFilter<T> extends Filter<T>
 
 		final JPanel panel = new JPanel(new HorizontalLayout(4));
 		Border paddingBorder = BorderFactory.createEmptyBorder(1, 5, 1, 5);
-		Border outsideBorder = BorderFactory.createBevelBorder(BevelBorder.LOWERED);
+		Border outsideBorder = BorderFactory.createEtchedBorder();
 		panel.setBorder(BorderFactory.createCompoundBorder(outsideBorder, paddingBorder));
 
 		JLabel filterLabel = new GDLabel(filterName + " Filter: ");

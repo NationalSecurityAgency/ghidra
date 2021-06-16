@@ -42,7 +42,7 @@ public class FilterTextField extends JPanel {
 	private static final int FLASH_FREQUENCY_MS = 250;
 
 	private static Color FLASH_BACKGROUND_COLOR = Color.WHITE;
-	private static Color FILTERED_BACKGROUND_COLOR = Color.YELLOW;
+	private static Color FILTERED_BACKGROUND_COLOR = Color.GRAY;
 	/*package*/ static Color UNEDITABLE_BACKGROUND_COLOR = Color.LIGHT_GRAY;
 
 	private Color noFlashColor;

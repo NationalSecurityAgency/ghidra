@@ -51,7 +51,7 @@ public interface ToolConstants extends DockingToolConstants {
 	/**
 	 * Used when placing an action in the "Selection" menu of the tool
 	 */
-	public static final String MENU_SELECTION = "Se&lect";
+	public static final String MENU_SELECTION = "&Select";
 
 	/**
 	 * Used when placing an action in the "About" menu of the tool

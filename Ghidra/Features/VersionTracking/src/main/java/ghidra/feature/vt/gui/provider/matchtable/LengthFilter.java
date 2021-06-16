@@ -58,7 +58,7 @@ public class LengthFilter extends Filter<VTMatch> {
 
 		final JPanel panel = new JPanel(new BorderLayout());
 		Border paddingBorder = BorderFactory.createEmptyBorder(1, 5, 1, 5);
-		Border outsideBorder = BorderFactory.createBevelBorder(BevelBorder.LOWERED);
+		Border outsideBorder = BorderFactory.createEtchedBorder();
 		panel.setBorder(BorderFactory.createCompoundBorder(outsideBorder, paddingBorder));
 
 		panel.add(label, BorderLayout.WEST);

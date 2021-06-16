@@ -347,7 +347,7 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 
 	private void buildPanel(String filterLabel) {
 		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-		setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		setBorder(BorderFactory.createEtchedBorder());
 
 		searchLabel = new GDLabel(filterLabel);
 		searchLabel.setToolTipText("Include only table elements that match the given search text");

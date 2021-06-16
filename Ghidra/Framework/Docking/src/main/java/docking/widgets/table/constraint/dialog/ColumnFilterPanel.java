@@ -48,7 +48,7 @@ class ColumnFilterPanel extends JPanel {
 		add(buildConstraintPanels(), BorderLayout.CENTER);
 		add(buildButtonPanel(), BorderLayout.EAST);
 		setBorder(
-			BorderFactory.createCompoundBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED),
+			BorderFactory.createCompoundBorder(BorderFactory.createEtchedBorder(),
 				BorderFactory.createEmptyBorder(3, 3, 3, 3)));
 
 	}

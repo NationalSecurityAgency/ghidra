@@ -120,7 +120,7 @@ public class DefaultGTreeFilterProvider implements GTreeFilterProvider {
 
 	private JPanel createFilterPanel() {
 		JPanel newFilterPanel = new JPanel(new BorderLayout());
-		newFilterPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
+		newFilterPanel.setBorder(BorderFactory.createEtchedBorder());
 		JLabel filterLabel = new GLabel(" Filter: ");
 		newFilterPanel.add(filterLabel, BorderLayout.WEST);
 

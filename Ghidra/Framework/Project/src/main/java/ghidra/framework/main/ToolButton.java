@@ -723,7 +723,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		public void dragEnter(DropTargetDragEvent e) {
 			super.dragEnter(e);
 			if (super.isDropOk(e)) {
-				ToolButton.this.setBorder(RAISED_BUTTON_BORDER);
+				ToolButton.this.setBorder(NO_BUTTON_BORDER);
 				draggingOverValidDropTarget = true;
 			}
 		}
