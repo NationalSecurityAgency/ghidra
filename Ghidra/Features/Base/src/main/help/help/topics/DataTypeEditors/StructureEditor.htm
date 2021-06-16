@@ -152,7 +152,7 @@
 
     <BLOCKQUOTE>
       <P>At the bottom of the editor is a read-only <SPAN style="font-style: italic;">Alignment</SPAN>
-      field which conveys the acutal alignment of this data type. 
+      field which conveys the actual alignment of this data type. 
       All non-packed structures and unions (i.e., pack disabled) will have a default alignment of 1 (byte aligned)
       unless a <A href="#Structure_Editor_Align">minimum alignment</A> value has been specified.  For packed structures and unions
       the actual alignment value is calculated based on the <A href="#Structure_Editor_Pack">pack</A> setting, 
@@ -160,7 +160,7 @@
       and the minimum alignment setting. The size of a packed structure or union will always be a multiple 
       of this alignment value.  This value is always expressed in terms of 8-bit bytes.</P>
       <P>
-      This alignment is considered when this data type, or dirivative data type, is placed within another packed composite.  
+      This alignment is considered when this data type, or derivative data type, is placed within another packed composite.  
       A compiler will also utilize this when placing components within memory although Ghidra does not
       enforce such placement.<BR>
       </P>
@@ -344,9 +344,9 @@
       		<li>A bitfield datatype may not exist anywhere other than within a structure or union.</li>
       		<li>A bitfield datatype may not be selected via the datatype chooser or tree since it
       		requires the specification of additional attributes (e.g., bit-size, bit-offset).  The
-      		bit-size is generally appended to the base-datatype for datatype specification and 
+      		bit-size is generally appended to the base datatype for datatype specification and 
       		presentation purposes (e.g., char:1).</li>
-      		<li>A zero-length bitfield may be defined within a byte but its' precise bit position
+      		<li>A zero-length bitfield may be defined within a byte but its precise bit position
       		is controlled by endianess alone.  A zero-length bitfield has no affect within a non-packed
       		structure and is intended for use within packed structures where it may impart alignment
       		affects based upon compiler conventions.</li> 
@@ -664,6 +664,8 @@
       <a href="#Structure_Bitfield_Editor">Bitfield Editor</a>.</P>
     </BLOCKQUOTE>
      
+    </BLOCKQUOTE> 
+
     <H2><A name="Structure_Editor_Component_Fields"></A>Component Fields</H2>
 
     <P>Each row displays information about a component in this structure or union. The DataType,
