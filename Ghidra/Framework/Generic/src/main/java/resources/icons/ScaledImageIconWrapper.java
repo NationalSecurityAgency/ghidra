@@ -66,6 +66,31 @@ public class ScaledImageIconWrapper extends ImageIconWrapper {
 		this.width = width;
 		this.height = height;
 	}
+	/**
+	 * Construct wrapped ImageIcon based upon specified image byte array
+	 * (see {@link Toolkit#createImage(byte[])})
+	 * @param imageBytes image bytes
+	 * @param imageName image reference name
+	 * @param width new icon width
+	 * @param height new icon height
+	 */
+	public ScaledImageIconWrapper(byte[] imageBytes, String imageName, int width, int height){
+		super(imageBytes, imageName);
+		this.width = width;
+		this.height = height;
+	}
+	/**
+	 * Construct wrapped ImageIcon based upon specified image
+	 * @param image icon image
+	 * @param imageName image reference name
+	 * @param width new icon width
+	 * @param height new icon height
+	 */
+	public ScaledImageIconWrapper(Image image, String imageName, int width, int height) {
+		super(image, imageName);
+		this.width = width;
+		this.height = height;
+	}
 
 	@Override
 	protected ImageIcon createImageIcon() {
