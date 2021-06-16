@@ -112,17 +112,23 @@ public class PcodeRawParser {
     }
 
     private PcodeData parseSingleRawPcode(String pcodeText) throws RuntimeException {
-        // form: varnode_out = OP varnode_in1 varnode_in2 ...
+        // form: varnode_out = OP varnode_in1, varnode_in2, ...
         try {
-            String[] parts = Stream.of(pcodeText.split("=")).map(x -> x.trim()).toArray(String[]::new);
-            Varnode varnodeOut = parseVarnode(parts[0]);
+            Varnode varnodeOut = null;
+            String[] rhsParts;
+            if (pcodeText.indexOf("=") != -1) {
+                String[] parts = Stream.of(pcodeText.split("=")).map(x -> x.trim()).toArray(String[]::new);
+                varnodeOut = parseVarnode(parts[0]);
+                rhsParts = parts[1].trim().split(" ");
+            } else {
+                rhsParts = pcodeText.trim().split(" ");
+            }
 
-            String[] rhs_parts = parts[1].trim().split(" ");
-            int opcode = PcodeOp.getOpcode(rhs_parts[0]);
-            rhs_parts = Arrays.copyOfRange(rhs_parts, 1, rhs_parts.length);
+            int opcode = PcodeOp.getOpcode(rhsParts[0]);
+            rhsParts = Arrays.copyOfRange(rhsParts, 1, rhsParts.length);
 
-            String inVarnodeText = String.join("", rhs_parts)
-                .replace(")", ") "); // spaces only between varnodes
+            String inVarnodeText = String.join("", rhsParts)
+                .replace("),", ") "); // spaces only between varnodes
 
             ArrayList<Varnode> varnodeIns = new ArrayList<>();
 
@@ -132,7 +138,7 @@ public class PcodeRawParser {
 
             return new PcodeData(opcode, varnodeIns.toArray(Varnode[]::new), varnodeOut);
         } catch (UnknownInstructionException e) {
-            throw new RuntimeException("Invalid Pcode OpCode");
+            throw new RuntimeException("Invalid Pcode OpCode: " + e.toString());
         } catch (Exception e) {
             throw new RuntimeException("Invalid Pcode Raw Expression");
         }

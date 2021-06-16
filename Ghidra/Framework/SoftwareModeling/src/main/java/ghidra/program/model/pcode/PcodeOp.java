@@ -709,7 +709,7 @@ public class PcodeOp implements PcodeDataLike {
 		}
 		Integer i = opcodeTable.get(s);
 		if (i == null) {
-			throw new UnknownInstructionException();
+			throw new UnknownInstructionException(String.format("Invalid opcode %s", s));
 		}
 		return i.intValue();
 	}

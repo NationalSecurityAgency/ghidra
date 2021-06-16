@@ -21,7 +21,7 @@ import ghidra.program.model.address.Address;
  * Format the pcode in raw format. This is used to format patched pcode.
  * 
  * Roughly, something like this:
- * (space, offset, size) = OP (space, offset, size) // ... each (space, offset, size) is a varnode
+ * (space, offset, size) = OP (space, offset, size), ... // ... each (space, offset, size) is a varnode
  */
 public class PcodeRawFormatter {
     public static String formatRaw(PcodeDataLike[] pcodes) {
@@ -52,7 +52,7 @@ public class PcodeRawFormatter {
         long offset = addr.getOffset();
         int size = varnode.getSize();
 
-        return String.format("(%s,0x%x, %d)", space, offset, size);
+        return String.format("(%s, 0x%x, %d)", space, offset, size);
     }
 
     public static String formatSingleRaw(PcodeDataLike pcode) {
@@ -66,9 +66,21 @@ public class PcodeRawFormatter {
 
         String opcodeMnemonic = PcodeOp.getMnemonic(opcode);
 
-        String result = formatVarnodeRaw(out) + " = " + opcodeMnemonic;
+        String result = "";
+        if (out != null) {
+            result += formatVarnodeRaw(out) + " = " + opcodeMnemonic;
+        } else {
+            result += opcodeMnemonic;
+        }
+        boolean first = true;
         for (var inVarnode : in) {
-            result += " " + formatVarnodeRaw(inVarnode);
+            if (first) {
+                result += " ";
+                first = false;
+            } else {
+                result += ", ";
+            }
+            result += formatVarnodeRaw(inVarnode);
         }
         return result;
     }
