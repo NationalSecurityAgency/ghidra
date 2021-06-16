@@ -346,7 +346,7 @@ public class ResourceManager {
 	 * @return disabled icon
 	 */
 	public static ImageIcon getDisabledIcon(Icon icon) {
-		return new DisabledImageIconWrapper(getImageIcon(icon));
+		return new ScaleDisableImageIconWrapper(getImageIcon(icon));
 	}
 
 	/**
@@ -355,11 +355,11 @@ public class ResourceManager {
 	 * @return disabled icon
 	 */
 	public static ImageIcon getDisabledIcon(ImageIcon icon) {
-		return new DisabledImageIconWrapper(icon);
+		return new ScaleDisableImageIconWrapper(icon);
 	}
 
 	/**
-	 * Returns a disabled icon while allowing the caller to control the brightness of the icon
+	 * Returns a disabled and scaled icon while allowing the caller to control the brightness of the icon
 	 * returned
 	 * 
 	 * @param icon The icon to disable.
@@ -367,7 +367,7 @@ public class ResourceManager {
 	 * @return a disabled version of the original icon.
 	 */
 	public static ImageIcon getDisabledIcon(Icon icon, int brightnessPercent) {
-		return new DisabledImageIconWrapper(icon, brightnessPercent);
+		return new ScaleDisableImageIconWrapper(icon, brightnessPercent);
 	}
 
 	/**
