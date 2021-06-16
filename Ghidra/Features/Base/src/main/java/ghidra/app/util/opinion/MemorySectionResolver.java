@@ -608,11 +608,11 @@ public abstract class MemorySectionResolver {
 				}
 
 				Address rangeStartAddr =
-					fileRange.rangeStartAddress.addWrap(filePos - fileRange.rangeStartFileOffset);
+					fileRange.rangeStartAddress.getPhysicalAddress()
+						.add(filePos - fileRange.rangeStartFileOffset);
 
 				// Ignore use of overlay and compare physical address for match to avoid duplication
-				if (!expectedRangeStart.getPhysicalAddress().equals(
-					rangeStartAddr.getPhysicalAddress())) {
+				if (!expectedRangeStart.getPhysicalAddress().equals(rangeStartAddr)) {
 					// File load memory range does not correspond to target memory range
 					if (conflictGapStart == null) {
 						conflictGapStart = expectedRangeStart;
