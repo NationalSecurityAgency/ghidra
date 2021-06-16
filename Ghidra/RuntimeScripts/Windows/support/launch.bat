@@ -31,13 +31,15 @@ setlocal enabledelayedexpansion
 set DOUBLE_CLICKED=n
 for /f "tokens=2" %%# in ("%cmdcmdline%") do if /i "%%#" equ "/c" set DOUBLE_CLICKED=y
 
-:: Sets SUPPORT_DIR to the directory that contains this file (ends with '\')
+:: Sets SUPPORT_DIR to the directory that contains this file (launch.bat).
+:: SUPPORT_DIR will not contain a trailing slash.
 ::
 :: '% ~' dereferences the value in param 0
 :: 'd' - drive
 :: 'p' - path (without filename)
+:: '~0,-1' - removes trailing \
 set "SUPPORT_DIR=%~dp0"
-
+set "SUPPORT_DIR=%SUPPORT_DIR:~0,-1%"
 ::
 :: Parse arguments
 ::
@@ -63,7 +65,7 @@ goto showUsage
 ::
 :: Production Environment
 ::
-set "INSTALL_DIR=%SUPPORT_DIR%.."
+set "INSTALL_DIR=%SUPPORT_DIR%\.."
 set "CPATH=%INSTALL_DIR%\Ghidra\Framework\Utility\lib\Utility.jar"
 set "LS_CPATH=%SUPPORT_DIR%\LaunchSupport.jar"
 set "DEBUG_LOG4J=%SUPPORT_DIR%\debug.log4j.xml"
