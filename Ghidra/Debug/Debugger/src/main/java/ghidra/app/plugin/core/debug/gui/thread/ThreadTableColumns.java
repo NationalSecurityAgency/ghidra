@@ -18,31 +18,37 @@ package ghidra.app.plugin.core.debug.gui.thread;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import com.google.common.collect.Range;
+
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 
 public enum ThreadTableColumns implements EnumeratedTableColumn<ThreadTableColumns, ThreadRow> {
-	NAME("Name", String.class, ThreadRow::getName, ThreadRow::setName),
-	CREATED("Created", Long.class, ThreadRow::getCreationSnap),
-	DESTROYED("Destroyed", String.class, ThreadRow::getDestructionSnap),
-	STATE("State", ThreadState.class, ThreadRow::getState),
-	COMMENT("Comment", String.class, ThreadRow::getComment, ThreadRow::setComment);
+	NAME("Name", String.class, ThreadRow::getName, ThreadRow::setName, true),
+	CREATED("Created", Long.class, ThreadRow::getCreationSnap, true),
+	DESTROYED("Destroyed", String.class, ThreadRow::getDestructionSnap, true),
+	STATE("State", ThreadState.class, ThreadRow::getState, true),
+	COMMENT("Comment", String.class, ThreadRow::getComment, ThreadRow::setComment, true),
+	PLOT("Plot", Range.class, ThreadRow::getLifespan, false);
 
 	private final String header;
 	private final Function<ThreadRow, ?> getter;
 	private final BiConsumer<ThreadRow, Object> setter;
+	private final boolean sortable;
 	private final Class<?> cls;
 
-	<T> ThreadTableColumns(String header, Class<T> cls, Function<ThreadRow, T> getter) {
-		this(header, cls, getter, null);
+	<T> ThreadTableColumns(String header, Class<T> cls, Function<ThreadRow, T> getter,
+			boolean sortable) {
+		this(header, cls, getter, null, sortable);
 	}
 
 	@SuppressWarnings("unchecked")
 	<T> ThreadTableColumns(String header, Class<T> cls, Function<ThreadRow, T> getter,
-			BiConsumer<ThreadRow, T> setter) {
+			BiConsumer<ThreadRow, T> setter, boolean sortable) {
 		this.header = header;
 		this.cls = cls;
 		this.getter = getter;
 		this.setter = (BiConsumer<ThreadRow, Object>) setter;
+		this.sortable = sortable;
 	}
 
 	@Override
@@ -63,6 +69,11 @@ public enum ThreadTableColumns implements EnumeratedTableColumn<ThreadTableColum
 	@Override
 	public boolean isEditable(ThreadRow row) {
 		return setter != null;
+	}
+
+	@Override
+	public boolean isSortable() {
+		return sortable;
 	}
 
 	@Override
