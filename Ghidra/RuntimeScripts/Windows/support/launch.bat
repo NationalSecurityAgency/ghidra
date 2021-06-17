@@ -31,13 +31,15 @@ setlocal enabledelayedexpansion
 set DOUBLE_CLICKED=n
 for /f "tokens=2" %%# in ("%cmdcmdline%") do if /i "%%#" equ "/c" set DOUBLE_CLICKED=y
 
-:: Sets SUPPORT_DIR to the directory that contains this file (ends with '\')
+:: Sets SUPPORT_DIR to the directory that contains this file (launch.bat).
+:: SUPPORT_DIR will not contain a trailing slash.
 ::
 :: '% ~' dereferences the value in param 0
 :: 'd' - drive
 :: 'p' - path (without filename)
+:: '~0,-1' - removes trailing \
 set "SUPPORT_DIR=%~dp0"
-
+set "SUPPORT_DIR=%SUPPORT_DIR:~0,-1%"
 ::
 :: Parse arguments
 ::
@@ -63,20 +65,20 @@ goto showUsage
 ::
 :: Production Environment
 ::
-set "INSTALL_DIR=%SUPPORT_DIR%..\"
-set "CPATH=%INSTALL_DIR%Ghidra\Framework\Utility\lib\Utility.jar"
-set "LS_CPATH=%SUPPORT_DIR%LaunchSupport.jar"
-set "DEBUG_LOG4J=%SUPPORT_DIR%debug.log4j.xml"
+set "INSTALL_DIR=%SUPPORT_DIR%\.."
+set "CPATH=%INSTALL_DIR%\Ghidra\Framework\Utility\lib\Utility.jar"
+set "LS_CPATH=%SUPPORT_DIR%\LaunchSupport.jar"
+set "DEBUG_LOG4J=%SUPPORT_DIR%\debug.log4j.xml"
 
-if exist "%INSTALL_DIR%Ghidra" goto continue2
+if exist "%INSTALL_DIR%\Ghidra" goto continue2
 
 ::
 :: Development Environment
 ::
-set "INSTALL_DIR=%INSTALL_DIR%..\..\..\"
-set "CPATH=%INSTALL_DIR%Ghidra\Framework\Utility\bin\main"
-set "LS_CPATH=%INSTALL_DIR%GhidraBuild\LaunchSupport\bin\main"
-set "DEBUG_LOG4J=%INSTALL_DIR%Ghidra\RuntimeScripts\Common\support\debug.log4j.xml"
+set "INSTALL_DIR=%INSTALL_DIR%\..\..\.."
+set "CPATH=%INSTALL_DIR%\Ghidra\Framework\Utility\bin\main"
+set "LS_CPATH=%INSTALL_DIR%\GhidraBuild\LaunchSupport\bin\main"
+set "DEBUG_LOG4J=%INSTALL_DIR%\Ghidra\RuntimeScripts\Common\support\debug.log4j.xml"
 if not exist "%LS_CPATH%" (
 	echo Ghidra cannot launch in development mode because Eclipse has not compiled its class files.
 	set ERRORLEVEL=1
@@ -99,13 +101,13 @@ if not %ERRORLEVEL% == 0 (
 
 :: Get the JDK that will be used to launch Ghidra
 set JAVA_HOME=
-for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%\" -jdk_home -save') do set JAVA_HOME=%%i
+for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -jdk_home -save') do set JAVA_HOME=%%i
 if "%JAVA_HOME%" == "" (
 	:: No JDK has been setup yet.  Let the user choose one.
-	java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%\" -jdk_home -ask
+	java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -jdk_home -ask
 	
 	:: Now that the user chose one, try again to get the JDK that will be used to launch Ghidra
-	for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%\" -jdk_home -save') do set JAVA_HOME=%%i
+	for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -jdk_home -save') do set JAVA_HOME=%%i
 	if "!JAVA_HOME!" == "" (
 		echo.
 		echo Failed to find a supported JDK.  Please refer to the Ghidra Installation Guide's Troubleshooting section.
@@ -116,7 +118,7 @@ if "%JAVA_HOME%" == "" (
 set "JAVA_CMD=%JAVA_HOME%\bin\java"
 
 :: Get the configurable VM arguments from the launch properties
-for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%\" -vmargs') do set VMARG_LIST=%VMARG_LIST% %%i
+for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -vmargs') do set VMARG_LIST=%VMARG_LIST% %%i
 
 :: Set Max Heap Size if specified
 if not "%MAXMEM%"=="" (

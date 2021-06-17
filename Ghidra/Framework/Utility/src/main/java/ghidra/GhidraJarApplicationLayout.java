@@ -17,6 +17,9 @@ package ghidra;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import generic.jar.ResourceFile;
@@ -49,8 +52,10 @@ public class GhidraJarApplicationLayout extends GhidraApplicationLayout {
 	@Override
 	protected Collection<ResourceFile> findGhidraApplicationRootDirs() {
 		List<ResourceFile> dirs = new ArrayList<>();
-		dirs.add(new ResourceFile(ApplicationLayout.class.getResource("/_Root/Ghidra/" +
-			ApplicationProperties.PROPERTY_FILE).toExternalForm()).getParentFile());
+		String appPropPath = "/_Root/Ghidra/" + ApplicationProperties.PROPERTY_FILE;
+		URL appPropUrl = ApplicationLayout.class.getResource(appPropPath);
+		ResourceFile rootDir = fromUrl(appPropUrl).getParentFile();
+		dirs.add(rootDir);
 		return dirs;
 	}
 
@@ -76,8 +81,18 @@ public class GhidraJarApplicationLayout extends GhidraApplicationLayout {
 
 	@Override
 	protected List<ResourceFile> findExtensionInstallationDirectories() {
-		ResourceFile extensionInstallDir = new ResourceFile(
-			ApplicationLayout.class.getResource("/_Root/Ghidra/Extensions").toExternalForm());
+		URL extensionInstallUrl = ApplicationLayout.class.getResource("/_Root/Ghidra/Extensions");
+		ResourceFile extensionInstallDir = fromUrl(extensionInstallUrl);
 		return Collections.singletonList(extensionInstallDir);
+	}
+
+	/**
+	 * Gets a {@link ResourceFile} from a {@link URL}
+	 * 
+	 * @param url The {@link URL}
+	 * @return A {@link ResourceFile} from the given {@link URL}
+	 */
+	private ResourceFile fromUrl(URL url) {
+		return new ResourceFile(URLDecoder.decode(url.toExternalForm(), StandardCharsets.UTF_8));
 	}
 }
