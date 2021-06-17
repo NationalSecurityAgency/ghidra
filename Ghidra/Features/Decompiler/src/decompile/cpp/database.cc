@@ -389,7 +389,7 @@ void Symbol::saveXmlHeader(ostream &s) const
       s << "bin\"";
     else if (format == force_float)
       s << "float\"";
-    else if (format == force_float)
+    else if (format == force_double)
       s << "double\"";
     else
       s << "hex\"";
