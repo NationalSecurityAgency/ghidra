@@ -13,6 +13,22 @@ rem  below:
 
 rem set "JAVA_HOME="
 
+:: Sets SERVER_DIR to the directory that contains this file (ghidraSvr.bat).
+:: SERVER_DIR will not contain a trailing slash.
+::
+:: '% ~' dereferences the value in param 0
+:: 'd' - drive
+:: 'p' - path (without filename)
+:: '~0,-1' - removes trailing \
+set "SERVER_DIR=%~dp0"
+set "SERVER_DIR=%SERVER_DIR:~0,-1%"
+
+rem Ensure Ghidra path doesn't contain illegal characters
+if not %SERVER_DIR:!=%==%SERVER_DIR% (
+	echo Ghidra path cannot contain a "!" character.
+	exit /B 1
+)
+
 setlocal enabledelayedexpansion
 
 set OPTION=%1
@@ -48,10 +64,6 @@ if "%IS_ADMIN%"=="NO" (
 	if "%OPTION%"=="restart" goto adminFail
 )
 
-rem Find the script directory
-rem %~dsp0 is location of current script under NT
-set "_REALPATH=%~dp0"
-
 set APP_NAME=ghidraSvr
 set APP_LONG_NAME=Ghidra Server
 
@@ -59,13 +71,13 @@ set MODULE_DIR=Ghidra\Features\GhidraServer
 
 set WRAPPER_NAME_PREFIX=yajsw
 
-if exist "%_REALPATH%..\Ghidra\" goto normal
+if exist "%SERVER_DIR%\..\Ghidra\" goto normal
 
 rem NOTE: If adjusting JAVA command assignment - do not attempt to add parameters (e.g., -d64, -version:1.7, etc.)
 
 rem Development Environment
-set "GHIDRA_HOME=%_REALPATH%..\..\..\.."
-set "WRAPPER_CONF=%_REALPATH%..\..\Common\server\server.conf"
+set "GHIDRA_HOME=%SERVER_DIR%\..\..\..\.."
+set "WRAPPER_CONF=%SERVER_DIR%\..\..\Common\server\server.conf"
 set "DATA_DIR=%GHIDRA_HOME%\%MODULE_DIR%\build\data"
 set "CLASSPATH_FRAG=%GHIDRA_HOME%\%MODULE_DIR%\build\dev-meta\classpath.frag"
 set "LS_CPATH=%GHIDRA_HOME%\GhidraBuild\LaunchSupport\bin\main"
@@ -73,8 +85,8 @@ set "LS_CPATH=%GHIDRA_HOME%\GhidraBuild\LaunchSupport\bin\main"
 goto lab1
 
 :normal
-set "GHIDRA_HOME=%_REALPATH%.."
-set "WRAPPER_CONF=%_REALPATH%server.conf"
+set "GHIDRA_HOME=%SERVER_DIR%\.."
+set "WRAPPER_CONF=%SERVER_DIR%\server.conf"
 set "DATA_DIR=%GHIDRA_HOME%\%MODULE_DIR%\data"
 set "CLASSPATH_FRAG=%GHIDRA_HOME%\%MODULE_DIR%\data\classpath.frag"
 set "LS_CPATH=%GHIDRA_HOME%\support\LaunchSupport.jar"
