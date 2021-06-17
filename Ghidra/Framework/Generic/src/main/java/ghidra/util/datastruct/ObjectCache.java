@@ -21,8 +21,8 @@ import java.util.*;
 
 /**
  * <code>ObjectClass</code> provides a fixed-size long-key-based object cache.
- * Both a hard and weak cache are maintained, where the weak cache is only 
- * limited by available memory.  This cache mechanism is useful in ensuring that 
+ * Both a hard and weak cache are maintained, where the weak cache is only
+ * limited by available memory.  This cache mechanism is useful in ensuring that
  * only a single object instance for a given key exists.
  * <p>
  * The weak cache is keyed, while the hard cache simply maintains the presence of
@@ -42,8 +42,8 @@ public class ObjectCache {
 	public ObjectCache(int hardCacheSize) {
 		this.hardCacheSize = hardCacheSize;
 		hashTable = new HashMap<>();
-		refQueue = new ReferenceQueue<Object>();
-		hardCache = new LinkedList<Object>();
+		refQueue = new ReferenceQueue<>();
+		hardCache = new LinkedList<>();
 	}
 
 	/**
@@ -100,7 +100,7 @@ public class ObjectCache {
 	 */
 	public synchronized void put(long key, Object obj) {
 		processQueue();
-		KeyedSoftReference<?> ref = new KeyedSoftReference<Object>(key, obj, refQueue);
+		KeyedSoftReference<?> ref = new KeyedSoftReference<>(key, obj, refQueue);
 		hashTable.put(key, ref);
 		addToHardCache(obj);
 	}
@@ -143,7 +143,7 @@ public class ObjectCache {
 	/**
 	 * Provides a weak wrapper for a keyed-object
 	 */
-	private class KeyedSoftReference<T> extends WeakReference<T> {
+	private static class KeyedSoftReference<T> extends WeakReference<T> {
 		private long key;
 
 		/**
