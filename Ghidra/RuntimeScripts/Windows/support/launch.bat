@@ -101,19 +101,23 @@ if not %ERRORLEVEL% == 0 (
 :: Get the JDK that will be used to launch Ghidra
 set JAVA_HOME=
 for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -jdk_home -save') do set JAVA_HOME=%%i
-if "%JAVA_HOME%" == "" (
-	:: No JDK has been setup yet.  Let the user choose one.
-	java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -jdk_home -ask
-	
-	:: Now that the user chose one, try again to get the JDK that will be used to launch Ghidra
-	for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -jdk_home -save') do set JAVA_HOME=%%i
-	if "!JAVA_HOME!" == "" (
-		echo.
-		echo Failed to find a supported JDK.  Please refer to the Ghidra Installation Guide's Troubleshooting section.
-		set ERRORLEVEL=1
-		goto exit1
-	)
+if not "%JAVA_HOME%" == "" (
+	goto continue3
 )
+
+:: No JDK has been setup yet.  Let the user choose one.
+java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -jdk_home -ask
+
+:: Now that the user chose one, try again to get the JDK that will be used to launch Ghidra
+for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -jdk_home -save') do set JAVA_HOME=%%i
+if "%JAVA_HOME%" == "" (
+	echo.
+	echo Failed to find a supported JDK.  Please refer to the Ghidra Installation Guide's Troubleshooting section.
+	set ERRORLEVEL=1
+	goto exit1
+)
+
+:continue3
 set "JAVA_CMD=%JAVA_HOME%\bin\java"
 
 :: Get the configurable VM arguments from the launch properties
@@ -137,6 +141,7 @@ if "%MODE%"=="debug-suspend" (
 	set SUSPEND=y
 )
 	
+setlocal enabledelayedexpansion
 if "%DEBUG%"=="y" (
 	if "%DEBUG_ADDRESS%"=="" (
 		set DEBUG_ADDRESS=127.0.0.1:18001
@@ -144,41 +149,43 @@ if "%DEBUG%"=="y" (
 		
 	set VMARG_LIST=!VMARG_LIST! -Dlog4j.configuration="!DEBUG_LOG4J!"	
 	set VMARG_LIST=!VMARG_LIST! -agentlib:jdwp=transport=dt_socket,server=y,suspend=!SUSPEND!,address=!DEBUG_ADDRESS!
-	goto continue3
+	goto continue4
 )
 
 if "%MODE%"=="fg" (
-	goto continue3
+	goto continue4
 )
 
 if "%MODE%"=="bg" (
 	set BACKGROUND=y
-	goto continue3
+	goto continue4
 )
 
 echo "Incorrect launch usage - invalid launch mode: %MODE%"
 exit /B 1
 
-:continue3
+:continue4
 
+setlocal disabledelayedexpansion
 set CMD_ARGS=%FORCE_JAVA_VERSION% %JAVA_USER_HOME_DIR_OVERRIDE% %VMARG_LIST% -cp "%CPATH%" ghidra.GhidraLauncher %CLASSNAME% %ARGS%
 
 set JAVAW_CMD=%JAVA_CMD%w
-if "%BACKGROUND%"=="y" (
-	start "%APPNAME%" /I /B "%JAVAW_CMD%" %CMD_ARGS%
-	
-	REM If our process dies immediately, output something so the user knows to run in debug mode.
-	REM Otherwise they'll never see any error output from background mode.
-	REM NOTE: The below check isn't perfect because they might have other javaw's running, but
-	REM without the PID of the thing we launched, it's the best we can do (maybe use WMI?).  
-	REM Worst case, they just won't see the error message.
-	%SystemRoot%\System32\timeout.exe /NOBREAK 1 > NUL
-	%SystemRoot%\System32\tasklist.exe | %SystemRoot%\System32\findstr.exe "javaw" > NUL
-	if not "!ERRORLEVEL!"=="0" (
-		echo Exited with error.  Run in foreground ^(fg^) mode for more details.
-	)
-) else (
+if not "%BACKGROUND%"=="y" (
 	"%JAVA_CMD%" %CMD_ARGS%
+	goto exit1
+)
+
+start "%APPNAME%" /I /B "%JAVAW_CMD%" %CMD_ARGS%
+
+REM If our process dies immediately, output something so the user knows to run in debug mode.
+REM Otherwise they'll never see any error output from background mode.
+REM NOTE: The below check isn't perfect because they might have other javaw's running, but
+REM without the PID of the thing we launched, it's the best we can do (maybe use WMI?).  
+REM Worst case, they just won't see the error message.
+%SystemRoot%\System32\timeout.exe /NOBREAK 1 > NUL
+%SystemRoot%\System32\tasklist.exe | %SystemRoot%\System32\findstr.exe "javaw" > NUL
+if not %ERRORLEVEL% == 0 (
+	echo Exited with error.  Run in foreground ^(fg^) mode for more details.
 )
 
 :exit1
