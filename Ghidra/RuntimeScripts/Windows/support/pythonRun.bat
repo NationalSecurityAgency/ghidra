@@ -2,7 +2,7 @@
 
 @echo off
 
-setlocal EnableDelayedExpansion
+setlocal
 
 :: Maximum heap memory size
 :: Default for Windows 32-bit is 768M and 64-bit is 1024M
