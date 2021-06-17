@@ -19,6 +19,7 @@ import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -574,12 +575,23 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		ProgramLocation oneBack = new ProgramLocation(panel.getProgram(), addr.previous());
 		runSwing(() -> panel.goTo(addr));
 		runSwing(() -> panel.goTo(oneBack, false));
-		Robot robot = new Robot();
 		waitForPass(() -> {
+			Rectangle r = panel.getBounds();
+			// Capture off screen, so that focus/stacking doesn't matter
+			BufferedImage image = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
+			Graphics g = image.getGraphics();
+			try {
+				runSwing(() -> panel.paint(g));
+			}
+			finally {
+				g.dispose();
+			}
+			Point locP = panel.getLocationOnScreen();
+			Point locFP = panel.getLocationOnScreen();
+			locFP.translate(-locP.x, -locP.y);
 			Rectangle cursor = panel.getCursorBounds();
-			Point panelLoc = panel.getFieldPanel().getLocationOnScreen();
-			Color actual = robot.getPixelColor(panelLoc.x + cursor.x - 1,
-				panelLoc.y + cursor.y + cursor.height * 3 / 2 + yAdjust);
+			Color actual = new Color(image.getRGB(locFP.x + cursor.x - 1,
+				locFP.y + cursor.y + cursor.height * 3 / 2 + yAdjust));
 			assertEquals(expected, actual);
 		});
 	}

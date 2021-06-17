@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 //Script to graph class hierarchies given metadata found in class structure description that
-// was applied using the ExtractClassInfoFromRTTIScript. 
+// was applied using the RecoverClassesFromRTTIScript.  
 //@category C++
 import java.util.*;
 

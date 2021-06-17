@@ -16,6 +16,7 @@
 package ghidra.app.util.html;
 
 import java.awt.Color;
+import java.util.Objects;
 
 import ghidra.program.model.data.DataType;
 import ghidra.util.UniversalID;
@@ -33,9 +34,6 @@ public class VariableTextLine implements ValidatableLine {
 	private ValidatableLine validationLine;
 
 	public VariableTextLine(String variableType, String variableName, DataType dataType) {
-		if (variableType == null) {
-			throw new NullPointerException("variable type cannot be null");
-		}
 
 		if (variableName == null) {
 			//throw new NullPointerException( "variable name cannot be null" );
@@ -45,7 +43,8 @@ public class VariableTextLine implements ValidatableLine {
 			variableName = "";
 		}
 
-		this.variableType = variableType;
+		this.variableType =
+			Objects.requireNonNull(variableType, "Variable type cannot be null");
 		this.variableName = variableName;
 		this.dataType = dataType;
 	}

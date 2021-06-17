@@ -514,9 +514,11 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void selectRowForAction(DockingActionIf action) throws Exception {
 		String actionName = action.getName();
+		String owner = action.getOwnerDescription();
 
 		for (int i = 0; i < model.getRowCount(); i++) {
-			if (actionName.equals(model.getValueAt(i, 0))) {
+			if (actionName.equals(model.getValueAt(i, 0)) &&
+				owner.equals(model.getValueAt(i, 2))) {
 				final int idx = i;
 				SwingUtilities.invokeAndWait(() -> {
 					table.setRowSelectionInterval(idx, idx);

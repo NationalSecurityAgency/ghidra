@@ -16,6 +16,7 @@
 package ghidra.app.util.html;
 
 import java.awt.Color;
+import java.util.Objects;
 
 import ghidra.program.model.data.DataType;
 import ghidra.util.StringUtilities;
@@ -43,12 +44,8 @@ public class DataTypeLine implements ValidatableLine {
 			name = "";
 		}
 
-		if (type == null) {
-			throw new NullPointerException("Type of data type cannot be null");
-		}
-
 		this.name = name;
-		this.type = type;
+		this.type = Objects.requireNonNull(type, "Type of data type cannot be null");
 		this.comment = comment == null ? "" : comment;
 	}
 

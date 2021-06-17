@@ -204,7 +204,7 @@ public enum CollectionUtils {
 		protected final Map<K, V> wrapped;
 
 		public AbstractNMap(Map<K, V> map) {
-			this.wrapped = Map.copyOf(map);
+			this.wrapped = Collections.unmodifiableMap(new LinkedHashMap<>(map));
 		}
 
 		@Override
