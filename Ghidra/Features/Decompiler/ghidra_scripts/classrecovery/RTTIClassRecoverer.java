@@ -131,25 +131,25 @@ public class RTTIClassRecoverer extends RecoveredClassUtils {
 
 	/**
 	 * Method to promote the namespace is a class namespace. 
-	 * @param vftableNamespace the namespace for the vftable
+	 * @param namespace the namespace for the vftable
 	 * @return true if namespace is (now) a class namespace or false if it could not be promoted.
 	 */
-	public Namespace promoteToClassNamespace(Namespace vftableNamespace) {
+	public Namespace promoteToClassNamespace(Namespace namespace) {
 
 		try {
-			Namespace newClass = NamespaceUtils.convertNamespaceToClass(vftableNamespace);
+			Namespace newClass = NamespaceUtils.convertNamespaceToClass(namespace);
 
 			SymbolType symbolType = newClass.getSymbol().getSymbolType();
 			if (symbolType == SymbolType.CLASS) {
 				return newClass;
 			}
 			Msg.debug(this,
-				"Could not promote " + vftableNamespace.getName() + " to a class namespace");
+				"Could not promote " + namespace.getName() + " to a class namespace");
 			return null;
 		}
 		catch (InvalidInputException e) {
 
-			Msg.debug(this, "Could not promote " + vftableNamespace.getName() +
+			Msg.debug(this, "Could not promote " + namespace.getName() +
 				" to a class namespace because " + e.getMessage());
 			return null;
 		}

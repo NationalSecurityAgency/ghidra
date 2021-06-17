@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Script to apply any changes the user has made to class virtual function signatures, ie ones they 
-// have edited in the listing. To run the script, put the cursor on any member of the desired class in
+// Script to apply any changes the user has made to recovered class virtual function signatures 
+// edited in the listing. To run the script, put the cursor on any member of the desired class in
 // the listing then run the script. For each function signature in the given class that differs from
 // the associated function definition in the data type manager, the script will update the listing 
-// function signatures of any related virtual vunctions (ie parents and children) and update related 
-// data types such as function definitions of the given class and related classes and also field names 
-// in related vftable structures. 
+// function signatures of any related virtual functions belonging to parents and children classes.
+// It will also update related data types including function definitions and vftable structures. 
 // Note: The script will not work if the vftable structures were not originally applied to 
 // the vftables using the RecoverClassesFromRTTIScript.
-// At some point, the Ghidra API will be updated to do this automatically instead of needing the script to do so. 
+// At some point, the Ghidra API will be updated to do this automatically instead of needing the 
+// script to do so. 
 //@category C++
 
 import java.util.List;

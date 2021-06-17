@@ -47,6 +47,7 @@ import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighVariable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -485,7 +486,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		for (int i = 0; i < numBaseClasses; i++) {
 
 			monitor.checkCanceled();
-
+			//TODO: extraUtils.getReferencedAddress(address, getIboIf64bit);
 			Address baseClassDescriptorAddress = getReferencedAddress(address.add(i * 4));
 
 			Data baseClassDescriptor = extraUtils.getDataAt(baseClassDescriptorAddress);
@@ -572,6 +573,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private Address createClassHierarchyDescriptor(Address address, Namespace classNamespace)
 			throws CancelledException, MemoryAccessException, InvalidInputException, Exception {
 
+		//TODO: extraUtils.getReferencedAddress(address, getIboIf64bit);
 		Address classHierarchyDescriptorAddress = getReferencedAddress(address);
 
 		Data classHierarchyStructure = extraUtils.getDataAt(classHierarchyDescriptorAddress);
@@ -652,6 +654,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			int numBaseClasses = extraUtils.getInt(classHierarchyDescriptorAddress.add(8));
 
+			//TODO: extraUtils.getReferencedAddress(address, getIboIf64bit);
 			Address baseClassArrayAddress =
 				getReferencedAddress(classHierarchyDescriptorAddress.add(12));
 
@@ -935,10 +938,13 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			Namespace classNamespace = classHierarchyDescriptorSymbol.getParentNamespace();
 
 			if (classNamespace.getSymbol().getSymbolType() != SymbolType.CLASS) {
-//				println("RTTI_Class_Hierarchy_Descriptor at " +
-//					classHierarchyDescriptorAddress.toString() +
-//					" is not in a class namespace. Cannot process.");
-				continue;
+				classNamespace = promoteToClassNamespace(classNamespace);
+				if(classNamespace.getSymbol().getSymbolType() != SymbolType.CLASS) {
+					Msg.debug(this,
+						classHierarchyDescriptorAddress.toString() + " Could not promote " +
+							classNamespace.getName(true) + " to a class namespace.");
+					continue;
+				}
 			}
 
 			List<Symbol> vftableSymbolsInNamespace =
@@ -973,12 +979,12 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				List<RecoveredClass> classesWithVftablesInNamespace =
 					recoverClassesFromVftables(vftableSymbolsInNamespace, false, false);
 				if (classesWithVftablesInNamespace.size() == 0) {
-					//println("No class recovered for namespace " + classNamespace.getName());
+					Msg.debug(this,"No class recovered for namespace " + classNamespace.getName());
 					continue;
 				}
 				if (classesWithVftablesInNamespace.size() > 1) {
-//					println("Unexpected multiple classes recovered for namespace " +
-//						classNamespace.getName());
+					Msg.debug(this,"Unexpected multiple classes recovered for namespace " +
+						classNamespace.getName());
 					continue;
 				}
 
@@ -1230,7 +1236,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				// if the namespace isn't in the map then it is a class 
 				// without a vftable and a new RecoveredClass object needs to be created
 				if (getClass(pointedToNamespace) == null) {
-					addNoVftableClass(pointedToNamespace);
+					createNewClass(pointedToNamespace, false);
 				}
 
 				RecoveredClass pointedToClass = getClass(pointedToNamespace);
@@ -1295,8 +1301,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	 */
 	private void setClassInheritanceType(RecoveredClass recoveredClass, int inheritanceType) {
 
-		// TODO: update the single virtual case from here too - may need to update class
-		// TODO: ?? add multi-repeate base inh flag? do I care other than to give info to user?
+		// TODO: add multi-repeated base inh flag? 
 
 		if ((inheritanceType & CHD_MULTINH) == 0) {
 			recoveredClass.setHasSingleInheritance(true);
@@ -1305,11 +1310,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			if ((inheritanceType & CHD_VIRTINH) == 0) {
 				recoveredClass.setInheritsVirtualAncestor(false);
 			}
-//			else {
-//			//  TODO: might have to update the single virt inh here
-//				println("Flag indicates single inheritance virtual ancestor for class " +
-//					recoveredClass.getName());
-//			}
+			// Flag indicates single inheritance virtual ancestor for class " +
+			//	recoveredClass.getName());
+			else {
+				recoveredClass.setInheritsVirtualAncestor(true);
+			}
 		}
 		else {
 			recoveredClass.setHasSingleInheritance(false);
@@ -1317,10 +1322,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			if ((inheritanceType & CHD_VIRTINH) == 0) {
 				recoveredClass.setHasMultipleVirtualInheritance(false);
 			}
+
+			// Flag indicates multiple inheritance virtual ancestor for class " +
+			// recoveredClass.getName());
 			else {
 				recoveredClass.setHasMultipleVirtualInheritance(true);
-//				println("Flag indicates multiple inheritance virtual ancestor for class " +
-//					recoveredClass.getName());
 			}
 		}
 		//TODO: CHD_AMBIGUOUS = 0x00000004;

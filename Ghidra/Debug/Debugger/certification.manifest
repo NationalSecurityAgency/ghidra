@@ -117,7 +117,6 @@ src/main/help/help/topics/DebuggerTraceManagerServicePlugin/DebuggerTraceManager
 src/main/help/help/topics/DebuggerWatchesPlugin/DebuggerWatchesPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerWatchesPlugin/images/DebuggerWatchesPlugin.png||GHIDRA||||END|
 src/main/resources/defaultTools/Debugger.tool||GHIDRA||||END|
-src/main/resources/define_info_proc_mappings||GHIDRA||||END|
 src/main/resources/images/add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/attach.png||GHIDRA||||END|
 src/main/resources/images/autoread.png||GHIDRA||||END|
