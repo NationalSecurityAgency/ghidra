@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.iso9660;
+package ghidra.file.formats.ios.hfs;
 
 import ghidra.file.formats.sevenzip.SevenZipFileSystem;
 import ghidra.formats.gfilesystem.FSRLRoot;
 import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 
-@FileSystemInfo(type = "iso9660", description = "ISO 9660", factory = ISO9660FileSystemFactory.class)
-public class ISO9660FileSystem extends SevenZipFileSystem {
-
-	public ISO9660FileSystem(FSRLRoot fsrl, FileSystemService fsService) {
+@FileSystemInfo(type = "hfsplus", description = "Apple HFS+ Disk Volume", factory = HFSPlusFileSystemFactory.class)
+public class HFSPlusFileSystem extends SevenZipFileSystem {
+	public HFSPlusFileSystem(FSRLRoot fsrl, FileSystemService fsService) {
 		super(fsrl, fsService);
 	}
 }
