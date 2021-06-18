@@ -672,18 +672,20 @@ public abstract class PcodeEmit {
 				"Semantics for this instruction are not implemented");
 		}
 
-		PcodeDataLike[] patchedPcode = instcontext.getPatchedPcode();
+		if (instcontext != null) {
+			PcodeDataLike[] patchedPcode = instcontext.getPatchedPcode();
 
-		if (patchedPcode != null) {
-			for (var op : patchedPcode) {
-				var inputs = Stream.of(op.getInputs())
-					.map(varnode -> VarnodeData.of(varnode))
-					.toArray(VarnodeData[]::new);
-				var output = VarnodeData.of(op.getOutput());
-				dump(startAddress, op.getOpcode(), inputs, inputs.length, output);
+			if (patchedPcode != null) {
+				for (var op : patchedPcode) {
+					var inputs = Stream.of(op.getInputs())
+						.map(varnode -> VarnodeData.of(varnode))
+						.toArray(VarnodeData[]::new);
+					var output = VarnodeData.of(op.getOutput());
+					dump(startAddress, op.getOpcode(), inputs, inputs.length, output);
+				}
+
+				return;
 			}
-
-			return;
 		}
 
 		int oldbase = labelbase;	// Recursively save old labelbase
