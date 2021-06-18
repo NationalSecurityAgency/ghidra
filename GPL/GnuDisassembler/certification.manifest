@@ -1,6 +1,7 @@
 ##VERSION: 2.0
 ##MODULE IP: GPL 2
 ##MODULE IP: Public Domain
+.gitignore||Public Domain||||END|
 Module.manifest||Public Domain||||END|
 README.txt||Public Domain||||END|
 data/arm_test1.s||Public Domain||||END|

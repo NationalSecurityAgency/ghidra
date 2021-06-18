@@ -14,7 +14,7 @@ project.ext.set("OS_NAMES", ["osx64", "win32", "win64", "linux64"])
  * Establish Visual Studio configuration environment for Windows native builds
  * NOTE: vsconfig.gradle path is relative to each GPL project module
  ****************************************************************************/
-apply from: "../vsconfig.gradle"
+apply from: buildscript.sourceFile.getParent() + "/vsconfig.gradle"
 
 /*********************************************************************************
  * Returns the local platform name.

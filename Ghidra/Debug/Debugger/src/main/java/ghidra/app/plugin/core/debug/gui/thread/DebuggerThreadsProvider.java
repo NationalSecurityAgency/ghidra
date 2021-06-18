@@ -23,22 +23,22 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+
+import com.google.common.collect.Range;
 
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.*;
-import docking.widgets.EventTrigger;
 import docking.widgets.HorizontalTabPanel;
 import docking.widgets.HorizontalTabPanel.TabListCellRenderer;
-import docking.widgets.table.GTable;
-import docking.widgets.table.RowWrappedEnumeratedColumnTableModel;
-import docking.widgets.timeline.TimelineListener;
+import docking.widgets.table.*;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerSnapActionContext;
-import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsTimelinePanel.VetoableSnapRequestListener;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerTraceManagerService.BooleanChangeAdapter;
 import ghidra.dbg.DebugModelConventions;
@@ -333,29 +333,23 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	private final SuppressableCallback<Void> cbCoordinateActivation = new SuppressableCallback<>();
 
 	private final ThreadsListener threadsListener = new ThreadsListener();
-	private final VetoableSnapRequestListener snapListener = this::snapRequested;
 	private final CollectionChangeListener<TraceRecorder> recordersListener =
 		new RecordersChangeListener();
+	/* package access for testing */
+	final RangeTableCellRenderer<Long> rangeRenderer = new RangeTableCellRenderer<>();
+	final RangeCursorTableHeaderRenderer<Long> headerRenderer =
+		new RangeCursorTableHeaderRenderer<>();
 
 	protected final ThreadTableModel threadTableModel = new ThreadTableModel(this);
 
 	private JPanel mainPanel;
-	private JSplitPane splitPane;
 
 	HorizontalTabPanel<Trace> traceTabs;
 	GTable threadTable;
 	GhidraTableFilterPanel<ThreadRow> threadFilterPanel;
-	DebuggerThreadsTimelinePanel threadTimeline;
 	JPopupMenu traceTabPopupMenu;
 
 	private ActionContext myActionContext;
-
-	private final TimelineListener timelineListener = new TimelineListener() {
-		@Override
-		public void itemActivated(int index) {
-			timelineItemActivated(index);
-		}
-	};
 
 	DockingAction actionSaveTrace;
 	StepSnapBackwardAction actionStepSnapBackward;
@@ -464,10 +458,8 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	}
 
 	private void doSetSnap(long snap) {
-		if (threadTimeline.getSnap() == snap) {
-			return;
-		}
-		threadTimeline.setSnap(snap);
+		headerRenderer.setCursorPosition(snap);
+		threadTable.getTableHeader().repaint();
 	}
 
 	public void traceOpened(Trace trace) {
@@ -508,7 +500,11 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	}
 
 	protected void updateTimelineMax() {
-		threadTimeline.setMaxSnapAtLeast(orZero(current.getTrace().getTimeManager().getMaxSnap()));
+		long max = orZero(current.getTrace().getTimeManager().getMaxSnap());
+		Range<Long> fullRange = Range.closed(0L, max + 1);
+		rangeRenderer.setFullRange(fullRange);
+		headerRenderer.setFullRange(fullRange);
+		threadTable.getTableHeader().repaint();
 	}
 
 	@Override
@@ -522,35 +518,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 			return super.getActionContext(event);
 		}
 		return myActionContext;
-	}
-
-	private void snapRequested(long req, EventTrigger trigger) {
-		long snap = req;
-		if (snap < 0) {
-			snap = 0;
-		}
-		if (current.getTrace() == null) {
-			snap = 0;
-		}
-		/*else {
-			Long maxSnap = currentTrace.getTimeManager().getMaxSnap();
-			if (maxSnap == null) {
-				maxSnap = 0L;
-			}
-			if (snap > maxSnap) {
-				snap = maxSnap;
-			}
-		}*/
-		if (trigger == EventTrigger.GUI_ACTION) {
-			traceManager.activateSnap(snap);
-		}
-		myActionContext = new DebuggerSnapActionContext(snap);
-		contextChanged();
-	}
-
-	private void timelineItemActivated(int index) {
-		ThreadRow row = threadTableModel.getRowObject(index);
-		rowActivated(row);
 	}
 
 	private void rowActivated(ThreadRow row) {
@@ -569,27 +536,15 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		traceTabPopupMenu = new JPopupMenu("Trace");
 
 		mainPanel = new JPanel(new BorderLayout());
-		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-		splitPane.setContinuousLayout(true);
 
-		JPanel tablePanel = new JPanel(new BorderLayout());
 		threadTable = new GhidraTable(threadTableModel);
 		threadTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		tablePanel.add(new JScrollPane(threadTable));
+		mainPanel.add(new JScrollPane(threadTable));
+
 		threadFilterPanel = new GhidraTableFilterPanel<>(threadTable, threadTableModel);
-		tablePanel.add(threadFilterPanel, BorderLayout.SOUTH);
-		splitPane.setLeftComponent(tablePanel);
-
-		threadTimeline = new DebuggerThreadsTimelinePanel(threadFilterPanel.getTableFilterModel());
-		splitPane.setRightComponent(threadTimeline);
-
-		splitPane.setResizeWeight(0.4);
+		mainPanel.add(threadFilterPanel, BorderLayout.SOUTH);
 
 		threadTable.getSelectionModel().addListSelectionListener(this::threadRowSelected);
-		threadTimeline.setSelectionModel(threadTable.getSelectionModel());
-		threadTimeline.addSnapRequestedListener(snapListener);
-		threadTimeline.addTimelineListener(timelineListener);
-
 		threadTable.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
@@ -598,8 +553,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 				rowActivated(row);
 			}
 		});
-
-		mainPanel.add(splitPane, BorderLayout.CENTER);
 
 		traceTabs = new HorizontalTabPanel<>();
 		traceTabs.getList().setCellRenderer(new TabListCellRenderer<>() {
@@ -633,6 +586,32 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		});
 		// TODO: The popup key? Only seems to have rawCode=0x93 (147) in Swing
 		mainPanel.add(traceTabs, BorderLayout.NORTH);
+
+		TableColumnModel columnModel = threadTable.getColumnModel();
+		TableColumn colName = columnModel.getColumn(ThreadTableColumns.NAME.ordinal());
+		colName.setPreferredWidth(100);
+		TableColumn colCreated = columnModel.getColumn(ThreadTableColumns.CREATED.ordinal());
+		colCreated.setPreferredWidth(10);
+		TableColumn colDestroyed = columnModel.getColumn(ThreadTableColumns.DESTROYED.ordinal());
+		colDestroyed.setPreferredWidth(10);
+		TableColumn colState = columnModel.getColumn(ThreadTableColumns.STATE.ordinal());
+		colState.setPreferredWidth(20);
+		TableColumn colComment = columnModel.getColumn(ThreadTableColumns.COMMENT.ordinal());
+		colComment.setPreferredWidth(100);
+		TableColumn colPlot = columnModel.getColumn(ThreadTableColumns.PLOT.ordinal());
+		colPlot.setPreferredWidth(200);
+		colPlot.setCellRenderer(rangeRenderer);
+		colPlot.setHeaderRenderer(headerRenderer);
+
+		headerRenderer.addSeekListener(threadTable, ThreadTableColumns.PLOT.ordinal(), pos -> {
+			long snap = Math.round(pos);
+			if (current.getTrace() == null || snap < 0) {
+				snap = 0;
+			}
+			traceManager.activateSnap(snap);
+			myActionContext = new DebuggerSnapActionContext(snap);
+			contextChanged();
+		});
 	}
 
 	private void checkTraceTabPopupViaMouse(MouseEvent e) {
