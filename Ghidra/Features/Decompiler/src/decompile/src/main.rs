@@ -13,8 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+use clap::{Clap, AppSettings};
+
 mod bridge;
+mod cli;
+
+#[derive(Clap)]
+#[clap(version = "1.0", author = "BinCraft Team")]
+#[clap(setting = AppSettings::ColoredHelp)]
+struct Opts {
+    /// commandline debugging mode
+    #[clap(short, long)]
+    cli_debug: bool
+}
 
 fn main() {
-    bridge::ffi::ghidra_process_main();
+
+    let opts: Opts = Opts::parse();
+
+    if opts.cli_debug {
+        cli::cli_main();
+    } else {
+        bridge::ffi::ghidra_process_main();
+    }
 }
