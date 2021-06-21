@@ -55,7 +55,6 @@ import ghidra.server.stream.RemoteBlockStreamHandle;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
-import resources.ResourceManager;
 import utilities.util.FileUtilities;
 import utility.application.ApplicationLayout;
 
@@ -73,7 +72,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 	private static Logger log;
 
-	private static String HELP_FILE = "/ghidra/server/remote/ServerHelp.txt";
+	private static String HELP_FILE = "ServerHelp.txt";
 	private static String USAGE_ARGS =
 		"[-ip <hostname>] [-i #.#.#.#] [-p#] [-n] [-a#] [-d<ad_domain>] [-e<days>] [-jaas <config_file>] [-u] [-autoProvision] [-anonymous] [-ssh] <repository_path>";
 
@@ -411,7 +410,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 	private static void displayHelp() {
 
-		try (InputStream in = ResourceManager.getResourceAsStream(HELP_FILE)) {
+		try (InputStream in = GhidraServer.class.getResourceAsStream(HELP_FILE)) {
 			List<String> lines = FileUtilities.getLines(in);
 			lines.stream().forEach(s -> System.out.println(s));
 		}
