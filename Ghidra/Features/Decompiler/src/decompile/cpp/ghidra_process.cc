@@ -510,7 +510,7 @@ void GhidraDecompCapability::initialize(void)
   commandmap["setOptions"] = new SetOptions();
 }
 
-int main(int argc,char **argv)
+void ghidra_process_main()
 
 {
   signal(SIGSEGV, &ArchitectureGhidra::segvHandler);  // Exit on SEGV errors
@@ -522,3 +522,9 @@ int main(int argc,char **argv)
   GhidraCapability::shutDown();
 }
 
+#ifdef GHIDRA_MAIN
+int main() {
+  ghidra_process_main();
+  return 0;
+}
+#endif
