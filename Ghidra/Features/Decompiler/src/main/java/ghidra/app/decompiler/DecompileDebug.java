@@ -55,6 +55,7 @@ public class DecompileDebug {
 	private ArrayList<String> cpool;		// Constant pool results
 	private ArrayList<String> flowoverride;	// Flow overrides associated with an address
 	private ArrayList<String> inject;		// Injection payloads
+	private ArrayList<String> patches;		// Pcode patches
 	private TreeSet<ByteChunk> byteset;		// Load image bytes
 	private TreeSet<Address> contextchange;	// Addresses at which there is a context change
 	private TreeMap<Address, StringData> stringmap;	// Strings queried with their associated start address
@@ -120,6 +121,7 @@ public class DecompileDebug {
 		stringmap = new TreeMap<>();
 		flowoverride = new ArrayList<>();
 		inject = new ArrayList<>();
+		patches = new ArrayList<>();
 		contextRegister = null;
 		comments = null;
 		globalnamespace = null;
@@ -176,6 +178,7 @@ public class DecompileDebug {
 			dumpConfiguration(debugStream, xmlOptions);
 			dumpFlowOverride(debugStream);
 			dumpInject(debugStream);
+			dumpPatch(debugStream);
 			debugStream.write("</save_state>\n".getBytes());
 			debugStream.write("</xml_savefile>\n".getBytes());
 			debugStream.close();
@@ -511,6 +514,19 @@ public class DecompileDebug {
 		debugStream.write("</injectdebug>\n".getBytes());
 	}
 
+	private void dumpPatch(OutputStream debugStream) throws IOException {
+		if (patches.size() == 0) {
+			return;
+		}
+
+		debugStream.write("<patches>\n".getBytes());
+		for (String element : patches) {
+			debugStream.write(element.getBytes());
+		}
+
+		debugStream.write("</patches>\n".getBytes());
+	}
+
 	private ArrayList<Namespace> orderNamespaces() {
 		TreeMap<Long, Namespace> namespaceMap = new TreeMap<>();
 		for (Namespace namespace : dbscope) {
@@ -783,6 +799,16 @@ public class DecompileDebug {
 		AddressXML.buildXML(buf, addr);
 		buf.append("</flow>\n");
 		flowoverride.add(buf.toString());
+	}
+
+	public void addPatch(Address addr, PcodeDataLike[] pcode) {
+		StringBuilder builder = new StringBuilder();
+		builder.append("<patch>\n  ");
+		AddressXML.buildXML(builder, addr);
+		builder.append("\n  <payload><![CDATA[\n");
+		builder.append(PcodeRawFormatter.formatRaw(pcode));
+		builder.append("\n]]></payload>\n</patch>\n");
+		patches.add(builder.toString());
 	}
 
 	public void addInject(Address addr, String name, int injectType, String payload) {
