@@ -25,7 +25,7 @@ import docking.action.MenuData;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
-import ghidra.app.context.*;
+import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -103,14 +103,15 @@ public class FindPossibleReferencesPlugin extends Plugin {
 				.supportsDefaultToolContext(true)
 				.helpLocation(new HelpLocation(HelpTopics.SEARCH, SEARCH_DIRECT_REFS_ACTION_NAME))
 				.description(getPluginDescription().getDescription())
-				.withContext(ListingActionContext.class)
+				.withContext(NavigatableActionContext.class)
+				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.onAction(this::findReferences)
 				.enabledWhen(this::hasCorrectAddressSize)
 				.buildAndInstall(tool);
 
 	}
 
-	private boolean hasCorrectAddressSize(ListingActionContext context) {
+	private boolean hasCorrectAddressSize(NavigatableActionContext context) {
 		int size =
 			context.getProgram().getAddressFactory().getDefaultAddressSpace().getSize();
 		if ((size == 64) || (size == 32) || (size == 24) || (size == 16) || (size == 20) ||
@@ -120,7 +121,7 @@ public class FindPossibleReferencesPlugin extends Plugin {
 		return false;
 	}
 
-	private void createLocalActions(ProgramLocationActionContext context, ComponentProvider p,
+	private void createLocalActions(NavigatableActionContext context, ComponentProvider p,
 			FindReferencesTableModel model) {
 
 		addLocalAlignment(p, model, 1);

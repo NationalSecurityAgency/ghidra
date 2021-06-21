@@ -32,8 +32,9 @@ class OptionsDB extends AbstractOptions {
 
 	private static final String PROPERTY_TABLE_NAME = "Property Table";
 
-	private final static Schema PROPERTY_SCHEMA = new Schema(0, StringField.class, "Property Name",
-		new Class[] { StringField.class, ByteField.class }, new String[] { "Value", "Type" });
+	private final static Schema PROPERTY_SCHEMA = new Schema(0, StringField.INSTANCE,
+		"Property Name", new Field[] { StringField.INSTANCE, ByteField.INSTANCE },
+		new String[] { "Value", "Type" });
 
 	private static final int VALUE_COL = 0;
 	private static final int TYPE_COL = 1;
@@ -81,8 +82,8 @@ class OptionsDB extends AbstractOptions {
 			throw new IllegalArgumentException("property alteration old-path may not be null");
 		}
 		if (path != null && path.endsWith(DELIMITER_STRING)) {
-			throw new IllegalArgumentException("property alteration paths must not end with '" +
-				DELIMITER + "': " + path);
+			throw new IllegalArgumentException(
+				"property alteration paths must not end with '" + DELIMITER + "': " + path);
 		}
 	}
 
@@ -96,7 +97,7 @@ class OptionsDB extends AbstractOptions {
 			return false;
 		}
 		RecordIterator iterator = propertyTable.iterator(new StringField(newSubListPath));
-		Record rec = iterator.next();
+		DBRecord rec = iterator.next();
 		if (rec != null) {
 			String keyName = ((StringField) rec.getKeyField()).getString();
 			if (keyName.startsWith(newSubListPath)) {
@@ -105,7 +106,7 @@ class OptionsDB extends AbstractOptions {
 		}
 
 		// move records
-		ArrayList<Record> list = new ArrayList<>();
+		ArrayList<DBRecord> list = new ArrayList<>();
 		rec = propertyTable.getRecord(new StringField(oldPath));
 		if (rec != null) {
 			propertyTable.deleteRecord(new StringField(oldPath));
@@ -118,15 +119,15 @@ class OptionsDB extends AbstractOptions {
 			String keyName = ((StringField) rec.getKeyField()).getString();
 			if (keyName.startsWith(oldSubListPath)) {
 				iterator.delete();
-				rec.setKey(new StringField(newSubListPath +
-					keyName.substring(oldSubListPath.length())));
+				rec.setKey(
+					new StringField(newSubListPath + keyName.substring(oldSubListPath.length())));
 				list.add(rec);
 			}
 			else {
 				break;
 			}
 		}
-		for (Record updatedRec : list) {
+		for (DBRecord updatedRec : list) {
 			propertyTable.putRecord(updatedRec);
 		}
 
@@ -140,7 +141,7 @@ class OptionsDB extends AbstractOptions {
 		// remove records
 		RecordIterator iterator = propertyTable.iterator(new StringField(path));
 		while (iterator.hasNext()) {
-			Record rec = iterator.next();
+			DBRecord rec = iterator.next();
 			String keyName = ((StringField) rec.getKeyField()).getString();
 			if (keyName.equals(path)) {
 				iterator.delete();
@@ -156,6 +157,8 @@ class OptionsDB extends AbstractOptions {
 	public synchronized void removeOption(String propertyName) {
 		super.removeOption(propertyName);
 		removePropertyFromDB(propertyName);
+		// NOTE: AbstractOptions does not provide removal notification
+		notifyOptionChanged(propertyName, null, null);
 	}
 
 	private void removePropertyFromDB(String propertyName) {
@@ -185,7 +188,7 @@ class OptionsDB extends AbstractOptions {
 			if (propertyTable != null) {
 				RecordIterator recIt = propertyTable.iterator();
 				while (recIt.hasNext()) {
-					Record rec = recIt.next();
+					DBRecord rec = recIt.next();
 					names.add(rec.getKeyField().getString());
 				}
 			}
@@ -207,7 +210,7 @@ class OptionsDB extends AbstractOptions {
 			if (propertyTable != null) {
 				RecordIterator recIt = propertyTable.iterator();
 				while (recIt.hasNext()) {
-					Record rec = recIt.next();
+					DBRecord rec = recIt.next();
 					String key = rec.getKeyField().getString();
 					if (optionName.equals(key)) {
 						return true;
@@ -221,7 +224,7 @@ class OptionsDB extends AbstractOptions {
 		return false;
 	}
 
-	private Record getPropertyRecord(String propertyName) {
+	private DBRecord getPropertyRecord(String propertyName) {
 		if (propertyTable == null) {
 			return null;
 		}
@@ -237,7 +240,7 @@ class OptionsDB extends AbstractOptions {
 		return null;
 	}
 
-	private void putRecord(Record rec) {
+	private void putRecord(DBRecord rec) {
 		try {
 			if (propertyTable == null) {
 				propertyTable =
@@ -264,7 +267,7 @@ class OptionsDB extends AbstractOptions {
 		@Override
 		public Object getCurrentValue() {
 			if (!isCached) {
-				Record rec = getPropertyRecord(getName());
+				DBRecord rec = getPropertyRecord(getName());
 				if (rec == null) {
 					value = getDefaultValue();
 				}
@@ -294,7 +297,7 @@ class OptionsDB extends AbstractOptions {
 				removePropertyFromDB(getName());
 			}
 			else {
-				Record rec = PROPERTY_SCHEMA.createRecord(new StringField(getName()));
+				DBRecord rec = PROPERTY_SCHEMA.createRecord(new StringField(getName()));
 				OptionType optionType = getOptionType();
 				rec.setByteValue(TYPE_COL, (byte) (optionType.ordinal()));
 				rec.setString(VALUE_COL, optionType.convertObjectToString(newValue));
@@ -320,7 +323,7 @@ class OptionsDB extends AbstractOptions {
 			Object defaultValue) {
 
 		if (type == OptionType.NO_TYPE) {
-			Record record = getPropertyRecord(optionName);
+			DBRecord record = getPropertyRecord(optionName);
 			if (record != null) {
 				type = OptionType.values()[record.getByteValue(TYPE_COL)];
 			}
@@ -330,7 +333,7 @@ class OptionsDB extends AbstractOptions {
 
 	@Override
 	protected boolean notifyOptionChanged(String optionName, Object oldValue, Object newValue) {
-		return domainObj.propertyChanged(name, oldValue, newValue);
+		return domainObj.propertyChanged(optionName, oldValue, newValue);
 	}
 
 }

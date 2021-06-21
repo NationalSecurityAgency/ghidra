@@ -28,16 +28,15 @@ import ghidra.program.model.listing.Program;
 /**
  * The primary class for obtaining an {@link Assembler} for a Ghidra-supported language.
  * 
+ * <p>
  * The general flow is: First, obtain an assembler for a language or program. Second, call its
  * {@link Assembler#assemble(Address, String...)} and related methods to perform assembly. More
  * advanced uses pass a {@link AssemblySelector} to control certain aspects of assembly instruction
  * selection, and to obtain advanced diagnostics, like detailed errors and code completion.
  * 
  * <pre>
- * {@code
  * Assembler asm = Assemblers.getAssembler(currentProgram);
  * asm.assemble(currentAddress, "ADD ...");
- * }
  * </pre>
  */
 public final class Assemblers {
@@ -45,6 +44,7 @@ public final class Assemblers {
 
 	/**
 	 * Get a builder for the given language, possibly using a cached one.
+	 * 
 	 * @param lang the language
 	 * @return the builder for that language, if successful
 	 */
@@ -64,10 +64,11 @@ public final class Assemblers {
 	/**
 	 * Get an assembler for the given program.
 	 * 
-	 * Provides an assembler suitable for the program's language, and bound to the program. Calls
-	 * to its Assembler#assemble() function will cause modifications to the bound program. If this
-	 * is the first time an assembler for the program's language has been requested, this function
-	 * may take some time to build the assembler.
+	 * <p>
+	 * Provides an assembler suitable for the program's language, and bound to the program. Calls to
+	 * its Assembler#assemble() function will cause modifications to the bound program. If this is
+	 * the first time an assembler for the program's language has been requested, this function may
+	 * take some time to build the assembler.
 	 * 
 	 * @param selector a method to select a single result from many
 	 * @param program the program for which an assembler is requested
@@ -81,6 +82,7 @@ public final class Assemblers {
 	/**
 	 * Get an assembler for the given language.
 	 * 
+	 * <p>
 	 * Provides a suitable assembler for the given language. Only calls to its
 	 * Assembler#assembleLine() method are valid. If this is the first time a language has been
 	 * requested, this function may take some time to build the assembler. Otherwise, it returns a

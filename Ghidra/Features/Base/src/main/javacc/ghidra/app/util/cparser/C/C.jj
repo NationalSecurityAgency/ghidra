@@ -1675,17 +1675,25 @@ Composite StructOrUnion() : {Composite comp;}
 	(
 		<STRUCT> ( DeclSpec() )* { comp =  new StructureDataType(ANONYMOUS_STRUCT_PREFIX + cnt++, 0);
 
-		                          // Always set the packing, because by default structures should be aligned
-		                          //     setting 0 turns off packing, but sets structures to be aligned
-		                          comp.setPackingValue(this.packSize);
+		                          	  // Always set the packing, because by default structures should be aligned
+	                                  if (packSize > 0) {
+	                                	  comp.setExplicitPackingValue(packSize);
+	                                  }
+	                                  else {
+	                                	  comp.setPackingEnabled(true); // ensure default packing enabled
+	                                  }
 		                           
 								}
 		|
 		<UNION>  ( DeclSpec() )* { comp = new UnionDataType(ANONYMOUS_UNION_PREFIX  + cnt++); 
 		
 								  // Always set the packing, because by default structures should be aligned
-		                          //     setting 0 turns off packing, but sets structures to be aligned.
-		                          comp.setPackingValue(this.packSize);
+                                  if (packSize > 0) {
+                                	  comp.setExplicitPackingValue(packSize);
+                                  }
+                                  else {
+                                	  comp.setPackingEnabled(true); // ensure default packing enabled
+                                  }
 		}
 	)
 	{

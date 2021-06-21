@@ -15,8 +15,6 @@
  */
 package ghidra.graph.visualization.mouse;
 
-import static org.jungrapht.visualization.VisualizationServer.*;
-
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -26,6 +24,8 @@ import org.jungrapht.visualization.control.GraphElementAccessor;
 import org.jungrapht.visualization.control.TransformSupport;
 import org.jungrapht.visualization.layout.model.LayoutModel;
 import org.jungrapht.visualization.selection.ShapePickSupport;
+
+import static org.jungrapht.visualization.layout.util.PropertyLoader.PREFIX;
 
 /**
  * Keeper of shared logic for jungrapht handling

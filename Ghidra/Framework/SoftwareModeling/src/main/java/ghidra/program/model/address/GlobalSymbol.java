@@ -34,8 +34,8 @@ public class GlobalSymbol implements Symbol {
 	}
 
 	@Override
-	public boolean checkIsValid() {
-		return true;
+	public boolean isDeleted() {
+		return false;
 	}
 
 	@Override

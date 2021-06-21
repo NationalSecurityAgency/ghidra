@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,15 @@
  */
 package ghidra.program.database.symbol;
 
+import java.io.IOException;
+import java.util.Set;
+
+import db.*;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-import java.util.Set;
-
-import db.*;
 
 /**
  * Adapter for the Label History table.
@@ -34,9 +32,10 @@ abstract class LabelHistoryAdapter {
 
 	static final String LABEL_HISTORY_TABLE_NAME = "Label History";
 
-	static final Schema LABEL_HISTORY_SCHEMA = new Schema(0, "Key", new Class[] { LongField.class,
-		ByteField.class, StringField.class, StringField.class, LongField.class }, new String[] {
-		"Address", "Action", "Labels", "User", "Date" });
+	static final Schema LABEL_HISTORY_SCHEMA = new Schema(0, "Key",
+		new Field[] { LongField.INSTANCE, ByteField.INSTANCE, StringField.INSTANCE,
+			StringField.INSTANCE, LongField.INSTANCE },
+		new String[] { "Address", "Action", "Labels", "User", "Date" });
 
 	static final int HISTORY_ADDR_COL = 0;
 	static final int HISTORY_ACTION_COL = 1;
@@ -139,7 +138,7 @@ abstract class LabelHistoryAdapter {
 	 * @throws IOException if there was a problem accessing the database
 	 */
 	abstract void deleteAddressRange(Address startAddr, Address endAddr, AddressMap addrMap,
-			Set<Address> doNotDeleteSet, TaskMonitor monitor) throws CancelledException,
-			IOException;
+			Set<Address> doNotDeleteSet, TaskMonitor monitor)
+			throws CancelledException, IOException;
 
 }

@@ -100,7 +100,7 @@ public class PcodeDataTypeManager {
 		progDataTypes = prog.getDataTypeManager();
 		dataOrganization = progDataTypes.getDataOrganization();
 		voidInputIsVarargs = true;				// By default, do not lock-in void parameter lists
-		displayLanguage = prog.getCompilerSpec().getDecompilerOutputLanguage(prog);
+		displayLanguage = prog.getCompilerSpec().getDecompilerOutputLanguage();
 		if (displayLanguage != DecompilerLanguage.C_LANGUAGE) {
 			voidInputIsVarargs = false;
 		}
@@ -277,6 +277,7 @@ public class PcodeDataTypeManager {
 				// construct a <typeref> tag but must build a full <type> tag.
 				return buildType(type, size);
 			}
+			size = 1;
 		}
 		else if (type.getLength() <= 0) {
 			return buildType(type, size);
@@ -293,6 +294,9 @@ public class PcodeDataTypeManager {
 			long id = progDataTypes.getID(type);
 			if (id > 0) {
 				SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "id", id);
+			}
+			if (type.getLength() <= 0 && size > 0) {
+				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
 			}
 		}
 		resBuf.append("/>");
@@ -588,8 +592,10 @@ public class PcodeDataTypeManager {
 		}
 		else {
 			int sz = type.getLength();
+			boolean isVarLength = false;
 			if (sz <= 0) {
 				sz = size;
+				isVarLength = true;
 			}
 			appendNameIdAttributes(resBuf, origType);
 			if (sz < 16) {
@@ -601,6 +607,9 @@ public class PcodeDataTypeManager {
 				// Build an "opaque" structure with no fields
 				SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "struct");
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
+				if (isVarLength) {
+					SpecXmlUtils.encodeBooleanAttribute(resBuf, "varlength", isVarLength);
+				}
 				resBuf.append('>');
 			}
 		}

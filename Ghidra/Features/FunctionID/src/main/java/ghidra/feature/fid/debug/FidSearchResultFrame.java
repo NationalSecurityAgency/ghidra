@@ -308,6 +308,7 @@ public class FidSearchResultFrame extends JFrame implements FidQueryCloseListene
 
 	@Override
 	public void dispose() {
+		table.dispose();
 		dbService.removeCloseListener(this);
 		super.dispose();
 	}

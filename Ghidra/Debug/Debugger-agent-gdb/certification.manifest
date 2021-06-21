@@ -1,0 +1,4 @@
+##VERSION: 2.0
+##MODULE IP: Jython License
+Module.manifest||GHIDRA||||END|
+data/scripts/define_info_proc_mappings||GHIDRA||||END|

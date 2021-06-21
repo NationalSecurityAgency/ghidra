@@ -16,9 +16,6 @@
 package ghidra.app.plugin.core.compositeeditor;
 
 import java.awt.Component;
-import java.awt.Window;
-
-import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
 import docking.DockingWindowManager;
@@ -57,11 +54,10 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 
 		BitFieldEditorDialog dlg =
 			new BitFieldEditorDialog(editorModel.viewComposite, provider.dtmService,
-				-(rowIndex + 1), ordinal -> refreshTableAndSelection(editorModel, ordinal));
+				-(rowIndex + 1), model.showHexNumbers,
+				ordinal -> refreshTableAndSelection(editorModel, ordinal));
 		Component c = provider.getComponent();
-		Window w = SwingUtilities.windowForComponent(c);
-		DockingWindowManager.showDialog(w, dlg, c);
-
+		DockingWindowManager.showDialog(c, dlg);
 		requestTableFocus();
 	}
 
@@ -73,8 +69,8 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 	public void adjustEnablement() {
 		boolean enabled = true;
 		CompEditorModel editorModel = (CompEditorModel) model;
-		// Union do not support unaligned placement of bitfields
-		if (!(editorModel.viewComposite instanceof Structure) || editorModel.isAligned() ||
+		// Union do not support non-packed placement of bitfields
+		if (!(editorModel.viewComposite instanceof Structure) || editorModel.isPackingEnabled() ||
 			editorModel.getNumSelectedRows() != 1 || editorModel.isFlexibleArraySelection()) {
 			enabled = false;
 		}

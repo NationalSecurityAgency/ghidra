@@ -41,12 +41,6 @@ public interface Symbol {
 	public String getName();
 
 	/**
-	 * Check whether this symbol is still valid (i.e., deleted).
-	 * @return true if valid or false if deleted.
-	 */
-	public boolean checkIsValid();
-
-	/**
 	 * Gets the full path name for this symbol as an ordered array of strings ending
 	 * with the symbol name. The global symbol will return an empty array.
 	 * @return the array indicating the full path name for this symbol.
@@ -67,12 +61,14 @@ public interface Symbol {
 	public String getName(boolean includeNamespace);
 
 	/**
-	 * @return the namespace that contains this symbol
+	 * Return the parent namespace for this symbol.
+	 * @return the namespace that contains this symbol.
 	 */
 	public Namespace getParentNamespace();
 
 	/**
 	 * Returns namespace symbol of the namespace containing this symbol
+	 * @return parent namespace symbol
 	 */
 	public Symbol getParentSymbol();
 
@@ -84,14 +80,16 @@ public interface Symbol {
 	public boolean isDescendant(Namespace namespace);
 
 	/**
-	 * Returns whether the given parent is valid for this Symbol.
-	 * @param parent
+	 * Determines if the given parent is valid for this Symbol.  Specified namespace 
+	 * must belong to the same symbol table as this symbol.
+	 * @param parent prospective parent namespace for this symbol
 	 * @return true if parent is valid
 	 */
 	public boolean isValidParent(Namespace parent);
 
 	/**
-	 * Returns the symbol type
+	 * Returns this symbol's type
+	 * @return symbol type
 	 */
 	public SymbolType getSymbolType();
 
@@ -273,4 +271,11 @@ public interface Symbol {
 	 * @return the source of this symbol
 	 */
 	public SourceType getSource();
+
+	/**
+	 * Determine if this symbol object has been deleted.  NOTE: the symbol could be
+	 * deleted at anytime due to asynchronous activity.  
+	 * @return true if symbol has been deleted, false if not.
+	 */
+	public boolean isDeleted();
 }

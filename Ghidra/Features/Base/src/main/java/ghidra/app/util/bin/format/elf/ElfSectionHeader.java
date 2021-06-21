@@ -339,7 +339,7 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 		return sh_name;
 	}
 
-	void updateName() throws IOException {
+	void updateName() {
 		if (reader == null) {
 			throw new UnsupportedOperationException("This ElfSectionHeader does not have a reader");
 		}
@@ -349,11 +349,11 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 		name = null;
 		try {
 			if (sh_name >= 0 && e_shstrndx >= 0 && e_shstrndx < sections.length) {
-				ElfSectionHeader stringTableSectionHeader = sections[e_shstrndx];
-				if (sh_name < stringTableSectionHeader.sh_size) {
-					// read section name from string table
-					long stringTableOffset = sections[e_shstrndx].getOffset();
-					if (stringTableOffset >= 0) {
+				// read section name from string table
+				long stringTableOffset = sections[e_shstrndx].getOffset();
+				if (stringTableOffset >= 0) {
+					long offset = stringTableOffset + sh_name;
+					if (offset < reader.length()) {
 						name = reader.readAsciiString(stringTableOffset + sh_name);
 						if ("".equals(name)) {
 							name = null;

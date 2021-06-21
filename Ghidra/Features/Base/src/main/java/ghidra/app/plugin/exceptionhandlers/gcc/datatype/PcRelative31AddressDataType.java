@@ -68,11 +68,6 @@ public class PcRelative31AddressDataType extends BuiltIn {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
-		return false;
-	}
-
-	@Override
 	public int getLength() {
 		return 4;
 	}

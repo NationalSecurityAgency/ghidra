@@ -43,7 +43,7 @@ public class TestDoubleDataType implements DataType {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
+	public boolean hasLanguageDependantLength() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -129,6 +129,11 @@ public class TestDoubleDataType implements DataType {
 	}
 
 	@Override
+	public boolean isZeroLength() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public String getDescription() {
 		throw new UnsupportedOperationException();
 	}
@@ -192,6 +197,11 @@ public class TestDoubleDataType implements DataType {
 
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void dataTypeAlignmentChanged(DataType dt) {
 		throw new UnsupportedOperationException();
 	}
 

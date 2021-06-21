@@ -234,6 +234,7 @@ public class GhidraFileChooser extends DialogComponentProvider
 		super(TITLE, true, true, true, false);
 		this.parent = parent;
 
+		setTransient(true);
 		init(model);
 		loadRecentList();
 		loadOptions();

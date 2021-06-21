@@ -1,0 +1,70 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Time</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Time</H1>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/DebuggerTimePlugin.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>This window displays all recorded snapshots in the current trace. Typically, there is one
+    snapshot per event recorded. Other windows often display the times of various events or use
+    time ranges to describe lifespans of various records. Those times refer to the "snap," which is
+    a 0-up counter of snapshot records. Thus, a snapshot is a collection of observations of a
+    target's state, usually while suspended, along with any mark up. Selecting a snapshot navigates
+    to the selected point in time. Note that browsing the past may prevent other windows from
+    interacting with a live target.</P>
+
+    <H2>Table Columns</H2>
+
+    <P>The table has the following columns:</P>
+
+    <UL>
+      <LI>Snap - the 0-up index of the snapshot (event) recorded.</LI>
+
+      <LI>Timestamp - the "wall-clock" time of the event. If the debugger doesn't give an event
+      time, or the snapshot does not correspond to an event, then it is the snapshot creation
+      time.</LI>
+
+      <LI>Event Thread - the thread that caused the event, if applicable. In the case of thread
+      creation, this should probably be the spawned thread, not the parent.</LI>
+
+      <LI>Schedule - if applicable, a source snap and the stepping schedule which produces this
+      snapshot. This always applies to "scratch" snapshots produced by emulation, but may also
+      apply if the stepping schedule between recorded events is somehow known. Typically, it is
+      just the number of steps of the source snapshot's event thread; however, the notation does
+      allow other threads to be stepped, too.</LI>
+
+      <LI>Description - a user-modifiable description of the snapshot or event. This defaults to
+      the debugger's description of the event.</LI>
+    </UL>
+
+    <H2>Actions</H2>
+
+    <P>The time window provides the following action:</P>
+
+    <H3><A name="hide_scratch"></A>Hide Scratch</H3>
+
+    <P>This toggle action is always available. It is enabled by default. The emulation service,
+    which enables trace extrapolation and interpolation, writes emulated state into the trace's
+    "scratch space," which comprises all negative snaps. When this toggle is enabled, those
+    snapshots are hidden. They can be displayed by disabling this toggle. Note that navigating into
+    scratch space may cause temporary undefined behavior in some windows, and may prevent
+    interaction with the target.</P>
+  </BODY>
+</HTML>

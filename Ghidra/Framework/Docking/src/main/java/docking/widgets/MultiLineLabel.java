@@ -16,7 +16,6 @@
 package docking.widgets;
 
 import java.awt.*;
-import java.util.StringTokenizer;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -103,15 +102,10 @@ public class MultiLineLabel extends JPanel {
 				"exception with no message from the line of code below:\n\n" + getCallerString();
 			Msg.debug(label, label, new Throwable());
 		}
-		StringTokenizer t = new StringTokenizer(label, "\n");
 
-		num_lines = t.countTokens();
-		lines = new String[num_lines];
+		lines = label.split("\n");
+		num_lines = lines.length;
 		line_widths = new int[num_lines];
-		for (int i = 0; i < num_lines; i++) {
-			lines[i] = t.nextToken();
-		}
-
 	}
 
 	private String getCallerString() {
@@ -331,7 +325,7 @@ public class MultiLineLabel extends JPanel {
 	public static void main(String[] args) {
 
 		MultiLineLabel mlab = new MultiLineLabel(
-			"This is a test\nof a multi-line label\nLine One\n" + "Line Two\nLine Three.", 20, 20,
+			"This is a test\nof a multi-line label\nLine One\n\nLine Two\nLine Three.", 20, 20,
 			MultiLineLabel.CENTER);
 		JFrame f = new JFrame("Test MultiLineLabel");
 		f.getContentPane().add(mlab);

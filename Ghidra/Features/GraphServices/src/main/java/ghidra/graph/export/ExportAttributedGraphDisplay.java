@@ -15,16 +15,15 @@
  */
 package ghidra.graph.export;
 
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 
 import org.jgrapht.Graph;
 
-import docking.action.DockingAction;
+import docking.action.DockingActionIf;
 import docking.widgets.EventTrigger;
+import ghidra.app.services.GraphDisplayBroker;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.service.graph.*;
-import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -37,7 +36,7 @@ import ghidra.util.task.TaskMonitor;
  */
 class ExportAttributedGraphDisplay implements GraphDisplay {
 
-	private final PluginTool pluginTool;
+	private final PluginTool tool;
 	private String title;
 	private AttributedGraph graph;
 
@@ -46,7 +45,7 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	 * @param programGraphDisplayProvider provides a {@link PluginTool} for Docking features
 	 */
 	ExportAttributedGraphDisplay(ExportAttributedGraphDisplayProvider programGraphDisplayProvider) {
-		this.pluginTool = programGraphDisplayProvider.getPluginTool();
+		this.tool = programGraphDisplayProvider.getPluginTool();
 	}
 
 	@Override
@@ -60,15 +59,22 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 		listener.dispose();
 	}
 
-
-
 	/**
 	 * set the {@link AttributedGraph} for visualization
 	 * @param attributedGraph the {@link AttributedGraph} to visualize
 	 */
 	private void doSetGraphData(AttributedGraph attributedGraph) {
-		GraphExporterDialog dialog = new GraphExporterDialog(attributedGraph);
-		Swing.runLater(() -> pluginTool.showDialog(dialog));
+		List<AttributedGraphExporter> exporters = findGraphExporters();
+		GraphExporterDialog dialog = new GraphExporterDialog(attributedGraph, exporters);
+		tool.showDialog(dialog);
+	}
+
+	private List<AttributedGraphExporter> findGraphExporters() {
+		GraphDisplayBroker service = tool.getService(GraphDisplayBroker.class);
+		if (service != null) {
+			return service.getGraphExporters();
+		}
+		return Collections.emptyList();
 	}
 
 	@Override
@@ -82,7 +88,8 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void setVertexLabel(String attributeName, int alignment, int size, boolean monospace,
+	public void setVertexLabelAttribute(String attributeName, int alignment, int size,
+			boolean monospace,
 			int maxLines) {
 		// no effect
 	}
@@ -114,7 +121,7 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void addAction(DockingAction action) {
+	public void addAction(DockingActionIf action) {
 		// do nothing, actions are not supported by this display
 	}
 

@@ -140,8 +140,11 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		// apply nested composite datatypes and allow them to be 
 		// created as-needed (e.g., function definition).  This is
 		// done to minimize duplication of anonymous/unnamed nested
-		// composites since the parent composite reconsruction performed
+		// composites since the parent composite reconstruction performed
 		// by DefaultCompositeMember will generate such nested composites.
+
+		// TODO: Dome some output comparisons with and without the !isNested()
+		// test which is intended to ignore nested anonymous composites.
 
 		if (!isForwardReference() && !isNested()) {
 			super.resolve();
@@ -337,7 +340,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			// TODO: Investigate.  We should do this check for some classes somewhere.  Should
 			// we do it here.  Set breakpoint here to investigate.
 		}
-		classType.createLayout(applicator.getPdbApplicatorOptions().getClassLayout(),
+		classType.createLayout(applicator.getPdbApplicatorOptions().getCompositeLayout(),
 			applicator.getVbtManager(), applicator.getCancelOnlyWrappingMonitor());
 	}
 

@@ -36,8 +36,8 @@ class SourceArchiveAdapterV0 extends SourceArchiveAdapter {
 	static final int V0_ARCHIVE_ID_DIRTY_FLAG_COL = 4;
 
 	static final Schema V0_SCHEMA = new Schema(VERSION, "Archive ID",
-		new Class[] { StringField.class, StringField.class, ByteField.class, LongField.class,
-			BooleanField.class },
+		new Field[] { StringField.INSTANCE, StringField.INSTANCE, ByteField.INSTANCE,
+			LongField.INSTANCE, BooleanField.INSTANCE },
 		new String[] { "Domain File ID", "Name", "Type", "Last Sync Time", "Dirty Flag" });
 
 	private Table table;
@@ -79,14 +79,14 @@ class SourceArchiveAdapterV0 extends SourceArchiveAdapter {
 	 * @throws IOException
 	 */
 	private void createRecordForLocalManager() throws IOException {
-		Record record = V0_SCHEMA.createRecord(DataTypeManager.LOCAL_ARCHIVE_KEY);
+		DBRecord record = V0_SCHEMA.createRecord(DataTypeManager.LOCAL_ARCHIVE_KEY);
 		record.setLongValue(V0_ARCHIVE_ID_LAST_SYNC_TIME_COL, (new Date()).getTime());
 		table.putRecord(record);
 	}
 
 	@Override
-	public Record createRecord(SourceArchive archive) throws IOException {
-		Record record = V0_SCHEMA.createRecord(archive.getSourceArchiveID().getValue());
+	public DBRecord createRecord(SourceArchive archive) throws IOException {
+		DBRecord record = V0_SCHEMA.createRecord(archive.getSourceArchiveID().getValue());
 		record.setString(V0_ARCHIVE_ID_DOMAIN_FILE_ID_COL, archive.getDomainFileID());
 		record.setString(V0_ARCHIVE_ID_NAME_COL, archive.getName());
 		record.setByteValue(V0_ARCHIVE_ID_TYPE_COL, (byte) archive.getArchiveType().ordinal());
@@ -103,13 +103,13 @@ class SourceArchiveAdapterV0 extends SourceArchiveAdapter {
 	}
 
 	@Override
-	public Record getRecord(long key) throws IOException {
+	public DBRecord getRecord(long key) throws IOException {
 		return table.getRecord(key);
 	}
 
 	@Override
-	public List<Record> getRecords() throws IOException {
-		List<Record> records = new ArrayList<>();
+	public List<DBRecord> getRecords() throws IOException {
+		List<DBRecord> records = new ArrayList<>();
 		RecordIterator iterator = table.iterator();
 		while (iterator.hasNext()) {
 			records.add(iterator.next());
@@ -118,7 +118,7 @@ class SourceArchiveAdapterV0 extends SourceArchiveAdapter {
 	}
 
 	@Override
-	public void updateRecord(Record record) throws IOException {
+	public void updateRecord(DBRecord record) throws IOException {
 		table.putRecord(record);
 	}
 

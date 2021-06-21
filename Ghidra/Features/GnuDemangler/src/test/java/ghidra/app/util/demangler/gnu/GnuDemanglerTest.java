@@ -47,15 +47,24 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testNonMangledSymbol() throws Exception {
+	public void testNonMangledSymbol_DemangleOnlyKnownPatterns_True() throws Exception {
 
 		String mangled = "Java_org_sqlite_NativeDB__1exec";
 
 		GnuDemangler demangler = new GnuDemangler();
 		demangler.canDemangle(program);// this perform initialization
 
+		GnuDemanglerOptions options = new GnuDemanglerOptions();
+		options.setDemangleOnlyKnownPatterns(true);
+
 		// this throws an exception with the bug in place
-		demangler.demangle(mangled);
+		try {
+			demangler.demangle(mangled);
+		}
+		catch (DemangledException e) {
+			failWithException("Should not have encountered exception when ignoring unknown symbols",
+				e);
+		}
 	}
 
 	@Test
@@ -158,32 +167,15 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDemangler_Format_EDG_DemangleOnlyKnownPatterns_False()
-			throws DemangledException {
-
-		String mangled = "_$_10MyFunction";
-
-		GnuDemangler demangler = new GnuDemangler();
-		demangler.canDemangle(program);// this perform initialization
-
-		GnuDemanglerOptions options = new GnuDemanglerOptions();
-		options.setDemangleOnlyKnownPatterns(false);
-		options.setDemanglerName(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
-		DemangledObject result = demangler.demangle(mangled, options);
-		assertNotNull(result);
-		assertEquals("undefined MyFunction::~MyFunction(void)", result.getSignature(false));
-	}
-
-	@Test
 	public void testDemangler_Format_EDG_DemangleOnlyKnownPatterns_True()
 			throws DemangledException {
 
 		/*
 		 						Note:
-			This test is less of a requirement and more of an observation.   This symbol was 
+			This test is less of a requirement and more of an observation.   This symbol was
 			seen in the wild and is claimed to be of the Edison Design Group (EDG) format.
 			It fails our parsing due to its resemblance to non-mangled text (see
-			the test testNonMangledSymbol()).   If we update the code that checks for this 
+			the test testNonMangledSymbol()).   If we update the code that checks for this
 			noise, then this test and it's parter should be consolidated.
 		 */
 
@@ -192,16 +184,31 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		GnuDemangler demangler = new GnuDemangler();
 		demangler.canDemangle(program);// this perform initialization
 
-		GnuDemanglerOptions options = new GnuDemanglerOptions();
-		options.setDemangleOnlyKnownPatterns(true); // do not try
-		options.setDemanglerName(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
+		GnuDemanglerOptions options = new GnuDemanglerOptions(GnuDemanglerFormat.EDG);
 		DemangledObject result = demangler.demangle(mangled, options);
 		assertNull(result);
 	}
 
 	@Test
-	public void testDemangler_Format_CodeWarrior_MacOS8or9() throws DemangledException {
+	public void testDemangler_Format_EDG_DemangleOnlyKnownPatterns_False()
+			throws DemangledException {
 
+		String mangled = "_$_10MyFunction";
+
+		GnuDemangler demangler = new GnuDemangler();
+		demangler.canDemangle(program);// this perform initialization
+
+		GnuDemanglerOptions options = new GnuDemanglerOptions(GnuDemanglerFormat.AUTO, true);
+		options.setDemangleOnlyKnownPatterns(false);
+		DemangledObject result = demangler.demangle(mangled, options);
+		assertNotNull(result);
+		assertEquals("undefined MyFunction::~MyFunction(void)", result.getSignature(false));
+	}
+
+	@Test
+	public void testDemangler_Format_CodeWarrior_MacOS8or9() throws DemangledException {
+		// NOTE: mangled CodeWarrior format symbols with templates will fail
+		// This is because the GNU demangler does not support CodeWarrior
 		// .scroll__10TTextPanelFUcsi
 
 		String mangled = ".scroll__10TTextPanelFUcsi";
@@ -209,9 +216,8 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		GnuDemangler demangler = new GnuDemangler();
 		demangler.canDemangle(program);// this perform initialization
 
-		GnuDemanglerOptions options = new GnuDemanglerOptions();
+		GnuDemanglerOptions options = new GnuDemanglerOptions(GnuDemanglerFormat.AUTO, true);
 		options.setDemangleOnlyKnownPatterns(false);
-		options.setDemanglerName(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
 		DemangledObject result = demangler.demangle(mangled, options);
 		assertNotNull(result);
 		assertEquals("undefined TTextPanel::scroll(unsigned char,short,int)",

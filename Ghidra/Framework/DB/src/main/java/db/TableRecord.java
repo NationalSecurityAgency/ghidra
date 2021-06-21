@@ -15,6 +15,8 @@
  */
 package db;
 
+import java.io.IOException;
+
 import db.Field.UnsupportedFieldException;
 
 /**
@@ -33,24 +35,27 @@ class TableRecord implements Comparable<TableRecord> {
 	private static final int MAX_KEY_COLUMN = 7;
 	private static final int RECORD_COUNT_COLUMN = 8;
 
-	private static Class<?>[] fieldClasses = { StringField.class, 	// name of table 
-		IntField.class,    	// Schema version
-		IntField.class,    	// Root buffer ID (first buffer)
-		ByteField.class,		// Key field type 
-		BinaryField.class, 	// Schema field types
-		StringField.class,		// Schema key/field names
-		IntField.class,		// indexing column  (-1 = primary)
-		LongField.class,		// max primary key value ever used
-		IntField.class 		// number of records
+	//@formatter:off
+	private static Field[] fields = { 
+		StringField.INSTANCE, 	// name of table 
+		IntField.INSTANCE,    	// Schema version
+		IntField.INSTANCE,    	// Root buffer ID (first buffer)
+		ByteField.INSTANCE,		// Key field type 
+		BinaryField.INSTANCE, 	// Schema field types
+		StringField.INSTANCE,	// Schema key/field names
+		IntField.INSTANCE,		// indexing column  (-1 = primary)
+		LongField.INSTANCE,		// max primary key value ever used
+		IntField.INSTANCE 		// number of records
 	};
+	//@formatter:on
 
 	private static String[] tableRecordFieldNames = { "TableName", "SchemaVersion", "RootBufferId",
 		"KeyType", "FieldTypes", "FieldNames", "IndexColumn", "MaxKey", "RecordCount" };
 
-	private static Schema schema = new Schema(0, "TableNum", fieldClasses, tableRecordFieldNames);
+	private static Schema schema = new Schema(0, "TableNum", fields, tableRecordFieldNames);
 
-	private Record record;
-
+	private DBRecord record;
+	private Schema tableSchema;
 	private Table table;
 
 	/**
@@ -61,10 +66,11 @@ class TableRecord implements Comparable<TableRecord> {
 	 * @param indexedColumn primary table index key column, or -1 for primary table
 	 */
 	TableRecord(long tableNum, String name, Schema tableSchema, int indexedColumn) {
+		this.tableSchema = tableSchema;
 		record = schema.createRecord(tableNum);
 		record.setString(NAME_COLUMN, name);
-		record.setByteValue(KEY_TYPE_COLUMN, tableSchema.getKeyFieldType().getFieldType());
-		record.setBinaryData(FIELD_TYPES_COLUMN, tableSchema.getFieldTypes());
+		record.setByteValue(KEY_TYPE_COLUMN, tableSchema.getEncodedKeyFieldType());
+		record.setBinaryData(FIELD_TYPES_COLUMN, tableSchema.getEncodedFieldTypes());
 		record.setString(FIELD_NAMES_COLUMN, tableSchema.getPackedFieldNames());
 		record.setIntValue(VERSION_COLUMN, tableSchema.getVersion());
 		record.setIntValue(COLUMN_INDEXED_COLUMN, indexedColumn);
@@ -75,9 +81,13 @@ class TableRecord implements Comparable<TableRecord> {
 
 	/**
 	 * Construct an existing master table storage record.
+	 * @param dbh database handle
 	 * @param record master table storage record.
+	 * @throws UnsupportedFieldException stored schema contains unsupported field
+	 * @throws IOException if IO error occurs
 	 */
-	TableRecord(Record record) {
+	TableRecord(DBHandle dbh, DBRecord record) throws IOException {
+		this.tableSchema = parseSchema(dbh, record);
 		this.record = record;
 	}
 
@@ -85,7 +95,7 @@ class TableRecord implements Comparable<TableRecord> {
 	 * Get the underlying storage record for this instance.
 	 * @return master table storage record.
 	 */
-	Record getRecord() {
+	DBRecord getRecord() {
 		return record;
 	}
 
@@ -100,9 +110,13 @@ class TableRecord implements Comparable<TableRecord> {
 	/**
 	 * Set the storage record for this instance.
 	 * Data is refreshed from the record provided.
+	 * @param dbh database handle
 	 * @param record master table storage record.
+	 * @throws UnsupportedFieldException stored schema contains unsupported field
+	 * @throws IOException if IO error occurs
 	 */
-	void setRecord(Record record) {
+	void setRecord(DBHandle dbh, DBRecord record) throws IOException {
+		this.tableSchema = parseSchema(dbh, record);
 		this.record = record;
 		if (table != null) {
 			table.tableRecordChanged();
@@ -120,6 +134,7 @@ class TableRecord implements Comparable<TableRecord> {
 			table = null;
 		}
 		this.record = null;
+		this.tableSchema = null;
 	}
 
 	/**
@@ -140,20 +155,62 @@ class TableRecord implements Comparable<TableRecord> {
 
 	/**
 	 * Set the table name
-	 * @param name
+	 * @param name table name
 	 */
 	void setName(String name) {
 		record.setString(NAME_COLUMN, name);
 	}
 
 	/**
+	 * 
+	 * @param dbh database handle
+	 * @param record record which defines table schema
+	 * @return table schema
+	 * @throws UnsupportedFieldException stored schema contains unsupported field
+	 * @throws IOException if IO error occurs
+	 */
+	private static Schema parseSchema(DBHandle dbh, DBRecord record) throws IOException {
+		Schema tableSchema =
+			new Schema(record.getIntValue(VERSION_COLUMN), record.getByteValue(KEY_TYPE_COLUMN),
+				record.getBinaryData(FIELD_TYPES_COLUMN), record.getString(FIELD_NAMES_COLUMN));
+		forceUseOfVariableLengthKeyNodesIfNeeded(dbh, tableSchema,
+			record.getIntValue(BUFFER_ID_COLUMN));
+		return tableSchema;
+	}
+
+	/**
+	 * Determine if legacy schema should be forced to use {@link VarKeyNode} 
+	 * table storage for compatibility. Root buffer node for applicable
+	 * primitive fixed-length key types will be checked.
+	 * @param dbh database handle
+	 * @param tableSchema table schema to be checked
+	 * @param rootBufferId table root buffer ID
+	 * @throws IOException if IO error occurs
+	 */
+	private static void forceUseOfVariableLengthKeyNodesIfNeeded(DBHandle dbh, Schema tableSchema,
+			int rootBufferId) throws IOException {
+		if (rootBufferId < 0) {
+			return;
+		}
+		Field keyType = tableSchema.getKeyFieldType();
+		if (keyType.isVariableLength()) {
+			return;
+		}
+		if (keyType instanceof LongField || keyType instanceof IndexField ||
+			keyType instanceof FixedField) {
+			return;
+		}
+		if (NodeMgr.isVarKeyNode(dbh.getBufferMgr(), rootBufferId)) {
+			tableSchema.forceUseOfVariableLengthKeyNodes();
+		}
+	}
+
+	/**
 	 * Get the table schema
 	 * @return table schema
-	 * @throws UnsupportedFieldException if unsupported schema field encountered
 	 */
-	Schema getSchema() throws UnsupportedFieldException {
-		return new Schema(record.getIntValue(VERSION_COLUMN), record.getByteValue(KEY_TYPE_COLUMN),
-			record.getBinaryData(FIELD_TYPES_COLUMN), record.getString(FIELD_NAMES_COLUMN));
+	Schema getSchema() {
+		return tableSchema;
 	}
 
 	/**

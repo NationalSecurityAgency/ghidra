@@ -91,6 +91,8 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	};
 	private List<ListingDisplayListener> displayListeners = new ArrayList<>();
 
+	private String currentTextSelection;
+
 	/**
 	 * Constructs a new ListingPanel using the given FormatManager and ServiceProvider.
 	 * 
@@ -1098,9 +1100,12 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		if (stringSelectionListener != null) {
 			stringSelectionListener.setStringSelection(text);
 		}
+
+		currentTextSelection = text;
 		if (text != null) {
 			return;
 		}
+
 		if (trigger != EventTrigger.API_CALL) {
 			if (listingModel.getProgram() == null || programSelectionListener == null) {
 				return;
@@ -1110,6 +1115,15 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 				programSelectionListener.programSelectionChanged(ps);
 			}
 		}
+	}
+
+	/**
+	 * Returns the currently selected text.   The value will only be non-null for selections within
+	 * a single field. 
+	 * @return the selected text or null
+	 */
+	public String getTextSelection() {
+		return currentTextSelection;
 	}
 
 	public void enablePropertyBasedColorModel(boolean b) {

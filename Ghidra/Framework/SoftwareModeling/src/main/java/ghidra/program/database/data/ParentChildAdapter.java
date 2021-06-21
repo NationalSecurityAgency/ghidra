@@ -67,32 +67,12 @@ abstract class ParentChildAdapter {
 
 	abstract boolean needsInitializing();
 
-	/**
-	 * Get the version number for this adapter
-	 */
-	abstract int getVersion();
-
-	/**
-	 * @param parentID
-	 * @param childID
-	 */
 	abstract void createRecord(long parentID, long childID) throws IOException;
 
-	/**
-	 * @param parentID
-	 * @param childID
-	 */
 	abstract void removeRecord(long parentID, long childID) throws IOException;
 
-	/**
-	 * @param childID
-	 * @return
-	 */
 	abstract long[] getParentIds(long childID) throws IOException;
 
-	/**
-	 * @param dataTypeID
-	 */
 	abstract void removeAllRecordsForParent(long parentID) throws IOException;
 
 	abstract void removeAllRecordsForChild(long childID) throws IOException;

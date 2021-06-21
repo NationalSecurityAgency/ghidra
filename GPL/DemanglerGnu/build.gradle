@@ -60,8 +60,8 @@ task zipBuildableSource(type:Zip) {
 
 	group 'private'
 	description "Collects the source files needed to build this module."
-	baseName project.name + "-src-for-build"
-	extension 'zip'
+	archiveBaseName = project.name + "-src-for-build"
+	archiveExtension = 'zip'
 				
 	//
 	// Version 2.33.1

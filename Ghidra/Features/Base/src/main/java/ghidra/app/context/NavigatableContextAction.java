@@ -15,8 +15,6 @@
  */
 package ghidra.app.context;
 
-import java.util.Set;
-
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.KeyBindingType;
@@ -71,14 +69,4 @@ public abstract class NavigatableContextAction extends DockingAction {
 	}
 
 	protected abstract void actionPerformed(NavigatableActionContext context);
-
-	@Override
-	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-		for (Class<?> class1 : contextTypes) {
-			if (NavigatableActionContext.class.isAssignableFrom(class1)) {
-				return true;
-			}
-		}
-		return false;
-	}
 }

@@ -43,12 +43,8 @@ public class GnuDemanglerParser {
 	private static final String TYPEINFO_FOR = "typeinfo for ";
 	private static final String COVARIANT_RETURN_THUNK = "covariant return thunk";
 
-	private static final Set<String> ADDRESS_TABLE_PREFIXES = Set.of(
-		CONSTRUCTION_VTABLE_FOR,
-		VTT_FOR,
-		VTABLE_FOR,
-		TYPEINFO_FN_FOR,
-		TYPEINFO_FOR);
+	private static final Set<String> ADDRESS_TABLE_PREFIXES =
+		Set.of(CONSTRUCTION_VTABLE_FOR, VTT_FOR, VTABLE_FOR, TYPEINFO_FN_FOR, TYPEINFO_FOR);
 
 	private static final String OPERATOR = "operator";
 	private static final String LAMBDA = "lambda";
@@ -64,23 +60,23 @@ public class GnuDemanglerParser {
 	 *
 	 * Pattern: name(([const] [params]))
 	 *
-	 * Parts: -optional spaces 
+	 * Parts: -optional spaces
 	 * 		  -optional (const)  (non-capture group)
 	 *        -followed by '()' with optional parameter text (capture group 1)
-	 *          
+	 *
 	 * Note:    this pattern is used for matching the arguments string, in the above examples it
-	 *          would be: 
+	 *          would be:
 	 *          		Rect &, unsigned long
 	 *          	and
 	 *          		Rect &, bool
-	 *       
+	 *
 	 */
 	private static final Pattern UNNECESSARY_PARENS_PATTERN =
 		Pattern.compile("\\s*(?:const){0,1}\\((.*)\\)\\s*");
 
 	/**
 	 * Captures the contents of a varargs parameter that is inside of parentheses.
-	 * 
+	 *
 	 * Sample:  (NS1::type&&)...
 	 *
 	 * Pattern: (namespace::name[modifiers])...
@@ -89,7 +85,7 @@ public class GnuDemanglerParser {
 	 * 		  -contents (capture group 1)
 	 *        -close paren
 	 *        -varargs
-	 *          
+	 *
 	 */
 	private static final Pattern VARARGS_IN_PARENS =
 		Pattern.compile("\\((.*)\\)" + Pattern.quote("..."));
@@ -97,17 +93,18 @@ public class GnuDemanglerParser {
 	/*
 	 * Sample: 	bob(short (&)[7])
 	 * 			bob(int const[8] (*) [12])
+	 *          _S_ref(array<float, 3ul> const (&) [64])
+	 *          _S_ptr(Foo<Bar> const* const (&) [3])
+	 *          {lambda(long&, unsigned int)#1} const (&) [4]
 	 *
-	 * Pattern: name[optional '*']<space>(*|&)[optional spaces][optional value]
-	 *
-	 * Parts:
-	 * 				-a word (capture group 1)
-	 *              -followed by an optional pointer '*'
-	 * 				-followed by a space
-	 * 				-*optional: any other text (e.g., const[8])   (non-capture group)
-	 * 				-followed by '()' that contain a '&' or a '*' (capture group 2)
-	 * 				-followed by one or more '[]' with optional interior text (capture group 3)
+	 * Pattern: <space>[optional const with optional '[',']', number, '*', '&' <space>]
+	 * 			(*|&)[optional spaces]brackets with optional characters inside
 	 * 
+	 * Parts:
+	 * 				-optional const text (e.g., const[8])   (non-capture group)
+	 * 				-followed by '()' that contain a '&' or a '*' (capture group 1)
+	 * 				-followed by one or more '[]' with optional interior text (capture group 2)
+	 *
 	 * Group Samples:
 	 * 				short (&)[7]
 	 * 				1 short
@@ -118,18 +115,19 @@ public class GnuDemanglerParser {
 	 * 				1 CanRxItem
 	 * 				2 &
 	 * 				3 [2][64u]
-	 * 
+	 *
 	 */
 	private static final Pattern ARRAY_POINTER_REFERENCE_PATTERN =
-		Pattern.compile("([\\w:]+)\\*?\\s(?:.*)\\(([&*])\\)\\s*((?:\\[.*?\\])+)");
+		Pattern.compile(
+			"\\s(?:const[\\[\\]\\d\\*&]{0,4}\\s)*\\(([&*])\\)\\s*((?:\\[.*?\\])+)");
 
 	/*
 	 * Sample:  bob(short (&)[7])
 	 *
 	 * Pattern: (*|&)[optional spaces][optional value]
 	 *
-	 * Parts:   
-	 * 			-'()' that contain a '&' or a '*' 
+	 * Parts:
+	 * 			-'()' that contain a '&' or a '*'
 	 *          -followed by '[]' with optional text
 	 * </pre>
 	*/
@@ -159,7 +157,7 @@ public class GnuDemanglerParser {
 	 * 		    std::basic_istream<char, std::char_traits<char> >& std::operator>><char, std::char_traits<char> >(std::basic_istream<char, std::char_traits<char> >&, char&)
 	 *          bool myContainer<int>::operator<< <double>(double)
 	 *          bool operator< <myContainer<int> >(myContainer<int> const&)
-	 *         
+	 *
 	 * Pattern: [return_type] operator operator_character(s) (opeartor_params) [trailing text]
 	 *
 	 * Parts:
@@ -168,7 +166,7 @@ public class GnuDemanglerParser {
 	 *          -optional space
 	 *          -optional templates (capture group 3)
 	 *          -parameters (capture group 4)
-	 *          
+	 *
 	 * Note:     this regex is generated from all known operator patterns and looks like:
 	 * 			(.*operator(generated_text).*)\s*(\(.*\))(.*)
 	 */
@@ -178,9 +176,9 @@ public class GnuDemanglerParser {
 	/*
 	* Sample:  std::integral_constant<bool, false>::operator bool() const
 	*          Magick::Color::operator std::basic_string<char, std::char_traits<char>, std::allocator<char> >() const
-	*         
+	*
 	* Pattern: operator type() [trailing text]
-	* 
+	*
 	* Parts:
 	* 			-operator (capture group 1)
 	* 			-space
@@ -211,13 +209,13 @@ public class GnuDemanglerParser {
 
 	/*
 	 * Pattern for newer C++ lambda syntax:
-	 * 
+	 *
 	 * Sample:  {lambda(void const*, unsigned int)#1}
 	 * 			{lambda(NS1::Class1 const&, int, int)#1} const&
 	 *          {lambda(auto:1&&)#1}<NS1::NS2>&&
-	 * 
+	 *
 	 * Pattern: [optional text] brace lambda([parameters])#digits brace [trailing text]
-	 * 
+	 *
 	 * Parts:
 	 * 			-full text without leading characters (capture group 1)
 	 *  		-parameters of the lambda function (capture group 2)
@@ -229,9 +227,9 @@ public class GnuDemanglerParser {
 
 	/*
 	 * Sample:  {unnamed type#1}
-	 * 
+	 *
 	 * Pattern: [optional text] brace unnamed type#digits brace
-	 * 
+	 *
 	 * Parts:
 	 * 			-full text without leading characters (capture group 1)
 	 */
@@ -239,9 +237,9 @@ public class GnuDemanglerParser {
 
 	/*
 	 * Sample:  covariant return thunk to Foo::Bar::copy(Foo::CoolStructure*) const
-	 * 
+	 *
 	 * Pattern: text for|to text
-	 * 
+	 *
 	 * Parts:
 	 * 			-required text (capture group 2) -+
 	 * 			-'for' or 'to' (capture group 3)  |  (capture group 1)
@@ -257,33 +255,33 @@ public class GnuDemanglerParser {
 	 *		typeinfo for
 	 *		guard variable for
 	 *		covariant return thunk to
-	 *		virtual thunk to 
+	 *		virtual thunk to
 	 *		non-virtual thunk to
 	 */
 	private static final Pattern DESCRIPTIVE_PREFIX_PATTERN =
 		Pattern.compile("((.+ )(for|to) )(.+)");
 
 	/**
-	 * The c 'decltype' keyword pattern 
+	 * The c 'decltype' keyword pattern
 	 */
 	private static final Pattern DECLTYPE_RETURN_TYPE_PATTERN =
 		Pattern.compile("decltype \\(.*\\)");
 
 	private static Pattern createOverloadedOperatorNamePattern() {
 
-		// note: the order of these matters--the single characters must come after the 
+		// note: the order of these matters--the single characters must come after the
 		//       multi-character entries; otherwise, the single characters will match before
 		//       longer matches
 		//@formatter:off
-		List<String> operators = new LinkedList<>(List.of(			
+		List<String> operators = new LinkedList<>(List.of(
 			"++", "--",
 			">>=", "<<=",
 			"->*", "->",
 			"==", "!=", ">=", "<=",
 			"&&", "||", ">>", "<<",
-			"+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", 
+			"+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=",
 			"+", "-", "*", "/", "%",
-			"~", "^", "&", "|", "!", "<", ">", "=",			
+			"~", "^", "&", "|", "!", "<", ">", "=",
 			",", "()"
 		));
 		//@formatter:on
@@ -293,12 +291,12 @@ public class GnuDemanglerParser {
 
 		//
 		// We have some extra 'operator' style constructs to add to the normal operator overloading
-		// 
-		// User Defined Literal 
-		// Sample: operator"" _init(char const*, unsigned long)  
-		//        
+		//
+		// User Defined Literal
+		// Sample: operator"" _init(char const*, unsigned long)
+		//
 		// Pattern: operator"" _someText(opeartor_params)
-		// 
+		//
 		String userDefinedLiteral = "\"\"\\s_.+";
 		String extra = userDefinedLiteral;
 		alternated += '|' + extra;
@@ -313,12 +311,22 @@ public class GnuDemanglerParser {
 		return Pattern.compile(operatorPrefix + parameters + trailing);
 	}
 
+	/**
+	 * Pattern to catch literal strings of the form:
+	 * 		
+	 * 		-1l
+	 * 		2l
+	 * 		0u
+	 * 		4294967295u
+	 */
+	private static final Pattern LITERAL_NUMBER_PATTERN = Pattern.compile("-*\\d+[ul]{0,1}");
+
 	private String mangledSource;
 	private String demangledSource;
 
 	/**
 	 * Parses the given demangled string and creates a {@link DemangledObject}
-	 * 
+	 *
 	 * @param mangled the original mangled text
 	 * @param demangled the demangled text
 	 * @return the demangled object
@@ -340,9 +348,9 @@ public class GnuDemanglerParser {
 	private DemangledObjectBuilder getSpecializedBuilder(String demangled) {
 
 		//
-		// Note: we check for the 'special handlers' first, since they are more specific than 
-		//       the other handlers here.  Checking for the operator handler first can produce 
-		//       errors, since some 'special handler' strings actually contain 'operator' 
+		// Note: we check for the 'special handlers' first, since they are more specific than
+		//       the other handlers here.  Checking for the operator handler first can produce
+		//       errors, since some 'special handler' strings actually contain 'operator'
 		//       signatures.  In those cases, the operator handler will incorrectly match on the
 		//       operator text.   Since the 'special handlers' perform more specific checks, it is
 		//       safe to do those first.
@@ -355,6 +363,13 @@ public class GnuDemanglerParser {
 		DemangledObjectBuilder operatorHandler = getOperatorHandler(demangled);
 		if (operatorHandler != null) {
 			return operatorHandler;
+		}
+
+		// Note: this really is a 'special handler' check that used to be handled above.  However, 
+		//       some demangled operator strings begin with this text.  If we do this check above,
+		//       then we will not correctly handle those operators.
+		if (mangledSource.startsWith("_ZZ")) {
+			return new ItemInNamespaceHandler(demangled);
 		}
 
 		return null;
@@ -401,9 +416,6 @@ public class GnuDemanglerParser {
 			return new ItemInNamespaceHandler(demangled, prefix, type);
 		}
 
-		if (mangled.startsWith("_ZZ")) {
-			return new ItemInNamespaceHandler(demangled);
-		}
 		return null;
 	}
 
@@ -424,12 +436,15 @@ public class GnuDemanglerParser {
 			// following that text in the original string.  We want the name to be the full lambda
 			// text, without spaces.
 			//
-			LambdaName lambdaName = getLambdaName(demangled);
+			String prefix = signatureParts.getRawParameterPrefix();
+			int lambdaStart = prefix.length() - LAMBDA_START.length(); // strip off '{lambda'
+			String lambdaText = demangled.substring(lambdaStart);
+			LambdaName lambdaName = getLambdaName(lambdaText);
 			String uniqueName = lambdaName.getFullText();
 			String escapedLambda = removeBadSpaces(uniqueName);
 			simpleName = simpleName.replace(LAMBDA_START, escapedLambda);
 			function = new DemangledLambda(mangledSource, demangled, null);
-			function.setSignature(lambdaName.getFullText());
+			function.setBackupPlateComment(lambdaName.getFullText());
 		}
 
 		//
@@ -441,16 +456,8 @@ public class GnuDemanglerParser {
 			function.addParameter(parameter);
 		}
 
-		// For GNU, we cannot leave the return type as null, because the DemangleCmd will fill in
-		// pointer to the class to accommodate windows demangling
-		DemangledDataType defaultReturnType =
-			new DemangledDataType(mangledSource, demangled, "undefined");
-		function.setReturnType(defaultReturnType);
-
 		String returnType = signatureParts.getReturnType();
-		if (returnType != null) {
-			setReturnType(function, returnType);
-		}
+		setReturnType(demangled, function, returnType);
 
 		if (demangled.endsWith(CONST)) {
 			function.setConst(true);
@@ -459,27 +466,54 @@ public class GnuDemanglerParser {
 		return function;
 	}
 
-	private void setReturnType(DemangledFunction function, String returnType) {
+	private void setReturnType(String demangled, DemangledFunction function, String returnType) {
 
-		if (DECLTYPE_RETURN_TYPE_PATTERN.matcher(returnType).matches()) {
+		String updatedReturnType = returnType;
+		if (returnType != null && DECLTYPE_RETURN_TYPE_PATTERN.matcher(returnType).matches()) {
 			// Not sure yet if there is any information we wish to recover from this pattern.
-			// Sample: decltype (functionName({parm#1}, (float)[42c80000])) 
+			// Sample: decltype (functionName({parm#1}, (float)[42c80000]))
+			updatedReturnType = null;
+		}
+
+		if (updatedReturnType != null) {
+			function.setReturnType(parseReturnType(updatedReturnType));
 			return;
 		}
 
-		function.setReturnType(parseReturnType(returnType));
+		// For GNU, we cannot leave the return type as null, because the DemangleCmd will fill in
+		// pointer to the class to accommodate windows demangling
+		DemangledDataType defaultReturnType =
+			new DemangledDataType(mangledSource, demangled, "undefined");
+		function.setReturnType(defaultReturnType);
 	}
 
 	private LambdaName getLambdaName(String name) {
 
-		Matcher matcher = LAMBDA_PATTERN.matcher(name);
+		if (!name.startsWith("{")) {
+			// the text must start with the lambda syntax; ignore lambdas that are internal to 
+			// the given name
+			return null;
+		}
+
+		// This replacement string will leave the initial 'lambda' text and replace all others
+		// with a placeholder value.  This allows us to use a simple regex pattern when pulling
+		// the lambda apart.   This is required to handle the case where a lambda expression 
+		// contains a nested lambda expression.
+		LambdaReplacedString replacedString = new LambdaReplacedString(name);
+		String updatedName = replacedString.getModifiedText();
+
+		Matcher matcher = LAMBDA_PATTERN.matcher(updatedName);
 		if (!matcher.matches()) {
 			return null;
 		}
 
+		// restore the placeholder values to get back the original lambda text
 		String fullText = matcher.group(1);
+		fullText = replacedString.restoreReplacedText(fullText);
 		String params = matcher.group(2);
+		params = replacedString.restoreReplacedText(params);
 		String trailing = matcher.group(3);
+		trailing = replacedString.restoreReplacedText(trailing);
 		String modifiers = matcher.group(4);
 		return new LambdaName(fullText, params, trailing, modifiers);
 	}
@@ -517,21 +551,48 @@ public class GnuDemanglerParser {
 		DemangledObject parent = parseFunctionOrVariable(parentText);
 		String name = itemText.substring(pos + 2);
 		DemangledObject item = parseFunctionOrVariable(name);
-		item.setNamespace(parent);
+
+		// 
+		// Convert the parent type to a suitable namespace.  The parent type may have spaces
+		// in its name, which is not allowed in an applied namespace.   
+		//
+		// We may eventually want to move this logic into the DemangledObject's 
+		// createNamespace() method.   This would also apply to the convertToNamespaces()
+		// method in this class.
+		//
+		String namespaceName = parent.getNamespaceName();
+		String escapedName = removeBadSpaces(namespaceName);
+		DemangledType type = new DemangledType(mangledSource, demangledSource, escapedName);
+		type.setNamespace(parent.getNamespace());
+
+		item.setNamespace(type);
 		return item;
 	}
 
 	/**
-	 * Removes spaces from unwanted places.  For example, all spaces internal to templates and 
+	 * Removes spaces from unwanted places.  For example, all spaces internal to templates and
 	 * parameter lists will be removed.   Also, other special cases may be handled, such as when
 	 * the 'unnamed type' construct is found.
-	 * 
+	 *
 	 * @param text the text to fix
 	 * @return the fixed text
 	 */
 	private String removeBadSpaces(String text) {
 		CondensedString condensedString = new CondensedString(text);
 		return condensedString.getCondensedText();
+	}
+
+	private String removeTrailingDereferenceCharacters(String text) {
+
+		int i = text.length() - 1;
+		for (; i >= 0; i--) {
+			char c = text.charAt(i);
+			if (c == '*' || c == '&') {
+				continue;
+			}
+			break;
+		}
+		return text.substring(0, i + 1);
 	}
 
 	/**
@@ -674,6 +735,12 @@ public class GnuDemanglerParser {
 			return dt;
 
 		}
+
+		// this handles the case where the demangled template has an empty argument
+		if ("".equals(parameter.trim())) {
+			return new DemangledDataType(mangledSource, demangledSource, "missing_argument");
+		}
+
 		return parseDataType(parameter);
 	}
 
@@ -686,8 +753,14 @@ public class GnuDemanglerParser {
 		DemangledDataType dt = createTypeInNamespace(fullDatatype);
 		String datatype = dt.getDemangledName();
 
-		if ("*".equals(datatype)) {
+		if (isMemberPointerOrReference(fullDatatype, datatype)) {
 			return createMemberPointer(fullDatatype);
+		}
+
+		// note: we should only encounter literals as template arguments.  Function parameters
+		//       and return types should never be literals.  
+		if (isLiteral(fullDatatype)) {
+			return createLiteral(fullDatatype);
 		}
 
 		boolean finishedName = false;
@@ -734,27 +807,41 @@ public class GnuDemanglerParser {
 				// lambda function
 				//      e.g., {lambda(NS1::Class1 const&, int, int)#1} const&
 				//            {lambda(auto:1&&)#1}<NS1::NS2>>&&
-				// 
+				//
 
 				LambdaName lambdaName = getLambdaName(datatype);
 
-				// check for array case
-				Matcher arrayMatcher = ARRAY_POINTER_REFERENCE_PATTERN.matcher(datatype);
-				if (arrayMatcher.matches()) {
-					Demangled namespace = dt.getNamespace();
-					String name = arrayMatcher.group(1);// group 0 is the entire string
-					dt = parseArrayPointerOrReference(datatype, name, arrayMatcher);
-					dt.setNamespace(namespace);
-					i = arrayMatcher.end();
+				//
+				// Check for array case
+				//
+				// remove the templates to allow us to use a simpler regex when checking for arrays				
+				DemangledDataType newDt = tryToParseArrayPointerOrReference(dt, datatype);
+				if (newDt != null) {
+					dt = newDt;
+					i = datatype.length();
 				}
+				// lambda case, maybe an array
 				else if (lambdaName != null) {
-					String fullText = lambdaName.getFullText();
-					dt.setName(fullText);
-					int offset = fullText.indexOf('(');
-					int remaining = fullText.length() - offset;
-					i = i + remaining; // end of lambda's closing '}'
-					i = i - 1; // back up one space to catch optional templates on next loop pass
+
+					DemangledDataType lambdaArrayDt =
+						tryToParseLambdaArrayPointerOrReference(lambdaName, dt, datatype);
+					if (lambdaArrayDt != null) {
+						dt = lambdaArrayDt;
+						i = datatype.length();
+					}
+					else {
+						// try a non-array lambda
+						String fullText = lambdaName.getFullText();
+						dt.setName(fullText);
+						int offset = fullText.indexOf('(');
+						// to to the end of the lambda, which is its length, minus our position 
+						// inside the lambda
+						int remaining = fullText.length() - offset;
+						i = i + remaining; // end of lambda's closing '}'
+						i = i - 1; // back up one space to catch optional templates on next loop pass
+					}
 				}
+				// function pointer case
 				else {
 					// e.g., unsigned long (*)(long const &)
 					boolean hasPointerParens = hasConsecutiveSetsOfParens(datatype.substring(i));
@@ -860,6 +947,81 @@ public class GnuDemanglerParser {
 		return dt;
 	}
 
+	private DemangledDataType createLiteral(String datatype) {
+
+		// literal cases handled: -1, -1l, -1ul
+		char lastChar = datatype.charAt(datatype.length() - 1);
+		if (lastChar == 'l') {
+			return new DemangledDataType(mangledSource, demangledSource, "long");
+		}
+
+		return new DemangledDataType(mangledSource, demangledSource, "int");
+	}
+
+	private boolean isLiteral(String fullDatatype) {
+		Matcher m = LITERAL_NUMBER_PATTERN.matcher(fullDatatype);
+		return m.matches();
+	}
+
+	private DemangledDataType tryToParseLambdaArrayPointerOrReference(LambdaName lambdaName,
+			DemangledDataType dt, String datatype) {
+
+		// remove the lambda text to allow us to use a simpler regex when checking for arrays
+		String fullText = lambdaName.getFullText();
+		ReplacedString lambdaString = new CustomReplacedString(datatype, fullText);
+		String noLambdaString = lambdaString.getModifiedText();
+
+		Matcher matcher = ARRAY_POINTER_REFERENCE_PATTERN.matcher(noLambdaString);
+		if (!matcher.find()) {
+			return null;
+		}
+
+		int start = matcher.start(0);
+		String leading = noLambdaString.substring(0, start);
+		leading = removeTrailingDereferenceCharacters(leading);
+
+		Demangled namespace = dt.getNamespace();
+		String name = leading;
+		DemangledDataType newDt = parseArrayPointerOrReference(datatype, name, lambdaString,
+			matcher);
+		newDt.setNamespace(namespace);
+		return newDt;
+	}
+
+	private DemangledDataType tryToParseArrayPointerOrReference(DemangledDataType dt,
+			String datatype) {
+
+		ReplacedString templatedString = new TemplatedString(datatype);
+		String untemplatedDatatype = templatedString.getModifiedText();
+
+		Matcher matcher = ARRAY_POINTER_REFERENCE_PATTERN.matcher(untemplatedDatatype);
+		if (!matcher.find()) {
+			return null;
+		}
+
+		int start = matcher.start(0);
+		String leading = untemplatedDatatype.substring(0, start);
+		leading = removeTrailingDereferenceCharacters(leading);
+
+		Demangled namespace = dt.getNamespace();
+		String name = leading;
+		DemangledDataType newDt = parseArrayPointerOrReference(datatype, name, templatedString,
+			matcher);
+		newDt.setNamespace(namespace);
+		return newDt;
+	}
+
+	private boolean isMemberPointerOrReference(String fullDataType, String datatype) {
+
+		String test = datatype;
+		test = test.replaceAll("const|\\*|&|\\s", "");
+		if (!test.isEmpty()) {
+			return false;
+		}
+
+		return fullDataType.endsWith(Namespace.DELIMITER + datatype);
+	}
+
 	private boolean hasConsecutiveSetsOfParens(String text) {
 		int end = findBalancedEnd(text, 0, '(', ')');
 		if (end < -1) {
@@ -873,9 +1035,12 @@ public class GnuDemanglerParser {
 	private DemangledDataType createMemberPointer(String datatype) {
 		// this is temp code we expect to update as more samples arrive
 
-		// example: NS1::Type1 NS1::ParenType::*
-		int trimLength = 3; // '::*'
-		String typeWithoutPointer = datatype.substring(0, datatype.length() - trimLength);
+		//
+		// Examples:
+		// Type NS1::Type1 NS1::ParenType::*
+		// Type NS1::Type1 NS1::ParenType::* const&
+		int namespaceEnd = datatype.lastIndexOf(Namespace.DELIMITER);
+		String typeWithoutPointer = datatype.substring(0, namespaceEnd);
 		int space = typeWithoutPointer.indexOf(' ');
 		DemangledDataType dt;
 		if (space != -1) {
@@ -897,30 +1062,31 @@ public class GnuDemanglerParser {
 	private boolean isDataTypeNameCharacter(char ch) {
 
 		/*
-			Note: really, this should just be checking a list of known disallowed characters, 
+			Note: really, this should just be checking a list of known disallowed characters,
 				  which is something like:
-				  
+		
 				  <,>,(,),&,*,[,]
 		
 		 		  It seems like the current code below is unnecessarily restrictive
 		 */
 
 		//@formatter:off
-		return Character.isLetter(ch) || 
-			   Character.isDigit(ch) || 
-			   ch == ':' || 
+		return Character.isLetter(ch) ||
+			   Character.isDigit(ch) ||
+			   ch == ':' ||
 			   ch == '_' ||
+			   ch == '{' ||
 			   ch == '$';
 		//@formatter:on
 	}
 
 	/**
-	 * Scans the given string from the given offset looking for a balanced {@code close} 
-	 * character.   This algorithm will not report a match for the end character until the 
+	 * Scans the given string from the given offset looking for a balanced {@code close}
+	 * character.   This algorithm will not report a match for the end character until the
 	 * {@code open} character has first been found.   This allows clients to scan from anywhere
 	 * in a string to find an open and start character combination, including at or before the
 	 * desired opening character.
-	 *  
+	 *
 	 * @param string the input string
 	 * @param start the start position within the string
 	 * @param open the open character (e.g, '(' or '<')
@@ -951,12 +1117,12 @@ public class GnuDemanglerParser {
 	}
 
 	/**
-	 * Scans the given string from the given offset looking for a balanced {@code open} 
-	 * character.   This algorithm will not report a match for the open character until the 
+	 * Scans the given string from the given offset looking for a balanced {@code open}
+	 * character.   This algorithm will not report a match for the open character until the
 	 * {@code end} character has first been found.   This allows clients to scan from anywhere
 	 * in a string to find an open and start character combination, including at or before the
 	 * desired opening character.
-	 *  
+	 *
 	 * @param string the input string
 	 * @param start the start position within the string
 	 * @param open the open character (e.g, '(' or '<')
@@ -997,11 +1163,11 @@ public class GnuDemanglerParser {
 	/**
 	 * Walks backward from the given start position to find the next namespace separator.  This
 	 * allows clients to determine if a given position is inside of a namespace.
-	 * 
+	 *
 	 * @param text the text to search
 	 * @param start the start position
 	 * @param stop the stop position
-	 * @return the start index of the namespace entry containing the current {@code start} 
+	 * @return the start index of the namespace entry containing the current {@code start}
 	 *         index; -1 if no namespace start is found
 	 */
 	private int findNamespaceStart(String text, int start, int stop) {
@@ -1118,12 +1284,16 @@ public class GnuDemanglerParser {
 	}
 
 	private DemangledDataType parseArrayPointerOrReference(String datatype, String name,
-			Matcher matcher) {
+			ReplacedString replacedString, Matcher matcher) {
+
 		// int (*)[8]
 		// char (&)[7]
+		// Foo<Bar> const* const (&) [3]
 
-		DemangledDataType dt = new DemangledDataType(mangledSource, demangledSource, name);
-		String type = matcher.group(2);
+		String realName = replacedString.restoreReplacedText(name);
+
+		DemangledDataType dt = new DemangledDataType(mangledSource, demangledSource, realName);
+		String type = matcher.group(1);
 		if (type.equals("*")) {
 			dt.incrementPointerLevels();
 		}
@@ -1134,9 +1304,29 @@ public class GnuDemanglerParser {
 			throw new DemanglerParseException("Unexpected charater inside of parens: " + type);
 		}
 
-		String arraySubscripts = matcher.group(3);
-		int n = StringUtilities.countOccurrences(arraySubscripts, '[');
-		dt.setArray(n);
+		//
+		// Grab the middle text, for example, inside:
+		//
+		// 		Foo<Bar> const* const (&) [3]
+		//
+		// we would like to grab 'const* const(&)' and similar text such as 'const* const*'
+		//
+		String safeDatatype = replacedString.getModifiedText();
+		int midTextStart = safeDatatype.indexOf(name) + name.length();
+		int midTextEnd = matcher.start(1) - 1; // -1 for opening '('
+		String midText = safeDatatype.substring(midTextStart, midTextEnd);
+		if (midText.contains(CONST)) {
+			dt.setConst();
+		}
+
+		int pointers = StringUtils.countMatches(midText, '*');
+		for (int i = 0; i < pointers; i++) {
+			dt.incrementPointerLevels();
+		}
+
+		String arraySubscripts = matcher.group(2);
+		int arrays = StringUtilities.countOccurrences(arraySubscripts, '[');
+		dt.setArray(arrays);
 
 		return dt;
 	}
@@ -1145,14 +1335,14 @@ public class GnuDemanglerParser {
 		//unsigned long (*)(long const &)
 
 		int parenStart = functionString.indexOf('(');
-		int parenEnd = functionString.indexOf(')');
-
+		int parenEnd = findBalancedEnd(functionString, parenStart, '(', ')');
 		String returnType = functionString.substring(0, parenStart).trim();
 
 		int paramStart = functionString.indexOf('(', parenEnd + 1);
 		int paramEnd = functionString.lastIndexOf(')');
 		String parameters = functionString.substring(paramStart + 1, paramEnd);
-		return createFunctionPointer(parameters, returnType);
+		DemangledFunctionPointer dfp = createFunctionPointer(parameters, returnType);
+		return dfp;
 	}
 
 	private DemangledFunctionPointer parseFunction(String functionString, int offset) {
@@ -1160,7 +1350,6 @@ public class GnuDemanglerParser {
 
 		int parenStart = functionString.indexOf('(', offset);
 		int parenEnd = findBalancedEnd(functionString, parenStart, '(', ')');
-		//int parenEnd = functionString.indexOf(')', parenStart + 1);
 
 		String returnType = functionString.substring(0, parenStart).trim();
 
@@ -1168,7 +1357,9 @@ public class GnuDemanglerParser {
 		int paramEnd = parenEnd;
 		String parameters = functionString.substring(paramStart + 1, paramEnd);
 		DemangledFunctionPointer dfp = createFunctionPointer(parameters, returnType);
-		dfp.setDisplayFunctionPointerParens(false);
+
+		// disable the function pointer display so this type reads like a function
+		dfp.setDisplayDefaultFunctionPointerSyntax(false);
 		return dfp;
 	}
 
@@ -1190,9 +1381,9 @@ public class GnuDemanglerParser {
 
 		/*
 		 	Examples:
-		 	
+		
 		 		NS1::Function<>()::StructureName::StructureConstructor()
-		 	
+		
 		 */
 
 		String nameString = removeBadSpaces(demangled).trim();
@@ -1207,10 +1398,10 @@ public class GnuDemanglerParser {
 	 * Given names = { "A", "B", "C" }, which represents "A::B::C".
 	 * The following will be created {@literal "Namespace{A}->Namespace{B}->Namespace{C}"}
 	 * and Namespace{C} will be returned.
-	 * 
+	 *
 	 * <p>This method will also escape spaces separators inside of templates
 	 * (see {@link #removeBadSpaces(String)}).
-	 * 
+	 *
 	 * @param names the names to convert
 	 * @return the newly created type
 	 */
@@ -1328,7 +1519,6 @@ public class GnuDemanglerParser {
 		DemangledObject doBuild(Demangled demangledObject) {
 
 			DemangledFunction function = (DemangledFunction) demangledObject;
-			function.setSignature(type);
 			function.setCallingConvention(CompilerSpec.CALLING_CONVENTION_thiscall);
 
 			DemangledThunk thunk = new DemangledThunk(mangledSource, demangledSource, function);
@@ -1356,7 +1546,7 @@ public class GnuDemanglerParser {
 		DemangledObject doBuild(Demangled namespace) {
 			DemangledString demangledString = new DemangledString(mangledSource, demangledSource,
 				"typeinfo-name", type, -1/*unknown length*/, false);
-			demangledString.setSpecialPrefix("typeinfo name for ");
+			demangledString.setSpecialPrefix(TYPEINFO_NAME_FOR);
 			String namespaceString = removeBadSpaces(type);
 			setNamespace(demangledString, namespaceString);
 			return demangledString;
@@ -1373,15 +1563,15 @@ public class GnuDemanglerParser {
 
 			/*
 			 Samples:
-			 	 prefix: construction vtable for 
+			 	 prefix: construction vtable for
 			 	 name:   construction-vtable
-			 	 
-			 	 prefix: vtable for 
+			
+			 	 prefix: vtable for
 			 	 name:   vtable
-			 
-			 	 prefix: typeinfo name for 
+			
+			 	 prefix: typeinfo name for
 			 	 name:   typeinfo-name
-			 	 
+			
 			 	 prefix: covariant return thunk
 			 	 name:   covariant-return
 			*/
@@ -1438,9 +1628,9 @@ public class GnuDemanglerParser {
 			int end = matcher.end(2); // operator chars start
 
 			//
-			// The 'operator' functions have symbols that confuse our default function parsing.  
-			// Specifically, operators that use shift symbols (<, <<, >, >>) will cause our 
-			// template parsing to fail.  To defeat the failure, we will install a temporary 
+			// The 'operator' functions have symbols that confuse our default function parsing.
+			// Specifically, operators that use shift symbols (<, <<, >, >>) will cause our
+			// template parsing to fail.  To defeat the failure, we will install a temporary
 			// function name here and then restore it after parsing is finished.
 			//
 
@@ -1549,9 +1739,14 @@ public class GnuDemanglerParser {
 			// Ghidra does not allow spaces in the name or extra parens. So, make a name that is
 			// as clear as possible in describing the construct.
 			//
+			if (shortReturnTypeName.contains("(")) {
+				// assume function pointer
+				shortReturnTypeName = "function.pointer";
+			}
+
 			method.setName("operator.cast.to." + shortReturnTypeName);
 
-			method.setSignature(fullName + " " + fullReturnType);
+			method.setBackupPlateComment(fullName + " " + fullReturnType + "()");
 			method.setOverloadedOperator(true);
 
 			return method;
@@ -1608,10 +1803,9 @@ public class GnuDemanglerParser {
 			if (arrayBrackets != null) {
 				name += "[]";
 			}
+
 			function.setName("operator." + name);
-
-			function.setSignature(operatorText + " " + operatorName);
-
+			function.setBackupPlateComment(operatorText + " " + operatorName);
 			return function;
 		}
 	}
@@ -1632,6 +1826,7 @@ public class GnuDemanglerParser {
 				paramEnd = -1;
 				return;
 			}
+
 			paramStart = findParameterStart(text, paramEnd);
 			int templateEnd = findTemplateEnd(text, 0);
 			int templateStart = -1;
@@ -1721,7 +1916,7 @@ public class GnuDemanglerParser {
 	}
 
 	/**
-	 * An object that will parse a function signature string into parts: return type, name, 
+	 * An object that will parse a function signature string into parts: return type, name,
 	 * and parameters.  {@link #isValidFunction()} can be called to check if the given sting is
 	 * indeed a function signature.
 	 */
@@ -1731,6 +1926,7 @@ public class GnuDemanglerParser {
 
 		private String returnType;
 		private String name;
+		private String rawParameterPrefix;
 
 		private List<DemangledDataType> parameters;
 
@@ -1750,9 +1946,9 @@ public class GnuDemanglerParser {
 
 			// 'prefix' is the text before the parameters
 			int prefixEndPos = paramStart;
-			String rawPrefix = signatureString.substring(0, prefixEndPos).trim();
+			rawParameterPrefix = signatureString.substring(0, prefixEndPos).trim();
 
-			CondensedString prefixString = new CondensedString(rawPrefix);
+			CondensedString prefixString = new CondensedString(rawParameterPrefix);
 			String prefix = prefixString.getCondensedText();
 			int nameStart = Math.max(0, prefix.lastIndexOf(' '));
 			name = prefix.substring(nameStart, prefix.length()).trim();
@@ -1769,6 +1965,11 @@ public class GnuDemanglerParser {
 
 		String getName() {
 			return name;
+		}
+
+		// this is the original demangled text up to, but excluding, the parameters
+		String getRawParameterPrefix() {
+			return rawParameterPrefix;
 		}
 
 		boolean isValidFunction() {
@@ -1790,8 +1991,8 @@ public class GnuDemanglerParser {
 	 * remove bad spaces, which is all whitespace that is not needed to separate distinct objects
 	 * inside of a demangled string.
 	 *
-	 * <p>Generally, this class removes spaces within templates and parameter lists.   It will 
-	 * remove some spaces, while converting some to underscores.   
+	 * <p>Generally, this class removes spaces within templates and parameter lists.   It will
+	 * remove some spaces, while converting some to underscores.
 	 */
 	private class CondensedString {
 
@@ -1861,7 +2062,7 @@ public class GnuDemanglerParser {
 		}
 
 		/**
-		 * Returns the original string value that has been 'condensed', which means to remove 
+		 * Returns the original string value that has been 'condensed', which means to remove
 		 * internal spaces
 		 * @return the condensed string
 		 */
@@ -1883,5 +2084,150 @@ public class GnuDemanglerParser {
 				return Json.toString(this);
 			}
 		}
+	}
+
+	/**
+	 * A class that allows us to pass around string content that has had some of its text
+	 * replaced with temporary values.   Clients can also use this class to get back the original 
+	 * text. 
+	 */
+	private abstract class ReplacedString {
+
+		static final String PLACEHOLDER = "REPLACEDSTRINGTEMPNAMEPLACEHOLDERVALUE";
+
+		@SuppressWarnings("unused") // used by toString()
+		private String sourceText;
+
+		ReplacedString(String sourceText) {
+			this.sourceText = sourceText;
+		}
+
+		abstract String restoreReplacedText(String modifiedText);
+
+		abstract String getModifiedText();
+
+		@Override
+		public String toString() {
+			return Json.toString(this);
+		}
+	}
+
+	/**
+	 * A string that clients can use to replace specific text patterns
+	 */
+	private class CustomReplacedString extends ReplacedString {
+
+		private String placeholderText = getClass().getSimpleName().toUpperCase() + PLACEHOLDER;
+		private String replacedText;
+		private String modifiedText;
+
+		CustomReplacedString(String input, String textToReplace) {
+			super(input);
+			this.replacedText = textToReplace;
+			this.modifiedText = input.replace(textToReplace, placeholderText);
+		}
+
+		@Override
+		String restoreReplacedText(String mutatedText) {
+			return mutatedText.replace(placeholderText, replacedText);
+		}
+
+		@Override
+		String getModifiedText() {
+			return modifiedText;
+		}
+	}
+
+	/**
+	 * A simple class to replace templates with a temporary placeholder value
+	 */
+	private class TemplatedString extends ReplacedString {
+
+		private String placeholderText = getClass().getSimpleName().toUpperCase() + PLACEHOLDER;
+
+		private String replacedText;
+		private String modifiedText;
+
+		TemplatedString(String input) {
+			super(input);
+			replaceTemplates(input);
+		}
+
+		private void replaceTemplates(String string) {
+			StringBuilder buffy = new StringBuilder();
+			StringBuilder templateBuffer = new StringBuilder();
+			int depth = 0;
+			for (int i = 0; i < string.length(); i++) {
+				char c = string.charAt(i);
+				if (c == '<') {
+					if (depth == 0) {
+						buffy.append(placeholderText);
+					}
+
+					templateBuffer.append(c);
+					depth++;
+					continue;
+				}
+				else if (c == '>') {
+					templateBuffer.append(c);
+					depth--;
+					continue;
+				}
+
+				if (depth == 0) {
+					buffy.append(c);
+				}
+				else {
+					templateBuffer.append(c);
+				}
+			}
+
+			modifiedText = buffy.toString();
+			replacedText = templateBuffer.toString();
+		}
+
+		@Override
+		String restoreReplacedText(String s) {
+			return s.replace(placeholderText, replacedText);
+		}
+
+		@Override
+		String getModifiedText() {
+			return modifiedText;
+		}
+	}
+
+	/**
+	 * A simple class to replace the text 'lambda' with a temporary placeholder value
+	 */
+	private class LambdaReplacedString extends ReplacedString {
+
+		private String placeholderText = getClass().getSimpleName().toUpperCase() + PLACEHOLDER;
+		private String modifiedText;
+
+		LambdaReplacedString(String input) {
+			super(input);
+
+			StringBuilder buffer = new StringBuilder();
+			Pattern p = Pattern.compile(LAMBDA);
+			Matcher matcher = p.matcher(input);
+			matcher.find(); // keep the first match
+			while (matcher.find()) {
+				matcher.appendReplacement(buffer, placeholderText);
+			}
+			matcher.appendTail(buffer);
+			modifiedText = buffer.toString();
+		}
+
+		@Override
+		String restoreReplacedText(String s) {
+			return s.replaceAll(placeholderText, LAMBDA);
+		}
+
+		@Override
+		String getModifiedText() {
+			return modifiedText;
+		}
+
 	}
 }

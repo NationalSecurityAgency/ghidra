@@ -15,9 +15,10 @@
  */
 package docking;
 
+import java.util.*;
+
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -52,21 +53,24 @@ public class DialogComponentProvider
 	private static final String PROGRESS = "Progress";
 	private static final String DEFAULT = "No Progress";
 
-	protected JPanel rootPanel;
+	private static int idCounter;
+
+	private int id = ++idCounter;
 
 	private boolean modal;
 	private String title;
 
+	protected JPanel rootPanel;
 	private JPanel mainPanel;
 	private JComponent workPanel;
-	private JPanel buttonPanel;
+	protected JPanel buttonPanel;
 	private JPanel statusPanel;
 	protected JButton okButton;
 	protected JButton applyButton;
 	protected JButton cancelButton;
 	protected JButton dismissButton;
 	private boolean isAlerting;
-	private JLabel statusLabel;
+	private GDHtmlLabel statusLabel;
 	private JPanel statusProgPanel; // contains status panel and progress panel
 	private Timer showTimer;
 	private TaskScheduler taskScheduler;
@@ -187,6 +191,10 @@ public class DialogComponentProvider
 	/** a callback mechanism for children to do work */
 	protected void doInitialize() {
 		// may be overridden by subclasses
+	}
+
+	public int getId() {
+		return id;
 	}
 
 	public JComponent getComponent() {
@@ -690,7 +698,7 @@ public class DialogComponentProvider
 		});
 	}
 
-	private Color getStatusColor(MessageType type) {
+	protected Color getStatusColor(MessageType type) {
 		switch (type) {
 			case ALERT:
 				return Color.orange;

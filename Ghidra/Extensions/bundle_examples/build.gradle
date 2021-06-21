@@ -30,7 +30,7 @@ eclipse.project.name = 'Xtra Bundle Examples'
 
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }
 
 
@@ -50,8 +50,8 @@ srcDirs.each {dirName ->
 // create and return a jar task for the given source directory
 def makeJarTask(dirName) {
 	return tasks.create("build${dirName}", Jar) {
-		baseName  dirName
-		archiveName "${dirName}.jar"
+		archiveBaseName =  dirName
+		archiveFileName = "${dirName}.jar"
 		ext.dirName=dirName
 
 
@@ -91,8 +91,8 @@ eclipse {
 // "$rootProject.projectDir/gradle/support/extensionCommon.gradle"
 task zipExtensions(type: Zip, dependsOn:jarTasks) {
 	def p = this.project
-	archiveName "${rootProject.ext.ZIP_NAME_PREFIX}_${p.name}.zip"
-	destinationDir rootProject.ext.DISTRIBUTION_DIR
+	archiveFileName = "${rootProject.ext.ZIP_NAME_PREFIX}_${p.name}.zip"
+	destinationDirectory = rootProject.ext.DISTRIBUTION_DIR
 
 	duplicatesStrategy 'exclude'
 

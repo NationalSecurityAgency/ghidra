@@ -30,10 +30,11 @@ class Architecture;
 /// Stores the decoded string until its needed for presentation.
 class StringManager {
 protected:
+  /// \brief String data (a sequence of bytes) stored by StringManager
   class StringData {
   public:
-    bool isTruncated;		// \b true if the the string is truncated
-    vector<uint1> byteData;	// UTF8 encoded string data
+    bool isTruncated;		///< \b true if the the string is truncated
+    vector<uint1> byteData;	///< UTF8 encoded string data
   };
   map<Address,StringData> stringMap;	///< Map from address to string data
   int4 maximumChars;			///< Maximum characters in a string before truncating

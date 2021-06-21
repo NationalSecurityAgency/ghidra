@@ -18,6 +18,10 @@
  */
 package ghidra.program.database.symbol;
 
+import java.io.IOException;
+import java.util.Set;
+
+import db.*;
 import ghidra.program.database.map.AddressIndexPrimaryKeyIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
@@ -25,11 +29,6 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-import java.util.Set;
-
-import db.*;
 
 /**
  * <code>SymbolDatabaseAdapterV0</code> handles symbol tables which were created 
@@ -81,8 +80,8 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 		}
 	}
 
-	long extractLocalSymbols(DBHandle handle, TaskMonitor monitor) throws IOException,
-			CancelledException {
+	long extractLocalSymbols(DBHandle handle, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		monitor.setMessage("Extracting Local and Dynamic Symbols...");
 		monitor.initialize(symbolTable.getRecordCount());
@@ -90,7 +89,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 		RecordIterator iter = symbolTable.iterator();
 		while (iter.hasNext()) {
 			monitor.checkCanceled();
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			if (rec.getBooleanValue(V0_SYMBOL_LOCAL_COL)) {
 				SymbolManager.saveLocalSymbol(handle, rec.getKey(),
 					rec.getLongValue(V0_SYMBOL_ADDR_COL), rec.getString(V0_SYMBOL_NAME_COL),
@@ -101,7 +100,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 		return symbolTable.getKey();
 	}
 
-	private Record convertRecord(Record record) {
+	private DBRecord convertRecord(DBRecord record) {
 		if (record == null) {
 			return null;
 		}
@@ -109,7 +108,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 			record.getBooleanValue(V0_SYMBOL_LOCAL_COL)) {
 			throw new AssertException("Unexpected Symbol");
 		}
-		Record rec = SymbolDatabaseAdapter.SYMBOL_SCHEMA.createRecord(record.getKey());
+		DBRecord rec = SymbolDatabaseAdapter.SYMBOL_SCHEMA.createRecord(record.getKey());
 		rec.setString(SymbolDatabaseAdapter.SYMBOL_NAME_COL, record.getString(V0_SYMBOL_NAME_COL));
 		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL,
 			record.getLongValue(V0_SYMBOL_ADDR_COL));
@@ -124,89 +123,59 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
-	Record createSymbol(String name, Address address, long namespaceID, SymbolType symbolType,
+	DBRecord createSymbol(String name, Address address, long namespaceID, SymbolType symbolType,
 			long data1, int data2, String data3, SourceType source) {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#removeSymbol(long)
-	 */
 	@Override
 	void removeSymbol(long symbolID) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#hasSymbol(ghidra.program.model.address.Address)
-	 */
 	@Override
 	boolean hasSymbol(Address addr) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#getSymbolIDs(ghidra.program.model.address.Address)
-	 */
 	@Override
-	long[] getSymbolIDs(Address addr) throws IOException {
+	Field[] getSymbolIDs(Address addr) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#getSymbolRecord(long)
-	 */
 	@Override
-	Record getSymbolRecord(long symbolID) throws IOException {
+	DBRecord getSymbolRecord(long symbolID) throws IOException {
 		return convertRecord(symbolTable.getRecord(symbolID));
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#getSymbolCount()
-	 */
 	@Override
 	int getSymbolCount() {
 		return symbolTable.getRecordCount();
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#getSymbolsByAddress()
-	 */
 	@Override
 	RecordIterator getSymbolsByAddress(boolean forward) throws IOException {
 		return new V0ConvertedRecordIterator(new KeyToRecordIterator(symbolTable,
 			new AddressIndexPrimaryKeyIterator(symbolTable, V0_SYMBOL_ADDR_COL, addrMap, forward)));
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#getSymbolsByAddress(ghidra.program.model.address.Address, boolean)
-	 */
 	@Override
 	RecordIterator getSymbolsByAddress(Address startAddr, boolean forward) throws IOException {
-		return new V0ConvertedRecordIterator(new KeyToRecordIterator(symbolTable,
-			new AddressIndexPrimaryKeyIterator(symbolTable, V0_SYMBOL_ADDR_COL, addrMap, startAddr,
-				forward)));
+		return new V0ConvertedRecordIterator(
+			new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
+				V0_SYMBOL_ADDR_COL, addrMap, startAddr, forward)));
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#updateSymbolRecord(ghidra.framework.store.db.Record)
-	 */
 	@Override
-	void updateSymbolRecord(Record record) throws IOException {
+	void updateSymbolRecord(DBRecord record) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#getSymbols()
-	 */
 	@Override
 	RecordIterator getSymbols() throws IOException {
 		return new V0ConvertedRecordIterator(symbolTable.iterator());
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#getSymbols(ghidra.program.model.address.Address, ghidra.program.model.address.Address, boolean)
-	 */
 	@Override
 	RecordIterator getSymbols(Address start, Address end, boolean forward) throws IOException {
 
@@ -214,47 +183,32 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 			throw new UnsupportedOperationException();
 //TODO: Is there any reason we need to support reverse symbol iteration ???
 		// Yes, to search text backwards!
-		return new V0ConvertedRecordIterator(new KeyToRecordIterator(symbolTable,
-			new AddressIndexPrimaryKeyIterator(symbolTable, V0_SYMBOL_ADDR_COL, addrMap, start,
-				end, forward)));
+		return new V0ConvertedRecordIterator(
+			new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
+				V0_SYMBOL_ADDR_COL, addrMap, start, end, forward)));
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#deleteExternalEntries(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
-	 */
 	void deleteExternalEntries(Address start, Address end) {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#moveAddress(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
-	 */
 	@Override
 	void moveAddress(Address oldAddr, Address newAddr) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.LabelHistoryAdapter#moveAddressRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address, long, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws CancelledException, IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#deleteAddressRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	Set<Address> deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException, IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#getSymbolsByNamespace(long)
-	 */
 	@Override
 	RecordIterator getSymbolsByNamespace(long id) throws IOException {
 
@@ -264,20 +218,17 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#getSymbolsByName(java.lang.String)
-	 */
 	@Override
 	RecordIterator getSymbolsByName(String name) throws IOException {
 		StringField val = new StringField(name);
-		return new V0ConvertedRecordIterator(symbolTable.indexIterator(V0_SYMBOL_NAME_COL, val,
-			val, true));
+		return new V0ConvertedRecordIterator(
+			symbolTable.indexIterator(V0_SYMBOL_NAME_COL, val, val, true));
 	}
 
 	private class V0ConvertedRecordIterator implements RecordIterator {
 
 		private RecordIterator symIter;
-		private Record rec;
+		private DBRecord rec;
 
 		/**
 		 * Construct a symbol filtered record iterator
@@ -288,9 +239,6 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 			this.symIter = symIter;
 		}
 
-		/*
-		 * @see db.RecordIterator#hasNext()
-		 */
 		@Override
 		public boolean hasNext() throws IOException {
 			if (rec == null) {
@@ -305,38 +253,26 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 			return rec != null;
 		}
 
-		/*
-		 * @see db.RecordIterator#hasPrevious()
-		 */
 		@Override
 		public boolean hasPrevious() throws IOException {
 			throw new UnsupportedOperationException();
 		}
 
-		/*
-		 * @see db.RecordIterator#next()
-		 */
 		@Override
-		public Record next() throws IOException {
+		public DBRecord next() throws IOException {
 			if (hasNext()) {
-				Record r = rec;
+				DBRecord r = rec;
 				rec = null;
 				return convertRecord(r);
 			}
 			return null;
 		}
 
-		/*
-		 * @see db.RecordIterator#previous()
-		 */
 		@Override
-		public Record previous() throws IOException {
+		public DBRecord previous() throws IOException {
 			throw new UnsupportedOperationException();
 		}
 
-		/*
-		 * @see db.RecordIterator#delete()
-		 */
 		@Override
 		public boolean delete() throws IOException {
 			throw new UnsupportedOperationException();
@@ -344,17 +280,11 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#getTable()
-	 */
 	@Override
 	Table getTable() {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDatabaseAdapter#getMaxSymbolAddress(ghidra.program.model.address.AddressSpace)
-	 */
 	@Override
 	Address getMaxSymbolAddress(AddressSpace space) throws IOException {
 		throw new UnsupportedOperationException();

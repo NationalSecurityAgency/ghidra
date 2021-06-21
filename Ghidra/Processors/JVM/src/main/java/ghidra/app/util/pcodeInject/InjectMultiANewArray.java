@@ -28,11 +28,6 @@ public class InjectMultiANewArray extends InjectPayloadJava {
 	}
 
 	@Override
-	public String getName() {
-		return PcodeInjectLibraryJava.MULTIANEWARRAY;
-	}
-
-	@Override
 	public PcodeOp[] getPcode(Program program, InjectContext con) {
 		AbstractConstantPoolInfoJava[] constantPool = getConstantPool(program);
 		int constantPoolIndex = (int) con.inputlist.get(0).getOffset();

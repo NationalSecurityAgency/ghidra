@@ -35,11 +35,6 @@ class MSRichProductBuildNumberDataType extends DataTypeImpl {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
-		return false;
-	}
-
-	@Override
 	public DataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;

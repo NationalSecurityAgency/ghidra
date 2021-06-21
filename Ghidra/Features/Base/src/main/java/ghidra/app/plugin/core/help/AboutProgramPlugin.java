@@ -106,7 +106,7 @@ public class AboutProgramPlugin extends Plugin implements FrontEndable {
 						ProgramActionContext pac = (ProgramActionContext) context;
 						Program program = pac.getProgram();
 						if (program != null) {
-							String menuName = "About " + program.getDomainFile().getName() + "...";
+							String menuName = "About " + program.getDomainFile().getName();
 							getMenuBarData().setMenuItemName(menuName);
 							return true;
 						}
@@ -115,6 +115,7 @@ public class AboutProgramPlugin extends Plugin implements FrontEndable {
 					return false;
 				}
 			};
+			aboutAction.addToWindowWhen(ProgramActionContext.class);
 			aboutAction.setSupportsDefaultToolContext(true);
 
 			aboutAction.setMenuBarData(

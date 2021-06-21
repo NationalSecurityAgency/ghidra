@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +71,7 @@ abstract class OldFunctionDBAdapter {
 	 * @param functionKey
 	 * @return Record
 	 */
-	abstract Record getFunctionRecord(long functionKey) throws IOException;
+	abstract DBRecord getFunctionRecord(long functionKey) throws IOException;
 
 	/**
 	 * Iterate over all function records.

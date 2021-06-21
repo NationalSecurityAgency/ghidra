@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,35 +15,36 @@
  */
 package ghidra.feature.vt.api.db;
 
-import static ghidra.feature.vt.api.db.VTAssociationTableDBAdapter.AssociationTableDescriptor.INSTANCE;
-import ghidra.feature.vt.api.main.VTAssociationStatus;
-import ghidra.feature.vt.api.main.VTAssociationType;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
+import static ghidra.feature.vt.api.db.VTAssociationTableDBAdapter.AssociationTableDescriptor.*;
 
 import java.io.IOException;
 import java.util.Set;
 
 import db.*;
-import db.util.TableColumn;
+import ghidra.feature.vt.api.main.VTAssociationStatus;
+import ghidra.feature.vt.api.main.VTAssociationType;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 public abstract class VTAssociationTableDBAdapter {
 
-	public static class AssociationTableDescriptor extends db.util.TableDescriptor {
+	public static class AssociationTableDescriptor
+			extends ghidra.feature.vt.api.db.TableDescriptor {
 
-		public static TableColumn SOURCE_ADDRESS_COL = new TableColumn(LongField.class, true);
-		public static TableColumn DESTINATION_ADDRESS_COL = new TableColumn(LongField.class, true);
-		public static TableColumn TYPE_COL = new TableColumn(ByteField.class);
-		public static TableColumn STATUS_COL = new TableColumn(ByteField.class);
-		public static TableColumn APPLIED_STATUS_COL = new TableColumn(ByteField.class);
-		public static TableColumn VOTE_COUNT_COL = new TableColumn(IntField.class);
+		public static TableColumn SOURCE_ADDRESS_COL = new TableColumn(LongField.INSTANCE, true);
+		public static TableColumn DESTINATION_ADDRESS_COL =
+			new TableColumn(LongField.INSTANCE, true);
+		public static TableColumn TYPE_COL = new TableColumn(ByteField.INSTANCE);
+		public static TableColumn STATUS_COL = new TableColumn(ByteField.INSTANCE);
+		public static TableColumn APPLIED_STATUS_COL = new TableColumn(ByteField.INSTANCE);
+		public static TableColumn VOTE_COUNT_COL = new TableColumn(IntField.INSTANCE);
 
 		public static AssociationTableDescriptor INSTANCE = new AssociationTableDescriptor();
 	}
 
 	static String TABLE_NAME = "AssociationTable";
 	static Schema TABLE_SCHEMA =
-		new Schema(0, "Key", INSTANCE.getColumnClasses(), INSTANCE.getColumnNames());
+		new Schema(0, "Key", INSTANCE.getColumnFields(), INSTANCE.getColumnNames());
 	static int[] TABLE_INDEXES = INSTANCE.getIndexedColumns();
 
 	public static VTAssociationTableDBAdapter createAdapter(DBHandle dbHandle) throws IOException {
@@ -56,7 +56,7 @@ public abstract class VTAssociationTableDBAdapter {
 		return new VTAssociationTableDBAdapterV0(dbHandle, openMode, monitor);
 	}
 
-	abstract Record insertRecord(long sourceAddressID, long destinationAddressID,
+	abstract DBRecord insertRecord(long sourceAddressID, long destinationAddressID,
 			VTAssociationType type, VTAssociationStatus status, int voteCount) throws IOException;
 
 	abstract void deleteRecord(long sourceAddressID) throws IOException;
@@ -70,18 +70,18 @@ public abstract class VTAssociationTableDBAdapter {
 
 	abstract RecordIterator getRecords() throws IOException;
 
-	abstract Record getRecord(long key) throws IOException;
+	abstract DBRecord getRecord(long key) throws IOException;
 
-	abstract Set<Record> getRelatedAssociationRecordsBySourceAndDestinationAddress(
+	abstract Set<DBRecord> getRelatedAssociationRecordsBySourceAndDestinationAddress(
 			long sourceAddressID, long destinationAddressID) throws IOException;
 
-	abstract Set<Record> getRelatedAssociationRecordsBySourceAddress(long sourceAddressID)
+	abstract Set<DBRecord> getRelatedAssociationRecordsBySourceAddress(long sourceAddressID)
 			throws IOException;
 
-	abstract Set<Record> getRelatedAssociationRecordsByDestinationAddress(long destinationAddressID)
+	abstract Set<DBRecord> getRelatedAssociationRecordsByDestinationAddress(long destinationAddressID)
 			throws IOException;
 
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	abstract void removeAssociaiton(long id) throws IOException;
 }

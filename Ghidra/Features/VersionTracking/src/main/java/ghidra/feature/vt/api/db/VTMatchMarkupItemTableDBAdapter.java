@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,36 +15,35 @@
  */
 package ghidra.feature.vt.api.db;
 
-import static ghidra.feature.vt.api.db.VTMatchMarkupItemTableDBAdapter.MarkupTableDescriptor.INSTANCE;
-import ghidra.feature.vt.api.impl.MarkupItemStorage;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
+import static ghidra.feature.vt.api.db.VTMatchMarkupItemTableDBAdapter.MarkupTableDescriptor.*;
 
 import java.io.IOException;
 
 import db.*;
-import db.util.TableColumn;
+import ghidra.feature.vt.api.impl.MarkupItemStorage;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 public abstract class VTMatchMarkupItemTableDBAdapter {
 
-	public static class MarkupTableDescriptor extends db.util.TableDescriptor {
-		public static TableColumn ASSOCIATION_KEY_COL = new TableColumn(LongField.class, true);
-		public static TableColumn ADDRESS_SOURCE_COL = new TableColumn(StringField.class);
-		public static TableColumn DESTINATION_ADDRESS_COL = new TableColumn(LongField.class);
-		public static TableColumn MARKUP_TYPE_COL = new TableColumn(ShortField.class);
-		public static TableColumn SOURCE_ADDRESS_COL = new TableColumn(LongField.class);
-		public static TableColumn SOURCE_VALUE_COL = new TableColumn(StringField.class);
+	public static class MarkupTableDescriptor extends ghidra.feature.vt.api.db.TableDescriptor {
+		public static TableColumn ASSOCIATION_KEY_COL = new TableColumn(LongField.INSTANCE, true);
+		public static TableColumn ADDRESS_SOURCE_COL = new TableColumn(StringField.INSTANCE);
+		public static TableColumn DESTINATION_ADDRESS_COL = new TableColumn(LongField.INSTANCE);
+		public static TableColumn MARKUP_TYPE_COL = new TableColumn(ShortField.INSTANCE);
+		public static TableColumn SOURCE_ADDRESS_COL = new TableColumn(LongField.INSTANCE);
+		public static TableColumn SOURCE_VALUE_COL = new TableColumn(StringField.INSTANCE);
 		public static TableColumn ORIGINAL_DESTINATION_VALUE_COL =
-			new TableColumn(StringField.class);
-		public static TableColumn STATUS_COL = new TableColumn(ByteField.class);
-		public static TableColumn STATUS_DESCRIPTION_COL = new TableColumn(StringField.class);
+			new TableColumn(StringField.INSTANCE);
+		public static TableColumn STATUS_COL = new TableColumn(ByteField.INSTANCE);
+		public static TableColumn STATUS_DESCRIPTION_COL = new TableColumn(StringField.INSTANCE);
 
 		public static MarkupTableDescriptor INSTANCE = new MarkupTableDescriptor();
 	}
 
 	protected static String TABLE_NAME = "MatchMarkupItemTable";
 	static Schema TABLE_SCHEMA =
-		new Schema(0, "Key", INSTANCE.getColumnClasses(), INSTANCE.getColumnNames());
+		new Schema(0, "Key", INSTANCE.getColumnFields(), INSTANCE.getColumnNames());
 
 	protected static int[] INDEXED_COLUMNS = INSTANCE.getIndexedColumns();
 
@@ -63,14 +61,13 @@ public abstract class VTMatchMarkupItemTableDBAdapter {
 
 	public abstract void removeMatchMarkupItemRecord(long key) throws IOException;
 
-	public abstract Record getRecord(long key) throws IOException;
+	public abstract DBRecord getRecord(long key) throws IOException;
 
 	public abstract RecordIterator getRecords(long AssociationKey) throws IOException;
 
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	public abstract int getRecordCount();
 
-	public abstract Record createMarkupItemRecord(MarkupItemStorage markupItem)
-			throws IOException;
+	public abstract DBRecord createMarkupItemRecord(MarkupItemStorage markupItem) throws IOException;
 }

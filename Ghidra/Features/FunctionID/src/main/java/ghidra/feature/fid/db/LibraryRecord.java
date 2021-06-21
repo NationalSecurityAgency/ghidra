@@ -18,7 +18,7 @@ package ghidra.feature.fid.db;
 import static ghidra.feature.fid.db.LibrariesTable.*;
 import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.lang.LanguageID;
-import db.Record;
+import db.DBRecord;
 
 /**
  * Represents a library record in the FID database.
@@ -27,13 +27,13 @@ public class LibraryRecord {
 	/**
 	 * The record is stored, no memoization is performed.
 	 */
-	final Record record;
+	final DBRecord record;
 
 	/**
 	 * Creates a new library record.
 	 * @param record the database record on which to base this library
 	 */
-	public LibraryRecord(Record record) {
+	public LibraryRecord(DBRecord record) {
 		if (record == null) {
 			throw new IllegalArgumentException("null record");
 		}

@@ -1,7 +1,15 @@
+abort
 CxxThrowException
 CxxThrowException@8
 CxxFrameHandler3
 crtExitProcess
 ExitProcess
+ExitThread
 exit
+FreeLibraryAndExitThread
+invalid_parameter_noinfo_noreturn
+invoke_watson
 longjmp
+quick_exit
+RpcRaiseException
+terminate

@@ -35,9 +35,10 @@ public class RecoveryDBTest extends AbstractGenericTest {
 	private static int RECORD_COUNT = 1000;
 
 	private static Schema SCHEMA =
-		new Schema(1, "key", new Class[] { StringField.class }, new String[] { "field1" });
+		new Schema(1, "key", new Field[] { StringField.INSTANCE }, new String[] { "field1" });
 
-	private static final File testDir = new File(AbstractGenericTest.getTestDirectoryPath(), "test");
+	private static final File testDir =
+		new File(AbstractGenericTest.getTestDirectoryPath(), "test");
 
 	private LocalFileSystem fileSystem;
 
@@ -123,7 +124,7 @@ public class RecoveryDBTest extends AbstractGenericTest {
 
 	private void tableFill(Table table, int recCnt, String baseName) throws Exception {
 		for (int i = 0; i < recCnt; i++) {
-			Record rec = SCHEMA.createRecord(i);
+			DBRecord rec = SCHEMA.createRecord(i);
 			rec.setString(0, baseName + i);
 			table.putRecord(rec);
 		}
@@ -151,12 +152,12 @@ public class RecoveryDBTest extends AbstractGenericTest {
 			assertEquals(RECORD_COUNT / 2, table1.getRecordCount());
 
 			for (int i = 0; i < RECORD_COUNT; i += 2) {
-				Record rec = table1.getRecord(i);
+				DBRecord rec = table1.getRecord(i);
 				assertNull(rec);
 			}
 
 			for (int i = 1; i < RECORD_COUNT; i += 2) {
-				Record rec = table1.getRecord(i);
+				DBRecord rec = table1.getRecord(i);
 				assertNotNull(rec);
 				assertEquals("initTable1_" + i, rec.getString(0));
 			}
@@ -170,7 +171,7 @@ public class RecoveryDBTest extends AbstractGenericTest {
 			}
 
 			for (int i = 1; i < RECORD_COUNT; i += 2) {
-				Record rec = table2.getRecord(i);
+				DBRecord rec = table2.getRecord(i);
 				assertNotNull(rec);
 				assertEquals("initTable2_" + i, rec.getString(0));
 			}
@@ -206,12 +207,12 @@ public class RecoveryDBTest extends AbstractGenericTest {
 			assertEquals(RECORD_COUNT / 2, table1.getRecordCount());
 
 			for (int i = 0; i < RECORD_COUNT; i += 2) {
-				Record rec = table1.getRecord(i);
+				DBRecord rec = table1.getRecord(i);
 				assertNull(rec);
 			}
 
 			for (int i = 1; i < RECORD_COUNT; i += 2) {
-				Record rec = table1.getRecord(i);
+				DBRecord rec = table1.getRecord(i);
 				assertNotNull(rec);
 				assertEquals("initTable1_" + i, rec.getString(0));
 			}
@@ -258,12 +259,12 @@ public class RecoveryDBTest extends AbstractGenericTest {
 			assertEquals(RECORD_COUNT / 2, table1.getRecordCount());
 
 			for (int i = 0; i < RECORD_COUNT; i += 2) {
-				Record rec = table1.getRecord(i);
+				DBRecord rec = table1.getRecord(i);
 				assertNull(rec);
 			}
 
 			for (int i = 1; i < RECORD_COUNT; i += 2) {
-				Record rec = table1.getRecord(i);
+				DBRecord rec = table1.getRecord(i);
 				assertNotNull(rec);
 				assertEquals("initTable1_" + i, rec.getString(0));
 			}
@@ -277,7 +278,7 @@ public class RecoveryDBTest extends AbstractGenericTest {
 			}
 
 			for (int i = 1; i < RECORD_COUNT; i += 2) {
-				Record rec = table2.getRecord(i);
+				DBRecord rec = table2.getRecord(i);
 				assertNotNull(rec);
 				assertEquals("initTable2_" + i, rec.getString(0));
 			}
@@ -314,12 +315,12 @@ public class RecoveryDBTest extends AbstractGenericTest {
 			assertEquals(RECORD_COUNT / 2, table1.getRecordCount());
 
 			for (int i = 0; i < RECORD_COUNT; i += 2) {
-				Record rec = table1.getRecord(i);
+				DBRecord rec = table1.getRecord(i);
 				assertNull(rec);
 			}
 
 			for (int i = 1; i < RECORD_COUNT; i += 2) {
-				Record rec = table1.getRecord(i);
+				DBRecord rec = table1.getRecord(i);
 				assertNotNull(rec);
 				assertEquals("initTable1_" + i, rec.getString(0));
 			}
@@ -333,7 +334,7 @@ public class RecoveryDBTest extends AbstractGenericTest {
 			}
 
 			for (int i = 1; i < RECORD_COUNT; i += 2) {
-				Record rec = table2.getRecord(i);
+				DBRecord rec = table2.getRecord(i);
 				assertNotNull(rec);
 				assertEquals("initTable2_" + i, rec.getString(0));
 			}

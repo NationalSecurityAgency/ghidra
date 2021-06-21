@@ -201,7 +201,7 @@ public:
   bool isFloatExtension(void) const { return (pieces.size() == 1); }	///< Does this record extend a float varnode
   const VarnodeData &getPiece(int4 i) const { return pieces[i]; }	///< Get the i-th piece
   const VarnodeData &getUnified(void) const { return unified; }		///< Get the Varnode whole
-  Address getEquivalentAddress(uintb offset,int4 &pos) const;	///< Given offset in \join space, get equivalent address of piece
+  Address getEquivalentAddress(uintb offset,int4 &pos) const;	///< Given offset in \e join space, get equivalent address of piece
   bool operator<(const JoinRecord &op2) const; ///< Compare records lexigraphically by pieces
 };
 
@@ -345,16 +345,6 @@ public:
   /// made by the disassembly
   /// \param val is \b true to allow context changes, \b false prevents changes
   virtual void allowContextSet(bool val) const {}
-
-  /// \brief Add a named register to the model for this processor
-  ///
-  /// \deprecated All registers used to be formally added to the
-  /// processor model through this method.
-  /// \param nm is the name of the new register
-  /// \param base is the address space containing the register
-  /// \param offset is the offset of the register
-  /// \param size is the number of bytes in the register
-  virtual void addRegister(const string &nm,AddrSpace *base,uintb offset,int4 size)=0;
 
   /// \brief Get a register as VarnodeData given its name
   ///

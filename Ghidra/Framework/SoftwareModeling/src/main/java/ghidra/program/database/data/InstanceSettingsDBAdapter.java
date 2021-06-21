@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +93,7 @@ abstract class InstanceSettingsDBAdapter {
 				if (monitor.isCancelled()) {
 					throw new CancelledException();
 				}
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				Address addr = oldAddrMap.decodeAddress(rec.getLongValue(INST_ADDR_COL));
 				rec.setLongValue(INST_ADDR_COL, addrMap.getKey(addr, true));
 				tmpAdapter.updateInstanceRecord(rec);
@@ -108,7 +107,7 @@ abstract class InstanceSettingsDBAdapter {
 				if (monitor.isCancelled()) {
 					throw new CancelledException();
 				}
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				newAdapter.updateInstanceRecord(rec);
 				monitor.setProgress(++cnt);
 			}
@@ -134,14 +133,14 @@ abstract class InstanceSettingsDBAdapter {
 	 * @return
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record createInstanceRecord(long addr, String name, String strValue, long longValue,
+	abstract DBRecord createInstanceRecord(long addr, String name, String strValue, long longValue,
 			byte[] byteValue) throws IOException;
 
 	/**
 	 * Get keys for the instance settings applied at the given address. 
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract long[] getInstanceKeys(long addr) throws IOException;
+	abstract Field[] getInstanceKeys(long addr) throws IOException;
 
 	/**
 	 * Remove the instance record. 
@@ -156,13 +155,13 @@ abstract class InstanceSettingsDBAdapter {
 	 * @param settingsID key for the record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record getInstanceRecord(long settingsID) throws IOException;
+	abstract DBRecord getInstanceRecord(long settingsID) throws IOException;
 
 	/**
 	 * Update the instance settings record in the table.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract void updateInstanceRecord(Record record) throws IOException;
+	abstract void updateInstanceRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Get an iterator over those records that fall in the given range for

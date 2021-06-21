@@ -523,7 +523,7 @@ public class StructureEditorLockedCellEditTest extends AbstractStructureEditorTe
 	public void testEditDataTypeNotSelf() throws Exception {
 
 		Structure testStruct = new StructureDataType("testStruct", 20);
-		testStruct.setInternallyAligned(false);
+		testStruct.setPackingEnabled(false);
 
 		DataTypeManager dtm = program.getDataTypeManager();
 		txId = program.startTransaction("Add testStruct");

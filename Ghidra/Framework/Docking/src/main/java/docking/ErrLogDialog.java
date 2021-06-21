@@ -43,7 +43,7 @@ import ghidra.util.table.column.GColumnRenderer;
 import utilities.util.reflection.ReflectionUtilities;
 
 /**
- * A dialog that takes error text and displays it with an option details button.  If there is 
+ * A dialog that takes error text and displays it with an option details button.  If there is
  * an {@link ErrorReporter}, then a button is provided to report the error.
  */
 public class ErrLogDialog extends AbstractErrDialog {
@@ -149,7 +149,8 @@ public class ErrLogDialog extends AbstractErrDialog {
 		introPanel.add(
 			new GIconLabel(UIManager.getIcon("OptionPane.errorIcon"), SwingConstants.RIGHT),
 			BorderLayout.WEST);
-		introPanel.add(new GHtmlLabel(HTMLUtilities.toHTML(message)) {
+		String html = HTMLUtilities.toHTML(message);
+		introPanel.add(new GHtmlLabel(html) {
 			@Override
 			public Dimension getPreferredSize() {
 				// rendering HTML the label can expand larger than the screen; keep it reasonable
@@ -385,6 +386,16 @@ public class ErrLogDialog extends AbstractErrDialog {
 
 			validate();
 			textDetails.scrollToBottom();
+		}
+
+		@Override
+		public Dimension getPreferredSize() {
+			Dimension size = super.getPreferredSize();
+
+			// Cap preferred width to something reasonable; most displays have more than 1000 width.
+			// Users can still resize as desired
+			size.width = Math.min(size.width, 1000);
+			return size;
 		}
 
 		void setError(ErrorEntry e) {

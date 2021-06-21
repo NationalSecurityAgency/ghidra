@@ -25,7 +25,7 @@ project.ext.excludeFromParallelTests = true
 project.ext.excludeFromParallelIntegrationTests = true
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }
 
 /*
@@ -48,10 +48,6 @@ test {
 	if (rootProject.ext.parallelMode) {
 		exclude "*"
 	} else {
-		includes = ['**/MDMangBaseTestSuite.class', '**/MDMangExtraTests.class']
+		includes = ['**/MDMangBaseWorkingTests.class', '**/MDMangExtraTest.class']
 	}
-}
-integrationTest {
-	scanForTestClasses = false
-	excludes = ['**/*']
 }

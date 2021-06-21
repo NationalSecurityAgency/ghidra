@@ -1,0 +1,63 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger Bots</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Debugger Bots: Workflow Automation</H1>
+
+    <P>Bots are a pluggable part of the Debugger's Workflow plugin and provide useful automation,
+    taking actions on the user's behalf that would otherwise be tedious, or that should occur
+    "under the hood." Each can be toggled from the <SPAN class="menu">Edit &rarr; Tool
+    Options</SPAN> menu in Ghidra's <EM>Project</EM> window.</P>
+
+    <H2><A name="show_interpreter"></A>Show Interpreter</H2>
+
+    <P>This bot automatically displays the interpreter console for new debugger connections. If a
+    connection does not present an interpreter, then this bot will take no action. This action can
+    be performed manually using the <A href=
+    "help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html#console">Console</A> action in
+    the Commands and Objects window.</P>
+
+    <H2><A name="disassemble_at_pc"></A>Disassemble at Program Counter</H2>
+
+    <P>This bot automatically disassembles trace memory, starting at the program counter. It is
+    activated whenever an open trace's memory or program counters change. If the target presents a
+    stack, then the bot will prefer to use the program counter recorded in the innermost frame 0.
+    Otherwise, it will use the value of the program counter register. To accommodate multi-threaded
+    traces, the bot considers all threads when responding to memory changes. It considers only the
+    affected thread for program counter changes. This action can be performed manually using the <A
+    href="help/topics/DisassemblerPlugin/Disassembly.htm#Disassemble">Disassemble</A> command in
+    the Dynamic Listing window.</P>
+
+    <H2><A name="map_modules"></A>Map Modules</H2>
+
+    <P>This bot automatically maps trace modules to programs opened in the same tool. It is
+    activated whenever a trace or program is opened, or when an opened trace's modules change. For
+    a given trace, this bot considers only those modules not already mapped, seeking suitable
+    programs open in the same tool. If the trace is open in multiple tools (not common) the bot
+    will consider programs from all such tools where the workflow plugin is enabled. This action
+    can be performed manually using the <A href=
+    "help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html#map_modules">Map Modules</A>
+    action in the Modules and Sections window.</P>
+
+    <H2><A name="map_sections"></A>Map Sections</H2>
+
+    <P>This bot automatically maps trace sections to memory blocks of programs opened in the same
+    tool. Its operation is analogous to that of the Map Modules Bot, except that it creates the
+    mapped ranges by section. It is not commonly used, as it's less efficient than the Map Modules
+    Bot, but it is required whenever a target presents sections which can be relocated
+    independently of other sections in the same module. This is more common in abstract machines,
+    such as the Java Virtual Machine, where each method is a "section." This action can be
+    performed manually using the <A href=
+    "help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html#map_sections">Map Sections</A>
+    action in the Modules and Sections window.</P>
+  </BODY>
+</HTML>

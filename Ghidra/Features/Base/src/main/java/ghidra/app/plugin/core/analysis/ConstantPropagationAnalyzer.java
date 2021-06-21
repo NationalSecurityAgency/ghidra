@@ -71,11 +71,11 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	protected static final String MINSPECULATIVEREFADDRESS_OPTION_DESCRIPTION =
 		"Minimum speculative reference address for offsets and parameters";
 	protected static final int MINSPECULATIVEREFADDRESS_OPTION_DEFAULT_VALUE = 1024;
-	
+
 	protected static final String MAXSPECULATIVEREFADDRESS_OPTION_NAME =
-			"Speculative reference max";
+		"Speculative reference max";
 	protected static final String MAXSPECULATIVEREFADDRESS_OPTION_DESCRIPTION =
-			"Maxmimum speculative reference address offset from the end of memory for offsets and parameters";
+		"Maxmimum speculative reference address offset from the end of memory for offsets and parameters";
 	protected static final int MAXSPECULATIVEREFADDRESS_OPTION_DEFAULT_VALUE = 256;
 
 	protected final static int NOTIFICATION_INTERVAL = 100;
@@ -305,36 +305,55 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		return analyzedSet;
 	}
 
-	public void analyzeSet(Program program, AddressSetView set, TaskMonitor monitor)
+	public void analyzeSet(Program program, AddressSetView setToAnalyze, TaskMonitor monitor)
 			throws CancelledException {
 
-		long totalNumAddresses = set.getNumAddresses();
+		long totalNumAddresses = setToAnalyze.getNumAddresses();
 		monitor.initialize(totalNumAddresses);
 
 		// Iterate over all new instructions
 		// Evaluate each operand
+		Listing listing = program.getListing();
 		int count = 0;
-		while (!set.isEmpty()) {
+		AddressSet todoSet = new AddressSet(setToAnalyze);
+		while (!todoSet.isEmpty()) {
 			monitor.checkCanceled();
 
 			if ((count++ % NOTIFICATION_INTERVAL) == 0) {
-				monitor.setProgress(totalNumAddresses - set.getNumAddresses());
+				monitor.setProgress(totalNumAddresses - todoSet.getNumAddresses());
 			}
 
-			InstructionIterator iterator = program.getListing().getInstructions(set, true);
-			if (!iterator.hasNext()) {
-				break;
-			}
-
-			Instruction instr = iterator.next();
-			Address start = instr.getMinAddress();
-			AddressSetView resultSet = analyzeLocation(program, start, set, monitor);
-			if (resultSet != null) { // null sometimes when cancelled
-				// set.getMinAddress() and start may not be in the same segment
-				if (!start.equals(set.getMinAddress())) {
-					set = AddressSetView.trimStart(set, start);
+			// find the next instruction starting at the minimum addr in the set
+			Address nextAddr = todoSet.getMinAddress();
+			Instruction instr = listing.getInstructionAt(nextAddr);
+			if (instr == null) {
+				// no instr at min address, find the next after
+				instr = listing.getInstructionAfter(nextAddr);
+				if (instr == null) {
+					break; // no more to do
 				}
-				set = set.subtract(resultSet);
+
+				// the instruction after could land outside the set,
+				// but that will only happen once, then the
+				// search will start again inside the set
+				nextAddr = instr.getMinAddress();
+				if (!todoSet.contains(nextAddr)) {
+					todoSet.deleteFromMin(nextAddr);
+					continue;
+				}
+			}
+
+			Address start = instr.getMinAddress();
+			AddressSetView resultSet = analyzeLocation(program, start, todoSet, monitor);
+			if (resultSet != null) { // null sometimes when cancelled
+				// if the first instruction found in todoSet, was past the beginning of
+				// the todoSet, there will be no instructions before start
+				if (!start.equals(todoSet.getMinAddress())) {
+					// delete all addresses up to the start from the todo set
+					todoSet.deleteFromMin(start);
+				}
+				// now get rid of all the instructions that were analyzed
+				todoSet.delete(resultSet);
 			}
 		}
 	}
@@ -391,10 +410,10 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	 * @return the address set of instructions which were followed
 	 * @throws CancelledException
 	 */
-	public AddressSetView flowConstants(final Program program,
-			Address flowStart, AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
+	public AddressSetView flowConstants(final Program program, Address flowStart,
+			AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
 			throws CancelledException {
-		
+
 		ContextEvaluator eval = new ConstantPropagationContextEvaluator(trustWriteMemOption,
 			minStoreLoadRefAddress, minSpeculativeRefAddress, maxSpeculativeRefAddress);
 
@@ -469,7 +488,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		minSpeculativeRefAddress = size * 16;
 		options.registerOption(MINSPECULATIVEREFADDRESS_OPTION_NAME, minSpeculativeRefAddress, null,
 			MINSPECULATIVEREFADDRESS_OPTION_DESCRIPTION);
-		
+
 		maxSpeculativeRefAddress = size * 8;
 		options.registerOption(MAXSPECULATIVEREFADDRESS_OPTION_NAME, maxSpeculativeRefAddress, null,
 			MAXSPECULATIVEREFADDRESS_OPTION_DESCRIPTION);
@@ -489,7 +508,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		minSpeculativeRefAddress =
 			options.getLong(MINSPECULATIVEREFADDRESS_OPTION_NAME, minSpeculativeRefAddress);
 		maxSpeculativeRefAddress =
-				options.getLong(MAXSPECULATIVEREFADDRESS_OPTION_NAME, maxSpeculativeRefAddress);
+			options.getLong(MAXSPECULATIVEREFADDRESS_OPTION_NAME, maxSpeculativeRefAddress);
 	}
 
 }

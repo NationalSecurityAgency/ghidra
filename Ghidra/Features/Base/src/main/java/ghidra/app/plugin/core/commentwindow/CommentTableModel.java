@@ -84,23 +84,30 @@ class CommentTableModel extends AddressBasedTableModel<CommentRowObject> {
 			listing.getCommentAddressIterator(getProgram().getMemory(), true);
 		while (commentIterator.hasNext()) {
 			Address commentAddr = commentIterator.next();
-			CodeUnit cu = listing.getCodeUnitAt(commentAddr);
-			if (cu != null) {
-				if (cu.getComment(CodeUnit.PRE_COMMENT) != null) {
-					accumulator.add(new CommentRowObject(commentAddr, CodeUnit.PRE_COMMENT));
-				}
-				if (cu.getComment(CodeUnit.POST_COMMENT) != null) {
-					accumulator.add(new CommentRowObject(commentAddr, CodeUnit.POST_COMMENT));
-				}
-				if (cu.getComment(CodeUnit.EOL_COMMENT) != null) {
-					accumulator.add(new CommentRowObject(commentAddr, CodeUnit.EOL_COMMENT));
-				}
-				if (cu.getComment(CodeUnit.PLATE_COMMENT) != null) {
-					accumulator.add(new CommentRowObject(commentAddr, CodeUnit.PLATE_COMMENT));
-				}
-				if (cu.getComment(CodeUnit.REPEATABLE_COMMENT) != null) {
-					accumulator.add(new CommentRowObject(commentAddr, CodeUnit.REPEATABLE_COMMENT));
-				}
+			CodeUnit cu = listing.getCodeUnitContaining(commentAddr);
+			if (!(cu instanceof Data)) {
+				// avoid too many comments in the table by not showing offcut instruction comments
+				cu = listing.getCodeUnitAt(commentAddr);
+			}
+
+			if (cu == null) {
+				continue;
+			}
+
+			if (cu.getComment(CodeUnit.PRE_COMMENT) != null) {
+				accumulator.add(new CommentRowObject(commentAddr, CodeUnit.PRE_COMMENT));
+			}
+			if (cu.getComment(CodeUnit.POST_COMMENT) != null) {
+				accumulator.add(new CommentRowObject(commentAddr, CodeUnit.POST_COMMENT));
+			}
+			if (cu.getComment(CodeUnit.EOL_COMMENT) != null) {
+				accumulator.add(new CommentRowObject(commentAddr, CodeUnit.EOL_COMMENT));
+			}
+			if (cu.getComment(CodeUnit.PLATE_COMMENT) != null) {
+				accumulator.add(new CommentRowObject(commentAddr, CodeUnit.PLATE_COMMENT));
+			}
+			if (cu.getComment(CodeUnit.REPEATABLE_COMMENT) != null) {
+				accumulator.add(new CommentRowObject(commentAddr, CodeUnit.REPEATABLE_COMMENT));
 			}
 		}
 

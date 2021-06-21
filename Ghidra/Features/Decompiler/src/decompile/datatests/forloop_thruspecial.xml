@@ -1,0 +1,30 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   For loop where the increment statement must cross special operations.  Contrived example.
+-->
+<bytechunk space="ram" offset="0x4005bb" readonly="true">
+                      554889e553
+4883ec18897dec488975e0bb03000000
+eb1c83c301488b45e0c7000a00000048
+8345e004bf38084000e842feffff3b5d
+ec7cdf904883c4185b5dc3
+</bytechunk>
+<bytechunk space="ram" offset="0x400838" readonly="true">
+  4d616b6520612063616c6c00
+</bytechunk>
+<symbol space="ram" offset="0x4005bb" name="forloop_thruspecial"/>
+<symbol space="ram" offset="0x400430" name="puts"/>
+</binaryimage>
+<script>
+  <com>parse line extern void puts(char *);</com>
+  <com>parse line extern void forloop_thruspecial(int4 max,int4 *ptr);</com>
+  <com>lo fu forloop_thruspecial</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="For-loop thru special #1" min="1" max="1">for.*iVar1 = 3; iVar1 &lt; max; iVar1 = iVar1 \+ 1</stringmatch>
+<stringmatch name="For-loop thru special #2" min="1" max="1">\*piStack.* = 10;</stringmatch>
+<stringmatch name="For-loop thru special #3" min="1" max="1">puts.*Make a call.*;</stringmatch>
+</decompilertest>

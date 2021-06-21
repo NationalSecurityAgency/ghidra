@@ -15,11 +15,12 @@
  */
 package docking.widgets.textfield;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -370,6 +371,15 @@ public class IntegerTextField {
 	 */
 	public void setEnabled(boolean enabled) {
 		textField.setEnabled(enabled);
+	}
+
+	/**
+	 * Sets the editable mode for the JTextField component
+	 * 
+	 * @param editable boolean flag, if true component is editable
+	 */
+	public void setEditable(boolean editable) {
+		textField.setEditable(editable);
 	}
 
 	/**

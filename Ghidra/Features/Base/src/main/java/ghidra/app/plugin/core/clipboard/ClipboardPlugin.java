@@ -377,7 +377,6 @@ public class ClipboardPlugin extends ProgramPlugin implements ClipboardOwner, Cl
 			if (!clipboardService.isValidContext(context)) {
 				return false;
 			}
-
 			return clipboardService.canCopy();
 		}
 
@@ -413,7 +412,8 @@ public class ClipboardPlugin extends ProgramPlugin implements ClipboardOwner, Cl
 			}
 
 			Clipboard systemClipboard = getSystemClipboard();
-			return clipboardService.canPaste(getAvailableDataFlavors(systemClipboard));
+			DataFlavor[] flavors = getAvailableDataFlavors(systemClipboard);
+			return clipboardService.canPaste(flavors);
 		}
 
 		@Override
@@ -444,7 +444,6 @@ public class ClipboardPlugin extends ProgramPlugin implements ClipboardOwner, Cl
 			if (!clipboardService.isValidContext(context)) {
 				return false;
 			}
-
 			return clipboardService.canCopySpecial();
 		}
 

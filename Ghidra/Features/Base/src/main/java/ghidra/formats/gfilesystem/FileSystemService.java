@@ -56,7 +56,7 @@ import ghidra.util.timer.GTimer;
  *
  * Refactor fileInfo -> needs dialog to show properties
  * Refactor GFile.getInfo() to return Map<> instead of String.
- * Persistant filesystem - when reopen tool, filesystems should auto-reopen.
+ * Persistent filesystem - when reopen tool, filesystems should auto-reopen.
  * Unify GhidraFileChooser with GFileSystem.
  * Add "Mounted Filesystems" button to show currently opened GFilesystems?
  * Dockable filesystem browser in FrontEnd.

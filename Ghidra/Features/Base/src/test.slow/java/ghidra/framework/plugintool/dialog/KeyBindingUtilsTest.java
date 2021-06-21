@@ -502,14 +502,23 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(keyText.toUpperCase(), keyField.getText());
 
 		runSwing(() -> panel.apply());
-		assertEquals(KeyStroke.getKeyStroke(keyCode, 0), action.getKeyBinding());
+
+		if (!Objects.equals(KeyStroke.getKeyStroke(keyCode, 0), action.getKeyBinding())) {
+
+			Msg.debug(this, "Action did not take keybinding: " + action.getFullName());
+
+			assertEquals("Key binding was not applied", KeyStroke.getKeyStroke(keyCode, 0),
+				action.getKeyBinding());
+		}
 	}
 
 	private void selectRowForAction(DockingActionIf action) throws Exception {
 		String actionName = action.getName();
+		String owner = action.getOwnerDescription();
 
 		for (int i = 0; i < model.getRowCount(); i++) {
-			if (actionName.equals(model.getValueAt(i, 0))) {
+			if (actionName.equals(model.getValueAt(i, 0)) &&
+				owner.equals(model.getValueAt(i, 2))) {
 				final int idx = i;
 				SwingUtilities.invokeAndWait(() -> {
 					table.setRowSelectionInterval(idx, idx);

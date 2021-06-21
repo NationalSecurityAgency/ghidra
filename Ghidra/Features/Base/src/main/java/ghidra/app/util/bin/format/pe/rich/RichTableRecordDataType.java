@@ -35,7 +35,7 @@ class RichTableRecordDataType extends StructureDataType {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
+	public boolean hasLanguageDependantLength() {
 		return false;
 	}
 

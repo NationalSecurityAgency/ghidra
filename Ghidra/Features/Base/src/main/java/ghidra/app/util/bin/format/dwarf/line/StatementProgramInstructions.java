@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.dwarf.line;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.dwarf4.LEB128;
 
 import java.io.IOException;
 
@@ -92,7 +93,7 @@ public final class StatementProgramInstructions {
 	}
 
 	private void executeExtended(int opcode) throws IOException {
-		LEB128 length = new LEB128(reader, false);
+		long length = LEB128.readAsLong(reader, false);
 
 		long oldIndex = reader.getPointerIndex();
 		int extendedOpcode = reader.readNextByte();
@@ -110,7 +111,7 @@ public final class StatementProgramInstructions {
 				throw new UnsupportedOperationException();
 		}
 
-		if (oldIndex + length.getValue() != reader.getPointerIndex()) {
+		if (oldIndex + length != reader.getPointerIndex()) {
 			throw new IllegalStateException("Index values do not match!");
 		}
 	}
@@ -122,23 +123,23 @@ public final class StatementProgramInstructions {
 				break;
 			}
 			case DW_LNS_advance_pc: {
-				LEB128 value = new LEB128(reader, false);
-				machine.address += (value.getValue() * prologue.getMinimumInstructionLength());
+				long value = LEB128.readAsLong(reader, false);
+				machine.address += (value * prologue.getMinimumInstructionLength());
 				break;
 			}
 			case DW_LNS_advance_line: {
-				LEB128 value = new LEB128(reader, false);
-				machine.line += value.getValue();
+				long value = LEB128.readAsLong(reader, false);
+				machine.line += value;
 				break;
 			}
 			case DW_LNS_set_file: {
-				LEB128 value = new LEB128(reader, false);
-				machine.file = (int) value.getValue();
+				long value = LEB128.readAsLong(reader, false);
+				machine.file = (int) value;
 				break;
 			}
 			case DW_LNS_set_column: {
-				LEB128 value = new LEB128(reader, false);
-				machine.column = (int) value.getValue();
+				long value = LEB128.readAsLong(reader, false);
+				machine.column = (int) value;
 				break;
 			}
 			case DW_LNS_negate_statement: {

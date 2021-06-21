@@ -40,14 +40,19 @@ public class JgtTranslatingPlugin<V, E>
 
 	private boolean panning;
 	private boolean isHandlingEvent;
+	private int translatingMask;
 
 	public JgtTranslatingPlugin() {
 		this(InputEvent.BUTTON1_DOWN_MASK);
 	}
 
 	public JgtTranslatingPlugin(int modifiers) {
-		super(modifiers);
+		this.translatingMask = modifiers;
 		this.cursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
+	}
+
+	public boolean checkModifiers(MouseEvent e) {
+		return e.getModifiersEx() == translatingMask;
 	}
 
 	@Override

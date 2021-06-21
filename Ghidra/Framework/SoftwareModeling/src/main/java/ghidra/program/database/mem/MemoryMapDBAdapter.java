@@ -240,7 +240,7 @@ abstract class MemoryMapDBAdapter {
 	 * @param record the record to update.
 	 * @throws IOException if a database IO error occurs.
 	 */
-	abstract void updateBlockRecord(Record record) throws IOException;
+	abstract void updateBlockRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Creates a new DBuffer object with the given length and initial value.
@@ -269,7 +269,7 @@ abstract class MemoryMapDBAdapter {
 	 * @param record the record to update.
 	 * @throws IOException if a database IO error occurs.
 	 */
-	protected abstract void updateSubBlockRecord(Record record) throws IOException;
+	protected abstract void updateSubBlockRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Creates a record for a new created sub block
@@ -283,7 +283,7 @@ abstract class MemoryMapDBAdapter {
 	 * @return the newly created record.
 	 * @throws IOException if a database error occurs
 	 */
-	abstract Record createSubBlockRecord(long memBlockId, long startingOffset, long length,
+	abstract DBRecord createSubBlockRecord(long memBlockId, long startingOffset, long length,
 			byte subType, int data1, long data2) throws IOException;
 
 	/**

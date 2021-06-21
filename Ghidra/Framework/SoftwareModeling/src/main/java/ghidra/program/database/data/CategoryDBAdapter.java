@@ -20,8 +20,7 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 
-import db.DBHandle;
-import db.Record;
+import db.*;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
@@ -38,47 +37,54 @@ abstract class CategoryDBAdapter {
 	 * Gets the category record for the given ID.
 	 * @param categoryID the key into the category table
 	 * @return the record for the given ID or null if no record with that id exists.
+	 * @throws IOException if IO error occurs
 	 */
-	abstract Record getRecord(long categoryID) throws IOException;
+	abstract DBRecord getRecord(long categoryID) throws IOException;
 
 	/**
 	 * Updates the record in the database
-	 * @param categoryID
-	 * @param parentCategoryID
-	 * @param name
-	 * @throws IOException
+	 * @param categoryID category record key
+	 * @param parentCategoryID parent category record key (-1 for root category)
+	 * @param name category name
+	 * @throws IOException if IO error occurs
 	 */
 	abstract void updateRecord(long categoryID, long parentCategoryID, String name)
 			throws IOException;
 
 	/**
 	 * Returns a list of categoryIDs that have the given parent ID.
-	 * @param categoryID the key into the category table
-	 * @return an array of categoryIDs that have the specified parent
+	 * @param categoryID the key into the catagory table
+	 * @return an array of categoryIDs that have the specified parent.  Field array 
+	 * returned with LongField key values.
+	 * @throws IOException if IO error occurs
 	 */
-	abstract long[] getRecordIdsWithParent(long categoryID) throws IOException;
+	abstract Field[] getRecordIdsWithParent(long categoryID) throws IOException;
 
 	/**
 	 * Creates a new category with the given name and parent ID.
 	 * @param name the name of the new category.
-	 * @param categoryID the key into the category table
+	 * @param parentID the parent key into the catagory table
 	 * @return a new record for the new category.
+	 * @throws IOException if IO error occurs
 	 */
-	abstract Record createCategory(String name, long parentID) throws IOException;
+	abstract DBRecord createCategory(String name, long parentID) throws IOException;
 
 	/**
 	 * Removes the category with the given ID.
 	 * @param categoryID the key into the category table
 	 * @return true if the a category with that id existed.
+	 * @throws IOException if IO error occurs
 	 */
 	abstract boolean removeCategory(long categoryID) throws IOException;
 
 	/**
 	 * Get the record for the root category.
+	 * @return root category record
+	 * @throws IOException if IO error occurs
 	 */
-	abstract Record getRootRecord() throws IOException;
+	abstract DBRecord getRootRecord() throws IOException;
 
-	abstract void putRecord(Record record) throws IOException;
+	abstract void putRecord(DBRecord record) throws IOException;
 
 	abstract int getRecordCount();
 }

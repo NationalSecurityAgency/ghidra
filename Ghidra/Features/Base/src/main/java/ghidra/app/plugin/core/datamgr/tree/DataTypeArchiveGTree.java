@@ -35,6 +35,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.listing.Program;
 import ghidra.util.UniversalID;
 import ghidra.util.task.TaskMonitor;
 import resources.MultiIcon;
@@ -154,6 +155,10 @@ public class DataTypeArchiveGTree extends GTree {
 		setDataTransformer(
 			includeDataTypes ? new DataTypeTransformer() : new DefaultGTreeDataTransformer());
 		reloadTree();
+	}
+
+	public Program getProgram() {
+		return plugin.getProgram();
 	}
 
 	private void reloadTree() {

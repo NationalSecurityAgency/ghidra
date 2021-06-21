@@ -16,6 +16,7 @@
 package ghidra.app.util.html;
 
 import java.awt.Color;
+import java.util.Objects;
 
 import ghidra.util.exception.AssertException;
 
@@ -27,11 +28,7 @@ public class TextLine implements ValidatableLine {
 	private ValidatableLine validationLine;
 
 	public TextLine(String text) {
-		if (text == null) {
-			throw new NullPointerException("Text cannot be null.");
-		}
-
-		this.text = text;
+		this.text = Objects.requireNonNull(text);
 	}
 
 	@Override

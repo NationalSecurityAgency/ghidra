@@ -1,0 +1,77 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Static Mappings</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Static Mappings</H1>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/DebuggerStaticMappingPlugin.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>A static mapping refers to a range of addresses in the dynamic listing and its corresponding
+    range in the static listing. These mappings provide a flexible means of mapping imported
+    images, i.e., Ghidra Program Databases, into a trace. Typically, this table is populated by
+    automation, e.g., the <A href="help/topics/DebuggerBots/DebuggerBots.html#map_modules">Map
+    Modules</A> bot, or by higher-level user actions, e.g., the <A href=
+    "help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html#map_modules">Map Modules</A>
+    action. This under-the-hood static mapping window displays the mappings table, allowing users or
+    developers to diagnose image mapping issues and manually add mappings, regardless of reported
+    modules and/or sections. For most users, there is no reason to access this window.</P>
+
+    <H2>Table Columns</H2>
+
+    <P>The table has the following columns:</P>
+
+    <UL>
+      <LI>Dynamic Address - the minimum address in the dynamic address range.</LI>
+
+      <LI>Static Program - the Ghidra URL of the imported static image.</LI>
+
+      <LI>Static Address - the minimum address in the static address range.</LI>
+
+      <LI>Length - the number of bytes in each address range.</LI>
+
+      <LI>Shift - the offset from static address to dynamic address.</LI>
+
+      <LI>Lifespan - the span of time for which this mapping is applicable.</LI>
+    </UL>
+
+    <H2>Actions</H2>
+
+    <P>This window provides actions for finding, adding, and removing mappings. Note that entries
+    cannot be modified.</P>
+
+    <H3><A name="select_rows"></A>Select Rows</H3>
+
+    <P>This action is available when the active listing's (dynamic or static) cursor is at a valid
+    location. It selects the mapping containing that cursor. If the active listing has a selection,
+    it selects all mappings intersecting that selection.</P>
+
+    <H3><A name="add"></A>Add Mapping</H3>
+
+    <P>This action is always available. It presents a dialog to manually add a mapping. When one
+    primary listing (dynamic or static) has a selection, and the other's cursor is at a valid
+    location, it will populate the dialog, using the selection's size and minimum address, and the
+    cursor as the corresponding minimum address. The default lifespan is "from now on out", i.e.,
+    the current snap to infinity.</P>
+
+    <H3><A name="remove"></A>Remove Mapping</H3>
+
+    <P>This action is available when at least one mapping is selected. It removes those
+    mappings.</P>
+  </BODY>
+</HTML>

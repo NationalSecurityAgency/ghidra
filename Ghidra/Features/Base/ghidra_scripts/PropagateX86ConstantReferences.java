@@ -57,7 +57,7 @@ public class PropagateX86ConstantReferences extends GhidraScript {
 	public void run() throws Exception {
 		long numInstructions = currentProgram.getListing().getNumInstructions();
 		monitor.initialize((int) (numInstructions));
-		monitor.setMessage("Constant Propogation Markup");
+		monitor.setMessage("Constant Propagation Markup");
 
 		// set up the address set to restrict processing
 		AddressSet restrictedSet = new AddressSet(currentSelection);

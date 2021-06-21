@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +15,7 @@
  */
 package ghidra.app.plugin.debug.dbtable;
 
-import db.Record;
+import db.DBRecord;
 import db.StringField;
 
 public class StringColumnAdapter extends AbstractColumnAdapter {
@@ -27,12 +26,12 @@ public class StringColumnAdapter extends AbstractColumnAdapter {
 	}
 
 	@Override
-	Object getKeyValue(Record rec) {
+	Object getKeyValue(DBRecord rec) {
 		return ((StringField) rec.getKeyField()).getString();
 	}
 
 	@Override
-	Object getValue(Record rec, int col) {
+	Object getValue(DBRecord rec, int col) {
 		return "  " + rec.getString(col);
 	}
 }

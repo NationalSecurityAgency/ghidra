@@ -40,7 +40,7 @@ public class UnionImplBigEndianBitFieldTest extends AbstractCompositeImplBitFiel
 		Union struct = getUnion("U1");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/U1\n" + 
-			"Aligned\n" + 
+			"pack()\n" + 
 			"Union U1 {\n" + 
 			"   0   int:4(4)   1   a   \"\"\n" + 
 			"   0   int:2(6)   1   b   \"\"\n" + 
@@ -54,7 +54,7 @@ public class UnionImplBigEndianBitFieldTest extends AbstractCompositeImplBitFiel
 		Union struct = getUnion("U1z");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/U1z\n" + 
-				"Aligned\n" + 
+				"pack()\n" + 
 				"Union U1z {\n" + 
 				"   0   int:4(4)   1   a   \"\"\n" + 
 				"   0   longlong:0(7)   1      \"\"\n" + // has no impact
@@ -69,7 +69,7 @@ public class UnionImplBigEndianBitFieldTest extends AbstractCompositeImplBitFiel
 		Union struct = getUnion("U1p1");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/U1p1\n" + 
-			"Aligned pack(1)\n" + 
+			"pack(1)\n" + 
 			"Union U1p1 {\n" + 
 			"   0   int:4(4)   1   a   \"\"\n" + 
 			"   0   int:2(6)   1   b   \"\"\n" + 
@@ -83,7 +83,7 @@ public class UnionImplBigEndianBitFieldTest extends AbstractCompositeImplBitFiel
 		Union struct = getUnion("U1p1z");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/U1p1z\n" + 
-			"Aligned pack(1)\n" + 
+			"pack(1)\n" + 
 			"Union U1p1z {\n" + 
 			"   0   int:4(4)   1   a   \"\"\n" + 
 			"   0   longlong:0(7)   1      \"\"\n" + // has no impact
@@ -98,7 +98,7 @@ public class UnionImplBigEndianBitFieldTest extends AbstractCompositeImplBitFiel
 		Union struct = getUnion("U1p2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/U1p2\n" + 
-			"Aligned pack(2)\n" + 
+			"pack(2)\n" + 
 			"Union U1p2 {\n" + 
 			"   0   int:4(4)   1   a   \"\"\n" + 
 			"   0   int:2(6)   1   b   \"\"\n" + 

@@ -78,14 +78,6 @@ public class AlignmentDataType extends BuiltIn implements Dynamic {
 		return new AlignmentDataType(dtm);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	@Override
-	public boolean isDynamicallySized() {
-		return true;
-	}
-
 	@Override
 	public String getDescription() {
 		return "Consumes alignment/repeating bytes.";

@@ -87,9 +87,8 @@ public class OldProgramContextDB implements ProgramContext, DefaultProgramContex
 
 		baseContextRegister = language.getContextBaseRegister();
 		if (baseContextRegister == null) {
-			baseContextRegister =
-				new Register("DEFAULT_CONTEXT", "DEFAULT_CONTEXT",
-					addrMap.getAddressFactory().getRegisterSpace().getAddress(0x0), 4, true, 0);
+			baseContextRegister = new Register("DEFAULT_CONTEXT", "DEFAULT_CONTEXT",
+				addrMap.getAddressFactory().getRegisterSpace().getAddress(0x0), 4, true, 0);
 		}
 		defaultDisassemblyContext = new RegisterValue(baseContextRegister);
 
@@ -298,9 +297,8 @@ public class OldProgramContextDB implements ProgramContext, DefaultProgramContex
 		RegisterValueStore store = defaultRegisterValueMap.get(baseRegister);
 		if (store == null) {
 			RangeMapAdapter adapter = new InMemoryRangeMapAdapter();
-			store =
-				new RegisterValueStore(registerValue.getRegister().getBaseRegister(), adapter,
-					false);
+			store = new RegisterValueStore(registerValue.getRegister().getBaseRegister(), adapter,
+				false);
 			defaultRegisterValueMap.put(baseRegister, store);
 		}
 		store.setValue(start, end, registerValue);
@@ -373,9 +371,8 @@ public class OldProgramContextDB implements ProgramContext, DefaultProgramContex
 	private AddressRangeMapDB createMap(int offset) {
 		lock.acquire();
 		try {
-			AddressRangeMapDB map =
-				new AddressRangeMapDB(dbHandle, addrMap, lock, "ProgContext" + offset, errHandler,
-					ByteField.class, false);
+			AddressRangeMapDB map = new AddressRangeMapDB(dbHandle, addrMap, lock,
+				"ProgContext" + offset, errHandler, ByteField.INSTANCE, false);
 			valueMaps.put(offset, map);
 			return map;
 		}

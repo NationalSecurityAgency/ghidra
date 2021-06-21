@@ -239,7 +239,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 			}
 			if (i < (varnodes.length - 1) && !isRegister) {
 				throw new InvalidInputException(
-					"Compound storage must use registers accept for last varnode");
+					"Compound storage must use registers except for last varnode");
 			}
 			size += varnode.getSize();
 		}

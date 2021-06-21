@@ -170,7 +170,8 @@ public:
   virtual void flipInPlaceExecute(void);
   virtual bool isComplex(void) const { return true; }	///< Is \b this too complex to be a condition (BlockCondition)
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
-  virtual void finalizePrinting(const Funcdata &data) const {}	///< Make any final configurations necessary to print the block
+  virtual void finalTransform(Funcdata &data) {}	///< Do any structure driven final transforms
+  virtual void finalizePrinting(Funcdata &data) const {}	///< Make any final configurations necessary to print the block
   virtual void saveXmlHeader(ostream &s) const;		///< Save basic information as XML attributes
   virtual void restoreXmlHeader(const Element *el);	///< Restore basic information for XML attributes
   virtual void saveXmlBody(ostream &s) const {}		///< Save detail about components to an XML stream
@@ -296,7 +297,8 @@ public:
   virtual void printRaw(ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockGraph(this); }
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
-  virtual void finalizePrinting(const Funcdata &data) const;
+  virtual void finalTransform(Funcdata &data);
+  virtual void finalizePrinting(Funcdata &data) const;
   virtual void saveXmlBody(ostream &s) const;
   virtual void restoreXmlBody(List::const_iterator &iter,List::const_iterator enditer,BlockMap &resolver);
   void restoreXml(const Element *el,const AddrSpaceManager *m);	///< Restore \b this BlockGraph from an XML stream
@@ -580,8 +582,23 @@ public:
 /// Overflow syntax refers to the situation where there is a proper BlockWhileDo structure but
 /// the conditional block is too long or complicated to emit as a single conditional expression.
 /// An alternate `while(true) { }` form is used instead.
+///
+/// If an iterator op is provided, the block will be printed using \e for loop syntax,
+/// `for(i=0;i<10;++i)` where an \e initializer statement and \e iterator statement are
+/// printed alongside the \e condition statement.  Otherwise, \e while loop syntax is used
+/// `while(i<10)`
 class BlockWhileDo : public BlockGraph {
+  mutable PcodeOp *initializeOp;	///< Statement used as \e for loop initializer
+  mutable PcodeOp *iterateOp;		///< Statement used as \e for loop iterator
+  mutable PcodeOp *loopDef;		///< MULTIEQUAL merging loop variable
+  void findLoopVariable(PcodeOp *cbranch,BlockBasic *head,BlockBasic *tail,PcodeOp *lastOp);	///< Find a \e loop \e variable
+  PcodeOp *findInitializer(BlockBasic *head,int4 slot) const;			///< Find the for-loop initializer op
+  PcodeOp *testTerminal(Funcdata &data,int4 slot) const;	///< Test that given statement is terminal and explicit
+  bool testIterateForm(void) const;	///< Return \b false if the iterate statement is of an unacceptable form
 public:
+  BlockWhileDo(void) { initializeOp = (PcodeOp *)0; iterateOp = (PcodeOp *)0; loopDef = (PcodeOp *)0; }	///< Constructor
+  PcodeOp *getInitializeOp(void) const { return initializeOp; }	///< Get root of initialize statement or null
+  PcodeOp *getIterateOp(void) const { return iterateOp; }	///< Get root of iterate statement or null
   bool hasOverflowSyntax(void) const { return ((getFlags() & f_whiledo_overflow)!=0); }	///< Does \b this require overflow syntax
   void setOverflowSyntax(void) { setFlag(f_whiledo_overflow); }		///< Set that \b this requires overflow syntax
   virtual block_type getType(void) const { return t_whiledo; }
@@ -590,6 +607,8 @@ public:
   virtual void printHeader(ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockWhileDo(this); }
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
+  virtual void finalTransform(Funcdata &data);
+  virtual void finalizePrinting(Funcdata &data) const;
 };
 
 /// \brief A loop structure where the condition is checked at the bottom.
@@ -674,7 +693,7 @@ public:
   virtual void printHeader(ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockSwitch(this); }
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
-  virtual void finalizePrinting(const Funcdata &data) const;
+  virtual void finalizePrinting(Funcdata &data) const;
 };
 
 /// \brief Helper class for resolving cross-references while deserializing BlockGraph objects

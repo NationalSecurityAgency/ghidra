@@ -23,6 +23,6 @@ eclipse.project.name = 'Processors PIC'
 
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }
 

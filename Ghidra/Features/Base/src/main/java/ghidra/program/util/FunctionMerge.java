@@ -15,6 +15,7 @@
  */
 package ghidra.program.util;
 
+import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
@@ -39,6 +40,10 @@ public class FunctionMerge {
 		this.toFunctionManager = toProgram.getFunctionManager();
 	}
 
+	static boolean isDefaultThunk(Function func) {
+		return func.getSymbol().getSource() == SourceType.DEFAULT && func.isThunk();
+	}
+
 	Symbol replaceFunctionSymbol(Address originEntryPoint, LongLongHashtable conflictSymbolIDMap,
 			TaskMonitor monitor)
 			throws DuplicateNameException, InvalidInputException, CircularDependencyException {
@@ -51,37 +56,53 @@ public class FunctionMerge {
 			String fromName = fromFunction.getName();
 			Symbol fromSymbol = fromFunction.getSymbol();
 			SourceType fromSource = fromSymbol.getSource();
-			Namespace fromNamespace = fromSymbol.getParentNamespace();
+			boolean isFromDefaultThunk = isDefaultThunk(fromFunction);
+
+			String toName = toFunction.getName();
+			Symbol toSymbol = toFunction.getSymbol();
+			SourceType toSource = toSymbol.getSource();
+			boolean isToDefaultThunk = isDefaultThunk(fromFunction);
+
+			if (isFromDefaultThunk && isToDefaultThunk) {
+				return toSymbol; // matching default thunk
+			}
+
+			Namespace fromNamespace = // default thunks will lie about their namespace
+				isFromDefaultThunk ? fromProgram.getGlobalNamespace()
+						: fromSymbol.getParentNamespace();
 			Namespace expectedToNamespace = DiffUtility.getNamespace(fromNamespace, toProgram);
-			if (expectedToNamespace != null) {
+			if (!isFromDefaultThunk && expectedToNamespace != null) {
 				Symbol existingSymbol = toProgram.getSymbolTable().getSymbol(fromName,
 					originEntryPoint, expectedToNamespace);
 				if (existingSymbol != null) {
-					// TODO Change the function symbol to this one. // FIXME
+					if (!existingSymbol.isPrimary()) {
+						SetLabelPrimaryCmd cmd =
+							new SetLabelPrimaryCmd(originEntryPoint, fromName, expectedToNamespace);
+						if (cmd.applyTo(toProgram)) {
+							existingSymbol = cmd.getSymbol();
+						}
+					}
+					return existingSymbol;
 				}
 			}
-			String toName = toFunction.getName();
-			Symbol toSymbol = toFunction.getSymbol();
-			Namespace currentToNamespace = toSymbol.getParentNamespace();
+
+			Namespace currentToNamespace = // default thunks will lie about their namespace
+				isToDefaultThunk ? toProgram.getGlobalNamespace() : toSymbol.getParentNamespace();
 			Symbol expectedNamespaceSymbol =
 				SimpleDiffUtility.getSymbol(fromNamespace.getSymbol(), toProgram);
 			boolean sameNamespace = currentToNamespace.getSymbol() == expectedNamespaceSymbol;
-			if (fromName.equals(toName) && sameNamespace) {
-				return toSymbol; // function symbol name and namespace match.
+			if (fromSource == toSource && fromName.equals(toName) && sameNamespace) {
+				return toSymbol; // function symbol source, name and namespace match
 			}
 			Namespace desiredToNamespace = currentToNamespace;
 			if (!sameNamespace) {
 				desiredToNamespace = new SymbolMerge(fromProgram, toProgram).resolveNamespace(
 					fromNamespace, conflictSymbolIDMap);
 			}
-			// Rename the function so that we will be able to move it.
-			boolean hasDifferentName = !fromName.equals(toName);
-			if (hasDifferentName) {
-				toFunction.setName(fromName, fromSource);
-			}
-			// Move it to the new namespace.
-			if (currentToNamespace != desiredToNamespace) {
-				toFunction.setParentNamespace(desiredToNamespace);
+
+			if (fromSource != toSource || !fromName.equals(toName) ||
+				currentToNamespace != desiredToNamespace) {
+				toSymbol.setNameAndNamespace(fromName, desiredToNamespace, fromSource);
 			}
 
 			// TODO May want to save the symbol info if the function didn't get desired pathname. // FIXME
@@ -97,48 +118,64 @@ public class FunctionMerge {
 		// Assumes: The function in the destination program should already be replaced at this point.
 		FunctionManager fromFunctionMgr = fromProgram.getFunctionManager();
 		FunctionManager toFunctionMgr = toProgram.getFunctionManager();
-		Function fromFunc = fromFunctionMgr.getFunctionAt(entryPoint);
-		Function toFunc = toFunctionMgr.getFunctionAt(entryPoint);
-		if ((fromFunc != null) && (toFunc != null)) {
-			String fromName = fromFunc.getName();
-			Symbol fromSymbol = fromFunc.getSymbol();
-			SourceType source = fromSymbol.getSource();
-			Namespace fromNamespace = fromSymbol.getParentNamespace();
+		Function fromFunction = fromFunctionMgr.getFunctionAt(entryPoint);
+		Function toFunction = toFunctionMgr.getFunctionAt(entryPoint);
+		if ((fromFunction != null) && (toFunction != null)) {
+			String fromName = fromFunction.getName();
+			Symbol fromSymbol = fromFunction.getSymbol();
+			SourceType fromSource = fromSymbol.getSource();
+			boolean isFromDefaultThunk = isDefaultThunk(fromFunction);
+
+			String toName = toFunction.getName();
+			Symbol toSymbol = toFunction.getSymbol();
+			SourceType toSource = toSymbol.getSource();
+			boolean isToDefaultThunk = isDefaultThunk(fromFunction);
+
+			if (isFromDefaultThunk && isToDefaultThunk) {
+				return toSymbol; // matching default thunk
+			}
+
+			Namespace fromNamespace = // default thunks will lie about their namespace
+				isFromDefaultThunk ? fromProgram.getGlobalNamespace()
+						: fromSymbol.getParentNamespace();
 			Namespace expectedToNamespace = DiffUtility.getNamespace(fromNamespace, toProgram);
-			if (expectedToNamespace != null) {
+			if (!isFromDefaultThunk && expectedToNamespace != null) {
 				Symbol existingSymbol =
 					toProgram.getSymbolTable().getSymbol(fromName, entryPoint, expectedToNamespace);
 				if (existingSymbol != null) {
-					// TODO Change the function symbol to this one. // FIXME
+					if (!existingSymbol.isPrimary()) {
+						SetLabelPrimaryCmd cmd =
+							new SetLabelPrimaryCmd(entryPoint, fromName, expectedToNamespace);
+						if (cmd.applyTo(toProgram)) {
+							existingSymbol = cmd.getSymbol();
+						}
+					}
+					return existingSymbol;
 				}
 			}
-			String toName = toFunc.getName();
-			Symbol toSymbol = toFunc.getSymbol();
-			Namespace currentToNamespace = toSymbol.getParentNamespace();
+
+			Namespace currentToNamespace = // default thunks will lie about their namespace
+				isToDefaultThunk ? toProgram.getGlobalNamespace() : toSymbol.getParentNamespace();
 			Symbol expectedNamespaceSymbol =
 				SimpleDiffUtility.getSymbol(fromNamespace.getSymbol(), toProgram);
 			boolean sameNamespace = currentToNamespace.getSymbol() == expectedNamespaceSymbol;
-			if (fromName.equals(toName) && sameNamespace) {
-				return toSymbol; // function symbol name and namespace match.
+			if (fromSource == toSource && fromName.equals(toName) && sameNamespace) {
+				return toSymbol; // function symbol source, name and namespace match.
 			}
 			Namespace desiredToNamespace = currentToNamespace;
 			if (!sameNamespace) {
 				desiredToNamespace = new SymbolMerge(fromProgram, toProgram).resolveNamespace(
 					fromNamespace, conflictSymbolIDMap);
 			}
-			// Rename the function so that we will be able to move it.
-			boolean hasDifferentName = !fromName.equals(toName);
-			if (hasDifferentName) {
-				toFunc.setName(fromName, source);
-			}
-			// Move it to the new namespace.
-			if (currentToNamespace != desiredToNamespace) {
-				toFunc.setParentNamespace(desiredToNamespace);
+
+			if (fromSource != toSource || !fromName.equals(toName) ||
+				currentToNamespace != desiredToNamespace) {
+				toSymbol.setNameAndNamespace(fromName, desiredToNamespace, fromSource);
 			}
 
 			// TODO May want to save the symbol info if the function didn't get desired pathname. // FIXME
 
-			return toFunc.getSymbol();
+			return toFunction.getSymbol();
 		}
 		return null;
 	}
@@ -155,22 +192,28 @@ public class FunctionMerge {
 			monitor.setProgress(++count);
 			monitor.checkCanceled();
 			Function originFunction = originIter.next();
+			SourceType originSource = originFunction.getSymbol().getSource();
 			Address originEntryPoint = originFunction.getEntryPoint();
 			Address resultEntryPoint = originToResultTranslator.getAddress(originEntryPoint);
-			monitor.setMessage("Replacing function name " + count + " of " + max + ".  Address=" +
-				originEntryPoint.toString(true));
+			monitor.setMessage("Replacing function name " + count + " of " + max);
 			Function resultFunction = toFunctionManager.getFunctionAt(resultEntryPoint);
-			if (resultFunction != null &&
-				!resultFunction.getName().equals(originFunction.getName())) {
-				try {
-					replaceFunctionSymbol(originEntryPoint, conflictSymbolIDMap, monitor);
+			if (resultFunction != null) {
+				// TODO: Gets complicated if 
+				SourceType resultSource = resultFunction.getSymbol().getSource();
+				if (resultSource == SourceType.DEFAULT && originSource == SourceType.DEFAULT) {
+					continue;
 				}
-				catch (DuplicateNameException e) {
-				}
-				catch (InvalidInputException e) {
-				}
-				catch (CircularDependencyException e) {
-					// TODO MAy want message to user if can't replace name.
+				if (!resultFunction.getName().equals(originFunction.getName())) {
+					try {
+						replaceFunctionSymbol(originEntryPoint, conflictSymbolIDMap, monitor);
+					}
+					catch (DuplicateNameException e) {
+					}
+					catch (InvalidInputException e) {
+					}
+					catch (CircularDependencyException e) {
+						// TODO May want message to user if can't replace name.
+					}
 				}
 			}
 		}

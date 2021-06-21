@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,35 @@
  */
 package db;
 
-import ghidra.util.exception.AssertException;
-
 import java.io.IOException;
+
+import db.buffers.DataBuffer;
 
 /**
  * <code>ShortField</code> provides a wrapper for 2-byte signed short data 
  * which is read or written to a Record. 
  */
-public class ShortField extends Field {
+public final class ShortField extends Field {
+
+	/**
+	 * Minimum short field value
+	 */
+	public static final ShortField MIN_VALUE = new ShortField(Short.MIN_VALUE, true);
+
+	/**
+	 * Maximum short field value
+	 */
+	public static final ShortField MAX_VALUE = new ShortField(Short.MAX_VALUE, true);
+
+	/**
+	 * Zero short field value
+	 */
+	public static final ShortField ZERO_VALUE = new ShortField((short) 0, true);
+
+	/**
+	 * Instance intended for defining a {@link Table} {@link Schema}
+	 */
+	public static final ShortField INSTANCE = ZERO_VALUE;
 
 	private short value;
 
@@ -39,69 +58,68 @@ public class ShortField extends Field {
 	 * @param s initial value
 	 */
 	public ShortField(short s) {
+		this(s, false);
+	}
+
+	/**
+	 * Construct a short field with an initial value of s.
+	 * @param s initial value
+	 * @param immutable true if field value is immutable
+	 */
+	ShortField(short s, boolean immutable) {
+		super(immutable);
 		value = s;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#getShortValue()
-	 */
+	@Override
+	boolean isNull() {
+		return value == 0;
+	}
+
+	@Override
+	void setNull() {
+		checkImmutable();
+		value = 0;
+	}
+
 	@Override
 	public short getShortValue() {
 		return value;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#setShortValue(short)
-	 */
 	@Override
 	public void setShortValue(short value) {
+		checkImmutable();
 		this.value = value;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#length()
-	 */
 	@Override
 	int length() {
 		return 2;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#write(ghidra.framework.store.Buffer, int)
-	 */
 	@Override
 	int write(Buffer buf, int offset) throws IOException {
 		return buf.putShort(offset, value);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#read(ghidra.framework.store.Buffer, int)
-	 */
 	@Override
 	int read(Buffer buf, int offset) throws IOException {
+		checkImmutable();
 		value = buf.getShort(offset);
 		return offset + 2;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#readLength(ghidra.framework.store.Buffer, int)
-	 */
 	@Override
 	int readLength(Buffer buf, int offset) throws IOException {
 		return 2;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#getFieldType()
-	 */
 	@Override
-	protected byte getFieldType() {
+	byte getFieldType() {
 		return SHORT_TYPE;
 	}
 
-	/*
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return "ShortField: " + Short.toString(value);
@@ -109,80 +127,88 @@ public class ShortField extends Field {
 
 	@Override
 	public String getValueAsString() {
-		return Integer.toHexString(value);
+		return "0x" + Integer.toHexString(value & 0xffff);
 	}
 
-	/*
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof ShortField))
+		if (obj == null || !(obj instanceof ShortField)) {
 			return false;
+		}
 		return ((ShortField) obj).value == value;
 	}
 
-	/*
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
 	@Override
 	public int compareTo(Field o) {
 		ShortField f = (ShortField) o;
-		if (value == f.value)
+		if (value == f.value) {
 			return 0;
-		else if (value < f.value)
+		}
+		else if (value < f.value) {
 			return -1;
+		}
 		return 1;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#newField(ghidra.framework.store.db.Field)
-	 */
 	@Override
-	public Field newField(Field fieldValue) {
-		if (fieldValue.isVariableLength())
-			throw new AssertException();
-		return new ShortField((short) fieldValue.getLongValue());
+	int compareTo(DataBuffer buffer, int offset) {
+		short otherValue = buffer.getShort(offset);
+		if (value == otherValue) {
+			return 0;
+		}
+		else if (value < otherValue) {
+			return -1;
+		}
+		return 1;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#newField()
-	 */
 	@Override
-	public Field newField() {
+	public ShortField copyField() {
+		return new ShortField((short) getLongValue());
+	}
+
+	@Override
+	public ShortField newField() {
 		return new ShortField();
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#getLongValue()
-	 */
 	@Override
 	public long getLongValue() {
 		return value;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#setLongValue(long)
-	 */
 	@Override
 	public void setLongValue(long value) {
-		this.value = (short) value;
+		setShortValue((short) value);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#getBinaryData()
-	 */
 	@Override
 	public byte[] getBinaryData() {
 		return new byte[] { (byte) (value >> 8), (byte) value };
 	}
 
-	/*
-	 * @see java.lang.Object#hashCode()
-	 */
+	@Override
+	public void setBinaryData(byte[] bytes) {
+		checkImmutable();
+		if (bytes.length != 2) {
+			throw new IllegalFieldAccessException();
+		}
+		value = (short) (((bytes[0] & 0xff) << 8) | (bytes[1] & 0xff));
+	}
+
 	@Override
 	public int hashCode() {
 		return value;
+	}
+
+	@Override
+	ShortField getMinValue() {
+		return MIN_VALUE;
+	}
+
+	@Override
+	ShortField getMaxValue() {
+		return MAX_VALUE;
 	}
 
 }

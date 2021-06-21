@@ -69,5 +69,10 @@ public class EndSymbolApplier extends MsSymbolApplier {
 				(SeparatedCodeSymbolApplier) applierParam;
 			separatedCodeSymbolApplier.endBlock();
 		}
+		else if (applierParam instanceof ManagedProcedureSymbolApplier) {
+			ManagedProcedureSymbolApplier procedureSymbolApplier =
+				(ManagedProcedureSymbolApplier) applierParam;
+			procedureSymbolApplier.endBlock();
+		}
 	}
 }

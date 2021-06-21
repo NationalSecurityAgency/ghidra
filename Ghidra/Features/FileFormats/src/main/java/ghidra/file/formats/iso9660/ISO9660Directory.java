@@ -15,13 +15,14 @@
  */
 package ghidra.file.formats.iso9660;
 
-import ghidra.app.util.bin.*;
-import ghidra.program.model.data.*;
-import ghidra.util.exception.DuplicateNameException;
-
-import java.io.*;
+import java.io.IOException;
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
+
+import ghidra.app.util.bin.*;
+import ghidra.formats.gfilesystem.FSRL;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
 
 public class ISO9660Directory implements StructConverter {
 
@@ -175,21 +176,11 @@ public class ISO9660Directory implements StructConverter {
 		return false;
 	}
 
-	/**
-	 * Returns the bytes of the file which this directory points to
-	 * @param provider The ByteProvider
-	 * @param logicalBlockSize
-	 * @return An InputStream of the data bytes
-	 * @throws IOException
-	 */
-	public InputStream getDataBytes(ByteProvider provider, long logicalBlockSize)
-			throws IOException {
+	ByteProvider getByteProvider(ByteProvider provider, long logicalBlockSize, FSRL fsrl) {
 
-		if (!(this.isDirectoryFlagSet())) {
+		if (!this.isDirectoryFlagSet()) {
 			long index = locationOfExtentLE * logicalBlockSize;
-			byte[] dataBytes = provider.readBytes(index, dataLengthLE);
-			InputStream inputStream = new ByteArrayInputStream(dataBytes);
-			return inputStream;
+			return new ByteProviderWrapper(provider, index, dataLengthLE, fsrl);
 		}
 		return null;
 	}

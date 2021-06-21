@@ -17,16 +17,13 @@ package ghidra.graph.program;
 
 import java.util.*;
 
-import docking.action.builder.ActionBuilder;
 import ghidra.app.plugin.core.graph.AddressBasedGraphDisplayListener;
-import ghidra.app.util.AddEditDialog;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.*;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.service.graph.*;
-import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -41,18 +38,11 @@ public class BlockModelGraphDisplayListener extends AddressBasedGraphDisplayList
 			GraphDisplay display) {
 		super(tool, blockModel.getProgram(), display);
 		this.blockModel = blockModel;
-		addActions(display);
 	}
 
-	private void addActions(GraphDisplay display) {
-		display.addAction(new ActionBuilder("Rename Vertex", "Block Graph")
-				.popupMenuPath("Rename Vertex")
-				.withContext(VertexGraphActionContext.class)
-				.helpLocation(new HelpLocation("ProgramGraphPlugin", "Rename Vertex"))
-				// only enable action when vertex corresponds to an address
-				.enabledWhen(c -> getAddress(c.getClickedVertex().getId()) != null)
-				.onAction(this::updateVertexName)
-				.build());
+	@Override
+	public Address getAddress(AttributedVertex vertex) {
+		return super.getAddress(vertex);
 	}
 
 	@Override
@@ -79,25 +69,7 @@ public class BlockModelGraphDisplayListener extends AddressBasedGraphDisplayList
 		// Identify all blocks which have an entry point within the selection address set
 		Set<AttributedVertex> vertices = new HashSet<>();
 		try {
-			SymbolTable symTable = program.getSymbolTable();
-			CodeBlockIterator cbIter =
-				blockModel.getCodeBlocksContaining(addrSet, TaskMonitor.DUMMY);
-			while (cbIter.hasNext()) {
-				CodeBlock block = cbIter.next();
-				String addrString;
-				Address addr = block.getFirstStartAddress();
-				if (addr.isExternalAddress()) {
-					Symbol s = symTable.getPrimarySymbol(addr);
-					addrString = s.getName(true);
-				}
-				else {
-					addrString = addr.toString();
-				}
-				AttributedVertex vertex = graphDisplay.getGraph().getVertex(addrString);
-				if (vertex != null) {
-					vertices.add(vertex);
-				}
-			}
+			addVerticesForAddresses(addrSet, vertices);
 		}
 		catch (CancelledException e) {
 			// Will not happen with dummyMonitor
@@ -107,37 +79,39 @@ public class BlockModelGraphDisplayListener extends AddressBasedGraphDisplayList
 		return vertices;
 	}
 
+	private void addVerticesForAddresses(AddressSetView addrSet, Set<AttributedVertex> vertices)
+			throws CancelledException {
+
+		SymbolTable symTable = program.getSymbolTable();
+		CodeBlockIterator it =
+			blockModel.getCodeBlocksContaining(addrSet, TaskMonitor.DUMMY);
+		while (it.hasNext()) {
+			CodeBlock block = it.next();
+			String addrString;
+			Address addr = block.getFirstStartAddress();
+			if (addr.isExternalAddress()) {
+				Symbol s = symTable.getPrimarySymbol(addr);
+				addrString = s.getName(true);
+			}
+			else {
+				addrString = addr.toString();
+			}
+			AttributedVertex vertex = graphDisplay.getGraph().getVertex(addrString);
+			if (vertex != null) {
+				vertices.add(vertex);
+			}
+		}
+	}
+
 	@Override
 	protected AddressSet getAddresses(Set<AttributedVertex> vertices) {
-		AddressSet addrSet = new AddressSet();
 
+		AddressSet addrSet = new AddressSet();
 		try {
 			// for each address string, translate it into a block
 			//   and add it to the address set.
 			for (AttributedVertex vertex : vertices) {
-				Address blockAddr = getAddress(vertex);
-				if (!isValidAddress(blockAddr)) {
-					continue;
-				}
-				CodeBlock blocks[] = null;
-				if (blockModel != null) {
-					CodeBlock block = blockModel.getCodeBlockAt(blockAddr, TaskMonitor.DUMMY);
-					if (block != null) {
-						blocks = new CodeBlock[1];
-						blocks[0] = block;
-					}
-					else {
-						blocks = blockModel.getCodeBlocksContaining(blockAddr, TaskMonitor.DUMMY);
-					}
-				}
-				if (blocks != null && blocks.length > 0) {
-					for (CodeBlock block : blocks) {
-						addrSet.add(block);
-					}
-				}
-				else {
-					addrSet.addRange(blockAddr, blockAddr);
-				}
+				addBlockAddresses(addrSet, vertex);
 			}
 		}
 		catch (CancelledException e) {
@@ -147,26 +121,40 @@ public class BlockModelGraphDisplayListener extends AddressBasedGraphDisplayList
 		return addrSet;
 	}
 
+	private void addBlockAddresses(AddressSet addrSet, AttributedVertex vertex)
+			throws CancelledException {
+
+		Address blockAddr = getAddress(vertex);
+		if (!isValidAddress(blockAddr)) {
+			return;
+		}
+
+		CodeBlock blocks[] = null;
+		if (blockModel != null) {
+			CodeBlock block = blockModel.getCodeBlockAt(blockAddr, TaskMonitor.DUMMY);
+			if (block != null) {
+				blocks = new CodeBlock[1];
+				blocks[0] = block;
+			}
+			else {
+				blocks = blockModel.getCodeBlocksContaining(blockAddr, TaskMonitor.DUMMY);
+			}
+		}
+		if (blocks != null && blocks.length > 0) {
+			for (CodeBlock block : blocks) {
+				addrSet.add(block);
+			}
+		}
+		else {
+			addrSet.addRange(blockAddr, blockAddr);
+		}
+	}
+
 	protected boolean isValidAddress(Address addr) {
 		if (addr == null || program == null) {
 			return false;
 		}
 		return program.getMemory().contains(addr) || addr.isExternalAddress();
-	}
-
-	private void updateVertexName(VertexGraphActionContext context) {
-		AttributedVertex vertex = context.getClickedVertex();
-		Address address = getAddress(vertex);
-		Symbol symbol = program.getSymbolTable().getPrimarySymbol(address);
-
-		if (symbol == null) {
-			AddEditDialog dialog = new AddEditDialog("Create Label", tool);
-			dialog.addLabel(address, program, context.getComponentProvider());
-		}
-		else {
-			AddEditDialog dialog = new AddEditDialog("Edit Label", tool);
-			dialog.editLabel(symbol, program, context.getComponentProvider());
-		}
 	}
 
 	@Override

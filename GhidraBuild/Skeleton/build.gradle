@@ -20,7 +20,7 @@ apply plugin: 'eclipse'
 eclipse.project.name = '_Skeleton'
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }
 
 // We don't want this to build
@@ -35,6 +35,7 @@ rootProject.assembleDistribution {
 		exclude 'ghidra_scripts/bin/'
 		exclude '.classpath'
 		exclude '.project'
+		exclude 'build.gradle'
 		rename "buildTemplate.gradle", "build.gradle"
 		into "Extensions/Ghidra/Skeleton"
 	}

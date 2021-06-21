@@ -101,6 +101,10 @@ else
 	CPATH="${INSTALL_DIR}/Ghidra/Framework/Utility/bin/main"
 	LS_CPATH="${INSTALL_DIR}/GhidraBuild/LaunchSupport/bin/main"
 	DEBUG_LOG4J="${INSTALL_DIR}/Ghidra/RuntimeScripts/Common/support/debug.log4j.xml"
+	if ! [ -d "${LS_CPATH}" ]; then
+		echo "Ghidra cannot launch in development mode because Eclipse has not compiled its class files."
+		exit 1
+	fi
 fi
 
 # Make sure some kind of java is on the path.  It's required to run the LaunchSupport program.
@@ -151,12 +155,10 @@ if [ "${MODE}" = "debug" ] || [ "${MODE}" = "debug-suspend" ]; then
 	if [ "${MODE}" = "debug-suspend" ]; then
 		SUSPEND=y
 	fi
-	
-	VMARG_LIST+=" -Xdebug"
-	VMARG_LIST+=" -Xnoagent" 
-	VMARG_LIST+=" -Djava.compiler=NONE" 
+	 
 	VMARG_LIST+=" -Dlog4j.configuration=\"${DEBUG_LOG4J}\""  
-	VMARG_LIST+=" -Xrunjdwp:transport=dt_socket,server=y,suspend=${SUSPEND},address=${DEBUG_ADDRESS}"
+	VMARG_LIST+=" -agentlib:jdwp=transport=dt_socket,server=y,suspend=${SUSPEND},address=${DEBUG_ADDRESS}"
+	
 
 elif [ "${MODE}" = "fg" ]; then
 	:

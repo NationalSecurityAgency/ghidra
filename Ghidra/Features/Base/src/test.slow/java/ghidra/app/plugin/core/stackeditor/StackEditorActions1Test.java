@@ -24,10 +24,7 @@ import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.program.model.data.*;
 
 public class StackEditorActions1Test extends AbstractStackEditorTest {
-	/**
-	 * Constructor for StackEditorActionsTest.
-	 * @param name the testcase name.
-	 */
+
 	public StackEditorActions1Test() {
 		super(false);
 	}
@@ -54,15 +51,15 @@ public class StackEditorActions1Test extends AbstractStackEditorTest {
 
 		// Make array of 2 arrays
 		assertEquals("", model.getStatus());
-		invoke(arrayAction);
-		dialog = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		invoke(arrayAction, false);
+		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 3);
 		assertEquals("", model.getStatus());
 		dialog = null;
 		waitUntilDialogProviderGone(NumberInputDialog.class, 2000);
-		invoke(arrayAction);
-		dialog = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		invoke(arrayAction, false);
+		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 2);
 		dialog = null;

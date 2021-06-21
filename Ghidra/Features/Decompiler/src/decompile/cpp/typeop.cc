@@ -274,11 +274,11 @@ Datatype *TypeOpBinary::getInputLocal(const PcodeOp *op,int4 slot) const
 void TypeOpBinary::printRaw(ostream &s,const PcodeOp *op)
 
 {
-  op->getOut()->printRaw(s);
+  Varnode::printRaw(s,op->getOut());
   s << " = ";
-  op->getIn(0)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(0));
   s << ' ' << getOperatorName(op) << ' ';
-  op->getIn(1)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(1));
 }
 
 Datatype *TypeOpUnary::getOutputLocal(const PcodeOp *op) const
@@ -296,9 +296,9 @@ Datatype *TypeOpUnary::getInputLocal(const PcodeOp *op,int4 slot) const
 void TypeOpUnary::printRaw(ostream &s,const PcodeOp *op)
 
 {
-  op->getOut()->printRaw(s);
+  Varnode::printRaw(s,op->getOut());
   s << " = " << getOperatorName(op) << ' ';
-  op->getIn(0)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(0));
 }
 
 Datatype *TypeOpFunc::getOutputLocal(const PcodeOp *op) const
@@ -316,12 +316,12 @@ Datatype *TypeOpFunc::getInputLocal(const PcodeOp *op,int4 slot) const
 void TypeOpFunc::printRaw(ostream &s,const PcodeOp *op)
 
 {
-  op->getOut()->printRaw(s);
+  Varnode::printRaw(s,op->getOut());
   s << " = " << getOperatorName(op) << '(';
-  op->getIn(0)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(0));
   for(int4 i=1;i<op->numInput();++i) {
     s << ',';
-    op->getIn(i)->printRaw(s);
+    Varnode::printRaw(s,op->getIn(i));
   }
   s << ')';
 }
@@ -350,9 +350,9 @@ Datatype *TypeOpCopy::getOutputToken(const PcodeOp *op,CastStrategy *castStrateg
 void TypeOpCopy::printRaw(ostream &s,const PcodeOp *op)
 
 {
-  op->getOut()->printRaw(s);
+  Varnode::printRaw(s,op->getOut());
   s << " = ";
-  op->getIn(0)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(0));
 }
 
 TypeOpLoad::TypeOpLoad(TypeFactory *t) : TypeOp(t,CPUI_LOAD,"load")
@@ -412,11 +412,11 @@ Datatype *TypeOpLoad::getOutputToken(const PcodeOp *op,CastStrategy *castStrateg
 void TypeOpLoad::printRaw(ostream &s,const PcodeOp *op)
 
 {
-  op->getOut()->printRaw(s);
+  Varnode::printRaw(s,op->getOut());
   s << " = *(";
   AddrSpace *spc = Address::getSpaceFromConst(op->getIn(0)->getAddr());
   s << spc->getName() << ',';
-  op->getIn(1)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(1));
   s << ')';
 }
 
@@ -469,9 +469,9 @@ void TypeOpStore::printRaw(ostream &s,const PcodeOp *op)
   s << "*(";
   AddrSpace *spc = Address::getSpaceFromConst(op->getIn(0)->getAddr());
   s << spc->getName() << ',';
-  op->getIn(1)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(1));
   s << ") = ";
-  op->getIn(2)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(2));
 }
 
 TypeOpBranch::TypeOpBranch(TypeFactory *t) : TypeOp(t,CPUI_BRANCH,"goto")
@@ -485,7 +485,7 @@ void TypeOpBranch::printRaw(ostream &s,const PcodeOp *op)
 
 {
   s << name << ' ';
-  op->getIn(0)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(0));
 }
 
 TypeOpCbranch::TypeOpCbranch(TypeFactory *t) : TypeOp(t,CPUI_CBRANCH,"goto")
@@ -511,9 +511,9 @@ void TypeOpCbranch::printRaw(ostream &s,const PcodeOp *op)
 
 {
   s << name << ' ';
-  op->getIn(0)->printRaw(s);	// Print the distant (non-fallthru) destination
+  Varnode::printRaw(s,op->getIn(0));	// Print the distant (non-fallthru) destination
   s << " if (";
-  op->getIn(1)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(1));
   if (op->isBooleanFlip()^op->isFallthruTrue())
     s << " == 0)";
   else
@@ -531,7 +531,7 @@ void TypeOpBranchind::printRaw(ostream &s,const PcodeOp *op)
 
 {
   s << name << ' ';
-  op->getIn(0)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(0));
 }
 
 TypeOpCall::TypeOpCall(TypeFactory *t) : TypeOp(t,CPUI_CALL,"call")
@@ -545,17 +545,17 @@ void TypeOpCall::printRaw(ostream &s,const PcodeOp *op)
 
 {
   if (op->getOut() != (Varnode *)0) {
-    op->getOut()->printRaw(s);
+    Varnode::printRaw(s,op->getOut());
     s << " = ";
   }
   s << name << ' ';
-  op->getIn(0)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(0));
   if (op->numInput()>1) {
     s << '(';
-    op->getIn(1)->printRaw(s);
+    Varnode::printRaw(s,op->getIn(1));
     for(int4 i=2;i<op->numInput();++i) {
       s << ',';
-      op->getIn(i)->printRaw(s);
+      Varnode::printRaw(s,op->getIn(i));
     }
     s << ')';
   }
@@ -669,17 +669,17 @@ void TypeOpCallind::printRaw(ostream &s,const PcodeOp *op)
 
 {
   if (op->getOut() != (Varnode *)0) {
-    op->getOut()->printRaw(s);
+    Varnode::printRaw(s,op->getOut());
     s << " = ";
   }
   s << name;
-  op->getIn(0)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(0));
   if (op->numInput()>1) {
     s << '(';
-    op->getIn(1)->printRaw(s);
+    Varnode::printRaw(s,op->getIn(1));
     for(int4 i=2;i<op->numInput();++i) {
       s << ',';
-      op->getIn(i)->printRaw(s);
+      Varnode::printRaw(s,op->getIn(i));
     }
     s << ')';
   }
@@ -696,16 +696,16 @@ void TypeOpCallother::printRaw(ostream &s,const PcodeOp *op)
 
 {
   if (op->getOut() != (Varnode *)0) {
-    op->getOut()->printRaw(s);
+    Varnode::printRaw(s,op->getOut());
     s << " = ";
   }
   s << getOperatorName(op);
   if (op->numInput()>1) {
     s << '(';
-    op->getIn(1)->printRaw(s);
+    Varnode::printRaw(s,op->getIn(1));
     for(int4 i=2;i<op->numInput();++i) {
       s << ',';
-      op->getIn(i)->printRaw(s);
+      Varnode::printRaw(s,op->getIn(i));
     }
     s << ')';
   }
@@ -784,15 +784,15 @@ void TypeOpReturn::printRaw(ostream &s,const PcodeOp *op)
   s << name;
   if (op->numInput()>=1) {
     s << '(';
-    op->getIn(0)->printRaw(s);
+    Varnode::printRaw(s,op->getIn(0));
     s << ')';
   }
   if (op->numInput()>1) {
     s << ' ';
-    op->getIn(1)->printRaw(s);
+    Varnode::printRaw(s,op->getIn(1));
     for(int4 i=2;i<op->numInput();++i) {
       s << ',';
-      op->getIn(i)->printRaw(s);
+      Varnode::printRaw(s,op->getIn(i));
     }
   }
 }
@@ -1204,11 +1204,11 @@ TypeOpIntSright::TypeOpIntSright(TypeFactory *t)
 void TypeOpIntSright::printRaw(ostream &s,const PcodeOp *op)
 
 {
-  op->getOut()->printRaw(s);
+  Varnode::printRaw(s,op->getOut());
   s << " = ";
-  op->getIn(0)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(0));
   s << " s>> ";
-  op->getIn(1)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(1));
 }
 
 Datatype *TypeOpIntSright::getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const
@@ -1501,16 +1501,16 @@ TypeOpMulti::TypeOpMulti(TypeFactory *t) : TypeOp(t,CPUI_MULTIEQUAL,"?")
 void TypeOpMulti::printRaw(ostream &s,const PcodeOp *op)
 
 {
-  op->getOut()->printRaw(s);
+  Varnode::printRaw(s,op->getOut());
   s << " = ";
-  op->getIn(0)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(0));
   //  if (op->Input(0)->isWritten())
   //    s << '(' << op->Input(0)->Def()->Start() << ')';
   if (op->numInput()==1)
     s << ' ' << getOperatorName(op);
   for(int4 i=1;i<op->numInput();++i) {
     s << ' ' << getOperatorName(op) << ' ';
-    op->getIn(i)->printRaw(s);
+    Varnode::printRaw(s,op->getIn(i));
     //    if (op->Input(i)->isWritten())
     //      s << '(' << op->Input(i)->Def()->Start() << ')';
   }
@@ -1539,16 +1539,16 @@ Datatype *TypeOpIndirect::getInputLocal(const PcodeOp *op,int4 slot) const
 void TypeOpIndirect::printRaw(ostream &s,const PcodeOp *op)
 
 {
-  op->getOut()->printRaw(s);
+  Varnode::printRaw(s,op->getOut());
   s << " = ";
   if (op->isIndirectCreation()) {
     s << "[create] ";
   }
   else {
-    op->getIn(0)->printRaw(s);
+    Varnode::printRaw(s,op->getIn(0));
     s << ' ' << getOperatorName(op) << ' ';
   }
-  op->getIn(1)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(1));
 }
 
 TypeOpPiece::TypeOpPiece(TypeFactory *t)
@@ -1614,9 +1614,9 @@ TypeOpCast::TypeOpCast(TypeFactory *t) : TypeOp(t,CPUI_CAST,"(cast)")
 void TypeOpCast::printRaw(ostream &s,const PcodeOp *op)
 
 {
-  op->getOut()->printRaw(s);
+  Varnode::printRaw(s,op->getOut());
   s << " = " << name << ' ';
-  op->getIn(0)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(0));
 }
 
 TypeOpPtradd::TypeOpPtradd(TypeFactory *t) : TypeOp(t,CPUI_PTRADD,"+")
@@ -1659,13 +1659,13 @@ Datatype *TypeOpPtradd::getInputCast(const PcodeOp *op,int4 slot,const CastStrat
 void TypeOpPtradd::printRaw(ostream &s,const PcodeOp *op)
 
 {
-  op->getOut()->printRaw(s);
+  Varnode::printRaw(s,op->getOut());
   s << " = ";
-  op->getIn(0)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(0));
   s << ' ' << name << ' ';
-  op->getIn(1)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(1));
   s << "(*";
-  op->getIn(2)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(2));
   s << ')';
 }
 
@@ -1720,11 +1720,11 @@ Datatype *TypeOpPtrsub::getOutputToken(const PcodeOp *op,CastStrategy *castStrat
 void TypeOpPtrsub::printRaw(ostream &s,const PcodeOp *op)
 
 {
-  op->getOut()->printRaw(s);
+  Varnode::printRaw(s,op->getOut());
   s << " = ";
-  op->getIn(0)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(0));
   s << ' ' << name << ' ';
-  op->getIn(1)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(1));
 }
 
 TypeOpSegment::TypeOpSegment(TypeFactory *t) : TypeOp(t,CPUI_SEGMENTOP,"segmentop")
@@ -1738,16 +1738,16 @@ void TypeOpSegment::printRaw(ostream &s,const PcodeOp *op)
 
 {
   if (op->getOut() != (Varnode *)0) {
-    op->getOut()->printRaw(s);
+    Varnode::printRaw(s,op->getOut());
     s << " = ";
   }
   s << getOperatorName(op);
   s << '(';
   AddrSpace *spc = Address::getSpaceFromConst(op->getIn(0)->getAddr());
   s << spc->getName() << ',';
-  op->getIn(1)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(1));
   s << ',';
-  op->getIn(2)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(2));
   s << ')';
 }
 
@@ -1800,7 +1800,7 @@ void TypeOpCpoolref::printRaw(ostream &s,const PcodeOp *op)
 
 {
   if (op->getOut() != (Varnode *)0) {
-    op->getOut()->printRaw(s);
+    Varnode::printRaw(s,op->getOut());
     s << " = ";
   }
   s << getOperatorName(op);
@@ -1811,10 +1811,10 @@ void TypeOpCpoolref::printRaw(ostream &s,const PcodeOp *op)
   if (rec != (const CPoolRecord *)0)
     s << '_' << rec->getToken();
   s << '(';
-  op->getIn(0)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(0));
   for(int4 i=2;i<op->numInput();++i) {
     s << ',';
-    op->getIn(i)->printRaw(s);
+    Varnode::printRaw(s,op->getIn(i));
   }
   s << ')';
 }
@@ -1830,15 +1830,15 @@ void TypeOpNew::printRaw(ostream &s,const PcodeOp *op)
 
 {
   if (op->getOut() != (Varnode *)0) {
-    op->getOut()->printRaw(s);
+    Varnode::printRaw(s,op->getOut());
     s << " = ";
   }
   s << getOperatorName(op);
   s << '(';
-  op->getIn(0)->printRaw(s);
+  Varnode::printRaw(s,op->getIn(0));
   for(int4 i=1;i<op->numInput();++i) {
     s << ',';
-    op->getIn(i)->printRaw(s);
+    Varnode::printRaw(s,op->getIn(i));
   }
   s << ')';
 }

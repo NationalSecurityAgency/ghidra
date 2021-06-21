@@ -15,23 +15,12 @@
  */
 package ghidra.service.graph;
 
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.apache.commons.text.StringEscapeUtils;
-
-import java.util.Set;
-
 /**
  * Graph vertex with attributes
  */
 public class AttributedVertex extends Attributed {
 
 	private final String id;
-	/**
-	 * cache of the html rendering of the vertex attributes
-	 */
-	private String htmlString;
 
 	/**
 	 * Constructs a new GhidraVertex with the given id and name
@@ -77,36 +66,6 @@ public class AttributedVertex extends Attributed {
 	@Override
 	public String toString() {
 		return getName() + " (" + id + ")";
-	}
-
-	public void clearCache() {
-		this.htmlString = null;
-	}
-
-	/**
-	 * parse (one time) then cache the attributes to html
-	 * @return the html string
-	 */
-	public String getHtmlString() {
-
-		if (htmlString != null) {
-			return htmlString;
-		}
-
-		Set<Entry<String, String>> entries = entrySet();
-		if (entries.isEmpty()) {
-			return ""; // empty so tooltip clients can handle empty data
-		}
-
-		StringBuilder buf = new StringBuilder("<html>");
-		for (Map.Entry<String, String> entry : entries) {
-			buf.append(entry.getKey());
-			buf.append(":");
-			buf.append(StringEscapeUtils.escapeHtml4(entry.getValue()));
-			buf.append("<br>");
-		}
-		htmlString = buf.toString();
-		return htmlString;
 	}
 
 	@Override

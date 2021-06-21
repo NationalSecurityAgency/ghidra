@@ -623,7 +623,7 @@ public class DataTypesXmlMgr {
 		XmlAttributes attrs = new XmlAttributes();
 		attrs.addAttribute("NAME", struct.getDisplayName());
 		attrs.addAttribute("NAMESPACE", struct.getCategoryPath().getPath());
-		attrs.addAttribute("SIZE", struct.isNotYetDefined() ? 0 : struct.getLength(), true);
+		attrs.addAttribute("SIZE", struct.isZeroLength() ? 0 : struct.getLength(), true);
 		writer.startElement("STRUCTURE", attrs);
 		writeRegularComment(writer, struct.getDescription());
 		DataTypeComponent[] members = struct.getComponents();
@@ -637,7 +637,7 @@ public class DataTypesXmlMgr {
 		XmlAttributes attrs = new XmlAttributes();
 		attrs.addAttribute("NAME", union.getDisplayName());
 		attrs.addAttribute("NAMESPACE", union.getCategoryPath().getPath());
-		attrs.addAttribute("SIZE", union.isNotYetDefined() ? 0 : union.getLength(), true);
+		attrs.addAttribute("SIZE", union.isZeroLength() ? 0 : union.getLength(), true);
 		writer.startElement("UNION", attrs);
 		writeRegularComment(writer, union.getDescription());
 		DataTypeComponent[] members = union.getComponents();
@@ -649,7 +649,7 @@ public class DataTypesXmlMgr {
 
 	private void writerMember(XmlWriter writer, DataTypeComponent member) {
 		XmlAttributes attrs = new XmlAttributes();
-		// TODO: how should we output bitfields (aligned/unaligned) and flex array
+		// TODO: how should we output bitfields (packed/non-packed) and flex array
 		attrs.addAttribute("OFFSET", member.getOffset(), true);
 		attrs.addAttribute("DATATYPE", member.getDataType().getDisplayName());
 		attrs.addAttribute("DATATYPE_NAMESPACE", member.getDataType().getCategoryPath().getPath());

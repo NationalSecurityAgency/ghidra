@@ -71,7 +71,7 @@ public class SymbolReferenceModel extends AddressBasedTableModel<Reference> {
 
 	@Override
 	protected TableColumnDescriptor<Reference> createTableColumnDescriptor() {
-		TableColumnDescriptor<Reference> descriptor = new TableColumnDescriptor<Reference>();
+		TableColumnDescriptor<Reference> descriptor = new TableColumnDescriptor<>();
 
 		descriptor.addVisibleColumn(
 			DiscoverableTableUtils.adaptColumForModel(this, new ReferenceFromAddressTableColumn()),
@@ -110,6 +110,10 @@ public class SymbolReferenceModel extends AddressBasedTableModel<Reference> {
 
 	@Override
 	public void setProgram(Program prog) {
+		if (isDisposed) {
+			return;
+		}
+
 		if (prog == null) {
 			super.setProgram(null);
 			refManager = null;
@@ -139,7 +143,6 @@ public class SymbolReferenceModel extends AddressBasedTableModel<Reference> {
 
 	void symbolChanged(Symbol symbol) {
 		if (currentSymbol != null && currentSymbol.equals(symbol)) {
-			setCurrentSymbol(symbol);
 			return;
 		}
 		checkRefs(symbol);

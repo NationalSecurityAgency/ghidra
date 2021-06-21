@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/// \file ghidra_string.hh
+/// \file string_ghidra.hh
 /// \brief Implementation of the StringManager through the ghidra client
 
 #ifndef __STRING_GHIDRA__

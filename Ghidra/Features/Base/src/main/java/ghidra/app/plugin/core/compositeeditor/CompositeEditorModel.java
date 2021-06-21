@@ -35,7 +35,6 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.util.*;
 import ghidra.util.exception.*;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * Model for editing a composite data type. Specific composite data type editors
@@ -83,9 +82,10 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		}
 		CategoryPath categoryPath = dataType.getCategoryPath();
 		Category cat = dataTypeManager.getCategory(categoryPath);
-		if (cat == null) {
+		if (cat == null && !useOffLineCategory) {
 			throw new IllegalArgumentException(
-				"Datatype " + dataType.getName() + " doesn't have a category specified.");
+				"Datatype " + dataType.getName() + " category not found: " +
+					categoryPath.getPath());
 		}
 		if (isEditingField()) {
 			endFieldEditing();
@@ -105,7 +105,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		currentName = dataType.getName();
 		originalDTM = dataTypeManager;
 		if (useOffLineCategory) {
-			viewDTM = new CompositeViewerDataTypeManager(originalDTM.getName(), dataType, cat);
+			viewDTM = new CompositeViewerDataTypeManager(originalDTM.getName(), dataType);
 			viewComposite = (Composite) viewDTM.resolve(dataType, null);
 		}
 		else {
@@ -212,8 +212,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		if (!isEditingField()) {
 			return;
 		}
-		for (int i = 0; i < listeners.size(); i++) {
-			CompositeEditorModelListener listener = listeners.get(i);
+		for (CompositeEditorModelListener listener : listeners) {
 			listener.endFieldEditing();
 		}
 	}
@@ -285,8 +284,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	 * COMPOSITE_LOADED, NO_COMPOSITE_LOADED.
 	 */
 	protected void editorStateChanged(int type) {
-		for (int i = 0; i < listeners.size(); i++) {
-			CompositeEditorModelListener listener = listeners.get(i);
+		for (CompositeEditorModelListener listener : listeners) {
 			listener.compositeEditStateChanged(type);
 		}
 		this.fireTableDataChanged();
@@ -547,7 +545,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	}
 
 	@Override
-	public void deleteSelectedComponents(TaskMonitor monitor) throws UsrException {
+	public void deleteSelectedComponents() throws UsrException {
 		if (!isDeleteAllowed()) {
 			throw new UsrException("Deleting is not allowed.");
 		}
@@ -611,8 +609,8 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 
 	private boolean hasCompPathNameChanges(Composite currentViewComposite, Composite oldComposite) {
 		// Check component data type pathnames.
-		DataTypeComponent[] comps = currentViewComposite.getComponents();
-		DataTypeComponent[] oldComps = oldComposite.getComponents();
+		DataTypeComponent[] comps = currentViewComposite.getDefinedComponents();
+		DataTypeComponent[] oldComps = oldComposite.getDefinedComponents();
 		if (comps.length != oldComps.length) {
 			return true;
 		}
@@ -687,8 +685,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	}
 
 	private void notifyEditingChanged() {
-		for (int i = 0; i < listeners.size(); i++) {
-			CompositeEditorModelListener listener = listeners.get(i);
+		for (CompositeEditorModelListener listener : listeners) {
 			listener.compositeEditStateChanged(
 				isEditingField() ? CompositeEditorModelListener.EDIT_STARTED
 						: CompositeEditorModelListener.EDIT_ENDED);

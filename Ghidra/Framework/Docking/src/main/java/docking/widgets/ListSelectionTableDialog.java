@@ -70,6 +70,12 @@ public class ListSelectionTableDialog<T> extends DialogComponentProvider {
 		}
 	}
 
+	@Override
+	public void close() {
+		super.close();
+		filterPanel.dispose();
+	}
+
 	private JComponent build() {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -113,24 +119,44 @@ public class ListSelectionTableDialog<T> extends DialogComponentProvider {
 	}
 
 	public T show(Component parent) {
-		setMultiSelectionMode(false);
+		setSelectionMode(false);
 		DockingWindowManager.showDialog(parent, this);
 		return getSelectedItem();
 	}
 
 	public List<T> showSelectMultiple(Component parent) {
-		setMultiSelectionMode(true);
+		setSelectionMode(true);
 		DockingWindowManager.showDialog(parent, this);
 		return getSelectedItems();
 	}
 
+	/**
+	 * Calling this method does does not work correctly when used with 
+	 * {@link #show(Component)} or {@link #showSelectMultiple(Component)}.   To use this method, you
+	 * must show the dialog by calling: 
+	 * <pre>
+	 * 	DockingWindowManager.showDialog(parent, dialog);
+	 * </pre>
+	 * 
+	 * <P>There is no need to use this method when using either of the aforementioned 
+	 * {@code show} methods
+	 * 
+	 * @param enable true to allow multiple selection
+	 * 
+	 * @deprecated to be removed sometime after the 9.3 release
+	 */
+	@Deprecated
 	public void setMultiSelectionMode(boolean enable) {
-		if (enable) {
-			gTable.getSelectionModel()
-				.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		setSelectionMode(enable);
+	}
+
+	private void setSelectionMode(boolean allowMultipleSelections) {
+		ListSelectionModel selectionModel = gTable.getSelectionModel();
+		if (allowMultipleSelections) {
+			selectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		}
 		else {
-			gTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+			selectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		}
 	}
 

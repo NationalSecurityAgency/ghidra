@@ -50,6 +50,9 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	/**
 	 * DB_VERSION should be incremented any time a change is made to the overall
 	 * database schema associated with any of the managers.
+	 * 
+	 * NOTE: 19-Jun-2020 Corrections to DB index tables should have no impact on user data 
+	 *                   PropertyMaps which are not indexed.                   
 	 */
 	static final int DB_VERSION = 1;
 
@@ -62,10 +65,10 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	private static final int UPGRADE_REQUIRED_BEFORE_VERSION = 1;
 
 	private static final String TABLE_NAME = "ProgramUserData";
-	private final static Class<?>[] COL_CLASS = new Class[] { StringField.class };
+	private final static Field[] COL_FIELDS = new Field[] { StringField.INSTANCE };
 	private final static String[] COL_NAMES = new String[] { "Value" };
 	private final static Schema SCHEMA =
-		new Schema(0, StringField.class, "Key", COL_CLASS, COL_NAMES);
+		new Schema(0, StringField.INSTANCE, "Key", COL_FIELDS, COL_NAMES);
 	private static final int VALUE_COL = 0;
 
 	private static final String STORED_DB_VERSION = "DB Version";
@@ -73,12 +76,12 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	private static final String LANGUAGE_ID = "Language ID";
 
 	private static final String REGISTRY_TABLE_NAME = "PropertyRegistry";
-	private final static Class<?>[] REGISTRY_COL_CLASS =
-		new Class[] { StringField.class, StringField.class, IntField.class, StringField.class };
+	private final static Field[] REGISTRY_COL_FIELDS = new Field[] { StringField.INSTANCE,
+		StringField.INSTANCE, IntField.INSTANCE, StringField.INSTANCE };
 	private final static String[] REGISTRY_COL_NAMES =
 		new String[] { "Owner", "PropertyName", "PropertyType", "SaveableClass" };
 	private final static Schema REGISTRY_SCHEMA =
-		new Schema(0, "ID", REGISTRY_COL_CLASS, REGISTRY_COL_NAMES);
+		new Schema(0, "ID", REGISTRY_COL_FIELDS, REGISTRY_COL_NAMES);
 	private static final int PROPERTY_OWNER_COL = 0;
 	private static final int PROPERTY_NAME_COL = 1;
 	private static final int PROPERTY_TYPE_COL = 2;
@@ -321,7 +324,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		registryTable =
 			dbh.createTable(REGISTRY_TABLE_NAME, REGISTRY_SCHEMA, new int[] { PROPERTY_OWNER_COL });
 
-		Record record = SCHEMA.createRecord(new StringField(LANGUAGE_ID));
+		DBRecord record = SCHEMA.createRecord(new StringField(LANGUAGE_ID));
 		record.setString(VALUE_COL, languageID.getIdAsString());
 		table.putRecord(record);
 
@@ -344,7 +347,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			throw new IOException("Unsupported User Data File Content");
 		}
 
-		Record record = table.getRecord(new StringField(LANGUAGE_ID));
+		DBRecord record = table.getRecord(new StringField(LANGUAGE_ID));
 		languageID = new LanguageID(record.getString(VALUE_COL));
 
 		record = table.getRecord(new StringField(LANGUAGE_VERSION));
@@ -374,7 +377,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 
 	private void upgradeDatabase() throws IOException {
 		table = dbh.getTable(TABLE_NAME);
-		Record record = SCHEMA.createRecord(new StringField(STORED_DB_VERSION));
+		DBRecord record = SCHEMA.createRecord(new StringField(STORED_DB_VERSION));
 		record.setString(VALUE_COL, Integer.toString(DB_VERSION));
 		table.putRecord(record);
 	}
@@ -435,7 +438,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 
 				clearCache(true);
 
-				Record record = SCHEMA.createRecord(new StringField(LANGUAGE_ID));
+				DBRecord record = SCHEMA.createRecord(new StringField(LANGUAGE_ID));
 				record.setString(VALUE_COL, languageID.getIdAsString());
 				table.putRecord(record);
 
@@ -467,8 +470,9 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			Class<?> saveableClass, boolean create) throws PropertyTypeMismatchException {
 
 		try {
-			for (long key : registryTable.findRecords(new StringField(owner), PROPERTY_OWNER_COL)) {
-				Record rec = registryTable.getRecord(key);
+			for (Field key : registryTable.findRecords(new StringField(owner),
+				PROPERTY_OWNER_COL)) {
+				DBRecord rec = registryTable.getRecord(key);
 				if (propertyName.equals(rec.getString(PROPERTY_NAME_COL))) {
 					int type = rec.getIntValue(PROPERTY_TYPE_COL);
 					if (propertyType != type) {
@@ -491,7 +495,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			}
 
 			long key = registryTable.getKey();
-			Record rec = REGISTRY_SCHEMA.createRecord(key);
+			DBRecord rec = REGISTRY_SCHEMA.createRecord(key);
 			rec.setString(PROPERTY_OWNER_COL, owner);
 			rec.setString(PROPERTY_NAME_COL, propertyName);
 			rec.setIntValue(PROPERTY_TYPE_COL, propertyType);
@@ -522,7 +526,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		return null;
 	}
 
-	private PropertyMap getPropertyMap(Record rec) throws IOException {
+	private PropertyMap getPropertyMap(DBRecord rec) throws IOException {
 		try {
 			PropertyMap map;
 			int type = rec.getIntValue(PROPERTY_TYPE_COL);
@@ -573,8 +577,9 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	public synchronized List<PropertyMap> getProperties(String owner) {
 		List<PropertyMap> list = new ArrayList<PropertyMap>();
 		try {
-			for (long key : registryTable.findRecords(new StringField(owner), PROPERTY_OWNER_COL)) {
-				Record rec = registryTable.getRecord(key);
+			for (Field key : registryTable.findRecords(new StringField(owner),
+				PROPERTY_OWNER_COL)) {
+				DBRecord rec = registryTable.getRecord(key);
 				list.add(getPropertyMap(rec));
 			}
 		}
@@ -591,7 +596,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 				propertyMapOwners = new HashSet<String>();
 				RecordIterator recIter = registryTable.iterator();
 				while (recIter.hasNext()) {
-					Record rec = recIter.next();
+					DBRecord rec = recIter.next();
 					propertyMapOwners.add(rec.getString(PROPERTY_OWNER_COL));
 				}
 			}

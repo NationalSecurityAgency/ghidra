@@ -269,14 +269,34 @@
 
             <LI><B>Use C++ Style Comments (//)</B> - Select to use // or /* style comments.</LI>
             
-            <LI><B>Emit data-type definitions</B> - Select to export a C/C++ definition for each data-type.</LI>
+            <LI><B>Emit Data-type Definitions</B> - Select to export a C/C++ definition for each data-type.</LI>
             
-            <LI><B>Function tags to filter</B> - Optionally list function tags to filter which functions are exported.
-            Multiple tags should be comma separated.</LI>
+            <LI><B>Function Tags to Filter</B> - Optional list of function tags to filter which 
+            functions are exported. Multiple tags must be comma separated.   Any tags listed will
+            be considered a match for purposes of filtering.  The result of filtering, to include
+            or exclude, depends on the <B>Function Tags Excluded/Included</B> setting.
+            <U>If this list is empty, than all functions will be exported</U>.
+            </LI>
             
-            <LI><B>Function tags excluded</B> - Select to exclude all tagged functions from being exported. Deselect to
-            export only tagged functions.</LI>
+            <LI><B>Function Tags Excluded/Included</B> - Select to exclude from export all 
+            functions with a tag that matches any in the <B>Function Tags to Filter</B> list.   
+            Deselect to include in export only functions with a tag that matches any in the list.
+            </LI>
           </UL>
+        </BLOCKQUOTE>
+        
+        <H3><A name="elf"></A>ELF</H3>
+
+        <BLOCKQUOTE>
+          <P>Writes an ELF program that was imported with the ELF loader back to its original file 
+          layout. Any file-backed bytes that were modified by the user in the program database will 
+          be reflected in the new file.</P>
+
+          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Writing back a modified Memory 
+          Map is not supported. </I></P>
+          
+          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Relocation bytes are always
+          restored to their original values, even if the user modifies them.</I></P>
         </BLOCKQUOTE>
 
         <H3><A name="gzf"></A>Ghidra Zip File (.gzf)</H3>
@@ -314,7 +334,7 @@
 
           <UL>
             <LI><B>Address Space</B> - Specifies which address space to export as Intel Hex format
-            only supports one address space. This option will be intialized to the "default"
+            only supports one address space. This option will be initialized to the "default"
             address space.</LI>
             <LI><B>Record Size</B> - Specifies the size (in bytes) of each record in the
             output file. The default 16.</LI>
@@ -323,6 +343,20 @@
             18 bytes selected, you will see only one line of 16 bytes in the output; the remaining
             2 bytes will be dropped.</LI>
           </UL>
+        </BLOCKQUOTE>
+        
+        <H3><A name="pe"></A>PE</H3>
+
+        <BLOCKQUOTE>
+          <P>Writes a PE program that was imported with the PE loader back to its original file 
+          layout. Any file-backed bytes that were modified by the user in the program database will 
+          be reflected in the new file.</P>
+
+          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Writing back a modified Memory 
+          Map is not supported. </I></P>
+          
+          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Relocation bytes are always
+          restored to their original values, even if the user modifies them.</I></P>
         </BLOCKQUOTE>
 
         <H3><A name="xml"/><A name="Options_XML"/>XML</H3>

@@ -22,7 +22,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.KeyRange;
 
 /**
@@ -81,13 +81,13 @@ public class DBObjectCache<T extends DatabaseObject> {
 	 * Retrieves the database object with the given record and associated key from the cache.
 	 * This form should be used in conjunction with record iterators to avoid unnecessary
 	 * record query during a possible object refresh.  To benefit from the record the cached
-	 * object must implement the {@link DatabaseObject#refresh(Record)} method which by default
+	 * object must implement the {@link DatabaseObject#refresh(DBRecord)} method which by default
 	 * ignores the record and simply calls {@link DatabaseObject#refresh()}.
 	 * @param objectRecord the valid record corresponding to the object to be retrieved and possibly
 	 * used to refresh the associated object if found in cache
 	 * @return the cached object or null if the object with that key is not currently cached.
 	 */
-	public synchronized T get(Record objectRecord) {
+	public synchronized T get(DBRecord objectRecord) {
 		long key = objectRecord.getKey();
 		KeyedSoftReference ref = map.get(key);
 		if (ref != null) {
@@ -158,6 +158,7 @@ public class DBObjectCache<T extends DatabaseObject> {
 	 * within the specified keyRanges.
 	 * @param keyRanges key ranges to delete
 	 */
+//TODO: Discourage large cases by only allowing a single range to be specified
 	public synchronized void delete(List<KeyRange> keyRanges) {
 		hardCache.clear();
 		processQueue();

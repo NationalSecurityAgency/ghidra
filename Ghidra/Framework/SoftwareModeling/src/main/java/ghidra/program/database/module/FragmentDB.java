@@ -18,7 +18,8 @@ package ghidra.program.database.module;
 import java.io.IOException;
 import java.util.Iterator;
 
-import db.Record;
+import db.Field;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.address.*;
@@ -34,7 +35,7 @@ import ghidra.util.exception.NotFoundException;
  */
 class FragmentDB extends DatabaseObject implements ProgramFragment {
 
-	private Record record;
+	private DBRecord record;
 	private ModuleManager moduleMgr;
 	private GroupDBAdapter adapter;
 	private AddressSetView addrSet;
@@ -47,7 +48,7 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 	 * @param record
 	 * @param addrSet
 	 */
-	FragmentDB(ModuleManager moduleMgr, DBObjectCache<FragmentDB> cache, Record record,
+	FragmentDB(ModuleManager moduleMgr, DBObjectCache<FragmentDB> cache, DBRecord record,
 			AddressSet addrSet) {
 		super(cache, record.getKey());
 		this.moduleMgr = moduleMgr;
@@ -60,7 +61,7 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 	@Override
 	protected boolean refresh() {
 		try {
-			Record rec = adapter.getFragmentRecord(key);
+			DBRecord rec = adapter.getFragmentRecord(key);
 			if (rec != null) {
 				record = rec;
 				addrSet = moduleMgr.getFragmentAddressSet(key);
@@ -74,26 +75,17 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#contains(ghidra.program.model.listing.CodeUnit)
-	 */
 	@Override
 	public boolean contains(CodeUnit codeUnit) {
 		return contains(codeUnit.getMinAddress());
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramFragment#getCodeUnits()
-	 */
 	@Override
 	public CodeUnitIterator getCodeUnits() {
 		checkIsValid();
 		return moduleMgr.getCodeUnits(this);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#getComment()
-	 */
 	@Override
 	public String getComment() {
 		lock.acquire();
@@ -106,9 +98,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#getName()
-	 */
 	@Override
 	public String getName() {
 		lock.acquire();
@@ -121,15 +110,12 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#getNumParents()
-	 */
 	@Override
 	public int getNumParents() {
 		lock.acquire();
 		try {
 			checkIsValid();
-			long[] keys = adapter.getParentChildKeys(-key, TreeManager.CHILD_ID_COL);
+			Field[] keys = adapter.getParentChildKeys(-key, TreeManager.CHILD_ID_COL);
 			return keys.length;
 		}
 		catch (IOException e) {
@@ -141,25 +127,16 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		return 0;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#getParentNames()
-	 */
 	@Override
 	public String[] getParentNames() {
 		return moduleMgr.getParentNames(-key);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#getParents()
-	 */
 	@Override
 	public ProgramModule[] getParents() {
 		return moduleMgr.getParents(-key);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramFragment#move(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
-	 */
 	@Override
 	public void move(Address min, Address max) throws NotFoundException {
 		lock.acquire();
@@ -172,9 +149,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#setComment(java.lang.String)
-	 */
 	@Override
 	public void setComment(String comment) {
 		lock.acquire();
@@ -198,15 +172,12 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#setName(java.lang.String)
-	 */
 	@Override
 	public void setName(String name) throws DuplicateNameException {
 		lock.acquire();
 		try {
 			checkIsValid();
-			Record r = adapter.getFragmentRecord(name);
+			DBRecord r = adapter.getFragmentRecord(name);
 			if (r != null) {
 				if (key != r.getKey()) {
 					throw new DuplicateNameException(name + " already exists");
@@ -230,17 +201,11 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#getTreeName()
-	 */
 	@Override
 	public String getTreeName() {
 		return moduleMgr.getTreeName();
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#contains(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
-	 */
 	@Override
 	public boolean contains(Address start, Address end) {
 		lock.acquire();
@@ -253,9 +218,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#contains(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public boolean contains(Address addr) {
 		lock.acquire();
@@ -268,9 +230,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#contains(ghidra.program.model.address.AddressSetView)
-	 */
 	@Override
 	public boolean contains(AddressSetView rangeSet) {
 		lock.acquire();
@@ -283,9 +242,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#equals(ghidra.program.model.address.AddressSetView)
-	 */
 	@Override
 	public boolean hasSameAddresses(AddressSetView view) {
 		lock.acquire();
@@ -298,10 +254,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.program.model.address.AddressSetView#getAddresses(boolean)
-	 */
 	@Override
 	public AddressIterator getAddresses(boolean forward) {
 		lock.acquire();
@@ -314,10 +266,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.program.model.address.AddressSetView#getAddresses(ghidra.program.model.address.Address, boolean)
-	 */
 	@Override
 	public AddressIterator getAddresses(Address start, boolean forward) {
 		lock.acquire();
@@ -330,9 +278,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#getAddressRanges()
-	 */
 	@Override
 	public AddressRangeIterator getAddressRanges() {
 		lock.acquire();
@@ -350,10 +295,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		return getAddressRanges();
 	}
 
-	/**
-	 *
-	 * @see ghidra.program.model.address.AddressSetView#getAddressRanges(boolean)
-	 */
 	@Override
 	public AddressRangeIterator getAddressRanges(boolean atStart) {
 		lock.acquire();
@@ -366,9 +307,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#getMaxAddress()
-	 */
 	@Override
 	public Address getMaxAddress() {
 		lock.acquire();
@@ -381,9 +319,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#getMinAddress()
-	 */
 	@Override
 	public Address getMinAddress() {
 		lock.acquire();
@@ -396,9 +331,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#getNumAddresses()
-	 */
 	@Override
 	public long getNumAddresses() {
 		lock.acquire();
@@ -411,9 +343,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#getNumAddressRanges()
-	 */
 	@Override
 	public int getNumAddressRanges() {
 		lock.acquire();
@@ -426,9 +355,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#intersect(ghidra.program.model.address.AddressSetView)
-	 */
 	@Override
 	public AddressSet intersect(AddressSetView view) {
 		lock.acquire();
@@ -441,9 +367,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#intersectRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
-	 */
 	@Override
 	public AddressSet intersectRange(Address start, Address end) {
 		lock.acquire();
@@ -456,9 +379,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#intersects(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
-	 */
 	@Override
 	public boolean intersects(Address start, Address end) {
 		lock.acquire();
@@ -471,9 +391,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#intersects(ghidra.program.model.address.AddressSetView)
-	 */
 	@Override
 	public boolean intersects(AddressSetView set) {
 		lock.acquire();
@@ -486,9 +403,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#isEmpty()
-	 */
 	@Override
 	public boolean isEmpty() {
 		lock.acquire();
@@ -501,9 +415,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#subtract(ghidra.program.model.address.AddressSetView)
-	 */
 	@Override
 	public AddressSet subtract(AddressSetView set) {
 		lock.acquire();
@@ -516,9 +427,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#union(ghidra.program.model.address.AddressSetView)
-	 */
 	@Override
 	public AddressSet union(AddressSetView set) {
 		lock.acquire();
@@ -531,9 +439,6 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#xor(ghidra.program.model.address.AddressSetView)
-	 */
 	@Override
 	public AddressSet xor(AddressSetView set) {
 		lock.acquire();

@@ -986,7 +986,7 @@ public class FunctionEditorModel {
 					if (!paramInfo.isAutoParameter() && paramInfo.isNameModified()) {
 						Parameter param = paramInfo.getOriginalParameter();
 						if (param != null) {
-							if (!param.getSymbol().checkIsValid()) {
+							if (param.getSymbol().isDeleted()) {
 								// concurrent removal of param - must do full update
 								paramsOrReturnModified = true;
 								break;

@@ -46,7 +46,6 @@ public class GZipFileSystem implements GFileSystem {
 	private final SingleFileSystemIndexHelper fsIndex;
 	private final FileSystemService fsService;
 
-	private GFile payload;
 	private String origFilename;
 	private String payloadKey;
 	private String origComment;
@@ -64,7 +63,6 @@ public class GZipFileSystem implements GFileSystem {
 		FileCacheEntry fce = getPayloadFileCacheEntry(monitor);
 		this.fsIndex =
 			new SingleFileSystemIndexHelper(this, fsFSRL, origFilename, fce.file.length(), fce.md5);
-		this.payload = fsIndex.getPayloadFile();
 	}
 
 	private void readGzipMetadata(File containerFile, TaskMonitor monitor) throws IOException {
@@ -101,7 +99,7 @@ public class GZipFileSystem implements GFileSystem {
 	}
 
 	public GFile getPayloadFile() {
-		return payload;
+		return fsIndex.getPayloadFile();
 	}
 
 	@Override
@@ -118,7 +116,6 @@ public class GZipFileSystem implements GFileSystem {
 	public void close() throws IOException {
 		refManager.onClose();
 		fsIndex.clear();
-		payload = null;
 	}
 
 	@Override
@@ -134,7 +131,7 @@ public class GZipFileSystem implements GFileSystem {
 	@Override
 	public InputStream getInputStream(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (payload.equals(file)) {
+		if (fsIndex.isPayloadFile(file)) {
 			FileCacheEntry fce = getPayloadFileCacheEntry(monitor);
 			return new FileInputStream(fce.file);
 		}
@@ -148,13 +145,14 @@ public class GZipFileSystem implements GFileSystem {
 
 	@Override
 	public String getInfo(GFile file, TaskMonitor monitor) {
-		if (payload.equals(file)) {
+		if (fsIndex.isPayloadFile(file)) {
 			return FSUtilities.infoMapToString(getInfoMap());
 		}
 		return null;
 	}
 
 	public Map<String, String> getInfoMap() {
+		GFile payload = fsIndex.getPayloadFile();
 		Map<String, String> info = new LinkedHashMap<>();
 		info.put("Name", payload.getName());
 		info.put("Size", Long.toString(payload.getLength()));

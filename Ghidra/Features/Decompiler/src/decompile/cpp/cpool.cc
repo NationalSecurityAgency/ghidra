@@ -193,7 +193,7 @@ CPoolRecord *ConstantPoolInternal::createRecord(const vector<uintb> &refs)
 {
   CheapSorter sorter(refs);
   pair<map<CheapSorter,CPoolRecord>::iterator,bool> res;
-  res = cpoolMap.insert(pair<CheapSorter,CPoolRecord>(sorter,CPoolRecord()));
+  res = cpoolMap.emplace(piecewise_construct,forward_as_tuple(sorter),forward_as_tuple());
   if (res.second == false)
     throw LowlevelError("Creating duplicate entry in constant pool: "+(*res.first).second.getToken());
   return &(*res.first).second;

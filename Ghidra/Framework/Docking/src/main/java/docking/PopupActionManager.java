@@ -16,6 +16,7 @@
 package docking;
 
 import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -67,28 +68,27 @@ public class PopupActionManager implements PropertyChangeListener {
 		}
 	}
 
-	void popupMenu(ComponentPlaceholder info, MouseEvent e) {
+	void popupMenu(ComponentPlaceholder placeholder, PopupMenuContext popupContext) {
 
-		if (e.isConsumed()) {
-			return;
-		}
-		ComponentProvider popupProvider = info.getProvider();
-		ActionContext actionContext = popupProvider.getActionContext(e);
+		MouseEvent event = popupContext.getEvent();
+		ComponentProvider popupProvider = placeholder.getProvider();
+		ActionContext actionContext = popupProvider.getActionContext(event);
 		if (actionContext == null) {
 			actionContext = new ActionContext();
 		}
 
-		actionContext.setSourceObject(e.getSource());
-		actionContext.setMouseEvent(e);
+		actionContext.setSourceObject(popupContext.getSource());
+		actionContext.setMouseEvent(event);
 
-		Iterator<DockingActionIf> localActions = info.getActions();
+		Iterator<DockingActionIf> localActions = placeholder.getActions();
 		JPopupMenu popupMenu = createPopupMenu(localActions, actionContext);
 		if (popupMenu == null) {
 			return; // no matching actions
 		}
 
-		Component c = (Component) e.getSource();
-		popupMenu.show(c, e.getX(), e.getY());
+		Component c = popupContext.getComponent();
+		Point p = popupContext.getPoint();
+		popupMenu.show(c, p.x, p.y);
 	}
 
 	protected JPopupMenu createPopupMenu(Iterator<DockingActionIf> localActions,

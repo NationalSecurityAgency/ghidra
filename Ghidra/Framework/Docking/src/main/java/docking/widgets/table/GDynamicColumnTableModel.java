@@ -555,4 +555,16 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 		DynamicTableColumn<ROW_TYPE, ?, ?> column = tableColumns.get(index);
 		return column.getMaxLines(columnSettings.get(column));
 	}
+
+	@Override
+	public void dispose() {
+		super.dispose();
+		disposeDynamicColumnData();
+	}
+
+	protected void disposeDynamicColumnData() {
+		tableColumns.clear();
+		defaultTableColumns.clear();
+		columnSettings.clear();
+	}
 }

@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.*;
 import ghidra.program.database.external.ExternalLocationDB;
 import ghidra.program.database.external.ExternalManagerDB;
@@ -30,7 +30,6 @@ import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ChangeManager;
-import ghidra.program.util.ProgramLocation;
 import ghidra.util.Lock;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateNameException;
@@ -43,7 +42,7 @@ import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
  */
 public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
-	private Record record;
+	private DBRecord record;
 	private boolean isDeleting = false;
 	protected Address address;
 	protected SymbolManager symbolMgr;
@@ -52,22 +51,8 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	private volatile String cachedName;
 	private volatile long cachedNameModCount;
 
-	/**
-	 * Creates a Symbol that is just a placeholder for use when trying to find symbols by using
-	 * {@link Symbol#getID()}.   This is useful for locating symbols in Java collections when
-	 * a symbol has been deleted and the only remaining information is that symbol's ID.
-	 * 
-	 * @param manager the manager for the new symbol
-	 * @param address the address of the symbol
-	 * @param id the id of the symbol
-	 * @return the fake symbol
-	 */
-	static SymbolDB createSymbolPlaceholder(SymbolManager manager, Address address, long id) {
-		return new PlaceholderSymbolDB(manager, address, id);
-	}
-
 	SymbolDB(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, Address address,
-			Record record) {
+			DBRecord record) {
 		super(cache, record.getKey());
 		this.symbolMgr = symbolMgr;
 		this.address = address;
@@ -83,6 +68,17 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	@Override
+	public boolean isDeleted() {
+		return isDeleted(lock);
+	}
+
+	@Override
+	protected void checkDeleted() {
+		// expose method to symbol package
+		super.checkDeleted();
+	}
+
+	@Override
 	public String toString() {
 		return getName();
 	}
@@ -93,7 +89,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	@Override
-	protected boolean refresh(Record rec) {
+	protected boolean refresh(DBRecord rec) {
 		if (record != null) {
 			if (rec == null) {
 				rec = symbolMgr.getSymbolRecord(key);
@@ -104,8 +100,9 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				return false;
 			}
 			record = rec;
-			address = symbolMgr.getAddressMap().decodeAddress(
-				rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL));
+			address = symbolMgr.getAddressMap()
+					.decodeAddress(
+						rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL));
 			return true;
 		}
 		return false;
@@ -522,8 +519,8 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		return source;
 	}
 
-	@Override
-	public void setNameAndNamespace(String newName, Namespace newNamespace, SourceType source)
+	public void doSetNameAndNamespace(String newName, Namespace newNamespace, SourceType source,
+			boolean checkForDuplicates)
 			throws DuplicateNameException, InvalidInputException, CircularDependencyException {
 
 		lock.acquire();
@@ -563,7 +560,11 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				if (!namespaceChange && !nameChange) {
 					return;
 				}
-				symbolMgr.checkDuplicateSymbolName(address, newName, newNamespace, getSymbolType());
+
+				if (checkForDuplicates) {
+					symbolMgr.checkDuplicateSymbolName(address, newName, newNamespace,
+						getSymbolType());
+				}
 			}
 
 			if (record != null) {
@@ -617,6 +618,13 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		}
 	}
 
+	@Override
+	public void setNameAndNamespace(String newName, Namespace newNamespace, SourceType source)
+			throws DuplicateNameException, InvalidInputException, CircularDependencyException {
+
+		doSetNameAndNamespace(newName, newNamespace, source, true);
+	}
+
 	protected List<SymbolDB> getSymbolsDynamicallyRenamedByMyRename() {
 		return null;
 	}
@@ -631,7 +639,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		}
 	}
 
-	private void updateSymbolSource(Record symbolRecord, SourceType source) {
+	private void updateSymbolSource(DBRecord symbolRecord, SourceType source) {
 		byte flags = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL);
 		flags &= ~SymbolDatabaseAdapter.SYMBOL_SOURCE_BITS;
 		flags |= (byte) source.ordinal();
@@ -704,6 +712,10 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	@Override
 	public Namespace getParentNamespace() {
+		return doGetParentNamespace();
+	}
+
+	protected Namespace doGetParentNamespace() {
 		Symbol parent = getParentSymbol();
 		if (parent != null) {
 			return (Namespace) parent.getObject();
@@ -914,62 +926,8 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	 * Change the record and key associated with this symbol
 	 * @param record the record
 	 */
-	void setRecord(Record record) {
+	void setRecord(DBRecord record) {
 		this.record = record;
 		keyChanged(record.getKey());
-	}
-
-	private static class PlaceholderSymbolDB extends SymbolDB {
-
-		PlaceholderSymbolDB(SymbolManager symbolMgr, Address address, long key) {
-			super(symbolMgr, null, address, key);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if ((obj == null) || (!(obj instanceof Symbol))) {
-				return false;
-			}
-			if (obj == this) {
-				return true;
-			}
-
-			// this class is only ever equal if the id matches
-			Symbol s = (Symbol) obj;
-			if (getID() == s.getID()) {
-				return true;
-			}
-			return false;
-		}
-
-		@Override
-		public SymbolType getSymbolType() {
-			throw new IllegalArgumentException();
-		}
-
-		@Override
-		public ProgramLocation getProgramLocation() {
-			throw new IllegalArgumentException();
-		}
-
-		@Override
-		public boolean isExternal() {
-			throw new IllegalArgumentException();
-		}
-
-		@Override
-		public Object getObject() {
-			throw new IllegalArgumentException();
-		}
-
-		@Override
-		public boolean isPrimary() {
-			throw new IllegalArgumentException();
-		}
-
-		@Override
-		public boolean isValidParent(Namespace parent) {
-			throw new IllegalArgumentException();
-		}
 	}
 }

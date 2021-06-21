@@ -15,6 +15,12 @@
  */
 package ghidra.program.database.util;
 
+import java.io.IOException;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+
+import db.*;
+import db.util.ErrorHandler;
 import ghidra.program.database.map.AddressKeyRecordIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
@@ -23,13 +29,6 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-import java.util.ConcurrentModificationException;
-import java.util.Iterator;
-
-import db.*;
-import db.util.ErrorHandler;
 
 /**
  * <code>RangeMapDB</code> provides a generic value range map backed by a database table.
@@ -42,7 +41,7 @@ public class AddressRangeMapDB implements DBListener {
 	private DBHandle dbHandle;
 	private AddressMap addrMap;
 	private ErrorHandler errHandler;
-	private Class<?> valueFieldClass;
+	private Field valueField;
 	private boolean indexed;
 	private Table rangeMapTable;
 	private Schema rangeMapSchema;
@@ -70,17 +69,17 @@ public class AddressRangeMapDB implements DBListener {
 	 * @param name map name used in naming the underlying database table.  
 	 * This name must be unique across all range maps.
 	 * @param errHandler database error handler.
-	 * @param valueFieldClass Field class to be used for stored values.
+	 * @param valueField Field to be used for stored values.
 	 * @param indexed if true, values will be indexed allowing use of the 
 	 * getValueRangeIterator method.
 	 */
 	public AddressRangeMapDB(DBHandle dbHandle, AddressMap addrMap, Lock lock, String name,
-			ErrorHandler errHandler, Class<?> valueFieldClass, boolean indexed) {
+			ErrorHandler errHandler, Field valueField, boolean indexed) {
 		this.dbHandle = dbHandle;
 		this.addrMap = addrMap;
 		this.lock = lock;
 		this.errHandler = errHandler;
-		this.valueFieldClass = valueFieldClass;
+		this.valueField = valueField;
 		this.indexed = indexed;
 		tableName = RANGE_MAP_TABLE_PREFIX + name;
 		findTable();
@@ -133,10 +132,10 @@ public class AddressRangeMapDB implements DBListener {
 		rangeMapTable = dbHandle.getTable(tableName);
 		if (rangeMapTable != null) {
 			rangeMapSchema = rangeMapTable.getSchema();
-			Class<?>[] fieldClasses = rangeMapSchema.getFieldClasses();
-			if (fieldClasses.length != 2 || !fieldClasses[VALUE_COL].equals(valueFieldClass)) {
-				errHandler.dbError(new IOException(
-					"Existing range map table has unexpected value class"));
+			Field[] fields = rangeMapSchema.getFields();
+			if (fields.length != 2 || !fields[VALUE_COL].isSameType(valueField)) {
+				errHandler.dbError(
+					new IOException("Existing range map table has unexpected value class"));
 			}
 			if (indexed) {
 				int[] indexedCols = rangeMapTable.getIndexedColumns();
@@ -149,7 +148,7 @@ public class AddressRangeMapDB implements DBListener {
 
 	private void createTable() throws IOException {
 		rangeMapSchema =
-			new Schema(0, "From", new Class[] { LongField.class, valueFieldClass }, COLUMN_NAMES);
+			new Schema(0, "From", new Field[] { LongField.INSTANCE, valueField }, COLUMN_NAMES);
 		if (indexed) {
 			rangeMapTable = dbHandle.createTable(tableName, rangeMapSchema, INDEXED_COLUMNS);
 		}
@@ -173,7 +172,7 @@ public class AddressRangeMapDB implements DBListener {
 				}
 				try {
 					long index = addrMap.getKey(addr, false);
-					Record rec = rangeMapTable.getRecordAtOrBefore(index);
+					DBRecord rec = rangeMapTable.getRecordAtOrBefore(index);
 					if (rec != null) {
 						Address startAddr = addrMap.decodeAddress(rec.getKey());
 						Address endAddr = addrMap.decodeAddress(rec.getLongValue(TO_COL));
@@ -243,9 +242,8 @@ public class AddressRangeMapDB implements DBListener {
 		lock.acquire();
 		try {
 			tmpDb = dbHandle.getScratchPad();
-			tmpMap =
-				new AddressRangeMapDB(tmpDb, addrMap, lock, "TEMP", errHandler, valueFieldClass,
-					indexed);
+			tmpMap = new AddressRangeMapDB(tmpDb, addrMap, lock, "TEMP", errHandler, valueField,
+				indexed);
 
 			Address fromEndAddr = fromAddr.add(length - 1);
 			for (AddressRange range : getAddressRanges(fromAddr, fromEndAddr)) {
@@ -302,7 +300,7 @@ public class AddressRangeMapDB implements DBListener {
 
 			// fix up the start of the range, unless the range starts at a key-range MIN
 			if (!addrMap.isKeyRangeMin(start)) {
-				Record rec = rangeMapTable.getRecordBefore(start);
+				DBRecord rec = rangeMapTable.getRecordBefore(start);
 				if (rec != null) {
 					long to = rec.getLongValue(TO_COL);
 					if (addrMap.hasSameKeyBase(start, to)) {
@@ -333,7 +331,7 @@ public class AddressRangeMapDB implements DBListener {
 
 			// fix up the end of the range, unless the end goes to key-range MAX
 			if (!addrMap.isKeyRangeMax(end)) {
-				Record rec = rangeMapTable.getRecord(end + 1);
+				DBRecord rec = rangeMapTable.getRecord(end + 1);
 				if (rec != null && rec.fieldEquals(VALUE_COL, value)) {
 					end = rec.getLongValue(TO_COL);
 					rangeMapTable.deleteRecord(rec.getKey());
@@ -343,7 +341,7 @@ public class AddressRangeMapDB implements DBListener {
 			// fix records which overlap paint range
 			RecordIterator iter = rangeMapTable.iterator(start, end, start);
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				iter.delete();
 				long to = rec.getLongValue(TO_COL);
 				if (to > end) {
@@ -359,7 +357,7 @@ public class AddressRangeMapDB implements DBListener {
 
 			// insert new range entry if value was specified
 			if (value != null) {
-				Record rec = rangeMapSchema.createRecord(start);
+				DBRecord rec = rangeMapSchema.createRecord(start);
 				rec.setLongValue(TO_COL, end);
 				rec.setField(VALUE_COL, value);
 				rangeMapTable.putRecord(rec);
@@ -415,7 +413,7 @@ public class AddressRangeMapDB implements DBListener {
 				try {
 					RecordIterator iterator = rangeMapTable.iterator();
 					while (iterator.hasNext()) {
-						Record rec = iterator.next();
+						DBRecord rec = iterator.next();
 						Address startAddr = addrMap.decodeAddress(rec.getKey());
 						Address endAddr = addrMap.decodeAddress(rec.getLongValue(TO_COL));
 						set.addRange(startAddr, endAddr);
@@ -446,7 +444,7 @@ public class AddressRangeMapDB implements DBListener {
 					RecordIterator iterator =
 						rangeMapTable.indexIterator(VALUE_COL, value, value, true);
 					while (iterator.hasNext()) {
-						Record rec = iterator.next();
+						DBRecord rec = iterator.next();
 						Address startAddr = addrMap.decodeAddress(rec.getKey());
 						Address endAddr = addrMap.decodeAddress(rec.getLongValue(TO_COL));
 						set.addRange(startAddr, endAddr);
@@ -524,7 +522,7 @@ public class AddressRangeMapDB implements DBListener {
 					AddressKeyRecordIterator addressKeyRecordIterator =
 						new AddressKeyRecordIterator(rangeMapTable, addrMap, min, addr, addr, true);
 					if (addressKeyRecordIterator.hasPrevious()) {
-						Record rec = addressKeyRecordIterator.previous();
+						DBRecord rec = addressKeyRecordIterator.previous();
 						Address fromAddr = addrMap.decodeAddress(rec.getKey());
 						Address toAddr = addrMap.decodeAddress(rec.getLongValue(TO_COL));
 						if (toAddr.compareTo(addr) >= 0) {
@@ -536,7 +534,7 @@ public class AddressRangeMapDB implements DBListener {
 					addressKeyRecordIterator =
 						new AddressKeyRecordIterator(rangeMapTable, addrMap, addr, max, addr, true);
 					if (addressKeyRecordIterator.hasNext()) {
-						Record rec = addressKeyRecordIterator.next();
+						DBRecord rec = addressKeyRecordIterator.next();
 						Address fromAddr = addrMap.decodeAddress(rec.getKey());
 						Address toAddr = addrMap.decodeAddress(rec.getLongValue(TO_COL));
 						if (fromAddr.compareTo(addr) == 0) {
@@ -564,7 +562,7 @@ public class AddressRangeMapDB implements DBListener {
 	private class RangeIterator implements AddressRangeIterator {
 
 		private RecordIterator recIter;
-		private Record nextRec;
+		private DBRecord nextRec;
 
 		private boolean checkStart;
 		private long startIndex;
@@ -605,7 +603,7 @@ public class AddressRangeMapDB implements DBListener {
 				try {
 					startIndex = addrMap.getKey(startAddr, false);
 					if (startIndex != AddressMap.INVALID_ADDRESS_KEY) {
-						Record rec = rangeMapTable.getRecordBefore(startIndex);
+						DBRecord rec = rangeMapTable.getRecordBefore(startIndex);
 						if (rec != null) {
 							long to = rec.getLongValue(TO_COL);
 							if (addrMap.hasSameKeyBase(startIndex, to) && to >= startIndex) {
@@ -643,7 +641,7 @@ public class AddressRangeMapDB implements DBListener {
 				try {
 					startIndex = addrMap.getKey(startAddr, false);
 					if (startIndex != AddressMap.INVALID_ADDRESS_KEY) {
-						Record rec = rangeMapTable.getRecordBefore(startIndex);
+						DBRecord rec = rangeMapTable.getRecordBefore(startIndex);
 						if (rec != null) {
 							long to = rec.getLongValue(TO_COL);
 							if (addrMap.hasSameKeyBase(startIndex, to) && to >= startIndex) {
@@ -655,9 +653,8 @@ public class AddressRangeMapDB implements DBListener {
 					endIndex = addrMap.getKey(endAddr, false);
 					checkEnd = (endIndex != AddressMap.INVALID_ADDRESS_KEY);
 
-					recIter =
-						new AddressKeyRecordIterator(rangeMapTable, addrMap, startAddr, endAddr,
-							startAddr, true);
+					recIter = new AddressKeyRecordIterator(rangeMapTable, addrMap, startAddr,
+						endAddr, startAddr, true);
 
 				}
 				catch (IOException e) {
@@ -717,7 +714,7 @@ public class AddressRangeMapDB implements DBListener {
 				AddressRange range = null;
 				if (recIter != null) {
 					try {
-						Record rec;
+						DBRecord rec;
 						if (nextRec != null) {
 							rec = nextRec;
 							nextRec = null;
@@ -791,7 +788,7 @@ public class AddressRangeMapDB implements DBListener {
 	private class ValueRangeIterator implements AddressRangeIterator {
 
 		RecordIterator recIter;
-		Record nextRec;
+		DBRecord nextRec;
 
 		private int expectedModCount;
 
@@ -862,7 +859,7 @@ public class AddressRangeMapDB implements DBListener {
 				AddressRange range = null;
 				if (recIter != null) {
 					try {
-						Record rec;
+						DBRecord rec;
 						if (nextRec != null) {
 							rec = nextRec;
 							nextRec = null;

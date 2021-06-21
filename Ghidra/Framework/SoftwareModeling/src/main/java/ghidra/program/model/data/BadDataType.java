@@ -43,6 +43,7 @@ public class BadDataType extends BuiltIn implements Dynamic {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getMnemonic(Settings)
 	 */
+	@Override
 	public String getMnemonic(Settings settings) {
 		return getName();
 	}
@@ -51,21 +52,16 @@ public class BadDataType extends BuiltIn implements Dynamic {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getLength()
 	 */
+	@Override
 	public int getLength() {
 		return -1;
-	}
-
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	public boolean isDynamicallySized() {
-		return false;
 	}
 
 	/**
 	 * 
 	 * @see ghidra.program.model.data.DataType#getDescription()
 	 */
+	@Override
 	public String getDescription() {
 		return "** Bad Data Type **";
 	}
@@ -74,6 +70,7 @@ public class BadDataType extends BuiltIn implements Dynamic {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getValue(ghidra.program.model.mem.MemBuffer, ghidra.docking.settings.Settings, int)
 	 */
+	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		return getDescription();
 	}
@@ -87,10 +84,12 @@ public class BadDataType extends BuiltIn implements Dynamic {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getRepresentation(MemBuffer, Settings, int)
 	 */
+	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		return getDescription();
 	}
 
+	@Override
 	public DataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;
@@ -98,14 +97,17 @@ public class BadDataType extends BuiltIn implements Dynamic {
 		return new BadDataType(dtm);
 	}
 
+	@Override
 	public boolean canSpecifyLength() {
 		return true;
 	}
 
+	@Override
 	public int getLength(MemBuffer buf, int maxLength) {
 		return -1;
 	}
 
+	@Override
 	public DataType getReplacementBaseType() {
 		return null;
 	}

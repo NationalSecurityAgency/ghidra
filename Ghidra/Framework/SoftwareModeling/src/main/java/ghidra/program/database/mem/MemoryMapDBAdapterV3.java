@@ -58,14 +58,14 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	public static final byte V3_SUB_TYPE_FILE_BYTES = 4;
 
 	static Schema V3_BLOCK_SCHEMA = new Schema(V3_VERSION, "Key",
-		new Class[] { StringField.class, StringField.class, StringField.class, ByteField.class,
-			LongField.class, LongField.class, IntField.class },
+		new Field[] { StringField.INSTANCE, StringField.INSTANCE, StringField.INSTANCE,
+			ByteField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE, IntField.INSTANCE },
 		new String[] { "Name", "Comments", "Source Name", "Permissions", "Start Address", "Length",
 			"Segment" });
 
 	static Schema V3_SUB_BLOCK_SCHEMA = new Schema(V3_VERSION, "Key",
-		new Class[] { LongField.class, ByteField.class, LongField.class, LongField.class,
-			IntField.class, LongField.class },
+		new Field[] { LongField.INSTANCE, ByteField.INSTANCE, LongField.INSTANCE,
+			LongField.INSTANCE, IntField.INSTANCE, LongField.INSTANCE },
 		new String[] { "Parent ID", "Type", "Length", "Starting Offset", "Source ID",
 			"Source Address/Offset" });
 
@@ -122,7 +122,7 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 		List<MemoryBlockDB> newBlocks = new ArrayList<>();
 		RecordIterator it = memBlockTable.iterator();
 		while (it.hasNext()) {
-			Record record = it.next();
+			DBRecord record = it.next();
 			long key = record.getKey();
 			MemoryBlockDB block = blockMap.remove(key);
 			if (block != null) {
@@ -154,7 +154,7 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 
 		List<SubMemoryBlock> subBlocks = new ArrayList<>();
 		try {
-			Record blockRecord = createMemoryBlockRecord(name, startAddr, length, permissions);
+			DBRecord blockRecord = createMemoryBlockRecord(name, startAddr, length, permissions);
 			long key = blockRecord.getKey();
 			int numFullBlocks = (int) (length / maxSubBlockSize);
 			int lastSubBlockSize = (int) (length % maxSubBlockSize);
@@ -209,10 +209,10 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 		updateAddressMapForAllAddresses(startAddr, buf.length());
 
 		List<SubMemoryBlock> subBlocks = new ArrayList<>();
-		Record blockRecord = createMemoryBlockRecord(name, startAddr, buf.length(), permissions);
+		DBRecord blockRecord = createMemoryBlockRecord(name, startAddr, buf.length(), permissions);
 		long key = blockRecord.getKey();
 
-		Record subRecord =
+		DBRecord subRecord =
 			createSubBlockRecord(key, 0, buf.length(), V3_SUB_TYPE_BUFFER, buf.getId(), 0);
 		subBlockTable.putRecord(subRecord);
 		subBlocks.add(new BufferSubMemoryBlock(this, subRecord));
@@ -229,10 +229,10 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 		updateAddressMapForAllAddresses(startAddress, length);
 
 		List<SubMemoryBlock> subBlocks = new ArrayList<>();
-		Record blockRecord = createMemoryBlockRecord(name, startAddress, length, permissions);
+		DBRecord blockRecord = createMemoryBlockRecord(name, startAddress, length, permissions);
 		long key = blockRecord.getKey();
 
-		Record subRecord = createSubBlockRecord(key, 0, length, V3_SUB_TYPE_UNITIALIZED, 0, 0);
+		DBRecord subRecord = createSubBlockRecord(key, 0, length, V3_SUB_TYPE_UNITIALIZED, 0, 0);
 		subBlocks.add(new UninitializedSubMemoryBlock(this, subRecord));
 
 		memBlockTable.putRecord(blockRecord);
@@ -245,7 +245,7 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	@Override
 	protected MemoryBlockDB createBlock(String name, Address startAddress, long length,
 			int permissions, List<SubMemoryBlock> splitBlocks) throws IOException {
-		Record blockRecord = createMemoryBlockRecord(name, startAddress, length, permissions);
+		DBRecord blockRecord = createMemoryBlockRecord(name, startAddress, length, permissions);
 		long key = blockRecord.getKey();
 
 		long startingOffset = 0;
@@ -284,10 +284,10 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 
 		updateAddressMapForAllAddresses(startAddress, length);
 		List<SubMemoryBlock> subBlocks = new ArrayList<>();
-		Record blockRecord = createMemoryBlockRecord(name, startAddress, length, permissions);
+		DBRecord blockRecord = createMemoryBlockRecord(name, startAddress, length, permissions);
 		long key = blockRecord.getKey();
 
-		Record subRecord = createSubBlockRecord(key, 0, length, V3_SUB_TYPE_FILE_BYTES,
+		DBRecord subRecord = createSubBlockRecord(key, 0, length, V3_SUB_TYPE_FILE_BYTES,
 			(int) fileBytes.getId(), offset);
 		subBlocks.add(createSubBlock(subRecord));
 
@@ -305,11 +305,11 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 		updateAddressMapForAllAddresses(startAddress, length);
 
 		List<SubMemoryBlock> subBlocks = new ArrayList<>();
-		Record blockRecord = createMemoryBlockRecord(name, startAddress, length, permissions);
+		DBRecord blockRecord = createMemoryBlockRecord(name, startAddress, length, permissions);
 		long key = blockRecord.getKey();
 
 		long encoded = addrMap.getKey(mappedAddress, true);
-		Record subRecord = createSubBlockRecord(key, 0, length, type, mappingScheme, encoded);
+		DBRecord subRecord = createSubBlockRecord(key, 0, length, type, mappingScheme, encoded);
 		subBlocks.add(createSubBlock(subRecord));
 
 		memBlockTable.putRecord(blockRecord);
@@ -330,12 +330,12 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	}
 
 	@Override
-	void updateBlockRecord(Record record) throws IOException {
+	void updateBlockRecord(DBRecord record) throws IOException {
 		memBlockTable.putRecord(record);
 	}
 
 	@Override
-	protected void updateSubBlockRecord(Record record) throws IOException {
+	protected void updateSubBlockRecord(DBRecord record) throws IOException {
 		subBlockTable.putRecord(record);
 	}
 
@@ -353,10 +353,10 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	}
 
 	@Override
-	Record createSubBlockRecord(long parentKey, long startingOffset, long length, byte type,
+	DBRecord createSubBlockRecord(long parentKey, long startingOffset, long length, byte type,
 			int data1, long data2) throws IOException {
 
-		Record record = V3_SUB_BLOCK_SCHEMA.createRecord(subBlockTable.getKey());
+		DBRecord record = V3_SUB_BLOCK_SCHEMA.createRecord(subBlockTable.getKey());
 		record.setLongValue(V3_SUB_PARENT_ID_COL, parentKey);
 		record.setByteValue(V3_SUB_TYPE_COL, type);
 		record.setLongValue(V3_SUB_LENGTH_COL, length);
@@ -368,9 +368,9 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 		return record;
 	}
 
-	private Record createMemoryBlockRecord(String name, Address startAddr, long length,
+	private DBRecord createMemoryBlockRecord(String name, Address startAddr, long length,
 			int permissions) {
-		Record record = V3_BLOCK_SCHEMA.createRecord(memBlockTable.getKey());
+		DBRecord record = V3_BLOCK_SCHEMA.createRecord(memBlockTable.getKey());
 		record.setString(V3_NAME_COL, name);
 		record.setLongValue(V3_START_ADDR_COL, addrMap.getKey(startAddr, true));
 		record.setLongValue(V3_LENGTH_COL, length);
@@ -383,7 +383,7 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 		List<SubMemoryBlock> subBlocks = new ArrayList<>(subBlockTable.getRecordCount());
 		RecordIterator it = subBlockTable.iterator();
 		while (it.hasNext()) {
-			Record record = it.next();
+			DBRecord record = it.next();
 			subBlocks.add(createSubBlock(record));
 		}
 		return subBlocks.stream().collect(Collectors.groupingBy(SubMemoryBlock::getParentBlockID));
@@ -402,7 +402,7 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 		addrMap.getKeyRanges(set, true);
 	}
 
-	private SubMemoryBlock createSubBlock(Record record) throws IOException {
+	private SubMemoryBlock createSubBlock(DBRecord record) throws IOException {
 		byte byteValue = record.getByteValue(V3_SUB_TYPE_COL);
 
 		switch (byteValue) {
@@ -424,7 +424,7 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	private SubMemoryBlock createBufferSubBlock(long parentKey, long offset, long length,
 			InputStream is) throws IOException {
 		DBBuffer buffer = createBuffer(length, is);
-		Record record =
+		DBRecord record =
 			createSubBlockRecord(parentKey, offset, length, V3_SUB_TYPE_BUFFER, buffer.getId(), 0);
 		return new BufferSubMemoryBlock(this, record);
 	}

@@ -18,6 +18,8 @@ package ghidra.app.util.exporter;
 import java.io.*;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import generic.cache.CachingPool;
 import generic.cache.CountingBasicFactory;
 import generic.concurrent.QCallback;
@@ -29,7 +31,6 @@ import ghidra.app.util.*;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.util.OptionsService;
-import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
@@ -41,13 +42,12 @@ import ghidra.util.task.*;
 
 public class CppExporter extends Exporter {
 
-	public static final String SPLIT_FILE = "Split each function into individual file";
 	public static final String CREATE_C_FILE = "Create C File (.c)";
 	public static final String CREATE_HEADER_FILE = "Create Header File (.h)";
-	public static final String USE_CPP_STYLE_COMMENTS = "Use C++ Style comments (//)";
-	public static final String EMIT_TYPE_DEFINITONS = "Emit data-type definitions";
-	public static final String FUNCTION_TAG_FILTERS = "Function tags to filter";
-	public static final String FUNCTION_TAG_EXCLUDE = "Function tags excluded";
+	public static final String USE_CPP_STYLE_COMMENTS = "Use C++ Style Comments (//)";
+	public static final String EMIT_TYPE_DEFINITONS = "Emit Data-type Definitions";
+	public static final String FUNCTION_TAG_FILTERS = "Function Tags to Filter";
+	public static final String FUNCTION_TAG_EXCLUDE = "Function Tags Excluded";
 
 	private static String EOL = System.getProperty("line.separator");
 
@@ -57,10 +57,9 @@ public class CppExporter extends Exporter {
 	private boolean emitDataTypeDefinitions = true;
 	private String tagOptions = "";
 
-	private ArrayList<FunctionTag> tagList = null;
-	private boolean tagsExclude = true;
+	private Set<FunctionTag> functionTagSet = new HashSet<>();
+	private boolean excludeMatchingTags = true;
 
-	//private boolean isSplitFunctions   = false;
 	private DecompileOptions options;
 	private boolean userSuppliedOptions = false;
 
@@ -80,7 +79,7 @@ public class CppExporter extends Exporter {
 		isCreateHeaderFile = createHeader;
 		isCreateCFile = createFile;
 		emitDataTypeDefinitions = emitTypes;
-		tagsExclude = excludeTags;
+		excludeMatchingTags = excludeTags;
 		if (tags != null) {
 			tagOptions = tags;
 		}
@@ -136,7 +135,7 @@ public class CppExporter extends Exporter {
 			return false;
 		}
 		catch (Exception e) {
-			Msg.error(this, "Error in parallel decompile task", e);
+			Msg.error(this, "Error exporting C/C++", e);
 			return false;
 		}
 		finally {
@@ -176,25 +175,34 @@ public class CppExporter extends Exporter {
 			}
 
 			Function currentFunction = iterator.next();
-			if (tagList != null) {
-				Set<FunctionTag> tags = currentFunction.getTags();
-				boolean hasTag = false;
-				for (FunctionTag tag : tagList) {
-					if (tags.contains(tag)) {
-						hasTag = true;
-						break;
-					}
-				}
-				if (tagsExclude == hasTag) {
-					continue;
-				}
+			if (excludeFunction(currentFunction)) {
+				continue;
 			}
+
 			functions.add(currentFunction);
 		}
 
 		// handle any remaining functions
 		List<CPPResult> results = parallelDecompiler.decompileFunctions(functions);
 		writeResults(results, headerWriter, cFileWriter, chunkingMonitor);
+	}
+
+	private boolean excludeFunction(Function currentFunction) {
+
+		if (functionTagSet.isEmpty()) {
+			return false;
+		}
+
+		Set<FunctionTag> tags = currentFunction.getTags();
+		boolean hasTag = false;
+		for (FunctionTag tag : functionTagSet) {
+			if (tags.contains(tag)) {
+				hasTag = true;
+				break;
+			}
+		}
+
+		return excludeMatchingTags == hasTag;
 	}
 
 	private void writeResults(List<CPPResult> results, PrintWriter headerWriter,
@@ -205,20 +213,21 @@ public class CppExporter extends Exporter {
 
 		StringBuilder headers = new StringBuilder();
 		StringBuilder bodies = new StringBuilder();
-		for (CPPResult entry : results) {
+		for (CPPResult result : results) {
 			monitor.checkCanceled();
-			if (entry != null) {
-				String headerCode = entry.getHeaderCode();
-				if (headerCode != null) {
-					headers.append(headerCode);
-					headers.append(EOL);
-				}
+			if (result == null) {
+				continue;
+			}
+			String headerCode = result.getHeaderCode();
+			if (headerCode != null) {
+				headers.append(headerCode);
+				headers.append(EOL);
+			}
 
-				String bodyCode = entry.getBodyCode();
-				if (bodyCode != null) {
-					bodies.append(bodyCode);
-					bodies.append(EOL);
-				}
+			String bodyCode = result.getBodyCode();
+			if (bodyCode != null) {
+				bodies.append(bodyCode);
+				bodies.append(EOL);
 			}
 		}
 
@@ -257,22 +266,18 @@ public class CppExporter extends Exporter {
 	}
 
 	private void configureFunctionTags(Program program) {
-		if (tagOptions != null && tagOptions.length() != 0) {
-			FunctionManager functionManager = program.getFunctionManager();
-			if (functionManager instanceof FunctionManagerDB) {
-				FunctionTagManager tagManager =
-					((FunctionManagerDB) functionManager).getFunctionTagManager();
-				String[] split = tagOptions.split(",");
-				tagList = new ArrayList<FunctionTag>();
-				for (String tag : split) {
-					FunctionTag functionTag = tagManager.getFunctionTag(tag.trim());
-					if (functionTag != null) {
-						tagList.add(functionTag);
-					}
-				}
-				if (tagList.isEmpty()) {
-					tagList = null;
-				}
+		if (StringUtils.isBlank(tagOptions)) {
+			return;
+		}
+
+		FunctionManager functionManager = program.getFunctionManager();
+
+		FunctionTagManager tagManager = functionManager.getFunctionTagManager();
+		String[] split = tagOptions.split(",");
+		for (String tag : split) {
+			FunctionTag functionTag = tagManager.getFunctionTag(tag.trim());
+			if (functionTag != null) {
+				functionTagSet.add(functionTag);
 			}
 		}
 	}
@@ -321,11 +326,10 @@ public class CppExporter extends Exporter {
 		ArrayList<Option> list = new ArrayList<>();
 		list.add(new Option(CREATE_HEADER_FILE, Boolean.valueOf(isCreateHeaderFile)));
 		list.add(new Option(CREATE_C_FILE, Boolean.valueOf(isCreateCFile)));
-		//list.add(new Option(SPLIT_FILE, new Boolean(isSplitFunctions)));
 		list.add(new Option(USE_CPP_STYLE_COMMENTS, Boolean.valueOf(isUseCppStyleComments)));
 		list.add(new Option(EMIT_TYPE_DEFINITONS, Boolean.valueOf(emitDataTypeDefinitions)));
 		list.add(new Option(FUNCTION_TAG_FILTERS, tagOptions));
-		list.add(new Option(FUNCTION_TAG_EXCLUDE, Boolean.valueOf(tagsExclude)));
+		list.add(new Option(FUNCTION_TAG_EXCLUDE, Boolean.valueOf(excludeMatchingTags)));
 		return list;
 	}
 
@@ -340,9 +344,6 @@ public class CppExporter extends Exporter {
 				else if (optName.equals(CREATE_C_FILE)) {
 					isCreateCFile = ((Boolean) option.getValue()).booleanValue();
 				}
-				else if (optName.equals(SPLIT_FILE)) {
-					//isSplitFunctions = ((Boolean)option.getValue()).booleanValue();
-				}
 				else if (optName.equals(USE_CPP_STYLE_COMMENTS)) {
 					isUseCppStyleComments = ((Boolean) option.getValue()).booleanValue();
 				}
@@ -353,7 +354,7 @@ public class CppExporter extends Exporter {
 					tagOptions = (String) option.getValue();
 				}
 				else if (optName.equals(FUNCTION_TAG_EXCLUDE)) {
-					tagsExclude = ((Boolean) option.getValue()).booleanValue();
+					excludeMatchingTags = ((Boolean) option.getValue()).booleanValue();
 				}
 				else {
 					throw new OptionException("Unknown option: " + optName);

@@ -19,10 +19,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
-import db.Record;
+import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.DBObjectCache;
@@ -38,9 +35,9 @@ import ghidra.util.exception.NotYetImplementedException;
  *
  *
  */
-abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeListener {
+abstract class DataTypeDB extends DatabaseObject implements DataType {
 
-	protected Record record;
+	protected DBRecord record;
 	protected final DataTypeManagerDB dataMgr;
 	private volatile Settings defaultSettings;
 	private final static SettingsDefinition[] EMPTY_DEFINITIONS = new SettingsDefinition[0];
@@ -51,7 +48,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 	private volatile Category category;
 
 	protected DataTypeDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
-			Record record) {
+			DBRecord record) {
 		super(cache, record.getKey());
 		this.dataMgr = dataMgr;
 		this.record = record;
@@ -125,9 +122,11 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getDisplayName()
-	 */
+	@Override
+	public boolean isZeroLength() {
+		return false;
+	}
+
 	@Override
 	public String getDisplayName() {
 		return getName();
@@ -159,23 +158,26 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 		return name;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getDefaultSettings()
-	 */
 	@Override
 	public Settings getDefaultSettings() {
-		validate(lock);
 		Settings localDefaultSettings = defaultSettings;
-		if (localDefaultSettings == null) {
-			localDefaultSettings = new SettingsDBManager(dataMgr, this, key);
-			defaultSettings = localDefaultSettings;
+		if (localDefaultSettings != null && !isInvalid()) {
+			return localDefaultSettings;
 		}
-		return localDefaultSettings;
+		lock.acquire();
+		try {
+			checkIsValid();
+			if (defaultSettings == null) {
+				defaultSettings = new SettingsDBManager(dataMgr, this, key);
+			}
+			return defaultSettings;
+		}
+		finally {
+			lock.release();
+		}
+
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getDocs()
-	 */
 	@Override
 	public URL getDocs() {
 		return null;
@@ -194,49 +196,31 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 		throw new NotYetImplementedException("setValue() not implemented");
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getSettingsDefinitions()
-	 */
 	@Override
 	public SettingsDefinition[] getSettingsDefinitions() {
 		return EMPTY_DEFINITIONS;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isDeleted()
-	 */
 	@Override
 	public boolean isDeleted() {
-		return !checkIsValid();
+		return isDeleted(lock);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#update(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
-		// no-op
+		// do nothing
 	}
 
-	/**
-	 * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
-	 */
 	@Override
-	public void stateChanged(ChangeEvent e) {
-		dataMgr.dataTypeChanged(this);
+	public void dataTypeAlignmentChanged(DataType dt) {
+		// do nothing
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getDataTypeManager()
-	 */
 	@Override
 	public DataTypeManager getDataTypeManager() {
 		return dataMgr;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#setDefaultSettings(ghidra.docking.settings.Settings)
-	 */
 	@Override
 	public void setDefaultSettings(Settings settings) {
 		checkIsValid();
@@ -250,12 +234,9 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 			return 1;
 		}
 		DataOrganization dataOrganization = dataMgr.getDataOrganization();
-		return dataOrganization.getAlignment(this, length);
+		return dataOrganization.getAlignment(this);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getPathName()
-	 */
 	@Override
 	public String getPathName() {
 		return getDataTypePath().getPath();
@@ -286,15 +267,24 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 
 	@Override
 	public CategoryPath getCategoryPath() {
-		validate(lock);
-		if (category == null) {
-			category = dataMgr.getCategory(doGetCategoryID());
+		Category cat = category;
+		if (cat != null && !isInvalid()) {
+			return cat.getCategoryPath();
 		}
-		if (category == null) {
-			category = dataMgr.getRootCategory();
-			return CategoryPath.ROOT;
+		lock.acquire();
+		try {
+			checkIsValid();
+			if (category == null) {
+				category = dataMgr.getCategory(doGetCategoryID());
+			}
+			if (category == null) {
+				category = dataMgr.getRootCategory();
+			}
+			return category.getCategoryPath();
 		}
-		return category.getCategoryPath();
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override
@@ -302,9 +292,6 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 		return new DataTypePath(getCategoryPath(), getName());
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#setName(java.lang.String)
-	 */
 	@Override
 	public void setName(String name) throws InvalidNameException, DuplicateNameException {
 		lock.acquire();
@@ -339,9 +326,6 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#setCategoryPath(ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void setCategoryPath(CategoryPath path) throws DuplicateNameException {
 		lock.acquire();
@@ -432,11 +416,28 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 		}
 	}
 
-	protected void notifySizeChanged() {
+	/**
+	 * Notify all parents that the size of this datatype has changed or
+	 * other significant change that may affect a parent containing this
+	 * datatype.
+	 * @param isAutoChange true if changes are in response to another datatype's change.
+	 */
+	protected void notifySizeChanged(boolean isAutoChange) {
 		for (DataType dt : dataMgr.getParentDataTypes(key)) {
 			dt.dataTypeSizeChanged(this);
 		}
-		dataMgr.dataTypeChanged(this);
+		dataMgr.dataTypeChanged(this, isAutoChange);
+	}
+
+	/**
+	 * Notification that this composite data type's alignment has changed.
+	 * @param isAutoChange true if changes are in response to another datatype's change.
+	 */
+	protected void notifyAlignmentChanged(boolean isAutoChange) {
+		for (DataType dt : dataMgr.getParentDataTypes(key)) {
+			dt.dataTypeAlignmentChanged(this);
+		}
+		dataMgr.dataTypeChanged(this, isAutoChange);
 	}
 
 	protected void notifyNameChanged(String oldName) {

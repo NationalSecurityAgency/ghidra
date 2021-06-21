@@ -132,6 +132,10 @@ public class SegmentCommand extends LoadCommand {
 	public long getFileOffset() {
 		return fileoff;
 	}
+	
+	public void setFileOffset(long fileOffset) {
+		fileoff = fileOffset;
+	}
 
 	public long getFileSize() {
 		return filesize;

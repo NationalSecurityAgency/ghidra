@@ -171,6 +171,106 @@ bool PcodeOp::isCseMatch(const PcodeOp *op) const
   return true;
 }
 
+/// Its possible for the order of operations to be rearranged in some instances but still keep
+/// equivalent data-flow.  Test if \b this operation can be moved to occur immediately after
+/// a specified \e point operation. This currently only tests for movement within a basic block.
+/// \param point is the specified point to move \b this after
+/// \return \b true if the move is possible
+bool PcodeOp::isMoveable(const PcodeOp *point) const
+
+{
+  if (this == point) return true;	// No movement necessary
+  bool movingLoad = false;
+  if (getEvalType() == PcodeOp::special) {
+    if (code() == CPUI_LOAD)
+      movingLoad = true;	// Allow LOAD to be moved with additional restrictions
+    else
+      return false;	// Don't move special ops
+  }
+  if (parent != point->parent) return false;	// Not in the same block
+  if (output != (Varnode *)0) {
+    // Output cannot be moved past an op that reads it
+    list<PcodeOp *>::const_iterator iter = output->beginDescend();
+    list<PcodeOp *>::const_iterator enditer = output->endDescend();
+    while(iter != enditer) {
+      PcodeOp *readOp = *iter;
+      ++iter;
+      if (readOp->parent != parent) continue;
+      if (readOp->start.getOrder() <= point->start.getOrder())
+	return false;		// Is in the block and is read before (or at) -point-
+    }
+  }
+  // Only allow this op to be moved across a CALL in very restrictive circumstances
+  bool crossCalls = false;
+  if (getEvalType() != PcodeOp::special) {
+    // Check for a normal op where all inputs and output are not address tied
+    if (output != (Varnode *)0 && !output->isAddrTied() && !output->isPersist()) {
+      int4 i;
+      for(i=0;i<numInput();++i) {
+	const Varnode *vn = getIn(i);
+	if (vn->isAddrTied() || vn->isPersist())
+	  break;
+      }
+      if (i == numInput())
+	crossCalls = true;
+    }
+  }
+  vector<const Varnode *> tiedList;
+  for(int4 i=0;i<numInput();++i) {
+    const Varnode *vn = getIn(i);
+    if (vn->isAddrTied())
+      tiedList.push_back(vn);
+  }
+  list<PcodeOp *>::iterator biter = basiciter;
+  do {
+    ++biter;
+    PcodeOp *op = *biter;
+    if (op->getEvalType() == PcodeOp::special) {
+      switch (op->code()) {
+	case CPUI_LOAD:
+	  if (output != (Varnode *)0) {
+	    if (output->isAddrTied()) return false;
+	  }
+	  break;
+	case CPUI_STORE:
+	  if (movingLoad)
+	    return false;
+	  else {
+	    if (!tiedList.empty()) return false;
+	    if (output != (Varnode *)0) {
+	      if (output->isAddrTied()) return false;
+	    }
+	  }
+	  break;
+	case CPUI_INDIRECT:		// Let thru, deal with what's INDIRECTed around separately
+	case CPUI_SEGMENTOP:
+	case CPUI_CPOOLREF:
+	  break;
+	case CPUI_CALL:
+	case CPUI_CALLIND:
+	case CPUI_NEW:
+	  if (!crossCalls) return false;
+	  break;
+	default:
+	  return false;
+      }
+    }
+    if (op->output != (Varnode *)0) {
+      if (movingLoad) {
+	if (op->output->isAddrTied()) return false;
+      }
+      for(int4 i=0;i<tiedList.size();++i) {
+	const Varnode *vn = tiedList[i];
+	if (vn->overlap(*op->output)>=0)
+	  return false;
+	if (op->output->overlap(*vn)>=0)
+	  return false;
+      }
+    }
+  } while(biter != point->basiciter);
+  return true;
+}
+
 /// Set the behavioral class (opcode) of this operation. For most applications this should only be called
 /// by the PcodeOpBank.  This is fairly low-level but does cache various boolean flags associated with the opcode
 /// \param t_op is the behavioural class to set

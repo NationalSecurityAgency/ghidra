@@ -16,23 +16,15 @@
 package ghidra.app.plugin.core.function.tags;
 
 import java.awt.BorderLayout;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
 
-import org.apache.commons.lang3.StringUtils;
-
-import docking.widgets.table.GTableFilterPanel;
-import docking.widgets.table.columnfilter.ColumnBasedTableFilter;
-import docking.widgets.table.columnfilter.LogicOperation;
-import docking.widgets.table.constraint.*;
 import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.listing.*;
-import ghidra.util.table.GhidraTable;
-import ghidra.util.table.field.AddressBasedLocation;
+import ghidra.util.table.*;
 
 /**
  * Displays all functions that are associated with the selected tag in the
@@ -41,10 +33,9 @@ import ghidra.util.table.field.AddressBasedLocation;
 public class AllFunctionsPanel extends JPanel {
 
 	private FunctionTableModel model;
-	private FunctionTableModel filteredModel;
-	private JLabel titleLabel;
-	private String filterText;
 	private GhidraTable table;
+	private GhidraTableFilterPanel<Function> filterPanel;
+	private JLabel titleLabel;
 
 	/**
 	 * Constructor
@@ -56,16 +47,19 @@ public class AllFunctionsPanel extends JPanel {
 	public AllFunctionsPanel(Program program, ComponentProviderAdapter provider, String title) {
 
 		model = new FunctionTableModel(title, provider.getTool(), program, null);
-		filteredModel = new FunctionTableModel(title, provider.getTool(), program, null);
+		GhidraThreadedTablePanel<Function> tablePanel =
+			new GhidraThreadedTablePanel<>(model);
 
-		table = new GhidraTable(filteredModel);
+		table = tablePanel.getTable();
+		filterPanel = new GhidraTableFilterPanel<>(table, model);
 		setLayout(new BorderLayout());
 
 		titleLabel = new JLabel(title);
 		titleLabel.setBorder(BorderFactory.createEmptyBorder(3, 5, 0, 0));
 
 		add(titleLabel, BorderLayout.NORTH);
-		add(new JScrollPane(table), BorderLayout.CENTER);
+		add(tablePanel, BorderLayout.CENTER);
+		add(filterPanel, BorderLayout.SOUTH);
 
 		GoToService goToService = provider.getTool().getService(GoToService.class);
 		if (goToService != null) {
@@ -74,25 +68,10 @@ public class AllFunctionsPanel extends JPanel {
 	}
 
 	/**
-	 * Filters the table based on the given text
-	 * <p>
-	 * Note that this panel shares a filter with the other panels in the 
-	 * function tag dialog, so it doesn't use a dedicated 
-	 * {@link GTableFilterPanel}.
-	 * 
-	 * @param filterString the filter text
-	 */
-	public void setFilterText(String filter) {
-		this.filterText = filter;
-		applyFilter();
-	}
-
-	/**
 	 * Updates the table with whatever is in the {@link #model}
 	 */
 	public void refresh() {
-		applyFilter();
-		filteredModel.refresh();
+		model.reload();
 	}
 
 	/**
@@ -100,7 +79,7 @@ public class AllFunctionsPanel extends JPanel {
 	 * 
 	 * @param selectedTags the selected function tags
 	 */
-	public void refresh(List<FunctionTag> selectedTags) {
+	public void refresh(Set<FunctionTag> selectedTags) {
 		setSelectedTags(selectedTags);
 	}
 
@@ -111,7 +90,6 @@ public class AllFunctionsPanel extends JPanel {
 	 */
 	public void setProgram(Program program) {
 		model.setProgram(program);
-		filteredModel.setProgram(program);
 	}
 
 	/**
@@ -120,16 +98,20 @@ public class AllFunctionsPanel extends JPanel {
 	 * 
 	 * @param tags the selected tags
 	 */
-	public void setSelectedTags(List<FunctionTag> tags) {
+	public void setSelectedTags(Set<FunctionTag> tags) {
+
+		Set<FunctionTag> currentTags = model.getTags();
+		if (Objects.equals(tags, currentTags)) {
+			return;
+		}
+
 		String tagNames = tags.stream()
 				.map(t -> t.getName())
 				.collect(Collectors.joining(" or "))
 				.toString();
 
 		titleLabel.setText("Functions With Tag: " + tagNames);
-		model.setSelectedTags(tags);
-		filteredModel.setSelectedTags(tags);
-		applyFilter();
+		model.setTags(tags);
 	}
 
 	/**
@@ -150,52 +132,5 @@ public class AllFunctionsPanel extends JPanel {
 	 */
 	public FunctionTableModel getTableModel() {
 		return model;
-	}
-
-	private void applyFilter() {
-		if (StringUtils.isEmpty(filterText)) {
-			return;
-		}
-
-		ColumnBasedTableFilter<Function> tableFilter = new ColumnBasedTableFilter<>(filteredModel);
-		tableFilter.addConstraintSet(LogicOperation.OR, 0,
-			Arrays.asList(new StringContainsColumnConstraint(filterText)));
-		tableFilter.addConstraintSet(LogicOperation.OR, 1, Arrays.asList(
-			new LocationContainsColumnConstraint(new StringContainsColumnConstraint(filterText))));
-		tableFilter.addConstraintSet(LogicOperation.OR, 2,
-			Arrays.asList(new StringContainsColumnConstraint(filterText)));
-
-		filteredModel.setTableFilter(tableFilter);
-		filteredModel.reFilter();
-	}
-
-	/**
-	 * Converts an {@link AddressBasedLocation} to a string
-	 */
-	private class LocationToStringMapper
-			extends ColumnTypeMapper<AddressBasedLocation, String> {
-
-		@Override
-		public String convert(AddressBasedLocation value) {
-			return value.toString();
-		}
-
-	}
-
-	/**
-	 * Column constraint stipulating that a given {@link AddressBasedLocation}
-	 * contains a specified string
-	 */
-	private class LocationContainsColumnConstraint
-			extends MappedColumnConstraint<AddressBasedLocation, String> {
-
-		public LocationContainsColumnConstraint(ColumnConstraint<String> delegate) {
-			super(new LocationToStringMapper(), delegate);
-		}
-
-		@Override
-		public ColumnConstraint<AddressBasedLocation> copy(ColumnConstraint<String> value) {
-			return new LocationContainsColumnConstraint(value);
-		}
 	}
 }

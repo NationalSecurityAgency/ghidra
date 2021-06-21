@@ -152,10 +152,11 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(new DeleteArchiveAction(plugin));
 		addLocalAction(new RenameAction(plugin));
 		addLocalAction(new EditAction(plugin));
-		addLocalAction(new AlignDataTypeAction(plugin));
+		// NOTE: it make very little sense to blindly enable packing
+//		  addLocalAction(new PackDataTypeAction(plugin));
 //        addLocalAction( new PackDataTypeAction( plugin ));
 //        addLocalAction( new PackSizeDataTypeAction( plugin ));
-		addLocalAction(new AlignAllDataTypesAction(plugin));
+//		  addLocalAction(new PackAllDataTypesAction(plugin));
 //        addLocalAction( new DefineDataTypeAlignmentAction( plugin ));
 		addLocalAction(new CreateEnumFromSelectionAction(plugin));
 
@@ -190,8 +191,9 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(new FindReferencesToFieldAction(plugin)); // DataType
 //    	addLocalAction( new FindDataTypesContainingAction(plugin) ); // DataType
 		addLocalAction(new FindBaseDataTypeAction(plugin)); // DataType
+		addLocalAction(new DisplayTypeAsGraphAction(plugin));
 
-		// toolbar actions		
+		// toolbar actions
 		previousAction = new NextPreviousDataTypeAction(this, plugin.getName(), false);
 		addLocalAction(previousAction);
 		nextAction = new NextPreviousDataTypeAction(this, plugin.getName(), true);
@@ -343,8 +345,8 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			isToolbarAction = false;
 		}
 
-		return new DataTypesActionContext(this, plugin.getProgram(), archiveGTree,
-			clickedNode, isToolbarAction);
+		return new DataTypesActionContext(this, plugin.getProgram(), archiveGTree, clickedNode,
+			isToolbarAction);
 	}
 
 	@Override // overridden to handle special logic in plugin
@@ -528,7 +530,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			return;
 		}
 
-		String toolTipText = ToolTipUtils.getToolTipText(dataType);
+		String toolTipText = ToolTipUtils.getFullToolTipText(dataType);
 		String updated = HTMLUtilities.convertLinkPlaceholdersToHyperlinks(toolTipText);
 		previewPane.setText(updated);
 		previewPane.setCaretPosition(0);
@@ -562,6 +564,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			return false;
 		}
 		tree.restoreTreeState(state);
+
 		return true;
 	}
 
@@ -829,6 +832,31 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 
 	void programClosed() {
 		archiveGTree.cancelWork();
+	}
+
+	void archiveClosed(DataTypeManager dtm) {
+		dataTypeManagerChanged(dtm);
+	}
+
+	void archiveChanged(Archive archive) {
+		DataTypeManager dtm = archive.getDataTypeManager();
+		dataTypeManagerChanged(dtm);
+	}
+
+	private void dataTypeManagerChanged(DataTypeManager dtm) {
+
+		if (lastPreviewNode == null || !(lastPreviewNode instanceof DataTypeNode)) {
+			return;
+		}
+
+		DataTypeNode dtNode = (DataTypeNode) lastPreviewNode;
+		DataType dt = dtNode.getDataType();
+		DataTypeManager dtManager = dt.getDataTypeManager();
+
+		// note: compare using name; an equality check will fail if the manager is reloaded
+		if (dtm.getName().equals(dtManager.getName())) {
+			lastPreviewNode = null;
+		}
 	}
 
 	void programRenamed() {

@@ -217,6 +217,10 @@ public class GTable extends JTable {
 	@Override
 	// overridden to install our SelectionManager
 	public void setModel(TableModel dataModel) {
+		// we are going to create a new selection model, save off the old selectionMode and
+		// restore it at the end.
+		int selectionMode = selectionModel.getSelectionMode();
+
 		if (selectionManager != null) {
 			selectionManager.dispose();
 		}
@@ -226,6 +230,7 @@ public class GTable extends JTable {
 		initializeRowHeight();
 
 		selectionManager = createSelectionManager();
+		selectionModel.setSelectionMode(selectionMode);
 	}
 
 	protected <T> SelectionManager createSelectionManager() {
@@ -279,8 +284,9 @@ public class GTable extends JTable {
 	 * Call this when the table will no longer be used
 	 */
 	public void dispose() {
-		if (dataModel instanceof AbstractGTableModel) {
-			((AbstractGTableModel<?>) dataModel).dispose();
+		TableModel unwrappedeModel = getUnwrappedTableModel();
+		if (unwrappedeModel instanceof AbstractGTableModel) {
+			((AbstractGTableModel<?>) unwrappedeModel).dispose();
 		}
 
 		if (columnModel instanceof GTableColumnModel) {
@@ -489,6 +495,10 @@ public class GTable extends JTable {
 	private int calculatePreferredRowHeight() {
 		if (userDefinedRowHeight != 16) { // default size
 			return userDefinedRowHeight; // prefer user-defined settings
+		}
+
+		if (getColumnCount() == 0) {
+			return userDefinedRowHeight; // no columns yet defined
 		}
 
 		TableCellRenderer defaultRenderer = getDefaultRenderer(String.class);

@@ -40,6 +40,7 @@ public class DataTypeNode extends DataTypeTreeNode {
 	private boolean useHighlight = false;
 
 	private String toolTipText;
+	private long toolTipTimestamp;
 
 	public DataTypeNode(DataType dataType) {
 		this.dataType = dataType;
@@ -100,14 +101,18 @@ public class DataTypeNode extends DataTypeTreeNode {
 
 	@Override
 	public String getToolTip() {
-		if (toolTipText == null) {
-			// HACK: SCR 4122 - TypeDefs currently have no way of knowing when the underlying
-			//                  datatype changes and thus cannot update the tooltip cache
-			if (dataType instanceof TypeDef) {
-				return ToolTipUtils.getToolTipText(dataType);
-			}
-			toolTipText = ToolTipUtils.getToolTipText(dataType);
+
+		DataType baseType = DataTypeUtils.getBaseDataType(dataType);
+		long lastChangeTime = baseType.getLastChangeTime();
+		if (lastChangeTime > toolTipTimestamp) {
+			toolTipText = null;
 		}
+
+		if (toolTipText == null) {
+			toolTipText = ToolTipUtils.getToolTipText(dataType);
+			toolTipTimestamp = lastChangeTime;
+		}
+
 		return toolTipText;
 	}
 

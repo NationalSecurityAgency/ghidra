@@ -16,13 +16,6 @@
 package ghidra.feature.vt.api.db;
 
 import static ghidra.feature.vt.api.db.VTMatchSetTableDBAdapter.ColumnDescription.*;
-import ghidra.feature.vt.api.main.VTProgramCorrelator;
-import ghidra.framework.options.ToolOptions;
-import ghidra.program.database.map.AddressMap;
-import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Program;
-import ghidra.util.exception.VersionException;
-import ghidra.util.xml.GenericXMLOutputter;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -31,13 +24,20 @@ import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 
 import db.*;
+import ghidra.feature.vt.api.main.VTProgramCorrelator;
+import ghidra.framework.options.ToolOptions;
+import ghidra.program.database.map.AddressMap;
+import ghidra.program.model.address.*;
+import ghidra.program.model.listing.Program;
+import ghidra.util.exception.VersionException;
+import ghidra.util.xml.GenericXMLOutputter;
 
 public class VTMatchSetTableDBAdapterV0 extends VTMatchSetTableDBAdapter {
 
 	private Table table;
 
-	private static final Schema STORED_ADDRESS_RANGE_SCHEMA = new Schema(0, "Key", new Class[] {
-		LongField.class, LongField.class }, new String[] { "addr1", "addr2" });
+	private static final Schema STORED_ADDRESS_RANGE_SCHEMA = new Schema(0, "Key",
+		new Field[] { LongField.INSTANCE, LongField.INSTANCE }, new String[] { "addr1", "addr2" });
 
 	private final DBHandle dbHandle;
 
@@ -46,7 +46,8 @@ public class VTMatchSetTableDBAdapterV0 extends VTMatchSetTableDBAdapter {
 		table = dbHandle.createTable(TABLE_NAME, TABLE_SCHEMA);
 	}
 
-	public VTMatchSetTableDBAdapterV0(DBHandle dbHandle, OpenMode openMode) throws VersionException {
+	public VTMatchSetTableDBAdapterV0(DBHandle dbHandle, OpenMode openMode)
+			throws VersionException {
 		this.dbHandle = dbHandle;
 		table = dbHandle.getTable(TABLE_NAME);
 		if (table == null) {
@@ -59,8 +60,9 @@ public class VTMatchSetTableDBAdapterV0 extends VTMatchSetTableDBAdapter {
 	}
 
 	@Override
-	public Record createMatchSetRecord(long key, VTProgramCorrelator correlator) throws IOException {
-		Record record = TABLE_SCHEMA.createRecord(key);
+	public DBRecord createMatchSetRecord(long key, VTProgramCorrelator correlator)
+			throws IOException {
+		DBRecord record = TABLE_SCHEMA.createRecord(key);
 
 		record.setString(CORRELATOR_CLASS_COL.column(), correlator.getClass().getName());
 		record.setString(CORRELATOR_NAME_COL.column(), correlator.getName());
@@ -89,7 +91,7 @@ public class VTMatchSetTableDBAdapterV0 extends VTMatchSetTableDBAdapter {
 		return null;
 	}
 
-	private void createSourceAddressSetTable(VTProgramCorrelator correlator, Record record)
+	private void createSourceAddressSetTable(VTProgramCorrelator correlator, DBRecord record)
 			throws IOException {
 
 		Program program = correlator.getSourceProgram();
@@ -99,7 +101,7 @@ public class VTMatchSetTableDBAdapterV0 extends VTMatchSetTableDBAdapter {
 		writeAddressSet(addressSet, tableName, program.getAddressMap());
 	}
 
-	private void createDestinationAddressSetTable(VTProgramCorrelator correlator, Record record)
+	private void createDestinationAddressSetTable(VTProgramCorrelator correlator, DBRecord record)
 			throws IOException {
 
 		Program program = correlator.getDestinationProgram();
@@ -109,11 +111,11 @@ public class VTMatchSetTableDBAdapterV0 extends VTMatchSetTableDBAdapter {
 		writeAddressSet(addressSet, tableName, program.getAddressMap());
 	}
 
-	private String getSourceTableName(Record record) {
+	private String getSourceTableName(DBRecord record) {
 		return "Source Address Set " + record.getKey();
 	}
 
-	private String getDestinationTableName(Record record) {
+	private String getDestinationTableName(DBRecord record) {
 		return "Destination Address Set " + record.getKey();
 	}
 
@@ -123,7 +125,7 @@ public class VTMatchSetTableDBAdapterV0 extends VTMatchSetTableDBAdapter {
 	}
 
 	@Override
-	public Record getRecord(long key) throws IOException {
+	public DBRecord getRecord(long key) throws IOException {
 		return table.getRecord(key);
 	}
 
@@ -132,7 +134,7 @@ public class VTMatchSetTableDBAdapterV0 extends VTMatchSetTableDBAdapter {
 
 		if (set != null) {
 			Table addressSetTable = dbHandle.createTable(tableName, STORED_ADDRESS_RANGE_SCHEMA);
-			Record rec = STORED_ADDRESS_RANGE_SCHEMA.createRecord(0);
+			DBRecord rec = STORED_ADDRESS_RANGE_SCHEMA.createRecord(0);
 			int rangeKey = 1;
 			for (KeyRange range : addressMap.getKeyRanges(set, false, false)) {
 				rec.setKey(rangeKey++);
@@ -144,17 +146,17 @@ public class VTMatchSetTableDBAdapterV0 extends VTMatchSetTableDBAdapter {
 	}
 
 	@Override
-	public AddressSet getDestinationAddressSet(Record record, AddressMap addressMap)
+	public AddressSet getDestinationAddressSet(DBRecord record, AddressMap addressMap)
 			throws IOException {
 		return readAddressSet(record, getDestinationTableName(record), addressMap);
 	}
 
 	@Override
-	public AddressSet getSourceAddressSet(Record record, AddressMap addressMap) throws IOException {
+	public AddressSet getSourceAddressSet(DBRecord record, AddressMap addressMap) throws IOException {
 		return readAddressSet(record, getSourceTableName(record), addressMap);
 	}
 
-	private AddressSet readAddressSet(Record record, String tableName, AddressMap addressMap)
+	private AddressSet readAddressSet(DBRecord record, String tableName, AddressMap addressMap)
 			throws IOException {
 
 		Table addressSetTable = dbHandle.getTable(tableName);
@@ -166,7 +168,7 @@ public class VTMatchSetTableDBAdapterV0 extends VTMatchSetTableDBAdapter {
 
 		RecordIterator it = addressSetTable.iterator();
 		while (it.hasNext()) {
-			Record rec = it.next();
+			DBRecord rec = it.next();
 			Address addr1 = addressMap.decodeAddress(rec.getLongValue(0));
 			Address addr2 = addressMap.decodeAddress(rec.getLongValue(1));
 			addressSet.addRange(addr1, addr2);

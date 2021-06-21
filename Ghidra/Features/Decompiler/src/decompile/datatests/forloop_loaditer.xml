@@ -1,0 +1,31 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   For-loop where the iterator statement LOADs the next value.  Contrived example.
+-->
+<bytechunk space="ram" offset="0x4005fb" readonly="true">
+                      554889e548
+83ec2048897de8c745fc00000000eb10
+488b45e8488b4018488945e88345fc01
+48837de80075e98b45fc89c6bf440840
+00b800000000e805feffff90c9c3
+</bytechunk>
+<bytechunk space="ram" offset="0x400844" readonly="true">
+  436f756e74203d2025640a00
+</bytechunk>
+<symbol space="ram" offset="0x4005fb" name="forloop_loaditer"/>
+<symbol space="ram" offset="0x400440" name="printf"/>
+</binaryimage>
+<script>
+  <com>parse line extern void printf(char *,...);</com>
+  <com>parse line extern void forloop_loaditer(int4 **ptr);</com>
+  <com>lo fu forloop_loaditer</com>
+  <com>map addr s0xfffffffffffffff4 int4 count</com>
+  <com>map addr s0xffffffffffffffe0 int4 **loopvar</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="For-loop iterator load #1" min="1" max="1">for \(loopvar = ptr; loopvar != \(int4 \*\*\)0x0; loopvar = \(int4 \*\*\)loopvar\[3\]\)</stringmatch>
+<stringmatch name="For-loop iterator load #2" min="1" max="1">count = count \+ 1;</stringmatch>
+</decompilertest>

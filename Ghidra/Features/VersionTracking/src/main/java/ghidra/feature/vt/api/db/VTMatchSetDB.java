@@ -44,7 +44,7 @@ import ghidra.util.xml.XmlUtilities;
 
 public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 
-	private final Record matchSetRecord;
+	private final DBRecord matchSetRecord;
 
 	private DBObjectCache<VTMatchDB> matchCache;
 	private final VTSessionDB session;
@@ -56,7 +56,7 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 	private ProgramCorrelatorInfoImpl correlatorInfo;
 	private Options options;
 
-	public static VTMatchSetDB createMatchSetDB(Record record, VTSessionDB session,
+	public static VTMatchSetDB createMatchSetDB(DBRecord record, VTSessionDB session,
 			DBHandle dbHandle, Lock lock) throws IOException {
 
 		VTMatchSetDB matchSetDB = new VTMatchSetDB(record, session, dbHandle, lock);
@@ -64,7 +64,7 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 		return matchSetDB;
 	}
 
-	public static VTMatchSetDB getMatchSetDB(Record record, VTSessionDB session, DBHandle dbHandle,
+	public static VTMatchSetDB getMatchSetDB(DBRecord record, VTSessionDB session, DBHandle dbHandle,
 			OpenMode openMode, TaskMonitor monitor, Lock lock) throws VersionException {
 
 		VTMatchSetDB matchSetDB = new VTMatchSetDB(record, session, dbHandle, lock);
@@ -72,7 +72,7 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 		return matchSetDB;
 	}
 
-	private VTMatchSetDB(Record record, VTSessionDB session, DBHandle dbHandle, Lock lock) {
+	private VTMatchSetDB(DBRecord record, VTSessionDB session, DBHandle dbHandle, Lock lock) {
 		super(null, record.getKey());// cache not supported
 		this.matchSetRecord = record;
 		this.session = session;
@@ -166,7 +166,7 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 		try {
 			lock.acquire();
 			VTMatchTagDB tagDB = session.getOrCreateMatchTagDB(tag);
-			Record matchRecord =
+			DBRecord matchRecord =
 				matchTableAdapter.insertMatchRecord(info, this, associationDB, tagDB);
 			newMatch = getMatchForRecord(matchRecord);
 		}
@@ -242,7 +242,7 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 			lock.acquire();
 			RecordIterator iterator = matchTableAdapter.getRecords();
 			while (iterator.hasNext()) {
-				Record nextRecord = iterator.next();
+				DBRecord nextRecord = iterator.next();
 				list.add(getMatchForRecord(nextRecord));
 			}
 		}
@@ -265,7 +265,7 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 		try {
 			RecordIterator iterator = matchTableAdapter.getRecords(associationDB.getKey());
 			while (iterator.hasNext()) {
-				Record nextRecord = iterator.next();
+				DBRecord nextRecord = iterator.next();
 				VTMatch match = getMatchForRecord(nextRecord);
 				list.add(match);
 			}
@@ -297,7 +297,7 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 		return session.getMatchSetRecord(key) == null;
 	}
 
-	private VTMatch getMatchForRecord(Record matchRecord) {
+	private VTMatch getMatchForRecord(DBRecord matchRecord) {
 		try {
 			lock.acquire();
 			VTMatchDB match = matchCache.get(matchRecord);
@@ -311,7 +311,7 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 		}
 	}
 
-	Record getMatchRecord(long matchRecordKey) {
+	DBRecord getMatchRecord(long matchRecordKey) {
 		try {
 			return matchTableAdapter.getMatchRecord(matchRecordKey);
 		}

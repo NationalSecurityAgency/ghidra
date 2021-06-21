@@ -738,7 +738,7 @@ Address AddrSpaceManager::constructFloatExtensionAddress(const Address &realaddr
   if (logicalsize == realsize)
     return realaddr;
   vector<VarnodeData> pieces;
-  pieces.push_back(VarnodeData());
+  pieces.emplace_back();
   pieces.back().space = realaddr.getSpace();
   pieces.back().offset = realaddr.getOffset();
   pieces.back().size = realsize;
@@ -790,8 +790,8 @@ Address AddrSpaceManager::constructJoinAddress(const Translate *translate,
   }
   // Otherwise construct a formal JoinRecord
   vector<VarnodeData> pieces;
-  pieces.push_back(VarnodeData());
-  pieces.push_back(VarnodeData());
+  pieces.emplace_back();
+  pieces.emplace_back();
   pieces[0].space = hiaddr.getSpace();
   pieces[0].offset = hiaddr.getOffset();
   pieces[0].size = hisz;

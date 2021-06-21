@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.data;
 
+import static org.junit.Assert.*;
+
 import org.junit.Test;
 
 public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitFieldTest {
@@ -38,7 +40,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("A1");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/A1\n" + 
-			"Aligned\n" + 
+			"pack()\n" + 
 			"Structure A1 {\n" + 
 			"   0   char[5]   5   a   \"\"\n" + 
 			"   8   int:3(0)   1   b   \"\"\n" + 
@@ -55,7 +57,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("A2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/A2\n" + 
-			"Aligned\n" + 
+			"pack()\n" + 
 			"Structure A2 {\n" + 
 			"   0   oddStruct   5   a   \"\"\n" + 
 			"   8   int:3(0)   1   b   \"\"\n" + 
@@ -68,11 +70,34 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 	}
 
 	@Test
+	public void testStructureBitFieldsA3() {
+		Structure struct = getStructure("A3");
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/A3\n" + 
+			"pack()\n" + 
+			"Structure A3 {\n" + 
+			"   0   char[5]   5   a   \"\"\n" + 
+			"   8   int:3(0)   1   b   \"\"\n" + 
+			"   8   int:8(3)   2   c   \"\"\n" + 
+			"   12   int:85(0)   4   d   \"\"\n" + 
+			"   16   int:6(0)   1   e   \"\"\n" + 
+			"}\n" + 
+			"Size = 20   Actual Alignment = 4", struct);
+		//@formatter:on
+		DataTypeComponent c = struct.getComponent(3);
+		assertTrue(c.isBitFieldComponent());
+		BitFieldDataType bfDt = (BitFieldDataType) c.getDataType();
+		assertEquals(4, bfDt.getBaseTypeSize());
+		assertEquals(32, bfDt.getBitSize());
+		assertEquals(85, bfDt.getDeclaredBitSize());
+	}
+
+	@Test
 	public void testStructureBitFieldsB1() {
 		Structure struct = getStructure("B1");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/B1\n" + 
-			"Aligned\n" + 
+			"pack()\n" + 
 			"Structure B1 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   ushort:6(0)   1   b   \"\"\n" + 
@@ -88,7 +113,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("B1flex");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/B1flex\n" + 
-			"Aligned\n" + 
+			"pack()\n" + 
 			"Structure B1flex {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   ushort:6(0)   1   b   \"\"\n" + 
@@ -105,7 +130,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("B2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/B2\n" + 
-			"Aligned\n" + 
+			"pack()\n" + 
 			"Structure B2 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   ushort:6(0)   1   b   \"\"\n" + 
@@ -121,7 +146,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("B3");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/B3\n" + 
-			"Aligned\n" + 
+			"pack()\n" + 
 			"Structure B3 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   ushort:6(0)   1   b   \"\"\n" + 
@@ -138,7 +163,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z1\n" + 
-			"Aligned\n" + 
+			"pack()\n" + 
 			"Structure Z1 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   int:0(0)   1      \"\"\n" + 
@@ -155,7 +180,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("Z2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z2\n" + 
-			"Aligned\n" + 
+			"pack()\n" + 
 			"Structure Z2 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   ushort:6(0)   1   b   \"\"\n" + 
@@ -172,7 +197,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("Z3");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z3\n" + 
-			"Aligned\n" + 
+			"pack()\n" + 
 			"Structure Z3 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   ushort:6(0)   1   b   \"\"\n" + 
@@ -189,7 +214,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("Z4");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z4\n" + 
-			"Aligned\n" + 
+			"pack()\n" + 
 			"Structure Z4 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   ushort:6(0)   1   b   \"\"\n" + 
@@ -206,7 +231,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("Z5");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z5\n" + 
-			"Aligned\n" + 
+			"pack()\n" + 
 			"Structure Z5 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   8   int:0(0)   1      \"\"\n" + 
@@ -223,7 +248,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("Z6");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z6\n" + 
-			"Aligned\n" + 
+			"pack()\n" + 
 			"Structure Z6 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   8   int:0(0)   1      \"\"\n" + 
@@ -243,7 +268,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("B1p1");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/B1p1\n" + 
-			"Aligned pack(1)\n" + 
+			"pack(1)\n" + 
 			"Structure B1p1 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   1   ushort:6(0)   1   b   \"\"\n" + 
@@ -259,7 +284,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("B2p1");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/B2p1\n" + 
-			"Aligned pack(1)\n" + 
+			"pack(1)\n" + 
 			"Structure B2p1 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   1   ushort:6(0)   1   b   \"\"\n" + 
@@ -275,7 +300,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("B3p1");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/B3p1\n" + 
-			"Aligned pack(1)\n" + 
+			"pack(1)\n" + 
 			"Structure B3p1 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   1   ushort:6(0)   1   b   \"\"\n" + 
@@ -291,7 +316,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("Z1p1");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z1p1\n" + 
-			"Aligned pack(1)\n" + 
+			"pack(1)\n" + 
 			"Structure Z1p1 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   1   int:0(0)   1      \"\"\n" + 
@@ -308,7 +333,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("Z2p1");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z2p1\n" + 
-			"Aligned pack(1)\n" + 
+			"pack(1)\n" + 
 			"Structure Z2p1 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   1   ushort:6(0)   1   b   \"\"\n" + 
@@ -325,7 +350,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("Z3p1");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z3p1\n" + 
-			"Aligned pack(1)\n" + 
+			"pack(1)\n" + 
 			"Structure Z3p1 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   1   ushort:6(0)   1   b   \"\"\n" + 
@@ -342,7 +367,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("Z3p1T");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z3p1T\n" + 
-			"Aligned\n" + 
+			"pack()\n" + 
 			"Structure Z3p1T {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   1   Z3p1   7   z3p1   \"\"\n" + 
@@ -356,7 +381,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("Z4p1");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z4p1\n" + 
-			"Aligned pack(1)\n" + 
+			"pack(1)\n" + 
 			"Structure Z4p1 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   1   ushort:6(0)   1   b   \"\"\n" + 
@@ -373,7 +398,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("B1p2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/B1p2\n" + 
-			"Aligned pack(2)\n" + 
+			"pack(2)\n" + 
 			"Structure B1p2 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   ushort:6(0)   1   b   \"\"\n" + 
@@ -389,7 +414,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("B2p2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/B2p2\n" + 
-			"Aligned pack(2)\n" + 
+			"pack(2)\n" + 
 			"Structure B2p2 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   ushort:6(0)   1   b   \"\"\n" + 
@@ -405,7 +430,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("B3p2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/B3p2\n" + 
-			"Aligned pack(2)\n" + 
+			"pack(2)\n" + 
 			"Structure B3p2 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   ushort:6(0)   1   b   \"\"\n" + 
@@ -421,7 +446,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("B4p2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/B4p2\n" + 
-			"Aligned pack(2)\n" + 
+			"pack(2)\n" + 
 			"Structure B4p2 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   ushort:6(0)   1   b   \"\"\n" + 
@@ -438,7 +463,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("Z1p2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z1p2\n" + 
-			"Aligned pack(2)\n" + 
+			"pack(2)\n" + 
 			"Structure Z1p2 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   int:0(0)   1      \"\"\n" + 
@@ -455,7 +480,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("Z1p2x");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z1p2x\n" + 
-			"Aligned pack(2)\n" + 
+			"pack(2)\n" + 
 			"Structure Z1p2x {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   int:0(0)   1      \"\"\n" + 
@@ -490,7 +515,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("Z2p2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z2p2\n" + 
-			"Aligned pack(2)\n" + 
+			"pack(2)\n" + 
 			"Structure Z2p2 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   ushort:6(0)   1   b   \"\"\n" + 
@@ -507,7 +532,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("Z3p2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z3p2\n" + 
-			"Aligned pack(2)\n" + 
+			"pack(2)\n" + 
 			"Structure Z3p2 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   ushort:6(0)   1   b   \"\"\n" + 
@@ -524,7 +549,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("Z4p2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z4p2\n" + 
-			"Aligned pack(2)\n" + 
+			"pack(2)\n" + 
 			"Structure Z4p2 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   ushort:6(0)   1   b   \"\"\n" + 
@@ -541,7 +566,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("Z5p2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z5p2\n" + 
-			"Aligned pack(2)\n" + 
+			"pack(2)\n" + 
 			"Structure Z5p2 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   ushort:12(0)   2   b   \"\"\n" + 
@@ -558,7 +583,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("x1p2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/x1p2\n" + 
-			"Aligned pack(2)\n" + 
+			"pack(2)\n" + 
 			"Structure x1p2 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"}\n" + 
@@ -571,7 +596,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("x2p2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/x2p2\n" + 
-			"Aligned pack(2)\n" + 
+			"pack(2)\n" + 
 			"Structure x2p2 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   int:27(0)   4   b   \"\"\n" + 
@@ -585,7 +610,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("x3p2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/x3p2\n" + 
-			"Aligned pack(2)\n" + 
+			"pack(2)\n" + 
 			"Structure x3p2 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   short:0(0)   1      \"\"\n" + 
@@ -600,7 +625,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("x4p2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/x4p2\n" + 
-			"Aligned pack(2)\n" + 
+			"pack(2)\n" + 
 			"Structure x4p2 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   int:27(0)   4   b   \"\"\n" + 
@@ -615,7 +640,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("Z5p4");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Z5p4\n" + 
-			"Aligned pack(4)\n" + 
+			"pack(4)\n" + 
 			"Structure Z5p4 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   2   ushort:12(0)   2   b   \"\"\n" + 
@@ -632,7 +657,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("x1p4");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/x1p4\n" + 
-			"Aligned pack(4)\n" + 
+			"pack(4)\n" + 
 			"Structure x1p4 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"}\n" + 
@@ -645,7 +670,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("x2p4");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/x2p4\n" + 
-			"Aligned pack(4)\n" + 
+			"pack(4)\n" + 
 			"Structure x2p4 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   4   int:27(0)   4   b   \"\"\n" + 
@@ -659,7 +684,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("x3p4");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/x3p4\n" + 
-			"Aligned pack(4)\n" + 
+			"pack(4)\n" + 
 			"Structure x3p4 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   4   short:0(0)   1      \"\"\n" + 
@@ -674,7 +699,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("x4p4");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/x4p4\n" + 
-			"Aligned pack(4)\n" + 
+			"pack(4)\n" + 
 			"Structure x4p4 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   4   int:27(0)   4   b   \"\"\n" + 
@@ -689,7 +714,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("T1");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/T1\n" + 
-			"Aligned\n" + 
+			"pack()\n" + 
 			"Structure T1 {\n" + 
 			"   0   charTypedef   1   a   \"\"\n" + 
 			"   4   myEnum:3(0)   1   b   \"\"\n" + 
@@ -705,7 +730,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("T2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/T2\n" + 
-			"Aligned\n" + 
+			"pack()\n" + 
 			"Structure T2 {\n" + 
 			"   0   charTypedef   1   a   \"\"\n" + 
 			"   4   intTypedef:17(0)   3   b   \"\"\n" + 
@@ -721,7 +746,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("S1");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/S1\n" + 
-			"Aligned\n" + 
+			"pack()\n" + 
 			"Structure S1 {\n" + 
 			"   0   B1   12   b1   \"\"\n" + 
 			"   12   B2   8   b2   \"\"\n" + 
@@ -738,7 +763,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("S1p1");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/S1p1\n" + 
-			"Aligned pack(1)\n" + 
+			"pack(1)\n" + 
 			"Structure S1p1 {\n" + 
 			"   0   B1   12   b1   \"\"\n" + 
 			"   12   B2   8   b2   \"\"\n" + 
@@ -755,7 +780,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("S2p1");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/S2p1\n" + 
-			"Aligned pack(1)\n" + 
+			"pack(1)\n" + 
 			"Structure S2p1 {\n" + 
 			"   0   B1p1   9   b1p1   \"\"\n" + 
 			"   9   B2p1   7   b2p1   \"\"\n" + 
@@ -772,7 +797,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("S1p2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/S1p2\n" + 
-			"Aligned pack(2)\n" + 
+			"pack(2)\n" + 
 			"Structure S1p2 {\n" + 
 			"   0   B1   12   b1   \"\"\n" + 
 			"   12   B2   8   b2   \"\"\n" + 
@@ -789,7 +814,7 @@ public class MSVCStructureImplBitFieldTest extends AbstractCompositeImplBitField
 		Structure struct = getStructure("S2p2");
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/S2p2\n" + 
-			"Aligned pack(2)\n" + 
+			"pack(2)\n" + 
 			"Structure S2p2 {\n" + 
 			"   0   B1p2   10   b1p2   \"\"\n" + 
 			"   10   B2p2   8   b2p2   \"\"\n" + 

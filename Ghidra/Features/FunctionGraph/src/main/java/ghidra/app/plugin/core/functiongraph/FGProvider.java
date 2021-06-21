@@ -578,6 +578,10 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		}
 	}
 
+	public void optionsChanged() {
+		controller.optionsChanged();
+	}
+
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		if (!isVisible()) {
@@ -1187,6 +1191,22 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		AddressSetView functionBody = function.getBody();
 		AddressSet intersection = currentProgramHighlight.intersect(functionBody);
 		return new ProgramSelection(intersection);
+	}
+
+	@Override
+	public String getTextSelection() {
+
+		FGData currentData = controller.getFunctionGraphData();
+		if (!currentData.hasResults()) {
+			return null;
+		}
+
+		FGVertex focusedVertex = controller.getFocusedVertex();
+		if (focusedVertex == null) {
+			return null;
+		}
+
+		return focusedVertex.getTextSelection();
 	}
 
 	@Override

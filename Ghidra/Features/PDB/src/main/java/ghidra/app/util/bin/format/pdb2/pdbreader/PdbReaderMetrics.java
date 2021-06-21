@@ -23,7 +23,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 /**
  * Metrics captured during the parsing and interpreting of a PDB.  This is a Ghidra class
  *  separate from the PDB API that we have crafted to help us quantify and qualify metatdata
- *  about the PDB. 
+ *  about the PDB.
  */
 public class PdbReaderMetrics {
 
@@ -919,8 +919,6 @@ public class PdbReaderMetrics {
 					// Not sure what to do here.  What are records in this range?
 					// Worse is when it was originally a TYPE with high bit set. Why would it
 					// just not be given a non-set high bit if primitive.
-					int a = 1;
-					a = a + 1;
 					//witnessPrimitive(recordNumber.getNumber());
 				}
 				break;

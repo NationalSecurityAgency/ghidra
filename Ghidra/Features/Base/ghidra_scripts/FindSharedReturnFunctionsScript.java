@@ -75,8 +75,10 @@ public class FindSharedReturnFunctionsScript extends GhidraScript {
 			@Override
 			public String getColumnValue(AddressableRowObject rowObject) {
 				SharedReturnLocations entry = (SharedReturnLocations) rowObject;
-				Function func = entry.getProgram().getFunctionManager().getFunctionContaining(
-					entry.getWhyAddr());
+				Function func = entry.getProgram()
+						.getFunctionManager()
+						.getFunctionContaining(
+							entry.getWhyAddr());
 				if (func == null) {
 					return "";
 				}
@@ -93,8 +95,10 @@ public class FindSharedReturnFunctionsScript extends GhidraScript {
 			@Override
 			public String getColumnValue(AddressableRowObject rowObject) {
 				SharedReturnLocations entry = (SharedReturnLocations) rowObject;
-				Function func = entry.getProgram().getFunctionManager().getFunctionContaining(
-					entry.getAddress());
+				Function func = entry.getProgram()
+						.getFunctionManager()
+						.getFunctionContaining(
+							entry.getAddress());
 				if (func == null) {
 					return "";
 				}
@@ -151,26 +155,18 @@ public class FindSharedReturnFunctionsScript extends GhidraScript {
 			@Override
 			public boolean execute(AddressableRowObject rowObject) {
 				SharedReturnLocations sharedRetLoc = (SharedReturnLocations) rowObject;
-				System.out.println("Fixup Shared Return Jump at : " + rowObject.getAddress());
+				println("Fixup Shared Return Jump at : " + rowObject.getAddress());
 
 				Program cp = sharedRetLoc.getProgram();
 				Address entry = sharedRetLoc.getAddress();
 
-				// gonna change something, have to open a transaction
-				int trans = cp.startTransaction("Fixup Shared Return Jump at " + entry);
-				try {
-					addBookMark(cp, entry, "Shared Return Jump");
+				addBookMark(cp, entry, "Shared Return Jump");
 
-					if (!sharedRetLoc.getStatus().equals("fixed")) {
-						fixSharedReturnLocation(cp, entry);
-					}
-
-					addBookMark(cp, sharedRetLoc.getWhyAddr(), sharedRetLoc.getExplanation());
-				}
-				finally {
-					cp.endTransaction(trans, true);
+				if (!sharedRetLoc.getStatus().equals("fixed")) {
+					fixSharedReturnLocation(cp, entry);
 				}
 
+				addBookMark(cp, sharedRetLoc.getWhyAddr(), sharedRetLoc.getExplanation());
 				return false;  // don't remove row
 			}
 

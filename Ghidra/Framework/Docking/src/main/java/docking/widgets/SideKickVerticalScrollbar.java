@@ -18,7 +18,6 @@ package docking.widgets;
 import java.awt.*;
 import java.awt.event.AdjustmentListener;
 
-import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.plaf.ScrollBarUI;
 
@@ -72,10 +71,18 @@ public class SideKickVerticalScrollbar extends JScrollBar {
 		delegate.addAdjustmentListener(l);
 	}
 
-	@Override
-	public AccessibleContext getAccessibleContext() {
-		return delegate.getAccessibleContext();
-	}
+	/*	 
+	 	Note: Using this method causes some screen reader hardware to fail.   We believe that this
+	 	      method was overridden to follow the pattern of all the other methods of this class.
+	 	      Apparently, the delegate's accessible context does not correctly return a parent,
+	 	      presumably because this class's parent is not the parent of the delegate.
+	 	      Not overriding this method seems to produce the correct result.
+	 
+		@Override
+		public AccessibleContext getAccessibleContext() {
+			return delegate.getAccessibleContext();
+		}
+	*/
 
 	@Override
 	public AdjustmentListener[] getAdjustmentListeners() {
@@ -244,10 +251,12 @@ public class SideKickVerticalScrollbar extends JScrollBar {
 
 		@Override
 		public void addLayoutComponent(String name, Component comp) {
+			// stub
 		}
 
 		@Override
 		public void removeLayoutComponent(Component comp) {
+			// stub
 		}
 
 		@Override
@@ -274,7 +283,6 @@ public class SideKickVerticalScrollbar extends JScrollBar {
 			sideKick.setBounds(0, y, size.width, height);
 		}
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		@Override
 		public Dimension minimumLayoutSize(Container parent) {
 			return new Dimension(0, 0);

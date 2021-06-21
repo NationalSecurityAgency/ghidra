@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +18,10 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.VersionException;
 
 /**
  * Version 0 implementation of the adapter for accessing the built-ins table.
@@ -33,8 +31,9 @@ class BuiltinDBAdapterV0 extends BuiltinDBAdapter {
 	static final int V0_BUILT_IN_NAME_COL = 0;
 	static final int V0_BUILT_IN_CLASSNAME_COL = 1;
 	static final int V0_BUILT_IN_CAT_COL = 2;
-	static final Schema V0_SCHEMA = new Schema(0, "Data Type ID", new Class[] { StringField.class,
-		StringField.class, LongField.class }, new String[] { "Name", "Class Name", "Category ID" });
+	static final Schema V0_SCHEMA = new Schema(0, "Data Type ID",
+		new Field[] { StringField.INSTANCE, StringField.INSTANCE, LongField.INSTANCE },
+		new String[] { "Name", "Class Name", "Category ID" });
 	private Table table;
 
 	/**
@@ -45,12 +44,12 @@ class BuiltinDBAdapterV0 extends BuiltinDBAdapter {
 	 * for this adapter.
 	 * @throws IOException if there is trouble accessing the database.
 	 */
-	public BuiltinDBAdapterV0(DBHandle handle, boolean create) throws VersionException, IOException {
+	public BuiltinDBAdapterV0(DBHandle handle, boolean create)
+			throws VersionException, IOException {
 
 		if (create) {
-			table =
-				handle.createTable(BUILT_IN_TABLE_NAME, V0_SCHEMA,
-					new int[] { V0_BUILT_IN_CAT_COL });
+			table = handle.createTable(BUILT_IN_TABLE_NAME, V0_SCHEMA,
+				new int[] { V0_BUILT_IN_CAT_COL });
 		}
 		else {
 			table = handle.getTable(BUILT_IN_TABLE_NAME);
@@ -65,17 +64,17 @@ class BuiltinDBAdapterV0 extends BuiltinDBAdapter {
 	}
 
 	@Override
-	public Record getRecord(long dataTypeID) throws IOException {
+	public DBRecord getRecord(long dataTypeID) throws IOException {
 		return table.getRecord(dataTypeID);
 	}
 
 	@Override
-	public long[] getRecordIdsInCategory(long categoryID) throws IOException {
+	public Field[] getRecordIdsInCategory(long categoryID) throws IOException {
 		return table.findRecords(new LongField(categoryID), V0_BUILT_IN_CAT_COL);
 	}
 
 	@Override
-	public void updateRecord(Record record) throws IOException {
+	public void updateRecord(DBRecord record) throws IOException {
 		table.putRecord(record);
 	}
 
@@ -85,7 +84,7 @@ class BuiltinDBAdapterV0 extends BuiltinDBAdapter {
 	}
 
 	@Override
-	public Record createRecord(String name, String className, long categoryID) throws IOException {
+	public DBRecord createRecord(String name, String className, long categoryID) throws IOException {
 
 		long tableKey = table.getKey();
 		if (tableKey <= 100) {
@@ -93,7 +92,7 @@ class BuiltinDBAdapterV0 extends BuiltinDBAdapter {
 		}
 		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.BUILT_IN, tableKey);
 
-		Record record = V0_SCHEMA.createRecord(key);
+		DBRecord record = V0_SCHEMA.createRecord(key);
 		record.setString(V0_BUILT_IN_NAME_COL, name);
 		record.setString(V0_BUILT_IN_CLASSNAME_COL, className);
 		record.setLongValue(V0_BUILT_IN_CAT_COL, categoryID);

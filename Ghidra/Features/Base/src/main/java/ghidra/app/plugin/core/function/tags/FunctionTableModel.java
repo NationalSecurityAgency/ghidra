@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.function.tags;
 
 import java.util.List;
+import java.util.Set;
 
 import docking.widgets.table.DiscoverableTableUtils;
 import docking.widgets.table.TableColumnDescriptor;
@@ -37,7 +38,7 @@ import ghidra.util.task.TaskMonitor;
 class FunctionTableModel extends AddressBasedTableModel<Function> {
 
 	// The function tags to display functions for
-	private List<FunctionTag> tags;
+	private Set<FunctionTag> tags;
 
 	/**
 	 * Constructor
@@ -86,11 +87,22 @@ class FunctionTableModel extends AddressBasedTableModel<Function> {
 		// Loop over all functions in the program, filtering out those that do not
 		// do not contain at least one of the tags in the provided set.
 		FunctionIterator iter = program.getFunctionManager().getFunctions(true);
-		monitor.initialize(program.getFunctionManager().getFunctionCount());
+		int realFunctionCount = program.getFunctionManager().getFunctionCount();
+		monitor.initialize(realFunctionCount);
 		while (iter.hasNext()) {
-			monitor.incrementProgress(1);
 			monitor.checkCanceled();
+			monitor.incrementProgress(1);
 			Function f = iter.next();
+			boolean hasTag = f.getTags().stream().anyMatch(t -> tags.contains(t));
+			if (hasTag) {
+				accumulator.add(f);
+			}
+		}
+
+		FunctionIterator externals = program.getFunctionManager().getExternalFunctions();
+		for (Function f : externals) {
+			monitor.checkCanceled();
+			monitor.incrementProgress(1);
 			boolean hasTag = f.getTags().stream().anyMatch(t -> tags.contains(t));
 			if (hasTag) {
 				accumulator.add(f);
@@ -104,9 +116,17 @@ class FunctionTableModel extends AddressBasedTableModel<Function> {
 	 * 
 	 * @param tags the selected tags
 	 */
-	public void setSelectedTags(List<FunctionTag> tags) {
+	public void setTags(Set<FunctionTag> tags) {
 		this.tags = tags;
 		reload();
+	}
+
+	/**
+	 * Returns the tags being used by this model
+	 * @return the tags
+	 */
+	public Set<FunctionTag> getTags() {
+		return tags;
 	}
 
 	/**

@@ -32,7 +32,7 @@ public class DiffApply2Test extends DiffApplyTestAdapter {
 	@Test
 	public void testApplyDiffsNextActionFirst() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
 		waitForPostedSwingRunnables();
 		showApplySettings();
@@ -55,7 +55,7 @@ public class DiffApply2Test extends DiffApplyTestAdapter {
 	@Test
 	public void testApplyDiffsNextActionMiddle() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
 		waitForPostedSwingRunnables();
 		showApplySettings();
@@ -79,7 +79,7 @@ public class DiffApply2Test extends DiffApplyTestAdapter {
 	@Test
 	public void testApplyDiffsNextActionLast() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
 		waitForPostedSwingRunnables();
 		showApplySettings();
@@ -93,7 +93,7 @@ public class DiffApply2Test extends DiffApplyTestAdapter {
 	@Test
 	public void testIgnoreEntireBlock() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
 		waitForPostedSwingRunnables();
 		showApplySettings();
@@ -136,7 +136,7 @@ public class DiffApply2Test extends DiffApplyTestAdapter {
 	@Test
 	public void testIgnorePartialBlock() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
 		waitForPostedSwingRunnables();
 		showApplySettings();
@@ -163,7 +163,7 @@ public class DiffApply2Test extends DiffApplyTestAdapter {
 	@Test
 	public void testUndoRedo() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
 		waitForPostedSwingRunnables();
 		showApplySettings();

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Adapter to access the default settings and instance settings database tables.
@@ -48,6 +46,7 @@ abstract class SettingsDBAdapter {
 
 	/**
 	 * Returns number of settings records
+	 * @return total settings record count
 	 */
 	abstract int getRecordCount();
 
@@ -58,16 +57,20 @@ abstract class SettingsDBAdapter {
 	 * @param strValue string value; null if setting is not String
 	 * @param longValue long value; -1 if setting is not a long
 	 * @param byteValue byte array value; null if setting is not a byte array
+	 * @return new record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record createSettingsRecord(long dataTypeID, String name, String strValue,
+	abstract DBRecord createSettingsRecord(long dataTypeID, String name, String strValue,
 			long longValue, byte[] byteValue) throws IOException;
 
 	/**
-	 * Get keys for the default settings for the given data type ID. 
+	 * Get settings record keys for the default settings corresponding to the 
+	 * specified data type ID. 
+	 * @param dataTypeID datatype ID
+	 * @return settings record keys returned as LongFields within Field array
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract long[] getSettingsKeys(long dataTypeID) throws IOException;
+	abstract Field[] getSettingsKeys(long dataTypeID) throws IOException;
 
 	/**
 	 * Remove the default settings record.
@@ -80,15 +83,16 @@ abstract class SettingsDBAdapter {
 	/**
 	 * Get the default settings record.
 	 * @param settingsID key for the record
+	 * @return record corresponding to settingsID or null
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record getSettingsRecord(long settingsID) throws IOException;
+	abstract DBRecord getSettingsRecord(long settingsID) throws IOException;
 
 	/**
 	 * Update the default settings record in the table.
 	 * @param record the new record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract void updateSettingsRecord(Record record) throws IOException;
+	abstract void updateSettingsRecord(DBRecord record) throws IOException;
 
 }

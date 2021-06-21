@@ -30,7 +30,7 @@ import docking.*;
 import docking.action.*;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDHtmlLabel;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import resources.ResourceManager;
 
 public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
@@ -80,7 +80,8 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 	 * method will effectively let the user click anywhere on the button or its drop-down arrow
 	 * to show the popup menu.  During normal operation, the user can only show the popup by
 	 * clicking the drop-down arrow.
-	 *
+	 * 
+	 * @param performActionOnButtonClick true to perform the action when the button is clicked
 	 */
 	public void setPerformActionOnButtonClick(boolean performActionOnButtonClick) {
 		entireButtonShowsPopupMenu = !performActionOnButtonClick;
@@ -160,7 +161,11 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 		return manager.getActiveComponentProvider();
 	}
 
-	/** Show a popup containing all the actions below the button */
+	/** 
+	 * Show a popup containing all the actions below the button
+	 * @param listener for the created popup menu
+	 * @return the popup menu that was shown
+	 */
 	JPopupMenu showPopup(PopupMenuListener listener) {
 		JPopupMenu menu = new JPopupMenu();
 		List<DockingActionIf> actionList = multipleAction.getActionList(getActionContext());
@@ -307,7 +312,7 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 				// will update the focused window after we click.  We need the focus to be
 				// correct before we show, since our menu is built with actions based upon the
 				// focused dude.
-				SystemUtilities.runSwingLater(() -> popupMenu = showPopup(PopupMouseListener.this));
+				Swing.runLater(() -> popupMenu = showPopup(PopupMouseListener.this));
 
 				e.consume();
 				model.setPressed(false);

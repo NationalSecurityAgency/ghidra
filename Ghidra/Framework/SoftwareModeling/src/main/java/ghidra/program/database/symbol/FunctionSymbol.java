@@ -18,7 +18,7 @@ package ghidra.program.database.symbol;
 import java.util.ArrayList;
 import java.util.List;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.external.ExternalManagerDB;
@@ -56,7 +56,7 @@ public class FunctionSymbol extends SymbolDB {
 	 * @param record the record for this symbol.
 	 */
 	public FunctionSymbol(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, Address address,
-			Record record) {
+			DBRecord record) {
 		super(symbolMgr, cache, address, record);
 		this.functionMgr = symbolMgr.getFunctionManager();
 	}
@@ -258,6 +258,21 @@ public class FunctionSymbol extends SymbolDB {
 			return SymbolUtilities.getDefaultFunctionName(address);
 		}
 		return super.doGetName();
+	}
+
+	@Override
+	protected Namespace doGetParentNamespace() {
+
+		// Check for default thunk function which should return the
+		// parent namespace of the thunked-function
+		if (getSource() == SourceType.DEFAULT) {
+			Symbol thunkedSymbol = getThunkedSymbol();
+			if (thunkedSymbol instanceof FunctionSymbol) {
+				FunctionSymbol thunkedFuncSym = (FunctionSymbol) thunkedSymbol;
+				return thunkedFuncSym.getParentNamespace();
+			}
+		}
+		return super.doGetParentNamespace();
 	}
 
 //	@Override

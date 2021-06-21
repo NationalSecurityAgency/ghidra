@@ -232,10 +232,11 @@ public class GhidraLauncher {
 			typePriorityMap.put("Framework", 0);
 			typePriorityMap.put("Configurations", 1);
 			typePriorityMap.put("Features", 2);
-			typePriorityMap.put("Processors", 3);
-			typePriorityMap.put("GPL", 4);
-			typePriorityMap.put("Extensions", 5);
-			typePriorityMap.put("Test", 6);
+			typePriorityMap.put("Debug", 3);
+			typePriorityMap.put("Processors", 4);
+			typePriorityMap.put("GPL", 5);
+			typePriorityMap.put("Extensions", 6);
+			typePriorityMap.put("Test", 7);
 
 			String type1 = module1.getModuleRoot().getParentFile().getName();
 			String type2 = module2.getModuleRoot().getParentFile().getName();

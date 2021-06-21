@@ -75,6 +75,7 @@ public abstract class AbstractNumberInputDialog extends DialogComponentProvider 
 		}
 		this.max = max;
 
+		setTransient(true);
 		addWorkPanel(buildMainPanel(prompt, showAsHex));
 		addOKButton();
 		addCancelButton();

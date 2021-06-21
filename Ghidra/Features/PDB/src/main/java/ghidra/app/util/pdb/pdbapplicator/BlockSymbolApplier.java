@@ -58,10 +58,20 @@ public class BlockSymbolApplier extends MsSymbolApplier {
 
 	@Override
 	void manageBlockNesting(MsSymbolApplier applierParam) {
+		Address address = applicator.getAddress(symbol);
 		if (applierParam instanceof FunctionSymbolApplier) {
 			FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applierParam;
-			Address address = applicator.getAddress(symbol);
 			functionSymbolApplier.beginBlock(address, symbol.getName(), symbol.getLength());
+		}
+		else if (applierParam instanceof SeparatedCodeSymbolApplier) {
+			SeparatedCodeSymbolApplier separatedCodeSymbolApplier =
+				(SeparatedCodeSymbolApplier) applierParam;
+			separatedCodeSymbolApplier.beginBlock(address);
+		}
+		else if (applierParam instanceof ManagedProcedureSymbolApplier) {
+			ManagedProcedureSymbolApplier procedureSymbolApplier =
+				(ManagedProcedureSymbolApplier) applierParam;
+			procedureSymbolApplier.beginBlock(address, symbol.getName(), symbol.getLength());
 		}
 	}
 }

@@ -62,20 +62,20 @@
 	                target="help/topics/DecompilePlugin/DecompilerConcepts.html">
 		  <tocdef id="ConceptPcode" sortgroup="a" text="P-code" target="help/topics/DecompilePlugin/DecompilerConcepts.html#ConceptPcode"/>
 		  <tocdef id="ConceptHighFunction" sortgroup="b" text="The HighFunction" target="help/topics/DecompilePlugin/DecompilerConcepts.html#ConceptHighFunction"/>
+		  <tocdef id="ConceptSpecification" sortgroup="c" text="SLEIGH Specification Files" target="help/topics/DecompilePlugin/DecompilerConcepts.html#ConceptSpecification"/>
 		</tocdef>
 	        <tocdef id="Program Annotations Affecting the Decompiler" 
 	        		sortgroup="b"
 	                text="Program Annotations Affecting the Decompiler"  
 	                target="help/topics/DecompilePlugin/DecompilerAnnotations.html">
 		  <tocdef id="AnnoteFunctionBody" sortgroup="a" text="Machine Instructions" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteFunctionBody"/>
-		  <!-- Space added to text="Comments" attribute below to distinguish it from the CommentsPlugin section of the same name -->
-		  <tocdef id="AnnoteComments" sortgroup="b" text="Comments " target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteComments"/>
+		  <tocdef id="AnnoteComments" sortgroup="b" text="Comments" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteComments"/>
 		  <tocdef id="AnnoteVariables" sortgroup="c" text="Variable Annotations" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteVariables"/>
 		  <tocdef id="AnnotePrototype" sortgroup="d" text="Function Prototypes" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnotePrototype"/>
 		  <tocdef id="AnnoteMutability" sortgroup="e" text="Data Mutability" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteMutability"/>
 		  <tocdef id="AnnoteConstants" sortgroup="f" text="Constant Annotations" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteConstants"/>
 		  <tocdef id="AnnoteRegister" sortgroup="g" text="Register Values" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteRegister"/>
-		</tocdef>
+		</tocdef> 
 	        <tocdef id="Decompiler Options"
 	        		sortgroup="c" 
 	                text="Decompiler Options"  
@@ -84,6 +84,7 @@
 		  <tocdef id="AnalysisOptions" sortgroup="b" text="Analysis Options" target="help/topics/DecompilePlugin/DecompilerOptions.html#AnalysisOptions"/>
 		  <tocdef id="DisplayOptions" sortgroup="c" text="Display Options" target="help/topics/DecompilePlugin/DecompilerOptions.html#DisplayOptions"/>
 		  <tocdef id="ProgramOptions" sortgroup="d" text="Program Options" target="help/topics/DecompilePlugin/DecompilerOptions.html#ProgramOptions"/>
+		  <tocdef id="ExtensionOptions" sortgroup="e" text="Specification Extensions" target="help/topics/DecompilePlugin/DecompilerOptions.html#ExtensionOptions"/>
 		</tocdef>
 	        <tocdef id="Decompiler Window" 
 	        		sortgroup="d"
@@ -92,11 +93,12 @@
 		  <tocdef id="DecompilerDisplay" sortgroup="a" text="Display" target="help/topics/DecompilePlugin/DecompilerWindow.html#DecompilerDisplay"/>
 		  <tocdef id="MainWindow" sortgroup="b" text="Main Window" target="help/topics/DecompilePlugin/DecompilerWindow.html#MainWindow"/>
 		  <tocdef id="Snapshot" sortgroup="c" text="Snapshot Windows" target="help/topics/DecompilePlugin/DecompilerWindow.html#Snapshot"/>
-		  <tocdef id="ToolBar" sortgroup="d" text="Tool Bar" target="help/topics/DecompilePlugin/DecompilerWindow.html#ToolBar"/>
-		  <tocdef id="MouseActions" sortgroup="e" text="Mouse Actions" target="help/topics/DecompilePlugin/DecompilerWindow.html#MouseActions"/>
-		  <tocdef id="MenuActions" sortgroup="f" text="Pop-up Menu Actions" target="help/topics/DecompilePlugin/DecompilerWindow.html#MenuActions"/>
+		  <tocdef id="UndefinedFunction" sortgroup="d" text="Undefined Functions" target="help/topics/DecompilePlugin/DecompilerWindow.html#UndefinedFunction"/>
+		  <tocdef id="ToolBar" sortgroup="e" text="Tool Bar" target="help/topics/DecompilePlugin/DecompilerWindow.html#ToolBar"/>
+		  <tocdef id="MouseActions" sortgroup="f" text="Mouse Actions" target="help/topics/DecompilePlugin/DecompilerWindow.html#MouseActions"/>
+		  <tocdef id="MenuActions" sortgroup="g" text="Pop-up Menu Actions" target="help/topics/DecompilePlugin/DecompilerWindow.html#MenuActions"/>
 		</tocdef>
 	   </tocdef>
 	 </tocref>
-
+ 
 </tocroot>

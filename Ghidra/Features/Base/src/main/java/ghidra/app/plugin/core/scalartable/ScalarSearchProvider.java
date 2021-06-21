@@ -27,7 +27,6 @@ import docking.help.HelpService;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.GTableFilterPanel;
 import docking.widgets.table.TableFilter;
-import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.scalartable.RangeFilterTextField.FilterType;
 import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -116,8 +115,12 @@ public class ScalarSearchProvider extends ComponentProviderAdapter {
 			buffy.append(" [filter: ").append(minValueText).append(']'); // single scalar search
 		}
 		else if (!isDefaultFilterRange(minValueText, maxValueText)) {
-			buffy.append(" [filter: ").append(minValueText).append(" - ").append(
-				maxValueText).append(']');
+			buffy.append(" [filter: ")
+					.append(minValueText)
+					.append(" - ")
+					.append(
+						maxValueText)
+					.append(']');
 		}
 
 		setTitle(buffy.toString());
@@ -137,12 +140,6 @@ public class ScalarSearchProvider extends ComponentProviderAdapter {
 		int minValue = minField.getLimitValue();
 		int maxValue = maxField.getLimitValue();
 		return min.equals(Integer.toString(minValue)) && max.equals(Integer.toString(maxValue));
-	}
-
-	private void selectDataInProgramFromTable(ProgramSelection selection) {
-		ProgramSelectionPluginEvent pspe =
-			new ProgramSelectionPluginEvent("Selection", selection, plugin.getCurrentProgram());
-		plugin.firePluginEvent(pspe);
 	}
 
 	@Override
@@ -183,7 +180,6 @@ public class ScalarSearchProvider extends ComponentProviderAdapter {
 		closeComponent();
 		threadedTablePanel.dispose();
 		filter.dispose();
-		scalarTable.dispose();
 	}
 
 	ProgramSelection getSelection() {

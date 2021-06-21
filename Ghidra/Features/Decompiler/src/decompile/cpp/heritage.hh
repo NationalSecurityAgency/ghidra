@@ -90,11 +90,11 @@ class HeritageInfo {
   int4 deadremoved;		///< >0 if Varnodes in this space have been eliminated
   bool loadGuardSearch;		///< \b true if the search for LOAD ops to guard has been performed
   bool warningissued;		///< \b true if warning issued previously
-  void set(AddrSpace *spc,int4 dl,int4 dcdl) {
-    space=spc; delay=dl; deadcodedelay=dcdl; deadremoved=0; warningissued=false; loadGuardSearch = false; } ///< Set all fields
+  bool hasCallPlaceholders;	///< \b true for the \e stack space, if stack placeholders have not been removed
   bool isHeritaged(void) const { return (space != (AddrSpace *)0); }	///< Return \b true if heritage is performed on this space
-  void reset(void) {
-    deadremoved = 0; deadcodedelay = delay; warningissued = false; loadGuardSearch = false; }	///< Reset
+  void reset(void);		///< Reset the state
+public:
+  HeritageInfo(AddrSpace *spc);	///< Constructor
 };
 
 /// \brief Description of a LOAD operation that needs to be guarded
@@ -222,6 +222,7 @@ class Heritage {
   /// \brief Get the heritage status for the given address space
   const HeritageInfo *getInfo(AddrSpace *spc) const { return &(infolist[spc->getIndex()]); }
 
+  void clearStackPlaceholders(HeritageInfo *info);	///< Clear remaining stack placeholder LOADs on any call
   void splitJoinLevel(vector<Varnode *> &lastcombo,vector<Varnode *> &nextlev,JoinRecord *joinrec);
   void splitJoinRead(Varnode *vn,JoinRecord *joinrec);
   void splitJoinWrite(Varnode *vn,JoinRecord *joinrec);

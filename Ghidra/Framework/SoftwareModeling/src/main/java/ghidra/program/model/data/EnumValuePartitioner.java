@@ -38,9 +38,10 @@ public class EnumValuePartitioner {
 	/**
 	 * Partition the given values into a list of non-intersecting BitGroups.
 	 * @param values the values to be partitioned.
+	 * @param size size of enum value in bytes
 	 * @return a list of BitGroups with non-intersecting bits.
 	 */
-	public static List<BitGroup> partition(long[] values) {
+	public static List<BitGroup> partition(long[] values, int size) {
 		List<BitGroup> list = new LinkedList<>();
 		long totalMask = 0;
 		for (long value : values) {
@@ -49,7 +50,8 @@ public class EnumValuePartitioner {
 			merge(list, bitGroup);
 		}
 		// now create a BitGroup for all bits not accounted for
-		list.add(new BitGroup(~totalMask));
+		long enumMask = ~(-1 << (size * 8));
+		list.add(new BitGroup(~totalMask & enumMask));
 
 		return list;
 	}

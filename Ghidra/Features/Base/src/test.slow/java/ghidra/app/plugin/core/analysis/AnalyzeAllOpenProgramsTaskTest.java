@@ -296,8 +296,9 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 		AnalysisOptionsDialog optionsDialog = waitForDialogComponent(AnalysisOptionsDialog.class);
 		AnalysisPanel panel =
 			findComponent(optionsDialog.getComponent(), AnalysisPanel.class, false);
-		invokeInstanceMethod("deselectAll", panel);
-		waitForSwing();
+
+		runSwing(() -> invokeInstanceMethod("deselectAll", panel));
+		runSwing(() -> panel.applyChanges());
 
 		close(optionsDialog);
 	}
@@ -371,12 +372,7 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 		}
 
 		final int analyzerRow = row;
-		runSwing(new Runnable() {
-			@Override
-			public void run() {
-				model.setValueAt(Boolean.TRUE, analyzerRow, 0);
-			}
-		});
+		runSwing(() -> model.setValueAt(Boolean.TRUE, analyzerRow, 0));
 	}
 
 	private void runTask(final AnalyzeAllOpenProgramsTask task) {

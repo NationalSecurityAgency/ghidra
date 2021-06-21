@@ -92,7 +92,7 @@ public class AndroidElfRelocationTableDataType extends DynamicDataType {
 
 		static LEB128Info parse(BinaryReader reader, boolean signed) throws IOException {
 			long nextPos = reader.getPointerIndex();
-			long value = LEB128.decode(reader, signed);
+			long value = LEB128.readAsLong(reader, signed);
 			long pos = reader.getPointerIndex();
 			int size = (int) (pos - nextPos);
 			return new LEB128Info((int) nextPos, value, size);
@@ -132,7 +132,7 @@ public class AndroidElfRelocationTableDataType extends DynamicDataType {
 				// NOTE: assumes 2-GByte MemBuffer limit
 				int offset = (int) reader.getPointerIndex();
 
-				long groupSize = LEB128.decode(reader, true);
+				long groupSize = LEB128.readAsLong(reader, true);
 				if (groupSize > remainingRelocations) {
 					Msg.debug(this, "Group relocation count " + groupSize +
 						" exceeded total count " + remainingRelocations);

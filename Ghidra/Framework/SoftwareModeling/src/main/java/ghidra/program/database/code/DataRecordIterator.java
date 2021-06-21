@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +20,7 @@ import ghidra.program.model.listing.DataIterator;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import db.RecordIterator;
 
 /**
@@ -78,7 +77,7 @@ public class DataRecordIterator implements DataIterator {
 	private void findNext() {
 		try {
 			while (nextData == null && (forward ? it.hasNext() : it.hasPrevious())) {
-				Record record = forward ? it.next() : it.previous();
+				DBRecord record = forward ? it.next() : it.previous();
 				nextData = codeMgr.getDataDB(record);
 			}
 		}

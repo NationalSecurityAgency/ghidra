@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package ghidra.program.database.oldfunction;
 
-import ghidra.program.database.map.AddressMap;
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.program.database.map.AddressMap;
+import ghidra.util.exception.VersionException;
 
 /**
  * 
@@ -41,11 +39,12 @@ class OldStackVariableDBAdapterV1 extends OldStackVariableDBAdapter {
 	static final int V1_STACK_VAR_COMMENT_COL = 4;
 	static final int V1_STACK_VAR_DT_LENGTH_COL = 5;
 
-	static final Schema V1_STACK_VARS_SCHEMA = new Schema(SCHEMA_VERSION, "Key", new Class[] {
-		LongField.class, IntField.class, LongField.class, StringField.class, StringField.class,
-		IntField.class },
+	static final Schema V1_STACK_VARS_SCHEMA = new Schema(SCHEMA_VERSION, "Key",
+		new Field[] { LongField.INSTANCE, IntField.INSTANCE, LongField.INSTANCE,
+			StringField.INSTANCE, StringField.INSTANCE, IntField.INSTANCE },
 
-	new String[] { "Function ID", "Offset", "DataType ID", "Name", "Comment", "DataType Length" });
+		new String[] { "Function ID", "Offset", "DataType ID", "Name", "Comment",
+			"DataType Length" });
 
 	private Table table;
 
@@ -64,25 +63,16 @@ class OldStackVariableDBAdapterV1 extends OldStackVariableDBAdapter {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.function.FunctionDBAdapter#getStackVariableRecord(long)
-	 */
 	@Override
-	public Record getStackVariableRecord(long key) throws IOException {
+	public DBRecord getStackVariableRecord(long key) throws IOException {
 		return table.getRecord(key);
 	}
 
-	/**
-	 * @see ghidra.program.database.function.FunctionDBAdapter#getStackVariableKeys(long)
-	 */
 	@Override
-	public long[] getStackVariableKeys(long functionKey) throws IOException {
+	public Field[] getStackVariableKeys(long functionKey) throws IOException {
 		return table.findRecords(new LongField(functionKey), V1_STACK_VAR_FUNCTION_KEY_COL);
 	}
 
-	/**
-	 * @see ghidra.program.database.data.PointerDBAdapter#deleteTable()
-	 */
 	@Override
 	void deleteTable(DBHandle handle) throws IOException {
 		handle.deleteTable(STACK_VARS_TABLE_NAME);

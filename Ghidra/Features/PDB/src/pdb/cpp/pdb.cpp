@@ -17,6 +17,7 @@
 #include "find.h"
 #include "print.h"
 #include "symbol.h"
+#include "xml.h"
 #include <stdlib.h>
 
 PDBApiContext::PDBApiContext(const std::wstring& szFilename, const std::wstring& szSignature, const std::wstring& szAge)
@@ -112,7 +113,7 @@ int PDBApiContext::init(const std::wstring& szFilename, const std::wstring& szSi
 		fatal("Unable to get GUID\n");
 	}
 
-	printf("<pdb file=\"%S\" exe=\"%S\" guid=\"%S\" age=\"%ld\">\n", szFilename.c_str(), exename.c_str(), guidStr.c_str(), currAge);
+	printf("<pdb file=\"%S\" exe=\"%S\" guid=\"%S\" age=\"%ld\">\n", escapeXmlEntities(szFilename).c_str(), escapeXmlEntities(exename).c_str(), escapeXmlEntities(guidStr).c_str(), currAge);
 
 	return hr;
 }

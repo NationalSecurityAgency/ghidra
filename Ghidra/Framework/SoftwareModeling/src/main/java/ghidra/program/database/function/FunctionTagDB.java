@@ -16,8 +16,9 @@
 package ghidra.program.database.function;
 
 import java.io.IOException;
+import java.util.Objects;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.listing.FunctionTag;
@@ -28,10 +29,10 @@ import ghidra.program.model.listing.FunctionTag;
 public class FunctionTagDB extends DatabaseObject implements FunctionTag {
 
 	private FunctionTagManagerDB mgr;
-	private Record record;
+	private DBRecord record;
 
 	public FunctionTagDB(FunctionTagManagerDB mgr, DBObjectCache<FunctionTagDB> cache,
-			Record record) {
+			DBRecord record) {
 		super(cache, record.getKey());
 		this.mgr = mgr;
 		this.record = record;
@@ -47,16 +48,19 @@ public class FunctionTagDB extends DatabaseObject implements FunctionTag {
 		mgr.lock.acquire();
 		try {
 			checkDeleted();
-	
-			if (comment == null)
+
+			if (comment == null) {
 				comment = "";
-	
-			if (!comment.equals(record.getString(FunctionTagAdapter.COMMENT_COL))) {
-				record.setString(FunctionTagAdapter.COMMENT_COL, comment);
-				mgr.updateFunctionTag(this);
 			}
-			
-		} catch (IOException e) {
+
+			String oldValue = record.getString(FunctionTagAdapter.COMMENT_COL);
+			if (!comment.equals(oldValue)) {
+				record.setString(FunctionTagAdapter.COMMENT_COL, comment);
+				mgr.updateFunctionTag(this, oldValue, comment);
+			}
+
+		}
+		catch (IOException e) {
 			mgr.dbError(e);
 		}
 		finally {
@@ -69,17 +73,21 @@ public class FunctionTagDB extends DatabaseObject implements FunctionTag {
 		mgr.lock.acquire();
 		try {
 			checkDeleted();
-	
-			if (name == null)
+
+			if (name == null) {
 				name = "";
-	
-			if (!name.equals(record.getString(FunctionTagAdapter.NAME_COL))) {
-				record.setString(FunctionTagAdapter.NAME_COL, name);
-				mgr.updateFunctionTag(this);
 			}
-		} catch (IOException e) {
+
+			String oldValue = record.getString(FunctionTagAdapter.NAME_COL);
+			if (!name.equals(oldValue)) {
+				record.setString(FunctionTagAdapter.NAME_COL, name);
+				mgr.updateFunctionTag(this, oldValue, name);
+			}
+		}
+		catch (IOException e) {
 			mgr.dbError(e);
-		} finally {
+		}
+		finally {
 			mgr.lock.release();
 		}
 	}
@@ -107,12 +115,12 @@ public class FunctionTagDB extends DatabaseObject implements FunctionTag {
 			mgr.lock.release();
 		}
 	}
-	
+
 	/**
 	 * Get tag record
 	 * @return record
 	 */
-	Record getRecord() {
+	DBRecord getRecord() {
 		return record;
 	}
 
@@ -125,13 +133,13 @@ public class FunctionTagDB extends DatabaseObject implements FunctionTag {
 	}
 
 	@Override
-	protected boolean refresh(Record rec) {
+	protected boolean refresh(DBRecord rec) {
 
 		// As per the description of this function, if the record passed-in
 		// is null, use whatever is in the database.
 		if (rec == null) {
 			try {
-				rec = mgr.getFunctionTagAdapter().getRecord(key);
+				rec = mgr.getTagRecord(key);
 			}
 			catch (IOException e) {
 				mgr.dbError(e);
@@ -149,8 +157,19 @@ public class FunctionTagDB extends DatabaseObject implements FunctionTag {
 	}
 
 	@Override
-	public int hashCode() {
-		return (int) key;
+	public void delete() {
+		mgr.lock.acquire();
+		try {
+			if (checkIsValid()) {
+				mgr.doDeleteTag(this);
+			}
+		}
+		catch (IOException e) {
+			mgr.dbError(e);
+		}
+		finally {
+			mgr.lock.release();
+		}
 	}
 
 	@Override
@@ -163,36 +182,40 @@ public class FunctionTagDB extends DatabaseObject implements FunctionTag {
 	}
 
 	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((getComment() == null) ? 0 : getComment().hashCode());
+		result = prime * result + ((getName() == null) ? 0 : getName().hashCode());
+		return result;
+	}
+
+	@Override
 	public boolean equals(Object obj) {
-		if ((obj == null) || (!(obj instanceof FunctionTag))) {
-			return false;
-		}
-		if (obj == this) {
+		if (this == obj) {
 			return true;
 		}
-		FunctionTag tag = (FunctionTag) obj;
-		if (!getName().equals(tag.getName())) {
+		if (obj == null) {
 			return false;
 		}
-		if (!getComment().equals(tag.getComment())) {
+		if (!(obj instanceof FunctionTag)) {
 			return false;
 		}
+
+		FunctionTag other = (FunctionTag) obj;
+		if (!Objects.equals(getComment(), other.getComment())) {
+			return false;
+		}
+
+		if (!Objects.equals(getName(), other.getName())) {
+			return false;
+		}
+
 		return true;
 	}
 
 	@Override
-	public void delete() {
-		mgr.lock.acquire();
-		try {
-			if (checkIsValid()) {
-				mgr.doDeleteTag(this);
-			}
-		} catch (IOException e) {
-			mgr.dbError(e);
-		}
-		finally {
-			mgr.lock.release();
-		}
+	public String toString() {
+		return getName();
 	}
 }
-

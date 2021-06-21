@@ -475,8 +475,9 @@ public class Emulate {
 		else if (behave instanceof BinaryOpBehavior) {
 			BinaryOpBehavior binaryBehave = (BinaryOpBehavior) behave;
 			Varnode in1var = op.getInput(0);
+			Varnode in2var = op.getInput(1);
 			Varnode outvar = op.getOutput();
-			if (in1var.getSize() > 8 || outvar.getSize() > 8) {
+			if (in1var.getSize() > 8 || in2var.getSize() > 8 || outvar.getSize() > 8) {
 				BigInteger in1 = memstate.getBigInteger(op.getInput(0), false);
 				BigInteger in2 = memstate.getBigInteger(op.getInput(1), false);
 				BigInteger out = binaryBehave.evaluateBinary(outvar.getSize(),

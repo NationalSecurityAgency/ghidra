@@ -17,10 +17,9 @@
 //@category Examples
 
 import java.io.File;
-import java.util.*;
+import java.util.List;
 
 import generic.jar.ApplicationModule;
-import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScript;
 import ghidra.framework.Application;
 import ghidra.util.GhidraJarBuilder;
@@ -32,8 +31,7 @@ public class BuildGhidraJarScript extends GhidraScript {
 
 	@Override
 	public void run() throws Exception {
-		GhidraJarBuilder builder =
-			new GhidraJarBuilder(toFiles(Application.getApplicationRootDirectories()));
+		GhidraJarBuilder builder = new GhidraJarBuilder(Application.getApplicationLayout());
 
 		builder.setMainClass("ghidra.JarRun");  // default is ghidra.JarRun, only here if you want 
 		// to change it to something else.
@@ -68,13 +66,5 @@ public class BuildGhidraJarScript extends GhidraScript {
 
 		// uncomment the following line to create a src zip for debugging.
 		// builder.buildSrcZip(new File(installDir, "GhidraSrc.zip"), monitor);
-	}
-
-	private List<File> toFiles(Collection<ResourceFile> resourceFiles) {
-		List<File> fileList = new ArrayList<>();
-		for (ResourceFile resourceFile : resourceFiles) {
-			fileList.add(resourceFile.getFile(true));
-		}
-		return fileList;
 	}
 }

@@ -70,7 +70,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 
 		env = new TestEnv();
 		frontEndTool = env.showFrontEndTool();
-		tree = findComponent(frontEndTool.getToolFrame(), DataTree.class);
+		tree = waitFor(() -> findComponent(frontEndTool.getToolFrame(), DataTree.class));
 		rootFolder = env.getProject().getProjectData().getRootFolder();
 
 		Program p = createDefaultProgram("p1", ProgramBuilder._TOY, this);
@@ -662,15 +662,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 
 		// attempt to rename "myFolder"
 		runSwingLater(() -> {
-			int row = tree.getRowForPath(myNode.getTreePath());
-			DefaultTreeCellEditor cellEditor = (DefaultTreeCellEditor) tree.getCellEditor();
-			JTree jTree = (JTree) getInstanceField("tree", tree);
-			Container container = (Container) cellEditor.getTreeCellEditorComponent(jTree, myNode,
-				true, true, false, row);
-			JTextField textField = (JTextField) container.getComponent(0);
-
-			textField.setText("My_Newfolder");
-			tree.stopEditing();
+			myNode.valueChanged("My_NewFolder");
 		});
 
 		waitForSwing();
@@ -821,7 +813,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	private void selectRow(GTable table, String programName) {
-	
+
 		int row = getRow(table, programName);
 		if (row != -1) {
 			runSwing(() -> table.selectRow(row));
@@ -829,20 +821,20 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	private GTable switchToTableView() {
-	
+
 		FrontEndPlugin plugin = getPlugin(frontEndTool, FrontEndPlugin.class);
 		JSplitPane panel = (JSplitPane) invokeInstanceMethod("getProjectDataPanel", plugin);
 		invokeInstanceMethod("showTable", panel);
-	
+
 		waitForSwing();
-	
+
 		GTable projectTable = findComponent(panel, GTable.class);
 		assertNotNull(projectTable);
 		return projectTable;
 	}
 
 	private ProjectDataTablePanel getProjectDataTablePanel() {
-	
+
 		FrontEndPlugin plugin = getPlugin(frontEndTool, FrontEndPlugin.class);
 		JSplitPane panel = (JSplitPane) invokeInstanceMethod("getProjectDataPanel", plugin);
 		ProjectDataTablePanel pdtp = findComponent(panel, ProjectDataTablePanel.class);
@@ -850,7 +842,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	private ActionContext getTableActionContext() {
-	
+
 		ProjectDataTablePanel panel = getProjectDataTablePanel();
 		MouseEvent e = null; // not currently used
 		FrontEndPlugin plugin = getPlugin(frontEndTool, FrontEndPlugin.class);

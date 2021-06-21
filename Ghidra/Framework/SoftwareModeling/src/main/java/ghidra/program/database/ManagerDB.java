@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,12 @@
  */
 package ghidra.program.database;
 
+import java.io.IOException;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
 
 /**
  * Interface that all subsection managers of a program must implement.
@@ -65,7 +64,7 @@ public interface ManagerDB {
 	 * @param monitor the task monitor to use in any upgrade operations.
 	 * @throws CancelledException if the user cancelled the operation via the task monitor.
 	 */
-	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
+	void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException;
 
 	/**
@@ -79,4 +78,12 @@ public interface ManagerDB {
 	 */
 	void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws AddressOverflowException, CancelledException;
+
+	/**
+	 * Callback from the program after being closed to signal this manager to release memory and resources.
+	 * <p>
+	 */
+	default void dispose() {
+		// default do nothing
+	}
 }

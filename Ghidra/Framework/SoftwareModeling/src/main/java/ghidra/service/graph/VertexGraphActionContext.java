@@ -15,6 +15,7 @@
  */
 package ghidra.service.graph;
 
+import java.util.Objects;
 import java.util.Set;
 
 import docking.ComponentProvider;
@@ -31,7 +32,7 @@ public class VertexGraphActionContext extends GraphActionContext {
 			AttributedVertex locatedVertex, AttributedVertex clickedVertex) {
 
 		super(componentProvider, graph, selectedVertices, locatedVertex);
-		this.clickedVertex = clickedVertex;
+		this.clickedVertex = Objects.requireNonNull(clickedVertex);
 	}
 
 	/**

@@ -32,8 +32,8 @@ abstract class CommentHistoryAdapter {
 	static final String COMMENT_HISTORY_TABLE_NAME = "Comment History";
 
 	static final Schema COMMENT_HISTORY_SCHEMA = new Schema(0, "Key",
-		new Class[] { LongField.class, ByteField.class, IntField.class, IntField.class,
-			StringField.class, StringField.class, LongField.class },
+		new Field[] { LongField.INSTANCE, ByteField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE,
+			StringField.INSTANCE, StringField.INSTANCE, LongField.INSTANCE },
 		new String[] { "Address", "Comment Type", "Pos1", "Pos2", "String Data", "User", "Date" });
 
 	static final int HISTORY_ADDRESS_COL = 0;
@@ -102,7 +102,7 @@ abstract class CommentHistoryAdapter {
 			RecordIterator iter = oldAdapter.getAllRecords();
 			while (iter.hasNext()) {
 				monitor.checkCanceled();
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				Address addr = oldAddrMap.decodeAddress(rec.getLongValue(HISTORY_ADDRESS_COL));
 				rec.setLongValue(HISTORY_ADDRESS_COL, addrMap.getKey(addr, true));
 				tmpAdapter.updateRecord(rec);
@@ -115,7 +115,7 @@ abstract class CommentHistoryAdapter {
 			iter = tmpAdapter.getAllRecords();
 			while (iter.hasNext()) {
 				monitor.checkCanceled();
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				newAdapter.updateRecord(rec);
 				monitor.setProgress(++count);
 			}
@@ -150,7 +150,7 @@ abstract class CommentHistoryAdapter {
 	 * @param rec the record to update
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract void updateRecord(Record rec) throws IOException;
+	abstract void updateRecord(DBRecord rec) throws IOException;
 
 	/**
 	 * Delete the records in the given range.

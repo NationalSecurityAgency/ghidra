@@ -85,7 +85,7 @@ public abstract class RenameTask {
 		
 		String label = "Rename " + oldName + ":";
         InputDialog renameVarDialog = new InputDialog( getTransactionName(), 
-                new String[]{ label }, new String[]{ oldName }, true, listener );
+                new String[]{ label }, new String[]{ oldName }, listener );
         
         tool.showDialog(renameVarDialog);
             

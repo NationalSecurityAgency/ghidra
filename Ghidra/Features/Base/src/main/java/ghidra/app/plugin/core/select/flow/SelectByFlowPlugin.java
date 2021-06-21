@@ -15,10 +15,14 @@
  */
 package ghidra.app.plugin.core.select.flow;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+
+import docking.action.DockingAction;
+import docking.action.MenuData;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
-import ghidra.app.context.NavigatableActionContext;
-import ghidra.app.context.NavigatableContextAction;
+import ghidra.app.context.*;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.nav.NavigationUtils;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -37,12 +41,6 @@ import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.*;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-
-import docking.action.DockingAction;
-import docking.action.MenuData;
 
 /**
  * The SelectByFlowPlugin adds selection of code based on program flow to a
@@ -484,9 +482,9 @@ public class SelectByFlowPlugin extends Plugin implements OptionsChangeListener 
 
 		selectProgramChangesAction.setHelpLocation(new HelpLocation(HelpTopics.SELECTION,
 			selectProgramChangesAction.getName()));
-
 		selectProgramChangesAction.getMenuBarData().setMenuSubGroup(
 			Integer.toString(subMenuGroupPosition++));
+		selectProgramChangesAction.addToWindowWhen(NavigatableActionContext.class);
 		tool.addAction(selectProgramChangesAction);
 
 		/**
@@ -496,6 +494,7 @@ public class SelectByFlowPlugin extends Plugin implements OptionsChangeListener 
 			new SelectByFlowAction("Select All Flows From", this, SELECT_ALL_FLOWS_FROM);
 		selectAllFlowsFromAction.getMenuBarData().setMenuSubGroup(
 			Integer.toString(subMenuGroupPosition++));
+		selectAllFlowsFromAction.addToWindowWhen(ListingActionContext.class);
 		tool.addAction(selectAllFlowsFromAction);
 
 		/**
@@ -505,6 +504,7 @@ public class SelectByFlowPlugin extends Plugin implements OptionsChangeListener 
 			new SelectByFlowAction("Select All Flows To", this, SELECT_ALL_FLOWS_TO);
 		selectAllFlowsToAction.getMenuBarData().setMenuSubGroup(
 			Integer.toString(subMenuGroupPosition++));
+		selectAllFlowsToAction.addToWindowWhen(ListingActionContext.class);
 		tool.addAction(selectAllFlowsToAction);
 
 		/**
@@ -514,6 +514,7 @@ public class SelectByFlowPlugin extends Plugin implements OptionsChangeListener 
 			new SelectByFlowAction("Select Limited Flows From", this, SELECT_LIMITED_FLOWS_FROM);
 		selectLimitedFlowsFromAction.getMenuBarData().setMenuSubGroup(
 			Integer.toString(subMenuGroupPosition++));
+		selectLimitedFlowsFromAction.addToWindowWhen(ListingActionContext.class);
 		tool.addAction(selectLimitedFlowsFromAction);
 
 		/**
@@ -523,6 +524,7 @@ public class SelectByFlowPlugin extends Plugin implements OptionsChangeListener 
 			new SelectByFlowAction("Select Limited Flows To", this, SELECT_LIMITED_FLOWS_TO);
 		selectLimitedFlowsToAction.getMenuBarData().setMenuSubGroup(
 			Integer.toString(subMenuGroupPosition++));
+		selectLimitedFlowsToAction.addToWindowWhen(ListingActionContext.class);
 		tool.addAction(selectLimitedFlowsToAction);
 
 		/**
@@ -532,6 +534,7 @@ public class SelectByFlowPlugin extends Plugin implements OptionsChangeListener 
 			new SelectByFlowAction("Select Subroutine", this, SELECT_SUBROUTINES);
 		selectSubroutineAction.getMenuBarData().setMenuSubGroup(
 			Integer.toString(subMenuGroupPosition++));
+		selectSubroutineAction.addToWindowWhen(ListingActionContext.class);
 		tool.addAction(selectSubroutineAction);
 
 		/**
@@ -541,6 +544,7 @@ public class SelectByFlowPlugin extends Plugin implements OptionsChangeListener 
 			new SelectByFlowAction("Select Dead Subroutine", this, SELECT_DEAD_SUBROUTINES);
 		selectDeadSubroutineAction.getMenuBarData().setMenuSubGroup(
 			Integer.toString(subMenuGroupPosition++));
+		selectDeadSubroutineAction.addToWindowWhen(ListingActionContext.class);
 		tool.addAction(selectDeadSubroutineAction);
 
 		/**
@@ -549,6 +553,7 @@ public class SelectByFlowPlugin extends Plugin implements OptionsChangeListener 
 		selectFunctionAction = new SelectByFlowAction("Select Function", this, SELECT_FUNCTIONS);
 		selectFunctionAction.getMenuBarData().setMenuSubGroup(
 			Integer.toString(subMenuGroupPosition++));
+		selectFunctionAction.addToWindowWhen(ListingActionContext.class);
 		tool.addAction(selectFunctionAction);
 
 	}

@@ -23,6 +23,6 @@ eclipse.project.name = 'Processors Sparc'
 
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }
 

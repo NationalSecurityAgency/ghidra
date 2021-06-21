@@ -165,7 +165,7 @@ public class StructureEditorUnlockedActions2Test
 		assertEquals(getDataType(3), DataType.DEFAULT);
 		assertEquals(getDataType(4), dt3);
 
-		invoke(action);
+		invoke(action, false);
 		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 2);
@@ -179,7 +179,7 @@ public class StructureEditorUnlockedActions2Test
 		assertEquals(getDataType(3), dt3);
 
 		setSelection(new int[] { 2 });
-		invoke(action);
+		invoke(action, false);
 		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 2);

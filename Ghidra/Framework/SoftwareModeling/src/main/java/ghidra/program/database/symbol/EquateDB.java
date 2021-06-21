@@ -17,7 +17,7 @@ package ghidra.program.database.symbol;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.address.Address;
@@ -39,7 +39,7 @@ import ghidra.util.exception.*;
  */
 public class EquateDB extends DatabaseObject implements Equate {
 
-	private Record record;
+	private DBRecord record;
 	private EquateManager equateMgr;
 
 	/**
@@ -48,7 +48,7 @@ public class EquateDB extends DatabaseObject implements Equate {
 	 * @param cache EquateDB cache
 	 * @param record the record for this equate.
 	 */
-	public EquateDB(EquateManager equateMgr, DBObjectCache<EquateDB> cache, Record record) {
+	public EquateDB(EquateManager equateMgr, DBObjectCache<EquateDB> cache, DBRecord record) {
 		super(cache, record.getKey());
 		this.equateMgr = equateMgr;
 		this.record = record;
@@ -56,7 +56,7 @@ public class EquateDB extends DatabaseObject implements Equate {
 
 	@Override
 	protected boolean refresh() {
-		Record rec = equateMgr.getEquateRecord(key);
+		DBRecord rec = equateMgr.getEquateRecord(key);
 		if (rec == null) {
 			return false;
 		}

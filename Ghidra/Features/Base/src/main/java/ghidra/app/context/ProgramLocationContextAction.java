@@ -15,8 +15,6 @@
  */
 package ghidra.app.context;
 
-import java.util.Set;
-
 import docking.ActionContext;
 import docking.action.DockingAction;
 
@@ -71,14 +69,4 @@ public abstract class ProgramLocationContextAction extends DockingAction {
 
 	// a version of actionPerformed() that takes a more specific context than our parent
 	protected abstract void actionPerformed(ProgramLocationActionContext context);
-
-	@Override
-	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-		for (Class<?> class1 : contextTypes) {
-			if (ProgramLocationActionContext.class.isAssignableFrom(class1)) {
-				return true;
-			}
-		}
-		return false;
-	}
 }

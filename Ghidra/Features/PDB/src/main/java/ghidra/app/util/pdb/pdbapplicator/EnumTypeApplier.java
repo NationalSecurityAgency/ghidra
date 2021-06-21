@@ -129,8 +129,7 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 
 //		MsProperty property = type.getMsProperty();
 //		if (property.isForwardReference()) {
-//			int a = 1;
-//			a = a + 1;
+//			// investigate this
 //		}
 ////		RecordNumber underlyingRecordNumber = type.getUnderlyingRecordNumber();
 ////		underlyingApplier = applicator.getApplier(underlyingRecordNumber);
@@ -158,7 +157,7 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 //				//TODO: can we set isSigned in here?  ((PrimitiveMsType) underlying)
 //				// TODO: there might be more
 //				// TODO: investigate getSize() on AbstractMsType?
-//				//       then: length = underlying.getSize(); 
+//				//       then: length = underlying.getSize();
 //			}
 //		}
 //		// Ghidra does not like size of zero.
@@ -227,8 +226,7 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 //		RecordNumber underlyingRecordNumber = type.getUnderlyingRecordNumber();
 //		MsProperty property = type.getMsProperty();
 //		if (property.isForwardReference()) {
-//			int a = 1;
-//			a = a + 1;
+//			// investigate this
 //		}
 //		underlyingApplier = applicator.getApplier(underlyingRecordNumber);
 //
@@ -248,7 +246,7 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 //				length = ((PrimitiveMsType) underlying).getTypeSize();
 //				// TODO: there might be more
 //				// TODO: investigate getSize() on AbstractMsType?
-//				//       then: length = underlying.getSize(); 
+//				//       then: length = underlying.getSize();
 //			}
 //		}
 //		// Ghidra does not like size of zero.

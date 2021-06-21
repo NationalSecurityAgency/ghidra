@@ -46,7 +46,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	public void testGetSources() {
 		TestV v1 = vertex(1);
 		TestV v2 = vertex(2);
-		TestV v3 = vertex(2);
+		TestV v3 = vertex(3);
 
 		g.addVertex(v1);
 		g.addVertex(v2);
@@ -72,7 +72,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	@Test
 	public void testGetDescendants() {
 		//   v1 -> v2 -> v3
-		//    |	
+		//    |
 		//   v4 -> v5 -> v6
 
 		TestV v1 = vertex(1);
@@ -129,8 +129,8 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	public void testStronglyConnected() {
 		//   V1 <- V4
 		//    |     ^
-		//    v     |       
-		//   V2 -> V3 -> V5 <--> V6 
+		//    v     |
+		//   V2 -> V3 -> V5 <--> V6
 		//
 		//   V7
 
@@ -165,7 +165,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//   V1 <- V4 <--------
 		//    |     ^          ^
 		//    v     |          |
-		//   V2 -> V3 -> V5 -> V6 
+		//   V2 -> V3 -> V5 -> V6
 
 		TestV v1 = vertex(1);
 		TestV v2 = vertex(2);
@@ -222,7 +222,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	public void testDominance_GetDominators() throws CancelledException {
 
 		/*
-		 		v1->.		 		
+		 		v1->.
 		 		 |  |
 		 		v2  |
 		 		 |  |
@@ -256,8 +256,8 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//           |  |
 		// 			v2  |
 		//		     |  \/
-		//           |  | 
-		//      	 |  v3  
+		//           |  |
+		//      	 |  v3
 		//           |  |
 		//           |  \/
 		//          v4--<
@@ -290,7 +290,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//           |  |
 		// 			v2  |
 		//		     |  \/
-		//           |  | 
+		//           |  |
 		//      	    v3  |
 		//           |  |
 		//           |  \/
@@ -313,7 +313,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//@formatter:off
 		assertContainsEdgesExactly(dg,
 								   resultEdge(v1, v2),
-								   resultEdge(v1, v2), 
+								   resultEdge(v1, v2),
 								   resultEdge(v2, v3),
 								   resultEdge(v1, v4));
 		//@formatter:on
@@ -324,25 +324,25 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	public void testDominance_GetDominators_Complicated() throws CancelledException {
 
 		//@formatter:off
-		/*		 
+		/*
 				v1
 			 	 |
-				v2	
+				v2
 			 	 |
 	sink   v3 <- v4
 		   /\	 |
 		   	|	 v5
 			| 	/  \
-			| v6   v7			 	    
+			| v6   v7
 		    |  |\   |
 		    | v8  \ |
 		    |   \   |
 		    |     \ |
 		    |      v9
 			|	   / \
-		    |     /   \ 
-		    .<--v11-->v10	sink	         			
-					 	   
+		    |     /   \
+		    .<--v11-->v10	sink
+
 		*/
 		//@formatter:on
 
@@ -397,7 +397,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//           |
 		// 			v2
 		//		   / |
-		//        /  | 
+		//        /  |
 		//      v3   v4
 		//       \   |
 		//        \  |
@@ -440,7 +440,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//           |
 		// 			v2
 		//		   / |
-		//        /  | 
+		//        /  |
 		//      v3   v4
 		//       \   |
 		//        \  |
@@ -468,7 +468,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		ChkDominanceAlgorithm<TestV, TestE> algo =
 			new ChkDominanceAlgorithm<>(g, TaskMonitor.DUMMY);
 
-		// all paths go through v1		
+		// all paths go through v1
 		//@formatter:off
 		Collection<TestE> dominated = findDominance(v1, algo);
 		assertContainsExactly(dominated, edge(v1, v2),
@@ -479,7 +479,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 									  	 edge(v5, v6));
 		//@formatter:on
 
-		// all paths, but v1, are dominated by v2		
+		// all paths, but v1, are dominated by v2
 		//@formatter:off
 		dominated = findDominance(v2, algo);
 		assertContainsExactly(dominated, edge(v2, v3),
@@ -507,7 +507,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	public void testPostDominance_GetDominators() throws CancelledException {
 
 		/*
-		 		v1->.		 		
+		 		v1->.
 		 		 |  |
 		 		v2  |
 		 		 |  |
@@ -541,12 +541,12 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		/*
 		 		v1
 		 		 |
-		 		v2 <-.		 		
+		 		v2 <-.
 		 		 |   |
 		 		v3   |
 		 	   / |   |
 	   sink  v4  v5->|
-		 		 
+
 		 */
 		//@formatter:on
 		TestV v1 = vertex(1);
@@ -579,7 +579,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//           |
 		// 			v2
 		//		   / |
-		//        /  | 
+		//        /  |
 		//      v3   v4
 		//       \   |
 		//        \  |
@@ -630,7 +630,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 									  	 edge(v4, v5));
 		//@formatter:on
 
-		// all paths go through v6	
+		// all paths go through v6
 		//@formatter:off
 		dominated = findPostDominance(v6, algo);
 		assertContainsExactly(dominated, edge(v1, v2),
@@ -651,7 +651,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		//           |
 		// 			v2
 		//		   / |
-		//        /  | 
+		//        /  |
 		//      v3   v4
 		//       \   |
 		//        \  |
@@ -699,7 +699,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 									  	 edge(v4, v5));
 		//@formatter:on
 
-		// all paths go through v6	
+		// all paths go through v6
 		//@formatter:off
 		dominated = findPostDominance(v6);
 		assertContainsExactly(dominated, edge(v1, v2),
@@ -714,7 +714,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 
 	@Test
 	public void testDominated_MultipleSources() throws CancelledException {
-		/*		 
+		/*
 		source 		v1
 			 		 |
 		source 	v2	v3
@@ -722,19 +722,19 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			 	v4	v5
 			 	 \   |
 			 	  \  |
-			 	   -v6			 	    
+			 	   -v6
 		             |
 		 			v7
 				   / |
-		          /  | 
+		          /  |
 		        v8   v9
 		         \   |
 		          \  |
 		           - v10
 		             |
 		             |
-		            v11					
-					 	   
+		            v11
+		
 		*/
 
 		TestV v1 = vertex(1);  // Root
@@ -792,7 +792,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 									  	 edge(v8, v10),
 									  	 edge(v9, v10),
 									  	 edge(v10, v11));
-		
+
 		dominated = findDominance(v7, algo);
 		assertContainsExactly(dominated, edge(v7, v8),
 									  	 edge(v7, v9),
@@ -814,7 +814,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 
 	@Test
 	public void testPostDominated_MultipleSources() {
-		/*		 
+		/*
 		source 		v1
 			 		 |
 		source 	v2	v3
@@ -822,19 +822,19 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			 	v4	v5
 			 	 \   |
 			 	  \  |
-			 	   -v6			 	    
+			 	   -v6
 		             |
 		 			v7
 				   / |
-		          /  | 
+		          /  |
 		        v8   v9
 		         \   |
 		          \  |
 		           - v10
 		             |
 		             |
-		            v11					
-					 	   
+		            v11
+		
 		*/
 
 		TestV v1 = vertex(1);  // Root
@@ -879,16 +879,16 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 
 		//@formatter:off
 		dominated = findPostDominance(v5);
-		assertContainsExactly(dominated, edge(v1, v3), 
+		assertContainsExactly(dominated, edge(v1, v3),
 										 edge(v3, v5));
-		
+
 		dominated = findPostDominance(v6);
 		assertContainsExactly(dominated, edge(v1, v3),
 										 edge(v3, v5),
 										 edge(v5, v6),
 										 edge(v2, v4),
 										 edge(v4, v6));
-		
+
 		dominated = findPostDominance(v7);
 		assertContainsExactly(dominated, edge(v1, v3),
 										 edge(v3, v5),
@@ -896,13 +896,13 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 										 edge(v2, v4),
 										 edge(v4, v6),
 										 edge(v6, v7));
-		
+
 		dominated = findPostDominance(v8);
 		assertTrue(dominated.isEmpty());
-		
+
 		dominated = findPostDominance(v9);
 		assertTrue(dominated.isEmpty());
-		
+
 		dominated = findPostDominance(v10);
 		assertContainsExactly(dominated, edge(v1, v3),
 										 edge(v3, v5),
@@ -914,7 +914,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 										 edge(v7, v9),
 										 edge(v8, v10),
 										 edge(v9, v10));
-		
+
 		dominated = findPostDominance(v11);
 		assertContainsExactly(dominated, edge(v1, v3),
 										 edge(v3, v5),
@@ -932,10 +932,10 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 
 	@Test
 	public void testPostDominated_MultipleSinks() {
-		/*		 
+		/*
 		 		    v1
 			 	   / |
-		sink ->  v2 v3	 	    
+		sink ->  v2 v3
 		             |
 		 			v4
 				   / |\
@@ -946,8 +946,8 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		           - v8
 		             |
 		             |
-		             v9		 <- sink	
-					 	   
+		             v9		 <- sink
+		
 		*/
 
 		TestV v1 = vertex(1);
@@ -986,17 +986,17 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 
 		dominated = findPostDominance(v5);
 		assertTrue(dominated.isEmpty()); // there are 3 paths at this level
-		
+
 		dominated = findPostDominance(v6);
 		assertTrue(dominated.isEmpty());  // there are 3 paths at this level
-		
+
 		dominated = findPostDominance(v7);
 		assertTrue(dominated.isEmpty());  // there are 3 paths at this level
-		
+
 		dominated = findPostDominance(v8);
 		assertContainsExactly(dominated, edge(v5, v8),
 			 							 edge(v6, v8));
-		
+
 		dominated = findPostDominance(v9);
 		assertContainsExactly(dominated, edge(v5, v8),
 			 							 edge(v6, v8),
@@ -1005,11 +1005,28 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	}
 
 	@Test
+	public void testDominanceEquality() throws CancelledException {
+		//
+		// Regression test for https://github.com/NationalSecurityAgency/ghidra/issues/2836
+		// Make sure that Object.equals() is used, not ==.
+		//
+		// Note: this tests uses multiple vertices that are equal() to expose the issue with
+		//       using '=='.   Previously it was up to clients to ensure they not duplicate nodes.
+		//       With this change duplicate nodes are acceptable as long as the client correctly
+		//       implements equals().
+		//
+		edge(vertex(1), vertex(2));
+		edge(vertex(1), vertex(3));
+
+		GraphAlgorithms.findDominanceTree(g, TaskMonitor.DUMMY);
+	}
+
+	@Test
 	public void testDepthFirstPostOrder() {
 		//   V1 -> V3 -> V6
-		//    |     |          
-		//    v     v          
-		//   V2 -> V4 -> V5 
+		//    |     |
+		//    v     v
+		//   V2 -> V4 -> V5
 
 		TestV v1 = vertex(1);
 		TestV v2 = vertex(2);
@@ -1039,9 +1056,9 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	@Test
 	public void testDepthFirstPreOrder() {
 		//   V1 -> V3 -> V6
-		//    |     |          
-		//    v     v          
-		//   V2 -> V4 -> V5 
+		//    |     |
+		//    v     v
+		//   V2 -> V4 -> V5
 
 		TestV v1 = vertex(1);
 		TestV v2 = vertex(2);
@@ -1072,7 +1089,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	@Test
 	public void testDepthFirstPreOrder_MiddleAlternatingPaths() {
 		/*
-		 
+		
 		 		v1
 		 		 |
 		 		v2
@@ -1082,8 +1099,8 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		 	   \ /
 		 	    v5
 		 	     |
-		 	    v6 
-		 	   
+		 	    v6
+		
 		 */
 
 		TestV v1 = vertex(1);
@@ -1110,7 +1127,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	@Test
 	public void testDepthFirstPostOrder_MiddleAlternatingPaths() {
 		/*
-		 
+		
 		 		v1
 		 		 |
 		 		v2
@@ -1120,8 +1137,8 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		 	   \ /
 		 	    v5
 		 	     |
-		 	    v6 
-		 	   
+		 	    v6
+		
 		 */
 
 		TestV v1 = vertex(1);
@@ -1148,9 +1165,9 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	@Test
 	public void testDepthFirstPostOrderWithCycle() {
 		//   V1 -> V3 -> V6
-		//    |     |          
-		//    v     v          
-		//   V2 -> V4 -> V5 
+		//    |     |
+		//    v     v
+		//   V2 -> V4 -> V5
 		TestV v1 = vertex(1);
 		TestV v2 = vertex(2);
 		TestV v3 = vertex(3);
@@ -1197,9 +1214,9 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 
 	@Test
 	public void testDepthFirstPostOrderWithDisjointCycle() {
-		//   V1 --> V2 
-		//    |     |          
-		//    v     |          
+		//   V1 --> V2
+		//    |     |
+		//    v     |
 		//   V3 <----
 		//    |
 		//    v
@@ -1245,7 +1262,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	public void testJohnsonsCircuitsNotCompletelyConnected() throws CancelledException {
 		//
 		//
-		//         <---------- 
+		//         <----------
 		//         |          |
 		//   1 --> 2 --> 3 --> 4
 		//         |      |
@@ -1305,7 +1322,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	public void testFindPaths() throws CancelledException {
 		//
 		//
-		//         <---------- 
+		//         <----------
 		//         |          |
 		//   1 --> 2 --> 3 --> 4
 		//         |      |
@@ -1434,7 +1451,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	public void testFindPaths_MultiPaths() throws CancelledException {
 
 		/*
-		 		v1		 		
+		 		v1
 		 	   /  \
 		 	 v2    v3
 			  |   / | \
@@ -1444,12 +1461,12 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			  |     |  | \
 			  |     |  v8 v9
 			  |     |   * |
-			   \    |    /    
+			   \    |    /
 			     \  |  /
 			       \|/
-			        v10	
-			        
-			        
+			        v10
+		
+		
 			 Paths:
 			 	v1, v2, v10
 			 	v1, v3, v5, v10
@@ -1502,7 +1519,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	public void testFindPathsNew_MultiPaths_BackFlows() throws CancelledException {
 
 		/*
-		   --> v1		 		
+		   --> v1
 		   |  /  \
 		   -v2    v3
 			    /  | \
@@ -1511,11 +1528,11 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			       |  v7    |
 			       |  | \   |
 			       |  v8 v9 -
-			       |   * 
+			       |   *
 			       |
-			      v10	
-			    
-			    
+			      v10
+		
+		
 			Paths: v1, v3, v5, v10
 		*/
 
@@ -1561,7 +1578,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	public void testFindPathsNew_MultiPaths_LongDeadEnd() throws CancelledException {
 
 		/*
-			   v1		 		
+			   v1
 			  /  \
 			v2    v3
 			|   /  | \
@@ -1571,12 +1588,12 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			|   |  |  | \
 			|  v12 |  v8 v9
 			|   *  |   * |
-			 \     |    /    
+			 \     |    /
 			   \   |  /
 			     \ |/
-			      v10	
-			    
-			    
+			      v10
+		
+		
 			Paths:
 			v1, v2, v10
 			v1, v3, v5, v10
@@ -1632,7 +1649,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	public void testFindPathsNew_MultiPaths() throws CancelledException {
 
 		/*
-		 		v1		 		
+		 		v1
 		 	   /  \
 		 	 v2    v3
 			  |   / | \
@@ -1642,12 +1659,12 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			  |     |  | \
 			  |     |  v8 v9
 			  |     |   * |
-			   \    |    /    
+			   \    |    /
 			     \  |  /
 			       \|/
-			        v10	
-			        
-			        
+			        v10
+		
+		
 			 Paths:
 			 	v1, v2, v10
 			 	v1, v3, v5, v10
@@ -1728,7 +1745,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	@Test
 	public void testGetEdgesFrom_StartToBottom() {
 		//   v1 -> v2 -> v3
-		//          |	
+		//          |
 		//         v4 -> v5 -> v6
 
 		TestV v1 = vertex(1);
@@ -1744,7 +1761,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		edge(v5, v6);
 
 		//@formatter:off
-		Set<TestE> edges = GraphAlgorithms.getEdgesFrom(g, v1, true);		
+		Set<TestE> edges = GraphAlgorithms.getEdgesFrom(g, v1, true);
 		assertContainsExactly(edges, edge(v1, v2),
 									 edge(v2, v3),
 									 edge(v2, v4),
@@ -1759,7 +1776,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	@Test
 	public void testGetEdgesFrom_BottomToTop() {
 		//   v1 -> v2 -> v3
-		//          |	
+		//          |
 		//         v4 -> v5 -> v6
 
 		TestV v1 = vertex(1);
@@ -1775,7 +1792,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		edge(v5, v6);
 
 		//@formatter:off
-		Set<TestE> edges = GraphAlgorithms.getEdgesFrom(g, v6, false);		
+		Set<TestE> edges = GraphAlgorithms.getEdgesFrom(g, v6, false);
 		assertContainsExactly(edges, edge(v5, v6),
 									 edge(v4, v5),
 									 edge(v2, v4),
@@ -1789,7 +1806,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	@Test
 	public void testGetEdgesFrom_MiddleOut_Upwards() {
 		//   v1 -> v2 -> v3
-		//          |	
+		//          |
 		//         v4 -> v5 -> v6
 
 		TestV v1 = vertex(1);
@@ -1805,16 +1822,16 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		edge(v5, v6);
 
 		//@formatter:off
-		Set<TestE> edges = GraphAlgorithms.getEdgesFrom(g, v5, false);		
+		Set<TestE> edges = GraphAlgorithms.getEdgesFrom(g, v5, false);
 		assertContainsExactly(edges, edge(v4, v5),
 									 edge(v2, v4),
 									 edge(v1, v2));
-		
-		edges = GraphAlgorithms.getEdgesFrom(g, v4, false);		
+
+		edges = GraphAlgorithms.getEdgesFrom(g, v4, false);
 		assertContainsExactly(edges, edge(v2, v4),
 									 edge(v1, v2));
-		
-		edges = GraphAlgorithms.getEdgesFrom(g, v3, false);		
+
+		edges = GraphAlgorithms.getEdgesFrom(g, v3, false);
 		assertContainsExactly(edges, edge(v2, v3),
 									 edge(v1, v2));
 		//@formatter:on
@@ -1826,7 +1843,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	@Test
 	public void testGetEdgesFrom_MiddleOut_Downwards() {
 		//   v1 -> v2 -> v3
-		//          |	
+		//          |
 		//         v4 -> v5 -> v6
 
 		TestV v1 = vertex(1);
@@ -1842,17 +1859,17 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		edge(v5, v6);
 
 		//@formatter:off
-		Set<TestE> edges = GraphAlgorithms.getEdgesFrom(g, v2, true);		
+		Set<TestE> edges = GraphAlgorithms.getEdgesFrom(g, v2, true);
 		assertContainsExactly(edges, edge(v2, v4),
 									 edge(v2, v3),
 									 edge(v4, v5),
 									 edge(v5, v6));
-		
-		edges = GraphAlgorithms.getEdgesFrom(g, v4, true);		
+
+		edges = GraphAlgorithms.getEdgesFrom(g, v4, true);
 		assertContainsExactly(edges, edge(v4, v5),
 									 edge(v5, v6));
-		
-		edges = GraphAlgorithms.getEdgesFrom(g, v5, true);		
+
+		edges = GraphAlgorithms.getEdgesFrom(g, v5, true);
 		assertContainsExactly(edges, edge(v5, v6));
 		//@formatter:on
 
@@ -1863,21 +1880,21 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	@Test
 	public void testGetEntryPoints() {
 		/*
-		 	 One large graph; each box represents a strong component; v8/v9 
-		 	 have no entry point, as that component has an incoming edge		
-		 
+		 	 One large graph; each box represents a strong component; v8/v9
+		 	 have no entry point, as that component has an incoming edge
+		
 		 		v1 -> v2 -> v3
-		 		
+		
 		 		 __
 		 		|v4|
 		 	    ----
 		 		 __________      _________
-		 		|v5 -> v6 -|--> |v8 <-> v9| 
+		 		|v5 -> v6 -|--> |v8 <-> v9|
 		 		|^      |  |    -----------
 		 		| \     |  |
 		 		|   v7 <-  |
 		 		------------
-		 
+		
 		 */
 
 		TestV v1 = vertex(1);
@@ -1918,8 +1935,8 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 
 		//   V1 <- V4
 		//    |     ^
-		//    v     |       
-		//   V2 -> V3 -> V5 <--> V6 
+		//    v     |
+		//   V2 -> V3 -> V5 <--> V6
 		//
 		//   V7
 

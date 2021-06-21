@@ -676,8 +676,11 @@ define pcodeop coproc_moveto_Cache_Type;
 define pcodeop coproc_moveto_TCM_Status;
 define pcodeop coproc_moveto_TLB_Type;
 define pcodeop coproc_moveto_Control;
-define pcodeop coproc_moveto_Auxilary_Control;
+define pcodeop coproc_moveto_Auxiliary_Control;
 define pcodeop coproc_moveto_Coprocessor_Access_Control;
+define pcodeop coproc_moveto_Secure_Configuration;
+define pcodeop coproc_moveto_Secure_Debug_Enable;
+define pcodeop coproc_moveto_NonSecure_Access_Control;
 define pcodeop coproc_moveto_Translation_table_base_0;
 define pcodeop coproc_moveto_Translation_table_base_1;
 define pcodeop coproc_moveto_Translation_table_control;
@@ -726,8 +729,11 @@ define pcodeop coproc_movefrom_Cache_Type;
 define pcodeop coproc_movefrom_TCM_Status;
 define pcodeop coproc_movefrom_TLB_Type;
 define pcodeop coproc_movefrom_Control;
-define pcodeop coproc_movefrom_Auxilary_Control;
+define pcodeop coproc_movefrom_Auxiliary_Control;
 define pcodeop coproc_movefrom_Coprocessor_Access_Control;
+define pcodeop coproc_movefrom_Secure_Configuration;
+define pcodeop coproc_movefrom_Secure_Debug_Enable;
+define pcodeop coproc_movefrom_NonSecure_Access_Control;
 define pcodeop coproc_movefrom_Translation_table_base_0;
 define pcodeop coproc_movefrom_Translation_table_base_1;
 define pcodeop coproc_movefrom_Translation_table_control;
@@ -2941,20 +2947,47 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=1 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND &
         mcrOperands
 {
   build COND;
-  coproc_moveto_Auxilary_Control(Rd);
+  coproc_moveto_Auxiliary_Control(Rd);
 }
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=2 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND &
         mcrOperands
 {
   build COND;
   coproc_moveto_Coprocessor_Access_Control(Rd);
+}
+
+
+:mcr^COND mcrOperands  is 
+    $(AMODE) &  CRm=1 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND &
+        mcrOperands
+{
+  build COND;
+  coproc_moveto_Secure_Configuration(Rd);
+}
+
+
+:mcr^COND mcrOperands  is 
+    $(AMODE) &  CRm=1 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND &
+        mcrOperands
+{
+  build COND;
+  coproc_moveto_Secure_Debug_Enable(Rd);
+}
+
+
+:mcr^COND mcrOperands  is 
+    $(AMODE) &  CRm=1 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND &
+        mcrOperands
+{
+  build COND;
+  coproc_moveto_NonSecure_Access_Control(Rd);
 }
 
 
@@ -3590,21 +3623,51 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=1 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND &
         mcrOperands
 {
   build COND;
-  Rd = coproc_movefrom_Auxilary_Control();
+  Rd = coproc_movefrom_Auxiliary_Control();
 }
 
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=2 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND &
         mcrOperands
 {
   build COND;
   Rd = coproc_movefrom_Coprocessor_Access_Control();
+}
+
+
+
+:mrc^COND mcrOperands  is 
+    $(AMODE) &  CRm=1 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND &
+        mcrOperands
+{
+  build COND;
+  Rd = coproc_movefrom_Secure_Configuration();
+}
+
+
+
+:mrc^COND mcrOperands  is 
+    $(AMODE) &  CRm=1 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND &
+        mcrOperands
+{
+  build COND;
+  Rd = coproc_movefrom_Secure_Debug_Enable();
+}
+
+
+
+:mrc^COND mcrOperands  is 
+    $(AMODE) &  CRm=1 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND &
+        mcrOperands
+{
+  build COND;
+  Rd = coproc_movefrom_NonSecure_Access_Control();
 }
 
 

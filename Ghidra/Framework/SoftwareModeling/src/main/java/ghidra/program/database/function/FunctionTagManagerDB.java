@@ -18,6 +18,8 @@ package ghidra.program.database.function;
 import java.io.IOException;
 import java.util.*;
 
+import org.apache.commons.collections4.map.LazyMap;
+
 import db.*;
 import db.util.ErrorHandler;
 import ghidra.program.database.DBObjectCache;
@@ -25,6 +27,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ChangeManager;
 import ghidra.util.Lock;
+import ghidra.util.datastruct.Counter;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -41,6 +44,8 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 
 	private DBObjectCache<FunctionTagDB> cache;
 
+	private Map<FunctionTag, Counter> tagCountCache;
+
 	protected final Lock lock;
 
 	/**
@@ -53,7 +58,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	 * @throws VersionException if the database is incompatible with the current
 	 * schema
 	 * @throws IOException if there is a problem accessing the database.
-	 * @throws CancelledException
+	 * @throws CancelledException if the program loading is cancelled
 	 */
 	FunctionTagManagerDB(DBHandle handle, int openMode, Lock lock, TaskMonitor monitor)
 			throws VersionException, IOException, CancelledException {
@@ -62,10 +67,9 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		functionTagAdapter = FunctionTagAdapter.getAdapter(handle, openMode, monitor);
 		functionTagMappingAdapter = FunctionTagMappingAdapter.getAdapter(handle, openMode, monitor);
 
-		cache = new DBObjectCache<FunctionTagDB>(100);
+		cache = new DBObjectCache<>(100);
 	}
 
-	@Override
 	public void setProgram(Program program) {
 		this.program = (ProgramDB) program;
 	}
@@ -80,7 +84,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		lock.acquire();
 
 		try {
-			Record rec = functionTagAdapter.getRecord(name);
+			DBRecord rec = functionTagAdapter.getRecord(name);
 			if (rec != null) {
 				return getFunctionTagFromCache(rec);
 			}
@@ -106,7 +110,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 				return tag;
 			}
 
-			Record rec = functionTagAdapter.getRecord(id);
+			DBRecord rec = functionTagAdapter.getRecord(id);
 			if (rec != null) {
 				return new FunctionTagDB(this, cache, rec);
 			}
@@ -156,7 +160,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 				return tag;
 			}
 
-			Record record = functionTagAdapter.createTagRecord(name, comment);
+			DBRecord record = functionTagAdapter.createTagRecord(name, comment);
 			tag = getFunctionTagFromCache(record);
 			fireTagCreatedNotification(ChangeManager.DOCR_FUNCTION_TAG_CREATED, tag);
 
@@ -172,21 +176,89 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		return null;
 	}
 
-	void updateFunctionTag(FunctionTagDB tag) throws IOException {
+	boolean isTagApplied(long functionId, long tagId) {
+
+		lock.acquire();
+
+		try {
+			return functionTagMappingAdapter.getRecord(functionId, tagId) != null;
+		}
+		catch (IOException e) {
+			dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+		return false;
+	}
+
+	void applyFunctionTag(long functionId, long tagId) {
+		lock.acquire();
+
+		try {
+			FunctionTag tag = getFunctionTag(tagId);
+			if (tag == null) {
+				return; // shouldn't happen
+			}
+
+			functionTagMappingAdapter.createFunctionTagRecord(functionId, tagId);
+			incrementCountCache(tag);
+		}
+		catch (IOException e) {
+			dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	private void incrementCountCache(FunctionTag tag) {
+		if (tagCountCache != null) {
+			tagCountCache.get(tag).count++;
+		}
+	}
+
+	private void decrementCountCache(FunctionTag tag) {
+		if (tagCountCache != null) {
+			tagCountCache.get(tag).count--;
+		}
+	}
+
+	boolean removeFunctionTag(long functionId, long tagId) {
+
+		lock.acquire();
+
+		try {
+			FunctionTag tag = getFunctionTag(tagId);
+			if (tag == null) {
+				return false; // shouldn't happen
+			}
+
+			if (functionTagMappingAdapter.removeFunctionTagRecord(functionId, tagId)) {
+				decrementCountCache(tag);
+				return true;
+			}
+		}
+		catch (IOException e) {
+			dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+		return false;
+	}
+
+	void updateFunctionTag(FunctionTagDB tag, String oldValue, String newValue) throws IOException {
 
 		// Update the tag attributes.
 		functionTagAdapter.updateRecord(tag.getRecord());
 
 		// Notify subscribers of the change.
-		fireTagChangedNotification(ChangeManager.DOCR_FUNCTION_TAG_CHANGED, tag);
+		fireTagChangedNotification(ChangeManager.DOCR_FUNCTION_TAG_CHANGED, tag, oldValue,
+			newValue);
 		invalidateFunctions();
 	}
 
-	/* (non-Javadoc)
-	 * TODO: Be a bit smarter about this - if the cache contains all the tags in
-	 *  	 the db we can just return the cache itself. If not, then go to the
-	 *  	 db to get the remainder.
-	 */
 	@Override
 	public List<? extends FunctionTag> getAllFunctionTags() {
 
@@ -196,7 +268,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 			List<FunctionTag> tags = new ArrayList<>();
 			RecordIterator records = functionTagAdapter.getRecords();
 			while (records.hasNext()) {
-				Record record = records.next();
+				DBRecord record = records.next();
 				tags.add(getFunctionTagFromCache(record));
 			}
 
@@ -211,27 +283,25 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		return Collections.emptyList();
 	}
 
-	public FunctionTagAdapter getFunctionTagAdapter() {
-		return functionTagAdapter;
+	public DBRecord getTagRecord(long id) throws IOException {
+		return functionTagAdapter.getRecord(id);
 	}
 
-	public FunctionTagMappingAdapter getFunctionTagMappingAdapter() {
-		return functionTagMappingAdapter;
-	}
-
-	/*****************************************************************************
-	 * PRIVATE METHODS
-	 *****************************************************************************/
+//==================================================================================================
+// Private Methods
+//==================================================================================================
 
 	/**
 	 * Sends a notification when a tag has been changed (edited or deleted).
 	 *
 	 * @param type {@link ChangeManager} change type
 	 * @param tag the tag that was changed
-	 * @throws IOException
+	 * @param oldValue the old value
+	 * @param newValue the new value
 	 */
-	private void fireTagChangedNotification(int type, FunctionTag tag) throws IOException {
-		program.tagChanged(tag, type, null, null);
+	private void fireTagChangedNotification(int type, FunctionTag tag, String oldValue,
+			String newValue) {
+		program.tagChanged(tag, type, oldValue, newValue);
 	}
 
 	/**
@@ -239,9 +309,8 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	 *
 	 * @param type {@link ChangeManager} change type
 	 * @param tag the tag that was created
-	 * @throws IOException
 	 */
-	private void fireTagCreatedNotification(int type, FunctionTag tag) throws IOException {
+	private void fireTagCreatedNotification(int type, FunctionTag tag) {
 		program.tagCreated(tag, type);
 	}
 
@@ -250,10 +319,9 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	 *
 	 * @param type the type of change
 	 * @param tag the tag that was deleted
-	 * @throws IOException
 	 */
-	private void fireTagDeletedNotification(int type, FunctionTag tag) throws IOException {
-		program.tagChanged(tag, type, null, null);
+	private void fireTagDeletedNotification(int type, FunctionTag tag) {
+		program.tagChanged(tag, type, tag, null);
 	}
 
 	/**
@@ -263,7 +331,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	 * @param tagRecord the tag record to retrieve
 	 * @return tag new cached tag object
 	 */
-	private FunctionTag getFunctionTagFromCache(Record tagRecord) {
+	private FunctionTag getFunctionTagFromCache(DBRecord tagRecord) {
 		FunctionTagDB tag = cache.get(tagRecord);
 		if (tag == null) {
 			tag = new FunctionTagDB(this, cache, tagRecord);
@@ -275,6 +343,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	 * Deletes the given function tag.
 	 *
 	 * @param tag the tag to delete
+	 * @throws IOException if there is an issue reading from the db
 	 */
 	void doDeleteTag(FunctionTag tag) throws IOException {
 
@@ -304,20 +373,56 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	 * Returns all function tags associated with the given function id.
 	 *
 	 * @param functionId the function id
-	 * @return
-	 * @throws IOException
+	 * @return the tags
+	 * @throws IOException if there is an issue reading from the db
 	 */
 	Set<FunctionTag> getFunctionTagsByFunctionID(long functionId) throws IOException {
 		Set<FunctionTag> tags = new HashSet<>();
-		RecordIterator functionTagMappingRecords =
+		RecordIterator functionRecords =
 			functionTagMappingAdapter.getRecordsByFunctionID(functionId);
 
-		while (functionTagMappingRecords.hasNext()) {
-			Record mappingRecord = functionTagMappingRecords.next();
-			Record tagRecord = functionTagAdapter.getRecord(
+		while (functionRecords.hasNext()) {
+			DBRecord mappingRecord = functionRecords.next();
+			DBRecord tagRecord = functionTagAdapter.getRecord(
 				mappingRecord.getLongValue(FunctionTagMappingAdapter.TAG_ID_COL));
 			tags.add(getFunctionTagFromCache(tagRecord));
 		}
 		return tags;
+	}
+
+	void invalidateCache() {
+		cache.invalidate();
+		tagCountCache = null;
+	}
+
+	@Override
+	public int getUseCount(FunctionTag tag) {
+		lock.acquire();
+		try {
+			if (tagCountCache == null) {
+				buildTagCountCache();
+			}
+			Counter counter = tagCountCache.get(tag);
+			return counter.count;
+		}
+		catch (IOException e) {
+			dbError(e);
+			return 0;
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	private void buildTagCountCache() throws IOException {
+		Map<FunctionTag, Counter> map = LazyMap.lazyMap(new HashMap<>(), () -> new Counter());
+		RecordIterator records = functionTagMappingAdapter.getRecords();
+		while (records.hasNext()) {
+			DBRecord mappingRecord = records.next();
+			long tagId = mappingRecord.getLongValue(FunctionTagMappingAdapter.TAG_ID_COL);
+			FunctionTag tag = getFunctionTag(tagId);
+			map.get(tag).count++;
+		}
+		tagCountCache = map;
 	}
 }

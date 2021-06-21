@@ -17,7 +17,7 @@ package ghidra.feature.fid.db;
 
 import static ghidra.feature.fid.db.FunctionsTable.*;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.feature.fid.hash.FidHashQuad;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
@@ -36,7 +36,7 @@ public class FunctionRecord extends DatabaseObject implements FidHashQuad {
 	/**
 	 * All values are stored in the record instead of memoized.
 	 */
-	final Record record;
+	final DBRecord record;
 	/**
 	 * Need a reference to the FidDb because all strings are stored
 	 * via foreign key (considerable duplication of string values).
@@ -49,7 +49,7 @@ public class FunctionRecord extends DatabaseObject implements FidHashQuad {
 	 * @param cache FunctionRecord object cache
 	 * @param record record for this function
 	 */
-	FunctionRecord(FidDB fid, DBObjectCache<FunctionRecord> cache, Record record) {
+	FunctionRecord(FidDB fid, DBObjectCache<FunctionRecord> cache, DBRecord record) {
 		super(cache, record.getKey());
 		this.record = record;
 		this.fidDb = fid;

@@ -50,6 +50,7 @@ public abstract class AbstractNextPreviousAction extends NavigatableContextActio
 		setKeyBindingData(new KeyBindingData(getKeyStroke()));
 		setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, name));
 		setDescription(getDescriptionString());
+		addToWindowWhen(NavigatableActionContext.class);
 	}
 
 	protected abstract Icon getIcon();

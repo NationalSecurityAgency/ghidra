@@ -26,9 +26,10 @@ import ghidra.app.util.bin.format.dwarf4.next.DWARFDataTypeImporter.DWARFDataTyp
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import utility.function.Dummy;
 
 /**
  * Manages mappings between DWARF DIEs and Ghidra DataTypes.
@@ -117,9 +118,7 @@ public class DWARFDataTypeManager {
 		// Wait for the swing thread to clear its event queue because we are running into
 		// issues with the number of events overwhelming the swing thread.
 		// This does slow us down a little bit but this makes the GUI responsive to the user.
-		SystemUtilities.runSwingNow(() -> {
-			/* nada */
-		});
+		Swing.runNow(Dummy.runnable());
 
 		DWARFDataTypeImporter ddtImporter =
 			new DWARFDataTypeImporter(prog, this, prog.getImportOptions());
@@ -651,6 +650,8 @@ public class DWARFDataTypeManager {
 						// parent's source info (handles auto-generated ctors and such)
 						addDataType(diea.getOffset(), funcDefDT,
 							DWARFSourceInfo.getSourceInfoWithFallbackToParent(diea));
+
+						Swing.runNow(Dummy.runnable());
 					}
 				}
 			}

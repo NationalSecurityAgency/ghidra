@@ -34,14 +34,14 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 	public static final int V0_FUNCTION_ID_COL = 0;
 	public static final int V0_TAG_ID_COL = 1;
 
-	final static Schema SCHEMA = new Schema(CURRENT_VERSION, "ID",
-		new Class[] { LongField.class, LongField.class }, new String[] { "Function ID", "Tag ID" });
+	final static Schema SCHEMA =
+		new Schema(CURRENT_VERSION, "ID", new Field[] { LongField.INSTANCE, LongField.INSTANCE },
+			new String[] { "Function ID", "Tag ID" });
 
 	private Table table; // lazy creation, null if empty
 	private final DBHandle dbHandle;
 
-	FunctionTagMappingAdapterV0(DBHandle dbHandle, boolean create)
-			throws VersionException {
+	FunctionTagMappingAdapterV0(DBHandle dbHandle, boolean create) throws VersionException {
 
 		this.dbHandle = dbHandle;
 
@@ -71,8 +71,8 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 	 ******************************************************************************/
 
 	@Override
-	Record getRecord(long functionID, long tagID) throws IOException {
-		
+	DBRecord getRecord(long functionID, long tagID) throws IOException {
+
 		if (table == null) {
 			return null;
 		}
@@ -82,7 +82,7 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 		RecordIterator iter = table.indexIterator(V0_FUNCTION_ID_COL, value, value, true);
 
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			if ((rec.getLongValue(V0_FUNCTION_ID_COL) == functionID) &&
 				(rec.getLongValue(V0_TAG_ID_COL) == tagID)) {
 				return rec;
@@ -93,11 +93,10 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 	}
 
 	@Override
-	Record createFunctionTagRecord(long functionID, long tagID)
-			throws IOException {
+	DBRecord createFunctionTagRecord(long functionID, long tagID) throws IOException {
 
 		Table t = getTable();
-		Record rec = SCHEMA.createRecord(t.getKey());
+		DBRecord rec = SCHEMA.createRecord(t.getKey());
 		rec.setLongValue(V0_FUNCTION_ID_COL, functionID);
 		rec.setLongValue(V0_TAG_ID_COL, tagID);
 		t.putRecord(rec);
@@ -106,10 +105,9 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 	}
 
 	@Override
-	boolean removeFunctionTagRecord(long functionID, long tagID)
-			throws IOException {
+	boolean removeFunctionTagRecord(long functionID, long tagID) throws IOException {
 
-		Record record = getRecord(functionID, tagID);
+		DBRecord record = getRecord(functionID, tagID);
 		if (record != null) {
 			return table.deleteRecord(record.getKey());
 		}
@@ -123,13 +121,13 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 		if (table == null) {
 			return;
 		}
-		
+
 		// Tag ID is not an indexed column in the mapping table, so we just have to iterate
 		// over all records. This operation is only done when deleting a tag (ie: not often)
 		// so it won't be indexed.
 		RecordIterator iter = table.iterator();
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			Long tID = rec.getLongValue(V0_TAG_ID_COL);
 			if (tID == tagID) {
 				iter.delete();
@@ -148,20 +146,28 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 	}
 
 	@Override
+	protected RecordIterator getRecords() throws IOException {
+		if (table == null) {
+			return new EmptyRecordIterator();
+		}
+		return table.iterator();
+	}
+
+	@Override
 	boolean isTagAssigned(long tagID) throws IOException {
 		if (table == null) {
 			return false;
 		}
 		RecordIterator iter = table.iterator();
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			if ((rec.getLongValue(V0_TAG_ID_COL) == tagID)) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
+
 	private Table getTable() throws IOException {
 		if (table == null) {
 			table = dbHandle.createTable(TABLE_NAME, SCHEMA, new int[] { V0_FUNCTION_ID_COL });
@@ -186,5 +192,5 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 	public void tableAdded(DBHandle dbh, Table table) {
 		// do nothing
 	}
-	
+
 }

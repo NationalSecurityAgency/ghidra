@@ -27,7 +27,7 @@
 vector<ArchitectureCapability *> ArchitectureCapability::thelist;
 
 const uint4 ArchitectureCapability::majorversion = 4;
-const uint4 ArchitectureCapability::minorversion = 0;
+const uint4 ArchitectureCapability::minorversion = 1;
 
 /// This builds a list of just the ArchitectureCapability extensions
 void ArchitectureCapability::initialize(void)
@@ -60,6 +60,20 @@ ArchitectureCapability *ArchitectureCapability::findCapability(Document *doc)
     ArchitectureCapability *capa = thelist[i];
     if (capa->isXmlMatch(doc))
       return capa;
+  }
+  return (ArchitectureCapability *)0;
+}
+
+/// Return the ArchitectureCapability object with the matching name
+/// \param name is the name to match
+/// \return the ArchitectureCapability or null if no match is found
+ArchitectureCapability *ArchitectureCapability::getCapability(const string &name)
+
+{
+  for(int4 i=0;i<thelist.size();++i) {
+    ArchitectureCapability *res = thelist[i];
+    if (res->getName() == name)
+      return res;
   }
   return (ArchitectureCapability *)0;
 }
@@ -1066,7 +1080,7 @@ void Architecture::parsePreferSplit(const Element *el)
   List::const_iterator iter;
 
   for(iter=list.begin();iter!=list.end();++iter) {
-    splitrecords.push_back(PreferSplitRecord());
+    splitrecords.emplace_back();
     PreferSplitRecord &record( splitrecords.back() );
     record.storage.restoreXml( *iter, this );
     record.splitoffset = record.storage.size/2;
@@ -1204,6 +1218,26 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
     else if (elname == "inferptrbounds")
       parseInferPtrBounds(*iter);
   }
+
+  el = store.getTag("specextensions");		// Look for any user-defined configuration document
+  if (el != (const Element *)0) {
+    const List &userlist(el->getChildren());
+    for(iter=userlist.begin();iter!=userlist.end();++iter) {
+      const string &elname( (*iter)->getName() );
+      if (elname == "prototype")
+        parseProto(*iter);
+     else if (elname == "callfixup") {
+        pcodeinjectlib->restoreXmlInject(archid+" : compiler spec", (*iter)->getAttributeValue("name"),
+					 InjectPayload::CALLFIXUP_TYPE, *iter);
+      }
+      else if (elname == "callotherfixup") {
+        userops.parseCallOtherFixup(*iter,this);
+      }
+      else if (elname == "global")
+        globaltags.push_back(*iter);
+    }
+  }
+
   // <global> tags instantiate the base symbol table
   // They need to know about all spaces, so it must come
   // after parsing of <stackpointer> and <spacebase>
@@ -1301,6 +1335,7 @@ void Architecture::resetDefaultsInternal(void)
   flowoptions = FlowInfo::error_toomanyinstructions;
   max_instructions = 100000;
   infer_pointers = true;
+  analyze_for_loops = true;
   readonlypropagate = false;
   alias_block_level = 2;	// Block structs and arrays by default
 }

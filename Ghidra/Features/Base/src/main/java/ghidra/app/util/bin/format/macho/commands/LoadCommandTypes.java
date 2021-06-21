@@ -113,7 +113,8 @@ public final class LoadCommandTypes {
 			case LC_CODE_SIGNATURE:
 			case LC_SEGMENT_SPLIT_INFO:
 			case LC_FUNCTION_STARTS: 
-			case LC_DATA_IN_CODE: 
+			case LC_DATA_IN_CODE:
+			case LC_OPTIMIZATION_HINT:
 			case LC_DYLIB_CODE_SIGN_DRS: {
 				return LinkEditDataCommand.createLinkEditDataCommand(reader);
 			}
@@ -144,6 +145,9 @@ public final class LoadCommandTypes {
 			}
 			case LC_BUILD_VERSION: {
 				return BuildVersionCommand.createBuildVersionCommand(reader);
+			}
+			case LC_LINKER_OPTIONS: {
+				return LinkerOptionCommand.createLinkerOptionCommand(reader);
 			}
 			default: {
 				return UnsupportedLoadCommand.createUnsupportedLoadCommand(reader, type);

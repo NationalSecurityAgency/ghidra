@@ -42,6 +42,7 @@ public class GhidraIconCache {
 	private final Map<AttributedVertex, Icon> map = new ConcurrentHashMap<>();
 
 	private final IconShape.Function iconShapeFunction = new IconShape.Function();
+	private String preferredVeretxLabelAttribute = null;
 
 	Icon get(AttributedVertex vertex) {
 
@@ -62,7 +63,8 @@ public class GhidraIconCache {
 	}
 
 	private Icon createIcon(AttributedVertex vertex) {
-		rendererLabel.setText(ProgramGraphFunctions.getLabel(vertex));
+		rendererLabel
+				.setText(ProgramGraphFunctions.getLabel(vertex, preferredVeretxLabelAttribute));
 		rendererLabel.setFont(new Font(DEFAULT_FONT_NAME, Font.BOLD, DEFAULT_FONT_SIZE));
 		rendererLabel.setForeground(Color.black);
 		rendererLabel.setBackground(Color.white);
@@ -100,17 +102,21 @@ public class GhidraIconCache {
 			// triangles have a non-zero +/- yoffset instead of centering the label
 			case TRIANGLE:
 				// scale the vertex shape
-				scalex = labelSize.getWidth() / vertexShape.getBounds().getWidth() * LABEL_TO_ICON_PROPORTION;
-				scaley = labelSize.getHeight() / vertexShape.getBounds().getHeight() * LABEL_TO_ICON_PROPORTION;
+				scalex = labelSize.getWidth() / vertexShape.getBounds().getWidth() *
+					LABEL_TO_ICON_PROPORTION;
+				scaley = labelSize.getHeight() / vertexShape.getBounds().getHeight() *
+					LABEL_TO_ICON_PROPORTION;
 				vertexShape = AffineTransform.getScaleInstance(scalex, scaley)
-					.createTransformedShape(vertexShape);
+						.createTransformedShape(vertexShape);
 				offset = -(int) ((vertexShape.getBounds().getHeight() - labelSize.getHeight()) / 2);
 				break;
 			case INVERTED_TRIANGLE:
-				scalex = labelSize.getWidth() / vertexShape.getBounds().getWidth() * LABEL_TO_ICON_PROPORTION;
-				scaley = labelSize.getHeight() / vertexShape.getBounds().getHeight() * LABEL_TO_ICON_PROPORTION;
+				scalex = labelSize.getWidth() / vertexShape.getBounds().getWidth() *
+					LABEL_TO_ICON_PROPORTION;
+				scaley = labelSize.getHeight() / vertexShape.getBounds().getHeight() *
+					LABEL_TO_ICON_PROPORTION;
 				vertexShape = AffineTransform.getScaleInstance(scalex, scaley)
-					.createTransformedShape(vertexShape);
+						.createTransformedShape(vertexShape);
 				offset = (int) ((vertexShape.getBounds().getHeight() - labelSize.getHeight()) / 2);
 				break;
 
@@ -119,17 +125,17 @@ public class GhidraIconCache {
 				scalex = labelSize.getWidth() / vertexShape.getBounds().getWidth();
 				scaley = labelSize.getHeight() / vertexShape.getBounds().getHeight();
 				vertexShape = AffineTransform.getScaleInstance(scalex, scaley)
-					.createTransformedShape(vertexShape);
+						.createTransformedShape(vertexShape);
 				break;
 
-		    // diamonds and ellipses reduce the label size to fit
+			// diamonds and ellipses reduce the label size to fit
 			case DIAMOND:
 			default: // ELLIPSE
 				scalex =
 					labelSize.getWidth() / vertexShape.getBounds().getWidth() * 1.1;
 				scaley = labelSize.getHeight() / vertexShape.getBounds().getHeight() * 1.1;
 				vertexShape = AffineTransform.getScaleInstance(scalex, scaley)
-					.createTransformedShape(vertexShape);
+						.createTransformedShape(vertexShape);
 				break;
 		}
 		Rectangle vertexBounds = vertexShape.getBounds();
@@ -163,13 +169,13 @@ public class GhidraIconCache {
 		label.paint(graphics);
 		// draw the shape again, but lighter (on top of the label)
 		offsetTransform =
-				AffineTransform.getTranslateInstance(strokeThickness + vertexBounds.width / 2.0,
-						strokeThickness + vertexBounds.height / 2.0);
+			AffineTransform.getTranslateInstance(strokeThickness + vertexBounds.width / 2.0,
+				strokeThickness + vertexBounds.height / 2.0);
 		offsetTransform.preConcatenate(graphicsTransform);
 		graphics.setTransform(offsetTransform);
 		Paint paint = Colors.getColor(vertex);
 		if (paint instanceof Color) {
-			Color color = (Color)paint;
+			Color color = (Color) paint;
 			Color transparent = new Color(color.getRed(), color.getGreen(), color.getBlue(), 50);
 			graphics.setPaint(transparent);
 			graphics.setStroke(new BasicStroke(strokeThickness));
@@ -192,5 +198,13 @@ public class GhidraIconCache {
 	 */
 	public void evict(AttributedVertex vertex) {
 		map.remove(vertex);
+	}
+
+	/**
+	 * Sets the vertex label to the value of the passed attribute name
+	 * @param attributeName the attribute key for the vertex label value to be displayed
+	 */
+	public void setPreferredVertexLabelAttribute(String attributeName) {
+		this.preferredVeretxLabelAttribute = attributeName;
 	}
 }

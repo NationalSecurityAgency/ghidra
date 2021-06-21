@@ -174,6 +174,7 @@ public class OptionDialog extends DialogComponentProvider {
 	protected OptionDialog(String title, String message, String option1, String option2,
 			int messageType, Icon icon, boolean addCancel) {
 		super(title, true, false, true, false);
+		setTransient(true);
 		buildMainPanel(message, messageType, icon, null);
 		buildButtons(toList(option1, option2), addCancel, null);
 	}
@@ -194,6 +195,7 @@ public class OptionDialog extends DialogComponentProvider {
 	protected OptionDialog(String title, String message, String option1, String option2,
 			int messageType, Icon icon, boolean addCancel, String defaultButtonName) {
 		super(title, true, false, true, false);
+		setTransient(true);
 		buildMainPanel(message, messageType, icon, null);
 		buildButtons(toList(option1, option2), addCancel, defaultButtonName);
 	}
@@ -233,6 +235,7 @@ public class OptionDialog extends DialogComponentProvider {
 	protected OptionDialog(String title, String message, String option1, String option2,
 			String option3, int messageType, Icon icon, boolean addCancel) {
 		super(title, true, false, true, false);
+		setTransient(true);
 		buildMainPanel(message, messageType, icon, null);
 		buildButtons(toList(option1, option2, option3), addCancel, null);
 	}
@@ -240,6 +243,7 @@ public class OptionDialog extends DialogComponentProvider {
 	OptionDialog(String title, String message, int messageType, Icon icon, boolean addCancelButton,
 			DialogRememberOption savedDialogChoice, List<String> options, String defaultOption) {
 		super(title, true, false, true, false);
+		setTransient(true);
 		buildMainPanel(message, messageType, icon, savedDialogChoice);
 		buildButtons(options, addCancelButton, defaultOption);
 	}
@@ -256,6 +260,7 @@ public class OptionDialog extends DialogComponentProvider {
 
 	private void buildMainPanel(String message, int messageType, Icon icon,
 			DialogRememberOption rememberOptionChoice) {
+
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 

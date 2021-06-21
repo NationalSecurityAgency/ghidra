@@ -22,8 +22,11 @@ import db.buffers.DataBuffer;
 /**
  * <code>VarKeyNode</code> is an abstract implementation of a BTree node
  * which utilizes variable-length Field key values.
+ * <pre>
+ *   | NodeType(1) | KeyType(1) | KeyCount(4) | ...
+ * </pre>
  */
-abstract class VarKeyNode implements BTreeNode {
+abstract class VarKeyNode implements FieldKeyNode {
 
 	private static final int KEY_TYPE_SIZE = 1;
 	private static final int KEY_COUNT_SIZE = 4;
@@ -62,7 +65,7 @@ abstract class VarKeyNode implements BTreeNode {
 	 * @param nodeMgr table node manager.
 	 * @param nodeType node type
 	 * @param keyType key Field type
-	 * @throws IOException thrown if IO error occurs
+	 * @throws IOException if IO error occurs
 	 */
 	VarKeyNode(NodeMgr nodeMgr, byte nodeType, Field keyType) throws IOException {
 		this.nodeMgr = nodeMgr;
@@ -73,6 +76,11 @@ abstract class VarKeyNode implements BTreeNode {
 		setKeyCount(0);
 		maxKeyLength = VarKeyInteriorNode.getMaxKeyLength(buffer.length());
 		nodeMgr.addNode(this);
+	}
+
+	@Override
+	public VarKeyInteriorNode getParent() {
+		return parent;
 	}
 
 	@Override
@@ -91,8 +99,9 @@ abstract class VarKeyNode implements BTreeNode {
 	 * @return TableNode
 	 */
 	VarKeyNode getRoot() {
-		if (parent != null)
+		if (parent != null) {
 			return parent.getRoot();
+		}
 		return this;
 	}
 
@@ -107,13 +116,26 @@ abstract class VarKeyNode implements BTreeNode {
 		buffer.putInt(KEY_COUNT_OFFSET, keyCount);
 	}
 
+	@Override
+	public int compareKeyField(Field k, int keyIndex) {
+		return k.compareTo(buffer, getKeyOffset(keyIndex));
+	}
+
+	/**
+	 * Get the key offset within the buffer
+	 * @param index key index
+	 * @return record key offset
+	 */
+	public abstract int getKeyOffset(int index);
+
 	/**
 	 * Get the key value at a specific index.
 	 * @param index key index
 	 * @return key value
 	 * @throws IOException thrown if an IO error occurs
 	 */
-	abstract Field getKey(int index) throws IOException;
+	@Override
+	public abstract Field getKeyField(int index) throws IOException;
 
 	/**
 	 * Get the leaf node which contains the specified key.
@@ -121,20 +143,23 @@ abstract class VarKeyNode implements BTreeNode {
 	 * @return leaf node
 	 * @throws IOException thrown if an IO error occurs
 	 */
-	abstract VarKeyRecordNode getLeafNode(Field key) throws IOException;
+	@Override
+	public abstract VarKeyRecordNode getLeafNode(Field key) throws IOException;
 
 	/**
 	 * Get the left-most leaf node within the tree.
 	 * @return left-most leaf node.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	abstract VarKeyRecordNode getLeftmostLeafNode() throws IOException;
+	@Override
+	public abstract VarKeyRecordNode getLeftmostLeafNode() throws IOException;
 
 	/**
 	 * Get the right-most leaf node within the tree.
 	 * @return right-most leaf node.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	abstract VarKeyRecordNode getRightmostLeafNode() throws IOException;
+	@Override
+	public abstract VarKeyRecordNode getRightmostLeafNode() throws IOException;
 
 }

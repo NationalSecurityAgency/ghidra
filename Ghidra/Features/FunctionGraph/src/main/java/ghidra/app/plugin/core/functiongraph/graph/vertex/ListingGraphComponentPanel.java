@@ -251,6 +251,19 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		title = createTitle();
 		genericHeader.setTitle(title);
 		previewListingPanel = null;
+
+		updateDefaultBackgroundColor();
+	}
+
+	private void updateDefaultBackgroundColor() {
+		FunctionGraphOptions options = controller.getFunctionGraphOptions();
+		Color newBgColor = options.getDefaultVertexBackgroundColor();
+		if (!defaultBackgroundColor.equals(newBgColor)) {
+			defaultBackgroundColor = newBgColor;
+			if (userDefinedColor == null) {
+				listingPanel.setTextBackgroundColor(defaultBackgroundColor);
+			}
+		}
 	}
 
 	@Override
@@ -392,6 +405,11 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 	}
 
 	@Override
+	String getTextSelection() {
+		return listingPanel.getTextSelection();
+	}
+
+	@Override
 	ProgramLocation getProgramLocation() {
 		return listingPanel.getProgramLocation();
 	}
@@ -522,8 +540,9 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 			tooltipTitleLabel.setText("From: " + getTitle());
 		}
 
-		previewListingPanel.getFieldPanel().setBackgroundColorModel(
-			new HighlightingColorModel(address, getColorForEdge(edge)));
+		previewListingPanel.getFieldPanel()
+				.setBackgroundColorModel(
+					new HighlightingColorModel(address, getColorForEdge(edge)));
 	}
 
 	private void initializeToolTipComponent(Address goToAddress) {

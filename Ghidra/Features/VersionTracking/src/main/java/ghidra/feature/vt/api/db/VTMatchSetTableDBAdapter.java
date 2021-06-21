@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,34 +15,33 @@
  */
 package ghidra.feature.vt.api.db;
 
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+
+import db.*;
 import ghidra.feature.vt.api.main.VTProgramCorrelator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.AddressSet;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-
-import db.*;
-
 public abstract class VTMatchSetTableDBAdapter {
 
 	public enum ColumnDescription {
-		CORRELATOR_CLASS_COL(StringField.class),
-		CORRELATOR_NAME_COL(StringField.class),
-		OPTIONS_COL(StringField.class);
+		CORRELATOR_CLASS_COL(StringField.INSTANCE),
+		CORRELATOR_NAME_COL(StringField.INSTANCE),
+		OPTIONS_COL(StringField.INSTANCE);
 
-		private final Class<? extends Field> columnClass;
+		private final Field columnField;
 
-		private ColumnDescription(Class<? extends Field> columnClass) {
-			this.columnClass = columnClass;
+		private ColumnDescription(Field columnField) {
+			this.columnField = columnField;
 
 		}
 
-		public Class<? extends Field> getColumnClass() {
-			return columnClass;
+		public Field getColumnField() {
+			return columnField;
 		}
 
 		public int column() {
@@ -59,20 +57,18 @@ public abstract class VTMatchSetTableDBAdapter {
 			return list.toArray(new String[columns.length]);
 		}
 
-		@SuppressWarnings("unchecked")
-		// we know our class types are safe
-		private static Class<? extends Field>[] getColumnClasses() {
+		private static Field[] getColumnFields() {
 			ColumnDescription[] columns = ColumnDescription.values();
-			List<Class<? extends Field>> list = new LinkedList<Class<? extends Field>>();
-			for (ColumnDescription column : columns) {
-				list.add(column.getColumnClass());
+			Field[] fields = new Field[columns.length];
+			for (int i = 0; i < fields.length; i++) {
+				fields[i] = columns[i].getColumnField();
 			}
-			return list.toArray(new Class[columns.length]);
+			return fields;
 		}
 	}
 
 	static String TABLE_NAME = "MatchSetTable";
-	static Schema TABLE_SCHEMA = new Schema(0, "Key", ColumnDescription.getColumnClasses(),
+	static Schema TABLE_SCHEMA = new Schema(0, "Key", ColumnDescription.getColumnFields(),
 		ColumnDescription.getColumnNames());
 
 	static VTMatchSetTableDBAdapter createAdapter(DBHandle dbHandle) throws IOException {
@@ -84,18 +80,18 @@ public abstract class VTMatchSetTableDBAdapter {
 		return new VTMatchSetTableDBAdapterV0(dbHandle, openMode);
 	}
 
-	public abstract Record createMatchSetRecord(long key, VTProgramCorrelator correlator)
+	public abstract DBRecord createMatchSetRecord(long key, VTProgramCorrelator correlator)
 			throws IOException;
 
 	public abstract RecordIterator getRecords() throws IOException;
 
-	public abstract AddressSet getSourceAddressSet(Record record, AddressMap addressMap)
+	public abstract AddressSet getSourceAddressSet(DBRecord record, AddressMap addressMap)
 			throws IOException;
 
-	public abstract AddressSet getDestinationAddressSet(Record record, AddressMap addressMap)
+	public abstract AddressSet getDestinationAddressSet(DBRecord record, AddressMap addressMap)
 			throws IOException;
 
 	public abstract long getNextMatchSetID();
 
-	public abstract Record getRecord(long key) throws IOException;
+	public abstract DBRecord getRecord(long key) throws IOException;
 }

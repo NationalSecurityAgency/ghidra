@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +67,7 @@ class InstDBAdapterV1 extends InstDBAdapter {
 	 */
 	@Override
 	void createInstruction(long addr, int protoID, byte flags) throws IOException {
-		Record record = INSTRUCTION_SCHEMA.createRecord(addr);
+		DBRecord record = INSTRUCTION_SCHEMA.createRecord(addr);
 		record.setIntValue(PROTO_ID_COL, protoID);
 		record.setByteValue(FLAGS_COL, flags);
 		instTable.putRecord(record);
@@ -86,7 +85,7 @@ class InstDBAdapterV1 extends InstDBAdapter {
 	 * @see ghidra.program.database.code.InstDBAdapter#getRecordAtOrAfter(long)
 	 */
 	@Override
-	Record getRecordAtOrAfter(Address addr) throws IOException {
+	DBRecord getRecordAtOrAfter(Address addr) throws IOException {
 		AddressKeyRecordIterator it = new AddressKeyRecordIterator(instTable, addrMap, addr, true);
 		return it.next();
 	}
@@ -95,7 +94,7 @@ class InstDBAdapterV1 extends InstDBAdapter {
 	 * @see ghidra.program.database.code.InstDBAdapter#getRecord(long)
 	 */
 	@Override
-	Record getRecord(long addr) throws IOException {
+	DBRecord getRecord(long addr) throws IOException {
 		return instTable.getRecord(addr);
 	}
 
@@ -103,7 +102,7 @@ class InstDBAdapterV1 extends InstDBAdapter {
 	 * @see ghidra.program.database.code.InstDBAdapter#getRecord(ghidra.program.model.address.Address)
 	 */
 	@Override
-	Record getRecord(Address addr) throws IOException {
+	DBRecord getRecord(Address addr) throws IOException {
 		return instTable.getRecord(addrMap.getKey(addr, false));
 	}
 
@@ -111,7 +110,7 @@ class InstDBAdapterV1 extends InstDBAdapter {
 	 * @see ghidra.program.database.code.InstDBAdapter#getRecordAfter(long)
 	 */
 	@Override
-	Record getRecordAfter(Address addr) throws IOException {
+	DBRecord getRecordAfter(Address addr) throws IOException {
 		AddressKeyRecordIterator it = new AddressKeyRecordIterator(instTable, addrMap, addr, false);
 		return it.next();
 	}
@@ -120,7 +119,7 @@ class InstDBAdapterV1 extends InstDBAdapter {
 	 * @see ghidra.program.database.code.InstDBAdapter#getRecordBefore(long)
 	 */
 	@Override
-	Record getRecordBefore(Address addr) throws IOException {
+	DBRecord getRecordBefore(Address addr) throws IOException {
 		AddressKeyRecordIterator it = new AddressKeyRecordIterator(instTable, addrMap, addr, true);
 		return it.previous();
 	}
@@ -157,7 +156,7 @@ class InstDBAdapterV1 extends InstDBAdapter {
 	 * @see ghidra.program.database.code.InstDBAdapter#getRecordAtOrBefore(long)
 	 */
 	@Override
-	Record getRecordAtOrBefore(Address addr) throws IOException {
+	DBRecord getRecordAtOrBefore(Address addr) throws IOException {
 		AddressKeyRecordIterator it = new AddressKeyRecordIterator(instTable, addrMap, addr, false);
 		return it.previous();
 	}
@@ -201,10 +200,10 @@ class InstDBAdapterV1 extends InstDBAdapter {
 	}
 
 	/**
-	 * @see ghidra.program.database.code.MoveRangeAdapter#putRecord(ghidra.framework.store.db.Record)
+	 * @see ghidra.program.database.code.MoveRangeAdapter#putRecord(ghidra.framework.store.db.DBRecord)
 	 */
 	@Override
-	void putRecord(Record record) throws IOException {
+	void putRecord(DBRecord record) throws IOException {
 		instTable.putRecord(record);
 	}
 
@@ -221,7 +220,7 @@ class InstDBAdapterV1 extends InstDBAdapter {
 	 */
 	@Override
 	void updateFlags(long addr, byte flags) throws IOException {
-		Record rec = instTable.getRecord(addr);
+		DBRecord rec = instTable.getRecord(addr);
 		rec.setByteValue(FLAGS_COL, flags);
 		instTable.putRecord(rec);
 	}

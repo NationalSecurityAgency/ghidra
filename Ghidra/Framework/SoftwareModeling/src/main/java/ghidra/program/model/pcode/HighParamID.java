@@ -46,8 +46,8 @@ public class HighParamID extends PcodeSyntaxTree {
 	private Address functionaddress;
 	private String modelname; // Name of prototype model
 	private Integer protoextrapop;
-	private List<ParamMeasure> inputlist = new ArrayList<ParamMeasure>();
-	private List<ParamMeasure> outputlist = new ArrayList<ParamMeasure>();
+	private List<ParamMeasure> inputlist = new ArrayList<>();
+	private List<ParamMeasure> outputlist = new ArrayList<>();
 
 	/**
 	 * @param function  function associated with the higher level function abstraction.
@@ -107,7 +107,8 @@ public class HighParamID extends PcodeSyntaxTree {
 	}
 
 	/**
-	 * @return the specific of input for functionparams
+	 * @param i is the specific index to return
+	 * @return the specific input for functionparams
 	 */
 	public ParamMeasure getInput(int i) {
 		return inputlist.get(i);
@@ -121,6 +122,7 @@ public class HighParamID extends PcodeSyntaxTree {
 	}
 
 	/**
+	 * @param i is the index of the specific output
 	 * @return the specific of output for functionparams
 	 */
 	public ParamMeasure getOutput(int i) {
@@ -135,14 +137,14 @@ public class HighParamID extends PcodeSyntaxTree {
 		XmlElement start = parser.start("parammeasures");
 		functionname = start.getAttribute("name");
 		if (!func.getName().equals(functionname)) {
-			throw new PcodeXMLException("Function name mismatch: " + func.getName() +
-				" + " + functionname);
+			throw new PcodeXMLException(
+				"Function name mismatch: " + func.getName() + " + " + functionname);
 		}
 		while (!parser.peek().isEnd()) {
 			XmlElement subel = parser.peek();
 			if (subel.getName().equals("addr")) {
 				subel = parser.start("addr");
-				functionaddress = Varnode.readXMLAddress(subel, getAddressFactory());
+				functionaddress = AddressXML.readXML(subel, getAddressFactory());
 				parser.end(subel);
 				functionaddress =
 					func.getEntryPoint().getAddressSpace().getOverlayAddress(functionaddress);
@@ -177,8 +179,10 @@ public class HighParamID extends PcodeSyntaxTree {
 
 	/**
 	 * Read in the inputs or outputs list for this function from an XML rep
-	 * @param el
-	 * @throws PcodeXMLException
+	 * @param parser is the XML parser
+	 * @param pmlist is populated with the resulting list
+	 * @param tag is the name of the tag
+	 * @throws PcodeXMLException for improperly formed XML
 	 */
 	private void parseParamMeasureXML(XmlPullParser parser, List<ParamMeasure> pmlist, String tag)
 			throws PcodeXMLException {
@@ -191,7 +195,8 @@ public class HighParamID extends PcodeSyntaxTree {
 		parser.end(el);
 	}
 
-	public static ErrorHandler getErrorHandler(final Object errOriginator, final String targetName) {
+	public static ErrorHandler getErrorHandler(final Object errOriginator,
+			final String targetName) {
 		return new ErrorHandler() {
 			@Override
 			public void error(SAXParseException exception) throws SAXException {
@@ -216,9 +221,10 @@ public class HighParamID extends PcodeSyntaxTree {
 	 * TODO: this probably doesn't belong here.
 	 * 
 	 * @param xml string to parse
+	 * @param handler is the error handler
 	 * @return an XML tree element
 	 * 
-	 * @throws PcodeXMLException
+	 * @throws PcodeXMLException for improper XML
 	 */
 	static public XmlPullParser stringTree(String xml, ErrorHandler handler)
 			throws PcodeXMLException {
@@ -235,6 +241,7 @@ public class HighParamID extends PcodeSyntaxTree {
 	/**
 	 * Update any parameters for this Function from parameters defined in this map.
 	 * 
+	 * @param storeDataTypes is true if data-types are getting stored
 	 * @param srctype function signature source 
 	 */
 	public void storeReturnToDatabase(boolean storeDataTypes, SourceType srctype) {
@@ -275,12 +282,13 @@ public class HighParamID extends PcodeSyntaxTree {
 	 * Update any parameters for this Function from parameters defined in this map.
 	 *   Originally from LocalSymbolMap, but being modified.
 	 * 
+	 * @param storeDataTypes is true if data-types are being stored
 	 * @param srctype function signature source 
 	 */
 	public void storeParametersToDatabase(boolean storeDataTypes, SourceType srctype) {
 		PcodeDataTypeManager dtManage = getDataTypeManager();
 		try {
-			List<Variable> params = new ArrayList<Variable>();
+			List<Variable> params = new ArrayList<>();
 			for (ParamMeasure pm : inputlist) {
 				Varnode vn = pm.getVarnode();
 				DataType dataType;
@@ -292,9 +300,7 @@ public class HighParamID extends PcodeSyntaxTree {
 				else {
 					dataType = dtManage.findUndefined(vn.getSize());
 				}
-				Variable v =
-					new ParameterImpl(null, dataType, buildStorage(vn),
-						func.getProgram());
+				Variable v = new ParameterImpl(null, dataType, buildStorage(vn), func.getProgram());
 				//Msg.debug(this, "function(" + func.getName() + ")--param: " + v.toString() +
 				//	" -- type: " + dataType.getName());
 				params.add(v);
@@ -302,7 +308,7 @@ public class HighParamID extends PcodeSyntaxTree {
 
 			func.updateFunction(modelname, null, params,
 				FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, srctype);
-			if ( !paramStorageMatches(func, params)) {
+			if (!paramStorageMatches(func, params)) {
 				// try again if dynamic storage assignment does not match decompiler's
 				// force into custom storage mode
 				func.updateFunction(modelname, null, params, FunctionUpdateType.CUSTOM_STORAGE,

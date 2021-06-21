@@ -17,7 +17,7 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.DBObjectCache;
@@ -40,7 +40,7 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	 * @param key
 	 */
 	public TypedefDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
-			TypedefDBAdapter adapter, Record record) {
+			TypedefDBAdapter adapter, DBRecord record) {
 		super(dataMgr, cache, record);
 		this.adapter = adapter;
 	}
@@ -61,8 +61,8 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
-		return getDataType().isDynamicallySized();
+	public boolean hasLanguageDependantLength() {
+		return getDataType().hasLanguageDependantLength();
 	}
 
 	@Override
@@ -74,6 +74,11 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	@Override
 	public String getMnemonic(Settings settings) {
 		return getDisplayName();
+	}
+
+	@Override
+	public boolean isZeroLength() {
+		return getDataType().isZeroLength();
 	}
 
 	@Override
@@ -108,7 +113,20 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		lock.acquire();
 		try {
 			if (checkIsValid() && dt == getDataType()) {
-				notifySizeChanged();
+				notifySizeChanged(true);
+			}
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
+	public void dataTypeAlignmentChanged(DataType dt) {
+		lock.acquire();
+		try {
+			if (checkIsValid() && dt == getDataType()) {
+				notifyAlignmentChanged(true);
 			}
 		}
 		finally {
@@ -204,10 +222,10 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 					dataMgr.dbError(e);
 				}
 				if (oldLen != getLength()) {
-					notifySizeChanged();
+					notifySizeChanged(false);
 				}
 				else {
-					dataMgr.dataTypeChanged(this);
+					dataMgr.dataTypeChanged(this, false);
 				}
 			}
 		}
@@ -236,7 +254,7 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	@Override
 	protected boolean refresh() {
 		try {
-			Record rec = adapter.getRecord(key);
+			DBRecord rec = adapter.getRecord(key);
 			if (rec != null) {
 				record = rec;
 //				super.getDefaultSettings();  // not sure why it was doing this - no one else does.
@@ -297,7 +315,7 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 			checkDeleted();
 			record.setLongValue(TypedefDBAdapter.TYPEDEF_UNIVERSAL_DT_ID_COL, id.getValue());
 			adapter.updateRecord(record, false);
-			dataMgr.dataTypeChanged(this);
+			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -319,7 +337,7 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 			checkDeleted();
 			record.setLongValue(TypedefDBAdapter.TYPEDEF_SOURCE_ARCHIVE_ID_COL, id.getValue());
 			adapter.updateRecord(record, false);
-			dataMgr.dataTypeChanged(this);
+			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -336,7 +354,7 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 			checkDeleted();
 			record.setLongValue(TypedefDBAdapter.TYPEDEF_LAST_CHANGE_TIME_COL, lastChangeTime);
 			adapter.updateRecord(record, false);
-			dataMgr.dataTypeChanged(this);
+			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -354,7 +372,7 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 			record.setLongValue(TypedefDBAdapter.TYPEDEF_SOURCE_SYNC_TIME_COL,
 				lastChangeTimeInSourceArchive);
 			adapter.updateRecord(record, false);
-			dataMgr.dataTypeChanged(this);
+			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);

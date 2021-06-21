@@ -61,7 +61,7 @@ public interface PcodeFactory {
 	public HighSymbol getSymbol(long symbolId);
 	public Varnode setInput(Varnode vn,boolean val);
 	public void setAddrTied(Varnode vn,boolean val);
-	public void setPersistant(Varnode vn,boolean val);
+	public void setPersistent(Varnode vn, boolean val);
 	public void setUnaffected(Varnode vn,boolean val);
 	public void setMergeGroup(Varnode vn,short val);
 	public void setDataType(Varnode vn,DataType type);

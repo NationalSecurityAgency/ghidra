@@ -310,8 +310,10 @@ class EnumEditorPanel extends JPanel {
 		EnumCellRenderer cellRenderer = new EnumCellRenderer();
 		table.setRowHeight(table.getRowHeight() + 4);
 		table.setDefaultEditor(String.class, new EnumStringCellEditor());
-		table.getColumnModel().getColumn(EnumTableModel.VALUE_COL).setCellEditor(
-			new EnumLongCellEditor());
+		table.getColumnModel()
+				.getColumn(EnumTableModel.VALUE_COL)
+				.setCellEditor(
+					new EnumLongCellEditor());
 		table.setDefaultRenderer(String.class, cellRenderer);
 		add(createInfoPanel(), BorderLayout.SOUTH);
 
@@ -335,13 +337,17 @@ class EnumEditorPanel extends JPanel {
 			}
 
 			private void changed() {
-				String name = nameField.getText();
+				String name = nameField.getText().trim();
+				if (name.length() == 0) {
+					return;
+				}
+
 				if (!name.equals(editedEnumDT.getName())) {
 					try {
 						editedEnumDT.setName(name);
 					}
 					catch (InvalidNameException e) {
-						e.printStackTrace();
+						setStatusMessage("'" + name + "' is not a valid name");
 					}
 				}
 

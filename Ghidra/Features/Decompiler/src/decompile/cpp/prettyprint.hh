@@ -727,7 +727,7 @@ class EmitPrettyPrint : public EmitXml {
   void print(const TokenSplit &tok);	///< Output the given token to the low-level emitter
   void advanceleft(void);	///< Emit tokens that have been fully committed
   void scan(void);		///< Process a new token
-  void resetDefaultsPrettyPrint(void) { setMaxLineSize(100); }
+  void resetDefaultsPrettyPrint(void) { setMaxLineSize(100); } ///< Reset the defaults
 public:
   EmitPrettyPrint(void);	///< Construct with an initial maximum line size
   virtual ~EmitPrettyPrint(void);

@@ -150,17 +150,17 @@ public class SymbolGroup {
 	 */
 	class AbstractMsSymbolIterator implements Iterator<AbstractMsSymbol> {
 
-		private int currentIndex;
+		private int nextIndex;
 		private long currentOffset;
 
 		public AbstractMsSymbolIterator() {
-			currentIndex = 0;
-			currentOffset = 0L;
+			nextIndex = 0;
+			currentOffset = -1L;
 		}
 
 		@Override
 		public boolean hasNext() {
-			if (currentIndex == offsets.size()) {
+			if (nextIndex == offsets.size()) {
 				return false;
 			}
 			return true;
@@ -175,10 +175,10 @@ public class SymbolGroup {
 		 * @throws NoSuchElementException if there are no more elements
 		 */
 		public AbstractMsSymbol peek() throws NoSuchElementException {
-			if (currentIndex == offsets.size()) {
+			if (nextIndex == offsets.size()) {
 				throw new NoSuchElementException("none left");
 			}
-			long temporaryOffset = offsets.get(currentIndex);
+			long temporaryOffset = offsets.get(nextIndex);
 			AbstractMsSymbol symbol = symbolsByOffset.get(temporaryOffset);
 			if (symbol == null) {
 				throw new NoSuchElementException("No symbol");
@@ -188,10 +188,10 @@ public class SymbolGroup {
 
 		@Override
 		public AbstractMsSymbol next() {
-			if (currentIndex == offsets.size()) {
+			if (nextIndex == offsets.size()) {
 				throw new NoSuchElementException("none left");
 			}
-			currentOffset = offsets.get(currentIndex++);
+			currentOffset = offsets.get(nextIndex++);
 			return symbolsByOffset.get(currentOffset);
 		}
 
@@ -211,7 +211,7 @@ public class SymbolGroup {
 		 * @see #hasNext()
 		 */
 		void initGet() {
-			currentIndex = 0;
+			nextIndex = 0;
 		}
 
 		/**
@@ -224,7 +224,7 @@ public class SymbolGroup {
 			if (index < 0) {
 				index = 0;
 			}
-			currentIndex = index;
+			nextIndex = index;
 			currentOffset = offset;
 		}
 

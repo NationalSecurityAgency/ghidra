@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,20 +70,20 @@ class OldFunctionDBAdapterV0 extends OldFunctionDBAdapter {
 	 * @see ghidra.program.database.function.FunctionDBAdapter#getFunctionRecord(long)
 	 */
 	@Override
-	public Record getFunctionRecord(long functionKey) throws IOException {
-		Record oldRecord = table.getRecord(functionKey);
+	public DBRecord getFunctionRecord(long functionKey) throws IOException {
+		DBRecord oldRecord = table.getRecord(functionKey);
 		return translateRecord(oldRecord);
 	}
 
 	/**
-	 * @see ghidra.program.database.function.FunctionDBAdapter#translateRecord(ghidra.framework.store.db.Record)
+	 * @see ghidra.program.database.function.FunctionDBAdapter#translateRecord(ghidra.framework.store.db.DBRecord)
 	 */
-	public Record translateRecord(Record oldRecord) {
+	public DBRecord translateRecord(DBRecord oldRecord) {
 		if (oldRecord == null) {
 			return null;
 		}
 		long entryPointKey = oldRecord.getKey();
-		Record newRecord = OldFunctionDBAdapter.FUNCTIONS_SCHEMA.createRecord(entryPointKey);
+		DBRecord newRecord = OldFunctionDBAdapter.FUNCTIONS_SCHEMA.createRecord(entryPointKey);
 		newRecord.setLongValue(OldFunctionDBAdapter.RETURN_DATA_TYPE_ID_COL,
 			oldRecord.getLongValue(V0_RETURN_DATA_TYPE_ID_COL));
 		newRecord.setIntValue(OldFunctionDBAdapter.STACK_DEPTH_COL,
@@ -126,17 +125,17 @@ class OldFunctionDBAdapterV0 extends OldFunctionDBAdapter {
 			return it.hasPrevious();
 		}
 
-		public Record next() throws IOException {
-			Record rec = it.next();
+		public DBRecord next() throws IOException {
+			DBRecord rec = it.next();
 			return translate(rec);
 		}
 
-		public Record previous() throws IOException {
-			Record rec = it.previous();
+		public DBRecord previous() throws IOException {
+			DBRecord rec = it.previous();
 			return translate(rec);
 		}
 
-		private Record translate(Record oldRecord) {
+		private DBRecord translate(DBRecord oldRecord) {
 			return translateRecord(oldRecord);
 		}
 	}

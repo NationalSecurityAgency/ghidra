@@ -99,7 +99,7 @@ public class PdbAddressManager {
 	/**
 	 * Returns the Address for the given symbol.  If the {@link PdbApplicatorOptions}
 	 * Address Remap option is turned on is turned on, it will attempt to map the address to a
-	 * new address in the current program. 
+	 * new address in the current program.
 	 * @param symbol The {@link AddressMsSymbol}
 	 * @return The Address, which can be {@code Address.NO_ADDRESS} if invalid or
 	 * {@code Address.EXTERNAL_ADDRESS} if the address is external to the program.
@@ -111,7 +111,7 @@ public class PdbAddressManager {
 	/**
 	 * Returns the Address for the given section and offset.  If the {@link PdbApplicatorOptions}
 	 * Address Remap option is turned on is turned on, it will attempt to map the address to a
-	 * new address in the current program. 
+	 * new address in the current program.
 	 * @param segment The segment
 	 * @param offset The offset
 	 * @return The Address, which can be {@code Address.NO_ADDRESS} if invalid or
@@ -128,7 +128,7 @@ public class PdbAddressManager {
 	/**
 	 * Returns the Address for the given section and offset.  If the {@link PdbApplicatorOptions}
 	 * Address Remap option is turned on is turned on, it will attempt to map the address to a
-	 * new address in the current program. 
+	 * new address in the current program.
 	 * @param symbol The {@link AddressMsSymbol}
 	 * @return The Address, which can be {@code Address.NO_ADDRESS} if invalid or
 	 * {@code Address.EXTERNAL_ADDRESS} if the address is external to the program.
@@ -298,7 +298,7 @@ public class PdbAddressManager {
 //		// Set section/segment 0 to image base. (should be what is header), but what is its size?
 //		// TODO... made up size for now... is there something else?  We could put null instead.
 //		// For now, the method that reads this information might report EXTERNAL instead of
-//		// trying to use this. 
+//		// trying to use this.
 //		long segmentZeroLength = 0x7fffffff;
 //		allSegmentsInfo.add(new SegmentInfo(imageBase, segmentZeroLength));
 //		PdbDebugInfo dbi = applicator.getPdb().getDebugInfo();

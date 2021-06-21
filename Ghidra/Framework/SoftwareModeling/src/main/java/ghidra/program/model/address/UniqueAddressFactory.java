@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +16,7 @@
 package ghidra.program.model.address;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.program.model.lang.Language;
 
 public class UniqueAddressFactory {
@@ -39,7 +39,9 @@ public class UniqueAddressFactory {
 	}
 
 	public synchronized Address getNextUniqueAddress() {
-		return uniqueSpace.getAddress(nextOffset++);
+		Address addr = uniqueSpace.getAddress(nextOffset);
+		nextOffset += SleighBase.MAX_UNIQUE_SIZE;
+		return addr;
 	}
 
 	public synchronized void reset() {

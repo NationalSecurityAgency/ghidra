@@ -18,7 +18,7 @@ package ghidra.program.database.code;
 import java.util.ArrayList;
 import java.util.List;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.DBObjectCache;
@@ -87,7 +87,7 @@ class DataDB extends CodeUnitDB implements Data {
 	}
 
 	@Override
-	protected boolean refresh(Record record) {
+	protected boolean refresh(DBRecord record) {
 		if (componentCache != null) {
 			componentCache.invalidate();
 		}
@@ -96,13 +96,15 @@ class DataDB extends CodeUnitDB implements Data {
 	}
 
 	@Override
-	protected boolean hasBeenDeleted(Record rec) {
+	protected boolean hasBeenDeleted(DBRecord rec) {
 		if (dataType == DataType.DEFAULT) {
 			return rec != null || !codeMgr.isUndefined(address, addr);
 		}
 		DataType dt;
 		if (rec != null) {
 			// ensure that record provided corresponds to a DataDB record
+			// since following an undo/redo the record could correspond to
+			// a different type of code unit (hopefully with a different record schema)
 			if (!rec.hasSameSchema(DataDBAdapter.DATA_SCHEMA)) {
 				return true;
 			}
@@ -612,7 +614,7 @@ class DataDB extends CodeUnitDB implements Data {
 				Structure struct = (Structure) baseDataType;
 				DataTypeComponent dtc = struct.getComponentAt(offset);
 				// Logic handles overlapping bit-fields
-				// Include if offset is contains within bounds of component
+				// Include if offset is contained within bounds of component
 				while (dtc != null && (offset >= dtc.getOffset()) &&
 					(offset <= (dtc.getOffset() + dtc.getLength() - 1))) {
 					int ordinal = dtc.getOrdinal();
@@ -623,8 +625,14 @@ class DataDB extends CodeUnitDB implements Data {
 			else if (baseDataType instanceof DynamicDataType) {
 				DynamicDataType ddt = (DynamicDataType) baseDataType;
 				DataTypeComponent dtc = ddt.getComponentAt(offset, this);
-				if (dtc != null) {
-					list.add(getComponent(dtc.getOrdinal()));
+				// Logic handles overlapping bit-fields
+				// Include if offset is contained within bounds of component
+				while (dtc != null && (offset >= dtc.getOffset()) &&
+					(offset <= (dtc.getOffset() + dtc.getLength() - 1))) {
+					int ordinal = dtc.getOrdinal();
+					list.add(getComponent(ordinal++));
+					dtc = ordinal < ddt.getNumComponents(this) ? ddt.getComponent(ordinal, this)
+							: null;
 				}
 			}
 			else if (baseDataType instanceof Union) {

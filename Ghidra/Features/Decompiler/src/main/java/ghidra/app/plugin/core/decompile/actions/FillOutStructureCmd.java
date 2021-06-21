@@ -46,7 +46,6 @@ import ghidra.util.task.TaskMonitor;
  */
 public class FillOutStructureCmd extends BackgroundCommand {
 
-
 	/**
 	 * Varnode with data-flow traceable to original pointer
 	 */
@@ -75,8 +74,8 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	private TaskMonitor monitor;
 	private PluginTool tool;
 
-	private List<OffsetPcodeOpPair> storePcodeOps = new ArrayList<OffsetPcodeOpPair>();
-	private List<OffsetPcodeOpPair> loadPcodeOps = new ArrayList<OffsetPcodeOpPair>();
+	private List<OffsetPcodeOpPair> storePcodeOps = new ArrayList<>();
+	private List<OffsetPcodeOpPair> loadPcodeOps = new ArrayList<>();
 
 	/**
 	 * Constructor.
@@ -155,8 +154,8 @@ public class FillOutStructureCmd extends BackgroundCommand {
 			DataType pointerDT = new PointerDataType(structDT);
 
 			// Delay adding to the manager until full structure is accumulated
-			pointerDT = currentProgram.getDataTypeManager().addDataType(pointerDT,
-				DataTypeConflictHandler.DEFAULT_HANDLER);
+			pointerDT = currentProgram.getDataTypeManager()
+					.addDataType(pointerDT, DataTypeConflictHandler.DEFAULT_HANDLER);
 			commitVariable(var, pointerDT, isThisParam);
 		}
 		catch (Exception e) {
@@ -224,7 +223,6 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	public List<OffsetPcodeOpPair> getLoadPcodeOps() {
 		return loadPcodeOps;
 	}
-
 
 	/**
 	 * Retrieve the (likely) storage address of a function parameter given
@@ -379,15 +377,15 @@ public class FillOutStructureCmd extends BackgroundCommand {
 				sym = highFunc.getMappedSymbol(storageAddress, function.getEntryPoint());
 			}
 			if (sym == null) {
-				sym = highFunc.getLocalSymbolMap().findLocal(storageAddress,
-					function.getEntryPoint().subtractWrap(1L));
+				sym = highFunc.getLocalSymbolMap()
+						.findLocal(storageAddress, function.getEntryPoint().subtractWrap(1L));
 			}
 			if (sym == null) {
 				sym = highFunc.getLocalSymbolMap().findLocal(storageAddress, null);
 			}
 			if (sym == null) {
-				sym = highFunc.getLocalSymbolMap().findLocal(storageAddress,
-					function.getEntryPoint());
+				sym = highFunc.getLocalSymbolMap()
+						.findLocal(storageAddress, function.getEntryPoint());
 			}
 			if (sym == null) {
 				return null;
@@ -450,13 +448,8 @@ public class FillOutStructureCmd extends BackgroundCommand {
 			structDT = createNewStruct(var, (int) componentMap.getSize(), f, isThisParam);
 		}
 		else {
-			int len;
-			if (structDT.isNotYetDefined()) {
-				len = 0;
-			}
-			else {
-				len = structDT.getLength();
-			}
+			// FIXME: How should an existing packed structure be handled? Growing and offset-based placement does not apply
+			int len = structDT.isZeroLength() ? 0 : structDT.getLength();
 			if (componentMap.getSize() > len) {
 				structDT.growStructure((int) componentMap.getSize() - len);
 			}
@@ -521,13 +514,8 @@ public class FillOutStructureCmd extends BackgroundCommand {
 				return null;
 			}
 			Structure structDT = VariableUtilities.findOrCreateClassStruct(f);
-			int len;
-			if (structDT.isNotYetDefined()) {
-				len = 0; // getLength reports as at least size 1
-			}
-			else {
-				len = structDT.getLength();
-			}
+// FIXME: How should an existing packed structure be handled? Growing and offset-based placement does not apply
+			int len = structDT.isZeroLength() ? 0 : structDT.getLength();
 			if (len < size) {
 				structDT.growStructure(size - len);
 			}
@@ -535,9 +523,8 @@ public class FillOutStructureCmd extends BackgroundCommand {
 		}
 		String structName = createUniqueStructName(var, DEFAULT_CATEGORY, DEFAULT_BASENAME);
 
-		StructureDataType dt =
-			new StructureDataType(new CategoryPath(DEFAULT_CATEGORY), structName, size,
-				f.getProgram().getDataTypeManager());
+		StructureDataType dt = new StructureDataType(new CategoryPath(DEFAULT_CATEGORY), structName,
+			size, f.getProgram().getDataTypeManager());
 		return dt;
 	}
 
@@ -623,7 +610,7 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	 */
 	private void fillOutStructureDef(HighVariable var) {
 		Varnode startVN = var.getRepresentative();
-		ArrayList<PointerRef> todoList = new ArrayList<PointerRef>();
+		ArrayList<PointerRef> todoList = new ArrayList<>();
 		HashSet<Varnode> doneList = new HashSet<>();
 
 		todoList.add(new PointerRef(startVN, 0));	// Base Varnode on the todo list
@@ -671,8 +658,7 @@ public class FillOutStructureCmd extends BackgroundCommand {
 						if (!inputs[1].isConstant() || !inputs[2].isConstant()) {
 							break;
 						}
-						newOff =
-							currentRef.offset + getSigned(inputs[1]) * inputs[2].getOffset();
+						newOff = currentRef.offset + getSigned(inputs[1]) * inputs[2].getOffset();
 						if (sanityCheck(newOff)) { // should this offset create a location in the structure?
 							putOnList(output, newOff, todoList, doneList);
 							// Don't do componentMap.addReference() as data-type info here is likely uninformed

@@ -111,7 +111,6 @@ public class ElfSymbol implements ByteArrayConverter {
 	 * @param reader to read symbol from
 	 * @param symbolIndex index of the symbol to read
 	 * @param symbolTable symbol table to associate the symbol to
-	 * @param stringTable string table to read symbols from
 	 * @param header else header
 	 * @return newly created ElfSymbol
 	 * 

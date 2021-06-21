@@ -20,7 +20,6 @@ import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -53,8 +52,7 @@ import ghidra.util.filechooser.ExtensionFileFilter;
 import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
-import ghidra.util.task.TaskLauncher;
-import ghidra.util.task.TaskMonitor;
+import ghidra.util.task.*;
 
 /**
  * Dialog for exporting a program from a Ghidra project to an external file in one of the
@@ -444,10 +442,65 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 
 	private boolean doExport() {
 
-		AtomicBoolean success = new AtomicBoolean();
-		TaskLauncher.launchModal("Exporting " + domainFile.getName(),
-			monitor -> success.set(tryExport(monitor)));
-		return success.get();
+		ExportTask task = new ExportTask();
+		TaskLauncher.launch(task);
+		task.showResults();
+		return task.getSuccess();
+	}
+
+	private class ExportTask extends Task {
+
+		private boolean success;
+		private boolean showResults;
+		private Exporter exporter;
+		private DomainObject exportedDomainObject;
+
+		public ExportTask() {
+			super("Export " + domainFile.getName(), true, true, true, false);
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+
+			exporter = getSelectedExporter();
+
+			exporter.setExporterServiceProvider(tool);
+			exportedDomainObject = getDomainObject(monitor);
+			if (exportedDomainObject == null) {
+				return;
+			}
+			ProgramSelection selection = getApplicableProgramSeletion();
+			File outputFile = getSelectedOutputFile();
+
+			try {
+				if (outputFile.exists() &&
+					OptionDialog.showOptionDialog(getComponent(), "Overwrite Existing File?",
+						"The file " + outputFile + " already exists.\nDo you want to overwrite it?",
+						"Overwrite", OptionDialog.QUESTION_MESSAGE) != OptionDialog.OPTION_ONE) {
+					return;
+				}
+				if (options != null) {
+					exporter.setOptions(options);
+				}
+				success = exporter.export(outputFile, exportedDomainObject, selection, monitor);
+				showResults = true;
+			}
+			catch (Exception e) {
+				Msg.error(this, "Exception exporting", e);
+				SystemUtilities.runSwingLater(() -> setStatusText(
+					"Exception exporting: " + e.getMessage() + ".  If null, see log for details."));
+			}
+		}
+
+		void showResults() {
+			if (showResults) {
+				displaySummaryResults(exporter, exportedDomainObject);
+			}
+		}
+
+		boolean getSuccess() {
+			return success;
+		}
 	}
 
 	private boolean tryExport(TaskMonitor monitor) {

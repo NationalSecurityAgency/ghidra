@@ -494,7 +494,6 @@ public class DataTypeSynchronizer {
 
 				dataType.setLastChangeTimeInSourceArchive(0); // Set timestamp so user must re-sync.
 				fixedSync = true;
-				dataTypeManager.dataTypeChanged(dataType);
 			}
 		}
 		if (fixedSync) {

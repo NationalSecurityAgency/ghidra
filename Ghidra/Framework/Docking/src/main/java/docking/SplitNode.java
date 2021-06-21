@@ -15,8 +15,6 @@
  */
 package docking;
 
-import ghidra.util.Msg;
-
 import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +22,8 @@ import java.util.List;
 import javax.swing.*;
 
 import org.jdom.Element;
+
+import ghidra.util.Msg;
 
 /**
  * Node for managing a JSplitPane view of two component trees.
@@ -41,9 +41,9 @@ class SplitNode extends Node {
 	/**
 	 * Constructs a new SplitNode object
 	 * @param winMgr the DockingWindowsManager that this node belongs to.
-	 * @param orientation the JSplitPane orientation (JSplitPane.HORIZONTAL_SPLIT or JSplitPane.VERTICAL_SPLIT)
 	 * @param child1 the node managing the first component tree.
 	 * @param child2 the node managing the second component tree.
+	 * @param isHorizontal true for horizontal layout
 	 */
 	SplitNode(DockingWindowManager winMgr, Node child1, Node child2, boolean isHorizontal) {
 		super(winMgr);
@@ -59,6 +59,7 @@ class SplitNode extends Node {
 	 * @param elem the XML JDOM element containing the configuration information.
 	 * @param mgr the DockingWindowsManager for this node.
 	 * @param parent the parent node for this node.
+	 * @param restoredPlaceholders the list into which any restored placeholders will be placed
 	 */
 	SplitNode(Element elem, DockingWindowManager mgr, Node parent,
 			List<ComponentPlaceholder> restoredPlaceholders) {
@@ -194,7 +195,7 @@ class SplitNode extends Node {
 
 	@Override
 	List<Node> getChildren() {
-		List<Node> list = new ArrayList<Node>();
+		List<Node> list = new ArrayList<>();
 		if (child1 != null) {
 			list.add(child1);
 		}
@@ -212,6 +213,12 @@ class SplitNode extends Node {
 	@Override
 	String getDescription() {
 		return "Split Node";
+	}
+
+	@Override
+	void dispose() {
+		child1.dispose();
+		child2.dispose();
 	}
 }
 

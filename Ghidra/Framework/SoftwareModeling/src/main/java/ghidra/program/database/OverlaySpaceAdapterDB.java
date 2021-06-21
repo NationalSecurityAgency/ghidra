@@ -29,7 +29,8 @@ import ghidra.util.exception.DuplicateNameException;
 class OverlaySpaceAdapterDB {
 	private static String TABLE_NAME = "Overlay Spaces";
 	static final Schema SCHEMA = new Schema(0, "ID",
-		new Class[] { StringField.class, StringField.class, LongField.class, LongField.class },
+		new Field[] { StringField.INSTANCE, StringField.INSTANCE, LongField.INSTANCE,
+			LongField.INSTANCE },
 		new String[] { "Overlay Space", "Template Space", "Minimum Offset", "Maximum Offset" });
 
 	private static final int OV_SPACE_NAME_COL = 0;
@@ -53,7 +54,7 @@ class OverlaySpaceAdapterDB {
 		if (table != null) {
 			RecordIterator it = table.iterator();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				String spaceName = rec.getString(OV_SPACE_NAME_COL);
 				String templateSpaceName = rec.getString(OV_SPACE_BASE_COL);
 				long minOffset = rec.getLongValue(OV_MIN_OFFSET_COL);
@@ -85,7 +86,7 @@ class OverlaySpaceAdapterDB {
 		if (table == null) {
 			table = db.createTable(TABLE_NAME, SCHEMA);
 		}
-		Record rec = SCHEMA.createRecord(table.getKey());
+		DBRecord rec = SCHEMA.createRecord(table.getKey());
 		rec.setString(0, ovSpace.getName());
 		rec.setString(1, ovSpace.getOverlayedSpace().getName());
 		rec.setLongValue(OV_MIN_OFFSET_COL, ovSpace.getMinOffset());
@@ -104,7 +105,7 @@ class OverlaySpaceAdapterDB {
 		if (table != null) {
 			RecordIterator it = table.iterator();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				String spaceName = rec.getString(0);
 				if (name.equals(spaceName)) {
 					it.delete();
@@ -126,7 +127,7 @@ class OverlaySpaceAdapterDB {
 		if (table != null) {
 			RecordIterator it = table.iterator();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				OverlayAddressSpace space = map.remove(rec.getKey());
 				if (space != null) {
 					//maxId = Math.max(maxId, space.getUnique());
@@ -172,7 +173,7 @@ class OverlaySpaceAdapterDB {
 		if (table != null) {
 			RecordIterator it = table.iterator();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				String spaceName = rec.getString(0);
 				if (oldName.equals(spaceName)) {
 					it.delete();
@@ -201,7 +202,7 @@ class OverlaySpaceAdapterDB {
 		if (table != null) {
 			RecordIterator it = table.iterator();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				String oldUnderlyingSpaceName = rec.getString(OV_SPACE_BASE_COL);
 				AddressSpace space = addrFactory.getAddressSpace(oldUnderlyingSpaceName);
 				if (space != null && space.isNonLoadedMemorySpace()) {

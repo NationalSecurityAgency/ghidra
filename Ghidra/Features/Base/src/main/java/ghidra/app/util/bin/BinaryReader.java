@@ -66,17 +66,58 @@ public class BinaryReader {
 		this.provider = provider;
 		setLittleEndian(isLittleEndian);
 	}
-
+	
 	/**
-	 * Returns a clone of this reader positioned at the new index.
+	 * Returns a clone of this reader, with its own independent current position,
+	 * positioned at the new index.
+	 *  
 	 * @param newIndex the new index
-	 * @return a clone of this reader positioned at the new index
+	 * @return an independent clone of this reader positioned at the new index
 	 */
 	public BinaryReader clone(long newIndex) {
 		BinaryReader clone = new BinaryReader(provider, isLittleEndian());
-		clone.converter = converter;
 		clone.currentIndex = newIndex;
 		return clone;
+	}
+
+	/**
+	 * Returns an independent clone of this reader positioned at the same index.
+	 * 
+	 * @return a independent clone of this reader positioned at the same index
+	 */
+	@Override
+	public BinaryReader clone() {
+		return clone(currentIndex);
+	}
+
+	/**
+	 * Returns a BinaryReader that is in BigEndian mode.
+	 * 
+	 * @return either this same instance (if already BigEndian), or a new instance
+	 * (at the same location) in BigEndian mode
+	 */
+	public BinaryReader asBigEndian() {
+		if (isBigEndian()) {
+			return this;
+		}
+		BinaryReader result = clone(currentIndex);
+		result.setLittleEndian(false);
+		return result;
+	}
+
+	/**
+	 * Returns a BinaryReader that is in LittleEndian mode.
+	 * 
+	 * @return either this same instance (if already LittleEndian), or a new instance
+	 * (at the same location) in LittleEndian mode
+	 */
+	public BinaryReader asLittleEndian() {
+		if (!isBigEndian()) {
+			return this;
+		}
+		BinaryReader result = clone(currentIndex);
+		result.setLittleEndian(true);
+		return result;
 	}
 
 	/**
@@ -86,6 +127,15 @@ public class BinaryReader {
 	 */
 	public boolean isLittleEndian() {
 		return converter instanceof LittleEndianDataConverter;
+	}
+
+	/**
+	 * Returns true if this reader will extract values in big endian.
+	 * 
+	 * @return true is big endian, false is little endian
+	 */
+	public boolean isBigEndian() {
+		return converter instanceof BigEndianDataConverter;
 	}
 
 	/**

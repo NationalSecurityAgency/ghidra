@@ -1,0 +1,168 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Getting Started</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Debugger: Getting Started</H1>
+
+    <P>The debugger is poised to support debugging native user-mode applications for Windows and
+    Linux on 64-bit x86. This is accomplished by "connecting" to the respective debugger for each
+    platform: MS dbgeng.dll on Windows, and GDB/MI on Linux. A variety of configurations are
+    possible, and we are already developing more connectors, but native desktop applications are
+    the target for this release.</P>
+
+    <H2>Pay Attention to Errors</H2>
+
+    <P>Many actions are taken automatically on behalf of the user, e.g., reading registers when a
+    target is paused. In most cases, errors on automatic actions are dropped to the Debug Console,
+    as displaying them in a dialog could become a pest. That said, if things still don't seem
+    right, please check the application log messages.</P>
+
+    <H2><A name="launching">Launching a Target</A></H2>
+
+    <P>Starting up the Ghidra Debugger for the simplest use case, user-mode debugging of a local
+    process, entails two steps:</P>
+
+    <OL>
+      <LI>Open (or import) your program into the Debugger tool</LI>
+
+      <LI>Click the "Debug" button ("bug" icon) in the main toolbar</LI>
+    </OL>
+
+    <P>To load the default Debugger tool, from the main Ghidra application window select <SPAN
+    class="menu">Tools &rarr; Import Default Tools...</SPAN> from the menus. Select
+    "defaultTools/Debugger.tool", and hit "OK". The Debugger tool will be added to the Tool
+    Chest.</P>
+
+    <P>To launch the tool, you have several options, identical to those you might use to launch the
+    CodeBrowser tool. You can click the Debugger icon to launch an empty Debugger tool. You can
+    drag a program that you have already imported from the Active Project window onto the tool icon
+    in the Tool Chest, or you can right-click on one of the project programs and pick <SPAN class=
+    "menu">Open With &rarr; Debugger</SPAN>. If you open an empty Debugger tool, you can add
+    programs to it later in the usual ways, e.g. via <SPAN class="menu">File &rarr; Import
+    File...</SPAN> or by dragging-and-dropping programs onto the running tool.</P>
+
+    <P>The default tool is pre-configured with a collection of plugins relevant for the Listing and
+    for Debugger-related operations. As always, there is some chance that the tool will launch with
+    some portion of the plugins not displayed or with a less-than-optimal layout. To verify which
+    plugins you have, you can select <SPAN class="menu">File &rarr; Configure...</SPAN>. "Debugger"
+    should already be selected. Choosing "Configure All Plugins" (the plug icon near the top
+    right), should show the full list of pre-selected plugins. Debugger-related plugins all begin
+    with "Debugger". At a bare minimum, you will need the "DebuggerTargetsPlugin" and the
+    "DebuggerObjectsPlugin", and the plugins on which they depend.</P>
+
+    <P>For the "Debug" button to work, you must (a) have the program you wish to run visible and
+    selected in the static Listing window, and (b) have imported the program from the place it
+    lives on the local system. In other words, the file path associated with the program should be
+    the path to the executable for the current file system. You can verify this using the <SPAN
+    class="menu">Help &rarr; About my_program</SPAN> menu item in the main tool bar. For example,
+    on a Linux system, if you've imported "xclock", <SPAN class="menu">Help &rarr; About
+    xclock...</SPAN> should have an entry at the bottom of the page for "Executable Location:
+    /usr/bin/xclock".</P>
+
+    <P>Alternative launch options may be available using the dropdown next to the "Debug" button.
+    Furthermore, to access additional configuration options, use the <SPAN class="menu">Debugger
+    &rarr; Debug program &rarr; ...</SPAN> menu options. The options selected here are saved and
+    applied for later launches, whether from the button or the menu.</P>
+
+    <P>When you launch the target by this method, a number of changes should be evident in the GUI.
+    A blank "Agent" window may appear, indicating the agent status and connection port (if GADP was
+    selected). An interpreter console will appear, potentially including various information about
+    the launch. A connection will be added to the <A href=
+    "help/topics/DebuggerTargetsPlugin/DebuggerTargetsPlugin.html">Targets</A> window. A new tree
+    structure will be populated within the <A href=
+    "help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html">Objects</A> window. The
+    remaining windows will be populated with current trace information. Please be patient, on some
+    platforms it may still take some time for things to populate and settle. The Debug Console
+    should provide some hints as to ongoing activity.</P>
+
+    <H2>Debugger Components</H2>
+
+    <P>Some of the more commonly-access components are explained below. Many also have their own
+    help pages.</P>
+
+    <H3>Debugging Agent</H3>
+
+    <P>An "agent" is a process running on the local system, which acts as a mediator between the
+    Ghidra GUI and the native debugger. For systems such as Linux that support GDB, the agent wraps
+    the native GDB functionality via a Java container that implements the GDB machine interface
+    (GDB/MI). For Windows, the agent wraps the native dbgeng.dll functionality in a similar
+    fashion. The blank "Agent" window allows you to see the current status of the agent. If the
+    agent dies or is killed, the debugging session will be terminated. Of particular note, the
+    protocol used to communicate between the GUI and the agent is the Ghidra Asynchronous Debug
+    Protocol (GADP). It is not the native protocol associated with the debugger. Direct
+    communication with a native target is not currently supported, although that functionality may
+    be added in the future. If you choose an IN-VM connector, Ghidra will access the native
+    debugger directly, so no agent window will appear. This may be faster, but it also introduces
+    the risk of crashing Ghidra and losing data.</P>
+
+    <H3>Interpreter</H3>
+
+    <P>The interpreter window allows a user command-line access to the native debugger. For Linux,
+    this means the standard GDB command line interface; for Windows, the WinDbg/kd command set.
+    While basic tasks may not require using the command line interface, more complicated debugging
+    scenarios invariably require commands specific to the target which have not or cannot be
+    implemented generically in the GUI.</P>
+
+    <H3>Targets / Connections</H3>
+
+    <P>The "Debugger Targets" window adds an entry for every new debugger connection. These may be
+    added directly from this window using the "Connect" button. This allows the user to select
+    non-default connection options and/or to initiate a connection without launching or attaching
+    to a target. Using this method of starting a connection requires the additional step of
+    launching or attaching to a specific target.</P>
+
+    <H3>Objects</H3>
+
+    <P>To launch or attach to a target without using the "Debug" button, you will need to use the
+    "Objects" window. The "Objects" window provides a default tree-structured list of everything
+    the debugger knows about the target. On its tool bar are buttons for "Quick Launch', "Launch",
+    and "Attach". "Quick Launch", like the "Debug" button on the main tool bar, runs the executable
+    associated with the active program in the Listing view. "Launch" allows you to specify a target
+    and its parameters, typically, in the form of a command line. This target can be any executable
+    on the system and need not be associated with an imported program. The "Attach" button
+    populates a list with potential targets from the running process list for the system, which the
+    user may select and attach to.</P>
+
+    <H3>Traces and Threads</H3>
+
+    <P>The Targets, Objects, and Interpreter windows are the only windows populated directly using
+    information gleaned directly from the target. All other windows derive information from the
+    current trace. Once triggered, Ghidra captures information from the current debugging session
+    and uses this information to fill the other windows. The most important of these is the
+    "Threads" provider. The Threads window has two parts: one on the left listing the set of traced
+    target threads and one on the right indicating the current position in the trace by thread. If
+    no process is being traced or no thread is selected, all of the remaining windows will be
+    empty. If the current position (indicated by the draggable caret at the top of the right
+    display) lies outside the bounds of the current trace, all of the remaining windows will be
+    empty. Selecting a thread and a position causes the trace-based windows to display information
+    for that thread and time. From this window, the "step" buttons can be used to simulate target
+    execution to some extent.</P>
+
+    <H3>Commands / Miscellany</H3>
+
+    <P>The control buttons in the Objects window or commands issued in the Interpreter cause the
+    target to advance in the usual ways. (The control buttons in the Thread window, by contrast,
+    cause the trace to move forward or backward without affecting the target.) Breakpoints can be
+    set from either the "Breakpoints" window or the listing. The "Registers" and "Stack" display
+    reflect the state of the selected thread from the "Threads" window. Typically, the thread
+    selected for the trace in the Threads display is kept in sync with the active thread for the
+    debugger selected in the Objects view, but this need not be the case. Similarly, the "Dynamic
+    Listing" shows the bytes from the target's actual memory, which may or may not match the bytes
+    from the imported executable in the primary "Listing". When it can, the Ghidra debugger keeps
+    the Static and Dynamic Listings synchronized.</P>
+
+    <H3>Console</H3>
+
+    <P>This console is a central place for reporting activity, errors, and suggesting actions. This
+    is the first place to look when troubleshooting.</P>
+  </BODY>
+</HTML>

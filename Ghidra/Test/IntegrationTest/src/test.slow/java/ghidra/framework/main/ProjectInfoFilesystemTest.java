@@ -40,12 +40,12 @@ import ghidra.program.model.util.StringPropertyMap;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.InvalidNameException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTest {
 
-	private static final String PROJECT_NAME = "TestProject";
+	private static final String TEST_PROJECT_NAME = "TestProject";
 
 	private TestEnv env;
 
@@ -64,11 +64,11 @@ public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTe
 
 		env = new TestEnv();
 
-		projectLocator = new ProjectLocator(getTestDirectoryPath(), PROJECT_NAME);
+		projectLocator = new ProjectLocator(getTestDirectoryPath(), TEST_PROJECT_NAME);
 		projectLocator.getMarkerFile().delete();
 
 		File projectDir = new File(getTestDirectoryPath(),
-			PROJECT_NAME + ProjectLocator.getProjectDirExtension());
+			TEST_PROJECT_NAME + ProjectLocator.getProjectDirExtension());
 		if (projectDir.isDirectory()) {
 			if (!FileUtilities.deleteDir(projectDir)) {
 				Assert.fail("Cleanup of old test project failed");
@@ -78,7 +78,7 @@ public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTe
 
 	@After
 	public void tearDown() throws Exception {
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 		env.dispose();
 
 		if (project != null) {
@@ -114,11 +114,6 @@ public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTe
 		}
 	}
 
-	/**
-	 * Create project
-	 * @param filesystemVersion -1: mangled, 0... indexed version
-	 * @throws Exception
-	 */
 	private void createProject(int filesystemVersion) throws Exception {
 
 		if (filesystemVersion < 0) {
@@ -164,11 +159,6 @@ public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTe
 		return action;
 	}
 
-	/**
-	 * Create and open project in front-end and popup Project Info dialog
-	 * @param filesystemVersion -1: mangled, 0... indexed version
-	 * @throws Exception
-	 */
 	private void openProjectAndInfo(int filesystemVersion) throws Exception {
 
 		frontEndTool = env.getFrontEndTool();
@@ -197,8 +187,7 @@ public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTe
 		assertNotNull(action);
 		performAction(action, true);
 
-		dialog = waitForDialogComponent(frontEndTool.getToolFrame(), ProjectInfoDialog.class, 2000);
-		assertNotNull(dialog);
+		dialog = waitForDialogComponent(ProjectInfoDialog.class);
 	}
 
 	private DomainFolder getFolder(String folderPath, boolean create) throws IOException {
@@ -239,13 +228,13 @@ public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTe
 				programUserData.endTransaction(txId);
 			}
 
-			df = getFolder(folderPath, true).createFile(name, p, TaskMonitorAdapter.DUMMY_MONITOR);
+			df = getFolder(folderPath, true).createFile(name, p, TaskMonitor.DUMMY);
 		}
 		finally {
 			p.release(this);
 		}
 
-		df.addToVersionControl("Initial", true, TaskMonitorAdapter.DUMMY_MONITOR);
+		df.addToVersionControl("Initial", true, TaskMonitor.DUMMY);
 		return df;
 	}
 
@@ -266,7 +255,7 @@ public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals("Initial", versionHistory[0].getComment());
 
 		Program p =
-			(Program) df.getDomainObject(this, false, false, TaskMonitorAdapter.DUMMY_MONITOR);
+			(Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
 		try {
 			AddressFactory addressFactory = p.getAddressFactory();
 			ProgramUserData programUserData = p.getProgramUserData();
@@ -303,7 +292,7 @@ public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTe
 
 		JLabel nameLabel = (JLabel) findComponentByName(dialog.getComponent(), "Project Name");
 		assertNotNull(nameLabel);
-		assertEquals(PROJECT_NAME, nameLabel.getText());
+		assertEquals(TEST_PROJECT_NAME, nameLabel.getText());
 	}
 
 	private void doStorageConvert(String buttonText) {
@@ -314,7 +303,7 @@ public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTe
 		pressButton(button, false);
 
 		JDialog confirmDialog =
-			waitForJDialog(null, "Confirm Convert/Upgrade Project Storage", 2000);
+			waitForJDialog("Confirm Convert/Upgrade Project Storage");
 		assertNotNull("Expected convert confirm dialog", confirmDialog);
 
 		JButton confirmButton = findButtonByText(confirmDialog, "Convert");
@@ -322,7 +311,7 @@ public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTe
 
 		waitForPostedSwingRunnables();
 
-		dialog = waitForDialogComponent(frontEndTool.getToolFrame(), ProjectInfoDialog.class, 5000);
+		dialog = waitForDialogComponent(ProjectInfoDialog.class);
 		assertNotNull("Expected to find Project Info dialog after conversion completed", dialog);
 
 		ProjectManager projectManager = env.getProjectManager();

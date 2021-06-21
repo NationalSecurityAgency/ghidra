@@ -148,6 +148,7 @@ public class MultiLineMessageDialog extends DialogComponentProvider {
 			workPanel.add(iconLabel, BorderLayout.WEST);
 		}
 
+		setTransient(true);
 		addWorkPanel(workPanel);
 		addOKButton();
 

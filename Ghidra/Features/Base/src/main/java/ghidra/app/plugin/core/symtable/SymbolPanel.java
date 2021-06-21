@@ -151,8 +151,8 @@ class SymbolPanel extends JPanel {
 		filterDialog.adjustFilter(symProvider, tableModel);
 	}
 
-	NewSymbolFilter getFilter() {
-		return filterDialog.getFilter();
+	SymbolFilter getFilter() {
+		return tableModel.getFilter();
 	}
 
 	void readConfigState(SaveState saveState) {

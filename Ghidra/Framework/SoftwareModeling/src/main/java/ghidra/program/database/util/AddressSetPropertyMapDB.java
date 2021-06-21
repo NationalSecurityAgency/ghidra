@@ -90,7 +90,7 @@ public class AddressSetPropertyMapDB implements AddressSetPropertyMap {
 		this.lock = lock;
 
 		propertyMap = new AddressRangeMapDB(program.getDBHandle(), program.getAddressMap(),
-			program.getLock(), MY_PREFIX + mapName, errHandler, BooleanField.class, true);
+			program.getLock(), MY_PREFIX + mapName, errHandler, BooleanField.INSTANCE, true);
 	}
 
 	@Override

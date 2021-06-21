@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.program.database.map;
 
-import ghidra.program.database.util.RecordFilter;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.KeyRange;
-
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
 import db.*;
+import ghidra.program.database.util.RecordFilter;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.KeyRange;
 
 /**
  * Static methods to delete records from a table. Handles subtle issues with image base causing
@@ -76,12 +74,12 @@ public class AddressRecordDeleter {
 			Address end, RecordFilter filter) throws IOException {
 
 		boolean success = false;
-		DBLongIterator iter =
+		DBFieldIterator iter =
 			new AddressIndexPrimaryKeyIterator(table, colIx, addrMap, start, end, true);
 		while (iter.hasNext()) {
-			long next = iter.next();
+			Field next = iter.next();
 			if (filter != null) {
-				Record record = table.getRecord(next);
+				DBRecord record = table.getRecord(next);
 				if (!filter.matches(record)) {
 					continue;
 				}

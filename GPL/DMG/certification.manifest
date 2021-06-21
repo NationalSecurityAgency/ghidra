@@ -3,11 +3,11 @@
 ##MODULE IP: LGPL 2.1
 ##MODULE IP: Public Domain
 Module.manifest||Public Domain||||END|
-data/lib/catacombae_csframework.jar||LGPL 2.1||||END|
-data/lib/catacombae_hfsx.jar||GPL 3||||END|
-data/lib/catacombae_hfsx_dmglib.jar||GPL 3||||END|
-data/lib/catacombae_iharder-base64.jar||GPL 3||||END|
+data/lib/csframework.jar||LGPL 2.1||||END|
 data/lib/hfsexplorer-0_21-src.zip||GPL 3||||END|
+data/lib/hfsx.jar||GPL 3||||END|
+data/lib/hfsx_dmglib.jar||GPL 3||||END|
+data/lib/iharder-base64.jar||GPL 3||||END|
 data/os/win32/llio_amd64.dll||GPL 3||||END|
 data/os/win32/llio_i386.dll||GPL 3||||END|
 data/os/win32/llio_ia64.dll||GPL 3||||END|

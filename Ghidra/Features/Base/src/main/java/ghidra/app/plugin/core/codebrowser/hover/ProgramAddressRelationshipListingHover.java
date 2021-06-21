@@ -123,9 +123,9 @@ public class ProgramAddressRelationshipListingHover extends AbstractConfigurable
 			return;
 		}
 
-		String dataDescr = "Data Offset";
+		String description = "Data Offset";
 		if (data.getDataType() instanceof Structure) {
-			dataDescr = "Structure Offset";
+			description = "Structure Offset";
 		}
 
 		String name = data.getLabel(); // prefer the label
@@ -133,12 +133,14 @@ public class ProgramAddressRelationshipListingHover extends AbstractConfigurable
 			name = data.getDataType().getName();
 		}
 
+		name = StringUtilities.trimMiddle(name, 60);
+
 		if (name == null) {
 			// don't think we can get here
 			name = italic("Unnamed");
 		}
 
-		appendTableRow(sb, dataDescr, name, dataOffset);
+		appendTableRow(sb, description, name, dataOffset);
 	}
 
 	private void addByteSourceInfo(Program program, Address loc, StringBuilder sb) {
@@ -150,7 +152,8 @@ public class ProgramAddressRelationshipListingHover extends AbstractConfigurable
 		if (addressSourceInfo.getFileName() == null) {
 			return;
 		}
-		String filename = StringUtilities.trim(addressSourceInfo.getFileName(), MAX_FILENAME_SIZE);
+		String filename =
+			StringUtilities.trimMiddle(addressSourceInfo.getFileName(), MAX_FILENAME_SIZE);
 		long fileOffset = addressSourceInfo.getFileOffset();
 		String dataDescr = "Byte Source Offset";
 		appendTableRow(sb, dataDescr, "File: " + filename, fileOffset);
@@ -160,7 +163,10 @@ public class ProgramAddressRelationshipListingHover extends AbstractConfigurable
 		Function function = program.getFunctionManager().getFunctionContaining(loc);
 		if (function != null) {
 			long functionOffset = loc.subtract(function.getEntryPoint());
-			appendTableRow(sb, "Function Offset", HTMLUtilities.escapeHTML(function.getName()),
+
+			String functionName = function.getName();
+			functionName = StringUtilities.trimMiddle(functionName, 60);
+			appendTableRow(sb, "Function Offset", HTMLUtilities.escapeHTML(functionName),
 				functionOffset);
 		}
 	}

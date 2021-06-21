@@ -16,7 +16,6 @@
 package db;
 
 import java.io.IOException;
-import java.util.NoSuchElementException;
 
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -29,7 +28,7 @@ import ghidra.util.task.TaskMonitor;
  */
 abstract class IndexTable {
 
-	protected static final long[] emptyKeyArray = new long[0];
+	protected static final Field[] emptyKeyArray = Field.EMPTY_ARRAY;
 
 	/**
 	 * Database Handle
@@ -52,14 +51,10 @@ abstract class IndexTable {
 	protected Table indexTable;
 
 	/**
-	 * Field type associated with indexed column.
-	 */
-	protected final Field fieldType;
-
-	/**
 	 * Indexed column within primary table schema.
 	 */
-	protected final int colIndex;
+	protected final int indexColumn;
+	protected final boolean isSparseIndex;
 
 	/**
 	 * Construct a new or existing secondary index. An existing index must have
@@ -69,15 +64,15 @@ abstract class IndexTable {
 	 * @throws IOException thrown if IO error occurs
 	 */
 	IndexTable(Table primaryTable, TableRecord indexTableRecord) throws IOException {
-		if (!primaryTable.useLongKeys()) {
-			throw new AssertException("Only long-key tables may be indexed");
+		if (!primaryTable.useLongKeys() && !primaryTable.useFixedKeys()) {
+			throw new AssertException("Only fixed-length key tables may be indexed");
 		}
 		this.db = primaryTable.getDBHandle();
 		this.primaryTable = primaryTable;
 		this.indexTableRecord = indexTableRecord;
 		this.indexTable = new Table(primaryTable.getDBHandle(), indexTableRecord);
-		this.colIndex = indexTableRecord.getIndexedColumn();
-		fieldType = primaryTable.getSchema().getField(indexTableRecord.getIndexedColumn());
+		this.indexColumn = indexTableRecord.getIndexedColumn();
+		this.isSparseIndex = primaryTable.getSchema().isSparseColumn(indexColumn);
 		primaryTable.addIndex(this);
 	}
 
@@ -95,14 +90,12 @@ abstract class IndexTable {
 			throw new AssertException("Table not found: " + name);
 		}
 
-		if (indexTableRecord.getSchema().getKeyFieldType() instanceof IndexField) {
+		Field keyFieldType = indexTableRecord.getSchema().getKeyFieldType();
+		if (keyFieldType instanceof IndexField) {
 			return new FieldIndexTable(primaryTable, indexTableRecord);
 		}
-		Field fieldType = primaryTable.getSchema().getField(indexTableRecord.getIndexedColumn());
-		if (fieldType.isVariableLength()) {
-			return new VarIndexTable(primaryTable, indexTableRecord);
-		}
-		return new FixedIndexTable(primaryTable, indexTableRecord);
+		throw new AssertException(
+			"Unexpected index field type: " + keyFieldType.getClass().getName());
 	}
 
 	/**
@@ -121,12 +114,22 @@ abstract class IndexTable {
 
 	/**
 	 * Check the consistency of this index table.
+	 * @param monitor task monitor
 	 * @return true if consistency check passed, else false
-	 * @throws IOException 
-	 * @throws CancelledException
+	 * @throws IOException if IO error occurs
+	 * @throws CancelledException if task cancelled
 	 */
 	boolean isConsistent(TaskMonitor monitor) throws IOException, CancelledException {
-		return indexTable.isConsistent(primaryTable.getSchema().getFieldNames()[colIndex], monitor);
+		return indexTable.isConsistent(primaryTable.getSchema().getFieldNames()[indexColumn],
+			monitor);
+	}
+
+	/**
+	 * Get the primary table key type
+	 * @return primary table key type
+	 */
+	Field getPrimaryTableKeyType() {
+		return primaryTable.getSchema().getKeyFieldType();
 	}
 
 	/**
@@ -142,7 +145,7 @@ abstract class IndexTable {
 	 * @return indexed column number
 	 */
 	int getColumnIndex() {
-		return colIndex;
+		return indexColumn;
 	}
 
 	/**
@@ -152,7 +155,7 @@ abstract class IndexTable {
 	 */
 	TableStatistics getStatistics() throws IOException {
 		TableStatistics stats = indexTable.getStatistics();
-		stats.indexColumn = colIndex;
+		stats.indexColumn = indexColumn;
 		return stats;
 	}
 
@@ -160,6 +163,7 @@ abstract class IndexTable {
 	 * Determine if there is an occurance of the specified index key value.
 	 * @param field index key value
 	 * @return true if an index key value equal to field exists.
+	 * @throws IOException if IO error occurs
 	 */
 	boolean hasRecord(Field field) throws IOException {
 		return indexTable.hasRecord(field);
@@ -168,16 +172,18 @@ abstract class IndexTable {
 	/**
 	 * Find all primary keys which correspond to the specified indexed field
 	 * value.
-	 * @param field the field value to search for.
+	 * @param indexValue the field value to search for.
 	 * @return list of primary keys
+	 * @throws IOException if IO error occurs
 	 */
-	abstract long[] findPrimaryKeys(Field indexValue) throws IOException;
+	abstract Field[] findPrimaryKeys(Field indexValue) throws IOException;
 
 	/**
 	 * Get the number of primary keys which correspond to the specified indexed field
 	 * value.
-	 * @param field the field value to search for.
+	 * @param indexValue the field value to search for.
 	 * @return key count
+	 * @throws IOException if IO error occurs
 	 */
 	abstract int getKeyCount(Field indexValue) throws IOException;
 
@@ -185,19 +191,20 @@ abstract class IndexTable {
 	 * Add an entry to this index. Caller is responsible for ensuring that this
 	 * is not a duplicate entry.
 	 * @param record new record
-	 * @throws IOException
+	 * @throws IOException if IO error occurs
 	 */
-	abstract void addEntry(Record record) throws IOException;
+	abstract void addEntry(DBRecord record) throws IOException;
 
 	/**
 	 * Delete an entry from this index.
-	 * @param record deleted record
-	 * @throws IOException
+	 * @param oldRecord deleted record
+	 * @throws IOException if IO error occurs
 	 */
-	abstract void deleteEntry(Record record) throws IOException;
+	abstract void deleteEntry(DBRecord oldRecord) throws IOException;
 
 	/**
 	 * Delete all records within this index table.
+	 * @throws IOException if IO error occurs
 	 */
 	void deleteAll() throws IOException {
 		indexTable.deleteAll();
@@ -218,7 +225,7 @@ abstract class IndexTable {
 	 * @param before if true initial position is before minField, else position
 	 * is after endField
 	 * @return index field iterator.
-	 * @throws IOException
+	 * @throws IOException if IO error occurs
 	 */
 	abstract DBFieldIterator indexIterator(Field minField, Field maxField, boolean before)
 			throws IOException;
@@ -233,7 +240,7 @@ abstract class IndexTable {
 	 * @param before if true initial position is before startField value, else position
 	 * is after startField value
 	 * @return index field iterator.
-	 * @throws IOException
+	 * @throws IOException if IO error occurs
 	 */
 	abstract DBFieldIterator indexIterator(Field minField, Field maxField, Field startField,
 			boolean before) throws IOException;
@@ -243,9 +250,7 @@ abstract class IndexTable {
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
 	 */
-	DBLongIterator keyIterator() throws IOException {
-		return new PrimaryKeyIterator();
-	}
+	abstract DBFieldIterator keyIterator() throws IOException;
 
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
@@ -255,9 +260,7 @@ abstract class IndexTable {
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
 	 */
-	DBLongIterator keyIteratorBefore(Field startField) throws IOException {
-		return new PrimaryKeyIterator(startField, false);
-	}
+	abstract DBFieldIterator keyIteratorBefore(Field startField) throws IOException;
 
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
@@ -268,9 +271,7 @@ abstract class IndexTable {
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
 	 */
-	DBLongIterator keyIteratorAfter(Field startField) throws IOException {
-		return new PrimaryKeyIterator(startField, true);
-	}
+	abstract DBFieldIterator keyIteratorAfter(Field startField) throws IOException;
 
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
@@ -282,9 +283,8 @@ abstract class IndexTable {
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
 	 */
-	DBLongIterator keyIteratorBefore(Field startField, long primaryKey) throws IOException {
-		return new PrimaryKeyIterator(null, null, startField, primaryKey, false);
-	}
+	abstract DBFieldIterator keyIteratorBefore(Field startField, Field primaryKey)
+			throws IOException;
 
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
@@ -296,9 +296,8 @@ abstract class IndexTable {
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
 	 */
-	DBLongIterator keyIteratorAfter(Field startField, long primaryKey) throws IOException {
-		return new PrimaryKeyIterator(null, null, startField, primaryKey, true);
-	}
+	abstract DBFieldIterator keyIteratorAfter(Field startField, Field primaryKey)
+			throws IOException;
 
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
@@ -314,17 +313,8 @@ abstract class IndexTable {
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
 	 */
-	DBLongIterator keyIterator(Field minField, Field maxField, boolean before) throws IOException {
-
-		Field startField = before ? minField : maxField;
-
-		if (startField == null && !before) {
-
-		}
-
-		return new PrimaryKeyIterator(minField, maxField, before ? minField : maxField,
-			before ? Long.MIN_VALUE : Long.MAX_VALUE, !before);
-	}
+	abstract DBFieldIterator keyIterator(Field minField, Field maxField, boolean before)
+			throws IOException;
 
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
@@ -337,295 +327,7 @@ abstract class IndexTable {
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
 	 */
-	DBLongIterator keyIterator(Field minField, Field maxField, Field startField, boolean before)
-			throws IOException {
-		return new PrimaryKeyIterator(minField, maxField, startField,
-			before ? Long.MIN_VALUE : Long.MAX_VALUE, !before);
-	}
-
-	/**
-	 * Iterates over primary keys for a range of index field values.
-	 */
-	private class PrimaryKeyIterator implements DBLongIterator {
-
-		private RecordIterator indexIterator;
-		private int expectedModCount;
-
-		private int index;
-		private long indexPrimaryKey;
-		private IndexBuffer indexBuffer;
-		private boolean forward = true;
-		private boolean reverse = true;
-		private Field lastKey;
-
-		private boolean hasPrev = false;
-		private boolean hasNext = false;
-
-		/**
-		 * Construct a key iterator starting with the minimum secondary key.
-		 */
-		PrimaryKeyIterator() throws IOException {
-			expectedModCount = indexTable.modCount;
-			indexIterator = indexTable.iterator();
-		}
-
-		/**
-		 * Construct a key iterator.  The iterator is positioned immediately before 
-		 * the key associated with the first occurance of the startValue.
-		 * @param startValue indexed field value.
-		 * @param after if true the iterator is positioned immediately after
-		 * the last occurance of the specified startValue position.
-		 */
-		PrimaryKeyIterator(Field startValue, boolean after) throws IOException {
-			this(null, null, startValue, after ? Long.MAX_VALUE : Long.MIN_VALUE, after);
-		}
-
-		/**
-		 * Construct a key iterator.  The iterator is positioned immediately before 
-		 * or after the key associated with the specified startValue/primaryKey.
-		 * @param minValue minimum index value or null if no minimum
-		 * @param maxValue maximum index value or null if no maximum
-		 * @param startValue starting index value.
-		 * @param primaryKey starting primary key value.
-		 * @param after if true iterator is positioned immediately after 
-		 * the startValue/primaryKey,
-		 * otherwise immediately before.
-		 * @throws IOException
-		 */
-		PrimaryKeyIterator(Field minValue, Field maxValue, Field startValue, long primaryKey,
-				boolean after) throws IOException {
-			expectedModCount = indexTable.modCount;
-			indexIterator = indexTable.iterator(minValue, maxValue, startValue);
-
-			if (hasNext()) {
-				if (startValue.equals(indexBuffer.getIndexKey())) {
-					index = indexBuffer.getIndex(primaryKey);
-					if (index < 0) {
-						index = -index - 1;
-					}
-					else if (after) {
-						index++;
-					}
-					if (index == indexBuffer.keyCount) {
-						--index;
-						indexPrimaryKey = indexBuffer.getPrimaryKey(index);
-						hasNext = false;
-						hasPrev = true;
-					}
-				}
-			}
-		}
-
-		@Override
-		public boolean hasNext() throws IOException {
-			if (hasNext) {
-				return true;
-			}
-			synchronized (db) {
-
-				// Handle concurrent modification if necessary
-				// This is a slightly lazy approach which could miss keys added to the end of an index buffer
-				if (indexBuffer != null && index < (indexBuffer.keyCount - 1) &&
-					indexTable.modCount != expectedModCount) {
-
-					// refetch index buffer which may have changed
-					Field indexKey = indexBuffer.getIndexKey();
-					Record indexRecord;
-					if (indexKey.isVariableLength()) {
-						indexRecord = indexTable.getRecord(indexKey);
-					}
-					else {
-						indexRecord = indexTable.getRecord(indexKey.getLongValue());
-					}
-					if (indexRecord != null) {
-
-						// recover position within index buffer
-						indexBuffer = new IndexBuffer(indexKey, indexRecord.getBinaryData(0));
-						index = indexBuffer.getIndex(indexPrimaryKey + 1);
-						if (index < 0) {
-							index = -index - 1;
-							if (index == indexBuffer.keyCount) {
-								// next must be found in next index buffer below
-								indexBuffer = null;
-							}
-							else {
-								indexPrimaryKey = indexBuffer.getPrimaryKey(index);
-								hasNext = true;
-							}
-						}
-						else {
-							indexPrimaryKey = indexBuffer.getPrimaryKey(index);
-							hasNext = true;
-						}
-					}
-					else {
-						// index buffer no longer exists - will need to get next buffer below
-						indexBuffer = null;
-					}
-					hasPrev = false;
-				}
-
-				if (!hasNext) {
-					// Goto next index buffer
-					if ((indexBuffer == null || index >= (indexBuffer.keyCount) - 1)) {
-						// get next index buffer
-						Record indexRecord = indexIterator.next();
-						if (indexRecord != null) {
-							if (!forward) {
-								indexRecord = indexIterator.next();
-								forward = true;
-							}
-							reverse = false;
-							if (indexRecord != null) {
-								indexBuffer =
-									new IndexBuffer(fieldType.newField(indexRecord.getKeyField()),
-										indexRecord.getBinaryData(0));
-								index = 0;
-								indexPrimaryKey = indexBuffer.getPrimaryKey(index);
-								hasNext = true;
-								hasPrev = false;
-							}
-						}
-					}
-
-					// Step within current index buffer
-					else {
-						++index;
-						indexPrimaryKey = indexBuffer.getPrimaryKey(index);
-						hasNext = true;
-						hasPrev = false;
-					}
-				}
-				expectedModCount = indexTable.modCount;
-				return hasNext;
-			}
-		}
-
-		@Override
-		public boolean hasPrevious() throws IOException {
-			if (hasPrev) {
-				return true;
-			}
-			synchronized (db) {
-
-				// Handle concurrent modification if necessary
-				// This is a slightly lazy approach which could miss keys added to the beginning of an index buffer
-				if (indexBuffer != null && index > 0 && indexTable.modCount != expectedModCount) {
-
-					// refetch index buffer which may have changed
-					Field indexKey = indexBuffer.getIndexKey();
-					Record indexRecord; // refetch index buffer which may have changed
-					if (indexKey.isVariableLength()) {
-						indexRecord = indexTable.getRecord(indexKey);
-					}
-					else {
-						indexRecord = indexTable.getRecord(indexKey.getLongValue());
-					}
-					if (indexRecord != null) {
-
-						// recover position within index buffer
-						indexBuffer = new IndexBuffer(indexKey, indexRecord.getBinaryData(0));
-						index = indexBuffer.getIndex(indexPrimaryKey - 1);
-						if (index < 0) {
-							index = -index - 1;
-							if (index == 0) {
-								// previous must be found in previous index buffer below
-								indexBuffer = null;
-							}
-							else {
-								--index;
-								indexPrimaryKey = indexBuffer.getPrimaryKey(index);
-								hasPrev = true;
-							}
-						}
-						else {
-							indexPrimaryKey = indexBuffer.getPrimaryKey(index);
-							hasPrev = true;
-						}
-					}
-					else {
-						indexBuffer = null;
-					}
-					hasNext = false;
-				}
-
-				if (!hasPrev) {
-					// Goto previous index buffer
-					if ((indexBuffer == null || index == 0)) {
-						// get previous index buffer
-						Record indexRecord = indexIterator.previous();
-						if (indexRecord != null) {
-							if (!reverse) {
-								indexRecord = indexIterator.previous();
-								reverse = true;
-							}
-							forward = false;
-							if (indexRecord != null) {
-								indexBuffer =
-									new IndexBuffer(fieldType.newField(indexRecord.getKeyField()),
-										indexRecord.getBinaryData(0));
-								index = indexBuffer.keyCount - 1;
-								indexPrimaryKey = indexBuffer.getPrimaryKey(index);
-								hasNext = false;
-								hasPrev = true;
-							}
-						}
-					}
-
-					// Step within current index buffer
-					else {
-						--index;
-						indexPrimaryKey = indexBuffer.getPrimaryKey(index);
-						hasNext = false;
-						hasPrev = true;
-					}
-				}
-				expectedModCount = indexTable.modCount;
-				return hasPrev;
-			}
-		}
-
-		@Override
-		public long next() throws IOException {
-			if (hasNext || hasNext()) {
-				long key = indexBuffer.getPrimaryKey(index);
-				lastKey = new LongField(key);
-				hasNext = false;
-				hasPrev = true;
-				return key;
-			}
-			throw new NoSuchElementException();
-		}
-
-		@Override
-		public long previous() throws IOException {
-			if (hasPrev || hasPrevious()) {
-				long key = indexBuffer.getPrimaryKey(index);
-				lastKey = new LongField(key);
-				hasNext = true;
-				hasPrev = false;
-				return key;
-			}
-			throw new NoSuchElementException();
-		}
-
-		/**
-		 * WARNING: This could be slow since the index buffer must be read
-		 * after each record deletion.
-		 * @see db.DBLongIterator#delete()
-		 */
-		@Override
-		public boolean delete() throws IOException {
-			if (lastKey == null) {
-				return false;
-			}
-			synchronized (db) {
-				long key = lastKey.getLongValue();
-				primaryTable.deleteRecord(key);
-				lastKey = null;
-				return true;
-			}
-		}
-	}
+	abstract DBFieldIterator keyIterator(Field minField, Field maxField, Field startField,
+			boolean before) throws IOException;
 
 }

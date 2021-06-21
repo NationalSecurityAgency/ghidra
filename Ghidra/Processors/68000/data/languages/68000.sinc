@@ -417,7 +417,9 @@ eaw: "#"^d16 is mode=7 & regan=4; d16		{ export *[const]:2 d16; }
 eab: regdnb is mode=0 & regdnb			{ export regdnb; }
 eab: reganb is mode=1 & reganb			{ export reganb; }
 eab: (regan) is mode=2 & regan			{ export *:1 regan; }
+eab: (regan)+ is mode=3 & regan & regan=7	{ local tmp = regan; regan = regan + 2; export *:1 tmp; }
 eab: (regan)+ is mode=3 & regan			{ local tmp = regan; regan = regan + 1; export *:1 tmp; }
+eab: -(regan) is mode=4 & regan & regan=7	{ regan = regan - 2; export *:1 regan; }
 eab: -(regan) is mode=4 & regan			{ regan = regan - 1; export *:1 regan; }
 eab: (d16,regan) is mode=5 & regan; d16		{ local tmp  = regan + d16; export *:1 tmp; }
 eab: (extw) is mode=6 & regan; extw		[ pcmode=0; regtfan=regan; ] { build extw; export *:1 extw; }
@@ -488,11 +490,13 @@ e2w: (d32)".l" is savmod2=7 & regsan=1; d32	{ export *:2 d32; }
 e2w: "#"^d16 is savmod2=7 & regsan=4; d16		{ export *[const]:2 d16; }
 
   # size=byte
-  # NB- TODO- Manual says that if in predecrement or postincrement mode and the res is the SP, then must inc/dec by 2, not by 1
+  # NB- Manual says that if in predecrement or postincrement mode and the res is the SP, then must inc/dec by 2, not by 1
 e2b: regsdnb is savmod2=0 & regsdnb		{ export regsdnb; }
 e2b: regsanb is savmod2=1 & regsanb		{ export regsanb; }
 e2b: (regsan) is savmod2=2 & regsan		{ export *:1 regsan; }
+e2b: (regsan)+ is savmod2=3 & regsan & regsan=7	{ local tmp = regsan; regsan = regsan + 2; export *:1 tmp; }
 e2b: (regsan)+ is savmod2=3 & regsan		{ local tmp = regsan; regsan = regsan + 1; export *:1 tmp; }
+e2b: -(regsan) is savmod2=4 & regsan & regsan=7	{ regsan = regsan - 2; export *:1 regsan; }
 e2b: -(regsan) is savmod2=4 & regsan		{ regsan = regsan - 1; export *:1 regsan; }
 e2b: (d16,regsan) is savmod2=5 & regsan; d16	{ local tmp  = regsan + d16; export *:1 tmp; }
 e2b: (extw) is savmod2=6; extw			[ pcmode=0; eanum=1; ] { build extw; export *:1 extw; }
@@ -1747,7 +1751,7 @@ fcc: "sne"	is fcode=0x1e			{ tmp:1 = $(Z_FP); clearflags_fp(); export tmp; }
 
 @define FormatByteWordLongSimple "( ffmt=0 | ffmt=1 | ffmt=4 | ffmt=6 )"
 
-# The following constraint should be used when using fprec (ffmt=7 is not valid) 
+# The following constraint should be used when using fprec
 @define FPREC_BWLS "fprec & ( ffmt=0 | ffmt=1 | ffmt=4 | ffmt=6 )" # Byte,Word,Long,Simple only
 @define FPREC_DXP "fprec & ( ffmt=2 | ffmt=3 | ffmt=5)" # Double,Extended,Packed only
 @define FPREC_XP "fprec & ( ffmt=2 | ffmt=3)" # Extended,Packed only
@@ -1764,6 +1768,7 @@ fprec: "p"                  is ffmt=3              {}
 fprec: "w"                  is ffmt=4              {}
 fprec: "d"                  is ffmt=5              {}
 fprec: "b"                  is ffmt=6              {}
+fprec: "p"                  is ffmt=7              {}
 
 
 :fabs.^fprec e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_BWLS) & fopmode=0x18; e2l  

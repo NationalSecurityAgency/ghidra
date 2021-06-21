@@ -15,6 +15,11 @@
  */
 package ghidra.program.database.oldfunction;
 
+import java.io.IOException;
+import java.util.*;
+
+import db.Field;
+import db.DBRecord;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
@@ -27,11 +32,6 @@ import ghidra.util.Msg;
 import ghidra.util.StringUtilities;
 import ghidra.util.exception.InvalidInputException;
 
-import java.io.IOException;
-import java.util.*;
-
-import db.Record;
-
 /**
  *
  */
@@ -43,15 +43,15 @@ class OldFunctionDataDB {
 	private OldFunctionDBAdapter functionAdapter;
 	private OldRegisterVariableDBAdapter registerAdapter;
 
-	private Record functionRecord;
+	private DBRecord functionRecord;
 	private Address entryPoint;
 
 	private AddressSetView body;
 	private OldStackFrameDB frame;
 	private List<Parameter> regParams;
 
-	OldFunctionDataDB(OldFunctionManager functionManager, AddressMap addrMap,
-			Record functionRecord, AddressSetView body) {
+	OldFunctionDataDB(OldFunctionManager functionManager, AddressMap addrMap, DBRecord functionRecord,
+			AddressSetView body) {
 
 		this.functionManager = functionManager;
 		this.addrMap = addrMap;
@@ -200,9 +200,9 @@ class OldFunctionDataDB {
 			return;
 		regParams = new ArrayList<Parameter>();
 		try {
-			long[] keys = registerAdapter.getRegisterVariableKeys(functionRecord.getKey());
+			Field[] keys = registerAdapter.getRegisterVariableKeys(functionRecord.getKey());
 			for (int i = 0; i < keys.length; i++) {
-				Record varRec = registerAdapter.getRegisterVariableRecord(keys[i]);
+				DBRecord varRec = registerAdapter.getRegisterVariableRecord(keys[i].getLongValue());
 				regParams.add(getRegisterParameter(varRec, i));
 			}
 // TODO Does register variable list need to be sorted?
@@ -212,7 +212,7 @@ class OldFunctionDataDB {
 		}
 	}
 
-	private Parameter getRegisterParameter(Record record, int ordinal) {
+	private Parameter getRegisterParameter(DBRecord record, int ordinal) {
 		String name = record.getString(OldRegisterVariableDBAdapter.REG_VAR_NAME_COL);
 		long dataTypeId =
 			record.getLongValue(OldRegisterVariableDBAdapter.REG_VAR_DATA_TYPE_ID_COL);
@@ -266,10 +266,9 @@ class OldFunctionDataDB {
 		try {
 			Variable[] stackParams = frame.getParameters();
 			for (int i = 0; i < stackParams.length; i++) {
-				parms[ordinal++] =
-					new OldFunctionParameter(stackParams[i].getName(), ordinal,
-						stackParams[i].getDataType(), stackParams[i].getVariableStorage(), program,
-						SourceType.USER_DEFINED);
+				parms[ordinal++] = new OldFunctionParameter(stackParams[i].getName(), ordinal,
+					stackParams[i].getDataType(), stackParams[i].getVariableStorage(), program,
+					SourceType.USER_DEFINED);
 			}
 		}
 		catch (InvalidInputException e) {

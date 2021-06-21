@@ -68,6 +68,13 @@
           <B>Edit</B><IMG alt="" src="images/arrow.gif"> <B>Tool Options</B> menu and check
           or uncheck <I>Show Analysis Options</I>. When unchecked, the next time Auto Analysis is
           chosen, the options dialog is skipped, and analysis begins immediately.</P>
+          
+          
+          
+		<P><IMG alt="" src="images/tip.png"> Any analyzer that is not in its default enablement
+		state will show a yellowish color in the table of analyzer names.</P>
+          
+          
         </BLOCKQUOTE>
       </BLOCKQUOTE>
 
@@ -151,12 +158,48 @@
         <P><IMG alt="" src="images/note.png"> A separate dialog showing the <I>Analysis</I>
         options is also displayed after a new program has been imported, or the <B>Analysis<IMG
         alt="" src="images/arrow.gif"> Auto Analysis</B> menu item is chosen.</P>
-
+        
         <P><IMG alt="" src="images/warning.help.png"> <FONT color="red">Some analyzers only work
         on certain processors. For example, the MIPS Instruction Analyzer only works on MIPS
         processors. Their options will only show up if the currently open program can be analyzed
         with the analyzer.</FONT></P>
       </BLOCKQUOTE>
+      
+      <P style="background-color: #FFF0E0;">
+		<IMG SRC="../../shared/warning.png" />Note that multi-user merge does not currently support
+		merging of Program Options (including Analysis Options).  Options stored in shared Program database
+		following a conflicting checkin may not reflect option settings specified prior to checkin.
+	</P>
+       
+ 	<H3>Saved Options Configurations</H3>
+    <BLOCKQUOTE>
+		<P>The Options Configurations combo box at bottom of the analyzer enablement panel can be used to quickly
+		switch between sets of analyzer option values. The combo box will always contain two standard sets of options as well as any 
+		previously saved configurations. The two standard configurations are:
+		<UL>
+			<LI>Standard Defaults - This setting will put all the analyzer enablements and options to the original default values.</LI>
+			<LI>Current Program Options - This setting will put all the analyzer enablements and options to values as stored in 
+			the current program.</LI>
+		</UL>
+		
+		<P style="background-color: #FFF0E0;">
+		<IMG SRC="../../shared/warning.png" />Access to stored configurations is not currently
+		aupported across different versions of Ghidra.
+		</P>
+		
+    </BLOCKQUOTE>
+        
+   	<H3>Analysis Panel Buttons</H3>
+    <BLOCKQUOTE>
+		<UL>
+			<LI>Select All - Turns all analyzers on.</LI>
+			<LI>Deselect All - Turns all analyzers off.</LI>
+			<LI>Reset - Resets all the options to the currently selected configuration.</LI>
+			<LI>Save... - Saves the current analysis options to a named configuration.</LI>
+			<LI>Delete - Deletes the currently selected named configuration.</LI>
+		</UL>
+    </BLOCKQUOTE>
+  
     </BLOCKQUOTE>
 
     <H2><A name="Auto_Analyzers"></A>Auto Analyzers</H2>
@@ -379,43 +422,28 @@
 			<U><B>Use Deprecated Demangler</B></U> -
 				By default, GCC symbols will be demangled using the most up-to-date demangler
 				that Ghidra contains (<B>version 2.33.1</B> as of this writing).   Turning this 
-				option on will also invoke the now deprecated previous version of the demangler
-				(<B>version 2.24</B>) if the preferred demangler cannot demangle a given symbol.
+				option on will invoke the now deprecated version of the demangler (<B>version 2.24</B>).
 		</P>
 		<P>	
 				Support for older demangling styles was removed in <CODE>c++filt (v2.32)</CODE>.
 				Specifically, the following formats are no longer supported: 
-				<CODE>Lucid, ARM, HP, and EDG</CODE>.   To use these formats, you must enable
-				usage of the deprecated demangler, which is <B>version 2.24</B>.  Further, you 
-				may have to pass the required external demangler options using the Ghidra 
-				option below.
+				<CODE>Lucid, ARM, HP, GNU, and EDG</CODE>.   For these formats, the deprecated
+				demangler, which is <B>version 2.24</B>, will automatically be used.
 		</P>
-		<P>
-		
-			<U><B>Use External Demangler Options</B></U> - 
-			
-				This allows users to pass settings to the demangler. As an example, you can enter 
-				in this Ghidra option text field the following text to use the <CODE>rust</CODE>
-				format: <CODE>-s rust</CODE>.  This is not needed for
-				normal operation.   To see a full list of supported options, query each demangler
-				directly using the <CODE>--help</CODE> switch.
-			</P>
-			<P>
-				The GNU demanglers can be found at: 
-				<CODE CLASS="path">
-				&lt;GHIDRA_INSTALL_DIR&gt;/GPL/DemanglerGnu/build/os/&lt;OS&gt;/
-				</CODE><BR>				
-		</P>
-		
 				
 			<BLOCKQUOTE>
 				<P>
 				The available programs are:
 					<UL>
-						<LI><CODE>demangler_gnu_v2_33_1</CODE></LI>
-						<LI><CODE>demangler_gnu_v2_24</CODE></LI>
+						<LI><CODE CLASS="path">
+					&lt;GHIDRA_INSTALL_DIR&gt;/GPL/DemanglerGnu/os/&lt;OS&gt;/
+					</CODE><CODE>demangler_gnu_v2_33_1</CODE></LI>
+						<LI><CODE CLASS="path">
+					&lt;GHIDRA_INSTALL_DIR&gt;/GPL/DemanglerGnu/os/&lt;OS&gt;/
+					</CODE><CODE>demangler_gnu_v2_24</CODE></LI>
 					</UL>	
 				</P>
+
 				<P style="background-color: #FFF0E0;">
 					<IMG SRC="../../shared/warning.png" />When using an external GNU demangler, 
 					please understand the risks associated with using that version of the 
@@ -449,6 +477,18 @@
         <B>Byte</B>.</P>
 
         <P><U>Started By:</U> Importing or adding to a program, Auto Analyze command</P>
+      </BLOCKQUOTE>
+      <H3><A name="Format_String_Analyzer"></A>Format String Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>This analyzer detects variadic function calls in the bodies of each function that intersect 
+        the current selection. It then parses their format string arguments to infer the correct function 
+        call signatures. Currently, this analyzer only supports printf, scanf, and their variants (e.g., snprintf, fscanf). 
+        If the current selection is empty, it searches through every function within the binary. Once 
+        the signatures are inferred, they are overridden.</P>
+
+        <P><U>Started By:</U> Importing or adding to a program, Auto Analyze command</P>
+
       </BLOCKQUOTE>
 
       <H3><A name="Image"></A>Image Analyzer</H3>
@@ -613,3 +653,4 @@
      <BR>
   </BODY>
 </HTML>
+

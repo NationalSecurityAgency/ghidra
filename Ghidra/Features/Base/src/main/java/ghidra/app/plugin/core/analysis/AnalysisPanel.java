@@ -16,56 +16,78 @@
 package ghidra.app.plugin.core.analysis;
 
 import java.awt.*;
+import java.awt.event.ItemEvent;
 import java.beans.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.table.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.table.TableColumn;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FilenameUtils;
 
 import docking.help.Help;
 import docking.help.HelpService;
 import docking.options.editor.GenericOptionsComponent;
 import docking.widgets.OptionDialog;
+import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
-import docking.widgets.table.*;
+import docking.widgets.table.GTable;
 import ghidra.GhidraOptions;
 import ghidra.app.services.Analyzer;
+import ghidra.framework.Application;
+import ghidra.framework.GenericRunInfo;
 import ghidra.framework.options.*;
+import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.listing.Program;
-import ghidra.util.ColorUtils;
 import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
+import utilities.util.FileUtilities;
 
 class AnalysisPanel extends JPanel implements PropertyChangeListener {
+	// create an empty options to represent the defaults of the analyzers
+	private static final Options STANDARD_DEFAULT_OPTIONS =
+		new FileOptions("Standard Defaults");
+
+	private static final int CURRENT_PROGRAM_OPTIONS_CHOICE_INDEX = 0;
+	private static final int STANDARD_OPTIONS_CHOICE_INDEX = 1;
+
+	private static final String OPTIONS_FILE_EXTENSION = "options";
 
 	public static final String PROTOTYPE = " (Prototype)";
+	public final static int COLUMN_ANALYZER_IS_ENABLED = 0;
 
-	private final static int COLUMN_ANALYZER_IS_ENABLED = 0;
-	private final static int COLUMN_ANALYZER_NAME = 1;
+	static final String ANALYZER_OPTIONS_SAVE_DIR = "analyzer_options";
+
+	// preference which retains last used analyzer_options file name 
+	public static final String LAST_USED_OPTIONS_CONFIG = "LAST_USED_OPTIONS_CONFIG";
 
 	private List<Program> programs;
 	private PropertyChangeListener propertyChangeListener;
 	private Options analysisOptions;
+	private Options currentProgramOptions; // this will have all the non-default options from the program
+	private Options selectedOptions = STANDARD_DEFAULT_OPTIONS;
 
 	private JTable table;
-	private AbstractTableModel model;
+	private AnalysisEnablementTableModel model;
 	private JTextArea descriptionComponent;
 	private JPanel analyzerOptionsPanel;
 
 	private List<EditorState> editorList = new ArrayList<>();
-	private List<String> analyzerNames = new ArrayList<>();
-	private List<Boolean> analyzerEnablement = new ArrayList<>();
-	private Set<String> prototypeAnalyzers = new HashSet<>();
 	private Map<String, Component> analyzerToOptionsPanelMap = new HashMap<>();
 	private Map<String, List<Component>> analyzerManagedComponentsMap = new HashMap<>();
 	private EditorStateFactory editorStateFactory;
 
 	private JPanel noOptionsPanel;
+	private GhidraComboBox<Options> defaultOptionsCombo;
+	private JButton deleteButton;
 
 	/**
 	 * Constructor
@@ -86,6 +108,18 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	 * @param editorStateFactory the editor factory
 	 * @param propertyChangeListener subscriber for property change notifications
 	 */
+	AnalysisPanel(List<Program> programs, EditorStateFactory editorStateFactory) {
+		this(programs, editorStateFactory, e -> {});
+	}
+	
+
+	/**
+	 * Constructor
+	 *
+	 * @param programs list of programs that will be analyzed
+	 * @param editorStateFactory the editor factory
+	 * @param propertyChangeListener subscriber for property change notifications
+	 */
 	AnalysisPanel(List<Program> programs, EditorStateFactory editorStateFactory,
 			PropertyChangeListener propertyChangeListener) {
 
@@ -94,22 +128,34 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		if (CollectionUtils.isEmpty(programs)) {
 			throw new AssertException("Must provide a program to run analysis");
 		}
-
 		this.programs = programs;
 		this.propertyChangeListener = propertyChangeListener;
 		this.editorStateFactory = editorStateFactory;
 		analysisOptions = programs.get(0).getOptions(Program.ANALYSIS_PROPERTIES);
-
+		currentProgramOptions = getNonDefaultProgramOptions();
 		setName("Analysis Panel");
 		build();
 		load();
+		loadCurrentOptionsIntoEditors();
+	}
+
+	/**
+	 * Copies the the non-default options from the program analysis options into a new options object
+	 * @return the the non-default options from the program analysis options into a new options object
+	 */
+	private Options getNonDefaultProgramOptions() {
+		FileOptions options = new FileOptions("Current Program Options");
+		List<String> optionNames = analysisOptions.getOptionNames();
+		for (String optionName : optionNames) {
+			if (!analysisOptions.isDefaultValue(optionName)) {
+				options.putObject(optionName, analysisOptions.getObject(optionName, null));
+			}
+		}
+		return options;
 	}
 
 	private void load() {
 		editorList.clear();
-		analyzerNames.clear();
-		analyzerEnablement.clear();
-		prototypeAnalyzers.clear();
 		analyzerToOptionsPanelMap.clear();
 		analyzerManagedComponentsMap.clear();
 
@@ -118,16 +164,15 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		loadAnalyzers();
 		loadAnalyzerOptionsPanels();
 
-		model.fireTableDataChanged();
-
 		if (selectedAnalyzerRow >= 0) {
 			table.setRowSelectionInterval(selectedAnalyzerRow, selectedAnalyzerRow);
 		}
 	}
 
 	private void loadAnalyzers() {
-
-		AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager(programs.get(0));
+		List<AnalyzerEnablementState> states = new ArrayList<>();
+		Program program = programs.get(0);
+		AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager(program);
 
 		List<String> propertyNames = analysisOptions.getOptionNames();
 		Collections.sort(propertyNames, (o1, o2) -> o1.compareToIgnoreCase(o2));
@@ -140,34 +185,56 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 
 				Analyzer analyzer = manager.getAnalyzer(analyzerName);
 				if (analyzer != null) {
-					analyzerNames.add(analyzerName);
-					if (analyzer.isPrototype()) {
-						prototypeAnalyzers.add(analyzerName);
-					}
-					analyzerEnablement.add(analysisOptions.getBoolean(analyzerName, false));
+					boolean enabled = analysisOptions.getBoolean(analyzerName, false);
+					boolean defaultEnabled = analyzer.getDefaultEnablement(program);
+					states.add(new AnalyzerEnablementState(analyzer, enabled, defaultEnabled));
 				}
 			}
 		}
+		model.setData(states);
 	}
 
 	private void build() {
-		buildTableModel();
+		setLayout(new BorderLayout());
+		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		add(buildMainPanel(), BorderLayout.CENTER);
+	}
+
+	private JComponent buildMainPanel() {
 		buildTable();
-		configureTableColumns();
 		buildAnalyzerOptionsPanel();
 
 		JSplitPane splitpane =
 			new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, buildLeftPanel(), buildRightPanel());
 		splitpane.setBorder(null);
 
-		setLayout(new BorderLayout());
-		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		add(splitpane, BorderLayout.CENTER);
+		return splitpane;
 	}
 
 	private void buildAnalyzerOptionsPanel() {
 		analyzerOptionsPanel = new JPanel(new BorderLayout());
 		configureBorder(analyzerOptionsPanel, "Options");
+	}
+
+	private Component buildOptionsComboBoxPanel() {
+		JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+
+		Options[] defaultOptionsArray = getDefaultOptionsArray();
+		defaultOptionsCombo = new GhidraComboBox<>(defaultOptionsArray);
+		selectedOptions = findOptions(defaultOptionsArray, getLastUsedDefaultOptionsName());
+		defaultOptionsCombo.setSelectedItem(selectedOptions);
+		defaultOptionsCombo.addItemListener(this::analysisComboChanged);
+		Dimension preferredSize = defaultOptionsCombo.getPreferredSize();
+		defaultOptionsCombo.setPreferredSize(new Dimension(200, preferredSize.height));
+		panel.add(defaultOptionsCombo);
+
+		deleteButton = new JButton("Delete");
+		deleteButton.addActionListener(e -> deleteSelectedOptionsConfiguration());
+		deleteButton.setToolTipText("Deletes the currently selected user configuration");
+		panel.add(deleteButton);
+
+		panel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+		return panel;
 	}
 
 	private Component buildRightPanel() {
@@ -197,7 +264,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	}
 
 	private JPanel buildLeftPanel() {
-		JPanel buttonPanel = buildButtonPanel();
+		JPanel buttonPanel = buildControlPanel();
 
 		JScrollPane scrollPane = new JScrollPane(table);
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -211,18 +278,51 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		return panel;
 	}
 
+	private JPanel buildControlPanel() {
+		JPanel panel = new JPanel(new BorderLayout());
+
+		panel.add(buildButtonPanel(), BorderLayout.NORTH);
+		panel.add(buildOptionsComboBoxPanel(), BorderLayout.SOUTH);
+
+		return panel;
+	}
+
 	private JPanel buildButtonPanel() {
 		JButton selectAllButton = new JButton("Select All");
 		selectAllButton.addActionListener(e -> selectAll());
 		JButton deselectAllButton = new JButton("Deselect All");
 		deselectAllButton.addActionListener(e -> deselectAll());
-		JButton restoreDefaultsButton = new JButton("Restore Defaults");
-		restoreDefaultsButton.addActionListener(e -> restoreDefaults());
+		JButton resetButton = new JButton("Reset");
+		resetButton.setToolTipText("Resets the editors to the selected options configuration");
+		resetButton.addActionListener(e -> loadCurrentOptionsIntoEditors());
+		JButton saveButton = new JButton("Save...");
+		saveButton.setToolTipText("Saves the current editor settings to a named configuration");
+		saveButton.addActionListener(e -> saveCurrentOptionsConfiguration());
 		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		buttonPanel.add(selectAllButton);
 		buttonPanel.add(deselectAllButton);
-		buttonPanel.add(restoreDefaultsButton);
+		buttonPanel.add(resetButton);
+		buttonPanel.add(saveButton);
 		return buttonPanel;
+	}
+
+	private void deleteSelectedOptionsConfiguration() {
+		if (!isUserConfiguration(selectedOptions)) {
+			// can only delete user configurations
+			return;
+		}
+		String configurationName = selectedOptions.getName();
+		int result = OptionDialog.showYesNoDialog(this, "Delete Configuration?",
+			"Are you sure you want to delete options configuration \"" + configurationName + "\"?");
+		if (result != OptionDialog.YES_OPTION) {
+			return;
+		}
+
+		File configurationFile = getOptionsSaveFile(configurationName);
+		configurationFile.delete();
+		selectedOptions = currentProgramOptions;
+		reloadOptionsCombo(currentProgramOptions);
+		loadCurrentOptionsIntoEditors();
 	}
 
 	private void selectAll() {
@@ -239,184 +339,130 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		}
 	}
 
-	private void restoreDefaults() {
-		int answer = OptionDialog.showYesNoDialog(this, "Restore Default Analysis Options",
-			"Do you really want to restore the analysis options to the default values?");
-		if (answer == OptionDialog.YES_OPTION) {
-			AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager(programs.get(0));
-			manager.restoreDefaultOptions();
-			editorStateFactory.clearAll();
-			load();
+	private void saveCurrentOptionsConfiguration() {
+		String defaultSaveName = "";
+		if (selectedOptions != STANDARD_DEFAULT_OPTIONS &&
+			selectedOptions != currentProgramOptions) {
+			defaultSaveName = selectedOptions.getName();
+		}
+
+		String saveName = OptionDialog.showEditableInputChoiceDialog(this, "Save Configuration",
+			"Options Configuration Name", getSavedChoices(), defaultSaveName,
+			OptionDialog.QUESTION_MESSAGE);
+		if (saveName == null) {
+			return;
+		}
+		saveName = saveName.trim();
+		if (saveName.length() == 0) {
+			return;
+		}
+		File saveFile = getOptionsSaveFile(saveName);
+		if (saveFile.exists() && OptionDialog.CANCEL_OPTION ==
+			OptionDialog.showOptionDialogWithCancelAsDefaultButton(this, "Overwrite Configuration",
+					"Overwrite existing configuration file: " + saveName + " ?", "Overwrite")) {
+			return;
+		}
+		FileOptions saved = saveCurrentOptions();
+		try {
+			saved.save(saveFile);
+			reloadOptionsCombo(saved);
+		}
+		catch (IOException e) {
+			Msg.error(this, "Error saving default options", e);
 		}
 	}
 
-	private void buildTableModel() {
-		model = new AbstractTableModel() {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public Object getValueAt(int rowIndex, int columnIndex) {
-				switch (columnIndex) {
-					case COLUMN_ANALYZER_IS_ENABLED: {
-						return analyzerEnablement.get(rowIndex);
-					}
-					case COLUMN_ANALYZER_NAME: {
-						String analyzerName = analyzerNames.get(rowIndex);
-						if (prototypeAnalyzers.contains(analyzerName)) {
-							return analyzerName + PROTOTYPE;
-						}
-						return analyzerName;
-					}
-				}
-				return null;
-			}
-
-			@Override
-			public int getRowCount() {
-				return analyzerEnablement.size();
-			}
-
-			@Override
-			public int getColumnCount() {
-				return 2;
-			}
-
-			@Override
-			public String getColumnName(int columnIndex) {
-				switch (columnIndex) {
-					case COLUMN_ANALYZER_IS_ENABLED:
-						return "Enabled";
-					case COLUMN_ANALYZER_NAME:
-						return "Analyzer Name";
-				}
-				return super.getColumnName(columnIndex);
-			}
-
-			@Override
-			public Class<?> getColumnClass(int columnIndex) {
-				switch (columnIndex) {
-					case COLUMN_ANALYZER_IS_ENABLED:
-						return Boolean.class;
-					case COLUMN_ANALYZER_NAME:
-						return String.class;
-				}
-				return super.getColumnClass(columnIndex);
-			}
-
-			@Override
-			public boolean isCellEditable(int rowIndex, int columnIndex) {
-				return columnIndex == COLUMN_ANALYZER_IS_ENABLED;
-			}
-
-			@Override
-			public void setValueAt(Object value, int rowIndex, int columnIndex) {
-				if (columnIndex == COLUMN_ANALYZER_IS_ENABLED) {
-					Boolean enabled = (Boolean) value;
-					analyzerEnablement.set(rowIndex, enabled);
-					String analyzerName = analyzerNames.get(rowIndex);
-					setAnalyzerEnabled(analyzerName, enabled);
-					fireTableRowsUpdated(rowIndex, rowIndex);
-				}
-			}
-		};
-	}
-
-	private void buildTable() {
-		table = new GTable(model);
-		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		table.getSelectionModel().addListSelectionListener(e -> {
-			if (e.getValueIsAdjusting()) {
-				return;
-			}
-
-			ListSelectionModel lsm = (ListSelectionModel) e.getSource();
-			int selectedRow = lsm.getMinSelectionIndex();
-			if (selectedRow == -1) {
-				analyzerOptionsPanel.removeAll();
-				analyzerOptionsPanel.validate();
-				analyzerOptionsPanel.repaint();
-				descriptionComponent.setText("");
-				return;
-			}
-
-			String analyzerName = analyzerNames.get(selectedRow);
-			setAnalyzerSelected(analyzerName);
-		});
-	}
-
-	private void setAnalyzerSelected(String analyzerName) {
-		Component component = analyzerToOptionsPanelMap.get(analyzerName);
-		if (component == null) {
-			component = noOptionsPanel;
-		}
-
-		analyzerOptionsPanel.removeAll();
-		analyzerOptionsPanel.add(component, BorderLayout.CENTER);
-		analyzerOptionsPanel.validate();
-		analyzerOptionsPanel.repaint();
-
-		analyzerOptionsPanel.getParent().validate();
-
-		String description = analysisOptions.getDescription(analyzerName);
-		descriptionComponent.setText(description);
-		descriptionComponent.setCaretPosition(0);
-	}
-
-	private void configureTableColumns() {
-		TableColumnModel columnModel = table.getColumnModel();
-		for (int i = 0; i < columnModel.getColumnCount(); ++i) {
-			TableColumn column = columnModel.getColumn(i);
-			int modelIndex = column.getModelIndex();
-			switch (modelIndex) {
-				case COLUMN_ANALYZER_IS_ENABLED: {
-					configureTableColumn_IsEnabled(column, 75);
-					break;
-				}
-				case COLUMN_ANALYZER_NAME: {
-					configureTableColumn_Name(column);
-					break;
-				}
+	private FileOptions saveCurrentOptions() {
+		FileOptions saveTo = new FileOptions("");
+		List<AnalyzerEnablementState> analyzerStates = model.getModelData();
+		for (AnalyzerEnablementState analyzerState : analyzerStates) {
+			String analyzerName = analyzerState.getName();
+			boolean enabled = analyzerState.isEnabled();
+			if (!Objects.equals(Boolean.valueOf(enabled),
+				analysisOptions.getDefaultValue(analyzerName))) {
+				saveTo.setBoolean(analyzerName, enabled);
 			}
 		}
-	}
 
-	private static class AnalyzerNameTableCellRenderer extends GTableCellRenderer {
-		private static final long serialVersionUID = 1L;
-
-		@Override
-		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-
-			Component component = super.getTableCellRendererComponent(data);
-
-			Object value = data.getValue();
-
-			// Null check is necessary here; Java doesn't guarantee that the cell contents
-			// passed to this method are valid.
-			if (value == null) {
-				return component;
-			}
-
-			String analyzerName = (String) value;
-
-			if (analyzerName.endsWith(PROTOTYPE)) {
-				component.setForeground(
-					ColorUtils.deriveForeground(component.getBackground(), ColorUtils.HUE_RED));
-			}
-
-			return component;
+		for (EditorState editorState : editorList) {
+			editorState.applyNonDefaults(saveTo);
 		}
+		return saveTo;
 	}
 
-	private void configureTableColumn_Name(TableColumn column) {
-		column.setCellRenderer(new AnalyzerNameTableCellRenderer());
+	private void loadCurrentOptionsIntoEditors() {
+		List<AnalyzerEnablementState> analyzerStates = model.getModelData();
+		for (AnalyzerEnablementState analyzerState : analyzerStates) {
+			String analyzerName = analyzerState.getName();
+			Object defaultObject = analysisOptions.getDefaultValue(analyzerName);
+			boolean defaultValue =
+				(defaultObject instanceof Boolean) ? (Boolean) defaultObject : false;
+			boolean newValue = selectedOptions.getBoolean(analyzerName, defaultValue);
+			analyzerState.setEnabled(newValue);
+			setAnalyzerEnabled(analyzerName, newValue, false);
+			model.fireTableRowsUpdated(0, model.getRowCount() - 1);
+		}
+
+		for (EditorState editorState : editorList) {
+			editorState.loadFrom(selectedOptions);
+		}
+		updateDeleteButton();
 	}
 
-	private void configureTableColumn_IsEnabled(TableColumn column, int width) {
-		column.setPreferredWidth(width);
+	private void reloadOptionsCombo(Options newDefaultOptions) {
+		Options[] defaultOptionsArray = getDefaultOptionsArray();
+		defaultOptionsCombo.setModel(new DefaultComboBoxModel<Options>(defaultOptionsArray));
+		Options selected = findOptions(defaultOptionsArray, newDefaultOptions.getName());
+		defaultOptionsCombo.setSelectedItem(selected);
+	}
+
+	private Options findOptions(Options[] defaultOptionsArray, String name) {
+		for (Options fileOptions : defaultOptionsArray) {
+			if (fileOptions.getName().equals(name)) {
+				return fileOptions;
+			}
+		}
+		return STANDARD_DEFAULT_OPTIONS;
+	}
+
+	private void configureEnabledColumnWidth(int width) {
+		TableColumn column = table.getColumnModel().getColumn(COLUMN_ANALYZER_IS_ENABLED);
+		column.setWidth(width);
 		column.setMinWidth(width);
 		column.setMaxWidth(width);
 		column.setResizable(false);
-		column.setCellRenderer(new GBooleanCellRenderer());
+	}
+
+	private void buildTable() {
+		model = new AnalysisEnablementTableModel(this, Collections.emptyList());
+		table = new GTable(model);
+		configureEnabledColumnWidth(60);
+		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		table.getSelectionModel().addListSelectionListener(this::selectedAnalyzerChanged);
+	}
+
+	private void selectedAnalyzerChanged(ListSelectionEvent event) {
+		if (event.getValueIsAdjusting()) {
+			return;
+		}
+		analyzerOptionsPanel.removeAll();
+		descriptionComponent.setText("");
+
+		int selectedRow = table.getSelectedRow();
+		if (selectedRow >= 0) {
+			String analyzerName = model.getModelData().get(selectedRow).getName();
+			Component component = analyzerToOptionsPanelMap.get(analyzerName);
+			if (component == null) {
+				component = noOptionsPanel;
+			}
+			analyzerOptionsPanel.add(component, BorderLayout.CENTER);
+			descriptionComponent.setText(analysisOptions.getDescription(analyzerName));
+		}
+
+		analyzerOptionsPanel.validate();
+		analyzerOptionsPanel.repaint();
+		analyzerOptionsPanel.getParent().validate();
+		descriptionComponent.setCaretPosition(0);
 	}
 
 	/**
@@ -431,7 +477,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		component.setBorder(compoundBorder);
 	}
 
-	private void setAnalyzerEnabled(String analyzerName, boolean enabled) {
+	void setAnalyzerEnabled(String analyzerName, boolean enabled, boolean fireEvent) {
 		List<Component> list = analyzerManagedComponentsMap.get(analyzerName);
 		if (list != null) {
 			Iterator<Component> iterator = list.iterator();
@@ -440,22 +486,25 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 				next.setEnabled(enabled);
 			}
 		}
-		propertyChange(null);
+		if (fireEvent) {
+			propertyChange(null);
+		}
 	}
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-		if (checkForDifferences()) {
+		if (checkForDifferencesWithProgram()) {
 			propertyChangeListener.propertyChange(
 				new PropertyChangeEvent(this, GhidraOptions.APPLY_ENABLED, null, Boolean.TRUE));
 		}
 	}
 
-	private boolean checkForDifferences() {
+	private boolean checkForDifferencesWithProgram() {
+		List<AnalyzerEnablementState> analyzerStates = model.getModelData();
 		boolean changes = false;
-		for (int i = 0; i < analyzerNames.size(); ++i) {
-			String analyzerName = analyzerNames.get(i);
-			boolean currEnabled = analyzerEnablement.get(i);
+		for (AnalyzerEnablementState analyzerState : analyzerStates) {
+			String analyzerName = analyzerState.getName();
+			boolean currEnabled = analyzerState.isEnabled();
 			boolean origEnabled = analysisOptions.getBoolean(analyzerName, false);
 			if (currEnabled != origEnabled) {
 				changes = true;
@@ -482,26 +531,56 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	 * analyzed.
 	 */
 	void applyChanges() {
-
-		for (int i = 0; i < analyzerNames.size(); ++i) {
-			String analyzerName = analyzerNames.get(i);
-			boolean enabled = analyzerEnablement.get(i);
-
-			int id = programs.get(0).startTransaction("setting analysis options");
-			boolean commit = false;
-			try {
+		int id = programs.get(0).startTransaction("Setting Analysis Options");
+		boolean commit = false;
+		try {
+			List<AnalyzerEnablementState> analyzerStates = model.getModelData();
+			for (AnalyzerEnablementState analyzerState : analyzerStates) {
+				String analyzerName = analyzerState.getName();
+				boolean enabled = analyzerState.isEnabled();
 				analysisOptions.setBoolean(analyzerName, enabled);
 				commit = true;
 			}
-			finally {
-				programs.get(0).endTransaction(id, commit);
+			for (EditorState info : editorList) {
+				info.applyValue();
 			}
-
-			updateOptionForAllPrograms(analyzerName, enabled);
+		}
+		finally {
+			programs.get(0).endTransaction(id, commit);
 		}
 
-		for (EditorState info : editorList) {
-			info.applyValue();
+		copyOptionsToAllPrograms();
+		currentProgramOptions = getNonDefaultProgramOptions();
+		reloadOptionsCombo(currentProgramOptions);
+	}
+
+	private void copyOptionsToAllPrograms() {
+		for (int i = 1; i < programs.size(); i++) {
+			Program program = programs.get(i);
+
+			int id = program.startTransaction("Setting Analysis Options");
+			boolean commit = false;
+			try {
+				copyOptionsTo(program);
+				commit = true;
+			}
+			finally {
+				program.endTransaction(id, commit);
+			}
+		}
+	}
+
+	private void copyOptionsTo(Program program) {
+		Options destinationOptions = program.getOptions(Program.ANALYSIS_PROPERTIES);
+
+		// first remove all options in destination
+		for (String optionName : destinationOptions.getOptionNames()) {
+			destinationOptions.removeOption(optionName);
+		}
+
+		// now copy all the options in the source
+		for (String optionName : analysisOptions.getOptionNames()) {
+			destinationOptions.putObject(optionName, analysisOptions.getObject(optionName, null));
 		}
 	}
 
@@ -555,7 +634,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			if (value instanceof Boolean) {
 				enabled = (Boolean) value;
 			}
-			setAnalyzerEnabled(analyzerName, enabled);
+			setAnalyzerEnabled(analyzerName, enabled, false);
 		}
 	}
 
@@ -617,4 +696,141 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			}
 		}
 	}
+
+	private String getLastUsedDefaultOptionsName() {
+		// if the program has non-default options or has been analyzed use its 
+		// current settings initially
+		if (isAnalyzed() || !currentProgramOptions.getOptionNames().isEmpty()) {
+			return currentProgramOptions.getName();
+		}
+		// Otherwise, use the last used analysis options configuration
+		return Preferences.getProperty(LAST_USED_OPTIONS_CONFIG,
+			STANDARD_DEFAULT_OPTIONS.getName());
+	}
+
+	private boolean isAnalyzed() {
+		Options options = programs.get(0).getOptions(Program.PROGRAM_INFO);
+		return options.getBoolean(Program.ANALYZED, false);
+	}
+
+	private Options[] getDefaultOptionsArray() {
+		List<Options> savedDefaultsList = getSavedOptionsObjects();
+		Options[] optionsArray = new FileOptions[savedDefaultsList.size() + 2]; // 2 standard configurations always present
+		optionsArray[CURRENT_PROGRAM_OPTIONS_CHOICE_INDEX] = currentProgramOptions;
+		optionsArray[STANDARD_OPTIONS_CHOICE_INDEX] = STANDARD_DEFAULT_OPTIONS;
+		for (int i = 0; i < savedDefaultsList.size(); i++) {
+			optionsArray[i + 2] = savedDefaultsList.get(i);
+		}
+		return optionsArray;
+	}
+
+	private String[] getSavedChoices() {
+		Options[] defaultOptionsArray = getDefaultOptionsArray();
+		List<String> list = new ArrayList<>();
+		for (int i = 2; i < defaultOptionsArray.length; i++) {
+			list.add(defaultOptionsArray[i].getName());
+		}
+		String[] a = new String[list.size()];
+		list.toArray(a);
+		return a;
+	}
+
+	private File getOptionsSaveFile(String saveName) {
+		File userSettingsDirectory = Application.getUserSettingsDirectory();
+		File optionsDir = new File(userSettingsDirectory, ANALYZER_OPTIONS_SAVE_DIR);
+		FileUtilities.mkdirs(optionsDir);
+		return new File(optionsDir, saveName + "." + OPTIONS_FILE_EXTENSION);
+	}
+
+	private List<Options> getSavedOptionsObjects() {
+		File userSettingsDirectory = Application.getUserSettingsDirectory();
+		File optionsDir = new File(userSettingsDirectory, ANALYZER_OPTIONS_SAVE_DIR);
+		if (!optionsDir.isDirectory()) {
+			// new installation, copy any old saved analysis options files to current
+			migrateOptionsFromPreviousRevision(optionsDir);
+		}
+		return readSavedOptions(optionsDir);
+	}
+
+	private List<Options> readSavedOptions(File optionsDir) {
+		List<Options> list = new ArrayList<>();
+		File[] listFiles = optionsDir.listFiles();
+		Arrays.sort(listFiles);
+		for (File file : listFiles) {
+			if (OPTIONS_FILE_EXTENSION.equals(FilenameUtils.getExtension(file.getName()))) {
+				FileOptions fileOptions;
+				try {
+					fileOptions = new FileOptions(file);
+					list.add(fileOptions);
+				}
+				catch (IOException e) {
+					Msg.error(this, "Error reading saved analysis options", e);
+				}
+			}
+		}
+
+		return list;
+	}
+
+	private void migrateOptionsFromPreviousRevision(File optionsDir) {
+		FileUtilities.mkdirs(optionsDir);
+		File previous = getMostRecentApplicationSettingsDirWithSavedOptions();
+		if (previous == null) {
+			return;
+		}
+		List<Options> readSavedOptions = readSavedOptions(previous);
+		for (Options options : readSavedOptions) {
+			FileOptions fileOptions = (FileOptions) options;
+			String name = fileOptions.getName();
+			try {
+				fileOptions.save(getOptionsSaveFile(name));
+			} catch (IOException e) {
+				Msg.error(this, "Error copying analysis options from previous Ghidra install", e);
+			}
+		}
+	}
+	private File getMostRecentApplicationSettingsDirWithSavedOptions() {
+		List<File> ghidraUserDirsByTime = GenericRunInfo.getPreviousApplicationSettingsDirsByTime();
+		if (ghidraUserDirsByTime.size() == 0) {
+			return null;
+		}
+
+		// get the tools from the most recent projects first
+		for (File ghidraUserDir : ghidraUserDirsByTime) {
+			File possible = new File(ghidraUserDir, ANALYZER_OPTIONS_SAVE_DIR);
+			if (possible.exists()) {
+				return possible;
+			}
+		}
+		return null;
+	}
+
+
+	private boolean isUserConfiguration(Options options) {
+		if (options == STANDARD_DEFAULT_OPTIONS ||
+			options == currentProgramOptions) {
+			// these two are not user configurations.
+			return false;
+		}
+		return true;
+
+	}
+
+	private void analysisComboChanged(ItemEvent e) {
+		if (e.getStateChange() == ItemEvent.SELECTED) {
+			selectedOptions = (FileOptions) defaultOptionsCombo.getSelectedItem();
+			updateDeleteButton();
+			loadCurrentOptionsIntoEditors();
+			// save off preference (unless it is the current program options, then don't save it)
+			if (selectedOptions != currentProgramOptions) {
+				Preferences.setProperty(LAST_USED_OPTIONS_CONFIG,
+					selectedOptions.getName());
+			}
+		}
+	}
+
+	private void updateDeleteButton() {
+		deleteButton.setEnabled(isUserConfiguration(selectedOptions));
+	}
 }
+

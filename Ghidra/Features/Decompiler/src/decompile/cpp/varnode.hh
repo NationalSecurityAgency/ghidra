@@ -310,6 +310,7 @@ public:
   bool copyShadow(const Varnode *op2) const; ///< Are \b this and \b op2 copied from the same source?
   void saveXml(ostream &s) const; ///< Save a description of \b this as an XML tag
   static bool comparePointers(const Varnode *a,const Varnode *b) { return (*a < *b); }	///< Compare Varnodes as pointers
+  static void printRaw(ostream &s,const Varnode *vn);	///< Print raw info about a Varnode to stream
   //  static Varnode *restoreXml(const Element *el,Funcdata &fd,bool coderef);
 };
 
@@ -373,6 +374,13 @@ public:
 #ifdef VARBANK_DEBUG
   void verifyIntegrity(void) const;		///< Verify the integrity of the container
 #endif
+};
+
+/// \brief Node for a forward traversal of a Varnode expression
+struct TraverseNode {
+  const Varnode *vn;		///< Varnode at the point of traversal
+  uint4 flags;			///< Flags associated with the node
+  TraverseNode(const Varnode *v,uint4 f) { vn = v; flags = f; }		///< Constructor
 };
 
 bool contiguous_test(Varnode *vn1,Varnode *vn2);	///< Test if Varnodes are pieces of a whole

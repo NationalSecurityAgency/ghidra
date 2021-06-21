@@ -83,13 +83,20 @@ public class SystemUtilities {
 		Class<?> myClass = SystemUtilities.class;
 		ClassLoader loader = myClass.getClassLoader();
 		if (loader == null) {
-			// Loaded with the bootstrap class loader...definitely dev mode.
-			// The Eclipse GhidraDevPlugin does this when it's running from dev mode.
-			return true;
+			// Can happen when called from the Eclipse GhidraDev plugin 
+			return false;
 		}
 		String name = myClass.getName().replace('.', '/') + ".class";
-		URL url = loader.getResource(name);
-		return !"jar".equals(url.getProtocol());
+		String protocol = loader.getResource(name).getProtocol();
+		switch(protocol) {
+			case "file": // Source repository mode (class files)
+				return true;
+			case "jar": // Release mode (jar files)
+			case "bundleresource": // Eclipse GhidraDev mode
+				return false;
+			default: // Unexpected protocol...assume a development mode
+				return true;
+		}
 	}
 
 	/**

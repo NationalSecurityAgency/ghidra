@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JButton;
-import javax.swing.SwingUtilities;
+import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
@@ -52,7 +52,6 @@ import ghidra.util.exception.DuplicateNameException;
  */
 public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTest {
 	private static final String PROGRAM_FILENAME = "notepad";
-	private static final int TASK_TIMEOUT = 2000;
 
 	private TestEnv env;
 	private PluginTool tool;
@@ -63,10 +62,6 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 	private DataTypeArchiveGTree tree;
 	private ArchiveRootNode archiveRootNode;
 	private ArchiveNode programNode;
-
-	public DataTypeCopyMoveDragTest() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -136,7 +131,7 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		});
 
 		// this handles the save changes dialog and potential analysis dialogs
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 
 		env.release(program);
 		env.dispose();
@@ -296,10 +291,20 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		CategoryNode miscNode = (CategoryNode) programNode.getChild("MISC");
 		expandNode(miscNode);
 
+		TreePath structureNodePath = structureNode.getTreePath();
+		TreePath category3Path = category3Node.getTreePath();
+		TreePath miscPath = miscNode.getTreePath();
+
 		// copy/drag ArrayStruct to MISC
 		copyNodeToNode(structureNode, miscNode);
 
-		DataTypeNode node = (DataTypeNode) miscNode.getChild(structName + DataType.CONFLICT_SUFFIX);
+		structureNode = (DataTypeNode) tree.getViewNodeForPath(structureNodePath);
+		category3Node = (CategoryNode) tree.getViewNodeForPath(category3Path);
+		miscNode = (CategoryNode) tree.getViewNodeForPath(miscPath);
+
+		CategoryNode parent = miscNode;
+		DataTypeNode node =
+			waitFor(() -> (DataTypeNode) parent.getChild(structName + DataType.CONFLICT_SUFFIX));
 		assertNotNull(node);
 		assertEquals(category3Node, structureNode.getParent());
 	}
@@ -319,8 +324,16 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		CategoryNode miscNode = (CategoryNode) programNode.getChild("MISC");
 		expandNode(miscNode);
 
+		TreePath structureNodePath = structureNode.getTreePath();
+		TreePath category3Path = category3Node.getTreePath();
+		TreePath miscPath = miscNode.getTreePath();
+
 		// copy/drag ArrayStruct to MISC
 		copyNodeToNode(structureNode, miscNode);
+
+		structureNode = (DataTypeNode) tree.getViewNodeForPath(structureNodePath);
+		category3Node = (CategoryNode) tree.getViewNodeForPath(category3Path);
+		miscNode = (CategoryNode) tree.getViewNodeForPath(miscPath);
 
 		DataTypeNode node = (DataTypeNode) miscNode.getChild(structName);
 		assertNotNull(node);
@@ -496,18 +509,25 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		CategoryNode miscNode = (CategoryNode) programNode.getChild("MISC");
 		expandNode(miscNode);
 
+		TreePath structureNodePath = structureNode.getTreePath();
+		TreePath category3Path = category3Node.getTreePath();
+		TreePath miscPath = miscNode.getTreePath();
+
 		// drag/move ArrayStruct to MISC/ArrayStruct
 		DataTypeNode miscStructureNode = (DataTypeNode) miscNode.getChild("ArrayStruct");
 		dragNodeToNode(structureNode, miscStructureNode);
 
 		pressButtonOnOptionDialog("No");
 
+		structureNode = (DataTypeNode) tree.getViewNodeForPath(structureNodePath);
 		assertNotNull(structureNode.getParent());
+
+		category3Node = (CategoryNode) tree.getViewNodeForPath(category3Path);
 		assertNotNull(category3Node.getChild("ArrayStruct"));
 
+		miscNode = (CategoryNode) tree.getViewNodeForPath(miscPath);
 		DataTypeNode node = (DataTypeNode) miscNode.getChild("ArrayStruct");
 		assertTrue(!structure.isEquivalent(node.getDataType()));
-
 	}
 
 	@Test
@@ -563,13 +583,21 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		DataTypeNode miscStructureNode = (DataTypeNode) miscNode.getChild("ArrayStruct");
 		DataType origDt = miscStructureNode.getDataType();
 
+		TreePath structureNodePath = structureNode.getTreePath();
+		TreePath category3Path = category3Node.getTreePath();
+		TreePath miscPath = miscNode.getTreePath();
+
 		copyNodeToNode(structureNode, miscStructureNode);
 
 		pressButtonOnOptionDialog("No");
 
+		structureNode = (DataTypeNode) tree.getViewNodeForPath(structureNodePath);
 		assertNotNull(structureNode.getParent());
+
+		category3Node = (CategoryNode) tree.getViewNodeForPath(category3Path);
 		assertNotNull(category3Node.getChild("ArrayStruct"));
 
+		miscNode = (CategoryNode) tree.getViewNodeForPath(miscPath);
 		DataTypeNode node = (DataTypeNode) miscNode.getChild(structName);
 		assertEquals(origDt, node.getDataType());
 	}
@@ -593,13 +621,21 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		DataTypeNode miscStructureNode = (DataTypeNode) miscNode.getChild("ArrayStruct");
 		DataType miscStructure = miscStructureNode.getDataType();
 
+		TreePath structureNodePath = structureNode.getTreePath();
+		TreePath category3Path = category3Node.getTreePath();
+		TreePath miscPath = miscNode.getTreePath();
+
 		copyNodeToNode(structureNode, miscStructureNode);
 
 		pressButtonOnOptionDialog("Yes");
 
+		structureNode = (DataTypeNode) tree.getViewNodeForPath(structureNodePath);
 		assertNotNull(structureNode.getParent());
+
+		category3Node = (CategoryNode) tree.getViewNodeForPath(category3Path);
 		assertNotNull(category3Node.getChild(structName));
 
+		miscNode = (CategoryNode) tree.getViewNodeForPath(miscPath);
 		DataTypeNode node = (DataTypeNode) miscNode.getChild(structName);
 		assertTrue(structure.isEquivalent(node.getDataType()));
 
@@ -678,85 +714,11 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		return miscNode;
 	}
 
-//	private void renameConflict() throws Exception {
-//		// test the conflict handler for the 3 options
-//		// should get a dialog that asks what to do with the conflict:
-//		// (1) rename new data type to struct_1.conflict,
-//		// (2) replace the existing data type, or
-//		// (3) use the existing data type (cancel the drop)
-//		ConflictDialog dialog =
-//			waitForDialogComponent(tool.getToolFrame(), ConflictDialog.class, TASK_TIMEOUT);
-//		assertNotNull(dialog);
-//		final JRadioButton renameButton = (JRadioButton) getInstanceField("renameRB", dialog);
-//		final JButton okButton = (JButton) getInstanceField("okButton", dialog);
-//		assertNotNull(renameButton);
-//		assertNotNull(okButton);
-//		runSwing(new Runnable() {
-//			@Override
-//			public void run() {
-//				renameButton.setSelected(true);
-//				okButton.doClick();
-//			}
-//		});
-//		waitForProgram();
-//	}
-//
-//	private void replaceConflict() throws Exception {
-//		// test the conflict handler for the 3 options
-//		// should get a dialog that asks what to do with the conflict:
-//		// (1) rename new data type to struct_1.conflict,
-//		// (2) replace the existing data type, or
-//		// (3) use the existing data type (cancel the drop)
-//		// choose option 2
-//		ConflictDialog dialog =
-//			waitForDialogComponent(tool.getToolFrame(), ConflictDialog.class, TASK_TIMEOUT);
-//		assertNotNull(dialog);
-//		final JRadioButton replaceButton = (JRadioButton) getInstanceField("replaceRB", dialog);
-//		final JButton okButton = (JButton) getInstanceField("okButton", dialog);
-//		assertNotNull(replaceButton);
-//		assertNotNull(okButton);
-//		runSwing(new Runnable() {
-//			@Override
-//			public void run() {
-//				replaceButton.setSelected(true);
-//				okButton.doClick();
-//			}
-//		});
-//		waitForProgram();
-//	}
-//
-//	private void useExistingConflict() throws Exception {
-//		// test the conflict handler for the 3 options
-//		// should get a dialog that asks what to do with the conflict:
-//		// (1) rename new data type to struct_1.conflict,
-//		// (2) replace the existing data type, or
-//		// (3) use the existing data type (cancel the drop)
-//		// choose option 3
-//		ConflictDialog dialog =
-//			waitForDialogComponent(tool.getToolFrame(), ConflictDialog.class, TASK_TIMEOUT);
-//		assertNotNull(dialog);
-//		final JRadioButton useExistingButton =
-//			(JRadioButton) getInstanceField("useExistingRB", dialog);
-//		final JButton okButton = (JButton) getInstanceField("okButton", dialog);
-//		assertNotNull(useExistingButton);
-//		assertNotNull(okButton);
-//		runSwing(new Runnable() {
-//			@Override
-//			public void run() {
-//				useExistingButton.setSelected(true);
-//				okButton.doClick();
-//			}
-//		});
-//		waitForProgram();
-//	}
-
 	private void pressButtonOnOptionDialog(String buttonName) throws Exception {
-		OptionDialog d =
-			waitForDialogComponent(tool.getToolFrame(), OptionDialog.class, TASK_TIMEOUT);
-		assertNotNull(d);
-		final JButton button = findButtonByText(d, buttonName);
+		OptionDialog d = waitForDialogComponent(OptionDialog.class);
+		JButton button = findButtonByText(d, buttonName);
 		assertNotNull(button);
-		SwingUtilities.invokeAndWait(() -> button.doClick());
+		pressButton(button);
 		waitForProgram();
 	}
 
@@ -766,20 +728,19 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		dropList.add(fromNode);
 		final Transferable transferable = new GTreeNodeTransferable(dragNDropHandler, dropList);
 
-		executeOnSwingWithoutBlocking(
-			() -> dragNDropHandler.drop(toNode, transferable, DnDConstants.ACTION_MOVE));
-		waitForPostedSwingRunnables();
+		runSwing(
+			() -> dragNDropHandler.drop(toNode, transferable, DnDConstants.ACTION_MOVE), false);
+		waitForSwing();
 	}
 
-	private void copyNodeToNode(GTreeNode fromNode, final GTreeNode toNode) {
+	private void copyNodeToNode(GTreeNode fromNode, final GTreeNode toNode) throws Exception {
 		final GTreeDragNDropHandler dragNDropHandler = tree.getDragNDropHandler();
 		List<GTreeNode> dropList = new ArrayList<>();
 		dropList.add(fromNode);
 		final Transferable transferable = new GTreeNodeTransferable(dragNDropHandler, dropList);
 
-		executeOnSwingWithoutBlocking(
-			() -> dragNDropHandler.drop(toNode, transferable, DnDConstants.ACTION_COPY));
-		waitForPostedSwingRunnables();
+		runSwing(
+			() -> dragNDropHandler.drop(toNode, transferable, DnDConstants.ACTION_COPY), false);
 	}
 
 //==================================================================================================
@@ -800,36 +761,17 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	private void waitForProgram() throws Exception {
+		waitForTasks();
 		program.flushEvents();
 		waitForTasks();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void undo() throws Exception {
-		runSwing(() -> {
-			try {
-				program.undo();
-				program.flushEvents();
-			}
-			catch (Exception e) {
-				e.printStackTrace();
-				Assert.fail(e.getMessage());
-			}
-		});
-		waitForTasks();
+		undo(program);
 	}
 
 	private void redo() throws Exception {
-		runSwing(() -> {
-			try {
-				program.redo();
-				program.flushEvents();
-			}
-			catch (Exception e) {
-				e.printStackTrace();
-				Assert.fail(e.getMessage());
-			}
-		});
-		waitForTasks();
+		redo(program);
 	}
 }

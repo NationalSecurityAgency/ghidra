@@ -71,7 +71,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 
 	@Override
 	protected void dialogShown() {
-		// users often wish to start typing in the filter when the dialog appeears
+		// users often wish to start typing in the filter when the dialog appears
 		tableFilterPanel.requestFocus();
 	}
 
@@ -84,7 +84,6 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 	public void close() {
 		super.close();
 		tableFilterPanel.dispose();
-		table.dispose();
 	}
 
 	/**
@@ -173,10 +172,14 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 			TableSortState.createDefaultSortState(PluginInstallerTableModel.NAME_COL));
 		tableModel.refresh();
 
-		table.getColumnModel().getColumn(PluginInstallerTableModel.NAME_COL).setCellRenderer(
-			new NameCellRenderer());
-		table.getColumnModel().getColumn(PluginInstallerTableModel.STATUS_COL).setCellRenderer(
-			new StatusCellRenderer());
+		table.getColumnModel()
+				.getColumn(PluginInstallerTableModel.NAME_COL)
+				.setCellRenderer(
+					new NameCellRenderer());
+		table.getColumnModel()
+				.getColumn(PluginInstallerTableModel.STATUS_COL)
+				.setCellRenderer(
+					new StatusCellRenderer());
 
 		HelpService help = Help.getHelpService();
 		help.registerHelp(table, new HelpLocation(GenericHelpTopics.TOOL, "PluginDialog"));

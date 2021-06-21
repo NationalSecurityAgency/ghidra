@@ -83,7 +83,7 @@ public class RepositoryFileSystemTest extends AbstractGhidraHeadedIntegrationTes
 		DBHandle dbh = new DBHandle();
 		long id = dbh.startTransaction();
 		Schema schema =
-			new Schema(0, "key", new Class[] { IntField.class }, new String[] { "dummy" });
+			new Schema(0, "key", new Field[] { IntField.INSTANCE }, new String[] { "dummy" });
 		dbh.createTable("test", schema);
 		dbh.endTransaction(id, true);
 		ManagedBufferFile bf = folder.createDatabase(itemName, FileIDFactory.createFileID(),
@@ -116,7 +116,7 @@ public class RepositoryFileSystemTest extends AbstractGhidraHeadedIntegrationTes
 
 			// Add record
 			long txId = dbh.startTransaction();
-			Record rec = schema.createRecord(i);
+			DBRecord rec = schema.createRecord(i);
 			rec.setIntValue(0, i);
 			testTable.putRecord(rec);
 			Msg.debug(this, "Added record to test table, key=" + i);
@@ -216,7 +216,7 @@ public class RepositoryFileSystemTest extends AbstractGhidraHeadedIntegrationTes
 			try {
 				Table testTable = dbh.getTable("test");
 				assertEquals(1, testTable.getRecordCount());
-				Record rec = testTable.getRecord(2);
+				DBRecord rec = testTable.getRecord(2);
 				assertNotNull(rec);
 				assertEquals(2, rec.getIntValue(0));
 			}

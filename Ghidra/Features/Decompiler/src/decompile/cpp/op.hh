@@ -206,6 +206,7 @@ public:
   bool usesSpacebasePtr(void) const { return ((flags&PcodeOp::spacebase_ptr)!=0); }
   uintm getCseHash(void) const;	///< Return hash indicating possibility of common subexpression elimination
   bool isCseMatch(const PcodeOp *op) const; ///< Return \b true if this and \e op represent common subexpressions
+  bool isMoveable(const PcodeOp *point) const;	///< Can \b this be moved to after \e point, without disturbing data-flow
   TypeOp *getOpcode(void) const { return opcode; } ///< Get the opcode for this op
   OpCode code(void) const { return opcode->getOpcode(); } ///< Get the opcode id (enum) for this op
   bool isCommutative(void) const { return ((flags & PcodeOp::commutative)!=0); } ///< Return \b true if inputs commute
@@ -227,6 +228,16 @@ public:
   Datatype *inputTypeLocal(int4 slot) const { return opcode->getInputLocal(this,slot); }	///< Calculate the local input type
   bool markExplicitUnsigned(int4 slot) { return opcode->markExplicitUnsigned(this,slot); } ///< Decide on unsignedness printing
   bool inheritsSign(void) const { return opcode->inheritsSign(); } ///< Does this token inherit its sign from operands
+};
+
+/// \brief An edge in a data-flow path or graph
+///
+/// A minimal node for traversing expressions in the data-flow
+struct PcodeOpNode {
+  PcodeOp *op;		///< The p-code end-point of the edge
+  int4 slot;		///< Slot indicating the input Varnode end-point of the edge
+  PcodeOpNode(void) { op = (PcodeOp *)0; slot = 0; }	///< Unused constructor
+  PcodeOpNode(PcodeOp *o,int4 s) { op = o; slot = s; }	///< Constructor
 };
 
 /// A map from sequence number (SeqNum) to PcodeOp

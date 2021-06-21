@@ -15,12 +15,11 @@
  */
 package db;
 
-import ghidra.util.datastruct.IntArrayList;
-import ghidra.util.exception.AssertException;
-
 import java.io.IOException;
 
 import db.buffers.DataBuffer;
+import ghidra.util.datastruct.IntArrayList;
+import ghidra.util.exception.AssertException;
 
 /**
  * <code>VarRecNode</code> is an implementation of a BTree leaf node
@@ -31,25 +30,25 @@ import db.buffers.DataBuffer;
  * <pre>
  *   | NodeType(1) | KeyCount(4) | PrevLeafId(4) | NextLeafId(4) | Key0(8) | RecOffset0(4) | IndFlag0(1) |...  
  *     
- *   | KeyN(8) | RecOffsetN(4) | IndFlagN(1) |...<FreeSpace>... | RecN |... | Rec1 |
+ *   | KeyN(8) | RecOffsetN(4) | IndFlagN(1) |...<FreeSpace>... | RecN |... | Rec0 |
  * </pre>
  * IndFlag - if not zero the record has been stored within a chained DBBuffer 
  * whose 4-byte integer buffer ID has been stored within this leaf at the record offset.
  */
 class VarRecNode extends LongKeyRecordNode {
-	
+
 	private static final int HEADER_SIZE = RECORD_LEAF_HEADER_SIZE;
-	
+
 	private static final int KEY_SIZE = 8;
 	private static final int OFFSET_SIZE = 4;
 	private static final int INDIRECT_OPTION_SIZE = 1;
 
 	private static final int ENTRY_SIZE = KEY_SIZE + OFFSET_SIZE + INDIRECT_OPTION_SIZE;
-	
+
 	private static final int KEY_BASE_OFFSET = HEADER_SIZE;
 	private static final int DATA_OFFSET_BASE_OFFSET = KEY_BASE_OFFSET + KEY_SIZE;
 	private static final int IND_OPTION_BASE_OFFSET = DATA_OFFSET_BASE_OFFSET + OFFSET_SIZE;
-	
+
 	/**
 	 * Construct an existing long-key variable-length record leaf node.
 	 * @param nodeMgr table node manager instance
@@ -58,7 +57,7 @@ class VarRecNode extends LongKeyRecordNode {
 	VarRecNode(NodeMgr nodeMgr, DataBuffer buf) {
 		super(nodeMgr, buf);
 	}
-	
+
 	/**
 	 * Construct a new long-key variable-length record leaf node.
 	 * @param nodeMgr table node manager instance
@@ -70,37 +69,27 @@ class VarRecNode extends LongKeyRecordNode {
 		super(nodeMgr, NodeMgr.LONGKEY_VAR_REC_NODE, prevLeafId, nextLeafId);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.LongKeyRecordNode#createNewLeaf()
-	 */
 	@Override
-    LongKeyRecordNode createNewLeaf(int prevLeafId, int nextLeafId) throws IOException {
+	LongKeyRecordNode createNewLeaf(int prevLeafId, int nextLeafId) throws IOException {
 		return new VarRecNode(nodeMgr, prevLeafId, nextLeafId);
 	}
-	
-	/*
-	 * @see ghidra.framework.store.db.LongKeyNode#getKey(int)
-	 */
+
 	@Override
-    long getKey(int index) {
-		return buffer.getLong(KEY_BASE_OFFSET + (index * ENTRY_SIZE));
+	long getKey(int index) {
+		return buffer.getLong(getKeyOffset(index));
 	}
-	
-//	/**
-//	 * Store a key at the specified index
-//	 * @param index key index
-//	 * @param key key value
-//	 */
-//	private void putKey(int index, long key) {
-//		buffer.putLong(KEY_BASE_OFFSET + (index * ENTRY_SIZE), key);
-//	}
-	
+
+	@Override
+	public int getKeyOffset(int index) {
+		return KEY_BASE_OFFSET + (index * ENTRY_SIZE);
+	}
+
 	/**
 	 * Get the record offset within the buffer
 	 * @param index key index
 	 * @return record offset
 	 */
-	private int getRecordOffset(int index) {
+	int getRecordDataOffset(int index) {
 		return buffer.getInt(DATA_OFFSET_BASE_OFFSET + (index * ENTRY_SIZE));
 	}
 
@@ -109,10 +98,10 @@ class VarRecNode extends LongKeyRecordNode {
 	 * @param index key index
 	 * @param offset record offset
 	 */
-	private void putRecordOffset(int index, int offset) {
+	private void putRecordDataOffset(int index, int offset) {
 		buffer.putInt(DATA_OFFSET_BASE_OFFSET + (index * ENTRY_SIZE), offset);
 	}
-	
+
 	/**
 	 * Determine if a record is utilizing a chained DBBuffer for data storage
 	 * @param index key index
@@ -128,42 +117,41 @@ class VarRecNode extends LongKeyRecordNode {
 	 * @param state indirect storage used (true) or not used (false)
 	 */
 	private void enableIndirectStorage(int index, boolean state) {
-		buffer.putByte(IND_OPTION_BASE_OFFSET + (index * ENTRY_SIZE),
-			state ? (byte)1 : (byte)0);
+		buffer.putByte(IND_OPTION_BASE_OFFSET + (index * ENTRY_SIZE), state ? (byte) 1 : (byte) 0);
 	}
-	
+
 	/**
 	 * @return unused free space within node
 	 */
 	private int getFreeSpace() {
-		return (keyCount == 0 ? buffer.length() : getRecordOffset(keyCount - 1)) 
-			- (keyCount * ENTRY_SIZE) - RECORD_LEAF_HEADER_SIZE;
+		return (keyCount == 0 ? buffer.length() : getRecordDataOffset(keyCount - 1)) -
+			(keyCount * ENTRY_SIZE) - RECORD_LEAF_HEADER_SIZE;
 	}
 
 	/**
 	 * Get the length of a stored record.
-	 * @param keyIndex key index associated with record.
+	 * @param index index associated with record.
 	 */
-	private int getRecordLength(int keyIndex) {
-		if (keyIndex == 0) { 
-			return buffer.length() - getRecordOffset(0);
+	private int getRecordLength(int index) {
+		if (index == 0) {
+			return buffer.length() - getRecordDataOffset(0);
 		}
-		return getRecordOffset(keyIndex - 1) - getRecordOffset(keyIndex);
+		return getRecordDataOffset(index - 1) - getRecordDataOffset(index);
 	}
-	
+
 	/**
 	 * Get the length of a stored record.  Optimized if record offset 
 	 * already known.
-	 * @param keyIndex key index associated with record.
+	 * @param index index associated with record.
 	 * @param offset record offset
 	 */
-	private int getRecordLength(int keyIndex, int offset) {
-		if (keyIndex == 0) { 
+	private int getRecordLength(int index, int offset) {
+		if (index == 0) {
 			return buffer.length() - offset;
 		}
-		return getRecordOffset(keyIndex - 1) - offset;
+		return getRecordDataOffset(index - 1) - offset;
 	}
-	
+
 	/**
 	 * Move all record data, starting with index, by the specified offset amount.
 	 * If the node contains 5 records, an index of 3 would shift the record data
@@ -174,76 +162,78 @@ class VarRecNode extends LongKeyRecordNode {
 	 * @return insertion offset immediately following moved block. 
 	 */
 	private int moveRecords(int index, int offset) {
-		
+
 		int lastIndex = keyCount - 1;
-		
+
 		// No movement needed for appended record
 		if (index == keyCount) {
 			if (index == 0) {
-				return buffer.length() + offset; 
+				return buffer.length() + offset;
 			}
-			return getRecordOffset(lastIndex) + offset;	
+			return getRecordDataOffset(lastIndex) + offset;
 		}
-		
+
 		// Determine block to be moved
-		int start = getRecordOffset(lastIndex);
-		int end = (index == 0) ? buffer.length() : getRecordOffset(index - 1);
+		int start = getRecordDataOffset(lastIndex);
+		int end = (index == 0) ? buffer.length() : getRecordDataOffset(index - 1);
 		int len = end - start;
-		
+
 		// Move record data
 		buffer.move(start, start + offset, len);
-		
+
 		// Adjust stored offsets
 		for (int i = index; i < keyCount; i++) {
-			putRecordOffset(i, getRecordOffset(i) + offset);
+			putRecordDataOffset(i, getRecordDataOffset(i) + offset);
 		}
 		return end + offset;
 	}
-	
-	/*
-	 * @see ghidra.framework.store.db.LongKeyRecordNode#getRecord(ghidra.framework.store.db.Schema, int)
-	 */
+
 	@Override
-    Record getRecord(Schema schema, int index) throws IOException {
+	public DBRecord getRecord(Schema schema, int index) throws IOException {
 		long key = getKey(index);
-		Record record = schema.createRecord(key);
+		DBRecord record = schema.createRecord(key);
 		if (hasIndirectStorage(index)) {
-			int bufId = buffer.getInt(getRecordOffset(index));
-			ChainedBuffer chainedBuffer = new ChainedBuffer(nodeMgr.getBufferMgr(), 
-				bufId);
+			int bufId = buffer.getInt(getRecordDataOffset(index));
+			ChainedBuffer chainedBuffer = new ChainedBuffer(nodeMgr.getBufferMgr(), bufId);
 			record.read(chainedBuffer, 0);
 		}
 		else {
-			record.read(buffer, getRecordOffset(index));
+			record.read(buffer, getRecordDataOffset(index));
 		}
-		return record;	
+		return record;
 	}
-	
-	/*
-	 * @see ghidra.framework.store.db.LongKeyRecordNode#getRecord(long, ghidra.framework.store.db.Schema)
-	 */
+
 	@Override
-    Record getRecord(long key, Schema schema) throws IOException {
+	public int getRecordOffset(int index) throws IOException {
+		if (hasIndirectStorage(index)) {
+			return -buffer.getInt(getRecordDataOffset(index));
+		}
+		return getRecordDataOffset(index);
+	}
+
+	@Override
+	DBRecord getRecord(long key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
-		if (index < 0)
+		if (index < 0) {
 			return null;
+		}
 		return getRecord(schema, index);
 	}
-	
+
 	/**
 	 * Find the index which represents the halfway point within the record data.
 	 * @return key index.
 	 */
 	private int getSplitIndex() {
-		
-		int halfway = ((keyCount == 0 ? buffer.length() : getRecordOffset(keyCount - 1))
-			+ buffer.length()) / 2; 
+
+		int halfway = ((keyCount == 0 ? buffer.length() : getRecordDataOffset(keyCount - 1)) +
+			buffer.length()) / 2;
 		int min = 1;
 		int max = keyCount - 1;
-		
+
 		while (min < max) {
-			int i = (min + max)/2;
-			int offset = getRecordOffset(i);
+			int i = (min + max) / 2;
+			int offset = getRecordDataOffset(i);
 			if (offset == halfway) {
 				return i;
 			}
@@ -257,59 +247,53 @@ class VarRecNode extends LongKeyRecordNode {
 		return min;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.LongKeyRecordNode#splitData(ghidra.framework.store.db.LongKeyRecordNode)
-	 */
 	@Override
-    void splitData(LongKeyRecordNode newRightLeaf) {
+	void splitData(LongKeyRecordNode newRightLeaf) {
 
 		VarRecNode rightNode = (VarRecNode) newRightLeaf;
-		
+
 		int splitIndex = getSplitIndex();
 		int count = keyCount - splitIndex;
-		int start = getRecordOffset(keyCount - 1);	// start of block to be moved
-		int end = getRecordOffset(splitIndex - 1);  // end of block to be moved
+		int start = getRecordDataOffset(keyCount - 1);	// start of block to be moved
+		int end = getRecordDataOffset(splitIndex - 1);  // end of block to be moved
 		int splitLen = end - start;				// length of block to be moved
 		int rightOffset = buffer.length() - splitLen;    // data offset within new leaf node 
-		
+
 		// Copy data to new leaf node
 		DataBuffer newBuf = rightNode.buffer;
-		newBuf.copy(rightOffset, buffer, start, splitLen); 
-		newBuf.copy(KEY_BASE_OFFSET, buffer, KEY_BASE_OFFSET + (splitIndex * ENTRY_SIZE), count * ENTRY_SIZE);
-		
+		newBuf.copy(rightOffset, buffer, start, splitLen);
+		newBuf.copy(KEY_BASE_OFFSET, buffer, KEY_BASE_OFFSET + (splitIndex * ENTRY_SIZE),
+			count * ENTRY_SIZE);
+
 		// Fix record offsets in new leaf node
 		int offsetCorrection = buffer.length() - end;
 		for (int i = 0; i < count; i++) {
-			rightNode.putRecordOffset(i, rightNode.getRecordOffset(i) + offsetCorrection);
+			rightNode.putRecordDataOffset(i, rightNode.getRecordDataOffset(i) + offsetCorrection);
 		}
-		
+
 		// Adjust key counts
 		setKeyCount(keyCount - count);
 		rightNode.setKeyCount(count);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.LongKeyRecordNode#updateRecord(int, ghidra.framework.store.db.Record)
-	 */
 	@Override
-    LongKeyNode updateRecord(int index, Record record) throws IOException {
-		
-		int offset = getRecordOffset(index);
+	LongKeyNode updateRecord(int index, DBRecord record) throws IOException {
+
+		int offset = getRecordDataOffset(index);
 		int oldLen = getRecordLength(index, offset);
 		int len = record.length();
-		
+
 		// Check for use of indirect chained record node(s)
 		int maxRecordLength = ((buffer.length() - HEADER_SIZE) >> 2) - ENTRY_SIZE; // min 4 records per node
 		boolean wasIndirect = hasIndirectStorage(index);
 		boolean useIndirect = (len > maxRecordLength);
-		
+
 		if (useIndirect) {
 			// Store record in chained buffers
 			len = 4;
 			ChainedBuffer chainedBuffer = null;
 			if (wasIndirect) {
-				chainedBuffer = new ChainedBuffer(nodeMgr.getBufferMgr(), 
-					buffer.getInt(offset));
+				chainedBuffer = new ChainedBuffer(nodeMgr.getBufferMgr(), buffer.getInt(offset));
 				chainedBuffer.setSize(record.length(), false);
 			}
 			else {
@@ -323,15 +307,15 @@ class VarRecNode extends LongKeyRecordNode {
 			removeChainedBuffer(buffer.getInt(offset));
 			enableIndirectStorage(index, false);
 		}
-					
+
 		// See if updated record will fit in current buffer
 		if (useIndirect || len <= (getFreeSpace() + oldLen)) {
-		
+
 			// Overwrite record data - move other data if needed			
 			int dataShift = oldLen - len;
 			if (dataShift != 0) {
 				offset = moveRecords(index + 1, dataShift);
-				putRecordOffset(index, offset);
+				putRecordDataOffset(index, offset);
 			}
 			if (!useIndirect) {
 				record.write(buffer, offset);
@@ -340,22 +324,13 @@ class VarRecNode extends LongKeyRecordNode {
 		}
 
 		// Insufficient room for updated record	- remove and re-add
-		long key = record.getKey();	
+		long key = record.getKey();
 		LongKeyRecordNode leaf = deleteRecord(key, null).getLeafNode(key);
 		return leaf.putRecord(record, null);
 	}
 
-	/**
-	 * Insert the specified record at the specified key index.
-	 * Existing data may be shifted within the buffer to make room for
-	 * the new record.  Parent must be notified if this changes the leftmost
-	 * key.
-	 * @param keyIndex
-	 * @param record
-	 * @throws IOException
-	 */
 	@Override
-    boolean insertRecord(int keyIndex, Record record) throws IOException {
+	boolean insertRecord(int index, DBRecord record) throws IOException {
 
 		// Check for use of indirect chained record node(s)
 		int len = record.length();
@@ -364,77 +339,78 @@ class VarRecNode extends LongKeyRecordNode {
 		if (useIndirect) {
 			len = 4;
 		}
-		
+
 		if ((len + ENTRY_SIZE) > getFreeSpace())
+		 {
 			return false;  // insufficient space for record storage
+		}
 
 		// Make room for new record
-		int offset = moveRecords(keyIndex, -len);
-		
+		int offset = moveRecords(index, -len);
+
 		// Make room for new key/offset entry
-		int start = KEY_BASE_OFFSET + (keyIndex * ENTRY_SIZE);
-		len = (keyCount - keyIndex) * ENTRY_SIZE;
+		int start = KEY_BASE_OFFSET + (index * ENTRY_SIZE);
+		len = (keyCount - index) * ENTRY_SIZE;
 		buffer.move(start, start + ENTRY_SIZE, len);
-		
+
 		// Store new record key/offset
 		buffer.putLong(start, record.getKey());
 		buffer.putInt(start + KEY_SIZE, offset);
 		setKeyCount(keyCount + 1);
-		
+
 		// Store record data
 		if (useIndirect) {
-			ChainedBuffer chainedBuffer = new ChainedBuffer(record.length(), nodeMgr.getBufferMgr());	
+			ChainedBuffer chainedBuffer =
+				new ChainedBuffer(record.length(), nodeMgr.getBufferMgr());
 			buffer.putInt(offset, chainedBuffer.getId());
 			record.write(chainedBuffer, 0);
 		}
 		else {
 			record.write(buffer, offset);
 		}
-		enableIndirectStorage(keyIndex, useIndirect);
+		enableIndirectStorage(index, useIndirect);
 
 		return true;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.LongKeyRecordNode#remove(int)
-	 */
 	@Override
-    void remove(int index) throws IOException {
+	public void remove(int index) throws IOException {
 
-if (index < 0 || index >= keyCount)
-throw new AssertException();
-		
+		if (index < 0 || index >= keyCount) {
+			throw new AssertException();
+		}
+
 		if (hasIndirectStorage(index)) {
-			removeChainedBuffer(buffer.getInt(getRecordOffset(index)));
+			removeChainedBuffer(buffer.getInt(getRecordDataOffset(index)));
 			enableIndirectStorage(index, false);
 		}
-			
+
 		int len = getRecordLength(index);
+
 		moveRecords(index + 1, len);
 
-		int start = KEY_BASE_OFFSET + ((index+1) * ENTRY_SIZE);
+		int start = KEY_BASE_OFFSET + ((index + 1) * ENTRY_SIZE);
 		len = (keyCount - index - 1) * ENTRY_SIZE;
 		buffer.move(start, start - ENTRY_SIZE, len);
-		setKeyCount(keyCount-1);
+		setKeyCount(keyCount - 1);
 	}
-	
-	
+
 	/**
 	 * Removes this leaf and all associated chained buffers.
 	 * @see db.LongKeyRecordNode#removeLeaf()
 	 */
 	@Override
-    LongKeyNode removeLeaf() throws IOException {
-		
+	public LongKeyNode removeLeaf() throws IOException {
+
 		// Remove all chained buffers associated with this leaf
 		for (int index = 0; index < keyCount; ++index) {
 			if (hasIndirectStorage(index)) {
-				removeChainedBuffer(buffer.getInt(getRecordOffset(index)));
+				removeChainedBuffer(buffer.getInt(getRecordDataOffset(index)));
 			}
 		}
 		return super.removeLeaf();
 	}
-	
+
 	/**
 	 * Remove a chained buffer.
 	 * @param bufferId chained buffer ID
@@ -443,35 +419,30 @@ throw new AssertException();
 		ChainedBuffer chainedBuffer = new ChainedBuffer(nodeMgr.getBufferMgr(), bufferId);
 		chainedBuffer.delete();
 	}
-	
-	/*
-	 * @see ghidra.framework.store.db.LongKeyNode#delete()
-	 */
+
 	@Override
-    public void delete() throws IOException {
-		
+	public void delete() throws IOException {
+
 		// Remove all chained buffers associated with this node.
 		for (int index = 0; index < keyCount; index++) {
 			if (hasIndirectStorage(index)) {
-				int offset = getRecordOffset(index);
+				int offset = getRecordDataOffset(index);
 				int bufferId = buffer.getInt(offset);
 				removeChainedBuffer(bufferId);
 				buffer.putInt(offset, -1);
 			}
 		}
-		
+
 		// Remove this node
 		nodeMgr.deleteNode(this);
 	}
-	
-	/*
-	 * @see ghidra.framework.store.db.BTreeNode#getBufferReferences()
-	 */
+
+	@Override
 	public int[] getBufferReferences() {
 		IntArrayList idList = new IntArrayList();
 		for (int i = 0; i < keyCount; i++) {
 			if (hasIndirectStorage(i)) {
-				int offset = getRecordOffset(i);
+				int offset = getRecordDataOffset(i);
 				idList.add(buffer.getInt(offset));
 			}
 		}

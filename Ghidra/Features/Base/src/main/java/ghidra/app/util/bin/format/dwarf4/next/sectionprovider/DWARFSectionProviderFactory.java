@@ -15,13 +15,13 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next.sectionprovider;
 
-import ghidra.program.model.listing.Program;
-import ghidra.util.Msg;
-
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+
+import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
 
 /**
  * Auto-detects which {@link DWARFSectionProvider} matches a Ghidra program.
@@ -44,7 +44,6 @@ public class DWARFSectionProviderFactory {
 	static {
 		sectionProviderFactoryFuncs.add(BaseSectionProvider::createSectionProviderFor);
 		sectionProviderFactoryFuncs.add(DSymSectionProvider::createSectionProviderFor);
-		sectionProviderFactoryFuncs.add(ElfSectionProvider::createSectionProviderFor);
 	}
 
 	/**

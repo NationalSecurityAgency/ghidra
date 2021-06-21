@@ -85,7 +85,7 @@ class ToAdapterSharedTable extends ToAdapter {
 
 		RecordIterator iter = table.indexIterator(OLD_TO_ADDR_COL, toField, toField, true);
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 
 			boolean isUser = rec.getBooleanValue(OLD_USER_DEFINED_COL);
 			SourceType source = isUser ? SourceType.USER_DEFINED : SourceType.DEFAULT;
@@ -110,18 +110,18 @@ class ToAdapterSharedTable extends ToAdapter {
 	}
 
 	@Override
-	public Record createRecord(long key, int numRefs, byte refType, byte[] refData)
+	public DBRecord createRecord(long key, int numRefs, byte refType, byte[] refData)
 			throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Record getRecord(long key) throws IOException {
+	public DBRecord getRecord(long key) throws IOException {
 		return table.getRecord(key);
 	}
 
 	@Override
-	public void putRecord(Record record) throws IOException {
+	public void putRecord(DBRecord record) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 

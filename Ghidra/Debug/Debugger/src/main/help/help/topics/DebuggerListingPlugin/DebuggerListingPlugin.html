@@ -1,0 +1,178 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Dynamic Listing</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Dynamic Listing</H1>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/DebuggerListingPlugin.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P><A name="Toggle_Header"></A>The dynamic listing is analogous to Ghidra's listing for static
+    analysis, but in the dynamic context. That is, it displays memory contents from a target. More
+    precisely, it displays recorded memory contents in a trace. In most use cases, that trace is
+    "at the present," meaning it is the most recent memory from a live target. Multiple listings
+    can be displayed simultaneously, using the same pattern as many other Ghidra windows. The
+    "primary" listing is always displayed and generally tracks with the rest of the tool. Any
+    listing can be "snapshotted," i.e., duplicated. This is where dynamic listings differ from
+    static listings. Static snapshots remain in place; they do not automatically navigate. Dynamic
+    snapshots can still be configured to navigate, following the rest of the tool. A common use is
+    to configure a "snapshot" to follow the stack pointer. Still, you can disable a listing's
+    automatic navigation, so it behaves like a true snapshot. A current limitation is that you
+    cannot use snapshots to display different points in time for the same trace.</P>
+
+    <P>Where applicable, the static listing's location is synchronized to the dynamic listing, and
+    vice versa. The dynamic listing permits most of the same mark-up as the static listing. Any
+    mark-up added to the dynamic listing is saved to the trace. All mark-up (and nearly all trace
+    record types, for that matter) have a location in space and time. That is, they occupy an
+    address range (like mark-up in Ghidra programs), but also a time range (unique to traces). When
+    mark-up is added to the listing, it exists "from this time on". That is, its time interval is
+    from the current time to infinity, i.e., it has been created but never destroyed. When mark-up
+    is removed from the listing, its "destruction time" is set to just before the current time. If
+    this would cause the mark-up to "never exist," i.e., its destruction time precedes its creation
+    time, then the record is deleted altogether. This yields a mostly-intuitive mechanism for
+    marking things up "in time," but the fact that mark-up is bound in time can still be
+    surprising. For example, disassembling some instructions and then stepping back in time will
+    cause that disassembly to disappear.</P>
+
+    <P>Because not all memory is captured, some background coloring is used to indicate the state
+    of attempted memory reads. Regardless of state, the most-recent contents, as recorded in the
+    trace, are displayed in the listing, defaulting to 00. "Stale" memory, that is ranges of memory
+    which have not been read at the current time, are displayed with a darker background. Where
+    that memory is marked "read-only" and has been successfully read previously, that coloring is
+    subdued, since the contents are not likely to have changed. Where a read was attempted but
+    failed, the first address in the failed range is displayed with a pink background. Otherwise,
+    up-to-date contents are displayed with the default background color.</P>
+
+    <H2>Actions</H2>
+
+    <P>The listing provides a variety of actions, some for managing and configuring listings, and
+    others for capturing memory from a target.</P>
+
+    <H3><A name="new_listing"></A>New Dynamic Listing</H3>
+
+    <P>This action is always available in the <SPAN class="menu">Window &rarr; Debugger</SPAN>
+    menu. It creates a new listing window with the same configuration as the primary dynamic
+    listing. It is equivalent to "snapshotting" the primary dynamic listing.</P>
+
+    <H3><A name="export_view"></A>Export Trace View</H3>
+
+    <P>This action is available whenever there is a trace open in the listing. It is analogous to
+    "Export Program," but for the current trace at the current time. This provides a mechanism for
+    capturing a particular point in time from a trace as a static image. The exported image can be
+    analyzed in Ghidra or another tool.</P>
+
+    <H3><A name="follows_thread"></A>Follows Selected Thread</H3>
+
+    <P>This action is only available on snapshot dynamic listings. The primary listing always
+    follows the tool's current thread. Disabling this toggle causes the snapshot to remain on its
+    own current thread rather than following the tool's. The current thread is used when computing
+    a location to navigate to automatically. It is only applicable when "Track Location" is set to
+    something other than "Do Not Track."</P>
+
+    <H3><A name="track_location"></A>Track Location</H3>
+
+    <P>This action is always available on all dynamic listings. It configures automatic navigation
+    for the dynamic listing. When location tracking is enabled, the listing is automatically
+    navigated to an address computed from the trace's or target's machine state. The address (and
+    its corresponding static address) are also highlighted in green. The computed address is
+    affected by the tool's current "coordinates," that is the selected thread, frame, and point in
+    time. The options are pluggable, but currently consist of:</P>
+
+    <UL>
+      <LI>Do Not Track - disables automatic navigation.</LI>
+
+      <LI>Track Program Counter - (default) navigates this listing to the current program counter.
+      If the stack contains a record of the program counter, it is preferred to the recorded
+      register value. Note that debuggers may vary in how they report the program counter, and its
+      meaning may vary among platforms. While there may be some nuances to the register value, the
+      value recorded in the stack should indicate the next instruction to be executed.</LI>
+
+      <LI>Track Stack Pointer - navigates this listing to the current stack pointer. Again,
+      platforms may vary in how they define the stack pointer.</LI>
+    </UL>
+
+    <H3><A name="go_to"></A>Go To (G)</H3>
+
+    <P>This action is available whenever a trace is active in the listing. It prompts the user for
+    an address, which can be expressed in Sleigh, then attempts to navigate to it. The expression
+    is evaluated in the context of the current thread, frame, and point in time. If the current
+    trace is live and at the present, the target may be queried to retrieve any machine state
+    required to evaluate the expression.</P>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" src="images/DebuggerGoToDialog.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <H3><A name="sync_static"></A>Sync to Static Listing</H3>
+
+    <P>This action is always available, but only on the primary dynamic listing. It configures
+    location synchronization with the (primary) static listing. When enabled, navigation in either
+    listing &mdash; including automatic navigation &mdash; automatically navigates to the
+    corresponding location, if applicable, in the other. In general, "corresponding location" is
+    computed using information about loaded modules reported by the debugger. For the finer
+    details, see the <A href=
+    "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static Mappings</A>
+    window. When you navigate to a location contained by a module, but there is no corresponding
+    static location, the listing logs a "missing module" to the console, offering either to import
+    the module or map it to an existing program.</P>
+
+    <H3><A name="open_program"></A>Open Program</H3>
+
+    <P>This action is offered as a resolution whenever a module cannot be automatically opened.
+    This typically happens when the module's program database has crash data that can be recovered
+    and/or needs a version upgrade. It will attempt to open the program, allowing Ghidra to prompt
+    you about the situation.</P>
+
+    <H3><A name="capture_memory"></A>Capture Memory</H3>
+
+    <P>This action is available when the current trace is "at the present" with a live target, and
+    there is a selection of addresses in the dynamic listing. It will instruct the recorder to
+    capture the contents of memory for the selected range(s). Typically, the viewable addresses are
+    automatically captured &mdash; see the Auto-Read action.</P>
+
+    <H3><A name="auto_memory"></A>Auto-Read Memory</H3>
+
+    <P>This action is always available on all dynamic listings. It configures whether or not the
+    memory range(s) displayed in the listing are automatically captured. Like the Capture Memory
+    action, capture can only occur when the current trace is "at the present" with a live target.
+    It occurs when the user scrolls the listing, or when the listing is otherwise navigated to a
+    new location. Note that other components may capture memory, regardless of this listing's
+    configuration. For example, the recorder typically captures the page of memory pointed to by
+    the program counter. In other words, this action <EM>cannot</EM> "disable all memory captures."
+    The options are pluggable, but currently consist of:</P>
+
+    <UL>
+      <LI>Do Not Read Memory - disables automatic memory capture <EM>for this listing
+      only</EM>.</LI>
+
+      <LI>Read Visible Memory - automatically reads stale ranges that enter this listing's
+      view.</LI>
+
+      <LI>Read Visible Memory, RO Once - (default) behaves like Read Visible Memory, except it will
+      neglect to capture read-only ranges that have been captured previously.</LI>
+    </UL>
+
+    <H2><A name="colors"></A>Tool Options: Colors</H2>
+
+    <P>The memory-state and tracked-location background colors can all be configured here.</P>
+  </BODY>
+</HTML>

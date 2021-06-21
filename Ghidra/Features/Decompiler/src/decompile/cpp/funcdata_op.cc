@@ -1361,3 +1361,54 @@ void cseEliminateList(Funcdata &data,vector< pair<uintm,PcodeOp *> > &list,vecto
     liter2++;
   }
 }
+
+/// This routine should be called only after Varnode merging and explicit/implicit attributes have
+/// been calculated.  Determine if the given op can be moved (only within its basic block) to
+/// after \e lastOp.  The output of any PcodeOp moved across must not be involved, directly or
+/// indirectly, with any variable in the expression rooted at the given op.
+/// If the move is possible, perform the move.
+/// \param op is the given PcodeOp
+/// \param lastOp is the PcodeOp to move past
+/// \return \b true if the move is possible
+bool Funcdata::moveRespectingCover(PcodeOp *op,PcodeOp *lastOp)
+
+{
+  if (op == lastOp) return true;	// Nothing to move past
+  if (op->isCall()) return false;
+  PcodeOp *prevOp = (PcodeOp *)0;
+  if (op->code() == CPUI_CAST) {
+    Varnode *vn = op->getIn(0);
+    if (!vn->isExplicit()) {		// If CAST is part of expression, we need to move the previous op as well
+      if (!vn->isWritten()) return false;
+      prevOp = vn->getDef();
+      if (prevOp->isCall()) return false;
+      if (op->previousOp() != prevOp) return false;	// Previous op must exist and feed into the CAST
+    }
+  }
+  Varnode *rootvn = op->getOut();
+  vector<HighVariable *> highList;
+  int4 typeVal = HighVariable::markExpression(rootvn, highList);
+  PcodeOp *curOp = op;
+  do {
+    PcodeOp *nextOp = curOp->nextOp();
+    OpCode opc = nextOp->code();
+    if (opc != CPUI_COPY && opc != CPUI_CAST) break;	// Limit ourselves to only crossing COPY and CAST ops
+    if (rootvn == nextOp->getIn(0)) break;	// Data-flow order dependence
+    Varnode *copyVn = nextOp->getOut();
+    if (copyVn->getHigh()->isMark()) break;	// Direct interference: COPY writes what original op reads
+    if (typeVal != 0 && copyVn->isAddrTied()) break;	// Possible indirect interference
+    curOp = nextOp;
+  } while(curOp != lastOp);
+  for(int4 i=0;i<highList.size();++i)		// Clear marks on expression
+    highList[i]->clearMark();
+  if (curOp == lastOp) {			// If we are able to cross everything
+    opUninsert(op);				// Move -op-
+    opInsertAfter(op, lastOp);
+    if (prevOp != (PcodeOp *)0) {		// If there was a CAST, move both ops
+      opUninsert(prevOp);
+      opInsertAfter(prevOp, lastOp);
+    }
+    return true;
+  }
+  return false;
+}

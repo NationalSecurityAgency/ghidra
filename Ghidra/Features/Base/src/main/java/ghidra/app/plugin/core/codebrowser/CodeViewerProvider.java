@@ -109,6 +109,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	private ProgramSelection currentSelection;
 	private ProgramSelection currentHighlight;
+	private String currentStringSelection;
 
 	private FieldNavigator fieldNavigator;
 
@@ -625,6 +626,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	@Override
 	public void setStringSelection(String string) {
+		this.currentStringSelection = string;
 		codeViewerClipboardProvider.setStringContent(string);
 		contextChanged();
 	}
@@ -806,6 +808,11 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 			return otherPanel.getProgramHighlight();
 		}
 		return currentHighlight;
+	}
+
+	@Override
+	public String getTextSelection() {
+		return currentStringSelection;
 	}
 
 	@Override

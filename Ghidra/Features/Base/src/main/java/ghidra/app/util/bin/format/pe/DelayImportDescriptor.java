@@ -22,6 +22,7 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.data.*;
+import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.Conv;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
@@ -64,7 +65,7 @@ public class DelayImportDescriptor implements StructConverter {
 	private List<ThunkData> thunksBoundIAT = new ArrayList<ThunkData>();
 	private List<ThunkData> thunksUnloadIAT = new ArrayList<ThunkData>();
 
-	private List<DelayImportInfo> delayImportInfoList = new ArrayList<DelayImportInfo>();
+	private List<ImportInfo> delayImportInfoList = new ArrayList<ImportInfo>();
 	private Map<ThunkData, ImportByName> importByNameMap = new HashMap<ThunkData, ImportByName>();
 	
 	private boolean isValid;
@@ -121,6 +122,8 @@ public class DelayImportDescriptor implements StructConverter {
 		}
 
 		long thunkPtr = 0;
+		int offset = 0;
+
 		if (isUsingRVA()) {
 			thunkPtr = ntHeader.rvaToPointer(ptr);
 		}
@@ -146,9 +149,9 @@ public class DelayImportDescriptor implements StructConverter {
 				continue;
 			}
 
+			String funcName;
 			if (thunk.isOrdinal()) {
-				long ordinal = thunk.getOrdinal();
-				delayImportInfoList.add(new DelayImportInfo(ordinal));
+				funcName = SymbolUtilities.ORDINAL_PREFIX + thunk.getOrdinal();
 			}
 			else {
 				long ibnPtr = 0;
@@ -164,11 +167,12 @@ public class DelayImportDescriptor implements StructConverter {
 				}
 				ImportByName ibn = ImportByName.createImportByName(reader, (int) ibnPtr);
 				importByNameMap.put(thunk, ibn);
-				int ordinal = ibn.getHint();
-				String name = ibn.getName();
-				delayImportInfoList.add(new DelayImportInfo(ordinal, name));
+				funcName = ibn.getName();
 				thunk.setImportByName(ibn);
 			}
+
+			delayImportInfoList.add(new ImportInfo(offset, "", dllName, funcName, false));
+			offset += thunk.getStructSize();
 		}
 
 		return thunkList;
@@ -292,8 +296,8 @@ public class DelayImportDescriptor implements StructConverter {
 		return new HashMap<ThunkData, ImportByName>(importByNameMap);
 	}
 
-	public List<DelayImportInfo> getImportList() {
-		return new ArrayList<DelayImportInfo>(delayImportInfoList);
+	public List<ImportInfo> getImportList() {
+		return new ArrayList<ImportInfo>(delayImportInfoList);
 	}
 
 	public List<ThunkData> getThunksIAT() {
@@ -312,6 +316,7 @@ public class DelayImportDescriptor implements StructConverter {
 		return new ArrayList<ThunkData>(thunksUnloadIAT);
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		DataType ibo32 = new ImageBaseOffset32DataType();
 		StructureDataType struct = new StructureDataType(NAME, 0);

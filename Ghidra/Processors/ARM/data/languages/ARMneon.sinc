@@ -3049,7 +3049,7 @@ define pcodeop VectorCopyNarrow;
 
 @if defined(VFPv2) || defined(VFPv3) || defined(SIMD)
 
-:vmrs^COND VRd,fpscr	is  COND & ( ($(AMODE) & c1627=0xef1 & c0011=0xa10) | ($(TMODE_E) &  c1627=0xef1 & c0011=0xa10)) & fpscr & VRd
+:vmrs^COND VRd,fpscr	is  COND & ( ($(AMODE) & c1627=0xef1 & c0011=0xa10) | ($(TMODE_E) &  thv_c1627=0xef1 & thv_c0011=0xa10)) & fpscr & VRd
 {
 	VRd = fpscr;
 }

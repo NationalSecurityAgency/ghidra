@@ -34,7 +34,7 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class MIPS_ElfExtension extends ElfExtension {
-
+	
 	private static final String MIPS_STUBS_SECTION_NAME = ".MIPS.stubs";
 
 	// GP value reflected by symbol address
@@ -287,9 +287,13 @@ public class MIPS_ElfExtension extends ElfExtension {
 	public static final byte ODK_IDENT = 10;
 	public static final byte ODK_PAGESIZE = 11;
 
+	// MIPS-specific SHN values
+	public static final short SHN_MIPS_ACOMMON = (short) 0xff00;
+	public static final short SHN_MIPS_TEXT = (short) 0xff01;
+	public static final short SHN_MIPS_DATA = (short) 0xff02;
+
 	@Override
 	public boolean canHandle(ElfHeader elf) {
-		// TODO: Verify 64-bit MIPS support
 		return elf.e_machine() == ElfConstants.EM_MIPS;
 	}
 
@@ -327,6 +331,25 @@ public class MIPS_ElfExtension extends ElfExtension {
 		}
 		return functionAddress;
 	}
+
+	@Override
+	public Address calculateSymbolAddress(ElfLoadHelper elfLoadHelper, ElfSymbol elfSymbol)
+			throws NoValueException {
+
+		short sectionIndex = elfSymbol.getSectionHeaderIndex();
+		if (!ElfSectionHeaderConstants.isProcessorSpecificSymbolSectionIndex(sectionIndex)) {
+			return null;
+		}
+		
+		if (sectionIndex == SHN_MIPS_ACOMMON || sectionIndex == SHN_MIPS_TEXT || sectionIndex == SHN_MIPS_DATA) {
+			// NOTE: logic assumes no memory conflict occured during section loading
+			AddressSpace defaultSpace = elfLoadHelper.getProgram().getAddressFactory().getDefaultAddressSpace();
+			return defaultSpace.getAddress(elfSymbol.getValue() + elfLoadHelper.getImageBaseWordAdjustmentOffset());
+		}
+
+		return null;
+	}
+
 
 	@Override
 	public Address evaluateElfSymbol(ElfLoadHelper elfLoadHelper, ElfSymbol elfSymbol,

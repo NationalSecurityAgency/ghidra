@@ -158,7 +158,8 @@ public class PasteAction extends DockingAction {
 
 		ActionType actionType = getActionType(dataTypeTreeNode);
 		DataTypeTreeCopyMoveTask task =
-			new DataTypeTreeCopyMoveTask(destinationNode, nodeList, actionType, gTree,
+			new DataTypeTreeCopyMoveTask(destinationNode, nodeList, actionType,
+				(DataTypeArchiveGTree) gTree,
 				plugin.getConflictHandler());
 		tool.execute(task, 250);
 	}

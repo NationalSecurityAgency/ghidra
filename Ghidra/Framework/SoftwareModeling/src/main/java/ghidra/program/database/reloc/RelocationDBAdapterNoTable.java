@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +23,7 @@ import java.io.IOException;
 
 import java.lang.UnsupportedOperationException;
 
-import db.Record;
+import db.DBRecord;
 import db.RecordIterator;
 
 /**
@@ -39,7 +38,7 @@ class RelocationDBAdapterNoTable extends RelocationDBAdapter {
 	}
 
 	@Override
-	Record get(long addrKey) {
+	DBRecord get(long addrKey) {
 		return null;
 	}
 
@@ -74,7 +73,7 @@ class RelocationDBAdapterNoTable extends RelocationDBAdapter {
 	}
 
 	@Override
-	Record adaptRecord(Record rec) {
+	DBRecord adaptRecord(DBRecord rec) {
 		throw new UnsupportedOperationException();
 	}
 }

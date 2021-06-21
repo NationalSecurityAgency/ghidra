@@ -63,7 +63,7 @@ public class UnionEditorDnDTest extends AbstractUnionEditorTest {
 
 		assertNotNull(dt4);
 		addAtPoint(dt4, 3, 0);
-		dialog = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 25);
 		dialog = null;
@@ -106,7 +106,7 @@ public class UnionEditorDnDTest extends AbstractUnionEditorTest {
 		DataType dt4 = model.getOriginalDataTypeManager().getDataType("/string");
 		assertNotNull(dt4);
 		insertAtPoint(dt4, 0, 0);
-		dialog = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 25);
 		dialog = null;

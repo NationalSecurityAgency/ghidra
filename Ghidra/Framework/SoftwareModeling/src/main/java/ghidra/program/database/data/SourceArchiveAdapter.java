@@ -104,16 +104,16 @@ abstract class SourceArchiveAdapter {
 		SourceArchiveAdapter tmpAdapter = null;
 		try {
 			tmpAdapter = new SourceArchiveAdapterV0(tmpHandle, true);
-			Iterator<Record> it = oldAdapter.getRecords().iterator();
+			Iterator<DBRecord> it = oldAdapter.getRecords().iterator();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec);
 			}
 			oldAdapter.deleteTable(handle);
 			SourceArchiveAdapter newAdapter = new SourceArchiveAdapterV0(handle, true);
 			it = tmpAdapter.getRecords().iterator();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec);
 			}
 
@@ -131,25 +131,25 @@ abstract class SourceArchiveAdapter {
 	 * Creates a new source archive record using the information from the given source archive.
 	 * @param sourceArchive the source archive from which to get the archive information.
 	 */
-	abstract Record createRecord(SourceArchive sourceArchive) throws IOException;
+	abstract DBRecord createRecord(SourceArchive sourceArchive) throws IOException;
 
 	/**
 	 * Returns a list containing all records in the archive table
 	 * @return
 	 */
-	abstract List<Record> getRecords() throws IOException;
+	abstract List<DBRecord> getRecords() throws IOException;
 
 	/**
 	 * Returns the record for the given key (sourceArchiveID)
 	 */
-	abstract Record getRecord(long key) throws IOException;
+	abstract DBRecord getRecord(long key) throws IOException;
 
 	/**
 	 * Updates the data type archive ID table with the provided record.
 	 * @param record the new record
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Remove the record for the given data type archive ID.

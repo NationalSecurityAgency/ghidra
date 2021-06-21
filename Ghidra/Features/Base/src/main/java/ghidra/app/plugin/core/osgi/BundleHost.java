@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 
 import org.apache.felix.framework.FrameworkFactory;
 import org.apache.felix.framework.util.FelixConstants;
+import org.apache.felix.framework.wiring.BundleRequirementImpl;
 import org.jgrapht.graph.DirectedMultigraph;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 import org.osgi.framework.*;
@@ -691,7 +692,13 @@ public class BundleHost {
 		Map<GhidraBundle, List<BundleRequirement>> requirementMap = new HashMap<>();
 		for (GhidraBundle bundle : bundles) {
 			try {
-				requirementMap.put(bundle, bundle.getAllRequirements());
+				List<BundleRequirement> requirements = bundle.getAllRequirements();
+				// remove optional requirements
+				requirements.removeIf(r -> {
+					BundleRequirementImpl rimpl = (BundleRequirementImpl) r;
+					return rimpl.isOptional();
+				});
+				requirementMap.put(bundle, requirements);
 			}
 			catch (GhidraBundleException e) {
 				fireBundleException(e);

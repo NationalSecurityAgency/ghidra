@@ -18,14 +18,14 @@ package ghidra.program.database.bookmark;
 import java.io.IOException;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 
 /**
  * 
  */
 public class BookmarkTypeDBAdapterNoTable extends BookmarkTypeDBAdapter {
 
-	private Record[] records = new Record[0];
+	private DBRecord[] records = new DBRecord[0];
 
 	/**
 	 * @param dbHandle the database handle
@@ -44,7 +44,7 @@ public class BookmarkTypeDBAdapterNoTable extends BookmarkTypeDBAdapter {
 	}
 
 	@Override
-	Record[] getRecords() throws IOException {
+	DBRecord[] getRecords() throws IOException {
 		return records;
 	}
 

@@ -191,4 +191,14 @@ public class ElfSectionHeaderConstants {
 	public static final short SHN_XINDEX = (short) 0xffff;
 	/**upper bound on range of reserved indexes*/
 	public static final short SHN_HIRESERVE = (short) 0xffff;
+	
+	/**
+	 * @param symbolSectionIndex symbol section index (st_shndx)
+	 * @return true if specified symbol section index corresponds to a processor
+	 * specific value in the range SHN_LOPROC..SHN_HIPROC, else false
+	 */
+	public static boolean isProcessorSpecificSymbolSectionIndex(short symbolSectionIndex) {
+		return symbolSectionIndex >= ElfSectionHeaderConstants.SHN_LOPROC &&
+			symbolSectionIndex <= ElfSectionHeaderConstants.SHN_HIPROC;
+	}
 }

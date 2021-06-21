@@ -123,7 +123,7 @@ void ExecutablePcode::build(void)
   icontext.nextaddr = icontext.baseaddr;
   for(int4 i=0;i<sizeInput();++i) {	// Skip the first operand containing the injectid
     InjectParameter &param( getInput(i) );
-    icontext.inputlist.push_back(VarnodeData());
+    icontext.inputlist.emplace_back();
     icontext.inputlist.back().space = uniqSpace;
     icontext.inputlist.back().offset = uniqReserve;
     icontext.inputlist.back().size = param.getSize();
@@ -132,7 +132,7 @@ void ExecutablePcode::build(void)
   }
   for(int4 i=0;i<sizeOutput();++i) {
     InjectParameter &param( getOutput(i) );
-    icontext.output.push_back(VarnodeData());
+    icontext.output.emplace_back();
     icontext.output.back().space = uniqSpace;
     icontext.output.back().offset = uniqReserve;
     icontext.output.back().size = param.getSize();

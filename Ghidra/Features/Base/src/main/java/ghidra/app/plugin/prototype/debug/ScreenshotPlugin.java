@@ -15,19 +15,11 @@
  */
 package ghidra.app.plugin.prototype.debug;
 
-import ghidra.app.DeveloperPluginPackage;
-import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.ProgramPlugin;
-import ghidra.framework.plugintool.PluginInfo;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.*;
-
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.RenderedImage;
 import java.io.File;
-import java.util.Set;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -36,6 +28,12 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import docking.*;
 import docking.action.*;
 import docking.tool.ToolConstants;
+import ghidra.app.DeveloperPluginPackage;
+import ghidra.app.plugin.PluginCategoryNames;
+import ghidra.app.plugin.ProgramPlugin;
+import ghidra.framework.plugintool.PluginInfo;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.util.PluginStatus;
 
 //@formatter:off
 @PluginInfo(
@@ -93,13 +91,8 @@ public class ScreenshotPlugin extends ProgramPlugin {
 					writeFile(image, file);
 				}
 			}
-
-			@Override
-			public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-				return true;// this is a global-level action
-			}
 		};
-
+		captureActiveWindowAction.setAddToAllWindows(true);
 		captureActiveWindowAction.setDescription("Takes a screenshot of the active component provider and exports it to PNG format.");
 		captureActiveWindowAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F11,
 			InputEvent.ALT_DOWN_MASK));
@@ -123,13 +116,8 @@ public class ScreenshotPlugin extends ProgramPlugin {
 					writeFile(image, file);
 				}
 			}
-
-			@Override
-			public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-				return true;// this is a global-level action
-			}
 		};
-
+		captureToolFrameAction.setAddToAllWindows(true);
 		captureToolFrameAction.setDescription("Takes a screenshot of the active tool and exports it to PNG format.");
 		captureToolFrameAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F12,
 			InputEvent.ALT_DOWN_MASK));

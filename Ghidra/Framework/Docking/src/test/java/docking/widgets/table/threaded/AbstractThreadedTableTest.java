@@ -15,7 +15,7 @@
  */
 package docking.widgets.table.threaded;
 
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 import java.awt.BorderLayout;
@@ -57,7 +57,7 @@ public abstract class AbstractThreadedTableTest extends AbstractDockingTest {
 			table = threadedTablePanel.getTable();
 			header = table.getTableHeader();
 
-			buildFrame();
+			buildFrame(threadedTablePanel);
 		});
 	}
 
@@ -73,11 +73,11 @@ public abstract class AbstractThreadedTableTest extends AbstractDockingTest {
 		dispose();
 	}
 
-	protected void buildFrame() {
+	protected void buildFrame(GThreadedTablePanel<Long> tablePanel) {
 		runSwing(() -> {
 			frame = new JFrame("Threaded Table Test");
 			frame.getContentPane().setLayout(new BorderLayout());
-			frame.getContentPane().add(new JScrollPane(threadedTablePanel));
+			frame.getContentPane().add(new JScrollPane(tablePanel));
 			frame.pack();
 			frame.setVisible(true);
 		});
@@ -85,7 +85,7 @@ public abstract class AbstractThreadedTableTest extends AbstractDockingTest {
 
 	protected void dispose() {
 		close(frame);
-		threadedTablePanel.dispose();
+		runSwing(threadedTablePanel::dispose);
 	}
 
 	protected void addItemToModel(long value) {

@@ -62,20 +62,30 @@ public class Dummy {
 	}
 
 	/**
-	 * Returns the given consumer object if it is not {@code null}.  Otherwise, a {@link #consumer()} 
+	 * Creates a dummy runnable
+	 * @return the runnable
+	 */
+	public static Runnable runnable() {
+		return () -> {
+			// no-op
+		};
+	}
+
+	/**
+	 * Returns the given consumer object if it is not {@code null}.  Otherwise, a {@link #consumer()}
 	 * is returned.  This is useful to avoid using {@code null}.
-	 * 
+	 *
 	 * @param c the consumer function to check for {@code null}
-	 * @return a non-null consumer function
+	 * @return a non-null consumer
 	 */
 	public static <T> Consumer<T> ifNull(Consumer<T> c) {
 		return c == null ? consumer() : c;
 	}
 
 	/**
-	 * Returns the given callback object if it is not {@code null}.  Otherwise, a {@link #callback()} 
+	 * Returns the given callback object if it is not {@code null}.  Otherwise, a {@link #callback()}
 	 * is returned.  This is useful to avoid using {@code null}.
-	 * 
+	 *
 	 * @param c the callback function to check for {@code null}
 	 * @return a non-null callback function
 	 */
@@ -84,26 +94,37 @@ public class Dummy {
 	}
 
 	/**
-	 * Returns the given function object if it is not {@code null}.  Otherwise, a 
+	 * Returns the given function object if it is not {@code null}.  Otherwise, a
 	 * {@link #function()} is returned.  This is useful to avoid using {@code null}.
-	 * 
+	 *
 	 * @param <T> the input type
 	 * @param <R> the result type
 	 * @param f the function to check for {@code null}
-	 * @return a non-null callback function
+	 * @return a non-null function
 	 */
 	public static <T, R> Function<T, R> ifNull(Function<T, R> f) {
 		return f == null ? function() : f;
 	}
 
 	/**
-	 * Returns the given callback object if it is not {@code null}.  Otherwise, a {@link #callback()} 
+	 * Returns the given callback object if it is not {@code null}.  Otherwise, a {@link #callback()}
 	 * is returned.  This is useful to avoid using {@code null}.
-	 * 
+	 *
 	 * @param s the supplier function to check for {@code null}
-	 * @return a non-null callback function
+	 * @return a non-null supplier
 	 */
 	public static <T> Supplier<T> ifNull(Supplier<T> s) {
 		return s == null ? supplier() : s;
+	}
+
+	/**
+	 * Returns the given runnable object if it is not {@code null}.  Otherwise, a {@link #runnable()}
+	 * is returned.  This is useful to avoid using {@code null}.
+	 *
+	 * @param r the runnable function to check for {@code null}
+	 * @return a non-null runnable
+	 */
+	public static Runnable ifNull(Runnable r) {
+		return r == null ? runnable() : r;
 	}
 }

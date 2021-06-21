@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.comments;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.nio.charset.StandardCharsets;
 
@@ -32,6 +32,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Listing;
+import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.exception.RollbackException;
@@ -60,6 +61,9 @@ public class DisplayableEolTest extends AbstractGenericTest {
 		// testReferenceToOffcutStringData_UseAbbreviatedCommentOption()
 		builder.createEncodedString("1001234", "one.two", StandardCharsets.US_ASCII, false);
 
+		// testReferenceToFunction()
+		builder.createFunction("0x1001050");
+
 		program = builder.getProgram();
 	}
 
@@ -68,7 +72,8 @@ public class DisplayableEolTest extends AbstractGenericTest {
 
 		Listing listing = program.getListing();
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x110"));
-		DisplayableEol displayableEol = new DisplayableEol(cu, true, true, true, false, 5, true);
+		DisplayableEol displayableEol =
+			new DisplayableEol(cu, true, true, true, false, 5, true, true);
 
 		String[] comments = displayableEol.getAutomaticComment();
 		assertEquals(1, comments.length);
@@ -84,7 +89,8 @@ public class DisplayableEolTest extends AbstractGenericTest {
 
 		Listing listing = program.getListing();
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x1001000"));
-		DisplayableEol displayableEol = new DisplayableEol(cu, true, true, true, false, 5, true);
+		DisplayableEol displayableEol =
+			new DisplayableEol(cu, true, true, true, false, 5, true, true);
 
 		String[] comments = displayableEol.getAutomaticComment();
 		assertEquals(1, comments.length);
@@ -107,7 +113,31 @@ public class DisplayableEolTest extends AbstractGenericTest {
 		boolean useAbbreviatedComments = false;
 
 		DisplayableEol displayableEol =
-			new DisplayableEol(cu, true, true, true, false, 5, useAbbreviatedComments);
+			new DisplayableEol(cu, true, true, true, false, 5, useAbbreviatedComments, true);
+
+		String[] comments = displayableEol.getAutomaticComment();
+		assertEquals(1, comments.length);
+		assertEquals("= \"one.two\"", comments[0]);
+	}
+
+	@Test
+	public void testReferenceToFunction_ShowAutomaticFunctionsOff() throws Exception {
+
+		Address dataStartAddress = addr("0x1001234");
+		Address offcutAddress = dataStartAddress.add(2);
+		Command cmd =
+			new AddMemRefCmd(addr("0x1001000"), offcutAddress, SourceType.USER_DEFINED, 0, true);
+		applyCmd(cmd);
+
+		Listing listing = program.getListing();
+		CodeUnit cu = listing.getCodeUnitAt(addr("0x1001000"));
+
+		// with this at false, all of the string will be rendered
+		boolean useAbbreviatedComments = false;
+		boolean showAutoFunctions = false;
+		DisplayableEol displayableEol =
+			new DisplayableEol(cu, true, true, true, false, 5, useAbbreviatedComments,
+				showAutoFunctions);
 
 		String[] comments = displayableEol.getAutomaticComment();
 		assertEquals(1, comments.length);
@@ -133,11 +163,50 @@ public class DisplayableEolTest extends AbstractGenericTest {
 		boolean useAbbreviatedComments = true;
 
 		DisplayableEol displayableEol =
-			new DisplayableEol(cu, true, true, true, false, 5, useAbbreviatedComments);
+			new DisplayableEol(cu, true, true, true, false, 5, useAbbreviatedComments, true);
 
 		String[] comments = displayableEol.getAutomaticComment();
 		assertEquals(1, comments.length);
 		assertEquals("= \"two\"", comments[0]);// full string is one.two
+	}
+
+	@Test
+	public void testReferenceToFunction_ShowAutomaticFunctions() throws Exception {
+
+		Address from = addr("0x1001000");
+		Address toFunction = addr("0x1001050");
+
+		applyCmd(new AddMemRefCmd(from, toFunction, RefType.UNCONDITIONAL_CALL, SourceType.ANALYSIS,
+			0, true));
+
+		Listing listing = program.getListing();
+		CodeUnit cu = listing.getCodeUnitAt(from);
+		boolean showAutoFunctions = true;
+		DisplayableEol displayableEol =
+			new DisplayableEol(cu, true, true, true, false, 5, false, showAutoFunctions);
+
+		String[] comments = displayableEol.getAutomaticComment();
+		assertEquals(1, comments.length);
+		assertEquals("undefined FUN_01001050()", comments[0]);
+	}
+
+	@Test
+	public void testReferenceToFunction_DontShowAutomaticFunctions() throws Exception {
+
+		Address from = addr("0x1001000");
+		Address toFunction = addr("0x1001050");
+
+		applyCmd(new AddMemRefCmd(from, toFunction, RefType.UNCONDITIONAL_CALL, SourceType.ANALYSIS,
+			0, true));
+
+		Listing listing = program.getListing();
+		CodeUnit cu = listing.getCodeUnitAt(from);
+		boolean showAutoFunctions = false;
+		DisplayableEol displayableEol =
+			new DisplayableEol(cu, true, true, true, false, 5, false, showAutoFunctions);
+
+		String[] comments = displayableEol.getAutomaticComment();
+		assertEquals(0, comments.length);
 	}
 
 	public boolean applyCmd(Command cmd) throws RollbackException {

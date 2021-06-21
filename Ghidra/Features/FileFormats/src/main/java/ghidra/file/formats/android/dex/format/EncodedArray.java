@@ -21,7 +21,7 @@ import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.file.formats.android.dex.util.Leb128;
+import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -33,18 +33,16 @@ public class EncodedArray implements StructConverter {
 	private byte [] values;
 
 	public EncodedArray( BinaryReader reader ) throws IOException {
-		size = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-		sizeLength = Leb128.unsignedLeb128Size( size );
-		reader.readNextByteArray( sizeLength );// consume leb...
+		LEB128 leb128 = LEB128.readUnsignedValue(reader);
+		size = leb128.asUInt32();
+		sizeLength = leb128.getLength();
 
-		long oldIndex = reader.getPointerIndex( );
-		List< EncodedValue > valuesList = new ArrayList< EncodedValue >( );
+		BinaryReader evReader = reader.clone();
+		List< EncodedValue > valuesList = new ArrayList< >( );
 		for ( int i = 0 ; i < size ; ++i ) {
-			valuesList.add( new EncodedValue( reader ) );
+			valuesList.add(new EncodedValue(evReader));
 		}
-		int nBytes = (int) ( reader.getPointerIndex() - oldIndex );
-
-		reader.setPointerIndex(oldIndex);
+		int nBytes = (int) (evReader.getPointerIndex() - reader.getPointerIndex());
 		values = reader.readNextByteArray(nBytes);		// Re-read the encoded values as a byte array
 	}
 

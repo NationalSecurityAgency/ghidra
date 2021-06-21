@@ -17,6 +17,7 @@ package ghidra.app.script;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.regex.Pattern;
 
 import generic.jar.ResourceFile;
 import ghidra.util.classfinder.ExtensionPoint;
@@ -80,6 +81,9 @@ public abstract class GhidraScriptProvider
 	 * @param sourceFile the source file
 	 * @param writer the print writer to write warning/error messages
 	 * @return a GhidraScript instance for the specified source file
+	 * @throws ClassNotFoundException if the script class cannot be found
+	 * @throws InstantiationException if the construction of the script fails for some reason
+	 * @throws IllegalAccessException if the class constructor is not accessible
 	 */
 	public abstract GhidraScript getScriptInstance(ResourceFile sourceFile, PrintWriter writer)
 			throws ClassNotFoundException, InstantiationException, IllegalAccessException;
@@ -92,6 +96,24 @@ public abstract class GhidraScriptProvider
 	 */
 	public abstract void createNewScript(ResourceFile newScript, String category)
 			throws IOException;
+
+	/**
+	 * Returns a Pattern that matches block comment openings.
+	 * If block comments are not supported by this provider, then this returns null.
+	 * @return the Pattern for block comment openings, null if block comments are not supported
+	 */
+	public Pattern getBlockCommentStart() {
+		return null;
+	}
+
+	/**
+	 * Returns a Pattern that matches block comment closings.
+	 * If block comments are not supported by this provider, then this returns null.
+	 * @return the Pattern for block comment closings, null if block comments are not supported
+	 */
+	public Pattern getBlockCommentEnd() {
+		return null;
+	}
 
 	/**
 	 * Returns the comment character.
@@ -149,8 +171,7 @@ public abstract class GhidraScriptProvider
 	}
 
 	/**
-	 * Return the start of certification header line if this file type is 
-	 * subject to certification.
+	 * Return the start of certification header line if this file type is subject to certification.
 	 * @return start of certification header or null if not supported
 	 */
 	protected String getCertifyHeaderStart() {
@@ -158,21 +179,19 @@ public abstract class GhidraScriptProvider
 	}
 
 	/**
-	 * Return the prefix for each certification header bofy line if
-	 * this file is subject to certification
-	 * @return certification heaber body prefix or null if not supported
+	 * Return the prefix for each certification header body line if this file is subject to 
+	 * certification.
+	 * @return certification header body prefix or null if not supported
 	 */
 	protected String getCertificationBodyPrefix() {
 		return null;
 	}
 
 	/**
-	 * Return the end of certification header line if this file type is 
-	 * subject to certification.
+	 * Return the end of certification header line if this file type is subject to certification.
 	 * @return end of certification header or null if not supported
 	 */
 	protected String getCertifyHeaderEnd() {
 		return null;
 	}
-
 }

@@ -204,6 +204,7 @@ public class DualProgramTest extends DiffTestAdapter {
 		TreeTestUtils.selectTreeNodeByText(tree, "OtherProgram");
 		pressButton(win, "OK");
 		waitForTasks();
+
 		win = waitForWindow("No Memory In Common");
 		assertNotNull(win);
 		MultiLineLabel mll = findComponent(win, MultiLineLabel.class);

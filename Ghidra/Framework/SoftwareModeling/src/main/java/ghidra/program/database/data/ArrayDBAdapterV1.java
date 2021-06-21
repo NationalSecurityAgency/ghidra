@@ -15,11 +15,10 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.VersionException;
 
 /**
  *
@@ -38,9 +37,11 @@ class ArrayDBAdapterV1 extends ArrayDBAdapter {
 
 	private Table table;
 
-	public static final Schema V1_SCHEMA = new Schema(VERSION, "Array ID", new Class[] {
-		LongField.class, IntField.class, IntField.class, LongField.class }, new String[] {
-		"Data Type ID", "Dimension", "Length", "Cat ID" });
+	public static final Schema V1_SCHEMA =
+		new Schema(VERSION, "Array ID",
+			new Field[] { LongField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE,
+				LongField.INSTANCE },
+			new String[] { "Data Type ID", "Dimension", "Length", "Cat ID" });
 
 	/**
 	 * Constructor
@@ -62,11 +63,8 @@ class ArrayDBAdapterV1 extends ArrayDBAdapter {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ArrayDBAdapter#createRecord(long, int)
-	 */
 	@Override
-	public Record createRecord(long dataTypeID, int numberOfElements, int length, long catID)
+	public DBRecord createRecord(long dataTypeID, int numberOfElements, int length, long catID)
 			throws IOException {
 
 		long tableKey = table.getKey();
@@ -75,7 +73,7 @@ class ArrayDBAdapterV1 extends ArrayDBAdapter {
 //		}
 		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.ARRAY, tableKey);
 
-		Record record = V1_SCHEMA.createRecord(key);
+		DBRecord record = V1_SCHEMA.createRecord(key);
 		record.setLongValue(V1_ARRAY_DT_ID_COL, dataTypeID);
 		record.setIntValue(V1_ARRAY_DIM_COL, numberOfElements);
 		record.setIntValue(V1_ARRAY_LENGTH_COL, length);
@@ -84,52 +82,34 @@ class ArrayDBAdapterV1 extends ArrayDBAdapter {
 		return record;
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ArrayDBAdapter#getRecord(long)
-	 */
 	@Override
-	public Record getRecord(long arrayID) throws IOException {
+	public DBRecord getRecord(long arrayID) throws IOException {
 		return table.getRecord(arrayID);
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ArrayDBAdapter#getRecords()
-	 */
 	@Override
 	public RecordIterator getRecords() throws IOException {
 		return table.iterator();
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ArrayDBAdapter#removeRecord(long)
-	 */
 	@Override
 	public boolean removeRecord(long dataID) throws IOException {
 		return table.deleteRecord(dataID);
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ArrayDBAdapter#updateRecord(ghidra.framework.store.db.Record)
-	 */
 	@Override
-	public void updateRecord(Record record) throws IOException {
+	public void updateRecord(DBRecord record) throws IOException {
 		table.putRecord(record);
 
 	}
 
-	/**
-	 * @see ghidra.program.database.data.ArrayDBAdapter#deleteTable(ghidra.framework.store.db.DBHandle)
-	 */
 	@Override
 	void deleteTable(DBHandle handle) throws IOException {
 		handle.deleteTable(ARRAY_TABLE_NAME);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.data.ArrayDBAdapter#getRecordIdsInCategory(long)
-	 */
 	@Override
-	long[] getRecordIdsInCategory(long categoryID) throws IOException {
+	Field[] getRecordIdsInCategory(long categoryID) throws IOException {
 		return table.findRecords(new LongField(categoryID), V1_ARRAY_CAT_COL);
 	}
 

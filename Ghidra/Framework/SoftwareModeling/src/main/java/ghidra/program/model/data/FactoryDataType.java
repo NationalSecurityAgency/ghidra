@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +29,17 @@ public interface FactoryDataType extends BuiltInDataType {
 	 * Returns the appropriate DataType which corresponds to the specified 
 	 * memory location.
 	 * @param buf memory location
+	 * @return fabricated datatype based upon memory data
 	 */
 	DataType getDataType(MemBuffer buf);
+
+	/**
+	 * All implementations must return a length of -1.
+	 * @return length of -1
+	 */
+	@Override
+	default int getLength() {
+		return -1;
+	}
 
 }

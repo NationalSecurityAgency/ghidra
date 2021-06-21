@@ -18,7 +18,6 @@ package ghidra.program.model.data;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.ProcessorContext;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.DataConverter;
 import ghidra.util.classfinder.ClassTranslator;
@@ -60,7 +59,7 @@ public class ShiftedAddressDataType extends BuiltIn {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
+	public boolean hasLanguageDependantLength() {
 		return true;
 	}
 

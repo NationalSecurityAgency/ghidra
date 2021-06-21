@@ -21,14 +21,12 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 
 import javax.swing.BorderFactory;
-import javax.swing.JTable;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
 import docking.ActionContext;
 import docking.DialogComponentProvider;
-import docking.widgets.table.GTableCellRenderer;
-import docking.widgets.table.GTableCellRenderingData;
+import docking.widgets.table.*;
 import docking.widgets.table.threaded.GThreadedTablePanel;
 import docking.widgets.table.threaded.ThreadedTableModelListener;
 import ghidra.framework.main.datatable.ProjectDataContext;
@@ -46,7 +44,7 @@ public class FindCheckoutsDialog extends DialogComponentProvider {
 	private FindCheckoutsTableModel model;
 	private Plugin plugin;
 	private DomainFolder folder;
-	private JTable table;
+	private GTable table;
 	private boolean showMessage = true;
 	private GThreadedTablePanel<CheckoutInfo> threadedTablePanel;
 
@@ -123,7 +121,7 @@ public class FindCheckoutsDialog extends DialogComponentProvider {
 	@Override
 	public void close() {
 		super.close();
-		model.dispose();
+		threadedTablePanel.dispose();
 	}
 
 	@Override

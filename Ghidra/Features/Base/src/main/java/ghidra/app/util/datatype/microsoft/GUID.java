@@ -21,11 +21,7 @@ import java.util.Arrays;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.BigEndianDataConverter;
-import ghidra.util.Conv;
-import ghidra.util.DataConverter;
-import ghidra.util.LittleEndianDataConverter;
-import ghidra.util.NumericUtilities;
+import ghidra.util.*;
 
 /**
  * GUIDs identify objects such as interfaces, manager entry-point vectors (EPVs), 
@@ -61,54 +57,52 @@ public class GUID {
 
 	/**
 	 * Creates a GUID object using the GUID string form.
-	 * @param guidString - "6B29FC40-CA47-1067-B31D-00DD010662DA"
+	 * @param guidString - either with or without dashes between parts - 
+	 * "6B29FC40-CA47-1067-B31D-00DD010662DA", or "6B29FC40CA471067B31D00DD010662DA", and
+	 * with or without leading and trailing "{" "}" characters
 	 * @throws IllegalArgumentException if string does not represent a valid GUID
 	 */
-	public GUID(String guidString) {
-		if (guidString.length() != 36) {
-			throw new IllegalArgumentException("Invalid GUID string.");
-		}
-		int pos = guidString.indexOf('-');
-		if (pos == -1) {
-			throw new IllegalArgumentException("Invalid GUID string.");
-		}
-		data1 = (int) NumericUtilities.parseHexLong(guidString.substring(0, pos));
-
-		guidString = guidString.substring(pos + 1);
-		pos = guidString.indexOf('-');
-		if (pos == -1) {
-			throw new IllegalArgumentException("Invalid GUID string.");
-		}
-		data2 = (short) Integer.parseInt(guidString.substring(0, pos), 16);
-
-		guidString = guidString.substring(pos + 1);
-		pos = guidString.indexOf('-');
-		if (pos == -1) {
-			throw new IllegalArgumentException("Invalid GUID string.");
-		}
-		data3 = (short) Integer.parseInt(guidString.substring(0, pos), 16);
-
-		guidString = guidString.substring(pos + 1);
-		pos = guidString.indexOf('-');
-		if (pos == -1) {
-			throw new IllegalArgumentException("Invalid GUID string.");
-		}
-		int value = Integer.parseInt(guidString.substring(0, pos), 16);
+	public GUID(String guidString) throws IllegalArgumentException {
+		String[] parts = getGUIDParts(guidString);
+		data1 = (int) NumericUtilities.parseHexLong(parts[0]);
+		data2 = (short) Integer.parseInt(parts[1], 16);
+		data3 = (short) Integer.parseInt(parts[2], 16);
+		int value = Integer.parseInt(parts[3], 16);
 		data4[0] = (byte) (value >> 8);
 		data4[1] = (byte) (value & 0xff);
+		data4[2] = (byte) Integer.parseInt(parts[4].substring(0, 2), 16);
+		data4[3] = (byte) Integer.parseInt(parts[4].substring(2, 4), 16);
+		data4[4] = (byte) Integer.parseInt(parts[4].substring(4, 6), 16);
+		data4[5] = (byte) Integer.parseInt(parts[4].substring(6, 8), 16);
+		data4[6] = (byte) Integer.parseInt(parts[4].substring(8, 10), 16);
+		data4[7] = (byte) Integer.parseInt(parts[4].substring(10, 12), 16);
+	}
 
-		guidString = guidString.substring(pos + 1);
-		data4[2] = (byte) Integer.parseInt(guidString.substring(0, 2), 16);
-		guidString = guidString.substring(2);
-		data4[3] = (byte) Integer.parseInt(guidString.substring(0, 2), 16);
-		guidString = guidString.substring(2);
-		data4[4] = (byte) Integer.parseInt(guidString.substring(0, 2), 16);
-		guidString = guidString.substring(2);
-		data4[5] = (byte) Integer.parseInt(guidString.substring(0, 2), 16);
-		guidString = guidString.substring(2);
-		data4[6] = (byte) Integer.parseInt(guidString.substring(0, 2), 16);
-		guidString = guidString.substring(2);
-		data4[7] = (byte) Integer.parseInt(guidString.substring(0, 2), 16);
+	private String[] getGUIDParts(String guidString) throws IllegalArgumentException {
+		String[] results = new String[5];
+		guidString = (guidString.startsWith("{") && guidString.endsWith("}"))
+				? guidString.substring(1, guidString.length() - 1)
+				: guidString;
+		if (guidString.length() == 36 && guidString.charAt(8) == '-' &&
+			guidString.charAt(13) == '-' && guidString.charAt(18) == '-' &&
+			guidString.charAt(23) == '-') {
+			results[0] = guidString.substring(0, 8);
+			results[1] = guidString.substring(9, 13);
+			results[2] = guidString.substring(14, 18);
+			results[3] = guidString.substring(19, 23);
+			results[4] = guidString.substring(24);
+		}
+		else if (guidString.length() == 32) {
+			results[0] = guidString.substring(0, 8);
+			results[1] = guidString.substring(8, 12);
+			results[2] = guidString.substring(12, 16);
+			results[3] = guidString.substring(16, 20);
+			results[4] = guidString.substring(20);
+		}
+		else {
+			throw new IllegalArgumentException("Invalid GUID string.");
+		}
+		return results;
 	}
 
 	/**
@@ -172,23 +166,23 @@ public class GUID {
 
 	@Override
 	public String toString() {
-		StringBuffer buffer = new StringBuffer();
-		buffer.append(Conv.toHexString(data1));
-		buffer.append("-");
-		buffer.append(Conv.toHexString(data2));
-		buffer.append("-");
-		buffer.append(Conv.toHexString(data3));
-		buffer.append("-");
-		buffer.append(Conv.toHexString(data4[0]));
-		buffer.append(Conv.toHexString(data4[1]));
-		buffer.append("-");
-		buffer.append(Conv.toHexString(data4[2]));
-		buffer.append(Conv.toHexString(data4[3]));
-		buffer.append(Conv.toHexString(data4[4]));
-		buffer.append(Conv.toHexString(data4[5]));
-		buffer.append(Conv.toHexString(data4[6]));
-		buffer.append(Conv.toHexString(data4[7]));
-		return buffer.toString();
+		StringBuilder sb = new StringBuilder();
+		sb.append(Conv.toHexString(data1));
+		sb.append("-");
+		sb.append(Conv.toHexString(data2));
+		sb.append("-");
+		sb.append(Conv.toHexString(data3));
+		sb.append("-");
+		sb.append(Conv.toHexString(data4[0]));
+		sb.append(Conv.toHexString(data4[1]));
+		sb.append("-");
+		sb.append(Conv.toHexString(data4[2]));
+		sb.append(Conv.toHexString(data4[3]));
+		sb.append(Conv.toHexString(data4[4]));
+		sb.append(Conv.toHexString(data4[5]));
+		sb.append(Conv.toHexString(data4[6]));
+		sb.append(Conv.toHexString(data4[7]));
+		return sb.toString();
 	}
 
 	/**

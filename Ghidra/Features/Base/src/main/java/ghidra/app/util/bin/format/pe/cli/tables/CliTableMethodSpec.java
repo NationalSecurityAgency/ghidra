@@ -41,7 +41,7 @@ public class CliTableMethodSpec extends CliAbstractTable {
 	public class CliMethodSpecRow extends CliAbstractTableRow {
 		public int methodIndex;
 		public int instantiationIndex;
-		
+
 		public CliMethodSpecRow(int methodIndex, int instantiationIndex) {
 			super();
 			this.methodIndex = methodIndex;
@@ -52,7 +52,9 @@ public class CliTableMethodSpec extends CliAbstractTable {
 		public String getRepresentation() {
 			String methodRep;
 			try {
-				methodRep = getRowRepresentationSafe(CliIndexMethodDefOrRef.getTableName(methodIndex), CliIndexMethodDefOrRef.getRowIndex(methodIndex));
+				methodRep =
+					getRowRepresentationSafe(CliIndexMethodDefOrRef.getTableName(methodIndex),
+						CliIndexMethodDefOrRef.getRowIndex(methodIndex));
 			}
 			catch (InvalidInputException e) {
 				methodRep = Integer.toHexString(methodIndex);
@@ -63,42 +65,49 @@ public class CliTableMethodSpec extends CliAbstractTable {
 				CliSigMethodSpec sig = new CliSigMethodSpec(blob);
 				instantiationRep = sig.getRepresentation();
 			}
-			catch (Exception e) {}
+			catch (Exception e) {
+			}
 			return String.format("Method %s Instantiation %s", methodRep, instantiationRep);
 		}
 	}
-	
-	public CliTableMethodSpec(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId) throws IOException {
+
+	public CliTableMethodSpec(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId)
+			throws IOException {
 		super(reader, stream, tableId);
 		for (int i = 0; i < this.numRows; i++) {
-			CliMethodSpecRow row = new CliMethodSpecRow(CliIndexMethodDefOrRef.readCodedIndex(reader, stream), readBlobIndex(reader));
+			CliMethodSpecRow row = new CliMethodSpecRow(
+				CliIndexMethodDefOrRef.readCodedIndex(reader, stream), readBlobIndex(reader));
 			rows.add(row);
 		}
 		reader.setPointerIndex(this.readerOffset);
 	}
 
 	@Override
-	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log, NTHeader ntHeader) 
+	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
+			NTHeader ntHeader)
 			throws DuplicateNameException, CodeUnitInsertionException, IOException {
 		for (CliAbstractTableRow row : rows) {
 			CliMethodSpecRow methodRow = (CliMethodSpecRow) row;
 			CliBlob blob = metadataStream.getBlobStream().getBlob(methodRow.instantiationIndex);
-			// Handle the signature
-			Address sigAddr = CliAbstractStream.getStreamMarkupAddress(program, isBinary, monitor, log,
-				ntHeader, metadataStream.getBlobStream(), methodRow.instantiationIndex);
-			// Create MethodSpec sig
+
+			// Create the MethodSpecSig
+			Address sigAddr = CliAbstractStream.getStreamMarkupAddress(program, isBinary, monitor,
+				log, ntHeader, metadataStream.getBlobStream(), methodRow.instantiationIndex);
+
 			CliSigMethodSpec methodSig = new CliSigMethodSpec(blob);
 			metadataStream.getBlobStream().updateBlob(methodSig, sigAddr, program);
-//			program.getBookmarkManager().setBookmark(sigAddr, BookmarkType.INFO, "Signature!", "MethodSpecSig (Offset "+methodRow.instantiationIndex+")");
 		}
 	}
-	
+
 	@Override
 	public StructureDataType getRowDataType() {
-		StructureDataType rowDt = new StructureDataType(new CategoryPath(PATH), "MethodSpec Row", 0);
-		rowDt.add(CliIndexMethodDefOrRef.toDataType(metadataStream), "Method", "MethodDefOrRef coded index");
-		rowDt.add(metadataStream.getBlobIndexDataType(), "Instantiation", "index into Blob heap, signature of this instantiation");
+		StructureDataType rowDt =
+			new StructureDataType(new CategoryPath(PATH), "MethodSpec Row", 0);
+		rowDt.add(CliIndexMethodDefOrRef.toDataType(metadataStream), "Method",
+			"MethodDefOrRef coded index");
+		rowDt.add(metadataStream.getBlobIndexDataType(), "Instantiation",
+			"index into Blob heap, signature of this instantiation");
 		return rowDt;
 	}
-	
+
 }

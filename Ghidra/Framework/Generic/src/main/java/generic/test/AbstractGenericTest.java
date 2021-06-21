@@ -49,6 +49,7 @@ import ghidra.framework.ApplicationConfiguration;
 import ghidra.util.*;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
+import ghidra.util.task.AbstractSwingUpdateManager;
 import ghidra.util.task.SwingUpdateManager;
 import junit.framework.AssertionFailedError;
 import sun.awt.AppContext;
@@ -450,6 +451,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	//      a more reasonable number
 	//
 	//      Update: 744 references at 12/1/19
+	//      Update: 559 references at 12/4/20
 	public static void waitForPostedSwingRunnables() {
 		waitForSwing();
 	}
@@ -1594,13 +1596,13 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 			throw new AssertException("Can't wait for swing from within the swing thread!");
 		}
 
-		Set<SwingUpdateManager> set = new HashSet<>();
+		Set<AbstractSwingUpdateManager> set = new HashSet<>();
 		runSwing(() -> {
 			@SuppressWarnings("unchecked")
 			WeakSet<SwingUpdateManager> s =
 				(WeakSet<SwingUpdateManager>) getInstanceField("instances",
 					SwingUpdateManager.class);
-			for (SwingUpdateManager manager : s) {
+			for (AbstractSwingUpdateManager manager : s) {
 				set.add(manager);
 			}
 		});
@@ -1617,7 +1619,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		return wasEverBusy;
 	}
 
-	private static boolean waitForSwing(Set<SwingUpdateManager> managers, boolean flush) {
+	private static boolean waitForSwing(Set<AbstractSwingUpdateManager> managers, boolean flush) {
 
 		// Note: not sure how long is too long to wait for the Swing thread and update managers
 		//       to finish.  This is usually less than a second.  We have seen a degenerate
@@ -1637,7 +1639,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 			yieldToSwing();
 			keepGoing = false;
 
-			for (SwingUpdateManager manager : managers) {
+			for (AbstractSwingUpdateManager manager : managers) {
 
 				if (!manager.isBusy()) {
 					// no current or pending work
@@ -1674,7 +1676,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		return wasEverBusy;
 	}
 
-	private static void flushAllManagers(Set<SwingUpdateManager> managers, boolean flush) {
+	private static void flushAllManagers(Set<AbstractSwingUpdateManager> managers, boolean flush) {
 
 		//
 		// Some update managers will make an update that causes another manager to schedule an
@@ -1691,21 +1693,19 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		// which would be 2
 		int n = 3;
 		for (int i = 0; i < n; i++) {
-			for (SwingUpdateManager manager : managers) {
+			for (AbstractSwingUpdateManager manager : managers) {
 				doFlush(flush, manager);
 			}
 		}
 	}
 
-	private static void doFlush(boolean doFlush, SwingUpdateManager manager) {
+	private static void doFlush(boolean doFlush, AbstractSwingUpdateManager manager) {
 		if (!doFlush) {
 			return;
 		}
 
 		runSwing(() -> {
-			if (manager.hasPendingUpdates()) {
-				manager.updateNow();
-			}
+			manager.flush();
 		}, false);
 		yieldToSwing();
 	}

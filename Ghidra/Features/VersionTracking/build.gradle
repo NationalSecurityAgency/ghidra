@@ -25,10 +25,10 @@ eclipse.project.name = 'Features VersionTracking'
 project.ext.excludeFromParallelIntegrationTests = true
 
 dependencies {
-	compile project(":Base")
+	api project(":Base")
 	
 	helpPath project(path: ":Base", configuration: "helpPath")
 	
-	testCompile "org.jmockit:jmockit:1.44"
-	testCompile project(path: ':Project', configuration: 'testArtifacts')
+	testImplementation "org.jmockit:jmockit:1.44"
+	testImplementation project(path: ':Project', configuration: 'testArtifacts')
 }

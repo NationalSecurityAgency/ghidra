@@ -1,0 +1,85 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+
+apply plugin: 'eclipse'
+eclipse.project.name = 'Debug Debugger-agent-dbgmodel'
+
+dependencies {
+	api project(":Debugger-agent-dbgeng")
+
+	testImplementation project(path: ":Debugger-agent-dbgeng", configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
+	testImplementation project(path: ":Debugger-gadp", configuration: 'testArtifacts')
+}
+
+def boolean filterJar(File jarfile) {
+	if (jarfile.name.contains("gradle-api")) {
+		return false
+	} else if (jarfile.name.contains("groovy-all")) {
+		return false
+	} else if (jarfile.name.contains("gradle-installation-beacon")) {
+		return false
+	}
+	return true
+}
+
+jar {
+	manifest {
+		attributes['Main-Class'] = 'agent.dbgmodel.gadp.DbgModelGadpServer'
+	}
+}
+
+task configureNodepJar {
+	dependsOn(configurations.default)
+	doLast {
+		configurations.default.files.forEach {
+			if (filterJar(it)) {
+				nodepJar.from(zipTree(it))
+			}
+		}
+	}
+}
+
+task nodepJar(type: Jar) {
+	inputs.file(file(jar.archivePath))
+	dependsOn(configureNodepJar)
+	dependsOn(jar)
+
+	appendix = 'nodep'
+	manifest {
+		attributes['Main-Class'] = 'agent.dbgmodel.gadp.DbgModelGadpServer'
+	}
+
+	from(zipTree(jar.archivePath))
+	// TODO: This kind of stinks. I could probably apply some judicious excludes
+	// images I don't care.
+	// I probably must include duplicate LICENSE files, so that all are included
+	// IDK why the duplicate OSGi framework classes, but I probably don't care.
+	duplicatesStrategy = 'include'
+}
+
+test {
+	jvmArgs('-Xrs') // TODO: Is this needed, or left over from trial-and-error
+	if ("win64".equals(getCurrentPlatformName())) {
+		dependsOn(":Framework-Debugging:testSpecimenWin64")
+	}
+}

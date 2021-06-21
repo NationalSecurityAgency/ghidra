@@ -1,0 +1,174 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Troubleshooting</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Debugger: Troubleshooting</H1>
+
+    <P>Often, it's a good idea to troubleshoot starting with your platform's native debugger. If it
+    doesn't work there, it's not likely to work in Ghidra, since it relies on that debugger. For
+    Linux, this is GDB; for Windows, this is WinDbg.</P>
+
+    <H2>Error Console</H2>
+
+    <P>The first place to look when you're having trouble is the Debug Console. Second, if you're
+    running from Eclipse, you can check its "Console" window. Often, Ghidra's Debug Console will
+    offer actions to help you resolve a well-known issue or configuration problem. It also
+    duplicates the error log when those messages are emitted from a debugger-related component.
+    These typically offer clues to exactly what has gone wrong.</P>
+
+    <H2>Settings and Toggles</H2>
+
+    <P>This list is not exhaustive, but here are some options to examine if you're having trouble.
+    In the FrontEnd tool, under <SPAN class="menu">Edit &rarr; Tool Options</SPAN>, select
+    "Debugger.Workflow."</P>
+
+    <UL>
+      <LI>"Map modules..." and "Map sections..." control how the debugger attempts to map static
+      and dynamic memory.</LI>
+
+      <LI>"Disassemble..." triggers automatic disassembly in the dynamic view.</LI>
+
+      <LI>"Show debugger interpreter..." automatically provides access to the command line.</LI>
+    </UL>
+
+    <P>In the Dynamic Listing:</P>
+
+    <UL>
+      <LI>"Sync to Static Listing" controls the tracking of the Static listing.</LI>
+    </UL>
+
+    <P>In the Objects provider:</P>
+
+    <UL>
+      <LI>"Record Automatically" causes a trace to be started when a Process object comes into
+      view. If the process object is not exposed automatically, you may have to expand the tree to
+      trigger the trace. If auto-record is toggled off, you'll need to hit "Record (R)" with the
+      process selected to start a trace.</LI>
+
+      <LI>"Subscribe to..." causes a particular object to be tracked by the trace. Processes,
+      threads, registers, memory, stack, and so forth are tracked automatically, but you may wish
+      to add other objects ad hoc.</LI>
+    </UL>
+
+    <P>In the Threads provider:</P>
+
+    <UL>
+      <LI>The "Track the tool to the latest snap" toggle determines whether the caret (and all
+      resulting information) should track the current thread position as it updates.</LI>
+
+      <LI>The "Synchronize trace activation..." toggle attempts to maintain synchronization between
+      the Object provider (i.e. the active target information) and the trace.</LI>
+    </UL>
+
+    <P>In the Debugger menu:</P>
+
+    <UL>
+      <LI>The "Save Traces By Default" toggle causes traces to be saved into the Ghidra project
+      database at the end of a session. (Open sessions will be re-opened with the tool in the
+      Threads window, reflected in the thin tabs at its top.)</LI>
+    </UL>
+
+    <H1><A name="faq">Frequently Asked Questions / Common Problems</A></H1>
+
+    <H2><A name="no_executable">I Can't Launch the Current Program</A></H2>
+
+    <P>This happens when the local launchers cannot locate the original executable from which the
+    current program was imported. Furthermore, if the user account under which Ghidra is running
+    does not have permission to execute the original executable, the local launchers will not make
+    offers to execute it. First, use <SPAN class="menu">Help &rarr; About [program]</SPAN> to check
+    the path of the executable. If it was imported from an older version of Ghidra, it may not be
+    correctly recorded. Verify that the file exists on the local system and can be executed. You
+    may need to close and re-open the program database or just switch program tabs back and forth
+    to get the launchers to re-assess their offers.</P>
+
+    <H2><A name="gdb_mising">I Can't Launch With GDB</A></H2>
+
+    <P>Ghidra does not come packaged with any 3rd-party debuggers. It relies on what is already
+    available on the local system. If you're trying to debug on Linux, and you only see the "GDB
+    over SSH" launcher, it's likely because the local launchers could not find your copy of GDB.
+    Either you don't have one installed, or it's not in its usual place. First verify GDB is
+    installed and that you can run it from your shell's command line. We recommend version 8 or
+    better. Second, click the "Connect" button in the "Targets" window, select the desired GDB
+    connector and configure GDB's path appropriately. Then, click "Connect" and verify the
+    connection is created successfully. You should now be able to use the "Quick Launch" button in
+    the "Objects" window to launch the current program. Furthermore, the now-configured connector
+    should make offers in the "Debug Program" menu and the "Debug" drop-down button.</P>
+
+    <P>If you're trying to debug using GDB on Windows, please consider using WinDbg (dbgeng.dll)
+    instead. If you insist on GDB, then there is a workaround, but it may take some work. We have
+    not yet implemented a pseudo-terminal wrapper for Windows, which is needed to communicate with
+    GDB/MI and support interrupts. The work-around is to use the "GDB over SSH" connector, but
+    you'll need to install an SSH server for Windows. There are a variety of options, including
+    WSL, Cygwin, and MSYS.</P>
+
+    <H2><A name="ssh_key_exchange">I Can't Connect to GDB Over SSH</A></H2>
+
+    <P>First, verify that you can SSH into the target system and execute GDB via your shell's
+    command line. If that works, but Ghidra still can't connect, then it's likely an issue with
+    allowed / supported key exchange algorithms. Ghidra currently uses Ganymed SSH v262, which
+    (unfortunately) supports very few (likely outdated) algorithms, and those algorithms are
+    removed from the default SSH configuration of more recent Linux distributions. One solution is
+    to replace the Ganymed JAR file with a patched one. There is a "v263," which supports more
+    algorithms, but it is not available in Maven Central, and is not created by Ganymed's original
+    maintainers. A second solution is to change the target system's SSH configuration to allow the
+    older algorithms. At some point, we may convert our connector to use JSch instead, since it's
+    actively maintained.</P>
+
+    <H2><A name="breakpoints_ineffective">My Breakpoints Aren't Working</A></H2>
+
+    <P>If your target is not breaking as expected, chances are the breakpoint has not actually been
+    sent to the debugger. Breakpoints in the static listing are not necessarily effective for a
+    target. Many things depend on tracing and module mapping to work correctly. Occasionally,
+    either because of configuration options, or some other hiccup, these dependencies are not met.
+    Furthermore, Ghidra can only send breakpoints to a target while it is suspended. If you are
+    trying, for example, to break before "main", you must ensure Ghidra has a chance to place the
+    breakpoint before the target would reach it. This may require using the command interpreter or
+    changing your native debugger's options. Otherwise, verify that you are actually tracing the
+    target where you expected a breakpoint to appear. Then, verify that the module containing your
+    breakpoint has been mapped into the trace.</P>
+
+    <H2>My Target is not Being Traced</H2>
+
+    <P>If the dynamic listing is empty, chances are, you are not recording your target. If that is
+    the case, right-click your target in the <A href=
+    "help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html">Objects</A> window and select
+    "Record". Please note that this action is enabled on any object, but is ignored if nothing
+    knows how to record it. Recorders typically examine the object and its environment (i.e.,
+    debugger name, target operating system, architecture) to determine if and how to record it. Be
+    sure you have selected the process, not a thread.</P>
+
+    <H2>I Click Record, but I Get an Empty Dialog</H2>
+
+    <P>That dialog is meant to display a list of offers for recording the selected target. If it's
+    empty, it's because nothing knows how to record it. Most likely, this means the target
+    environment (arch, os, etc.) is not recognized. Rarely, this is an error in the connector,
+    which may incorrectly report the target environment. Less rarely, the native debugger requires
+    the user to manually specify the target platform. Most likely, the target environment is simply
+    not supported by Ghidra, yet. If Ghidra supports the target processor, this can usually be
+    resolved by coding up a new opinion, selecting the correct Ghidra language and compiler spec
+    (ABI) for the environment as reported by the debugger connection.</P>
+
+    <H2>My Modules are not Mapped in</H2>
+
+    <P>If changing your cursor location in the static listing does not automatically synchronize
+    the dynamic listing to the same place, and vice versa, chances are the module is not mapped.
+    (It is also possible you disabled this sync feature, but that is not usually the case.) You can
+    also check the <A href=
+    "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static Mappings</A>
+    window to see if the memory ranges are mapped properly. To attempt to map the module, use the
+    <A href="help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html">Modules</A> window.
+    Right-click the module where you expected to sync and select "Map Modules." If you do not see
+    the program you expected, it may be because it is not named in a way that Ghidra would
+    recognize it as the given module. To force Ghidra to map a module to the current program,
+    select "Map Module to ...."</P>
+  </BODY>
+</HTML>

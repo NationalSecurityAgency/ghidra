@@ -38,6 +38,7 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
+import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.classfinder.ClassSearcher;
@@ -110,6 +111,7 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		// they are inserted
 		int subGroupIndex = 0;
 
+		//@formatter:off
 		autoAnalyzeAction =
 			new ActionBuilder("Auto Analyze", getName())
 					.supportsDefaultToolContext(true)
@@ -131,6 +133,7 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 					.onAction(c -> analyzeAllCallback())
 					.validContextWhen(ac -> ac instanceof ListingActionContext)
 					.buildAndInstall(tool);
+		//@formatter:on
 
 		tool.setMenuGroup(new String[] { "Analysis", "One Shot" }, ANALYZE_GROUP_NAME);
 
@@ -189,6 +192,9 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		}
 
 		analysisMgr.initializeOptions(); // options may have changed
+
+		// At this point, any analysis that is done is consider to be true for analyzed.
+		GhidraProgramUtilities.setAnalyzedFlag(program, true);
 
 		// start analysis to set the flag, but it probably won't do more.  A bit goofy but better
 		// than the way it was
@@ -270,9 +276,9 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 
 	private void programActivated(final Program program) {
 
-		program.getOptions(StoredAnalyzerTimes.OPTIONS_LIST)
-				.registerOption(StoredAnalyzerTimes.OPTION_NAME, OptionType.CUSTOM_TYPE, null, null,
-					"Cumulative analysis task times", new StoredAnalyzerTimesPropertyEditor());
+		program.getOptions(StoredAnalyzerTimes.OPTIONS_LIST).registerOption(
+			StoredAnalyzerTimes.OPTION_NAME, OptionType.CUSTOM_TYPE, null, null,
+			"Cumulative analysis task times", new StoredAnalyzerTimesPropertyEditor());
 
 		// invokeLater() to ensure that all other plugins have been notified of the program
 		// activated.  This makes sure plugins like the Listing have opened and painted the 

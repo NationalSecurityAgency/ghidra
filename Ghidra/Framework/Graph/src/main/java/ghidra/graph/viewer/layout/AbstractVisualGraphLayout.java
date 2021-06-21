@@ -44,36 +44,36 @@ import ghidra.util.task.TaskMonitor;
  * A base layout that marries the Visual Graph and Jung layout interfaces.   This class allows
  * you to create new layouts while stubbing the Jung layout methods.
  *
- * <P>This class essentially takes in client-produced grid row and column indices and 
+ * <P>This class essentially takes in client-produced grid row and column indices and
  * produces layout locations for those values.
  *
- * <P>This an implementation the Jung {@link Layout} interface that handles most of the 
+ * <P>This an implementation the Jung {@link Layout} interface that handles most of the
  * layout implementation for you.  Things to know:
  * <UL>
  * 	<LI>You should call initialize() inside of your constructor</LI>
- *  <LI>You must implement {@link #performInitialGridLayout(VisualGraph)} - this is where 
+ *  <LI>You must implement {@link #performInitialGridLayout(VisualGraph)} - this is where
  *      you align your vertices (and optionally edge articulations) on a grid.  This grid
  *      will be translated into layout space points for you.</LI>
- *  <LI>If you wish to use articulation points in your edges, you must override 
- *      {@link #usesEdgeArticulations()} to return true.</LI> 
+ *  <LI>If you wish to use articulation points in your edges, you must override
+ *      {@link #usesEdgeArticulations()} to return true.</LI>
  * </UL>
- * 
+ *
  * <p><a id="column_centering"></A>By default, this class will create x-position values that
- * are aligned with the column's x-position.   You can override 
+ * are aligned with the column's x-position.   You can override
  * {@link #getVertexLocation(VisualVertex, Column, Row, Rectangle)} in order to center the
  * vertex within its column
- * {@link #getCenteredVertexLocation(VisualVertex, Column, Row, Rectangle)}.  Also note though 
+ * {@link #getCenteredVertexLocation(VisualVertex, Column, Row, Rectangle)}.  Also note though
  * that if your layout returns true for {@link #isCondensedLayout()},
- * then the centering will be condensed and slightly off.   
- * 
+ * then the centering will be condensed and slightly off.
+ *
  * @param <V> the vertex type
  * @param <E> the edge type
- * 
+ *
  * @see GridLocationMap
  * @see LayoutPositions
  */
 //@formatter:off
-public abstract class AbstractVisualGraphLayout<V extends VisualVertex, 
+public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 	                                            E extends VisualEdge<V>>
 	extends AbstractLayout<V, E>
 	implements VisualGraphLayout<V, E> {
@@ -106,9 +106,9 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 
 	/**
 	 * This is the method that is called to perform the actual layout.  While this method is
-	 * running, the {@link #monitor} variable has been set so that you can call 
+	 * running, the {@link #monitor} variable has been set so that you can call
 	 * {@link TaskMonitor#checkCanceled()}.
-	 * 
+	 *
 	 * @param g the graph
 	 * @return the new grid location
 	 * @throws CancelledException if the operation was cancelled
@@ -151,10 +151,10 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 	}
 
 	/**
-	 * Returns true if this layout is in a condensed mode, which means to reduce space 
-	 * between vertices and edges.  This is useful to save space.  Subclasses may choose to 
+	 * Returns true if this layout is in a condensed mode, which means to reduce space
+	 * between vertices and edges.  This is useful to save space.  Subclasses may choose to
 	 * have this setting controlled via an option that the user can toggle.
-	 * 
+	 *
 	 * @return true for a condensed layout
 	 */
 	protected boolean isCondensedLayout() {
@@ -218,11 +218,11 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 	}
 
 	/**
-	 * This class has implemented {@link #cloneLayout(VisualGraph)} in order to properly 
+	 * This class has implemented {@link #cloneLayout(VisualGraph)} in order to properly
 	 * initialize location information in the layout so that subclasses do not have to.  Each
 	 * subclass still needs to create the new instance of the layout that is being cloned, as
 	 * this class does not know how to do so.
-	 * 
+	 *
 	 * @param newGraph the new graph for the new layout
 	 * @return the new layout
 	 */
@@ -237,7 +237,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 
 	/**
 	 * Takes the given layout and copies the layout information this layout into that layout
-	 * 
+	 *
 	 * @param newLayout the new layout to update
 	 */
 	protected void initializeClonedLayout(AbstractVisualGraphLayout<V, E> newLayout) {
@@ -260,7 +260,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 
 			List<Point2D> bends = edgesToBends.get(e);
 			if (bends == null) {
-				// New edge is not in the old graph.  This can happen if the old graph has 
+				// New edge is not in the old graph.  This can happen if the old graph has
 				// grouped vertices and some edges have been removed.
 				continue;
 			}
@@ -313,30 +313,35 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 		Map<V, Point2D> vertexLayoutLocations =
 			positionVerticesInLayoutSpace(transformer, vertices, layoutLocations);
 
-		Map<E, List<Point2D>> edgeLayoutArticulationLocations =
-			positionEdgeArticulationsInLayoutSpace(transformer, vertexLayoutLocations, edges,
-				layoutLocations);
-
-		// DEGUG triggers grid lines to be printed; useful for debugging
-//		VisualGraphRenderer.DEBUG_ROW_COL_MAP.put((Graph<?, ?>) visualGraph,
-//			layoutLocations.copy());
-
-		Rectangle graphBounds =
-			getTotalGraphSize(vertexLayoutLocations, edgeLayoutArticulationLocations, transformer);
+		Rectangle graphBounds = getTotalGraphSize(vertexLayoutLocations, transformer);
 		double centerX = graphBounds.getCenterX();
 		double centerY = graphBounds.getCenterY();
 
+		//
+		// Condense vertices before placing edges.  This allows layouts to perform custom routing
+		// of edges around vertices *after* condensing.
+		//
 		if (isCondensed) {
 			List<Row<V>> rows = gridLocations.rows();
-			condense(rows, vertexLayoutLocations, edgeLayoutArticulationLocations, transformer,
-				centerX, centerY);
+			condenseVertices(rows, vertexLayoutLocations, transformer, centerX, centerY);
 		}
+
+		Map<E, List<Point2D>> edgeLayoutArticulations = positionEdgeArticulationsInLayoutSpace(
+			transformer, vertexLayoutLocations, edges, layoutLocations);
+
+		if (isCondensed) {
+			// note: some layouts will not condense the edges, as they perform custom routing
+			List<Row<V>> rows = gridLocations.rows();
+			condenseEdges(rows, edgeLayoutArticulations, centerX, centerY);
+		}
+
+		// DEGUG triggers grid lines to be printed; useful for debugging
+		// VisualGraphRenderer.DEBUG_ROW_COL_MAP.put(this, layoutLocations.copy());
 
 		layoutLocations.dispose();
 		gridLocations.dispose();
 
-		return LayoutPositions.createNewPositions(vertexLayoutLocations,
-			edgeLayoutArticulationLocations);
+		return LayoutPositions.createNewPositions(vertexLayoutLocations, edgeLayoutArticulations);
 	}
 
 	private Map<V, Point2D> positionVerticesInLayoutSpace(
@@ -368,7 +373,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 
 	/**
 	 * Returns a location for the given vertex that is centered within its cell
-	 * 
+	 *
 	 * @param v the vertex
 	 * @param col the vertex's column in the grid
 	 * @param row the vertex's row in the grid
@@ -379,7 +384,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 		//
 		// Move x over to compensate for vertex painting.   Edges are drawn from the center of the
 		// vertex.  Thus, if you have vertices with two different widths, then the edge between
-		// them will not be straight *when the vertices are painted off-center on their column* 
+		// them will not be straight *when the vertices are painted off-center on their column*
 		// (which means they are left-aligned).  By centering the vertex, the center points of
 		// the differently sized vertices (on the same column and different rows) will be aligned.
 		//
@@ -423,7 +428,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 		//
 		// half-height offsets the articulation points, which keeps long edge lines from
 		// overlapping as much
-		//		
+		//
 		boolean isCondensed = isCondensedLayout();
 		int x = col.x + (col.getPaddedWidth(isCondensed) >> 1);
 		int y = row.y + (row.getPaddedHeight(isCondensed) >> 1);
@@ -431,11 +436,12 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 	}
 
 	private Rectangle getTotalGraphSize(Map<V, Point2D> vertexLocationMap,
-			Map<E, List<Point2D>> edgeArticulations,
 			com.google.common.base.Function<V, Shape> vertexShapeTransformer) {
 
+		// note: do not include edges in the size of the graph at this point, as some layouts use
+		//       custom edge routing after this method is called
 		Set<V> vertices = vertexLocationMap.keySet();
-		Set<E> edges = edgeArticulations.keySet();
+		Set<E> edges = Collections.emptySet();
 
 		Function<V, Rectangle> vertexToBounds = v -> {
 
@@ -453,19 +459,18 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 			return bounds;
 		}
 
-		Function<E, List<Point2D>> edgeToArticulations = e -> edgeArticulations.get(e);
+		Function<E, List<Point2D>> edgeToArticulations = e -> Collections.emptyList();
 		Rectangle bounds = GraphViewerUtils.getTotalGraphSizeInLayoutSpace(vertices, edges,
 			vertexToBounds, edgeToArticulations);
 		return bounds;
 	}
 
-	private void condense(List<Row<V>> rows, Map<V, Point2D> newLocations,
-			Map<E, List<Point2D>> newEdgeArticulations,
+	protected void condenseVertices(List<Row<V>> rows, Map<V, Point2D> newLocations,
 			VisualGraphVertexShapeTransformer<V> transformer, double centerX, double centerY) {
 
 		//
-		// Note: we move the articulations and vertices closer together on the x-axis.  We do 
-		//       not move the y-axis, as that is already as close together as we would like at 
+		// Note: we move the articulations and vertices closer together on the x-axis.  We do
+		//       not move the y-axis, as that is already as close together as we would like at
 		//       this point.
 		//
 		double condenseFactor = getCondenseFactor();
@@ -481,6 +486,22 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 			point.setLocation(offsetX, currentY);
 		}
 
+		//
+		// The above aggressive condensing may lead to neighboring node overlapping for
+		// nodes in the same row.  Check to see if we need to move the nodes to avoid this case.
+		//
+		unclip(rows, newLocations, transformer);
+	}
+
+	protected void condenseEdges(List<Row<V>> rows, Map<E, List<Point2D>> newEdgeArticulations,
+			double centerX, double centerY) {
+
+		//
+		// Note: we move the articulations and vertices closer together on the x-axis.  We do
+		//       not move the y-axis, as that is already as close together as we would like at
+		//       this point.
+		//
+		double condenseFactor = getCondenseFactor();
 		Collection<List<Point2D>> edgeArticulations = newEdgeArticulations.values();
 		for (List<Point2D> edgePoints : edgeArticulations) {
 			for (Point2D point : edgePoints) {
@@ -494,16 +515,10 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 				point.setLocation(offsetX, currentY);
 			}
 		}
-
-		//
-		// The above aggressive condensing may lead to neighboring node overlapping for 
-		// nodes in the same row.  Check to see if we need to move the nodes to avoid this case. 
-		//
-		unclip(rows, newLocations, transformer);
 	}
 
-	/** 
-	 * The amount (from 0 to 1.0) by which to condense the vertices of the graph when that 
+	/**
+	 * The amount (from 0 to 1.0) by which to condense the vertices of the graph when that
 	 * feature is enabled.  The default is .5 (50%).  A value of 1.0 would be fully-condensed
 	 * such that all vertices are aligned on the x-axis on the center of the graph.
 	 * @return the condense factor
@@ -528,7 +543,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 	private void moveLeft(Row<V> row, int moveLeftStartIndex, Map<V, Point2D> vertexLocations,
 			VisualGraphVertexShapeTransformer<V> transformer) {
 
-		for (int i = moveLeftStartIndex; i >= 0; i--) {
+		for (int i = moveLeftStartIndex; i >= row.getStartColumn(); i--) {
 			V vertex = row.getVertex(i);
 			V rightVertex = getRightVertex(row, i);
 			moveLeftIfOverlaps(vertexLocations, transformer, vertex, rightVertex);
@@ -538,7 +553,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 	private void moveRight(Row<V> row, int moveRightStartIndex, Map<V, Point2D> vertexLocations,
 			VisualGraphVertexShapeTransformer<V> transformer) {
 
-		for (int i = moveRightStartIndex; i < row.getColumnCount(); i++) {
+		for (int i = moveRightStartIndex; i <= row.getEndColumn(); i++) {
 			V vertex = row.getVertex(i);
 			V leftVertex = getLeftVertex(row, i);
 			moveRightIfOverlaps(vertexLocations, transformer, vertex, leftVertex);
@@ -601,7 +616,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 		//
 		// Visual points (after the centering has taken place).  Update the location to account
 		// for this centering before checking for clipping.
-		// 
+		//
 		int myWidth = vertexBounds.width >> 1; // half width
 		int myHeight = vertexBounds.height >> 1; // half height
 		double x = vertexPoint.getX();
@@ -635,20 +650,20 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 		double newX = otherX + offset;
 		vertexPoint.setLocation(newX, oldY); // editing this point changes the map's value
 
-// DEBUG this can be deleted in the future, future, future		
+// DEBUG this can be deleted in the future, future, future
 //		//@formatter:off
 //		Msg.debug(this,
-//			vertex + 
+//			vertex +
 //			"\n\tat " + vertexPoint.getX() +
 //			"\n\tvisual x: " + myNewPoint +
-//			"\n\tw: " + vertexBounds.width + 
-//				"\n\t\t" + otherVertex + 
+//			"\n\tw: " + vertexBounds.width +
+//				"\n\t\t" + otherVertex +
 //				"\n\t\tat: " + otherVertexPoint +
 //				"\n\t\tvisual x: " + otherNewPoint.getX() +
-//			"\n\t\tw: " + otherVertexBounds.width + 
-//			"\n\tclip: " + intersection.width + 
-//			"\n\toffset: " + offset + 
-//			"\n\tnew pt: " + newX);		
+//			"\n\t\tw: " + otherVertexBounds.width +
+//			"\n\tclip: " + intersection.width +
+//			"\n\toffset: " + offset +
+//			"\n\tnew pt: " + newX);
 //		//@formatter:on
 
 	}

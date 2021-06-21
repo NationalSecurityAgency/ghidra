@@ -30,6 +30,8 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
 import ghidra.service.graph.*;
 import ghidra.util.Msg;
+import java.util.*;
+import static ghidra.service.graph.GraphDisplay.*;
 
 public class GraphAST extends GhidraScript {
 	protected static final String COLOR_ATTRIBUTE = "Color";
@@ -64,8 +66,15 @@ public class GraphAST extends GhidraScript {
 		graph = new AttributedGraph();
 		buildGraph();
 
+		Map<String, String> properties = new HashMap<>();
+		properties.put(SELECTED_VERTEX_COLOR, "0xFF1493");
+		properties.put(SELECTED_EDGE_COLOR, "0xFF1493");
+		properties.put(INITIAL_LAYOUT_ALGORITHM, "Hierarchical MinCross Coffman Graham");
+		properties.put(DISPLAY_VERTICES_AS_ICONS, "false");
+		properties.put(VERTEX_LABEL_POSITION, "S");
+		properties.put(ENABLE_EDGE_SELECTION, "true");
 		GraphDisplay graphDisplay =
-			graphDisplayBroker.getDefaultGraphDisplay(false, monitor);
+			graphDisplayBroker.getDefaultGraphDisplay(false, properties, monitor);
 //        graphDisplay.defineVertexAttribute(CODE_ATTRIBUTE); //
 //        graphDisplay.defineVertexAttribute(SYMBOLS_ATTRIBUTE);
 //        graphDisplay.defineEdgeAttribute(EDGE_TYPE_ATTRIBUTE);
@@ -130,7 +139,7 @@ public class GraphAST extends GhidraScript {
 		else if (vn.isUnique()) {
 			colorattrib = "Black";
 		}
-		else if (vn.isPersistant()) {
+		else if (vn.isPersistent()) {
 			colorattrib = "DarkOrange";
 		}
 		else if (vn.isAddrTied()) {

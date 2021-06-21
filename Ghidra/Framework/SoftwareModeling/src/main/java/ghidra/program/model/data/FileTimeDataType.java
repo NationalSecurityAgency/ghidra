@@ -67,14 +67,6 @@ public class FileTimeDataType extends BuiltIn {
 		return 8;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	@Override
-	public boolean isDynamicallySized() {
-		return false;
-	}
-
 	@Override
 	public String getMnemonic(Settings settings) {
 		return "FileTime";

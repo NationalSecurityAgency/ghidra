@@ -1,0 +1,193 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Breakpoints</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Breakpoints</H1>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/DebuggerBreakpointsPlugin.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>Breakpoints refer to any mechanism which may trap execution based on an address. The
+    breakpoints manager presents all active breakpoints among all open programs and live traces.
+    Note that dead traces are not considered, and only the breakpoints at the present are
+    displayed, even if the user has stepped a trace backward. Breakpoints which map to the same
+    address in the same module, i.e., program image, and otherwise share the same attributes, are
+    grouped into a logical breakpoint. <B>NOTE:</B> The breakpoints window cannot display or
+    manipulate breakpoints from a target until that target is recorded into a trace. See the <A
+    href="help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static
+    Mappings</A> window for the finer details of mapping traces to imported modules. In this
+    manner, breakpoints stored in Ghidra programs comprise the current breakpoint set, organized by
+    address &mdash; except for breakpoints outside a known imported module. The top table of the
+    provider displays logical breakpoints; the bottom table displays breakpoint locations.</P>
+
+    <P>Depending on what is supported by the connected debugger, breakpoints can trap a target when
+    an address or range is executed, read, or written; using software or hardware mechanisms. In
+    case of "read" or "write," debuggers may differ in terminology, e.g., GDB might call them
+    "watchpoints," but Ghidra still calls these "breakpoints." Some debuggers allow the user to
+    specify a breakpoint location other than by address, but ultimately each specification is
+    realized by 0 or more addressable locations. To accommodate this, the <A href=
+    "help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html">Objects</A> window will
+    typically display a list of specifications, each listing its locations as children. However,
+    the grouping of breakpoint locations into logical breakpoints by this manager is done
+    <EM>without respect</EM> to the specifications. Often the specification is at a higher stratum
+    than Ghidra natively understands, e.g., the source filename and line number, and so such
+    specifications are not relevant. Note, however, that the model might not permit locations to be
+    manipulated independently of their specification, which may limit how the manager can operate
+    on each breakpoint location.</P>
+
+    <P>Because of the logical grouping of breakpoints, it is possible for a breakpoint to be in a
+    mixed or inconsistent state. This happens quite commonly, e.g., when a breakpoint is placed in
+    a Ghidra program before that program is mapped in any traced target. Once mapped in, the
+    location of that breakpoint in the trace is computed and noted as missing. A logical breakpoint
+    without any location in a trace (i.e., on an actual target) is called "ineffective" and is
+    drawn in grey. An enabled logical breakpoint having a disabled location is called
+    "inconsistent" and its icon will indicate that state. A disabled logical breakpoint having an
+    enabled location is similarly "inconsistent." Toggling ineffective or inconsistent breakpoints
+    enables and/or places all locations, bringing it into a consistent enabled state. Toggling it
+    again disables all locations.</P>
+
+    <H2>Tables and Columns</H2>
+
+    <P>The top table, which lists logical breakpoints, has the following columns:</P>
+
+    <UL>
+      <LI>Enabled - displays an icon indicating the state of the breakpoint. Clicking the icon
+      toggles the breakpoint.</LI>
+
+      <UL style="list-style-type: none">
+        <LI><IMG alt="" src="images/breakpoint-enable.png"> Enabled</LI>
+
+        <LI><IMG alt="" src="images/breakpoint-disable.png"> Disabled</LI>
+
+        <LI><IMG alt="" src="images/breakpoint-mixed-ed.png"> Inconsistent: Enabled with disabled
+        locations</LI>
+
+        <LI><IMG alt="" src="images/breakpoint-mixed-de.png"> Inconsistent: Disabled with enabled
+        locations</LI>
+
+        <LI><IMG alt="" src="images/breakpoint-ineffective-e.png"> Enabled but ineffective</LI>
+
+        <LI><IMG alt="" src="images/breakpoint-ineffective-d.png"> Disabled and ineffective</LI>
+      </UL>
+
+      <LI>Image - gives the name of the Ghidra program, if the breakpoint is mapped to one.</LI>
+
+      <LI>Address - gives the address of the breakpoint. For a breakpoint mapped to a Ghidra
+      program, this gives the address in that program. For a breakpoint not mapped, this gives the
+      address in its trace.</LI>
+
+      <LI>Length - usually 1. For access breakpoints, this notes the length in bytes of the address
+      range.</LI>
+
+      <LI>Kinds - indicates the kind(s) of breakpoint: SW_EXECUTE, HW_EXECUTE, READ, and/or
+      WRITE.</LI>
+
+      <LI>Locations - counts the number of trace locations mapped to this logical breakpoint,
+      applying the trace filter if active. Note that a logical breakpoint with 0 locations is
+      ineffective.</LI>
+    </UL>
+
+    <P>The bottom table, which lists trace breakpoint locations, has the following columns:</P>
+
+    <UL>
+      <LI>Enabled - displays an icon indicating the state of the location. Clicking the icon
+      toggles the location.</LI>
+
+      <LI>Name - displays the name given to the location by the connected debugger. This field is
+      user modifiable.</LI>
+
+      <LI>Address - gives the address of this location in its trace.</LI>
+
+      <LI>Trace - gives the name of the location's trace &mdash; the target path by default.</LI>
+
+      <LI>Threads - if the breakpoint applies to a limited set of threads, gives the list of
+      threads.</LI>
+
+      <LI>Comment - gives a user comment &mdash; the specification expression by default. This
+      field is user modifiable.</LI>
+    </UL>
+
+    <H2>Breakpoint Actions</H2>
+
+    <P>The primary purpose of this provider is to manipulate existing breakpoints. It provides the
+    following actions to that end. Breakpoints can also be managed via the <A href=
+    "help/topics/DebuggerBreakpointMarkerPlugin/DebuggerBreakpointMarkerPlugin.html">Breakpoint
+    Marker Actions</A> in the disassembly listings.</P>
+
+    <H3><A name="enable_breakpoints"></A><IMG alt="" src="images/breakpoint-enable.png"> Enable
+    Selected Breakpoints</H3>
+
+    <P>This action is available when one or more breakpoints or locations are selected. It enables
+    each selected breakpoint. For any breakpoint that is already enabled, no action is taken.</P>
+
+    <H3><A name="enable_all_breakpoints"></A><IMG alt="" src="images/breakpoints-enable-all.png">
+    Enable All Breakpoints</H3>
+
+    <P>This action is always available. It enables every breakpoint. For any breakpoint that is
+    already enabled, no action is taken.</P>
+
+    <H3><A name="disable_breakpoints"></A><IMG alt="" src="images/breakpoint-disable.png"> Disable
+    Selected Breakpoints</H3>
+
+    <P>This action is available when one or more breakpoints or locations are selected. It disables
+    each selected breakpoint. For any breakpoint that is already disabled, no action is taken.</P>
+
+    <H3><A name="disable_all_breakpoints"></A><IMG alt="" src="images/breakpoints-disable-all.png">
+    Disable All Breakpoints</H3>
+
+    <P>This action is always available. It disables every breakpoint. For any breakpoint that is
+    already disabled, no action is taken.</P>
+
+    <H3><A name="make_breakpoints_effective"></A><IMG alt="" src=
+    "images/breakpoints-make-effective.png"> Make Breakpoints Effective</H3>
+
+    <P>This action is available whenever there are mapped breakpoints with 0 locations, i.e., it
+    corresponds to a target location where the breakpoint is still missing. It places such
+    breakpoints where possible. This action is also offered as a resolution in the console. It
+    appears in the log any time this action is available.</P>
+
+    <H3><A name="clear_breakpoints"></A><IMG alt="" src="images/breakpoint-clear.png"> Clear
+    Selected Breakpoints</H3>
+
+    <P>This action is available when one or more breakpoints or locations are selected. It clears
+    (deletes) each selected breakpoint.</P>
+
+    <H3><A name="clear_all_breakpoints"></A><IMG alt="" src="images/breakpoints-clear-all.png">
+    Clear All Breakpoints</H3>
+
+    <P>This action is always available. <FONT color="red">Use with caution!</FONT> It deletes every
+    breakpoint.</P>
+
+    <H2>Filter Actions</H2>
+
+    <P>For organizing breakpoints the manager provides the following actions:</P>
+
+    <H3><A name="filter_by_trace"></A><IMG alt="" src="images/video-x-generic16.png"> Filter to
+    Current Trace</H3>
+
+    <P>This toggle is always available. It filters the bottom table to those locations in the
+    current trace only. Additionally, the "Locations" column of the top table will only count those
+    in the current trace.</P>
+
+    <H3><A name="filter_by_logical"></A><IMG alt="" src="images/filter_off.png"> Filter to
+    Breakpoint Selection</H3>
+
+    <P>This action is always available. It filters the bottom table to those locations belonging to
+    a selected breakpoint in the top table.</P>
+  </BODY>
+</HTML>

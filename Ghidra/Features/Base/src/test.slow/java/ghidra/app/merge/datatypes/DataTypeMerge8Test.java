@@ -163,7 +163,7 @@ public class DataTypeMerge8Test extends AbstractDataTypeMergeTest {
 		String statusText = label.getText();
 		String expectedText =
 			"Structure Merge: Not enough undefined bytes to fit /XYZ in structure " +
-				"/MISC/ABC at offset 0x4.\nIt needs 3 more byte(s) to be able to fit.";
-		assertTrue(statusText.contains(expectedText));
+				"/MISC/ABC at offset 0x4. It needs 3 more byte(s) to be able to fit.";
+		assertTrue("Wrong status text: " + statusText, statusText.contains(expectedText));
 	}
 }

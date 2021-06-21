@@ -313,6 +313,22 @@ public class ElfLoadAdapter {
 	}
 
 	/**
+	 * This method allows an extension to override the default address calculation for loading
+	 * a symbol.  This is generally only neccessary when symbol requires handling of processor-specific 
+	 * flags or section index.  This method should return null when default symbol processing 
+	 * is sufficient. {@link Address#NO_ADDRESS} should be returned if the symbol is external
+	 * and is not handled by default processing.
+	 * @param elfLoadHelper load helper object
+	 * @param elfSymbol elf symbol
+	 * @return symbol memory address or null to defer to default implementation
+	 * @throws NoValueException if error logged and address calculation failed
+	 */
+	public Address calculateSymbolAddress(ElfLoadHelper elfLoadHelper, ElfSymbol elfSymbol)
+			throws NoValueException {
+		return null;
+	}
+
+	/**
 	 * During symbol processing this method will be invoked to permit an extension to
 	 * adjust the address and/or apply context to the intended symbol location.
 	 * @param elfLoadHelper load helper object
@@ -487,4 +503,5 @@ public class ElfLoadAdapter {
 	public Class<? extends ElfRelocation> getRelocationClass(ElfHeader elfHeader) {
 		return null;
 	}
+
 }

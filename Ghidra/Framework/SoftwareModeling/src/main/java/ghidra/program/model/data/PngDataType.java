@@ -57,14 +57,6 @@ public class PngDataType extends BuiltIn implements Dynamic, Resource {
 		return -1;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	@Override
-	public boolean isDynamicallySized() {
-		return true;
-	}
-
 	@Override
 	public boolean canSpecifyLength() {
 		return false;
@@ -104,6 +96,11 @@ public class PngDataType extends BuiltIn implements Dynamic, Resource {
 		@Override
 		public ImageIcon getImageIcon() {
 			return new ImageIcon(data, "<PNG-Image>");
+		}
+
+		@Override
+		public String getImageFileType() {
+			return "png";
 		}
 	}
 

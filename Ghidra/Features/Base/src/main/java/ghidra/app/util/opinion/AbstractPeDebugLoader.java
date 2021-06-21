@@ -17,11 +17,11 @@ package ghidra.app.util.opinion;
 
 import java.util.*;
 
-import ghidra.app.util.bin.format.pdb.*;
+import ghidra.app.util.bin.format.pdb.PdbInfoCodeView;
+import ghidra.app.util.bin.format.pdb.PdbInfoDotNet;
 import ghidra.app.util.bin.format.pe.FileHeader;
 import ghidra.app.util.bin.format.pe.SectionHeader;
 import ghidra.app.util.bin.format.pe.debug.*;
-import ghidra.app.util.datatype.microsoft.GUID;
 import ghidra.app.util.demangler.DemangledObject;
 import ghidra.app.util.demangler.DemanglerUtil;
 import ghidra.framework.options.Options;
@@ -112,56 +112,14 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 
 		Options proplist = program.getOptions(Program.PROGRAM_INFO);
 
-		PdbInfoIface cvPdbInfo = dcv.getPdbInfo();
+		PdbInfoCodeView cvPdbInfo = dcv.getPdbInfo();
 		if (cvPdbInfo != null) {
-			byte[] magic = cvPdbInfo.getMagic();
-			int sig = cvPdbInfo.getSig();
-			int age = cvPdbInfo.getAge();
-			String name = cvPdbInfo.getPdbName();
-
-			proplist.setString(PdbParserConstants.PDB_VERSION, Conv.toString(magic));
-			proplist.setString(PdbParserConstants.PDB_SIGNATURE, Conv.toHexString(sig));
-			proplist.setString(PdbParserConstants.PDB_AGE, Integer.toHexString(age));
-			proplist.setString(PdbParserConstants.PDB_FILE, name);
-/*
-			DebugDirectory dd = dcv.getDebugDirectory();
-			if (dd.getAddressOfRawData() > 0) {
-				Address address = space.getAddress(imageBase + dd.getAddressOfRawData());
-				listing.setComment(address, CodeUnit.PLATE_COMMENT, "CodeView PDB Info");
-				try {
-					listing.createData(address, cvPdbInfo.toDataType());
-				}
-				catch (IOException e) {}
-				catch (DuplicateNameException e) {}
-				catch (CodeUnitInsertionException e) {}
-			}
-*/
+			cvPdbInfo.serializeToOptions(proplist);
 		}
 
-		PdbInfoDotNetIface dotnetPdbInfo = dcv.getDotNetPdbInfo();
+		PdbInfoDotNet dotnetPdbInfo = dcv.getDotNetPdbInfo();
 		if (dotnetPdbInfo != null) {
-			byte[] magic = dotnetPdbInfo.getMagic();
-			GUID guid = dotnetPdbInfo.getGUID();
-			int age = dotnetPdbInfo.getAge();
-			String name = dotnetPdbInfo.getPdbName();
-
-			proplist.setString(PdbParserConstants.PDB_VERSION, Conv.toString(magic));
-			proplist.setString(PdbParserConstants.PDB_GUID, guid.toString());
-			proplist.setString(PdbParserConstants.PDB_AGE, Integer.toHexString(age));
-			proplist.setString(PdbParserConstants.PDB_FILE, name);
-/*
-			DebugDirectory dd = dcv.getDebugDirectory();
-			if (dd.getAddressOfRawData() > 0) {
-				Address address = space.getAddress(imageBase + dd.getAddressOfRawData());
-				listing.setComment(address, CodeUnit.PLATE_COMMENT, ".NET PDB Info");
-				try {
-					listing.createData(address, dotnetPdbInfo.toDataType());
-				}
-				catch (IOException e) {}
-				catch (DuplicateNameException e) {}
-				catch (CodeUnitInsertionException e) {}
-			}
-*/
+			dotnetPdbInfo.serializeToOptions(proplist);
 		}
 
 		DebugCodeViewSymbolTable dcvst = dcv.getSymbolTable();

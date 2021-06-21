@@ -18,8 +18,10 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.program.model.data.CompositeInternal;
 import ghidra.util.UniversalID;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -28,38 +30,29 @@ import ghidra.util.task.TaskMonitor;
 abstract class CompositeDBAdapter {
 
 	static final String COMPOSITE_TABLE_NAME = "Composite Data Types";
-	static final Schema COMPOSITE_SCHEMA = CompositeDBAdapterV2V3.V2_COMPOSITE_SCHEMA;
+	static final Schema COMPOSITE_SCHEMA = CompositeDBAdapterV5.V5_COMPOSITE_SCHEMA;
 
-	static final int COMPOSITE_NAME_COL = CompositeDBAdapterV2V3.V2_COMPOSITE_NAME_COL;
-	static final int COMPOSITE_COMMENT_COL = CompositeDBAdapterV2V3.V2_COMPOSITE_COMMENT_COL;
-	static final int COMPOSITE_IS_UNION_COL = CompositeDBAdapterV2V3.V2_COMPOSITE_IS_UNION_COL;
-	static final int COMPOSITE_CAT_COL = CompositeDBAdapterV2V3.V2_COMPOSITE_CAT_COL;
-	static final int COMPOSITE_LENGTH_COL = CompositeDBAdapterV2V3.V2_COMPOSITE_LENGTH_COL;
+	static final int COMPOSITE_NAME_COL = CompositeDBAdapterV5.V5_COMPOSITE_NAME_COL;
+	static final int COMPOSITE_COMMENT_COL = CompositeDBAdapterV5.V5_COMPOSITE_COMMENT_COL;
+	static final int COMPOSITE_IS_UNION_COL = CompositeDBAdapterV5.V5_COMPOSITE_IS_UNION_COL;
+	static final int COMPOSITE_CAT_COL = CompositeDBAdapterV5.V5_COMPOSITE_CAT_COL;
+	static final int COMPOSITE_LENGTH_COL = CompositeDBAdapterV5.V5_COMPOSITE_LENGTH_COL;
+	static final int COMPOSITE_ALIGNMENT_COL = CompositeDBAdapterV5.V5_COMPOSITE_ALIGNMENT_COL;
 	static final int COMPOSITE_NUM_COMPONENTS_COL =
-		CompositeDBAdapterV2V3.V2_COMPOSITE_NUM_COMPONENTS_COL;
+		CompositeDBAdapterV5.V5_COMPOSITE_NUM_COMPONENTS_COL;
 	static final int COMPOSITE_SOURCE_ARCHIVE_ID_COL =
-		CompositeDBAdapterV2V3.V2_COMPOSITE_SOURCE_ARCHIVE_ID_COL;
+		CompositeDBAdapterV5.V5_COMPOSITE_SOURCE_ARCHIVE_ID_COL;
 	static final int COMPOSITE_UNIVERSAL_DT_ID =
-		CompositeDBAdapterV2V3.V2_COMPOSITE_UNIVERSAL_DT_ID_COL;
+		CompositeDBAdapterV5.V5_COMPOSITE_UNIVERSAL_DT_ID_COL;
 	static final int COMPOSITE_SOURCE_SYNC_TIME_COL =
-		CompositeDBAdapterV2V3.V2_COMPOSITE_SOURCE_SYNC_TIME_COL;
+		CompositeDBAdapterV5.V5_COMPOSITE_SOURCE_SYNC_TIME_COL;
 	static final int COMPOSITE_LAST_CHANGE_TIME_COL =
-		CompositeDBAdapterV2V3.V2_COMPOSITE_LAST_CHANGE_TIME_COL;
-	static final int COMPOSITE_INTERNAL_ALIGNMENT_COL =
-		CompositeDBAdapterV2V3.V2_COMPOSITE_INTERNAL_ALIGNMENT_COL;
-	static final int COMPOSITE_EXTERNAL_ALIGNMENT_COL =
-		CompositeDBAdapterV2V3.V2_COMPOSITE_EXTERNAL_ALIGNMENT_COL;
+		CompositeDBAdapterV5.V5_COMPOSITE_LAST_CHANGE_TIME_COL;
+	static final int COMPOSITE_PACKING_COL =
+		CompositeDBAdapterV5.V5_COMPOSITE_PACK_COL;
+	static final int COMPOSITE_MIN_ALIGN_COL = CompositeDBAdapterV5.V5_COMPOSITE_MIN_ALIGN_COL;
 
-	// Internal Alignment Constants
-	static final byte UNALIGNED = (byte) -1;
-	static final byte ALIGNED_NO_PACKING = (byte) 0;
-	// Otherwise the packing value.
-
-	// External Alignment Constants
-	static final byte MACHINE_ALIGNED = (byte) -1;
-	static final byte DEFAULT_ALIGNED = (byte) 0;
-
-	// Otherwise the external minimum alignment value.
+	// Stored Packing and Minimum Alignment values are consistent with CompositeInternal
 
 	/**
 	 * Gets an adapter for working with the composite data type database table. 
@@ -75,18 +68,21 @@ abstract class CompositeDBAdapter {
 	 */
 	static CompositeDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
 			throws VersionException, IOException, CancelledException {
+		if (openMode == DBConstants.CREATE) {
+			return new CompositeDBAdapterV5(handle, true);
+		}
 		try {
-			return new CompositeDBAdapterV2V3(handle, openMode);
+			return new CompositeDBAdapterV5(handle, false);
 		}
 		catch (VersionException e) {
-			if (openMode == DBConstants.CREATE) {
-				throw new AssertException();
+			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+				throw e;
 			}
+			CompositeDBAdapter adapter = findReadOnlyAdapter(handle);
 			if (openMode == DBConstants.UPGRADE) {
-				CompositeDBAdapter adapter = findReadOnlyAdapter(handle);
 				return upgrade(handle, adapter, monitor);
 			}
-			throw e;
+			return adapter;
 		}
 	}
 
@@ -95,12 +91,12 @@ abstract class CompositeDBAdapter {
 	 * @param handle handle to prior version of the database.
 	 * @return the read only Composite data type table adapter
 	 * @throws VersionException if a read only adapter can't be obtained for the database handle's version.
-	 * @throws IOException 
+	 * @throws IOException if IO error occurs
 	 */
 	static CompositeDBAdapter findReadOnlyAdapter(DBHandle handle)
 			throws VersionException, IOException {
 		try {
-			return new CompositeDBAdapterV2V3(handle);
+			return new CompositeDBAdapterV2V4(handle);
 		}
 		catch (VersionException e) {
 			// ignore
@@ -132,19 +128,19 @@ abstract class CompositeDBAdapter {
 		long id = tmpHandle.startTransaction();
 		CompositeDBAdapter tmpAdapter = null;
 		try {
-			tmpAdapter = new CompositeDBAdapterV2V3(tmpHandle, DBConstants.CREATE);
+			tmpAdapter = new CompositeDBAdapterV5(tmpHandle, true);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
 				monitor.checkCanceled();
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec, false);
 			}
 			oldAdapter.deleteTable(handle);
-			CompositeDBAdapter newAdapter = new CompositeDBAdapterV2V3(handle, DBConstants.CREATE);
+			CompositeDBAdapter newAdapter = new CompositeDBAdapterV5(handle, true);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
 				monitor.checkCanceled();
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec, false);
 			}
 			return newAdapter;
@@ -162,19 +158,20 @@ abstract class CompositeDBAdapter {
 	 * @param isUnion true indicates this data type is a union and all component offsets are at zero.
 	 * @param categoryID the ID for the category that contains this array.
 	 * @param length the total length or size of this data type.
+	 * @param computedAlignment computed alignment for composite or -1 if not yet computed
 	 * @param sourceArchiveID the ID for the source archive where this data type originated.
 	 * @param sourceDataTypeID the ID of the associated data type in the source archive.
 	 * @param lastChangeTime the time this data type was last changed.
-	 * @param internalAlignment UNALIGNED, ALIGNED_NO_PACKING or the packing value 
-	 * currently in use by this data type.
-	 * @param externalAlignment DEFAULT_ALIGNED, MACHINE_ALIGNED or the minimum alignment value 
-	 * currently in use by this data type. 
+	 * @param packValue {@link CompositeInternal#NO_PACKING}, {@link CompositeInternal#DEFAULT_PACKING} 
+	 * or the explicit pack value currently in use by this data type (positive value).
+	 * @param minAlignment {@link CompositeInternal#DEFAULT_ALIGNMENT}, {@link CompositeInternal#MACHINE_ALIGNMENT} 
+	 * or the minimum alignment value currently in use by this data type (positive value). 
 	 * @return the database record for this data type.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract Record createRecord(String name, String comments, boolean isUnion, long categoryID,
-			int length, long sourceArchiveID, long sourceDataTypeID, long lastChangeTime,
-			int internalAlignment, int externalAlignment) throws IOException;
+	abstract DBRecord createRecord(String name, String comments, boolean isUnion, long categoryID,
+			int length, int computedAlignment, long sourceArchiveID, long sourceDataTypeID,
+			long lastChangeTime, int packValue, int minAlignment) throws IOException;
 
 	/**
 	 * Gets a composite data type record from the database based on its ID.
@@ -182,7 +179,7 @@ abstract class CompositeDBAdapter {
 	 * @return the record for the composite (structure or union) data type.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract Record getRecord(long dataTypeID) throws IOException;
+	abstract DBRecord getRecord(long dataTypeID) throws IOException;
 
 	/**
 	 * Gets an iterator over all composite (structure and union) data type records.
@@ -194,11 +191,11 @@ abstract class CompositeDBAdapter {
 	/**
 	 * Updates the composite data type table with the provided record.
 	 * @param record the new record
-	 * @param setLastChangedTime true means change the last change time in the record to the 
+	 * @param setLastChangeTime true means change the last change time in the record to the 
 	 * current time before putting the record in the database.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract void updateRecord(Record record, boolean setLastChangeTime) throws IOException;
+	abstract void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException;
 
 	/**
 	 * Removes the composite data type record with the specified ID.
@@ -218,10 +215,11 @@ abstract class CompositeDBAdapter {
 	/**
 	 * Gets all the composite data types that are contained in the category that has the indicated ID.
 	 * @param categoryID the category whose composite data types are wanted.
-	 * @return an array of IDs for the composite data types in the category.
+	 * @return an array of IDs as LongField values within Field array for the 
+	 * composite data types in the category.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract long[] getRecordIdsInCategory(long categoryID) throws IOException;
+	abstract Field[] getRecordIdsInCategory(long categoryID) throws IOException;
 
 	/**
 	 * Gets an array with the IDs of all data types in the composite table that were derived
@@ -230,9 +228,16 @@ abstract class CompositeDBAdapter {
 	 * @return the array data type IDs.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract long[] getRecordIdsForSourceArchive(long archiveID) throws IOException;
+	abstract Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException;
 
-	abstract Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
+	/**
+	 * Get composite record whoose sourceID and datatypeID match the specified Universal IDs.
+	 * @param sourceID universal source archive ID
+	 * @param datatypeID universal datatype ID
+	 * @return composite record found or null
+	 * @throws IOException if IO error occurs
+	 */
+	abstract DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
 			throws IOException;
 
 }

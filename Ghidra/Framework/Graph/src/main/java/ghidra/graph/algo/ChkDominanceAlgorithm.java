@@ -122,7 +122,7 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 
 				while (iterator.hasNext()) {
 					V p = iterator.next();
-					if (p == newIdom) {
+					if (newIdom.equals(p)) {
 						continue;
 					}
 					if (dominatorMap.containsKey(p)) {
@@ -131,7 +131,7 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 				}
 
 				V idom = dominatorMap.get(b);
-				if (idom != newIdom) {
+				if (!newIdom.equals(idom)) {
 					V last = dominatorMap.put(b, newIdom);
 					dominatedMap.get(newIdom).add(b);
 					if (last != null) {
@@ -148,7 +148,7 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 		V finger2 = v2;
 		int finger1Index = map.get(finger1);
 		int finger2Index = map.get(finger2);
-		while (finger1 != finger2) {
+		while (!finger1.equals(finger2)) {
 			while (finger1Index < finger2Index) {
 				finger1 = dominatorMap.get(finger1);
 				finger1Index = map.get(finger1);
@@ -197,7 +197,7 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 		Set<V> dominators = new HashSet<>();
 		dominators.add(a);
 
-		while (a != root) {
+		while (!root.equals(a)) {
 			a = dominatorMap.get(a); // immediate dominator
 			add(a, dominators);
 		}

@@ -68,7 +68,7 @@ public class NamespaceManager implements ManagerDB {
 		}
 
 		namespaceMap = new AddressRangeMapDB(handle, addrMap, lock, NAMESPACE_MAP_NAME, errHandler,
-			LongField.class, true);
+			LongField.INSTANCE, true);
 
 	}
 
