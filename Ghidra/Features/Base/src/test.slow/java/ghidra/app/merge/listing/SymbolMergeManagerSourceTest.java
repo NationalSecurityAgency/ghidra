@@ -81,8 +81,9 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 				int txId = program.startTransaction("Modify My Program");
 				boolean commit = false;
 				try {
-					program.getSymbolTable().createLabel(addr(program, "0x10032a7"), "Lucy", null,
-						SourceType.USER_DEFINED);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10032a7"), "Lucy", null,
+								SourceType.USER_DEFINED);
 					commit = true;
 				}
 				catch (Exception e) {
@@ -101,8 +102,9 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 				int txId = program.startTransaction("Modify My Program");
 				boolean commit = false;
 				try {
-					program.getSymbolTable().createLabel(addr(program, "0x10032a7"), "Lucy", null,
-						SourceType.USER_DEFINED);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10032a7"), "Lucy", null,
+								SourceType.USER_DEFINED);
 					commit = true;
 				}
 				catch (Exception e) {
@@ -141,11 +143,11 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 //				try {
 //					Symbol s = program.getSymbolTable().createSymbol(addr(program, "0x10032a7"),
 //							"Lucy", null, SourceType.USER_DEFINED);
-//					s.setSymbolData3("This is a symbol comment.");
+//					s.setSymbolStringData("This is a symbol comment.");
 //
 //					s = program.getSymbolTable().createSymbol(addr(program, "0x1004bf4"),
 //							"red", null, SourceType.IMPORTED);
-//					s.setSymbolData3(longComment1);
+//					s.setSymbolStringData(longComment1);
 //					commit = true;
 //				} catch (Exception e) {
 //					Assert.fail(e.getMessage());
@@ -163,11 +165,11 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 //				try {
 //					Symbol s = program.getSymbolTable().createSymbol(addr(program, "0x10032a7"), "Lucy", null,
 //							SourceType.USER_DEFINED);
-//					s.setSymbolData3("This is a symbol comment.");
+//					s.setSymbolStringData("This is a symbol comment.");
 //
 //					s = program.getSymbolTable().createSymbol(addr(program, "0x1004bf4"),
 //							"red", null, SourceType.IMPORTED);
-//					s.setSymbolData3(longComment1);
+//					s.setSymbolStringData(longComment1);
 //					commit = true;
 //				} catch (Exception e) {
 //					Assert.fail(e.getMessage());
@@ -186,13 +188,13 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 //		checkSymbol(s, "Lucy", true);
 //		assertTrue(s.isPrimary());
 //		assertEquals(SourceType.USER_DEFINED, s.getSource());
-//		assertEquals("This is a symbol comment.", s.getSymbolData3());
+//		assertEquals("This is a symbol comment.", s.getSymbolStringData());
 //
 //		s = symtab.getPrimarySymbol(addr("0x1004bf4"));
 //		checkSymbol(s, "red", true);
 //		assertTrue(s.isPrimary());
 //		assertEquals(SourceType.IMPORTED, s.getSource());
-//		assertEquals(longComment1, s.getSymbolData3());
+//		assertEquals(longComment1, s.getSymbolStringData());
 //	}
 
 	/** Test add of same symbol and source to both Latest and My, but different symbol comments. */
@@ -351,12 +353,15 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 				int txId = program.startTransaction("Modify My Program");
 				boolean commit = false;
 				try {
-					program.getSymbolTable().createLabel(addr(program, "0x10032a7"), "Charlie",
-						null, SourceType.ANALYSIS);
-					program.getSymbolTable().createLabel(addr(program, "0x10032a7"), "Lucy", null,
-						SourceType.IMPORTED);
-					program.getSymbolTable().createLabel(addr(program, "0x10032a7"), "Linus", null,
-						SourceType.USER_DEFINED);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10032a7"), "Charlie",
+								null, SourceType.ANALYSIS);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10032a7"), "Lucy", null,
+								SourceType.IMPORTED);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10032a7"), "Linus", null,
+								SourceType.USER_DEFINED);
 					commit = true;
 				}
 				catch (Exception e) {
@@ -375,12 +380,15 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 				int txId = program.startTransaction("Modify My Program");
 				boolean commit = false;
 				try {
-					program.getSymbolTable().createLabel(addr(program, "0x10032a7"), "Charlie",
-						null, SourceType.USER_DEFINED);
-					program.getSymbolTable().createLabel(addr(program, "0x10032a7"), "Lucy", null,
-						SourceType.ANALYSIS);
-					program.getSymbolTable().createLabel(addr(program, "0x10032a7"), "Linus", null,
-						SourceType.IMPORTED);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10032a7"), "Charlie",
+								null, SourceType.USER_DEFINED);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10032a7"), "Lucy", null,
+								SourceType.ANALYSIS);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10032a7"), "Linus", null,
+								SourceType.IMPORTED);
 					commit = true;
 				}
 				catch (Exception e) {
@@ -426,12 +434,15 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 				int txId = program.startTransaction("Modify My Program");
 				boolean commit = false;
 				try {
-					program.getSymbolTable().createLabel(addr(program, "0x10032a7"), "Lucy", null,
-						SourceType.IMPORTED);
-					program.getSymbolTable().createLabel(addr(program, "0x10032a7"), "Linus", null,
-						SourceType.ANALYSIS);
-					program.getSymbolTable().createLabel(addr(program, "0x10032a7"), "Sally", null,
-						SourceType.USER_DEFINED);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10032a7"), "Lucy", null,
+								SourceType.IMPORTED);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10032a7"), "Linus", null,
+								SourceType.ANALYSIS);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10032a7"), "Sally", null,
+								SourceType.USER_DEFINED);
 					commit = true;
 				}
 				catch (Exception e) {
@@ -493,12 +504,15 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 				int txId = program.startTransaction("Modify My Program");
 				boolean commit = false;
 				try {
-					program.getSymbolTable().createLabel(addr(program, "0x10032a7"), "Charlie",
-						null, SourceType.USER_DEFINED);
-					program.getSymbolTable().createLabel(addr(program, "0x10032a7"), "Lucy", null,
-						SourceType.ANALYSIS);
-					program.getSymbolTable().createLabel(addr(program, "0x10032a7"), "Linus", null,
-						SourceType.IMPORTED);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10032a7"), "Charlie",
+								null, SourceType.USER_DEFINED);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10032a7"), "Lucy", null,
+								SourceType.ANALYSIS);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10032a7"), "Linus", null,
+								SourceType.IMPORTED);
 					commit = true;
 				}
 				catch (Exception e) {

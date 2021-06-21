@@ -760,6 +760,29 @@ public class SymbolUtilities {
 		return addr.getAddressSpace().getName() + Long.toHexString(addr.getOffset());
 	}
 
+	/**
+	 * Returns true if the given name is a possible default parameter name or local variable name
+	 * 
+	 * @param name the name to check to see if it is a possible default local or parameter name
+	 * @return true if the given name is a possible default parameter name or local variable name
+	 */
+	public static boolean isPossibleDefaultLocalOrParamName(String name) {
+		if (isDefaultParameterName(name)) {
+			return true;
+		}
+		return name.startsWith(Function.DEFAULT_LOCAL_PREFIX);
+	}
+
+	/**
+	 * Checks if the given name could be a default external location name
+	 * 
+	 * @param name the name to check
+	 * @return true if the given name is a possible default external location name
+	 */
+	public static boolean isPossibleDefaultExternalName(String name) {
+		return name.startsWith(DEFAULT_EXTERNAL_ENTRY_PREFIX);
+	}
+
 	public static boolean isDefaultLocalStackName(String name) {
 		if (name == null || name.length() == 0) {
 			return true;
@@ -1042,4 +1065,5 @@ public class SymbolUtilities {
 	public static Comparator<Symbol> getSymbolNameComparator() {
 		return CASE_INSENSITIVE_SYMBOL_NAME_COMPARATOR;
 	}
+
 }

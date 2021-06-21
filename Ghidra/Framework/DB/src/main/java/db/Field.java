@@ -112,7 +112,7 @@ public abstract class Field implements Comparable<Field> {
 	 * is reserved for use in the special-purpose byte value 0x88.
 	 * (see {@link LegacyIndexField})
 	 */
-	static final byte LEGACY_INDEX_LONG_TYPE = 8; 
+	static final byte LEGACY_INDEX_LONG_TYPE = 8;
 
 	// Available field types (6): 0x9..0xE
 
@@ -424,7 +424,7 @@ public abstract class Field implements Comparable<Field> {
 	 * Determine if the field has been set to a null-state or value.  
 	 * @return true if field has been set to a null state or value, else false
 	 */
-	abstract boolean isNull();
+	public abstract boolean isNull();
 
 	/**
 	 * Set this field to its null-state.  For variable-length field this will 

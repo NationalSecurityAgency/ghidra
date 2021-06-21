@@ -193,8 +193,8 @@ public interface ChangeManager {
 	public static final int DOCR_SYMBOL_ASSOCIATION_REMOVED = 51;
 
 	/**
-	 * Symbol data changed.  This corresponds to unspecified data
-	 * changes within the symbol (e.g., Data1, Data2, Data3, or VariableStorage).
+	 * Symbol data changed.  This corresponds to various
+	 * changes within the symbol (e.g., primary status, datatype, external path or VariableStorage).
 	 */
 	public static final int DOCR_SYMBOL_DATA_CHANGED = 52;
 
@@ -591,7 +591,6 @@ public interface ChangeManager {
 	 * A function tag was removed from a function.
 	 */
 	public final static int DOCR_TAG_REMOVED_FROM_FUNCTION = 157;
-
 
 	////////////////////////////////////////////////////////////////////////////
 	//

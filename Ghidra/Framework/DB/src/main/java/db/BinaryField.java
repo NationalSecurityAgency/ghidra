@@ -59,7 +59,7 @@ public class BinaryField extends Field {
 	}
 
 	@Override
-	boolean isNull() {
+	public boolean isNull() {
 		return data == null;
 	}
 
