@@ -40,6 +40,10 @@ You may not need all of these, depending on which portions you are building or d
     - https://gcc.gnu.org/
     - https://developer.apple.com/xcode/
     - https://visualstudio.microsoft.com/downloads/
+* Rust compiler - You may use [Rustup](https://rustup.rs/) to install the toolchain of your chosen native target.
+    - windows: x86_64-pc-windows-msvc
+    - linux: x86_64-unknown-linux-gnu
+    - macos: x86_64-apple-darwin
 #### Optional for Development
 * Eclipse - It must support JDK 11. Eclipse 2018-12 or later should work. Other IDEs may work, but we have not tested them.
     - https://www.eclipse.org/downloads/
@@ -264,6 +268,10 @@ You may see build path errors until the environment is properly prepared, as des
 Some of Ghidra's components are built for the native platform.
 We currently support Linux, macOS, and Windows 64-bit x86 systems.
 Others should be possible, but we do not test on them.
+
+Before building, please make sure the rust compiler toolchains are successfully installed.
+Commands like "cargo" should run successfully by default. Or else, the building will not
+success. -- This is bincraft only modification.
 
 Now build using Gradle:
 
