@@ -7,13 +7,14 @@
 
 <BODY>
 
-<H1 align="center">Ghidra 10.0 BETA Change History (May 2021)</H1>
+<H1 align="center">Ghidra 10.0 Change History (June 2021)</H1>
 <blockquote><p><u>New Features</u></p>
 <ul>
     <li><I>Debugger</I>. Introduced the Debugger, along with GDB and dbgeng.dll connectors for debugging user-mode applications on Linux and Windows, respectively. The UI includes threads, timeline, modules, memory, registers, watches, etc., for examining and controlling debug targets. See <B>Help -> Contents -> What's New</B> for more details. (GP-986)</li>
-    <li><I>Exporter</I>. Added new exporters that write programs imported with the PE and ELF loaders back to their original file layout.  Any file-backed bytes that were modified by the user in the program database will be reflected in the written file (except on relocations).  Writing back a modified Memory Map is not supported. (GP-786, Issue #1501, #1505, #19)</li>
+    <li><I>Exporter</I>. For programs imported with the PE and ELF loaders, new exporters are available that write back to the original file layout.  Any file-backed bytes that were modified by the user in the program database will be reflected in the written file (except on relocations).  Writing back a modified Memory Map is not supported. (GP-786, Issue #1501, #1505, #19)</li>
     <li><I>Graphing</I>. Added <B>Graph -> Data </B> actions to the Code Browser, allowing visualization of specified pointer relationships in a graph. (GP-194)</li>
     <li><I>Scripting</I>. Added prototype RecoverClassesFromRTTIScript and that uses RTTI information to enhance Ghidra's knowledge of class hierarchy, class member function types (constructors, destructors, deleting destructors, clones) and class member data. The script will label and put member functions into correct class namespace and apply new class structures created either using PDB information, if available, or Decompiler pcode information. (GP-339)</li>
+    <li><I>Scripting</I>. Added an example script, LocateMemoryAddressForFileOffset, to demonstrate mapping of a location in the original imported file to the program memory address.  Useful for cases where the original file offset is known; for example, a YARA rule match. (GP-782)</li>
     <li><I>Scripting</I>. Created a script to allow users to search for image base offsets to the current cursor location in 32-bit and 64-bit programs. (GP-863)</li>
 </ul>
 </blockquote>
@@ -32,11 +33,12 @@
     <li><I>Build</I>. Command <code><B>gradle -I gradle/support/fetchDependencies.gradle init</B></code> now downloads the Function ID datasets from the ghidra-data GitHub repository so they will be automatically included in development mode and custom builds. (GP-678, Issue #1007)</li>
     <li><I>Build</I>. Performing a <code><B>gradle clean</B></code> no longer deletes downloaded dependencies.  The top-level <B>flatRepo</B> directory has been replaced with the <B>dependencies</B> directory. (GP-811, Issue #1663)</li>
     <li><I>Build</I>. Ghidra now requires Gradle 6.0 or later to build.  Gradle 7.x is now supported. (GP-849, Issue #2949)</li>
+    <li><I>Build</I>. Made changes to gradle code to remove warnings. (GP-993, Issue #3039)</li>
     <li><I>Data Types</I>. Added support for hexadecimal byte offset display within composite bitfield view. (GP-910, Issue #2959)</li>
     <li><I>Decompiler</I>. Decompiler analysis now automatically identifies and displays loop variables using standard for-loop syntax.  When a loop variable is discovered, a condition, iteration, and optional initializer statement are displayed at the top of the loop. (GP-565)</li>
-    <li><I>Decompiler</I>. Added the <B>Max Instructions per Function</B> Decompiler tool option, specifying the maximum number of instructions the Decompiler will decode in a single function before throwing an exception. Previously this, had been a hard-coded limit. (GP-767, Issue #2557)</li>
+    <li><I>Decompiler</I>. Added the <B>Max Instructions per Function</B> Decompiler tool option, specifying the maximum number of instructions the Decompiler will decode in a single function before throwing an exception. Previously, this had been a hard-coded limit. (GP-767, Issue #2557)</li>
     <li><I>Decompiler</I>. The Decompiler now propagates datatypes across signed comparison operations, so constant integer and enum values display correctly. (GP-802, Issue #2565)</li>
-    <li><I>Demangler</I>. Updated the Gnu Demangler Analyzer options to provide a list of available formats from which to choose. (GP-94, Issue #2214)</li>
+    <li><I>Demangler</I>. Updated the GNU Demangler Analyzer options to provide a list of available formats from which to choose. (GP-94, Issue #2214)</li>
     <li><I>Demangler</I>. Updated the GNU Demangler's Namespace-building to improve analysis performance. (GP-706, Issue #2509)</li>
     <li><I>Demangler</I>. Improved Demangler error checking and reporting to give underlying cause of failure. (GP-850)</li>
     <li><I>Documentation</I>. Added basic instructions on how to install, build, and develop Ghidra to README.md. (GP-847)</li>
@@ -55,8 +57,9 @@
     <li><I>Graphing</I>. Updated Function Graph edge routing when applying the <B>Use Condensed Layout</B> option to reduce edges being clipped by vertices. (GP-768)</li>
     <li><I>Graphing</I>. Added option to disable the lightening of edges in the Function Graph. (GP-769, Issue #1106)</li>
     <li><I>Graphing</I>. Added a distinct visual edge highlight beyond just a different color for graph edge selection. (GP-793, Issue #2953)</li>
-    <li><I>Graphing</I>. Added <B>Display as Graph</B> action to the Datatype Manager, allowing visualization of embedded and referenced types of the selected type(s). (GP-808)</li>
-    <li><I>Graphing</I>. Fixed function graph bug that prevented the satellite view from showing the primary view lens.  Fixed a layout bug that allowed from some vertices to get clipped when condensing the graph. (GP-940)</li>
+    <li><I>Graphing</I>. Added <B>Display as Graph</B> action to the Data Type Manager, allowing visualization of embedded and referenced types of the selected types. (GP-808)</li>
+    <li><I>Graphing</I>. Fixed function graph bug that prevented the satellite view from showing the primary view lens.  Fixed a layout bug that allowed some vertices to get clipped when condensing the graph. (GP-940)</li>
+    <li><I>Graphing</I>. Added graph API method to set descriptions (tooltips) on vertices and edges. (GP-949)</li>
     <li><I>Graphing</I>. Added Vertex and Edge attributes to GraphML export format. (GP-957, Issue #2958)</li>
     <li><I>GUI</I>. Added new <B>Copy Special</B> actions: <B>Python Byte String</B>, <B>Python List</B>, and <B>C Array</B>. (GP-210, Issue #744)</li>
     <li><I>GUI</I>. Updated the Listing to allow structure members to display Plate Comments. (GP-421, Issue #2091)</li>
@@ -64,20 +67,23 @@
     <li><I>GUI</I>. Added right-click menu <B>Data -> Save Image</B> action to allow user to export embedded graphic resource images. (GP-426)</li>
     <li><I>GUI</I>. Changed Symbol Comment Annotation to use the existing symbol when available.  This allows for the direct navigation of that symbol's address instead of using the search feature of the Go To Service. (GP-675)</li>
     <li><I>GUI</I>. Added the <B>Shift-F10</B> keybinding to allow users to show the popup context menu over the currently focused item.  The  Menu Key can also be used on supporting keyboards. (GP-732, Issue #2790)</li>
-    <li><I>GUI</I>. Fixed/Improved the behavior of global menu items and toolbar items with respect to which windows they appear in. These actions can now easily be configured to be either 1) only in menu bar and tool bar of the main window, 2) in the menu bar and tool bar of all windows, or 3) only the windows that have components that generate the type of context that the action consumes.  Added methods to the ActionBuilder class to support these three options. Also, updated numerous actions to make sure they appear in the appropriate windows. (GP-759)</li>
+    <li><I>GUI</I>. Fixed/Improved the behavior of global menu items and toolbar items with respect to which windows they appear in. These actions can now easily be configured to be either 1) only in menu bar and tool bar of the main window, 2) in the menu bar and tool bar of all windows, or 3) only in the windows that have components that generate the type of context that the action consumes.  Added methods to the ActionBuilder class to support these three options. Also, updated numerous actions to make sure they appear in the appropriate windows. (GP-759)</li>
     <li><I>GUI</I>. Improved overall UI responsiveness when performing analysis with the Symbol Table open. (GP-788)</li>
     <li><I>GUI</I>. Updated the Function Tags table column so that it may be used in most Ghidra tables. (GP-816, Issue #2873)</li>
     <li><I>GUI</I>. Updated the Defined Strings view to reload less frequently during auto-analysis. (GP-835, Issue #2889)</li>
     <li><I>GUI</I>. Updated function hovering in the Decompiler to find the correct function tooltip when multiple functions exist with the same name. (GP-959, Issue #2604)</li>
     <li><I>Importer:ELF</I>. Added markup to ELF import for <code>.note.gnu.build-id</code> and <code>.gnu_debuglink</code> sections. (GP-468)</li>
     <li><I>Importer:ELF</I>. Added ELF import support for SHN_MIPS_TEXT and SHN_MIPS_DATA symbol section index values and provided ability for other processor-specific ELF extensions to resolve ELF symbol memory addresses. (GP-664)</li>
+    <li><I>Importer:ELF</I>. Changed various ELF relocations to detect and mark unsupported data relocations which refer to the EXTERNAL block.  Applied EXTERNAL data relocations, which have a non-zero offset from the external symbol, will still be incorrect but will have an error bookmark to flag the condition.  The relocation addend will not be applied in this case to avoid references to a completely irrelevant symbol in the EXTERNAL block. (GP-1029)</li>
     <li><I>Importer:Mach-O</I>. Improved support for Mach-O object files. (GP-700)</li>
     <li><I>Importer:PE</I>. CustomAttrib blobs in CLI/.NET metadata are now decoded. (GP-414)</li>
     <li><I>Importer:PE</I>. Created proper external references for PE Delay Load Imports. (GP-674, Issue #2554, #2623)</li>
     <li><I>Importer:PE</I>. PeLoader can now read and interpret the <code>.pdata</code> section of PE files that include exception handling data. (GP-729)</li>
+    <li><I>Importer:PE</I>. Added <B>.exports</B> XML files for the <B>mfc71.dll</B> and <B>mfc71u.dll</B> libraries. Having them allows Ghidra to translate ordinal imports from applications compiled against MFC 7.1 (from Visual Studio .NET 2003) to class and function names with parameters. (GP-1010, Issue #3051)</li>
     <li><I>Listing</I>. Improved Listing view performance, especially noticeable on functions with excessively large stack frames. (GP-268, Issue #109, #2351)</li>
     <li><I>Listing</I>. Added a tool option to hide function auto-comments that appear, trailing a function call in the Listing. (GP-752)</li>
     <li><I>PDB</I>. Improved Ghidra's ability to find and pull PDB files from symbol servers and symbol storage locations. (GP-42)</li>
+    <li><I>Processors</I>. Simplified PIC24 return instruction semantics. (GP-647)</li>
     <li><I>Processors</I>. Added support for register alias specification within processor spec (*.pspec).  Added <code>WREG</code> register aliases for PIC24 processor variants. (GP-901, Issue #2956)</li>
     <li><I>Processors</I>. Fixed issue with the <code>PPAGE</code> register not being properly restored after <code>CALL</code> instructions in the HCS12 processor. (GP-920, Issue #1099)</li>
     <li><I>Processors</I>. Fixed HCS12 <code>IDX1</code> addressing with negative immediate values. (GP-937, Issue #3008)</li>
@@ -87,8 +93,10 @@
     <li><I>Scripting</I>. Improved TableChooserDialog, allowing multiple rows to be processed at once. (GP-676)</li>
     <li><I>Scripting</I>. Updated the TableChooserDialog to allow clients to set the default column sort. (GP-792)</li>
     <li><I>Scripting</I>. Added Python script comment block support. (GP-843, Issue #1484, #2846)</li>
+    <li><I>Scripting</I>. Added ApplyClassFunctionSignatureUpdatesScript and ApplyClassFunctionDefinitionUpdatesScript fix-up scripts that can be applied if a user makes changes to a virtual function recovered by the RecoverClassesFromRTTIScript.  Both scripts identify differences between Function Signatures in the Listing and Function Definitions in the Data Type Manager, but the first script fixes all changes to match the signature and the second to match the definition. (GP-973, Issue #3081)</li>
     <li><I>Sleigh</I>. Debug info for Sleigh constructors now includes source file names. (GP-233)</li>
     <li><I>Sleigh</I>. The Sleigh compiler now issues a warning if it generates a temporary varnode which might be large enough to overlap another temporary varnode. (GP-520)</li>
+    <li><I>Sleigh</I>. While register names should remain case-sensitive within a Sleigh spec during compilation/parse, register names must not duplicate in a case-insensitive manner since the Program API provides a case-insensitive register lookup by name. The Sleigh Compiler now enforces this. (GP-927)</li>
 </ul>
 </blockquote>
 <blockquote><p><u>Bugs</u></p>
@@ -102,17 +110,20 @@
     <li><I>Assembler</I>. Fixed assemble <B>Patch Instruction</B> action to work on listings other than the primary static listing. (GP-623)</li>
     <li><I>Assembler</I>. Modified assembler <B>Patch Instruction</B> action to ignore external symbols which produced bad offsets for instructions. (GP-645)</li>
     <li><I>Basic Infrastructure</I>. Fixed an issue with Ghidra and its supporting launch scripts not being able to run correctly on Windows when an ampersand was in the path.  Also fixed an issue with <B>svrAdmin.bat</B> and <B>buildGhidraJar.bat</B> not working if the Ghidra path contained a space. (GP-693, Issue #1726, #1728)</li>
+    <li><I>Basic Infrastructure</I>. Corrected <I>"LaunchSupport expected 2 to 4 arguments but got 1" </I> error when starting Ghidra on Windows. (GP-1050, Issue #2176, #3122)</li>
     <li><I>Build</I>. Building of <B>pdb.exe</B> on Windows now works if the path to the Ghidra repository contains a space. (GP-916, Issue #2998)</li>
     <li><I>Build</I>. Corrected GPL DMG module build to properly utilize the jar dependencies included within the repository and distribution. (GP-934)</li>
+    <li><I>Build</I>. Corrected an issue with <code><B>gradle prepDev</B></code> when the Ghidra repository is on a different drive than the user's home directory on Windows OS. (GP-970, Issue #3047, #3062)</li>
+    <li><I>Build</I>. Fixed a bug that prevented Ghidra from launching in <B>Single Jar Mode</B> when its path contained a space. (GP-1039)</li>
     <li><I>C Parsing</I>. The C-Parser bitfield parsing has been relaxed to allow declared bitfield sizes to exceed the base datatype size.  The effective bitfield size may be clamped based upon the current data organization while preserving the declared size. (GP-558)</li>
-    <li><I>Data Types</I>. Fixed a NullPointerException that occurred when trying to edit a function data type in a data type archive when there was no open program in the tool. (GP-356, Issue #2407)</li>
+    <li><I>Data Types</I>. Fixed a NullPointerException that occurred when trying to edit a function datatype in a datatype archive when there was no open program in the tool. (GP-356, Issue #2407)</li>
     <li><I>Data Types</I>. Corrected the retention of datatype archive search paths, which did not properly remember disabled paths. (GP-639)</li>
     <li><I>Data Types</I>. Fixed potential deadlock encountered when working with the DataTypes tree. (GP-774, Issue #2832)</li>
     <li><I>Decompiler</I>. Fixed endianess issue for joined, two-register returns of <code>longlong</code> values for MIPS 32-bit little endian variants. (GP-513)</li>
     <li><I>Decompiler</I>. The Decompiler no longer emits comments in the middle of conditional expressions. (GP-621, Issue #1670)</li>
-    <li><I>Decompiler</I>. Fixed <code>Redefinition of structure ...</code> exceptions in the Decompiler caused by a PNG Image and other opaque datatypes. (GP-820, Issue #2734)</li>
+    <li><I>Decompiler</I>. Fixed <code>Redefinition of structure...</code> exceptions in the Decompiler caused by a PNG Image and other opaque datatypes. (GP-820, Issue #2734)</li>
     <li><I>Decompiler</I>. Fixed infinite loop in the Decompiler when analyzing return values. (GP-821, Issue #2851)</li>
-    <li><I>Decompiler</I>. Fixed bug in the Decompiler's handling of enumerated data types causing <code>Shared type id</code> exceptions. (GP-895, Issue #2909)</li>
+    <li><I>Decompiler</I>. Fixed bug in the Decompiler's handling of enumerated datatypes causing <code>Shared type id</code> exceptions. (GP-895, Issue #2909)</li>
     <li><I>DWARF</I>. Fixed and consolidated DEX and DWARF implementations of LEB128. (GP-444, Issue #2512)</li>
     <li><I>DWARF</I>. Fixed unnecessary ELF header parsing when DWARF analyzer checks if it needs to run.  Improved DWARF analyzer's run-once logic. (GP-695)</li>
     <li><I>DWARF</I>. Fixed issue with DWARF data type importing that could omit the definition of a structure. (GP-929)</li>
@@ -132,13 +143,19 @@
     <li><I>GUI</I>. Fixed Function Graph bug that caused some vertex text to get clipped when using wide address format width. (GP-755, Issue #1008)</li>
     <li><I>GUI</I>. Fixed bug in the Listing scroll bar that caused some screen reader software to deadlock. (GP-772, Issue #2820)</li>
     <li><I>GUI</I>. Fixed bug that caused the UI to freeze when clicking in the Program Tree UI.  The bug manifested depending upon the contents of the system clipboard. (GP-775)</li>
+    <li><I>GUI</I>. Updated tooltip code to limit data types name length and updated formatting to place pertinent information at the top of the tooltip. (GP-836, Issue #2029)</li>
+    <li><I>GUI</I>. Fixed exception triggered when the Bookmarks table failed to remove a deleted symbol. (GP-989, Issue #3066)</li>
+    <li><I>GUI</I>. Fixed exception encountered when double-clicking a structure in an archive in the <code><B>closed for edit</B></code> state. (GP-998)</li>
+    <li><I>GUI</I>. Fixed Function Graph stack trace encountered when changing the graph's background color option after showing and then closing the graph. (GP-1013, Issue #3058)</li>
     <li><I>Importer:ELF</I>. Added support for additional PIC30 ELF relocations (4, 5, 6) and improved register symbol resolution and markup. (GP-710, Issue #2792)</li>
     <li><I>Importer:ELF</I>. Changed processing of ELF absolute symbols (section ID 0xfff1) to treat them as constants by defining equates instead of memory symbols. (GP-902)</li>
     <li><I>Importer:ELF</I>. Corrected EXTERNAL symbol alignment for PIC24, PIC30, PIC33 during ELF import.  The improperly aligned symbol addresses would cause incorrect external symbol references to appear on instructions (e.g., <code>RCALL</code>). (GP-906)</li>
     <li><I>Importer:PE</I>. Fixed error when importing a PE file with an uninitialized <code>.textbss</code> section. (GP-397, Issue #2496)</li>
     <li><I>Importer:PE</I>. Fixed a bug processing RUNTIME_INFO structures that caused a failure to load PE files under certain conditions when the list is empty. (GP-924, Issue #2995)</li>
+    <li><I>Importer:PE</I>. Fixed an issue in the PeLoader that prevented PE files with 0 data directories from being imported. (GP-997, Issue #2858)</li>
     <li><I>Installation</I>. Renamed database <code>db.Record</code> class to <code>db.DBRecord</code> to avoid naming conflict with <code>java.lang.Record</code> class and potential import issues. (GP-193)</li>
     <li><I>Jython</I>. Fixed pasting multi-line strings into the Python interpreter panel. (GP-487, Issue #2456)</li>
+    <li><I>Listing</I>. A default thunk function now reflects the <B>namespace</B> of the thunked function similar to the way it reflects its <B>name</B>.  This change also allows thunk functions of a <code>this_call</code> to have the correct <code>this</code> pointer parameter.  Symbol table queries based upon name and/or namespace will always exclude default thunk functions. (GP-17)</li>
     <li><I>Listing</I>. Fixed #US table processing to correctly interpret the string as UTF-16LE for CIL binaries. (GP-318)</li>
     <li><I>Listing</I>. Fixed a sporadic listing operand hover stacktrace bug. (GP-987)</li>
     <li><I>PDB</I>. Escaped more character strings in MSDIA pdb.exe XML output. (GP-578, Issue #1690)</li>
@@ -147,7 +164,7 @@
     <li><I>Processors</I>. Fixed issue with ARM <code>VMRS</code> instruction parsing in thumb. (GP-735, Issue #2750)</li>
     <li><I>Processors</I>. Corrected issue with M68000 floating point dynamic k-factor instruction semantics. (GP-736, Issue #2754)</li>
     <li><I>Processors</I>. Fixed instruction semantics for x86 <code>MOVUPS</code> instruction. (GP-744, Issue #2789)</li>
-    <li><I>Processors</I>. Simplified SuperH <code>div1</code> instruction. (GP-753, Issue #2864)</li>
+    <li><I>Processors</I>. Simplified SuperH <code>div1</code> instruction.  Corrected several SuperH instructions to set flags properly around the delay slot. (GP-753, Issue #2863, #2864)</li>
     <li><I>Processors</I>. Corrected issue with ARM co-processor registers and the <code>MCR</code> instruction. (GP-761, Issue #2451)</li>
     <li><I>Processors</I>. Fixed issued with x86 <code>INSx.rep</code> and <code>OUTSx.rep</code> pcode ordering. (GP-766, Issue #2829)</li>
     <li><I>Processors</I>. Corrected addresses for PIC24 <code>TBLPAG</code> and <code>PSVPAG</code> registers. (GP-798, Issue #2844, #2855)</li>
@@ -155,7 +172,13 @@
     <li><I>Processors</I>. Updated 8085 processor definition to disassemble <code>XRA HL</code> instruction. (GP-818, Issue #2447)</li>
     <li><I>Processors</I>. Corrected missing optional <code>rex.w</code> prefix for x86 conditional jump instructions. (GP-837, Issue #1163)</li>
     <li><I>Processors</I>. Added <code>CALLW</code>, <code>ASRF</code>, <code>LSLF</code>, and <code>LSRF</code> instructions to PIC16 language. (GP-841, Issue #1362)</li>
+    <li><I>Processors</I>. Fixed ARM Thumb instructions which update the status flags to now correctly append an <code><B>s</B></code> to the instruction mnemonic. (GP-881)</li>
     <li><I>Processors</I>. Made corrections to <code>wr</code> instruction for SPARC which in some cases did not write to the appropriate ASR register. (GP-928)</li>
+    <li><I>Processors</I>. Corrected issue with x86-64 <code>CALL</code> and <code>RET</code> instructions with <code>0x67</code> prefix pushing/popping the wrong address size from the stack. (GP-954, Issue #2976)</li>
+    <li><I>Processors</I>. Fixed issue with delay slots modifying some instructions in SuperH processor. (GP-969, Issue #2863)</li>
+    <li><I>Processors</I>. Corrected pcode for x86-64 <code>RDMSR</code> instruction. (GP-982, Issue #3046)</li>
+    <li><I>Processors</I>. Corrected size of 20-bit signed immediate value in PPC VLE <code>e_li</code> instruction. (GP-1060)</li>
+    <li><I>Scripting</I>. Fixed scripting bug where showing a TableChooserDialog while having <code><B>AnalysisMode.DISABLED</B></code> in use caused the dialog to be closed. (GP-1018, Issue #3103)</li>
     <li><I>Sleigh</I>. Fixed multiple errors in x64 vector operation semantics. (GP-799)</li>
 </ul>
 </blockquote>
