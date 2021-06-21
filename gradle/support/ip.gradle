@@ -135,9 +135,9 @@ def Map<String, List<String>> getIpForModule(Project p) {
 		exclude "**/*.vcxproj.user"
 		exclude "**/*.toml"
 		exclude "**/*.lock"
-		exclude "**/com_dbg/**"
-		exclude "**/decomp_dbg"
-		exclude "**/target/**"
+		exclude "**/com_dbg/**" // decompiler debugging purpose
+		exclude "**/decomp_dbg" // decompiler debugging purpose
+		exclude "**/target/**" // rust
 	}
 	tree.each { file ->
 			String ip = getIp(p.projectDir, file)

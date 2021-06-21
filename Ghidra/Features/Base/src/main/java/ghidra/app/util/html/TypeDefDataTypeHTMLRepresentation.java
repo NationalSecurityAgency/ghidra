@@ -23,6 +23,7 @@ import ghidra.app.util.html.diff.DataTypeDiff;
 import ghidra.app.util.html.diff.DataTypeDiffBuilder;
 import ghidra.program.model.data.*;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.StringUtilities;
 
 public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 
@@ -32,6 +33,8 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 	protected List<ValidatableLine> headerContent;
 	protected List<ValidatableLine> bodyContent;
 
+	private String truncatedHtmlData;
+
 	// private constructor for making diff copies
 	private TypeDefDataTypeHTMLRepresentation(TypeDef typeDef, List<String> warningLines,
 			List<ValidatableLine> headerLines, List<ValidatableLine> bodyLines) {
@@ -40,21 +43,41 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 		this.headerContent = headerLines;
 		this.bodyContent = bodyLines;
 
-		originalHTMLData = buildHTMLText(typeDef, warningLines, headerLines, bodyLines);
+		List<ValidatableLine> trimmedHeaderContent = buildHeaderText(typeDef, true);
+		List<ValidatableLine> trimmedBodyContent = buildBodyText(getBaseDataType(), true);
+		truncatedHtmlData =
+			buildHTMLText(typeDef, warningLines, trimmedHeaderContent, trimmedBodyContent, true);
 	}
 
 	public TypeDefDataTypeHTMLRepresentation(TypeDef typeDef) {
 		this.typeDef = typeDef;
 
 		warningLines = buildWarnings();
-		headerContent = buildHeaderText(typeDef);
-		bodyContent = buildBodyText(getBaseDataType());
+		headerContent = buildHeaderText(typeDef, false);
+		bodyContent = buildBodyText(getBaseDataType(), false);
 
-		originalHTMLData = buildHTMLText(typeDef, warningLines, headerContent, bodyContent);
+		originalHTMLData = buildHTMLText(typeDef, warningLines, headerContent, bodyContent, false);
+
+		List<ValidatableLine> trimmedHeaderContent = buildHeaderText(typeDef, true);
+		List<ValidatableLine> trimmedBodyContent = buildBodyText(getBaseDataType(), true);
+		truncatedHtmlData =
+			buildHTMLText(typeDef, warningLines, trimmedHeaderContent, trimmedBodyContent, true);
 	}
 
 	protected DataType getBaseDataType() {
 		return getBaseDataType(typeDef);
+	}
+
+	// overridden to return truncated text by default
+	@Override
+	public String getHTMLString() {
+		return HTML_OPEN + truncatedHtmlData + HTML_CLOSE;
+	}
+
+	// overridden to return truncated text by default
+	@Override
+	public String getHTMLContentString() {
+		return truncatedHtmlData;
 	}
 
 	private static DataType getBaseDataType(DataType dataType) {
@@ -87,38 +110,41 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 		return super.buildFooterText(dataType);
 	}
 
-	@Override
-	protected List<ValidatableLine> buildHeaderText(DataType dataType) {
-		DataType basedataType = typeDef;
+	protected List<ValidatableLine> buildHeaderText(DataType dataType, boolean trim) {
+		DataType baseDataType = typeDef;
 		List<ValidatableLine> lines = new ArrayList<>();
-		while (basedataType instanceof TypeDef) {
+		while (baseDataType instanceof TypeDef) {
 			StringBuilder buffy = new StringBuilder();
-			String baseDtString = basedataType.toString();
+			String baseDtString = baseDataType.toString();
+			if (trim) {
+				baseDtString = StringUtilities.trimMiddle(baseDtString, ToolTipUtils.LINE_LENGTH);
+			}
 			String encodedBaseDt = HTMLUtilities.friendlyEncodeHTML(baseDtString);
 			buffy.append(TT_OPEN).append(encodedBaseDt).append(TT_CLOSE).append(BR);
 			lines.add(new TextLine(buffy.toString()));
-			basedataType = ((TypeDef) basedataType).getDataType();
-			while (basedataType instanceof Pointer) {
-				basedataType = ((Pointer) basedataType).getDataType();
+			baseDataType = ((TypeDef) baseDataType).getDataType();
+			while (baseDataType instanceof Pointer) {
+				baseDataType = ((Pointer) baseDataType).getDataType();
 			}
 		}
 		return lines;
 	}
 
-	private List<ValidatableLine> buildBodyText(DataType baseDataType) {
+	private List<ValidatableLine> buildBodyText(DataType baseDataType, boolean trim) {
 		List<ValidatableLine> lines = new ArrayList<>();
 		if (baseDataType instanceof BuiltInDataType) {
 			buildHTMLTextForBuiltIn(lines, baseDataType);
 		}
 		else {
-			buildHTMLTextForBaseDataType(lines, baseDataType);
+			buildHTMLTextForBaseDataType(lines, baseDataType, trim);
 		}
 		return lines;
 	}
 
 	private static String buildHTMLText(TypeDef typeDef, List<String> warningLines,
-			List<ValidatableLine> headerLines, List<ValidatableLine> bodyLines) {
-		StringBuffer buffy = new StringBuffer();
+			List<ValidatableLine> headerLines, List<ValidatableLine> bodyLines, boolean trim) {
+
+		StringBuilder buffy = new StringBuilder();
 
 		// warnings
 		Iterator<String> warnings = warningLines.iterator();
@@ -132,7 +158,11 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 		Iterator<ValidatableLine> iterator = headerLines.iterator();
 		for (; iterator.hasNext();) {
 			TextLine line = (TextLine) iterator.next(); // This text should already be encoded.
-			String headerLine = wrapStringInColor(line.getText(), line.getTextColor());
+			String headerLine = line.getText();
+			if (trim) {
+				headerLine = truncateAsNecessary(headerLine, ToolTipUtils.LINE_LENGTH);
+			}
+			headerLine = wrapStringInColor(line.getText(), line.getTextColor());
 			buffy.append(headerLine);
 		}
 
@@ -142,8 +172,11 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 
 		iterator = bodyLines.iterator();
 		for (; iterator.hasNext();) {
-			TextLine line = (TextLine) iterator.next(); // This text should already be encoded.
-			String bodyLine = wrapStringInColor(line.getText(), line.getTextColor());
+
+			// This text should already be encoded and already trimmed
+			TextLine line = (TextLine) iterator.next();
+			String bodyLine = line.getText();
+			bodyLine = wrapStringInColor(line.getText(), line.getTextColor());
 			buffy.append(bodyLine);
 		}
 
@@ -159,7 +192,7 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 			HTMLUtilities.friendlyEncodeHTML(dataTypeDescriptionOrName);
 		lines.add(new TextLine(encodedDescriptionOrName));
 		lines.add(new TextLine(TT_CLOSE));
-		StringBuffer buffy = addDataTypeLength(basedataType, new StringBuffer());
+		StringBuilder buffy = addDataTypeLength(basedataType, new StringBuilder());
 		lines.add(new TextLine(buffy.toString()));
 		lines.add(new TextLine(INDENT_CLOSE));
 	}
@@ -173,17 +206,21 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 	}
 
 	private static void buildHTMLTextForBaseDataType(List<ValidatableLine> lines,
-			DataType basedataType) {
+			DataType basedataType, boolean trim) {
 		lines.add(new TextLine(INDENT_OPEN));
 
 		HTMLDataTypeRepresentation baseRepresentation =
 			ToolTipUtils.getHTMLRepresentation(basedataType);
-		String baseHTML = baseRepresentation.getHTMLContentString();
+
+		String baseHTML = baseRepresentation.getFullHTMLContentString();
+		if (trim) {
+			baseHTML = baseRepresentation.getHTMLContentString();
+		}
 
 		lines.add(new TextLine(baseHTML));
 
 		if (baseHTML.indexOf(LENGTH_PREFIX) < 0) {
-			StringBuffer buffy = addDataTypeLength(basedataType, new StringBuffer());
+			StringBuilder buffy = addDataTypeLength(basedataType, new StringBuilder());
 			lines.add(new TextLine(buffy.toString()));
 		}
 
@@ -215,14 +252,14 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 		List<ValidatableLine> body = new ArrayList<>();
 
 		if (diffs != null) {
-			body.add(new TextLine(diffs[0].getHTMLContentString()));
+			body.add(new TextLine(diffs[0].getFullHTMLContentString()));
 		}
 
 		List<ValidatableLine> otherHeader = new ArrayList<>(typeDefRepresentation.headerContent);
 		List<ValidatableLine> otherBody = new ArrayList<>();
 
 		if (diffs != null) {
-			otherBody.add(new TextLine(diffs[1].getHTMLContentString()));
+			otherBody.add(new TextLine(diffs[1].getFullHTMLContentString()));
 		}
 
 		DataTypeDiff headerDiff =

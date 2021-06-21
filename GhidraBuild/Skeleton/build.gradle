@@ -35,8 +35,8 @@ rootProject.assembleDistribution {
 		exclude 'ghidra_scripts/bin/'
 		exclude '.classpath'
 		exclude '.project'
+		exclude 'build.gradle'
 		rename "buildTemplate.gradle", "build.gradle"
 		into "Extensions/Ghidra/Skeleton"
-		duplicatesStrategy = 'include'
 	}
 }

@@ -26,6 +26,7 @@ import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.model.*;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.UndoableTransaction;
 import help.screenshot.GhidraScreenShotGenerator;
 
@@ -42,6 +43,10 @@ public class DebuggerThreadsPluginScreenShots extends GhidraScreenShotGenerator 
 		modelService = addPlugin(tool, DebuggerModelServiceProxyPlugin.class);
 		traceManager = addPlugin(tool, DebuggerTraceManagerServicePlugin.class);
 		threadsPlugin = addPlugin(tool, DebuggerThreadsPlugin.class);
+	}
+
+	protected boolean nullOrDead(TraceThread thread) {
+		return thread == null || !thread.isAlive();
 	}
 
 	@Test
@@ -77,12 +82,12 @@ public class DebuggerThreadsPluginScreenShots extends GhidraScreenShotGenerator 
 
 		recorder.forceSnapshot();
 		process.removeThreads(handler1Thread);
-		waitFor(() -> recorder.getTraceThread(handler1Thread) == null);
+		waitFor(() -> nullOrDead(recorder.getTraceThread(handler1Thread)));
 		recorder.forceSnapshot();
 		recorder.forceSnapshot();
 		recorder.forceSnapshot();
 		process.removeThreads(handler2Thread);
-		waitFor(() -> recorder.getTraceThread(handler2Thread) == null);
+		waitFor(() -> nullOrDead(recorder.getTraceThread(handler2Thread)));
 		long lastSnap = recorder.forceSnapshot().getKey();
 
 		traceManager.openTrace(trace);

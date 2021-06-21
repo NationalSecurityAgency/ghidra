@@ -66,6 +66,8 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 		long offset = relocationAddress.getOffset();
 
 		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex);
+		String symbolName = sym.getNameAsString();
+		Address symbolAddr = elfRelocationContext.getSymbolAddress(sym);
 		long symbolValue = elfRelocationContext.getSymbolValue(sym);
 
 		int oldValue = memory.getInt(relocationAddress);
@@ -93,7 +95,7 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 				Symbol tocBaseSym = SymbolUtilities.getLabelOrFunctionSymbol(program,
 					PowerPC64_ElfExtension.TOC_BASE, err -> log.error("PPC_ELF", err));
 				if (tocBaseSym == null) {
-					markAsError(program, relocationAddress, type, sym.getNameAsString(),
+					markAsError(program, relocationAddress, type, symbolName,
 						"TOC_BASE unknown", log);
 					return;
 				}
@@ -104,7 +106,7 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 
 		switch (type) {
 			case PowerPC64_ElfRelocationConstants.R_PPC64_COPY:
-				markAsWarning(program, relocationAddress, "R_PPC64_COPY", sym.getNameAsString(),
+				markAsWarning(program, relocationAddress, "R_PPC64_COPY", symbolName,
 					symbolIndex, "Runtime copy not supported", elfRelocationContext.getLog());
 				break;
 			case PowerPC64_ElfRelocationConstants.R_PPC64_ADDR32:
@@ -220,6 +222,10 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 			case PowerPC64_ElfRelocationConstants.R_PPC64_UADDR64:
 			case PowerPC64_ElfRelocationConstants.R_PPC64_ADDR64:
 			case PowerPC64_ElfRelocationConstants.R_PPC64_GLOB_DAT:
+				if (addend != 0 && isUnsupportedExternalRelocation(program, relocationAddress,
+					symbolAddr, symbolName, addend, elfRelocationContext.getLog())) {
+					addend = 0; // prefer bad fixup for EXTERNAL over really-bad fixup
+				}
 				value64 = symbolValue + addend;
 				memory.setLong(relocationAddress, value64);
 				break;
@@ -227,7 +233,6 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setLong(relocationAddress, toc);
 				break;
 			default:
-				String symbolName = sym.getNameAsString();
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
 					elfRelocationContext.getLog());
 				break;

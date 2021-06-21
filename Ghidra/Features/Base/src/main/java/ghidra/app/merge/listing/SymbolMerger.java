@@ -934,9 +934,21 @@ class SymbolMerger extends AbstractListingMerger {
 		monitor.setProgress(len);
 	}
 
+	private static boolean isDefaultThunk(Symbol s) {
+		if (s.getSource() != SourceType.DEFAULT || s.getSymbolType() != SymbolType.FUNCTION) {
+			return false;
+		}
+		Function f = (Function) s.getObject();
+		return f.isThunk();
+	}
+
 	private void processModifiedFunctionNamespace(long id, Symbol mySym, Symbol resultSym) {
-		Namespace myNs = mySym.getParentNamespace();
-		Namespace resultNs = resultSym.getParentNamespace();
+		Namespace myNs = // default thunks may lie about their namespace
+			isDefaultThunk(mySym) ? mySym.getProgram().getGlobalNamespace()
+					: mySym.getParentNamespace();
+		Namespace resultNs = // default thunks may lie about their namespace
+			isDefaultThunk(resultSym) ? resultSym.getProgram().getGlobalNamespace()
+					: resultSym.getParentNamespace();
 		try {
 			Namespace desiredNs = resolveNamespace(myPgm, myNs);
 			// Is the result namespace the one we actually want it to be?

@@ -25,51 +25,9 @@ extern FILE *yyin;		// Global pointer to file for lexer
 extern int yyparse(void);
 extern int yylex_destroy(void);
 
-static VarnodeTpl *find_size(const ConstTpl &offset,const ConstructTpl *ct)
-
-{				// Find a defining instance of the local variable
-				// with given -offset-
-  const vector<OpTpl *> &ops(ct->getOpvec());
-  VarnodeTpl *vn;
-  OpTpl *op;
-  
-  for(int4 i=0;i<ops.size();++i) {
-    op = ops[i];
-    vn = op->getOut();
-    if ((vn!=(VarnodeTpl *)0)&&(vn->isLocalTemp())) {
-      if (vn->getOffset() == offset)
-	return vn;
-    }
-    for(int4 j=0;j<op->numInput();++j) {
-      vn = op->getIn(j);
-      if (vn->isLocalTemp()&&(vn->getOffset()==offset))
-	return vn;
-    }
-  }
-  return (VarnodeTpl *)0;
-}
-
-static bool force_exportsize(ConstructTpl *ct)
-
-{				// Look for zero size temps in export statement
-  HandleTpl *result = ct->getResult();
-  if (result == (HandleTpl *)0) return true;
-
-  VarnodeTpl *vt;
-
-  if (result->getPtrSpace().isUniqueSpace()&&result->getPtrSize().isZero()) {
-    vt = find_size(result->getPtrOffset(),ct);
-    if (vt == (VarnodeTpl *)0) return false;
-    result->setPtrSize(vt->getSize());
-  }
-  else if (result->getSpace().isUniqueSpace()&&result->getSize().isZero()) {
-    vt = find_size(result->getPtrOffset(),ct);
-    if (vt == (VarnodeTpl *)0) return false;
-    result->setSize(vt->getSize());
-  }
-  return true;
-}
-
+/// This must be constructed with the \e main section of p-code, which can contain no p-code
+/// \param rtl is the \e main section of p-code
+/// \param scope is the symbol scope associated with the section
 SectionVector::SectionVector(ConstructTpl *rtl,SymbolScope *scope)
 
 {
@@ -78,6 +36,9 @@ SectionVector::SectionVector(ConstructTpl *rtl,SymbolScope *scope)
   main.scope = scope;
 }
 
+/// Associate the new section with \b nextindex, established prior to parsing
+/// \param rtl is the \e named section of p-code
+/// \param scope is the associated symbol scope
 void SectionVector::append(ConstructTpl *rtl,SymbolScope *scope)
 
 {
@@ -86,9 +47,12 @@ void SectionVector::append(ConstructTpl *rtl,SymbolScope *scope)
   named[ nextindex ] = RtlPair(rtl,scope);
 }
 
+/// Construct with the default qualities for an address space, which
+/// can then be overridden with further parsing.
+/// \param nm is the name of the address space
 SpaceQuality::SpaceQuality(const string &nm)
 
-{				// Default space qualities
+{
   name = nm;
   type = ramtype;
   size = 0;
@@ -96,6 +60,11 @@ SpaceQuality::SpaceQuality(const string &nm)
   isdefault = false;
 }
 
+/// Establish default qualities for the field, which can then be overridden
+/// by further parsing.  A name and bit range must always be explicitly given.
+/// \param nm is the parsed name for the field
+/// \param l is the parsed lower bound of the bit range
+/// \param h is the parse upper bound of the bit range
 FieldQuality::FieldQuality(string *nm,uintb *l,uintb *h)
 
 {
@@ -110,6 +79,10 @@ FieldQuality::FieldQuality(string *nm,uintb *l,uintb *h)
   delete h;
 }
 
+/// Establish each component of the \b with block header
+/// \param s is the subtable (or null)
+/// \param pq is the pattern to prepend (or null)
+/// \param cvec is the set of context changes (or null)
 void WithBlock::set(SubtableSymbol *s, PatternEquation *pq, vector<ContextChange *> *cvec)
 
 {
@@ -134,6 +107,14 @@ WithBlock::~WithBlock(void)
   }
 }
 
+/// \brief Build a complete pattern equation from any surrounding \b with blocks
+///
+/// Given the pattern equation parsed locally from a Constructor and the stack of
+/// surrounding \b with blocks, create the final pattern equation for the Constructor.
+/// Each \b with block pattern is preprended to the local pattern.
+/// \param stack is the stack of \b with blocks currently active at the Constructor
+/// \param pateq is the pattern equation parsed from the local Constructor statement
+/// \return the final pattern equation
 PatternEquation *WithBlock::collectAndPrependPattern(const list<WithBlock> &stack, PatternEquation *pateq)
 
 {
@@ -146,9 +127,17 @@ PatternEquation *WithBlock::collectAndPrependPattern(const list<WithBlock> &stac
   return pateq;
 }
 
+/// \brief Build a complete array of context changes from any surrounding \b with blocks
+///
+/// Given a list of ContextChanges parsed locally from a Constructor and the stack of
+/// surrounding \b with blocks, make a new list of ContextChanges, prepending everything from
+/// the stack to the local vector.  Return the new list and delete the old.
+/// \param stack is the current \b with block stack
+/// \param contvec is the local list of ContextChanges (or null)
+/// \return the new list of ContextChanges
 vector<ContextChange *> *WithBlock::collectAndPrependContext(const list<WithBlock> &stack, vector<ContextChange *> *contvec)
 
-{ // Make new list of ContextChanges, prepending everything from stack to -contvec-, delete old contvec
+{
   vector<ContextChange *> *res = (vector<ContextChange *> *)0;
   list<WithBlock>::const_iterator iter;
   for(iter=stack.begin();iter!=stack.end();++iter) {
@@ -172,6 +161,11 @@ vector<ContextChange *> *WithBlock::collectAndPrependContext(const list<WithBloc
   return res;
 }
 
+/// \brief Get the active subtable from the stack of currently active \b with blocks
+///
+/// Find the subtable associated with the innermost \b with block and return it.
+/// \param stack is the stack of currently active \b with blocks
+/// \return the innermost subtable (or null)
 SubtableSymbol *WithBlock::getCurrentSubtable(const list<WithBlock> &stack)
 
 {
@@ -183,6 +177,13 @@ SubtableSymbol *WithBlock::getCurrentSubtable(const list<WithBlock> &stack)
   return (SubtableSymbol *)0;
 }
 
+/// \brief Construct the consistency checker and optimizer
+///
+/// \param sleigh is the parsed SLEIGH spec
+/// \param rt is the root subtable of the SLEIGH spec
+/// \param un is \b true to request "Unnecessary extension" warnings
+/// \param warndead is \b true to request warnings for written but not read temporaries
+/// \param warnlargetemp is \b true to request warnings for temporaries that are too large
 ConsistencyChecker::ConsistencyChecker(SleighCompile *sleigh,SubtableSymbol *rt,bool un,bool warndead, bool warnlargetemp)
 
 {
@@ -197,6 +198,17 @@ ConsistencyChecker::ConsistencyChecker(SleighCompile *sleigh,SubtableSymbol *rt,
   printlargetempwarning = warnlargetemp; ///< If true, prints a warning about each constructor using a temporary varnode larger than SleighBase::MAX_UNIQUE_SIZE
 }
 
+/// \brief Recover a specific value for the size associated with a Varnode template
+///
+/// This method is passed a ConstTpl that is assumed to be the \e size attribute of
+/// a VarnodeTpl (as returned by getSize()).  This method recovers the specific
+/// integer value for this constant template or throws an exception.
+/// The integer value can either be immediately available from parsing, derived
+/// from a Constructor operand symbol whose size is known, or taken from
+/// the calculated export size of a subtable symbol.
+/// \param sizeconst is the Varnode size template
+/// \param ct is the Constructor containing the Varnode
+/// \return the integer value
 int4 ConsistencyChecker::recoverSize(const ConstTpl &sizeconst,Constructor *ct)
 
 {
@@ -229,10 +241,16 @@ int4 ConsistencyChecker::recoverSize(const ConstTpl &sizeconst,Constructor *ct)
   return size;
 }
 
+/// \brief Convert an unnecessary CPUI_INT_ZEXT and CPUI_INT_SEXT into a COPY
+///
+/// SLEIGH allows \b zext and \b sext notation even if the input and output
+/// Varnodes are ultimately the same size.  In this case, a warning may be
+/// issued and the operator is converted to a CPUI_COPY.
+/// \param op is the given CPUI_INT_ZEXT or CPUI_INT_SEXT operator to check
+/// \param ct is the Constructor containing the operator
 void ConsistencyChecker::dealWithUnnecessaryExt(OpTpl *op,Constructor *ct)
 
-{ // Deal with detected extension (SEXT or ZEXT) where the
-  // input size is the same as the output size
+{
   if (printextwarning) {
     ostringstream msg;
     msg << "Unnecessary ";
@@ -243,6 +261,13 @@ void ConsistencyChecker::dealWithUnnecessaryExt(OpTpl *op,Constructor *ct)
   unnecessarypcode += 1;
 }
 
+/// \brief Convert an unnecessary CPUI_SUBPIECE into a COPY
+///
+/// SLEIGH allows truncation notation even if the input and output Varnodes are
+/// ultimately the same size.  In this case, a warning may be issued and the operator
+/// is converted to a CPUI_COPY.
+/// \param op is the given CPUI_SUBPIECE operator
+/// \param ct is the containing Constructor
 void ConsistencyChecker::dealWithUnnecessaryTrunc(OpTpl *op,Constructor *ct)
 
 {
@@ -257,6 +282,14 @@ void ConsistencyChecker::dealWithUnnecessaryTrunc(OpTpl *op,Constructor *ct)
   unnecessarypcode += 1;
 }
 
+/// \brief Check for misuse of the given operator and print a warning
+///
+/// This method currently checks for:
+///   - Unsigned less-than comparison with zero
+///
+/// \param op is the given operator
+/// \param ct is the Constructor owning the operator
+/// \return \b false if the operator is fatally misused
 bool ConsistencyChecker::checkOpMisuse(OpTpl *op,Constructor *ct)
 
 {
@@ -275,6 +308,14 @@ bool ConsistencyChecker::checkOpMisuse(OpTpl *op,Constructor *ct)
   return true;
 }
 
+/// \brief Make sure the given operator meets size restrictions
+///
+/// Many SLEIGH operators require that inputs and/or outputs are the
+/// same size, or they have other specific size requirement.
+/// Print an error and return \b false for any violations.
+/// \param op is the given p-code operator
+/// \param ct is the Constructor owning the operator
+/// \return \b true if there are no size restriction violations
 bool ConsistencyChecker::sizeRestriction(OpTpl *op,Constructor *ct)
 
 { // Make sure op template meets size restrictions
@@ -540,6 +581,11 @@ bool ConsistencyChecker::sizeRestriction(OpTpl *op,Constructor *ct)
   return true;
 }
 
+/// \brief Print the name of a p-code operator (for warning and error messages)
+///
+/// Print the full name of the operator with its syntax token in parentheses.
+/// \param s is the output stream to write to
+/// \param op is the operator to print
 void ConsistencyChecker::printOpName(ostream &s,OpTpl *op)
 
 {
@@ -744,6 +790,16 @@ void ConsistencyChecker::printOpName(ostream &s,OpTpl *op)
   }
 }
 
+/// \brief Get the OperandSymbol associated with an input/output Varnode of the given p-code operator
+///
+/// Find the Constructor operand associated with a specified Varnode, if it exists.
+/// The Varnode is specified by the p-code operator using it and the input \e slot index, with -1
+/// indicating the operator's output Varnode.  Not all Varnode's are associated with a
+/// Constructor operand, in which case \e null is returned.
+/// \param slot is the input \e slot index, or -1 for an output Varnode
+/// \param op is the p-code operator using the Varnode
+/// \param ct is the Constructor containing the p-code and operands
+/// \return the associated operand or null
 OperandSymbol *ConsistencyChecker::getOperandSymbol(int4 slot,OpTpl *op,Constructor *ct)
 
 {
@@ -768,6 +824,17 @@ OperandSymbol *ConsistencyChecker::getOperandSymbol(int4 slot,OpTpl *op,Construc
   return opsym;
 }
 
+/// \brief Print an error message describing a size restriction violation
+///
+/// The given p-code operator is assumed to violate the Varnode size rules for its opcode.
+/// If the violation is for two Varnodes that should be the same size, each Varnode is indicated
+/// as an input \e slot index, where -1 indicates the operator's output Varnode.
+/// If the violation is for a single Varnode, its \e slot index is passed in twice.
+/// \param op is the given p-code operator
+/// \param ct is the containing Constructor
+/// \param err1 is the slot of the first violating Varnode
+/// \param err2 is the slot of the second violating Varnode (or equal to \b err1)
+/// \param msg is additional description that is appended to the error message
 void ConsistencyChecker::printOpError(OpTpl *op,Constructor *ct,int4 err1,int4 err2,const string &msg)
 
 {
@@ -798,9 +865,17 @@ void ConsistencyChecker::printOpError(OpTpl *op,Constructor *ct,int4 err1,int4 e
   compiler->reportError(compiler->getLocation(ct), msgBuilder.str());
 }
 
+/// \brief Check all p-code operators within a given Constructor section for misuse and size consistency
+///
+/// Each operator within the section is checked in turn, and warning and error messages are emitted
+/// if necessary. The method returns \b false if there is a fatal error associated with any
+/// operator.
+/// \param ct is the Constructor to check
+/// \param cttpl is the specific p-code section to check
+/// \return \b true if there are no fatal errors in the section
 bool ConsistencyChecker::checkConstructorSection(Constructor *ct,ConstructTpl *cttpl)
 
-{ // Check all the OpTpl s within the given section for consistency, return true if all tests pass
+{
   if (cttpl == (ConstructTpl *)0)
     return true;		// Nothing to check
   vector<OpTpl *>::const_iterator iter;
@@ -816,33 +891,54 @@ bool ConsistencyChecker::checkConstructorSection(Constructor *ct,ConstructTpl *c
   return testresult;
 }
 
+/// \brief Check the given p-code operator for too large temporary registers
 ///
-/// Returns true if the output or one of the inputs of
-/// op is in the unique space and larger than SleighBase::MAX_UNIQUE_SIZE
-///
-bool ConsistencyChecker::hasLargeTemporary(OpTpl *op){
-	VarnodeTpl *out = op->getOut();
-	if ((out != (VarnodeTpl *) 0x0) && isTemporaryAndTooBig(out)) {
-		return true;
-	}
-	for (int4 i = 0; i < op->numInput(); ++i) {
-	    VarnodeTpl *in = op->getIn(i);
-		if (isTemporaryAndTooBig(in)) {
-			return true;
-		}
-	}
-	return false;
+/// Return \b true if the output or one of the inputs to the operator
+/// is in the \e unique space and larger than SleighBase::MAX_UNIQUE_SIZE
+/// \param op is the given operator
+/// \return \b true if the operator has a too large temporary parameter
+bool ConsistencyChecker::hasLargeTemporary(OpTpl *op)
+
+{
+  VarnodeTpl *out = op->getOut();
+  if ((out != (VarnodeTpl*)0x0) && isTemporaryAndTooBig(out)) {
+    return true;
+  }
+  for(int4 i = 0;i < op->numInput();++i) {
+    VarnodeTpl *in = op->getIn(i);
+    if (isTemporaryAndTooBig(in)) {
+      return true;
+    }
+  }
+  return false;
 }
 
+/// \brief Check if the given Varnode is a too large temporary register
 ///
-/// Returns true precisely when vn is in the unique space and
+/// Return \b true precisely when the Varnode is in the \e unique space and
 /// has size larger than SleighBase::MAX_UNIQUE_SIZE
-///
-bool ConsistencyChecker::isTemporaryAndTooBig(VarnodeTpl *vn){
-	return vn->getSpace().isUniqueSpace() &&
-	    (vn->getSize().getReal() > SleighBase::MAX_UNIQUE_SIZE);
-	}
+/// \param vn is the given Varnode
+/// \return \b true if the Varnode is a too large temporary register
+bool ConsistencyChecker::isTemporaryAndTooBig(VarnodeTpl *vn)
 
+{
+  return vn->getSpace().isUniqueSpace() && (vn->getSize().getReal() > SleighBase::MAX_UNIQUE_SIZE);
+}
+
+/// \brief Resolve the offset of the given \b truncated Varnode
+///
+/// SLEIGH allows a Varnode to be derived from another larger Varnode using
+/// truncation or bit range notation.  The final offset of the truncated Varnode may not
+/// be calculable immediately during parsing, especially if the address space is big endian
+/// and the size of the containing Varnode is not immediately known.
+/// This method recovers the final offset of the truncated Varnode now that all sizes are
+/// known and otherwise checks that the truncation expression is valid.
+/// \param ct is the Constructor containing the Varnode
+/// \param slot is the \e slot index of the truncated Varnode (for error messages)
+/// \param op is the operator using the truncated Varnode (for error messages)
+/// \param vn is the given truncated Varnode
+/// \param isbigendian is \b true if the Varnode is in a big endian address space
+/// \return \b true if the truncation expression was valid
 bool ConsistencyChecker::checkVarnodeTruncation(Constructor *ct,int4 slot,
 						OpTpl *op,VarnodeTpl *vn,bool isbigendian)
 {
@@ -867,11 +963,18 @@ bool ConsistencyChecker::checkVarnodeTruncation(Constructor *ct,int4 slot,
   return true;
 }
 
+/// \brief Check and adjust truncated Varnodes in the given Constructor p-code section
+///
+/// Run through all Varnodes looking for offset templates marked as ConstTpl::v_offset_plus,
+/// which indicates they were constructed using truncation notation. These truncation expressions
+/// are checked for validity and adjusted depending on the endianess of the address space.
+/// \param ct is the Constructor
+/// \param cttpl is the given p-code section
+/// \param isbigendian is set to \b true if the SLEIGH specification is big endian
+/// \return \b true if all truncation expressions were valid
 bool ConsistencyChecker::checkSectionTruncations(Constructor *ct,ConstructTpl *cttpl,bool isbigendian)
 
-{ // Check all the varnodes that have an offset_plus template
-  //     adjust the plus if we are bigendian
-  //     make sure the truncation is valid
+{
   vector<OpTpl *>::const_iterator iter;
   const vector<OpTpl *> &ops(cttpl->getOpvec());
   bool testresult = true;
@@ -891,6 +994,13 @@ bool ConsistencyChecker::checkSectionTruncations(Constructor *ct,ConstructTpl *c
   return testresult;
 }
 
+/// \brief Check all Constructors within the given subtable for operator misuse and size consistency
+///
+/// Each Constructor and section is checked in turn.  Additionally, the size of Constructor
+/// exports is checked for consistency across the subtable.  Constructors within one subtable must
+/// all export the same size Varnode if the export at all.
+/// \param sym is the given subtable to check
+/// \return \b true if there are no fatal misuse or consistency violations
 bool ConsistencyChecker::checkSubtable(SubtableSymbol *sym)
 
 {
@@ -956,15 +1066,18 @@ bool ConsistencyChecker::checkSubtable(SubtableSymbol *sym)
   return testresult;
 }
 
+/// \brief Establish ordering on subtables so that more dependent tables come first
+///
+/// Do a depth first traversal of SubtableSymbols starting at the root table going
+/// through Constructors and then through their operands, establishing a post-order on the
+/// subtables. This allows the size restriction checks to recursively calculate sizes of dependent
+/// subtables first and propagate their values into more global Varnodes (as Constructor operands)
+/// \param root is the root subtable
 void ConsistencyChecker::setPostOrder(SubtableSymbol *root)
 
 {
   postorder.clear();
   sizemap.clear();
-
-  // Establish post-order of SubtableSymbols so that we can
-  // recursively fill in sizes of varnodes which are exported
-  // from constructors
 
   vector<SubtableSymbol *> path;
   vector<int4> state;
@@ -1010,6 +1123,13 @@ void ConsistencyChecker::setPostOrder(SubtableSymbol *root)
   }
 }
 
+/// \brief Test whether two given Varnodes intersect
+///
+/// This test must be conservative.  If it can't explicitly prove that the
+/// Varnodes don't intersect, it returns \b true (a possible intersection).
+/// \param vn1 is the first Varnode to check
+/// \param vn2 is the second Varnode to check
+/// \return \b true if there is a possible intersection of the Varnodes' storage
 bool ConsistencyChecker::possibleIntersection(const VarnodeTpl *vn1,const VarnodeTpl *vn2)
 
 { // Conservatively test whether vn1 and vn2 can intersect
@@ -1042,12 +1162,19 @@ bool ConsistencyChecker::possibleIntersection(const VarnodeTpl *vn1,const Varnod
   return true;
 }
 
+/// \brief Check if a p-code operator reads from or writes to a given Varnode
+///
+/// A write check is always performed. A read check is performed only if requested.
+/// Return \b true if there is a possible write (or read) of the Varnode.
+/// The checks need to be extremely conservative.  If it can't be determined what
+/// exactly is being read or written, \b true (possible interference) is returned.
+/// \param vn is the given Varnode
+/// \param op is p-code operator to test for interference
+/// \param checkread is \b true if read interference should be checked
+/// \return \b true if there is write (or read) interference
 bool ConsistencyChecker::readWriteInterference(const VarnodeTpl *vn,const OpTpl *op,bool checkread) const
 
-{ // Does op potentially read vn
-  // This is extremely conservative.  Basically any op where
-  // we can't see exactly what might be written is considered
-  // interference
+{
   switch(op->getOpcode()) {
   case BUILD:
   case CROSSBUILD:
@@ -1084,9 +1211,19 @@ bool ConsistencyChecker::readWriteInterference(const VarnodeTpl *vn,const OpTpl 
   return false;
 }
 
+/// \brief Accumulate read/write info if the given Varnode is temporary
+///
+/// If the Varnode is in the \e unique space, an OptimizationRecord for it is looked
+/// up based on its offset.  Information about how a p-code operator uses the Varnode
+/// is accumulated in the record.
+/// \param recs is collection of OptimizationRecords associated with temporary Varnodes
+/// \param vn is the given Varnode to check (which may or may not be temporary)
+/// \param i is the index of the operator using the Varnode (within its p-code section)
+/// \param inslot is the \e slot index of the Varnode within its operator
+/// \param secnum is the section number containing the operator
 void ConsistencyChecker::examineVn(map<uintb,OptimizeRecord> &recs,
 				   const VarnodeTpl *vn,uint4 i,int4 inslot,int4 secnum)
-{ // If varnode is a temporary,  count whether it is read or written
+{
   if (vn == (const VarnodeTpl *)0) return;
   if (!vn->getSpace().isUniqueSpace()) return;
   if (vn->getOffset().getType() != ConstTpl::real) return;
@@ -1106,9 +1243,16 @@ void ConsistencyChecker::examineVn(map<uintb,OptimizeRecord> &recs,
   }
 }
 
+/// \brief Gather statistics about read and writes to temporary Varnodes within a given p-code section
+///
+/// For each temporary Varnode, count how many times it is read from or written to
+/// in the given section of p-code operators.
+/// \param ct is the given Constructor
+/// \param recs is the (initially empty) collection of count records
+/// \param secnum is the given p-code section number
 void ConsistencyChecker::optimizeGather1(Constructor *ct,map<uintb,OptimizeRecord> &recs,int4 secnum) const
 
-{ // Look for reads and writes to temporaries, count how many times each temporary is read or written
+{
   ConstructTpl *tpl;
   if (secnum < 0)
     tpl = ct->getTempl();
@@ -1128,9 +1272,17 @@ void ConsistencyChecker::optimizeGather1(Constructor *ct,map<uintb,OptimizeRecor
   }
 }
 
+/// \brief Mark Varnodes in the export of the given p-code section as read and written
+///
+/// As part of accumulating read/write info for temporary Varnodes, examine the export Varnode
+/// for the section, and if it involves a temporary, mark it as both read and written, guaranteeing
+/// that the Varnode is not optimized away.
+/// \param ct is the given Constructor
+/// \param recs is the collection of count records
+/// \param secnum is the given p-code section number
 void ConsistencyChecker::optimizeGather2(Constructor *ct,map<uintb,OptimizeRecord> &recs,int4 secnum) const
 
-{ // Make sure any temp used by the export is not optimized away
+{
   ConstructTpl *tpl;
   if (secnum < 0)
     tpl = ct->getTempl();
@@ -1169,13 +1321,24 @@ void ConsistencyChecker::optimizeGather2(Constructor *ct,map<uintb,OptimizeRecor
   }
 }
 
-ConsistencyChecker::OptimizeRecord *ConsistencyChecker::findValidRule(Constructor *ct,map<uintb,OptimizeRecord> &recs) const
-
+/// \brief Search for an OptimizeRecord indicating a temporary Varnode that can be optimized away
+///
+/// OptimizeRecords for all temporary Varnodes must already be calculated.
+/// Find a record indicating a temporary Varnode that is written once and read once through a COPY.
+/// Test propagation of the other Varnode associated with the COPY, making sure:
+/// if propagation is backward, the Varnode must not cross another read or write, and
+/// if propagation is forward, the Varnode must not cross another write.
+/// If all the requirements pass, return the record indicating that the COPY can be removed.
+/// \param ct is the Constructor owning the p-code
+/// \param recs is the collection of OptimizeRecords to search
+/// \return a passing OptimizeRecord or null
+const ConsistencyChecker::OptimizeRecord *ConsistencyChecker::findValidRule(Constructor *ct,
+									    const map<uintb,OptimizeRecord> &recs) const
 {
-  map<uintb,OptimizeRecord>::iterator iter;
+  map<uintb,OptimizeRecord>::const_iterator iter;
   iter = recs.begin();
   while(iter != recs.end()) {
-    OptimizeRecord &currec( (*iter).second );
+    const OptimizeRecord &currec( (*iter).second );
     ++iter;
     if ((currec.writecount==1)&&(currec.readcount==1)&&(currec.readsection==currec.writesection)) {
       // Temporary must be read and written exactly once
@@ -1217,9 +1380,19 @@ ConsistencyChecker::OptimizeRecord *ConsistencyChecker::findValidRule(Constructo
       }
     }
   }
-  return (OptimizeRecord *)0;
+  return (const OptimizeRecord *)0;
 }
 
+/// \brief Remove an extraneous COPY going through a temporary Varnode
+///
+/// If an OptimizeRecord has determined that a temporary Varnode is read once, written once,
+/// and goes through a COPY operator, remove the COPY operator.
+/// If the Varnode is an input to the COPY, the operator writing the Varnode is changed to
+/// write to the output of the COPY instead.  If the Varnode is an output of the COPY, the
+/// operator reading the Varnode is changed to read the input of the COPY instead.
+/// In either case, the COPY operator is removed.
+/// \param ct is the Constructor
+/// \param rec is record describing the temporary and its read/write operators
 void ConsistencyChecker::applyOptimization(Constructor *ct,const OptimizeRecord &rec)
 
 {
@@ -1247,6 +1420,12 @@ void ConsistencyChecker::applyOptimization(Constructor *ct,const OptimizeRecord 
   ctempl->deleteOps(deleteops);
 }
 
+/// \brief Issue error/warning messages for unused temporary Varnodes
+///
+/// An error message is issued if a temporary is read but not written.
+/// A warning may be issued if a temporary is written but not read.
+/// \param ct is the Constructor
+/// \param recs is the collection of records associated with each temporary Varnode
 void ConsistencyChecker::checkUnusedTemps(Constructor *ct,const map<uintb,OptimizeRecord> &recs)
 
 {
@@ -1267,32 +1446,39 @@ void ConsistencyChecker::checkUnusedTemps(Constructor *ct,const map<uintb,Optimi
   }
 }
 
+/// \brief In the given Constructor p-code section, check for temporary Varnodes that are too large
 ///
-/// Checks the ops in ct to see whether a varnode larger than
-/// SleighBase::MAX_UNIQUE_SIZE is used.  Note that this method
-/// returns after the first large varnode is found.
-///
-void ConsistencyChecker::checkLargeTemporaries(Constructor *ct){
-	ConstructTpl *ctTpl = ct->getTempl();
-    if (ctTpl == (ConstructTpl *) 0){
-        return;
+/// Run through all Varnodes in the constructor, if a Varnode is in the \e unique
+/// space and its size exceeds the threshold SleighBase::MAX_UNIQUE_SIZE, issue
+/// a warning. Note that this method returns after the first large Varnode is found.
+/// \param ct is the given Constructor
+/// \param ctpl is the specific p-code section
+void ConsistencyChecker::checkLargeTemporaries(Constructor *ct,ConstructTpl *ctpl)
+
+{
+  vector<OpTpl*> ops = ctpl->getOpvec();
+  for(vector<OpTpl*>::iterator iter = ops.begin();iter != ops.end();++iter) {
+    if (hasLargeTemporary(*iter)) {
+      if (printlargetempwarning) {
+	compiler->reportWarning(
+	    compiler->getLocation(ct),
+	    "Constructor uses temporary varnode larger than " + to_string(SleighBase::MAX_UNIQUE_SIZE) + " bytes.");
+      }
+      largetemp++;
+      return;
     }
-    vector<OpTpl *> ops = ctTpl->getOpvec();
-    for (vector<OpTpl *>::iterator iter = ops.begin(); iter != ops.end(); ++iter){
-    	if (hasLargeTemporary(*iter)){
-    		if (printlargetempwarning){
-    			compiler->reportWarning(compiler->getLocation(ct), "Constructor uses temporary varnode larger than " + to_string(SleighBase::MAX_UNIQUE_SIZE) + " bytes.");
-    		}
-    		largetemp++;
-    		return;
-    	}
-    }
+  }
 }
 
+/// \brief Do p-code optimization on each section of the given Constructor
+///
+/// For p-code section, statistics on temporary Varnode usage is collected,
+/// and unnecessary COPY operators are removed.
+/// \param ct is the given Constructor
 void ConsistencyChecker::optimize(Constructor *ct)
 
 {
-  OptimizeRecord *currec;
+  const OptimizeRecord *currec;
   map<uintb,OptimizeRecord> recs;
   int4 numsections = ct->getNumSections();
   do {
@@ -1302,16 +1488,17 @@ void ConsistencyChecker::optimize(Constructor *ct)
       optimizeGather2(ct,recs,i);
     }
     currec = findValidRule(ct,recs);
-    if (currec != (OptimizeRecord *)0)
+    if (currec != (const OptimizeRecord *)0)
       applyOptimization(ct,*currec);
-  } while(currec != (OptimizeRecord *)0);
+  } while(currec != (const OptimizeRecord *)0);
   checkUnusedTemps(ct,recs);
-  checkLargeTemporaries(ct);
 }
 
-bool ConsistencyChecker::test(void)
+/// Warnings or errors for individual violations may be printed, depending on settings.
+/// \return \b true if all size consistency checks pass
+bool ConsistencyChecker::testSizeRestrictions(void)
 
-{ // Main entry point for size consistency check
+{
   setPostOrder(root_symbol);
   bool testresult = true;
 
@@ -1323,11 +1510,15 @@ bool ConsistencyChecker::test(void)
   return testresult;
 }
 
-bool ConsistencyChecker::testTruncations(bool isbigendian)
+/// Update truncated Varnodes given complete size information. Print errors
+/// for any invalid truncation constructions.
+/// \param isbigendian is \b true if the SLEIGH spec is big endian
+/// \return \b true if there are no invalid truncations
+bool ConsistencyChecker::testTruncations(void)
 
 {
-  // Now that the sizemap is calculated, we can check/adjust the offset_plus templates
   bool testresult = true;
+  bool isbigendian = slgh->isBigEndian();
   for(int4 i=0;i<postorder.size();++i) {
     SubtableSymbol *sym = postorder[i];
     int4 numconstruct = sym->getNumConstructors();
@@ -1352,6 +1543,33 @@ bool ConsistencyChecker::testTruncations(bool isbigendian)
   return testresult;
 }
 
+/// This counts Constructors that contain temporary Varnodes that are too large.
+/// If requested, an individual warning is printed for each Constructor.
+void ConsistencyChecker::testLargeTemporary(void)
+
+{
+  for(int4 i=0;i<postorder.size();++i) {
+    SubtableSymbol *sym = postorder[i];
+    int4 numconstruct = sym->getNumConstructors();
+    Constructor *ct;
+    for(int4 j=0;j<numconstruct;++j) {
+      ct = sym->getConstructor(j);
+
+      int4 numsections = ct->getNumSections();
+      for(int4 k=-1;k<numsections;++k) {
+	ConstructTpl *tpl;
+	if (k < 0)
+	  tpl = ct->getTempl();
+	else
+	  tpl = ct->getNamedTempl(k);
+	if (tpl == (ConstructTpl *)0)
+	  continue;
+	checkLargeTemporaries(ct, tpl);
+      }
+    }
+  }
+}
+
 void ConsistencyChecker::optimizeAll(void)
 
 {
@@ -1366,6 +1584,9 @@ void ConsistencyChecker::optimizeAll(void)
   }
 }
 
+/// Sort based on the containing Varnode, then on the bit boundary
+/// \param op2 is a field to compare with \b this
+/// \return \b true if \b this should be sorted before the other field
 bool FieldContext::operator<(const FieldContext &op2) const
 
 {
@@ -1385,6 +1606,10 @@ void MacroBuilder::free(void)
   params.clear();
 }
 
+/// The error is passed up to the main parse object and a note is made
+/// locally that an error occurred so parsing can be terminated immediately.
+/// \param loc is the parse location where the error occurred
+/// \param val is the error message
 void MacroBuilder::reportError(const Location* loc, const string &val)
 
 {
@@ -1392,9 +1617,11 @@ void MacroBuilder::reportError(const Location* loc, const string &val)
   haserror = true;
 }
 
+/// Given the op corresponding to the invocation, set up the specific parameters.
+/// \param macroop is the given MACRO directive op
 void MacroBuilder::setMacroOp(OpTpl *macroop)
 
-{				// Set up parameters for a particular macro invocation
+{
   VarnodeTpl *vn;
   HandleTpl *hand;
   free();
@@ -1405,6 +1632,17 @@ void MacroBuilder::setMacroOp(OpTpl *macroop)
   }
 }
 
+/// \brief Given a cloned OpTpl, substitute parameters and add to the output list
+///
+/// VarnodesTpls used by the op are examined to see if they are derived from
+/// parameters of the macro. If so, details of the parameters actively passed
+/// as part of the specific macro invocation are substituted into the VarnodeTpl.
+/// Truncation operations on a macro parameter may cause additional CPUI_SUBPIECE
+/// operators to be inserted as part of the expansion and certain forms are not
+/// permitted.
+/// \param op is the cloned op to emit
+/// \param params is the set of parameters specific to the macro invocation
+/// \return \b true if there are no illegal truncations
 bool MacroBuilder::transferOp(OpTpl *op,vector<HandleTpl *> &params)
 
 { // Fix handle details of a macro generated OpTpl relative to its specific invocation
@@ -1542,15 +1780,21 @@ SleighCompile::SleighCompile(void)
   warnunnecessarypcode = false;
   warndeadtemps = false;
   lenientconflicterrors = true;
+  largetemporarywarning = false;
   warnalllocalcollisions = false;
   warnallnops = false;
+  failinsensitivedups = true;
   root = (SubtableSymbol *)0;
+  curmacro = (MacroSymbol *)0;
+  curct = (Constructor *)0;
 }
 
+/// Create the address spaces: \b const, \b unique, and \b other.
+/// Define the special symbols: \b inst_start, \b inst_next, \b epsilon.
+/// Define the root subtable symbol: \b instruction
 void SleighCompile::predefinedSymbols(void)
 
-{ // Define the "pre" defined spaces and symbols
-  // This must happen after endian has been defined
+{
   symtab.addScope();		// Create global scope
 
 				// Some predefined symbols
@@ -1576,6 +1820,19 @@ void SleighCompile::predefinedSymbols(void)
   pcode.setUniqueSpace(getUniqueSpace());
 }
 
+/// \brief Calculate the complete context layout for all definitions sharing the same backing storage Varnode
+///
+/// Internally context is stored in an array of (32-bit) words.  The bit-range for each field definition is
+/// adjusted to pack the fields within this array, but overlapping bit-ranges between definitions are preserved.
+/// Due to the internal storage word size, the covering range across a set of overlapping definitions cannot
+/// exceed the word size (of 32-bits).
+/// Within the sorted list of all context definitions, the subset sharing the same backing storage is
+/// provided to this method as a starting index and a size (of the subset), along with the total number
+/// of context bits already allocated.
+/// \param start is the provided starting index of the definition subset
+/// \param sz is the provided number of definitions in the subset
+/// \param numbits is the number of previously allocated context bits
+/// \return the total number of allocated bits (after the new allocations)
 int4 SleighCompile::calcContextVarLayout(int4 start,int4 sz,int4 numbits)
 
 {
@@ -1590,7 +1847,7 @@ int4 SleighCompile::calcContextVarLayout(int4 start,int4 sz,int4 numbits)
   i = 0;
   while(i<sz) {
 
-    qual = contexttable[i].qual;
+    qual = contexttable[i+start].qual;
     int4 min = qual->low;
     int4 max = qual->high;
     if ((max - min) > (8*sizeof(uintm)))
@@ -1600,7 +1857,7 @@ int4 SleighCompile::calcContextVarLayout(int4 start,int4 sz,int4 numbits)
     j = i+1;
     // Find union of fields overlapping with first field
     while(j<sz) {
-      qual = contexttable[j].qual;
+      qual = contexttable[j+start].qual;
       if (qual->low <= max) {	// We have overlap of context variables
 	if (qual->high > max)
 	  max = qual->high;
@@ -1621,7 +1878,7 @@ int4 SleighCompile::calcContextVarLayout(int4 start,int4 sz,int4 numbits)
     numbits += alloc;
 
     for(;i<j;++i) {
-      qual = contexttable[i].qual;
+      qual = contexttable[i+start].qual;
       uint4 l = qual->low - min + low;
       uint4 h = numbits-1-(max-qual->high);
       ContextField *field = new ContextField(qual->signext,l,h);
@@ -1633,6 +1890,10 @@ int4 SleighCompile::calcContextVarLayout(int4 start,int4 sz,int4 numbits)
   return numbits;
 }
 
+/// A separate decision tree is calculated for each subtable, and information about
+/// conflicting patterns is accumulated.  Identical pattern pairs are reported
+/// as errors, and indistinguishable pattern pairs are reported as errors depending
+/// on the \b lenientconflicterrors setting.
 void SleighCompile::buildDecisionTrees(void)
 
 {
@@ -1667,6 +1928,8 @@ void SleighCompile::buildDecisionTrees(void)
   }
 }
 
+/// For each Constructor, generate the final pattern (TokenPattern) used to match it from
+/// the parsed constraints (PatternEquation).  Accumulated error messages are reported.
 void SleighCompile::buildPatterns(void)
 
 {
@@ -1689,25 +1952,27 @@ void SleighCompile::buildPatterns(void)
   }
 }
 
+/// Optimization is performed across all p-code sections.  Size restriction and other consistency
+/// checks are performed.  Errors and warnings are reported as appropriate.
 void SleighCompile::checkConsistency(void)
 
 {
   ConsistencyChecker checker(this, root,warnunnecessarypcode,warndeadtemps,largetemporarywarning);
 
-  if (!checker.test()) {
+  if (!checker.testSizeRestrictions()) {
     errors += 1;
     return;
   }
-  if (!checker.testTruncations(isBigEndian())) {
+  if (!checker.testTruncations()) {
     errors += 1;
     return;
   }
   if ((!warnunnecessarypcode)&&(checker.getNumUnnecessaryPcode() > 0)) {
     ostringstream msg;
     msg << dec << checker.getNumUnnecessaryPcode();
-    msg << " unnecessary extensions/truncations were converted to copies" << endl;
-    msg << "Use -u switch to list each individually";
-    reportInfo(msg.str());
+    msg << " unnecessary extensions/truncations were converted to copies";
+    reportWarning(msg.str());
+    reportWarning("Use -u switch to list each individually");
   }
   checker.optimizeAll();
   if (checker.getNumReadNoWrite() > 0) {
@@ -1717,20 +1982,31 @@ void SleighCompile::checkConsistency(void)
   if ((!warndeadtemps)&&(checker.getNumWriteNoRead() > 0)) {
     ostringstream msg;
     msg << dec << checker.getNumWriteNoRead();
-    msg << " operations wrote to temporaries that were not read" << endl;
-    msg << "Use -t switch to list each individually";
-    reportInfo(msg.str());
+    msg << " operations wrote to temporaries that were not read";
+    reportWarning(msg.str());
+    reportWarning("Use -t switch to list each individually");
   }
+  checker.testLargeTemporary();
   if ((!largetemporarywarning) && (checker.getNumLargeTemporaries() > 0)) {
 	ostringstream msg;
 	msg << dec << checker.getNumLargeTemporaries();
 	msg << " constructors contain temporaries larger than ";
-	msg << SleighBase::MAX_UNIQUE_SIZE << " bytes" << endl;
-	msg << "Use -o switch to list each individually.";
-	reportInfo(msg.str());
+	msg << SleighBase::MAX_UNIQUE_SIZE << " bytes";
+	reportWarning(msg.str());
+	reportWarning("Use -o switch to list each individually.");
   }
 }
 
+/// \brief Search for offset matches between a previous set and the given current set
+///
+/// This method is given a collection of offsets, each mapped to a particular set index.
+/// A new set of offsets and set index is given.  The new set is added to the collection.
+/// If any offset in the new set matches an offset in one of the old sets, the old matching
+/// set index is returned. Otherwise -1 is returned.
+/// \param local2Operand is the collection of previous offsets
+/// \param locals is the new given set of offsets
+/// \param operand is the new given set index
+/// \return the set index of an old matching offset or -1
 int4 SleighCompile::findCollision(map<uintb,int4> &local2Operand,const vector<uintb> &locals,int operand)
 
 {
@@ -1746,6 +2022,15 @@ int4 SleighCompile::findCollision(map<uintb,int4> &local2Operand,const vector<ui
   return -1;
 }
 
+/// Because local variables can be exported and subtable symbols can be reused as operands across
+/// multiple Constructors, its possible for different operands in the same Constructor to be assigned
+/// the same exported local variable. As this is a potential spec design problem, this method searches
+/// for these collisions and potentially reports a warning.
+/// For each operand of the given Constructor, the potential local variable exports are collected and
+/// compared with the other operands.  Any potential collision may generate a warning and causes
+/// \b false to be returned.
+/// \param ct is the given Constructor
+/// \return \b true if there are no potential collisions between operands
 bool SleighCompile::checkLocalExports(Constructor *ct)
 
 {
@@ -1776,6 +2061,9 @@ bool SleighCompile::checkLocalExports(Constructor *ct)
   return noCollisions;
 }
 
+/// Check each Constructor for collisions in turn.  If there are any collisions
+/// report a warning indicating the number of Construtors with collisions. Optionally
+/// generate a warning for each colliding Constructor.
 void SleighCompile::checkLocalCollisions(void)
 
 {
@@ -1795,12 +2083,14 @@ void SleighCompile::checkLocalCollisions(void)
   if (collisionCount > 0) {
     ostringstream msg;
     msg << dec << collisionCount << " constructors with local collisions between operands";
+    reportWarning(msg.str());
     if (!warnalllocalcollisions)
-      msg << endl << "Use -c switch to list each individually";
-    reportInfo(msg.str());
+      reportWarning("Use -c switch to list each individually");
   }
 }
 
+/// The number of \e empty Constructors, with no p-code and no export, is always reported.
+/// Optionally, empty Constructors are reported individually.
 void SleighCompile::checkNops(void)
 
 {
@@ -1811,15 +2101,53 @@ void SleighCompile::checkNops(void)
     }
     ostringstream msg;
     msg << dec << noplist.size() << " NOP constructors found";
+    reportWarning(msg.str());
     if (!warnallnops)
-      msg << endl << "Use -n switch to list each individually";
-    reportInfo(msg.str());
+      reportWarning("Use -n switch to list each individually");
   }
 }
 
+/// Treating names as case insensitive, look for duplicate register names and
+/// report as errors.  For this method, \e register means any global Varnode defined
+/// using SLEIGH's `define <address space>` directive, in an address space of
+/// type \e IPTR_PROCESSOR  (either RAM or REGISTER)
+void SleighCompile::checkCaseSensitivity(void)
+
+{
+  if (!failinsensitivedups) return;		// Case insensitive duplicates don't cause error
+  map<string,SleighSymbol *> registerMap;
+  SymbolScope *scope = symtab.getGlobalScope();
+  SymbolTree::const_iterator iter;
+  for(iter=scope->begin();iter!=scope->end();++iter) {
+    SleighSymbol *sym = *iter;
+    if (sym->getType() != SleighSymbol::varnode_symbol) continue;
+    VarnodeSymbol *vsym = (VarnodeSymbol *)sym;
+    AddrSpace *space = vsym->getFixedVarnode().space;
+    if (space->getType() != IPTR_PROCESSOR) continue;
+    string nm = sym->getName();
+    transform(nm.begin(), nm.end(), nm.begin(), ::toupper);
+    pair<map<string,SleighSymbol *>::iterator,bool> check;
+    check = registerMap.insert( pair<string,SleighSymbol *>(nm,sym) );
+    if (!check.second) {	// Name already existed
+      SleighSymbol *oldsym = (*check.first).second;
+      ostringstream s;
+      s << "Name collision: " << sym->getName() << " --- ";
+      const Location *oldLocation = getLocation(oldsym);
+      s << "Duplicate symbol " << oldsym->getName() << " defined at " << oldLocation->format();
+      const Location *location = getLocation(sym);
+      reportError(location,s.str());
+    }
+  }
+}
+
+/// Each label symbol define which operator is being labeled and must also be
+/// used as a jump destination by at least 1 operator. A description of each
+/// symbol violating this is accumulated in a string returned by this method.
+/// \param scope is the scope across which to look for label symbols
+/// \return the accumulated error messages
 string SleighCompile::checkSymbols(SymbolScope *scope)
 
-{ // Make sure label symbols are used properly
+{
   ostringstream msg;
   SymbolTree::const_iterator iter;
   for(iter=scope->begin();iter!=scope->end();++iter) {
@@ -1833,9 +2161,14 @@ string SleighCompile::checkSymbols(SymbolScope *scope)
   return msg.str();
 }
 
+/// The symbol definition is assumed to have just been parsed.  It is added to the
+/// table within the current scope as determined by the parse state and is cross
+/// referenced with the current parse location.
+/// Duplicate symbol exceptions are caught and reported as a parse error.
+/// \param sym is the new symbol
 void SleighCompile::addSymbol(SleighSymbol *sym)
 
-{				// Make sure symbol table errors are caught
+{
   try {
     symtab.addSymbol(sym);
     symbolLocationMap[sym] = *getCurrentLocation();
@@ -1845,18 +2178,25 @@ void SleighCompile::addSymbol(SleighSymbol *sym)
   }
 }
 
+/// \param ctor is the given Constructor
+/// \return the filename and line number
 const Location *SleighCompile::getLocation(Constructor *ctor) const
 
 {
   return &ctorLocationMap.at(ctor);
 }
 
+/// \param sym is the given symbol
+/// \return the filename and line number
 const Location *SleighCompile::getLocation(SleighSymbol *sym) const
 
 {
   return &symbolLocationMap.at(sym);
 }
 
+/// The current filename and line number are placed into a Location object
+/// which is then returned.
+/// \return the current Location
 const Location *SleighCompile::getCurrentLocation(void) const
 
 {
@@ -1865,7 +2205,13 @@ const Location *SleighCompile::getCurrentLocation(void) const
   return &currentLocCache;
 }
 
+/// \brief Format an error or warning message given an optional source location
+///
+/// \param loc is the given source location (or null)
+/// \param msg is the message
+/// \return the formatted message
 string SleighCompile::formatStatusMessage(const Location* loc, const string &msg)
+
 {
   ostringstream s;
   if (loc != (Location*)0) {
@@ -1876,12 +2222,23 @@ string SleighCompile::formatStatusMessage(const Location* loc, const string &msg
   return s.str();
 }
 
+/// The error message is formatted indicating the location of the error in source.
+/// The message is displayed for the user and a count is incremented.
+/// Otherwise, parsing can continue, but the compiler will not produce an output file.
+/// \param loc is the location of the error
+/// \param msg is the error message
 void SleighCompile::reportError(const Location* loc, const string &msg)
+
 {
   reportError(formatStatusMessage(loc, msg));
 }
 
+/// The message is formatted and displayed for the user and a count is incremented.
+/// If there are too many fatal errors, the entire compilation process is terminated.
+/// Otherwise, parsing can continue, but the compiler will not produce an output file.
+/// \param msg is the error message
 void SleighCompile::reportError(const string &msg)
+
 {
   cerr << "ERROR   " << msg << endl;
   errors += 1;
@@ -1891,28 +2248,30 @@ void SleighCompile::reportError(const string &msg)
   }
 }
 
+/// The message indicates a potential problem with the SLEIGH specification but does not
+/// prevent compilation from producing output.
+/// \param loc is the location of the problem in source
+/// \param msg is the warning message
 void SleighCompile::reportWarning(const Location* loc, const string &msg)
+
 {
   reportWarning(formatStatusMessage(loc, msg));
 }
 
+/// The message indicates a potential problem with the SLEIGH specification but does not
+/// prevent compilation from producing output.
+/// \param msg is the warning message
 void SleighCompile::reportWarning(const string &msg)
 
 {
-  cerr << "WARNING " << msg << endl;
+  cerr << "WARN  " << msg << endl;
 }
 
-void SleighCompile::reportInfo(const Location* loc, const string &msg)
-{
-  reportInfo(formatStatusMessage(loc, msg));
-}
-
-void SleighCompile::reportInfo(const string &msg)
-
-{
-  cerr << "INFO    " << msg << endl;
-}
-
+/// The \e unique space acts as a pool of temporary registers that are drawn as needed.
+/// As Varnode sizes are frequently inferred and not immediately available during the parse,
+/// this method does not make an assumption about the size of the requested temporary Varnode.
+/// It reserves a fixed amount of space and returns its starting offset.
+/// \return the starting offset of the new temporary register
 uintb SleighCompile::getUniqueAddr(void)
 
 {
@@ -1921,10 +2280,17 @@ uintb SleighCompile::getUniqueAddr(void)
   return base;
 }
 
+/// This method is called after parsing is complete.  It builds the final Constructor patterns,
+/// builds decision trees, does p-code optimization, and builds cross referencing structures.
+/// A number of checks are also performed, which may generate errors or warnings, including
+/// size restriction checks, pattern conflict checks, NOP constructor checks, and
+/// local collision checks.  Once this method is run, \b this SleighCompile is ready for the
+/// saveXml method.
 void SleighCompile::process(void)
 
-{				// Do all post processing on the parsed data structures
+{
   checkNops();
+  checkCaseSensitivity();
   if (getDefaultCodeSpace() == (AddrSpace *)0)
     reportError("No default space specified");
   if (errors>0) return;
@@ -1953,6 +2319,9 @@ void SleighCompile::process(void)
 
 // Methods needed by the lexer
 
+/// All current context field definitions are analyzed, the internal packing of
+/// the fields is determined, and the final symbols (ContextSymbol) are created and
+/// added to the symbol table. No new context fields can be defined once this method is called.
 void SleighCompile::calcContextLayout(void)
 
 {
@@ -1982,13 +2351,20 @@ void SleighCompile::calcContextLayout(void)
   contexttable.clear();
 }
 
+/// Get the path of the current file being parsed as either an absolute path, or relative to cwd
+/// \return the path string
 string SleighCompile::grabCurrentFilePath(void) const
 
-{ // Get the path of the current file being parse as either an absolute path, or relative to cwd
+{
   if (relpath.empty()) return "";
   return (relpath.back() + filename.back());
 }
 
+/// The given filename can be absolute are relative to the current working directory.
+/// The directory containing the file is established as the new current working directory.
+/// The file is added to the current stack of \e included source files, and parsing
+/// is set to continue from the first line.
+/// \param fname is the absolute or relative pathname of the new source file
 void SleighCompile::parseFromNewFile(const string &fname)
 
 {
@@ -2005,6 +2381,7 @@ void SleighCompile::parseFromNewFile(const string &fname)
   lineno.push_back(1);
 }
 
+/// Indicate to the location finder that parsing is currently in an expanded preprocessor macro
 void SleighCompile::parsePreprocMacro(void)
 
 {
@@ -2013,6 +2390,8 @@ void SleighCompile::parsePreprocMacro(void)
   lineno.push_back(lineno.back());
 }
 
+/// Pop the current file off the \e included source file stack, indicating that parsing continues
+/// in the parent source file.
 void SleighCompile::parseFileFinished(void)
 
 {
@@ -2021,6 +2400,10 @@ void SleighCompile::parseFileFinished(void)
   lineno.pop_back();
 }
 
+/// Pass back the string associated with the variable name.
+/// \param nm is the name of the given preprocessor variable
+/// \param res will hold string value passed back
+/// \return \b true if the variable was defined
 bool SleighCompile::getPreprocValue(const string &nm,string &res) const
 
 {
@@ -2030,12 +2413,18 @@ bool SleighCompile::getPreprocValue(const string &nm,string &res) const
   return true;
 }
 
+/// The string value is associated with the variable name.
+/// \param nm is the name of the given preprocessor variable
+/// \param value is the string value to associate
 void SleighCompile::setPreprocValue(const string &nm,const string &value)
 
 {
   preproc_defines[nm] = value;
 }
 
+/// Any existing string value associated with the variable is removed.
+/// \param nm is the name of the given preprocessor variable
+/// \return \b true if the variable had a value (was defined) initially
 bool SleighCompile::undefinePreprocValue(const string &nm)
 
 {
@@ -2047,6 +2436,17 @@ bool SleighCompile::undefinePreprocValue(const string &nm)
 
 // Functions needed by the parser
 
+/// \brief Define a new SLEIGH token
+///
+/// In addition to the name and size, an endianness code is provided, with the possible values:
+///   - -1 indicates a \e little endian interpretation is forced on the token
+///   -  0 indicates the global endianness setting is used for the token
+///   -  1 indicates a \e big endian interpretation is forced on the token
+///
+/// \param name is the name of the token
+/// \param sz is the number of bits in the token
+/// \param endian is the endianness code
+/// \return the new token symbol
 TokenSymbol *SleighCompile::defineToken(string *name,uintb *sz,int4 endian)
 
 {
@@ -2071,6 +2471,10 @@ TokenSymbol *SleighCompile::defineToken(string *name,uintb *sz,int4 endian)
   return res;
 }
 
+/// \brief Add a new field definition to the given token
+///
+/// \param sym is the given token
+/// \param qual is the set of parsed qualities to associate with the new field
 void SleighCompile::addTokenField(TokenSymbol *sym,FieldQuality *qual)
 
 {
@@ -2079,6 +2483,10 @@ void SleighCompile::addTokenField(TokenSymbol *sym,FieldQuality *qual)
   delete qual;
 }
 
+/// \brief Add a new context field definition to the given backing Varnode
+///
+/// \param sym is the given Varnode providing backing storage for the context field
+/// \param qual is the set of parsed qualities to associate with the new field
 bool SleighCompile::addContextField(VarnodeSymbol *sym,FieldQuality *qual)
 
 {
@@ -2089,6 +2497,9 @@ bool SleighCompile::addContextField(VarnodeSymbol *sym,FieldQuality *qual)
   return true;
 }
 
+/// \brief Define a new addresds space
+///
+/// \param qual is the set of parsed qualities to associate with the new space
 void SleighCompile::newSpace(SpaceQuality *qual)
 
 {
@@ -2113,6 +2524,10 @@ void SleighCompile::newSpace(SpaceQuality *qual)
   addSymbol( new SpaceSymbol(spc) );
 }
 
+/// \brief Start a new named p-code section and define the associated section symbol
+///
+/// \param nm is the name of the section
+/// \return the new section symbol
 SectionSymbol *SleighCompile::newSectionSymbol(const string &nm)
 
 {
@@ -2127,14 +2542,26 @@ SectionSymbol *SleighCompile::newSectionSymbol(const string &nm)
   return sym;
 }
 
+/// \brief Set the global endianness of the SLEIGH specification
+///
+/// This \b must be called at the very beginning of the parse.
+/// This method additionally establishes predefined symbols for the specification.
+/// \param end is the endianness value (0=little 1=big)
 void SleighCompile::setEndian(int4 end)
 
-{ // This MUST be called at the very beginning of the parse
-  // The parser should enforce this
+{
   setBigEndian( (end == 1) );
   predefinedSymbols();		// Set up symbols now that we know endianess
 }
 
+/// \brief Definition a set of Varnodes
+///
+/// Storage for each Varnode is allocated in sequence from the given address space,
+/// starting from the specified offset.
+/// \param spacesym is the given address space
+/// \param off is the starting offset
+/// \param size is the size (in bytes) to allocate for each Varnode
+/// \param names is the list of Varnode names to define
 void SleighCompile::defineVarnodes(SpaceSymbol *spacesym,uintb *off,uintb *size,vector<string> *names)
 
 {
@@ -2150,12 +2577,18 @@ void SleighCompile::defineVarnodes(SpaceSymbol *spacesym,uintb *off,uintb *size,
   delete size;
 }
 
+/// \brief Define a new Varnode symbol as a subrange of bits within another symbol
+///
+/// If the ends of the range fall on byte boundaries, we
+/// simply define a normal VarnodeSymbol, otherwise we create
+/// a special symbol which is a place holder for the bitrange operator
+/// \param name is the name of the new Varnode
+/// \param sym is the parent Varnode
+/// \param bitoffset is the (least significant) starting bit of the new Varnode within the parent
+/// \param numb is the number of bits in the new Varnode
 void SleighCompile::defineBitrange(string *name,VarnodeSymbol *sym,uint4 bitoffset,uint4 numb)
 
-{ // Define a new symbol as a subrange of bits within another symbol
-  // If the ends of the range fall on byte boundaries, we
-  // simply define a normal VarnodeSymbol, otherwise we create
-  // a special symbol which is a place holder for the bitrange operator
+{
   string namecopy = *name;
   delete name;
   uint4 size = 8*sym->getSize(); // Number of bits
@@ -2182,6 +2615,10 @@ void SleighCompile::defineBitrange(string *name,VarnodeSymbol *sym,uint4 bitoffs
     addSymbol( new BitrangeSymbol(namecopy,sym,bitoffset,numb) );
 }
 
+/// \brief Define a list of new user-defined operators
+///
+/// A new symbol is created for each name.
+/// \param names is the list of names
 void SleighCompile::addUserOp(vector<string> *names)
 
 {
@@ -2193,9 +2630,14 @@ void SleighCompile::addUserOp(vector<string> *names)
   delete names;
 }
 
+/// Find duplicates in the list and null out any entry but the first.
+/// Return an example of a symbol with duplicates or null if there are
+/// no duplicates.
+/// \param symlist is the given list of symbols (which may contain nulls)
+/// \return an example symbol with a duplicate are null
 SleighSymbol *SleighCompile::dedupSymbolList(vector<SleighSymbol *> *symlist)
 
-{				// Find duplicates in -symlist-, null out all but first
+{
   SleighSymbol *res = (SleighSymbol *)0;
   for(int4 i=0;i<symlist->size();++i) {
     SleighSymbol *sym = (*symlist)[i];
@@ -2210,6 +2652,12 @@ SleighSymbol *SleighCompile::dedupSymbolList(vector<SleighSymbol *> *symlist)
   return res;
 }
 
+/// \brief Attach a list integer values, to each value symbol in the given list
+///
+/// Each symbol's original bit representation is no longer used as the absolute integer
+/// value associated with the symbol. Instead it is used to map into this integer list.
+/// \param symlist is the given list of value symbols
+/// \param numlist is the list of integer values to attach
 void SleighCompile::attachValues(vector<SleighSymbol *> *symlist,vector<intb> *numlist)
 
 {
@@ -2229,6 +2677,12 @@ void SleighCompile::attachValues(vector<SleighSymbol *> *symlist,vector<intb> *n
   delete symlist;
 }
 
+/// \brief Attach a list of display names to the given list of value symbols
+///
+/// Each symbol's original bit representation is no longer used as the display name
+/// for the symbol. Instead it is used to map into this list of display names.
+/// \param symlist is the given list of value symbols
+/// \param names is the list of display names to attach
 void SleighCompile::attachNames(vector<SleighSymbol *> *symlist,vector<string> *names)
 
 {
@@ -2248,6 +2702,12 @@ void SleighCompile::attachNames(vector<SleighSymbol *> *symlist,vector<string> *
   delete symlist;
 }
 
+/// \brief Attach a list of Varnodes to the given list of value symbols
+///
+/// Each symbol's original bit representation is no longer used as the display name and
+/// semantic value of the symbol.  Instead it is used to map into this list of Varnodes.
+/// \param symlist is the given list of value symbols
+/// \param varlist is the list of Varnodes to attach
 void SleighCompile::attachVarnodes(vector<SleighSymbol *> *symlist,vector<SleighSymbol *> *varlist)
 
 {
@@ -2281,6 +2741,10 @@ void SleighCompile::attachVarnodes(vector<SleighSymbol *> *symlist,vector<Sleigh
   delete symlist;
 }
 
+/// \brief Define a new SLEIGH subtable
+///
+/// A symbol and table entry are created.
+/// \param nm is the name of the new subtable
 SubtableSymbol *SleighCompile::newTable(string *nm)
 
 {
@@ -2291,6 +2755,12 @@ SubtableSymbol *SleighCompile::newTable(string *nm)
   return sym;
 }
 
+/// \brief Define a new operand for the given Constructor
+///
+/// A symbol local to the Constructor is defined, which initially is unmapped.
+/// Operands are defined in order.
+/// \param ct is the given Constructor
+/// \param nm is the name of the new operand
 void SleighCompile::newOperand(Constructor *ct,string *nm)
 
 {
@@ -2301,9 +2771,15 @@ void SleighCompile::newOperand(Constructor *ct,string *nm)
   delete nm;
 }
 
+/// \brief Create a new constraint equation based on the given operand
+///
+/// The constraint forces the operand to \e match the specified expression
+/// \param sym is the given operand
+/// \param patexp is the specified expression
+/// \return the new constraint equation
 PatternEquation *SleighCompile::constrainOperand(OperandSymbol *sym,PatternExpression *patexp)
 
-{				// Create constraint on operand
+{
   PatternEquation *res;
   FamilySymbol *famsym = dynamic_cast<FamilySymbol *>(sym->getDefiningSymbol());
   if (famsym != (FamilySymbol *)0) { // Operand already defined as family symbol
@@ -2317,9 +2793,15 @@ PatternEquation *SleighCompile::constrainOperand(OperandSymbol *sym,PatternExpre
   return res;
 }
 
+/// \brief Map the local operand symbol to a PatternExpression
+///
+/// The operand symbol's display string and semantic value are calculated at
+/// disassembly time based on the specified expression.
+/// \param sym is the local operand
+/// \param patexp is the expression to map to the operand
 void SleighCompile::defineOperand(OperandSymbol *sym,PatternExpression *patexp)
 
-{				// Define operand in terms of PatternExpression
+{
   try {
     sym->defineOperand(patexp);
     sym->setOffsetIrrelevant();	// If not a self-definition, the operand has no
@@ -2332,6 +2814,13 @@ void SleighCompile::defineOperand(OperandSymbol *sym,PatternExpression *patexp)
   }
 }
 
+/// \brief Define a new \e invisible operand based on an existing symbol
+///
+/// A new symbol is defined that is considered an operand of the current Constructor,
+/// but its display does not contribute to the display of the Constructor.
+/// The new symbol may still contribute matching patterns and p-code
+/// \param sym is the existing symbol that the new operand maps to
+/// \return an (unconstrained) operand pattern
 PatternEquation *SleighCompile::defineInvisibleOperand(TripleSymbol *sym)
 
 {
@@ -2347,7 +2836,6 @@ PatternEquation *SleighCompile::defineInvisibleOperand(TripleSymbol *sym)
     }
     else {
       opsym->defineOperand(sym);
-      //      reportWarning("Defining invisible operand "+sym->getName(),true);
     }
   }
   catch(SleighError &err) {
@@ -2356,9 +2844,14 @@ PatternEquation *SleighCompile::defineInvisibleOperand(TripleSymbol *sym)
   return res;
 }
 
+/// \brief Map given operand to a global symbol of same name
+///
+/// The operand symbol still acts as a local symbol but gets its display,
+/// pattern, and semantics from the global symbol.
+/// \param sym is the given operand
 void SleighCompile::selfDefine(OperandSymbol *sym)
 
-{				// Define operand as global symbol of same name
+{
   TripleSymbol *glob = dynamic_cast<TripleSymbol *>(symtab.findSymbol(sym->getName(),1));
   if (glob == (TripleSymbol *)0) {
     reportError(getCurrentLocation(), "No matching global symbol '" + sym->getName() + "'");
@@ -2377,19 +2870,31 @@ void SleighCompile::selfDefine(OperandSymbol *sym)
   }
 }
 
+/// \brief Set \e export of a Constructor to the given Varnode
+///
+/// SLEIGH symbols matching the Constructor use this Varnode as their semantic storage/value.
+/// \param ct is the Constructor p-code section
+/// \param vn is the given Varnode
+/// \return the p-code section
 ConstructTpl *SleighCompile::setResultVarnode(ConstructTpl *ct,VarnodeTpl *vn)
 
-{				// Set constructors handle to indicate given varnode
+{
   HandleTpl *res = new HandleTpl(vn);
   delete vn;
   ct->setResult(res);
   return ct;
 }
 
+/// \brief Set a Constructor export to be the location pointed to by the given Varnode
+///
+/// SLEIGH symbols matching the Constructor use this dynamic location as their semantic storage/value.
+/// \param ct is the Constructor p-code section
+/// \param star describes the pointer details
+/// \param vn is the given Varnode pointer
+/// \return the p-code section
 ConstructTpl *SleighCompile::setResultStarVarnode(ConstructTpl *ct,StarQuality *star,VarnodeTpl *vn)
 
-{				// Set constructors handle to be the value pointed
-				// at by -vn-
+{
   HandleTpl *res = new HandleTpl(star->id,ConstTpl(ConstTpl::real,star->size),vn,
 				   getUniqueSpace(),getUniqueAddr());
   delete star;
@@ -2398,11 +2903,20 @@ ConstructTpl *SleighCompile::setResultStarVarnode(ConstructTpl *ct,StarQuality *
   return ct;
 }
 
+/// \brief Create a change operation that makes a temporary change to a context variable
+///
+/// The new change operation is added to the current list.
+/// When executed, the change operation will assign a new value to the given context variable
+/// using the specified expression.  The change only applies within the parsing of a single instruction.
+/// Because we are in the middle of parsing, the \b inst_next value has not been computed yet
+/// So we check to make sure the value expression doesn't use this symbol.
+/// \param vec is the current list of change operations
+/// \param sym is the given context variable affected by the operation
+/// \param pe is the specified expression
+/// \return \b true if the expression does not use the \b inst_next symbol
 bool SleighCompile::contextMod(vector<ContextChange *> *vec,ContextSymbol *sym,PatternExpression *pe)
 
-{ // A temporary change to a context variable (within the parsing of a single instruction)
-  // Because we are in the middle of parsing, the "inst_next" value has not been computed yet
-  // So we check to make sure the value expression doesn't use this symbol
+{
   vector<const PatternValue *> vallist;
   pe->listValues(vallist);
   for(uint4 i=0;i<vallist.size();++i)
@@ -2415,20 +2929,34 @@ bool SleighCompile::contextMod(vector<ContextChange *> *vec,ContextSymbol *sym,P
   return true;
 }
 
+/// \brief Create a change operation that makes a context variable change permanent
+///
+/// The new change operation is added to the current list.
+/// When executed, the operation makes the final value of the given context variable permanent,
+/// starting at the specified address symbol. This value is set for contexts starting at the
+/// specified symbol address and may flow to following addresses depending on the variable settings.
+/// \param vec is the current list of change operations
+/// \param sym is the specified address symbol
+/// \param cvar is the given context variable
 void SleighCompile::contextSet(vector<ContextChange *> *vec,TripleSymbol *sym,
 				ContextSymbol *cvar)
 
-{ // A permanent (global) change to context.  During parsing of an instruction, this change
-  // is put off until the full instruction has been parsed.  The existing value in the context
-  // field is set permanently to that value starting at the address given by the address expression
+{
   ContextField *field = (ContextField *)cvar->getPatternValue();
   ContextCommit *op = new ContextCommit(sym,field->getStartBit(),field->getEndBit(),cvar->getFlow());
   vec->push_back(op);
 }
 
+/// \brief Create a macro symbol (with parameter names)
+///
+/// An uninitialized symbol is defined and a macro table entry assigned.
+/// The body of the macro must be provided later with the buildMacro method.
+/// \param name is the name of the macro
+/// \param params is the list of parameter names for the macro
+/// \return the new macro symbol
 MacroSymbol *SleighCompile::createMacro(string *name,vector<string> *params)
 
-{				// create a macro symbol (with parameter names)
+{
   curct = (Constructor *)0;	// Not currently defining a Constructor
   curmacro = new MacroSymbol(*name,macrotable.size());
   delete name;
@@ -2444,10 +2972,15 @@ MacroSymbol *SleighCompile::createMacro(string *name,vector<string> *params)
   return curmacro;
 }
 
+/// \brief Pass through operand properties of an invoked macro to the parent operands
+///
+/// Match up any qualities of the macro's OperandSymbols with any OperandSymbol passed
+/// into the macro.
+/// \param sym is the macro being invoked
+/// \param param is the list of expressions passed to the macro
 void SleighCompile::compareMacroParams(MacroSymbol *sym,const vector<ExprTree *> &param)
 
-{ // Match up any qualities of the macro's OperandSymbols with
-  // any OperandSymbol passed into the macro
+{
   for(uint4 i=0;i<param.size();++i) {
     VarnodeTpl *outvn = param[i]->getOut();
     if (outvn == (VarnodeTpl *)0) continue;
@@ -2469,9 +3002,16 @@ void SleighCompile::compareMacroParams(MacroSymbol *sym,const vector<ExprTree *>
   }
 }
 
+/// \brief Create a p-code sequence that invokes a macro
+///
+/// The given parameter expressions are expanded first into the p-code sequence,
+/// followed by a final macro build directive.
+/// \param sym is the macro being invoked
+/// \param param is the sequence of parameter expressions passed to the macro
+/// \return the p-code sequence
 vector<OpTpl *> *SleighCompile::createMacroUse(MacroSymbol *sym,vector<ExprTree *> *param)
 
-{ // Create macro build directive, given symbol and parameters
+{
   if (sym->getNumOperands() != param->size()) {
     bool tooManyParams = param->size() > sym->getNumOperands();
     string errmsg = "Invocation of macro '" + sym->getName() + "' passes too " + (tooManyParams ? "many" : "few") + " parameters";
@@ -2487,16 +3027,28 @@ vector<OpTpl *> *SleighCompile::createMacroUse(MacroSymbol *sym,vector<ExprTree 
   return ExprTree::appendParams(op,param);
 }
 
+/// \brief Create a SectionVector containing just the \e main p-code section with no named sections
+///
+/// \param main is the main p-code section
+/// \return the new SectionVector
 SectionVector *SleighCompile::standaloneSection(ConstructTpl *main)
 
-{ // Create SectionVector for just the main rtl section with no named sections
+{
   SectionVector *res = new SectionVector(main,symtab.getCurrentScope());
   return res;
 }
 
+/// \brief Start a new named p-code section after the given \e main p-code section
+///
+/// The \b main p-code section must already be constructed, and the new named section
+/// symbol defined.  A SectionVector is initialized with the \e main section, and a
+/// symbol scope is created for the new p-code section.
+/// \param main is the existing \e main p-code section
+/// \param sym is the existing symbol for the new named p-code section
+/// \return the new SectionVector
 SectionVector *SleighCompile::firstNamedSection(ConstructTpl *main,SectionSymbol *sym)
 
-{ // Start the first named p-code section after the main p-code section
+{
   sym->incrementDefineCount();
   SymbolScope *curscope = symtab.getCurrentScope(); // This should be a Constructor scope
   SymbolScope *parscope = curscope->getParent();
@@ -2508,9 +3060,18 @@ SectionVector *SleighCompile::firstNamedSection(ConstructTpl *main,SectionSymbol
   return res;
 }
 
+/// \brief Complete a named p-code section and prepare for a new named section
+///
+/// The actual p-code templates are assigned to a previously registered p-code section symbol
+/// and is added to the existing Section Vector. The old symbol scope is popped and another
+/// scope is created for the new named section.
+/// \param vec is the existing SectionVector
+/// \param section contains the p-code templates to assign to the previous section
+/// \param sym is the symbol describing the new named section being parsed
+/// \return the updated SectionVector
 SectionVector *SleighCompile::nextNamedSection(SectionVector *vec,ConstructTpl *section,SectionSymbol *sym)
 
-{ // Add additional named p-code sections
+{
   sym->incrementDefineCount();
   SymbolScope *curscope = symtab.getCurrentScope();
   symtab.popScope();		// Pop the scope of the last named section
@@ -2523,17 +3084,29 @@ SectionVector *SleighCompile::nextNamedSection(SectionVector *vec,ConstructTpl *
   return vec;
 }
 
+/// \brief Fill-in final named section to match the previous SectionSymbol
+///
+/// The provided p-code templates are assigned to the previously registered p-code section symbol,
+/// and the completed section is added to the SectionVector.
+/// \param vec is the existing SectionVector
+/// \param section contains the p-code templates to assign to the last section
+/// \return the updated SectionVector
 SectionVector *SleighCompile::finalNamedSection(SectionVector *vec,ConstructTpl *section)
 
-{ // Fill-in final named section to match the previous SectionSymbol
+{
   vec->append(section,symtab.getCurrentScope());
   symtab.popScope();		// Pop the section scope
   return vec;
 }
 
+/// \brief Create the \b crossbuild directive as a p-code template
+///
+/// \param addr is the address symbol indicating the instruction to \b crossbuild
+/// \param sym is the symbol indicating the p-code to be build
+/// \return the p-code template
 vector<OpTpl *> *SleighCompile::createCrossBuild(VarnodeTpl *addr,SectionSymbol *sym)
 
-{ // Create the crossbuild directive as a pcode template
+{
   unique_allocatemask = 1;
   vector<OpTpl *> *res = new vector<OpTpl *>();
   VarnodeTpl *sectionid = new VarnodeTpl(ConstTpl(getConstantSpace()),
@@ -2548,6 +3121,11 @@ vector<OpTpl *> *SleighCompile::createCrossBuild(VarnodeTpl *addr,SectionSymbol 
   return res;
 }
 
+/// \brief Create a new Constructor under the given subtable
+///
+/// Create the object and initialize parsing for the new definition
+/// \param sym is the given subtable or null for the root table
+/// \return the new Constructor
 Constructor *SleighCompile::createConstructor(SubtableSymbol *sym)
 
 {
@@ -2567,13 +3145,21 @@ Constructor *SleighCompile::createConstructor(SubtableSymbol *sym)
   return curct;
 }
 
+/// \brief Reset state after a parsing error in the previous Constructor
 void SleighCompile::resetConstructors(void)
 
-{				// Reset set state after a an error in previous constructor
+{
   symtab.setCurrentScope(symtab.getGlobalScope()); // Purge any dangling local scopes
 }
 
-bool SleighCompile::expandMacros(ConstructTpl *ctpl,const vector<ConstructTpl *> &macrotable)
+/// Run through the section looking for MACRO directives.  The directive includes an
+/// id for a specific macro in the table.  Using the MacroBuilder class each directive
+/// is replaced with new sequence of OpTpls that tailors the macro with parameters
+/// in its invocation. Any errors encountered during expansion are reported.
+/// Other OpTpls in the section are unchanged.
+/// \param ctpl is the given section of p-code to expand
+/// \return \b true if there were no errors expanding a macro
+bool SleighCompile::expandMacros(ConstructTpl *ctpl)
 
 {
   vector<OpTpl *> newvec;
@@ -2602,9 +3188,19 @@ bool SleighCompile::expandMacros(ConstructTpl *ctpl,const vector<ConstructTpl *>
   return true;
 }
 
+/// For each p-code section of the given Constructor:
+///   - Expand macros
+///   - Check that labels are both defined and referenced
+///   - Generate BUILD directives for subtable operands
+///   - Propagate Varnode sizes throughout the section
+///
+/// Each action may generate errors or warnings.
+/// \param big is the given Constructor
+/// \param vec is the list of p-code sections
+/// \return \b true if there were no fatal errors
 bool SleighCompile::finalizeSections(Constructor *big,SectionVector *vec)
 
-{ // Do all final checks, expansions, and linking for p-code sections
+{
   vector<string> errors;
 
   RtlPair cur = vec->getMainPair();
@@ -2617,8 +3213,9 @@ bool SleighCompile::finalizeSections(Constructor *big,SectionVector *vec)
     errstring = checkSymbols(cur.scope); // Check labels in the section's scope
     if (errstring.size()!=0) {
       errors.push_back(sectionstring + errstring);
-    } else {
-      if (!expandMacros(cur.section,macrotable))
+    }
+    else {
+      if (!expandMacros(cur.section))
 	errors.push_back(sectionstring + "Could not expand macros");
       vector<int4> check;
       big->markSubtableOperands(check);
@@ -2635,7 +3232,7 @@ bool SleighCompile::finalizeSections(Constructor *big,SectionVector *vec)
       if (cur.section->getResult() != (HandleTpl *)0) {	// If there is an export statement
 	if (big->getParent()==root)
 	  errors.push_back("   Cannot have export statement in root constructor");
-	else if (!force_exportsize(cur.section))
+	else if (!forceExportSize(cur.section))
 	  errors.push_back("   Size of export is unknown");
       }
     }
@@ -2672,9 +3269,68 @@ bool SleighCompile::finalizeSections(Constructor *big,SectionVector *vec)
   return true;
 }
 
+/// \brief Find a defining instance of the local variable with the given offset
+///
+/// \param offset is the given offset
+/// \param ct is the Constructor to search
+/// \return the matchine local variable or null
+VarnodeTpl *SleighCompile::findSize(const ConstTpl &offset,const ConstructTpl *ct)
+
+{
+  const vector<OpTpl *> &ops(ct->getOpvec());
+  VarnodeTpl *vn;
+  OpTpl *op;
+
+  for(int4 i=0;i<ops.size();++i) {
+    op = ops[i];
+    vn = op->getOut();
+    if ((vn!=(VarnodeTpl *)0)&&(vn->isLocalTemp())) {
+      if (vn->getOffset() == offset)
+	return vn;
+    }
+    for(int4 j=0;j<op->numInput();++j) {
+      vn = op->getIn(j);
+      if (vn->isLocalTemp()&&(vn->getOffset()==offset))
+	return vn;
+    }
+  }
+  return (VarnodeTpl *)0;
+}
+
+/// \brief Propagate local variable sizes into an \b export statement
+///
+/// Look for zero size temporary Varnodes in \b export statements, search for
+/// the matching local Varnode symbol and force its size on the \b export.
+/// \param ct is the Constructor whose \b export is to be modified
+/// \return \b false if a local zero size can't be updated
+bool SleighCompile::forceExportSize(ConstructTpl *ct)
+
+{
+  HandleTpl *result = ct->getResult();
+  if (result == (HandleTpl *)0) return true;
+
+  VarnodeTpl *vt;
+
+  if (result->getPtrSpace().isUniqueSpace()&&result->getPtrSize().isZero()) {
+    vt = findSize(result->getPtrOffset(),ct);
+    if (vt == (VarnodeTpl *)0) return false;
+    result->setPtrSize(vt->getSize());
+  }
+  else if (result->getSpace().isUniqueSpace()&&result->getSize().isZero()) {
+    vt = findSize(result->getPtrOffset(),ct);
+    if (vt == (VarnodeTpl *)0) return false;
+    result->setSize(vt->getSize());
+  }
+  return true;
+}
+
+/// \brief If the given Varnode is in the \e unique space, shift its offset up by \b sa bits
+///
+/// \param vn is the given Varnode
+/// \param sa is the number of bits to shift by
 void SleighCompile::shiftUniqueVn(VarnodeTpl *vn,int4 sa)
 
-{ // If the varnode is in the unique space, shift its offset up by -sa- bits
+{
   if (vn->getSpace().isUniqueSpace() && (vn->getOffset().getType() == ConstTpl::real)) {
     uintb val = vn->getOffset().getReal();
     val <<= sa;
@@ -2682,9 +3338,13 @@ void SleighCompile::shiftUniqueVn(VarnodeTpl *vn,int4 sa)
   }
 }
 
+/// \brief Shift the offset up by \b sa bits for any Varnode used by the given op in the \e unique space
+///
+/// \param op is the given op
+/// \param sa is the number of bits to shift by
 void SleighCompile::shiftUniqueOp(OpTpl *op,int4 sa)
 
-{ // Shift the offset up by -sa- bits for any varnode used by this -op- in the unique space
+{
   VarnodeTpl *outvn = op->getOut();
   if (outvn != (VarnodeTpl *)0)
     shiftUniqueVn(outvn,sa);
@@ -2692,9 +3352,13 @@ void SleighCompile::shiftUniqueOp(OpTpl *op,int4 sa)
     shiftUniqueVn(op->getIn(i),sa);
 }
 
+/// \brief Shift the offset up for both \e dynamic or \e static Varnode aspects in the \e unique space
+///
+/// \param hand is a handle template whose aspects should be modified
+/// \param sa is the number of bits to shift by
 void SleighCompile::shiftUniqueHandle(HandleTpl *hand,int4 sa)
 
-{ // Shift the offset up by -sa- bits, for either the dynamic or static varnode aspects that are in the unique space
+{
   if (hand->getSpace().isUniqueSpace() && (hand->getPtrSpace().getType() == ConstTpl::real)
       && (hand->getPtrOffset().getType() == ConstTpl::real)) {
     uintb val = hand->getPtrOffset().getReal();
@@ -2714,9 +3378,13 @@ void SleighCompile::shiftUniqueHandle(HandleTpl *hand,int4 sa)
   }
 }
 
+/// \brief Shift the offset up for any Varnode in the \e unique space for all p-code in the given section
+///
+/// \param tpl is the given p-code section
+/// \param sa is the number of bits to shift by
 void SleighCompile::shiftUniqueConstruct(ConstructTpl *tpl,int4 sa)
 
-{ // Shift the offset up by -sa- bits, for any varnode in the unique space associated with this template
+{
   HandleTpl *result = tpl->getResult();
   if (result != (HandleTpl *)0)
     shiftUniqueHandle(result,sa);
@@ -2725,11 +3393,12 @@ void SleighCompile::shiftUniqueConstruct(ConstructTpl *tpl,int4 sa)
     shiftUniqueOp(vec[i],sa);
 }
 
+/// With \b crossbuilds, temporaries may need to survive across instructions in a packet, so here we
+/// provide space in the offset of the temporary (within the \e unique space) so that the run-time SLEIGH
+/// engine can alter the value to prevent collisions with other nearby instructions
 void SleighCompile::checkUniqueAllocation(void)
 
-{ // With crossbuilds,  temporaries may need to survive across instructions in a packet, so here we
-  // provide space in the offset of the temporary (within the unique space) so that the run-time sleigh
-  // engine can alter the value to prevent collisions with other nearby instructions
+{
   if (unique_allocatemask == 0) return;	// We don't have any crossbuild directives
 
   unique_allocatemask = 0xff;	// Provide 8 bits of free space
@@ -2759,6 +3428,12 @@ void SleighCompile::checkUniqueAllocation(void)
   setUniqueBase(ubase);
 }
 
+/// \brief Add a new \b with block to the current stack
+///
+/// All subsequent Constructors adopt properties declared in the \b with header.
+/// \param ss the subtable to assign to each Constructor, or null
+/// \param pateq is an pattern equation constraining each Constructor, or null
+/// \param contvec is a context change applied to each Constructor, or null
 void SleighCompile::pushWith(SubtableSymbol *ss,PatternEquation *pateq,vector<ContextChange *> *contvec)
 
 {
@@ -2766,15 +3441,24 @@ void SleighCompile::pushWith(SubtableSymbol *ss,PatternEquation *pateq,vector<Co
   withstack.back().set(ss,pateq,contvec);
 }
 
+/// \brief Pop the current \b with block from the stack
 void SleighCompile::popWith(void)
 
 {
   withstack.pop_back();
 }
 
+/// \brief Finish building a given Constructor after all its pieces have been parsed
+///
+/// The constraint pattern and context changes are modified by the current \b with block.
+/// The result along with any p-code sections are registered with the Constructor object.
+/// \param big is the given Constructor
+/// \param pateq is the parsed pattern equation
+/// \param contvec is the list of context changes or null
+/// \param vec is the collection of p-code sections, or null
 void SleighCompile::buildConstructor(Constructor *big,PatternEquation *pateq,vector<ContextChange *> *contvec,SectionVector *vec)
 
-{ // Take all the different parse pieces for a Constructor and build the Constructor object
+{
   bool noerrors = true;
   if (vec != (SectionVector *)0) { // If the sections were implemented
     noerrors = finalizeSections(big,vec);
@@ -2802,6 +3486,12 @@ void SleighCompile::buildConstructor(Constructor *big,PatternEquation *pateq,vec
   symtab.popScope();		// In all cases pop scope
 }
 
+/// \brief Finish defining a macro given a set of p-code templates for its body
+///
+/// Try to propagate sizes through the templates, expand any (sub)macros and make
+/// sure any label symbols are defined and used.
+/// \param sym is the macro being defined
+/// \param rtl is the set of p-code templates
 void SleighCompile::buildMacro(MacroSymbol *sym,ConstructTpl *rtl)
 
 {
@@ -2810,7 +3500,7 @@ void SleighCompile::buildMacro(MacroSymbol *sym,ConstructTpl *rtl)
     reportError(getCurrentLocation(), "In definition of macro '"+sym->getName() + "': " + errstring);
     return;
   }
-  if (!expandMacros(rtl,macrotable)) {
+  if (!expandMacros(rtl)) {
     reportError(getCurrentLocation(), "Could not expand submacro in definition of macro '" + sym->getName() + "'");
     return;
   }
@@ -2820,6 +3510,9 @@ void SleighCompile::buildMacro(MacroSymbol *sym,ConstructTpl *rtl)
   macrotable.push_back(rtl);
 }
 
+/// \brief Record a NOP constructor at the current location
+///
+/// The location is recorded and may be reported on after parsing.
 void SleighCompile::recordNop(void)
 
 {
@@ -2828,12 +3521,20 @@ void SleighCompile::recordNop(void)
   noplist.push_back(msg);
 }
 
-static int4 run_compilation(const char *filein,const char *fileout,SleighCompile &compiler)
+/// \brief Run the full compilation process, given a path to the specification file
+///
+/// The specification file is opened and a parse is started.  Errors and warnings
+/// are printed to standard out, and if no fatal errors are encountered, the compiled
+/// form of the specification is written out.
+/// \param filein is the given path to the specification file to compile
+/// \param fileout is the path to output file
+/// \return an error code, where 0 indicates that a compiled file was successfully produced
+int4 SleighCompile::run_compilation(const string &filein,const string &fileout)
 
 {
-  compiler.parseFromNewFile(filein);
-  slgh = &compiler;		// Set global pointer up for parser
-  yyin = fopen(filein,"r");	// Open the file for the lexer
+  parseFromNewFile(filein);
+  slgh = this;		// Set global pointer up for parser
+  yyin = fopen(filein.c_str(),"r");	// Open the file for the lexer
   if (yyin == (FILE *)0) {
     cerr << "Unable to open specfile: " << filein << endl;
     return 2;
@@ -2843,15 +3544,15 @@ static int4 run_compilation(const char *filein,const char *fileout,SleighCompile
     int4 parseres = yyparse();	// Try to parse
     fclose(yyin);
     if (parseres==0)
-      compiler.process();	// Do all the post-processing
-    if ((parseres==0)&&(compiler.numErrors()==0)) { // If no errors
+      process();	// Do all the post-processing
+    if ((parseres==0)&&(numErrors()==0)) { // If no errors
       ofstream s(fileout);
       if (!s) {
 	ostringstream errs;
 	errs << "Unable to open output file: " << fileout;
 	throw SleighError(errs.str());
       }
-      compiler.saveXml(s);	// Dump output xml
+      saveXml(s);	// Dump output xml
       s.close();
     }
     else {
@@ -2866,7 +3567,7 @@ static int4 run_compilation(const char *filein,const char *fileout,SleighCompile
   return 0;
 }
 
-static int4 run_xml(const char *filein,SleighCompile &compiler)
+static int4 run_xml(const string &filein,SleighCompile &compiler)
 
 {
   ifstream s(filein);
@@ -2917,7 +3618,7 @@ static int4 run_xml(const char *filein,SleighCompile &compiler)
     cerr << "Output sla file was not specified in " << filein << endl;
     exit(1);
   }
-  return run_compilation(specfilein.c_str(),specfileout.c_str(),compiler);
+  return compiler.run_compilation(specfilein,specfileout);
 }
 
 static void findSlaSpecs(vector<string> &res, const string &dir, const string &suffix)
@@ -2934,29 +3635,34 @@ static void findSlaSpecs(vector<string> &res, const string &dir, const string &s
   }
 }
 
-static void initCompiler(SleighCompile &compiler, map<string,string> &defines, bool enableUnnecessaryPcodeWarning,
-			 bool disableLenientConflict, bool enableAllCollisionWarning,
-			 bool enableAllNopWarning,bool enableDeadTempWarning,bool enforceLocalKeyWord, bool largeTemporaryWarning)
-
+/// \brief Set all compiler options at the same time
+///
+/// \param defines is map of \e variable to \e value that is passed to the preprocessor
+/// \param unnecessaryPcodeWarning is \b true for individual warnings about unnecessary p-code ops
+/// \param lenientConflict is \b false to report indistinguishable patterns as errors
+/// \param allCollisionWarning is \b true for individual warnings about constructors with colliding operands
+/// \param allNopWarning is \b true for individual warnings about NOP constructors
+/// \param deadTempWarning is \b true for individual warnings about dead temporary varnodes
+/// \param enforceLocalKeyWord is \b true to force all local variable definitions to use the \b local keyword
+/// \param largeTemporaryWarning is \b true for individual warnings about temporary varnodes that are too large
+/// \param caseSensitiveRegisterNames is \b true if register names are allowed to be case sensitive
+void SleighCompile::setAllOptions(const map<string,string> &defines, bool unnecessaryPcodeWarning,
+				  bool lenientConflict, bool allCollisionWarning,
+				  bool allNopWarning,bool deadTempWarning,bool enforceLocalKeyWord,
+				  bool largeTemporaryWarning, bool caseSensitiveRegisterNames)
 {
-  map<string,string>::iterator iter = defines.begin();
+  map<string,string>::const_iterator iter = defines.begin();
   for (iter = defines.begin(); iter != defines.end(); iter++) {
-    compiler.setPreprocValue((*iter).first, (*iter).second);
+    setPreprocValue((*iter).first, (*iter).second);
   }
-  if (enableUnnecessaryPcodeWarning)
-    compiler.setUnnecessaryPcodeWarning(true);
-  if (disableLenientConflict)
-    compiler.setLenientConflict(false);
-  if (enableAllCollisionWarning)
-    compiler.setLocalCollisionWarning( true );
-  if (enableAllNopWarning)
-    compiler.setAllNopWarning( true );
-  if (enableDeadTempWarning)
-    compiler.setDeadTempWarning(true);
-  if (enforceLocalKeyWord)
-    compiler.setEnforceLocalKeyWord(true);
-  if (largeTemporaryWarning)
-	  compiler.setLargeTemporaryWarning(true);
+  setUnnecessaryPcodeWarning(unnecessaryPcodeWarning);
+  setLenientConflict(lenientConflict);
+  setLocalCollisionWarning( allCollisionWarning );
+  setAllNopWarning( allNopWarning );
+  setDeadTempWarning(deadTempWarning);
+  setEnforceLocalKeyWord(enforceLocalKeyWord);
+  setLargeTemporaryWarning(largeTemporaryWarning);
+  setInsensitiveDuplicateError(!caseSensitiveRegisterNames);
 }
 
 static void segvHandler(int sig) {
@@ -2985,6 +3691,7 @@ int main(int argc,char **argv)
     cerr << "   -e              enforce use of 'local' keyword for temporaries" << endl;
     cerr << "   -c              print warnings for all constructors with colliding operands" << endl;
     cerr << "   -o              print warnings for temporaries which are too large" << endl;
+    cerr << "   -s              treat register names as case sensitive" << endl;
     cerr << "   -DNAME=VALUE    defines a preprocessor macro NAME with value VALUE" << endl;
     exit(2);
   }
@@ -2992,13 +3699,14 @@ int main(int argc,char **argv)
   const string SLAEXT(".sla");	// Default sla extension
   const string SLASPECEXT(".slaspec");
   map<string,string> defines;
-  bool enableUnnecessaryPcodeWarning = false;
-  bool disableLenientConflict = false;
-  bool enableAllCollisionWarning = false;
-  bool enableAllNopWarning = false;
-  bool enableDeadTempWarning = false;
+  bool unnecessaryPcodeWarning = false;
+  bool lenientConflict = true;
+  bool allCollisionWarning = false;
+  bool allNopWarning = false;
+  bool deadTempWarning = false;
   bool enforceLocalKeyWord = false;
   bool largeTemporaryWarning = false;
+  bool caseSensitiveRegisterNames = false;
   
   bool compileAll = false;
   
@@ -3019,19 +3727,21 @@ int main(int argc,char **argv)
       defines[name] = value;
     }
     else if (argv[i][1] == 'u')
-      enableUnnecessaryPcodeWarning = true;
+      unnecessaryPcodeWarning = true;
     else if (argv[i][1] == 'l')
-      disableLenientConflict = true;
+      lenientConflict = false;
     else if (argv[i][1] == 'c')
-      enableAllCollisionWarning = true;
+      allCollisionWarning = true;
     else if (argv[i][1] == 'n')
-      enableAllNopWarning = true;
+      allNopWarning = true;
     else if (argv[i][1] == 't')
-      enableDeadTempWarning = true;
+      deadTempWarning = true;
     else if (argv[i][1] == 'e')
       enforceLocalKeyWord = true;
     else if (argv[i][1] == 'o')
-    	largeTemporaryWarning = true;
+      largeTemporaryWarning = true;
+    else if (argv[i][1] == 's')
+      caseSensitiveRegisterNames = true;
 #ifdef YYDEBUG
     else if (argv[i][1] == 'x')
       yydebug = 1;		// Debug option
@@ -3062,10 +3772,9 @@ int main(int argc,char **argv)
       string sla = slaspec;
       sla.replace(slaspec.length() - slaspecExtLen, slaspecExtLen, SLAEXT);
       SleighCompile compiler;
-      initCompiler(compiler, defines, enableUnnecessaryPcodeWarning, 
-		   disableLenientConflict, enableAllCollisionWarning, enableAllNopWarning,
-		   enableDeadTempWarning, enforceLocalKeyWord,largeTemporaryWarning);
-      retval = run_compilation(slaspec.c_str(),sla.c_str(),compiler);
+      compiler.setAllOptions(defines, unnecessaryPcodeWarning, lenientConflict, allCollisionWarning, allNopWarning,
+			     deadTempWarning, enforceLocalKeyWord,largeTemporaryWarning, caseSensitiveRegisterNames);
+      retval = compiler.run_compilation(slaspec,sla);
       if (retval != 0) {
 	return retval; // stop on first error
       }
@@ -3099,9 +3808,8 @@ int main(int argc,char **argv)
     }
     
     SleighCompile compiler;
-    initCompiler(compiler, defines, enableUnnecessaryPcodeWarning, 
-		 disableLenientConflict, enableAllCollisionWarning, enableAllNopWarning,
-		 enableDeadTempWarning, enforceLocalKeyWord,largeTemporaryWarning);
+    compiler.setAllOptions(defines, unnecessaryPcodeWarning, lenientConflict, allCollisionWarning, allNopWarning,
+			   deadTempWarning, enforceLocalKeyWord,largeTemporaryWarning,caseSensitiveRegisterNames);
     
     if (i < argc - 1) {
       string fileoutExamine(argv[i+1]);
@@ -3109,15 +3817,16 @@ int main(int argc,char **argv)
       if (extOutPos == string::npos) { // No Extension Given...
 	fileoutExamine.append(SLAEXT);
       }
-      retval = run_compilation(fileinExamine.c_str(),fileoutExamine.c_str(),compiler);
-    }else{
-      //First determine whether or not to use Run_XML...
-      if (autoExtInSet || extIsSLASPECEXT) { //Assumed format of at least "sleigh file" -> "sleigh file.slaspec file.sla"
+      retval = compiler.run_compilation(fileinExamine,fileoutExamine);
+    }
+    else {
+      // First determine whether or not to use Run_XML...
+      if (autoExtInSet || extIsSLASPECEXT) {	// Assumed format of at least "sleigh file" -> "sleigh file.slaspec file.sla"
 	string fileoutSTR = fileinPreExt;
 	fileoutSTR.append(SLAEXT);
-	retval = run_compilation(fileinExamine.c_str(),fileoutSTR.c_str(),compiler);
+	retval = compiler.run_compilation(fileinExamine,fileoutSTR);
       }else{
-	retval = run_xml(fileinExamine.c_str(),compiler);
+	retval = run_xml(fileinExamine,compiler);
       }
       
     }

@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.*;
 import ghidra.app.util.NamespaceUtils;
+import ghidra.app.util.PseudoDisassembler;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -377,6 +378,11 @@ public class DemangledFunction extends DemangledObject {
 	@Override
 	public boolean applyTo(Program program, Address address, DemanglerOptions options,
 			TaskMonitor monitor) throws Exception {
+
+		// Account for register context.  This class may trigger disassembly, so we need to make
+		// sure that the context is correctly set before that happens.  Also, be sure to apply
+		// the function to the correct address.
+		address = PseudoDisassembler.setTargeContextForDisassembly(program, address);
 
 		if (!passesPreconditions(program, address)) {
 			return true; // eventually will not return anything 

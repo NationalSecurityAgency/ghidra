@@ -26,7 +26,7 @@
     configuration, this can comprise a wide range of components, including all GUI views, active
     connectors, and running agents. Currently, it implements an appender to gather all Log4J
     messages emitted by Ghidra and filters for debugger-related packages and a level in the range
-    INFO through and including FATAL. That feature will likely be removed as more components are
+    INFO through FATAL, inclusive. That feature will likely be removed as more components are
     programmed to work directly with the console. Soon, it may also provide a command-line
     interface to control Ghidra's debugging sessions and interact with traces.</P>
 
@@ -64,5 +64,9 @@
     <H3><A name="clear"></A>Clear</H3>
 
     <P>Removes all messages, including actionable messages, from the log.</P>
+
+    <H3><A name="select_none"></A>Select None</H3>
+
+    <P>Resets the selection, usually so table scrolling can be restored to "normal."</P>
   </BODY>
 </HTML>

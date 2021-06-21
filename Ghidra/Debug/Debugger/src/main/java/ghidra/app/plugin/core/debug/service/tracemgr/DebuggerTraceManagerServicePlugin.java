@@ -1010,17 +1010,17 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			return;
 		}
 		TargetObject focus = translateToFocus(prev, resolved);
-		if (focus == null) {
+		if (focus == null || !focus.isValid()) {
 			return;
 		}
 		recorder.requestFocus(focus);
 	}
 
 	public void activateNoFocusChange(DebuggerCoordinates coordinates) {
-		DebuggerCoordinates prev;
+		//DebuggerCoordinates prev;
 		DebuggerCoordinates resolved;
 		synchronized (listenersByTrace) {
-			prev = current;
+			//prev = current;
 			resolved = doSetCurrent(coordinates);
 		}
 		if (resolved == null) {

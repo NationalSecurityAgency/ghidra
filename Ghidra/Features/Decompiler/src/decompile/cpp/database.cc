@@ -387,6 +387,10 @@ void Symbol::saveXmlHeader(ostream &s) const
       s << "oct\"";
     else if (format == force_bin)
       s << "bin\"";
+    else if (format == force_float)
+      s << "float\"";
+    else if (format == force_double)
+      s << "double\"";
     else
       s << "hex\"";
   }
@@ -425,6 +429,10 @@ void Symbol::restoreXmlHeader(const Element *el)
 	    dispflags |= force_oct;
 	  else if (formString == "bin")
 	    dispflags |= force_bin;
+      else if (formString == "float")
+        dispflags |= force_float;
+      else if (formString == "double")
+        dispflags |= force_double;
 	}
 	break;
       case 'h':
@@ -1968,6 +1976,12 @@ void ScopeInternal::clearUnlocked(void)
       }
       if (sym->isSizeTypeLocked())
 	resetSizeLockType(sym);
+    }
+    else if (sym->getCategory() == 1) {
+      // Note we treat EquateSymbols as locked for purposes of this method
+      // as a typelock (which traditionally prevents a symbol from being cleared)
+      // does not make sense for an equate
+      continue;
     }
     else
       removeSymbol(sym);

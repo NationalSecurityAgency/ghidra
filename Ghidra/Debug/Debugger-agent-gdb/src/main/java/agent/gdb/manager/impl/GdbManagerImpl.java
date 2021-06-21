@@ -720,6 +720,10 @@ public class GdbManagerImpl implements GdbManager {
 				curCmd = pcmd;
 			}
 			//Msg.debug(this, "CURCMD = " + curCmd);
+			if (LOG_IO) {
+				DBG_LOG.println("*CMD: " + cmd.getClass());
+				DBG_LOG.flush();
+			}
 			String text = cmd.encode();
 			if (text != null) {
 				Interpreter interpreter = cmd.getInterpreter();

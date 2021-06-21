@@ -55,23 +55,22 @@ import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.Msg;
 
-@PluginInfo( //
-	shortDescription = "Debugger breakpoint marker service plugin", //
-	description = "Marks logical breakpoints in the listings", //
-	category = PluginCategoryNames.DEBUGGER, //
-	packageName = DebuggerPluginPackage.NAME, //
-	status = PluginStatus.RELEASED, //
-	eventsConsumed = { //
-		ProgramOpenedPluginEvent.class, //
-		ProgramClosedPluginEvent.class, //
-		TraceOpenedPluginEvent.class, //
-		TraceClosedPluginEvent.class, //
-	}, //
-	servicesRequired = { //
-		DebuggerLogicalBreakpointService.class, //
-		MarkerService.class, //
-	} //
-)
+@PluginInfo(
+	shortDescription = "Debugger breakpoint marker service plugin",
+	description = "Marks logical breakpoints and provides actions in the listings",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
+		ProgramOpenedPluginEvent.class,
+		ProgramClosedPluginEvent.class,
+		TraceOpenedPluginEvent.class,
+		TraceClosedPluginEvent.class,
+	},
+	servicesRequired = {
+		DebuggerLogicalBreakpointService.class,
+		MarkerService.class,
+	})
 public class DebuggerBreakpointMarkerPlugin extends Plugin
 		implements PopupActionProvider {
 
@@ -99,8 +98,9 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	}
 
 	/**
-	 * Attempt to derive an address from the given context
+	 * Attempt to derive a location from the given context
 	 * 
+	 * <p>
 	 * Currently, this supports {@link ProgramLocationActionContext} and {@link MarkerLocation}.
 	 * 
 	 * @param context a possible location context
@@ -215,6 +215,9 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		return result;
 	}
 
+	/**
+	 * A variety of marker sets (one for each logical state) attached to a program or trace view
+	 */
 	protected class BreakpointMarkerSets {
 		final Program program;
 
@@ -225,7 +228,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		final MarkerSet mixedED;
 		final MarkerSet mixedDE;
 
-		public BreakpointMarkerSets(Program program) {
+		protected BreakpointMarkerSets(Program program) {
 			this.program = program;
 
 			// Prevent default bookmark icons from obscuring breakpoints
@@ -542,16 +545,23 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 				return;
 			}
 			Enablement en = breakpointService.computeEnablement(bs, loc);
-			Trace trace = getTraceFromContext(context); // OK if null - means all traces
-			if (en.enabled) {
-				breakpointService.disableAll(bs, trace).exceptionally(ex -> {
-					breakpointError(NAME, "Could not disable breakpoints", ex);
+			/**
+			 * If we're in the static listing, this will return null, indicating we should use the
+			 * program's perspective. The methods taking trace should accept a null trace and behave
+			 * accordingly. If in the dynamic listing, we act in the context of the returned trace.
+			 */
+			Trace trace = getTraceFromContext(context);
+			boolean mapped = breakpointService.anyMapped(bs, trace);
+			Enablement toggled = en = en.getToggled(mapped);
+			if (toggled.enabled) {
+				breakpointService.enableAll(bs, trace).exceptionally(ex -> {
+					breakpointError(NAME, "Could not enable breakpoints", ex);
 					return null;
 				});
 			}
 			else {
-				breakpointService.enableAll(bs, trace).exceptionally(ex -> {
-					breakpointError(NAME, "Could not enable breakpoints", ex);
+				breakpointService.disableAll(bs, trace).exceptionally(ex -> {
+					breakpointError(NAME, "Could not disable breakpoints", ex);
 					return null;
 				});
 			}
@@ -954,6 +964,12 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 				.collect(Collectors.toSet());
 	}
 
+	/**
+	 * Instantiate a marker set for the given program or trace view
+	 * 
+	 * @param program the (static) program or (dynamic) trace view
+	 * @return the marker sets
+	 */
 	protected BreakpointMarkerSets createMarkers(Program program) {
 		synchronized (markersByProgram) {
 			BreakpointMarkerSets newSets = new BreakpointMarkerSets(program);

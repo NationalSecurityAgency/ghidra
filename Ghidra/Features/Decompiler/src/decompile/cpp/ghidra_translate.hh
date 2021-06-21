@@ -41,8 +41,6 @@ public:
   GhidraTranslate(ArchitectureGhidra *g) { glb = g; }	///< Constructor
 
   virtual void initialize(DocumentStorage &store);
-  virtual void addRegister(const string &nm,AddrSpace *base,uintb offset,int4 size) {
-    throw LowlevelError("Cannot add register name into GHIDRA through this interface"); }
   virtual const VarnodeData &getRegister(const string &nm) const;
   virtual string getRegisterName(AddrSpace *base,uintb off,int4 size) const;
   virtual void getAllRegisters(map<VarnodeData,string> &reglist) const {

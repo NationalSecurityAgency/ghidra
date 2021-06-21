@@ -110,6 +110,7 @@ public class DBTraceBreakpoint
 			}
 		}
 		enabled = (flagsByte & ENABLED_MASK) != 0;
+		// Msg.debug(this, "trace: breakpoint " + this + " enabled=" + enabled + ", because doFresh");
 	}
 
 	@Override
@@ -154,6 +155,7 @@ public class DBTraceBreakpoint
 		this.comment = comment;
 		update(PATH_COLUMN, NAME_COLUMN, THREADS_COLUMN, FLAGS_COLUMN, COMMENT_COLUMN);
 		this.enabled = enabled;
+		// Msg.debug(this, "trace: breakpoint " + this + " enabled=" + enabled + ", because set");
 	}
 
 	public void set(String path, String name, long[] threadKeys,
@@ -342,11 +344,15 @@ public class DBTraceBreakpoint
 		this.kinds.clear();
 		this.kinds.addAll(kinds);
 		this.enabled = enabled;
+		// Msg.debug(this,
+		// 	"trace: breakpoint " + this + " enabled=" + enabled + ", because doSetFlags");
 		update(FLAGS_COLUMN);
 	}
 
 	protected void doSetEnabled(boolean enabled) {
 		this.enabled = enabled;
+		// Msg.debug(this,
+		//	"trace: breakpoint " + this + " enabled=" + enabled + ", because doSetEnabled");
 		if (enabled) {
 			flagsByte |= ENABLED_MASK;
 		}

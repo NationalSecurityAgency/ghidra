@@ -86,6 +86,10 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			// include features unless they have been excluded via the module.manifest file.
 			return !module.excludeFromGhidraJar();
 		}
+		if (module.isDebug()) {
+			// include debug modules unless they have been excluded via the module.manifest file.
+			return !module.excludeFromGhidraJar();
+		}
 		if (module.isGPL()) {
 			// include features unless they have been excluded via the module.manifest file.
 			return !module.excludeFromGhidraJar();
@@ -335,8 +339,8 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			}
 		}
 		if (wroteToZip) {
-			System.out.println(
-				"Can't create source zip!  Has source been downloaded and installed?");
+			System.out
+					.println("Can't create source zip!  Has source been downloaded and installed?");
 			// zip.close reports error if nothing has been written to it
 			zip.close();
 		}
@@ -396,6 +400,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		Enumeration<JarEntry> entries = jarFile.entries();
 		while (entries.hasMoreElements()) {
 			JarEntry jarEntry = entries.nextElement();
+			String jarName = jarEntry.getName();
 
 			// Special case for Log4j:
 			//
@@ -415,13 +420,17 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			//			point, even though it doesn't now. As such, we may want to try to merge
 			//			all the .dat files together at some point.
 			//
-			if (jarEntry.getName().contains("Log4j2Plugins.dat")) {
+			if (jarName.contains("Log4j2Plugins.dat")) {
 				if (jarFile.getName().contains("log4j-core")) {
 					jar.addJarEntry(jarFile, jarEntry, module);
 				}
 				else {
 					continue;
 				}
+			}
+
+			if (jarName.endsWith(".SF") || jarName.endsWith(".DSA") || jarName.endsWith(".RSA")) {
+				continue;
 			}
 
 			jar.addJarEntry(jarFile, jarEntry, module);
@@ -562,26 +571,26 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		}
 		return manifest;
 	}
-	
+
 	private List<ApplicationModule> findAllModules(ApplicationLayout layout) throws IOException {
 		List<ApplicationModule> modules = new ArrayList<>();
-		
+
 		for (GModule module : layout.getModules().values()) {
 			File moduleDir = module.getModuleRoot().getFile(false).getCanonicalFile();
 			File rootDir = getModuleRootDir(moduleDir);
 			modules.add(new ApplicationModule(rootDir, moduleDir));
 		}
-		
+
 		return modules;
 	}
-	
+
 	private File getModuleRootDir(File moduleDir) {
 		// Look in GPL directories too
 		List<File> rootDirs = new ArrayList<>(rootGhidraDirs);
 		for (File rootDir : rootGhidraDirs) {
 			rootDirs.add(new File(rootDir.getParentFile(), "GPL"));
 		}
-		
+
 		// Check each root directory to see if it contains the module
 		for (File rootDir : rootDirs) {
 			if (FileUtilities.isPathContainedWithin(rootDir, moduleDir)) {

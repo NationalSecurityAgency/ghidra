@@ -9233,7 +9233,6 @@ int4 RulePieceExpand::applyOp(PcodeOp *op, Funcdata &data)
   data.opSetInput(extOp, mostSig, 0);
   Varnode *extOut = data.newUniqueOut(originalOut->getSize(), extOp);
 
-  data.opInsertAfter(extOp, op);
 
   PcodeOp *shiftOp = data.newOp(2, op->getAddr());
   Varnode *shiftSize = data.newConstant(originalOut->getSize(), leastSig->getSize() * 8);
@@ -9242,7 +9241,12 @@ int4 RulePieceExpand::applyOp(PcodeOp *op, Funcdata &data)
   data.opSetInput(shiftOp, shiftSize, 1);
   Varnode *shiftOut = data.newUniqueOut(originalOut->getSize(), shiftOp);
 
-  data.opInsertAfter(shiftOp, op);
+  // insert as:
+  //   - SEXT
+  //   - LEFT
+  //   - ADD (original)
+  data.opInsertBefore(extOp, op);
+  data.opInsertBefore(shiftOp, op);
 
   // modify original op => add
 

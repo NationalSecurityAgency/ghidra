@@ -894,12 +894,20 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 */
 	private Symbol getSymbol(String name, Address addr, long parentID) {
 		Symbol[] symbols = getSymbols(addr);
-		for (Symbol element : symbols) {
-			if (element.getName().equals(name) && parentID == ((SymbolDB) element).getParentID()) {
-				return element;
+		for (Symbol sym : symbols) {
+			if (parentID != ((SymbolDB) sym).getParentID()) {
+				continue;
+			}
+			if (!isDefaultThunk(sym) && sym.getName().equals(name)) {
+				return sym;
 			}
 		}
 		return null;
+	}
+
+	private static boolean isDefaultThunk(Symbol sym) {
+		return sym.getSource() == SourceType.DEFAULT && (sym instanceof FunctionSymbol) &&
+			((FunctionSymbol) sym).isThunk();
 	}
 
 	@Override
@@ -991,7 +999,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			// the specified name.
 			int count = 0;
 			List<Symbol> list = new ArrayList<>();
-			SymbolIterator symbols = getSymbols(name);
+			SymbolIterator symbols = getSymbols(name); // will not include default thunks
 			for (Symbol s : symbols) {
 				if (++count == MAX_DUPLICATE_COUNT && !namespace.isGlobal()) {
 					return searchSymbolsByNamespaceFirst(name, namespace);
@@ -1085,7 +1093,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	public SymbolIterator getSymbols(long namespaceID) {
 		try {
 			RecordIterator it = adapter.getSymbolsByNamespace(namespaceID);
-			return new SymbolRecordIterator(it, true);
+			return new SymbolRecordIterator(it, false, true);
 		}
 		catch (IOException e) {
 			program.dbError(e);
@@ -1228,7 +1236,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			program.dbError(e);
 			it = new EmptyRecordIterator();
 		}
-		return new SymbolRecordIterator(it, forward);
+		return new SymbolRecordIterator(it, true, forward);
 	}
 
 	@Override
@@ -1248,7 +1256,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	public SymbolIterator getSymbolIterator(boolean forward) {
 		try {
 			RecordIterator it = adapter.getSymbolsByAddress(forward);
-			return new SymbolRecordIterator(it, forward);
+			return new SymbolRecordIterator(it, true, forward);
 		}
 		catch (IOException e) {
 			program.dbError(e);
@@ -1260,7 +1268,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	public SymbolIterator getSymbolIterator(String searchStr, boolean caseSensitive) {
 		try {
 			RecordIterator iter = adapter.getSymbols();
-			SymbolIterator symbolIterator = new SymbolRecordIterator(iter, true);
+			SymbolIterator symbolIterator = new SymbolRecordIterator(iter, false, true);
 			return new SymbolQueryIterator(symbolIterator, searchStr, caseSensitive);
 		}
 		catch (IOException e) {
@@ -1694,12 +1702,14 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	private class SymbolRecordIterator implements SymbolIterator {
 		private Symbol nextSymbol;
-		private RecordIterator it;
 
-		private boolean forward;
+		private final RecordIterator it;
+		private final boolean includeDefaultThunks;
+		private final boolean forward;
 
-		SymbolRecordIterator(RecordIterator it, boolean forward) {
+		SymbolRecordIterator(RecordIterator it, boolean includeDefaultThunks, boolean forward) {
 			this.it = it;
+			this.includeDefaultThunks = includeDefaultThunks;
 			this.forward = forward;
 		}
 
@@ -1711,12 +1721,14 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 			try {
 				lock.acquire();
-				boolean hasNext = forward ? it.hasNext() : it.hasPrevious();
-				if (hasNext) {
+				while (nextSymbol == null && (forward ? it.hasNext() : it.hasPrevious())) {
 					DBRecord rec = forward ? it.next() : it.previous();
-					nextSymbol = getSymbol(rec);
+					Symbol sym = getSymbol(rec);
+					if (includeDefaultThunks || !isDefaultThunk(sym)) {
+						nextSymbol = sym;
+					}
 				}
-				return hasNext;
+				return nextSymbol != null;
 			}
 			catch (IOException e) {
 				program.dbError(e);
@@ -2013,7 +2025,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			program.dbError(e);
 			it = new EmptyRecordIterator();
 		}
-		return new SymbolRecordIterator(it, true);
+		return new SymbolRecordIterator(it, true, true);
 	}
 
 	@Override
@@ -2058,7 +2070,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			program.dbError(e);
 			it = new EmptyRecordIterator();
 		}
-		return new SymbolRecordIterator(it, true);
+		return new SymbolRecordIterator(it, true, true); // NOTE: thunks do not exist in external space
 	}
 
 	Lock getLock() {
@@ -2069,7 +2081,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	public SymbolIterator getChildren(Symbol parentSymbol) {
 		try {
 			RecordIterator it = adapter.getSymbolsByNamespace(parentSymbol.getID());
-			return new SymbolRecordIterator(it, true);
+			return new SymbolRecordIterator(it, false, true);
 		}
 		catch (IOException e) {
 			dbError(e);

@@ -60,18 +60,22 @@ public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebugge
 		SleighExpression expr = SleighProgramCompiler
 				.compileExpression((SleighLanguage) language, "r0 + r1");
 
-		AsyncPcodeExecutor<byte[]> executor =
-			new AsyncPcodeExecutor<>(language, AsyncWrappedPcodeArithmetic.forLanguage(language),
-				new TraceRecorderAsyncPcodeExecutorState(recorder, recorder.getSnap(), thread, 0));
-
 		Register r0 = language.getRegister("r0");
 		Register r1 = language.getRegister("r1");
 		waitForPass(() -> {
+			// TODO: A little brittle: Depends on a specific snap advancement strategy
+			assertEquals(3, trace.getTimeManager().getSnapshotCount());
 			DebuggerRegisterMapper rm = recorder.getRegisterMapper(thread);
 			assertNotNull(rm);
+			assertNotNull(rm.getTargetRegister("r0"));
+			assertNotNull(rm.getTargetRegister("r1"));
 			assertTrue(rm.getRegistersOnTarget().contains(r0));
 			assertTrue(rm.getRegistersOnTarget().contains(r1));
 		});
+
+		AsyncPcodeExecutor<byte[]> executor =
+			new AsyncPcodeExecutor<>(language, AsyncWrappedPcodeArithmetic.forLanguage(language),
+				new TraceRecorderAsyncPcodeExecutorState(recorder, recorder.getSnap(), thread, 0));
 
 		byte[] result = waitOn(expr.evaluate(executor));
 		assertEquals(11, Utils.bytesToLong(result, result.length, language.isBigEndian()));
@@ -99,19 +103,23 @@ public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebugge
 		PcodeProgram prog = SleighProgramCompiler.compileProgram((SleighLanguage) language, "test",
 			List.of("r2 = r0 + r1;"), SleighUseropLibrary.NIL);
 
+		Register r0 = language.getRegister("r0");
+		Register r1 = language.getRegister("r1");
+		waitForPass(() -> {
+			// TODO: A little brittle: Depends on a specific snap advancement strategy
+			assertEquals(3, trace.getTimeManager().getSnapshotCount());
+			DebuggerRegisterMapper rm = recorder.getRegisterMapper(thread);
+			assertNotNull(rm);
+			assertNotNull(rm.getTargetRegister("r0"));
+			assertNotNull(rm.getTargetRegister("r1"));
+			assertTrue(rm.getRegistersOnTarget().contains(r0));
+			assertTrue(rm.getRegistersOnTarget().contains(r1));
+		});
+
 		TraceRecorderAsyncPcodeExecutorState asyncState =
 			new TraceRecorderAsyncPcodeExecutorState(recorder, recorder.getSnap(), thread, 0);
 		AsyncPcodeExecutor<byte[]> executor = new AsyncPcodeExecutor<>(
 			language, AsyncWrappedPcodeArithmetic.forLanguage(language), asyncState);
-
-		Register r0 = language.getRegister("r0");
-		Register r1 = language.getRegister("r1");
-		waitForPass(() -> {
-			DebuggerRegisterMapper rm = recorder.getRegisterMapper(thread);
-			assertNotNull(rm);
-			assertTrue(rm.getRegistersOnTarget().contains(r0));
-			assertTrue(rm.getRegistersOnTarget().contains(r1));
-		});
 
 		waitOn(executor.executeAsync(prog, SleighUseropLibrary.nil()));
 		waitOn(asyncState.getVar(language.getRegister("r2")));

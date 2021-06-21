@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,4 +18,5 @@ package ghidra.app.util.html;
 /** Marker interface for lines that are generic place holders for diffing */
 public interface PlaceHolderLine extends ValidatableLine {
 
+	// marker interface
 }

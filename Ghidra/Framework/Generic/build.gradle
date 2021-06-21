@@ -19,6 +19,7 @@ apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
 apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
 apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
 apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javadoc.gradle"
 apply plugin: 'eclipse'
 
 eclipse.project.name = 'Framework Generic'
@@ -45,3 +46,4 @@ ext.addExports([
 	'java.base/sun.security.util=ALL-UNNAMED',
 	'java.desktop/sun.awt=ALL-UNNAMED'
 ])
+
