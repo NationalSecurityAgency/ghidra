@@ -19,6 +19,7 @@ apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
 apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
 apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+
 apply plugin: 'eclipse'
 
 eclipse.project.name = 'Features Decompiler'
@@ -370,9 +371,54 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 	}
 }
 
-/**
- * Define the "native build model" for building the decompiler executables.
- */
+task win64BuildDecompilerRust(type: Exec) {
+	workingDir "./src/decompile"
+
+	commandLine 'cargo', 'build', '--release', '--target', 'x86_64-pc-windows-msvc'
+
+    doLast {
+
+        def binary = 'decompile.exe'
+
+        copy {
+            from "$workingDir/target/release/${binary}"
+            into "build/os/win64/"
+        }
+    }
+}
+
+task linux64BuildDecompilerRust(type: Exec) {
+	workingDir "./src/decompile"
+
+	commandLine 'cargo', 'build', '--release', '--target', 'x86_64-unknown-linux-gnu'
+
+    doLast {
+
+        def binary = 'decompile'
+
+        copy {
+            from "$workingDir/target/release/${binary}"
+            into "build/os/linux64/"
+        }
+    }
+}
+
+task osx64BuildDecompilerRust(type: Exec) {
+	workingDir "./src/decompile"
+
+	commandLine 'cargo', 'build', '--release', '--target', 'x86_64-apple-darwin'
+
+    doLast {
+
+        def binary = 'decompile'
+
+        copy {
+            from "$workingDir/target/release/${binary}"
+            into "build/os/osx64/"
+        }
+    }
+}
+
 model {
 	
 	// Define the source files that are compiled and linked to become the decompiler.
@@ -381,108 +427,6 @@ model {
 	// That is why we have to list every cpp file that makes up the decomplier.
 	components {
 			
-		decompile(NativeExecutableSpec) {
-		
-			baseName "decompile"
-									
-			// these tell gradle for which platforms to build a decompiler executable.
-			targetPlatform "win64"
-			targetPlatform "linux64"
-			targetPlatform "osx64"
-			sources {
-				cpp {
-					// NOTE: The bison/flex generated files are assumed to be up-to-date.
-					//       The task `generateParsers` should be executed if needed.
-					// builtBy yaccDecompiler
-		            source {
-		                srcDir "src/decompile/cpp"
-		                
-		                include "space.cc"
-		                include "float.cc"
-		                include "address.cc"
-		                include "pcoderaw.cc"
-		                include "translate.cc"
-		                include "opcodes.cc"
-		                include "globalcontext.cc"
-		                include "capability.cc"
-		                include "architecture.cc"
-		                include "options.cc"
-		                include "graph.cc"
-		                include "cover.cc"
-		                include "block.cc"
-		                include "cast.cc"
-		                include "typeop.cc"
-		                include "database.cc"
-		                include "cpool.cc"
-		                include "comment.cc"
-						include "stringmanage.cc"
-		                include "fspec.cc"
-		                include "action.cc"
-		                include "loadimage.cc"
-		                include "varnode.cc"
-		                include "op.cc"
-		                include "type.cc"
-		                include "variable.cc"
-		                include "varmap.cc"
-		                include "jumptable.cc"
-		                include "emulate.cc"
-		                include "emulateutil.cc"
-		                include "flow.cc"
-		                include "userop.cc"
-		                include "funcdata.cc"
-		                include "funcdata_block.cc"
-		                include "funcdata_varnode.cc"
-		                include "funcdata_op.cc"
-		                include "pcodeinject.cc"
-		                include "heritage.cc"
-		                include "prefersplit.cc"
-		                include "rangeutil.cc"
-		                include "ruleaction.cc"
-		                include "subflow.cc"
-		                include "transform.cc"
-		                include "blockaction.cc"
-		                include "merge.cc"
-		                include "double.cc"
-		                include "coreaction.cc"
-		                include "condexe.cc"
-		                include "override.cc"
-		                include "dynamic.cc"
-		                include "crc32.cc"
-		                include "prettyprint.cc"
-		                include "printlanguage.cc"
-		                include "printc.cc"
-		                include "printjava.cc"
-		                include "memstate.cc"
-		                include "opbehavior.cc"
-		                include "paramid.cc"
-		                include "ghidra_arch.cc"
-		                include "inject_ghidra.cc"
-		                include "ghidra_translate.cc"
-		                include "loadimage_ghidra.cc"
-		                include "typegrp_ghidra.cc"
-		                include "database_ghidra.cc"
-		                include "ghidra_context.cc"
-		                include "cpool_ghidra.cc"
-		                include "ghidra_process.cc"
-		                include "comment_ghidra.cc"
-						include "string_ghidra.cc"
-		         //       include "callgraph.cc"			// uncomment for debug
-		         //       include "ifacedecomp.cc"			// uncomment for debug
-		         //       include "ifaceterm.cc"			// uncomment for debug
-		         //       include "interface.cc"			// uncomment for debug
-		         
-		         		// generated source files
-		         		
-		         	 	include "xml.cc"
-		         // 	  include "grammar.cc"				// used by diagnostic console mode
-		            }
-					exportedHeaders {
-						srcDir "src/decompile/cpp"
-					}
-				} // end cpp				
-			} // end sources
-		} // end decompile
-		
 		sleigh(NativeExecutableSpec) {
 			targetPlatform "win64"
 			targetPlatform "linux64"
