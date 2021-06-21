@@ -192,9 +192,20 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 			popupWindow.showPopup(event);
 		}
 		else {
-			int xOffset = 50;// magic: trial and error
-			Dimension size = fieldBounds.getSize();
-			Dimension keepVisibleArea = new Dimension(xOffset, size.height);
+
+			// 
+			// Make an area over which to show the popup.   The popup should not cover this area.
+			// The field that is hovered may be too big to be this area, as a big field may cause 
+			// the popup to be too far away from the cursor.
+			//
+			// Use the mouse point and then create an area (based on trial-and-error) that should
+			// not be occluded. 
+			// 
+			int horizontalPad = 100;
+			int verticalPad = 50;
+			Rectangle keepVisibleArea = new Rectangle(event.getPoint());
+			keepVisibleArea.grow(horizontalPad, verticalPad);
+
 			popupWindow.showOffsetPopup(event, keepVisibleArea);
 		}
 	}

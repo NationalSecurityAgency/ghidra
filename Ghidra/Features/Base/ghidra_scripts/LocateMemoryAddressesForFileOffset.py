@@ -51,14 +51,14 @@ def processAddress(addr, memBlockName, fileOffset):
 
 myFileOffset = getFileOffset()
 mem = currentProgram.getMemory()
-addressSet = mem.locateAddressesForFileOffset(myFileOffset)
-if addressSet.isEmpty():
+addressList = mem.locateAddressesForFileOffset(myFileOffset)
+if addressList.isEmpty():
   println('No memory address found for: ' + hex(myFileOffset))
-elif addressSet.size() == 1:
-  address = addressSet.iterator().next()
+elif addressList.size() == 1:
+  address = addressList.get(0)
   processAddress(address, mem.getBlock(address).getName(), myFileOffset)
 #file offset matches to multiple addresses.  Let the user decide which address they want.
 else:
   println('Possible memory block:address are:')
-  for addr in addressSet:
+  for addr in addressList:
     println(mem.getBlock(addr).getName() + ":" + addr.toString())

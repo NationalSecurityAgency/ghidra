@@ -15,13 +15,12 @@
  */
 package ghidra.app.services;
 
-import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
-
 import javax.swing.JComponent;
 
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import ghidra.program.model.listing.Program;
+import ghidra.program.util.ProgramLocation;
 
 /**
  * <code>HoverService</code> provides the ability to popup data Windows over a Field viewer
@@ -30,7 +29,8 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 public interface HoverService {
 
 	/**
-	 * Returns the priority of this hover service.
+	 * Returns the priority of this hover service.   A lower priority is more important.
+	 * @return the priority
 	 */
 	public int getPriority();
 
@@ -41,7 +41,8 @@ public interface HoverService {
 	public void scroll(int amount);
 
 	/**
-	 * Return whether hover mode is "on."
+	 * Return whether hover mode is "on"
+	 * @return the priority
 	 */
 	public boolean hoverModeSelected();
 

@@ -526,10 +526,14 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 				.menuPath(ToolConstants.MENU_FILE, "&Open...")
 				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroupOrder++))
 				.keyBinding("ctrl O")
-				.withContext(ProgramActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.onAction(c -> open())
 				.buildAndInstall(tool);
+
+		//		.withContext(ProgramActionContext.class)
+		//		.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+		// openAction doesn't really use a context, but we want it to be in windows that
+		// have providers that use programs. 
+		openAction.addToWindowWhen(ProgramActionContext.class);
 
 		closeAction = new ActionBuilder("Close File", getName())
 				.menuPath(ToolConstants.MENU_FILE, "&Close")

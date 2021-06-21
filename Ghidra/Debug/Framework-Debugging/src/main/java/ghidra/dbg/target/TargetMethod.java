@@ -201,7 +201,10 @@ public interface TargetMethod extends TargetObject {
 	 * @return a map of descriptions by name
 	 */
 	static TargetParameterMap makeParameters(Stream<ParameterDescription<?>> params) {
-		return TargetParameterMap.copyOf(params.collect(Collectors.toMap(p -> p.name, p -> p)));
+		return TargetParameterMap
+				.copyOf(params.collect(Collectors.toMap(p -> p.name, p -> p, (a, b) -> {
+					throw new IllegalArgumentException("duplicate parameters: " + a + " and " + b);
+				}, LinkedHashMap::new)));
 	}
 
 	/**

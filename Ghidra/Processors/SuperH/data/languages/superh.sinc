@@ -1021,74 +1021,25 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
     local tmp1:1;
     local tmp2:4;
     local old_q:1;
+    local old_q_eq_m:1;
+    local m_eq_q:1;
     
     old_q = $(Q_FLAG);
     $(Q_FLAG) = (0x80000000 & rn_08_11) != 0;
     tmp2 = rm_04_07;
     rn_08_11 = rn_08_11 << 1;
     rn_08_11 = rn_08_11 | zext($(T_FLAG));
+    old_q_eq_m = old_q == $(M_FLAG);
+    m_eq_q = $(M_FLAG) == $(Q_FLAG);
     
-    # FIXME: cleaner way to do this??
     tmp0 = rn_08_11;
+    # rn_08_11 = old_q_eq_m ? rn_08_11 - tmp2 : rn_08_11 + tmp2;
+    rn_08_11 = (zext(old_q_eq_m) * (rn_08_11 - tmp2)) + (zext(!old_q_eq_m) * (rn_08_11 + tmp2));
+    # tmp1 = old_q_eq_m ? rn_08_11 > tmp0 : rn_08_11 < tmp0;
+    tmp1 = (old_q_eq_m * (rn_08_11 > tmp0)) + (!old_q_eq_m * (rn_08_11 < tmp0));
+    # $(Q_FLAG) = m_eq_q ? tmp1 : tmp1 == 0;
+    $(Q_FLAG) = (m_eq_q * tmp1) + (!m_eq_q & (tmp1 == 0));
     
-    if(old_q == 0 && $(M_FLAG) == 0 && $(Q_FLAG) == 0) goto <OQ0_M0_Q0>;
-    if(old_q == 0 && $(M_FLAG) == 0 && $(Q_FLAG) == 1) goto <OQ0_M0_Q1>;
-    if(old_q == 0 && $(M_FLAG) == 1 && $(Q_FLAG) == 0) goto <OQ0_M1_Q0>;
-    if(old_q == 0 && $(M_FLAG) == 1 && $(Q_FLAG) == 1) goto <OQ0_M1_Q1>;
-    if(old_q == 1 && $(M_FLAG) == 0 && $(Q_FLAG) == 0) goto <OQ1_M0_Q0>;
-    if(old_q == 1 && $(M_FLAG) == 0 && $(Q_FLAG) == 1) goto <OQ1_M0_Q1>;
-    if(old_q == 1 && $(M_FLAG) == 1 && $(Q_FLAG) == 0) goto <OQ1_M1_Q0>;
-    if(old_q == 1 && $(M_FLAG) == 1 && $(Q_FLAG) == 1) goto <OQ1_M1_Q1>;
-    
-    <OQ0_M0_Q0>
-    rn_08_11 = rn_08_11 - tmp2;
-    tmp1 = rn_08_11 > tmp0;
-    $(Q_FLAG) = tmp1;
-    goto <SET_FLAG>;
-    
-    <OQ0_M0_Q1>
-    rn_08_11 = rn_08_11 - tmp2;
-    tmp1 = rn_08_11 > tmp0;
-    $(Q_FLAG) = tmp1 == 0;
-    goto <SET_FLAG>;
-    
-    <OQ0_M1_Q0>
-    rn_08_11 = rn_08_11 + tmp2;
-    tmp1 = rn_08_11 < tmp0;
-    $(Q_FLAG) = tmp1 == 0;
-    goto <SET_FLAG>;
-    
-    <OQ0_M1_Q1>
-    rn_08_11 = rn_08_11 + tmp2;
-    tmp1 = rn_08_11 < tmp0;
-    $(Q_FLAG) = tmp1;
-    goto <SET_FLAG>;
-    
-    <OQ1_M0_Q0>
-    rn_08_11 = rn_08_11 + tmp2;
-    tmp1 = rn_08_11 < tmp0;
-    $(Q_FLAG) = tmp1;
-    goto <SET_FLAG>;
-    
-    <OQ1_M0_Q1>
-    rn_08_11 = rn_08_11 + tmp2;
-    tmp1 = rn_08_11 < tmp0;
-    $(Q_FLAG) = tmp1;
-    goto <SET_FLAG>;
-    
-    <OQ1_M1_Q0>
-    rn_08_11 = rn_08_11 - tmp2;
-    tmp1 = rn_08_11 > tmp0;
-    $(Q_FLAG) = tmp1 == 0;
-    goto <SET_FLAG>;
-    
-    <OQ1_M1_Q1>
-    rn_08_11 = rn_08_11 - tmp2;
-    tmp1 = rn_08_11 > tmp0;
-    $(Q_FLAG) = tmp1;
-    goto <SET_FLAG>;
-    
-    <SET_FLAG>
     $(T_FLAG) = $(Q_FLAG) == $(M_FLAG);
 }
 

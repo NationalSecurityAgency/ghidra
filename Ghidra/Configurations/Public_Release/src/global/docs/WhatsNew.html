@@ -143,11 +143,13 @@
     <BLOCKQUOTE><UL>
         <P> NOTE: As this is a prototype script, the location, names, layout of data types, and default virtual function names created by this script are
         likely to change in the future once an official design for Object Oriented representation is determined.<P>
-        <P>NOTE: Windows class recovery is fairly complete and tested, however GCC class recovery is still in early development.
-        GCC class data types have not been recovered yet but if the program has DWARF, there will be some amount of data recovered by the DWARF analyzer in the DWARF data folder.</P>
+        <P>NOTE: Windows class recovery is fairly complete and tested, however GCC class recovery is still in early development.</P>
         <P>NOTE: For best results, run this script on freshly imported and analyzed programs. No testing has been done on programs previously imported with pre-existing user mark-up.</P>
     </UL></BLOCKQUOTE>
-    
+    <P>Two related scripts have been added, ApplyClassFunctionSignatureUpdatesScript and ApplyClassFunctionDefinitionUpdatesScript, which are fix-up scripts that can be applied if a user 
+    makes changes to a virtual function recovered by the RecoverClassesFromRTTIScript. Both scripts identify differences between Function Signatures in the 
+    Listing and Function Definitions in the Data Type Manager, but the first script fixes all changes to match the signature and the second to match the definition. NOTE: These
+    scripts are a temporary measure until an underlying connection between function signatures and their associated function definition can be implemented in the Ghidra API.</P>
     <BR />
 
     <H2>PDB Symbol Server</H2

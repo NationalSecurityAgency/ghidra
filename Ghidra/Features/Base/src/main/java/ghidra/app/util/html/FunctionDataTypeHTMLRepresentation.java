@@ -18,21 +18,28 @@ package ghidra.app.util.html;
 import java.util.ArrayList;
 import java.util.List;
 
+import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.datatype.DataTypeUrl;
 import ghidra.app.util.html.diff.DataTypeDiff;
 import ghidra.app.util.html.diff.DataTypeDiffBuilder;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.FunctionSignature;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.StringUtilities;
 import ghidra.util.exception.AssertException;
 
 public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
+
+	private static final int MAX_LINE_COUNT = 10;
+
 	protected TextLine returnType;
 	protected TextLine functionName;
 
 	protected List<ValidatableLine> arguments;
 	protected TextLine varArgs;
 	protected TextLine voidArgs;
+
+	private static String truncatedHtmlData;
 
 	// private constructor for making diff copies
 	private FunctionDataTypeHTMLRepresentation(TextLine returnType, TextLine functionName,
@@ -42,7 +49,11 @@ public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentati
 		this.arguments = arguments;
 		this.varArgs = varArgs;
 		this.voidArgs = voidArgs;
-		originalHTMLData = buildHTMLText(returnType, functionName, arguments, varArgs, voidArgs);
+
+		originalHTMLData =
+			buildHTMLText(returnType, functionName, arguments, varArgs, voidArgs, false);
+		truncatedHtmlData =
+			buildHTMLText(returnType, functionName, arguments, varArgs, voidArgs, true);
 	}
 
 	public FunctionDataTypeHTMLRepresentation(FunctionDefinition functionDefinition) {
@@ -51,7 +62,23 @@ public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentati
 		arguments = buildArguments(functionDefinition);
 		varArgs = buildVarArgs(functionDefinition);
 		voidArgs = buildVoidArgs(functionDefinition);
-		originalHTMLData = buildHTMLText(returnType, functionName, arguments, varArgs, voidArgs);
+
+		originalHTMLData =
+			buildHTMLText(returnType, functionName, arguments, varArgs, voidArgs, false);
+		truncatedHtmlData =
+			buildHTMLText(returnType, functionName, arguments, varArgs, voidArgs, true);
+	}
+
+	// overridden to return truncated text by default
+	@Override
+	public String getHTMLString() {
+		return HTML_OPEN + truncatedHtmlData + HTML_CLOSE;
+	}
+
+	// overridden to return truncated text by default
+	@Override
+	public String getHTMLContentString() {
+		return truncatedHtmlData;
 	}
 
 	@Override
@@ -112,69 +139,113 @@ public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentati
 	}
 
 	private static String buildHTMLText(TextLine returnType, TextLine functionName,
-			List<ValidatableLine> arguments, TextLine varArgs, TextLine voidArgs) {
+			List<ValidatableLine> arguments, TextLine varArgs, TextLine voidArgs, boolean trim) {
 
-		StringBuilder sb = new StringBuilder();
+		StringBuilder fullHtml = new StringBuilder();
+		StringBuilder truncatedHtml = new StringBuilder();
 
+		int lineCount = 0;
 		String returnTypeText = returnType.getText();
+		if (trim) {
+			returnTypeText =
+				StringUtilities.trimMiddle(returnTypeText, ToolTipUtils.LINE_LENGTH);
+		}
 		returnTypeText = wrapStringInColor(returnTypeText, returnType.getTextColor());
 
 		String functionNameText = functionName.getText();
+		if (trim) {
+			functionNameText =
+				StringUtilities.trimMiddle(functionNameText, ToolTipUtils.LINE_LENGTH);
+		}
 		functionNameText = wrapStringInColor(functionNameText, functionName.getTextColor());
 
-		sb.append(returnTypeText).append(HTML_SPACE).append(functionNameText).append("(");
+		//@formatter:off
+		append(fullHtml, truncatedHtml, lineCount, returnTypeText,
+                                                   HTML_SPACE,
+                                                   functionNameText,
+                                                   "(");
+		//@formatter:on
 
 		String varArgsText = varArgs.getText();
 		varArgsText = wrapStringInColor(varArgsText, varArgs.getTextColor());
 		boolean hasVarArgs = varArgsText.length() != 0;
 
 		int size = arguments.size();
-		for (int i = 0; i < size; i++) { // walk in pairs (display name to name)
-			sb.append(BR);
+		for (int i = 0; i < size; i++, lineCount++) { // walk in pairs (display name to name)
+			append(fullHtml, truncatedHtml, lineCount, BR);
+
 			VariableTextLine variableLine = (VariableTextLine) arguments.get(i);
-
-			String typeText = generateTypeText(variableLine);
-
+			String typeText = generateTypeText(variableLine, trim);
 			String variableNameText = variableLine.getVariableName();
+			if (trim) {
+				variableNameText =
+					StringUtilities.trimMiddle(variableNameText, ToolTipUtils.LINE_LENGTH);
+			}
 			variableNameText =
 				wrapStringInColor(variableNameText, variableLine.getVariableNameColor());
 
-			sb.append(TAB).append(typeText).append(HTML_SPACE).append(variableNameText);
+			String separator = "";
+			if ((i < size - 1) || (size > 0 && hasVarArgs)) {
+				separator = ",";
+			}
 
-			if ((i + 1 < size - 1) || (size > 0 && hasVarArgs)) {
-				sb.append(",");
-			}
-			if (i > MAX_COMPONENTS) {
-// TODO: change to diff color if any of the ellipsed-out args are diffed
-				// if ( cointains unmatching lines ( arguments, i ) )
-				// then make the ellipses the diff color
-				sb.append(TAB).append(ELLIPSES).append(BR);
-				break;
-			}
+			//@formatter:off
+			append(fullHtml, truncatedHtml, lineCount, TAB, 
+                                                       typeText,
+                                                       HTML_SPACE,
+                                                       variableNameText,
+                                                       separator);
+			//@formatter:on
 		}
 
 		if (hasVarArgs) {
 			if (size > 0) {
-				sb.append(BR).append(TAB);
+
+				//@formatter:off
+				append(fullHtml, truncatedHtml, lineCount, BR, 
+                                                           TAB);
+				//@formatter:on
+				lineCount++;
 			}
-			sb.append(varArgsText);
+
+			append(fullHtml, truncatedHtml, lineCount, varArgsText);
 		}
 		else if (size == 0) {
 			String voidArgsText = voidArgs.getText();
 			voidArgsText = wrapStringInColor(voidArgsText, voidArgs.getTextColor());
 			if (voidArgsText.length() != 0) {
-				sb.append(voidArgsText);
+				append(fullHtml, truncatedHtml, lineCount, varArgsText);
 			}
 		}
 
-		sb.append(")").append(BR);
+		if (lineCount >= MAX_LINE_COUNT) {
+			truncatedHtml.append(ELLIPSES);
+		}
 
-		return sb.toString();
+		fullHtml.append(")").append(BR);
+		truncatedHtml.append(")").append(BR);
+
+		if (trim) {
+			return truncatedHtml.toString();
+		}
+		return fullHtml.toString();
 	}
 
-	private static String generateTypeText(VariableTextLine line) {
+	private static void append(StringBuilder fullHtml, StringBuilder truncatedHtml,
+			int lineCount, String... content) {
+
+		for (String string : content) {
+			fullHtml.append(string);
+			truncatedHtml.append(string);
+		}
+	}
+
+	private static String generateTypeText(VariableTextLine line, boolean trim) {
 
 		String type = line.getVariableType();
+		if (trim) {
+			type = StringUtilities.trimMiddle(type, ToolTipUtils.LINE_LENGTH);
+		}
 		type = wrapStringInColor(type, line.getVariableTypeColor());
 
 		if (!line.hasUniversalId()) {

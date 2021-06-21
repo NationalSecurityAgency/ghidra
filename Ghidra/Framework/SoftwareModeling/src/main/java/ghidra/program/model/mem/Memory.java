@@ -17,7 +17,8 @@ package ghidra.program.model.mem;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.*;
@@ -829,22 +830,21 @@ public interface Memory extends AddressSetView {
 	}
 
 	/**
-	 * Gets a {@link Set} of {@link Address addresses} that correspond to the given file offset.
-	 * 
+	 * Gets a {@link List} of {@link Address addresses} that correspond to the given file offset.
 	 * @param fileOffset the file offset that will be used to locate the corresponding memory 
 	 *   addresses
-	 * @return a {@link Set} of {@link Address}es that are associated with the provided file offset 
+	 * @return a {@link List} of {@link Address}es that are associated with the provided file offset 
 	 */
-	public default Set<Address> locateAddressesForFileOffset(long fileOffset) {
-		Set<Address> set = new HashSet<>();
+	public default List<Address> locateAddressesForFileOffset(long fileOffset) {
+		List<Address> list = new ArrayList<>();
 		for (MemoryBlock memBlock : getBlocks()) {
 			for (MemoryBlockSourceInfo info : memBlock.getSourceInfos()) {
 				Address addr = info.locateAddressForFileOffset(fileOffset);
 				if (addr != null) {
-					set.add(addr);
+					list.add(addr);
 				}
 			}
 		}
-		return set;
+		return list;
 	}
 }

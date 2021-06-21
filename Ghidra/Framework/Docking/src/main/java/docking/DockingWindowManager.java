@@ -1775,7 +1775,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		return bestParent;
 	}
 
-	private static Window getBestNonModalParent(DialogComponentProvider newProvider,
+	private static Window getBestNonModalParent(DialogComponentProvider providerToShow,
 			Window bestParent) {
 
 		Window activeWindow = getJavaActiveWindow();
@@ -1801,10 +1801,20 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		}
 
 		int activeId = activeProvider.getId();
-		int newId = newProvider.getId();
-		if (newId < activeId) {
-			// the new provider is actually older than the active window--do not parent the
-			// new provider to that window
+		int providerId = providerToShow.getId();
+		if (providerId < activeId) {
+			// The provider being shown is older than the active window--do not parent the provider 
+			// to that window.  The older age suggests that the new provider was shown on a delay
+			// and should really be considered to live behind the active modal dialog.
+			return bestParent;
+		}
+
+		if (activeProvider.isTransient()) {
+			// This prevents transient modal dialogs from being parents to non-modal dialogs.  This
+			// can cause the non-modal dialog to be closed when the transient modal dialog goes 
+			// away.  There is the possibility of the non-modal dialog being blocked if not parented
+			// the this modal dialog.   If we find a use case that exposes this pattern, then we
+			// will have to revisit how this method chooses to parent.
 			return bestParent;
 		}
 

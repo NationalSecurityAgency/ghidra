@@ -59,6 +59,7 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 
 		long offset = (int) relocationAddress.getOffset();
 
+		Address symbolAddr = elfRelocationContext.getSymbolAddress(sym);
 		long symbolValue = elfRelocationContext.getSymbolValue(sym);
 
 		int newValue = 0;
@@ -84,6 +85,10 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 			case ARM_ElfRelocationConstants.R_ARM_ABS32: { // Target class: Data
 				if (elfRelocationContext.extractAddend()) {
 					addend = memory.getInt(relocationAddress);
+				}
+				if (addend != 0 && isUnsupportedExternalRelocation(program, relocationAddress,
+					symbolAddr, symbolName, addend, elfRelocationContext.getLog())) {
+					addend = 0; // prefer bad fixup for EXTERNAL over really-bad fixup
 				}
 				newValue = (int) (symbolValue + addend);
 				if (isThumb) {
@@ -354,8 +359,9 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 				oldValue = (oldValue ^ 0x8000) - 0x8000;
 
 				oldValue += symbolValue;
-				if (type == ARM_ElfRelocationConstants.R_ARM_MOVT_ABS)
+				if (type == ARM_ElfRelocationConstants.R_ARM_MOVT_ABS) {
 					oldValue >>= 16;
+				}
 
 				newValue &= 0xfff0f000;
 				newValue |= ((oldValue & 0xf000) << 4) |

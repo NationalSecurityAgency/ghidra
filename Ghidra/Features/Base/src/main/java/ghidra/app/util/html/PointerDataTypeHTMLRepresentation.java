@@ -15,32 +15,37 @@
  */
 package ghidra.app.util.html;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.util.ToolTipUtils;
 import ghidra.program.model.data.*;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.StringUtilities;
 import ghidra.util.exception.AssertException;
 
 public class PointerDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 
+	private String truncatedHtmlData;
+
 	public PointerDataTypeHTMLRepresentation(Pointer pointer) {
-		super(buildHTMLText(pointer));
+		super(buildHTMLText(pointer, false));
+
+		truncatedHtmlData = buildHTMLText(pointer, true);
 	}
 
-	private static String buildHTMLText(Pointer pointer) {
-		StringBuffer buffer = new StringBuffer();
-		String description = pointer.getDescription();
+	// overridden to return truncated text by default
+	@Override
+	public String getHTMLString() {
+		return HTML_OPEN + truncatedHtmlData + HTML_CLOSE;
+	}
 
-		if (description == null || description.length() == 0) {
-			description = pointer.getDisplayName();
-		}
-		description = HTMLUtilities.friendlyEncodeHTML(description);
-		buffer.append(description);
+	// overridden to return truncated text by default
+	@Override
+	public String getHTMLContentString() {
+		return truncatedHtmlData;
+	}
 
-		// the base pointer description does not start with an upper case; fix it
-		char firstChar = buffer.charAt(0);
-		if (!Character.isUpperCase(firstChar)) {
-			buffer.replace(0, 1, Character.toString(Character.toUpperCase(firstChar)));
-		}
+	private static String buildHTMLText(Pointer pointer, boolean trim) {
 
 		DataType baseDataType = pointer;
 		while (baseDataType instanceof Pointer) {
@@ -48,8 +53,25 @@ public class PointerDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 		}
 
 		if (baseDataType == null) {
-			return buffer.toString();
+			return getDefaultDescription(pointer);
 		}
+
+		StringBuilder buffer = new StringBuilder();
+		int length = pointer.getLength();
+		String bits = (length * 8) + " bit ";
+		String baseName = baseDataType.getName();
+		if (trim) {
+			baseName = StringUtilities.trimMiddle(baseName, ToolTipUtils.LINE_LENGTH);
+		}
+		String fullDescription = bits + " Pointer";
+
+		fullDescription = HTMLUtilities.friendlyEncodeHTML(fullDescription);
+		buffer.append(FORWARD_SLASH).append(FORWARD_SLASH).append(HTML_SPACE);
+		buffer.append(HTMLUtilities.friendlyEncodeHTML(pointer.getName()));
+		buffer.append(BR);
+		buffer.append(fullDescription);
+		buffer.append(BR);
+		buffer.append("Size: ").append((length >= 0) ? length : "default");
 
 		buffer.append(BR).append(BR);
 		buffer.append("Pointer Base Data Type: ").append(BR);
@@ -65,7 +87,10 @@ public class PointerDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 
 			HTMLDataTypeRepresentation representation =
 				ToolTipUtils.getHTMLRepresentation(baseDataType);
-			String baseHTML = representation.getHTMLContentString();
+			String baseHTML = representation.getFullHTMLContentString();
+			if (trim) {
+				baseHTML = representation.getHTMLContentString();
+			}
 
 			buffer.append(baseHTML);
 
@@ -76,10 +101,22 @@ public class PointerDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 			buffer.append(INDENT_CLOSE);
 		}
 
-		buffer.append(BR);
-		int length = pointer.getLength();
-		buffer.append("Size: ").append((length >= 0) ? length : "default");
 		return buffer.toString();
+	}
+
+	private static String getDefaultDescription(Pointer pointer) {
+		String description = pointer.getDescription();
+		if (StringUtils.isBlank(description)) {
+			description = pointer.getDisplayName();
+		}
+
+		// the base pointer description does not start with an upper case; fix it
+		char firstChar = description.charAt(0);
+		if (!Character.isUpperCase(firstChar)) {
+			description = Character.toUpperCase(firstChar) + description.substring(1);
+		}
+
+		return description;
 	}
 
 	@Override

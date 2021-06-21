@@ -67,22 +67,22 @@ public abstract class HTMLDataTypeRepresentation {
 	protected static final String TT_OPEN = "<TT>";
 	protected static final String TT_CLOSE = "</TT>";
 
-	// Indentation tags (note: we switched from <div> tags because the Java rendering engine
+	// Note 1: Indentation tags (note: we switched from <DIV> tags because the Java rendering engine
 	// does not keep the color of the div's parent tags.  The <P> tag seems to work).
-	protected static final String INDENT_OPEN = "<P STYLE='margin-left: 10px;'>";
-	protected static final String INDENT_CLOSE = "</P>";
+	// Note 2: Switch back to <DIV> from <P>, since the <P> tag gets broken by the <TABLE> tag
+	// used by composite types.   If not inheriting the color becomes an issue, then we will need 
+	// to find another solution for indentation.
+	protected static final String INDENT_OPEN = "<DIV STYLE='margin-left: 10px;'>";
+	protected static final String INDENT_CLOSE = "</DIV>";
 
 	protected static final String ELLIPSES = "...";
 	protected static final String LENGTH_PREFIX = "Length: ";
 
 	protected final static String FORWARD_SLASH = "&#47;";
-//	protected final static String COMMENT = FORWARD_SLASH + FORWARD_SLASH + HTML_SPACE;
 
 	protected final static String START_COMMENT = FORWARD_SLASH + '*' + BR;
 	protected final static String MIDDLE_COMMENT = HTML_SPACE + '*' + HTML_SPACE;
 	protected final static String END_COMMENT = HTML_SPACE + '*' + FORWARD_SLASH + BR;
-	private final static int COMMENT_PREFIX_LENGTH = MIDDLE_COMMENT.length();
-//	private final static String COMMENT_NEWLINE = BR + COMMENT;
 
 	protected final static Color DIFF_COLOR = ValidatableLine.INVALID_COLOR;
 
@@ -104,8 +104,16 @@ public abstract class HTMLDataTypeRepresentation {
 		return buffer;
 	}
 
-	protected static StringBuffer addDataTypeLength(DataType dt, StringBuffer buffer) {
+	protected static StringBuilder addDataTypeLength(DataType dt, StringBuilder buffer) {
 
+		buffer.append(BR);
+		buffer.append(LENGTH_PREFIX);
+		buffer.append(getDataTypeLengthString(dt));
+
+		return buffer;
+	}
+
+	protected static String getDataTypeLengthString(DataType dt) {
 		String lengthString = null;
 		if (dt == null) {
 			lengthString = "<i>Unknown</i>";
@@ -119,12 +127,7 @@ public abstract class HTMLDataTypeRepresentation {
 				lengthString = " <i>Unsized</i>";
 			}
 		}
-
-		buffer.append(BR);
-		buffer.append(LENGTH_PREFIX);
-		buffer.append(lengthString);
-
-		return buffer;
+		return lengthString;
 	}
 
 	/**
@@ -172,7 +175,7 @@ public abstract class HTMLDataTypeRepresentation {
 		List<String> list = new ArrayList<>();
 		for (String nativeCommentLine : string.split("\n")) {
 			List<String> wrappedLines = breakLongLineAtWordBoundaries(nativeCommentLine,
-				MAX_LINE_LENGTH - MIDDLE_COMMENT.length());
+				MAX_CHARACTER_LENGTH - MIDDLE_COMMENT.length());
 			for (int i = 0; i < wrappedLines.size(); i++) {
 				String wrappedLine = wrappedLines.get(i);
 				list.add(MIDDLE_COMMENT + wrappedLine + BR);
@@ -240,7 +243,7 @@ public abstract class HTMLDataTypeRepresentation {
 	 * Formats a multi-line plain-text comment as a list of HTML marked-up lines.
 	 *  
 	 * @param comment multi-line plain-text string
-	 * @param maxLines max number of formatted lines to return
+	 * @param maxLines max number of formatted lines to return 
 	 * @return list of html marked-up {@link TextLine}s
 	 */
 	protected static List<TextLine> createCommentLines(String comment, int maxLines) {
@@ -263,14 +266,20 @@ public abstract class HTMLDataTypeRepresentation {
 			newList.add(new TextLine(commentLine));
 		}
 		newList.add(new TextLine(END_COMMENT));
+
+		/*
+		 // note sure why we were add so much padding to the header
 		while (newList.size() < maxLines + 2) {
 			newList.add(new TextLine(BR)); // pad the end of the header for uniformity in appearance
 		}
+		*/
+
+		newList.add(new TextLine(BR)); // pad the end of the header for visual separation 
 
 		return newList;
 	}
 
-	/** Returns a data type that can later be located */
+	/* Returns a data type that can later be located */
 	protected static DataType getLocatableDataType(DataType type) {
 
 		if (type instanceof DefaultDataType) {
@@ -302,7 +311,7 @@ public abstract class HTMLDataTypeRepresentation {
 		// needed for clients what want to build-up this object later via setter methods
 	}
 
-	/**
+	/*
 	 * Convenience constructor for those representations that don't really do much, like diffing.
 	 */
 	protected HTMLDataTypeRepresentation(String htmlText) {
@@ -315,12 +324,40 @@ public abstract class HTMLDataTypeRepresentation {
 		}
 	}
 
+	/**
+	 * Returns an HTML string for this data representation object.  The HTML returned will be 
+	 * truncated if it is too long.   To get the full HTML, call {@link #getFullHTMLString()}.
+	 * 
+	 * @return the html
+	 * @see #getFullHTMLString()
+	 */
 	public String getHTMLString() {
+		return getFullHTMLString(); // default to full text; subclasses can override
+	}
+
+	/**
+	 * Returns an HTML string for this data representation object
+	 * 
+	 * @return the html
+	 * @see #getHTMLString()
+	 */
+	public String getFullHTMLString() {
 		return HTML_OPEN + originalHTMLData + HTML_CLOSE;
 	}
 
-	/** This is like {@link #getHTMLString()}, but does not put HTML tags around the data. */
+	/** 
+	 * This is like {@link #getHTMLString()}, but does not put HTML tags around the data 
+	 * @return the content
+	 */
 	public String getHTMLContentString() {
+		return originalHTMLData; // default to full text; subclasses can override
+	}
+
+	/** 
+	* This is like {@link #getHTMLString()}, but does not put HTML tags around the data 
+	* @return the content
+	*/
+	public String getFullHTMLContentString() {
 		return originalHTMLData;
 	}
 
@@ -342,10 +379,12 @@ public abstract class HTMLDataTypeRepresentation {
 		List<ValidatableLine> headerLines = new ArrayList<>();
 		headerLines.addAll(createCommentLines(comment, 4));
 
-		// put the path info in
+		// put the path info in; don't display a floating '/' when the path is the root path
 		CategoryPath path = dataType.getCategoryPath();
-		headerLines.add(new TextLine(HTMLUtilities.escapeHTML(path.getPath())));
-		headerLines.add(new TextLine(BR));
+		if (!path.equals(CategoryPath.ROOT)) {
+			headerLines.add(new TextLine(HTMLUtilities.escapeHTML(path.getPath())));
+			headerLines.add(new TextLine(BR));
+		}
 
 		return headerLines;
 	}
@@ -391,6 +430,8 @@ public abstract class HTMLDataTypeRepresentation {
 	/**
 	 * Extension point for adding empty lines.  Subclasses that do not wish to use the default
 	 * empty text line can override this method.
+	 * @param oppositeLine the line that will go along with the newly created placeholder line
+	 * @return the placeholder line
 	 */
 	protected PlaceHolderLine createPlaceHolderLine(ValidatableLine oppositeLine) {
 		// for now, base representations do not know how to create empty lines...if it turns out

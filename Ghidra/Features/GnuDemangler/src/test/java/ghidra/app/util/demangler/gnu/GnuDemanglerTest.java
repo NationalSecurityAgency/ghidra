@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,19 +47,23 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testNonMangledSymbol() throws Exception {
+	public void testNonMangledSymbol_DemangleOnlyKnownPatterns_True() throws Exception {
 
 		String mangled = "Java_org_sqlite_NativeDB__1exec";
 
 		GnuDemangler demangler = new GnuDemangler();
 		demangler.canDemangle(program);// this perform initialization
 
+		GnuDemanglerOptions options = new GnuDemanglerOptions();
+		options.setDemangleOnlyKnownPatterns(true);
+
 		// this throws an exception with the bug in place
 		try {
 			demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
-			assertTrue(e.isInvalidMangledName());
+			failWithException("Should not have encountered exception when ignoring unknown symbols",
+				e);
 		}
 	}
 

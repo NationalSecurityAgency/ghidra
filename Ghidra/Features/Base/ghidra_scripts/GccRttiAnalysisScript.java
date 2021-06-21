@@ -680,7 +680,6 @@ public class GccRttiAnalysisScript extends GhidraScript {
 
 	/**
 	 * Method to process the primary vtable for each "vtable" label
-	 * @return the vftable Address in the vtable
 	 * @throws Exception if Data cannot be created
 	 */
 	private void processVtables() throws Exception {
