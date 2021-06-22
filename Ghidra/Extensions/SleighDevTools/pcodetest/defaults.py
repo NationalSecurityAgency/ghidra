@@ -20,7 +20,7 @@
 
 PCodeTest.defaults.toolchain_root = '/local/ToolChains'
 PCodeTest.defaults.build_root = '/local/build-pcodetest'
-PCodeTest.defaults.gcc_version = '7.3.0'
+PCodeTest.defaults.gcc_version = '9.2.0'
 PCodeTest.defaults.skip_files = []
 PCodeTest.defaults.export_root = os.getcwd() + '/../../../../../ghidra.bin/Ghidra/Test/TestResources/data/pcodetests/'
 PCodeTest.defaults.pcodetest_src = os.getcwd() + '/c_src'

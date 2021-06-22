@@ -1,20 +1,18 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
+data/languages/cust.sinc||GHIDRA||||END|
+data/languages/flix.sinc||GHIDRA||||END|
 data/languages/xtensa.cspec||GHIDRA||||END|
 data/languages/xtensa.dwarf||GHIDRA||||END|
 data/languages/xtensa.ldefs||GHIDRA||||END|
 data/languages/xtensa.opinion||GHIDRA||||END|
 data/languages/xtensa.pspec||GHIDRA||||END|
-data/languages/xtensa.sinc||GHIDRA||||END|
-data/languages/xtensa.slaspec||GHIDRA||||END|
+data/languages/xtensaArch.sinc||GHIDRA||||END|
 data/languages/xtensaInstructions.sinc||GHIDRA||||END|
+data/languages/xtensaMain.sinc||GHIDRA||||END|
+data/languages/xtensa_be.slaspec||GHIDRA||||END|
+data/languages/xtensa_depbits.sinc||GHIDRA||||END|
+data/languages/xtensa_le.slaspec||GHIDRA||||END|
 data/manuals/xtensa.idx||GHIDRA||||END|
 data/patterns/patternconstraints.xml||GHIDRA||||END|
 data/patterns/xtensa_patterns.xml||GHIDRA||||END|
-src/main/help/help/topics/xtensa/help.html||GHIDRA||||END|
-src/main/help/help/TOC_Source.xml||GHIDRA||||END|
-src/main/java/ghidra/app/util/bin/format/elf/relocation/Xtensa_ElfRelocationHandler.java||GHIDRA||||END|
-src/main/java/ghidra/app/util/bin/format/elf/relocation/Xtensa_ElfRelocationConstants.java||GHIDRA||||END|
-src/test.processors/java/ghidra/test/processors/Xtensa_O0_EmulatorTest.java||GHIDRA||||END|
-src/test.processors/java/ghidra/test/processors/Xtensa_O3_EmulatorTest.java||GHIDRA||||END|

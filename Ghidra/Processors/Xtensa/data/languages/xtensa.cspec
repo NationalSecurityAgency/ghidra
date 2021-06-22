@@ -55,69 +55,15 @@
         <pentry minsize="1" maxsize="4" extension="inttype">
           <register name="a2"/>
         </pentry>
-        <pentry minsize="1" maxsize="4" extension="inttype">
-          <register name="a3"/>
-        </pentry>
-        <pentry minsize="1" maxsize="4" extension="inttype">
-          <register name="a4"/>
-        </pentry>
-        <pentry minsize="1" maxsize="4" extension="inttype">
-          <register name="a5"/>
-        </pentry>
-    </output>
-    <returnaddress>
-        <register name="a0"/>
-    </returnaddress>
-    <unaffected>
-      <register name="a1"/>
-      <register name="a12"/>
-      <register name="a13"/>
-      <register name="a14"/>
-      <register name="a15"/>
-    </unaffected>
-    </prototype>
-  </default_proto>
-  
-  <!-- TODO: Evaluate calling convention introduced with PR 5442 -->
-  <prototype name="__stdcall_windowed" extrapop="0" stackshift="0">
-      <input>
-	<!-- TODO: These might be named a2, a3, a4, etc. -->
-        <pentry minsize="1" maxsize="4" extension="inttype">
-          <register name="i2"/>
-        </pentry>
-        <pentry minsize="1" maxsize="4" extension="inttype">
-          <register name="i3"/>
-        </pentry>
-        <pentry minsize="1" maxsize="4" extension="inttype">
-          <register name="i4"/>
-        </pentry>
-        <pentry minsize="1" maxsize="4" extension="inttype">
-          <register name="i5"/>
-        </pentry>
-        <pentry minsize="1" maxsize="4" extension="inttype">
-          <register name="i6"/>
-        </pentry>
-        <pentry minsize="1" maxsize="4" extension="inttype">
-          <register name="i7"/>
-        </pentry>
-        <pentry minsize="1" maxsize="500" align="4">
-          <addr offset="0" space="stack"/>
-        </pentry>
-      </input>
-      <output>
-	<!-- TODO: Verify minsize and maxsize values -->
-	<!-- TODO: Consider need to name registers -->
-        <pentry minsize="1" maxsize="4" extension="inttype">
-          <register name="o2"/>
-        </pentry>
+        <!-- TODO: Are joins impacted by endianess ? -->
         <pentry minsize="5" maxsize="8" extension="inttype">
-          <addr space="join" piece1="o3" piece2="o2"/>
+          <addr space="join" piece1="a3" piece2="a2"/>
         </pentry>
         <pentry minsize="9" maxsize="12" extension="inttype">
-          <addr space="join" piece1="o4" piece2="o3" piece3="o2"/>
+          <addr space="join" piece1="a4" piece2="a3" piece3="a2"/>
         </pentry>
         <pentry minsize="13" maxsize="16" extension="inttype">
-          <addr space="join" piece1="o5" piece2="o4" piece3="o3" piece4="o2"/>
+          <addr space="join" piece1="a5" piece2="a4" piece3="a3" piece4="a2"/>
         </pentry>
     </output>
     <returnaddress>
@@ -125,6 +71,7 @@
     </returnaddress>
     <unaffected>
       <register name="a1"/>
+      <register name="a0"/>
       <register name="a2"/>
       <register name="a3"/>
       <register name="a4"/>
@@ -135,11 +82,173 @@
       <register name="a9"/>
       <register name="a10"/>
       <register name="a11"/>
+      <register name="t2"/>
+      <register name="t3"/>
+      <register name="t4"/>
+      <register name="t5"/>
+      <register name="t6"/>
+      <register name="t7"/>
+    </unaffected>
+    </prototype>
+  </default_proto>
+  
+  <prototype name="__call0" extrapop="0" stackshift="0">
+    <input>
+      <pentry minsize="1" maxsize="4" extension="inttype">
+        <register name="a2"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" extension="inttype">
+        <register name="a3"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" extension="inttype">
+        <register name="a4"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" extension="inttype">
+        <register name="a5"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" extension="inttype">
+        <register name="a6"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" extension="inttype">
+        <register name="a7"/>
+      </pentry>
+      <pentry minsize="1" maxsize="500" align="4">
+        <addr offset="0" space="stack"/>
+      </pentry>
+    </input>
+    <output>
+      <pentry minsize="1" maxsize="4" extension="inttype">
+        <register name="a2"/>
+      </pentry>
+      <!-- TODO: Are joins impacted by endianess ? -->
+      <pentry minsize="5" maxsize="8" extension="inttype">
+        <addr space="join" piece1="a3" piece2="a2"/>
+      </pentry>
+      <pentry minsize="9" maxsize="12" extension="inttype">
+        <addr space="join" piece1="a4" piece2="a3" piece3="a2"/>
+      </pentry>
+      <pentry minsize="13" maxsize="16" extension="inttype">
+        <addr space="join" piece1="a5" piece2="a4" piece3="a3" piece4="a2"/>
+      </pentry>
+    </output>
+    <returnaddress>
+        <register name="a0"/>
+    </returnaddress>
+    <unaffected>
+      <register name="a1"/>
+      <register name="a0"/>
       <register name="a12"/>
       <register name="a13"/>
       <register name="a14"/>
       <register name="a15"/>
     </unaffected>
   </prototype>
-    
+  
+  <callotherfixup targetop="swap4">
+    <pcode incidentalcopy="true">
+      <body><![CDATA[
+		t2 = a2;
+		t3 = a3;
+		a2 = a6;
+		a3 = a7;
+		a4 = a8;
+		a5 = a9;
+		a6 = a10;
+		a7 = a11;
+      ]]></body>
+    </pcode>
+  </callotherfixup>
+  
+  <callotherfixup targetop="restore4">
+    <pcode incidentalcopy="true">
+      <body><![CDATA[
+		a6 = a2;
+		a7 = a3;
+		a2 = t2;
+		a3 = t3;
+		a4 = t0;
+		a5 = t0;
+		a8 = t0;
+		a9 = t0;
+		a10 = t0;
+		a11 = t0;
+      ]]></body>
+    </pcode>
+  </callotherfixup>
+  
+  <callotherfixup targetop="swap8">
+    <pcode incidentalcopy="true">
+      <body><![CDATA[
+		t2 = a2;
+		t3 = a3;
+		t4 = a4;
+		t5 = a5;
+		t6 = a6;
+		t7 = a7;
+		a2 = a10;
+		a3 = a11;
+		a4 = a12;
+		a5 = a13;
+		a6 = a14;
+		a7 = a15;
+      ]]></body>
+    </pcode>
+  </callotherfixup>
+  
+  <callotherfixup targetop="restore8">
+    <pcode incidentalcopy="true">
+      <body><![CDATA[
+		a10 = a2;
+		a11 = a3;
+		a2 = t2;
+		a3 = t3;
+		a4 = t4;
+		a5 = t5;
+		a6 = t6;
+		a7 = t7;
+		a8 = t0;
+		a9 = t0;
+      ]]></body>
+    </pcode>
+  </callotherfixup>
+  
+  <callotherfixup targetop="swap12">
+    <pcode incidentalcopy="true">
+      <body><![CDATA[
+		t2 = a2;
+		t3 = a3;
+		a2 = a14;
+		a3 = a15;
+      ]]></body>
+    </pcode>
+  </callotherfixup>
+  
+  <callotherfixup targetop="restore12">
+    <pcode incidentalcopy="true">
+      <body><![CDATA[
+		a14 = a2;
+		a15 = a3;
+		a2 = t2;
+		a3 = t3;
+      ]]></body>
+    </pcode>
+  </callotherfixup>
+  
+  <callotherfixup targetop="rotateRegWindow">
+    <pcode>
+      <input name="CALLINC"/>
+      <body><![CDATA[
+		t0 = t0;
+      ]]></body>
+    </pcode>
+  </callotherfixup>
+  
+  <callotherfixup targetop="restoreRegWindow">
+    <pcode>
+      <body><![CDATA[
+		t0 = t0;
+      ]]></body>
+    </pcode>
+  </callotherfixup>
+
 </compiler_spec>

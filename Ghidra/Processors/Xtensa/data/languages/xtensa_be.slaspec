@@ -1,0 +1,12 @@
+@define ENDIAN "big"
+@include "xtensaArch.sinc"
+@include "xtensaMain.sinc"
+
+with : phase=1 {
+
+@include "xtensaInstructions.sinc"
+#@include "xtensa_depbits.sinc" #comment floating-point and uncomment this to use depbits
+@include "cust.sinc"
+@include "flix.sinc"
+
+}

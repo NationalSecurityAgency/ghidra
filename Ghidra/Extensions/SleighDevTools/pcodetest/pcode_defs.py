@@ -665,10 +665,20 @@ PCodeTest({
 })
 
 PCodeTest({
-    'name': 'Xtensa',
+    'name': 'Xtensa_LE',
     'build_all': 1,
     'build_exe': 1,
-    'toolchain': 'Xtensa/xtensa-lx106-elf',
+    'toolchain': 'Xtensa/xtensa-esp32-elf',
     'language_id': 'Xtensa:LE:32:default',
-    'ccflags': '-L %(toolchain_dir)s/lib/gcc/xtensa-lx106-elf/%(gcc_version)s -lgcc',
+    'gcc_version' : '8.4.0',
+    'ccflags': '-L %(toolchain_dir)s/lib/gcc/xtensa-esp32-elf/%(gcc_version)s',
+})
+
+PCodeTest({
+    'name': 'Xtensa_BE',
+    'build_all': 1,
+    'build_exe': 1,
+    'toolchain': 'Xtensa/xtensa-elf',
+    'language_id': 'Xtensa:BE:32:default',
+    'ccflags': '-L %(toolchain_dir)s/lib/gcc/xtensa-elf/%(gcc_version)s',
 })

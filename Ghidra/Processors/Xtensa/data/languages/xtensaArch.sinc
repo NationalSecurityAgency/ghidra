@@ -1,0 +1,433 @@
+define endian=$(ENDIAN);
+define alignment=1;
+
+define space ram        type=ram_space      size=4  default;
+define space register   type=register_space size=4;
+
+# Address registers (AR).
+define register offset=0x0000 size=4 [
+    a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15
+];
+
+# Temporary Address registers (facilitates simplified CALL register swapping used by decompiler)
+define register offset=0x0080 size=4 [
+    t0 t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11
+];
+
+# Floating Point registers
+define register offset=0x0100 size=4 [
+    f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14 f15
+];
+
+# Boolean registers (BR)
+define register offset=0x0200 size=1 [
+    b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15
+];
+
+define register offset=0x0400 size=4 [
+user0		user1		user2		user3		user4		user5		user6		user7		user8		user9		user10		user11		user12		user13		user14		user15
+user16		user17		user18		user19		user20		user21		user22		user23		user24		user25		user26		user27		user28		user29		user30		user31
+user32		user33		user34		user35		user36		user37		user38		user39		user40		user41		user42		user43		user44		user45		user46		user47
+user48		user49		user50		user51		user52		user53		user54		user55		user56		user57		user58		user59		user60		user61		user62		user63
+user64		user65		user66		user67		user68		user69		user70		user71		user72		user73		user74		user75		user76		user77		user78		user79
+user80		user81		user82		user83		user84		user85		user86		user87		user88		user89		user90		user91		user92		user93		user94		user95
+user96		user97		user98		user99		user100		user101		user102		user103		user104		user105		user106		user107		user108		user109		user110		user111
+user112		user113		user114		user115		user116		user117		user118		user119		user120		user121		user122		user123		user124		user125		user126		user127
+user128		user129		user130		user131		user132		user133		user134		user135		user136		user137		user138		user139		user140		user141		user142		user143
+user144		user145		user146		user147		user148		user149		user150		user151		user152		user153		user154		user155		user156		user157		user158		user159
+user160		user161		user162		user163		user164		user165		user166		user167		user168		user169		user170		user171		user172		user173		user174		user175
+user176		user177		user178		user179		user180		user181		user182		user183		user184		user185		user186		user187		user188		user189		user190		user191
+user192		user193		user194		user195		user196		user197		user198		user199		user200		user201		user202		user203		user204		user205		user206		user207
+user208		user209		user210		user211		user212		user213		user214		user215		user216		user217		user218		user219		user220		user221		user222		user223
+user224		user225		user226		user227		user228		user229		user230		THREADPTR	FCR			FSR			user234		user235		user236		user237		user238		user239
+user240		user241		user242		user243		user244		user245		user246		user247		user248		user249		user250		user251		user252		user253		user254		user255
+];
+
+# Program counter.
+define register offset=0x1000 size=4 [ pc ];
+
+define register offset=0x2000 size=4 [
+	LBEG	LEND	LCOUNT	SAR		BR	LITBASE	sr6		sr7		sr8		sr9		sr10	sr11	SCOMPARE1	sr13	sr14	sr15
+@if ENDIAN == "big"
+ACCHI	ACCLO
+@else
+ACCLO	ACCHI
+@endif
+	sr18	sr19	sr20	sr21	sr22	sr23	sr24	sr25	sr26	sr27	sr28	sr29	sr30	sr31
+	M0		M1		M2		M3		sr36	sr37	sr38	sr39	sr40	sr41	sr42	sr43	sr44	sr45	sr46	sr47
+	sr48	sr49	sr50	sr51	sr52	sr53	sr54	sr55	sr56	sr57	sr58	sr59	sr60	sr61	sr62	sr63
+	sr64	sr65	sr66	sr67	sr68	sr69	sr70	sr71	WindowBase	WindowStart	sr74	sr75	sr76	sr77	sr78	sr79
+	sr80	sr81	sr82	PTEVADDR	sr84	sr85	sr86	sr87	sr88	MMID	RASID	ITLBCFG	DTLBCFG	sr93	sr94	sr95
+	IBREAKENABLE	MEMCTL	CACHEATTR	ATOMCTL	sr100	sr101	sr102	sr103	DDR	sr105	MEPC	MEPS	MESAVE	MESR	MECR	MEVADDR
+	sr112		sr113		sr114	sr115	sr116	sr117	sr118	sr119	sr120	sr121	sr122	sr123	sr124	sr125	sr126	sr127
+	IBREAKA0	IBREAKA1	sr130	sr131	sr132	sr133	sr134	sr135	sr136	sr137	sr138	sr139	sr140	sr141	sr142	sr143
+	DBREAKA0	DBREAKA1	sr146	sr147	sr148	sr149	sr150	sr151	sr152	sr153	sr154	sr155	sr156	sr157	sr158	sr159
+	DBREAKC0	DBREAKC1	sr162	sr163	sr164	sr165	sr166	sr167	sr168	sr169	sr170	sr171	sr172	sr173	sr174	sr175
+	sr176		EPC1		EPC2	EPC3	EPC4	EPC5	EPC6	EPC7	sr184	sr185	sr186	sr187	sr188	sr189	sr190	sr191
+	DEPC		sr193		EPS2	EPS3	EPS4	EPS5	EPS6	EPS7	sr200	sr201	sr202	sr203	sr204	sr205	sr206	sr207
+	sr208	EXCSAVE1	EXCSAVE2	EXCSAVE3	EXCSAVE4	EXCSAVE5	EXCSAVE6	EXCSAVE7	sr216	sr217	sr218	sr219	sr220	sr221	sr222	sr223
+#TODO: REVIEW NEEDED! - INTSET / INTERRUPT placement/address (also review related attach)
+	CPENABLE	INTERRUPT	INTSET	INTCLEAR	INTENABLE	sr229	PS	VECBASE	EXCCAUSE	DEBUGCAUSE	CCOUNT	PRID	ICOUNT	ICOUNTLEVEL	EXCVADDR	sr239
+	CCOMPARE0	CCOMPARE1	CCOMPARE2	sr243	MISC0	MISC1	MISC2	MISC3	sr248	sr249	sr250	sr251	sr252	sr253	sr254	sr255
+];
+
+define register offset=0x2040 size=8 [ ACC ];
+
+@define EPC_BASE	"0x22c0" #address of EPCn = $(EPC_BASE) + (n * 4)
+@define EPS_BASE	"0x2300" #address of EPSn = $(EPS_BASE) + (n * 4)
+
+@define PS_INTLEVEL "PS[0,4]"
+@define PS_EXCM		"PS[4,1]"
+@define PS_UM		"PS[5,1]"
+@define	PS_RING		"PS[6,2]"
+@define PS_OWB		"PS[8,4]"
+@define PS_CALLINC	"PS[12,2]"
+@define	PS_WOE		"PS[14,1]"
+
+
+define register offset=0xf000 size=4 contextreg;
+define context contextreg
+	loopMode=(0,0)
+	loopEnd=(1,1) noflow
+	
+	#transient bits
+	phase=(31,31)
+;
+
+@if ENDIAN == "big"
+
+# little-endian -> big-endian 24-bit conversion chart
+#|00|01|02|03|04|05|06|07|08|09|10|11|12|13|14|15|16|17|18|19|20|21|22|23|
+#|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+
+# Regular 24-bit instruction.
+define token insn(24)
+    # Named opcode/register fields.
+    op2    = (0,3)
+    op1    = (4,7)
+    ar     = (8,11)
+    fr     = (8,11)
+    br     = (8,11)
+    as     = (12,15)
+    fs     = (12,15)
+    bs     = (12,15)
+    sr     = (8,15)
+    at     = (16,19)
+    ft     = (16,19)
+    bt     = (16,19)
+    op0    = (20,23)
+
+    # Signed and unsigned immediates. Named [us]N_L.M, where u and s denote signedness, L and M the
+    # least and most significant bit of the immediate in the instruction word, and N the length
+    # (i.e. M-L+1).
+    u3_21_23    = (0,2)
+    u4_20_23    = (0,3)
+    s8_16_23    = (0,7) signed
+    u8_16_23    = (0,7)
+    u12_12_23   = (0,11)
+    s12_12_23   = (0,11) signed
+    u16_8_23    = (0,15)
+    s8_6_23     = (0,17) signed
+    u1_20       = (3,3)
+    u2_18_19    = (4,5)
+    u3_17_19    = (4,6)
+    u2_16_17    = (6,7)
+    u1_16       = (7,7)
+    u1_15_15    = (8,8)
+    u2_14_15    = (8,9)
+    u3_13_15    = (8,10)
+    u4_12_15    = (8,11)
+    m0m1_14_14  = (9,9)
+    u2_12_13    = (10,11)
+    mw_12_13    = (10,11)
+    u1_12       = (11,11)
+    u4_8_11     = (12,15)
+    u8_4_11     = (12,19)
+    s4_8_11     = (12,15)  signed
+    u1_7_7      = (16,16)
+    u2_6_7      = (16,17)
+    u3_5_7      = (16,18)
+    u4_4_7      = (16,19)
+    s4_4_7      = (16,19)
+    m2m3_6_6    = (17,17)
+    u_4_23      = (0,19)
+    u2_4_5      = (18,19)
+    u1_4        = (19,19)
+;
+
+# little-endian -> big-endian 16-bit conversion chart
+#|00|01|02|03|04|05|06|07|08|09|10|11|12|13|14|15|
+#|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+
+# Narrow 16-bit instructions; fields are always prefixed with n_.
+define token narrowinsn(16)
+    n_ar   = (0,3)
+    n_as   = (4,7)
+    n_at   = (8,11)
+    n_op0  = (12,15)
+
+    n_u4_12_15  = (0,3)
+    n_s4_12_15  = (0,3) signed
+    n_u4_8_11   =  (4,7)
+    n_u1_7      =  (8,8)
+    n_u2_6_7    =  (8,9)
+    n_u4_4_7    =  (8,11)
+    n_s3_4_6    =  (9,11)
+    n_u2_4_5    =  (10,11)
+;
+
+@else
+# Regular 24-bit instruction.
+define token insn(24)
+    # Named opcode/register fields.
+    op2    = (20,23)
+    ar     = (12,15)
+    fr     = (12,15)
+    br     = (12,15)
+    as     = (8,11)
+    fs     = (8,11)
+    bs     = (8,11)
+    sr     = (8,15)
+    at     = (4,7)
+    ft     = (4,7)
+    bt     = (4,7)
+    op1    = (16,19)
+    op0    = (0,3)
+
+    # Signed and unsigned immediates. Named [us]N_L_M, where u and s denote signedness, L and M the
+    # least and most significant bit of the immediate in the instruction word, and N the length
+    # (i.e. M-L+1).
+    u3_21_23    = (21,23)
+    u4_20_23    = (20,23)
+    s8_16_23    = (16,23) signed
+    u8_16_23    = (16,23)
+    u12_12_23   = (12,23)
+    s12_12_23   = (12,23) signed
+    u16_8_23    = (8,23)
+    s8_6_23     = (6,23) signed
+    u1_20       = (20,20)
+    u2_18_19    = (18,19)
+    u3_17_19    = (17,19)
+    u2_16_17    = (16,17)
+    u1_16       = (16,16)
+    u1_15_15    = (15,15)
+    u2_14_15    = (14,15)
+    u3_13_15    = (13,15)
+    u4_12_15    = (12,15)
+    m0m1_14_14  = (14,14)
+    u2_12_13    = (12,13)
+    mw_12_13    = (12,13)
+    u1_12       = (12,12)
+    u4_8_11     = (8,11)
+    u8_4_11     = (4,11)
+    s4_8_11     = (8,11)  signed
+    u1_7_7      = (7,7)
+    u2_6_7      = (6,7)
+    u3_5_7      = (5,7)
+    u4_4_7      = (4,7)
+    s4_4_7      = (4,7)
+    m2m3_6_6    = (6,6)
+    u_4_23      = (4,23)
+    u2_4_5      = (4,5)
+    u1_4        = (4,4)
+;
+
+# Narrow 16-bit instructions; fields are always prefixed with n_.
+define token narrowinsn(16)
+    n_ar   = (12,15)
+    n_as   = (8,11)
+    n_at   = (4,7)
+    n_op0  = (0, 3)
+
+    n_u4_12_15  = (12,15)
+    n_s4_12_15  = (12,15) signed
+    n_u4_8_11   =  (8,11)
+    n_u1_7      =  (7,7)
+    n_u2_6_7    =  (6,7)
+    n_u4_4_7    =  (4,7)
+    n_s3_4_6    =  (4,6)
+    n_u2_4_5    =  (4,5)
+;
+
+@endif
+
+attach variables [ sr ] [
+#    0x...0         0x...4      0x...8      0x...c
+     LBEG           LEND        LCOUNT      SAR         # 0x0_
+     BR             LITBASE     _           _           # 0x1_
+     _              _           _           _           # 0x2_
+     SCOMPARE1      _           _           _           # 0x3_
+     ACCLO          ACCHI       _           _           # 0x4_
+     _              _           _           _           # 0x5_
+     _              _           _           _           # 0x6_
+     _              _           _           _           # 0x7_
+     M0             M1          M2          M3          # 0x8_
+     _              _           _           _           # 0x9_
+     _              _           _           _           # 0xa_
+     _              _           _           _           # 0xb_
+     _              _           _           _           # 0xc_
+     _              _           _           _           # 0xd_
+     _              _           _           _           # 0xe_
+     _              _           _           _           # 0xf_
+#    0x...0         0x...4      0x...8      0x...c
+     _              _           _           _           # 0x10_
+     _              _           _           _           # 0x11_
+     WindowBase     WindowStart _           _           # 0x12_
+     _              _           _           _           # 0x13_
+     _              _           _           PTEVADDR    # 0x14_
+     _              _           _           _           # 0x15_
+     _              MMID        RASID       ITLBCFG     # 0x16_
+     DTLBCFG        _           _           _           # 0x17_
+     IBREAKENABLE   MEMCTL      CACHEATTR   ATOMCTL     # 0x18_
+     _              _           _           _           # 0x19_
+     DDR            _           MEPC        MEPS        # 0x1a_
+     MESAVE         MESR        MECR        MEVADDR     # 0x1b_
+     _              _           _           _           # 0x1c_
+     _              _           _           _           # 0x1d_
+     _              _           _           _           # 0x1e_
+     _              _           _           _           # 0x1f_
+#    0x...0         0x...4      0x...8      0x...c
+     IBREAKA0       IBREAKA1    _           _           # 0x20_
+     _              _           _           _           # 0x21_
+     _              _           _           _           # 0x22_
+     _              _           _           _           # 0x23_
+     DBREAKA0       DBREAKA1    _           _           # 0x24_
+     _              _           _           _           # 0x25_
+     _              _           _           _           # 0x26_
+     _              _           _           _           # 0x27_
+     DBREAKC0       DBREAKC1    _           _           # 0x28_
+     _              _           _           _           # 0x29_
+     _              _           _           _           # 0x2a_
+     _              _           _           _           # 0x2b_
+     _              EPC1        EPC2        EPC3        # 0x2c_
+     EPC4           EPC5        EPC6        EPC7        # 0x2d_
+     _              _           _           _           # 0x2e_
+     _              _           _           _           # 0x2f_
+#    0x...0         0x...4      0x...8      0x...c
+     DEPC           _           EPS2        EPS3        # 0x30_
+     EPS4           EPS5        EPS6        EPS7        # 0x31_
+     _              _           _           _           # 0x32_
+     _              _           _           _           # 0x33_
+     _              EXCSAVE1    EXCSAVE2    EXCSAVE3    # 0x34_
+     EXCSAVE4       EXCSAVE5    EXCSAVE6    EXCSAVE7    # 0x35_
+     _              _           _           _           # 0x36_
+     _              _           _           _           # 0x37_
+     CPENABLE       INTERRUPT   INTSET      INTCLEAR    # 0x38_
+     INTENABLE      _           PS          VECBASE     # 0x39_
+     EXCCAUSE       DEBUGCAUSE  CCOUNT      PRID        # 0x3a_
+     ICOUNT         ICOUNTLEVEL EXCVADDR    _           # 0x3b_
+     CCOMPARE0      CCOMPARE1   CCOMPARE2   _           # 0x3c_
+     MISC0          MISC1       MISC2       MISC3       # 0x3d_
+     _              _           _           _           # 0x3e_
+     _              _           _           _           # 0x3f_
+#    0x...0         0x...4      0x...8      0x...c
+];
+
+attach variables [ ar as at n_ar n_as n_at ] [
+    a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15
+];
+
+attach variables [ fr fs ft ] [
+    f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14 f15
+];
+
+attach variables [ br bs bt ] [
+    b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15
+];
+
+# Various 32-bit pointers relative to PC. Any operands that are split across non-consecutive
+# bits are named foo_LL.LM_ML.MM, where LL is the least significant bits of the least
+# singificant operand half, LM the most significant bits of the least significant operand half, etc.
+
+attach variables [ mw_12_13 ] [
+	M0 M1 M2 M3
+];
+
+attach variables [ m2m3_6_6 ] [
+	M2 M3
+];
+
+attach variables [ m0m1_14_14 ] [
+	M0 M1
+];
+
+
+#implemented pcodeops
+define pcodeop breakpoint;
+define pcodeop dhi;
+define pcodeop dhu;
+define pcodeop dhwb;
+define pcodeop dhwbi;
+define pcodeop dii;
+define pcodeop diu;
+define pcodeop diwb;
+define pcodeop diwbi;
+define pcodeop dpfl;
+define pcodeop dpfr;
+define pcodeop dpfro;
+define pcodeop dpfw;
+define pcodeop dpfwo;
+define pcodeop dsync;
+define pcodeop esync;
+define pcodeop excw;
+define pcodeop extw;
+define pcodeop idtlb;
+define pcodeop ihi;
+define pcodeop ihu;
+define pcodeop iii;
+define pcodeop iitlb;
+define pcodeop iiu;
+define pcodeop ill;
+define pcodeop ipf;
+define pcodeop ipfl;
+define pcodeop isync;
+define pcodeop acquire;
+define pcodeop ldct;
+define pcodeop lict;
+define pcodeop licw;
+define pcodeop memw;
+define pcodeop nsa;
+define pcodeop nsau;
+define pcodeop pdtlb;
+define pcodeop pitlb;
+define pcodeop rdtlb0;
+define pcodeop rdtlb1;
+define pcodeop rer;
+define pcodeop restore4;
+define pcodeop restore8;
+define pcodeop restore12;
+define pcodeop rfdd;
+define pcodeop rfde;
+define pcodeop rfdo;
+define pcodeop rfe;
+define pcodeop rfi;
+define pcodeop rfme;
+define pcodeop rfue;
+define pcodeop rfwo;
+define pcodeop rfwu;
+define pcodeop ritlb0;
+define pcodeop ritlb1;
+define pcodeop rsil;
+define pcodeop rsr;
+define pcodeop rsync;
+define pcodeop rur;
+define pcodeop s32c1i;
+define pcodeop release;
+define pcodeop restoreRegWindow;
+define pcodeop rotateRegWindow;
+define pcodeop sdct;
+define pcodeop sict;
+define pcodeop sicw;
+define pcodeop simcall;
+define pcodeop syscall;
+define pcodeop swap4;
+define pcodeop swap8;
+define pcodeop swap12;
+define pcodeop waiti;
+define pcodeop wdtlb;
+define pcodeop wer;
+define pcodeop witlb;
+define pcodeop wsr;
+define pcodeop wur;
+define pcodeop xsr;
+
