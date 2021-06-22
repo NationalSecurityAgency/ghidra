@@ -13,8 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+use clap::{Clap, AppSettings};
+use std::env;
+
 mod bridge;
+mod cli;
+
+#[derive(Clap)]
+#[clap(version = "1.0", author = "BinCraft Team")]
+#[clap(setting = AppSettings::ColoredHelp)]
+struct Opts {
+    /// commandline debugging mode
+    #[clap(short, long)]
+    cli_debug: bool,
+    /// sleigh home (ghidra installation point), used in cli
+    #[clap(short, long)]
+    sleigh_home: Option<String>,
+    /// use legacy (C++ version) CLI
+    #[clap(long)]
+    legacy: bool,
+}
 
 fn main() {
-    bridge::ffi::ghidra_process_main();
+
+    let opts: Opts = Opts::parse();
+
+    if opts.cli_debug {
+        if opts.legacy {
+            let args: Vec<_> = env::args().collect();
+            bridge::ffi::console_main_rust(args.as_slice());
+        } else {
+            cli::cli_main(opts.sleigh_home);
+        }
+    } else {
+        bridge::ffi::ghidra_process_main();
+    }
 }

@@ -257,8 +257,12 @@ void SleighArchitecture::buildSpecFile(DocumentStorage &store)
     }
     catch(XmlError &err) {
       ostringstream serr;
-      serr << "XML error parsing SLEIGH file: " << slafile;
-      serr << "\n " << err.explain;
+      if (slafile.length() == 0) {
+        serr << "SLEIGH file not found\n" << err.explain;
+      } else {
+        serr << "XML error parsing SLEIGH file: " << slafile;
+        serr << "\n " << err.explain;
+      }
       throw SleighError(serr.str());
     }
     catch(LowlevelError &err) {

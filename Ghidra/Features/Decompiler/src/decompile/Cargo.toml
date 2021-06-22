@@ -8,6 +8,9 @@ edition = "2018"
 
 [dependencies]
 cxx = "1.0"
+clap = "3.0.0-beta.2"
+easy-repl = { git = "https://github.com/Escapingbug/easy-repl.git", branch = "different_types" }
+anyhow = "1.0"
 
 [build-dependencies]
 cxx-build = "1.0"
