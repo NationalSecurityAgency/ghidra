@@ -226,6 +226,14 @@ public class Ext4SuperBlock implements StructConverter {
 		return s_blocks_count_lo;
 	}
 
+	/**
+	 * Return the calculated block count by combining the s_blocks_count_lo and s_blocks_count_hi
+	 * @return the calculated block count by combining the s_blocks_count_lo and s_blocks_count_hi
+	 */
+	public long getS_blocks_count() {
+		return ((long) s_blocks_count_hi << 32) | Integer.toUnsignedLong(s_blocks_count_lo);
+	}
+
 	public int getS_r_blocks_count_lo() {
 		return s_r_blocks_count_lo;
 	}
