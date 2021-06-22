@@ -1,160 +1,118 @@
 /* ###
- * IP: BinCraft 
+ * IP: BinCraft
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
+*/
+use crate::bridge::ffi;
+use anyhow;
+use cxx::UniquePtr;
+use easy_repl::{command, CommandStatus, Repl};
 use std::{
-    borrow::Cow::{self, Borrowed, Owned}
+    collections::HashMap,
+    env::{self},
+    pin::Pin,
 };
-use rustyline::{
-    Editor,
-    Cmd,
-    CompletionType,
-    Context,
-    EditMode,
-    KeyEvent,
-    Config,
-    config::OutputStreamType,
-    error::ReadlineError,
-    completion::{Completer, FilenameCompleter, Pair},
-    hint::{Hinter, HistoryHinter},
-    highlight::{Highlighter, MatchingBracketHighlighter},
-    validate::{self, MatchingBracketValidator, Validator},
-};
-use rustyline_derive::Helper;
 
-#[derive(Helper)]
-struct CliHelper {
-    completer: FilenameCompleter,
-    highlighter: MatchingBracketHighlighter,
-    validator: MatchingBracketValidator,
-    hinter: HistoryHinter,
-    colored_prompt: String,
+struct CliContext {
+    status: UniquePtr<ffi::IfaceStatus>,
+    data_map: HashMap<String, *mut ffi::IfaceData>,
+    interface_cmds: HashMap<String, UniquePtr<ffi::IfaceCommand>>,
 }
 
-impl CliHelper {
+impl CliContext {
     fn new() -> Self {
-        Self {
-            completer: FilenameCompleter::new(),
-            highlighter: MatchingBracketHighlighter::new(),
-            hinter: HistoryHinter {},
-            colored_prompt: "".to_owned(),
-            validator: MatchingBracketValidator::new()
+        let mut ctx = Self {
+            status: ffi::new_iface_status_stub(),
+            data_map: HashMap::new(),
+            interface_cmds: HashMap::new(),
+        };
+
+        ctx.register_command("load-file", ffi::new_load_file_command());
+        ctx.register_command("add-path", ffi::new_add_path_command());
+        ctx.register_command("save", ffi::new_save_command());
+        ctx.register_command("restore", ffi::new_restore_command());
+
+        ctx.register_command("decompile", ffi::new_decompile_command());
+        ctx.register_command("print-raw", ffi::new_print_raw_command());
+        ctx.register_command("print-c", ffi::new_print_c_command());
+
+        ctx
+    }
+
+    fn command(&mut self, name: &str) -> Pin<&mut ffi::IfaceCommand> {
+        self.interface_cmds.get_mut(name).unwrap().as_mut().unwrap()
+    }
+
+    fn register_command(&mut self, name: &str, mut command: UniquePtr<ffi::IfaceCommand>) {
+        let entry = self
+            .data_map
+            .entry(command.as_mut().unwrap().getModuleRust().to_string())
+            .or_insert(command.as_mut().unwrap().createData());
+        unsafe {
+            command
+                .as_mut()
+                .unwrap()
+                .setData(self.status.as_mut().unwrap().get_unchecked_mut() as *mut ffi::IfaceStatus, *entry);
         }
+        self.interface_cmds.insert(name.to_string(), command);
     }
 }
 
-impl Completer for CliHelper {
-    type Candidate = Pair;
-
-    fn complete(
-        &self,
-        line: &str,
-        pos: usize,
-        ctx: &Context<'_>
-    ) -> Result<(usize, Vec<Pair>), ReadlineError> {
-        self.completer.complete(line, pos, ctx)
-    }
+macro_rules! call_cmd {
+    ($cmd:ident, $($arg:ident),*) => {
+        let mut v = vec![];
+        $(
+            v.push($arg.to_string());
+        )*
+        let s = v.join(" ");
+        unsafe { ffi::call_cmd($cmd, &s) };
+    };
 }
 
-impl Hinter for CliHelper {
-    type Hint = String;
+fn init_decompiler(sleigh_home: Option<String>) {
+    let ghidra_root = if let Some(ghidra_root) = sleigh_home {
+        ghidra_root
+    } else {
+        let ghidra_root = match env::var("SLEIGHHOME") {
+            Ok(v) => v,
+            _ => panic!("SLEIGHHOME not set to ghidra install"),
+        };
+        ghidra_root
+    };
 
-    fn hint(&self, line: &str, pos: usize, ctx: &Context<'_>) -> Option<String> {
-        self.hinter.hint(line, pos, ctx)
-    }
+    ffi::startDecompilerLibrary(&ghidra_root);
 }
 
-impl Highlighter for CliHelper {
-    fn highlight_prompt<'b, 's: 'b, 'p: 'b>(
-        &'s self,
-        prompt: &'p str,
-        default: bool,
-    ) -> Cow<'b, str> {
-        if default {
-            Borrowed(&self.colored_prompt)
-        } else {
-            Borrowed(prompt)
-        }
-    }
+pub(crate) fn cli_main(sleigh_home: Option<String>) {
+    init_decompiler(sleigh_home);
 
-    fn highlight_hint<'h>(&self, hint: &'h str) -> Cow<'h, str> {
-        Owned("\x1b[1m".to_owned() + hint + "\x1b[m")
-    }
+    let mut ctx = CliContext::new();
 
-    fn highlight<'l>(&self, line: &'l str, pos: usize) -> Cow<'l, str> {
-        self.highlighter.highlight(line, pos)
-    }
-
-    fn highlight_char(&self, line: &str, pos: usize) -> bool {
-        self.highlighter.highlight_char(line, pos)
-    }
-}
-
-impl Validator for CliHelper {
-    fn validate(
-        &self,
-        ctx: &mut validate::ValidationContext
-    ) -> rustyline::Result<validate::ValidationResult> {
-        self.validator.validate(ctx)
-    }
-
-    fn validate_while_typing(&self) -> bool {
-        self.validator.validate_while_typing()
-    }
-}
-
-/// main function for cli
-pub(crate) fn cli_main() {
-    let config = Config::builder()
-        .history_ignore_space(true)
-        .completion_type(CompletionType::List)
-        .edit_mode(EditMode::Emacs)
-        .output_stream(OutputStreamType::Stdout)
-        .build();
-    let mut rl = Editor::with_config(config);
-    rl.set_helper(Some(CliHelper::new()));
-    rl.bind_sequence(KeyEvent::alt('n'), Cmd::HistorySearchForward);
-    rl.bind_sequence(KeyEvent::alt('p'), Cmd::HistorySearchBackward);
-
-    if rl.load_history(".decomp_history.txt",).is_err() {
-        println!("No previous history");
-    }
-
-    loop {
-        rl.helper_mut().expect("No helper").colored_prompt = format!("\x1b[1;32m{}\x1b[0m", "decomp> ");
-        let readline = rl.readline("decomp> ");
-
-        match readline {
-            Ok(line) => {
-                rl.add_history_entry(line.as_str());
-                println!("Line: {}", line);
-            }
-            Err(ReadlineError::Interrupted) => {
-                println!("Interrupted");
-                break;
-            }
-            Err(ReadlineError::Eof) => {
-                println!("EOF");
-                break;
-            }
-            Err(err) => {
-                println!("Error: {:?}", err);
-                break;
-            }
-        }
-
-        rl.append_history(".decomp_history.txt").unwrap();
-    }
+    let mut rl = Repl::builder()
+        .prompt("\x1b[1;32mdecomp> \x1b[0m")
+        .with_filename_completion(true)
+        .add(
+            "load-file",
+            command! {
+                "load the binary into cli",
+                (filename: String) => |filename: String| {
+                    let cmd = ctx.command("load-file");
+                    call_cmd!(cmd, filename);
+                    Ok(CommandStatus::Done)
+                }
+            },
+        )
+        .build()
+        .expect("unable to build cli");
+    rl.run().expect("unable to run cli");
 }

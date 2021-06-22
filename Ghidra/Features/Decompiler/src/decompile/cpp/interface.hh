@@ -20,12 +20,15 @@
 #define __INTERFACE__
 
 #include "capability.hh"
+#include "rust/cxx.h"
 #include <string>
 #include <map>
 #include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <cstdio>
+#include <memory>
+#include <iostream>
 
 using namespace std;
 
@@ -115,6 +118,10 @@ public:
   /// Commands in the same module share data through their registered IfaceData object
   /// \return the formal module name
   virtual string getModule(void) const=0;
+
+  rust::String getModuleRust(void) const {
+    return this->getModule();
+  }
 
   /// \brief Create a specialized data object for \b this command (and its module)
   ///
@@ -234,6 +241,7 @@ public:
 		   const char *nm3 = (const char *)0,
 		   const char *nm4 = (const char *)0,
 		   const char *nm5 = (const char *)0);
+  void registerComRust(IfaceCommand *fptr);
   IfaceData *getData(const string &nm) const;	///< Get data associated with a IfaceCommand module
   bool runCommand(void);			///< Run the next command
   void getHistory(string &line,int4 i) const;	///< Get the i-th command line from history
@@ -242,6 +250,14 @@ public:
   bool isInError(void) const { return inerror; }	///< Return \b true if the last command failed
   void evaluateError(void);			///< Adjust which stream to process based on last error
   static void wordsToString(string &res,const vector<string> &list);	///< Concatenate tokens
+};
+
+/// \brief stub of the status, used in Rust binding
+class IfaceStatusStub : public IfaceStatus {
+public:
+  IfaceStatusStub(const string &prompt, ostream &os): IfaceStatus(prompt, os) {}
+  void readLine(string &line) {}
+  bool isStreamFinished() const { return true; }
 };
 
 /// \brief A root class for a basic set of commands
@@ -286,5 +302,15 @@ class IfcEcho : public IfaceBaseCommand {
 public:
   virtual void execute(istream &s);
 };
+
+unique_ptr<IfaceStatus> new_iface_status_stub() {
+  return make_unique<IfaceStatusStub>("decomp> ", cout);
+}
+
+void call_cmd(IfaceCommand &cmd, rust::Str s) {
+  auto sstr = string(s);
+  istringstream istr(sstr);
+  cmd.execute(istr);
+}
 
 #endif

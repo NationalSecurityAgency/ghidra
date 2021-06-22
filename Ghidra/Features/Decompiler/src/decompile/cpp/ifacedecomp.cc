@@ -3340,3 +3340,15 @@ void IfcSource::execute(istream &s)
   s >> filename;
   status->pushScript(filename,filename+"> ");
 }
+
+unique_ptr<IfaceCommand> new_decompile_command() {
+  return make_unique<IfcDecompile>();
+}
+
+unique_ptr<IfaceCommand> new_print_raw_command() {
+  return make_unique<IfcPrintRaw>();
+}
+
+unique_ptr<IfaceCommand> new_print_c_command() {
+  return make_unique<IfcPrintCFlat>();
+}

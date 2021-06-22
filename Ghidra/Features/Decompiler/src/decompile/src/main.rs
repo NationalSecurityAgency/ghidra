@@ -24,7 +24,10 @@ mod cli;
 struct Opts {
     /// commandline debugging mode
     #[clap(short, long)]
-    cli_debug: bool
+    cli_debug: bool,
+    /// sleigh home (ghidra installation point), used in cli
+    #[clap(short, long)]
+    sleigh_home: Option<String>,
 }
 
 fn main() {
@@ -32,7 +35,7 @@ fn main() {
     let opts: Opts = Opts::parse();
 
     if opts.cli_debug {
-        cli::cli_main();
+        cli::cli_main(opts.sleigh_home);
     } else {
         bridge::ffi::ghidra_process_main();
     }

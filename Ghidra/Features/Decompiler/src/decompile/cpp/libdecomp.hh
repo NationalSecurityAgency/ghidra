@@ -23,6 +23,7 @@
 #include "architecture.hh"
 #include "sleigh_arch.hh"
 #include "ifacedecomp.hh"
+#include "rust/cxx.h"
 
 // Initialize all decompiler capabilities and register any sleigh specifications
 // If you have an entire ghidra distribution, you can specify its root with the -sleighhome- input,
@@ -30,6 +31,8 @@
 extern void startDecompilerLibrary(const char *sleighhome);
 extern void startDecompilerLibrary(const vector<string> &extrapaths);
 extern void startDecompilerLibrary(const char *sleighhome,const vector<string> &extrapaths);
+
+extern void startDecompilerLibrary(rust::Str sleighhome);
 
 extern void shutdownDecompilerLibrary(void);
 
