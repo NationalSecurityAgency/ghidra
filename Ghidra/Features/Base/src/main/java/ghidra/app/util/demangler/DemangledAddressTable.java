@@ -32,10 +32,10 @@ public class DemangledAddressTable extends DemangledObject {
 	/**
 	 * Constructor
 	 * 
-	 * @param mangled the source mangled string 
+	 * @param mangled the source mangled string
 	 * @param originalDemangled the original demangled string
 	 * @param name the name of the address table
-	 * @param calculateLength true if the length of this address table should be calculdated at 
+	 * @param calculateLength true if the length of this address table should be calculdated at
 	 *        analysis time
 	 */
 	public DemangledAddressTable(String mangled, String originalDemangled, String name,
@@ -56,7 +56,7 @@ public class DemangledAddressTable extends DemangledObject {
 
 	@Override
 	public String getSignature(boolean format) {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 
 		if (specialPrefix != null) {
 			buffer.append(specialPrefix);
@@ -120,11 +120,11 @@ public class DemangledAddressTable extends DemangledObject {
 	}
 
 	/**
-	 * Perform a best guess at the length of an address table assuming that 
+	 * Perform a best guess at the length of an address table assuming that
 	 * another label (or end of block) can be used to identify the end.
 	 * @param program the program
 	 * @param address start of address table
-	 * @return maximum length of table or -1 if address does not reside 
+	 * @return maximum length of table or -1 if address does not reside
 	 * within an initialized memory block
 	 */
 	private static int guessTableLength(Program program, Address address) {
@@ -191,7 +191,7 @@ public class DemangledAddressTable extends DemangledObject {
 
 			if (!mem.contains(refAddr)) {
 				// terminate table early if pointer reference address does not exist
-				// within memory (demangled address tables should only refer to entities 
+				// within memory (demangled address tables should only refer to entities
 				// contained within program memory).
 				return;
 			}
