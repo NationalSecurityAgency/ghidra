@@ -597,3 +597,13 @@ void IfcEcho::execute(istream &s)
     status->fileoptr->put(c);
   *status->fileoptr << endl;
 }
+
+unique_ptr<IfaceStatus> new_iface_status_stub() {
+  return make_unique<IfaceStatusStub>("decomp> ", cout);
+}
+
+void call_cmd(IfaceCommand &cmd, rust::Str s) {
+  auto sstr = string(s);
+  istringstream istr(sstr);
+  cmd.execute(istr);
+}

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 use clap::{Clap, AppSettings};
+use std::env;
 
 mod bridge;
 mod cli;
@@ -28,6 +29,9 @@ struct Opts {
     /// sleigh home (ghidra installation point), used in cli
     #[clap(short, long)]
     sleigh_home: Option<String>,
+    /// use legacy (C++ version) CLI
+    #[clap(long)]
+    legacy: bool,
 }
 
 fn main() {
@@ -35,7 +39,12 @@ fn main() {
     let opts: Opts = Opts::parse();
 
     if opts.cli_debug {
-        cli::cli_main(opts.sleigh_home);
+        if opts.legacy {
+            let args: Vec<_> = env::args().collect();
+            bridge::ffi::console_main_rust(args.as_slice());
+        } else {
+            cli::cli_main(opts.sleigh_home);
+        }
     } else {
         bridge::ffi::ghidra_process_main();
     }

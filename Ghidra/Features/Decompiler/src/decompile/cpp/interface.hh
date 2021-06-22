@@ -303,14 +303,7 @@ public:
   virtual void execute(istream &s);
 };
 
-unique_ptr<IfaceStatus> new_iface_status_stub() {
-  return make_unique<IfaceStatusStub>("decomp> ", cout);
-}
-
-void call_cmd(IfaceCommand &cmd, rust::Str s) {
-  auto sstr = string(s);
-  istringstream istr(sstr);
-  cmd.execute(istr);
-}
+unique_ptr<IfaceStatus> new_iface_status_stub();
+void call_cmd(IfaceCommand &cmd, rust::Str s);
 
 #endif

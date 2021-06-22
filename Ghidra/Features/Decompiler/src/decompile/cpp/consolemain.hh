@@ -40,6 +40,10 @@ public:
   virtual void execute(istream &s);
 };
 
+int console_main(int argc, const char **argv);
+
+int32_t console_main_rust(rust::Slice<const rust::String> args);
+
 unique_ptr<IfaceCommand> new_load_file_command();
 unique_ptr<IfaceCommand> new_add_path_command();
 unique_ptr<IfaceCommand> new_save_command();

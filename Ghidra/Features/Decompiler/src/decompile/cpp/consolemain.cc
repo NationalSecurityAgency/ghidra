@@ -165,7 +165,7 @@ unique_ptr<IfaceCommand> new_restore_command() {
 #ifdef GHIDRA_MAIN
 int main(int argc,char **argv)
 #else
-int console_main(int argc,char **argv)
+int console_main(int argc, const char **argv)
 #endif
 
 {
@@ -236,3 +236,18 @@ int console_main(int argc,char **argv)
   exit(retval);
 }
 
+int32_t console_main_rust(rust::Slice<const rust::String> args) {
+  int argc = args.size();
+  vector<string> argvData;
+  vector<const char*> argv;
+
+  for (auto arg : args) {
+    argvData.push_back(string(arg));
+  }
+
+  for (auto arg : argvData) {
+    argv.push_back(arg.c_str());
+  }
+
+  return console_main(argc, argv.data());
+}

@@ -44,6 +44,8 @@ pub(crate) mod ffi {
         fn new_save_command() -> UniquePtr<IfaceCommand>;
         fn new_restore_command() -> UniquePtr<IfaceCommand>;
 
+        fn console_main_rust(args: &[String]) -> i32;
+
         include!("ifacedecomp.hh");
         fn new_decompile_command() -> UniquePtr<IfaceCommand>;
         fn new_print_raw_command() -> UniquePtr<IfaceCommand>;

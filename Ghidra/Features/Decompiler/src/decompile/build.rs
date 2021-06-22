@@ -116,10 +116,11 @@ const CLI_CXX: &[&'static str] = &[
     "pcodecompile.cc",
     "libdecomp.cc",
     "consolemain.cc",
+    "ifaceterm.cc",
     "interface.cc",
     "ifacedecomp.cc",
     "grammar.cc",
-    "callgraph.cc"
+    "callgraph.cc",
 ];
 
 struct CompileOptions {
@@ -290,6 +291,10 @@ fn main() {
     #[cfg(target_os = "windows")]
     {
         target.define("_WINDOWS", "1"); // This is assumed by ghidra, but not defined by msvc, strange.
+    }
+    #[cfg(debug_assertions)]
+    {
+        target.define("__TERMINAL__", "");
     }
     target
         .cpp(true)
