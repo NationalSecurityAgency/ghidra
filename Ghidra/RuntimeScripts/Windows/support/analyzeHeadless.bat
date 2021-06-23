@@ -1,8 +1,7 @@
 :: Ghidra Headless Analyzer launch (see analyzeHeadlessREADME.html)
 
 @echo off
-
-setlocal EnableDelayedExpansion
+setlocal 
 
 :: Maximum heap memory size.  For headless, it is recommended to not use the default value
 :: because garbage collection could take too long on systems with a large amount of physical
@@ -23,9 +22,6 @@ set DEBUG_ADDRESS=127.0.0.1:13002
 set VMARG_LIST=-XX:ParallelGCThreads=2
 set VMARG_LIST=%VMARG_LIST% -XX:CICompilerCount=2
 
-:: store current path
-set "filepath=%~dp0"
-
 :: Loop through parameters (if there aren't any, just continue) and store
 ::   in params variable.
 
@@ -36,6 +32,7 @@ if "%~1" == "" goto cont
 
 :: If -import is found and Windows has not done proper wildcard expansion, force
 :: this to happen and save expansion to params variable.
+setlocal EnableDelayedExpansion
 if "%~1" == "-import" (	
 	set params=!params! -import
 	for %%f in ("%~2") DO (
@@ -45,10 +42,11 @@ if "%~1" == "-import" (
 ) else (
 	set params=!params! "%~1"
 )
+setlocal DisableDelayedExpansion
 
 shift
 goto Loop
 
 :cont
 
-call "%filepath%launch.bat" %LAUNCH_MODE% Ghidra-Headless "%MAXMEM%" "%VMARG_LIST%" ghidra.app.util.headless.AnalyzeHeadless %params%
+call "%~dp0launch.bat" %LAUNCH_MODE% Ghidra-Headless "%MAXMEM%" "%VMARG_LIST%" ghidra.app.util.headless.AnalyzeHeadless %params%
