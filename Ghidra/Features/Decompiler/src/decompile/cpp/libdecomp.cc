@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "libdecomp.hh"
+#include "rust/cxx.h"
 
 void startDecompilerLibrary(const char *sleighhome)
 
@@ -46,6 +47,11 @@ void startDecompilerLibrary(const char *sleighhome,const vector<string> &extrapa
 
   for(uint4 i=0;i<extrapaths.size();++i)
     SleighArchitecture::specpaths.addDir2Path(extrapaths[i]);
+}
+
+void startDecompilerLibrary(rust::Str sleighhome) {
+  auto sleighhomeString = string(sleighhome);
+  startDecompilerLibrary(sleighhomeString.c_str());
 }
 
 void shutdownDecompilerLibrary(void)

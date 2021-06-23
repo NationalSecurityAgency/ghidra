@@ -15,6 +15,8 @@
  */
 /// \file ifaceterm.hh
 /// \brief Add some terminal capabilities to the command-line interface (IfaceStatus)
+#ifndef __IFACETERM__
+#define __IFACETERM__
 
 #include "interface.hh"
 
@@ -48,3 +50,5 @@ public:
   virtual void popScript(void);
   virtual bool isStreamFinished(void) const;
 };
+
+#endif

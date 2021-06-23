@@ -17,26 +17,7 @@
 #include <cstdlib>
 
 #include "libdecomp.hh"
-
-class IfcLoadFile : public IfaceDecompCommand {
-public:
-  virtual void execute(istream &s);
-};
-
-class IfcAddpath : public IfaceDecompCommand {
-public:
-  virtual void execute(istream &s);
-};
-
-class IfcSave : public IfaceDecompCommand {
-public:
-  virtual void execute(istream &s);
-};
-
-class IfcRestore : public IfaceDecompCommand {
-public:
-  virtual void execute(istream &s);
-};
+#include "consolemain.hh"
 
 void IfcLoadFile::execute(istream &s)
 
@@ -165,7 +146,27 @@ void IfcRestore::execute(istream &s)
   *status->optr << savefile << " successfully loaded: " << dcp->conf->getDescription() << endl;
 }
 
+unique_ptr<IfaceCommand> new_load_file_command() {
+  return make_unique<IfcLoadFile>();
+}
+
+unique_ptr<IfaceCommand> new_add_path_command() {
+  return make_unique<IfcAddpath>();
+}
+
+unique_ptr<IfaceCommand> new_save_command() {
+  return make_unique<IfcSave>();
+}
+
+unique_ptr<IfaceCommand> new_restore_command() {
+  return make_unique<IfcRestore>();
+}
+
+#ifdef GHIDRA_MAIN
 int main(int argc,char **argv)
+#else
+int console_main(int argc, const char **argv)
+#endif
 
 {
   const char *initscript = (const char *)0;
@@ -235,3 +236,18 @@ int main(int argc,char **argv)
   exit(retval);
 }
 
+int32_t console_main_rust(rust::Slice<const rust::String> args) {
+  int argc = args.size();
+  vector<string> argvData;
+  vector<const char*> argv;
+
+  for (auto arg : args) {
+    argvData.push_back(string(arg));
+  }
+
+  for (auto arg : argvData) {
+    argv.push_back(arg.c_str());
+  }
+
+  return console_main(argc, argv.data());
+}
