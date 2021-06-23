@@ -50,5 +50,6 @@ pub(crate) mod ffi {
         fn new_decompile_command() -> UniquePtr<IfaceCommand>;
         fn new_print_raw_command() -> UniquePtr<IfaceCommand>;
         fn new_print_c_command() -> UniquePtr<IfaceCommand>;
+        fn new_addressrange_load_command() -> UniquePtr<IfaceCommand>;
     }
 }

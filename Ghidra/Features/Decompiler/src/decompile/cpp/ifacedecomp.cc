@@ -3352,3 +3352,7 @@ unique_ptr<IfaceCommand> new_print_raw_command() {
 unique_ptr<IfaceCommand> new_print_c_command() {
   return make_unique<IfcPrintCFlat>();
 }
+
+unique_ptr<IfaceCommand> new_addressrange_load_command() {
+  return make_unique<IfcAddrrangeLoad>();
+}
