@@ -28,55 +28,56 @@
 //     directory once the extension has been installed/unpacked by Ghidra.  The binutils referenced 
 //     by the script below may be downloaded from the following URL:
 //
-//         https://ftp.gnu.org/pub/gnu/binutils/binutils-2.34.tar.bz2
+//         https://ftp.gnu.org/pub/gnu/binutils/binutils-2.36.tar.bz2
 //
 
-ext.binutils = "binutils-2.34"
+ext.binutils = "binutils-2.36"
 ext.binutilsDistro = "${binutils}.tar.bz2"
 
-ext.ghidraInstallDir = null;
-
-if (file("../gpl.gradle").exists()) {
-	// Module is located within the Ghidra GPL directory
-	ext.ghidraInstallDir = file("../..").getCanonicalPath()
-	ext.binutilsLocation = file("${ghidraInstallDir}/../ghidra.bin/GPL/${name}").getCanonicalPath()
-	apply from: file("../gpl.gradle").getCanonicalPath()
+// Find the GPL dir
+def gplDir = null;
+if (file("../gpl.gradle").exists()) { 
+	gplDir = file("..").getCanonicalPath()
 }
 else {
-	// various module placements for Ghidra installations
-	ext.binutilsLocation = projectDir
-	if (file("../../../GPL/gpl.gradle").exists()) {
-		// Handle GPL extension install within Ghidra Extensions directory
-		ext.ghidraInstallDir = file("../../..").getCanonicalPath()
+	// Module lives disconnected from the GPL directory, which it will need to build.
+	// Find a Ghidra installation directory and use its GPL directory.
+	if (file("../../Extensions").exists() && file("../../../GPL/gpl.gradle").exists()) {
+		// Module is installed within a Ghidra installation (i.e, ghidra/Ghidra/Extensions)
+		gplDir = file("../../../GPL").getCanonicalPath()
 	}
 	else {
-		// Handle extension install outside of Ghidra installation - must specify Ghidra install path
+		// Module is in an unknown location (likely outside of Ghidra). 
+		// Rely on the GHIDRA_INSTALL_DIR property being set.
+		def ghidraInstallDir = null;
 		if (System.env.GHIDRA_INSTALL_DIR) {
-			ext.ghidraInstallDir = System.env.GHIDRA_INSTALL_DIR
+			ghidraInstallDir = System.env.GHIDRA_INSTALL_DIR
 		}
 		else if (project.hasProperty("GHIDRA_INSTALL_DIR")) {
-			ext.ghidraInstallDir = project.getProperty("GHIDRA_INSTALL_DIR")
+			ghidraInstallDir = project.getProperty("GHIDRA_INSTALL_DIR")
 		}
-	}
-	if (ghidraInstallDir) {
+		else {
+			throw new GradleException("GHIDRA_INSTALL_DIR is not defined!")
+		}
+		
 		if (ghidraInstallDir.replace("\\","/").endsWith("/")) {
-			ext.ghidraInstallDir = ghidraInstallDir.substring(0, ghidraInstallDir.length()-1)
+			ghidraInstallDir = ghidraInstallDir.substring(0, ghidraInstallDir.length()-1)
 		}
+		gplDir = file("${ghidraInstallDir}/GPL")
 		println "Building with Ghidra installation at $ghidraInstallDir"
-		apply from: new File(ghidraInstallDir).getCanonicalPath() + "/GPL/gpl.gradle"
-	}
-	else {
-		throw new GradleException("GHIDRA_INSTALL_DIR is not defined!")
 	}
 }
 
+// If we see other projects, we are packaging this extension for distribution
 if (findProject(':Generic') != null) {
-	// Handle integrated Ghidra build - do not build gdis native
+	// Package extension
 	apply from: "$rootProject.projectDir/gradle/distributableGPLExtension.gradle"
 	delete file("build/os"); // remove any prior build of gdis
 }
 else {
-	apply from: "${ghidraInstallDir}/GPL/nativeBuildProperties.gradle"
+	// Build GPL extension (gdis)
+	apply from: "${gplDir}/gpl.gradle"
+	apply from: "${gplDir}/nativeBuildProperties.gradle"
 	apply from: "buildGdis.gradle"
 }
 

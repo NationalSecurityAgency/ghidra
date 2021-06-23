@@ -1,17 +1,12 @@
 /* ###
  * IP: Public Domain
  */
-/*******************************************************************************************
- * build.gradle file that applies this script must define two properties
- *     1) binutilsLocation  - the folder where the original binutils.zip lives
- *     2) binutilsPrebuiltPath - the folder where the custom prebuilt binutils lives or will be built to
- *******************************************************************************************/
 
 defaultTasks 'assemble'
 
 ext.supportedPlatforms = ['osx64', 'linux64']
 
-ext.binutilsResource = new File("${binutilsLocation}/${binutils}.tar.bz2")
+ext.binutilsResource = new File("${projectDir}/${binutils}.tar.bz2")
 
 def binutilsUnpackDir = file("${project.buildDir}/${binutils}/")
 
@@ -19,8 +14,6 @@ def binutilsUnpackDir = file("${project.buildDir}/${binutils}/")
  *
  * For each supported platform build the following tasks:
  *        buildBinutils_<platform>			builds binutils for the platform
- *        packageBinutilsDev_<platform>      creates the built bundle of stuf we need to build gdis
- *        unpackBinutilsPrebuilt_<platform>  unpacks the built bundle to be used to build gdis
  *
  ******************************************************************************************/
  

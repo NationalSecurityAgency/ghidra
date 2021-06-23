@@ -2672,26 +2672,29 @@ public class RecoveredClassUtils {
 		return false;
 	}
 
+
 	/**
-	 * Method to add class with no vftable to the namespace map
+	 * Method to create a new recovered class object and add it to the namespaceToClassMap
 	 * @param namespace the namespace to put the new class in
-	 * @return the recovered class\
+	 * @param hasVftable true if class has at least one vftable, false otherwise
+	 * @return the RecoveredClass object
 	 * @throws CancelledException if cancelled
 	 */
-	public RecoveredClass addNoVftableClass(Namespace namespace) throws CancelledException {
+	public RecoveredClass createNewClass(Namespace namespace, boolean hasVftable)
+			throws CancelledException {
 
 		String className = namespace.getName();
 		String classNameWithNamespace = namespace.getName(true);
-		CategoryPath classPath =
-			extraUtils.createDataTypeCategoryPath(classDataTypesCategoryPath,
-				classNameWithNamespace);
 
-		RecoveredClass nonVftableClass =
+		CategoryPath classPath = extraUtils.createDataTypeCategoryPath(classDataTypesCategoryPath,
+			classNameWithNamespace);
+
+		RecoveredClass newClass =
 			new RecoveredClass(className, classPath, namespace, dataTypeManager);
-		nonVftableClass.setHasVftable(false);
+		newClass.setHasVftable(hasVftable);
 
-		updateNamespaceToClassMap(namespace, nonVftableClass);
-		return nonVftableClass;
+		updateNamespaceToClassMap(namespace, newClass);
+		return newClass;
 
 	}
 
@@ -2735,24 +2738,7 @@ public class RecoveredClassUtils {
 				}
 				continue;
 			}
-
-			// promote any non-class namespaces in the vftableNamespace path to class namespaces
-			boolean success = promoteNamespaces(vftableNamespace.getSymbol());
-			if (!success) {
-				if (DEBUG) {
-					Msg.debug(this, "Unable to promote all non-class namespaces for " +
-						vftableNamespace.getName(true));
-				}
-			}
-
-			String className = vftableNamespace.getName();
-			String classNameWithNamespace = vftableNamespace.getName(true);
-
-			// Create Data Type Manager Category for given class
-			CategoryPath classPath =
-				extraUtils.createDataTypeCategoryPath(classDataTypesCategoryPath,
-					classNameWithNamespace);
-
+			
 			// get only the functions from the ones that are not already processed structures
 			// return null if not an unprocessed table
 			List<Function> virtualFunctions = getFunctionsFromVftable(vftableAddress, vftableSymbol,
@@ -2764,24 +2750,24 @@ public class RecoveredClassUtils {
 			}
 
 			// Check to see if already have an existing RecoveredClass object for the
-			// class associated with the current vftable. If so, it indicates multi-inheritance
+			// class associated with the current vftable. 
 			RecoveredClass recoveredClass = getClass(vftableNamespace);
 
 			if (recoveredClass == null) {
 				// Create a RecoveredClass object for the current class
-				recoveredClass =
-					new RecoveredClass(className, classPath, vftableNamespace, dataTypeManager);
+				recoveredClass = createNewClass(vftableNamespace, true);
 				recoveredClass.addVftableAddress(vftableAddress);
 				recoveredClass.addVftableVfunctionsMapping(vftableAddress, virtualFunctions);
 
-				// add recovered class to map
-				updateNamespaceToClassMap(vftableNamespace, recoveredClass);
 				// add it to the running list of RecoveredClass objects
 				recoveredClasses.add(recoveredClass);
 			}
 			else {
 				recoveredClass.addVftableAddress(vftableAddress);
 				recoveredClass.addVftableVfunctionsMapping(vftableAddress, virtualFunctions);
+				if (!recoveredClasses.contains(recoveredClass)) {
+					recoveredClasses.add(recoveredClass);
+				}
 
 			}
 
@@ -2795,8 +2781,6 @@ public class RecoveredClassUtils {
 			Map<Address, Function> vftableReferenceToFunctionMapping =
 				createVftableReferenceToFunctionMapping(referencesToVftable);
 
-			// add this smaller mapping set to the global map
-			//vftableRefToFunctionMap.putAll(vftableReferenceToFunctionMapping);
 
 			//vftableReferenceToFunctionMapping
 			List<Function> possibleConstructorDestructorsForThisClass =
@@ -2819,25 +2803,38 @@ public class RecoveredClassUtils {
 		return recoveredClasses;
 	}
 
-	private boolean promoteNamespaces(Symbol symbol) throws CancelledException {
+	public void promoteClassNamespaces(List<RecoveredClass> recoveredClasses)
+			throws CancelledException {
 
-		Namespace namespace = symbol.getParentNamespace();
+		Iterator<RecoveredClass> classIterator = recoveredClasses.iterator();
+		while (classIterator.hasNext()) {
+			monitor.checkCanceled();
+
+			RecoveredClass recoveredClass = classIterator.next();
+			Namespace classNamespace = recoveredClass.getClassNamespace();
+			promoteNamespaces(classNamespace);
+		}
+	}
+
+	private boolean promoteNamespaces(Namespace namespace) throws CancelledException {
+
 		while (!namespace.isGlobal()) {
 
 			monitor.checkCanceled();
 			SymbolType namespaceType = namespace.getSymbol().getSymbolType();
-			if (namespaceType != SymbolType.CLASS) {
-				// if it is a namespace but not a class we need to promote it to a class namespace
-				if (namespaceType == SymbolType.NAMESPACE) {
-					namespace = promoteToClassNamespace(namespace);
-					if (namespace == null) {
-						return false;
-					}
-					if (DEBUG) {
-						Msg.debug(this,
-							"Promoted namespace " + namespace.getName() + " to a class namespace");
-					}
+			// if it is a namespace but not a class and it is in our namespace map (which makes
+			// it a valid class) we need to promote it to a class namespace
+			if (namespaceType != SymbolType.CLASS && namespaceType == SymbolType.NAMESPACE &&
+				namespaceToClassMap.get(namespace) != null) {
+
+				namespace = promoteToClassNamespace(namespace);
+				if (namespace == null) {
+					return false;
 				}
+				//if (DEBUG) {
+				Msg.debug(this,
+					"Promoted namespace " + namespace.getName(true) + " to a class namespace");
+				//}
 			}
 			else {
 				namespace = namespace.getParentNamespace();
@@ -2852,11 +2849,20 @@ public class RecoveredClassUtils {
 	 */
 	private Namespace promoteToClassNamespace(Namespace namespace) {
 
+		SymbolType symbolType = namespace.getSymbol().getSymbolType();
+		if (symbolType == SymbolType.CLASS) {
+			return namespace;
+		}
+
+		if (symbolType != SymbolType.NAMESPACE) {
+			return namespace;
+		}
+
 		try {
 			Namespace newClass = NamespaceUtils.convertNamespaceToClass(namespace);
 
-			SymbolType symbolType = newClass.getSymbol().getSymbolType();
-			if (symbolType == SymbolType.CLASS) {
+			SymbolType newSymbolType = newClass.getSymbol().getSymbolType();
+			if (newSymbolType == SymbolType.CLASS) {
 				return newClass;
 			}
 			if (DEBUG) {
@@ -3246,7 +3252,8 @@ public class RecoveredClassUtils {
 
 		if (parentClasses.isEmpty()) {
 			throw new Exception(
-				recoveredClass.getName() + " should not have an empty class hierarchy");
+				recoveredClass.getClassNamespace().getName(true) +
+					" should not have an empty class hierarchy");
 		}
 
 		// if size one it only includes self

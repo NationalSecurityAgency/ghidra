@@ -163,6 +163,11 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		}
 		else if (isGcc()) {
 
+			boolean runGcc = askYesNo("GCC Class Recovery Still Under Development",
+				"I understand that gcc class recovery is still under development and my results will be incomplete but want to run this anyway.");
+			if (!runGcc) {
+				return;
+			}
 			nameVfunctions = true;
 			recoverClassesFromRTTI = new RTTIGccClassRecoverer(currentProgram, currentLocation,
 				state.getTool(), this, BOOKMARK_FOUND_FUNCTIONS,
@@ -544,25 +549,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		}
 		return true;
 	}
-
-
-
-	//TODO: call this before create data in debug mode from script
-	private void findClassesWithErrors(List<RecoveredClass> recoveredClasses)
-			throws CancelledException {
-
-		Iterator<RecoveredClass> iterator = recoveredClasses.iterator();
-		while (iterator.hasNext()) {
-			monitor.checkCanceled();
-			RecoveredClass recoveredClass = iterator.next();
-			if (hasConstructorDestructorDiscrepancy(recoveredClass)) {
-				println(recoveredClass.getName() + " has function on both c and d lists");
-			}
-		}
-	}
-
-
-
 
 	/**
 	 * Method to analyze the program changes with the decompiler parameter ID analyzer
