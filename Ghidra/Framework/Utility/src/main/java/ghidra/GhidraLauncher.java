@@ -26,33 +26,83 @@ import utility.application.ApplicationLayout;
 import utility.module.ModuleUtilities;
 
 /**
- * Class to build the Ghidra classpath, add it to the {@link GhidraClassLoader}, and start the 
- * desired {@link GhidraLaunchable} that's passed in as a command line argument.
+ * Class used to prepare Ghidra for launching
+ * <p>
+ * A {@link #main(String[])} method is provided which redirects execution to a 
+ * {@link GhidraLaunchable} class passed in as a command line argument
  */
 public class GhidraLauncher {
 
 	/**
-	 * Launches the given {@link GhidraLaunchable}, passing through the args to it.
+	 * Launches the given {@link GhidraLaunchable} specified in the first command line argument
 	 * 
-	 * @param args The first argument is the name of the class to launch.  The remaining args
-	 *     get passed through to the class's {@link GhidraLaunchable#launch} method.
+	 * @param args The first argument is the name of the {@link GhidraLaunchable} to launch.
+	 *   The remaining args get passed through to the class's {@link GhidraLaunchable#launch} 
+	 *   method.
 	 * @throws Exception If there was a problem launching.  See the exception's message for more
 	 *     details on what went wrong.  
 	 */
 	public static void main(String[] args) throws Exception {
 
+		// Initialize the Ghidra environment
+		GhidraApplicationLayout layout = initializeGhidraEnvironment();
+		
+		// Make sure the thing to launch is a GhidraLaunchable
+		Class<?> cls = ClassLoader.getSystemClassLoader().loadClass(args[0]);
+		if (!GhidraLaunchable.class.isAssignableFrom(cls)) {
+			throw new IllegalArgumentException("\"" + args[0] + "\" is not a launchable class");
+		}
+
+		// Launch the target class, which is the first argument.  Strip off the first argument
+		// and pass the rest through to the target class's launch method.
+		GhidraLaunchable launchable = (GhidraLaunchable) cls.getConstructor().newInstance();
+		launchable.launch(layout, Arrays.copyOfRange(args, 1, args.length));
+	}
+
+	/**
+	 * Initializes the Ghidra environment by discovering its {@link GhidraApplicationLayout layout}
+	 * and adding all relevant modules and libraries to the classpath
+	 * <p>
+	 * NOTE: This method expects that the {@link GhidraClassLoader} is the active classloader
+	 * 
+	 * @return Ghidra's {@link GhidraApplicationLayout layout}
+	 * @throws IOException if there was an issue getting the {@link GhidraApplicationLayout layout}
+	 * @throws ClassNotFoundException if the {@link GhidraClassLoader} is not the active classloader 
+	 */
+	public static GhidraApplicationLayout initializeGhidraEnvironment()
+			throws IOException, ClassNotFoundException {
+
 		// Make sure our class loader is being used
 		if (!(ClassLoader.getSystemClassLoader() instanceof GhidraClassLoader)) {
-			throw new ClassNotFoundException("ERROR: Ghidra class loader not in use.  " +
+			throw new ClassNotFoundException("Ghidra class loader not in use.  " +
 				"Confirm JVM argument \"-Djava.system.class.loader argument=" +
 				GhidraClassLoader.class.getName() + "\" is set.");
 		}
+		GhidraClassLoader loader = (GhidraClassLoader) ClassLoader.getSystemClassLoader();
 
 		// Get application layout
 		GhidraApplicationLayout layout = new GhidraApplicationLayout();
-		GhidraClassLoader loader = (GhidraClassLoader) ClassLoader.getSystemClassLoader();
+		
+		// Get the classpath
+		List<String> classpathList = buildClasspath(layout);
 
-		// Build the classpath
+		// Add the classpath to the class loader
+		classpathList.forEach(loader::addPath);
+
+		return layout;
+	}
+
+	/**
+	 * Builds and returns a classpath from the given {@link GhidraApplicationLayout layout}
+	 * <p>
+	 * NOTE: This method does NOT add the built classpath to a classloader...it just returns it
+	 * 
+	 * @param layout Ghidra's {@link GhidraApplicationLayout layout}
+	 * @return A {@link List} of classpath entries
+	 * @throws IOException if there was an IO-related issue with building the classpath
+	 */
+	private static List<String> buildClasspath(GhidraApplicationLayout layout) throws IOException {
+
 		List<String> classpathList = new ArrayList<>();
 		Map<String, GModule> modules = getOrderedModules(layout);
 
@@ -65,21 +115,7 @@ public class GhidraLauncher {
 			addModuleJarPaths(classpathList, modules);
 		}
 		classpathList = orderClasspath(classpathList, modules);
-
-		// Add the classpath to the class loader
-		classpathList.forEach(entry -> loader.addPath(entry));
-
-		// Make sure the thing to launch is a GhidraLaunchable
-		Class<?> cls = ClassLoader.getSystemClassLoader().loadClass(args[0]);
-		if (!GhidraLaunchable.class.isAssignableFrom(cls)) {
-			throw new IllegalArgumentException(
-				"ERROR: \"" + args[0] + "\" is not a launchable class");
-		}
-
-		// Launch the target class, which is the first argument.  Strip off the first argument
-		// and pass the rest through to the target class's launch method.
-		GhidraLaunchable launchable = (GhidraLaunchable) cls.getConstructor().newInstance();
-		launchable.launch(layout, Arrays.copyOfRange(args, 1, args.length));
+		return classpathList;
 	}
 
 	/**
@@ -267,8 +303,7 @@ public class GhidraLauncher {
 	private static List<String> orderClasspath(List<String> pathList,
 			Map<String, GModule> modules) {
 
-		Set<String> fatJars = modules
-				.values()
+		Set<String> fatJars = modules.values()
 				.stream()
 				.flatMap(m -> m.getFatJars().stream())
 				.collect(Collectors.toSet());
