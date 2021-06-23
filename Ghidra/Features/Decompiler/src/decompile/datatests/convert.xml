@@ -1,0 +1,66 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+  <!--
+      A contrived function with many different signed and unsigned constants to convert.
+  -->
+<bytechunk space="ram" offset="0x1006b9" readonly="true">
+                  554889e5bf0001
+0000e883ffffffbf00feffffe879ffff
+ffbf00030000e893ffffffbf00ffffff
+e889ffffffbfe8030000e85bffffffbf
+48f4ffffe851ffffffbf70170000e86b
+ffffffbf00ea56fae861ffffffbfff01
+0000e833ffffffbf25ffffffe829ffff
+ffbf6d010000e843ffffffbffeffffff
+e839ffffffbf88000000e80bffffffbf
+3433ffffe801ffffffbfeeee0000e81b
+ffffffbfdff7ffffe811ffffffbf6100
+0000e8e3feffff905dc3
+</bytechunk>
+<symbol space="ram" offset="0x10064a" name="recv_signed"/>
+<symbol space="ram" offset="0x10066e" name="recv_unsigned"/>
+<symbol space="ram" offset="0x1006b9" name="convert_list"/>
+</binaryimage>
+<script>
+  <com>parse line extern void recv_signed(int4 val);</com>
+  <com>parse line extern void recv_unsigned(uint4 val);</com>
+  <com>lo fu convert_list</com>
+  <com>map convert dec 100 r0x1006c2 e1721eecc7</com>
+  <com>map convert dec fffffe00 r0x1006cc e17658909c</com>
+  <com>map convert dec 300 r0x1006d6 e1eab3665d</com>
+  <com>map convert dec ffffff00 r0x1006e0 e105173e00</com>
+  <com>map convert hex 3e8 r0x1006ea e104265e92</com>
+  <com>map convert hex fffff448 r0x1006f4 e168cf57b5</com>
+  <com>map convert hex 1770 r0x1006fe e15ef160b7</com>
+  <com>map convert hex fa56ea00 r0x100708 e1ce753c62</com>
+  <com>map convert oct 1ff r0x100712 e1edfc793e</com>
+  <com>map convert oct ffffff25 r0x10071c e142632204</com>
+  <com>map convert oct 16d r0x100726 e1e8d4339a</com>
+  <com>map convert oct fffffffe r0x100730 e107fa4a8f</com>
+  <com>map convert bin 88 r0x10073a e1955bc0dd </com>
+  <com>map convert bin ffff3334 r0x100744 e1b8401a2a</com>
+  <com>map convert bin eeee r0x10074e e19d2168d1</com>
+  <com>map convert bin fffff7df r0x100758 e10e9cbb42</com>
+  <com>map convert char 61 r0x10075d 20c20f516a</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Convert #1" min="1" max="1">recv_signed\(256\)</stringmatch>
+<stringmatch name="Convert #2" min="1" max="1">recv_signed\(-512\)</stringmatch>
+<stringmatch name="Convert #3" min="1" max="1">recv_unsigned\(768\)</stringmatch>
+<stringmatch name="Convert #4" min="1" max="1">recv_unsigned\(4294967040\)</stringmatch>
+<stringmatch name="Convert #5" min="1" max="1">recv_signed\(0x3e8\)</stringmatch>
+<stringmatch name="Convert #6" min="1" max="1">recv_signed\(-0xbb8\)</stringmatch>
+<stringmatch name="Convert #7" min="1" max="1">recv_unsigned\(0x1770\)</stringmatch>
+<stringmatch name="Convert #8" min="1" max="1">recv_unsigned\(0xfa56ea00\)</stringmatch>
+<stringmatch name="Convert #9" min="1" max="1">recv_signed\(0777\)</stringmatch>
+<stringmatch name="Convert #10" min="1" max="1">recv_signed\(-0333\)</stringmatch>
+<stringmatch name="Convert #11" min="1" max="1">recv_unsigned\(0555\)</stringmatch>
+<stringmatch name="Convert #12" min="1" max="1">recv_unsigned\(037777777776\)</stringmatch>
+<stringmatch name="Convert #13" min="1" max="1">recv_signed\(0b10001000\)</stringmatch>
+<stringmatch name="Convert #14" min="1" max="1">recv_signed\(-0b1100110011001100\)</stringmatch>
+<stringmatch name="Convert #15" min="1" max="1">recv_unsigned\(0b1110111011101110\)</stringmatch>
+<stringmatch name="Convert #16" min="1" max="1">recv_unsigned\(0b11111111111111111111011111011111\)</stringmatch>
+<stringmatch name="Convert #17" min="1" max="1">recv_signed\('a'\)</stringmatch>
+</decompilertest>

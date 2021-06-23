@@ -50,8 +50,8 @@ public class LocalSymbolMap {
 	public LocalSymbolMap(HighFunction highFunc, String spcname) {
 		func = highFunc;
 		spacename = spcname;
-		addrMappedSymbols = new HashMap<MappedVarKey, HighSymbol>();
-		symbolMap = new HashMap<Long, HighSymbol>();
+		addrMappedSymbols = new HashMap<>();
+		symbolMap = new HashMap<>();
 		paramSymbols = new HighSymbol[0];
 		uniqueSymbolId = 0;
 	}
@@ -79,7 +79,7 @@ public class LocalSymbolMap {
 	 * @return the new name to symbol map
 	 */
 	public Map<String, HighSymbol> getNameToSymbolMap() {
-		Map<String, HighSymbol> newMap = new TreeMap<String, HighSymbol>();
+		Map<String, HighSymbol> newMap = new TreeMap<>();
 		for (HighSymbol highSymbol : symbolMap.values()) {
 			newMap.put(highSymbol.getName(), highSymbol);
 		}
@@ -171,7 +171,7 @@ public class LocalSymbolMap {
 				// An indication of names like "name", "name@1", "name@2"
 				if (name.charAt(name.length() - 1) == '1') {
 					if (mergeNames == null) {
-						mergeNames = new ArrayList<String>();
+						mergeNames = new ArrayList<>();
 					}
 					mergeNames.add(name);
 				}
@@ -207,7 +207,7 @@ public class LocalSymbolMap {
 		Address pcaddr = dbFunction.getEntryPoint();
 		pcaddr = pcaddr.subtractWrap(1);
 
-		List<HighSymbol> paramList = new ArrayList<HighSymbol>();
+		List<HighSymbol> paramList = new ArrayList<>();
 		for (int i = 0; i < p.length; ++i) {
 			Parameter var = p[i];
 			if (!var.isValid()) {
@@ -220,7 +220,7 @@ public class LocalSymbolMap {
 				// An indication of names like "name", "name@1", "name@2"
 				if (name.charAt(name.length() - 1) == '1') {
 					if (mergeNames == null) {
-						mergeNames = new ArrayList<String>();
+						mergeNames = new ArrayList<>();
 					}
 					mergeNames.add(name);
 				}
@@ -297,13 +297,12 @@ public class LocalSymbolMap {
 		parser.end(el);
 	}
 
-	private static final Comparator<HighSymbol> PARAM_SYMBOL_SLOT_COMPARATOR =
-		new Comparator<HighSymbol>() {
-			@Override
-			public int compare(HighSymbol sym1, HighSymbol sym2) {
-				return sym1.getCategoryIndex() - sym2.getCategoryIndex();
-			}
-		};
+	private static final Comparator<HighSymbol> PARAM_SYMBOL_SLOT_COMPARATOR = new Comparator<>() {
+		@Override
+		public int compare(HighSymbol sym1, HighSymbol sym2) {
+			return sym1.getCategoryIndex() - sym2.getCategoryIndex();
+		}
+	};
 
 	/**
 	 * Add mapped symbols to this LocalVariableMap, by parsing the &lt;symbollist&gt; and &lt;mapsym&gt; tags.
@@ -312,7 +311,7 @@ public class LocalSymbolMap {
 	 */
 	public void parseSymbolList(XmlPullParser parser) throws PcodeXMLException {
 		XmlElement el = parser.start("symbollist");
-		ArrayList<HighSymbol> parms = new ArrayList<HighSymbol>();
+		ArrayList<HighSymbol> parms = new ArrayList<>();
 		while (parser.peek().isStart()) {
 			HighSymbol sym = parseSymbolXML(parser);
 			if (sym.isParameter()) {
@@ -483,7 +482,7 @@ public class LocalSymbolMap {
 			uniqueId = getNextId();
 		}
 		int conv = EquateSymbol.convertName(nm, val);
-		if (conv < 0) {
+		if (conv == EquateSymbol.FORMAT_DEFAULT) {
 			eqSymbol = new EquateSymbol(uniqueId, nm, val, func, addr, hash);
 			eqSymbol.setNameLock(true);
 		}
@@ -507,25 +506,37 @@ public class LocalSymbolMap {
 		while (equateAddresses.hasNext()) {
 			Address defAddr = equateAddresses.next();
 			for (Equate eq : equateTable.getEquates(defAddr)) {
-				Instruction instr = listing.getInstructionAt(defAddr);
-				if (instr == null) {
-					continue;
-				}
-				long hash[] = DynamicHash.calcConstantHash(instr, eq.getValue());
-				if (hash.length == 0) {
-					continue;
-				}
-				Arrays.sort(hash);		// Sort in preparation for deduping
+				List<EquateReference> references = eq.getReferences(defAddr);
 				String displayName = eq.getDisplayName();
 				long eqValue = eq.getValue();
 
 				EquateSymbol eqSymbol;
-				for (int i = 0; i < hash.length; ++i) {
-					if (i != 0 && hash[i - 1] == hash[i]) {
-						continue;		// Found a duplicate, skip it
+				for (EquateReference ref : references) {
+					long hashVal = ref.getDynamicHashValue();
+					if (hashVal == 0) {
+						// Multiple varnodes of the same constant
+						Instruction instr = listing.getInstructionAt(defAddr);
+						if (instr == null) {
+							continue;
+						}
+						long hash[] = DynamicHash.calcConstantHash(instr, eqValue);
+						if (hash.length == 0) {
+							continue;
+						}
+						Arrays.sort(hash);		// Sort in preparation for deduping
+						for (int i = 0; i < hash.length; ++i) {
+							if (i != 0 && hash[i - 1] == hash[i]) {
+								continue;		// Found a duplicate, skip it
+							}
+							// Emit each varnode copy as a separate EquateSymbol
+							eqSymbol = newEquateSymbol(0, displayName, eqValue, hash[i], defAddr);
+							symbolMap.put(eqSymbol.getId(), eqSymbol);
+						}
 					}
-					eqSymbol = newEquateSymbol(0, displayName, eqValue, hash[i], defAddr);
-					symbolMap.put(eqSymbol.getId(), eqSymbol);
+					else {
+						eqSymbol = newEquateSymbol(0, displayName, eqValue, hashVal, defAddr);
+						symbolMap.put(eqSymbol.getId(), eqSymbol);
+					}
 				}
 			}
 		}

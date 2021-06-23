@@ -639,6 +639,21 @@ void FunctionSymbol::restoreXml(const Element *el)
   }
 }
 
+/// Create a symbol either to associate a name with a constant or to force a display conversion
+///
+/// \param sc is the scope owning the new symbol
+/// \param nm is the name of the equate (an empty string can be used for a convert)
+/// \param format is the desired display conversion (0 for no conversion)
+/// \param val is the constant value whose display is being altered
+EquateSymbol::EquateSymbol(Scope *sc,const string &nm,uint4 format,uintb val)
+  : Symbol(sc, nm, (Datatype *)0)
+{
+  value = val;
+  category = 1;
+  type = sc->getArch()->types->getBase(1,TYPE_UNKNOWN);
+  dispflags |= format;
+}
+
 /// An EquateSymbol should survive certain kinds of transforms during decompilation,
 /// such as negation, twos-complementing, adding or subtracting 1.
 /// Return \b true if the given value looks like a transform of this type relative
@@ -688,7 +703,6 @@ void EquateSymbol::restoreXml(const Element *el)
 
   TypeFactory *types = scope->getArch()->types;
   type = types->getBase(1,TYPE_UNKNOWN);
-  checkSizeTypeLock();
 }
 
 /// Label symbols don't really have a data-type, so we just put
@@ -1658,6 +1672,26 @@ Symbol *Scope::addDynamicSymbol(const string &nm,Datatype *ct,const Address &cad
   if (!caddr.isInvalid())
     rnglist.insertRange(caddr.getSpace(),caddr.getOffset(),caddr.getOffset());
   addDynamicMapInternal(sym,Varnode::mapped,hash,0,ct->getSize(),rnglist);
+  return sym;
+}
+
+/// \brief Create a symbol that forces a constant display conversion
+///
+/// \param format is the type of conversion (Symbol::force_hex, Symbol::force_dec, etc.)
+/// \param value is the constant value being converted
+/// \param addr is the address of the p-code op reading the constant
+/// \param hash is the dynamic hash identifying the constant
+/// \return the new EquateSymbol
+Symbol *Scope::addConvertSymbol(uint4 format,uintb value,Address &addr,uint8 hash)
+
+{
+  Symbol *sym;
+
+  sym = new EquateSymbol(owner,"",format,value);
+  RangeList rnglist;
+  if (!addr.isInvalid())
+    rnglist.insertRange(addr.getSpace(),addr.getOffset(),addr.getOffset());
+  addDynamicMapInternal(sym,Varnode::mapped,hash,0,1,rnglist);
   return sym;
 }
 

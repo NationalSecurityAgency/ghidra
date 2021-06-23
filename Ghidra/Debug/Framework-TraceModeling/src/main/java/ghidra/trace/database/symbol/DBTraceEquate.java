@@ -16,6 +16,7 @@
 package ghidra.trace.database.symbol;
 
 import java.util.Collection;
+import java.util.List;
 
 import com.google.common.collect.Range;
 
@@ -23,6 +24,7 @@ import db.DBRecord;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.symbol.EquateReference;
 import ghidra.trace.model.symbol.TraceEquate;
 import ghidra.trace.model.symbol.TraceEquateReference;
 import ghidra.trace.model.thread.TraceThread;
@@ -111,6 +113,10 @@ public class DBTraceEquate extends DBAnnotatedObject implements TraceEquate {
 	@Override
 	public Collection<? extends TraceEquateReference> getReferences() {
 		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public List<EquateReference> getReferences(Address refAddr) {
 		return null;
 	}
 

@@ -1099,7 +1099,7 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,
       displayFormat = sym->getDisplayFormat();
     }
   }
-  if (sign) { // Print the constant as signed
+  if (sign && displayFormat != Symbol::force_char) { // Print the constant as signed
     uintb mask = calc_mask(sz);
     uintb flip = val^mask;
     print_negsign = (flip < val);
@@ -1136,21 +1136,14 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,
   else if (displayFormat == Symbol::force_oct)
     t << oct << '0' << val;
   else if (displayFormat == Symbol::force_char) {
-    int4 internalSize = 4;
-    if (val < 256)
-      internalSize = 1;
-    else if (val < 65536)
-      internalSize = 2;
-    if ((internalSize==1)&&((val<7)||(val>0x7e)||((val>13)&&(val<0x20)))) { // not a good character constant
-      t << dec << val;		// Just emit as decimal
-    }
-    else {
-      if (doEmitWideCharPrefix() && internalSize > 1)
-        t << 'L';			// Print symbol indicating wide character
-      t << '\'';			// char is surrounded with single quotes
+    if (doEmitWideCharPrefix() && sz > 1)
+      t << 'L';			// Print symbol indicating wide character
+    t << '\'';			// char is surrounded with single quotes
+    if (sz == 1 && val >= 0x80)
+      printCharHexEscape(t,(int4)val);
+    else
       printUnicode(t,(int4)val);
-      t << '\'';
-    }
+    t << '\'';
   }
   else {	// Must be Symbol::force_bin
     t << "0b";
@@ -1270,15 +1263,8 @@ void PrintC::printUnicode(ostream &s,int4 onechar) const
       s << "\\\'";
       return;
     }
-    // Generic unicode escape
-    if (onechar < 256) {
-      s << "\\x" << setfill('0') << setw(2) << hex << onechar;
-    }
-    else if (onechar < 65536) {
-      s << "\\x" << setfill('0') << setw(4) << hex << onechar;
-    }
-    else
-      s << "\\x" << setfill('0') << setw(8) << hex << onechar;
+    // Generic escape code
+    printCharHexEscape(s, onechar);
     return;
   }
   StringManager::writeUtf8(s, onechar);		// emit normally
@@ -1319,6 +1305,22 @@ void PrintC::pushBoolConstant(uintb val,const TypeBase *ct,
 bool PrintC::doEmitWideCharPrefix(void) const
 {
   return true;
+}
+
+/// Print the given value using the standard character hexadecimal escape sequence.
+/// \param s is the stream to write to
+/// \param val is the given value
+void PrintC::printCharHexEscape(ostream &s,int4 val)
+
+{
+  if (val < 256) {
+    s << "\\x" << setfill('0') << setw(2) << hex << val;
+  }
+  else if (val < 65536) {
+    s << "\\x" << setfill('0') << setw(4) << hex << val;
+  }
+  else
+    s << "\\x" << setfill('0') << setw(8) << hex << val;
 }
 
 /// \brief Print a quoted (unicode) string at the given address.
@@ -1397,28 +1399,50 @@ void PrintC::resetDefaultsPrintC(void)
 /// \param ct is data-type attached to the value
 /// \param vn is the Varnode holding the value
 /// \param op is the PcodeOp using the value
-void PrintC::pushCharConstant(uintb val,const TypeChar *ct,const Varnode *vn,const PcodeOp *op)
+void PrintC::pushCharConstant(uintb val,const Datatype *ct,const Varnode *vn,const PcodeOp *op)
 
 {
-  ostringstream t;
+  uint4 displayFormat = 0;
+  bool isSigned = (ct->getMetatype() == TYPE_INT);
+  if ((vn != (const Varnode *)0)&&(!vn->isAnnotation())) {
+    Symbol *sym = vn->getHigh()->getSymbol();
+    if (sym != (Symbol *)0) {
+      if (sym->isNameLocked() && (sym->getCategory() == 1)) {
+	if (pushEquate(val,vn->getSize(),(EquateSymbol *)sym,vn,op))
+	  return;
+      }
+      displayFormat = sym->getDisplayFormat();
+      if (displayFormat == Symbol::force_bin || displayFormat == Symbol::force_dec || displayFormat == Symbol::force_oct) {
+        push_integer(val, ct->getSize(), isSigned, vn, op);
+        return;
+      }
+    }
+  }
   if ((ct->getSize()==1)&&(val >= 0x80)) {
     // For byte characters, the encoding is assumed to be ASCII, UTF-8, or some other
     // code-page that extends ASCII. At 0x80 and above, we cannot treat the value as a
     // unicode code-point. Its either part of a multi-byte UTF-8 encoding or an unknown
-    // code-page value. In either case, we print it as an integer.
-    push_integer(val,1,true,vn,op);
+    // code-page value. In either case, we print as an integer or an escape sequence.
+    if (displayFormat != Symbol::force_hex && displayFormat != Symbol::force_char) {
+      push_integer(val, 1, isSigned, vn, op);
+      return;
+    }
+    displayFormat = Symbol::force_hex;	// Fallthru but force a hex representation
   }
-  else {
-    // From here we assume, the constant value is a direct unicode code-point.
-    // The value could be an illegal code-point (surrogates or beyond the max code-point),
-    // but this will just be emitted as an escape sequence.
-    if (doEmitWideCharPrefix() && ct->getSize() > 1)
-      t << 'L';			// Print symbol indicating wide character
-    t << '\'';			// char is surrounded with single quotes
+  ostringstream t;
+  // From here we assume, the constant value is a direct unicode code-point.
+  // The value could be an illegal code-point (surrogates or beyond the max code-point),
+  // but this will just be emitted as an escape sequence.
+  if (doEmitWideCharPrefix() && ct->getSize() > 1)
+    t << 'L';		// Print symbol indicating wide character
+  t << '\'';			// char is surrounded with single quotes
+  if (displayFormat == Symbol::force_hex) {
+    printCharHexEscape(t,(int4)val);
+  }
+  else
     printUnicode(t,(int4)val);
-    t << '\'';
-    pushAtom(Atom(t.str(),vartoken,EmitXml::const_color,op,vn));
-  }
+  t << '\'';
+  pushAtom(Atom(t.str(),vartoken,EmitXml::const_color,op,vn));
 }
 
 /// \brief Push an enumerated value to the RPN stack
