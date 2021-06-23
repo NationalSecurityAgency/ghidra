@@ -21,6 +21,7 @@ import static java.awt.event.InputEvent.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -292,7 +293,16 @@ public class GTable extends JTable {
 		if (columnModel instanceof GTableColumnModel) {
 			((GTableColumnModel) columnModel).dispose();
 		}
+
 		columnRenderingDataMap.clear();
+
+		if (selectionManager != null) {
+			selectionManager.dispose();
+		}
+
+		for (PropertyChangeListener listener : getPropertyChangeListeners()) {
+			removePropertyChangeListener(listener);
+		}
 	}
 
 	/**
