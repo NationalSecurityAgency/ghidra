@@ -1,12 +1,12 @@
 /* ###
- * IP: BinCraft 
+ * IP: BinCraft
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -90,13 +90,38 @@ const DECOMPILER_SOURCE_BASE_CXX: &[&str] = &[
     "ghidra_process.cc",
     "comment_ghidra.cc",
     "string_ghidra.cc",
-
-    "xml.cc"
+    "xml.cc",
 ];
 
 const DECOMPILER_YACC: &[&'static str] = &["xml.y", "grammar.y"];
 const SLEIGH_YACC: &[&'static str] = &["slghparse.y", "pcodeparse.y", "xml.y"];
 const SLEIGH_FLEX: &[&'static str] = &["slghscan.l"];
+
+const CLI_CXX: &[&'static str] = &[
+    "bfd_arch.cc",
+    "loadimage_bfd.cc",
+    "sleigh_arch.cc",
+    "filemanage.cc",
+    "sleigh.cc",
+    "sleighbase.cc",
+    "context.cc",
+    "slghsymbol.cc",
+    "semantics.cc",
+    "slghpatexpress.cc",
+    "slghpattern.cc",
+    "inject_sleigh.cc",
+    "pcodeparse.cc",
+    "slghparse.cc",
+    "slghscan.cc",
+    "pcodecompile.cc",
+    "libdecomp.cc",
+    "consolemain.cc",
+    "ifaceterm.cc",
+    "interface.cc",
+    "ifacedecomp.cc",
+    "grammar.cc",
+    "callgraph.cc",
+];
 
 struct CompileOptions {
     sources: Vec<PathBuf>,
@@ -133,7 +158,10 @@ fn run_lex(input: &Path) -> PathBuf {
         Command::new("flex")
             .args(&["-o", output.to_str().unwrap(), input.to_str().unwrap()])
             .output()
-            .expect(&format!("unable generate {} with flex", output.to_str().unwrap()));
+            .expect(&format!(
+                "unable generate {} with flex",
+                output.to_str().unwrap()
+            ));
     }
     output
 }
@@ -154,10 +182,10 @@ fn run_bison(input: &Path, qualify_vars: bool, gen_header: bool) -> (PathBuf, Pa
     }
 
     if needs_recompile(input, &cc_file) {
-        Command::new("bison")
-            .args(&args)
-            .output()
-            .expect(&format!("unable generate {} with bison", cc_file.to_str().unwrap()));
+        Command::new("bison").args(&args).output().expect(&format!(
+            "unable generate {} with bison",
+            cc_file.to_str().unwrap()
+        ));
     }
 
     (cc_file, header_file)
@@ -230,7 +258,24 @@ fn prepare() -> CompileOptions {
         }
     }
 
-    CompileOptions { sources, objects, includes }
+    #[cfg(debug_assertions)]
+    {
+        for src in CLI_CXX.iter() {
+            let path = Path::new("cpp").join(src);
+            let out_path = output_path(&path, "o");
+            if needs_recompile(&path, &out_path) {
+                sources.push(path);
+            } else {
+                objects.push(out_path);
+            }
+        }
+    }
+
+    CompileOptions {
+        sources,
+        objects,
+        includes,
+    }
 }
 
 fn main() {
@@ -242,12 +287,14 @@ fn main() {
     for obj in &compile_opts.objects {
         target.object(obj);
     }
-    let bridge_path = Path::new("cpp")
-        .join("bridge.cc");
+    let bridge_path = Path::new("cpp").join("bridge.cc");
     #[cfg(target_os = "windows")]
     {
         target.define("_WINDOWS", "1"); // This is assumed by ghidra, but not defined by msvc, strange.
-                                        //target.target("x86_64-pc-windows-gnu");
+    }
+    #[cfg(debug_assertions)]
+    {
+        target.define("__TERMINAL__", "");
     }
     target
         .cpp(true)
@@ -258,4 +305,6 @@ fn main() {
         .include("cpp")
         .includes(compile_opts.includes)
         .compile("decompile");
+    #[cfg(debug_assertions)]
+    println!("cargo:rustc-link-lib=bfd");
 }

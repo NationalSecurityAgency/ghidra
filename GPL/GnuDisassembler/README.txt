@@ -14,6 +14,12 @@ To build this extension for Linux or Mac OS X:
 	   If a different binutils distribution is used the build.gradle and/or buildGdis.gradle
 	   may require modification.
 	   
+	   The build requires the following packages to be installed:
+	     * flex
+	     * bison
+	     * texinfo
+	     * zlib1g-dev
+	   
 	2. Run gradle from the module's root directory (see top of build.gradle file for
 	   specific instructions). 
 

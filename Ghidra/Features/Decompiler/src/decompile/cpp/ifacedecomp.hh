@@ -27,6 +27,7 @@
 #ifdef CPUI_RULECOMPILE
 #include "rulecompile.hh"
 #endif
+#include <memory>
 
 /// \brief Interface capability point for all decompiler commands
 class IfaceDecompCapability : public IfaceCapability {
@@ -617,5 +618,10 @@ public:
 };
 
 #endif
+
+unique_ptr<IfaceCommand> new_decompile_command();
+unique_ptr<IfaceCommand> new_print_raw_command();
+unique_ptr<IfaceCommand> new_print_c_command();
+unique_ptr<IfaceCommand> new_addressrange_load_command();
 
 #endif

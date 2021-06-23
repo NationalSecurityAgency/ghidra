@@ -47,6 +47,7 @@ import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighVariable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -937,10 +938,13 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			Namespace classNamespace = classHierarchyDescriptorSymbol.getParentNamespace();
 
 			if (classNamespace.getSymbol().getSymbolType() != SymbolType.CLASS) {
-//				println("RTTI_Class_Hierarchy_Descriptor at " +
-//					classHierarchyDescriptorAddress.toString() +
-//					" is not in a class namespace. Cannot process.");
-				continue;
+				classNamespace = promoteToClassNamespace(classNamespace);
+				if(classNamespace.getSymbol().getSymbolType() != SymbolType.CLASS) {
+					Msg.debug(this,
+						classHierarchyDescriptorAddress.toString() + " Could not promote " +
+							classNamespace.getName(true) + " to a class namespace.");
+					continue;
+				}
 			}
 
 			List<Symbol> vftableSymbolsInNamespace =
@@ -975,12 +979,12 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				List<RecoveredClass> classesWithVftablesInNamespace =
 					recoverClassesFromVftables(vftableSymbolsInNamespace, false, false);
 				if (classesWithVftablesInNamespace.size() == 0) {
-					//println("No class recovered for namespace " + classNamespace.getName());
+					Msg.debug(this,"No class recovered for namespace " + classNamespace.getName());
 					continue;
 				}
 				if (classesWithVftablesInNamespace.size() > 1) {
-//					println("Unexpected multiple classes recovered for namespace " +
-//						classNamespace.getName());
+					Msg.debug(this,"Unexpected multiple classes recovered for namespace " +
+						classNamespace.getName());
 					continue;
 				}
 
@@ -1232,7 +1236,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				// if the namespace isn't in the map then it is a class 
 				// without a vftable and a new RecoveredClass object needs to be created
 				if (getClass(pointedToNamespace) == null) {
-					addNoVftableClass(pointedToNamespace);
+					createNewClass(pointedToNamespace, false);
 				}
 
 				RecoveredClass pointedToClass = getClass(pointedToNamespace);
