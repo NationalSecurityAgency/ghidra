@@ -24,9 +24,6 @@ exit /B 1
 
 :continue
 
-:: Delay the expansion of our loop items below since the value is being updated as the loop works
-setlocal enabledelayedexpansion
-
 :: See if we were doubled clicked or run from a command prompt
 set DOUBLE_CLICKED=n
 for /f "tokens=2" %%# in ("%cmdcmdline%") do if /i "%%#" equ "/c" set DOUBLE_CLICKED=y
@@ -40,6 +37,17 @@ for /f "tokens=2" %%# in ("%cmdcmdline%") do if /i "%%#" equ "/c" set DOUBLE_CLI
 :: '~0,-1' - removes trailing \
 set "SUPPORT_DIR=%~dp0"
 set "SUPPORT_DIR=%SUPPORT_DIR:~0,-1%"
+
+:: Ensure Ghidra path doesn't contain illegal characters
+if not %SUPPORT_DIR:!=%==%SUPPORT_DIR% (
+	echo Ghidra path cannot contain a "!" character.
+	set ERRORLEVEL=1
+	goto exit1
+)
+
+:: Delay the expansion of our loop items below since the value is being updated as the loop works
+setlocal enabledelayedexpansion
+
 ::
 :: Parse arguments
 ::

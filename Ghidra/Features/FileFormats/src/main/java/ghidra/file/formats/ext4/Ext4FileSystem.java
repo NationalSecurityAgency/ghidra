@@ -57,15 +57,13 @@ public class Ext4FileSystem implements GFileSystem {
 
 		this.uuid = NumericUtilities.convertBytesToString(superBlock.getS_uuid());
 
+		long blockCount = superBlock.getS_blocks_count();
+
 		int s_log_block_size = superBlock.getS_log_block_size();
 		blockSize = (int) Math.pow(2, (10 + s_log_block_size));
 
-		int groupSize = blockSize * superBlock.getS_blocks_per_group();
-		if (groupSize <= 0) {
-			throw new IOException("Invalid groupSize: " + groupSize);
-		}
-		int numGroups = (int) (provider.length() / groupSize);
-		if (provider.length() % groupSize != 0) {
+		int numGroups = (int) (blockCount / superBlock.getS_blocks_per_group());
+		if (blockCount % superBlock.getS_blocks_per_group() != 0) {
 			numGroups++;
 		}
 
@@ -81,7 +79,7 @@ public class Ext4FileSystem implements GFileSystem {
 			monitor.incrementProgress(1);
 		}
 
-		Ext4Inode[] inodes = getInodes(reader, superBlock, groupDescriptors, is64Bit, monitor);
+		Ext4Inode[] inodes = getInodes(reader, superBlock, groupDescriptors, monitor);
 
 		int s_inodes_count = superBlock.getS_inodes_count();
 		for (int i = 0; i < s_inodes_count; i++) {
@@ -400,23 +398,19 @@ public class Ext4FileSystem implements GFileSystem {
 	}
 
 	private Ext4Inode[] getInodes(BinaryReader reader, Ext4SuperBlock superBlock,
-			Ext4GroupDescriptor[] groupDescriptors, boolean is64Bit, TaskMonitor monitor)
+			Ext4GroupDescriptor[] groupDescriptors, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
 		int inodeCount = superBlock.getS_inodes_count();
+		int inodesPerGroup = superBlock.getS_inodes_per_group();
 		Ext4Inode[] inodes = new Ext4Inode[inodeCount + 1];
 		int inodeIndex = 1;
 
 		for (int i = 0; i < groupDescriptors.length; i++) {
 			monitor.checkCanceled();
-			long inodeTableBlockOffset = groupDescriptors[i].getBg_inode_table_lo() & 0xffffffffL;
-			if (is64Bit) {
-				inodeTableBlockOffset =
-					(groupDescriptors[i].getBg_inode_table_hi() << 32) | inodeTableBlockOffset;
-			}
+			long inodeTableBlockOffset = groupDescriptors[i].getBg_inode_table();
 			long offset = inodeTableBlockOffset * blockSize;
 			reader.setPointerIndex(offset);
-			int inodesPerGroup = superBlock.getS_inodes_per_group();
 			monitor.setMessage(
 				"Reading inode table " + i + " of " + (groupDescriptors.length - 1) + "...");
 			monitor.setMaximum(inodesPerGroup);
