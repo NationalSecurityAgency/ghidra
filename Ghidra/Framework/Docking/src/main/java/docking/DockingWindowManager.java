@@ -1384,7 +1384,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			focusedPlaceholder.setSelected(false);
 		}
 
-		// Activating placeholders is done to help users find widgets hiding in plain sight. 
+		// Activating placeholders is done to help users find widgets hiding in plain sight.
 		// Assume that the user is no longer seeking a provider if they are clicking around.
 		activatedInfo.clear();
 
@@ -1708,8 +1708,8 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * positioning.
 	 * 
 	 * <p>Warning: this method allows user to explicitly pass a parent window and component over
-	 * which to be centered.   There is no reason to use this method in the standard workflow. 
-	 * This method exists strictly to handle future unforeseen use cases.   Use at your own 
+	 * which to be centered.   There is no reason to use this method in the standard workflow.
+	 * This method exists strictly to handle future unforeseen use cases.   Use at your own
 	 * risk of incorrectly parenting dialogs.
 	 *
 	 * @param parent the component whose window over which the given dialog will be shown; cannot
@@ -1740,7 +1740,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			//
 			// Note: prefer the active window; allow user's choice of center component when it is
 			//       in the active window
-			// 
+			//
 			if (centeredOnComponent != null &&
 				SwingUtilities.isDescendingFrom(centeredOnComponent, bestParent)) {
 				bestCenter = centeredOnComponent;
@@ -1764,9 +1764,12 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			bestParent = getBestNonModalParent(provider, bestParent);
 		}
 
-		if (bestParent == null) {
-			bestParent = getJavaActiveWindow();
-		}
+//		We should no longer need this code.  If the above could not find a suitable parent, then
+//		we can allow a null return value, which should signal to Java to pick a reasonable parent.
+//		If we put this code back, then make sure the chosen window is not transient.
+//		if (bestParent == null) {
+//			bestParent = getActiveNonTransientWindow();
+//		}
 
 		if (bestParent != null && !bestParent.isShowing()) {
 			bestParent = null; // don't let non-showing windows be parents
@@ -1803,7 +1806,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		int activeId = activeProvider.getId();
 		int providerId = providerToShow.getId();
 		if (providerId < activeId) {
-			// The provider being shown is older than the active window--do not parent the provider 
+			// The provider being shown is older than the active window--do not parent the provider
 			// to that window.  The older age suggests that the new provider was shown on a delay
 			// and should really be considered to live behind the active modal dialog.
 			return bestParent;
@@ -1811,14 +1814,14 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 		if (activeProvider.isTransient()) {
 			// This prevents transient modal dialogs from being parents to non-modal dialogs.  This
-			// can cause the non-modal dialog to be closed when the transient modal dialog goes 
+			// can cause the non-modal dialog to be closed when the transient modal dialog goes
 			// away.  There is the possibility of the non-modal dialog being blocked if not parented
 			// the this modal dialog.   If we find a use case that exposes this pattern, then we
 			// will have to revisit how this method chooses to parent.
 			return bestParent;
 		}
 
-		// 
+		//
 		// The active window is modal.  We must make it the non-modal dialog's parent to
 		// prevent blocking the non-modal.
 		//
@@ -2194,7 +2197,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * Shows a popup menu over the given component.  If this given component is not part of the
 	 * docking windows hierarchy, then no action is taken.
 	 * 
-	 * @param component the component 
+	 * @param component the component
 	 */
 	public static void showContextMenu(Component component) {
 
