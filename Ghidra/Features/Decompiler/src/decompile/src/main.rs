@@ -16,8 +16,11 @@
 use clap::{Clap, AppSettings};
 use std::env;
 
+mod model;
+mod patch;
 mod bridge;
 mod cli;
+mod serde_int;
 
 #[derive(Clap)]
 #[clap(version = "1.0", author = "BinCraft Team")]
