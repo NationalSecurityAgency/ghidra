@@ -18,6 +18,8 @@ use anyhow;
 use cxx::UniquePtr;
 use easy_repl::{command, CommandStatus, Repl};
 use std::{
+    rc::Rc,
+    sync::Mutex,
     collections::HashMap,
     env::{self},
     pin::Pin,
@@ -38,6 +40,7 @@ impl CliContext {
         };
 
         ctx.register_command("load-file", ffi::new_load_file_command());
+        ctx.register_command("load-addr", ffi::new_addressrange_load_command());
         ctx.register_command("add-path", ffi::new_add_path_command());
         ctx.register_command("save", ffi::new_save_command());
         ctx.register_command("restore", ffi::new_restore_command());
@@ -70,7 +73,7 @@ impl CliContext {
 
 macro_rules! call_cmd {
     ($cmd:ident, $($arg:ident),*) => {
-        let mut v = vec![];
+        let mut v: Vec<String> = vec![];
         $(
             v.push($arg.to_string());
         )*
@@ -96,23 +99,34 @@ fn init_decompiler(sleigh_home: Option<String>) {
 pub(crate) fn cli_main(sleigh_home: Option<String>) {
     init_decompiler(sleigh_home);
 
-    let mut ctx = CliContext::new();
 
     let mut rl = Repl::builder()
         .prompt("\x1b[1;32mdecomp> \x1b[0m")
-        .with_filename_completion(true)
-        .add(
-            "load-file",
-            command! {
-                "load the binary into cli",
-                (filename: String) => |filename: String| {
-                    let cmd = ctx.command("load-file");
-                    call_cmd!(cmd, filename);
+        .with_filename_completion(true);
+
+    let ctx = Rc::new(Mutex::new(CliContext::new()));
+
+    macro_rules! legacy_command {
+        ($name:literal, $desc:literal, ( $( $arg_name:ident  : $arg_type:ty),* )) => {
+            let ctx_ref = Rc::clone(&ctx);
+            rl = rl.add($name, command! {
+                $desc,
+                ($($arg_name: $arg_type),*) => |$($arg_name: $arg_type),*| {
+                    let mut ctx_inner = ctx_ref.lock().unwrap();
+                    let cmd = ctx_inner.command($name);
+                    call_cmd!(cmd, $($arg_name),*);
                     Ok(CommandStatus::Done)
                 }
-            },
-        )
-        .build()
-        .expect("unable to build cli");
+            });
+        }
+    }
+
+    legacy_command!("load-file", "load the binary into cli", (filename: String));
+    legacy_command!("restore", "restore the saved xml file", (filename: String));
+    legacy_command!("decompile", "decompile the function", ());
+    legacy_command!("load-addr", "load function at such address", (addr: String));
+    legacy_command!("print-c", "print in C flat", ());
+    
+    let mut rl = rl.build().expect("unable to build cli");
     rl.run().expect("unable to run cli");
 }
