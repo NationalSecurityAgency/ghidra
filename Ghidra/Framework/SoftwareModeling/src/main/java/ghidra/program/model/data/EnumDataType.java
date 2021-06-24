@@ -141,7 +141,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 	}
 
 	private boolean isTooBig(int testLength, long value) {
-		if (length == 8) {
+		if (testLength == 8) {
 			return false; // all long values permitted
 		}
 		// compute maximum enum value as a positive value: (2^length)-1
