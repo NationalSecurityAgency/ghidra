@@ -6276,6 +6276,7 @@ int4 RulePushPtr::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *vn;
   Varnode *vni = (Varnode *)0;
   const Datatype *ct;
+  int4 ret = 0;
 
   if (!data.isTypeRecoveryOn()) return 0;
   for(i=0;i<op->numInput();++i) { // Search for pointer type
@@ -6287,33 +6288,42 @@ int4 RulePushPtr::applyOp(PcodeOp *op,Funcdata &data)
   if ((i==0)&&(op->getIn(1)->getType()->getMetatype() == TYPE_PTR)) return 0;	// Prevent infinite loops
   
   vn = op->getOut();
-  if ((decop=vn->loneDescend()) == (PcodeOp *)0) return 0;
-  if (decop->code() != CPUI_INT_ADD) return 0;
 
-  j = decop->getSlot(vn);
-  if (decop->getIn(1-j)->getType()->getMetatype() == TYPE_PTR) return 0; // Prevent infinite loops
+  // Cache the descendants list now because otherwise the propagation steps would alter the list while
+  // it was being iterated
+  vector<PcodeOp *> descend(vn->beginDescend(), vn->endDescend());
+  for (vector<PcodeOp *>::iterator it = descend.begin(); it != descend.end(); ++it) {
+    decop = *it;
 
-  Varnode *vnadd1 = decop->getIn(1-j);
-  Varnode *vnadd2 = op->getIn(1-i);
-  Varnode *newout;
+    if (decop->code() != CPUI_INT_ADD) continue;
 
-  // vni and vnadd2 are propagated, so they shouldn't be free
-  if (vnadd2->isFree() && (!vnadd2->isConstant())) return 0;
-  if (vni->isFree() && (!vni->isConstant())) return 0;
+    j = decop->getSlot(vn);
+    if (decop->getIn(1-j)->getType()->getMetatype() == TYPE_PTR) continue; // Prevent infinite loops
 
-  newop = data.newOp(2,decop->getAddr());
-  data.opSetOpcode(newop,CPUI_INT_ADD);
-  newout = data.newUniqueOut(vnadd1->getSize(),newop);
+    Varnode *vnadd1 = decop->getIn(1-j);
+    Varnode *vnadd2 = op->getIn(1-i);
+    Varnode *newout;
 
-  data.opSetInput(decop,vni,0);
-  data.opSetInput(decop,newout,1);
+    // vni and vnadd2 are propagated, so they shouldn't be free
+    if (vnadd2->isFree() && (!vnadd2->isConstant())) continue;
+    if (vni->isFree() && (!vni->isConstant())) continue;
 
-  data.opSetInput(newop,vnadd1,0);
-  data.opSetInput(newop,vnadd2,1);
+    newop = data.newOp(2,decop->getAddr());
+    data.opSetOpcode(newop,CPUI_INT_ADD);
+    newout = data.newUniqueOut(vnadd1->getSize(),newop);
 
-  data.opInsertBefore(newop,decop);
+    data.opSetInput(decop,vni,0);
+    data.opSetInput(decop,newout,1);
 
-  return 1;
+    data.opSetInput(newop,vnadd1,0);
+    data.opSetInput(newop,vnadd2,1);
+
+    data.opInsertBefore(newop,decop);
+
+    ret = 1;
+  }
+
+  return ret;
 }
 
 /// \class RulePtraddUndo
