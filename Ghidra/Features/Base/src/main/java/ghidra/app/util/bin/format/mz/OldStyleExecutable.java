@@ -29,7 +29,7 @@ import java.io.*;
  */
 public class OldStyleExecutable {
     private FactoryBundledWithBinaryReader reader;
-    private DOSHeader dosHeader;
+    private OldDOSHeader dosHeader;
 
     /**
      * Constructs a new instance of an old-style executable
@@ -38,7 +38,7 @@ public class OldStyleExecutable {
      */
     public OldStyleExecutable(GenericFactory factory, ByteProvider bp) throws IOException {
         reader = new FactoryBundledWithBinaryReader(factory, bp, true);
-        dosHeader = DOSHeader.createDOSHeader(reader);
+        dosHeader = OldDOSHeader.createOldDOSHeader(reader);
     }
 
     /**
@@ -53,7 +53,7 @@ public class OldStyleExecutable {
      * Returns the DOS Header from this old-style executable.
      * @return the DOS Header from this old-style executable
      */
-    public DOSHeader getDOSHeader() {
+    public OldDOSHeader getOldDOSHeader() {
         return dosHeader;
     }
 }
