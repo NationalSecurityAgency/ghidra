@@ -98,7 +98,7 @@ void StringManager::saveXml(ostream &s) const
     s << " <bytes";
     a_v_b(s, "trunc", stringData.isTruncated);
     s << ">\n" << setfill('0');
-    for(int4 i=0;stringData.byteData.size();++i) {
+    for(uintp i=0;i<stringData.byteData.size();++i) {
       s << hex << setw(2) << (int4)stringData.byteData[i];
       if (i%20 == 19)
 	s << "\n  ";
