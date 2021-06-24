@@ -25,6 +25,7 @@ import docking.widgets.fieldpanel.support.ViewerPosition;
 import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.util.ProgramLocation;
@@ -289,6 +290,10 @@ public class DecompilerController {
 
 	void goToScalar(long value, boolean newWindow) {
 		callbackHandler.goToScalar(value, newWindow);
+	}
+
+	public void goToField(DataType dataType, int offset) {
+		callbackHandler.goToField(dataType, offset);
 	}
 
 	public DecompileData getDecompileData() {
