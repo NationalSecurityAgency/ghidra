@@ -28,6 +28,7 @@ import idaxml
 import idc
 import sys
 
+
 class XmlImporterPlugin(ida_idaapi.plugin_t):
     """
     XML Importer plugin class
@@ -68,17 +69,18 @@ class XmlImporterPlugin(ida_idaapi.plugin_t):
                 xml.import_xml()
             except idaxml.Cancelled:
                 msg = "XML Import cancelled!"
-                print "\n" + msg
+                print("\n" + msg)
                 idc.warning(msg)
             except idaxml.MultipleAddressSpacesNotSupported:
                 msg  = "XML Import cancelled!"
                 msg += "\n\nXML Import does not currently support"
                 msg += "\nimporting multiple address spaces."
-                print "\n" + msg
+                print("\n" + msg)
                 idc.warning(msg)
             except:
                 msg = "***** Exception occurred: XML Importer failed! *****"
-                print "\n" + msg + "\n", sys.exc_type, sys.exc_value
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                print("\n" + msg + "\n", exc_type, exc_value)
                 idc.warning(msg)
         finally:
             xml.cleanup()
