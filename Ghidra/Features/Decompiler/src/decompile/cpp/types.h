@@ -25,80 +25,39 @@
 #ifndef __MYTYPES__
 #define __MYTYPES__
 
+#include <limits.h>
+#include <stdint.h>
+
+typedef size_t uintm;
+#if INT64_MAX == LONG_MAX
+typedef long intm;
+#else
+typedef int intm;
+#endif
+typedef uint64_t uint8;
+typedef int64_t int8;
+typedef uint32_t uint4;
+typedef int32_t int4;
+typedef uint16_t uint2;
+typedef int16_t int2;
+typedef uint8_t uint1;
+typedef int8_t int1;
+typedef uintptr_t uintp;
+
 #if defined( __sparc )
 #define HOST_ENDIAN 1
-#if defined( __sparcv9 )
-typedef unsigned long uintm;
-typedef long intm;
-typedef unsigned long uint8;
-typedef long int8;
-typedef unsigned int uint4;
-typedef int int4;
-typedef unsigned short uint2;
-typedef short int2;
-typedef unsigned char uint1;
-typedef char int1;
-typedef uint8 uintp;
-#else
-typedef unsigned int uintm;
-typedef int intm;
-
-typedef unsigned long long uint8;
-typedef long long int8;
-typedef unsigned int uint4;
-typedef int int4;
-typedef unsigned short uint2;
-typedef short int2;
-typedef unsigned char uint1;
-typedef char int1;
-typedef uint4 uintp;
-
-#endif /* __sparcv9 */
 #endif /* __sparc */
 
 /* Alpha defines */
 #if defined (__digital__) && defined (__unix__)
-typedef unsigned long uintm;
-typedef long intm;
-typedef unsigned long uint8;
-typedef long int8;
-typedef unsigned int uint4;
-typedef int int4;
-typedef unsigned short uint2;
-typedef short int2;
-typedef unsigned char uint1;
-typedef char int1;
-typedef uint8 uintp;
 #endif
 
 #if defined (__linux__) && defined (__i386__)
 #define HOST_ENDIAN 0
-typedef unsigned long uintm;
-typedef long intm;
-typedef unsigned long long uint8;
-typedef long long int8;
-typedef unsigned int uint4;
-typedef int int4;
-typedef unsigned short uint2;
-typedef short int2;
-typedef unsigned char uint1;
-typedef char int1;
-typedef uint4 uintp;
 #endif
 
 #if defined (__linux__) && defined (__x86_64__)
 #define HOST_ENDIAN 0
-typedef unsigned int uintm;
-typedef int intm;
-typedef unsigned long uint8;
-typedef long int8;
-typedef unsigned int uint4;
-typedef int int4;
-typedef unsigned short uint2;
-typedef short int2;
-typedef unsigned char uint1;
-typedef char int1;
-typedef uint8 uintp;
 #endif
 
 #if defined(_WINDOWS)
@@ -106,79 +65,24 @@ typedef uint8 uintp;
 #if defined(_WIN64)
 
 #define HOST_ENDIAN 0
-typedef unsigned int uintm;
-typedef int intm;
-typedef unsigned long long uint8;
-typedef long long int8;
-typedef unsigned int uint4;
-typedef int int4;
-typedef unsigned short uint2;
-typedef short int2;
-typedef unsigned char uint1;
-typedef char int1;
-typedef uint8 uintp;
 
 #else // _WIN32 assumed
 
 #define HOST_ENDIAN 0
-typedef unsigned long uintm;
-typedef long intm;
-typedef unsigned long long uint8;
-typedef long long int8;
-typedef unsigned int uint4;
-typedef int int4;
-typedef unsigned short uint2;
-typedef short int2;
-typedef unsigned char uint1;
-typedef char int1;
-typedef uint4 uintp;
 #endif // _WIN32
 
 #endif // _WINDOWS
 
 #if defined( __APPLE_CC__) && defined( __ppc__)
 #define HOST_ENDIAN 1
-typedef unsigned long uintm;
-typedef long intm;
-typedef unsigned long uint8;
-typedef long int8;
-typedef unsigned int uint4;
-typedef int int4;
-typedef unsigned short uint2;
-typedef short int2;
-typedef unsigned char uint1;
-typedef char int1;
-typedef uint4 uintp;
 #endif
 
 #if defined( __APPLE_CC__) && defined( __i386__)
 #define HOST_ENDIAN 0
-typedef unsigned long uintm;
-typedef long intm;
-typedef unsigned long long uint8;
-typedef long long int8;
-typedef unsigned int uint4;
-typedef int int4;
-typedef unsigned short uint2;
-typedef short int2;
-typedef unsigned char uint1;
-typedef char int1;
-typedef uint4 uintp;
 #endif
 
 #if defined (__APPLE_CC__) && defined (__x86_64__)
 #define HOST_ENDIAN 0
-typedef unsigned int uintm;
-typedef int intm;
-typedef unsigned long uint8;
-typedef long int8;
-typedef unsigned int uint4;
-typedef int int4;
-typedef unsigned short uint2;
-typedef short int2;
-typedef unsigned char uint1;
-typedef char int1;
-typedef uint8 uintp;
 #endif
 
 #if defined (__APPLE_CC__) && defined (__aarch64__)
