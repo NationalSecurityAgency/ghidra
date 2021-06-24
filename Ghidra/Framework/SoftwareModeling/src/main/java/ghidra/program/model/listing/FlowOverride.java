@@ -182,11 +182,7 @@ public enum FlowOverride {
 				if (flowType.isComputed()) {
 					return RefType.CONDITIONAL_COMPUTED_CALL;
 				}
-				if (flowType.isTerminal()) {
-					// assume return was replaced
-					return RefType.COMPUTED_CALL_TERMINATOR;
-				}
-				return flowType;  // don't replace
+				return RefType.CONDITIONAL_CALL_TERMINATOR;
 			}
 			if (flowType.isComputed()) {
 				return RefType.COMPUTED_CALL_TERMINATOR;
