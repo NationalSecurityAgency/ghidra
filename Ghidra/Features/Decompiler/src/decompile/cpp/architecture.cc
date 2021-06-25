@@ -24,6 +24,9 @@
 #include <cmath>
 #endif
 
+#include "decompile/src/bridge.rs.h"
+#include "rust/cxx.h"
+
 vector<ArchitectureCapability *> ArchitectureCapability::thelist;
 
 const uint4 ArchitectureCapability::majorversion = 4;
@@ -97,7 +100,7 @@ void ArchitectureCapability::sortCapabilities(void)
 
 /// Set most sub-components to null pointers. Provide reasonable defaults
 /// for the configurable options
-Architecture::Architecture(void)
+Architecture::Architecture(void) : patches(rust::Box<Patches>::from_raw((Patches *) 0))
 
 {
   //  endian = -1;
@@ -122,6 +125,7 @@ Architecture::Architecture(void)
   printlist.push_back(print);
   options = new OptionDatabase(this);
   loadersymbols_parsed = false;
+
 #ifdef CPUI_STATISTICS
   stats = new Statistics();
 #endif
@@ -473,6 +477,23 @@ void Architecture::restoreXml(DocumentStorage &store)
       restoreFlowOverride(subel);
     else if (subel->getName() == "injectdebug")
       pcodeinjectlib->restoreDebug(subel);
+    else if (subel->getName() == "patches") {
+      patches = new_patches();
+      string payload;
+      Address addr;
+
+      for (auto patch: subel->getChildren()) {
+        for (auto ele : patch->getChildren()) {
+          if (ele->getName() == "addr") {
+            addr = Address::restoreXml(ele, this);
+          } else if (ele->getName() == "patch") {
+            payload = ele->getContent();
+          }
+        }
+
+        patches->add_patch(addr.getSpace()->getName(), addr.getOffset(), payload);
+      }
+    }
     else
       throw LowlevelError("XML error restoring architecture: " + subel->getName());
   }

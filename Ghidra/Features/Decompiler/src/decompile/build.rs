@@ -121,7 +121,9 @@ const CLI_CXX: &[&'static str] = &[
     "ifacedecomp.cc",
     "grammar.cc",
     "callgraph.cc",
-    "ruststream.cc"
+    "ruststream.cc",
+    "xml_arch.cc",
+    "loadimage_xml.cc"
 ];
 
 struct CompileOptions {

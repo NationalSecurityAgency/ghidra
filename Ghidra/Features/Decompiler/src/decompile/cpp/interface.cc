@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "interface.hh"
+#include "error.hh"
+
 #ifdef __REMOTE_SOCKET__
 #include "sys/socket.h"
 #include "sys/un.h"
@@ -605,5 +607,11 @@ unique_ptr<IfaceStatus> new_iface_status_stub() {
 void call_cmd(IfaceCommand &cmd, rust::Str s) {
   auto sstr = string(s);
   istringstream istr(sstr);
-  cmd.execute(istr);
+  try {
+    cmd.execute(istr);
+  } catch (IfaceExecutionError &e) {
+    cout << e.explain << endl;
+  } catch (LowlevelError &e) {
+    cout << e.explain << endl;
+  }
 }

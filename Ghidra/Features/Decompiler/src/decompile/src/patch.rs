@@ -16,11 +16,26 @@
 
 use crate::model::Address;
 use serde::{Serialize, Deserialize};
+use cxx::CxxString;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Patches {
     #[serde(rename = "patch")]
     patches: Vec<Patch>,
+}
+
+impl Patches {
+  pub(crate) fn add_patch(&mut self, space: &CxxString, offset: u64, payload: &CxxString) {
+    let space = space.to_string();
+    let payload = payload.to_string();
+
+    self.patches.push(Patch {
+      addr: Address {
+        space, offset
+      },
+      payload
+    })
+  }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
