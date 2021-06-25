@@ -525,22 +525,28 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 
 	@Override
 	public DBTraceProgramView getFixedProgramView(long snap) {
-		synchronized (fixedProgramViews) {
-			DBTraceProgramView view = fixedProgramViews.computeIfAbsent(snap, t -> {
-				Msg.debug(this, "Creating fixed view at snap=" + snap);
-				return new DBTraceProgramView(this, snap, baseCompilerSpec);
-			});
-			return view;
+		// NOTE: The new viewport will need to read from the time manager during init
+		try (LockHold hold = lockRead()) {
+			synchronized (fixedProgramViews) {
+				DBTraceProgramView view = fixedProgramViews.computeIfAbsent(snap, t -> {
+					Msg.debug(this, "Creating fixed view at snap=" + snap);
+					return new DBTraceProgramView(this, snap, baseCompilerSpec);
+				});
+				return view;
+			}
 		}
 	}
 
 	@Override
 	public DBTraceVariableSnapProgramView createProgramView(long snap) {
-		synchronized (programViews) {
-			DBTraceVariableSnapProgramView view =
-				new DBTraceVariableSnapProgramView(this, snap, baseCompilerSpec);
-			programViews.put(view, null);
-			return view;
+		// NOTE: The new viewport will need to read from the time manager during init
+		try (LockHold hold = lockRead()) {
+			synchronized (programViews) {
+				DBTraceVariableSnapProgramView view =
+					new DBTraceVariableSnapProgramView(this, snap, baseCompilerSpec);
+				programViews.put(view, null);
+				return view;
+			}
 		}
 	}
 

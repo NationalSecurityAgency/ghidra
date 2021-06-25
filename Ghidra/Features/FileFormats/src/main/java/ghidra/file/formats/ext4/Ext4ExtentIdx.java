@@ -55,6 +55,15 @@ public class Ext4ExtentIdx implements StructConverter {
 		return ei_leaf_hi;
 	}
 
+	/**
+	 * Return the calculated ei_leaf value by combining ei_leaf_lo and ei_leaf_hi
+	 * 
+	 * @return the calculated ei_leaf value by combining ei_leaf_lo and ei_leaf_hi
+	 */
+	public long getEi_leaf() {
+		return (Short.toUnsignedLong(ei_leaf_hi) << 32) | Integer.toUnsignedLong(ei_leaf_lo);
+	}
+
 	public short getEi_unused() {
 		return ei_unused;
 	}
