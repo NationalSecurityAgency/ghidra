@@ -36,6 +36,21 @@ public class Ext4IBlock implements StructConverter {
 	
 	private boolean isExtentTree;
 	
+	/**
+	 * Reads an IBlock that is expected to contain extents
+	 * 
+	 * @param provider {@link ByteProvider} to read from
+	 * @param offset offset of the extent header
+	 * @return new Ext4IBlock
+	 * @throws IOException if error
+	 */
+	public static Ext4IBlock readIBlockWithExtents(ByteProvider provider, long offset)
+			throws IOException {
+		BinaryReader reader = new BinaryReader(provider, true);
+		reader.setPointerIndex(offset);
+		return new Ext4IBlock(reader, true);
+	}
+
 	public Ext4IBlock(ByteProvider provider, boolean isExtentTree) throws IOException {
 		this( new BinaryReader( provider, true ), isExtentTree );
 	}
@@ -48,14 +63,14 @@ public class Ext4IBlock implements StructConverter {
 			count++;
 			short numEntries = header.getEh_entries();
 			if( header.getEh_depth() > 0 ) {
-				indexEntries = new ArrayList<Ext4ExtentIdx>();
+				indexEntries = new ArrayList<>();
 				for( int i = 0; i < numEntries; i++ ) {
 					indexEntries.add( new Ext4ExtentIdx(reader) );
 					count++;
 				}
 			}
 			else {
-				extentEntries = new ArrayList<Ext4Extent>();
+				extentEntries = new ArrayList<>();
 				for( int i = 0; i < numEntries; i++ ) {
 					extentEntries.add( new Ext4Extent(reader) );
 					count++;

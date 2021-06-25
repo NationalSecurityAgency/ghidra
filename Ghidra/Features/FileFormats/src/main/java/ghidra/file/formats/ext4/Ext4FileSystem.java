@@ -40,6 +40,7 @@ public class Ext4FileSystem implements GFileSystem {
 	private ByteProvider provider;
 	private String volumeName;
 	private String uuid;
+	private Ext4SuperBlock superBlock;
 
 	public Ext4FileSystem(FSRLRoot fsrl, ByteProvider provider) {
 		this.fsrl = fsrl;
@@ -51,17 +52,18 @@ public class Ext4FileSystem implements GFileSystem {
 		BinaryReader reader = new BinaryReader(provider, true);
 		reader.setPointerIndex(0x400);
 
-		Ext4SuperBlock superBlock = new Ext4SuperBlock(reader);
-
+		this.superBlock = new Ext4SuperBlock(reader);
 		this.volumeName = superBlock.getVolumeName();
-
 		this.uuid = NumericUtilities.convertBytesToString(superBlock.getS_uuid());
 
 		long blockCount = superBlock.getS_blocks_count();
-
 		int s_log_block_size = superBlock.getS_log_block_size();
-		blockSize = (int) Math.pow(2, (10 + s_log_block_size));
+		this.blockSize = (int) Math.pow(2, (10 + s_log_block_size));
 
+		int groupSize = blockSize * superBlock.getS_blocks_per_group();
+		if (groupSize <= 0) {
+			throw new IOException("Invalid groupSize: " + groupSize);
+		}
 		int numGroups = (int) (blockCount / superBlock.getS_blocks_per_group());
 		if (blockCount % superBlock.getS_blocks_per_group() != 0) {
 			numGroups++;
@@ -79,7 +81,7 @@ public class Ext4FileSystem implements GFileSystem {
 			monitor.incrementProgress(1);
 		}
 
-		Ext4Inode[] inodes = getInodes(reader, superBlock, groupDescriptors, monitor);
+		Ext4Inode[] inodes = getInodes(reader, groupDescriptors, monitor);
 
 		int s_inodes_count = superBlock.getS_inodes_count();
 		for (int i = 0; i < s_inodes_count; i++) {
@@ -88,17 +90,16 @@ public class Ext4FileSystem implements GFileSystem {
 				continue;
 			}
 			if ((inode.getI_mode() & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFDIR) {
-				processDirectory(reader, superBlock, inodes, i, null, null, monitor);
+				processDirectory(reader, inodes, i, null, null, monitor);
 			}
 			else if ((inode.getI_mode() & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFREG) {
-				processFile(reader, superBlock, inode, monitor);
+				// TODO: handle files if needed here
 			}
 		}
 	}
 
-	private void processDirectory(BinaryReader reader, Ext4SuperBlock superBlock,
-			Ext4Inode[] inodes, int index, String name, GFile parent, TaskMonitor monitor)
-			throws IOException, CancelledException {
+	private void processDirectory(BinaryReader reader, Ext4Inode[] inodes, int index, String name,
+			GFile parent, TaskMonitor monitor) throws IOException, CancelledException {
 
 		if (name != null && (name.equals(".") || name.equals(".."))) {
 			return;
@@ -119,20 +120,23 @@ public class Ext4FileSystem implements GFileSystem {
 		}
 		boolean isDirEntry2 =
 			(superBlock.getS_feature_incompat() & Ext4Constants.INCOMPAT_FILETYPE) != 0;
-		// if uses extents
-		if ((inode.getI_flags() & Ext4Constants.EXT4_EXTENTS_FL) != 0) {
-			Ext4IBlock i_block = inode.getI_block();
-			processIBlock(reader, superBlock, inodes, parent, isDirEntry2, i_block, monitor);
-		}
-		else {
-			throw new IOException("File system fails to use extents.");
-		}
+		Ext4IBlock i_block = inode.getI_block();
+		processDirectoryIBlock(reader, inodes, parent, isDirEntry2, i_block, monitor);
+
+		// null out directories that have already been processed
 		inodes[index] = null;
 	}
 
-	private void processIBlock(BinaryReader reader, Ext4SuperBlock superBlock, Ext4Inode[] inodes,
-			GFile parent, boolean isDirEntry2, Ext4IBlock i_block, TaskMonitor monitor)
-			throws CancelledException, IOException {
+	interface Checked2Consumer<T, E1 extends Throwable, E2 extends Throwable> {
+		void accept(T t) throws E1, E2;
+	}
+
+	interface ExtentConsumer extends Checked2Consumer<Ext4Extent, IOException, CancelledException> {
+		// no additional def
+	}
+
+	private void forEachExtentEntry(Ext4IBlock i_block, ExtentConsumer extentConsumer,
+			TaskMonitor monitor) throws CancelledException, IOException {
 		Ext4ExtentHeader header = i_block.getHeader();
 		if (header.getEh_depth() == 0) {
 			short numEntries = header.getEh_entries();
@@ -140,42 +144,41 @@ public class Ext4FileSystem implements GFileSystem {
 			for (int i = 0; i < numEntries; i++) {
 				monitor.checkCanceled();
 				Ext4Extent extent = entries.get(i);
-				long offset = extent.getExtentStartBlockNumber() * blockSize;
-				reader.setPointerIndex(offset);
-				if (isDirEntry2) {
-					processDirEntry2(reader, superBlock, inodes, parent, monitor, extent, offset);
-				}
-				else {
-					processDirEntry(reader, superBlock, inodes, parent, monitor, extent, offset);
-				}
+				extentConsumer.accept(extent);
 			}
 		}
 		else {
-			//throw new IOException( "Unhandled extent tree depth > 0 for inode " + index );
 			short numEntries = header.getEh_entries();
 			List<Ext4ExtentIdx> entries = i_block.getIndexEntries();
 			for (int i = 0; i < numEntries; i++) {
 				monitor.checkCanceled();
 
 				Ext4ExtentIdx extentIndex = entries.get(i);
-				long lo = extentIndex.getEi_leaf_lo();
-				long hi = extentIndex.getEi_leaf_hi();
-				long physicalBlockOfNextLevel = (hi << 16) | lo;
-				long offset = physicalBlockOfNextLevel * blockSize;
+				long offset = extentIndex.getEi_leaf() * blockSize;
 
-//				System.out.println( ""+physicalBlockOfNextLevel );
-//				System.out.println( "" );
-
-				reader.setPointerIndex(offset);
-				Ext4IBlock intermediateBlock = new Ext4IBlock(reader, true);
-				processIBlock(reader, superBlock, inodes, parent, isDirEntry2, intermediateBlock,
-					monitor);
+				forEachExtentEntry(Ext4IBlock.readIBlockWithExtents(provider, offset),
+					extentConsumer, monitor);
 			}
 		}
 	}
 
-	private void processDirEntry(BinaryReader reader, Ext4SuperBlock superBlock, Ext4Inode[] inodes,
-			GFile parent, TaskMonitor monitor, Ext4Extent extent, long offset)
+	private void processDirectoryIBlock(BinaryReader reader, Ext4Inode[] inodes, GFile parent,
+			boolean isDirEntry2, Ext4IBlock i_block, TaskMonitor monitor)
+			throws CancelledException, IOException {
+		forEachExtentEntry(i_block, extent -> {
+			long offset = extent.getExtentStartBlockNumber() * blockSize;
+			reader.setPointerIndex(offset);
+			if (isDirEntry2) {
+				processDirEntry2(reader, inodes, parent, monitor, extent, offset);
+			}
+			else {
+				processDirEntry(reader, inodes, parent, monitor, extent, offset);
+			}
+		}, monitor);
+	}
+
+	private void processDirEntry(BinaryReader reader, Ext4Inode[] inodes, GFile parent,
+			TaskMonitor monitor, Ext4Extent extent, long offset)
 			throws CancelledException, IOException {
 
 		while ((reader.getPointerIndex() - offset) < ((long) extent.getEe_len() * blockSize)) {
@@ -189,8 +192,7 @@ public class Ext4FileSystem implements GFileSystem {
 			if ((child.getI_mode() & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFDIR) {
 				String childName = dirEnt.getName();
 				long readerOffset = reader.getPointerIndex();
-				processDirectory(reader, superBlock, inodes, childIndex, childName, parent,
-					monitor);
+				processDirectory(reader, inodes, childIndex, childName, parent, monitor);
 				reader.setPointerIndex(readerOffset);
 			}
 			else if ((child.getI_mode() & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFREG ||
@@ -204,8 +206,8 @@ public class Ext4FileSystem implements GFileSystem {
 		}
 	}
 
-	private void processDirEntry2(BinaryReader reader, Ext4SuperBlock superBlock,
-			Ext4Inode[] inodes, GFile parent, TaskMonitor monitor, Ext4Extent extent, long offset)
+	private void processDirEntry2(BinaryReader reader, Ext4Inode[] inodes, GFile parent,
+			TaskMonitor monitor, Ext4Extent extent, long offset)
 			throws CancelledException, IOException {
 
 		while ((reader.getPointerIndex() - offset) < ((long) extent.getEe_len() * blockSize)) {
@@ -218,8 +220,7 @@ public class Ext4FileSystem implements GFileSystem {
 				int childInode = dirEnt2.getInode();
 				String childName = dirEnt2.getName();
 				long readerOffset = reader.getPointerIndex();
-				processDirectory(reader, superBlock, inodes, childInode, childName, parent,
-					monitor);
+				processDirectory(reader, inodes, childInode, childName, parent, monitor);
 				reader.setPointerIndex(readerOffset);
 			}
 			else if (dirEnt2.getFile_type() == Ext4Constants.FILE_TYPE_REGULAR_FILE ||
@@ -252,11 +253,6 @@ public class Ext4FileSystem implements GFileSystem {
 			dirEnt2.getFile_type() == Ext4Constants.FILE_TYPE_DIRECTORY, fileInode.getSize(),
 			new Ext4File(dirEnt2.getName(), fileInode));
 		inodes[fileInodeNum] = null;
-	}
-
-	private void processFile(BinaryReader reader, Ext4SuperBlock superBlock, Ext4Inode inode,
-			TaskMonitor monitor) {
-
 	}
 
 	@Override
@@ -368,38 +364,38 @@ public class Ext4FileSystem implements GFileSystem {
 			throw new IOException("Unsupported file storage: not EXT4_EXTENTS: " + file.getPath());
 		}
 
-		Ext4IBlock i_block = inode.getI_block();
-		Ext4ExtentHeader header = i_block.getHeader();
-		if (header.getEh_depth() != 0) {
-			throw new IOException("Unsupported file storage: eh_depth: " + file.getPath());
-		}
+		try {
+			long fileSize = inode.getSize();
+			ExtentsByteProvider result = new ExtentsByteProvider(provider, file.getFSRL());
 
-		long fileSize = inode.getSize();
-		ExtentsByteProvider ebp = new ExtentsByteProvider(provider, file.getFSRL());
-		for (Ext4Extent extent : i_block.getExtentEntries()) {
-			long startPos = extent.getStreamBlockNumber() * blockSize;
-			long providerOfs = extent.getExtentStartBlockNumber() * blockSize;
-			long extentLen = extent.getExtentBlockCount() * blockSize;
-			if (ebp.length() < startPos) {
-				ebp.addSparseExtent(startPos - ebp.length());
-			}
-			if (ebp.length() + extentLen > fileSize) {
-				// the last extent may have a trailing partial block
-				extentLen = fileSize - ebp.length();
-			}
+			Ext4IBlock i_block = inode.getI_block();
+			forEachExtentEntry(i_block, extent -> {
+				long startPos = extent.getStreamBlockNumber() * blockSize;
+				long providerOfs = extent.getExtentStartBlockNumber() * blockSize;
+				long extentLen = extent.getExtentBlockCount() * blockSize;
+				if (result.length() < startPos) {
+					result.addSparseExtent(startPos - result.length());
+				}
+				if (result.length() + extentLen > fileSize) {
+					// the last extent may have a trailing partial block
+					extentLen = fileSize - result.length();
+				}
 
-			ebp.addExtent(providerOfs, extentLen);
+				result.addExtent(providerOfs, extentLen);
+			}, monitor);
+			if (result.length() < fileSize) {
+				// trailing sparse.  not sure if possible.
+				result.addSparseExtent(fileSize - result.length());
+			}
+			return result;
 		}
-		if (ebp.length() < fileSize) {
-			// trailing sparse.  not sure if possible.
-			ebp.addSparseExtent(fileSize - ebp.length());
+		catch (CancelledException e) {
+			throw new IOException(e);
 		}
-		return ebp;
 	}
 
-	private Ext4Inode[] getInodes(BinaryReader reader, Ext4SuperBlock superBlock,
-			Ext4GroupDescriptor[] groupDescriptors, TaskMonitor monitor)
-			throws IOException, CancelledException {
+	private Ext4Inode[] getInodes(BinaryReader reader, Ext4GroupDescriptor[] groupDescriptors,
+			TaskMonitor monitor) throws IOException, CancelledException {
 
 		int inodeCount = superBlock.getS_inodes_count();
 		int inodesPerGroup = superBlock.getS_inodes_per_group();
