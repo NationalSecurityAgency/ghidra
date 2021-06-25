@@ -37,6 +37,8 @@ public class DataTypeDecompilerHover extends AbstractConfigurableHover
 	private static final String NAME = "Data Type Display";
 	private static final String DESCRIPTION =
 		"Show data type contents when hovering over a type name.";
+
+	// note: this is relative to other DecompilerHovers; a higher priority gets called first
 	private static final int PRIORITY = 20;
 
 	protected DataTypeDecompilerHover(PluginTool tool) {

@@ -47,6 +47,8 @@ public class FunctionSignatureDecompilerHover extends AbstractConfigurableHover
 	private static final String NAME = "Function Signature Display";
 	private static final String DESCRIPTION =
 		"Show function signatures when hovering over a function name.";
+
+	// note: this is relative to other DecompilerHovers; a higher priority gets called first
 	private static final int PRIORITY = 20;
 
 	protected FunctionSignatureDecompilerHover(PluginTool tool) {
