@@ -134,7 +134,7 @@ public class DBTestUtils {
 		int indexCnt = 0;
 		int[] indexedColumns = null;
 
-		Schema[] schemas = longKeySchemas;
+		Schema[] schemas = longKeySchemas.clone();
 		if (useSparseColumns) {
 			for (int i = 0; i < schemas.length; i++) {
 				schemas[i] = createSparseSchema(schemas[i]);
@@ -199,7 +199,7 @@ public class DBTestUtils {
 		int indexCnt = 0;
 		int[] indexedColumns = null;
 
-		Schema[] schemas = fixedKeySchemas;
+		Schema[] schemas = fixedKeySchemas.clone();
 		if (useSparseColumns) {
 			for (int i = 0; i < schemas.length; i++) {
 				schemas[i] = createSparseSchema(schemas[i]);

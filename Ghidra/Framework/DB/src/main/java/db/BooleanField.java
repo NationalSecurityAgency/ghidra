@@ -23,7 +23,7 @@ import db.buffers.DataBuffer;
  * <code>BooleanField</code> provides a wrapper for boolean data which is read or
  * written to a Record. 
  */
-public final class BooleanField extends Field {
+public final class BooleanField extends PrimitiveField {
 
 	/**
 	 * Minimum boolean field value (FALSE)
@@ -57,13 +57,8 @@ public final class BooleanField extends Field {
 	}
 
 	@Override
-	boolean isNull() {
-		return value == 0;
-	}
-
-	@Override
 	void setNull() {
-		checkImmutable();
+		super.setNull();
 		value = 0;
 	}
 
@@ -84,7 +79,7 @@ public final class BooleanField extends Field {
 
 	@Override
 	public void setBooleanValue(boolean b) {
-		checkImmutable();
+		updatingPrimitiveValue();
 		this.value = b ? (byte) 1 : (byte) 0;
 	}
 
@@ -100,7 +95,7 @@ public final class BooleanField extends Field {
 
 	@Override
 	int read(Buffer buf, int offset) throws IOException {
-		checkImmutable();
+		updatingPrimitiveValue();
 		value = buf.getByte(offset);
 		return offset + 1;
 	}
@@ -116,22 +111,16 @@ public final class BooleanField extends Field {
 	}
 
 	@Override
-	public String toString() {
-		return "BooleanField: " + Boolean.toString(getBooleanValue());
-	}
-
-	@Override
 	public String getValueAsString() {
 		return Boolean.toString(getBooleanValue());
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof BooleanField)) {
+		if (!(obj instanceof BooleanField)) {
 			return false;
 		}
-		BooleanField otherField = (BooleanField) obj;
-		return otherField.value == value;
+		return ((BooleanField) obj).value == value;
 	}
 
 	@Override
@@ -180,10 +169,10 @@ public final class BooleanField extends Field {
 
 	@Override
 	public void setBinaryData(byte[] bytes) {
-		checkImmutable();
 		if (bytes.length != 1) {
 			throw new IllegalFieldAccessException();
 		}
+		updatingPrimitiveValue();
 		value = bytes[0];
 	}
 

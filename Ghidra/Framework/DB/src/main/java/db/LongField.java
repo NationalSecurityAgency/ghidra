@@ -23,7 +23,7 @@ import db.buffers.DataBuffer;
  * <code>LongField</code> provides a wrapper for 8-byte signed long data 
  * which is read or written to a Record. 
  */
-public final class LongField extends Field {
+public final class LongField extends PrimitiveField {
 
 	/**
 	 * Minimum long field value
@@ -72,13 +72,8 @@ public final class LongField extends Field {
 	}
 
 	@Override
-	boolean isNull() {
-		return value == 0;
-	}
-
-	@Override
 	void setNull() {
-		checkImmutable();
+		super.setNull();
 		value = 0;
 	}
 
@@ -89,7 +84,7 @@ public final class LongField extends Field {
 
 	@Override
 	public void setLongValue(long value) {
-		checkImmutable();
+		updatingPrimitiveValue();
 		this.value = value;
 	}
 
@@ -105,7 +100,7 @@ public final class LongField extends Field {
 
 	@Override
 	int read(Buffer buf, int offset) throws IOException {
-		checkImmutable();
+		updatingPrimitiveValue();
 		value = buf.getLong(offset);
 		return offset + 8;
 	}
@@ -121,18 +116,13 @@ public final class LongField extends Field {
 	}
 
 	@Override
-	public String toString() {
-		return "LongField: " + Long.toString(value);
-	}
-
-	@Override
 	public String getValueAsString() {
 		return "0x" + Long.toHexString(value);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof LongField)) {
+		if (!(obj instanceof LongField)) {
 			return false;
 		}
 		return ((LongField) obj).value == value;
@@ -184,10 +174,10 @@ public final class LongField extends Field {
 
 	@Override
 	public void setBinaryData(byte[] bytes) {
-		checkImmutable();
 		if (bytes.length != 8) {
 			throw new IllegalFieldAccessException();
 		}
+		updatingPrimitiveValue();
 		value = (((long) bytes[0] & 0xff) << 56) | (((long) bytes[1] & 0xff) << 48) |
 			(((long) bytes[2] & 0xff) << 40) | (((long) bytes[3] & 0xff) << 32) |
 			(((long) bytes[4] & 0xff) << 24) | (((long) bytes[5] & 0xff) << 16) |
