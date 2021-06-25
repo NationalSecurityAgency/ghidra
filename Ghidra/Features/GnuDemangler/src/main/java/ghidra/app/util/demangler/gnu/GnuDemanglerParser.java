@@ -245,7 +245,7 @@ public class GnuDemanglerParser {
 	 * 			-'for' or 'to' (capture group 3)  |  (capture group 1)
 	 * 			-a space                         -+
 	 * 			-optional text (capture group 4)
-	 * 	
+	 * 
 	 * Note:    capture group 1 is the combination of groups 2 and 3 with trailing space
 	 * 
 	 * Examples:
@@ -313,7 +313,7 @@ public class GnuDemanglerParser {
 
 	/**
 	 * Pattern to catch literal strings of the form:
-	 * 		
+	 * 
 	 * 		-1l
 	 * 		2l
 	 * 		0u
@@ -365,7 +365,7 @@ public class GnuDemanglerParser {
 			return operatorHandler;
 		}
 
-		// Note: this really is a 'special handler' check that used to be handled above.  However, 
+		// Note: this really is a 'special handler' check that used to be handled above.  However,
 		//       some demangled operator strings begin with this text.  If we do this check above,
 		//       then we will not correctly handle those operators.
 		if (mangledSource.startsWith("_ZZ")) {
@@ -490,14 +490,14 @@ public class GnuDemanglerParser {
 	private LambdaName getLambdaName(String name) {
 
 		if (!name.startsWith("{")) {
-			// the text must start with the lambda syntax; ignore lambdas that are internal to 
+			// the text must start with the lambda syntax; ignore lambdas that are internal to
 			// the given name
 			return null;
 		}
 
 		// This replacement string will leave the initial 'lambda' text and replace all others
 		// with a placeholder value.  This allows us to use a simple regex pattern when pulling
-		// the lambda apart.   This is required to handle the case where a lambda expression 
+		// the lambda apart.   This is required to handle the case where a lambda expression
 		// contains a nested lambda expression.
 		LambdaReplacedString replacedString = new LambdaReplacedString(name);
 		String updatedName = replacedString.getModifiedText();
@@ -552,20 +552,8 @@ public class GnuDemanglerParser {
 		String name = itemText.substring(pos + 2);
 		DemangledObject item = parseFunctionOrVariable(name);
 
-		// 
-		// Convert the parent type to a suitable namespace.  The parent type may have spaces
-		// in its name, which is not allowed in an applied namespace.   
-		//
-		// We may eventually want to move this logic into the DemangledObject's 
-		// createNamespace() method.   This would also apply to the convertToNamespaces()
-		// method in this class.
-		//
-		String namespaceName = parent.getNamespaceName();
-		String escapedName = removeBadSpaces(namespaceName);
-		DemangledType type = new DemangledType(mangledSource, demangledSource, escapedName);
-		type.setNamespace(parent.getNamespace());
-
-		item.setNamespace(type);
+		DemangledType namespaceType = createNamespaceDemangledType(parent);
+		item.setNamespace(namespaceType);
 		return item;
 	}
 
@@ -758,7 +746,7 @@ public class GnuDemanglerParser {
 		}
 
 		// note: we should only encounter literals as template arguments.  Function parameters
-		//       and return types should never be literals.  
+		//       and return types should never be literals.
 		if (isLiteral(fullDatatype)) {
 			return createLiteral(fullDatatype);
 		}
@@ -814,7 +802,7 @@ public class GnuDemanglerParser {
 				//
 				// Check for array case
 				//
-				// remove the templates to allow us to use a simpler regex when checking for arrays				
+				// remove the templates to allow us to use a simpler regex when checking for arrays
 				DemangledDataType newDt = tryToParseArrayPointerOrReference(dt, datatype);
 				if (newDt != null) {
 					dt = newDt;
@@ -834,7 +822,7 @@ public class GnuDemanglerParser {
 						String fullText = lambdaName.getFullText();
 						dt.setName(fullText);
 						int offset = fullText.indexOf('(');
-						// to to the end of the lambda, which is its length, minus our position 
+						// to to the end of the lambda, which is its length, minus our position
 						// inside the lambda
 						int remaining = fullText.length() - offset;
 						i = i + remaining; // end of lambda's closing '}'
@@ -1583,9 +1571,28 @@ public class GnuDemanglerParser {
 		DemangledObject doBuild(Demangled namespace) {
 			DemangledAddressTable addressTable =
 				new DemangledAddressTable(mangledSource, demangled, name, true);
-			addressTable.setNamespace(namespace);
+			DemangledType namespaceType = createNamespaceDemangledType(namespace);
+			addressTable.setNamespace(namespaceType);
 			return addressTable;
 		}
+	}
+
+	//
+	// Convert the given demangled object into a suitable namespace.  The given type may have spaces
+	// in its name, which is not allowed in an *applied* namespace.
+	//
+	// We may eventually want to move this logic into the DemangledObject's createNamespace()
+	// method.   This would also apply to the convertToNamespaces() method in this class.  The
+	// reasoning is that this parser should create namespaces just as they are given to the parser,
+	// while the code responsible for applying the namespace should be responsible for domain
+	// logic, such as removing spaces in the namespace name.
+	//
+	private DemangledType createNamespaceDemangledType(Demangled namespace) {
+		String namespaceName = namespace.getNamespaceName();
+		String escapedName = removeBadSpaces(namespaceName);
+		DemangledType type = new DemangledType(mangledSource, demangledSource, escapedName);
+		type.setNamespace(namespace.getNamespace());
+		return type;
 	}
 
 	private class OverloadOperatorHandler extends OperatorHandler {
@@ -2088,8 +2095,8 @@ public class GnuDemanglerParser {
 
 	/**
 	 * A class that allows us to pass around string content that has had some of its text
-	 * replaced with temporary values.   Clients can also use this class to get back the original 
-	 * text. 
+	 * replaced with temporary values.   Clients can also use this class to get back the original
+	 * text.
 	 */
 	private abstract class ReplacedString {
 
