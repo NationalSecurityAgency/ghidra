@@ -182,6 +182,12 @@ public class ElfLoaderOptionsFactory {
 			return "Invalid type for option: " + name + " - " + option.getValueClass();
 		}
 		String value = (String) option.getValue();
+
+		/* Strip any leading 0x prefix */
+		if (value.startsWith("0x")) {
+			value = value.substring(2);
+		}
+
 		try {
 			space.getAddress(Long.parseUnsignedLong(value, 16), true);// verify valid address
 		}
