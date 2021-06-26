@@ -303,7 +303,7 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	goto ADDR16;
 }
 
-:JMP ADDRI     is (op=0x6c); ADDRI
+:JMP (ADDRI)     is (op=0x6c); ADDRI
 {
 	goto [ADDRI];
 }
