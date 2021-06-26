@@ -931,3 +931,7 @@ int4 power2Divide(int4 n,uint8 divisor,uint8 &q,uint8 &r)
   }
   return 0;
 }
+
+unique_ptr<Address> new_address(AddrSpace *id, uintb off) {
+  return make_unique<Address>(id, off);
+}

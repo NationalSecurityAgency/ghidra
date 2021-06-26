@@ -886,6 +886,16 @@ const FloatFormat *Translate::getFloatFormat(int4 size) const
   return (const FloatFormat *)0;
 }
 
+void dump_rust(PcodeEmit *emit, const Address &addr, OpCode opcode, unique_ptr<VarnodeData> outvar, rust::Slice<const unique_ptr<VarnodeData>> inputs, int4 size) {
+  auto v = make_unique<vector<VarnodeData>>();
+
+  for (auto iter = inputs.begin(); iter != inputs.end(); iter++) {
+    auto input = **iter;
+    v->push_back(VarnodeData { input.space, input.offset, input.size });
+  }
+  emit->dump(addr, opcode, outvar.get(), v->data(), v->size());
+}
+
 /// A convenience method for passing around pcode operations via
 /// XML.  A single pcode operation is parsed from an XML tag and
 /// returned to the application via the PcodeEmit::dump method.

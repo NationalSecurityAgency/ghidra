@@ -197,6 +197,8 @@ public:
   void restoreFlowOverride(const Element *el);		///< Set flow overrides from XML
   virtual ~Architecture(void);				///< Destructor
 
+  const AddrSpaceManager& getAddrSpaceManager() const;
+
   virtual string getDescription(void) const { return archid; }	///< Get a string describing \b this architecture
 
   /// \brief Print an error message to console
@@ -291,6 +293,7 @@ protected:
   void parseNoHighPtr(const Element *el);		///< Apply memory alias configuration
   void parsePreferSplit(const Element *el);		///< Designate registers to be split
   void parseAggressiveTrim(const Element *el);		///< Designate how to trim extension p-code ops
+
 };
 
 /// \brief A resolver for segmented architectures

@@ -478,7 +478,7 @@ void Architecture::restoreXml(DocumentStorage &store)
     else if (subel->getName() == "injectdebug")
       pcodeinjectlib->restoreDebug(subel);
     else if (subel->getName() == "patches") {
-      patches = new_patches();
+      patches = new_patches(this);
       string payload;
       Address addr;
 
@@ -486,7 +486,7 @@ void Architecture::restoreXml(DocumentStorage &store)
         for (auto ele : patch->getChildren()) {
           if (ele->getName() == "addr") {
             addr = Address::restoreXml(ele, this);
-          } else if (ele->getName() == "patch") {
+          } else if (ele->getName() == "payload") {
             payload = ele->getContent();
           }
         }
@@ -1370,6 +1370,10 @@ void Architecture::resetDefaults(void)
   allacts.resetDefaults();
   for(int4 i=0;i<printlist.size();++i)
     printlist[i]->resetDefaults();
+}
+
+const AddrSpaceManager& Architecture::getAddrSpaceManager() const {
+  return *translate;
 }
 
 Address SegmentedResolver::resolve(uintb val,int4 sz,const Address &point,uintb &fullEncoding)

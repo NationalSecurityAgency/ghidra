@@ -14,38 +14,85 @@
  * limitations under the License.
 */
 
+use cxx::{CxxString, type_id, ExternType};
 use std::io::Read;
 use std::pin::Pin;
-use cxx::CxxString;
 
 use crate::patch::Patches;
 
+unsafe impl ExternType for ffi::OpCode {
+    type Id = type_id!("OpCode");
+    type Kind = cxx::kind::Trivial;
+}
+
 #[cxx::bridge]
 pub(crate) mod ffi {
-
+    
     extern "Rust" {
         type Patches;
-        fn new_patches() -> Box<Patches>;
-        fn add_patch(self: &mut Patches, space: &CxxString, offset: u64, payload: &CxxString);
+        unsafe fn new_patches(arch: *mut Architecture) -> Box<Patches>;
+        fn add_patch(self: &mut Patches, space: &CxxString, offset: usize, payload: &CxxString);
+        unsafe fn resolve_patch(self: &Patches, addr: &Address, emit: *mut PcodeEmit) -> bool;
     }
 
     unsafe extern "C++" {
+        include!("fspec.hh");
+        include!("varnode.hh");
+        include!("pcoderaw.hh");
+        include!("architecture.hh");
+        include!("space.hh");
+        include!("address.hh");
+        include!("translate.hh");
+        include!("libdecomp.hh");
+        include!("interface.hh");
+        include!("consolemain.hh");
+        include!("ifacedecomp.hh");
+        include!("ruststream.hh");
         include!("ghidra_process.hh");
+
+        type OpCode = crate::model::OpCode;
+        type Address;
+        type AddrSpace;
+        type VarnodeData;
+        type AddrSpaceManager;
+        type Architecture;
+        type PcodeEmit;
+        type IfaceStatus;
+        type IfaceData;
+        type IfaceCommand;
+        type StreamReader;
 
         fn ghidra_process_main();
 
-        include!("architecture.hh");
-        type Architecture;
+        fn getName(self: &AddrSpace) -> &CxxString;
 
-        include!("libdecomp.hh");
+        unsafe fn new_address(space: *mut AddrSpace, off: usize) -> UniquePtr<Address>;
+        fn getSpace(self: &Address) -> *mut AddrSpace;
+        fn getOffset(self: &Address) -> usize;
+
+        unsafe fn new_varnode_data(
+            space: *mut AddrSpace,
+            offset: usize,
+            size: u32,
+        ) -> UniquePtr<VarnodeData>;
+
+        fn getAddrSpaceManager(self: &Architecture) -> &AddrSpaceManager;
+
+        fn getSpaceByName(self: &AddrSpaceManager, name: &CxxString) -> *mut AddrSpace;
+
+        unsafe fn dump_rust(
+            emit: *mut PcodeEmit,
+            addr: &Address,
+            opcode: OpCode,
+            out_var: UniquePtr<VarnodeData>,
+            input_vars: &[UniquePtr<VarnodeData>],
+            size: i32,
+        );
+
         fn startDecompilerLibrary(sleigh_home: &str);
 
-        include!("interface.hh");
-        type IfaceStatus;
         fn new_iface_status_stub() -> UniquePtr<IfaceStatus>;
 
-        type IfaceData;
-        type IfaceCommand;
 
         unsafe fn call_cmd(cmd: Pin<&mut IfaceCommand>, s: &str);
         fn getModuleRust(self: &IfaceCommand) -> String;
@@ -56,7 +103,6 @@ pub(crate) mod ffi {
             data: *mut IfaceData,
         );
 
-        include!("consolemain.hh");
         fn new_load_file_command() -> UniquePtr<IfaceCommand>;
         fn new_add_path_command() -> UniquePtr<IfaceCommand>;
         fn new_save_command() -> UniquePtr<IfaceCommand>;
@@ -64,19 +110,16 @@ pub(crate) mod ffi {
 
         fn console_main_rust(args: &[String]) -> i32;
 
-        include!("ifacedecomp.hh");
         fn new_decompile_command() -> UniquePtr<IfaceCommand>;
         fn new_print_raw_command() -> UniquePtr<IfaceCommand>;
         fn new_print_c_command() -> UniquePtr<IfaceCommand>;
         fn new_addressrange_load_command() -> UniquePtr<IfaceCommand>;
         fn new_load_func_command() -> UniquePtr<IfaceCommand>;
 
-        include!("ruststream.hh");
-        type StreamReader;
         fn read(self: Pin<&mut StreamReader>, buf: &mut [u8]) -> usize;
 
-        include!("opcodes.hh");
-        type OpCode;
+        // opcode
+        fn get_opcode(s: &CxxString) -> OpCode;
     }
 }
 
@@ -96,6 +139,6 @@ impl<'a> Read for RustReader<'a> {
     }
 }
 
-fn new_patches() -> Box<Patches> {
-    Box::new(Patches::default())
+unsafe fn new_patches(arch: *mut ffi::Architecture) -> Box<Patches> {
+    Box::new(Patches::new(arch))
 }

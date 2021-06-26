@@ -17,8 +17,9 @@
 /// "SoftwareModelling" (as in Java)
 
 use serde::{Serialize, Deserialize};
+
 #[derive(Debug, Serialize, Deserialize)]
-#[repr(u8)]
+#[repr(u32)]
 pub enum OpCode {
     Copy = 1,  // Copy one operand to another
     Load = 2,  // Load from a pointer into a specified address space
@@ -117,7 +118,7 @@ pub enum OpCode {
 pub struct Address {
     pub space: String,
     #[serde(with = "crate::serde_int")]
-    pub offset: u64,
+    pub offset: usize,
 }
 
 impl std::cmp::PartialEq for Address {

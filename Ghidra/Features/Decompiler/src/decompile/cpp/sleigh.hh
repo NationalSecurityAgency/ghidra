@@ -21,6 +21,8 @@
 
 #include "sleighbase.hh"
 
+#include "decompile/src/bridge.rs.h"
+
 class LoadImage;
 
 /// \brief Class for describing a relative p-code branch destination
