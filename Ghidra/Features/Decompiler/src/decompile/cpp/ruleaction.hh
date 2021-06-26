@@ -1488,5 +1488,15 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
+class RuleLzcntZeroTest : public Rule {
+public:
+  RuleLzcntZeroTest(const string &g) : Rule( g, 0, "lzcntzerotest") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleLzcntZeroTest(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 
+};
 #endif
