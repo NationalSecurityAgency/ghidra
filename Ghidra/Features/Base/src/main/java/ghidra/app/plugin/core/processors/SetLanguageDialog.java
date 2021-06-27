@@ -19,6 +19,7 @@ import javax.swing.BorderFactory;
 
 import docking.DialogComponentProvider;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.plugin.importer.LcsSelectionEvent;
 import ghidra.plugin.importer.LcsSelectionListener;
 import ghidra.plugin.importer.NewLanguagePanel;
 import ghidra.program.model.lang.*;
@@ -36,31 +37,36 @@ public class SetLanguageDialog extends DialogComponentProvider {
 	private LanguageID dialogLanguageDescID;
 	private CompilerSpecID dialogCompilerSpecDescID;
 
-	LcsSelectionListener listener = e -> {
-		LanguageID langID = null;
-		CompilerSpecID compilerSpecID = null;
-		if (e.selection != null) {
-			langID = e.selection.languageID;
-			compilerSpecID = e.selection.compilerSpecID;
-		}
-		if ((langID != null) && (langID.equals(currProgram.getLanguageID()))) {
-			if ((compilerSpecID != null) &&
-				(compilerSpecID.equals(currProgram.getCompilerSpec().getCompilerSpecID()))) {
-				//selectLangPanel.setNotificationText("Please select a different Language or Compiler Spec.");
-				setStatusText("Please select a different Language or Compiler Spec.");
-				setOkEnabled(false);
+	LcsSelectionListener listener = new LcsSelectionListener() {
+		@Override
+		public void valueChanged(LcsSelectionEvent e) {
+			LanguageID langID = null;
+			CompilerSpecID compilerSpecID = null;
+			if (e.selection != null) {
+				langID = e.selection.languageID;
+				compilerSpecID = e.selection.compilerSpecID;
 			}
-			else {
-				//selectLangPanel.setNotificationText(null);
-				setStatusText(null);
-				setOkEnabled(true);
+			if ((langID != null) && (langID.equals(currProgram.getLanguageID()))) {
+				if ((compilerSpecID != null) &&
+						(compilerSpecID.equals(currProgram.getCompilerSpec().getCompilerSpecID()))) {
+					setStatusText("Please select a different Language or Compiler Spec.");
+					setOkEnabled(false);
+				} else {
+					setStatusText(null);
+					setOkEnabled(true);
+				}
+				return;
 			}
-			return;
+			setStatusText(null);
+			setOkEnabled(langID != null);
 		}
-		//selectLangPanel.setNotificationText("Setting the language from '" + currProgram.getLanguageName() + "' to '" + langDesc.getName() + "'...");
-		//selectLangPanel.setNotificationText(null);
-		setStatusText(null);
-		setOkEnabled(langID != null);
+
+		@Override
+		public void valueChosen(LcsSelectionEvent e) {
+			if (isOKEnabled()) {
+				okCallback();
+			}
+		}
 	};
 
 	public SetLanguageDialog(PluginTool tool, Program program) {
