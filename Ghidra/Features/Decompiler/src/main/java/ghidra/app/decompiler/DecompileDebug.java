@@ -801,10 +801,21 @@ public class DecompileDebug {
 		flowoverride.add(buf.toString());
 	}
 
-	public void addPatch(Address addr, PcodeDataLike[] pcode) {
+	/**
+	 * Adds a patch to the decompile debug storage.
+	 * 
+	 * Addr, pcode and along with a length is stored. Length is needed
+	 * to resolve the instruction in native target.
+	 * 
+	 * @param addr the address of the patch
+	 * @param pcode the pcode to resolve to (instead of original semantic)
+	 * @param length the length of the instruction, needed by native component
+	 * 				 (i.e, decompiler binary) to resolve the instruction correctly.
+	 */
+	public void addPatch(Address addr, PcodeDataLike[] pcode, int length) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("<patch>\n  ");
-		AddressXML.buildXML(builder, addr);
+		AddressXML.buildXML(builder, addr, length);
 		builder.append("\n  <payload><![CDATA[\n");
 		builder.append(PcodeRawFormatter.formatRaw(pcode));
 		builder.append("\n]]></payload>\n</patch>\n");
