@@ -161,7 +161,7 @@ public final class StringField extends Field {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof StringField)) {
+		if (!(obj instanceof StringField)) {
 			return false;
 		}
 		StringField f = (StringField) obj;
