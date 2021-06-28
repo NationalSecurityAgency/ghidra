@@ -480,18 +480,18 @@ void Architecture::restoreXml(DocumentStorage &store)
     else if (subel->getName() == "patches") {
       patches = new_patches(this);
       string payload;
-      Address addr;
+      VarnodeData varnode;
 
       for (auto patch: subel->getChildren()) {
         for (auto ele : patch->getChildren()) {
           if (ele->getName() == "addr") {
-            addr = Address::restoreXml(ele, this);
+            varnode.restoreXml(ele, this);
           } else if (ele->getName() == "payload") {
             payload = ele->getContent();
           }
         }
 
-        patches->add_patch(addr.getSpace()->getName(), addr.getOffset(), payload);
+        patches->add_patch(varnode.space->getName(), varnode.offset, varnode.size, payload);
       }
     }
     else

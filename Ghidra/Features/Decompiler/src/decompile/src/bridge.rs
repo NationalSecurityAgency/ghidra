@@ -14,7 +14,7 @@
  * limitations under the License.
 */
 
-use cxx::{CxxString, type_id, ExternType};
+use cxx::{type_id, ExternType};
 use std::io::Read;
 use std::pin::Pin;
 
@@ -31,8 +31,8 @@ pub(crate) mod ffi {
     extern "Rust" {
         type Patches;
         unsafe fn new_patches(arch: *mut Architecture) -> Box<Patches>;
-        fn add_patch(self: &mut Patches, space: &CxxString, offset: usize, payload: &CxxString);
-        unsafe fn resolve_patch(self: &Patches, addr: &Address, emit: *mut PcodeEmit) -> bool;
+        fn add_patch(self: &mut Patches, space: &CxxString, offset: usize, size: i32, payload: &CxxString);
+        unsafe fn resolve_patch(self: &Patches, addr: &Address, emit: *mut PcodeEmit) -> i32;
     }
 
     unsafe extern "C++" {

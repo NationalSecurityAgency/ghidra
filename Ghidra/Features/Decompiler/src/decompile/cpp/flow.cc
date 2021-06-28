@@ -405,10 +405,17 @@ bool FlowInfo::processInstruction(const Address &curaddr,bool &startbasic)
   else
     flowoverride = Override::NONE;
 
-  auto resolved = glb->patches->resolve_patch(curaddr, &emitter);
+  auto patch_raw = glb->patches.into_raw();
+  if (patch_raw != 0) {
+    glb->patches = rust::Box<Patches>::from_raw(patch_raw);
+    step = glb->patches->resolve_patch(curaddr, &emitter);
+  } else {
+    glb->patches = rust::Box<Patches>::from_raw(0);
+    step = 0;
+  }
 
   try {
-    if (!resolved) {
+    if (step == 0) {
       step = glb->translate->oneInstruction(emitter,curaddr); // Generate ops for instruction
     }
   }
