@@ -53,11 +53,14 @@ public class ArticulatedEdgeRenderer<V extends VisualVertex, E extends VisualEdg
 		List<Point2D> articulations = e.getArticulationPoints();
 		offset = updateOffsetForLeftOrRightHandSizeEdge(rc, offset, x1, articulations);
 		for (Point2D point : articulations) {
-			Point2D offsetPoint =
-				new Point2D.Float((float) point.getX() + offset, (float) point.getY() + offset);
+			double x = point.getX();
+			double y = point.getY();
+			Point2D offsetPoint = new Point2D.Double(x + offset, y + offset);
 			point = rc.getMultiLayerTransformer().transform(Layer.LAYOUT, offsetPoint);
-			path.lineTo((float) point.getX(), (float) point.getY());
-			path.moveTo((float) point.getX(), (float) point.getY());
+
+			x = point.getX();
+			y = point.getY();
+			path.lineTo(x, y);
 		}
 
 		path.lineTo(x2, y2);
