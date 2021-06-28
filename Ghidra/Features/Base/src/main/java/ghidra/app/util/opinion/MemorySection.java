@@ -29,7 +29,7 @@ class MemorySection {
 	protected final boolean isFragmentationOK;
 
 	// destination information
-	protected final AddressRange range;
+	protected final AddressRange physicalAddrRange;
 
 	// metadata
 	protected final String sectionName;
@@ -40,24 +40,25 @@ class MemorySection {
 
 	/**
 	 * Create memory "section" definition.  Those sections defined within the OTHER address
-	 * space will be treated as non-loaded data.
+	 * space will be treated as non-loaded data.  Section is always defined with its
+	 * physcal address range (i.e., not overlay address range).
 	 * @param key the loadable section key which corresponds to this memory "section"
 	 * @param isInitialized true if "section" will be initialized from a data source
 	 * @param fileOffset data source offset (required if isInitialized is true)
 	 * @param length number of bytes within this "section"
-	 * @param range physical address range of "section" (i.e., not overlay addresses)
+	 * @param physicalAddrRange physical address range of "section" (i.e., not overlay addresses)
 	 * @param sectionName section name
 	 * @param isReadable true if "section" has read privilege
 	 * @param isWritable true if "section" has write privilege
-	 * @param isExecutable true if "section" has execute privilege
+	 * @param isExecute true if "section" has execute privilege
 	 * @param comment section comment (used as basis for block comment)
 	 * @param isFragmentationOK if true this memory section may be fragmented due to 
 	 * conflict/overlap with other memory sections of higher precedence.
 	 */
 	MemorySection(MemoryLoadable key, boolean isInitialized, long fileOffset, long length,
-			AddressRange range, String sectionName, boolean isReadable, boolean isWritable,
-			boolean isExecute, String comment, boolean isFragmentationOK) {
-		AddressSpace space = range.getAddressSpace();
+			AddressRange physicalAddrRange, String sectionName, boolean isReadable,
+			boolean isWritable, boolean isExecute, String comment, boolean isFragmentationOK) {
+		AddressSpace space = physicalAddrRange.getAddressSpace();
 		if (!space.isMemorySpace()) {
 			throw new IllegalArgumentException("memory-based address required");
 		}
@@ -65,7 +66,7 @@ class MemorySection {
 		this.isInitialized = isInitialized;
 		this.fileOffset = fileOffset;
 		this.length = length;
-		this.range = range;
+		this.physicalAddrRange = physicalAddrRange;
 		this.sectionName = sectionName;
 		this.isReadable = isReadable;
 		this.isWritable = isWritable;
@@ -90,20 +91,40 @@ class MemorySection {
 		return length;
 	}
 
-	public AddressRange getRange() {
-		return range;
+	/**
+	 * Get the physical address range of the section
+	 * (i.e., not an overlay address range)
+	 * @return physical address range of the section
+	 */
+	public AddressRange getPhysicalAddressRange() {
+		return physicalAddrRange;
 	}
 
-	public Address getMinAddress() {
-		return range.getMinAddress();
+	/**
+	 * Get the minimum physical address of the section
+	 * (i.e., not an overlay address)
+	 * @return minimum physical address of the section
+	 */
+	public Address getMinPhysicalAddress() {
+		return physicalAddrRange.getMinAddress();
 	}
 
-	public Address getMaxAddress() {
-		return range.getMaxAddress();
+	/**
+	 * Get the maximum physical address of the section
+	 * (i.e., not an overlay address)
+	 * @return maximum physical address of the section
+	 */
+	public Address getMaxPhysicalAddress() {
+		return physicalAddrRange.getMaxAddress();
 	}
 
-	public AddressSpace getAddressSpace() {
-		return range.getMinAddress().getAddressSpace();
+	/**
+	 * Get the physical address space of the section
+	 * (i.e., not an overlay address space)
+	 * @return physical address space of the section
+	 */
+	public AddressSpace getPhysicalAddressSpace() {
+		return physicalAddrRange.getMinAddress().getAddressSpace();
 	}
 
 	public String getSectionName() {
@@ -111,7 +132,7 @@ class MemorySection {
 	}
 
 	public boolean isLoaded() {
-		return range.getAddressSpace() != AddressSpace.OTHER_SPACE;
+		return physicalAddrRange.getAddressSpace() != AddressSpace.OTHER_SPACE;
 	}
 
 	public boolean isReadable() {
@@ -133,7 +154,8 @@ class MemorySection {
 	@Override
 	public String toString() {
 		return isInitialized
-				? String.format("%s (%d, %d @ %s)", sectionName, fileOffset, length, range)
-				: String.format("%s (uninitialized @ %s)", sectionName, range);
+				? String.format("%s (%d, %d @ %s)", sectionName, fileOffset, length,
+					physicalAddrRange)
+				: String.format("%s (uninitialized @ %s)", sectionName, physicalAddrRange);
 	}
 }
