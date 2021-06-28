@@ -15,8 +15,11 @@
  */
 package agent.gdb.model.invm;
 
+import org.junit.Ignore;
+
 import agent.gdb.model.AbstractModelForGdbThreadActivationTest;
 
+@Ignore
 public class InVmModelForGdbThreadActivationTest extends AbstractModelForGdbThreadActivationTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
