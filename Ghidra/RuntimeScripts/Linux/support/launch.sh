@@ -86,7 +86,15 @@ if [[ ${INDEX} -lt 5 ]]; then
 	exit 1
 fi
 
+# Sets SUPPORT_DIR to the directory that contains this file (launch.sh)
 SUPPORT_DIR="${0%/*}"
+
+# Ensure Ghidra path doesn't contain illegal characters
+if [[ "$SUPPORT_DIR" = *"!"* ]]; then
+	echo "Ghidra path cannot contain a \"!\" character."
+	exit 1
+fi
+
 if [ -f "${SUPPORT_DIR}/launch.properties" ]; then
 
 	# Production Environment

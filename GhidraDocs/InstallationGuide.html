@@ -18,7 +18,7 @@
 
 <h1>Ghidra Installation Guide</h1>
 <p>
-The installation information provided is effective as of Ghidra 9.2 and is subject to change with
+The installation information provided is effective as of Ghidra 10.0.1 and is subject to change with
 future releases.
 </p>
 
@@ -537,12 +537,19 @@ be installed in a pre-existing Eclipse installation.</p>
     new files.  Future versions of Ghidra will address this in order to ensure compatibility with
     the newest versions of Java.
   </li>
+  <li>
+    Ghidra will not launch when its path contains a "!" character.  This is to avoid issues that 
+    Java's internal libraries have parsing these paths ("!" is used as a jar-separator by Java).
+  </li>
 </ul>
 <h3><a name="WindowsIssues"></a>Windows</h3>
 <ul>
   <li>
     Older versions of 7-Zip may not be able to unpack the Ghidra distribution file if it contains
     any files with a 0-byte length.  Upgrade to a newer version of 7-Zip to fix this problem.
+  </li>
+  <li>
+    Ghidra will fail to launch when its path contains a "^" character.
   </li>
 </ul>
 <h3><a name="LinuxIssues"></a>Linux</h3>

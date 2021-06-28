@@ -64,6 +64,12 @@ SERVICE_NAME=org.rzo.yajsw.$APP_NAME
 SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
 SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
+# Ensure Ghidra path doesn't contain illegal characters
+if [[ "$SCRIPT_DIR" = *"!"* ]]; then
+	echo "Ghidra path cannot contain a \"!\" character."
+	exit 1
+fi
+
 # YAJSW likes absolute paths
 cd "${SCRIPT_DIR}"
 SCRIPT_DIR="$(pwd)"

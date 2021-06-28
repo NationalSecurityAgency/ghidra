@@ -1,8 +1,7 @@
 :: Ghidra python launch
 
 @echo off
-
-setlocal EnableDelayedExpansion
+setlocal
 
 :: Maximum heap memory size
 :: Default for Windows 32-bit is 768M and 64-bit is 1024M
@@ -25,7 +24,4 @@ set DEBUG_ADDRESS=127.0.0.1:13002
 set VMARG_LIST=-XX:ParallelGCThreads=2
 set VMARG_LIST=%VMARG_LIST% -XX:CICompilerCount=2
 
-:: store current path
-set "filepath=%~dp0"
-
-call "%filepath%launch.bat" %LAUNCH_MODE% Ghidra-Python "%MAXMEM%" "%VMARG_LIST%" ghidra.python.PythonRun %params%
+call "%~dp0launch.bat" %LAUNCH_MODE% Ghidra-Python "%MAXMEM%" "%VMARG_LIST%" ghidra.python.PythonRun %params%
