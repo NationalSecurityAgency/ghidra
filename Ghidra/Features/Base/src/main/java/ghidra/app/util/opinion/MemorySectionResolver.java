@@ -54,7 +54,7 @@ public abstract class MemorySectionResolver {
 	 * @param fileOffset data source file offset.  It is assumed that all initialized
 	 * "sections" draw from a single data source.
 	 * @param numberOfBytes number of bytes within "section" 
-	 * @param startAddress desired physical start address of "section"
+	 * @param startAddress desired physical start address of "section" (not overlay address)
 	 * @param sectionName name of "section" 
 	 * @param isReadable true if "section" has read privilege
 	 * @param isWritable true if "section" has write privilege
@@ -91,7 +91,7 @@ public abstract class MemorySectionResolver {
 	 * The last "section" defined will take precedence when resolving conflicts.  
 	 * @param key the loadable section key which corresponds to this memory "section"
 	 * @param numberOfBytes number of bytes within "section" 
-	 * @param startAddress desired physical start address of "section"
+	 * @param startAddress desired physical start address of "section" (not overlay address)
 	 * @param sectionName name of "section" 
 	 * @param isReadable true if "section" has read privilege
 	 * @param isWritable true if "section" has write privilege
@@ -165,8 +165,15 @@ public abstract class MemorySectionResolver {
 		final MemorySection section;
 		final long rangeStartFileOffset;
 		final long rangeSize; // size in file bytes
-		final Address rangeStartAddress;
+		final Address rangeStartAddress; // start of memory range (NOTE: may be overlay address)
 
+		/**
+		 * Construction file allocation range
+		 * @param section memory section
+		 * @param rangeStartFileOffset file byte offset for start of range 
+		 * @param rangeSize length of range in bytes
+		 * @param rangeStartAddress range memory address (NOTE: may be a memory overlay address)
+		 */
 		AllocatedFileSectionRange(MemorySection section, long rangeStartFileOffset, long rangeSize,
 				Address rangeStartAddress) {
 			this.section = section;
@@ -289,7 +296,7 @@ public abstract class MemorySectionResolver {
 		}
 		catch (AddressOverflowException | IOException e) {
 			Msg.error(this, "Error while creating section " + section.getSectionName() +
-				section.getRange() + ": " + e.getMessage(), e);
+				section.getPhysicalAddressRange() + ": " + e.getMessage(), e);
 		}
 	}
 
@@ -300,7 +307,7 @@ public abstract class MemorySectionResolver {
 	 * @param memoryAllocationList memory allocation list.
 	 * Matching ranges allocated to other sections are identified using a ProxyAddressRange, 
 	 * memory-mapped file range conflicts are identified using an OverlayAddressRange, while
-	 * new file-mapped ranges are be identified by an AddressRangeImpl.
+	 * new file-mapped ranges are identified by an AddressRangeImpl.
 	 * @param monitor
 	 * @return memory address ranges corresponding to the specified section. Memory blocks
 	 * will have been created for these ranges but may be shared by other sections.  
@@ -315,7 +322,7 @@ public abstract class MemorySectionResolver {
 		long sectionByteOffset = 0;
 
 		ObjectRangeMap<AllocatedFileSectionRange> fileLoadRangeMap = null;
-		AddressSpace addressSpace = section.getAddressSpace();
+		AddressSpace addressSpace = section.getPhysicalAddressSpace();
 		if (addressSpace != AddressSpace.OTHER_SPACE) {
 			fileLoadRangeMap = getFileLoadRangeMap(addressSpace, true);
 		}
@@ -323,7 +330,9 @@ public abstract class MemorySectionResolver {
 		List<AddressRange> modifiedRangeList = new ArrayList<>();
 
 		Memory memory = program.getMemory();
-		for (AddressRange range : memoryAllocationList) {
+
+		// NOTE: Allocated address ranges may refer to overlay memory address
+		for (AddressRange allocatedAddrRange : memoryAllocationList) {
 
 			monitor.checkCanceled();
 
@@ -335,33 +344,33 @@ public abstract class MemorySectionResolver {
 				rangeIndex = -1; // prefer to omit index if only a single range
 			}
 
-			long rangeSize = range.getLength();
+			long rangeSize = allocatedAddrRange.getLength();
 
-			if (range instanceof ProxyAddressRange) {
-				modifiedRangeList.add(new AddressRangeImpl(range));
+			if (allocatedAddrRange instanceof ProxyAddressRange) {
+				modifiedRangeList.add(new AddressRangeImpl(allocatedAddrRange));
 				sectionByteOffset += rangeSize;
 				continue; // skip range
 			}
 
 			String blockName = getUniqueSectionChunkName(section, memory, rangeIndex);
 
-			Address address = section.getMinAddress().add(sectionByteOffset);
+			Address physicalStartAddr = section.getMinPhysicalAddress().add(sectionByteOffset);
 
 			if (section.isInitialized) {
 				MemoryBlock block;
 				long fileOffset = section.fileOffset + sectionByteOffset;
 				Address minAddr;
 				Address maxAddr;
-				if (range instanceof OverlayAddressRange) {
+				if (allocatedAddrRange instanceof OverlayAddressRange) {
 					String comment = section.getComment();
 					if (section.isLoaded()) { // assume another section took priority
-						MemoryBlock priorityBlock = memory.getBlock(address);
+						MemoryBlock priorityBlock = memory.getBlock(physicalStartAddr);
 						if (priorityBlock != null) {
 							comment = comment + " - displaced by " + priorityBlock.getName();
 						}
 					}
 					// As an overlay no conflict should ever occur
-					block = createInitializedBlock(section.key, true, blockName, address,
+					block = createInitializedBlock(section.key, true, blockName, physicalStartAddr,
 						fileOffset, rangeSize, comment, section.isReadable(), section.isWritable(),
 						section.isExecute(), monitor);
 					minAddr = block.getStart();
@@ -369,11 +378,11 @@ public abstract class MemorySectionResolver {
 				}
 				else {
 					// block may be null due to unexpected conflict
-					block = createInitializedBlock(section.key, false, blockName, address,
+					block = createInitializedBlock(section.key, false, blockName, physicalStartAddr,
 						fileOffset, rangeSize, section.getComment(), section.isReadable(),
 						section.isWritable(), section.isExecute(), monitor);
-					minAddr = address;
-					maxAddr = address.addNoWrap(rangeSize - 1);
+					minAddr = physicalStartAddr;
+					maxAddr = physicalStartAddr.addNoWrap(rangeSize - 1);
 					if (block == null) {
 						// This is a bug but allow load to continue by not referring to block below
 						Msg.error(this,
@@ -391,15 +400,16 @@ public abstract class MemorySectionResolver {
 				modifiedRangeList.add(new AddressRangeImpl(minAddr, maxAddr));
 			}
 			else {
-				if (range instanceof OverlayAddressRange) {
+				if (allocatedAddrRange instanceof OverlayAddressRange) {
 					// skip
 				}
 				else {
-					createUninitializedBlock(section.key, false, blockName, address, rangeSize,
+					createUninitializedBlock(section.key, false, blockName, physicalStartAddr,
+						rangeSize,
 						section.getComment(), section.isReadable(), section.isWritable(),
 						section.isExecute());
 				}
-				modifiedRangeList.add(new AddressRangeImpl(range));
+				modifiedRangeList.add(new AddressRangeImpl(allocatedAddrRange));
 			}
 			sectionByteOffset += rangeSize;
 		}
@@ -409,9 +419,9 @@ public abstract class MemorySectionResolver {
 	/**
 	 * Determine loaded memory conflict set.  Use physical address of loaded overlay
 	 * blocks to force reconciliation and avoid duplication.
-	 * @param rangeMin
-	 * @param rangeMax
-	 * @return conflict memory set
+	 * @param rangeMin minimum physical address of range
+	 * @param rangeMax maximum physical address of range
+	 * @return conflict memory set (physical address ranges only)
 	 */
 	private AddressSet getMemoryConflictSet(Address rangeMin, Address rangeMax) {
 
@@ -458,63 +468,68 @@ public abstract class MemorySectionResolver {
 
 		List<AddressRange> rangeList = new ArrayList<>();
 
-		Address targetMin = section.getMinAddress();
-		Address targetMax = section.getMaxAddress();
+		Address targetMinPhysicalAddr = section.getMinPhysicalAddress();
+		Address targetMaxPhysicalAddr = section.getMaxPhysicalAddress();
 
 		if (!section.isLoaded()) {
 			// section should be assigned to named overlay in OTHER space
-			if (section.getAddressSpace() != AddressSpace.OTHER_SPACE) {
+			if (section.getPhysicalAddressSpace() != AddressSpace.OTHER_SPACE) {
 				throw new AssertException();
 			}
-			rangeList.add(new OverlayAddressRange(targetMin, targetMax));
+			rangeList.add(new OverlayAddressRange(targetMinPhysicalAddr, targetMaxPhysicalAddr));
 			return rangeList;
 		}
 
-		AddressSet conflictSet = getMemoryConflictSet(targetMin, targetMax);
-		boolean noConflict = conflictSet.isEmpty();
+		AddressSet physicalConflictAddrSet =
+			getMemoryConflictSet(targetMinPhysicalAddr, targetMaxPhysicalAddr);
+		boolean noConflict = physicalConflictAddrSet.isEmpty();
 		if (noConflict || !section.isFragmentationOK) {
 			if (noConflict) {
 				// add normal non-conflicting section
-				rangeList.add(section.getRange());
+				rangeList.add(section.getPhysicalAddressRange());
 			}
 			else {
 				// if conflict and fragmentation not permitted bump section into overlay
-				AddressRange range = section.getRange();
+				AddressRange physicalAddrRange = section.getPhysicalAddressRange();
 				rangeList.add(
-					new OverlayAddressRange(range.getMinAddress(), range.getMaxAddress()));
+					new OverlayAddressRange(physicalAddrRange.getMinAddress(),
+						physicalAddrRange.getMaxAddress()));
 			}
 			AllocatedFileSectionRange fileRange = new AllocatedFileSectionRange(section,
-				section.getFileOffset(), section.length, targetMin);
-			fileAllocationMap.setObject(targetMin, targetMax, fileRange);
+				section.getFileOffset(), section.length, targetMinPhysicalAddr);
+			fileAllocationMap.setObject(targetMinPhysicalAddr, targetMaxPhysicalAddr, fileRange);
 			return rangeList;
 		}
 
 		try {
 			long fileOffset = section.getFileOffset(); // only used for initialized sections
-			for (AddressRange range : conflictSet.getAddressRanges()) {
+			for (AddressRange physicalAddrRange : physicalConflictAddrSet.getAddressRanges()) {
 				monitor.checkCanceled();
 
-				Address rangeMin = range.getMinAddress();
-				Address rangeMax = range.getMaxAddress();
+				Address physicalRangeMinAddr = physicalAddrRange.getMinAddress();
+				Address physicalRangeMaxAddr = physicalAddrRange.getMaxAddress();
 
 				// Handle chunk before range
-				if (targetMin.compareTo(rangeMin) < 0) {
+				if (targetMinPhysicalAddr.compareTo(physicalRangeMinAddr) < 0) {
 					// new range - no conflict
-					fileOffset = addSectionRange(section, targetMin, rangeMin.subtract(1),
+					fileOffset = addSectionRange(section, targetMinPhysicalAddr,
+						physicalRangeMinAddr.subtract(1),
 						fileOffset, rangeList);
-					targetMin = rangeMin;
+					targetMinPhysicalAddr = physicalRangeMinAddr;
 				}
 
 				// Handle overlap/conflict region
-				fileOffset = reconcileSectionRangeOverlap(section, rangeMin, rangeMax, fileOffset,
+				fileOffset = reconcileSectionRangeOverlap(section, physicalRangeMinAddr,
+					physicalRangeMaxAddr, fileOffset,
 					rangeList);
-				targetMin = rangeMax.addNoWrap(1); // could bump into end of space
+				targetMinPhysicalAddr = physicalRangeMaxAddr.addNoWrap(1); // could bump into end of space
 			}
 
 			// Handle residual chunk
-			if (targetMin.compareTo(targetMax) <= 0) {
+			if (targetMinPhysicalAddr.compareTo(targetMaxPhysicalAddr) <= 0) {
 				// new range - no conflict
-				fileOffset = addSectionRange(section, targetMin, targetMax, fileOffset, rangeList);
+				fileOffset = addSectionRange(section, targetMinPhysicalAddr, targetMaxPhysicalAddr,
+					fileOffset, rangeList);
 			}
 		}
 		catch (AddressOverflowException e) {
@@ -548,33 +563,33 @@ public abstract class MemorySectionResolver {
 	 * previously resolved section chunks.  Either OverlayAddressRange or 
 	 * ProxyAddressRange objects will be added to rangeList to provide advice for
 	 * subsequent memory block creation.
-	 * @param section
-	 * @param minAddr start of conflict range
-	 * @param maxAddr end of conflict range
+	 * @param section memory section to be loaded which resulted in conflict
+	 * @param minPhysicalAddr start of conflict range physical address
+	 * @param maxPhysicalAddr end of conflict range physical address
 	 * @param fileOffset file offset at start of conflict range
 	 * @param rangeList accumulation list of sequentially allocated memory address ranges
 	 * which makeup the specified loaded section.  This list will be added to as the specified
 	 * conflict range is reconciled.
 	 * @return updated file offset if section is initialized.
 	 */
-	private long reconcileSectionRangeOverlap(MemorySection section, Address minAddr,
-			Address maxAddr, long fileOffset, List<AddressRange> rangeList) {
+	private long reconcileSectionRangeOverlap(MemorySection section, Address minPhysicalAddr,
+			Address maxPhysicalAddr, long fileOffset, List<AddressRange> rangeList) {
 
 		if (section.isInitialized) {
 
 			ObjectRangeMap<AllocatedFileSectionRange> fileLoadRangeMap =
-				getFileLoadRangeMap(minAddr.getAddressSpace(), false);
+				getFileLoadRangeMap(minPhysicalAddr.getAddressSpace(), false);
 			if (fileLoadRangeMap == null) {
 				// unexpected unless memory already defined 
-				rangeList.add(new OverlayAddressRange(minAddr, maxAddr));
-				return fileOffset + maxAddr.subtract(minAddr) + 1;
+				rangeList.add(new OverlayAddressRange(minPhysicalAddr, maxPhysicalAddr));
+				return fileOffset + maxPhysicalAddr.subtract(minPhysicalAddr) + 1;
 			}
 
-			long conflictRangeSize = maxAddr.subtract(minAddr) + 1;
+			long conflictRangeSize = maxPhysicalAddr.subtract(minPhysicalAddr) + 1;
 
 			// conflict gap accumulator addresses
-			Address conflictGapStart = null;
-			Address conflictGapEnd = null;
+			Address conflictGapPhysicalAddrRangeStart = null;
+			Address conflictGapPhysicalAddrRangeEnd = null;
 
 			// NOTE: Range iterator does not fill-in the gaps, only those
 			// ranges which match-up will be returned, range gaps correspond
@@ -583,11 +598,11 @@ public abstract class MemorySectionResolver {
 				fileOffset, fileOffset + conflictRangeSize - 1);
 
 			long filePos = fileOffset;
-			Address expectedRangeStart = minAddr;
+			Address expectedPhysicalAddrRangeStart = minPhysicalAddr;
 
 			while (fileOffsetRangeIterator.hasNext()) {
 
-				if (expectedRangeStart == null) {
+				if (expectedPhysicalAddrRangeStart == null) {
 					throw new AssertException("expectedRangeStart is null");
 				}
 
@@ -599,64 +614,67 @@ public abstract class MemorySectionResolver {
 
 				if (fileOffsetRange.getStart() > filePos) {
 					// File load gap in memory - conflict with uninitialized or pre-existing block.
-					if (conflictGapStart == null) {
-						conflictGapStart = expectedRangeStart;
+					if (conflictGapPhysicalAddrRangeStart == null) {
+						conflictGapPhysicalAddrRangeStart = expectedPhysicalAddrRangeStart;
 					}
-					expectedRangeStart =
-						expectedRangeStart.add(fileOffsetRange.getStart() - filePos);
-					conflictGapEnd = expectedRangeStart.previous();
+					expectedPhysicalAddrRangeStart =
+						expectedPhysicalAddrRangeStart.add(fileOffsetRange.getStart() - filePos);
+					conflictGapPhysicalAddrRangeEnd = expectedPhysicalAddrRangeStart.previous();
 				}
 
 				// Perform address computation in physical space
-				Address rangeStartAddr =
+				Address physicalAddrRangeStart =
 					fileRange.rangeStartAddress.getPhysicalAddress()
 							.add(filePos - fileRange.rangeStartFileOffset);
 
 				// Ignore use of overlay and compare physical address for match to avoid duplication
-				if (!expectedRangeStart.getPhysicalAddress().equals(rangeStartAddr)) {
+				if (!expectedPhysicalAddrRangeStart.equals(physicalAddrRangeStart)) {
 					// File load memory range does not correspond to target memory range
-					if (conflictGapStart == null) {
-						conflictGapStart = expectedRangeStart;
+					if (conflictGapPhysicalAddrRangeStart == null) {
+						conflictGapPhysicalAddrRangeStart = expectedPhysicalAddrRangeStart;
 					}
-					conflictGapEnd = expectedRangeStart.add(rangeSize - 1);
+					conflictGapPhysicalAddrRangeEnd =
+						expectedPhysicalAddrRangeStart.add(rangeSize - 1);
 				}
 				else {
 					// File load range matches target
-					if (conflictGapStart != null) {
+					if (conflictGapPhysicalAddrRangeStart != null) {
 						// add accumulated conflict gap
-						rangeList.add(new OverlayAddressRange(conflictGapStart, conflictGapEnd));
-						conflictGapStart = null;
-						conflictGapEnd = null;
+						rangeList.add(new OverlayAddressRange(conflictGapPhysicalAddrRangeStart,
+							conflictGapPhysicalAddrRangeEnd));
+						conflictGapPhysicalAddrRangeStart = null;
+						conflictGapPhysicalAddrRangeEnd = null;
 					}
-					rangeList.add(new ProxyAddressRange(expectedRangeStart,
-						expectedRangeStart.add(rangeSize - 1)));
+					rangeList.add(new ProxyAddressRange(expectedPhysicalAddrRangeStart,
+						expectedPhysicalAddrRangeStart.add(rangeSize - 1)));
 				}
 
 				filePos = fileOffsetRange.getEnd() + 1;
 				try {
-					expectedRangeStart = minAddr.add(filePos - fileOffset);
+					expectedPhysicalAddrRangeStart = minPhysicalAddr.add(filePos - fileOffset);
 				}
 				catch (AddressOutOfBoundsException e) {
 					// catch case where we hit the end of the address space
-					expectedRangeStart = null; // we should be done
+					expectedPhysicalAddrRangeStart = null; // we should be done
 				}
 			}
 
 			if ((filePos - fileOffset) != conflictRangeSize) {
 				// Trailing file load gap in memory - conflict with uninitialized of pre-existing block
-				if (conflictGapStart == null) {
-					conflictGapStart = expectedRangeStart;
+				if (conflictGapPhysicalAddrRangeStart == null) {
+					conflictGapPhysicalAddrRangeStart = expectedPhysicalAddrRangeStart;
 				}
-				conflictGapEnd = maxAddr;
+				conflictGapPhysicalAddrRangeEnd = maxPhysicalAddr;
 			}
-			if (conflictGapStart != null) {
-				rangeList.add(new OverlayAddressRange(conflictGapStart, conflictGapEnd));
+			if (conflictGapPhysicalAddrRangeStart != null) {
+				rangeList.add(new OverlayAddressRange(conflictGapPhysicalAddrRangeStart,
+					conflictGapPhysicalAddrRangeEnd));
 			}
 			return fileOffset + conflictRangeSize;
 		}
 
 		// force proxy range condition for lower priority uninitialized section (unlikely condition)
-		rangeList.add(new ProxyAddressRange(minAddr, maxAddr));
+		rangeList.add(new ProxyAddressRange(minPhysicalAddr, maxPhysicalAddr));
 		return fileOffset;
 	}
 
