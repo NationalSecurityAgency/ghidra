@@ -138,9 +138,7 @@ impl Patches {
                     continue
                 }
 
-                unsafe {
-                    inputs.push(self.parse_varnode_data(input_varnode));
-                }
+                inputs.push(self.parse_varnode_data(input_varnode));
             }
 
             unsafe {
