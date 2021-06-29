@@ -19,7 +19,6 @@ use crate::model::Address;
 use cxx::{let_cxx_string, CxxString, UniquePtr};
 use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
-use std::pin::Pin;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename = "patch")]
@@ -95,9 +94,7 @@ impl Patches {
             .patches
             .iter()
             .filter(|patch| {
-                println!("before space_name");
                 let space_name = unsafe { addr.getSpace().as_ref().unwrap().getName().to_string() };
-                println!("after space_name");
                 space_name == patch.addr.space && addr.getOffset() == patch.addr.offset
             })
             .next();
