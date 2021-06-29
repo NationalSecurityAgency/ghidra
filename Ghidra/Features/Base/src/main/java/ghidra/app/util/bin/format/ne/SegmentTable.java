@@ -29,10 +29,10 @@ import ghidra.util.Conv;
 public class SegmentTable {
     private Segment [] segments;
 
-	SegmentTable(FactoryBundledWithBinaryReader reader, SegmentedAddress baseAddr, short index,
+	SegmentTable(FactoryBundledWithBinaryReader reader, SegmentedAddress baseAddr, int index,
 			short segmentCount, short shiftAlignCount) throws IOException {
         long oldIndex = reader.getPointerIndex();
-        reader.setPointerIndex(Conv.shortToInt(index));
+        reader.setPointerIndex(index);
 
         //create a value of the shift count...
         shiftAlignCount = (short)(0x01 << shiftAlignCount);
