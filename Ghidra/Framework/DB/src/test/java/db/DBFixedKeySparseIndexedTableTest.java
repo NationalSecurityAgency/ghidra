@@ -32,9 +32,16 @@ public class DBFixedKeySparseIndexedTableTest extends AbstractGenericTest {
 	private static final int BUFFER_SIZE = 2048;// keep small for chained buffer testing
 	private static final int CACHE_SIZE = 4 * 1024 * 1024;
 
-	private static final int ITER_REC_CNT = 1000;
-
 	private static final String table1Name = "TABLE1";
+
+	private static final int BOOLEAN_COL = 0; // not indexed
+	private static final int BYTE_COL = 1; // not indexed
+	private static final int INT_COL = 2;
+	private static final int SHORT_COL = 3;
+	private static final int LONG_COL = 4;
+	private static final int STR_COL = 5;
+	private static final int BIN_COL = 6;
+	private static final int FIXED10_COL = 7;
 
 	private File testDir;
 	private static final String dbName = "test";
@@ -125,9 +132,7 @@ public class DBFixedKeySparseIndexedTableTest extends AbstractGenericTest {
 		assertTrue(!iter.hasNext());
 	}
 
-	@Test
-	public void testFixedKeyIterator() throws IOException {
-
+	private void populateFixedKeySparseRecords() throws IOException {
 		long txId = dbh.startTransaction();
 		Table table =
 			DBTestUtils.createFixedKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, true, true);
@@ -136,65 +141,239 @@ public class DBFixedKeySparseIndexedTableTest extends AbstractGenericTest {
 			assertTrue(schema.isSparseColumn(i));
 		}
 
+//		DBRecord r1 = schema.createRecord(FixedField10.ZERO_VALUE);
+//		System.out.println("Sparse record test columns:");
+//		for (Field f : r1.getFields()) {
+//			System.out.println("   " + f.toString());
+//		}
+
 		int cnt = schema.getFieldCount();
-		for (int i = 0; i < cnt; i++) {
+
+//		System.out.println("Write sparse records:");
+		for (int i = 0; i < cnt + 1; i++) {
 			Field key = new FixedField10(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 1, (byte) i });
 			DBRecord r = schema.createRecord(key);
 
-			Field f = schema.getField(i);
-			if (f.isVariableLength()) {
-				f.setBinaryData(new byte[] { 'X' });
+			for (Field f : r.getFields()) {
+				// all fields correspond to a sparse columns and 
+				// should have a null state initially
+				assertTrue(f.isNull());
 			}
-			else {
-				f = f.getMaxValue();
-			}
-			r.setField(i, f);
 
-			int nextCol = i + 1;
-			if (nextCol < cnt) {
-				f = schema.getField(nextCol);
+			if (i < cnt) {
+				Field f = schema.getField(i);
+				if (f.isVariableLength()) {
+					f.setBinaryData(new byte[] { 'X' });
+				}
+				else {
+					f = f.getMaxValue();
+				}
+				r.setField(i, f);
+			}
+
+			// set min value all fields before i
+			for (int m = 0; m < i; m++) {
+				Field f = schema.getField(m);
 				if (f.isVariableLength()) {
 					f.setBinaryData(new byte[] { 'x' });
 				}
 				else {
 					f = f.getMinValue();
 				}
-				r.setField(nextCol, f);
+				r.setField(m, f);
 			}
+
+//			// NOTE: sparse columns default to a null state if not explicitly set
+
+//			System.out.println("-> " + r.getField(2) + ", " + r.getField(6).toString() + ", " +
+//				r.getField(7).toString());
 
 			table.putRecord(r);
 		}
 
+		assertEquals(cnt + 1, table.getRecordCount());
+
 		dbh.endTransaction(txId, true);
 
 		saveAsAndReopen(dbName);
+	}
 
-		table = dbh.getTable(table1Name);
-		assertEquals(cnt, table.getRecordCount());
+	@Test
+	public void testFixedKeyIterator() throws IOException {
+
+		populateFixedKeySparseRecords();
+
+		Table table = dbh.getTable(table1Name);
+		int cnt = table.getSchema().getFieldCount();
+		assertEquals(8, cnt); // testing 8 field types as sparse columns in 9 data records
+		assertEquals(cnt + 1, table.getRecordCount());
 
 		// see DBTestUtils for schema column types
 
-		// Index does not track null/zero values
-		assertEquals(0, table.findRecords(IntField.ZERO_VALUE, 2).length);
-		assertEquals(0, table.findRecords(ShortField.ZERO_VALUE, 3).length);
-		assertEquals(0, table.findRecords(LongField.ZERO_VALUE, 4).length);
-		assertEquals(0, table.findRecords(StringField.NULL_VALUE, 5).length);
-		assertEquals(0, table.findRecords(new BinaryField(), 6).length);
-		assertEquals(0, table.findRecords(FixedField10.ZERO_VALUE, 7).length);
+//		System.out.println("Read sparse records:");
+		int recordIndex = 0;
+		RecordIterator iterator = table.iterator();
+		while (iterator.hasNext()) {
+			DBRecord r = iterator.next();
 
-		assertEquals(1, table.findRecords(IntField.MAX_VALUE, 2).length);
-		assertEquals(1, table.findRecords(ShortField.MAX_VALUE, 3).length);
-		assertEquals(1, table.findRecords(LongField.MAX_VALUE, 4).length);
-		assertEquals(1, table.findRecords(new StringField("X"), 5).length);
-		assertEquals(1, table.findRecords(new BinaryField(new byte[] { 'X' }), 6).length);
-		assertEquals(1, table.findRecords(FixedField10.MAX_VALUE, 7).length);
+			Field key =
+				new FixedField10(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 1, (byte) recordIndex });
+			assertEquals(key, r.getKeyField());
 
-		assertEquals(1, table.findRecords(IntField.MIN_VALUE, 2).length);
-		assertEquals(1, table.findRecords(ShortField.MIN_VALUE, 3).length);
-		assertEquals(1, table.findRecords(LongField.MIN_VALUE, 4).length);
-		assertEquals(1, table.findRecords(new StringField("x"), 5).length);
-		assertEquals(1, table.findRecords(new BinaryField(new byte[] { 'x' }), 6).length);
-		assertEquals(0, table.findRecords(FixedField10.MIN_VALUE, 7).length); // same as zero/null
+//			System.out.println("<- " + r.getField(2) + ", " + r.getField(6).toString() + ", " +
+//				r.getField(7).toString());
+
+			// recordIndex used as walking columnIndex
+			int columnIndex = recordIndex;
+
+			if (columnIndex < cnt) {
+				Field f = r.getField(columnIndex);
+				if (f.isVariableLength()) {
+					Field f2 = f.newField();
+					f2.setBinaryData(new byte[] { 'X' });
+					assertEquals(f2, f);
+				}
+				else {
+					assertEquals(f.getMaxValue(), f);
+				}
+			}
+
+			// set min value all fields before i
+			for (int m = 0; m < columnIndex; m++) {
+				Field f = r.getField(m);
+				if (f.isVariableLength()) {
+					Field f2 = f.newField();
+					f2.setBinaryData(new byte[] { 'x' });
+					assertEquals(f2, f);
+				}
+				else {
+					assertEquals(f.getMinValue(), f);
+				}
+			}
+
+			for (int n = columnIndex + 1; n < cnt; n++) {
+				Field f = r.getField(n);
+				assertTrue(f.isNull());
+			}
+
+			++recordIndex;
+		}
+
+	}
+
+	@Test
+	public void testFixedKeySparseIndex() throws IOException {
+
+		populateFixedKeySparseRecords();
+
+		Table table = dbh.getTable(table1Name);
+		int cnt = table.getSchema().getFieldCount();
+		assertEquals(8, cnt); // testing 8 field types as sparse columns in 9 data records
+		assertEquals(cnt + 1, table.getRecordCount());
+
+		// see DBTestUtils for schema column types
+
+		// null state/value not indexed (corresponds to a 0 primitive value)
+		assertEquals(0, table.findRecords(IntField.ZERO_VALUE, INT_COL).length);
+		assertEquals(0, table.findRecords(ShortField.ZERO_VALUE, SHORT_COL).length);
+		assertEquals(0, table.findRecords(LongField.ZERO_VALUE, LONG_COL).length);
+		assertEquals(0, table.findRecords(StringField.NULL_VALUE, STR_COL).length);
+		assertEquals(0, table.findRecords(new BinaryField(), BIN_COL).length);
+		assertEquals(1, table.findRecords(FixedField10.ZERO_VALUE, FIXED10_COL).length); // last record has a FixedField10.ZERO_VALUE
+
+		assertEquals(1, table.findRecords(IntField.MAX_VALUE, INT_COL).length);
+		assertEquals(1, table.findRecords(ShortField.MAX_VALUE, SHORT_COL).length);
+		assertEquals(1, table.findRecords(LongField.MAX_VALUE, LONG_COL).length);
+		assertEquals(1, table.findRecords(new StringField("X"), STR_COL).length);
+		assertEquals(1, table.findRecords(new BinaryField(new byte[] { 'X' }), BIN_COL).length);
+		assertEquals(1, table.findRecords(FixedField10.MAX_VALUE, FIXED10_COL).length);
+
+		assertEquals(6, table.findRecords(IntField.MIN_VALUE, INT_COL).length);
+		assertEquals(5, table.findRecords(ShortField.MIN_VALUE, SHORT_COL).length);
+		assertEquals(4, table.findRecords(LongField.MIN_VALUE, LONG_COL).length);
+		assertEquals(3, table.findRecords(new StringField("x"), STR_COL).length);
+		assertEquals(2, table.findRecords(new BinaryField(new byte[] { 'x' }), BIN_COL).length);
+		assertEquals(1, table.findRecords(FixedField10.MIN_VALUE, FIXED10_COL).length); // same as ZERO_VALUE
+
+		assertEquals(6, table.getMatchingRecordCount(IntField.MIN_VALUE, INT_COL));
+		assertEquals(5, table.getMatchingRecordCount(ShortField.MIN_VALUE, SHORT_COL));
+		assertEquals(4, table.getMatchingRecordCount(LongField.MIN_VALUE, LONG_COL));
+		assertEquals(3, table.getMatchingRecordCount(new StringField("x"), STR_COL));
+		assertEquals(2, table.getMatchingRecordCount(new BinaryField(new byte[] { 'x' }), BIN_COL));
+		assertEquals(1, table.getMatchingRecordCount(FixedField10.MIN_VALUE, FIXED10_COL)); // same as ZERO_VALUE
+	}
+
+	private int count(DBFieldIterator iter) throws IOException {
+		int count = 0;
+		while (iter.hasNext()) {
+			iter.next();
+			++count;
+		}
+		return count;
+	}
+
+	private int count(RecordIterator iter) throws IOException {
+		int count = 0;
+		while (iter.hasNext()) {
+			iter.next();
+			++count;
+		}
+		return count;
+	}
+
+	@Test
+	public void testFixedKeySparseIndexIterator() throws IOException {
+
+		populateFixedKeySparseRecords();
+
+		Table table = dbh.getTable(table1Name);
+		int cnt = table.getSchema().getFieldCount();
+		assertEquals(8, cnt); // testing 8 field types as sparse columns in 9 data records
+		assertEquals(cnt + 1, table.getRecordCount());
+
+		// see DBTestUtils for schema column types
+
+		// null state/value not indexed
+
+		assertEquals(7, count(table.indexIterator(INT_COL)));
+		assertEquals(6, count(table.indexIterator(SHORT_COL)));
+		assertEquals(5, count(table.indexIterator(LONG_COL)));
+		assertEquals(4, count(table.indexIterator(STR_COL)));
+		assertEquals(3, count(table.indexIterator(BIN_COL)));
+		assertEquals(2, count(table.indexIterator(FIXED10_COL)));
+	}
+
+	@Test
+	public void testFixedKeySparseIndexFieldIterator() throws IOException {
+
+		populateFixedKeySparseRecords();
+
+		Table table = dbh.getTable(table1Name);
+		int cnt = table.getSchema().getFieldCount();
+		assertEquals(8, cnt); // testing 8 field types as sparse columns in 9 data records
+		assertEquals(cnt + 1, table.getRecordCount());
+
+		// see DBTestUtils for schema column types
+
+		// null state/value not indexed - only 2 unique values were used
+		
+		assertEquals(2, count(table.indexFieldIterator(INT_COL)));
+		assertEquals(2, count(table.indexFieldIterator(SHORT_COL)));
+		assertEquals(2, count(table.indexFieldIterator(LONG_COL)));
+		try {
+			assertEquals(2, count(table.indexFieldIterator(STR_COL)));
+		}
+		catch (UnsupportedOperationException e) {
+			// expected
+		}
+		try {
+			assertEquals(2, count(table.indexFieldIterator(BIN_COL)));
+		}
+		catch (UnsupportedOperationException e) {
+			// expected
+		}
+		assertEquals(2, count(table.indexFieldIterator(FIXED10_COL)));
 	}
 
 }
+

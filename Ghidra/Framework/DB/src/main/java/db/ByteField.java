@@ -23,7 +23,7 @@ import db.buffers.DataBuffer;
  * <code>ByteField</code> provides a wrapper for single signed byte data 
  * which is read or written to a Record. 
  */
-public final class ByteField extends Field {
+public final class ByteField extends PrimitiveField {
 
 	/**
 	 * Minimum byte field value 
@@ -72,13 +72,8 @@ public final class ByteField extends Field {
 	}
 
 	@Override
-	boolean isNull() {
-		return value == 0;
-	}
-
-	@Override
 	void setNull() {
-		checkImmutable();
+		super.setNull();
 		value = 0;
 	}
 
@@ -89,7 +84,7 @@ public final class ByteField extends Field {
 
 	@Override
 	public void setByteValue(byte value) {
-		checkImmutable();
+		updatingPrimitiveValue();
 		this.value = value;
 	}
 
@@ -105,7 +100,7 @@ public final class ByteField extends Field {
 
 	@Override
 	int read(Buffer buf, int offset) throws IOException {
-		checkImmutable();
+		updatingPrimitiveValue();
 		value = buf.getByte(offset);
 		return offset + 1;
 	}
@@ -121,18 +116,13 @@ public final class ByteField extends Field {
 	}
 
 	@Override
-	public String toString() {
-		return "Byte: " + Byte.toString(value);
-	}
-
-	@Override
 	public String getValueAsString() {
 		return "0x" + Integer.toHexString(value & 0xff);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof ByteField)) {
+		if (!(obj instanceof ByteField)) {
 			return false;
 		}
 		return ((ByteField) obj).value == value;
@@ -189,10 +179,10 @@ public final class ByteField extends Field {
 
 	@Override
 	public void setBinaryData(byte[] bytes) {
-		checkImmutable();
 		if (bytes.length != 1) {
 			throw new IllegalFieldAccessException();
 		}
+		updatingPrimitiveValue();
 		value = bytes[0];
 	}
 

@@ -16,17 +16,25 @@
 package db;
 
 /**
- * <code>FixedField</code> provides an abstract implementation of a fixed-length
- * binary field.
+ * <code>FixedField</code> provides an abstract implementation of an unsigned fixed-length
+ * field whose value is specified with a byte-array.  This field behaves similar to a 
+ * {@link PrimitiveField} in that a null "state" (see {@link #isNull()}) is supported for 
+ * sparse record column use with a zero (0) value.  Unlike a variable-length 
+ * {@link BinaryField} a null "value" (i.e., data byte array) is not permitted.
+ * <br>
+ * Implementations may use the internal data byte-array as a lazy storage cache for
+ * the actual fixed-length value (i.e., invoking {@link #getBinaryData()} may update
+ * the internal data byte-array if needed).
  */
-public abstract class FixedField extends BinaryField {
+abstract class FixedField extends BinaryField {
 
-	@SuppressWarnings("hiding")
-	public static final FixedField10 INSTANCE = null;
+	private boolean isNull = false;
 
 	/**
-	 * Construct a fixed-length field
-	 * @param data initial value
+	 * Construct a fixed-length field.  A null "state" may only be established 
+	 * by invoking the {@link #setNull()} method after construction provided
+	 * the instance is mutable.
+	 * @param data initial storage value (may be null)
 	 * @param immutable true if field value is immutable
 	 */
 	FixedField(byte[] data, boolean immutable) {
@@ -39,7 +47,25 @@ public abstract class FixedField extends BinaryField {
 	}
 
 	@Override
-	abstract boolean isNull();
+	final boolean isNull() {
+		return isNull;
+	}
+
+	@Override
+	void setNull() {
+		checkImmutable();
+		this.isNull = true;
+	}
+
+	/**
+	 * Invoked prior to setting the field's primitive value this
+	 * method will perform an immutable check and set to a non-null 
+	 * state.
+	 */
+	final void updatingValue() {
+		checkImmutable();
+		this.isNull = false;
+	}
 
 	@Override
 	void truncate(int length) {

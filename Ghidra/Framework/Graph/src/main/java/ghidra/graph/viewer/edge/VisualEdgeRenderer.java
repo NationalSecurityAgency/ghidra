@@ -29,7 +29,7 @@ import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.Context;
 import edu.uci.ics.jung.graph.util.Pair;
 import edu.uci.ics.jung.visualization.*;
-import edu.uci.ics.jung.visualization.renderers.*;
+import edu.uci.ics.jung.visualization.renderers.BasicEdgeRenderer;
 import edu.uci.ics.jung.visualization.transform.LensTransformer;
 import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
@@ -90,6 +90,9 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 
 	private Color defaultBaseColor = Color.BLACK;
 	private Color defaultHighlightColor = Color.GRAY;
+
+	private VisualEdgeArrowRenderingSupport<V, E> arrowRenderingSupport =
+		new VisualEdgeArrowRenderingSupport<>();
 
 	/**
 	 * Sets the offset value for painting dashed lines.  This allows clients to animate the 
@@ -171,7 +174,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 		Color selectedColor = highlightColor.darker(); // note: we can do better for selected color
 		Color selectedAccentColor = highlightColor;
 
-		float scale = StrictMath.min(scalex, scaley);
+		float scale = Math.min(scalex, scaley);
 
 		Point2D p1 = layout.apply(v1);
 		Point2D p2 = layout.apply(v2);
@@ -313,6 +316,11 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 		//g.setPaint(Color.ORANGE);
 		//g.draw(shapeBounds);
 
+		// can add this feature as needed to speed up painting 
+		//if (scale < .3) {
+		//	return;
+		//}
+
 		//
 		// Arrow Head
 		//
@@ -330,16 +338,15 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 		}
 
 		Shape vs2 = getVertexShapeForArrow(rc, layout, v2);	// end vertex
+
 		boolean arrowHit = vt.transform(vs2).intersects(deviceRectangle);
 		if (!arrowHit) {
 			g.setPaint(oldPaint);
 			return;
 		}
 
-		EdgeArrowRenderingSupport<V, E> arrowRenderingSupport =
-			new BasicEdgeArrowRenderingSupport<>();
-		AffineTransform at = arrowRenderingSupport.getArrowTransform(rc, edgeShape, vs2);
-		if (at == null) {
+		AffineTransform at = arrowRenderingSupport.createArrowTransform(rc, edgeShape, vs2);
+		if (at == null || at.isIdentity()) {
 			g.setPaint(oldPaint);
 			g.setStroke(oldArrowStroke);
 			return;

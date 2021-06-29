@@ -20,9 +20,16 @@ import java.io.IOException;
 import db.buffers.DataBuffer;
 
 /**
- * <code>Field</code> is an abstract data wrapper for use with Records.
+ * <p><code>Field</code> is an abstract data wrapper for use with Records.
  * Note that when comparing two Field instances both must be of the same 
- * class.
+ * class.</p>
+ * 
+ * <p>Fields may take on a null state.  In the case of {@link FixedField}
+ * and {@link PrimitiveField} this state is distinct from value and only
+ * applies when used for a sparse column within a {@link SparseRecord}.
+ * In this sparse column situation the {@link SparseRecord#setField(int, Field)} 
+ * method may be passed a null Field argument.  Sparse columns with a 
+ * null value/state will not be indexed within a {@link Table}.
  * 
  * <p>Stored Schema Field Type Encoding:</p>
  * 
@@ -376,6 +383,13 @@ public abstract class Field implements Comparable<Field> {
 	 */
 	abstract int length();
 
+	/**
+	 * Determine if the specified Object is another Field which has the same 
+	 * type and value as this Field.  When comparing a {@link PrimitiveField},
+	 * with a null state, a value of zero (0) is used.
+	 * @param obj another object
+	 * @return true if this field equals obj
+	 */
 	@Override
 	public abstract boolean equals(Object obj);
 
@@ -407,14 +421,16 @@ public abstract class Field implements Comparable<Field> {
 	abstract Field getMaxValue();
 
 	/**
-	 * Determine if the field value is null (or zero for
-	 * fixed-length fields)
-	 * @return true if null/zero else false
+	 * Determine if the field has been set to a null-state or value.  
+	 * @return true if field has been set to a null state or value, else false
 	 */
 	abstract boolean isNull();
 
 	/**
-	 * Set this field to its null/zero value
+	 * Set this field to its null-state.  For variable-length field this will 
+	 * generally correspond to a null value, while primitive and fixed-length
+	 * fields will be set to a zero (0) value.  This method may only be invoked
+	 * on a sparse column field.
 	 * @throws IllegalFieldAccessException thrown if this field is immutable or is an index field
 	 */
 	abstract void setNull();
@@ -422,6 +438,8 @@ public abstract class Field implements Comparable<Field> {
 	/**
 	 * Performs a fast in-place comparison of this field value with another
 	 * field value stored within the specified buffer at the the specified offset.
+	 * NOTE: This method will treat all null primitives as 0 although is not intended
+	 * to support such use.
 	 * @param buffer data buffer
 	 * @param offset field value offset within buffer
 	 * @return comparison value, zero if equal, -1 if this field has a value 
@@ -429,6 +447,23 @@ public abstract class Field implements Comparable<Field> {
 	 * the stored field located at keyIndex.
 	 */
 	abstract int compareTo(DataBuffer buffer, int offset);
+
+	/**
+	 * Compares this Field with another Field for order.  Returns a
+	 * negative integer, zero, or a positive integer as this object is less
+	 * than, equal to, or greater than the specified Field.  
+	 * <br>
+	 * NOTE: Field objects do not fully comply with the Comparable interface.
+	 * Only the same Field implementations may be compared.  In addition, the 
+	 * null state is not considered when comparing {@link PrimitiveField}s which have a 
+	 * zero (0) value.
+	 * @param otherField another Field which is the same type as this Field
+	 * @return field comparison result (see {@link Comparable#compareTo(Object)}).
+	 * @throws ClassCastException if an attempt to compare dissimilar Fields (e.g., 
+	 * an IntField may not be compared with a ShortField).
+	 */
+	@Override
+	public abstract int compareTo(Field otherField);
 
 	/**
 	 * Get the field associated with the specified type value.

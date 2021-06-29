@@ -23,7 +23,7 @@ import db.buffers.DataBuffer;
  * <code>ShortField</code> provides a wrapper for 2-byte signed short data 
  * which is read or written to a Record. 
  */
-public final class ShortField extends Field {
+public final class ShortField extends PrimitiveField {
 
 	/**
 	 * Minimum short field value
@@ -72,13 +72,8 @@ public final class ShortField extends Field {
 	}
 
 	@Override
-	boolean isNull() {
-		return value == 0;
-	}
-
-	@Override
 	void setNull() {
-		checkImmutable();
+		super.setNull();
 		value = 0;
 	}
 
@@ -89,7 +84,7 @@ public final class ShortField extends Field {
 
 	@Override
 	public void setShortValue(short value) {
-		checkImmutable();
+		updatingPrimitiveValue();
 		this.value = value;
 	}
 
@@ -105,7 +100,7 @@ public final class ShortField extends Field {
 
 	@Override
 	int read(Buffer buf, int offset) throws IOException {
-		checkImmutable();
+		updatingPrimitiveValue();
 		value = buf.getShort(offset);
 		return offset + 2;
 	}
@@ -121,18 +116,13 @@ public final class ShortField extends Field {
 	}
 
 	@Override
-	public String toString() {
-		return "ShortField: " + Short.toString(value);
-	}
-
-	@Override
 	public String getValueAsString() {
 		return "0x" + Integer.toHexString(value & 0xffff);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof ShortField)) {
+		if (!(obj instanceof ShortField)) {
 			return false;
 		}
 		return ((ShortField) obj).value == value;
@@ -189,10 +179,10 @@ public final class ShortField extends Field {
 
 	@Override
 	public void setBinaryData(byte[] bytes) {
-		checkImmutable();
 		if (bytes.length != 2) {
 			throw new IllegalFieldAccessException();
 		}
+		updatingPrimitiveValue();
 		value = (short) (((bytes[0] & 0xff) << 8) | (bytes[1] & 0xff));
 	}
 

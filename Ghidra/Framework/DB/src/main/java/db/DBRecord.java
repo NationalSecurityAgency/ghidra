@@ -52,6 +52,10 @@ public class DBRecord implements Comparable<DBRecord> {
 		for (int colIndex = 0; colIndex < schemaFields.length; colIndex++) {
 			try {
 				fieldValues[colIndex] = schemaFields[colIndex].newField();
+				if (schema.isSparseColumn(colIndex)) {
+					// sparse column default to null state/value
+					fieldValues[colIndex].setNull();
+				}
 			}
 			catch (Exception e) {
 				throw new AssertException(e);
@@ -104,7 +108,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	/**
 	 * Determine if this record's schema is the same as another record's
 	 * schema.  This check factors column count and column field types only.
-	 * @param otherRec
+	 * @param otherRec another record
 	 * @return true if records schemas are the same
 	 */
 	public boolean hasSameSchema(DBRecord otherRec) {
@@ -123,17 +127,21 @@ public class DBRecord implements Comparable<DBRecord> {
 	/**
 	 * Determine if this record's schema is compatible with the specified schema.  
 	 * This check factors column count and column field types only.
-	 * @param schema other schema
+	 * Index and sparse column checks are not performed.
+	 * @param otherSchema other schema
 	 * @return true if records schemas are the same
 	 */
-	public boolean hasSameSchema(Schema schema) {
-		if (fieldValues.length != schema.getFieldCount()) {
+	public boolean hasSameSchema(Schema otherSchema) {
+		if (otherSchema == this.schema) {
+			return true;
+		}
+		if (fieldValues.length != otherSchema.getFieldCount()) {
 			return false;
 		}
-		if (!key.isSameType(schema.getKeyFieldType())) {
+		if (!key.isSameType(otherSchema.getKeyFieldType())) {
 			return false;
 		}
-		Field[] otherFields = schema.getFields();
+		Field[] otherFields = otherSchema.getFields();
 		for (int i = 0; i < fieldValues.length; i++) {
 			if (!fieldValues[i].isSameType(otherFields[i])) {
 				return false;
@@ -152,8 +160,8 @@ public class DBRecord implements Comparable<DBRecord> {
 
 	/**
 	 * Get a copy of the specified field value.
-	 * @param columnIndex
-	 * @return Field
+	 * @param columnIndex field index
+	 * @return Field field value
 	 */
 	public Field getFieldValue(int columnIndex) {
 		Field f = fieldValues[columnIndex];
@@ -163,7 +171,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	/**
 	 * Set the field value for the specified field.
 	 * @param colIndex field index
-	 * @param value field value
+	 * @param value field value (null permitted for sparse column only)
 	 */
 	public void setField(int colIndex, Field value) {
 		if (fieldValues[colIndex].getFieldType() != value.getFieldType()) {
@@ -176,7 +184,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	/**
 	 * Get the specified field.  The object returned must not be
 	 * modified.
-	 * @param columnIndex
+	 * @param columnIndex field index
 	 * @return Field
 	 */
 	Field getField(int columnIndex) {
@@ -195,8 +203,8 @@ public class DBRecord implements Comparable<DBRecord> {
 	/**
 	 * Determine if the specified field equals the field associated with the
 	 * specified columnIndex.
-	 * @param columnIndex
-	 * @param field
+	 * @param columnIndex field index
+	 * @param field field value to compare with
 	 * @return true if the fields are equal, else false.
 	 */
 	public boolean fieldEquals(int columnIndex, Field field) {
