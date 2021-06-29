@@ -31,6 +31,9 @@ dependencies {
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 }
 
+// Ensure the below native test binaries don't get built for a distribution
+ext.nativesTestOnly = true
+
 task testSpecimenWin64 {
 	dependsOn 'expCreateProcessWin64Executable'
 	dependsOn 'expCreateThreadExitWin64Executable'
