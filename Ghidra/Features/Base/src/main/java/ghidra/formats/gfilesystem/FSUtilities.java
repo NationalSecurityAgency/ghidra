@@ -21,6 +21,7 @@ import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -42,6 +43,7 @@ public class FSUtilities {
 	public static final String SEPARATOR_CHARS = "/\\:";
 	public static final String SEPARATOR = "/";
 	private static final char DOT = '.';
+	private static final TimeZone GMT = TimeZone.getTimeZone("GMT");
 
 	public static class StreamCopyResult {
 		public long bytesCopied;
@@ -504,4 +506,32 @@ public class FSUtilities {
 	public static String normalizeNativePath(String path) {
 		return appendPath("/", FilenameUtils.separatorsToUnix(path));
 	}
+
+	/**
+	 * Common / unified date formatting for all file system information strings.
+	 * 
+	 * @param d {@link Date} to format, or null
+	 * @return formatted date string, or "NA" if date was null
+	 */
+	public static String formatFSTimestamp(Date d) {
+		if (d == null) {
+			return "NA";
+		}
+		SimpleDateFormat df = new SimpleDateFormat("dd MMM yyyy HH:mm:ss z");
+		df.setTimeZone(GMT);
+		return df.format(d);
+	}
+
+	/**
+	 * Common / unified size formatting for all file system information strings.
+	 * 
+	 * @param length {@link Long} length, null ok
+	 * @return pretty'ish length format string, or "NA" if length was null
+	 */
+	public static String formatSize(Long length) {
+		return (length != null)
+				? String.format("%d (%s)", length, FileUtilities.formatLength(length))
+				: "NA";
+	}
+
 }

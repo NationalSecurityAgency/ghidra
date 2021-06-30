@@ -15,17 +15,14 @@
  */
 package ghidra.file.formats.ext4;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
 
+import ghidra.app.util.bin.*;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
+
 public class Ext4XattrIbodyHeader implements StructConverter {
+	static final int SIZEOF = 4;
 
 	private int h_magic;
 	
@@ -48,6 +45,10 @@ public class Ext4XattrIbodyHeader implements StructConverter {
 		Structure structure = new StructureDataType("ext4_xattr_ibody_header", 0);
 		structure.add(DWORD, "h_magic", null);
 		return structure;
+	}
+
+	public boolean isValid() {
+		return h_magic == Ext4Constants.EXT4_XATTR_MAGIC;
 	}
 
 }

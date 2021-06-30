@@ -17,40 +17,20 @@ package ghidra.file.formats.ext4;
 
 public class Ext4File {
 
-	private String name;
-	private Ext4Inode inode;
+	private final String name;
+	private final Ext4Inode inode;
 	
 	public Ext4File(String name, Ext4Inode inode) {
 		this.name = name;
 		this.inode = inode;
 	}
 	
-	public Ext4File(String name) {
-		this.name = name;
-	}
-	
-	public Ext4File(Ext4Inode inode) {
-		this.inode = inode;
-	}
-	
-	public Ext4File() {
-		
-	}
-
 	public String getName() {
 		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
 	}
 
 	public Ext4Inode getInode() {
 		return inode;
 	}
 
-	public void setInode(Ext4Inode inode) {
-		this.inode = inode;
-	}
-	
 }
