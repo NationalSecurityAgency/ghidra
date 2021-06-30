@@ -50,7 +50,7 @@ import resources.ResourceManager;
 public class ExternalReferencesProvider extends ComponentProviderAdapter {
 	private static ImageIcon ADD_ICON = ResourceManager.loadImage("images/Plus.png");
 	private static ImageIcon DELETE_ICON = ResourceManager.loadImage("images/edit-delete.png");
-	private static ImageIcon EDIT_ICON = ResourceManager.loadImage("images/editbytes.gif");
+	private static ImageIcon EDIT_ICON = ResourceManager.loadImage("images/editbytes.png");
 	private static ImageIcon CLEAR_ICON = ResourceManager.loadImage("images/erase16.png");
 
 	private JPanel mainPanel;

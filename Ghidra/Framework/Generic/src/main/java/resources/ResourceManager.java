@@ -329,7 +329,7 @@ public class ResourceManager {
 
 	/**
 	 * Creates a scaled ImageIcon from the given icon with scaling of 
-	 * {@link Image#SCALE_AREA_AVERAGING}
+	 * {@link Image#SCALE_SMOOTH}
 	 *  
 	 * @param icon the icon to scale
 	 * @param width the width of the new icon
@@ -346,7 +346,7 @@ public class ResourceManager {
 	 * @return disabled icon
 	 */
 	public static ImageIcon getDisabledIcon(Icon icon) {
-		return new DisabledImageIconWrapper(getImageIcon(icon));
+		return new ScaleDisableImageIconWrapper(getImageIcon(icon));
 	}
 
 	/**
@@ -355,11 +355,11 @@ public class ResourceManager {
 	 * @return disabled icon
 	 */
 	public static ImageIcon getDisabledIcon(ImageIcon icon) {
-		return new DisabledImageIconWrapper(icon);
+		return new ScaleDisableImageIconWrapper(icon);
 	}
 
 	/**
-	 * Returns a disabled icon while allowing the caller to control the brightness of the icon
+	 * Returns a disabled and scaled icon while allowing the caller to control the brightness of the icon
 	 * returned
 	 * 
 	 * @param icon The icon to disable.
@@ -367,7 +367,7 @@ public class ResourceManager {
 	 * @return a disabled version of the original icon.
 	 */
 	public static ImageIcon getDisabledIcon(Icon icon, int brightnessPercent) {
-		return new DisabledImageIconWrapper(icon, brightnessPercent);
+		return new ScaleDisableImageIconWrapper(icon, brightnessPercent);
 	}
 
 	/**
@@ -381,7 +381,7 @@ public class ResourceManager {
 	 * @return the new icon
 	 */
 	public static ImageIcon getImageIconFromImage(String imageName, Image image) {
-		return new ImageIconWrapper(image, imageName);
+		return new ScaledImageIconWrapper(image, imageName, 16, 16);
 	}
 
 	/**
@@ -396,7 +396,7 @@ public class ResourceManager {
 		if (icon instanceof ImageIcon) {
 			return (ImageIcon) icon;
 		}
-		return new ImageIconWrapper(icon);
+		return new ScaledImageIconWrapper(icon, 16, 16);
 	}
 
 	/**
@@ -439,10 +439,11 @@ public class ResourceManager {
 	}
 
 	/**
-	 * Load the image using the specified bytes. The image icon will
+	 * Load and scale the image using the specified bytes. The image icon will
 	 * be cached using the image name. The bytes must have been
 	 * read from an image file containing a supported image format,
 	 * such as GIF, JPEG, or (as of 1.3) PNG.
+	 * The height and width of the image icon are fixed, 16 * 16
 	 * @param imageName   the name of the image
 	 * @param imageBytes  the bytes of the image
 	 * @return the image icon stored in the bytes
@@ -452,7 +453,7 @@ public class ResourceManager {
 		if (icon != null) {
 			return icon;
 		}
-		icon = new ImageIconWrapper(imageBytes, imageName);
+		icon = new ScaledImageIconWrapper(imageBytes, imageName, 16, 16);
 		iconMap.put(imageName, icon);
 		return icon;
 	}
@@ -466,33 +467,15 @@ public class ResourceManager {
 	 * @return the scaled image.
 	 */
 	public static ImageIcon loadImage(String filename, int width, int height) {
-		ImageIcon loadImage = loadImage(filename);
-		if (loadImage == null) {
-			return null;
-		}
-		return getScaledIcon(loadImage, width, height);
-	}
 
-	/**
-	 * Load the image specified by filename; returns the default bomb icon
-	 * if problems occur trying to load the file.
-	 * <p>
-	 * 
-	 * @param filename name of file to load, e.g., "images/home.gif"
-	 * @return the image icon stored in the bytes
-	 */
-	public static ImageIcon loadImage(String filename) {
-
-		// use the wrapper so that images are not loaded until they are needed
 		ImageIcon icon = iconMap.get(filename);
 		if (icon != null) {
 			return icon;
 		}
-
 		File imageFile = new File(filename);
 		if (imageFile.exists()) {
 			try {
-				icon = new ImageIconWrapper(imageFile.toURI().toURL());
+				icon = new ScaledImageIconWrapper(imageFile.toURI().toURL(), width, height);
 				iconMap.put(filename, icon);
 				return icon;
 			}
@@ -500,19 +483,30 @@ public class ResourceManager {
 				// handled below
 			}
 		}
-
 		URL url = getResource(filename);
 		if (url != null) {
-			icon = new ImageIconWrapper(url);
+			icon = new ScaledImageIconWrapper(url, width, height);
 			iconMap.put(filename, icon);
 			return icon;
 		}
-
 		return getDefaultIcon();
 	}
 
 	/**
-	 * Load the images specified by filenames; substitutes the default bomb icon
+	 * Load and scale the image specified by filename; returns null if problems occur trying to load
+	 * the file. The height and width of the picture are fixed, 16*16.
+	 * @param filename name of file to load, e.g., "images/home.gif"
+	 * @return the scaled image.
+	 */
+	public static ImageIcon loadImage(String filename) {
+		ImageIcon loadImage = loadImage(filename, 16, 16);
+		if (loadImage == null) {
+			return null;
+		}
+		return loadImage;
+	}
+	/**
+	 * Load and scale the images specified by filenames; substitutes the default bomb icon
 	 * if problems occur trying to load an individual file.
 	 * <p>
 	 * @param filenames vararg list of string filenames (ie. "images/home.gif")
@@ -540,6 +534,9 @@ public class ResourceManager {
 		return loadImage(filename);
 	}
 
+
+
+
 	public static ImageIcon getDefaultIcon() {
 		if (DEFAULT_ICON == null) {
 			URL url = getResource(DEFAULT_ICON_FILENAME);
@@ -547,7 +544,7 @@ public class ResourceManager {
 				Msg.error(ResourceManager.class,
 					"Could not find default icon: " + DEFAULT_ICON_FILENAME);
 			}
-			DEFAULT_ICON = new ImageIconWrapper(url);
+			DEFAULT_ICON = new ScaledImageIconWrapper(url, 16, 16);
 		}
 		return DEFAULT_ICON;
 	}
@@ -642,5 +639,162 @@ public class ResourceManager {
 
 		testSearchPaths = results;
 		return testSearchPaths;
+	}
+
+
+
+	/**
+	 * Load the image using the specified bytes. The image icon will
+	 * be cached using the image name. The bytes must have been
+	 * read from an image file containing a supported image format,
+	 * such as GIF, JPEG, or (as of 1.3) PNG.
+	 * @param imageName   the name of the image
+	 * @param imageBytes  the bytes of the image
+	 * @return the image icon stored in the bytes
+	 */
+	public static ImageIcon loadOriginalSizeImage(String imageName, byte[] imageBytes){
+		ImageIcon icon = iconMap.get(imageName);
+		if (icon != null) {
+			return icon;
+		}
+		icon = new ImageIconWrapper(imageBytes, imageName);
+		iconMap.put(imageName, icon);
+		return icon;
+	}
+
+	/**
+	 * Load the images specified by filenames; substitutes the default bomb icon
+	 * if problems occur trying to load an individual file.
+	 * <p>
+	 * @param filenames vararg list of string filenames (ie. "images/home.gif")
+	 * @return list of ImageIcons with each image, problem / missing images replaced with
+	 * the default icon.
+	 */
+	public static List<ImageIcon> loadOriginalSizeImages(String... filenames){
+		List<ImageIcon> results = new ArrayList<>(filenames.length);
+		for (String filename : filenames) {
+			results.add(loadOriginalSizeImage(filename));
+		}
+		return results;
+	}
+
+	/**
+	 * Load the image specified by filename; returns the default bomb icon
+	 * if problems occur trying to load the file.
+	 * <p>
+	 * 
+	 * @param filename name of file to load, e.g., "images/home.gif"
+	 * @return the image icon stored in the bytes
+	 */
+	public static ImageIcon reloadOriginalSizeImage(String filename) {
+		iconMap.remove(filename);
+		return loadOriginalSizeImage(filename);
+	}
+
+	/**
+	 * Load the image specified by filename; returns the default bomb icon
+	 * if problems occur trying to load the file.
+	 * <p>
+	 * 
+	 * @param filename name of file to load, e.g., "images/home.gif"
+	 * @return the image icon stored in the bytes
+	 */
+	public static ImageIcon loadOriginalSizeImage(String filename) {
+		// use the wrapper so that images are not loaded until they are needed
+		ImageIcon icon = iconMap.get(filename);
+		if (icon != null) {
+			return icon;
+		}
+
+		File imageFile = new File(filename);
+		if (imageFile.exists()) {
+			try {
+				icon = new ImageIconWrapper(imageFile.toURI().toURL());
+				iconMap.put(filename, icon);
+				return icon;
+			}
+			catch (MalformedURLException e) {
+				// handled below
+			}
+		}
+
+		URL url = getResource(filename);
+		if (url != null) {
+			icon = new ImageIconWrapper(url);
+			iconMap.put(filename, icon);
+			return icon;
+		}
+
+		return getDefaultOriginalSizeIcon();
+	}
+
+	public static ImageIcon getDefaultOriginalSizeIcon() {
+		if (DEFAULT_ICON == null) {
+			URL url = getResource(DEFAULT_ICON_FILENAME);
+			if (url == null) {
+				Msg.error(ResourceManager.class,
+					"Could not find default icon: " + DEFAULT_ICON_FILENAME);
+			}
+			DEFAULT_ICON = new ImageIconWrapper(url);
+		}
+		return DEFAULT_ICON;
+	}
+	/**
+	 * Get the disabled rendering of the given icon.
+	 * @param icon The icon to disable.
+	 * @return disabled icon
+	 */
+	public static ImageIcon getDisabledOriginalSizeIcon(Icon icon) {
+		return new DisabledImageIconWrapper(getOriginalSizeImageIcon(icon));
+	}
+
+	/**
+	 * Get the disabled rendering of the given imageIcon.
+	 * @param icon The icon to disable.
+	 * @return disabled icon
+	 */
+	public static ImageIcon getDisabledOriginalSizeIcon(ImageIcon icon) {
+		return new DisabledImageIconWrapper(icon);
+	}
+
+	/**
+	 * Returns a disabled icon while allowing the caller to control the brightness of the icon
+	 * returned
+	 * 
+	 * @param icon The icon to disable.
+	 * @param brightnessPercent The level of brightness (0-100, where 100 is the brightest).
+	 * @return a disabled version of the original icon.
+	 */
+	public static ImageIcon getDisabledOriginalSizeIcon(Icon icon, int brightnessPercent) {
+		return new DisabledImageIconWrapper(icon, brightnessPercent);
+	}
+
+	/**
+	 * Creates an image icon from the given image.  This method will create an <code>ImageIcon</code>
+	 * the <a href="safe">"safe"</a> way by avoiding the constructor 
+	 * {@link ImageIcon#ImageIcon(Image)}, which can
+	 * trigger problems with Java's {@link MediaTracker}.
+	 * 
+	 * @param imageName A textual description of the image; may be null
+	 * @param image The image to use for creating an ImageIcon.
+	 * @return the new icon
+	 */
+	public static ImageIcon getImageIconFromOriginalSizeImage(String imageName, Image image) {
+		return new ImageIconWrapper(image, imageName);
+	}
+
+	/**
+	 * Returns an {@link ImageIcon} for the given icon.  If the value is already an ImageIcon, then
+	 * that object is returned; otherwise, an ImageIcon will be created the <a href="#safe">safe</a>
+	 * way.
+	  
+	 * @param icon The icon to convert
+	 * @return the new icon
+	 */
+	public static ImageIcon getOriginalSizeImageIcon(Icon icon) {
+		if (icon instanceof ImageIcon) {
+			return (ImageIcon) icon;
+		}
+		return new ImageIconWrapper(icon);
 	}
 }

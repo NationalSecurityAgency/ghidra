@@ -79,8 +79,8 @@ src/main/help/help/topics/VersionTrackingPlugin/images/function.png||GHIDRA||||E
 src/main/help/help/topics/VersionTrackingPlugin/images/kgpg.png||Nuvola Icons - LGPL 2.1||||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/lightbulb.png||FAMFAMFAM Icons - CC 2.5|||famfam|END|
 src/main/help/help/topics/VersionTrackingPlugin/images/list-remove.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0) copied from oxygen/16x16/list-remove.png|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/locationIn.gif||GHIDRA||reviewed||END|
-src/main/help/help/topics/VersionTrackingPlugin/images/locationOut.gif||GHIDRA||reviewed||END|
+src/main/help/help/topics/VersionTrackingPlugin/images/locationIn.png||GHIDRA||reviewed||END|
+src/main/help/help/topics/VersionTrackingPlugin/images/locationOut.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/menu16.gif||GHIDRA||reviewed||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/settings16.gif||GHIDRA||reviewed|From GhidraArchive/ImageLibrary/GhidraIcons/settings16.gif|END|
 src/main/help/help/topics/VersionTrackingPlugin/images/start-here_16.png||Tango Icons - Public Domain|||From tango|END|

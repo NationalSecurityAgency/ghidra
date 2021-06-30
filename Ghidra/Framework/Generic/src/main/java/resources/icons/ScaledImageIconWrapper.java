@@ -19,7 +19,7 @@ import java.awt.*;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-
+import java.net.URL;
 import generic.util.image.ImageUtils;
 
 public class ScaledImageIconWrapper extends ImageIconWrapper {
@@ -31,13 +31,13 @@ public class ScaledImageIconWrapper extends ImageIconWrapper {
 	/**
 	 * Construct wrapped scaled ImageIcon based upon specified
 	 * baseIcon and desired size.  The rendering hints of 
-	 * {@link Image#SCALE_AREA_AVERAGING} will be applied.
+	 * {@link Image#SCALE_SMOOTH} will be applied.
 	 * @param baseIcon base icon
 	 * @param width new icon width
 	 * @param height new icon height
 	 */
 	public ScaledImageIconWrapper(Icon baseIcon, int width, int height) {
-		this(baseIcon, width, height, Image.SCALE_AREA_AVERAGING);
+		this(baseIcon, width, height, Image.SCALE_SMOOTH);
 	}
 
 	/**
@@ -53,6 +53,43 @@ public class ScaledImageIconWrapper extends ImageIconWrapper {
 		this.width = width;
 		this.height = height;
 		this.hints = hints;
+	}
+	
+	/**
+	 * Construct wrapped ImageIcon based upon specified resource URL
+	 * @param url icon image resource URL
+	 * @param width new icon width
+	 * @param height new icon height
+	 */
+	public ScaledImageIconWrapper(URL url, int width, int height) {
+		super(url);
+		this.width = width;
+		this.height = height;
+	}
+	/**
+	 * Construct wrapped ImageIcon based upon specified image byte array
+	 * (see {@link Toolkit#createImage(byte[])})
+	 * @param imageBytes image bytes
+	 * @param imageName image reference name
+	 * @param width new icon width
+	 * @param height new icon height
+	 */
+	public ScaledImageIconWrapper(byte[] imageBytes, String imageName, int width, int height){
+		super(imageBytes, imageName);
+		this.width = width;
+		this.height = height;
+	}
+	/**
+	 * Construct wrapped ImageIcon based upon specified image
+	 * @param image icon image
+	 * @param imageName image reference name
+	 * @param width new icon width
+	 * @param height new icon height
+	 */
+	public ScaledImageIconWrapper(Image image, String imageName, int width, int height) {
+		super(image, imageName);
+		this.width = width;
+		this.height = height;
 	}
 
 	@Override

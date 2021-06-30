@@ -37,7 +37,7 @@ public class BookmarkNavigator {
 
 	private static final int BIG_CHANGE = 1000;
 
-	final static ImageIcon NOTE_ICON = ResourceManager.loadImage("images/notes.gif");
+	final static ImageIcon NOTE_ICON = ResourceManager.loadImage("images/notes.png");
 	final static ImageIcon INFO_ICON = ResourceManager.loadImage("images/information.png");
 	final static ImageIcon WARNING_ICON = ResourceManager.loadImage("images/warning.png");
 	final static ImageIcon ERROR_ICON = ResourceManager.loadImage("images/edit-delete.png");
