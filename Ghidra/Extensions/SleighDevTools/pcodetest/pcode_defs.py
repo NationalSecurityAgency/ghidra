@@ -48,6 +48,16 @@ PCodeTest({
 })
 
 PCodeTest({
+    'name': 'ARMv5',
+    'build_all': 1,
+    'build_exe': 1,
+    'qemu_command': 'qemu-arm',
+    'toolchain': 'ARM/arm-eabi',
+    'language_id': 'ARM:LE:32:v5',
+    'ccflags': '-march=armv5 -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',
+})
+
+PCodeTest({
     'name': 'ARM7',
     'toolchain': 'ARM/arm-eabi',
     'ccflags': '-mcpu=arm7 -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',

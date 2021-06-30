@@ -15,6 +15,8 @@
  */
 package ghidra.program.emulation;
 
+import java.math.BigInteger;
+
 import ghidra.pcode.emulate.Emulate;
 import ghidra.pcode.emulate.EmulateInstructionStateModifier;
 import ghidra.pcode.emulate.callother.CountLeadingZerosOpBehavior;
@@ -23,8 +25,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.pcode.PcodeOp;
-
-import java.math.BigInteger;
 
 public class ARMEmulateInstructionStateModifier extends EmulateInstructionStateModifier {
 
@@ -38,11 +38,13 @@ public class ARMEmulateInstructionStateModifier extends EmulateInstructionStateM
 		TModeReg = language.getRegister("TMode");
 		TBreg = language.getRegister("ISAModeSwitch");
 		if (TModeReg != null && TBreg == null) {
-			throw new RuntimeException("Expected language " + language.getLanguageID() +
-				" to have TB register defined");
+			throw new RuntimeException(
+				"Expected language " + language.getLanguageID() + " to have TB register defined");
 		}
-		tMode = new RegisterValue(TModeReg, BigInteger.ONE);
-		aMode = new RegisterValue(TModeReg, BigInteger.ZERO);
+		if (TModeReg != null) {
+			tMode = new RegisterValue(TModeReg, BigInteger.ONE);
+			aMode = new RegisterValue(TModeReg, BigInteger.ZERO);
+		}
 
 		registerPcodeOpBehavior("count_leading_zeroes", new CountLeadingZerosOpBehavior());
 
@@ -114,17 +116,22 @@ public class ARMEmulateInstructionStateModifier extends EmulateInstructionStateM
 	 * Initialize TB register based upon context-register state before first instruction is executed.
 	 */
 	@Override
-	public void initialExecuteCallback(Emulate emulate, Address current_address, RegisterValue contextRegisterValue) throws LowlevelError {
+	public void initialExecuteCallback(Emulate emulate, Address current_address,
+			RegisterValue contextRegisterValue) throws LowlevelError {
 		BigInteger tModeValue = BigInteger.ZERO;
+		if (TModeReg == null) {
+			return;
+		}
 		if (contextRegisterValue != null) {
-			tModeValue = contextRegisterValue.getRegisterValue(TModeReg).getUnsignedValueIgnoreMask();
+			tModeValue =
+				contextRegisterValue.getRegisterValue(TModeReg).getUnsignedValueIgnoreMask();
 		}
 		if (!BigInteger.ZERO.equals(tModeValue)) {
 			tModeValue = BigInteger.ONE;
 		}
 		emu.getMemoryState().setValue(TBreg, tModeValue);
 	}
-	
+
 	/**
 	 * Handle odd addresses which may occur when jumping/returning indirectly
 	 * to Thumb mode.  It is assumed that language will properly handle
