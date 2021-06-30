@@ -25,16 +25,15 @@ public class ConcurrentGraphQ<I> {
 	private AbstractDependencyGraph<I> graph;
 
 	public ConcurrentGraphQ(QRunnable<I> runnable, AbstractDependencyGraph<I> graph,
-			GThreadPool pool,
-			TaskMonitor monitor) {
+			GThreadPool pool, TaskMonitor monitor) {
 		this.graph = graph;
 		// @formatter:off
 		queue = new ConcurrentQBuilder<I, Object>()
 			.setCollectResults(false)
-			.setThreadPool(pool)			
+			.setThreadPool(pool)
 			.setMonitor(monitor)
 			.setListener(new MyItemListener())
-			.build(new QRunnableAdapter<>(runnable));		
+			.build(new QRunnableAdapter<>(runnable));
 		// @formatter:on
 
 	}

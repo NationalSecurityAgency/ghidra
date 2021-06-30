@@ -28,19 +28,19 @@ import ghidra.util.BigEndianDataConverter;
 public class FixedField10 extends FixedField {
 
 	/**
+	 * Zero fixed10 field value
+	 */
+	public static final FixedField10 ZERO_VALUE = new FixedField10(0L, (short) 0, true);
+
+	/**
 	 * Minimum long field value
 	 */
-	public static FixedField10 MIN_VALUE = new FixedField10(0L, (short) 0, true);
+	public static FixedField10 MIN_VALUE = ZERO_VALUE;
 
 	/**
 	 * Maximum long field value
 	 */
 	public static FixedField10 MAX_VALUE = new FixedField10(-1L, (short) -1, true);
-
-	/**
-	 * Zero fixed10 field value
-	 */
-	public static final FixedField10 ZERO_VALUE = new FixedField10(null, true);
 
 	/**
 	 * Instance intended for defining a {@link Table} {@link Schema}
@@ -65,7 +65,8 @@ public class FixedField10 extends FixedField {
 
 	/**
 	 * Construct a 10-byte fixed-length field with an initial value of data.
-	 * @param data initial 10-byte binary value
+	 * @param data initial 10-byte binary value.  A null corresponds to zero value 
+	 * and does not affect the null-state (see {@link #setNull()} and {@link #isNull()}).
 	 * @throws IllegalArgumentException thrown if data is not 10-bytes in length
 	 */
 	public FixedField10(byte[] data) {
@@ -74,24 +75,25 @@ public class FixedField10 extends FixedField {
 
 	/**
 	 * Construct a 10-byte fixed-length binary field with an initial value of data.
-	 * @param data initial 10-byte binary value
+	 * @param data initial 10-byte binary value.  A null corresponds to zero value 
+	 * and does not affect the null-state (see {@link #setNull()} and {@link #isNull()}).
 	 * @param immutable true if field value is immutable
 	 * @throws IllegalArgumentException thrown if data is not 10-bytes in length
 	 */
 	public FixedField10(byte[] data, boolean immutable) {
-		super(null, immutable);
-		setBinaryData(data);
+		super(data, immutable);
+		if (data != null) {
+			if (data.length != 10) {
+				throw new IllegalArgumentException("Invalid FixedField10 data length");
+			}
+			updatePrimitiveValue(data);
+		}
 	}
 
 	FixedField10(long hi8, short lo2, boolean immutable) {
 		super(null, immutable);
 		this.hi8 = hi8;
 		this.lo2 = lo2;
-	}
-
-	@Override
-	boolean isNull() {
-		return hi8 == 0 && lo2 == 0;
 	}
 
 	@Override
@@ -154,18 +156,27 @@ public class FixedField10 extends FixedField {
 	}
 
 	@Override
-	public void setBinaryData(byte[] data) {
-		this.data = data;
-		if (data == null) {
-			hi8 = 0;
-			lo2 = 0;
-			return;
+	public void setBinaryData(byte[] d) {
+		if (d == null || d.length != 10) {
+			// null value not permitted although null state is (see setNull())
+			throw new IllegalArgumentException("Invalid FixedField10 data length");
 		}
-		if (data.length != 10) {
-			throw new IllegalArgumentException("Invalid FixedField10 length: " + data.length);
-		}
-		hi8 = BigEndianDataConverter.INSTANCE.getLong(data, 0);
-		lo2 = BigEndianDataConverter.INSTANCE.getShort(data, 8);
+		updatingValue();
+		this.data = d;
+		updatePrimitiveValue(d);
+	}
+
+	void updatePrimitiveValue(byte[] d) {
+		hi8 = BigEndianDataConverter.INSTANCE.getLong(d, 0);
+		lo2 = BigEndianDataConverter.INSTANCE.getShort(d, 8);
+	}
+
+	@Override
+	void setNull() {
+		super.setNull();
+		data = null;
+		hi8 = 0;
+		lo2 = 0;
 	}
 
 	@Override
@@ -184,7 +195,7 @@ public class FixedField10 extends FixedField {
 
 	@Override
 	int read(Buffer buf, int offset) throws IOException {
-		checkImmutable();
+		updatingValue();
 		data = null; // be lazy
 		hi8 = buf.getLong(offset);
 		lo2 = buf.getShort(offset + 8);
@@ -214,7 +225,7 @@ public class FixedField10 extends FixedField {
 		if (this == obj) {
 			return true;
 		}
-		if (getClass() != obj.getClass()) {
+		if (!(obj instanceof FixedField10)) {
 			return false;
 		}
 		FixedField10 other = (FixedField10) obj;

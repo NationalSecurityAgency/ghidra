@@ -15,8 +15,11 @@
  */
 package agent.gdb.model.invm;
 
+import org.junit.Ignore;
+
 import agent.gdb.model.AbstractModelForGdbScenarioForkExitTest;
 
+@Ignore
 public class InVmModelForGdbScenarioForkExitTest extends AbstractModelForGdbScenarioForkExitTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {

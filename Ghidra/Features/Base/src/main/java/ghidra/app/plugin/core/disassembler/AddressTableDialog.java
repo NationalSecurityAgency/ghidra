@@ -144,9 +144,9 @@ public class AddressTableDialog extends DialogComponentProvider {
 
 		// make bottom of right panel
 
-		JPanel buttonPanel = new JPanel(new FlowLayout());
-		buttonPanel.add(makeTablePanel);
-		buttonPanel.add(disassemblePanel);
+		JPanel myButtonPanel = new JPanel(new FlowLayout());
+		myButtonPanel.add(makeTablePanel);
+		myButtonPanel.add(disassemblePanel);
 
 		// search options panel   
 		JPanel searchOptionsPanel = new JPanel(new BorderLayout());
@@ -278,7 +278,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 		offsetPanel.add(viewOffset);
 
 		makeOptionsPanel.add(offsetPanel, BorderLayout.NORTH);
-		makeOptionsPanel.add(buttonPanel, BorderLayout.SOUTH);
+		makeOptionsPanel.add(myButtonPanel, BorderLayout.SOUTH);
 
 		// add panels to left panel
 		JPanel optionsPanel = new JPanel(new GridLayout(1, 2));
@@ -336,8 +336,13 @@ public class AddressTableDialog extends DialogComponentProvider {
 
 	@Override
 	public void close() {
+		if (!isShowing()) {
+			return;
+		}
+
 		cancelCurrentTask();
 		super.close();
+		resultsTablePanel.dispose();
 		plugin.dialogDismissed();
 	}
 
@@ -481,10 +486,6 @@ public class AddressTableDialog extends DialogComponentProvider {
 
 	int[] getSelectedRows() {
 		return resultsTable.getSelectedRows();
-	}
-
-	void setModel(AutoTableDisassemblerModel model) {
-		resultsTablePanel.setModel(model);
 	}
 
 	public void setSelectedRows(int[] selectedRows) {

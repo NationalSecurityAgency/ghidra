@@ -154,11 +154,6 @@ class MemSearchDialog extends DialogComponentProvider {
 		updateSearchButtonEnablement();
 	}
 
-	void dispose() {
-		close();
-		this.plugin = null;
-	}
-
 	private void setEndianEnabled(boolean enabled) {
 		littleEndian.setEnabled(enabled);
 		bigEndian.setEnabled(enabled);

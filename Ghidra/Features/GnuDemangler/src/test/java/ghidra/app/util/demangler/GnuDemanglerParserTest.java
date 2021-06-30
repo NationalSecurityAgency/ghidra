@@ -541,6 +541,25 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testTypeInfo_AddressTable_InFunctionNamespace() throws Exception {
+
+		String mangled =
+			"_ZTIFR17ClimateAttributesPSt4pairISt17reference_wrapperI5BiomeES2_I24IWorldRegistriesProviderEEE";
+		String demangled = process.demangle(mangled);
+		assertEquals(
+			"typeinfo for ClimateAttributes& (std::pair<std::reference_wrapper<Biome>, std::reference_wrapper<IWorldRegistriesProvider> >*)",
+			demangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		String namespaceString =
+			"ClimateAttributes&(std::pair<std::reference_wrapper<Biome>,std::reference_wrapper<IWorldRegistriesProvider>>*)";
+		assertType(object, DemangledAddressTable.class);
+		assertName(object, "typeinfo", namespaceString);
+
+		assertEquals(namespaceString + "::typeinfo", object.getSignature(false));
+	}
+
+	@Test
 	public void testTypeInfo() throws Exception {
 		String mangled = "_ZTIN4Arts28FileInputStream_impl_FactoryE";
 
@@ -1085,7 +1104,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		/*
 		
-		 	Note: the empty template type: '<, std...' 
+		 	Note: the empty template type: '<, std...'
 		 		<, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>
 		 		
 		 		 
@@ -1147,7 +1166,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		 
 		 lambda contents - lambdas in templates and as a parameter
 		 
-		 	bool (*** 
+		 	bool (***
 		 			const* std::
 		 				__addressof<
 		 						Bedrock::
@@ -1237,7 +1256,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertType(object, DemangledFunction.class);
 
 		//@formatter:off
-		String expected = 
+		String expected =
 			"void (* " +
 					"entt::" +
 					"basic_registry::" +
@@ -1848,16 +1867,16 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		//
 		// Test to ensure proper handling of 'float AvoidBlockGoal::Definition::* const&'
-		// which is a const reference to a floating point member of the class 
+		// which is a const reference to a floating point member of the class
 		// AvoidBlockGoal::Definition
-		// 
+		//
 
 		/*
 		 
 		 	Demangled:
 		 
 		  auto && JsonUtil::
-			addMember<std::shared_ptr<JsonUtil::JsonSchemaObjectNode<JsonUtil::EmptyClass,AvoidBlockGoal::Definition>>,AvoidBlockGoal::Definition,float>			
+			addMember<std::shared_ptr<JsonUtil::JsonSchemaObjectNode<JsonUtil::EmptyClass,AvoidBlockGoal::Definition>>,AvoidBlockGoal::Definition,float>
 			(
 			
 				std::shared_ptr<JsonUtil::JsonSchemaObjectNode<JsonUtil::EmptyClass,AvoidBlockGoal::Definition>>,

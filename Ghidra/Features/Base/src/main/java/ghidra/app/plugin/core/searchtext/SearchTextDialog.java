@@ -108,11 +108,6 @@ class SearchTextDialog extends DialogComponentProvider {
 		addDismissButton();
 	}
 
-	void dispose() {
-		close();
-		this.plugin = null;
-	}
-
 	@Override
 	public void close() {
 		super.close();

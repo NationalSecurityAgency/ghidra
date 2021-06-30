@@ -103,6 +103,7 @@ public class AutoTableDisassemblerPlugin extends ProgramPlugin implements Domain
 
 	void dialogDismissed() {
 
+		addressTableDialog.dispose();
 		addressTableDialog = null;
 		if (model != null) {
 			model.dispose();

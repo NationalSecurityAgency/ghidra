@@ -36,7 +36,14 @@ import ghidra.program.util.ProgramLocation;
 public class ScalarValueDecompilerHover extends AbstractScalarOperandHover
 		implements DecompilerHoverService {
 
-	private static final int PRIORITY = 20;
+	// note: this is relative to other DecompilerHovers; a higher priority gets called first
+	// Use high value so this hover gets called first.  The method for determining what the user
+	// is hovering in the Decompiler is less then perfect.  We choose to allow the more precise
+	// hovers to get a chance to process the request first.
+	// We want this hover to go before the data type hovers, due to how that hover decides when it
+	// can show a popup, it decides to work when over a scalar.   Having this hover get called
+	// first prevents that.
+	private static final int PRIORITY = 30;
 
 	private static final String NAME = "Scalar Operand Display";
 	private static final String DESCRIPTION =

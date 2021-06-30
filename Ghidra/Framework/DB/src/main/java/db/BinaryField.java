@@ -234,11 +234,15 @@ public class BinaryField extends Field {
 	@Override
 	public String toString() {
 		String classname = getClass().getSimpleName();
+		String nullState = "";
+		if (isNull()) {
+			nullState = "(NULL)";
+		}
 		byte[] d = getBinaryData();
 		if (d == null) {
-			return classname + ": null";
+			return classname + nullState + ": null";
 		}
-		return classname = "[" + d.length + "] = 0x" + getValueAsString(d);
+		return classname + nullState + ": [" + d.length + "] = 0x" + getValueAsString(d);
 	}
 
 	@Override

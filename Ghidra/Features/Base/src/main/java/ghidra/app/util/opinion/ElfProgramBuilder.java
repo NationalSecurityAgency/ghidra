@@ -2445,7 +2445,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	/**
-	 * Determine segment preferred load address.
+	 * Determine segment preferred physical load address (not overlay address).
 	 * While this method can produce the intended load address, there is no guarantee that
 	 * the segment data did not get bumped into an overlay area due to a conflict with
 	 * another segment or section.
