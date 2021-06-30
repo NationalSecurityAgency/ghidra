@@ -28,7 +28,6 @@ import javax.swing.event.ChangeListener;
 import ghidra.docking.util.DockingWindowsLookAndFeelUtils;
 import resources.ResourceManager;
 
-import static ghidra.util.config.ReadColorFromConfig.findColor;
 import static javax.swing.BorderFactory.createEmptyBorder;
 
 /**
@@ -43,7 +42,7 @@ public class EmptyBorderButton extends JButton {
 	/**
 	 * An empty border.
 	 */
-	public static final Border NO_BUTTON_BORDER = createEmptyBorder(0, 0, 0, 0);
+	public static final Border NO_BUTTON_BORDER = createEmptyBorder(1, 1, 1, 1);
 	public static final Border RAISED_BUTTON_BORDER = NO_BUTTON_BORDER;
 	public static final Border LOWERED_BUTTON_BORDER = NO_BUTTON_BORDER;
 
@@ -97,8 +96,8 @@ public class EmptyBorderButton extends JButton {
 		ToolTipManager.sharedInstance().registerComponent(this);
 		installLookAndFeelFix();
 		this.setBorder(new EmptyBorder(4, 4, 4, 4));
-		emptyBorderButtonChangeListener = new ButtonStateListener();
 		clearBackground();
+		emptyBorderButtonChangeListener = new ButtonStateListener();
 		addChangeListener(emptyBorderButtonChangeListener);
 	}
 
@@ -110,21 +109,15 @@ public class EmptyBorderButton extends JButton {
 	}
 
 	public void setFocusBackground(){
-		setBackground(findColor("Button.background.focus"));
-//		setBackground(Color.GRAY);
-
+		setBackground(new Color(87, 92, 95));
 	}
 
 	public void setPressBackground(){
-//		setBackground(Color.LIGHT_GRAY);
-		setBackground(findColor("Button.background.pressed"));
-
+		setBackground(new Color(112, 117, 120));
 	}
 
 	public void clearBackground() {
-//		setBackground(Color.darkGray);
-		setBackground(findColor("Button.background"));
-
+		setBackground(Color.DARK_GRAY);
 	}
 
 	public void clearBorder() {
