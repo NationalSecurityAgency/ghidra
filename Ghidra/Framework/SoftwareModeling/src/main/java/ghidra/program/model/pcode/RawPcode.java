@@ -15,10 +15,23 @@
  */
 package ghidra.program.model.pcode;
 
+
 /**
- * Used to normalize the access of both PcodeOp and PcodeData
+ * The pcode without address (or SeqNum) but only has the opcode and input/outputs.
+ * 
+ * Although it is quite alike, this is still not the same as {@link OpTpl} as OpTpl
+ * must construct the pcode out of varnode template, which is more suitable to be used
+ * in compilation context.
+ * 
+ * However, this is the pcode "template" that can be constructed directly as we are
+ * using real varnodes instead of {@link VarnodeTpl}.
+ * 
+ * One of the important usecase for this is to unify the access for real pcode (i.e,
+ * {@link PcodeOp}) and the {@link RawPcodeImpl} that can be constructed in the scripts.
+ * 
+ * Used to implement the pcode patching functionality.
  */
-public interface PcodeDataLike {
+public interface RawPcode {
     public int getOpcode();
     public Varnode[] getInputs();
     public Varnode getOutput();
