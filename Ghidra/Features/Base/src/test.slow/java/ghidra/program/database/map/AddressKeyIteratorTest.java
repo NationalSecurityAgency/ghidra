@@ -115,7 +115,7 @@ public class AddressKeyIteratorTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testIterator0() throws Exception {
-		AddressKeyIterator it = new AddressKeyIterator();
+		AddressKeyIterator it = AddressKeyIterator.EMPTY_ITERATOR;
 		assertTrue(!it.hasNext());
 		assertTrue(!it.hasPrevious());
 		try {
@@ -123,12 +123,14 @@ public class AddressKeyIteratorTest extends AbstractGhidraHeadedIntegrationTest 
 			Assert.fail();
 		}
 		catch (NoSuchElementException e) {
+			// expected
 		}
 		try {
 			it.previous();
 			Assert.fail();
 		}
 		catch (NoSuchElementException e) {
+			// expected
 		}
 	}
 

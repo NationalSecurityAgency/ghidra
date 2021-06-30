@@ -25,13 +25,37 @@ import util.CollectionUtils;
  * @see CollectionUtils#asIterable
  */
 public interface SymbolIterator extends Iterator<Symbol>, Iterable<Symbol> {
+
+	public static final SymbolIterator EMPTY_ITERATOR = new SymbolIterator() {
+
+		@Override
+		public Iterator<Symbol> iterator() {
+			return this;
+		}
+
+		@Override
+		public Symbol next() {
+			return null;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return false;
+		}
+	};
+
 	/**
 	 * Return true if there is a next symbol.
 	 */
+	@Override
 	public boolean hasNext();
 
 	/**
-	 * Get the next symbol.
+	 * Get the next symbol or null if no more symbols.
+	 * <P>NOTE: This deviates from the standard {@link Iterator} interface
+	 * by returning null instead of throwing an exception.
 	 */
+	@Override
 	public Symbol next();
+
 }
