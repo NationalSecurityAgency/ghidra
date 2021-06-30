@@ -28,12 +28,15 @@ import ghidra.util.exception.CancelledException;
  */
 public abstract class Task implements MonitoredRunnable {
 	private String title;
-	private boolean canCancel;
+
 	private boolean hasProgress;
 	private boolean isModal;
 	protected boolean waitForTaskCompleted = false;
 	private Set<TaskListener> listeners = new HashSet<>();
 	protected TaskMonitor taskMonitor = TaskMonitor.DUMMY;
+
+	private boolean canCancel;
+	private boolean isCancelled;
 
 	/**
 	 * Creates new Task.
@@ -66,8 +69,8 @@ public abstract class Task implements MonitoredRunnable {
 	 * progress indicator
 	 * @param isModal true means that the dialog is modal and the task has to
 	 * complete or be canceled before any other action can occur
-	 * @param waitForTaskCompleted true causes the running thread to block until the finish or 
-	 *  	  cancelled callback has completed on the swing thread.  Note: passing true 
+	 * @param waitForTaskCompleted true causes the running thread to block until the finish or
+	 *  	  cancelled callback has completed on the swing thread.  Note: passing true
 	 *  	  only makes sense if the task is modal.
 	 */
 	public Task(String title, boolean canCancel, boolean hasProgress, boolean isModal,
@@ -106,26 +109,26 @@ public abstract class Task implements MonitoredRunnable {
 	}
 
 	/**
-	 * When an object implementing interface <code>Runnable</code> is used to create a thread, 
-	 * starting the thread causes the object's <code>run</code> method to be called in that 
+	 * When an object implementing interface <code>Runnable</code> is used to create a thread,
+	 * starting the thread causes the object's <code>run</code> method to be called in that
 	 * separately executing thread.
 	 * 
 	 * @param monitor the task monitor
 	*/
 	@Override
 	public final void monitoredRun(TaskMonitor monitor) {
-		this.taskMonitor = monitor;
+		taskMonitor = monitor;
 
 		// this will be removed from SystemUtilities in Task.run() after the task is finished
 		TaskUtilities.addTrackedTask(this, monitor);
 
-		boolean isCancelled = false;
 		try {
 			run(monitor);
 			isCancelled = monitor.isCancelled();
 		}
 		catch (CancelledException e) {
 			Msg.debug(this, "Task cancelled: " + getTaskTitle());
+			isCancelled = true;
 		}
 		catch (Throwable t) {
 			Msg.showError(this, null, "Task Error",
@@ -133,16 +136,18 @@ public abstract class Task implements MonitoredRunnable {
 		}
 		finally {
 			TaskUtilities.removeTrackedTask(this);
-			this.taskMonitor = null;
+			taskMonitor = TaskMonitor.DUMMY;
 		}
 
 		notifyTaskListeners(isCancelled);
 	}
 
 	public void cancel() {
-		if (taskMonitor != null) {
-			taskMonitor.cancel();
-		}
+		taskMonitor.cancel();
+	}
+
+	public boolean isCancelled() {
+		return isCancelled;
 	}
 
 	protected void notifyTaskListeners(final boolean wasCancelled) {
@@ -180,8 +185,8 @@ public abstract class Task implements MonitoredRunnable {
 	 * 
 	 * @param monitor The TaskMonitor that will monitor the executing Task
 	 * @throws CancelledException if the task is cancelled.  Subclasses can trigger this exception
-	 *                            by calling {@link TaskMonitor#checkCanceled()}.  This allows 
-	 *                            them to break out of the current work stack. 
+	 *                            by calling {@link TaskMonitor#checkCanceled()}.  This allows
+	 *                            them to break out of the current work stack.
 	 */
 	public abstract void run(TaskMonitor monitor) throws CancelledException;
 
