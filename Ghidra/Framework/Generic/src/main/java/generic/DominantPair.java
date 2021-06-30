@@ -15,16 +15,17 @@
  */
 package generic;
 
+import java.util.Objects;
+
 import generic.stl.Pair;
 
 /**
- * DominantPair is a pair where the key is responsible for equality and
- * hashCode (and the value of the pair doesn't matter at all).  This is
- * useful when you need the pair itself to function as a key in a Map or
- * value in a Set.
+ * DominantPair is a pair where the key is responsible for equality and hashCode (and the value of
+ * the pair doesn't matter at all).  This is useful when you need the pair itself to function as a
+ * key in a Map or value in a Set.
  *
- * @param <K>
- * @param <V>
+ * @param <K> the key type
+ * @param <V> the value type
  */
 public class DominantPair<K, V> extends Pair<K, V> {
 	public DominantPair(K key, V value) {
@@ -51,15 +52,7 @@ public class DominantPair<K, V> extends Pair<K, V> {
 			return false;
 		}
 		DominantPair<?, ?> other = (DominantPair<?, ?>) obj;
-		if (first == null) {
-			if (other.first != null) {
-				return false;
-			}
-		}
-		else if (!first.equals(other.first)) {
-			return false;
-		}
-		return true;
+		return Objects.equals(first, other.first);
 	}
 
 	@Override
