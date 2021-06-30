@@ -25,7 +25,9 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.pcode.RawPcode;
 import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.PcodeRawParser;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ChangeManager;
@@ -52,6 +54,8 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 
 	private ParserContext parserContext;
 
+	private RawPcode[] patchPcode = null;
+
 	/**
 	 * Construct a new InstructionDB.
 	 * @param codeMgr code manager
@@ -60,12 +64,14 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	 * @param addr database key
 	 * @param proto instruction prototype
 	 * @param flags flow override flags
+	 * @param patchPcode pcode patches to this instruction
 	 */
 	public InstructionDB(CodeManager codeMgr, DBObjectCache<? extends CodeUnitDB> cache,
-			Address address, long addr, InstructionPrototype proto, byte flags) {
+			Address address, long addr, InstructionPrototype proto, byte flags, RawPcode[] patchPcode) {
 		super(codeMgr, cache, addr, address, addr, proto.getLength());
 		this.proto = proto;
 		this.flags = flags;
+		this.patchPcode = patchPcode;
 		flowOverride =
 			FlowOverride.getFlowOverride((flags & FLOWOVERRIDE_MASK) >> FLOWOVERRIDE_SHIFT);
 	}
@@ -107,6 +113,8 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 		}
 		length = proto.getLength();
 		flags = rec.getByteValue(InstDBAdapter.FLAGS_COL);
+		String rawPcodeText = rec.getString(InstDBAdapter.PCODES_COL);
+		patchPcode = PcodeRawParser.parseRawPcode(getProgram().getAddressFactory(), rawPcodeText);
 		flowOverride =
 			FlowOverride.getFlowOverride((flags & FLOWOVERRIDE_MASK) >> FLOWOVERRIDE_SHIFT);
 		return false;
@@ -592,6 +600,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 		lock.acquire();
 		try {
 			checkIsValid();
+
 			if (!includeOverrides) {
 				return proto.getPcode(this, null, null);
 			}
@@ -812,5 +821,24 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 				"Instruction has incompatible prototype at: " + instructionAddress);
 		}
 		return instr.getParserContext();
+	}
+
+	@Override
+	public void patchPcode(RawPcode[] pcodeOps) {
+		this.patchPcode = pcodeOps;
+		codeMgr.setPcodes(addr, pcodeOps);
+		program.setChanged(ChangeManager.DOCR_CODE_UNIT_PROPERTY_CHANGED, this, this);
+	}
+
+	@Override
+	public RawPcode[] getPatchedPcode() {
+		return patchPcode;
+	}
+
+	@Override
+	public void removePatchedPcode() {
+		this.patchPcode = null;
+		codeMgr.setPcodes(addr, null);
+		program.setChanged(ChangeManager.DOCR_CODE_UNIT_PROPERTY_CHANGED, this, this);
 	}
 }

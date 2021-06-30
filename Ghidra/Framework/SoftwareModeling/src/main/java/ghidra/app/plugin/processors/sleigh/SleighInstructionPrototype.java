@@ -1040,6 +1040,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 
 	@Override
 	public PcodeOp[] getPcode(InstructionContext context, int opIndex) {
+
 		if (opIndex < 0 || opIndex >= opresolve.length) {
 			return emptyPCode;
 		}

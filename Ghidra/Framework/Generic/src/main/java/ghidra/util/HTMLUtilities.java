@@ -751,56 +751,8 @@ public class HTMLUtilities {
 			return null;
 		}
 
-		if (!BasicHTML.isHTMLString(text)) {
-			// the message may still contain HTML, but that is something we don't handle
-			return text;
-		}
-
-		//
-		// Use the label's builtin handling of HTML text via the HTMLEditorKit
-		//
-		JLabel label = new JLabel(text) {
-			@Override
-			public void paint(Graphics g) {
-				// we cannot use paint, as we are not parented; change paint to call
-				// something that works
-				super.paintComponent(g);
-			}
-		};
-		View v = (View) label.getClientProperty(BasicHTML.propertyKey);
-		if (v == null) {
-			return text;
-		}
-
-		//
-		// Use some magic to turn the painting into text
-		//
-		Dimension size = label.getPreferredSize();
-		label.setBounds(new Rectangle(0, 0, size.width, size.height));
-
-		// Note: when laying out an unparented label, the y value will be half of the height
-		Rectangle bounds =
-			new Rectangle(-size.width, -size.height, size.width * 2, size.height * 10);
-
-		TextLayoutGraphics g = new TextLayoutGraphics();
-		g.setClip(bounds);
-		label.paint(g);
-		g.flush();
-		String raw = g.getBuffer();
-		raw = raw.trim(); // I can't see any reason to keep leading/trailing newlines/whitespace
-
-		String updated = replaceKnownSpecialCharacters(raw);
-
-		//
-		// Unfortunately, the label adds odd artifacts to the output, like newlines after
-		// formatting tags (like <B>, <FONT>, etc).   So, just normalize the text, not
-		// preserving any of the line breaks.
-		//
-		// Note: Calling this method here causes unwanted removal of newlines.  If the original 
-		//       need for this call is found, this can be revisited. 
-		//       (see history for condense() code)
-		// String condensed = condense(updated);
-		return updated;
+		// INPROPER USAGE! HTML should never be used in this way!
+		return text;
 	}
 
 	/**

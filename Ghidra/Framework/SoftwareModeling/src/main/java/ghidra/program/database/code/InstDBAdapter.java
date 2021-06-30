@@ -33,22 +33,28 @@ abstract class InstDBAdapter {
 
 	static final String INSTRUCTION_TABLE_NAME = "Instructions";
 
+	/**
+	 * Instruction schema change record:
+	 * 
+	 * - version 1 -> version 2: add string field Pcodes to store user patched pcodes
+	 */
 	static final Schema INSTRUCTION_SCHEMA =
-		new Schema(1, "Address", new Field[] { IntField.INSTANCE, ByteField.INSTANCE },
-			new String[] { "Proto ID", "Flags" });
+		new Schema(2, "Address", new Field[] { IntField.INSTANCE, ByteField.INSTANCE, StringField.INSTANCE },
+			new String[] { "Proto ID", "Flags", "Pcodes" });
 
 	static final int PROTO_ID_COL = 0;
 	static final int FLAGS_COL = 1;
+	static final int PCODES_COL = 2;
 
 	static InstDBAdapter getAdapter(DBHandle dbHandle, int openMode, AddressMap addrMap,
 			TaskMonitor monitor) throws VersionException, CancelledException, IOException {
 
 		if (openMode == DBConstants.CREATE) {
-			return new InstDBAdapterV1(dbHandle, addrMap, true);
+			return new InstDBAdapterV2(dbHandle, addrMap, true);
 		}
 
 		try {
-			InstDBAdapter adapter = new InstDBAdapterV1(dbHandle, addrMap, false);
+			InstDBAdapter adapter = new InstDBAdapterV2(dbHandle, addrMap, false);
 			if (addrMap.isUpgraded()) {
 				throw new VersionException(true);
 			}
@@ -68,6 +74,12 @@ abstract class InstDBAdapter {
 
 	private static InstDBAdapter findReadOnlyAdapter(DBHandle handle, AddressMap addrMap)
 			throws VersionException, IOException {
+		try {
+			return new InstDBAdapterV2(handle, addrMap.getOldAddressMap(), false);
+		}
+		catch (VersionException e) {
+		}
+
 		try {
 			return new InstDBAdapterV1(handle, addrMap.getOldAddressMap(), false);
 		}
@@ -103,13 +115,18 @@ abstract class InstDBAdapter {
 			}
 
 			dbHandle.deleteTable(INSTRUCTION_TABLE_NAME);
-			InstDBAdapter newAdapter = new InstDBAdapterV1(dbHandle, addrMap, true);
+			InstDBAdapter newAdapter = new InstDBAdapterV2(dbHandle, addrMap, true);
 
 			iter = tmpAdapter.getRecords();
 			while (iter.hasNext()) {
 				monitor.checkCanceled();
 				DBRecord rec = iter.next();
-				newAdapter.putRecord(rec);
+
+				long addr = rec.getKey();
+				int protoId = rec.getIntValue(PROTO_ID_COL);
+				byte flags = rec.getByteValue(FLAGS_COL);
+				newAdapter.createInstruction(addr, protoId, flags, null);
+
 				monitor.setProgress(++count);
 			}
 			return newAdapter;
@@ -123,9 +140,10 @@ abstract class InstDBAdapter {
 	 * Create a new instruction.
 	 * @param addr address (key for the record)
 	 * @param protoID prototype ID
+	 * @param pcodes the pcode raw text (see {@link PcodeFormatter}), might be multiline
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract void createInstruction(long addr, int protoID, byte flags) throws IOException;
+	abstract void createInstruction(long addr, int protoID, byte flags, String pcodes) throws IOException;
 
 	/**
 	 * Sets the flag column in the record at addr to the give flags byte.
@@ -134,6 +152,14 @@ abstract class InstDBAdapter {
 	 * @throws IOException if there was a problem accessing the database
 	 */
 	abstract void updateFlags(long addr, byte flags) throws IOException;
+
+	/**
+	 * Sets the pcode column in the record at addr to the given pcode raw reprentation.
+	 * @param addr key of the recrod to be changed
+	 * @param pcodes a string, might be multiline, describing the pcode in raw format see
+	 * {@link PcodeFormatter} and {@link PcodeRawParser}
+	 */
+	abstract void updatePcodes(long addr, String pcodes) throws IOException;
 
 	/**
 	 * Remove the instruction.

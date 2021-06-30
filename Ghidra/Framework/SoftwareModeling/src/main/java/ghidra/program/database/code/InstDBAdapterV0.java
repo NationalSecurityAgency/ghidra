@@ -53,7 +53,7 @@ class InstDBAdapterV0 extends InstDBAdapter {
 	 * @see ghidra.program.database.code.InstDBAdapter#createInstruction(long, int)
 	 */
 	@Override
-	void createInstruction(long addr, int protoID, byte flags) throws IOException {
+	void createInstruction(long addr, int protoID, byte flags, String pcodes) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -278,4 +278,8 @@ class InstDBAdapterV0 extends InstDBAdapter {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	void updatePcodes(long addr, String pcodes) throws IOException {
+		throw new UnsupportedOperationException();
+	}
 }

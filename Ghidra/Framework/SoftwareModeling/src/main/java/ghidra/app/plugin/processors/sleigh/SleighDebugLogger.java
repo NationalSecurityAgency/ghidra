@@ -28,6 +28,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramContext;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.util.StringUtilities;
 
@@ -186,6 +187,11 @@ public class SleighDebugLogger {
 				return getParserContext();
 			}
 			append("Warning! ignored request for instruction context at " + instructionAddress);
+			return null;
+		}
+
+		@Override
+		public PcodeOp[] getPatchedPcode() {
 			return null;
 		}
 

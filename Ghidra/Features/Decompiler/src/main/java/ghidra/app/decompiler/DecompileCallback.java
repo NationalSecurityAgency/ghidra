@@ -290,6 +290,11 @@ public class DecompileCallback {
 				if (fo != FlowOverride.NONE) {
 					debug.addFlowOverride(addr, fo);
 				}
+
+				if (instr.hasPatch()) {
+					RawPcode[] pcode = instr.getPatchedPcode();
+					debug.addPatch(addr, pcode, instr.getLength());
+				}
 			}
 
 			PackedBytes pcode = instr.getPrototype()

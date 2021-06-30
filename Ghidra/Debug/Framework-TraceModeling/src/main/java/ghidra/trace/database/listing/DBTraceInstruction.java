@@ -28,6 +28,8 @@ import ghidra.program.model.listing.ContextChangeException;
 import ghidra.program.model.listing.FlowOverride;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.pcode.RawPcode;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.context.DBTraceRegisterContextSpace;
@@ -95,6 +97,11 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 				throws UnknownContextException, MemoryAccessException {
 			// TODO: Does the given address need mapping?
 			return DBTraceInstruction.this.getParserContext(instructionAddress);
+		}
+
+		@Override
+		public PcodeOp[] getPatchedPcode() {
+			return null;
 		}
 	}
 
@@ -693,5 +700,18 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 				getStartSnap() + "," + instructionAddress + ")");
 		}
 		return instruction.getParserContext();
+	}
+
+	@Override
+	public RawPcode[] getPatchedPcode() {
+		return null;
+	}
+
+	@Override
+	public void patchPcode(RawPcode[] pcodeOps) {
+	}
+
+	@Override
+	public void removePatchedPcode() {
 	}
 }

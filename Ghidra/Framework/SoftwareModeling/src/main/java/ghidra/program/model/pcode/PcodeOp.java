@@ -37,7 +37,7 @@ import ghidra.xml.XmlPullParser;
  *    possible output varnode
  * 
  */
-public class PcodeOp {
+public class PcodeOp implements RawPcode {
 
 	// The opcodes of the Pcode language
 
@@ -709,7 +709,7 @@ public class PcodeOp {
 		}
 		Integer i = opcodeTable.get(s);
 		if (i == null) {
-			throw new UnknownInstructionException();
+			throw new UnknownInstructionException(String.format("Invalid opcode %s", s));
 		}
 		return i.intValue();
 	}

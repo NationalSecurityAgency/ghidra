@@ -20,6 +20,7 @@ import java.util.List;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.UniqueAddressFactory;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.pcode.RawPcode;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.symbol.FlowType;
 import ghidra.program.model.symbol.RefType;
@@ -184,6 +185,28 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	 * @param flowOverride
 	 */
 	public void setFlowOverride(FlowOverride flowOverride);
+
+	/**
+	 * Set the expected pcodes to this instructions, patch the original ones.
+	 * 
+	 * @param pcodes expected pcodes to be returned
+	 */
+	public void patchPcode(RawPcode[] pcodes);
+
+	/**
+	 * Get patching pcode associated with this instruction
+	 * @return patching pcode, null if no patching pcode in this instruction
+	 */
+	public RawPcode[] getPatchedPcode();
+
+	/**
+	 * Remove the patched pcode, use original pcode
+	 */
+	public void removePatchedPcode();
+
+	default boolean hasPatch() {
+		return getPatchedPcode() != null;
+	}
 
 	/**
 	 * Get an array of PCode operations (micro code) that this instruction

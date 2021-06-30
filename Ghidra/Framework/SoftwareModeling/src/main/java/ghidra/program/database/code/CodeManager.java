@@ -33,6 +33,9 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.lang.InstructionError.InstructionErrorType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.pcode.RawPcode;
+import ghidra.program.model.pcode.PcodeRawFormatter;
+import ghidra.program.model.pcode.PcodeRawParser;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.*;
 import ghidra.program.util.ChangeManager;
@@ -661,12 +664,14 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 			Byte byteFlags = redisassmblyFlags.get(addr);
 			flags = (byteFlags == null) ? 0 : byteFlags;
 		}
-		instAdapter.createInstruction(addr, protoID, flags);
+
+		// initially, the patched pcode should always be not used (null)
+		instAdapter.createInstruction(addr, protoID, flags, null);
 
 		cache.delete(addrMap.getKeyRanges(address, endAddr, false));
 
 		// create new InstructionDB object and add to the cache (conflicts assumed to have been removed)
-		InstructionDB inst = new InstructionDB(this, cache, address, addr, prototype, flags);
+		InstructionDB inst = new InstructionDB(this, cache, address, addr, prototype, flags, null);
 
 		addReferencesForInstruction(inst);
 //				if (unlockedContextSet != null) {
@@ -2739,7 +2744,9 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 				int protoID = rec.getIntValue(InstDBAdapter.PROTO_ID_COL);
 				byte flags = rec.getByteValue(InstDBAdapter.FLAGS_COL);
 				InstructionPrototype proto = protoMgr.getPrototype(protoID);
-				inst = new InstructionDB(this, cache, address, addr, proto, flags);
+				String rawPcodeText = rec.getString(InstDBAdapter.PCODES_COL);
+				RawPcode[] pcodes = PcodeRawParser.parseRawPcode(program.getAddressFactory(), rawPcodeText);
+				inst = new InstructionDB(this, cache, address, addr, proto, flags, pcodes);
 				return inst;
 			}
 			return null;
@@ -3297,6 +3304,15 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		}
 		finally {
 			lock.release();
+		}
+	}
+
+	void setPcodes(long addr, RawPcode[] pcodes) {
+		try {
+			String pcodesText = PcodeRawFormatter.formatRaw(pcodes);
+			instAdapter.updatePcodes(addr, pcodesText);
+		} catch (IOException e) {
+			program.dbError(e);
 		}
 	}
 
