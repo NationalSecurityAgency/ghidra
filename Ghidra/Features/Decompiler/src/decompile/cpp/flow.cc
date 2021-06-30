@@ -15,6 +15,8 @@
  */
 #include "flow.hh"
 
+#include "decompile/src/bridge.rs.h"
+
 /// Prepare for tracing flow for a new function.
 /// The Funcdata object and references to its internal containers must be explicitly given.
 /// \param d is the new function to trace
@@ -403,8 +405,19 @@ bool FlowInfo::processInstruction(const Address &curaddr,bool &startbasic)
   else
     flowoverride = Override::NONE;
 
+  auto patch_raw = glb->patches.into_raw();
+  if (patch_raw != 0) {
+    glb->patches = rust::Box<Patches>::from_raw(patch_raw);
+    step = glb->patches->resolve_patch(curaddr, &emitter);
+  } else {
+    glb->patches = rust::Box<Patches>::from_raw(0);
+    step = 0;
+  }
+
   try {
-    step = glb->translate->oneInstruction(emitter,curaddr); // Generate ops for instruction
+    if (step == 0) {
+      step = glb->translate->oneInstruction(emitter,curaddr); // Generate ops for instruction
+    }
   }
   catch(UnimplError &err) {	// Instruction is unimplemented
     if ((flags & ignore_unimplemented)!=0) {

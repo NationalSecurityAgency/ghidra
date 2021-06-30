@@ -34,6 +34,9 @@
 #include "transform.hh"
 #include "prefersplit.hh"
 
+#include "rust/cxx.h"
+class Patches;
+
 #ifdef CPUI_STATISTICS
 /// \brief Class for collecting statistics while processing over multiple functions
 ///
@@ -137,6 +140,12 @@ public:
   int4 alias_block_level;	///< Aliases blocked by 0=none, 1=struct, 2=array, 3=all
   vector<Rule *> extra_pool_rules; ///< Extra rules that go in the main pool (cpu specific, experimental)
 
+  // Rust layer systems begin
+
+  rust::Box<Patches> patches; ///< external pcode patches
+
+  // Rust layer systems end
+
   Database *symboltab;		///< Memory map of global variables and functions
   ContextDatabase *context;	///< Map from addresses to context settings
   map<string,ProtoModel *> protoModels; ///< Parsed forms of possible prototypes
@@ -187,6 +196,8 @@ public:
   void globalify(void);					///< Mark \e all spaces as global
   void restoreFlowOverride(const Element *el);		///< Set flow overrides from XML
   virtual ~Architecture(void);				///< Destructor
+
+  const AddrSpaceManager& getAddrSpaceManager() const;
 
   virtual string getDescription(void) const { return archid; }	///< Get a string describing \b this architecture
 
@@ -282,6 +293,7 @@ protected:
   void parseNoHighPtr(const Element *el);		///< Apply memory alias configuration
   void parsePreferSplit(const Element *el);		///< Designate registers to be split
   void parseAggressiveTrim(const Element *el);		///< Designate how to trim extension p-code ops
+
 };
 
 /// \brief A resolver for segmented architectures

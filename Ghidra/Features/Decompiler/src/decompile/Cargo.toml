@@ -11,6 +11,10 @@ cxx = "1.0"
 clap = "3.0.0-beta.2"
 easy-repl = { git = "https://github.com/Escapingbug/easy-repl.git", branch = "different_types" }
 anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde-xml-rs = "0.4"
+parse_int = "0.5"
+num-traits = "0.2"
 
 [build-dependencies]
 cxx-build = "1.0"

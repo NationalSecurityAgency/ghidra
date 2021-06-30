@@ -41,6 +41,7 @@ impl CliContext {
 
         ctx.register_command("load-file", ffi::new_load_file_command());
         ctx.register_command("load-addr", ffi::new_addressrange_load_command());
+        ctx.register_command("load-func", ffi::new_load_func_command());
         ctx.register_command("add-path", ffi::new_add_path_command());
         ctx.register_command("save", ffi::new_save_command());
         ctx.register_command("restore", ffi::new_restore_command());
@@ -126,6 +127,7 @@ pub(crate) fn cli_main(sleigh_home: Option<String>) {
     legacy_command!("decompile", "decompile the function", ());
     legacy_command!("load-addr", "load function at such address", (addr: String));
     legacy_command!("print-c", "print in C flat", ());
+    legacy_command!("load-func", "load function", (func_name: String));
     
     let mut rl = rl.build().expect("unable to build cli");
     rl.run().expect("unable to run cli");

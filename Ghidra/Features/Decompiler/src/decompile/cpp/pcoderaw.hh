@@ -48,6 +48,8 @@ struct VarnodeData {
   bool contains(const VarnodeData &op2) const;
 };
 
+unique_ptr<VarnodeData> new_varnode_data(AddrSpace *space, uintb offset, uint4 size);
+
 /// VarnodeData can be sorted in terms of the space its in
 /// (the space's \e index), the offset within the space,
 /// and finally by the size.

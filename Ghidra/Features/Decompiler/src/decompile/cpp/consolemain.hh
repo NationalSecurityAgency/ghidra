@@ -15,9 +15,9 @@
  */
 
 #ifndef __CPUI_CONSOLE_MAIN__
-#define __CPUI_CONSOLE_MAIN_
+#define __CPUI_CONSOLE_MAIN__
 
-#include "interface.hh"
+#include "ifacedecomp.hh"
 #include <memory>
 
 class IfcLoadFile : public IfaceDecompCommand {

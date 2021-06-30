@@ -53,3 +53,8 @@ bool VarnodeData::contains(const VarnodeData &op2) const
   if ((offset + (size-1)) < (op2.offset + (op2.size-1))) return false;
   return true;
 }
+
+
+unique_ptr<VarnodeData> new_varnode_data(AddrSpace *space, uintb offset, uint4 size) {
+  return make_unique<VarnodeData>( VarnodeData{space, offset, size} );
+}

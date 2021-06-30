@@ -24,6 +24,9 @@
 #include <cmath>
 #endif
 
+#include "decompile/src/bridge.rs.h"
+#include "rust/cxx.h"
+
 vector<ArchitectureCapability *> ArchitectureCapability::thelist;
 
 const uint4 ArchitectureCapability::majorversion = 4;
@@ -97,7 +100,7 @@ void ArchitectureCapability::sortCapabilities(void)
 
 /// Set most sub-components to null pointers. Provide reasonable defaults
 /// for the configurable options
-Architecture::Architecture(void)
+Architecture::Architecture(void) : patches(rust::Box<Patches>::from_raw((Patches *) 0))
 
 {
   //  endian = -1;
@@ -122,6 +125,7 @@ Architecture::Architecture(void)
   printlist.push_back(print);
   options = new OptionDatabase(this);
   loadersymbols_parsed = false;
+
 #ifdef CPUI_STATISTICS
   stats = new Statistics();
 #endif
@@ -473,6 +477,23 @@ void Architecture::restoreXml(DocumentStorage &store)
       restoreFlowOverride(subel);
     else if (subel->getName() == "injectdebug")
       pcodeinjectlib->restoreDebug(subel);
+    else if (subel->getName() == "patches") {
+      patches = new_patches(this);
+      string payload;
+      VarnodeData varnode;
+
+      for (auto patch: subel->getChildren()) {
+        for (auto ele : patch->getChildren()) {
+          if (ele->getName() == "addr") {
+            varnode.restoreXml(ele, this);
+          } else if (ele->getName() == "payload") {
+            payload = ele->getContent();
+          }
+        }
+
+        patches->add_patch(varnode.space->getName(), varnode.offset, varnode.size, payload);
+      }
+    }
     else
       throw LowlevelError("XML error restoring architecture: " + subel->getName());
   }
@@ -1349,6 +1370,10 @@ void Architecture::resetDefaults(void)
   allacts.resetDefaults();
   for(int4 i=0;i<printlist.size();++i)
     printlist[i]->resetDefaults();
+}
+
+const AddrSpaceManager& Architecture::getAddrSpaceManager() const {
+  return *translate;
 }
 
 Address SegmentedResolver::resolve(uintb val,int4 sz,const Address &point,uintb &fullEncoding)
