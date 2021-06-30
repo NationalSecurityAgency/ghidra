@@ -15,8 +15,7 @@
  */
 package functioncalls.plugin;
 
-import static functioncalls.graph.FcgDirection.IN;
-import static functioncalls.graph.FcgDirection.OUT;
+import static functioncalls.graph.FcgDirection.*;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -60,7 +59,7 @@ import resources.Icons;
 import util.CollectionUtils;
 
 /**
- * The primary component provider for the {@link FunctionCallGraphPlugin}	
+ * The primary component provider for the {@link FunctionCallGraphPlugin}
  */
 public class FcgProvider
 		extends VisualGraphComponentProvider<FcgVertex, FcgEdge, FunctionCallGraph> {
@@ -131,6 +130,10 @@ public class FcgProvider
 	@Override
 	public void componentShown() {
 		installGraph();
+	}
+
+	void optionsChanged() {
+		view.optionsChanged();
 	}
 
 	void locationChanged(ProgramLocation loc) {
@@ -277,7 +280,7 @@ public class FcgProvider
 
 	private void buildComponent() {
 
-		view = new FcgView();
+		view = new FcgView(plugin.getOptions());
 
 		view.setVertexClickListener((v, info) -> {
 
@@ -519,7 +522,7 @@ public class FcgProvider
 		addLocalAction(resetGraphAction);
 
 		MultiStateDockingAction<LayoutProvider<FcgVertex, FcgEdge, FunctionCallGraph>> layoutAction =
-			new MultiStateDockingAction<LayoutProvider<FcgVertex, FcgEdge, FunctionCallGraph>>(
+			new MultiStateDockingAction<>(
 				RELAYOUT_GRAPH_ACTION_NAME, plugin.getName()) {
 
 				@Override
@@ -627,7 +630,7 @@ public class FcgProvider
 
 //==================================================================================================
 // Expand/Collapse Methods
-//==================================================================================================	
+//==================================================================================================
 
 	/*
 	 * 									Notes
@@ -660,8 +663,8 @@ public class FcgProvider
 
 		Set<FcgEdge> newEdges = getModelEdges(sources, expandingLevel, edgeNotInGraphFilter);
 
-		// Need all vertices from the source level, as well as their edges.  
-		// This is used to correctly layout the vertices we are adding.  This way, if we 
+		// Need all vertices from the source level, as well as their edges.
+		// This is used to correctly layout the vertices we are adding.  This way, if we
 		// later add the sibling vertices, they will be in the correct spot, without clipping.
 		Iterable<FcgVertex> sourceSiblings = getVerticesByLevel(sourceLevel);
 		Set<FcgEdge> parentLevelEdges = getModelEdges(sourceSiblings, expandingLevel, unfiltered);
@@ -756,7 +759,7 @@ public class FcgProvider
 		FcgLevel parentLevel = parent.getLevel();
 		FcgLevel otherLevel = other.getLevel();
 		if (!parentLevel.isParentOf(otherLevel)) {
-			// the other vertex must be in the child level to be a dependent 
+			// the other vertex must be in the child level to be a dependent
 			return false;
 		}
 
@@ -864,7 +867,7 @@ public class FcgProvider
 	}
 
 	private Set<FcgVertex> toStartVertices(Iterable<FcgEdge> edges, Predicate<FcgVertex> filter) {
-		//@formatter:off 
+		//@formatter:off
 		return CollectionUtils
 			.asStream(edges)
 			.map(e -> e.getStart())
@@ -921,7 +924,7 @@ public class FcgProvider
 			currentLevel = currentLevel.child();
 		}
 
-		// hand out from greatest to least so that we can close the extremities first 
+		// hand out from greatest to least so that we can close the extremities first
 		Collections.reverse(result);
 
 		@SuppressWarnings("unchecked")
@@ -931,8 +934,8 @@ public class FcgProvider
 
 	private void doExpand(FcgExpandingVertexCollection collection) {
 
-		// note: we must do this before adding edges, as that will also add vertices and 
-		//       we will filter vertices later by those that are not already in the graph		
+		// note: we must do this before adding edges, as that will also add vertices and
+		//       we will filter vertices later by those that are not already in the graph
 
 		Set<FcgVertex> newVertices = collection.getNewVertices();
 		FunctionCallGraph graph = graphData.getGraph();
@@ -979,13 +982,13 @@ public class FcgProvider
 
 	/**
 	 * Called when new vertices are added to the graph to ensure that known edges between any
-	 * level of the graph get added as the associated vertices are added to the graph.  This 
-	 * is needed because we don't add all known edges for a single vertex when it is added, as 
+	 * level of the graph get added as the associated vertices are added to the graph.  This
+	 * is needed because we don't add all known edges for a single vertex when it is added, as
 	 * its associated vertex may not yet be in the graph.   Calling this method ensures that as
 	 * vertices appear, the edges are added.
 	 * 
 	 * @param newVertices the vertices being added to the graph
-	 * @param newEdges the set to which should be added any new edges being added to the graph 
+	 * @param newEdges the set to which should be added any new edges being added to the graph
 	 */
 	private void addEdgesToExistingVertices(Iterable<FcgVertex> newVertices,
 			Set<FcgEdge> newEdges) {
@@ -1018,7 +1021,7 @@ public class FcgProvider
 
 		//
 		//						Unusual Code Alert
-		// We wish to always use the same vertex *instance* across edges that we are 
+		// We wish to always use the same vertex *instance* across edges that we are
 		// creating.  If the vertex is already in the graph, then that will happen as we get it
 		// from the graph.  However, if the function does not have a vertex in the graph, then
 		// it must be created.  Cache the vertices we retrieve here, whether exiting or created,
@@ -1026,7 +1029,7 @@ public class FcgProvider
 		//
 
 		//@formatter:off
-		return CollectionUtils.asStream(callees)		
+		return CollectionUtils.asStream(callees)
 		    .map(f -> {
 			  
 			    if (newVertexCache.containsKey(f)) {

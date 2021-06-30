@@ -35,8 +35,6 @@ public interface GhidraOptions {
 	 * Category name for the Browser options that affect the display.
 	 */
 	final String CATEGORY_BROWSER_DISPLAY = "Listing Display";
-	@Deprecated //remove a few versions after 8.0
-	final String OLD_CATEGORY_BROWSER_DISPLAY = "Browser Display";
 
 	/**
 	 * Category name for the Browser Navigation Marker options.
@@ -101,8 +99,6 @@ public interface GhidraOptions {
 	 * Options name for Browser fields
 	 */
 	final String CATEGORY_BROWSER_FIELDS = "Listing Fields";
-	@Deprecated //remove a few versions after 8.0
-	final String OLD_CATEGORY_BROWSER_FIELDS = "Browser Fields";
 
 	/**
 	 * Options title for Mnemonic group.
@@ -125,8 +121,6 @@ public interface GhidraOptions {
 	 * Category name for Browser Popup options
 	 */
 	final String CATEGORY_BROWSER_POPUPS = "Listing Popups";
-	@Deprecated //remove a few versions after 8.0
-	final String OLD_CATEGORY_BROWSER_POPUPS = "Browser Popups";
 
 	/**
 	 * Category name for Decompiler Popup options

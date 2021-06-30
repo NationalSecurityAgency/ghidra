@@ -60,12 +60,12 @@ import ghidra.util.*;
 import ghidra.util.task.*;
 
 /**
- * Base class that is a container to manage plugins and their actions, and to coordinate the 
+ * Base class that is a container to manage plugins and their actions, and to coordinate the
  * firing of plugin events and tool events. A PluginTool may have visible components supplied by
- * <pre>ComponentProviders </pre>. These components may be docked within the tool, or moved 
+ * <pre>ComponentProviders </pre>. These components may be docked within the tool, or moved
  * out into their own windows.
  *
- * <p>Plugins normally add actions via {@link #addAction(DockingActionIf)}.   There is also 
+ * <p>Plugins normally add actions via {@link #addAction(DockingActionIf)}.   There is also
  * an alternate method for getting actions to appear in the popup context menu (see
  * {@link #addPopupActionProvider(PopupActionProvider)}).   The popup listener mechanism is generally not
  * needed and should only be used in special circumstances (see {@link PopupActionProvider}).
@@ -710,11 +710,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 		new TaskLauncher(task, winMgr.getActiveWindow());
 	}
 
-	/**
-	 * Get the options for the given category name; if no options exist with
-	 * the given name, then one is created.
-	 */
-
 	@Override
 	public ToolOptions getOptions(String categoryName) {
 		return optionsMgr.getOptions(categoryName);
@@ -1103,7 +1098,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		return configChangedFlag; // ignore the window layout changes
 	}
 
-	/** 
+	/**
 	 * Called when it is time to save the tool.  Handles auto-saving logic.
 	 * @return true if a save happened
 	 */

@@ -32,13 +32,17 @@ import ghidra.util.exception.AssertException;
 
 /**
  * Class to manage a set of option name/value pairs for a category.
- * The values may be primitives or
- * WrappedObjects that are containers for its primitive components.
- * The option may be associated with a particular group.
- * <p> The name/value pair has a owner so that the option name
- * can be removed from the Options object when it is no longer being used.
- * <p>NOTE: Property Names can have DELIMITER characters to create a hierarchy.
- * The Options Dialog shows the hierarchy in tree format.
+ * 
+ * <p>The values may be primitives or {@link WrappedOption}s that are containers for primitive
+ * components.
+ * 
+ * <p>The name/value pair has an owner so that the option name can be removed from the Options
+ * object when it is no longer being used.
+ * 
+ * <p>Note: Property Names can have {@link Options#DELIMITER} characters to create a hierarchy.
+ * So too can sub-options accessed via {@link #getOptions(String)}.
+ * 
+ * <p>The Options Dialog shows the delimited hierarchy in tree format.
  */
 public class ToolOptions extends AbstractOptions {
 	private static final String CLASS_ATTRIBUTE = "CLASS";
@@ -145,7 +149,7 @@ public class ToolOptions extends AbstractOptions {
 	 * Note: only those options which have been explicitly set
 	 * will be included.
 	 * 
-	 * @param includeDefaultBindings true to include default key binding values in the xml 
+	 * @param includeDefaultBindings true to include default key binding values in the xml
 	 * @return the xml root element
 	 */
 	public Element getXmlRoot(boolean includeDefaultBindings) {
@@ -194,7 +198,7 @@ public class ToolOptions extends AbstractOptions {
 				SaveState ss = new SaveState(WRAPPED_OPTION_NAME);
 				Element elem = null;
 				if (value == null) {
-					// Handle the null case ourselves, not using the wrapped option (and when 
+					// Handle the null case ourselves, not using the wrapped option (and when
 					// reading from xml) so that the logic does not need to in each wrapped option
 					elem = ss.saveToXml();
 					elem.addContent(new Element(CLEARED_VALUE_ELEMENT_NAME));

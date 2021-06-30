@@ -40,7 +40,7 @@ public interface Options {
 
 	/**
 	 * Returns a unique id for option in this options with the given name.  This will be the full
-	 * path name to the root options object. 
+	 * path name to the root options object.
 	 * @param optionName the name of the option for which to get an ID;
 	 * @return the unique ID for the given option.
 	 */
@@ -56,6 +56,7 @@ public interface Options {
 	/**
 	 * Get the property editor for the option with the given name. Note: This method must be called
 	 * from the swing thread.
+	 * @param optionName the option name
 	 * @return either the PropertyEditor that was registered for this option or a default editor
 	 * for the property type if one can be found; otherwise null.
 	 * @throws IllegalStateException if not called from the swing thread.
@@ -65,6 +66,7 @@ public interface Options {
 	/**
 	 * Get the property editor that was registered for the specific option with the given name.  Unlike
 	 * the getPropertyEditor() method, this method does not have to be called from the swing thread
+	 * @param optionName the option name
 	 * @return the PropertyEditor that was registered for this option.
 	 */
 
@@ -79,7 +81,7 @@ public interface Options {
 	/**
 	 * Returns a list of option names that immediately fall under this options.  For example, if this options
 	 * object had the following options named ("a", "b", "c.d"), only "a" and "b" would be returned.  The
-	 * "c.d" leaf option name could be returned by getOptions("c").getLeafOptionNames() 
+	 * "c.d" leaf option name could be returned by getOptions("c").getLeafOptionNames()
 	 * @return the list of the names of the options that are immediate children of this options object.
 	 */
 	public List<String> getLeafOptionNames();
@@ -163,6 +165,8 @@ public interface Options {
 	/**
 	 * Put the object value.  If the option exists, the type must match the type of the existing
 	 * object.
+	 * @param optionName the option name
+	 * @param obj the option value
 	 * @throws IllegalStateException if the object does not match the existing type of the option.
 	 * @throws IllegalArgumentException if the object is null or not a supported type.
 	 */
@@ -268,7 +272,7 @@ public interface Options {
 	 * @param pName the property name
 	 * @param date the default date that is stored and returned if there is no
 	 * option with the given name
-	 * @return the Date for the option 
+	 * @return the Date for the option
 	 * @throws IllegalArgumentException is a option exists with the given
 	 * name but it is not a Date options
 	 */
@@ -352,21 +356,21 @@ public interface Options {
 	/**
 	 * Sets the Custom option value for the option.
 	 * @param optionName name of the option
-	 * @param value
+	 * @param value the value
 	 */
 	public abstract void setCustomOption(String optionName, CustomOption value);
 
 	/**
 	 * Sets the byte[] value for the given option name.
 	 * @param optionName the name of the option on which to save bytes.
-	 * @param value
+	 * @param value the value
 	 */
 	public abstract void setByteArray(String optionName, byte[] value);
 
 	/**
 	 * Sets the File value for the option.
 	 * @param optionName name of the option
-	 * @param value
+	 * @param value the value
 	 */
 	public abstract void setFile(String optionName, File value);
 
@@ -426,7 +430,7 @@ public interface Options {
 
 	/**
 	 * Get the list of option names. This method will return the names (paths) of all options contained
-	 * in this options object or below.  For example, if the options has ("aaa", "bbb", "ccc.ddd"), 
+	 * in this options object or below.  For example, if the options has ("aaa", "bbb", "ccc.ddd"),
 	 * all three will be returned.  the {@link Options#getLeafOptionNames()} method will return only
 	 * the "aaa" and "bbb" names.
 	 * @return the list of all option names(paths) under this options.
@@ -436,6 +440,7 @@ public interface Options {
 	/**
 	 * Return true if a option exists with the given name.
 	 * @param optionName option name
+	 * @return true if there exists an option with the given name
 	 */
 	public abstract boolean contains(String optionName);
 
@@ -449,6 +454,8 @@ public interface Options {
 	/**
 	 * Returns true if the specified option has been registered.  Only registered names
 	 * are saved.
+	 * @param optionName the option name
+	 * @return true if registered
 	 */
 	public abstract boolean isRegistered(String optionName);
 
@@ -476,14 +483,20 @@ public interface Options {
 
 	/**
 	 * Returns a Options object that is a sub-options of this options.
-	 * @param path the path for the sub-options object.
-	 * @return  a Options object that is a sub-options of this options.
+	 * 
+	 * <p>Note: the option path can have {@link Options#DELIMITER} characters which will be
+	 * used to create a hierarchy with each element in the path resulting in sub-option of the
+	 * previous path element.
+	 * 
+	 * @param path the path for the sub-options object
+	 * @return an Options object that is a sub-options of this options
 	 */
 	public Options getOptions(String path);
 
 	/**
 	 * Create an alias in this options for an existing option in some other options object.
-	 * @param aliasName the name within this options object that will acutally refer to some other options object.
+	 * @param aliasName the name within this options object that will actually refer to some other
+	 * options object.
 	 * @param options the options object that has the actual option.
 	 * @param optionsName the name within the given options object of the actual option.
 	 */

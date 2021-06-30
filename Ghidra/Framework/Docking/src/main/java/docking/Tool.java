@@ -27,7 +27,7 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.ServiceProvider;
 
 /**
- * Generic tool interface for managing {@link ComponentProvider}s and 
+ * Generic tool interface for managing {@link ComponentProvider}s and
  * {@link DockingActionIf actions}
  */
 public interface Tool extends ServiceProvider {
@@ -74,7 +74,7 @@ public interface Tool extends ServiceProvider {
 	public void addComponentProvider(ComponentProvider componentProvider, boolean show);
 
 	/**
-	 * Removes the given ComponentProvider from the tool.  When a provider has been removed 
+	 * Removes the given ComponentProvider from the tool.  When a provider has been removed
 	 * from the tool it is considered disposed and should not be reused.
 	 * 
 	 * @param componentProvider the provider to remove from the tool
@@ -165,7 +165,7 @@ public interface Tool extends ServiceProvider {
 	 * Return a set of all actions in the tool.
 	 * 
 	 * <p>Note: the result may contain conceptually duplicate actions, which is when multiple
-	 * actions exist that share the same full name (the full name is the action name with the 
+	 * actions exist that share the same full name (the full name is the action name with the
 	 * owner name, such as "My Action (MyPlugin)".
 	 * 
 	 * @return set of all actions
@@ -176,7 +176,7 @@ public interface Tool extends ServiceProvider {
 	 * Returns all actions for the given owner
 	 * 
 	 * <p>Note: the result may contain conceptually duplicate actions, which is when multiple
-	 * actions exist that share the same full name (the full name is the action name with the 
+	 * actions exist that share the same full name (the full name is the action name with the
 	 * owner name, such as "My Action (MyPlugin)".
 	 * 
 	 * @param owner the action owner's name
@@ -239,8 +239,8 @@ public interface Tool extends ServiceProvider {
 	public void updateTitle(ComponentProvider componentProvider);
 
 	/**
-	 * Signals to the tool that the provider's context has changed.  This lets toolbar and 
-	 * menu actions update enablement based on current context.  
+	 * Signals to the tool that the provider's context has changed.  This lets toolbar and
+	 * menu actions update enablement based on current context.
 	 * 
 	 * <p>Pass <code>null</code> to signal that the entire tool's context has changed
 	 *
@@ -290,7 +290,7 @@ public interface Tool extends ServiceProvider {
 	 * Returns the class that manages actions for the tool.
 	 * 
 	 * <p>Most clients will not need to use this methods.  Instead, actions should be added to
-	 * the tool via {@link #addAction(DockingActionIf)} and 
+	 * the tool via {@link #addAction(DockingActionIf)} and
 	 * {@link #addLocalAction(ComponentProvider, DockingActionIf)}.
 	 * 
 	 * @return the action manager
