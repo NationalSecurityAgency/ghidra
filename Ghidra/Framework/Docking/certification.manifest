@@ -115,3 +115,4 @@ src/main/svg/images/cause.svg||GHIDRA||reviewed||END|
 src/main/svg/images/exception.svg||GHIDRA||reviewed||END|
 src/main/svg/images/report.svg||GHIDRA||reviewed||END|
 src/test.slow/resources/docking/widgets/table/threaded/threaded.table.test.csv.txt||GHIDRA||||END|
+src/main/resources/config/Color.properties||GHIDRA||||END|
