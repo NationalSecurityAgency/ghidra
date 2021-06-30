@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.pcodepatch;
 
 import java.util.stream.Stream;
 
-import ghidra.program.model.pcode.PcodeData;
-import ghidra.program.model.pcode.PcodeDataLike;
+import ghidra.program.model.pcode.RawPcodeImpl;
+import ghidra.program.model.pcode.RawPcode;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.PcodeRawFormatter;
 
@@ -41,8 +41,8 @@ public class PcodePatchAction extends AbstractPcodePatchAction {
     }
 
     @Override
-    public void doPatch(PcodeData patchPcode) {
-        PcodeDataLike[] pcodes = Stream.of(instruction.getPcode()).toArray(PcodeDataLike[]::new);
+    public void doPatch(RawPcodeImpl patchPcode) {
+        RawPcode[] pcodes = Stream.of(instruction.getPcode()).toArray(RawPcode[]::new);
         pcodes[row] = patchPcode;
         instruction.patchPcode(pcodes);
     }

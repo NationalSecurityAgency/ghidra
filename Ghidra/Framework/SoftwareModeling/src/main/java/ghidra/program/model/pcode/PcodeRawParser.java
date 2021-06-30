@@ -42,7 +42,7 @@ public class PcodeRawParser {
         this.addressFactory = addressFactory;
     }
 
-    public static PcodeData[] parseRawPcode(
+    public static RawPcodeImpl[] parseRawPcode(
             AddressFactory addressFactory,
             String rawPcodeText) throws RuntimeException {
         if (rawPcodeText == null) {
@@ -52,7 +52,7 @@ public class PcodeRawParser {
         return parser.parseRawPcode(rawPcodeText);
     }
 
-    public static PcodeData parseSingleRawPcode(
+    public static RawPcodeImpl parseSingleRawPcode(
         AddressFactory addressFactory,
         String rawPcodeText) throws RuntimeException {
         if (rawPcodeText == null) {
@@ -111,7 +111,7 @@ public class PcodeRawParser {
             return new Varnode(addr, size);
     }
 
-    private PcodeData parseSingleRawPcode(String pcodeText) throws RuntimeException {
+    private RawPcodeImpl parseSingleRawPcode(String pcodeText) throws RuntimeException {
         // form: varnode_out = OP varnode_in1, varnode_in2, ...
         try {
             Varnode varnodeOut = null;
@@ -136,7 +136,7 @@ public class PcodeRawParser {
                 varnodeIns.add(parseVarnode(varnodeText));
             }
 
-            return new PcodeData(opcode, varnodeIns.toArray(Varnode[]::new), varnodeOut);
+            return new RawPcodeImpl(opcode, varnodeIns.toArray(Varnode[]::new), varnodeOut);
         } catch (UnknownInstructionException e) {
             throw new RuntimeException("Invalid Pcode OpCode: " + e.toString());
         } catch (Exception e) {
@@ -144,8 +144,8 @@ public class PcodeRawParser {
         }
     }
 
-    private PcodeData[] parseRawPcode(String pcodeText) throws RuntimeException {
-        ArrayList<PcodeData> results = new ArrayList<>();
+    private RawPcodeImpl[] parseRawPcode(String pcodeText) throws RuntimeException {
+        ArrayList<RawPcodeImpl> results = new ArrayList<>();
 
         for (var line : pcodeText.split("\n")) {
             line = line.trim();
@@ -154,7 +154,7 @@ public class PcodeRawParser {
             }
         }
 
-        return results.toArray(PcodeData[]::new);
+        return results.toArray(RawPcodeImpl[]::new);
     }
 
 }

@@ -28,7 +28,7 @@ import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.pcode.PcodeData;
+import ghidra.program.model.pcode.RawPcodeImpl;
 import ghidra.program.model.pcode.PcodeRawParser;
 import ghidra.util.Msg;
 import ghidra.util.layout.PairLayout;
@@ -92,7 +92,7 @@ public class PatchPcodeTextDialog extends DialogComponentProvider {
         try {
             AddressFactory addressFactory = this.plugin.getCurrentProgram().getAddressFactory();
 
-            PcodeData patchPcode = PcodeRawParser.parseSingleRawPcode(addressFactory, pcodeText);
+            RawPcodeImpl patchPcode = PcodeRawParser.parseSingleRawPcode(addressFactory, pcodeText);
             Program program = this.plugin.getCurrentProgram();
 
             this.plugin.getTool().execute(new BackgroundCommand() {

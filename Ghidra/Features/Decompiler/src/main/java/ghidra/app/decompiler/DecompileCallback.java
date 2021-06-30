@@ -292,7 +292,7 @@ public class DecompileCallback {
 				}
 
 				if (instr.hasPatch()) {
-					PcodeDataLike[] pcode = instr.getPatchedPcode();
+					RawPcode[] pcode = instr.getPatchedPcode();
 					debug.addPatch(addr, pcode, instr.getLength());
 				}
 			}

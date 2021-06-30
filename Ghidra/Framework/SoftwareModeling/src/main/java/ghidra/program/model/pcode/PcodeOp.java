@@ -37,7 +37,7 @@ import ghidra.xml.XmlPullParser;
  *    possible output varnode
  * 
  */
-public class PcodeOp implements PcodeDataLike {
+public class PcodeOp implements RawPcode {
 
 	// The opcodes of the Pcode language
 

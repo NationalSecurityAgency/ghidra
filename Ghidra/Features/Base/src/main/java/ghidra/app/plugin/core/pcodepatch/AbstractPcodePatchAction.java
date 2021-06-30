@@ -16,7 +16,7 @@
 
 package ghidra.app.plugin.core.pcodepatch;
 
-import ghidra.program.model.pcode.PcodeData;
+import ghidra.program.model.pcode.RawPcodeImpl;
 
 public abstract class AbstractPcodePatchAction extends AbstractPcodeManipulationAction {
 
@@ -41,5 +41,5 @@ public abstract class AbstractPcodePatchAction extends AbstractPcodeManipulation
      * @param patchPcode the pcode user specifies, note that the address is temporary as
      * the user should not specify one
      */
-    public abstract void doPatch(PcodeData patchPcode);
+    public abstract void doPatch(RawPcodeImpl patchPcode);
 }

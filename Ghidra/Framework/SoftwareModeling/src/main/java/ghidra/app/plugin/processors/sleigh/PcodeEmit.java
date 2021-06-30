@@ -28,7 +28,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.FlowOverride;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.pcode.PcodeDataLike;
+import ghidra.program.model.pcode.RawPcode;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.PcodeOverride;
 import ghidra.program.model.symbol.RefType;
@@ -673,7 +673,7 @@ public abstract class PcodeEmit {
 		}
 
 		if (instcontext != null) {
-			PcodeDataLike[] patchedPcode = instcontext.getPatchedPcode();
+			RawPcode[] patchedPcode = instcontext.getPatchedPcode();
 
 			if (patchedPcode != null) {
 				for (var op : patchedPcode) {

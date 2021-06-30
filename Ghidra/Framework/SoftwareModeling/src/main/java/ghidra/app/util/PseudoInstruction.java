@@ -28,7 +28,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.pcode.PcodeDataLike;
+import ghidra.program.model.pcode.RawPcode;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
@@ -55,7 +55,7 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 	private Address fallThroughOverride = null; // NO_ADDRESS indicate fall-through removed
 	private FlowOverride flowOverride = FlowOverride.NONE;
 
-	private PcodeDataLike[] patchedPcode = null;
+	private RawPcode[] patchedPcode = null;
 
 	/** 
 	 * Construct a new PseudoInstruction within a program.
@@ -632,12 +632,12 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 	}
 
 	@Override
-	public void patchPcode(PcodeDataLike[] pcodeOps) {
+	public void patchPcode(RawPcode[] pcodeOps) {
 		this.patchedPcode = pcodeOps;
 	}
 
 	@Override
-	public PcodeDataLike[] getPatchedPcode() {
+	public RawPcode[] getPatchedPcode() {
 		return patchedPcode;
 	}
 

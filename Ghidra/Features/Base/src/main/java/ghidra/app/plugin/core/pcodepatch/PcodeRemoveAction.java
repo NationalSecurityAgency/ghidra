@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.pcode.PcodeDataLike;
+import ghidra.program.model.pcode.RawPcode;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
@@ -40,10 +40,10 @@ public class PcodeRemoveAction extends AbstractPcodeManipulationAction {
             @Override
             public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
                 try {
-                    List<PcodeDataLike> pcode = Stream.of(instruction.getPcode())
+                    List<RawPcode> pcode = Stream.of(instruction.getPcode())
                         .collect(Collectors.toList());
                     pcode.remove(row);
-                    instruction.patchPcode(pcode.toArray(PcodeDataLike[]::new));
+                    instruction.patchPcode(pcode.toArray(RawPcode[]::new));
                     return true;
                 } catch (Exception e) {
                     Msg.showError(this, null, "Can't Remove Pcode", e.toString());

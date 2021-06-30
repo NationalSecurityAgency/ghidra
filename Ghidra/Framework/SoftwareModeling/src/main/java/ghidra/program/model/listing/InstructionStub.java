@@ -23,7 +23,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.pcode.PcodeDataLike;
+import ghidra.program.model.pcode.RawPcode;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
@@ -526,12 +526,12 @@ public class InstructionStub implements Instruction {
 	}
 
 	@Override
-	public void patchPcode(PcodeDataLike[] pcodeOps) {
+	public void patchPcode(RawPcode[] pcodeOps) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public PcodeDataLike[] getPatchedPcode() {
+	public RawPcode[] getPatchedPcode() {
 		throw new UnsupportedOperationException();
 	}
 

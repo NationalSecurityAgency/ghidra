@@ -20,8 +20,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import ghidra.program.model.pcode.PcodeData;
-import ghidra.program.model.pcode.PcodeDataLike;
+import ghidra.program.model.pcode.RawPcodeImpl;
+import ghidra.program.model.pcode.RawPcode;
 
 public class PcodeInsertBeforeAction extends AbstractPcodePatchAction {
 
@@ -39,10 +39,10 @@ public class PcodeInsertBeforeAction extends AbstractPcodePatchAction {
     }
 
     @Override
-    public void doPatch(PcodeData patchPcode) {
-        List<PcodeDataLike> pcodes = Stream.of(instruction.getPcode()).collect(Collectors.toList());
+    public void doPatch(RawPcodeImpl patchPcode) {
+        List<RawPcode> pcodes = Stream.of(instruction.getPcode()).collect(Collectors.toList());
         pcodes.add(row, patchPcode);
-        instruction.patchPcode(pcodes.toArray(PcodeDataLike[]::new));
+        instruction.patchPcode(pcodes.toArray(RawPcode[]::new));
     }
     
 }

@@ -33,7 +33,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.lang.InstructionError.InstructionErrorType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
-import ghidra.program.model.pcode.PcodeDataLike;
+import ghidra.program.model.pcode.RawPcode;
 import ghidra.program.model.pcode.PcodeRawFormatter;
 import ghidra.program.model.pcode.PcodeRawParser;
 import ghidra.program.model.symbol.*;
@@ -2745,7 +2745,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 				byte flags = rec.getByteValue(InstDBAdapter.FLAGS_COL);
 				InstructionPrototype proto = protoMgr.getPrototype(protoID);
 				String rawPcodeText = rec.getString(InstDBAdapter.PCODES_COL);
-				PcodeDataLike[] pcodes = PcodeRawParser.parseRawPcode(program.getAddressFactory(), rawPcodeText);
+				RawPcode[] pcodes = PcodeRawParser.parseRawPcode(program.getAddressFactory(), rawPcodeText);
 				inst = new InstructionDB(this, cache, address, addr, proto, flags, pcodes);
 				return inst;
 			}
@@ -3307,7 +3307,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		}
 	}
 
-	void setPcodes(long addr, PcodeDataLike[] pcodes) {
+	void setPcodes(long addr, RawPcode[] pcodes) {
 		try {
 			String pcodesText = PcodeRawFormatter.formatRaw(pcodes);
 			instAdapter.updatePcodes(addr, pcodesText);

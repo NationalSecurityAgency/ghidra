@@ -812,7 +812,7 @@ public class DecompileDebug {
 	 * @param length the length of the instruction, needed by native component
 	 * 				 (i.e, decompiler binary) to resolve the instruction correctly.
 	 */
-	public void addPatch(Address addr, PcodeDataLike[] pcode, int length) {
+	public void addPatch(Address addr, RawPcode[] pcode, int length) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("<patch>\n  ");
 		AddressXML.buildXML(builder, addr, length);

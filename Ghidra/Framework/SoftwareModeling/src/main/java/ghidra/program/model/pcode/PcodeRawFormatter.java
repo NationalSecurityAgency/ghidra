@@ -24,7 +24,7 @@ import ghidra.program.model.address.Address;
  * (space, offset, size) = OP (space, offset, size), ... // ... each (space, offset, size) is a varnode
  */
 public class PcodeRawFormatter {
-    public static String formatRaw(PcodeDataLike[] pcodes) {
+    public static String formatRaw(RawPcode[] pcodes) {
         if (pcodes == null) {
             return null;
         }
@@ -55,7 +55,7 @@ public class PcodeRawFormatter {
         return String.format("(%s, 0x%x, %d)", space, offset, size);
     }
 
-    public static String formatSingleRaw(PcodeDataLike pcode) {
+    public static String formatSingleRaw(RawPcode pcode) {
         if (pcode == null) {
             return null;
         }

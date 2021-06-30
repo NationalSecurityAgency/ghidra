@@ -25,7 +25,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.pcode.PcodeDataLike;
+import ghidra.program.model.pcode.RawPcode;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.PcodeRawParser;
 import ghidra.program.model.scalar.Scalar;
@@ -54,7 +54,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 
 	private ParserContext parserContext;
 
-	private PcodeDataLike[] patchPcode = null;
+	private RawPcode[] patchPcode = null;
 
 	/**
 	 * Construct a new InstructionDB.
@@ -67,7 +67,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	 * @param patchPcode pcode patches to this instruction
 	 */
 	public InstructionDB(CodeManager codeMgr, DBObjectCache<? extends CodeUnitDB> cache,
-			Address address, long addr, InstructionPrototype proto, byte flags, PcodeDataLike[] patchPcode) {
+			Address address, long addr, InstructionPrototype proto, byte flags, RawPcode[] patchPcode) {
 		super(codeMgr, cache, addr, address, addr, proto.getLength());
 		this.proto = proto;
 		this.flags = flags;
@@ -824,14 +824,14 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	}
 
 	@Override
-	public void patchPcode(PcodeDataLike[] pcodeOps) {
+	public void patchPcode(RawPcode[] pcodeOps) {
 		this.patchPcode = pcodeOps;
 		codeMgr.setPcodes(addr, pcodeOps);
 		program.setChanged(ChangeManager.DOCR_CODE_UNIT_PROPERTY_CHANGED, this, this);
 	}
 
 	@Override
-	public PcodeDataLike[] getPatchedPcode() {
+	public RawPcode[] getPatchedPcode() {
 		return patchPcode;
 	}
 
