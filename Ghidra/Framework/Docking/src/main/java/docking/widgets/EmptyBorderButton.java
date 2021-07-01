@@ -15,6 +15,7 @@
  */
 package docking.widgets;
 
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -27,6 +28,8 @@ import javax.swing.event.ChangeListener;
 import ghidra.docking.util.DockingWindowsLookAndFeelUtils;
 import resources.ResourceManager;
 
+import static javax.swing.BorderFactory.createEmptyBorder;
+
 /**
  * Class that is a JButton that has an empty border and adds a mouse listener
  * so that the button looks raised when the mouse pointer enters the button,
@@ -37,22 +40,11 @@ public class EmptyBorderButton extends JButton {
 	private ButtonStateListener emptyBorderButtonChangeListener;
 
 	/**
-	 * A raised beveled border.
-	 */
-	public static final Border RAISED_BUTTON_BORDER = BorderFactory.createCompoundBorder(
-		BorderFactory.createRaisedBevelBorder(), BorderFactory.createEmptyBorder(1, 1, 1, 1));
-
-	/**
 	 * An empty border.
 	 */
-	public static final Border NO_BUTTON_BORDER = new EmptyBorder(
-		RAISED_BUTTON_BORDER.getBorderInsets(new JButton()));
-
-	/**
-	 * A lowered border beveled border.
-	 */
-	public static final Border LOWERED_BUTTON_BORDER = BorderFactory.createCompoundBorder(
-		BorderFactory.createLoweredBevelBorder(), BorderFactory.createEmptyBorder(1, 1, 1, 1));
+	public static final Border NO_BUTTON_BORDER = createEmptyBorder(1, 1, 1, 1);
+	public static final Border RAISED_BUTTON_BORDER = NO_BUTTON_BORDER;
+	public static final Border LOWERED_BUTTON_BORDER = NO_BUTTON_BORDER;
 
 	/**
 	 * Construct a new EmptyBorderButton.
@@ -103,7 +95,8 @@ public class EmptyBorderButton extends JButton {
 	private void init() {
 		ToolTipManager.sharedInstance().registerComponent(this);
 		installLookAndFeelFix();
-		clearBorder();
+		this.setBorder(new EmptyBorder(4, 4, 4, 4));
+		clearBackground();
 		emptyBorderButtonChangeListener = new ButtonStateListener();
 		addChangeListener(emptyBorderButtonChangeListener);
 	}
@@ -115,10 +108,26 @@ public class EmptyBorderButton extends JButton {
 		super.setIcon(newIcon);
 	}
 
+	public void setFocusBackground(){
+		setBackground(new Color(87, 92, 95));
+	}
+
+	public void setPressBackground(){
+		setBackground(new Color(112, 117, 120));
+	}
+
+	public void clearBackground() {
+		setBackground(Color.DARK_GRAY);
+	}
+
+	public void clearBorder() {
+		setBorder(NO_BUTTON_BORDER);
+	}
+
 	private void installLookAndFeelFix() {
 		// We want our custom buttons to paint themselves blended with the background.  Several 
 		// LookAndFeels do not do this (WinXP and Metal), so we override that behavior here.
-		setContentAreaFilled(false);
+		setContentAreaFilled(true);
 		setOpaque(true);
 
 		// Mac OSX LNF doesn't give us rollover callbacks, so we have to add a mouse listener to
@@ -128,24 +137,16 @@ public class EmptyBorderButton extends JButton {
 				@Override
 				public void mouseEntered(MouseEvent e) {
 					if (e.getButton() == MouseEvent.NOBUTTON) {
-						raiseBorder();
+						setFocusBackground();
 					}
 				}
 
 				@Override
 				public void mouseExited(MouseEvent e) {
-					clearBorder();
+					clearBackground();
 				}
 			});
 		}
-	}
-
-	public void raiseBorder() {
-		setBorder(getRaisedBorder());
-	}
-
-	public void clearBorder() {
-		setBorder(NO_BUTTON_BORDER);
 	}
 
 	protected void updateBorderBasedOnState() {
@@ -159,22 +160,14 @@ public class EmptyBorderButton extends JButton {
 		boolean armed = buttonModel.isArmed();
 
 		if (pressed && (rollover || armed)) {
-			setBorder(getLoweredBorder());
+			setPressBackground();
 		}
 		else if (rollover) {
-			setBorder(getRaisedBorder());
+			setFocusBackground();
 		}
 		else {
-			setBorder(NO_BUTTON_BORDER);
+			clearBackground();
 		}
-	}
-
-	protected Border getRaisedBorder() {
-		return RAISED_BUTTON_BORDER;
-	}
-
-	protected Border getLoweredBorder() {
-		return LOWERED_BUTTON_BORDER;
 	}
 
 	public void removeListeners() {

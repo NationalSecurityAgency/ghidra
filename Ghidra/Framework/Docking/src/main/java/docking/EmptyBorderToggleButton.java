@@ -49,7 +49,7 @@ public class EmptyBorderToggleButton extends EmptyBorderButton {
 		// initialization from the action that we have not been designed to handle (we shouldn't 
 		// have to change the way that Java uses actions, but that is for a later refactoring).
 		initFromAction(action);
-		updateBorder(); // synch up the action with the border
+		updateBackground(); // synch up the action with the border
 		init();
 	}
 
@@ -80,12 +80,12 @@ public class EmptyBorderToggleButton extends EmptyBorderButton {
 		removePropertyChangeListener(propertyChangeListener);
 	}
 
-	private void updateBorder() {
+	private void updateBackground() {
 		if (isButtonSelected()) {
-			setBorder(LOWERED_BUTTON_BORDER);
+			setPressBackground();
 		}
 		else {
-			setBorder(NO_BUTTON_BORDER);
+			clearBackground();
 		}
 	}
 
@@ -116,7 +116,7 @@ public class EmptyBorderToggleButton extends EmptyBorderButton {
 			setIcon((Icon) e.getNewValue());
 		}
 		else if (name.equals("CheckBoxState")) {
-			updateBorder();
+			updateBackground();
 		}
 	}
 
@@ -124,21 +124,11 @@ public class EmptyBorderToggleButton extends EmptyBorderButton {
 	// overridden to handle our selected state and the depressed border
 	public void clearBorder() {
 		if (isButtonSelected()) {
-			setBorder(LOWERED_BUTTON_BORDER);
 			return;
 		}
 		super.clearBorder();
 	}
 
-	@Override
-	// overridden to handle our selected state and the depressed border
-	public void raiseBorder() {
-		if (isButtonSelected()) {
-			// do nothing if we are selected
-			return;
-		}
-		super.raiseBorder();
-	}
 
 	@Override
 	public void setIcon(Icon newIcon) {
@@ -155,7 +145,7 @@ public class EmptyBorderToggleButton extends EmptyBorderButton {
 		boolean state = updateStateFromButtonGroup(b);
 
 		super.setSelected(state);
-		updateBorder();
+		updateBackground();
 	}
 
 	private boolean updateStateFromButtonGroup(boolean b) {

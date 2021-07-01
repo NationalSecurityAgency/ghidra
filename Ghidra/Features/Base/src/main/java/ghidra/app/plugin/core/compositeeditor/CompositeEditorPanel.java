@@ -74,7 +74,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	//private static final Color SELECTION_COLOR = Color.YELLOW.brighter().brighter();
 	//protected static final Insets TEXTFIELD_INSETS = new JTextField().getInsets();
 
-	protected static final Border BEVELED_BORDER = BorderFactory.createLoweredBevelBorder();
+	protected static final Border BEVELED_BORDER = BorderFactory.createEtchedBorder();
 
 	protected static final HelpService helpManager = Help.getHelpService();
 

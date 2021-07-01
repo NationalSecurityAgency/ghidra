@@ -266,7 +266,7 @@ public class ScalarSearchProvider extends ComponentProviderAdapter {
 	private class RangeFilterPanel extends JPanel {
 
 		RangeFilterPanel() {
-			Border lowerBorder = BorderFactory.createLoweredBevelBorder();
+			Border lowerBorder = BorderFactory.createEtchedBorder();
 
 			setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 

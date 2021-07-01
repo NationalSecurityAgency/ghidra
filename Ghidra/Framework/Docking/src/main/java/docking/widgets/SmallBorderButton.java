@@ -16,6 +16,7 @@
  */
 package docking.widgets;
 
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -30,26 +31,12 @@ import javax.swing.border.Border;
  */ 
 public class SmallBorderButton extends JButton {
 	
-	/**
-	 * A raised beveled border.
-	 */
-    public static final Border RAISED_BORDER = BorderFactory.createCompoundBorder(
-				BorderFactory.createRaisedBevelBorder(),
-				BorderFactory.createEmptyBorder(1,1,1,1));
+
     /**
      * An empty border.
      */
-//    public static final Border NO_BORDER = new EmptyBorder(RAISED_BORDER.getBorderInsets(new JButton()));
-    public static final Border NO_BORDER = RAISED_BORDER;
-    
-    /**
-     * A lowered border beveled border.
-     */
-    public static final Border LOWERED_BORDER = BorderFactory.createCompoundBorder(
-				BorderFactory.createLoweredBevelBorder(),
-				BorderFactory.createEmptyBorder(1,1,1,1));
+    public static final Border NO_BORDER = BorderFactory.createEmptyBorder(1,1,1,1);
 
-	private Border overrideBorder;
 
 	/**
 	 * Construct a new EmptyBorderButton.
@@ -57,7 +44,7 @@ public class SmallBorderButton extends JButton {
 	 */
 	public SmallBorderButton() {
 		super();
-		initBorder();
+		initBackground();
 	}
 
 	/**
@@ -66,7 +53,7 @@ public class SmallBorderButton extends JButton {
 	 */
 	public SmallBorderButton(String text) {
 		super(text);
-		initBorder();
+		initBackground();
 	}
 
 	/**
@@ -75,7 +62,7 @@ public class SmallBorderButton extends JButton {
 	 */
 	public SmallBorderButton(Action a) {
 		super(a);
-		initBorder();
+		initBackground();
 	}
 
 	/**
@@ -84,7 +71,7 @@ public class SmallBorderButton extends JButton {
 	 */
 	public SmallBorderButton(Icon icon) {
 		super(icon);
-		initBorder();
+		initBackground();
 	}
 
 	/**
@@ -94,11 +81,11 @@ public class SmallBorderButton extends JButton {
 	 */
 	public SmallBorderButton(String text, Icon icon) {
 		super(text, icon);
-		initBorder();
+		initBackground();
 	}
 
-	private void initBorder() {
-		clearBorder();
+	private void initBackground() {
+		clearBackground();
 		addMouseListener(new ButtonMouseListener());
 	}
 
@@ -110,12 +97,16 @@ public class SmallBorderButton extends JButton {
 		setBorder(NO_BORDER);
 	}
 
-	/**
-	 * Override the default border created by this button.
-	 * @param overrideBorder new border to use
-	 */
-	public void setOverrideBorder(Border overrideBorder) {
-	    this.overrideBorder = overrideBorder;
+	public void setFocusBackground(){
+		setBackground(Color.lightGray);
+	}
+
+	public void setPressBackground(){
+		setBackground(Color.GRAY);
+	}
+
+	public void clearBackground() {
+		setBackground(Color.DARK_GRAY);
 	}
 
 	/**
@@ -127,7 +118,7 @@ public class SmallBorderButton extends JButton {
 		@Override
         public void mouseEntered(MouseEvent me)  {
 			if (isEnabled()) {
-				setBorder(RAISED_BORDER);
+				setFocusBackground();
 				inside = true;
 			}
 		}
@@ -136,28 +127,24 @@ public class SmallBorderButton extends JButton {
         public void mouseExited(MouseEvent me)  {
 			inside = false;
 			setBorder(NO_BORDER);
-			if (overrideBorder != null) {
-			    setBorder(overrideBorder);
-			}
+			clearBackground();
 		}
 
 		@Override
         public void mousePressed(MouseEvent e) {
 			if (isEnabled()) {
-				setBorder(LOWERED_BORDER);
+				setPressBackground();
 			}
 		}
 
 		@Override
         public void mouseReleased(MouseEvent e) {
 			if (inside) {
-				setBorder(RAISED_BORDER);
+				setFocusBackground();
 			}
 			else {
 				setBorder(NO_BORDER);
-			}
-			if (overrideBorder != null) {
-			    setBorder(overrideBorder);
+				clearBackground();
 			}
 		}
 	}
