@@ -81,9 +81,6 @@ Release
 *.iml
 .idea
 
-# Ignore vscode
-.vscode
-
 # Ignore gradle wrapper files
 gradle/wrapper
 gradlew

@@ -351,7 +351,7 @@ public class PreviewTable extends AbstractInstructionTable {
 	}
 
 	private EmptyBorderToggleButton createBinaryViewBtn(JToolBar toolbar1) {
-		Icon binaryIcon = ResourceManager.loadImage("images/binaryData.png");
+		Icon binaryIcon = ResourceManager.loadImage("images/binaryData.gif");
 		Action binaryAction = new BinaryAction("binary", (ImageIcon) binaryIcon, "binary view");
 		EmptyBorderToggleButton binaryBtn = new EmptyBorderToggleButton();
 		binaryBtn.setAction(binaryAction);

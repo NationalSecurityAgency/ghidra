@@ -364,37 +364,7 @@ public class ImageUtils {
 		lookupOp.filter(srcImage, destImage);
 		return destImage;
 	}
-	/**
-	 * Creates a disabled and scaled version of the given image.  The disabled version will be grayed
-	 * and have the varying gray levels blended together.
-	 * 
-	 * @param image the image to disable
-	 * @param width the new width
-	 * @param height the new height
-	 * @param hints {@link RenderingHints} used by {@link Graphics2D}
-	 * @param brightnessPercent the amount of brightness to apply; 0-100
-	 * @return the new image
-	 */
-	public static Image createScaleDisablImage(Image image, int width, int height, final int brightnessPercent) {
-		Objects.requireNonNull(image);
-		BufferedImage srcImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-		Graphics graphics = srcImage.getGraphics();
-		graphics.drawImage(image, 0, 0, null);
-		graphics.dispose();
-		BufferedImage destImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-		LookupTable table = new LookupTable(0, 4) {
-			@Override
-			// overridden to pass in the complete pixel data
-			public int[] lookupPixel(int[] src, int[] dest) {
-				return filterRgbDisabledImage(src, dest, brightnessPercent);
-			}
-		};
 
-		LookupOp lookupOp = new LookupOp(table, null);
-		lookupOp.filter(srcImage, destImage);
-		return destImage;
-
-	}
 	/**
 	 * Creates a new image that is the same as the given image but has the given colored 
 	 * pixels replaced with the given new color

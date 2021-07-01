@@ -127,7 +127,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		ComponentProvider.registerProviderNameOwnerChange(OLD_NAME, owner, NAME, owner);
 
 		setConnected(isConnected);
-		setIcon(ResourceManager.loadImage("images/Browser.png"));
+		setIcon(ResourceManager.loadImage("images/Browser.gif"));
 		if (!isConnected) {
 			setTransient();
 		}

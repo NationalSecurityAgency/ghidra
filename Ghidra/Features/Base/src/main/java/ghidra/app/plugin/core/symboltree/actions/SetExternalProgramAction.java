@@ -38,7 +38,7 @@ import docking.action.ToolBarData;
 import resources.ResourceManager;
 
 public class SetExternalProgramAction extends SymbolTreeContextAction {
-	private static ImageIcon EDIT_ICON = ResourceManager.loadImage("images/editbytes.png");
+	private static ImageIcon EDIT_ICON = ResourceManager.loadImage("images/editbytes.gif");
 	private final SymbolTreePlugin plugin;
 	private SymbolTreeProvider provider;
 

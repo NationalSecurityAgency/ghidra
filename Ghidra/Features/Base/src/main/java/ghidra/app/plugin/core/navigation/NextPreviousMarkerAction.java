@@ -51,7 +51,7 @@ public class NextPreviousMarkerAction extends MultiStateDockingAction<String> {
 	private static ImageIcon markerLatestVersionChangesIcon =
 		ResourceManager.loadImage("images/information.png");
 	private static ImageIcon markerNotCheckedInChangesIcon =
-		ResourceManager.loadImage("images/notes.png");
+		ResourceManager.loadImage("images/notes.gif");
 	private static ImageIcon markerUnSavedChangesIcon =
 		ResourceManager.loadImage("images/warning.png");
 	private static ImageIcon markerCursorIcon = ResourceManager.loadImage("images/unknown.gif");

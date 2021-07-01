@@ -75,7 +75,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 	private static final String FILTER_SETTINGS_KEY = "FUNCTION_FILTER_SETTINGS";
 	private static final String BASE_TITLE = "Version Tracking Functions";
 	private static final ImageIcon PROVIDER_ICON =
-		ResourceManager.loadImage("images/functions.png");
+		ResourceManager.loadImage("images/functions.gif");
 	private static final String SOURCE_TITLE = "Source";
 	private static final String DESTINATION_TITLE = "Destination";
 	private static final String NO_SESSION = "None";

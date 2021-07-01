@@ -73,7 +73,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	private final static String MERGE_IMAGE = "images/Merge.png";
 	private final static String DELETE_IMAGE = "images/edit-delete.png";
 	private final static String IMAGE_BASE = "images/house.png";
-	final static String MEMORY_IMAGE = "images/memory16.png";
+	final static String MEMORY_IMAGE = "images/memory16.gif";
 
 	private Program program;
 	private MemoryMapManager memManager;

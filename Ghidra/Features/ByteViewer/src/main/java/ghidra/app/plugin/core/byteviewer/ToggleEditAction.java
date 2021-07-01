@@ -31,7 +31,7 @@ import docking.action.*;
     		super("Enable/Disable Byteviewer Editing", plugin.getName());
 			this.provider = provider;
     		setToolBarData( new ToolBarData( 
-    			ResourceManager.loadImage( "images/editbytes.png" ), "Byteviewer" ) );
+    			ResourceManager.loadImage( "images/editbytes.gif" ), "Byteviewer" ) );
     		setKeyBindingData( new KeyBindingData( 
     			KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK ) );
 
