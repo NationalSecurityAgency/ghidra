@@ -28,16 +28,31 @@ public class ObjectiveC2_Method extends ObjectiveC_Method {
 	private String types;
 	private ObjectiveC2_Implementation imp;
 
-	public ObjectiveC2_Method(ObjectiveC2_State state, BinaryReader reader, ObjectiveC_MethodType methodType) throws IOException {
+	private boolean isSmall;
+
+	public ObjectiveC2_Method(ObjectiveC2_State state, BinaryReader reader, ObjectiveC_MethodType methodType, boolean isSmallList) throws IOException {
 		super(state, reader, methodType);
 
-		long nameIndex = ObjectiveC1_Utilities.readNextIndex(reader, state.is32bit);
-		name  = reader.readAsciiString(nameIndex);
+		isSmall = isSmallList;
 
-		long typesIndex = ObjectiveC1_Utilities.readNextIndex(reader, state.is32bit);
-		types = reader.readAsciiString(typesIndex);
+		if (isSmallList) {
+			int nameOffset = (int)ObjectiveC1_Utilities.readNextIndex(reader, true);
+			name = reader.readAsciiString(_index + nameOffset);
 
-		imp   = new ObjectiveC2_Implementation(state, reader);
+			int typesOffset = (int)ObjectiveC1_Utilities.readNextIndex(reader, true);
+			types = reader.readAsciiString(_index + 4 + typesOffset);
+
+			imp = new ObjectiveC2_Implementation(state, reader, true);
+		}
+		else {
+			long nameIndex = ObjectiveC1_Utilities.readNextIndex(reader, state.is32bit);
+			name  = reader.readAsciiString(nameIndex);
+
+			long typesIndex = ObjectiveC1_Utilities.readNextIndex(reader, state.is32bit);
+			types = reader.readAsciiString(typesIndex);
+
+			imp   = new ObjectiveC2_Implementation(state, reader);
+		}
 	}
 
 	@Override
@@ -54,12 +69,22 @@ public class ObjectiveC2_Method extends ObjectiveC_Method {
 	}
 
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure struct = new StructureDataType("method_t", 0);
-		struct.add(new PointerDataType(STRING), _state.pointerSize, "name",  null);
-		struct.add(new PointerDataType(STRING), _state.pointerSize, "types", null);
-		struct.add(new PointerDataType(VOID),   _state.pointerSize, "imp",   null);
-		struct.setCategoryPath(ObjectiveC2_Constants.CATEGORY_PATH);
-		return struct;
+		if (isSmall) {
+			Structure struct = new StructureDataType("method_t_small", 0);
+			struct.add(new SignedDWordDataType(), 4, "name", null);
+			struct.add(new SignedDWordDataType(), 4, "types", null);
+			struct.add(new SignedDWordDataType(), 4, "imp", null);
+			struct.setCategoryPath(ObjectiveC2_Constants.CATEGORY_PATH);
+			return struct;
+		}
+		else {
+			Structure struct = new StructureDataType("method_t", 0);
+			struct.add(new PointerDataType(STRING), _state.pointerSize, "name",  null);
+			struct.add(new PointerDataType(STRING), _state.pointerSize, "types", null);
+			struct.add(new PointerDataType(VOID),   _state.pointerSize, "imp",   null);
+			struct.setCategoryPath(ObjectiveC2_Constants.CATEGORY_PATH);
+			return struct;
+		}
 	}
 
 }
