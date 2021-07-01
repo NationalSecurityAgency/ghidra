@@ -41,7 +41,8 @@ public class ToolTaskManager implements Runnable {
 	private Map<UndoableDomainObject, PriorityQueue<BackgroundCommand>> queuedCommandsMap =
 		new HashMap<>();
 	private Map<UndoableDomainObject, Integer> openForgroundTransactionIDs = new HashMap<>();
-	private long start_time = 0;
+	private long startQueueTime = 0;
+	private long startTaskTime = 0;
 	private Thread taskThread;
 	private ThreadGroup taskThreadGroup;
 	private ToolTaskMonitor toolTaskMonitor;
@@ -185,7 +186,7 @@ public class ToolTaskManager implements Runnable {
 
 		BackgroundCommandTask task = new BackgroundCommandTask(this, obj, cmd);
 		tasks.addLast(task);
-		start_time = System.currentTimeMillis();
+
 		if (taskThread != null && taskThread.isAlive()) {
 			return;
 		}
@@ -297,9 +298,12 @@ public class ToolTaskManager implements Runnable {
 	@Override
 	public void run() {
 		try {
+			Msg.debug(this, (new Date()) + " Background processing started...");
+			startQueueTime = System.currentTimeMillis();
 			for (BackgroundCommandTask task = getNextTask(); task != null; task = getNextTask()) {
 
-				Msg.debug(this, "Exec Task " + task.getTaskTitle());
+				Msg.debug(this, (new Date()) + " Exec Task " + task.getTaskTitle());
+				startTaskTime = System.currentTimeMillis();
 
 				synchronized (this) {
 					currentTask = task;
@@ -315,6 +319,10 @@ public class ToolTaskManager implements Runnable {
 					task.run(toolTaskMonitor);
 				}
 			}
+
+			double totalTime = (System.currentTimeMillis() - startQueueTime) / 1000.00;
+			Msg.debug(this,
+				(new Date()) + " Background processing complete (" + totalTime + " secs)");
 		}
 		finally {
 			synchronized (this) {
@@ -353,8 +361,9 @@ public class ToolTaskManager implements Runnable {
 	 */
 	public void taskCompleted(UndoableDomainObject obj, BackgroundCommandTask task,
 			TaskMonitor monitor) {
-		double taskTime = (System.currentTimeMillis() - start_time) / 1000.00;
-		Msg.debug(this, "  task finish (" + taskTime + " secs)");
+		double taskTime = (System.currentTimeMillis() - startTaskTime) / 1000.00;
+		Msg.debug(this,
+			(new Date()) + " " + task.getTaskTitle() + " task finish (" + taskTime + " secs)");
 		obj.flushEvents();
 		try {
 			while (!monitor.isCancelled()) {
@@ -367,13 +376,13 @@ public class ToolTaskManager implements Runnable {
 						break;
 					}
 				}
-				Msg.debug(this, "    Queue - " + cmd.getName());
+				Msg.debug(this, (new Date()) + "  Queue - " + cmd.getName());
 				toolTaskMonitor.updateTaskCmd(cmd);
 				long localStart = System.currentTimeMillis();
 				cmd.applyTo(obj, monitor);
 				cmd.taskCompleted();
 				double totalTime = (System.currentTimeMillis() - localStart) / 1000.00;
-				Msg.debug(this, "   (" + totalTime + " secs)");
+				Msg.debug(this, (new Date()) + "  (" + totalTime + " secs)");
 				obj.flushEvents();
 			}
 		}
@@ -403,8 +412,9 @@ public class ToolTaskManager implements Runnable {
 			}
 		}
 		task.getCommand().taskCompleted();
-		double totalTime = (System.currentTimeMillis() - start_time) / 1000.00;
-		Msg.debug(this, "  task complete (" + totalTime + " secs)");
+		double totalTime = (System.currentTimeMillis() - startTaskTime) / 1000.00;
+		Msg.debug(this,
+			(new Date()) + " " + task.getTaskTitle() + " task complete (" + totalTime + " secs)");
 	}
 
 	/**
