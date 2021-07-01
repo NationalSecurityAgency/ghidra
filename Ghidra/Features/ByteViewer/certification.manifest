@@ -21,9 +21,9 @@ src/main/help/help/topics/ByteViewerPlugin/images/ByteViewerExample.png||GHIDRA|
 src/main/help/help/topics/ByteViewerPlugin/images/ByteViewerOptionsDialog.png||GHIDRA||||END|
 src/main/help/help/topics/ByteViewerPlugin/images/ByteViewerResults.png||GHIDRA||||END|
 src/main/help/help/topics/ByteViewerPlugin/images/addressMark.png||GHIDRA||reviewed||END|
-src/main/help/help/topics/ByteViewerPlugin/images/binaryData.png||GHIDRA||reviewed||END|
+src/main/help/help/topics/ByteViewerPlugin/images/binaryData.gif||GHIDRA||reviewed||END|
 src/main/help/help/topics/ByteViewerPlugin/images/box.gif||GHIDRA||reviewed||END|
-src/main/help/help/topics/ByteViewerPlugin/images/editbytes.png||GHIDRA||reviewed||END|
+src/main/help/help/topics/ByteViewerPlugin/images/editbytes.gif||GHIDRA||reviewed||END|
 src/main/help/help/topics/ByteViewerPlugin/images/wrench.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/binaryData.png||GHIDRA||reviewed||END|
+src/main/resources/images/binaryData.gif||GHIDRA||reviewed||END|
 src/main/resources/images/wrench.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|

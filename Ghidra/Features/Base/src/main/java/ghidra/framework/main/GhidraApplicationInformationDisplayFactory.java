@@ -33,14 +33,14 @@ public class GhidraApplicationInformationDisplayFactory
 	@Override
 	protected List<Image> doGetWindowIcons() {
 		List<Image> list = new ArrayList<>();
-		list.add(ResourceManager.loadOriginalSizeImage("images/GhidraIcon16.png").getImage());
-		list.add(ResourceManager.loadOriginalSizeImage("images/GhidraIcon24.png").getImage());
-		list.add(ResourceManager.loadOriginalSizeImage("images/GhidraIcon32.png").getImage());
-		list.add(ResourceManager.loadOriginalSizeImage("images/GhidraIcon40.png").getImage());
-		list.add(ResourceManager.loadOriginalSizeImage("images/GhidraIcon48.png").getImage());
-		list.add(ResourceManager.loadOriginalSizeImage("images/GhidraIcon64.png").getImage());
-		list.add(ResourceManager.loadOriginalSizeImage("images/GhidraIcon128.png").getImage());
-		list.add(ResourceManager.loadOriginalSizeImage("images/GhidraIcon256.png").getImage());
+		list.add(ResourceManager.loadImage("images/GhidraIcon16.png").getImage());
+		list.add(ResourceManager.loadImage("images/GhidraIcon24.png").getImage());
+		list.add(ResourceManager.loadImage("images/GhidraIcon32.png").getImage());
+		list.add(ResourceManager.loadImage("images/GhidraIcon40.png").getImage());
+		list.add(ResourceManager.loadImage("images/GhidraIcon48.png").getImage());
+		list.add(ResourceManager.loadImage("images/GhidraIcon64.png").getImage());
+		list.add(ResourceManager.loadImage("images/GhidraIcon128.png").getImage());
+		list.add(ResourceManager.loadImage("images/GhidraIcon256.png").getImage());
 		return list;
 	}
 

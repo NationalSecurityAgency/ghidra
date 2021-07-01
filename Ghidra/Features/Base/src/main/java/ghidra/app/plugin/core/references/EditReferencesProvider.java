@@ -63,7 +63,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 		new HelpLocation("ReferencesPlugin", "View_Edit_References_From");
 
 	private static Icon ADD_ICON = ResourceManager.loadImage("images/Plus.png");
-	private static Icon EDIT_ICON = ResourceManager.loadImage("images/editbytes.png");
+	private static Icon EDIT_ICON = ResourceManager.loadImage("images/editbytes.gif");
 	private static Icon DELETE_ICON = ResourceManager.loadImage("images/edit-delete.png");
 	private static Icon RECV_LOCATION_ICON = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
 	//private static Icon RECV_LOCATION_OFF_ICON = ResourceManager.loadImage("images/locationInOff.gif");

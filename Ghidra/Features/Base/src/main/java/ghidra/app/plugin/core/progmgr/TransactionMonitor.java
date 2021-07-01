@@ -40,7 +40,7 @@ class TransactionMonitor extends JComponent implements TransactionListener {
 
 	TransactionMonitor() {
 		super();
-		busyIcon = ResourceManager.loadImage("images/editbytes.png");
+		busyIcon = ResourceManager.loadImage("images/editbytes.gif");
 		prefSize = new Dimension(busyIcon.getIconWidth(), busyIcon.getIconHeight());
 		ToolTipManager.sharedInstance().registerComponent(this);
 	}

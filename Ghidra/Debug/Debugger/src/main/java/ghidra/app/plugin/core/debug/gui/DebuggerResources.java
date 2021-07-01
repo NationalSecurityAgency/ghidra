@@ -103,7 +103,7 @@ public interface DebuggerResources {
 		ResourceManager.loadImage("images/breakpoints-make-effective.png");
 
 	// TODO: Some overlay to indicate dynamic, or new icon altogether
-	ImageIcon ICON_LISTING = ResourceManager.loadImage("images/Browser.png");
+	ImageIcon ICON_LISTING = ResourceManager.loadImage("images/Browser.gif");
 	ImageIcon ICON_CONSOLE = ResourceManager.loadImage("images/console.png");
 	ImageIcon ICON_REGISTERS = ResourceManager.loadImage("images/registers.png");
 	ImageIcon ICON_STACK = ResourceManager.loadImage("images/stack.png");
@@ -112,7 +112,7 @@ public interface DebuggerResources {
 	ImageIcon ICON_MAPPINGS = ICON_PROGRAM; // TODO: A better icon 
 	ImageIcon ICON_PCODE = ResourceManager.loadImage("images/stepinto.png"); // TODO
 	//ResourceManager.loadImage("images/mappings.png");
-	ImageIcon ICON_REGIONS = ResourceManager.loadImage("images/memory16.png");
+	ImageIcon ICON_REGIONS = ResourceManager.loadImage("images/memory16.gif");
 	ImageIcon ICON_TIME = ResourceManager.loadImage("images/time.png");
 	// TODO: Draw a real icon. object-populated duplicates breakpoint-enabled
 	ImageIcon ICON_OBJECTS = ResourceManager.loadImage("images/object-populated.png");
@@ -879,7 +879,7 @@ public interface DebuggerResources {
 		String NAME = "Enable Edits";
 		String DESCRIPTION = "Enable editing of recorded register values";
 		String GROUP = "yyyy";
-		Icon ICON = ResourceManager.loadImage("images/editbytes.png");
+		Icon ICON = ResourceManager.loadImage("images/editbytes.gif");
 		String HELP_ANCHOR = "enable_edits";
 
 		static ToggleActionBuilder builder(Plugin owner) {

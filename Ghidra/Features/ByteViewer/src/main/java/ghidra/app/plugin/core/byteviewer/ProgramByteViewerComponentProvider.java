@@ -73,7 +73,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		super(tool, plugin, "Bytes", ByteViewerActionContext.class);
 
 		this.isConnected = isConnected;
-		setIcon(ResourceManager.loadImage("images/binaryData.png"));
+		setIcon(ResourceManager.loadImage("images/binaryData.gif"));
 		if (!isConnected) {
 			setTransient();
 		}
