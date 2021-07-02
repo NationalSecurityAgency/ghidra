@@ -16,6 +16,7 @@
 package ghidra.app.util.bin;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -25,7 +26,9 @@ import ghidra.formats.gfilesystem.FSRL;
  * A {@link ByteProvider} that is a concatenation of sub-ranges of another ByteProvider, also
  * allowing for non-initialized (sparse) regions.
  * <p> 
- * Not thread-safe when extents are being added. 
+ * Not thread-safe when extents are being added.
+ * <p>
+ * Does not assume ownership of wrapped ByteProvider.
  */
 public class ExtentsByteProvider implements ByteProvider {
 
@@ -45,7 +48,7 @@ public class ExtentsByteProvider implements ByteProvider {
 	 * Creates a new {@link ExtentsByteProvider}.
 	 * 
 	 * @param provider {@link ByteProvider} to wrap
-	 * @param fsrl {@link FSRL} of the byte provider
+	 * @param fsrl {@link FSRL} of this new byte provider
 	 */
 	public ExtentsByteProvider(ByteProvider provider, FSRL fsrl) {
 		this.delegate = provider;
@@ -82,7 +85,7 @@ public class ExtentsByteProvider implements ByteProvider {
 
 	@Override
 	public String getName() {
-		return null;
+		return fsrl != null ? fsrl.getName() : null;
 	}
 
 	@Override
@@ -92,7 +95,7 @@ public class ExtentsByteProvider implements ByteProvider {
 
 	@Override
 	public String getAbsolutePath() {
-		return null;
+		return fsrl != null ? fsrl.getPath() : null;
 	}
 
 	@Override
@@ -107,7 +110,7 @@ public class ExtentsByteProvider implements ByteProvider {
 
 	@Override
 	public void close() throws IOException {
-		delegate.close();
+		// do not close wrapped delegate ByteProvider
 	}
 
 	@Override
@@ -133,31 +136,60 @@ public class ExtentsByteProvider implements ByteProvider {
 
 		int count = (int) longCount;
 		byte[] result = new byte[count];
-		int bytesRead = 0;
-		while (bytesRead < count) {
-			long offsetToRead = index + bytesRead;
-			Entry<Long, Long> entry = offsetMap.floorEntry(offsetToRead);
-			Entry<Long, Long> nextEntry = offsetMap.higherEntry(entry.getKey());
-
-			long extentStart = entry.getKey();
-			long extentOffset = offsetToRead - extentStart;
-			long extentEnd = (nextEntry != null) ? nextEntry.getKey() : length;
-			long delegateExtentStart = entry.getValue();
-			int bytesToRead =
-				(int) Math.min(count - bytesRead, extentEnd - extentStart - extentOffset);
-			if (delegateExtentStart != -1) {
-				long delegateOffsetToRead = delegateExtentStart + extentOffset;
-				byte[] extentBytes = delegate.readBytes(delegateOffsetToRead, bytesToRead);
-				System.arraycopy(extentBytes, 0, result, bytesRead, bytesToRead);
-			}
-			else {
-				// the extent was not present, result will be 0's
-			}
-			bytesRead += bytesToRead;
+		int bytesRead = readBytes(index, result, 0, count);
+		if (bytesRead != count) {
+			throw new IOException("Unable to read " + count + " bytes at " + index);
 		}
 		return result;
 	}
 
+	/**
+	 * Read bytes at the specified index into the given byte array.
+	 * <p>
+	 * See {@link InputStream#read(byte[], int, int)}.
+	 * <p>
+	 * 
+	 * @param index file offset to start reading
+	 * @param buffer byte array that will receive the bytes
+	 * @param offset offset inside the byte array to place the bytes
+	 * @param len number of bytes to read
+	 * @return number of actual bytes read
+	 * @throws IOException if error
+	 */
+	public int readBytes(long index, byte[] buffer, int offset, int len) throws IOException {
+		ensureBounds(index, 0);
+		len = (int) Math.min(length - index, len);
+		int totalBytesRead = 0;
+		int bufferDest = offset;
+		long currentIndex = index;
+		while (totalBytesRead < len) {
+			Entry<Long, Long> entry = offsetMap.floorEntry(currentIndex);
+			Entry<Long, Long> nextEntry = offsetMap.higherEntry(entry.getKey());
+
+			long extentStart = entry.getKey();
+			long extentOffset = currentIndex - extentStart;
+			long extentEnd = (nextEntry != null) ? nextEntry.getKey() : length;
+			long delegateExtentStart = entry.getValue();
+			int bytesToRead =
+				(int) Math.min(len - totalBytesRead, extentEnd - extentStart - extentOffset);
+			if (delegateExtentStart != -1) {
+				long delegateOffsetToRead = delegateExtentStart + extentOffset;
+				// TODO: when ByteProvider interface has better readBytes() method, use it here
+				byte[] extentBytes = delegate.readBytes(delegateOffsetToRead, bytesToRead);
+				System.arraycopy(extentBytes, 0, buffer, bufferDest, bytesToRead);
+			}
+			else {
+				// the extent was not present, result will be 0's
+				Arrays.fill(buffer, bufferDest, bufferDest + bytesToRead,
+					(byte) 0 /* fill value */);
+			}
+			totalBytesRead += bytesToRead;
+			bufferDest += bytesToRead;
+			currentIndex += bytesToRead;
+		}
+		return totalBytesRead;
+	}
+	
 	@Override
 	public InputStream getInputStream(long index) throws IOException {
 		return new ByteProviderInputStream(this, 0, length);

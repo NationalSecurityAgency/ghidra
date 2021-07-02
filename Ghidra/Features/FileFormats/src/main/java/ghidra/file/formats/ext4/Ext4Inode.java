@@ -17,45 +17,59 @@ package ghidra.file.formats.ext4;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 public class Ext4Inode implements StructConverter {
-	
-	private short i_mode;
-	private short i_uid;
-	private int i_size_lo;
-	private int i_atime;
-	private int i_ctime;
-	private int i_mtime;
-	private int i_dtime;
-	private short i_gid;
-	private short i_links_count;
-	private int i_blocks_lo;
-	private int i_flags;
-	private int i_osd1;
-	private Ext4IBlock i_block; //15 ints long
-	private int i_generation;
-	private int i_file_acl_lo;
-	private int i_size_high;
-	private int i_obso_faddr;
-	private byte[] i_osd2; //12 bytes long
-	private short i_extra_isize;
-	private short i_checksum_hi;
-	private int i_ctime_extra;
-	private int i_mtime_extra;
-	private int i_atime_extra;
-	private int i_crtime;
-	private int i_crtime_extra;
-	private int i_version_hi;
-	private int i_projid;
-	
-	public Ext4Inode( ByteProvider provider ) throws IOException {
-		this( new BinaryReader( provider, true ) );
+	private static final int INODE_BASE_SIZE = 128;	// by definition
+	private static final int MINIMAL_SIZEOF_INODE = 0xa0; // sizeof the fields we try to read
+
+	//@formatter:off
+	//                                     Offset (hex) Length  Comment
+	private short i_mode;               // 0            2       see Ext4Constants.S_IXOTH...S_IFSOCK
+	private short i_uid;                // 2            2
+	private int i_size_lo;              // 4            4
+	private int i_atime;                // 8            4
+	private int i_ctime;                // C            4
+	private int i_mtime;                // 10           4
+	private int i_dtime;                // 14           4
+	private short i_gid;                // 18           2
+	private short i_links_count;        // 1A           2
+	private int i_blocks_lo;            // 1C           4
+	private int i_flags;                // 20           4        see Ext4Constants.EXT4_SECRM_FL...EXT4_RESERVED_FL
+	private int i_osd1;                 // 24           4
+	private Ext4IBlock i_block;         // 28           60
+	private int i_generation;           // 64           4
+	private int i_file_acl_lo;          // 68           4
+	private int i_size_high;            // 6C           4
+	private int i_obso_faddr;           // 70           4
+	private byte[] i_osd2;              // 74           12       last of the base fields, everything after is counted in i_extra_isize
+	private short i_extra_isize;        // 80           2        number of bytes to the end of the defined fields
+	private short i_checksum_hi;        // 82           2
+	private int i_ctime_extra;          // 84           4
+	private int i_mtime_extra;          // 88           4
+	private int i_atime_extra;          // 8C           4
+	private int i_crtime;               // 90           4
+	private int i_crtime_extra;         // 94           4
+	private int i_version_hi;           // 98           4
+	private int i_projid;               // 9C           4
+	//unknown_fields                    // A0           i_extra_isize-32           
+	//extended_attributes               // 80+i_extra_size, inodeSize-0x80-i_extra_isize
+	//@formatter:on
+
+	private Ext4Xattributes xAttributes;
+
+	public Ext4Inode(BinaryReader reader) throws IOException {
+		this(reader, MINIMAL_SIZEOF_INODE);
 	}
 	
-	public Ext4Inode( BinaryReader reader ) throws IOException {
+	public Ext4Inode(BinaryReader reader, int inodeSize) throws IOException {
+		if (inodeSize < MINIMAL_SIZEOF_INODE) {
+			throw new IOException("Bad inodeSize: " + inodeSize);
+		}
+		long inodeStart = reader.getPointerIndex();
 		i_mode = reader.readNextShort();
 		i_uid = reader.readNextShort();
 		i_size_lo = reader.readNextInt();
@@ -68,7 +82,7 @@ public class Ext4Inode implements StructConverter {
 		i_blocks_lo = reader.readNextInt();
 		i_flags = reader.readNextInt();
 		i_osd1 = reader.readNextInt();
-		i_block = new Ext4IBlock(reader, (i_flags & 0x80000) != 0 );
+		i_block = new Ext4IBlock(reader, isFlagExtents());
 		i_generation = reader.readNextInt();
 		i_file_acl_lo = reader.readNextInt();
 		i_size_high = reader.readNextInt();
@@ -83,6 +97,12 @@ public class Ext4Inode implements StructConverter {
 		i_crtime_extra = reader.readNextInt();
 		i_version_hi = reader.readNextInt();
 		i_projid = reader.readNextInt();
+
+		// skipping unknown fields here
+
+		// read EAs if present
+		reader.setPointerIndex(inodeStart + INODE_BASE_SIZE + i_extra_isize);
+		xAttributes = Ext4Xattributes.readInodeXAttributes(reader, inodeStart + inodeSize);
 	}
 
 	
@@ -201,6 +221,77 @@ public class Ext4Inode implements StructConverter {
 	 */
 	public long getSize() {
 		return Integer.toUnsignedLong(i_size_high) << 32 | Integer.toUnsignedLong(i_size_lo);
+	}
+
+	/**
+	 * Returns true if the inode appears to be unused.
+	 *  
+	 * @return boolean true if the inode appears to be unused
+	 */
+	public boolean isUnused() {
+		return i_links_count == 0;
+	}
+
+	public boolean isSymLink() {
+		return (i_mode & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFLNK;
+	}
+
+	public boolean isFile() {
+		return (i_mode & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFREG;
+	}
+
+	public boolean isDir() {
+		return (i_mode & Ext4Constants.I_MODE_MASK) == Ext4Constants.S_IFDIR;
+	}
+
+	public int getFileType() {
+		return i_mode & Ext4Constants.I_MODE_MASK;
+	}
+
+	public boolean isFlagExtents() {
+		return (i_flags & Ext4Constants.EXT4_EXTENTS_FL) != 0;
+	}
+
+	public boolean isFlagInlineData() {
+		return (i_flags & Ext4Constants.EXT4_INLINE_DATA_FL) != 0;
+	}
+
+	/**
+	 * Returns the bytes in this inode's iblock.extra and the system.data
+	 * extended attribute.
+	 * 
+	 * @return bytes of this file that were stored inline in the inode
+	 * @throws IOException if not able to assemble enough bytes to match
+	 * the file size
+	 */
+	public byte[] getInlineDataValue() throws IOException {
+		int bytesRemaining = (int) getSize();
+		byte[] result = new byte[bytesRemaining];
+		byte[] iblockExtra = i_block.getExtra();
+		byte[] eaSystemData = getEAValue("system.data");
+		if (eaSystemData == null) {
+			eaSystemData = new byte[0];
+		}
+		int bytesCopied = 0;
+		int copyLen = Math.min(bytesRemaining, iblockExtra.length);
+		System.arraycopy(i_block.getExtra(), 0, result, 0, copyLen);
+		bytesCopied += copyLen;
+		bytesRemaining -= copyLen;
+		if (bytesRemaining > 0) {
+			copyLen = Math.min(bytesRemaining, eaSystemData.length);
+			System.arraycopy(eaSystemData, 0, result, bytesCopied, copyLen);
+			bytesCopied += copyLen;
+			bytesRemaining -= copyLen;
+		}
+		if (bytesRemaining != 0) {
+			throw new IOException("Unable to read inline data");
+		}
+		return result;
+	}
+
+	byte[] getEAValue(String name) {
+		Ext4XattrEntry attr = (xAttributes != null) ? xAttributes.getAttribute(name) : null;
+		return attr != null ? attr.getValue() : null;
 	}
 
 	@Override

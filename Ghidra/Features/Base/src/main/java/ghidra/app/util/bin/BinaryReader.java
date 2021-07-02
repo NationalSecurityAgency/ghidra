@@ -43,13 +43,12 @@ public class BinaryReader {
 	 */
 	public final static int SIZEOF_LONG = 8;
 
-	private ByteProvider provider;
+	private final ByteProvider provider;
 	private DataConverter converter;
 	private long currentIndex;
 
 	/**
-	 * Constructs a reader using the given
-	 * file and endian-order.
+	 * Constructs a reader using the given ByteProvider and endian-order.
 	 *
 	 * If isLittleEndian is true, then all values read
 	 * from the file will be done so assuming
@@ -63,10 +62,22 @@ public class BinaryReader {
 	 * @param isLittleEndian the endian-order
 	 */
 	public BinaryReader(ByteProvider provider, boolean isLittleEndian) {
-		this.provider = provider;
-		setLittleEndian(isLittleEndian);
+		this(provider, DataConverter.getInstance(!isLittleEndian), 0);
 	}
 	
+	/**
+	 * Creates a BinaryReader instance.
+	 * 
+	 * @param provider the ByteProvider to use
+	 * @param converter the {@link DataConverter} to use
+	 * @param initialIndex the initial offset
+	 */
+	public BinaryReader(ByteProvider provider, DataConverter converter, long initialIndex) {
+		this.provider = provider;
+		this.converter = converter;
+		this.currentIndex = initialIndex;
+	}
+
 	/**
 	 * Returns a clone of this reader, with its own independent current position,
 	 * positioned at the new index.
@@ -75,9 +86,7 @@ public class BinaryReader {
 	 * @return an independent clone of this reader positioned at the new index
 	 */
 	public BinaryReader clone(long newIndex) {
-		BinaryReader clone = new BinaryReader(provider, isLittleEndian());
-		clone.currentIndex = newIndex;
-		return clone;
+		return new BinaryReader(provider, converter, newIndex);
 	}
 
 	/**
@@ -93,31 +102,19 @@ public class BinaryReader {
 	/**
 	 * Returns a BinaryReader that is in BigEndian mode.
 	 * 
-	 * @return either this same instance (if already BigEndian), or a new instance
-	 * (at the same location) in BigEndian mode
+	 * @return a new independent BinaryReader, at the same position, in BigEndian mode
 	 */
 	public BinaryReader asBigEndian() {
-		if (isBigEndian()) {
-			return this;
-		}
-		BinaryReader result = clone(currentIndex);
-		result.setLittleEndian(false);
-		return result;
+		return new BinaryReader(provider, BigEndianDataConverter.INSTANCE, currentIndex);
 	}
 
 	/**
 	 * Returns a BinaryReader that is in LittleEndian mode.
 	 * 
-	 * @return either this same instance (if already LittleEndian), or a new instance
-	 * (at the same location) in LittleEndian mode
+	 * @return a new independent instance, at the same position, in LittleEndian mode
 	 */
 	public BinaryReader asLittleEndian() {
-		if (!isBigEndian()) {
-			return this;
-		}
-		BinaryReader result = clone(currentIndex);
-		result.setLittleEndian(true);
-		return result;
+		return new BinaryReader(provider, LittleEndianDataConverter.INSTANCE, currentIndex);
 	}
 
 	/**
@@ -196,11 +193,12 @@ public class BinaryReader {
 	////////////////////////////////////////////////////////////////////
 
 	/**
-	 * A convenience method for setting the index using
-	 * an integer.
+	 * A convenience method for setting the index using a 32 bit integer.
+	 * 
+	 * @param index new index, treated as a 32 bit unsigned integer 
 	 */
 	public void setPointerIndex(int index) {
-		this.currentIndex = index & Conv.INT_MASK;
+		this.currentIndex = Integer.toUnsignedLong(index);
 	}
 
 	/**

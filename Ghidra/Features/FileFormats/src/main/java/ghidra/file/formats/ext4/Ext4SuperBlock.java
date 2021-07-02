@@ -598,6 +598,22 @@ public class Ext4SuperBlock implements StructConverter {
 		return s_checksum;
 	}
 	
+	public boolean isValid() {
+		return Short.toUnsignedInt(s_magic) == Ext4Constants.SUPER_BLOCK_MAGIC;
+	}
+
+	public boolean is64Bit() {
+		return (s_desc_size > 32) && ((s_feature_incompat & Ext4Constants.INCOMPAT_64BIT) != 0);
+	}
+
+	public boolean isInlineData() {
+		return (s_feature_incompat & Ext4Constants.INCOMPAT_INLINE_DATA) != 0;
+	}
+
+	public boolean isDirEntry2() {
+		return (s_feature_incompat & Ext4Constants.INCOMPAT_FILETYPE) != 0;
+	}
+
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure structure = new StructureDataType("ext4_super_block", 0);

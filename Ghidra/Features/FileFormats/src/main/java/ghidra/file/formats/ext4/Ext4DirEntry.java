@@ -15,41 +15,52 @@
  */
 package ghidra.file.formats.ext4;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
-import java.io.IOException;
-
 public class Ext4DirEntry implements StructConverter {
+	protected static final int SIZEOF_FIXEDFIELDS = 8;
 	
-	private int inode;
-	private short rec_len;
-	private short name_len;
-	private String name;
-	private byte[] extra;
+	protected int inode;
+	protected short rec_len;
+	protected short name_len;
+	protected String name;
+	protected byte[] extra;
 
-	public Ext4DirEntry( ByteProvider provider ) throws IOException {
-		this( new BinaryReader( provider, true) );
-	}
-	
-	public Ext4DirEntry( BinaryReader reader ) throws IOException {
-		inode = reader.readNextInt();
-		rec_len = reader.readNextShort();
-		name_len = reader.readNextShort();
-		name = reader.readNextAsciiString(name_len);
-		
-		int extraSize = rec_len - (8 + name_len);
-		if( extraSize > 0 ) {
-			extra = reader.readNextByteArray(extraSize);
+	/**
+	 * Reads a Ext4DirEntry from the stream.
+	 * 
+	 * @param reader BinaryReader to read from
+	 * @return new Ext4DirEntry, or null if eof
+	 * @throws IOException if error when reading
+	 */
+	public static Ext4DirEntry read(BinaryReader reader) throws IOException {
+		if (reader.getPointerIndex() + SIZEOF_FIXEDFIELDS >= reader.length()) {
+			return null;
 		}
+		Ext4DirEntry result = new Ext4DirEntry();
+		result.inode = reader.readNextInt();
+		result.rec_len = reader.readNextShort();
+		result.name_len = reader.readNextShort();
+		result.name = new String(reader.readNextByteArray(result.name_len), StandardCharsets.UTF_8);
+		
+		int extraSize =
+			Short.toUnsignedInt(result.rec_len) - (SIZEOF_FIXEDFIELDS + result.name_len);
+		if( extraSize > 0 ) {
+			result.extra = reader.readNextByteArray(extraSize);
+		}
+		return result;
 	}
 	
+	protected Ext4DirEntry() {
+		// empty
+	}
+
 	public int getInode() {
 		return inode;
 	}
@@ -68,6 +79,10 @@ public class Ext4DirEntry implements StructConverter {
 	
 	public byte[] getExtra() {
 		return extra;
+	}
+
+	public boolean isUnused() {
+		return inode == Ext4Constants.EXT4_INODE_INDEX_NULL;
 	}
 
 	@Override

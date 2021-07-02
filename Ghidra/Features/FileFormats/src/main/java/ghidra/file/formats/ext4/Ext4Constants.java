@@ -17,7 +17,8 @@ package ghidra.file.formats.ext4;
 
 public final class Ext4Constants {
 	
-	public final static int SUPER_BLOCK_MAGIC = 0xEF53;
+	public final static int SUPER_BLOCK_START = 0x400;
+	public final static int SUPER_BLOCK_MAGIC = 0xEF53;	// LE
 	
 	//Super Block Compatible Feature Flags
 	public final static int COMPAT_DIR_PREALLOC = 0x1;
@@ -152,4 +153,37 @@ public final class Ext4Constants {
 	public final static byte EXT4_FT_MAX       = 8;
 
 	public final static byte EXT4_FT_DIR_CSUM  = (byte) 0xDE;
+
+	// ---------------------------------------------------------
+	// index of special inodes that are statically assigned by convention
+
+	public final static int EXT4_INODE_INDEX_NULL = 0;
+	public final static int EXT4_INODE_INDEX_BADBLOCKS = 1; // this file holds info about bad blocks
+	public final static int EXT4_INODE_INDEX_ROOTDIR = 2; // the root directory
+	public final static int EXT4_INODE_INDEX_USERQUOTA = 3;
+	public final static int EXT4_INODE_INDEX_GROUPQUOTA = 4;
+	public final static int EXT4_INODE_INDEX_BOOTLOADER = 5;
+	public final static int EXT4_INODE_INDEX_UNDELETEDIR = 6;
+	public final static int EXT4_INODE_INDEX_RESERVED_GROUPDESCRIPTORS = 7;
+	public final static int EXT4_INODE_INDEX_JOURNALINODE = 8;
+	public final static int EXT4_INODE_INDEX_EXCLUDEINODE = 9;
+	public final static int EXT4_INODE_INDEX_REPLICAINODE = 10;
+	public final static int EXT4_INODE_INDEX_NORMAL_FIRSTUSED = 11;	// typically the first non-reserved inode, "lost+found" dir
+
+	// ---------------------------------------------------------
+	//
+	public final static int EXT4_XATTR_MAGIC = 0xEA020000;
+
+	// prefixes inserted before the Ext4XattrEntry name value, looked up by Ext4XattrEntry.e_name_index
+	public final static String[] EXT4_XATTR_NAMEINDEX_STRINGS = {
+		"",
+		"user.",
+		"system.posix_acl_access.",
+		"system.posix_acl_default",
+		"trusted.",
+		"lustre.",	// guessing about this string
+		"security.",
+		"system.",
+		"system.richacl"
+	};
 }
