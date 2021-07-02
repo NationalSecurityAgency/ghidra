@@ -169,8 +169,10 @@ public class ReturnParameterDB extends ParameterDB {
 
 	@Override
 	public SourceType getSource() {
-		// VARDO: What source-type should be used ?
-		return function.getSymbol().getSource();
+		if (dataType == null || Undefined.isUndefined(dataType)) {
+			return SourceType.DEFAULT;
+		}
+		return function.getSignatureSource();
 	}
 
 	@Override
