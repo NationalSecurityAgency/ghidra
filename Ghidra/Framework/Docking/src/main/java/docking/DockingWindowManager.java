@@ -32,6 +32,7 @@ import org.jdom.Element;
 import docking.action.DockingActionIf;
 import docking.actions.*;
 import docking.help.HelpService;
+import docking.widgets.PasswordDialog;
 import generic.util.WindowUtilities;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
@@ -1764,12 +1765,14 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			bestParent = getBestNonModalParent(provider, bestParent);
 		}
 
-//		We should no longer need this code.  If the above could not find a suitable parent, then
-//		we can allow a null return value, which should signal to Java to pick a reasonable parent.
-//		If we put this code back, then make sure the chosen window is not transient.
-//		if (bestParent == null) {
-//			bestParent = getActiveNonTransientWindow();
-//		}
+		if (bestParent == null) {
+			// Special case: allow transient password dialogs to parent to the active window.  This
+			// allows the password dialog to stay open over the application splash screen.  (This
+			// is described in getParentWindow(), which is called above.)
+			if (provider instanceof PasswordDialog) {
+				bestParent = getJavaActiveWindow();
+			}
+		}
 
 		if (bestParent != null && !bestParent.isShowing()) {
 			bestParent = null; // don't let non-showing windows be parents

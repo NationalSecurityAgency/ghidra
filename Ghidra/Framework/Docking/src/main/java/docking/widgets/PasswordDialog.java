@@ -52,7 +52,7 @@ public class PasswordDialog extends DialogComponentProvider {
 	 * @param choicePrompt namePrompt name prompt to show in the dialog, if null a name will not be prompted for.
 	 * @param choices array of choices to present if choicePrompt is not null
 	 * @param defaultChoice default choice index
-	 * @param includeAnonymousOption
+	 * @param includeAnonymousOption true signals to add a checkbox to request anonymous login
 	 */
 	public PasswordDialog(String title, String serverType, String serverName, String passPrompt,
 			String namePrompt, String defaultUserID, String choicePrompt, String[] choices,
@@ -118,6 +118,7 @@ public class PasswordDialog extends DialogComponentProvider {
 			String namePrompt, String defaultUserID, boolean hasMessages) {
 		super(title, true);
 		setRememberSize(false);
+		setTransient(true);
 
 		if (hasMessages) {
 			setMinimumSize(300, 150);
@@ -198,7 +199,7 @@ public class PasswordDialog extends DialogComponentProvider {
 		passwordField.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyTyped(KeyEvent e) {
-				if (e.getModifiers() == 0 && e.getKeyChar() == KeyEvent.VK_ENTER) {
+				if (e.getModifiersEx() == 0 && e.getKeyChar() == KeyEvent.VK_ENTER) {
 					okCallback();
 				}
 			}
@@ -210,7 +211,7 @@ public class PasswordDialog extends DialogComponentProvider {
 
 	/**
 	 * Display error status
-	 * @param text
+	 * @param text the text
 	 */
 	public void setErrorText(String text) {
 		super.setStatusText(text, MessageType.ERROR);
@@ -218,12 +219,14 @@ public class PasswordDialog extends DialogComponentProvider {
 
 	/**
 	 * Return the password entered in the password field.
+	 * @return the password chars
 	 */
 	public char[] getPassword() {
 		return passwordField.getPassword();
 	}
 
 	/**
+	 * Returns true if anonymous access is requested
 	 * @return true if anonymous access requested
 	 */
 	public boolean anonymousAccessRequested() {
@@ -235,6 +238,7 @@ public class PasswordDialog extends DialogComponentProvider {
 
 	/**
 	 * Return the user ID entered in the password field
+	 * @return the user ID entered in the password field
 	 */
 	public String getUserID() {
 		return nameField != null ? nameField.getText().trim() : null;
@@ -242,6 +246,7 @@ public class PasswordDialog extends DialogComponentProvider {
 
 	/**
 	 * Returns index of selected choice or -1 if no choice has been made
+	 * @return index of selected choice or -1 if no choice has been made
 	 */
 	public int getChoice() {
 		if (choiceCB != null) {
@@ -252,6 +257,7 @@ public class PasswordDialog extends DialogComponentProvider {
 
 	/**
 	 * Returns true if the OK button was pressed.
+	 * @return true if the OK button was pressed.
 	 */
 	public boolean okWasPressed() {
 		return okPressed;
@@ -263,6 +269,7 @@ public class PasswordDialog extends DialogComponentProvider {
 		close();
 	}
 
+	@Override
 	public void dispose() {
 		if (passwordField != null) {
 			passwordField.setText("");
