@@ -88,6 +88,16 @@ def isNativeBinaryMakeTask(Task task, String platform) {
 }
 
 /*******************************************************************************************
+ * Returns true if the native binaries for the given task should be skipped during build.
+ *
+ * NOTE: Some native binaries are test-only and should not be built for a distribution.
+ *
+ ******************************************************************************************/
+def shouldSkipNative(task) {
+	return task.ext.has("skipNative") && task.ext.get("skipNative")
+}
+
+/*******************************************************************************************
  * Task Rule : builds all the natives in this module for a given platform.
  *
  * Example : gradle buildNatives_win64 will build all win64 native executables and shared libraries.
@@ -112,6 +122,11 @@ tasks.addRule("Pattern: buildNatives_<platform name>]: build all natives for giv
 				if (isNativeBinaryMakeTask(t, platform)) {
 					myTask.dependsOn t.path
 					t.dependsOn CheckToolChain
+				}
+				
+				// buildNatives task natives end up in the distribution...mark test natives as "skip"
+				if (project.findProperty("nativesTestOnly") ?: false) {
+					t.ext.set("skipNative", true)
 				}
 			}
 			
@@ -169,18 +184,22 @@ tasks.addRule("Pattern: prebuildNatives_<platform name>]: build all natives for 
 gradle.taskGraph.whenReady {
 		def p = this.project
 		p.tasks.withType(LinkExecutable).each { t ->
-			File f = t.linkedFile.getAsFile().get()
-			String filename = f.getName()
-			NativePlatform platform = t.targetPlatform.get()
-			String osName = platform.getName()
-			t.linkedFile = p.file("build/os/${osName}/$filename")
+			if (!shouldSkipNative(t)) {
+				File f = t.linkedFile.getAsFile().get()
+				String filename = f.getName()
+				NativePlatform platform = t.targetPlatform.get()
+				String osName = platform.getName()
+				t.linkedFile = p.file("build/os/${osName}/$filename")
+			}
 		}
 		p.tasks.withType(LinkSharedLibrary).each { t ->
-			File f = t.linkedFile.getAsFile().get()
-			String filename = f.getName()
-			NativePlatform platform = t.targetPlatform.get()
-			String osName = platform.getName()
-			t.linkedFile = p.file("build/os/${osName}/$filename")
+			if (!shouldSkipNative(t)) {
+				File f = t.linkedFile.getAsFile().get()
+				String filename = f.getName()
+				NativePlatform platform = t.targetPlatform.get()
+				String osName = platform.getName()
+				t.linkedFile = p.file("build/os/${osName}/$filename")
+			}
 		}
 }
 
