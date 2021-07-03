@@ -72,7 +72,7 @@ public class Ext4FileSystem implements GFileSystem {
 		boolean is64Bit =
 			(superBlock.getS_desc_size() > 32) && ((superBlock.getS_feature_incompat() & 0x80) > 0);
 
-		int groupDescriptorOffset = blockSize;
+		int groupDescriptorOffset = blockSize + (superBlock.getS_first_data_block() * blockSize);
 		reader.setPointerIndex(groupDescriptorOffset);
 		Ext4GroupDescriptor[] groupDescriptors = new Ext4GroupDescriptor[numGroups];
 		for (int i = 0; i < numGroups; i++) {
