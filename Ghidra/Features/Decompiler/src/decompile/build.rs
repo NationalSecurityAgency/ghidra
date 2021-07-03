@@ -299,6 +299,7 @@ fn main() {
     {
         target.define("__TERMINAL__", "");
     }
+    target.define("RUST_SUPPORT", "");
     target
         .cpp(true)
         .warnings(false)

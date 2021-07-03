@@ -24,7 +24,9 @@
 #include "pcoderaw.hh"
 #include "float.hh"
 
+#ifdef RUST_SUPPORT
 #include "rust/cxx.h"
+#endif
 
 // Some errors specific to the translation unit
 
@@ -114,7 +116,9 @@ public:
   const uint1 *restorePackedOp(const Address &addr,const uint1 *ptr,const AddrSpaceManager *trans);
 };
 
+#ifdef RUST_SUPPORT
 void dump_rust(PcodeEmit *emit, const Address &addr, OpCode opcode, unique_ptr<VarnodeData> outvar, rust::Slice<const unique_ptr<VarnodeData>> inputs, int4 size);
+#endif
 
 /// \brief Abstract class for emitting disassembly to an application
 ///
