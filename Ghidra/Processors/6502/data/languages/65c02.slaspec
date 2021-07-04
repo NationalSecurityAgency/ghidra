@@ -1,5 +1,13 @@
 @include "6502.slaspec"
 
+define token bitopbyte (8)
+    bitop           = (0,7)
+
+    action          = (7,7)
+    bitindex        = (4,6) dec
+    optype          = (0,3)
+;
+
 define token testopbyte (8)
     top             = (0, 7)
     taaa            = (5, 7)
@@ -36,6 +44,20 @@ ADDRIX: (imm16,X) is X; imm16     { addr:2 = imm16 + zext(X); tmp:2 = *:2 addr; 
 {
     A = A & ZIOP;
     resultFlags(A);
+}
+
+:BBR "#"bitindex, imm8, REL    is (action=0 & optype=0xF) & bitindex ; imm8 ; REL {
+    local ptr:2 = imm8;
+    local value:1 = *:1 ptr;
+    local jump = (value & (1 << bitindex)) == 0;
+    if (jump) goto REL;
+}
+
+:BBS "#"bitindex, imm8, REL    is (action=1 & optype=0xF) & bitindex ; imm8 ; REL {
+    local ptr:2 = imm8;
+    local value:1 = *:1 ptr;
+    local jump = (value & (1 << bitindex)) != 0;
+    if (jump) goto REL;
 }
 
 :BIT "#"imm8                   is op=0x89; imm8
@@ -131,6 +153,13 @@ ADDRIX: (imm16,X) is X; imm16     { addr:2 = imm16 + zext(X); tmp:2 = *:2 addr; 
     resultFlags(Y);
 }
 
+:RMB "#"bitindex, imm8         is (action=0 & optype=7) & bitindex ; imm8 {
+    local ptr:2 = imm8;
+    local value:1 = *:1 ptr;
+    value = value & ~(1 << bitindex);
+    *:1 ptr = value;
+}
+
 :SBC ZIOP                      is (cc=2 & aaa=7) ... & ZIOP
 {
     local op1 = ZIOP;
@@ -138,6 +167,13 @@ ADDRIX: (imm16,X) is X; imm16     { addr:2 = imm16 + zext(X); tmp:2 = *:2 addr; 
 
     subtraction_flags1(A, op1, result);
     A = result;
+}
+
+:SMB "#"bitindex, imm8         is (action=1 & optype=7) & bitindex ; imm8 {
+    local ptr:2 = imm8;
+    local value:1 = *:1 ptr;
+    value = value | (1 << bitindex);
+    *:1 ptr = value;
 }
 
 :STA ZIOP                      is (cc=2 & aaa=4) ... & ZIOP
