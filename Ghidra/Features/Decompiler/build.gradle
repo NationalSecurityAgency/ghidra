@@ -380,16 +380,19 @@ def getCurrentArch() {
 	} else if (arch == "x86_64") {
 		return "x86_64"
 	} else {
-		return null
+		throw new Exception("unsupported architecture ${arch}")
 	}
 }
 
 task win64BuildDecompilerRust(type: Exec) {
 	workingDir "./src/decompile"
 
-	def arch = getCurrentArch()
-	if (arch == null) {
-		throw new TaskExecutionException(it, new Exception("unsupported architecture!"))
+	def arch = null
+
+	try {
+		arch = getCurrentArch()
+	} catch (Exception e) {
+		throw new TaskExecutionException(it, e)
 	}
 
 	commandLine 'cargo', 'build', '--release', '--target', "${arch}-pc-windows-msvc"
@@ -408,9 +411,12 @@ task win64BuildDecompilerRust(type: Exec) {
 task linux64BuildDecompilerRust(type: Exec) {
 	workingDir "./src/decompile"
 
-	def arch = getCurrentArch()
-	if (arch == null) {
-		throw new TaskExecutionException(it, new Exception("unsupported architecture!"))
+	def arch = null
+
+	try {
+		arch = getCurrentArch()
+	} catch (Exception e) {
+		throw new TaskExecutionException(it, e)
 	}
 
 	commandLine 'cargo', 'build', '--release', '--target', "${arch}-unknown-linux-gnu"
@@ -429,9 +435,12 @@ task linux64BuildDecompilerRust(type: Exec) {
 task osx64BuildDecompilerRust(type: Exec) {
 	workingDir "./src/decompile"
 
-	def arch = getCurrentArch()
-	if (arch == null) {
-		throw new TaskExecutionException(it, new Exception("unsupported architecture!"))
+	def arch = null
+
+	try {
+		arch = getCurrentArch()
+	} catch (Exception e) {
+		throw new TaskExecutionException(it, e)
 	}
 
 	commandLine 'cargo', 'build', '--release', '--target', "${arch}-apple-darwin"
