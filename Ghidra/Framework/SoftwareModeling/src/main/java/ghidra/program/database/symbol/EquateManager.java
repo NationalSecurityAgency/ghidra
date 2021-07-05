@@ -631,7 +631,8 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 	 * @return The error formatted equate name
 	 */
 	public static String formatNameForEquateError(long equateValue) {
-		return "0x" + Long.toString(equateValue, 16) + " " + EquateManager.ERROR_TAG;
+		return (equateValue < 0 ? "-" : "") + "0x" + Long.toHexString(Math.abs(equateValue)) +
+			" " + EquateManager.ERROR_TAG;
 	}
 
 	/**
