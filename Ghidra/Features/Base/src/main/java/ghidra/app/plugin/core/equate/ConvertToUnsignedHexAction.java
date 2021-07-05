@@ -33,10 +33,10 @@ public class ConvertToUnsignedHexAction extends AbstractConvertAction {
 
 	@Override
 	protected String convertToString(Program program, Scalar scalar, boolean isData) {
-		String valueStr = Long.toHexString(scalar.getUnsignedValue()).toUpperCase();
+		String valueStr = Long.toHexString(scalar.getUnsignedValue());
 		if (isData) {
 			// Data relies on data format settings which uses "h" suffix
-			return valueStr + "h";
+			return valueStr.toUpperCase() + "h";
 		}
 		// Instructions rely on equate which uses 0x prefix (consistent with default scalar formatting)
 		return "0x" + valueStr;
