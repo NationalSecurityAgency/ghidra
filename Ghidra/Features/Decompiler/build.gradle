@@ -372,8 +372,13 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 	}
 }
 
-def getCurrentArch() {
-	def arch = System.getProperty("os.arch")
+def getTargetArch() {
+
+	def arch = System.getenv("TARGET_ARCH")
+
+	if (arch == null) {
+		arch = System.getProperty("os.arch")
+	}
 
 	if (arch == "aarch64") {
 		return arch
@@ -390,20 +395,22 @@ task win64BuildDecompilerRust(type: Exec) {
 	def arch = null
 
 	try {
-		arch = getCurrentArch()
+		arch = getTargetArch()
 	} catch (Exception e) {
 		throw new TaskExecutionException(it, e)
 	}
 
+	def target = "${arch}-pc-windows-msvc"
 
-	commandLine 'cargo', 'build', '--release', '--target', "${arch}-pc-windows-msvc"
+
+	commandLine 'cargo', 'build', '--release', '--target', target
 
     doLast {
 
         def binary = 'decompile.exe'
 
         copy {
-            from "$workingDir/target/release/${binary}"
+            from "$workingDir/target/${target}/release/${binary}"
             into "build/os/win64/"
         }
     }
@@ -415,19 +422,21 @@ task linux64BuildDecompilerRust(type: Exec) {
 	def arch = null
 
 	try {
-		arch = getCurrentArch()
+		arch = getTargetArch()
 	} catch (Exception e) {
 		throw new TaskExecutionException(it, e)
 	}
 
-	commandLine 'cargo', 'build', '--release', '--target', "${arch}-unknown-linux-gnu"
+	def target = "${arch}-unknown-linux-gnu"
+
+	commandLine 'cargo', 'build', '--release', '--target', target
 
     doLast {
 
         def binary = 'decompile'
 
         copy {
-            from "$workingDir/target/release/${binary}"
+            from "$workingDir/target/${target}/release/${binary}"
             into "build/os/linux64/"
         }
     }
@@ -439,19 +448,21 @@ task osx64BuildDecompilerRust(type: Exec) {
 	def arch = null
 
 	try {
-		arch = getCurrentArch()
+		arch = getTargetArch()
 	} catch (Exception e) {
 		throw new TaskExecutionException(it, e)
 	}
 
-	commandLine 'cargo', 'build', '--release', '--target', "${arch}-apple-darwin"
+	def target = "${arch}-apple-darwin"
+
+	commandLine 'cargo', 'build', '--release', '--target', target
 
     doLast {
 
         def binary = 'decompile'
 
         copy {
-            from "$workingDir/target/release/${binary}"
+            from "$workingDir/target/${target}/release/${binary}"
             into "build/os/osx64/"
         }
     }

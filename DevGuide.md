@@ -271,7 +271,9 @@ Others should be possible, but we do not test on them.
 
 Before building, please make sure the rust compiler toolchains are successfully installed.
 Commands like "cargo" should run successfully by default. Or else, the building will not
-success. -- This is bincraft only modification.
+success. Also, the environment variable "TARGET_ARCH" can be used to specify the target
+platform. For example, "amd64" or "aarch64". If not specified, the running platform will
+be used as the target. -- This is bincraft only modification.
 
 Now build using Gradle:
 
