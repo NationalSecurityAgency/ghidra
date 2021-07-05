@@ -87,6 +87,14 @@ def isNativeBinaryMakeTask(Task task, String platform) {
 	return false
 }
 
+def isRustTask(Task task, String platform) {
+	if (task.name.startsWith(platform) && task.name.endsWith("Rust")) {
+		return true
+	}
+
+	return false
+}
+
 /*******************************************************************************************
  * Task Rule : builds all the natives in this module for a given platform.
  *
@@ -112,6 +120,8 @@ tasks.addRule("Pattern: buildNatives_<platform name>]: build all natives for giv
 				if (isNativeBinaryMakeTask(t, platform)) {
 					myTask.dependsOn t.path
 					t.dependsOn CheckToolChain
+				} else if (isRustTask(t, platform)) {
+					myTask.dependsOn t.path
 				}
 			}
 			
@@ -126,6 +136,8 @@ tasks.addRule("Pattern: buildNatives_<platform name>]: build all natives for giv
 				if (isNativeBinaryMakeTask(t, platform)) {
 					myTask.dependsOn t.path
 					t.dependsOn CheckToolChain
+				} else if (isRustTask(t, platform)) {
+					myTask.dependsOn t.path
 				}
 			}
 		}

@@ -375,8 +375,10 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 def getCurrentArch() {
 	def arch = System.getProperty("os.arch")
 
-	if (arch == "x86_64" || arch == "aarch64") {
+	if (arch == "aarch64") {
 		return arch
+	} else if (arch == "amd64") {
+		return "x86_64"
 	} else {
 		throw new Exception("unsupported architecture ${arch}")
 	}
@@ -392,6 +394,7 @@ task win64BuildDecompilerRust(type: Exec) {
 	} catch (Exception e) {
 		throw new TaskExecutionException(it, e)
 	}
+
 
 	commandLine 'cargo', 'build', '--release', '--target', "${arch}-pc-windows-msvc"
 
