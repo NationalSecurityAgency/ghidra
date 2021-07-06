@@ -275,12 +275,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	private boolean isPDBLoadedInProgram() {
 
 		Options options = currentProgram.getOptions("Program Information");
-		isPDBLoaded = false;
-		Object isPDBLoadedObject = options.getObject("PDB Loaded", null);
-		if (isPDBLoadedObject != null) {
-			isPDBLoaded = (boolean) isPDBLoadedObject;
-		}
-		return isPDBLoaded;
+		return options.getBoolean("PDB Loaded", false);
+
 	}
 
 	public String validate() {
