@@ -3196,9 +3196,15 @@ public class RecoveredClassUtils {
 	}
 
 	/**
-	 * Method to create a string buffer containing class parents in the corrector order
+	 * Method to create a string buffer containing class parents in the correct order. The format
+	 * of the parent string is of the format "class <class_name> : <parent1_spec> : <parent2_spec> ...
+	 * where parentN_spec = "virtual (only if inherited virtually) <parentN_name>"
+	 * Examples: 
+	 * The class Pet with no parents would be "class Pet"
+	 * The class Cat with non-virtual parent Pet would be "class Cat : Pet"
+	 * The class A with virtual parent B and non-virtual parent C would be "class A : virtual B : C"
 	 * @param recoveredClass the given class
-	 * @return StringBuffer containing class parents
+	 * @return StringBuffer containing class parent description
 	 * @throws CancelledException if cancelled
 	 */
 	public StringBuffer createParentStringBuffer(RecoveredClass recoveredClass)
@@ -4442,6 +4448,7 @@ public class RecoveredClassUtils {
 				recoveredClass.getName(), defaultPointerSize, dataTypeManager);
 		}
 
+		// create a description indicating class parentage
 		classStruct.setDescription(createParentStringBuffer(recoveredClass).toString());
 
 		classStruct = (Structure) dataTypeManager.addDataType(classStruct,
