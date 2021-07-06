@@ -15,10 +15,13 @@
  */
 package ghidra.program.model.symbol;
 
+import java.util.List;
+
 import ghidra.program.model.address.Address;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
+
 /**
  * An Equate associates a string with a scalar value in the program, 
  * and contains a list of addresses and operand positions that refer 
@@ -45,7 +48,7 @@ public interface Equate {
 	/**
 	 * Get the value of this equate.
 	 */
-    public long getValue();
+	public long getValue();
 
 	/**
 	 * Gets a more accurate representation of the equate value. Used for rendering as close to the
@@ -57,7 +60,7 @@ public interface Equate {
 	/**
 	 * Get the number of references to this equate.
 	 */
-    public int getReferenceCount();
+	public int getReferenceCount();
 
 	/**
 	 * Add a reference (at the given operand position) to this equate.  If a reference already
@@ -67,9 +70,9 @@ public interface Equate {
 	 * @param refAddr the address where the equate is used.
 	 * @param opndPosition the operand index where the equate is used.
 	 */
-    public void addReference(Address refAddr,int opndPosition);
-    
-    /**
+	public void addReference(Address refAddr, int opndPosition);
+
+	/**
 	 * Add a reference (at the given dynamic hash position) to this equate. If a reference already
 	 * exists for the instruction at this address, then the old reference will be removed
 	 * before the new reference is added.
@@ -77,39 +80,45 @@ public interface Equate {
 	 * @param dynamicHash constant varnode dynamic hash value
 	 * @param refAddr the address where the equate is used.
 	 */
-    public void addReference(long dynamicHash, Address refAddr);
+	public void addReference(long dynamicHash, Address refAddr);
 
-    /**
-     * Changes the name associated with the equate.
-     * @param newName the new name for this equate.
-     * @exception DuplicateNameException thrown if newName is already
-     *   used by another equate.
-     * @throws InvalidInputException if newName contains blank characters,
-     * is zero length, or is null
-     */
-    void renameEquate(String newName) throws DuplicateNameException,
-        InvalidInputException;
+	/**
+	 * Changes the name associated with the equate.
+	 * @param newName the new name for this equate.
+	 * @exception DuplicateNameException thrown if newName is already
+	 *   used by another equate.
+	 * @throws InvalidInputException if newName contains blank characters,
+	 * is zero length, or is null
+	 */
+	void renameEquate(String newName) throws DuplicateNameException, InvalidInputException;
 
 	/**
 	 * Get the references for this equate.
 	 * @return a array of EquateReferences. 
 	 */
-    public EquateReference[] getReferences();
+	public EquateReference[] getReferences();
+
+	/**
+	 * Get references for this equate attached to a specific address
+	 * @param refAddr is the address
+	 * @return the list of EquateReferences
+	 */
+	public List<EquateReference> getReferences(Address refAddr);
 
 	/**
 	 * Remove the reference at the given operand position.
 	 * @param refAddr the address that was using this equate
 	 * @param opndPosition the operand index of the operand that was using this eqate.
 	 */
-    public void removeReference(Address refAddr, int opndPosition);
-    
-    /**
+	public void removeReference(Address refAddr, int opndPosition);
+
+	/**
 	 * Remove the reference at the given address
 	 * @param dynamicHash the hash of the reference
 	 * @param refAddr the reference's address
 	 */
-    public void removeReference(long dynamicHash, Address refAddr);
-    
+	public void removeReference(long dynamicHash, Address refAddr);
+
 	/**
 	 * Checks if equate is based off an enum's universal id and checks if the enum still exists.
 	 * The equate is still valid if the equate is not based off an enum.
@@ -129,10 +138,10 @@ public interface Equate {
 	 */
 	public UniversalID getEnumUUID();
 
-    /**
-     * Get the name of this equate.
-     * @see #getName()
-     */
-    @Override
+	/**
+	 * Get the name of this equate.
+	 * @see #getName()
+	 */
+	@Override
 	public String toString();
 }

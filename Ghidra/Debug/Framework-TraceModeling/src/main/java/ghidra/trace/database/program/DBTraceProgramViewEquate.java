@@ -16,6 +16,7 @@
 package ghidra.trace.database.program;
 
 import java.util.Collection;
+import java.util.List;
 
 import com.google.common.collect.Range;
 
@@ -83,6 +84,11 @@ public class DBTraceProgramViewEquate implements Equate {
 	public EquateReference[] getReferences() {
 		Collection<? extends TraceEquateReference> refs = equate.getReferences();
 		return refs.toArray(new EquateReference[refs.size()]);
+	}
+
+	@Override
+	public List<EquateReference> getReferences(Address refAddr) {
+		return equate.getReferences(refAddr);
 	}
 
 	@Override
