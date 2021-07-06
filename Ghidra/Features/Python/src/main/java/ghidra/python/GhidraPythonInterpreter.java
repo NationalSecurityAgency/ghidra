@@ -211,6 +211,9 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 
 		Py.getThreadState().tracefunc = interruptTraceFunction;
 
+		// The Python import system sets the __file__ attribute to the file it's executing
+		setVariable("__file__", new PyString(file.getAbsolutePath()));
+
 		// If the remote python debugger is alive, initialize it by calling settrace()
 		if (!SystemUtilities.isInDevelopmentMode() && !SystemUtilities.isInHeadlessMode()) {
 			if (PyDevUtils.getPyDevSrcDir() != null) {
