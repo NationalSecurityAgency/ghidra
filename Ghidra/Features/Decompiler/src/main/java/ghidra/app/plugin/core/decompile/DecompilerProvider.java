@@ -63,43 +63,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	static final ImageIcon C_SOURCE_ICON =
 		ResourceManager.loadImage("images/decompileFunction.gif");
 
-	private DockingAction defUseHighlightAction;
-	private DockingAction forwardSliceAction;
-	private DockingAction forwardSliceToOpsAction;
-	private DockingAction backwardSliceAction;
-	private DockingAction backwardSliceToOpsAction;
-	private DockingAction lockProtoAction;
-	private DockingAction lockLocalAction;
-	private DockingAction renameLocalAction;
-	private DockingAction renameGlobalAction;
-	private DockingAction renameFieldAction;
-	private DockingAction retypeLocalAction;
-	private DockingAction retypeGlobalAction;
-	private DockingAction retypeReturnAction;
-	private DockingAction retypeFieldAction;
-	private DockingAction isolateVarAction;
-	private DockingAction specifyCProtoAction;
-	private DockingAction overrideSigAction;
-	private DockingAction deleteSigAction;
-	private DockingAction debugFunctionAction;
-	private DockingAction convertAction;
 	private DockingAction graphASTControlFlowAction;
-	private DockingAction findAction;
-	private DockingAction propertiesAction;
-	private DockingAction editDataTypeAction;
-	private DockingAction decompilerCreateStructureAction;
-	private DockingAction listingCreateStructureAction;
-	private DockingAction renameFunctionAction;
-	private DockingAction findReferencesAction;
-
-	private CloneDecompilerAction cloneDecompilerAction;
-
-	private SelectAllAction selectAllAction;
-
-	private SetSecondaryHighlightAction setSecondaryHighlightAction;
-	private SetSecondaryHighlightColorChooserAction setSecondaryHighlightColorChooserAction;
-	private RemoveAllSecondaryHighlightsAction removeAllSecondadryHighlightsAction;
-	private RemoveSecondaryHighlightAction removeSecondaryHighlightAction;
 
 	private final DecompilePlugin plugin;
 	private ClipboardService clipboardService;
@@ -753,7 +717,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	private void createActions(boolean isConnected) {
 		String owner = plugin.getName();
 
-		selectAllAction = new SelectAllAction(owner, controller.getDecompilerPanel());
+		SelectAllAction selectAllAction =
+			new SelectAllAction(owner, controller.getDecompilerPanel());
 
 		DockingAction refreshAction = new DockingAction("Refresh", owner) {
 			@Override
@@ -796,16 +761,16 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		String functionGroup = "1 - Function Group";
 		int subGroupPosition = 0;
 
-		specifyCProtoAction = new SpecifyCPrototypeAction();
+		SpecifyCPrototypeAction specifyCProtoAction = new SpecifyCPrototypeAction();
 		setGroupInfo(specifyCProtoAction, functionGroup, subGroupPosition++);
 
-		overrideSigAction = new OverridePrototypeAction();
+		OverridePrototypeAction overrideSigAction = new OverridePrototypeAction();
 		setGroupInfo(overrideSigAction, functionGroup, subGroupPosition++);
 
-		deleteSigAction = new DeletePrototypeOverrideAction();
+		DeletePrototypeOverrideAction deleteSigAction = new DeletePrototypeOverrideAction();
 		setGroupInfo(deleteSigAction, functionGroup, subGroupPosition++);
 
-		renameFunctionAction = new RenameFunctionAction();
+		RenameFunctionAction renameFunctionAction = new RenameFunctionAction();
 		setGroupInfo(renameFunctionAction, functionGroup, subGroupPosition++);
 
 		//
@@ -814,41 +779,42 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		String variableGroup = "2 - Variable Group";
 		subGroupPosition = 0; // reset for the next group
 
-		renameLocalAction = new RenameLocalAction();
+		RenameLocalAction renameLocalAction = new RenameLocalAction();
 		setGroupInfo(renameLocalAction, variableGroup, subGroupPosition++);
 
-		renameGlobalAction = new RenameGlobalAction();
+		RenameGlobalAction renameGlobalAction = new RenameGlobalAction();
 		setGroupInfo(renameGlobalAction, variableGroup, subGroupPosition++);
 
-		renameFieldAction = new RenameFieldAction();
+		RenameFieldAction renameFieldAction = new RenameFieldAction();
 		setGroupInfo(renameFieldAction, variableGroup, subGroupPosition++);
 
-		retypeLocalAction = new RetypeLocalAction();
+		RetypeLocalAction retypeLocalAction = new RetypeLocalAction();
 		setGroupInfo(retypeLocalAction, variableGroup, subGroupPosition++);
 
-		retypeGlobalAction = new RetypeGlobalAction();
+		RetypeGlobalAction retypeGlobalAction = new RetypeGlobalAction();
 		setGroupInfo(retypeGlobalAction, variableGroup, subGroupPosition++);
 
-		retypeReturnAction = new RetypeReturnAction();
+		RetypeReturnAction retypeReturnAction = new RetypeReturnAction();
 		setGroupInfo(retypeReturnAction, variableGroup, subGroupPosition++);
 
-		retypeFieldAction = new RetypeFieldAction();
+		RetypeFieldAction retypeFieldAction = new RetypeFieldAction();
 		setGroupInfo(retypeFieldAction, variableGroup, subGroupPosition++);
 
-		isolateVarAction = new IsolateVariableAction();
+		IsolateVariableAction isolateVarAction = new IsolateVariableAction();
 		setGroupInfo(isolateVarAction, variableGroup, subGroupPosition++);
 
-		decompilerCreateStructureAction =
+		DecompilerStructureVariableAction decompilerCreateStructureAction =
 			new DecompilerStructureVariableAction(owner, tool, controller);
 		setGroupInfo(decompilerCreateStructureAction, variableGroup, subGroupPosition++);
 
-		editDataTypeAction = new EditDataTypeAction();
+		EditDataTypeAction editDataTypeAction = new EditDataTypeAction();
 		setGroupInfo(editDataTypeAction, variableGroup, subGroupPosition++);
 
 		//
 		// Listing action for Creating Structure on a Variable
 		//
-		listingCreateStructureAction = new ListingStructureVariableAction(owner, tool, controller);
+		ListingStructureVariableAction listingCreateStructureAction =
+			new ListingStructureVariableAction(owner, tool, controller);
 
 		//
 		// Commit
@@ -856,10 +822,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		String commitGroup = "3 - Commit Group";
 		subGroupPosition = 0; // reset for the next group
 
-		lockProtoAction = new CommitParamsAction();
+		CommitParamsAction lockProtoAction = new CommitParamsAction();
 		setGroupInfo(lockProtoAction, commitGroup, subGroupPosition++);
 
-		lockLocalAction = new CommitLocalsAction();
+		CommitLocalsAction lockLocalAction = new CommitLocalsAction();
 		setGroupInfo(lockLocalAction, commitGroup, subGroupPosition++);
 
 		subGroupPosition = 0; // reset for the next group
@@ -869,33 +835,60 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		//
 		String highlightGroup = "4a - Highlight Group";
 		tool.setMenuGroup(new String[] { "Highlight" }, highlightGroup);
-		defUseHighlightAction = new HighlightDefinedUseAction();
+		HighlightDefinedUseAction defUseHighlightAction = new HighlightDefinedUseAction();
 		setGroupInfo(defUseHighlightAction, highlightGroup, subGroupPosition++);
 
-		forwardSliceAction = new ForwardSliceAction();
+		ForwardSliceAction forwardSliceAction = new ForwardSliceAction();
 		setGroupInfo(forwardSliceAction, highlightGroup, subGroupPosition++);
 
-		backwardSliceAction = new BackwardsSliceAction();
+		BackwardsSliceAction backwardSliceAction = new BackwardsSliceAction();
 		setGroupInfo(backwardSliceAction, highlightGroup, subGroupPosition++);
 
-		forwardSliceToOpsAction = new ForwardSliceToPCodeOpsAction();
+		ForwardSliceToPCodeOpsAction forwardSliceToOpsAction = new ForwardSliceToPCodeOpsAction();
 		setGroupInfo(forwardSliceToOpsAction, highlightGroup, subGroupPosition++);
 
-		backwardSliceToOpsAction = new BackwardsSliceToPCodeOpsAction();
+		BackwardsSliceToPCodeOpsAction backwardSliceToOpsAction =
+			new BackwardsSliceToPCodeOpsAction();
 		setGroupInfo(backwardSliceToOpsAction, highlightGroup, subGroupPosition++);
 
 		tool.setMenuGroup(new String[] { "Secondary Highlight" }, highlightGroup);
-		setSecondaryHighlightAction = new SetSecondaryHighlightAction();
+		SetSecondaryHighlightAction setSecondaryHighlightAction = new SetSecondaryHighlightAction();
 		setGroupInfo(setSecondaryHighlightAction, highlightGroup, subGroupPosition++);
 
-		setSecondaryHighlightColorChooserAction = new SetSecondaryHighlightColorChooserAction();
+		SetSecondaryHighlightColorChooserAction setSecondaryHighlightColorChooserAction =
+			new SetSecondaryHighlightColorChooserAction();
 		setGroupInfo(setSecondaryHighlightColorChooserAction, highlightGroup, subGroupPosition++);
 
-		removeSecondaryHighlightAction = new RemoveSecondaryHighlightAction();
+		RemoveSecondaryHighlightAction removeSecondaryHighlightAction =
+			new RemoveSecondaryHighlightAction();
 		setGroupInfo(removeSecondaryHighlightAction, highlightGroup, subGroupPosition++);
 
-		removeAllSecondadryHighlightsAction = new RemoveAllSecondaryHighlightsAction();
+		RemoveAllSecondaryHighlightsAction removeAllSecondadryHighlightsAction =
+			new RemoveAllSecondaryHighlightsAction();
 		setGroupInfo(removeAllSecondadryHighlightsAction, highlightGroup, subGroupPosition++);
+
+		String convertGroup = "7 - Convert Group";
+		subGroupPosition = 0;
+		RemoveEquateAction removeEquateAction = new RemoveEquateAction();
+		setGroupInfo(removeEquateAction, convertGroup, subGroupPosition++);
+
+		SetEquateAction setEquateAction = new SetEquateAction(plugin);
+		setGroupInfo(setEquateAction, convertGroup, subGroupPosition++);
+
+		ConvertBinaryAction convertBinaryAction = new ConvertBinaryAction(plugin);
+		setGroupInfo(convertBinaryAction, convertGroup, subGroupPosition++);
+
+		ConvertDecAction convertDecAction = new ConvertDecAction(plugin);
+		setGroupInfo(convertDecAction, convertGroup, subGroupPosition++);
+
+		ConvertHexAction convertHexAction = new ConvertHexAction(plugin);
+		setGroupInfo(convertHexAction, convertGroup, subGroupPosition++);
+
+		ConvertOctAction convertOctAction = new ConvertOctAction(plugin);
+		setGroupInfo(convertOctAction, convertGroup, subGroupPosition++);
+
+		ConvertCharAction convertCharAction = new ConvertCharAction(plugin);
+		setGroupInfo(convertCharAction, convertGroup, subGroupPosition++);
 
 		//
 		// Comments
@@ -910,7 +903,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		String searchGroup = "comment2 - Search Group";
 		subGroupPosition = 0; // reset for the next group
 
-		findAction = new FindAction();
+		FindAction findAction = new FindAction();
 		setGroupInfo(findAction, searchGroup, subGroupPosition++);
 
 		//
@@ -920,7 +913,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		// note: set the menu group so that the 'References' group is with the 'Find' action
 		String referencesParentGroup = searchGroup;
 
-		findReferencesAction = new FindReferencesToDataTypeAction(owner, tool, controller);
+		FindReferencesToDataTypeAction findReferencesAction =
+			new FindReferencesToDataTypeAction(owner, tool, controller);
 		setGroupInfo(findReferencesAction, searchGroup, subGroupPosition++);
 		findReferencesAction.getPopupMenuData().setParentMenuGroup(referencesParentGroup);
 
@@ -942,15 +936,15 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		String optionsGroup = "comment6 - Options Group";
 		subGroupPosition = 0; // reset for the next group
 
-		propertiesAction = new EditPropertiesAction(owner, tool);
+		EditPropertiesAction propertiesAction = new EditPropertiesAction(owner, tool);
 		setGroupInfo(propertiesAction, optionsGroup, subGroupPosition++);
 
 		//
 		// These actions are not in the popup menu
 		//
-		debugFunctionAction = new DebugDecompilerAction(controller);
-		convertAction = new ExportToCAction();
-		cloneDecompilerAction = new CloneDecompilerAction();
+		DebugDecompilerAction debugFunctionAction = new DebugDecompilerAction(controller);
+		ExportToCAction convertAction = new ExportToCAction();
+		CloneDecompilerAction cloneDecompilerAction = new CloneDecompilerAction();
 
 		addLocalAction(refreshAction);
 		addLocalAction(selectAllAction);
@@ -968,6 +962,13 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(setSecondaryHighlightColorChooserAction);
 		addLocalAction(removeSecondaryHighlightAction);
 		addLocalAction(removeAllSecondadryHighlightsAction);
+		addLocalAction(convertBinaryAction);
+		addLocalAction(convertDecAction);
+		addLocalAction(convertHexAction);
+		addLocalAction(convertOctAction);
+		addLocalAction(convertCharAction);
+		addLocalAction(setEquateAction);
+		addLocalAction(removeEquateAction);
 		addLocalAction(retypeLocalAction);
 		addLocalAction(retypeGlobalAction);
 		addLocalAction(retypeReturnAction);

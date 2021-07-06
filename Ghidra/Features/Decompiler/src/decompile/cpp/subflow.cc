@@ -83,7 +83,7 @@ SubvariableFlow::ReplaceVarnode *SubvariableFlow::setReplacement(Varnode *vn,uin
       if (sextval != cval)
 	return (ReplaceVarnode *)0;
     }
-    return addConstant((ReplaceOp *)0,mask,0,vn->getOffset());
+    return addConstant((ReplaceOp *)0,mask,0,vn);
   }
 
   if (vn->isFree())
@@ -628,7 +628,7 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
     sa = doesAndClear(op,rvn->mask);
     if (sa != -1) {
       rop = createOp(CPUI_COPY,1,rvn);
-      addConstant(rop,rvn->mask,0,op->getIn(sa)->getOffset());
+      addConstant(rop,rvn->mask,0,op->getIn(sa));
     }
     else {
       rop = createOp(CPUI_INT_AND,2,rvn);
@@ -640,7 +640,7 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
     sa = doesOrSet(op,rvn->mask);
     if (sa != -1) {
       rop = createOp(CPUI_COPY,1,rvn);
-      addConstant(rop,rvn->mask,0,op->getIn(sa)->getOffset());
+      addConstant(rop,rvn->mask,0,op->getIn(sa));
     }
     else {
       rop = createOp(CPUI_INT_OR,2,rvn);
@@ -676,7 +676,7 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
     newmask = rvn->mask >> sa;	// What mask looks like before shift
     if (newmask == 0) {		// Subvariable filled with shifted zero
       rop = createOp(CPUI_COPY,1,rvn);
-      addConstant(rop,rvn->mask,0,(uintb)0);
+      addNewConstant(rop,0,(uintb)0);
       return true;
     }
     if ((newmask<<sa) != rvn->mask)
@@ -690,7 +690,7 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
     newmask = (rvn->mask << sa) & calc_mask(op->getIn(0)->getSize());
     if (newmask == 0) {		// Subvariable filled with shifted zero
       rop = createOp(CPUI_COPY,1,rvn);
-      addConstant(rop,rvn->mask,0,(uintb)0);
+      addNewConstant(rop,0,(uintb)0);
       return true;
     }
     if ((newmask>>sa) != rvn->mask)
@@ -772,7 +772,7 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
     if ((rvn->mask&1)==1) break; // Not normal variable flow
     // Variable is filled with zero
     rop = createOp(CPUI_COPY,1,rvn);
-    addConstant(rop,rvn->mask,0,(uintb)0);
+    addNewConstant(rop,0,(uintb)0);
     return true;
   default:
     break;			// Everything else we abort
@@ -825,7 +825,7 @@ bool SubvariableFlow::traceForwardSext(ReplaceVarnode *rvn)
       if (!op->getIn(1)->isConstant()) return false; // Right now we only deal with constant shifts
       rop = createOpDown(CPUI_INT_SRIGHT,2,op,rvn,0);
       if (!createLink(rop,rvn->mask,-1,outvn)) return false; // Keep the same mask size
-      addConstant(rop,calc_mask(op->getIn(1)->getSize()),1,op->getIn(1)->getOffset()); // Preserve the shift amount
+      addConstant(rop,calc_mask(op->getIn(1)->getSize()),1,op->getIn(1)); // Preserve the shift amount
       hcount += 1;
       break;
     case CPUI_SUBPIECE:
@@ -916,7 +916,7 @@ bool SubvariableFlow::traceBackwardSext(ReplaceVarnode *rvn)
     rop = createOp(CPUI_INT_SRIGHT,2,rvn);
     if (!createLink(rop,rvn->mask,0,op->getIn(0))) return false; // Keep the same mask
     if (rop->input.size()==1)
-      addConstant(rop,calc_mask(op->getIn(1)->getSize()),1,op->getIn(1)->getOffset()); // Preserve the shift amount
+      addConstant(rop,calc_mask(op->getIn(1)->getSize()),1,op->getIn(1)); // Preserve the shift amount
     return true;
   case CPUI_CALL:
   case CPUI_CALLIND:
@@ -993,23 +993,40 @@ bool SubvariableFlow::createCompareBridge(PcodeOp *op,ReplaceVarnode *inrvn,int4
 
 /// \brief Add a constant variable node to the logical subgraph
 ///
-/// Unlike other subgraph variable nodes, this one does not maintain a mirror with the original containing Varnode.
 /// \param rop is the logical operation taking the constant as input
 /// \param mask is the set of bits holding the logical value (within a bigger value)
 /// \param slot is the input slot to the operation
-/// \param val is the bigger constant value holding the logical value
+/// \param constvn is the original constant
 SubvariableFlow::ReplaceVarnode *SubvariableFlow::addConstant(ReplaceOp *rop,uintb mask,
-					      uint4 slot,uintb val)
-{ // Add a constant to the replacement tree
+					      uint4 slot,Varnode *constvn)
+{
   newvarlist.emplace_back();
   ReplaceVarnode *res = &newvarlist.back();
-  res->vn = (Varnode *)0;
+  res->vn = constvn;
   res->replacement = (Varnode *)0;
   res->mask = mask;
 
   // Calculate the actual constant value
   int4 sa = leastsigbit_set(mask);
-  res->val = (mask & val) >> sa;
+  res->val = (mask & constvn->getOffset()) >> sa;
+  res->def = (ReplaceOp *)0;
+  if (rop != (ReplaceOp *)0) {
+    while(rop->input.size() <= slot)
+      rop->input.push_back((ReplaceVarnode *)0);
+    rop->input[slot] = res;
+  }
+  return res;
+}
+
+SubvariableFlow::ReplaceVarnode *SubvariableFlow::addNewConstant(ReplaceOp *rop,uint4 slot,uintb val)
+
+{
+  newvarlist.emplace_back();
+  ReplaceVarnode *res = &newvarlist.back();
+  res->vn = (Varnode *)0;
+  res->replacement = (Varnode *)0;
+  res->mask = 0;
+  res->val = val;
   res->def = (ReplaceOp *)0;
   if (rop != (ReplaceOp *)0) {
     while(rop->input.size() <= slot)
@@ -1214,12 +1231,16 @@ Varnode *SubvariableFlow::getReplaceVarnode(ReplaceVarnode *rvn)
 {
   if (rvn->replacement != (Varnode *)0)
     return rvn->replacement;
-  // Only a constant if BOTH replacement and vn fields are null
   if (rvn->vn == (Varnode *)0) {
-    if (rvn->def==(ReplaceOp *)0) // A constant
+    if (rvn->def==(ReplaceOp *)0) // A constant that did not come from an original Varnode
       return fd->newConstant(flowsize,rvn->val);
     rvn->replacement = fd->newUnique(flowsize);
     return rvn->replacement;
+  }
+  if (rvn->vn->isConstant()) {
+    Varnode *newVn = fd->newConstant(flowsize,rvn->val);
+    newVn->copySymbolIfValid(rvn->vn);
+    return newVn;
   }
 
   bool isinput = rvn->vn->isInput();

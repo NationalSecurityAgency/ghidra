@@ -32,7 +32,7 @@ public class EquateSymbol extends HighSymbol {
 
 	private long value;			// Value of the equate
 	private int convert;		// Non-zero if this is a conversion equate
-	
+
 	public EquateSymbol(HighFunction func) {
 		super(func);
 	}
@@ -46,7 +46,7 @@ public class EquateSymbol extends HighSymbol {
 		DynamicEntry entry = new DynamicEntry(this, addr, hash);
 		addMapEntry(entry);
 	}
-	
+
 	public EquateSymbol(long uniqueId, int conv, long val, HighFunction func, Address addr,
 			long hash) {
 		super(uniqueId, "", DataType.DEFAULT, func);
@@ -57,7 +57,9 @@ public class EquateSymbol extends HighSymbol {
 		addMapEntry(entry);
 	}
 
-	public long getValue() { return value; }
+	public long getValue() {
+		return value;
+	}
 
 	public int getConvert() {
 		return convert;
@@ -121,8 +123,18 @@ public class EquateSymbol extends HighSymbol {
 		buf.append("</value>\n");
 		buf.append("</equatesymbol>\n");
 	}
-	
-	public static int convertName(String nm,long val) {
+
+	/**
+	 * Determine what format a given equate name is in.
+	 * Integer format conversions are stored using an Equate object, where the name of the equate
+	 * is the actual conversion String. So the only way to tell what kind of conversion is being performed
+	 * is by examining the name of the equate.  The format code of the conversion is returned, or if
+	 * the name is not a conversion,  FORMAT_DEFAULT is returned indicating a normal String equate.
+	 * @param nm is the name of the equate
+	 * @param val is the value being equated
+	 * @return the format code for the conversion or FORMAT_DEFAULT if not a conversion
+	 */
+	public static int convertName(String nm, long val) {
 		int pos = 0;
 		char firstChar = nm.charAt(pos++);
 		if (firstChar == '-') {
@@ -133,32 +145,53 @@ public class EquateSymbol extends HighSymbol {
 				return FORMAT_DEFAULT;			// Bad equate name, just print number normally
 			}
 		}
-		if (firstChar == '\'') {
-			return FORMAT_CHAR;
-		}
-		if (firstChar == '"') {					// Multi-character conversion
-			return FORMAT_DEC;					// not currently supported, just format in decimal
-		}
-		if (firstChar < '0' || firstChar > '9') {
-			return -1;			// Don't treat as a conversion
-		}
-		char lastChar = nm.charAt(nm.length() - 1);
-		if (lastChar == 'b') {
-			return FORMAT_BIN;
-		}
-		else if (lastChar == 'o') {
-			return FORMAT_OCT;
-		}
-		int format = FORMAT_DEC;
-		if (firstChar == '0') {
-			format = FORMAT_DEC;
-			if (nm.length() >= (pos + 1)) {
-				char c = nm.charAt(pos);
-				if (c == 'x') {
-					format = FORMAT_HEX;
+		switch (firstChar) {
+			case '\'':
+			case '"':
+				return FORMAT_CHAR;
+			case '0':
+				if (nm.length() >= (pos + 1) && nm.charAt(pos) == 'x') {
+					return FORMAT_HEX;
 				}
-			}
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				break;
+			case 'A':
+			case 'B':
+			case 'C':
+			case 'D':
+			case 'E':
+			case 'F':
+				if (nm.length() >= 3 && nm.charAt(2) == 'h') {
+					char secondChar = nm.charAt(1);
+					if (secondChar >= '0' && secondChar <= '9') {
+						return FORMAT_CHAR;
+					}
+					if (secondChar >= 'A' && secondChar <= 'F') {
+						return FORMAT_CHAR;
+					}
+				}
+				return FORMAT_DEFAULT;
+			default:
+				return FORMAT_DEFAULT;					// Don't treat as a conversion
 		}
-		return format;
+		switch (nm.charAt(nm.length() - 1)) {
+			case 'b':
+				return FORMAT_BIN;
+			case 'o':
+				return FORMAT_OCT;
+			case '\'':
+			case '"':
+			case 'h':									// The 'h' encoding is used for "unrepresentable" characters
+				return FORMAT_CHAR;
+		}
+		return FORMAT_DEC;
 	}
 }

@@ -24,8 +24,7 @@ import ghidra.program.database.*;
 import ghidra.program.database.map.AddressKeyAddressIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
-import ghidra.program.model.symbol.Equate;
-import ghidra.program.model.symbol.EquateTable;
+import ghidra.program.model.symbol.*;
 import ghidra.program.util.ChangeManager;
 import ghidra.program.util.EquateInfo;
 import ghidra.util.Lock;
@@ -328,11 +327,10 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 					list.add(ref);
 				}
 			}
-			for (int i = 0; i < list.size(); i++) {
+			for (EquateRefDB ref : list) {
 				if (monitor.isCancelled()) {
 					throw new CancelledException();
 				}
-				EquateRefDB ref = list.get(i);
 				EquateDB equateDB = getEquateDB(ref.getEquateID());
 
 				removeRef(equateDB, ref);
@@ -452,6 +450,22 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 
 	int getReferenceCount(long equateID) throws IOException {
 		return getReferences(equateID).length;
+	}
+
+	List<EquateReference> getReferences(long equateID, Address reference) throws IOException {
+		List<EquateReference> refs = new ArrayList<>();
+		long refAddr = addrMap.getKey(reference, false);
+		if (refAddr == AddressMap.INVALID_ADDRESS_KEY) {
+			return refs;
+		}
+		Field[] keys = refAdapter.getRecordKeysForAddr(refAddr);
+		for (Field key : keys) {
+			EquateRefDB ref = getEquateRefDB(key.getLongValue());
+			if (ref.getEquateID() == equateID) {
+				refs.add(ref);
+			}
+		}
+		return refs;
 	}
 
 	void removeReference(EquateDB equateDB, Address refAddr, short opIndex) throws IOException {

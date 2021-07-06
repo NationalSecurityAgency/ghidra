@@ -388,12 +388,11 @@ public interface Address extends Comparable<Address> {
 	public boolean isHashAddress();
 
 	/**
-	 * Returns true if this address represents a location in register space.
-	 * @deprecated use of this method is highly discouraged since since registers
-	 * may also exist in a memory space. The address for such registers 
-	 * would return false from this method. 
+	 * Returns true if this address represents a location in the register space.
+	 * <P>NOTE: It is important to note that a {@link Register} could reside within
+	 * a memory space and not the register space in which case this method would return
+	 * false for its address.
 	 */
-	@Deprecated
 	public boolean isRegisterAddress();
 
 	/**

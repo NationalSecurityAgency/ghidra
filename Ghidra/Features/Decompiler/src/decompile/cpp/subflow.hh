@@ -111,7 +111,8 @@ class SubvariableFlow {
   void addBooleanPatch(PcodeOp *pullop,ReplaceVarnode *rvn,int4 slot);
   void addSuggestedPatch(ReplaceVarnode *rvn,PcodeOp *pushop,int4 sa);
   void addComparePatch(ReplaceVarnode *in1,ReplaceVarnode *in2,PcodeOp *op);
-  ReplaceVarnode *addConstant(ReplaceOp *rop,uintb mask,uint4 slot,uintb val);
+  ReplaceVarnode *addConstant(ReplaceOp *rop,uintb mask,uint4 slot,Varnode *constvn);
+  ReplaceVarnode *addNewConstant(ReplaceOp *rop,uint4 slot,uintb val);
   void createNewOut(ReplaceOp *rop,uintb mask);
   void replaceInput(ReplaceVarnode *rvn);
   bool useSameAddress(ReplaceVarnode *rvn);

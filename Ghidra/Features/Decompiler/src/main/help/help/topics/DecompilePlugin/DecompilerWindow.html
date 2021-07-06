@@ -622,6 +622,69 @@
 
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
+<a name="ActionConvert"></a>Convert</h3></div></div></div>
+  
+  <p>
+    Change the displayed encoding for the integer or character constant under the cursor.
+  </p>
+  <p>
+    Various encodings are possible.
+    </p>
+<div class="informalexample">
+      <div class="table">
+<a name="convert.htmltable"></a><table width="50%" frame="none" rules="none" id="convert.htmltable">
+        <col width="30%">
+        <col width="70%">
+      <tbody>
+        <tr>
+          <td><span class="bold"><strong>Binary:</strong></span></td>
+          <td>0b01100001</td>
+        </tr>
+         <tr>
+          <td><span class="bold"><strong>Decimal:</strong></span></td>
+          <td>97</td>
+        </tr>
+        <tr>
+          <td><span class="bold"><strong>Hexadecimal:</strong></span></td>
+          <td>0x61</td>
+        </tr>
+        <tr>
+          <td><span class="bold"><strong>Octal:</strong></span></td>
+          <td>0141</td>
+        </tr>
+        <tr>
+          <td><span class="bold"><strong>Char:</strong></span></td>
+          <td>'a'</td>
+        </tr>
+      </tbody>
+      </table>
+</div>
+    </div>
+<p>
+  </p>
+  <p>
+    This command primarily targets a constant token in the Decompiler window, but
+    if there is a <span class="emphasis"><em>scalar</em></span> operand in an instruction that corresponds
+    with the selected constant, the same conversion is also applied to the scalar in the Listing
+    window. This is equivalent to selecting the
+    <a class="ulink" href="help/topics/EquatePlugin/Equates.htm#Convert" target="_top">Convert</a> command from the
+    Listing.  There may not be a scalar operand directly corresponding to the selected constant, in
+    which case the conversion will be applied only in the Decompiler window.
+  </p>
+  <p>
+    The data-type of the selected token is not changed by the action, and it retains its
+    meaning in the decompiler output. This slightly limits the possible conversions as signed
+    values cannot be forced into an unsigned representation, and vice versa.
+  </p>
+  <p>
+    The constant's encoding can be changed by selecting a different <span class="bold"><strong>Convert</strong></span>
+    command, or it can be returned to its <span class="emphasis"><em>default</em></span> encoding by selecting
+    the <a class="xref" href="DecompilerWindow.html#ActionRemoveEquate" title="Remove Convert/Equate">&#8220;Remove Convert/Equate&#8221;</a> command.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
 <a name="ActionCopy"></a>Copy/Copy Special ...</h3></div></div></div>
   
   <p>
@@ -923,6 +986,23 @@
 
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
+<a name="ActionRemoveEquate"></a>Remove Convert/Equate</h3></div></div></div>
+  
+  <p>
+    Remove the display <span class="emphasis"><em>conversion</em></span> or <span class="emphasis"><em>equate</em></span> from
+    the constant under the cursor.
+  </p>
+  <p>
+    The selected constant must have had either a <a class="xref" href="DecompilerWindow.html#ActionConvert" title="Convert">&#8220;Convert&#8221;</a> or a
+    <a class="xref" href="DecompilerWindow.html#ActionSetEquate" title="Set Equate ...">&#8220;Set Equate ...&#8221;</a> command applied to it.  After applying this command,
+    the conversion is no longer applied, and the selected constant will be displayed
+    using the decompiler's default strategy, which depends on the data-type of the constant and
+    other display settings (See <a class="xref" href="DecompilerOptions.html#DisplayIntegerFormat"><span class="bold"><strong>Integer format</strong></span></a>).
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
 <a name="ActionRemoveOverride"></a>Remove Signature Override</h3></div></div></div>
   
   <p>
@@ -1177,6 +1257,40 @@
     Data-type information applied to parameters using this action is especially impactful
     because it affects decompilation for the function owning the parameter and, additionally,
     any function that calls this owning function.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionSetEquate"></a>Set Equate ...</h3></div></div></div>
+  
+  <p>
+    Change the display of the integer or character constant under the cursor to an <span class="emphasis"><em>equate</em></span>
+    string.
+  </p>
+  <p>
+    An equate is a descriptive string associated with a specific constant value, which is managed globally for
+    a Program by the Equate plug-in (See <a class="ulink" href="help/topics/EquatePlugin/Equates.htm" target="_top">Equates</a>).
+  </p>
+  <p>
+    The <span class="bold"><strong>Set Equate</strong></span> command, brings up a dialog listing other equates
+    that have previously been associated with the selected constant.  The user can choose an equate from this list
+    or define a new equate for the constant by typing in the text field at the top of the dialog. Alternately,
+    the text field can be used as a filter to narrow down possibilities prior to selecting from the list. Clicking
+    OK, completes the action, and the selected equate is substituted for its constant.
+  </p>
+  <p>
+    This command primarily targets a constant token in the Decompiler window, but
+    if there is a <span class="emphasis"><em>scalar</em></span> operand in an instruction that corresponds
+    with the selected constant, the same equate is also applied to the scalar in the Listing
+    window. This is equivalent to selecting the
+    <a class="ulink" href="help/topics/EquatePlugin/Equates.htm#Set_Equate" target="_top">Set Equate</a> command from the
+    Listing.  There may not be a scalar operand directly corresponding to the selected constant, in
+    which case the equate will be applied only in the Decompiler window.
+  </p>
+  <p>
+    Once an equate is applied, the constant can be returned to its <span class="emphasis"><em>default</em></span> display
+    by selecting the <a class="xref" href="DecompilerWindow.html#ActionRemoveEquate" title="Remove Convert/Equate">&#8220;Remove Convert/Equate&#8221;</a> command.
   </p>
 </div>
 
