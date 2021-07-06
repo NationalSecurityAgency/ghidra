@@ -63,13 +63,13 @@ import ghidra.app.plugin.core.analysis.DecompilerFunctionAnalyzer;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.Analyzer;
 import ghidra.app.services.GraphDisplayBroker;
+import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.service.graph.*;
 import ghidra.util.exception.CancelledException;
@@ -273,10 +273,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	 * @return true if pdb info has been applied to program
 	 */
 	private boolean isPDBLoadedInProgram() {
-
-		Options options = currentProgram.getOptions("Program Information");
-		return options.getBoolean("PDB Loaded", false);
-
+		Options options = currentProgram.getOptions(Program.PROGRAM_INFO);
+		return options.getBoolean(PdbParserConstants.PDB_LOADED, false);
 	}
 
 	public String validate() {
