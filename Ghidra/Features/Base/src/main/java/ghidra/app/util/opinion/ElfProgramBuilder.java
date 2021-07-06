@@ -34,7 +34,6 @@ import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.app.util.bin.format.elf.relocation.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
-import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.database.register.AddressRangeObjectMap;
 import ghidra.program.model.address.*;
@@ -136,7 +135,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			resolve(monitor);
 
 			if (elf.e_shnum() == 0) {
-				// create/expand segments to their fullsize if not sections are defined
+				// create/expand segments to their fullsize if no sections are defined
 				expandProgramHeaderBlocks(monitor);
 			}
 
@@ -145,8 +144,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				success = true;
 				return;
 			}
-
-			pruneDiscardableBlocks();
 
 			markupElfHeader(monitor);
 			markupProgramHeaders(monitor);
@@ -183,10 +180,11 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 	}
 
-	private void adjustSegmentAndSectionFileAllocations(ByteProvider byteProvider)
+	private void adjustSegmentAndSectionFileAllocations(
+			ByteProvider byteProvider)
 			throws IOException {
 
-		// Identify file ranges not consumed by segments and sections
+		// Identify file ranges not allocated to segments or sections
 		RangeMap fileMap = new RangeMap();
 		fileMap.paintRange(0, byteProvider.length() - 1, -1); // -1: unallocated
 
@@ -220,17 +218,17 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		// Ignore header regions which will always be allocated to blocks
 		int elfHeaderSize = elf.toDataType().getLength();
-		fileMap.paintRange(0, elfHeaderSize - 1, -4);
+		fileMap.paintRange(0, elfHeaderSize - 1, -4); // -4: header block
 		int programHeaderSize = elf.e_phentsize() * elf.e_phnum();
 		if (programHeaderSize != 0) {
-			fileMap.paintRange(elf.e_phoff(), elf.e_phoff() + programHeaderSize - 1, -4);
+			fileMap.paintRange(elf.e_phoff(), elf.e_phoff() + programHeaderSize - 1, -4); // -4: header block
 		}
 		int sectionHeaderSize = elf.e_shentsize() * elf.e_shnum();
 		if (sectionHeaderSize != 0) {
-			fileMap.paintRange(elf.e_shoff(), elf.e_shoff() + sectionHeaderSize - 1, -4);
+			fileMap.paintRange(elf.e_shoff(), elf.e_shoff() + sectionHeaderSize - 1, -4); // -4: header block
 		}
 
-		// Unused file ranges - add as OTHER blocks
+		// Add unallocated non-zero file regions as OTHER blocks
 		IndexRangeIterator rangeIterator = fileMap.getIndexRangeIterator(0);
 		int unallocatedIndex = 0;
 		while (rangeIterator.hasNext()) {
@@ -239,10 +237,18 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			if (value != -1) {
 				continue;
 			}
+
+			long start = range.getStart();
+			long length = range.getEnd() - start + 1;
+
+			if (isZeroFilledFileRegion(byteProvider, start, length)) {
+				continue;
+			}
+
 			String name = UNALLOCATED_NAME_PREFIX + unallocatedIndex++;
 			try {
-				addInitializedMemorySection(null, range.getStart(),
-					range.getEnd() - range.getStart() + 1, AddressSpace.OTHER_SPACE.getMinAddress(),
+				addInitializedMemorySection(null, start, length,
+					AddressSpace.OTHER_SPACE.getMinAddress(),
 					name, false, false, false, null, false, false);
 			}
 			catch (AddressOverflowException e) {
@@ -251,45 +257,19 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 	}
 
-	private void pruneDiscardableBlocks() {
-		try {
-			for (MemoryBlock block : memory.getBlocks()) {
-				long size = block.getSize();
-				// prune any zero-filled unallocated block or segment blocks smaller than DISCARDABLE_SEGMENT_SIZE
-				if (!block.getName().startsWith(UNALLOCATED_NAME_PREFIX)) {
-					// Don't prune segments when sections are absent
-					if (elf.e_shnum() == 0 || size > DISCARDABLE_SEGMENT_SIZE ||
-						!block.getName().startsWith(SEGMENT_NAME_PREFIX)) {
-						continue;
-					}
-				}
-				if (isZeroFilledBlock(block)) {
-					Msg.debug(this,
-						"Removing discardable alignment/filler segment at " + block.getStart());
-					memory.removeBlock(block, TaskMonitor.DUMMY);
-				}
-			}
+	private boolean isZeroFilledFileRegion(ByteProvider byteProvider, long start, long length)
+			throws IOException {
+		int bufSize = 16 * 1024;
+		if (length < bufSize) {
+			bufSize = (int) length;
 		}
-		catch (LockException | MemoryAccessException e) {
-			throw new AssertException(e); // should never happen
-		}
-	}
-
-	private boolean isZeroFilledBlock(MemoryBlock block) throws MemoryAccessException {
-		int bufSize = 8 * 1024;
-		long blockSize = block.getSize();
-		if (blockSize < bufSize) {
-			bufSize = (int) blockSize;
-		}
-		byte[] bytes = new byte[bufSize];
-		Address addr = block.getStart();
-		long cnt = 0;
-		while (cnt < blockSize) {
-			int readLen = block.getBytes(addr.add(cnt), bytes, 0, bufSize);
-			if (readLen <= 0 || !isZeroedArray(bytes, readLen)) {
+		long remaining = length;
+		while (remaining > 0) {
+			byte[] bytes = byteProvider.readBytes(start, Math.min(remaining, bufSize));
+			if (!isZeroedArray(bytes, bytes.length)) {
 				return false;
 			}
-			cnt += readLen;
+			remaining -= bytes.length;
 		}
 		return true;
 	}
@@ -301,6 +281,29 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			}
 		}
 		return true;
+	}
+
+	private boolean isDiscardableFillerSegment(MemoryLoadable loadable, String blockName,
+			Address start, long fileOffset, long length) throws IOException {
+		if (elf.e_shnum() == 0 || elf.e_phnum() == 0) {
+			return false; // only prune if both sections and program headers are present
+		}
+		if (length > DISCARDABLE_SEGMENT_SIZE || !blockName.startsWith(SEGMENT_NAME_PREFIX)) {
+			return false;
+		}
+
+		if (elf.getLoadAdapter().hasFilteredLoadInputStream(this, loadable, start)) {
+			// block is unable to map directly to file bytes - read from filtered input stream
+			try (InputStream dataInput =
+				getInitializedBlockInputStream(loadable, start, fileOffset, length)) {
+				byte[] bytes = new byte[(int) length];
+				return dataInput.read(bytes) == bytes.length && isZeroedArray(bytes, bytes.length);
+			}
+		}
+
+		byte[] bytes = new byte[(int) length];
+		return fileBytes.getModifiedBytes(fileOffset, bytes) == bytes.length &&
+			isZeroedArray(bytes, bytes.length);
 	}
 
 	@Override
@@ -3220,10 +3223,16 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			boolean w, boolean x, TaskMonitor monitor)
 			throws IOException, AddressOverflowException, CancelledException {
 
+		long revisedLength = checkBlockLimit(name, dataLength, true);
+
+		if (isDiscardableFillerSegment(loadable, name, start, fileOffset, dataLength)) {
+			Msg.debug(this,
+				"Discarding " + dataLength + "-byte alignment/filler " + name + " at " + start);
+			return null;
+		}
+
 		// TODO: MemoryBlockUtil poorly and inconsistently handles duplicate name errors (can throw RuntimeException).
 		// Are we immune from such errors? If not, how should they be handled?
-
-		long revisedLength = checkBlockLimit(name, dataLength, true);
 
 		if (start.isNonLoadedMemoryAddress()) {
 			r = false;
@@ -3245,19 +3254,32 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			blockComment += " (section truncated)";
 		}
 
-		if (elf.getLoadAdapter().hasFilteredLoadInputStream(this, loadable, start)) {
-			// block is unable to map directly to file bytes - load from input stream
-			try (InputStream dataInput =
-				getInitializedBlockInputStream(loadable, start, fileOffset, revisedLength)) {
-				return MemoryBlockUtils.createInitializedBlock(program, isOverlay, name, start,
-					dataInput, revisedLength, blockComment, BLOCK_SOURCE_NAME, r, w, x, log,
-					monitor);
+		MemoryBlock block = null;
+		try {
+			if (elf.getLoadAdapter().hasFilteredLoadInputStream(this, loadable, start)) {
+				// block is unable to map directly to file bytes - load from input stream
+				try (InputStream dataInput =
+					getInitializedBlockInputStream(loadable, start, fileOffset, revisedLength)) {
+					block = MemoryBlockUtils.createInitializedBlock(program, isOverlay, name, start,
+						dataInput, revisedLength, blockComment, BLOCK_SOURCE_NAME, r, w, x, log,
+						monitor);
+				}
+			}
+			else {
+				// create block using direct mapping to file bytes
+				block = MemoryBlockUtils.createInitializedBlock(program, isOverlay, name, start,
+					fileBytes, fileOffset, revisedLength, blockComment, BLOCK_SOURCE_NAME, r, w, x,
+					log);
 			}
 		}
-
-		// create block using direct mapping to file bytes
-		return MemoryBlockUtils.createInitializedBlock(program, isOverlay, name, start, fileBytes,
-			fileOffset, revisedLength, blockComment, BLOCK_SOURCE_NAME, r, w, x, log);
+		finally {
+			if (block == null) {
+				Address end = start.addNoWrap(revisedLength - 1);
+				Msg.error(this, "Unexpected ELF memory bock load conflict when creating '" + name +
+					"' at " + start.toString(true) + "-" + end.toString(true));
+			}
+		}
+		return block;
 	}
 
 	@Override
