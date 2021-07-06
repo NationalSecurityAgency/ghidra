@@ -25,11 +25,17 @@ import ghidra.graph.viewer.options.VisualGraphOptions;
  */
 public class FcgView extends VisualGraphView<FcgVertex, FcgEdge, FunctionCallGraph> {
 
+	private VisualGraphOptions options;
+
+	public FcgView(VisualGraphOptions options) {
+		this.options = options;
+	}
+
 	@Override
 	protected void installGraphViewer() {
 
 		FcgComponent component = createGraphComponent();
-		component.setGraphOptions(new VisualGraphOptions());
+		component.setGraphOptions(options);
 		setGraphComponent(component);
 	}
 

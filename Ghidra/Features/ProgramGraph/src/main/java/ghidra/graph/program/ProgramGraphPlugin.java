@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.action.builder.ToggleActionBuilder;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -69,11 +70,18 @@ import ghidra.util.task.TaskLauncher;
 //@formatter:on
 public class ProgramGraphPlugin extends ProgramPlugin
 		implements OptionsChangeListener, BlockModelServiceListener, GraphDisplayBrokerListener {
-	private static final String MAX_CODE_LINES_DISPLAYED = "Max Code Lines Displayed";
-	private static final String REUSE_GRAPH = "Reuse Graph";
-	private static final String GRAPH_ENTRY_POINT_NEXUS = "Graph Entry Point Nexus";
-	private static final String FORCE_LOCATION_DISPLAY_OPTION = "Force Location Visible on Graph";
-	private static final String MAX_DEPTH_OPTION = "Max Reference Depth";
+
+	private static final String PLUGIN_NAME = "Program Graph";
+
+	private static final String OPTIONS_PREFIX = PLUGIN_NAME + Options.DELIMITER;
+	private static final String MAX_CODE_LINES_DISPLAYED =
+		OPTIONS_PREFIX + "Max Code Lines Displayed";
+	private static final String REUSE_GRAPH = OPTIONS_PREFIX + "Reuse Graph";
+	private static final String GRAPH_ENTRY_POINT_NEXUS =
+		OPTIONS_PREFIX + "Graph Entry Point Nexus";
+	private static final String FORCE_LOCATION_DISPLAY_OPTION =
+		OPTIONS_PREFIX + "Force Location Visible on Graph";
+	private static final String MAX_DEPTH_OPTION = OPTIONS_PREFIX + "Max Reference Depth";
 	public static final String MENU_GRAPH = "&Graph";
 
 	private BlockModelService blockModelService;
@@ -102,23 +110,23 @@ public class ProgramGraphPlugin extends ProgramPlugin
 
 	private void intializeOptions() {
 		HelpLocation help = new HelpLocation(getName(), "Graph_Option");
-		ToolOptions options = tool.getOptions("Graph");
+		ToolOptions options = tool.getOptions(ToolConstants.GRAPH_OPTIONS);
 
 		options.registerOption(MAX_CODE_LINES_DISPLAYED, codeLimitPerBlock, help,
 			"Specifies the maximum number of instructions to display in each graph " +
 				"node in a Code Flow Graph.");
 
 		options.registerOption(REUSE_GRAPH, false, help,
-			"Determines whether the graph will reuse the active graph window when displaying graphs.");
+			"Determines whether the graph will reuse the active graph window when displaying " +
+				"graphs.");
 
 		options.registerOption(GRAPH_ENTRY_POINT_NEXUS, false, help,
-			"Add a dummy node at the root of the graph and adds dummy edges to each node that has " +
-				"no incoming edges.");
+			"Add a dummy node at the root of the graph and adds dummy edges to each node that " +
+				"has no incoming edges.");
 
 		options.registerOption(FORCE_LOCATION_DISPLAY_OPTION, false, help,
-			"Specifies whether or not " +
-				"graph displays should force the visible graph to pan and/or scale to ensure that focused " +
-				"locations are visible.");
+			"Specifies whether or not graph displays should force the visible graph to pan " +
+				"and/or scale to ensure that focused locations are visible.");
 		options.registerOption(MAX_DEPTH_OPTION, 1, help,
 			"Specifies max depth of data references to graph (0 for no limit)");
 

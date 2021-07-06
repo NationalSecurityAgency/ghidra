@@ -220,8 +220,8 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 		edgeLabelRenderer.setRotateEdgeLabels(false);
 		renderContext.setEdgeLabelRenderer(edgeLabelRenderer);
 
-		viewer.setGraphOptions(options);
-		Color bgColor = options.getGraphBackgroundColor();
+		viewer.setGraphOptions(vgOptions);
+		Color bgColor = vgOptions.getGraphBackgroundColor();
 		if (bgColor.equals(VisualGraphOptions.DEFAULT_GRAPH_BACKGROUND_COLOR)) {
 
 			// Give user notice when seeing the graph for a non-function (such as an undefined 
@@ -259,7 +259,7 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 		renderContext.setVertexFillPaintTransformer(new FGVertexPickableBackgroundPaintTransformer(
 			pickedVertexState, Color.YELLOW, START_COLOR, END_COLOR));
 
-		viewer.setGraphOptions(options);
+		viewer.setGraphOptions(vgOptions);
 
 		return viewer;
 	}
@@ -287,7 +287,7 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 //==================================================================================================
 
 	public FunctionGraphOptions getFucntionGraphOptions() {
-		return (FunctionGraphOptions) options;
+		return (FunctionGraphOptions) vgOptions;
 	}
 
 	public void ensureCursorVisible(FGVertex vertex) {
