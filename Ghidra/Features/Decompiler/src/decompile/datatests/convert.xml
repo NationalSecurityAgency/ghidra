@@ -62,5 +62,5 @@ ffffffbfdff7ffffe811ffffffbf6100
 <stringmatch name="Convert #14" min="1" max="1">recv_signed\(-0b1100110011001100\)</stringmatch>
 <stringmatch name="Convert #15" min="1" max="1">recv_unsigned\(0b1110111011101110\)</stringmatch>
 <stringmatch name="Convert #16" min="1" max="1">recv_unsigned\(0b11111111111111111111011111011111\)</stringmatch>
-<stringmatch name="Convert #17" min="1" max="1">recv_signed\('a'\)</stringmatch>
+<stringmatch name="Convert #17" min="1" max="1">recv_signed\(L'a'\)</stringmatch>
 </decompilertest>
