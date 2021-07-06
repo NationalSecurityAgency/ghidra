@@ -16,7 +16,8 @@
 //Script to graph class hierarchies given metadata found in class structure description that
 // was applied using the RecoverClassesFromRTTIScript.  
 //@category C++
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.GraphDisplayBroker;
@@ -46,13 +47,18 @@ public class GraphClassesScript extends GhidraScript {
 		Category category = dataTypeManager.getCategory(dataTypePath);
 		if (category == null) {
 			println(
-				"/ClassDataTypes folder does not exist so there is no class data to process. Please run the ExtractClassInfoFromRTTIScript to generate the necessary information needed to run this script.");
+				"/ClassDataTypes folder does not exist so there is no class data to process. Please run the RecoverClassesFromRTTIScript to generate the necessary information needed to run this script.");
 			return;
 		}
 
 		Category[] subCategories = category.getCategories();
 
 		getClassStructures(subCategories);
+
+		if (classStructures.isEmpty()) {
+			println("There were no class structures to process.");
+			return;
+		}
 
 		AttributedGraph graph = createGraph();
 		if (graph.getVertexCount() == 0) {
@@ -93,43 +99,47 @@ public class GraphClassesScript extends GhidraScript {
 		}
 	}
 
-	private AttributedGraph createGraph() throws CancelledException {
+	/**
+	 * Method to create a graph using preconfigured information found in class structure descriptions. 
+	 * The structure descriptions are created using 
+	 * {@link RecoveredClassUtils#createParentStringBuffer(RecoveredClass)}
+	 * @return the newly created graph
+	 */
+	private AttributedGraph createGraph() throws Exception {
 
 		AttributedGraph g = new AttributedGraph();
 
-		Iterator<Structure> classStructuresIterator = classStructures.iterator();
-		while (classStructuresIterator.hasNext()) {
+		for (Structure classStructure : classStructures) {
 
 			monitor.checkCanceled();
 
-			Structure classStructure = classStructuresIterator.next();
-
 			String description = classStructure.getDescription();
-			String mainClassName = getClassName(description);
 
-			if (mainClassName == null) {
+			// parse description for class hierarchy
+			if (!description.startsWith("class")) {
 				continue;
 			}
 
-			AttributedVertex classVertex = g.addVertex(mainClassName);
+			// skip "class " to get overall class
+			description = description.substring(6);
+			String mainClassName = getClassName(description);
+
+			if (mainClassName == null || mainClassName.isBlank()) {
+				continue;
+			}
+
+			AttributedVertex classVertex =
+				g.addVertex(classStructure.getCategoryPath().getPath(), mainClassName);
+			classVertex.setDescription(classStructure.getCategoryPath().getPath());
 
 			int numParents = 0;
-			while (description.contains(":")) {
+			description = removeClassSubstring(description, mainClassName);
+
+			while (description != null) {
 
 				numParents++;
 
-				int indexOfColon = description.indexOf(":", 0);
-
-				description = description.substring(indexOfColon + 1);
-
-				int endOfBlock = description.indexOf(":", 0);
-				if (endOfBlock == -1) {
-					endOfBlock = description.length();
-				}
-
-				String parentName = description.substring(0, endOfBlock);
-
-				description = description.substring(endOfBlock);
+				String parentName = getClassName(description);
 
 				boolean isVirtualParent = false;
 				if (parentName.contains("virtual")) {
@@ -139,14 +149,38 @@ public class GraphClassesScript extends GhidraScript {
 				parentName = parentName.replace("virtual", "");
 				parentName = parentName.replace(" ", "");
 
+				// first try to get parent structure from inside child structure
+				Structure parentStructure =
+					getParentStructureFromChildStructure(classStructure, parentName);
 
-				AttributedVertex parentVertex = g.addVertex(parentName);
+				// if parent structure isn't in child structure then try to get it by name
+				// from the list of class structures - only returns one if unique
+				if (parentStructure == null) {
+					parentStructure = getParentStructureFromClassStructures(parentName);
+				}
+
+				AttributedVertex parentVertex;
+				if (parentStructure == null) {
+					parentVertex = g.addVertex(parentName);
+					parentVertex.setDescription("Couldn't get parent structure " + parentName +
+						" from structure " + classStructure.getName() +
+						" or uniquely from all class structures");
+					println("Couldn't get parent structure " + parentName + " from structure " +
+						classStructure.getName() + " or uniquely from all class structures");
+				}
+				else {
+					parentVertex =
+						g.addVertex(parentStructure.getCategoryPath().getPath(), parentName);
+					parentVertex.setDescription(parentStructure.getCategoryPath().getPath());
+				}
 
 				AttributedEdge edge = g.addEdge(parentVertex, classVertex);
 				if (isVirtualParent) {
 					edge.setAttribute("Color", "Orange");
 				}
 				// else leave it default lime green
+
+				description = removeClassSubstring(description, parentName);
 			}
 
 			// no parent = blue vertex
@@ -166,6 +200,94 @@ public class GraphClassesScript extends GhidraScript {
 		return g;
 	}
 
+	private String removeClassSubstring(String string, String substring) {
+
+		int indexofSubstring = string.indexOf(substring);
+		if (indexofSubstring == -1) {
+			return null;
+		}
+
+		if (indexofSubstring + substring.length() >= string.length()) {
+			return null;
+		}
+
+		String newString = string.substring(indexofSubstring + substring.length());
+		if (newString.isBlank() || newString.isEmpty()) {
+			return null;
+		}
+
+		// should be a space : space and another class name next if gets to here
+		if (newString.length() < 4) {
+			return null;
+		}
+
+		if (newString.indexOf(" : ") == 0) {
+			return newString.substring(3);
+		}
+
+		return null;
+
+	}
+
+	private int getIndexOfFirstSingleColon(String string) {
+
+		// replace all :: with something else so can isolate :'s 
+		String testString = new String(string);
+		testString = testString.replace("::", "xx");
+
+		return testString.indexOf(":", 0);
+
+	}
+
+	/**
+	 * Attempts to get the parent structure from within the child structure given the parent name
+	 * @param childStructure the child structure
+	 * @param parentName the name of the parent structure
+	 * @return the parent structure or null if the parent structure is not contained in the child structure
+	 * @throws CancelledException if cancelled
+	 */
+	private Structure getParentStructureFromChildStructure(Structure childStructure,
+			String parentName)
+			throws CancelledException {
+
+		DataTypeComponent[] components = childStructure.getComponents();
+		for (DataTypeComponent component : components) {
+
+			monitor.checkCanceled();
+			DataType componentDataType = component.getDataType();
+			if (componentDataType instanceof Structure &&
+				componentDataType.getName().equals(parentName)) {
+				return (Structure) componentDataType;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Attempts to get the parent structure from the list of class structures
+	 * @param parentName the name of the parent
+	 * @return the parent structure if there is only one with the given name, else returns null
+	 * @throws CancelledException if cancelled
+	 */
+	private Structure getParentStructureFromClassStructures(String parentName)
+			throws CancelledException {
+
+		List<Structure> parentStructures = new ArrayList<Structure>();
+		for (Structure classStructure : classStructures) {
+			monitor.checkCanceled();
+
+			if (classStructure.getName().equals(parentName)) {
+				parentStructures.add(classStructure);
+			}
+
+		}
+		if (parentStructures.size() == 1) {
+			return parentStructures.get(0);
+		}
+		return null;
+
+	}
+
 	private void showGraph(AttributedGraph graph) throws Exception {
 
 		GraphDisplay display;
@@ -176,26 +298,20 @@ public class GraphClassesScript extends GhidraScript {
 		display.setGraph(graph, "test graph", false, TaskMonitor.DUMMY);
 	}
 
+
 	private String getClassName(String description) {
 
-		// parse description for class hierarchy
-		if (!description.startsWith("class")) {
-			return null;
-		}
-
-		// skip "class " to get overall class
-		description = description.substring(6);
-		int indexOfColon = description.indexOf(":", 0);
-		String mainClassName;
+		int indexOfColon = getIndexOfFirstSingleColon(description);
+		String firstClassName;
 		if (indexOfColon == -1) {
-			mainClassName = description;
+			firstClassName = description;
 		}
 		else {
-			mainClassName = description.substring(0, indexOfColon - 1);
+			firstClassName = description.substring(0, indexOfColon - 1);
 		}
-		mainClassName = mainClassName.replace(" ", "");
+		firstClassName = firstClassName.replace(" ", "");
 
-		return mainClassName;
+		return firstClassName;
 	}
 
 }
