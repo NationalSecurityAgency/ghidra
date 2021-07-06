@@ -76,7 +76,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 				assertEquals("apples", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(DataType.DEFAULT, function.getReturnType());
-				assertEquals(SourceType.USER_DEFINED, function.getReturn().getSource());
+				assertEquals(SourceType.DEFAULT, function.getReturn().getSource());
 				assertEquals("unknown", function.getCallingConventionName());
 				assertEquals(new AddressSet(), function.getBody());
 				assertEquals(null, function.getComment());
@@ -297,7 +297,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 				assertEquals("apples", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(DataType.DEFAULT, function.getReturnType());
-				assertEquals(SourceType.USER_DEFINED, function.getReturn().getSource());
+				assertEquals(SourceType.DEFAULT, function.getReturn().getSource());
 				assertEquals("unknown", function.getCallingConventionName());
 				assertEquals(new AddressSet(), function.getBody());
 				assertEquals(null, function.getComment());
@@ -518,7 +518,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 				assertEquals("apples", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(DataType.DEFAULT, function.getReturnType());
-				assertEquals(SourceType.USER_DEFINED, function.getReturn().getSource());
+				assertEquals(SourceType.DEFAULT, function.getReturn().getSource());
 				assertEquals("unknown", function.getCallingConventionName());
 				assertEquals(new AddressSet(), function.getBody());
 				assertEquals(null, function.getComment());
@@ -753,7 +753,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 				assertEquals("apples", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(DataType.DEFAULT, function.getReturnType());
-				assertEquals(SourceType.USER_DEFINED, function.getReturn().getSource());
+				assertEquals(SourceType.DEFAULT, function.getReturn().getSource());
 				assertEquals("unknown", function.getCallingConventionName());
 				assertEquals(new AddressSet(), function.getBody());
 				assertEquals(null, function.getComment());
@@ -945,7 +945,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 				assertEquals("apples", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(DataType.DEFAULT, function.getReturnType());
-				assertEquals(SourceType.USER_DEFINED, function.getReturn().getSource());
+				assertEquals(SourceType.DEFAULT, function.getReturn().getSource());
 				assertEquals("unknown", function.getCallingConventionName());
 				assertEquals(new AddressSet(), function.getBody());
 				assertEquals(null, function.getComment());
@@ -1137,7 +1137,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 				assertEquals("apples", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(DataType.DEFAULT, function.getReturnType());
-				assertEquals(SourceType.USER_DEFINED, function.getReturn().getSource());
+				assertEquals(SourceType.DEFAULT, function.getReturn().getSource());
 				assertEquals("unknown", function.getCallingConventionName());
 				assertEquals(new AddressSet(), function.getBody());
 				assertEquals(null, function.getComment());
@@ -1372,7 +1372,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 				assertEquals("apples", function.getName());
 				assertEquals(SourceType.USER_DEFINED, function.getSymbol().getSource());
 				checkDataType(DataType.DEFAULT, function.getReturnType());
-				assertEquals(SourceType.USER_DEFINED, function.getReturn().getSource());
+				assertEquals(SourceType.DEFAULT, function.getReturn().getSource());
 				assertEquals("unknown", function.getCallingConventionName());
 				assertEquals(new AddressSet(), function.getBody());
 				assertEquals(null, function.getComment());

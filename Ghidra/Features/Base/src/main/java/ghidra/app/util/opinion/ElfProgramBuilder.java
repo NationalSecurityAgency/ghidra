@@ -31,8 +31,7 @@ import ghidra.app.util.bin.format.MemoryLoadable;
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.ElfDynamicType.ElfDynamicValueType;
 import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
-import ghidra.app.util.bin.format.elf.relocation.ElfRelocationContext;
-import ghidra.app.util.bin.format.elf.relocation.ElfRelocationHandler;
+import ghidra.app.util.bin.format.elf.relocation.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
@@ -732,19 +731,27 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	private void processRelocations(TaskMonitor monitor) throws CancelledException {
 		monitor.setMessage("Processing relocation tables...");
 
+		ElfRelocationTable[] relocationTables = elf.getRelocationTables();
+		if (relocationTables.length == 0) {
+			return;
+		}
+
 		boolean processRelocations = ElfLoaderOptionsFactory.performRelocations(options);
+		if (processRelocations && ElfRelocationHandlerFactory.getHandler(elf) == null) {
+			log("ELF relocation handler extension not found!  Unable to process relocations.");
+		}
 
 		Address defaultBase = getDefaultAddress(elf.adjustAddressForPrelink(0));
 		AddressSpace defaultSpace = defaultBase.getAddressSpace();
 		long defaultBaseOffset = defaultBase.getAddressableWordOffset();
 
 		int totalCount = 0;
-		for (ElfRelocationTable relocationTable : elf.getRelocationTables()) {
+		for (ElfRelocationTable relocationTable : relocationTables) {
 			totalCount += relocationTable.getRelocationCount();
 		}
 		monitor.initialize(totalCount);
 
-		for (ElfRelocationTable relocationTable : elf.getRelocationTables()) {
+		for (ElfRelocationTable relocationTable : relocationTables) {
 
 			monitor.checkCanceled();
 
@@ -877,7 +884,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 				memory.getBytes(relocAddr, bytes);
 
-				if (context != null && context.hasRelocationHandler()) {
+				if (context != null) {
 					if (relrTypeUnknown) {
 						ElfRelocationHandler.markAsUnsupportedRelr(program, relocAddr);
 					}
