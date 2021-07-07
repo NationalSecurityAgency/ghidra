@@ -364,8 +364,8 @@ task assembleDistribution (type: Copy) {
  *			these have already been built and are located in the proper location.
  *
  *********************************************************************************/
-project.OS_NAMES.each { platform ->
-	task ("assembleDistribution_$platform", type: Copy ) { 	
+project.PLATFORMS.each { platform ->
+	task ("assembleDistribution_${platform.name}", type: Copy ) { 	
 		
 		// delete the gradle ziptree temp directory because of gradle bug not cleaning up its temp files.
 		delete rootProject.file("build/tmp/expandedArchives")
@@ -480,10 +480,9 @@ task createInstallationZip(type: Zip) { t ->
 	dependsOn "assembleDistribution_$currentPlatform"
 	
 	if (project.hasProperty("allPlatforms")) {
-		dependsOn ":assembleDistribution_win32"
-		dependsOn ":assembleDistribution_win64"
-		dependsOn ":assembleDistribution_linux64"
-		dependsOn ":assembleDistribution_osx64"
+		project.PLATFORMS.each { platform ->
+			dependsOn ":assembleDistribution_${platform.name}"
+		}
 	}
 
 	if (project.hasProperty("allPlatforms")) {

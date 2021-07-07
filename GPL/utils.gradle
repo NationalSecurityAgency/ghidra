@@ -1,0 +1,179 @@
+/* ###
+ * IP: Public Domain
+ */
+// BIN_REPO only useable in full Ghidra source configuration
+project.ext.BIN_REPO = file("../../../ghidra.bin").absolutePath
+
+/****************************************************************************
+ * Create a list containing all the platforms we support for building native
+ * artifacts.  Each platform has the following fields:
+ *   name: Ghidra's naming convention for the platform.  This is used in the 
+           native build tasks, and is the name of the os/ subdirectories.
+ *   os:   Gradle's NativePlatform operatingSystem property naming convention.
+ *   arch: Gradle's NativePlatform architecture property naming convention.
+ ****************************************************************************/
+project.ext.PLATFORMS = [
+	[name: "win_x86_32", os: "windows", arch: "x86"],
+	[name: "win_x86_64", os: "windows", arch: "x86_64"],
+	[name: "linux_x86_64", os: "linux", arch: "x86_64"],
+	[name: "linux_arm_64", os: "linux", arch: "arm64"],
+	[name: "mac_x86_64", os: "osx", arch: "x86_64"],
+	[name: "mac_arm_64", os: "osx", arch: "arm64"]
+]
+
+/*********************************************************************************
+ * Returns the local platform name.
+ *********************************************************************************/
+ext.getCurrentPlatformName = {
+
+	String os = System.getProperty("os.name");
+	switch (os) {
+		case ~/Windows.*/:
+			os = "win"
+			break
+		case ~/Linux.*/:
+			os = "linux"
+			break
+		case ~/Mac OS X.*/:
+			os = "mac"
+			break
+		default:
+			throw new GradleException("Unrecognized platform operating system: $os")
+	}
+
+	String arch = System.getProperty("os.arch");
+	switch (arch) {
+		case "x86":
+		case "i386":
+			arch = "x86_32"
+			break
+		case "x86_64":
+		case "amd64":
+			arch = "x86_64"
+			break
+		case "aarch64":
+		case "arm64":
+			arch = "arm_64"
+			break
+		default:
+			throw new GradleException("Unrecognized platform architecture: $arch" )
+	}
+	
+	return "${os}_${arch}"
+}
+
+
+/*********************************************************************************
+ * Returns true if the given platform is linux.
+ *********************************************************************************/
+ext.isLinux = { platform_name ->
+	return platform_name.startsWith("linux")
+}
+/*********************************************************************************
+ * Returns true if the current platform is linux.
+ *********************************************************************************/
+ext.isCurrentLinux = {
+	return isLinux(getCurrentPlatformName())
+}
+
+/*********************************************************************************
+ * Returns true if the given platform is macOS.
+ *********************************************************************************/
+ext.isMac = { platform_name ->
+	return platform_name.startsWith("mac")
+}
+
+/*********************************************************************************
+ * Returns true if the current platform is macOS.
+ *********************************************************************************/
+ext.isCurrentMac = {
+	return isMac(getCurrentPlatformName())
+}
+
+/*********************************************************************************
+ * Returns true if the given platform is Windows.
+ *********************************************************************************/
+ext.isWindows = { platform_name ->
+	return platform_name.startsWith("win")
+}
+
+/*********************************************************************************
+ * Returns true if the current platform is Windows.
+ *********************************************************************************/
+ext.isCurrentWindows = {
+	return isWindows(getCurrentPlatformName())
+}
+
+/*********************************************************************************
+ * Returns true if the given platform is x86.
+ *********************************************************************************/
+ext.isX86 = { platform_name ->
+	return platform_name.contains("x86")
+}
+/*********************************************************************************
+ * Returns true if the current platform is x86.
+ *********************************************************************************/
+ext.isCurrentX86 = {
+	return isX86(getCurrentPlatformName())
+}
+
+/*********************************************************************************
+ * Returns true if the given platform is ARM.
+ *********************************************************************************/
+ext.isArm = { platform_name ->
+	return platform_name.contains("arm")
+}
+/*********************************************************************************
+ * Returns true if the current platform is ARM.
+ *********************************************************************************/
+ext.isCurrentArm = {
+	return isArm(getCurrentPlatformName())
+}
+
+/******************************************************************************************
+ *	Helper method that returns a file that is the same relative location in the bin repo
+ *  as the given project is in its repo.
+ ******************************************************************************************/
+ext.getProjectLocationInBinRepo = {
+	String relativePath = getGhidraRelativePath(this.project)
+	println("RELATIVE: $relativePath")
+	File binRepoRootProject = new File("${BIN_REPO}")
+	if (!binRepoRootProject.isDirectory()) {
+		throw new GradleException("Task requires Ghidra source and ghidra.bin")
+	}
+	return new File(binRepoRootProject, relativePath)
+}
+/****************************************************************************************
+ * Returns the "effective" relative path (Path starting with Ghidra)
+ * Normally, for files in the ghidra repo this is just the relative path from 
+ * the root project (ghidra) to the given project.  
+ *
+ *  For example <...>/ghidra/Ghidra/Features/Base will return Ghidra/Features/Base
+ *
+ *  If the project is in a sibling repo (ghidra.<other> that lives in the same directory
+ *  as ghidra), then this method returns a relative path as though the project lived
+ *  in ghidra.  
+ *
+ *	for example <...>/ghidra.foo/Ghidra/Features/OtherProject will return Ghidra/Features/OtherProject
+ ****************************************************************************************/
+String getGhidraRelativePath(Project p) {
+	String path = rootProject.relativePath(p.projectDir)
+
+	// If the project lives outside the ghidra repo, then its relative path will
+	// start with "../".  In this case, we want to remove the "../" and the next path element
+	// so that the path will appear as though the project lived under the ghidra repo.
+	// example:   "../ghidra/Ghidra/Features/Foo"  will get changed to "Ghidra/Features/Foo"
+	String prefix = ".."+File.separator
+	if (path.startsWith(prefix)) {
+		int index = path.indexOf(File.separator,3)
+		path = path.substring(index+1)
+	}
+
+	return path
+}
+
+/****************************************************************************
+ * Establish Visual Studio configuration environment for Windows native builds
+ * NOTE: vsconfig.gradle path is relative to each GPL project module
+ ****************************************************************************/
+apply from: buildscript.sourceFile.getParent() + "/vsconfig.gradle"
