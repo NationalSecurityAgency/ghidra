@@ -1,0 +1,13 @@
+<patternlist>
+  <patternpairs totalbits="32" postbits="16">
+    <prepatterns>
+        <data>0xd5 ........</data>
+        <data>0x48 ........ ........ ........</data>
+        <data>0x92 0x00</data>
+    </prepatterns>
+    <postpatterns>
+       <data>0011101. ....1111 1......0 .0111100</data>
+       <funcstart/>
+    </postpatterns>
+  </patternpairs>
+</patternlist>
