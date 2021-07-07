@@ -114,7 +114,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	// multiple parents = red vertex
 	// edge between child and parent is orange if child inherits the parent virtually
 	// edge between child and parent is lime green if child inherits the parent non-virtually
-	private static final boolean GRAPH_CLASS_HIERARCHIES = true;
+	private static final boolean GRAPH_CLASS_HIERARCHIES = false;
 
 	// show shortened class template names in class structure field names
 	private static final boolean USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS = true;
