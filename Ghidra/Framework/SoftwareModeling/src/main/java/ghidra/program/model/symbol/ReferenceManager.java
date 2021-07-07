@@ -288,7 +288,7 @@ public interface ReferenceManager {
 	/**
 	 * Returns an iterator over all addresses that are the "From" address in a
 	 * reference, restricted by the given address set.
-	 * @param addrSet the set of address to restrict the iterator.
+	 * @param addrSet the set of address to restrict the iterator or null for all addresses.
 	 * @param forward true means to iterate in the forward direction
 	 */
 	public AddressIterator getReferenceSourceIterator(AddressSetView addrSet, boolean forward);
@@ -304,7 +304,7 @@ public interface ReferenceManager {
 	/**
 	 * Returns an iterator over all addresses that are the "To" address in a
 	 * memory reference, restricted by the given address set.
-	 * @param addrSet the set of address to restrict the iterator.
+	 * @param addrSet the set of address to restrict the iterator or null for all addresses.
 	 * @param forward true means to iterate in the forward direction
 	 */
 	public AddressIterator getReferenceDestinationIterator(AddressSetView addrSet, boolean forward);

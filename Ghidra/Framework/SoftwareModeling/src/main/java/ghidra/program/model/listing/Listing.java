@@ -213,7 +213,7 @@ public interface Listing {
 	 * addresses are contained in the given address set will be returned by the
 	 * iterator.
 	 *
-	 * @param addrSet the AddressRangeSet to iterate over.
+	 * @param addrSet the AddressRangeSet to iterate over (required).
 	 * @param forward true means get iterator in forward direction
 	 * @return a CodeUnitIterator that is restricted to the give
 	 *         AddressRangeSet.

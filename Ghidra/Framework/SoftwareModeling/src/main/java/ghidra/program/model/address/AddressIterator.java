@@ -16,6 +16,7 @@
 package ghidra.program.model.address;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import util.CollectionUtils;
 
@@ -30,20 +31,24 @@ import util.CollectionUtils;
  */
 
 public interface AddressIterator extends Iterator<Address>, Iterable<Address> {
-	/**
-	 * Get the next address.
-	 * 
-	 * @return the next address in the iteration.
-	 */
-	@Override
-	public Address next();
 
-	/**
-	 * Checks if there is a next address in the iteration.
-	 * 
-	 * @return true if there is a next address.
-	 */
-	@Override
-	public boolean hasNext();
+	public static final AddressIterator EMPTY_ITERATOR = new AddressIterator() {
+
+		@Override
+		public boolean hasNext() {
+			return false;
+		}
+
+		@Override
+		public Address next() {
+			throw new NoSuchElementException();
+		}
+
+		@Override
+		public Iterator<Address> iterator() {
+			return this;
+		}
+
+	};
 
 }
