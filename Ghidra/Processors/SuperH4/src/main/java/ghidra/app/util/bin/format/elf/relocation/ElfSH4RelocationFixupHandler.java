@@ -34,6 +34,9 @@ public class ElfSH4RelocationFixupHandler extends RelocationFixupHandler {
 		switch (relocation.getType()) {
 			case SH_ElfRelocationConstants.R_SH_DIR32:
 			case SH_ElfRelocationConstants.R_SH_REL32:
+			case SH_ElfRelocationConstants.R_SH_GLOB_DAT:
+			case SH_ElfRelocationConstants.R_SH_JMP_SLOT:
+			case SH_ElfRelocationConstants.R_SH_RELATIVE:
 				return process32BitRelocation(program, relocation, oldImageBase, newImageBase);
 
 //			case SH_ElfRelocationConstants.R_SH_DIR8WPN:
