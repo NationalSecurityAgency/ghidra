@@ -163,7 +163,7 @@ ADDRIX: (imm16,X) is X; imm16     { addr:2 = imm16 + zext(X); tmp:2 = *:2 addr; 
 :SBC ZIOP                      is (cc=2 & aaa=7) ... & ZIOP
 {
     local op1 = ZIOP;
-    local result = A - op1 - C;
+    local result = A - op1 - (1 - C);
 
     subtraction_flags1(A, op1, result);
     A = result;
