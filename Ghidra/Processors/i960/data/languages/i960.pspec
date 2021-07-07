@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="ip"/>
+
+  <default_symbols>
+    <symbol name="DLMCON" address="ram:0xFF008100" />
+    <symbol name="LMADR0" address="ram:0xFF008108" />
+    <symbol name="LMMR0" address="ram:0xFF00810C" />
+    <symbol name="LMADR1" address="ram:0xFF008110" />
+    <symbol name="LMMR1" address="ram:0xFF008114" />
+    <symbol name="IPB0" address="ram:0xFF008400" />
+    <symbol name="IPB1" address="ram:0xFF008404" />
+    <symbol name="DAB0" address="ram:0xFF008420" />
+    <symbol name="DAB1" address="ram:0xFF008424" />
+    <symbol name="BPCON" address="ram:0xFF008440" />
+    <symbol name="IPND" address="ram:0xFF008500" />
+    <symbol name="IMSK" address="ram:0xFF008504" />
+    <symbol name="ICON" address="ram:0xFF008510" />
+    <symbol name="IMAP0" address="ram:0xFF008520" />
+    <symbol name="IMAP1" address="ram:0xFF008524" />
+    <symbol name="IMAP2" address="ram:0xFF008528" />
+    <symbol name="PMCON0_1" address="ram:0xFF008600" />
+    <symbol name="PMCON2_3" address="ram:0xFF008608" />
+    <symbol name="PMCON4_5" address="ram:0xFF008610" />
+    <symbol name="PMCON6_7" address="ram:0xFF008618" />
+    <symbol name="PMCON8_9" address="ram:0xFF008620" />
+    <symbol name="PMCON10_11" address="ram:0xFF008628" />
+    <symbol name="PMCON12_13" address="ram:0xFF008630" />
+    <symbol name="PMCON14_15" address="ram:0xFF008638" />
+    <symbol name="BCON" address="ram:0xFF0086FC" />
+    <symbol name="PRCB" address="ram:0xFF008700" />
+    <symbol name="ISP" address="ram:0xFF008704" />
+    <symbol name="SSP" address="ram:0xFF008708" />
+    <symbol name="DEVICEID" address="ram:0xFF008710" />
+    <symbol name="TRR0" address="ram:0xFF000300" />
+    <symbol name="TCR0" address="ram:0xFF000304" />
+    <symbol name="TMR0" address="ram:0xFF000308" />
+    <symbol name="TRR1" address="ram:0xFF000310" />
+    <symbol name="TCR1" address="ram:0xFF000314" />
+    <symbol name="TMR1" address="ram:0xFF000318" />
+  </default_symbols>
+</processor_spec>
