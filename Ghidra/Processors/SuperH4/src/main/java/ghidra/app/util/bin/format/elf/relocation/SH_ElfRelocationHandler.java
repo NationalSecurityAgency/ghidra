@@ -59,9 +59,13 @@ public class SH_ElfRelocationHandler extends ElfRelocationHandler {
 		int symbolValue = (int) elfRelocationContext.getSymbolValue(sym);
 
 		int newValue = 0;
+		int oldValue;
 
 		switch (type) {
-			case SH_ElfRelocationConstants.R_SH_DIR32: { //32 bit absolute relocation
+			case SH_ElfRelocationConstants.R_SH_DIR32:
+			case SH_ElfRelocationConstants.R_SH_GLOB_DAT:
+			case SH_ElfRelocationConstants.R_SH_JMP_SLOT:
+				// 32-bit absolute relocations
 				if (elfRelocationContext.extractAddend()) {
 					addend = memory.getInt(relocationAddress);
 				}
@@ -72,64 +76,69 @@ public class SH_ElfRelocationHandler extends ElfRelocationHandler {
 				newValue = symbolValue + addend;
 				memory.setInt(relocationAddress, newValue);
 				break;
-			}
-			case SH_ElfRelocationConstants.R_SH_REL32: { // 32 bit PC relative relocation
+
+			case SH_ElfRelocationConstants.R_SH_REL32:  // 32-bit PC relative relocation
 				if (elfRelocationContext.extractAddend()) {
 					addend = memory.getInt(relocationAddress);
 				}
 				newValue = (symbolValue + addend) - offset;
 				memory.setInt(relocationAddress, newValue);
 				break;
-			}
-			case SH_ElfRelocationConstants.R_SH_DIR8WPN:   // 8-bit PC relative branch divided by 2
-			case SH_ElfRelocationConstants.R_SH_DIR8WPZ: { // 8-bit PC unsigned-relative branch divided by 2
-				short oldShortValue = memory.getShort(relocationAddress);
+
+			case SH_ElfRelocationConstants.R_SH_DIR8WPN:  // 8-bit PC relative branch divided by 2
+			case SH_ElfRelocationConstants.R_SH_DIR8WPZ:  // 8-bit PC unsigned-relative branch divided by 2
+				oldValue = memory.getShort(relocationAddress);
 				if (elfRelocationContext.extractAddend()) {
-					addend = oldShortValue & 0xff;
+					addend = oldValue & 0xff;
 					if (type == SH_ElfRelocationConstants.R_SH_DIR8WPN && (addend & 0x80) != 0) {
 						addend -= 0x100; // sign-extend addend for R_SH_DIR8WPN
 					}
 				}
 				newValue = ((symbolValue + addend) - offset) >> 1;
-				newValue = (oldShortValue & 0xff00) | (newValue & 0xff);
+				newValue = (oldValue & 0xff00) | (newValue & 0xff);
 				memory.setShort(relocationAddress, (short) newValue);
 				break;
-			}
-			case SH_ElfRelocationConstants.R_SH_IND12W: { // 12-bit PC relative branch divided by 2
-				short oldShortValue = memory.getShort(relocationAddress);
+
+			case SH_ElfRelocationConstants.R_SH_IND12W:  // 12-bit PC relative branch divided by 2
+				oldValue = memory.getShort(relocationAddress);
 				if (elfRelocationContext.extractAddend()) {
-					addend = oldShortValue & 0xfff;
+					addend = oldValue & 0xfff;
 					if ((addend & 0x800) != 0) {
 						addend -= 0x1000; // sign-extend addend
 					}
 				}
 				newValue = ((symbolValue + addend) - offset) >> 1;
-				newValue = (oldShortValue & 0xf000) | (newValue & 0xfff);
+				newValue = (oldValue & 0xf000) | (newValue & 0xfff);
 				memory.setShort(relocationAddress, (short) newValue);
 				break;
-			}
-			case SH_ElfRelocationConstants.R_SH_DIR8WPL: { // 8-bit PC unsigned-relative branch divided by 4
-				short oldShortValue = memory.getShort(relocationAddress);
+
+			case SH_ElfRelocationConstants.R_SH_DIR8WPL:  // 8-bit PC unsigned-relative branch divided by 4
+				oldValue = memory.getShort(relocationAddress);
 				if (elfRelocationContext.extractAddend()) {
-					addend = oldShortValue & 0xff;
+					addend = oldValue & 0xff;
 				}
 				newValue = ((symbolValue + addend) - offset) >> 2;
-				newValue = (oldShortValue & 0xff00) | (newValue & 0xff);
+				newValue = (oldValue & 0xff00) | (newValue & 0xff);
 				memory.setShort(relocationAddress, (short) newValue);
 				break;
-			}
 
-			case SH_ElfRelocationConstants.R_SH_COPY: {
+			case SH_ElfRelocationConstants.R_SH_COPY:
 				markAsWarning(program, relocationAddress, "R_SH_COPY", symbolName, symbolIndex,
 					"Runtime copy not supported", elfRelocationContext.getLog());
 				break;
-			}
 
-			default: {
+			case SH_ElfRelocationConstants.R_SH_RELATIVE:
+				if (elfRelocationContext.extractAddend()) {
+					addend = memory.getInt(relocationAddress);
+				}
+				newValue = (int) (elfRelocationContext.getImageBaseWordAdjustmentOffset()) + addend;
+				memory.setInt(relocationAddress, newValue);
+				break;
+
+			default:
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
 					elfRelocationContext.getLog());
 				break;
-			}
 		}
 	}
 
