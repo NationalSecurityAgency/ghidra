@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +15,21 @@
  */
 package ghidra.program.database.map;
 
-import ghidra.program.model.address.*;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 import db.DBLongIterator;
 import db.Table;
+import ghidra.program.model.address.*;
 
 /**
  * Iterator of primary keys that are addresses. The longs returned are the address longs.
  */
 
 public class AddressKeyIterator implements DBLongIterator {
+
+	public static final AddressKeyIterator EMPTY_ITERATOR = new AddressKeyIterator();
 
 	private Table table;
 
@@ -40,7 +40,7 @@ public class AddressKeyIterator implements DBLongIterator {
 	/**
 	 * Constructs an empty iterator.
 	 */
-	public AddressKeyIterator() {
+	private AddressKeyIterator() {
 	}
 
 	/**
@@ -96,7 +96,7 @@ public class AddressKeyIterator implements DBLongIterator {
 	 * Memory addresses encoded as Absolute are not included.
 	 * @param table the database table key by addresses
 	 * @param addrMap the address map
-	 * @param set the address set to iterator over
+	 * @param set the address set to iterator over (may be null for all defined memory)
 	 * @param startAddr the address at which to position the iterator, can be null. The exact
 	 * position of the iterator depends on the before parameter.
 	 * @param before positions the iterator before the start address,otherwise after
@@ -115,7 +115,7 @@ public class AddressKeyIterator implements DBLongIterator {
 	 * @param addrMap the address map
 	 * @param absolute if true, only absolute memory address encodings are considered, otherwise 
 	 * only standard/relocatable address encodings are considered.
-	 * @param set the address set to iterator over
+	 * @param set the address set to iterator over or null for all addresses.
 	 * @param startAddr the address at which to position the iterator, can be null. The exact
 	 * position of the iterator depends on the before parameter.
 	 * @param before positions the iterator before the start address,otherwise after
@@ -180,6 +180,7 @@ public class AddressKeyIterator implements DBLongIterator {
 	/**
 	 * @see db.DBLongIterator#hasNext()
 	 */
+	@Override
 	public boolean hasNext() throws IOException {
 		if (it == null) {
 			return false;
@@ -203,6 +204,7 @@ public class AddressKeyIterator implements DBLongIterator {
 	/**
 	 * @see db.DBLongIterator#hasPrevious()
 	 */
+	@Override
 	public boolean hasPrevious() throws IOException {
 		if (it == null) {
 			return false;
@@ -226,6 +228,7 @@ public class AddressKeyIterator implements DBLongIterator {
 	/**
 	 * @see db.DBLongIterator#next()
 	 */
+	@Override
 	public long next() throws IOException {
 		if (hasNext()) {
 			return it.next();
@@ -236,6 +239,7 @@ public class AddressKeyIterator implements DBLongIterator {
 	/**
 	 * @see db.DBLongIterator#previous()
 	 */
+	@Override
 	public long previous() throws IOException {
 		if (hasPrevious()) {
 			return it.previous();
@@ -246,6 +250,7 @@ public class AddressKeyIterator implements DBLongIterator {
 	/**
 	 * @see db.DBLongIterator#delete()
 	 */
+	@Override
 	public boolean delete() throws IOException {
 		if (it != null) {
 			return it.delete();

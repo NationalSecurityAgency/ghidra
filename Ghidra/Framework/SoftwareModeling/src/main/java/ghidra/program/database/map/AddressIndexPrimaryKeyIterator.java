@@ -93,7 +93,7 @@ public class AddressIndexPrimaryKeyIterator implements DBFieldIterator {
 	 * @param addrMap the address map
 	 * @param absolute if true, only absolute memory address encodings are considered, otherwise 
 	 * only standard/relocatable address encodings are considered.
-	 * @param set the set of addresses to iterator over.
+	 * @param set the set of addresses to iterator over or null for all addresses.
 	 * @param atStart if true, iterates forward, otherwise iterates backwards.
 	 * @throws IOException if a database io error occurs.
 	 */

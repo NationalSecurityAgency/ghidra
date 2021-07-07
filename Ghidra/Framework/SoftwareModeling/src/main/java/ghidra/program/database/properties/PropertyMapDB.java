@@ -434,7 +434,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 
 	/**
 	 * Get an iterator over the long address keys which contain a property value.
-	 * @param set
+	 * @param set addresses over which to iterate (null indicates all defined memory regions)
 	 * @param atStart true if the iterator should be positioned at the start
 	 * of the range
 	 * @return long address iterator.
@@ -442,9 +442,8 @@ public abstract class PropertyMapDB implements PropertyMap {
 	 */
 	public AddressKeyIterator getAddressKeyIterator(AddressSetView set, boolean atStart)
 			throws IOException {
-
-		if (propertyTable == null) {
-			return new AddressKeyIterator();
+		if (propertyTable == null || (set != null && set.isEmpty())) {
+			return AddressKeyIterator.EMPTY_ITERATOR;
 		}
 		if (atStart) {
 			return new AddressKeyIterator(propertyTable, addrMap, set, set.getMinAddress(), true);
@@ -463,7 +462,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 			throws IOException {
 
 		if (propertyTable == null) {
-			return new AddressKeyIterator();
+			return AddressKeyIterator.EMPTY_ITERATOR;
 		}
 		return new AddressKeyIterator(propertyTable, addrMap, start, before);
 	}
@@ -481,7 +480,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 			throws IOException {
 
 		if (propertyTable == null) {
-			return new AddressKeyIterator();
+			return AddressKeyIterator.EMPTY_ITERATOR;
 		}
 		if (atStart) {
 			return new AddressKeyIterator(propertyTable, addrMap, start, end, start, true);
@@ -561,8 +560,8 @@ public abstract class PropertyMapDB implements PropertyMap {
 	 */
 	@Override
 	public AddressIterator getPropertyIterator(AddressSetView asv, boolean forward) {
-		if (propertyTable == null) {
-			return new EmptyAddressIterator();
+		if (propertyTable == null || (asv != null && asv.isEmpty())) {
+			return AddressIterator.EMPTY_ITERATOR;
 		}
 		AddressKeyIterator keyIter = null;
 		try {

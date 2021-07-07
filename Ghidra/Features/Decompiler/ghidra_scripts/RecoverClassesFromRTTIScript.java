@@ -114,7 +114,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	// multiple parents = red vertex
 	// edge between child and parent is orange if child inherits the parent virtually
 	// edge between child and parent is lime green if child inherits the parent non-virtually
-	private static final boolean GRAPH_CLASS_HIERARCHIES = false;
+	private static final boolean GRAPH_CLASS_HIERARCHIES = true;
 
 	// show shortened class template names in class structure field names
 	private static final boolean USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS = true;
@@ -342,7 +342,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 			RecoveredClass recoveredClass = recoveredClassIterator.next();
 
-			AttributedVertex classVertex = g.addVertex(recoveredClass.getName());
+			AttributedVertex classVertex =
+				g.addVertex(recoveredClass.getClassPath().getPath(), recoveredClass.getName());
 
 			Map<RecoveredClass, List<RecoveredClass>> classHierarchyMap =
 				recoveredClass.getClassHierarchyMap();
@@ -350,6 +351,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			// no parent = blue vertex
 			if (classHierarchyMap.isEmpty()) {
 				classVertex.setAttribute("Color", "Blue");
+				classVertex.setDescription(recoveredClass.getClassPath().getPath());
 				continue;
 			}
 
@@ -364,6 +366,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 				classVertex.setAttribute("Color", "Red");
 			}
 
+			classVertex.setDescription(recoveredClass.getClassPath().getPath());
+
 			Map<RecoveredClass, Boolean> parentToBaseTypeMap =
 				recoveredClass.getParentToBaseTypeMap();
 
@@ -372,7 +376,10 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 				monitor.checkCanceled();
 				RecoveredClass parent = parentIterator.next();
 
-				AttributedVertex parentVertex = g.addVertex(parent.getName());
+				AttributedVertex parentVertex =
+					g.addVertex(parent.getClassPath().getPath(), parent.getName());
+
+				parentVertex.setDescription(parent.getClassPath().getPath());
 
 				AttributedEdge edge = g.addEdge(parentVertex, classVertex);
 

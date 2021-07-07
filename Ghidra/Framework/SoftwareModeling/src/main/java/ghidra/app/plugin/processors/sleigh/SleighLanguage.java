@@ -1433,7 +1433,7 @@ public class SleighLanguage implements Language {
 			if ((element instanceof OverlayAddressSpace)) {
 				OverlayAddressSpace ospace = (OverlayAddressSpace) element;
 				resBuf.append("<space_overlay");
-				SpecXmlUtils.encodeStringAttribute(resBuf, "name", ospace.getName());
+				SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", ospace.getName());
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "index", ospace.getUnique());
 				SpecXmlUtils.encodeStringAttribute(resBuf, "base",
 					ospace.getOverlayedSpace().getName());

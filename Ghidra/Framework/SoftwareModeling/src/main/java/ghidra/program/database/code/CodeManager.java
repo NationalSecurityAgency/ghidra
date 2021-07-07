@@ -1174,6 +1174,9 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		if (addrSetView == null) {
 			addrSetView = program.getMemory();
 		}
+		else if (addrSetView.isEmpty()) {
+			return CodeUnitIterator.EMPTY_ITERATOR;
+		}
 
 		if (property.equals(CodeUnit.COMMENT_PROPERTY)) {
 			try {
@@ -1219,7 +1222,8 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	/**
 	 * Get a forward iterator over code units that have comments of the given type.
 	 * @param commentType comment type defined in CodeUnit
-	 * @param set address set
+	 * @param set address set (null for all defined memory)
+	 * @return code unit iterator
 	 */
 	public CodeUnitIterator getCommentCodeUnitIterator(int commentType, AddressSetView set) {
 		CodeUnitIterator it = getCodeUnitIterator(CodeUnit.COMMENT_PROPERTY, set, true);
@@ -1229,10 +1233,15 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	/**
 	 * Get a forward iterator over addresses that have comments of the given type.
 	 * @param commentType comment type defined in CodeUnit
-	 * @param set address set
+	 * @param set address set (null for all defined memory)
+	 * @param forward true to iterate in the direction of increasing addresses.
+	 * @return address iterator
 	 */
 	public AddressIterator getCommentAddressIterator(int commentType, AddressSetView set,
 			boolean forward) {
+		if (set != null && set.isEmpty()) {
+			return AddressIterator.EMPTY_ITERATOR;
+		}
 		try {
 			AddressKeyIterator keyIter = commentAdapter.getKeys(set, forward);
 			AddressIterator addrIter =
@@ -1251,6 +1260,9 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * @param forward true to iterate in the direction of increasing addresses.
 	 */
 	public AddressIterator getCommentAddressIterator(AddressSetView addrSet, boolean forward) {
+		if (addrSet != null && addrSet.isEmpty()) {
+			return AddressIterator.EMPTY_ITERATOR;
+		}
 		try {
 			AddressKeyIterator keyIter = commentAdapter.getKeys(addrSet, forward);
 			return new AddressKeyAddressIterator(keyIter, forward, addrMap, program);
@@ -1632,6 +1644,9 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 				searchSet = new AddressSet(
 					initializedMemoryOnly ? mem.getLoadedAndInitializedAddressSet() : mem);
 			}
+			else if (set.isEmpty()) {
+				return set;
+			}
 			else {
 				searchSet = new AddressSet(set);
 				searchSet = searchSet.intersect(
@@ -1855,13 +1870,19 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * Returns the next undefined data whose min address falls within the address set
 	 * searching in the forward direction {@code (e.g., 0 -> 0xfff).}
 	 *
-	 * @param set the address set to look within.
+	 * @param set the address set to look within (required).
 	 * @param monitor the current monitor.
 	 * @return Data the first undefined data within the address set, or null if there is none.
 	 */
 	public Data getFirstUndefinedData(AddressSetView set, TaskMonitor monitor) {
+		if (set.isEmpty()) {
+			return null;
+		}
 		Memory mem = program.getMemory();
 		set = mem.intersect(set);
+		if (set.isEmpty()) {
+			return null;
+		}
 
 		int i = 0;
 		CodeUnitIterator it = getCodeUnits(set, true);
@@ -2172,8 +2193,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	private boolean exceedsLimitOn64BitAddressSegments(List<Address> longSegmentAddressList,
 			Address toAddr) {
 		long maskedOffset = toAddr.getOffset() & 0xffffffff00000000L;
-		for (int i = 0; i < longSegmentAddressList.size(); i++) {
-			Address address = longSegmentAddressList.get(i);
+		for (Address address : longSegmentAddressList) {
 			long offset = address.getOffset();
 			if ((offset & 0xffffffff00000000L) == maskedOffset) {
 				return false;
@@ -2419,6 +2439,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * @param forward if true the iterator returns all codeUnits from the given
 	 * start address to the end of the program, otherwise it returns all codeUnits
 	 * from the given start address to the start of the program.
+	 * @return code unit iterator
 	 */
 	public CodeUnitIterator getCodeUnits(Address start, boolean forward) {
 
@@ -2439,6 +2460,10 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 			bounds = program.getAddressFactory().getAddressSet(min, start);
 		}
 
+		AddressSet set = mem.intersect(bounds);
+		if (set.isEmpty()) {
+			return CodeUnitIterator.EMPTY_ITERATOR;
+		}
 		return new CodeUnitRecordIterator(this, getInstructions(start, forward),
 			getDefinedData(start, forward), mem.intersect(bounds), forward);
 	}
@@ -2447,10 +2472,15 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * Returns an iterator over all codeUnits in the given addressSet. The iterator
 	 * will go from the lowest address to the largest or from the largest to the
 	 * lowest depending on the forward parameter.
+	 * @param set the memory address set over which code units should be iterated (required)
 	 * @param forward determines if the iterator goes from lowest address to highest
 	 * or the other way around.
+	 * @return code unit iterator
 	 */
 	public CodeUnitIterator getCodeUnits(AddressSetView set, boolean forward) {
+		if (set.isEmpty()) {
+			return CodeUnitIterator.EMPTY_ITERATOR;
+		}
 		return new CodeUnitRecordIterator(this, getInstructions(set, forward),
 			getDefinedData(set, forward), set, forward);
 	}
@@ -2677,9 +2707,8 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 					}
 				}
 			}
-			for (int i = 0; i < addrs.size(); i++) {
+			for (Address addr : addrs) {
 				monitor.checkCanceled();
-				Address addr = addrs.get(i);
 				clearCodeUnits(addr, addr, false, monitor);
 			}
 		}

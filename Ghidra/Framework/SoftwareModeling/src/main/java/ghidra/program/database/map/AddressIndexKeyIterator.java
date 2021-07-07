@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,12 @@
  */
 package ghidra.program.database.map;
 
-import ghidra.program.model.address.*;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 import db.*;
+import ghidra.program.model.address.*;
 
 /**
  * Iterator of indexed fields that are addresses. The longs returned are the address longs.
@@ -95,7 +93,7 @@ public class AddressIndexKeyIterator implements DBLongIterator {
 	 * @param addrMap the address map
 	 * @param absolute if true, only absolute memory address encodings are considered, otherwise 
 	 * only standard/relocatable address encodings are considered.
-	 * @param set the set of addresses to iterator over.
+	 * @param set the set of addresses to iterator over or null for all addresses.
 	 * @param atStart if true, iterates forward, otherwise iterates backwards.
 	 * @throws IOException if a database io error occurs.
 	 */
@@ -192,6 +190,7 @@ public class AddressIndexKeyIterator implements DBLongIterator {
 	/**
 	 * @see db.DBLongIterator#hasNext()
 	 */
+	@Override
 	public boolean hasNext() throws IOException {
 		if (it == null) {
 			return false;
@@ -217,6 +216,7 @@ public class AddressIndexKeyIterator implements DBLongIterator {
 	/**
 	 * @see db.DBLongIterator#hasPrevious()
 	 */
+	@Override
 	public boolean hasPrevious() throws IOException {
 		if (it == null) {
 			return false;
@@ -242,6 +242,7 @@ public class AddressIndexKeyIterator implements DBLongIterator {
 	/**
 	 * @see db.DBLongIterator#next()
 	 */
+	@Override
 	public long next() throws IOException {
 		if (hasNext()) {
 			return ((LongField) it.next()).getLongValue();
@@ -252,6 +253,7 @@ public class AddressIndexKeyIterator implements DBLongIterator {
 	/**
 	 * @see db.DBLongIterator#previous()
 	 */
+	@Override
 	public long previous() throws IOException {
 		if (hasPrevious()) {
 			return ((LongField) it.previous()).getLongValue();
@@ -262,6 +264,7 @@ public class AddressIndexKeyIterator implements DBLongIterator {
 	/**
 	 * @see db.DBLongIterator#delete()
 	 */
+	@Override
 	public boolean delete() throws IOException {
 		if (it != null) {
 			return it.delete();

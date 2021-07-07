@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.program.database.map;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressIterator;
-
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import db.DBLongIterator;
 import db.util.ErrorHandler;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressIterator;
 
 /**
  * Converts an AddressKeyIterator or an addressKeyAddressIterator into an AddressIterator
@@ -39,6 +37,7 @@ public class AddressKeyAddressIterator implements AddressIterator {
 	/**
 	 * Constructor.
 	 * @param keyIter address key iterator, may be null.  All long values must decode properly with the specified addrMap.
+	 * @param forward true to iterate in the direction of increasing addresses.
 	 * @param addrMap address map
 	 * @param errHandler IO error handler (may be null)
 	 */

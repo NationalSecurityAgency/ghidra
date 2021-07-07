@@ -946,6 +946,9 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	@Override
 	public AddressIterator getReferenceDestinationIterator(AddressSetView addrSet,
 			boolean forward) {
+		if (addrSet != null && addrSet.isEmpty()) {
+			return AddressIterator.EMPTY_ITERATOR;
+		}
 		try {
 			return toAdapter.getToIterator(addrSet, forward);
 		}
@@ -973,6 +976,9 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 
 	@Override
 	public AddressIterator getReferenceSourceIterator(AddressSetView addrSet, boolean forward) {
+		if (addrSet != null && addrSet.isEmpty()) {
+			return AddressIterator.EMPTY_ITERATOR;
+		}
 		try {
 			return fromAdapter.getFromIterator(addrSet, forward);
 		}

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,10 @@
  */
 package ghidra.program.database.code;
 
+import java.util.Iterator;
+
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
-
-import java.util.Iterator;
 
 /**
  * Combines an Instruction iterator and Data iterator into a codeunit iterator
@@ -42,7 +41,7 @@ class CodeUnitRecordIterator implements CodeUnitIterator {
 	 * @param codeMgr the code managaer
 	 * @param instIt the instruction iterator
 	 * @param dataIt the data iterator
-	 * @param set the address set
+	 * @param set the address set (required)
 	 * @param forward the iterator direction
 	 */
 	CodeUnitRecordIterator(CodeManager codeMgr, InstructionIterator instIt, DataIterator dataIt,

@@ -415,8 +415,9 @@ void PcodeOp::saveXml(ostream &s) const
     else if (vn->getSpace()->getType()==IPTR_CONSTANT) {
       if ((i==0)&&((code()==CPUI_STORE)||(code()==CPUI_LOAD))) {
 	AddrSpace *spc = Address::getSpaceFromConst(vn->getAddr());
-	s << "<spaceid name=\"";
-	s << spc->getName() << "\"/>\n";
+	s << "<spaceid";
+	a_v(s,"name",spc->getName());
+	s << "/>\n";
       }
       else
 	s << "<addr ref=\"0x" << hex << vn->getCreateIndex() << "\"/>\n";

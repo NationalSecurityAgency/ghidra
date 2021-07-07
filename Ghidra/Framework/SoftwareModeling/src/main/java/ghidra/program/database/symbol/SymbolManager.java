@@ -1204,6 +1204,9 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	@Override
 	public SymbolIterator getPrimarySymbolIterator(AddressSetView set, boolean forward) {
+		if (set.isEmpty()) {
+			return SymbolIterator.EMPTY_ITERATOR;
+		}
 		Query query1 = new FieldMatchQuery(SymbolDatabaseAdapter.SYMBOL_DATA2_COL, new IntField(1));
 		Query query2 = new FieldMatchQuery(SymbolDatabaseAdapter.SYMBOL_TYPE_COL,
 			new ByteField(SymbolType.LABEL.getID()));
@@ -1216,6 +1219,9 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	@Override
 	public SymbolIterator getSymbols(AddressSetView set, SymbolType type, boolean forward) {
+		if (set.isEmpty()) {
+			return SymbolIterator.EMPTY_ITERATOR;
+		}
 		Query query =
 			new FieldMatchQuery(SymbolDatabaseAdapter.SYMBOL_TYPE_COL, new ByteField(type.getID()));
 		return new AddressSetFilteredSymbolIterator(this, set, query, forward);
