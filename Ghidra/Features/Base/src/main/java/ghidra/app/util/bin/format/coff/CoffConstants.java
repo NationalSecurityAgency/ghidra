@@ -38,4 +38,8 @@ public class CoffConstants {
 	 * Number of dimensions of a symbol's auxiliary array.
 	 */
 	public final static int AUXILIARY_ARRAY_DIMENSION   =  4;
+	/**
+	 * Length (in bytes0 of a Line Number
+	 */
+	public final static int LINENO_SIZEOF = 6;
 }

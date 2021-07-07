@@ -25,10 +25,13 @@ import java.io.IOException;
 
 public class CoffSymbolAuxEndOfStruct implements CoffSymbolAux {
 
-	private int     tagIndex;
-	private byte [] unused1;
-	private short   size; //of structure, union, or enumeration
-	private byte [] unused2;
+	protected int     tagIndex;
+	protected byte [] unused1;
+	protected short   size; //of structure, union, or enumeration
+	protected byte [] unused2;
+
+	protected CoffSymbolAuxEndOfStruct() {		
+	}
 
 	CoffSymbolAuxEndOfStruct(BinaryReader reader) throws IOException {
 		tagIndex = reader.readNextInt();

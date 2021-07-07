@@ -25,9 +25,12 @@ import java.io.IOException;
 
 public class CoffSymbolAuxEndOfBlock implements CoffSymbolAux {
 
-	private byte [] unused1;
-	private short   sourceLineNumber;
-	private byte [] unused2;
+	protected byte [] unused1;
+	protected short   sourceLineNumber;
+	protected byte [] unused2;
+
+	protected CoffSymbolAuxEndOfBlock() {		
+	}
 
 	CoffSymbolAuxEndOfBlock(BinaryReader reader) throws IOException {
 		unused1          = reader.readNextByteArray(4);
