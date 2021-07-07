@@ -79,12 +79,13 @@ development process has been highly customized for.
 * Follow the above build instructions so the build completes without errors
 * Install [Eclipse IDE for Java Developers][eclipse]
 
-##### Prepare the development environment (Linux-only, see **NOTE** for Windows/macOS):
+##### Prepare the development environment (Linux/x86-only, see **NOTE** for other platforms):
 ``` 
-$ gradle prepdev eclipse buildNatives_linux64
+$ gradle prepdev eclipse buildNatives_linux_x86_64
 ```
-**NOTE:** If you are on a Windows or macOS platform, change `buildNatives_linux64` to 
-`buildNatives_win64` or `gradle buildNatives_osx64`. 
+**NOTE:** If you are on a different platform, change `buildNatives_linux_x86_64` to the gradle task
+that is appropriate for your platform: `buildNatives_win_x86_64`, `buildNatives_mac_x86_64`, 
+`buildNatives_mac_arm_64`, or `buildNatives_linux_arm_64`
 
 ##### Import Ghidra projects into Eclipse:
 * *File* -> *Import...*

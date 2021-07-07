@@ -8,10 +8,10 @@ data/lib/hfsexplorer-0_21-src.zip||GPL 3||||END|
 data/lib/hfsx.jar||GPL 3||||END|
 data/lib/hfsx_dmglib.jar||GPL 3||||END|
 data/lib/iharder-base64.jar||GPL 3||||END|
-data/os/win32/llio_amd64.dll||GPL 3||||END|
-data/os/win32/llio_i386.dll||GPL 3||||END|
-data/os/win32/llio_ia64.dll||GPL 3||||END|
-data/os/win64/llio_amd64.dll||GPL 3||||END|
-data/os/win64/llio_i386.dll||GPL 3||||END|
-data/os/win64/llio_ia64.dll||GPL 3||||END|
+data/os/win_x86_32/llio_amd64.dll||GPL 3||||END|
+data/os/win_x86_32/llio_i386.dll||GPL 3||||END|
+data/os/win_x86_32/llio_ia64.dll||GPL 3||||END|
+data/os/win_x86_64/llio_amd64.dll||GPL 3||||END|
+data/os/win_x86_64/llio_i386.dll||GPL 3||||END|
+data/os/win_x86_64/llio_ia64.dll||GPL 3||||END|
 data/server_memory.cfg||Public Domain||||END|

@@ -270,22 +270,24 @@ Now build using Gradle:
 On Linux:
 
 ```bash
-gradle buildNatives_linux64
+gradle buildNatives_linux_x86_64
 ```
 
 On macOS:
 
 ```bash
-gradle buildNatives_osx64
+gradle buildNatives_mac_x86_64
 ```
 
 On Windows:
 
 ```bash
-gradle buildNatives_win64
+gradle buildNatives_win_x86_64
 ```
 
 This will build the decompiler, the demangler for GNU toolchains, the sleigh compiler, and (on Windows only) the PDB parser.
+
+**NOTE:** `buildNatives_linux_arm_64` and `buildNatives_mac_arm_64` are also supported.
 
 ### Pre-compile Language Modules (optional)
 
