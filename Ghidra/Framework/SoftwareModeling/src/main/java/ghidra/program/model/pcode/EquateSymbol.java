@@ -20,6 +20,8 @@ import ghidra.program.model.data.DataType;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
+import ghidra.pcode.floatformat.*;
+import java.math.BigInteger;
 
 public class EquateSymbol extends HighSymbol {
 
@@ -29,6 +31,8 @@ public class EquateSymbol extends HighSymbol {
 	public static final int FORMAT_OCT = 3;
 	public static final int FORMAT_BIN = 4;
 	public static final int FORMAT_CHAR = 5;
+	public static final int FORMAT_FLOAT = 6;
+	public static final int FORMAT_DOUBLE = 7;
 
 	private long value;			// Value of the equate
 	private int convert;		// Non-zero if this is a conversion equate
@@ -113,6 +117,12 @@ public class EquateSymbol extends HighSymbol {
 			else if (convert == FORMAT_CHAR) {
 				formString = "char";
 			}
+			else if (convert == FORMAT_FLOAT) {
+				formString = "float";
+			}
+			else if (convert == FORMAT_DOUBLE) {
+				formString = "double";
+			}
 			SpecXmlUtils.encodeStringAttribute(buf, "format", formString);
 		}
 		buf.append(">\n");
@@ -131,6 +141,16 @@ public class EquateSymbol extends HighSymbol {
 			}
 			else {
 				return FORMAT_DEFAULT;			// Bad equate name, just print number normally
+			}
+		}
+		else if (nm.contains("-")) {        //Characteristics of the current double type
+			int DoubleSize = 8;				//The double type does not have the problem of loss of precision, so it is used as a comparison method here
+			FloatFormat format = FloatFormatFactory.getFloatFormat(DoubleSize);
+			String doubleFormat = format.round(format.getHostFloat(new BigInteger(String.valueOf(val)))).toString();
+			if (doubleFormat.equals(nm)) {
+				return FORMAT_DOUBLE;
+			}else{
+				return FORMAT_FLOAT;
 			}
 		}
 		if (firstChar == '\'') {

@@ -181,6 +181,8 @@ public:
     force_oct = 3,		///< Force octal printing of constant symbol
     force_bin = 4,		///< Force binary printing of constant symbol
     force_char = 5,		///< Force integer to be printed as a character constant
+    force_float = 6,    ///< Force float to be printed as a character constant
+    force_double = 7,   ///< Force double to be printed as a character constant
     size_typelock = 8,	        ///< Only the size of the symbol is typelocked
     isolate = 16,		///< Symbol should not speculatively merge automatically
     merge_problems = 32,	///< Set if some SymbolEntrys did not get merged
