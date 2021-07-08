@@ -440,6 +440,23 @@ public class PdbApplicator {
 	}
 
 	/**
+	 * Puts error message to {@link PdbLog} and to Msg.error() which will 
+	 * also log a stack trace if exception is specified.
+	 * @param originator a Logger instance, "this", or YourClass.class
+	 * @param message the error message to display/log
+	 * @param exc exception whose stack trace should be reported or null
+	 */
+	void pdbLogAndErrorMessage(Object originator, String message, Exception exc) {
+		PdbLog.message(message);
+		if (exc != null) {
+			Msg.error(originator, message);
+		}
+		else {
+			Msg.error(originator, message, exc);
+		}
+	}
+
+	/**
 	 * Returns the {@link TaskMonitor} to available for this analyzer.
 	 * @return the monitor.
 	 */
@@ -928,6 +945,7 @@ public class PdbApplicator {
 	//==============================================================================================
 	// CLI-Managed infor methods.
 	//==============================================================================================
+
 	// Currently in CLI, but could move.
 	boolean isDll() {
 		return pdbCliManagedInfoManager.isDll();
@@ -938,6 +956,15 @@ public class PdbApplicator {
 		return pdbCliManagedInfoManager.isAslr();
 	}
 
+	/**
+	 * Get CLI metadata for specified tableNum and rowNum within the CLI
+	 * metadata stream.
+	 * @param tableNum CLI metadata stream table index
+	 * @param rowNum table row number
+	 * @return CLI metadata or null if specified tableNum not found
+	 * @throws PdbException if CLI metadata stream is not found in program file bytes
+	 * @throws IndexOutOfBoundsException if specified rowNum is invalid
+	 */
 	CliAbstractTableRow getCliTableRow(int tableNum, int rowNum) throws PdbException {
 		return pdbCliManagedInfoManager.getCliTableRow(tableNum, rowNum);
 	}
