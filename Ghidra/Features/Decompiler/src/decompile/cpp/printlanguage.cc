@@ -431,7 +431,7 @@ bool PrintLanguage::unicodeNeedsEscape(int4 codepoint)
     if (codepoint > 0xa0) {	// Printable codepoints  A1-FF
       return false;
     }
-    return true;
+    return true;		// Delete + C1 Control characters
   }
   if (codepoint >= 0x2fa20) {	// Up to last currently defined language
     return true;
@@ -483,6 +483,8 @@ bool PrintLanguage::unicodeNeedsEscape(int4 codepoint)
     return true;			// zero width non-breaking space
   }
   if (codepoint >= 0xfff0 && codepoint <= 0xffff) {
+    if ((codepoint == 0xfffc || codepoint == 0xfffd))
+      return false;
     return true;			// interlinear specials
   }
   return false;
@@ -772,11 +774,11 @@ void PrintLanguage::formatBinary(ostream &s,uintb val)
     s << '0';
     return;
   }
-  else if (pos < 7)
+  else if (pos <= 7)
     pos = 7;
-  else if (pos < 15)
+  else if (pos <= 15)
     pos = 15;
-  else if (pos < 31)
+  else if (pos <= 31)
     pos = 31;
   else
     pos = 63;

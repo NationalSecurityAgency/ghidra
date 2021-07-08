@@ -2456,12 +2456,14 @@
 <section id="AnnoteConstants">
   <title>Constant Annotations</title>
   <para>
-    Ghidra provides some ways to control how specific constants shown in disassembly are formatted or displayed.
-    These annotations are attached to constants as operands of specific machine instructions. To the extent
-    possible, the decompiler applies these annotations to the matching constant in the decompiler output.
-    The constant may be transformed from its value in the original machine instruction during the decompiler's
-    analysis.  The decompiler will follow the constant through simple transformations, but if the transformed
-    is too far from the original value, the annotation will not be applied.  The transforms followed are:
+    Ghidra provides numerous actions to control how specific constants are formatted or displayed.
+    An annotation can be applied directly to a constant in the Decompiler Window, which always affects
+    decompiler output. Or, an annotation can be applied to the constant operand of a specific machine
+    instruction displayed in the Listing Window.  In this case, to the extent possible, the decompiler
+    attempts to track the operand and apply the annotation to the matching constant in the decompiler output.
+    However, the constant may be transformed from its value in the original machine instruction during the decompiler's
+    analysis.  The decompiler will follow the constant through simple transformations, but if the constant strays
+    too far from its original value, the annotation will not be applied.  The transforms followed are:
     <informalexample>
     <itemizedlist mark='bullet'>
       <listitem>Signed or zero extension</listitem>
@@ -2475,39 +2477,53 @@
     <title>Equates</title>
     <para>
       Ghidra can create an association between a name and a constant, called an <emphasis role="bold">equate</emphasis>.
-      The constant must be a constant operand of a specific machine instruction, and the equate
-      is applied directly to the operand from the Listing Window using the
-      <link xlink:href="help/topics/EquatePlugin/Equates.htm#Set_Equate">Set Equate</link> menu.
-      Once applied, the equate's name is displayed instead of the numeric representation of the constant.
-      Equates across the entire Program can be viewed from the
+      An equate is a descriptive string that is intended to replace the numeric form of the constant, and equates
+      across the entire Program can be viewed from the
       <link xlink:href="help/topics/EquatePlugin/Equates.htm#Equate_Table">Equate Table</link>.
     </para>
     <para>
-      When analyzing a function, the decompiler attempts to follow any constant in the function with an attached
-      equate to the matching constant in the final output.  If successful, the equate's name is printed instead of
-      the numeric form of the matching constant. If the constant was transformed from its original value, the
-      matching constant is printed as an expression, where the transforming operations are applied to the equate
-      symbol (representing the original constant).
+      An equate can be applied to a machine instruction with a constant
+      operand by using the <link xlink:href="help/topics/EquatePlugin/Equates.htm#Set_Equate">Set Equate</link>
+      menu from the Listing Window. If the decompiler successfully follows the operand to a matching constant,
+      the equate's name is displayed as part of the decompiler's output as well as in the Listing Window.
+      A transformed operand is displayed as an expression, where the transforming operations are applied to
+      the equate symbol (representing the original constant).
+    </para>
+    <para>
+      Alternately an equate can be applied directly to a constant from the Decompiler Window using its
+      <xref linkend="ActionSetEquate"/> menu.  The constant may or may not have a corresponding instruction
+      operand but will be displayed in decompiler output using the descriptive string.
+    </para>
+    <para>
+      
     </para>
   </sect2>
   <sect2 id="ConstantConversions">
     <title>Format Conversions</title>
     <para>
-      Ghidra can apply a <emphasis role="bold">format conversion</emphasis> to override how an integer operand
-      is displayed in a specific machine instruction.  Conversions are generally applied from the Listing Window using the
-      <link xlink:href="help/topics/EquatePlugin/Equates.htm#Convert">Convert</link> menu option. When analyzing a
-      function containing a machine instruction that has a format conversion applied, the decompiler will attempt
-      to trace the constant to a matching constant in the final output. If successful, the format conversion is also
-      applied to the matching constant.
+      Ghidra can apply a <emphasis role="bold">format conversion</emphasis> to integer constants that are displayed
+      in decompiler output.
+    </para>
+    <para>
+      A conversion can be applied to the machine instruction containing the constant
+      as an operand using the <link xlink:href="help/topics/EquatePlugin/Equates.htm#Convert">Convert</link> menu option
+      from the Listing Window. If the decompiler successfully traces the operand to a matching constant,
+      the format conversion is applied in the decompiler output as well as in the Listing Window.
+    </para>
+    <para>
+      Alternately, a conversion can be applied directly to an integer constant in the
+      Decompiler Window using its <xref linkend="ActionConvert"/> menu option. The constant may or may not
+      have a corresponding instruction operand but is displayed in decompiler output using the conversion.
     </para>
     <para>
       Conversions applied by the decompiler are currently limited to:
       <informalexample>
       <itemizedlist mark='bullet'>
-	<listitem>Binary - 0b10100111</listitem>
-	<listitem>Decimal- 167</listitem>
-	<listitem>Hexadecimal - 0xa7</listitem>
-	<listitem>Octal - 0247</listitem>
+	<listitem>Binary - 0b01100001</listitem>
+	<listitem>Decimal- 97</listitem>
+	<listitem>Hexadecimal - 0x61</listitem>
+	<listitem>Octal - 0141</listitem>
+	<listitem>Char - 'a'</listitem>
       </itemizedlist>
       </informalexample>
       An appropriate header matching the format is prepended to the representation string, either "0b", "0x" or just
@@ -4020,6 +4036,63 @@
   </para>
 </sect2>
 
+<sect2 id="ActionConvert">
+  <title>Convert</title>
+  <para>
+    Change the displayed encoding for the integer or character constant under the cursor.
+  </para>
+  <para>
+    Various encodings are possible.
+    <informalexample>
+      <table xml:id="convert.htmltable" width="50%" frame="none" rules="none">
+        <col width="30%"/>
+        <col width="70%"/>
+      <tbody>
+        <tr>
+          <td><emphasis role="bold">Binary:</emphasis></td>
+          <td>0b01100001</td>
+        </tr>
+         <tr>
+          <td><emphasis role="bold">Decimal:</emphasis></td>
+          <td>97</td>
+        </tr>
+        <tr>
+          <td><emphasis role="bold">Hexadecimal:</emphasis></td>
+          <td>0x61</td>
+        </tr>
+        <tr>
+          <td><emphasis role="bold">Octal:</emphasis></td>
+          <td>0141</td>
+        </tr>
+        <tr>
+          <td><emphasis role="bold">Char:</emphasis></td>
+          <td>'a'</td>
+        </tr>
+      </tbody>
+      </table>
+    </informalexample>
+  </para>
+  <para>
+    This command primarily targets a constant token in the Decompiler window, but
+    if there is a <emphasis>scalar</emphasis> operand in an instruction that corresponds
+    with the selected constant, the same conversion is also applied to the scalar in the Listing
+    window. This is equivalent to selecting the
+    <link xlink:href="help/topics/EquatePlugin/Equates.htm#Convert">Convert</link> command from the
+    Listing.  There may not be a scalar operand directly corresponding to the selected constant, in
+    which case the conversion will be applied only in the Decompiler window.
+  </para>
+  <para>
+    The data-type of the selected token is not changed by the action, and it retains its
+    meaning in the decompiler output. This slightly limits the possible conversions as signed
+    values cannot be forced into an unsigned representation, and vice versa.
+  </para>
+  <para>
+    The constant's encoding can be changed by selecting a different <emphasis role="bold">Convert</emphasis>
+    command, or it can be returned to its <emphasis>default</emphasis> encoding by selecting
+    the <xref linkend="ActionRemoveEquate"/> command.
+  </para>
+</sect2>
+
 <sect2 id="ActionCopy">
   <title>Copy/Copy Special ...</title>
   <para>
@@ -4322,6 +4395,21 @@
   </sect3>
 </sect2>
 
+<sect2 id="ActionRemoveEquate">
+  <title>Remove Convert/Equate</title>
+  <para>
+    Remove the display <emphasis>conversion</emphasis> or <emphasis>equate</emphasis> from
+    the constant under the cursor.
+  </para>
+  <para>
+    The selected constant must have had either a <xref linkend="ActionConvert"/> or a
+    <xref linkend="ActionSetEquate"/> command applied to it.  After applying this command,
+    the conversion is no longer applied, and the selected constant will be displayed
+    using the decompiler's default strategy, which depends on the data-type of the constant and
+    other display settings (See <xref linkend="DisplayIntegerFormat"/>).
+  </para>
+</sect2>
+
 <sect2 id="ActionRemoveOverride">
   <title>Remove Signature Override</title>
   <para>
@@ -4560,6 +4648,38 @@
     Data-type information applied to parameters using this action is especially impactful
     because it affects decompilation for the function owning the parameter and, additionally,
     any function that calls this owning function.
+  </para>
+</sect2>
+
+<sect2 id="ActionSetEquate">
+  <title>Set Equate ...</title>
+  <para>
+    Change the display of the integer or character constant under the cursor to an <emphasis>equate</emphasis>
+    string.
+  </para>
+  <para>
+    An equate is a descriptive string associated with a specific constant value, which is managed globally for
+    a Program by the Equate plug-in (See <link xlink:href="help/topics/EquatePlugin/Equates.htm">Equates</link>).
+  </para>
+  <para>
+    The <emphasis role="bold">Set Equate</emphasis> command, brings up a dialog listing other equates
+    that have previously been associated with the selected constant.  The user can choose an equate from this list
+    or define a new equate for the constant by typing in the text field at the top of the dialog. Alternately,
+    the text field can be used as a filter to narrow down possibilities prior to selecting from the list. Clicking
+    OK, completes the action, and the selected equate is substituted for its constant.
+  </para>
+  <para>
+    This command primarily targets a constant token in the Decompiler window, but
+    if there is a <emphasis>scalar</emphasis> operand in an instruction that corresponds
+    with the selected constant, the same equate is also applied to the scalar in the Listing
+    window. This is equivalent to selecting the
+    <link xlink:href="help/topics/EquatePlugin/Equates.htm#Set_Equate">Set Equate</link> command from the
+    Listing.  There may not be a scalar operand directly corresponding to the selected constant, in
+    which case the equate will be applied only in the Decompiler window.
+  </para>
+  <para>
+    Once an equate is applied, the constant can be returned to its <emphasis>default</emphasis> display
+    by selecting the <xref linkend="ActionRemoveEquate"/> command.
   </para>
 </sect2>
 

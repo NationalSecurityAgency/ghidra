@@ -144,6 +144,8 @@ void Funcdata::startProcessing(void)
 
   if (funcp.isInline())
     warningHeader("This is an inlined function");
+  localmap->clearUnlocked();
+  funcp.clearUnlockedOutput();
   Address baddr(baseaddr.getSpace(),0);
   Address eaddr(baseaddr.getSpace(),~((uintb)0));
   followFlow(baddr,eaddr);

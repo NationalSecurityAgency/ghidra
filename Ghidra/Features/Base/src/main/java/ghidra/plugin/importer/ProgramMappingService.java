@@ -20,24 +20,24 @@ import java.net.MalformedURLException;
 import java.util.*;
 
 import ghidra.app.services.ProgramManager;
-import ghidra.formats.gfilesystem.*;
+import ghidra.formats.gfilesystem.FSRL;
+import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.FixedSizeHashMap;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Provides a best-effort<sup>[1]</sup> mapping / association between Ghidra Program/DomainFile objects and
- * GFilesystem files (identified by their {@link FSRL}).
+ * Provides a best-effort<sup>[1]</sup> mapping / association between Ghidra Program/DomainFile
+ * objects and GFilesystem files (identified by their {@link FSRL}).
  * <p>
- * As there is no current feature that allows you to quickly query the metadata of Programs/DomainFile
- * objects in the current project, finding a Program by its MD5 or by a original source location
- * string is not easily possible.
+ * As there is no current feature that allows you to quickly query the metadata of
+ * Programs/DomainFile objects in the current project, finding a Program by its MD5 or by a
+ * original source location string is not easily possible.
  * <p>
  * Threadsafe.
  * <p>
@@ -64,7 +64,7 @@ public class ProgramMappingService {
 		new FixedSizeHashMap<>(FSRL_TO_PATH_MAP_SIZE);
 
 	private ProgramMappingService() {
-		// nada
+		// utils class; cannot instantiate
 	}
 
 	/**
@@ -90,8 +90,7 @@ public class ProgramMappingService {
 	public static boolean isFileOpen(FSRL fsrl) {
 		String expectedMD5 = fsrl.getMD5();
 
-		List<DomainFile> openDomainFiles = new ArrayList<>();
-		AppInfo.getActiveProject().getProjectData().findOpenFiles(openDomainFiles);
+		List<DomainFile> openDomainFiles = findOpenFiles();
 
 		Object consumer = new Object();
 		for (DomainFile df : openDomainFiles) {
@@ -140,33 +139,34 @@ public class ProgramMappingService {
 	 * and not persisted.
 	 * <p>
 	 * @param fsrl {@link FSRL} to search for
-	 * @return {@link DomainFile} that was previously associated via {@link #createAssociation(FSRL, DomainFile)}
-	 * and friends.
+	 * @return {@link DomainFile} that was previously associated via
+	 * 			{@link #createAssociation(FSRL, DomainFile)} and friends.
 	 */
 	public static DomainFile getCachedDomainFileFor(FSRL fsrl) {
-		String doPath = null;
+		String path = null;
 		synchronized (fsrlToProjectPathMap) {
-			doPath = fsrlToProjectPathMap.get(fsrl);
-			if (doPath == null && fsrl.getMD5() != null) {
+			path = fsrlToProjectPathMap.get(fsrl);
+			if (path == null && fsrl.getMD5() != null) {
 				fsrl = fsrl.withMD5(null);
-				doPath = fsrlToProjectPathMap.get(fsrl);
+				path = fsrlToProjectPathMap.get(fsrl);
 			}
-		}
-		if (doPath != null) {
-			DomainFile domainFile = AppInfo.getActiveProject().getProjectData().getFile(doPath);
-			if (domainFile == null) {
-				// The domainFile will be null if the cached path is no longer valid.  Remove
-				// the stale path from the cache.
-				synchronized (fsrlToProjectPathMap) {
-					if (SystemUtilities.isEqual(fsrlToProjectPathMap.get(fsrl), doPath)) {
-						fsrlToProjectPathMap.remove(fsrl);
-					}
-				}
-			}
-			return domainFile;
 		}
 
-		return null;
+		if (path == null) {
+			return null;
+		}
+
+		DomainFile domainFile = getProjectFile(path);
+		if (domainFile == null) {
+			// The domainFile will be null if the cached path is no longer valid.  Remove
+			// the stale path from the cache.
+			synchronized (fsrlToProjectPathMap) {
+				if (Objects.equals(fsrlToProjectPathMap.get(fsrl), path)) {
+					fsrlToProjectPathMap.remove(fsrl);
+				}
+			}
+		}
+		return domainFile;
 	}
 
 	/**
@@ -245,7 +245,8 @@ public class ProgramMappingService {
 	 * must release the consumer when done.
 	 * @param programManager {@link ProgramManager} that will be used to open DomainFiles
 	 * if necessary.
-	 * @param openState one of {@link ProgramManager#OPEN_VISIBLE}, {@link ProgramManager#OPEN_HIDDEN}, {@link ProgramManager#OPEN_VISIBLE}
+	 * @param openState one of {@link ProgramManager#OPEN_VISIBLE},
+	 * 			{@link ProgramManager#OPEN_HIDDEN}, {@link ProgramManager#OPEN_VISIBLE}
 	 * @return {@link Program} which was imported from the specified FSRL, or null if not found.
 	 */
 	public static Program findMatchingProgramOpenIfNeeded(FSRL fsrl, Object consumer,
@@ -265,7 +266,8 @@ public class ProgramMappingService {
 	 * must release the consumer when done.
 	 * @param programManager {@link ProgramManager} that will be used to open DomainFiles
 	 * if necessary.
-	 * @param openState one of {@link ProgramManager#OPEN_VISIBLE}, {@link ProgramManager#OPEN_HIDDEN}, {@link ProgramManager#OPEN_VISIBLE}
+	 * @param openState one of {@link ProgramManager#OPEN_VISIBLE},
+	 * 			{@link ProgramManager#OPEN_HIDDEN}, {@link ProgramManager#OPEN_VISIBLE}
 	 * @return {@link Program} which was imported from the specified FSRL, or null if not found.
 	 */
 	public static Program findMatchingProgramOpenIfNeeded(FSRL fsrl, DomainFile domainFile,
@@ -306,7 +308,7 @@ public class ProgramMappingService {
 		// use a temp consumer to hold the domainObject open because the caller-supplied
 		// consumer might already have been used to open one of the files we are querying.
 		Object tmpConsumer = new Object();
-		List<DomainFile> openDomainFiles = AppInfo.getActiveProject().getOpenData();
+		List<DomainFile> openDomainFiles = getOpenFiles();
 		for (DomainFile df : openDomainFiles) {
 			DomainObject openedDomainObject = df.getOpenedDomainObject(tmpConsumer);
 			try {
@@ -336,22 +338,6 @@ public class ProgramMappingService {
 		return null;
 	}
 
-	private static Map<String, FSRL> buildFullyQualifiedFSRLMap(List<FSRL> fsrls,
-			TaskMonitor monitor) throws CancelledException {
-		Map<String, FSRL> result = new HashMap<>();
-		for (FSRL fsrl : fsrls) {
-			try {
-				FSRL fqFSRL = FileSystemService.getInstance().getFullyQualifiedFSRL(fsrl, monitor);
-				String expectedMD5 = fqFSRL.getMD5();
-				result.put(expectedMD5, fsrl);
-			}
-			catch (IOException e) {
-				// ignore and continue
-			}
-		}
-		return result;
-	}
-
 	/**
 	 * Recursively searches the current active {@link Project} for {@link DomainFile}s that
 	 * have metadata that matches a {@link FSRL} in the specified list.
@@ -364,7 +350,15 @@ public class ProgramMappingService {
 	 */
 	public static Map<FSRL, DomainFile> searchProjectForMatchingFiles(List<FSRL> fsrls,
 			TaskMonitor monitor) {
-		int fc = AppInfo.getActiveProject().getProjectData().getFileCount();
+
+		Project project = AppInfo.getActiveProject();
+		if (project == null) {
+			// this should not be possible if this call is being run as a task
+			return Collections.emptyMap();
+		}
+
+		ProjectData projectData = project.getProjectData();
+		int fc = projectData.getFileCount();
 		if (fc > 0) {
 			monitor.setShowProgressValue(true);
 			monitor.setMaximum(fc);
@@ -386,8 +380,8 @@ public class ProgramMappingService {
 
 		Map<FSRL, DomainFile> results = new HashMap<>();
 
-		for (DomainFile domainFile : ProjectDataUtils.descendantFiles(
-			AppInfo.getActiveProject().getProjectData().getRootFolder())) {
+		Iterable<DomainFile> files = ProjectDataUtils.descendantFiles(projectData.getRootFolder());
+		for (DomainFile domainFile : files) {
 			if (monitor.isCancelled() || fsrlsToFindByMD5.isEmpty()) {
 				break;
 			}
@@ -432,6 +426,57 @@ public class ProgramMappingService {
 			}
 		}
 		return null;
+	}
+
+	private static DomainFile getProjectFile(String path) {
+
+		Project project = AppInfo.getActiveProject();
+		if (project != null) {
+			ProjectData data = project.getProjectData();
+			if (data != null) {
+				return data.getFile(path);
+			}
+		}
+		return null;
+	}
+
+	private static List<DomainFile> getOpenFiles() {
+
+		List<DomainFile> files = new ArrayList<>();
+		Project project = AppInfo.getActiveProject();
+		if (project != null) {
+			files = project.getOpenData();
+		}
+		return files;
+	}
+
+	private static List<DomainFile> findOpenFiles() {
+
+		List<DomainFile> files = new ArrayList<>();
+		Project project = AppInfo.getActiveProject();
+		if (project != null) {
+			ProjectData data = project.getProjectData();
+			if (data != null) {
+				data.findOpenFiles(files);
+			}
+		}
+		return files;
+	}
+
+	private static Map<String, FSRL> buildFullyQualifiedFSRLMap(List<FSRL> fsrls,
+			TaskMonitor monitor) throws CancelledException {
+		Map<String, FSRL> result = new HashMap<>();
+		for (FSRL fsrl : fsrls) {
+			try {
+				FSRL fqFSRL = FileSystemService.getInstance().getFullyQualifiedFSRL(fsrl, monitor);
+				String expectedMD5 = fqFSRL.getMD5();
+				result.put(expectedMD5, fsrl);
+			}
+			catch (IOException e) {
+				// ignore and continue
+			}
+		}
+		return result;
 	}
 
 }

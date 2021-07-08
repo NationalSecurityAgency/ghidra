@@ -20,6 +20,8 @@ import static ghidra.feature.vt.api.correlator.program.VTAbstractReferenceProgra
 import java.util.*;
 import java.util.Map.Entry;
 
+import org.apache.commons.collections4.map.LazyMap;
+
 import generic.DominantPair;
 import generic.lsh.vector.LSHCosineVectorAccum;
 import generic.lsh.vector.VectorCompare;
@@ -31,6 +33,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
+import ghidra.util.datastruct.Counter;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -44,9 +47,13 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	private static final double DIFFERENTIAL = 0.2;
 	private static final double EQUALS_EPSILON = 0.00001;
 
+	private static final Comparator<VTMatchInfo> SCORE_COMPARATOR = (o1, o2) -> {
+		return o2.getSimilarityScore().compareTo(o1.getSimilarityScore());
+	};
+
 	private String correlatorName;
-	private HashMap<Address, LSHCosineVectorAccum> srcFuncAddresstoVectorMap;
-	private HashMap<Address, LSHCosineVectorAccum> destFuncAddresstoVectorMap;
+	private Map<Address, LSHCosineVectorAccum> srcVectorsByAddress;
+	private Map<Address, LSHCosineVectorAccum> destVectorsByAddress;
 
 	private Program sourceProgram;
 	private Program destinationProgram;
@@ -55,13 +62,13 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 
 	/**
 	 * Correlator class constructor.
-	 * @param serviceProvider The {@code ServiceProvider}.
-	 * @param sourceProgram The source {@code Program}.
-	 * @param sourceAddressSet The {@code AddressSetView} for the source program.
-	 * @param destinationProgram The destination {@code Program}.
-	 * @param destinationAddressSet The {@code AddressSetView} for the destination program.
-	 * @param correlatorName The correlator name string passed from the factory.
-	 * @param options {@code ToolOptions}
+	 * @param serviceProvider the service provider
+	 * @param sourceProgram the source program
+	 * @param sourceAddressSet the source addresses to correlate
+	 * @param destinationProgram the destination program
+	 * @param destinationAddressSet the destination addresses to correlate
+	 * @param correlatorName the correlator name
+	 * @param options the tool options
 	 */
 	VTAbstractReferenceProgramCorrelator(ServiceProvider serviceProvider, Program sourceProgram,
 			AddressSetView sourceAddressSet, Program destinationProgram,
@@ -84,81 +91,72 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	}
 
 	/**
-	 * First generates the sourceDictionary from the source program and matchSet, 
-	 * then finds the destinations corresponding to the matchSet and the 
+	 * First generates the sourceDictionary from the source program and matchSet,
+	 * then finds the destinations corresponding to the matchSet and the
 	 * sourceDictionary using the preset similarity and confidence thresholds.
-	 *  
-	 * @param matchSet VTMatchSetDB containing all existing matches sorted into 
-	 * subsets corresponding to the generating correlators.
+	 * 
+	 * @param matchSet contains all existing matches
 	 * @param monitor the task monitor
-	 * @throws CancelledException the process cancellation exception
+	 * @throws CancelledException if cancelled
 	 */
 	@Override
 	protected void doCorrelate(VTMatchSet matchSet, TaskMonitor monitor) throws CancelledException {
-
-		double minbits = getOptions().getDouble(CONFIDENCE_THRESHOLD, CONFIDENCE_THRESHOLD_DEFAULT);
-		double similarity_threshold =
-			getOptions().getDouble(SIMILARITY_THRESHOLD, SIMILARITY_THRESHOLD_DEFAULT);
 
 		monitor.setMessage("Finding reference features");
 		extractReferenceFeatures(matchSet, monitor);
 
 		monitor.setMessage("Finding destination functions");
-		try {
-			findDestinations(matchSet, similarity_threshold, minbits, monitor);
-		}
-		catch (Exception e) {
-			throw new RuntimeException("problem with parallel decompiler", e);
-		}
+		findDestinations(matchSet, monitor);
 	}
 
 	/**
 	 * findDestinations updates matchSet with non-null VTMatchInfo members returned from transform.
-	 * For each of the entries in the destinationMap = {destMatchAddr:[list of source references]}, 
-	 * we test all pairs [list of source references] x [list of destination references] 
+	 * For each of the entries in the destinationMap = {destMatchAddr:[list of source references]},
+	 * we test all pairs [list of source references] x [list of destination references]
 	 * 
-	 * </br> 
+	 * </br>
 	 * Note: {@code destinationMap} is a class variable set by {@code extractReferenceFeatures}
 	 * 
-	 * @param matchSet The {@code VTMatchSet} for the current session (non-transitive).
-	 * @param similarityThreshold The {@code double} threshold passed to {@code transform}
-	 * @param minbits The {@code double} minbits value passed to {@code transform}.
-	 * @param monitor The {@code TaskMonitor} (non-transitive).
+	 * @param matchSet The {@code VTMatchSet} for the current session (non-transitive)
+	 * @param monitor task monitor
+	 * @throws CancelledException if cancelled
 	 */
-	protected void findDestinations(final VTMatchSet matchSet, final double similarityThreshold,
-			double minbits, final TaskMonitor monitor) {
+	private void findDestinations(VTMatchSet matchSet, TaskMonitor monitor)
+			throws CancelledException {
 
-		monitor.initialize(destFuncAddresstoVectorMap.size());
-		for (Entry<Address, LSHCosineVectorAccum> destEntry : destFuncAddresstoVectorMap.entrySet()) {
-			if (monitor.isCancelled()) {
-				return;
-			}
+		monitor.initialize(destVectorsByAddress.size());
+		Set<Entry<Address, LSHCosineVectorAccum>> destEntries =
+			destVectorsByAddress.entrySet();
+		for (Entry<Address, LSHCosineVectorAccum> destEntry : destEntries) {
+
+			monitor.checkCanceled();
 			monitor.incrementProgress(1);
 
-			// Get the function CONTAINING the ACCEPTED match destination address
+			// Get the function containing the ACCEPTED match destination address
 			Function destFunc = destinationListing.getFunctionAt(destEntry.getKey());
 			LSHCosineVectorAccum dstVector = destEntry.getValue();
 
 			// Get the set of possible matches, neighbors, in the SourceProgram
-			HashMap<Address, DominantPair<Double, VectorCompare>> srcNeighbors = new HashMap<>();
+			Map<Address, DominantPair<Double, VectorCompare>> srcNeighbors = new HashMap<>();
 
-			for (Entry<Address, LSHCosineVectorAccum> srcEntry : srcFuncAddresstoVectorMap.entrySet()) {
+			Set<Entry<Address, LSHCosineVectorAccum>> srcEntries =
+				srcVectorsByAddress.entrySet();
+			for (Entry<Address, LSHCosineVectorAccum> srcEntry : srcEntries) {
 				Address srcAddr = srcEntry.getKey();
 				LSHCosineVectorAccum srcVector = srcEntry.getValue();
 
-				VectorCompare veccompare = new VectorCompare();
-				Double similarity = dstVector.compare(srcVector, veccompare);
-
+				VectorCompare vectorCompare = new VectorCompare();
+				double similarity = dstVector.compare(srcVector, vectorCompare);
 				DominantPair<Double, VectorCompare> compareOut =
-					new DominantPair<>(similarity, veccompare);
+					new DominantPair<>(similarity, vectorCompare);
 
-				if (dstVector.compare(srcVector, veccompare) > 0) {
+				if (dstVector.compare(srcVector, vectorCompare) > 0) {
 					srcNeighbors.put(srcAddr, compareOut);
 				}
 			}
 
 			List<VTMatchInfo> members = transform(matchSet, destFunc, dstVector, srcNeighbors,
-				similarityThreshold, minbits, monitor);
+				monitor);
 
 			for (VTMatchInfo member : members) {
 				if (member != null) {
@@ -170,34 +168,35 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	}
 
 	/**
-	 * Scoring Mechanism: determines destination similarity and confidence for each 
-	 * of the sourceNeighbors and if similarity passes the threshold and confidence passes minbits, 
-	 * then VTMatchInfo will be created and added to the result.
-	 *  
-	 * @param matchSet - The returned {@code VTMatchSet} for this correlator. 
-	 * @param destinationFunction - A {@code Function} in the destination program that references an existing accepted match.
-	 * @param destinationVector - The destination function's feature vector.
-	 * @param neighbors - The set data for possible sourceFunction matches for destinationFunction.
-	 * @param similarityThreshold - The user defined similarity scoring threshold (expected to be between 0 and 1).
-	 * @param minbits - The user defined confidence threshold. 
-	 * @param monitor - {@code TaskMonitor} 
+	 * Scoring Mechanism: determines destination similarity and confidence for each of the
+	 * sourceNeighbors and if similarity and confidence pass the threshold, then VTMatchInfo will
+	 * be created and added to the result.
+	 * 
+	 * @param matchSet match set for this correlator
+	 * @param destinationFunction function in the destination program that references an existing accepted match
+	 * @param destinationVector the destination function's feature vector
+	 * @param neighbors the set data for possible sourceFunction matches for destinationFunction
+	 * @param monitor the monitor
 	 * @return {@code List<VTMatchInfo>} result
+	 * @throws CancelledException if cancelled
 	 */
 	private List<VTMatchInfo> transform(VTMatchSet matchSet, Function destinationFunction,
 			LSHCosineVectorAccum destinationVector,
-			HashMap<Address, DominantPair<Double, VectorCompare>> neighbors,
-			double similarityThreshold, double minbits, TaskMonitor monitor) {
+			Map<Address, DominantPair<Double, VectorCompare>> neighbors, TaskMonitor monitor)
+			throws CancelledException {
 
 		boolean refineResult = getOptions().getBoolean(REFINE_RESULTS, REFINE_RESULTS_DEFAULT);
+		double confidenceThreshold =
+			getOptions().getDouble(CONFIDENCE_THRESHOLD, CONFIDENCE_THRESHOLD_DEFAULT);
+		double similarityThreshold =
+			getOptions().getDouble(SIMILARITY_THRESHOLD, SIMILARITY_THRESHOLD_DEFAULT);
 
 		Address destinationAddress = destinationFunction.getEntryPoint();
 		int destinationLength = (int) destinationFunction.getBody().getNumAddresses();
 		List<VTMatchInfo> result = new ArrayList<>();
 
 		for (Entry<Address, DominantPair<Double, VectorCompare>> neighbor : neighbors.entrySet()) {
-			if (monitor.isCancelled()) {
-				break;
-			}
+			monitor.checkCanceled();
 
 			Address sourceAddr = neighbor.getKey();
 
@@ -214,9 +213,10 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 				continue;
 			}
 
-			if (confidence < minbits) {
+			if (confidence < confidenceThreshold) {
 				continue;
 			}
+
 			confidence *= 10.0; // remove when getting rid of log10 stuff
 
 			VTMatchInfo match = new VTMatchInfo(matchSet);
@@ -241,28 +241,20 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 		return result;
 	}
 
-	private static final Comparator<VTMatchInfo> SCORE_COMPARATOR = new Comparator<VTMatchInfo>() {
-		@Override
-		public int compare(VTMatchInfo o1, VTMatchInfo o2) {
-			return o2.getSimilarityScore().compareTo(o1.getSimilarityScore());
-		}
-	};
-
 	private List<VTMatchInfo> refine(List<VTMatchInfo> list) {
 
-		int topN;
 		Collections.sort(list, SCORE_COMPARATOR);
 
 		// take the top N + 1 (to catch duplicates across the N boundary)
-		topN = Math.min(TOP_N + 1, list.size());
+		int topN = Math.min(TOP_N + 1, list.size());
 		list = list.subList(0, topN);
 
 		// remove things that are "very equal"
 		if (list.size() > 1) {
 			double previousScore = list.get(0).getSimilarityScore().getScore();
 			int cutoffIndex = 1;
-			for (int ii = 1; ii < list.size(); ++ii) {
-				double currentScore = list.get(ii).getSimilarityScore().getScore();
+			for (int i = 1; i < list.size(); ++i) {
+				double currentScore = list.get(i).getSimilarityScore().getScore();
 				if (currentScore > previousScore - EQUALS_EPSILON) {
 					--cutoffIndex;
 					break;
@@ -281,9 +273,9 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 		if (list.size() > 1) {
 			double bestScore = list.get(0).getSimilarityScore().getScore();
 			int cutoffIndex = list.size();
-			for (int ii = 1; ii < list.size(); ++ii) {
-				if (list.get(ii).getSimilarityScore().getScore() < bestScore - DIFFERENTIAL) {
-					cutoffIndex = ii;
+			for (int i = 1; i < list.size(); ++i) {
+				if (list.get(i).getSimilarityScore().getScore() < bestScore - DIFFERENTIAL) {
+					cutoffIndex = i;
 					break;
 				}
 			}
@@ -293,302 +285,305 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	}
 
 	/**
-	 * accumulateFunctionReferences recursively traces the reference chains from a given address 
-	 * and returns by reference a list of functions found along the reference chain.
+	 * Recursively traces the reference chains from a given address and returns by reference a
+	 * list of functions found along the reference chain.
 	 * 
-	 * @param depth - The initial recursion depth
-	 * @param list  - A function accumulation list that is updated by this function
-	 * @param refManager - {@inheritDoc ReferenceManager}
-	 * @param funManager - {@inheritDoc FunctionManager}
-	 * @param listing - The Program listing
-	 * @param address - An address represents a location in a program
+	 * @param depth the initial recursion depth
+	 * @param list a function accumulation list that is updated by this function
+	 * @param program the program
+	 * @param address an address represents a location in a program
 	 */
-	private void accumulateFunctionReferences(int depth, List<Function> list,
-			ReferenceManager refManager, FunctionManager funManager, Listing listing,
-			Address address) {
+	private void accumulateFunctionReferences(int depth, Set<Function> list,
+			Program program, Address address) {
 
-		// Do NOT proceed if the max recursion depth has been reached
 		if (depth >= MAX_DEPTH) {
 			return;
 		}
-		/* If address corresponds to a Thunk Function, in addition to following back references, 
-		 * you should collect back-thunk-addresses (not included in references) by using the 
-		 * method Function.getFunctionThunkAddresses (Elf programs can have thunks which do 
+
+		/*
+		 * If address corresponds to a Thunk Function, in addition to following back references,
+		 * you should collect back-thunk-addresses (not included in references) by using the
+		 * method Function.getFunctionThunkAddresses (Elf programs can have thunks which do
 		 * not have a forward reference but thunk another function).  You may also need to dedup
-		 *  your list of functions returned if this could cause fallout.  In addition, you may 
-		 *  need to watch out for recursion loops which could occur (i.e., a function pointer which 
-		 *  has a secondary reference to itself - contrived example). 		 * 
+		 * your list of functions returned if this could cause fallout.  In addition, you may
+		 * need to watch out for recursion loops which could occur (i.e., a function pointer which
+		 * has a secondary reference to itself - contrived example).
 		 */
 
-		// Check for Thunk Function
-		Function addressFunction = funManager.getFunctionAt(address);
+		FunctionManager functionManager = program.getFunctionManager();
+		Function addressFunction = functionManager.getFunctionAt(address);
 		if (addressFunction != null) {
 			Address[] thunkAddresses = addressFunction.getFunctionThunkAddresses();
 			if (thunkAddresses != null) {
 				for (Address thunkAddress : thunkAddresses) {
-					if (depth < MAX_DEPTH) {
-						accumulateFunctionReferences(depth + 1, list, refManager, funManager,
-							listing, thunkAddress);
-					}
+					accumulateFunctionReferences(depth + 1, list, program, thunkAddress);
 				}
 			}
 		}
 
 		// Handle References to the address
-		ReferenceIterator ii = refManager.getReferencesTo(address);
-		while (ii.hasNext()) {
-			Reference reference = ii.next();
+		if (address.isStackAddress() || address.isRegisterAddress()) {
+			return; // can't have references to these types of addresses
+		}
+
+		ReferenceManager refManager = program.getReferenceManager();
+		Listing listing = program.getListing();
+		ReferenceIterator it = refManager.getReferencesTo(address);
+		while (it.hasNext()) {
+			Reference reference = it.next();
 			Address fromAddress = reference.getFromAddress();
 			CodeUnit codeUnit = listing.getCodeUnitAt(fromAddress);
-			// if the code unit at the location of the reference is an Instruction, then get the function
-			// where the reference occurs and determine if it passes the basic VT function match test set above
-			// if so, add it to the function accumulation list for the original reference
-			if (codeUnit instanceof Instruction) {
-				Function function = funManager.getFunctionContaining(fromAddress);
 
-				if (function != null) {
-					if (!function.isThunk()) {
-						list.add(function);
-					}
-					else {
-						//If a thunk function recurse
-						accumulateFunctionReferences(depth + 1, list, refManager, funManager,
-							listing, function.getEntryPoint());
-					}
+			// if the code unit at the location of the reference is an Instruction, then get the
+			// function where the reference occurs and determine if it passes the basic VT function
+			// match test set above
+			if (codeUnit instanceof Instruction) {
+				Function function = functionManager.getFunctionContaining(fromAddress);
+				if (function == null) {
+					continue;
+				}
+
+				if (function.isThunk()) {
+					// also add references to the thunk function
+					Address entryPoint = function.getEntryPoint();
+					accumulateFunctionReferences(depth + 1, list, program, entryPoint);
 				}
 				else {
-					//Msg.warn(this, "no function for instruction at " + fromAddress +
-					//	" for reference " + address);
+					list.add(function);
 				}
 			}
 			else if (codeUnit instanceof Data) {
-				if (depth < MAX_DEPTH) {
-					accumulateFunctionReferences(depth + 1, list, refManager, funManager, listing,
-						fromAddress);
-				}
-			}
-			else {
-				//Msg.warn(this, "weird non-instruction non-data codeunit: " + codeUnit);
+				accumulateFunctionReferences(depth + 1, list, program, fromAddress);
 			}
 		}
 	}
 
 	/**
-	 * Boolean function used to check that a match association is of the correct type (e.g. DATA or FUNCTION) for the given correlator.
-	 * Called by extractReferenceFeatures. 
+	 * Used to check that a match association is of the correct type (e.g. DATA or FUNCTION) for
+	 * the given correlator.
 	 * 
-	 * @param matchAssocType the type of match.
-	 * @return True or False
+	 * @param associationType the type of match
+	 * @return true if the correct type
 	 */
-	protected abstract boolean isExpectedRefType(VTAssociationType matchAssocType);
-
-	protected abstract boolean isExpectedRefType(Reference myRef);
+	protected abstract boolean isExpectedRefType(VTAssociationType associationType);
 
 	/**
-	 * extractReferenceFeatures is the core of the reference algorithm.  Each accepted match becomes a unique feature.
-	 * At the end, all the source and destination functions will have "vectors" of these features, which
-	 * are unique match ids.  Then the LSH dictionary can be made from the source and we can look for matches   
-	 * in the destination.
+	 * Used to check that a match association is of the correct type (e.g. DATA or FUNCTION) for
+	 * the given correlator.
 	 * 
-	 * @param matchSet The VTMatchSet of previously user-accepted matches.
-	 * @param monitor TaskMonitor
+	 * @param ref the reference
+	 * @return true if the correct type
 	 */
-	protected void extractReferenceFeatures(VTMatchSet matchSet, TaskMonitor monitor) {
+	protected abstract boolean isExpectedRefType(Reference ref);
 
-		// Make source and destination maps that will be populated here.
-		srcFuncAddresstoVectorMap = new HashMap<>();
-		destFuncAddresstoVectorMap = new HashMap<>();
+	/**
+	 * extractReferenceFeatures is the core of the reference algorithm.  Each accepted match
+	 * becomes a unique feature. At the end, all the source and destination functions will have
+	 * "vectors" of these features, which are unique match ids.  Then the LSH dictionary can be
+	 * made from the source and we can look for matches in the destination.
+	 * 
+	 * @param matchSet the match set of previously user-accepted matches
+	 * @param monitor the monitor
+	 */
+	private void extractReferenceFeatures(VTMatchSet matchSet, TaskMonitor monitor)
+			throws CancelledException {
 
-		// Get function managers for Source and Destination Programs
+		srcVectorsByAddress =
+			LazyMap.lazyMap(new HashMap<>(), addr -> new LSHCosineVectorAccum());
+		destVectorsByAddress =
+			LazyMap.lazyMap(new HashMap<>(), addr -> new LSHCosineVectorAccum());
+
 		FunctionManager srcFuncManager = sourceProgram.getFunctionManager();
 		FunctionManager destFuncManager = destinationProgram.getFunctionManager();
-
-		// get total function counts for computing probabilities 
 		int srcFunctionCount = srcFuncManager.getFunctionCount();
 		int destFunctionCount = destFuncManager.getFunctionCount();
 
-		// setup session
-		final VTSession session = matchSet.getSession();
-		int total = 0;
-		HashMap<String, VTMatchSet> dedupedMatchSets = new HashMap<>();
-		for (VTMatchSet ms : session.getMatchSets()) {
-			String name = ms.getProgramCorrelatorInfo().getName();
-			if (name.equals(correlatorName) ||
-				(dedupedMatchSets.containsKey(name) && ms.getID() < dedupedMatchSets.get(name).getID())) {
-				continue;
-			}
-			dedupedMatchSets.put(name, ms);
+		Counter totalMatches = new Counter();
+		Collection<VTMatchSet> matchSets = getMatchSets(matchSet.getSession(), totalMatches);
+		monitor.initialize(totalMatches.count);
 
-			// get total number of matches in matchSets List
-			total += ms.getMatchCount();
-		}
-
-		final Collection<VTMatchSet> matchSets = dedupedMatchSets.values();
-		monitor.initialize(total);
-
-		/**
-		 * Loop through the matchSets in order to get total source and dest reference counts that pass the filter.
-		 * Only add matches that pass the isExpectedRefType filter test to the hash tables.
-		 */
-
-		Map<VTMatch, ArrayList<Function>> sourceRefMap = new HashMap<>();
-		Map<VTMatch, ArrayList<Function>> destinationRefMap = new HashMap<>();
+		// Loop through the matchSets in order to get total source and destination reference
+		// counts that pass the filter
+		Map<VTMatch, Set<Function>> sourceRefMap = new HashMap<>();
+		Map<VTMatch, Set<Function>> destinationRefMap = new HashMap<>();
 
 		for (VTMatchSet ms : matchSets) {
-			final Collection<VTMatch> matches = ms.getMatches();
+			Collection<VTMatch> matches = ms.getMatches();
 			for (VTMatch match : matches) {
-				// update monitor
-				if (monitor.isCancelled()) {
-					return;
-				}
+
+				monitor.checkCanceled();
 				monitor.incrementProgress(1);
 
-				//check match association type and status
-				final VTAssociation association = match.getAssociation();
-				final Address sourceAddress = association.getSourceAddress();
-				final Address destinationAddress = association.getDestinationAddress();
-
-				if (isExpectedRefType(association.getType()) &&
-					association.getStatus() == VTAssociationStatus.ACCEPTED) {
-
-					// populate sourceReferences by passing it to accumulateFunctionReferences
-					ArrayList<Function> sourceReferences = new ArrayList<>();
-					accumulateFunctionReferences(0, sourceReferences,
-						sourceProgram.getReferenceManager(), srcFuncManager, sourceListing,
-						sourceAddress);
-
-					ArrayList<Function> destinationReferences = new ArrayList<>();
-					accumulateFunctionReferences(0, destinationReferences,
-						destinationProgram.getReferenceManager(), destFuncManager,
-						destinationListing, destinationAddress);
-
-					final int sourceReferenceCountTo = sourceReferences.size();
-					final int destinationReferenceCountTo = destinationReferences.size();
-
-					//If either of the reference lists is empty, skip adding them to the hashtable
-					if (sourceReferenceCountTo == 0 || destinationReferenceCountTo == 0) {
-						continue;
-					}
-
-					// Fill Hashtable for use in next loop
-					sourceRefMap.put(match, sourceReferences);
-					destinationRefMap.put(match, destinationReferences);
-				}
+				accumulateMatchFunctionReferences(sourceRefMap, destinationRefMap, match);
 			}
 		}
+
 		monitor.setMessage("Adding ACCEPTED matches to feature vectors.");
 		int featureID = 1;
-		// for each match that passed the filter above, score it
+
+		// score each match that passed the filter above
 		for (VTMatch match : sourceRefMap.keySet()) {
-			// update monitor
-			if (monitor.isCancelled()) {
-				return;
-			}
+
+			monitor.checkCanceled();
 			monitor.incrementProgress(1);
 
-			// If the match is in one Hashtable it will be in the other by the joint construction above
-			if (sourceRefMap.get(match) != null) {
+			if (sourceRefMap.get(match).isEmpty()) {
+				continue;
+			}
 
-				/**
-				 * Compute raw percentages for the sources and destination counts 
-				 * as ratios 
-				 * (total references to the match):(total number of references of the correct type)
-				 */
+			/**
+			 * Compute raw percentages for the sources and destination counts as ratios
+			 * (total references to the match):(total number of references of the correct type)
+			 */
 
-				// Compute entropy of the system for the given match
-				Set<Function> srcRefFuncs = new HashSet<>(sourceRefMap.get(match));
-				Set<Function> destRefFuncs = new HashSet<>(destinationRefMap.get(match));
+			// Compute entropy of the system for the given match
+			Set<Function> srcRefFuncs = new HashSet<>(sourceRefMap.get(match));
+			Set<Function> destRefFuncs = new HashSet<>(destinationRefMap.get(match));
 
-				// take the average probability that the feature appears any one function (in either source or dest)
-				double altPraw = (double) (srcRefFuncs.size() + destRefFuncs.size()) /
-					(srcFunctionCount + destFunctionCount);
-				final double weight = Math.sqrt(-Math.log(altPraw));
+			// take the average probability that the feature appears in any one function (in either
+			// source or dest)
+			double altPraw = (double) (srcRefFuncs.size() + destRefFuncs.size()) /
+				(srcFunctionCount + destFunctionCount);
+			double weight = Math.sqrt(-Math.log(altPraw));
 
-				// By the construction above, there may be duplicate functions in the RefMaps
-				for (Function function : sourceRefMap.get(match)) {
-					//If function is not in the HashMap, add it
-					LSHCosineVectorAccum vector = srcFuncAddresstoVectorMap.get(function.getEntryPoint());
-					if (vector == null) {
-						vector = new LSHCosineVectorAccum();
-						srcFuncAddresstoVectorMap.put(function.getEntryPoint(), vector);
-					}
-					vector.addHash(featureID, weight);
-				}
+			// By the construction above, there may be duplicate functions in the RefMaps
+			for (Function function : sourceRefMap.get(match)) {
+				LSHCosineVectorAccum vector =
+					srcVectorsByAddress.get(function.getEntryPoint());
+				vector.addHash(featureID, weight);
+			}
 
-				for (Function function : destinationRefMap.get(match)) {
-					LSHCosineVectorAccum vector = destFuncAddresstoVectorMap.get(function.getEntryPoint());
-					if (vector == null) {
-						vector = new LSHCosineVectorAccum();
-						destFuncAddresstoVectorMap.put(function.getEntryPoint(), vector);
-					}
-					vector.addHash(featureID, weight);
-				}
-				++featureID;
-			} //end if match association 
+			for (Function function : destinationRefMap.get(match)) {
+				LSHCosineVectorAccum vector =
+					destVectorsByAddress.get(function.getEntryPoint());
+				vector.addHash(featureID, weight);
+			}
+
+			++featureID;
 		}
 
-		/* At this point the vectors in the sourceMap and the destinationMap contain log weights for 
+		updateSourceAndDestinationVectors(featureID, srcFuncManager, destFuncManager, monitor);
+	}
+
+	private Collection<VTMatchSet> getMatchSets(VTSession session, Counter totalMatches) {
+
+		Map<String, VTMatchSet> dedupedMatchSets = new HashMap<>();
+		for (VTMatchSet ms : session.getMatchSets()) {
+			String name = ms.getProgramCorrelatorInfo().getName();
+
+			// odd checks here: 1) assuming we do not want to include our own results when checking
+			// matches; 2) why keep only the newest match set data?  seems like we should take all
+			// matches and dedup the matches, not the match sets
+			if (name.equals(correlatorName) ||
+				(dedupedMatchSets.containsKey(name) &&
+					ms.getID() < dedupedMatchSets.get(name).getID())) {
+				continue;
+			}
+
+			dedupedMatchSets.put(name, ms);
+			totalMatches.count += ms.getMatchCount();
+		}
+
+		return dedupedMatchSets.values();
+
+	}
+
+	private void accumulateMatchFunctionReferences(
+			Map<VTMatch, Set<Function>> sourceRefMap,
+			Map<VTMatch, Set<Function>> destinationRefMap, VTMatch match) {
+
+		// check match association type and status
+		VTAssociation association = match.getAssociation();
+		Address sourceAddress = association.getSourceAddress();
+		Address destinationAddress = association.getDestinationAddress();
+
+		if (!isExpectedRefType(association.getType())) {
+			return;
+		}
+
+		if (association.getStatus() != VTAssociationStatus.ACCEPTED) {
+			return;
+		}
+
+		Set<Function> sourceReferences = new HashSet<>();
+		accumulateFunctionReferences(0, sourceReferences, sourceProgram, sourceAddress);
+
+		// If either of the reference lists is empty, skip adding them to the map
+		if (sourceReferences.isEmpty()) {
+			return;
+		}
+
+		Set<Function> destinationReferences = new HashSet<>();
+		accumulateFunctionReferences(0, destinationReferences, destinationProgram,
+			destinationAddress);
+
+		// If either of the reference lists is empty, skip adding them to the map
+		if (destinationReferences.isEmpty()) {
+			return;
+		}
+
+		// Fill Hashtable for use in next loop
+		sourceRefMap.put(match, sourceReferences);
+		destinationRefMap.put(match, destinationReferences);
+	}
+
+	private void updateSourceAndDestinationVectors(int featureID, FunctionManager srcFuncManager,
+			FunctionManager destFuncManager, TaskMonitor monitor) {
+
+		/*
+		 * At this point the vectors in the sourceMap and the destinationMap contain log weights for
 		 * the probability that ACCEPTED MATCHED features appear in any one function in the system.
 		 * Each map has the key:value pair = refFunction:featureVector.
-		 * In order to account unmatched/unaccepted matches that appear in the key set that consists of 
-		 * possibly correlated functions, we can consider the cost of a reference switching
-		 * and the cost of a reference being dropped or picked up between versions.
+		 * In order to account unmatched/unaccepted matches that appear in the key set that
+		 * consists of possibly correlated functions, we can consider the cost of a reference
+		 * switching and the cost of a reference being dropped or picked up between versions.
 		 * 
-		 * Theoretically this should be dependent on the probability of the referenced element occurring, 
-		 * but for the moment we'll consider the model for a generalized switch and drop/pickup. 
+		 * Theoretically this should be dependent on the probability of the referenced element
+		 * occurring, but for the moment we'll consider the model for a generalized switch and
+		 * drop/pickup.
 		 */
 		monitor.setMessage("Adding unmatched references to feature vectors.");
 
 		double pSwitch = 0.5;
 		double uniqueWeight = Math.sqrt(-Math.log(pSwitch)); //arbitrary weight used to provide negative correlation
 
-		/*
-		 * Update Source Vectors
-		 */
-		for (Address addr : srcFuncAddresstoVectorMap.keySet()) {
-			Function func = srcFuncManager.getFunctionAt(addr);
+		for (Address addr : srcVectorsByAddress.keySet()) {
 
-			CodeUnitIterator iter = sourceProgram.getListing().getCodeUnits(func.getBody(), true);
-			int totalRefs = 0;
-			while (iter.hasNext()) {
-				CodeUnit cu = iter.next();
-				Reference[] memRefs = cu.getReferencesFrom();
-
-				for (Reference memRef : memRefs) {
-					if (isExpectedRefType(memRef)) {
-						++totalRefs;
-					}
-				}
-			}
-			LSHCosineVectorAccum srcVector = srcFuncAddresstoVectorMap.get(addr);
+			int totalRefs = countFunctionRefs(sourceProgram, addr);
+			LSHCosineVectorAccum srcVector = srcVectorsByAddress.get(addr);
 			int numEntries = srcVector.numEntries();
 			for (int i = 0; i < (totalRefs - numEntries); i++) {
 				srcVector.addHash(featureID, uniqueWeight);
 				++featureID;
 			}
 		}
-		/*
-		 * Update Destination Vectors
-		 */
-		for (Address addr : destFuncAddresstoVectorMap.keySet()) {
-			Function func = destFuncManager.getFunctionAt(addr);
-			CodeUnitIterator iter = destinationListing.getCodeUnits(func.getBody(), true);
-			int totalRefs = 0;
-			while (iter.hasNext()) {
-				CodeUnit cu = iter.next();
-				Reference[] memRefs = cu.getReferencesFrom();
-				for (Reference memRef : memRefs) {
-					if (isExpectedRefType(memRef)) {
-						++totalRefs;
-					}
-				}
-			}
-			LSHCosineVectorAccum dstVector = destFuncAddresstoVectorMap.get(addr);
+
+		for (Address addr : destVectorsByAddress.keySet()) {
+
+			int totalRefs = countFunctionRefs(destinationProgram, addr);
+			LSHCosineVectorAccum dstVector = destVectorsByAddress.get(addr);
 			int numEntries = dstVector.numEntries();
 			for (int i = 0; i < (totalRefs - numEntries); i++) {
 				dstVector.addHash(featureID, uniqueWeight);
 				++featureID;
 			}
 		}
+	}
+
+	private int countFunctionRefs(Program program, Address addr) {
+		Function f = program.getFunctionManager().getFunctionAt(addr);
+		CodeUnitIterator it = program.getListing().getCodeUnits(f.getBody(), true);
+		int totalRefs = 0;
+		while (it.hasNext()) {
+			CodeUnit cu = it.next();
+			Reference[] memRefs = cu.getReferencesFrom();
+
+			for (Reference memRef : memRefs) {
+				if (isExpectedRefType(memRef)) {
+					++totalRefs;
+				}
+			}
+		}
+		return totalRefs;
 	}
 }

@@ -131,7 +131,7 @@ protected:
   virtual void pushTypeEnd(const Datatype *ct);			///< Push the tail ends of a data-type declaration onto the RPN stack
   void pushBoolConstant(uintb val,const TypeBase *ct,const Varnode *vn,
 			  const PcodeOp *op);
-  void pushCharConstant(uintb val,const TypeChar *ct,const Varnode *vn,
+  void pushCharConstant(uintb val,const Datatype *ct,const Varnode *vn,
 			  const PcodeOp *op);
   void pushEnumConstant(uintb val,const TypeEnum *ct,const Varnode *vn,
 			  const PcodeOp *op);
@@ -162,6 +162,7 @@ protected:
   void opFunc(const PcodeOp *op);			///< Push a \e functional expression based on the given p-code op to the RPN stack
   void opTypeCast(const PcodeOp *op);			///< Push the given p-code op using type-cast syntax to the RPN stack
   void opHiddenFunc(const PcodeOp *op);			///< Push the given p-code op as a hidden token
+  static void printCharHexEscape(ostream &s,int4 val);	///< Print value as an escaped hex sequence
   bool printCharacterConstant(ostream &s,const Address &addr,Datatype *charType) const;
   int4 getHiddenThisSlot(const PcodeOp *op,FuncProto *fc);	///< Get position of "this" pointer needing to be hidden
   void resetDefaultsPrintC(void);			///< Set default values for options specific to PrintC

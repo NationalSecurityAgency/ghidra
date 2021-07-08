@@ -344,7 +344,7 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 				Address address = toAddr( program, offset );
 				if ( isDirEntry2 ) {
 					while ( ( reader.getPointerIndex( ) - offset ) < ( extent.getEe_len( ) * blockSize ) ) {
-						Ext4DirEntry2 dirEnt2 = new Ext4DirEntry2( reader );
+						Ext4DirEntry2 dirEnt2 = Ext4DirEntry2.read(reader);
 						DataType dataType = dirEnt2.toDataType( );
 						createData( program, address, dataType );
 						String comment = "Name: " + dirEnt2.getName( ) + "\n";

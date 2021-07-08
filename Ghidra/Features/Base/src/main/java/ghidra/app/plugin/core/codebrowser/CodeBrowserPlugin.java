@@ -131,12 +131,7 @@ public class CodeBrowserPlugin extends Plugin
 
 	public CodeBrowserPlugin(PluginTool tool) {
 		super(tool);
-		tool.registerOptionsNameChange(GhidraOptions.OLD_CATEGORY_BROWSER_FIELDS,
-			GhidraOptions.CATEGORY_BROWSER_FIELDS);
-		tool.registerOptionsNameChange(GhidraOptions.OLD_CATEGORY_BROWSER_DISPLAY,
-			GhidraOptions.CATEGORY_BROWSER_DISPLAY);
-		tool.registerOptionsNameChange(GhidraOptions.OLD_CATEGORY_BROWSER_POPUPS,
-			GhidraOptions.CATEGORY_BROWSER_POPUPS);
+
 		ToolOptions displayOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_DISPLAY);
 		ToolOptions fieldOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		displayOptions.registerOptionsEditor(new ListingDisplayOptionsEditor(displayOptions));

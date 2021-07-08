@@ -15,13 +15,12 @@
  */
 package ghidra.program.database.map;
 
-import ghidra.program.model.address.*;
-
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
 import db.*;
+import ghidra.program.model.address.*;
 
 /**
  * Returns a RecordIterator over records that are address keyed.  Various constructors allow
@@ -116,7 +115,7 @@ public class AddressKeyRecordIterator implements RecordIterator {
 	 * @param addrMap the address map
 	 * @param absolute if true, only absolute memory address encodings are considered, otherwise 
 	 * only standard/relocatable address encodings are considered.
-	 * @param set the address set to iterate over.
+	 * @param set the address set to iterate over or null for all addresses
 	 * @param startAddr the address at which to position the iterator.  The iterator will be positioned 
 	 * either before or after the start address depending on the before parameter. If this parameter
 	 * is null, then the iterator will start either before the min address or after the max address 
@@ -174,6 +173,7 @@ public class AddressKeyRecordIterator implements RecordIterator {
 	/**
 	 * @see db.RecordIterator#hasNext()
 	 */
+	@Override
 	public boolean hasNext() throws IOException {
 		if (it == null) {
 			return false;
@@ -197,6 +197,7 @@ public class AddressKeyRecordIterator implements RecordIterator {
 	/**
 	 * @see db.RecordIterator#hasPrevious()
 	 */
+	@Override
 	public boolean hasPrevious() throws IOException {
 		if (it == null) {
 			return false;
@@ -220,6 +221,7 @@ public class AddressKeyRecordIterator implements RecordIterator {
 	/**
 	 * @see db.RecordIterator#next()
 	 */
+	@Override
 	public DBRecord next() throws IOException {
 		if (hasNext()) {
 			return it.next();
@@ -230,6 +232,7 @@ public class AddressKeyRecordIterator implements RecordIterator {
 	/**
 	 * @see db.RecordIterator#previous()
 	 */
+	@Override
 	public DBRecord previous() throws IOException {
 		if (hasPrevious()) {
 			return it.previous();
@@ -240,6 +243,7 @@ public class AddressKeyRecordIterator implements RecordIterator {
 	/**
 	 * @see db.RecordIterator#delete()
 	 */
+	@Override
 	public boolean delete() throws IOException {
 		if (it != null) {
 			return it.delete();

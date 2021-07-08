@@ -66,7 +66,7 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 	private PopupRegulator<V, E> popupRegulator;
 	private VertexTooltipProvider<V, E> vertexTooltipProvider = new DummyTooltipProvider();
 
-	protected VisualGraphOptions options;
+	protected VisualGraphOptions vgOptions;
 
 	private VisualGraphViewUpdater<V, E> viewUpdater;
 	private VisualGraphPathHighlighter<V, E> pathHighlighter;
@@ -157,16 +157,16 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 	}
 
 	public void setGraphOptions(VisualGraphOptions options) {
-		this.options = options;
+		this.vgOptions = options;
 		optionsChanged();
 	}
 
 	public void optionsChanged() {
-		setBackground(options.getGraphBackgroundColor());
+		setBackground(vgOptions.getGraphBackgroundColor());
 	}
 
 	public VisualGraphOptions getOptions() {
-		return options;
+		return vgOptions;
 	}
 
 	public void setVertexHoverPathHighlightMode(PathHighlightMode hoverMode) {
@@ -221,7 +221,7 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 	 * @return true if using mouse-relative zoom
 	 */
 	public boolean useMouseRelativeZoom() {
-		return options.useMouseRelativeZoom();
+		return vgOptions.useMouseRelativeZoom();
 	}
 
 	/**

@@ -480,6 +480,17 @@ public class SetEquateDialog extends DialogComponentProvider {
 	}
 
 	/**
+	 * For using the dialog outside of the EquatePlugin, the "Apply to Current" radio button
+	 * can be selected and the other buttons disabled.
+	 */
+	public void disableHasSelection() {
+		applyToAll.setEnabled(false);
+		applyToSelection.setEnabled(false);
+		applyToSelection.setSelected(false);
+		overwriteExistingEquates.setEnabled(false);
+	}
+
+	/**
 	 * Sets the dialogs status display to the given message.
 	 */
 	void setStatus(String text) {

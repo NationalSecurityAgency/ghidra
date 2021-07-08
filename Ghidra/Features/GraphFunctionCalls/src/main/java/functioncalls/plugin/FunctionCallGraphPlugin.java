@@ -17,18 +17,21 @@ package functioncalls.plugin;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.GoToService;
-import ghidra.framework.options.SaveState;
+import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.graph.viewer.options.VisualGraphOptions;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
+import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.task.SwingUpdateManager;
 
 /**
@@ -43,7 +46,7 @@ import ghidra.util.task.SwingUpdateManager;
 	description = "Displays a graph of incoming and outgoing calls for a given function."
 )
 //@formatter:on
-public class FunctionCallGraphPlugin extends ProgramPlugin {
+public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsChangeListener {
 
 	/*package*/ static final String NAME = "Function Call Graph";
 	/*package*/ static final String SHOW_PROVIDER_ACTION_NAME = "Display Function Call Graph";
@@ -52,6 +55,7 @@ public class FunctionCallGraphPlugin extends ProgramPlugin {
 			FunctionCallGraphPlugin.class.getSimpleName());
 
 	private FcgProvider provider;
+	private VisualGraphOptions vgOptions = new VisualGraphOptions();
 
 	// enough time for users to click around without the graph starting its work
 	private static final int MIN_UPDATE_DELAY = 750;
@@ -65,8 +69,32 @@ public class FunctionCallGraphPlugin extends ProgramPlugin {
 
 	@Override
 	protected void init() {
+
 		provider = new FcgProvider(tool, this);
 		createActions();
+
+		initializeOptions();
+	}
+
+	private void initializeOptions() {
+		ToolOptions options = tool.getOptions(ToolConstants.GRAPH_OPTIONS);
+		options.addOptionsChangeListener(this);
+
+		HelpLocation help = new HelpLocation(getName(), "Options");
+
+		Options callGraphOptions = options.getOptions(NAME);
+		vgOptions.registerOptions(callGraphOptions, help);
+		vgOptions.loadOptions(callGraphOptions);
+		provider.optionsChanged();
+	}
+
+	@Override
+	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
+			Object newValue) throws OptionsVetoException {
+
+		Options callGraphOptions = options.getOptions(NAME);
+		vgOptions.loadOptions(callGraphOptions);
+		provider.optionsChanged();
 	}
 
 	@Override
@@ -118,7 +146,7 @@ public class FunctionCallGraphPlugin extends ProgramPlugin {
 			}
 		};
 
-// TODO create icon from scratch: bow-tie		
+// TODO create icon from scratch: bow-tie
 //		ImageIcon icon = ResourceManager.loadImage("images/applications-development.png");
 //		showProviderAction.setToolBarData(new ToolBarData(icon, "View"));
 		tool.addAction(showProviderAction);
@@ -141,5 +169,9 @@ public class FunctionCallGraphPlugin extends ProgramPlugin {
 
 	ProgramLocation getCurrentLocation() {
 		return currentLocation;
+	}
+
+	VisualGraphOptions getOptions() {
+		return vgOptions;
 	}
 }

@@ -15,16 +15,12 @@
  */
 package ghidra.file.formats.ext4;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
+import ghidra.app.util.bin.*;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
 
 public class Ext4XattrEntry implements StructConverter {
 	
@@ -35,6 +31,8 @@ public class Ext4XattrEntry implements StructConverter {
 	private int e_value_size;
 	private int e_hash;
 	private byte[] e_name;
+
+	private byte[] value;	// calculated value supplied by external logic
 
 	public Ext4XattrEntry(ByteProvider provider) throws IOException {
 		this( new BinaryReader( provider, true ) );
@@ -76,6 +74,38 @@ public class Ext4XattrEntry implements StructConverter {
 
 	public byte[] getE_name() {
 		return e_name;
+	}
+
+	public boolean isEndOfListMarker() {
+		return e_name_len == 0 && e_name_index == 0 && e_value_offs == 0 && e_value_block == 0;
+	}
+
+	public boolean isValid() {
+		return 0 <= e_name_index &&
+			e_name_index < Ext4Constants.EXT4_XATTR_NAMEINDEX_STRINGS.length;
+	}
+
+	public String getName() {
+		return Ext4Constants.EXT4_XATTR_NAMEINDEX_STRINGS[e_name_index] +
+			new String(e_name, StandardCharsets.UTF_8);
+	}
+
+	/**
+	 * Returns the value of this external attribute entry
+	 * 
+	 * @return value of this external attribute entry
+	 */
+	public byte[] getValue() {
+		return value;
+	}
+
+	/**
+	 * Sets the value of this external attribute entry
+	 * 
+	 * @param value byte[] array
+	 */
+	public void setValue(byte[] value) {
+		this.value = value;
 	}
 
 	@Override

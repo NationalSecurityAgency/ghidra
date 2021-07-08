@@ -63,13 +63,13 @@ import resources.ResourceManager;
 import util.CollectionUtils;
 
 /**
- * A component that contains primary and satellite graph views.  This viewer provides 
+ * A component that contains primary and satellite graph views.  This viewer provides
  * methods for manipulating the graph using the mouse.
  *
- * <p>To gain the full functionality offered by this class, clients will need to subclass 
- * this class and override {@link #createPrimaryGraphViewer(VisualGraphLayout, Dimension)} 
- * and {@link #createSatelliteGraphViewer(GraphViewer, Dimension)} as needed.   This allows 
- * them to customize renderers and other viewer attributes.  To use the subclass, see the 
+ * <p>To gain the full functionality offered by this class, clients will need to subclass
+ * this class and override {@link #createPrimaryGraphViewer(VisualGraphLayout, Dimension)}
+ * and {@link #createSatelliteGraphViewer(GraphViewer, Dimension)} as needed.   This allows
+ * them to customize renderers and other viewer attributes.  To use the subclass, see the
  * {@link VisualGraphView} and its <code>installGraphViewer()</code> method.
  * 
  * @param <V> the vertex type
@@ -83,7 +83,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 	private static final double PARENT_TO_SATELLITE_RATIO = 4;// 2.5 smaller view seems better
 	private static final int MINIMUM_SATELLITE_WIDTH = 150;
 
-	// TODO this is arbitrary right now; perform testing for a generic number value; 
+	// TODO this is arbitrary right now; perform testing for a generic number value;
 	// subclasses can override
 	private static final int REALLY_BIG_GRAPH_VERTEX_COUNT = 500;
 
@@ -124,7 +124,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 	// a cache to prevent unnecessary layout calculations
 	private Dimension lastSize;
 
-	protected VisualGraphOptions options = new VisualGraphOptions();
+	protected VisualGraphOptions vgOptions = new VisualGraphOptions();
 
 	public GraphComponent(G graph) {
 
@@ -187,7 +187,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		//
 		// This method can be overridden by subclasses to perform custom creation and setup.
 		// Any setup, like renderers, that this class should not override must be put in this
-		// method so that subclasses can override.  Common setup items should be in the 
+		// method so that subclasses can override.  Common setup items should be in the
 		// method that calls this one.
 		//
 
@@ -208,7 +208,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		renderContext.setVertexFillPaintTransformer(
 			new PickableVertexPaintTransformer<>(pickedVertexState, Color.WHITE, Color.YELLOW));
 
-		viewer.setGraphOptions(options);
+		viewer.setGraphOptions(vgOptions);
 
 		return viewer;
 	}
@@ -295,7 +295,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 		SatelliteGraphViewer<V, E> viewer = createSatelliteGraphViewer(masterViewer, viewerSize);
 
-		viewer.setGraphOptions(options);
+		viewer.setGraphOptions(vgOptions);
 
 		viewer.setMinimumSize(viewerSize);
 		viewer.setMaximumSize(viewerSize);
@@ -434,7 +434,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 		/*
 		 
-		 TODO fix when the help module is created
+		 TODO fix when the Generic Visual Graph help module is created
 		 
 		HelpService helpService = DockingWindowManager.getHelpService();
 		helpService.registerHelp(button,
@@ -506,7 +506,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 	}
 
 	/**
-	 * This method is used to determine caching strategy.  For example, large graph will 
+	 * This method is used to determine caching strategy.  For example, large graph will
 	 * trigger the us of a cached satellite view, for performance reasons.
 	 * 
 	 * @return true if the data is considered 'really big'
@@ -524,7 +524,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 	}
 
 	public void setGraphOptions(VisualGraphOptions options) {
-		this.options = options;
+		this.vgOptions = options;
 
 		// the viewers may be null if called during initialization
 		if (primaryViewer != null) {
@@ -534,6 +534,10 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		if (satelliteViewer != null) {
 			satelliteViewer.setGraphOptions(options);
 		}
+	}
+
+	public VisualGraphOptions getGraphOptions() {
+		return vgOptions;
 	}
 
 	public boolean isUninitialized() {
@@ -592,7 +596,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		return primaryViewer.getViewUpdater();
 	}
 
-	/** 
+	/**
 	 * Returns an empty rectangle if the satellite is not visible
 	 * @return the bounds
 	 */
@@ -611,10 +615,10 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 			applyGraphPerspective(graphPerspectiveInfo);
 		}
 		else {
-			// 
+			//
 			// Default Zoom - Zoomed-out or Zoomed-in?
 			//
-			ViewRestoreOption viewOption = options.getViewRestoreOption();
+			ViewRestoreOption viewOption = vgOptions.getViewRestoreOption();
 			if (viewOption == ViewRestoreOption.START_FULLY_ZOOMED_IN) {
 				zoomInCompletely(getInitialVertex());
 			}
@@ -883,7 +887,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		}
 
 		//
-		// Let's go a bit overboard and help the garbage collector cleanup by nulling out 
+		// Let's go a bit overboard and help the garbage collector cleanup by nulling out
 		// references and removing the data from Jung's graph
 		//
 
@@ -1204,7 +1208,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 		@Override
 		public void mouseClicked(MouseEvent e) {
-			// stub	
+			// stub
 		}
 
 		@Override
@@ -1214,7 +1218,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 		@Override
 		public void mouseEntered(MouseEvent e) {
-			// stub	
+			// stub
 		}
 
 		@Override

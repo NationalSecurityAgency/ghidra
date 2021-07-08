@@ -35,7 +35,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.task.TaskMonitor;
 
-public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
+public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 	private TestEnv env;
 	private PluginTool tool;
 	private AttributedGraph graph;
@@ -299,7 +299,7 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
-	// @Test TODO GP-658
+	@Test
 	public void testSelectNodeThatIsDoubleGrouped() {
 		select(a, b, c);
 		collapse();
@@ -332,7 +332,7 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(vertex instanceof GroupVertex);
 	}
 
-	// @Test TODO GP-658
+	@Test
 	public void testFocusNodeThatIsDoubleGrouped() {
 		select(a, b, c);
 		collapse();
@@ -362,7 +362,7 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(graphSpy.isFocused(a));
 	}
 
-	// @Test TODO GP-658
+	@Test
 	public void testListenerNotificatinWhenDoubleGroupedNodeFocused() {
 		select(a, b, c);
 		collapse();
@@ -392,7 +392,7 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(graphSpy.isSelected(a, b, c));
 	}
 
-	// @Test TODO GP-658
+	@Test
 	public void testSelectNotificatinWhenDoubleGroupedNodeFocused() {
 		select(a, b, c);
 		collapse();
