@@ -23,6 +23,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
+import org.apache.commons.lang3.StringUtils;
 
 public class CParserUtils {
 
@@ -165,6 +166,18 @@ public class CParserUtils {
 			return null;
 		}
 
+        GenericCallingConvention convention = null;
+
+        for (GenericCallingConvention conv : GenericCallingConvention.values()) {
+            if (conv == GenericCallingConvention.unknown) continue;
+
+            if (StringUtils.endsWith(signatureParts[0], " " + conv)) {
+                convention = conv;
+                signatureParts[0] = StringUtils.removeEnd(signatureParts[0], " " + conv);
+                break;
+            }
+        }
+
 		String replacedText =
 			signatureParts[0] + " " + getTempName(signatureParts[1].length()) + signatureParts[2];
 
@@ -180,7 +193,9 @@ public class CParserUtils {
 			// put back the old signature name
 			dt.setName(signatureParts[1]);
 
-			return (FunctionDefinitionDataType) dt;
+            FunctionDefinitionDataType fdt = (FunctionDefinitionDataType) dt;
+            if (convention != null) fdt.setGenericCallingConvention(convention);
+            return fdt;
 		}
 		catch (InvalidNameException | DuplicateNameException e) {
 			// can't happen since we are calling setName() with the value that was 
