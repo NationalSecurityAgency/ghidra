@@ -2464,6 +2464,7 @@ int4 RuleZextEliminate::applyOp(PcodeOp *op,Funcdata &data)
   val = vn2->getOffset();
   if ((val>>(8*smallsize))==0) { // Is zero extension unnecessary
     newvn = data.newConstant(smallsize,val);
+    newvn->copySymbolIfValid(vn2);
     data.opSetInput(op,zext->getIn(0),zextslot);
     data.opSetInput(op,newvn,otherslot);
     return 1;
@@ -3696,7 +3697,9 @@ int4 RuleXorCollapse::applyOp(PcodeOp *op,Funcdata &data)
   }
   coeff2 = xorvn->getOffset();
   if (coeff2 == 0) return 0;
-  data.opSetInput(op,data.newConstant(op->getIn(1)->getSize(),coeff1^coeff2),1);
+  Varnode *constvn = data.newConstant(op->getIn(1)->getSize(),coeff1^coeff2);
+  constvn->copySymbolIfValid(xorvn);
+  data.opSetInput(op,constvn,1);
   data.opSetInput(op,xorop->getIn(0),0);
   return 1;
 }
@@ -3757,6 +3760,10 @@ int4 RuleAddMultCollapse::applyOp(PcodeOp *op,Funcdata &data)
 
       uintb val = op->getOpcode()->evaluateBinary(c[0]->getSize(),c[0]->getSize(),c[0]->getOffset(),c[1]->getOffset());
       newvn = data.newConstant(c[0]->getSize(),val);
+      if (c[0]->getSymbolEntry() != (SymbolEntry *)0)
+	newvn->copySymbolIfValid(c[0]);
+      else if (c[1]->getSymbolEntry() != (SymbolEntry *)0)
+	newvn->copySymbolIfValid(c[1]);
       PcodeOp *newop = data.newOp(2,op->getAddr());
       data.opSetOpcode(newop,CPUI_INT_ADD);
       Varnode *newout = data.newUniqueOut(c[0]->getSize(),newop);
@@ -3774,6 +3781,10 @@ int4 RuleAddMultCollapse::applyOp(PcodeOp *op,Funcdata &data)
 
   uintb val = op->getOpcode()->evaluateBinary(c[0]->getSize(),c[0]->getSize(),c[0]->getOffset(),c[1]->getOffset());
   newvn = data.newConstant(c[0]->getSize(),val);
+  if (c[0]->getSymbolEntry() != (SymbolEntry *)0)
+    newvn->copySymbolIfValid(c[0]);
+  else if (c[1]->getSymbolEntry() != (SymbolEntry *)0)
+    newvn->copySymbolIfValid(c[1]);
   data.opSetInput(op,newvn,1); // Replace c[0] with c[0]+c[1] or c[0]*c[1]
   data.opSetInput(op,sub2,0); // Replace sub with sub2
   return 1;

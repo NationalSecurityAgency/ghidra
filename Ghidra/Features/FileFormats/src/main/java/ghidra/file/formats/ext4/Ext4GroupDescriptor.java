@@ -149,6 +149,14 @@ public class Ext4GroupDescriptor implements StructConverter {
 		return bg_inode_table_hi;
 	}
 
+	/**
+	 * Return the calculated inode table value by combining bg_inode_table_lo and bg_inode_table_hi
+	 * @return the calculated inode table value by combining bg_inode_table_lo and bg_inode_table_hi
+	 */
+	public long getBg_inode_table() {
+		return ((long) bg_inode_table_hi << 32) | Integer.toUnsignedLong(bg_inode_table_lo);
+	}
+
 	public short getBg_free_blocks_count_hi() {
 		return bg_free_blocks_count_hi;
 	}

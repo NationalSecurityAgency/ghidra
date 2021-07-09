@@ -1207,6 +1207,10 @@ bool Funcdata::attemptDynamicMappingLate(SymbolEntry *entry,DynamicHash &dhash)
     return false;
   if (vn->getSymbolEntry() == entry) return false; // Already applied it
   Symbol *sym = entry->getSymbol();
+  if (sym->getCategory() == 1) {	// Equate symbol does not depend on size
+    vn->setSymbolEntry(entry);
+    return true;
+  }
   if (vn->getSize() != entry->getSize()) {
     ostringstream s;
     s << "Unable to use symbol ";

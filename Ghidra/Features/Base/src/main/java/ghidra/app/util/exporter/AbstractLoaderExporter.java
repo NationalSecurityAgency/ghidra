@@ -89,25 +89,25 @@ public abstract class AbstractLoaderExporter extends Exporter {
 		}
 		
 		// Undo relocations in the temp file
+		// NOTE: not all relocations are file-backed
 		String error = null;
 		try (RandomAccessFile fout = new RandomAccessFile(tempFile, "rw")) {
 			Iterable<Relocation> relocs = () -> program.getRelocationTable().getRelocations();
 			for (Relocation reloc : relocs) {
 				AddressSourceInfo info = memory.getAddressSourceInfo(reloc.getAddress());
 				if (info == null) {
-					error = "Failed to get relocation address source";
-					break;
+					continue;
 				}
-				if (info.getFileOffset() < 0) {
-					error = "Failed to get relocation file offset";
-					break;
+				long offset = info.getFileOffset();
+				byte[] bytes = reloc.getBytes();
+				if (offset >= 0) {
+					if (offset + bytes.length > fout.length()) {
+						error = "Relocation at " + reloc.getAddress() + " exceeds file length";
+						break;
+					}
+					fout.seek(offset);
+					fout.write(bytes);
 				}
-				if (info.getFileOffset() >= fout.length()) {
-					error = "Relocation file offset exceeds file length";
-					break;
-				}
-				fout.seek(info.getFileOffset());
-				fout.write(reloc.getBytes());
 			}
 		}
 		

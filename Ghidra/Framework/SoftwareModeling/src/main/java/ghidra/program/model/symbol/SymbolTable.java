@@ -420,7 +420,7 @@ public interface SymbolTable {
 
 	/**
 	 * Returns all the symbols of the given type within the given address set.
-	 * @param set the address set in which to look for symbols of the given type
+	 * @param set the address set in which to look for symbols of the given type (required).
 	 * @param type the SymbolType to look for.
 	 * @param forward the direction within the addressSet to search
 	 * @return symbol iterator
@@ -500,7 +500,7 @@ public interface SymbolTable {
 
 	/**
 	 * Get an iterator over symbols at addresses in the given addressSet
-	 * @param asv the set of address over which to iterate symbols.
+	 * @param asv the set of address over which to iterate symbols (required).
 	 * @param forward true means the iterator is in the forward direction
 	 * @return symbol iterator
 	 */

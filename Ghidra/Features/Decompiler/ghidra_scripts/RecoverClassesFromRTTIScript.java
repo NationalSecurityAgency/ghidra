@@ -63,13 +63,13 @@ import ghidra.app.plugin.core.analysis.DecompilerFunctionAnalyzer;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.Analyzer;
 import ghidra.app.services.GraphDisplayBroker;
+import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.service.graph.*;
 import ghidra.util.exception.CancelledException;
@@ -273,14 +273,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	 * @return true if pdb info has been applied to program
 	 */
 	private boolean isPDBLoadedInProgram() {
-
-		Options options = currentProgram.getOptions("Program Information");
-		isPDBLoaded = false;
-		Object isPDBLoadedObject = options.getObject("PDB Loaded", null);
-		if (isPDBLoadedObject != null) {
-			isPDBLoaded = (boolean) isPDBLoadedObject;
-		}
-		return isPDBLoaded;
+		Options options = currentProgram.getOptions(Program.PROGRAM_INFO);
+		return options.getBoolean(PdbParserConstants.PDB_LOADED, false);
 	}
 
 	public String validate() {
@@ -348,7 +342,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 			RecoveredClass recoveredClass = recoveredClassIterator.next();
 
-			AttributedVertex classVertex = g.addVertex(recoveredClass.getName());
+			AttributedVertex classVertex =
+				g.addVertex(recoveredClass.getClassPath().getPath(), recoveredClass.getName());
 
 			Map<RecoveredClass, List<RecoveredClass>> classHierarchyMap =
 				recoveredClass.getClassHierarchyMap();
@@ -356,6 +351,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			// no parent = blue vertex
 			if (classHierarchyMap.isEmpty()) {
 				classVertex.setAttribute("Color", "Blue");
+				classVertex.setDescription(recoveredClass.getClassPath().getPath());
 				continue;
 			}
 
@@ -370,6 +366,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 				classVertex.setAttribute("Color", "Red");
 			}
 
+			classVertex.setDescription(recoveredClass.getClassPath().getPath());
+
 			Map<RecoveredClass, Boolean> parentToBaseTypeMap =
 				recoveredClass.getParentToBaseTypeMap();
 
@@ -378,7 +376,10 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 				monitor.checkCanceled();
 				RecoveredClass parent = parentIterator.next();
 
-				AttributedVertex parentVertex = g.addVertex(parent.getName());
+				AttributedVertex parentVertex =
+					g.addVertex(parent.getClassPath().getPath(), parent.getName());
+
+				parentVertex.setDescription(parent.getClassPath().getPath());
 
 				AttributedEdge edge = g.addEdge(parentVertex, classVertex);
 

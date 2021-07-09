@@ -235,7 +235,7 @@ abstract class CommentsDBAdapter {
 
 	/**
 	 * Returns an address key iterator over the given address set in the given direction.
-	 * @param addrSetView the set to iterator over.
+	 * @param addrSetView the set to iterator over (null for all defined memory).
 	 * @param forward the direction to iterate.
 	 */
 	abstract AddressKeyIterator getKeys(AddressSetView set, boolean forward) throws IOException;

@@ -16,6 +16,8 @@
 package ghidra.program.database.symbol;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
@@ -73,15 +75,18 @@ public class EquateDB extends DatabaseObject implements Equate {
 		try {
 			Instruction instr = equateMgr.getProgram().getCodeManager().getInstructionAt(refAddr);
 			long dynamicHash;
-			if (instr == null)
+			if (instr == null) {
 				dynamicHash = 0;
+			}
 			else {
 				long value = record.getLongValue(EquateDBAdapter.VALUE_COL);
-			    long hashArray[] = DynamicHash.calcConstantHash(instr, value);
-			    if (hashArray.length != 1)
-			    	dynamicHash = 0;
-			    else
-			    	dynamicHash = hashArray[0];
+				long hashArray[] = DynamicHash.calcConstantHash(instr, value);
+				if (hashArray.length != 1) {
+					dynamicHash = 0;
+				}
+				else {
+					dynamicHash = hashArray[0];
+				}
 			}
 			equateMgr.addReference(key, refAddr, (short) opIndex, dynamicHash);
 		}
@@ -112,9 +117,11 @@ public class EquateDB extends DatabaseObject implements Equate {
 		}
 		long value = record.getLongValue(EquateDBAdapter.VALUE_COL);
 		long checkHash[] = DynamicHash.calcConstantHash(instr, value);
-		for (long element : checkHash)
-			if (element == dynamicHash)
+		for (long element : checkHash) {
+			if (element == dynamicHash) {
 				return findScalarOpIndex(instr);
+			}
+		}
 		return -1;
 	}
 
@@ -199,6 +206,27 @@ public class EquateDB extends DatabaseObject implements Equate {
 			equateMgr.dbError(e);
 		}
 		return new EquateReference[0];
+	}
+
+	/**
+	 * @see ghidra.program.model.symbol.Equate#getReferences(Address)
+	 */
+	@Override
+	public List<EquateReference> getReferences(Address refAddr) {
+		Lock lock = equateMgr.getLock();
+		lock.acquire();
+		try {
+			if (checkIsValid()) {
+				return equateMgr.getReferences(key, refAddr);
+			}
+		}
+		catch (IOException e) {
+			equateMgr.getProgram().dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+		return new ArrayList<>();
 	}
 
 	/**

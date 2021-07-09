@@ -26,14 +26,35 @@ import util.CollectionUtils;
  */
 public interface CodeUnitIterator extends Iterator<CodeUnit>, Iterable<CodeUnit> {
 
+	public static final CodeUnitIterator EMPTY_ITERATOR = new CodeUnitIterator() {
+
+		@Override
+		public boolean hasNext() {
+			return false;
+		}
+
+		@Override
+		public CodeUnit next() {
+			return null;
+		}
+
+		@Override
+		public Iterator<CodeUnit> iterator() {
+			return this;
+		}
+
+	};
+
 	/**
-	 * Returns true if the iteration has more elements.
+	 * Return true if there is a next CodeUnit.
 	 */
 	@Override
 	public boolean hasNext();
 
 	/**
-	 * Return the next code unit in the iteration.
+	 * Get the next CodeUnit or null if no more CodeUnits.
+	 * <P>NOTE: This deviates from the standard {@link Iterator} interface
+	 * by returning null instead of throwing an exception.
 	 */
 	@Override
 	public CodeUnit next();

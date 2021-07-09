@@ -259,8 +259,9 @@ void EmitXml::tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,in
 void EmitXml::tagComment(const char *ptr,syntax_highlight hl,
 			   const AddrSpace *spc,uintb off) {
   *s << "<comment " << highlight[(int4)hl];
-  *s << " space=\"" << spc->getName();
-  *s << "\" off=\"0x" << hex << off << "\">";
+  a_v(*s,"space",spc->getName());
+  a_v_u(*s,"off",off);
+  *s << '>';
   xml_escape(*s,ptr);
   *s << "</comment>";
 }
@@ -276,8 +277,9 @@ void EmitXml::tagComment(const char *ptr,syntax_highlight hl,
 void EmitXml::tagLabel(const char *ptr,syntax_highlight hl,
 			 const AddrSpace *spc,uintb off) {
   *s << "<label " << highlight[(int4)hl];
-  *s << " space=\"" << spc->getName();
-  *s << "\" off=\"0x" << hex << off << "\">";
+  a_v(*s,"space",spc->getName());
+  a_v_u(*s,"off",off);
+  *s << '>';
   xml_escape(*s,ptr);
   *s << "</label>";
 }

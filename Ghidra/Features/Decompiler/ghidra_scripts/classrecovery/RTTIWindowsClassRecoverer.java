@@ -91,6 +91,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		super(program, location, tool, api, createBookmarks, useShortTemplates, nameVFunctions,
 			monitor);
 
+		this.isPDBLoaded = isPDBLoaded;
+
 	}
 
 	@Override
@@ -146,8 +148,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 	@Override
 	public List<RecoveredClass> createRecoveredClasses() {
-
-		//TODO: check the classPath var for null and return null if it is null
 
 		List<Symbol> vftableSymbols;
 		try {
@@ -253,8 +253,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		}
 		return false;
 	}
-
-	
 
 	/**
 	 * Method to determine if the current program has RTTI data applied to it

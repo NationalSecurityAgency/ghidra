@@ -44,7 +44,7 @@ class AddressSetFilteredSymbolIterator implements SymbolIterator {
 	/**
 	 * Construct a new AddressSetFilteredSymbolIterator.
 	 * @param symbolMgr the symbol manager
-	 * @param set the address set to iterator over.
+	 * @param set the address set to iterator over (required).
 	 * @param query the query to use as a filter
 	 * @param forward the direction of the iterator.
 	 */
