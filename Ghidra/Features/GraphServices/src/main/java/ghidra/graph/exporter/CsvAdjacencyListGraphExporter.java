@@ -47,7 +47,7 @@ public class CsvAdjacencyListGraphExporter extends AbstractAttributedGraphExport
 
 	@Override
 	public String getName() {
-		return "CSV";
+		return "CSV:Adjacency List";
 	}
 
 	@Override
