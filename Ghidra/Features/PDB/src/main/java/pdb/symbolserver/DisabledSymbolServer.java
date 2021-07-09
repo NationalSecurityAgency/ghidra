@@ -15,11 +15,11 @@
  */
 package pdb.symbolserver;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
-import java.io.IOException;
-
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -105,7 +105,7 @@ public class DisabledSymbolServer implements SymbolServer {
 
 	@Override
 	public SymbolServerInputStream getFileStream(String filename, TaskMonitor monitor)
-			throws IOException {
+			throws IOException, CancelledException {
 		return delegate.getFileStream(filename, monitor);
 	}
 
