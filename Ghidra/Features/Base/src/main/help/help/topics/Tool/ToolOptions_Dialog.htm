@@ -56,35 +56,44 @@
     <H2><A name="KeyBindings_Option"></A><B>Key Bindings</B></H2>
 
     <BLOCKQUOTE>
-      <P>You can create a new "hot key" for a Plugin's action or modify the default key binding.
-      The hot key (or accelerator) that you add can be used to execute the action with a keystroke
-      combination.</P>
+      <P>You can create a new key binding (<I>accelerator key</I>) for an action or modify the 
+      default key binding.  The key binding that you add can be used to execute the action  
+      using the keyboard.   Below we describe the <B>Key Bindings</B> options editor.</P>
 
       <BLOCKQUOTE>
-        <P><IMG alt="" border="0" src="../../shared/note.png"> You can also change key bindings
+        <P><IMG alt="" border="0" src="../../shared/tip.png">Not all key bindings are changeable  
+        via the tool options.  For example, the following keys cannot be changed:
+        <UL>
+        	<LI>
+        	<TT><B>F1, Help, Ctrl-F1, F4</B></TT> (this bindings are reserved and cannot be used 
+        	when assigning key bindings to actions) 
+        	</LI>
+        	<LI>
+        	Menu Navigation Actions: <TT><B>1-9, Page Up/Down, End, Home</B></TT> (these key 
+        	bindings are usable with a menu or popup menu open and are otherwise available for 
+        	assignment to key bindings). 
+        	</LI>
+        </UL>        
+        </P>
+      </BLOCKQUOTE>
+
+
+      <BLOCKQUOTE>
+        <P><IMG alt="" border="0" src="../../shared/tip.png"> You can also change key bindings
         from within Ghidra by pressing <B>F4</B> while the mouse is over any toolbar icon or menu
         item. Click <A href="#KeyBindingPopup">here</A> for more info.</P>
       </BLOCKQUOTE>
 
-      <P>The <I>Key Bindings</I> panel has a table containing the <I>Action Name</I>, <I>Key
-      Binding</I>, and <I>Plugin Name</I>. You can sort the columns in ascending or descending
-      order. (By default, the <I>Action Nam</I>e column is sorted in ascending order.) The Plugin
-      name is the name of the plugin supplying the action.</P>
+      <P>The <B>Key Bindings</B> option editor has a table with the following sortable columns:
+      <I>Action Name</I>, <I>Key Binding</I>, and <I>Plugin Name</I>.   To change a value in 
+      the table, select the row and then edit the text field below the table.</P>
 
       <UL>
-        <LI>Click on the category header to change the sort order.</LI>
-
-        <LI>Change the order of the columns by dragging the column header to another position in
-        the table.</LI>
-
         <LI>The text field below the table captures keystroke combinations entered.</LI>
 
         <LI>If an action has a description to explain what it does, it will be displayed below the
         text field.</LI>
       </UL>
-
-      <P><IMG alt="" border="0" src="../../shared/note.png"> The table entries are not
-      editable.</P>
 
       <P>The display below shows the key bindings panel for the <I>Project Window</I>. Using the
       Key Bindings Options panel works the same as for a regular Ghidra Tool.</P>
@@ -130,12 +139,12 @@
         </OL>
       </BLOCKQUOTE>
 
-      <P><IMG alt="" border="0" src="../../shared/note.png"> When a key is mapped to multiple
+      <P><IMG alt="" border="0" src="../../shared/note.yellow.png"> When a key is mapped to multiple
       actions, and more than one of these actions is valid in the current context (i.e., the action
       is enabled), then a dialog is displayed for you to choose what action you want to
       perform.</P>
 
-      <P><IMG alt="" border="0" src="../../shared/tip.png"> To avoid the extra step of choosing the
+      <P>To avoid the extra step of choosing the
       action from the dialog, do not map the same key to actions that are applicable in the same
       context.</P>
 
@@ -185,7 +194,7 @@
           <LI>Press <B>OK</B> to import the key bindings.</LI>
         </OL>
 
-        <P><IMG alt="" border="0" src="../../shared/note.png"> Importing key bindings will override
+        <P><IMG alt="" border="0" src="../../shared/warning.png"> Importing key bindings will override
         your current key bindings settings. It is suggested that you <A href="#Export">export your
         key bindings</A> before you import so that you may revert to your previous settings if
         necessary.</P>

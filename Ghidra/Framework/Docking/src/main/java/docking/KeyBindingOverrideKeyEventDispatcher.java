@@ -26,6 +26,7 @@ import javax.swing.text.JTextComponent;
 
 import docking.action.MultipleKeyAction;
 import docking.actions.KeyBindingUtils;
+import docking.menu.keys.MenuKeyProcessor;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.exception.AssertException;
 
@@ -34,7 +35,7 @@ import ghidra.util.exception.AssertException;
  * processing.  See {@link #dispatchKeyEvent(KeyEvent)} for a more detailed explanation of how
  * Ghidra processes key events.
  * <p>
- * {@link #install()} must be called in order to install this <code>Singleton</code> into Java's 
+ * {@link #install()} must be called in order to install this <code>Singleton</code> into Java's
  * key event processing system.
  */
 public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher {
@@ -45,14 +46,14 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	 * We use this action as a signal that we intend to process a key
 	 * binding and that no other Java component should try to handle it (sometimes Java processes
 	 * bindings on key typed, after we have processed a binding on key pressed, which is not
-	 * what we want).  
+	 * what we want).
 	 * <p>
-	 * This action is one that is triggered by a key pressed, but will be processed on a 
-	 * key released.  We need to do this for because on some systems, when we perform the 
-	 * action on a key pressed, we do not get the follow-on key events, which we need to reset 
+	 * This action is one that is triggered by a key pressed, but will be processed on a
+	 * key released.  We need to do this for because on some systems, when we perform the
+	 * action on a key pressed, we do not get the follow-on key events, which we need to reset
 	 * our state (SCR 7040).
 	 * <p>
-	 * <b>Posterity Note:</b> While debugging we will not get a KeyEvent.KEY_RELEASED event if 
+	 * <b>Posterity Note:</b> While debugging we will not get a KeyEvent.KEY_RELEASED event if
 	 * the focus changes from the application to the debugger tool.
 	 */
 	private DockingKeyBindingAction inProgressAction;
@@ -98,9 +99,9 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	 * <P>
 	 * There are some exceptions to this processing chain:
 	 * <ol>
-	 *      <li>We don't do any processing when the focused component is an instance of 
+	 *      <li>We don't do any processing when the focused component is an instance of
 	 *          <code>JTextComponent</code>.</li>
-	 *      <li>We don't do any processing if the active window is an instance of 
+	 *      <li>We don't do any processing if the active window is an instance of
 	 *          <code>DockingDialog</code>.</li>
 	 * </ol>
 	 * 
@@ -114,6 +115,10 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 
 		// always let Ghidra finish processing key events that it started
 		if (actionInProgress(event)) {
+			return true;
+		}
+
+		if (MenuKeyProcessor.processMenuKeyEvent(event)) {
 			return true;
 		}
 
@@ -147,11 +152,11 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 			return false;
 		}
 
-		// Process the key event in precedence order.  
-		// If it processes the event at any given level, the short-circuit operator will kick out.  
-		// Finally, if the exception statement is reached, then someone has added a new level 
+		// Process the key event in precedence order.
+		// If it processes the event at any given level, the short-circuit operator will kick out.
+		// Finally, if the exception statement is reached, then someone has added a new level
 		// of precedence that this algorithm has not taken into account!
-		// @formatter:off		
+		// @formatter:off
 		return processKeyListenerPrecedence(action, keyBindingPrecedence, event) ||
 			   processComponentActionMapPrecedence(action, keyBindingPrecedence, event) ||
 			   processActionAtPrecedence(DefaultLevel, keyBindingPrecedence, action, event) ||
@@ -180,10 +185,10 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 
 		JRootPane rootPane = SwingUtilities.getRootPane(component);
 		if (rootPane == null) {
-			// This can happen when the source component of the key event has been hidden as a 
-			// result of processing the key event earlier, like on a key pressed event; for 
-			// example, when the user presses the ESC key to close a dialog.            
-			return true; // don't let Java process the remaining event chain 
+			// This can happen when the source component of the key event has been hidden as a
+			// result of processing the key event earlier, like on a key pressed event; for
+			// example, when the user presses the ESC key to close a dialog.
+			return true; // don't let Java process the remaining event chain
 		}
 
 		Component glassPane = rootPane.getGlassPane();
@@ -192,16 +197,16 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 				return true; // out parent's glass pane is blocking..don't let events through
 			}
 		}
-//        else { 
-//            Msg.debug( KeyBindingOverrideKeyEventDispatcher.this, 
-//                "Found a window with a non-standard glass pane--this should be fixed to " + 
+//        else {
+//            Msg.debug( KeyBindingOverrideKeyEventDispatcher.this,
+//                "Found a window with a non-standard glass pane--this should be fixed to " +
 //                "use the Docking windowing system" );
 //        }
 		return false;
 	}
 
 	/**
-	 * Used to clear the flag that signals we are in the middle of processing a Ghidra action.  
+	 * Used to clear the flag that signals we are in the middle of processing a Ghidra action.
 	 */
 	private boolean actionInProgress(KeyEvent event) {
 		boolean wasInProgress = inProgressAction != null;
@@ -219,7 +224,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	}
 
 	/**
-	 * A check to see if a given keystroke is something that should not be processed, depending 
+	 * A check to see if a given keystroke is something that should not be processed, depending
 	 * upon the current state of the system.
 	 * 
 	 * @param keyStroke The keystroke to check.
@@ -231,9 +236,9 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		if (activeWindow instanceof DockingDialog) {
 
 			// The choice to ignore modal dialogs was made long ago.  We cannot remember why the
-			// choice was made, but speculate that odd things can happen when keybindings are 
-			// processed with modal dialogs open.  For now, do not let key bindings get processed 
-			// for modal dialogs.  This can be changed in the future if needed.   
+			// choice was made, but speculate that odd things can happen when keybindings are
+			// processed with modal dialogs open.  For now, do not let key bindings get processed
+			// for modal dialogs.  This can be changed in the future if needed.
 			DockingDialog dialog = (DockingDialog) activeWindow;
 			return !dialog.isModal();
 		}
@@ -252,8 +257,8 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 			return false; // we only handle text components
 		}
 
-		// Note: don't do this--it breaks key event handling for text components, as they do 
-		//       not get to handle key events when they are not editable (they still should 
+		// Note: don't do this--it breaks key event handling for text components, as they do
+		//       not get to handle key events when they are not editable (they still should
 		//       though, so things like built-in copy/paste still work).
 		// JTextComponent textComponent = (JTextComponent) focusOwner;
 		// if (!textComponent.isEditable()) {
@@ -261,7 +266,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		// }
 
 		// We've made the executive decision to allow all keys to go through to the text component
-		// unless they are modified with the 'Alt'/'Ctrl'/etc keys, unless they directly used 
+		// unless they are modified with the 'Alt'/'Ctrl'/etc keys, unless they directly used
 		// by the text component
 		if (!isModified(event)) {
 			return true; // unmodified keys will be given to the text component
@@ -288,8 +293,8 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	}
 
 	/**
-	 * This method should only be called if a programmer adds a new precedence to 
-	 * {@link KeyBindingPrecedence} and does not update the algorithm of 
+	 * This method should only be called if a programmer adds a new precedence to
+	 * {@link KeyBindingPrecedence} and does not update the algorithm of
 	 * {@link #dispatchKeyEvent(KeyEvent)} to take into account the new precedence.
 	 */
 	private boolean throwAssertException() {
@@ -318,7 +323,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 			return true;
 		}
 
-		// O.K., there is an action for the KeyStroke, but before we process it, we have to 
+		// O.K., there is an action for the KeyStroke, but before we process it, we have to
 		// check the proper ordering of key events (see method JavaDoc)
 		if (processComponentKeyListeners(e)) {
 			return true;
@@ -355,7 +360,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		}
 
 		inProgressAction = action; // this will be handled on the release
-		event.consume(); // don't let this event be used later 
+		event.consume(); // don't let this event be used later
 		return true;
 	}
 
@@ -387,7 +392,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 
 	// note: this code is taken from the JComponent method:
 	// protected boolean processKeyBinding(KeyStroke, KeyEvent, int, boolean )
-	// 
+	//
 	// returns true if there is a focused component that has an action for the given keystroke
 	// and it processes that action.
 	private boolean processInputAndActionMaps(KeyEvent keyEvent, KeyStroke keyStroke) {
@@ -406,7 +411,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	}
 
 	private Action getJavaActionForComponent(JComponent jComponent, KeyStroke keyStroke) {
-		// first see if there is a Java key binding for when the component is in the focused 
+		// first see if there is a Java key binding for when the component is in the focused
 		// window...
 		Action action = KeyBindingUtils.getAction(jComponent, keyStroke, JComponent.WHEN_FOCUSED);
 		if (action != null) {
@@ -447,7 +452,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 
 		DockingWindowManager activeManager = DockingWindowManager.getActiveInstance();
 		if (activeManager == null) {
-			// this can happen if clients use DockingWindows Look and Feel settings or 
+			// this can happen if clients use DockingWindows Look and Feel settings or
 			// DockingWindows widgets without using the DockingWindows system (like in tests or
 			// in stand-alone, non-Ghidra apps).
 			return null;

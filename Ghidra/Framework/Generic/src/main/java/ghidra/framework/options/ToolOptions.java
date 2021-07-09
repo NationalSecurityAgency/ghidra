@@ -145,7 +145,7 @@ public class ToolOptions extends AbstractOptions {
 	 * Note: only those options which have been explicitly set
 	 * will be included.
 	 * 
-	 * @param includeDefaultBindings true to include default key binding values in the xml 
+	 * @param includeDefaultBindings true to include default key binding values in the xml
 	 * @return the xml root element
 	 */
 	public Element getXmlRoot(boolean includeDefaultBindings) {
@@ -194,8 +194,8 @@ public class ToolOptions extends AbstractOptions {
 				SaveState ss = new SaveState(WRAPPED_OPTION_NAME);
 				Element elem = null;
 				if (value == null) {
-					// Handle the null case ourselves, not using the wrapped option (and when 
-					// reading from xml) so that the logic does not need to in each wrapped option
+					// Handle the null case ourselves, not using the wrapped option (and when
+					// reading from xml) so the logic does not need to be in each wrapped option
 					elem = ss.saveToXml();
 					elem.addContent(new Element(CLEARED_VALUE_ELEMENT_NAME));
 				}
