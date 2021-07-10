@@ -29,13 +29,14 @@ import ghidra.xml.*;
 
 import java.awt.Color;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * 
  *
  * A node in a tree of C code tokens. 
  */
-public class ClangTokenGroup implements ClangNode {
+public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 	private ClangNode parent;
 	Address minaddress,maxaddress;
 	private ArrayList<ClangNode> tokgroup;
@@ -46,7 +47,11 @@ public class ClangTokenGroup implements ClangNode {
 		minaddress = null;
 		maxaddress = null;
 	}
+	
+	@Override
 	public Address getMinAddress() { return minaddress; }
+	
+	@Override
 	public Address getMaxAddress() { return maxaddress; }
 	
 	public void AddTokenGroup(Object obj) {
@@ -67,17 +72,26 @@ public class ClangTokenGroup implements ClangNode {
 		}
 		tokgroup.add((ClangNode)obj);
 	}
-	
+
+	@Override
 	public ClangNode Parent() { return parent; }
+
+	@Override
 	public int numChildren() { return tokgroup.size(); }
+
+	@Override
 	public ClangNode Child(int i) { return tokgroup.get(i); }
+
+	@Override
 	public ClangFunction getClangFunction() { return parent.getClangFunction(); }
 
+	@Override
 	public void setHighlight(Color val) {
 		for(int i=0;i<tokgroup.size();++i)
 			tokgroup.get(i).setHighlight(val);		
 	}
-	
+
+	@Override
 	public void flatten(List<ClangNode> list) {
 		for(int i=0;i<tokgroup.size();++i) {
 			tokgroup.get(i).flatten(list);
@@ -146,5 +160,18 @@ public class ClangTokenGroup implements ClangNode {
 	        buffer.append(tokenStr);
 	    }
 	    return buffer.toString();
+	}
+
+	@Override
+	public Iterator<ClangNode> iterator() {
+		return tokgroup.iterator();
+	}
+
+	/**
+	 * Gets a stream over this group's children
+	 * @return a stream of this group's children
+	 */
+	public Stream<ClangNode> stream() {
+		return tokgroup.stream();
 	}
 }
