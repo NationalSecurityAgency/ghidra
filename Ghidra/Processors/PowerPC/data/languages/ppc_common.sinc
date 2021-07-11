@@ -1561,9 +1561,12 @@ macro setCrBit(crReg, bitIndex, bit)
 	crReg = crReg | tmp;
 }
 macro cr0flags(result ) {
-	setCrBit(cr0, 0, (result s< 0));
-	setCrBit(cr0, 1, (result s> 0));
-	setCrBit(cr0, 2, (result == 0));
+	# the first three bits of CR are set by signed comparison of the
+	# result to zero, and the fourth bit of CR is copied from the SO field
+	# of the XER
+	setCrBit(cr0, 0, (result s< 0)); # 0b100
+	setCrBit(cr0, 1, (result s> 0)); # 0b010
+	setCrBit(cr0, 2, (result == 0)); # 0b001
 	setCrBit(cr0, 3, (xer_so & 1));
 }
 
@@ -1586,7 +1589,7 @@ macro divOverflow(a,b) {
 	xer_ov = (b==0) || ((b==-1) && (a==0x80000000));
   	xer_so = xer_so || xer_ov;
 }
-macro divZero(a,b) {
+macro divZero(b) {
 	xer_ov = (b==0);
   	xer_so = xer_so || xer_ov;
 }

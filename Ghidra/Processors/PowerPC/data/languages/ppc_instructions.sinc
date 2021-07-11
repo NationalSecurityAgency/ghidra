@@ -17,16 +17,16 @@
 
 #addo r1,r2,r3  0x7c 22 1e 14
 :addo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=266 & Rc=0
-{ 
-	D = A + B;
+{
 	addOverflow(A,B);
+	D = A + B;
 }
 
 #addo. r1,r2,r3  0x7c 22 1e 15
 :addo. D,A,B	is OP=31 & D & A & B & OE=1 & XOP_1_9=266 & Rc=1
-{ 	
+{
+	addOverflow(A,B);
 	D = A + B;	 
-	addOverflow( A, B );
 	cr0flags(D);
 }
 
@@ -933,15 +933,15 @@
 #divdo r0,r0,r0		0x7c 00 07 d2
 :divdo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=489 & Rc=0
 {
-	D = A s/ B;
 	divOverflow(A,B);
+	D = A s/ B;
 }
 
 #divdo. r0,r0,r0	0x7c 00 07 d3
 :divdo. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=489 & Rc=1
 {
-	D = A s/ B;
 	divOverflow(A,B);
+	D = A s/ B;
 	cr0flags(D);
 }
 
@@ -962,15 +962,15 @@
 #divduo r0,r0,r0		0x7c 00 07 92
 :divduo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=457 & Rc=0
 {
+	divZero(B);
 	D = A / B;
-	divZero(A,B);
 }
 
 #divduo. r0,r0,r0	0x7c 00 07 93
 :divduo. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=457 & Rc=1
 {
+	divZero(B);
 	D = A / B;
-	divZero(A,B);
 	cr0flags(D);
 }
 @endif
@@ -990,12 +990,12 @@
 :divw. D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=491 & Rc=1
 {
 @ifdef BIT_64
-	D = sext(A:4 s/ B:4);
 	divOverflow(A:4,B:4);
+	D = sext(A:4 s/ B:4);
 	cr0flags(D:4);
 @else
-	D = A s/ B;
 	divOverflow(A,B);
+	D = A s/ B;
 	cr0flags(D);
 @endif
 }
@@ -1004,11 +1004,11 @@
 :divwo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=491 & Rc=0
 {
 @ifdef BIT_64
-	D = sext(A:4 s/ B:4);
 	divOverflow(A:4,B:4);
+	D = sext(A:4 s/ B:4);
 @else
-	D = A s/ B;
 	divOverflow(A,B);
+	D = A s/ B;
 @endif
 }
 
@@ -1016,12 +1016,12 @@
 :divwo. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=491 & Rc=1
 {
 @ifdef BIT_64
-	D = sext(A:4 s/ B:4);
 	divOverflow(A:4,B:4);
+	D = sext(A:4 s/ B:4);
 	cr0flags(D:4);
 @else
-	D = A s/ B;
 	divOverflow(A,B);
+	D = A s/ B;
 	cr0flags(D);
 @endif
 }
@@ -1053,11 +1053,11 @@
 :divwuo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=459 & Rc=0
 {
 @ifdef BIT_64
+	divZero(B:4);
 	D = zext(A:4) / zext(B:4);
-	divZero(A:4,B:4);
 @else
+	divZero(B);
 	D = A / B;
-	divZero(A,B);
 @endif
 }
 
@@ -1065,12 +1065,12 @@
 :divwuo. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=459 & Rc=1
 {
 @ifdef BIT_64
+	divZero(B:4);
 	D = zext(A:4) / zext(B:4);
-	divZero(A:4,B:4);
 	cr0flags(D:4);
 @else
+	divZero(B);
 	D = A / B;
-	divZero(A,B);
 	cr0flags(D);
 @endif
 }
@@ -1173,33 +1173,41 @@
 #fadd fr0,fr0,fr0	0xfc 00 00 2a
 :fadd fD,fA,fB	is $(NOTVLE) & OP=63 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=21 & Rc=0
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
 	fD = fA f+ fB;
-	setFPAddFlags(fA,fB,fD);
+	setFPAddFlags(tmpfA,tmpfB,fD);
 }
 
 #fadd. fr0,fr0,fr0	0xfc 00 00 2b
 :fadd. fD,fA,fB	is $(NOTVLE) & OP=63 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=21 & Rc=1
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
 	fD = fA f+ fB;
-	setFPAddFlags(fA,fB,fD);
+	setFPAddFlags(tmpfA,tmpfB,fD);
 	cr1flags();
 }
 
 #fadds fr0,fr0,fr0	0xec 00 00 2a
 :fadds fD,fA,fB	is $(NOTVLE) & OP=59 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=21 & Rc=0
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
 	tmp:4 = float2float(fA f+ fB);
 	fD = float2float(tmp);
-	setFPAddFlags(fA,fB,fD);
+	setFPAddFlags(tmpfA,tmpfB,fD);
 	
 }
 
 #fadds. fr0,fr0,fr0	0xec 00 00 2b
 :fadds. fD,fA,fB	is $(NOTVLE) & OP=59 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=21 & Rc=1
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
 	tmp:4 = float2float(fA f+ fB);
 	fD = float2float(tmp);
-	setFPAddFlags(fA,fB,fD);
+	setFPAddFlags(tmpfA,tmpfB,fD);
 	cr1flags();
 }
 
@@ -1347,64 +1355,78 @@
 #fdiv fr0,fr0,fr0  0xfc 00 00 24
 :fdiv fD,fA,fB   is $(NOTVLE) & OP=63 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=18 & Rc=0
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
 	fD = fA f/ fB;
-	setFPDivFlags(fA,fB,fD);
+	setFPDivFlags(tmpfA,tmpfB,fD);
 }
 #fdiv. fr0,fr0,fr0  0xfc 00 00 25
 :fdiv. fD,fA,fB   is $(NOTVLE) & OP=63 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=18 & Rc=1
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
 	fD = fA f/ fB;
-	setFPDivFlags(fA,fB,fD);
+	setFPDivFlags(tmpfA,tmpfB,fD);
 	cr1flags();
 }
 
 #fdivs fr0,fr0,fr0  0xec 00 00 24
 :fdivs fD,fA,fB   is $(NOTVLE) & OP=59 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=18 & Rc=0
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
 	tmp:4 = float2float(fA f/ fB);
 	fD = float2float(tmp);
-	setFPDivFlags(fA,fB,fD);
+	setFPDivFlags(tmpfA,tmpfB,fD);
 }
 #fdivs. fr0,fr0,fr0  0xec 00 00 25
 :fdivs. fD,fA,fB   is $(NOTVLE) & OP=59 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=18 & Rc=1
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
 	tmp:4 = float2float(fA f/ fB);
 	fD = float2float(tmp);
-	setFPDivFlags(fA,fB,fD);
+	setFPDivFlags(tmpfA,tmpfB,fD);
 	cr1flags();
 }
 
 #fmadd fr0,fr0,fr0,fr0	0xfc 00 00 3a
 :fmadd fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fC & fB & XOP_1_5=29 & Rc=0
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
+	local tmpfC = fC;
 	tmp:8 = fA f* fC;
 	fD = tmp f+ fB;
 	setFPRF(fD);
-#	fp_fr = floatMaddRoundedUp(fA, fC, fB);
-#	fp_fi = floatMaddInexact(fA,fC,fB);
-#	fp_ox = fp_ox | floatMaddOverflow(fA,fC,fB);
-#	fp_ux = fp_ux | floatMaddUnderflow(fA,fC,fB);
+#	fp_fr = floatMaddRoundedUp(tmpfA, tmpfC, tmpfB);
+#	fp_fi = floatMaddInexact(tmpfA,tmpfC,tmpfB);
+#	fp_ox = fp_ox | floatMaddOverflow(tmpfA,tmpfC,tmpfB);
+#	fp_ux = fp_ux | floatMaddUnderflow(tmpfA,tmpfC,tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
-#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, fB);
-#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	fp_vxsnan = fp_vxsnan | nan(tmpfA) | nan(tmpfC) | nan(tmpfB);
+#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, tmpfB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(tmpfA,tmpfC);
 	setSummaryFPSCR();
 }
 
 #fmadd. fr0,fr0,fr0,fr0	0xfc 00 00 3b
 :fmadd. fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fC & fB & XOP_1_5=29 & Rc=1
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
+	local tmpfC = fC;
 	tmp:8 = fA f* fC;
 	fD = tmp f+ fB;
 	setFPRF(fD);
-#	fp_fr = floatMaddRoundedUp(fA, fC, fB);
-#	fp_fi = floatMaddInexact(fA,fC,fB);
-#	fp_ox = fp_ox | floatMaddOverflow(fA,fC,fB);
-#	fp_ux = fp_ux | floatMaddUnderflow(fA,fC,fB);
+#	fp_fr = floatMaddRoundedUp(tmpfA, tmpfC, tmpfB);
+#	fp_fi = floatMaddInexact(tmpfA,tmpfC,tmpfB);
+#	fp_ox = fp_ox | floatMaddOverflow(tmpfA,tmpfC,tmpfB);
+#	fp_ux = fp_ux | floatMaddUnderflow(tmpfA,tmpfC,tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
-#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, fB);
-#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	fp_vxsnan = fp_vxsnan | nan(tmpfA) | nan(tmpfC) | nan(tmpfB);
+#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, tmpfB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(tmpfA,tmpfC);
 	setSummaryFPSCR();
 	cr1flags();
 }
@@ -1412,36 +1434,42 @@
 #fmadds fr0,fr0,fr0,fr0	0xec 00 00 3a
 :fmadds fD,fA,fC,fB	is $(NOTVLE) & OP=59 & fD & fA & fC & fB & XOP_1_5=29 & Rc=0
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
+	local tmpfC = fC;
 	tmp:8 = fA f* fC;
 	tmp2:4 = float2float(tmp f+ fB);
 	fD = float2float(tmp2);
 	setFPRF(fD);
-#	fp_fr = floatMaddRoundedUp(fA, fC, fB);
-#	fp_fi = floatMaddInexact(fA,fC,fB);
-#	fp_ox = fp_ox | floatMaddOverflow(fA,fC,fB);
-#	fp_ux = fp_ux | floatMaddUnderflow(fA,fC,fB);
+#	fp_fr = floatMaddRoundedUp(tmpfA, tmpfC, tmpfB);
+#	fp_fi = floatMaddInexact(tmpfA,tmpfC,tmpfB);
+#	fp_ox = fp_ox | floatMaddOverflow(tmpfA,tmpfC,tmpfB);
+#	fp_ux = fp_ux | floatMaddUnderflow(tmpfA,tmpfC,tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
-#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, fB);
-#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	fp_vxsnan = fp_vxsnan | nan(tmpfA) | nan(tmpfC) | nan(tmpfB);
+#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, tmpfB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(tmpfA,tm[fC);
 	setSummaryFPSCR();
 }
 
 #fmadds. fr0,fr0,fr0,fr0	0xec 00 00 3b
 :fmadds. fD,fA,fC,fB	is $(NOTVLE) & OP=59 & fD & fA & fC & fB & XOP_1_5=29 & Rc=1
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
+	local tmpfC = fC;
 	tmp:8 = fA f* fC;
 	tmp2:4 = float2float(tmp f+ fB);
 	fD = float2float(tmp2);
 	setFPRF(fD);
-#	fp_fr = floatMaddRoundedUp(fA, fC, fB);
-#	fp_fi = floatMaddInexact(fA,fC,fB);
-#	fp_ox = fp_ox | floatMaddOverflow(fA,fC,fB);
-#	fp_ux = fp_ux | floatMaddUnderflow(fA,fC,fB);
+#	fp_fr = floatMaddRoundedUp(tmpfA, tmpfC, tmpfB);
+#	fp_fi = floatMaddInexact(tmpfA,tmpfC,tmpfB);
+#	fp_ox = fp_ox | floatMaddOverflow(tmpfA,tmpfC,tmpfB);
+#	fp_ux = fp_ux | floatMaddUnderflow(tmpfA,tmpfC,tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
-#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, fB);
-#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	fp_vxsnan = fp_vxsnan | nan(tmpfA) | nan(tmpfC) | nan(tmpfB);
+#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, tmpfB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(tmpfA,tmpfC);
 	setSummaryFPSCR();
 	cr1flags();
 }
@@ -1460,35 +1488,41 @@
 #fmsub fr0,fr0,fr0,fr0	0xfc 00 00 38
 :fmsub fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fC & fB & XOP_1_5=28 & Rc=0
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
+	local tmpfC = fC;
 	tmp:8 = fA f* fC;
 	fD = tmp f- fB;
 	setFPRF(fD);
-#	fp_fr = floatMsubRoundedUp(fA, fC, fB);
-#	fp_fi = floatMsubInexact(fA,fC,fB);
-#	fp_ox = fp_ox | floatMsubOverflow(fA,fC,fB);
-#	fp_ux = fp_ux | floatMsubUnderflow(fA,fC,fB);
+#	fp_fr = floatMsubRoundedUp(tmpfA, tmpfC, tmpfB);
+#	fp_fi = floatMsubInexact(tmpfA,tmpfC,tmpfB);
+#	fp_ox = fp_ox | floatMsubOverflow(tmpfA,tmpfC,tmpfB);
+#	fp_ux = fp_ux | floatMsubUnderflow(tmpfA,tmpfC,tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
-#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, fB);
-#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	fp_vxsnan = fp_vxsnan | nan(tmpfA) | nan(tmpfC) | nan(tmpfB);
+#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, tmpfB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(tmpfA,tmpfC);
 	setSummaryFPSCR();
 }
 
 #fmsub. fr0,fr0,fr0,fr0	0xfc 00 00 39
 :fmsub. fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fC & fB & XOP_1_5=28 & Rc=1
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
+	local tmpfC = fC;
 	tmp:8 = fA f* fC;
 	tmp2:4 = float2float(tmp f- fB);
 	fD = float2float(tmp2);
 	setFPRF(fD);
-#	fp_fr = floatMsubRoundedUp(fA, fC, fB);
-#	fp_fi = floatMsubInexact(fA,fC,fB);
-#	fp_ox = fp_ox | floatMsubOverflow(fA,fC,fB);
-#	fp_ux = fp_ux | floatMsubUnderflow(fA,fC,fB);
+#	fp_fr = floatMsubRoundedUp(tmpfA, tmpfC, tmpfB);
+#	fp_fi = floatMsubInexact(tmpfA,tmpfC,tmpfB);
+#	fp_ox = fp_ox | floatMsubOverflow(tmpfA,tmpfC,tmpfB);
+#	fp_ux = fp_ux | floatMsubUnderflow(tmpfA,tmpfC,tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
-#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, fB);
-#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	fp_vxsnan = fp_vxsnan | nan(tmpfA) | nan(tmpfC) | nan(tmpfB);
+#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, tmpfB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(tmpfA,tmpfC);
 	setSummaryFPSCR();
 	cr1flags();
 }
@@ -1496,36 +1530,42 @@
 #fmsubs fr0,fr0,fr0,fr0	0xec 00 00 38
 :fmsubs fD,fA,fC,fB	is $(NOTVLE) & OP=59 & fD & fA & fC & fB & XOP_1_5=28 & Rc=0
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
+	local tmpfC = fC;
 	tmp:8 = fA f* fC;
 	tmp2:4 = float2float(tmp f- fB);
 	fD = float2float(tmp2);
 	setFPRF(fD);
-#	fp_fr = floatMsubRoundedUp(fA, fC, fB);
-#	fp_fi = floatMsubInexact(fA,fC,fB);
-#	fp_ox = fp_ox | floatMsubOverflow(fA,fC,fB);
-#	fp_ux = fp_ux | floatMsubUnderflow(fA,fC,fB);
+#	fp_fr = floatMsubRoundedUp(tmpfA, tmpfC, tmpfB);
+#	fp_fi = floatMsubInexact(tmpfA,tmpfC,tmpfB);
+#	fp_ox = fp_ox | floatMsubOverflow(tmpfA,tmpfC,tmpfB);
+#	fp_ux = fp_ux | floatMsubUnderflow(tmpfA,tmpfC,tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
-#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, fB);
-#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	fp_vxsnan = fp_vxsnan | nan(tmpfA) | nan(tmpfC) | nan(tmpfB);
+#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, tmpfB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(tmpfA,tmpfC);
 	setSummaryFPSCR();
 }
 
 #fmsubs. fr0,fr0,fr0,fr0	0xfc 00 00 39
 :fmsubs. fD,fA,fC,fB	is $(NOTVLE) & OP=59 & fD & fA & fC & fB & XOP_1_5=28 & Rc=1
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
+	local tmpfC = fC;
 	tmp:8 = fA f* fC;
 	tmp2:4 = float2float(tmp f- fB);
 	fD = float2float(tmp2);
 	setFPRF(fD);
-#	fp_fr = floatMsubRoundedUp(fA, fC, fB);
-#	fp_fi = floatMsubInexact(fA,fC,fB);
-#	fp_ox = fp_ox | floatMsubOverflow(fA,fC,fB);
-#	fp_ux = fp_ux | floatMsubUnderflow(fA,fC,fB);
+#	fp_fr = floatMsubRoundedUp(tmpfA, tmpfC, tmpfB);
+#	fp_fi = floatMsubInexact(tmpfA,tmpfC,tmpfB);
+#	fp_ox = fp_ox | floatMsubOverflow(tmpfA,tmpfC,tmpfB);
+#	fp_ux = fp_ux | floatMsubUnderflow(tmpfA,tmpfC,tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
-#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, fB);
-#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	fp_vxsnan = fp_vxsnan | nan(tmpfA) | nan(tmpfC) | nan(tmpfB);
+#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, tmpfB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(tmpfA,tmpfC);
 	setSummaryFPSCR();
 	cr1flags();
 }
@@ -1533,31 +1573,39 @@
 #fmul fr0,fr0,fr0	0xfc 00 00 32
 :fmul fD,fA,fC	is $(NOTVLE) & OP=63 & fD & fA & fC & BITS_11_15=0 & XOP_1_5=25 & Rc=0
 {
+	local tmpfA = fA;
+	local tmpfC = fC;
 	fD = fA f* fC;
-	setFPMulFlags(fA,fC,fD);
+	setFPMulFlags(tmpfA,tmpfC,fD);
 }
 #fmul. fr0,fr0,fr0	0xfc 00 00 33
 :fmul. fD,fA,fC	is $(NOTVLE) & OP=63 & fD & fA & fC & BITS_11_15=0 & XOP_1_5=25 & Rc=1
 {
+	local tmpfA = fA;
+	local tmpfC = fC;
 	fD = fA f* fC;
-	setFPMulFlags(fA,fC,fD);
+	setFPMulFlags(tmpfA,tmpfC,fD);
 	cr1flags();
 }
 
 #fmuls fr0,fr0,fr0	0xec 00 00 32
 :fmuls fD,fA,fC	is $(NOTVLE) & OP=59 & fD & fA & fC & BITS_11_15=0 & XOP_1_5=25 & Rc=0
 {
+	local tmpfA = fA;
+	local tmpfC = fC;
 	tmp:4 = float2float(fA f* fC);
 	fD = float2float(tmp);
-	setFPMulFlags(fA,fC,fD);
+	setFPMulFlags(tmpfA,tmpfC,fD);
 }
 
 #fmuls. fr0,fr0,fr0	0xec 00 00 33
 :fmuls. fD,fA,fC	is $(NOTVLE) & OP=59 & fD & fA & fC & BITS_11_15=0 & XOP_1_5=25 & Rc=1
 {
+	local tmpfA = fA;
+	local tmpfC = fC;
 	tmp:4 = float2float(fA f* fC);
 	fD = float2float(tmp);
-	setFPMulFlags(fA,fC,fD);
+	setFPMulFlags(tmpfA,tmpfC,fD);
 	cr1flags();
 }
 
@@ -1590,34 +1638,40 @@
 #fnmadd fr0,fr0,fr0,fr0	0xfc 00 00 3e
 :fnmadd fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fC & fB & XOP_1_5=31 & Rc=0
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
+	local tmpfC = fC;
 	tmp:8 = fA f* fC;
 	fD = f- (tmp f+ fB);
 	setFPRF(fD);
-#	fp_fr = floatMaddRoundedUp(fA, fC, fB);
-#	fp_fi = floatMaddInexact(fA,fC,fB);
-#	fp_ox = fp_ox | floatMaddOverflow(fA,fC,fB);
-#	fp_ux = fp_ux | floatMaddUnderflow(fA,fC,fB);
+#	fp_fr = floatMaddRoundedUp(tmpfA, tmpfC, tmpfB);
+#	fp_fi = floatMaddInexact(tmpfA,tmpfC,tmpfB);
+#	fp_ox = fp_ox | floatMaddOverflow(tmpfA,tmpfC,tmpfB);
+#	fp_ux = fp_ux | floatMaddUnderflow(tmpfA,tmpfC,tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
-#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, fB);
-#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	fp_vxsnan = fp_vxsnan | nan(tmpfA) | nan(tmpfC) | nan(tmpfB);
+#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, tmpfB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(tmpfA,tmpfC);
 	setSummaryFPSCR();
 }
 
 #fnmadd. fr0,fr0,fr0,fr0	0xfc 00 00 3f
 :fnmadd. fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fC & fB & XOP_1_5=31 & Rc=1
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
+	local tmpfC = fC;
 	tmp:8 = fA f* fC;
 	fD = f- (tmp f+ fB);
 	setFPRF(fD);
-#	fp_fr = floatMaddRoundedUp(fA, fC, fB);
-#	fp_fi = floatMaddInexact(fA,fC,fB);
-#	fp_ox = fp_ox | floatMaddOverflow(fA,fC,fB);
-#	fp_ux = fp_ux | floatMaddUnderflow(fA,fC,fB);
+#	fp_fr = floatMaddRoundedUp(tmpfA, tmpfC, tmpfB);
+#	fp_fi = floatMaddInexact(tmpfA,tmpfC,tmpfB);
+#	fp_ox = fp_ox | floatMaddOverflow(tmpfA,tmpfC,tmpfB);
+#	fp_ux = fp_ux | floatMaddUnderflow(tmpfA,tmpfC,tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
-#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, fB);
-#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	fp_vxsnan = fp_vxsnan | nan(tmpfA) | nan(tmpfC) | nan(tmpfB);
+#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, tmpfB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(tmpfA,tmpfC);
 	setSummaryFPSCR();
 	cr1flags();
 }
@@ -1625,36 +1679,42 @@
 #fnmadds fr0,fr0,fr0,fr0	0xec 00 00 3e
 :fnmadds fD,fA,fC,fB	is $(NOTVLE) & OP=59 & fD & fA & fC & fB & XOP_1_5=31 & Rc=0
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
+	local tmpfC = fC;
 	tmp:8 = fA f* fC;
 	tmp2:4 = float2float(tmp f+ fB);
 	fD = f- float2float(tmp2);
 	setFPRF(fD);
-#	fp_fr = floatMaddRoundedUp(fA, fC, fB);
-#	fp_fi = floatMaddInexact(fA,fC,fB);
-#	fp_ox = fp_ox | floatMaddOverflow(fA,fC,fB);
-#	fp_ux = fp_ux | floatMaddUnderflow(fA,fC,fB);
+#	fp_fr = floatMaddRoundedUp(tmpfA, tmpfC, tmpfB);
+#	fp_fi = floatMaddInexact(tmpfA,tmpfC,tmpfB);
+#	fp_ox = fp_ox | floatMaddOverflow(tmpfA,tmpfC,tmpfB);
+#	fp_ux = fp_ux | floatMaddUnderflow(tmpfA,tmpfC,tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
-#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, fB);
-#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	fp_vxsnan = fp_vxsnan | nan(tmpfA) | nan(tmpfC) | nan(tmpfB);
+#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, tmpfB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(tmpfA,tmpfC);
 	setSummaryFPSCR();
 }
 
 #fnmadds. fr0,fr0,fr0,fr0	0xec 00 00 3f
 :fnmadds. fD,fA,fC,fB	is $(NOTVLE) & OP=59 & fD & fA & fC & fB & XOP_1_5=31 & Rc=1
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
+	local tmpfC = fC;
 	tmp:8 = fA f* fC;
 	tmp2:4 = float2float(tmp f+ fB);
 	fD = f- float2float(tmp2);
 	setFPRF(fD);
-#	fp_fr = floatMaddRoundedUp(fA, fC, fB);
-#	fp_fi = floatMaddInexact(fA,fC,fB);
-#	fp_ox = fp_ox | floatMaddOverflow(fA,fC,fB);
-#	fp_ux = fp_ux | floatMaddUnderflow(fA,fC,fB);
+#	fp_fr = floatMaddRoundedUp(tmpfA, tmpfC, tmpfB);
+#	fp_fi = floatMaddInexact(tmpfA,tmpfC,tmpfB);
+#	fp_ox = fp_ox | floatMaddOverflow(tmpfA,tmpfC,tmpfB);
+#	fp_ux = fp_ux | floatMaddUnderflow(tmpfA,tmpfC,tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
-#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, fB);
-#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	fp_vxsnan = fp_vxsnan | nan(tmpfA) | nan(tmpfC) | nan(tmpfB);
+#	fp_vxisi = fp_vxisi | floatInfinityAdd(tmp, tmpfB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(tmpfA,tmpfC);
 	setSummaryFPSCR();
 	cr1flags();
 }
@@ -1662,35 +1722,41 @@
 #fnmsub fr0,fr0,fr0,fr0	0xfc 00 00 3c
 :fnmsub fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fC & fB & XOP_1_5=30 & Rc=0
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
+	local tmpfC = fC;
 	tmp:8 = fA f* fC;
 	fD = f- (tmp f- fB);
 	setFPRF(fD);
-#	fp_fr = floatMsubRoundedUp(fA, fC, fB);
-#	fp_fi = floatMsubInexact(fA,fC,fB);
-#	fp_ox = fp_ox | floatMsubOverflow(fA,fC,fB);
-#	fp_ux = fp_ux | floatMsubUnderflow(fA,fC,fB);
+#	fp_fr = floatMsubRoundedUp(tmpfA, tmpfC, tmpfB);
+#	fp_fi = floatMsubInexact(tmpfA,tmpfC,tmpfB);
+#	fp_ox = fp_ox | floatMsubOverflow(tmpfA,tmpfC,tmpfB);
+#	fp_ux = fp_ux | floatMsubUnderflow(tmpfA,tmpfC,tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
-#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, fB);
-#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	fp_vxsnan = fp_vxsnan | nan(tmpfA) | nan(tmpfC) | nan(tmpfB);
+#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, tmpfB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(tmpfA,tmpfC);
 	setSummaryFPSCR();
 }
 
 #fnmsub. fr0,fr0,fr0,fr0	0xfc 00 00 3d
 :fnmsub. fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fC & fB & XOP_1_5=30 & Rc=1
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
+	local tmpfC = fC;
 	tmp:8 = fA f* fC;
 	tmp2:4 = float2float(tmp f- fB);
 	fD = f- float2float(tmp2);
 	setFPRF(fD);
-#	fp_fr = floatMsubRoundedUp(fA, fC, fB);
-#	fp_fi = floatMsubInexact(fA,fC,fB);
-#	fp_ox = fp_ox | floatMsubOverflow(fA,fC,fB);
-#	fp_ux = fp_ux | floatMsubUnderflow(fA,fC,fB);
+#	fp_fr = floatMsubRoundedUp(tmpfA, tmpfC, tmpfB);
+#	fp_fi = floatMsubInexact(tmpfA,tmpfC,tmpfB);
+#	fp_ox = fp_ox | floatMsubOverflow(tmpfA,tmpfC,tmpfB);
+#	fp_ux = fp_ux | floatMsubUnderflow(tmpfA,tmpfC,tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
-#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, fB);
-#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	fp_vxsnan = fp_vxsnan | nan(tmpfA) | nan(tmpfC) | nan(tmpfB);
+#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, tmpfB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(tmpfA,tmpfC);
 	setSummaryFPSCR();
 	cr1flags();
 }
@@ -1698,36 +1764,42 @@
 #fnmsubs fr0,fr0,fr0,fr0	0xec 00 00 3c
 :fnmsubs fD,fA,fC,fB	is $(NOTVLE) & OP=59 & fD & fA & fC & fB & XOP_1_5=30 & Rc=0
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
+	local tmpfC = fC;
 	tmp:8 = fA f* fC;
 	tmp2:4 = float2float(tmp f- fB);
 	fD = f- float2float(tmp2);
 	setFPRF(fD);
-#	fp_fr = floatMsubRoundedUp(fA, fC, fB);
-#	fp_fi = floatMsubInexact(fA,fC,fB);
-#	fp_ox = fp_ox | floatMsubOverflow(fA,fC,fB);
-#	fp_ux = fp_ux | floatMsubUnderflow(fA,fC,fB);
+#	fp_fr = floatMsubRoundedUp(tmpfA, tmpfC, tmpfB);
+#	fp_fi = floatMsubInexact(tmpfA,tmpfC,tmpfB);
+#	fp_ox = fp_ox | floatMsubOverflow(tmpfA,tmpfC,tmpfB);
+#	fp_ux = fp_ux | floatMsubUnderflow(tmpfA,tmpfC,tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
-#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, fB);
-#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	fp_vxsnan = fp_vxsnan | nan(tmpfA) | nan(tmpfC) | nan(tmpfB);
+#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, tmpfB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(tmpfA,tmpfC);
 	setSummaryFPSCR();
 }
 
 #fnmsubs. fr0,fr0,fr0,fr0	0xfc 00 00 3d
 :fnmsubs. fD,fA,fC,fB	is $(NOTVLE) & OP=59 & fD & fA & fC & fB & XOP_1_5=30 & Rc=1
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
+	local tmpfC = fC;
 	tmp:8 = fA f* fC;
 	tmp2:4 = float2float(tmp f- fB);
 	fD = f- float2float(tmp2);
 	setFPRF(fD);
-#	fp_fr = floatMsubRoundedUp(fA, fC, fB);
-#	fp_fi = floatMsubInexact(fA,fC,fB);
-#	fp_ox = fp_ox | floatMsubOverflow(fA,fC,fB);
-#	fp_ux = fp_ux | floatMsubUnderflow(fA,fC,fB);
+#	fp_fr = floatMsubRoundedUp(tmpfA, tmpfC, tmpfB);
+#	fp_fi = floatMsubInexact(tmpfA,tmpfC,tmpfB);
+#	fp_ox = fp_ox | floatMsubOverflow(tmpfA,tmpfC,tmpfB);
+#	fp_ux = fp_ux | floatMsubUnderflow(tmpfA,tmpfC,tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fA) | nan(fC) | nan(fB);
-#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, fB);
-#	fp_vximz = fp_vximz | floatInfinityMulZero(fA,fC);
+	fp_vxsnan = fp_vxsnan | nan(tmpfA) | nan(tmpfC) | nan(tmpfB);
+#	fp_vxisi = fp_vxisi | floatInfinitySub(tmp, tmpfB);
+#	fp_vximz = fp_vximz | floatInfinityMulZero(tmpfA,tmpfC);
 	setSummaryFPSCR();
 	cr1flags();
 }
@@ -1735,34 +1807,36 @@
 #fres fr0,fr0		0xec 00 00 30
 :fres fD,fB	is $(NOTVLE) & OP=59 & fD & BITS_16_20 & fB & BITS_6_10=0 & XOP_1_5=24 & Rc=0 
 {
+	local tmpfB = fB;
 	one:8 = 1;
 	floatOne:8 = int2float(one);
 	tmp:4 = float2float(floatOne f/ fB);
 	fD = float2float(tmp);
 	setFPRF(fD);
-#	fp_fr = floatDivRoundedUp(floatOne, fB);
-#	fp_fi = floatDivInexact(floatOne, fB);
-#	fp_ox = fp_ox | floatDivOverflow(floatOne, fB);
-#	fp_ux = fp_ux | floatDivUnderflow(floatOne, fB);
+#	fp_fr = floatDivRoundedUp(floatOne, tmpfB);
+#	fp_fi = floatDivInexact(floatOne, tmpfB);
+#	fp_ox = fp_ox | floatDivOverflow(floatOne, tmpfB);
+#	fp_ux = fp_ux | floatDivUnderflow(floatOne, tmpfB);
 	fp_zx = fp_zx | (fB f== 0);
-	fp_vxsnan = fp_vxsnan | nan(fB);
+	fp_vxsnan = fp_vxsnan | nan(tmpfB);
 	setSummaryFPSCR();	
 }
 
 #fres. fr0,fr0		0xec 00 00 31
 :fres. fD,fB	is $(NOTVLE) & OP=59 & fD & BITS_16_20 & fB & BITS_6_10=0 & XOP_1_5=24 & Rc=1
 {
+	local tmpfB = fB;
 	one:8 = 1;
 	floatOne:8 = int2float(one);
 	tmp:4 = float2float(floatOne f/ fB);
 	fD = float2float(tmp);
 	setFPRF(fD);
-#	fp_fr = floatDivRoundedUp(floatOne, fB);
-#	fp_fi = floatDivInexact(floatOne, fB);
-#	fp_ox = fp_ox | floatDivOverflow(floatOne, fB);
-#	fp_ux = fp_ux | floatDivUnderflow(floatOne, fB);
+#	fp_fr = floatDivRoundedUp(floatOne, tmpfB);
+#	fp_fi = floatDivInexact(floatOne, tmpfB);
+#	fp_ox = fp_ox | floatDivOverflow(floatOne, tmpfB);
+#	fp_ux = fp_ux | floatDivUnderflow(floatOne, tmpfB);
 	fp_zx = fp_zx | (fB f== 0);
-	fp_vxsnan = fp_vxsnan | nan(fB);
+	fp_vxsnan = fp_vxsnan | nan(tmpfB);
 	setSummaryFPSCR();
 	cr1flags();
 }
@@ -1770,34 +1844,36 @@
 #frsp fr0,fr0		0xfc 00 00 18
 :frsp fD,fB		is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=12 & Rc=0
 {
+	local tmpfB = fB;
 	#zero:8 = 0;
 	#floatZero:8 = int2float(zero);
 	tmp:4 = float2float(fB);
 	fD = float2float(tmp);
 	setFPRF(fD);
-#	fp_fr = floatAddRoundedUp(floatZero, fB);
-#	fp_fi = floatAddInexact(floatZero, fB);
-#	fp_ox = fp_ox | floatAddOverflow(floatZero, fB);
-#	fp_ux = fp_ux | floatAddUnderflow(floatZero, fB);
+#	fp_fr = floatAddRoundedUp(floatZero, tmpfB);
+#	fp_fi = floatAddInexact(floatZero, tmpfB);
+#	fp_ox = fp_ox | floatAddOverflow(floatZero, tmpfB);
+#	fp_ux = fp_ux | floatAddUnderflow(floatZero, tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fB);
+	fp_vxsnan = fp_vxsnan | nan(tmpfB);
 	setSummaryFPSCR();
 }
 
 #frsp. fr0,fr0		0xfc 00 00 19
 :frsp. fD,fB		is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & XOP_1_10=12 & Rc=1
 {
+	local tmpfB = fB;
 	#zero:8 = 0;
 	#floatZero:8 = int2float(zero);
 	tmp:4 = float2float(fB);
 	fD = float2float(tmp);
 	setFPRF(fD);
-#	fp_fr = floatAddRoundedUp(floatZero, fB);
-#	fp_fi = floatAddInexact(floatZero, fB);
-#	fp_ox = fp_ox | floatAddOverflow(floatZero, fB);
-#	fp_ux = fp_ux | floatAddUnderflow(floatZero, fB);
+#	fp_fr = floatAddRoundedUp(floatZero, tmpfB);
+#	fp_fi = floatAddInexact(floatZero, tmpfB);
+#	fp_ox = fp_ox | floatAddOverflow(floatZero, tmpfB);
+#	fp_ux = fp_ux | floatAddUnderflow(floatZero, tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fB);
+	fp_vxsnan = fp_vxsnan | nan(tmpfB);
 	setSummaryFPSCR();
 	cr1flags();
 }
@@ -1805,6 +1881,7 @@
 #frsqrte fr0,fr0		0xfc 00 00 34
 :frsqrte fD,fB	is $(NOTVLE) & OP=63 & fD & BITS_16_20 & fB & BITS_6_10=0 & XOP_1_5=26 & Rc=0 
 {
+	local tmpfB = fB;
 	one:8 = 1;
 	floatOne:8 = int2float(one);
 	tmpSqrt:8 = sqrt(fB);
@@ -1815,13 +1892,14 @@
 #	fp_ox = fp_ox | floatDivOverflow(floatOne, tmpSqrt);
 #	fp_ux = fp_ux | floatDivUnderflow(floatOne, tmpSqrt);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fB);
+	fp_vxsnan = fp_vxsnan | nan(tmpfB);
 	setSummaryFPSCR();	
 }
 
 #frsqrte. fr0,fr0		0xfc 00 00 35
 :frsqrte. fD,fB	is $(NOTVLE) & OP=63 & fD & BITS_16_20 & fB & BITS_6_10=0 & XOP_1_5=26 & Rc=1
 {
+	local tmpfB = fB;
 	one:8 = 1;
 	floatOne:8 = int2float(one);
 	tmpSqrt:8 = sqrt(fB);
@@ -1832,8 +1910,8 @@
 #	fp_ox = fp_ox | floatDivOverflow(floatOne, tmpSqrt);
 #	fp_ux = fp_ux | floatDivUnderflow(floatOne, tmpSqrt);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fB);
-	fp_vxsqrt = fp_vxsqrt | sqrtInvalid(fB);
+	fp_vxsnan = fp_vxsnan | nan(tmpfB);
+	fp_vxsqrt = fp_vxsqrt | sqrtInvalid(tmpfB);
 	setSummaryFPSCR();	
 	cr1flags();
 }
@@ -1841,45 +1919,51 @@
 #fsel f0r,fr0,fr0,fr0	0xfc 00 00 2e
 :fsel fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fB & fC & XOP_1_5=23 & Rc=0
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
 	zero:4=0;
 	fD=fC;
-	if (fA f> int2float(zero)) goto inst_next; 
-	fD=fB; 
+	if (tmpfA f> int2float(zero)) goto inst_next;
+	fD=tmpfB;
 }
 
 #fsel. fr0,fr0,fr0,fr0	0xfc 00 00 2f
 :fsel. fD,fA,fC,fB	is $(NOTVLE) & OP=63 & fD & fA & fB & fC & XOP_1_5=23 & Rc=1
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
 	zero:4=0;
 	fD=fC;
 	cr1flags();
-	if (fA f> int2float(zero)) goto inst_next; 
-	fD=fB; 
+	if (tmpfA f> int2float(zero)) goto inst_next;
+	fD=tmpfB;
 }
 
 #fsqrt f0r,fr0	0xfc 00 00 2c
 :fsqrt fD,fB 	is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=22 & Rc=0
 {
+	local tmpfB = fB;
 	fD = sqrt(fB);
 	setFPRF(fD);
-#	fp_fr = floatSqrtRoundedUp(fB);
-#	fp_fi = floatSqrtInexact(fB);
+#	fp_fr = floatSqrtRoundedUp(tmpfB);
+#	fp_fi = floatSqrtInexact(tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fB);
-#	fp_vxsqrt = fp_vxsqrt | sqrtInvalid(fB);	
+	fp_vxsnan = fp_vxsnan | nan(tmpfB);
+#	fp_vxsqrt = fp_vxsqrt | sqrtInvalid(tmpfB);
 	setSummaryFPSCR();	
 }
  
 #fsqrt. fr0,fr0	0xfc 00 00 2d
 :fsqrt. fD,fB 	is $(NOTVLE) & OP=63 & fD & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=22 & Rc=1
 {
+	local tmpfB = fB;
 	fD = sqrt(fB);
 	setFPRF(fD);
-#	fp_fr = floatSqrtRoundedUp(fB);
-#	fp_fi = floatSqrtInexact(fB);
+#	fp_fr = floatSqrtRoundedUp(tmpfB);
+#	fp_fi = floatSqrtInexact(tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fB);
-#	fp_vxsqrt = fp_vxsqrt | sqrtInvalid(fB);	
+	fp_vxsnan = fp_vxsnan | nan(tmpfB);
+#	fp_vxsqrt = fp_vxsqrt | sqrtInvalid(tmpfB);
 	setSummaryFPSCR();	
 	cr1flags();
 } 
@@ -1887,28 +1971,30 @@
 #fsqrts fr0,fr0	0xec 00 00 2c
 :fsqrts fD,fB 	is $(NOTVLE) & OP=59 & fD & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=22 & Rc=0
 {
+	local tmpfB = fB;
 	tmp:4 = float2float(sqrt(fB));
 	fD = float2float(tmp);
 	setFPRF(fD);
-#	fp_fr = floatSqrtRoundedUp(fB);
-#	fp_fi = floatSqrtInexact(fB);
+#	fp_fr = floatSqrtRoundedUp(tmpfB);
+#	fp_fi = floatSqrtInexact(tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fB);
-#	fp_vxsqrt = fp_vxsqrt | sqrtInvalid(fB);	
+	fp_vxsnan = fp_vxsnan | nan(tmpfB);
+#	fp_vxsqrt = fp_vxsqrt | sqrtInvalid(tmpfB);
 	setSummaryFPSCR();	
 }
  
 #fsqrts. fr0,fr0	0xec 00 00 2d
 :fsqrts. fD,fB 	is $(NOTVLE) & OP=59 & fD & BITS_16_20=0 & fB & BITS_6_10=0 & XOP_1_5=22 & Rc=1
 {
+	local tmpfB = fB;
 	tmp:4 = float2float(sqrt(fB));
 	fD = float2float(tmp);
 	setFPRF(fD);
-#	fp_fr = floatSqrtRoundedUp(fB);
-#	fp_fi = floatSqrtInexact(fB);
+#	fp_fr = floatSqrtRoundedUp(tmpfB);
+#	fp_fi = floatSqrtInexact(tmpfB);
 	fp_xx = fp_xx | fp_fi;
-	fp_vxsnan = fp_vxsnan | nan(fB);
-#	fp_vxsqrt = fp_vxsqrt | sqrtInvalid(fB);	
+	fp_vxsnan = fp_vxsnan | nan(tmpfB);
+#	fp_vxsqrt = fp_vxsqrt | sqrtInvalid(tmpfB);
 	setSummaryFPSCR();	
 	cr1flags();
 } 
@@ -1916,33 +2002,41 @@
 #fsub fr0,fr0,fr0	0xfc 00 00 28
 :fsub fD,fA,fB	is $(NOTVLE) & OP=63 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=20 & Rc=0
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
 	fD = fA f- fB;
-	setFPSubFlags(fA,fB,fD);
+	setFPSubFlags(tmpfA,tmpfB,fD);
 }
 
 #fsub. fr0,fr0,fr0	0xfc 00 00 29
 :fsub. fD,fA,fB	is $(NOTVLE) & OP=63 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=20 & Rc=1
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
 	fD = fA f- fB;
-	setFPSubFlags(fA,fB,fD);
+	setFPSubFlags(tmpfA,tmpfB,fD);
 	cr1flags();
 }
 
 #fsubs fr0,fr0,fr0	0xec 00 00 28
 :fsubs fD,fA,fB	is $(NOTVLE) & OP=59 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=20 & Rc=0
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
 	tmp:4 = float2float(fA f- fB);
 	fD = float2float(tmp);
-	setFPSubFlags(fA,fB,fD);
+	setFPSubFlags(tmpfA,tmpfB,fD);
 	
 }
 
 #fsubs. fr0,fr0,fr0	0xec 00 00 29
 :fsubs. fD,fA,fB	is $(NOTVLE) & OP=59 & fD & fA & fB & BITS_6_10=0 & XOP_1_5=20 & Rc=1
 {
+	local tmpfA = fA;
+	local tmpfB = fB;
 	tmp:4 = float2float(fA f- fB);
 	fD = float2float(tmp);
-	setFPSubFlags(fA,fB,fD);
+	setFPSubFlags(tmpfA,tmpfB,fD);
 	cr1flags();
 }
 
@@ -1974,16 +2068,17 @@
 #lbzu	r0,3(r2)	0x8c 02 00 03
 :lbzu	D,dPlusRaAddress	is $(NOTVLE) & OP=35 & D & dPlusRaAddress & A
 {
-	A = dPlusRaAddress;
-	D = zext(*:1(A));
-	
+	ea:$(REGISTER_SIZE) = dPlusRaAddress;
+	D = zext(*:1(ea));
+	A = ea;
 }
 
 #lbzux	r0,r2,r0	0x7c 02 00 ee
 :lbzux	D,A,B				is OP=31 & D & A & B & XOP_1_10=119 & BIT_0=0
 {
-	A = A+B;
-	D = zext(*:1(A));
+	ea:$(REGISTER_SIZE) = A+B;
+	D = zext(*:1(ea));
+	A = ea;
 }
 
 #lbzx	r0,r2,r0	0x7c 02 00 ae
@@ -2012,15 +2107,17 @@
 #ldu	r0,8(r2)	0xe8 02 00 09
 :ldu	D,dsPlusRaAddress	is $(NOTVLE) & OP=58 & D & dsPlusRaAddress & A & BITS_0_1=1
 {
-	A = dsPlusRaAddress;
-	D = *:8(A);
+	ea:$(REGISTER_SIZE) = dsPlusRaAddress;
+	D = *:8(ea);
+	A = ea;
 }
 
 #ldux	r0,r2,r0	0x7c 02 00 6a
 :ldux	D,A,B			is OP=31 & D & A & B & XOP_1_10=53 & BIT_0=0
 {
-	A = A+B;
-	D = *:8(A);
+	ea:$(REGISTER_SIZE) = A+B;
+	D = *:8(ea);
+	A = ea;
 }
 
 @ifndef IS_ISA
@@ -2042,14 +2139,16 @@
 #lfdu fr0,8(r2)	0xcc 02 00 08	
 :lfdu	fD,dPlusRaAddress 	is $(NOTVLE) & OP=51 & fD & dPlusRaAddress & A
 {
-	A = dPlusRaAddress;
-	fD = *:8(A);
+	ea:$(REGISTER_SIZE) = dPlusRaAddress;
+	fD = *:8(ea);
+	A = ea;
 }
 #lfdux fr0,r2,r0	0x7c 02 04 ee	
 :lfdux	fD,A,B 	is $(NOTVLE) & OP=31 & fD & A & B & XOP_1_10=631 & BIT_0=0
 {
-	A = A+B;
-	fD = *:8(A);
+	ea:$(REGISTER_SIZE) = A+B;
+	fD = *:8(ea);
+	A = ea;
 }
 #lfdx fr0,r2,r0	0x7c 02 04 ae	
 :lfdx	fD,RA_OR_ZERO,B 	is $(NOTVLE) & OP=31 & fD & RA_OR_ZERO & B & XOP_1_10=599 & BIT_0=0
@@ -2065,15 +2164,17 @@
 #lfsu fr0,8(r2)	0xc0 02 00 08	
 :lfsu	fD,dPlusRaAddress 	is $(NOTVLE) & OP=49 & fD & dPlusRaAddress & A
 {
-	A = dPlusRaAddress;
-	fD = float2float(*:4(A));
+	ea:$(REGISTER_SIZE) = dPlusRaAddress;
+	fD = float2float(*:4(ea));
+	A = ea;
 }
 
 #lfsux fr0,r2,r0	0x7c 02 04 6e	
 :lfsux	fD,A,B 	is $(NOTVLE) & OP=31 & fD & A & B & XOP_1_10=567 & BIT_0=0
 {
-	A = A+B;
-	fD = float2float(*:4(A));
+	ea:$(REGISTER_SIZE) = A+B;
+	fD = float2float(*:4(ea));
+	A = ea;
 }
 #lfsx fr0,r2,r0	0x7c 02 04 2e	
 :lfsx	fD,RA_OR_ZERO,B 	is $(NOTVLE) & OP=31 & fD & RA_OR_ZERO & B & XOP_1_10=535 & BIT_0=0
@@ -2090,14 +2191,16 @@
 #lhau r0,8(r2)	0xac 02 00 08	
 :lhau D,dPlusRaAddress 	is $(NOTVLE) & OP=43 & D & dPlusRaAddress & A
 {
-	A = dPlusRaAddress;
-	D = sext(*:2(A));
+	ea:$(REGISTER_SIZE) = dPlusRaAddress;
+	D = sext(*:2(ea));
+	A = ea;
 }
 #lhaux r0,r2,r0	0x7c 02 02 ee	
 :lhaux D,A,B 			is OP=31 & D & A & B & XOP_1_10=375 & BIT_0=0
 {
-	A = A+B;
-	D = sext(*:2(A));
+	ea:$(REGISTER_SIZE) = A+B;
+	D = sext(*:2(ea));
+	A = ea;
 }
 #lhax r0,r2,r0	0x7c 02 02 ae	
 :lhax D,RA_OR_ZERO,B 	is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=343 & BIT_0=0
@@ -2124,15 +2227,17 @@
 #lhzu	r0,4(r2)	0xa4 02 00 04
 :lhzu	D,dPlusRaAddress	is $(NOTVLE) & OP=41 & D & dPlusRaAddress & A
 {
-	A = dPlusRaAddress;
-	D = zext(*:2(A));
+	ea:$(REGISTER_SIZE) = dPlusRaAddress;
+	D = zext(*:2(ea));
+	A = ea;
 }
 
 #lhzux r0,r2,r0	0x7c 02 02 6e	
 :lhzux D,A,B 			is OP=31 & D & A & B & XOP_1_10=311 & BIT_0=0
 {
-	A = A+B;
-	D = zext(*:2(A));
+	ea:$(REGISTER_SIZE) = A+B;
+	D = zext(*:2(ea));
+	A = ea;
 }
 #lhzx r0,r2,r0	0x7c 02 02 2e	
 :lhzx D,RA_OR_ZERO,B 	is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=279 & BIT_0=0
@@ -2177,8 +2282,9 @@ define pcodeop lswxOp;
 #lwaux r0,r2,r0	0x7c 02 02 ea	
 :lwaux D,A,B 			is OP=31 & D & A & B & XOP_1_10=373 & BIT_0=0
 {
-	A = A+B;
-	D = sext(*:4(A));
+	ea:$(REGISTER_SIZE) = A+B;
+	D = sext(*:4(ea));
+	A = ea;
 }
 #lwax r0,r2,r0	0x7c 02 02 aa	
 :lwax D,RA_OR_ZERO,B 	is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=341 & BIT_0=0
@@ -2210,23 +2316,25 @@ define pcodeop lswxOp;
 #lwzu	r0,4(r2)	0x84 02 00 04
 :lwzu	D,dPlusRaAddress	is $(NOTVLE) & OP=33 & D & dPlusRaAddress & A
 {
-	A = dPlusRaAddress;
+	ea:$(REGISTER_SIZE) = dPlusRaAddress;
 @ifdef BIT_64
-	D = zext(*:4(A));
+	D = zext(*:4(ea));
 @else
-	D = *:4(A);
+	D = *:4(ea);
 @endif
+	A = ea;
 }
 
 #lwzux r0,r2,r0	0x7c 02 00 6e	
 :lwzux D,A,B 			is OP=31 & D & A & B & XOP_1_10=55 & BIT_0=0
 {
-	A = A+B;
+	ea:$(REGISTER_SIZE) = A+B;
 @ifdef BIT_64
-	D = zext(*:4(A));
+	D = zext(*:4(ea));
 @else
-	D = *:4(A);
+	D = *:4(ea);
 @endif
+	A = ea;
 
 }
 #lwzx r0,r2,r0	0x7c 02 00 2e	
@@ -2857,6 +2965,9 @@ define pcodeop lswxOp;
 :mcrxr CRFD		is OP=31 & CRFD & BITS_11_22=0 & XOP_1_10=512 & BIT_0=0
 {
 	CRFD = (xer_so & 1) << 3 | (xer_ov & 1) << 2 | (xer_ca & 1) << 1;
+	xer_so = 0;
+	xer_ov = 0;
+	xer_ca = 0;
 }
 
 #mfcr r0 	0x7c 00 00 26
@@ -3343,7 +3454,7 @@ define pcodeop lswxOp;
 {	
 	subOverflow(A,1);
 	D = -A;
-	cr0flags( A );
+	cr0flags( D );
 }
 
 #nor r0,r0,r0		0x7C 00 00 F8
@@ -3850,6 +3961,8 @@ define pcodeop lswxOp;
 	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
 	if (RESERVE == 0) goto inst_next;
 	*[ram]:8 EA = storeDoubleWordConditionalIndexed(S,RA_OR_ZERO,B);
+	# set when a stwcx. or stdcx. successfully completes
+	cr0flags(0:$(REGISTER_SIZE));
 }
 
 #stdu r0,8(0)	0xf8 00 00 01	
@@ -3863,8 +3976,9 @@ define pcodeop lswxOp;
 #stdux	r0,r2,r0	0x7c 00 01 6a
 :stdux	S,A,B	is OP=31 & S & A & B & XOP_1_10=181 & BIT_0=0
 {
-	A = A+B;
-	*:8(A) = S;
+	local ea:$(REGISTER_SIZE) = A+B;
+	*:8(ea) = S;
+	A = ea;
 }
 
 #stdx	r0,r2,r0	0x7c 00 01 2a
@@ -3887,15 +4001,17 @@ define pcodeop lswxOp;
 #stfdu fr0,8(r2)	0xDC 02 00 08
 :stfdu fS,dPlusRaAddress 	is $(NOTVLE) & OP=55 & fS & dPlusRaAddress & A
 {
-	A = dPlusRaAddress;
-	*:8(dPlusRaAddress) = fS;
+	ea:$(REGISTER_SIZE) = dPlusRaAddress;
+	*:8(ea) = fS;
+	A = ea;
 }
 
 #stfdux	fr0,r2,r0	0x7C 00 05 EE
 :stfdux	fS,A,B	is $(NOTVLE) & OP=31 & fS & A & B & XOP_1_10=759 & BIT_0=0
 {
-	A = A+B;
-	*:8(A) = fS;
+	ea:$(REGISTER_SIZE) = A+B;
+	*:8(ea) = fS;
+	A = ea;
 }
 
 #stfdx fr0,r0,r0	0x7C 00 05 AE
@@ -4035,6 +4151,8 @@ define pcodeop stswxOp;
 	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
 	if (RESERVE == 0) goto inst_next;
 	*[ram]:4 EA = storeWordConditionalIndexed(S,RA_OR_ZERO,B);
+	# set when a stwcx. or stdcx. successfully completes
+	cr0flags(0:$(REGISTER_SIZE));
 }
 
 #stwu r0,r0			0x94 00 00 00
@@ -4087,16 +4205,16 @@ define pcodeop stswxOp;
 
 #subfo r1,r2,r3  0x7c 00 04 50
 :subfo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=40 & Rc=0
-{ 
+{
+	subOverflow(B,A);
 	D = B - A;
-	subOverflow(A,B);
 }
 
 #subfo. r1,r2,r3  0x7c 00 04 51
 :subfo. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=40 & Rc=1
 { 	
+	subOverflow(B,A);
 	D = B - A;
-	subOverflow( A, B );
 	cr0flags(D);
 }
 
@@ -4119,16 +4237,16 @@ define pcodeop stswxOp;
 :subfco D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=8 & Rc=0
 { 
 	xer_ca = (A <= B);
+	subOverflow(B,A);
 	D = B - A;
-	subOverflow( A, B );
 }
 
 #subfco. r0,r0,r0  0x7c 00 04 11
 :subfco. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=8 & Rc=1
 { 	
 	xer_ca = (A <= B);
-	D = B - A;
 	subOverflow( B, A );
+	D = B - A;
 	cr0flags(D);
 }
 
@@ -4154,8 +4272,8 @@ define pcodeop stswxOp;
 { 
 	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A; 
 	xer_ca= (tmp<=B); 
-	D = B - tmp; 
 	subOverflow( B, tmp );
+	D = B - tmp;
 }
 
 #subfeo. r0,r0,r0  0x7c 00 05 11
@@ -4163,8 +4281,8 @@ define pcodeop stswxOp;
 { 	
 	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A; 
 	xer_ca= (tmp<=B); 
-	D = B - tmp; 
 	subOverflow( B, tmp );
+	D = B - tmp;
 	cr0flags(D);
 }
 
@@ -4179,7 +4297,7 @@ define pcodeop stswxOp;
 :subfme D,A			is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=232 & Rc=0
 {
 	tmp:$(REGISTER_SIZE)=zext(!xer_ca)+A;
-	xer_ca=!(-1<tmp);
+	xer_ca=!(-1 s< tmp);
 	D=-1-tmp; 
 }
 
@@ -4187,7 +4305,7 @@ define pcodeop stswxOp;
 :subfme. D,A		is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=232 & Rc=1
 {
 	tmp:$(REGISTER_SIZE)=zext(!xer_ca)+A;
-	xer_ca=!(-1<tmp);
+	xer_ca=!(-1 s< tmp);
 	D=-1-tmp;
 	cr0flags(D);
 }
@@ -4197,7 +4315,7 @@ define pcodeop stswxOp;
 {
 	tmp:$(REGISTER_SIZE)=zext(!xer_ca)+A;
 	subOverflow(0xffffffff,tmp);
-	xer_ca=!(-1<tmp);
+	xer_ca=!(-1 s< tmp);
 	D=-1-tmp;
 }
 
@@ -4206,7 +4324,7 @@ define pcodeop stswxOp;
 {
 	tmp:$(REGISTER_SIZE)=zext(!xer_ca)+A;
 	subOverflow(0xffffffff,tmp);
-	xer_ca=!(-1<tmp);
+	xer_ca=!(-1 s< tmp);
 	D=-1-tmp;
 	cr0flags(D);
 }

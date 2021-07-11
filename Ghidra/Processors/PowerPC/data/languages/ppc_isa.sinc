@@ -352,9 +352,8 @@ define pcodeop AddAndGenerateSixes;
     # C low 4 bytes to TH high 4 bytes
     tmp = zext(c);
     tmp = tmp << 32;
-    TH = tmp;
-
     divOverflow(A,B);
+    TH = tmp;
 }
 
 # PowerISA II: 3.3.8 Fixed-Point Arithmetic Instructions
@@ -380,9 +379,9 @@ define pcodeop DivideWordExtended4;
     # C low 4 bytes to TH high 4 bytes
     tmp = zext(c);
     tmp = tmp << 32;
+    divOverflow(A,B);
     TH = tmp;
 
-    divOverflow(A,B);
     cr0flags(TH);
 }
 
@@ -460,9 +459,8 @@ define pcodeop DivideWordExtended4;
     # C low 4 bytes to TH high 4 bytes
     tmp = zext(c);
     tmp = tmp << 32;
-    TH = tmp;
-
     divOverflow(A,B);
+    TH = tmp;
 }
 
 # PowerISA II: 3.3.8 Fixed-Point Arithmetic Instructions
@@ -487,9 +485,9 @@ define pcodeop DivideWordExtended4;
     # C low 4 bytes to TH high 4 bytes
     tmp = zext(c);
     tmp = tmp << 32;
+    divOverflow(A,B);
     TH = tmp;
 
-    divOverflow(A,B);
     cr0flags(TH);
 }
 
@@ -1683,16 +1681,16 @@ define pcodeop eieioOp;
 # binutils-descr: "divdeuo",	XO(31,393,1,0),	XO_MASK,  POWER7|PPCA2,	PPCNONE,	{RT, RA, RB}
 # binutils: mytest.d:   28:	7c 64 2f 12 	divdeuo r3,r4,r5
 :divdeuo RT,A,B is $(NOTVLE) & OP=31 & XOP_1_9=393 & OE=1 & Rc=0 & RT & A & B  { 
-	RT = A/B;
 	divOverflow(A,B);
+	RT = A/B;
 } 
 
 # binutils-descr: "divdeuo.",	XO(31,393,1,1),	XO_MASK,  POWER7|PPCA2,	PPCNONE,	{RT, RA, RB}
 define pcodeop divdeuoDotOp;
 # binutils: mytest.d:   2c:	7c 64 2f 13 	divdeuo. r3,r4,r5
 :divdeuo. RT,A,B is $(NOTVLE) & OP=31 & XOP_1_9=393 & OE=1 & Rc=1 & RT & A & B  { 
-	RT = A/B;
 	divOverflow(A,B);
+	RT = A/B;
 	cr0flags(RT);
 } 
 
@@ -1726,16 +1724,16 @@ define pcodeop stfddxOp;
 define pcodeop divdeoOp;
 # binutils: mytest.d:   38:	7c 64 2f 52 	divdeo  r3,r4,r5
 :divdeo RT,A,B is $(NOTVLE) & OP=31 & XOP_1_9=425 & OE=1 & Rc=0 & RT & A & B  { 
-	RT = A s/ B;
 	divOverflow(A,B);
+	RT = A s/ B;
 } 
 
 # binutils-descr: "divdeo.",	XO(31,425,1,1),	XO_MASK,  POWER7|PPCA2,	PPCNONE,	{RT, RA, RB}
 define pcodeop divdeoDotOp;
 # binutils: mytest.d:   3c:	7c 64 2f 53 	divdeo. r3,r4,r5
 :divdeo. RT,A,B is $(NOTVLE) & OP=31 & XOP_1_9=425 & OE=1 & Rc=1 & RT & A & B  { 
-	RT = A s/ B;
 	divOverflow(A,B);
+	RT = A s/ B;
 	cr0flags(RT);
 } 
 
@@ -2574,10 +2572,12 @@ define pcodeop InstructionCacheBlockLockSetX;
 
 :cmpeqb CRFD,A,B			is $(NOTVLE) & OP=31 & BITS_21_22=0 & BIT_0=0 & XOP_1_10=224 & A & B & CRFD {
 	tmpa:1 = A:1;
-	CRFD = (tmpa == B[0,8]) | (tmpa == B[8,8]) | (tmpa == B[16,8]) | (tmpa == B[24,8]);
+	match:1 = (tmpa == B[0,8]) | (tmpa == B[8,8]) | (tmpa == B[16,8]) | (tmpa == B[24,8]);
 @if REGISTER_SIZE == "8"
-	CRFD = CRFD | (tmpa == B[32,8]) | (tmpa == B[40,8]) | (tmpa == B[48,8]) | (tmpa == B[56,8]);
+	match = match | (tmpa == B[32,8]) | (tmpa == B[40,8]) | (tmpa == B[48,8]) | (tmpa == B[56,8]);
 @endif
+	# 0b0 | match | 0b0 | 0b0
+	CRFD = (match & 1) << 2;
 }
 
 :cmprb CRFD,L2,A,B		is $(NOTVLE) & OP=31 & BIT_22=0 & BIT_0=0 & XOP_1_10=192 & A & B & CRFD & L2 {
@@ -2586,7 +2586,9 @@ define pcodeop InstructionCacheBlockLockSetX;
 	tmp1hi:1 = B[24,8];
 	tmp2lo:1 = B[0,8];
 	tmp2hi:1 = B[8,8];
-	CRFD = ((tmpin >= tmp2lo) & (tmpin <= tmp2hi)) | (((tmpin >= tmp1lo) & (tmpin <= tmp1hi)) * L2:1);
+	in_range:1 = ((tmpin >= tmp2lo) & (tmpin <= tmp2hi)) | (((tmpin >= tmp1lo) & (tmpin <= tmp1hi)) * L2:1);
+	# 0b0 | in_range | 0b0 | 0b0
+	CRFD = (in_range & 1) << 2;
 }
 
 :cnttzw A,S				is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=538 & Rc=0 {

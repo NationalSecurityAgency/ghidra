@@ -63,9 +63,10 @@ define pcodeop invalidateTLB;
 
 :isel^CC_X_OPm D,RA_OR_ZERO,B,CC_X_OP  is OP=31 & D & RA_OR_ZERO & B & CC_X_OP & CC_X_OPm & XOP_1_5=15
 {
-		D = B;
-		if (!CC_X_OP) goto inst_next;
-		D = RA_OR_ZERO;
+	local tmp:$(REGISTER_SIZE) = RA_OR_ZERO;
+	D = B;
+	if (!CC_X_OP) goto inst_next;
+	D = tmp;
 #        D = (zext(CC_X_OP) * RA_OR_ZERO) + (zext(!CC_X_OP) * B);
 }
 
