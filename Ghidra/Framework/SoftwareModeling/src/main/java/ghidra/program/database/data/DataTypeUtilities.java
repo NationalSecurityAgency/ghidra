@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import ghidra.app.util.NamespaceUtils;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.GlobalNamespace;
 import ghidra.program.model.data.*;
@@ -341,23 +342,15 @@ public class DataTypeUtilities {
 	 */
 	public static CategoryPath getDataTypeCategoryPath(CategoryPath baseCategory,
 			Namespace namespace) {
-		Namespace ns = namespace;
-		String path = "";
-		while (!ns.isGlobal() && !(ns instanceof Library)) {
-			if (path.length() != 0) {
-				path = "/" + path;
+		List<String> categoryPathParts = new ArrayList<>();
+		for (Namespace ns : NamespaceUtils.getNameSpaceParts(namespace)) {
+			if (!(ns instanceof Library)) {
+				categoryPathParts.add(ns.getName());
 			}
-			path = ns.getName() + path;
-			ns = ns.getParentNamespace();
 		}
-		if (path.length() == 0) {
-			return baseCategory;
-		}
-		String categoryPath = CategoryPath.DELIMITER_CHAR + path;
-		if (!baseCategory.equals(CategoryPath.ROOT)) {
-			categoryPath = baseCategory.getPath() + categoryPath;
-		}
-		return new CategoryPath(categoryPath);
+		return categoryPathParts.isEmpty()
+				? baseCategory
+				: new CategoryPath(baseCategory, categoryPathParts);
 	}
 
 	/**

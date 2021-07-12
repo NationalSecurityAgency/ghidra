@@ -16,8 +16,8 @@
 package ghidra.app.util.bin.format.dwarf4.next;
 
 import java.util.List;
+import java.util.Objects;
 
-import ghidra.formats.gfilesystem.FSUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Namespace;
@@ -35,15 +35,38 @@ public class DWARFNameInfo {
 	private final NamespacePath namespacePath;
 	private final String originalName;
 
+	/**
+	 * Create a root name entry that will serve as the parent for all children.
+	 * 
+	 * @param rootCategory {@link CategoryPath} in the data type manager that will contain
+	 * any sub-categories that represent namespaces
+	 * @return a new {@link DWARFNameInfo} instance
+	 */
 	public static DWARFNameInfo createRoot(CategoryPath rootCategory) {
 		return new DWARFNameInfo(null, rootCategory, NamespacePath.ROOT, null);
 	}
 
+	/**
+	 * Create a {@link DWARFNameInfo} instance using the specified {@link DataType}'s name.
+	 * 
+	 * @param dataType {@link DataType}
+	 * @return new {@link DWARFNameInfo} using the same name / CategoryPath as the data type
+	 */
 	public static DWARFNameInfo fromDataType(DataType dataType) {
 		return new DWARFNameInfo(null, dataType.getCategoryPath(),
 			NamespacePath.create(null, dataType.getName(), null), dataType.getName());
 	}
 
+	/**
+	 * Create a child {@link DWARFNameInfo} instance of the specified parent.
+	 * <p>
+	 * Example:<br>
+	 * <pre>fromList(parent, List.of("name1", "name2")) &rarr; parent_name/name1/name2</pre>
+	 *  
+	 * @param parent {@link DWARFNameInfo} parent
+	 * @param names list of names
+	 * @return new {@link DWARFNameInfo} instance that is a child of the parent
+	 */
 	public static DWARFNameInfo fromList(DWARFNameInfo parent, List<String> names) {
 		for (String s : names) {
 			DWARFNameInfo tmp = new DWARFNameInfo(parent, s, s, SymbolType.NAMESPACE);
@@ -56,8 +79,8 @@ public class DWARFNameInfo {
 			NamespacePath namespacePath, String originalName) {
 		this.parent = parent;
 		this.organizationalCategoryPath =
-			(organizationalCategoryPath != null) ? organizationalCategoryPath : CategoryPath.ROOT;
-		this.namespacePath = (namespacePath != null) ? namespacePath : NamespacePath.ROOT;
+			Objects.requireNonNullElse(organizationalCategoryPath, CategoryPath.ROOT);
+		this.namespacePath = Objects.requireNonNullElse(namespacePath, NamespacePath.ROOT);
 		this.originalName = originalName;
 	}
 
@@ -68,38 +91,89 @@ public class DWARFNameInfo {
 		this.originalName = originalName;
 	}
 
+	/**
+	 * Returns the parent name
+	 * 
+	 * @return parent
+	 */
 	public DWARFNameInfo getParent() {
 		return parent;
 	}
 
+	/**
+	 * Returns true if this instance has no parent and is considered the root.
+	 * 
+	 * @return boolean true if root name, false if not root
+	 */
 	public boolean isRoot() {
 		return parent == null;
 	}
 
+	/**
+	 * Returns the organizational category path.
+	 * 
+	 * @return organizational category path for dwarf names
+	 */
 	public CategoryPath getOrganizationalCategoryPath() {
 		return organizationalCategoryPath;
 	}
 
+	/**
+	 * Returns the NamespacePath of this instance.
+	 * 
+	 * @return {@link NamespacePath} of this instance
+	 */
 	public NamespacePath getNamespacePath() {
 		return namespacePath;
 	}
 
+	/**
+	 * Returns the parent's CategoryPath.
+	 * 
+	 * @return parent name's CategoryPath
+	 */
 	public CategoryPath getParentCP() {
 		return getParent().asCategoryPath();
 	}
 
+	/**
+	 * Returns the name of this entry.
+	 * 
+	 * @return string name of this entry, safe to use to name a Ghidra object (datatype, namespace,
+	 * etc)
+	 */
 	public String getName() {
 		return namespacePath.getName();
 	}
 
+	/**
+	 * Creates a new DWARFNameInfo instance, using this instance as the template, replacing
+	 * the name with a new name.
+	 * 
+	 * @param newName name for the new instance
+	 * @param newOriginalName originalName for the new instance
+	 * @return new instance with new name
+	 */
 	public DWARFNameInfo replaceName(String newName, String newOriginalName) {
 		return new DWARFNameInfo(getParent(), newOriginalName, newName, getType());
 	}
 
+	/**
+	 * Creates a new DWARFNameInfo instance, using this instance as the template, replacing
+	 * the SymbolType with a new value.
+	 * 
+	 * @param newType new SymbolType value
+	 * @return new instance with the specified SymbolType
+	 */
 	public DWARFNameInfo replaceType(SymbolType newType) {
 		return new DWARFNameInfo(parent, originalName, getName(), newType);
 	}
 
+	/**
+	 * Returns the SymbolType of this name.
+	 * 
+	 * @return {@link SymbolType} of this entry
+	 */
 	public SymbolType getType() {
 		return namespacePath.getType();
 	}
@@ -110,8 +184,10 @@ public class DWARFNameInfo {
 	 * @return {@link CategoryPath}: "/organizational_cat_path/namespace1/namespace2/obj_name"
 	 */
 	public CategoryPath asCategoryPath() {
-		return new CategoryPath(FSUtilities.appendPath(organizationalCategoryPath.getPath(),
-			namespacePath.isRoot() ? null : namespacePath.asCategoryPathString()));
+		List<String> nsParts = namespacePath.getParts();
+		return nsParts.isEmpty()
+				? organizationalCategoryPath
+				: new CategoryPath(organizationalCategoryPath, nsParts);
 	}
 
 	/**
@@ -123,6 +199,12 @@ public class DWARFNameInfo {
 		return !isRoot() ? new DataTypePath(getParentCP(), getName()) : null;
 	}
 
+	/**
+	 * Returns the Ghidra {@link Namespace} that represents this entry's parent.
+	 * 
+	 * @param program the Ghidra program that contains the namespace
+	 * @return {@link Namespace} representing this entry's parent
+	 */
 	public Namespace getParentNamespace(Program program) {
 		return getParent().asNamespace(program);
 	}
@@ -143,10 +225,20 @@ public class DWARFNameInfo {
 		return organizationalCategoryPath.toString() + " || " + namespacePath.toString();
 	}
 
+	/**
+	 * Returns true if the original name of this entry was blank.
+	 * 
+	 * @return boolean true if there was no original name
+	 */
 	public boolean isAnon() {
 		return originalName == null;
 	}
 
+	/**
+	 * Returns the original name (unmodified by Ghidra-isms) of this entry.
+	 * 
+	 * @return original name
+	 */
 	public String getOriginalName() {
 		return originalName;
 	}
@@ -156,12 +248,21 @@ public class DWARFNameInfo {
 	 * than its {@link #getOriginalName() original} form.
 	 * <p>
 	 *
-	 * @return
+	 * @return boolean true if the original name doesn't match the ghidra-ized name
 	 */
 	public boolean isNameModified() {
 		return originalName == null || !originalName.equals(namespacePath.getName());
 	}
 
+	/**
+	 * Creates a {@link DWARFNameInfo} instance, which has a name that is contained with
+	 * this instance's namespace, using the specified name and symbol type.
+	 * 
+	 * @param childOriginalName the unmodified name
+	 * @param childName the ghidra-ized name of the type/symbol/namespace/etc
+	 * @param childType the type of the object being named
+	 * @return new DWARFNameInfo instance
+	 */
 	public DWARFNameInfo createChild(String childOriginalName, String childName,
 			SymbolType childType) {
 		return new DWARFNameInfo(this, childOriginalName, childName, childType);

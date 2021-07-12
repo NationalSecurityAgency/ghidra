@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
-import java.util.*;
-
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.*;
 
 import org.apache.commons.collections4.ListValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
@@ -396,14 +395,6 @@ public class DWARFProgram implements Closeable {
 
 		String origName = isAnon ? null : name;
 		String workingName = ensureSafeNameLength(name);
-		switch (diea.getTag()) {
-			// fixup DWARF entries that are related to Ghidra symbols
-			case DWARFTag.DW_TAG_subroutine_type:
-			case DWARFTag.DW_TAG_subprogram:
-			case DWARFTag.DW_TAG_inlined_subroutine:
-				workingName = SymbolUtilities.replaceInvalidChars(workingName, false);
-				break;
-		}
 
 		DWARFNameInfo result =
 			parentDNI.createChild(origName, workingName, DWARFUtil.getSymbolTypeFromDIE(diea));
