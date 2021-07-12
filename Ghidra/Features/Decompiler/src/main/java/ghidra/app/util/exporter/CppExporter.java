@@ -220,7 +220,7 @@ public class CppExporter extends Exporter {
 			}
 			String headerCode = result.getHeaderCode();
 			if (headerCode != null) {
-				headers.append(headerCode);
+				headers.append(headerCode + ";");
 				headers.append(EOL);
 			}
 
