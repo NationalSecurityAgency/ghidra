@@ -148,7 +148,12 @@ public class ELFExternalSymbolResolver {
 				continue;
 			}
 			try {
-				s.setNamespace(extLibrary);
+				Symbol parent_symbol = s.getParentSymbol();
+				if (parent_symbol != null && parent_symbol.isExternal()) {
+					parent_symbol.setNamespace(extLibrary);
+				} else {
+					s.setNamespace(extLibrary);
+				}
 				idIterator.remove();
 				libResolvedCount++;
 				Msg.debug(ELFExternalSymbolResolver.class, "External symbol " + extLoc.getLabel() +
@@ -180,13 +185,9 @@ public class ELFExternalSymbolResolver {
 
 	private static Collection<Long> getUnresolvedExternalFunctionIds(Program program) {
 		List<Long> symbolIds = new ArrayList<>();
-		ExternalManager externalManager = program.getExternalManager();
-		Library library = externalManager.getExternalLibrary(Library.UNKNOWN);
-		if (library != null) {
-			for (Symbol s : program.getSymbolTable().getSymbols(library)) {
-				if (s.getSymbolType() == SymbolType.FUNCTION) {
-					symbolIds.add(s.getID());
-				}
+		for (Symbol s : program.getSymbolTable().getExternalSymbols()) {
+			if (s.getSymbolType() == SymbolType.FUNCTION) {
+				symbolIds.add(s.getID());
 			}
 		}
 		return symbolIds;
