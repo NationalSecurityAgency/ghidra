@@ -154,7 +154,7 @@ public class NTHeader implements StructConverter, OffsetValidator {
 		SectionHeader[] sections = fileHeader.getSectionHeaders();
 		for (SectionHeader section : sections) {
 			long sectionVA = section.getVirtualAddress() & Conv.INT_MASK;
-			long rawSize = section.getSizeOfRawData() & Conv.INT_MASK;
+			long vSize = section.getVirtualSize() & Conv.INT_MASK;
 			long rawPtr = section.getPointerToRawData() & Conv.INT_MASK;
 
 			switch (layout) {
@@ -162,7 +162,7 @@ public class NTHeader implements StructConverter, OffsetValidator {
 					return rva;
 				case FILE:
 				default:
-					if (rva >= sectionVA && rva < sectionVA + rawSize) {
+					if (rva >= sectionVA && rva < sectionVA + vSize) {
 						return rva + rawPtr - sectionVA;
 					}
 					break;
