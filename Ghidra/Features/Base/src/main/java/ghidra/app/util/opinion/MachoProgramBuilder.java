@@ -396,6 +396,11 @@ public class MachoProgramBuilder {
 					continue;
 				}
 
+				// is a re-exported symbol, will be added as an external later
+				if (symbol.isIndirect()) {
+					continue;
+				}
+
 				if (symbol.isExternal() || symbol.isPrivateExternal()) {
 					program.getSymbolTable().addExternalEntryPoint(addr);
 				}
@@ -483,8 +488,8 @@ public class MachoProgramBuilder {
 					String name = generateValidName(symbol.getString());
 					if (name != null && name.length() > 0) {
 						try {
-							program.getSymbolTable()
-									.createLabel(startAddr, name, namespace, SourceType.IMPORTED);
+							program.getSymbolTable().createLabel(startAddr, name, namespace,
+								SourceType.IMPORTED);
 						}
 						catch (Exception e) {
 							log.appendMsg("Unable to create indirect symbol " + name);
@@ -565,9 +570,8 @@ public class MachoProgramBuilder {
 			symbol.setName(ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME, SourceType.IMPORTED);
 		}
 		else {
-			program.getSymbolTable()
-					.createLabel(address, ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME,
-						SourceType.IMPORTED);
+			program.getSymbolTable().createLabel(address,
+				ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME, SourceType.IMPORTED);
 		}
 	}
 
@@ -593,8 +597,8 @@ public class MachoProgramBuilder {
 					continue;
 				}
 				if (symbol.isTypeUndefined()) {
-					List<Symbol> globalSymbols = program.getSymbolTable()
-							.getLabelOrFunctionSymbols(symbol.getString(), null);
+					List<Symbol> globalSymbols = program.getSymbolTable().getLabelOrFunctionSymbols(
+						symbol.getString(), null);
 					if (globalSymbols.isEmpty()) {//IF IT DOES NOT ALREADY EXIST...
 						undefinedSymbols.add(symbol);
 					}
@@ -946,8 +950,8 @@ public class MachoProgramBuilder {
 	 * See crt.c from opensource.apple.com
 	 */
 	private void processProgramVars() {
-		if (program.getLanguage().getProcessor() == Processor
-				.findOrPossiblyCreateProcessor("PowerPC")) {
+		if (program.getLanguage().getProcessor() == Processor.findOrPossiblyCreateProcessor(
+			"PowerPC")) {
 			return;
 		}
 
@@ -1030,7 +1034,7 @@ public class MachoProgramBuilder {
 			if (monitor.isCancelled()) {
 				return;
 			}
-			
+
 			MemoryBlock sectionMemoryBlock = getMemoryBlock(section);
 			if (sectionMemoryBlock == null) {
 				if (section.getNumberOfRelocations() > 0) {
@@ -1080,20 +1084,18 @@ public class MachoProgramBuilder {
 					}
 				}
 
-				program.getRelocationTable()
-						.add(address, relocationInfo.getType(),
-							new long[] { relocationInfo.getValue(), relocationInfo.getLength(),
-								relocationInfo.isPcRelocated() ? 1 : 0,
-								relocationInfo.isExternal() ? 1 : 0,
-								relocationInfo.isScattered() ? 1 : 0},
-							origBytes, relocation.getTargetDescription());
+				program.getRelocationTable().add(address, relocationInfo.getType(),
+					new long[] { relocationInfo.getValue(), relocationInfo.getLength(),
+						relocationInfo.isPcRelocated() ? 1 : 0, relocationInfo.isExternal() ? 1 : 0,
+						relocationInfo.isScattered() ? 1 : 0 },
+					origBytes, relocation.getTargetDescription());
 			}
 		}
 	}
 
 	private void handleRelocationError(Address address, String message) {
-		program.getBookmarkManager()
-				.setBookmark(address, BookmarkType.ERROR, "Relocations", message);
+		program.getBookmarkManager().setBookmark(address, BookmarkType.ERROR, "Relocations",
+			message);
 		log.appendMsg(message);
 	}
 
@@ -1180,9 +1182,8 @@ public class MachoProgramBuilder {
 
 		byte[] originalRelocationBytes = getOriginalRelocationBytes(relocation, relocationAddress);
 
-		program.getRelocationTable()
-				.add(relocationAddress, relocation.getType(), relocation.toValues(),
-					originalRelocationBytes, null);
+		program.getRelocationTable().add(relocationAddress, relocation.getType(),
+			relocation.toValues(), originalRelocationBytes, null);
 	}
 
 	private void addLibrary(String library) {
@@ -1297,9 +1298,8 @@ public class MachoProgramBuilder {
 
 	private void markAsThumb(Address address)
 			throws ContextChangeException, AddressOverflowException {
-		if (!program.getLanguage()
-				.getProcessor()
-				.equals(Processor.findOrPossiblyCreateProcessor("ARM"))) {
+		if (!program.getLanguage().getProcessor().equals(
+			Processor.findOrPossiblyCreateProcessor("ARM"))) {
 			return;
 		}
 		if ((address.getOffset() & 1) == 1) {
@@ -1327,9 +1327,8 @@ public class MachoProgramBuilder {
 				try {
 					MemoryBlock memoryBlock = memory.getBlock(reference.getToAddress());
 					Namespace namespace = createNamespace(memoryBlock.getName());
-					program.getSymbolTable()
-							.createLabel(reference.getToAddress(), fromSymbol.getName(), namespace,
-								SourceType.IMPORTED);
+					program.getSymbolTable().createLabel(reference.getToAddress(),
+						fromSymbol.getName(), namespace, SourceType.IMPORTED);
 				}
 				catch (Exception e) {
 					//log.appendMsg("Unable to create lazy pointer symbol " + fromSymbol.getName() + " at " + reference.getToAddress());
@@ -1345,9 +1344,8 @@ public class MachoProgramBuilder {
 
 	private Namespace createNamespace(String namespaceName) {
 		try {
-			return program.getSymbolTable()
-					.createNameSpace(program.getGlobalNamespace(), namespaceName,
-						SourceType.IMPORTED);
+			return program.getSymbolTable().createNameSpace(program.getGlobalNamespace(),
+				namespaceName, SourceType.IMPORTED);
 		}
 		catch (DuplicateNameException | InvalidInputException e) {
 			Namespace namespace =

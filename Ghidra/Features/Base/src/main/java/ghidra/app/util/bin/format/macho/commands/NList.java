@@ -150,6 +150,11 @@ public class NList implements StructConverter {
 			(n_type & NListConstants.MASK_N_TYPE) == NListConstants.TYPE_N_PBUD;
 	}
 
+	public boolean isIndirect() {
+		return n_sect == NListConstants.NO_SECT &&
+			(n_type & NListConstants.MASK_N_TYPE) == NListConstants.TYPE_N_INDR;
+	}
+
 	public boolean isSymbolicDebugging() {
 		return (n_type & NListConstants.MASK_N_STAB) != 0;
 	}
