@@ -35,6 +35,6 @@ public class MIPSEL_O0_EmulatorTest extends ProcessorEmulatorTestAdapter {
 	}
 
 	public static Test suite() {
-		return ProcessorEmulatorTestAdapter.buildEmulatorTestSuite(MIPS_O0_EmulatorTest.class);
+		return ProcessorEmulatorTestAdapter.buildEmulatorTestSuite(MIPSEL_O0_EmulatorTest.class);
 	}
 }
