@@ -46,6 +46,7 @@ import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.IOCancelledException;
 import ghidra.util.filechooser.ExtensionFileFilter;
 import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.layout.PairLayout;
@@ -552,7 +553,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 				(!selectedSymbolFile.isExactMatch(programSymbolFileInfo) &&
 					OptionDialog.showYesNoDialog(loadPdbButton, "Mismatched Pdb File Warning",
 						"<html>The selected file is not an exact match for the current program.<br>" +
-							"Note: <b>Invalid disassembly may be produced!</b><br>Continue anyway?") != OptionDialog.YES_OPTION)) {
+							"Note: <b>Invalid disassembly may be produced!</b><br>" +
+							"Continue anyway?") != OptionDialog.YES_OPTION)) {
 				return;
 			}
 			executeMonitoredRunnable("Prepare Selected Symbol File",
@@ -588,11 +590,12 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			Swing.runLater(() -> close());
 			return;
 		}
+		catch (CancelledException | IOCancelledException ce) {
+			setStatusText("Operation cancelled");
+			monitor.clearCanceled();
+		}
 		catch (IOException ioe) {
 			Msg.showError(this, getComponent(), "Error Getting Symbol File", ioe);
-		}
-		catch (CancelledException ce) {
-			// ignore
 		}
 	}
 
