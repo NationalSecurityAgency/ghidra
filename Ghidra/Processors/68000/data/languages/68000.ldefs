@@ -64,4 +64,17 @@
     <external_name tool="IDA-PRO" name="colfire"/>
     <external_name tool="DWARF.register.mapping.file" name="68000.dwarf"/>
   </language>
+  <language processor="68000"
+            endian="big"
+            size="32"
+            variant="CPU32"
+            version="1.1"
+            slafile="CPU32.sla"
+            processorspec="68000.pspec"
+            manualindexfile="../manuals/68000.idx"
+            id="68000:BE:32:CPU32">
+    <description>Motorola 32-bit CPU32</description>
+    <compiler name="default" spec="68000.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="CPU32"/>
+  </language>
 </language_definitions>
