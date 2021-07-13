@@ -22,7 +22,8 @@ import java.io.IOException;
 import java.util.Set;
 
 import db.*;
-import ghidra.program.database.map.*;
+import ghidra.program.database.map.AddressIndexPrimaryKeyIterator;
+import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.symbol.*;
@@ -181,19 +182,8 @@ class SymbolDatabaseAdapterV1 extends SymbolDatabaseAdapter {
 		return new V1ConvertedRecordIterator(symbolTable.indexIterator(V1_SYMBOL_NAME_COL));
 	}
 
-	void deleteExternalEntries(Address start, Address end) throws IOException {
-		AddressRecordDeleter.deleteRecords(symbolTable, V1_SYMBOL_ADDR_COL, addrMap, start, end,
-			null);
-	}
-
 	@Override
 	void moveAddress(Address oldAddr, Address newAddr) throws IOException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
-			throws CancelledException, IOException {
 		throw new UnsupportedOperationException();
 	}
 
