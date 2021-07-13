@@ -22,6 +22,7 @@ import javax.swing.JComponent;
 
 import docking.widgets.fieldpanel.internal.FieldBackgroundColorManager;
 import docking.widgets.fieldpanel.internal.PaintContext;
+import docking.widgets.fieldpanel.support.DefaultRowColLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
 
 /**
@@ -46,7 +47,8 @@ public class SimpleImageField implements Field {
 	 * @param startY the starting y coordinate of the field.
 	 * @param width the width of the field.
 	 */
-	public SimpleImageField(ImageIcon icon, FontMetrics metrics, int startX, int startY, int width) {
+	public SimpleImageField(ImageIcon icon, FontMetrics metrics, int startX, int startY,
+			int width) {
 		this(icon, metrics, startX, startY, width, false);
 	}
 
@@ -116,6 +118,11 @@ public class SimpleImageField implements Field {
 	}
 
 	@Override
+	public int getNumDataRows() {
+		return 1;
+	}
+
+	@Override
 	public int getNumRows() {
 		return 1;
 	}
@@ -180,7 +187,8 @@ public class SimpleImageField implements Field {
 
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
-			Rectangle clip, FieldBackgroundColorManager map, RowColLocation cursorLoc, int rowHeight) {
+			Rectangle clip, FieldBackgroundColorManager map, RowColLocation cursorLoc,
+			int rowHeight) {
 		if (icon == null) {
 			return;
 		}
@@ -263,7 +271,7 @@ public class SimpleImageField implements Field {
 
 	@Override
 	public RowColLocation textOffsetToScreenLocation(int textOffset) {
-		return new RowColLocation(0, 0);
+		return new DefaultRowColLocation();
 	}
 
 	@Override

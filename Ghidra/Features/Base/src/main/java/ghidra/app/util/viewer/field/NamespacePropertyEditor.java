@@ -33,8 +33,8 @@ public class NamespacePropertyEditor extends PropertyEditorSupport implements Cu
 
 	private static final String DISPLAY_LOCAL_NAMESPACE_LABEL = "Display Local Namespace";
 	private static final String DISPLAY_NON_LOCAL_NAMESPACE_LABEL = "Display Non-local Namespace";
-	private static final String LOCAL_NAMESPACE_PREFIX_LABEL = "Local namespace prefix";
-	private static final String DISPLAY_LIBRARY_IN_NAMESPACE_LABEL = "Display library in namespace";
+	private static final String LOCAL_NAMESPACE_PREFIX_LABEL = "Local Namespace Prefix";
+	private static final String DISPLAY_LIBRARY_IN_NAMESPACE_LABEL = "Display library in Namespace";
 
 	private static final String[] NAMES =
 		{ DISPLAY_LOCAL_NAMESPACE_LABEL, DISPLAY_NON_LOCAL_NAMESPACE_LABEL,
@@ -94,7 +94,7 @@ public class NamespacePropertyEditor extends PropertyEditorSupport implements Cu
 
 		showLocalCheckBox.addItemListener(e -> {
 			boolean enabled = showLocalCheckBox.isSelected();
-			// only enable the text field if we are showing namespaces AND we are 
+			// only enable the text field if we are showing namespaces AND we are
 			// overriding the display value
 			localPrefixField.setEnabled(enabled && useLocalPrefixCheckBox.isSelected());
 			useLocalPrefixCheckBox.setEnabled(enabled);

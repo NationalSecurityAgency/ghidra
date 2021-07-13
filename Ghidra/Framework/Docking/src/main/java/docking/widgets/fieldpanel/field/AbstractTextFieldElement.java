@@ -24,9 +24,9 @@ import docking.widgets.fieldpanel.support.RowColLocation;
 
 /**
  * An object that wraps a string and provides data that describes how to render
- * that string.  
+ * that string.
  * <p>
- * This class was created as a place to house attributes of rendering that 
+ * This class was created as a place to house attributes of rendering that
  * are not described by Java's Font object, like underlining.
  * 
  * 
@@ -83,7 +83,7 @@ abstract public class AbstractTextFieldElement implements FieldElement {
 
 	@Override
 	public int getMaxCharactersForWidth(int width) {
-		return attributedString.getColumnPosition(width);
+		return attributedString.getCharPosition(width);
 	}
 
 	@Override
@@ -112,7 +112,8 @@ abstract public class AbstractTextFieldElement implements FieldElement {
 	@Override
 	public RowColLocation getDataLocationForCharacterIndex(int characterIndex) {
 		if (characterIndex < 0 || characterIndex > attributedString.getText().length()) {
-			throw new IllegalArgumentException("columnPosition is out of range: " + characterIndex);
+			throw new IllegalArgumentException("columnPosition is out of range: " + characterIndex +
+				"; range is [0," + attributedString.getText().length() + "]");
 		}
 		return new RowColLocation(row, column + characterIndex);
 	}

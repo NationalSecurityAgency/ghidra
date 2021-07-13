@@ -24,9 +24,9 @@ import docking.util.GraphicsUtils;
 
 /**
  * An object that wraps a string and provides data that describes how to render
- * that string.  
+ * that string.
  * <p>
- * This class was created as a place to house attributes of rendering that 
+ * This class was created as a place to house attributes of rendering that
  * are not described by Java's Font object, like underlining.
  * 
  * 
@@ -136,11 +136,11 @@ public class AttributedString {
 		return fontMetrics.getMaxDescent() + UNDERLINE_HEIGHT;
 	}
 
-	public int getColumnPosition(int width) {
+	public int getCharPosition(int x) {
 		int subWidth = getIconWidth();
 		for (int i = 0; i < text.length(); i++) {
 			subWidth += fontMetrics.charWidth(text.charAt(i));
-			if (subWidth > width) {
+			if (subWidth > x) {
 				return i;
 			}
 		}

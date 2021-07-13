@@ -16,17 +16,19 @@
 package ghidra.app.util.viewer.field;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.util.HighlightProvider;
-import ghidra.app.util.XReferenceUtil;
+import ghidra.app.util.XReferenceUtils;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.XRefHeaderFieldLocation;
 
@@ -126,14 +128,20 @@ public class XRefHeaderFieldFactory extends XRefFieldFactory {
 			return null;
 		}
 		Program prog = cu.getProgram();
-		int xrefCnt = prog.getReferenceManager().getReferenceCountTo(cu.getMinAddress());
-		int offcutCnt = XReferenceUtil.getOffcutXRefCount(cu);
+		int xrefCount = prog.getReferenceManager().getReferenceCountTo(cu.getMinAddress());
+		List<Reference> offcuts = XReferenceUtils.getOffcutXReferences(cu, maxXRefs);
+		int offcutCount = offcuts.size();
 
-		if (offcutCnt > 0) {
-			return "XREF[" + xrefCnt + "," + offcutCnt + "]: ";
+		if (offcutCount > 0) {
+			String modifier = "";
+			if (offcutCount == maxXRefs) {
+				modifier = "+";
+			}
+			return "XREF[" + xrefCount + "," + offcutCount + modifier + "]: ";
 		}
-		if (xrefCnt > 0) {
-			return "XREF[" + xrefCnt + "]: ";
+
+		if (xrefCount > 0) {
+			return "XREF[" + xrefCount + "]: ";
 		}
 		return null;
 	}

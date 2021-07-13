@@ -21,6 +21,7 @@ import javax.swing.JComponent;
 
 import docking.widgets.fieldpanel.internal.FieldBackgroundColorManager;
 import docking.widgets.fieldpanel.internal.PaintContext;
+import docking.widgets.fieldpanel.support.DefaultRowColLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
 
 /**
@@ -80,6 +81,11 @@ public class EmptyTextField implements Field {
 	}
 
 	@Override
+	public int getNumDataRows() {
+		return 1;
+	}
+
+	@Override
 	public int getNumRows() {
 		return 1;
 	}
@@ -123,7 +129,8 @@ public class EmptyTextField implements Field {
 
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
-			Rectangle clip, FieldBackgroundColorManager map, RowColLocation cursorLoc, int rowHeight) {
+			Rectangle clip, FieldBackgroundColorManager map, RowColLocation cursorLoc,
+			int rowHeight) {
 		paintCursor(g, context.getCursorColor(), cursorLoc);
 	}
 
@@ -227,7 +234,7 @@ public class EmptyTextField implements Field {
 
 	@Override
 	public RowColLocation textOffsetToScreenLocation(int textOffset) {
-		return new RowColLocation(0, 0);
+		return new DefaultRowColLocation();
 	}
 
 	@Override

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +34,12 @@ public class FieldSelectionHelper {
 
 	}
 
-	/** 
+	/**
 	 * Gets the selected text that pertains to an individual field.  Null is returned if the
 	 * given selection spans more than one field.
+	 * @param selection the selection
+	 * @param panel the field panel
+	 * @return the text
 	 */
 	public static String getFieldSelectionText(FieldSelection selection, FieldPanel panel) {
 		if (!isStringSelection(selection)) {
@@ -46,9 +48,14 @@ public class FieldSelectionHelper {
 		return getTextForField(selection.getFieldRange(0), panel);
 	}
 
-	/** Returns the text within the given selection. */
+	/**
+	 * Returns the text within the given selection.
+	 * @param selection the selection
+	 * @param panel the field panel
+	 * @return the text
+	 */
 	public static String getAllSelectedText(FieldSelection selection, FieldPanel panel) {
-		StringBuffer buffy = new StringBuffer();
+		StringBuilder buffy = new StringBuilder();
 		int numRanges = selection.getNumRanges();
 		for (int i = 0; i < numRanges; i++) {
 			FieldRange fieldRange = selection.getFieldRange(i);
@@ -99,7 +106,7 @@ public class FieldSelectionHelper {
 		int startFieldNumber = startLoc.fieldNum;
 		BigInteger endIndex = endLoc.getIndex();
 
-		StringBuffer buffy = new StringBuffer();
+		StringBuilder buffy = new StringBuilder();
 		for (BigInteger i = startIndex; i.compareTo(endIndex) <= 0; i = i.add(BigInteger.ONE)) {
 			Layout layout = panel.getLayoutModel().getLayout(i);
 			String text = null;
@@ -133,7 +140,7 @@ public class FieldSelectionHelper {
 
 	private static String getTextForFieldsInLayout(Layout layout, FieldRange fieldRange,
 			int startFieldNumber, int endFieldNumber) {
-		StringBuffer buffy = new StringBuffer();
+		StringBuilder buffy = new StringBuilder();
 		for (int i = startFieldNumber; i < endFieldNumber; i++) {
 			Field field = layout.getField(i);
 			buffy.append(field.getTextWithLineSeparators());

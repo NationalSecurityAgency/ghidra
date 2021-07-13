@@ -41,10 +41,6 @@ public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 	private Options fieldOptions;
 	private Program program;
 
-	public EolCommentFieldFactoryTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 
@@ -87,7 +83,7 @@ public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 //==================================================================================================
 
 	private ProgramDB buildProgram() throws Exception {
-		ProgramBuilder builder = new ProgramBuilder("notepad", ProgramBuilder._TOY, this);
+		ProgramBuilder builder = new ProgramBuilder("sample", ProgramBuilder._TOY, this);
 		builder.createMemory(".text", "0x1001000", 0x6600);
 		builder.createEmptyFunction(null, "0x1002000", 20, null);
 

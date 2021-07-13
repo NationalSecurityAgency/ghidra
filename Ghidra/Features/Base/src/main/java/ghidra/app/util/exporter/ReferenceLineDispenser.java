@@ -17,12 +17,11 @@ package ghidra.app.util.exporter;
 
 import java.util.*;
 
-import ghidra.app.util.XReferenceUtil;
-import ghidra.program.model.address.Address;
+import ghidra.app.util.XReferenceUtils;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
-import ghidra.program.model.symbol.Reference;
-import ghidra.program.model.symbol.ReferenceManager;
+import ghidra.program.model.symbol.*;
 
 class ReferenceLineDispenser extends AbstractLineDispenser {
 
@@ -35,48 +34,46 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 	private Memory memory;
 	private ReferenceManager referenceManager;
 
-	private List<String> lines = new ArrayList<String>();
+	private List<String> lines = new ArrayList<>();
 
 	ReferenceLineDispenser() {
 	}
 
-	ReferenceLineDispenser(boolean forwardRefs, CodeUnit cu, Program program, ProgramTextOptions options) {
-		this.memory  = program.getMemory();
+	ReferenceLineDispenser(boolean forwardRefs, CodeUnit cu, Program program,
+			ProgramTextOptions options) {
+		this.memory = program.getMemory();
 		this.referenceManager = program.getReferenceManager();
 		this.displayRefHeader = options.isShowReferenceHeaders();
 		this.prefix = options.getCommentPrefix();
 		this.header = (forwardRefs ? " FWD" : "XREF");
 		this.headerWidth = options.getRefHeaderWidth();
 		this.width = options.getRefWidth();
-		this.fillAmount = options.getAddrWidth()
-				+ options.getBytesWidth()
-				+ options.getLabelWidth();
+		this.fillAmount =
+			options.getAddrWidth() + options.getBytesWidth() + options.getLabelWidth();
 		this.isHTML = options.isHTML();
 
-		Address [] refs    = (forwardRefs ? getForwardRefs(cu) : XReferenceUtil.getXRefList(cu));
-		Address [] offcuts = (forwardRefs ? EMPTY_ADDR_ARR  : XReferenceUtil.getOffcutXRefList(cu));
+		Address[] refs = (forwardRefs ? getForwardRefs(cu) : getXRefList(cu));
+		Address[] offcuts = (forwardRefs ? EMPTY_ADDR_ARR : getOffcutXRefList(cu));
 
 		processRefs(cu.getMinAddress(), refs, offcuts);
 	}
 
 	ReferenceLineDispenser(Variable var, Program program, ProgramTextOptions options) {
-		this.memory  = program.getMemory();
+		this.memory = program.getMemory();
 		this.referenceManager = program.getReferenceManager();
 		this.displayRefHeader = options.isShowReferenceHeaders();
 		this.header = "XREF";
 		this.headerWidth = options.getRefHeaderWidth();
 		this.prefix = options.getCommentPrefix();
 		this.width = options.getStackVarXrefWidth();
-		this.fillAmount = options.getStackVarPreNameWidth()
-				+ options.getStackVarNameWidth()
-				+ options.getStackVarDataTypeWidth()
-				+ options.getStackVarOffsetWidth()
-				+ options.getStackVarCommentWidth();
+		this.fillAmount = options.getStackVarPreNameWidth() + options.getStackVarNameWidth() +
+			options.getStackVarDataTypeWidth() + options.getStackVarOffsetWidth() +
+			options.getStackVarCommentWidth();
 		this.isHTML = options.isHTML();
 
-		List<Reference>   xrefs = new ArrayList<Reference>();
-		List<Reference> offcuts = new ArrayList<Reference>();
-		XReferenceUtil.getVariableRefs(var, xrefs, offcuts);
+		List<Reference> xrefs = new ArrayList<>();
+		List<Reference> offcuts = new ArrayList<>();
+		XReferenceUtils.getVariableRefs(var, xrefs, offcuts);
 		Address[] xrefAddr = extractFromAddr(xrefs);
 		Address[] offcutsAddr = extractFromAddr(offcuts);
 
@@ -84,9 +81,9 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 			xrefAddr, offcutsAddr);
 	}
 
-	private Address [] extractFromAddr(List<Reference> refs) {
-		Address [] addrs = new Address[refs.size()];
-		for (int i=0; i < addrs.length; i++) {
+	private Address[] extractFromAddr(List<Reference> refs) {
+		Address[] addrs = new Address[refs.size()];
+		for (int i = 0; i < addrs.length; i++) {
 			addrs[i] = refs.get(i).getFromAddress();
 		}
 		Arrays.sort(addrs);
@@ -113,18 +110,18 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 
 	////////////////////////////////////////////////////////////////////
 
-	private Address [] getForwardRefs(CodeUnit cu) {
+	private Address[] getForwardRefs(CodeUnit cu) {
 		boolean showRefs = false;
 
 		Address cuAddr = cu.getMinAddress();
-		Reference [] monRefs = cu.getMnemonicReferences();
+		Reference[] monRefs = cu.getMnemonicReferences();
 		Reference primMonRef = referenceManager.getPrimaryReferenceFrom(cuAddr, CodeUnit.MNEMONIC);
 		showRefs = (monRefs.length == 1 && primMonRef == null) || (monRefs.length > 1);
 
 		if (!showRefs) {
 			int opCount = cu.getNumOperands();
-			for (int i = 0 ; i < opCount ; ++i) {
-				Reference [] opRefs = cu.getOperandReferences(i);
+			for (int i = 0; i < opCount; ++i) {
+				Reference[] opRefs = cu.getOperandReferences(i);
 				if (opRefs.length > 1) {
 					showRefs = true;
 					break;
@@ -136,9 +133,9 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 			return EMPTY_ADDR_ARR;
 		}
 
-		Reference [] mRefs = cu.getReferencesFrom();
-		Address [] refs = new Address[mRefs.length];
-		for (int i = 0 ; i < mRefs.length ; ++i) {
+		Reference[] mRefs = cu.getReferencesFrom();
+		Address[] refs = new Address[mRefs.length];
+		for (int i = 0; i < mRefs.length; ++i) {
 			refs[i] = mRefs[i].getToAddress();
 		}
 		Arrays.sort(refs);
@@ -147,7 +144,7 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 
 	////////////////////////////////////////////////////////////////////
 
-	private void processRefs(Address addr, Address [] refs, Address [] offcuts) {
+	private void processRefs(Address addr, Address[] refs, Address[] offcuts) {
 		if (width < 1) {
 			return;
 		}
@@ -157,8 +154,8 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 
 		StringBuffer buf = new StringBuffer();
 
-		Address [] all = new Address[refs.length + offcuts.length];
-		System.arraycopy(   refs, 0, all,           0,   refs.length);
+		Address[] all = new Address[refs.length + offcuts.length];
+		System.arraycopy(refs, 0, all, 0, refs.length);
 		System.arraycopy(offcuts, 0, all, refs.length, offcuts.length);
 
 		if (displayRefHeader) {
@@ -223,5 +220,52 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 			lines.add((displayRefHeader ? prefix : "") + buf.toString());
 			buf.delete(0, buf.length());
 		}
+	}
+
+	public static Address[] getXRefList(CodeUnit cu) {
+		Program prog = cu.getProgram();
+		if (prog == null) {
+			return new Address[0];
+		}
+		List<Address> xrefList = new ArrayList<>();
+		//lookup the direct xrefs to the current code unit
+		//
+		ReferenceIterator iter = prog.getReferenceManager().getReferencesTo(cu.getMinAddress());
+		while (iter.hasNext()) {
+			Reference ref = iter.next();
+			xrefList.add(ref.getFromAddress());
+		}
+		Address[] arr = new Address[xrefList.size()];
+		xrefList.toArray(arr);
+		Arrays.sort(arr);
+		return arr;
+	}
+
+	private static Address[] getOffcutXRefList(CodeUnit cu) {
+		Program prog = cu.getProgram();
+		if (prog == null) {
+			return new Address[0];
+		}
+		List<Address> offcutList = new ArrayList<>();
+		// Lookup the offcut xrefs...
+		//
+		if (cu.getLength() > 1) {
+			ReferenceManager refMgr = prog.getReferenceManager();
+			AddressSet set =
+				new AddressSet(cu.getMinAddress().add(1), cu.getMaxAddress());
+			AddressIterator iter = refMgr.getReferenceDestinationIterator(set, true);
+			while (iter.hasNext()) {
+				Address addr = iter.next();
+				ReferenceIterator refIter = refMgr.getReferencesTo(addr);
+				while (refIter.hasNext()) {
+					Reference ref = refIter.next();
+					offcutList.add(ref.getFromAddress());
+				}
+			}
+		}
+		Address[] arr = new Address[offcutList.size()];
+		offcutList.toArray(arr);
+		Arrays.sort(arr);
+		return arr;
 	}
 }

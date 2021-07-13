@@ -141,25 +141,22 @@ public class PlateFieldFactory extends FieldFactory {
 		}
 
 		CodeUnit cu = (CodeUnit) proxy.getObject();
-		List<FieldElement> elementList = new ArrayList<>(10);
+		List<FieldElement> elements = new ArrayList<>(10);
 		boolean isClipped = false;
 		String commentText = getCommentText(cu);
 		if ((commentText == null) || (commentText.isEmpty())) {
-			generateDefaultPlate(elementList, cu);
+			generateDefaultPlate(elements, cu);
 		}
 		else {
-			isClipped = generateFormattedPlateComment(elementList, cu);
+			isClipped = generateFormattedPlateComment(elements, cu);
 		}
 
-		addBlankLines(elementList, cu);
+		addBlankLines(elements, cu);
 
-		if (elementList.size() == 0) {
+		if (elements.size() == 0) {
 			// no real or default comment
 			return null;
 		}
-
-		FieldElement[] fields = new FieldElement[elementList.size()];
-		elementList.toArray(fields);
 
 		if (isNestedDataAtSameAddressAsParent(proxy)) {
 			// This is data at the same address as the parent, which happens with the first
@@ -169,7 +166,7 @@ public class PlateFieldFactory extends FieldFactory {
 		}
 
 		PlateFieldTextField textField =
-			new PlateFieldTextField(fields, this, proxy, startX, width, commentText, isClipped);
+			new PlateFieldTextField(elements, this, proxy, startX, width, commentText, isClipped);
 		return new PlateListingTextField(proxy, textField);
 	}
 
@@ -706,7 +703,7 @@ public class PlateFieldFactory extends FieldFactory {
 		private boolean isCommentClipped;
 		private String commentText;
 
-		public PlateFieldTextField(FieldElement[] textElements, PlateFieldFactory factory,
+		public PlateFieldTextField(List<FieldElement> textElements, PlateFieldFactory factory,
 				ProxyObj<?> proxy, int startX, int width, String commentText,
 				boolean isCommentClipped) {
 			super(textElements, startX, width, Integer.MAX_VALUE,

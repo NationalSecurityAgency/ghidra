@@ -32,10 +32,12 @@ import ghidra.util.table.ReferencesFromTableModel;
 import ghidra.util.table.field.ReferenceEndpoint;
 
 /**
- * A utility class to handle the generation of
- * direct and offcut cross-reference (xref) lists
+ * A utility class to handle the generation of direct and offcut cross-reference (xref) lists
  * on code units and stack variables.
+ * 
+ * @deprecated deprecated for 10.1; removal for 10.3 or later
  */
+@Deprecated // Use XReferenceUtils instead
 public class XReferenceUtil {
 	private final static Address[] EMPTY_ADDR_ARRAY = new Address[0];
 	private final static Reference[] EMPTY_REF_ARRAY = new Reference[0];
@@ -59,11 +61,11 @@ public class XReferenceUtil {
 	/**
 	 * Returns an array containing the first <b><code>maxNumber</code></b>
 	 * direct xref addresses to the specified code unit.
-	 *  
+	 * 
 	 * @param cu the code unit to generate the xrefs
 	 * @param maxNumber max number of xrefs to get,
 	 *                  or -1 to get all references
-	 *  
+	 * 
 	 * @return array first <b><code>maxNumber</code></b> xrefs to the code unit
 	 */
 	public final static Address[] getXRefList(CodeUnit cu, int maxNumber) {
@@ -71,9 +73,8 @@ public class XReferenceUtil {
 		if (prog == null) {
 			return EMPTY_ADDR_ARRAY;
 		}
-		List<Address> xrefList = new ArrayList<Address>();
-		//lookup the direct xrefs to the current code unit
-		//
+		List<Address> xrefList = new ArrayList<>();
+		// lookup the direct xrefs to the current code unit
 		ReferenceIterator iter = prog.getReferenceManager().getReferencesTo(cu.getMinAddress());
 		while (iter.hasNext()) {
 			Reference ref = iter.next();
@@ -91,11 +92,11 @@ public class XReferenceUtil {
 	/**
 	 * Returns an array containing the first <b><code>maxNumber</code></b>
 	 * direct xref references to the specified code unit.
-	 *  
+	 * 
 	 * @param cu the code unit to generate the xrefs
 	 * @param maxNumber max number of xrefs to get,
 	 *                  or -1 to get all references
-	 *  
+	 * 
 	 * @return array first <b><code>maxNumber</code></b> xrefs to the code unit
 	 */
 	public final static Reference[] getXReferences(CodeUnit cu, int maxNumber) {
@@ -103,7 +104,7 @@ public class XReferenceUtil {
 		if (prog == null) {
 			return EMPTY_REF_ARRAY;
 		}
-		List<Reference> xrefList = new ArrayList<Reference>();
+		List<Reference> xrefList = new ArrayList<>();
 		//lookup the direct xrefs to the current code unit
 		//
 		ReferenceIterator iter = prog.getReferenceManager().getReferencesTo(cu.getMinAddress());
@@ -156,7 +157,7 @@ public class XReferenceUtil {
 		if (prog == null) {
 			return EMPTY_ADDR_ARRAY;
 		}
-		List<Address> offcutList = new ArrayList<Address>();
+		List<Address> offcutList = new ArrayList<>();
 		// Lookup the offcut xrefs...
 		//
 		if (cu.getLength() > 1) {
@@ -195,7 +196,7 @@ public class XReferenceUtil {
 		if (prog == null) {
 			return EMPTY_REF_ARRAY;
 		}
-		List<Reference> offcutList = new ArrayList<Reference>();
+		List<Reference> offcutList = new ArrayList<>();
 		// Lookup the offcut xrefs...
 		//
 		if (cu.getLength() > 1) {
@@ -227,6 +228,7 @@ public class XReferenceUtil {
 	 * @return count of all offcut xrefs to the code unit
 	 */
 	public static int getOffcutXRefCount(CodeUnit cu) {
+
 		Program prog = cu.getProgram();
 		if (prog == null) {
 			return 0;
@@ -300,7 +302,7 @@ public class XReferenceUtil {
 	}
 
 	/**
-	 * Shows all xrefs to the given location in a new table.  These xrefs are retrieved 
+	 * Shows all xrefs to the given location in a new table.  These xrefs are retrieved
 	 * from the given supplier.  Thus, it is up to the client to determine which xrefs to show.
 	 * 
 	 * @param navigatable the navigatable used for navigation from the table
@@ -322,7 +324,7 @@ public class XReferenceUtil {
 
 	/**
 	 * Returns all xrefs to the given location.  If in data, then xrefs to the specific data
-	 * component will be returned.  Otherwise, the code unit containing the address of the 
+	 * component will be returned.  Otherwise, the code unit containing the address of the
 	 * given location will be used as the source of the xrefs.
 	 * 
 	 * @param location the location for which to get xrefs

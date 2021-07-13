@@ -23,7 +23,7 @@ import javax.swing.JComponent;
 import docking.widgets.fieldpanel.support.RowColLocation;
 
 /**
- * Used by {@link Field}s to combine text, attributes and location information (for example to and 
+ * Used by {@link Field}s to combine text, attributes and location information (for example to and
  * from screen and data locations).  FieldFactory classes can use the various implementations
  * of this interface, or create new ones, to include additional information specific to the fields
  * that they create.
@@ -37,14 +37,14 @@ public interface FieldElement {
 	public String getText();
 
 	/**
-	 * Returns the length of the text within this element.  This is a convenience method for 
+	 * Returns the length of the text within this element.  This is a convenience method for
 	 * calling <code>getText().length()</code>.
 	 * @return the length of the text within this element.
 	 */
 	public int length();
 
 	/**
-	 * Returns the string width of this element.  The width is based upon the associated 
+	 * Returns the string width of this element.  The width is based upon the associated
 	 * FontMetrics object within this element.
 	 * @return the string width of this element.
 	 */
@@ -87,7 +87,7 @@ public interface FieldElement {
 	public FieldElement substring(int start);
 
 	/**
-	 * Returns a new FieldElement containing just the characters beginning at the given start 
+	 * Returns a new FieldElement containing just the characters beginning at the given start
 	 * index (inclusive) and ending at the given end index (exclusive).
 	 * 
 	 * @param start The starting index (inclusive) from which to substring this element.
@@ -97,11 +97,11 @@ public interface FieldElement {
 	public FieldElement substring(int start, int end);
 
 	/**
-	 * Returns a new FieldElement with all occurrences of the target characters replaced with the 
+	 * Returns a new FieldElement with all occurrences of the target characters replaced with the
 	 * given replacement character.
 	 * @param targets The array of characters to replace.
 	 * @param replacement The replacement character.
-	 * @return a new FieldElement with all occurrences of the target characters replaced with the 
+	 * @return a new FieldElement with all occurrences of the target characters replaced with the
 	 * given replacement character.
 	 */
 	public FieldElement replaceAll(char[] targets, char replacement);
@@ -111,13 +111,13 @@ public interface FieldElement {
 	 * element that will fit within the given width.
 	 * 
 	 * @param width The width constraint
-	 * @return the maximum number of characters from this field element that will fit within 
+	 * @return the maximum number of characters from this field element that will fit within
 	 * the given width.
 	 */
 	public int getMaxCharactersForWidth(int width);
 
 	/**
-	 * Translates the given character index to a data location related to the data model, as 
+	 * Translates the given character index to a data location related to the data model, as
 	 * determined by the FieldFactory.
 	 * 
 	 * @param characterIndex The character index to translate.
@@ -129,13 +129,15 @@ public interface FieldElement {
 	 * Returns the character index appropriate for the given data location
 	 * @param dataRow the row in the data model as determined by the creating field factory.
 	 * @param dataColumn the column in the data model as determined by the creating field factory.
-	 * @return the character index appropriate for the given data location
+	 * @return the character index appropriate for the given data location; -1 if this field does
+	 *         not contain the given location
 	 */
 	public int getCharacterIndexForDataLocation(int dataRow, int dataColumn);
 
 	/**
 	 * Paints the text contained in this field element at the given x,y screen coordinate using the
 	 * given Graphics object.
+	 * @param c the component being painted.
 	 * @param g the Graphics object used to paint the field text.
 	 * @param x the horizontal screen position to paint
 	 * @param y the vertical screen position to paint.
@@ -144,7 +146,7 @@ public interface FieldElement {
 
 	/**
 	 * Returns the inner-most FieldElement inside this field element at the given location
-	 * @param column the charactor offset. 
+	 * @param column the character offset.
 	 * @return  the inner-most FieldElement inside this field element at the given location
 	 */
 	public FieldElement getFieldElement(int column);
