@@ -26,17 +26,17 @@ import ghidra.formats.gfilesystem.FSRL;
  * A {@link ByteProvider} that is a concatenation of sub-ranges of another ByteProvider, also
  * allowing for non-initialized (sparse) regions.
  * <p> 
- * Not thread-safe when extents are being added.
+ * Not thread-safe when ranges are being added.
  * <p>
  * Does not assume ownership of wrapped ByteProvider.
  */
-public class ExtentsByteProvider implements ByteProvider {
+public class RangeMappedByteProvider implements ByteProvider {
 
 	private ByteProvider delegate;
 	/**
 	 * TreeMap of this-provider offsets to the delegate-provider's offsets.
 	 * <p>
-	 * Each extent/region in the delegate provider is defined by the gap between
+	 * Each range in the delegate provider is defined by the gap between
 	 * adjacent offsetMap entries.  The last entry is bounded by the total
 	 * length of the provider as specified by the length field. 
 	 */
@@ -45,37 +45,67 @@ public class ExtentsByteProvider implements ByteProvider {
 	private FSRL fsrl;
 
 	/**
-	 * Creates a new {@link ExtentsByteProvider}.
+	 * Creates a new {@link RangeMappedByteProvider}.
 	 * 
 	 * @param provider {@link ByteProvider} to wrap
 	 * @param fsrl {@link FSRL} of this new byte provider
 	 */
-	public ExtentsByteProvider(ByteProvider provider, FSRL fsrl) {
+	public RangeMappedByteProvider(ByteProvider provider, FSRL fsrl) {
 		this.delegate = provider;
 		this.fsrl = fsrl;
 	}
 
 	/**
-	 * Adds an extent to the current end of this instance.
+	 * Adds a range to the current end of this instance.
+	 * <p>
+	 * If the new range immediately follows the previous range, the new range is merged
+	 * into the previous entry.
 	 * 
-	 * @param offset long byte offset in the delegate ByteProvider
-	 * @param extentLen long length of the extent region in the delegate ByteProvider
+	 * @param offset long byte offset in the delegate ByteProvider, -1 indicates a sparse
+	 * range with no storage
+	 * @param rangeLen long length of the range in the delegate ByteProvider
 	 */
-	public void addExtent(long offset, long extentLen) {
-		if (extentLen <= 0) {
+	public void addRange(long offset, long rangeLen) {
+		if (rangeLen <= 0) {
 			throw new IllegalArgumentException();
 		}
+		Entry<Long, Long> lastEntry = offsetMap.lastEntry();
+		if (lastEntry != null) {
+			// try to merge sparse ranges
+			long lastRangeOffset = lastEntry.getValue();
+			if (offset == -1 && lastRangeOffset == -1) {
+				length += rangeLen;
+				return;
+			}
+
+			// try to merge this new range into the previous range
+			long lastRangeLen = length - lastEntry.getKey();
+			if (lastRangeOffset + lastRangeLen == offset) {
+				length += rangeLen;
+				return;
+			}
+		}
 		offsetMap.put(length, offset);
-		length += extentLen;
+		length += rangeLen;
 	}
 
 	/**
-	 * Adds a sparse extent to the current end of this instance.
+	 * Adds a sparse range to the current end of this instance.
 	 * 
-	 * @param extentLen long length of the sparse extent region
+	 * @param rangeLen long length of the sparse range
 	 */
-	public void addSparseExtent(long extentLen) {
-		addExtent(-1, extentLen);
+	public void addSparseRange(long rangeLen) {
+		addRange(-1, rangeLen);
+	}
+
+	/**
+	 * Return the number of ranges.  Adjacent ranges that were merged
+	 * will count as a single range.
+	 * 
+	 * @return number of ranges
+	 */
+	public int getRangeCount() {
+		return offsetMap.size();
 	}
 
 	@Override
@@ -118,12 +148,12 @@ public class ExtentsByteProvider implements ByteProvider {
 		ensureBounds(index, 1);
 
 		Entry<Long, Long> entry = offsetMap.floorEntry(index);
-		long extentStart = entry.getKey();
-		long extentOffset = index - extentStart;
-		long delegateExtentStart = entry.getValue();
+		long rangeStart = entry.getKey();
+		long rangeOffset = index - rangeStart;
+		long delegateRangeStart = entry.getValue();
 
-		return (delegateExtentStart != -1)
-				? delegate.readByte(delegateExtentStart + extentOffset)
+		return (delegateRangeStart != -1)
+				? delegate.readByte(delegateRangeStart + rangeOffset)
 				: 0;
 	}
 
@@ -166,20 +196,20 @@ public class ExtentsByteProvider implements ByteProvider {
 			Entry<Long, Long> entry = offsetMap.floorEntry(currentIndex);
 			Entry<Long, Long> nextEntry = offsetMap.higherEntry(entry.getKey());
 
-			long extentStart = entry.getKey();
-			long extentOffset = currentIndex - extentStart;
-			long extentEnd = (nextEntry != null) ? nextEntry.getKey() : length;
-			long delegateExtentStart = entry.getValue();
+			long rangeStart = entry.getKey();
+			long rangeOffset = currentIndex - rangeStart;
+			long rangeEnd = (nextEntry != null) ? nextEntry.getKey() : length;
+			long delegateRangeStart = entry.getValue();
 			int bytesToRead =
-				(int) Math.min(len - totalBytesRead, extentEnd - extentStart - extentOffset);
-			if (delegateExtentStart != -1) {
-				long delegateOffsetToRead = delegateExtentStart + extentOffset;
+				(int) Math.min(len - totalBytesRead, rangeEnd - rangeStart - rangeOffset);
+			if (delegateRangeStart != -1) {
+				long delegateOffsetToRead = delegateRangeStart + rangeOffset;
 				// TODO: when ByteProvider interface has better readBytes() method, use it here
-				byte[] extentBytes = delegate.readBytes(delegateOffsetToRead, bytesToRead);
-				System.arraycopy(extentBytes, 0, buffer, bufferDest, bytesToRead);
+				byte[] rangeBytes = delegate.readBytes(delegateOffsetToRead, bytesToRead);
+				System.arraycopy(rangeBytes, 0, buffer, bufferDest, bytesToRead);
 			}
 			else {
-				// the extent was not present, result will be 0's
+				// the range was not present, result will be 0's
 				Arrays.fill(buffer, bufferDest, bufferDest + bytesToRead,
 					(byte) 0 /* fill value */);
 			}

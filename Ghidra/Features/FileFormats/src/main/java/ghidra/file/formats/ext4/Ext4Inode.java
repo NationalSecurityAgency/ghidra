@@ -40,7 +40,7 @@ public class Ext4Inode implements StructConverter {
 	private int i_blocks_lo;            // 1C           4
 	private int i_flags;                // 20           4        see Ext4Constants.EXT4_SECRM_FL...EXT4_RESERVED_FL
 	private int i_osd1;                 // 24           4
-	private Ext4IBlock i_block;         // 28           60
+	private byte[] i_block;             // 28           60
 	private int i_generation;           // 64           4
 	private int i_file_acl_lo;          // 68           4
 	private int i_size_high;            // 6C           4
@@ -82,7 +82,7 @@ public class Ext4Inode implements StructConverter {
 		i_blocks_lo = reader.readNextInt();
 		i_flags = reader.readNextInt();
 		i_osd1 = reader.readNextInt();
-		i_block = new Ext4IBlock(reader, isFlagExtents());
+		i_block = reader.readNextByteArray(60);
 		i_generation = reader.readNextInt();
 		i_file_acl_lo = reader.readNextInt();
 		i_size_high = reader.readNextInt();
@@ -154,7 +154,7 @@ public class Ext4Inode implements StructConverter {
 		return i_osd1;
 	}
 
-	public Ext4IBlock getI_block() {
+	public byte[] getI_block() {
 		return i_block;
 	}
 
@@ -257,7 +257,7 @@ public class Ext4Inode implements StructConverter {
 	}
 
 	/**
-	 * Returns the bytes in this inode's iblock.extra and the system.data
+	 * Returns the bytes in this inode's i_block and the "system.data"
 	 * extended attribute.
 	 * 
 	 * @return bytes of this file that were stored inline in the inode
@@ -267,14 +267,13 @@ public class Ext4Inode implements StructConverter {
 	public byte[] getInlineDataValue() throws IOException {
 		int bytesRemaining = (int) getSize();
 		byte[] result = new byte[bytesRemaining];
-		byte[] iblockExtra = i_block.getExtra();
 		byte[] eaSystemData = getEAValue("system.data");
 		if (eaSystemData == null) {
 			eaSystemData = new byte[0];
 		}
 		int bytesCopied = 0;
-		int copyLen = Math.min(bytesRemaining, iblockExtra.length);
-		System.arraycopy(i_block.getExtra(), 0, result, 0, copyLen);
+		int copyLen = Math.min(bytesRemaining, i_block.length);
+		System.arraycopy(i_block, 0, result, 0, copyLen);
 		bytesCopied += copyLen;
 		bytesRemaining -= copyLen;
 		if (bytesRemaining > 0) {
@@ -296,8 +295,7 @@ public class Ext4Inode implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		DataType iBlockDataType = i_block.toDataType();
-		Structure structure = new StructureDataType("ext4_inode_"+iBlockDataType.getName( ), 0);
+		Structure structure = new StructureDataType("ext4_inode", 0);
 		structure.add(WORD, "i_mode", null);
 		structure.add(WORD, "i_uid", null);
 		structure.add(DWORD, "i_size_lo", null);
@@ -310,7 +308,7 @@ public class Ext4Inode implements StructConverter {
 		structure.add(DWORD, "i_blocks_lo", null);
 		structure.add(DWORD, "i_flags", null);
 		structure.add(DWORD, "i_osd1", null);
-		structure.add(iBlockDataType, "i_block", null);
+		structure.add(new ArrayDataType(BYTE, 60, BYTE.getLength()), "i_block", null);
 		structure.add(DWORD, "i_generation", null);
 		structure.add(DWORD, "i_file_acl_lo", null);
 		structure.add(DWORD, "i_size_high", null);
