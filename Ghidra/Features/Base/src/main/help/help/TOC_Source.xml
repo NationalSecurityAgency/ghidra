@@ -159,9 +159,6 @@
             <tocdef id="Control the View" sortgroup="b" text="Control the View" target="help/topics/ProgramTreePlugin/program_tree.htm#ViewControl" />
             <tocdef id="Cut/Copy/Paste and Drag and Drop" sortgroup="c" text="Cut/Copy/Paste and Drag and Drop"  target="help/topics/ProgramTreePlugin/program_tree.htm#CCPandDnD" />
             <tocdef id="Program Organizations" sortgroup="d" text="Program Organizations" target="help/topics/ProgramTreePlugin/Program_Organizations.htm" />
-        </tocdef>
-        
-        <tocdef id="Program Tree Manager" text="Program Tree Manager"  target="help/topics/ProgramTreePlugin/view_manager.htm" >
             <tocdef id="Create view" sortgroup="a" text="Create view" target="help/topics/ProgramTreePlugin/view_manager.htm#Create_Default_Tree_View" />
             <tocdef id="Delete view" sortgroup="b" text="Delete view" target="help/topics/ProgramTreePlugin/view_manager.htm#Delete_Tree_View" />
             <tocdef id="Rename view" sortgroup="c" text="Rename view" target="help/topics/ProgramTreePlugin/view_manager.htm#Rename_Tree_View" />

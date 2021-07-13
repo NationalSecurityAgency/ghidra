@@ -92,4 +92,6 @@ You can reconfigure the browser display by adding / removing / moving / resizing
 
 Did you know that you can run Ghidra from the command line without invoking the user interface?  (See analyzeHeadlessREADME.html in the {Install Dir}/support folder.
 
+You can use the following keys with an open menu or popup menu to quickly move through the menu: Page Up/Down, Home, End, and number keys 1-9.
+
 This is the last tip.  You can turn them off now.

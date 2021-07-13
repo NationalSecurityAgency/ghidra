@@ -199,7 +199,7 @@ public class ToolOptions extends AbstractOptions {
 				Element elem = null;
 				if (value == null) {
 					// Handle the null case ourselves, not using the wrapped option (and when
-					// reading from xml) so that the logic does not need to in each wrapped option
+					// reading from xml) so the logic does not need to be in each wrapped option
 					elem = ss.saveToXml();
 					elem.addContent(new Element(CLEARED_VALUE_ELEMENT_NAME));
 				}
