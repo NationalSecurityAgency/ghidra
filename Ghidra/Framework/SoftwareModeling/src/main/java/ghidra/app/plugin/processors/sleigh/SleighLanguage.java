@@ -899,13 +899,13 @@ public class SleighLanguage implements Language {
 		if (version != SLA_FORMAT_VERSION) {
 			throw new SleighException(".sla file for " + getLanguageID() + " has the wrong format");
 		}
-		boolean isBigEndian = SpecXmlUtils.decodeBoolean(el.getAttribute("bigendian"));
-		if (isBigEndian ^ description.getEndian().isBigEndian()) {
-			if (description.getInstructionEndian().isBigEndian() == description.getEndian()
-					.isBigEndian()) {
-				throw new SleighException(".ldefs says " + getLanguageID() + " is " +
-					description.getEndian() + " but .sla says " + el.getAttribute("bigendian"));
-			}
+		String endianAttr = el.getAttribute("bigendian");
+		Endian slaEndian = SpecXmlUtils.decodeBoolean(endianAttr) ? Endian.BIG : Endian.LITTLE;
+		Endian ldefEndian = description.getEndian();
+		Endian instEndian = description.getInstructionEndian();
+		if (slaEndian != ldefEndian && instEndian == ldefEndian) {
+			throw new SleighException(".ldefs says " + getLanguageID() + " is " +
+				ldefEndian + " but .sla says " + slaEndian);
 		}
 		uniqueBase = SpecXmlUtils.decodeLong(el.getAttribute("uniqbase"));
 		alignment = SpecXmlUtils.decodeInt(el.getAttribute("align"));
