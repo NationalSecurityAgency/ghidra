@@ -22,13 +22,24 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import agent.gdb.gadp.impl.GdbGadpServerImpl;
 import ghidra.dbg.agent.AgentWindow;
 import ghidra.util.Msg;
 
 public interface GdbGadpServer extends AutoCloseable {
 	public static void main(String[] args) throws Exception {
-		new Runner().run(args);
+		try {
+			new Runner().run(args);
+		}
+		catch (Throwable t) {
+			System.err.println(ExceptionUtils.getMessage(t));
+			t.printStackTrace(System.err);
+			System.exit(1);
+		}
+
+//		new Runner().run(args);
 	}
 
 	public static GdbGadpServer newInstance(SocketAddress addr) throws IOException {

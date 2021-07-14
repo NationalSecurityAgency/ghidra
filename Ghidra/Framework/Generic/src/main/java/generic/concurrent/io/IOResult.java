@@ -32,7 +32,7 @@ public class IOResult implements Runnable {
 
 	public static final String THREAD_POOL_NAME = "I/O Thread Pool";
 
-	private List<String> outputLines = new ArrayList<String>();
+	private List<String> outputLines = new ArrayList<>();
 	private BufferedReader commandOutput;
 	private final Throwable inception;
 	private Consumer<String> consumer = Dummy.consumer();
@@ -53,7 +53,7 @@ public class IOResult implements Runnable {
 	public String getOutputAsString() {
 		StringBuilder buffy = new StringBuilder();
 		for (String line : outputLines) {
-			buffy.append(line);
+			buffy.append(line).append("\n");
 		}
 		return buffy.toString();
 	}
