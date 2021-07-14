@@ -35,11 +35,8 @@ public interface GdbGadpServer extends AutoCloseable {
 		}
 		catch (Throwable t) {
 			System.err.println(ExceptionUtils.getMessage(t));
-			t.printStackTrace(System.err);
 			System.exit(1);
 		}
-
-//		new Runner().run(args);
 	}
 
 	public static GdbGadpServer newInstance(SocketAddress addr) throws IOException {
