@@ -22,6 +22,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import agent.dbgeng.gadp.impl.DbgEngGadpServerImpl;
 import ghidra.dbg.agent.AgentWindow;
 import ghidra.util.Msg;
@@ -40,7 +42,13 @@ public interface DbgEngGadpServer extends AutoCloseable {
 	 * @throws InterruptedException
 	 */
 	public static void main(String[] args) throws Exception {
-		new DbgEngRunner().run(args);
+		try {
+			new DbgEngRunner().run(args);
+		}
+		catch (Throwable t) {
+			System.err.println(ExceptionUtils.getMessage(t));
+			System.exit(1);
+		}
 	}
 
 	/**

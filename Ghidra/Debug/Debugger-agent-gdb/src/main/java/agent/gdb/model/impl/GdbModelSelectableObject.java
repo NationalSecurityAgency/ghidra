@@ -18,7 +18,13 @@ package agent.gdb.model.impl;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 
+@TargetObjectSchemaInfo(
+	name = "Selectable",
+	attributes = {
+		@TargetAttributeType(type = Void.class) })
 interface GdbModelSelectableObject extends TargetObject {
 	CompletableFuture<Void> setActive();
 }
