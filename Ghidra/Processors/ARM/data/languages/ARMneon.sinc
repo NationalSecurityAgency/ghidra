@@ -1818,7 +1818,7 @@ extImm: "#"^thv_c0811	is TMode=1 & thv_c0811	{ tmp:1 = thv_c0811; export tmp; }
 # VFMA VFMS VFNMA and VFNMS
 #
 
-@if defined(VFPv2) || defined(VFPv3)
+@if defined(VFPv4)
 
 :vfma^COND^".f32" Sd,Sn,Sm	is ( ( $(AMODE) & COND & c2327=0x1d & c2021=2 & c0811=10 & c0606=0 & c0404=0 ) |
 						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=2 & thv_c0811=10 & thv_c0606=0 & thv_c0404=0)) & Sm & Sn & Sd
@@ -1844,31 +1844,31 @@ extImm: "#"^thv_c0811	is TMode=1 & thv_c0811	{ tmp:1 = thv_c0811; export tmp; }
 	Dd = Dd f- (Dn f* Dm);
 }
 
-:vfnma^COND^".f32" Sd,Sn,Sm is ( ( $(AMODE) & COND & c2327=0x1d & c2021=1 & c0811=10 & c0606=0 & c0404=0 ) |
-						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=1 & thv_c0811=1 & thv_c0606=0 & thv_c0404=0)) & Sm & Sn & Sd
+:vfnma^COND^".f32" Sd,Sn,Sm is ( ( $(AMODE) & COND & c2327=0x1d & c2021=1 & c0811=10 & c0606=1 & c0404=0 ) |
+						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=1 & thv_c0811=10 & thv_c0606=1 & thv_c0404=0)) & Sm & Sn & Sd
 {
 	Sd = Sd f+ ((0 f- Sn) f* Sm);
 }
 
-:vfnma^COND^".f64" Dd,Dn,Dm	is ( ( $(AMODE) & COND & c2327=0x1d & c2021=1 & c0811=11 & c0606=0 & c0404=0) |
-						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=1 & thv_c0811=11 & thv_c0606=0 & thv_c0404=0)) & Dm & Dn & Dd
+:vfnma^COND^".f64" Dd,Dn,Dm	is ( ( $(AMODE) & COND & c2327=0x1d & c2021=1 & c0811=11 & c0606=1 & c0404=0) |
+						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=1 & thv_c0811=11 & thv_c0606=1 & thv_c0404=0)) & Dm & Dn & Dd
 {
 	Dd = Dd f+ ((0 f- Dn) f* Dm);
 }
 
-:vfnms^COND^".f32" Sd,Sn,Sm	is ( ( $(AMODE) & COND & c2327=0x1d & c2021=1 & c0811=10 & c0606=1 & c0404=0 ) |
-						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=1 & thv_c0811=1 & thv_c0606=1 & thv_c0404=0)) & Sm & Sn & Sd
+:vfnms^COND^".f32" Sd,Sn,Sm	is ( ( $(AMODE) & COND & c2327=0x1d & c2021=1 & c0811=10 & c0606=0 & c0404=0 ) |
+						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=1 & thv_c0811=10 & thv_c0606=0 & thv_c0404=0)) & Sm & Sn & Sd
 {
 	Sd = Sd f- ((0 f- Sn) f* Sm);
 }
 
-:vfnms^COND^".f64" Dd,Dn,Dm	is ( ( $(AMODE) & COND & c2327=0x1d & c2021=1 & c0811=11 & c0606=1 & c0404=0 ) |
-						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=1 & thv_c0811=11 & thv_c0606=1 & thv_c0404=0)) & Dm & Dn & Dd
+:vfnms^COND^".f64" Dd,Dn,Dm	is ( ( $(AMODE) & COND & c2327=0x1d & c2021=1 & c0811=11 & c0606=0 & c0404=0 ) |
+						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=1 & thv_c0811=11 & thv_c0606=0 & thv_c0404=0)) & Dm & Dn & Dd
 {
 	Dd = Dd f- ((0 f- Dn) f* Dm);
 }
 
-@endif # VFPv2 || VFPv3
+@endif # VFPv4
 
 #######
 # VLD1 (multiple single elements)
