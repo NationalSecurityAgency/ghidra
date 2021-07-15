@@ -25,6 +25,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
@@ -346,12 +347,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 			return createStringTransferable(g.getBuffer().toString());
 		}
 		catch (Exception e) {
-			String msg = e.getMessage();
-			if (msg == null) {
-				msg = e.toString();
-			}
-
-			String message = "Copy failed: " + msg;
+			String message = "Copy failed: " + ExceptionUtils.getMessage(e);
 			Msg.error(this, message, e);
 			tool.setStatusInfo(message, true);
 		}
