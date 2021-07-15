@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="Xtensa"
+            endian="little"
+            size="32"
+            variant="default"
+            version="1.0"
+            slafile="xtensa.sla"
+            processorspec="xtensa.pspec"
+            manualindexfile="../manuals/xtensa.idx"
+            id="Xtensa:LE:32:default">
+    <description>Tensilica Xtensa 32-bit little-endian</description>
+    <compiler name="default" spec="xtensa.cspec" id="default"/>
+    <external_name tool="DWARF.register.mapping.file" name="xtensa.dwarf"/>
+  </language>
+</language_definitions>

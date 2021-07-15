@@ -1,0 +1,275 @@
+define endian=little;
+define alignment=1;
+
+define space ram        type=ram_space      size=4  default;
+define space register   type=register_space size=4;
+
+# Address registers (AR).
+define register offset=0x0000 size=4 [
+    a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15
+];
+
+# Floating Point registers (FR + FCR (control) + FSR (status)).
+# TODO: FCR and FSR seem unused?
+define register offset=0x0100 size=4 [
+    f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14 f15
+    fcr fsr
+];
+
+# Boolean registers (BR).
+define register offset=0x0200 size=1 [
+    b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15
+];
+
+# Program counter.
+define register offset=0x1000 size=4 [ pc ];
+
+# Shift amount register. (TODO: other special registers)
+define register offset=0x2000 size=1 [ sar ];
+
+# Regular 24-bit instruction.
+define token insn(24)
+    # Named opcode/register fields.
+    op2    = (20,23)
+    ar     = (12,15)
+    fr     = (12,15)
+    br     = (12,15)
+    as     = (8,11)
+    fs     = (8,11)
+    bs     = (8,11)
+    at     = (4,7)
+    ft     = (4,7)
+    bt     = (4,7)
+    op1    = (16,19)
+    op0    = (0,3)
+
+    # Signed and unsigned immediates. Named [us]N_L.M, where u and s denote signedness, L and M the
+    # least and most significant bit of the immediate in the instruction word, and N the length
+    # (i.e. M-L+1).
+    u3_21.23    = (21,23)
+    u4_20.23    = (20,23)
+    s8_16.23    = (16,23) signed
+    u8_16.23    = (16,23)
+    u12_12.23   = (12,23)
+    s12_12.23   = (12,23) signed
+    u16_8.23    =  (8,23)
+    s8_6.23     =  (6,23) signed
+    u1_20       = (20,20)
+    u2_18.19    = (18,19)
+    u3_17.19    = (17,19)
+    u2_16.17    = (16,17)
+    u1_16       = (16,16)
+    u2_14.15    = (14,15)
+    u3_13.15    = (13,15)
+    u4_12.15    = (12,15)
+    u8_8.15     =  (8,15)
+    u2_12.13    = (12,13)
+    u1_12       = (12,12)
+    u4_8.11     =  (8,11)
+    u8_4.11     =  (4,11)
+    s4_8.11     =  (8,11)  signed
+    u2_6.7      =  (6,7)
+    u3_5.7      =  (5,7)
+    u4_4.7      =  (4,7)
+    s4_4.7      =  (4,7)
+    u2_4.5      =  (4,5)
+    u1_4        =  (4,4)
+;
+
+# Narrow 16-bit instructions; fields are always prefixed with n_.
+define token narrowinsn(16)
+    n_ar   = (12,15)
+    n_as   = (8,11)
+    n_at   = (4,7)
+    n_op0  = (0, 3)
+
+    n_u4_12.15  = (12,15)
+    n_s4_12.15  = (12,15) signed
+    n_u4_8.11   =  (8,11)
+    n_u1_7      =  (7,7)
+    n_u2_6.7    =  (6,7)
+    n_u4_4.7    =  (4,7)
+    n_s3_4.6    =  (4,6)
+    n_u2_4.5    =  (4,5)
+
+;
+
+attach variables [ ar as at n_ar n_as n_at ] [
+    a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15
+];
+
+attach variables [ fr fs ft ] [
+    f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14 f15
+];
+
+attach variables [ br bs bt ] [
+    b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15
+];
+
+# Various 32-bit pointers relative to PC. Any operands that are split across non-consecutive
+# bits are named foo_LL.LM_ML.MM, where LL is the least significant bits of the least
+# singificant operand half, LM the most significant bits of the least significant operand half, etc.
+
+urel_16.23: rel is u8_16.23  [ rel = inst_start + u8_16.23  + 4; ] { export *:4 rel; }
+
+srel_16.23: rel is s8_16.23  [ rel = inst_start + s8_16.23  + 4; ] { export *:4 rel; }
+
+srel_12.23: rel is s12_12.23 [ rel = inst_start + s12_12.23 + 4; ] { export *:4 rel; }
+
+srel_6.23:  rel is s8_6.23   [ rel = inst_start + s8_6.23   + 4; ] { export *:4 rel; }
+
+urel_12.15_4.5: rel is n_u2_4.5 & n_u4_12.15 [
+    rel = inst_start + ((n_u2_4.5 << 4) | n_u4_12.15) + 4;
+] { export *:4 rel; }
+
+srel_6.23_sb2: rel is s8_6.23 [
+    rel = (inst_start & ~3) + ( s8_6.23 << 2 ) + 4;
+] { export *:4 rel; }
+
+srel_8.23_oex_sb2: rel is u16_8.23 [
+    rel = ((inst_start + 3) & ~3) + ((u16_8.23 | 0xffff0000) << 2);
+] { export *:4 rel; }
+
+# Immediates split across the instruction.
+u5_8.11_20: tmp is u1_20 & u4_8.11  [ tmp = (u1_20 << 4) | u4_8.11; ] { export *[const]:1 tmp; }
+u5_4.7_20:  tmp is u1_20 & u4_4.7   [ tmp = (u1_20 << 4) | u4_4.7;  ] { export *[const]:1 tmp; }
+u5_8.11_16: tmp is u1_16 & u4_8.11  [ tmp = (u1_16 << 4) | u4_8.11; ] { export *[const]:1 tmp; }
+u5_4.7_12:  tmp is u1_12 & u4_4.7   [ tmp = (u1_12 << 4) | u4_4.7;  ] { export *[const]:1 tmp; }
+u5_8.11_4:  tmp is u1_4 & u4_8.11   [ tmp = (u1_4  << 4) | u4_8.11; ] { export *[const]:1 tmp; }
+
+# Signed 12-bit (extended to 16) immediate, used by MOVI.
+s16_16.23_8.11: tmp is s4_8.11 & u8_16.23 [
+   tmp = (s4_8.11 << 8) | u8_16.23;
+] { export *[const]:2 tmp; }
+
+# An “asymmetric” immediate from -32..95, used by MOVI.N.
+n_s8_12.15_4.6_asymm: tmp is n_s3_4.6 & n_s4_12.15 [
+    tmp = ((((n_s3_4.6 & 7) << 4) | (n_s4_12.15 & 15)) |
+          ((((n_s3_4.6 >> 2) & 1) & ((n_s3_4.6 >> 1) & 1)) << 7));
+] { export *[const]:1 tmp; }
+
+# Immediates shifted or with offset.
+s16_16.23_sb8:  tmp is s8_16.23     [ tmp = s8_16.23  << 8; ] { export *[const]:2 tmp; }
+u15_12.23_sb3:  tmp is u12_12.23    [ tmp = u12_12.23 << 3; ] { export *[const]:2 tmp; }
+u10_16.23_sb2:  tmp is u8_16.23     [ tmp = u8_16.23  << 2; ] { export *[const]:2 tmp; }
+u9_16.23_sb1:   tmp is u8_16.23     [ tmp = u8_16.23  << 1; ] { export *[const]:2 tmp; }
+u5_20.23_plus1: tmp is u4_20.23     [ tmp = u4_20.23   + 1; ] { export *[const]:1 tmp; }
+u8_20.23_sb4:   tmp is u4_20.23     [ tmp = u4_20.23  << 4; ] { export *[const]:1 tmp; }
+u5_4.7_plus7:   tmp is u4_4.7       [ tmp = u4_4.7     + 7; ] { export *[const]:1 tmp; }
+
+n_u6_12.15_sb2: tmp is n_u4_12.15  [ tmp = n_u4_12.15 << 2; ] { export *[const]:1 tmp; }
+
+# One-extended. FIXME: Verify this. Only used by [LS]32E (window extension), which aren’t yet
+# implemented.
+s5_12.15_oex:  tmp is u4_12.15      [ tmp = (2 << u4_12.15) * -1; ] { export *[const]:2 tmp; }
+
+# Some 4-bit immediates with mappings that can’t be (easily) expressed in a single disassembly action.
+
+# n_u4_4.7 with 0 being -1, used by ADDI.N.
+n_s4_4.7_nozero: tmp is n_u4_4.7 = 0  [ tmp = -1;         ] { export *[const]:4 tmp; }
+n_s4_4.7_nozero: tmp is n_u4_4.7      [ tmp = n_u4_4.7+0; ] { export *[const]:4 tmp; }
+
+# B4CONST(ar) (Branch Immediate) encodings, pg. 41 f.
+r_b4const: tmp is ar = 0         [ tmp = 0xffffffff; ] { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 1         [ tmp = 0x1; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 2         [ tmp = 0x2; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 3         [ tmp = 0x3; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 4         [ tmp = 0x4; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 5         [ tmp = 0x5; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 6         [ tmp = 0x6; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 7         [ tmp = 0x7; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 8         [ tmp = 0x8; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 9         [ tmp = 0xa; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 10        [ tmp = 0xc; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 11        [ tmp = 0x10; ]       { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 12        [ tmp = 0x20; ]       { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 13        [ tmp = 0x40; ]       { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 14        [ tmp = 0x80; ]       { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 15        [ tmp = 0x100; ]      { export *[const]:4 tmp; }
+
+# B4CONSTU(ar) (Branch Unsigned Immediate) encodings, pg. 42.
+r_b4constu: tmp is ar = 0         [ tmp = 0x8000; ] { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 1         [ tmp = 0x1000; ] { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 2         [ tmp = 0x2; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 3         [ tmp = 0x3; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 4         [ tmp = 0x4; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 5         [ tmp = 0x5; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 6         [ tmp = 0x6; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 7         [ tmp = 0x7; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 8         [ tmp = 0x8; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 9         [ tmp = 0xa; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 10        [ tmp = 0xc; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 11        [ tmp = 0x10; ]   { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 12        [ tmp = 0x20; ]   { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 13        [ tmp = 0x40; ]   { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 14        [ tmp = 0x80; ]   { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 15        [ tmp = 0x100; ]  { export *[const]:4 tmp; }
+
+define pcodeop breakpoint;
+define pcodeop dhi;
+define pcodeop dhu;
+define pcodeop dhwb;
+define pcodeop dhwbi;
+define pcodeop dii;
+define pcodeop diu;
+define pcodeop diwb;
+define pcodeop diwbi;
+define pcodeop dpfl;
+define pcodeop dpfr;
+define pcodeop dpfro;
+define pcodeop dpfw;
+define pcodeop dpfwo;
+define pcodeop dsync;
+define pcodeop esync;
+define pcodeop excw;
+define pcodeop extw;
+define pcodeop idtlb;
+define pcodeop ihi;
+define pcodeop ihu;
+define pcodeop iii;
+define pcodeop iitlb;
+define pcodeop iiu;
+define pcodeop ill;
+define pcodeop ipf;
+define pcodeop ipfl;
+define pcodeop isync;
+define pcodeop acquire;
+define pcodeop ldct;
+define pcodeop lict;
+define pcodeop licw;
+define pcodeop memw;
+define pcodeop nsa;
+define pcodeop pdtlb;
+define pcodeop pitlb;
+define pcodeop rdtlb0;
+define pcodeop rdtlb1;
+define pcodeop rer;
+define pcodeop rfdd;
+define pcodeop rfde;
+define pcodeop rfdo;
+define pcodeop rfe;
+define pcodeop rfi;
+define pcodeop rfme;
+define pcodeop rfue;
+define pcodeop rfwo;
+define pcodeop rfwu;
+define pcodeop ritlb0;
+define pcodeop ritlb1;
+define pcodeop rsil;
+define pcodeop rsr; # TODO: Map known special registers.
+define pcodeop rsync;
+define pcodeop rur;
+define pcodeop s32c1i;
+define pcodeop release;
+define pcodeop sdct;
+define pcodeop sict;
+define pcodeop sicw;
+define pcodeop simcall;
+define pcodeop syscall;
+define pcodeop waiti;
+define pcodeop wdtlb;
+define pcodeop wer;
+define pcodeop witlb;
+define pcodeop wsr; # TODO: Map known special registers.
+define pcodeop wur;
+define pcodeop xsr;
