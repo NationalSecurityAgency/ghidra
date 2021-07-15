@@ -295,6 +295,12 @@ bool PrintLanguage::parentheses(const OpToken *op2)
     //    if (associative && (this == &op2)) return false;
     if ((op2->type==OpToken::unary_prefix)||(op2->type==OpToken::presurround)) return false;
     return true;
+  case OpToken::unary_postfix:
+    if (topToken->precedence > op2->precedence) return true;
+    if (topToken->precedence < op2->precedence) return false;
+    //    if (associative && (this == &op2)) return false;
+    if (op2->type==OpToken::postsurround) return false;
+    return true;
   case OpToken::postsurround:
     if (stage==1) return false;	// Inside the surround
     if (topToken->precedence > op2->precedence) return true;
@@ -342,6 +348,11 @@ void PrintLanguage::emitOp(const ReversePolish &entry)
     break;
   case OpToken::unary_prefix:
     if (entry.visited!=0) return;
+    emit->tagOp(entry.tok->print,EmitXml::no_color,entry.op);
+    emit->spaces(entry.tok->spacing,entry.tok->bump);
+    break;
+  case OpToken::unary_postfix:
+    if (entry.visited!=1) return;
     emit->tagOp(entry.tok->print,EmitXml::no_color,entry.op);
     emit->spaces(entry.tok->spacing,entry.tok->bump);
     break;

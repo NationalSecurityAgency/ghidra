@@ -72,6 +72,10 @@ protected:
   static OpToken boolean_not;		///< The \e boolean \e not operator
   static OpToken unary_minus;		///< The \e unary \e minus operator
   static OpToken unary_plus;		///< The \e unary \e plus operator
+  static OpToken pre_increment;		///< The \e pre increment \e operator
+  static OpToken pre_decrement;		///< The \e pre decrement \e operator
+  static OpToken post_increment;	///< The \e post increment \e operator
+  static OpToken post_decrement;	///< The \e post decrement \e operator
   static OpToken addressof;		///< The \e address \e of operator
   static OpToken dereference;		///< The \e pointer \e dereference operator
   static OpToken typecast;		///< The \e type \e cast operator
@@ -149,6 +153,7 @@ protected:
   void emitGlobalVarDeclsRecursive(Scope *scope);	///< Emit variable declarations for all global symbols under given scope
   void emitLocalVarDecls(const Funcdata *fd);		///< Emit variable declarations for a function
   void emitStatement(const PcodeOp *inst);		///< Emit a statement in the body of a function
+  bool emitIncDecOp(const PcodeOp *op);			///< Attempt to emit a increment or deincrement expression
   bool emitInplaceOp(const PcodeOp *op);		///< Attempt to emit an expression rooted at an \e in-place operator
   void emitGotoStatement(const FlowBlock *bl,const FlowBlock *exp_bl,uint4 type);
   void emitSwitchCase(int4 casenum,const BlockSwitch *switchbl);	///< Emit labels for a \e case block
