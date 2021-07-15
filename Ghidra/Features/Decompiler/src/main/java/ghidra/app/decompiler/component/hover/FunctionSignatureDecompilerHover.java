@@ -86,6 +86,9 @@ public class FunctionSignatureDecompilerHover extends AbstractConfigurableHover
 		if (token instanceof ClangFuncNameToken) {
 
 			Function function = DecompilerUtils.getFunction(program, (ClangFuncNameToken) token);
+			if (function == null) {
+				return null; // no function in program; maybe bad address
+			}
 			String content = ToolTipUtils.getToolTipText(function, false);
 			return createTooltipComponent(content);
 		}

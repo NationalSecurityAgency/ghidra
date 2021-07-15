@@ -47,7 +47,7 @@ import ghidra.util.task.TaskMonitor;
  * Subclasses are responsible for the actual load.
  * <p>
  * This {@link Loader} provides a couple processor-related options, as all {@link Program}s will
- * have a processor associated with them. 
+ * have a processor associated with them.
  */
 public abstract class AbstractProgramLoader implements Loader {
 
@@ -55,19 +55,19 @@ public abstract class AbstractProgramLoader implements Loader {
 	public static final String ANCHOR_LABELS_OPTION_NAME = "Anchor Processor Defined Labels";
 
 	/**
-	 * Loads program bytes in a particular format as a new {@link Program}. Multiple 
+	 * Loads program bytes in a particular format as a new {@link Program}. Multiple
 	 * {@link Program}s may end up getting created, depending on the nature of the format.
 	 *
 	 * @param provider The bytes to load.
 	 * @param programName The name of the {@link Program} that's being loaded.
-	 * @param programFolder The {@link DomainFolder} where the loaded thing should be saved.  Could 
+	 * @param programFolder The {@link DomainFolder} where the loaded thing should be saved.  Could
 	 *   be null if the thing should not be pre-saved.
 	 * @param loadSpec The {@link LoadSpec} to use during load.
 	 * @param options The load options.
 	 * @param log The message log.
 	 * @param consumer A consumer object for {@link Program}s generated.
 	 * @param monitor A cancelable task monitor.
-	 * @return A list of loaded {@link Program}s (element 0 corresponds to primary loaded 
+	 * @return A list of loaded {@link Program}s (element 0 corresponds to primary loaded
 	 *   {@link Program}).
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
@@ -77,7 +77,7 @@ public abstract class AbstractProgramLoader implements Loader {
 			Object consumer, TaskMonitor monitor) throws IOException, CancelledException;
 
 	/**
-	 * Loads program bytes into the specified {@link Program}.  This method will not create any new 
+	 * Loads program bytes into the specified {@link Program}.  This method will not create any new
 	 * {@link Program}s.  It is only for adding to an existing {@link Program}.
 	 * <p>
 	 * NOTE: The loading that occurs in this method will automatically be done in a transaction.
@@ -122,7 +122,7 @@ public abstract class AbstractProgramLoader implements Loader {
 
 				loadedProgram.setEventsEnabled(true);
 
-				// TODO: null should not be used as a determinant for saving; don't allow null 
+				// TODO: null should not be used as a determinant for saving; don't allow null
 				// folders?
 				if (folder == null) {
 					results.add(loadedProgram);
@@ -179,8 +179,7 @@ public abstract class AbstractProgramLoader implements Loader {
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
 			DomainObject domainObject, boolean isLoadIntoProgram) {
 		ArrayList<Option> list = new ArrayList<>();
-		list.add(new Option(APPLY_LABELS_OPTION_NAME,
-			shouldApplyProcessorLabelsByDefault(),
+		list.add(new Option(APPLY_LABELS_OPTION_NAME, shouldApplyProcessorLabelsByDefault(),
 			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-applyLabels"));
 		list.add(new Option(ANCHOR_LABELS_OPTION_NAME, true, Boolean.class,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-anchorLabels"));
@@ -189,7 +188,8 @@ public abstract class AbstractProgramLoader implements Loader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
 		if (options != null) {
 			for (Option option : options) {
 				String name = option.getName();
@@ -207,7 +207,7 @@ public abstract class AbstractProgramLoader implements Loader {
 	/**
 	 * This gets called after the given list of {@link Program}s is finished loading.  It provides
 	 * subclasses an opportunity to do follow-on actions to the load.
-	 * 
+	 *
 	 * @param loadedPrograms The {@link Program}s that got loaded.
 	 * @param folder The folder the programs were loaded to.
 	 * @param options The load options.
@@ -257,7 +257,7 @@ public abstract class AbstractProgramLoader implements Loader {
 
 	/**
 	 * Creates a {@link Program} with the specified attributes.
-	 * 
+	 *
 	 * @param provider The bytes that will make up the {@link Program}.
 	 * @param programName The name of the {@link Program}.
 	 * @param imageBase  The image base address of the {@link Program}.
@@ -305,7 +305,7 @@ public abstract class AbstractProgramLoader implements Loader {
 
 	/**
 	 * Creates default memory blocks for the given {@link Program}.
-	 * 
+	 *
 	 * @param program The {@link Program} to create default memory blocks for.
 	 * @param language The {@link Program}s {@link Language}.
 	 * @param log The log to use during memory block creation.
@@ -351,7 +351,7 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * Gets the {@link Loader}'s language service.
 	 * <p>
 	 * The default behavior of this method is to return the {@link DefaultLanguageService}.
-	 * 
+	 *
 	 * @return The {@link Loader}'s language service.
 	 */
 	protected LanguageService getLanguageService() {
@@ -360,7 +360,7 @@ public abstract class AbstractProgramLoader implements Loader {
 
 	/**
 	 * Releases the given consumer from each of the provided {@link DomainObject}s.
-	 * 
+	 *
 	 * @param domainObjects A list of {@link DomainObject}s which are no longer being used.
 	 * @param consumer The consumer that was marking the {@link DomainObject}s as being used.
 	 */
@@ -389,6 +389,19 @@ public abstract class AbstractProgramLoader implements Loader {
 				throw e;
 			}
 			catch (Exception e) {
+				Throwable t = e.getCause();
+				if (t == null) {
+					t = e;
+				}
+				String msg = t.getMessage();
+				if (msg == null) {
+					msg = "";
+				}
+				else {
+					msg = "\n" + msg;
+				}
+				Msg.showError(this, null, "Create Program Failed",
+					"Failed to create program file: " + uniqueName + msg, e);
 				messageLog.appendMsg("Unexpected exception creating file: " + uniqueName);
 				messageLog.appendException(e);
 				return false;
@@ -441,8 +454,7 @@ public abstract class AbstractProgramLoader implements Loader {
 				if (info.getScope() != null) {
 					namespace = info.getScope();
 				}
-				s = symTable.createLabel(addr, info.getLabel(), namespace,
-					info.getSource());
+				s = symTable.createLabel(addr, info.getLabel(), namespace, info.getSource());
 				if (info.isEntry()) {
 					symTable.addExternalEntryPoint(addr);
 				}
