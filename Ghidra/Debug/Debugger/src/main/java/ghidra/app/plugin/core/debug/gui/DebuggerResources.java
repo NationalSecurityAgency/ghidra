@@ -89,7 +89,7 @@ public interface DebuggerResources {
 	ImageIcon ICON_SNAP_BACKWARD = ResourceManager.loadImage("images/2leftarrow.png");
 	ImageIcon ICON_SEEK_PRESENT = ICON_RESUME;
 
-	boolean altIcons = Boolean.parseBoolean(System.getProperty("debugger.breakpoints.alt.icons"));
+	boolean altIcons = Boolean.getBoolean("debugger.breakpoints.alt.icons");
 
 	ImageIcon ICON_SET_BREAKPOINT =
 		altIcons ? ResourceManager.loadImage("images/alt-breakpoint-set.png")
