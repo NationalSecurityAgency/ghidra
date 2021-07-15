@@ -118,6 +118,19 @@ src/main/help/help/topics/DebuggerWatchesPlugin/DebuggerWatchesPlugin.html||GHID
 src/main/help/help/topics/DebuggerWatchesPlugin/images/DebuggerWatchesPlugin.png||GHIDRA||||END|
 src/main/resources/defaultTools/Debugger.tool||GHIDRA||||END|
 src/main/resources/images/add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/alt-breakpoint-clear.png||GHIDRA||||END|
+src/main/resources/images/alt-breakpoint-disable.png||GHIDRA||||END|
+src/main/resources/images/alt-breakpoint-enable.png||GHIDRA||||END|
+src/main/resources/images/alt-breakpoint-ineffective-d.png||GHIDRA||||END|
+src/main/resources/images/alt-breakpoint-ineffective-e.png||GHIDRA||||END|
+src/main/resources/images/alt-breakpoint-mixed-de.png||GHIDRA||||END|
+src/main/resources/images/alt-breakpoint-mixed-ed.png||GHIDRA||||END|
+src/main/resources/images/alt-breakpoint-set.png||GHIDRA||||END|
+src/main/resources/images/alt-breakpoints-clear-all.png||GHIDRA||||END|
+src/main/resources/images/alt-breakpoints-disable-all.png||GHIDRA||||END|
+src/main/resources/images/alt-breakpoints-enable-all.png||GHIDRA||||END|
+src/main/resources/images/alt-breakpoints-make-effective.png||GHIDRA||||END|
+src/main/resources/images/alt-breakpoints.png||GHIDRA||||END|
 src/main/resources/images/attach.png||GHIDRA||||END|
 src/main/resources/images/autoread.png||GHIDRA||||END|
 src/main/resources/images/blank.png||GHIDRA||||END|
