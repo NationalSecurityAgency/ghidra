@@ -633,32 +633,39 @@ public class DexHeaderFormatAnalyzer extends FileFormatAnalyzer {
 			if (annotationsDirectoryItem.getClassAnnotationsOffset() > 0) {
 				Address classAddress =
 					toAddr(program, annotationsDirectoryItem.getClassAnnotationsOffset());
-				AnnotationSetItem setItem = annotationsDirectoryItem.getClassAnnotations();
-				DataType setItemDataType = setItem.toDataType();
-				createData(program, classAddress, setItemDataType);
-				createFragment(program, "class_annotations", classAddress,
-					classAddress.add(setItemDataType.getLength()));
-				processAnnotationSetItem(program, setItem, monitor, log);
+				// Only create data if it has not been created already
+				if (getDataAt(program, classAddress) == null) {
+					AnnotationSetItem setItem = annotationsDirectoryItem.getClassAnnotations();
+					DataType setItemDataType = setItem.toDataType();
+					createData(program, classAddress, setItemDataType);
+					createFragment(program, "class_annotations", classAddress,
+						classAddress.add(setItemDataType.getLength()));
+					processAnnotationSetItem(program, setItem, monitor, log);
+				}
 			}
 			for (FieldAnnotation field : annotationsDirectoryItem.getFieldAnnotations()) {
 				monitor.checkCanceled();
 				Address fieldAddress = toAddr(program, field.getAnnotationsOffset());
-				AnnotationSetItem setItem = field.getAnnotationSetItem();
-				DataType setItemDataType = setItem.toDataType();
-				createData(program, fieldAddress, setItemDataType);
-				createFragment(program, "annotation_fields", fieldAddress,
-					fieldAddress.add(setItemDataType.getLength()));
-				processAnnotationSetItem(program, setItem, monitor, log);
+				if (getDataAt(program, fieldAddress) == null) {
+					AnnotationSetItem setItem = field.getAnnotationSetItem();
+					DataType setItemDataType = setItem.toDataType();
+					createData(program, fieldAddress, setItemDataType);
+					createFragment(program, "annotation_fields", fieldAddress,
+						fieldAddress.add(setItemDataType.getLength()));
+					processAnnotationSetItem(program, setItem, monitor, log);
+				}
 			}
 			for (MethodAnnotation method : annotationsDirectoryItem.getMethodAnnotations()) {
 				monitor.checkCanceled();
 				Address methodAddress = toAddr(program, method.getAnnotationsOffset());
-				AnnotationSetItem setItem = method.getAnnotationSetItem();
-				DataType setItemDataType = setItem.toDataType();
-				createData(program, methodAddress, setItemDataType);
-				createFragment(program, "annotation_methods", methodAddress,
-					methodAddress.add(setItemDataType.getLength()));
-				processAnnotationSetItem(program, setItem, monitor, log);
+				if (getDataAt(program, methodAddress) == null) {
+					AnnotationSetItem setItem = method.getAnnotationSetItem();
+					DataType setItemDataType = setItem.toDataType();
+					createData(program, methodAddress, setItemDataType);
+					createFragment(program, "annotation_methods", methodAddress,
+						methodAddress.add(setItemDataType.getLength()));
+					processAnnotationSetItem(program, setItem, monitor, log);
+				}
 			}
 			for (ParameterAnnotation parameter : annotationsDirectoryItem
 					.getParameterAnnotations()) {
@@ -666,20 +673,24 @@ public class DexHeaderFormatAnalyzer extends FileFormatAnalyzer {
 				Address parameterAddress = toAddr(program, parameter.getAnnotationsOffset());
 				AnnotationSetReferenceList annotationSetReferenceList =
 					parameter.getAnnotationSetReferenceList();
-				DataType listDataType = annotationSetReferenceList.toDataType();
-				createData(program, parameterAddress, listDataType);
-				createFragment(program, "annotation_parameters", parameterAddress,
-					parameterAddress.add(listDataType.getLength()));
+				if (getDataAt(program, parameterAddress) == null) {
+					DataType listDataType = annotationSetReferenceList.toDataType();
+					createData(program, parameterAddress, listDataType);
+					createFragment(program, "annotation_parameters", parameterAddress,
+						parameterAddress.add(listDataType.getLength()));
+				}
 
 				for (AnnotationSetReferenceItem refItem : annotationSetReferenceList.getItems()) {
 					AnnotationItem annotationItem = refItem.getItem();
 					if (annotationItem != null) {
 						int annotationsItemOffset = refItem.getAnnotationsOffset();
 						Address annotationItemAddress = toAddr(program, annotationsItemOffset);
-						DataType annotationItemDataType = annotationItem.toDataType();
-						createData(program, annotationItemAddress, annotationItemDataType);
-						createFragment(program, "annotation_item", annotationItemAddress,
-							annotationItemAddress.add(annotationItemDataType.getLength()));
+						if (getDataAt(program, annotationItemAddress) == null) {
+							DataType annotationItemDataType = annotationItem.toDataType();
+							createData(program, annotationItemAddress, annotationItemDataType);
+							createFragment(program, "annotation_item", annotationItemAddress,
+								annotationItemAddress.add(annotationItemDataType.getLength()));
+						}
 					}
 				}
 			}
