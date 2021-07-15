@@ -15,12 +15,12 @@
  */
 package pdb.symbolserver;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
-import java.io.IOException;
-import java.io.InputStream;
-
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -87,8 +87,10 @@ public interface SymbolServer {
 	 * @param monitor {@link TaskMonitor}
 	 * @return {@link SymbolServerInputStream} wrapped {@link InputStream}, never null
 	 * @throws IOException if error or not found
+	 * @throws CancelledException if cancelled
 	 */
-	SymbolServerInputStream getFileStream(String filename, TaskMonitor monitor) throws IOException;
+	SymbolServerInputStream getFileStream(String filename, TaskMonitor monitor)
+			throws IOException, CancelledException;
 
 	/**
 	 * Returns a location description string of a specific file contained in this symbol server.

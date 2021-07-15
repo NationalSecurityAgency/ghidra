@@ -47,7 +47,7 @@ public class CsvEdgeListGraphExporter extends AbstractAttributedGraphExporter {
 
 	@Override
 	public String getName() {
-		return "CSV";
+		return "CSV:Edge List";
 	}
 
 	@Override

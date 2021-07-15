@@ -7,6 +7,36 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 10.0.1 Change History (July 2021)</H1>
+<blockquote><p><u>New Features</u></p>
+<ul>
+    <li><I>Decompiler</I>. The Decompiler now supports conversion (hex, dec, bin, oct, char) and equate actions directly on constant tokens in the Decompiler window.  To the extent possible, these actions also affect matching scalar operands in the listing. (GP-1053, Issue #21)</li>
+</ul>
+</blockquote>
+<blockquote><p><u>Improvements</u></p>
+<ul>
+    <li><I>Basic Infrastructure</I>. Ghidra now gracefully fails to launch when its path contains an exclamation point. (GP-1057, Issue #1817)</li>
+    <li><I>FileSystems</I>. Can now handle multi-level Ext4 extent nodes when reading a file. (GP-1070)</li>
+</ul>
+</blockquote>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>Build</I>. No longer building and distributing the Debugger native test binaries. (GP-1080, Issue #3160, #3177)</li>
+    <li><I>Debugger</I>. Corrected potential deadlock condition within Debugger which could occur under some circumstances during a breakpoint or while stepping. (GP-1072)</li>
+    <li><I>Decompiler</I>. Fixed a bug in the Decompiler causing <code>Overriding symbol with different type size</code> exceptions. (GP-1041)</li>
+    <li><I>Exporter</I>. PE and ELF exporters no longer error out when processing non-file-backed relocations. (GP-1091)</li>
+    <li><I>FileSystems</I>. Corrected problem mounting Ext4 file systems when the container file is larger than the file system. (GP-1067)</li>
+    <li><I>Importer:ELF</I>. Corrected ELF relocation error reporting, including error bookmarks, when relocation handler extension is missing. (GP-1097)</li>
+    <li><I>Jython</I>. Added <code>__file__ attribute</code> support in Jython scripts. (GP-1099, Issue #3181)</li>
+    <li><I>PDB</I>. Fixed bug that prevented constructor signatures from being created properly. (GP-1086)</li>
+    <li><I>PDB</I>. Fixed bug in PDB CLI processing that could kill analysis for binaries imported with older versions of Ghidra. (GP-1104)</li>
+    <li><I>Processors</I>. Added ELF Relocation handler for SuperH processors.  Only a few common relocation types have been added. (GP-1090)</li>
+    <li><I>Scripting</I>. Fixed a potential NullPointerException that could occur when trying to run a script that doesn't exist. (GP-1074, Issue #2742)</li>
+    <li><I>Scripting</I>. Improved graphing of class hierarchy in RecoverClassesFromRTTIScript and the GraphClassesScript to handle duplicate class names, class namespace delimiters, and to make better vertex descriptions. (GP-1095)</li>
+    <li><I>Scripting</I>. Fixed a flaw in the RecoverClassesFromRTTIScript that was not using PDB information to create data member names in class data structures. (GP-1101)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 10.0 Change History (June 2021)</H1>
 <blockquote><p><u>New Features</u></p>
 <ul>

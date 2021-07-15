@@ -24,7 +24,7 @@ set "SERVER_DIR=%~dp0"
 set "SERVER_DIR=%SERVER_DIR:~0,-1%"
 
 rem Ensure Ghidra path doesn't contain illegal characters
-if not %SERVER_DIR:!=%==%SERVER_DIR% (
+if not "%SERVER_DIR:!=%"=="%SERVER_DIR%" (
 	echo Ghidra path cannot contain a "!" character.
 	exit /B 1
 )

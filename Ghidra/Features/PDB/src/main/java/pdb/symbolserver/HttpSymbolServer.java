@@ -24,9 +24,12 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
+import java.util.concurrent.*;
 
 import ghidra.net.HttpClients;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.CancelledListener;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -37,7 +40,7 @@ import ghidra.util.task.TaskMonitor;
 public class HttpSymbolServer extends AbstractSymbolServer {
 	private static final String GHIDRA_USER_AGENT = "Ghidra_HttpSymbolServer_client";
 	private static final int HTTP_STATUS_OK = HttpURLConnection.HTTP_OK;
-	private static final int HTTP_REQUEST_TIMEOUT_MS = 10000; // 10 seconds
+	private static final int HTTP_REQUEST_TIMEOUT_MS = 10 * 1000; // 10 seconds
 	
 	/**
 	 * Predicate that tests if the location string is an instance of a HttpSymbolServer location.
@@ -81,14 +84,16 @@ public class HttpSymbolServer extends AbstractSymbolServer {
 
 	private HttpRequest.Builder request(String str) {
 		return HttpRequest.newBuilder(serverURI.resolve(str))
-				.timeout(Duration.ofMillis(HTTP_REQUEST_TIMEOUT_MS))
 				.setHeader("User-Agent", GHIDRA_USER_AGENT);
 	}
 
 	@Override
 	public boolean exists(String filename, TaskMonitor monitor) {
 		try {
-			HttpRequest request = request(filename).method("HEAD", BodyPublishers.noBody()).build();
+			HttpRequest request = request(filename)
+					.timeout(Duration.ofMillis(HTTP_REQUEST_TIMEOUT_MS))
+					.method("HEAD", BodyPublishers.noBody())
+					.build();
 
 			Msg.debug(this,
 				logPrefix() + ": Checking exist for [" + filename + "]: " + request.toString());
@@ -107,23 +112,50 @@ public class HttpSymbolServer extends AbstractSymbolServer {
 
 	@Override
 	public SymbolServerInputStream getFileStream(String filename, TaskMonitor monitor)
-			throws IOException {
+			throws IOException, CancelledException {
+		monitor.setIndeterminate(true);
+		monitor.setMessage("Connecting to " + serverURI);
+
+		HttpRequest request = request(filename).GET().build();
+		Msg.debug(this,
+			logPrefix() + ": Getting file [" + filename + "]: " + request.toString());
+		CompletableFuture<HttpResponse<InputStream>> futureResponse =
+			HttpClients.getHttpClient().sendAsync(request, BodyHandlers.ofInputStream());
+		CancelledListener l = () -> futureResponse.cancel(true);
+		monitor.addCancelledListener(l);
+
 		try {
-			HttpRequest request = request(filename).GET().build();
-			Msg.debug(this,
-				logPrefix() + ": Getting file [" + filename + "]: " + request.toString());
 			HttpResponse<InputStream> response =
-				HttpClients.getHttpClient().send(request, BodyHandlers.ofInputStream());
+				futureResponse.get(HTTP_REQUEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
 			int statusCode = response.statusCode();
+			monitor.setMessage(statusCode == HTTP_STATUS_OK ? "Success" : "Failed");
 			Msg.debug(this, logPrefix() + ": Http response: " + response.statusCode());
-			if (statusCode == HTTP_STATUS_OK) {
-				long contentLen = response.headers().firstValueAsLong("Content-Length").orElse(-1);
-				return new SymbolServerInputStream(response.body(), contentLen);
+			InputStream bodyIS = response.body();
+			if (statusCode != HTTP_STATUS_OK) {
+				// clean up the body inputstream since its just an error message
+				uncheckedClose(bodyIS);
+				throw new IOException("Unable to get file: " + statusCode);
 			}
-			throw new IOException("Unable to get file: " + statusCode);
+			long contentLen = response.headers().firstValueAsLong("Content-Length").orElse(-1);
+			return new SymbolServerInputStream(bodyIS, contentLen);
 		}
 		catch (InterruptedException e) {
-			throw new IOException("Http get interrupted");
+			throw new CancelledException("Download canceled");
+		}
+		catch (TimeoutException e) {
+			throw new IOException("Connection timed out");
+		}
+		catch (ExecutionException e) {
+			// if possible, unwrap the exception that happened inside the future
+			Throwable cause = e.getCause();
+			Msg.error(this, "Error during HTTP get", cause);
+			throw (cause instanceof IOException)
+					? (IOException) cause
+					: new IOException("Error during HTTP get", cause);
+		}
+		finally {
+			monitor.removeCancelledListener(l);
 		}
 	}
 
@@ -145,6 +177,15 @@ public class HttpSymbolServer extends AbstractSymbolServer {
 
 	private String logPrefix() {
 		return getClass().getSimpleName() + "[" + serverURI + "]";
+	}
+
+	private static void uncheckedClose(InputStream is) {
+		try {
+			is.close();
+		}
+		catch (IOException e) {
+			// ignore it
+		}
 	}
 
 }

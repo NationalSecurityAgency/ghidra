@@ -396,7 +396,7 @@ public class SleighCompile extends SleighBase {
 				reportError(qual.location,
 					String.format(
 						"Size of bitfield %s=(%d,%d) larger than %d bits in context register '%s'",
-						qual.name, min, (8 * 4), sym.getName()));
+						qual.name, min, max, (8 * 4), sym.getName()));
 
 			}
 			if (max > maxBits) {
