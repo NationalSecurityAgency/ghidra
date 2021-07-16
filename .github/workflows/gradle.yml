@@ -1,0 +1,58 @@
+name: gradle CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-2016]
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11.0.4
+          architecture: x64
+
+      - name: Build Dependencies (Linux)
+        if: matrix.platform == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y bison flex
+        
+      - name: Build Dependencies (macOS)
+        if: matrix.platform == 'macos-latest'
+        run: |
+          brew install bison flex curl
+
+      - name: Build Dependencies (Windows)
+        if: matrix.platform == 'windows-2016'
+        run: |
+          choco install winflexbison
+          ren "C:\ProgramData\chocolatey\bin\win_bison.exe" "bison.exe"
+          ren "C:\ProgramData\chocolatey\bin\win_flex.exe" "flex.exe"
+
+      - name: Fetch Dependencies
+        run: gradle --init-script gradle/support/fetchDependencies.gradle init
+
+      - name: Build with Gradle
+        run: gradle buildGhidra
+
+      - uses: actions/upload-artifact@v2
+        if: matrix.platform == 'ubuntu-latest'
+        with:
+          name: ghidra-linux-dev
+          path: build/dist/ghidra_*_linux64.zip
+
+      - uses: actions/upload-artifact@v2          
+        if: matrix.platform == 'windows-2016'
+        with:
+          name: ghidra-windows-dev
+          path: build/dist/ghidra_*_win64.zip
+
+      - uses: actions/upload-artifact@v2          
+        if: matrix.platform == 'macos-latest'
+        with:
+          name: ghidra-macos-dev
+          path: build/dist/ghidra_*_osx64.zip
