@@ -1,0 +1,220 @@
+@include "6502.slaspec"
+
+define token bitopbyte (8)
+    bitop           = (0,7)
+
+    action          = (7,7)
+    bitindex        = (4,6) dec
+    optype          = (0,3)
+;
+
+define token testopbyte (8)
+    top             = (0, 7)
+    taaa            = (5, 7)
+    td              = (4, 4)
+    tbb             = (2, 3)
+    tcc             = (0, 1)
+;
+
+################################################################
+
+# Zero Page Indirect
+ZIOP:   (imm8)    is bbb=4; imm8  { addr:2 = imm8; tmp:2 = *:2 addr; export *:1 tmp; }
+
+OPTB:   imm8      is tbb=1; imm8  { export *:1 imm8; }
+OPTB:   imm16     is tbb=3; imm16 { export *:1 imm16; }
+
+# Absolute Indexed Indirect
+ADDRIX: (imm16,X) is X; imm16     { addr:2 = imm16 + zext(X); tmp:2 = *:2 addr; export tmp; }
+
+# Instructions
+
+:ADC ZIOP                      is (cc=2 & aaa=3) ... & ZIOP
+{
+    local op1 = ZIOP;
+    local tmpC = C;
+
+    C = carry(A, op1);
+    A = A + op1 + tmpC;
+    resultFlags(A);
+    V = C;
+}
+
+:AND ZIOP                      is (cc=2 & aaa=1) ... & ZIOP
+{
+    A = A & ZIOP;
+    resultFlags(A);
+}
+
+:BBR "#"bitindex, imm8, REL    is (action=0 & optype=0xF) & bitindex ; imm8 ; REL {
+    local ptr:2 = imm8;
+    local value:1 = *:1 ptr;
+    local jump = (value & (1 << bitindex)) == 0;
+    if (jump) goto REL;
+}
+
+:BBS "#"bitindex, imm8, REL    is (action=1 & optype=0xF) & bitindex ; imm8 ; REL {
+    local ptr:2 = imm8;
+    local value:1 = *:1 ptr;
+    local jump = (value & (1 << bitindex)) != 0;
+    if (jump) goto REL;
+}
+
+:BIT "#"imm8                   is op=0x89; imm8
+{
+    local value:1 = imm8;
+    N = (value & 0x80) == 0x80;
+    V = (value & 0x40) == 0x40;
+    value = A & value;
+    Z = (value == 0);
+}
+
+:BIT OP2                       is (op=0x34 | op=0x3C) ... & OP2
+{
+    N = (OP2 & 0x80) == 0x80;
+    V = (OP2 & 0x40) == 0x40;
+    local value = A & OP2;
+    Z = (value == 0);
+}
+
+:BRA  REL                      is op=0x80; REL
+{
+    goto REL;
+}
+
+:CMP ZIOP                      is (cc=2 & aaa=6) ... & ZIOP
+{
+    local op1 = ZIOP;
+    local tmp = A - op1;
+    resultFlags(tmp);
+    C = (A >= op1);
+}
+
+:DEC A                         is op=0x3A & A
+{
+    local tmp = A - 1;
+    A = tmp;
+    resultFlags(tmp);
+}
+
+:EOR ZIOP                      is (cc=2 & aaa=2) ... & ZIOP
+{
+    local op1 = ZIOP;
+    A = A ^ op1;
+    resultFlags(A);
+}
+
+:INC A                         is op=0x1A & A
+{
+    A = A + 1;
+    resultFlags(A);
+}
+
+:JMP ADDRIX                    is (op=0x7C); ADDRIX
+{
+    goto [ADDRIX];
+}
+
+:LDA ZIOP                      is (cc=2 & aaa=5) ... & ZIOP
+{
+    A = ZIOP;
+    resultFlags(A);
+}
+
+:ORA  ZIOP                     is (cc=2 & aaa=0) ... & ZIOP
+{
+    A = A | ZIOP;
+    resultFlags(A);
+}
+
+:PHX                           is op=0xDA
+{
+    *:1 (SP) = X;
+    SP = SP - 1;
+}
+
+:PLX                           is op=0xFA
+{
+    SP = SP + 1;
+    X = *:1 (SP);
+    resultFlags(X);
+}
+
+:PHY                           is op=0x5A
+{
+    *:1 (SP) = Y;
+    SP = SP - 1;
+}
+
+:PLY                           is op=0x7A
+{
+    SP = SP + 1;
+    Y = *:1 (SP);
+    resultFlags(Y);
+}
+
+:RMB "#"bitindex, imm8         is (action=0 & optype=7) & bitindex ; imm8 {
+    local ptr:2 = imm8;
+    local value:1 = *:1 ptr;
+    value = value & ~(1 << bitindex);
+    *:1 ptr = value;
+}
+
+:SBC ZIOP                      is (cc=2 & aaa=7) ... & ZIOP
+{
+    local op1 = ZIOP;
+    local result = A - op1 - !C;
+
+    subtraction_flags1(A, op1, result);
+    A = result;
+}
+
+:SMB "#"bitindex, imm8         is (action=1 & optype=7) & bitindex ; imm8 {
+    local ptr:2 = imm8;
+    local value:1 = *:1 ptr;
+    value = value | (1 << bitindex);
+    *:1 ptr = value;
+}
+
+:STA ZIOP                      is (cc=2 & aaa=4) ... & ZIOP
+{
+    ZIOP = A;
+}
+
+:STZ imm8                      is op=0x64 ; imm8
+{
+    local tmp:2 = imm8;
+    *:1 tmp = 0;
+}
+
+:STZ imm8,X                    is op=0x74 & X ; imm8
+{
+    local tmp:2 = zext(imm8 + X);
+    *:1 tmp = 0;
+}
+
+:STZ imm16                     is op=0x9C ; imm16
+{
+    local tmp:2 = imm16;
+    *:1 tmp = 0;
+}
+
+:STZ imm16,X                   is op=0x9E & X ; imm16
+{
+    local tmp:2 = imm16 + zext(X);
+    *:1 tmp = 0;
+}
+
+:TRB OPTB                      is (tcc=0 & taaa=0 & td=1) ... & OPTB
+{
+    local op1 = OPTB;
+    local result = A & ~op1;
+    Z = result == 0;
+}
+
+:TSB OPTB                      is (tcc=0 & taaa=0 & td=0) ... & OPTB
+{
+    local op1 = OPTB;
+    local result = A | op1;
+    Z = result == 0;
+}
