@@ -19,7 +19,6 @@ import java.math.BigInteger;
 
 import ghidra.pcode.emulate.Emulate;
 import ghidra.pcode.emulate.EmulateInstructionStateModifier;
-import ghidra.pcode.emulate.callother.CountLeadingZerosOpBehavior;
 import ghidra.pcode.emulate.callother.OpBehaviorOther;
 import ghidra.pcode.memstate.MemoryState;
 import ghidra.pcodeCPort.error.LowlevelError;
@@ -30,7 +29,6 @@ public class PPCEmulateInstructionStateModifier extends EmulateInstructionStateM
 	public PPCEmulateInstructionStateModifier(Emulate emu) {
 		super(emu);
 
-		registerPcodeOpBehavior("countLeadingZeros", new CountLeadingZerosOpBehavior());
 		registerPcodeOpBehavior("vectorPermute", new vectorPermuteOpBehavior());
 
 	}

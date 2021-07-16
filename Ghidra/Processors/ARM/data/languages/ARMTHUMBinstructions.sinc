@@ -1602,7 +1602,7 @@ define pcodeop IndexCheck;
 :clz^ItCond	Rd0811,Rm0003		is TMode=1 & ItCond & op4=0xfab & Rm0003; op12=15 & Rd0811
 {
   build ItCond;
-  Rd0811 = count_leading_zeroes(Rm0003);
+  Rd0811 = countLeadingZeros(Rm0003);
 }
 
 :cmn^ItCond	Rn0003,ThumbExpandImm12  is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=8 & thc0404=1 & Rn0003; thc1515=0 & thc0811=15) & ThumbExpandImm12

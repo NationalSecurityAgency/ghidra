@@ -2,7 +2,7 @@
 <article>
 <info>
   <title>P-Code Reference Manual</title>
-  <releaseinfo>Last updated September 5, 2019</releaseinfo>
+  <releaseinfo>Last updated March 4, 2021</releaseinfo>
 </info>
 <table xml:id="mytoc.htmltable" width="90%" frame='none'>
   <col width="25%"/>
@@ -135,6 +135,12 @@
  <td><link linkend="cpui_int_sext">INT_SEXT</link></td>
  <td><link linkend="cpui_bool_and">BOOL_AND</link></td>
  <td><link linkend="cpui_new">NEW</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_countleadingzeros">COUNTLEADINGZEROS</link></td>
+ <td><link linkend="cpui_countleadingones">COUNTLEADINGONES</link></td>
+ <td></td>
 </tr>
 </tbody>
 </table>
@@ -3937,6 +3943,94 @@ to SLEIGH <emphasis role="bold">bitrange</emphasis> syntax such as output = inpu
 </para>
 </sect2>
 
+<sect2 id="cpui_countleadingzeros"><title>COUNTLEADINGZEROS</title>
+<informalexample>
+<table xml:id="countleadingzeros.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Input varnode to count.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Resulting integer varnode containing count.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = countLeadingZeros(input0);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operator counts the number of zeros starting at the most significant bit.
+For instance, for a 4-byte varnode, a value of 0 returns 32, a value of 1
+returns 31, and the value 2<superscript>31</superscript> returns 0.
+The resulting count is zero extended into the output varnode.
+</para>
+</sect2>
+
+<sect2 id="cpui_countleadingones"><title>COUNTLEADINGONES</title>
+<informalexample>
+<table xml:id="countleadingones.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Input varnode to count.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Resulting integer varnode containing count.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = countLeadingOnes(input0);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operator counts the number of one bits starting at the most significant bit.
+For instance, for a 4-byte varnode, a value of 0 returns 0, the value 2<superscript>31</superscript>
+returns 1, and the value 2<superscript>32</superscript>-1 returns 32.
+The resulting count is zero extended into the output varnode.
+</para>
+</sect2>
+
 </sect1>
 
 <sect1 id="reference">
@@ -4419,6 +4513,16 @@ to SLEIGH <emphasis role="bold">bitrange</emphasis> syntax such as output = inpu
   <td>EXTRACT</td>
   <td><code>&lt;na></code></td>
   <td>Extract a bit-range from a varnode</td>
+</tr>
+<tr>
+  <td>COUNTLEADINGZEROS</td>
+  <td><code>countLeadingZeros(v0)</code></td>
+  <td>Counts the number of leading zero bits</td>
+</tr>
+<tr>
+  <td>COUNTLEADINGONES</td>
+  <td><code>countLeadingOnes(v0)</code></td>
+  <td>Counts the number of leading one bits</td>
 </tr>
 </tbody>
 </table>

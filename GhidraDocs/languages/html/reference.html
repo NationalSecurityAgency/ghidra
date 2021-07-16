@@ -4,7 +4,7 @@
 <title>Syntax Reference</title>
 <link rel="stylesheet" type="text/css" href="Frontpage.css">
 <link rel="stylesheet" type="text/css" href="languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.77.1">
 <link rel="home" href="pcoderef.html" title="P-Code Reference Manual">
 <link rel="up" href="pcoderef.html" title="P-Code Reference Manual">
 <link rel="prev" href="additionalpcode.html" title="Additional P-CODE Operations">
@@ -25,8 +25,7 @@
 <div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="reference"></a>Syntax Reference</h2></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="ref.htmltable"></a><table width="90%" frame="box" rules="rows">
+<div class="informalexample"><table width="90%" frame="box" rules="rows" id="ref.htmltable">
 <col width="25%">
 <col width="25%">
 <col width="50%">
@@ -44,8 +43,7 @@
 <tr>
   <td>LOAD</td>
   <td>
-    <div class="table">
-<a name="loadtmp.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="loadtmp.htmltable"><tbody>
 <tr>
         <td><code class="code">* v1</code></td>
       </tr>
@@ -59,7 +57,6 @@
         <td><code class="code">*[spc]:2 v1</code></td>
       </tr>
 </tbody></table>
-</div>
   </td>
   <td>Dereference v1 as pointer into default space. Optionally specify a space
       to load from and size of data in bytes.</td>
@@ -67,8 +64,7 @@
 <tr>
   <td>STORE</td>
   <td>
-    <div class="table">
-<a name="storetmp.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="storetmp.htmltable"><tbody>
 <tr>
         <td><code class="code">*v0 = v1;</code></td>
       </tr>
@@ -82,7 +78,6 @@
         <td><code class="code">*[spc]:4 v0 = v1;</code></td>
       </tr>
 </tbody></table>
-</div>
   </td>
   <td>Store in v1 in default space using v0 as pointer. Optionally specify space to store in
       and size of data in bytes.</td>
@@ -152,8 +147,7 @@
 <tr>
   <td>INT_LESS</td>
   <td>
-    <div class="table">
-<a name="less.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="less.htmltable"><tbody>
 <tr>
         <td><code class="code">v0 &lt; v1</code></td>
       </tr>
@@ -161,15 +155,13 @@
         <td><code class="code">v1 &gt; v0</code></td>
       </tr>
 </tbody></table>
-</div>
   </td>
   <td>True if v0 is less than v1 as an unsigned integer.</td>
 </tr>
 <tr>
   <td>INT_SLESS</td>
   <td>
-    <div class="table">
-<a name="sless.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="sless.htmltable"><tbody>
 <tr>
         <td><code class="code">v0 s&lt; v1</code></td>
       </tr>
@@ -177,15 +169,13 @@
         <td><code class="code">v1 s&gt; v0</code></td>
       </tr>
 </tbody></table>
-</div>
   </td>
   <td>True if v0 is less than v1 as a signed integer.</td>
 </tr>
 <tr>
   <td>INT_LESSEQUAL</td>
   <td>
-    <div class="table">
-<a name="lessequal.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="lessequal.htmltable"><tbody>
 <tr>
         <td><code class="code">v0 &lt;= v1</code></td>
       </tr>
@@ -193,15 +183,13 @@
         <td><code class="code">v1 &gt;= v0</code></td>
       </tr>
 </tbody></table>
-</div>
   </td>
   <td>True if v0 is less than or equal to v1 as an unsigned integer.</td>
 </tr>
 <tr>
   <td>INT_SLESSEQUAL</td>
   <td>
-    <div class="table">
-<a name="slessequal.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="slessequal.htmltable"><tbody>
 <tr>
         <td><code class="code">v0 s&lt;= v1</code></td>
       </tr>
@@ -209,7 +197,6 @@
         <td><code class="code">v1 s&gt;= v0</code></td>
       </tr>
 </tbody></table>
-</div>
   </td>
   <td>True if v0 is less than or equal to v1 as a signed integer.</td>
 </tr>
@@ -346,8 +333,7 @@
 <tr>
   <td>FLOAT_LESS</td>
   <td>
-    <div class="table">
-<a name="floatlesstmp.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="floatlesstmp.htmltable"><tbody>
 <tr>
         <td><code class="code">v0 f&lt; v1</code></td>
       </tr>
@@ -355,15 +341,13 @@
         <td><code class="code">v1 f&gt; v0</code></td>
       </tr>
 </tbody></table>
-</div>
   </td>
   <td>True if v0 is less than v1 viewed as floating-point numbers.</td>
 </tr>
 <tr>
   <td>FLOAT_LESSEQUAL</td>
   <td>
-    <div class="table">
-<a name="floatlessequaltmp.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="floatlessequaltmp.htmltable"><tbody>
 <tr>
         <td><code class="code">v0 f&lt;= v1</code></td>
       </tr>
@@ -371,7 +355,6 @@
         <td><code class="code">v1 f&gt;= v0</code></td>
       </tr>
 </tbody></table>
-</div>
   </td>
   <td>True if v0 is less than or equal to v1 viewed as floating-point numbers.</td>
 </tr>
@@ -453,8 +436,7 @@
 <tr>
   <td>NEW</td>
   <td>
-    <div class="table">
-<a name="newtmp.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="newtmp.htmltable"><tbody>
 <tr>
         <td><code class="code">newobject(v0)</code></td>
       </tr>
@@ -462,7 +444,6 @@
         <td><code class="code">newobject(v0,v1)</code></td>
       </tr>
 </tbody></table>
-</div>
   </td>
   <td>Allocate an object or an array of objects.</td>
 </tr>
@@ -501,9 +482,18 @@
   <td><code class="code">&lt;na&gt;</code></td>
   <td>Extract a bit-range from a varnode</td>
 </tr>
+<tr>
+  <td>COUNTLEADINGZEROS</td>
+  <td><code class="code">countLeadingZeros(v0)</code></td>
+  <td>Counts the number of leading zero bits</td>
+</tr>
+<tr>
+  <td>COUNTLEADINGONES</td>
+  <td><code class="code">countLeadingOnes(v0)</code></td>
+  <td>Counts the number of leading one bits</td>
+</tr>
 </tbody>
-</table>
-</div></div>
+</table></div>
 </div>
 <div class="navfooter">
 <hr>

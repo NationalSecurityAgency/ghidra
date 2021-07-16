@@ -638,6 +638,8 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 <sem>cpool         { return OP_CPOOLREF; }
 <sem>newobject     { return OP_NEW; }
 <sem>popcount      { return OP_POPCOUNT; }
+<sem>countLeadingZeros { return OP_COUNTLEADINGZEROS; }
+<sem>countLeadingOnes  { return OP_COUNTLEADINGONES; }
 <sem>if            { return IF_KEY; }
 <sem>goto          { return GOTO_KEY; }
 <sem>call          { return CALL_KEY; }

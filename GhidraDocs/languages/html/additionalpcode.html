@@ -3,7 +3,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>Additional P-CODE Operations</title>
 <link rel="stylesheet" type="text/css" href="Frontpage.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.77.1">
 <link rel="home" href="pcoderef.html" title="P-Code Reference Manual">
 <link rel="up" href="pcoderef.html" title="P-Code Reference Manual">
 <link rel="prev" href="pseudo-ops.html" title="Pseudo P-CODE Operations">
@@ -35,8 +35,7 @@ introduced at a later stage by various analysis algorithms.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_multiequal"></a>MULTIEQUAL</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="multiequal.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="multiequal.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -76,8 +75,7 @@ introduced at a later stage by various analysis algorithms.
   <td colspan="2"><span class="emphasis"><em>Cannot be explicitly coded.</em></span></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This operation represents a copy from one or more possible
 locations. From the compiler theory concept of Static Single Assignment form, this is
@@ -90,8 +88,7 @@ was last executed. All inputs and outputs must be the same size.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_indirect"></a>INDIRECT</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="indirect.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="indirect.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -126,8 +123,7 @@ was last executed. All inputs and outputs must be the same size.
   <td colspan="2"><span class="emphasis"><em>Cannot be explicitly coded.</em></span></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 An <span class="bold"><strong>INDIRECT</strong></span> operator copies input0 into output,
 but the value may be altered in an indirect way
@@ -151,8 +147,7 @@ to the operation was used or preserved.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_ptradd"></a>PTRADD</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="ptradd.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="ptradd.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -192,8 +187,7 @@ to the operation was used or preserved.
   <td colspan="2"><span class="emphasis"><em>Cannot be explicitly coded.</em></span></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This operator serves as a more compact representation of the pointer calculation,
 input0 + input1 * input2, but also indicates explicitly that
@@ -209,8 +203,7 @@ and stores it in output.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_ptrsub"></a>PTRSUB</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="ptrsub.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="ptrsub.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -245,8 +238,7 @@ and stores it in output.
   <td colspan="2"><span class="emphasis"><em>Cannot be explicitly coded.</em></span></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 A <span class="bold"><strong>PTRSUB</strong></span> performs the simple pointer calculation,
 input0 + input1, but also indicates explicitly that input0 is a
@@ -260,8 +252,7 @@ pointer to the subcomponent and stores it in output.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_cast"></a>CAST</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="cast.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="cast.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -291,8 +282,7 @@ pointer to the subcomponent and stores it in output.
   <td colspan="2"><span class="emphasis"><em>Cannot be explicitly coded.</em></span></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 A <span class="bold"><strong>CAST</strong></span> performs identically to the <span class="bold"><strong>COPY</strong></span>
 operator but also indicates that there is a forced change in the data-types associated with the varnodes
@@ -304,8 +294,7 @@ interpretation as a data-type changes at this point.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_insert"></a>INSERT</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="insert.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="insert.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -350,8 +339,7 @@ interpretation as a data-type changes at this point.
   <td colspan="2"><span class="emphasis"><em>Cannot be explicitly coded.</em></span></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 The values <span class="emphasis"><em>position</em></span> and <span class="emphasis"><em>size</em></span> must be constants.
 The least significant <span class="emphasis"><em>size</em></span> bits from input1 are
@@ -372,8 +360,7 @@ to SLEIGH <span class="bold"><strong>bitrange</strong></span> syntax such as inp
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_extract"></a>EXTRACT</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="extract.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="extract.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -413,8 +400,7 @@ to SLEIGH <span class="bold"><strong>bitrange</strong></span> syntax such as inp
   <td colspan="2"><span class="emphasis"><em>Cannot be explicitly coded.</em></span></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 The values <span class="emphasis"><em>position</em></span> and <span class="emphasis"><em>size</em></span> must be constants.
 The operation extracts <span class="emphasis"><em>size</em></span> bits from input0 and returns it in output.
@@ -428,6 +414,88 @@ than the varnode input0.
 <p>
 This operation is never generated as raw p-code, even though it is equivalent
 to SLEIGH <span class="bold"><strong>bitrange</strong></span> syntax such as output = input0[10,1].
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="cpui_countleadingzeros"></a>COUNTLEADINGZEROS</h3></div></div></div>
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="countleadingzeros.htmltable">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Parameters</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right">input0</td>
+  <td></td>
+  <td>Input varnode to count.</td>
+</tr>
+<tr>
+  <td align="right">output</td>
+  <td></td>
+  <td>Resulting integer varnode containing count.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Semantic statement</strong></span></td>
+  <td></td>
+</tr>
+<tr>
+  <td></td>
+  <td colspan="2"><code class="code">output = countLeadingZeros(input0);</code></td>
+</tr>
+</tfoot>
+</table></div>
+<p>
+This operator counts the number of zeros starting at the most significant bit.
+For instance, for a 4-byte varnode, a value of 0 returns 32, a value of 1
+returns 31, and the value 2<sup>31</sup> returns 0.
+The resulting count is zero extended into the output varnode.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="cpui_countleadingones"></a>COUNTLEADINGONES</h3></div></div></div>
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="countleadingones.htmltable">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Parameters</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right">input0</td>
+  <td></td>
+  <td>Input varnode to count.</td>
+</tr>
+<tr>
+  <td align="right">output</td>
+  <td></td>
+  <td>Resulting integer varnode containing count.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Semantic statement</strong></span></td>
+  <td></td>
+</tr>
+<tr>
+  <td></td>
+  <td colspan="2"><code class="code">output = countLeadingOnes(input0);</code></td>
+</tr>
+</tfoot>
+</table></div>
+<p>
+This operator counts the number of one bits starting at the most significant bit.
+For instance, for a 4-byte varnode, a value of 0 returns 0, the value 2<sup>31</sup>
+returns 1, and the value 2<sup>32</sup>-1 returns 32.
+The resulting count is zero extended into the output varnode.
 </p>
 </div>
 </div>

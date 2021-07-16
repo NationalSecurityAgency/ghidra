@@ -19,8 +19,6 @@ import java.math.BigInteger;
 
 import ghidra.pcode.emulate.Emulate;
 import ghidra.pcode.emulate.EmulateInstructionStateModifier;
-import ghidra.pcode.emulate.callother.CountLeadingOnesOpBehavior;
-import ghidra.pcode.emulate.callother.CountLeadingZerosOpBehavior;
 import ghidra.pcode.error.LowlevelError;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
@@ -48,10 +46,6 @@ public class MIPSEmulateInstructionStateModifier extends EmulateInstructionState
 
 		// These classes are defined here:
 		// ghidra/Ghidra/Framework/SoftwareModeling/src/main/java/ghidra/pcode/emulate/callother
-
-		registerPcodeOpBehavior("countLeadingZeros", new CountLeadingZerosOpBehavior());
-
-		registerPcodeOpBehavior("countLeadingOnes", new CountLeadingOnesOpBehavior());
 
 		/**
 		 * We could registerPcodeOpBehavior for one or more of the following

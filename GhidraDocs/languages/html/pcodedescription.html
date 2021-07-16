@@ -4,7 +4,7 @@
 <title>P-Code Operation Reference</title>
 <link rel="stylesheet" type="text/css" href="Frontpage.css">
 <link rel="stylesheet" type="text/css" href="languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.77.1">
 <link rel="home" href="pcoderef.html" title="P-Code Reference Manual">
 <link rel="up" href="pcoderef.html" title="P-Code Reference Manual">
 <link rel="prev" href="pcoderef.html" title="P-Code Reference Manual">
@@ -36,8 +36,7 @@ describing semantics in a processor specification file.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_copy"></a>COPY</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="copy.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="copy.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -67,8 +66,7 @@ describing semantics in a processor specification file.
   <td colspan="2"><code class="code">output = input0;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 Copy a sequence of contiguous bytes from anywhere to anywhere. Size of
 input0 and output must be the same.
@@ -77,8 +75,7 @@ input0 and output must be the same.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_load"></a>LOAD</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="load.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="load.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -117,8 +114,7 @@ input0 and output must be the same.
   <td colspan="2"><code class="code">output = *[input0]input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This instruction loads data from a dynamic location into the output
 variable by dereferencing a pointer. The &#8220;pointer&#8221; comes in two
@@ -148,8 +144,7 @@ correct byte offset into the space.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_store"></a>STORE</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="store.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="store.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -188,8 +183,7 @@ correct byte offset into the space.
   <td colspan="2"><code class="code">*[input0]input1 = input2; </code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This instruction is the complement
 of <span class="bold"><strong>LOAD</strong></span>.  The data in the variable
@@ -211,8 +205,7 @@ correct byte offset into the space.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_branch"></a>BRANCH</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="branch.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="branch.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -235,8 +228,7 @@ correct byte offset into the space.
   <td colspan="2"><code class="code">goto input0;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is an absolute jump instruction. The varnode parameter input0 encodes
 the destination address (address space and offset) of the jump. The varnode is not
@@ -271,8 +263,7 @@ with index 8 by specifying a constant destination &#8220;address&#8221; of
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_cbranch"></a>CBRANCH</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="cbranch.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="cbranch.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -302,8 +293,7 @@ with index 8 by specifying a constant destination &#8220;address&#8221; of
   <td colspan="2"><code class="code">if (input1) goto input0;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a conditional branch instruction where the dynamic condition
 for taking the branch is determined by the 1 byte variable input1. If
@@ -321,8 +311,7 @@ relative branching</em></span>.  See the discussion for the
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_branchind"></a>BRANCHIND</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="branchind.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="branchind.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -345,8 +334,7 @@ relative branching</em></span>.  See the discussion for the
   <td colspan="2"><code class="code">goto [input0];</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is an indirect branching instruction. The address to branch to is
 determined dynamically (at runtime) by examining the contents of the
@@ -363,8 +351,7 @@ relative branching is not possible with <span class="bold"><strong>BRANCHIND</st
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_call"></a>CALL</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="call.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="call.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -399,8 +386,7 @@ relative branching is not possible with <span class="bold"><strong>BRANCHIND</st
   <td colspan="2"><code class="code">call [input0];</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This instruction is semantically equivalent to
 the <span class="bold"><strong>BRANCH</strong></span> instruction.
@@ -427,8 +413,7 @@ into the call.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_callind"></a>CALLIND</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="callind.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="callind.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -463,8 +448,7 @@ into the call.
   <td colspan="2"><code class="code">call [input0];</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This instruction is semantically equivalent to
 the <span class="bold"><strong>BRANCHIND</strong></span> instruction. It does
@@ -481,8 +465,7 @@ the parameters being passed to the logical call.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_return"></a>RETURN</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="return.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="return.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -512,8 +495,7 @@ the parameters being passed to the logical call.
   <td colspan="2"><code class="code">return [input0];</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This instruction is semantically equivalent to
 the <span class="bold"><strong>BRANCHIND</strong></span> instruction. It does
@@ -533,8 +515,7 @@ subroutine.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_piece"></a>PIECE</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="piece.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="piece.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -569,8 +550,7 @@ subroutine.
   <td colspan="2"><span class="emphasis"><em>Cannot (currently) be explicitly coded</em></span></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a concatenation operator that understands the endianess of the
 data. The size of input0 and input1 must add up to the size of
@@ -582,8 +562,7 @@ makes up the most significant part of the output.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_subpiece"></a>SUBPIECE</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="subpiece.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="subpiece.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -618,8 +597,7 @@ makes up the most significant part of the output.
   <td colspan="2"><code class="code">output = input0(input1);</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a truncation operator that understands the endianess of the
 data. Input1 indicates the number of least significant bytes of input0
@@ -633,8 +611,7 @@ truncated.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_popcount"></a>POPCOUNT</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="popcount.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="popcount.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -664,8 +641,7 @@ truncated.
   <td colspan="2"><code class="code">output = popcount(input0);</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a bit count (population count) operator. Within the binary representation of the value
 contained in the input varnode, the number of 1 bits are counted and then returned in the
@@ -677,8 +653,7 @@ count is zero extended into the output varnode.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_equal"></a>INT_EQUAL</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intequal.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intequal.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -713,8 +688,7 @@ count is zero extended into the output varnode.
   <td colspan="2"><code class="code">output = input0 == input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is the integer equality operator. Output is
 assigned <span class="emphasis"><em>true</em></span>, if input0 equals input1. It works
@@ -726,8 +700,7 @@ must have a size of 1.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_notequal"></a>INT_NOTEQUAL</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intnotequal.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intnotequal.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -762,8 +735,7 @@ must have a size of 1.
   <td colspan="2"><code class="code">output = input0 != input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is the integer inequality operator. Output is
 assigned <span class="emphasis"><em>true</em></span>, if input0 does not equal
@@ -775,8 +747,7 @@ and the output must have a size of 1.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_less"></a>INT_LESS</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intless.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intless.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -811,8 +782,7 @@ and the output must have a size of 1.
   <td colspan="2"><code class="code">output = input0 &lt; input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is an unsigned integer comparison operator. If the unsigned
 integer input0 is strictly less than the unsigned integer input1,
@@ -823,8 +793,7 @@ same size, and the output must have a size of 1.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_sless"></a>INT_SLESS</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intsless.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intsless.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -859,8 +828,7 @@ same size, and the output must have a size of 1.
   <td colspan="2"><code class="code">output = input0 s&lt; input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a signed integer comparison operator. If the signed integer
 input0 is strictly less than the signed integer input1, output is set
@@ -871,8 +839,7 @@ the output must have a size of 1.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_lessequal"></a>INT_LESSEQUAL</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intlessequal.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intlessequal.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -907,8 +874,7 @@ the output must have a size of 1.
   <td colspan="2"><code class="code">output = input0 &lt;= input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is an unsigned integer comparison operator. If the unsigned
 integer input0 is less than or equal to the unsigned integer input1,
@@ -919,8 +885,7 @@ same size, and the output must have a size of 1.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_slessequal"></a>INT_SLESSEQUAL</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intslessequal.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intslessequal.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -955,8 +920,7 @@ same size, and the output must have a size of 1.
   <td colspan="2"><code class="code">output = input0 s&lt;= input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a signed integer comparison operator. If the signed integer
 input0 is less than or equal to the signed integer input1, output is
@@ -967,8 +931,7 @@ and the output must have a size of 1.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_zext"></a>INT_ZEXT</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intzext.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intzext.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -998,8 +961,7 @@ and the output must have a size of 1.
   <td colspan="2"><code class="code">output = zext(input0);</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 Zero-extend the data in input0 and store the result in output. Copy
 all the data from input0 into the least significant positions of
@@ -1011,8 +973,7 @@ size of input.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_sext"></a>INT_SEXT</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intsext.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intsext.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1042,8 +1003,7 @@ size of input.
   <td colspan="2"><code class="code">output = sext(input0);</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 Sign-extend the data in input0 and store the result in output. Copy
 all the data from input0 into the least significant positions of
@@ -1056,8 +1016,7 @@ than the size of input0.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_add"></a>INT_ADD</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intadd.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intadd.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1092,8 +1051,7 @@ than the size of input0.
   <td colspan="2"><code class="code">output = input0 + input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is standard integer addition. It works for either unsigned or
 signed interpretations of the integer encoding (twos complement). Size
@@ -1107,8 +1065,7 @@ and <span class="bold"><strong>INT_SCARRY</strong></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_sub"></a>INT_SUB</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intsub.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intsub.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1143,8 +1100,7 @@ and <span class="bold"><strong>INT_SCARRY</strong></span>.
   <td colspan="2"><code class="code">output = input0 - input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is standard integer subtraction. It works for either unsigned or
 signed interpretations of the integer encoding (twos complement). Size
@@ -1158,8 +1114,7 @@ and <span class="bold"><strong>INT_LESS</strong></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_carry"></a>INT_CARRY</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intcarry.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intcarry.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1194,8 +1149,7 @@ and <span class="bold"><strong>INT_LESS</strong></span>.
   <td colspan="2"><code class="code">output = carry(input0,input1);</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This operation checks for unsigned addition overflow or carry
 conditions. If the result of adding input0 and input1 as unsigned
@@ -1207,8 +1161,7 @@ and output must be size 1.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_scarry"></a>INT_SCARRY</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intscarry.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intscarry.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1243,8 +1196,7 @@ and output must be size 1.
   <td colspan="2"><code class="code">output = scarry(input0,input1);</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This operation checks for signed addition overflow or carry
 conditions. If the result of adding input0 and input1 as signed
@@ -1256,8 +1208,7 @@ and output must be size 1.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_sborrow"></a>INT_SBORROW</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intsborrow.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intsborrow.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1292,8 +1243,7 @@ and output must be size 1.
   <td colspan="2"><code class="code">output = sborrow(input0,input1);</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This operation checks for signed subtraction overflow or borrow
 conditions. If the result of subtracting input1 from input0 as signed
@@ -1307,8 +1257,7 @@ is <span class="bold"><strong>INT_LESS</strong></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_2comp"></a>INT_2COMP</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="int2comp.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="int2comp.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1338,8 +1287,7 @@ is <span class="bold"><strong>INT_LESS</strong></span>.
   <td colspan="2"><code class="code">output = -input0;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is the twos complement or arithmetic negation operation. Treating input0 as a signed
 integer, the result is the same integer value but with the opposite sign. This is equivalent
@@ -1350,8 +1298,7 @@ be the same size.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_negate"></a>INT_NEGATE</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intnegate.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intnegate.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1381,8 +1328,7 @@ be the same size.
   <td colspan="2"><code class="code">output = ~input0;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is the bitwise negation operation. Output is the result of taking
 every bit of input0 and flipping it. Both input0 and output must be
@@ -1392,8 +1338,7 @@ the same size.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_xor"></a>INT_XOR</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intxor.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intxor.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1428,8 +1373,7 @@ the same size.
   <td colspan="2"><code class="code">output = input0 ^ input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This operation performs a logical Exclusive-Or on the bits of input0
 and input1. Both inputs and output must be the same size.
@@ -1438,8 +1382,7 @@ and input1. Both inputs and output must be the same size.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_and"></a>INT_AND</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intand.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intand.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1474,8 +1417,7 @@ and input1. Both inputs and output must be the same size.
   <td colspan="2"><code class="code">output = input0 &amp; input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This operation performs a Logical-And on the bits of input0 and input1. Both inputs and
 output must be the same size.
@@ -1484,8 +1426,7 @@ output must be the same size.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_or"></a>INT_OR</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intor.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intor.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1520,8 +1461,7 @@ output must be the same size.
   <td colspan="2"><code class="code">output = input0 | input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This operation performs a Logical-Or on the bits of input0 and input1. Both inputs and
 output must be the same size.
@@ -1530,8 +1470,7 @@ output must be the same size.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_left"></a>INT_LEFT</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intleft.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intleft.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1566,8 +1505,7 @@ output must be the same size.
   <td colspan="2"><code class="code">output = input0 &lt;&lt; input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This operation performs a left shift on input0. The value given by
 input1, interpreted as an unsigned integer, indicates the number of
@@ -1581,8 +1519,7 @@ size. Input1 can be any size.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_right"></a>INT_RIGHT</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intright.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intright.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1617,8 +1554,7 @@ size. Input1 can be any size.
   <td colspan="2"><code class="code">output = input0 &gt;&gt; input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This operation performs an unsigned (logical) right shift on
 input0. The value given by input1, interpreted as an unsigned integer,
@@ -1632,8 +1568,7 @@ the same size. Input1 can be any size.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_sright"></a>INT_SRIGHT</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intsright.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intsright.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1668,8 +1603,7 @@ the same size. Input1 can be any size.
   <td colspan="2"><code class="code">output = input0 s&gt;&gt; input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This operation performs a signed (arithmetic) right shift on
 input0. The value given by input1, interpreted as an unsigned integer,
@@ -1685,8 +1619,7 @@ any size.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_mult"></a>INT_MULT</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intmult.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intmult.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1721,8 +1654,7 @@ any size.
   <td colspan="2"><code class="code">output = input0 * input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is an integer multiplication operation. The result of multiplying
 input0 and input1, viewed as integers, is stored in output. Both
@@ -1736,8 +1668,7 @@ sign-extended to the desired size.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_div"></a>INT_DIV</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intdiv.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intdiv.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1772,8 +1703,7 @@ sign-extended to the desired size.
   <td colspan="2"><code class="code">output = input0 / input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is an unsigned integer division operation. Divide input0 by
 input1, truncating the result to the nearest integer, and store the
@@ -1786,8 +1716,7 @@ the <span class="bold"><strong>INT_DIV</strong></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_rem"></a>INT_REM</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intrem.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intrem.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1822,8 +1751,7 @@ the <span class="bold"><strong>INT_DIV</strong></span>.
   <td colspan="2"><code class="code">output = input0 % input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is an unsigned integer remainder operation. The remainder of
 performing the unsigned integer division of input0 and input1 is put
@@ -1837,8 +1765,7 @@ and <span class="bold"><strong>INT_ADD</strong></span> operations.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_sdiv"></a>INT_SDIV</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intsdiv.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intsdiv.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1873,8 +1800,7 @@ and <span class="bold"><strong>INT_ADD</strong></span> operations.
   <td colspan="2"><code class="code">output = input0 s/ input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a signed integer division operation. The resulting integer is
 the one closest to the rational value input0/input1 but which is still
@@ -1887,8 +1813,7 @@ be used before the <span class="bold"><strong>INT_SDIV</strong></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int_srem"></a>INT_SREM</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="intsrem.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="intsrem.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1923,8 +1848,7 @@ be used before the <span class="bold"><strong>INT_SDIV</strong></span>.
   <td colspan="2"><code class="code">output = input0 s% input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a signed integer remainder operation. The remainder of
 performing the signed integer division of input0 and input1 is put in
@@ -1938,8 +1862,7 @@ and <span class="bold"><strong>INT_ADD</strong></span> operations.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_bool_negate"></a>BOOL_NEGATE</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="boolnegate.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="boolnegate.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -1969,8 +1892,7 @@ and <span class="bold"><strong>INT_ADD</strong></span> operations.
   <td colspan="2"><code class="code">output = !input0;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a logical negate operator, where we assume input0 and output
 are boolean values.  It puts the logical complement of input0, treated
@@ -1983,8 +1905,7 @@ or <span class="emphasis"><em>false</em></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_bool_xor"></a>BOOL_XOR</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="boolxor.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="boolxor.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2019,8 +1940,7 @@ or <span class="emphasis"><em>false</em></span>.
   <td colspan="2"><code class="code">output = input0 ^^ input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is an Exclusive-Or operator, where we assume the inputs and
 output are boolean values. It puts the exclusive-or of input0 and
@@ -2033,8 +1953,7 @@ or <span class="emphasis"><em>false</em></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_bool_and"></a>BOOL_AND</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="booland.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="booland.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2069,8 +1988,7 @@ or <span class="emphasis"><em>false</em></span>.
   <td colspan="2"><code class="code">output = input0 &amp;&amp; input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a Logical-And operator, where we assume the inputs and output
 are boolean values. It puts the logical-and of input0 and input1,
@@ -2083,8 +2001,7 @@ or <span class="emphasis"><em>false</em></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_bool_or"></a>BOOL_OR</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="boolor.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="boolor.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2119,8 +2036,7 @@ or <span class="emphasis"><em>false</em></span>.
   <td colspan="2"><code class="code">output = input0 || input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a Logical-Or operator, where we assume the inputs and output
 are boolean values. It puts the logical-or of input0 and input1,
@@ -2133,8 +2049,7 @@ or <span class="emphasis"><em>false</em></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_float_equal"></a>FLOAT_EQUAL</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="floatequal.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="floatequal.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2169,8 +2084,7 @@ or <span class="emphasis"><em>false</em></span>.
   <td colspan="2"><code class="code">output = input0 f== input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a floating-point equality operator. Output is
 assigned <span class="emphasis"><em>true</em></span>, if input0 and input1 are
@@ -2183,8 +2097,7 @@ to <span class="emphasis"><em>false</em></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_float_notequal"></a>FLOAT_NOTEQUAL</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="floatnotequal.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="floatnotequal.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2219,8 +2132,7 @@ to <span class="emphasis"><em>false</em></span>.
   <td colspan="2"><code class="code">output = input0 f!= input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a floating-point inequality operator. Output is
 assigned <span class="emphasis"><em>true</em></span>, if input0 and input1 are not
@@ -2233,8 +2145,7 @@ to <span class="emphasis"><em>false</em></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_float_less"></a>FLOAT_LESS</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="floatless.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="floatless.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2269,8 +2180,7 @@ to <span class="emphasis"><em>false</em></span>.
   <td colspan="2"><code class="code">output = input0 f&lt; input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a comparison operator, where both inputs are considered
 floating-point values. Output is assigned <span class="emphasis"><em>true</em></span>,
@@ -2283,8 +2193,7 @@ to <span class="emphasis"><em>false</em></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_float_lessequal"></a>FLOAT_LESSEQUAL</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="floatlessequal.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="floatlessequal.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2319,8 +2228,7 @@ to <span class="emphasis"><em>false</em></span>.
   <td colspan="2"><code class="code">output = input0 f&lt;= input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a comparison operator, where both inputs are considered
 floating-point values. Output is assigned <span class="emphasis"><em>true</em></span>,
@@ -2333,8 +2241,7 @@ to <span class="emphasis"><em>false</em></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_float_add"></a>FLOAT_ADD</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="floatadd.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="floatadd.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2369,8 +2276,7 @@ to <span class="emphasis"><em>false</em></span>.
   <td colspan="2"><code class="code">output = input0 f+ input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a floating-point addition operator. The result of adding
 input0 and input1 as floating-point values is stored in output. Both
@@ -2383,8 +2289,7 @@ occurs, output is set to <span class="bold"><strong>NaN</strong></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_float_sub"></a>FLOAT_SUB</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="floatsub.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="floatsub.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2419,8 +2324,7 @@ occurs, output is set to <span class="bold"><strong>NaN</strong></span>.
   <td colspan="2"><code class="code">output = input0 f- input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a floating-point subtraction operator. The result of
 subtracting input1 from input0 as floating-point values is stored in
@@ -2433,8 +2337,7 @@ occurs, output is set to <span class="bold"><strong>NaN</strong></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_float_mult"></a>FLOAT_MULT</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="floatmult.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="floatmult.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2469,8 +2372,7 @@ occurs, output is set to <span class="bold"><strong>NaN</strong></span>.
   <td colspan="2"><code class="code">output = input0 f* input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a floating-point multiplication operator. The result of
 multiplying input0 to input1 as floating-point values is stored in
@@ -2483,8 +2385,7 @@ occurs, output is set to <span class="bold"><strong>NaN</strong></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_float_div"></a>FLOAT_DIV</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="floatdiv.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="floatdiv.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2519,8 +2420,7 @@ occurs, output is set to <span class="bold"><strong>NaN</strong></span>.
   <td colspan="2"><code class="code">output = input0 f/ input1;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a floating-point division operator. The result of dividing
 input1 into input0 as floating-point values is stored in output. Both
@@ -2533,8 +2433,7 @@ occurs, output is set to <span class="bold"><strong>NaN</strong></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_float_neg"></a>FLOAT_NEG</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="floatneg.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="floatneg.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2564,8 +2463,7 @@ occurs, output is set to <span class="bold"><strong>NaN</strong></span>.
   <td colspan="2"><code class="code">output = f- input0;</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a floating-point negation operator. The floating-point value
 in input0 is stored in output with the opposite sign. Both input and
@@ -2577,8 +2475,7 @@ to <span class="bold"><strong>NaN</strong></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_float_abs"></a>FLOAT_ABS</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="floatabs.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="floatabs.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2608,8 +2505,7 @@ to <span class="bold"><strong>NaN</strong></span>.
   <td colspan="2"><code class="code">output = abs(input0);</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a floating-point absolute-value operator. The absolute value
 of input0 is stored in output. Both input0 and output must be the same
@@ -2620,8 +2516,7 @@ to <span class="bold"><strong>NaN</strong></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_float_sqrt"></a>FLOAT_SQRT</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="floatsqrt.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="floatsqrt.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2651,8 +2546,7 @@ to <span class="bold"><strong>NaN</strong></span>.
   <td colspan="2"><code class="code">output = sqrt(input0);</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a floating-point square-root operator. The square root of
 input0 is stored in output.  Both input0 and output must be the same
@@ -2663,8 +2557,7 @@ to <span class="bold"><strong>NaN</strong></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_float_ceil"></a>FLOAT_CEIL</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="floatceil.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="floatceil.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2694,8 +2587,7 @@ to <span class="bold"><strong>NaN</strong></span>.
   <td colspan="2"><code class="code">output = ceil(input0);</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This operation rounds input0, as a signed floating-point value, towards <span class="emphasis"><em>positive infinity</em></span>.
 For instance, the value 1.2 rounds to 2.0; -1.2 rounds to -1.0.
@@ -2708,8 +2600,7 @@ to <span class="bold"><strong>NaN</strong></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_float_floor"></a>FLOAT_FLOOR</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="floatfloor.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="floatfloor.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2739,8 +2630,7 @@ to <span class="bold"><strong>NaN</strong></span>.
   <td colspan="2"><code class="code">output = floor(input0);</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This operation rounds input0, as a floating-point value, towards <span class="emphasis"><em>negative infinity</em></span>.
 For instance, the value 1.2 rounds to 1.0 and -1.2 rounds to -2.0.
@@ -2755,8 +2645,7 @@ to <span class="bold"><strong>NaN</strong></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_float_round"></a>FLOAT_ROUND</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="floatround.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="floatround.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2786,8 +2675,7 @@ to <span class="bold"><strong>NaN</strong></span>.
   <td colspan="2"><code class="code">output = round(input0);</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a floating-point rounding operator. The integral value closest to the
 floating-point value in input0 is stored in output, as a floating-point value.
@@ -2802,8 +2690,7 @@ to <span class="bold"><strong>NaN</strong></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_float_nan"></a>FLOAT_NAN</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="floatnan.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="floatnan.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2833,8 +2720,7 @@ to <span class="bold"><strong>NaN</strong></span>.
   <td colspan="2"><code class="code">output = nan(input0);</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This operator returns <span class="emphasis"><em>true</em></span> in output if input0 is
 interpreted as <span class="bold"><strong>NaN</strong></span>. Output must be
@@ -2844,8 +2730,7 @@ size 1, and input0 can be any size.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_int2float"></a>INT2FLOAT</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="int2float.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="int2float.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2875,8 +2760,7 @@ size 1, and input0 can be any size.
   <td colspan="2"><code class="code">output = int2float(input0);</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is an integer to floating-point conversion operator. Input0
 viewed as a signed integer is converted to floating-point format and
@@ -2888,8 +2772,7 @@ precision.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_float2float"></a>FLOAT2FLOAT</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="float2float.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="float2float.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2919,8 +2802,7 @@ precision.
   <td colspan="2"><code class="code">output = float2float(input0);</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a floating-point precision conversion operator. The
 floating-point value in input0 is converted to a floating-point value
@@ -2934,8 +2816,7 @@ to <span class="bold"><strong>NaN</strong></span>.
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cpui_trunc"></a>TRUNC</h3></div></div></div>
-<div class="informalexample"><div class="table">
-<a name="trunc.htmltable"></a><table frame="above" width="80%" rules="groups">
+<div class="informalexample"><table frame="above" width="80%" rules="groups" id="trunc.htmltable">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -2965,8 +2846,7 @@ to <span class="bold"><strong>NaN</strong></span>.
   <td colspan="2"><code class="code">output = trunc(input0);</code></td>
 </tr>
 </tfoot>
-</table>
-</div></div>
+</table></div>
 <p>
 This is a floating-point to integer conversion operator. The
 floating-point value in input0 is converted to a signed integer and

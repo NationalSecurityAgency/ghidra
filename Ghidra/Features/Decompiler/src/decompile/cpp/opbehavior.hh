@@ -509,4 +509,18 @@ public:
   virtual uintb evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const;
 };
 
+/// CPUI_COUNTLEADINGZEROS behavior
+class OpBehaviorCountLeadingZeros : public OpBehavior {
+public:
+  OpBehaviorCountLeadingZeros(void) : OpBehavior(CPUI_COUNTLEADINGZEROS,true) {}	///< Constructor
+  virtual uintb evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const;
+};
+
+/// CPUI_COUNTLEADINGONES behavior
+class OpBehaviorCountLeadingOnes : public OpBehavior {
+public:
+  OpBehaviorCountLeadingOnes(void) : OpBehavior(CPUI_COUNTLEADINGONES,true) {}	///< Constructor
+  virtual uintb evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const;
+};
+
 #endif

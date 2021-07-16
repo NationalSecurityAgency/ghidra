@@ -9133,3 +9133,58 @@ int4 RuleXorSwap::applyOp(PcodeOp *op,Funcdata &data)
   }
   return 0;
 }
+
+/// \class RuleCountLeadingZerosShiftBool
+/// \brief Simplify equality checks that use countLeadingZeros.
+///
+/// Some compilers check if a value is equal to zero by checking the most
+/// significant bit in countLeadingZeros; for instance on a 32-bit system,
+/// it being equal to 32 would have the 5th bit set.
+///  - `countLeadingZeros(a ^ 3) >> 5  =>  a ^ 3 == 0  =>  a == 3` (by RuleXorCollapse)
+///  - `countLeadingZeros(a - 3) >> 5  =>  a - 3 == 0  =>  a == 3` (by RuleEqual2Zero)
+void RuleCountLeadingZerosShiftBool::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_COUNTLEADINGZEROS);
+}
+
+int4 RuleCountLeadingZerosShiftBool::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *outVn = op->getOut();
+  list<PcodeOp *>::const_iterator iter, iter2;
+  uintb max_return = 8 * op->getIn(0)->getSize();
+  if (popcount(max_return) != 1) {
+    // This rule only makes sense with sizes that are powers of 2; if the maximum value
+    // returned by countLeadingZeros was, say, 24, then both 16 >> 4 and 24 >> 4
+    // are 1, and thus the check does not make sense.  (Such processors couldn't
+    // use countLeadingZeros for checking equality in any case.)
+    return 0;
+  }
+
+  for(iter=outVn->beginDescend();iter!=outVn->endDescend();++iter) {
+    PcodeOp *baseOp = *iter;
+    if (baseOp->code() != CPUI_INT_RIGHT && baseOp->code() != CPUI_INT_SRIGHT) continue;
+    Varnode *vn1 = baseOp->getIn(1);
+    if (!vn1->isConstant()) continue;
+    uintb shift = vn1->getOffset();
+    if ((max_return >> shift) == 1) {
+      // Becomes a comparison with zero
+      PcodeOp* newOp = data.newOp(2, baseOp->getAddr());
+      data.opSetOpcode(newOp, CPUI_INT_EQUAL);
+      Varnode* b = data.newConstant(outVn->getSize(), 0);
+      data.opSetInput(newOp, op->getIn(0), 0);
+      data.opSetInput(newOp, b, 1);
+
+      Varnode* oldOut = baseOp->getOut();
+      // Use a size of 1 to produce a bool (even though the actual result size is oldOut->getSize())
+      Varnode* newOut = data.newUniqueOut(1, newOp);
+      data.opSetOutput(newOp, newOut);
+      data.opInsertBefore(newOp, baseOp);
+      data.totalReplace(oldOut, newOut);
+      data.opDestroy(baseOp);
+      return 1;
+    }
+  }
+  return 0;
+}

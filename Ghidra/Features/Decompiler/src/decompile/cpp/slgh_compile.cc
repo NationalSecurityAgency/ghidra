@@ -785,6 +785,12 @@ void ConsistencyChecker::printOpName(ostream &s,OpTpl *op)
   case CPUI_POPCOUNT:
     s << "Count bits(popcount)";
     break;
+  case CPUI_COUNTLEADINGZEROS:
+    s << "Count leading zero bits";
+    break;
+  case CPUI_COUNTLEADINGONES:
+    s << "Count leading one bits";
+    break;
   default:
     break;
   }

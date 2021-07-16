@@ -103,6 +103,8 @@ void TypeOp::registerInstructions(vector<TypeOp *> &inst,TypeFactory *tlst,
   inst[CPUI_INSERT] = new TypeOpInsert(tlst);
   inst[CPUI_EXTRACT] = new TypeOpExtract(tlst);
   inst[CPUI_POPCOUNT] = new TypeOpPopcount(tlst);
+  inst[CPUI_COUNTLEADINGZEROS] = new TypeOpCountLeadingZeros(tlst);
+  inst[CPUI_COUNTLEADINGONES] = new TypeOpCountLeadingOnes(tlst);
 }
 
 /// Change basic data-type info (signed vs unsigned) and operator names ( '>>' vs '>>>' )
@@ -1879,4 +1881,18 @@ TypeOpPopcount::TypeOpPopcount(TypeFactory *t)
 {
   opflags = PcodeOp::unary;
   behave = new OpBehaviorPopcount();
+}
+
+TypeOpCountLeadingZeros::TypeOpCountLeadingZeros(TypeFactory *t)
+  : TypeOpFunc(t,CPUI_COUNTLEADINGZEROS,"COUNTLEADINGZEROS",TYPE_INT,TYPE_UNKNOWN)
+{
+  opflags = PcodeOp::unary;
+  behave = new OpBehaviorCountLeadingZeros();
+}
+
+TypeOpCountLeadingOnes::TypeOpCountLeadingOnes(TypeFactory *t)
+  : TypeOpFunc(t,CPUI_COUNTLEADINGONES,"COUNTLEADINGONES",TYPE_INT,TYPE_UNKNOWN)
+{
+  opflags = PcodeOp::unary;
+  behave = new OpBehaviorCountLeadingOnes();
 }

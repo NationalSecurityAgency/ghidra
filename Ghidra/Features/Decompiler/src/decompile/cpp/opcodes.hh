@@ -123,8 +123,10 @@ enum OpCode {
   CPUI_INSERT = 70,		///< Insert a bit-range
   CPUI_EXTRACT = 71,		///< Extract a bit-range
   CPUI_POPCOUNT = 72,		///< Count the 1-bits
+  CPUI_COUNTLEADINGZEROS = 73,	///< Count the leading 0-bits
+  CPUI_COUNTLEADINGONES = 74,	///< Count the leading 1-bits
 
-  CPUI_MAX = 73			///< Value indicating the end of the op-code values
+  CPUI_MAX = 75			///< Value indicating the end of the op-code values
 };
 
 extern const char *get_opname(OpCode opc);		///< Convert an OpCode to the name as a string

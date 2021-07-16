@@ -802,4 +802,18 @@ public:
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opPopcountOp(op); }
 };
 
+/// \brief Information about the COUNTLEADINGZEROS op-code
+class TypeOpCountLeadingZeros : public TypeOpFunc {
+public:
+  TypeOpCountLeadingZeros(TypeFactory *t);			///< Constructor
+  virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opCountLeadingZerosOp(op); }
+};
+
+/// \brief Information about the COUNTLEADINGONES op-code
+class TypeOpCountLeadingOnes : public TypeOpFunc {
+public:
+  TypeOpCountLeadingOnes(TypeFactory *t);			///< Constructor
+  virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opCountLeadingOnesOp(op); }
+};
+
 #endif

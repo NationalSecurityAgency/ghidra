@@ -117,7 +117,6 @@ define context contextreg
 	ARMcondCk	= (35,35)   # Finished ARM condition check phase
 ;
 
-define pcodeop count_leading_zeroes;
 define pcodeop coprocessor_function;
 define pcodeop coprocessor_function2;
 define pcodeop coprocessor_load;

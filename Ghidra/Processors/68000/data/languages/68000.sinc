@@ -793,8 +793,6 @@ with : extGUARD=1 {
    logflags(); tmp:4 = e2l; getbitfield(tmp, f_off, f_wd); f_reg = tmp; resbitflags(f_reg, f_wd-1);
 }
 
-define pcodeop countLeadingZeros;
-
 :bfffo e2l{f_off:f_wd},f_reg	is opbig=0xed & op67=3 & $(DAT_DIR_CTL_ADDR_MODES); f_off & f_wd & f_reg & flddo=0 & fldoffdat=0 & flddw=0 & fldwddat=0; e2l
 					[ savmod2=savmod1; regtsan=regtfan; ] {
 	# "Find First One in Bit Field" pronounced "boo-foe"

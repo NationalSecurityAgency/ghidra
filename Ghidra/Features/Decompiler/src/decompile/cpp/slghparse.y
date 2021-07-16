@@ -93,7 +93,7 @@
 %right '!' '~'
 %token OP_ZEXT OP_CARRY OP_BORROW OP_SEXT OP_SCARRY OP_SBORROW OP_NAN OP_ABS
 %token OP_SQRT OP_CEIL OP_FLOOR OP_ROUND OP_INT2FLOAT OP_FLOAT2FLOAT
-%token OP_TRUNC OP_CPOOLREF OP_NEW OP_POPCOUNT
+%token OP_TRUNC OP_CPOOLREF OP_NEW OP_POPCOUNT OP_COUNTLEADINGZEROS OP_COUNTLEADINGONES
 
 %token BADINTEGER GOTO_KEY CALL_KEY RETURN_KEY IF_KEY
 %token DEFINE_KEY ATTACH_KEY MACRO_KEY SPACE_KEY TYPE_KEY RAM_KEY DEFAULT_KEY
@@ -442,6 +442,8 @@ expr: varnode { $$ = new ExprTree($1); }
   | OP_NEW '(' expr ')'     { $$ = slgh->pcode.createOp(CPUI_NEW,$3); }
   | OP_NEW '(' expr ',' expr ')' { $$ = slgh->pcode.createOp(CPUI_NEW,$3,$5); }
   | OP_POPCOUNT '(' expr ')' { $$ = slgh->pcode.createOp(CPUI_POPCOUNT,$3); }
+  | OP_COUNTLEADINGZEROS '(' expr ')' { $$ = slgh->pcode.createOp(CPUI_COUNTLEADINGZEROS,$3); }
+  | OP_COUNTLEADINGONES '(' expr ')' { $$ = slgh->pcode.createOp(CPUI_COUNTLEADINGONES,$3); }
   | specificsymbol '(' integervarnode ')' { $$ = slgh->pcode.createOp(CPUI_SUBPIECE,new ExprTree($1->getVarnode()),new ExprTree($3)); }
   | specificsymbol ':' INTEGER	{ $$ = slgh->pcode.createBitRange($1,0,(uint4)(*$3 * 8)); delete $3; }
   | specificsymbol '[' INTEGER ',' INTEGER ']' { $$ = slgh->pcode.createBitRange($1,(uint4)*$3,(uint4)*$5); delete $3, delete $5; }

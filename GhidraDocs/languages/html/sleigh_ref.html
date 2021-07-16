@@ -4,7 +4,7 @@
 <title>9. P-code Tables</title>
 <link rel="stylesheet" type="text/css" href="Frontpage.css">
 <link rel="stylesheet" type="text/css" href="languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.77.1">
 <link rel="home" href="sleigh.html" title="SLEIGH">
 <link rel="up" href="sleigh.html" title="SLEIGH">
 <link rel="prev" href="sleigh_context.html" title="8. Using Context">
@@ -47,7 +47,7 @@ to lowest.
 <div class="informalexample">
 <div class="table">
 <a name="syntaxref.htmltable"></a><p class="title"><b>Table 5. Semantic Expression Operators and Syntax</b></p>
-<div class="table-contents"><table width="95%" frame="box" rules="all">
+<div class="table-contents"><table width="95%" frame="box" rules="all" id="syntaxref.htmltable">
 <col width="25%">
 <col width="25%">
 <col width="50%">
@@ -60,8 +60,7 @@ to lowest.
 <tr>
   <td><code class="code">SUBPIECE</code></td>
   <td>
-    <div class="informaltable">
-<a name="subpieceref.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="subpieceref.htmltable"><tbody>
 <tr>
           <td><code class="code">v0:2</code></td>
         </tr>
@@ -69,7 +68,6 @@ to lowest.
           <td><code class="code">v0(2)</code></td>
         </tr>
 </tbody></table>
-</div>
   </td>
   <td>The least significant n bytes of v0.
       Truncate least significant n bytes of
@@ -81,6 +79,18 @@ to lowest.
   <td><code class="code">POPCOUNT</code></td>
   <td><code class="code">popcount(v0)</code></td>
   <td>Count the number of 1 bits in v0.
+  </td>
+</tr>
+<tr>
+  <td><code class="code">COUNTLEADINGZEROS</code></td>
+  <td><code class="code">countLeadingZeros(v0)</code></td>
+  <td>Count the number of leading 0 bits in v0.
+  </td>
+</tr>
+<tr>
+  <td><code class="code">COUNTLEADINGONES</code></td>
+  <td><code class="code">countLeadingOnes(v0)</code></td>
+  <td>Count the number of leading 1 bits in v0.
   </td>
 </tr>
 <tr>
@@ -97,8 +107,7 @@ to lowest.
 <tr>
   <td><code class="code">LOAD</code></td>
   <td>
-    <div class="informaltable">
-<a name="loadref.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="loadref.htmltable"><tbody>
 <tr>
           <td><code class="code">* v1</code></td>
         </tr>
@@ -112,7 +121,6 @@ to lowest.
           <td><code class="code">*[spc]:2 v1</code></td>
         </tr>
 </tbody></table>
-</div>
   </td>
   <td>Dereference v1 as pointer into
       default space. Optionally specify
@@ -213,8 +221,7 @@ to lowest.
 <tr>
   <td><code class="code">INT_SLESS</code></td>
   <td>
-    <div class="informaltable">
-<a name="slessref.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="slessref.htmltable"><tbody>
 <tr>
           <td><code class="code">v0 s&lt; v1</code></td>
         </tr>
@@ -222,15 +229,13 @@ to lowest.
           <td><code class="code">v1 s&gt; v0</code></td>
         </tr>
 </tbody></table>
-</div>
   </td>
   <td>True if v0 is less than v1 as a signed integer.</td>
 </tr>
 <tr>
   <td><code class="code">INT_SLESSEQUAL</code></td>
   <td>
-    <div class="informaltable">
-<a name="slessequalref.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="slessequalref.htmltable"><tbody>
 <tr>
           <td><code class="code">v0 s&lt;= v1</code></td>
         </tr>
@@ -238,15 +243,13 @@ to lowest.
           <td><code class="code">v1 s&gt;= v0</code></td>
         </tr>
 </tbody></table>
-</div>
   </td>
   <td>True if v0 is less than or equal to v1 as a signed integer.</td>
 </tr>
 <tr>
   <td><code class="code">INT_LESS</code></td>
   <td>
-    <div class="informaltable">
-<a name="lessref.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="lessref.htmltable"><tbody>
 <tr>
           <td><code class="code">v0 &lt; v1</code></td>
         </tr>
@@ -254,15 +257,13 @@ to lowest.
           <td><code class="code">v1 &gt; v0</code></td>
         </tr>
 </tbody></table>
-</div>
   </td>
   <td>True if v0 is less than v1 as an unsigned integer.</td>
 </tr>
 <tr>
   <td><code class="code">INT_LESSEQUAL</code></td>
   <td>
-    <div class="informaltable">
-<a name="lessequalref.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="lessequalref.htmltable"><tbody>
 <tr>
           <td><code class="code">v0 &lt;= v1</code></td>
         </tr>
@@ -270,15 +271,13 @@ to lowest.
           <td><code class="code">v1 &gt;= v0</code></td>
         </tr>
 </tbody></table>
-</div>
   </td>
   <td>True if v0 is less than or equal to v1 as an unsigned integer.</td>
 </tr>
 <tr>
   <td><code class="code">FLOAT_LESS</code></td>
   <td>
-    <div class="informaltable">
-<a name="flessref.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="flessref.htmltable"><tbody>
 <tr>
           <td><code class="code">v0 f&lt; v1</code></td>
         </tr>
@@ -286,15 +285,13 @@ to lowest.
           <td><code class="code">v1 f&gt; v0</code></td>
         </tr>
 </tbody></table>
-</div>
   </td>
   <td>True if v0 is less than v1 viewed as floating-point numbers.</td>
 </tr>
 <tr>
   <td><code class="code">FLOAT_LESSEQUAL</code></td>
   <td>
-    <div class="informaltable">
-<a name="flessequalref.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="flessequalref.htmltable"><tbody>
 <tr>
           <td><code class="code">v0 f&lt;= v1</code></td>
         </tr>
@@ -302,7 +299,6 @@ to lowest.
           <td><code class="code">v1 f&gt;= v0</code></td>
         </tr>
 </tbody></table>
-</div>
   </td>
   <td>True if v0 is less than or equal to v1 as floating-point.</td>
 </tr>
@@ -454,7 +450,7 @@ The following table lists the basic forms of a semantic statement.
 <div class="informalexample">
 <div class="table">
 <a name="statementref.htmltable"></a><p class="title"><b>Table 6. Basic Statements and Associated Operators</b></p>
-<div class="table-contents"><table width="95%" frame="box" rules="all">
+<div class="table-contents"><table width="95%" frame="box" rules="all" id="statementref.htmltable">
 <col width="25%">
 <col width="25%">
 <col width="50%">
@@ -472,8 +468,7 @@ The following table lists the basic forms of a semantic statement.
 <tr>
   <td><code class="code">STORE</code></td>
   <td>
-    <div class="informaltable">
-<a name="storeref.htmltable"></a><table frame="none"><tbody>
+    <table frame="none" id="storeref.htmltable"><tbody>
 <tr>
           <td><code class="code">*v0 = v1</code></td>
         </tr>
@@ -487,7 +482,6 @@ The following table lists the basic forms of a semantic statement.
           <td><code class="code">*[spc]:4 v0 = v1;</code></td>
         </tr>
 </tbody></table>
-</div>
   </td>
   <td>Store v1 in default space using v0
       As pointer. Optionally specify space
@@ -533,7 +527,7 @@ The following table lists the branching operations and the statements which invo
 <div class="informalexample">
 <div class="table">
 <a name="branchref.htmltable"></a><p class="title"><b>Table 7. Branching Statements</b></p>
-<div class="table-contents"><table width="95%" frame="box" rules="all">
+<div class="table-contents"><table width="95%" frame="box" rules="all" id="branchref.htmltable">
 <col width="25%">
 <col width="25%">
 <col width="50%">
