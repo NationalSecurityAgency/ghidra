@@ -72,8 +72,8 @@ public class GdbManagerImpl implements GdbManager {
 		CLI, MI2;
 	}
 
-	private static final boolean LOG_IO = true |
-		Boolean.parseBoolean(System.getProperty("agent.gdb.manager.log"));
+	private static final boolean LOG_IO =
+		Boolean.getBoolean("agent.gdb.manager.log");
 	private static PrintWriter DBG_LOG = null;
 	private static final String PROMPT_GDB = "(gdb)";
 	public static final int INTERRUPT_MAX_RETRIES = 3;
