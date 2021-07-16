@@ -103,5 +103,280 @@ NOINLINE i4 breakOnSubDone(const char *file, int line, const char *func);
 #define ASSERTF4(val, exp)  assertF4(__FILE__, __LINE__, 0, val, exp);
 #define ASSERTF8(val, exp)  assertF8(__FILE__, __LINE__, 0, val, exp);
 
-#endif /* PCODE_TEST_H */
 
+
+#ifndef PCODE_COMPLEX_LOGIC
+#define PCODE_COMPLEX_LOGIC(typ)			\
+typ typ##_complexLogic(					\
+			typ a,				\
+			typ b,				\
+			typ c,				\
+			typ d,				\
+			typ e,				\
+			typ f)				\
+{							\
+	typ ret = 0;					\
+							\
+	if (a > b && b > c || d < e && f < e)		\
+		ret += 1;				\
+	if (a != b || a != c && d != e || f != e)	\
+		ret += 2;				\
+	if (a && b && c || d && e && f)			\
+		ret += 4;				\
+	if (a || b || c && d || e || f)			\
+		ret += 8;				\
+	return ret;					\
+}
+#endif
+#ifndef PCODE_COMPARE_LOGIC
+#define PCODE_COMPARE_LOGIC(typ)	\
+typ typ##_compareLogic(			\
+			typ lhs,	\
+			typ rhs)	\
+{					\
+	if (lhs < rhs)			\
+		lhs += 2;		\
+	if (lhs > rhs)			\
+		lhs += 4;		\
+	if (lhs == 0)			\
+		lhs += 8;		\
+	if (lhs != rhs)			\
+		lhs += 16;		\
+	return lhs;			\
+}
+#endif
+#ifndef PCODE_SUBTRACT
+#define PCODE_SUBTRACT(typ)		\
+typ typ##_subtract(			\
+			typ lhs,	\
+			typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs - rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_ADDITION
+#define PCODE_ADDITION(typ)		\
+typ typ##_addition(			\
+			typ lhs,	\
+			typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs + rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_BITWISE_AND
+#define PCODE_BITWISE_AND(typ)		\
+typ typ##_bitwiseAnd(			\
+			typ lhs,	\
+			typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs & rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_BITWISE_OR
+#define PCODE_BITWISE_OR(typ)		\
+typ typ##_bitwiseOr(			\
+			 typ lhs,	\
+			 typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs | rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_LOGICAL_AND
+#define PCODE_LOGICAL_AND(typ)		\
+typ typ##_logicalAnd(			\
+			typ lhs,	\
+			typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs && rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_LOGICAL_OR
+#define PCODE_LOGICAL_OR(typ)		\
+typ typ##_logicalOr(			\
+			typ lhs,	\
+			typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs || rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_LESSTHANEQUALS
+#define PCODE_LESSTHANEQUALS(typ)	\
+typ typ##_lessThanEquals(		\
+			typ lhs,	\
+			typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs <= rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_LESSTHAN
+#define PCODE_LESSTHAN(typ)		\
+typ typ##_lessThan(			\
+			typ lhs,	\
+			typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs < rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_GREATERTHANEQUALS
+#define PCODE_GREATERTHANEQUALS(typ)	\
+typ typ##_greaterThanEquals(		\
+			typ lhs,	\
+			typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs >= rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_GREATERTHAN
+#define PCODE_GREATERTHAN(typ)		\
+typ typ##_greaterThan(			\
+			typ lhs,	\
+			typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs > rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_EQUALS
+#define PCODE_EQUALS(typ)		\
+typ typ##_equals(			\
+			 typ lhs,	\
+			 typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs == rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_NOTEQUALS
+#define PCODE_NOTEQUALS(typ)		\
+typ typ##_notEquals(			\
+			 typ lhs,	\
+			 typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs != rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_XOR
+#define PCODE_XOR(typ)			\
+typ typ##_bitwiseXor(			\
+			typ lhs,	\
+			typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs ^ rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_SHIFTLEFT
+#define PCODE_SHIFTLEFT(typ)		\
+typ typ##_shiftLeft(			\
+			typ lhs,	\
+			typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs << rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_SHIFTRIGHT
+#define PCODE_SHIFTRIGHT(typ)		\
+typ typ##_shiftRight(			\
+			typ lhs,	\
+			typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs >> rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_LOGICAL_NOT
+#define PCODE_LOGICAL_NOT(typ)		\
+typ typ##_logicalNot(typ lhs)		\
+{					\
+	typ z;				\
+	z = !lhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_UNARY_PLUS
+#define PCODE_UNARY_PLUS(typ)		\
+typ typ##_unaryPlus(typ lhs)		\
+{					\
+	typ z;				\
+	z = +lhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_UNARY_MINUS
+#define PCODE_UNARY_MINUS(typ)		\
+typ typ##_unaryMinus(typ lhs)		\
+{					\
+	typ z;				\
+	z = -lhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_DIV
+#define PCODE_DIV(typ)			\
+typ typ##_divide(			\
+			typ lhs,	\
+			typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs / rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_REM
+#define PCODE_REM(typ)			\
+typ typ##_remainder(			\
+			typ lhs,	\
+			typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs % rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_MUL
+#define PCODE_MUL(typ)			\
+typ typ##_multiply(			\
+			typ lhs,	\
+			typ rhs)	\
+{					\
+	typ z;				\
+	z = lhs * rhs;			\
+	return z;			\
+}
+#endif
+#ifndef PCODE_CONVERT
+#define PCODE_CONVERT(typ, typ0)	\
+typ0 typ##_to_##typ0##_convert(typ a)	\
+{					\
+	typ x = a;			\
+	typ0 y = (typ0)x;		\
+	return y;			\
+}
+#endif
+#endif /* PCODE_TEST_H */

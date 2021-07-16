@@ -308,6 +308,51 @@ typedef i1 size_t;
 #define I8_MAX                   9223372036854775807LL
 #define I8_MIN                   (-I8_MAX - 1LL)
 
+/* made up useful defines */
+#define U1_MSB   0x80
+#define U2_MSB   0x8000
+#define U21_MSB  0xff80
+#define U4_MSB   0x80000000
+#define U41_MSB  0xffffff80
+#define U42_MSB  0xffff8000
+#define U8_MSB   0x8000000000000000
+#define U81_MSB  0xffffffffffffff80
+#define U82_MSB  0xffffffffffff8000
+#define U84_MSB  0xffffffff80000000
+#define U1_MAGIC 0x11
+#define U2_MAGIC 0x1211
+#define U4_MAGIC 0x14131211
+#define U8_MAGIC 0x1817161514131211
+#define U1_55    0x55
+#define U1_56    0x56
+#define U1_AA    0xAA
+#define U1_AB    0xAB
+#define U2_55    0x5555
+#define U2_56    0x5556
+#define U2_AA    0xAAAA
+#define U2_AB    0xAAAB
+#define U21_AB   0xFFAB
+#define U21_56   0xFF56
+#define U4_55    0x55555555
+#define U4_56    0x55555556
+#define U4_AA    0xAAAAAAAA
+#define U4_AB    0xAAAAAAAB
+#define U41_56   0xFFFFFF56
+#define U41_AB   0xFFFFFFAB
+#define U42_56   0xFFFF5556
+#define U42_AB   0xFFFFAAAB
+#define U8_55    0x5555555555555555
+#define U8_56    0x5555555555555556
+#define U8_AA    0xAAAAAAAAAAAAAAAA
+#define U8_AB    0xAAAAAAAAAAAAAAAB
+#define U81_AB   0xFFFFFFFFFFFFFFAB
+#define U82_AB   0xFFFFFFFFFFFFAAAB
+#define U84_AB   0xFFFFFFFFAAAAAAAB
+#define U81_56   0xFFFFFFFFFFFFFF56
+#define U82_56   0xFFFFFFFFFFFF5556
+
+
+
 /* Simulate float.h assumes IEEE standard format and 4 8 10 byte formats (FLT_, DBL_, LDBL_) (FLT_ maps to F4, DBL_ maps to F8) */
 
 #define DBL_DIG                  15
@@ -347,6 +392,9 @@ typedef i1 size_t;
 #define FLT_ROUNDS               1
 
 #define PI_SHORT 3.14
+#define M_PI     3.14159265358979323846
+#define M_PIl    3.141592653589793238462643383279502884L
+
 
 #ifdef HAS_LIBC
 #include <stdio.h>

@@ -2227,4 +2227,19 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 		// stub
 	}
 
+	public final void test_CONVERT() {
+		// stub
+	}
+
+	public final void test_CONVERT_DOUBLE() {
+		// stub
+	}
+
+	public final void test_CONVERT_FLOAT() {
+		// stub
+	}
+
+	public final void test_CONVERT_LONGLONG() {
+		// stub
+	}
 }

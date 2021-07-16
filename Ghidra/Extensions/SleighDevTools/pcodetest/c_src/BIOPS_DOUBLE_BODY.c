@@ -16,121 +16,42 @@
 #include "pcode_test.h"
 #ifdef HAS_DOUBLE
 
-/* Comparison operators */
-f8 f8_greaterThan(f8 lhs, f8 rhs)
-{
-	f8 z;
+PCODE_COMPARE_LOGIC(f8)
 
-	z = lhs > rhs;
-	return z;
-}
+PCODE_GREATERTHAN(f8)
 
-f8 f8_greaterThanEquals(f8 lhs, f8 rhs)
-{
-	f8 z;
+PCODE_GREATERTHANEQUALS(f8)
 
-	z = lhs >= rhs;
-	return z;
-}
+PCODE_LESSTHAN(f8)
 
-f8 f8_lessThan(f8 lhs, f8 rhs)
-{
-	f8 z;
+PCODE_LESSTHANEQUALS(f8)
 
-	z = lhs < rhs;
-	return z;
-}
+PCODE_EQUALS(f8)
 
-f8 f8_lessThanEquals(f8 lhs, f8 rhs)
-{
-	f8 z;
+PCODE_NOTEQUALS(f8)
 
-	z = lhs <= rhs;
-	return z;
-}
+PCODE_LOGICAL_AND(f8)
 
-f8 f8_equals(f8 lhs, f8 rhs)
-{
-	f8 z;
+PCODE_LOGICAL_OR(f8)
 
-	z = lhs == rhs;
-	return z;
-}
+PCODE_LOGICAL_NOT(f8)
 
-f8 f8_notEquals(f8 lhs, f8 rhs)
-{
-	f8 z;
+PCODE_UNARY_PLUS(f8)
 
-	z = lhs != rhs;
-	return z;
-}
+PCODE_UNARY_MINUS(f8)
 
-/* Bitwise operators */
+PCODE_ADDITION(f8)
 
-/* Logical operators */
-f8 f8_logicalAnd(f8 lhs, f8 rhs)
-{
-	f8 z;
+PCODE_SUBTRACT(f8)
 
-	z = lhs && rhs;
-	return z;
-}
+#ifdef HAS_MULTIPLY
 
-f8 f8_logicalOr(f8 lhs, f8 rhs)
-{
-	f8 z;
+PCODE_MUL(f8)
 
-	z = lhs || rhs;
-	return z;
-}
+#endif /* #ifdef HAS_MULTIPLY */
+#ifdef HAS_DIVIDE
 
-f8 f8_logicalNot(f8 lhs)
-{
-	f8 z;
+PCODE_DIV(f8)
 
-	z = !lhs;
-	return z;
-}
-
-/* Arithmetic operators */
-f8 f8_unaryMinus(f8 lhs)
-{
-	f8 z;
-
-	z = -lhs;
-	return z;
-}
-
-f8 f8_unaryPlus(f8 lhs)
-{
-	f8 z;
-
-	z = +lhs;
-	return z;
-}
-
-f8 f8_addition(f8 lhs, f8 rhs)
-{
-	f8 z;
-
-	z = lhs + rhs;
-	return z;
-}
-
-f8 f8_subtract(f8 lhs, f8 rhs)
-{
-	f8 z;
-
-	z = lhs - rhs;
-	return z;
-}
-
-f8 f8_multiply(f8 lhs, f8 rhs)
-{
-	f8 z;
-
-	z = lhs * rhs;
-	return z;
-}
-
+#endif /* #ifdef HAS_DIVIDE */
 #endif /* #ifdef HAS_DOUBLE */

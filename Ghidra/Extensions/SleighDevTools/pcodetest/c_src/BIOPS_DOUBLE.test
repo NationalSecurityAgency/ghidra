@@ -17,6 +17,19 @@ TEST f8_greaterThan_Main()
 #endif
 
 #ifdef HAS_DOUBLE
+TEST f8_compareLogic_Main()
+{
+	extern f8 f8_compareLogic(f8 lhs, f8 rhs);
+	ASSERTF8(f8_compareLogic(0x1, 0x1), 21);
+	ASSERTF8(f8_compareLogic(0x1, 0x2), 21);
+	ASSERTF8(f8_compareLogic(0x2, 0x1), 22);
+	ASSERTF8(f8_compareLogic(-0x1, -0x1), 21);
+	ASSERTF8(f8_compareLogic(-0x1, -0x2), 21);
+	ASSERTF8(f8_compareLogic(-0x2, -0x1), 24);
+}
+#endif
+
+#ifdef HAS_DOUBLE
 TEST f8_greaterThanEquals_Main()
 {
 	extern f8 f8_greaterThanEquals(f8 lhs, f8 rhs);
