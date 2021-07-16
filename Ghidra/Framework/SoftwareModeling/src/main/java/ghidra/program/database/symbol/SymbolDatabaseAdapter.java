@@ -216,19 +216,6 @@ abstract class SymbolDatabaseAdapter {
 	abstract void moveAddress(Address oldAddr, Address newAddr) throws IOException;
 
 	/**
-	 * Update the addresses in all records to reflect the movement of a memory block.
-	 * @param fromAddr minimum address of the original block to be moved
-	 * @param toAddr the new minimum address after the block move
-	 * @param length the number of bytes in the memory block being moved
-	 * @param monitor progress monitor
-	 * @return returns the set of addresses where symbols where not moved because they were anchored
-	 * @throws CancelledException
-	 * @throws IOException
-	 */
-	abstract void moveAddressRange(Address fromAddr, Address toAddr, long length,
-			TaskMonitor monitor) throws CancelledException, IOException;
-
-	/**
 	 * Delete all records which contain addresses within the specified range
 	 * @param startAddr minimum address in range
 	 * @param endAddr maximum address in range

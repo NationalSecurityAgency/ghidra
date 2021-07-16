@@ -21,7 +21,6 @@ import java.util.Set;
 
 import db.*;
 import ghidra.program.database.map.*;
-import ghidra.program.database.util.DatabaseTableUtils;
 import ghidra.program.database.util.RecordFilter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -271,10 +270,6 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 			SYMBOL_ADDR_COL, addrMap, start, end, forward));
 	}
 
-	void deleteExternalEntries(Address start, Address end) throws IOException {
-		AddressRecordDeleter.deleteRecords(symbolTable, SYMBOL_ADDR_COL, addrMap, start, end, null);
-	}
-
 	@Override
 	void moveAddress(Address oldAddr, Address newAddr) throws IOException {
 		LongField oldKey = new LongField(addrMap.getKey(oldAddr, false));
@@ -285,14 +280,6 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 			rec.setLongValue(SYMBOL_ADDR_COL, newKey);
 			symbolTable.putRecord(rec);
 		}
-	}
-
-	@Override
-	void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
-			throws CancelledException, IOException {
-
-		DatabaseTableUtils.updateIndexedAddressField(symbolTable, SYMBOL_ADDR_COL, addrMap,
-			fromAddr, toAddr, length, null, monitor);
 	}
 
 	@Override

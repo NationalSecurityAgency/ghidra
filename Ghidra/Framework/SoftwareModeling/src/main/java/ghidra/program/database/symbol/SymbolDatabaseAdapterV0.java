@@ -188,18 +188,8 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 				V0_SYMBOL_ADDR_COL, addrMap, start, end, forward)));
 	}
 
-	void deleteExternalEntries(Address start, Address end) {
-		throw new UnsupportedOperationException();
-	}
-
 	@Override
 	void moveAddress(Address oldAddr, Address newAddr) throws IOException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
-			throws CancelledException, IOException {
 		throw new UnsupportedOperationException();
 	}
 

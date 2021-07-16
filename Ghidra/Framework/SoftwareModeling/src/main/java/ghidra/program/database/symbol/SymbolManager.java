@@ -2150,19 +2150,169 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	@Override
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws CancelledException {
+		if (fromAddr.equals(toAddr)) {
+			return;
+		}
+		Set<Address> primaryFixups = new HashSet<>();
 		lock.acquire();
 		try {
 			invalidateCache(true);
-			adapter.moveAddressRange(fromAddr, toAddr, length, monitor);
-			historyAdapter.moveAddressRange(fromAddr, toAddr, length, addrMap, monitor);
-			fixupPinnedSymbols(toAddr, fromAddr, toAddr, toAddr.add(length - 1));
-		}
-		catch (IOException e) {
-			program.dbError(e);
+			Address lastAddress = fromAddr.add(length-1);
+			AddressRange range = new AddressRangeImpl(fromAddr, lastAddress);
+
+			// in order to handle overlapping ranges, need to iterate in the correct direction
+			SymbolIterator symbolIterator = (fromAddr.compareTo(toAddr) > 0) ? 
+						getSymbolIterator(fromAddr, true) :
+						getSymbolIterator(lastAddress, false);
+			
+			for (Symbol symbol : symbolIterator) {
+				if (!range.contains(symbol.getAddress())) {
+					break;
+				}
+				Address newAddress = toAddr.add(symbol.getAddress().subtract(fromAddr));
+
+				// any address that has symbols added or removed may have a corrupted primary (too many or non-existent)
+				primaryFixups.add(symbol.getAddress());
+				primaryFixups.add(newAddress);
+				
+				moveSymbolForMemoryBlockMove((SymbolDB) symbol, newAddress);
+			}
+			// go back and make sure there is a valid primary symbol at touched addressess
+			fixupPrimarySymbols(primaryFixups);
 		}
 		finally {
 			lock.release();
 		}
+	}
+
+	// This method is specifically for moving symbols in the context of a memory block move
+	// Since this is a memory block move, the destination range can not contain any functions, but
+	// it may contain labels so we may have to deal with collisions. The other complication we have
+	// to deal with is functions in the moved block that are currently pinned.
+	private void moveSymbolForMemoryBlockMove(SymbolDB symbol, Address newAddress) {
+		Address oldAddress = symbol.getAddress();
+
+		// If the symbol is not pinned go ahead and move it. Only wrinkle is that there may
+		// be a matching symbol at the destination. In that unlikely event, remove it, but preserve
+		// its pinned status
+		if (!symbol.isPinned()) {
+			// if we conflict with a symbol at the destination, delete it (it can't be a function)
+			// and retain its pinned status if it had one.
+			boolean shouldPin = deleteMatchingSymbolAndCheckPinnedStatus(symbol, newAddress);
+			symbol.moveLowLevel(newAddress, null, null, null, shouldPin);
+			moveLabelHistory(oldAddress, newAddress);
+			return;
+		}
+
+		// the other complicated case is a pinned function symbol. In this case we need to move
+		// the function symbol, but create a replacement label in the pinned source location. Also,
+		// if there is a primary symbol at the destination, we need to remove it and set the
+		// function's symbol to that name.
+		if (symbol.getSymbolType() == SymbolType.FUNCTION) {
+			String originalName = symbol.getName();
+			Namespace originalNamespace = symbol.getParentNamespace();
+			SourceType originalSource = symbol.getSource();
+			String newName = "";
+			Namespace newNamespace = namespaceMgr.getGlobalNamespace();
+			SourceType newSource = SourceType.DEFAULT;
+			boolean newPinned = false;
+			// see if there is a symbol at the destination
+			Symbol destinationPrimary = getPrimarySymbol(newAddress);
+
+			// so there is a symbol at the destination, steal its name and namespace and delete it.
+			if (destinationPrimary != null) {
+				newName = destinationPrimary.getName();
+				newNamespace = destinationPrimary.getParentNamespace();  // use the destination's namespace
+				newSource = destinationPrimary.getSource();
+				newPinned = destinationPrimary.isPinned();
+				destinationPrimary.delete();
+			}
+			try {
+				// so move the symbol to the new address and update namespace, source, and pinned state
+				symbol.moveLowLevel(newAddress, newName, newNamespace, newSource, newPinned);
+
+				// create a pinned label to replace the pinned function symbol at the source.
+				Symbol newSymbol =
+					createLabel(oldAddress, originalName, originalNamespace, originalSource);
+				newSymbol.setPinned(true);
+			}
+			catch (InvalidInputException e) {
+				// can't happen - name was already valid
+			}
+		}
+	}
+
+	// Checks if there is a matching symbol at the given address and deletes it. Also returns if
+	// the deleted symbol was pinned which we will preserve on the moved symbol
+	private boolean deleteMatchingSymbolAndCheckPinnedStatus(SymbolDB symbol, Address address) {
+		boolean isPinned = false;
+		Symbol match = getSymbol(symbol.getName(), address, symbol.getParentNamespace());
+		if (match != null) {
+			isPinned = match.isPinned();
+			match.delete();
+		}
+		return isPinned;
+	}
+
+	/**
+	 * Checks to make sure there is a single valid primary symbol at each address
+	 * @param set the set of addresses that may have to be fixed up
+	 */
+	private void fixupPrimarySymbols(Set<Address> set) {
+		for (Address address : set) {
+			Symbol[] symbols = getSymbols(address);
+
+			// check if there is a valid consistent primary state amongst all the symbols at an address.
+			if (hasValidPrimary(symbols)) {
+				continue;
+			}
+
+			// otherwise, set them all to non-primary, find the best symbol to make primary and
+			// make that one the primary symbol
+			setAllSymbolsToNonPrimary(symbols);
+			Symbol bestPrimary = findBestPrimary(symbols);
+			bestPrimary.setPrimary();
+		}
+	}
+
+	private void setAllSymbolsToNonPrimary(Symbol[] symbols) {
+		for (Symbol symbol : symbols) {
+			if (symbol instanceof CodeSymbol) {
+				((CodeSymbol) symbol).setPrimary(false);
+			}
+		}
+	}
+
+	private Symbol findBestPrimary(Symbol[] symbols) {
+		// first see if see if there is a function, if so that has to be the primary symbol
+		for (Symbol symbol : symbols) {
+			if (symbol.getSymbolType() == SymbolType.FUNCTION) {
+				return symbol;
+			}
+		}
+
+		// else just pick one. This is such a rare case, it isn't worth doing something more clever
+		return symbols[0];
+	}
+
+	/**
+	 * Checks if the givens symbols from the same address have exactly one primary symbol amongst them
+	 * @param symbols the array of symbols at a an address
+	 * @return true if there is exactly one primary symbol at the address (also true if no symbols at address)
+	 */
+	private boolean hasValidPrimary(Symbol[] symbols) {
+		if (symbols.length == 0) {
+			return true;
+		}
+		if (!symbols[0].isPrimary()) {
+			return false;
+		}
+		for (int i = 1; i < symbols.length; i++) {
+			if (symbols[i].isPrimary()) {
+				return false;
+			}
+		}
+		return getPrimarySymbol(symbols[0].getAddress()) == symbols[0];
 	}
 
 	@Override
@@ -2182,43 +2332,109 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		}
 	}
 
-	public void imageBaseChanged(Address oldBase, Address base) {
-		fixupPinnedSymbols(base, oldBase, program.getMinAddress(), program.getMaxAddress());
+	public void imageBaseChanged(Address oldBase, Address newBase) {
+		AddressSpace space = newBase.getAddressSpace();
+		fixupPinnedSymbolsAfterRebase(oldBase, newBase, space.getMinAddress(),
+			space.getMaxAddress());
 	}
 
-	private void fixupPinnedSymbols(Address currentBase, Address newBase, Address minAddr,
+	private void fixupPinnedSymbolsAfterRebase(Address oldBase, Address base, Address minAddr,
 			Address maxAddr) {
-		List<SymbolDB> fixupSymbols = new ArrayList<>();
+
+		List<SymbolDB> fixupPinnedSymbols = findPinnedSymbols(minAddr, maxAddr);
+
+		Set<Address> primaryFixups = new HashSet<>();
+		for (SymbolDB symbol : fixupPinnedSymbols) {
+			Address currentAddress = symbol.getAddress();
+			Address beforeBaseChangeAddress = oldBase.add(currentAddress.subtract(base));
+			primaryFixups.add(currentAddress);
+			primaryFixups.add(beforeBaseChangeAddress);
+
+			// see if there is a name collision for the pinned symbol we are about to move back
+			Symbol match =
+				getSymbol(symbol.getName(), beforeBaseChangeAddress, symbol.getParentNamespace());
+
+			if (symbol.getSymbolType() == SymbolType.FUNCTION) {
+				fixupPinnedFunctionSymbolAfterRebase(symbol, beforeBaseChangeAddress, match);
+			}
+			else {
+				fixupPinnedLabelSymbolAfterRebase(symbol, beforeBaseChangeAddress, match);
+			}
+		}
+		fixupPrimarySymbols(primaryFixups);
+	}
+
+	private void fixupPinnedLabelSymbolAfterRebase(SymbolDB symbol, Address newAddress,
+			Symbol match) {
+		if (match != null) {
+			match.setPinned(true);
+			symbol.delete();
+		}
+		else {
+			symbol.moveLowLevel(newAddress, null, null, null, true);
+		}
+	}
+
+	private void fixupPinnedFunctionSymbolAfterRebase(SymbolDB symbol, Address newAddress,
+			Symbol match) {
+		// since we are a function, we are not moving the symbol, so we must either pin a
+		// matching symbol at the destination or create a new pinned label at the destination.
+		if (match != null) {
+			match.setPinned(true);
+		}
+		else {
+			try {
+				Symbol newLabel =
+					createLabel(newAddress, symbol.getName(), symbol.getParentNamespace(),
+					symbol.getSource());
+				newLabel.setPinned(true);
+			}
+			catch (InvalidInputException e) {
+				// can't happen, we already know it is valid
+			}
+		}
+
+		// unpin the function symbol since it is not moving.
+		symbol.setPinned(false);
+
+		// now, either set the function to default or find another symbol to promote.
+		String newName = "";
+		Namespace newNamespace = namespaceMgr.getGlobalNamespace();
+		SourceType newSource = SourceType.DEFAULT;
+		Symbol symbolToPromote = findSymbolToPromote(symbol.getAddress());
+		if (symbolToPromote != null) {
+			newName = symbolToPromote.getName();
+			newNamespace = symbolToPromote.getParentNamespace();
+			newSource = symbolToPromote.getSource();
+			symbolToPromote.delete();
+		}
+		try {
+			symbol.setNameAndNamespace(newName, newNamespace, newSource);
+		}
+		catch (DuplicateNameException | InvalidInputException | CircularDependencyException e) {
+			// can't happen
+		}
+	}
+
+	private List<SymbolDB> findPinnedSymbols(Address minAddr, Address maxAddr) {
+		List<SymbolDB> pinnedSymbols = new ArrayList<>();
 		for (Symbol symbol : getSymbolIterator(minAddr, true)) {
 			if (symbol.getAddress().compareTo(maxAddr) > 0) {
 				break;
 			}
 			if (symbol.isPinned()) {
-				fixupSymbols.add((SymbolDB) symbol);
+				pinnedSymbols.add((SymbolDB) symbol);
 			}
 		}
-		for (SymbolDB symbol : fixupSymbols) {
-			if (symbol.getSymbolType() == SymbolType.FUNCTION) {
-				String name = symbol.getName();
-				SourceType source = symbol.getSource();
-				try {
-					symbol.setPinned(false);
-					symbol.setName("", SourceType.DEFAULT);
-					Address symbolAddr =
-						newBase.addNoWrap(symbol.getAddress().subtract(currentBase));
-					Symbol newSymbol = createLabel(symbolAddr, name, source);
-					newSymbol.setPinned(true);
-					moveLabelHistory(symbol.getAddress(), newSymbol.getAddress());
-				}
-				catch (Exception e) {
-					throw new AssertException("Should not get exception here.", e);
-				}
-			}
-			else {
-				symbol.move(currentBase, newBase);
-			}
-		}
+		return pinnedSymbols;
+	}
 
+	private Symbol findSymbolToPromote(Address address) {
+		Symbol[] symbols = getSymbols(address);
+		if (symbols.length > 1) {
+			return symbols[1];
+		}
+		return null;
 	}
 
 	void moveLabelHistory(Address oldAddress, Address address) {
