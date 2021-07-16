@@ -369,18 +369,21 @@ public abstract class MemorySectionResolver {
 							comment = comment + " - displaced by " + priorityBlock.getName();
 						}
 					}
-					// As an overlay no conflict should ever occur
 					block = createInitializedBlock(section.key, true, blockName, physicalStartAddr,
 						fileOffset, rangeSize, comment, section.isReadable(), section.isWritable(),
 						section.isExecute(), monitor);
+				}
+				else {
+					block = createInitializedBlock(section.key, false, blockName, physicalStartAddr,
+						fileOffset, rangeSize, section.getComment(), section.isReadable(),
+						section.isWritable(), section.isExecute(), monitor);
+				}
+				if (block != null) {
 					minAddr = block.getStart();
 					maxAddr = block.getEnd();
 				}
 				else {
 					// block may be null due to unexpected conflict or pruning - allow to continue
-					block = createInitializedBlock(section.key, false, blockName, physicalStartAddr,
-						fileOffset, rangeSize, section.getComment(), section.isReadable(),
-						section.isWritable(), section.isExecute(), monitor);
 					minAddr = physicalStartAddr;
 					maxAddr = physicalStartAddr.addNoWrap(rangeSize - 1);
 				}

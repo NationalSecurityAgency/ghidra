@@ -1962,7 +1962,11 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			if (length == 0) {
 				length = 1;
 			}
-			program.getListing().createData(address, Undefined.getUndefinedDataType(length));
+			Data d = listing.getDefinedDataAt(address);
+			if (d != null && d.getLength() == length) {
+				return d;
+			}
+			listing.createData(address, Undefined.getUndefinedDataType(length));
 		}
 		catch (CodeUnitInsertionException e) {
 			Msg.warn(this, "ELF data markup conflict at " + address);
