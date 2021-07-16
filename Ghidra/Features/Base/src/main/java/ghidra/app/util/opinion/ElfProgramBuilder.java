@@ -2707,8 +2707,11 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					if (block == null) {
 						// Create new zeroed segment block with no bytes from file
 						String blockName = String.format("%s%d", SEGMENT_NAME_PREFIX, i);
-						memory.createInitializedBlock(blockName, expandStart, expandSize, (byte) 0,
+						MemoryBlock newBlock = memory.createInitializedBlock(blockName, expandStart,
+							expandSize, (byte) 0,
 							monitor, false);
+						newBlock.setSourceName(BLOCK_SOURCE_NAME);
+						newBlock.setComment("Zero-initialized segment");
 					}
 					else {
 						// Expand tail end of segment which had portion loaded from file
@@ -2716,7 +2719,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 						MemoryBlock expandBlock =
 							memory.createInitializedBlock(block.getName() + ".expand", expandStart,
 								expandSize, (byte) 0, monitor, false);
-						memory.join(block, expandBlock);
+						MemoryBlock extBlock = memory.join(block, expandBlock);
+						extBlock.setComment(extBlock.getComment() + " (zero-extended)");
 						joinProgramTreeFragments(oldBlockEnd, expandStart);
 					}
 				}
@@ -2819,8 +2823,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		long addr = elfProgramHeader.getVirtualAddress();
 		long loadSizeBytes = elfProgramHeader.getAdjustedLoadSize();
-		long fullSizeBytes =
-			elfProgramHeader.getAdjustedMemorySize() * space.getAddressableUnitSize();
+		long fullSizeBytes = elfProgramHeader.getAdjustedMemorySize();
 
 		boolean maintainExecuteBit = elf.e_shnum() == 0;
 
@@ -3289,7 +3292,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	@Override
 	protected MemoryBlock createUninitializedBlock(MemoryLoadable loadable, boolean isOverlay,
 			String name, Address start, long dataLength, String comment, boolean r, boolean w,
-			boolean x) throws IOException, AddressOverflowException, CancelledException {
+			boolean x) throws IOException, AddressOverflowException {
 
 		// TODO: MemoryBlockUtil poorly and inconsistently handles duplicate name errors (can throw RuntimeException).
 		// Are we immune from such errors? If not, how should they be handled?
