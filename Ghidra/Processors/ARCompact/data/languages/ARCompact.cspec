@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <data_organization>  <!-- These tags were copied from https://github.com/xyzz/ghidra-mep -->
+    <absolute_max_alignment value="0" />
+    <machine_alignment value="2" />
+    <default_alignment value="1" />
+    <default_pointer_alignment value="4" />
+    <pointer_size value="4" />
+    <wchar_size value="4" />
+    <short_size value="2" />
+    <integer_size value="4" />
+    <long_size value="4" />
+    <long_long_size value="8" />
+    <float_size value="4" />
+    <double_size value="8" />
+    <long_double_size value="8" />
+    <size_alignment_map>
+      <entry size="1" alignment="1" />
+      <entry size="2" alignment="2" />
+      <entry size="4" alignment="4" />
+      <entry size="8" alignment="8" />
+    </size_alignment_map>
+  </data_organization>
+  <global>
+    <range space="ram"/>
+    <range space="auxregs"/>
+  </global>
+  <stackpointer register="sp" space="ram"/>
+  <funcptr align="2"/>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="0" stackshift="0">
+      <input>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="r0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="r1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="r2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="r3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="r4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="r5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="r6"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="r7"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="4">
+          <addr offset="0" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="r0"/>
+        </pentry>
+        <pentry minsize="5" maxsize="8">
+          <addr space="join" piece1="r1" piece2="r0"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="r13"/>
+        <register name="r14"/>
+        <register name="r15"/>
+        <register name="r16"/>
+        <register name="r17"/>
+        <register name="r18"/>
+        <register name="r19"/>
+        <register name="r20"/>
+        <register name="r21"/>
+        <register name="r22"/>
+        <register name="r23"/>
+        <register name="r25"/>
+        <register name="gp"/>
+        <register name="fp"/>
+        <register name="sp"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+  <prototype name="__stdcall64" extrapop="0" stackshift="0" strategy="register">
+    <input>
+      <pentry minsize="1" maxsize="4" extension="inttype">
+        <register name="r0"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" extension="inttype">
+        <register name="r1"/>
+      </pentry>
+      <pentry minsize="5" maxsize="8">
+        <addr space="join" piece1="r1" piece2="r0"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" extension="inttype">
+        <register name="r2"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" extension="inttype">
+        <register name="r3"/>
+      </pentry>
+      <pentry minsize="5" maxsize="8">
+        <addr space="join" piece1="r3" piece2="r2"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" extension="inttype">
+        <register name="r4"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" extension="inttype">
+        <register name="r5"/>
+      </pentry>
+      <pentry minsize="5" maxsize="8">
+        <addr space="join" piece1="r5" piece2="r4"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" extension="inttype">
+        <register name="r6"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" extension="inttype">
+        <register name="r7"/>
+      </pentry>
+      <pentry minsize="5" maxsize="8">
+        <addr space="join" piece1="r7" piece2="r6"/>
+      </pentry>
+      <pentry minsize="1" maxsize="500" align="4">
+        <addr offset="0" space="stack"/>
+      </pentry>
+    </input>
+    <output>
+      <pentry minsize="1" maxsize="4" extension="inttype">
+        <register name="r0"/>
+      </pentry>
+      <pentry minsize="5" maxsize="8">
+        <addr space="join" piece1="r1" piece2="r0"/>
+      </pentry>
+    </output>
+    <unaffected>
+      <register name="r13"/>
+      <register name="r14"/>
+      <register name="r15"/>
+      <register name="r16"/>
+      <register name="r17"/>
+      <register name="r18"/>
+      <register name="r19"/>
+      <register name="r20"/>
+      <register name="r21"/>
+      <register name="r22"/>
+      <register name="r23"/>
+      <register name="r25"/>
+      <register name="gp"/>
+      <register name="fp"/>
+      <register name="sp"/>
+    </unaffected>
+  </prototype>
+</compiler_spec>

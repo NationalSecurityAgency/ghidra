@@ -653,3 +653,11 @@ PCodeTest({
     'has_double': 0,
     'has_longlong': 0,
 })
+
+PCodeTest({
+    'name': 'ARC700',
+    'build_all': 1,
+    'toolchain': 'ARC/arc700-elf',
+    'language_id': 'ARCompact:LE:32:default',
+    'ccflags': '-mcpu=arc700 -lgcc',
+})
