@@ -30,24 +30,36 @@ configurations {
 	protocArtifact
 }
 
-def os = org.gradle.internal.os.OperatingSystem.current()
+def platform = getCurrentPlatformName()
 
 dependencies {
-	allProtocArtifacts 'com.google.protobuf:protoc:3.11.1:windows-x86_64@exe'
-    allProtocArtifacts 'com.google.protobuf:protoc:3.11.1:linux-x86_64@exe'
-    allProtocArtifacts 'com.google.protobuf:protoc:3.11.1:osx-x86_64@exe'
+	allProtocArtifacts 'com.google.protobuf:protoc:3.17.3:windows-x86_64@exe'
+	allProtocArtifacts 'com.google.protobuf:protoc:3.17.3:linux-x86_64@exe'
+	allProtocArtifacts 'com.google.protobuf:protoc:3.17.3:linux-aarch_64@exe'
+	allProtocArtifacts 'com.google.protobuf:protoc:3.17.3:osx-x86_64@exe'
+	allProtocArtifacts 'com.google.protobuf:protoc:3.17.3:osx-aarch_64@exe'
 
-	if (os.isWindows()) {
-    	protocArtifact 'com.google.protobuf:protoc:3.11.1:windows-x86_64@exe'
+	if (isCurrentWindows()) {
+		protocArtifact 'com.google.protobuf:protoc:3.17.3:windows-x86_64@exe'
 	}
-	if (os.isLinux()) {
-    	protocArtifact 'com.google.protobuf:protoc:3.11.1:linux-x86_64@exe'
+	if (isCurrentLinux()) {
+		if (platform.endsWith("x86_64")) {
+			protocArtifact 'com.google.protobuf:protoc:3.17.3:linux-x86_64@exe'
+		}
+		else {
+			protocArtifact 'com.google.protobuf:protoc:3.17.3:linux-aarch_64@exe'
+		}
 	}
-	if (os.isMacOsX()) {
-    	protocArtifact 'com.google.protobuf:protoc:3.11.1:osx-x86_64@exe'
-    }
+	if (isCurrentMac()) {
+		if (platform.endsWith("x86_64")) {
+			protocArtifact 'com.google.protobuf:protoc:3.17.3:osx-x86_64@exe'
+		}
+		else {
+			protocArtifact 'com.google.protobuf:protoc:3.17.3:osx-aarch_64@exe'
+		}
+	}
 
-	api 'com.google.protobuf:protobuf-java:3.11.1'
+	api 'com.google.protobuf:protobuf-java:3.17.3'
 	api project(':Framework-AsyncComm')
 	api project(':Framework-Debugging')
 	api project(':ProposedUtils')
@@ -58,7 +70,7 @@ dependencies {
 
 /*protobuf {
 	protoc {
-		artifact = 'com.google.protobuf:protoc:3.11.1'
+		artifact = 'com.google.protobuf:protoc:3.17.3'
 	}
 }*/
 
@@ -73,7 +85,7 @@ task generateProto {
 	dependsOn(configurations.protocArtifact)
 	doLast {
 		def exe = configurations.protocArtifact.first()
-		if (!os.isWindows()) {
+		if (!isCurrentWindows()) {
 			exe.setExecutable(true)
 		}
 		exec {

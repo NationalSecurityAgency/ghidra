@@ -15,14 +15,14 @@
  */
 package ghidra.file.jad;
 
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.framework.Application;
 import ghidra.framework.Platform;
 import ghidra.util.SystemUtilities;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 
@@ -136,8 +136,8 @@ class OldJad {
 	}
 
 	private String getJadPath() throws FileNotFoundException {
-		if (Platform.CURRENT_PLATFORM == Platform.WIN_32 ||
-			Platform.CURRENT_PLATFORM == Platform.WIN_64) {
+		if (Platform.CURRENT_PLATFORM == Platform.WIN_X86_32 ||
+			Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
 			File jadExecutableFile = Application.getOSFile("jad.exe");
 			String jadPath = jadExecutableFile.getAbsolutePath();
 			return jadPath;

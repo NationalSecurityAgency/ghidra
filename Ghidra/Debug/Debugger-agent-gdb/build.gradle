@@ -104,7 +104,7 @@ task executableJar {
 }
 
 test {
-	if ("linux64".equals(getCurrentPlatformName())) {
-		dependsOn(":Framework-Debugging:testSpecimenLinux64")
+	if ("linux_x86_64".equals(getCurrentPlatformName())) {
+		dependsOn(":Framework-Debugging:testSpecimenLinux_x86_64")
 	}
 }

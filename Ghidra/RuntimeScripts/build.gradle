@@ -28,11 +28,11 @@ rootProject.assembleDistribution {
 	}
 }
 
-rootProject.OS_NAMES.each { platform ->
-	rootProject.tasks.findAll {it.name == "assembleDistribution_$platform"}.each { t -> 
+rootProject.PLATFORMS.each { platform ->
+	rootProject.tasks.findAll {it.name == "assembleDistribution_${platform.name}"}.each { t -> 
 		def p = this.project
 
-		if (isLinux(platform) || isMac(platform)) {
+		if (isLinux(platform.name) || isMac(platform.name)) {
 			t.from ("${p.projectDir}/Linux/support") {
 				into "support"
 			}
@@ -42,7 +42,7 @@ rootProject.OS_NAMES.each { platform ->
 			t.from (p.file("Linux/ghidraRun")) 
 		}
 
-		if (isWindows(platform)) {
+		if (isWindows(platform.name)) {
 			t.from ("${p.projectDir}/Windows/support") {
 				into "support"
 			}

@@ -470,12 +470,13 @@ public class Application {
 		}
 
 		// Allow win32 to be used for win64 as fallback
-		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_64) {
-			file = getModuleFile(module, "build/os/" + Platform.WIN_32.getDirectoryName(),
+		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
+			file = getModuleFile(module, "build/os/" + Platform.WIN_X86_32.getDirectoryName(),
 				exactFilename);
 		}
-		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_64) {
-			file = getModuleFile(module, "os/" + Platform.WIN_32.getDirectoryName(), exactFilename);
+		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
+			file = getModuleFile(module, "os/" + Platform.WIN_X86_32.getDirectoryName(),
+				exactFilename);
 		}
 
 		return file;
@@ -501,11 +502,11 @@ public class Application {
 		}
 
 		// Allow win32 to be used for win64 as fallback
-		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_64) {
-			file = findModuleFile("build/os/" + Platform.WIN_32.getDirectoryName(), path);
+		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
+			file = findModuleFile("build/os/" + Platform.WIN_X86_32.getDirectoryName(), path);
 		}
-		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_64) {
-			file = findModuleFile("os/" + Platform.WIN_32.getDirectoryName(), path);
+		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
+			file = findModuleFile("os/" + Platform.WIN_X86_32.getDirectoryName(), path);
 		}
 
 		if (file == null) {
