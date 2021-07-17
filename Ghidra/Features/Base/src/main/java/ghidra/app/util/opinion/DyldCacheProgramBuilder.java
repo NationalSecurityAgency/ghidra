@@ -25,6 +25,7 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.commands.NList;
+import ghidra.app.util.bin.format.macho.commands.SymbolTableCommand;
 import ghidra.app.util.bin.format.macho.dyld.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.importer.MessageLogContinuesFactory;
@@ -394,6 +395,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		monitor.initialize(infoSet.size());
 		for (DyldCacheMachoInfo info : infoSet) {
 			info.markupHeaders();
+			info.processSymbolTables();
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
 		}
@@ -498,6 +500,54 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 					if (headerAddr.compareTo(mappingAddr) >= 0 &&
 						headerAddr.compareTo(mappingAddr.add(mappingInfo.getSize() - 1)) <= 0) {
 						fragment.move(headerAddr, mappingAddr.add(mappingInfo.getSize() - 1));
+					}
+				}
+			}
+		}
+
+		public void processSymbolTables() {
+			monitor.setMessage("Processing symbol tables...");
+			List<SymbolTableCommand> commands = header.getLoadCommands(SymbolTableCommand.class);
+			for (SymbolTableCommand symbolTableCommand : commands) {
+				List<NList> symbols = symbolTableCommand.getSymbols();
+				for (NList symbol : symbols) {
+					if (symbol.isTypePreboundUndefined()) {
+						continue;
+					}
+					if (symbol.isLazyBind()) {
+						continue;
+					}
+
+					Address addr = space.getAddress(symbol.getValue());
+
+					if (symbol.isSymbolicDebugging()) {
+						continue;
+					}
+					if (symbol.isTypeAbsolute()) {
+						continue;
+					}
+					if (symbol.isTypeUndefined()) {
+						continue;
+					}
+
+					if (symbol.isExternal() || symbol.isPrivateExternal()) {
+						program.getSymbolTable().addExternalEntryPoint(addr);
+					}
+
+					String string = symbol.getString();
+					if (string.length() == 0) {
+						continue;
+					}
+					string = SymbolUtilities.replaceInvalidChars(string, true);
+
+					if (program.getSymbolTable().getGlobalSymbol(string, addr) != null) {
+						continue;
+					}
+					try {
+						program.getSymbolTable().createLabel(addr, string, SourceType.IMPORTED);
+					}
+					catch (Exception e) {
+						log.appendMsg("Unable to create symbol: " + e.getMessage());
 					}
 				}
 			}
