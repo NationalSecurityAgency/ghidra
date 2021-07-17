@@ -4,7 +4,7 @@
   <title>SLEIGH</title>
   <subtitle>A Language for Rapid Processor Specification</subtitle>
   <pubdate>Originally published December 16, 2005</pubdate>
-  <releaseinfo>Last updated October 28, 2020</releaseinfo>
+  <releaseinfo>Last updated July 16, 2021</releaseinfo>
 </info>
 <simplesect>
 <info>
@@ -3525,6 +3525,7 @@ define space ram type=ram_space size=4 default;
 define space register type=register_space size=4;
 define register offset=0 size=4 [ r0 r1 r2 r3 r4 r5 r6 r7 ];
 define register offset=0x100 size=4 [ s0 s1 s2 s3 s4 s5 s6 s7 ];
+define register offset=0x180 size=4 [ statusreg ];
 
 define token instr(16)
   op=(10,15) rreg1=(7,9) sreg1=(7,9) imm=(0,6)
@@ -3569,6 +3570,20 @@ state associated with the <emphasis>mode</emphasis> variable that will
 make the final decision about which form to generate. The setting of
 this state is (at least partially) out of the control of SLEIGH,
 although see the following sections.
+</para>
+<para>
+Note that a context variable is tied to a specific register (in the
+example above, it is <emphasis>statusreg</emphasis>). Although this
+register can be one that is used by the actual processor for the same
+purpose, it is often convenient to use a separate register, as
+context variables can be used for purposes where the real processor
+does not have an (exposed) register. Context variables are not updated
+in the semantic actions section of a constructor, only in the disassembly
+actions section (see below), which also makes using the same register
+awkward. Lastly, note that due to implementation constraints, the
+register associated with a context variable must have a size that is
+a multiple of 4 bytes, though each context variable itself can be any
+size up to 32 bits.
 </para>
 </sect2>
 <sect2 id="sleigh_local_change">

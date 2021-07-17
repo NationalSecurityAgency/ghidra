@@ -4,7 +4,7 @@
 <title>8. Using Context</title>
 <link rel="stylesheet" type="text/css" href="Frontpage.css">
 <link rel="stylesheet" type="text/css" href="languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="sleigh.html" title="SLEIGH">
 <link rel="up" href="sleigh.html" title="SLEIGH">
 <link rel="prev" href="sleigh_constructors.html" title="7. Constructors">
@@ -85,7 +85,7 @@ whose encodings are otherwise the same.
 </p>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140526920261472"></a>8.1. Basic Use of Context Variables</h3></div></div></div>
+<a name="idm1389"></a>8.1. Basic Use of Context Variables</h3></div></div></div>
 <p>
 Suppose a processor supports the use of two different sets of
 registers in its main addressing mode, based on the setting of a
@@ -100,6 +100,7 @@ define space ram type=ram_space size=4 default;
 define space register type=register_space size=4;
 define register offset=0 size=4 [ r0 r1 r2 r3 r4 r5 r6 r7 ];
 define register offset=0x100 size=4 [ s0 s1 s2 s3 s4 s5 s6 s7 ];
+define register offset=0x180 size=4 [ statusreg ];
 
 define token instr(16)
   op=(10,15) rreg1=(7,9) sreg1=(7,9) imm=(0,6)
@@ -144,6 +145,20 @@ state associated with the <span class="emphasis"><em>mode</em></span> variable t
 make the final decision about which form to generate. The setting of
 this state is (at least partially) out of the control of SLEIGH,
 although see the following sections.
+</p>
+<p>
+Note that a context variable is tied to a specific register (in the
+example above, it is <span class="emphasis"><em>statusreg</em></span>). Although this
+register can be one that is used by the actual processor for the same
+purpose, it is often convenient to use a separate register, as
+context variables can be used for purposes where the real processor
+does not have an (exposed) register. Context variables are not updated
+in the semantic actions section of a constructor, only in the disassembly
+actions section (see below), which also makes using the same register
+awkward. Lastly, note that due to implementation constraints, the
+register associated with a context variable must have a size that is
+a multiple of 4 bytes, though each context variable itself can be any
+size up to 32 bits.
 </p>
 </div>
 <div class="sect2">
