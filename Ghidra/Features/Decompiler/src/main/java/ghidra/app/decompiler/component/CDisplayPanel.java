@@ -141,6 +141,11 @@ public class CDisplayPanel extends JPanel implements DecompilerCallbackHandler {
 	}
 
 	@Override
+	public void goToNextPrevAddress(boolean isNext) {
+		// stub
+	}
+
+	@Override
 	public void locationChanged(ProgramLocation programLocation) {
 		if (locationListener == null) {
 			return;
