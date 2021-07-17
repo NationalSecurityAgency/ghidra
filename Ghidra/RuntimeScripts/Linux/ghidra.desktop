@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Ghidra
+Comment=The Ghidra Software Reverse Engineering (SRE) Suite
+Exec=ghidraRun
+Icon=ghidra
+Terminal=false
