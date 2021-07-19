@@ -251,15 +251,6 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 		assertNotNull(symbolTable.getPrimarySymbol(addr(0x28)));
 		assertNotNull(symbolTable.getPrimarySymbol(addr(0x30)));
 		assertNotNull(symbolTable.getPrimarySymbol(addr(0x38)));
-
-		assertEquals(1, symbolTable.getLabelHistory(addr(0)).length);
-		assertEquals(1, symbolTable.getLabelHistory(addr(8)).length);
-		assertEquals(1, symbolTable.getLabelHistory(addr(0x10)).length);
-		assertEquals(1, symbolTable.getLabelHistory(addr(0x18)).length);
-		assertEquals(1, symbolTable.getLabelHistory(addr(0x20)).length);
-		assertEquals(1, symbolTable.getLabelHistory(addr(0x28)).length);
-		assertEquals(1, symbolTable.getLabelHistory(addr(0x30)).length);
-		assertEquals(1, symbolTable.getLabelHistory(addr(0x38)).length);
 	}
 
 	@Before
