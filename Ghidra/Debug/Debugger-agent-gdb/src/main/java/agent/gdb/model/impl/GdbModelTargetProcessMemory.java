@@ -65,6 +65,14 @@ public class GdbModelTargetProcessMemory
 	protected void updateUsingMappings(Map<BigInteger, GdbMemoryMapping> byStart) {
 		List<GdbModelTargetMemoryRegion> regions;
 		synchronized (this) {
+			if (byStart.isEmpty()) {
+				AddressSet addressSet = impl.getAddressFactory().getAddressSet();
+				BigInteger start = addressSet.getMinAddress().getOffsetAsBigInteger();
+				BigInteger end = addressSet.getMaxAddress().getOffsetAsBigInteger();
+				GdbMemoryMapping mem = new GdbMemoryMapping(start, end,
+					end.subtract(start), start.subtract(start), "default");
+				byStart.put(start, mem);
+			}
 			regions =
 				byStart.values().stream().map(this::getTargetRegion).collect(Collectors.toList());
 		}
