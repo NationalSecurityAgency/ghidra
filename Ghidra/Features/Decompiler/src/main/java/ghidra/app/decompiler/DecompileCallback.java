@@ -1058,13 +1058,13 @@ public class DecompileCallback {
 				Address last = range.getMaxAddress();
 				boolean readonly = true; // Treat function body as readonly
 				return buildHoleXML(first.getAddressSpace().getPhysicalSpace().getName(),
-					first.getOffset(), last.getOffset(), readonly, false);
+					first.getUnsignedOffset(), last.getUnsignedOffset(), readonly, false);
 			}
 		}
 		// There is probably some sort of error, just return a block
 		// containing the single queried address
-		return buildHoleXML(addr.getAddressSpace().getPhysicalSpace().getName(), addr.getOffset(),
-			addr.getOffset(), true, false);
+		return buildHoleXML(addr.getAddressSpace().getPhysicalSpace().getName(),
+			addr.getUnsignedOffset(), addr.getUnsignedOffset(), true, false);
 	}
 
 	private int getExtraPopOverride(Function func, Address addr) {
@@ -1175,8 +1175,8 @@ public class DecompileCallback {
 //						after.getOffset(),readonly,isVolatile);
 		boolean readonly = isReadOnlyNoData(addr);
 		boolean isvolatile = isVolatileNoData(addr);
-		return buildHoleXML(addr.getAddressSpace().getPhysicalSpace().getName(), addr.getOffset(),
-			addr.getOffset(), readonly, isvolatile);
+		return buildHoleXML(addr.getAddressSpace().getPhysicalSpace().getName(),
+			addr.getUnsignedOffset(), addr.getUnsignedOffset(), readonly, isvolatile);
 	}
 
 	private String buildExternalRef(Address addr, ExternalReference ref) {

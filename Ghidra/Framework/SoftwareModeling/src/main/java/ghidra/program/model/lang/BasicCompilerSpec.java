@@ -808,7 +808,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 			seenLast = true;
 		}
 		if (!seenLast) {
-			last = addressSpace.getMaxAddress().getOffset();
+			last = addressSpace.getMaxAddress().getUnsignedOffset();
 		}
 		if (extraRanges == null) {
 			extraRanges = new ArrayList<>();
