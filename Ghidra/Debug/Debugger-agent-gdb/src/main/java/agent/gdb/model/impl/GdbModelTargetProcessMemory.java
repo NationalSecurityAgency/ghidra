@@ -65,17 +65,37 @@ public class GdbModelTargetProcessMemory
 	protected void updateUsingMappings(Map<BigInteger, GdbMemoryMapping> byStart) {
 		List<GdbModelTargetMemoryRegion> regions;
 		synchronized (this) {
-			if (byStart.isEmpty()) {
+			regions =
+				byStart.values().stream().map(this::getTargetRegion).collect(Collectors.toList());
+			if (regions.isEmpty()) {
+				Map<BigInteger, GdbMemoryMapping> defaultMap =
+					new HashMap<BigInteger, GdbMemoryMapping>();
 				AddressSet addressSet = impl.getAddressFactory().getAddressSet();
 				BigInteger start = addressSet.getMinAddress().getOffsetAsBigInteger();
 				BigInteger end = addressSet.getMaxAddress().getOffsetAsBigInteger();
-				GdbMemoryMapping mem = new GdbMemoryMapping(start, end,
-					end.subtract(start), start.subtract(start), "default");
-				byStart.put(start, mem);
+				if (end.longValue() < 0) {
+					BigInteger split = BigInteger.valueOf(Long.MAX_VALUE);
+					GdbMemoryMapping lmem = new GdbMemoryMapping(start, split,
+						split.subtract(start), start.subtract(start), "defaultLow");
+					defaultMap.put(start, lmem);
+					split = split.add(BigInteger.valueOf(1));
+					GdbMemoryMapping hmem = new GdbMemoryMapping(split, end,
+						end.subtract(split), split.subtract(split), "defaultHigh");
+					defaultMap.put(split, hmem);
+				}
+				else {
+					GdbMemoryMapping mem = new GdbMemoryMapping(start, end,
+						end.subtract(start), start.subtract(start), "default");
+					defaultMap.put(start, mem);
+				}
+				regions =
+					defaultMap.values()
+							.stream()
+							.map(this::getTargetRegion)
+							.collect(Collectors.toList());
 			}
-			regions =
-				byStart.values().stream().map(this::getTargetRegion).collect(Collectors.toList());
 		}
+
 		setElements(regions, "Refreshed");
 	}
 
