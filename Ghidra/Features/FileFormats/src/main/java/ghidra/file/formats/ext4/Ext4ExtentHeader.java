@@ -15,17 +15,14 @@
  */
 package ghidra.file.formats.ext4;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
 
+import ghidra.app.util.bin.*;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
+
 public class Ext4ExtentHeader implements StructConverter {
+	private static final int SIZEOF = 12;
 	
 	private short eh_magic;
 	private short eh_entries;
@@ -33,6 +30,21 @@ public class Ext4ExtentHeader implements StructConverter {
 	private short eh_depth;
 	private int eh_generation;
 	
+	/**
+	 * Read a Ext4ExtentHeader from the stream.
+	 * 
+	 * @param reader BinaryReader to read from
+	 * @return new Ext4ExtentHeader instance, or null if eof or no magic value
+	 * @throws IOException if error
+	 */
+	public static Ext4ExtentHeader read(BinaryReader reader) throws IOException {
+		if (reader.getPointerIndex() + SIZEOF >= reader.length() ||
+			Short.toUnsignedInt(reader.peekNextShort()) != Ext4Constants.EXTENT_HEADER_MAGIC) {
+			return null;
+		}
+		return new Ext4ExtentHeader(reader);
+	}
+
 	public Ext4ExtentHeader( ByteProvider provider ) throws IOException {
 		this( new BinaryReader( provider, true ) );
 	}

@@ -70,7 +70,7 @@ public class Ext4FileSystem implements GFileSystem {
 			numGroups++;
 		}
 
-		int groupDescriptorOffset = blockSize;
+		int groupDescriptorOffset = blockSize + (superBlock.getS_first_data_block() * blockSize);
 		reader.setPointerIndex(groupDescriptorOffset);
 		monitor.initialize(numGroups);
 		monitor.setMessage("Reading inode tables");
@@ -109,41 +109,6 @@ public class Ext4FileSystem implements GFileSystem {
 		}
 		if (count > 0) {
 			Msg.warn(this, "Unprocessed inodes: " + count);
-		}
-	}
-
-	interface Checked2Consumer<T, E1 extends Throwable, E2 extends Throwable> {
-		void accept(T t) throws E1, E2;
-	}
-
-	interface ExtentConsumer extends Checked2Consumer<Ext4Extent, IOException, CancelledException> {
-		// no additional def
-	}
-
-	private void forEachExtentEntry(Ext4IBlock i_block, ExtentConsumer extentConsumer,
-			TaskMonitor monitor) throws CancelledException, IOException {
-		Ext4ExtentHeader header = i_block.getHeader();
-		if (header.getEh_depth() == 0) {
-			short numEntries = header.getEh_entries();
-			List<Ext4Extent> entries = i_block.getExtentEntries();
-			for (int i = 0; i < numEntries; i++) {
-				monitor.checkCanceled();
-				Ext4Extent extent = entries.get(i);
-				extentConsumer.accept(extent);
-			}
-		}
-		else {
-			short numEntries = header.getEh_entries();
-			List<Ext4ExtentIdx> entries = i_block.getIndexEntries();
-			for (int i = 0; i < numEntries; i++) {
-				monitor.checkCanceled();
-
-				Ext4ExtentIdx extentIndex = entries.get(i);
-				long offset = extentIndex.getEi_leaf() * blockSize;
-
-				forEachExtentEntry(Ext4IBlock.readIBlockWithExtents(provider, offset),
-					extentConsumer, monitor);
-			}
 		}
 	}
 
@@ -186,6 +151,7 @@ public class Ext4FileSystem implements GFileSystem {
 			throw new IOException("Inode " + inode + " has unhandled file type: " +
 				Integer.toHexString(inode.getFileType()));
 		}
+
 		String name = dirEntry.getName();
 		if (".".equals(name) || "..".equals(name)) {
 			// skip the ".", and ".." self-reference directories
@@ -331,53 +297,17 @@ public class Ext4FileSystem implements GFileSystem {
 	private ByteProvider getInodeByteProvider(Ext4Inode inode, FSRL inodeFSRL, TaskMonitor monitor)
 			throws IOException {
 		if (inode.isFlagExtents()) {
-			return getExtentsByteProvider(inodeFSRL, inode, monitor);
+			return Ext4ExtentsHelper.getByteProvider(inode.getI_block(), provider, inode.getSize(),
+				blockSize, inodeFSRL);
 		}
 		else if (inode.isFlagInlineData() || inode.isSymLink()) {
-			return getInlineDataProvider(inodeFSRL, inode, monitor);
+			byte[] data = inode.getInlineDataValue();
+			return new ByteArrayProvider(data, inodeFSRL);
 		}
 		else {
-			throw new IOException("Unsupported file storage: " + inodeFSRL.getPath());
+			return Ext4BlockMapHelper.getByteProvider(inode.getI_block(), provider, inode.getSize(),
+				blockSize, inodeFSRL);
 		}
-	}
-
-	private ByteProvider getInlineDataProvider(FSRL fileFSRL, Ext4Inode inode, TaskMonitor monitor)
-			throws IOException {
-		byte[] data = inode.getInlineDataValue();
-		return new ByteArrayProvider(data, fileFSRL);
-	}
-
-	private ByteProvider getExtentsByteProvider(FSRL fileFSRL, Ext4Inode inode, TaskMonitor monitor)
-			throws IOException {
-		try {
-			long fileSize = inode.getSize();
-			ExtentsByteProvider result = new ExtentsByteProvider(provider, fileFSRL);
-
-			Ext4IBlock i_block = inode.getI_block();
-			forEachExtentEntry(i_block, extent -> {
-				long startPos = extent.getStreamBlockNumber() * blockSize;
-				long providerOfs = extent.getExtentStartBlockNumber() * blockSize;
-				long extentLen = extent.getExtentBlockCount() * blockSize;
-				if (result.length() < startPos) {
-					result.addSparseExtent(startPos - result.length());
-				}
-				if (result.length() + extentLen > fileSize) {
-					// the last extent may have a trailing partial block
-					extentLen = fileSize - result.length();
-				}
-
-				result.addExtent(providerOfs, extentLen);
-			}, monitor);
-			if (result.length() < fileSize) {
-				// trailing sparse.  not sure if possible.
-				result.addSparseExtent(fileSize - result.length());
-			}
-			return result;
-		}
-		catch (CancelledException e) {
-			throw new IOException(e);
-		}
-
 	}
 
 	private Ext4Inode[] getInodes(BinaryReader reader, Ext4GroupDescriptor[] groupDescriptors,

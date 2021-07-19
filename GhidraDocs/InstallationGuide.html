@@ -137,12 +137,19 @@ destination using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRA
     will be prompted to enter a path to the Java home directory to use (the Java home directory is 
     the parent directory of Java's <i>bin</i> directory).  This minimizes the impact Ghidra has on 
     pre-existing configurations of Java that other software may rely on.
-  </li>  
+  </li>
+  <li>
+    Depending on your operating system, it may be possible to find and install a 
+    <a href="#Requirements">supported</a> version of a Java Runtime and Development Kit through 
+    your package manager, without the need to set the Path environment variables as described 
+    below.
+  </li>
   <li>
     If Ghidra failed to run because <i>no versions</i> of Java were on the PATH, a 
-    <a href="#Requirements">supported</a> JDK should be manually installed and added to the 
-    PATH.  The following steps outline how to add a JDK distribution to the operating system's 
-    PATH.
+    <a href="#Requirements">supported</a> JDK should be installed via a Linux package manager 
+    (aptitude, yum, etc), Windows installer program (*.exe, *.msi), macOS Installer package 
+    (*.pkg), or manually extracted and added to the PATH.  The following steps outline how to 
+    manually extract and add a JDK distribution to the operating system's PATH.
     <ul>
       <li>
         <p><b>Windows: </b>Extract the JDK distribution (.zip file) to your desired location 
@@ -174,10 +181,11 @@ destination using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRA
           <li>
             <p>Add the JDK bin directory to the PATH variable:</p>
             <ol>
-              <li>Under System variables, highlight <i>Path</i> and click <b>Edit...</b></li>
+              <li>Under <b>System variables</b>, highlight <i>Path</i> and click <b>Edit...</b></li>
               <li>
                 At the end of the the <i>Variable value</i> field, add a semicolon followed by 
-                <i>&lt;path of extracted JDK dir&gt;\bin</i>  
+                <i>&lt;path of extracted JDK dir&gt;\bin</i>, or use the <b>New</b> button in the
+                <i>Edit environment variable</i> window to add a new entry to the <i>Path</i>.
               </li>
               <li>Click <b>OK</b></li>
               <li>Click <b>OK</b></li>

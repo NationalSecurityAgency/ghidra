@@ -18,6 +18,8 @@ package ghidra.app.plugin.core.functiongraph;
 import java.awt.Rectangle;
 import java.awt.datatransfer.Transferable;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import docking.ActionContext;
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.internal.EmptyLayoutBackgroundColorManager;
@@ -32,6 +34,7 @@ import ghidra.app.plugin.core.functiongraph.mvc.FGData;
 import ghidra.app.util.viewer.listingpanel.ListingModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
+import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 public class FGClipboardProvider extends CodeBrowserClipboardProvider {
@@ -82,11 +85,9 @@ public class FGClipboardProvider extends CodeBrowserClipboardProvider {
 			return createStringTransferable(g.getBuffer().toString());
 		}
 		catch (Exception e) {
-			String msg = e.getMessage();
-			if (msg == null) {
-				msg = e.toString();
-			}
-			tool.setStatusInfo("Copy failed: " + msg, true);
+			String message = "Copy failed: " + ExceptionUtils.getMessage(e);
+			Msg.error(this, message, e);
+			tool.setStatusInfo(message, true);
 		}
 
 		return null;

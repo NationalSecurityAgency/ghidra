@@ -15,8 +15,8 @@
  */
 package ghidra.util;
 
-import static ghidra.util.HTMLUtilities.HTML;
-import static org.junit.Assert.assertEquals;
+import static ghidra.util.HTMLUtilities.*;
+import static org.junit.Assert.*;
 
 import java.awt.Color;
 
@@ -122,7 +122,7 @@ public class HTMLUtilitiesTest {
 	@Test
 	public void testFromHTML() {
 		String s = "<HTML><b>Bold</b>, <i>italics</i>, <font size='3'>sized font!</font>";
-		String text = HTMLUtilities.fromHTML(s);
+		String text = Swing.runNow(() -> HTMLUtilities.fromHTML(s));
 		assertEquals("Bold, italics, sized font!", text);
 	}
 

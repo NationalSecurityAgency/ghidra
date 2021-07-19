@@ -26,28 +26,55 @@ import java.text.AttributedCharacterIterator;
 import java.util.*;
 import java.util.List;
 
-import javax.swing.JPanel;
-
 /**
  * Graphics used to render copied text data.  This class is not a true graphics object, but is
  * instead used to grab text being painted so that clients can later use that text.
  */
 public class TextLayoutGraphics extends Graphics2D {
 
-	private static final Component COMPONENT = new JPanel();
-
 	private int transX;
 	private int transY;
 	private Shape clip;
 	private StringBuilder buffer = new StringBuilder();
 	private Font lastFont = new Font("SansSerif", Font.PLAIN, 12);
-	private FontMetrics fontMetrics = getFontMetricsForFont(lastFont);
+	private FontMetrics fontMetrics = createFontMetrics(lastFont);
 
 	private List<TextInfo> textInfos = new ArrayList<>();
 
-	@SuppressWarnings("deprecation") // Java still uses it, so we still use it
-	private static FontMetrics getFontMetricsForFont(Font font) {
-		return Toolkit.getDefaultToolkit().getFontMetrics(font);
+	private Comparator<TextInfo> pointComparator = (o1, o2) -> {
+		TextInfo t1 = o1;
+		TextInfo t2 = o2;
+
+		int diff = t1.point.y - t2.point.y;
+		if (diff != 0) {
+			return diff;
+		}
+
+		diff = t1.point.x - t2.point.x;
+
+		return diff;
+	};
+
+	private Comparator<TextInfo> rowComparator = (o1, o2) -> {
+		TextInfo t1 = o1;
+		TextInfo t2 = o2;
+
+		int diff = t1.row - t2.row;
+		if (diff != 0) {
+			return diff;
+		}
+
+		diff = t1.point.x - t2.point.x;
+
+		return diff;
+	};
+
+	private static FontMetrics createFontMetrics(Font font) {
+		BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB_PRE);
+		Graphics g = image.getGraphics();
+		FontMetrics fm = g.getFontMetrics(font);
+		g.dispose();
+		return fm;
 	}
 
 	@Override
@@ -71,13 +98,14 @@ public class TextLayoutGraphics extends Graphics2D {
 		newTextInfo.point = new Point(x + transX, y + transY);
 		newTextInfo.text = str;
 		newTextInfo.font = lastFont;
+		newTextInfo.fontMetrics = fontMetrics;
 		textInfos.add(newTextInfo);
 	}
 
 	@Override
 	public void setFont(Font font) {
 		lastFont = font;
-		fontMetrics = getFontMetrics(font);
+		fontMetrics = createFontMetrics(font);
 	}
 
 	/**
@@ -89,99 +117,77 @@ public class TextLayoutGraphics extends Graphics2D {
 			return;
 		}
 
-		Comparator<TextInfo> pointComparator = (o1, o2) -> {
-			TextInfo t1 = o1;
-			TextInfo t2 = o2;
+		sortDataAndAssignRows();
 
-			int diff = t1.point.y - t2.point.y;
-			if (diff != 0) {
-				return diff;
-			}
-
-			diff = t1.point.x - t2.point.x;
-
-			return diff;
-		};
-
-		Comparator<TextInfo> rowComparator = (o1, o2) -> {
-			TextInfo t1 = o1;
-			TextInfo t2 = o2;
-
-			int diff = t1.row - t2.row;
-			if (diff != 0) {
-				return diff;
-			}
-
-			diff = t1.point.x - t2.point.x;
-
-			return diff;
-		};
-
-		TextInfo[] sortedTextInfos = new TextInfo[textInfos.size()];
-		textInfos.toArray(sortedTextInfos);
-
-		//Sort the text by y position, then by x position
-		Arrays.sort(sortedTextInfos, pointComparator);
-
-		//Group the text into rows based on font height and y position
-		//TODO - Ideally, it would be nice if there was a good way to group text that
-		//       varied in height in a nice way
-		int lastPos = sortedTextInfos[0].point.y;
-		int curRow = 0;
-		for (int i = 0; i < sortedTextInfos.length; i++) {
-			if (sortedTextInfos[i].point.y != lastPos) {
-				curRow++;
-				lastPos = sortedTextInfos[i].point.y;
-			}
-
-			sortedTextInfos[i].row = curRow;
-		}
-
-		//Sort the text by row, then by x position
-		Arrays.sort(sortedTextInfos, rowComparator);
-
-		//Render the text into a string
+		// render the text into a string
 		int lastRow = 0;
-		int lastXPos = 0; //The X co-ordinate of the end of the last string
-		for (TextInfo sortedTextInfo : sortedTextInfos) {
-			//Insert newlines as appropriate
-			for (int j = lastRow; j < sortedTextInfo.row; j++) {
+		int currentX = 0; //The x coordinate of the end of the last string
+		for (TextInfo info : textInfos) {
+			// insert newlines as appropriate
+			for (int i = lastRow; i < info.row; i++) {
 				buffer.append('\n');
 			}
 
-			//If we started a new row, reset the X position
-			if (lastRow != sortedTextInfo.row) {
-				lastXPos = 0;
+			// if we started a new row, reset the x position
+			if (lastRow != info.row) {
+				currentX = 0;
 			}
-			lastRow = sortedTextInfo.row;
+			lastRow = info.row;
 
-			//Insert spaces to account for distance past last field in row
-			FontMetrics metrics = COMPONENT.getFontMetrics(sortedTextInfo.font);
+			// insert spaces to account for distance past last field in row
+			FontMetrics metrics = info.fontMetrics;
 			int spaceWidth = metrics.charWidth(' ');
+
 			if (spaceWidth == 0) {
 				// some environments report 0 for some fonts
 				spaceWidth = 4;
 			}
 
-			int fillSpaces =
-				Math.round((float) (sortedTextInfo.point.x - lastXPos) / (float) spaceWidth);
-			//Account for the case where there's a very small amount of space between fields
-			if (fillSpaces == 0 && sortedTextInfo.point.x > lastXPos) {
+			float spaceBetween = info.point.x - currentX;
+			int fillSpaces = Math.round(spaceBetween / spaceWidth);
+
+			// account for the case where there's a very small amount of space between fields
+			if (fillSpaces == 0 && info.point.x > currentX) {
 				fillSpaces = 1;
 			}
 
-			for (int j = 0; j < fillSpaces; j++) {
+			for (int i = 0; i < fillSpaces; i++) {
 				buffer.append(' ');
 			}
 
-			lastXPos = sortedTextInfo.point.x + metrics.stringWidth(sortedTextInfo.text);
+			int stringWidth = metrics.stringWidth(info.text);
+			currentX = info.point.x + stringWidth;
 
-			//Append the text
-			buffer.append(sortedTextInfo.text);
+			// append the text
+			buffer.append(info.text);
 		}
 
 		buffer.append('\n');
 		textInfos.clear();
+	}
+
+	private void sortDataAndAssignRows() {
+
+		// sort the text by y position, then by x position
+		textInfos.sort(pointComparator);
+
+		// Group the text into rows based on font height and y position
+		//TODO - Ideally, it would be nice if there was a good way to group text that
+		//       varied in height in a nice way
+		int lastPos = textInfos.get(0).point.y;
+		int row = 0;
+		for (TextInfo info : textInfos) {
+			if (info.point.y != lastPos) {
+				row++;
+				lastPos = info.point.y;
+			}
+
+			info.row = row;
+		}
+
+		// sort the text by row, then by x position
+		textInfos.sort(rowComparator);
+
 	}
 
 	public String getBuffer() {
@@ -231,7 +237,7 @@ public class TextLayoutGraphics extends Graphics2D {
 
 //==================================================================================================
 // Stubs
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	public void dispose() {
@@ -387,7 +393,7 @@ public class TextLayoutGraphics extends Graphics2D {
 
 	@Override
 	public void drawRenderableImage(RenderableImage img, AffineTransform xform) {
-		// stub	
+		// stub
 	}
 
 	@Override
@@ -419,7 +425,7 @@ public class TextLayoutGraphics extends Graphics2D {
 
 	@Override
 	public void setPaint(Paint paint) {
-		// stub	
+		// stub
 	}
 
 	@Override
@@ -440,7 +446,7 @@ public class TextLayoutGraphics extends Graphics2D {
 
 	@Override
 	public void setRenderingHints(Map<?, ?> hints) {
-		// stub	
+		// stub
 	}
 
 	@Override
@@ -456,22 +462,22 @@ public class TextLayoutGraphics extends Graphics2D {
 
 	@Override
 	public void translate(double tx, double ty) {
-		// stub		
+		// stub
 	}
 
 	@Override
 	public void rotate(double theta) {
-		// stub	
+		// stub
 	}
 
 	@Override
 	public void rotate(double theta, double x, double y) {
-		// stub	
+		// stub
 	}
 
 	@Override
 	public void scale(double sx, double sy) {
-		// stub	
+		// stub
 	}
 
 	@Override
@@ -486,7 +492,7 @@ public class TextLayoutGraphics extends Graphics2D {
 
 	@Override
 	public void setTransform(AffineTransform Tx) {
-		// stub	
+		// stub
 	}
 
 	@Override
@@ -538,11 +544,11 @@ public class TextLayoutGraphics extends Graphics2D {
 }
 
 class TextInfo {
-	public String text;
-	public Point point;
-	public Font font;
-
-	public int row;
+	String text;
+	Font font;
+	FontMetrics fontMetrics;
+	Point point;
+	int row;
 
 	@Override
 	public String toString() {

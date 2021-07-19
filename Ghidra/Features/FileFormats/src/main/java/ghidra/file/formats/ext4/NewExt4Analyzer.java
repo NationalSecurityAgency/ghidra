@@ -252,14 +252,14 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 				comment += "Group Descriptor ID: 0x" + Integer.toHexString( i ) + "\n";
 				comment += "Inode Offset Into Group: 0x" + Integer.toHexString( j ) + "\n";
 
-				Ext4IBlock iBlock = inode.getI_block( );
-				if ( iBlock != null ) {
-					for ( Ext4Extent extent : iBlock.getExtentEntries( ) ) {
-						monitor.checkCanceled( );
-						long destination = extent.getExtentStartBlockNumber() * blockSize;
-						comment += "Extent: 0x" + Long.toHexString( destination ) + "\n";
-					}
-				}
+//				Ext4IBlock iBlock = inode.getI_block( );
+//				if ( iBlock != null ) {
+//					for ( Ext4Extent extent : iBlock.getExtentEntries( ) ) {
+//						monitor.checkCanceled( );
+//						long destination = extent.getExtentStartBlockNumber() * blockSize;
+//						comment += "Extent: 0x" + Long.toHexString( destination ) + "\n";
+//					}
+//				}
 
 				setPlateComment( program, address, comment );
 				createLabel( program, address, "INODE_" + "0x" + Integer.toHexString( inodeIndex + 1 ) );
@@ -322,8 +322,8 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 		boolean isDirEntry2 = (superBlock.getS_feature_incompat() & Ext4Constants.INCOMPAT_FILETYPE) != 0;
 		// if uses extents
 		if ( (inode.getI_flags() & Ext4Constants.EXT4_EXTENTS_FL) != 0 ) {
-			Ext4IBlock i_block = inode.getI_block();
-			processIBlock( program, reader, isDirEntry2, i_block, monitor );
+//			Ext4IBlock i_block = inode.getI_block();
+//			processIBlock( program, reader, isDirEntry2, i_block, monitor );
 		}
 	}
 
