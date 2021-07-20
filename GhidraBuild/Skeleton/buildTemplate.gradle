@@ -47,28 +47,14 @@ else {
 }
 //----------------------END "DO NOT MODIFY" SECTION-------------------------------
 
-// Include the code below if you want dependency jars to be automatically managed
-
-task copyDependencies(type: Copy) {
-	from configurations.default
-	into "lib"
-	exclude {fileTreeElement ->
-		def fileAbsPath = fileTreeElement.getFile().getCanonicalFile().toPath()
-		// Avoid including Ghidra Jars in lib folder...
-		def isGhidraJar = fileAbsPath.startsWith(ghidraInstallDir)
-		// ...and jars already in the destination location
-		def destLibDir = project.file("lib").getCanonicalFile().toPath()
-		def isFromDest = fileAbsPath.startsWith(destLibDir)
-		return isGhidraJar || isFromDest
-	}
+repositories {
+	// Declare dependency repositories here.  This is not needed if dependencies are manually 
+	// dropped into the lib/ directory.
+	// See https://docs.gradle.org/current/userguide/declaring_repositories.html for more info.
+	// Ex: mavenCentral()
 }
 
-task cleanDependencyJars(type: Delete) {
-	delete fileTree("lib").matching {
-		include "**/*.jar"
-	}
+dependencies {
+	// Any external dependencies added here will automatically be copied to the lib/ directory when
+	// this extension is built.	
 }
-
-tasks.buildExtension.dependsOn(copyDependencies)
-tasks.copyDependencies.dependsOn(cleanDependencyJars)
-tasks.clean.dependsOn(cleanDependencyJars)

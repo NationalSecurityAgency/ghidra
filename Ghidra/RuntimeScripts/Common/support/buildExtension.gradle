@@ -25,7 +25,8 @@ apply plugin: 'java-library'
  *  		release name, and distro prefix (ghidira_<version>)
  *
  *****************************************************************************************/
-def ghidraDir = buildscript.sourceFile.getAbsolutePath() + "/../../Ghidra"
+def ghidraInstallDir = file(buildscript.sourceFile.getAbsolutePath() + "/../..").getCanonicalFile().getAbsolutePath()
+def ghidraDir = file(ghidraInstallDir + "/Ghidra").getCanonicalFile().getAbsolutePath()
 def ghidraProps = new Properties()
 file(ghidraDir + "/application.properties").withReader { reader ->
 	ghidraProps.load(reader)
@@ -42,9 +43,24 @@ artifacts {
 	helpPath jar
 }
 
+task copyDependencies(type: Copy) {
+	from configurations.runtimeClasspath
+	into "lib"
+	exclude { fileTreeElement ->
+		def fileAbsPath = fileTreeElement.getFile().getCanonicalFile().toPath()
+		// Avoid including Ghidra Jars in lib folder...
+		def isGhidraJar = fileAbsPath.startsWith(ghidraInstallDir)
+		// ...and jars already in the destination location
+		def destLibDir = project.file("lib").getCanonicalFile().toPath()
+		def isFromDest = fileAbsPath.startsWith(destLibDir)
+		return isGhidraJar || isFromDest
+	}
+}
+
 compileJava {
     sourceCompatibility = ghidraProps.getProperty('application.java.compiler')
     targetCompatibility = ghidraProps.getProperty('application.java.compiler')
+    dependsOn copyDependencies
 }
 
 dependencies {
@@ -64,9 +80,9 @@ def pathInZip = "${project.name}"
 task zipSource (type: Zip) {
 		
 	// Define some metadata about the zip (name, location, version, etc....)
-	it.baseName project.name + "-src"
-	it.extension 'zip'
-	it.destinationDir file(project.projectDir.path + "/build/tmp/src")
+	it.archiveBaseName = project.name + "-src"
+	it.archiveExtension = 'zip'
+	it.destinationDirectory = file(project.projectDir.path + "/build/tmp/src")
 		
 	// We MUST copy from a directory, and not just grab a list of source files.  
 	// This is the only way to preserve the directory structure.
@@ -74,13 +90,12 @@ task zipSource (type: Zip) {
 	it.include 'src/**/*'
 }
 
-				
 task buildExtension (type: Zip) {
 				
 	archiveBaseName = "${ZIP_NAME_PREFIX}_${project.name}"
 	archiveExtension = 'zip'
-	destinationDir DISTRIBUTION_DIR
-	version ''
+	destinationDirectory = DISTRIBUTION_DIR
+	archiveVersion = ''
 	
 	// Make sure that we don't try to copy the same file with the same path into the
 	// zip (this can happen!)
@@ -154,7 +169,7 @@ task buildExtension (type: Zip) {
 	}
 
 	doLast {
-		println "\nCreated " + archiveBaseName + "." + archiveExtension + " in " + destinationDir
+		println "\nCreated " + archiveBaseName + "." + archiveExtension + " in " + destinationDirectory
 	}
 }
 
@@ -171,7 +186,7 @@ task indexHelp(type: JavaExec) {
 
 	classpath = sourceSets.main.runtimeClasspath		// this modules runtime classpath (contains jhall.jar)
 	
-	main = 'com.sun.java.help.search.Indexer'		// main class to call
+	mainClass = 'com.sun.java.help.search.Indexer'		// main class to call
 
 	// tell the indexer where send its output
 	
@@ -222,7 +237,7 @@ task buildHelp(type: JavaExec, dependsOn: indexHelp) {
 
 	classpath = sourceSets.main.runtimeClasspath		// this modules runtime classpath (contains jhall.jar)
 
-	main = 'help.GHelpBuilder'				// program to run to build help files.
+	mainClass = 'help.GHelpBuilder'				// program to run to build help files.
 	
 	args '-n', "${project.name}"				// use the modules name as the base for the help file name
 	
@@ -242,7 +257,7 @@ task buildHelp(type: JavaExec, dependsOn: indexHelp) {
 jar {
 	from "build/help/main"		// include the generated help index files
 	from "src/main/help"			// include the help source files
-	version = ""
+	archiveVersion = ""
 }
 
 // build the help whenever this module's jar file is built
