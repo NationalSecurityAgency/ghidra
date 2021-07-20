@@ -217,6 +217,12 @@ bool CastStrategyC::isExtensionCastImplied(const PcodeOp *op,const PcodeOp *read
   return false;
 }
 
+static bool isTypeDef(Datatype *type)
+
+{
+  return (type->getMetatype()==TYPE_UINT)&&(type->numDepend()>0);
+}
+
 Datatype *CastStrategyC::castStandard(Datatype *reqtype,Datatype *curtype,
 				      bool care_uint_int,bool care_ptr_uint) const
 
@@ -231,6 +237,10 @@ Datatype *CastStrategyC::castStandard(Datatype *reqtype,Datatype *curtype,
     care_uint_int = true;
     isptr = true;
   }
+  while(isTypeDef(reqbase))
+    reqbase = reqbase->getDepend(0);
+  while(isTypeDef(curbase))
+    curbase = curbase->getDepend(0);
   if (curtype == reqtype) return (Datatype *)0;	// Different typedefs could point to the same type
   if ((reqbase->getMetatype()==TYPE_VOID)||(curtype->getMetatype()==TYPE_VOID))
     return (Datatype *)0;	// Don't cast from or to VOID
