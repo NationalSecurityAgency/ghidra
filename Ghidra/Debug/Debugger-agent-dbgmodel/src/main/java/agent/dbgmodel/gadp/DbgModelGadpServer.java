@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import agent.dbgeng.gadp.DbgEngGadpServer;
 import agent.dbgmodel.gadp.impl.DbgModelGadpServerImpl;
 import ghidra.dbg.agent.AgentWindow;
@@ -75,7 +77,13 @@ public interface DbgModelGadpServer extends DbgEngGadpServer {
 	 * @throws InterruptedException
 	 */
 	public static void main(String[] args) throws Exception {
-		new DbgModelRunner().run(args);
+		try {
+			new DbgModelRunner().run(args);
+		}
+		catch (Throwable t) {
+			System.err.println(ExceptionUtils.getMessage(t));
+			System.exit(1);
+		}
 	}
 
 	/**
