@@ -278,8 +278,9 @@ void Range::restoreXml(const Element *el,const AddrSpaceManager *manage)
 
 {
   spc = (AddrSpace *)0;
+  bool seenLast = false;
   first = 0;
-  last = ~((uintb)0);
+  last = 0;
   for(int4 i=0;i<el->getNumAttributes();++i) {
     if (el->getAttributeName(i) == "space") {
       spc = manage->getSpaceByName(el->getAttributeValue(i));
@@ -295,6 +296,7 @@ void Range::restoreXml(const Element *el,const AddrSpaceManager *manage)
       istringstream s(el->getAttributeValue(i));
       s.unsetf(ios::dec | ios::hex | ios::oct);
       s >> last;
+      seenLast = true;
     }
     else if (el->getAttributeName(i) == "name") {
       const Translate *trans = manage->getDefaultCodeSpace()->getTrans();
@@ -302,12 +304,16 @@ void Range::restoreXml(const Element *el,const AddrSpaceManager *manage)
       spc = point.space;
       first = point.offset;
       last = (first-1) + point.size;
-      break;		// There should be no (space,first,last) attributes
+      return;		// There should be no (space,first,last) attributes
     }
   }
   if (spc == (AddrSpace *)0)
-	  throw LowlevelError("No address space indicated in range tag");
-  last = spc->wrapOffset(last);
+    throw LowlevelError("No address space indicated in range tag");
+  if (!seenLast) {
+    last = spc->getHighest();
+  }
+  if (first > spc->getHighest() || last > spc->getHighest() || last < first)
+    throw LowlevelError("Illegal range tag");
 }
 
 /// Insert a new Range merging as appropriate to maintain the disjoint cover
