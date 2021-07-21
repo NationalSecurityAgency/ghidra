@@ -106,7 +106,10 @@ public class GdbModelTargetProcessMemory
 			setElements(List.of(), "Refreshed (while no process)");
 			return AsyncUtils.NIL;
 		}
-		return inferior.listMappings().thenAccept(this::updateUsingMappings);
+		return inferior.listMappings().exceptionally(ex -> {
+			Msg.error(this, "Could not list regions", ex);
+			return Map.of(); // empty map will be replaced with default
+		}).thenAccept(this::updateUsingMappings);
 	}
 
 	protected synchronized GdbModelTargetMemoryRegion getTargetRegion(GdbMemoryMapping mapping) {
