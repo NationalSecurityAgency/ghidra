@@ -46,6 +46,7 @@ public class DebuggerBreakpointLocEnabledTableCellRenderer
 		setIcon(iconForEnabled(en));
 		setHorizontalAlignment(SwingConstants.CENTER);
 		setText("");
+		setToolTipText(en ? "ENABLED" : "DISABLED");
 		return this;
 	}
 

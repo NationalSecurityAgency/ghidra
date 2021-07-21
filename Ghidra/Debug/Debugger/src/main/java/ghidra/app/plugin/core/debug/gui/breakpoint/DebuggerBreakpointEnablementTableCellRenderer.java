@@ -61,6 +61,7 @@ public class DebuggerBreakpointEnablementTableCellRenderer
 		setIcon(iconForEnablement(en));
 		setHorizontalAlignment(SwingConstants.CENTER);
 		setText("");
+		setToolTipText(en.name());
 		return this;
 	}
 
