@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.app.plugin.core.decompile.DecompilePlugin;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
@@ -24,6 +25,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.EquateSymbol;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.util.HelpLocation;
+import java.awt.event.KeyEvent;
 
 public class SetEquateAction extends ConvertConstantAction {
 
@@ -31,6 +33,7 @@ public class SetEquateAction extends ConvertConstantAction {
 		super(plugin, "Set Equate", EquateSymbol.FORMAT_DEFAULT);
 		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionSetEquate"));
 		setPopupMenuData(new MenuData(new String[] { "Set Equate..." }, "Decompile"));
+		setKeyBindingData(new KeyBindingData(KeyEvent.VK_E, 0));
 	}
 
 	@Override
