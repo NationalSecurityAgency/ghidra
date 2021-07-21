@@ -516,7 +516,8 @@ public class CppExporter extends Exporter {
 			Address entryPoint = function.getEntryPoint();
 			CodeUnit codeUnitAt = function.getProgram().getListing().getCodeUnitAt(entryPoint);
 			if (codeUnitAt == null || !(codeUnitAt instanceof Instruction)) {
-				return new CPPResult(entryPoint, function.getPrototypeString(false, false), null);
+				return new CPPResult(entryPoint, function.getPrototypeString(false, false) + ';',
+					null);
 			}
 
 			monitor.setMessage("Decompiling " + function.getName());

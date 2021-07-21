@@ -545,7 +545,7 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 <defblock>[0-9]|[1-9][0-9]+	{ return scan_number(yytext,&yylval,false); }
 <defblock>0x[0-9a-fA-F]+	{ return scan_number(yytext,&yylval,false); }
 <defblock>0b[01]+		{ return scan_number(yytext,&yylval,false); }
-<defblock>\"([^\"]|\"\")*\"	{ yylval.str = new string(yytext+1,strlen(yytext)-2); return STRING; }
+<defblock>\"([^\"[:cntrl:]]|\"\")*\"	{ yylval.str = new string(yytext+1,strlen(yytext)-2); return STRING; }
 <defblock>[\r\ \t\v]+
 <defblock>\n        { slgh->nextLine(); }
 <defblock>.         { return yytext[0]; }
@@ -557,7 +557,7 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 <print>\^           { yylval.ch = '^'; return '^'; }
 <print>is           { BEGIN(pattern); actionon=0; return IS_KEY; }
 <print>[a-zA-Z_.][a-zA-Z0-9_.]*   {  yylval.str = new string(yytext); return SYMBOLSTRING;  }
-<print>\"([^\"]|\"\")*\"       { yylval.str = new string(yytext+1,strlen(yytext)-2); return STRING; }
+<print>\"([^\"[:cntrl:]]|\"\")*\"       { yylval.str = new string(yytext+1,strlen(yytext)-2); return STRING; }
 <print>[\r\ \t\v]+  { yylval.ch = ' '; return ' '; }
 <print>\n           { slgh->nextLine(); return ' '; }
 <print>.            { return yytext[0]; }
