@@ -134,10 +134,15 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 			throws IOException, LanguageNotFoundException {
 		super(new DBHandle(), DBOpenMode.CREATE, TaskMonitor.DUMMY, name, DB_TIME_INTERVAL,
 			DB_BUFFER_SIZE, consumer);
+
 		this.storeFactory = new DBCachedObjectStoreFactory(this);
 		this.baseLanguage = baseCompilerSpec.getLanguage();
-		this.baseCompilerSpec = baseCompilerSpec;
-		this.baseAddressFactory = new ProgramAddressFactory(baseLanguage, baseCompilerSpec);
+		// Need to "downgrade" the compiler spec, so nothing program-specific seeps in
+		// TODO: Should there be a TraceCompilerSpec?
+		this.baseCompilerSpec =
+			baseLanguage.getCompilerSpecByID(baseCompilerSpec.getCompilerSpecID());
+		this.baseAddressFactory =
+			new ProgramAddressFactory(this.baseLanguage, this.baseCompilerSpec);
 
 		try (UndoableTransaction tid = UndoableTransaction.start(this, "Create", false)) {
 			initOptions(DBOpenMode.CREATE);

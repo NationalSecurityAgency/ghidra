@@ -15,23 +15,40 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import com.google.common.collect.Range;
+
+import docking.action.DockingAction;
+import ghidra.app.context.ProgramLocationActionContext;
+import ghidra.app.events.ProgramActivatedPluginEvent;
+import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
+import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.EmulateAddThreadAction;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.EmulateProgramAction;
 import ghidra.app.services.*;
 import ghidra.async.AsyncLazyMap;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.trace.model.Trace;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
+import ghidra.program.util.ProgramLocation;
+import ghidra.trace.model.*;
+import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSchedule;
 import ghidra.trace.model.time.TraceSchedule.CompareResult;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
@@ -44,10 +61,13 @@ import ghidra.util.task.TaskMonitor;
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.UNSTABLE,
 	eventsConsumed = {
-		TraceClosedPluginEvent.class
+		TraceClosedPluginEvent.class,
+		ProgramActivatedPluginEvent.class,
+		ProgramClosedPluginEvent.class,
 	},
 	servicesRequired = {
-		DebuggerTraceManagerService.class
+		DebuggerTraceManagerService.class,
+		DebuggerStaticMappingService.class
 	},
 	servicesProvided = {
 		DebuggerEmulationService.class
@@ -153,23 +173,166 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	private DebuggerTraceManagerService traceManager;
 	@AutoServiceConsumed
 	private DebuggerModelService modelService;
+	@AutoServiceConsumed
+	private DebuggerStaticMappingService staticMappings;
 	@SuppressWarnings("unused")
 	private AutoService.Wiring autoServiceWiring;
+
+	DockingAction actionEmulateProgram;
+	DockingAction actionEmulateAddThread;
 
 	public DebuggerEmulationServicePlugin(PluginTool tool) {
 		super(tool);
 		autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
 	}
 
+	@Override
+	protected void init() {
+		super.init();
+		createActions();
+	}
+
+	protected void createActions() {
+		actionEmulateProgram = EmulateProgramAction.builder(this)
+				.withContext(ProgramLocationActionContext.class)
+				.enabledWhen(this::emulateProgramEnabled)
+				.popupWhen(this::emulateProgramEnabled)
+				.onAction(this::emulateProgramActivated)
+				.buildAndInstall(tool);
+		actionEmulateAddThread = EmulateAddThreadAction.builder(this)
+				.withContext(ProgramLocationActionContext.class)
+				.enabledWhen(this::emulateAddThreadEnabled)
+				.popupWhen(this::emulateAddThreadEnabled)
+				.onAction(this::emulateAddThreadActivated)
+				.buildAndInstall(tool);
+	}
+
+	private boolean emulateProgramEnabled(ProgramLocationActionContext ctx) {
+		Program program = ctx.getProgram();
+		// To avoid confusion of "forked from trace," only permit action from static context
+		if (program == null || program instanceof TraceProgramView) {
+			return false;
+		}
+		/*MemoryBlock block = program.getMemory().getBlock(ctx.getAddress());
+		if (!block.isExecute()) {
+			return false;
+		}*/
+		return true;
+	}
+
+	private void emulateProgramActivated(ProgramLocationActionContext ctx) {
+		Program program = ctx.getProgram();
+		if (program == null) {
+			return;
+		}
+		Trace trace = null;
+		try {
+			trace = ProgramEmulationUtils.launchEmulationTrace(program, ctx.getAddress(), this);
+
+			traceManager.openTrace(trace);
+			traceManager.activateTrace(trace);
+		}
+		catch (IOException e) {
+			Msg.showError(this, null, actionEmulateProgram.getDescription(),
+				"Could not create trace for emulation", e);
+		}
+		finally {
+			if (trace != null) {
+				trace.release(this);
+			}
+		}
+	}
+
+	private boolean emulateAddThreadEnabled(ProgramLocationActionContext ctx) {
+		Program programOrView = ctx.getProgram();
+		if (programOrView instanceof TraceProgramView) {
+			TraceProgramView view = (TraceProgramView) programOrView;
+			if (!ProgramEmulationUtils.isEmulatedProgram(view.getTrace())) {
+				return false;
+			}
+			/*MemoryBlock block = view.getMemory().getBlock(ctx.getAddress());
+			return block.isExecute();*/
+			return true;
+		}
+
+		// Action was probably activated in a static listing.
+		// Bail if current trace is not emulated. Otherwise map and check region.
+		DebuggerCoordinates current = traceManager.getCurrent();
+		if (current.getTrace() == null ||
+			!ProgramEmulationUtils.isEmulatedProgram(current.getTrace())) {
+			return false;
+		}
+		TraceLocation traceLoc = staticMappings.getOpenMappedLocation(
+			current.getTrace(), ctx.getLocation(), current.getSnap());
+		if (traceLoc == null) {
+			return false;
+		}
+		/*TraceMemoryRegion region = current.getTrace()
+				.getMemoryManager()
+				.getRegionContaining(current.getSnap(), traceLoc.getAddress());
+		return region != null && region.isExecute()*/;
+		return true;
+	}
+
+	private void emulateAddThreadActivated(ProgramLocationActionContext ctx) {
+
+		Program programOrView = ctx.getProgram();
+		if (programOrView instanceof TraceProgramView) {
+			TraceProgramView view = (TraceProgramView) programOrView;
+			Trace trace = view.getTrace();
+			Address tracePc = ctx.getAddress();
+
+			/*MemoryBlock block = view.getMemory().getBlock(tracePc);
+			if (!block.isExecute()) {
+				return;
+			}*/
+			ProgramLocation progLoc =
+				staticMappings.getOpenMappedLocation(new DefaultTraceLocation(view.getTrace(), null,
+					Range.singleton(view.getSnap()), tracePc));
+			Program program = progLoc == null ? null : progLoc.getProgram();
+			Address programPc = progLoc == null ? null : progLoc.getAddress();
+
+			long snap =
+				view.getViewport().getOrderedSnaps().stream().filter(s -> s >= 0).findFirst().get();
+			TraceThread thread = ProgramEmulationUtils.launchEmulationThread(trace, snap, program,
+				tracePc, programPc);
+			traceManager.activateThread(thread);
+		}
+		else {
+			Program program = programOrView;
+			Address programPc = ctx.getAddress();
+
+			DebuggerCoordinates current = traceManager.getCurrent();
+			long snap = current.getSnap();
+			Trace trace = current.getTrace();
+			TraceLocation traceLoc =
+				staticMappings.getOpenMappedLocation(trace, ctx.getLocation(), snap);
+			if (traceLoc == null) {
+				return;
+			}
+			Address tracePc = traceLoc.getAddress();
+			/*TraceMemoryRegion region =
+				trace.getMemoryManager().getRegionContaining(snap, tracePc);
+			if (region == null || !region.isExecute()) {
+				return;
+			}*/
+			TraceThread thread = ProgramEmulationUtils.launchEmulationThread(trace, snap, program,
+				tracePc, programPc);
+			traceManager.activateThread(thread);
+		}
+	}
+
 	protected Map.Entry<CacheKey, CachedEmulator> findNearestPrefix(CacheKey key) {
-		Map.Entry<CacheKey, CachedEmulator> candidate = cache.floorEntry(key);
-		if (candidate == null) {
-			return null;
+		synchronized (cache) {
+			Map.Entry<CacheKey, CachedEmulator> candidate = cache.floorEntry(key);
+			if (candidate == null) {
+				return null;
+			}
+			if (!candidate.getKey().compareKey(key).related) {
+				return null;
+			}
+			return candidate;
 		}
-		if (!candidate.getKey().compareKey(key).related) {
-			return null;
-		}
-		return candidate;
 	}
 
 	protected CompletableFuture<Long> doBackgroundEmulate(CacheKey key) {
@@ -220,8 +383,10 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		if (ancestor != null) {
 			CacheKey prevKey = ancestor.getKey();
 
-			cache.remove(prevKey);
-			eldest.remove(prevKey);
+			synchronized (cache) {
+				cache.remove(prevKey);
+				eldest.remove(prevKey);
+			}
 
 			// TODO: Handle errors, and add to proper place in cache?
 			// TODO: Finish partially-executed instructions?
@@ -243,14 +408,15 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			emu.writeDown(trace, destSnap.getKey(), time.getSnap(), false);
 		}
 
-		cache.put(key, ce);
-		eldest.add(key);
-
-		assert cache.size() == eldest.size();
-		while (cache.size() > MAX_CACHE_SIZE) {
-			CacheKey expired = eldest.iterator().next();
-			eldest.remove(expired);
-			cache.remove(expired);
+		synchronized (cache) {
+			cache.put(key, ce);
+			eldest.add(key);
+			assert cache.size() == eldest.size();
+			while (cache.size() > MAX_CACHE_SIZE) {
+				CacheKey expired = eldest.iterator().next();
+				eldest.remove(expired);
+				cache.remove(expired);
+			}
 		}
 
 		return destSnap.getKey();
@@ -283,5 +449,21 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	@AutoServiceConsumed
 	private void setModelService(DebuggerModelService modelService) {
 		cache.clear();
+	}
+
+	@Override
+	public void processEvent(PluginEvent event) {
+		super.processEvent(event);
+		if (event instanceof TraceClosedPluginEvent) {
+			TraceClosedPluginEvent evt = (TraceClosedPluginEvent) event;
+			synchronized (cache) {
+				List<CacheKey> toRemove = eldest.stream()
+						.filter(k -> k.trace == evt.getTrace())
+						.collect(Collectors.toList());
+				cache.keySet().removeAll(toRemove);
+				eldest.removeAll(toRemove);
+				assert cache.size() == eldest.size();
+			}
+		}
 	}
 }

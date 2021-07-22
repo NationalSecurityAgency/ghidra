@@ -26,6 +26,7 @@ import org.junit.*;
 
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.*;
 import ghidra.app.services.LogicalBreakpoint.Enablement;
 import ghidra.async.AsyncReference;
@@ -273,8 +274,10 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 			waitFor(() -> r.getTraceMemoryRegion(region), "Recorder missed region: " + region);
 		try (UndoableTransaction tid =
 			UndoableTransaction.start(t, "Add .text mapping", true)) {
-			mappingService.addMapping(new DefaultTraceLocation(t, null, textRegion.getLifespan(),
-				textRegion.getMinAddress()), new ProgramLocation(p, addr(p, 0x00400000)), 0x1000,
+			DebuggerStaticMappingUtils.addMapping(
+				new DefaultTraceLocation(t, null, textRegion.getLifespan(),
+					textRegion.getMinAddress()),
+				new ProgramLocation(p, addr(p, 0x00400000)), 0x1000,
 				false);
 		}
 	}

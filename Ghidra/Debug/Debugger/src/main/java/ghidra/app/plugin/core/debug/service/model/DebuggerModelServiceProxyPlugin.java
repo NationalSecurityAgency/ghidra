@@ -63,22 +63,22 @@ import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-@PluginInfo( //
-	shortDescription = "Debugger models manager service (proxy to front-end)", //
-	description = "Manage debug sessions, connections, and trace recording", //
-	category = PluginCategoryNames.DEBUGGER, //
-	packageName = DebuggerPluginPackage.NAME, //
-	status = PluginStatus.RELEASED, //
-	eventsConsumed = { ProgramActivatedPluginEvent.class, //
-		ProgramClosedPluginEvent.class, //
-	}, //
-	servicesRequired = { //
-		DebuggerTraceManagerService.class, //
-	}, //
-	servicesProvided = { //
-		DebuggerModelService.class, //
-	} //
-)
+@PluginInfo(
+	shortDescription = "Debugger models manager service (proxy to front-end)",
+	description = "Manage debug sessions, connections, and trace recording",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
+		ProgramActivatedPluginEvent.class,
+		ProgramClosedPluginEvent.class,
+	},
+	servicesRequired = {
+		DebuggerTraceManagerService.class,
+	},
+	servicesProvided = {
+		DebuggerModelService.class,
+	})
 public class DebuggerModelServiceProxyPlugin extends Plugin
 		implements DebuggerModelServiceInternal {
 
@@ -401,11 +401,17 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 			DockingAction action = it.next();
 			it.remove();
 			tool.removeAction(action);
+			String[] path = action.getMenuBarData().getMenuPath();
+			tool.setMenuGroup(Arrays.copyOf(path, path.length - 1), null);
 		}
 		for (DebuggerProgramLaunchOffer offer : offers) {
-			actionDebugProgramMenus.add(DebugProgramAction.menuBuilder(offer, this, delegate)
+			DockingAction action = DebugProgramAction.menuBuilder(offer, this, delegate)
 					.onAction(ctx -> debugProgramMenuActivated(offer))
-					.buildAndInstall(tool));
+					.build();
+			actionDebugProgramMenus.add(action);
+			String[] path = action.getMenuBarData().getMenuPath();
+			tool.setMenuGroup(Arrays.copyOf(path, path.length - 1), DebugProgramAction.GROUP, "zz");
+			tool.addAction(action);
 		}
 	}
 
@@ -449,7 +455,6 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 			ProgramActivatedPluginEvent evt = (ProgramActivatedPluginEvent) event;
 			currentProgram = evt.getActiveProgram();
 			currentProgramPath = getProgramPath(currentProgram);
-
 			updateActionDebugProgram();
 		}
 		if (event instanceof ProgramClosedPluginEvent) {
@@ -457,7 +462,6 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 			if (currentProgram == evt.getProgram()) {
 				currentProgram = null;
 				currentProgramPath = null;
-
 				updateActionDebugProgram();
 			}
 		}
