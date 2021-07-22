@@ -15,7 +15,7 @@
  */
 package agent.gdb.manager.impl;
 
-import static ghidra.async.AsyncUtils.loop;
+import static ghidra.async.AsyncUtils.*;
 
 import java.io.*;
 import java.util.*;
@@ -718,22 +718,22 @@ public class GdbManagerImpl implements GdbManager {
 					return;
 				}
 				curCmd = pcmd;
-			}
-			//Msg.debug(this, "CURCMD = " + curCmd);
-			if (LOG_IO) {
-				DBG_LOG.println("*CMD: " + cmd.getClass());
-				DBG_LOG.flush();
-			}
-			String text = cmd.encode();
-			if (text != null) {
-				Interpreter interpreter = cmd.getInterpreter();
-				PrintWriter wr = getWriter(interpreter);
-				//Msg.debug(this, "STDIN: " + text);
-				wr.println(text);
-				wr.flush();
+				//Msg.debug(this, "CURCMD = " + curCmd);
 				if (LOG_IO) {
-					DBG_LOG.println(">" + interpreter + ": " + text);
+					DBG_LOG.println("*CMD: " + cmd.getClass());
 					DBG_LOG.flush();
+				}
+				String text = cmd.encode();
+				if (text != null) {
+					Interpreter interpreter = cmd.getInterpreter();
+					PrintWriter wr = getWriter(interpreter);
+					//Msg.debug(this, "STDIN: " + text);
+					wr.println(text);
+					wr.flush();
+					if (LOG_IO) {
+						DBG_LOG.println(">" + interpreter + ": " + text);
+						DBG_LOG.flush();
+					}
 				}
 			}
 		}).exceptionally((exc) -> {
