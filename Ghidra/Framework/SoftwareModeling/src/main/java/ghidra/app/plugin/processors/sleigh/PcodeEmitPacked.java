@@ -16,6 +16,7 @@
 package ghidra.app.plugin.processors.sleigh;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.InstructionContext;
@@ -96,28 +97,22 @@ public class PcodeEmitPacked extends PcodeEmit {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.PcodeEmit#addLabelRef()
-	 */
 	@Override
 	void addLabelRef() {
 		if (labelref == null) {
 			labelref = new ArrayList<LabelRef>();
 		}
-		int labelIndex = (int) incache[0].offset;
-		int labelSize = incache[0].size;
+		VarnodeData data = incache.get(0);
 		// Force the emitter to write out a maximum length encoding (12 bytes) of a long
 		// so that we have space to insert whatever value we need to when this relative is resolved
-		incache[0].offset = -1;
+		int labelIndex = (int) data.offset;
+		data.offset = -1;
 
-		labelref.add(new LabelRef(numOps, labelIndex, labelSize, buf.size()));
+		labelref.add(new LabelRef(numOps, labelIndex, data.size, buf.size()));
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.PcodeEmit#dump(ghidra.program.model.address.Address, int, ghidra.app.plugin.processors.sleigh.VarnodeData[], int, ghidra.app.plugin.processors.sleigh.VarnodeData)
-	 */
 	@Override
-	void dump(Address instrAddr, int opcode, VarnodeData[] in, int isize, VarnodeData out) {
+	void dump(Address instrAddr, int opcode, List<VarnodeData> in, int isize, VarnodeData out) {
 		opcode = checkOverrides(opcode, in);
 		checkOverlays(opcode, in, isize, out);
 		buf.write(op_tag);
@@ -130,11 +125,11 @@ public class PcodeEmitPacked extends PcodeEmit {
 		}
 		int i = 0;
 		if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
-			dumpSpaceId(in[0]);
+			dumpSpaceId(in.get(0));
 			i = 1;
 		}
 		for (; i < isize; ++i) {
-			dumpVarnodeData(in[i]);
+			dumpVarnodeData(in.get(i));
 		}
 		buf.write(end_tag);
 	}
