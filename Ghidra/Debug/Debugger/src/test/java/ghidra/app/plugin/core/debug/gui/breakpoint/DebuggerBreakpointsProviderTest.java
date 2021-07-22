@@ -27,6 +27,7 @@ import org.junit.Test;
 
 import com.google.common.collect.Range;
 
+import docking.widgets.table.RowWrappedEnumeratedColumnTableModel;
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
@@ -496,6 +497,13 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		});
 	}
 
+	protected static <R> List<R> copyModelData(
+			RowWrappedEnumeratedColumnTableModel<?, ?, R, ?> model) {
+		synchronized (model) {
+			return List.copyOf(model.getModelData());
+		}
+	}
+
 	@Test
 	public void testActionFilters() throws Exception {
 		createTestModel();
@@ -525,7 +533,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		// Because mapping service debounces, wait for breakpoints to be reconciled
 		LogicalBreakpointTableModel bptModel = breakpointsProvider.breakpointTableModel;
 		waitForPass(() -> {
-			List<LogicalBreakpointRow> data = bptModel.getModelData();
+			List<LogicalBreakpointRow> data = copyModelData(bptModel);
 			assertEquals(2, data.size());
 			LogicalBreakpointRow row1 = data.get(0);
 			LogicalBreakpointRow row2 = data.get(1);
@@ -548,7 +556,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 			assertEquals(2, lb2.getTraceBreakpoints().size());
 		});
 
-		List<LogicalBreakpointRow> breakData = bptModel.getModelData();
+		List<LogicalBreakpointRow> breakData = copyModelData(bptModel);
 		List<BreakpointLocationRow> filtLocs =
 			breakpointsProvider.locationFilterPanel.getTableFilterModel().getModelData();
 
