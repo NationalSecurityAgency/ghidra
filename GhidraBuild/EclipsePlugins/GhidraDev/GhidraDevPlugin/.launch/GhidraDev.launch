@@ -28,7 +28,7 @@
     <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/CDC-1.0%Foundation-1.0"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog"/>
     <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
-    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dorg.eclipse.swt.internal.carbon.smallFonts -Xbootclasspath/a:${workspace_loc:Framework Utility}/bin/main -Xbootclasspath/a:${workspace_loc:_LaunchSupport}/bin/main"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xbootclasspath/a:&quot;${workspace_loc:Framework Utility}/bin/main&quot;;&quot;${workspace_loc:_LaunchSupport}/bin/main&quot;"/>
     <booleanAttribute key="pde.generated.config" value="false"/>
     <stringAttribute key="pde.version" value="3.3"/>
     <stringAttribute key="product" value="org.eclipse.platform.ide"/>
@@ -166,11 +166,13 @@
         <setEntry value="com.python.pydev.analysis@default:default"/>
         <setEntry value="com.python.pydev.debug@default:default"/>
         <setEntry value="com.python.pydev.refactoring@default:default"/>
-        <setEntry value="com.sun.jna.platform@default:default"/>
-        <setEntry value="com.sun.jna@default:default"/>
+        <setEntry value="com.sun.jna*4.5.1.v20190425-1842@default:default"/>
+        <setEntry value="com.sun.jna*5.8.0.v20210503-0343@default:default"/>
+        <setEntry value="com.sun.jna.platform*4.5.1.v20190425-1842@default:default"/>
+        <setEntry value="com.sun.jna.platform*5.8.0.v20210406-1004@default:default"/>
+        <setEntry value="jakarta.servlet-api@default:default"/>
         <setEntry value="javax.annotation@default:default"/>
         <setEntry value="javax.inject@default:default"/>
-        <setEntry value="javax.servlet@default:default"/>
         <setEntry value="javax.xml@default:default"/>
         <setEntry value="org.apache.batik.constants@default:default"/>
         <setEntry value="org.apache.batik.css@default:default"/>
@@ -193,6 +195,8 @@
         <setEntry value="org.apache.xml.resolver@default:default"/>
         <setEntry value="org.apache.xml.serializer@default:default"/>
         <setEntry value="org.apache.xmlgraphics@default:default"/>
+        <setEntry value="org.bouncycastle.bcpg@default:default"/>
+        <setEntry value="org.bouncycastle.bcprov@default:default"/>
         <setEntry value="org.eclipse.ant.core@default:default"/>
         <setEntry value="org.eclipse.buildship.core@default:default"/>
         <setEntry value="org.eclipse.buildship.ui@default:default"/>
@@ -328,7 +332,6 @@
         <setEntry value="org.eclipse.osgi@-1:true"/>
         <setEntry value="org.eclipse.platform@default:default"/>
         <setEntry value="org.eclipse.search@default:default"/>
-        <setEntry value="org.eclipse.swt.browser.chromium.win32.win32.x86_64@default:false"/>
         <setEntry value="org.eclipse.swt.win32.win32.x86_64@default:false"/>
         <setEntry value="org.eclipse.swt@default:default"/>
         <setEntry value="org.eclipse.team.core@default:default"/>
