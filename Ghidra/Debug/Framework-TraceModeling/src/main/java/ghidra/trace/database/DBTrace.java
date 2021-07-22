@@ -524,7 +524,8 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	}
 
 	@Override
-	public DBTraceProgramView getFixedProgramView(long snap) {
+	// NOTE: addListener synchronizes on this and might generate callbacks immediately
+	public synchronized DBTraceProgramView getFixedProgramView(long snap) {
 		// NOTE: The new viewport will need to read from the time manager during init
 		try (LockHold hold = lockRead()) {
 			synchronized (fixedProgramViews) {
@@ -538,7 +539,8 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	}
 
 	@Override
-	public DBTraceVariableSnapProgramView createProgramView(long snap) {
+	// NOTE: Ditto getFixedProgramView
+	public synchronized DBTraceVariableSnapProgramView createProgramView(long snap) {
 		// NOTE: The new viewport will need to read from the time manager during init
 		try (LockHold hold = lockRead()) {
 			synchronized (programViews) {
