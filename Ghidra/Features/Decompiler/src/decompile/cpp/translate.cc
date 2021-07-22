@@ -896,13 +896,12 @@ void PcodeEmit::restoreXmlOp(const Element *el,const AddrSpaceManager *manage)
 { // Read a raw pcode op from DOM (and dump it)
   int4 opcode;
   VarnodeData outvar;
-  VarnodeData invar[30];
+  vector<VarnodeData> invar;
   VarnodeData *outptr;
 
   istringstream i(el->getAttributeValue("code"));
   i >> opcode;
-  const List &list(el->getChildren());
-  List::const_iterator iter = list.begin();
+  List::const_iterator iter = el->getChildren().begin();
   Address pc = Address::restoreXml(*iter,manage);
   ++iter;
   if ((*iter)->getName() == "void") 
@@ -913,18 +912,15 @@ void PcodeEmit::restoreXmlOp(const Element *el,const AddrSpaceManager *manage)
   }
   ++iter;
   int4 isize = 0;
-  while(iter != list.end() && isize < 30) {
-    if ((*iter)->getName() == "spaceid") {
-      invar[isize].space = manage->getConstantSpace();
-      invar[isize].offset = (uintb)(uintp)manage->getSpaceByName( (*iter)->getAttributeValue("name") );
-      invar[isize].size = sizeof(void *);
-    }
+  List::const_iterator end = el->getChildren().end();
+  while(iter != end) {
+    const Element *el = *iter++;
+    if (el->getName() == "spaceid")
+      invar.emplace_back(manage->getConstantSpace(), (uintb)(uintp)manage->getSpaceByName( el->getAttributeValue("name") ), sizeof(void *));
     else
-      invar[isize].restoreXml(*iter,manage);
-    isize += 1;
-    ++iter;
+      invar.emplace_back().restoreXml(el,manage);
   }
-  dump(pc,(OpCode)opcode,outptr,invar,isize);
+  dump(pc,(OpCode)opcode,outptr,&invar.front(),invar.size());
 }
 
 /// A Helper function for PcodeEmit::restorePackedOp that reads an unsigned offset from a packed stream
@@ -986,7 +982,7 @@ const uint1 *PcodeEmit::restorePackedOp(const Address &addr,const uint1 *ptr,con
 {
   int4 opcode;
   VarnodeData outvar;
-  VarnodeData invar[30];
+  vector<VarnodeData> invar;
   VarnodeData *outptr;
 
   ptr += 1;			// Consume the -op- tag
@@ -999,12 +995,11 @@ const uint1 *PcodeEmit::restorePackedOp(const Address &addr,const uint1 *ptr,con
     ptr = unpackVarnodeData(ptr,outvar,manage);
     outptr = &outvar;
   }
-  int4 isize = 0;
   while(*ptr != end_tag) {
-    ptr = unpackVarnodeData(ptr,invar[isize],manage);
-    isize += 1;
+    invar.emplace_back();
+    ptr = unpackVarnodeData(ptr,invar.back(),manage);
   }
   ptr += 1;			// Consume the end tag
-  dump(addr,(OpCode)opcode,outptr,invar,isize);
+  dump(addr,(OpCode)opcode,outptr,&invar.front(),invar.size());
   return ptr;
 }
