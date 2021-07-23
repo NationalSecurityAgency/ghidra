@@ -22,7 +22,7 @@ set DEBUG_ADDRESS=127.0.0.1:13002
 set VMARG_LIST=-XX:ParallelGCThreads=2
 set VMARG_LIST=%VMARG_LIST% -XX:CICompilerCount=2
 
-:: Store current path
+:: Store current path (%0 gets modified below by SHIFT)
 set "SCRIPT_DIR=%~dp0"
 
 :: Loop through parameters (if there aren't any, just continue) and store
