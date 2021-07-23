@@ -22,6 +22,9 @@ set DEBUG_ADDRESS=127.0.0.1:13002
 set VMARG_LIST=-XX:ParallelGCThreads=2
 set VMARG_LIST=%VMARG_LIST% -XX:CICompilerCount=2
 
+:: Store current path (%0 gets modified below by SHIFT)
+set "SCRIPT_DIR=%~dp0"
+
 :: Loop through parameters (if there aren't any, just continue) and store
 ::   in params variable.
 
@@ -49,4 +52,4 @@ goto Loop
 
 :cont
 
-call "%~dp0launch.bat" %LAUNCH_MODE% Ghidra-Headless "%MAXMEM%" "%VMARG_LIST%" ghidra.app.util.headless.AnalyzeHeadless %params%
+call "%SCRIPT_DIR%launch.bat" %LAUNCH_MODE% Ghidra-Headless "%MAXMEM%" "%VMARG_LIST%" ghidra.app.util.headless.AnalyzeHeadless %params%
