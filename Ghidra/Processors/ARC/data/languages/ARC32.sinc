@@ -347,16 +347,16 @@ Qcc: "pnz"	is Q=0x0f	{ local tmp:1 = !NE && !Z; export tmp; }
 cc:         is Q=0x00 {}
 cc: "."Qcc  is Q & Qcc { if (!Qcc) goto inst_next; }
 cj:         is Q=0x00 {}
-cj:    Qcc  is Q & Qcc { if (!Qcc) goto inst_next; }
+cj:    Qcc  is Q & Qcc {}  # Handle conditional jumps in the Ndd table.
 cl:         is Q=0x00  { export 1:1; }
 cl:    Qcc  is Q & Qcc { export Qcc; }
 
-Ndd: "nd"  is N=0b00  {}  # Only execute the next instruction when not jumping.
-Ndd: "d"   is N=0b01  { delayslot(1); }  # Always execute the next instruction.
-Ndd: "jd"  is N=0b10  { delayslot(1); }  # FIXME: This should be, "Only execute the next instruction when jumping."
+Ndd: "nd"  is N=0b00 & Qcc { if (!Qcc) goto inst_next; }  # Only execute the next instruction when not jumping.
+Ndd: "d"   is N=0b01 & Qcc { delayslot(1); if (!Qcc) goto inst_next; }  # Always execute the next instruction.
+Ndd: "jd"  is N=0b10 & Qcc { if (!Qcc) goto inst_next; delayslot(1); }  # Only execute the next instruction when jumping.
 
-dd:         is N=0b00 {}
-dd: "."Ndd  is N & Ndd {}
+dd:         is N=0b00 & Ndd {}
+dd: "."Ndd  is N      & Ndd {}
 
 f:       is F=0 { export 0:1; }
 f: ".f"  is F=1 { export 1:1; }
