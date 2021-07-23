@@ -1134,7 +1134,8 @@ public final class ReferenceUtils {
 	}
 
 	private static String emboldenBracketedText(String context) {
-		String updated = fixBreakingSpaces(context);
+		String escaped = HTMLUtilities.escapeHTML(context);
+		String updated = fixBreakingSpaces(escaped);
 		updated = updated.replaceFirst(CONTEXT_CALLOUT_START_REGEX, EMBOLDEN_START);
 		updated = updated.replaceFirst(CONTEXT_CALLOUT_END_REGEX, EMBOLDEN_END);
 		return "<html>" + updated;

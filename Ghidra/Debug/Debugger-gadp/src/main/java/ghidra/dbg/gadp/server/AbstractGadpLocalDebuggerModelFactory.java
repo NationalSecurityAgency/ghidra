@@ -15,18 +15,18 @@
  */
 package ghidra.dbg.gadp.server;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.lang.ProcessBuilder.Redirect;
+import java.io.*;
 import java.nio.channels.AsynchronousByteChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
+import generic.concurrent.io.IOResult;
+import generic.concurrent.io.ProcessConsumer;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.gadp.client.GadpClient;
 import ghidra.dbg.gadp.client.GadpTcpDebuggerModelFactory;
-import ghidra.dbg.util.ConfigurableFactory.FactoryOption;
 import ghidra.util.Msg;
 
 public abstract class AbstractGadpLocalDebuggerModelFactory implements DebuggerModelFactory {
@@ -108,9 +108,13 @@ public abstract class AbstractGadpLocalDebuggerModelFactory implements DebuggerM
 				}
 				completeCommandLine(cmd);
 				builder.command(cmd);
-				builder.redirectError(Redirect.INHERIT);
+				//builder.redirectError(Redirect.INHERIT);
 
 				process = builder.start();
+
+				InputStream errorStream = process.getErrorStream();
+				Future<IOResult> errorFuture = ProcessConsumer.consume(errorStream);
+
 				BufferedReader reader =
 					new BufferedReader(new InputStreamReader(process.getInputStream()));
 				String line;
@@ -124,9 +128,19 @@ public abstract class AbstractGadpLocalDebuggerModelFactory implements DebuggerM
 						ready.complete(null);
 					}
 				}
+
 				if (!ready.isDone()) {
-					ready.completeExceptionally(
-						new RuntimeException("Agent terminated unexpectedly"));
+					IOResult errorResult = errorFuture.get();
+					String errorMessage = errorResult.getOutputAsString();
+					if (errorMessage != null) {
+						ready.completeExceptionally(
+							new RuntimeException("Agent terminated with error: " + errorMessage));
+					}
+					else {
+						ready.completeExceptionally(
+							new RuntimeException("Agent terminated unexpectedly"));
+					}
+
 				}
 			}
 			catch (Throwable e) {

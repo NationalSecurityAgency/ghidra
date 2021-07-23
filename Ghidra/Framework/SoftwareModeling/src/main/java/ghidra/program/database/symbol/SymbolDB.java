@@ -134,22 +134,38 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 			oldAddr, addr);
 	}
 
-	protected void move(Address oldBase, Address newBase) {
+	/**
+	 * 	low level record adjustment to move a symbol. Used only when moving a memory block or
+	 *  changing the image base.
+	 *  
+	 * @param newAddress the new address for the symbol
+	 * @param newName the new name for the symbol (or null if the name should stay the same)
+	 * @param newNamespace the new namespace for the symbol (or null if it should stay the same)
+	 * @param newSource 
+	 */
+	protected void moveLowLevel(Address newAddress, String newName, Namespace newNamespace,
+			SourceType newSource, boolean pinned) {
 		lock.acquire();
 		try {
 			checkDeleted();
-			// check if this symbol is in the address space that was moved.
-			if (!oldBase.getAddressSpace().equals(address.getAddressSpace())) {
-				return;
-			}
-			ProgramDB program = symbolMgr.getProgram();
 			Address oldAddress = address;
-			long diff = address.subtract(oldBase);
-			address = newBase.addWrap(diff);
 			record.setLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL,
-				program.getAddressMap().getKey(address, true));
+				symbolMgr.getAddressMap().getKey(newAddress, true));
+			if (newName != null) {
+				record.setString(SymbolDatabaseAdapter.SYMBOL_NAME_COL, newName);
+				if (newName.length() == 0) {
+					setSourceFlagBit(SourceType.DEFAULT);
+				}
+			}
+			if (newNamespace != null) {
+				record.setLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_COL, newNamespace.getID());
+			}
+			if (newSource != null) {
+				setSourceFlagBit(newSource);
+			}
+			updatePinnedFlag(pinned);
 			updateRecord();
-			symbolMgr.moveLabelHistory(oldAddress, address);
+			setInvalid();
 		}
 		finally {
 			lock.release();
@@ -406,12 +422,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				throw new IllegalArgumentException(msg);
 			}
 			if (record != null) {
-				byte flags = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL);
-				byte clearBits = SymbolDatabaseAdapter.SYMBOL_SOURCE_BITS;
-				byte setBits = (byte) newSource.ordinal();
-				flags &= ~clearBits;
-				flags |= setBits;
-				record.setByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL, flags);
+				setSourceFlagBit(newSource);
 				updateRecord();
 				symbolMgr.symbolSourceChanged(this);
 			}
@@ -419,6 +430,15 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		finally {
 			lock.release();
 		}
+	}
+
+	private void setSourceFlagBit(SourceType newSource) {
+		byte flags = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL);
+		byte clearBits = SymbolDatabaseAdapter.SYMBOL_SOURCE_BITS;
+		byte setBits = (byte) newSource.ordinal();
+		flags &= ~clearBits;
+		flags |= setBits;
+		record.setByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL, flags);
 	}
 
 	@Override
@@ -461,7 +481,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	@Override
 	public void setPinned(boolean pinned) {
-		throw new UnsupportedOperationException("Only Code Symbols may be pinned.");
+		throw new UnsupportedOperationException("Only Code and Function Symbols may be pinned.");
 	}
 
 	protected void doSetPinned(boolean pinned) {
@@ -472,14 +492,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				return;
 			}
 			if (record != null) {
-				byte flags = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL);
-				if (pinned) {
-					flags |= SymbolDatabaseAdapter.SYMBOL_PINNED_FLAG;
-				}
-				else {
-					flags &= ~SymbolDatabaseAdapter.SYMBOL_PINNED_FLAG;
-				}
-				record.setByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL, flags);
+				updatePinnedFlag(pinned);
 				updateRecord();
 				symbolMgr.symbolAnchoredFlagChanged(this);
 			}
@@ -487,6 +500,17 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		finally {
 			lock.release();
 		}
+	}
+
+	private void updatePinnedFlag(boolean pinned) {
+		byte flags = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL);
+		if (pinned) {
+			flags |= SymbolDatabaseAdapter.SYMBOL_PINNED_FLAG;
+		}
+		else {
+			flags &= ~SymbolDatabaseAdapter.SYMBOL_PINNED_FLAG;
+		}
+		record.setByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL, flags);
 	}
 
 	@Override

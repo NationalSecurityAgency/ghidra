@@ -66,7 +66,9 @@ public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
 	protected PtySession sessionUsingJavaLeader(String[] args, Map<String, String> env)
 			throws IOException {
 		final List<String> argsList = new ArrayList<>();
-		argsList.add("java");
+		String javaCommand =
+			System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+		argsList.add(javaCommand);
 		argsList.add("-cp");
 		argsList.add(System.getProperty("java.class.path"));
 		argsList.add(LinuxPtySessionLeader.class.getCanonicalName());

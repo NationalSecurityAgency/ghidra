@@ -89,18 +89,32 @@ public interface DebuggerResources {
 	ImageIcon ICON_SNAP_BACKWARD = ResourceManager.loadImage("images/2leftarrow.png");
 	ImageIcon ICON_SEEK_PRESENT = ICON_RESUME;
 
-	ImageIcon ICON_SET_BREAKPOINT = ResourceManager.loadImage("images/breakpoint-set.png");
-	ImageIcon ICON_CLEAR_BREAKPOINT = ResourceManager.loadImage("images/breakpoint-clear.png");
-	ImageIcon ICON_ENABLE_BREAKPOINT = ResourceManager.loadImage("images/breakpoint-enable.png");
+	boolean altIcons = Boolean.getBoolean("debugger.breakpoints.alt.icons");
+
+	ImageIcon ICON_SET_BREAKPOINT =
+		altIcons ? ResourceManager.loadImage("images/alt-breakpoint-set.png")
+				: ResourceManager.loadImage("images/breakpoint-set.png");
+	ImageIcon ICON_CLEAR_BREAKPOINT =
+		altIcons ? ResourceManager.loadImage("images/alt-breakpoint-clear.png")
+				: ResourceManager.loadImage("images/breakpoint-clear.png");
+	ImageIcon ICON_ENABLE_BREAKPOINT =
+		altIcons ? ResourceManager.loadImage("images/alt-breakpoint-enable.png")
+				: ResourceManager.loadImage("images/breakpoint-enable.png");
 	ImageIcon ICON_ENABLE_ALL_BREAKPOINTS =
-		ResourceManager.loadImage("images/breakpoints-enable-all.png");
-	ImageIcon ICON_DISABLE_BREAKPOINT = ResourceManager.loadImage("images/breakpoint-disable.png");
+		altIcons ? ResourceManager.loadImage("images/alt-breakpoints-enable-all.png")
+				: ResourceManager.loadImage("images/breakpoints-enable-all.png");
+	ImageIcon ICON_DISABLE_BREAKPOINT =
+		altIcons ? ResourceManager.loadImage("images/alt-breakpoint-disable.png")
+				: ResourceManager.loadImage("images/breakpoint-disable.png");
 	ImageIcon ICON_DISABLE_ALL_BREAKPOINTS =
-		ResourceManager.loadImage("images/breakpoints-disable-all.png");
+		altIcons ? ResourceManager.loadImage("images/alt-breakpoints-disable-all.png")
+				: ResourceManager.loadImage("images/breakpoints-disable-all.png");
 	ImageIcon ICON_CLEAR_ALL_BREAKPOINTS =
-		ResourceManager.loadImage("images/breakpoints-clear-all.png");
+		altIcons ? ResourceManager.loadImage("images/alt-breakpoints-clear-all.png")
+				: ResourceManager.loadImage("images/breakpoints-clear-all.png");
 	ImageIcon ICON_MAKE_BREAKPOINTS_EFFECTIVE =
-		ResourceManager.loadImage("images/breakpoints-make-effective.png");
+		altIcons ? ResourceManager.loadImage("images/alt-breakpoints-make-effective.png")
+				: ResourceManager.loadImage("images/breakpoints-make-effective.png");
 
 	// TODO: Some overlay to indicate dynamic, or new icon altogether
 	ImageIcon ICON_LISTING = ResourceManager.loadImage("images/Browser.gif");
@@ -279,16 +293,21 @@ public interface DebuggerResources {
 	int PRIORITY_BREAKPOINT_INEFFECTIVE_D_MARKER = MarkerService.BREAKPOINT_PRIORITY;
 	int PRIORITY_BREAKPOINT_MIXED_ED_MARKER = MarkerService.BREAKPOINT_PRIORITY;
 	int PRIORITY_BREAKPOINT_MIXED_DE_MARKER = MarkerService.BREAKPOINT_PRIORITY;
+
 	ImageIcon ICON_BREAKPOINT_ENABLED_MARKER = ICON_ENABLE_BREAKPOINT;
 	ImageIcon ICON_BREAKPOINT_DISABLED_MARKER = ICON_DISABLE_BREAKPOINT;
 	ImageIcon ICON_BREAKPOINT_MIXED_ED_MARKER =
-		ResourceManager.loadImage("images/breakpoint-mixed-ed.png");
+		altIcons ? ResourceManager.loadImage("images/alt-breakpoint-mixed-ed.png")
+				: ResourceManager.loadImage("images/breakpoint-mixed-ed.png");
 	ImageIcon ICON_BREAKPOINT_MIXED_DE_MARKER =
-		ResourceManager.loadImage("images/breakpoint-mixed-de.png");
+		altIcons ? ResourceManager.loadImage("images/alt-breakpoint-mixed-de.png")
+				: ResourceManager.loadImage("images/breakpoint-mixed-de.png");
 	ImageIcon ICON_BREAKPOINT_INEFFECTIVE_E_MARKER =
-		ResourceManager.loadImage("images/breakpoint-ineffective-e.png");
+		altIcons ? ResourceManager.loadImage("images/alt-breakpoint-ineffective-e.png")
+				: ResourceManager.loadImage("images/breakpoint-ineffective-e.png");
 	ImageIcon ICON_BREAKPOINT_INEFFECTIVE_D_MARKER =
-		ResourceManager.loadImage("images/breakpoint-ineffective-d.png");
+		altIcons ? ResourceManager.loadImage("images/alt-breakpoint-ineffective-d.png")
+				: ResourceManager.loadImage("images/breakpoint-ineffective-d.png");
 
 	Icon ICON_UNIQUE_REF_READ =
 		new RotateIcon(ResourceManager.loadImage("images/cursor_arrow.gif"), 180); // TODO
@@ -1734,4 +1753,5 @@ public interface DebuggerResources {
 			action.setSelected(value);
 		}
 	}
+
 }

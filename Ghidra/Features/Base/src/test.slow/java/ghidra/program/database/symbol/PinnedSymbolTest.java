@@ -33,17 +33,24 @@ import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressLabelInfo;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
-import ghidra.util.exception.*;
+import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
 public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 	private static int EXPECTED_PROCESSOR_SYMBOLS = 9;
 	private static int EXPECTED_USER_SYMBOLS = 2;
+	private static int ORIGINAL_BOB_ADDRESS = 4;
+	private static int ORIGINAL_FUNCTION_ADDRESS = 0xc;
+
 	private Program program;
 	private AddressSpace space;
 	private int transactionID;
 	private SymbolTable symbolTable;
+
+	private Address originalBobAddress;
+	private Address originalFunctionAddress;
 
 	public PinnedSymbolTest() {
 		super();
@@ -56,22 +63,29 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 		checkProcessorSymbolsInPlace(EXPECTED_PROCESSOR_SYMBOLS + EXPECTED_USER_SYMBOLS);
 		assertNotNull(symbolTable.getPrimarySymbol(addr(4)));
 
-		program.setImageBase(addr(0x100), true);
+		long imageBaseMove = 0x100;
+		Address movedBobAddress = originalBobAddress.add(imageBaseMove);
+		Address movedFunctionAddress = originalFunctionAddress.add(imageBaseMove);
+
+		program.setImageBase(addr(imageBaseMove), true);
 
 		// expect one new symbol for pinned function
 		checkProcessorSymbolsInPlace(EXPECTED_PROCESSOR_SYMBOLS + EXPECTED_USER_SYMBOLS + 1);
 
 		// check bob symbol
-		assertNotNull(symbolTable.getPrimarySymbol(addr(0x104)));
-		assertEquals(0, symbolTable.getLabelHistory(addr(0x4)).length);
-		assertEquals(1, symbolTable.getLabelHistory(addr(0x104)).length);
+		assertNull(symbolTable.getPrimarySymbol(originalBobAddress));
+		assertNotNull(symbolTable.getPrimarySymbol(movedBobAddress));
+
+		assertEquals(0, symbolTable.getLabelHistory(originalBobAddress).length);
+		assertEquals(1, symbolTable.getLabelHistory(movedBobAddress).length);
 
 		// check function symbol - function should move, but pinned label should remain.
-		Symbol symbol = symbolTable.getPrimarySymbol(addr(0xc));
+		Symbol symbol = symbolTable.getPrimarySymbol(originalFunctionAddress);
 		assertNotNull(symbol);
 		assertEquals(SymbolType.LABEL, symbol.getSymbolType());
 		assertEquals("MyFunction", symbol.getName());
-		symbol = symbolTable.getPrimarySymbol(addr(0x10c));
+
+		symbol = symbolTable.getPrimarySymbol(movedFunctionAddress);
 		assertNotNull(symbol);
 		assertEquals(SymbolType.FUNCTION, symbol.getSymbolType());
 		assertEquals(SourceType.DEFAULT, symbol.getSource());
@@ -84,25 +98,30 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 			MemoryBlockException, MemoryConflictException, NotFoundException {
 
 		checkProcessorSymbolsInPlace(EXPECTED_PROCESSOR_SYMBOLS + EXPECTED_USER_SYMBOLS);
-		assertNotNull(symbolTable.getPrimarySymbol(addr(4)));
+		assertNotNull(symbolTable.getPrimarySymbol(originalBobAddress));
+
+		long moveAmount = 0x200;
+		Address movedBobAddress = originalBobAddress.add(moveAmount);
+		Address movedFunctionAddress = originalFunctionAddress.add(moveAmount);
 
 		Memory memory = program.getMemory();
 		MemoryBlock block = memory.getBlock(addr(0));
-		memory.moveBlock(block, addr(0x200), TaskMonitorAdapter.DUMMY_MONITOR);
+		memory.moveBlock(block, addr(moveAmount), TaskMonitorAdapter.DUMMY_MONITOR);
 
 		checkProcessorSymbolsInPlace(EXPECTED_PROCESSOR_SYMBOLS + EXPECTED_USER_SYMBOLS + 1);
 
 		// check bob symbol
-		assertNotNull(symbolTable.getPrimarySymbol(addr(0x204)));
-		assertEquals(0, symbolTable.getLabelHistory(addr(0x4)).length);
-		assertEquals(1, symbolTable.getLabelHistory(addr(0x204)).length);
+		assertNull(symbolTable.getPrimarySymbol(originalBobAddress));
+		assertNotNull(symbolTable.getPrimarySymbol(movedBobAddress));
+		assertEquals(0, symbolTable.getLabelHistory(originalBobAddress).length);
+		assertEquals(1, symbolTable.getLabelHistory(movedBobAddress).length);
 
 		// check function symbol - function should move, but pinned label should remain.
-		Symbol symbol = symbolTable.getPrimarySymbol(addr(0xc));
+		Symbol symbol = symbolTable.getPrimarySymbol(originalFunctionAddress);
 		assertNotNull(symbol);
 		assertEquals(SymbolType.LABEL, symbol.getSymbolType());
 		assertEquals("MyFunction", symbol.getName());
-		symbol = symbolTable.getPrimarySymbol(addr(0x20c));
+		symbol = symbolTable.getPrimarySymbol(movedFunctionAddress);
 		assertNotNull(symbol);
 		assertEquals(SymbolType.FUNCTION, symbol.getSymbolType());
 		assertEquals(SourceType.DEFAULT, symbol.getSource());
@@ -113,7 +132,7 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 	public void testDeleteMemoryBlock() throws LockException {
 
 		checkProcessorSymbolsInPlace(EXPECTED_PROCESSOR_SYMBOLS + EXPECTED_USER_SYMBOLS);
-		assertNotNull(symbolTable.getPrimarySymbol(addr(4)));
+		assertNotNull(symbolTable.getPrimarySymbol(originalBobAddress));
 
 		Memory memory = program.getMemory();
 		MemoryBlock block = memory.getBlock(addr(0));
@@ -122,15 +141,104 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 		checkProcessorSymbolsInPlace(EXPECTED_PROCESSOR_SYMBOLS + 1);
 
 		// check bob symbol is gone
-		assertNull(symbolTable.getPrimarySymbol(addr(4)));
-		assertEquals(0, symbolTable.getLabelHistory(addr(0x4)).length);
+		assertNull(symbolTable.getPrimarySymbol(originalBobAddress));
+		assertEquals(0, symbolTable.getLabelHistory(originalBobAddress).length);
 
 		// check the pinned function symbol is now just a pinned code symbol
-		Symbol symbol = symbolTable.getPrimarySymbol(addr(0xc));
+		Symbol symbol = symbolTable.getPrimarySymbol(originalFunctionAddress);
 		assertNotNull(symbol);
 		assertEquals(SymbolType.LABEL, symbol.getSymbolType());
 		assertEquals("MyFunction", symbol.getName());
 		assertTrue(symbol.isPinned());
+	}
+
+	@Test
+	public void testMoveMemoryBlockSymbolAlreadyExistsAtDestination() throws Exception {
+		long moveAmount = 0x200;
+		Address movedBobAddress = originalBobAddress.add(moveAmount);
+
+		symbolTable.createLabel(movedBobAddress, "Joe", SourceType.USER_DEFINED);
+
+		Symbol[] symbolsAtOrig = symbolTable.getSymbols(originalBobAddress);
+		assertTrue(symbolsAtOrig[0].isPrimary());
+
+		Symbol[] symbolsAtMoved = symbolTable.getSymbols(movedBobAddress);
+		assertTrue(symbolsAtMoved[0].isPrimary());
+
+		Memory memory = program.getMemory();
+		MemoryBlock block = memory.getBlock(addr(0));
+		memory.moveBlock(block, addr(moveAmount), TaskMonitor.DUMMY);
+
+		symbolsAtOrig = symbolTable.getSymbols(originalBobAddress);
+		assertEquals(0, symbolsAtOrig.length);
+
+		symbolsAtMoved = symbolTable.getSymbols(movedBobAddress);
+		assertEquals(2, symbolsAtMoved.length);
+
+		assertEquals("Joe", symbolsAtMoved[0].getName());
+		assertEquals("Bob", symbolsAtMoved[1].getName());
+
+		assertTrue(symbolsAtMoved[0].isPrimary());  // joe should be primary
+		assertTrue(!symbolsAtMoved[1].isPrimary()); // bob should not be primary
+	}
+
+	@Test
+	public void moveBlockWithFunctionFromOnePinnedSymbolToAnother() throws Exception {
+		long moveAmount = 0x100;
+		Address functionAddressAfterMove = addr(ORIGINAL_FUNCTION_ADDRESS + moveAmount);
+		symbolTable.createLabel(functionAddressAfterMove, "TARGET", SourceType.USER_DEFINED);
+		Symbol target = symbolTable.getPrimarySymbol(functionAddressAfterMove);
+		target.setPinned(true);
+
+		assertEquals(SymbolType.LABEL, target.getSymbolType());
+		assertTrue(target.isPinned());
+		
+		Memory memory = program.getMemory();
+		MemoryBlock block = memory.getBlock(addr(0));
+		memory.moveBlock(block, addr(moveAmount), TaskMonitor.DUMMY);
+
+		Symbol result = symbolTable.getPrimarySymbol(functionAddressAfterMove);
+		assertEquals(SymbolType.FUNCTION, result.getSymbolType());
+		assertEquals("TARGET", result.getName());
+		assertTrue(result.isPinned());
+
+		Symbol leftover = symbolTable.getPrimarySymbol(originalFunctionAddress);
+		assertEquals(SymbolType.LABEL, leftover.getSymbolType());
+		assertEquals("MyFunction", leftover.getName());
+		assertTrue(leftover.isPinned());
+
+	}
+
+	@Test
+	public void testPinnedStayWhenBlockMovedOnTopOfThem() throws Exception {
+		Address moveToAddress = addr(0x200);
+
+		Symbol symbol = symbolTable.createLabel(moveToAddress, "MyPinned", SourceType.USER_DEFINED);
+		symbol.setPinned(true);
+
+		Memory memory = program.getMemory();
+		MemoryBlock block = memory.getBlock(addr(0));
+		memory.moveBlock(block, moveToAddress, TaskMonitor.DUMMY);
+
+		SymbolIterator symbols = symbolTable.getSymbols("MyPinned");
+		Symbol s = symbols.next();
+		assertEquals(moveToAddress, s.getAddress());
+
+	}
+
+	@Test
+	public void testLabelCollision() throws Exception {
+		int moveAmount = 0x100;
+		Address movedBobAddress = originalBobAddress.add(moveAmount);
+		symbolTable.createLabel(movedBobAddress, "Bob", SourceType.USER_DEFINED);
+
+		Memory memory = program.getMemory();
+		MemoryBlock block = memory.getBlock(addr(0));
+		memory.moveBlock(block, addr(0x100), TaskMonitor.DUMMY);
+
+		Symbol[] symbols = symbolTable.getSymbols(movedBobAddress);
+		assertEquals(1, symbols.length);
+		assertEquals("Bob", symbols[0].getName());
 	}
 
 	private void checkProcessorSymbolsInPlace(int expectedSymbols) {
@@ -143,15 +251,6 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 		assertNotNull(symbolTable.getPrimarySymbol(addr(0x28)));
 		assertNotNull(symbolTable.getPrimarySymbol(addr(0x30)));
 		assertNotNull(symbolTable.getPrimarySymbol(addr(0x38)));
-
-		assertEquals(1, symbolTable.getLabelHistory(addr(0)).length);
-		assertEquals(1, symbolTable.getLabelHistory(addr(8)).length);
-		assertEquals(1, symbolTable.getLabelHistory(addr(0x10)).length);
-		assertEquals(1, symbolTable.getLabelHistory(addr(0x18)).length);
-		assertEquals(1, symbolTable.getLabelHistory(addr(0x20)).length);
-		assertEquals(1, symbolTable.getLabelHistory(addr(0x28)).length);
-		assertEquals(1, symbolTable.getLabelHistory(addr(0x30)).length);
-		assertEquals(1, symbolTable.getLabelHistory(addr(0x38)).length);
 	}
 
 	@Before
@@ -160,11 +259,16 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 		program = new ProgramDB("z80", lang, lang.getDefaultCompilerSpec(), this);
 		symbolTable = program.getSymbolTable();
 		space = program.getAddressFactory().getDefaultAddressSpace();
+
+		originalBobAddress = addr(ORIGINAL_BOB_ADDRESS);
+		originalFunctionAddress = addr(ORIGINAL_FUNCTION_ADDRESS);
+
 		transactionID = program.startTransaction("Test");
 		createMemBlock();
 		createProcessorSymbols(lang);
 		createBobSymbol();
 		createPinnedFunctionSymbol();
+
 
 	}
 
@@ -179,14 +283,14 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	private void createBobSymbol() throws InvalidInputException {
-		symbolTable.createLabel(addr(4), "Bob", SourceType.USER_DEFINED);
+		symbolTable.createLabel(originalBobAddress, "Bob", SourceType.USER_DEFINED);
 	}
 
 	private void createPinnedFunctionSymbol()
-			throws DuplicateNameException, InvalidInputException, OverlappingFunctionException {
-		Address addr = addr(0xc);
-		AddressSet set = new AddressSet(addr);
-		Function fun = program.getFunctionManager().createFunction("MyFunction", addr, set,
+			throws InvalidInputException, OverlappingFunctionException {
+		AddressSet set = new AddressSet(originalFunctionAddress);
+		Function fun = program.getFunctionManager()
+				.createFunction("MyFunction", originalFunctionAddress, set,
 			SourceType.USER_DEFINED);
 		Symbol symbol = fun.getSymbol();
 		symbol.setPinned(true);
