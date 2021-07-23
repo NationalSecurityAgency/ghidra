@@ -388,9 +388,11 @@ public class GhidraProjectUtils {
 				// If the project is linked to an old Ghidra, keep the list of source folders that are
 				// linked to the Ghidra installation (after updating their paths to point to the new
 				// Ghidra installation).
-				IFolder entryFolder =
-					ResourcesPlugin.getWorkspace().getRoot().getFolder(entry.getPath());
-				if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE && entryFolder.isLinked() &&
+				IFolder entryFolder = null;
+				if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+					entryFolder = ResourcesPlugin.getWorkspace().getRoot().getFolder(entry.getPath());
+				}
+				if (entryFolder != null && entryFolder.isLinked() &&
 					oldGhidraInstallPath != null &&
 					oldGhidraInstallPath.isPrefixOf(entryFolder.getLocation())) {
 					String origPath = entryFolder.getLocation().toString();
