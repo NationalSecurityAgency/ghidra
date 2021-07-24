@@ -81,6 +81,8 @@ define register offset=0x2000 size=1 [
 	E1  # Enable level 1 interrupts
 	E2  # Enable level 2 interrupts
 	H   # Halt
+
+	loop_enable
 ];
 
 define register offset=0x3000 size=4 [
@@ -89,7 +91,16 @@ define register offset=0x3000 size=4 [
 
 define register offset=0x4000 size=4 [
 	dummy_write  # Dummy register to send writes to when the destination register points to an immediate.
+	contextreg
 ];
+
+define context contextreg
+	# Instruction decoding phase.
+	phase = (0, 0)
+
+	# Indicate that this is the last instruction in a loop.
+	end_of_loop = (1, 1) noflow
+;
 
 define token instr(32)
 	I = (27, 31)
@@ -348,8 +359,6 @@ cc:         is Q=0x00 {}
 cc: "."Qcc  is Q & Qcc { if (!Qcc) goto inst_next; }
 cj:         is Q=0x00 {}
 cj:    Qcc  is Q & Qcc {}  # Handle conditional jumps in the Ndd table.
-cl:         is Q=0x00  { export 1:1; }
-cl:    Qcc  is Q & Qcc { export Qcc; }
 
 Ndd: "nd"  is N=0b00 & Qcc { if (!Qcc) goto inst_next; }  # Only execute the next instruction when not jumping.
 Ndd: "d"   is N=0b01 & Qcc { delayslot(1); if (!Qcc) goto inst_next; }  # Always execute the next instruction.
@@ -357,6 +366,13 @@ Ndd: "jd"  is N=0b10 & Qcc { if (!Qcc) goto inst_next; delayslot(1); }  # Only e
 
 dd:         is N=0b00 & Ndd {}
 dd: "."Ndd  is N      & Ndd {}
+
+Ndl: "nd"  is N=0b00 & L & Qcc { local jump_dest:4 = inst_next + (L << 2); if (Qcc) goto <skip>; goto [jump_dest]; <skip> }  # Only execute the next instruction when not jumping.
+Ndl: "d"   is N=0b01 & L & Qcc { local jump_dest:4 = inst_next + (L << 2); delayslot(1); if (Qcc) goto <skip>; goto [jump_dest]; <skip> }  # Always execute the next instruction.
+Ndl: "jd"  is N=0b10 & L & Qcc { local jump_dest:4 = inst_next + (L << 2); if (Qcc) goto <skip>; goto [jump_dest]; <skip> delayslot(1); }  # Only execute the next instruction when jumping.
+
+dl:         is N=0b00 & Ndl {}
+dl: "."Ndl  is N      & Ndl {}
 
 f:       is F=0 { export 0:1; }
 f: ".f"  is F=1 { export 1:1; }
@@ -386,6 +402,24 @@ lds_x:         is lds_X=0 { export 0:1; }
 lds_x:  ".x"   is lds_X=1 { export 1:1; }
 
 
+:^instruction is phase=0 & instruction [ phase = 1; ] {
+	build instruction;
+}
+
+:^instruction is phase=0 & end_of_loop=1 & instruction [ phase = 1; ] {
+	if (loop_enable == 0) goto <end_loop>;
+	lp_count = lp_count - 1;
+	if (lp_count == 0) goto <end_loop>;
+	pc = lp_start;
+	goto [pc];
+	<end_loop>
+	loop_enable = 0;
+	build instruction;
+}
+
+with: phase=1 {
+
+
 :nop  is I=0b01111 & A=63 & B=63 & C=63 & D=0x1ff {}
 
 :brk    is I=0b00011 & A=63 & B=63 & C=63 & D=0x000 { DebugBreak(); }
@@ -403,13 +437,14 @@ lds_x:  ".x"   is lds_X=1 { export 1:1; }
 :b^cj^dd #jump_dest  is I=0b00100 & L & dd & cj [ jump_dest = inst_next + (L << 2); ] { goto [jump_dest:4]; }
 :bl^cj^dd #jump_dest  is I=0b00101 & L & dd & cj [ jump_dest = inst_next + (L << 2); ] { link(); call [jump_dest:4]; }
 
-# FIXME: Properly implement loops.
-:lp^cl^dd #jump_dest  is I=0b00110 & L & dd & cl [ jump_dest = inst_next + (L << 2); ] {
-	if (cl) goto <skip>;
-	goto [jump_dest:4];
-	<skip>
-	lp_end = jump_dest;
+:lp^cj^dl #jump_dest  is I=0b00110 & L & dl & cj [
+	jump_dest = inst_next + (L << 2);
+	end_of_loop = 1;
+	globalset(jump_dest, end_of_loop);
+] {
 	lp_start = inst_next;
+	lp_end = jump_dest;
+	loop_enable = 1;
 }
 
 :adc^fi   dest, B, #D     is I=0b01001 & dest & B & (C=61 | C=63) & fi & D { dest = B + D + zext(CY); if (!fi) goto <skip>; adcflags(dest, B, D:4); <skip> }
@@ -596,3 +631,6 @@ lds_x:  ".x"   is lds_X=1 { export 1:1; }
 :lr  dest, [ar_D]   is I=0b00001 & lds_Di=0 & lds_13=1 & lds_A=0 & lds_Z=0b00 & lds_X=0 & dest & B=63 & ar_D { dest = ar_D; }
 :lr  dest, [#Limm]  is I=0b00001 & lds_Di=0 & lds_13=1 & lds_A=0 & lds_Z=0b00 & lds_X=0 & dest & B=62 ; Limm { dest = *[auxregs]:4 (Limm:4); }
 :lr  dest, [B]      is I=0b00001 & lds_Di=0 & lds_13=1 & lds_A=0 & lds_Z=0b00 & lds_X=0 & dest & B { dest = *[auxregs]:4 (B); }
+
+
+}
