@@ -17,7 +17,6 @@ package ghidra.pcode.emu;
 
 import java.util.List;
 
-import ghidra.pcode.emu.AbstractPcodeMachine.ThreadPcodeExecutorState;
 import ghidra.pcode.emu.DefaultPcodeThread.SleighEmulationLibrary;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;

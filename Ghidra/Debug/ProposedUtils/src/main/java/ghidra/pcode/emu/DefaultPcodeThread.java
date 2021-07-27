@@ -19,7 +19,6 @@ import java.math.BigInteger;
 import java.util.*;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.pcode.emu.AbstractPcodeMachine.ThreadPcodeExecutorState;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
@@ -110,8 +109,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	protected final ProgramContextImpl defaultContext;
 	protected final Map<Address, PcodeProgram> injects = new HashMap<>();
 
-	public DefaultPcodeThread(String name, AbstractPcodeMachine<T> machine,
-			SleighUseropLibrary<T> library) {
+	public DefaultPcodeThread(String name, AbstractPcodeMachine<T> machine) {
 		this.name = name;
 		this.machine = machine;
 		this.language = machine.language;
@@ -119,8 +117,8 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		PcodeExecutorState<T> memoryState = machine.getMemoryState();
 		PcodeExecutorState<T> registerState = machine.createRegisterState(this);
 		this.state = new ThreadPcodeExecutorState<>(memoryState, registerState);
-		this.decoder = new SleighInstructionDecoder(language, memoryState);
-		this.library = new SleighEmulationLibrary<>(this).compose(library);
+		this.decoder = createInstructionDecoder(memoryState);
+		this.library = createUseropLibrary();
 
 		this.executor = createExecutor();
 		this.pc = language.getProgramCounter();
@@ -135,6 +133,14 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 			defaultContext = null;
 		}
 		this.reInitialize();
+	}
+
+	protected SleighInstructionDecoder createInstructionDecoder(PcodeExecutorState<T> memoryState) {
+		return new SleighInstructionDecoder(language, memoryState);
+	}
+
+	protected SleighUseropLibrary<T> createUseropLibrary() {
+		return new SleighEmulationLibrary<>(this).compose(machine.library);
 	}
 
 	protected PcodeThreadExecutor createExecutor() {

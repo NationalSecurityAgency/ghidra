@@ -22,9 +22,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-import ghidra.pcode.emu.AbstractPcodeMachine;
-import ghidra.pcode.emu.AbstractPcodeMachine.ThreadPcodeExecutorState;
-import ghidra.pcode.emu.PcodeThread;
+import ghidra.pcode.emu.*;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.RegisterValue;
