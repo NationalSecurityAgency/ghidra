@@ -143,13 +143,13 @@ bool SegmentOp::unify(Funcdata &data,PcodeOp *op,
     innervn = op->getIn(2);
     if (basevn->isConstant())
       basevn = data.newConstant(baseinsize,basevn->getOffset());
-    bindlist[1] = basevn;
+    bindlist[0] = basevn;
   }
   else
-    bindlist[1] = (Varnode *)0;
+    bindlist[0] = (Varnode *)0;
   if (innervn->isConstant())
     innervn = data.newConstant(innerinsize,innervn->getOffset());
-  bindlist[0] = innervn;
+  bindlist[1] = innervn;
   return true;
 }
 

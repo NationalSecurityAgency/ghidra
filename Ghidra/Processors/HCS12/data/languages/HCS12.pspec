@@ -8,8 +8,8 @@
   
   <segmentop space="RAM" userop="segment" farpointer="no">
     <pcode>
-      <input name="inner" size="2"/>
       <input name="base" size="3"/>
+      <input name="inner" size="2"/>
       <output name="res" size="3"/>
       <body><![CDATA[
         res = base ^ zext(inner);

@@ -644,12 +644,12 @@ int4 ActionSegmentize::apply(Funcdata &data)
       }
 
       if (segdef->getNumVariableTerms()==1)
-	bindlist[1] = data.newConstant(4,0);
+	bindlist[0] = data.newConstant(4,0);
       // Redefine the op as a segmentop
       data.opSetOpcode(segroot,CPUI_SEGMENTOP);
       data.opSetInput(segroot,data.newVarnodeSpace(spc),0);
-      data.opSetInput(segroot,bindlist[1],1);
-      data.opSetInput(segroot,bindlist[0],2);
+      data.opSetInput(segroot,bindlist[0],1);
+      data.opSetInput(segroot,bindlist[1],2);
       for(int4 j=segroot->numInput()-1;j>2;--j) // Remove anything else
 	data.opRemoveInput(segroot,j);
       count += 1;
