@@ -15,6 +15,7 @@
  */
 package ghidra.pcode.emu;
 
+import java.util.Collection;
 import java.util.List;
 
 import ghidra.pcode.emu.DefaultPcodeThread.SleighEmulationLibrary;
@@ -52,6 +53,13 @@ public interface PcodeMachine<T> {
 	 * @return the thread, or {@code null} if absent and not created
 	 */
 	PcodeThread<T> getThread(String name, boolean createIfAbsent);
+
+	/**
+	 * Collect all threads present in the machine
+	 * 
+	 * @return the collection of threads
+	 */
+	Collection<? extends PcodeThread<T>> getAllThreads();
 
 	/**
 	 * Get the machine's shared (memory) state

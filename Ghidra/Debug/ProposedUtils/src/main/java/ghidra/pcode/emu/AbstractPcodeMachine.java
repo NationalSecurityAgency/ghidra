@@ -36,6 +36,8 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	/* for abstract thread access */ PcodeStateInitializer initializer;
 	private PcodeExecutorState<T> sharedState;
 	protected final Map<String, PcodeThread<T>> threads = new LinkedHashMap<>();
+	protected final Collection<PcodeThread<T>> threadsView =
+		Collections.unmodifiableCollection(threads.values());
 
 	protected final Map<Address, PcodeProgram> injects = new HashMap<>();
 
@@ -90,7 +92,7 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 
 	@Override
 	public PcodeThread<T> newThread() {
-		return createThread("Thread" + threads.size());
+		return newThread("Thread " + threads.size());
 	}
 
 	@Override
@@ -110,6 +112,11 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 			thread = newThread(name);
 		}
 		return thread;
+	}
+
+	@Override
+	public Collection<? extends PcodeThread<T>> getAllThreads() {
+		return threadsView;
 	}
 
 	@Override
