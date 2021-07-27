@@ -15,17 +15,14 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import java.io.IOException;
 
 import ghidra.app.cmd.comments.AppendCommentCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.bin.format.dwarf4.*;
-import ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute;
-import ghidra.app.util.bin.format.dwarf4.encoding.DWARFSourceLanguage;
-import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
+import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.*;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
@@ -288,14 +285,6 @@ public class DWARFFunctionImporter {
 
 		Function gfunc = createFunction(dfunc, diea);
 
-		Number dwarfLanguage = -1;
-
-
-		DWARFCompilationUnit firstCompilationUnit = prog.getCompilationUnits().get(0);
-		if (firstCompilationUnit != null) {
-			dwarfLanguage = firstCompilationUnit.getCompileUnit().getLanguage();
-		}
-
 		if (gfunc != null) {
 
 			if (formalParams.isEmpty() && dfunc.localVarErrors) {
@@ -303,7 +292,10 @@ public class DWARFFunctionImporter {
 				// don't force the method to have an empty param signature because there are other
 				// issues afoot.
 				skipFuncSignature = true;
-			} else if (formalParams.isEmpty() && dwarfLanguage == (Number) DWARFSourceLanguage.DW_LANG_Rust) {
+			}
+			else if (formalParams.isEmpty() && diea.getCompilationUnit()
+					.getCompileUnit()
+					.getLanguage() == DWARFSourceLanguage.DW_LANG_Rust) {
 				// if there were no defined parameters and the language is Rust, don't force an
 				// empty param signature. Rust language emit dwarf info without types (signatures)
 				// when used without -g.
