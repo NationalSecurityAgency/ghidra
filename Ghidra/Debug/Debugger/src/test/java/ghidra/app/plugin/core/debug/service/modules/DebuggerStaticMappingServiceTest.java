@@ -75,7 +75,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 				dynSpace.getAddress(0x00100000));
 		ProgramLocation to = new ProgramLocation(program, stSpace.getAddress(0x00200000));
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			mappingService.addMapping(from, to, 0x1000, false);
+			DebuggerStaticMappingUtils.addMapping(from, to, 0x1000, false);
 		}
 		waitForDomainObject(tb.trace);
 	}
@@ -85,7 +85,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 			dynSpace.getAddress(0x00100800));
 		ProgramLocation to = new ProgramLocation(program, stSpace.getAddress(0x00300000));
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			mappingService.addMapping(from, to, 0x1000, truncateExisting);
+			DebuggerStaticMappingUtils.addMapping(from, to, 0x1000, truncateExisting);
 		}
 	}
 
@@ -104,7 +104,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 				dynSpace.getAddress(0x00102000));
 		ProgramLocation to = new ProgramLocation(program, stSpace.getAddress(0x00200000));
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			mappingService.addMapping(from, to, 0x800, false);
+			DebuggerStaticMappingUtils.addMapping(from, to, 0x800, false);
 		}
 		waitForDomainObject(tb.trace);
 	}

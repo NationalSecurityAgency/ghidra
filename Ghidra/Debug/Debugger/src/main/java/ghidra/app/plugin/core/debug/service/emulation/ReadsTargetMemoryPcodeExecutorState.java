@@ -44,30 +44,37 @@ public class ReadsTargetMemoryPcodeExecutorState
 
 		@Override
 		protected void fillUninitialized(AddressSet uninitialized) {
-			// TODO: fillUnknownWithStaticImages?
-			if (!isLive()) {
-				return;
-			}
-			AddressSet unknown = computeUnknown(uninitialized);
-			if (unknown.isEmpty()) {
-				return;
-			}
-			fillUnknownWithRecorder(unknown);
+			AddressSet unknown;
 			unknown = computeUnknown(uninitialized);
 			if (unknown.isEmpty()) {
 				return;
 			}
+			if (fillUnknownWithRecorder(unknown)) {
+				unknown = computeUnknown(uninitialized);
+				if (unknown.isEmpty()) {
+					return;
+				}
+			}
+			if (fillUnknownWithStaticImages(unknown)) {
+				unknown = computeUnknown(uninitialized);
+				if (unknown.isEmpty()) {
+					return;
+				}
+			}
 			Msg.warn(this, "Emulator read from UNKNOWN state: " + unknown);
 		}
 
-		protected void fillUnknownWithRecorder(AddressSet unknown) {
+		protected boolean fillUnknownWithRecorder(AddressSet unknown) {
+			if (!isLive()) {
+				return false;
+			}
 			waitTimeout(recorder.captureProcessMemory(unknown, TaskMonitor.DUMMY));
+			return true;
 		}
 
-		private void fillUnknownWithStaticImages(AddressSet unknown) {
-			if (!space.isMemorySpace()) {
-				return;
-			}
+		private boolean fillUnknownWithStaticImages(AddressSet unknown) {
+			boolean result = false;
+			// TODO: Expand to block? DON'T OVERWRITE KNOWN!
 			DebuggerStaticMappingService mappingService =
 				tool.getService(DebuggerStaticMappingService.class);
 			byte[] data = new byte[4096];
@@ -76,12 +83,15 @@ public class ReadsTargetMemoryPcodeExecutorState
 					.entrySet()) {
 				Program program = ent.getKey();
 				ShiftAndAddressSetView shifted = ent.getValue();
-				Msg.warn(this,
-					"Filling in unknown trace memory in emulator using mapped image: " +
-						program + ": " + shifted.getAddressSetView());
 				long shift = shifted.getShift();
 				Memory memory = program.getMemory();
-				for (AddressRange rng : shifted.getAddressSetView()) {
+				AddressSetView initialized = memory.getLoadedAndInitializedAddressSet();
+				AddressSetView toRead = shifted.getAddressSetView().intersect(initialized);
+				Msg.warn(this,
+					"Filling in unknown trace memory in emulator using mapped image: " +
+						program + ": " + toRead);
+
+				for (AddressRange rng : toRead) {
 					long lower = rng.getMinAddress().getOffset();
 					long fullLen = rng.getLength();
 					while (fullLen > 0) {
@@ -101,8 +111,10 @@ public class ReadsTargetMemoryPcodeExecutorState
 						lower += len;
 						fullLen -= len;
 					}
+					result = true;
 				}
 			}
+			return result;
 		}
 	}
 

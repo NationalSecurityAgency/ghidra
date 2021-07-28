@@ -30,6 +30,7 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest.Test
 import ghidra.app.plugin.core.debug.service.breakpoint.DebuggerLogicalBreakpointServicePlugin;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.*;
@@ -130,12 +131,12 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 		mb.testProcess3.addRegion("echo:.text", mb.rng(0x7fac0000, 0x7fac0fff), "rx");
 
 		try (UndoableTransaction tid = UndoableTransaction.start(trace1, "Add mapping", true)) {
-			mappingService.addMapping(
+			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(trace1, null, Range.atLeast(0L), addr(trace1, 0x00400000)),
 				new ProgramLocation(program, addr(program, 0x00400000)), 0x00210000, false);
 		}
 		try (UndoableTransaction tid = UndoableTransaction.start(trace3, "Add mapping", true)) {
-			mappingService.addMapping(
+			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(trace3, null, Range.atLeast(0L), addr(trace3, 0x7fac0000)),
 				new ProgramLocation(program, addr(program, 0x00400000)), 0x00010000, false);
 		}

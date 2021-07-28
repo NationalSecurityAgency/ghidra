@@ -59,8 +59,10 @@ public class DebuggerRegistersPlugin extends AbstractDebuggerPlugin {
 
 	protected DebuggerRegistersProvider connectedProvider;
 
-	private final Map<CompilerSpec, LinkedHashSet<Register>> selectionByCSpec = new HashMap<>();
-	private final Map<CompilerSpec, LinkedHashSet<Register>> favoritesByCSpec = new HashMap<>();
+	private final Map<LanguageCompilerSpecPair, LinkedHashSet<Register>> selectionByCSpec =
+		new HashMap<>();
+	private final Map<LanguageCompilerSpecPair, LinkedHashSet<Register>> favoritesByCSpec =
+		new HashMap<>();
 	private final Set<DebuggerRegistersProvider> disconnectedProviders = new HashSet<>();
 
 	public DebuggerRegistersPlugin(PluginTool tool) {
@@ -119,13 +121,13 @@ public class DebuggerRegistersPlugin extends AbstractDebuggerPlugin {
 		}
 	}
 
-	public static String encodeSetsByCSpec(Map<CompilerSpec, LinkedHashSet<Register>> setsByCSpec) {
+	public static String encodeSetsByCSpec(
+			Map<LanguageCompilerSpecPair, LinkedHashSet<Register>> setsByCSpec) {
 		return StringUtils.join(setsByCSpec.entrySet().stream().map(ent -> {
-			CompilerSpec cspec = ent.getKey();
+			LanguageCompilerSpecPair lcsp = ent.getKey();
 			String regs = StringUtils.join(
 				ent.getValue().stream().map(Register::getName).collect(Collectors.toList()), ',');
-			return cspec.getLanguage().getLanguageID() + "/" + cspec.getCompilerSpecID() + ":" +
-				regs;
+			return lcsp.languageID + "/" + lcsp.compilerSpecID + ":" + regs;
 		}).collect(Collectors.toList()), ';');
 	}
 
@@ -138,8 +140,8 @@ public class DebuggerRegistersPlugin extends AbstractDebuggerPlugin {
 		saveState.putString(KEY_FAVORITES_BY_CSPEC, favoritesByCSpecString);
 	}
 
-	public static void readSetsByCSpec(Map<CompilerSpec, LinkedHashSet<Register>> setsByCSpec,
-			String encoded) {
+	public static void readSetsByCSpec(
+			Map<LanguageCompilerSpecPair, LinkedHashSet<Register>> setsByCSpec, String encoded) {
 		LanguageService langServ = DefaultLanguageService.getLanguageService();
 		if (encoded.length() == 0) {
 			return;
@@ -160,24 +162,17 @@ public class DebuggerRegistersPlugin extends AbstractDebuggerPlugin {
 					"Bad lang-spec key: " + langCsPart + ". Ignoring.");
 				continue;
 			}
+			LanguageID lid = new LanguageID(langCsParts[0]);
 			Language lang;
 			try {
-				lang = langServ.getLanguage(new LanguageID(langCsParts[0]));
+				lang = langServ.getLanguage(lid);
 			}
 			catch (LanguageNotFoundException e) {
 				Msg.warn(DebuggerRegistersPlugin.class,
 					"Language " + langCsParts[0] + " does not exist. Ignoring.");
 				continue;
 			}
-			CompilerSpec cSpec;
-			try {
-				cSpec = lang.getCompilerSpecByID(new CompilerSpecID(langCsParts[1]));
-			}
-			catch (CompilerSpecNotFoundException e) {
-				Msg.warn(DebuggerRegistersPlugin.class,
-					"CompilerSpec " + langCsParts[1] + " does not exist. Ignoring.");
-				continue;
-			}
+			CompilerSpecID csid = new CompilerSpecID(langCsParts[1]);
 
 			LinkedHashSet<Register> regs = new LinkedHashSet<>();
 			for (String regName : regsPart.split(",")) {
@@ -190,7 +185,7 @@ public class DebuggerRegistersPlugin extends AbstractDebuggerPlugin {
 				regs.add(register);
 			}
 
-			setsByCSpec.put(cSpec, regs);
+			setsByCSpec.put(new LanguageCompilerSpecPair(lid, csid), regs);
 		}
 	}
 
