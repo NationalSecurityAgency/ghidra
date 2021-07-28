@@ -646,10 +646,10 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 				List.of(
 					"RIP = 0x00400000;",
 					"RSP = 0x00110000;",
-					"*:8 0x00600000:8 = 0x0123456789abcdef;",
-					"*:8 0x00600008:8 = 0xfedcba9876543210;"),
+					"*:8 0x00600008:8 = 0x0123456789abcdef;", // LE
+					"*:8 0x00600000:8 = 0xfedcba9876543210;"),
 				List.of(
-					"MOVAPS XMM0, xmmword ptr [0x00600007]"));
+					"MOVAPS XMM0, xmmword ptr [0x00600000]"));
 
 			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
