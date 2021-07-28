@@ -40,31 +40,32 @@ public enum BytesPcodeArithmetic implements PcodeArithmetic<byte[]> {
 	}
 
 	@Override
-	public byte[] unaryOp(UnaryOpBehavior op, int sizeout, int sizein, byte[] in1) {
-		if (sizein > 8 || sizeout > 8) {
-			BigInteger in1Val = Utils.bytesToBigInteger(in1, sizein, isBigEndian, false);
-			BigInteger outVal = op.evaluateUnary(sizeout, sizein, in1Val);
+	public byte[] unaryOp(UnaryOpBehavior op, int sizeout, int sizein1, byte[] in1) {
+		if (sizein1 > 8 || sizeout > 8) {
+			BigInteger in1Val = Utils.bytesToBigInteger(in1, in1.length, isBigEndian, false);
+			BigInteger outVal = op.evaluateUnary(sizeout, sizein1, in1Val);
 			return Utils.bigIntegerToBytes(outVal, sizeout, isBigEndian);
 		}
 		else {
-			long in1Val = Utils.bytesToLong(in1, sizein, isBigEndian);
-			long outVal = op.evaluateUnary(sizeout, sizein, in1Val);
+			long in1Val = Utils.bytesToLong(in1, sizein1, isBigEndian);
+			long outVal = op.evaluateUnary(sizeout, sizein1, in1Val);
 			return Utils.longToBytes(outVal, sizeout, isBigEndian);
 		}
 	}
 
 	@Override
-	public byte[] binaryOp(BinaryOpBehavior op, int sizeout, int sizein, byte[] in1, byte[] in2) {
-		if (sizein > 8 || sizeout > 8) {
-			BigInteger in1Val = Utils.bytesToBigInteger(in1, sizein, isBigEndian, false);
-			BigInteger in2Val = Utils.bytesToBigInteger(in2, sizein, isBigEndian, false);
-			BigInteger outVal = op.evaluateBinary(sizeout, sizein, in1Val, in2Val);
+	public byte[] binaryOp(BinaryOpBehavior op, int sizeout, int sizein1, byte[] in1, int sizein2,
+			byte[] in2) {
+		if (sizein1 > 8 || sizeout > 8) {
+			BigInteger in1Val = Utils.bytesToBigInteger(in1, sizein1, isBigEndian, false);
+			BigInteger in2Val = Utils.bytesToBigInteger(in2, sizein2, isBigEndian, false);
+			BigInteger outVal = op.evaluateBinary(sizeout, sizein1, in1Val, in2Val);
 			return Utils.bigIntegerToBytes(outVal, sizeout, isBigEndian);
 		}
 		else {
-			long in1Val = Utils.bytesToLong(in1, sizein, isBigEndian);
-			long in2Val = Utils.bytesToLong(in2, sizein, isBigEndian);
-			long outVal = op.evaluateBinary(sizeout, sizein, in1Val, in2Val);
+			long in1Val = Utils.bytesToLong(in1, sizein1, isBigEndian);
+			long in2Val = Utils.bytesToLong(in2, sizein2, isBigEndian);
+			long outVal = op.evaluateBinary(sizeout, sizein1, in1Val, in2Val);
 			return Utils.longToBytes(outVal, sizeout, isBigEndian);
 		}
 	}
