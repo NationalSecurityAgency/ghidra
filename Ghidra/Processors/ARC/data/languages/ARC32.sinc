@@ -219,7 +219,9 @@ macro resultflags(dst) { # Set Z flag for results
 	NE = ((dst >> 31) & 1) != 0;
 }
 
-macro addflags(dst, op1, op2) {  # Flags set by add instructions
+macro exec_add(dst, op1, op2, fl) {
+	dst = op1 + op2;
+	if (!fl) goto inst_next;
 	CY = scarry(op1, op2);  # Check for signed carry
 	local dst_sign:1 = ((dst >> 31) & 1) != 0;
 	local op1_sign:1 = ((op1 >> 31) & 1) != 0;
@@ -228,8 +230,10 @@ macro addflags(dst, op1, op2) {  # Flags set by add instructions
 	resultflags(dst);
 }
 
-macro subflags(dst, op1, op2) {  # Flags set by sub instructions
-	CY = op1 s< op2;  # Check for signed carry
+macro exec_sub(dst, op1, op2, fl) {
+	dst = op1 - op2;
+	if (!fl) goto inst_next;
+	CY = op1 s< op2;  # Check for signed borrow
 	local dst_sign:1 = ((dst >> 31) & 1) != 0;
 	local op1_sign:1 = ((op1 >> 31) & 1) != 0;
 	local op2_sign:1 = ((op2 >> 31) & 1) != 0;
@@ -237,23 +241,19 @@ macro subflags(dst, op1, op2) {  # Flags set by sub instructions
 	resultflags(dst);
 }
 
-macro adcflags(dst, op1, op2) {  # Flags set by add-with-carry instruction
-	local old_CY = CY;
-	CY = scarry(op1, op2);  # Check for carry
-	if CY goto <skip>;
-	local tmp = op1 + op2;
-	CY = scarry(tmp, zext(old_CY));
-	<skip>
+macro exec_adc(dst, op1, op2, fl) {
+	local tmp:4 = op2 + zext(CY);
+	dst = op1 + tmp;
+	if (!fl) goto inst_next;
+	CY = scarry(op1, tmp);  # Check for signed carry
 	resultflags(dst);
 }
 
-macro sbcflags(dst, op1, op2) {  # Flags set by sub-with-carry instruction
-	local old_CY = CY;
-	CY = op1 s< op2;  # Check for carry
-	if CY goto <skip>;
-	local tmp = op1 - op2;
-	CY = tmp s< zext(old_CY);
-	<skip>
+macro exec_sbc(dst, op1, op2, fl) {
+	local tmp:4 = op2 + zext(CY);
+	dst = op1 - tmp;
+	if (!fl) goto inst_next;
+	CY = op1 s< tmp;  # Check for signed borrow
 	resultflags(dst);
 }
 
@@ -447,17 +447,17 @@ with: phase=1 {
 	loop_enable = 1;
 }
 
-:adc^fi   dest, B, #D     is I=0b01001 & dest & B & (C=61 | C=63) & fi & D { dest = B + D + zext(CY); if (!fi) goto <skip>; adcflags(dest, B, D:4); <skip> }
-:adc^fi   dest, #D, C     is I=0b01001 & dest & (B=61 | B=63) & C & fi & D { dest = D + C + zext(CY); if (!fi) goto <skip>; adcflags(dest, D:4, C); <skip> }
-:adc^cc^f dest, B, #Limm  is I=0b01001 & dest & B & C=62 & f & cc ; Limm { dest = B + Limm + zext(CY); if (!f) goto <skip>; adcflags(dest, B, Limm:4); <skip> }
-:adc^cc^f dest, #Limm, C  is I=0b01001 & dest & B=62 & C & f & cc ; Limm { dest = Limm + C + zext(CY); if (!f) goto <skip>; adcflags(dest, Limm:4, C); <skip> }
-:adc^cc^f dest, B, C      is I=0b01001 & dest & B & C & f & cc { dest = B + C + zext(CY); if (!f) goto <skip>; adcflags(dest, B, C); <skip> }
+:adc^fi   dest, B, #D     is I=0b01001 & dest & B & (C=61 | C=63) & fi & D { exec_adc(dest, B, D:4, fi); }
+:adc^fi   dest, #D, C     is I=0b01001 & dest & (B=61 | B=63) & C & fi & D { exec_adc(dest, D:4, C, fi); }
+:adc^cc^f dest, B, #Limm  is I=0b01001 & dest & B & C=62 & f & cc ; Limm { exec_adc(dest, B, Limm:4, f); }
+:adc^cc^f dest, #Limm, C  is I=0b01001 & dest & B=62 & C & f & cc ; Limm { exec_adc(dest, Limm:4, C, f); }
+:adc^cc^f dest, B, C      is I=0b01001 & dest & B & C & f & cc { exec_adc(dest, B, C, f); }
 
-:add^fi   dest, B, #D     is I=0b01000 & dest & B & (C=61 | C=63) & fi & D { dest = B + D; if (!fi) goto <skip>; addflags(dest, B, D:4); <skip> }
-:add^fi   dest, #D, C     is I=0b01000 & dest & (B=61 | B=63) & C & fi & D { dest = D + C; if (!fi) goto <skip>; addflags(dest, D:4, C); <skip> }
-:add^cc^f dest, B, #Limm  is I=0b01000 & dest & B & C=62 & f & cc ; Limm { dest = B + Limm; if (!f) goto <skip>; addflags(dest, B, Limm:4); <skip> }
-:add^cc^f dest, #Limm, C  is I=0b01000 & dest & B=62 & C & f & cc ; Limm { dest = Limm + C; if (!f) goto <skip>; addflags(dest, Limm:4, C); <skip> }
-:add^cc^f dest, B, C      is I=0b01000 & dest & B & C & f & cc { dest = B + C; if (!f) goto <skip>; addflags(dest, B, C); <skip> }
+:add^fi   dest, B, #D     is I=0b01000 & dest & B & (C=61 | C=63) & fi & D { exec_add(dest, B, D:4, fi); }
+:add^fi   dest, #D, C     is I=0b01000 & dest & (B=61 | B=63) & C & fi & D { exec_add(dest, D:4, C, fi); }
+:add^cc^f dest, B, #Limm  is I=0b01000 & dest & B & C=62 & f & cc ; Limm { exec_add(dest, B, Limm:4, f); }
+:add^cc^f dest, #Limm, C  is I=0b01000 & dest & B=62 & C & f & cc ; Limm { exec_add(dest, Limm:4, C, f); }
+:add^cc^f dest, B, C      is I=0b01000 & dest & B & C & f & cc { exec_add(dest, B, C, f); }
 
 :mov^fi   dest, #D        is I=0b01100 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D { dest = D; }
 :mov^cc^f dest, #Limm     is I=0b01100 & dest & B=62 & C=62 & f & cc ; Limm { dest = Limm; }
@@ -515,17 +515,17 @@ with: phase=1 {
 :ror^cc^f dest, #Limm, C  is I=0b10011 & dest & B=62 & C & f & cc ; Limm { rormultiple(dest, Limm:4, C); if (!f) goto <skip>; resultflags(dest); <skip> }
 :ror^cc^f dest, B, C      is I=0b10011 & dest & B & C & f & cc { rormultiple(dest, B, C); if (!f) goto <skip>; resultflags(dest); <skip> }
 
-:sbc^fi   dest, B, #D     is I=0b01011 & dest & B & (C=61 | C=63) & fi & D { dest = B - D - zext(CY); if (!fi) goto <skip>; sbcflags(dest, B, D:4); <skip> }
-:sbc^fi   dest, #D, C     is I=0b01011 & dest & (B=61 | B=63) & C & fi & D { dest = D - C - zext(CY); if (!fi) goto <skip>; sbcflags(dest, D:4, C); <skip> }
-:sbc^cc^f dest, B, #Limm  is I=0b01011 & dest & B & C=62 & f & cc ; Limm { dest = B - Limm - zext(CY); if (!f) goto <skip>; sbcflags(dest, B, Limm:4); <skip> }
-:sbc^cc^f dest, #Limm, C  is I=0b01011 & dest & B=62 & C & f & cc ; Limm { dest = Limm - C - zext(CY); if (!f) goto <skip>; sbcflags(dest, Limm:4, C); <skip> }
-:sbc^cc^f dest, B, C      is I=0b01011 & dest & B & C & f & cc { dest = B - C - zext(CY); if (!f) goto <skip>; sbcflags(dest, B, C); <skip> }
+:sbc^fi   dest, B, #D     is I=0b01011 & dest & B & (C=61 | C=63) & fi & D { exec_sbc(dest, B, D:4, fi); }
+:sbc^fi   dest, #D, C     is I=0b01011 & dest & (B=61 | B=63) & C & fi & D { exec_sbc(dest, D:4, C, fi); }
+:sbc^cc^f dest, B, #Limm  is I=0b01011 & dest & B & C=62 & f & cc ; Limm { exec_sbc(dest, B, Limm:4, f); }
+:sbc^cc^f dest, #Limm, C  is I=0b01011 & dest & B=62 & C & f & cc ; Limm { exec_sbc(dest, Limm:4, C, f); }
+:sbc^cc^f dest, B, C      is I=0b01011 & dest & B & C & f & cc { exec_sbc(dest, B, C, f); }
 
-:sub^fi   dest, B, #D     is I=0b01010 & dest & B & (C=61 | C=63) & fi & D { dest = B - D; if (!fi) goto <skip>; subflags(dest, B, D:4); <skip> }
-:sub^fi   dest, #D, C     is I=0b01010 & dest & (B=61 | B=63) & C & fi & D { dest = D - C; if (!fi) goto <skip>; subflags(dest, D:4, C); <skip> }
-:sub^cc^f dest, B, #Limm  is I=0b01010 & dest & B & C=62 & f & cc ; Limm { dest = B - Limm; if (!f) goto <skip>; subflags(dest, B, Limm:4); <skip> }
-:sub^cc^f dest, #Limm, C  is I=0b01010 & dest & B=62 & C & f & cc ; Limm { dest = Limm - C; if (!f) goto <skip>; subflags(dest, Limm:4, C); <skip> }
-:sub^cc^f dest, B, C      is I=0b01010 & dest & B & C & f & cc { dest = B - C; if (!f) goto <skip>; subflags(dest, B, C); <skip> }
+:sub^fi   dest, B, #D     is I=0b01010 & dest & B & (C=61 | C=63) & fi & D { exec_sub(dest, B, D:4, fi); }
+:sub^fi   dest, #D, C     is I=0b01010 & dest & (B=61 | B=63) & C & fi & D { exec_sub(dest, D:4, C, fi); }
+:sub^cc^f dest, B, #Limm  is I=0b01010 & dest & B & C=62 & f & cc ; Limm { exec_sub(dest, B, Limm:4, f); }
+:sub^cc^f dest, #Limm, C  is I=0b01010 & dest & B=62 & C & f & cc ; Limm { exec_sub(dest, Limm:4, C, f); }
+:sub^cc^f dest, B, C      is I=0b01010 & dest & B & C & f & cc { exec_sub(dest, B, C, f); }
 
 :xor^fi   dest, B, #D     is I=0b01111 & dest & B & (C=61 | C=63) & fi & D { dest = B ^ D; if (!fi) goto <skip>; resultflags(dest); <skip> }
 :xor^fi   dest, #D, C     is I=0b01111 & dest & (B=61 | B=63) & C & fi & D { dest = D ^ C; if (!fi) goto <skip>; resultflags(dest); <skip> }
