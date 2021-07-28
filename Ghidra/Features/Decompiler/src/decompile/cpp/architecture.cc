@@ -134,46 +134,30 @@ Architecture::Architecture(void)
 Architecture::~Architecture(void)
 
 {				// Delete anything that was allocated
-  vector<TypeOp *>::iterator iter;
-  TypeOp *t_op;
+  for(TypeOp *op : inst)
+    delete op;
+  for(Rule *rule : extra_pool_rules)
+    delete rule;
 
-  for(iter=inst.begin();iter!=inst.end();++iter) {
-    t_op = *iter;
-    if (t_op != (TypeOp *)0)
-      delete t_op;
-  }
-  for(int4 i=0;i<extra_pool_rules.size();++i)
-    delete extra_pool_rules[i];
-
-  if (symboltab != (Database *)0)
-    delete symboltab;
-  for(int4 i=0;i<(int4)printlist.size();++i)
-    delete printlist[i];
+  delete symboltab;
+  for(PrintLanguage *lang : printlist)
+    delete lang;
   delete options;
 #ifdef CPUI_STATISTICS
   delete stats;
 #endif
 
-  map<string,ProtoModel *>::const_iterator piter;
-  for(piter=protoModels.begin();piter!=protoModels.end();++piter)
-    delete (*piter).second;
+  for(auto &model : protoModels)
+    delete model.second;
 
-  if (types != (TypeFactory *)0)
-    delete types;
-  if (translate != (Translate *)0)
-    delete translate;
-  if (loader != (LoadImage *)0)
-    delete loader;
-  if (pcodeinjectlib != (PcodeInjectLibrary *)0)
-    delete pcodeinjectlib;
-  if (commentdb != (CommentDatabase *)0)
-    delete commentdb;
-  if (stringManager != (StringManager *)0)
-    delete stringManager;
-  if (cpool != (ConstantPool *)0)
-    delete cpool;
-  if (context != (ContextDatabase *)0)
-    delete context;
+  delete types;
+  delete translate;
+  delete loader;
+  delete pcodeinjectlib;
+  delete commentdb;
+  delete stringManager;
+  delete cpool;
+  delete context;
 }
 
 /// The Architecture maintains the set of prototype models that can

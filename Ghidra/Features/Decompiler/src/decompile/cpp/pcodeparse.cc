@@ -3270,10 +3270,8 @@ void PcodeSnippet::clear(void)
       tree.erase(tmpiter);
     }
   }
-  if (result != (ConstructTpl *)0) {
-    delete result;
-    result = (ConstructTpl *)0;
-  }
+  delete result;
+  result = (ConstructTpl *)0;
   // tempbase = 0;
   errorcount = 0;
   firsterror.clear();
@@ -3305,12 +3303,9 @@ PcodeSnippet::~PcodeSnippet(void)
 
 {
   SymbolTree::iterator iter;
-  for(iter=tree.begin();iter!=tree.end();++iter)
-    delete *iter;		// Free ALL temporary symbols
-  if (result != (ConstructTpl *)0) {
-    delete result;
-    result = (ConstructTpl *)0;
-  }
+  for(auto *it : tree)
+    delete it;		// Free ALL temporary symbols
+  delete result;
 }
 
 void PcodeSnippet::reportError(const Location *loc, const string &msg)

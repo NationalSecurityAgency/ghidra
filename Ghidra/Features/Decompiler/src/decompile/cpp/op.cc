@@ -1052,14 +1052,12 @@ list<PcodeOp *>::const_iterator PcodeOpBank::end(OpCode opc) const
 void PcodeOpBank::clear(void)
 
 {
-  list<PcodeOp *>::iterator iter;
-
-  for(iter=alivelist.begin();iter!=alivelist.end();++iter)
-    delete *iter;
-  for(iter=deadlist.begin();iter!=deadlist.end();++iter)
-    delete *iter;
-  for(iter=deadandgone.begin();iter!=deadandgone.end();++iter)
-    delete *iter;
+  for(auto *it : alivelist)
+    delete it;
+  for(auto *it : deadlist)
+    delete it;
+  for(auto *it : deadandgone)
+    delete it;
   optree.clear();
   alivelist.clear();
   deadlist.clear();

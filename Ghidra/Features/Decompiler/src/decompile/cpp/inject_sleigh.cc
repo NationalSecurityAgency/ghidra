@@ -20,15 +20,13 @@
 InjectContextSleigh::~InjectContextSleigh(void)
 
 {
-  if (pos != (ParserContext *)0)
-    delete pos;
+  delete pos;
 }
 
 InjectPayloadSleigh::~InjectPayloadSleigh(void)
 
 {
-  if (tpl != (ConstructTpl *)0)
-    delete tpl;
+  delete tpl;
 }
 
 InjectPayloadSleigh::InjectPayloadSleigh(const string &src,const string &nm,int4 tp)
@@ -185,8 +183,7 @@ ExecutablePcodeSleigh::ExecutablePcodeSleigh(Architecture *g,const string &src,c
 ExecutablePcodeSleigh::~ExecutablePcodeSleigh(void)
 
 {
-  if (tpl != (ConstructTpl *)0)
-    delete tpl;
+  delete tpl;
 }
 
 void ExecutablePcodeSleigh::inject(InjectContext &context,PcodeEmit &emit) const
@@ -238,9 +235,8 @@ void ExecutablePcodeSleigh::printTemplate(ostream &s) const
 InjectPayloadDynamic::~InjectPayloadDynamic(void)
 
 {
-  map<Address,Document *>::iterator iter;
-  for(iter=addrMap.begin();iter!=addrMap.end();++iter)
-    delete (*iter).second;
+  for(auto &it : addrMap)
+    delete it.second;
 }
 
 void InjectPayloadDynamic::restoreEntry(const Element *el)

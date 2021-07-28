@@ -88,7 +88,7 @@ public:
   InstructionPattern(PatternBlock *mv) { maskvalue = mv; }
   InstructionPattern(bool tf) { maskvalue = new PatternBlock(tf); }
   PatternBlock *getBlock(void) { return maskvalue; }
-  virtual ~InstructionPattern(void) { if (maskvalue != (PatternBlock *)0) delete maskvalue; }
+  virtual ~InstructionPattern(void) { delete maskvalue; }
   virtual Pattern *simplifyClone(void) const { return new InstructionPattern(maskvalue->clone()); }
   virtual void shiftInstruction(int4 sa) { maskvalue->shift(sa); }
   virtual Pattern *doOr(const Pattern *b,int4 sa) const;
@@ -109,7 +109,7 @@ public:
   ContextPattern(void) { maskvalue = (PatternBlock *)0; } // For use with restoreXml
   ContextPattern(PatternBlock *mv) { maskvalue = mv; }
   PatternBlock *getBlock(void) { return maskvalue; }
-  virtual ~ContextPattern(void) { if (maskvalue != (PatternBlock *)0) delete maskvalue; }
+  virtual ~ContextPattern(void) { delete maskvalue; }
   virtual Pattern *simplifyClone(void) const { return new ContextPattern(maskvalue->clone()); }
   virtual void shiftInstruction(int4 sa) { }  // do nothing
   virtual Pattern *doOr(const Pattern *b,int4 sa) const;

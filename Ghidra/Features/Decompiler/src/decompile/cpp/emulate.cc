@@ -339,10 +339,10 @@ EmulatePcodeCache::EmulatePcodeCache(Translate *t,MemoryState *s,BreakTable *b)
 void EmulatePcodeCache::clearCache(void)
 
 {
-  for(int4 i=0;i<opcache.size();++i)
-    delete opcache[i];
-  for(int4 i=0;i<varcache.size();++i)
-    delete varcache[i];
+  for(auto *op : opcache)
+    delete op;
+  for(auto *var : varcache)
+    delete var;
   opcache.clear();
   varcache.clear();
 }

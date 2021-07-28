@@ -69,7 +69,7 @@ private:
   int4 byteDataLen;	///< The number of bytes in the data for a string literal
 public:
   CPoolRecord(void) { type = (Datatype *)0; byteData = (uint1 *)0; }		///< Construct an empty record
-  ~CPoolRecord(void) { if (byteData != (uint1 *)0) delete [] byteData; }	///< Destructor
+  ~CPoolRecord(void) { delete [] byteData; }	///< Destructor
   uint4 getTag(void) const { return tag; }					///< Get the type of record
   const string &getToken(void) const { return token; }				///< Get name of method or data-type
   const uint1 *getByteData(void) const { return byteData; }			///< Get pointer to string literal data

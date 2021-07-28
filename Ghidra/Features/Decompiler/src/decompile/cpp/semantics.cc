@@ -661,11 +661,9 @@ void HandleTpl::restoreXml(const Element *el,const AddrSpaceManager *manage)
 OpTpl::~OpTpl(void)
 
 {				// An OpTpl owns its varnode_tpls
-  if (output != (VarnodeTpl *)0)
-    delete output;
-  vector<VarnodeTpl *>::iterator iter;
-  for(iter=input.begin();iter!=input.end();++iter)
-    delete *iter;
+  delete output;
+  for(auto *it : input)
+    delete it;
 }
 
 bool OpTpl::isZeroSize(void) const
@@ -738,11 +736,9 @@ void OpTpl::restoreXml(const Element *el,const AddrSpaceManager *manage)
 ConstructTpl::~ConstructTpl(void)
 
 {				// Constructor owns its ops and handles
-  vector<OpTpl *>::iterator oiter;
-  for(oiter=vec.begin();oiter!=vec.end();++oiter)
-    delete *oiter;
-  if (result != (HandleTpl *)0)
-    delete result;
+  for(auto *it : vec)
+    delete it;
+  delete result;
 }
 
 bool ConstructTpl::addOp(OpTpl *ot)
@@ -838,8 +834,7 @@ void ConstructTpl::setInput(VarnodeTpl *vn,int4 index,int4 slot)
   OpTpl *op = vec[index];
   VarnodeTpl *oldvn = op->getIn(slot);
   op->setInput(vn,slot);
-  if (oldvn != (VarnodeTpl *)0)
-    delete oldvn;
+  delete oldvn;
 }
 
 void ConstructTpl::setOutput(VarnodeTpl *vn,int4 index)
@@ -849,8 +844,7 @@ void ConstructTpl::setOutput(VarnodeTpl *vn,int4 index)
   OpTpl *op = vec[index];
   VarnodeTpl *oldvn = op->getOut();
   op->setOutput(vn);
-  if (oldvn != (VarnodeTpl *)0)
-    delete oldvn;
+  delete oldvn;
 }
 
 void ConstructTpl::deleteOps(const vector<int4> &indices)

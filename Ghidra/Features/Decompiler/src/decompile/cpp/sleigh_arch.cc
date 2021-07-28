@@ -463,9 +463,7 @@ void SleighArchitecture::scanForSleighDirectories(const string &rootpath)
 void SleighArchitecture::shutdown(void)
 
 {
-  if (last_sleigh != (Sleigh *)0) {
-    delete last_sleigh;
-    last_sleigh = (Sleigh *)0;
-  }
+  delete last_sleigh;
+  last_sleigh = (Sleigh *)0;
   // description.clear();  // static vector is destroyed by the normal exit handler
 }

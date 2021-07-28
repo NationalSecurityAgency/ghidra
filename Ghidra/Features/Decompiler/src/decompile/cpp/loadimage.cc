@@ -46,10 +46,7 @@ RawLoadImage::RawLoadImage(const string &f) : LoadImage(f)
 RawLoadImage::~RawLoadImage(void)
 
 {
-  if (thefile != (ifstream *)0) {
-    thefile->close();
-    delete thefile;
-  }
+  delete thefile;
 }
 
 /// The file is opened and its size immediately recovered.

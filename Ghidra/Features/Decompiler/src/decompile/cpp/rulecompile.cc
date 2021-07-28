@@ -402,13 +402,9 @@ RuleCompile::RuleCompile(void)
 RuleCompile::~RuleCompile(void)
 
 {
-  if (finalrule != (ConstraintGroup *)0)
-    delete finalrule;
-  for(int4 i=0;i<inst.size();++i) {
-    OpBehavior *t_op = inst[i];
-    if (t_op != (OpBehavior *)0)
-      delete t_op;
-  }
+  delete finalrule;
+  for(auto *op : inst) {
+    delete op;
 }
 
 void RuleCompile::ruleError(const char *s)
@@ -771,10 +767,8 @@ void RuleCompile::run(istream &s,bool debug)
     return;
   }
   errors = 0;
-  if (finalrule != (ConstraintGroup *)0) {
-    delete finalrule;
-    finalrule = (ConstraintGroup *)0;
-  }
+  delete finalrule;
+  finalrule = (ConstraintGroup *)0;
   lexer.initialize(s);
 
   rulecompile = this;		// Setup the global pointer

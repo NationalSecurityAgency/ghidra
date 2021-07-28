@@ -161,8 +161,7 @@ TypeOp::TypeOp(TypeFactory *t,OpCode opc,const string &n)
 TypeOp::~TypeOp(void)
 
 {
-  if (behave != (OpBehavior *)0)
-    delete behave;
+  delete behave;
 }
 
 /// \return \b true if the ordering of the inputs does not affect the output

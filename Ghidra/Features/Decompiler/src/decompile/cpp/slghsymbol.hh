@@ -604,7 +604,7 @@ public:
   void addOperand(OperandSymbol *sym) { operands.push_back(sym); }
   int4 getNumOperands(void) const { return operands.size(); }
   OperandSymbol *getOperand(int4 i) const { return operands[i]; }
-  virtual ~MacroSymbol(void) { if (construct != (ConstructTpl *)0) delete construct; }
+  virtual ~MacroSymbol(void) { delete construct; }
   virtual symbol_type getType(void) const { return macro_symbol; }
 };
 

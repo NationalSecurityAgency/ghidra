@@ -135,19 +135,15 @@ CommentDatabaseInternal::CommentDatabaseInternal(void)
 CommentDatabaseInternal::~CommentDatabaseInternal(void)
 
 {
-  CommentSet::iterator iter;
-
-  for(iter=commentset.begin();iter!=commentset.end();++iter)
-    delete *iter;
+  for(auto *it : commentset)
+    delete it;
 }
 
 void CommentDatabaseInternal::clear(void)
 
 {
-  CommentSet::iterator iter;
-
-  for(iter=commentset.begin();iter!=commentset.end();++iter)
-    delete *iter;
+  for(auto *it : commentset)
+    delete it;
   commentset.clear();
 }
 

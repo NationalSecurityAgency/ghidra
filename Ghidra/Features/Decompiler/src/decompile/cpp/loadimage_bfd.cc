@@ -39,8 +39,7 @@ LoadImageBfd::LoadImageBfd(const string &f,const string &t) : LoadImage(f)
 LoadImageBfd::~LoadImageBfd(void)
 
 {
-  if (symbol_table != (asymbol **)0)
-    delete [] symbol_table;
+  delete [] symbol_table;
   if (thebfd != (bfd *) 0)
     close();
   delete [] buffer;
@@ -274,8 +273,7 @@ bool LoadImageBfd::getNextSection(LoadImageSection &record) const
 void LoadImageBfd::closeSymbols(void) const
 
 {
-  if (symbol_table != (asymbol **)0)
-    delete [] symbol_table;
+  delete [] symbol_table;
   symbol_table = (asymbol **)0;
   number_of_symbols = 0;
   cursymbol = 0;

@@ -1114,8 +1114,7 @@ void TypeCode::set(TypeFactory *tfact,ProtoModel *model,
 {
   factory = tfact;
   flags |= variable_length;
-  if (proto != (FuncProto *)0)
-    delete proto;
+  delete proto;
   proto = new FuncProto();
   proto->setInternal(model,voidtype);
   vector<Datatype *> typelist;
@@ -1153,8 +1152,7 @@ TypeCode::TypeCode(const string &nm) : Datatype(1,TYPE_CODE,nm)
 TypeCode::~TypeCode(void)
 
 {
-  if (proto != (FuncProto *)0)
-    delete proto;
+  delete proto;
 }
 
 void TypeCode::printRaw(ostream &s) const
@@ -1305,11 +1303,11 @@ void TypeCode::restoreXml(const Element *el,TypeFactory &typegrp)
     flags |= variable_length;
   }
   restoreXmlBasic(el);
-  if (proto != (FuncProto *)0) {
-    delete proto;
+  delete proto;
+  if (iter == list.end()) {
     proto = (FuncProto *)0;
+    return; // No underlying prototype
   }
-  if (iter == list.end()) return; // No underlying prototype
   Architecture *glb = typegrp.getArch();
   factory = &typegrp;
   proto = new FuncProto();
@@ -1604,10 +1602,8 @@ void TypeFactory::cacheCoreTypes(void)
 void TypeFactory::clear(void)
 
 {
-  DatatypeSet::iterator iter;
-
-  for(iter=tree.begin();iter!=tree.end();++iter)
-    delete *iter;
+  for(auto *it : tree)
+    delete it;
   tree.clear();
   nametree.clear();
   clearCache();

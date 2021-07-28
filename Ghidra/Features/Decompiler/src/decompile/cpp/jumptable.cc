@@ -1283,8 +1283,7 @@ bool JumpBasic::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)
 JumpBasic::~JumpBasic(void)
 
 {
-  if (jrange != (JumpValuesRange *)0)
-    delete jrange;
+  delete jrange;
 }
 
 bool JumpBasic::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize)
@@ -1491,10 +1490,8 @@ JumpModel *JumpBasic::clone(JumpTable *jt) const
 void JumpBasic::clear(void)
 
 {
-  if (jrange != (JumpValuesRange *)0) {
-    delete jrange;
-    jrange = (JumpValuesRange *)0;
-  }
+  delete jrange;
+  jrange = (JumpValuesRange *)0;
   pathMeld.clear();
   selectguards.clear();
   normalvn = (Varnode *)0;
@@ -2255,10 +2252,8 @@ JumpTable::JumpTable(const JumpTable *op2)
 JumpTable::~JumpTable(void)
 
 {
-  if (jmodel != (JumpModel *)0)
-    delete jmodel;
-  if (origmodel != (JumpModel *)0)
-    delete origmodel;
+  delete jmodel;
+  delete origmodel;
 }
 
 /// \brief Return the number of address table entries that target the given basic-block
@@ -2296,8 +2291,7 @@ bool JumpTable::isOverride(void) const
 void JumpTable::setOverride(const vector<Address> &addrtable,const Address &naddr,uintb h,uintb sv)
 
 {
-  if (jmodel != (JumpModel *)0)
-    delete jmodel;
+  delete jmodel;
 
   JumpBasicOverride *override;
   jmodel = override = new JumpBasicOverride(this);
@@ -2478,8 +2472,7 @@ void JumpTable::recoverAddresses(Funcdata *fd)
 void JumpTable::recoverMultistage(Funcdata *fd)
 
 {
-  if (origmodel != (JumpModel *)0)
-    delete origmodel;
+  delete origmodel;
   origmodel = jmodel;
   jmodel = (JumpModel *)0;
   
@@ -2490,26 +2483,21 @@ void JumpTable::recoverMultistage(Funcdata *fd)
     recoverAddresses(fd);
   }
   catch(JumptableThunkError &err) {
-    if (jmodel != (JumpModel *)0)
-      delete jmodel;
+    delete jmodel;
     jmodel = origmodel;
     origmodel = (JumpModel *)0;
     addresstable = oldaddresstable;
     fd->warning("Second-stage recovery error",indirect->getAddr());
   }
   catch(LowlevelError &err) {
-    if (jmodel != (JumpModel *)0)
-      delete jmodel;
+    delete jmodel;
     jmodel = origmodel;
     origmodel = (JumpModel *)0;
     addresstable = oldaddresstable;
     fd->warning("Second-stage recovery error",indirect->getAddr());
   }
   recoverystage = 2;
-  if (origmodel != (JumpModel *)0) { // Keep the new model if it was created successfully
-    delete origmodel;
-    origmodel = (JumpModel *)0;
-  }
+  delete origmodel;
 }
 
 /// This is run assuming the address table has already been recovered, via recoverAddresses() in another
@@ -2527,8 +2515,7 @@ bool JumpTable::recoverLabels(Funcdata *fd)
 
   // Unless the model is an override, move model (created on a flow copy) so we can create a current instance
   if (jmodel != (JumpModel *)0) {
-    if (origmodel != (JumpModel *)0)
-      delete origmodel;
+    delete origmodel;
     if (!jmodel->isOverride()) {
       origmodel = jmodel;
       jmodel = (JumpModel *)0;
@@ -2561,10 +2548,8 @@ bool JumpTable::recoverLabels(Funcdata *fd)
     trivialSwitchOver();
     jmodel->buildLabels(fd,addresstable,label,origmodel);
   }
-  if (origmodel != (JumpModel *)0) {
-    delete origmodel;
-    origmodel = (JumpModel *)0;
-  }
+  delete origmodel;
+  origmodel = (JumpModel *)0;
   return multistagerestart;
 }
 
@@ -2574,10 +2559,8 @@ bool JumpTable::recoverLabels(Funcdata *fd)
 void JumpTable::clear(void)
 
 {
-  if (origmodel != (JumpModel *)0) {
-    delete origmodel;
-    origmodel = (JumpModel *)0;
-  }
+  delete origmodel;
+  origmodel = (JumpModel *)0;
   if (jmodel->isOverride())
     jmodel->clear();
   else {
