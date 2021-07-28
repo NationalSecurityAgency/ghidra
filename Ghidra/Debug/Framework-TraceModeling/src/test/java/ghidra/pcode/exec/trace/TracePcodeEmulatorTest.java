@@ -630,4 +630,42 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 				TraceSleighUtils.evaluate("r1", tb.trace, 1, thread, 0));
 		}
 	}
+
+	/**
+	 * Test x86's MOVAPS instruction
+	 * 
+	 * <p>
+	 * This test hits a SUBPIECE instruction where the two input operands have differing sizes.
+	 */
+	@Test
+	public void testMOVAPS() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			Register pc = tb.language.getProgramCounter();
+
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"RIP = 0x00400000;",
+					"RSP = 0x00110000;",
+					"*:8 0x00600000:8 = 0x0123456789abcdef;",
+					"*:8 0x00600008:8 = 0xfedcba9876543210;"),
+				List.of(
+					"MOVAPS XMM0, xmmword ptr [0x00600007]"));
+
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.overrideContextWithDefault();
+			emuThread.stepInstruction();
+
+			assertEquals(tb.addr(0x00400007), emuThread.getCounter());
+			assertArrayEquals(tb.arr(0x07, 0, 0x40, 0, 0, 0, 0, 0),
+				emuThread.getState().getVar(pc));
+
+			try (UndoableTransaction tid = tb.startTransaction()) {
+				emu.writeDown(tb.trace, 1, 1, false);
+			}
+
+			assertEquals(new BigInteger("0123456789abcdeffedcba9876543210", 16),
+				TraceSleighUtils.evaluate("XMM0", tb.trace, 1, thread, 0));
+		}
+	}
 }
