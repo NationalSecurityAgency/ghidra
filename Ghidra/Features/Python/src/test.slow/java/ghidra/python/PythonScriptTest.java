@@ -131,6 +131,8 @@ public class PythonScriptTest extends AbstractGhidraHeadedIntegrationTest {
 		script.set(state, TaskMonitor.DUMMY, writer);
 		script.run();
 
+		waitForSwing();
+
 		AtomicReference<String> ref = new AtomicReference<>();
 		runSwing(() -> {
 			String text = console.getText(0, console.getTextLength());
