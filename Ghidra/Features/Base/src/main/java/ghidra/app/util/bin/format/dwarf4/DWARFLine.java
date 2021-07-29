@@ -23,6 +23,8 @@ import java.util.List;
 import org.apache.commons.io.FilenameUtils;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.dwarf4.DWARFUtil.LengthResult;
+import ghidra.program.model.listing.Program;
 
 public class DWARFLine {
 	private long unit_length;
@@ -40,21 +42,10 @@ public class DWARFLine {
 	private List<DWARFFile> file_names;
 
 	// TODO: convert this to a static factory method and a simple setter ctor
-	public DWARFLine(BinaryReader reader) throws IOException, DWARFException {
-		this.unit_length = reader.readNextUnsignedInt();
-		// Length of 0xffffffff implies 64-bit DWARF format
-		if (this.unit_length == 0xffffffffL) {
-			this.unit_length = reader.readNextLong();
-			this.format = DWARFCompilationUnit.DWARF_64;
-		}
-		// Length of 0xfffffff0 or greater is reserved for DWARF
-		else if (this.unit_length >= 0xfffffff0L) {
-			throw new DWARFException("Reserved DWARF length value: " +
-				Long.toHexString(this.unit_length) + ". Unknown extension.");
-		}
-		else {
-			this.format = DWARFCompilationUnit.DWARF_32;
-		}
+	public DWARFLine(BinaryReader reader, Program program) throws IOException, DWARFException {
+		LengthResult lengthInfo = DWARFUtil.readLength(reader, program);
+		this.unit_length = lengthInfo.length;
+		this.format = lengthInfo.format;
 
 		// A version number for this line number information section
 		this.version = reader.readNextUnsignedShort();

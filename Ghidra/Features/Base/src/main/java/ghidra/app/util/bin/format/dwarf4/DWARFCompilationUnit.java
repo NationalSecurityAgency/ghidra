@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.dwarf4.DWARFUtil.LengthResult;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -126,32 +127,12 @@ public class DWARFCompilationUnit {
 			throws DWARFException, IOException, CancelledException {
 
 		long startOffset = debugInfoBR.getPointerIndex();
-		long length = debugInfoBR.readNextUnsignedInt();
-		int format;
+		LengthResult lengthInfo =
+			DWARFUtil.readLength(debugInfoBR, dwarfProgram.getGhidraProgram());
 
-		if (length == 0xffffffffL) {
-			// Length of 0xffffffff implies 64-bit DWARF format
-			// Mostly untested as there is no easy way to force the compiler
-			// to generate this
-			length = debugInfoBR.readNextLong();
-			format = DWARF_64;
-		}
-		else if (length >= 0xfffffff0L) {
-			// Length of 0xfffffff0 or greater is reserved for DWARF
-			throw new DWARFException("Reserved DWARF length value: " + Long.toHexString(length) +
-				". Unknown extension.");
-		}
-		else if (length == 0) {
-			throw new DWARFException("Invalid length 0 for DWARF Compilation Unit at 0x" +
-				Long.toHexString(startOffset));
-		}
-		else {
-			format = DWARF_32;
-		}
-
-		long endOffset = (debugInfoBR.getPointerIndex() + length);
+		long endOffset = debugInfoBR.getPointerIndex() + lengthInfo.length;
 		short version = debugInfoBR.readNextShort();
-		long abbreviationOffset = DWARFUtil.readOffsetByDWARFformat(debugInfoBR, format);
+		long abbreviationOffset = DWARFUtil.readOffsetByDWARFformat(debugInfoBR, lengthInfo.format);
 		byte pointerSize = debugInfoBR.readNextByte();
 		long firstDIEOffset = debugInfoBR.getPointerIndex();
 
@@ -172,9 +153,9 @@ public class DWARFCompilationUnit {
 		Map<Integer, DWARFAbbreviation> abbrMap =
 			DWARFAbbreviation.readAbbreviations(debugAbbrBR, dwarfProgram, monitor);
 
-		DWARFCompilationUnit cu =
-			new DWARFCompilationUnit(dwarfProgram, startOffset, endOffset, length, format, version,
-				abbreviationOffset, pointerSize, cuNumber, firstDIEOffset, abbrMap);
+		DWARFCompilationUnit cu = new DWARFCompilationUnit(dwarfProgram, startOffset, endOffset,
+			lengthInfo.length, lengthInfo.format, version, abbreviationOffset, pointerSize,
+			cuNumber, firstDIEOffset, abbrMap);
 
 		try {
 			DebugInfoEntry compileUnitDIE =

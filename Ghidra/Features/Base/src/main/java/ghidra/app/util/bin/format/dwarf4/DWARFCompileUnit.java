@@ -81,7 +81,7 @@ public class DWARFCompileUnit {
 		DWARFLine line = null;
 		if (stmt_list != null && lineReader != null) {
 			lineReader.setPointerIndex(stmt_list.longValue());
-			line = new DWARFLine(lineReader);
+			line = new DWARFLine(lineReader, diea.getProgram().getGhidraProgram());
 		}
 
 		return new DWARFCompileUnit(name, producer, comp_dir, low_pc, high_pc, language, stmt_list,
