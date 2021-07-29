@@ -198,6 +198,18 @@ public class DWARFCompilationUnit {
 
 	/**
 	 * This ctor is public only for junit tests.  Do not use directly.
+	 * 
+	 * @param dwarfProgram {@link DWARFProgram} 
+	 * @param startOffset offset in provider where it starts
+	 * @param endOffset offset in provider where it ends
+	 * @param length how many bytes following the header the DIEs of this unit take
+	 * @param format DWARF_32 or DWARF_64
+	 * @param version 2, 3, 4
+	 * @param abbreviationOffset offset into abbrev section 
+	 * @param pointerSize default size of pointers
+	 * @param compUnitNumber this compunits ordinal in the file
+	 * @param firstDIEOffset start of DIEs in the provider
+	 * @param codeToAbbreviationMap map of abbreviation numbers to {@link DWARFAbbreviation} instances
 	 */
 	public DWARFCompilationUnit(DWARFProgram dwarfProgram, long startOffset, long endOffset,
 			long length, int format, short version, long abbreviationOffset, byte pointerSize,

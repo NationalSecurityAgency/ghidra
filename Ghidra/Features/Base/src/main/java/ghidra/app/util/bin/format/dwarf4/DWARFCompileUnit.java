@@ -190,6 +190,9 @@ public class DWARFCompileUnit {
 
 	/**
 	 * Get the source language of the compile unit.
+	 * <p>
+	 * See {@link DWARFSourceLanguage} for values.
+	 * 
 	 * @return the source language of the compile unit
 	 */
 	public int getLanguage() {
