@@ -2596,17 +2596,28 @@ void PrintC::emitBlockCondition(const BlockCondition *bl)
   }
 }
 
+void PendingBrace::callback(EmitXml *emit)
+
+{
+  emit->print("{");
+  indentId = emit->startIndent();
+}
+
 void PrintC::emitBlockIf(const BlockIf *bl)
 
 {
   const PcodeOp *op;
+  PendingBrace pendingBrace;
+
+  if (isSet(pending_brace))
+    emit->setPendingPrint(&pendingBrace);
 
 				// if block never prints final branch
 				// so no_branch and only_branch don't matter
 				// and shouldn't be passed automatically to
 				// the subblocks
   pushMod();
-  unsetMod(no_branch|only_branch);
+  unsetMod(no_branch|only_branch|pending_brace);
 
   pushMod();
   setMod(no_branch);
@@ -2614,7 +2625,11 @@ void PrintC::emitBlockIf(const BlockIf *bl)
   condBlock->emit(this);
   popMod();
   emitCommentBlockTree(condBlock);
-  emit->tagLine();
+  if (emit->hasPendingPrint(&pendingBrace))	// If we issued a brace but it did not emit
+    emit->cancelPendingPrint();			// Cancel the brace in order to have "else if" syntax
+  else
+    emit->tagLine();				// Otherwise start the "if" on a new line
+
   op = condBlock->lastOp();
   emit->tagOp("if",EmitXml::keyword_color,op);
   emit->spaces(1);
@@ -2625,34 +2640,48 @@ void PrintC::emitBlockIf(const BlockIf *bl)
   if (bl->getGotoTarget() != (FlowBlock *)0) {
     emit->spaces(1);
     emitGotoStatement(condBlock,bl->getGotoTarget(),bl->getGotoType());
-    popMod();
-    return;
   }
-  
-  setMod(no_branch);
-  emit->spaces(1);
-  int4 id = emit->startIndent();
-  emit->print("{");
-  int4 id1 = emit->beginBlock(bl->getBlock(1));
-  bl->getBlock(1)->emit(this);
-  emit->endBlock(id1);
-  emit->stopIndent(id);
-  emit->tagLine();
-  emit->print("}");
-  if (bl->getSize()==3) {
-    emit->tagLine();
-    emit->print("else",EmitXml::keyword_color);
+  else {
+    setMod(no_branch);
     emit->spaces(1);
     int4 id = emit->startIndent();
     emit->print("{");
-    int4 id2 = emit->beginBlock(bl->getBlock(2));
-    bl->getBlock(2)->emit(this);
-    emit->endBlock(id2);
+    int4 id1 = emit->beginBlock(bl->getBlock(1));
+    bl->getBlock(1)->emit(this);
+    emit->endBlock(id1);
     emit->stopIndent(id);
     emit->tagLine();
     emit->print("}");
+    if (bl->getSize() == 3) {
+      emit->tagLine();
+      emit->print("else",EmitXml::keyword_color);
+      emit->spaces(1);
+      FlowBlock *elseBlock = bl->getBlock(2);
+      if (elseBlock->getType() == FlowBlock::t_if) {
+	// Attempt to merge the "else" and "if" syntax
+	setMod(pending_brace);
+	int4 id2 = emit->beginBlock(elseBlock);
+	elseBlock->emit(this);
+	emit->endBlock(id2);
+      }
+      else {
+	int4 id = emit->startIndent();
+	emit->print("{");
+	int4 id2 = emit->beginBlock(elseBlock);
+	elseBlock->emit(this);
+	emit->endBlock(id2);
+	emit->stopIndent(id);
+	emit->tagLine();
+	emit->print("}");
+      }
+    }
   }
   popMod();
+  if (pendingBrace.getIndentId() >= 0) {
+    emit->stopIndent(pendingBrace.getIndentId());
+    emit->tagLine();
+    emit->print("}");
+  }
 }
 
 /// Print the loop using the keyword \e for, followed by a semicolon separated
