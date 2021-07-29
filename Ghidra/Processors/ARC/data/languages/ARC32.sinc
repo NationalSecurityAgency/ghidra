@@ -513,7 +513,7 @@ with: phase=1 {
 :ror^fi   dest, #D, C     is I=0b10011 & dest & (B=61 | B=63) & C & fi & D { rormultiple(dest, D:4, C); if (!fi) goto inst_next; resultflags(dest); }
 :ror^cc^f dest, B, #Limm  is I=0b10011 & dest & B & C=62 & f & cc ; Limm { rormultiple(dest, B, Limm:4); if (!f) goto inst_next; resultflags(dest); }
 :ror^cc^f dest, #Limm, C  is I=0b10011 & dest & B=62 & C & f & cc ; Limm { rormultiple(dest, Limm:4, C); if (!f) goto inst_next; resultflags(dest); }
-:ror^cc^f dest, B, C      is I=0b10011 & dest & B & C & f & cc { rormultiple(dest, B, C); if (!f) goto <skip>; resultflags(dest); <skip> }
+:ror^cc^f dest, B, C      is I=0b10011 & dest & B & C & f & cc { rormultiple(dest, B, C); if (!f) goto inst_next; resultflags(dest); }
 
 :sbc^fi   dest, B, #D     is I=0b01011 & dest & B & (C=61 | C=63) & fi & D { exec_sbc(dest, B, D:4, fi); }
 :sbc^fi   dest, #D, C     is I=0b01011 & dest & (B=61 | B=63) & C & fi & D { exec_sbc(dest, D:4, C, fi); }
@@ -527,15 +527,15 @@ with: phase=1 {
 :sub^cc^f dest, #Limm, C  is I=0b01010 & dest & B=62 & C & f & cc ; Limm { exec_sub(dest, Limm:4, C, f); }
 :sub^cc^f dest, B, C      is I=0b01010 & dest & B & C & f & cc { exec_sub(dest, B, C, f); }
 
-:xor^fi   dest, B, #D     is I=0b01111 & dest & B & (C=61 | C=63) & fi & D { dest = B ^ D; if (!fi) goto <skip>; resultflags(dest); <skip> }
+:xor^fi   dest, B, #D     is I=0b01111 & dest & B & (C=61 | C=63) & fi & D { dest = B ^ D; if (!fi) goto inst_next; resultflags(dest); }
 :xor^fi   dest, #D, C     is I=0b01111 & dest & (B=61 | B=63) & C & fi & D { dest = D ^ C; if (!fi) goto inst_next; resultflags(dest); }
 :xor^cc^f dest, B, #Limm  is I=0b01111 & dest & B & C=62 & f & cc ; Limm { dest = B ^ Limm; if (!f) goto inst_next; resultflags(dest); }
 :xor^cc^f dest, #Limm, C  is I=0b01111 & dest & B=62 & C & f & cc ; Limm { dest = Limm ^ C; if (!f) goto inst_next; resultflags(dest); }
 :xor^cc^f dest, B, C      is I=0b01111 & dest & B & C & f & cc { dest = B ^ C; if (!f) goto inst_next; resultflags(dest); }
 
-:asr^fi   dest, #D     is I=0b00011 & dest & (B=61 | B=63) & C=1 & fi & D { dest = D s>> 1; if (!fi) goto <skip>; rorflags(dest, D:4); <skip> }
-:asr^cc^f dest, #Limm  is I=0b00011 & dest & B=62 & C=1 & f & cc ; Limm { dest = Limm s>> 1; if (!f) goto <skip>; rorflags(dest, Limm:4); <skip> }
-:asr^cc^f dest, B      is I=0b00011 & dest & B & C=1 & f & cc { dest = B s>> 1; if (!f) goto <skip>; rorflags(dest, B); <skip> }
+:asr^fi   dest, #D     is I=0b00011 & dest & (B=61 | B=63) & C=1 & fi & D { dest = D s>> 1; if (!fi) goto inst_next; rorflags(dest, D:4); }
+:asr^cc^f dest, #Limm  is I=0b00011 & dest & B=62 & C=1 & f & cc ; Limm { dest = Limm s>> 1; if (!f) goto inst_next; rorflags(dest, Limm:4); }
+:asr^cc^f dest, B      is I=0b00011 & dest & B & C=1 & f & cc { dest = B s>> 1; if (!f) goto inst_next; rorflags(dest, B); }
 
 :extb^fi   dest, #D     is I=0b00011 & dest & (B=61 | B=63) & C=7 & fi & D { dest = zext(D:1); if (!fi) goto inst_next; resultflags(dest); }
 :extb^cc^f dest, #Limm  is I=0b00011 & dest & B=62 & C=7 & f & cc ; Limm { dest = zext(Limm:1); if (!f) goto inst_next; resultflags(dest); }
@@ -548,15 +548,15 @@ with: phase=1 {
 :flag^cc #Limm  is I=0b00011 & A=61 & B=62 & C=0 & F=0 & cc ; Limm { set_flags(Limm:4); }
 :flag^cc B      is I=0b00011 & A=61 & B    & C=0 & F=0 & cc        { set_flags(B); }
 
-:lsr^fi   dest, #D     is I=0b00011 & dest & (B=61 | B=63) & C=2 & fi & D { dest = D >> 1; if (!fi) goto <skip>; rorflags(dest, D:4); <skip> }
-:lsr^cc^f dest, #Limm  is I=0b00011 & dest & B=62 & C=2 & f & cc ; Limm { dest = Limm >> 1; if (!f) goto <skip>; rorflags(dest, Limm:4); <skip> }
-:lsr^cc^f dest, B      is I=0b00011 & dest & B & C=2 & f & cc { dest = B >> 1; if (!f) goto <skip>; rorflags(dest, B); <skip> }
+:lsr^fi   dest, #D     is I=0b00011 & dest & (B=61 | B=63) & C=2 & fi & D { dest = D >> 1; if (!fi) goto inst_next; rorflags(dest, D:4); }
+:lsr^cc^f dest, #Limm  is I=0b00011 & dest & B=62 & C=2 & f & cc ; Limm { dest = Limm >> 1; if (!f) goto inst_next; rorflags(dest, Limm:4); }
+:lsr^cc^f dest, B      is I=0b00011 & dest & B & C=2 & f & cc { dest = B >> 1; if (!f) goto inst_next; rorflags(dest, B); }
 
 # TODO: Implement NORM instruction.
 
-:ror^fi   dest, #D     is I=0b00011 & dest & (B=61 | B=63) & C=3 & fi & D { roronce(dest, D); if (!fi) goto <skip>; rorflags(dest, D:4); <skip> }
-:ror^cc^f dest, #Limm  is I=0b00011 & dest & B=62 & C=3 & f & cc ; Limm { roronce(dest, Limm); if (!f) goto <skip>; rorflags(dest, Limm:4); <skip> }
-:ror^cc^f dest, B      is I=0b00011 & dest & B & C=3 & f & cc { roronce(dest, B); if (!f) goto <skip>; rorflags(dest, B); <skip> }
+:ror^fi   dest, #D     is I=0b00011 & dest & (B=61 | B=63) & C=3 & fi & D { roronce(dest, D); if (!fi) goto inst_next; rorflags(dest, D:4); }
+:ror^cc^f dest, #Limm  is I=0b00011 & dest & B=62 & C=3 & f & cc ; Limm { roronce(dest, Limm); if (!f) goto inst_next; rorflags(dest, Limm:4); }
+:ror^cc^f dest, B      is I=0b00011 & dest & B & C=3 & f & cc { roronce(dest, B); if (!f) goto inst_next; rorflags(dest, B); }
 
 :sexb^fi   dest, #D     is I=0b00011 & dest & (B=61 | B=63) & C=5 & fi & D { dest = sext(D:1); if (!fi) goto inst_next; resultflags(dest); }
 :sexb^cc^f dest, #Limm  is I=0b00011 & dest & B=62 & C=5 & f & cc ; Limm { dest = sext(Limm:1); if (!f) goto inst_next; resultflags(dest); }
