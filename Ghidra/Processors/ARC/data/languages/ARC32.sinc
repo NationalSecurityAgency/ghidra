@@ -108,6 +108,7 @@ define token instr(32)
 	B = (15, 20)
 	C = (9, 14)
 	D = (0, 8) signed
+	D2 = (0, 8) signed
 
 	L = (7, 26) signed
 	F = (8, 8)
@@ -447,12 +448,14 @@ with: phase=1 {
 	loop_enable = 1;
 }
 
+:adc^fi   dest, #D, #D2   is I=0b01001 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { exec_adc(dest, D:4, D2:4, fi); }
 :adc^fi   dest, B, #D     is I=0b01001 & dest & B & (C=61 | C=63) & fi & D { exec_adc(dest, B, D:4, fi); }
 :adc^fi   dest, #D, C     is I=0b01001 & dest & (B=61 | B=63) & C & fi & D { exec_adc(dest, D:4, C, fi); }
 :adc^cc^f dest, B, #Limm  is I=0b01001 & dest & B & C=62 & f & cc ; Limm { exec_adc(dest, B, Limm:4, f); }
 :adc^cc^f dest, #Limm, C  is I=0b01001 & dest & B=62 & C & f & cc ; Limm { exec_adc(dest, Limm:4, C, f); }
 :adc^cc^f dest, B, C      is I=0b01001 & dest & B & C & f & cc { exec_adc(dest, B, C, f); }
 
+:add^fi   dest, #D, #D2   is I=0b01000 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { exec_add(dest, D:4, D2:4, fi); }
 :add^fi   dest, B, #D     is I=0b01000 & dest & B & (C=61 | C=63) & fi & D { exec_add(dest, B, D:4, fi); }
 :add^fi   dest, #D, C     is I=0b01000 & dest & (B=61 | B=63) & C & fi & D { exec_add(dest, D:4, C, fi); }
 :add^cc^f dest, B, #Limm  is I=0b01000 & dest & B & C=62 & f & cc ; Limm { exec_add(dest, B, Limm:4, f); }
@@ -462,30 +465,35 @@ with: phase=1 {
 :mov^fi   dest, #D        is I=0b01100 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D { dest = D; }
 :mov^cc^f dest, #Limm     is I=0b01100 & dest & B=62 & C=62 & f & cc ; Limm { dest = Limm; }
 
+# The "(B=61 | B=63) & (C=61 | C=63)" case is handled by "mov", above.
 :and^fi   dest, B, #D     is I=0b01100 & dest & B & (C=61 | C=63) & fi & D { dest = B & D; if (!fi) goto inst_next; resultflags(dest); }
 :and^fi   dest, #D, C     is I=0b01100 & dest & (B=61 | B=63) & C & fi & D { dest = D & C; if (!fi) goto inst_next; resultflags(dest); }
 :and^cc^f dest, B, #Limm  is I=0b01100 & dest & B & C=62 & f & cc ; Limm { dest = B & Limm; if (!f) goto inst_next; resultflags(dest); }
 :and^cc^f dest, #Limm, C  is I=0b01100 & dest & B=62 & C & f & cc ; Limm { dest = Limm & C; if (!f) goto inst_next; resultflags(dest); }
 :and^cc^f dest, B, C      is I=0b01100 & dest & B & C & f & cc { dest = B & C; if (!f) goto inst_next; resultflags(dest); }
 
+:asl^fi   dest, #D, #D2   is I=0b10000 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { dest = D << D2; if (!fi) goto inst_next; resultflags(dest); }
 :asl^fi   dest, B, #D     is I=0b10000 & dest & B & (C=61 | C=63) & fi & D { dest = B << D; if (!fi) goto inst_next; resultflags(dest); }
 :asl^fi   dest, #D, C     is I=0b10000 & dest & (B=61 | B=63) & C & fi & D { dest = D << C; if (!fi) goto inst_next; resultflags(dest); }
 :asl^cc^f dest, B, #Limm  is I=0b10000 & dest & B & C=62 & f & cc ; Limm { dest = B << Limm; if (!f) goto inst_next; resultflags(dest); }
 :asl^cc^f dest, #Limm, C  is I=0b10000 & dest & B=62 & C & f & cc ; Limm { dest = Limm << C; if (!f) goto inst_next; resultflags(dest); }
 :asl^cc^f dest, B, C      is I=0b10000 & dest & B & C & f & cc { dest = B << C; if (!f) goto inst_next; resultflags(dest); }
 
+:asr^fi   dest, #D, #D2   is I=0b10010 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { dest = D s>> D2; if (!fi) goto inst_next; resultflags(dest); }
 :asr^fi   dest, B, #D     is I=0b10010 & dest & B & (C=61 | C=63) & fi & D { dest = B s>> D; if (!fi) goto inst_next; resultflags(dest); }
 :asr^fi   dest, #D, C     is I=0b10010 & dest & (B=61 | B=63) & C & fi & D { dest = D s>> C; if (!fi) goto inst_next; resultflags(dest); }
 :asr^cc^f dest, B, #Limm  is I=0b10010 & dest & B & C=62 & f & cc ; Limm { dest = B s>> Limm; if (!f) goto inst_next; resultflags(dest); }
 :asr^cc^f dest, #Limm, C  is I=0b10010 & dest & B=62 & C & f & cc ; Limm { dest = Limm s>> C; if (!f) goto inst_next; resultflags(dest); }
 :asr^cc^f dest, B, C      is I=0b10010 & dest & B & C & f & cc { dest = B s>> C; if (!f) goto inst_next; resultflags(dest); }
 
+:bic^fi   dest, #D, #D2   is I=0b01110 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { dest = D & ~D2; if (!fi) goto inst_next; resultflags(dest); }
 :bic^fi   dest, B, #D     is I=0b01110 & dest & B & (C=61 | C=63) & fi & D { dest = B & ~D; if (!fi) goto inst_next; resultflags(dest); }
 :bic^fi   dest, #D, C     is I=0b01110 & dest & (B=61 | B=63) & C & fi & D { dest = D & ~C; if (!fi) goto inst_next; resultflags(dest); }
 :bic^cc^f dest, B, #Limm  is I=0b01110 & dest & B & C=62 & f & cc ; Limm { dest = B & ~Limm; if (!f) goto inst_next; resultflags(dest); }
 :bic^cc^f dest, #Limm, C  is I=0b01110 & dest & B=62 & C & f & cc ; Limm { dest = Limm & ~C; if (!f) goto inst_next; resultflags(dest); }
 :bic^cc^f dest, B, C      is I=0b01110 & dest & B & C & f & cc { dest = B & ~C; if (!f) goto inst_next; resultflags(dest); }
 
+:lsr^fi   dest, #D, #D2   is I=0b10001 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { dest = D >> D2; if (!fi) goto inst_next; resultflags(dest); }
 :lsr^fi   dest, B, #D     is I=0b10001 & dest & B & (C=61 | C=63) & fi & D { dest = B >> D; if (!fi) goto inst_next; resultflags(dest); }
 :lsr^fi   dest, #D, C     is I=0b10001 & dest & (B=61 | B=63) & C & fi & D { dest = D >> C; if (!fi) goto inst_next; resultflags(dest); }
 :lsr^cc^f dest, B, #Limm  is I=0b10001 & dest & B & C=62 & f & cc ; Limm { dest = B >> Limm; if (!f) goto inst_next; resultflags(dest); }
@@ -497,36 +505,42 @@ with: phase=1 {
 # TODO: Implement MIN instruction.
 
 # FIXME: Semantics are guessed--confirm with old GCC sources.
+:mul16^fi   dest, #D, #D2   is I=0b10110 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { mulext(dest, D:2, D2:2); if (!fi) goto inst_next; resultflags(dest); }
 :mul16^fi   dest, B, #D     is I=0b10110 & dest & B & (C=61 | C=63) & fi & D { mulext(dest, B:2, D:2); if (!fi) goto inst_next; resultflags(dest); }
 :mul16^fi   dest, #D, C     is I=0b10110 & dest & (B=61 | B=63) & C & fi & D { mulext(dest, D:2, C:2); if (!fi) goto inst_next; resultflags(dest); }
 :mul16^cc^f dest, B, #Limm  is I=0b10110 & dest & B & C=62 & f & cc ; Limm { mulext(dest, B:2, Limm:2); if (!f) goto inst_next; resultflags(dest); }
 :mul16^cc^f dest, #Limm, C  is I=0b10110 & dest & B=62 & C & f & cc ; Limm { mulext(dest, Limm:2, C:2); if (!f) goto inst_next; resultflags(dest); }
 :mul16^cc^f dest, B, C      is I=0b10110 & dest & B & C & f & cc { mulext(dest, B:2, C:2); if (!f) goto inst_next; resultflags(dest); }
 
+:or^fi   dest, #D, #D2   is I=0b01101 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { dest = D | D2; if (!fi) goto inst_next; resultflags(dest); }
 :or^fi   dest, B, #D     is I=0b01101 & dest & B & (C=61 | C=63) & fi & D { dest = B | D; if (!fi) goto inst_next; resultflags(dest); }
 :or^fi   dest, #D, C     is I=0b01101 & dest & (B=61 | B=63) & C & fi & D { dest = D | C; if (!fi) goto inst_next; resultflags(dest); }
 :or^cc^f dest, B, #Limm  is I=0b01101 & dest & B & C=62 & f & cc ; Limm { dest = B | Limm; if (!f) goto inst_next; resultflags(dest); }
 :or^cc^f dest, #Limm, C  is I=0b01101 & dest & B=62 & C & f & cc ; Limm { dest = Limm | C; if (!f) goto inst_next; resultflags(dest); }
 :or^cc^f dest, B, C      is I=0b01101 & dest & B & C & f & cc { dest = B | C; if (!f) goto inst_next; resultflags(dest); }
 
+:ror^fi   dest, #D, #D2   is I=0b10011 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { rormultiple(dest, D:4, D2:4); if (!fi) goto inst_next; resultflags(dest); }
 :ror^fi   dest, B, #D     is I=0b10011 & dest & B & (C=61 | C=63) & fi & D { rormultiple(dest, B, D:4); if (!fi) goto inst_next; resultflags(dest); }
 :ror^fi   dest, #D, C     is I=0b10011 & dest & (B=61 | B=63) & C & fi & D { rormultiple(dest, D:4, C); if (!fi) goto inst_next; resultflags(dest); }
 :ror^cc^f dest, B, #Limm  is I=0b10011 & dest & B & C=62 & f & cc ; Limm { rormultiple(dest, B, Limm:4); if (!f) goto inst_next; resultflags(dest); }
 :ror^cc^f dest, #Limm, C  is I=0b10011 & dest & B=62 & C & f & cc ; Limm { rormultiple(dest, Limm:4, C); if (!f) goto inst_next; resultflags(dest); }
 :ror^cc^f dest, B, C      is I=0b10011 & dest & B & C & f & cc { rormultiple(dest, B, C); if (!f) goto inst_next; resultflags(dest); }
 
+:sbc^fi   dest, #D, #D2   is I=0b01011 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { exec_sbc(dest, D:4, D2:4, fi); }
 :sbc^fi   dest, B, #D     is I=0b01011 & dest & B & (C=61 | C=63) & fi & D { exec_sbc(dest, B, D:4, fi); }
 :sbc^fi   dest, #D, C     is I=0b01011 & dest & (B=61 | B=63) & C & fi & D { exec_sbc(dest, D:4, C, fi); }
 :sbc^cc^f dest, B, #Limm  is I=0b01011 & dest & B & C=62 & f & cc ; Limm { exec_sbc(dest, B, Limm:4, f); }
 :sbc^cc^f dest, #Limm, C  is I=0b01011 & dest & B=62 & C & f & cc ; Limm { exec_sbc(dest, Limm:4, C, f); }
 :sbc^cc^f dest, B, C      is I=0b01011 & dest & B & C & f & cc { exec_sbc(dest, B, C, f); }
 
+:sub^fi   dest, #D, #D2   is I=0b01010 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { exec_sub(dest, D:4, D2:4, fi); }
 :sub^fi   dest, B, #D     is I=0b01010 & dest & B & (C=61 | C=63) & fi & D { exec_sub(dest, B, D:4, fi); }
 :sub^fi   dest, #D, C     is I=0b01010 & dest & (B=61 | B=63) & C & fi & D { exec_sub(dest, D:4, C, fi); }
 :sub^cc^f dest, B, #Limm  is I=0b01010 & dest & B & C=62 & f & cc ; Limm { exec_sub(dest, B, Limm:4, f); }
 :sub^cc^f dest, #Limm, C  is I=0b01010 & dest & B=62 & C & f & cc ; Limm { exec_sub(dest, Limm:4, C, f); }
 :sub^cc^f dest, B, C      is I=0b01010 & dest & B & C & f & cc { exec_sub(dest, B, C, f); }
 
+:xor^fi   dest, #D, #D2   is I=0b01111 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { dest = D ^ D2; if (!fi) goto inst_next; resultflags(dest); }
 :xor^fi   dest, B, #D     is I=0b01111 & dest & B & (C=61 | C=63) & fi & D { dest = B ^ D; if (!fi) goto inst_next; resultflags(dest); }
 :xor^fi   dest, #D, C     is I=0b01111 & dest & (B=61 | B=63) & C & fi & D { dest = D ^ C; if (!fi) goto inst_next; resultflags(dest); }
 :xor^cc^f dest, B, #Limm  is I=0b01111 & dest & B & C=62 & f & cc ; Limm { dest = B ^ Limm; if (!f) goto inst_next; resultflags(dest); }
