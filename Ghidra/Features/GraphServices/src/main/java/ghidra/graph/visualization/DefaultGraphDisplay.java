@@ -297,7 +297,16 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		Lens lens = Lens.builder().lensShape(Lens.Shape.RECTANGLE).magnification(3.f).build();
 		lens.setMagnification(2.f);
 		LensMagnificationGraphMousePlugin magnificationPlugin =
-			new LensMagnificationGraphMousePlugin(1.f, 60.f, .2f);
+				new LensMagnificationGraphMousePlugin(1.f, 60.f, .2f) {
+					// Override to address a bug when using a high resolution mouse wheel.
+					// May be removed when jungrapht-visualization version is updated
+					@Override
+					public void mouseWheelMoved(MouseWheelEvent e) {
+						if (e.getWheelRotation() != 0) {
+							super.mouseWheelMoved(e);
+						}
+					}
+				};
 
 		MutableTransformer transformer = viewer.getRenderContext()
 				.getMultiLayerTransformer()
