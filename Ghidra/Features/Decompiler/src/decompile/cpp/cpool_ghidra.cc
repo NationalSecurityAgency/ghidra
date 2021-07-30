@@ -32,7 +32,7 @@ const CPoolRecord *ConstantPoolGhidra::getRecord(const vector<uintb> &refs) cons
 {
   const CPoolRecord *rec = cache.getRecord(refs);
   if (rec == (const CPoolRecord *)0) {
-    Document *doc;
+    unique_ptr<Document> doc;
     try {
       doc = ghidra->getCPoolRef(refs);
     }
@@ -42,13 +42,12 @@ const CPoolRecord *ConstantPoolGhidra::getRecord(const vector<uintb> &refs) cons
     catch(XmlError &err) {
       throw LowlevelError("Error in constant pool record xml: "+err.explain);
     }
-    if (doc == (Document *)0) {
+    if (!doc) {
       ostringstream s;
       s << "Could not retrieve constant pool record for reference: 0x" << refs[0];
       throw LowlevelError(s.str());
     }
     rec = cache.restoreXmlRecord(refs,doc->getRoot(),*ghidra->types);
-    delete doc;
   }
   return rec;
 }

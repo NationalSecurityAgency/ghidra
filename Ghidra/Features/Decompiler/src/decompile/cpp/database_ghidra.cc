@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,8 +52,8 @@ Scope *ScopeGhidra::reresolveScope(uint8 id) const
   if (cacheScope != (Scope *)0)
     return cacheScope;		// Scope was previously cached
 
-  Document *doc = ghidra->getNamespacePath(id);
-  if (doc == (Document *)0)
+  unique_ptr<Document> doc = ghidra->getNamespacePath(id);
+  if (!doc)
     throw LowlevelError("Could not get namespace info");
 
   Scope *curscope = symboltab->getGlobalScope();	// Get pointer to ourselves (which is not const)
@@ -70,10 +70,8 @@ Scope *ScopeGhidra::reresolveScope(uint8 id) const
       s >> scopeId;
       curscope = symboltab->findCreateScope(scopeId, el->getContent(), curscope);
     }
-    delete doc;
   }
   catch(LowlevelError &err) {
-    delete doc;
     throw err;
   }
   return curscope;
@@ -208,7 +206,6 @@ Symbol *ScopeGhidra::dump2Cache(Document *doc) const
 Symbol *ScopeGhidra::removeQuery(const Address &addr) const
 
 {
-  Document *doc;
   Symbol *sym = (Symbol *)0;
 
   // Don't send up queries on constants or uniques
@@ -230,10 +227,9 @@ Symbol *ScopeGhidra::removeQuery(const Address &addr) const
 
   // Have we queried this address before
   if (holes.inRange(addr,1)) return (Symbol *)0;
-  doc = ghidra->getMappedSymbolsXML(addr); // Query GHIDRA about this address
-  if (doc != (Document *)0) {
-    sym = dump2Cache(doc);	// Add it to the cache
-    delete doc;
+  unique_ptr<Document> doc = ghidra->getMappedSymbolsXML(addr); // Query GHIDRA about this address
+  if (doc) {
+    sym = dump2Cache(doc.get());	// Add it to the cache
   }
   return sym;
 }
@@ -368,14 +364,12 @@ Funcdata *ScopeGhidra::resolveExternalRefFunction(ExternRefSymbol *sym) const
   if (resFd == (Funcdata *)0) {
     // If the function isn't in cache, we use the special
     // getExternalRefXML interface to recover the external function
-    Document *doc;
     SymbolEntry *entry = sym->getFirstWholeMap();
-    doc = ghidra->getExternalRefXML(entry->getAddr());
-    if (doc != (Document *)0) {
+    unique_ptr<Document> doc = ghidra->getExternalRefXML(entry->getAddr());
+    if (doc) {
       FunctionSymbol *funcSym;
       // Make sure referenced function is cached
-      funcSym = dynamic_cast<FunctionSymbol *>(dump2Cache(doc));
-      delete doc;
+      funcSym = dynamic_cast<FunctionSymbol *>(dump2Cache(doc.get()));
       if (funcSym != (FunctionSymbol *)0)
 	resFd = funcSym->getFunction();
     }

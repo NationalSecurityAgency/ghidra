@@ -21,6 +21,7 @@
 #include "types.h"
 #include <fstream>
 #include <iomanip>
+#include <memory>
 #include <string>
 #include <vector>
 #include <map>
@@ -305,7 +306,7 @@ extern int4 xml_parse(istream &i,ContentHandler *hand,int4 dbg=0);
 /// DOM representation of the XML document.
 /// \param i is the given stream
 /// \return the in-memory XML document
-extern Document *xml_tree(istream &i);
+extern unique_ptr<Document> xml_tree(istream &i);
 
 /// \brief Send the given character array to a stream, escaping characters with special XML meaning
 ///

@@ -45,7 +45,7 @@ const VarnodeData &GhidraTranslate::getRegister(const string &nm) const
   map<string,VarnodeData>::const_iterator iter = nm2addr.find(nm);
   if (iter != nm2addr.end())
     return (*iter).second;
-  Document *doc;
+  unique_ptr<Document> doc;
   try {
     doc = glb->getRegister(nm);		// Ask Ghidra client about the register
   }
@@ -55,7 +55,7 @@ const VarnodeData &GhidraTranslate::getRegister(const string &nm) const
     errmsg << " -- " << err.explain;
     throw LowlevelError(errmsg.str());
   }
-  if (doc == (Document *)0)
+  if (!doc)
     throw LowlevelError("No register named "+nm);
   Address regaddr;
   int4 regsize;
@@ -64,7 +64,6 @@ const VarnodeData &GhidraTranslate::getRegister(const string &nm) const
   vndata.space = regaddr.getSpace();
   vndata.offset = regaddr.getOffset();
   vndata.size = regsize;
-  delete doc;
   return cacheRegister(nm,vndata);
 }
 

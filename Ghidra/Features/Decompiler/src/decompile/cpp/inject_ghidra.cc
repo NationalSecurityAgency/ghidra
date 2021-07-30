@@ -47,7 +47,7 @@ void InjectContextGhidra::saveXml(ostream &s) const
 void InjectPayloadGhidra::inject(InjectContext &con,PcodeEmit &emit) const
 
 {
-  Document *doc;
+  unique_ptr<Document> doc;
   ArchitectureGhidra *ghidra = (ArchitectureGhidra *)con.glb;
   try {
     doc = ghidra->getPcodeInject(name,type,con);
@@ -58,7 +58,7 @@ void InjectPayloadGhidra::inject(InjectContext &con,PcodeEmit &emit) const
   catch(XmlError &err) {
     throw LowlevelError("Error in pcode snippet xml: "+err.explain);
   }
-  if (doc == (Document *)0) {
+  if (!doc) {
     throw LowlevelError("Could not retrieve pcode snippet: "+name);
   }
   const Element *el = doc->getRoot();
@@ -66,7 +66,6 @@ void InjectPayloadGhidra::inject(InjectContext &con,PcodeEmit &emit) const
   List::const_iterator iter;
   for(iter=list.begin();iter!=list.end();++iter)
     emit.restoreXmlOp(*iter,ghidra->translate);
-  delete doc;
 }
 
 void InjectPayloadGhidra::printTemplate(ostream &s) const
@@ -111,7 +110,7 @@ ExecutablePcodeGhidra::ExecutablePcodeGhidra(Architecture *g,const string &src,c
 void ExecutablePcodeGhidra::inject(InjectContext &con,PcodeEmit &emit) const
 
 {
-  Document *doc;
+  unique_ptr<Document> doc;
   ArchitectureGhidra *ghidra = (ArchitectureGhidra *)con.glb;
   try {
     doc = ghidra->getPcodeInject(name,type,con);
@@ -122,7 +121,7 @@ void ExecutablePcodeGhidra::inject(InjectContext &con,PcodeEmit &emit) const
   catch(XmlError &err) {
     throw LowlevelError("Error in pcode snippet xml: "+err.explain);
   }
-  if (doc == (Document *)0) {
+  if (!doc) {
     throw LowlevelError("Could not retrieve pcode snippet: "+name);
   }
   const Element *el = doc->getRoot();
@@ -130,7 +129,6 @@ void ExecutablePcodeGhidra::inject(InjectContext &con,PcodeEmit &emit) const
   List::const_iterator iter;
   for(iter=list.begin();iter!=list.end();++iter)
     emit.restoreXmlOp(*iter,ghidra->translate);
-  delete doc;
 }
 
 void ExecutablePcodeGhidra::restoreXml(const Element *el)

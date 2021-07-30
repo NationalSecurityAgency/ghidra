@@ -2302,8 +2302,7 @@ DocumentStorage::~DocumentStorage(void)
 Document *DocumentStorage::parseDocument(istream &s)
 
 {
-  doclist.push_back((Document *)0);
-  doclist.back() = xml_tree(s);
+  doclist.push_back(xml_tree(s).release());
   return doclist.back();
 }
 
@@ -2335,13 +2334,12 @@ const Element *DocumentStorage::getTag(const string &nm) const
   return (const Element *)0;
 }
 
-Document *xml_tree(istream &i)
+unique_ptr<Document> xml_tree(istream &i)
 
 {
-  Document *doc = new Document();
-  TreeHandler handle(doc);
+  unique_ptr<Document> doc(new Document());
+  TreeHandler handle(doc.get());
   if (0!=xml_parse(i,&handle)) {
-    delete doc;
     throw XmlError(handle.getError());
   }
   return doc;

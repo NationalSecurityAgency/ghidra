@@ -142,19 +142,19 @@ void ArchitectureGhidra::readStringStream(istream &s,string &res)
 /// otherwise it throws and exception.  The string is read in and then parsed as XML.
 /// \param s is the input stream from the client.
 /// \return the XML document
-Document *ArchitectureGhidra::readXMLStream(istream &s)
+unique_ptr<Document> ArchitectureGhidra::readXMLStream(istream &s)
 
 {
   int4 type = readToAnyBurst(s);
   if (type==14) {
-    Document *doc = xml_tree(s);
+    unique_ptr<Document> doc = xml_tree(s);
     type = readToAnyBurst(s);
     if (type!=15)
       throw JavaError("alignment","Expecting XML string end");
     return doc;
   }
   if ((type&1)==1)
-    return (Document *)0;
+    return {};
   throw JavaError("alignment","Expecting string or end of query response");
 }
 
@@ -234,12 +234,12 @@ void ArchitectureGhidra::readResponseEnd(istream &s)
 /// exception record, otherwise read in a string as an XML document.
 /// \param s is the input stream from the client
 /// \return the XML document
-Document *ArchitectureGhidra::readXMLAll(istream &s)
+unique_ptr<Document> ArchitectureGhidra::readXMLAll(istream &s)
 
 {
   readToResponse(s);
-  Document *doc = readXMLStream(s);
-  if (doc != (Document *)0)
+  unique_ptr<Document> doc = readXMLStream(s);
+  if (doc)
     readResponseEnd(s);
   return doc;
 }
@@ -402,7 +402,7 @@ void ArchitectureGhidra::resolveArchitecture(void)
 /// location of the register.
 /// \param regname is the name to query for
 /// \return the storage address as XML or NULL if the register is unknown
-Document *ArchitectureGhidra::getRegister(const string &regname)
+unique_ptr<Document> ArchitectureGhidra::getRegister(const string &regname)
 
 {
   sout.write("\000\000\001\004",4);
@@ -444,7 +444,7 @@ string ArchitectureGhidra::getRegisterName(const VarnodeData &vndata)
 /// a storage location and value.
 /// \param addr is the given address
 /// \return the response Document
-Document *ArchitectureGhidra::getTrackedRegisters(const Address &addr)
+unique_ptr<Document> ArchitectureGhidra::getTrackedRegisters(const Address &addr)
 
 {
   sout.write("\000\000\001\004",4);
@@ -505,7 +505,7 @@ uint1 *ArchitectureGhidra::getPcodePacked(const Address &addr)
 /// memory region that is free of symbols.
 /// \param addr is the given address
 /// \return the symbol document
-Document *ArchitectureGhidra::getMappedSymbolsXML(const Address &addr)
+unique_ptr<Document> ArchitectureGhidra::getMappedSymbolsXML(const Address &addr)
 
 {
   sout.write("\000\000\001\004",4);
@@ -527,7 +527,7 @@ Document *ArchitectureGhidra::getMappedSymbolsXML(const Address &addr)
 /// a \<hole> tag if the reference can't be resolved
 /// \param addr is the given address
 /// \return a description of the referred to function
-Document *ArchitectureGhidra::getExternalRefXML(const Address &addr)
+unique_ptr<Document> ArchitectureGhidra::getExternalRefXML(const Address &addr)
 
 {
   sout.write("\000\000\001\004",4);
@@ -546,7 +546,7 @@ Document *ArchitectureGhidra::getExternalRefXML(const Address &addr)
 /// a \<val> child for each namespace in the path.
 /// \param id is the given id of the namespace to resolve
 /// \return the XML document
-Document *ArchitectureGhidra::getNamespacePath(uint8 id)
+unique_ptr<Document> ArchitectureGhidra::getNamespacePath(uint8 id)
 
 {
   sout.write("\000\000\001\004",4);
@@ -610,7 +610,7 @@ string ArchitectureGhidra::getCodeLabel(const Address &addr)
 /// \param name is the name of the data-type
 /// \param id is a unique id associated with the data-type, pass 0 if unknown
 /// \return the data-type XML element or NULL
-Document *ArchitectureGhidra::getType(const string &name,uint8 id)
+unique_ptr<Document> ArchitectureGhidra::getType(const string &name,uint8 id)
 
 {
   sout.write("\000\000\001\004",4);
@@ -632,7 +632,7 @@ Document *ArchitectureGhidra::getType(const string &name,uint8 id)
 /// \param fad is the address of the function to query
 /// \param flags specifies the properties the query will match (must be non-zero)
 /// \return an XML document describing each comment
-Document *ArchitectureGhidra::getComments(const Address &fad,uint4 flags)
+unique_ptr<Document> ArchitectureGhidra::getComments(const Address &fad,uint4 flags)
 
 {
   sout.write("\000\000\001\004",4);
@@ -760,7 +760,7 @@ void ArchitectureGhidra::getStringData(vector<uint1> &buffer,const Address &addr
 /// \param type is the type of injection
 /// \param con is the context object
 /// \return an XML document describing the p-code ops to inject
-Document *ArchitectureGhidra::getPcodeInject(const string &name,int4 type,const InjectContext &con)
+unique_ptr<Document> ArchitectureGhidra::getPcodeInject(const string &name,int4 type,const InjectContext &con)
 
 {
   sout.write("\000\000\001\004",4);
@@ -788,7 +788,7 @@ Document *ArchitectureGhidra::getPcodeInject(const string &name,int4 type,const 
 /// an exception if record isn't properly referenced.
 /// \param refs is an array of 1 or more integer values referencing a constant pool record
 /// \return a description of the record as a \<cpoolrec> XML document.
-Document *ArchitectureGhidra::getCPoolRef(const vector<uintb> &refs)
+unique_ptr<Document> ArchitectureGhidra::getCPoolRef(const vector<uintb> &refs)
 
 {
   sout.write("\000\000\001\004",4);

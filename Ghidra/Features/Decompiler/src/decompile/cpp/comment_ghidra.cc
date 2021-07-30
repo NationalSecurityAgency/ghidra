@@ -28,7 +28,7 @@ CommentDatabaseGhidra::CommentDatabaseGhidra(ArchitectureGhidra *g)
 void CommentDatabaseGhidra::fillCache(const Address &fad) const
 
 {
-  Document *doc;
+  unique_ptr<Document> doc;
   uint4 commentfilter;
 
   if (cachefilled) return;	// Already queried ghidra
@@ -42,10 +42,8 @@ void CommentDatabaseGhidra::fillCache(const Address &fad) const
   iterend = cache.endComment(fad);
 
   doc = ghidra->getComments(fad,commentfilter);
-  if (doc != (Document *)0) {
+  if (doc)
     cache.restoreXml(doc->getRoot(),ghidra);
-    delete doc;
-  }
 }
 
 /// For the Ghidra implementation of CommentDatabase, addComment() is currently only

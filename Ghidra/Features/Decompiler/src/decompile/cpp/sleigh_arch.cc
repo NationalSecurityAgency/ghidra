@@ -97,7 +97,7 @@ void SleighArchitecture::loadLanguageDescription(const string &specfile,ostream 
   ifstream s(specfile.c_str());
   if (!s) return;
 
-  Document *doc;
+  unique_ptr<Document> doc;
   Element *el;
   try {
     doc = xml_tree(s);
@@ -115,7 +115,6 @@ void SleighArchitecture::loadLanguageDescription(const string &specfile,ostream 
     description.emplace_back();
     description.back().restoreXml( *iter );
   }
-  delete doc;
 }
 
 SleighArchitecture::~SleighArchitecture(void)

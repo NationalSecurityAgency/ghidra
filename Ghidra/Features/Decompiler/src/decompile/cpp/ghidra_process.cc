@@ -274,12 +274,10 @@ void DecompileAt::loadParameters(void)
 
 {
   GhidraCommand::loadParameters();
-  Document *doc;
-  doc = ArchitectureGhidra::readXMLStream(sin);	// Read XML of address directly from in stream
+  unique_ptr<Document> doc = ArchitectureGhidra::readXMLStream(sin);	// Read XML of address directly from in stream
   addr = Address::restoreXml(doc->getRoot(),ghidra); // Parse XML for functions address
   addr.toPhysical(); 		// Only for backward compatibility
                                 // with SLED
-  delete doc;
 }
 
 void DecompileAt::rawAction(void) 
@@ -337,10 +335,8 @@ void StructureGraph::loadParameters(void)
 
 {
   GhidraCommand::loadParameters();
-  Document *doc;
-  doc = ArchitectureGhidra::readXMLStream(sin);
+  unique_ptr<Document> doc = ArchitectureGhidra::readXMLStream(sin);
   ingraph.restoreXml(doc->getRoot(),ghidra);
-  delete doc;
 }
 
 void StructureGraph::rawAction(void)
@@ -413,27 +409,10 @@ void SetAction::sendResult(void)
   GhidraCommand::sendResult();
 }
 
-SetOptions::SetOptions(void) : GhidraCommand()
-
-{
-  doc = (Document *)0;
-}
-
-SetOptions::~SetOptions(void)
-
-{
-  if (doc != (Document *)0)
-    delete doc;
-}
-
 void SetOptions::loadParameters(void)
 
 {
   GhidraCommand::loadParameters();
-  if (doc != (Document *)0) {
-    delete doc;
-    doc = (Document *)0;
-  }
   doc = ArchitectureGhidra::readXMLStream(sin);
 }
 
@@ -444,8 +423,7 @@ void SetOptions::rawAction(void)
 
   ghidra->resetDefaults();
   ghidra->options->restoreXml(doc->getRoot());
-  delete doc;
-  doc = (Document *)0;
+  doc.reset();
   res = true;
 }
 

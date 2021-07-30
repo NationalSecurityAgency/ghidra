@@ -86,22 +86,22 @@ public:
 		     istream &i,ostream &o);
   const string &getWarnings(void) const { return warnings; }	///< Get warnings produced by the last decompilation
   void clearWarnings(void) { warnings.clear(); }		///< Clear warnings
-  Document *getRegister(const string &regname);			///< Retrieve a register description given a name
+  unique_ptr<Document> getRegister(const string &regname);			///< Retrieve a register description given a name
   string getRegisterName(const VarnodeData &vndata);		///< Retrieve a register name given its storage location
-  Document *getTrackedRegisters(const Address &addr);		///< Retrieve \e tracked register values at the given address
+  unique_ptr<Document> getTrackedRegisters(const Address &addr);		///< Retrieve \e tracked register values at the given address
   string getUserOpName(int4 index);				///< Get the name of a user-defined p-code op
   uint1 *getPcodePacked(const Address &addr);			///< Get p-code for a single instruction
-  Document *getMappedSymbolsXML(const Address &addr);		///< Get symbols associated with the given address
-  Document *getExternalRefXML(const Address &addr);		///< Retrieve a description of an external function
-  Document *getNamespacePath(uint8 id);				///< Get a description of a namespace path
+  unique_ptr<Document> getMappedSymbolsXML(const Address &addr);		///< Get symbols associated with the given address
+  unique_ptr<Document> getExternalRefXML(const Address &addr);		///< Retrieve a description of an external function
+  unique_ptr<Document> getNamespacePath(uint8 id);				///< Get a description of a namespace path
   bool isNameUsed(const string &nm,uint8 startId,uint8 stopId);	///< Is given name used along namespace path
   string getCodeLabel(const Address &addr);			///< Retrieve a label at the given address
-  Document *getType(const string &name,uint8 id);		///< Retrieve a data-type description for the given name and id
-  Document *getComments(const Address &fad,uint4 flags);	///< Retrieve comments for a particular function
+  unique_ptr<Document> getType(const string &name,uint8 id);		///< Retrieve a data-type description for the given name and id
+  unique_ptr<Document> getComments(const Address &fad,uint4 flags);	///< Retrieve comments for a particular function
   void getBytes(uint1 *buf,int4 size,const Address &inaddr);	///< Retrieve bytes in the LoadImage at the given address
-  Document *getPcodeInject(const string &name,int4 type,const InjectContext &con);
-  Document *getCPoolRef(const vector<uintb> &refs);		///< Resolve a constant pool reference
-  //  Document *getScopeProperties(Scope *newscope);
+  unique_ptr<Document> getPcodeInject(const string &name,int4 type,const InjectContext &con);
+  unique_ptr<Document> getCPoolRef(const vector<uintb> &refs);		///< Resolve a constant pool reference
+  //  unique_ptr<Document> getScopeProperties(Scope *newscope);
 
   /// \brief Toggle whether the data-flow and control-flow is emitted as part of the main decompile action
   ///
@@ -138,8 +138,8 @@ public:
   static void writeStringStream(ostream &s,const string &msg);	///< Send a string to the client
   static void readToResponse(istream &s);			///< Read the query response protocol marker
   static void readResponseEnd(istream &s);			///< Read the ending query response protocol marker
-  static Document *readXMLAll(istream &s);			///< Read a whole response as an XML document
-  static Document *readXMLStream(istream &s);			///< Receive an XML document from the client
+  static unique_ptr<Document> readXMLAll(istream &s);			///< Read a whole response as an XML document
+  static unique_ptr<Document> readXMLStream(istream &s);			///< Receive an XML document from the client
   static uint1 *readPackedStream(istream &s);			///< Read packed p-code op information
   static uint1 *readPackedAll(istream &s);			///< Read a whole response as packed p-code op information
   static void passJavaException(ostream &s,const string &tp,const string &msg);
