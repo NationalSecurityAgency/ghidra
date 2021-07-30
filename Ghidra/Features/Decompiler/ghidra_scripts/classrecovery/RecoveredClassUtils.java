@@ -13,23 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package classrecovery;
-/* ###
- * IP: GHIDRA
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 //DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS. 
+package classrecovery;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -1512,7 +1498,7 @@ public class RecoveredClassUtils {
 	/**
 	 * Method to get ancestors that do not have vfunctions
 	 * @param recoveredClass the given class
-	 * @return true if any of the given class's ancestors are inherited virtually, false otherwise
+	 * @return List of ancestors without vfunctions
 	 * @throws CancelledException if cancelled
 	 */
 	public List<RecoveredClass> getAncestorsWithoutVfunctions(RecoveredClass recoveredClass)
@@ -2772,7 +2758,6 @@ public class RecoveredClassUtils {
 			}
 
 			// add it to the vftableAddress to Class map
-			//vftableToClassMap.put(vftableAddress, recoveredClass);
 			updateVftableToClassMap(vftableAddress, recoveredClass);
 
 			List<Address> referencesToVftable = getReferencesToVftable(vftableAddress);
