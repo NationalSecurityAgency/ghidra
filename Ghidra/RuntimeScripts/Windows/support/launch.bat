@@ -39,7 +39,7 @@ set "SUPPORT_DIR=%~dp0"
 set "SUPPORT_DIR=%SUPPORT_DIR:~0,-1%"
 
 :: Ensure Ghidra path doesn't contain illegal characters
-if not "%SUPPORT_DIR:!=%"=="%SUPPORT_DIR%" (
+ECHO.%SUPPORT_DIR%| FIND /I "!">Nul && ( 
 	echo Ghidra path cannot contain a "!" character.
 	set ERRORLEVEL=1
 	goto exit1
