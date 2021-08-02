@@ -18,7 +18,6 @@ package ghidra.app.util.bin.format.dwarf4;
 import java.io.File;
 import java.io.IOException;
 
-import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf4.encoding.*;
 
 /**
@@ -32,13 +31,12 @@ public class DWARFCompileUnit {
 	private final Number high_pc;
 	private final Number low_pc;
 	private final Number language;
-	private final Number stmt_list;
 	private final DWARFIdentifierCase identifier_case;
 	private final boolean hasDWO;
 
 	private DWARFLine line = null;
 
-	public static DWARFCompileUnit read(DIEAggregate diea, BinaryReader lineReader)
+	public static DWARFCompileUnit read(DIEAggregate diea)
 			throws IOException, DWARFException {
 		if (diea.getTag() != DWARFTag.DW_TAG_compile_unit) {
 			throw new IOException("Expecting a DW_TAG_compile_unit DIE, found " + diea.getTag());
@@ -48,7 +46,7 @@ public class DWARFCompileUnit {
 		String producer = diea.getString(DWARFAttribute.DW_AT_producer, null);
 		String comp_dir = diea.getString(DWARFAttribute.DW_AT_comp_dir, null);
 
-		Number high_pc = null, low_pc = null, language = null, stmt_list = null;
+		Number high_pc = null, low_pc = null, language = null;
 
 		if (diea.hasAttribute(DWARFAttribute.DW_AT_low_pc)) {
 			low_pc = diea.getLowPC(0);
@@ -64,11 +62,6 @@ public class DWARFCompileUnit {
 			language = diea.getUnsignedLong(DWARFAttribute.DW_AT_language, -1);
 		}
 
-		// DW_AT_stmt_list can be const or ptr form types.
-		if (diea.hasAttribute(DWARFAttribute.DW_AT_stmt_list)) {
-			stmt_list = diea.getUnsignedLong(DWARFAttribute.DW_AT_stmt_list, -1);
-		}
-
 		DWARFIdentifierCase identifier_case = null;
 		if (diea.hasAttribute(DWARFAttribute.DW_AT_identifier_case)) {
 			identifier_case = DWARFIdentifierCase.find(
@@ -78,13 +71,9 @@ public class DWARFCompileUnit {
 		boolean hasDWO = diea.hasAttribute(DWARFAttribute.DW_AT_GNU_dwo_id) &&
 			diea.hasAttribute(DWARFAttribute.DW_AT_GNU_dwo_name);
 
-		DWARFLine line = null;
-		if (stmt_list != null && lineReader != null) {
-			lineReader.setPointerIndex(stmt_list.longValue());
-			line = new DWARFLine(lineReader);
-		}
+		DWARFLine line = DWARFLine.read(diea);
 
-		return new DWARFCompileUnit(name, producer, comp_dir, low_pc, high_pc, language, stmt_list,
+		return new DWARFCompileUnit(name, producer, comp_dir, low_pc, high_pc, language,
 			identifier_case, hasDWO, line);
 	}
 
@@ -92,15 +81,14 @@ public class DWARFCompileUnit {
 	 * Construct a DWARF compile unit with the given values.
 	 */
 	public DWARFCompileUnit(String name, String producer, String comp_dir, Number low_pc,
-			Number high_pc, Number language, Number stmt_list, DWARFIdentifierCase identifier_case,
-			boolean hasDWO, DWARFLine line) {
+			Number high_pc, Number language, DWARFIdentifierCase identifier_case, boolean hasDWO,
+			DWARFLine line) {
 		this.name = name;
 		this.producer = producer;
 		this.comp_dir = comp_dir;
 		this.low_pc = low_pc;
 		this.high_pc = high_pc;
 		this.language = language;
-		this.stmt_list = stmt_list;
 		this.identifier_case = identifier_case;
 		this.hasDWO = hasDWO;
 		this.line = line;
@@ -200,14 +188,6 @@ public class DWARFCompileUnit {
 	}
 
 	/**
-	 * Get the statement list of the compile unit.
-	 * @return the statement list of the compile unit
-	 */
-	public int getStatementList() {
-		return this.stmt_list == null ? -1 : this.stmt_list.intValue();
-	}
-
-	/**
 	 * Get the identifier case of the compile unit
 	 * @return the identifier case of the compile unit
 	 */
@@ -223,7 +203,6 @@ public class DWARFCompileUnit {
 	public String toString() {
 		return "DWARFCompileUnit [name=" + name + ", producer=" + producer + ", comp_dir=" +
 			comp_dir + ", high_pc=" + high_pc + ", low_pc=" + low_pc + ", language=" + language +
-			", stmt_list=" + stmt_list + ", identifier_case=" + identifier_case + ", hasDWO=" +
-			hasDWO + ", line=" + line + "]";
+			", identifier_case=" + identifier_case + ", hasDWO=" + hasDWO + ", line=" + line + "]";
 	}
 }
