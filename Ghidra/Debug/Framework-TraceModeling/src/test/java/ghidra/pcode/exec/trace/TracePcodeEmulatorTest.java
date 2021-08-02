@@ -329,7 +329,6 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 	@Test
 	public void testBRDS() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "Toy:BE:64:default")) {
-			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
 			TraceThread thread = initTrace(tb,
 				List.of(
 					"pc = 0x00400000;",
@@ -666,6 +665,44 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 			assertEquals(new BigInteger("0123456789abcdeffedcba9876543210", 16),
 				TraceSleighUtils.evaluate("XMM0", tb.trace, 1, thread, 0));
+		}
+	}
+
+	/**
+	 * ( Test x86's SAR instruction
+	 * 
+	 * <p>
+	 * This test hits an INT_SRIGHT p-code op where the two input operands have differing sizes.
+	 */
+	@Test
+	public void testSAR() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			Register pc = tb.language.getProgramCounter();
+
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"RIP = 0x00400000;",
+					"RSP = 0x00110000;",
+					"RAX = 0x7fffffff;",
+					"RCX = 4;"),
+				List.of(
+					"SAR EAX, CL"));
+
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.overrideContextWithDefault();
+			emuThread.stepInstruction();
+
+			assertEquals(tb.addr(0x00400002), emuThread.getCounter());
+			assertArrayEquals(tb.arr(0x02, 0, 0x40, 0, 0, 0, 0, 0),
+				emuThread.getState().getVar(pc));
+
+			try (UndoableTransaction tid = tb.startTransaction()) {
+				emu.writeDown(tb.trace, 1, 1, false);
+			}
+
+			assertEquals(BigInteger.valueOf(0x7ffffff),
+				TraceSleighUtils.evaluate("RAX", tb.trace, 1, thread, 0));
 		}
 	}
 }
