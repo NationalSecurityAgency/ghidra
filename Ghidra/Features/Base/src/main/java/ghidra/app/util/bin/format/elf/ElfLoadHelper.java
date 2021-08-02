@@ -21,6 +21,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.exception.InvalidInputException;
@@ -187,5 +188,19 @@ public interface ElfLoadHelper {
 	 * @return address range or null if no unallocated range found
 	 */
 	public AddressRange allocateLinkageBlock(int alignment, int size, String purpose);
+
+	/**
+	 * <p>Get the original memory value at the specified address if a relocation was applied at the
+	 * specified address (not containing).  Current memory value will be returned if no relocation
+	 * has been applied at specified address.  The value size is either 8-bytes if {@link ElfHeader#is64Bit()},
+	 * otherwise it will be 4-bytes.  This is primarily intended to inspect original bytes within 
+	 * the GOT which may have had relocations applied to them.
+	 * @param addr memory address
+	 * @param signExtend if true sign-extend to long, else treat as unsigned
+	 * @return original bytes value
+	 * @throws MemoryAccessException if memory read fails
+	 */
+	public long getOriginalValue(Address addr, boolean signExtend)
+			throws MemoryAccessException;
 
 }

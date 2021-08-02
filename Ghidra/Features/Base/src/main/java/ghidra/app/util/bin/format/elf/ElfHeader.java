@@ -530,6 +530,11 @@ public class ElfHeader implements StructConverter, Writeable {
 			}
 
 			long relocTableOffset = relocTableLoadHeader.getOffset(relocTableAddr);
+			for (ElfRelocationTable relocTable : relocationTableList) {
+				if (relocTable.getFileOffset() == relocTableOffset) {
+					return; // skip reloc table previously parsed
+				}
+			}
 			long tableEntrySize =
 				relocEntrySizeType != null ? dynamicTable.getDynamicValue(relocEntrySizeType) : -1;
 			long tableSize = dynamicTable.getDynamicValue(relocTableSizeType);
