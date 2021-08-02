@@ -56,7 +56,7 @@ public enum BytesPcodeArithmetic implements PcodeArithmetic<byte[]> {
 	@Override
 	public byte[] binaryOp(BinaryOpBehavior op, int sizeout, int sizein1, byte[] in1, int sizein2,
 			byte[] in2) {
-		if (sizein1 > 8 || sizeout > 8) {
+		if (sizein1 > 8 || sizein2 > 8 || sizeout > 8) {
 			BigInteger in1Val = Utils.bytesToBigInteger(in1, sizein1, isBigEndian, false);
 			BigInteger in2Val = Utils.bytesToBigInteger(in2, sizein2, isBigEndian, false);
 			BigInteger outVal = op.evaluateBinary(sizeout, sizein1, in1Val, in2Val);
