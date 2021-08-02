@@ -43,6 +43,7 @@ import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.reloc.Relocation;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
@@ -909,6 +910,23 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 						.add(relocAddr, reloc.getType(), values, bytes, symbolName);
 			}
 		}
+	}
+
+	@Override
+	public long getOriginalValue(Address addr, boolean signExtend) throws MemoryAccessException {
+		byte[] bytes;
+		int len = elf.is64Bit() ? 8 : 4;
+		Relocation relocation = program.getRelocationTable().getRelocation(addr);
+		if (relocation == null) {
+			bytes = new byte[len];
+			memory.getBytes(addr, bytes);
+		}
+		else {
+			bytes = relocation.getBytes();
+		}
+		DataConverter dataConverter = DataConverter.getInstance(elf.isBigEndian());
+		return signExtend ? dataConverter.getSignedValue(bytes, len)
+				: dataConverter.getValue(bytes, len);
 	}
 
 	/**

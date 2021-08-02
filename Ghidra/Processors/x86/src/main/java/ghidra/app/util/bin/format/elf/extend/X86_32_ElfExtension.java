@@ -27,8 +27,6 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class X86_32_ElfExtension extends ElfExtension {
-	
-	// TODO: Add extension types
 
 	@Override
 	public boolean canHandle(ElfHeader elf) {
@@ -90,8 +88,7 @@ public class X86_32_ElfExtension extends ElfExtension {
 		
 		// MemoryBlock pltBlock = getBlockPLT(pltSection);
 		MemoryBlock pltBlock = memory.getBlock(pltSection.getNameAsString());
-		// TODO: This is a band-aid since there are many PLT implementations and this assumes only one.
-		if (pltBlock == null || pltBlock.getSize() <= ElfConstants.PLT_ENTRY_SIZE) {
+		if (pltBlock == null) {
 			return;
 		}
 
