@@ -161,8 +161,8 @@ public class DWARFCompilationUnit {
 			DebugInfoEntry compileUnitDIE =
 				DebugInfoEntry.read(debugInfoBR, cu, dwarfProgram.getAttributeFactory());
 
-			DWARFCompileUnit compUnit = DWARFCompileUnit.read(
-				DIEAggregate.createSingle(compileUnitDIE), dwarfProgram.getDebugLine());
+			DWARFCompileUnit compUnit =
+				DWARFCompileUnit.read(DIEAggregate.createSingle(compileUnitDIE));
 			cu.setCompileUnit(compUnit);
 			return cu;
 		}

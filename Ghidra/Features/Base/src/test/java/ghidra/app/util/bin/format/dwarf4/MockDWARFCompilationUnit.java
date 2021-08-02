@@ -35,7 +35,7 @@ public class MockDWARFCompilationUnit extends DWARFCompilationUnit {
 
 		setCompileUnit(
 			new DWARFCompileUnit("Mock Comp Unit", "Mock Comp Unit Producer", "Mock Comp Unit Dir",
-				0, 0, language, 0, DWARFIdentifierCase.DW_ID_case_insensitive, false, null));
+				0, 0, language, DWARFIdentifierCase.DW_ID_case_insensitive, false, null));
 		compUnitDIE = new DIECreator(DWARFTag.DW_TAG_compile_unit)
 				.addString(DWARFAttribute.DW_AT_name, "MockCompUnit" + compUnitNumber)
 				.create(this);
