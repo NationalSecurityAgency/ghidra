@@ -17,6 +17,8 @@ package ghidra.app.util.bin.format.elf.relocation;
 
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
@@ -125,7 +127,7 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 	public static void markAsUnhandled(Program program, Address relocationAddress, long type,
 			long symbolIndex, String symbolName, MessageLog log) {
 
-		symbolName = symbolName == null ? "<no name>" : symbolName;
+		symbolName = StringUtils.isEmpty(symbolName) ? "<no name>" : symbolName;
 		log.appendMsg("Unhandled Elf Relocation: Type = " + type + " (0x" + Long.toHexString(type) +
 			") at " + relocationAddress + " (Symbol = " + symbolName + ")");
 		BookmarkManager bookmarkManager = program.getBookmarkManager();

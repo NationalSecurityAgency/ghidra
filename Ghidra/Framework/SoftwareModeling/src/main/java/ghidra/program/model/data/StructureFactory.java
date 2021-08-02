@@ -238,9 +238,19 @@ public class StructureFactory {
 			throw new IllegalArgumentException("No data type components found");
 		}
 
-		for (int i = 0; i < dataComps.length; i++) {
-			structure.add(dataComps[i].getDataType(), dataComps[i].getLength(),
-				dataComps[i].getFieldName(), dataComps[i].getComment());
+		// adopt pack settings from parent - things could move as a result
+		DataType parent = dataComps[0].getParent();
+		if (parent instanceof Composite) {
+			Composite c = (Composite) parent;
+			structure.setPackingEnabled(c.isPackingEnabled());
+			if (c.getPackingType() == PackingType.EXPLICIT) {
+				structure.setExplicitPackingValue(c.getExplicitPackingValue());
+			}
+		}
+
+		for (DataTypeComponent dataComp : dataComps) {
+			structure.add(dataComp.getDataType(), dataComp.getLength(),
+				dataComp.getFieldName(), dataComp.getComment());
 		}
 	}
 }

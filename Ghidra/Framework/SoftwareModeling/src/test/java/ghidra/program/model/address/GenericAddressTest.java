@@ -15,8 +15,7 @@
  */
 package ghidra.program.model.address;
 
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
@@ -184,6 +183,125 @@ public class GenericAddressTest extends AbstractGenericTest {
 		Address addr5 = new GenericAddress(sp, 30);
 		assertTrue(addr5.compareTo(addr1) > 0);
 
+	}
+
+	@Test
+	public void testCompareToWithUnSigned32AddressSpace() {
+		AddressSpace space32Unsigned =
+			new GenericAddressSpace("test", 32, AddressSpace.TYPE_CODE, 0);
+
+		Address addr0 = new GenericAddress(space32Unsigned, 0);
+		Address addrMax = space32Unsigned.getMaxAddress();
+		Address addrPositive = new GenericAddress(space32Unsigned, 1);
+		// this will not be negative, but instead will be large positive
+		Address addrLargePositive = new GenericAddress(space32Unsigned, -2);
+
+		// test both directions for all combinations of the 4 addresses
+		assertEquals(-1, addr0.compareTo(addrMax));
+		assertEquals(1, addrMax.compareTo(addr0));
+
+		assertEquals(-1, addr0.compareTo(addrPositive));
+		assertEquals(1, addrPositive.compareTo(addr0));
+
+		assertEquals(-1, addr0.compareTo(addrLargePositive));
+		assertEquals(1, addrLargePositive.compareTo(addr0));
+
+		assertEquals(1, addrMax.compareTo(addrPositive));
+		assertEquals(-1, addrPositive.compareTo(addrMax));
+
+		assertEquals(1, addrMax.compareTo(addrLargePositive));
+		assertEquals(-1, addrLargePositive.compareTo(addrMax));
+
+		assertEquals(-1, addrPositive.compareTo(addrLargePositive));
+		assertEquals(1, addrLargePositive.compareTo(addrPositive));
+	}
+
+	@Test
+	public void testCompareToWithSigned32AddressSpace() {
+		AddressSpace space32Signed =
+			new GenericAddressSpace("test", 32, AddressSpace.TYPE_STACK, 0);
+		Address addr0 = new GenericAddress(space32Signed, 0);
+		Address addrMax = space32Signed.getMaxAddress();
+		Address addrPositive = new GenericAddress(space32Signed, 1);
+		Address addrNegative = new GenericAddress(space32Signed, -2);
+
+		// test both directions for all combinations of the 4 addresses
+		assertEquals(-1, addr0.compareTo(addrMax));
+		assertEquals(1, addrMax.compareTo(addr0));
+
+		assertEquals(-1, addr0.compareTo(addrPositive));
+		assertEquals(1, addrPositive.compareTo(addr0));
+
+		assertEquals(1, addr0.compareTo(addrNegative));
+		assertEquals(-1, addrNegative.compareTo(addr0));
+
+		assertEquals(1, addrMax.compareTo(addrPositive));
+		assertEquals(-1, addrPositive.compareTo(addrMax));
+
+		assertEquals(1, addrMax.compareTo(addrNegative));
+		assertEquals(-1, addrNegative.compareTo(addrMax));
+
+		assertEquals(1, addrPositive.compareTo(addrNegative));
+		assertEquals(-1, addrNegative.compareTo(addrPositive));
+	}
+
+	@Test
+	public void testCompareWithSigned64BitAddressSpace() {
+		AddressSpace space64Signed =
+			new GenericAddressSpace("test", 64, AddressSpace.TYPE_STACK, 0);
+
+		Address addr0 = new GenericAddress(space64Signed, 0);
+		Address addrMax = space64Signed.getMaxAddress();
+		Address addrPositive = new GenericAddress(space64Signed, 1);
+		Address addrNegative = new GenericAddress(space64Signed, -2);
+
+		// test both directions for all combinations of the 4 addresses
+		assertEquals(-1, addr0.compareTo(addrMax));
+		assertEquals(1, addrMax.compareTo(addr0));
+
+		assertEquals(-1, addr0.compareTo(addrPositive));
+		assertEquals(1, addrPositive.compareTo(addr0));
+
+		assertEquals(1, addr0.compareTo(addrNegative));
+		assertEquals(-1, addrNegative.compareTo(addr0));
+
+		assertEquals(1, addrMax.compareTo(addrPositive));
+		assertEquals(-1, addrPositive.compareTo(addrMax));
+
+		assertEquals(1, addrMax.compareTo(addrNegative));
+		assertEquals(-1, addrNegative.compareTo(addrMax));
+
+		assertEquals(1, addrPositive.compareTo(addrNegative));
+		assertEquals(-1, addrNegative.compareTo(addrPositive));
+	}
+
+	@Test
+	public void testCompareWithUnSigned64BitAddressSpace() {
+		AddressSpace space64Signed = new GenericAddressSpace("test", 64, AddressSpace.TYPE_CODE, 0);
+
+		Address addr0 = new GenericAddress(space64Signed, 0);
+		Address addrMax = space64Signed.getMaxAddress();
+		Address addrPositive = new GenericAddress(space64Signed, 1);
+		// since this is unsigned space the following will actually be a large positive value
+		Address addrLarge = new GenericAddress(space64Signed, -2);
+
+		assertEquals(-1, addr0.compareTo(addrMax));
+		assertEquals(1, addrMax.compareTo(addr0));
+
+		assertEquals(-1, addr0.compareTo(addrPositive));
+		assertEquals(1, addrPositive.compareTo(addr0));
+
+		assertEquals(-1, addr0.compareTo(addrLarge));
+		assertEquals(1, addrLarge.compareTo(addr0));
+
+		assertEquals(1, addrMax.compareTo(addrPositive));
+		assertEquals(-1, addrPositive.compareTo(addrMax));
+
+		assertEquals(1, addrMax.compareTo(addrLarge));
+		assertEquals(-1, addrLarge.compareTo(addrMax));
+
+		assertEquals(-1, addrPositive.compareTo(addrLarge));
+		assertEquals(1, addrLarge.compareTo(addrPositive));
 	}
 
 	@Test

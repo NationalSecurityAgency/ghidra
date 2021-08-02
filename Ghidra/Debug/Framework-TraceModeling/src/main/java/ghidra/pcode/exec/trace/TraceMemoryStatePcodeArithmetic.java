@@ -26,14 +26,14 @@ public enum TraceMemoryStatePcodeArithmetic implements PcodeArithmetic<TraceMemo
 	INSTANCE;
 
 	@Override
-	public TraceMemoryState unaryOp(UnaryOpBehavior op, int sizeout, int sizein,
+	public TraceMemoryState unaryOp(UnaryOpBehavior op, int sizeout, int sizein1,
 			TraceMemoryState in1) {
 		return in1;
 	}
 
 	@Override
-	public TraceMemoryState binaryOp(BinaryOpBehavior op, int sizeout, int sizein,
-			TraceMemoryState in1, TraceMemoryState in2) {
+	public TraceMemoryState binaryOp(BinaryOpBehavior op, int sizeout, int sizein1,
+			TraceMemoryState in1, int sizein2, TraceMemoryState in2) {
 		if (in1 == TraceMemoryState.KNOWN && in2 == TraceMemoryState.KNOWN) {
 			return TraceMemoryState.KNOWN;
 		}

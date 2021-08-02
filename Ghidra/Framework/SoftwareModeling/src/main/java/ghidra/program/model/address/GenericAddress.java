@@ -249,23 +249,14 @@ public class GenericAddress implements Address {
 	@Override
 	public int compareTo(Address a) {
 		int comp = addrSpace.compareTo(a.getAddressSpace());
-		if (comp == 0) {
-			long otherOffset = a.getOffset();
-			if (!addrSpace.hasSignedOffset() && addrSpace.getMaxAddress().getOffset() < 0) {
-				// Address space offsets are 64-bit unsigned
-				if ((offset < 0 && otherOffset >= 0) || (offset >= 0 && otherOffset < 0)) {
-					return offset >= 0 ? -1 : 1;
-				}
-			}
-			long diff = offset - otherOffset;
-			if (diff > 0) {
-				return 1;
-			}
-			if (diff < 0) {
-				return -1;
-			}
+		if (comp != 0) {
+			return comp;
 		}
-		return comp;
+		long otherOffset = a.getOffset();
+		if (addrSpace.hasSignedOffset()) {
+			return Long.compare(offset, otherOffset);
+		}
+		return Long.compareUnsigned(offset, otherOffset);
 	}
 
 	/**

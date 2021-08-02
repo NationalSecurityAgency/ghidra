@@ -13,23 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+//DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS. 
 package classrecovery;
-/* ###
- * IP: GHIDRA
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-//DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS.  
+
 import java.util.*;
 
 import ghidra.app.cmd.function.CreateFunctionCmd;
@@ -110,8 +96,8 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 				return null;
 			}
 
-			Address possibleFunctionPointer = address.getNewAddress(offset);
-			return possibleFunctionPointer;
+			Address possiblePointer = address.getNewAddress(offset);
+			return possiblePointer;
 
 		}
 		catch (MemoryAccessException e) {
@@ -686,6 +672,11 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 
 	public boolean doesFunctionACallAnyListedFunction(Function aFunction, List<Function> bFunctions)
 			throws CancelledException {
+
+		if (aFunction == null) {
+			return false;
+		}
+
 		Iterator<Function> bFunctionsIterator = bFunctions.iterator();
 		while (bFunctionsIterator.hasNext()) {
 			monitor.checkCanceled();
@@ -797,6 +788,14 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 	 */
 	public boolean doesFunctionACallFunctionB(Function aFunction, Function bFunction)
 			throws CancelledException {
+
+		if (aFunction == null) {
+			return false;
+		}
+
+		if (bFunction == null) {
+			return false;
+		}
 
 		Set<Function> calledFunctions = aFunction.getCalledFunctions(monitor);
 		if (calledFunctions.contains(bFunction)) {
