@@ -105,8 +105,8 @@ public class PcodeExecutor<T> {
 			Varnode in1Var = op.getInput(0);
 			Varnode outVar = op.getOutput();
 			T in1 = state.getVar(in1Var);
-			T out =
-				arithmetic.unaryOp((UnaryOpBehavior) b, outVar.getSize(), in1Var.getSize(), in1);
+			T out = arithmetic.unaryOp((UnaryOpBehavior) b, outVar.getSize(),
+				in1Var.getSize(), in1);
 			state.setVar(outVar, out);
 			return;
 		}
@@ -116,8 +116,8 @@ public class PcodeExecutor<T> {
 			Varnode outVar = op.getOutput();
 			T in1 = state.getVar(in1Var);
 			T in2 = state.getVar(in2Var);
-			T out = arithmetic.binaryOp((BinaryOpBehavior) b, outVar.getSize(), in1Var.getSize(),
-				in1, in2);
+			T out = arithmetic.binaryOp((BinaryOpBehavior) b, outVar.getSize(),
+				in1Var.getSize(), in1, in2Var.getSize(), in2);
 			state.setVar(outVar, out);
 			return;
 		}
