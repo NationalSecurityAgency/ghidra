@@ -17,6 +17,7 @@ package ghidra.program.model.pcode;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
+import ghidra.util.Msg;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
@@ -58,10 +59,12 @@ public class HighGlobal extends HighVariable {
 			offset = SpecXmlUtils.decodeInt(attrString);
 		}
 		restoreInstances(parser, el);
-		if (symref == 0) {
-			throw new PcodeXMLException("Missing symref attribute in <high> tag");
+		if (symref != 0) {
+			symbol = function.getGlobalSymbolMap().getSymbol(symref);
 		}
-		symbol = function.getGlobalSymbolMap().getSymbol(symref);
+		else {
+			Msg.warn(this, "Missing symref attribute in <high> tag");
+		}
 		if (symbol == null) {	// If we don't already have symbol, synthesize it
 			DataType symbolType;
 			int symbolSize;
