@@ -6141,6 +6141,33 @@ bool RulePtrArith::verifyAddTreeBottom(PcodeOp *op,int4 slot)
   return true;
 }
 
+/// \brief Test for other pointers in the ADD tree above the given op that might be a preferred base
+///
+/// This tests the condition of RulePushPtr, making sure that the given op isn't the lone descendant
+/// of a pointer constructed by INT_ADD on another pointer (which would then be preferred).
+/// \param op is the given op
+/// \param slot is the input slot of the pointer
+/// \return \b true if the indicated slot holds the preferred pointer
+bool RulePtrArith::verifyPreferredPointer(PcodeOp *op,int4 slot)
+
+{
+  Varnode *vn = op->getIn(slot);
+  // Check if RulePushPtr would apply here
+  if (op->getIn(1-slot)->getType()->getMetatype() != TYPE_PTR && vn->isWritten()) {
+    PcodeOp *preOp = vn->getDef();
+    if (preOp->code() == CPUI_INT_ADD) {
+	if (vn->loneDescend() == op) {
+	  int ptrCount = 0;
+	  if (preOp->getIn(0)->getType()->getMetatype() == TYPE_PTR) ptrCount += 1;
+	  if (preOp->getIn(1)->getType()->getMetatype() == TYPE_PTR) ptrCount += 1;
+	  if (ptrCount == 1)
+	    return false;	// RulePushPtr would apply, so we are not preferred
+	}
+    }
+  }
+  return true;
+}
+
 /// \class RulePtrArith
 /// \brief Transform pointer arithmetic
 ///
@@ -6180,11 +6207,14 @@ int4 RulePtrArith::applyOp(PcodeOp *op,Funcdata &data)
   }
   if (slot == op->numInput()) return 0;
   if (!verifyAddTreeBottom(op, slot)) return 0;
+  if (!verifyPreferredPointer(op, slot)) return 0;
 
   const TypePointer *tp = (const TypePointer *) ct;
   ct = tp->getPtrTo();		// Type being pointed to
   int4 unitsize = AddrSpace::addressToByteInt(1,tp->getWordSize());
   if (ct->getSize() == unitsize) { // Degenerate case
+    if (op->getOut()->getType()->getMetatype() != TYPE_PTR)	// Make sure pointer propagates thru INT_ADD
+      return 0;
     vector<Varnode *> newparams;
     newparams.push_back( op->getIn(slot) );
     newparams.push_back( op->getIn(1-slot) );

@@ -231,7 +231,7 @@ Datatype *CastStrategyC::castStandard(Datatype *reqtype,Datatype *curtype,
     care_uint_int = true;
     isptr = true;
   }
-  if (curtype == reqtype) return (Datatype *)0;	// Different typedefs could point to the same type
+  if (curbase == reqbase) return (Datatype *)0;	// Different typedefs could point to the same type
   if ((reqbase->getMetatype()==TYPE_VOID)||(curtype->getMetatype()==TYPE_VOID))
     return (Datatype *)0;	// Don't cast from or to VOID
   if (reqbase->getSize() != curbase->getSize()) {
