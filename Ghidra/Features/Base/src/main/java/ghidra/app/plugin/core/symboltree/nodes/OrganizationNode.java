@@ -22,16 +22,18 @@ import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
 import ghidra.program.model.symbol.Namespace;
-import ghidra.util.datastruct.IntArray;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
 /**
- * See {@link #computeChildren(List, int, GTreeNode, int, TaskMonitor)} for details on 
+ * These nodes are used to organize large lists of nodes into a hierachical structure based on 
+ * the node names. See {@link #organize(List, int, TaskMonitor)} for details on 
  * how this class works.
  */
 public class OrganizationNode extends SymbolTreeNode {
+	public static final int MAX_SAME_NAME = 10;
+
 	static final Comparator<GTreeNode> COMPARATOR = new OrganizationNodeComparator();
 
 	private static Icon OPEN_FOLDER_GROUP_ICON =
@@ -40,45 +42,38 @@ public class OrganizationNode extends SymbolTreeNode {
 		ResourceManager.loadImage("images/closedFolderGroup.png");
 
 	private String baseName;
+	private int totalCount;
 
-	/**
-	 * You cannot instantiate this class directly, instead use the factory method below
-	 * {@link #organize(List, int, TaskMonitor)}
-	 * @throws CancelledException if the operation is cancelled
-	 */
-	private OrganizationNode(List<GTreeNode> list, int max, int parentLevel, TaskMonitor monitor)
+	private MoreNode moreNode;
+
+	private OrganizationNode(List<GTreeNode> list, int maxGroupSize, TaskMonitor monitor)
 			throws CancelledException {
+		totalCount = list.size();
+		// organize children further if the list is too big
+		List<GTreeNode> children = organize(list, maxGroupSize, monitor);
 
-		doSetChildren(computeChildren(list, max, this, parentLevel, monitor));
+		// if all the entries have the same name and we have more than a handful, show only
+		// a few and add a special "More" node
+		if (children.size() > MAX_SAME_NAME && hasSameName(children)) {
+			// they all have the same name, so just use that as this nodes name
+			baseName = children.get(0).getName();
 
-		GTreeNode child = getChild(0);
-		baseName = child.getName().substring(0, getPrefixSizeForGrouping(getChildren(), 1) + 1);
+			children = new ArrayList<>(children.subList(0, MAX_SAME_NAME));
+			moreNode = new MoreNode(baseName, totalCount - MAX_SAME_NAME);
+			children.add(moreNode);
+		}
+		else {
+			// name this node the prefix that all children nodes have in common
+			baseName = getCommonPrefix(children);
+		}
+		doSetChildren(children);
 	}
 
 	/**
-	 * A factory method for creating OrganizationNode objects. 
-	 * See {@link #computeChildren(List, int, GTreeNode, int, TaskMonitor)}
-	 *
-	 * @param nodes the original list of child nodes to be subdivided.
-	 * @param max The max number of child nodes per parent node at any node level.
-	 * @param monitor the task monitor used to cancel this operation
-	 * @return A list of nodes that is based upon the given list, but subdivided as needed.
-	 * @throws CancelledException if the operation is cancelled
-	 * @see #computeChildren(List, int, GTreeNode, int, TaskMonitor)
-	 */
-	public static List<GTreeNode> organize(List<GTreeNode> nodes, int max, TaskMonitor monitor)
-			throws CancelledException {
-		return organize(nodes, null, max, monitor);
-	}
-
-	private static List<GTreeNode> organize(List<GTreeNode> nodes, GTreeNode parent, int max,
-			TaskMonitor monitor) throws CancelledException {
-		return computeChildren(nodes, max, parent, 0, monitor);
-	}
-
-	/**
-	 * Subdivide the given list of nodes such that the list or no new parent created will have
-	 * more than <tt>maxNodes</tt> children.
+	 * Subdivide the given list of nodes recursively such that there are generally not more
+	 * than maxGroupSize number of nodes at any level. Also, if there are ever many
+	 * nodes of the same name, a group for them will be created and only a few will be shown with
+	 * an "xx more..." node to indicate there are additional nodes that are not shown.
 	 * <p>
 	 * This algorithm uses the node names to group nodes based upon common prefixes.  For example,
 	 * if a parent node contained more than <tt>maxNodes</tt> children then a possible grouping
@@ -98,101 +93,45 @@ public class OrganizationNode extends SymbolTreeNode {
 	 *  g
 	 * </pre>
 	 * <p>
-	 * The algorithm prefers to group nodes that have the longest common prefixes.
-	 * <p>
-	 * <b>Note: the given data must be sorted for this method to work properly.</b>
-	 *
-	 * @param list list of child nodes of <tt>parent</tt> to breakup into smaller groups.
-	 * @param maxNodes The max number of child nodes per parent node at any node level.
-	 * @param parent The parent of the given <tt>children</tt>
-	 * @param parentLevel node depth in the tree of <b>Organization</b> nodes.
-	 * @return the given <tt>list</tt> sub-grouped as outlined above.
+	 * @param list list of child nodes of to breakup into smaller groups
+	 * @param maxGroupSize the max number of nodes to allow before trying to organize into
+	 * smaller groups
+	 * @param monitor the TaskMonitor to be checked for canceling this operation
+	 * @return the given <tt>list</tt> sub-grouped as outlined above
 	 * @throws CancelledException if the operation is cancelled
 	 */
-	private static List<GTreeNode> computeChildren(List<GTreeNode> list, int maxNodes,
-			GTreeNode parent, int parentLevel, TaskMonitor monitor) throws CancelledException {
-		List<GTreeNode> children;
-		if (list.size() <= maxNodes) {
-			children = new ArrayList<>(list);
+	public static List<GTreeNode> organize(List<GTreeNode> list, int maxGroupSize,
+			TaskMonitor monitor) throws CancelledException {
+
+		Map<String, List<GTreeNode>> prefixMap = partition(list, maxGroupSize, monitor);
+
+		// if they didn't partition, just add all given nodes as children
+		if (prefixMap == null) {
+			return new ArrayList<>(list);
 		}
-		else {
-			int characterOffset = getPrefixSizeForGrouping(list, maxNodes);
 
-			characterOffset = Math.max(characterOffset, parentLevel + 1);
+		// otherwise, the nodes have been partitioned into groups with a common prefix
+		// loop through and create organization nodes for groups larger than one element
+		List<GTreeNode> children = new ArrayList<>();
+		for (String prefix : prefixMap.keySet()) {
+			monitor.checkCanceled();
 
-			children = new ArrayList<>();
-			String prevStr = list.get(0).getName();
-			int start = 0;
-			int end = list.size();
-			for (int i = 1; i < end; i++) {
-				monitor.checkCanceled();
-				String str = list.get(i).getName();
-				if (stringsDiffer(prevStr, str, characterOffset)) {
-					addNode(children, list, start, i - 1, maxNodes, characterOffset, monitor);
-					start = i;
-				}
-				prevStr = str;
+			List<GTreeNode> nodesSamePrefix = prefixMap.get(prefix);
+
+			// all the nodes that don't have a common prefix get added directly
+			if (prefix.isEmpty()) {
+				children.addAll(nodesSamePrefix);
 			}
-			addNode(children, list, start, end - 1, maxNodes, characterOffset, monitor);
+			// groups with one entry, just add in the element directly
+			else if (nodesSamePrefix.size() == 1) {
+				children.addAll(nodesSamePrefix);
+			}
+			else {
+				// add an organization node for each unique prefix
+				children.add(new OrganizationNode(nodesSamePrefix, maxGroupSize, monitor));
+			}
 		}
 		return children;
-	}
-
-	private static boolean stringsDiffer(String s1, String s2, int diffLevel) {
-		if (s1.length() <= diffLevel || s2.length() <= diffLevel) {
-			return true;
-		}
-		return s1.substring(0, diffLevel + 1)
-				.compareToIgnoreCase(s2.substring(0, diffLevel + 1)) != 0;
-	}
-
-	private static void addNode(List<GTreeNode> children, List<GTreeNode> list, int start, int end,
-			int max, int diffLevel, TaskMonitor monitor) throws CancelledException {
-		if (end - start > 0) {
-			children.add(
-				new OrganizationNode(list.subList(start, end + 1), max, diffLevel, monitor));
-		}
-		else {
-			GTreeNode node = list.get(start);
-			children.add(node);
-		}
-	}
-
-	/**
-	 * Returns the longest prefix size such that the list of nodes can be grouped by
-	 * those prefixes while not exceeding <tt>maxNodes</tt> number of children.
-	 */
-	private static int getPrefixSizeForGrouping(List<GTreeNode> list, int maxNodes) {
-		IntArray prefixSizeCountBins = new IntArray();
-		Iterator<GTreeNode> it = list.iterator();
-		String previousNodeName = it.next().getName();
-		prefixSizeCountBins.put(0, 1);
-		while (it.hasNext()) {
-			String currentNodeName = it.next().getName();
-			int prefixSize = getCommonPrefixSize(previousNodeName, currentNodeName);
-			prefixSizeCountBins.put(prefixSize, prefixSizeCountBins.get(prefixSize) + 1);
-			previousNodeName = currentNodeName;
-		}
-
-		int binContentsTotal = 0;
-		for (int i = 0; i <= prefixSizeCountBins.getLastNonEmptyIndex(); i++) {
-			binContentsTotal += prefixSizeCountBins.get(i);
-			if (binContentsTotal > maxNodes) {
-				return Math.max(0, i - 1);  // we've crossed the max; take a step back
-			}
-		}
-
-		return prefixSizeCountBins.getLastNonEmptyIndex(); // all are allowed; use max prefix size
-	}
-
-	private static int getCommonPrefixSize(String s1, String s2) {
-		int maxCompareLength = Math.min(s1.length(), s2.length());
-		for (int i = 0; i < maxCompareLength; i++) {
-			if (Character.toUpperCase(s1.charAt(i)) != Character.toUpperCase(s2.charAt(i))) {
-				return i;
-			}
-		}
-		return maxCompareLength; // one string is a subset of the other (or the same)
 	}
 
 	@Override
@@ -226,10 +165,6 @@ public class OrganizationNode extends SymbolTreeNode {
 		return false;
 	}
 
-	public boolean isModifiable() {
-		return false;
-	}
-
 	@Override
 	public void setNodeCut(boolean isCut) {
 		throw new UnsupportedOperationException("Cannot cut an organization node");
@@ -245,12 +180,12 @@ public class OrganizationNode extends SymbolTreeNode {
 
 	@Override
 	public String getName() {
-		return baseName + "...";
+		return baseName;
 	}
 
 	@Override
 	public String getToolTip() {
-		return getName();
+		return "Contains labels that start with \"" + getName() + "\" (" + totalCount + ")";
 	}
 
 	@Override
@@ -282,6 +217,11 @@ public class OrganizationNode extends SymbolTreeNode {
 	 * @param newNode the node to insert.
 	 */
 	public void insertNode(GTreeNode newNode) {
+		if (moreNode != null) {
+			moreNode.incrementCount();
+			return;
+		}
+
 		int index = Collections.binarySearch(getChildren(), newNode, getChildrenComparator());
 		if (index >= 0) {
 			// found a match
@@ -307,6 +247,23 @@ public class OrganizationNode extends SymbolTreeNode {
 		if (!symbolName.startsWith(baseName)) {
 			// the given name does not start with the base name; it cannot be in this node
 			return null;
+		}
+
+		// special case: all symbols in this group have the same name.
+		if (moreNode != null) {
+			if (!symbolName.equals(baseName)) {
+				return null;
+			}
+			// The node either belongs to this node's children or it is represented by the
+			// 'more' node
+			for (GTreeNode child : children()) {
+				SymbolTreeNode symbolTreeNode = (SymbolTreeNode) child;
+				if (symbolTreeNode.getSymbol() == key.getSymbol()) {
+					return child;
+				}
+			}
+
+			return moreNode;
 		}
 
 		//
@@ -339,6 +296,112 @@ public class OrganizationNode extends SymbolTreeNode {
 		return COMPARATOR;
 	}
 
+	// We are being tricky here. The findSymbolTreeNode above returns the 'more' node
+	// if the searched node is one of the nodes not being shown, so then the removeNode gets
+	// called with the 'more' node, which just means to decrement the count.
+	@Override
+	public void removeNode(GTreeNode node) {
+		if (node == moreNode) {
+			moreNode.decrementCount();
+			if (!moreNode.isEmpty()) {
+				return;
+			}
+			// The 'more' node is empty, just let it be removed
+			moreNode = null;
+		}
+		super.removeNode(node);
+	}
+
+	@Override
+	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
+		// not used, children generated in constructor
+		return null;
+	}
+
+	private String getCommonPrefix(List<GTreeNode> children) {
+		int commonPrefixSize = getCommonPrefixSize(children);
+		return children.get(0).getName().substring(0, commonPrefixSize);
+	}
+
+	/**
+	 * This is the algorithm for partitioning a list of nodes into a hierarchical structure based
+	 * on common prefixes 
+	 * @param nodeList the list of nodes to be partitioned
+	 * @param maxGroupSize the maximum number of nodes in a group before an organization is attempted
+	 * @param monitor {@link TaskMonitor} so the operation can be cancelled
+	 * @return a map of common prefixes to lists of nodes that have that common prefix. Returns null
+	 * if the size is less than maxGroupSize or the partition didn't reduce the number of nodes
+	 * @throws CancelledException if the operation was cancelled
+	 */
+	private static Map<String, List<GTreeNode>> partition(List<GTreeNode> nodeList,
+			int maxGroupSize, TaskMonitor monitor) throws CancelledException {
+
+		// no need to partition of the number of nodes is small enough
+		if (nodeList.size() <= maxGroupSize) {
+			return null;
+		}
+		int commonPrefixSize = getCommonPrefixSize(nodeList);
+		int uniquePrefixSize = commonPrefixSize + 1;
+		Map<String, List<GTreeNode>> map = new LinkedHashMap<>();
+		for (GTreeNode node : nodeList) {
+			monitor.checkCanceled();
+			String prefix = getPrefix(node, uniquePrefixSize);
+			List<GTreeNode> list = map.computeIfAbsent(prefix, k -> new ArrayList<GTreeNode>());
+			list.add(node);
+		}
+		if (map.size() == 1) {
+			return null;
+		}
+		if (map.size() >= nodeList.size()) {
+			return null;	// no reduction
+		}
+
+		return map;
+	}
+
+	private static String getPrefix(GTreeNode gTreeNode, int uniquePrefixSize) {
+		String name = gTreeNode.getName();
+		if (name.length() <= uniquePrefixSize) {
+			return name;
+		}
+		return name.substring(0, uniquePrefixSize);
+	}
+
+	private static int getCommonPrefixSize(List<GTreeNode> list) {
+		GTreeNode node = list.get(0);
+		String first = node.getName();
+		int inCommonSize = first.length();
+		for (int i = 1; i < list.size(); i++) {
+			String next = list.get(i).getName();
+			inCommonSize = Math.min(inCommonSize, getCommonPrefixSize(first, next, inCommonSize));
+		}
+		return inCommonSize;
+	}
+
+	private static int getCommonPrefixSize(String base, String candidate, int max) {
+		int maxCompareLength = Math.min(max, candidate.length());
+		for (int i = 0; i < maxCompareLength; i++) {
+			if (base.charAt(i) != candidate.charAt(i)) {
+				return i;
+			}
+		}
+		return maxCompareLength; // one string is a subset of the other (or the same)
+	}
+
+	private static boolean hasSameName(List<GTreeNode> list) {
+		if (list.size() < 2) {
+			return false;
+		}
+		String name = list.get(0).getName();
+		for (GTreeNode node : list) {
+			if (!name.equals(node.getName())) {
+				return false;
+			}
+		}
+		return true;
+
+	}
+
 	static class OrganizationNodeComparator implements Comparator<GTreeNode> {
 		@Override
 		public int compare(GTreeNode g1, GTreeNode g2) {
@@ -355,9 +418,4 @@ public class OrganizationNode extends SymbolTreeNode {
 		}
 	}
 
-	@Override
-	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
-		// not used, children generated in constructor
-		return null;
-	}
 }

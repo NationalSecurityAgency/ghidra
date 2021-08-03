@@ -16,8 +16,7 @@
 package ghidra.app.util.bean;
 
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,6 +27,7 @@ import javax.swing.table.TableColumnModel;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.DialogComponentProvider;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.filter.FilterListener;
@@ -220,7 +220,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 		return entries;
 	}
 
-	/**
+	/*
 	 * Builds the main panel of the dialog and returns it.
 	 */
 	protected JPanel buildMainPanel() {
@@ -274,10 +274,18 @@ public class SetEquateDialog extends DialogComponentProvider {
 		suggestedEquatesTable = new GhidraTable(model);
 		suggestedEquatesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-		JPanel tablePanel = new JPanel(new BorderLayout());
-		JScrollPane scrollPane = new JScrollPane(suggestedEquatesTable);
-		tablePanel.add(scrollPane);
+		// allows users to press enter in the table to accept the current selection
+		KeyStroke enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+		AbstractAction action = new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				okCallback();
+			}
+		};
+		KeyBindingUtils.registerAction(suggestedEquatesTable, enter, action,
+			JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
+		// allows users to double-click a row to accept the item
 		suggestedEquatesTable.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
@@ -289,6 +297,10 @@ public class SetEquateDialog extends DialogComponentProvider {
 				}
 			}
 		});
+
+		JPanel tablePanel = new JPanel(new BorderLayout());
+		JScrollPane scrollPane = new JScrollPane(suggestedEquatesTable);
+		tablePanel.add(scrollPane);
 		tablePanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 5, 5));
 
 		filterPanel =
@@ -378,7 +390,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 		return result;
 	}
 
-	/**
+	/*
 	 * Get the Equate Name entered or chosen by the user.
 	 */
 	public String getEquateName() {
@@ -441,7 +453,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 	/**
 	 * Returns the type of selection the user has chosen.
 	 *
-	 * @return
+	 * @return the selection type
 	 */
 	public SelectionType getSelectionType() {
 		if (applyToAll.isSelected()) {
@@ -458,7 +470,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 	/**
 	 * Returns true if the user has chosen to overwrite any existing equate rules.
 	 *
-	 * @return
+	 * @return true if the user has chosen to overwrite any existing equate rules. 
 	 */
 	public boolean getOverwriteExisting() {
 		return overwriteExistingEquates.isSelected();
@@ -492,6 +504,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 
 	/**
 	 * Sets the dialogs status display to the given message.
+	 * @param text the text
 	 */
 	void setStatus(String text) {
 		this.setStatusText(text);

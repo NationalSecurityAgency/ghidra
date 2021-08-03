@@ -108,18 +108,6 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	 * @param editorStateFactory the editor factory
 	 * @param propertyChangeListener subscriber for property change notifications
 	 */
-	AnalysisPanel(List<Program> programs, EditorStateFactory editorStateFactory) {
-		this(programs, editorStateFactory, e -> {});
-	}
-	
-
-	/**
-	 * Constructor
-	 *
-	 * @param programs list of programs that will be analyzed
-	 * @param editorStateFactory the editor factory
-	 * @param propertyChangeListener subscriber for property change notifications
-	 */
 	AnalysisPanel(List<Program> programs, EditorStateFactory editorStateFactory,
 			PropertyChangeListener propertyChangeListener) {
 
@@ -357,8 +345,8 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			return;
 		}
 		File saveFile = getOptionsSaveFile(saveName);
-		if (saveFile.exists() && OptionDialog.CANCEL_OPTION ==
-			OptionDialog.showOptionDialogWithCancelAsDefaultButton(this, "Overwrite Configuration",
+		if (saveFile.exists() && OptionDialog.CANCEL_OPTION == OptionDialog
+				.showOptionDialogWithCancelAsDefaultButton(this, "Overwrite Configuration",
 					"Overwrite existing configuration file: " + saveName + " ?", "Overwrite")) {
 			return;
 		}
@@ -493,13 +481,12 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-		if (checkForDifferencesWithProgram()) {
-			propertyChangeListener.propertyChange(
-				new PropertyChangeEvent(this, GhidraOptions.APPLY_ENABLED, null, Boolean.TRUE));
-		}
+		boolean isDifferent = hasChangedValues();
+		propertyChangeListener.propertyChange(
+			new PropertyChangeEvent(this, GhidraOptions.APPLY_ENABLED, null, isDifferent));
 	}
 
-	private boolean checkForDifferencesWithProgram() {
+	public boolean hasChangedValues() {
 		List<AnalyzerEnablementState> analyzerStates = model.getModelData();
 		boolean changes = false;
 		for (AnalyzerEnablementState analyzerState : analyzerStates) {
@@ -784,11 +771,13 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			String name = fileOptions.getName();
 			try {
 				fileOptions.save(getOptionsSaveFile(name));
-			} catch (IOException e) {
+			}
+			catch (IOException e) {
 				Msg.error(this, "Error copying analysis options from previous Ghidra install", e);
 			}
 		}
 	}
+
 	private File getMostRecentApplicationSettingsDirWithSavedOptions() {
 		List<File> ghidraUserDirsByTime = GenericRunInfo.getPreviousApplicationSettingsDirsByTime();
 		if (ghidraUserDirsByTime.size() == 0) {
@@ -804,7 +793,6 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		}
 		return null;
 	}
-
 
 	private boolean isUserConfiguration(Options options) {
 		if (options == STANDARD_DEFAULT_OPTIONS ||
@@ -833,4 +821,3 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		deleteButton.setEnabled(isUserConfiguration(selectedOptions));
 	}
 }
-

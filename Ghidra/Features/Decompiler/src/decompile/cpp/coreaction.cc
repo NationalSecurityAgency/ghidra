@@ -76,7 +76,7 @@ void StackSolver::propagate(int4 varnum,int4 val)
   while(!workstack.empty()) {
     varnum = workstack.back();
     workstack.pop_back();
-    
+
     eqn.var1 = varnum;
     top = lower_bound(eqs.begin(),eqs.end(),eqn,StackEqn::compare);
     while((top!=eqs.end())&&((*top).var1 == varnum)) {
@@ -212,7 +212,7 @@ void StackSolver::build(const Funcdata &data,AddrSpace *id,int4 spcbase)
 	  }
 	}
       }
-      
+
       eqn.rhs = 4;		// Otherwise make a guess
       guess.push_back(eqn);
     }
@@ -274,7 +274,7 @@ void ActionStackPtrFlow::analyzeExtraPop(Funcdata &data,AddrSpace *stackspace,in
   }
   if (solver.getNumVariables() == 0) return;
   solver.solve();		// Solve the equations
-  
+
   Varnode *invn = solver.getVariable(0);
   bool warningprinted = false;
 
@@ -622,7 +622,7 @@ int4 ActionSegmentize::apply(Funcdata &data)
   vector<Varnode *> bindlist;
   bindlist.push_back((Varnode *)0);
   bindlist.push_back((Varnode *)0);
-  
+
   for(int4 i=0;i<numops;++i) {
     SegmentOp *segdef = data.getArch()->userops.getSegmentOp(i);
     if (segdef == (SegmentOp *)0) continue;
@@ -703,7 +703,7 @@ int4 ActionConstbase::apply(Funcdata &data)
 //   PcodeOp *op;
 //   list<PcodeOp *>::const_iterator iter;
 //   uintm hash;
-  
+
 //   for(iter=data.op_alive_begin();iter!=data.op_alive_end();++iter) {
 //     op = *iter;
 //     hash = op->getCseHash();
@@ -1384,7 +1384,7 @@ int4 ActionExtraPopSetup::apply(Funcdata &data)
   const VarnodeData &point(stackspace->getSpacebase(0));
   Address sb_addr(point.space,point.offset);
   int4 sb_size = point.size;
-  
+
   for(int4 i=0;i<data.numCalls();++i) {
     fc = data.getCallSpecs(i);
     if (fc->getExtraPop() == 0) continue; // Stack pointer is undisturbed
@@ -1552,7 +1552,7 @@ int4 ActionParamDouble::apply(Funcdata &data)
 	    data.opSetInput(op,mostvn,slot+1);
 	  }
 	  count += 1;		// Indicate that a change was made
-	  
+
 	  j -= 1;	// Note we decrement j here, so that we can check nested CONCATs
 	}
       }
@@ -1573,7 +1573,7 @@ int4 ActionParamDouble::apply(Funcdata &data)
 	else if (whole.inHandLo(vn1)) {
 	  if (whole.getHi() != vn2) continue;
 	  isslothi = false;
-	}	  
+	}
 	else
 	  continue;
 	if (fc->checkInputJoin(j,isslothi,vn1,vn2)) {
@@ -1838,7 +1838,7 @@ int4 ActionReturnRecovery::apply(Funcdata &data)
     Varnode *vn;
     list<PcodeOp *>::const_iterator iter,iterend;
     int4 i;
-    
+
     int4 maxancestor = data.getArch()->trim_recurse_max;
     iterend = data.endOp(CPUI_RETURN);
     AncestorRealistic ancestorReal;
@@ -1861,7 +1861,7 @@ int4 ActionReturnRecovery::apply(Funcdata &data)
     active->finishPass();
     if (active->getNumPasses() > active->getMaxPass())
       active->markFullyChecked();
-    
+
     if (active->isFullyChecked()) {
       data.getFuncProto().deriveOutputMap(active);
       iterend = data.endOp(CPUI_RETURN);
@@ -1887,7 +1887,7 @@ int4 ActionRestrictLocal::apply(Funcdata &data)
   Varnode *vn;
   int4 i;
   vector<EffectRecord>::const_iterator eiter,endeiter;
-  
+
   for(i=0;i<data.numCalls();++i) {
     fc = data.getCallSpecs(i);
     op = fc->getOp();
@@ -2126,7 +2126,7 @@ int4 ActionRestructureHigh::apply(Funcdata &data)
   l1->restructureHigh();
   if (data.syncVarnodesWithSymbols(l1,true))
     count += 1;
-  
+
 #ifdef OPACTION_DEBUG
   if ((flags&rule_debug)==0) return 0;
   l1->turnOffDebug();
@@ -2151,7 +2151,7 @@ int4 ActionDefaultParams::apply(Funcdata &data)
     fc = data.getCallSpecs(i);
     if (!fc->hasModel()) {
       Funcdata *otherfunc = fc->getFuncdata();
-      
+
       if (otherfunc != (Funcdata *)0) {
 	fc->copy(otherfunc->getFuncProto());
 	if ((!fc->isModelLocked())&&(!fc->hasMatchingModel(evalfp)))
@@ -2163,6 +2163,36 @@ int4 ActionDefaultParams::apply(Funcdata &data)
     fc->insertPcode(data);	// Insert any necessary pcode
   }
   return 0;			// Indicate success
+}
+
+/// \brief Test if the given cast conflict can be resolved by passing to the first structure field
+///
+/// Test if the given Varnode data-type is a pointer to a structure and if interpreting
+/// the data-type as a pointer to the structure's first field will get it to match the
+/// desired data-type.
+/// \param vn is the given Varnode
+/// \param ct is the desired data-type
+/// \param castStrategy is used to determine if the data-types are compatible
+/// \return \b true if a pointer to the first field makes sense
+bool ActionSetCasts::testStructOffset0(Varnode *vn,Datatype *ct,CastStrategy *castStrategy)
+
+{
+  if (ct->getMetatype() != TYPE_PTR) return false;
+  Datatype *highType = vn->getHigh()->getType();
+  if (highType->getMetatype() != TYPE_PTR) return false;
+  Datatype *highPtrTo = ((TypePointer *)highType)->getPtrTo();
+  if (highPtrTo->getMetatype() != TYPE_STRUCT) return false;
+  TypeStruct *highStruct = (TypeStruct *)highPtrTo;
+  if (highStruct->numDepend() == 0) return false;
+  vector<TypeField>::const_iterator iter = highStruct->beginField();
+  if ((*iter).offset != 0) return false;
+  Datatype *reqtype = ((TypePointer *)ct)->getPtrTo();
+  Datatype *curtype = (*iter).type;
+  if (reqtype->getMetatype() == TYPE_ARRAY)
+    reqtype = ((TypeArray *)reqtype)->getBase();
+  if (curtype->getMetatype() == TYPE_ARRAY)
+    curtype = ((TypeArray *)curtype)->getBase();
+  return (castStrategy->castStandard(reqtype, curtype, true, true) == (Datatype *)0);
 }
 
 /// \brief Insert cast to output Varnode type after given PcodeOp if it is necessary
@@ -2229,7 +2259,7 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
 
 {
   Datatype *ct;
-  Varnode *vn;
+  Varnode *vn,*vnout;
   PcodeOp *newop;
 
   ct = op->getOpcode()->getInputCast(op,slot,castStrategy); // Input type expected by this operation
@@ -2253,16 +2283,29 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
     if (vn->getType() == ct)
       return 1;
   }
+  else if (testStructOffset0(vn, ct, castStrategy)) {
+    // Insert a PTRSUB(vn,#0) instead of a CAST
+    newop = data.newOp(2,op->getAddr());
+    vnout = data.newUniqueOut(vn->getSize(), newop);
+    vnout->updateType(ct,false,false);
+    vnout->setImplied();
+    data.opSetOpcode(newop, CPUI_PTRSUB);
+    data.opSetInput(newop,vn,0);
+    data.opSetInput(newop,data.newConstant(4, 0),1);
+    data.opSetInput(op,vnout,slot);
+    data.opInsertBefore(newop,op);
+    return 1;
+  }
   newop = data.newOp(1,op->getAddr());
-  vn = data.newUniqueOut(op->getIn(slot)->getSize(),newop);
-  vn->updateType(ct,false,false);
-  vn->setImplied();
+  vnout = data.newUniqueOut(vn->getSize(),newop);
+  vnout->updateType(ct,false,false);
+  vnout->setImplied();
 #ifdef CPUI_STATISTICS
   data.getArch()->stats->countCast();
 #endif
   data.opSetOpcode(newop,CPUI_CAST);
-  data.opSetInput(newop,op->getIn(slot),0);
-  data.opSetInput(op,vn,slot);
+  data.opSetInput(newop,vn,0);
+  data.opSetInput(op,vnout,slot);
   data.opInsertBefore(newop,op); // Cast comes AFTER operation
   return 1;
 }
@@ -2614,7 +2657,7 @@ int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
     desccount += 1;
     if (desccount > maxref) return -1; // Must not exceed max descendants
   }
-  
+
   return desccount;
 }
 
@@ -3010,7 +3053,7 @@ int4 ActionDoNothing::apply(Funcdata &data)
   int4 i;
   const BlockGraph &graph(data.getBasicBlocks());
   BlockBasic *bb;
-  
+
   for(i=0;i<graph.getSize();++i) {
     bb = (BlockBasic *) graph.getBlock(i);
     if (bb->isDoNothing()) {
@@ -3825,7 +3868,7 @@ int4 ActionPrototypeTypes::apply(Funcdata &data)
       data.opSetInput(op,vn,0);
     }
   }
-  
+
   if (data.getFuncProto().isOutputLocked()) {
     ProtoParameter *outparam = data.getFuncProto().getOutput();
     if (outparam->getType()->getMetatype() != TYPE_VOID) {
@@ -3877,7 +3920,7 @@ int4 ActionPrototypeTypes::apply(Funcdata &data)
     BlockBasic *topbl = (BlockBasic *)0;
     if (data.getBasicBlocks().getSize() > 0)
       topbl = (BlockBasic *)data.getBasicBlocks().getBlock(0);
-    
+
     int4 numparams = data.getFuncProto().numParams();
     for(i=0;i<numparams;++i) {
       ProtoParameter *param = data.getFuncProto().getParam(i);
@@ -4087,7 +4130,7 @@ int4 ActionPrototypeWarnings::apply(Funcdata &data)
   if (ourproto.hasOutputErrors()) {
     data.warningHeader("Cannot assign location of return value for this function: Return value may be inaccurate");
   }
-  if (ourproto.isUnknownModel() && (!ourproto.hasCustomStorage()) && 
+  if (ourproto.isUnknownModel() && (!ourproto.hasCustomStorage()) &&
   	(ourproto.isInputLocked() || ourproto.isOutputLocked())) {
     data.warningHeader("Unknown calling convention yet parameter storage is locked");
   }
@@ -4201,31 +4244,64 @@ bool ActionInferTypes::writeBack(Funcdata &data)
 
 /// Determine if the given data-type edge looks like a pointer
 /// propagating through an "add a constant" operation. We assume the input
-/// Varnode has a pointer data-type.
+/// to the edge has a pointer data-type.  This routine returns one the commands:
+///   - 0  indicates this is "add a constant" and the constant is passed back
+///   - 1  indicating the pointer does not propagate through
+///   - 2 the input data-type propagates through untransformed
+///
+/// \param off passes back the constant offset if the command is '0'
 /// \param op is the PcodeOp propagating the data-type
 /// \param slot is the input edge being propagated
-/// \return the offset of the added constant or -1 if not a pointer add operation
-int4 ActionInferTypes::propagateAddPointer(PcodeOp *op,int4 slot)
-  
+/// \param sz is the size of the data-type being pointed to
+/// \return a command indicating how the op should be treated
+int4 ActionInferTypes::propagateAddPointer(uintb &off,PcodeOp *op,int4 slot,int4 sz)
+
 {
-  if ((op->code() == CPUI_PTRADD)&&(slot==0))
-    return op->getIn(2)->getOffset();
-  if ((op->code() == CPUI_PTRSUB)&&(slot==0))
-    return op->getIn(1)->getOffset();
+  if (op->code() == CPUI_PTRADD) {
+    if (slot != 0) return 1;
+    Varnode *constvn = op->getIn(1);
+    uintb mult = op->getIn(2)->getOffset();
+    if (constvn->isConstant()) {
+      off = (constvn->getOffset() * mult) & calc_mask(constvn->getSize()) ;
+      return 0;
+    }
+    if (sz != 0 && (mult % sz) != 0)
+      return 1;
+    return 2;
+  }
+  if (op->code() == CPUI_PTRSUB) {
+    if (slot != 0) return 1;
+    off = op->getIn(1)->getOffset();
+    return 0;
+  }
   if (op->code() == CPUI_INT_ADD) {
     Varnode *othervn = op->getIn(1-slot);
 				// Check if othervn is an offset
     if (!othervn->isConstant()) {
-      if ((!othervn->isWritten())||(othervn->getDef()->code() != CPUI_INT_MULT))
-	return -1;
+      if (othervn->isWritten()) {
+	PcodeOp *multop = othervn->getDef();
+	if (multop->code() == CPUI_INT_MULT) {
+	  Varnode *constvn = multop->getIn(1);
+	  if (constvn->isConstant()) {
+	    uintb mult = constvn->getOffset();
+	    if (mult == calc_mask(constvn->getSize()))	// If multiplying by -1
+	      return 1;		// Assume this is a pointer difference and don't propagate
+	    if (sz != 0 && (mult % sz) !=0)
+	      return 1;
+	  }
+	  return 2;
+	}
+      }
+      if (sz == 1)
+	return 2;
+      return 1;
     }
     if (othervn->getTempType()->getMetatype() == TYPE_PTR) // Check if othervn marked as ptr
-      return -1;
-    if (othervn->isConstant())
-      return othervn->getOffset();
+      return 1;
+    off = othervn->getOffset();
     return 0;
   }
-  return -1;
+  return 1;
 }
 
 /// \brief Propagate a pointer data-type through an ADD operation.
@@ -4240,30 +4316,24 @@ int4 ActionInferTypes::propagateAddPointer(PcodeOp *op,int4 slot)
 /// \param inslot is the edge to propagate along
 /// \return the transformed Datatype or the original output Datatype
 Datatype *ActionInferTypes::propagateAddIn2Out(TypeFactory *typegrp,PcodeOp *op,int4 inslot)
-  
+
 {
-  Datatype *rettype = op->getIn(inslot)->getTempType(); // We know this is a pointer type
-  Datatype *tstruct = ((TypePointer *)rettype)->getPtrTo();
-  int4 offset = propagateAddPointer(op,inslot);
-  if (offset==-1) return op->getOut()->getTempType(); // Doesn't look like a good pointer add
-  uintb uoffset = AddrSpace::addressToByte(offset,((TypePointer *)rettype)->getWordSize());
-  if (tstruct->getSize() > 0 && !tstruct->isVariableLength())
-    uoffset = uoffset % tstruct->getSize();
-  if (uoffset==0) {
-    if (op->code() == CPUI_PTRSUB) // Go down at least one level
-      rettype = typegrp->downChain(rettype,uoffset);
-    if (rettype == (Datatype *)0)
-      rettype = op->getOut()->getTempType();
+  TypePointer *pointer = (TypePointer *)op->getIn(inslot)->getTempType(); // We know this is a pointer type
+  uintb uoffset;
+  int4 command = propagateAddPointer(uoffset,op,inslot,pointer->getPtrTo()->getSize());
+  if (command == 1) return op->getOut()->getTempType(); // Doesn't look like a good pointer add
+  if (command != 2) {
+    uoffset = AddrSpace::addressToByte(uoffset,pointer->getWordSize());
+    bool allowWrap = (op->code() != CPUI_PTRSUB);
+    do {
+      pointer = pointer->downChain(uoffset,allowWrap,*typegrp);
+      if (pointer == (TypePointer *)0)
+	return op->getOut()->getTempType();
+    } while(uoffset != 0);
   }
-  else {
-    while(uoffset != 0) {
-      rettype = typegrp->downChain(rettype,uoffset);
-      if (rettype == (Datatype *)0) {
-	rettype = op->getOut()->getTempType(); // Don't propagate anything
-	break;
-      }
-    }
-  }
+  Datatype *rettype = pointer;
+  if (rettype == (Datatype *)0)
+    rettype = op->getOut()->getTempType();
   if (op->getIn(inslot)->isSpacebase()) {
     if (rettype->getMetatype() == TYPE_PTR) {
       TypePointer *ptype = (TypePointer *)rettype;
@@ -4367,7 +4437,7 @@ bool ActionInferTypes::propagateGoodEdge(PcodeOp *op,int4 inslot,int4 outslot,Va
 /// \param outslot indicates the edge's output Varnode
 /// \return \b true if the data-type propagates
 bool ActionInferTypes::propagateTypeEdge(TypeFactory *typegrp,PcodeOp *op,int4 inslot,int4 outslot)
-  
+
 {
   Varnode *invn,*outvn;
   Datatype *newtype;
@@ -4608,7 +4678,7 @@ void ActionInferTypes::propagateRef(Funcdata &data,Varnode *vn,const Address &ad
       } while(cur != (Datatype *)0);
     }
     if (lastct->getSize() != cursize) continue;
-    
+
     // Try to propagate the reference type into a varnode that is pointed to by that reference
     if (0>lastct->typeOrder(*curvn->getTempType())) {
 #ifdef TYPEPROP_DEBUG
@@ -4850,7 +4920,7 @@ void ActionDatabase::buildDefaultGroups(void)
 			    "cleanup", "merge", "dynamic", "casts", "analysis",
 			    "fixateglobals", "fixateproto",
 			    "segment", "returnsplit", "nodejoin", "doubleload", "doubleprecis",
-			    "unreachable", "subvar", "floatprecision", 
+			    "unreachable", "subvar", "floatprecision",
 			    "conditionalexe", "" };
   setGroup("decompile",members);
 

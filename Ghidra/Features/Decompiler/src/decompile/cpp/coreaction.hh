@@ -310,6 +310,7 @@ public:
 /// input. In this case, it casts to the necessary pointer type
 /// immediately.
 class ActionSetCasts : public Action {
+  static bool testStructOffset0(Varnode *vn,Datatype *ct,CastStrategy *castStrategy);
   static int4 castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStrategy);
   static int4 castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy *castStrategy);
 public:
@@ -924,7 +925,7 @@ class ActionInferTypes : public Action {
   int4 localcount;					///< Number of passes performed for this function
   static void buildLocaltypes(Funcdata &data);		///< Assign initial data-type based on local info
   static bool writeBack(Funcdata &data);		///< Commit the final propagated data-types to Varnodes
-  static int4 propagateAddPointer(PcodeOp *op,int4 slot);	///< Test if edge is pointer plus a constant
+  static int4 propagateAddPointer(uintb &off,PcodeOp *op,int4 slot,int4 sz);	///< Test if edge is pointer plus a constant
   static Datatype *propagateAddIn2Out(TypeFactory *typegrp,PcodeOp *op,int4 inslot);
   static bool propagateGoodEdge(PcodeOp *op,int4 inslot,int4 outslot,Varnode *invn);
   static bool propagateTypeEdge(TypeFactory *typegrp,PcodeOp *op,int4 inslot,int4 outslot);

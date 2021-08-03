@@ -270,6 +270,7 @@ ScopeLocal::ScopeLocal(uint8 id,AddrSpace *spc,Funcdata *fd,Architecture *g) : S
 
 {
   space = spc;
+  deepestParamOffset = ~((uintb)0);
   rangeLocked = false;
   stackGrowsNegative = true;
   restrictScope(fd);
@@ -310,12 +311,14 @@ void ScopeLocal::collectNameRecs(void)
 void ScopeLocal::resetLocalWindow(void)
 
 {
+  stackGrowsNegative = fd->getFuncProto().isStackGrowsNegative();
+  deepestParamOffset = stackGrowsNegative ? ~((uintb)0) : 0;
+
   if (rangeLocked) return;
 
-  localRange = fd->getFuncProto().getLocalRange();
+  const RangeList &localRange( fd->getFuncProto().getLocalRange() );
   const RangeList &paramrange( fd->getFuncProto().getParamRange() );
 
-  stackGrowsNegative = fd->getFuncProto().isStackGrowsNegative();
   RangeList newrange;
 
   set<Range>::const_iterator iter;
@@ -375,16 +378,13 @@ void ScopeLocal::markNotMapped(AddrSpace *spc,uintb first,int4 sz,bool parameter
     last = spc->getHighest();
   if (parameter) {		// Everything above parameter
     if (stackGrowsNegative) {
-      const Range *rng = localRange.getRange(spc,first);
-      if (rng != (const Range *)0)
-	first = rng->getFirst(); // Everything less is not mapped
+      if (first < deepestParamOffset)
+	deepestParamOffset = first;
     }
     else {
-      const Range *rng = localRange.getRange(spc,last);
-      if (rng != (const Range *)0)
-	last = rng->getLast();	// Everything greater is not mapped
+      if (first > deepestParamOffset)
+	deepestParamOffset = first;
     }
-    sz = (last-first)+1;
   }
   Address addr(space,first);
 				// Remove any symbols under range
@@ -426,6 +426,11 @@ string ScopeLocal::buildVariableName(const Address &addr,
       if (start <= 0) {
 	s << 'X';		// Indicate local stack space allocated by caller
 	start = -start;
+      }
+      else {
+	if (deepestParamOffset + 1 > 1 && stackGrowsNegative == (addr.getOffset() < deepestParamOffset)) {
+	  s << 'Y';		// Indicate unusual region of stack
+	}
       }
       s << dec << start;
       return makeNameUnique(s.str());
@@ -1095,6 +1100,9 @@ void ScopeLocal::markUnaliased(const vector<uintb> &alias)
   EntryMap *rangemap = maptable[space->getIndex()];
   if (rangemap == (EntryMap *)0) return;
   list<SymbolEntry>::iterator iter,enditer;
+  set<Range>::const_iterator rangeIter, rangeEndIter;
+  rangeIter = getRangeTree().begin();
+  rangeEndIter = getRangeTree().end();
 
   int4 alias_block_level = glb->alias_block_level;
   bool aliason = false;
@@ -1105,31 +1113,39 @@ void ScopeLocal::markUnaliased(const vector<uintb> &alias)
   enditer = rangemap->end_list();
 
   while(iter!=enditer) {
-    if ((i<alias.size()) && (alias[i] <= (*iter).getAddr().getOffset() + (*iter).getSize() - 1)) {
+    SymbolEntry &entry(*iter++);
+    uintb curoff = entry.getAddr().getOffset() + entry.getSize() - 1;
+    while ((i<alias.size()) && (alias[i] <= curoff)) {
       aliason = true;
       curalias = alias[i++];
     }
-    else {
-      SymbolEntry &entry(*iter++);
-      Symbol *symbol = entry.getSymbol();
-      // Test if there is enough distance between symbol
-      // and last alias to warrant ignoring the alias
-      // NOTE: this is primarily to reset aliasing between
-      // stack parameters and stack locals
-      if (aliason && (entry.getAddr().getOffset()+entry.getSize() -1 - curalias > 0xffff))
-	aliason = false;
-      if (!aliason)
-	symbol->getScope()->setAttribute(symbol,Varnode::nolocalalias);
-      if (symbol->isTypeLocked() && alias_block_level != 0) {
-	if (alias_block_level == 3)
-	  aliason = false;		// For this level, all locked data-types block aliases
-	else {
-	  type_metatype meta = symbol->getType()->getMetatype();
-	  if (meta == TYPE_STRUCT)
-	    aliason = false;		// Only structures block aliases
-	  else if (meta == TYPE_ARRAY && alias_block_level > 1)
-	    aliason = false;		// Only arrays (and structures) block aliases
-	}
+    // Aliases shouldn't go thru unmapped regions of the local variables
+    while(rangeIter != rangeEndIter) {
+      const Range &rng(*rangeIter);
+      if (rng.getSpace() == space) {
+	if (rng.getFirst() > curalias && curoff >= rng.getFirst())
+	  aliason = false;
+	if (rng.getLast() >= curoff) break;	// Check if symbol past end of mapped range
+	if (rng.getLast() > curalias)		// If past end of range AND past last alias offset
+	  aliason = false;			//    turn aliases off
+      }
+      ++rangeIter;
+    }
+    Symbol *symbol = entry.getSymbol();
+    // Test if there is enough distance between symbol
+    // and last alias to warrant ignoring the alias
+    // NOTE: this is primarily to reset aliasing between
+    // stack parameters and stack locals
+    if (aliason && (curoff - curalias > 0xffff)) aliason = false;
+    if (!aliason) symbol->getScope()->setAttribute(symbol,Varnode::nolocalalias);
+    if (symbol->isTypeLocked() && alias_block_level != 0) {
+      if (alias_block_level == 3)
+	aliason = false;		// For this level, all locked data-types block aliases
+      else {
+	type_metatype meta = symbol->getType()->getMetatype();
+	if (meta == TYPE_STRUCT)
+	  aliason = false;		// Only structures block aliases
+	else if (meta == TYPE_ARRAY && alias_block_level > 1) aliason = false;// Only arrays (and structures) block aliases
       }
     }
   }

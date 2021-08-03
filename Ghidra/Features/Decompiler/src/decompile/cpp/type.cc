@@ -556,6 +556,45 @@ void TypePointer::restoreXml(const Element *el,TypeFactory &typegrp)
     flags = ptrto->getInheritable();
 }
 
+/// \brief Find a sub-type pointer given an offset into \b this
+///
+/// Add a constant offset to \b this pointer.
+/// If there is a valid component at that offset, return a pointer
+/// to the data-type of the component or NULL otherwise.
+/// This routine only goes down one level at most. Pass back the
+/// renormalized offset relative to the new data-type
+/// \param off is a reference to the offset to add
+/// \param allowArrayWrap is \b true if the pointer should be treated as a pointer to an array
+/// \return a pointer datatype for the component or NULL
+TypePointer *TypePointer::downChain(uintb &off,bool allowArrayWrap,TypeFactory &typegrp)
+
+{
+  int4 ptrtoSize = ptrto->getSize();
+  if (off >= ptrtoSize) {	// Check if we are wrapping
+    if (ptrtoSize != 0 && !ptrto->isVariableLength()) {	// Check if pointed-to is wrappable
+      if (!allowArrayWrap)
+        return (TypePointer *)0;
+      intb signOff = (intb)off;
+      sign_extend(signOff,size*8-1);
+      signOff = signOff % ptrtoSize;
+      if (signOff < 0)
+	signOff = signOff + ptrtoSize;
+      off = signOff;
+      if (off == 0)		// If we've wrapped and are now at zero
+        return this;		// consider this going down one level
+    }
+  }
+
+  // If we know we have exactly one of an array, strip the array to get pointer to element
+  bool doStrip = (ptrto->getMetatype() != TYPE_ARRAY);
+  Datatype *pt = ptrto->getSubType(off,&off);
+  if (pt == (Datatype *)0)
+    return (TypePointer *)0;
+  if (doStrip)
+    return typegrp.getTypePointerStripArray(size, pt, wordsize);
+  return typegrp.getTypePointer(size,pt,wordsize);
+}
+
 void TypeArray::printRaw(ostream &s) const
 
 {
@@ -2157,31 +2196,6 @@ void TypeFactory::destroyType(Datatype *ct)
   nametree.erase(ct);
   tree.erase(ct);
   delete ct;
-}
-
-/// Add a constant offset to a pointer with known data-type.
-/// If there is a valid component at that offset, return a pointer
-/// to the data-type of the component or NULL otherwise.
-/// This routine only goes down one level at most. Pass back the
-/// renormalized offset relative to the new data-type
-/// \param ptrtype is the pointer data-type being added to
-/// \param off is a reference to the offset to add
-/// \return a pointer datatype for the component or NULL
-Datatype *TypeFactory::downChain(Datatype *ptrtype,uintb &off)
-
-{				// Change ptr->struct =>  ptr->substruct
-				// where substruct starts at offset off
-  if (ptrtype->metatype != TYPE_PTR) return (Datatype *)0;
-  TypePointer *ptype = (TypePointer *)ptrtype;
-  Datatype *pt = ptype->ptrto;
-  // If we know we have exactly one of an array, strip the array to get pointer to element
-  bool doStrip = (pt->getMetatype() != TYPE_ARRAY);
-  pt = pt->getSubType(off,&off);
-  if (pt == (Datatype *)0)
-    return (Datatype *)0;
-  if (doStrip)
-    return getTypePointerStripArray(ptype->size, pt, ptype->getWordSize());
-  return getTypePointer(ptype->size,pt,ptype->getWordSize());
 }
 
 /// The data-type propagation system can push around data-types that are \e partial or are

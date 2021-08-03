@@ -1711,7 +1711,7 @@ Datatype *TypeOpPtrsub::getOutputToken(const PcodeOp *op,CastStrategy *castStrat
   TypePointer *ptype = (TypePointer *)op->getIn(0)->getHigh()->getType();
   if (ptype->getMetatype() == TYPE_PTR) {
     uintb offset = AddrSpace::addressToByte(op->getIn(1)->getOffset(),ptype->getWordSize());
-    Datatype *rettype = tlst->downChain(ptype,offset);
+    Datatype *rettype = ptype->downChain(offset,false,*tlst);
     if ((offset==0)&&(rettype != (Datatype *)0))
       return rettype;
   }
