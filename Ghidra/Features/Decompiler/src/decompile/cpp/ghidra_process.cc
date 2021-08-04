@@ -36,7 +36,7 @@ void connect_to_console(Funcdata *fd)
   if (remote == (RemoteSocket *)0) {
     remote = new RemoteSocket();
     if (remote->open("/tmp/ghidrasocket")) {
-      ghidra_dcp = new IfaceStatus("[ghidradbg]> ",*remote->getInputStream(),*remote->getOutputStream());
+      ghidra_dcp = new IfaceTerm("[ghidradbg]> ",*remote->getInputStream(),*remote->getOutputStream());
       IfaceCapability::registerAllCommands(ghidra_dcp);
     }
   }
