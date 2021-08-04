@@ -255,6 +255,24 @@ public class LoadConfigDirectory implements StructConverter {
 	}
 
 	/**
+	 * Gets the ControlFlowGuard IAT table pointer address.
+	 * 
+	 * @return The ControlFlowGuard IAT table function pointer address. Could be 0 if ControlFlowGuard is not being used
+	 */
+	public long getGuardAddressIatTableTablePointer() {
+		return guardAddressTakenIatEntryTable;
+	}
+
+	/**
+	 * Gets the ControlFlowGuard IAT entries count.
+	 * 
+	 * @return The ControlFlowGuard IAT entries count.  Could be 0 if ControlFlowGuard is not being used
+	 */
+	public long getGuardAddressIatTableCount() {
+		return guardAddressTakenIatEntryCount;
+	}
+
+	/**
 	 * Gets the ReturnFlowGuard failure routine address.
 	 * 
 	 * @return The ReturnFlowGuard failure routine address.
