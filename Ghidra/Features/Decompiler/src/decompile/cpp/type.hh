@@ -118,7 +118,7 @@ public:
   virtual int4 numDepend(void) const { return 0; }	///< Return number of component sub-types
   virtual Datatype *getDepend(int4 index) const { return (Datatype *)0; }	///< Return the i-th component sub-type
   virtual void printNameBase(ostream &s) const { if (!name.empty()) s<<name[0]; } ///< Print name as short prefix
-  virtual int4 compare(const Datatype &op,int4 level) const; ///< Compare for functional equivalence
+  virtual int4 compare(const Datatype &op,int4 level) const; ///< Order types for propagation
   virtual int4 compareDependency(const Datatype &op) const; ///< Compare for storage in tree structure
   virtual Datatype *clone(void) const=0;	///< Clone the data-type
   virtual void saveXml(ostream &s) const;	///< Serialize the data-type to XML
@@ -443,6 +443,7 @@ public:
   TypeCode *getTypeCode(void);					///< Get an "anonymous" function data-type
   TypePointer *getTypePointerStripArray(int4 s,Datatype *pt,uint4 ws);	///< Construct a pointer data-type, stripping an ARRAY level
   TypePointer *getTypePointer(int4 s,Datatype *pt,uint4 ws);	///< Construct an absolute pointer data-type
+  TypePointer *getTypePointer(int4 s,Datatype *pt,uint4 ws,const string &n);	///< Construct a named pointer data-type
   TypePointer *getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws);	///< Construct a depth limited pointer data-type
   TypeArray *getTypeArray(int4 as,Datatype *ao);		///< Construct an array data-type
   TypeStruct *getTypeStruct(const string &n);			///< Create an (empty) structure

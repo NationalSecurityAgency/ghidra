@@ -130,6 +130,9 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcPreferSplit(),"prefersplit");
   status->registerCom(new IfcStructureBlocks(),"structure","blocks");
   status->registerCom(new IfcAnalyzeRange(), "analyze","range");
+  status->registerCom(new IfcLoadTestFile(), "load","test","file");
+  status->registerCom(new IfcListTestCommands(), "list","test","commands");
+  status->registerCom(new IfcExecuteTestCommand(), "execute","test","command");
 #ifdef CPUI_RULECOMPILE
   status->registerCom(new IfcParseRule(),"parse","rule");
   status->registerCom(new IfcExperimentalRules(),"experimental","rules");
@@ -218,6 +221,7 @@ IfaceDecompData::IfaceDecompData(void)
   conf = (Architecture *)0;
   fd = (Funcdata *)0;
   cgraph = (CallGraph *)0;
+  testCollection = (FunctionTestCollection *)0;
 #ifdef OPACTION_DEBUG
   jumptabledebug = false;
 #endif
@@ -230,6 +234,8 @@ IfaceDecompData::~IfaceDecompData(void)
     delete cgraph;
   if (conf != (Architecture *)0)
     delete conf;
+  if (testCollection != (FunctionTestCollection *)0)
+    delete testCollection;
 // fd will get deleted with Database
 }
 
@@ -3141,6 +3147,71 @@ void IfcAnalyzeRange::execute(istream &s)
     (*riter).second.printRaw(*status->optr);
     *status->optr << endl;
   }
+}
+
+/// \class IfcLoadTestFile
+/// \brief Load a datatest environment file: `load test <filename>`
+///
+/// The program and associated script from a decompiler test file is loaded
+void IfcLoadTestFile::execute(istream &s)
+
+{
+  string filename;
+
+  if (dcp->conf != (Architecture *)0)
+    throw IfaceExecutionError("Load image already present");
+  s >> filename;
+  dcp->testCollection = new FunctionTestCollection(status);
+  dcp->testCollection->loadTest(filename);
+  *status->optr << filename << " test successfully loaded: " << dcp->conf->getDescription() << endl;
+}
+
+/// \class IfaceListTestCommands
+/// \brief List all the script commands in the current test: `list test commands`
+void IfcListTestCommands::execute(istream &s)
+
+{
+  if (dcp->testCollection == (FunctionTestCollection *)0)
+    throw IfaceExecutionError("No test file is loaded");
+  for(int4 i=0;i<dcp->testCollection->numCommands();++i) {
+    *status->optr << ' ' << dec << i+1 << ": " << dcp->testCollection->getCommand(i) << endl;
+  }
+}
+
+/// \class IfcExecuteTestCommands
+/// \brief Execute a specified range of the test script: `execute test command <#>-<#>
+void IfcExecuteTestCommand::execute(istream &s)
+
+{
+  if (dcp->testCollection == (FunctionTestCollection *)0)
+    throw IfaceExecutionError("No test file is loaded");
+  int4 first = -1;
+  int4 last = -1;
+  char hyphen;
+
+  s >> ws >> dec >> first;
+  first -= 1;
+  if (first < 0 || first > dcp->testCollection->numCommands())
+    throw IfaceExecutionError("Command index out of bounds");
+  s >> ws;
+  if (!s.eof()) {
+    s >> ws >> hyphen;
+    if (hyphen != '-')
+      throw IfaceExecutionError("Missing hyphenated command range");
+    s >> ws >> last;
+    last -= 1;
+    if (last < 0 || last < first || last > dcp->testCollection->numCommands())
+      throw IfaceExecutionError("Command index out of bounds");
+  }
+  else {
+    last = first;
+  }
+  ostringstream s1;
+  for(int4 i=first;i<=last;++i) {
+    s1 << dcp->testCollection->getCommand(i) << endl;
+  }
+  istringstream *s2 = new istringstream(s1.str());
+  status->pushScript(s2, "test> ");
 }
 
 #ifdef OPACTION_DEBUG

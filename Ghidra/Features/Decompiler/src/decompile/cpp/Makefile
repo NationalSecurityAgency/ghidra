@@ -94,7 +94,7 @@ GHIDRA=	ghidra_arch inject_ghidra ghidra_translate loadimage_ghidra \
 # Additional files specific to the sleigh compiler
 SLACOMP=slgh_compile slghparse slghscan
 # Additional special files that should not be considered part of the library
-SPECIAL=consolemain sleighexample test testfunction
+SPECIAL=consolemain sleighexample test
 # Any additional modules for the command line decompiler
 EXTRA= $(filter-out $(CORE) $(DECCORE) $(SLEIGH) $(GHIDRA) $(SLACOMP) $(SPECIAL),$(ALL_NAMES))
 
@@ -117,7 +117,7 @@ COMMANDLINE_NAMES=$(CORE) $(DECCORE) $(EXTRA) $(SLEIGH) consolemain
 COMMANDLINE_DEBUG=-DCPUI_DEBUG -D__TERMINAL__
 COMMANDLINE_OPT=-D__TERMINAL__
 
-TEST_NAMES=$(CORE) $(DECCORE) $(SLEIGH) $(EXTRA) testfunction test 
+TEST_NAMES=$(CORE) $(DECCORE) $(SLEIGH) $(EXTRA) test 
 TEST_DEBUG=-D__TERMINAL__
 
 GHIDRA_NAMES=$(CORE) $(DECCORE) $(GHIDRA)
