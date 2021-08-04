@@ -29,10 +29,10 @@ import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressLabelInfo;
@@ -344,6 +344,33 @@ public abstract class AbstractProgramLoader implements Loader {
 		}
 		finally {
 			program.endTransaction(id, true);
+		}
+	}
+
+	/**
+	 * Mark this address as a function by creating a one byte function.  The single byte body
+	 * function is picked up by the function analyzer, disassembled, and the body fixed.
+	 * Marking the function this way keeps disassembly and follow on analysis out of the loaders.
+	 * 
+	 * @param program the program
+	 * @param name name of function, null if name not known
+	 * @param funcStart starting address of the function
+	 */
+	public static void markAsFunction(Program program, String name, Address funcStart) {
+		FunctionManager functionMgr = program.getFunctionManager();
+
+		if (functionMgr.getFunctionAt(funcStart) != null) {
+			return;
+		}
+		try {
+			functionMgr.createFunction(name, funcStart, new AddressSet(funcStart, funcStart),
+				SourceType.IMPORTED);
+		}
+		catch (InvalidInputException e) {
+			// ignore
+		}
+		catch (OverlappingFunctionException e) {
+			// ignore
 		}
 	}
 

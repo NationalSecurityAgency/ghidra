@@ -7489,8 +7489,8 @@ int4 RuleSegment::applyOp(PcodeOp *op,Funcdata &data)
 
   if (vn1->isConstant() && vn2->isConstant()) {
     vector<uintb> bindlist;
-    bindlist.push_back(vn2->getOffset());
     bindlist.push_back(vn1->getOffset());
+    bindlist.push_back(vn2->getOffset());
     uintb val = segdef->execute(bindlist);
     data.opRemoveInput(op,2);
     data.opRemoveInput(op,1);

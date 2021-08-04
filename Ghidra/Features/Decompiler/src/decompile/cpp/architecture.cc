@@ -1363,8 +1363,8 @@ Address SegmentedResolver::resolve(uintb val,int4 sz,const Address &point,uintb 
       uintb base = glb->context->getTrackedValue(segop->getResolve(),point);
       fullEncoding = (base << 8 * innersz) + (val & calc_mask(innersz));
       vector<uintb> seginput;
-      seginput.push_back(val);
       seginput.push_back(base);
+      seginput.push_back(val);
       val = segop->execute(seginput);
       return Address(spc,AddrSpace::addressToByte(val,spc->getWordSize()));
     }
@@ -1375,8 +1375,8 @@ Address SegmentedResolver::resolve(uintb val,int4 sz,const Address &point,uintb 
     uintb base = (val >> 8*innersz) & calc_mask(outersz);
     val = val & calc_mask(innersz);
     vector<uintb> seginput;
-    seginput.push_back(val);
     seginput.push_back(base);
+    seginput.push_back(val);
     val = segop->execute(seginput);
     return Address(spc,AddrSpace::addressToByte(val,spc->getWordSize()));
   }
