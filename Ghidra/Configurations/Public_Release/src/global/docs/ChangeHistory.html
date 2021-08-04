@@ -32,6 +32,7 @@
     <li><I>Debugger</I>. Fixed issue with Debugger ignoring JAVA_HOME when launching child JVM. (GP-1143, Issue #3231)</li>
     <li><I>Debugger</I>. Fixed command-reply matching issue when using GDB via SSH. (GP-1153, Issue #3238)</li>
     <li><I>Debugger:Emulator</I>. Fixed bug in Trace Emulation causing ArrayIndexOutOfBoundsExceptions. (GP-1058)</li>
+    <li><I>Decompiler</I>. Fixed issue causing <code>Offset must be between...</code> AddressOutOfBoundsException, when decompiling real-mode x86 programs. (GP-1163, Issue #239, #2948)</li>
     <li><I>Decompiler</I>. The decompiler now shows results when a HighGlobal has no associated symbol reference in the program. (GP-1184)</li>
     <li><I>DWARF</I>. Changed processing to ignore incomplete DWARF parameter lists in Rust binaries. (GP-1121, Issue #3060)</li>
     <li><I>Exporter</I>. The C/C++ Exporter now emits semicolons after function prototypes when using the <B>Create Header File</B> option. (GP-1145, Issue #1644)</li>
@@ -39,12 +40,13 @@
     <li><I>Graphing</I>. Corrected graph magnification behavior when using a high resolution mouse wheel. (GP-1181, Issue #3281, #3284)</li>
     <li><I>GUI</I>. Fixed NullPointerException when Hovering in Decompiler over a function that is not in memory. (GP-1131)</li>
     <li><I>GUI</I>. Fixed bug in <B>Find References to</B> search results that prevented '<' characters from being rendered. (GP-1137, Issue #3217)</li>
-    <li><I>GUI</I>. Fixed issue where duplicate label names could cause the symbol tree to become unstable, evidenced by broken display and scrolling actions. Also, improved grouping algorithm. (GP-1159, Issue #3264)</li>
+    <li><I>GUI</I>. Fixed issue where duplicate label names could cause the symbol tree to become unstable, evidenced by broken display and scrolling actions. Also, improved grouping algorithm. (GP-1159, Issue #3263)</li>
     <li><I>GUI</I>. Fixed <B>Enter</B> key in Set Equates dialog to choose the selected table row. Updated the Function Signature Editor dialog to allow the <B>Cancel</B> key to close the dialog when the focus is in the top text editor. (GP-1162, Issue #3235)</li>
     <li><I>Headless</I>. Fixed a regression in analyzeHeadless.bat that prevented the headless analyzer from running on Windows in some cases. (GP-1156, Issue #3261)</li>
     <li><I>Importer</I>. The MzLoader now populates the relocation table when relocations are performed. (GP-1160)</li>
     <li><I>Importer:ELF</I>. Corrected dynamic GOT/PLT markup problem for images which do not contain section headers.  In cases where image does not define symbols within the PLT, analysis may be relied upon for its disassembly.  ELF Importer's goal is to migrate symbols which may be defined within the PLT to the External symbol space. (GP-1110, Issue #3198)</li>
     <li><I>Importer:Mach-O</I>. The Mach-O importer now correctly interprets indirect symbols as references to symbols within another .dylib. (GP-1120)</li>
+    <li><I>Importer:PE</I>. Improved ControlFlowGuard markup and creation of functions (GP-1179, Issue #1547, #1565)</li>
     <li><I>Processors</I>. Fixed bug in SuperH4 <code>fmov.s</code> pcode. (GP-1152)</li>
     <li><I>Processors</I>. The ARM instruction semantics for the mulitple-single-element forms of the  <code>vld1</code>/<code>vst1</code> vector instructions have been corrected. (GP-1167)</li>
     <li><I>Sleigh</I>. Fixed a string formatting error in the sleigh compiler. (GP-1124, Issue #3168)</li>
