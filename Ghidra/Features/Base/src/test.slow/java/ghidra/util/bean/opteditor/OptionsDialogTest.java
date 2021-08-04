@@ -38,6 +38,7 @@ import docking.actions.KeyBindingUtils;
 import docking.options.editor.*;
 import docking.tool.ToolConstants;
 import docking.widgets.MultiLineLabel;
+import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.table.RowObjectFilterModel;
 import docking.widgets.tree.GTree;
@@ -554,9 +555,9 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		// change to "LEFT"
 		runSwing(() -> ps.setSelectedIndex(0));
 
-		final JButton cancelButton = findButtonByText(dialog.getComponent(), "Cancel");
-		assertTrue(cancelButton.isEnabled());
-		runSwing(() -> cancelButton.getActionListeners()[0].actionPerformed(null));
+		pressButtonByText(dialog, "Cancel", false);
+		OptionDialog yesNoDialog = waitForDialogComponent(OptionDialog.class);
+		pressButtonByText(yesNoDialog.getComponent(), "No");
 
 		Options options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
 		GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES mouseButton =
@@ -564,7 +565,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 				(GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES) null);
 
 		assertEquals("MIDDLE", mouseButton.toString());
-		assertTrue(!dialog.isShowing());
+		assertFalse(runSwing(() -> dialog.isShowing()));
 	}
 
 	@Test
