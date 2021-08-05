@@ -29,7 +29,7 @@ public abstract class AbstractMagePanelManager<T> implements PanelManager {
 	private WizardState<T> state;
 
 	protected AbstractMagePanelManager(WizardState<T> initialState) {
-		panelPath = new Stack<Integer>();
+		panelPath = new Stack<>();
 		this.state = initialState;
 
 	}
@@ -303,7 +303,7 @@ public abstract class AbstractMagePanelManager<T> implements PanelManager {
 			++index;
 		}
 		doFinish();
-		initialize();
+		initialize(); // reset the panels
 		wizardManager.enableNavigation();
 	}
 

@@ -52,5 +52,8 @@ public interface MagePanel<T> extends WizardPanel {
 	 */
 	public void updateStateObjectWithPanelInfo(WizardState<T> state);
 
+	/**
+	 * Called when the wizard is cancelled or otherwise finished being shown
+	 */
 	public void dispose();
 }
