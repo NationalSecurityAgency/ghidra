@@ -17,9 +17,7 @@ package ghidra.app.util.bin.format.pe;
 
 import java.io.*;
 
-import ghidra.app.util.bin.ByteArrayConverter;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.*;
 import ghidra.util.Conv;
@@ -237,29 +235,53 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	private short numberOfLinenumbers;
 	private int characteristics;
 
-	private FactoryBundledWithBinaryReader reader;
-	private long index;
-
-	static SectionHeader createSectionHeader(FactoryBundledWithBinaryReader reader, long index)
-			throws IOException {
-		SectionHeader sectionHeader =
-			(SectionHeader) reader.getFactory().create(SectionHeader.class);
-		sectionHeader.initSectionHeader(reader, index);
-		return sectionHeader;
-	}
+	private BinaryReader reader;
 
 	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
+	 * Read a {@link SectionHeader} from the specified stream starting at {@code index}.
+	 *  
+	 * @param reader {@link BinaryReader} to read from
+	 * @param index long offset in the reader where the section header starts
+	 * @param stringTableOffset offset of the string table, or -1 if not available
+	 * @return new {@link SectionHeader}
+	 * @throws IOException if error reading data
 	 */
-	public SectionHeader() {
+	public static SectionHeader readSectionHeader(BinaryReader reader, long index,
+			long stringTableOffset) throws IOException {
+		SectionHeader result = new SectionHeader();
+
+		result.reader = reader;
+
+		result.name = reader.readAsciiString(index, IMAGE_SIZEOF_SHORT_NAME).trim();
+		if (result.name.startsWith("/") && stringTableOffset != -1) {
+			try {
+				int nameOffset = Integer.parseInt(result.name.substring(1));
+				result.name = reader.readAsciiString(stringTableOffset + nameOffset);
+			}
+			catch (NumberFormatException nfe) {
+				// ignore error, section name will remain as it was
+			}
+		}
+
+		// we need to skip IMAGE_SIZEOF_SHORT_NAME chars no matter what,
+		// since those bytes are always allocated
+		reader.setPointerIndex(index + IMAGE_SIZEOF_SHORT_NAME);
+
+		result.physicalAddress = result.virtualSize = reader.readNextInt();
+		result.virtualAddress = reader.readNextInt();
+		result.sizeOfRawData = reader.readNextInt();
+		result.pointerToRawData = reader.readNextInt();
+		result.pointerToRelocations = reader.readNextInt();
+		result.pointerToLinenumbers = reader.readNextInt();
+		result.numberOfRelocations = reader.readNextShort();
+		result.numberOfLinenumbers = reader.readNextShort();
+		result.characteristics = reader.readNextInt();
+
+		return result;
 	}
 
-	private void initSectionHeader(FactoryBundledWithBinaryReader reader, long index)
-			throws IOException {
-		this.reader = reader;
-		this.index = index;
-
-		parse();
+	private SectionHeader() {
+		// empty
 	}
 
 	SectionHeader(MemoryBlock block, OptionalHeader optHeader, int ptr) {
@@ -491,24 +513,6 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 		buff.append("\t" + "characteristics:      " + Integer.toHexString(characteristics) + "\n");
 
 		return buff.toString();
-	}
-
-	private void parse() throws IOException {
-		name = reader.readAsciiString(index, IMAGE_SIZEOF_SHORT_NAME).trim();
-
-		// we need to skip IMAGE_SIZEOF_SHORT_NAME chars no matter what,
-		// since those bytes are always allocated
-		reader.setPointerIndex(index + IMAGE_SIZEOF_SHORT_NAME);
-
-		physicalAddress = virtualSize = reader.readNextInt();
-		virtualAddress = reader.readNextInt();
-		sizeOfRawData = reader.readNextInt();
-		pointerToRawData = reader.readNextInt();
-		pointerToRelocations = reader.readNextInt();
-		pointerToLinenumbers = reader.readNextInt();
-		numberOfRelocations = reader.readNextShort();
-		numberOfLinenumbers = reader.readNextShort();
-		characteristics = reader.readNextInt();
 	}
 
 	@Override
