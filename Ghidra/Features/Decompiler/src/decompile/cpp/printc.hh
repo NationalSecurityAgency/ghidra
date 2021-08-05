@@ -301,4 +301,16 @@ public:
   virtual void opPopcountOp(const PcodeOp *op) { opFunc(op); }
 };
 
+/// \brief Set of print commands for displaying an open brace '{' and setting a new indent level
+///
+/// These are the print commands sent to the emitter prior to printing and \e else block.
+/// The open brace can be canceled if the block decides it wants to use "else if" syntax.
+class PendingBrace : public PendPrint {
+  int4 indentId;		///< Id associated with the new indent level
+public:
+  PendingBrace(void) { indentId = -1; }			///< Constructor
+  int4 getIndentId(void) const { return indentId; }	///< If commands have been issued, returns the new indent level id.
+  virtual void callback(EmitXml *emit);
+};
+
 #endif

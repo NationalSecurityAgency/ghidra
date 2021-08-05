@@ -71,6 +71,7 @@ void EmitXml::endBlock(int4 id) {
 
 /// Tell the emitter that a new line is desired at the current indent level
 void EmitXml::tagLine(void) {
+  emitPending();
   *s << "<break " << highlight[(int4)no_color] << " indent=\"0x" << hex <<
     indentlevel << "\"/>";
 }
@@ -79,6 +80,7 @@ void EmitXml::tagLine(void) {
 /// is overridden only for the line, then it returns to its previous value.
 /// \param indent is the desired indent level for the new line
 void EmitXml::tagLine(int4 indent) {
+  emitPending();
   *s << "<break " << highlight[(int4)no_color] << " indent=\"0x" << hex <<
     indent << "\"/>";
 }
@@ -923,6 +925,7 @@ void EmitPrettyPrint::endBlock(int4 id)
 void EmitPrettyPrint::tagLine(void)
 
 {
+  emitPending();
   checkbreak();
   TokenSplit &tok( tokqueue.push() );
   tok.tagLine();
@@ -932,6 +935,7 @@ void EmitPrettyPrint::tagLine(void)
 void EmitPrettyPrint::tagLine(int4 indent)
 
 {
+  emitPending();
   checkbreak();
   TokenSplit &tok( tokqueue.push() );
   tok.tagLine(indent);
