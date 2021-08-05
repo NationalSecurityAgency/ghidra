@@ -15,9 +15,13 @@
  */
 package ghidra.app.plugin.core.analysis;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.List;
 
 import docking.DialogComponentProvider;
+import docking.widgets.OptionDialog;
+import ghidra.GhidraOptions;
 import ghidra.framework.options.EditorStateFactory;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
@@ -27,10 +31,12 @@ import ghidra.util.Msg;
  * Dialog to show the panel for the auto analysis options.
  *
  */
-public class AnalysisOptionsDialog extends DialogComponentProvider {
+public class AnalysisOptionsDialog extends DialogComponentProvider
+		implements PropertyChangeListener {
 	private boolean doAnalysis;
 	private AnalysisPanel panel;
 	private EditorStateFactory editorStateFactory = new EditorStateFactory();
+	private boolean hasChanges;
 
 	/**
 	 * Constructor
@@ -49,16 +55,18 @@ public class AnalysisOptionsDialog extends DialogComponentProvider {
 	AnalysisOptionsDialog(List<Program> programs) {
 		super("Analysis Options");
 		setHelpLocation(new HelpLocation("AutoAnalysisPlugin", "AnalysisOptions"));
-		panel = new AnalysisPanel(programs, editorStateFactory);
+		panel = new AnalysisPanel(programs, editorStateFactory, this);
 
 		addWorkPanel(panel);
 		addOKButton();
 		addCancelButton();
+		addApplyButton();
 		setOkButtonText("Analyze");
 		okButton.setMnemonic('A');
 		setOkEnabled(true);
 		setPreferredSize(1000, 600);
 		setRememberSize(true);
+		setHasChanges(panel.hasChangedValues());
 	}
 
 	@Override
@@ -73,9 +81,41 @@ public class AnalysisOptionsDialog extends DialogComponentProvider {
 		}
 	}
 
+	@Override
+	protected void cancelCallback() {
+		if (hasChanges) {
+			int result = OptionDialog.showYesNoCancelDialog(panel, "Save Changes?",
+				"These options are different from what is in the program.\n" +
+					"Do you want to save them to the program?");
+			if (result == OptionDialog.CANCEL_OPTION) {
+				return;
+			}
+			if (result == OptionDialog.YES_OPTION) {
+				panel.applyChanges();
+			}
+		}
+		close();
+	}
+
+	@Override
+	protected void applyCallback() {
+		panel.applyChanges();
+		setHasChanges(false);
+	}
+
 	boolean wasAnalyzeButtonSelected() {
 		return doAnalysis;
 	}
 
-}
+	private void setHasChanges(boolean hasChanges) {
+		this.hasChanges = hasChanges;
+		setApplyEnabled(hasChanges);
+	}
 
+	@Override
+	public void propertyChange(PropertyChangeEvent evt) {
+		if (evt.getPropertyName().equals(GhidraOptions.APPLY_ENABLED)) {
+			setHasChanges((Boolean) evt.getNewValue());
+		}
+	}
+}

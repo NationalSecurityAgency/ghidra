@@ -7,6 +7,52 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 10.0.2 Change History (August 2021)</H1>
+<blockquote><p><u>New Features</u></p>
+<ul>
+    <li><I>Scripting</I>. Created an example script which demonstrates how to use the FileBytes class to do a binary export of the current program. (GP-1157)</li>
+</ul>
+</blockquote>
+<blockquote><p><u>Improvements</u></p>
+<ul>
+    <li><I>Data Types</I>. When creating a substructure from existing components, the new structure will adopt the pack setting of the parent structure from which it was created.  Note  that a packed structure may still move based upon component alignment rules. (GP-1111, Issue #3193)</li>
+    <li><I>Decompiler</I>. Added <B>E</B> key binding to the Decompiler's Equate action. (GP-1146, Issue #3195)</li>
+    <li><I>GUI</I>. Added <B>Apply</B> button to analysis options dialog. Also added a last chance save/cancel dialog that is shown when a user cancels an options dialog that has unsaved changes. (GP-1169, Issue #3274)</li>
+    <li><I>Scripting</I>. For stripped gcc binaries, improved prototype RecoverClassesFromRTTIScript identification of vtables and simple class data, constructors, and destructors. (GP-1055, Issue #3266)</li>
+</ul>
+</blockquote>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>Basic Infrastructure</I>. Fixed regression that prevented Ghidra from launching on Windows when its path contained spaces. (GP-1113, Issue #3201, #3205)</li>
+    <li><I>Data Types</I>. Fixed IllegalArgumentException error message when adding a duplicate enumerate name for EnumDataType. (GP-1173, Issue #3246)</li>
+    <li><I>Debugger</I>. Changed diagnostics to write GDB.log to user directory, not installation. Clarified an error message. (GP-1133, Issue #3218)</li>
+    <li><I>Debugger</I>. Improved error reporting when failing to start a Debugger GADP agent. (GP-1136, Issue #3175)</li>
+    <li><I>Debugger</I>. Added system property to toggle alternative icons/colors for breakpoints. (GP-1139, Issue #3204)</li>
+    <li><I>Debugger</I>. Applying a default <B>everything</B> memory map for GDB targets if <B>info proc mappings</B> fails or produces an empty list. (GP-1142, Issue #3071, #3074, #3161, #3169)</li>
+    <li><I>Debugger</I>. Fixed issue with Debugger ignoring JAVA_HOME when launching child JVM. (GP-1143, Issue #3231)</li>
+    <li><I>Debugger</I>. Fixed command-reply matching issue when using GDB via SSH. (GP-1153, Issue #3238)</li>
+    <li><I>Debugger:Emulator</I>. Fixed bug in Trace Emulation causing ArrayIndexOutOfBoundsExceptions. (GP-1058)</li>
+    <li><I>Decompiler</I>. Fixed issue causing <code>Offset must be between...</code> AddressOutOfBoundsException, when decompiling real-mode x86 programs. (GP-1163, Issue #239, #2948)</li>
+    <li><I>Decompiler</I>. The decompiler now shows results when a HighGlobal has no associated symbol reference in the program. (GP-1184)</li>
+    <li><I>DWARF</I>. Changed processing to ignore incomplete DWARF parameter lists in Rust binaries. (GP-1121, Issue #3060)</li>
+    <li><I>Exporter</I>. The C/C++ Exporter now emits semicolons after function prototypes when using the <B>Create Header File</B> option. (GP-1145, Issue #1644)</li>
+    <li><I>Framework</I>. Corrected address comparison for 64-bit signed address spaces (e.g., stack space, constant space) which could produce non-transitive comparison results. (GP-1178, Issue #3302)</li>
+    <li><I>Graphing</I>. Corrected graph magnification behavior when using a high resolution mouse wheel. (GP-1181, Issue #3281, #3284)</li>
+    <li><I>GUI</I>. Fixed NullPointerException when Hovering in Decompiler over a function that is not in memory. (GP-1131)</li>
+    <li><I>GUI</I>. Fixed bug in <B>Find References to</B> search results that prevented '<' characters from being rendered. (GP-1137, Issue #3217)</li>
+    <li><I>GUI</I>. Fixed issue where duplicate label names could cause the symbol tree to become unstable, evidenced by broken display and scrolling actions. Also, improved grouping algorithm. (GP-1159, Issue #3263)</li>
+    <li><I>GUI</I>. Fixed <B>Enter</B> key in Set Equates dialog to choose the selected table row. Updated the Function Signature Editor dialog to allow the <B>Cancel</B> key to close the dialog when the focus is in the top text editor. (GP-1162, Issue #3235)</li>
+    <li><I>Headless</I>. Fixed a regression in analyzeHeadless.bat that prevented the headless analyzer from running on Windows in some cases. (GP-1156, Issue #3261)</li>
+    <li><I>Importer</I>. The MzLoader now populates the relocation table when relocations are performed. (GP-1160)</li>
+    <li><I>Importer:ELF</I>. Corrected dynamic GOT/PLT markup problem for images which do not contain section headers.  In cases where image does not define symbols within the PLT, analysis may be relied upon for its disassembly.  ELF Importer's goal is to migrate symbols which may be defined within the PLT to the External symbol space. (GP-1110, Issue #3198)</li>
+    <li><I>Importer:Mach-O</I>. The Mach-O importer now correctly interprets indirect symbols as references to symbols within another .dylib. (GP-1120)</li>
+    <li><I>Importer:PE</I>. Improved ControlFlowGuard markup and creation of functions (GP-1179, Issue #1547, #1565)</li>
+    <li><I>Processors</I>. Fixed bug in SuperH4 <code>fmov.s</code> pcode. (GP-1152)</li>
+    <li><I>Processors</I>. The ARM instruction semantics for the mulitple-single-element forms of the  <code>vld1</code>/<code>vst1</code> vector instructions have been corrected. (GP-1167)</li>
+    <li><I>Sleigh</I>. Fixed a string formatting error in the sleigh compiler. (GP-1124, Issue #3168)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 10.0.1 Change History (July 2021)</H1>
 <blockquote><p><u>New Features</u></p>
 <ul>

@@ -369,8 +369,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	final DebuggerRegistersPlugin plugin;
-	private final Map<CompilerSpec, LinkedHashSet<Register>> selectionByCSpec;
-	private final Map<CompilerSpec, LinkedHashSet<Register>> favoritesByCSpec;
+	private final Map<LanguageCompilerSpecPair, LinkedHashSet<Register>> selectionByCSpec;
+	private final Map<LanguageCompilerSpecPair, LinkedHashSet<Register>> favoritesByCSpec;
 	private final boolean isClone;
 
 	DebuggerCoordinates previous = DebuggerCoordinates.NOWHERE;
@@ -436,8 +436,9 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	AddressSetView viewKnown;
 
 	protected DebuggerRegistersProvider(final DebuggerRegistersPlugin plugin,
-			Map<CompilerSpec, LinkedHashSet<Register>> selectionByCSpec,
-			Map<CompilerSpec, LinkedHashSet<Register>> favoritesByCSpec, boolean isClone) {
+			Map<LanguageCompilerSpecPair, LinkedHashSet<Register>> selectionByCSpec,
+			Map<LanguageCompilerSpecPair, LinkedHashSet<Register>> favoritesByCSpec,
+			boolean isClone) {
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_REGISTERS, plugin.getName());
 		this.plugin = plugin;
 		this.selectionByCSpec = selectionByCSpec;
@@ -1026,18 +1027,27 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		return result;
 	}
 
+	protected LanguageCompilerSpecPair getLangCSpecPair(Trace trace) {
+		return new LanguageCompilerSpecPair(trace.getBaseLanguage().getLanguageID(),
+			trace.getBaseCompilerSpec().getCompilerSpecID());
+	}
+
+	protected LanguageCompilerSpecPair getLangCSpecPair(TraceThread thread) {
+		return getLangCSpecPair(thread.getTrace());
+	}
+
 	protected Set<Register> getSelectionFor(TraceThread thread) {
 		synchronized (selectionByCSpec) {
-			CompilerSpec cSpec = thread.getTrace().getBaseCompilerSpec();
-			return selectionByCSpec.computeIfAbsent(cSpec,
+			LanguageCompilerSpecPair lcsp = getLangCSpecPair(thread);
+			return selectionByCSpec.computeIfAbsent(lcsp,
 				__ -> computeDefaultRegisterSelection(thread));
 		}
 	}
 
 	protected Set<Register> getFavoritesFor(TraceThread thread) {
 		synchronized (favoritesByCSpec) {
-			CompilerSpec cSpec = thread.getTrace().getBaseCompilerSpec();
-			return favoritesByCSpec.computeIfAbsent(cSpec,
+			LanguageCompilerSpecPair lcsp = getLangCSpecPair(thread);
+			return favoritesByCSpec.computeIfAbsent(lcsp,
 				__ -> computeDefaultRegisterFavorites(thread));
 		}
 	}

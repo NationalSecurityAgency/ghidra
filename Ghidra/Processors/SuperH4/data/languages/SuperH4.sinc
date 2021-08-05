@@ -1421,12 +1421,12 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
       OP_0=0xf &  N_0t_at_neg &  XDRM & FRM_0 &  OP_1=0xb {
 
 	if (!( $(FPSCR_SZ) == 0 )) goto <doubleWidth>;
-	*:4 N_0t_at_neg = FRM_0;
 	N_0t_at_neg = N_0t_at_neg - 4;
+	*:4 N_0t_at_neg = FRM_0;
 	goto <skip>;
 	<doubleWidth>
-	*:8 N_0t_at_neg = XDRM;
 	N_0t_at_neg = N_0t_at_neg - 8;
+	*:8 N_0t_at_neg = XDRM;
 	<skip>
 }
 

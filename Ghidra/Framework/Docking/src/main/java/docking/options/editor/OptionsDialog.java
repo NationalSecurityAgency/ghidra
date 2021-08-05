@@ -22,6 +22,7 @@ import java.beans.PropertyChangeListener;
 import javax.swing.tree.TreePath;
 
 import docking.DialogComponentProvider;
+import docking.widgets.OptionDialog;
 import ghidra.framework.options.Options;
 
 /**
@@ -85,9 +86,20 @@ public class OptionsDialog extends DialogComponentProvider {
 
 	@Override
 	protected void cancelCallback() {
-		if (panel.cancel()) {
-			close();
+		// stop any active editors
+		panel.cancel();
+
+		if (hasChanges) {
+			int result = OptionDialog.showYesNoCancelDialog(panel, "Save Changes?",
+				"These options have changed.  Do you want to save them?");
+			if (result == OptionDialog.CANCEL_OPTION) {
+				return;
+			}
+			if (result == OptionDialog.YES_OPTION) {
+				applyChanges();
+			}
 		}
+		close();
 	}
 
 	@Override

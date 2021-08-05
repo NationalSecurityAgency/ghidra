@@ -487,7 +487,7 @@ public interface DebuggerStaticMappingService {
 	}
 
 	/**
-	 * A {@code (shift,view)} pair for describing sets of mapped addresses
+	 * <<<<<<< HEAD A {@code (shift,view)} pair for describing sets of mapped addresses
 	 */
 	public class ShiftAndAddressSetView {
 		private final long shift;
@@ -559,7 +559,8 @@ public interface DebuggerStaticMappingService {
 			boolean truncateExisting) throws TraceConflictedMappingException;
 
 	/**
-	 * Add several static mappings (relocations)
+	 * ======= >>>>>>> d694542c5 (GP-660: Put program filler back in. Need to performance test.) Add
+	 * several static mappings (relocations)
 	 * 
 	 * <p>
 	 * This will group the entries by trace and add each's entries in a single transaction. If any
@@ -573,23 +574,6 @@ public interface DebuggerStaticMappingService {
 	 */
 	void addModuleMappings(Collection<ModuleMapEntry> entries, TaskMonitor monitor,
 			boolean truncateExisting) throws CancelledException;
-
-	/**
-	 * Add a static mapping (relocation) from the given section to the given program memory block
-	 * 
-	 * <p>
-	 * This is simply a shortcut and does not mean to imply that all mappings must represent section
-	 * relocations. In most cases the lengths of the from and to objects match exactly, but this may
-	 * not be the case. Whatever the case, the minimum length is computed, and the start addresses
-	 * are used as the location. The lifespan is that of the section's containing module.
-	 * 
-	 * @param from the source section
-	 * @param toProgram the destination program
-	 * @param to the destination memory block
-	 * @see #addMapping(TraceLocation, ProgramLocation, long, boolean)
-	 */
-	void addSectionMapping(TraceSection from, Program toProgram, MemoryBlock to,
-			boolean truncateExisting) throws TraceConflictedMappingException;
 
 	/**
 	 * Add several static mappings (relocations)

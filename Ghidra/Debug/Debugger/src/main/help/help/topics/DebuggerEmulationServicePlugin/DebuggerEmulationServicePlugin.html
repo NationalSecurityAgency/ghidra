@@ -1,0 +1,44 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Model Service</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Emulation Service</H1>
+
+    <P>This service plugin provides emulation to the <A href=
+    "help/topics/DebuggerTraceManagerServicePlugin/DebuggerTraceManagerServicePlugin.html">Trace
+    Manager</A> and provides actions for launching emulated traces from programs, i.e., without
+    requiring a connected debugger. Please note that "pure emulation" of a target program, while it
+    doesn't require a platform to execute the target natively, it typically does require
+    significant state initialization and dependency stubbing, except in limited circumstances.</P>
+
+    <H2>Actions</H2>
+
+    <H3><A name="emulate_program"></A> Emulate Program</H3>
+
+    <P>This action is available whenever a program is active. It will create a new trace suitable
+    for "pure emulation" of the current program starting at the current address. More precisely, it
+    will open a new blank trace, initializes it with the current program's memory map, allocates a
+    stack, and creates a thread whose program counter is initialized to the current address and
+    whose registers are initialized to the register context at the current address. Optionally, any
+    other initialization can be done by manually modifying the trace in the UI, or using a script.
+    The trace and/or p-code stepping actions can then be used to emulate.</P>
+
+    <H3><A name="add_emulated_thread"></A> Add Emulated Thread</H3>
+
+    <P>This action is available whenever a "pure emulation" trace is active. It spawns a new thread
+    in the current trace suitable for emulating starting at the current address. More precisely, it
+    allocates another stack and creates a new thread whose program counter is initialized to the
+    current address and whose registers are initialized to the register context at the current
+    address. Optionally, other registers can be initialized via the UI or a script. The new thread
+    is activated so that stepping actions will affect it by default.</P>
+  </BODY>
+</HTML>

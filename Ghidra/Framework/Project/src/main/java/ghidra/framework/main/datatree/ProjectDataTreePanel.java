@@ -47,6 +47,7 @@ import ghidra.util.task.TaskMonitor;
 public class ProjectDataTreePanel extends JPanel {
 
 	private static final String EXPANDED_PATHS_SEPARATOR = ":";
+	private static final int MAX_PROJECT_SIZE_TO_SEARCH = 1000;
 
 	private DataTree tree;
 	private ProjectData projectData;
@@ -488,13 +489,14 @@ public class ProjectDataTreePanel extends JPanel {
 	 * @param s node name
 	 */
 	public void findAndSelect(String s) {
-		tree.expandTree(root);
-		Iterator<GTreeNode> it = root.iterator(true);
-		while (it.hasNext()) {
-			GTreeNode node = it.next();
-			if (node.getName().equals(s)) {
-				tree.setSelectedNode(node);
-				return;
+		if (projectData.getFileCount() < MAX_PROJECT_SIZE_TO_SEARCH) {
+			tree.expandTree(root);
+			for (Iterator<GTreeNode> it = root.iterator(true); it.hasNext();) {
+				GTreeNode node = it.next();
+				if (node.getName().equals(s)) {
+					tree.setSelectedNode(node);
+					return;
+				}
 			}
 		}
 	}

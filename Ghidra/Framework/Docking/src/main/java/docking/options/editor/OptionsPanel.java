@@ -183,7 +183,7 @@ public class OptionsPanel extends JPanel {
 		processSelection(node);
 	}
 
-	public boolean cancel() {
+	public void cancel() {
 		Set<Entry<OptionsTreeNode, OptionsEditor>> entrySet = editorMap.entrySet();
 		for (Map.Entry<OptionsTreeNode, OptionsEditor> entry : entrySet) {
 			OptionsEditor editor = entry.getValue();
@@ -199,8 +199,6 @@ public class OptionsPanel extends JPanel {
 				Msg.showError(this, this, title, title + "\nError Message: " + msg, e);
 			}
 		}
-
-		return true;
 	}
 
 	public boolean apply() {

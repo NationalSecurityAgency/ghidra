@@ -1028,6 +1028,7 @@ public:
 };
 class RulePtrArith : public Rule {
   static bool verifyAddTreeBottom(PcodeOp *op,int4 slot);
+  static bool verifyPreferredPointer(PcodeOp *op,int4 slot);
 public:
   RulePtrArith(const string &g) : Rule(g, 0, "ptrarith") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {

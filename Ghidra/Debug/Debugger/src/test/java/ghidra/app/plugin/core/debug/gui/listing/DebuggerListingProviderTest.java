@@ -42,6 +42,7 @@ import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.BoundAction;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.LogRow;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerMissingModuleActionContext;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.SwingExecutorService;
@@ -461,7 +462,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			TraceLocation from =
 				new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L), tb.addr(0x00400000));
 			ProgramLocation to = new ProgramLocation(program, ss.getAddress(0x00600000));
-			mappingService.addMapping(from, to, 0x8000, false);
+			DebuggerStaticMappingUtils.addMapping(from, to, 0x8000, false);
 		}
 		waitForProgram(program);
 		waitForDomainObject(tb.trace);
@@ -512,7 +513,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			TraceLocation from =
 				new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L), tb.addr(0x00400000));
 			ProgramLocation to = new ProgramLocation(program, ss.getAddress(0x00600000));
-			mappingService.addMapping(from, to, 0x8000, false);
+			DebuggerStaticMappingUtils.addMapping(from, to, 0x8000, false);
 
 			thread = tb.getOrAddThread("Thread1", 0);
 			Register pc = tb.trace.getBaseLanguage().getProgramCounter();
@@ -552,7 +553,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			TraceLocation from =
 				new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L), tb.addr(0x00400000));
 			ProgramLocation to = new ProgramLocation(program, ss.getAddress(0x00600000));
-			mappingService.addMapping(from, to, 0x8000, false);
+			DebuggerStaticMappingUtils.addMapping(from, to, 0x8000, false);
 		}
 		waitForProgram(program);
 		waitForDomainObject(tb.trace);
@@ -643,7 +644,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			TraceLocation from =
 				new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L), tb.addr(0x00400000));
 			ProgramLocation to = new ProgramLocation(program, ss.getAddress(0x00600000));
-			mappingService.addMapping(from, to, 0x8000, false);
+			DebuggerStaticMappingUtils.addMapping(from, to, 0x8000, false);
 
 			thread = tb.getOrAddThread("Thread1", 0);
 			Register pc = tb.trace.getBaseLanguage().getProgramCounter();
@@ -906,7 +907,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			TraceLocation from =
 				new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L), tb.addr(0x00400000));
 			ProgramLocation to = new ProgramLocation(program, ss.getAddress(0x00600000));
-			mappingService.addMapping(from, to, 0x8000, false);
+			DebuggerStaticMappingUtils.addMapping(from, to, 0x8000, false);
 		}
 		waitForProgram(program);
 		waitForDomainObject(tb.trace);

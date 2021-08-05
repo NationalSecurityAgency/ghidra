@@ -27,11 +27,13 @@ import org.junit.Test;
 
 import com.google.common.collect.Range;
 
+import docking.widgets.table.RowWrappedEnumeratedColumnTableModel;
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.breakpoint.DebuggerBreakpointsProvider.LogicalBreakpointTableModel;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.*;
 import ghidra.app.services.LogicalBreakpoint.Enablement;
 import ghidra.async.AsyncTestUtils;
@@ -70,7 +72,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 
 	protected void addMapping(Trace trace, Program prog) throws Exception {
 		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add mapping", true)) {
-			mappingService.addMapping(
+			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(trace, null, Range.atLeast(0L), addr(trace, 0x55550000)),
 				new ProgramLocation(prog, addr(prog, 0x00400000)), 0x1000, false);
 		}
@@ -496,6 +498,13 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		});
 	}
 
+	protected static <R> List<R> copyModelData(
+			RowWrappedEnumeratedColumnTableModel<?, ?, R, ?> model) {
+		synchronized (model) {
+			return List.copyOf(model.getModelData());
+		}
+	}
+
 	@Test
 	public void testActionFilters() throws Exception {
 		createTestModel();
@@ -525,7 +534,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		// Because mapping service debounces, wait for breakpoints to be reconciled
 		LogicalBreakpointTableModel bptModel = breakpointsProvider.breakpointTableModel;
 		waitForPass(() -> {
-			List<LogicalBreakpointRow> data = bptModel.getModelData();
+			List<LogicalBreakpointRow> data = copyModelData(bptModel);
 			assertEquals(2, data.size());
 			LogicalBreakpointRow row1 = data.get(0);
 			LogicalBreakpointRow row2 = data.get(1);
@@ -548,7 +557,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 			assertEquals(2, lb2.getTraceBreakpoints().size());
 		});
 
-		List<LogicalBreakpointRow> breakData = bptModel.getModelData();
+		List<LogicalBreakpointRow> breakData = copyModelData(bptModel);
 		List<BreakpointLocationRow> filtLocs =
 			breakpointsProvider.locationFilterPanel.getTableFilterModel().getModelData();
 

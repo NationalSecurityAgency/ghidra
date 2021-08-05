@@ -398,8 +398,8 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		tree.refilterLater();
 	}
 
-	private void symbolChanged(Symbol symbol) {
-		addTask(new SymbolChangedTask(tree, symbol));
+	private void symbolChanged(Symbol symbol, String oldName) {
+		addTask(new SymbolChangedTask(tree, symbol, oldName));
 	}
 
 	private void symbolAdded(Symbol symbol) {
@@ -577,15 +577,18 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 	private class SymbolChangedTask extends AbstactSymbolUpdateTask {
 
-		SymbolChangedTask(GTree tree, Symbol symbol) {
+		private String oldName;
+
+		SymbolChangedTask(GTree tree, Symbol symbol, String oldName) {
 			super(tree, symbol);
+			this.oldName = oldName;
 		}
 
 		@Override
 		void doRun(TaskMonitor monitor) throws CancelledException {
 
 			SymbolTreeRootNode root = (SymbolTreeRootNode) tree.getModelRoot();
-			root.symbolRemoved(symbol, monitor);
+			root.symbolRemoved(symbol, oldName, monitor);
 
 			// the symbol may have been deleted while we are processing bulk changes
 			if (!symbol.isDeleted()) {
@@ -662,7 +665,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 				if (eventType == ChangeManager.DOCR_SYMBOL_RENAMED) {
 					Symbol symbol = (Symbol) object;
-					symbolChanged(symbol);
+					symbolChanged(symbol, (String) rec.getOldValue());
 				}
 				else if (eventType == ChangeManager.DOCR_SYMBOL_DATA_CHANGED ||
 					eventType == ChangeManager.DOCR_SYMBOL_SCOPE_CHANGED ||
@@ -676,7 +679,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 						symbol = ((Namespace) object).getSymbol();
 					}
 
-					symbolChanged(symbol);
+					symbolChanged(symbol, symbol.getName());
 				}
 				else if (eventType == ChangeManager.DOCR_SYMBOL_ADDED) {
 					Symbol symbol = (Symbol) rec.getNewValue();
@@ -693,7 +696,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Symbol[] symbols = symbolTable.getSymbols(address);
 					for (Symbol symbol : symbols) {
-						symbolChanged(symbol);
+						symbolChanged(symbol, symbol.getName());
 					}
 				}
 			}

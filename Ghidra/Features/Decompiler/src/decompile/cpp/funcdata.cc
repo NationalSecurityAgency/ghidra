@@ -361,7 +361,7 @@ void Funcdata::spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const 
   bool typelock = sym->isTypeLocked();
   if (typelock && (entrytype->getMetatype() == TYPE_UNKNOWN))
     typelock = false;
-  outvn->updateType(ptrentrytype,typelock,true);
+  outvn->updateType(ptrentrytype,typelock,false);
   if (extra != 0) {
     if (extraOp == (PcodeOp *)0) {
       extraOp = newOp(2,op->getAddr());

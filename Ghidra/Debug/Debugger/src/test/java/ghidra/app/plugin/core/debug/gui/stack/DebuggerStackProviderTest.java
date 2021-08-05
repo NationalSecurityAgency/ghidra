@@ -28,6 +28,7 @@ import com.google.common.collect.Range;
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -496,7 +497,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 			TraceLocation dloc =
 				new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L), tb.addr(0x00400000));
 			ProgramLocation sloc = new ProgramLocation(program, addr(program, 0x00600000));
-			mappingService.addMapping(dloc, sloc, 0x1000, false);
+			DebuggerStaticMappingUtils.addMapping(dloc, sloc, 0x1000, false);
 		}
 		waitForDomainObject(tb.trace);
 

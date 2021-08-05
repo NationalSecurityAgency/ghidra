@@ -248,6 +248,7 @@ public:
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
   virtual Datatype *clone(void) const { return new TypePointer(*this); }
   virtual void saveXml(ostream &s) const;
+  virtual TypePointer *downChain(uintb &off,bool allowArrayWrap,TypeFactory &typegrp);
 };
 
 /// \brief Datatype object representing an array of elements
@@ -451,7 +452,6 @@ public:
 			const vector<Datatype *> &intypes,
 			bool dotdotdot);			///< Create a "function" datatype
   void destroyType(Datatype *ct);				///< Remove a data-type from \b this
-  Datatype *downChain(Datatype *ptrtype,uintb &off);		///< Find a sub-type matching a pointer and offset
   Datatype *concretize(Datatype *ct);				///< Convert given data-type to concrete form
   void dependentOrder(vector<Datatype *> &deporder) const;	///< Place all data-types in dependency order
   void saveXml(ostream &s) const;			///< Save \b this container to stream

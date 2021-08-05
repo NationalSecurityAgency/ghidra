@@ -67,7 +67,7 @@ public class GdbModelTargetProcessMemory
 		synchronized (this) {
 			regions =
 				byStart.values().stream().map(this::getTargetRegion).collect(Collectors.toList());
-			if (regions.isEmpty()) {
+			if (regions.isEmpty() && valid) {
 				Map<BigInteger, GdbMemoryMapping> defaultMap =
 					new HashMap<BigInteger, GdbMemoryMapping>();
 				AddressSet addressSet = impl.getAddressFactory().getAddressSet();

@@ -169,6 +169,8 @@ public interface DebuggerResources {
 	ImageIcon ICON_BLANK = ResourceManager.loadImage("images/blank.png");
 	ImageIcon ICON_PACKAGE = ResourceManager.loadImage("images/debugger32.png");
 
+	ImageIcon ICON_EMULATE = ICON_PROCESS; // TODO
+
 	HelpLocation HELP_PACKAGE = new HelpLocation("Debugger", "package");
 
 	String HELP_ANCHOR_PLUGIN = "plugin";
@@ -486,6 +488,50 @@ public interface DebuggerResources {
 					.menuIcon(offer.getIcon())
 					.menuGroup(GROUP)
 					.helpLocation(new HelpLocation(helpOwner.getName(), HELP_ANCHOR));
+		}
+	}
+
+	interface EmulateProgramAction {
+		String NAME = "Emulate Program in new Trace";
+		String DESCRIPTION = "Emulate the current program in a new trace starting at the cursor";
+		Icon ICON = ICON_EMULATE;
+		String GROUP = GROUP_GENERAL;
+		String HELP_ANCHOR = "emulate_program";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.menuIcon(ICON)
+					.menuGroup(GROUP)
+					.popupMenuPath(NAME)
+					.popupMenuIcon(ICON)
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface EmulateAddThreadAction {
+		String NAME = "Add Emulated Thread to Trace";
+		String DESCRIPTION = "Add an emulated thread to the current trace starting here";
+		Icon ICON = ICON_THREAD;
+		String GROUP = GROUP_GENERAL;
+		String HELP_ANCHOR = "add_emulated_thread";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.menuIcon(ICON)
+					.menuGroup(GROUP)
+					.popupMenuPath(NAME)
+					.popupMenuIcon(ICON)
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 

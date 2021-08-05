@@ -94,6 +94,10 @@
 					sortgroup="g"
 					target="help/topics/DebuggerTraceManagerServicePlugin/DebuggerTraceManagerServicePlugin.html" />
 
+			<tocdef id="DebuggerEmulationServicePlugin" text="Emulation"
+			        sortgroup="g1"
+			        target="help/topics/DebuggerEmulationServicePlugin/DebuggerEmulationServicePlugin.html" />
+
 	        <tocdef id="DebuggerRegistersPlugin" text="Registers" 
 	        		sortgroup="h" 
 	                target="help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html" />

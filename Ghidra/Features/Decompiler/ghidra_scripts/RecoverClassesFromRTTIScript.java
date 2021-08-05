@@ -63,6 +63,8 @@ import ghidra.app.plugin.core.analysis.DecompilerFunctionAnalyzer;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.Analyzer;
 import ghidra.app.services.GraphDisplayBroker;
+import ghidra.app.util.bin.format.dwarf4.next.DWARFFunctionImporter;
+import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
 import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
@@ -127,7 +129,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	private static final String INDETERMINATE_BOOKMARK = "INDETERMINATE";
 
 	boolean programHasRTTIApplied = false;
-	boolean isPDBLoaded;
+	boolean hasDebugSymbols;
 	boolean isGcc = false;
 	boolean isWindows = false;
 	String ghidraVersion = null;
@@ -155,11 +157,12 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 		if (isWindows()) {
 
-			isPDBLoaded = isPDBLoadedInProgram();
-			nameVfunctions = !isPDBLoaded;
+			hasDebugSymbols = isPDBLoadedInProgram();
+			nameVfunctions = !hasDebugSymbols;
 			recoverClassesFromRTTI = new RTTIWindowsClassRecoverer(currentProgram,
 				currentLocation, state.getTool(), this, BOOKMARK_FOUND_FUNCTIONS,
-				USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS, nameVfunctions, isPDBLoaded, monitor);
+				USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS, nameVfunctions, hasDebugSymbols,
+				monitor);
 		}
 		else if (isGcc()) {
 
@@ -168,10 +171,18 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			if (!runGcc) {
 				return;
 			}
-			nameVfunctions = true;
+
+			hasDebugSymbols = isDwarfLoadedInProgram();
+			if (hasDwarf() && !hasDebugSymbols) {
+				println(
+					"The program contains DWARF but the DWARF analyzer has not been run. Please run the DWARF analyzer to get best results from this script.");
+				return;
+			}
+			nameVfunctions = !hasDebugSymbols;
 			recoverClassesFromRTTI = new RTTIGccClassRecoverer(currentProgram, currentLocation,
 				state.getTool(), this, BOOKMARK_FOUND_FUNCTIONS,
-				USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS, nameVfunctions, monitor);
+				USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS, nameVfunctions, hasDebugSymbols,
+				monitor);
 		}
 		else {
 			println("This script will not work on this program type");
@@ -245,7 +256,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			" class member functions to assign.");
 
 
-		if (!isPDBLoaded) {
+		if (!hasDebugSymbols) {
 
 			if (BOOKMARK_FOUND_FUNCTIONS) {
 				bookmarkFunctions(recoveredClasses);
@@ -268,6 +279,10 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		decompilerUtils.disposeDecompilerInterface();
 	}
 
+	private boolean hasDwarf() {
+		return DWARFProgram.isDWARF(currentProgram);
+	}
+
 	/**
 	 * Method to determine if pdb info has been applied to the program
 	 * @return true if pdb info has been applied to program
@@ -275,6 +290,12 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	private boolean isPDBLoadedInProgram() {
 		Options options = currentProgram.getOptions(Program.PROGRAM_INFO);
 		return options.getBoolean(PdbParserConstants.PDB_LOADED, false);
+	}
+
+	private boolean isDwarfLoadedInProgram() {
+
+		return DWARFFunctionImporter.hasDWARFProgModule(currentProgram,
+			DWARFProgram.DWARF_ROOT_NAME);
 	}
 
 	public String validate() {
@@ -454,8 +475,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 
 	/**
-	 * Script only works on versions of ghidra after 9.2, but not 9.2.1 because a method was
-	 * accidentally removed from FillOutStructureCmd that is needed
+	 * Script works on versions of ghidra including and after 9.2 except for 9.2.1 because a method 
+	 * was accidentally removed from FillOutStructureCmd that is needed
 	 * @return true if script will work and false otherwise
 	 */
 	private boolean checkGhidraVersion() {
@@ -571,9 +592,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	private String getVersionOfGhidra() {
 
 		Options options = currentProgram.getOptions("Program Information");
-		Object ghidraVersionObject = options.getObject("Created With Ghidra Version", null);
-
-		return ghidraVersionObject.toString();
+		return options.getString("Created With Ghidra Version", null);
 	}
 
 

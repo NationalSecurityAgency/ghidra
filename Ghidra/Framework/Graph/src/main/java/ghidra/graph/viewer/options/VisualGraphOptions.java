@@ -108,6 +108,9 @@ public class VisualGraphOptions {
 		options.registerOption(USE_MOUSE_RELATIVE_ZOOM_KEY, useMouseRelativeZoom(), help,
 			USE_MOUSE_RELATIVE_ZOOM_DESCRIPTION);
 
+		options.registerOption(USE_CONDENSED_LAYOUT_KEY, useCondensedLayout(), help,
+			USE_CONDENSED_LAYOUT_DESCRIPTION);
+
 		options.registerOption(VIEW_RESTORE_OPTIONS_KEY, ViewRestoreOption.START_FULLY_ZOOMED_OUT,
 			help, VIEW_RESTORE_OPTIONS_DESCRIPTION);
 

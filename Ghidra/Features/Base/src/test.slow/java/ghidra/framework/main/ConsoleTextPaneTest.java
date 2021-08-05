@@ -15,7 +15,7 @@
  */
 package ghidra.framework.main;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.function.Supplier;
 
@@ -133,8 +133,11 @@ public class ConsoleTextPaneTest {
 	private void printEnoughLinesToOverflowTheMaxCharCount(ConsoleTextPane text) {
 		AbstractGenericTest.runSwing(() -> {
 
-			for (int i = 0; i < 20; i++) {
-				text.addMessage("Run " + runNumber + " - line " + (i + 1) + '\n');
+			int charsWritten = 0;
+			for (int i = 0; charsWritten < text.getMaximumCharacterLimit(); i++) {
+				String msg = "Run " + runNumber + " - line " + (i + 1) + '\n';
+				charsWritten += msg.length();
+				text.addMessage(msg);
 			}
 		});
 

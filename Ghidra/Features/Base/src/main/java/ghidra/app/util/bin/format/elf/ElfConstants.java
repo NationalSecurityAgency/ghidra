@@ -512,18 +512,4 @@ public interface ElfConstants {
 	/** used by NetBSD/avr32 - AVR 32-bit */
 	public static final short EM_AVR32_unofficial = 0x18ad;
 
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	/**
-	 * The size in bytes of the entry in the program
-	 * location table (PLT).
-	 */
-	public static final int PLT_ENTRY_SIZE = 0x10;
-
-	/**
-	 * The size in bytes of the entry in the program
-	 * location table (PLT) in ARM files.
-	 */
-	//public static final int PLT_ENTRY_SIZE_ARM = 0x12;
-
 }

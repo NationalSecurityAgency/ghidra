@@ -28,6 +28,7 @@ import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
 public abstract class SymbolCategoryNode extends SymbolTreeNode {
+	private static final int MAX_NODES = 40;
 	protected SymbolCategory symbolCategory;
 	protected SymbolTable symbolTable;
 	protected GlobalNamespace globalNamespace;
@@ -53,10 +54,7 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 		SymbolType symbolType = symbolCategory.getSymbolType();
 		List<GTreeNode> list = getSymbols(symbolType, monitor);
 		monitor.checkCanceled();
-		if (list.size() > MAX_CHILD_NODES) {
-			list = OrganizationNode.organize(list, MAX_CHILD_NODES, monitor);
-		}
-		return list;
+		return OrganizationNode.organize(list, MAX_NODES, monitor);
 	}
 
 	public Program getProgram() {
