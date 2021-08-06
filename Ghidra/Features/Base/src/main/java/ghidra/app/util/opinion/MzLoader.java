@@ -134,8 +134,8 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		}
 		monitor.setMessage("Setting registers...");
 
-		Symbol entrySymbol =
-			SymbolUtilities.getLabelOrFunctionSymbol(prog, ENTRY_NAME, err -> log.error("MZ", err));
+		Symbol entrySymbol = SymbolUtilities.getLabelOrFunctionSymbol(prog, ENTRY_NAME,
+			err -> log.appendMsg("MZ", err));
 		setRegisters(context, entrySymbol, memory.getBlocks(), dos);
 
 	}
@@ -375,6 +375,11 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 				int value = Conv.shortToInt(reader.readShort(locOffset));
 				int fixupAddrSeg = (value + csStart) & Conv.SHORT_MASK;
 				mem.setShort(fixupAddr, (short) fixupAddrSeg);
+
+				// Add to relocation table
+				prog.getRelocationTable()
+						.add(fixupAddr, 0, new long[] { off, seg }, converter.getBytes(value),
+							null);
 			}
 		}
 		catch (IOException e) {

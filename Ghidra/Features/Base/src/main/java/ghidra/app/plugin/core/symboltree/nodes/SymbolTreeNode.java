@@ -41,8 +41,6 @@ import ghidra.util.task.TaskMonitor;
  */
 public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 
-	public static final int MAX_CHILD_NODES = 40;
-
 	public static final Comparator<Symbol> SYMBOL_COMPARATOR = (s1, s2) -> {
 		// note: not really sure if we care about the cases where 'symbol' is null, as that 
 		//       implies the symbol was deleted and the node will go away.  Just be consistent.

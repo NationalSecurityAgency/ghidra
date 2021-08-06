@@ -45,18 +45,18 @@ public class PairedPcodeArithmetic<L, R> implements PcodeArithmetic<Pair<L, R>> 
 	}
 
 	@Override
-	public Pair<L, R> unaryOp(UnaryOpBehavior op, int sizeout, int sizein, Pair<L, R> in1) {
+	public Pair<L, R> unaryOp(UnaryOpBehavior op, int sizeout, int sizein1, Pair<L, R> in1) {
 		return new ImmutablePair<>(
-			leftArith.unaryOp(op, sizeout, sizein, in1.getLeft()),
-			rightArith.unaryOp(op, sizeout, sizein, in1.getRight()));
+			leftArith.unaryOp(op, sizeout, sizein1, in1.getLeft()),
+			rightArith.unaryOp(op, sizeout, sizein1, in1.getRight()));
 	}
 
 	@Override
-	public Pair<L, R> binaryOp(BinaryOpBehavior op, int sizeout, int sizein, Pair<L, R> in1,
-			Pair<L, R> in2) {
+	public Pair<L, R> binaryOp(BinaryOpBehavior op, int sizeout, int sizein1, Pair<L, R> in1,
+			int sizein2, Pair<L, R> in2) {
 		return new ImmutablePair<>(
-			leftArith.binaryOp(op, sizeout, sizein, in1.getLeft(), in2.getLeft()),
-			rightArith.binaryOp(op, sizeout, sizein, in2.getRight(), in2.getRight()));
+			leftArith.binaryOp(op, sizeout, sizein1, in1.getLeft(), sizein2, in2.getLeft()),
+			rightArith.binaryOp(op, sizeout, sizein1, in2.getRight(), sizein2, in2.getRight()));
 	}
 
 	@Override

@@ -127,8 +127,8 @@ void EmulatePcodeOp::executeSegmentOp(void)
   uintb in1 = getVarnodeValue(currentOp->getIn(1));
   uintb in2 = getVarnodeValue(currentOp->getIn(2));
   vector<uintb> bindlist;
-  bindlist.push_back(in2);
   bindlist.push_back(in1);
+  bindlist.push_back(in2);
   uintb res = segdef->execute(bindlist);
   setVarnodeValue(currentOp->getOut(), res);
 }

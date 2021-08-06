@@ -15,7 +15,7 @@
  */
 package agent.gdb.manager.impl;
 
-import static ghidra.async.AsyncUtils.loop;
+import static ghidra.async.AsyncUtils.*;
 
 import java.io.*;
 import java.util.*;
@@ -40,6 +40,7 @@ import ghidra.async.AsyncLock.Hold;
 import ghidra.dbg.error.DebuggerModelTerminatingException;
 import ghidra.dbg.util.HandlerMap;
 import ghidra.dbg.util.PrefixMap;
+import ghidra.framework.Application;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
@@ -71,22 +72,9 @@ public class GdbManagerImpl implements GdbManager {
 		CLI, MI2;
 	}
 
-	private static final boolean LOG_IO = true |
-		Boolean.parseBoolean(System.getProperty("agent.gdb.manager.log"));
-	private static final PrintWriter DBG_LOG;
-	static {
-		if (LOG_IO) {
-			try {
-				DBG_LOG = new PrintWriter(new FileOutputStream(new File("GDB.log")));
-			}
-			catch (FileNotFoundException e) {
-				throw new AssertionError(e);
-			}
-		}
-		else {
-			DBG_LOG = null;
-		}
-	}
+	private static final boolean LOG_IO =
+		Boolean.getBoolean("agent.gdb.manager.log");
+	private static PrintWriter DBG_LOG = null;
 	private static final String PROMPT_GDB = "(gdb)";
 	public static final int INTERRUPT_MAX_RETRIES = 3;
 	public static final int INTERRUPT_RETRY_PERIOD_MILLIS = 100;
@@ -111,6 +99,9 @@ public class GdbManagerImpl implements GdbManager {
 
 		@Override
 		public void run() {
+			if (LOG_IO && DBG_LOG == null) {
+				initLog();
+			}
 			try {
 				String line;
 				while (isAlive() && null != (line = reader.readLine())) {
@@ -206,6 +197,20 @@ public class GdbManagerImpl implements GdbManager {
 		state.addChangeListener((os, ns, c) -> event(() -> asyncState.set(ns, c), "managerState"));
 		defaultPrefixes();
 		defaultHandlers();
+	}
+
+	private void initLog() {
+		try {
+			File userSettings = Application.getUserSettingsDirectory();
+			File logFile = new File(userSettings, "GDB.log");
+			if (!logFile.canWrite()) {
+				throw new AssertionError(logFile.getPath() + " appears to be unwritable");
+			}
+			DBG_LOG = new PrintWriter(new FileOutputStream(logFile));
+		}
+		catch (FileNotFoundException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 	CompletableFuture<Void> event(Runnable r, String text) {
@@ -718,22 +723,22 @@ public class GdbManagerImpl implements GdbManager {
 					return;
 				}
 				curCmd = pcmd;
-			}
-			//Msg.debug(this, "CURCMD = " + curCmd);
-			if (LOG_IO) {
-				DBG_LOG.println("*CMD: " + cmd.getClass());
-				DBG_LOG.flush();
-			}
-			String text = cmd.encode();
-			if (text != null) {
-				Interpreter interpreter = cmd.getInterpreter();
-				PrintWriter wr = getWriter(interpreter);
-				//Msg.debug(this, "STDIN: " + text);
-				wr.println(text);
-				wr.flush();
+				//Msg.debug(this, "CURCMD = " + curCmd);
 				if (LOG_IO) {
-					DBG_LOG.println(">" + interpreter + ": " + text);
+					DBG_LOG.println("*CMD: " + cmd.getClass());
 					DBG_LOG.flush();
+				}
+				String text = cmd.encode();
+				if (text != null) {
+					Interpreter interpreter = cmd.getInterpreter();
+					PrintWriter wr = getWriter(interpreter);
+					//Msg.debug(this, "STDIN: " + text);
+					wr.println(text);
+					wr.flush();
+					if (LOG_IO) {
+						DBG_LOG.println(">" + interpreter + ": " + text);
+						DBG_LOG.flush();
+					}
 				}
 			}
 		}).exceptionally((exc) -> {

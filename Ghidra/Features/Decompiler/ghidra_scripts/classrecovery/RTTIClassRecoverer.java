@@ -13,23 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package classrecovery;
-/* ###
- * IP: GHIDRA
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 //DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS. 
+package classrecovery;
+
 import java.util.*;
 
 import ghidra.app.util.NamespaceUtils;
@@ -52,10 +38,11 @@ public class RTTIClassRecoverer extends RecoveredClassUtils {
 	String ghidraVersion;
 	Program program;
 	TaskMonitor monitor;
+	boolean hasDebugSymbols;
 
 	RTTIClassRecoverer(Program program, ProgramLocation location, PluginTool tool,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
-			boolean nameVfunctions,
+			boolean nameVfunctions, boolean hasDebugSymbols,
 			TaskMonitor monitor) {
 
 		super(program, location, tool, api, createBookmarks, useShortTemplates, nameVfunctions,
@@ -69,6 +56,7 @@ public class RTTIClassRecoverer extends RecoveredClassUtils {
 		this.createBookmarks = createBookmarks;
 		this.useShortTemplates = useShortTemplates;
 		this.nameVfunctions = nameVfunctions;
+		this.hasDebugSymbols = hasDebugSymbols;
 
 		ghidraVersion = getVersionOfGhidra();
 	}
@@ -109,9 +97,7 @@ public class RTTIClassRecoverer extends RecoveredClassUtils {
 	public String getVersionOfGhidra() {
 
 		Options options = program.getOptions("Program Information");
-		Object ghidraVersionObject = options.getObject("Created With Ghidra Version", null);
-
-		return ghidraVersionObject.toString();
+		return options.getString("Created With Ghidra Version", null);
 	}
 
 

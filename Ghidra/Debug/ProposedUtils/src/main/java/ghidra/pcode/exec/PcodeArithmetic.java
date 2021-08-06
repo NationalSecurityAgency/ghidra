@@ -25,9 +25,9 @@ public interface PcodeArithmetic<T> {
 	PcodeArithmetic<byte[]> BYTES_LE = BytesPcodeArithmetic.LITTLE_ENDIAN;
 	PcodeArithmetic<BigInteger> BIGINT = BigIntegerPcodeArithmetic.INSTANCE;
 
-	T unaryOp(UnaryOpBehavior op, int sizeout, int sizein, T in1);
+	T unaryOp(UnaryOpBehavior op, int sizeout, int sizein1, T in1);
 
-	T binaryOp(BinaryOpBehavior op, int sizeout, int sizein, T in1, T in2);
+	T binaryOp(BinaryOpBehavior op, int sizeout, int sizein1, T in1, int sizein2, T in2);
 
 	T fromConst(long value, int size);
 

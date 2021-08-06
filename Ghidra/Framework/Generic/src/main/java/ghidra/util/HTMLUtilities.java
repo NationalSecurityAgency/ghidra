@@ -759,6 +759,7 @@ public class HTMLUtilities {
 		//
 		// Use the label's builtin handling of HTML text via the HTMLEditorKit
 		//
+		Swing.assertSwingThread("This method must be called on the Swing thread");
 		JLabel label = new JLabel(text) {
 			@Override
 			public void paint(Graphics g) {

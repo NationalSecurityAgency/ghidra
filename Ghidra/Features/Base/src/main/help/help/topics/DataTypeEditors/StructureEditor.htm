@@ -631,7 +631,18 @@
       does this by selecting the components in the editor and clicking the <IMG src=
       "images/cstruct.png" alt=""> <B>Create Structure From Selection</B> button. The user is then
       prompted for the name of the new structure. Once a unique name is specified the new structure
-      is created and a component containing it replaces the selected components.</P>
+      is created and a component containing it replaces the selected components.  The newly created
+      structure will adopt the same pack setting as the current structure.</P>
+      
+      <P>It is important to note that when using this action with a packed structure the placement of components 
+      within the new stucture may change as can offsets of trailing components within the current structure.
+      The size of the current structure may also be affected as a result of this change.</P>
+      
+      <P>If you do not like the result of the change you can restore the previous state of the
+      current structure by using the <A HREF="#Structure_Editor_Unpackage_Component"></A> action on 
+      the new structure component, although the newly created structure will still exist within 
+      the Data Type Manager.</P>
+
     </BLOCKQUOTE><BR>
      
     </BLOCKQUOTE> 

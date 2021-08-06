@@ -22,7 +22,13 @@ import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 
+@TargetObjectSchemaInfo(
+	name = "Selectable",
+	attributes = {
+		@TargetAttributeType(type = Void.class) })
 public interface DbgModelSelectableObject extends DbgModelTargetObject {
 
 	public default CompletableFuture<Void> setActive() {

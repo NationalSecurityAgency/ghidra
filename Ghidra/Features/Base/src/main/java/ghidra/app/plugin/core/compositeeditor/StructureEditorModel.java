@@ -1216,11 +1216,13 @@ class StructureEditorModel extends CompEditorModel {
 		final StructureDataType structureDataType =
 			new StructureDataType(originalCategoryPath, uniqueName, length, originalDTM);
 
-//		if (isPackingEnabled()) {
-//			structureDataType.setPackingValue(getPackingValue());
-//		}
+		// adopt pack setting from current structure
+		structureDataType.setPackingEnabled(isPackingEnabled());
+		if (getPackingType() == PackingType.EXPLICIT) {
+			structureDataType.setExplicitPackingValue(getExplicitPackingValue());
+		}
 
-// Get data type components to make into structure.
+		// Get data type components to make into structure.
 		DataTypeComponent firstDtc = null;
 		DataTypeComponent lastDtc = null;
 		for (int rowIndex = minRow; rowIndex < maxRow; rowIndex++) {

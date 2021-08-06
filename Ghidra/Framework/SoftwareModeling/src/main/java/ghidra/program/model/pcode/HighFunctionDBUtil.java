@@ -254,8 +254,8 @@ public class HighFunctionDBUtil {
 
 		Register reg = var.getRegister();
 		if (reg != null) {
-			program.getReferenceManager().addRegisterReference(pcAddr, -1, reg, RefType.WRITE,
-				source);
+			program.getReferenceManager()
+					.addRegisterReference(pcAddr, -1, reg, RefType.WRITE, source);
 		}
 
 		return var;
@@ -496,8 +496,7 @@ public class HighFunctionDBUtil {
 			VariableStorage storage = highSymbol.getStorage();
 			Address pcAddr = highSymbol.getPCAddress();
 			HighVariable tmpHigh = highSymbol.getHighVariable();
-			if (!storage.isHashStorage() && tmpHigh != null &&
-				tmpHigh.requiresDynamicStorage()) {
+			if (!storage.isHashStorage() && tmpHigh != null && tmpHigh.requiresDynamicStorage()) {
 				DynamicEntry entry = DynamicEntry.build(tmpHigh.getRepresentative());
 				storage = entry.getStorage();
 				pcAddr = entry.getPCAdress();	// The address may change from original Varnode
@@ -728,17 +727,25 @@ public class HighFunctionDBUtil {
 		}
 		if (op.getOpcode() == PcodeOp.PTRSUB) {
 			Varnode vnode = op.getInput(0);
+			Varnode cnode = op.getInput(1);
 			if (vnode.isRegister()) {
 				AddressSpace stackspace = program.getAddressFactory().getStackSpace();
 				if (stackspace != null) {
-					Address caddr = op.getInput(1).getAddress();
-					storageAddress = stackspace.getAddress(caddr.getOffset());
+					storageAddress = stackspace.getAddress(cnode.getOffset());
 				}
 			}
 			else {
-				Address caddr = op.getInput(1).getAddress();
-				storageAddress = program.getAddressFactory().getDefaultAddressSpace().getAddress(
-					caddr.getOffset());
+				AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
+				if (space instanceof SegmentedAddressSpace) {
+					// Assume this is a "full" encoding of the offset
+					int innersize = space.getPointerSize();
+					int base = (int) (cnode.getOffset() >>> 8 * innersize);
+					int off = (int) cnode.getOffset() & ((1 << 8 * innersize) - 1);
+					storageAddress = ((SegmentedAddressSpace) space).getAddress(base, off);
+				}
+				else {
+					storageAddress = space.getAddress(cnode.getOffset());
+				}
 			}
 		}
 		return storageAddress;

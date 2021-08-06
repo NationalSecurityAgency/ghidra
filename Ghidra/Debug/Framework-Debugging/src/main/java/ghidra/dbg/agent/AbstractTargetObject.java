@@ -61,7 +61,7 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 	protected final String typeHint;
 	protected final TargetObjectSchema schema;
 
-	protected boolean valid = true;
+	protected volatile boolean valid = true;
 
 	// TODO: Remove these, and just do invocations on model's listeners?
 	protected final ListenerSet<DebuggerModelListener> listeners;

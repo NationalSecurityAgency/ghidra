@@ -24,14 +24,14 @@ public enum BigIntegerPcodeArithmetic implements PcodeArithmetic<BigInteger> {
 	INSTANCE;
 
 	@Override
-	public BigInteger unaryOp(UnaryOpBehavior op, int sizeout, int sizein, BigInteger in1) {
-		return op.evaluateUnary(sizeout, sizein, in1);
+	public BigInteger unaryOp(UnaryOpBehavior op, int sizeout, int sizein1, BigInteger in1) {
+		return op.evaluateUnary(sizeout, sizein1, in1);
 	}
 
 	@Override
-	public BigInteger binaryOp(BinaryOpBehavior op, int sizeout, int sizein, BigInteger in1,
-			BigInteger in2) {
-		return op.evaluateBinary(sizeout, sizein, in1, in2);
+	public BigInteger binaryOp(BinaryOpBehavior op, int sizeout, int sizein1, BigInteger in1,
+			int sizein2, BigInteger in2) {
+		return op.evaluateBinary(sizeout, sizein1, in1, in2);
 	}
 
 	@Override

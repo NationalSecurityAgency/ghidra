@@ -15,10 +15,10 @@
  */
 package ghidra.app.util.bin.format.elf;
 
+import java.util.*;
+
 import ghidra.app.cmd.refs.RemoveReferenceCmd;
-import ghidra.framework.store.LockException;
 import ghidra.program.disassemble.Disassembler;
-import ghidra.program.disassemble.DisassemblerMessageListener;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
@@ -37,6 +37,9 @@ import ghidra.util.task.TaskMonitor;
  * extensions.
  */
 public class ElfDefaultGotPltMarkup {
+
+	// When PLT head is known and named sections are missing this label will be placed at head of PLT
+	private static final String PLT_HEAD_SYMBOL_NAME = "__PLT_HEAD";
 
 	private ElfLoadHelper elfLoadHelper;
 	private ElfHeader elf;
@@ -58,7 +61,7 @@ public class ElfDefaultGotPltMarkup {
 
 	public void process(TaskMonitor monitor) throws CancelledException {
 		if (elf.e_shnum() == 0) {
-			processDynamicPLTGOT(monitor);
+			processDynamicPLTGOT(ElfDynamicType.DT_PLTGOT, ElfDynamicType.DT_JMPREL, monitor);
 		}
 		else {
 			processGOTSections(monitor);
@@ -87,30 +90,55 @@ public class ElfDefaultGotPltMarkup {
 		}
 	}
 
+	private static class PltGotSymbol implements Comparable<PltGotSymbol> {
+		final ElfSymbol elfSymbol;
+		final long offset;
+
+		PltGotSymbol(ElfSymbol elfSymbol, long offset) {
+			this.elfSymbol = elfSymbol;
+			this.offset = offset;
+		}
+
+		@Override
+		public int compareTo(PltGotSymbol o) {
+			return Long.compareUnsigned(offset, o.offset);
+		}
+	}
+
+	// When scanning PLT for symbols the min/max entry size are used to control the search
+	private static final int MAX_SUPPORTED_PLT_ENTRY_SIZE = 32;
+	private static final int MIN_SUPPORTED_PLT_ENTRY_SIZE = 8;
+
+	// When scanning PLT for symbol spacing this is the threashold used to stop the search
+	// when the same spacing size is detected in an attempt to identify the PLT entry size
+	private static final int PLT_SYMBOL_SAMPLE_COUNT_THRESHOLD = 10;
+
 	/**
-	 * Process GOT table specified by Dynamic Program Header (DT_PLTGOT).
-	 * Entry count determined by corresponding relocation table identified by
-	 * the dynamic table entry DT_JMPREL.
+	 * Process GOT and associated PLT based upon specified dynamic table entries.
+	 * The primary goal is to identify the bounds of the GOT and PLT and process
+	 * any external symbols which may be defined within the PLT.  Processing of PLT
+	 * is only critical if it contains external symbols which must be processed, otherwise
+	 * they will likely resolve adequately during subsequent analysis.
+	 * @param pltGotType dynamic type for dynamic PLTGOT lookup (identifies dynamic PLTGOT)
+	 * @param pltGotRelType dynamic type for associated dynamic JMPREL lookup (identifies dynamic PLTGOT relocation table)
 	 * @param monitor task monitor
 	 * @throws CancelledException thrown if task cancelled
 	 */
-	private void processDynamicPLTGOT(TaskMonitor monitor) throws CancelledException {
+	private void processDynamicPLTGOT(ElfDynamicType pltGotType, ElfDynamicType pltGotRelType,
+			TaskMonitor monitor) throws CancelledException {
 
 		ElfDynamicTable dynamicTable = elf.getDynamicTable();
-		if (dynamicTable == null || !dynamicTable.containsDynamicValue(ElfDynamicType.DT_PLTGOT) ||
-			!dynamicTable.containsDynamicValue(ElfDynamicType.DT_JMPREL)) {
+		if (dynamicTable == null || !dynamicTable.containsDynamicValue(pltGotType) ||
+			!dynamicTable.containsDynamicValue(pltGotRelType)) {
 			return;
 		}
-
-		// NOTE: there may be other relocation table affecting the GOT 
-		// corresponding to DT_PLTGOT
 
 		AddressSpace defaultSpace = program.getAddressFactory().getDefaultAddressSpace();
 		long imageBaseAdj = elfLoadHelper.getImageBaseWordAdjustmentOffset();
 
 		try {
 			long relocTableAddr =
-				elf.adjustAddressForPrelink(dynamicTable.getDynamicValue(ElfDynamicType.DT_JMPREL));
+				elf.adjustAddressForPrelink(dynamicTable.getDynamicValue(pltGotRelType));
 
 			ElfProgramHeader relocTableLoadHeader =
 				elf.getProgramLoadHeaderContaining(relocTableAddr);
@@ -123,44 +151,199 @@ public class ElfDefaultGotPltMarkup {
 				return;
 			}
 
-			// External dynamic symbol entries in the PLTGOT, if any, will be placed
-			// after any local symbol entries.
+			// External dynamic symbol entries in the GOT, if any, will be placed
+			// after any local symbol entries.  Local entries are assumed to have original 
+			// bytes of zero, whereas non-local entries will refer to the PLT
 
-			// While DT_PLTGOT identifies the start of the PLTGOT it does not
-			// specify its length.  If there are dynamic non-local entries in the 
-			// PLTGOT they should have relocation entries in the table identified 
-			// by DT_JMPREL.  It is important to note that this relocation table
-			// can include entries which affect other processor-specific PLTGOT
-			// tables (e.g., MIPS_PLTGOT) so we must attempt to isolate the 
-			// entries which correspond to DT_PLTGOT.  
-
-			// WARNING: This implementation makes a potentially bad assumption that 
-			// the last relocation entry will identify the endof the PLTGOT if its
-			// offset is beyond the start of the PLTGOT.  This assumption could
-			// easily be violated by a processor-specific PLTGOT which falls after
-			// the standard PLTGOT in memory and shares the same relocation table.
+			// While the dynamic value for pltGotType (e.g., DT_PLTGOT) identifies the start of 
+			// dynamic GOT table it does not specify its length.  The associated relocation
+			// table, identified by the dynamic value for pltGotRelType, will have a relocation
+			// record for each PLT entry linked via the GOT.  The number of relocations matches
+			// the number of PLT entries and the one with the greatest offset correspionds
+			// to the last GOT entry.  Unfortuntely, the length of each PLT entry and initial
+			// PLT head is unknown.  If the binary has not placed external symbols within the PLT
+			// processing and disassembly of the PLT may be skipped.
 
 			long pltgot = elf.adjustAddressForPrelink(
-				dynamicTable.getDynamicValue(ElfDynamicType.DT_PLTGOT));
+				dynamicTable.getDynamicValue(pltGotType));
+			Address gotStart = defaultSpace.getAddress(pltgot + imageBaseAdj);
 
 			ElfRelocation[] relocations = relocationTable.getRelocations();
-
-			long lastGotOffset = relocations[relocations.length - 1].getOffset();
-			if (lastGotOffset < pltgot) {
+			ElfSymbolTable associatedSymbolTable = relocationTable.getAssociatedSymbolTable();
+			if (associatedSymbolTable == null) {
 				return;
 			}
 
-			Address gotStart = defaultSpace.getAddress(pltgot + imageBaseAdj);
-			Address gotEnd = defaultSpace.getAddress(lastGotOffset + imageBaseAdj);
+			// Create ordered list of PLTGOT symbols based upon offset with GOT.
+			// It assumed that the PLT entry sequence will match this list.
+			ElfSymbol[] symbols = associatedSymbolTable.getSymbols();
+			List<PltGotSymbol> pltGotSymbols = new ArrayList<>();
+			for (ElfRelocation reloc : relocations) {
+				pltGotSymbols
+						.add(new PltGotSymbol(symbols[reloc.getSymbolIndex()], reloc.getOffset()));
+			}
+			Collections.sort(pltGotSymbols);
+
+			// Identify end of GOT table based upon relocation offsets
+			long maxGotOffset = pltGotSymbols.get(pltGotSymbols.size() - 1).offset;
+			Address gotEnd = defaultSpace.getAddress(maxGotOffset + imageBaseAdj);
 
 			processGOT(gotStart, gotEnd, monitor);
-			processDynamicPLT(gotStart, gotEnd, monitor);
+
+			//
+			// Examine the first two GOT entries which correspond to the relocations (i.e., pltGotSymbols).
+			// An adjusted address from the original bytes is computed.  These will point into the PLT.  
+			// These two pointers will either refer to the same address (i.e., PLT head) or different 
+			// addresses which correspond to the first two PLT entries.  While likely offcut into each PLT 
+			// entry, the differing PLT addresses can be used to identify the PLT entry size/spacing but 
+			// not the top of PLT.  If symbols are present within the PLT for each entry, they may 
+			// be used to identify the PLT entry size/spacing and will be converted to external symbols.
+			// 
+
+			long pltEntryCount = pltGotSymbols.size();
+
+			// Get original bytes, converted to addresses, for first two PLT/GOT symbols
+			Address pltAddr1 = null;
+			Address pltAddr2 = null;
+			for (PltGotSymbol pltGotSym : pltGotSymbols) {
+				Address gotEntryAddr = defaultSpace.getAddress(pltGotSym.offset + imageBaseAdj);
+				long originalGotEntry = elfLoadHelper.getOriginalValue(gotEntryAddr, true);
+				if (originalGotEntry == 0) {
+					return; // unexpected original bytes for PLTGOT entry - skip PLT processing
+				}
+				if (pltAddr1 == null) {
+					pltAddr1 = defaultSpace.getAddress(originalGotEntry + imageBaseAdj);
+				}
+				else {
+					pltAddr2 = defaultSpace.getAddress(originalGotEntry + imageBaseAdj);
+					break;
+				}
+			}
+			if (pltAddr2 == null) {
+				return; // unable to find two GOT entries which refer to PLT - skip PLT processing
+			}
+
+			// NOTE: This approach assumes that all PLT entries have the same structure (i.e., instruction sequence)
+			long pltSpacing = pltAddr2.subtract(pltAddr1);
+			if (pltSpacing < 0 || pltSpacing > MAX_SUPPORTED_PLT_ENTRY_SIZE ||
+				(pltSpacing % 2) != 0) {
+				return; // unsupported PLT entry size - skip PLT processing
+			}
+
+			Address minSymbolSearchAddress;
+			long symbolSearchSpacing; // nominal PLT entry size for computing maxSymbolSearchAddress
+
+			Address firstPltEntryAddr = null; // may be offcut within first PLT entry
+			
+			if (pltSpacing == 0) { // Entries have same original bytes which refer to PLT head
+				Function pltHeadFunc = elfLoadHelper.createOneByteFunction(null, pltAddr1, false);
+				if (pltHeadFunc.getSymbol().getSource() == SourceType.DEFAULT) {
+					try {
+						pltHeadFunc.setName(PLT_HEAD_SYMBOL_NAME, SourceType.ANALYSIS);
+					}
+					catch (DuplicateNameException | InvalidInputException e) {
+						// Ignore - unexpected
+					}
+				}
+
+				// PLT spacing is not known.  pltAddr1 is PLT head
+				minSymbolSearchAddress = pltAddr1.next();
+
+				// Use conservative PLT entry size when computing address limit for PLT symbol search.
+				// For a PLT with an actual entry size of 16 this will reduce the scan to less than half 
+				// of the PLT.  This should only present an issue for very small PLTs or those 
+				// with sparsely placed symbols.
+				symbolSearchSpacing = MIN_SUPPORTED_PLT_ENTRY_SIZE;
+			}
+			else {
+				// PLT spacing is known, but start of entry and head is not known.  pltAddr1 points to middle of first PLT entry (not head).
+				firstPltEntryAddr = pltAddr1;
+				minSymbolSearchAddress = pltAddr1.subtract(pltSpacing - 1); // try to avoid picking up symbol which may be at head
+				symbolSearchSpacing = pltSpacing;
+			}
+
+			// Attempt to find symbols located within the PLT.
+			Address maxSymbolSearchAddress =
+				minSymbolSearchAddress.add(pltEntryCount * symbolSearchSpacing);
+
+			// Scan symbols within PLT; helps to identify start of first entry and PLT entry size/spacing if unknown
+			Symbol firstSymbol = null;
+			Symbol lastSymbol = null;
+			long discoveredPltSpacing = Long.MAX_VALUE;
+			Map<Long, Integer> spacingCounts = new HashMap<>();
+			for (Symbol sym : elfLoadHelper.getProgram()
+					.getSymbolTable()
+					.getSymbolIterator(minSymbolSearchAddress, true)) {
+				if (sym.getSource() == SourceType.DEFAULT) {
+					continue;
+				}
+				Address addr = sym.getAddress();
+				if (addr.compareTo(maxSymbolSearchAddress) > 0) {
+					break;
+				}
+				if (firstSymbol == null) {
+					firstSymbol = sym;
+				}
+				if (pltSpacing == 0) {
+					// Collect spacing samples if PLT spacing is unknown
+					if (lastSymbol != null) {
+						long spacing = addr.subtract(lastSymbol.getAddress());
+						if (spacing > MAX_SUPPORTED_PLT_ENTRY_SIZE) {
+							lastSymbol = null; // reset on large symbol spacing
+							continue;
+						}
+						int count =
+							spacingCounts.compute(spacing, (k, v) -> (v == null) ? 1 : v + 1);
+						discoveredPltSpacing = Math.min(discoveredPltSpacing, spacing);
+						if (count == PLT_SYMBOL_SAMPLE_COUNT_THRESHOLD) {
+							break; // stop on 10 occurances of the same spacing (rather arbitrary sample limit)
+						}
+					}
+					lastSymbol = sym;
+				}
+			}
+
+			if (pltSpacing == 0) {
+				if (discoveredPltSpacing == Long.MAX_VALUE ||
+					spacingCounts.get(discoveredPltSpacing) == 1) { // NOTE: required number of symbol-spacing samples could be increased from 1
+					return; // PLT spacing not determined / too large or insufficient PLT symbols - skip PLT processing
+				}
+				pltSpacing = discoveredPltSpacing;
+			}
+
+			if (firstSymbol != null) {
+				// use PLT symbol if found to identify start of first PLT entry
+				int firstSymbolEntryIndex = -1;
+				Address firstSymbolAddr = firstSymbol.getAddress();
+				int entryIndex = 0;
+				for (PltGotSymbol entrySymbol : pltGotSymbols) {
+					if (firstSymbolAddr
+							.equals(elfLoadHelper.getElfSymbolAddress(entrySymbol.elfSymbol))) {
+						firstSymbolEntryIndex = entryIndex;
+						break;
+					}
+					++entryIndex;
+				}
+				if (firstSymbolEntryIndex >= 0) {
+					firstPltEntryAddr = firstSymbolAddr;
+					if (firstSymbolEntryIndex > 0) {
+						firstPltEntryAddr =
+							firstPltEntryAddr.subtract(firstSymbolEntryIndex * pltSpacing);
+					}
+				}
+			}
+
+			if (firstPltEntryAddr == null) {
+				return; // failed to identify first PLT entry - skip PLT processing
+			}
+
+			Address pltEnd = firstPltEntryAddr.add(pltSpacing * (pltEntryCount - 1));
+			processLinkageTable("PLT", firstPltEntryAddr, pltEnd, monitor);
 		}
-		catch (NotFoundException e) {
-			throw new AssertException(e);
-		}
-		catch (AddressOutOfBoundsException e) {
-			log("Failed to process GOT: " + e.getMessage());
+		catch (Exception e) {
+			String msg = "Failed to process " + pltGotType + ": " + e.getMessage();
+			log(msg);
+			Msg.error(this, msg, e);
 		}
 	}
 
@@ -175,20 +358,47 @@ public class ElfDefaultGotPltMarkup {
 	private void processGOT(Address gotStart, Address gotEnd, TaskMonitor monitor)
 			throws CancelledException {
 
-		boolean imageBaseAlreadySet = elf.isPreLinked();
+		// Bail if GOT was previously marked-up or not within initialized memory
+		MemoryBlock block = memory.getBlock(gotStart);
+		if (block == null || !block.isInitialized()) {
+			return; // unsupported memory region - skip GOT processing
+		}
+		Data data = program.getListing().getDataAt(gotStart);
+		if (data == null || !Undefined.isUndefined(data.getDataType())) {
+			return; // evidence of prior markup - skip GOT processing
+		}
 
 		try {
-			Address newImageBase = null;
-			while (gotStart.compareTo(gotEnd) <= 0) {
-				monitor.checkCanceled();
+			// Fixup first GOT entry which frequently refers to _DYNAMIC but generally lacks relocation (e.g. .got.plt)
+			ElfDynamicTable dynamicTable = elf.getDynamicTable();
+			long imageBaseAdj = elfLoadHelper.getImageBaseWordAdjustmentOffset();
+			if (dynamicTable != null && imageBaseAdj != 0) {
+				long entry1Value = elfLoadHelper.getOriginalValue(gotStart, false);
+				if (entry1Value == dynamicTable.getAddressOffset()) {
+					// TODO: record artificial relative relocation for reversion/export concerns
+					entry1Value += imageBaseAdj; // adjust first entry value
+					if (elf.is64Bit()) {
+						memory.setLong(gotStart, entry1Value);
+					}
+					else {
+						memory.setInt(gotStart, (int) entry1Value);
+					}
+				}
+			}
 
-				Data data = createPointer(gotStart, true);
+			boolean imageBaseAlreadySet = elf.isPreLinked();
+
+			Address newImageBase = null;
+			Address nextGotAddr = gotStart;
+			while (nextGotAddr.compareTo(gotEnd) <= 0) {
+
+				data = createPointer(nextGotAddr, true);
 				if (data == null) {
 					break;
 				}
 
 				try {
-					gotStart = data.getMaxAddress().add(1);
+					nextGotAddr = data.getMaxAddress().add(1);
 				}
 				catch (AddressOutOfBoundsException e) {
 					break; // no more room
@@ -208,20 +418,20 @@ public class ElfDefaultGotPltMarkup {
 				}
 			}
 		}
-		catch (CodeUnitInsertionException e) {
-			log("Failed to process GOT: " + e.getMessage());
-		}
-		catch (AddressOverflowException e) {
-			log("Failed to adjust image base: " + e.getMessage());
-		}
-		catch (LockException e) {
-			throw new AssertException(e);
+		catch (Exception e) {
+			String msg = "Failed to process GOT at " + gotStart + ": " + e.getMessage();
+			log(msg);
+			Msg.error(this, msg, e);
 		}
 	}
 
 	private void processPLTSection(TaskMonitor monitor) throws CancelledException {
 
-		// TODO: Handle case where PLT is non-executable pointer table
+		// TODO: May want to consider using analysis to fully disassemble PLT, we only 
+		// really need to migrate external symbols contained within the PLT
+
+		// FIXME: Code needs help ... bad assumption about PLT head size (e.g., 16)
+		int assumedPltHeadSize = 16;
 
 		if (elf.isRelocatable()) {
 			return; //relocatable files do not have .PLT sections
@@ -229,54 +439,21 @@ public class ElfDefaultGotPltMarkup {
 
 		MemoryBlock pltBlock = memory.getBlock(ElfSectionHeaderConstants.dot_plt);
 		// TODO: This is a band-aid since there are many PLT implementations and this assumes only one.
-		if (pltBlock == null || !pltBlock.isExecute() ||
-			pltBlock.getSize() <= ElfConstants.PLT_ENTRY_SIZE) {
+		if (pltBlock == null || !pltBlock.isExecute() || pltBlock.getSize() <= assumedPltHeadSize) {
 			return;
 		}
 
-		int skipPointers = ElfConstants.PLT_ENTRY_SIZE;
+		int skipPointers = assumedPltHeadSize;
 
 		// ARM, AARCH64 and others may not store pointers at start of .plt
 		if (elf.e_machine() == ElfConstants.EM_ARM || elf.e_machine() == ElfConstants.EM_AARCH64) {
-			// TODO: Should be handled by extension
-			skipPointers = 0;
+			skipPointers = 0; // disassemble entire PLT
 		}
 
 		// Process PLT section
 		Address minAddress = pltBlock.getStart().add(skipPointers);
 		Address maxAddress = pltBlock.getEnd();
 		processLinkageTable(ElfSectionHeaderConstants.dot_plt, minAddress, maxAddress, monitor);
-	}
-
-	private void processDynamicPLT(Address gotStart, Address gotEnd, TaskMonitor monitor)
-			throws CancelledException {
-
-		Address pltStart = null;
-		Address pltEnd = null;
-
-		for (Data gotPtr : listing.getDefinedData(new AddressSet(gotStart.next(), gotEnd), true)) {
-			monitor.checkCanceled();
-			if (!gotPtr.isPointer()) {
-				Msg.error(this, "ELF PLTGOT contains non-pointer");
-				return; // unexpected
-			}
-			Address ptr = (Address) gotPtr.getValue();
-			if (ptr.getOffset() == 0) {
-				continue;
-			}
-			MemoryBlock block = memory.getBlock(ptr);
-			if (block == null || block.getName().equals(MemoryBlock.EXTERNAL_BLOCK_NAME)) {
-				continue;
-			}
-			if (pltStart == null) {
-				pltStart = ptr;
-			}
-			pltEnd = ptr;
-		}
-
-		if (pltStart != null) {
-			processLinkageTable("PLT", pltStart, pltEnd, monitor);
-		}
 	}
 
 	/**
@@ -292,16 +469,24 @@ public class ElfDefaultGotPltMarkup {
 	public void processLinkageTable(String pltName, Address minAddress, Address maxAddress,
 			TaskMonitor monitor) throws CancelledException {
 
-		// Disassemble section.  
-		// Disassembly is only done so we can see all instructions since many
-		// of them are unreachable after applying relocations
-		disassemble(minAddress, maxAddress, program, monitor);
+		try {
+			// Disassemble section.  
+			// Disassembly is only done so we can see all instructions since many
+			// of them are unreachable after applying relocations
+			disassemble(minAddress, maxAddress, program, monitor);
 
-		// Any symbols in the linkage section should be converted to External function thunks 
-		// This can be seen with ARM Android examples.
-		int count = convertSymbolsToExternalFunctions(minAddress, maxAddress);
-		if (count > 0) {
-			log("Converted " + count + " " + pltName + " section symbols to external thunks");
+			// Any symbols in the linkage section should be converted to External function thunks 
+			// This can be seen with ARM Android examples.
+			int count = convertSymbolsToExternalFunctions(minAddress, maxAddress);
+			if (count > 0) {
+				log("Converted " + count + " " + pltName + " section symbols to external thunks");
+			}
+		}
+		catch (Exception e) {
+			String msg =
+				"Failed to process " + pltName + " at " + minAddress + ": " + e.getMessage();
+			log(msg);
+			Msg.error(this, msg, e);
 		}
 	}
 
@@ -341,15 +526,13 @@ public class ElfDefaultGotPltMarkup {
 
 	private void disassemble(Address start, Address end, Program prog, TaskMonitor monitor)
 			throws CancelledException {
-		DisassemblerMessageListener dml = msg -> {
-			//don't care...
-		};
 		// TODO: Should we restrict disassembly or follows flows?
 		AddressSet set = new AddressSet(start, end);
-		Disassembler disassembler = Disassembler.getDisassembler(prog, monitor, dml);
+		Disassembler disassembler = Disassembler.getDisassembler(prog, monitor, m -> {
+			/* silent */});
 		while (!set.isEmpty()) {
 			monitor.checkCanceled();
-			AddressSet disset = disassembler.disassemble(set.getMinAddress(), set, true);
+			AddressSet disset = disassembler.disassemble(set.getMinAddress(), null, true);
 			if (disset.isEmpty()) {
 				// Stop on first error but discard error bookmark since
 				// some plt sections are partly empty and must rely
@@ -444,6 +627,8 @@ public class ElfDefaultGotPltMarkup {
 	 * then the base of the .so is most likely incorrect.  Shift it!
 	 */
 	private Address UglyImageBaseCheck(Data data, Address imageBase) {
+		// TODO: Find sample - e.g., ARM .so - seems too late in import processing to change image base 
+		//       if any relocations have been applied.
 		if (elf.e_machine() != ElfConstants.EM_ARM) {
 			return null;
 		}

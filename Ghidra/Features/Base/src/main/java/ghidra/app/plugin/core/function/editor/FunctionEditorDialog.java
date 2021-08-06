@@ -27,6 +27,8 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.event.*;
 import javax.swing.table.TableCellEditor;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.*;
 import docking.widgets.OptionDialog;
 import docking.widgets.checkbox.GCheckBox;
@@ -248,7 +250,22 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		signatureTextField.setFont(font.deriveFont(18.0f));
 		panel.add(signatureTextField);
 
-		signatureTextField.setEscapeListener(e -> model.resetSignatureTextField());
+		signatureTextField.setEscapeListener(e -> {
+
+			if (!model.hasChanges()) {
+				// no changes; user wish to close the dialog
+				cancelCallback();
+				return;
+			}
+
+			// editor has changes, see if they wish to cancel editing
+			if (!promptToAbortChanges()) {
+				return; // keep editing
+			}
+
+			// abort changes confirmed
+			model.resetSignatureTextField();
+		});
 
 		signatureTextField.setActionListener(e -> {
 			try {
@@ -297,16 +314,29 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			message = details;
 		}
 
-		message = HTMLUtilities.wrapAsHTML(
-			message + "<BR><BR><CENTER><B>Do you want to continue editing or " +
-				"abort your changes?</B></CENTER>");
-		int result = OptionDialog.showOptionNoCancelDialog(rootPanel, "Invalid Function Signature",
-			message, "Continue Editing", "Abort Changes", OptionDialog.ERROR_MESSAGE);
-		if (result == OptionDialog.OPTION_TWO) {
+		if (doPromptToAbortChanges(message)) {
 			model.resetSignatureTextField();
 			return true;
 		}
 		return false;
+	}
+
+	private boolean promptToAbortChanges() {
+		return doPromptToAbortChanges("");
+	}
+
+	private boolean doPromptToAbortChanges(String message) {
+
+		if (!StringUtils.isBlank(message)) {
+			message += "<BR><BR>";
+		}
+
+		message = HTMLUtilities.wrapAsHTML(
+			message + "<CENTER><B>Do you want to continue editing or " +
+				"abort your changes?</B></CENTER>");
+		int result = OptionDialog.showOptionNoCancelDialog(rootPanel, "Invalid Function Signature",
+			message, "Continue Editing", "Abort Changes", OptionDialog.ERROR_MESSAGE);
+		return result == OptionDialog.OPTION_TWO; // Option 2 is to abort
 	}
 
 	private Component buildAttributePanel() {

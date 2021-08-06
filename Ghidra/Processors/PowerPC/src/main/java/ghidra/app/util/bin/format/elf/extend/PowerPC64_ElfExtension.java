@@ -35,6 +35,9 @@ import ghidra.util.task.TaskMonitor;
 
 public class PowerPC64_ElfExtension extends ElfExtension {
 
+	private static final int PLT_ENTRY_SIZE = 8; // could be 16(local) or 24 w/ opd_api, 32 for VxWorks
+	private static final int PLT_HEAD_SIZE = 16; // could be 24 w/ obd_api, 32 for VxWorks
+
 	// Elf Dynamic Type Extensions
 	public static final ElfDynamicType DT_PPC64_GLINK = new ElfDynamicType(0x70000000,
 		"DT_PPC64_GLINK", "Specify the start of the .glink section", ElfDynamicValueType.ADDRESS);
@@ -225,8 +228,7 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 		}
 		Program program = elfLoadHelper.getProgram();
 		MemoryBlock pltBlock = program.getMemory().getBlock(pltSection.getNameAsString());
-		// TODO: This is a band-aid since there are many PLT implementations and this assumes only one.
-		if (pltBlock == null || pltBlock.getSize() <= ElfConstants.PLT_ENTRY_SIZE) {
+		if (pltBlock == null) {
 			return;
 		}
 		if (pltSection.isExecutable()) {
@@ -243,14 +245,14 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 
 		// TODO: Uncertain
 
-		Address addr = pltBlock.getStart().add(ElfConstants.PLT_ENTRY_SIZE);
+		Address addr = pltBlock.getStart().add(PLT_HEAD_SIZE);
 		try {
 			while (addr.compareTo(pltBlock.getEnd()) < 0) {
 				monitor.checkCanceled();
 				if (elfLoadHelper.createData(addr, PointerDataType.dataType) == null) {
 					break; // stop early if failed to create a pointer
 				}
-				addr = addr.addNoWrap(8);
+				addr = addr.addNoWrap(PLT_ENTRY_SIZE);
 			}
 		}
 		catch (AddressOverflowException e) {

@@ -115,7 +115,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 		bitGroups = null;
 		checkValue(value);
 		if (nameMap.containsKey(valueName)) {
-			throw new IllegalArgumentException(name + " already exists in this enum");
+			throw new IllegalArgumentException(valueName + " already exists in this enum");
 		}
 		nameMap.put(valueName, value);
 		List<String> list = valueMap.get(value);

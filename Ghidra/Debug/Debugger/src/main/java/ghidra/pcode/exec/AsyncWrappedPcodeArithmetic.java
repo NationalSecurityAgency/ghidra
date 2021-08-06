@@ -45,15 +45,16 @@ public class AsyncWrappedPcodeArithmetic<T> implements PcodeArithmetic<Completab
 	}
 
 	@Override
-	public CompletableFuture<T> unaryOp(UnaryOpBehavior op, int sizeout, int sizein,
+	public CompletableFuture<T> unaryOp(UnaryOpBehavior op, int sizeout, int sizein1,
 			CompletableFuture<T> in1) {
-		return in1.thenApply(t1 -> arithmetic.unaryOp(op, sizeout, sizein, t1));
+		return in1.thenApply(t1 -> arithmetic.unaryOp(op, sizeout, sizein1, t1));
 	}
 
 	@Override
-	public CompletableFuture<T> binaryOp(BinaryOpBehavior op, int sizeout, int sizein,
-			CompletableFuture<T> in1, CompletableFuture<T> in2) {
-		return in1.thenCombine(in2, (t1, t2) -> arithmetic.binaryOp(op, sizeout, sizein, t1, t2));
+	public CompletableFuture<T> binaryOp(BinaryOpBehavior op, int sizeout, int sizein1,
+			CompletableFuture<T> in1, int sizein2, CompletableFuture<T> in2) {
+		return in1.thenCombine(in2,
+			(t1, t2) -> arithmetic.binaryOp(op, sizeout, sizein1, t1, sizein2, t2));
 	}
 
 	@Override
