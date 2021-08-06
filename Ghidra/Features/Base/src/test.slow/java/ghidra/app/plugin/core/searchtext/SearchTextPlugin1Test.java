@@ -681,9 +681,9 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 			AddressBasedTableModel<ProgramLocation> model) {
 		GThreadedTablePanel<ProgramLocation> threadedTablePanel =
 			(GThreadedTablePanel<ProgramLocation>) providers[0].getThreadedTablePanel();
-		final GTable table = threadedTablePanel.getTable();
+		GTable table = threadedTablePanel.getTable();
 		Random random = new Random();
-		final int randomRow = random.nextInt(model.getRowCount());
+		int randomRow = random.nextInt(model.getRowCount());
 
 		DockingActionIf deleteRowAction = getAction(tool, "TableServicePlugin", "Remove Items");
 		ProgramLocation toBeDeleted = model.getRowObject(randomRow);
@@ -972,7 +972,7 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void searchOnce(JTextField tf) throws Exception {
-		final ActionListener listener = tf.getActionListeners()[0];
+		ActionListener listener = tf.getActionListeners()[0];
 		runSwing(() -> listener.actionPerformed(null));
 	}
 
