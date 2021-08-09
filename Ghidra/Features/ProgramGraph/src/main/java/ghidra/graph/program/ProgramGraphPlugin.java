@@ -35,6 +35,7 @@ import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.graph.*;
 import ghidra.program.model.block.CodeBlockModel;
 import ghidra.service.graph.GraphDisplayProvider;
 import ghidra.util.HelpLocation;
@@ -106,6 +107,16 @@ public class ProgramGraphPlugin extends ProgramPlugin
 	public ProgramGraphPlugin(PluginTool tool) {
 		super(tool, true, true);
 		intializeOptions();
+		registerProgramFlowGraphDisplayOptionsWithTool();
+	}
+
+	private void registerProgramFlowGraphDisplayOptionsWithTool() {
+		ProgramGraphDisplayOptions displayOptions =
+			new ProgramGraphDisplayOptions(new BlockFlowGraphType(), null);
+
+		// this will register Program Flow Graph Type options with the tool
+		HelpLocation help = new HelpLocation(getName(), "Program Graphs Display Options");
+		displayOptions.registerOptions(tool.getOptions("Graph"), help);
 	}
 
 	private void intializeOptions() {
@@ -315,19 +326,19 @@ public class ProgramGraphPlugin extends ProgramPlugin
 	}
 
 	private void graphBlockFlow() {
-		graph("Block Flow Graph", blockModelService.getActiveBlockModelName(), false);
+		graph(new BlockFlowGraphType(), blockModelService.getActiveBlockModelName());
 	}
 
 	private void graphCodeFlow() {
-		graph("Code Flow Graph", blockModelService.getActiveBlockModelName(), true);
+		graph(new CodeFlowGraphType(), blockModelService.getActiveBlockModelName());
 	}
 
 	private void graphSubroutines() {
-		graph("Call Graph", blockModelService.getActiveSubroutineModelName(), false);
+		graph(new CallGraphType(), blockModelService.getActiveSubroutineModelName());
 	}
 
 	private void graphSubroutinesUsing(String modelName) {
-		graph("Call Graph (" + modelName + ")", modelName, false);
+		graph(new CallGraphType(), modelName);
 	}
 
 	private void graphDataReferences() {
@@ -342,11 +353,12 @@ public class ProgramGraphPlugin extends ProgramPlugin
 		graphData(DataReferenceGraph.Directions.FROM_ONLY);
 	}
 
-	private void graph(String actionName, String modelName, boolean showCode) {
+	private void graph(ProgramGraphType graphType, String modelName) {
 		try {
 			CodeBlockModel model =
 				blockModelService.getNewModelByName(modelName, currentProgram, true);
-			BlockGraphTask task = new BlockGraphTask(actionName, graphEntryPointNexus, showCode,
+			BlockGraphTask task =
+				new BlockGraphTask(graphType, graphEntryPointNexus,
 				reuseGraph, appendToGraph, tool, currentSelection, currentLocation, model,
 				defaultGraphService);
 			task.setCodeLimitPerBlock(codeLimitPerBlock);

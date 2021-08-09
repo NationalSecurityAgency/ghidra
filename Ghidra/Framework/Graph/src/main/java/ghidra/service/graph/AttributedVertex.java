@@ -20,6 +20,8 @@ package ghidra.service.graph;
  */
 public class AttributedVertex extends Attributed {
 
+	public static final String NAME_KEY = "Name";
+	public static final String VERTEX_TYPE_KEY = "VertexType";
 	private final String id;
 
 	/**
@@ -43,7 +45,7 @@ public class AttributedVertex extends Attributed {
 	 * @param name the new name for the vertex
 	 */
 	public void setName(String name) {
-		setAttribute("Name", name);
+		setAttribute(NAME_KEY, name);
 	}
 
 	/**
@@ -60,7 +62,7 @@ public class AttributedVertex extends Attributed {
 	 * @return  the name of the vertex
 	 */
 	public String getName() {
-		return getAttribute("Name");
+		return getAttribute(NAME_KEY);
 	}
 
 	@Override
@@ -86,6 +88,24 @@ public class AttributedVertex extends Attributed {
 		}
 		AttributedVertex other = (AttributedVertex) obj;
 		return id.equals(other.id);
+	}
+
+	/**
+	 * Returns the vertex type for this vertex
+	 * @return the vertex type for this vertex
+	 */
+	public String getVertexType() {
+		return getAttribute(VERTEX_TYPE_KEY);
+	}
+
+	/**
+	 * Sets the vertex type for this vertex. Should be a value defined by the {@link GraphType} for
+	 * this graph, but there is no enforcement for this. If the value is not defined in GraphType,
+	 * it will be rendered using the default vertex shape and color for the {@link GraphType}
+	 * @param vertexType the vertex type for this vertex
+	 */
+	public void setVertexType(String vertexType) {
+		setAttribute(VERTEX_TYPE_KEY, vertexType);
 	}
 
 }

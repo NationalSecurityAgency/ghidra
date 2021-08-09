@@ -30,13 +30,21 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
 import ghidra.service.graph.*;
 import ghidra.util.Msg;
-import java.util.*;
-import static ghidra.service.graph.GraphDisplay.*;
+import ghidra.util.WebColors;
 
 public class GraphAST extends GhidraScript {
-	protected static final String COLOR_ATTRIBUTE = "Color";
-	protected static final String ICON_ATTRIBUTE = "Icon";
+	private static final String SHAPE_ATTRIBUTE = "Shape";
 
+	protected static final String DEFAULT = "Default";
+	protected static final String CONSTANT = "Constant";
+	protected static final String REGISTER = "Register";
+	protected static final String UNIQUE = "Unique";
+	protected static final String PERSISTENT = "Persistent";
+	protected static final String ADDRESS_TIED = "Address Tied";
+	protected static final String OP = "Op";
+
+	protected static final String TYPE_OUTPUT = "Output";
+	protected static final String TYPE_INPUT = "Input";
 	private Function func;
 	private AttributedGraph graph;
 	protected HighFunction high;
@@ -63,24 +71,48 @@ public class GraphAST extends GhidraScript {
 
 		buildAST();
 
-		graph = new AttributedGraph();
+		GraphType graphType = new GraphTypeBuilder("AST")
+				.vertexType(DEFAULT)
+				.vertexType(CONSTANT)
+				.vertexType(REGISTER)
+				.vertexType(UNIQUE)
+				.vertexType(PERSISTENT)
+				.vertexType(ADDRESS_TIED)
+				.vertexType(OP)
+				.edgeType(DEFAULT)
+				.edgeType(TYPE_OUTPUT)
+				.edgeType(TYPE_INPUT)
+				.build();
+
+		GraphDisplayOptions displayOptions = new GraphDisplayOptionsBuilder(graphType)
+				.vertexSelectionColor(WebColors.DEEP_PINK)
+				.edgeSelectionColor(WebColors.DEEP_PINK)
+				.defaultVertexColor(WebColors.RED)
+				.defaultEdgeColor(WebColors.NAVY)
+				.defaultVertexShape(VertexShape.ELLIPSE)
+				.defaultLayoutAlgorithm("Hierarchical MinCross Coffman Graham")
+				.useIcons(false)
+				.labelPosition(GraphLabelPosition.SOUTH)
+				.shapeOverrideAttribute(SHAPE_ATTRIBUTE)
+				.vertex(DEFAULT, VertexShape.ELLIPSE, WebColors.RED)
+				.vertex(CONSTANT, VertexShape.ELLIPSE, WebColors.DARK_GREEN)
+				.vertex(REGISTER, VertexShape.ELLIPSE, WebColors.NAVY)
+				.vertex(UNIQUE, VertexShape.ELLIPSE, WebColors.BLACK)
+				.vertex(PERSISTENT, VertexShape.ELLIPSE, WebColors.DARK_ORANGE)
+				.vertex(ADDRESS_TIED, VertexShape.ELLIPSE, WebColors.ORANGE)
+				.vertex(OP, VertexShape.RECTANGLE, WebColors.RED)
+				.edge(DEFAULT, WebColors.BLUE)
+				.edge(TYPE_OUTPUT, WebColors.BLACK)
+				.edge(TYPE_INPUT, WebColors.RED)
+				.build();
+
+		graph = new AttributedGraph("AST Graph", graphType);
 		buildGraph();
 
-		Map<String, String> properties = new HashMap<>();
-		properties.put(SELECTED_VERTEX_COLOR, "0xFF1493");
-		properties.put(SELECTED_EDGE_COLOR, "0xFF1493");
-		properties.put(INITIAL_LAYOUT_ALGORITHM, "Hierarchical MinCross Coffman Graham");
-		properties.put(DISPLAY_VERTICES_AS_ICONS, "false");
-		properties.put(VERTEX_LABEL_POSITION, "S");
-		properties.put(ENABLE_EDGE_SELECTION, "true");
-		GraphDisplay graphDisplay =
-			graphDisplayBroker.getDefaultGraphDisplay(false, properties, monitor);
-//        graphDisplay.defineVertexAttribute(CODE_ATTRIBUTE); //
-//        graphDisplay.defineVertexAttribute(SYMBOLS_ATTRIBUTE);
-//        graphDisplay.defineEdgeAttribute(EDGE_TYPE_ATTRIBUTE);
-		String description = "AST Data Flow Graph For " + func.getName();
+		GraphDisplay graphDisplay = graphDisplayBroker.getDefaultGraphDisplay(false, monitor);
 
-		graphDisplay.setGraph(graph, description, false, monitor);
+		String description = "AST Data Flow Graph For " + func.getName();
+		graphDisplay.setGraph(graph, displayOptions, description, false, monitor);
 
 		// Install a handler so the selection/location will map
 		graphDisplay.setGraphDisplayListener(
@@ -125,34 +157,33 @@ public class GraphAST extends GhidraScript {
 	protected AttributedVertex createVarnodeVertex(VarnodeAST vn) {
 		String name = vn.getAddress().toString(true);
 		String id = getVarnodeKey(vn);
-		String colorattrib = "Red";
+		String vertexType = DEFAULT;
 		if (vn.isConstant()) {
-			colorattrib = "DarkGreen";
+			vertexType = CONSTANT;
 		}
 		else if (vn.isRegister()) {
-			colorattrib = "Blue";
+			vertexType = REGISTER;
 			Register reg = func.getProgram().getRegister(vn.getAddress(), vn.getSize());
 			if (reg != null) {
 				name = reg.getName();
 			}
 		}
 		else if (vn.isUnique()) {
-			colorattrib = "Black";
+			vertexType = UNIQUE;
 		}
 		else if (vn.isPersistent()) {
-			colorattrib = "DarkOrange";
+			vertexType = PERSISTENT;
 		}
 		else if (vn.isAddrTied()) {
-			colorattrib = "Orange";
+			vertexType = ADDRESS_TIED;
 		}
 		AttributedVertex vert = graph.addVertex(id, name);
+		vert.setVertexType(vertexType);
+
+		// if it is an input override the shape to be a triangle
 		if (vn.isInput()) {
-			vert.setAttribute(ICON_ATTRIBUTE, "TriangleDown");
+			vert.setAttribute(SHAPE_ATTRIBUTE, VertexShape.TRIANGLE_DOWN.getName());
 		}
-		else {
-			vert.setAttribute(ICON_ATTRIBUTE, "Circle");
-		}
-		vert.setAttribute(COLOR_ATTRIBUTE, colorattrib);
 		return vert;
 	}
 
@@ -176,7 +207,7 @@ public class GraphAST extends GhidraScript {
 			}
 		}
 		AttributedVertex vert = graph.addVertex(id, name);
-		vert.setAttribute(ICON_ATTRIBUTE, "Square");
+		vert.setVertexType(OP);
 		return vert;
 	}
 
@@ -192,7 +223,9 @@ public class GraphAST extends GhidraScript {
 	}
 
 	protected AttributedEdge createEdge(AttributedVertex in, AttributedVertex out) {
-		return graph.addEdge(in, out);
+		AttributedEdge newEdge = graph.addEdge(in, out);
+		newEdge.setEdgeType(DEFAULT);
+		return newEdge;
 	}
 
 	protected void buildGraph() {

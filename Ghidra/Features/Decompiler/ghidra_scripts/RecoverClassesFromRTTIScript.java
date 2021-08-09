@@ -334,7 +334,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	private AttributedGraph createGraph(List<RecoveredClass> recoveredClasses)
 			throws CancelledException {
 
-		AttributedGraph g = new AttributedGraph();
+		AttributedGraph g = new AttributedGraph("Test Graph", new EmptyGraphType());
 
 		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
 		while (recoveredClassIterator.hasNext()) {

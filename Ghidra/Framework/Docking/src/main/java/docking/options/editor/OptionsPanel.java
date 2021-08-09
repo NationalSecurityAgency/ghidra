@@ -341,13 +341,13 @@ public class OptionsPanel extends JPanel {
 		if (options == null) {
 			return null;
 		}
-		List<String> optionList = node.getOptionNames();
 
 		editor = options.getOptionsEditor();
 		if (editor == null) {
+			List<String> optionList = node.getOptionNames();
+			Collections.sort(optionList);
 			if (optionList.size() > 0) {
-				editor = new ScrollableOptionsEditor(options.getName(), options, optionList,
-					editorStateFactory);
+				editor = new ScrollableOptionsEditor(options.getName(), optionList);
 			}
 		}
 

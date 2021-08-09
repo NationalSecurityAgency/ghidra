@@ -28,7 +28,7 @@ public class AttributedGraphTest {
 
 	@Before
 	public void setup() {
-		graph = new AttributedGraph();
+		graph = new AttributedGraph("Test", new EmptyGraphType());
 	}
 
 	@Test
@@ -192,7 +192,7 @@ public class AttributedGraphTest {
 
 	@Test
 	public void testNonCollapsingEdges() {
-		graph = new AttributedGraph(false);
+		graph = new AttributedGraph("Test", new EmptyGraphType(), "Test", false);
 
 		AttributedVertex v1 = graph.addVertex("A");
 		AttributedVertex v2 = graph.addVertex("B");

@@ -15,9 +15,7 @@
  */
 package ghidra.graph.visualization;
 
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import ghidra.framework.options.Options;
@@ -54,13 +52,7 @@ public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 	}
 
 	@Override
-	public GraphDisplay getGraphDisplay(boolean reuseGraph,  TaskMonitor monitor) {
-		return getGraphDisplay(reuseGraph, Collections.emptyMap(), monitor);
-	}
-
-		@Override
-	public GraphDisplay getGraphDisplay(boolean reuseGraph, Map<String, String> properties,
-			TaskMonitor monitor) {
+	public GraphDisplay getGraphDisplay(boolean reuseGraph, TaskMonitor monitor) {
 
 		if (reuseGraph && !displays.isEmpty()) {
 			DefaultGraphDisplay visibleGraph = getVisibleGraph();
@@ -69,7 +61,7 @@ public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 		}
 
 		DefaultGraphDisplay display =
-			Swing.runNow(() -> new DefaultGraphDisplay(this, properties, displayCounter++));
+			Swing.runNow(() -> new DefaultGraphDisplay(this, displayCounter++));
 		displays.add(display);
 		return display;
 	}

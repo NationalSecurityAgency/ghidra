@@ -16,17 +16,8 @@
 package ghidra.service.graph;
 
 import java.util.*;
-import java.util.Map.Entry;
-
-import org.apache.commons.text.StringEscapeUtils;
-
-import com.google.common.base.Splitter;
 
 public class Attributed {
-	/**
-	 * cache of the html rendering of the vertex attributes
-	 */
-	private String htmlString;
 	private static final String DESCRIPTION = "Description";
 
 	/**
@@ -39,7 +30,7 @@ public class Attributed {
 	 * @return an unmodifiable view of the attribute map
 	 */
 
-	public Map<String, String> getAttributeMap() {
+	public Map<String, String> getAttributes() {
 		return Collections.unmodifiableMap(attributes);
 	}
 
@@ -51,7 +42,6 @@ public class Attributed {
 	 * @return the previous value of the attribute
 	 */
 	public String setAttribute(String key, String value) {
-		htmlString = null;
 		return attributes.put(key, value);
 	}
 
@@ -154,7 +144,6 @@ public class Attributed {
 	 * @return the previously set description
 	 */
 	public String setDescription(String value) {
-		htmlString = null;
 		return attributes.put(DESCRIPTION, value);
 	}
 
@@ -167,35 +156,4 @@ public class Attributed {
 		return getAttribute(DESCRIPTION);
 	}
 
-	/**
-	 * parse (one time) then cache the attributes to html
-	 * @return the html string
-	 */
-	public String getHtmlString() {
-
-		if (htmlString != null) {
-			return htmlString;
-		}
-
-		htmlString = getDescription();
-		if (htmlString == null) { // if no description is set, create a default one
-			Set<Entry<String, String>> entries = entrySet();
-			if (entries.isEmpty()) {
-				return ""; // empty so tooltip clients can handle empty data
-			}
-			StringBuilder buf = new StringBuilder();
-			for (Map.Entry<String, String> entry : entries) {
-				buf.append(entry.getKey());
-				buf.append(":");
-				String value = entry.getValue();
-				value = StringEscapeUtils.escapeHtml4(value);
-				String split = String.join("<br>", Splitter.on('\n').split(value));
-				split = split.replaceAll("\\s", "&nbsp;");
-				buf.append(split);
-				buf.append("<br>");
-			}
-			htmlString = buf.toString();
-		}
-		return htmlString;
-	}
 }
