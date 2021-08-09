@@ -33,6 +33,16 @@ file(ghidraDir + "/application.properties").withReader { reader ->
 	project.ext.ghidra_version = ghidraProps.getProperty('application.version')
 	project.ext.RELEASE_NAME = ghidraProps.getProperty('application.release.name')
 	project.ext.DISTRO_PREFIX = "ghidra_${ghidra_version}"
+	project.ext.GRADLE_MINIMUM_VERSION = ghidraProps.getProperty('application.gradle.min')
+}
+
+/***************************************************************************************
+ * Make sure the correct version of gradle is being used
+ ***************************************************************************************/
+import org.gradle.util.GradleVersion;
+final GradleVersion minimum_version = GradleVersion.version("${GRADLE_MINIMUM_VERSION}")
+if (GradleVersion.current() < minimum_version) {
+	throw new GradleException("Requires at least $minimum_version, but was run with $gradle.gradleVersion")
 }
 
 configurations {
