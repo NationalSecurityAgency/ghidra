@@ -19,6 +19,7 @@ package ghidra.service.graph;
  * Generic directed graph edge implementation
  */
 public class AttributedEdge extends Attributed {
+	public static final String EDGE_TYPE_KEY = "EdgeType";
 	private final String id;
 
 	/**
@@ -62,4 +63,21 @@ public class AttributedEdge extends Attributed {
 		return id.equals(other.id);
 	}
 
+	/**
+	 * Returns the edge type for this edge
+	 * @return the edge type for this edge
+	 */
+	public String getEdgeType() {
+		return getAttribute(EDGE_TYPE_KEY);
+	}
+
+	/**
+	 * Sets the edge type for this edge. Should be a value defined by the {@link GraphType} for
+	 * this graph, but there is no enforcement for this. If the value is not defined in GraphType,
+	 * it will be rendered using the default edge color for {@link GraphType}
+	 * @param edgeType the edge type for this edge
+	 */
+	public void setEdgeType(String edgeType) {
+		setAttribute(EDGE_TYPE_KEY, edgeType);
+	}
 }

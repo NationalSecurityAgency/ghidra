@@ -107,7 +107,7 @@ public class GraphClassesScript extends GhidraScript {
 	 */
 	private AttributedGraph createGraph() throws Exception {
 
-		AttributedGraph g = new AttributedGraph();
+		AttributedGraph g = new AttributedGraph("Test Graph", new EmptyGraphType());
 
 		for (Structure classStructure : classStructures) {
 

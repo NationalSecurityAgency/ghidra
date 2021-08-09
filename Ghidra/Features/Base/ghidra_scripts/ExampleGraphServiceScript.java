@@ -22,7 +22,7 @@ import ghidra.service.graph.*;
  * Example script for creating and displaying a graph in ghidra
  */
 public class ExampleGraphServiceScript extends GhidraScript {
-	private AttributedGraph graph = new AttributedGraph();
+	private AttributedGraph graph = new AttributedGraph("Test", new EmptyGraphType());
 	private int nextEdgeID = 1;
 
 	@Override

@@ -536,7 +536,7 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private AttributedGraph createGraph() {
-		AttributedGraph g = new AttributedGraph();
+		AttributedGraph g = new AttributedGraph("Test", new EmptyGraphType());
 		a = g.addVertex("A");
 		b = g.addVertex("B");
 		c = g.addVertex("C");

@@ -15,29 +15,25 @@
  */
 package ghidra.feature.vt.gui.wizard;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.*;
+
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+
+import docking.options.editor.OptionsEditorPanel;
+import docking.wizard.*;
 import ghidra.feature.vt.api.main.VTProgramCorrelatorFactory;
 import ghidra.feature.vt.api.util.VTOptions;
 import ghidra.framework.options.EditorStateFactory;
 import ghidra.framework.options.Options;
 import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
-import ghidra.util.exception.InvalidInputException;
 import ghidra.util.layout.MiddleLayout;
 import ghidra.util.layout.VerticalLayout;
-
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-
 import util.CollectionUtils;
-import docking.options.editor.OptionsEditorPanel;
-import docking.wizard.*;
 
 public class OptionsPanel extends AbstractMageJPanel<VTWizardStateKey> {
 
@@ -118,7 +114,7 @@ public class OptionsPanel extends AbstractMageJPanel<VTWizardStateKey> {
 			if (optionNames.isEmpty()) {
 				continue;
 			}
-
+			Collections.sort(optionNames);
 			OptionsEditorPanel optionsPanel =
 				new OptionsEditorPanel(title, options, optionNames, editorStateFactory);
 			optionsPanel.setOptionsPropertyChangeListener(propertyChangeListener);
@@ -222,13 +218,8 @@ public class OptionsPanel extends AbstractMageJPanel<VTWizardStateKey> {
 	}
 
 	private void applyOptions() {
-		try {
-			for (OptionsEditorPanel panel : optionsEditorPanelList) {
-				panel.apply();
-			}
-		}
-		catch (InvalidInputException e) {
-			Msg.showError(this, this, "Error", "could not apply options settings", e);
+		for (OptionsEditorPanel panel : optionsEditorPanelList) {
+			panel.apply();
 		}
 	}
 
