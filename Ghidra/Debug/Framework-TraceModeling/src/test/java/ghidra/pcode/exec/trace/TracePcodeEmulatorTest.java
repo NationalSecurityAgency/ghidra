@@ -705,4 +705,31 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 				TraceSleighUtils.evaluate("RAX", tb.trace, 1, thread, 0));
 		}
 	}
+
+	@Test
+	public void testCachedReadAfterSmallWrite() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"RIP = 0x00400000;",
+					"RSP = 0x00110000;",
+					"RAX = 0x12345678;"),
+				List.of(
+					"XOR AH, AH",
+					"MOV RCX, RAX"));
+
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.overrideContextWithDefault();
+			emuThread.stepInstruction();
+			emuThread.stepInstruction();
+
+			try (UndoableTransaction tid = tb.startTransaction()) {
+				emu.writeDown(tb.trace, 1, 1, false);
+			}
+
+			assertEquals(BigInteger.valueOf(0x12340078),
+				TraceSleighUtils.evaluate("RAX", tb.trace, 1, thread, 0));
+		}
+	}
 }

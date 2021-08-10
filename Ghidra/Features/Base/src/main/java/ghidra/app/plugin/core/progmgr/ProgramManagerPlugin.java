@@ -288,21 +288,17 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 	@Override
 	public Program openProgram(DomainFile df, Component parent) {
-		return openProgram(df, -1, OPEN_CURRENT, parent);
+		return openProgram(df, -1, OPEN_CURRENT);
 	}
 
 	@Override
-	public Program openProgram(final DomainFile df, final int version) {
+	public Program openProgram(DomainFile df, int version) {
 		return openProgram(df, version, OPEN_CURRENT);
 	}
 
 	@Override
-	public Program openProgram(final DomainFile df, final int version, final int state) {
-		return openProgram(df, version, state, tool.getToolFrame());
-	}
+	public Program openProgram(DomainFile domainFile, int version, int state) {
 
-	private Program openProgram(final DomainFile domainFile, final int version, final int state,
-			final Component parent) {
 		if (domainFile == null) {
 			throw new IllegalArgumentException("Domain file cannot be null");
 		}
@@ -312,15 +308,12 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 			return null;
 		}
 
-		AtomicReference<Program> ref = new AtomicReference<>();
-		Runnable r = () -> {
-			ref.set(doOpenProgram(domainFile, version, state));
+		Program program = Swing.runNow(() -> {
+			Program p = doOpenProgram(domainFile, version, state);
 			updateActions();
-		};
+			return p;
+		});
 
-		SystemUtilities.runSwingNow(r);
-
-		Program program = ref.get();
 		if (program != null) {
 			Msg.info(this, "Opened program in " + tool.getName() + " tool: " + domainFile);
 		}
