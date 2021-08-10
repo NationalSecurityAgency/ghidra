@@ -227,7 +227,7 @@ public class DataReferenceGraphTaskTest extends AbstractDataReferenceGraphTest {
 		assertNotNull(v1);
 		assertNotNull(v2);
 		assertNotNull(e1);
-		assertEquals("Initial Instruction", v1.getVertexType());
+		assertEquals("Instruction", v1.getVertexType());
 	}
 
 	@Test
