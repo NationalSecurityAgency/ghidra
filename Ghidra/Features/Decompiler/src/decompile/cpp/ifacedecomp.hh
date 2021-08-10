@@ -19,11 +19,11 @@
 #ifndef __IFACE_DECOMP__
 #define __IFACE_DECOMP__
 
-#include "ifaceterm.hh"
 #include "graph.hh"
 #include "grammar.hh"
 #include "callgraph.hh"
 #include "paramid.hh"
+#include "testfunction.hh"
 #ifdef CPUI_RULECOMPILE
 #include "rulecompile.hh"
 #endif
@@ -44,6 +44,7 @@ public:
   Funcdata *fd;		///< Current function active in the console
   Architecture *conf;	///< Current architecture/program active in the console
   CallGraph *cgraph;	///< Call-graph information for the program
+  FunctionTestCollection *testCollection;		///< Executable environment from a datatest
 
   map<Funcdata*,PrototypePieces> prototypePieces;
   void storePrototypePieces( Funcdata *fd_in, PrototypePieces pp_in ) { prototypePieces.insert(pair<Funcdata*,PrototypePieces>(fd_in,pp_in)); }
@@ -564,6 +565,21 @@ public:
 };
 
 class IfcAnalyzeRange : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
+class IfcLoadTestFile : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
+class IfcListTestCommands : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
+class IfcExecuteTestCommand : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);
 };

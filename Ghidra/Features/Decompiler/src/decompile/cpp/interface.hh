@@ -224,9 +224,10 @@ public:
   IfaceStatus(const string &prmpt,ostream &os,int4 mxhist=10);	///< Constructor
   virtual ~IfaceStatus(void);					///< Destructor
   void setErrorIsDone(bool val) { errorisdone = val; }	///< Set if processing should terminate on an error
-  virtual void pushScript(const string &filename,const string &newprompt);
+  void pushScript(const string &filename,const string &newprompt);
+  virtual void pushScript(istream *iptr,const string &newprompt);
   virtual void popScript(void);
-  void reset(void);	///< Pop any existing script streams and return to processing from the base stream
+  virtual void reset(void);	///< Pop any existing script streams and return to processing from the base stream
   int4 getNumInputStreamSize(void) const { return promptstack.size(); }	///< Get depth of script nesting
   void writePrompt(void) { *optr << prompt; }	///< Write the current command prompt to the current output stream
   void registerCom(IfaceCommand *fptr, const char *nm1,
