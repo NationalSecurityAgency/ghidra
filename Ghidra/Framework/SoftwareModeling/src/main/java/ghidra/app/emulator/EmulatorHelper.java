@@ -511,6 +511,9 @@ public class EmulatorHelper implements MemoryFaultHandler, EmulatorConfiguration
 		catch (Throwable t) {
 //	TODO: need to enumerate errors better !!
 			lastError = t.getMessage();
+			if (lastError == null) {
+				lastError = t.toString();
+			}
 			emulator.setHalt(true); // force execution to stop
 			if (t instanceof CancelledException) {
 				throw (CancelledException) t;
