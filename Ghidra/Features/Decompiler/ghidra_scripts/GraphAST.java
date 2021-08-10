@@ -43,8 +43,8 @@ public class GraphAST extends GhidraScript {
 	protected static final String ADDRESS_TIED = "Address Tied";
 	protected static final String OP = "Op";
 
-	protected static final String TYPE_OUTPUT = "Output";
-	protected static final String TYPE_INPUT = "Input";
+	protected static final String WITHIN_BLOCK = "Within Block";
+	protected static final String BETWEEN_BLOCK = "Between Block";
 	private Function func;
 	private AttributedGraph graph;
 	protected HighFunction high;
@@ -80,8 +80,8 @@ public class GraphAST extends GhidraScript {
 				.vertexType(ADDRESS_TIED)
 				.vertexType(OP)
 				.edgeType(DEFAULT)
-				.edgeType(TYPE_OUTPUT)
-				.edgeType(TYPE_INPUT)
+				.edgeType(WITHIN_BLOCK)
+				.edgeType(BETWEEN_BLOCK)
 				.build();
 
 		GraphDisplayOptions displayOptions = new GraphDisplayOptionsBuilder(graphType)
@@ -92,6 +92,7 @@ public class GraphAST extends GhidraScript {
 				.defaultVertexShape(VertexShape.ELLIPSE)
 				.defaultLayoutAlgorithm("Hierarchical MinCross Coffman Graham")
 				.useIcons(false)
+				.arrowLength(15)
 				.labelPosition(GraphLabelPosition.SOUTH)
 				.shapeOverrideAttribute(SHAPE_ATTRIBUTE)
 				.vertex(DEFAULT, VertexShape.ELLIPSE, WebColors.RED)
@@ -102,8 +103,8 @@ public class GraphAST extends GhidraScript {
 				.vertex(ADDRESS_TIED, VertexShape.ELLIPSE, WebColors.ORANGE)
 				.vertex(OP, VertexShape.RECTANGLE, WebColors.RED)
 				.edge(DEFAULT, WebColors.BLUE)
-				.edge(TYPE_OUTPUT, WebColors.BLACK)
-				.edge(TYPE_INPUT, WebColors.RED)
+				.edge(WITHIN_BLOCK, WebColors.BLACK)
+				.edge(BETWEEN_BLOCK, WebColors.RED)
 				.build();
 
 		graph = new AttributedGraph("AST Graph", graphType);
