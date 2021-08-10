@@ -16,6 +16,7 @@
 package mdemangler;
 
 import java.io.*;
+import java.util.Date;
 
 import org.junit.*;
 import org.junit.experimental.categories.Category;
@@ -104,6 +105,8 @@ public class MDMangBaseTest extends AbstractGenericTest {
 
 	protected boolean quiet = false;
 
+	private static long startTime = 0;
+
 	protected boolean beQuiet() {
 		return quiet || BATCH_MODE;
 		//return quiet;
@@ -139,6 +142,11 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		}
 	}
 
+	@BeforeClass
+	public static void startUp() {
+		startTime = (new Date()).getTime();
+	}
+
 	@AfterClass
 	public static void tearDown() throws Throwable {
 		if (testWriter == null) {
@@ -147,6 +155,9 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		testWriter.close();
 		Msg.info(MDMangBaseTest.class,
 			"Short test demangled results: " + testFile.getAbsolutePath());
+		long endTime = (new Date()).getTime();
+		Msg.info(MDMangBaseTest.class,
+			"MDMangBaseTest time: " + (endTime - startTime) / 1000.0 + " sec.");
 	}
 
 	@Rule
