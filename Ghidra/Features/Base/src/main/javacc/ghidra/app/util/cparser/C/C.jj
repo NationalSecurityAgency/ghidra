@@ -1968,14 +1968,7 @@ Declaration DirectDeclarator(Declaration dt, DataType container) : {
                 for (Iterator iterator = list.iterator(); iterator.hasNext();) {
                     Integer iSize = (Integer) iterator.next();
                     DataType decDt = dec.getDataType();
-                    if (iSize == 0 && container != null) {
-                    	    dec.setFlexArray(true);
-                    	    break;
-                    } else if (iSize == 0) {
-                        dec.setDataType(dtMgr.getPointer(decDt));
-                    } else {
-                        dec.setDataType(new ArrayDataType(decDt, iSize, decDt.getLength()));
-                    }
+                    dec.setDataType(new ArrayDataType(decDt, iSize, decDt.getLength()));
                 }
                 //System.out.println("Array expr: for " + dec.getName() + " make an array " + dt.getName() + "["+size+"]");
 			}

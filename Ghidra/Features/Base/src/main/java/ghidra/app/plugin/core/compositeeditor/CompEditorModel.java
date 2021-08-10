@@ -536,7 +536,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		if (isEditingField()) {
 			endFieldEditing();
 		}
-		checkIsAllowableDataType(datatype, true);
+		checkIsAllowableDataType(datatype);
 		if (length < 1) {
 			DataTypeInstance dti = DataTypeHelper.getSizedDataType(getProvider(), datatype,
 				lastNumBytes, Integer.MAX_VALUE);
@@ -575,7 +575,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			endFieldEditing();
 		}
 
-		checkIsAllowableDataType(dataType, true);
+		checkIsAllowableDataType(dataType);
 		insertMultiple(rowIndex, dataType, dtLen, multiple, monitor);
 		fixSelection();
 		componentEdited();
@@ -741,29 +741,23 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			return null;
 		}
 
-		checkIsAllowableDataType(datatype, !oldDtc.isFlexibleArrayComponent());
+		checkIsAllowableDataType(datatype);
 
-		DataTypeComponent dtc;
-		if (oldDtc.isFlexibleArrayComponent()) {
-			// flexible array only supports fixed-length types
-			dtc = replace(rowIndex, datatype);
-		}
-		else {
-			int oldCompSize = oldDtc.getLength();
-			int newCompSize = length;
-			int sizeDiff = newCompSize - oldCompSize;
+		int oldCompSize = oldDtc.getLength();
+		int newCompSize = length;
+		int sizeDiff = newCompSize - oldCompSize;
 
-			// New one is larger so check to make sure it will fit.
-			if (sizeDiff > 0) {
-				if (!checkForReplace(rowIndex, datatype)) {
-					throw new InvalidDataTypeException(datatype.getDisplayName() + " doesn't fit.");
-				}
+		// New one is larger so check to make sure it will fit.
+		if (sizeDiff > 0) {
+			if (!checkForReplace(rowIndex, datatype)) {
+				throw new InvalidDataTypeException(datatype.getDisplayName() + " doesn't fit.");
 			}
-
-			// Replace the component at index.
-			dtc = replace(rowIndex, datatype, newCompSize, oldDtc.getFieldName(),
-				oldDtc.getComment());
 		}
+
+		// Replace the component at index.
+		DataTypeComponent dtc =
+			replace(rowIndex, datatype, newCompSize, oldDtc.getFieldName(), oldDtc.getComment());
+
 		fixSelection();
 		componentEdited();
 		selectionChanged();
@@ -793,11 +787,11 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 
 		DataTypeComponent oldDtc = getComponent(startRowIndex);
-		if (oldDtc == null || oldDtc.isFlexibleArrayComponent()) {
+		if (oldDtc == null) {
 			throw new AssertException();
 		}
 
-		checkIsAllowableDataType(datatype, true);
+		checkIsAllowableDataType(datatype);
 
 		//
 		// Note: if the range being replaced is large enough, then the UI could lock-up.  If we 
@@ -839,7 +833,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		if (dtc == null) {
 			return false;
 		}
-		if (!isShowingUndefinedBytes() || dtc.isFlexibleArrayComponent()) {
+		if (!isShowingUndefinedBytes()) {
 			return true;
 		}
 		// Does the new data type fit by replacing the component at index.
@@ -869,10 +863,10 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	protected abstract void replaceOriginalComponents();
 
 	@Override
-	protected void checkIsAllowableDataType(DataType datatype, boolean dynamicSizingAllowed)
+	protected void checkIsAllowableDataType(DataType datatype)
 			throws InvalidDataTypeException {
 
-		super.checkIsAllowableDataType(datatype, dynamicSizingAllowed);
+		super.checkIsAllowableDataType(datatype);
 
 		// Verify that we aren't adding this structure or anything that it is
 		// part of to this editable structure.
@@ -1020,12 +1014,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 		// Get data type to make into array.
 		DataType dt = comp.getDataType();
-
-		if (numElements == 0) {
-			// assume if 0 was permitted flexible array support has been provided
-			convertToFlexibleArray(rowIndex);
-			return;
-		}
 
 		ArrayDataType array = new ArrayDataType(dt, numElements, comp.getLength(), viewDTM);
 
@@ -1244,17 +1232,17 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	@Override
-	public void setComponentDataTypeInstance(int rowIndex, DataTypeInstance dti)
+	public void setComponentDataTypeInstance(int rowIndex, DataType dt, int length)
 			throws UsrException {
 		if (getComponent(rowIndex) == null) {
 			// Replacing data type in unlocked mode replaces only
 			// that data type and structure size may change.
-			insert(rowIndex, dti.getDataType(), dti.getLength());
+			insert(rowIndex, dt, length);
 		}
 		else {
 			// Replacing data type in unlocked mode replaces only
 			// that data type and structure size may change.
-			replace(rowIndex, dti.getDataType(), dti.getLength());
+			replace(rowIndex, dt, length);
 		}
 	}
 
@@ -1268,14 +1256,11 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	@Override
 	public void setComponentName(int rowIndex, String name)
 			throws InvalidInputException, InvalidNameException, DuplicateNameException {
-		if (name.equals("")) {
-			name = null;
-		}
 		if (nameExistsElsewhere(name, rowIndex)) {
 			throw new InvalidNameException("Name \"" + name + "\" already exists.");
 		}
 		try {
-			getComponent(rowIndex).setFieldName(name);
+			getComponent(rowIndex).setFieldName(name); // setFieldName handles trimming
 		}
 		catch (DuplicateNameException exc) {
 			throw new InvalidNameException(exc.getMessage());
@@ -1551,9 +1536,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	public int getMaxElements() {
 		if (!isContiguousSelection()) {
 			return 0;
-		}
-		if (isFlexibleArraySelection()) {
-			return Integer.MAX_VALUE;
 		}
 
 		int rowIndex = selection.getFieldRange(0).getStart().getIndex().intValue();

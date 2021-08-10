@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,7 @@
  */
 package ghidra.program.model.data;
 
+import ghidra.program.model.listing.Data;
 import ghidra.program.model.mem.MemBuffer;
 
 /**
@@ -39,9 +39,13 @@ public interface Dynamic extends BuiltInDataType {
 	int getLength(MemBuffer buf, int maxLength);
 
 	/**
-	 * Returns true if a user-specified length can be used
+	 * Determine if the length may be specified for an instanceof this 
+	 * datatype (e.g., {@link Data}, {@link Array}, {@link DataTypeComponent}, etc.).
+	 * @return true if a user-specified length can be used, else false
 	 */
-	boolean canSpecifyLength();
+	default boolean canSpecifyLength() {
+		return false;
+	}
 
 	/**
 	 * Returns a suitable replacement base data-type for pointers and arrays 

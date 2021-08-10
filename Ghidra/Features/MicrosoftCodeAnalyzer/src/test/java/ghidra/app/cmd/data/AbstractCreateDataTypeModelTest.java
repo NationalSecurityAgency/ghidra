@@ -384,24 +384,24 @@ public class AbstractCreateDataTypeModelTest extends AbstractGenericTest {
 
 	protected void CheckTypeDefOnStructureData(ProgramDB program, long address, String expectedName,
 			String[] expectedFieldNames, int expectedDtLength) {
-		CheckStructureData(program, address, expectedName, expectedFieldNames, null,
+		CheckStructureData(program, address, expectedName, expectedFieldNames, false,
 			expectedDtLength, true);
 	}
 
 	protected void CheckStructureData(ProgramDB program, long address, String expectedName,
 			String[] expectedFieldNames, int expectedDtLength) {
-		CheckStructureData(program, address, expectedName, expectedFieldNames, null,
+		CheckStructureData(program, address, expectedName, expectedFieldNames, false,
 			expectedDtLength, false);
 	}
 
 	protected void CheckStructureData(ProgramDB program, long address, String expectedName,
-			String[] expectedFieldNames, String flexArrayName, int expectedDtLength) {
-		CheckStructureData(program, address, expectedName, expectedFieldNames, flexArrayName,
+			String[] expectedFieldNames, boolean lastFieldIsFlexArray, int expectedDtLength) {
+		CheckStructureData(program, address, expectedName, expectedFieldNames, lastFieldIsFlexArray,
 			expectedDtLength, false);
 	}
 
 	protected void CheckStructureData(ProgramDB program, long address, String expectedName,
-			String[] expectedFieldNames, String flexArrayName, int expectedDtLength,
+			String[] expectedFieldNames, boolean lastFieldIsFlexArray, int expectedDtLength,
 			boolean isTypeDefOfStructure) {
 		Listing listing = program.getListing();
 		Data data = listing.getDataAt(addr(program, address));
@@ -421,24 +421,22 @@ public class AbstractCreateDataTypeModelTest extends AbstractGenericTest {
 		assertEquals("Mismatch in expected structure component count: " + name,
 			expectedFieldNames.length, structure.getNumComponents());
 		DataTypeComponent[] components = structure.getComponents();
+		boolean hasTrailingFlexArray = false;
 		for (int i = 0; i < components.length; i++) {
 			assertEquals(
 				"Expected component " + i + " to be named " + expectedFieldNames[i] + " but was " +
 					components[i].getFieldName(),
 				expectedFieldNames[i], components[i].getFieldName());
+			DataType dt = components[i].getDataType();
+			hasTrailingFlexArray = (dt instanceof Array) && dt.isZeroLength();
 		}
-		if (flexArrayName != null) {
-			DataTypeComponent flexibleArrayComponent = structure.getFlexibleArrayComponent();
-			assertNotNull("Structure does not contain flexible array: " + name,
-				flexibleArrayComponent);
-			assertEquals(
-				"Expected flexible array named " + flexArrayName + " but was " +
-					flexibleArrayComponent.getFieldName(),
-				flexArrayName, flexibleArrayComponent.getFieldName());
+
+		if (lastFieldIsFlexArray) {
+			assertTrue("Structure does not end with flexible array", hasTrailingFlexArray);
 		}
 		else {
-			assertFalse("Structure contains unexpected flexible array component: " + name,
-				structure.hasFlexibleArrayComponent());
+			assertFalse("Structure contains unexpected flexible array component",
+				hasTrailingFlexArray);
 		}
 	}
 
@@ -493,8 +491,9 @@ public class AbstractCreateDataTypeModelTest extends AbstractGenericTest {
 
 	protected void checkTypeDescriptorData(ProgramDB program, long address, int structLength,
 			int nameArrayLength, String expectedTypeName) {
-		CheckStructureData(program, address, "TypeDescriptor", new String[] { "pVFTable", "spare" },
-			"name", structLength);
+		CheckStructureData(program, address, "TypeDescriptor",
+			new String[] { "pVFTable", "spare", "name" },
+			true, structLength);
 		checkTypeName(program, address, expectedTypeName);
 	}
 

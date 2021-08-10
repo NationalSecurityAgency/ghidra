@@ -24,6 +24,7 @@ import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.*;
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -257,6 +258,19 @@ public class DWARFFunctionImporter {
 		for (DebugInfoEntry childEntry : diea.getHeadFragment().getChildren(
 			DWARFTag.DW_TAG_formal_parameter)) {
 			DIEAggregate childDIEA = prog.getAggregate(childEntry);
+
+			DataType childDT = dwarfDTM.getDataType(childDIEA.getTypeRef(), null);
+			if (childDT == null || DataTypeComponent.usesZeroLengthComponent(childDT)) {
+				String paramName =
+					childDIEA.getString(DWARFAttribute.DW_AT_name, "param" + formalParams.size());
+				Msg.warn(this, "DWARF: zero-length function parameter " + paramName +
+					":" + childDT.getName() + ", omitting from definition of " +
+					dfunc.dni.getName() + "@" + dfunc.address);
+				// skip this parameter because its data type is a zero-width type that typically does
+				// not generate code.  If this varies compiler-to-compiler, setting 
+				// skipFuncSignature=true may be a better choice
+				continue;
+			}
 
 			Parameter formalParam = createFormalParameter(childDIEA);
 			if (formalParam == null) {
@@ -581,27 +595,7 @@ public class DWARFFunctionImporter {
 			}
 		}
 		else if (exprEvaluator.getLastRegister() == null) {
-			dvar.dni = dvar.dni.replaceType(null /*nothing matches static global var*/);
-			if (res != 0) {
-				// If the expression evaluated to a static address other than '0'
-				Address staticVariableAddress = toAddr(res + prog.getProgramBaseAddressFixup());
-				if (variablesProcesesed.contains(staticVariableAddress)) {
-					return null;
-				}
-
-				boolean external = diea.getBool(DWARFAttribute.DW_AT_external, false);
-
-				outputGlobal(staticVariableAddress, dvar.type, external,
-					DWARFSourceInfo.create(diea), dvar.dni);
-			}
-			else {
-				// If the expression evaluated to a static address of '0'.
-				// This case is probably caused by relocation fixups not being applied to the
-				// .debug_info section.
-				importSummary.relocationErrorVarDefs.add(
-					dvar.dni.getNamespacePath().asFormattedString() + " : " +
-						dvar.type.getPathName());
-			}
+			processStaticVar(res, dvar, diea);
 			return null;// Don't return the variable to be associated with the function
 		}
 		else {
@@ -613,6 +607,61 @@ public class DWARFFunctionImporter {
 			return null;
 		}
 		return dvar;
+	}
+
+	private void processStaticVar(long address, DWARFVariable dvar, DIEAggregate diea)
+			throws InvalidInputException {
+		dvar.dni = dvar.dni.replaceType(null /*nothing matches static global var*/);
+		if (address != 0) {
+			Address staticVariableAddress = toAddr(address + prog.getProgramBaseAddressFixup());
+			if (isZeroByteDataType(dvar.type)) {
+				processZeroByteStaticVar(staticVariableAddress, dvar);
+				return;
+			}
+
+			if (variablesProcesesed.contains(staticVariableAddress)) {
+				return;
+			}
+
+			boolean external = diea.getBool(DWARFAttribute.DW_AT_external, false);
+
+			outputGlobal(staticVariableAddress, dvar.type, external,
+				DWARFSourceInfo.create(diea), dvar.dni);
+		}
+		else {
+			// If the expression evaluated to a static address of '0'.
+			// This case is probably caused by relocation fixups not being applied to the
+			// .debug_info section.
+			importSummary.relocationErrorVarDefs.add(
+				dvar.dni.getNamespacePath().asFormattedString() + " : " +
+					dvar.type.getPathName());
+		}
+	}
+
+	private void processZeroByteStaticVar(Address staticVariableAddress, DWARFVariable dvar)
+			throws InvalidInputException {
+		// because this is a zero-length data type (ie. array[0]),
+		// don't create a variable at the location since it will prevent other elements
+		// from occupying the same offset
+		Listing listing = currentProgram.getListing();
+		String comment =
+			listing.getComment(CodeUnit.PRE_COMMENT, staticVariableAddress);
+		comment = (comment != null) ? comment + "\n" : "";
+		comment += String.format("Zero length variable: %s: %s", dvar.dni.getOriginalName(),
+			dvar.type.getDisplayName());
+		listing.setComment(staticVariableAddress, CodeUnit.PRE_COMMENT, comment);
+
+		SymbolTable symbolTable = currentProgram.getSymbolTable();
+		symbolTable.createLabel(staticVariableAddress, dvar.dni.getName(),
+			dvar.dni.getParentNamespace(currentProgram),
+			SourceType.IMPORTED);
+	}
+
+	private boolean isZeroByteDataType(DataType dt) {
+		if (!dt.isZeroLength() && dt instanceof Array) {
+			dt = DataTypeUtilities.getArrayBaseDataType((Array) dt);
+		}
+		return dt.isZeroLength();
 	}
 
 	/**

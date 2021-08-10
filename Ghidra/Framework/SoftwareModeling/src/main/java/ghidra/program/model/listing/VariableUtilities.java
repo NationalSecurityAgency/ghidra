@@ -253,53 +253,110 @@ public class VariableUtilities {
 	}
 
 	/**
-	 * Perform variable datatype checks
-	 * @param dataType datatype to be checked or null to produce suitable Undefined type
-	 * @param voidOK true if the zero-sized void data type is permitted
-	 * @param defaultSize datatype size to be used if specified datatype is null
-	 * @param program program which corresponds to this variable
-	 * @return checked datatype (could be new instance)
-	 * @throws InvalidInputException
+	 * Check the specified datatype for use as a return, parameter or variable type.  It may
+	 * not be suitable for other uses.  The following datatypes will be mutated into a default pointer datatype:
+	 * <ul>
+	 * <li>Function definition datatype</li>
+	 * <li>An unsized/zero-element array</li>
+	 * </ul>  
+	 * @param dataType datatype to be checked
+	 * @param voidOK true if checking return datatype and void is allow, else false.
+	 * @param defaultSize Undefined datatype size to be used if specified datatype is null.  A value less than 1
+	 * will result in the DEFAULT data type being returned (i.e., "undefined").
+	 * @param dtMgr target datatype manager (null permitted which will adopt default data organization)
+	 * @return cloned/mutated datatype suitable for function parameters and variables (including function return data type).
+	 * @throws InvalidInputException if an unacceptable datatype was specified
 	 */
 	public static DataType checkDataType(DataType dataType, boolean voidOK, int defaultSize,
-			Program program) throws InvalidInputException {
-		if (dataType instanceof BitFieldDataType) {
-			throw new InvalidInputException("Bitfields not supported for variable");
-		}
+			DataTypeManager dtMgr) throws InvalidInputException {
+
 		if (dataType == null) {
-			if (voidOK) {
-				return VoidDataType.dataType;
-			}
 			dataType = Undefined.getUndefinedDataType(defaultSize);
 		}
-		else if (dataType.hasLanguageDependantLength()) {
-			// A clone is done to ensure that any affects of the data organization
-			// are properly reflected in the sizing of the datatype
-			dataType = dataType.clone(program.getDataTypeManager());
+		else if (dataType instanceof BitFieldDataType) {
+			throw new InvalidInputException("Bitfield not permitted");
 		}
-		else if (dataType instanceof FunctionDefinition || (dataType instanceof TypeDef &&
-			((TypeDef) dataType).getBaseDataType() instanceof FunctionDefinition)) {
-			dataType = new PointerDataType(dataType, program.getDataTypeManager());
+		else if (dataType instanceof Dynamic || dataType instanceof FactoryDataType) {
+			throw new InvalidInputException(
+				"Dynamic and Factory data types are not permitted: " + dataType.getName());
+		}
+
+		DataType baseType = dataType;
+		if (baseType instanceof TypeDef) {
+			baseType = ((TypeDef) baseType).getBaseDataType();
+		}
+
+		if (baseType instanceof FunctionDefinition) {
+			dataType = new PointerDataType(dataType, dtMgr);
+		}
+		else if (baseType instanceof Array) {
+			// TODO: Uncertain if typedefs or multi-dimensional arrays should be handled?
+			Array a = (Array) baseType;
+			if (a.getNumElements() == 0) {
+				// convert unsized/zero-length array to pointer
+				dataType = new PointerDataType(a.getDataType(), dtMgr);
+			}
+		}
+
+		// A clone is done to ensure that any affects of the data organization
+		// are properly reflected in the sizing of the datatype.
+		// NOTE: This will not properly handle composites since a deep-clone is not performed.
+		dataType = dataType.clone(dtMgr);
+
+		if (baseType instanceof VoidDataType) {
+			if (!voidOK) {
+				throw new InvalidInputException(
+					"The void type is not permitted - allowed for function return use only");
+			}
+			return dataType;
 		}
 
 		if (dataType.getLength() <= 0) {
-			if (dataType instanceof Dynamic || dataType instanceof FactoryDataType) {
-				throw new InvalidInputException(
-					"Dynamic or Factory data-type not allowed: " + dataType.getName());
-			}
-			DataType baseType = dataType;
-			if (baseType instanceof TypeDef) {
-				baseType = ((TypeDef) baseType).getBaseDataType();
-			}
-			if (baseType instanceof Structure) {
-				// ignore - allow 0-sized structures
-			}
-			else if (!(baseType instanceof VoidDataType) || !voidOK) {
-				throw new InvalidInputException(
-					"Expected fixed-length data type with positive size");
-			}
+			// Unexpected condition - only dynamic types are expected to have negative length and 
+			// none should report 0 has a length.
+			throw new IllegalArgumentException("Unsupported data type length (" +
+				dataType.getLength() + "): " + dataType.getName());
 		}
 		return dataType;
+	}
+
+	/**
+	 * Check the specified datatype for use as a return, parameter or variable type.  It may
+	 * not be suitable for other uses.  The following datatypes will be mutated into a default pointer datatype:
+	 * <ul>
+	 * <li>Function definition datatype</li>
+	 * <li>An unsized/zero-element array</li>
+	 * </ul>  
+	 * @param dataType datatype to be checked
+	 * @param voidOK true if checking return datatype and void is allow, else false.
+	 * @param defaultSize Undefined datatype size to be used if specified datatype is null.  A value less than 1
+	 * will result in the DEFAULT data type being returned (i.e., "undefined").
+	 * @param program target program
+	 * @return cloned/mutated datatype suitable for function parameters and variables (including function return data type).
+	 * @throws InvalidInputException if an unacceptable datatype was specified
+	 */
+	public static DataType checkDataType(DataType dataType, boolean voidOK, int defaultSize,
+			Program program) throws InvalidInputException {
+		return checkDataType(dataType, voidOK, defaultSize, program.getDataTypeManager());
+	}
+
+	/**
+	 * Check the specified datatype for use as a return, parameter or variable type.  It may
+	 * not be suitable for other uses.  The following datatypes will be mutated into a default pointer datatype:
+	 * <ul>
+	 * <li>Function definition datatype</li>
+	 * <li>An unsized/zero-element array</li>
+	 * </ul>  
+	 * @param dataType datatype to be checked.  If null is specified the DEFAULT datatype will be
+	 * returned.
+	 * @param voidOK true if checking return datatype and void is allow, else false.
+	 * @param dtMgr target datatype manager (null permitted which will adopt default data organization)
+	 * @return cloned/mutated datatype suitable for function parameters and variables (including function return data type).
+	 * @throws InvalidInputException if an unacceptable datatype was specified
+	 */
+	public static DataType checkDataType(DataType dataType, boolean voidOK, DataTypeManager dtMgr)
+			throws InvalidInputException {
+		return checkDataType(dataType, voidOK, -1, dtMgr);
 	}
 
 	/**

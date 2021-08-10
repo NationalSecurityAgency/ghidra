@@ -27,7 +27,6 @@ public class Declaration {
 	private String name;
 	private String comment;
 	private int bitSize = -1;
-	private boolean flexArray = false;  // true if this is a zero size flex array component
 
 	public Declaration() {
 		super();
@@ -155,11 +154,4 @@ public class Declaration {
 		bitSize = bits;
 	}
 
-	public void setFlexArray(boolean b) {
-		flexArray = b;
-	}
-
-	public boolean isFlexArray() {
-		return flexArray;
-	}
 }

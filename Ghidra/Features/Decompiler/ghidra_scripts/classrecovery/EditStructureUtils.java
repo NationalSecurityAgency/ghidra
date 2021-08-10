@@ -260,6 +260,8 @@ public class EditStructureUtils {
 		int endOfDataTypeInStruct = offset + dataTypeLength;
 
 		int roomForData = structure.getLength() - endOfDataTypeInStruct;
+		
+		// FIXME: This will not worked for structures where packing is enabled - not sure how to handle
 
 		// if structure isn't defined insert
 		if (structure.isNotYetDefined()) {

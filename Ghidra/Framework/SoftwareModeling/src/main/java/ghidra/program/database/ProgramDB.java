@@ -98,7 +98,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 *                            created tables. 
 	 * 18-Feb-2021 - version 23   Added support for Big Reflist for tracking FROM references.
 	 *                            Primarily used for large numbers of Entry Point references.
-	 * 31-Mar-2021 - version 24   Added support for CompilerSpec extensions                          
+	 * 31-Mar-2021 - version 24   Added support for CompilerSpec extensions     
 	 */
 	static final int DB_VERSION = 24;
 
@@ -2060,7 +2060,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 					Msg.info(this,
 						"Updating language version for Program " + getName() + ": " +
 							language.getLanguageDescription() + " (Version " +
-							language.getVersion() + ")");
+							language.getVersion() + "." + language.getMinorVersion());
 				}
 
 				if (newCompilerSpecID != null) {

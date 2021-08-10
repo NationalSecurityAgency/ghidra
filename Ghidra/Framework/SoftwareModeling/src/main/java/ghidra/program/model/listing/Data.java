@@ -29,6 +29,8 @@ import ghidra.program.model.symbol.Reference;
  */
 public interface Data extends CodeUnit, Settings {
 
+	// TODO: Fix javadocs !!
+
 	/**
 	 * Returns the value of the data item.  The value may be an address, a scalar,
 	 * register or null if no value.
@@ -195,30 +197,52 @@ public interface Data extends CodeUnit, Settings {
 	public int getNumComponents();
 
 	/**
-	 * Return the immediate child component that contains the byte
-	 *         at the given offset.
+	 * Return the first immediate child component that contains the byte
+	 * at the given offset.  It is important to note that with certain
+	 * datatypes there may be more than one component containing the specified offset
+	 * (see {@link #getComponentsContaining(int)}).
+	 * 
 	 * @param offset the amount to add to this data items address to get the
 	 * address of the requested data item.
+	 * @return first data component containing offset or null
+	 * @deprecated method name has been changed to better reflect behavior.  The method 
+	 * {@link #getComponentContaining(int)} should be used instead.
 	 */
+	@Deprecated
 	Data getComponentAt(int offset);
+
+	/**
+	 * RReturn the first immediate child component that contains the byte
+	 * at the given offset.  It is important to note that with certain
+	 * datatypes there may be more than one component containing the specified offset
+	 * (see {@link #getComponentsContaining(int)}).
+	 * 
+	 * @param offset the amount to add to this data items address to get the
+	 * @return first data component containing offset or null
+	 * address of the requested data item.
+	 */
+	Data getComponentContaining(int offset);
 
 	/**
 	 * Returns a list of all the immediate child components that contain the byte at the
 	 * given offset.
 	 * <P>
-	 * For a union, this will return all the components (if the offset is 0).  For a structure,
-	 * this will be either a single non bit field element or a list of bit field elements.
+	 * For a union, this will return all the components (if the offset is 0).  The presence of bit-fields
+	 * or zero-length components may cause multiple components to be returned.
 	 * @param offset the amount to add to this data items address to get the
 	 * address of the requested data item.
 	 * @return a list of all the immediate child components that contain the byte at the
-	 * given offset.
+	 * given offset or null if offset is out of bounds.
 	 */
 	List<Data> getComponentsContaining(int offset);
 
 	/**
-	 * Returns the primitive component that is at this offset.  This is useful
-	 * for data items are made up of multiple layers of other data items. This
-	 * method immediately goes to the lowest level data item.
+	 * Returns the primitive component containing this offset (i.e., one that does not
+	 * have sub-components).  This is useful for data items which are made up of multiple 
+	 * layers of other data items. This method immediately goes to the lowest level data item.  
+	 * If the minimum offset of a component is specified, the only first component containing 
+	 * the offset will be considered (e.g., 0-element array).
+	 * @return primitive component containing this offset
 	 */
 	Data getPrimitiveAt(int offset);
 

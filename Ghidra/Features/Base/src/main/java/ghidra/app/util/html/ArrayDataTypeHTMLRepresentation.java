@@ -110,7 +110,11 @@ public class ArrayDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation 
 	}
 
 	private ValidatableLine buildFooterContent() {
-		return new TextLine("Size: " + array.getLength());
+		int len = array.getLength();
+		if (array.isZeroLength()) {
+			return new TextLine("Size: 0 (reported size is " + len + ")");
+		}
+		return new TextLine("Size: " + len);
 	}
 
 	private String buildHTMLText(ValidatableLine header, String body, ValidatableLine info,

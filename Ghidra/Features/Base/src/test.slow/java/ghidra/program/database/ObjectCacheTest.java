@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- *
- */
 package ghidra.program.database;
 
 import static org.junit.Assert.*;
@@ -25,8 +22,6 @@ import java.util.ConcurrentModificationException;
 
 import org.junit.Test;
 
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.address.KeyRange;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 

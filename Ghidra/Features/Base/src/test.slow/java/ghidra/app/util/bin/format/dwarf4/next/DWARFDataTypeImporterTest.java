@@ -354,8 +354,8 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		DataType structdt2 = dataMgr.getDataType(rootCP, "mystruct.conflict");
 
 		assertEquals(100, structdt.getLength());
-		assertEquals("f1", structdt.getComponentAt(0).getFieldName());
-		assertEquals("f2", structdt.getComponentAt(10).getFieldName());
+		assertEquals("f1", structdt.getComponentContaining(0).getFieldName());
+		assertEquals("f2", structdt.getComponentContaining(10).getFieldName());
 		assertNull(structdt2);
 	}
 
@@ -378,7 +378,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		Structure struct2dt = (Structure) dataMgr.getDataType(rootCP, "mystruct2");
 
 		assertEquals(100, structdt.getLength());
-		assertEquals("ptr_to_struct1", struct2dt.getComponentAt(0).getFieldName());
+		assertEquals("ptr_to_struct1", struct2dt.getComponentContaining(0).getFieldName());
 	}
 
 	@Test
@@ -699,7 +699,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		importAllDataTypes();
 
 		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
-		DataTypeComponent dtc = structdt.getComponentAt(14);
+		DataTypeComponent dtc = structdt.getComponentContaining(14);
 		DataType anonDT = dtc.getDataType();
 		assertEquals("anon_struct_for_f3_f4", anonDT.getName());
 	}
@@ -717,8 +717,13 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		importAllDataTypes();
 
 		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
-		assertNotNull(structdt.getFlexibleArrayComponent());
-
+		DataTypeComponent component = structdt.getComponent(structdt.getNumComponents() - 1);
+		assertNotNull(component);
+		assertEquals(0, component.getLength());
+		DataType dt = component.getDataType();
+		assertTrue(dt instanceof Array);
+		Array a = (Array) dt;
+		assertEquals(0, a.getNumElements());
 	}
 
 	/*
@@ -739,7 +744,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		importAllDataTypes();
 
 		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
-		assertNotNull(structdt.getFlexibleArrayComponent());
+		assertHasFlexArray(structdt);
 
 	}
 
@@ -761,7 +766,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		importAllDataTypes();
 
 		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
-		assertNotNull(structdt.getFlexibleArrayComponent());
+		assertHasFlexArray(structdt);
 	}
 
 	@Test
@@ -778,9 +783,73 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		importAllDataTypes();
 
 		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
-		assertTrue(structdt.getDescription().contains("Missing member flexarray"));
-		assertNull(structdt.getFlexibleArrayComponent());
 
+		DataTypeComponent component = structdt.getComponentContaining(99);
+		assertNotNull(component);
+		assertEquals(0, component.getLength());
+		DataType dt = component.getDataType();
+		assertTrue(dt.isEquivalent(new ArrayDataType(IntegerDataType.dataType, 0, -1)));
+
+		assertEquals(100, structdt.getLength());
+
+	}
+
+	@Test
+	public void testStructZeroLenField()
+			throws CancelledException, IOException, DWARFException {
+
+		DebugInfoEntry intDIE = addInt(cu);
+
+		DebugInfoEntry emptyStructDIE = newStruct("emptystruct", 0).create(cu);
+		DebugInfoEntry structDIE = newStruct("mystruct", 10).create(cu);
+		newMember(structDIE, "f1", intDIE, 0).create(cu);
+		newMember(structDIE, "f2", emptyStructDIE, 4).create(cu);
+
+		importAllDataTypes();
+
+		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+
+		assertEquals(2, structdt.getNumDefinedComponents());
+		DataTypeComponent f1 = structdt.getDefinedComponents()[0];
+		assertEquals(0, f1.getOffset());
+		assertEquals(4, f1.getLength());
+		DataTypeComponent f2 = structdt.getDefinedComponents()[1];
+		assertEquals(4, f2.getOffset());
+		assertTrue(f2.getDataType().isZeroLength());
+		assertEquals(10, structdt.getLength());
+	}
+
+	@Test
+	public void testStruct2ZeroLenField()
+			throws CancelledException, IOException, DWARFException {
+
+		DebugInfoEntry intDIE = addInt(cu);
+
+		DebugInfoEntry emptyStructDIE = newStruct("emptystruct", 0).create(cu);
+		DebugInfoEntry structDIE = newStruct("mystruct", 10).create(cu);
+		newMember(structDIE, "f1", intDIE, 0).create(cu);
+		newMember(structDIE, "f2", emptyStructDIE, 4).create(cu);
+		newMember(structDIE, "f3", emptyStructDIE, 4).create(cu);
+		newMember(structDIE, "f4", intDIE, 4).create(cu);
+
+		importAllDataTypes();
+
+		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		assertEquals(4, structdt.getNumDefinedComponents());
+		DataTypeComponent f1 = structdt.getDefinedComponents()[0];
+		assertEquals(0, f1.getOffset());
+		assertEquals(4, f1.getLength());
+		DataTypeComponent f2 = structdt.getDefinedComponents()[1];
+		assertEquals(4, f2.getOffset());
+		assertTrue(f2.getDataType().isZeroLength());
+		DataTypeComponent f3 = structdt.getDefinedComponents()[2];
+		assertEquals(4, f3.getOffset());
+		assertTrue(f3.getDataType().isZeroLength());
+		DataTypeComponent f4 = structdt.getDefinedComponents()[3];
+		assertEquals(4, f4.getOffset());
+		assertEquals(4, f4.getLength());
+
+		assertEquals(10, structdt.getLength());
 	}
 
 	@Test
@@ -862,8 +931,6 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 	@Test
 	public void testUnionFlexArray() throws CancelledException, IOException, DWARFException {
-		// flex array in a union is converted to an 1 element array (if it can fit)
-
 		DebugInfoEntry intDIE = addInt(cu);
 		DebugInfoEntry arrayDIE = newArray(cu, intDIE, false, -1);
 
@@ -920,10 +987,10 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		importAllDataTypes();
 
 		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
-		DataTypeComponent f1dtc = structdt.getComponentAt(0);
-		DataTypeComponent f2dtc = structdt.getComponentAt(10);
-		DataTypeComponent f3dtc = structdt.getComponentAt(20);
-		DataTypeComponent f4dtc = structdt.getComponentAt(40);
+		DataTypeComponent f1dtc = structdt.getComponentContaining(0);
+		DataTypeComponent f2dtc = structdt.getComponentContaining(10);
+		DataTypeComponent f3dtc = structdt.getComponentContaining(20);
+		DataTypeComponent f4dtc = structdt.getComponentContaining(40);
 
 		assertEquals(f1dtc.getDataType(), f2dtc.getDataType());
 		assertEquals(f1dtc.getDataType(), f3dtc.getDataType());

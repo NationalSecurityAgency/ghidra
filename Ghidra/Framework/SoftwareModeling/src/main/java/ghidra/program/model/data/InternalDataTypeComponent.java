@@ -18,7 +18,8 @@ package ghidra.program.model.data;
 public interface InternalDataTypeComponent extends DataTypeComponent {
 
 	/**
-	 * Sets the DataType for this component
+	 * Sets the DataType for this component.  Must be used carefully since the component
+	 * will not be resized.
 	 * @param dataType the new DataType for this component
 	 */
 	public void setDataType(DataType dataType);
@@ -30,5 +31,20 @@ public interface InternalDataTypeComponent extends DataTypeComponent {
 	 * @param length updated byte length
 	 */
 	void update(int ordinal, int offset, int length);
+
+	public static String toString(DataTypeComponent c) {
+		StringBuffer buffer = new StringBuffer();
+		buffer.append("  " + c.getOrdinal());
+		buffer.append("  " + c.getOffset());
+		buffer.append("  " + c.getDataType().getName());
+		if (c.isBitFieldComponent()) {
+			buffer.append("(" + ((BitFieldDataType) c.getDataType()).getBitOffset() + ")");
+		}
+		buffer.append("  " + c.getLength());
+		buffer.append("  " + c.getFieldName());
+		String cmt = c.getComment();
+		buffer.append("  " + ((cmt != null) ? ("\"" + cmt + "\"") : cmt));
+		return buffer.toString();
+	}
 
 }

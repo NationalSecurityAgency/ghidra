@@ -25,7 +25,7 @@ import ghidra.framework.store.db.PackedDatabase;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * DataTypeManager for a file. Can import categories from a file, or export
@@ -47,7 +47,7 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 	private PackedDatabase packedDB;
 
 	/**
-	 * Construct a new DataTypeFileManager
+	 * Construct a new DataTypeFileManager using the default data organization.
 	 * @param packedDbfile file to load or create based upon openMode
 	 * @param openMode one of the DBConstants: CREATE, UPDATE, READ_ONLY, UPGRADE 
 	 * @throws IOException
@@ -67,7 +67,7 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 	}
 
 	/**
-	 * Create a new data-type file archive
+	 * Create a new data-type file archive using the default data organization
 	 * @param packedDbfile archive file (filename must end with DataTypeFileManager.SUFFIX)
 	 * @return data-type manager backed by specified packedDbFile
 	 * @throws IOException
@@ -77,7 +77,7 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 	}
 
 	/**
-	 * Open an existing data-type file archive
+	 * Open an existing data-type file archive using the default data organization
 	 * @param packedDbfile archive file (filename must end with DataTypeFileManager.SUFFIX)
 	 * @param openForUpdate if true archive will be open for update
 	 * @return data-type manager backed by specified packedDbFile
@@ -89,7 +89,7 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 	}
 
 	/**
-	 * Open an existing data-type file archive
+	 * Open an existing data-type file archive using the default data organization
 	 * @param packedDbfile archive file (filename must end with DataTypeFileManager.SUFFIX)
 	 * @param openForUpdate if true archive will be open for update
 	 * @return data-type manager backed by specified packedDbFile
@@ -107,6 +107,8 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 	 * match another existing archive database.
 	 * @param saveFile the file to save
 	 * @param newUniversalId the new id to use
+	 * @throws DuplicateFileException 
+	 * @throws IOException 
 	 */
 	public void saveAs(File saveFile, UniversalID newUniversalId)
 			throws DuplicateFileException, IOException {
@@ -116,7 +118,7 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 		try {
 			universalID = newUniversalId;
 			packedDB = ((PackedDBHandle) dbHandle).saveAs("DTArchive", saveFile.getParentFile(),
-				saveFile.getName(), newUniversalId.getValue(), TaskMonitorAdapter.DUMMY_MONITOR);
+				saveFile.getName(), newUniversalId.getValue(), TaskMonitor.DUMMY);
 			file = resourceSaveFile;
 			updateRootCategoryName(resourceSaveFile, getRootCategory());
 		}
@@ -134,7 +136,7 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 		validateFilename(resourceSaveFile);
 		try {
 			packedDB = ((PackedDBHandle) dbHandle).saveAs("DTArchive", saveFile.getParentFile(),
-				saveFile.getName(), TaskMonitorAdapter.DUMMY_MONITOR);
+				saveFile.getName(), TaskMonitor.DUMMY);
 			file = resourceSaveFile;
 			updateRootCategoryName(resourceSaveFile, getRootCategory());
 		}
@@ -153,7 +155,7 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 		}
 
 		try {
-			((PackedDBHandle) dbHandle).save(TaskMonitorAdapter.DUMMY_MONITOR);
+			((PackedDBHandle) dbHandle).save(TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// Cancel can't happen because we are using a dummy monitor

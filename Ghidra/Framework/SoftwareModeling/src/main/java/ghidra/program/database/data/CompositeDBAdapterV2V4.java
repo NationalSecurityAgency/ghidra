@@ -38,20 +38,20 @@ class CompositeDBAdapterV2V4 extends CompositeDBAdapter implements RecordTransla
 	static final int VERSION = 4;
 	static final int MIN_READ_ONLY_VERSION = 2;
 
-	static final int V2_COMPOSITE_NAME_COL = 0;
-	static final int V2_COMPOSITE_COMMENT_COL = 1;
-	static final int V2_COMPOSITE_IS_UNION_COL = 2;
-	static final int V2_COMPOSITE_CAT_COL = 3;
-	static final int V2_COMPOSITE_LENGTH_COL = 4;
-	static final int V2_COMPOSITE_NUM_COMPONENTS_COL = 5;
-	static final int V2_COMPOSITE_SOURCE_ARCHIVE_ID_COL = 6;
-	static final int V2_COMPOSITE_UNIVERSAL_DT_ID_COL = 7;
-	static final int V2_COMPOSITE_SOURCE_SYNC_TIME_COL = 8;
-	static final int V2_COMPOSITE_LAST_CHANGE_TIME_COL = 9;
-	static final int V2_COMPOSITE_PACK_COL = 10; // renamed from Internal Alignment
-	static final int V2_COMPOSITE_MIN_ALIGN_COL = 11;  // renamed from External Alignment
+	static final int V2V4_COMPOSITE_NAME_COL = 0;
+	static final int V2V4_COMPOSITE_COMMENT_COL = 1;
+	static final int V2V4_COMPOSITE_IS_UNION_COL = 2;
+	static final int V2V4_COMPOSITE_CAT_COL = 3;
+	static final int V2V4_COMPOSITE_LENGTH_COL = 4;
+	static final int V2V4_COMPOSITE_NUM_COMPONENTS_COL = 5;
+	static final int V2V4_COMPOSITE_SOURCE_ARCHIVE_ID_COL = 6;
+	static final int V2V4_COMPOSITE_UNIVERSAL_DT_ID_COL = 7;
+	static final int V2V4_COMPOSITE_SOURCE_SYNC_TIME_COL = 8;
+	static final int V2V4_COMPOSITE_LAST_CHANGE_TIME_COL = 9;
+	static final int V2V4_COMPOSITE_PACK_COL = 10; // renamed from Internal Alignment
+	static final int V2V4_COMPOSITE_MIN_ALIGN_COL = 11;  // renamed from External Alignment
 
-	static final Schema V2_COMPOSITE_SCHEMA = new Schema(VERSION, "Data Type ID",
+	static final Schema V2V4_COMPOSITE_SCHEMA = new Schema(VERSION, "Data Type ID",
 		new Field[] { StringField.INSTANCE, StringField.INSTANCE, BooleanField.INSTANCE,
 			LongField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE, LongField.INSTANCE,
 			LongField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE, IntField.INSTANCE,
@@ -82,6 +82,16 @@ class CompositeDBAdapterV2V4 extends CompositeDBAdapter implements RecordTransla
 				" but got " + version;
 			throw new VersionException(msg, VersionException.NEWER_VERSION, false);
 		}
+	}
+
+	@Override
+	int getVersion() {
+		return compositeTable.getSchema().getVersion();
+	}
+
+	@Override
+	int getRecordCount() {
+		return compositeTable.getRecordCount();
 	}
 
 	@Override
@@ -127,7 +137,7 @@ class CompositeDBAdapterV2V4 extends CompositeDBAdapter implements RecordTransla
 	@Override
 	Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
 		return compositeTable.findRecords(new LongField(archiveID),
-			V2_COMPOSITE_SOURCE_ARCHIVE_ID_COL);
+			V2V4_COMPOSITE_SOURCE_ARCHIVE_ID_COL);
 	}
 
 	/* (non-Javadoc)
@@ -139,36 +149,36 @@ class CompositeDBAdapterV2V4 extends CompositeDBAdapter implements RecordTransla
 			return null;
 		}
 		DBRecord rec = CompositeDBAdapter.COMPOSITE_SCHEMA.createRecord(oldRec.getKey());
-		rec.setString(COMPOSITE_NAME_COL, oldRec.getString(V2_COMPOSITE_NAME_COL));
-		rec.setString(COMPOSITE_COMMENT_COL, oldRec.getString(V2_COMPOSITE_COMMENT_COL));
+		rec.setString(COMPOSITE_NAME_COL, oldRec.getString(V2V4_COMPOSITE_NAME_COL));
+		rec.setString(COMPOSITE_COMMENT_COL, oldRec.getString(V2V4_COMPOSITE_COMMENT_COL));
 		rec.setBooleanValue(COMPOSITE_IS_UNION_COL,
-			oldRec.getBooleanValue(V2_COMPOSITE_IS_UNION_COL));
-		rec.setLongValue(COMPOSITE_CAT_COL, oldRec.getLongValue(V2_COMPOSITE_CAT_COL));
-		rec.setIntValue(COMPOSITE_LENGTH_COL, oldRec.getIntValue(V2_COMPOSITE_LENGTH_COL));
+			oldRec.getBooleanValue(V2V4_COMPOSITE_IS_UNION_COL));
+		rec.setLongValue(COMPOSITE_CAT_COL, oldRec.getLongValue(V2V4_COMPOSITE_CAT_COL));
+		rec.setIntValue(COMPOSITE_LENGTH_COL, oldRec.getIntValue(V2V4_COMPOSITE_LENGTH_COL));
 		rec.setIntValue(COMPOSITE_ALIGNMENT_COL, -1);
 		rec.setIntValue(COMPOSITE_NUM_COMPONENTS_COL,
-			oldRec.getIntValue(V2_COMPOSITE_NUM_COMPONENTS_COL));
+			oldRec.getIntValue(V2V4_COMPOSITE_NUM_COMPONENTS_COL));
 		rec.setLongValue(COMPOSITE_SOURCE_ARCHIVE_ID_COL,
-			oldRec.getLongValue(V2_COMPOSITE_SOURCE_ARCHIVE_ID_COL));
+			oldRec.getLongValue(V2V4_COMPOSITE_SOURCE_ARCHIVE_ID_COL));
 		rec.setLongValue(COMPOSITE_UNIVERSAL_DT_ID,
-			oldRec.getLongValue(V2_COMPOSITE_UNIVERSAL_DT_ID_COL));
+			oldRec.getLongValue(V2V4_COMPOSITE_UNIVERSAL_DT_ID_COL));
 		rec.setLongValue(COMPOSITE_SOURCE_SYNC_TIME_COL,
-			oldRec.getLongValue(V2_COMPOSITE_SOURCE_SYNC_TIME_COL));
+			oldRec.getLongValue(V2V4_COMPOSITE_SOURCE_SYNC_TIME_COL));
 		rec.setLongValue(COMPOSITE_LAST_CHANGE_TIME_COL,
-			oldRec.getLongValue(V2_COMPOSITE_LAST_CHANGE_TIME_COL));
-		rec.setIntValue(COMPOSITE_PACKING_COL, oldRec.getIntValue(V2_COMPOSITE_PACK_COL));
-		rec.setIntValue(COMPOSITE_MIN_ALIGN_COL, oldRec.getIntValue(V2_COMPOSITE_MIN_ALIGN_COL));
+			oldRec.getLongValue(V2V4_COMPOSITE_LAST_CHANGE_TIME_COL));
+		rec.setIntValue(COMPOSITE_PACKING_COL, oldRec.getIntValue(V2V4_COMPOSITE_PACK_COL));
+		rec.setIntValue(COMPOSITE_MIN_ALIGN_COL, oldRec.getIntValue(V2V4_COMPOSITE_MIN_ALIGN_COL));
 		return rec;
 	}
 
 	@Override
 	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
 		Field[] keys = compositeTable.findRecords(new LongField(datatypeID.getValue()),
-			V2_COMPOSITE_UNIVERSAL_DT_ID_COL);
+			V2V4_COMPOSITE_UNIVERSAL_DT_ID_COL);
 
 		for (Field key : keys) {
 			DBRecord record = compositeTable.getRecord(key);
-			if (record.getLongValue(V2_COMPOSITE_SOURCE_ARCHIVE_ID_COL) == sourceID.getValue()) {
+			if (record.getLongValue(V2V4_COMPOSITE_SOURCE_ARCHIVE_ID_COL) == sourceID.getValue()) {
 				return translateRecord(record);
 			}
 		}

@@ -528,6 +528,11 @@ public class DataStub implements Data {
 	}
 
 	@Override
+	public Data getComponentContaining(int offset) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public List<Data> getComponentsContaining(int offset) {
 		throw new UnsupportedOperationException();
 	}

@@ -163,10 +163,16 @@ class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 		// isEquiv().
 		// Ensure that two components in the partial struct don't map to the same
 		// component in the full structure.
+
 		for (DataTypeComponent partDTC : partComps) {
+			DataType partDT = partDTC.getDataType();
+			if (partDT.isZeroLength()) {
+				// don't try to match zero length fields, so skip
+				continue;
+			}
 			DataTypeComponent fullDTCAt = (partDTC.getDataType() instanceof BitFieldDataType)
 					? getBitfieldByOffsets(full, partDTC)
-					: full.getComponentAt(partDTC.getOffset());
+					: getBestMatchingDTC(full, partDTC);
 			if (fullDTCAt == null || fullDTCAt.getOffset() != partDTC.getOffset() ||
 				!SystemUtilities.isEqual(fullDTCAt.getFieldName(), partDTC.getFieldName())) {
 				return false;
@@ -175,13 +181,18 @@ class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 				return false;
 			}
 		}
-		if ( part.getFlexibleArrayComponent() != null ) {
-			return full.getFlexibleArrayComponent() != null &&
-				isMemberFieldPartiallyCompatible(full.getFlexibleArrayComponent(),
-					part.getFlexibleArrayComponent(), visitedDataTypes);
-		}
 
 		return true;
+	}
+
+	DataTypeComponent getBestMatchingDTC(Structure struct, DataTypeComponent matchCriteria) {
+		for (DataTypeComponent dtc : struct.getComponentsContaining(matchCriteria.getOffset())) {
+			DataType dt = dtc.getDataType();
+			if (dtc.getOffset() == matchCriteria.getOffset() && !dt.isZeroLength()) {
+				return dtc;
+			}
+		}
+		return null;
 	}
 
 	boolean isMemberFieldPartiallyCompatible(DataTypeComponent fullDTC, DataTypeComponent partDTC,
@@ -216,7 +227,7 @@ class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 	private DataTypeComponent getBitfieldByOffsets(Structure full, DataTypeComponent partDTC) {
 		BitFieldDataType partBF = (BitFieldDataType) partDTC.getDataType();
 
-		DataTypeComponent fullDTC = full.getComponentAt(partDTC.getOffset());
+		DataTypeComponent fullDTC = full.getComponentContaining(partDTC.getOffset());
 		if (fullDTC == null) {
 			return null;
 		}

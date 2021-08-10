@@ -92,12 +92,9 @@ public class BitFieldDataType extends AbstractDataType {
 	protected BitFieldDataType(DataType baseDataType, int bitSize) throws InvalidDataTypeException {
 		this(baseDataType, bitSize, 0);
 	}
-
-	/**
-	 * Determine if this bit-field has a zero length (i.e., alignment field)
-	 * @return true if this bit-field has a zero length 
-	 */
-	public boolean isZeroLengthField() {
+	
+	@Override
+	public boolean isZeroLength() {
 		return bitSize == 0;
 	}
 

@@ -43,17 +43,8 @@ public class CompositeHandler {
 		if (dec == null || dec.getDataType() == null) {
 			return;
 		}
-		if (parent instanceof Structure) {
-			// ensure that only the last component establishes a structure's flex array
-			((Structure) parent).clearFlexibleArrayComponent();
-		}
 		// not a bitfield, just add the data type to composite
 		if (!dec.isBitField()) {
-			if (dec.isFlexArray() && parent instanceof Structure) {
-				((Structure) parent).setFlexibleArrayComponent(dec.getDataType(), dec.getName(),
-					dec.getComment());
-				return;
-			}
 			parent.add(dec.getDataType(), dec.getName(), dec.getComment());
 			return;
 		}

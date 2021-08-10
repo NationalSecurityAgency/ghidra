@@ -86,8 +86,7 @@ public class BitFieldListingDisplayTest extends AbstractGhidraHeadedIntegrationT
 		struct.add(new ByteDataType(), "field0", "Comment1");
 		struct.add(new WordDataType(), null, "Comment2");
 		struct.add(new DWordDataType(), "field3", null);
-		struct.add(new ByteDataType(), "field4", "Comment4");
-//		struct.setFlexibleArrayComponent(CharDataType.dataType, "flex", "Flex Comment");
+		struct.add(new ArrayDataType(CharDataType.dataType, 0, -1), "flex", "Flex Comment");
 		return struct;
 	}
 
@@ -117,7 +116,7 @@ public class BitFieldListingDisplayTest extends AbstractGhidraHeadedIntegrationT
 	public void testStructureBitFields() throws Exception {
 		openStructure(addr(0x1010));
 		assertMnemonic("Test", addr(0x1010), 0);
-		assertComponents();
+		assertComponents("Test");
 	}
 
 	@Test
@@ -130,10 +129,10 @@ public class BitFieldListingDisplayTest extends AbstractGhidraHeadedIntegrationT
 
 		openStructure(addr(0x1010));
 		assertMnemonic("BitfieldDType", addr(0x1010), 0);
-		assertComponents();
+		assertComponents("BitfieldDType");
 	}
 
-	private void assertComponents() {
+	private void assertComponents(String typeName) {
 		assertMnemonic("int:3", addr(0x1010), 1);
 		assertOperand("0h", addr(0x1010), 1);
 		assertMnemonic("int:24", addr(0x1010), 2);
@@ -152,6 +151,10 @@ public class BitFieldListingDisplayTest extends AbstractGhidraHeadedIntegrationT
 		assertOperand("EFh", addr(0x1017), 0);
 		assertMnemonic("dw", addr(0x1018), 0);
 		assertOperand("1234h", addr(0x1018), 0);
+		assertMnemonic("ddw", addr(0x101c), 0);
+		assertOperand("89ABCDEFh", addr(0x101c), 0);
+		// flex-array should appear as pre-comment for next code unit
+		assertPreComment("Zero-length Component: char[0] " + typeName + ".flex", addr(0x1020), 0);
 	}
 
 	private void assertMnemonic(String expectedValue, Address addr, int occurrence) {
@@ -161,6 +164,11 @@ public class BitFieldListingDisplayTest extends AbstractGhidraHeadedIntegrationT
 
 	private void assertOperand(String expectedValue, Address addr, int occurrence) {
 		plugin.goToField(addr, "Operands", occurrence, 0, 0);
+		assertEquals(expectedValue, plugin.getCurrentFieldText());
+	}
+
+	private void assertPreComment(String expectedValue, Address addr, int occurrence) {
+		plugin.goToField(addr, "Pre-Comment", occurrence, 0, 0);
 		assertEquals(expectedValue, plugin.getCurrentFieldText());
 	}
 
@@ -209,14 +217,7 @@ public class BitFieldListingDisplayTest extends AbstractGhidraHeadedIntegrationT
 		protected DataTypeComponent[] getAllComponents(MemBuffer buf) {
 			try {
 				Structure struct = createStructure(dataMgr);
-				DataTypeComponent[] components = struct.getComponents();
-				if (struct.hasFlexibleArrayComponent()) {
-					DataTypeComponent[] newArray = new DataTypeComponent[components.length + 1];
-					System.arraycopy(components, 0, newArray, 0, components.length);
-					newArray[components.length] = struct.getFlexibleArrayComponent();
-					components = newArray;
-				}
-				return components;
+				return struct.getComponents();
 			}
 			catch (InvalidDataTypeException e) {
 				return null; // test should fail as a result

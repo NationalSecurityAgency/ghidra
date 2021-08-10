@@ -27,7 +27,6 @@ import ghidra.util.exception.DuplicateNameException;
  * particular type of data in the program.
  */
 public class DefaultDataType extends DataTypeImpl {
-	private final static long serialVersionUID = 1;
 
 	/** A statically defined DefaultDataType used when an Undefined byte is needed.*/
 	public static DefaultDataType dataType = new DefaultDataType();

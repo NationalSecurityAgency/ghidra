@@ -177,17 +177,14 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			rowIndex = range.getStart().getIndex().intValue();
 		}
 
-		boolean dynamicSizingAllowed = true;
-
 		DataType currentDt = null;
 		DataTypeComponent dtc = getComponent(rowIndex);
 		if (dtc != null) {
-			dynamicSizingAllowed = !dtc.isFlexibleArrayComponent();
 			currentDt = dtc.getDataType();
 		}
 		if (!(currentDt instanceof Pointer)) {
 			// stacking on pointer allows any data type
-			checkIsAllowableDataType(dt, dynamicSizingAllowed);
+			checkIsAllowableDataType(dt);
 		}
 
 		DataType resultDt = DataUtilities.reconcileAppliedDataType(currentDt, dt, true);
@@ -358,7 +355,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			dtName = previousDt.getDisplayName();
 		}
 		DataType newDt = null;
-		int newLength = 0;
+		int newLength = -1;
 		if (dataTypeObject instanceof DataTypeInstance) {
 			DataTypeInstance dti = (DataTypeInstance) dataTypeObject;
 			newDt = dti.getDataType();
@@ -381,10 +378,15 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		if (newDt == null) {
 			return; // Was nothing and is nothing.
 		}
+		
+		if (DataTypeComponent.usesZeroLengthComponent(newDt)) {
+			newLength = 0;
+		}
 
-		checkIsAllowableDataType(newDt, element == null || !element.isFlexibleArrayComponent());
+		checkIsAllowableDataType(newDt);
 
 		newDt = resolveDataType(newDt, viewDTM, DataTypeConflictHandler.DEFAULT_HANDLER);
+		
 		if (newLength < 0) {
 			// prefer previous size first
 			int suggestedLength = (previousLength <= 0) ? lastNumBytes : previousLength;
@@ -393,22 +395,22 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			if (sizedDataType == null) {
 				return;
 			}
+			newDt = resolveDataType(sizedDataType.getDataType(),  viewDTM, DataTypeConflictHandler.DEFAULT_HANDLER);
 			newLength = sizedDataType.getLength();
+			if (newLength <= 0) {
+				throw new UsrException("Can't currently add this data type.");
+			}
 		}
 		if ((previousDt != null) && newDt.isEquivalent(previousDt) && newLength == previousLength) {
 			return;
 		}
 
 		int maxLength = getMaxReplaceLength(rowIndex);
-		if (newLength <= 0) {
-			throw new UsrException("Can't currently add this data type.");
-		}
 		if (maxLength > 0 && newLength > maxLength) {
 			throw new UsrException(newDt.getDisplayName() + " doesn't fit within " + maxLength +
 				" bytes, need " + newLength + " bytes");
 		}
-		setComponentDataTypeInstance(rowIndex,
-			DataTypeInstance.getDataTypeInstance(newDt, newLength));
+		setComponentDataTypeInstance(rowIndex, newDt, newLength);
 		notifyCompositeChanged();
 	}
 
@@ -458,10 +460,6 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		int max = getMaxElements();
 		if (isSingleRowSelection()) {
 			if (max != 0) {
-				int currentIndex = selection.getFieldRange(0).getStart().getIndex().intValue();
-				if (canConvertToFlexibleArray(currentIndex)) {
-					min = 0; // allow flexible array
-				}
 				int initial = getLastNumElements();
 				NumberInputDialog numberInputDialog =
 					new NumberInputDialog("elements", ((initial > 0) ? initial : 1), min, max);
@@ -490,20 +488,6 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 				}
 			}
 		}
-	}
-
-	/**
-	 * Determine if the existing composite component identified by its rowIndex can
-	 * be converted to a flexible array (i.e., unsized array).
-	 * @param rowIndex existing component index
-	 * @return true if conversion to flexible array permitted.
-	 */
-	protected boolean canConvertToFlexibleArray(int rowIndex) {
-		return false;
-	}
-
-	protected void convertToFlexibleArray(int rowIndex) throws UsrException {
-		throw new UsrException("Flexible array not permitted");
 	}
 
 	protected void createArray(int numElements)
@@ -777,6 +761,10 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	 */
 	protected boolean nameExistsElsewhere(String name, int rowIndex) {
 		if (name != null) {
+			name = name.trim();
+			if (name.length() == 0) {
+				return false;
+			}
 			int numComponents = getNumComponents();
 			for (int i = 0; i < rowIndex && i < numComponents; i++) {
 				if (name.equals(getComponent(i).getFieldName())) {
@@ -797,12 +785,18 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	 * If invalid, an exception will be thrown.
 	 * 
 	 * @param datatype the data type
-	 * @param dynamicSizingAllowed true signals to allow dynamic types
 	 * @throws InvalidDataTypeException if the structure being edited is part
 	 *         of the data type being inserted or doesn't have a valid size.
 	 */
-	protected void checkIsAllowableDataType(DataType datatype, boolean dynamicSizingAllowed)
+	protected void checkIsAllowableDataType(DataType datatype)
 			throws InvalidDataTypeException {
+		if (!allowsZeroLengthComponents() && DataTypeComponent.usesZeroLengthComponent(datatype)) {
+			throw new InvalidDataTypeException(
+				"Zero-length datatype not permitted: " + datatype.getName());
+		}
+		if (!allowsBitFields() && (datatype instanceof BitFieldDataType)) {
+			throw new InvalidDataTypeException("Bitfield not permitted: " + datatype.getName());
+		}
 		if (datatype instanceof TypeDef) {
 			datatype = ((TypeDef) datatype).getBaseDataType();
 		}
@@ -811,15 +805,19 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 				"Factory data types are not " + "allowed in a composite data type.");
 		}
 		else if (datatype instanceof Dynamic) {
-			if (!dynamicSizingAllowed) {
-				throw new InvalidDataTypeException(
-					"Dynamic data type is not permitted in current context");
-			}
-			else if (!((Dynamic) datatype).canSpecifyLength()) {
+			if (!((Dynamic) datatype).canSpecifyLength()) {
 				throw new InvalidDataTypeException("Non-sizable Dynamic data types are not " +
 					"allowed in a composite data type.");
 			}
 		}
+	}
+
+	protected boolean allowsZeroLengthComponents() {
+		return true;
+	}
+
+	protected boolean allowsBitFields() {
+		return true;
 	}
 
 	@Override
@@ -1114,7 +1112,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			throw new AssertException("Can't set data type to null.");
 		}
 
-		checkIsAllowableDataType(newDt, element == null || !element.isFlexibleArrayComponent());
+		checkIsAllowableDataType(newDt);
 
 		newLength = newDt.getLength();
 		if (newLength < 0) {

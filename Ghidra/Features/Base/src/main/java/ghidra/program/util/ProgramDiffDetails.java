@@ -882,22 +882,6 @@ public class ProgramDiffDetails {
 		for (int index2 = i; index2 < compDt2.length; index2++) {
 			getComponentInfo(compDt2[index2], buf2, newIndent);
 		}
-
-		if (dt1 instanceof Structure) {
-			// dt2 is also Structure - check for flex array component
-			DataTypeComponent flexDtc1 = ((Structure) dt1).getFlexibleArrayComponent();
-			DataTypeComponent flexDtc2 = ((Structure) dt2).getFlexibleArrayComponent();
-			if (flexDtc1 != null) {
-				getComponentInfo(flexDtc1, buf1, newIndent);
-			}
-			if (flexDtc2 != null) {
-				getComponentInfo(flexDtc2, buf2, newIndent);
-			}
-			if (flexDtc1 != null && flexDtc2 != null) {
-				compareSubDataTypes(flexDtc1.getDataType(), flexDtc2.getDataType(), buf1, buf2,
-					newIndent);
-			}
-		}
 	}
 
 	private void compareDataCUs(Data d1, Data d2, StringBuffer buf1, StringBuffer buf2,
@@ -926,22 +910,13 @@ public class ProgramDiffDetails {
 		if (fieldName == null) {
 			fieldName = dtc.getDefaultFieldName();
 		}
-		if (dtc.isFlexibleArrayComponent()) {
-			buf.append(indent + "Offset=" + DiffUtility.toSignedHexString(offset) + " " +
-				"Ordinal=" + ordinal + " " + fieldName + " " +
-				actualDt.getMnemonic(actualDt.getDefaultSettings()) + "[]" + "  " +
-				getCategoryName(actualDt) + " " + "DataTypeSize=" + actualDt.getLength() +
-				" (flexible array) " + ((comment != null) ? comment : "") + " " + newLine);
-		}
-		else {
-			// TODO: how should we display bitfields?
-			buf.append(indent + "Offset=" + DiffUtility.toSignedHexString(offset) + " " +
-				"Ordinal=" + ordinal + " " + fieldName + " " +
-				actualDt.getMnemonic(actualDt.getDefaultSettings()) + "  " +
-				getCategoryName(actualDt) + " " + "DataTypeSize=" + actualDt.getLength() + " " +
-				"ComponentSize=" + dtc.getLength() + " " + ((comment != null) ? comment : "") +
-				" " + newLine);
-		}
+		// TODO: how should we display bitfields?
+		buf.append(indent + "Offset=" + DiffUtility.toSignedHexString(offset) + " " + "Ordinal=" +
+			ordinal + " " + fieldName + " " + actualDt.getMnemonic(actualDt.getDefaultSettings()) +
+			"  " + getCategoryName(actualDt) + " " + "DataTypeSize=" +
+			(actualDt.isZeroLength() ? 0 : actualDt.getLength()) + " " + "ComponentSize=" +
+			dtc.getLength() + " " + ((comment != null) ? comment : "") +
+			" " + newLine);
 		return actualDt;
 	}
 
@@ -983,18 +958,17 @@ public class ProgramDiffDetails {
 				Data data = (Data) cu;
 				DataType dt = data.getDataType();
 				if (dt instanceof Composite) {
-					DataTypeComponent[] compDt = ((Composite) dt).getComponents();
-					for (DataTypeComponent element : compDt) {
-						int offset = element.getOffset();
-						String comment = element.getComment();
-						String fieldName = element.getFieldName();
+					DataTypeComponent[] components = ((Composite) dt).getComponents();
+					for (DataTypeComponent dtc : components) {
+						int offset = dtc.getOffset();
+						String comment = dtc.getComment();
+						String fieldName = dtc.getFieldName();
 						if (fieldName == null) {
 							fieldName = "field" + offset;
 						}
-						buf.append(newIndent + min.add(offset) + " " + element.getFieldName() +
-							" " + element.getDataType().getName() + " " + "length=" +
-							element.getLength() + " " +
-
+						buf.append(newIndent + min.add(offset) + " " + dtc.getFieldName() + " " +
+							dtc.getDataType().getName() + " " + "length=" +
+							dtc.getLength() + " " +
 							((comment != null) ? comment : "") + " " + newLine);
 					}
 				}

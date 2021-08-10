@@ -177,7 +177,13 @@ public class CompEditorPanel extends CompositeEditorPanel {
 					validate();
 				}
 
-				bitViewComponent.init(dtc);
+				if (dtc != null && dtc.getOffset() >= length) {
+					// likely trailing zero-length component - not in range for bitViewComponent
+					bitViewComponent.init(null);
+				}
+				else {
+					bitViewComponent.init(dtc);
+				}
 
 			}
 		});
@@ -821,7 +827,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		sizeTextField.setEditable(editable);
 		if (editable) {
 			// editable - use same background as category field
-			sizeTextField.setBackground(categoryStatusTextField.getBackground());
+			sizeTextField.setBackground(descriptionTextField.getBackground());
 		}
 		else {
 			// not editable - use same background as panel

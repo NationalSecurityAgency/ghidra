@@ -71,6 +71,9 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	 * @return preferred component length
 	 */
 	protected int getPreferredComponentLength(DataType dataType, int length) {
+		if (DataTypeComponent.usesZeroLengthComponent(dataType)) {
+			return 0;
+		}
 		if ((isPackingEnabled() || (this instanceof Union)) && !(dataType instanceof Dynamic)) {
 			length = -1; // force use of datatype size
 		}
@@ -87,7 +90,7 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		}
 		return length;
 	}
-
+	
 	@Override
 	protected String doGetName() {
 		return record.getString(CompositeDBAdapter.COMPOSITE_NAME_COL);
@@ -191,6 +194,22 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	@Override
 	public abstract boolean hasLanguageDependantLength();
 	
+	/**
+	 * Determine if this composite should be treated as undefined.
+	 * <p>
+	 * A composite is considered undefined with a zero-length when it has 
+	 * no components and packing is disabled.  A {@link DataTypeComponent} defined by an
+	 * an datatype which is not-yet-defined (i.e., {@link DataType#isNotYetDefined()} is true) 
+	 * will always have a size of 1.  If an empty composite should be treated as 
+	 * fully specified, packing on the composite should be enabled to ensure that 
+	 * a zero-length component is used should the occassion arise (e.g., empty structure 
+	 * placed within union as a component).
+	 */
+	@Override
+	public final boolean isNotYetDefined() {
+		return getNumComponents() == 0 && !isPackingEnabled();
+	}
+
 	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		return null;
@@ -661,7 +680,7 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 
 	@Override
 	public String toString() {
-		return CompositeDataTypeImpl.toString(this);
+		return CompositeInternal.toString(this);
 	}
 	
 	/**
@@ -670,6 +689,8 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	 * specification which may be influenced by the data organization.
 	 * If this composite changes parents will not be
 	 * notified - handling this is the caller's responsibility.
+	 * It is assumed that this method is invoked on composites
+	 * in dependency order.
 	 * @throws IOException if database IO error occurs
 	 */
 	protected abstract void fixupComponents() throws IOException;

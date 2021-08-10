@@ -21,7 +21,7 @@ import ghidra.util.exception.AssertException;
 
 public class EmptyDataTypeLine extends DataTypeLine implements PlaceHolderLine {
 	public EmptyDataTypeLine() {
-		super("", "", "", null, false);
+		super("", "", "", null);
 	}
 
 	@Override

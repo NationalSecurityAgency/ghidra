@@ -29,8 +29,22 @@ import ghidra.util.exception.DuplicateNameException;
  */
 public interface DataType {
 
-	public static final DataType DEFAULT = DefaultDataType.dataType; // global default data type
-	public static final DataType VOID = VoidDataType.dataType; // global void data type
+	/**
+	 * WARNING: do not add <code>default</code> method implementations to this interface.
+	 * Doing so intereferes with correct initialization of the static instance variables
+	 * {@link #DEFAULT} and {@link #VOID} below.
+	 */
+
+	/**
+	 * Singleton instance of default datatype.
+	 */
+	public static final DataType DEFAULT = DefaultDataType.dataType;
+
+	/**
+	 * Instance of void datatype (never use <code>==</code>)
+	 * @deprecated should use {@link VoidDataType#dataType} instead
+	 */
+	public static final DataType VOID = VoidDataType.dataType;
 
 	public final static String CONFLICT_SUFFIX = ".conflict";
 
@@ -43,14 +57,6 @@ public interface DataType {
 	 * @return true length is language/compiler-specification dependent, else false
 	 */
 	public boolean hasLanguageDependantLength();
-
-	/**
-	 * Indicates if type has not yet been defined.
-	 * Such types will always return a size of 1.
-	 * (example: empty structure)
-	 * @return true if this type is not yet defined.
-	 */
-	public boolean isNotYetDefined();
 
 	/**
 	 * Gets a list of all the settingsDefinitions used by this data type.
@@ -157,21 +163,37 @@ public interface DataType {
 	public String getMnemonic(Settings settings);
 
 	/**
-	 * Get the length (number of 8-bit bytes) of this DataType.
+	 * Get the length (number of 8-bit bytes) of this DataType.  
+	 * <p>P
+	 * NOTE: No datatype should ever return 0, even if {@link #isZeroLength()}, and only 
+	 * {@link Dynamic} datatypes should return -1.  If {@link #isZeroLength()} is true a length of 1 
+	 * should be returned.  Where a zero-length datatype can be handled (e.g., {@link Composite}) 
+	 * the {@link #isZeroLength()} method should be used.
 	 * @return the length of this DataType
 	 */
 	public int getLength();
 
 	/**
-	 * Indicates is this datatype is defined with a zero length.
+	 * Indicates this datatype is defined with a zero length.
 	 * This method should not be confused with {@link #isNotYetDefined()}
 	 * which indicates that nothing but the name and basic type is known.
-	 * NOTE: Support for zero-length datatypes is not yet fully supported, as a result
-	 * they will generally return a non-zero length.
-	 * @return true if type definition has a length of 0 even though it may report
-	 * a length of 1, else false.  
+	 * NOTE: a zero-length datatype must return a length of 1
+	 * via {@link #getLength()}.  Zero-length datatypes used as a 
+	 * component within a {@link Composite} may, or may not, be assigned
+	 * a component length of 0.  The method {@link DataTypeComponent#usesZeroLengthComponent(DataType)}
+	 * is used to make this determination.
+	 * @return true if type definition has a length of 0, else false
 	 */
 	public boolean isZeroLength();
+
+	/**
+	 * Indicates if this datatype has not yet been fully defined.
+	 * Such datatypes should always return a {@link #getLength()} of 1 and 
+	 * true for {@link #isZeroLength()}.
+	 * (example: empty structure)
+	 * @return true if this type is not yet defined.
+	 */
+	public boolean isNotYetDefined();
 
 	/**
 	 * Get a String briefly describing this DataType.
@@ -450,6 +472,7 @@ public interface DataType {
 
 	/**
 	 * Returns the DataOrganization associated with this data-type
+	 * @return associated data organization 
 	 */
 	public DataOrganization getDataOrganization();
 

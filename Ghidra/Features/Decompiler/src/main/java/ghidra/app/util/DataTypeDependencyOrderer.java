@@ -265,9 +265,6 @@ public class DataTypeDependencyOrderer {
 				for (DataTypeComponent dtcomp : dtcomps) {
 					addDependent(entry, dtcomp.getDataType());
 				}
-				if (struct.hasFlexibleArrayComponent()) {
-					addDependent(entry, struct.getFlexibleArrayComponent().getDataType());
-				}
 			}
 			else if (dataType instanceof Composite) {
 				DataTypeComponent dtcomps[] = ((Composite) dataType).getComponents();

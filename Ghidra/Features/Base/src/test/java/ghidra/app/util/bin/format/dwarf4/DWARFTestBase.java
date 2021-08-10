@@ -36,8 +36,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -355,5 +354,23 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 
 	protected Address addr(long l) {
 		return space.getAddress(l);
+	}
+
+	protected void assertHasFlexArray(Structure struct) {
+		DataTypeComponent component = struct.getComponent(struct.getNumComponents() - 1);
+		assertNotNull(component);
+		assertEquals(0, component.getLength());
+		DataType dt = component.getDataType();
+		assertTrue(dt instanceof Array);
+		Array a = (Array) dt;
+		assertEquals(0, a.getNumElements());
+	}
+
+	protected void assertMissingFlexArray(Structure struct) {
+		DataTypeComponent component = struct.getComponent(struct.getNumComponents() - 1);
+		if (component == null) {
+			return;
+		}
+		assertNotEquals(0, component.getLength());
 	}
 }

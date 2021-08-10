@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- *
- */
-package ghidra.program.database.data;
+package ghidra.program.model.data;
 
 import static org.junit.Assert.*;
 
@@ -25,7 +22,6 @@ import org.junit.*;
 import com.google.common.collect.Sets;
 
 import generic.test.AbstractGTest;
-import ghidra.program.model.data.*;
 
 /**
  *
@@ -46,8 +42,8 @@ public class UnionDataTypeTest extends AbstractGTest {
 	private void transitionToBigEndian() {
 
 		// transition default little-endian structure to big-endian
-		DataTypeManager beDtm = new MyBigEndianDataTypeManager();
-		union = (Union) union.clone(beDtm);
+		DataTypeManager beDtm = createBigEndianDataTypeManager();
+		union = union.clone(beDtm);
 	}
 
 	private Union createUnion(String name) {
@@ -594,12 +590,9 @@ public class UnionDataTypeTest extends AbstractGTest {
 		}
 	}
 
-	protected class MyBigEndianDataTypeManager extends StandAloneDataTypeManager {
-		MyBigEndianDataTypeManager() {
-			super("BEdtm");
-			DataOrganizationImpl dataOrg = DataOrganizationImpl.getDefaultOrganization(null);
-			dataOrg.setBigEndian(true);
-			this.dataOrganization = dataOrg;
-		}
+	protected DataTypeManager createBigEndianDataTypeManager() {
+		DataOrganizationImpl dataOrg = DataOrganizationImpl.getDefaultOrganization(null);
+		dataOrg.setBigEndian(true);
+		return new StandAloneDataTypeManager("BEdtm", dataOrg);
 	}
 }
