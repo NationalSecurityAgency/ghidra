@@ -44,8 +44,10 @@ import ghidra.service.graph.*;
  * Handles the rendering of graphs for the {@link DefaultGraphDisplay}
  */
 public class DefaultGraphRenderer implements GraphRenderer {
+	private static final double ARROW_WIDTH_TO_LENGTH_RATIO = 1.3;
 	private static final int DEFAULT_MARGIN_BORDER_SIZE = 4;
 	private static final int DEFAULT_STROKE_THICKNESS = 6;
+	// scale factor so the icons can be rendered smaller so that fonts read better when zoomed out a bit
 	private static final int ICON_ZOOM = 5;
 
 	private int labelBorderSize = DEFAULT_MARGIN_BORDER_SIZE;
@@ -56,6 +58,7 @@ public class DefaultGraphRenderer implements GraphRenderer {
 	private final Map<AttributedVertex, Icon> iconCache = new ConcurrentHashMap<>();
 	private final Map<RenderingHints.Key, Object> renderingHints = new HashMap<>();
 	private Stroke edgeStroke = new BasicStroke(4.0f);
+
 	public DefaultGraphRenderer() {
 		this(new DefaultGraphDisplayOptions());
 	}
@@ -104,7 +107,7 @@ public class DefaultGraphRenderer implements GraphRenderer {
 			renderContext.setVertexShapeFunction(nodeShaper);
 			renderContext.setVertexIconFunction(this::getIcon);
 			int arrowLength = options.getArrowLength() * ICON_ZOOM;
-			int arrowWidth = (int) (arrowLength * 1.3);
+			int arrowWidth = (int) (arrowLength * ARROW_WIDTH_TO_LENGTH_RATIO);
 			renderContext.setEdgeArrowWidth(arrowWidth);
 			renderContext.setEdgeArrowLength(arrowLength);
 			renderContext.setVertexLabelFunction(v -> "");
@@ -112,6 +115,10 @@ public class DefaultGraphRenderer implements GraphRenderer {
 				InitialDimensionFunction.builder(nodeShaper.andThen(toRectangle)).build());
 		}
 		else {
+			int arrowLength = options.getArrowLength();
+			int arrowWidth = (int) (arrowLength * ARROW_WIDTH_TO_LENGTH_RATIO);
+			renderContext.setEdgeArrowWidth(arrowWidth);
+			renderContext.setEdgeArrowLength(arrowLength);
 			renderContext.setVertexIconFunction(null);
 			renderContext.setVertexShapeFunction(this::getVertexShape);
 			viewer.setInitialDimensionFunction(InitialDimensionFunction
@@ -122,13 +129,12 @@ public class DefaultGraphRenderer implements GraphRenderer {
 			renderContext.setVertexLabelPosition(getJungraphTPosition(labelPosition));
 
 		}
-		
+
 		// assign the shapes to the modal renderer
 		// the modal renderer optimizes rendering for large graphs by removing detail
 		ModalRenderer<AttributedVertex, AttributedEdge> modalRenderer = viewer.getRenderer();
 		Renderer.Vertex<AttributedVertex, AttributedEdge> lightWeightRenderer =
 			modalRenderer.getVertexRenderer(LIGHTWEIGHT);
-
 
 		// set the lightweight (optimized) renderer to use the vertex shapes instead
 		// of using default shapes.
@@ -241,10 +247,8 @@ public class DefaultGraphRenderer implements GraphRenderer {
 			(int) (Math.max(label.getHeight(), labelWidth / maxWidthToHeightRatio) * sizeFactor) +
 				strokeThickness;
 
-
 		double scalex = iconWidth / bounds.getWidth();
 		double scaley = iconHeight / bounds.getHeight();
-
 
 		Shape scaledShape =
 			AffineTransform.getScaleInstance(scalex, scaley).createTransformedShape(unitShape);
@@ -257,7 +261,6 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		int height = bounds.height + strokeThickness;
 		BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
-
 		Graphics2D graphics = bufferedImage.createGraphics();
 		graphics.setRenderingHints(renderingHints);
 		AffineTransform graphicsTransform = graphics.getTransform();
@@ -268,7 +271,6 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		graphics.setPaint(vertexColor);
 		graphics.setStroke(new BasicStroke(strokeThickness));
 		graphics.draw(scaledShape);
-
 
 		graphics.setTransform(graphicsTransform);
 		int xOffset = (width - label.getWidth()) / 2;
@@ -287,7 +289,6 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		return imageIcon;
 
 	}
-
 
 	private void prepareLabel(String vertexName, Color vertexColor) {
 		label.setFont(options.getFont());
