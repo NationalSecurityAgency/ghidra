@@ -386,7 +386,7 @@ public:
   void initActiveOutput(void);					///< Initialize \e return prototype recovery analysis
   /// \brief Clear any analysis of the function's \e return prototype
   void clearActiveOutput(void) {
-    if (activeoutput != (ParamActive *)0) delete activeoutput;
+    delete activeoutput;
     activeoutput = (ParamActive *)0;
   }
   ParamActive *getActiveOutput(void) const { return activeoutput; }	///< Get the \e return prototype recovery object

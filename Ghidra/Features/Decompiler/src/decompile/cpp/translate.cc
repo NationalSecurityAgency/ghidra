@@ -416,8 +416,7 @@ void AddrSpaceManager::insertResolver(AddrSpace *spc,AddressResolver *rsolv)
   int4 ind = spc->getIndex();
   while(resolvelist.size() <= ind)
     resolvelist.push_back((AddressResolver *)0);
-  if (resolvelist[ind] != (AddressResolver *)0)
-    delete resolvelist[ind];
+  delete resolvelist[ind];
   resolvelist[ind] = rsolv;
 }
 
@@ -444,10 +443,8 @@ AddrSpaceManager::~AddrSpaceManager(void)
     else
       delete spc;
   }
-  for(int4 i=0;i<resolvelist.size();++i) {
-    if (resolvelist[i] != (AddressResolver *)0)
-      delete resolvelist[i];
-  }
+  for(int4 i=0;i<resolvelist.size();++i)
+    delete resolvelist[i];
   for(int4 i=0;i<splitlist.size();++i)
     delete splitlist[i];	// Delete any join records
 }

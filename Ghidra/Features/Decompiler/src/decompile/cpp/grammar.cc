@@ -2910,45 +2910,36 @@ Datatype *CParse::oldEnum(const string &ident)
 void CParse::clearAllocation(void)
 
 {
-  list<TypeDeclarator *>::iterator iter1;
-
-  for(iter1=typedec_alloc.begin();iter1!=typedec_alloc.end();++iter1)
-    delete *iter1;
+  for(auto *it : typedec_alloc)
+    delete it;
   typedec_alloc.clear();
 
-  list<TypeSpecifiers *>::iterator iter2;
-  for(iter2=typespec_alloc.begin();iter2!=typespec_alloc.end();++iter2)
-    delete *iter2;
+  for(auto *it : typespec_alloc)
+    delete it;
   typespec_alloc.clear();
 
-  list<vector<uint4> *>::iterator iter3;
-  for(iter3=vecuint4_alloc.begin();iter3!=vecuint4_alloc.end();++iter3)
-    delete *iter3;
+  for(auto *it : vecuint4_alloc)
+    delete it;
   vecuint4_alloc.clear();
 
-  list<vector<TypeDeclarator *> *>::iterator iter4;
-  for(iter4=vecdec_alloc.begin();iter4!=vecdec_alloc.end();++iter4)
-    delete *iter4;
+  for(auto *it : vecdec_alloc)
+    delete it;
   vecdec_alloc.clear();
 
-  list<string *>::iterator iter5;
-  for(iter5=string_alloc.begin();iter5!=string_alloc.end();++iter5)
-    delete *iter5;
+  for(auto *it : string_alloc)
+    delete it;
   string_alloc.clear();
 
-  list<uintb *>::iterator iter6;
-  for(iter6=num_alloc.begin();iter6!=num_alloc.end();++iter6)
-    delete *iter6;
+  for(auto *it : num_alloc)
+    delete it;
   num_alloc.clear();
 
-  list<Enumerator *>::iterator iter7;
-  for(iter7=enum_alloc.begin();iter7!=enum_alloc.end();++iter7)
-    delete *iter7;
+  for(auto *it : enum_alloc)
+    delete it;
   enum_alloc.clear();
 
-  list<vector<Enumerator *> *>::iterator iter8;
-  for(iter8=vecenum_alloc.begin();iter8!=vecenum_alloc.end();++iter8)
-    delete *iter8;
+  for(auto *it : vecenum_alloc)
+    delete it;
   vecenum_alloc.clear();
 }
 

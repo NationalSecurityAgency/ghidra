@@ -303,13 +303,8 @@ UserOpManage::UserOpManage(void)
 UserOpManage::~UserOpManage(void)
 
 {
-  vector<UserPcodeOp *>::iterator iter;
-
-  for(iter=useroplist.begin();iter!=useroplist.end();++iter) {
-    UserPcodeOp *userop = *iter;
-    if (userop != (UserPcodeOp *)0)
-      delete userop;
-  }
+  for(auto *op : useroplist)
+    delete op;
 }
 
 /// Every user defined p-code op is initially assigned an UnspecializedPcodeOp description,

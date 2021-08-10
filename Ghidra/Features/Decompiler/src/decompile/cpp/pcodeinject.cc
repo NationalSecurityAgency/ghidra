@@ -175,9 +175,8 @@ uintb ExecutablePcode::evaluate(const vector<uintb> &input)
 PcodeInjectLibrary::~PcodeInjectLibrary(void)
 
 {
-  vector<InjectPayload *>::iterator iter;
-  for(iter=injection.begin();iter!=injection.end();++iter)
-    delete *iter;
+  for(auto *it : injection)
+    delete it;
 }
 
 /// \brief Map a \e call-fixup name to a payload id

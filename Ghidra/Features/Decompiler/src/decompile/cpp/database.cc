@@ -584,9 +584,10 @@ FunctionSymbol::FunctionSymbol(Scope *sc,int4 size)
   buildType();
 }
 
-FunctionSymbol::~FunctionSymbol(void) {
-  if (fd != (Funcdata *)0)
-    delete fd;
+FunctionSymbol::~FunctionSymbol(void)
+
+{
+  delete fd;
 }
 
 Funcdata *FunctionSymbol::getFunction(void)
@@ -1157,11 +1158,8 @@ SymbolEntry *Scope::addMap(SymbolEntry &entry)
 Scope::~Scope(void)
 
 {
-  ScopeMap::iterator iter = children.begin();
-  while(iter != children.end()) {
-    delete (*iter).second;
-    ++iter;
-  }
+  for (auto &it : children)
+    delete it.second;
 }
 
 /// Starting from \b this Scope, look for a Symbol with the given name.
@@ -1909,16 +1907,10 @@ ScopeInternal::ScopeInternal(uint8 id,const string &nm,Architecture *g, Scope *o
 ScopeInternal::~ScopeInternal(void)
 
 {
-  vector<EntryMap *>::iterator iter1;
-
-  for(iter1=maptable.begin();iter1!=maptable.end();++iter1)
-    if ((*iter1) != (EntryMap *)0)
-      delete *iter1;
-
-  SymbolNameTree::iterator iter2;
-
-  for(iter2=nametree.begin();iter2!=nametree.end();++iter2)
-    delete *iter2;
+  for(auto *it : maptable)
+    delete it;
+  for(auto *it : nametree)
+    delete it;
 }
 
 void ScopeInternal::clear(void)

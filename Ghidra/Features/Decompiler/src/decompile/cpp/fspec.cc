@@ -434,11 +434,8 @@ ParamListStandard::ParamListStandard(const ParamListStandard &op2)
 ParamListStandard::~ParamListStandard(void)
 
 {
-  for(int4 i=0;i<resolverMap.size();++i) {
-    ParamEntryResolver *resolver = resolverMap[i];
-    if (resolver != (ParamEntryResolver *)0)
-      delete resolver;
-  }
+  for(auto *resolver : resolverMap)
+    delete resolver;
 }
 
 /// Find the (first) entry containing the given memory range
@@ -1806,10 +1803,8 @@ ProtoModel::ProtoModel(const string &nm,const ProtoModel &op2)
 ProtoModel::~ProtoModel(void)
 
 {
-  if (input != (ParamList *)0)
-    delete input;
-  if (output != (ParamList *)0)
-    delete output;
+  delete input;
+  delete output;
 }
 
 /// Test whether one ProtoModel can substituted for another during FuncCallSpecs::deindirect
@@ -2473,13 +2468,9 @@ ProtoStoreSymbol::ProtoStoreSymbol(Scope *sc,const Address &usepoint)
 ProtoStoreSymbol::~ProtoStoreSymbol(void)
 
 {
-  for(int4 i=0;i<inparam.size();++i) {
-    ProtoParameter *param = inparam[i];
-    if (param != (ProtoParameter *)0)
-      delete param;
-  }
-  if (outparam != (ProtoParameter *)0)
-    delete outparam;
+  for(auto *param : inparam)
+    delete param;
+  delete outparam;
 }
 
 /// Retrieve the specified ProtoParameter object, making sure it is a ParameterSymbol.
@@ -2495,8 +2486,7 @@ ParameterSymbol *ProtoStoreSymbol::getSymbolBacked(int4 i)
   ParameterSymbol *res = dynamic_cast<ParameterSymbol *>(inparam[i]);
   if (res != (ParameterSymbol *)0)
     return res;
-  if (inparam[i] != (ProtoParameter *)0)
-    delete inparam[i];
+  delete inparam[i];
   res = new ParameterSymbol();
   inparam[i] = res;
   return res;
@@ -2596,8 +2586,7 @@ ProtoParameter *ProtoStoreSymbol::getInput(int4 i)
 ProtoParameter *ProtoStoreSymbol::setOutput(const ParameterPieces &piece)
 
 {
-  if (outparam != (ProtoParameter *)0)
-    delete outparam;
+  delete outparam;
   outparam = new ParameterBasic("",piece.addr,piece.type,piece.flags);
   return outparam;
 }
@@ -2657,13 +2646,9 @@ ProtoStoreInternal::ProtoStoreInternal(Datatype *vt)
 ProtoStoreInternal::~ProtoStoreInternal(void)
 
 {
-  if (outparam != (ProtoParameter *)0)
-    delete outparam;
-  for(int4 i=0;i<inparam.size();++i) {
-    ProtoParameter *param = inparam[i];
-    if (param != (ProtoParameter *)0)
-      delete param;
-  }
+  delete outparam;
+  for(auto *param : inparam)
+    delete param;
 }
 
 ProtoParameter *ProtoStoreInternal::setInput(int4 i,const string &nm,const ParameterPieces &pieces)
@@ -2671,8 +2656,7 @@ ProtoParameter *ProtoStoreInternal::setInput(int4 i,const string &nm,const Param
 {
   while(inparam.size() <= i)
     inparam.push_back((ProtoParameter *)0);
-  if (inparam[i] != (ProtoParameter *)0)
-    delete inparam[i];
+  delete inparam[i];
   inparam[i] = new ParameterBasic(nm,pieces.addr,pieces.type,pieces.flags);
   return inparam[i];
 }
@@ -2682,8 +2666,7 @@ void ProtoStoreInternal::clearInput(int4 i)
 {
   int4 sz = inparam.size();
   if (i>=sz) return;
-  if (inparam[i] != (ProtoParameter *)0)
-    delete inparam[i];
+  delete inparam[i];
   inparam[i] = (ProtoParameter *)0;
   for(int4 j=i+1;j<sz;++j) {	// Renumber parameters with index > i
     inparam[j-1] = inparam[j];
@@ -2696,10 +2679,8 @@ void ProtoStoreInternal::clearInput(int4 i)
 void ProtoStoreInternal::clearAllInputs(void)
 
 {
-  for(int4 i=0;i<inparam.size();++i) {
-    if (inparam[i] != (ProtoParameter *)0)
-      delete inparam[i];
-  }
+  for(auto *param : inparam)
+    delete param;
   inparam.clear();
 }
 
@@ -2720,8 +2701,7 @@ ProtoParameter *ProtoStoreInternal::getInput(int4 i)
 ProtoParameter *ProtoStoreInternal::setOutput(const ParameterPieces &piece)
 
 {
-  if (outparam != (ProtoParameter *)0)
-    delete outparam;
+  delete outparam;
   outparam = new ParameterBasic("",piece.addr,piece.type,piece.flags);
   return outparam;
 }
@@ -2729,8 +2709,7 @@ ProtoParameter *ProtoStoreInternal::setOutput(const ParameterPieces &piece)
 void ProtoStoreInternal::clearOutput(void)
 
 {
-  if (outparam != (ProtoParameter *)0)
-    delete outparam;
+  delete outparam;
   outparam = new ParameterBasic(voidtype);
 }
 
@@ -3012,8 +2991,7 @@ void FuncProto::copy(const FuncProto &op2)
   model = op2.model;
   extrapop = op2.extrapop;
   flags = op2.flags;
-  if (store != (ProtoStore *)0)
-    delete store;
+  delete store;
   if (op2.store != (ProtoStore *)0)
     store = op2.store->clone();
   else
@@ -3126,8 +3104,7 @@ void FuncProto::setInternal(ProtoModel *m,Datatype *vt)
 FuncProto::~FuncProto(void)
 
 {
-  if (store != (ProtoStore *)0)
-    delete store;
+  delete store;
 }
 
 bool FuncProto::isInputLocked(void) const

@@ -44,8 +44,7 @@ ExprTree::ExprTree(OpTpl *op)
 ExprTree::~ExprTree(void)
 
 {
-  if (outvn != (VarnodeTpl *)0)
-    delete outvn;
+  delete outvn;
   if (ops != (vector<OpTpl *> *)0) {
     for(int4 i=0;i<ops->size();++i)
       delete (*ops)[i];

@@ -569,8 +569,8 @@ TraceDAG::BranchPoint::BranchPoint(BlockTrace *parenttrace)
 TraceDAG::BranchPoint::~BranchPoint(void)
 
 {
-  for(int4 i=0;i<paths.size();++i)
-    delete paths[i];
+  for(auto *path : paths)
+    delete path;
 }
 
 /// \param t is the parent BranchPoint
@@ -951,8 +951,8 @@ TraceDAG::TraceDAG(list<FloatingEdge> &lg)
 TraceDAG::~TraceDAG(void)
 
 {
-  for(int4 i=0;i<branchlist.size();++i)
-    delete branchlist[i];
+  for(auto *branch : branchlist)
+    delete branch;
 }
 
 /// Given the registered root FlowBlocks, create the initial (virtual) BranchPoint

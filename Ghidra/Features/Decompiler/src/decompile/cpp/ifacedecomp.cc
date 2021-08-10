@@ -226,18 +226,15 @@ IfaceDecompData::IfaceDecompData(void)
 IfaceDecompData::~IfaceDecompData(void)
 
 {
-  if (cgraph != (CallGraph *)0)
-    delete cgraph;
-  if (conf != (Architecture *)0)
-    delete conf;
+  delete cgraph;
+  delete conf;
 // fd will get deleted with Database
 }
 
 void IfaceDecompData::allocateCallGraph(void)
 
 {
-  if (cgraph != (CallGraph *)0)
-    delete cgraph;
+  delete cgraph;
   cgraph = new CallGraph(conf);
 }
 
@@ -257,8 +254,7 @@ void IfaceDecompData::abortFunction(ostream &s)
 void IfaceDecompData::clearArchitecture(void)
 
 {
-  if (conf != (Architecture *)0)
-    delete conf;
+  delete conf;
   conf = (Architecture *)0;
   fd = (Funcdata *)0;
 }

@@ -246,8 +246,7 @@ ConstantExpression::~ConstantExpression(void)
 
 {
   delete expr1;
-  if (expr2 != (RHSConstant *)0)
-    delete expr2;
+  delete expr2;
 }
 
 RHSConstant *ConstantExpression::clone(void)
@@ -417,8 +416,7 @@ ConstraintVarConst::~ConstraintVarConst(void)
 
 {
   delete expr;
-  if (exprsz != (RHSConstant *)0)
-    delete exprsz;
+  delete exprsz;
 }
 
 UnifyConstraint *ConstraintVarConst::clone(void) const
@@ -1350,8 +1348,7 @@ ConstraintSetInputConstVal::~ConstraintSetInputConstVal(void)
 {
   delete val;
   delete slot;
-  if (exprsz != (RHSConstant *)0)
-    delete exprsz;
+  delete exprsz;
 }
 
 UnifyConstraint *ConstraintSetInputConstVal::clone(void) const

@@ -232,8 +232,7 @@ XmlScan::~XmlScan(void)
 void XmlScan::clearlvalue(void)
 
 {
-  if (lvalue != (string *)0)
-    delete lvalue;
+  delete lvalue;
 }
 
 int4 XmlScan::scanSingle(void)
@@ -553,10 +552,8 @@ void TreeHandler::characters(const char *text,int4 start,int4 length)
 Element::~Element(void)
 
 {
-  List::iterator iter;
-  
-  for(iter=children.begin();iter!=children.end();++iter)
-    delete *iter;
+  for(auto *it : children)
+    delete it;
 }
 
 const string &Element::getAttributeValue(const string &nm) const
@@ -571,10 +568,8 @@ const string &Element::getAttributeValue(const string &nm) const
 DocumentStorage::~DocumentStorage(void)
 
 {
-  for(int4 i=0;i<doclist.size();++i) {
-    if (doclist[i] != (Document *)0)
-      delete doclist[i];
-  }
+  for(int4 i=0;i<doclist.size();++i)
+    delete doclist[i];
 }
 
 Document *DocumentStorage::parseDocument(istream &s)

@@ -142,7 +142,7 @@ class ExecutablePcode : public InjectPayload {
   void build(void);			///< Initialize the Emulate object with the snippet p-code
 public:
   ExecutablePcode(Architecture *g,const string &src,const string &nm);	///< Constructor
-  virtual ~ExecutablePcode(void) { if (emitter != (PcodeEmit *)0) delete emitter; }
+  virtual ~ExecutablePcode(void) { delete emitter; }
   virtual string getSource(void) const { return source; }
   uintb evaluate(const vector<uintb> &input);		///< Evaluate the snippet on the given inputs
 };

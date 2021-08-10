@@ -537,10 +537,8 @@ MemoryPageOverlay::MemoryPageOverlay(AddrSpace *spc,int4 ws,int4 ps,MemoryBank *
 MemoryPageOverlay::~MemoryPageOverlay(void)
 
 {
-  map<uintb,uint1 *>::iterator iter;
-
-  for(iter=page.begin();iter!=page.end();++iter)
-    delete [] (*iter).second;
+  for(auto &it : page)
+    delete [] it.second;
 }
 
 /// Write the value into the hashtable, using \b addr as a key.

@@ -692,10 +692,8 @@ void ContextPattern::restoreXml(const Element *el)
 CombinePattern::~CombinePattern(void)
 
 {
-  if (context != (ContextPattern *)0)
-    delete context;
-  if (instr != (InstructionPattern *)0)
-    delete instr;
+  delete context;
+  delete instr;
 }
 
 bool CombinePattern::isMatch(ParserWalker &walker) const
@@ -843,10 +841,8 @@ OrPattern::OrPattern(const vector<DisjointPattern *> &list)
 OrPattern::~OrPattern(void)
 
 {
-  vector<DisjointPattern *>::iterator iter;
-
-  for(iter=orlist.begin();iter!=orlist.end();++iter)
-    delete *iter;
+  for(auto *it : orlist)
+    delete it;
 }
 
 void OrPattern::shiftInstruction(int4 sa)

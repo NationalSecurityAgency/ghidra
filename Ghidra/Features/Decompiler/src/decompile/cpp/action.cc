@@ -362,10 +362,8 @@ int4 Action::perform(Funcdata &data)
 ActionGroup::~ActionGroup(void)
 
 {
-  vector<Action *>::iterator iter;
-  
-  for(iter=list.begin();iter!=list.end();++iter)
-    delete *iter;
+  for(auto *it : list)
+    delete it;
 }
 
 /// To be used only during the construction of \b this ActionGroup. This routine
@@ -726,10 +724,8 @@ bool Rule::checkActionBreak(void)
 ActionPool::~ActionPool(void)
 
 {
-  vector<Rule *>::iterator iter;
-
-  for(iter=allrules.begin();iter!=allrules.end();++iter)
-    delete *iter;
+  for(auto *it : allrules)
+    delete it;
 }
 
 /// This method should only be invoked during construction of this ActionPool
@@ -974,9 +970,8 @@ const char ActionDatabase::universalname[] = "universal";
 ActionDatabase::~ActionDatabase(void)
 
 {
-  map<string,Action *>::iterator iter;
-  for(iter = actionmap.begin();iter!=actionmap.end();++iter)
-    delete (*iter).second;
+  for(auto &it : actionmap)
+    delete it.second;
 }
 
 /// Clear out (possibly altered) root Actions. Reset the default groups.

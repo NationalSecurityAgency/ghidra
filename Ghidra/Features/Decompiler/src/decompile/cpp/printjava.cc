@@ -39,8 +39,7 @@ PrintJava::PrintJava(Architecture *glb,const string &nm) : PrintC(glb,nm)
 {
   resetDefaultsPrintJava();
   nullToken = "null";			// Java standard lower-case 'null'
-  if (castStrategy != (CastStrategy *)0)
-    delete castStrategy;
+  delete castStrategy;
 
   castStrategy = new CastStrategyJava();
 }

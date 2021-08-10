@@ -43,12 +43,10 @@ SleighSymbol *SymbolScope::findSymbol(const string &nm) const
 SymbolTable::~SymbolTable(void)
 
 {
-  vector<SymbolScope *>::iterator iter;
-  for(iter=table.begin();iter!=table.end();++iter)
-    delete *iter;
-  vector<SleighSymbol *>::iterator siter;
-  for(siter=symbollist.begin();siter!=symbollist.end();++siter)
-    delete *siter;
+  for(auto *it : table)
+    delete it;
+  for(auto *it : symbollist)
+    delete it;
 }
 
 void SymbolTable::addScope(void)
@@ -1388,20 +1386,14 @@ Constructor::Constructor(SubtableSymbol *p)
 Constructor::~Constructor(void)
 
 {
-  if (pattern != (TokenPattern *)0)
-    delete pattern;
+  delete pattern;
   if (pateq != (PatternEquation *)0)
     PatternEquation::release(pateq);
-  if (templ != (ConstructTpl *)0)
-    delete templ;
-  for(int4 i=0;i<namedtempl.size();++i) {
-    ConstructTpl *ntpl = namedtempl[i];
-    if (ntpl != (ConstructTpl *)0)
-      delete ntpl;
-  }
-  vector<ContextChange *>::iterator iter;
-  for(iter=context.begin();iter!=context.end();++iter)
-    delete *iter;
+  delete templ;
+  for(auto *it : namedtempl)
+    delete it;
+  for(auto *it : context)
+    delete it;
 }
 
 void Constructor::addInvisibleOperand(OperandSymbol *sym)
@@ -1891,13 +1883,10 @@ SubtableSymbol::SubtableSymbol(const string &nm) : TripleSymbol(nm)
 SubtableSymbol::~SubtableSymbol(void)
 
 {
-  if (pattern != (TokenPattern *)0)
-    delete pattern;
-  if (decisiontree != (DecisionNode *)0)
-    delete decisiontree;
-  vector<Constructor *>::iterator iter;
-  for(iter=construct.begin();iter!=construct.end();++iter)
-    delete *iter;
+  delete pattern;
+  delete decisiontree;
+  for(auto *it : construct)
+    delete it;
 }
 
 void SubtableSymbol::collectLocalValues(vector<uintb> &results) const
@@ -2047,12 +2036,10 @@ DecisionNode::DecisionNode(DecisionNode *p)
 DecisionNode::~DecisionNode(void)
 
 {				// We own sub nodes
-  vector<DecisionNode *>::iterator iter;
-  for(iter=children.begin();iter!=children.end();++iter)
-    delete *iter;
-  vector<pair<DisjointPattern *,Constructor *> >::iterator piter;
-  for(piter=list.begin();piter!=list.end();++piter)
-    delete (*piter).first;	// Delete the patterns
+  for(auto *it : children)
+    delete it;
+  for(auto &it : list)
+    delete it.first;	// Delete the patterns
 }
 
 void DecisionNode::addConstructorPair(const DisjointPattern *pat,Constructor *ct)

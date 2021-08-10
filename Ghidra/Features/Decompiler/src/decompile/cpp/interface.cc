@@ -55,23 +55,14 @@ RemoteSocket::RemoteSocket(void)
 void RemoteSocket::close(void)
 
 {
-  if (inStream != (istream *)0) {
-    delete inStream;
-    inStream = (istream *)0;
-  }
-  if (outStream != (ostream *)0) {
-    delete outStream;
-    outStream = (ostream *)0;
-  }
-  if (inbuf != (basic_filebuf<char> *)0) {
-    // Destroying the buffer should automatically close the socket
-    delete inbuf;
-    inbuf = (basic_filebuf<char> *)0;
-  }
-  if (outbuf != (basic_filebuf<char> *)0) {
-    delete outbuf;
-    outbuf = (basic_filebuf<char> *)0;
-  }
+  delete inStream;
+  inStream = (istream *)0;
+  delete outStream;
+  outStream = (ostream *)0;
+  delete inbuf;
+  inbuf = (basic_filebuf<char> *)0;
+  delete outbuf;
+  outbuf = (basic_filebuf<char> *)0;
   isOpen = false;
 }
 
@@ -239,18 +230,14 @@ void IfaceStatus::wordsToString(string &res,const vector<string> &list)
 IfaceStatus::~IfaceStatus(void)
 
 {
-  if (optr != fileoptr) {
-    ((ofstream *)fileoptr)->close();
+  if (optr != fileoptr)
     delete fileoptr;
-  }
   while(!promptstack.empty())
     popScript();
   for(int4 i=0;i<comlist.size();++i)
     delete comlist[i];
-  map<string,IfaceData *>::const_iterator iter;
-  for(iter=datamap.begin();iter!=datamap.end();++iter)
-    if ((*iter).second != (IfaceData *)0)
-      delete (*iter).second;
+  for(auto &it : datamap)
+    delete it.second;
 }
 
 /// \brief Register a command with this interface
@@ -581,7 +568,6 @@ void IfcClosefile::execute(istream &s)
 {
   if (status->optr == status->fileoptr)
     throw IfaceExecutionError("No file open");
-  ((ofstream *)status->fileoptr)->close();
   delete status->fileoptr;
   status->fileoptr = status->optr;
 }

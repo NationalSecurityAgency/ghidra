@@ -293,10 +293,10 @@ void EmulateSnippet::fallthruOp(void)
 EmulateSnippet::~EmulateSnippet(void)
 
 {
-  for(int4 i=0;i<opList.size();++i)
-    delete opList[i];
-  for(int4 i=0;i<varList.size();++i)
-    delete varList[i];
+  for(auto *op : opList)
+    delete op;
+  for(auto *var : varList)
+    delete var;
 }
 
 /// \brief Provide the caller with an emitter for building the p-code snippet

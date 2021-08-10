@@ -1167,10 +1167,8 @@ void BlockGraph::markCopyBlock(FlowBlock *bl,uint4 fl)
 void BlockGraph::clear(void)
 
 {
-  vector<FlowBlock *>::iterator iter;
-
-  for(iter=list.begin();iter!=list.end();++iter)
-    delete *iter;
+  for(auto *it : list)
+    delete it;
   list.clear();
 }
 
