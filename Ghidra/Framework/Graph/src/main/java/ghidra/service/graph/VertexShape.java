@@ -37,7 +37,6 @@ public abstract class VertexShape {
 	public static VertexShape HEXAGON = new HexagonVertexShape(SIZE);
 	public static VertexShape OCTAGON = new OctagonVertexShape(SIZE);
 
-
 	private Shape cachedShape;
 	private String name;
 	private int size;
@@ -169,7 +168,7 @@ public abstract class VertexShape {
 		}
 
 		protected Shape createShape() {
-			return new Ellipse2D.Double(-1.0, 1.0, 2.0, 2.0);
+			return new Ellipse2D.Double(-1.0, -1.0, 2.0, 2.0);
 		}
 
 		@Override
