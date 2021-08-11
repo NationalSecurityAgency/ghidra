@@ -377,6 +377,9 @@ public class Emulate {
 	/// completes.
 	public void executeInstruction(boolean stopAtBreakpoint, TaskMonitor monitor)
 			throws CancelledException, LowlevelError, InstructionDecodeException {
+		if (monitor == null) {
+			monitor = TaskMonitor.DUMMY;
+		}
 		if (executionState == EmulateExecutionState.STOPPED) {
 			if (last_execute_address == null && instructionStateModifier != null) {
 				instructionStateModifier.initialExecuteCallback(this, current_address,

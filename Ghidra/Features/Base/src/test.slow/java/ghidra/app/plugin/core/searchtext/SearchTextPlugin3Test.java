@@ -194,29 +194,29 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		SearchTextDialog dialog = getDialog();
 		JComponent container = dialog.getComponent();
-		final JTextField tf = findTextField(container);
+		JTextField tf = findTextField(container);
 
 		JCheckBox cb = (JCheckBox) findAbstractButtonByText(container, "Functions");
 		cb.setSelected(true);
 
 		cb = (JCheckBox) findAbstractButtonByText(container, "Labels");
-		cb.setSelected(true);
+		setToggleButtonSelected(cb, true);
 
 		cb = (JCheckBox) findAbstractButtonByText(container, "Instruction Mnemonics");
-		cb.setSelected(true);
+		setToggleButtonSelected(cb, true);
 
 		cb = (JCheckBox) findAbstractButtonByText(container, "Instruction Operands");
-		cb.setSelected(true);
+		setToggleButtonSelected(cb, true);
 
 		cb = (JCheckBox) findAbstractButtonByText(container, "Defined Data Mnemonics");
-		cb.setSelected(true);
+		setToggleButtonSelected(cb, true);
 
 		cb = (JCheckBox) findAbstractButtonByText(container, "Defined Data Values");
-		cb.setSelected(true);
+		setToggleButtonSelected(cb, true);
 
 		goToService.goTo(new ProgramLocation(program, getAddr(0x01002c92)));
 
-		final ActionListener listener = tf.getActionListeners()[0];
+		ActionListener listener = tf.getActionListeners()[0];
 		runSwing(() -> {
 			tf.setText("eax");
 			listener.actionPerformed(null);
@@ -281,10 +281,10 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		SearchTextDialog dialog = getDialog();
 		JComponent container = dialog.getComponent();
-		final JTextField tf = findTextField(container);
-		final JButton searchButton = (JButton) findAbstractButtonByText(container, "Next");
+		JTextField tf = findTextField(container);
+		JButton searchButton = (JButton) findAbstractButtonByText(container, "Next");
 		JCheckBox cb = (JCheckBox) findAbstractButtonByText(container, "Functions");
-		cb.setSelected(true);
+		setToggleButtonSelected(cb, true);
 
 		runSwing(() -> {
 			tf.setText("sscanf");
@@ -296,8 +296,8 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		ProgramLocation loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof CommentFieldLocation);
 		assertEquals(CodeUnit.PLATE_COMMENT, ((CommentFieldLocation) loc).getCommentType());
-		final ActionListener listener = searchButton.getActionListeners()[0];
 
+		ActionListener listener = searchButton.getActionListeners()[0];
 		runSwing(() -> listener.actionPerformed(null));
 
 		waitForSearchTasks(dialog);
@@ -364,16 +364,16 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		SearchTextDialog dialog = getDialog();
 		JComponent container = dialog.getComponent();
-		final JTextField tf = findTextField(container);
+		JTextField tf = findTextField(container);
 		selectRadioButton(container, SearchTextPlugin1Test.EXACT_MATCH_SEARCH);
 		JCheckBox cb = (JCheckBox) findAbstractButtonByText(container, "Instruction Mnemonics");
-		cb.setSelected(true);
+		setToggleButtonSelected(cb, true);
 
 		cb = (JCheckBox) findAbstractButtonByText(container, "Instruction Operands");
-		cb.setSelected(true);
+		setToggleButtonSelected(cb, true);
 
 		cb = (JCheckBox) findAbstractButtonByText(container, "Comments");
-		cb.setSelected(false);
+		setToggleButtonSelected(cb, false);
 
 		goToService.goTo(new ProgramLocation(program, getAddr(0x01004160)));
 		runSwing(() -> tf.setText("sscanf"));
@@ -455,15 +455,15 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		final JTextField tf = findTextField(container);
 		selectRadioButton(container, SearchTextPlugin1Test.EXACT_MATCH_SEARCH);
 		JCheckBox cb = (JCheckBox) findAbstractButtonByText(container, "Instruction Mnemonics");
-		cb.setSelected(true);
+		setToggleButtonSelected(cb, true);
 
 		cb = (JCheckBox) findAbstractButtonByText(container, "Instruction Operands");
-		cb.setSelected(true);
+		setToggleButtonSelected(cb, true);
 
 		cb = (JCheckBox) findAbstractButtonByText(container, "Comments");
-		cb.setSelected(false);
-		// Backwards
+		setToggleButtonSelected(cb, true);
 
+		// Backwards
 		goToService.goTo(new ProgramLocation(program, getAddr(0x01004160)));
 		runSwing(() -> tf.setText("call sscanf"));
 		JButton searchButton = (JButton) findAbstractButtonByText(container, "Previous");
@@ -492,19 +492,19 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testHighlights() throws Exception {
 
-		final SearchTextDialog dialog = getDialog();
+		SearchTextDialog dialog = getDialog();
 		JComponent container = dialog.getComponent();
-		final JTextField tf = findTextField(container);
+		JTextField tf = findTextField(container);
 		JCheckBox cb = (JCheckBox) findAbstractButtonByText(container, "Instruction Mnemonics");
-		cb.setSelected(true);
+		setToggleButtonSelected(cb, true);
 
 		cb = (JCheckBox) findAbstractButtonByText(container, "Instruction Operands");
-		cb.setSelected(true);
+		setToggleButtonSelected(cb, true);
 
 		cb = (JCheckBox) findAbstractButtonByText(container, "Functions");
-		cb.setSelected(true);
+		setToggleButtonSelected(cb, true);
 
-		final String searchText = "param_";
+		String searchText = "param_";
 		runSwing(() -> {
 			tf.setText(searchText);
 			ActionListener[] listeners = tf.getActionListeners();
@@ -543,19 +543,19 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testHighlightsWithMultipleProviders() throws Exception {
-		final SearchTextDialog dialog = getDialog();
+		SearchTextDialog dialog = getDialog();
 		JComponent container = dialog.getComponent();
-		final JTextField tf = findTextField(container);
+		JTextField tf = findTextField(container);
 		JCheckBox cb = (JCheckBox) findAbstractButtonByText(container, "Instruction Mnemonics");
-		cb.setSelected(true);
+		setToggleButtonSelected(cb, true);
 
 		cb = (JCheckBox) findAbstractButtonByText(container, "Instruction Operands");
-		cb.setSelected(true);
+		setToggleButtonSelected(cb, true);
 
 		cb = (JCheckBox) findAbstractButtonByText(container, "Functions");
-		cb.setSelected(true);
+		setToggleButtonSelected(cb, true);
 
-		final JButton searchAllButton = (JButton) getInstanceField("allButton", dialog);
+		JButton searchAllButton = (JButton) getInstanceField("allButton", dialog);
 		runSwing(() -> {
 			tf.setText("param_");
 			searchAllButton.doClick();
@@ -582,10 +582,10 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue("Did not find highlights at expected field.", (numberOfHighlights > 0));
 
 		// re-show the dialog to perform a new search
-		final SearchTextDialog dialogTwo = getDialog();
+		SearchTextDialog dialogTwo = getDialog();
 		container = dialogTwo.getComponent();
-		final JTextField tfTwo = findTextField(container);
-		final JButton searchAllButtonTwo = (JButton) getInstanceField("allButton", dialog);
+		JTextField tfTwo = findTextField(container);
+		JButton searchAllButtonTwo = (JButton) getInstanceField("allButton", dialog);
 		runSwing(() -> {
 			tfTwo.setText("text");
 			searchAllButtonTwo.doClick();
@@ -612,13 +612,13 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 	private void cancelSearch(String buttonText) throws Exception {
 
-		final SearchTextDialog dialog = getDialog();
+		SearchTextDialog dialog = getDialog();
 		JComponent container = dialog.getComponent();
-		final JTextField tf = findTextField(container);
+		JTextField tf = findTextField(container);
 		selectRadioButton(container, buttonText);
 
 		JCheckBox cb = (JCheckBox) findAbstractButtonByText(container, "Functions");
-		cb.setSelected(true);
+		setToggleButtonSelected(cb, true);
 
 		cb = (JCheckBox) findAbstractButtonByText(container, "Labels");
 		setToggleButtonSelected(cb, true);

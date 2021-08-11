@@ -29,30 +29,36 @@ import ghidra.util.layout.MiddleLayout;
 /**
  * Panel that shows each property in an Options category or a Group in an Options category
  */
-public class ScrollableOptionsEditor extends JScrollPane implements OptionsEditor {
+public class ScrollableOptionsEditor implements OptionsEditor {
 
 	private OptionsEditorPanel optionsPanel;
+	private String title;
+	private List<String> optionNames;
+	private JScrollPane scrollPane;
+	private PropertyChangeListener listener;
 
 	/**
-	 * Creates a panel for editing the given options
+	 * Creates a panel for editing options. This version of the constructor allows the client
+	 * to specify the option names to put them in some order other than the default alphabetical
+	 * ordering.
 	 * 
 	 * @param title The title of the options panel
-	 * @param options the options for this panel
 	 * @param optionNames the names of the options for this panel
-	 * @param editorStateFactory the factory needed by the editor 
 	 */
-	public ScrollableOptionsEditor(String title, Options options, List<String> optionNames,
-			EditorStateFactory editorStateFactory) {
+	public ScrollableOptionsEditor(String title, List<String> optionNames) {
+		this.title = title;
+		this.optionNames = optionNames;
 
-		optionsPanel = new OptionsEditorPanel(title, options, optionNames, editorStateFactory);
+	}
 
-		setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_AS_NEEDED);
-
-		// the outer panel is 'Scrollable' and uses a layout that centers the options panel
-		JPanel outerPanel = new ScollableOptionsPanel();
-		outerPanel.add(optionsPanel);
-		setViewportView(outerPanel);
+	/**
+	 * Creates a panel for editing options. This version of the constructor will get the
+	 * options names from the options object when
+	 * {@link #getEditorComponent(Options, EditorStateFactory)} is called.
+	 * @param title the title for the panel
+	 */
+	public ScrollableOptionsEditor(String title) {
+		this(title, null);
 	}
 
 //==================================================================================================
@@ -61,7 +67,9 @@ public class ScrollableOptionsEditor extends JScrollPane implements OptionsEdito
 
 	@Override
 	public void dispose() {
-		// stub
+		if (optionsPanel != null) {
+			optionsPanel.dispose();
+		}
 	}
 
 	@Override
@@ -81,12 +89,27 @@ public class ScrollableOptionsEditor extends JScrollPane implements OptionsEdito
 
 	@Override
 	public JComponent getEditorComponent(Options options, EditorStateFactory factory) {
-		return this;
+		scrollPane = new JScrollPane();
+		optionsPanel = new OptionsEditorPanel(title, options, optionNames, factory);
+		optionsPanel.setOptionsPropertyChangeListener(listener);
+
+		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+		// the outer panel is 'Scrollable' and uses a layout that centers the options panel
+		JPanel outerPanel = new ScollableOptionsPanel();
+		outerPanel.add(optionsPanel);
+		scrollPane.setViewportView(outerPanel);
+
+		return scrollPane;
 	}
 
 	@Override
 	public void setOptionsPropertyChangeListener(PropertyChangeListener listener) {
-		optionsPanel.setOptionsPropertyChangeListener(listener);
+		this.listener = listener;
+		if (optionsPanel != null) {
+			optionsPanel.setOptionsPropertyChangeListener(listener);
+		}
 	}
 
 //==================================================================================================
@@ -120,7 +143,7 @@ public class ScrollableOptionsEditor extends JScrollPane implements OptionsEdito
 			// scrollbars.
 			//			
 			Dimension mySize = getPreferredSize();
-			Dimension viewSize = ScrollableOptionsEditor.this.getViewport().getSize();
+			Dimension viewSize = scrollPane.getViewport().getSize();
 			boolean viewIsLarger = viewSize.height > mySize.height;
 			return viewIsLarger;
 		}
@@ -135,7 +158,7 @@ public class ScrollableOptionsEditor extends JScrollPane implements OptionsEdito
 			// scrollbars.
 			//			
 			Dimension mySize = getPreferredSize();
-			Dimension viewSize = ScrollableOptionsEditor.this.getViewport().getSize();
+			Dimension viewSize = scrollPane.getViewport().getSize();
 			boolean viewIsLarger = viewSize.width > mySize.width;
 			return viewIsLarger;
 		}
@@ -147,4 +170,8 @@ public class ScrollableOptionsEditor extends JScrollPane implements OptionsEdito
 		}
 	}
 
+	// for testing
+	public JComponent getComponent() {
+		return scrollPane;
+	}
 }

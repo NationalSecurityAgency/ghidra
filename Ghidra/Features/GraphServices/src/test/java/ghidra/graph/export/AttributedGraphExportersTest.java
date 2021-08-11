@@ -277,7 +277,7 @@ public class AttributedGraphExportersTest extends AbstractGenericTest {
 	}
 
 	private AttributedGraph createGraph() {
-		AttributedGraph g = new AttributedGraph();
+		AttributedGraph g = new AttributedGraph("Test", new EmptyGraphType());
 		AttributedVertex vA = g.addVertex("A");
 		AttributedVertex vB = g.addVertex("B");
 		AttributedVertex vC = g.addVertex("C");

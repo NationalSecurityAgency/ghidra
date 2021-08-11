@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,15 @@
  */
 package ghidra.feature.vt.gui.wizard;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import docking.wizard.*;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskLauncher;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import docking.wizard.*;
 
 public class VTNewSessionWizardManager extends AbstractMagePanelManager<VTWizardStateKey> {
 
@@ -44,9 +42,10 @@ public class VTNewSessionWizardManager extends AbstractMagePanelManager<VTWizard
 		getState().put(VTWizardStateKey.DESTINATION_PROGRAM_FILE, destinationFile);
 	}
 
-	protected ArrayList<MagePanel<VTWizardStateKey>> createPanels() {
-		ArrayList<MagePanel<VTWizardStateKey>> panels =
-			new ArrayList<MagePanel<VTWizardStateKey>>();
+	@Override
+	protected List<MagePanel<VTWizardStateKey>> createPanels() {
+		List<MagePanel<VTWizardStateKey>> panels =
+			new ArrayList<>();
 		panels.add(new NewSessionPanel(controller.getTool()));
 		panels.add(new PreconditionsPanel(this));
 		panels.add(new SummaryPanel());
@@ -61,17 +60,20 @@ public class VTNewSessionWizardManager extends AbstractMagePanelManager<VTWizard
 		}
 		finally {
 			getWizardManager().completed(true);
+			cleanup();
 		}
 	}
 
 	@Override
 	public void cancel() {
+		cleanup();
+	}
 
+	private void cleanup() {
 		List<MagePanel<VTWizardStateKey>> panels = getPanels();
 		for (MagePanel<VTWizardStateKey> magePanel : panels) {
 			magePanel.dispose();
 		}
-
 	}
 
 	public PluginTool getTool() {

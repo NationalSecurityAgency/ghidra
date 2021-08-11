@@ -15,7 +15,8 @@
  */
 package ghidra.graph;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
 import docking.action.DockingActionIf;
 import docking.widgets.EventTrigger;
@@ -24,8 +25,6 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class TestGraphDisplay implements GraphDisplay {
-	private Set<String> definedVertexAttributes = new HashSet<>();
-	private Set<String> definedEdgeAttributes = new HashSet<>();
 	private AttributedGraph graph;
 	private String title;
 	private GraphDisplayListener listener;
@@ -63,23 +62,6 @@ public class TestGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void defineVertexAttribute(String name) {
-		definedVertexAttributes.add(name);
-	}
-
-	@Override
-	public void defineEdgeAttribute(String name) {
-		definedEdgeAttributes.add(name);
-	}
-
-	@Override
-	public void setVertexLabelAttribute(String attributeName, int alignment, int size,
-			boolean monospace,
-			int maxLines) {
-		//  nothing
-	}
-
-	@Override
 	public void setGraph(AttributedGraph graph, String title, boolean append,
 			TaskMonitor monitor)
 			throws CancelledException {
@@ -90,6 +72,12 @@ public class TestGraphDisplay implements GraphDisplay {
 			this.graph = graph;
 		}
 		this.title = title;
+	}
+
+	@Override
+	public void setGraph(AttributedGraph graph, GraphDisplayOptions options, String title,
+			boolean append, TaskMonitor monitor) throws CancelledException {
+		setGraph(graph, title, append, monitor);
 	}
 
 	@Override
@@ -133,7 +121,7 @@ public class TestGraphDisplay implements GraphDisplay {
 			AttributedVertex from = oldGraph.getEdgeSource(edge);
 			AttributedVertex to = oldGraph.getEdgeTarget(edge);
 			AttributedEdge newEdge = newGraph.addEdge(from, to);
-			Map<String, String> attributeMap = edge.getAttributeMap();
+			Map<String, String> attributeMap = edge.getAttributes();
 			for (String key : attributeMap.keySet()) {
 				newEdge.setAttribute(key, edge.getAttribute(key));
 			}

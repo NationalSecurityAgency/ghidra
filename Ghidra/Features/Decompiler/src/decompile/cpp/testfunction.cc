@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "testfunction.hh"
-#include "filemanage.hh"
+#include "ifacedecomp.hh"
 
 void FunctionTestProperty::startTest(void) const
 
@@ -57,8 +56,10 @@ void ConsoleCommands::readLine(string &line)
   pos += 1;
 }
 
-ConsoleCommands::ConsoleCommands(void) :
-    IfaceStatus("> ", cout)
+/// \param s is the stream where command output is printed
+/// \param comms is the list of commands to be issued
+ConsoleCommands::ConsoleCommands(ostream &s,vector<string> &comms) :
+    IfaceStatus("> ", s), commands(comms)
 {
   pos = 0;
   IfaceCapability::registerAllCommands(this);
@@ -67,14 +68,22 @@ ConsoleCommands::ConsoleCommands(void) :
 void ConsoleCommands::reset(void)
 
 {
-  commands.clear();
   pos = 0;
   inerror = false;
   done = false;
 }
 
+void FunctionTestCollection::clear(void)
+
+{
+  dcp->clearArchitecture();
+  commands.clear();
+  testList.clear();
+  console->reset();
+}
+
 /// \param el is the root \<script> tag
-void ConsoleCommands::restoreXml(const Element *el)
+void FunctionTestCollection::restoreXmlCommands(const Element *el)
 
 {
   const List &list(el->getChildren());
@@ -84,15 +93,6 @@ void ConsoleCommands::restoreXml(const Element *el)
     const Element *subel = *iter;
     commands.push_back(subel->getContent());
   }
-  pos = 0;
-}
-
-void FunctionTestCollection::clear(void)
-
-{
-  dcp->clearArchitecture();
-  testList.clear();
-  console.reset();
 }
 
 /// Instantiate an Architecture object
@@ -102,7 +102,7 @@ void FunctionTestCollection::buildProgram(DocumentStorage &docStorage)
   ArchitectureCapability *capa = ArchitectureCapability::getCapability("xml");
   if (capa == (ArchitectureCapability *)0)
     throw IfaceExecutionError("Missing XML architecture capability");
-  dcp->conf = capa->buildArchitecture("test", "", console.optr);
+  dcp->conf = capa->buildArchitecture("test", "", console->optr);
   string errmsg;
   bool iserror = false;
   try {
@@ -145,32 +145,51 @@ void FunctionTestCollection::passLineToTests(const string &line) const
 /// This is called after each test has been fed all lines of output.
 /// The result of each test is printed to the \e midStream, and then
 /// failures are written to the lateStream in order to see a summary.
-/// \param midStream is the stream write results to as the test is performed
 /// \param lateStream collects failures to display as a summary
-void FunctionTestCollection::evaluateTests(ostream &midStream,list<string> &lateStream) const
+void FunctionTestCollection::evaluateTests(list<string> &lateStream) const
 
 {
   list<FunctionTestProperty>::const_iterator iter;
   for(iter=testList.begin();iter!=testList.end();++iter) {
     numTestsApplied += 1;
     if ((*iter).endTest()) {
-      midStream << "Success -- " << (*iter).getName() << endl;
+      *console->optr << "Success -- " << (*iter).getName() << endl;
       numTestsSucceeded += 1;
     }
     else {
-      midStream << "FAIL -- " << (*iter).getName() << endl;
+      *console->optr << "FAIL -- " << (*iter).getName() << endl;
       lateStream.push_back((*iter).getName());
     }
   }
 }
 
-FunctionTestCollection::FunctionTestCollection(void)
+/// \param s is the stream where output is sent during tests
+FunctionTestCollection::FunctionTestCollection(ostream &s)
 
 {
-  dcp = (IfaceDecompData *)console.getData("decompile");
-  console.setErrorIsDone(true);
+  console = new ConsoleCommands(s,commands);
+  consoleOwner = true;
+  dcp = (IfaceDecompData *)console->getData("decompile");
+  console->setErrorIsDone(true);
   numTestsApplied = 0;
   numTestsSucceeded = 0;
+}
+
+FunctionTestCollection::FunctionTestCollection(IfaceStatus *con)
+
+{
+  console = con;
+  consoleOwner = false;
+  dcp = (IfaceDecompData *)console->getData("decompile");
+  numTestsApplied = 0;
+  numTestsSucceeded = 0;
+}
+
+FunctionTestCollection::~FunctionTestCollection(void)
+
+{
+  if (consoleOwner)
+    delete console;
 }
 
 /// Load the architecture based on the discovered \<binaryimage> tag.
@@ -194,7 +213,6 @@ void FunctionTestCollection::loadTest(const string &filename)
 void FunctionTestCollection::restoreXml(DocumentStorage &store,const Element *el)
 
 {
-  clear();
   const List &list(el->getChildren());
   List::const_iterator iter = list.begin();
   bool sawScript = false;
@@ -205,7 +223,7 @@ void FunctionTestCollection::restoreXml(DocumentStorage &store,const Element *el
     ++iter;
     if (subel->getName() == "script") {
       sawScript = true;
-      console.restoreXml(subel);
+      restoreXmlCommands(subel);
     }
     else if (subel->getName() == "stringmatch") {
       sawTests = true;
@@ -232,30 +250,29 @@ void FunctionTestCollection::restoreXml(DocumentStorage &store,const Element *el
 void FunctionTestCollection::restoreXmlOldForm(DocumentStorage &store,const Element *el)
 
 {
-  clear();
   throw IfaceParseError("Old format test not supported");
 }
 
 /// Run the script commands on the current program.
 /// Collect any bulk output, and run tests over the output.
 /// Report test failures back to the caller
-/// \param midStream is the output stream to write to during the test
 /// \param lateStream collects messages for a final summary
-void FunctionTestCollection::runTests(ostream &midStream,list<string> &lateStream)
+void FunctionTestCollection::runTests(list<string> &lateStream)
 
 {
+  ostream *origStream = console->optr;
   numTestsApplied = 0;
   numTestsSucceeded = 0;
   ostringstream midBuffer;		// Collect command console output
-  console.optr = &midBuffer;
+  console->optr = &midBuffer;
   ostringstream bulkout;
-  console.fileoptr = &bulkout;
-  mainloop(&console);
-  console.optr = &midStream;
-  console.fileoptr = &midStream;
-  if (console.isInError()) {
-    midStream << "Error: Did not apply tests in " << fileName << endl;
-    midStream << midBuffer.str() << endl;
+  console->fileoptr = &bulkout;
+  mainloop(console);
+  console->optr = origStream;
+  console->fileoptr = origStream;
+  if (console->isInError()) {
+    *console->optr << "Error: Did not apply tests in " << fileName << endl;
+    *console->optr << midBuffer.str() << endl;
     ostringstream fs;
     fs << "Execution failed for " << fileName;
     lateStream.push_back(fs.str());
@@ -281,63 +298,48 @@ void FunctionTestCollection::runTests(ostream &midStream,list<string> &lateStrea
     string line = result.substr(prevpos);	// Process final line without a newline char
     passLineToTests(line);
   }
-  evaluateTests(midStream, lateStream);
+  evaluateTests(lateStream);
 }
 
-/// Run through all XML files in the given directory, processing each in turn.
-/// \param dirname is a directory containing the XML test files
-/// \param testNames (if not empty) specifies particular tests to run
-void FunctionTestCollection::runTestCollections(const string &dirname,set<string> &testNames)
+/// Run through all XML files in the given list, processing each in turn.
+/// \param testFiles is the given list of test files
+/// \param s is the output stream to print results to
+void FunctionTestCollection::runTestFiles(const vector<string> &testFiles,ostream &s)
 
 {
-  FileManage fileManage;
-
-  set<string> fullNames;
-  for(set<string>::iterator iter=testNames.begin();iter!=testNames.end();++iter) {
-    string val = dirname;
-    if (dirname.back() != '/')
-      val += '/';
-    val += *iter;
-    fullNames.insert(val);
-  }
-  fileManage.addDir2Path(dirname);
-  vector<string> testFiles;
-  fileManage.matchList(testFiles,".xml",true);
-
   int4 totalTestsApplied = 0;
   int4 totalTestsSucceeded = 0;
   list<string> failures;
-  FunctionTestCollection testCollection;
+  FunctionTestCollection testCollection(s);
   for(int4 i=0;i<testFiles.size();++i) {
-    if (!fullNames.empty() && fullNames.find(testFiles[i]) == fullNames.end())
-      continue;
     try {
+      testCollection.clear();
       testCollection.loadTest(testFiles[i]);
-      testCollection.runTests(cout, failures);
+      testCollection.runTests(failures);
       totalTestsApplied += testCollection.getTestsApplied();
       totalTestsSucceeded += testCollection.getTestsSucceeded();
     } catch(IfaceParseError &err) {
       ostringstream fs;
       fs << "Error parsing " << testFiles[i] << ": " << err.explain;
-      cout << fs.str() << endl;
+      s << fs.str() << endl;
       failures.push_back(fs.str());
     } catch(IfaceExecutionError &err) {
       ostringstream fs;
       fs << "Error executing " << testFiles[i] << ": " << err.explain;
-      cout << fs.str() << endl;
+      s << fs.str() << endl;
       failures.push_back(fs.str());
     }
   }
 
-  cout << endl;
-  cout << "Total tests applied = " << totalTestsApplied << endl;
-  cout << "Total passing tests = " << totalTestsSucceeded << endl;
-  cout << endl;
+  s << endl;
+  s << "Total tests applied = " << totalTestsApplied << endl;
+  s << "Total passing tests = " << totalTestsSucceeded << endl;
+  s << endl;
   if (!failures.empty()) {
-    cout << "Failures: " << endl;
+    s << "Failures: " << endl;
     list<string>::const_iterator iter = failures.begin();
     for(int4 i=0;i<10;++i) {
-      cout << "  " << *iter << endl;
+      s << "  " << *iter << endl;
       ++iter;
       if (iter == failures.end()) break;
     }

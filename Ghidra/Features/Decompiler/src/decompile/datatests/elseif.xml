@@ -1,0 +1,84 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+    Contrived example testing various forms of nested if/else structures,
+    where the some should collapse to "else if" syntax and others should not.
+-->
+<bytechunk space="ram" offset="0x1006ca" readonly="true">
+                    554889e54883
+ec10897dfc8975f8837dfc0a75188b45
+f889c6488d3d3a030000b800000000e8
+9cfeffffeb17837dfc017511488d3d2a
+030000b800000000e883feffff837df8
+01751b8b45fc89c6488d3d05030000b8
+00000000e867feffffe9bb000000837d
+f80b751e8b45fc83c06489c6488d3de1
+020000b800000000e843feffffe99700
+0000837df815751b8b45fc6bc06489c6
+488d3dbd020000b800000000e81ffeff
+ffeb76837df81f751d8b55fc8b45f801
+d089c6488d3d9a020000b800000000e8
+fcfdffffeb53837df8f9751b8b45fc2b
+45f889c6488d3d79020000b800000000
+e8dbfdffffeb32837df800751b8b45fc
+83e80189c6488d3d58020000b8000000
+00e8bafdffffeb11488d3d53020000b8
+00000000e8a7fdffff8b45fc3b45f875
+1b8b45fc83e80289c6488d3d24020000
+b800000000e886fdffffeb28837dfc25
+7511488d3d1f020000b800000000e86d
+fdffff488d3d18020000b800000000e8
+5cfdffff8b45fc3b45f87d1b8b45fc83
+e80389c6488d3dd9010000b800000000
+e83bfdffffeb1e8b55fc8b45f801d083
+f80a7511488d3ddd010000b800000000
+e81bfdffff817df8c8000000751b8b45
+fc83c06789c6488d3d97010000b80000
+0000e8f9fcffffeb23817df8c9000000
+751a817dfc2b0100007f11488d3d7b01
+0000b800000000e8d4fcffff837df81b
+751b8b45fc83c01b89c6488d3d530100
+00b800000000e8b5fcffffeb5d837df8
+1d7557eb2e488d3d64010000e88ffcff
+ff837dfc64751b8b45f883c06f89c648
+8d3d4e010000b800000000e880fcffff
+eb1890837dfc677511488d3d3c010000
+b800000000e866fcffff488d3d310100
+00e84afcffff8345fc018b45fc3b45f8
+7ca390c9c3
+</bytechunk>
+<bytechunk space="ram" offset="0x100a24" readonly="true">
+  426f64792025640a00456c73650046
+  696e616c004e6f7420717569746500
+  457874726100436f6d6d656e740054
+  6f7000426f6479202564004c616265
+  6c00426f74746f6d00
+</bytechunk>
+</binaryimage>
+<script>
+  <com>map fun r0x1006ca testElseIf</com>
+  <com>map fun r0x100590 printf</com>
+  <com>parse line extern void testElseIf(int4 a,int4 b);</com>
+  <com>parse line extern void printf(char *,...);</com>
+  <com>map label mylabel r0x100913</com>
+  <com>lo fu testElseIf</com>
+  <com>comment instr r0x10085a Comment</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Else-if #1" min="1" max="1">else if \(a == 1\)</stringmatch>
+<stringmatch name="Else-if #2" min="1" max="1">else if \(b == 0xb\)</stringmatch>
+<stringmatch name="Else-if #3" min="1" max="1">else if \(b == 0x15\)</stringmatch>
+<stringmatch name="Else-if #4" min="1" max="1">else if \(b == 0x1f\)</stringmatch>
+<stringmatch name="Else-if #5" min="1" max="1">else if \(b == -7\)</stringmatch>
+<stringmatch name="Else-if #6" min="1" max="1">else if \(b == 0\)</stringmatch>
+<stringmatch name="Else-if #7" min="0" max="0">else if \(a == 0x25\)</stringmatch>
+<stringmatch name="Else-if #8" min="1" max="1">if \(a == 0x25\)</stringmatch>
+<stringmatch name="Else-if #9" min="0" max="0">else if \(b \+ a == 10\)</stringmatch>
+<stringmatch name="Else-if #10" min="1" max="1">if \(b \+ a == 10\)</stringmatch>
+<stringmatch name="Else-if #11" min="1" max="1">else if \(b == 0x1d\) goto</stringmatch>
+<stringmatch name="Else-if #12" min="0" max="0">else if \(.* == 0x67\)</stringmatch>
+<stringmatch name="Else-if #13" min="1" max="1">if \(.* == 0x67\)</stringmatch>
+<stringmatch name="Else-if #14" min="1" max="1">else if \(\(b == 0xc9\) &amp;&amp; \(a &lt; 300\)\)</stringmatch>
+</decompilertest>

@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
-import static ghidra.app.plugin.core.decompile.actions.ASTGraphTask.GraphType.*;
+import static ghidra.app.plugin.core.decompile.actions.ASTGraphTask.AstGraphSubType.*;
 
 import docking.action.MenuData;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;

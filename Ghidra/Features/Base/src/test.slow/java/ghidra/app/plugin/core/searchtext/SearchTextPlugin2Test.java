@@ -155,7 +155,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		JRadioButton exactRB = (JRadioButton) findAbstractButtonByText(container,
 			SearchTextPlugin1Test.EXACT_MATCH_SEARCH);
 		assertNotNull(exactRB);
-		assertTrue(!exactRB.isSelected());
+		assertFalse(exactRB.isSelected());
 
 		JRadioButton searchFieldsRB =
 			(JRadioButton) findAbstractButtonByText(container, "Selected Fields");
@@ -188,24 +188,24 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		JRadioButton searchAllRB = (JRadioButton) findAbstractButtonByText(container, "All Fields");
 		assertNotNull(searchAllRB);
-		assertTrue(!searchAllRB.isSelected());
+		assertFalse(searchAllRB.isSelected());
 		setSelected(searchAllRB);
 
 		assertTrue(exactRB.isSelected());
 
-		assertTrue(!functionCB.isEnabled());
-		assertTrue(!commentsCB.isEnabled());
-		assertTrue(!labelCB.isEnabled());
-		assertTrue(!instMnemonicCB.isEnabled());
-		assertTrue(!instOpCB.isEnabled());
-		assertTrue(!dataMnemonicCB.isEnabled());
-		assertTrue(!dataOpCB.isEnabled());
+		assertFalse(functionCB.isEnabled());
+		assertFalse(commentsCB.isEnabled());
+		assertFalse(labelCB.isEnabled());
+		assertFalse(instMnemonicCB.isEnabled());
+		assertFalse(instOpCB.isEnabled());
+		assertFalse(dataMnemonicCB.isEnabled());
+		assertFalse(dataOpCB.isEnabled());
 
 		// Select Quick Search --> Search Fields is selected
 		setSelected(quickRB);
 
 		assertTrue(searchFieldsRB.isSelected());
-		assertTrue(!searchAllRB.isSelected());
+		assertFalse(searchAllRB.isSelected());
 
 		assertTrue(functionCB.isEnabled());
 		assertTrue(commentsCB.isEnabled());
@@ -434,7 +434,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 		cbPlugin.updateNow();
 		loc = cbPlugin.getCurrentLocation();
-		assertTrue(!(addr.equals(loc.getAddress())));
+		assertFalse((addr.equals(loc.getAddress())));
 	}
 
 	@Test
@@ -491,7 +491,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		runSwing(() -> dismissButton.getActionListeners()[0].actionPerformed(null));
 		waitForSearchTasks(tempDialog);
-		assertTrue(!tempDialog.isVisible());
+		assertFalse(tempDialog.isVisible());
 	}
 
 	private AbstractButton findButton(Container guiContainer, String text) {
@@ -555,7 +555,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		setTextAndPressEnter(tf, "hello");
 
 		runSwing(() -> tool.removePlugins(new Plugin[] { plugin }));
-		assertTrue(!tempDialog.isVisible());
+		assertFalse(tempDialog.isVisible());
 	}
 
 	private void closeToolDuringSearch(String buttonText) throws Exception {
@@ -588,7 +588,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		env.restartTool();
 
 		waitForSearchTasks(tempDialog);
-		assertTrue(!tempDialog.isVisible());
+		assertFalse(tempDialog.isVisible());
 	}
 
 	private void closeToolDuringSearch2(String buttonText) throws Exception {

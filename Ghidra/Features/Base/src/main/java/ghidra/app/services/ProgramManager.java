@@ -26,9 +26,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 
 /**
- * Service for managing programs. Multiple programs may be open in a tool, 
- * but only one is active at any given time.
- *
+ * Service for managing programs. Multiple programs may be open in a tool, but only one is active 
+ * at any given time.
  */
 @ServiceInfo(defaultProvider = ProgramManagerPlugin.class, description = "Get the currently open program")
 public interface ProgramManager {
@@ -59,11 +58,9 @@ public interface ProgramManager {
 	public Program getCurrentProgram();
 
 	/**
-	 * Returns true if the specified program is open and considiered visible to
-	 * the user.
-	 * @param program
-	 * @return true if the specified program is open and considiered visible to
-	 * the user
+	 * Returns true if the specified program is open and considered visible to the user.
+	 * @param program the program
+	 * @return true if the specified program is open and considered visible to the user
 	 */
 	public boolean isVisible(Program program);
 
@@ -75,8 +72,7 @@ public interface ProgramManager {
 	public boolean closeProgram();
 
 	/**
-	 * Open the program corresponding to the given url.  Once open it will
-	 * become
+	 * Open the program corresponding to the given url. 
 	 * @param ghidraURL valid server-based program URL
 	 * @param state initial open state (OPEN_HIDDEN, OPEN_CURRENT, OPEN_VISIBLE).  
 	 * The visibility states will be ignored if the program is already open.
@@ -94,6 +90,17 @@ public interface ProgramManager {
 	 */
 	public Program openProgram(DomainFile domainFile);
 
+	/**
+	 * Open the program for the given domainFile.  Once open it will become the active program.
+	 * 
+	 * <P>Note: this method functions exactly as {@link #openProgram(DomainFile)}
+	 * 
+	 * @param domainFile domain file that has the program
+	 * @param dialogParent unused
+	 * @return the program
+	 * @deprecated deprecated for 10.1; removal for 10.3 or later; use {@link #openProgram(DomainFile)}
+	 */
+	@Deprecated
 	public Program openProgram(DomainFile domainFile, Component dialogParent);
 
 	/**
@@ -123,7 +130,7 @@ public interface ProgramManager {
 	 * may not have it registered as open. The program is made the active program.
 	 * @param program the program to register as open with the tool.
 	 */
-	void openProgram(Program program);
+	public void openProgram(Program program);
 
 	/**
 	 * Opens the program to the tool.  In this case the program is already open, but this tool
@@ -134,22 +141,21 @@ public interface ProgramManager {
 	 * @deprecated use openProgram(Program program, int state) instead.
 	 */
 	@Deprecated
-	void openProgram(Program program, boolean current);
+	public void openProgram(Program program, boolean current);
 
 	/**
-	 * Open the specified program in te tool.
-	 * @param program
+	 * Open the specified program in the tool.
+	 * @param program the program
 	 * @param state initial open state (OPEN_HIDDEN, OPEN_CURRENT, OPEN_VISIBLE).  
 	 * The visibility states will be ignored if the program is already open.
 	 */
 	public void openProgram(Program program, int state);
 
 	/**
-	 * Establish a persistent owner on an open program.
-	 * This will cause the program manager to simply make a program 
-	 * hidden if it is closed.
-	 * @param program
-	 * @param owner
+	 * Establish a persistent owner on an open program. This will cause the program manager to 
+	 * imply make a program hidden if it is closed.
+	 * @param program the program
+	 * @param owner the owner
 	 * @return true if program is open and another object is not already the owner,
 	 * or the specified owner is already the owner.
 	 * @see #releaseProgram(Program, Object)
@@ -158,14 +164,14 @@ public interface ProgramManager {
 
 	/**
 	 * Release the persistent ownership of a program.
-	 * The program will automatically be closed if it is hidden or was
-	 * marked as temporary.  If any of these closures corresponds to a
-	 * program with changes the user will be given an opportunity to
-	 * save or keep the program open.
-	 * If persistentOwner is not the correct owner, the method will
-	 * have no affect.
-	 * @param program
-	 * @param persistentOwner
+	 * <p>
+	 * The program will automatically be closed if it is hidden or was marked as temporary.  If 
+	 * any of these closures corresponds to a program with changes the user will be given an 
+	 * opportunity to save or keep the program open.
+	 * <p>
+	 * If persistentOwner is not the correct owner, the method will have no affect.
+	 * @param program the program
+	 * @param persistentOwner the owner defined by {@link #setPersistentOwner(Program, Object)}
 	 */
 	public void releaseProgram(Program program, Object persistentOwner);
 
@@ -192,7 +198,7 @@ public interface ProgramManager {
 	 * @return true if all other programs were closed. Returns false if the user canceled the close
 	 * while being prompted to save.
 	 */
-	boolean closeOtherPrograms(boolean ignoreChanges);
+	public boolean closeOtherPrograms(boolean ignoreChanges);
 
 	/**
 	 * Closes all open programs in this tool.  If this tool is the only tool with a program
@@ -202,13 +208,13 @@ public interface ProgramManager {
 	 * @return true if all programs were closed. Returns false if the user canceled the close
 	 * while being prompted to save.
 	 */
-	boolean closeAllPrograms(boolean ignoreChanges);
+	public boolean closeAllPrograms(boolean ignoreChanges);
 
 	/**
 	 * Sets the given program to be the current active program in the tool.
 	 * @param p the program to make active.
 	 */
-	void setCurrentProgram(Program p);
+	public void setCurrentProgram(Program p);
 
 	/**
 	 * Returns the first program in the list of open programs that contains the given address.
@@ -218,24 +224,28 @@ public interface ProgramManager {
 	 * @param addr the address for which to search.
 	 * @return the first program that can be found to contain the given address.
 	 */
-	Program getProgram(Address addr);
+	public Program getProgram(Address addr);
 
 	/**
-	 * Returns a list of all open program.s
+	 * Returns a list of all open program.
+	 * @return the programs
 	 */
-	Program[] getAllOpenPrograms();
+	public Program[] getAllOpenPrograms();
 
 	/**
-	 * Allows program manager state to be locked/unlocked.
-	 * While locked, the program manager will not support opening
-	 * additional programs.
+	 * Allows program manager state to be locked/unlocked.  While locked, the program manager will 
+	 * not support opening additional programs.
 	 * @param state locked if true, unlocked if false
+	 * @deprecated deprecated for 10.1; removal for 10.3 or later
 	 */
-	void lockDown(boolean state);
+	@Deprecated
+	public void lockDown(boolean state);
 
 	/**
-	 * Returns true if program manager 
-	 * @return
+	 * Returns true if program manager is in the locked state
+	 * @return true if program manager is in the locked state
+	 * @deprecated deprecated for 10.1; removal for 10.3 or later
 	 */
-	boolean isLocked();
+	@Deprecated
+	public boolean isLocked();
 }

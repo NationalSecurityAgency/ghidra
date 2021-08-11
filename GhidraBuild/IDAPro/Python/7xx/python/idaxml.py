@@ -1550,9 +1550,9 @@ class XmlExporter(IdaXml):
             regcmt = ida_struct.get_member_cmt(member.id, False)
             rptcmt = ida_struct.get_member_cmt(member.id, True)
             if regcmt != None:
-                regcmt  = ida_lines.tag_remove(regcmt + " ", 0)
+                regcmt  = ida_lines.tag_remove(regcmt + " ")
             if rptcmt != None:
-                rptrcmt = ida_lines.tag_remove(rptcmt + " ", 0)
+                rptrcmt = ida_lines.tag_remove(rptcmt + " ")
             has_regcmt = regcmt != None and len(regcmt) > 0
             has_rptcmt = rptcmt != None and len(rptcmt) > 0
             has_content = has_regcmt or has_rptcmt

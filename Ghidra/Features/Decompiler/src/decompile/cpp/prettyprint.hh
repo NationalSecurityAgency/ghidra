@@ -26,6 +26,7 @@ class PcodeOp;
 class FlowBlock;
 class Funcdata;
 class Symbol;
+class PendPrint;
 
 /// \brief Base class (and interface) for pretty printing and XML markup of tokens
 ///
@@ -80,9 +81,11 @@ protected:
   int4 indentlevel;			///< Current indent level (in fixed width characters)
   int4 parenlevel;			///< Current depth of parentheses
   int4 indentincrement;			///< Change in indentlevel per level of nesting
+  PendPrint *pendPrint;			///< Pending print callback
   void resetDefaultsInternal(void) { indentincrement = 2; }	///< Set options to default values for EmitXml
+  void emitPending(void);		///< Emit any pending print commands
 public:
-  EmitXml(void) { s = (ostream *)0; indentlevel=0; parenlevel=0; resetDefaultsInternal(); }	///< Constructor
+  EmitXml(void) { s = (ostream *)0; indentlevel=0; parenlevel=0; pendPrint=(PendPrint *)0; resetDefaultsInternal(); }	///< Constructor
 
   /// \brief Possible types of syntax highlighting
   enum syntax_highlight {
@@ -136,7 +139,7 @@ public:
   /// Inform the emitter that a printing group is ending.
   /// \param id is the id associated with the group (as returned by openGroup)
   virtual void closeGroup(int4 id) {}
-  virtual void clear(void) { parenlevel = 0; indentlevel=0; }	///< Reset the emitter to its initial state
+  virtual void clear(void) { parenlevel = 0; indentlevel=0; pendPrint=(PendPrint *)0; }	///< Reset the emitter to its initial state
   virtual void setOutputStream(ostream *t) { s = t; }		///< Set the output stream for the emitter
   virtual ostream *getOutputStream(void) const { return s; }	///< Get the current output stream
   virtual void spaces(int4 num,int4 bump=0);
@@ -214,6 +217,24 @@ public:
   ///
   /// \param val is the desired number of characters to indent
   void setIndentIncrement(int4 val) { indentincrement = val; }
+
+  /// \brief Set a pending print callback
+  ///
+  /// The callback will be issued prior to the the next call to tagLine() unless
+  /// a the method cancelPendingPrint() is called first.
+  /// \param pend is the callback to be issued
+  void setPendingPrint(PendPrint *pend) { pendPrint = pend; }
+
+  /// \brief Cancel any pending print callback
+  ///
+  /// If there is any print callback pending, cancel it
+  void cancelPendingPrint(void) { pendPrint = (PendPrint *)0; }
+
+  /// \brief Check if the given print callback is still pending
+  ///
+  /// \param pend is the given print callback to check
+  /// \return \b true if the specific print callback is pending
+  bool hasPendingPrint(PendPrint *pend) const { return (pendPrint == pend); }
 };
 
 /// \brief A trivial emitter that outputs syntax straight to the stream
@@ -778,5 +799,26 @@ public:
   virtual void resetDefaults(void);
   void setXML(bool val);	///< Toggle whether the low-level emitter emits XML markup or not
 };
+
+/// \brief Helper class for sending cancelable print commands to an ExitXml
+///
+/// The PendPrint is issued as a placeholder for commands to the emitter using its
+/// setPendingPrint() method.  The callback() method is overridden to tailor the exact
+/// sequence of print commands.  The print commands will be executed prior to the next
+/// tagLine() call to the emitter, unless the PendPrint is cancelled.
+class PendPrint {
+public:
+  virtual ~PendPrint(void) {}			///< Destructor
+  virtual void callback(EmitXml *emit)=0;	///< Callback that executes the actual print commands
+};
+
+inline void EmitXml::emitPending(void)
+
+{
+  if (pendPrint != (PendPrint *)0) {
+    pendPrint->callback(this);
+    pendPrint = (PendPrint *)0;
+  }
+}
 
 #endif

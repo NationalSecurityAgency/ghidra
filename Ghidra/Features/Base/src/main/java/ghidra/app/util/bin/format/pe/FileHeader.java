@@ -356,9 +356,11 @@ public class FileHeader implements StructConverter {
 			Msg.error(this, "File alignment == 0: section processing skipped");
 		}
 		else {
+			long stringTableOffset = getStringTableOffset();
 			sectionHeaders = new SectionHeader[numberOfSections];
 			for (int i = 0; i < numberOfSections; ++i) {
-				sectionHeaders[i] = SectionHeader.createSectionHeader(reader, tmpIndex);
+				sectionHeaders[i] =
+					SectionHeader.readSectionHeader(reader, tmpIndex, stringTableOffset);
 
 				// Ensure PointerToRawData + SizeOfRawData doesn't exceed the length of the file
 				int pointerToRawData = sectionHeaders[i].getPointerToRawData();
@@ -439,7 +441,7 @@ public class FileHeader implements StructConverter {
 			return;
 		}
 
-		int stringTableIndex = tmpIndex + DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL * numberOfSymbols;
+		long stringTableOffset = getStringTableOffset();
 
 		for (int i = 0; i < numberOfSymbols; ++i) {
 			if (!ntHeader.checkRVA(tmpIndex)) {
@@ -448,7 +450,7 @@ public class FileHeader implements StructConverter {
 			}
 
 			DebugCOFFSymbol symbol =
-				DebugCOFFSymbol.createDebugCOFFSymbol(reader, tmpIndex, stringTableIndex);
+				DebugCOFFSymbol.createDebugCOFFSymbol(reader, tmpIndex, stringTableOffset);
 
 			tmpIndex += DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL;
 
@@ -462,6 +464,22 @@ public class FileHeader implements StructConverter {
 		}
 
 		reader.setPointerIndex(oldIndex);
+	}
+
+	/**
+	 * Return the offset of the string table, or -1 if invalid or not present.
+	 * 
+	 * @return long offset of string table, or -1 if invalid or not present
+	 * @throws IOException if io error
+	 */
+	long getStringTableOffset() throws IOException {
+		if (pointerToSymbolTable <= 0 /* 0 is excluded because other stuff is there */ ||
+			!ntHeader.checkRVA(pointerToSymbolTable) || (numberOfSymbols < 0) ||
+			(pointerToSymbolTable + (numberOfSymbols * DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL) > reader
+					.length())) {
+			return -1;
+		}
+		return pointerToSymbolTable + (DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL * numberOfSymbols);
 	}
 
 	public boolean isLordPE() {

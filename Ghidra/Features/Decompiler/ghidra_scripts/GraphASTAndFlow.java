@@ -77,7 +77,7 @@ public class GraphASTAndFlow extends GraphAST {
 				}
 				if (prev != null && map.containsKey(prev) && map.containsKey(next)) {
 					AttributedEdge edge = createEdge(map.get(prev), map.get(next));
-					edge.setAttribute(COLOR_ATTRIBUTE, "Black");
+					edge.setEdgeType(WITHIN_BLOCK);
 				}
 				prev = next;
 			}
@@ -92,7 +92,7 @@ public class GraphASTAndFlow extends GraphAST {
 				PcodeBlock in = block.getIn(i);
 				if (last.containsKey(in)) {
 					AttributedEdge edge = createEdge(last.get(in), first.get(block));
-					edge.setAttribute(COLOR_ATTRIBUTE, "Red");
+					edge.setEdgeType(BETWEEN_BLOCK);
 				}
 			}
 		}

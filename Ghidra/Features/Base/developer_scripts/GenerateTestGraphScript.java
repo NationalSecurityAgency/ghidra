@@ -22,7 +22,7 @@ import ghidra.service.graph.*;
  * Sample script to test graph service
  */
 public class GenerateTestGraphScript extends GhidraScript {
-	private AttributedGraph graph = new AttributedGraph();
+	private AttributedGraph graph = new AttributedGraph("Test", new EmptyGraphType());
 	private int nextEdgeID = 1;
 
 	@Override

@@ -15,13 +15,15 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
-import java.util.HashMap;
+import static ghidra.graph.ProgramGraphType.*;
+
 import java.util.Iterator;
-import java.util.Map;
 
 import docking.widgets.EventTrigger;
 import ghidra.app.services.GraphDisplayBroker;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.graph.ProgramGraphDisplayOptions;
+import ghidra.graph.ProgramGraphType;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Program;
@@ -34,14 +36,12 @@ import ghidra.util.exception.GraphException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
-import static ghidra.service.graph.GraphDisplay.*;
-
 public class ASTGraphTask extends Task {
-	enum GraphType {
+	enum AstGraphSubType {
 		CONTROL_FLOW_GRAPH("AST Control Flow"), DATA_FLOW_GRAPH("AST Data Flow");
 		private String name;
 
-		GraphType(String name) {
+		AstGraphSubType(String name) {
 			this.name = name;
 		}
 
@@ -51,35 +51,19 @@ public class ASTGraphTask extends Task {
 	}
 
 	private static final String CODE_ATTRIBUTE = "Code";
-	private static final String SYMBOLS_ATTRIBUTE = "Symbols";
-	private static final String VERTEX_TYPE_ATTRIBUTE = "VertexType";
-
-	// Vertex Types
-	private final static String ENTRY_NODE = "Entry";
-	// "1";       // beginning of a block, someone calls it
-	private final static String BODY_NODE = "Body";
-	// "2";       // Body block, no flow
-	private final static String EXIT_NODE = "Exit";
-	// "3";       // Terminator
-	private final static String SWITCH_NODE = "Switch";
-	// "4";       // Switch/computed jump
-	private final static String BAD_NODE = "Bad";
-	// "5";       // Bad destination
-	private final static String DATA_NODE = "Data";
-	// "6";       // Data Node, used for indirection
 
 	private GraphDisplayBroker graphService;
 	private boolean newGraph;
 	private int codeLimitPerBlock;
 	private Address location;
 	private HighFunction hfunction;
-	private GraphType graphType;
+	private AstGraphSubType astGraphType;
 
 	private int uniqueNum = 0;
 	private PluginTool tool;
 
 	public ASTGraphTask(GraphDisplayBroker graphService, boolean newGraph, int codeLimitPerBlock,
-			Address location, HighFunction hfunction, GraphType graphType, PluginTool tool) {
+			Address location, HighFunction hfunction, AstGraphSubType graphType, PluginTool tool) {
 		super("Graph " + graphType.getName(), true, false, true);
 
 		this.graphService = graphService;
@@ -87,32 +71,30 @@ public class ASTGraphTask extends Task {
 		this.codeLimitPerBlock = codeLimitPerBlock;
 		this.location = location;
 		this.hfunction = hfunction;
-		this.graphType = graphType;
+		this.astGraphType = graphType;
 		this.tool = tool;
 	}
 
 	@Override
 	public void run(TaskMonitor monitor) {
+		GraphType graphType = new AstGraphType();
 
 		// get a new graph
-		AttributedGraph graph = new AttributedGraph();
-
+		AttributedGraph graph = new AttributedGraph(astGraphType.getName(), graphType);
 		try {
 			monitor.setMessage("Computing Graph...");
-			if (graphType == GraphType.DATA_FLOW_GRAPH) {
+			if (astGraphType == AstGraphSubType.DATA_FLOW_GRAPH) {
 				createDataFlowGraph(graph, monitor);
 			}
 			else {
 				createControlFlowGraph(graph, monitor);
 			}
-			Map<String, String> properties = new HashMap<>();
-			properties.put(SELECTED_VERTEX_COLOR, "0xFF1493");
-			properties.put(SELECTED_EDGE_COLOR, "0xFF1493");
-			properties.put(INITIAL_LAYOUT_ALGORITHM, "Hierarchical MinCross Coffman Graham");
-			properties.put(ENABLE_EDGE_SELECTION, "true");
-			GraphDisplay display = graphService.getDefaultGraphDisplay(!newGraph, properties, monitor);
+
+			GraphDisplay display =
+				graphService.getDefaultGraphDisplay(!newGraph, monitor);
+
 			ASTGraphDisplayListener displayListener =
-				new ASTGraphDisplayListener(tool, display, hfunction, graphType);
+				new ASTGraphDisplayListener(tool, display, hfunction, astGraphType);
 			display.setGraphDisplayListener(displayListener);
 
 			monitor.setMessage("Obtaining handle to graph provider...");
@@ -122,20 +104,19 @@ public class ASTGraphTask extends Task {
 			monitor.setCancelEnabled(false);
 
 			monitor.setMessage("Rendering Graph...");
-			display.defineVertexAttribute(CODE_ATTRIBUTE);
-			display.defineVertexAttribute(SYMBOLS_ATTRIBUTE);
-
-			display.setVertexLabelAttribute(CODE_ATTRIBUTE, GraphDisplay.ALIGN_LEFT, 12, true,
-				graphType == GraphType.CONTROL_FLOW_GRAPH ? (codeLimitPerBlock + 1) : 1);
 
 			String description =
-				graphType == GraphType.DATA_FLOW_GRAPH ? "AST Data Flow" : "AST Control Flow";
+				astGraphType == AstGraphSubType.DATA_FLOW_GRAPH ? "AST Data Flow" : "AST Control Flow";
 			description = description + " for " + hfunction.getFunction().getName();
-			display.setGraph(graph, description, false, monitor);
+			GraphDisplayOptions graphDisplayOptions =
+				new ProgramGraphDisplayOptions(new AstGraphType(), tool);
+			graphDisplayOptions.setVertexLabelOverrideAttributeKey(CODE_ATTRIBUTE);
+			display.setGraph(graph, graphDisplayOptions, description, false, monitor);
 			setGraphLocation(display, displayListener);
 		}
 		catch (GraphException e) {
-			Msg.showError(this, null, "Graph Error", e.getMessage());
+			Msg.showError(this, null, "Graph Error",
+				"Can't create graph display: " + e.getMessage());
 		}
 		catch (CancelledException e1) {
 			return;
@@ -230,20 +211,20 @@ public class ASTGraphTask extends Task {
 
 		vertex.setAttribute(CODE_ATTRIBUTE, formatOpMnemonic(op));
 
-		String vertexType = BODY_NODE;
+		String vertexType = BODY;
 		switch (op.getOpcode()) {
 			case PcodeOp.BRANCH:
 			case PcodeOp.BRANCHIND:
 			case PcodeOp.CBRANCH:
 			case PcodeOp.CALL:
 			case PcodeOp.CALLIND:
-				vertexType = SWITCH_NODE;
+				vertexType = SWITCH;
 				break;
 			case PcodeOp.RETURN:
-				vertexType = EXIT_NODE;
+				vertexType = EXIT;
 				break;
 		}
-		vertex.setAttribute(VERTEX_TYPE_ATTRIBUTE, vertexType);
+		vertex.setVertexType(vertexType);
 	}
 
 	private AttributedVertex getDataVertex(AttributedGraph graph, Varnode node,
@@ -278,7 +259,7 @@ public class ASTGraphTask extends Task {
 		}
 		label += translateVarnode(node, false);
 		vertex.setAttribute(CODE_ATTRIBUTE, label);
-		vertex.setAttribute(VERTEX_TYPE_ATTRIBUTE, DATA_NODE);
+		vertex.setVertexType(ProgramGraphType.DATA);
 	}
 
 	protected void createControlFlowGraph(AttributedGraph graph, TaskMonitor monitor)
@@ -322,7 +303,7 @@ public class ASTGraphTask extends Task {
 			}
 			else {
 				vertex.setAttribute(CODE_ATTRIBUTE, "<???>");
-				vertex.setAttribute(VERTEX_TYPE_ATTRIBUTE, BAD_NODE);
+				vertex.setVertexType(BAD);
 			}
 		}
 		return vertex;
@@ -348,23 +329,23 @@ public class ASTGraphTask extends Task {
 		vertex.setAttribute(CODE_ATTRIBUTE, buf.toString());
 
 		// Establish vertex type
-		String vertexType = BODY_NODE;
+		String vertexType = BODY;
 		if (basicBlk.getInSize() == 0) {
-			vertexType = ENTRY_NODE;
+			vertexType = ENTRY;
 		}
 		else {
 			switch (basicBlk.getOutSize()) {
 				case 0:
-					vertexType = EXIT_NODE;
+					vertexType = EXIT;
 					break;
 				case 1:
-					vertexType = BODY_NODE;
+					vertexType = BODY;
 					break;
 				default:
-					vertexType = SWITCH_NODE;
+					vertexType = SWITCH;
 			}
 		}
-		vertex.setAttribute(VERTEX_TYPE_ATTRIBUTE, vertexType);
+		vertex.setVertexType(vertexType);
 	}
 
 	private String formatOpMnemonic(PcodeOp op) {

@@ -16,12 +16,13 @@
 package ghidra.feature.vt.gui.wizard;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.label.GDLabel;
@@ -37,25 +38,31 @@ import ghidra.util.InvalidNameException;
 import ghidra.util.task.TaskLauncher;
 import resources.ResourceManager;
 
+/**
+ * Version tracking wizard panel to create a new session.
+ */
 public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 
 	private static final int MAX_LENGTH_FOR_VT_SESSION_NAME = 20;
 	private static final Icon SWAP_ICON = ResourceManager.loadImage("images/doubleArrowUpDown.png");
 	private static final Icon INFO_ICON = ResourceManager.loadImage("images/information.png");
 
-	private DomainFile sourceProgramFile;
-	private DomainFile destinationProgramFile;
-	private JTextField placeholderForSourceProgram;
-	private JTextField placeholderForDestinationProgram;
-	private JButton sourceProgramBrowseButton;
-	private JButton destinationProgramBrowseButton;
+	private JTextField sourceField;
+	private JTextField destinationField;
+	private JButton sourceBrowseButton;
+	private JButton destinationBrowseButton;
 	private JButton swapProgramsButton;
 	private JTextField sessionNameField;
 	private JTextField folderNameField;
 	private DomainFolder folder;
-	private final PluginTool tool;
-	private Program sourceProgram;
-	private Program destinationProgram;
+	private PluginTool tool;
+
+	// All program info objects that the user may have opened while using the wizard.  We keep 
+	// these around to avoid reopening them and any accompanying upgrading that may be required.
+	// These will be released when the wizard is finished.
+	private Map<DomainFile, ProgramInfo> allProgramInfos = new HashMap<>();
+	private ProgramInfo sourceProgramInfo;
+	private ProgramInfo destinationProgramInfo;
 
 	NewSessionPanel(PluginTool tool) {
 
@@ -71,12 +78,7 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 
 		JButton browseFolderButton =
 			ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
-		browseFolderButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				browseDataTreeFolders();
-			}
-		});
+		browseFolderButton.addActionListener(e -> browseDataTreeFolders());
 		Font font = browseFolderButton.getFont();
 		browseFolderButton.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
 
@@ -112,24 +114,19 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		destinationLabel.setToolTipText("New program that receives the transferred markup");
 		destinationLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 
-		placeholderForSourceProgram = new JTextField(25);
-		placeholderForSourceProgram.setEditable(false);
+		sourceField = new JTextField(25);
+		sourceField.setEditable(false);
 
-		placeholderForDestinationProgram = new JTextField(25);
-		placeholderForDestinationProgram.setEditable(false);
+		destinationField = new JTextField(25);
+		destinationField.setEditable(false);
 
-		sourceProgramBrowseButton = createSourceBrowseButton();
-		destinationProgramBrowseButton = createDestinationBrowseButton();
+		sourceBrowseButton = createSourceBrowseButton();
+		destinationBrowseButton = createDestinationBrowseButton();
 
 		swapProgramsButton = new JButton(SWAP_ICON);
 		swapProgramsButton.setText("swap");
 		swapProgramsButton.setName("SWAP_BUTTON");
-		swapProgramsButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				swapPrograms();
-			}
-		});
+		swapProgramsButton.addActionListener(arg0 -> swapPrograms());
 
 		JPanel mainPanel = new JPanel(new GridBagLayout());
 		GridBagConstraints gbc = new GridBagConstraints();
@@ -178,10 +175,10 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		mainPanel.add(sourceLabel, gbc);
 
 		gbc.gridx++;
-		mainPanel.add(placeholderForSourceProgram, gbc);
+		mainPanel.add(sourceField, gbc);
 
 		gbc.gridx += 2;
-		mainPanel.add(sourceProgramBrowseButton, gbc);
+		mainPanel.add(sourceBrowseButton, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy++;
@@ -195,10 +192,10 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		mainPanel.add(destinationLabel, gbc);
 
 		gbc.gridx++;
-		mainPanel.add(placeholderForDestinationProgram, gbc);
+		mainPanel.add(destinationField, gbc);
 
 		gbc.gridx += 2;
-		mainPanel.add(destinationProgramBrowseButton, gbc);
+		mainPanel.add(destinationBrowseButton, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy++;
@@ -236,19 +233,13 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		final DataTreeDialog dataTreeDialog =
 			new DataTreeDialog(this, "Choose a project folder", DataTreeDialog.CHOOSE_FOLDER);
 
-		dataTreeDialog.addOkActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				dataTreeDialog.close();
-				setFolder(dataTreeDialog.getDomainFolder());
-			}
+		dataTreeDialog.addOkActionListener(e -> {
+			dataTreeDialog.close();
+			setFolder(dataTreeDialog.getDomainFolder());
 		});
 		dataTreeDialog.showComponent();
 	}
 
-	/**
-	 * Sets the destination domain folder
-	 */
 	void setFolder(DomainFolder folder) {
 		this.folder = folder;
 
@@ -264,66 +255,85 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 
 	private void setSourceProgram(DomainFile programFile) {
 		notifyListenersOfStatusMessage(" ");
-		sourceProgramFile = programFile;
-		String path = programFile == null ? "" : programFile.getPathname();
-		placeholderForSourceProgram.setText(path);
+
+		String path;
+		if (programFile == null) {
+			sourceProgramInfo = null;
+			path = "";
+		}
+		else {
+			sourceProgramInfo =
+				allProgramInfos.computeIfAbsent(programFile, file -> new ProgramInfo(file));
+			path = programFile.getPathname();
+		}
+
+		sourceField.setText(path);
 
 		updateSessionNameIfBlank();
 		notifyListenersOfValidityChanged();
 	}
 
 	private void updateSessionNameIfBlank() {
-		if (sessionNameField.getText().trim().length() != 0) {
+		if (!StringUtils.isBlank(sessionNameField.getText())) {
 			return;
 		}
-		if (sourceProgramFile == null || destinationProgramFile == null) {
+		if (sourceProgramInfo == null || destinationProgramInfo == null) {
 			return;
 		}
-		String sourceName = sourceProgramFile.getName();
-		String destinationName = destinationProgramFile.getName();
+
+		String sourceName = sourceProgramInfo.getName();
+		String destinationName = destinationProgramInfo.getName();
 		if (sourceName.length() > MAX_LENGTH_FOR_VT_SESSION_NAME) {
 			sourceName = sourceName.substring(0, MAX_LENGTH_FOR_VT_SESSION_NAME);
 		}
 		if (destinationName.length() > MAX_LENGTH_FOR_VT_SESSION_NAME) {
 			destinationName = destinationName.substring(0, MAX_LENGTH_FOR_VT_SESSION_NAME);
 		}
-		String defaultSessionName = "VT__" + sourceName + "__" + destinationName;
 
+		String defaultSessionName = "VT__" + sourceName + "__" + destinationName;
 		sessionNameField.setText(defaultSessionName);
 	}
 
 	private void setDestinationProgram(DomainFile programFile) {
 		notifyListenersOfStatusMessage(" ");
-		destinationProgramFile = programFile;
-		String path = programFile == null ? "" : programFile.getPathname();
-		placeholderForDestinationProgram.setText(path);
+
+		String path;
+		if (programFile == null) {
+			destinationProgramInfo = null;
+			path = "";
+		}
+		else {
+			destinationProgramInfo =
+				allProgramInfos.computeIfAbsent(programFile, file -> new ProgramInfo(file));
+			path = programFile.getPathname();
+		}
+
+		destinationField.setText(path);
 		updateSessionNameIfBlank();
 		notifyListenersOfValidityChanged();
 	}
 
 	private void swapPrograms() {
 		notifyListenersOfStatusMessage(" ");
-		DomainFile tmpFile = destinationProgramFile;
-		Program tmpProgram = destinationProgram;
 
-		destinationProgramFile = sourceProgramFile;
-		destinationProgram = sourceProgram;
+		ProgramInfo temp = destinationProgramInfo;
+		destinationProgramInfo = sourceProgramInfo;
+		sourceProgramInfo = temp;
 
-		sourceProgramFile = tmpFile;
-		sourceProgram = tmpProgram;
-
-		if (sourceProgramFile != null) {
-			placeholderForSourceProgram.setText(sourceProgramFile.getPathname());
+		if (sourceProgramInfo != null) {
+			sourceField.setText(sourceProgramInfo.getPathname());
 		}
 		else {
-			placeholderForSourceProgram.setText("");
+			sourceField.setText("");
 		}
-		if (destinationProgramFile != null) {
-			placeholderForDestinationProgram.setText(destinationProgramFile.getPathname());
+
+		if (destinationProgramInfo != null) {
+			destinationField.setText(destinationProgramInfo.getPathname());
 		}
 		else {
-			placeholderForDestinationProgram.setText("");
+			destinationField.setText("");
 		}
+
 		notifyListenersOfValidityChanged();
 	}
 
@@ -333,14 +343,12 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 	}
 
 	private void releaseConsumers() {
-		if (sourceProgram != null) {
-			sourceProgram.release(tool);
-			sourceProgram = null;
+
+		for (ProgramInfo info : allProgramInfos.values()) {
+			info.release(tool);
 		}
-		if (destinationProgram != null) {
-			destinationProgram.release(tool);
-			destinationProgram = null;
-		}
+
+		allProgramInfos.clear();
 	}
 
 	@Override
@@ -361,27 +369,24 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 
 	@Override
 	public void updateStateObjectWithPanelInfo(WizardState<VTWizardStateKey> state) {
-		state.put(VTWizardStateKey.SOURCE_PROGRAM_FILE, sourceProgramFile);
-		state.put(VTWizardStateKey.DESTINATION_PROGRAM_FILE, destinationProgramFile);
+		state.put(VTWizardStateKey.SOURCE_PROGRAM_FILE, sourceProgramInfo.getFile());
+		state.put(VTWizardStateKey.DESTINATION_PROGRAM_FILE, destinationProgramInfo.getFile());
+		state.put(VTWizardStateKey.SOURCE_PROGRAM, sourceProgramInfo.getProgram());
+		state.put(VTWizardStateKey.DESTINATION_PROGRAM, destinationProgramInfo.getProgram());
 		state.put(VTWizardStateKey.SESSION_NAME, sessionNameField.getText());
 		state.put(VTWizardStateKey.NEW_SESSION_FOLDER, folder);
-		state.put(VTWizardStateKey.SOURCE_PROGRAM, sourceProgram);
-		state.put(VTWizardStateKey.DESTINATION_PROGRAM, destinationProgram);
 	}
 
-	private Program updateProgram(DomainFile file, Program currentProgram) {
-		if (currentProgram != null) {
-			if (currentProgram.getDomainFile().equals(file)) {
-				return currentProgram;
-			}
-			currentProgram.release(tool);
+	private void openProgram(ProgramInfo programInfo) {
+
+		if (programInfo.hasProgram()) {
+			return; // already open
 		}
-		if (file == null) {
-			return null;
-		}
-		OpenProgramTask openProgramTask = new OpenProgramTask(file, tool);
+
+		OpenProgramTask openProgramTask = new OpenProgramTask(programInfo.getFile(), tool);
 		new TaskLauncher(openProgramTask, tool.getActiveWindow());
-		return openProgramTask.getOpenProgram();
+		Program program = openProgramTask.getOpenProgram();
+		programInfo.setProgram(program);
 	}
 
 	@Override
@@ -391,34 +396,38 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 
 	@Override
 	public void initialize() {
-		sourceProgramFile = null;
-		destinationProgramFile = null;
+		sourceProgramInfo = null;
+		destinationProgramInfo = null;
 		sessionNameField.setText("");
-		placeholderForSourceProgram.setText("");
-		placeholderForDestinationProgram.setText("");
+		sourceField.setText("");
+		destinationField.setText("");
 		setFolder(tool.getProject().getProjectData().getRootFolder());
 	}
 
 	@Override
 	public boolean isValidInformation() {
+
 		if (folder == null) {
 			notifyListenersOfStatusMessage("Choose a project folder to continue!");
 			return false;
 		}
-		if (sourceProgramFile == null || destinationProgramFile == null) {
+
+		if (sourceProgramInfo == null || destinationProgramInfo == null) {
 			return false;
 		}
-		if (sourceProgramFile.equals(destinationProgramFile)) {
+
+		if (sourceProgramInfo.hasSameFile(destinationProgramInfo)) {
 			notifyListenersOfStatusMessage("Source and Destination Programs must be different");
 			releaseConsumers();
 			return false;
 		}
 
 		String name = sessionNameField.getText().trim();
-		if ("".equals(name)) {
+		if (StringUtils.isBlank(name)) {
 			notifyListenersOfStatusMessage("Please enter a name for this session");
 			return false;
 		}
+
 		try {
 			tool.getProject().getProjectData().testValidName(name, false);
 		}
@@ -426,6 +435,7 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 			notifyListenersOfStatusMessage("'" + name + "' contains invalid characters");
 			return false;
 		}
+
 		DomainFile file = folder.getFile(name);
 		if (file != null) {
 			notifyListenersOfStatusMessage(
@@ -433,19 +443,17 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 			return false;
 		}
 
-		sourceProgram = updateProgram(sourceProgramFile, sourceProgram);
-
-		if (sourceProgram == null) {
+		openProgram(sourceProgramInfo);
+		if (!sourceProgramInfo.hasProgram()) {
 			notifyListenersOfStatusMessage(
-				"Can't open source program " + sourceProgramFile.getName());
+				"Can't open source program " + sourceProgramInfo.getName());
 			return false;
 		}
 
-		destinationProgram = updateProgram(destinationProgramFile, destinationProgram);
-
-		if (destinationProgram == null) {
+		openProgram(destinationProgramInfo);
+		if (!destinationProgramInfo.hasProgram()) {
 			notifyListenersOfStatusMessage(
-				"Can't open destination program " + destinationProgramFile.getName());
+				"Can't open destination program " + destinationProgramInfo.getName());
 			return false;
 		}
 
@@ -455,20 +463,17 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 
 	@Override
 	public void addDependencies(WizardState<VTWizardStateKey> state) {
-		// none; weird!
+		// none
 	}
 
 	private JButton createSourceBrowseButton() {
 		JButton button = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
 		button.setName("SOURCE_BUTTON");
-		button.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				DomainFile programFile = VTWizardUtils.chooseDomainFile(NewSessionPanel.this,
-					"a source program", VTWizardUtils.PROGRAM_FILTER, null);
-				if (programFile != null) {
-					setSourceProgram(programFile);
-				}
+		button.addActionListener(e -> {
+			DomainFile programFile = VTWizardUtils.chooseDomainFile(NewSessionPanel.this,
+				"a source program", VTWizardUtils.PROGRAM_FILTER, null);
+			if (programFile != null) {
+				setSourceProgram(programFile);
 			}
 		});
 		return button;
@@ -477,14 +482,11 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 	private JButton createDestinationBrowseButton() {
 		JButton button = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
 		button.setName("DESTINATION_BUTTON");
-		button.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				DomainFile programFile = VTWizardUtils.chooseDomainFile(NewSessionPanel.this,
-					"a destination program", VTWizardUtils.PROGRAM_FILTER, null);
-				if (programFile != null) {
-					setDestinationProgram(programFile);
-				}
+		button.addActionListener(e -> {
+			DomainFile programFile = VTWizardUtils.chooseDomainFile(NewSessionPanel.this,
+				"a destination program", VTWizardUtils.PROGRAM_FILTER, null);
+			if (programFile != null) {
+				setDestinationProgram(programFile);
 			}
 		});
 		return button;
@@ -493,5 +495,56 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 	@Override
 	public void dispose() {
 		releaseConsumers();
+	}
+
+	// simple object to track a domain file and its program
+	private class ProgramInfo {
+
+		private Program program;
+		private DomainFile file;
+
+		public ProgramInfo(DomainFile file) {
+			this.file = Objects.requireNonNull(file);
+		}
+
+		void setProgram(Program program) {
+			this.program = program;
+		}
+
+		Program getProgram() {
+			return program;
+		}
+
+		DomainFile getFile() {
+			return file;
+		}
+
+		String getPathname() {
+			return file.getPathname();
+		}
+
+		String getName() {
+			return file.getName();
+		}
+
+		void release(Object consumer) {
+			if (program == null) {
+				return;
+			}
+
+			if (program.getConsumerList().contains(consumer)) {
+				program.release(consumer);
+			}
+
+			program = null;
+		}
+
+		boolean hasSameFile(ProgramInfo other) {
+			return file.getPathname().equals(other.getPathname());
+		}
+
+		boolean hasProgram() {
+			return program != null;
+		}
 	}
 }

@@ -130,9 +130,8 @@ Datatype *Datatype::nearestArrayedComponentBackward(uintb off,uintb *newoff,int4
   return (TypeArray *)0;
 }
 
-// Compare \b this with another data-type.
-/// 0 (equality) means the data-types are functionally equivalent (even if names differ)
-/// Smaller types come earlier. More specific types come earlier.
+/// Order \b this with another data-type, in a way suitable for the type propagation algorithm.
+/// Bigger types come earlier. More specific types come earlier.
 /// \param op is the data-type to compare with \b this
 /// \param level is maximum level to descend when recursively comparing
 /// \return negative, 0, positive depending on ordering of types
@@ -142,9 +141,11 @@ int4 Datatype::compare(const Datatype &op,int4 level) const
   return compareDependency(op);
 }
 
-/// Ordering of data-types for the main TypeFactory container.
-/// Comparison only goes down one-level in the component structure,
-/// before just comparing pointers.
+/// Sort data-types for the main TypeFactory container.  The sort needs to be based on
+/// the data-type structure so that an example data-type, constructed outside the factory,
+/// can be used to find the equivalent object inside the factory.  This means the
+/// comparison should not examine the data-type id. In practice, the comparison only needs
+/// to go down one level in the component structure before just comparing component pointers.
 /// \param op is the data-type to compare with \b this
 /// \return negative, 0, positive depending on ordering of types
 int4 Datatype::compareDependency(const Datatype &op) const
@@ -2098,6 +2099,22 @@ TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws)
 
 {
   TypePointer tmp(s,pt,ws);
+  return (TypePointer *) findAdd(tmp);
+}
+
+/// The given name is attached, which distinguishes the returned data-type from
+/// other unnamed (or differently named) pointers that otherwise have the same attributes.
+/// \param s is the size of the pointer
+/// \param pt is the pointed-to data-type
+/// \param ws is the wordsize associated with the pointer
+/// \param n is the given name to attach to the pointer
+/// \return the TypePointer object
+TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws,const string &n)
+
+{
+  TypePointer tmp(s,pt,ws);
+  tmp.name = n;
+  tmp.id = Datatype::hashName(n);
   return (TypePointer *) findAdd(tmp);
 }
 

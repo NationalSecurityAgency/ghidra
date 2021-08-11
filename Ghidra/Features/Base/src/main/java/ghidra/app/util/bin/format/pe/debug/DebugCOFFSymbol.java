@@ -15,13 +15,13 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
-import ghidra.program.model.data.*;
-import ghidra.util.*;
-import ghidra.util.exception.*;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.program.model.data.*;
+import ghidra.util.Conv;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
  * A class to represent the COFF symbol data structure.
@@ -135,10 +135,10 @@ public class DebugCOFFSymbol implements StructConverter {
         return createDebugCOFFSymbol(reader, index, symbolTable.getStringTableIndex());
     }
 
-    public static DebugCOFFSymbol createDebugCOFFSymbol(
-            FactoryBundledWithBinaryReader reader, int index,
-            int stringTableIndex) throws IOException {
-        DebugCOFFSymbol debugCOFFSymbol = (DebugCOFFSymbol) reader.getFactory().create(DebugCOFFSymbol.class);
+	public static DebugCOFFSymbol createDebugCOFFSymbol(FactoryBundledWithBinaryReader reader,
+			int index, long stringTableIndex) throws IOException {
+		DebugCOFFSymbol debugCOFFSymbol =
+			(DebugCOFFSymbol) reader.getFactory().create(DebugCOFFSymbol.class);
         debugCOFFSymbol.initDebugCOFFSymbol(reader, index, stringTableIndex);
         return debugCOFFSymbol;
     }
@@ -148,7 +148,8 @@ public class DebugCOFFSymbol implements StructConverter {
      */
     public DebugCOFFSymbol() {}
 
-    private void initDebugCOFFSymbol(FactoryBundledWithBinaryReader reader, int index, int stringTableIndex) throws IOException {
+	private void initDebugCOFFSymbol(FactoryBundledWithBinaryReader reader, int index,
+			long stringTableIndex) throws IOException {
         // read the union first...
         //
         int shortVal = reader.readInt(index);
@@ -295,7 +296,8 @@ public class DebugCOFFSymbol implements StructConverter {
         return numberOfAuxSymbols;
     }
 
-    public DataType toDataType() throws DuplicateNameException, IOException {
+    @Override
+	public DataType toDataType() throws DuplicateNameException, IOException {
     	String structureName = StructConverterUtil.parseName(DebugCOFFSymbol.class);
     	
     	Structure structure = new StructureDataType(structureName + "_" +numberOfAuxSymbols, 0);
