@@ -4454,6 +4454,22 @@
   </para>
 </sect2>
 
+<sect2 id="ActionRenameLabel">
+  <title>Rename Label</title>
+  <para>
+    Rename the label corresponding to the token under the cursor.
+  </para>
+  <para>
+    A label can be renamed by triggering this action while the corresponding label token is
+    under the cursor.   This action brings up the 
+    <a href="help/topics/LabelMgrPlugin/Labels.htm#AddEditDialog">Edit Label Dialog</a>.
+  </para>
+  <para>
+    The change will be immediately visible across all references to the label
+    (including in any Decompiler, Listing, and Functions windows).
+  </para>
+</sect2>
+
 <sect2 id="ActionRenameField">
   <title>Rename Field</title>
   <para>

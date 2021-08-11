@@ -773,6 +773,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		RenameFunctionAction renameFunctionAction = new RenameFunctionAction();
 		setGroupInfo(renameFunctionAction, functionGroup, subGroupPosition++);
 
+		// not a function action, but it fits nicely in this group
+		RenameLabelAction renameLabelAction = new RenameLabelAction();
+		setGroupInfo(renameLabelAction, functionGroup, subGroupPosition++);
+
 		//
 		// Variables
 		//
@@ -981,6 +985,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(overrideSigAction);
 		addLocalAction(deleteSigAction);
 		addLocalAction(renameFunctionAction);
+		addLocalAction(renameLabelAction);
 		addLocalAction(debugFunctionAction);
 		addLocalAction(convertAction);
 		addLocalAction(findAction);
