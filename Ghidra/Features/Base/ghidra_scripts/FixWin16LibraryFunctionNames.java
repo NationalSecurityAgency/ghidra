@@ -40,6 +40,7 @@ import ghidra.util.exception.InvalidInputException;
 public class FixWin16LibraryFunctionNames extends GhidraScript {
 
 	private static HashMap<String, String> fnNameMap = new HashMap<>();
+	private static long fnNameMapModified = 0;
 
 	private int cntFilenamesTotal;
 	private int cntFilenamesChanged;
@@ -106,7 +107,7 @@ public class FixWin16LibraryFunctionNames extends GhidraScript {
 		String currentName = null;
 		try {
 			currentName = func.getName();
-			updatedName = translateFunctionName(currentName);
+			updatedName = translateFunctionName(func);
 			if (!updatedName.contentEquals(currentName)) {
 				++cntFilenamesTotal;
 				func.setName(updatedName, func.getSignatureSource());
@@ -136,23 +137,28 @@ public class FixWin16LibraryFunctionNames extends GhidraScript {
 //	}
 
 	/**
-	 * @param origFnName
+	 * @param func current Function object
 	 * @return the updated function name
 	 */
-	private String translateFunctionName(String origFnName) {
-		if (fnNameMap.isEmpty()) {
+	private String translateFunctionName(Function func) {
+		String currentQualifiedName = func.getName(true);
+		String currentName = func.getName();
+
+		ResourceFile file = Application.findDataFileInAnyModule("FunctionNames.properties");
+		if (fnNameMap.isEmpty() || (file != null && file.lastModified() != fnNameMapModified)) {
+			// reload property file
 			Properties prop = new Properties();
 	        try
 	        {
-	    		ResourceFile file = Application.findDataFileInAnyModule("FunctionNames.properties");
 	            prop.load(file.getInputStream());
+	            fnNameMapModified = file.lastModified();
 	        }
 	        catch (Exception e) {
 	            e.printStackTrace();
 	            warningMessages.add("Some issue finding or loading file....!!! " + e.getMessage());
-	            return origFnName;
-
+	            return currentName;
 	        }
+	        fnNameMap.clear();
 	        for (final Entry<Object, Object> entry : prop.entrySet()) {
 	        	if (fnNameMap.containsKey(entry.getKey().toString())) {
 	        		warningMessages.add("Multiple translations exist for " + entry.getKey().toString());
@@ -161,7 +167,8 @@ public class FixWin16LibraryFunctionNames extends GhidraScript {
 	        }
 		}
 		
-		return fnNameMap.getOrDefault(origFnName, origFnName);
+		// return lookup value or default (original)
+		return fnNameMap.getOrDefault(currentQualifiedName, currentName);
 	}
 
 }
