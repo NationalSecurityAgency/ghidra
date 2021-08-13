@@ -39,6 +39,11 @@ public class MenuKeyProcessor {
 			menuHandlersByKeyStroke.put(keyStroke(Integer.toString(i)),
 				new NumberMenuKeyHandler(i));
 		}
+
+		for (char c = 'A'; c <= 'Z'; c++) {
+			menuHandlersByKeyStroke.put(keyStroke(Character.toString(c)),
+				new NumberMenuKeyHandler(10 + (int)c - (int)'A'));
+		}
 	}
 
 	/**
