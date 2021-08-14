@@ -127,6 +127,7 @@ public:
   void saveXmlBasic(ostream &s) const;	///< Save basic data-type properties
   void saveXmlRef(ostream &s) const;	///< Write an XML reference of \b this to stream
   bool isPtrsubMatching(uintb offset) const;	///< Is this data-type suitable as input to a CPUI_PTRSUB op
+  virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const { return id == reqtype->id; }
 };
 
 /// \brief Specifies subfields of a structure or what a pointer points to
@@ -175,6 +176,7 @@ public:
   /// Construct TypeBase from a size, meta-type, and name
   TypeBase(int4 s,type_metatype m,const string &n) : Datatype(s,m,n) {}
   virtual Datatype *clone(void) const { return new TypeBase(*this); }
+  virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const;
 };
 
 /// \brief Base type for character data-types: i.e. char
@@ -222,6 +224,7 @@ public:
   TypeVoid(void) : Datatype(0,TYPE_VOID,"void") { flags |= Datatype::coretype; }
   virtual Datatype *clone(void) const { return new TypeVoid(*this); }
   virtual void saveXml(ostream &s) const;
+  virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const { return reqtype->getMetatype()==TYPE_VOID; }
 };
 
 /// \brief Datatype object representing a pointer
@@ -248,6 +251,7 @@ public:
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
   virtual Datatype *clone(void) const { return new TypePointer(*this); }
   virtual void saveXml(ostream &s) const;
+  virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const;
   virtual TypePointer *downChain(uintb &off,bool allowArrayWrap,TypeFactory &typegrp);
 };
 
@@ -278,6 +282,7 @@ public:
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
   virtual Datatype *clone(void) const { return new TypeArray(*this); }
   virtual void saveXml(ostream &s) const;
+  virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const;
 };
 
 /// \brief An enumerated Datatype object: an integer with named values.
@@ -305,6 +310,7 @@ public:
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypeEnum(*this); }
   virtual void saveXml(ostream &s) const;
+  virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const;
 };
 
 /// \brief A composite Datatype object: A "structure" with component "fields"
@@ -331,6 +337,7 @@ public:
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
   virtual Datatype *clone(void) const { return new TypeStruct(*this); }
   virtual void saveXml(ostream &s) const;
+  virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const;
 };
 
 class FuncProto;		// Forward declaration
@@ -361,6 +368,7 @@ public:
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypeCode(*this); }
   virtual void saveXml(ostream &s) const;
+  virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const;
 };
 
 /// \brief Special Datatype object used to describe pointers that index into the symbol table
@@ -391,6 +399,7 @@ public:
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
   virtual Datatype *clone(void) const { return new TypeSpacebase(*this); }
   virtual void saveXml(ostream &s) const;
+  virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const;
 };
 
 /// \brief Container class for all Datatype objects in an Architecture

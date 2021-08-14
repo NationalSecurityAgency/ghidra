@@ -2207,7 +2207,6 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
   Datatype *outct,*ct,*tokenct;
   Varnode *vn,*outvn;
   PcodeOp *newop;
-  bool force=false;
 
   tokenct = op->getOpcode()->getOutputToken(op,castStrategy);
   outvn = op->getOut();
@@ -2222,14 +2221,10 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
       if ((meta!=TYPE_ARRAY)&&(meta!=TYPE_STRUCT))
 	outvn->updateType(tokenct,false,false); // Otherwise ignore it in favor of the token type
     }
-    if (outvn->getType() != tokenct)
-      force=true;		// Make sure not to drop pointer type
   }
-  if (!force) {
-    outct = outvn->getHigh()->getType();	// Type of result
-    ct = castStrategy->castStandard(outct,tokenct,false,true);
-    if (ct == (Datatype *)0) return 0;
-  }
+  outct = outvn->getHigh()->getType();	// Type of result
+  ct = castStrategy->castStandard(outct,tokenct,false,true);
+  if (ct == (Datatype *)0) return 0;
 				// Generate the cast op
   vn = data.newUnique(op->getOut()->getSize());
   vn->updateType(tokenct,false,false);

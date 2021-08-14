@@ -222,73 +222,8 @@ Datatype *CastStrategyC::castStandard(Datatype *reqtype,Datatype *curtype,
 
 {				// Generic casting rules that apply for most ops
   if (curtype == reqtype) return (Datatype *)0; // Types are equal, no cast required
-  Datatype *reqbase = reqtype;
-  Datatype *curbase = curtype;
-  bool isptr = false;
-  while((reqbase->getMetatype()==TYPE_PTR)&&(curbase->getMetatype()==TYPE_PTR)) {
-    reqbase = ((const TypePointer *)reqbase)->getPtrTo();
-    curbase = ((const TypePointer *)curbase)->getPtrTo();
-    care_uint_int = true;
-    isptr = true;
-  }
-  if (curbase == reqbase) return (Datatype *)0;	// Different typedefs could point to the same type
-  if ((reqbase->getMetatype()==TYPE_VOID)||(curtype->getMetatype()==TYPE_VOID))
-    return (Datatype *)0;	// Don't cast from or to VOID
-  if (reqbase->getSize() != curbase->getSize()) {
-    if (reqbase->isVariableLength() && isptr && reqbase->hasSameVariableBase(curbase)) {
-      return (Datatype *)0;	// Don't need a cast
-    }
-    return reqtype; // Otherwise, always cast change in size
-  }
-  switch(reqbase->getMetatype()) {
-  case TYPE_UNKNOWN:
-    return (Datatype *)0;
-  case TYPE_UINT:
-    if (!care_uint_int) {
-      type_metatype meta = curbase->getMetatype();
-      // Note: meta can be TYPE_UINT if curbase is typedef/enumerated
-      if ((meta==TYPE_UNKNOWN)||(meta==TYPE_INT)||(meta==TYPE_UINT)||(meta==TYPE_BOOL))
-	return (Datatype *)0;
-    }
-    else {
-      type_metatype meta = curbase->getMetatype();
-      if ((meta == TYPE_UINT)||(meta==TYPE_BOOL))	// Can be TYPE_UINT for typedef/enumerated
-	return (Datatype *)0;
-      if (isptr && (meta==TYPE_UNKNOWN)) // Don't cast pointers to unknown
-	return (Datatype *)0;
-    }
-    if ((!care_ptr_uint)&&(curbase->getMetatype()==TYPE_PTR))
-      return (Datatype *)0;
-    break;
-  case TYPE_INT:
-    if (!care_uint_int) {
-      type_metatype meta = curbase->getMetatype();
-      // Note: meta can be TYPE_INT if curbase is an enumerated type
-      if ((meta==TYPE_UNKNOWN)||(meta==TYPE_INT)||(meta==TYPE_UINT)||(meta==TYPE_BOOL))
-	return (Datatype *)0;
-    }
-    else {
-      type_metatype meta = curbase->getMetatype();
-      if ((meta == TYPE_INT)||(meta == TYPE_BOOL))
-	return (Datatype *)0;	// Can be TYPE_INT for typedef/enumerated/char
-      if (isptr && (meta==TYPE_UNKNOWN)) // Don't cast pointers to unknown
-	return (Datatype *)0;
-    }
-    break;
-  case TYPE_CODE:
-    if (curbase->getMetatype() == TYPE_CODE) {
-      // Don't cast between function pointer and generic code pointer
-      if (((TypeCode *)reqbase)->getPrototype() == (const FuncProto *)0)
-	return (Datatype *)0;
-      if (((TypeCode *)curbase)->getPrototype() == (const FuncProto *)0)
-	return (Datatype *)0;
-    }
-    break;
-  default:
-    break;
-  }
-
-  return reqtype;
+  if (curtype->getMetatype()==TYPE_UNKNOWN||reqtype->getMetatype()==TYPE_UNKNOWN) return (Datatype *)0;
+  return curtype->isEquivalent(reqtype,care_uint_int,care_ptr_uint) ? (Datatype *)0 : reqtype;
 }
 
 Datatype *CastStrategyC::arithmeticOutputStandard(const PcodeOp *op)

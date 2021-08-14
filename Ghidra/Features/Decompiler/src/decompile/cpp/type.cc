@@ -2593,3 +2593,120 @@ void TypeFactory::parseEnumConfig(const Element *el)
   else
     enumtype = TYPE_UINT;
 }
+
+static bool shouldCastStructs(const TypeStruct *curtype,const TypeStruct *reqtype)
+
+{
+  if (curtype->getId()==reqtype->getId())
+    return false;
+  if (curtype->getSize()!=reqtype->getSize())
+    return reqtype->numDepend()==0||!curtype->isEquivalent(reqtype->beginField()->type,true,false);
+  return true;
+}
+
+bool TypePointer::isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const
+
+{
+  const TypePointer *other;
+  if (!care_ptr_uint&&reqtype->getMetatype()==TYPE_UINT&&size==reqtype->getSize())
+    return true;
+  if (metatype==reqtype->getMetatype()) {
+    other = (const TypePointer *)reqtype;
+    if (other->ptrto->getMetatype()==TYPE_VOID)
+      return true;
+    if (ptrto->isEquivalent(other->ptrto,care_ptr_uint,false)) {
+      type_metatype meta = ptrto->getMetatype();
+      type_metatype ometa = other->ptrto->getMetatype();
+      return meta==TYPE_UNKNOWN||ometa==TYPE_UNKNOWN||(meta==ometa&&care_ptr_uint);
+    }
+    if (ptrto->getMetatype()==TYPE_STRUCT) {
+      if (other->ptrto->getMetatype()==TYPE_STRUCT) {
+	// handle "inheritance"
+	if (!shouldCastStructs((const TypeStruct *)ptrto,(const TypeStruct *)other->ptrto))
+	  return true;
+      }
+      const TypeStruct *ostruct = (const TypeStruct *)ptrto;
+      if (ostruct->numDepend() > 0 && ostruct->beginField()->type->isEquivalent(other->ptrto,true,false)) {
+	// handles when the required pointer is a pointer to the first field
+	return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool TypeArray::isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const
+
+{
+  const Datatype *other;
+  type_metatype meta = reqtype->getMetatype();
+  if (meta==TYPE_ARRAY) {
+    other = ((const TypeArray *)reqtype)->arrayof;
+  } else if (meta==TYPE_PTR) {
+    other = ((const TypePointer *)reqtype)->getPtrTo();
+  } else {
+    return true;
+  }
+  return arrayof->isEquivalent(other,true,false);
+}
+
+bool TypeStruct::isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const
+
+{
+  const TypeStruct *other;
+  if (Datatype::isEquivalent(reqtype,care_uint_int,care_ptr_uint))
+    return true;
+  if (metatype!=reqtype->getMetatype())
+    return false;
+  other = (const TypeStruct *)reqtype;
+  if (field.size()!=other->field.size())
+    return false;
+  if (name!=other->name) // is this actually correct?
+    return false;
+  // check each field
+  for (int4 i=0;i<field.size();i++)
+    if (field[i].offset!=other->field[i].offset||!field[i].type->isEquivalent(other->field[i].type,true,false))
+      return false;
+  return true;
+}
+
+bool TypeCode::isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const
+
+{
+  const TypeCode *other;
+  if (reqtype->getMetatype()!=TYPE_CODE)
+    return false;
+  other = (const TypeCode *)reqtype;
+  return other->getPrototype()==(const FuncProto *)0||proto->isCompatible(*other->proto);
+}
+
+bool TypeSpacebase::isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const
+
+{
+  return reqtype->getMetatype()==TYPE_SPACEBASE&&spaceid==((const TypeSpacebase *)reqtype)->spaceid;
+}
+
+bool TypeEnum::isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const
+
+{
+  type_metatype meta = reqtype->getMetatype();
+  return meta==TYPE_UINT||meta==TYPE_INT;
+}
+
+bool TypeBase::isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const
+
+{
+  type_metatype meta = reqtype->getMetatype();
+  if ((size==reqtype->getSize())&&(metatype==TYPE_UNKNOWN||meta==TYPE_UNKNOWN))
+    return true;
+  if (metatype==TYPE_UINT||metatype==TYPE_INT||metatype==TYPE_BOOL) {
+    if (size!=reqtype->getSize())
+      return false;
+    if (care_uint_int)
+      return metatype==meta;
+    return meta==TYPE_UINT||meta==TYPE_INT||meta==TYPE_BOOL;
+  }
+  if (meta!=TYPE_STRUCT&&reqtype->isEquivalent(this,care_uint_int,care_ptr_uint))
+    return true;
+  return metatype==meta;
+}
