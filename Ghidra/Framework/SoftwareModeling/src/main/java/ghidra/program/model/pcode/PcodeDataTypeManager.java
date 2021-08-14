@@ -182,7 +182,13 @@ public class PcodeDataTypeManager {
 			}
 			String meta = el.getAttribute("metatype");
 			DataType restype = null;
-			if (meta.equals("ptr")) {
+			if (meta.equals("alias")) {
+				if (parser.peek().isStart()) {
+					DataType dt = readXMLDataType(parser);
+					restype = new TypedefDataType(name, dt).clone(progDataTypes);
+				}
+			}
+			else if (meta.equals("ptr")) {
 				int size = SpecXmlUtils.decodeInt(el.getAttribute("size"));
 				if (parser.peek().isStart()) {
 					DataType dt = readXMLDataType(parser);
@@ -269,6 +275,9 @@ public class PcodeDataTypeManager {
 		if (type instanceof Array) {
 			return buildType(type, size);
 		}
+		if (type instanceof TypeDef) {
+			return buildType(type, size);
+		}
 		if (type instanceof FunctionDefinition) {
 			long id = progDataTypes.getID(type);
 			if (id <= 0) {
@@ -343,22 +352,17 @@ public class PcodeDataTypeManager {
 		resBuf.append("</field>\n");
 	}
 
-	private String buildTypeInternal(DataType origType, int size) {		// Build all of type except name attribute
-		DataType type;
-		if (origType instanceof TypeDef) {
-			type = ((TypeDef) origType).getBaseDataType();
-		}
-		else {
-			type = origType;
-		}
+	private String buildTypeInternal(DataType type, int size) {		// Build all of type except name attribute
 		StringBuilder resBuf = new StringBuilder();
-		if (type instanceof Pointer) {
-			if (origType == type) {
-				SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
-			}
-			else {
-				appendNameIdAttributes(resBuf, origType);
-			}
+		if (type instanceof TypeDef) {
+			appendNameIdAttributes(resBuf, type);
+			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "alias");
+			resBuf.append('>');
+			DataType ref = ((TypeDef)type).getDataType();
+			resBuf.append(buildTypeRef(ref, ref.getLength()));
+		}
+		else if (type instanceof Pointer) {
+			SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
 			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "ptr");
 			int ptrLen = type.getLength();
 			if (ptrLen <= 0) {
@@ -417,12 +421,7 @@ public class PcodeDataTypeManager {
 			resBuf.append(ptrtoTypeRef);
 		}
 		else if (type instanceof Array) {
-			if (origType == type) {
-				SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
-			}
-			else {
-				appendNameIdAttributes(resBuf, origType);
-			}
+			SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
 			int sz = type.getLength();
 			if (sz == 0) {
 				sz = size;
@@ -436,7 +435,7 @@ public class PcodeDataTypeManager {
 				buildTypeRef(((Array) type).getDataType(), ((Array) type).getElementLength()));
 		}
 		else if (type instanceof Structure) {
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			// if size is 0, insert an Undefined4 component
 			//
 			int sz = type.getLength();
@@ -468,7 +467,7 @@ public class PcodeDataTypeManager {
 			// TODO: trailing flexible array component not yet supported
 		}
 		else if (type instanceof Enum) {
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			Enum enumDt = (Enum) type;
 			long[] keys = enumDt.getValues();
 			String metatype = "uint";
@@ -490,7 +489,7 @@ public class PcodeDataTypeManager {
 			}
 		}
 		else if (type instanceof CharDataType) {
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			boolean signed = ((CharDataType) type).isSigned();
 			int sz = type.getLength();
 			if (sz <= 0) {
@@ -508,7 +507,7 @@ public class PcodeDataTypeManager {
 		}
 		else if (type instanceof WideCharDataType || type instanceof WideChar16DataType ||
 			type instanceof WideChar32DataType) {
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "int");
 			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", type.getLength());
 			SpecXmlUtils.encodeBooleanAttribute(resBuf, "utf", true);
@@ -558,7 +557,7 @@ public class PcodeDataTypeManager {
 			if (size <= 0) {
 				size = 1;
 			}
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "code");
 			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", 1);	// Force size of 1
 			resBuf.append('>');
@@ -568,7 +567,7 @@ public class PcodeDataTypeManager {
 			fproto.buildPrototypeXML(resBuf, this);
 		}
 		else if (type instanceof BooleanDataType) {
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "bool");
 			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", type.getLength());
 			resBuf.append('>');
@@ -579,13 +578,13 @@ public class PcodeDataTypeManager {
 			if (sz <= 0) {
 				sz = size;
 			}
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", signed ? "int" : "uint");
 			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
 			resBuf.append('>');
 		}
 		else if (type instanceof AbstractFloatDataType) {
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "float");
 			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", type.getLength());
 			resBuf.append('>');
@@ -597,7 +596,7 @@ public class PcodeDataTypeManager {
 				sz = size;
 				isVarLength = true;
 			}
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			if (sz < 16) {
 				SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "unknown");
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
@@ -665,6 +664,9 @@ public class PcodeDataTypeManager {
 		if (!((type instanceof Structure) || ((type instanceof TypeDef) &&
 			(((TypeDef) type).getBaseDataType() instanceof Structure)))) {
 			return resBuf; //empty.  Could throw AssertException.
+		}
+		if (type instanceof TypeDef) {
+			type = ((TypeDef) type).getBaseDataType();
 		}
 		resBuf.append("<type");
 		SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", type.getDisplayName());

@@ -204,6 +204,9 @@ void metatype2string(type_metatype metatype,string &res)
   case TYPE_FLOAT:
     res = "float";
     break;
+  case TYPE_ALIAS:
+    res = "alias";
+    break;
   default:
     throw LowlevelError("Unknown metatype");
   }
@@ -221,6 +224,8 @@ type_metatype string2metatype(const string &metastring)
       return TYPE_PTR;
     break;
   case 'a':
+    if (metastring == "alias")
+      return TYPE_ALIAS;
     if (metastring=="array")
       return TYPE_ARRAY;
     break;
@@ -233,7 +238,7 @@ type_metatype string2metatype(const string &metastring)
   case 'u':
     if (metastring=="unknown")
       return TYPE_UNKNOWN;
-    else if (metastring=="uint")
+    if (metastring=="uint")
       return TYPE_UINT;
     break;
   case 'i':
@@ -2202,6 +2207,17 @@ TypeCode *TypeFactory::getTypeCode(ProtoModel *model,Datatype *outtype,
   return (TypeCode *) findAdd(tc);
 }
 
+/// Create a typedef to a data-type
+/// \param dt is the dt this typedef is aliasing
+/// \param n is the name of this type
+/// \return the typedef
+TypeAlias *TypeFactory::getTypeDef(const Datatype *dt, const string &n)
+
+{
+  TypeAlias td(n, dt);
+  return (TypeAlias *) findAdd(td);
+}
+
 /// The indicated Datatype object is removed from this container.
 /// Indirect references (via TypeArray TypeStruct etc.) are not affected
 /// \param ct is the data-type to destroy
@@ -2373,6 +2389,15 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
   metastring = el->getAttributeValue("metatype");
   type_metatype meta = string2metatype(metastring);
   switch(meta) {
+  case TYPE_ALIAS:
+    {
+      TypeAlias td;
+      td.restoreXml(el, *this);
+      ct = findAdd(td);
+      if (ct != (Datatype *)0)
+        ((TypeAlias *)ct)->size = td.getSize(); // always refresh the size
+    }
+    break;
   case TYPE_PTR:
     {
       TypePointer tp;
@@ -2607,26 +2632,30 @@ static bool shouldCastStructs(const TypeStruct *curtype,const TypeStruct *reqtyp
 bool TypePointer::isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const
 
 {
-  const TypePointer *other;
+  if (reqtype->getMetatype()==TYPE_ALIAS)
+    reqtype = ((const TypeAlias *)reqtype)->getBaseDatatype();
   if (!care_ptr_uint&&reqtype->getMetatype()==TYPE_UINT&&size==reqtype->getSize())
     return true;
   if (metatype==reqtype->getMetatype()) {
-    other = (const TypePointer *)reqtype;
-    if (other->ptrto->getMetatype()==TYPE_VOID)
+    type_metatype ometa;
+    const Datatype *optrto = ((const TypePointer *)reqtype)->ptrto;
+    if (optrto->getMetatype()==TYPE_ALIAS)
+      optrto = ((const TypeAlias *)optrto)->getBaseDatatype();
+    ometa = optrto->getMetatype();
+    if (ometa==TYPE_VOID)
       return true;
-    if (ptrto->isEquivalent(other->ptrto,care_ptr_uint,false)) {
+    if (ptrto->isEquivalent(optrto,care_ptr_uint,false)) {
       type_metatype meta = ptrto->getMetatype();
-      type_metatype ometa = other->ptrto->getMetatype();
       return meta==TYPE_UNKNOWN||ometa==TYPE_UNKNOWN||(meta==ometa&&care_ptr_uint);
     }
     if (ptrto->getMetatype()==TYPE_STRUCT) {
-      if (other->ptrto->getMetatype()==TYPE_STRUCT) {
+      if (ometa==TYPE_STRUCT) {
 	// handle "inheritance"
-	if (!shouldCastStructs((const TypeStruct *)ptrto,(const TypeStruct *)other->ptrto))
+	if (!shouldCastStructs((const TypeStruct *)ptrto,(const TypeStruct *)optrto))
 	  return true;
       }
       const TypeStruct *ostruct = (const TypeStruct *)ptrto;
-      if (ostruct->numDepend() > 0 && ostruct->beginField()->type->isEquivalent(other->ptrto,true,false)) {
+      if (ostruct->numDepend() > 0 && ostruct->beginField()->type->isEquivalent(optrto,true,false)) {
 	// handles when the required pointer is a pointer to the first field
 	return true;
       }
@@ -2639,7 +2668,10 @@ bool TypeArray::isEquivalent(const Datatype *reqtype,bool care_uint_int,bool car
 
 {
   const Datatype *other;
-  type_metatype meta = reqtype->getMetatype();
+  type_metatype meta;
+  if (reqtype->getMetatype()==TYPE_ALIAS)
+    reqtype = ((const TypeAlias *)reqtype)->getBaseDatatype();
+  meta = reqtype->getMetatype();
   if (meta==TYPE_ARRAY) {
     other = ((const TypeArray *)reqtype)->arrayof;
   } else if (meta==TYPE_PTR) {
@@ -2654,6 +2686,8 @@ bool TypeStruct::isEquivalent(const Datatype *reqtype,bool care_uint_int,bool ca
 
 {
   const TypeStruct *other;
+  if (reqtype->getMetatype()==TYPE_ALIAS)
+    reqtype = ((const TypeAlias *)reqtype)->getBaseDatatype();
   if (Datatype::isEquivalent(reqtype,care_uint_int,care_ptr_uint))
     return true;
   if (metatype!=reqtype->getMetatype())
@@ -2661,7 +2695,7 @@ bool TypeStruct::isEquivalent(const Datatype *reqtype,bool care_uint_int,bool ca
   other = (const TypeStruct *)reqtype;
   if (field.size()!=other->field.size())
     return false;
-  if (name!=other->name) // is this actually correct?
+  if (name!=other->name)
     return false;
   // check each field
   for (int4 i=0;i<field.size();i++)
@@ -2689,14 +2723,20 @@ bool TypeSpacebase::isEquivalent(const Datatype *reqtype,bool care_uint_int,bool
 bool TypeEnum::isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const
 
 {
-  type_metatype meta = reqtype->getMetatype();
+  type_metatype meta;
+  if (reqtype->getMetatype()==TYPE_ALIAS)
+    reqtype = ((const TypeAlias *)reqtype)->getBaseDatatype();
+  meta = reqtype->getMetatype();
   return meta==TYPE_UINT||meta==TYPE_INT;
 }
 
 bool TypeBase::isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const
 
 {
-  type_metatype meta = reqtype->getMetatype();
+  type_metatype meta;
+  if (reqtype->getMetatype()==TYPE_ALIAS)
+    reqtype = ((const TypeAlias *)reqtype)->getBaseDatatype();
+  meta = reqtype->getMetatype();
   if ((size==reqtype->getSize())&&(metatype==TYPE_UNKNOWN||meta==TYPE_UNKNOWN))
     return true;
   if (metatype==TYPE_UINT||metatype==TYPE_INT||metatype==TYPE_BOOL) {
@@ -2709,4 +2749,48 @@ bool TypeBase::isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care
   if (meta!=TYPE_STRUCT&&reqtype->isEquivalent(this,care_uint_int,care_ptr_uint))
     return true;
   return metatype==meta;
+}
+
+TypeAlias::TypeAlias(const string &name, const Datatype *dataType) : Datatype(dataType->getSize(), TYPE_ALIAS, name), dataType(dataType)
+
+{
+  flags = dataType->getInheritable();
+  id = hashName(name);
+}
+
+void TypeAlias::restoreXml(const Element *el,TypeFactory &typegrp)
+
+{
+  name = el->getAttributeValue("name");
+  id = stoull(el->getAttributeValue("id"), nullptr, 16);
+  dataType = typegrp.restoreXmlType( el->getChildren().front() );
+  flags = dataType->getInheritable();
+  size = dataType->getSize();
+}
+
+void TypeAlias::saveXml(ostream &s) const
+
+{
+  s << "<type";
+  a_v(s,"name",name);
+  a_v_u(s,"id",id);
+  s << '>';
+  dataType->saveXmlRef(s);
+  s << "</type>";
+}
+
+int4 TypeAlias::compareDependency(const Datatype &op) const
+
+{
+  if (id == op.getId())
+    return 0;
+  return op.getId() == dataType->getId() ? 1 : dataType->compareDependency(op);
+}
+
+bool TypeAlias::isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const
+
+{
+  if (reqtype->getMetatype()==TYPE_ALIAS)
+    reqtype = ((const TypeAlias *)reqtype)->getBaseDatatype();
+  return dataType->isEquivalent(reqtype,care_uint_int,care_ptr_uint);
 }

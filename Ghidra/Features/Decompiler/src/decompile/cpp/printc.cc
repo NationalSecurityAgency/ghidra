@@ -1578,6 +1578,9 @@ void PrintC::pushConstant(uintb val,const Datatype *ct,
   case TYPE_FLOAT:
     push_float(val,ct->getSize(),vn,op);
     return;
+  case TYPE_ALIAS:
+    pushConstant(val, ((const TypeAlias *)ct)->getDatatype(), vn, op);
+    return;
   case TYPE_SPACEBASE:
   case TYPE_CODE:
   case TYPE_ARRAY:

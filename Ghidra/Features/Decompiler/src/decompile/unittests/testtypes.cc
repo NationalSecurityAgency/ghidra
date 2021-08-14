@@ -109,7 +109,7 @@ TEST(cast_basic) {
   ASSERT(!castPrinted(CPUI_COPY,parse("int4"),parse("xunknown4")));
   ASSERT(castPrinted(CPUI_COPY,parse("int4"),parse("float4")));
   ASSERT(castPrinted(CPUI_COPY,parse("int1 var[4]"),parse("uint4")));
-  Datatype *typedefInt = types->getBase(4,TYPE_INT,"myint4");
+  Datatype *typedefInt = types->getTypeDef(parse("int4"),"myint4");
   ASSERT(!castPrinted(CPUI_COPY,typedefInt,parse("int4")));
   ASSERT(!castPrinted(CPUI_COPY,parse("char"),parse("int1")));
   ASSERT(!castPrinted(CPUI_COPY,parse("uint1"),parse("char")));
@@ -120,7 +120,7 @@ TEST(cast_pointer) {
   ASSERT(castPrinted(CPUI_COPY,parse("uint4 *"),parse("int4 *")));
   ASSERT(!castPrinted(CPUI_COPY,parse("void *"),parse("float4 *")));
   ASSERT(castPrinted(CPUI_COPY,parse("int2 *"),parse("void *")));
-  Datatype *typedefInt = types->getBase(4,TYPE_INT,"myint4");
+  Datatype *typedefInt = types->getTypeDef(parse("int4"),"myint4");
   Datatype *typedefPtr = types->getTypePointer(8,typedefInt,1);
   ASSERT(!castPrinted(CPUI_COPY,typedefPtr,parse("int4 *")));
   ASSERT(castPrinted(CPUI_COPY,parse("bool **"),parse("int1 **")));
@@ -157,12 +157,31 @@ TEST(cast_compare) {
   ASSERT(castPrinted(CPUI_INT_EQUAL,parse("int4"),parse("float4")));
 }
 
+TEST(cast_typedef) {
+  TypeTestEnvironment::build();
+  Datatype *struct1 = parse("struct struct1_t { int4 a; int4 b; }");
+  Datatype *struct2 = parse("struct struct2_t { int4 a; int4 b; }");
+  ASSERT_NOT_EQUALS(struct1,struct2);
+  ASSERT(castPrinted(CPUI_COPY, struct1, struct2));
+  Datatype *tstruct1 = types->getTypeDef(struct1, "tstruct1");
+  ASSERT(!castPrinted(CPUI_COPY, struct1, tstruct1));
+  ASSERT(!castPrinted(CPUI_COPY, tstruct1, struct1));
+  Datatype *pstruct1 = types->getTypePointer(8, struct1, 1);
+  Datatype *ptstruct1 = types->getTypePointer(8, struct1, 1);
+  Datatype *tpstruct1 = types->getTypeDef(pstruct1, "tpstruct1");
+  ASSERT(!castPrinted(CPUI_COPY, pstruct1, ptstruct1));
+  ASSERT(!castPrinted(CPUI_COPY, ptstruct1, pstruct1));
+  ASSERT(!castPrinted(CPUI_COPY, ptstruct1, tpstruct1));
+  ASSERT(!castPrinted(CPUI_COPY, pstruct1, tpstruct1));
+  ASSERT(!castPrinted(CPUI_COPY, tpstruct1, pstruct1));
+}
+
 TEST(type_ordering) {
   TypeTestEnvironment::build();
   ASSERT(parse("uint4")->compare(*parse("int4"),10) < 0);
   Datatype *intTypeDef = types->getBase(4,TYPE_INT,"myint4");
   ASSERT_NOT_EQUALS(parse("int4"),intTypeDef);
-  ASSERT(parse("int4")->compareDependency(*intTypeDef) == 0);
+  ASSERT(parse("int4")->compareDependency(*intTypeDef) < 0);
   ASSERT(parse("int1")->compare(*parse("char"),10) < 0);
   ASSERT(parse("wchar2")->compare(*parse("int2"),10) < 0);
   ASSERT(parse("wchar4")->compare(*parse("int4"),10) < 0);

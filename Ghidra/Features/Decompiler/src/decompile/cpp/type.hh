@@ -31,18 +31,19 @@ extern void print_data(ostream &s,uint1 *buffer,int4 size,const Address &baseadd
 /// the number, the more \b specific the type, in calculations involving the generality
 /// of a type.
 enum type_metatype {
-  TYPE_VOID = 10,		///< Standard "void" type, absence of type
-  TYPE_SPACEBASE = 9,		///< Placeholder for symbol/type look-up calculations
-  TYPE_UNKNOWN = 8,		///< An unknown low-level type. Treated as an unsigned integer.
-  TYPE_INT = 7,			///< Signed integer. Signed is considered less specific than unsigned in C
-  TYPE_UINT = 6,		///< Unsigned integer
-  TYPE_BOOL = 5,		///< Boolean
-  TYPE_CODE = 4,		///< Data is actual executable code
-  TYPE_FLOAT = 3,		///< Floating-point
+  TYPE_STRUCT,		///< Structure data-type, made up of component datatypes
+  TYPE_ARRAY,		///< Array data-type, made up of a sequence of "element" datatype
+  TYPE_PTR,			///< Pointer data-type
 
-  TYPE_PTR = 2,			///< Pointer data-type
-  TYPE_ARRAY = 1,		///< Array data-type, made up of a sequence of "element" datatype
-  TYPE_STRUCT = 0		///< Structure data-type, made up of component datatypes
+  TYPE_FLOAT,		///< Floating-point
+  TYPE_CODE,		///< Data is actual executable code
+  TYPE_BOOL,		///< Boolean
+  TYPE_UINT,		///< Unsigned integer
+  TYPE_INT,			///< Signed integer. Signed is considered less specific than unsigned in C
+  TYPE_UNKNOWN,		///< An unknown low-level type. Treated as an unsigned integer.
+  TYPE_SPACEBASE,		///< Placeholder for symbol/type look-up calculations
+  TYPE_VOID,		///< Standard "void" type, absence of type
+  TYPE_ALIAS,   ///< Typedef data-type
 };
 
 /// Convert type \b meta-type to name
@@ -402,6 +403,25 @@ public:
   virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const;
 };
 
+/// \brief Datatype object representing a typedef
+class TypeAlias : public Datatype {
+  friend class TypeFactory;
+  const Datatype *dataType;
+  virtual void restoreXml(const Element *el,TypeFactory &typegrp);
+  TypeAlias(void) : Datatype(0,TYPE_ALIAS) {}
+public:
+  TypeAlias(const string &name, const Datatype *dataType);
+  TypeAlias(const TypeAlias &op) : Datatype(op), dataType(op.dataType) { }
+  virtual Datatype *clone(void) const { return new TypeAlias(*this); }
+  virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const;
+  virtual void saveXml(ostream &s) const;
+  const Datatype *getDatatype() const { return dataType; }
+  const Datatype *getBaseDatatype() const { auto *dt=dataType; while(dt->getMetatype()==TYPE_ALIAS){dt=((TypeAlias *)dt)->getDatatype();} return dt;}
+  virtual void printRaw(ostream &s) const { s << "typedef " << dataType->getName() << " " << name; }
+  virtual int4 compareDependency(const Datatype &op) const;
+  virtual int4 compare(const Datatype &op,int4 level) const { return dataType->compare(op, level); }
+};
+
 /// \brief Container class for all Datatype objects in an Architecture
 class TypeFactory {
   int4 sizeOfInt;		///< Size of the core "int" datatype
@@ -461,6 +481,7 @@ public:
   TypeCode *getTypeCode(ProtoModel *model,Datatype *outtype,
 			const vector<Datatype *> &intypes,
 			bool dotdotdot);			///< Create a "function" datatype
+  TypeAlias *getTypeDef(const Datatype *dt, const string &n); ///< Create a typedef to a data-type
   void destroyType(Datatype *ct);				///< Remove a data-type from \b this
   Datatype *concretize(Datatype *ct);				///< Convert given data-type to concrete form
   void dependentOrder(vector<Datatype *> &deporder) const;	///< Place all data-types in dependency order
