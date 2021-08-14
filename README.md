@@ -5,7 +5,7 @@
 Ghidra is a software reverse engineering (SRE) framework created and maintained by the 
 [National Security Agency][nsa] Research Directorate. This framework includes a suite of 
 full-featured, high-end software analysis tools that enable users to analyze compiled code on a 
-variety of platforms including Windows, macOS, and Linux. Capabilities include disassembly, 
+variety of platforms including Windows, macOS and Linux. Capabilities include disassembly, 
 assembly, decompilation, graphing, and scripting, along with hundreds of other features. Ghidra 
 supports a wide variety of processor instruction sets and executable formats and can be run in both 
 user-interactive and automated modes. Users may also develop their own Ghidra extension components 
