@@ -95,7 +95,11 @@ public class FixPascalCallingConvention extends GhidraScript {
 					+ " calling convertions out of " + cntConvertionTotal + " to " + PASCAL16FAR
 					+ ".\n\nUpdated " + cntFnsUpdated + " functions having " + cntParamsReplaced
 					+ " parameters reversed out of " + cntParamsTotal + " parameters found.";
-			popup(buf + String.join("\n\n", warningMessages);
+			if (!warningMessages.isEmpty()) {
+				buf = buf + "\n\n" + String.join("\n\n", warningMessages);
+			}
+
+			popup(buf);
 
 		}
 	}

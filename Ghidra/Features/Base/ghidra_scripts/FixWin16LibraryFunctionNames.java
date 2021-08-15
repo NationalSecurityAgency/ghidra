@@ -1,3 +1,4 @@
+
 /* ###
  * IP: GHIDRA
  *
@@ -66,14 +67,12 @@ public class FixWin16LibraryFunctionNames extends GhidraScript {
 			doRun(fnMgr.getExternalFunctions());
 
 			// build popup information
-			StringBuffer buf = new StringBuffer("Updated " + cntFilenamesChanged
-					+ " out of " + cntFilenamesTotal + " functions found.");
-			Iterator<String> messages = warningMessages.iterator();
-			while (messages.hasNext()) {
-				buf.append("\n\n").append(messages.next());
+			String buf = "Updated " + cntFilenamesChanged + " out of " + cntFilenamesTotal + " functions found.";
+			if (!warningMessages.isEmpty()) {
+				buf = buf + "\n\n" + String.join("\n\n", warningMessages);
 			}
 
-			popup(buf.toString());
+			popup(buf);
 
 		}
 	}
@@ -115,8 +114,8 @@ public class FixWin16LibraryFunctionNames extends GhidraScript {
 				println("Renamed function " + currentName + " to " + updatedName);
 			}
 		} catch (DuplicateNameException | InvalidInputException e) {
-			warningMessages.add("Could not rename function " + currentName + " to " +
-					updatedName + ".  Error " + e.getStackTrace());
+			warningMessages.add("Could not rename function " + currentName + " to " + updatedName + ".  Error "
+					+ e.getStackTrace());
 		}
 
 //		println(" After: " + func.getName() + ":" + getDescription(func));
@@ -148,25 +147,23 @@ public class FixWin16LibraryFunctionNames extends GhidraScript {
 		if (fnNameMap.isEmpty() || (file != null && file.lastModified() != fnNameMapModified)) {
 			// reload property file
 			Properties prop = new Properties();
-	        try
-	        {
-	            prop.load(file.getInputStream());
-	            fnNameMapModified = file.lastModified();
-	        }
-	        catch (Exception e) {
-	            e.printStackTrace();
-	            warningMessages.add("Some issue finding or loading file....!!! " + e.getMessage());
-	            return currentName;
-	        }
-	        fnNameMap.clear();
-	        for (final Entry<Object, Object> entry : prop.entrySet()) {
-	        	if (fnNameMap.containsKey(entry.getKey().toString())) {
-	        		warningMessages.add("Multiple translations exist for " + entry.getKey().toString());
-	        	}
-	        	fnNameMap.put(entry.getKey().toString(), entry.getValue().toString());
-	        }
+			try {
+				prop.load(file.getInputStream());
+				fnNameMapModified = file.lastModified();
+			} catch (Exception e) {
+				e.printStackTrace();
+				warningMessages.add("Some issue finding or loading file....!!! " + e.getMessage());
+				return currentName;
+			}
+			fnNameMap.clear();
+			for (final Entry<Object, Object> entry : prop.entrySet()) {
+				if (fnNameMap.containsKey(entry.getKey().toString())) {
+					warningMessages.add("Multiple translations exist for " + entry.getKey().toString());
+				}
+				fnNameMap.put(entry.getKey().toString(), entry.getValue().toString());
+			}
 		}
-		
+
 		// return lookup value or default (original)
 		return fnNameMap.getOrDefault(currentQualifiedName, currentName);
 	}
