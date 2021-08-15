@@ -56,13 +56,6 @@ public class SegmentCodePointerDataType extends BuiltIn {
 		return 2;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	@Override
-	public boolean isDynamicallySized() {
-		return false;
-	}
 
 	@Override
 	public String getDescription() {
