@@ -6,11 +6,11 @@ package mobiledevices.dmg.ghidra;
 import java.io.Serializable;
 
 /**
- * 
+ *
  * Defines methods to convert byte arrays to a specific primitive Java types,
  * and to populate byte arrays from primitive Java types.
- * 
- * 
+ *
+ *
  */
 public interface GDataConverter extends Serializable {
 

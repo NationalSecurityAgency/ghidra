@@ -9,8 +9,8 @@ import mobiledevices.dmg.ghidra.GBinaryReader;
 
 /**
  * Represents a Map Record.
- * 
- * @see <a href="https://developer.apple.com/library/archive/technotes/tn/tn1150.html">Map Record</a> 
+ *
+ * @see <a href="https://developer.apple.com/library/archive/technotes/tn/tn1150.html">Map Record</a>
  */
 public class BTreeMapRecord /*implements StructConverter*/ {
 
@@ -26,7 +26,7 @@ public class BTreeMapRecord /*implements StructConverter*/ {
 	 * @return the map record node allocation bitmap
 	 */
 	public byte[] getBitmap() {
-		return bitmap;
+		return this.bitmap;
 	}
 
 	/**
@@ -36,7 +36,7 @@ public class BTreeMapRecord /*implements StructConverter*/ {
 	 * @return true if the specified node index is used, false if free
 	 */
 	public boolean isNodeUsed(int nodeIndex) {
-		int block = bitmap[nodeIndex / 8] & 0xff;
+		int block = this.bitmap[nodeIndex / 8] & 0xff;
 		return (block & (1 << 7 - (nodeIndex % 8))) != 0;
 	}
 

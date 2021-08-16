@@ -45,19 +45,19 @@ else if ( nElements < 0 ) {//TODO
 	}
 
 	public String getCompressionMagic() {
-		return GStringUtilities.toString( compression_magic );
+		return GStringUtilities.toString( this.compression_magic );
 	}
 
 	public int getCompressionType() {
-		return compression_type;
+		return this.compression_type;
 	}
 
 	public long getUncompressedSize() {
-		return uncompressed_size;
+		return this.uncompressed_size;
 	}
 
 	public byte [] getAttrBytes() {
-		return attr_bytes;
+		return this.attr_bytes;
 	}
 
 //	@Override
@@ -75,5 +75,5 @@ else if ( nElements < 0 ) {//TODO
 //		}
 //		return struct;
 //	}
-	
+
 }

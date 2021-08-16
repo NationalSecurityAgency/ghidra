@@ -3,12 +3,17 @@
  */
 package mobiledevices.dmg.ghidra;
 
-import java.io.*;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 
 /**
- * Instances of this class support both reading and writing to a 
- * random access file. A random access file behaves like a large 
- * array of bytes stored in the file system. There is a kind of cursor, 
+ * Instances of this class support both reading and writing to a
+ * random access file. A random access file behaves like a large
+ * array of bytes stored in the file system. There is a kind of cursor,
  * or index into the implied array, called the <em>file pointer</em>.
  * This implementation relies on java.net.RandomAccessFile,
  * but adds buffering to limit the amount.
@@ -28,7 +33,7 @@ public class GRandomAccessFile {
 	private boolean open = false;
 
 	private void checkOpen() throws IOException {
-		if (!open) {
+		if (!this.open) {
 			throw new IOException("GhidraRandomAccessFile is closed");
 		}
 	}
@@ -42,7 +47,7 @@ public class GRandomAccessFile {
 	 * This implementation relies on java.net.RandomAccessFile,
 	 * but adds buffering to limit the amount.
 	 * <p>
-	 * 
+	 *
 	 * <a name="mode"><p> The <tt>mode</tt> argument specifies the access mode
 	 * in which the file is to be opened.  The permitted values and their
 	 * meanings are:
@@ -78,21 +83,21 @@ public class GRandomAccessFile {
 	 */
 	public GRandomAccessFile(File file, String mode) throws IOException {
 		this.file = file;
-		randomAccessFile = new RandomAccessFile(file, mode);
+		this.randomAccessFile = new RandomAccessFile(file, mode);
 		this.open = true;
 	}
 
 	@Override
 	protected void finalize() {
-		if (open) {
+		if (this.open) {
 			//TODO Msg.warn(this, "FAIL TO CLOSE " + file);
 		}
 	}
 
 	/**
-	 * Closes this random access file stream and releases any system 
-	 * resources associated with the stream. A closed random access 
-	 * file cannot perform input or output operations and cannot be 
+	 * Closes this random access file stream and releases any system
+	 * resources associated with the stream. A closed random access
+	 * file cannot perform input or output operations and cannot be
 	 * reopened.
 	 * <p>
 	 * If this file has an associated channel then the channel is closed as well.
@@ -100,8 +105,8 @@ public class GRandomAccessFile {
 	 */
 	public void close() throws IOException {
 		checkOpen();
-		open = false;
-		randomAccessFile.close();
+		this.open = false;
+		this.randomAccessFile.close();
 	}
 
 	/**
@@ -111,21 +116,21 @@ public class GRandomAccessFile {
 	 */
 	public long length() throws IOException {
 		checkOpen();
-		return randomAccessFile.length();
+		return this.randomAccessFile.length();
 	}
 
 	/**
-	 * Sets the file-pointer offset, measured from the beginning of this 
-	 * file, at which the next read or write occurs.  The offset may be 
-	 * set beyond the end of the file. Setting the offset beyond the end 
-	 * of the file does not change the file length.  The file length will 
-	 * change only by writing after the offset has been set beyond the end 
-	 * of the file. 
-	 * @param      pos   the offset position, measured in bytes from the 
-	 *                   beginning of the file, at which to set the file 
+	 * Sets the file-pointer offset, measured from the beginning of this
+	 * file, at which the next read or write occurs.  The offset may be
+	 * set beyond the end of the file. Setting the offset beyond the end
+	 * of the file does not change the file length.  The file length will
+	 * change only by writing after the offset has been set beyond the end
+	 * of the file.
+	 * @param      pos   the offset position, measured in bytes from the
+	 *                   beginning of the file, at which to set the file
 	 *                   pointer.
-	 * @throws IOException 
-	 * @exception  IOException  if <code>pos</code> is less than 
+	 * @throws IOException
+	 * @exception  IOException  if <code>pos</code> is less than
 	 *                          <code>0</code> or if an I/O error occurs.
 	 */
 	public void seek(long pos) throws IOException {
@@ -135,24 +140,24 @@ public class GRandomAccessFile {
 			throw new IOException("pos cannot be less than zero");
 		}
 
-		if (pos < bufferFileStartIndex || pos >= bufferFileStartIndex + BUFFER_SIZE) {
+		if (pos < this.bufferFileStartIndex || pos >= this.bufferFileStartIndex + BUFFER_SIZE) {
 			// check if the last buffer contained it, and swap in if necessary
 			swapInLast();
-			if (pos < bufferFileStartIndex || pos >= bufferFileStartIndex + BUFFER_SIZE) {
+			if (pos < this.bufferFileStartIndex || pos >= this.bufferFileStartIndex + BUFFER_SIZE) {
 				// not in either, gotta get a new one
-				buffer = EMPTY;
-				bufferOffset = 0;
-				bufferFileStartIndex = pos;
+				this.buffer = EMPTY;
+				this.bufferOffset = 0;
+				this.bufferFileStartIndex = pos;
 			}
 		}
-		bufferOffset = pos - bufferFileStartIndex;
+		this.bufferOffset = pos - this.bufferFileStartIndex;
 	}
 
 	/**
-	 * This method reads a byte from the file, starting from the current file pointer. 
+	 * This method reads a byte from the file, starting from the current file pointer.
 	 * <p>
-	 * This method blocks until the byte is read, the end of the stream 
-	 * is detected, or an exception is thrown. 
+	 * This method blocks until the byte is read, the end of the stream
+	 * is detected, or an exception is thrown.
 	 *
 	 * @return     the next byte of this file as a signed eight-bit
 	 *             <code>byte</code>.
@@ -162,13 +167,13 @@ public class GRandomAccessFile {
 	public byte readByte() throws IOException {
 		checkOpen();
 		ensure(1);
-		return buffer[(int) bufferOffset];
+		return this.buffer[(int) this.bufferOffset];
 	}
 
 	/**
-	 * Reads up to <code>b.length</code> bytes of data from this file 
-	 * into an array of bytes. This method blocks until at least one byte 
-	 * of input is available. 
+	 * Reads up to <code>b.length</code> bytes of data from this file
+	 * into an array of bytes. This method blocks until at least one byte
+	 * of input is available.
 	 *
 	 * @param      b   the buffer into which the data is read.
 	 * @return     the total number of bytes read into the buffer, or
@@ -182,10 +187,10 @@ public class GRandomAccessFile {
 	}
 
 	/**
-	 * Reads up to <code>len</code> bytes of data from this file into an 
-	 * array of bytes. This method blocks until at least one byte of input 
+	 * Reads up to <code>len</code> bytes of data from this file into an
+	 * array of bytes. This method blocks until at least one byte of input
 	 * is available.
-	 * 
+	 *
 	 * @param      b     the buffer into which the data is read.
 	 * @param      off   the start offset of the data.
 	 * @param      len   the maximum number of bytes read.
@@ -199,18 +204,18 @@ public class GRandomAccessFile {
 		int readLen = length;
 		do {
 			int blocklength = readLen;
-			if (readLen > (BUFFER_SIZE - bufferOffset)) {
-				blocklength = (BUFFER_SIZE - (int) bufferOffset);
+			if (readLen > (BUFFER_SIZE - this.bufferOffset)) {
+				blocklength = (BUFFER_SIZE - (int) this.bufferOffset);
 				if (blocklength <= 0) {
 					blocklength = BUFFER_SIZE;
 				}
 			}
 			ensure(blocklength);
-			System.arraycopy(buffer, (int) bufferOffset, b, offset, blocklength);
+			System.arraycopy(this.buffer, (int) this.bufferOffset, b, offset, blocklength);
 			readLen -= blocklength;
 			offset += blocklength;
 			if (readLen > 0) {
-				seek(this.bufferFileStartIndex + bufferOffset + blocklength);
+				seek(this.bufferFileStartIndex + this.bufferOffset + blocklength);
 			}
 		}
 		while (readLen > 0);
@@ -218,7 +223,7 @@ public class GRandomAccessFile {
 	}
 
 	/**
-	 * Writes a byte to this file, starting at the current file pointer. 
+	 * Writes a byte to this file, starting at the current file pointer.
 	 * @param      b   the data.
 	 * @exception  IOException  if an I/O error occurs.
 	 */
@@ -228,8 +233,8 @@ public class GRandomAccessFile {
 	}
 
 	/**
-	 * Writes <code>b.length</code> bytes from the specified byte array 
-	 * to this file, starting at the current file pointer. 
+	 * Writes <code>b.length</code> bytes from the specified byte array
+	 * to this file, starting at the current file pointer.
 	 * @param      b   the data.
 	 * @exception  IOException  if an I/O error occurs.
 	 */
@@ -239,7 +244,7 @@ public class GRandomAccessFile {
 	}
 
 	/**
-	 * Writes a sub array as a sequence of bytes. 
+	 * Writes a sub array as a sequence of bytes.
 	 * @param b the data to be written
 	 * @param offset the start offset in the data
 	 * @param length the number of bytes that are written
@@ -247,11 +252,11 @@ public class GRandomAccessFile {
 	 */
 	public void write(byte[] b, int offset, int length) throws IOException {
 		checkOpen();
-		randomAccessFile.write(b, offset, length);
-		buffer = EMPTY;
-		bufferOffset = 0;
-		lastbuffer = EMPTY;
-		lastbufferOffset = 0;
+		this.randomAccessFile.write(b, offset, length);
+		this.buffer = EMPTY;
+		this.bufferOffset = 0;
+		this.lastbuffer = EMPTY;
+		this.lastbufferOffset = 0;
 	}
 
 	/**
@@ -260,47 +265,47 @@ public class GRandomAccessFile {
 	 */
 	private void ensure(int bytesNeeded) throws IOException {
 		checkOpen();
-		long oldFileStartIndex = bufferFileStartIndex;
-		long oldBufferOffset = bufferOffset;
+		long oldFileStartIndex = this.bufferFileStartIndex;
+		long oldBufferOffset = this.bufferOffset;
 		long oldSeekPos = oldFileStartIndex + oldBufferOffset;
 
-		if (bufferOffset + bytesNeeded > buffer.length) {
+		if (this.bufferOffset + bytesNeeded > this.buffer.length) {
 			// check if the last buffer contained it, and swap in if necessary
 			swapInLast();
 			// must ensure that current read pos is in old buffer, and enough bytes
-			long newBufferOffset = (oldSeekPos - bufferFileStartIndex);
-			if (oldSeekPos < bufferFileStartIndex ||
-				oldSeekPos >= bufferFileStartIndex + BUFFER_SIZE ||
-				(newBufferOffset + bytesNeeded > buffer.length)) {
-				bufferFileStartIndex = oldFileStartIndex + oldBufferOffset;
+			long newBufferOffset = (oldSeekPos - this.bufferFileStartIndex);
+			if (oldSeekPos < this.bufferFileStartIndex ||
+				oldSeekPos >= this.bufferFileStartIndex + BUFFER_SIZE ||
+				(newBufferOffset + bytesNeeded > this.buffer.length)) {
+				this.bufferFileStartIndex = oldFileStartIndex + oldBufferOffset;
 
-				buffer = new byte[BUFFER_SIZE];
-				randomAccessFile.seek(bufferFileStartIndex);
-				randomAccessFile.read(buffer);
-				bufferOffset = 0;
+				this.buffer = new byte[BUFFER_SIZE];
+				this.randomAccessFile.seek(this.bufferFileStartIndex);
+				this.randomAccessFile.read(this.buffer);
+				this.bufferOffset = 0;
 			}
 			else {
-				bufferOffset = newBufferOffset;
+				this.bufferOffset = newBufferOffset;
 			}
 		}
 	}
 
 	private void swapInLast() throws IOException {
 		checkOpen();
-		if (buffer == EMPTY) {
+		if (this.buffer == EMPTY) {
 			return;
 		}
 		// swap em and return
-		byte[] swapbuffer = buffer;
-		long swapbufferOffset = bufferOffset;
-		long swapbufferFileStartIndex = bufferFileStartIndex;
+		byte[] swapbuffer = this.buffer;
+		long swapbufferOffset = this.bufferOffset;
+		long swapbufferFileStartIndex = this.bufferFileStartIndex;
 
-		buffer = lastbuffer;
-		bufferOffset = lastbufferOffset;
-		bufferFileStartIndex = lastbufferFileStartIndex;
+		this.buffer = this.lastbuffer;
+		this.bufferOffset = this.lastbufferOffset;
+		this.bufferFileStartIndex = this.lastbufferFileStartIndex;
 
-		lastbuffer = swapbuffer;
-		lastbufferOffset = swapbufferOffset;
-		lastbufferFileStartIndex = swapbufferFileStartIndex;
+		this.lastbuffer = swapbuffer;
+		this.lastbufferOffset = swapbufferOffset;
+		this.lastbufferFileStartIndex = swapbufferFileStartIndex;
 	}
 }

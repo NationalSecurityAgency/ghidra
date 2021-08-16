@@ -3,10 +3,16 @@
  */
 package mobiledevices.dmg.server;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.List;
 
-import org.catacombae.jparted.lib.fs.*;
+import org.catacombae.jparted.lib.fs.FSEntry;
+import org.catacombae.jparted.lib.fs.FSFile;
+import org.catacombae.jparted.lib.fs.FSLink;
 
 import mobiledevices.dmg.ghidra.GByteProvider;
 import mobiledevices.dmg.ghidra.GFileUtilityMethods;
@@ -60,10 +66,7 @@ public class DmgServer {
 
 		try {
 			String openLine = inputReader.readLine();
-			if (openLine == null) {
-				return;
-			}
-			if (!openLine.startsWith("open ")) {
+			if ((openLine == null) || !openLine.startsWith("open ")) {
 				return;//TODO handle invalid initial command???
 			}
 			String openPath = parseLine(openLine);

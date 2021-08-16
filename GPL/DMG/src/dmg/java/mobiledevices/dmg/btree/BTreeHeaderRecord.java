@@ -9,8 +9,8 @@ import mobiledevices.dmg.ghidra.GBinaryReader;
 
 /**
  * Represents a BTHeaderRec structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-792/bsd/hfs/hfs_format.h.auto.html">hfs/hfs_format.h</a> 
+ *
+ * @see <a href="https://opensource.apple.com/source/xnu/xnu-792/bsd/hfs/hfs_format.h.auto.html">hfs/hfs_format.h</a>
  */
 public class BTreeHeaderRecord /*implements StructConverter*/ {
 
@@ -49,63 +49,63 @@ public class BTreeHeaderRecord /*implements StructConverter*/ {
 	}
 
 	public short getTreeDepth() {
-		return treeDepth;
+		return this.treeDepth;
 	}
 
 	public int getRootNode() {
-		return rootNode;
+		return this.rootNode;
 	}
 
 	public int getLeafRecords() {
-		return leafRecords;
+		return this.leafRecords;
 	}
 
 	public int getFirstLeafNode() {
-		return firstLeafNode;
+		return this.firstLeafNode;
 	}
 
 	public int getLastLeafNode() {
-		return lastLeafNode;
+		return this.lastLeafNode;
 	}
 
 	public short getNodeSize() {
-		return nodeSize;
+		return this.nodeSize;
 	}
 
 	public short getMaxKeyLength() {
-		return maxKeyLength;
+		return this.maxKeyLength;
 	}
 
 	public int getTotalNodes() {
-		return totalNodes;
+		return this.totalNodes;
 	}
 
 	public int getFreeNodes() {
-		return freeNodes;
+		return this.freeNodes;
 	}
 
 	public short getReserved1() {
-		return reserved1;
+		return this.reserved1;
 	}
 
 	public int getClumpSize() {
-		return clumpSize;
+		return this.clumpSize;
 	}
 
 	public byte getBtreeType() {
-		return btreeType;
+		return this.btreeType;
 	}
 
 	public byte getKeyCompareType() {
-		return keyCompareType;
+		return this.keyCompareType;
 	}
 
 	public int getAttributes() {
-		return attributes;
+		return this.attributes;
 	}
 
 	public int[] getReserved() {
-		return reserved;
+		return this.reserved;
 	}
 
 //	@Override

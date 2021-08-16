@@ -146,27 +146,28 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 	public void setUp() throws Exception {
 		super.setUp();
 		String testFilename = getClass().getSimpleName().replace(".class", "");
-		mtfGenerator = new MergeScreenShotGenerator(testFilename, testName.getMethodName(), mtf, testName);
-		env = mtf.getTestEnvironment();
+		this.mtfGenerator = new MergeScreenShotGenerator(testFilename, this.testName.getMethodName(), this.mtf,
+				this.testName);
+		this.env = this.mtf.getTestEnvironment();
 	}
 
 	@After
 	@Override
 	public void tearDown() throws Exception {
-		mtfGenerator.showResults();
-		mtf.dispose();
+		this.mtfGenerator.showResults();
+		this.mtf.dispose();
 	}
 
 	@Override
 	protected void executeMerge(int decision) throws Exception {
 		super.executeMerge(decision);
-		mtfGenerator.setTool(mergeTool);
+		this.mtfGenerator.setTool(this.mergeTool);
 	}
 
 	@Override
 	protected void executeMerge(int decision, boolean waitForVisibleWindow) throws Exception {
 		super.executeMerge(decision, waitForVisibleWindow);
-		mtfGenerator.setTool(mergeTool);
+		this.mtfGenerator.setTool(this.mergeTool);
 	}
 
 //	public void testMultiUser() throws Exception {
@@ -178,7 +179,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testMemoryConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
@@ -213,14 +214,14 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		executeMerge(ASK_USER);
 
 		waitForPrompting();
-		MergeResolver[] mergeResolvers = (MergeResolver[]) TestUtils.getInstanceField("mergeResolvers", mergeMgr);
+		MergeResolver[] mergeResolvers = (MergeResolver[]) TestUtils.getInstanceField("mergeResolvers", this.mergeMgr);
 		Object memoryMergeManager = mergeResolvers[0];
 		Container memoryMergePanel = (Container) TestUtils.getInstanceField("mergePanel", memoryMergeManager);
 		Container namePanel = (Container) TestUtils.getInstanceField("namePanel", memoryMergePanel);
 		setToolSize(600, 450);
-		Window window = mergeTool.getActiveWindow();
+		Window window = this.mergeTool.getActiveWindow();
 
-		mtfGenerator.captureComponent(window);
+		this.mtfGenerator.captureComponent(window);
 
 //		chooseRadioButton(MergeConstants.MY_TITLE, namePanel.getClass(), false);
 //		chooseApply(memoryMergePanel);
@@ -229,7 +230,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testProgramTreeConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
@@ -307,11 +308,11 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 		waitForPrompting();
 		setToolSize(700, 650);
-		Window window = mergeTool.getActiveWindow();
+		Window window = this.mergeTool.getActiveWindow();
 
 		selectButtonAndApply(MergeConstants.ORIGINAL_TITLE, window, false);// Use name "Main Tree", lose "My Main Tree"
 
-		mtfGenerator.captureComponent(window);
+		this.mtfGenerator.captureComponent(window);
 
 		selectButtonAndApply(MergeConstants.LATEST_TITLE, window, true);// Use "Tree3_XXX", lose "MY TREE 3"
 		waitForMergeCompletion();
@@ -319,7 +320,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testDataTypeConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
@@ -354,7 +355,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 					miscCat.setName("Category3");
 					Category cat1 = dtm.createCategory(new CategoryPath("/Category1"));
 					Category cat2 = cat1.createCategory("Category2");
-					cat2.moveCategory(miscCat, monitor);
+					cat2.moveCategory(miscCat, RepositoryScreenShots.this.monitor);
 
 					commit = true;
 				} catch (InvalidNameException e) {
@@ -395,8 +396,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 		waitForPrompting();
 		setToolSize(800, 550);
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply(MergeConstants.LATEST_TITLE, window);
 		chooseButtonAndApply(MergeConstants.LATEST_TITLE, window);
@@ -405,7 +406,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testCategoryConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
@@ -431,7 +432,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 					Category cat1 = dtm.createCategory(new CategoryPath("/Category1"));
 					Category cat2 = cat1.createCategory("Category2");
 					Category cat3 = cat2.createCategory("Category3");
-					cat3.moveCategory(miscCat, monitor);
+					cat3.moveCategory(miscCat, RepositoryScreenShots.this.monitor);
 
 					commit = true;
 				} catch (InvalidNameException e) {
@@ -452,7 +453,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 					Category miscCat = dtm.getCategory(new CategoryPath("/MISC"));
 					Category cat1 = dtm.createCategory(new CategoryPath("/Category1"));
-					cat1.moveCategory(miscCat, monitor);
+					cat1.moveCategory(miscCat, RepositoryScreenShots.this.monitor);
 
 					commit = true;
 				} catch (DuplicateNameException e) {
@@ -467,8 +468,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 		waitForPrompting();
 		setToolSize(700, 450);
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply(MergeConstants.LATEST_TITLE, window);
 		waitForMergeCompletion();
@@ -478,7 +479,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 	public void testRegConflict() throws Exception {
 		final String regNameDR0 = "DR0";
 
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
@@ -534,8 +535,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		waitForPrompting();
 		setToolSize(1300, 850);
 		goToListing("0x004010a0");
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply(MergeConstants.LATEST_TITLE, window);
 		waitForMergeCompletion();
@@ -543,7 +544,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testListingMergeDescriptions() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
@@ -589,16 +590,17 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		waitForPrompting();
 		setToolSize(1200, 730);
 		goToListing("0x0040e694");
-		Window window = mergeTool.getActiveWindow();
-		Image image = mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		Image image = this.mtfGenerator.captureComponent(window);
 
-		ProgramMergeManagerPlugin programMergeManagerPlugin = getPlugin(mergeTool, ProgramMergeManagerPlugin.class);
+		ProgramMergeManagerPlugin programMergeManagerPlugin = getPlugin(this.mergeTool,
+				ProgramMergeManagerPlugin.class);
 		assertNotNull(programMergeManagerPlugin);
 		Object mergeManagerProvider = getInstanceField("provider", programMergeManagerPlugin);
 
 		Point windowLocationOnScreen = window.getLocationOnScreen();
 
-		ListingMergePanel listingMergePanel = mergeMgr.getListingMergePanel();
+		ListingMergePanel listingMergePanel = this.mergeMgr.getListingMergePanel();
 
 		// Main panel is ListingMergePanel.
 
@@ -678,10 +680,14 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int arrowHead2Y = lock3Y;
 		int description1Y = arrowTailY - 10;
 		int description2Y = arrowTailY + 10;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY), new Point(arrowHeadX, arrowHead1Y), 8);
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY), new Point(arrowHeadX, arrowHead2Y), 8);
-		mtfGenerator.drawText(description1, Color.RED, new Point(descriptionX, description1Y), DESCRIPTION_FONT_SIZE);
-		mtfGenerator.drawText(description2, Color.RED, new Point(descriptionX, description2Y), DESCRIPTION_FONT_SIZE);
+		this.mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY), new Point(arrowHeadX, arrowHead1Y),
+				8);
+		this.mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY), new Point(arrowHeadX, arrowHead2Y),
+				8);
+		this.mtfGenerator.drawText(description1, Color.RED, new Point(descriptionX, description1Y),
+				DESCRIPTION_FONT_SIZE);
+		this.mtfGenerator.drawText(description2, Color.RED, new Point(descriptionX, description2Y),
+				DESCRIPTION_FONT_SIZE);
 	}
 
 	private void addGreyListingDescription(Point windowLocationOnScreen, ListingPanel[] listingPanels) {
@@ -692,7 +698,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		Dimension size = listingPanels[0].getSize();
 		int descriptionX = listingX + (size.width / 3);
 		int descriptionY = listingY + size.height - 20;
-		mtfGenerator.drawText(greyListingDescription, Color.RED, new Point(descriptionX, descriptionY),
+		this.mtfGenerator.drawText(greyListingDescription, Color.RED, new Point(descriptionX, descriptionY),
 				DESCRIPTION_FONT_SIZE);
 	}
 
@@ -717,8 +723,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int arrowHeadY = buttonY;
 		int arrowTailY = buttonY;
 		int descriptionY = buttonY + 5;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY), new Point(arrowHeadX, arrowHeadY), 8);
-		mtfGenerator.drawText(adjustFieldsDescription, Color.RED, new Point(descriptionX, descriptionY),
+		this.mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY), new Point(arrowHeadX, arrowHeadY),
+				8);
+		this.mtfGenerator.drawText(adjustFieldsDescription, Color.RED, new Point(descriptionX, descriptionY),
 				DESCRIPTION_FONT_SIZE);
 	}
 
@@ -736,9 +743,11 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int arrowHeadY = westLabelBottomY;
 		int arrowTailY = westLabelBottomY + 15;
 		int descriptionY = westLabelBottomY + 20;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY), new Point(arrowHeadX, arrowTailY), 0);
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowHeadX, arrowTailY), new Point(arrowHeadX, arrowHeadY), 8);
-		mtfGenerator.drawText("Indicates which conflict you are resolving.", Color.RED,
+		this.mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY), new Point(arrowHeadX, arrowTailY),
+				0);
+		this.mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowHeadX, arrowTailY), new Point(arrowHeadX, arrowHeadY),
+				8);
+		this.mtfGenerator.drawText("Indicates which conflict you are resolving.", Color.RED,
 				new Point(descriptionX, descriptionY), DESCRIPTION_FONT_SIZE);
 	}
 
@@ -757,8 +766,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int arrowHeadY = eastLabelY - 10;
 		int arrowTailY = arrowHeadY - 30;
 		int descriptionY = arrowTailY - 5;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowHeadX, arrowTailY), new Point(arrowHeadX, arrowHeadY), 8);
-		mtfGenerator.drawText(addressRangeDescription, Color.RED, new Point(descriptionX, descriptionY),
+		this.mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowHeadX, arrowTailY), new Point(arrowHeadX, arrowHeadY),
+				8);
+		this.mtfGenerator.drawText(addressRangeDescription, Color.RED, new Point(descriptionX, descriptionY),
 				DESCRIPTION_FONT_SIZE);
 	}
 
@@ -784,8 +794,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int westLabelY = westLabelLocation.y - windowLocationOnScreen.y;
 		int arrowY = westLabelY + 5;
 		int descriptionY = arrowY;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowY), new Point(arrowHeadX, arrowY), 8);
-		mtfGenerator.drawText("Indicates the address(es) in conflict.", Color.RED,
+		this.mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowY), new Point(arrowHeadX, arrowY), 8);
+		this.mtfGenerator.drawText("Indicates the address(es) in conflict.", Color.RED,
 				new Point(descriptionX, descriptionY), DESCRIPTION_FONT_SIZE);
 	}
 
@@ -802,8 +812,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int arrowTailY = endTitleTextY - 5;
 		int arrowHeadY = endTitleTextY + 5;
 		int descriptionY = endTitleTextY;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY), new Point(arrowHeadX, arrowHeadY), 8);
-		mtfGenerator.drawText("Type of conflict to resolve.", Color.RED, new Point(descriptionX, descriptionY),
+		this.mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY), new Point(arrowHeadX, arrowHeadY),
+				8);
+		this.mtfGenerator.drawText("Type of conflict to resolve.", Color.RED, new Point(descriptionX, descriptionY),
 				DESCRIPTION_FONT_SIZE);
 	}
 
@@ -811,9 +822,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		Point variousChoicesLocation = variousChoicesPanel.getLocationOnScreen();
 		int conflictAreaX = variousChoicesLocation.x - windowLocationOnScreen.x;
 		int conflictAreaY = variousChoicesLocation.y - windowLocationOnScreen.y;
-		mtfGenerator.drawText("Area indicating the specific information", Color.RED,
+		this.mtfGenerator.drawText("Area indicating the specific information", Color.RED,
 				new Point(conflictAreaX + 20, conflictAreaY + 40), DESCRIPTION_FONT_SIZE);
-		mtfGenerator.drawText("for the current conflict(s) being resolved.", Color.RED,
+		this.mtfGenerator.drawText("for the current conflict(s) being resolved.", Color.RED,
 				new Point(conflictAreaX + 20, conflictAreaY + 60), DESCRIPTION_FONT_SIZE);
 	}
 
@@ -833,10 +844,11 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int arrowTailY = radioButtonY - 10;
 		int description1Y = radioButtonY - 20;
 		int description2Y = radioButtonY;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY), new Point(arrowHeadX, arrowHeadY), 8);
-		mtfGenerator.drawText("Radio buttons or check boxes to", Color.RED, new Point(descriptionX, description1Y),
+		this.mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY), new Point(arrowHeadX, arrowHeadY),
+				8);
+		this.mtfGenerator.drawText("Radio buttons or check boxes to", Color.RED, new Point(descriptionX, description1Y),
 				DESCRIPTION_FONT_SIZE);
-		mtfGenerator.drawText("select for resolving the conflict(s).", Color.RED,
+		this.mtfGenerator.drawText("select for resolving the conflict(s).", Color.RED,
 				new Point(descriptionX, description2Y), DESCRIPTION_FONT_SIZE);
 	}
 
@@ -853,8 +865,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int checkBoxHeight = useForAllCB.getSize().height;
 		int arrowY = useForAllY + (checkBoxHeight / 2);
 		int descriptionY = useForAllY + 15;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowY), new Point(arrowHeadX, arrowY), 8);
-		mtfGenerator.drawText(
+		this.mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowY), new Point(arrowHeadX, arrowY), 8);
+		this.mtfGenerator.drawText(
 				"Check this box to automatically make the same choice for all remaining conflicts like this one.",
 				Color.RED, new Point(descriptionX, descriptionY), DESCRIPTION_FONT_SIZE);
 	}
@@ -876,15 +888,18 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int arrowHeadY = applyButtonY + 10;
 		int description1Y = applyButtonY + 5;
 		int description2Y = description1Y + 20;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY), new Point(arrowHeadX, arrowHeadY), 8);
-		mtfGenerator.drawText(description1, Color.RED, new Point(descriptionX, description1Y), DESCRIPTION_FONT_SIZE);
-		mtfGenerator.drawText(description2, Color.RED, new Point(descriptionX, description2Y), DESCRIPTION_FONT_SIZE);
+		this.mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY), new Point(arrowHeadX, arrowHeadY),
+				8);
+		this.mtfGenerator.drawText(description1, Color.RED, new Point(descriptionX, description1Y),
+				DESCRIPTION_FONT_SIZE);
+		this.mtfGenerator.drawText(description2, Color.RED, new Point(descriptionX, description2Y),
+				DESCRIPTION_FONT_SIZE);
 	}
 
 	@Test
 	public void testCodeUnit2CharConflict() throws Exception {
 
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
@@ -951,8 +966,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		openEachListingsData("0x0040e694");
 		setToolSize(1200, 750);
 		goToListing("0x0040e695");
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply(MergeConstants.LATEST_TITLE, window);
 		waitForMergeCompletion();
@@ -960,7 +975,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testExternalAddConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
@@ -1011,8 +1026,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 		waitForPrompting();
 		setToolSize(1200, 680);
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply("Resolve External Add Conflict", LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
@@ -1020,7 +1035,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testExternalDataTypeConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
@@ -1087,8 +1102,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 		waitForPrompting();
 		setToolSize(1200, 800);
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply("Resolve External Data Type Conflict", LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
@@ -1096,7 +1111,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testExternalFunctionParametersConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
@@ -1178,8 +1193,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 		waitForPrompting();
 		setToolSize(1300, 950);
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply("Resolve Function Parameters Conflict", LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
@@ -1187,7 +1202,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testParameterMultiConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
@@ -1245,8 +1260,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		chooseVariousOptionsForConflictType("Resolve Function Parameter Conflict", new int[] { INFO_ROW, KEEP_LATEST });
 
 		setToolSize(1300, 950);
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseVariousOptionsForConflictType("Resolve Function Parameter Conflict",
 				new int[] { INFO_ROW, KEEP_LATEST, KEEP_LATEST });
@@ -1256,7 +1271,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testFunctionOverlapConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
@@ -1304,8 +1319,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 		waitForPrompting();
 		setToolSize(1300, 950);
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseVariousOptionsForConflictType("Resolve Function Overlap Conflict", new int[] { KEEP_LATEST });
 		waitForMergeCompletion();
@@ -1313,7 +1328,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testFunctionRemoveVsChangeConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
@@ -1345,8 +1360,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 		waitForPrompting();
 		setToolSize(1100, 950);
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		verticalChooseFunction("0x00401130", KEEP_LATEST);
 		waitForMergeCompletion();
@@ -1354,7 +1369,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testSymbolRemoveVsChangeConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
@@ -1404,8 +1419,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		waitForPrompting();
 		setToolSize(1100, 750);
 		goToListing("0x0040113a");
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply("Resolve Symbol Conflict", LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
@@ -1413,7 +1428,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testSymbolRenameWithScopeConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
@@ -1463,8 +1478,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		waitForPrompting();
 		setToolSize(1100, 750);
 		goToListing("0x0040113c");
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply("Resolve Symbol Conflict", LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
@@ -1472,7 +1487,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testSymbolAddressConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
@@ -1508,8 +1523,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		waitForPrompting();
 		setToolSize(1100, 750);
 		goToListing("0x0040113c");
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply("Resolve Symbol Conflict", REMOVE_CHECKED_OUT_BUTTON_NAME);
 		waitForMergeCompletion();
@@ -1517,7 +1532,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testSymbolPrimaryConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
@@ -1553,8 +1568,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		waitForPrompting();
 		setToolSize(1100, 750);
 		goToListing("0x0040113c");
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply("Resolve Symbol Conflict", LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
@@ -1562,7 +1577,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testSymbolNamespaceKept() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
@@ -1624,7 +1639,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 		waitForReadTextDialog("Symbol Merge Information", "The following namespaces were not removed", 4000, false);
 
-		mtfGenerator.captureDialog();
+		this.mtfGenerator.captureDialog();
 
 		waitForReadTextDialog("Symbol Merge Information", "The following namespaces were not removed", 4000, true);
 		waitForMergeCompletion();
@@ -1632,7 +1647,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testSymbolConflictAutoRenamed() throws Exception {
-		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
@@ -1669,7 +1684,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 		waitForReadTextDialog("Symbol Merge Information", "The following symbols were renamed", 4000, false);
 
-		mtfGenerator.captureDialog();
+		this.mtfGenerator.captureDialog();
 
 		waitForReadTextDialog("Symbol Merge Information", "The following symbols were renamed", 4000, true);
 		waitForMergeCompletion();
@@ -1677,7 +1692,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testEquateConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
@@ -1729,8 +1744,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		waitForPrompting();
 		setToolSize(1200, 750);
 		goToListing("0x00402e5f");
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply("Resolve Equate Conflict", LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
@@ -1738,7 +1753,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testUserDefinedUseForAllConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
@@ -1788,8 +1803,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		waitForPrompting();
 		setToolSize(1000, 700);
 		goToListing("0x00401002");
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply("Resolve User Defined Property Conflict", LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
@@ -1797,7 +1812,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testExternalRefConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
@@ -1872,8 +1887,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		setToolSize(1100, 750);
 		goToListing("0x0040b044");
 		scrollHorizontal(45);
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply("Resolve Reference Conflict", LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
@@ -1881,7 +1896,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testRefRegStackConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
@@ -1919,8 +1934,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		setToolSize(1000, 700);
 		goToListing("0x004018e4");
 		scrollHorizontal(30);
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply("Resolve Reference Conflict", LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
@@ -1928,7 +1943,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testMemRefConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
@@ -1985,8 +2000,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		setToolSize(1100, 700);
 		goToListing("0x00401f05");
 		scrollHorizontal(30);
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply("Resolve Reference Conflict", LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
@@ -1994,7 +2009,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testRefTypeConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
@@ -2043,8 +2058,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		setToolSize(1100, 750);
 		goToListing("0x004017db");
 		scrollHorizontal(30);
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply("Resolve Reference Conflict", LATEST_BUTTON_NAME);
 		chooseButtonAndApply("Resolve Reference Conflict", LATEST_BUTTON_NAME);
@@ -2053,7 +2068,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testBmNoteBothAddConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
@@ -2091,8 +2106,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		setToolSize(1100, 750);
 		goToListing("0x0040156c");
 
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseApply();
 		waitForMergeCompletion();
@@ -2100,7 +2115,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testBmRemoveVsChangeConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
@@ -2152,8 +2167,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		setToolSize(1100, 750);
 		goToListing("0x004010a0");
 
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseApply();
 		waitForMergeCompletion();
@@ -2161,7 +2176,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testCommentRemoveVsChangeConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
@@ -2217,8 +2232,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		goToListing("0x0040156c");
 		scrollHorizontal(30);
 
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseApply();
 		waitForMergeCompletion();
@@ -2226,7 +2241,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testCommentChangeConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
@@ -2284,8 +2299,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		goToListing("0x0040156c");
 		scrollHorizontal(30);
 
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseApply();
 		waitForMergeCompletion();
@@ -2293,7 +2308,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testExternalProgramChangeConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
@@ -2336,8 +2351,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 		waitForPrompting();
 		setToolSize(600, 400);
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply("Resolve External Program Name Conflict", LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
@@ -2345,7 +2360,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testExternalProgramRemoveConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
@@ -2388,8 +2403,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 		waitForPrompting();
 		setToolSize(600, 400);
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply("Resolve External Program Name Conflict", LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
@@ -2397,7 +2412,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testProperyListConflict() throws Exception {
-		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
@@ -2434,8 +2449,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 		waitForPrompting();
 		setToolSize(600, 550);
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply(MergeConstants.LATEST_TITLE, window);
 		chooseButtonAndApply(MergeConstants.MY_TITLE, window);
@@ -2446,10 +2461,10 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 	@Test
 	public void testDataTypeSourceConflict() throws Exception {
 
-		FrontEndTool frontEndTool = env.showFrontEndTool();
+		FrontEndTool frontEndTool = this.env.showFrontEndTool();
 		DomainFolder rootFolder = frontEndTool.getProject().getProjectData().getRootFolder();
 		TaskMonitor dummyMonitor = TaskMonitorAdapter.DUMMY_MONITOR;
-		DomainFile myTestArchiveDF = env.restoreDataTypeArchive("MyTestArchive.gdt", rootFolder);
+		DomainFile myTestArchiveDF = this.env.restoreDataTypeArchive("MyTestArchive.gdt", rootFolder);
 		final DataTypeArchive myTestArchive = (DataTypeArchiveDB) myTestArchiveDF.getDomainObject(this, true, false,
 				TaskMonitorAdapter.DUMMY_MONITOR);
 
@@ -2457,7 +2472,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		final DataType floatStruct = myTestArchive.getDataTypeManager().getDataType(sourceCatPath, "FloatStruct");
 		assertNotNull(floatStruct);
 
-		mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
+		this.mtf.initialize("WallaceSrc", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
@@ -2515,8 +2530,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 		waitForPrompting();
 		setToolSize(1100, 450);
-		Window window = mergeTool.getActiveWindow();
-		mtfGenerator.captureComponent(window);
+		Window window = this.mergeTool.getActiveWindow();
+		this.mtfGenerator.captureComponent(window);
 
 		chooseButtonAndApply(MergeConstants.LATEST_TITLE, window);
 		waitForMergeCompletion();
@@ -2530,13 +2545,13 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 //==================================================================================================
 
 	private void setToolSize(final int width, final int height) throws Exception {
-		runSwing(() -> mergeTool.setSize(width, height));
+		runSwing(() -> this.mergeTool.setSize(width, height));
 		waitForPostedSwingRunnables();
 		sleep(500);
 	}
 
 	private void waitForCompletion(Window window) throws Exception {
-		while (!mergeMgr.processingCompleted()) {
+		while (!this.mergeMgr.processingCompleted()) {
 			Thread.sleep(300);
 		}
 
@@ -2559,7 +2574,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 		pressButton(applyButton);
 		waitForPostedSwingRunnables();
-		resultProgram.flushEvents();
+		this.resultProgram.flushEvents();
 		if (doWait) {
 			waitForCompletion(window);
 		} else {
@@ -2607,7 +2622,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	public void goToListing(final String address) {
 		runSwing(() -> {
-			ListingMergePanel listingMergePanel = mergeMgr.getListingMergePanel();
+			ListingMergePanel listingMergePanel = this.mergeMgr.getListingMergePanel();
 			listingMergePanel.goTo(addr(address));
 		});
 		waitForPostedSwingRunnables();
@@ -2615,12 +2630,12 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	public void openEachListingsData(final String address) {
 		runSwing(() -> {
-			ListingMergePanel listingMergePanel = mergeMgr.getListingMergePanel();
+			ListingMergePanel listingMergePanel = this.mergeMgr.getListingMergePanel();
 			ListingPanel[] listingPanels = (ListingPanel[]) TestUtils.getInstanceField("listingPanels",
 					listingMergePanel);
 			for (int i = 0; i < listingPanels.length; i++) {
 				ListingPanel listingPanel = listingPanels[i];
-				Program program = mergeMgr.getProgram(i);
+				Program program = this.mergeMgr.getProgram(i);
 				Data data = program.getListing().getDataAt(addr(program, address));
 				listingPanel.getListingModel().openData(data);
 			}
@@ -2720,7 +2735,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	private void scrollHorizontal(final int percent) {
 		runSwing(() -> {
-			ListingMergePanel listingMergePanel = mergeMgr.getListingMergePanel();
+			ListingMergePanel listingMergePanel = this.mergeMgr.getListingMergePanel();
 			ListingPanel[] listingPanels = (ListingPanel[]) TestUtils.getInstanceField("listingPanels",
 					listingMergePanel);
 			ListingPanel latestPanel = listingPanels[1];

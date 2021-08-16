@@ -3,7 +3,10 @@
  */
 package mobiledevices.dmg.hfsplus;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,12 +14,17 @@ import org.catacombae.hfsexplorer.fs.ImplHFSXFileSystemView;
 import org.catacombae.hfsexplorer.fs.NullProgressMonitor;
 import org.catacombae.hfsexplorer.types.hfscommon.CommonHFSCatalogFile;
 import org.catacombae.hfsexplorer.types.hfscommon.CommonHFSForkData;
-import org.catacombae.hfsexplorer.types.hfsplus.*;
+import org.catacombae.hfsexplorer.types.hfsplus.HFSCatalogNodeID;
+import org.catacombae.hfsexplorer.types.hfsplus.HFSPlusCatalogFile;
+import org.catacombae.hfsexplorer.types.hfsplus.HFSPlusForkData;
+import org.catacombae.hfsexplorer.types.hfsplus.HFSPlusVolumeHeader;
 import org.catacombae.jparted.lib.fs.FSFile;
 import org.catacombae.jparted.lib.fs.hfscommon.HFSCommonFSFile;
 import org.catacombae.jparted.lib.fs.hfsx.HFSXFileSystemHandler;
 
-import mobiledevices.dmg.btree.*;
+import mobiledevices.dmg.btree.BTreeNodeDescriptor;
+import mobiledevices.dmg.btree.BTreeNodeRecord;
+import mobiledevices.dmg.btree.BTreeRootNodeDescriptor;
 import mobiledevices.dmg.decmpfs.DecmpfsHeader;
 import mobiledevices.dmg.ghidra.GBinaryReader;
 import mobiledevices.dmg.ghidra.GByteProvider;
@@ -27,7 +35,7 @@ import mobiledevices.dmg.ghidra.GByteProvider;
  */
 public class AttributesFileParser {
 
-	private Map<FSFile, DecmpfsHeader> map = new HashMap<FSFile, DecmpfsHeader>();
+	private Map<FSFile, DecmpfsHeader> map = new HashMap<>();
 	private GByteProvider provider;
 	private BTreeRootNodeDescriptor root;
 
@@ -40,20 +48,20 @@ public class AttributesFileParser {
 
        	File attributesFile = writeVolumeHeaderFile( hfsxFileSystemView, attributes, prefix + "_" + "attributesFile" );
 
-		provider = new GByteProvider( attributesFile );
+		this.provider = new GByteProvider( attributesFile );
 
        	if ( attributesFile.length() == 0 ) {
        		return;
        	}
 
-		GBinaryReader reader = new GBinaryReader( provider, false );
+		GBinaryReader reader = new GBinaryReader( this.provider, false );
 
-        root = new BTreeRootNodeDescriptor( reader );
+        this.root = new BTreeRootNodeDescriptor( reader );
 	}
 
 	public void dispose() throws IOException {
-		map.clear();
-		provider.close();
+		this.map.clear();
+		this.provider.close();
 	}
 
 	private int getFileID(FSFile file) {
@@ -70,8 +78,8 @@ public class AttributesFileParser {
 		}
 	}
 
-	private File writeVolumeHeaderFile( ImplHFSXFileSystemView hfsxFileSystemView, 
-										HFSPlusForkData volumeHeaderFile, 
+	private File writeVolumeHeaderFile( ImplHFSXFileSystemView hfsxFileSystemView,
+										HFSPlusForkData volumeHeaderFile,
 										String volumeHeaderFileName ) throws IOException {
 
 		if (volumeHeaderFile == null) {
@@ -90,15 +98,15 @@ public class AttributesFileParser {
 		}
 		return file;
 	}
-	
+
 	public DecmpfsHeader getDecmpfsHeader(FSFile file) throws IOException {
 
-		if ( root == null ) {
+		if ( this.root == null ) {
 			return null;
 		}
 
-		if ( map.get( file ) != null ) {
-			return map.get( file );
+		if ( this.map.get( file ) != null ) {
+			return this.map.get( file );
 		}
 
 		int fileID = getFileID( file );
@@ -107,12 +115,12 @@ public class AttributesFileParser {
 			return null;
 		}
 
-        for ( BTreeNodeDescriptor node : root.getNodes() ) {
+        for ( BTreeNodeDescriptor node : this.root.getNodes() ) {
 			for ( BTreeNodeRecord record : node.getRecords() ) {
 				if ( record.getFileID() == fileID ) {
 					DecmpfsHeader header = record.getDecmpfsHeader();
 					if ( header != null ) {
-						map.put( file, header );
+						this.map.put( file, header );
 						return header;
 					}
 				}
@@ -121,5 +129,5 @@ public class AttributesFileParser {
         return null;
 	}
 
-	
+
 }

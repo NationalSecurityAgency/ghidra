@@ -14,45 +14,45 @@ public class BTreeRootNodeDescriptor extends BTreeNodeDescriptor {
 	private BTreeHeaderRecord headerRecord;
 	private BTreeUserDataRecord userDataRecord;
 	private BTreeMapRecord mapRecord;
-	private List<BTreeNodeDescriptor> nodes = new ArrayList<BTreeNodeDescriptor>();
+	private List<BTreeNodeDescriptor> nodes = new ArrayList<>();
 
 	public BTreeRootNodeDescriptor( GBinaryReader reader ) throws IOException {
 		super( reader );
 
-		headerRecord   = new BTreeHeaderRecord( reader );
-		userDataRecord = new BTreeUserDataRecord( reader );
-		mapRecord      = new BTreeMapRecord( reader, headerRecord );
+		this.headerRecord   = new BTreeHeaderRecord( reader );
+		this.userDataRecord = new BTreeUserDataRecord( reader );
+		this.mapRecord      = new BTreeMapRecord( reader, this.headerRecord );
 
-		nodes.add( this );
+		this.nodes.add( this );
 
-		int nodeSize = headerRecord.getNodeSize() & 0xffff;
+		int nodeSize = this.headerRecord.getNodeSize() & 0xffff;
 
 		for ( int i = nodeSize ; i < reader.length() ; i += nodeSize ) {
 			reader.setPointerIndex( i );
 			BTreeNodeDescriptor node = new BTreeNodeDescriptor( reader );
-			nodes.add( node );
-			node.readRecordOffsets( reader, i, headerRecord );
+			this.nodes.add( node );
+			node.readRecordOffsets( reader, i, this.headerRecord );
 			node.readRecords( reader, i );
 		}
 
-		this.readRecordOffsets( reader, 0, headerRecord );
+		this.readRecordOffsets( reader, 0, this.headerRecord );
 	}
 
 	public BTreeHeaderRecord getHeaderRecord() {
-		return headerRecord;
+		return this.headerRecord;
 	}
 
 	public BTreeUserDataRecord getUserDataRecord() {
-		return userDataRecord;
+		return this.userDataRecord;
 	}
 
 	public BTreeMapRecord getMapRecord() {
-		return mapRecord;
+		return this.mapRecord;
 	}
 
 	public BTreeNodeDescriptor getNode( int index ) {
 		try {
-			return nodes.get( index );
+			return this.nodes.get( index );
 		}
 		catch (Exception e) {
 			return null;
@@ -60,7 +60,7 @@ public class BTreeRootNodeDescriptor extends BTreeNodeDescriptor {
 	}
 
 	public List<BTreeNodeDescriptor> getNodes() {
-		return nodes;
+		return this.nodes;
 	}
 
 //	@Override

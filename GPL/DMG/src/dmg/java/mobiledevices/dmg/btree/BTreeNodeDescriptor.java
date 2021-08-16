@@ -11,8 +11,8 @@ import mobiledevices.dmg.ghidra.GBinaryReader;
 
 /**
  * Represents a BTNodeDescriptor structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-792/bsd/hfs/hfs_format.h.auto.html">hfs/hfs_format.h</a> 
+ *
+ * @see <a href="https://opensource.apple.com/source/xnu/xnu-792/bsd/hfs/hfs_format.h.auto.html">hfs/hfs_format.h</a>
  */
 public class BTreeNodeDescriptor /*implements StructConverter*/ {
 
@@ -23,8 +23,8 @@ public class BTreeNodeDescriptor /*implements StructConverter*/ {
 	private short numRecords;
 	private short reserved;
 
-	private List<Short> _recordOffsets = new ArrayList<Short>();
-	private List<BTreeNodeRecord> _records = new ArrayList<BTreeNodeRecord>();
+	private List<Short> _recordOffsets = new ArrayList<>();
+	private List<BTreeNodeRecord> _records = new ArrayList<>();
 
 	BTreeNodeDescriptor(GBinaryReader reader) throws IOException {
 		this.fLink = reader.readNextInt();
@@ -43,7 +43,7 @@ public class BTreeNodeDescriptor /*implements StructConverter*/ {
 			if (recordOffset == 0) {
 				break;
 			}
-			_recordOffsets.add(recordOffset);
+			this._recordOffsets.add(recordOffset);
 			position = position - 2;
 		}
 	}
@@ -57,16 +57,16 @@ public class BTreeNodeDescriptor /*implements StructConverter*/ {
 			reader.setPointerIndex(recordIndex);
 
 			BTreeNodeRecord record = new BTreeNodeRecord(reader, this);
-			_records.add(record);
+			this._records.add(record);
 		}
 	}
 
 	public List<Short> getRecordOffsets() {
-		return _recordOffsets;
+		return this._recordOffsets;
 	}
 
 	public List<BTreeNodeRecord> getRecords() {
-		return _records;
+		return this._records;
 	}
 
 	/**
@@ -75,7 +75,7 @@ public class BTreeNodeDescriptor /*implements StructConverter*/ {
 	 * @return node number of the next node of this type
 	 */
 	public int getFLink() {
-		return fLink;
+		return this.fLink;
 	}
 
 	/**
@@ -84,7 +84,7 @@ public class BTreeNodeDescriptor /*implements StructConverter*/ {
 	 * @return node number of the previous node of this type
 	 */
 	public int getBLink() {
-		return bLink;
+		return this.bLink;
 	}
 
 	/**
@@ -93,7 +93,7 @@ public class BTreeNodeDescriptor /*implements StructConverter*/ {
 	 * @see BTreeNodeKinds
 	 */
 	public byte getKind() {
-		return kind;
+		return this.kind;
 	}
 
 	/**
@@ -101,7 +101,7 @@ public class BTreeNodeDescriptor /*implements StructConverter*/ {
 	 * @return the level, or depth, of this node in the B-tree hierarchy
 	 */
 	public byte getHeight() {
-		return height;
+		return this.height;
 	}
 
 	/**
@@ -109,7 +109,7 @@ public class BTreeNodeDescriptor /*implements StructConverter*/ {
 	 * @return the number of records in this node
 	 */
 	public short getNumRecords() {
-		return numRecords;
+		return this.numRecords;
 	}
 
 	/**
@@ -117,7 +117,7 @@ public class BTreeNodeDescriptor /*implements StructConverter*/ {
 	 * @return this field is reserved
 	 */
 	public short getReserved() {
-		return reserved;
+		return this.reserved;
 	}
 
 //	@Override

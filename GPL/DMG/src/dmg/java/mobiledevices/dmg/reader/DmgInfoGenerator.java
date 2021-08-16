@@ -12,15 +12,21 @@ import org.catacombae.hfsexplorer.ObjectContainer;
 import org.catacombae.hfsexplorer.types.hfscommon.CommonHFSCatalogFile;
 import org.catacombae.hfsexplorer.types.hfsplus.HFSCatalogNodeID;
 import org.catacombae.hfsexplorer.types.hfsplus.HFSPlusCatalogFile;
-import org.catacombae.jparted.lib.fs.*;
+import org.catacombae.jparted.lib.fs.FSAttributes;
 import org.catacombae.jparted.lib.fs.FSAttributes.POSIXFileAttributes;
+import org.catacombae.jparted.lib.fs.FSEntry;
+import org.catacombae.jparted.lib.fs.FSFile;
+import org.catacombae.jparted.lib.fs.FSFolder;
+import org.catacombae.jparted.lib.fs.FSFork;
+import org.catacombae.jparted.lib.fs.FSLink;
+import org.catacombae.jparted.lib.fs.WindowsFileAttributes;
 import org.catacombae.jparted.lib.fs.hfscommon.HFSCommonFSFile;
 
 import mobiledevices.dmg.decmpfs.DecmpfsHeader;
 import mobiledevices.dmg.hfsplus.AttributesFileParser;
 
 /**
- * 
+ *
  * @see org.catacombae.hfsexplorer.gui.FSEntrySummaryPanel
  *
  */
@@ -39,17 +45,17 @@ class DmgInfoGenerator {
 	}
 
 	List<String> getInformation() {
-		List<String> infoList = new ArrayList<String>();
+		List<String> infoList = new ArrayList<>();
 
-		if (entry == null) {
+		if (this.entry == null) {
 			infoList.add("<< no information available >>");
 			return infoList;
 		}
 
-		infoList.add("Name: " + entry.getName());
+		infoList.add("Name: " + this.entry.getName());
 
-		if (entry instanceof FSFile) {
-			FSFile file = (FSFile) entry;
+		if (this.entry instanceof FSFile) {
+			FSFile file = (FSFile) this.entry;
 			infoList.add("Type: " + "File");
 			infoList.add("Total Size: " + getSizeString(file.getCombinedLength()));
 			FSFork[] allForks = file.getAllForks();
@@ -59,9 +65,9 @@ class DmgInfoGenerator {
 			}
 			appendFileID(infoList, file);
 
-			if (parser != null) {
+			if (this.parser != null) {
 				try {
-					DecmpfsHeader decmpfsHeader = parser.getDecmpfsHeader(file);
+					DecmpfsHeader decmpfsHeader = this.parser.getDecmpfsHeader(file);
 					if (decmpfsHeader != null) {
 						infoList.add(
 							"Decmpfs Size: " + getSizeString(decmpfsHeader.getUncompressedSize()));
@@ -71,16 +77,16 @@ class DmgInfoGenerator {
 				}
 			}
 		}
-		else if (entry instanceof FSFolder) {
-			FSFolder folder = (FSFolder) entry;
+		else if (this.entry instanceof FSFolder) {
+			FSFolder folder = (FSFolder) this.entry;
 			infoList.add("Type: " + "Folder");
 			infoList.add("Size: " + startFolderSizeCalculation(folder));
 		}
-		else if (entry instanceof FSLink) {
-			FSLink link = (FSLink) entry;
+		else if (this.entry instanceof FSLink) {
+			FSLink link = (FSLink) this.entry;
 
 			FSEntry linkTarget =
-				link.getLinkTarget(fileSystem.convertPathToArrayAndStripFileSystemName(filePath));
+				link.getLinkTarget(this.fileSystem.convertPathToArrayAndStripFileSystemName(this.filePath));
 			if (linkTarget == null) {
 				infoList.add("Type: " + "Symbolic link (broken)");
 				infoList.add("Size: " + "- (broken link)");
@@ -107,11 +113,11 @@ class DmgInfoGenerator {
 			infoList.add("Link Target: " + link.getLinkTargetString());
 		}
 		else {
-			infoList.add("Type: " + "Unknown [" + entry.getClass() + "]");
+			infoList.add("Type: " + "Unknown [" + this.entry.getClass() + "]");
 			infoList.add("Size: " + "- (unknown size)");
 		}
 
-		FSAttributes attrs = entry.getAttributes();
+		FSAttributes attrs = this.entry.getAttributes();
 
 		appendDateInformation(attrs, infoList);
 		appendPosixInformation(attrs, infoList);
@@ -165,19 +171,19 @@ class DmgInfoGenerator {
 
 	private void appendDateInformation(FSAttributes attributes, List<String> infoList) {
 		if (attributes.hasCreateDate()) {
-			infoList.add("Created: " + df.format(attributes.getCreateDate()));
+			infoList.add("Created: " + this.df.format(attributes.getCreateDate()));
 		}
 		if (attributes.hasModifyDate()) {
-			infoList.add("Contents Modified: " + df.format(attributes.getModifyDate()));
+			infoList.add("Contents Modified: " + this.df.format(attributes.getModifyDate()));
 		}
 		if (attributes.hasAttributeModifyDate()) {
-			infoList.add("Attributes Modified: " + df.format(attributes.getAttributeModifyDate()));
+			infoList.add("Attributes Modified: " + this.df.format(attributes.getAttributeModifyDate()));
 		}
 		if (attributes.hasAccessDate()) {
-			infoList.add("Last Accessed: " + df.format(attributes.getAccessDate()));
+			infoList.add("Last Accessed: " + this.df.format(attributes.getAccessDate()));
 		}
 		if (attributes.hasBackupDate()) {
-			infoList.add("Last Backup: " + df.format(attributes.getBackupDate()));
+			infoList.add("Last Backup: " + this.df.format(attributes.getBackupDate()));
 		}
 	}
 
@@ -189,7 +195,7 @@ class DmgInfoGenerator {
 	private String startFolderSizeCalculation(FSFolder folder) {
 		String resultString;
 		try {
-			ObjectContainer<Long> result = new ObjectContainer<Long>((long) 0);
+			ObjectContainer<Long> result = new ObjectContainer<>((long) 0);
 			calculateFolderSize(folder, result);
 			resultString = getSizeString(result.o);
 		}

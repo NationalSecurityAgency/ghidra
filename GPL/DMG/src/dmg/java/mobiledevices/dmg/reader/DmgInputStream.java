@@ -21,23 +21,23 @@ public class DmgInputStream extends InputStream {
 	}
 
 	public long getLength() {
-		return stream.length();
+		return this.stream.length();
 	}
 
 	@Override
 	public int read() throws IOException {
-		return stream.read();
+		return this.stream.read();
 	}
 
 	@Override
 	public int read(byte [] b) throws IOException {
-		return stream.read(b);
+		return this.stream.read(b);
 	}
 
 	@Override
 	public int read(byte [] b, int off, int len) throws IOException {
-		return stream.read(b, off, len);
+		return this.stream.read(b, off, len);
 	}
 
-	
+
 }

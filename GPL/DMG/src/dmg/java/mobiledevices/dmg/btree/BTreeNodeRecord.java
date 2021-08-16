@@ -26,16 +26,16 @@ public class BTreeNodeRecord /*implements StructConverter*/ {
 	private long _offset;
 
 	BTreeNodeRecord( GBinaryReader reader, BTreeNodeDescriptor descriptor ) throws IOException {
-		_offset       =  reader.getPointerIndex();
+		this._offset       =  reader.getPointerIndex();
 
-		unknown0      =  reader.readNextInt();
-		fileID        =  reader.readNextInt();
-		unknown2      =  reader.readNextInt();
+		this.unknown0      =  reader.readNextInt();
+		this.fileID        =  reader.readNextInt();
+		this.unknown2      =  reader.readNextInt();
 
-		_typeLength   =  reader.readNextShort();
+		this._typeLength   =  reader.readNextShort();
 
-		type          =  readType( reader );
-		unknown3      =  reader.readNextInt();
+		this.type          =  readType( reader );
+		this.unknown3      =  reader.readNextInt();
 
 		switch ( descriptor.getKind() ) {
 			case BTreeNodeKinds.kBTHeaderNode: {
@@ -45,9 +45,9 @@ public class BTreeNodeRecord /*implements StructConverter*/ {
 				break;
 			}
 			case BTreeNodeKinds.kBTLeafNode: {
-				unknown4      =  reader.readNextInt();
-				unknown5      =  reader.readNextInt();
-				recordLength  =  reader.readNextInt();
+				this.unknown4      =  reader.readNextInt();
+				this.unknown5      =  reader.readNextInt();
+				this.recordLength  =  reader.readNextInt();
 				break;
 			}
 			case BTreeNodeKinds.kBTMapNode: {
@@ -55,11 +55,11 @@ public class BTreeNodeRecord /*implements StructConverter*/ {
 			}
 		}
 
-		_descriptor = descriptor;
+		this._descriptor = descriptor;
 
 		if ( descriptor.getKind() == BTreeNodeKinds.kBTLeafNode ) {
 			if ( getType().equals( XattrConstants.DECMPFS_XATTR_NAME ) ) {
-				_decmpfsHeader = new DecmpfsHeader( reader, getRecordLength() );
+				this._decmpfsHeader = new DecmpfsHeader( reader, getRecordLength() );
 			}
 			else if ( getType().equals( XattrConstants.KAUTH_FILESEC_XATTR_NAME ) ) {
 				//TODO
@@ -74,7 +74,7 @@ public class BTreeNodeRecord /*implements StructConverter*/ {
 
 	private String readType( GBinaryReader reader ) throws IOException {
 		StringBuffer buffer = new StringBuffer();
-		for ( int i = 0 ; i < _typeLength ; ++i ) {
+		for ( int i = 0 ; i < this._typeLength ; ++i ) {
 			reader.readNextByte();//skip it...
 			buffer.append( (char) reader.readNextByte() );
 		}
@@ -82,37 +82,37 @@ public class BTreeNodeRecord /*implements StructConverter*/ {
 	}
 
 	public String getType() {
-		return type;
+		return this.type;
 	}
 	public int getRecordLength() {
-		return recordLength;
+		return this.recordLength;
 	}
 	public BTreeNodeDescriptor getDescriptor() {
-		return _descriptor;
+		return this._descriptor;
 	}
 	public int getUnknown0() {
-		return unknown0;
+		return this.unknown0;
 	}
 	public int getUnknown2() {
-		return unknown2;
+		return this.unknown2;
 	}
 	public int getUnknown3() {
-		return unknown3;
+		return this.unknown3;
 	}
 	public int getUnknown4() {
-		return unknown4;
+		return this.unknown4;
 	}
 	public int getUnknown5() {
-		return unknown5;
+		return this.unknown5;
 	}
 	public int getFileID() {
-		return fileID;
+		return this.fileID;
 	}
 	public DecmpfsHeader getDecmpfsHeader() {
-		return _decmpfsHeader;
+		return this._decmpfsHeader;
 	}
 	public long getRecordOffset() {
-		return _offset;
+		return this._offset;
 	}
 
 //	@Override

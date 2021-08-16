@@ -6,10 +6,10 @@ package mobiledevices.dmg.ghidra;
 import java.io.IOException;
 
 /**
- * A class for reading data from a 
+ * A class for reading data from a
  * generic byte provider in either big-endian or little-endian.
- * 
- * 
+ *
+ *
  */
 public class GBinaryReader {
     /**
@@ -34,17 +34,17 @@ public class GBinaryReader {
     private long currentIndex;
 
     /**
-     * Constructs a reader using the given 
+     * Constructs a reader using the given
      * file and endian-order.
-     * 
+     *
      * If isLittleEndian is true, then all values read
      * from the file will be done so assuming
      * little-endian order.
-     * 
+     *
      * Otherwise, if isLittleEndian
      * is false, then all values will be read
      * assuming big-endian order.
-     * 
+     *
      * @param provider the byte provider
      * @param isLittleEndian the endian-order
      */
@@ -59,8 +59,8 @@ public class GBinaryReader {
      * @return a clone of this reader positioned at the new index
      */
     public GBinaryReader clone(int newIndex) {
-    	GBinaryReader clone = new GBinaryReader(provider, isLittleEndian());
-    	clone.converter = converter;
+    	GBinaryReader clone = new GBinaryReader(this.provider, isLittleEndian());
+    	clone.converter = this.converter;
     	clone.currentIndex = newIndex;
     	return clone;
     }
@@ -71,7 +71,7 @@ public class GBinaryReader {
      * @return true is little endian, false is big endian
      */
 	public boolean isLittleEndian() {
-		return converter instanceof GDataConverterLE;
+		return this.converter instanceof GDataConverterLE;
 	}
 
 	/**
@@ -80,10 +80,10 @@ public class GBinaryReader {
 	 */
 	public void setLittleEndian(boolean isLittleEndian) {
         if (isLittleEndian) {
-            converter = new GDataConverterLE();
+            this.converter = new GDataConverterLE();
         }
         else {
-            converter = new GDataConverterBE();
+            this.converter = new GDataConverterBE();
         }
 	}
 
@@ -93,29 +93,29 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public long length() throws IOException {
-        return provider.length();
+        return this.provider.length();
     }
 
     /**
-     * Returns true if the specified index into 
+     * Returns true if the specified index into
      * the underlying byte provider is valid.
      * @param index the index in the byte provider
      * @return returns true if the specified index is valid
      * @exception IOException if an I/O error occurs
      */
     public boolean isValidIndex(int index) throws IOException {
-        return provider.isValidIndex(index & GConv.INT_MASK);
+        return this.provider.isValidIndex(index & GConv.INT_MASK);
     }
 
     /**
-     * Returns true if the specified index into 
+     * Returns true if the specified index into
      * the underlying byte provider is valid.
      * @param index the index in the byte provider
      * @return returns true if the specified index is valid
      * @exception IOException if an I/O error occurs
      */
     public boolean isValidIndex(long index) throws IOException {
-        return provider.isValidIndex(index);
+        return this.provider.isValidIndex(index);
     }
 
     /**
@@ -126,11 +126,11 @@ public class GBinaryReader {
      * @return the number of bytes required to align
      */
     public int align(int alignValue) {
-        long align = currentIndex % alignValue;
+        long align = this.currentIndex % alignValue;
         if (align == 0) {
             return 0;
         }
-        currentIndex = currentIndex + (alignValue - align);
+        this.currentIndex = this.currentIndex + (alignValue - align);
         return (int)(alignValue - align);
     }
 
@@ -148,7 +148,7 @@ public class GBinaryReader {
      * Sets the current index to the specified value.
      * The pointer index will allow the reader
      * to operate as a psuedo-iterator.
-     * 
+     *
      * @param index the byte provider index value
      */
     public void setPointerIndex(long index) {
@@ -160,7 +160,7 @@ public class GBinaryReader {
      * @return the current index value
      */
     public long getPointerIndex() {
-        return currentIndex;
+        return this.currentIndex;
     }
 
     /**
@@ -170,7 +170,7 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public byte peekNextByte() throws IOException {
-        return readByte(currentIndex);
+        return readByte(this.currentIndex);
     }
 
     /**
@@ -180,7 +180,7 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public short peekNextShort() throws IOException {
-        return readShort(currentIndex);
+        return readShort(this.currentIndex);
     }
 
     /**
@@ -190,7 +190,7 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public int peekNextInt() throws IOException {
-        return readInt(currentIndex);
+        return readInt(this.currentIndex);
     }
 
     /**
@@ -200,7 +200,7 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public long peekNextLong() throws IOException {
-        return readLong(currentIndex);
+        return readLong(this.currentIndex);
     }
 
     /**
@@ -210,8 +210,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public byte readNextByte() throws IOException {
-        byte b = readByte(currentIndex);
-        currentIndex += SIZEOF_BYTE;
+        byte b = readByte(this.currentIndex);
+        this.currentIndex += SIZEOF_BYTE;
         return b;
     }
 
@@ -222,8 +222,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public byte readNextByte(byte minClamp, byte maxClamp, Byte... exceptions) throws IOException {
-        byte b = readByte(currentIndex, minClamp, maxClamp, exceptions);
-        currentIndex += SIZEOF_BYTE;
+        byte b = readByte(this.currentIndex, minClamp, maxClamp, exceptions);
+        this.currentIndex += SIZEOF_BYTE;
         return b;
     }
 
@@ -234,8 +234,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public short readNextShort() throws IOException {
-        short s = readShort(currentIndex);
-        currentIndex+=SIZEOF_SHORT;
+        short s = readShort(this.currentIndex);
+        this.currentIndex+=SIZEOF_SHORT;
         return s;
     }
 
@@ -246,8 +246,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public short readNextShort(short minClamp, short maxClamp, Short... exceptions) throws IOException {
-        short s = readShort(currentIndex, minClamp, maxClamp, exceptions);
-        currentIndex+=SIZEOF_SHORT;
+        short s = readShort(this.currentIndex, minClamp, maxClamp, exceptions);
+        this.currentIndex+=SIZEOF_SHORT;
         return s;
     }
 
@@ -258,8 +258,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public int readNextInt() throws IOException {
-        int i = readInt(currentIndex);
-        currentIndex+=SIZEOF_INT;
+        int i = readInt(this.currentIndex);
+        this.currentIndex+=SIZEOF_INT;
         return i;
     }
 
@@ -270,8 +270,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public int readNextInt(int minClamp, int maxClamp, Integer... exceptions) throws IOException {
-        int i = readInt(currentIndex, minClamp, maxClamp, exceptions);
-        currentIndex+=SIZEOF_INT;
+        int i = readInt(this.currentIndex, minClamp, maxClamp, exceptions);
+        this.currentIndex+=SIZEOF_INT;
         return i;
     }
 
@@ -282,8 +282,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public long readNextLong() throws IOException {
-        long l = readLong(currentIndex);
-        currentIndex+=SIZEOF_LONG;
+        long l = readLong(this.currentIndex);
+        this.currentIndex+=SIZEOF_LONG;
         return l;
     }
 
@@ -294,8 +294,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public long readNextLong(long minClamp, long maxClamp, Long... exceptions) throws IOException {
-        long l = readLong(currentIndex, minClamp, maxClamp, exceptions);
-        currentIndex+=SIZEOF_LONG;
+        long l = readLong(this.currentIndex, minClamp, maxClamp, exceptions);
+        this.currentIndex+=SIZEOF_LONG;
         return l;
     }
 
@@ -307,8 +307,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public String readNextAsciiString() throws IOException {
-        String s = readAsciiString(currentIndex);
-        currentIndex+=(s.length()+1);
+        String s = readAsciiString(this.currentIndex);
+        this.currentIndex+=(s.length()+1);
         return s;
     }
 
@@ -316,12 +316,12 @@ public class GBinaryReader {
      * Reads an Ascii string of <code>length</code>
      * characters starting at the current index and then increments the current
      * index by <code>length</code>.
-     * 
+     *
      * @return the Ascii string at the current index
      */
     public String readNextAsciiString(int length) throws IOException {
-        String s = readAsciiString(currentIndex, length);
-        currentIndex+=length;
+        String s = readAsciiString(this.currentIndex, length);
+        this.currentIndex+=length;
         return s;
     }
 
@@ -333,8 +333,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public String readNextUnicodeString() throws IOException {
-        String s = readUnicodeString(currentIndex);
-        currentIndex += ((s.length()+1)*2);
+        String s = readUnicodeString(this.currentIndex);
+        this.currentIndex += ((s.length()+1)*2);
         return s;
     }
 
@@ -345,8 +345,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public String readNextUnicodeString(int length) throws IOException {
-        String s = readUnicodeString(currentIndex, length);
-        currentIndex+=(length*2);
+        String s = readUnicodeString(this.currentIndex, length);
+        this.currentIndex+=(length*2);
         return s;
     }
 
@@ -358,8 +358,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public byte [] readNextByteArray(int nElements) throws IOException {
-        byte [] b = readByteArray(currentIndex, nElements);
-        currentIndex+=(SIZEOF_BYTE*nElements);
+        byte [] b = readByteArray(this.currentIndex, nElements);
+        this.currentIndex+=(SIZEOF_BYTE*nElements);
         return b;
     }
 
@@ -371,8 +371,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public byte [] readNextByteArray(int nElements, byte minClamp, byte maxClamp, Byte... exceptions) throws IOException {
-        byte [] b = readByteArray(currentIndex, nElements, minClamp, maxClamp, exceptions);
-        currentIndex+=(SIZEOF_BYTE*nElements);
+        byte [] b = readByteArray(this.currentIndex, nElements, minClamp, maxClamp, exceptions);
+        this.currentIndex+=(SIZEOF_BYTE*nElements);
         return b;
     }
 
@@ -384,8 +384,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public short [] readNextShortArray(int nElements) throws IOException {
-        short [] s = readShortArray(currentIndex, nElements);
-        currentIndex+=(SIZEOF_SHORT*nElements);
+        short [] s = readShortArray(this.currentIndex, nElements);
+        this.currentIndex+=(SIZEOF_SHORT*nElements);
         return s;
     }
 
@@ -397,8 +397,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public short [] readNextShortArray(int nElements, short minClamp, short maxClamp, Short... exceptions) throws IOException {
-        short [] s = readShortArray(currentIndex, nElements, minClamp, maxClamp, exceptions);
-        currentIndex+=(SIZEOF_SHORT*nElements);
+        short [] s = readShortArray(this.currentIndex, nElements, minClamp, maxClamp, exceptions);
+        this.currentIndex+=(SIZEOF_SHORT*nElements);
         return s;
     }
 
@@ -410,8 +410,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public int [] readNextIntArray(int nElements) throws IOException {
-        int [] i = readIntArray(currentIndex, nElements);
-        currentIndex+=(SIZEOF_INT*nElements);
+        int [] i = readIntArray(this.currentIndex, nElements);
+        this.currentIndex+=(SIZEOF_INT*nElements);
         return i;
     }
 
@@ -423,8 +423,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public int [] readNextIntArray(int nElements, int minClamp, int maxClamp, Integer... exceptions) throws IOException {
-        int [] i = readIntArray(currentIndex, nElements, minClamp, maxClamp, exceptions);
-        currentIndex+=(SIZEOF_INT*nElements);
+        int [] i = readIntArray(this.currentIndex, nElements, minClamp, maxClamp, exceptions);
+        this.currentIndex+=(SIZEOF_INT*nElements);
         return i;
     }
 
@@ -436,8 +436,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public long [] readNextLongArray(int nElements) throws IOException {
-        long [] l = readLongArray(currentIndex, nElements);
-        currentIndex+=(SIZEOF_LONG*nElements);
+        long [] l = readLongArray(this.currentIndex, nElements);
+        this.currentIndex+=(SIZEOF_LONG*nElements);
         return l;
     }
 
@@ -449,8 +449,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public long [] readNextLongArray(int nElements, long minClamp, long maxClamp, Long... exceptions) throws IOException {
-        long [] l = readLongArray(currentIndex, nElements, minClamp, maxClamp, exceptions);
-        currentIndex+=(SIZEOF_LONG*nElements);
+        long [] l = readLongArray(this.currentIndex, nElements, minClamp, maxClamp, exceptions);
+        this.currentIndex+=(SIZEOF_LONG*nElements);
         return l;
     }
 
@@ -460,7 +460,7 @@ public class GBinaryReader {
      * Returns a null-terminated Ascii string starting
      * at <code>index</code>. The end of the string
      * is denoted by a <code>null</code> character.
-     * 
+     *
      * @param index the index where the Ascii string begins
      * @return the Ascii string
      * @exception IOException if an I/O error occurs
@@ -468,7 +468,7 @@ public class GBinaryReader {
     public String readAsciiString(long index) throws IOException {
         StringBuffer buffer = new StringBuffer();
         while (true) {
-            byte b = provider.readByte(index++);
+            byte b = this.provider.readByte(index++);
             if ((b >= 32) && (b <= 126)) {
                 buffer.append((char)b);
             }
@@ -491,7 +491,7 @@ public class GBinaryReader {
     public String readAsciiString(long index, int length) throws IOException {
         StringBuffer buffer = new StringBuffer();
         for (int i = 0 ; i < length ; ++i) {
-            byte b = provider.readByte(index++);
+            byte b = this.provider.readByte(index++);
             buffer.append((char) (b & 0x00FF));
         }
         return buffer.toString().trim();
@@ -510,12 +510,12 @@ public class GBinaryReader {
 		char c = 0;
 		int i = 0;
         while (i < length()) {
-            c  = (char)((provider.readByte(index++) & 0xff));
-            c += (char)((provider.readByte(index++) & 0xff) << 8);
+            c  = (char)((this.provider.readByte(index++) & 0xff));
+            c += (char)((this.provider.readByte(index++) & 0xff) << 8);
             if (c == 0x0000) {
                 break;
             }
-            buffer.append(c); 
+            buffer.append(c);
             i += 2;
         }
         return buffer.toString().trim();
@@ -534,8 +534,8 @@ public class GBinaryReader {
         StringBuffer buffer = new StringBuffer();
         char c = 0;
         for (int i = 0 ; i < length*2 ; i+=2) {
-            c  = (char)((provider.readByte(index++) & 0xff));
-            c += (char)((provider.readByte(index++) & 0xff) << 8);
+            c  = (char)((this.provider.readByte(index++) & 0xff));
+            c += (char)((this.provider.readByte(index++) & 0xff) << 8);
             buffer.append(c);
         }
         return buffer.toString().trim();
@@ -548,7 +548,7 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public byte readByte(long index) throws IOException {
-        return provider.readByte(index);
+        return this.provider.readByte(index);
     }
 
     /**
@@ -569,8 +569,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public short readShort(long index) throws IOException {
-        byte [] bytes = provider.readBytes(index, SIZEOF_SHORT);
-        return converter.getShort(bytes);
+        byte [] bytes = this.provider.readBytes(index, SIZEOF_SHORT);
+        return this.converter.getShort(bytes);
     }
 
     /**
@@ -591,8 +591,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public int readInt(long index) throws IOException {
-        byte [] bytes = provider.readBytes(index, SIZEOF_INT);
-        return converter.getInt(bytes);
+        byte [] bytes = this.provider.readBytes(index, SIZEOF_INT);
+        return this.converter.getInt(bytes);
     }
 
     /**
@@ -613,8 +613,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public long readLong(long index) throws IOException {
-        byte [] bytes = provider.readBytes(index, SIZEOF_LONG);
-        return converter.getLong(bytes);
+        byte [] bytes = this.provider.readBytes(index, SIZEOF_LONG);
+        return this.converter.getLong(bytes);
     }
 
     /**
@@ -640,7 +640,7 @@ public class GBinaryReader {
         if (nElements < 0) {
             throw new IOException("Invalid number of elements specified: "+nElements);
         }
-        return provider.readBytes(index, nElements);
+        return this.provider.readBytes(index, nElements);
     }
 
     /**
@@ -795,7 +795,7 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public void writeByte(long index, byte value) throws IOException {
-        provider.writeByte(index, value);
+        this.provider.writeByte(index, value);
     }
 
     /**
@@ -805,8 +805,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public void writeShort(long index, short value) throws IOException {
-        byte [] bytes = converter.getBytes(value);
-        provider.writeBytes(index, bytes);
+        byte [] bytes = this.converter.getBytes(value);
+        this.provider.writeBytes(index, bytes);
     }
 
     /**
@@ -816,8 +816,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public void writeInt(long index, int value) throws IOException {
-        byte [] bytes = converter.getBytes(value);
-        provider.writeBytes(index, bytes);
+        byte [] bytes = this.converter.getBytes(value);
+        this.provider.writeBytes(index, bytes);
     }
 
     /**
@@ -827,8 +827,8 @@ public class GBinaryReader {
      * @exception IOException if an I/O error occurs
      */
     public void writeLong(long index, long value) throws IOException {
-        byte [] bytes = converter.getBytes(value);
-        provider.writeBytes(index, bytes);
+        byte [] bytes = this.converter.getBytes(value);
+        this.provider.writeBytes(index, bytes);
     }
 
     /**
@@ -836,7 +836,7 @@ public class GBinaryReader {
      * @return the underlying byte provider
      */
     public GByteProvider getByteProvider() {
-        return provider;
+        return this.provider;
     }
 
     protected byte clampByte(byte b, byte minClamp, byte maxClamp, Byte... exceptions) {

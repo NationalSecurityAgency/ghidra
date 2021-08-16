@@ -4,7 +4,12 @@
 package mobiledevices.dmg.ghidra;
 
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * An implementation of ByteProvider where the underlying
@@ -39,25 +44,25 @@ public class GByteProvider implements Closeable {
      * @see GByteProvider.app.util.bin.ByteProvider#getFile()
      */
     public File getFile() {
-		return file;
+		return this.file;
 	}
 
     /**
      * @see GByteProvider.app.util.bin.ByteProvider#getName()
      */
     public String getName() {
-        return file.getName();
+        return this.file.getName();
     }
 
     public String getAbsolutePath() {
-        return file.getAbsolutePath();
+        return this.file.getAbsolutePath();
     }
 
     /**
      * @see GByteProvider.app.util.bin.ByteProvider#getInputStream(long)
      */
     public InputStream getInputStream(long index) throws IOException {
-        FileInputStream is = new FileInputStream(file);
+        FileInputStream is = new FileInputStream(this.file);
         is.skip(index);
         return is;
     }
@@ -68,19 +73,19 @@ public class GByteProvider implements Closeable {
      */
 	@Override
     public void close() throws IOException {
-        randomAccessFile.close();
+        this.randomAccessFile.close();
     }
 
     /**
      * @see GByteProvider.app.util.bin.ByteProvider#length()
      */
     public long length() throws IOException {
-        return randomAccessFile.length();
+        return this.randomAccessFile.length();
     }
 
     public boolean isValidIndex(long index) {
     	try {
-    		return index >= 0 && index < randomAccessFile.length();
+    		return index >= 0 && index < this.randomAccessFile.length();
     	}
     	catch (IOException e) {
     	}
@@ -91,17 +96,17 @@ public class GByteProvider implements Closeable {
      * @see GByteProvider.app.util.bin.ByteProvider#readByte(long)
      */
     public byte readByte(long index) throws IOException {
-        randomAccessFile.seek(index);
-        return randomAccessFile.readByte();
+        this.randomAccessFile.seek(index);
+        return this.randomAccessFile.readByte();
     }
 
     /**
      * @see GByteProvider.app.util.bin.ByteProvider#readBytes(long, long)
      */
     public byte [] readBytes(long index, long length) throws IOException {
-        randomAccessFile.seek(index);
+        this.randomAccessFile.seek(index);
         byte [] b = new byte[(int)length];
-        int nRead = randomAccessFile.read(b);
+        int nRead = this.randomAccessFile.read(b);
         if (nRead != length) {
             throw new IOException("Unable to read "+length+" bytes");
         }
@@ -112,15 +117,15 @@ public class GByteProvider implements Closeable {
      * @see GByteProvider.app.util.bin.ByteProvider#writeByte(long, byte)
      */
     public void writeByte(long index, byte value) throws IOException {
-        randomAccessFile.seek(index);
-        randomAccessFile.write(value);
+        this.randomAccessFile.seek(index);
+        this.randomAccessFile.write(value);
     }
 
     /**
      * @see GByteProvider.app.util.bin.ByteProvider#writeBytes(long, byte[])
      */
     public void writeBytes(long index, byte [] values) throws IOException {
-        randomAccessFile.seek(index);
-        randomAccessFile.write(values);
+        this.randomAccessFile.seek(index);
+        this.randomAccessFile.write(values);
     }
 }
