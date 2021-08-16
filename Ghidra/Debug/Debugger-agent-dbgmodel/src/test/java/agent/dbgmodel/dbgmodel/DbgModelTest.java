@@ -15,11 +15,22 @@
  */
 package agent.dbgmodel.dbgmodel;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.Before;
@@ -31,24 +42,62 @@ import com.sun.jna.platform.win32.Variant.VARIANT;
 import com.sun.jna.platform.win32.COM.COMException;
 import com.sun.jna.platform.win32.COM.Unknown;
 
-import agent.dbgeng.dbgeng.*;
+import agent.dbgeng.dbgeng.DbgEngTest;
+import agent.dbgeng.dbgeng.DebugBreakpoint;
 import agent.dbgeng.dbgeng.DebugBreakpoint.BreakType;
+import agent.dbgeng.dbgeng.DebugClient;
 import agent.dbgeng.dbgeng.DebugClient.DebugStatus;
-import agent.dbgeng.dbgeng.DebugDataSpaces.*;
+import agent.dbgeng.dbgeng.DebugControl;
+import agent.dbgeng.dbgeng.DebugDataSpaces.DebugMemoryBasicInformation;
+import agent.dbgeng.dbgeng.DebugDataSpaces.PageProtection;
+import agent.dbgeng.dbgeng.DebugDataSpaces.PageState;
+import agent.dbgeng.dbgeng.DebugModule;
 import agent.dbgeng.dbgeng.DebugModule.DebugModuleName;
+import agent.dbgeng.dbgeng.DebugOutputCallbacks;
+import agent.dbgeng.dbgeng.DebugProcessId;
+import agent.dbgeng.dbgeng.DebugProcessInfo;
+import agent.dbgeng.dbgeng.DebugRegisters;
 import agent.dbgeng.dbgeng.DebugRegisters.DebugRegisterDescription;
 import agent.dbgeng.dbgeng.DebugRegisters.DebugRegisterSource;
+import agent.dbgeng.dbgeng.DebugSymbolEntry;
+import agent.dbgeng.dbgeng.DebugSymbolId;
+import agent.dbgeng.dbgeng.DebugSymbolName;
+import agent.dbgeng.dbgeng.DebugSymbols;
+import agent.dbgeng.dbgeng.DebugSystemObjects;
+import agent.dbgeng.dbgeng.DebugThreadId;
+import agent.dbgeng.dbgeng.DebugThreadInfo;
+import agent.dbgeng.dbgeng.DebugValue;
 import agent.dbgeng.dbgeng.DebugValue.DebugInt64Value;
 import agent.dbgmodel.dbgmodel.bridge.HostDataModelAccess;
 import agent.dbgmodel.dbgmodel.datamodel.DataModelManager1;
-import agent.dbgmodel.dbgmodel.datamodel.script.*;
-import agent.dbgmodel.dbgmodel.debughost.*;
-import agent.dbgmodel.dbgmodel.main.*;
+import agent.dbgmodel.dbgmodel.datamodel.script.DataModelScriptManager;
+import agent.dbgmodel.dbgmodel.datamodel.script.DataModelScriptProvider;
+import agent.dbgmodel.dbgmodel.datamodel.script.DataModelScriptProviderEnumerator;
+import agent.dbgmodel.dbgmodel.datamodel.script.DataModelScriptTemplate;
+import agent.dbgmodel.dbgmodel.datamodel.script.DataModelScriptTemplateEnumerator;
+import agent.dbgmodel.dbgmodel.debughost.DebugHost;
+import agent.dbgmodel.dbgmodel.debughost.DebugHostContext;
+import agent.dbgmodel.dbgmodel.debughost.DebugHostEvaluator2;
+import agent.dbgmodel.dbgmodel.debughost.DebugHostMemory1;
+import agent.dbgmodel.dbgmodel.debughost.DebugHostModule1;
+import agent.dbgmodel.dbgmodel.debughost.DebugHostPublic;
+import agent.dbgmodel.dbgmodel.debughost.DebugHostScriptHost;
+import agent.dbgmodel.dbgmodel.debughost.DebugHostSymbol1;
+import agent.dbgmodel.dbgmodel.debughost.DebugHostSymbolEnumerator;
+import agent.dbgmodel.dbgmodel.debughost.DebugHostSymbols;
+import agent.dbgmodel.dbgmodel.debughost.DebugHostType1;
+import agent.dbgmodel.dbgmodel.debughost.DebugHostType2;
+import agent.dbgmodel.dbgmodel.main.KeyEnumerator;
+import agent.dbgmodel.dbgmodel.main.ModelMethod;
+import agent.dbgmodel.dbgmodel.main.ModelObject;
+import agent.dbgmodel.dbgmodel.main.RawEnumerator;
 import agent.dbgmodel.gadp.impl.WrappedDbgModel;
 import agent.dbgmodel.impl.dbgmodel.bridge.HDMAUtil;
 import agent.dbgmodel.impl.dbgmodel.debughost.DebugHostModuleImpl1;
 import agent.dbgmodel.impl.dbgmodel.main.ModelPropertyAccessorInternal;
-import agent.dbgmodel.jna.dbgmodel.DbgModelNative.*;
+import agent.dbgmodel.jna.dbgmodel.DbgModelNative.LOCATION;
+import agent.dbgmodel.jna.dbgmodel.DbgModelNative.ModelObjectKind;
+import agent.dbgmodel.jna.dbgmodel.DbgModelNative.SymbolKind;
 import agent.dbgmodel.jna.dbgmodel.UnknownWithUtils;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.NumericUtilities;
@@ -69,10 +118,10 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	protected void debugCreate() {
-		//if (cachedClient == null) {
+		// if (cachedClient == null) {
 		cachedAccess = doDebugCreate();
 		cachedClient = cachedAccess.getClient();
-		//}
+		// }
 	}
 
 	protected void debugConnect() {
@@ -88,7 +137,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 	public void setUp() {
 		DbgEngTest.assumeDbgengDLLLoadable();
 		debugCreate();
-		//debugConnect();
+		// debugConnect();
 		access = cachedAccess;
 		client = cachedClient;
 		control = client.getControl();
@@ -106,8 +155,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 				while (true) {
 					count++;
 				}
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				System.err.println(e);
 			}
 		}
@@ -118,9 +166,10 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
-			// NB:  This does not work!  TTDReplay must live in TTD\TTReplay.dll wherever
-			//  dbgeng.dll lives
-			//client.getControl().execute(".load c:\\Software\\windbg\\amd64\\ttd\\TTDReplay.dll");
+			// NB: This does not work! TTDReplay must live in TTD\TTReplay.dll wherever
+			// dbgeng.dll lives
+			// client.getControl().execute(".load
+			// c:\\Software\\windbg\\amd64\\ttd\\TTDReplay.dll");
 
 			client.getControl().execute(".load TTDReplay.dll");
 			client.getControl().execute(".load TTDAnalyze.dll");
@@ -161,9 +210,6 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			@Override
 			public void output(int mask, String text) {
 				System.out.print(text);
-				if (outputCapture != null) {
-					outputCapture.append(text);
-				}
 			}
 		});
 
@@ -194,13 +240,13 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			assertNotNull("manager not null", manager);
 			DebugHost host = util.getHost();
 			assertNotNull("host not null", host);
-			//KeyStore defaultMetadata = host.getDefaultMetadata();
-			//UnknownEx hostDefinedInterface = host.getHostDefinedInterface();
+			// KeyStore defaultMetadata = host.getDefaultMetadata();
+			// UnknownEx hostDefinedInterface = host.getHostDefinedInterface();
 
 			ModelObject rootNamespace = util.getRootNamespace();
 			assertNotNull("rootNamespace not null", rootNamespace);
 			enumerate(rootNamespace, " ");
-			//enumerateR(rootNamespace, " ");
+			// enumerateR(rootNamespace, " ");
 			System.out.println("END");
 		}
 	}
@@ -238,7 +284,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			if (value == null || key == null || key.equals("Registers")) {
 				continue;
 			}
-			//if (!value.getKind().equals(ModelObjectKind.OBJECT_METHOD)) {
+			// if (!value.getKind().equals(ModelObjectKind.OBJECT_METHOD)) {
 			String desc = tab + key + ":" + value.getKind();
 			if (value.getKind().equals(ModelObjectKind.OBJECT_INTRINSIC)) {
 				desc += ":" + value.getIntrinsicValue();
@@ -248,9 +294,8 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 				seen.add(key);
 				enumerate(value, tab + " ");
 			}
-			//}
-		}
-		while (key != null);
+			// }
+		} while (key != null);
 
 		List<ModelObject> children = obj.getElements();
 		ListIterator<ModelObject> iter = children.listIterator();
@@ -261,8 +306,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 		}
 
 		if (obj.getKind().equals(ModelObjectKind.OBJECT_TARGET_OBJECT)) {
-			RawEnumerator enumerateRaw =
-				obj.enumerateRawValues(SymbolKind.SYMBOL_FIELD.ordinal(), 0);
+			RawEnumerator enumerateRaw = obj.enumerateRawValues(SymbolKind.SYMBOL_FIELD.ordinal(), 0);
 			while ((key = enumerateRaw.getNext()) != null) {
 				ModelObject value = enumerateRaw.getValue();
 				String desc = tab + key + ":" + value.getKind();
@@ -296,10 +340,10 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
-			//control.execute(".server tcp:port=54321");
+			// control.execute(".server tcp:port=54321");
 
 			HDMAUtil util = new HDMAUtil(access);
-			//DataModelManager1 manager = util.getManager();
+			// DataModelManager1 manager = util.getManager();
 
 			ModelObject currentProcess = util.getCurrentProcess();
 			ModelObject env = currentProcess.getKeyValue("Environment");
@@ -308,16 +352,16 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			System.out.println(eb.toString());
 
 			DebugHostType1 targetInfo = eb.getTargetInfo();
-			//DebugHostContext context = targetInfo.getContext();
+			// DebugHostContext context = targetInfo.getContext();
 			System.out.println(targetInfo.getSymbolKind());
 			System.out.println(targetInfo.getName());
-			//DebugHostType1 type = targetInfo.getType();
+			// DebugHostType1 type = targetInfo.getType();
 			DebugHostModule1 containingModule = targetInfo.getContainingModule();
 			System.out.println(containingModule.getName());
 			DebugHostType1 typeByName = containingModule.findTypeByName("_PEB");
 			System.out.println(typeByName.getName());
 
-			//System.out.println(targetInfo.getOffset());
+			// System.out.println(targetInfo.getOffset());
 			System.out.println(targetInfo.getTypeKind());
 			System.out.println(targetInfo.getSize());
 
@@ -325,8 +369,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 			System.out.println(targetInfo.getPointerKind());
 
-			DebugHostSymbolEnumerator enumerator =
-				targetInfo.enumerateChildren(SymbolKind.SYMBOL, null);
+			DebugHostSymbolEnumerator enumerator = targetInfo.enumerateChildren(SymbolKind.SYMBOL, null);
 			DebugHostSymbol1 next;
 			while ((next = enumerator.getNext()) != null) {
 				System.out.println(next.getName());
@@ -339,26 +382,23 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
-			//control.execute(".server tcp:port=54321");
+			// control.execute(".server tcp:port=54321");
 
 			HDMAUtil util = new HDMAUtil(access);
 			DebugHost host = util.getHost();
-			//DebugHostContext currentContext = host.getCurrentContext();
-			//DataModelManager1 manager = util.getManager();
+			// DebugHostContext currentContext = host.getCurrentContext();
+			// DataModelManager1 manager = util.getManager();
 
 			ModelObject currentProcess = util.getCurrentProcess();
 			ModelObject env = currentProcess.getKeyValue("Environment");
 			ModelObject eb = env.getKeyValue("EnvironmentBlock");
 
 			client.getControl().execute("dt nt!_PEB");
-			client.getControl()
-					.execute(
-						"dx Debugger.State.DebuggerVariables.curprocess.Environment.EnvironmentBlock");
+			client.getControl().execute("dx Debugger.State.DebuggerVariables.curprocess.Environment.EnvironmentBlock");
 			System.err.println(eb.hashCode());
 			System.err.println(eb.getLocation().Offset);
 			DebugHostType2 targetInfo = (DebugHostType2) eb.getTargetInfo();
-			DebugHostSymbolEnumerator enumerator =
-				targetInfo.enumerateChildren(SymbolKind.SYMBOL, null);
+			DebugHostSymbolEnumerator enumerator = targetInfo.enumerateChildren(SymbolKind.SYMBOL, null);
 			DebugHostSymbol1 next;
 			while ((next = enumerator.getNext()) != null) {
 				System.out.println(next.getName());
@@ -380,22 +420,14 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	/*
-	@Test
-	public void testPrintln() {
-		CompletableFuture<String> cb = new CompletableFuture<>();
-		client.setOutputCallbacks(new DebugOutputCallbacks() {
-			@Override
-			public void output(int mask, String text) {
-				System.out.print(text);
-				cb.complete(text);
-			}
-		});
-		control.outln("Hello, World!");
-		String back = cb.getNow(null);
-		// NOTE: I'd like to be precise wrt/ new lines, but it seems to vary with version.
-		assertEquals("Hello, World!", back.trim());
-	}
-	*/
+	 * @Test public void testPrintln() { CompletableFuture<String> cb = new
+	 * CompletableFuture<>(); client.setOutputCallbacks(new DebugOutputCallbacks() {
+	 * 
+	 * @Override public void output(int mask, String text) { System.out.print(text);
+	 * cb.complete(text); } }); control.outln("Hello, World!"); String back =
+	 * cb.getNow(null); // NOTE: I'd like to be precise wrt/ new lines, but it seems
+	 * to vary with version. assertEquals("Hello, World!", back.trim()); }
+	 */
 
 	@Test
 	public void testGetProcessSystemIds() {
@@ -448,10 +480,8 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			for (ModelObject p : procs) {
 				try {
 					System.out.println(p.toString());
-				}
-				catch (COMException e) {
-					System.out
-							.println("Error with PID " + util.getCtlId(p) + ": " + e.getMessage());
+				} catch (COMException e) {
+					System.out.println("Error with PID " + util.getCtlId(p) + ": " + e.getMessage());
 				}
 			}
 		}
@@ -504,13 +534,12 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			indices.add(raxIdx);
 			indices.add(rbxIdx);
 			indices.add(rcxIdx);
-			Map<Integer, DebugValue> values =
-				regs.getValues(DebugRegisterSource.DEBUG_REGSRC_DEBUGGEE, indices);
+			Map<Integer, DebugValue> values = regs.getValues(DebugRegisterSource.DEBUG_REGSRC_DEBUGGEE, indices);
 
 			String actual = String.format("rax=%016x rbx=%016x rcx=%016x",
-				((DebugInt64Value) values.get(raxIdx)).longValue(),
-				((DebugInt64Value) values.get(rbxIdx)).longValue(),
-				((DebugInt64Value) values.get(rcxIdx)).longValue());
+					((DebugInt64Value) values.get(raxIdx)).longValue(),
+					((DebugInt64Value) values.get(rbxIdx)).longValue(),
+					((DebugInt64Value) values.get(rcxIdx)).longValue());
 			System.out.println(actual);
 			assertEquals(expected, actual);
 		}
@@ -540,8 +569,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			maker.start();
 
 			HDMAUtil util = new HDMAUtil(access);
-			List<ModelObject> children =
-				util.getElements(List.of("Debugger", "Sessions[0]", "Processes"));
+			List<ModelObject> children = util.getElements(List.of("Debugger", "Sessions[0]", "Processes"));
 			for (ModelObject obj : children) {
 				System.err.println(obj.getSearchKey());
 			}
@@ -569,9 +597,10 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			HDMAUtil util = new HDMAUtil(access);
 			DataModelManager1 manager = util.getManager();
 			Pointer[] args = new Pointer[0];
-			//VARIANT.ByReference vbr = new VARIANT.ByReference(v);
-			//ModelObject mo = manager.createIntrinsicObject(ModelObjectKind.OBJECT_INTRINSIC, vbr);
-			//args[0] = mo.getPointer();
+			// VARIANT.ByReference vbr = new VARIANT.ByReference(v);
+			// ModelObject mo =
+			// manager.createIntrinsicObject(ModelObjectKind.OBJECT_INTRINSIC, vbr);
+			// args[0] = mo.getPointer();
 			ModelObject sessions = util.getSessionOf(null);
 			ModelMethod f = sessions.getMethod("Last");
 			ModelObject ret = f.call(sessions, 0, args);
@@ -591,8 +620,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			ModelObject process = util.getCurrentProcess();
 			ModelObject threads = process.getKeyValue("Threads");
 			DebugHostContext context = host.getCurrentContext();
-			ModelObject mo =
-				eval.evaluateExtendedExpression(context, new WString("c => c.Id"), threads);
+			ModelObject mo = eval.evaluateExtendedExpression(context, new WString("c => c.Id"), threads);
 			args[0] = mo.getPointer();
 			ModelMethod f = threads.getMethod("OrderByDescending");
 			ModelObject ret = f.call(threads, 1, args);
@@ -615,7 +643,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			ModelObject modules = process.getKeyValue("Modules");
 			DebugHostContext context = host.getCurrentContext();
 			ModelObject mo = eval.evaluateExtendedExpression(context,
-				new WString("OrderByDescending(c => c.BaseAddress)"), modules);
+					new WString("OrderByDescending(c => c.BaseAddress)"), modules);
 			List<ModelObject> children = mo.getElements();
 			for (ModelObject child : children) {
 				ModelObject value = child.getKeyValue("BaseAddress");
@@ -624,78 +652,54 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 		}
 	}
 
-/*
-	@Test
-	public void testSetSingleRegister() {
-		try (ProcMaker maker = new ProcMaker(client,"notepad")) {
-			maker.start();
-
-			DebugRegisters regs = client.getRegisters();
-			regs.setValueByName("rax", new DebugInt64Value(0x0102030405060708L));
-
-			List<String> out = maker.execCapture("r");
-			String actual =
-				out.stream().filter(s -> s.startsWith("rax")).findAny().get().split("\\s+")[0];
-			assertEquals("rax=0102030405060708", actual);
-		}
-	}
-
-	@Test
-	public void testSetRegisters() {
-		try (ProcMaker maker = new ProcMaker(client,"notepad")) {
-			maker.start();
-
-			DebugRegisters regs = client.getRegisters();
-			// Purposefully choosing non-linked variant.
-			// Want to know that order does not make a difference.
-			Map<Integer, DebugValue> values = new HashMap<>();
-			values.put(regs.getIndexByName("rax"), new DebugInt64Value(0x0102030405060708L));
-			values.put(regs.getIndexByName("rbx"), new DebugInt64Value(0x1122334455667788L));
-			values.put(regs.getIndexByName("rcx"), new DebugInt64Value(0x8877665544332211L));
-			regs.setValues(DebugRegisterSource.DEBUG_REGSRC_DEBUGGEE, values);
-
-			List<String> out = maker.execCapture("r");
-			String actual = out.stream().filter(s -> s.startsWith("rax")).findAny().get();
-			assertEquals("rax=0102030405060708 rbx=1122334455667788 rcx=8877665544332211", actual);
-		}
-	}
-
-	@Test
-	public void testQueryVirtual() {
-		// Also, an experiment to figure out how it works
-		try (ProcMaker maker = new ProcMaker(client,"notepad")) {
-			maker.start();
-
-			List<DebugMemoryBasicInformation> collected1 = new ArrayList<>();
-			try {
-				long last = 0;
-				long offset = 0;
-				do {
-					System.out.print(Long.toHexString(offset) + ": ");
-					DebugMemoryBasicInformation info = client.getDataSpaces().queryVirtual(offset);
-					System.out.println(info);
-					collected1.add(info);
-					last = offset;
-					offset += info.regionSize;
-				}
-				while (Long.compareUnsigned(last, offset) < 0);
-			}
-			catch (COMException e) {
-				if (!e.getMessage().contains("HRESULT: 80004002")) {
-					throw e;
-				}
-			}
-
-			List<DebugMemoryBasicInformation> collected2 = new ArrayList<>();
-			for (DebugMemoryBasicInformation info : client.getDataSpaces().iterateVirtual(0)) {
-				collected2.add(info);
-			}
-
-			assertTrue(collected1.size() > 0);
-			assertEquals(collected1, collected2);
-		}
-	}
-*/
+	/*
+	 * @Test public void testSetSingleRegister() { try (ProcMaker maker = new
+	 * ProcMaker(client,"notepad")) { maker.start();
+	 * 
+	 * DebugRegisters regs = client.getRegisters(); regs.setValueByName("rax", new
+	 * DebugInt64Value(0x0102030405060708L));
+	 * 
+	 * List<String> out = maker.execCapture("r"); String actual =
+	 * out.stream().filter(s ->
+	 * s.startsWith("rax")).findAny().get().split("\\s+")[0];
+	 * assertEquals("rax=0102030405060708", actual); } }
+	 * 
+	 * @Test public void testSetRegisters() { try (ProcMaker maker = new
+	 * ProcMaker(client,"notepad")) { maker.start();
+	 * 
+	 * DebugRegisters regs = client.getRegisters(); // Purposefully choosing
+	 * non-linked variant. // Want to know that order does not make a difference.
+	 * Map<Integer, DebugValue> values = new HashMap<>();
+	 * values.put(regs.getIndexByName("rax"), new
+	 * DebugInt64Value(0x0102030405060708L)); values.put(regs.getIndexByName("rbx"),
+	 * new DebugInt64Value(0x1122334455667788L));
+	 * values.put(regs.getIndexByName("rcx"), new
+	 * DebugInt64Value(0x8877665544332211L));
+	 * regs.setValues(DebugRegisterSource.DEBUG_REGSRC_DEBUGGEE, values);
+	 * 
+	 * List<String> out = maker.execCapture("r"); String actual =
+	 * out.stream().filter(s -> s.startsWith("rax")).findAny().get();
+	 * assertEquals("rax=0102030405060708 rbx=1122334455667788 rcx=8877665544332211"
+	 * , actual); } }
+	 * 
+	 * @Test public void testQueryVirtual() { // Also, an experiment to figure out
+	 * how it works try (ProcMaker maker = new ProcMaker(client,"notepad")) {
+	 * maker.start();
+	 * 
+	 * List<DebugMemoryBasicInformation> collected1 = new ArrayList<>(); try { long
+	 * last = 0; long offset = 0; do { System.out.print(Long.toHexString(offset) +
+	 * ": "); DebugMemoryBasicInformation info =
+	 * client.getDataSpaces().queryVirtual(offset); System.out.println(info);
+	 * collected1.add(info); last = offset; offset += info.regionSize; } while
+	 * (Long.compareUnsigned(last, offset) < 0); } catch (COMException e) { if
+	 * (!e.getMessage().contains("HRESULT: 80004002")) { throw e; } }
+	 * 
+	 * List<DebugMemoryBasicInformation> collected2 = new ArrayList<>(); for
+	 * (DebugMemoryBasicInformation info : client.getDataSpaces().iterateVirtual(0))
+	 * { collected2.add(info); }
+	 * 
+	 * assertTrue(collected1.size() > 0); assertEquals(collected1, collected2); } }
+	 */
 
 	@Test
 	public void testModules() {
@@ -705,14 +709,12 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			HDMAUtil util = new HDMAUtil(access);
 			DebugHost host = util.getHost();
 			DebugHostSymbols symbols = host.asSymbols();
-			DebugHostSymbolEnumerator enumerator =
-				symbols.enumerateModules(util.getCurrentContext());
+			DebugHostSymbolEnumerator enumerator = symbols.enumerateModules(util.getCurrentContext());
 			DebugHostSymbol1 next;
 			while ((next = enumerator.getNext()) != null) {
 				DebugHostModule1 module = next.asModule();
 				System.out.println("  Ctxt: " + module.getContext());
-				System.out.println(
-					"  Kind: " + SymbolKind.values()[module.getSymbolKind().ordinal()]);
+				System.out.println("  Kind: " + SymbolKind.values()[module.getSymbolKind().ordinal()]);
 				System.out.println("  Load: " + module.getName().toString());
 				DebugHostModule1 containingModule = module.getContainingModule();
 				System.out.println("  CMod: " + containingModule);
@@ -746,8 +748,8 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 					if (value.getKind().equals(ModelObjectKind.OBJECT_PROPERTY_ACCESSOR)) {
 						Unknown v = (Unknown) value.getIntrinsicValue();
 						System.out.println(v);
-						ModelPropertyAccessorInternal ifc =
-							ModelPropertyAccessorInternal.tryPreferredInterfaces(v::QueryInterface);
+						ModelPropertyAccessorInternal ifc = ModelPropertyAccessorInternal
+								.tryPreferredInterfaces(v::QueryInterface);
 						System.out.println(ifc);
 						ModelObject result = ifc.getValue("All", null);
 						System.out.println(result);
@@ -786,12 +788,13 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 				assertArrayEquals(fromFile, data.array());
 			}
 
-			//data.clear();
-			//data.putInt(0x12345678);
-			//client.getDataSpaces().readVirtual(notepadModule.getBase(), data, data.remaining());
-			//data.flip();
+			// data.clear();
+			// data.putInt(0x12345678);
+			// client.getDataSpaces().readVirtual(notepadModule.getBase(), data,
+			// data.remaining());
+			// data.flip();
 
-			//assertEquals(0x12345678, data.getInt());
+			// assertEquals(0x12345678, data.getInt());
 		}
 	}
 
@@ -800,8 +803,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
-			client.getControl()
-					.execute(".load c:\\Software\\windbg\\amd64\\winext\\JSProvider.dll");
+			client.getControl().execute(".load c:\\Software\\windbg\\amd64\\winext\\JSProvider.dll");
 			client.getControl().execute(".load c:\\Software\\windbg\\amd64\\ttd\\TTDReplayCPU.dll");
 			client.getControl().execute(".load c:\\Software\\windbg\\amd64\\ttd\\TTDAnalyze.dll");
 			client.getControl().execute(".load c:\\Software\\windbg\\amd64\\ttd\\TtdExt.dll");
@@ -813,10 +815,9 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			DebugHostScriptHost scriptHost = host.asScriptHost();
 			DataModelManager1 manager = util.getManager();
 			DataModelScriptManager scriptManager = manager.asScriptManager();
-			//DataModelScriptProvider jsProvider =
-			//	scriptManager.findProviderForScriptType("JavaScript");
-			DataModelScriptProviderEnumerator enumerator =
-				scriptManager.enumeratorScriptProviders();
+			// DataModelScriptProvider jsProvider =
+			// scriptManager.findProviderForScriptType("JavaScript");
+			DataModelScriptProviderEnumerator enumerator = scriptManager.enumeratorScriptProviders();
 			DataModelScriptProvider next;
 			while ((next = enumerator.getNext()) != null) {
 				System.out.println(next.getName());
@@ -847,7 +848,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			ModelObject bpts = currentProcess.getKeyValue("Debug").getKeyValue("Breakpoints");
 			List<ModelObject> children = bpts.getElements();
 			for (ModelObject child : children) {
-				//List<ModelObject> gc = child.getChildren();
+				// List<ModelObject> gc = child.getChildren();
 				Map<String, ModelObject> pairs = child.getKeyValueMap();
 				for (String key : pairs.keySet()) {
 					System.out.println(key);
@@ -859,8 +860,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testSymbols() {
-		try (ProcMaker maker =
-			new ProcMaker(client, "c:\\Users\\user\\Desktop\\ConsoleApplication1.exe")) {
+		try (ProcMaker maker = new ProcMaker(client, "c:\\Users\\user\\Desktop\\ConsoleApplication1.exe")) {
 			maker.start();
 
 			DebugSymbols ds = client.getSymbols();
@@ -882,8 +882,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 				System.out.println(symbol0.size());
 
 				try {
-					DebugHostSymbolEnumerator enumerator =
-						module.enumerateChildren(SymbolKind.SYMBOL_PUBLIC, null);
+					DebugHostSymbolEnumerator enumerator = module.enumerateChildren(SymbolKind.SYMBOL_PUBLIC, null);
 					if (enumerator != null) {
 						DebugHostSymbol1 next;
 						int count = 0;
@@ -895,8 +894,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 								try {
 									System.out.println(pub.getLocationKind());
 									System.out.println(pub.getLocation().Offset);
-								}
-								catch (Exception e) {
+								} catch (Exception e) {
 									e.printStackTrace();
 								}
 							}
@@ -905,8 +903,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 						}
 						System.out.println(count);
 					}
-				}
-				catch (Exception e) {
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
@@ -922,19 +919,19 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			System.out.println("Total Modules (by symbol name): " + modules.size());
 
 			// These make assumptions that could be broken later.
-			// It used to expect at least 10 modules (devised when testing on Win7). Now it's 5!
+			// It used to expect at least 10 modules (devised when testing on Win7). Now
+			// it's 5!
 			assertTrue("Fewer than 1000 symbols: " + symbols.size(), symbols.size() > 1000);
 			assertTrue("Fewer than 3 modules: " + modules.size(), modules.size() > 3);
 		}
 	}
 
-	//@Test(expected = COMException.class)
+	// @Test(expected = COMException.class)
 	public void testModuleOutOfBounds() {
 		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
-			DebugModule umod = client.getSymbols()
-					.getModuleByIndex(client.getSymbols().getNumberLoadedModules() + 1);
+			DebugModule umod = client.getSymbols().getModuleByIndex(client.getSymbols().getNumberLoadedModules() + 1);
 			System.out.println(umod.getBase());
 		}
 	}
@@ -951,13 +948,12 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 					try {
 						mod = client.getSymbols().getModuleByOffset(info.baseAddress, 0);
 						name = mod.getName(DebugModuleName.IMAGE);
-					}
-					catch (COMException e) {
+					} catch (COMException e) {
 						name = "[ERR:" + e + "]";
 					}
-					System.out.println(String.format("%016x", info.baseAddress) + ":" +
-						Long.toHexString(info.regionSize) + ":" + info.state + " from " + name +
-						" " + info.type + info.protect);
+					System.out
+							.println(String.format("%016x", info.baseAddress) + ":" + Long.toHexString(info.regionSize)
+									+ ":" + info.state + " from " + name + " " + info.type + info.protect);
 				}
 			}
 		}
@@ -970,7 +966,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 			int count = 0;
 			for (DebugSymbolId symid : client.getSymbols().getSymbolIdsByName("ntdll!*")) {
-				//System.out.println(symid);
+				// System.out.println(symid);
 				DebugSymbolEntry syment = client.getSymbols().getSymbolEntry(symid);
 				if (syment.typeId != 0) {
 					System.out.println("  " + syment);
@@ -982,7 +978,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 		}
 	}
 
-	//@Test
+	// @Test
 	public void testWriteMemory() {
 		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
@@ -990,8 +986,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			// TODO: How to write to protected memory?
 			// Debugger should be able to modify program code.
 			DebugMemoryBasicInformation writable = null;
-			space: for (DebugMemoryBasicInformation info : client.getDataSpaces()
-					.iterateVirtual(0)) {
+			space: for (DebugMemoryBasicInformation info : client.getDataSpaces().iterateVirtual(0)) {
 				for (PageProtection prot : info.protect) {
 					if (prot.isWrite()) {
 						writable = info;
@@ -1018,112 +1013,74 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	/*
-	@Test
-	public void testFreezeUnfreeze() {
-		try (ProcMaker maker = new ProcMaker(client,"notepad")) {
-			maker.start();
-	
-			// Trying to see if any events will help me track frozen threads
-			System.out.println("****Freezing");
-			control.execute("~0 f");
-			System.out.println("****Unfreezing");
-			control.execute("~0 u");
-			System.out.println("****Done");
-			// Well, that result stinks.
-			// There is no event to tell me about frozenness
-		}
-	}
-	*/
+	 * @Test public void testFreezeUnfreeze() { try (ProcMaker maker = new
+	 * ProcMaker(client,"notepad")) { maker.start();
+	 * 
+	 * // Trying to see if any events will help me track frozen threads
+	 * System.out.println("****Freezing"); control.execute("~0 f");
+	 * System.out.println("****Unfreezing"); control.execute("~0 u");
+	 * System.out.println("****Done"); // Well, that result stinks. // There is no
+	 * event to tell me about frozenness } }
+	 */
 
 	/*
-	@Test
-	@Ignore("I can't find a reliable means to detect the last thread. " +
-		"There's supposed to be an initial break, but it is rarely reported. " +
-		"I thought about toolhelp, but that presumes local live debugging.")
-	public void testMultiThreadAttach() throws Exception {
-		// I need to see how to attach to multi-threaded processes. There must be some event
-		// or condition to indicate when all threads have been discovered.
-		String specimen =
-			Application.getOSFile("sctldbgeng", "expCreateThreadSpin.exe").getCanonicalPath();
-		client.setOutputCallbacks(new DebugOutputCallbacks() {
-			@Override
-			public void output(int mask, String text) {
-				System.out.print(text);
-				System.out.flush();
-			}
-		});
-		client.setEventCallbacks(new DebugEventCallbacksAdapter() {
-			@Override
-			public DebugStatus breakpoint(DebugBreakpoint bp) {
-				control.outln("*** Breakpoint: " + bp);
-				return DebugStatus.BREAK;
-			}
-	
-			@Override
-			public DebugStatus exception(DebugExceptionRecord64 exception, boolean firstChance) {
-				control.outln("*** Exception: " + exception + "," + firstChance);
-				return DebugStatus.BREAK;
-			}
-	
-			@Override
-			public DebugStatus createThread(DebugThreadInfo debugThreadInfo) {
-				control.outln("*** CreateThread: " + debugThreadInfo);
-				System.out.println("Threads: " + client.getSystemObjects().getThreads());
-				return DebugStatus.BREAK;
-			}
-	
-			@Override
-			public DebugStatus createProcess(DebugProcessInfo debugProcessInfo) {
-				control.outln("*** CreateProcess: " + debugProcessInfo);
-				System.out.println("Threads: " + client.getSystemObjects().getThreads());
-				return DebugStatus.BREAK;
-			}
-	
-			@Override
-			public DebugStatus exitThread(int exitCode) {
-				control.outln("*** ExitThread: code=" + exitCode + ", " +
-					client.getSystemObjects().getEventThread());
-				System.out.println("Threads: " + client.getSystemObjects().getThreads());
-				return DebugStatus.BREAK;
-			}
-	
-			@Override
-			public DebugStatus exitProcess(int exitCode) {
-				control.outln("*** ExitProcess: code=" + exitCode + ", " +
-					client.getSystemObjects().getEventProcess());
-				System.out.println("Threads: " + client.getSystemObjects().getThreads());
-				return DebugStatus.BREAK;
-			}
-	
-			@Override
-			public DebugStatus changeEngineState(BitmaskSet<ChangeEngineState> flags,
-					long argument) {
-				if (flags.contains(ChangeEngineState.EXECUTION_STATUS)) {
-					control.outln("*** ExecutionStatus: " + control.getExecutionStatus());
-				}
-				return DebugStatus.NO_CHANGE;
-			}
-		});
-		try (DummyProc proc = new DummyProc(specimen)) {
-			System.out.println("Started " + specimen + " with PID=" + proc.pid);
-			Thread.sleep(1000);
-			System.out.println("Attaching...");
-			client.attachProcess(client.getLocalServer(), proc.pid, BitmaskSet.of());
-			if (true) {
-				for (int i = 0; i < 10; i++) {
-					System.out.println("WAIT " + i + "...");
-					control.waitForEvent(100);
-					System.out.println("STATUS: " + control.getExecutionStatus());
-					System.out.println("DONE " + i);
-					// control.execute("~*");
-				}
-			}
-		}
-		finally {
-			client.setEventCallbacks(null);
-		}
-	}
-	*/
+	 * @Test
+	 * 
+	 * @Ignore("I can't find a reliable means to detect the last thread. " +
+	 * "There's supposed to be an initial break, but it is rarely reported. " +
+	 * "I thought about toolhelp, but that presumes local live debugging.") public
+	 * void testMultiThreadAttach() throws Exception { // I need to see how to
+	 * attach to multi-threaded processes. There must be some event // or condition
+	 * to indicate when all threads have been discovered. String specimen =
+	 * Application.getOSFile("sctldbgeng",
+	 * "expCreateThreadSpin.exe").getCanonicalPath(); client.setOutputCallbacks(new
+	 * DebugOutputCallbacks() {
+	 * 
+	 * @Override public void output(int mask, String text) { System.out.print(text);
+	 * System.out.flush(); } }); client.setEventCallbacks(new
+	 * DebugEventCallbacksAdapter() {
+	 * 
+	 * @Override public DebugStatus breakpoint(DebugBreakpoint bp) {
+	 * control.outln("*** Breakpoint: " + bp); return DebugStatus.BREAK; }
+	 * 
+	 * @Override public DebugStatus exception(DebugExceptionRecord64 exception,
+	 * boolean firstChance) { control.outln("*** Exception: " + exception + "," +
+	 * firstChance); return DebugStatus.BREAK; }
+	 * 
+	 * @Override public DebugStatus createThread(DebugThreadInfo debugThreadInfo) {
+	 * control.outln("*** CreateThread: " + debugThreadInfo);
+	 * System.out.println("Threads: " + client.getSystemObjects().getThreads());
+	 * return DebugStatus.BREAK; }
+	 * 
+	 * @Override public DebugStatus createProcess(DebugProcessInfo debugProcessInfo)
+	 * { control.outln("*** CreateProcess: " + debugProcessInfo);
+	 * System.out.println("Threads: " + client.getSystemObjects().getThreads());
+	 * return DebugStatus.BREAK; }
+	 * 
+	 * @Override public DebugStatus exitThread(int exitCode) {
+	 * control.outln("*** ExitThread: code=" + exitCode + ", " +
+	 * client.getSystemObjects().getEventThread()); System.out.println("Threads: " +
+	 * client.getSystemObjects().getThreads()); return DebugStatus.BREAK; }
+	 * 
+	 * @Override public DebugStatus exitProcess(int exitCode) {
+	 * control.outln("*** ExitProcess: code=" + exitCode + ", " +
+	 * client.getSystemObjects().getEventProcess()); System.out.println("Threads: "
+	 * + client.getSystemObjects().getThreads()); return DebugStatus.BREAK; }
+	 * 
+	 * @Override public DebugStatus changeEngineState(BitmaskSet<ChangeEngineState>
+	 * flags, long argument) { if
+	 * (flags.contains(ChangeEngineState.EXECUTION_STATUS)) {
+	 * control.outln("*** ExecutionStatus: " + control.getExecutionStatus()); }
+	 * return DebugStatus.NO_CHANGE; } }); try (DummyProc proc = new
+	 * DummyProc(specimen)) { System.out.println("Started " + specimen +
+	 * " with PID=" + proc.pid); Thread.sleep(1000);
+	 * System.out.println("Attaching...");
+	 * client.attachProcess(client.getLocalServer(), proc.pid, BitmaskSet.of()); if
+	 * (true) { for (int i = 0; i < 10; i++) { System.out.println("WAIT " + i +
+	 * "..."); control.waitForEvent(100); System.out.println("STATUS: " +
+	 * control.getExecutionStatus()); System.out.println("DONE " + i); //
+	 * control.execute("~*"); } } } finally { client.setEventCallbacks(null); } }
+	 */
 
 	@Test
 	public void testPrompt() throws Exception {

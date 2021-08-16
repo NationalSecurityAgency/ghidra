@@ -24,47 +24,34 @@ import org.jgrapht.nio.AttributeType;
 import org.jgrapht.nio.DefaultAttribute;
 import org.jgrapht.nio.graphml.GraphMLExporter;
 
-import ghidra.service.graph.*;
+import ghidra.service.graph.Attributed;
+import ghidra.service.graph.AttributedEdge;
+import ghidra.service.graph.AttributedGraph;
+import ghidra.service.graph.AttributedVertex;
 
 public class GraphMlGraphExporter extends AbstractAttributedGraphExporter {
 
 	@Override
 	public void exportGraph(AttributedGraph graph, File file) throws IOException {
-		GraphMLExporter<AttributedVertex, AttributedEdge> exporter =
-				new GraphMLExporter<>(vertexIdProvider);
+		GraphMLExporter<AttributedVertex, AttributedEdge> exporter = new GraphMLExporter<>(vertexIdProvider);
 
 		exporter.setEdgeIdProvider(edgeIdProvider);
-		exporter.setVertexAttributeProvider(
-				vertex -> vertex.entrySet()
-						.stream()
-						.collect(
-								Collectors.toMap(
-										Map.Entry::getKey,
-										entry -> new DefaultAttribute(entry.getValue(), AttributeType.STRING))));
-		exporter.setEdgeAttributeProvider(
-				edge -> edge.entrySet()
-						.stream()
-						.collect(
-								Collectors.toMap(
-										Map.Entry::getKey,
-										entry -> new DefaultAttribute<>(entry.getValue(), AttributeType.STRING))));
+		exporter.setVertexAttributeProvider(vertex -> vertex.entrySet().stream().collect(Collectors
+				.toMap(Map.Entry::getKey, entry -> new DefaultAttribute<>(entry.getValue(), AttributeType.STRING))));
+		exporter.setEdgeAttributeProvider(edge -> edge.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+				entry -> new DefaultAttribute<>(entry.getValue(), AttributeType.STRING))));
 
-		graph.vertexSet().stream()
-				.map(Attributed::getAttributes)
-				.flatMap(m -> m.entrySet().stream())
-				.map(Map.Entry::getKey)
-				.forEach(key -> exporter.registerAttribute(key, GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING));
+		graph.vertexSet().stream().map(Attributed::getAttributes).flatMap(m -> m.entrySet().stream())
+				.map(Map.Entry::getKey).forEach(key -> exporter.registerAttribute(key,
+						GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING));
 
-		graph.edgeSet().stream()
-				.map(Attributed::getAttributes)
-				.flatMap(m -> m.entrySet().stream())
-				.map(Map.Entry::getKey)
-				.forEach(key -> exporter.registerAttribute(key, GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING));
+		graph.edgeSet().stream().map(Attributed::getAttributes).flatMap(m -> m.entrySet().stream())
+				.map(Map.Entry::getKey).forEach(key -> exporter.registerAttribute(key,
+						GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING));
 
 		try {
 			exporter.exportGraph(graph, file);
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			throw new IOException(e);
 		}
 	}

@@ -15,11 +15,27 @@
  */
 package ghidra.feature.vt.gui.filters;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
 
 import docking.DialogComponentProvider;
 import docking.widgets.checkbox.GCheckBox;
@@ -64,7 +80,7 @@ public class TagFilterEditorDialog extends DialogComponentProvider implements Ta
 					return;
 				}
 				if (cellBounds.contains(e.getPoint())) {
-					TagInfo info = (TagInfo) listModel.get(index);
+					TagInfo info = listModel.get(index);
 					info.setIncluded(!info.isIncluded());
 					list.repaint();
 				}
@@ -113,7 +129,7 @@ public class TagFilterEditorDialog extends DialogComponentProvider implements Ta
 		int size = listModel.getSize();
 		Map<String, VTMatchTag> newExcludedTags = new TreeMap<>();
 		for (int i = 0; i < size; i++) {
-			TagInfo info = (TagInfo) listModel.get(i);
+			TagInfo info = listModel.get(i);
 			if (!info.isIncluded()) {
 				VTMatchTag tag = info.getTag();
 				newExcludedTags.put(tag.getName(), tag);
@@ -153,7 +169,7 @@ public class TagFilterEditorDialog extends DialogComponentProvider implements Ta
 // Inner Classes
 //==================================================================================================
 
-	private class TagListModel extends DefaultListModel {
+	private class TagListModel extends DefaultListModel<TagInfo> {
 		TagListModel(Map<String, VTMatchTag> allTags, Map<String, VTMatchTag> excludedTags) {
 			for (Map.Entry<String, VTMatchTag> entry : allTags.entrySet()) {
 				boolean isExcluded = excludedTags.containsKey(entry.getKey());
@@ -199,10 +215,9 @@ public class TagFilterEditorDialog extends DialogComponentProvider implements Ta
 		private GCheckBox checkBox = new GCheckBox();
 
 		@Override
-		public Component getListCellRendererComponent(JList<? extends TagInfo> list, TagInfo value,
-				int index, boolean isSelected, boolean cellHasFocus) {
-			JLabel renderer = (JLabel) super.getListCellRendererComponent(list, value, index,
-				isSelected, cellHasFocus);
+		public Component getListCellRendererComponent(JList<? extends TagInfo> list, TagInfo value, int index,
+				boolean isSelected, boolean cellHasFocus) {
+			JLabel renderer = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
 			checkBox.setSelected(value.isIncluded);
 

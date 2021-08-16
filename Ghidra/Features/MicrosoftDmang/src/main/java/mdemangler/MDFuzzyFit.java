@@ -17,7 +17,9 @@ package mdemangler;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import ghidra.util.Msg;
 import mdemangler.datatype.MDDataType;
@@ -27,11 +29,12 @@ import mdemangler.typeinfo.MDTypeInfo;
 import mdemangler.typeinfo.MDTypeInfoParser;
 
 /**
- * This class is still not used and might be turned into a derivative of the MDMang class.
- * The intention is to have a class that can be used to explore a symbol that cannot currently
- * be parsed into portions of already-recognizable components by trying to apply these
- * components against different offsets within a mangled string.
- * The details of this class are still vague and incomplete.
+ * This class is still not used and might be turned into a derivative of the
+ * MDMang class. The intention is to have a class that can be used to explore a
+ * symbol that cannot currently be parsed into portions of already-recognizable
+ * components by trying to apply these components against different offsets
+ * within a mangled string. The details of this class are still vague and
+ * incomplete.
  */
 // TODO: consider making this an MDMang extension.
 public class MDFuzzyFit {
@@ -72,10 +75,7 @@ public class MDFuzzyFit {
 		Msg.info(this, "Best type location: " + bestTypeLocation);
 
 		StringBuilder outputBuilder = new StringBuilder();
-		if (mangledArg == null) {
-			// errorMessage = "MDMang: Mangled string is null.";
-			return false;
-		}
+
 		MDMang dmang = new MDMang();
 		String substring;
 		int offset = mangledArg.length();
@@ -111,8 +111,7 @@ public class MDFuzzyFit {
 						outputBuilder.append("; Output:");
 						outputBuilder.append(substringDemangled);
 					}
-				}
-				catch (MDException e) {
+				} catch (MDException e) {
 					// errorMessage = e.getMessage();
 					pass = false;
 				}
@@ -149,13 +148,11 @@ public class MDFuzzyFit {
 				if (num == 0) {
 					bestOffset = offset;
 				}
-			}
-			catch (MDException mde) {
+			} catch (MDException mde) {
 				// Ignore for now
 				int a = 1;
 				a = a + 1;
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				// Ignore for now
 				int a = 1;
 				a = a + 1;
@@ -183,13 +180,11 @@ public class MDFuzzyFit {
 				if (num == 0) {
 					bestOffset = offset;
 				}
-			}
-			catch (MDException mde) {
+			} catch (MDException mde) {
 				// Ignore for now
 				int a = 1;
 				a = a + 1;
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				// Ignore for now
 				int a = 1;
 				a = a + 1;
@@ -199,27 +194,23 @@ public class MDFuzzyFit {
 		return bestOffset;
 	}
 
-	private MDParsableItem createItem(Class<? extends MDParsableItem> clazz, MDMang dmang)
-			throws MDException {
+	private MDParsableItem createItem(Class<? extends MDParsableItem> clazz, MDMang dmang) throws MDException {
 		Class<?>[] constructorClassArgs = new Class[1];
 		constructorClassArgs[0] = MDMang.class;
 		Constructor<? extends MDParsableItem> constructor;
 		try {
 			constructor = clazz.getDeclaredConstructor(constructorClassArgs);
-		}
-		catch (SecurityException e) {
-			throw new MDException("Security exception when getting constructor for class: " +
-				clazz.getName() + ": " + e);
-		}
-		catch (NoSuchMethodException e) {
+		} catch (SecurityException e) {
+			throw new MDException(
+					"Security exception when getting constructor for class: " + clazz.getName() + ": " + e);
+		} catch (NoSuchMethodException e) {
 			throw new MDException("Constructor not found for class: " + clazz.getName() + ": " + e);
 		}
 
 		MDParsableItem item;
 		try {
 			item = constructor.newInstance(dmang);
-		}
-		catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException e) {
 			throw new MDException("Cannot create new instance of: " + clazz.getName() + ": " + e);
 		}

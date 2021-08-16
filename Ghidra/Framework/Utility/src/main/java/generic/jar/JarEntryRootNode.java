@@ -30,7 +30,7 @@ public class JarEntryRootNode extends JarEntryNode {
 
 	public JarEntryRootNode(File file, JarEntryFilter filter) throws IOException {
 		super(null, "");
-		jarFile = new JarFile(file);
+		this.jarFile = new JarFile(file);
 		this.file = file;
 		if (filter == null) {
 			filter = new DefaultFilter();
@@ -40,19 +40,19 @@ public class JarEntryRootNode extends JarEntryNode {
 
 	@Override
 	protected JarFile getJarFile() {
-		return jarFile;
+		return this.jarFile;
 	}
 
 	protected File getFile() {
-		return file;
+		return this.file;
 	}
 
 	public URL toURL() throws MalformedURLException {
-		return file.toURI().toURL();
+		return this.file.toURI().toURL();
 	}
 
 	private void createIndex(JarEntryFilter filter) {
-		Enumeration<JarEntry> entries = jarFile.entries();
+		Enumeration<JarEntry> entries = this.jarFile.entries();
 		while (entries.hasMoreElements()) {
 			JarEntry jarEntry = entries.nextElement();
 			if (jarEntry.isDirectory()) {
@@ -74,25 +74,19 @@ public class JarEntryRootNode extends JarEntryNode {
 	}
 
 	private JarEntryNode getOrCreateNode(JarEntryNode node, String name) {
-		return node.createNode(name);  // if already exists, create will return exiting node
+		return node.createNode(name); // if already exists, create will return exiting node
 	}
 
 	private static class DefaultFilter implements JarEntryFilter {
 
+		public DefaultFilter() {
+			// Prevent synthetic accessor from being generated
+		}
+
 		@Override
 		public boolean accepts(JarEntry jarEntry) {
 			String name = jarEntry.getName();
-			if (name.endsWith(".class")) {
-				return false;
-			}
-			if (name.endsWith(".png")) {
-				return false;
-			}
-			if (name.endsWith(".gif")) {
-				return false;
-			}
-			return true;
+			return !(name.endsWith(".class") || name.endsWith(".png") || name.endsWith(".gif"));
 		}
-
 	}
 }

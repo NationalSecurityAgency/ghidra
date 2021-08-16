@@ -18,9 +18,10 @@ package docking.widgets.table.constrainteditor;
 import javax.swing.SpinnerNumberModel;
 
 /**
- * {@link SpinnerNumberModel} that adds checking to make sure setValue is in the allowed range.  Strangely,
- * the default SpinnerNumberModel has min and max values, but does not check except during the
- * increment/decrement using the spinner widget.
+ * {@link SpinnerNumberModel} that adds checking to make sure setValue is in the
+ * allowed range. Strangely, the default SpinnerNumberModel has min and max
+ * values, but does not check except during the increment/decrement using the
+ * spinner widget.
  */
 class BoundedSpinnerNumberModel extends SpinnerNumberModel {
 
@@ -33,8 +34,7 @@ class BoundedSpinnerNumberModel extends SpinnerNumberModel {
 		this(new Integer(value), new Integer(minimum), new Integer(maximum), new Integer(stepSize));
 	}
 
-	public BoundedSpinnerNumberModel(double value, double minimum, double maximum,
-			double stepSize) {
+	public BoundedSpinnerNumberModel(double value, double minimum, double maximum, double stepSize) {
 		this(new Double(value), new Double(minimum), new Double(maximum), new Double(stepSize));
 	}
 
@@ -44,7 +44,7 @@ class BoundedSpinnerNumberModel extends SpinnerNumberModel {
 
 	@Override
 	public void setValue(Object value) {
-		if (value != null && value instanceof Number) {
+		if (value instanceof Number) {
 			Comparable minimum = getMinimum();
 			Comparable maximum = getMaximum();
 
