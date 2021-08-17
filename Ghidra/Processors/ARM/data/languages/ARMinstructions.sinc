@@ -1876,14 +1876,14 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
 #
 #################################################
 
-#See Section 2-13, "Overflow Detection", of Hacker's Delight (2nd ed)
+#See ARM Architecture reference section "Pseudocode details of addition and subtraction"
 macro add_with_carry_flags(op1,op2){
-	tmpCY = ((CY == 0) && carry(op1,op2)) || ((CY == 1) && (op1 >= op1 + op2 + 1:4));
-	local total= op1 + op2 + zext(CY);
-	local sign_total = (total >> 31) != 0;
-	local sign_op1 = (op1 >> 31) != 0;
-	local sign_op2 = (op2 >> 31) != 0;
-	tmpOV = (sign_op1 == sign_op2) && (sign_total != sign_op1);
+local CYz = zext(CY);
+local CYa = carry( op1, op2 );
+local OVa = scarry( op1, op2 );
+local result = op1 + op2;
+tmpCY = CYa || carry( result, CYz );
+tmpOV = OVa ^^ scarry( result, CYz );
 }
 
 :adc^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) &  COND & c2124=5 & SBIT_CZNO & rn & Rd & c2627=0 & shift1

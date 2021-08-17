@@ -49,4 +49,5 @@ PCodeTest.defaults.readelf_exe = 'bin/readelf'
 PCodeTest.defaults.nm_exe = 'bin/nm'
 PCodeTest.defaults.strip_exe = 'bin/strip'
 PCodeTest.defaults.variants = {'O0': '-O0', 'O3': '-O3'}
+PCodeTest.defaults.proc_test = ''
 
