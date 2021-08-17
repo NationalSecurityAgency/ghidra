@@ -350,6 +350,15 @@ srcREG: "PC"		is a=0 & f8=0xf9						{
 
 # Destination register (either srcREG or WREG)
 destREG: "0"	is d=0											{ export WREG; }
+# MOVF POSTDEC1, f causes a double decrement in p-code but not in pic
+# postdec1 is used in this form in function epilog in c18 compiler
+# may be needed for pre as well
+destREG: "1"    is d=1 & a=0 & (f8=0xed | f8=0xee) # postdec0/postinc0
+       { export INDF0; }
+destREG: "1"    is d=1 & a=0 & (f8=0xe5 | f8=0xe6) # postdec1/postinc1
+       { export INDF1; }     
+destREG: "1"    is d=1 & a=0 & (f8=0xdd | f8=0xde) # postdec2/postinc2
+       { export INDF2; }
 destREG: "1"	is d=1 & srcREG									{ export srcREG; }
 #destREG: "1"	is d=1 & f8=0xf9						{ 
 #	# Storing to PCL must write the PC using both the stored PCL (PC<7:0>), PCLATH (PC<15:8>) and PCLATU (PC<21:16>)
