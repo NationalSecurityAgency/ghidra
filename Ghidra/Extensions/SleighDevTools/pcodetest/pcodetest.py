@@ -103,7 +103,10 @@ class PCodeTestBuild(BuildUtil):
 
         # Get a list of strings to filter input files
         available_files = sorted(glob.glob(self.config.format('%(pcodetest_src)s/*')))
-
+        if self.config.proc_test:
+            available_files.extend(sorted(glob.glob(self.config.format('%(pcodetest_src)s/%(proc_test)s/*'))))
+        
+        available_files = [x for x in available_files if not os.path.isdir(x) ]
         # skip any?
         skip_files = self.config.skip_files
         if len(skip_files) > 0:

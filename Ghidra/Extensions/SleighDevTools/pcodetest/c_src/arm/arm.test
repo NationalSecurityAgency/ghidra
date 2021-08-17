@@ -1,0 +1,43 @@
+#include "pcode_test.h"
+ 
+/* This test checks the correct carry flag handling for adc instructions */
+TEST arm_adc_Main()
+{
+	extern u4 u4_adc_carry(u4 a, u4 b, u1 carry);
+	extern u4 u4_adc_overflow(u4 a, u4 b, u1 carry);
+	ASSERTU1(u4_adc_carry(0xffffffff, 0, 1), 1);
+	ASSERTU1(u4_adc_carry(0, 0xffffffff, 1), 1);
+	ASSERTU1(u4_adc_carry(1, 0xffffffff, 1), 1);
+	ASSERTU1(u4_adc_carry(0xffffffff, 1, 1), 1);
+	ASSERTU1(u4_adc_carry(1, 0xfffffffe, 1), 1);
+	ASSERTU1(u4_adc_carry(0xfffffffe, 1, 1), 1);
+	ASSERTU1(u4_adc_carry(0xffffffff, 0, 0), 0);
+	ASSERTU1(u4_adc_carry(0, 0xffffffff, 0), 0);
+	ASSERTU1(u4_adc_carry(1, 0xffffffff, 0), 1);
+	ASSERTU1(u4_adc_carry(0xffffffff, 1, 0), 1);
+	ASSERTU1(u4_adc_carry(1, 0xfffffffe, 0), 0);
+	ASSERTU1(u4_adc_carry(0xfffffffe, 1, 0), 0);
+	ASSERTU1(u4_adc_overflow(0x80000000, 0xffffffff, 1), 0);
+}
+
+/* This test checks the correct carry flag handling for sbc instructions */
+TEST arm_sbc_Main()
+{
+	extern u4 u4_sbc_carry(i4 a, i4 b, u1 carry);
+	ASSERTU1(u4_sbc_carry(-1, 0, 0), 1);
+	ASSERTU1(u4_sbc_carry(0, 0x7fffffff, 0), 0);
+	ASSERTU1(u4_sbc_carry(-1, 0x7fffffff, 0), 1);
+	ASSERTU1(u4_sbc_carry(-1, 1, 1), 1);
+	ASSERTU1(u4_sbc_carry(1, 1, 1), 1);
+	ASSERTU1(u4_sbc_carry(-1, 1, 1), 1);
+	
+	extern i4 i4_sbc(i4 a, i4 b, u1 carry);
+	ASSERTU1(i4_sbc(0, 0, 0), -1);
+	ASSERTU1(i4_sbc(-1, 0, 0), -2);
+	ASSERTU1(i4_sbc(0, 0, 1), 0);
+	ASSERTU1(i4_sbc(0, 1, 1), -1);
+	ASSERTU1(i4_sbc(2, 1, 0), 0);
+}
+
+
+MAIN asm_main() { }
