@@ -1,0 +1,17 @@
+apply plugin: 'eclipse'
+eclipse.project.name = '_NativeSupport'
+
+rootProject.assembleDistribution {
+	from (this.project.projectDir) {
+		include "settings.gradle"
+		include "buildGhidra.gradle"
+		rename "buildGhidra.gradle", "build.gradle"
+		into "Ghidra"
+	}
+	from (this.project.projectDir) {
+		include "settings.gradle"
+		include "buildGPL.gradle"
+		rename "buildGPL.gradle", "build.gradle"
+		into "GPL"
+	}
+}

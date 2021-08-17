@@ -1,0 +1,5 @@
+
+// Include files necessary to build natives from a distribution's "GPL" directory
+apply from: "utils.gradle"
+apply from: "nativePlatforms.gradle"
+apply from: "nativeBuildProperties.gradle"

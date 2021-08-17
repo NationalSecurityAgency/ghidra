@@ -352,6 +352,7 @@ task assembleDistribution (type: Copy) {
 	from (ROOT_PROJECT_DIR + "/GhidraBuild/patch") {
 		into "Ghidra/patch"
 	}
+
 }
 
 /*********************************************************************************

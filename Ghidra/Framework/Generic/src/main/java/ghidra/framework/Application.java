@@ -470,13 +470,23 @@ public class Application {
 				exactFilename);
 		}
 
-		// Allow win32 to be used for win64 as fallback
+		// Allow win_x86_32 to be used for win_x86_64 as fallback
 		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
 			file = getModuleFile(module, "build/os/" + Platform.WIN_X86_32.getDirectoryName(),
 				exactFilename);
 		}
 		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
 			file = getModuleFile(module, "os/" + Platform.WIN_X86_32.getDirectoryName(),
+				exactFilename);
+		}
+		
+		// Allow mac_x86_64 to be used for mac_arm_64 as fallback (requires macOS Rosetta 2)
+		if (file == null && Platform.CURRENT_PLATFORM == Platform.MAC_ARM_64) {
+			file = getModuleFile(module, "build/os/" + Platform.MAC_X86_64.getDirectoryName(),
+				exactFilename);
+		}
+		if (file == null && Platform.CURRENT_PLATFORM == Platform.MAC_ARM_64) {
+			file = getModuleFile(module, "os/" + Platform.MAC_X86_64.getDirectoryName(),
 				exactFilename);
 		}
 
@@ -506,12 +516,20 @@ public class Application {
 			file = findModuleFile("os/" + Platform.CURRENT_PLATFORM.getDirectoryName(), path);
 		}
 
-		// Allow win32 to be used for win64 as fallback
+		// Allow win_x86_32 to be used for win_x86_64 as fallback
 		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
 			file = findModuleFile("build/os/" + Platform.WIN_X86_32.getDirectoryName(), path);
 		}
 		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
 			file = findModuleFile("os/" + Platform.WIN_X86_32.getDirectoryName(), path);
+		}
+		
+		// Allow mac_x86_64 to be used for mac_arm_64 as fallback (requires macOS Rosetta 2)
+		if (file == null && Platform.CURRENT_PLATFORM == Platform.MAC_ARM_64) {
+			file = findModuleFile("build/os/" + Platform.MAC_X86_64.getDirectoryName(), path);
+		}
+		if (file == null && Platform.CURRENT_PLATFORM == Platform.MAC_ARM_64) {
+			file = findModuleFile("os/" + Platform.MAC_X86_64.getDirectoryName(), path);
 		}
 
 		if (file == null) {

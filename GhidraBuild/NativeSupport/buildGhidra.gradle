@@ -1,0 +1,5 @@
+
+// Include files necessary to build natives from a distribution's "Ghidra" directory
+apply from: "../GPL/utils.gradle"
+apply from: "../GPL/nativePlatforms.gradle"
+apply from: "../GPL/nativeBuildProperties.gradle"

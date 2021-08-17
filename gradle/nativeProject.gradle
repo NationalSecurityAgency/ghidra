@@ -26,3 +26,27 @@
 
 def projectRootDir = rootProject.projectDir.path
 apply from: "$projectRootDir/GPL/nativeBuildProperties.gradle"
+
+// Include and rename native projects' buildNative.gradle files to build.gradle in the distribution
+// so a user can build or rebuild natives for their specific platform.
+// NOTE: GPL projects' build.gradle files are already written to build their natives from a release,
+// so we can just include their build.gradle as as-is.  
+rootProject.assembleDistribution {
+	def p = this.project
+	def zipPath = getZipPath(p)
+	
+	from (p.projectDir.toString()) {
+		if (p.projectDir.parentFile.name == "GPL") {
+			include "build.gradle"
+		}
+		else {
+			include "buildNatives.gradle"
+			rename "buildNatives.gradle", "build.gradle"
+		}
+		include "src/**"
+		exclude "src/main/**"
+		exclude "src/test/**"
+		exclude "src/test.slow/**"
+		into  { zipPath }
+	}
+}
