@@ -37,8 +37,8 @@ public class GraphDisplayOptionsTest {
 
 	@Before
 	public void setUp() {
-		List<String> vertexTypes = Arrays.asList("V1", "V2", "V3" );
-		List<String> edgeTypes = Arrays.asList("E1", "E2", "E3" );
+		List<String> vertexTypes = Arrays.asList("V1", "V2", "V3");
+		List<String> edgeTypes = Arrays.asList("E1", "E2", "E3");
 		graphType = new GraphType("Test", "Test Description", vertexTypes, edgeTypes);
 		options = new GraphDisplayOptions(graphType);
 	}
@@ -217,7 +217,6 @@ public class GraphDisplayOptionsTest {
 		assertEquals(VertexShape.STAR, options.getVertexShape("V1"));
 	}
 
-
 	@Test
 	public void testGetEdgeColorForType() {
 		assertEquals(options.getDefaultEdgeColor(), options.getEdgeColor("V1"));
@@ -252,8 +251,8 @@ public class GraphDisplayOptionsTest {
 		assertEquals(options.getDefaultEdgeColor(),
 			edgeColorOptions.getColor("E1", Color.WHITE));
 
-		Options miscellaniousOptions = graphDisplayOptions.getOptions("Miscellanious");
-		leafOptionNames = miscellaniousOptions.getLeafOptionNames();
+		Options miscellaneousOptions = graphDisplayOptions.getOptions("Miscellaneous");
+		leafOptionNames = miscellaneousOptions.getLeafOptionNames();
 		assertEquals(Arrays.asList("Use Icons", "Selected Vertex Color", "Default Layout Algorithm",
 			"Default Vertex Color", "Default Vertex Shape", "Selected Edge Color", "Label Position",
 			"Default Edge Color", "Font", "Favored Edge Type"), leafOptionNames);
