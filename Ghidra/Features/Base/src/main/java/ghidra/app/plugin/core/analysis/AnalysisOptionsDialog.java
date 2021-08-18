@@ -56,7 +56,7 @@ public class AnalysisOptionsDialog extends DialogComponentProvider
 		super("Analysis Options");
 		setHelpLocation(new HelpLocation("AutoAnalysisPlugin", "AnalysisOptions"));
 		panel = new AnalysisPanel(programs, editorStateFactory, this);
-
+		panel.setToLastUsedAnalysisOptionsIfProgramNotAnalyzed();
 		addWorkPanel(panel);
 		addOKButton();
 		addCancelButton();
