@@ -24,16 +24,14 @@ import ghidra.framework.client.*;
 import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.remote.User;
+import ghidra.framework.store.*;
 import ghidra.framework.store.FileSystem;
-import ghidra.framework.store.FileSystemListener;
-import ghidra.framework.store.FolderItem;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.framework.store.remote.RemoteFileSystem;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateFileException;
-import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.*;
 import utilities.util.FileUtilities;
 
 /**
@@ -143,9 +141,6 @@ public class ProjectFileManager implements ProjectData {
 		}
 	}
 
-	/**
-	 * Constructor used for testing
-	 */
 	ProjectFileManager(LocalFileSystem fileSystem, FileSystem versionedFileSystem) {
 		this.localStorageLocator = new ProjectLocator(null, "Test");
 		owner = SystemUtilities.getUserName();
@@ -208,9 +203,6 @@ public class ProjectFileManager implements ProjectData {
 		fileSystem.testValidName(name, isPath);
 	}
 
-	/**
-	 * @see ghidra.framework.model.ProjectData#getUser()
-	 */
 	@Override
 	public User getUser() {
 		if (repository != null) {
@@ -386,17 +378,11 @@ public class ProjectFileManager implements ProjectData {
 		return owner;
 	}
 
-	/**
-	 * @see ghidra.framework.model.ProjectData#getRootFolder()
-	 */
 	@Override
 	public GhidraFolder getRootFolder() {
 		return rootFolderData.getDomainFolder();
 	}
 
-	/**
-	 * @see ghidra.framework.model.ProjectData#getFolder(java.lang.String)
-	 */
 	@Override
 	public DomainFolder getFolder(String path) {
 		int len = path.length();
@@ -429,9 +415,8 @@ public class ProjectFileManager implements ProjectData {
 			}
 		}
 
-		// NOTE: we can't distinguish between files represented
-		// in both file counts so we will return the larger of
-		// the two counts obtained.
+		// NOTE: we can't distinguish between files represented in both file counts so we will 
+		// return the larger of the two counts obtained.
 
 		int privateFileCnt = -1;
 		try {
@@ -452,9 +437,6 @@ public class ProjectFileManager implements ProjectData {
 		return Math.max(sharedFileCnt, privateFileCnt);
 	}
 
-	/**
-	 * @see ghidra.framework.model.ProjectData#getFile(java.lang.String)
-	 */
 	@Override
 	public DomainFile getFile(String path) {
 		int len = path.length();
@@ -480,17 +462,11 @@ public class ProjectFileManager implements ProjectData {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.framework.model.ProjectData#getFileByID(java.lang.String)
-	 */
 	@Override
 	public DomainFile getFileByID(String fileID) {
 		return fileIndex.getFileByID(fileID);
 	}
 
-	/**
-	 * @see ghidra.framework.model.ProjectData#getSharedFileURL(java.lang.String)
-	 */
 	@Override
 	public URL getSharedFileURL(String path) {
 		if (repository != null) {
@@ -504,10 +480,6 @@ public class ProjectFileManager implements ProjectData {
 		return null;
 	}
 
-	/**
-	 * Releases all domain files for the specified consumer.
-	 * @param consumer the domain object consumer
-	 */
 	public void releaseDomainFiles(Object consumer) {
 		for (DomainObjectAdapter domainObj : openDomainObjects.values()) {
 			try {
@@ -522,8 +494,7 @@ public class ProjectFileManager implements ProjectData {
 	}
 
 	/**
-	 * Finds all changed domain files and appends
-	 * them to the specified list.
+	 * Finds all changed domain files and appends them to the specified list.
 	 * @param list the list to receive the changed domain files
 	 */
 	@Override
@@ -533,52 +504,30 @@ public class ProjectFileManager implements ProjectData {
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.model.ProjectData#getProjectLocator()
-	 */
 	@Override
 	public ProjectLocator getProjectLocator() {
 		return localStorageLocator;
 	}
 
-	/**
-	 * @see ghidra.framework.model.ProjectData#addDomainFolderChangeListener(
-	 * 											ghidra.framework.model.DomainFolderChangeListener)
-	 */
 	@Override
 	public void addDomainFolderChangeListener(DomainFolderChangeListener l) {
 		listenerList.addListener(l);
 	}
 
-	/**
-	 * @see ghidra.framework.model.ProjectData#removeDomainFolderChangeListener(
-	 * 											ghidra.framework.model.DomainFolderChangeListener)
-	 */
 	@Override
 	public void removeDomainFolderChangeListener(DomainFolderChangeListener l) {
 		listenerList.removeListener(l);
 	}
 
-	/**
-	 * Returns the private files system associated with this project file manager.
-	 * @return the private files system associated with this project file manager
-	 */
 	public FileSystem getPrivateFileSystem() {
 		return fileSystem;
 	}
 
-	/**
-	 * Returns the repository associated with this project file manager.
-	 * @return the repository associated with this project file manager
-	 */
 	@Override
 	public RepositoryAdapter getRepository() {
 		return repository;
 	}
 
-	/**
-	 * @see ghidra.framework.model.ProjectData#refresh(boolean)
-	 */
 	@Override
 	public void refresh(boolean force) throws IOException {
 		try {
@@ -589,12 +538,6 @@ public class ProjectFileManager implements ProjectData {
 		}
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.framework.model.ProjectData#convertProjectToShared(
-	 * 											ghidra.framework.client.RepositoryAdapter, 
-	 * 											ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void convertProjectToShared(RepositoryAdapter newRepository, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -607,7 +550,7 @@ public class ProjectFileManager implements ProjectData {
 			throw new IllegalStateException("Only private project may be converted to shared");
 		}
 
-		// 1) Convert versioned files (inclulding checked-out files) to private files
+		// 1) Convert versioned files (including checked-out files) to private files
 		convertFilesToPrivate(getRootFolder(), monitor);
 
 		// 2) Update the properties with server info
@@ -621,12 +564,6 @@ public class ProjectFileManager implements ProjectData {
 		FileUtilities.deleteDir(versionedFileSystemDir);
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.framework.model.ProjectData#updateRepositoryInfo(
-	 * 											ghidra.framework.client.RepositoryAdapter, 
-	 * 											ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void updateRepositoryInfo(RepositoryAdapter newRepository, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -641,20 +578,20 @@ public class ProjectFileManager implements ProjectData {
 			throws IOException, CancelledException {
 
 		DomainFile[] files = folder.getFiles();
-		for (int i = 0; i < files.length; i++) {
+		for (DomainFile file : files) {
 			if (monitor.isCancelled()) {
 				throw new CancelledException();
 			}
-			if (files[i].isCheckedOut()) {
-				throw new IOException("File " + files[i].getPathname() + " is checked out.");
+			if (file.isCheckedOut()) {
+				throw new IOException("File " + file.getPathname() + " is checked out.");
 			}
 		}
 		DomainFolder[] folders = folder.getFolders();
-		for (int i = 0; i < folders.length; i++) {
+		for (DomainFolder folder2 : folders) {
 			if (monitor.isCancelled()) {
 				throw new CancelledException();
 			}
-			findCheckedOutFiles(folders[i], monitor);
+			findCheckedOutFiles(folder2, monitor);
 		}
 	}
 
@@ -662,12 +599,12 @@ public class ProjectFileManager implements ProjectData {
 			throws IOException, CancelledException {
 
 		DomainFile[] files = folder.getFiles();
-		for (int i = 0; i < files.length; i++) {
-			((GhidraFile) files[i]).convertToPrivateFile(monitor);
+		for (DomainFile file : files) {
+			((GhidraFile) file).convertToPrivateFile(monitor);
 		}
 		DomainFolder[] folders = folder.getFolders();
-		for (int i = 0; i < folders.length; i++) {
-			convertFilesToPrivate(folders[i], monitor);
+		for (DomainFolder folder2 : folders) {
+			convertFilesToPrivate(folder2, monitor);
 		}
 	}
 
@@ -902,12 +839,32 @@ public class ProjectFileManager implements ProjectData {
 
 		@Override
 		public void syncronize() {
+
+			if (SystemUtilities.isInHeadlessMode()) {
+				doSynchronize();
+				return;
+			}
+
+			try {
+
+				FileSystemSynchronizer.setSynchronizing(true);
+
+				// This operation can hold a lock for a long period.  Block with a modal dialog to
+				// prevent UI live lock situations.
+				TaskLauncher.launchModal("Synchronizing Filesystem", this::doSynchronize);
+			}
+			finally {
+				FileSystemSynchronizer.setSynchronizing(false);
+			}
+		}
+
+		private void doSynchronize() {
 			try {
 				rootFolderData.refresh(true, true, projectDisposalMonitor);
 				scheduleUserDataReconcilation();
 			}
 			catch (Exception e) {
-				// ignore
+				Msg.trace(this, "Exception synchronizing filesystem", e);
 			}
 		}
 	}
@@ -929,9 +886,6 @@ public class ProjectFileManager implements ProjectData {
 		return buf.length() == 0 ? "unknown" : buf.toString();
 	}
 
-	/**
-	 * Return the project directory.
-	 */
 	public File getProjectDir() {
 		return projectDir;
 	}
@@ -941,9 +895,6 @@ public class ProjectFileManager implements ProjectData {
 		dispose();
 	}
 
-	/**
-	 * Disposes this project file manager.
-	 */
 	public void dispose() {
 
 		synchronized (this) {
@@ -978,12 +929,11 @@ public class ProjectFileManager implements ProjectData {
 
 	/**
 	 * Set the open domain object (opened for update) associated with a file. 
-	 * NOTE: Caller is responsible for setting domain file on domain object after
-	 * invoking this method.
-	 * If a domain object saveAs was done, the previous file association 
+	 * NOTE: Caller is responsible for setting domain file on domain object after invoking this 
+	 * method. If a domain object saveAs was done, the previous file association 
 	 * will be removed.
-	 * @param pathname
-	 * @param doa
+	 * @param pathname the path name
+	 * @param doa the domain object
 	 */
 	synchronized void setDomainObject(String pathname, DomainObjectAdapter doa) {
 		if (openDomainObjects.containsKey(pathname)) {
@@ -998,7 +948,8 @@ public class ProjectFileManager implements ProjectData {
 
 	/**
 	 * Returns the open domain object (opened for update) for the specified path.
-	 * @param pathname
+	 * @param pathname the path name
+	 * @return the domain object
 	 */
 	synchronized DomainObjectAdapter getOpenedDomainObject(String pathname) {
 		return openDomainObjects.get(pathname);
@@ -1006,7 +957,7 @@ public class ProjectFileManager implements ProjectData {
 
 	/**
 	 * Clears the previously open domain object which has been closed.
-	 * @param pathname
+	 * @param pathname the path name
 	 * @return true if previously open domain file was cleared, else false
 	 */
 	synchronized boolean clearDomainObject(String pathname) {
@@ -1028,7 +979,7 @@ public class ProjectFileManager implements ProjectData {
 
 	/**
 	 * Remove specified fileID from index.
-	 * @param fileID
+	 * @param fileID the file ID
 	 */
 	public void removeFromIndex(String fileID) {
 		fileIndex.removeFileEntry(fileID);
@@ -1041,5 +992,4 @@ public class ProjectFileManager implements ProjectData {
 	public TaskMonitor getProjectDisposalMonitor() {
 		return projectDisposalMonitor;
 	}
-
 }

@@ -115,5 +115,4 @@ public interface DomainFolderChangeListener {
 	 * @param object domain object which was open for update
 	 */
 	public void domainFileObjectClosed(DomainFile file, DomainObject object);
-
 }
