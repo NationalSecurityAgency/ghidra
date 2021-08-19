@@ -413,7 +413,7 @@ public class FileHeader implements StructConverter {
 
 		long oldIndex = reader.getPointerIndex();
 
-		int start = irfeHeader.getPointerToRawData();
+		int start = ntHeader.rvaToPointer(irfeHeader.getVirtualAddress());
 		reader.setPointerIndex(start);
 
 		ImageRuntimeFunctionEntries entries =
