@@ -15,12 +15,13 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf4.attribs.DWARFAttributeValue;
@@ -584,13 +585,13 @@ public class DWARFUtil {
 	 * 
 	 * @param reader {@link BinaryReader} stream to read from
 	 * @param program Ghidra {@link Program} 
-	 * @return new {@link LengthResult}, never null
+	 * @return new {@link LengthResult}, never null; length == 0 should be checked for and treated
+	 * specially
 	 * @throws IOException if io error
 	 * @throws DWARFException if invalid values
 	 */
 	public static LengthResult readLength(BinaryReader reader, Program program)
 			throws IOException, DWARFException {
-		long startOffset = reader.getPointerIndex();
 		long length = reader.readNextUnsignedInt();
 		int format;
 
@@ -617,8 +618,8 @@ public class DWARFUtil {
 				format = DWARFCompilationUnit.DWARF_64;
 			}
 			else {
-				throw new DWARFException(
-					"Invalid DWARF length 0 at 0x" + Long.toHexString(startOffset));
+				// length 0 signals an error to caller
+				format = DWARFCompilationUnit.DWARF_32; // doesn't matter
 			}
 		}
 		else {
