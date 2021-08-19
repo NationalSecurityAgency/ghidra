@@ -16,7 +16,7 @@
 package ghidra.framework.model;
 
 import java.io.*;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.Icon;
@@ -28,10 +28,10 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * <code>DomainFile</code> provides a storage interface for project
- * files.  A <code>DomainFile</code> is an immutable reference to 
- * a file contained within a project.  The state of a <code>DomainFile</code>
- * object does not track name/parent changes made to the referenced project file.
+ * <code>DomainFile</code> provides a storage interface for project files.  A 
+ * <code>DomainFile</code> is an immutable reference to file contained within a project.  The state 
+ * of a <code>DomainFile</code> object does not track name/parent changes made to the referenced 
+ * project file.
  */
 public interface DomainFile extends Comparable<DomainFile> {
 
@@ -48,8 +48,8 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public final static String READ_ONLY_PROPERTY = "READ_ONLY";
 
 	/**
-	 * Get the name of the StoredObj that is associated with
-	 * the data.
+	 * Get the name of  the StoredObj that is associated with the data.
+	 * @return the name
 	 */
 	public String getName();
 
@@ -61,7 +61,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 
 	/**
 	 * Returns a unique file-ID 
-	 * @return
+	 * @return the ID
 	 */
 	public String getFileID();
 
@@ -79,27 +79,31 @@ public interface DomainFile extends Comparable<DomainFile> {
 
 	/**
 	 * Returns the path name to the domain object.
+	 * @return the path name
 	 */
 	public String getPathname();
 
 	/**
 	 * Returns the local storage location for the project that this DomainFile belongs to.
+	 * @return the location
 	 */
 	public ProjectLocator getProjectLocator();
 
 	/**
 	 * Returns content-type string
+	 * @return the content type
 	 */
 	public String getContentType();
 
 	/**
-	 * Returns the underlying Class for the domain object in this
-	 * domain file.
+	 * Returns the underlying Class for the domain object in this domain file.
+	 * @return the class
 	 */
 	public Class<? extends DomainObject> getDomainObjectClass();
 
 	/**
 	 * Get the parent domain folder for this domain file.
+	 * @return the parent
 	 */
 	public DomainFolder getParent();
 
@@ -210,21 +214,23 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public boolean canRecover();
 
 	/**
-	 * If the file has an updateable domain object with unsaved changes, generate a
-	 * recovery snapshot.
-	 * @return true if snapshot successful or not needed, false if file is busy
-	 * which prevents snapshot, or snapshot was cancelled.
-	 * @throws IOException
+	 * If the file has an updatable domain object with unsaved changes, generate a recovery 
+	 * snapshot.
+	 * @return true if snapshot successful or not needed, false if file is busy which prevents 
+	 * snapshot, or snapshot was cancelled.
+	 * @throws IOException if there is an exception saving the snapshot
 	 */
 	public boolean takeRecoverySnapshot() throws IOException;
 
 	/**
 	 *  Returns true if this file is in a writable project.
+	 * @return true if writable
 	 */
 	public boolean isInWritableProject();
 
 	/**
 	 * Get a long value representing the time when the data was last modified.
+	 * @return the time
 	 */
 	public long getLastModifiedTime();
 
@@ -238,39 +244,44 @@ public interface DomainFile extends Comparable<DomainFile> {
 
 	/**
 	 * Returns true if this is a checked-out file.
+	 * @return true if checked-out
 	 */
 	public boolean isCheckedOut();
 
 	/**
 	 * Returns true if this a checked-out file with exclusive access.
+	 * @return true if checked-out exclusively
 	 */
 	public boolean isCheckedOutExclusive();
 
 	/**
-	 * Returns true if this is a checked-out file which has been modified
-	 * since it was checked-out.
+	 * Returns true if this is a checked-out file which has been modified since it was checked-out.
+	 * @return true if modified since check-out
 	 */
 	public boolean modifiedSinceCheckout();
 
 	/**
 	 * Returns true if this file may be checked-out from the associated repository.
 	 * User's with read-only repository access will not have checkout ability.
+	 * @return true if can checkout
 	 */
 	public boolean canCheckout();
 
 	/**
 	 * Returns true if this file may be checked-in to the associated repository.
+	 * @return true if can check-in
 	 */
 	public boolean canCheckin();
 
 	/**
 	 * Returns true if this file can be merged with the current versioned file.
+	 * @return true if can merge
 	 */
 	public boolean canMerge();
 
 	/**
-	 * Returns true if this private file may be added to the
-	 * associated repository.
+	 * Returns true if this private file may be added to the associated repository.
+	 * @return true if can add to the repository
 	 */
 	public boolean canAddToRepository();
 
@@ -284,47 +295,53 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public void setReadOnly(boolean state) throws IOException;
 
 	/**
-	 * Returns whether the object is read-only. From a
-	 * framework point of view a read-only object can never be
-	 * changed.
+	 * Returns whether the object is read-only. From a framework point of view a read-only object 
+	 * can never be changed.
+	 * @return true if read-only
 	 */
 	public boolean isReadOnly();
 
 	/**
-	 * Returns true if the versioned filesystem can be used to store
-	 * this files content type.
+	 * Returns true if the versioned filesystem can be used to store this files content type.
+	 * @return true if supports version control
 	 */
 	public boolean isVersionControlSupported();
 
 	/**
 	 * Return true if this is a versioned database, else false
+	 * @return true if versioned
 	 */
 	public boolean isVersioned();
 
 	/**
 	 * Returns true if the file is versioned but a private copy also exists.
+	 * @return true if hijacked
 	 */
 	public boolean isHijacked();
 
 	/**
 	 * Return the latest version
+	 * @return the version
 	 */
 	public int getLatestVersion();
 
 	/**
-	 * Returns true if this file represents the latest version of the 
-	 * associated domain object.
+	 * Returns true if this file represents the latest version of the associated domain object.
+	 * @return true if the latest version
 	 */
 	public boolean isLatestVersion();
 
 	/**
 	 * Return either the latest version if the file is not checked-out or the version that
 	 * was checked-out or a specific version that was requested.
+	 * @return the version
 	 */
 	public int getVersion();
 
 	/**
 	 * Returns list of all available versions.
+	 * @return the versions
+	 * @throws IOException if there is an exception getting the history
 	 */
 	public Version[] getVersionHistory() throws IOException;
 
@@ -334,8 +351,8 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * @param keepCheckedOut if true, the file will be initially checked-out
 	 * @param monitor progress monitor
 	 * @throws FileInUseException if this file is in-use.
-	 * @throws IOException thrown if an IO or access error occurs.  Also
-	 * thrown if file is not private.
+	 * @throws IOException thrown if an IO or access error occurs.  Also thrown if file is not 
+	 * private.
 	 * @throws CancelledException if the monitor cancelled the operation
 	 */
 	public void addToVersionControl(String comment, boolean keepCheckedOut, TaskMonitor monitor)
@@ -393,7 +410,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 
 	/**
 	 * Forcefully terminate a checkout for the associated versioned file.
-	 * The user must be the owner of the checkout or have admin privilege
+	 * The user must be the owner of the checkout or have administrator privilege
 	 * on the versioned filesystem (i.e., repository).
 	 * @param checkoutId checkout ID
 	 * @throws IOException if an IO or access error occurs
@@ -456,7 +473,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * @throws IOException thrown if an IO or access error occurs.
 	 * @throws CancelledException if task monitor cancelled operation.
 	 */
-	DomainFile copyTo(DomainFolder newParent, TaskMonitor monitor)
+	public DomainFile copyTo(DomainFolder newParent, TaskMonitor monitor)
 			throws IOException, CancelledException;
 
 	/**
@@ -464,47 +481,53 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * @param version version to copy
 	 * @param destFolder destination parent folder
 	 * @param monitor task monitor
+	 * @return the copied file
 	 * @throws IOException thrown if an IO or access error occurs.
 	 * @throws CancelledException if task monitor cancelled operation.
 	 */
-	DomainFile copyVersionTo(int version, DomainFolder destFolder, TaskMonitor monitor)
+	public DomainFile copyVersionTo(int version, DomainFolder destFolder, TaskMonitor monitor)
 			throws IOException, CancelledException;
 
 	/**
 	 * Get the list of consumers (Objects) for this domain file.
 	 * @return empty array list if there are no consumers
 	 */
-	ArrayList<?> getConsumers();
+	public List<?> getConsumers();
 
 	/**
 	 * Return whether the domain object in this domain file has changed.
+	 * @return true if changed
 	 */
-	boolean isChanged();
+	public boolean isChanged();
 
 	/**
 	 * Returns true if there is an open domainObject for this file.
+	 * @return true if open
 	 */
-	boolean isOpen();
+	public boolean isOpen();
 
 	/**
 	 * Returns true if the domain object in this domain file exists and has an open transaction.
+	 * @return true if busy
 	 */
-	boolean isBusy();
+	public boolean isBusy();
 
 	/**
 	 * Pack domain file into specified file.
 	 * Specified file will be overwritten if it already exists.
 	 * @param file destination file
-	 * @param monitor
-	 * @throws IOException
+	 * @param monitor the task monitor
+	 * @throws IOException if there is an exception packing the file
 	 * @throws CancelledException if monitor cancels operation
 	 */
 	public void packFile(File file, TaskMonitor monitor) throws IOException, CancelledException;
 
 	/**
-	 * Returns an ordered map containting the metadata that has been associated with the corresponding domain object.
-	 * The map contains key,value pairs and are ordered by their insertion order. 
-	 * @return a map containting the metadata that has been associated with the corresponding domain object.
+	 * Returns an ordered map containing the metadata that has been associated with the 
+	 * corresponding domain object. The map contains key,value pairs and are ordered by their 
+	 * insertion order. 
+	 * @return a map containing the metadata that has been associated with the corresponding domain 
+	 * object.
 	 */
 	public Map<String, String> getMetadata();
 
