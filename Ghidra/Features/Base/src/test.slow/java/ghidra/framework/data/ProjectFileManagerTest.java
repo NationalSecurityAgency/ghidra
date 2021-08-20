@@ -19,8 +19,8 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,13 +29,13 @@ import org.junit.*;
 import generic.test.TestUtils;
 import ghidra.framework.model.*;
 import ghidra.framework.store.FileSystem;
-import ghidra.framework.store.FileSystemListenerList;
+import ghidra.framework.store.FileSystemEventManager;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -45,11 +45,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 	private LocalFileSystem privateFS;
 	private ProjectFileManager fileMgr;
 	private DomainFolder root;
-	private ArrayList<MyEvent> events = new ArrayList<>();
-
-	public ProjectFileManagerTest() {
-		super();
-	}
+	private List<MyEvent> events = new ArrayList<>();
 
 	@Before
 	public void setUp() throws Exception {
@@ -107,16 +103,16 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 	}
 
 	private void flushFileSystemEvents() {
-		FileSystemListenerList privateListenerList =
-			(FileSystemListenerList) TestUtils.getInstanceField("listeners", privateFS);
-		FileSystemListenerList sharedListenerList =
-			(FileSystemListenerList) TestUtils.getInstanceField("listeners", sharedFS);
+		FileSystemEventManager privateEventManager =
+			(FileSystemEventManager) TestUtils.getInstanceField("eventManager", privateFS);
+		FileSystemEventManager sharedEventManager =
+			(FileSystemEventManager) TestUtils.getInstanceField("eventManager", sharedFS);
 
-		flushTheseEvents(privateListenerList);
-		flushTheseEvents(sharedListenerList);
+		flushTheseEvents(privateEventManager);
+		flushTheseEvents(sharedEventManager);
 	}
 
-	private void flushTheseEvents(FileSystemListenerList listenerList) {
+	private void flushTheseEvents(FileSystemEventManager eventManager) {
 		// Events get added synchronously, but processed asynchronously, so we can check to see
 		// if any have been added by an action we triggered without waiting.  Also, we know that
 		// no more events will get added, since we are the thread (the main thread) doing the 
@@ -124,14 +120,12 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		//
 		// If there are queued actions, then we have to kick the handling thread and 
 		// let it finish running.
-		while (listenerList.isProcessingEvents()) {
-			// give the event tread some time to send events
-			try {
-				Thread.sleep(100);
-			}
-			catch (InterruptedException e) {
-				// don't care, we will try again
-			}
+
+		try {
+			assertTrue(eventManager.flushEvents(DEFAULT_WAIT_TIMEOUT, TimeUnit.MILLISECONDS));
+		}
+		catch (InterruptedException e) {
+			failWithException("Interrupted waiting for filesystem events", e);
 		}
 	}
 
@@ -180,7 +174,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		Language language = getSLEIGH_X86_LANGUAGE();
 		Program p = new ProgramDB(name, language, language.getDefaultCompilerSpec(), this);
 		try {
-			return folder.createFile(name, p, TaskMonitorAdapter.DUMMY_MONITOR);
+			return folder.createFile(name, p, TaskMonitor.DUMMY);
 		}
 		finally {
 			p.release(this);
@@ -215,7 +209,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		assertNotNull(df2);
 		assertEquals("file2", df.getName());
 
-		df1.addToVersionControl("", false, TaskMonitorAdapter.DUMMY_MONITOR);
+		df1.addToVersionControl("", false, TaskMonitor.DUMMY);
 
 		df = fileMgr.getFileByID(fileID1);
 		assertNotNull(df1);
@@ -262,7 +256,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		DomainFile df1 = createFile(folder, "file1");
 		String fileID = df1.getFileID();
 
-		df1.addToVersionControl("", true, TaskMonitorAdapter.DUMMY_MONITOR);
+		df1.addToVersionControl("", true, TaskMonitor.DUMMY);
 		assertEquals(fileID, df1.getFileID());
 
 		df1.undoCheckout(true);
@@ -282,7 +276,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		// create shared file /a/file1 and keep checked-out
 		DomainFile df1 = createFile(folder, "file1");
 		String fileID = df1.getFileID();
-		df1.addToVersionControl("", true, TaskMonitorAdapter.DUMMY_MONITOR);
+		df1.addToVersionControl("", true, TaskMonitor.DUMMY);
 		assertEquals(fileID, df1.getFileID());
 
 		// Force Hijack - terminate checkout at versioned file-system

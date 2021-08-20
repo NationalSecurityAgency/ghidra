@@ -18,15 +18,14 @@ package ghidra.framework.store.local;
 import static org.junit.Assert.*;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.*;
 
 import db.*;
 import db.buffers.BufferFile;
-import generic.test.AbstractGenericTest;
-import generic.test.TestUtils;
+import generic.test.*;
 import ghidra.framework.store.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.PropertyFile;
@@ -41,7 +40,7 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 	LocalFileSystem fs;
 	File projectDir;
 
-	ArrayList<MyEvent> events = new ArrayList<>();
+	List<MyEvent> events = new ArrayList<>();
 
 	public AbstractLocalFileSystemTest(boolean useIndexedFileSystem) {
 		super();
@@ -51,7 +50,7 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 	@Before
 	public void setUp() throws Exception {
 
-		File tempDir = new File(AbstractGenericTest.getTestDirectoryPath());
+		File tempDir = new File(AbstractGTest.getTestDirectoryPath());
 		projectDir = new File(tempDir, "testproject");
 		FileUtilities.deleteDir(projectDir);
 		projectDir.mkdir();
@@ -114,6 +113,7 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 			Assert.fail();
 		}
 		catch (IOException e) {
+			// expected
 		}
 
 		try {
@@ -121,6 +121,7 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 			Assert.fail();
 		}
 		catch (IOException e) {
+			// expected
 		}
 
 	}
@@ -161,78 +162,6 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 		checkEvent("Folder Created", "/a1/a2/a3", "a4", null, null, events.get(3));
 	}
 
-//	@Test
-//	public void testFolderPathTooLong() throws Exception {
-//
-//		StringBuffer sb = new StringBuffer();
-//		int projectDirLength = projectDir.getAbsolutePath().length();
-//		int i = 0;
-//		while (sb.length() + projectDirLength < 248) {
-//			sb.append("/a" + i);
-//			++i;
-//		}
-//		try {
-//			fs.createFolder(sb.toString(), "aaaa");
-//			Assert.fail("Should have gotten IO exception on too long of a filename!");
-//		}
-//		catch (IOException e) {
-//		}
-//	}
-//
-//	@Test
-//	public void testDataFilePathTooLong() throws Exception {
-//		fs.createFolder("/", "abc");
-//		String data = "This is a test";
-//		byte[] dataBytes = data.getBytes();
-//
-//		StringBuffer sb = new StringBuffer();
-//		int projectDirLength = projectDir.getAbsolutePath().length();
-//		int i = 0;
-//		while (sb.length() + projectDirLength < 248) {
-//			sb.append("/a" + i);
-//			++i;
-//		}
-//		try {
-//			fs.createDataFile(sb.toString(), "freddxxxx", new ByteArrayInputStream(dataBytes), null,
-//				"Data", null);
-//			Assert.fail("Should have gotten IO Exception!");
-//		}
-//		catch (IOException e) {
-//		}
-//
-//	}
-//
-//	public void testDataBasePathTooLong() throws Exception {
-//		fs.createFolder("/", "abc");
-//		DBHandle dbh = new DBHandle();
-//		long id = dbh.startTransaction();
-//		dbh.createTable("test", new Schema(0, "key", new Class[] { IntField.class },
-//			new String[] { "dummy" }));
-//		dbh.endTransaction(id, true);
-//		int projectDirLength = projectDir.getAbsolutePath().length();
-//		StringBuffer sb = new StringBuffer();
-//		int i = 0;
-//		while (sb.length() + projectDirLength < 248) {
-//			sb.append("/a" + i);
-//			++i;
-//		}
-//		try {
-//			fs.createDatabase(sb.toString(), "freddxxxx", null, "Database", dbh.getBufferSize(),
-//				"bob", null);
-//			Assert.fail("Should have gotten IO Exception!");
-//		}
-//		catch (IOException e) {
-//		}
-//	}
-
-	/**
-	 * @param string
-	 * @param string2
-	 * @param string3
-	 * @param object
-	 * @param object2
-	 * @param object3
-	 */
 	private void checkEvent(String op, String path, String name, String newPath, String newName,
 			Object evObj) {
 		MyEvent event = (MyEvent) evObj;
@@ -262,6 +191,7 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 			Assert.fail();
 		}
 		catch (FolderNotEmptyException e) {
+			// expected
 		}
 	}
 
@@ -337,12 +267,14 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 			Assert.fail();
 		}
 		catch (FileNotFoundException e) {
+			// expected
 		}
 		fs.createFolder("/b", "def");
 		try {
 			fs.moveFolder("/mno/abc", "def", "/b");
 		}
 		catch (DuplicateFileException e) {
+			// expected
 		}
 	}
 
@@ -675,8 +607,6 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 
 		DataFileItem df = fs.createDataFile("/abc", "fred", new ByteArrayInputStream(dataBytes),
 			null, "Data", null);
-		DataFileItem df2 = fs.createDataFile("/abc", "bob", new ByteArrayInputStream(dataBytes),
-			null, "Data", null);
 		createDatabase("/abc", "greg", "123");
 
 		String[] items = fs.getItemNames("/abc");
@@ -991,25 +921,43 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 
 		@Override
 		public void syncronize() {
+			// not tracked
 		}
 	}
 
 	private void flushFileSystemEvents() {
-		FileSystemListenerList listenerList =
-			(FileSystemListenerList) TestUtils.getInstanceField("listeners", fs);
-		while (listenerList.isProcessingEvents()) {
-			// give the event tread some time to send events
-			try {
-				Thread.sleep(100);
-			}
-			catch (InterruptedException e) {
-				// don't care, we will try again
-			}
+		FileSystemEventManager eventManager =
+			(FileSystemEventManager) TestUtils.getInstanceField("eventManager", fs);
+
+		try {
+			eventManager.flushEvents(DEFAULT_WAIT_TIMEOUT, TimeUnit.MILLISECONDS);
+		}
+		catch (InterruptedException e) {
+			failWithException("Interrupted waiting for filesystem events", e);
 		}
 	}
 }
 
 class MyEvent {
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + ((newName == null) ? 0 : newName.hashCode());
+		result = prime * result + ((newParentPath == null) ? 0 : newParentPath.hashCode());
+		result = prime * result + ((op == null) ? 0 : op.hashCode());
+		result = prime * result + ((parentPath == null) ? 0 : parentPath.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		MyEvent other = (MyEvent) obj;
+		return eq(op, other.op) && eq(parentPath, other.parentPath) && eq(name, other.name) &&
+			eq(newParentPath, other.newParentPath) && eq(newName, other.newName);
+	}
+
 	String op;
 	String parentPath;
 	String name;
@@ -1024,18 +972,8 @@ class MyEvent {
 		this.newName = newName;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		MyEvent other = (MyEvent) obj;
-		return eq(op, other.op) && eq(parentPath, other.parentPath) && eq(name, other.name) &&
-			eq(newParentPath, other.newParentPath) && eq(newName, other.newName);
-	}
-
 	private boolean eq(String s1, String s2) {
-		if (s1 == null) {
-			return s2 == null;
-		}
-		return s1.equals(s2);
+		return Objects.equals(s1, s2);
 	}
 
 	@Override
