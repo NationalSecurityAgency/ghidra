@@ -24,6 +24,7 @@ import ch.ethz.ssh2.Connection;
 import ch.ethz.ssh2.KnownHosts;
 import docking.DockingWindowManager;
 import docking.widgets.PasswordDialog;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 
 public class GhidraSshPtyFactory implements PtyFactory {
@@ -97,7 +98,8 @@ public class GhidraSshPtyFactory implements PtyFactory {
 				// TODO: Find an API that uses char[] so I can clear it!
 				String password = new String(promptPassword(hostname, "Password for " + username));
 				if (!sshConn.authenticateWithPassword(username, password)) {
-					throw new IOException("Authentication failed");
+					Msg.error(this, "SSH password authentication failed");
+					throw new IOException("SSH password authentication failed");
 				}
 			}
 			else {
@@ -108,14 +110,16 @@ public class GhidraSshPtyFactory implements PtyFactory {
 				}
 				String password = new String(promptPassword(hostname, "Password for " + pemFile));
 				if (!sshConn.authenticateWithPublicKey(username, pemFile, password)) {
-					throw new IOException("Authentication failed");
+					Msg.error(this, "SSH pukey authentication failed");
+					throw new IOException("SSH pukey authentication failed");
 				}
 			}
 			success = true;
 			return sshConn;
 		}
 		catch (CancelledException e) {
-			throw new IOException("User cancelled", e);
+			Msg.error(this, "SSH connection/authentication cancelled by user");
+			throw new IOException("SSH connection/authentication cancelled by user", e);
 		}
 		finally {
 			if (!success) {
