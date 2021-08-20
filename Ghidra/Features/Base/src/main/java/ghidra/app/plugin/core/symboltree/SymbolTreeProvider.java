@@ -23,6 +23,8 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
@@ -32,8 +34,7 @@ import docking.widgets.tree.support.GTreeNodeTransferable;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.tasks.GTreeBulkTask;
 import ghidra.app.plugin.core.symboltree.actions.*;
-import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
-import ghidra.app.plugin.core.symboltree.nodes.SymbolTreeRootNode;
+import ghidra.app.plugin.core.symboltree.nodes.*;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -176,9 +177,29 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			}
 		});
 
+		newTree.addTreeExpansionListener(new TreeExpansionListener() {
+
+			@Override
+			public void treeExpanded(TreeExpansionEvent event) {
+				// nothing
+			}
+
+			@Override
+			public void treeCollapsed(TreeExpansionEvent event) {
+				treeNodeCollapsed(event.getPath());
+			}
+		});
+
 		newTree.setEditable(true);
 
 		return newTree;
+	}
+
+	protected void treeNodeCollapsed(TreePath path) {
+		Object lastPathComponent = path.getLastPathComponent();
+		if (lastPathComponent instanceof SymbolCategoryNode) {
+			tree.runTask(m -> ((SymbolCategoryNode) lastPathComponent).unloadChildren());
+		}
 	}
 
 	private void maybeGoToSymbol() {
