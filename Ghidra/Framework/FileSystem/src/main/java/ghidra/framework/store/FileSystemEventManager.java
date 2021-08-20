@@ -15,8 +15,8 @@
  */
 package ghidra.framework.store;
 
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * <code>FileSystemListenerList</code> maintains a list of FileSystemListener's.
@@ -24,32 +24,31 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * all FileSystemListener's within its list.  Employs either a synchronous 
  * and asynchronous notification mechanism.
  */
-public class FileSystemListenerList implements FileSystemListener {
+public class FileSystemEventManager implements FileSystemListener {
 
-	private List<FileSystemListener> listenerList = new CopyOnWriteArrayList<>();
+	private List<FileSystemListener> listeners = new CopyOnWriteArrayList<>();
+	private BlockingQueue<FileSystemEvent> eventQueue = new LinkedBlockingQueue<>();
 
-	private List<FileSystemEvent> events =
-		Collections.synchronizedList(new LinkedList<FileSystemEvent>());
-
-	private boolean enableAsynchronousDispatching;
-	private boolean isEventProcessingThreadWaiting;
-	private boolean alive = true;
-	private Object lock = new Object();
+	private volatile boolean disposed = false;
 	private Thread thread;
 
 	/**
-	 * Construct FileSystemListenerList
+	 * Constructor
 	 * @param enableAsynchronousDispatching if true a separate dispatch thread will be used
 	 * to notify listeners.  If false, blocking notification will be performed.
 	 */
-	public FileSystemListenerList(boolean enableAsynchronousDispatching) {
-		this.enableAsynchronousDispatching = enableAsynchronousDispatching;
+	public FileSystemEventManager(boolean enableAsynchronousDispatching) {
+
+		if (enableAsynchronousDispatching) {
+			thread = new FileSystemEventProcessingThread();
+			thread.start();
+		}
 	}
 
 	public void dispose() {
-		alive = false;
-		synchronized (lock) {
-			lock.notify();
+		disposed = true;
+		if (thread != null) {
+			thread.interrupt();
 		}
 	}
 
@@ -57,13 +56,8 @@ public class FileSystemListenerList implements FileSystemListener {
 	 * Add a listener to this list.
 	 * @param listener the listener
 	 */
-	public synchronized void add(FileSystemListener listener) {
-		listenerList.add(listener);
-		if (thread == null && enableAsynchronousDispatching) {
-			thread = new FileSystemEventProcessingThread();
-			thread.setName("File System Listener");
-			thread.start();
-		}
+	public void add(FileSystemListener listener) {
+		listeners.add(listener);
 	}
 
 	/**
@@ -71,157 +65,106 @@ public class FileSystemListenerList implements FileSystemListener {
 	 * @param listener the listener
 	 */
 	public void remove(FileSystemListener listener) {
-		listenerList.remove(listener);
-	}
-
-	/**
-	 * Remove all listeners from this list.
-	 */
-	public void clear() {
-		listenerList.clear();
+		listeners.remove(listener);
 	}
 
 	@Override
 	public void itemMoved(String parentPath, String name, String newParentPath, String newName) {
-		if (enableAsynchronousDispatching) {
-			add(new ItemMovedEvent(parentPath, name, newParentPath, newName));
-		}
-		else {
-			for (FileSystemListener l : listenerList) {
-				l.itemMoved(parentPath, name, newParentPath, newName);
-			}
-		}
+		handleEvent(new ItemMovedEvent(parentPath, name, newParentPath, newName));
 	}
 
 	@Override
 	public void itemRenamed(String parentPath, String itemName, String newName) {
-		if (enableAsynchronousDispatching) {
-			add(new ItemRenamedEvent(parentPath, itemName, newName));
-		}
-		else {
-			for (FileSystemListener l : listenerList) {
-				l.itemRenamed(parentPath, itemName, newName);
-			}
-		}
+		handleEvent(new ItemRenamedEvent(parentPath, itemName, newName));
 	}
 
 	@Override
 	public void itemDeleted(String parentPath, String itemName) {
-		if (enableAsynchronousDispatching) {
-			add(new ItemDeletedEvent(parentPath, itemName));
-		}
-		else {
-			for (FileSystemListener l : listenerList) {
-				l.itemDeleted(parentPath, itemName);
-			}
-		}
+		handleEvent(new ItemDeletedEvent(parentPath, itemName));
 	}
 
 	@Override
 	public void folderRenamed(String parentPath, String folderName, String newFolderName) {
-		if (enableAsynchronousDispatching) {
-			add(new FolderRenamedEvent(parentPath, folderName, newFolderName));
-		}
-		else {
-			for (FileSystemListener l : listenerList) {
-				l.folderRenamed(parentPath, folderName, newFolderName);
-			}
-		}
+		handleEvent(new FolderRenamedEvent(parentPath, folderName, newFolderName));
 	}
 
 	@Override
 	public void folderMoved(String parentPath, String folderName, String newParentPath) {
-		if (enableAsynchronousDispatching) {
-			add(new FolderMovedEvent(parentPath, folderName, newParentPath));
-		}
-		else {
-			for (FileSystemListener l : listenerList) {
-				l.folderMoved(parentPath, folderName, newParentPath);
-			}
-		}
+		handleEvent(new FolderMovedEvent(parentPath, folderName, newParentPath));
 	}
 
 	@Override
 	public void folderDeleted(String parentPath, String folderName) {
-		if (enableAsynchronousDispatching) {
-			add(new FolderDeletedEvent(parentPath, folderName));
-		}
-		else {
-			for (FileSystemListener l : listenerList) {
-				l.folderDeleted(parentPath, folderName);
-			}
-		}
+		handleEvent(new FolderDeletedEvent(parentPath, folderName));
 	}
 
 	@Override
 	public void itemCreated(String parentPath, String itemName) {
-		if (enableAsynchronousDispatching) {
-			add(new ItemCreatedEvent(parentPath, itemName));
-		}
-		else {
-			for (FileSystemListener l : listenerList) {
-				l.itemCreated(parentPath, itemName);
-			}
-		}
+		handleEvent(new ItemCreatedEvent(parentPath, itemName));
 	}
 
 	@Override
 	public void folderCreated(String parentPath, String folderName) {
-		if (enableAsynchronousDispatching) {
-			add(new FolderCreatedEvent(parentPath, folderName));
-		}
-		else {
-			for (FileSystemListener l : listenerList) {
-				l.folderCreated(parentPath, folderName);
-			}
-		}
+		handleEvent(new FolderCreatedEvent(parentPath, folderName));
 	}
 
 	@Override
 	public void itemChanged(String parentPath, String itemName) {
-		if (enableAsynchronousDispatching) {
-			add(new ItemChangedEvent(parentPath, itemName));
-		}
-		else {
-			for (FileSystemListener l : listenerList) {
-				l.itemChanged(parentPath, itemName);
-			}
-		}
+		handleEvent(new ItemChangedEvent(parentPath, itemName));
 	}
 
 	@Override
 	public void syncronize() {
-		if (enableAsynchronousDispatching) {
+		// Note: synchronize calls will only work when using a threaded event queue
+		if (isAsynchronous()) {
 			add(new SynchronizeEvent());
 		}
 	}
 
+	private boolean isAsynchronous() {
+		return thread != null;
+	}
+
 	private void add(FileSystemEvent ev) {
-		if (!listenerList.isEmpty()) {
-			events.add(ev);
-			synchronized (lock) {
-				lock.notify();
-			}
+		if (!listeners.isEmpty()) {
+			eventQueue.add(ev);
+		}
+	}
+
+	private void handleEvent(FileSystemEvent e) {
+		if (disposed) {
+			return;
+		}
+
+		if (isAsynchronous()) {
+			add(e);
+		}
+		else {
+			e.process(listeners);
 		}
 	}
 
 	/**
-	 * Returns true if this class is processing events <b>or</b> needs to process events that are
-	 * in its event queue. 
+	 * Blocks until all current events have been processed.
+	 * <p>
+	 * Note: clients should only use this method when {@link #isAsynchronous()} returns true, since
+	 * this class cannot track when non-threaded events have finished broadcasting to listeners.
+	 * In a synchronous use case, any test that needs to know when client events have been processed
+	 * must use some other mechanism to know when event processing is finished.  
 	 * 
-	 * @return true if this class is processing events <b>or</b> needs to process events that are
-	 * in its event queue. 
+	 * @param timeout the maximum time to wait
+	 * @param unit the time unit of the {@code time} argument
+	 * @return true if the events were processed in the given timeout
+	 * @throws InterruptedException if this waiting thread is interrupted
 	 */
-	public boolean isProcessingEvents() {
-		synchronized (this) {
-			if (thread == null) {
-				return false; // non-threaded; does not 'process' events, done synchronously
-			}
+	public boolean flushEvents(long timeout, TimeUnit unit) throws InterruptedException {
+		if (!isAsynchronous()) {
+			return true; // each thread processes its own event
 		}
 
-		synchronized (lock) { // lock so nobody adds new events
-			return !isEventProcessingThreadWaiting || (events.size() > 0);
-		}
+		MarkerEvent event = new MarkerEvent();
+		eventQueue.add(event);
+		return event.waitForEvent(timeout, unit);
 	}
 
 //==================================================================================================
@@ -231,42 +174,25 @@ public class FileSystemListenerList implements FileSystemListener {
 	private class FileSystemEventProcessingThread extends Thread {
 
 		FileSystemEventProcessingThread() {
-			super("File System Event Processor");
+			super("File System Listener");
 			setDaemon(true);
 		}
 
 		@Override
 		public void run() {
-			while (alive) {
-				while (!events.isEmpty()) {
-					FileSystemEvent event;
-					synchronized (lock) {
-						event = events.remove(0);
-					}
-					synchronized (FileSystemListenerList.this) {
-						for (FileSystemListener l : listenerList) {
-							event.dispatch(l);
-						}
-					}
-				}
-				doWait();
-			}
-		}
+			while (!disposed) {
 
-		private void doWait() {
-			try {
-				synchronized (lock) {
-					if (alive && events.isEmpty()) {
-						isEventProcessingThreadWaiting = true;
-						lock.wait();
-					}
+				FileSystemEvent event;
+				try {
+					event = eventQueue.take();
+					event.process(listeners);
 				}
-			}
-			catch (InterruptedException e) {
-				// not sure why we are ignoring this
-			}
-			finally {
-				isEventProcessingThreadWaiting = false;
+				catch (InterruptedException e) {
+					// interrupt has been cleared; if other threads rely on this interrupted state,
+					// then mark the thread as interrupted again by calling: 
+					// Thread.currentThread().interrupt();
+					// For now, this code relies on the 'alive' flag to know when to terminate
+				}
 			}
 		}
 	}
@@ -284,7 +210,18 @@ public class FileSystemListenerList implements FileSystemListener {
 			this.newName = newName;
 		}
 
+		void process(List<FileSystemListener> listeners) {
+			for (FileSystemListener l : listeners) {
+				dispatch(l);
+			}
+		}
+
 		abstract void dispatch(FileSystemListener listener);
+
+		@Override
+		public String toString() {
+			return getClass().getSimpleName();
+		}
 	}
 
 	private static class ItemMovedEvent extends FileSystemEvent {
@@ -396,4 +333,29 @@ public class FileSystemListenerList implements FileSystemListener {
 			listener.syncronize();
 		}
 	}
+
+	// an event used by the flush method to mark when current events have been processed
+	private static class MarkerEvent extends FileSystemEvent {
+
+		private CountDownLatch latch = new CountDownLatch(1);
+
+		MarkerEvent() {
+			super(null, null, null, null);
+		}
+
+		@Override
+		void dispatch(FileSystemListener listener) {
+			// we don't actually process the event
+		}
+
+		@Override
+		void process(List<FileSystemListener> listeners) {
+			latch.countDown();
+		}
+
+		boolean waitForEvent(long timeout, TimeUnit unit) throws InterruptedException {
+			return latch.await(timeout, unit);
+		}
+	}
+
 }

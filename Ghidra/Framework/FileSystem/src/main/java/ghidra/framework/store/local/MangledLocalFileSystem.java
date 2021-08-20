@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,13 @@
  */
 package ghidra.framework.store.local;
 
-import ghidra.framework.store.FolderNotEmptyException;
-import ghidra.util.*;
-import ghidra.util.exception.DuplicateFileException;
-
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import ghidra.framework.store.FolderNotEmptyException;
+import ghidra.util.*;
+import ghidra.util.exception.DuplicateFileException;
 import utilities.util.FileUtilities;
 
 /**
@@ -150,12 +148,12 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 		if (dirList == null) {
 			throw new FileNotFoundException("Folder " + folderPath + " not found");
 		}
-		ArrayList<String> fileList = new ArrayList<String>(dirList.length);
-		for (int i = 0; i < dirList.length; i++) {
-			String name = dirList[i].getName();
-			if (name.endsWith(PROPERTY_EXT) && dirList[i].isFile()) {
-				if (!NamingUtilities.isValidMangledName(dirList[i].getName())) {
-					log.warn("Ignoring property file with bad name: " + dirList[i]);
+		ArrayList<String> fileList = new ArrayList<>(dirList.length);
+		for (File element : dirList) {
+			String name = element.getName();
+			if (name.endsWith(PROPERTY_EXT) && element.isFile()) {
+				if (!NamingUtilities.isValidMangledName(element.getName())) {
+					log.warn("Ignoring property file with bad name: " + element);
 					continue;
 				}
 				int index = name.lastIndexOf(PROPERTY_EXT);
@@ -172,6 +170,7 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 	/*
 	 * @see ghidra.framework.store.FileSystem#getFolders(java.lang.String)
 	 */
+	@Override
 	public synchronized String[] getFolderNames(String folderPath) throws IOException {
 		File dir = getFile(folderPath);
 
@@ -179,12 +178,12 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 		if (dirList == null) {
 			throw new FileNotFoundException("Folder " + folderPath + " not found");
 		}
-		ArrayList<String> folderList = new ArrayList<String>(dirList.length);
-		for (int i = 0; i < dirList.length; i++) {
-			if (!dirList[i].isDirectory()) {
+		ArrayList<String> folderList = new ArrayList<>(dirList.length);
+		for (File element : dirList) {
+			if (!element.isDirectory()) {
 				continue;
 			}
-			String name = demangleName(dirList[i].getName());
+			String name = demangleName(element.getName());
 			if (name != null) {
 				folderList.add(name);
 			}
@@ -196,6 +195,7 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 	/*
 	 * @see ghidra.framework.store.FileSystem#createFolder(java.lang.String, java.lang.String)
 	 */
+	@Override
 	public synchronized void createFolder(String parentPath, String folderName)
 			throws InvalidNameException, IOException {
 
@@ -218,6 +218,7 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 	/*
 	 * @see ghidra.framework.store.FileSystem#deleteFolder(java.lang.String)
 	 */
+	@Override
 	public synchronized void deleteFolder(String folderPath) throws IOException {
 
 		if (readOnly) {
@@ -243,12 +244,13 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 		}
 		FileUtilities.deleteDir(file);
 
-		listeners.folderDeleted(getParentPath(folderPath), getName(folderPath));
+		eventManager.folderDeleted(getParentPath(folderPath), getName(folderPath));
 	}
 
 	/*
 	 * @see ghidra.framework.store.FileSystem#moveFolder(java.lang.String, java.lang.String, java.lang.String)
 	 */
+	@Override
 	public synchronized void moveFolder(String parentPath, String folderName, String newParentPath)
 			throws InvalidNameException, IOException {
 
@@ -277,7 +279,7 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 				throw new IOException("move failed for unknown reason");
 			}
 
-			listeners.folderMoved(parentPath, folderName, newParentPath);
+			eventManager.folderMoved(parentPath, folderName, newParentPath);
 			deleteEmptyVersionedFolders(parentPath);
 		}
 		finally {
@@ -290,7 +292,9 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 	/*
 	 * @see ghidra.framework.store.FileSystem#renameFolder(java.lang.String, java.lang.String, java.lang.String)
 	 */
-	public synchronized void renameFolder(String parentPath, String folderName, String newFolderName)
+	@Override
+	public synchronized void renameFolder(String parentPath, String folderName,
+			String newFolderName)
 			throws InvalidNameException, IOException {
 
 		if (readOnly) {
@@ -315,7 +319,7 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 			throw new IOException("Folder may contain files that are in use");
 		}
 
-		listeners.folderRenamed(parentPath, folderName, newFolderName);
+		eventManager.folderRenamed(parentPath, folderName, newFolderName);
 	}
 
 	/**
@@ -329,7 +333,8 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 			throw new FileNotFoundException("Empty read-only file system");
 		}
 		if (path.charAt(0) != SEPARATOR_CHAR) {
-			throw new FileNotFoundException("Path names must begin with \'" + SEPARATOR_CHAR + "\'");
+			throw new FileNotFoundException(
+				"Path names must begin with \'" + SEPARATOR_CHAR + "\'");
 		}
 		if (path.length() == 1) {
 			return root;
@@ -344,9 +349,9 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 		}
 		StringBuilder buf = new StringBuilder();
 		String[] split = path.split(SEPARATOR);
-		for (int i = 0; i < split.length; i++) {
+		for (String element : split) {
 			buf.append(SEPARATOR_CHAR);
-			buf.append(escapeHiddenDirPrefixChars(split[i]));
+			buf.append(escapeHiddenDirPrefixChars(element));
 		}
 		return NamingUtilities.mangle(buf.toString());
 	}
@@ -399,7 +404,7 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 		String parentPath = getParentPath(folderPath);
 		createFolders(parentDir, parentPath);
 		folderDir.mkdir();
-		listeners.folderCreated(parentPath, getName(folderPath));
+		eventManager.folderCreated(parentPath, getName(folderPath));
 	}
 
 	/*
@@ -443,7 +448,8 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 		}
 
 		IndexedV1LocalFileSystem indexedFs =
-			new IndexedV1LocalFileSystem(tmpRoot.getAbsolutePath(), isVersioned, false, false, true);
+			new IndexedV1LocalFileSystem(tmpRoot.getAbsolutePath(), isVersioned, false, false,
+				true);
 
 		migrationInProgress = true;
 		migrateFolder(SEPARATOR, indexedFs);
