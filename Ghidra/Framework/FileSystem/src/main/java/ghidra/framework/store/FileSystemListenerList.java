@@ -55,7 +55,7 @@ public class FileSystemListenerList implements FileSystemListener {
 
 	/**
 	 * Add a listener to this list.
-	 * @param listener
+	 * @param listener the listener
 	 */
 	public synchronized void add(FileSystemListener listener) {
 		listenerList.add(listener);
@@ -68,7 +68,7 @@ public class FileSystemListenerList implements FileSystemListener {
 
 	/**
 	 * Remove a listener from this list.
-	 * @param listener
+	 * @param listener the listener
 	 */
 	public void remove(FileSystemListener listener) {
 		listenerList.remove(listener);
@@ -81,10 +81,6 @@ public class FileSystemListenerList implements FileSystemListener {
 		listenerList.clear();
 	}
 
-	/**
-	 * Forwards itemMoved callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#itemMoved(String, String, String, String)
-	 */
 	@Override
 	public void itemMoved(String parentPath, String name, String newParentPath, String newName) {
 		if (enableAsynchronousDispatching) {
@@ -97,10 +93,6 @@ public class FileSystemListenerList implements FileSystemListener {
 		}
 	}
 
-	/**
-	 * Forwards itemRenamed callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#itemRenamed(String, String, String)
-	 */
 	@Override
 	public void itemRenamed(String parentPath, String itemName, String newName) {
 		if (enableAsynchronousDispatching) {
@@ -113,10 +105,6 @@ public class FileSystemListenerList implements FileSystemListener {
 		}
 	}
 
-	/**
-	 * Forwards itemDeleted callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#itemDeleted(String, String)
-	 */
 	@Override
 	public void itemDeleted(String parentPath, String itemName) {
 		if (enableAsynchronousDispatching) {
@@ -129,10 +117,6 @@ public class FileSystemListenerList implements FileSystemListener {
 		}
 	}
 
-	/**
-	 * Forwards folderRenamed callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#folderRenamed(String, String, String)
-	 */
 	@Override
 	public void folderRenamed(String parentPath, String folderName, String newFolderName) {
 		if (enableAsynchronousDispatching) {
@@ -145,10 +129,6 @@ public class FileSystemListenerList implements FileSystemListener {
 		}
 	}
 
-	/**
-	 * Forwards folderMoved callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#folderMoved(String, String, String)
-	 */
 	@Override
 	public void folderMoved(String parentPath, String folderName, String newParentPath) {
 		if (enableAsynchronousDispatching) {
@@ -161,10 +141,6 @@ public class FileSystemListenerList implements FileSystemListener {
 		}
 	}
 
-	/**
-	 * Forwards folderDeleted callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#folderDeleted(String, String)
-	 */
 	@Override
 	public void folderDeleted(String parentPath, String folderName) {
 		if (enableAsynchronousDispatching) {
@@ -177,10 +153,6 @@ public class FileSystemListenerList implements FileSystemListener {
 		}
 	}
 
-	/**
-	 * Forwards itemCreated callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#itemCreated(String, String)
-	 */
 	@Override
 	public void itemCreated(String parentPath, String itemName) {
 		if (enableAsynchronousDispatching) {
@@ -193,10 +165,6 @@ public class FileSystemListenerList implements FileSystemListener {
 		}
 	}
 
-	/**
-	 * Forwards folderCreated callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#folderCreated(String, String)
-	 */
 	@Override
 	public void folderCreated(String parentPath, String folderName) {
 		if (enableAsynchronousDispatching) {
@@ -209,10 +177,6 @@ public class FileSystemListenerList implements FileSystemListener {
 		}
 	}
 
-	/**
-	 * Forwards itemChanged callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#itemChanged(String, String)
-	 */
 	@Override
 	public void itemChanged(String parentPath, String itemName) {
 		if (enableAsynchronousDispatching) {
@@ -225,10 +189,6 @@ public class FileSystemListenerList implements FileSystemListener {
 		}
 	}
 
-	/**
-	 * Forwards syncronize callback to all listeners within this list.
-	 * @see ghidra.framework.store.FileSystemListener#syncronize()
-	 */
 	@Override
 	public void syncronize() {
 		if (enableAsynchronousDispatching) {
@@ -303,6 +263,7 @@ public class FileSystemListenerList implements FileSystemListener {
 				}
 			}
 			catch (InterruptedException e) {
+				// not sure why we are ignoring this
 			}
 			finally {
 				isEventProcessingThreadWaiting = false;

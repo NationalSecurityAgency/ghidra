@@ -1,3 +1,39 @@
+# MOVDQA,VMOVDQA32/64 4-62 PAGE 1182 LINE 61667
+# Note: we do not model the exception generated if VMOVDQA is used with a memory operand which is not 16-bye aligned
+:VMOVDQA XmmReg1, XmmReg2_m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0x6F; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	YmmReg1 = zext(XmmReg2_m128);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# MOVDQA,VMOVDQA32/64 4-62 PAGE 1182 LINE 61669
+:VMOVDQA XmmReg2, XmmReg1 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0x7F; XmmReg1 & (mod = 3 & XmmReg2 & YmmReg2)
+{
+	YmmReg2 = zext(XmmReg1);
+	# TODO ZmmReg2 = zext(XmmReg2)
+}
+
+# MOVDQA,VMOVDQA32/64 4-62 PAGE 1182 LINE 61669
+:VMOVDQA m128, XmmReg1 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0x7F; XmmReg1 ... & m128
+{
+	m128 = XmmReg1;
+	# TODO ZmmReg2 = zext(XmmReg2)
+}
+
+# MOVDQA,VMOVDQA32/64 4-62 PAGE 1182 LINE 61671
+:VMOVDQA YmmReg1, YmmReg2_m256 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0x6F; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1 = YmmReg2_m256;
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# MOVDQA,VMOVDQA32/64 4-62 PAGE 1182 LINE 61673
+:VMOVDQA YmmReg2_m256, YmmReg1 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0x7F; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg2_m256 = YmmReg1;
+	# TODO ZmmReg2 = zext(YmmReg2)
+}
+
 # MOVSD 4-111 PAGE 1231 LINE 63970
 :VMOVSD XmmReg1, vexVVVV_XmmReg, XmmReg2 is $(VEX_NDS) & $(VEX_LIG) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_WIG) & vexVVVV_XmmReg; byte=0x10; XmmReg1 & YmmReg1 & (mod=0x3 & XmmReg2)
 {
@@ -70,3 +106,40 @@
 {
 	YmmReg2_m256 = YmmReg1;
 }
+
+# PCMPEQQ 4-250 PAGE 1370 LINE 71169
+:VPCMPEQQ XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_WIG) & vexVVVV_XmmReg; byte=0x29; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+	XmmReg1[0,64] = zext(vexVVVV_XmmReg[0,64] == XmmReg2_m128[0,64]) * 0xffffffffffffffff:8;
+	XmmReg1[64,64] = zext(vexVVVV_XmmReg[64,64] == XmmReg2_m128[64,64]) * 0xffffffffffffffff:8;
+	YmmReg1 = zext(XmmReg1);
+	# TODO ZmmReg1 = zext(XmmReg1)
+}
+
+
+# PMOVMSKB 4-338 PAGE 1458 LINE 75651
+:VPMOVMSKB Reg32, XmmReg2 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0xD7; Reg32 & (mod=0x3 & XmmReg2) & check_Reg32_dest
+{
+	local byte_mask:2 = 0:2;
+	byte_mask[0,1] = XmmReg2[7,1];
+	byte_mask[1,1] = XmmReg2[15,1];
+	byte_mask[2,1] = XmmReg2[23,1];
+	byte_mask[3,1] = XmmReg2[31,1];
+	byte_mask[4,1] = XmmReg2[39,1];
+	byte_mask[5,1] = XmmReg2[47,1];
+	byte_mask[6,1] = XmmReg2[55,1];
+	byte_mask[7,1] = XmmReg2[63,1];
+	byte_mask[8,1] = XmmReg2[71,1];
+	byte_mask[9,1] = XmmReg2[79,1];
+	byte_mask[10,1] = XmmReg2[87,1];
+	byte_mask[11,1] = XmmReg2[95,1];
+	byte_mask[12,1] = XmmReg2[103,1];
+	byte_mask[13,1] = XmmReg2[111,1];
+	byte_mask[14,1] = XmmReg2[119,1];
+	byte_mask[15,1] = XmmReg2[127,1];
+	Reg32 = zext(byte_mask);
+	build check_Reg32_dest;
+}
+
+
+

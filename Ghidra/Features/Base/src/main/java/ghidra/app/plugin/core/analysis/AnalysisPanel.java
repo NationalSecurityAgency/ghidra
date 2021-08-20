@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.analysis;
 
 import java.awt.*;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.*;
 import java.io.File;
 import java.io.IOException;
@@ -86,8 +87,14 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	private EditorStateFactory editorStateFactory;
 
 	private JPanel noOptionsPanel;
-	private GhidraComboBox<Options> defaultOptionsCombo;
+	private GhidraComboBox<Options> optionsComboBox;
 	private JButton deleteButton;
+
+	private Options[] optionConfigurationChoices;
+
+	private ItemListener optionsComboBoxListener = this::optionsComboBoxChanged;
+
+	private FileOptions currentNonDefaults;
 
 	/**
 	 * Constructor
@@ -207,14 +214,14 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	private Component buildOptionsComboBoxPanel() {
 		JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 
-		Options[] defaultOptionsArray = getDefaultOptionsArray();
-		defaultOptionsCombo = new GhidraComboBox<>(defaultOptionsArray);
-		selectedOptions = findOptions(defaultOptionsArray, getLastUsedDefaultOptionsName());
-		defaultOptionsCombo.setSelectedItem(selectedOptions);
-		defaultOptionsCombo.addItemListener(this::analysisComboChanged);
-		Dimension preferredSize = defaultOptionsCombo.getPreferredSize();
-		defaultOptionsCombo.setPreferredSize(new Dimension(200, preferredSize.height));
-		panel.add(defaultOptionsCombo);
+		optionConfigurationChoices = loadPossibleOptionsChoicesForComboBox();
+		optionsComboBox = new GhidraComboBox<>(optionConfigurationChoices);
+		selectedOptions = currentProgramOptions;
+		optionsComboBox.setSelectedItem(selectedOptions);
+		optionsComboBox.addItemListener(optionsComboBoxListener);
+		Dimension preferredSize = optionsComboBox.getPreferredSize();
+		optionsComboBox.setPreferredSize(new Dimension(200, preferredSize.height));
+		panel.add(optionsComboBox);
 
 		deleteButton = new JButton("Delete");
 		deleteButton.addActionListener(e -> deleteSelectedOptionsConfiguration());
@@ -350,17 +357,18 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 					"Overwrite existing configuration file: " + saveName + " ?", "Overwrite")) {
 			return;
 		}
-		FileOptions saved = saveCurrentOptions();
+		FileOptions currentOptions = getCurrentOptionsAsFileOptions();
 		try {
-			saved.save(saveFile);
-			reloadOptionsCombo(saved);
+			currentOptions.save(saveFile);
+			currentNonDefaults = currentOptions;
+			reloadOptionsCombo(currentOptions);
 		}
 		catch (IOException e) {
 			Msg.error(this, "Error saving default options", e);
 		}
 	}
 
-	private FileOptions saveCurrentOptions() {
+	private FileOptions getCurrentOptionsAsFileOptions() {
 		FileOptions saveTo = new FileOptions("");
 		List<AnalyzerEnablementState> analyzerStates = model.getModelData();
 		for (AnalyzerEnablementState analyzerState : analyzerStates) {
@@ -395,17 +403,18 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			editorState.loadFrom(selectedOptions);
 		}
 		updateDeleteButton();
+		currentNonDefaults = getCurrentOptionsAsFileOptions();
 	}
 
 	private void reloadOptionsCombo(Options newDefaultOptions) {
-		Options[] defaultOptionsArray = getDefaultOptionsArray();
-		defaultOptionsCombo.setModel(new DefaultComboBoxModel<Options>(defaultOptionsArray));
-		Options selected = findOptions(defaultOptionsArray, newDefaultOptions.getName());
-		defaultOptionsCombo.setSelectedItem(selected);
+		optionConfigurationChoices = loadPossibleOptionsChoicesForComboBox();
+		optionsComboBox.setModel(new DefaultComboBoxModel<Options>(optionConfigurationChoices));
+		Options selected = findOptionsByName(newDefaultOptions.getName());
+		optionsComboBox.setSelectedItem(selected);
 	}
 
-	private Options findOptions(Options[] defaultOptionsArray, String name) {
-		for (Options fileOptions : defaultOptionsArray) {
+	private Options findOptionsByName(String name) {
+		for (Options fileOptions : optionConfigurationChoices) {
 			if (fileOptions.getName().equals(name)) {
 				return fileOptions;
 			}
@@ -539,6 +548,13 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		copyOptionsToAllPrograms();
 		currentProgramOptions = getNonDefaultProgramOptions();
 		reloadOptionsCombo(currentProgramOptions);
+
+		// save off preference (unless it is the current program options, then don't save it)
+		if (selectedOptions != currentProgramOptions) {
+			Preferences.setProperty(LAST_USED_OPTIONS_CONFIG,
+				selectedOptions.getName());
+		}
+
 	}
 
 	private void copyOptionsToAllPrograms() {
@@ -684,23 +700,12 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		}
 	}
 
-	private String getLastUsedDefaultOptionsName() {
-		// if the program has non-default options or has been analyzed use its 
-		// current settings initially
-		if (isAnalyzed() || !currentProgramOptions.getOptionNames().isEmpty()) {
-			return currentProgramOptions.getName();
-		}
-		// Otherwise, use the last used analysis options configuration
-		return Preferences.getProperty(LAST_USED_OPTIONS_CONFIG,
-			STANDARD_DEFAULT_OPTIONS.getName());
-	}
-
 	private boolean isAnalyzed() {
 		Options options = programs.get(0).getOptions(Program.PROGRAM_INFO);
 		return options.getBoolean(Program.ANALYZED, false);
 	}
 
-	private Options[] getDefaultOptionsArray() {
+	private Options[] loadPossibleOptionsChoicesForComboBox() {
 		List<Options> savedDefaultsList = getSavedOptionsObjects();
 		Options[] optionsArray = new FileOptions[savedDefaultsList.size() + 2]; // 2 standard configurations always present
 		optionsArray[CURRENT_PROGRAM_OPTIONS_CHOICE_INDEX] = currentProgramOptions;
@@ -712,10 +717,9 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	}
 
 	private String[] getSavedChoices() {
-		Options[] defaultOptionsArray = getDefaultOptionsArray();
 		List<String> list = new ArrayList<>();
-		for (int i = 2; i < defaultOptionsArray.length; i++) {
-			list.add(defaultOptionsArray[i].getName());
+		for (int i = 2; i < optionConfigurationChoices.length; i++) {
+			list.add(optionConfigurationChoices[i].getName());
 		}
 		String[] a = new String[list.size()];
 		list.toArray(a);
@@ -804,20 +808,57 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 
 	}
 
-	private void analysisComboChanged(ItemEvent e) {
+	private void optionsComboBoxChanged(ItemEvent e) {
 		if (e.getStateChange() == ItemEvent.SELECTED) {
-			selectedOptions = (FileOptions) defaultOptionsCombo.getSelectedItem();
+			if (!checkOkToChange()) {
+				optionsComboBox.removeItemListener(optionsComboBoxListener);
+				optionsComboBox.setSelectedItem(selectedOptions);
+				optionsComboBox.addItemListener(optionsComboBoxListener);
+				return;
+			}
+			selectedOptions = (FileOptions) optionsComboBox.getSelectedItem();
 			updateDeleteButton();
 			loadCurrentOptionsIntoEditors();
-			// save off preference (unless it is the current program options, then don't save it)
-			if (selectedOptions != currentProgramOptions) {
-				Preferences.setProperty(LAST_USED_OPTIONS_CONFIG,
-					selectedOptions.getName());
-			}
+			propertyChangeListener.propertyChange(
+				new PropertyChangeEvent(this, GhidraOptions.APPLY_ENABLED, null,
+					hasChangedValues()));
 		}
+	}
+
+	private boolean checkOkToChange() {
+		FileOptions current = getCurrentOptionsAsFileOptions();
+		if (Options.hasSameOptionsAndValues(current, currentNonDefaults)) {
+			return true;
+		}
+		int result = OptionDialog.showYesNoDialog(this, "Loose Changes?",
+			"You have made changes from the current options set. If you change\n" +
+				"the current option set, those changes will be lost.\n" +
+				"Do you want to proceed?");
+		return result == OptionDialog.YES_OPTION;
 	}
 
 	private void updateDeleteButton() {
 		deleteButton.setEnabled(isUserConfiguration(selectedOptions));
+	}
+
+	public void setToLastUsedAnalysisOptionsIfProgramNotAnalyzed() {
+		// if already analyzed, get out
+		if (isAnalyzed()) {
+			return;
+		}
+
+		// if any analysis options are non default, it means the user previously saved
+		// some options, so don't use last save profile
+		if (!getNonDefaultProgramOptions().getOptionNames().isEmpty()) {
+			return;
+		}
+
+		// Otherwise, use the last used analysis options configuration
+		String optionsName = Preferences.getProperty(LAST_USED_OPTIONS_CONFIG,
+			STANDARD_DEFAULT_OPTIONS.getName());
+		Options lastUsed = findOptionsByName(optionsName);
+		if (lastUsed != null) {
+			optionsComboBox.setSelectedItem(lastUsed);
+		}
 	}
 }

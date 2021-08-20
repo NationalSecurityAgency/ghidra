@@ -22,8 +22,10 @@ import docking.widgets.OptionDialog;
 import ghidra.framework.client.*;
 import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.main.datatable.DomainFileProviderContextAction;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.Project;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.store.FileSystemSynchronizer;
 import ghidra.util.HelpLocation;
 
 /**
@@ -78,6 +80,14 @@ public abstract class VersionControlAction extends DomainFileProviderContextActi
 		else if (repository != null) {
 			repository = null;
 		}
+	}
+
+	/**
+	 * True if the file system is locked by another thread for a long running operation
+	 * @return true if locked
+	 */
+	protected boolean isFileSystemBusy() {
+		return FileSystemSynchronizer.isSynchronizing();
 	}
 
 	/**

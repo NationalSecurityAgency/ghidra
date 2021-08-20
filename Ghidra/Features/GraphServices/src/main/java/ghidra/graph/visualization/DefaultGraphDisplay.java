@@ -94,7 +94,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	private static final String ACTION_OWNER = "GraphServices";
 
-	private static final int MAX_NODES = Integer.getInteger("maxNodes", 10000);
 	private static final Dimension PREFERRED_VIEW_SIZE = new Dimension(1000, 1000);
 	private static final Dimension PREFERRED_LAYOUT_SIZE = new Dimension(3000, 3000);
 
@@ -273,16 +272,16 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		Lens lens = Lens.builder().lensShape(Lens.Shape.RECTANGLE).magnification(3.f).build();
 		lens.setMagnification(2.f);
 		LensMagnificationGraphMousePlugin magnificationPlugin =
-				new LensMagnificationGraphMousePlugin(1.f, 60.f, .2f) {
-					// Override to address a bug when using a high resolution mouse wheel.
-					// May be removed when jungrapht-visualization version is updated
-					@Override
-					public void mouseWheelMoved(MouseWheelEvent e) {
-						if (e.getWheelRotation() != 0) {
-							super.mouseWheelMoved(e);
-						}
+			new LensMagnificationGraphMousePlugin(1.f, 60.f, .2f) {
+				// Override to address a bug when using a high resolution mouse wheel.
+				// May be removed when jungrapht-visualization version is updated
+				@Override
+				public void mouseWheelMoved(MouseWheelEvent e) {
+					if (e.getWheelRotation() != 0) {
+						super.mouseWheelMoved(e);
 					}
-				};
+				}
+			};
 
 		MutableTransformer transformer = viewer.getRenderContext()
 				.getMultiLayerTransformer()
@@ -1158,9 +1157,10 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		this.title = title;
 		componentProvider.setTitle(title);
 		int count = graph.getVertexCount();
-		if (count > MAX_NODES) {
+		if (count > options.getMaxNodeCount()) {
 			Msg.showWarn(this, null, "Graph Not Rendered - Too many nodes!",
-				"Exceeded limit of " + MAX_NODES + " nodes.\n\n  Graph contained " + count +
+				"Exceeded limit of " + options.getMaxNodeCount() + " nodes.\n\n  Graph contained " +
+					count +
 					" nodes!");
 			graph = new AttributedGraph("Aborted", graph.getGraphType(), "Too Many Nodes");
 			graph.addVertex("1", "Graph Aborted");

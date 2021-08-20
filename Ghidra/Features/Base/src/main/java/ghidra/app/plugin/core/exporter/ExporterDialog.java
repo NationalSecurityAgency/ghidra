@@ -387,7 +387,11 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 
 	private String appendExporterFileExtension(String filename) {
 		Exporter exporter = getSelectedExporter();
-		String extension = "." + exporter.getDefaultFileExtension();
+		String extension = exporter.getDefaultFileExtension();
+		if (extension.isEmpty()) {
+			return filename;
+		}
+		extension = "." + extension;
 		if (!filename.toLowerCase().endsWith(extension.toLowerCase())) {
 			return filename + extension;
 		}

@@ -39,10 +39,10 @@ import ghidra.util.bean.opteditor.OptionsVetoException;
  * and edge type and shapes for vertex types.
  */
 public class GraphDisplayOptions implements OptionsChangeListener {
-	
+
 	public static final GraphDisplayOptions DEFAULT =
 		new GraphDisplayOptions(new EmptyGraphType());
-	
+
 	private static final String FONT = "Font";
 	private static final String LABEL_POSITION = "Label Position";
 	private static final String USE_ICONS = "Use Icons";
@@ -50,13 +50,15 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	private static final String EDGE_COLORS = "Edge Colors";
 	private static final String VERTEX_COLORS = "Vertex Colors";
 	private static final String VERTEX_SHAPES = "Vertex Shapes";
-	private static final String MISCELLANIOUS_OPTIONS = "Miscellanious";
+	private static final String MISCELLANEOUS_OPTIONS = "Miscellaneous";
 	private static final String DEFAULT_VERTEX_COLOR = "Default Vertex Color";
 	private static final String DEFAULT_EDGE_COLOR = "Default Edge Color";
 	private static final String DEFAULT_VERTEX_SHAPE = "Default Vertex Shape";
 	private static final String FAVORED_EDGE_TYPE = "Favored Edge Type";
 	private static final String VERTEX_SELECTION_COLOR = "Selected Vertex Color";
 	private static final String EDGE_SELECTION_COLOR = "Selected Edge Color";
+
+	private static final String MAX_NODES_SIZE = "Max Graph Size";
 
 	private GraphType graphType;
 
@@ -84,6 +86,8 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	private GraphLabelPosition labelPosition = GraphLabelPosition.SOUTH;
 	private Font font = new Font("Dialog", Font.BOLD, 18);
 	private int arrowLength = 15;
+
+	private int maxNodeCount = 500; // graph display struggles with too many nodes
 
 	/**
 	 * Constructs a new GraphTypeDisplayOptions for the given {@link GraphType}
@@ -138,8 +142,6 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	public void removeChangeListener(ChangeListener listener) {
 		changeListeners.remove(listener);
 	}
-
-
 
 	/**
 	 * Sets the default shape to be used by vertices that don't have a vertex type set
@@ -384,7 +386,6 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 		vertexShapeMap.put(vertexType, Objects.requireNonNull(vertexShape));
 	}
 
-
 	/**
 	 * Returns the color for the given edge type
 	 * @param edgeType the edge type whose color is to be determined.
@@ -580,6 +581,24 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	}
 
 	/**
+	 * Returns the maximum number of nodes that can be in a displayed graph
+	 * @return the maximum number of nodes that can be in a displayed graph
+	 */
+	public int getMaxNodeCount() {
+		return maxNodeCount;
+	}
+
+	/**
+	 * Sets the maximum number of nodes a graph can have and still be displayed. Be careful, 
+	 * setting this value too high can result in Ghidra running out of memory and/or 
+	 * making the system very sluggish.
+	 * @param maxNodeCount the maximum number of nodes a graph can have and still be displayed.
+	 */
+	public void setMaxNodeCount(int maxNodeCount) {
+		this.maxNodeCount = maxNodeCount;
+	}
+
+	/**
 	 * Returns true if this {@link GraphDisplayOptions} instance has been constructed with
 	 * a tool for getting/saving option values in the tool options
 	 * @return true if this {@link GraphDisplayOptions} instance is connected to tool options
@@ -603,7 +622,7 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 		registerVertexColorOptions(rootOptions, help);
 		registerVertexShapeOptions(rootOptions, help);
 		registerEdgeColorOptions(rootOptions, help);
-		registerMiscellaniousOptions(rootOptions, help);
+		registerMiscellaneousOptions(rootOptions, help);
 	}
 
 	/**
@@ -643,7 +662,6 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 		registeredWithTool = true;
 	}
 
-
 	private void updateOptions(Options rootOptions) {
 		updateVertexColorsFromOptions(rootOptions);
 		updateEdgeColorsFromOptions(rootOptions);
@@ -652,7 +670,7 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	}
 
 	private void updateMiscellaniousOptions(Options rootOptions) {
-		Options options = rootOptions.getOptions(MISCELLANIOUS_OPTIONS);
+		Options options = rootOptions.getOptions(MISCELLANEOUS_OPTIONS);
 		String shapeName = options.getString(DEFAULT_VERTEX_SHAPE, defaultVertexShape.getName());
 		defaultVertexShape = VertexShape.getShape(shapeName);
 
@@ -662,13 +680,14 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 
 		vertexSelectionColor = options.getColor(VERTEX_SELECTION_COLOR, vertexSelectionColor);
 		edgeSelectionColor = options.getColor(EDGE_SELECTION_COLOR, edgeSelectionColor);
-		
+
 		defaultLayoutAlgorithmName =
 			options.getString(DEFAULT_LAYOUT_ALGORITHM, defaultLayoutAlgorithmName);
-		
+
 		useIcons = options.getBoolean(USE_ICONS, useIcons);
 		labelPosition = options.getEnum(LABEL_POSITION, labelPosition);
 		font = options.getFont(FONT, font);
+		maxNodeCount = options.getInt(MAX_NODES_SIZE, maxNodeCount);
 	}
 
 	private void updateVertexShapesFromOptions(Options rootOptions) {
@@ -713,7 +732,6 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 		}
 	}
 
-
 	private void registerVertexColorOptions(Options rootOptions, HelpLocation help) {
 		Options options = rootOptions.getOptions(VERTEX_COLORS);
 
@@ -755,10 +773,12 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 		options.registerOptionsEditor(editor);
 	}
 
-	private void registerMiscellaniousOptions(Options rootOptions, HelpLocation help) {
+	private void registerMiscellaneousOptions(Options rootOptions, HelpLocation help) {
 
-		Options options = rootOptions.getOptions(MISCELLANIOUS_OPTIONS);
+		Options options = rootOptions.getOptions(MISCELLANEOUS_OPTIONS);
 
+		options.registerOption(MAX_NODES_SIZE, OptionType.INT_TYPE, maxNodeCount, help,
+			"Graphs with more than this number of nodes will not be displayed. (Large graphs can cause Ghidra to become unstable/sluggish)");
 		StringWithChoicesEditor editor = new StringWithChoicesEditor(VertexShape.getShapeNames());
 
 		options.registerOption(VERTEX_SELECTION_COLOR, OptionType.COLOR_TYPE, vertexSelectionColor,
@@ -777,9 +797,12 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 		options.registerOption(DEFAULT_EDGE_COLOR, OptionType.COLOR_TYPE, defaultEdgeColor,
 			help, "Color for edge that have no edge type defined");
 
-		editor = new StringWithChoicesEditor(graphType.getEdgeTypes());
-		options.registerOption(FAVORED_EDGE_TYPE, OptionType.STRING_TYPE, favoredEdgeType, help,
-			"Favored edge is used to influence layout algorithms", editor);
+		List<String> edgeTypes = graphType.getEdgeTypes();
+		if (!edgeTypes.isEmpty()) {
+			editor = new StringWithChoicesEditor(edgeTypes);
+			options.registerOption(FAVORED_EDGE_TYPE, OptionType.STRING_TYPE, favoredEdgeType, help,
+				"Favored edge is used to influence layout algorithms", editor);
+		}
 
 		editor = new StringWithChoicesEditor(LayoutAlgorithmNames.getLayoutAlgorithmNames());
 		options.registerOption(DEFAULT_LAYOUT_ALGORITHM, OptionType.STRING_TYPE,
@@ -796,6 +819,7 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 
 		List<String> optionNamesInDisplayOrder = new ArrayList<>();
 
+		optionNamesInDisplayOrder.add(MAX_NODES_SIZE);
 		optionNamesInDisplayOrder.add(VERTEX_SELECTION_COLOR);
 		optionNamesInDisplayOrder.add(EDGE_SELECTION_COLOR);
 		optionNamesInDisplayOrder.add(DEFAULT_VERTEX_COLOR);
@@ -807,9 +831,8 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 		optionNamesInDisplayOrder.add(FONT);
 		optionNamesInDisplayOrder.add(USE_ICONS);
 
-
 		OptionsEditor optionsEditor =
-			new ScrollableOptionsEditor(MISCELLANIOUS_OPTIONS, optionNamesInDisplayOrder);
+			new ScrollableOptionsEditor(MISCELLANEOUS_OPTIONS, optionNamesInDisplayOrder);
 		options.registerOptionsEditor(optionsEditor);
 
 	}
@@ -827,5 +850,5 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 				"\" not defined in GraphType \"" + getGraphType().getName() + "\".");
 		}
 	}
-}
 
+}

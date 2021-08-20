@@ -169,6 +169,9 @@ abstract class MenuKeyHandler {
 		}
 
 		int itemCount = getItemCount(popup);
+		if (itemCount == 0) {
+			return -1;
+		}
 
 		// handle wrapping around to the top again
 		int updatedOffset = offset >= itemCount ? offset % itemCount : offset;
