@@ -25,7 +25,6 @@ import org.jungrapht.visualization.layout.model.LayoutModel;
 
 import ghidra.service.graph.AttributedEdge;
 import ghidra.service.graph.AttributedVertex;
-import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -103,9 +102,6 @@ public class SetLayoutTask extends Task {
 	 *        the algorithm is done.
 	 */
 	private void layoutStateChanged(Event e) {
-
-		Msg.debug(this, "layoutStatechanged(): " + e);
-
 		if (!e.active) {
 			// algorithm is done, release the latch
 			taskDone.countDown();
@@ -116,9 +112,6 @@ public class SetLayoutTask extends Task {
 	 * Callback if the user cancels the layout
 	 */
 	private void taskCancelled() {
-
-		Msg.debug(this, "taskCancelled()");
-
 		// release the latch and tell the layout algorithm to cancel.
 		taskDone.countDown();
 		viewer.getVisualizationModel().getLayoutAlgorithm().cancel();

@@ -55,11 +55,12 @@ public class VersionControlUndoHijackAction extends VersionControlAction {
 		undoHijackedFiles(context.getSelectedFiles());
 	}
 
-	/**
-	 * Returns true if at least one of the provided domain files is hijacked.
-	 */
 	@Override
 	public boolean isEnabledForContext(DomainFileContext context) {
+		if (isFileSystemBusy()) {
+			return false; // don't block; we should get called again later
+		}
+
 		List<DomainFile> domainFiles = context.getSelectedFiles();
 		for (DomainFile domainFile : domainFiles) {
 			if (domainFile.isHijacked()) {
@@ -77,7 +78,7 @@ public class VersionControlUndoHijackAction extends VersionControlAction {
 			return;
 		}
 
-		List<DomainFile> hijackList = new ArrayList<DomainFile>();
+		List<DomainFile> hijackList = new ArrayList<>();
 		for (DomainFile domainFile : domainFiles) {
 			if (domainFile != null && domainFile.isHijacked()) {
 				hijackList.add(domainFile);
@@ -143,8 +144,7 @@ public class VersionControlUndoHijackAction extends VersionControlAction {
 		 * Creates a task for undoing hijacks of domain files.
 		 * @param hijackFiles the list of hijacked files
 		 * @param saveCopy true indicates that copies of the modified files should be made 
-		 * before undo of the checkout.
-		 * @param listener the task listener to call when the task completes or is cancelled.
+		 * before undo of the checkout
 		 */
 		UndoHijackTask(DomainFile[] hijackFiles, boolean saveCopy) {
 			super("Undo Hijack", true, true, true);
@@ -152,9 +152,6 @@ public class VersionControlUndoHijackAction extends VersionControlAction {
 			this.saveCopy = saveCopy;
 		}
 
-		/* (non-Javadoc)
-		 * @see ghidra.util.task.Task#run(ghidra.util.task.TaskMonitor)
-		 */
 		@Override
 		public void run(TaskMonitor monitor) {
 			try {

@@ -64,12 +64,12 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 		checkOut(context.getSelectedFiles());
 	}
 
-	/**
-	 * Returns true if at least one of the provided domain files can can be 
-	 * checked out of the repository.
-	 */
 	@Override
 	public boolean isEnabledForContext(DomainFileContext context) {
+		if (isFileSystemBusy()) {
+			return false; // don't block; we should get called again later
+		}
+
 		List<DomainFile> providedList = context.getSelectedFiles();
 		for (DomainFile domainFile : providedList) {
 			if (domainFile.canCheckout()) {

@@ -79,22 +79,22 @@ class ProgramSaveManager {
 		List<Program> saveList = new ArrayList<>();
 		List<Program> lockList = new ArrayList<>();
 		try {
-			for (int i = 0; i < programs.length; i++) {
+			for (Program program : programs) {
 //				if (programs[i].isTemporary()) {
 //					continue;
 //				}
-				if (isOnlyToolConsumer(programs[i])) {
-					if (!acquireSaveLock(programs[i], "Close")) {
+				if (isOnlyToolConsumer(program)) {
+					if (!acquireSaveLock(program, "Close")) {
 						return false;
 					}
-					lockList.add(programs[i]);
-					saveList.add(programs[i]);
+					lockList.add(program);
+					saveList.add(program);
 				}
-				else if (isAnalysisTool(programs[i])) {
-					if (!acquireSaveLock(programs[i], "Close")) {
+				else if (isAnalysisTool(program)) {
+					if (!acquireSaveLock(program, "Close")) {
 						return false;
 					}
-					lockList.add(programs[i]);
+					lockList.add(program);
 				}
 			}
 
@@ -110,7 +110,7 @@ class ProgramSaveManager {
 	}
 
 	private boolean isOnlyToolConsumer(Program program) {
-		ArrayList<?> consumers = program.getDomainFile().getConsumers();
+		List<?> consumers = program.getDomainFile().getConsumers();
 		for (Object consumer : consumers) {
 			if ((consumer instanceof PluginTool) && consumer != tool) {
 				return false;
@@ -474,25 +474,15 @@ class ProgramSaveManager {
 		return dataTreeSaveDialog;
 	}
 
-	/**
-	 * 
-	 */
 	class SaveFileTask extends Task {
 
 		private DomainFile domainFile;
 
-		/**
-		 * Construct new SaveFileTask.
-		 * @param df domain file to save
-		 */
 		SaveFileTask(DomainFile df) {
 			super("Save Program", true, true, true);
 			this.domainFile = df;
 		}
 
-		/**
-		 * @see ghidra.util.task.Task#run(TaskMonitor)
-		 */
 		@Override
 		public void run(TaskMonitor monitor) {
 			monitor.setMessage("Saving Program...");
@@ -500,6 +490,7 @@ class ProgramSaveManager {
 				domainFile.save(monitor);
 			}
 			catch (CancelledException e) {
+				// ignore
 			}
 			catch (NotConnectedException e) {
 				ClientUtil.promptForReconnect(tool.getProject().getRepository(),
@@ -525,7 +516,7 @@ class ProgramSaveManager {
 
 		/**
 		 * Construct new SaveFileTask to do a "Save As"
-		 * @param obj
+		 * @param obj the object to save
 		 * @param folder new parent folder
 		 * @param newName name for domain object
 		 * @param doOverwrite true means the given name already exists and the user
@@ -541,9 +532,6 @@ class ProgramSaveManager {
 			this.doOverwrite = doOverwrite;
 		}
 
-		/**
-		 * @see ghidra.util.task.Task#run(TaskMonitor)
-		 */
 		@Override
 		public void run(TaskMonitor monitor) {
 			monitor.setMessage("Saving Program...");

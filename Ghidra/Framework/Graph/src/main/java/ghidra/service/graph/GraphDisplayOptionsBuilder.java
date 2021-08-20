@@ -26,7 +26,7 @@ public class GraphDisplayOptionsBuilder {
 	private GraphDisplayOptions displayOptions;
 
 	/**
-	 * Create a new {@link GraphDisplayOptionsBuilder}
+	 * Create a new GraphDisplayOptionsBuilder
 	 * @param graphType the {@link GraphType} of graphs that this instance configures.
 	 */
 	public GraphDisplayOptionsBuilder(GraphType graphType) {
@@ -36,7 +36,7 @@ public class GraphDisplayOptionsBuilder {
 	/**
 	 * Sets the default vertex color for vertexes that don't have a registered vertex type
 	 * @param c the default vertex color
-	 * @return this {@link GraphDisplayOptionsBuilder}
+	 * @return this GraphDisplayOptionsBuilder
 	 */
 	public GraphDisplayOptionsBuilder defaultVertexColor(Color c) {
 		displayOptions.setDefaultVertexColor(c);
@@ -46,7 +46,7 @@ public class GraphDisplayOptionsBuilder {
 	/**
 	 * Sets the default edge color for edges that don't have a registered edge type
 	 * @param c the default edge color
-	 * @return this {@link GraphDisplayOptionsBuilder}
+	 * @return this GraphDisplayOptionsBuilder
 	 */
 	public GraphDisplayOptionsBuilder defaultEdgeColor(Color c) {
 		Objects.requireNonNull(c);
@@ -57,7 +57,7 @@ public class GraphDisplayOptionsBuilder {
 	/**
 	 * Sets the vertex selection color
 	 * @param color the vertex selection color
-	 * @return this {@link GraphDisplayOptionsBuilder}
+	 * @return this GraphDisplayOptionsBuilder
 	 */
 	public GraphDisplayOptionsBuilder vertexSelectionColor(Color color) {
 		displayOptions.setVertexSelectionColor(color);
@@ -67,7 +67,7 @@ public class GraphDisplayOptionsBuilder {
 	/**
 	 * Sets the edge selection color
 	 * @param color the edge selection color
-	 * @return this {@link GraphDisplayOptionsBuilder}
+	 * @return this GraphDisplayOptionsBuilder
 	 */
 	public GraphDisplayOptionsBuilder edgeSelectionColor(Color color) {
 		displayOptions.setEdgeSelectionColor(color);
@@ -77,7 +77,7 @@ public class GraphDisplayOptionsBuilder {
 	/**
 	 * Sets the default vertex shape for vertices that don't have a registered vertex type
 	 * @param vertexShape the {@link VertexShape} to use as a default
-	 * @return this {@link GraphDisplayOptionsBuilder}
+	 * @return this GraphDisplayOptionsBuilder
 	 */
 	public GraphDisplayOptionsBuilder defaultVertexShape(VertexShape vertexShape) {
 		Objects.requireNonNull(vertexShape);
@@ -90,7 +90,7 @@ public class GraphDisplayOptionsBuilder {
 	 * @param vertexType the vertex type to assign shape and color
 	 * @param vertexShape the shape to use for the named vertex type 
 	 * @param color the color to use for the named vertex type
-	 * @return this {@link GraphDisplayOptionsBuilder}
+	 * @return this GraphDisplayOptionsBuilder
 	 */
 	public GraphDisplayOptionsBuilder vertex(String vertexType, VertexShape vertexShape,
 			Color color) {
@@ -102,7 +102,7 @@ public class GraphDisplayOptionsBuilder {
 	 * Sets the color for edges of the given type
 	 * @param edgeType the edge type to assign color
 	 * @param color the color to use for the named edge type
-	 * @return this {@link GraphDisplayOptionsBuilder}
+	 * @return this GraphDisplayOptionsBuilder
 	 */
 	public GraphDisplayOptionsBuilder edge(String edgeType, Color color) {
 		displayOptions.configureEdgeType(edgeType, color);
@@ -112,7 +112,7 @@ public class GraphDisplayOptionsBuilder {
 	/**
 	 * Sets the attribute used to override the color for a vertex
 	 * @param colorAttributeKey the attribute key to use for overriding a vertex color
-	 * @return this {@link GraphDisplayOptionsBuilder}
+	 * @return this GraphDisplayOptionsBuilder
 	 */
 	public GraphDisplayOptionsBuilder vertexColorOverrideAttribute(String colorAttributeKey) {
 		displayOptions.setVertexColorOverrideAttributeKey(colorAttributeKey);
@@ -122,7 +122,7 @@ public class GraphDisplayOptionsBuilder {
 	/**
 	 * Sets the attribute used to override the color for a edge
 	 * @param colorAttributeKey the attribute key to use for overriding an edge color
-	 * @return this {@link GraphDisplayOptionsBuilder}
+	 * @return this GraphDisplayOptionsBuilder
 	 */
 	public GraphDisplayOptionsBuilder edgeColorOverrideAttribute(String colorAttributeKey) {
 		displayOptions.setEdgeColorOverrideAttributeKey(colorAttributeKey);
@@ -132,7 +132,7 @@ public class GraphDisplayOptionsBuilder {
 	/**
 	 * Sets the attribute used to override the shape for a vertex
 	 * @param shapeAttributeKey the attribute key to use of shape override
-	 * @return this {@link GraphDisplayOptionsBuilder}
+	 * @return this GraphDisplayOptionsBuilder
 	 */
 	public GraphDisplayOptionsBuilder shapeOverrideAttribute(String shapeAttributeKey) {
 		displayOptions.setVertexShapeOverrideAttributeKey(shapeAttributeKey);
@@ -142,7 +142,7 @@ public class GraphDisplayOptionsBuilder {
 	/**
 	 * Sets the name of the layout algorithm that will be used to initially layout the graph
 	 * @param string the name of the layout algoritm to use to initially layout the graph
-	 * @return this {@link GraphDisplayOptionsBuilder}
+	 * @return this GraphDisplayOptionsBuilder
 	 */
 	public GraphDisplayOptionsBuilder defaultLayoutAlgorithm(String string) {
 		displayOptions.setDefaultLayoutAlgorithmName(string);
@@ -154,7 +154,7 @@ public class GraphDisplayOptionsBuilder {
 	 * cached images with the label inside the shapes. If false, vertices are drawn as smaller
 	 * shapes with labels drawn near the shapes. 
 	 * @param b true to use pre-rendered icon images
-	 * @return this {@link GraphDisplayOptionsBuilder}
+	 * @return this GraphDisplayOptionsBuilder
 	 */
 	public GraphDisplayOptionsBuilder useIcons(boolean b) {
 		displayOptions.setUsesIcons(b);
@@ -164,7 +164,7 @@ public class GraphDisplayOptionsBuilder {
 	/**
 	 * Sets the length of the arrows to display in the graph. The width will be sized proportionately.
 	 * @param length the length the arrows to display in the graph
-	 * @return this {@link GraphDisplayOptionsBuilder}
+	 * @return this GraphDisplayOptionsBuilder
 	 */
 	public GraphDisplayOptionsBuilder arrowLength(int length) {
 		displayOptions.setArrowLength(length);
@@ -172,10 +172,20 @@ public class GraphDisplayOptionsBuilder {
 	}
 
 	/**
+	 * Sets the maximum number of nodes a graph can have and still be displayed.
+	 * @param maxNodeCount the maximum number of nodes
+	 * @return this GraphDisplayOptionsBuilder
+	 */
+	public GraphDisplayOptionsBuilder maxNodeCount(int maxNodeCount) {
+		displayOptions.getMaxNodeCount();
+		return this;
+	}
+
+	/**
 	 * Sets the vertex label position relative to vertex shape. This is only applicable if the
-	 * {@link #useIcons(boolean)} is set to true.
+	 * {@link #useIcons(boolean)} is set to false.
 	 * @param labelPosition the relative position to place the vertex label
-	 * @return this {@link GraphDisplayOptionsBuilder}
+	 * @return this GraphDisplayOptionsBuilder
 	 */
 	public GraphDisplayOptionsBuilder labelPosition(GraphLabelPosition labelPosition) {
 		displayOptions.setLabelPosition(labelPosition);

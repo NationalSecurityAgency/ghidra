@@ -91,16 +91,15 @@ public class FixPascalCallingConvention extends GhidraScript {
 			doRun(functions);
 
 			// build popup information
-			StringBuffer buf = new StringBuffer("Update " + cntConvertionChanged
+			String buf = "Update " + cntConvertionChanged
 					+ " calling convertions out of " + cntConvertionTotal + " to " + PASCAL16FAR
 					+ ".\n\nUpdated " + cntFnsUpdated + " functions having " + cntParamsReplaced
-					+ " parameters reversed out of " + cntParamsTotal + " parameters found.");
-			Iterator<String> messages = warningMessages.iterator();
-			while (messages.hasNext()) {
-				buf.append("\n\n").append(messages.next());
+					+ " parameters reversed out of " + cntParamsTotal + " parameters found.";
+			if (!warningMessages.isEmpty()) {
+				buf = buf + "\n\n" + String.join("\n\n", warningMessages);
 			}
 
-			popup(buf.toString());
+			popup(buf);
 
 		}
 	}

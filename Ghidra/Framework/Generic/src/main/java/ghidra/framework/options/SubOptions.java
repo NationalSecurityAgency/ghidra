@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,6 @@
  */
 package ghidra.framework.options;
 
-import ghidra.util.HelpLocation;
-
 import java.awt.Color;
 import java.awt.Font;
 import java.beans.PropertyEditor;
@@ -25,6 +22,8 @@ import java.io.File;
 import java.util.*;
 
 import javax.swing.KeyStroke;
+
+import ghidra.util.HelpLocation;
 
 public class SubOptions implements Options {
 
@@ -369,5 +368,4 @@ public class SubOptions implements Options {
 		Set<String> leaves = AbstractOptions.getLeaves(optionPaths);
 		return new ArrayList<String>(leaves);
 	}
-
 }

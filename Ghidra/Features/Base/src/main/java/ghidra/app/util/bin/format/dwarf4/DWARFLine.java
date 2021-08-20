@@ -15,10 +15,11 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import java.io.File;
+import java.io.IOException;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -69,6 +70,10 @@ public class DWARFLine {
 		LengthResult lengthInfo = DWARFUtil.readLength(reader, dProg.getGhidraProgram());
 		result.unit_length = lengthInfo.length;
 		result.format = lengthInfo.format;
+		if (result.unit_length == 0) {
+			throw new DWARFException(
+				"Invalid DWARFLine length 0 at 0x" + Long.toHexString(stmtListOffset));
+		}
 
 		// A version number for this line number information section
 		result.version = reader.readNextUnsignedShort();

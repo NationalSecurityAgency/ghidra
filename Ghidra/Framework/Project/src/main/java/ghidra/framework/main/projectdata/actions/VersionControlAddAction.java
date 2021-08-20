@@ -57,11 +57,12 @@ public class VersionControlAddAction extends VersionControlAction {
 		addToVersionControl(context.getSelectedFiles());
 	}
 
-	/**
-	 * Returns true if at least one of the provided domain files can be added to the repository.
-	 */
 	@Override
 	public boolean isEnabledForContext(DomainFileContext context) {
+		if (isFileSystemBusy()) {
+			return false; // don't block; we should get called again later
+		}
+
 		List<DomainFile> domainFiles = context.getSelectedFiles();
 		for (DomainFile domainFile : domainFiles) {
 			if (domainFile.canAddToRepository()) {
@@ -71,11 +72,6 @@ public class VersionControlAddAction extends VersionControlAction {
 		return false;
 	}
 
-	/**
-	 * Adds all the non-version controlled domain files to the repository from the 
-	 * list of files from the DomainFileProvider.
-	 * @param domainFiles 
-	 */
 	private void addToVersionControl(List<DomainFile> domainFiles) {
 
 		if (!checkRepositoryConnected()) {

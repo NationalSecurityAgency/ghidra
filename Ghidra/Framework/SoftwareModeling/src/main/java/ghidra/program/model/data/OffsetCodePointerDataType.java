@@ -56,14 +56,6 @@ public class OffsetCodePointerDataType extends BuiltIn {
 		return 2;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	@Override
-	public boolean isDynamicallySized() {
-		return false;
-	}
-
 	@Override
 	public String getDescription() {
 		return "16 bit offset address";

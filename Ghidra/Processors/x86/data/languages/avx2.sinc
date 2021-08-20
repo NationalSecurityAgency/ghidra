@@ -218,14 +218,6 @@ define pcodeop vpcmpeqd_avx2 ;
 	# TODO ZmmReg1 = zext(YmmReg1)
 }
 
-# PCMPEQQ 4-250 PAGE 1370 LINE 71171
-define pcodeop vpcmpeqq_avx2 ;
-:VPCMPEQQ YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_WIG) & vexVVVV_YmmReg; byte=0x29; YmmReg1 ... & YmmReg2_m256
-{
-	YmmReg1 = vpcmpeqq_avx2( vexVVVV_YmmReg, YmmReg2_m256 );
-	# TODO ZmmReg1 = zext(YmmReg1)
-}
-
 # PCMPGTB/PCMPGTW/PCMPGTD 4-257 PAGE 1377 LINE 71508
 define pcodeop vpcmpgtb_avx2 ;
 :VPCMPGTB YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG) & vexVVVV_YmmReg; byte=0x64; YmmReg1 ... & YmmReg2_m256
@@ -416,14 +408,6 @@ define pcodeop vpminud_avx2 ;
 {
 	YmmReg1 = vpminud_avx2( vexVVVV_YmmReg, YmmReg2_m256 );
 	# TODO ZmmReg1 = zext(YmmReg1)
-}
-
-# PMOVMSKB 4-338 PAGE 1458 LINE 75655
-define pcodeop vpmovmskb_avx2 ;
-:VPMOVMSKB Reg32, YmmReg2 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0xD7; Reg32 & (mod=0x3 & YmmReg2)
-{
-	Reg32 = vpmovmskb_avx2( YmmReg2 );
-	# TODO Reg64 = zext(Reg32)
 }
 
 # PMOVSX 4-340 PAGE 1460 LINE 75782

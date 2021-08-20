@@ -50,15 +50,16 @@ public class VersionControlViewCheckOutAction extends VersionControlAction {
 		viewCheckouts(context.getSelectedFiles());
 	}
 
-	/**
-	 * Returns true if a single version controlled domain file is being provided.
-	 */
 	@Override
 	public boolean isEnabledForContext(DomainFileContext context) {
 		List<DomainFile> domainFiles = context.getSelectedFiles();
 		if (domainFiles.size() != 1) {
 			return false;
 		}
+		if (isFileSystemBusy()) {
+			return false; // don't block; we should get called again later
+		}
+
 		DomainFile domainFile = domainFiles.get(0);
 		return domainFile.isVersioned();
 	}

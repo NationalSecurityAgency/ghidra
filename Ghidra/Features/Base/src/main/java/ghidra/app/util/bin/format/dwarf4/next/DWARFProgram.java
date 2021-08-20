@@ -15,9 +15,10 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
+import java.util.*;
+
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.*;
 
 import org.apache.commons.collections4.ListValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
@@ -28,8 +29,7 @@ import ghidra.app.util.bin.format.dwarf4.attribs.DWARFAttributeFactory;
 import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
 import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.*;
-import ghidra.app.util.opinion.ElfLoader;
-import ghidra.app.util.opinion.MachoLoader;
+import ghidra.app.util.opinion.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.CategoryPath;
@@ -67,15 +67,17 @@ public class DWARFProgram implements Closeable {
 	 * @return boolean true if program has DWARF info, false if not
 	 */
 	public static boolean isDWARF(Program program) {
-		String format = program.getExecutableFormat();
+		String format = Objects.requireNonNullElse(program.getExecutableFormat(), "");
 
-		if (ElfLoader.ELF_NAME.equals(format) &&
-			DWARFSectionProviderFactory.createSectionProviderFor(program) != null) {
-			return true;
-		}
-		if (MachoLoader.MACH_O_NAME.equals(format) &&
-			DSymSectionProvider.getDSYMForProgram(program) != null) {
-			return true;
+		switch (format) {
+			case ElfLoader.ELF_NAME:
+			case PeLoader.PE_NAME:
+				try (DWARFSectionProvider dsp =
+					DWARFSectionProviderFactory.createSectionProviderFor(program)) {
+					return dsp != null;
+				}
+			case MachoLoader.MACH_O_NAME:
+				return DSymSectionProvider.getDSYMForProgram(program) != null;
 		}
 		return false;
 	}

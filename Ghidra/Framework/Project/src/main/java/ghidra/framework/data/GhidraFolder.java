@@ -85,7 +85,8 @@ public class GhidraFolder implements DomainFolder {
 
 	GhidraFolderData getFolderPathData(String folderPath) throws FileNotFoundException {
 		GhidraFolderData parentData = (folderPath.startsWith(FileSystem.SEPARATOR))
-				? fileManager.getRootFolderData() : getFolderData();
+				? fileManager.getRootFolderData()
+				: getFolderData();
 		GhidraFolderData folderData = parentData.getFolderPathData(folderPath, false);
 		if (folderData == null) {
 			String path = (folderPath.startsWith(FileSystem.SEPARATOR)) ? folderPath

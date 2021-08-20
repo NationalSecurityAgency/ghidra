@@ -47,8 +47,18 @@ public class DefaultGraphRenderer implements GraphRenderer {
 	private static final double ARROW_WIDTH_TO_LENGTH_RATIO = 1.3;
 	private static final int DEFAULT_MARGIN_BORDER_SIZE = 4;
 	private static final int DEFAULT_STROKE_THICKNESS = 6;
-	// scale factor so the icons can be rendered smaller so that fonts read better when zoomed out a bit
-	private static final int ICON_ZOOM = 5;
+
+	// This is an arbitrary scale factor applied after creating a node's icon
+	// This somehow causes the low level jungrapht layout to perform better
+	// If the icon is not zoomed, the icons are rendered too small and too far apart
+	// somehow, by giving it bigger icons, the layouts seem to produce better results
+	// When/if this is fixed in the jungrapht library, this can be removed
+	private static final int ICON_ZOOM = 2;
+
+	// put a limit on node size. Nodes are sized based on user supplied vertex names, so need to
+	// protect them from becoming too large, so just picked some limits.
+	private static final int MAX_WIDTH = 500;
+	private static final int MAX_HEIGHT = 500;
 
 	private int labelBorderSize = DEFAULT_MARGIN_BORDER_SIZE;
 	private int strokeThickness = DEFAULT_STROKE_THICKNESS;
@@ -220,7 +230,6 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		VertexShape vertexShape = options.getVertexShape(vertex);
 		Color vertexColor = options.getVertexColor(vertex);
 		String labelText = options.getVertexLabel(vertex);
-
 		return createImage(vertexShape, labelText, vertexColor);
 	}
 
@@ -235,37 +244,47 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		Shape unitShape = vertexShape.getShape();
 		Rectangle bounds = unitShape.getBounds();
 
+		// this variable attempts to keep the shape's height from being too out of proportion
+		// from the width. 
 		int maxWidthToHeightRatio = vertexShape.getMaxWidthToHeightRatio();
 		double sizeFactor = vertexShape.getShapeToLabelRatio();
 
 		int labelWidth = label.getWidth();
 		int labelHeight = label.getHeight();
 
-		int iconWidth =
-			(int) (Math.max(labelWidth, labelHeight * 2.0) * sizeFactor) + strokeThickness;
-		int iconHeight =
-			(int) (Math.max(label.getHeight(), labelWidth / maxWidthToHeightRatio) * sizeFactor) +
-				strokeThickness;
+		// make height somewhat bigger if label width is really long to avoid really long thin
+		// nodes
+		labelHeight = Math.max(labelHeight, labelWidth / maxWidthToHeightRatio);
 
-		double scalex = iconWidth / bounds.getWidth();
-		double scaley = iconHeight / bounds.getHeight();
+		// adjust for shape size factor (some shapes want to be somewhat bigger than the label)
+		// for example, triangles need to be much bigger to get the text to fit inside the shape,
+		// whereas, rectangles fit naturally.
+		int shapeWidth = (int) (labelWidth * sizeFactor);
+		int shapeHeight = (int) (labelHeight * sizeFactor);
+
+		// compute the amount to scale the shape to fit around the label
+		double scalex = shapeWidth / bounds.getWidth();
+		double scaley = shapeHeight / bounds.getHeight();
 
 		Shape scaledShape =
 			AffineTransform.getScaleInstance(scalex, scaley).createTransformedShape(unitShape);
 
+		// this determines the vertical positioning of text in the shape
+		// a value of 0 will put the text at the top, 1 at the bottom, and .5 in the center
 		double labelOffsetRatio = vertexShape.getLabelPosition();
-
 		bounds = scaledShape.getBounds();
+		int iconWidth = bounds.width + (2 * strokeThickness);
+		int iconHeight = bounds.height + (2 * strokeThickness);
 
-		int width = bounds.width + 2 * strokeThickness;
-		int height = bounds.height + strokeThickness;
-		BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage bufferedImage =
+			new BufferedImage(iconWidth, iconHeight, BufferedImage.TYPE_INT_ARGB);
 
 		Graphics2D graphics = bufferedImage.createGraphics();
 		graphics.setRenderingHints(renderingHints);
 		AffineTransform graphicsTransform = graphics.getTransform();
 
-		graphics.translate(-bounds.x + strokeThickness, -bounds.y + strokeThickness / 2);
+		// shapes are centered at the origin, so translate the graphics to compensate
+		graphics.translate(-bounds.x + strokeThickness, -bounds.y + strokeThickness);
 		graphics.setPaint(Color.WHITE);
 		graphics.fill(scaledShape);
 		graphics.setPaint(vertexColor);
@@ -273,8 +292,12 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		graphics.draw(scaledShape);
 
 		graphics.setTransform(graphicsTransform);
-		int xOffset = (width - label.getWidth()) / 2;
-		int yOffset = (int) ((height - label.getHeight()) * labelOffsetRatio);
+
+		// center the text horizontally
+		// position the text vertically based on the shape.
+		int xOffset = (iconWidth - label.getWidth()) / 2;
+		int yOffset = (int) ((iconHeight - label.getHeight()) * labelOffsetRatio);
+
 		graphics.translate(xOffset, yOffset);
 		graphics.setPaint(Color.black);
 		label.paint(graphics);
@@ -282,19 +305,26 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		graphics.setTransform(graphicsTransform); // restore the original transform
 		graphics.dispose();
 		Image scaledImage =
-			ImageUtils.createScaledImage(bufferedImage, width * ICON_ZOOM, height * ICON_ZOOM,
+			ImageUtils.createScaledImage(bufferedImage, iconWidth * ICON_ZOOM,
+				iconHeight * ICON_ZOOM,
 				Image.SCALE_FAST);
-
 		ImageIcon imageIcon = new ImageIcon(scaledImage);
 		return imageIcon;
 
 	}
 
 	private void prepareLabel(String vertexName, Color vertexColor) {
-		label.setFont(options.getFont());
+		// The label is just used as a renderer and never parented, so no need to be 
+		// on the swing thread
+		Font font = options.getFont();
+		label.setFont(font);
 		label.setText(vertexName);
 		Dimension labelSize = label.getPreferredSize();
-		label.setSize(labelSize);
+
+		// make sure the the vertexName doesn't make the icon ridiculously big
+		int width = Math.min(labelSize.width, MAX_WIDTH);
+		int height = Math.min(labelSize.height, MAX_HEIGHT);
+		label.setSize(width, height);
 	}
 
 	@Override

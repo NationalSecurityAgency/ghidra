@@ -61,12 +61,12 @@ public class VersionControlCheckInAction extends VersionControlAction {
 		doCheckIn(context.getSelectedFiles());
 	}
 
-	/**
-	 * Returns true if at least one of the provided domain files can have its changes 
-	 * checked into the repository.
-	 */
 	@Override
 	public boolean isEnabledForContext(DomainFileContext context) {
+		if (isFileSystemBusy()) {
+			return false; // don't block; we should get called again later
+		}
+
 		List<DomainFile> domainFiles = context.getSelectedFiles();
 		for (DomainFile domainFile : domainFiles) {
 			if (domainFile.isCheckedOut() && domainFile.modifiedSinceCheckout()) {
@@ -83,7 +83,7 @@ public class VersionControlCheckInAction extends VersionControlAction {
 		if (!checkRepositoryConnected()) {
 			return;
 		}
-		List<DomainFile> checkedOut = new ArrayList<DomainFile>();
+		List<DomainFile> checkedOut = new ArrayList<>();
 		for (DomainFile domainFile : domainFiles) {
 			if (domainFile.isCheckedOut() && domainFile.modifiedSinceCheckout()) {
 				checkedOut.add(domainFile);
@@ -112,8 +112,8 @@ public class VersionControlCheckInAction extends VersionControlAction {
 			return;
 		}
 
-		ArrayList<DomainFile> changedList = new ArrayList<DomainFile>();
-		ArrayList<DomainFile> list = new ArrayList<DomainFile>();
+		ArrayList<DomainFile> changedList = new ArrayList<>();
+		ArrayList<DomainFile> list = new ArrayList<>();
 		for (int i = 0; i < fileList.size(); i++) {
 			DomainFile df = fileList.get(i);
 			if (df != null && df.canCheckin()) {
