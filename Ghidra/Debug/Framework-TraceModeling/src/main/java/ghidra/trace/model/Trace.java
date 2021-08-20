@@ -106,6 +106,8 @@ public interface Trace extends DataTypeManagerDomainObject {
 		// Long is data type ID
 		public static final TraceCodeChangeType<TraceAddressSnapRange, Long> DATA_TYPE_REPLACED =
 			new TraceCodeChangeType<>();
+		public static final TraceCodeChangeType<TraceAddressSnapRange, Void> DATA_TYPE_SETTINGS_CHANGED =
+			new TraceCodeChangeType<>();
 	}
 
 	public static final class TraceCommentChangeType

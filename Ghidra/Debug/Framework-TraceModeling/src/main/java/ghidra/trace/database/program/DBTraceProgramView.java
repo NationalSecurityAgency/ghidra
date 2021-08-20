@@ -109,6 +109,8 @@ public class DBTraceProgramView implements TraceProgramView {
 			listenFor(TraceCodeChangeType.REMOVED, this::codeRemoved);
 			listenFor(TraceCodeChangeType.FRAGMENT_CHANGED, this::codeFragmentChanged);
 			listenFor(TraceCodeChangeType.DATA_TYPE_REPLACED, this::codeDataTypeReplaced);
+			listenFor(TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED,
+				this::codeDataTypeSettingsChanged);
 
 			listenFor(TraceCommentChangeType.EOL_CHANGED, this::commentEolChanged);
 			listenFor(TraceCommentChangeType.PLATE_CHANGED, this::commentPlateChanged);
@@ -330,8 +332,19 @@ public class DBTraceProgramView implements TraceProgramView {
 			if (queues == null) {
 				return;
 			}
-			queues.fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_CODE_REPLACED,
+			queues.fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_DATA_TYPE_REPLACED,
 				range.getX1(), range.getX2(), null, null, null));
+		}
+
+		private void codeDataTypeSettingsChanged(TraceAddressSpace space,
+				TraceAddressSnapRange range) {
+			DomainObjectEventQueues queues = isVisible(space, range);
+			if (queues == null) {
+				return;
+			}
+			// Yes, x1 twice
+			queues.fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_DATA_TYPE_SETTING_CHANGED,
+				range.getX1(), range.getX1(), null, null, null));
 		}
 
 		private void commentChanged(int docrType, TraceAddressSpace space,
