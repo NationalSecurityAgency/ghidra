@@ -236,7 +236,7 @@ public class FunctionSignatureParser {
 	}
 
 	private String replaceDataTypeIfNeeded(String text, DataType dataType, String replacementName) {
-		String displayName = dataType.getDisplayName();
+		String displayName = dataType.getName();
 		if (canParse(displayName)) {
 			return text;
 		}
@@ -285,15 +285,27 @@ public class FunctionSignatureParser {
 	// Note: group-2 is an inner group to group-3 is not useful
 	//
 	private static final Pattern parameterNameCapturePattern =
-		Pattern.compile("(.+?)((\\[\\d*\\]|\\*\\d*)\\s*)*([^\\s\\[\\*]+)");
+		Pattern.compile("([^\\*\\[]+?)((\\[\\d*\\]|\\*[8|16|24|32|40|48|56|64|72|80|96|128|256|512]*)\\s*)*([^\\s\\[\\*]*)");
 
 	private DataType resolveDataType(String dataTypeName) throws CancelledException {
+
 		if (dtMap.containsKey(dataTypeName)) {
 			return dtMap.get(dataTypeName);
 		}
 
 		Matcher m = parameterNameCapturePattern.matcher(dataTypeName);
 		if (m.matches()) {
+			StringBuilder s = new StringBuilder();
+			for(int i = 0; i <= m.groupCount(); i++) {
+				s.append("\nGroup ").append(i).append(": ");
+				try {
+					s.append(m.group(i));
+				}
+				catch (Exception e) {
+					s.append("No match");
+				}
+			}
+			System.out.println(s);
 			boolean hasPointerOrArraySpec = m.group(3) != null;
 			boolean hasName = (m.group(4) != null) && (m.group(4).length() != 0);
 			if (hasPointerOrArraySpec && hasName) {

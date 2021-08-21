@@ -73,7 +73,7 @@ public class PrototypeModel {
 		likelytrash = model.likelytrash;
 		localRange = new AddressSet(model.localRange);
 		paramRange = new AddressSet(model.paramRange);
-		hasThis = model.hasThis || name.equals(CompilerSpec.CALLING_CONVENTION_thiscall);
+		hasThis = model.hasThis || name.startsWith(CompilerSpec.CALLING_CONVENTION_thiscall);
 		isConstruct = model.isConstruct;
 		genericCallingConvention = GenericCallingConvention.getGenericCallingConvention(name);
 		hasUponEntry = model.hasUponEntry;
@@ -283,18 +283,43 @@ public class PrototypeModel {
 			injectAutoThisParam = true;
 			DataType[] ammendedTypes = new DataType[dataTypes.length + 1];
 			ammendedTypes[0] = dataTypes[0];
-			ammendedTypes[1] = new PointerDataType(program.getDataTypeManager());
+			if (name.endsWith("16far")) { // FAR pointers
+				ammendedTypes[1] = new PointerDataType(null, 4, program.getDataTypeManager());
+			} else {
+				ammendedTypes[1] = new PointerDataType(program.getDataTypeManager());
+			}
 			if (dataTypes.length > 1) {
 				System.arraycopy(dataTypes, 1, ammendedTypes, 2, dataTypes.length - 1);
 			}
 			dataTypes = ammendedTypes;
 		}
 
+		// Deal with PASCAL convention parameter ordering
+		if (name.contains(GenericCallingConvention.pascal.name())) {
+			// swap around the datatypes to map variable storage high-to-low
+			for (int i = 1; i <= (dataTypes.length-1) / 2; i++) {
+				DataType tmp = dataTypes[dataTypes.length - i];
+				dataTypes[dataTypes.length - i] = dataTypes[i];
+				dataTypes[i] = tmp;
+			}
+		}
+
+		// Assign storage
 		ArrayList<VariableStorage> res = new ArrayList<>();
 		outputParams.assignMap(program, dataTypes, false, res, addAutoParams);
 		inputParams.assignMap(program, dataTypes, true, res, addAutoParams);
 		VariableStorage[] finalres = new VariableStorage[res.size()];
 		res.toArray(finalres);
+
+		// Deal with PASCAL convention parameter ordering
+		if (name.contains(GenericCallingConvention.pascal.name())) {
+			// swap back the resulting storage to be ordered correctly
+			for (int i = 1; i <= (finalres.length-1) / 2; i++) {
+				VariableStorage tmp = finalres[finalres.length - i];
+				finalres[finalres.length - i] = finalres[i];
+				finalres[i] = tmp;
+			}
+		}
 
 		if (injectAutoThisParam) {
 
