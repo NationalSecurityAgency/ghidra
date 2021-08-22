@@ -15,6 +15,7 @@
  */
 #include "type.hh"
 #include "funcdata.hh"
+#include "utils.hh"
 
 // Some default routines for displaying data
 
@@ -141,18 +142,18 @@ int4 Datatype::compare(const Datatype &op,int4 level) const
   return compareDependency(op);
 }
 
-/// Sort data-types for the main TypeFactory container.  The sort needs to be based on
-/// the data-type structure so that an example data-type, constructed outside the factory,
-/// can be used to find the equivalent object inside the factory.  This means the
-/// comparison should not examine the data-type id. In practice, the comparison only needs
+/// Sort data-types for the main TypeFactory container.  The sort needs to be based on 
+/// the data-type structure so that an example data-type, constructed outside the factory, 
+/// can be used to find the equivalent object inside the factory.  This means the 
+/// comparison should not examine the data-type id. In practice, the comparison only needs 
 /// to go down one level in the component structure before just comparing component pointers.
 /// \param op is the data-type to compare with \b this
 /// \return negative, 0, positive depending on ordering of types
 int4 Datatype::compareDependency(const Datatype &op) const
 
 {
-  if (size != op.size) return (op.size-size);
-  if (metatype != op.metatype) return (metatype < op.metatype) ? -1 : 1;
+  if (size != op.size) return op.size-size;
+  if (metatype != op.metatype) return metatype - op.metatype;
   uint4 fl = flags & (~coretype);
   uint4 opfl = op.flags & (~coretype);
   // We need to be careful here, we compare flags so that enum types are more specific than base int or uint,
@@ -160,8 +161,7 @@ int4 Datatype::compareDependency(const Datatype &op) const
   // we don't want char to be more specific than int1 because char is the default size 1 integer type.
   fl ^= chartype;
   opfl ^= chartype;
-  if (fl != opfl) return (opfl < fl) ? -1 : 1;
-  return 0;
+  return opfl - fl;
 }
 
 /// Convert a type \b meta-type into the string name of the meta-type
@@ -579,7 +579,7 @@ TypePointer *TypePointer::downChain(uintb &off,bool allowArrayWrap,TypeFactory &
   if (off >= ptrtoSize) {	// Check if we are wrapping
     if (ptrtoSize != 0 && !ptrto->isVariableLength()) {	// Check if pointed-to is wrappable
       if (!allowArrayWrap)
-        return (TypePointer *)0;
+	return (TypePointer *)0;
       intb signOff = (intb)off;
       sign_extend(signOff,size*8-1);
       signOff = signOff % ptrtoSize;
@@ -587,7 +587,7 @@ TypePointer *TypePointer::downChain(uintb &off,bool allowArrayWrap,TypeFactory &
 	signOff = signOff + ptrtoSize;
       off = signOff;
       if (off == 0)		// If we've wrapped and are now at zero
-        return this;		// consider this going down one level
+	return this;		// consider this going down one level
     }
   }
 
@@ -686,14 +686,6 @@ void TypeArray::restoreXml(const Element *el,TypeFactory &typegrp)
     throw LowlevelError("Bad size for array of type "+arrayof->getName());
 }
 
-TypeEnum::TypeEnum(const TypeEnum &op) : TypeBase(op)
-
-{
-  namemap = op.namemap;
-  masklist = op.masklist;
-  flags |= (op.flags&poweroftwo)|enumtype;
-}
-
 /// Set the map. Calculate the independent bit-fields within the named values of the enumeration
 /// Two bits are in the same bit-field if there is a name in the map whose value
 /// has those two bits set.  Bit-fields must be a contiguous range of bits.
@@ -741,7 +733,7 @@ void TypeEnum::setNameMap(const map<uintb,string> &nmap)
       uintb mask2 = 1;
       mask2 <<= msb;
       mask2 <<= 1;
-      mask2 -= 1;                  // every bit below or equal to msb is set to 1
+      mask2 -= 1;		  // every bit below or equal to msb is set to 1
       curmask = mask1 ^ mask2;
     }
     if (fieldisempty) {		// If no value hits this bit
@@ -868,31 +860,6 @@ void TypeEnum::restoreXml(const Element *el,TypeFactory &typegrp)
     nmap[val] = subel->getAttributeValue("name");
   }
   setNameMap(nmap);
-}
-
-TypeStruct::TypeStruct(const TypeStruct &op)
-  : Datatype(op)
-{
-  setFields(op.field);
-  size = op.size;		// setFields might have changed the size
-}
-
-/// Copy a list of fields into this structure, establishing its size.
-/// Should only be called once when constructing the type
-/// \param fd is the list of fields to copy in
-void TypeStruct::setFields(const vector<TypeField> &fd)
-
-{
-  vector<TypeField>::const_iterator iter;
-  int4 end;
-				// Need to calculate size
-  size = 0;
-  for(iter=fd.begin();iter!=fd.end();++iter) {
-    field.push_back(*iter);
-    end = (*iter).offset + (*iter).type->getSize();
-    if (end > size)
-      size = end;
-  }
 }
 
 /// Find the proper subfield given an offset. Return the index of that field
@@ -1175,17 +1142,6 @@ void TypeCode::set(TypeFactory *tfact,ProtoModel *model,
   proto->updateAllTypes(blanknames,typelist,dotdotdot);
   proto->setInputLock(true);
   proto->setOutputLock(true);
-}
-
-TypeCode::TypeCode(const TypeCode &op) : Datatype(op)
-
-{
-  proto = (FuncProto *)0;
-  factory = op.factory;
-  if (op.proto != (FuncProto *)0) {
-    proto = new FuncProto();
-    proto->copy(*op.proto);
-  }
 }
 
 TypeCode::TypeCode(const string &nm) : Datatype(1,TYPE_CODE,nm)
@@ -1624,7 +1580,7 @@ void TypeFactory::cacheCoreTypes(void)
       // fallthru
     case TYPE_UINT:
       if (ct->isEnumType()) break; // Conceivably an enumeration
-      if (ct->isASCII()) { 	// Char is preferred over other int types
+      if (ct->isASCII()) {	 // Char is preferred over other int types
 	typecache[ct->getSize()][ct->getMetatype()-TYPE_FLOAT] = ct;
 	break;
       }
@@ -1645,14 +1601,18 @@ void TypeFactory::cacheCoreTypes(void)
   }
 }
 
+void TypeFactory::deleteTree(void)
+
+{
+  for(auto *it : tree)
+    delete it;
+}
+
 /// Remove all Datatype objects owned by this TypeFactory
 void TypeFactory::clear(void)
 
 {
-  DatatypeSet::iterator iter;
-
-  for(iter=tree.begin();iter!=tree.end();++iter)
-    delete *iter;
+  deleteTree();
   tree.clear();
   nametree.clear();
   clearCache();
@@ -1681,7 +1641,7 @@ void TypeFactory::clearNoncore(void)
 TypeFactory::~TypeFactory(void)
 
 {
-  clear();
+  deleteTree();
 }
 
 /// Looking just within this container, find a Datatype by \b name and/or \b id.
@@ -1725,15 +1685,6 @@ Datatype *TypeFactory::findById(const string &n,uint8 id,int4 sz)
   return findByIdLocal(n,id);
 }
 
-/// Find type with given name. If there are more than, return first.
-/// \param n is the name to search for
-/// \return a Datatype object with the name or NULL
-Datatype *TypeFactory::findByName(const string &n)
-
-{
-  return findById(n,0,0);
-}
-
 /// Find data-type without reference to name, using the functional comparators
 /// For this to work, the type must be built out of dependencies that are already
 /// present in \b this type factory
@@ -1754,18 +1705,22 @@ Datatype *TypeFactory::findNoName(Datatype &ct)
 /// If its not currently in \b this container, clone the data-type and add it to the container.
 /// \param ct is the data-type to match
 /// \return the matching Datatype object in this container
-Datatype *TypeFactory::findAdd(Datatype &ct)
+Datatype *TypeFactory::findExisting(Datatype &ct)
 
 {
-  Datatype *newtype,*res;
+  Datatype *res;
 
   if (ct.name.size()!=0) {	// If there is a name
     if (ct.id == 0)		// There must be an id
       throw LowlevelError("Datatype must have a valid id");
     res = findByIdLocal(ct.name,ct.id); // Lookup type by it
     if (res != (Datatype *)0) { // If a type has this name
-      if (0!=res->compareDependency( ct )) // Check if it is the same type
-	throw LowlevelError("Trying to alter definition of type: "+ct.name);
+      if (0!=res->compareDependency( ct )) {// Check if it is the same type
+        if (ct.getMetatype()==TYPE_ALIAS)
+          *(TypeAlias *)res = *(TypeAlias*)&ct; // alias can be redefined due to "forward declarations"
+        else
+          throw LowlevelError("Trying to alter definition of type: "+ct.name);
+      }
       return res;
     }
   }
@@ -1774,7 +1729,12 @@ Datatype *TypeFactory::findAdd(Datatype &ct)
     if (res != (Datatype *)0) return res; // Found it
   }
 
-  newtype = ct.clone();		// Add the new type to trees
+  return nullptr;
+}
+
+void TypeFactory::sharedIdCheck(Datatype *newtype)
+
+{
   pair<DatatypeSet::iterator,bool> insres = tree.insert(newtype);
   if (!insres.second) {
     ostringstream s;
@@ -1787,7 +1747,6 @@ Datatype *TypeFactory::findAdd(Datatype &ct)
   }
   if (newtype->id!=0)
     nametree.insert(newtype);
-  return newtype;
 }
 
 /// This routine renames a Datatype object and fixes up cross-referencing
@@ -1816,7 +1775,7 @@ Datatype *TypeFactory::setName(Datatype *ct,const string &n)
 /// \param fixedsize is 0 or the forced size of the structure
 /// \param flags are other flags to set on the structure
 /// \return true if modification was successful
-bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,uint4 flags)
+bool TypeFactory::setFields(vector<TypeField> &&fd,TypeStruct *ot,int4 fixedsize,uint4 flags)
 
 {
   int4 offset,cursize,curalign;
@@ -1858,9 +1817,8 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,
   sort(fd.begin(),fd.end());	// Sort fields by offset
 
   // We could check field overlapping here
-
   tree.erase(ot);
-  ot->setFields(fd);
+  ot->field = fd;
   ot->flags |= (flags & (Datatype::opaque_string | Datatype::variable_length));
   if (fixedsize > 0) {		// If the caller is trying to force a size
     if (fixedsize > ot->size)	// If the forced size is bigger than the size required for fields
@@ -1959,9 +1917,8 @@ TypeVoid *TypeFactory::getTypeVoid(void)
   TypeVoid *ct = (TypeVoid *)typecache[0][TYPE_VOID-TYPE_FLOAT];
   if (ct != (TypeVoid *)0)
     return ct;
-  TypeVoid tv;
-  tv.id = Datatype::hashName(tv.getName());
-  ct = (TypeVoid *)tv.clone();
+  ct = new TypeVoid();
+  ct->id = Datatype::hashName(ct->name);
   tree.insert(ct);
   nametree.insert(ct);
   typecache[0][TYPE_VOID-TYPE_FLOAT] = ct; // Cache this particular type ourselves
@@ -1976,7 +1933,7 @@ TypeChar *TypeFactory::getTypeChar(const string &n)
 {
   TypeChar tc(n);
   tc.id = Datatype::hashName(n);
-  return (TypeChar *) findAdd(tc);
+  return findAdd(move(tc));
 }
 
 /// This creates a multi-byte character data-type (using UTF16 or UTF32 encoding)
@@ -1989,7 +1946,7 @@ TypeUnicode *TypeFactory::getTypeUnicode(const string &nm,int4 sz,type_metatype 
 {
   TypeUnicode tu(nm,sz,m);
   tu.id = Datatype::hashName(nm);
-  return (TypeUnicode *) findAdd(tu);
+  return findAdd(move(tu));
 }
 
 /// Get a "base" data-type, given its size and \b metatype.
@@ -2033,11 +1990,9 @@ Datatype *TypeFactory::getBase(int4 s,type_metatype m)
   if (s > glb->max_basetype_size) {
     // Create array of unknown bytes to match size
     ct = typecache[1][TYPE_UNKNOWN-TYPE_FLOAT];
-    ct = getTypeArray(s,ct);
-    return findAdd(*ct);
+    return getTypeArray(s,ct);
   }
-  TypeBase tmp(s,m);
-  return findAdd(tmp);
+  return findAdd(TypeBase{s,m});
 }
 
 /// Get or create a "base" type with a specified name and properties
@@ -2050,7 +2005,7 @@ Datatype *TypeFactory::getBase(int4 s,type_metatype m,const string &n)
 {
   TypeBase tmp(s,m,n);
   tmp.id = Datatype::hashName(n);
-  return findAdd(tmp);
+  return findAdd(move(tmp));
 }
 
 /// Retrieve or create the core "code" Datatype object
@@ -2062,8 +2017,7 @@ TypeCode *TypeFactory::getTypeCode(void)
   Datatype *ct = typecache[1][TYPE_CODE-TYPE_FLOAT];
   if (ct != (Datatype *)0)
     return (TypeCode *)ct;
-  TypeCode tmp("");
-  return (TypeCode *) findAdd(tmp);
+  return findAdd(TypeCode{""});
 }
 
 /// Create a "function" or "executable" Datatype object
@@ -2076,7 +2030,7 @@ TypeCode *TypeFactory::getTypeCode(const string &nm)
   if (nm.size()==0) return getTypeCode();
   TypeCode tmp(nm);
   tmp.id = Datatype::hashName(nm);
-  return (TypeCode *) findAdd(tmp);
+  return findAdd(move(tmp));
 }
 
 /// This creates a pointer to a given data-type.  If the given data-type is
@@ -2091,20 +2045,7 @@ TypePointer *TypeFactory::getTypePointerStripArray(int4 s,Datatype *pt,uint4 ws)
 {
   if (pt->getMetatype() == TYPE_ARRAY)
     pt = ((TypeArray *)pt)->getBase();		// Strip the first ARRAY type
-  TypePointer tmp(s,pt,ws);
-  return (TypePointer *) findAdd(tmp);
-}
-
-/// Allows "pointer to array" to be constructed
-/// \param s is the size of the pointer
-/// \param pt is the pointed-to data-type
-/// \param ws is the wordsize associated with the pointer
-/// \return the TypePointer object
-TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws)
-
-{
-  TypePointer tmp(s,pt,ws);
-  return (TypePointer *) findAdd(tmp);
+  return findAdd(TypePointer{s,pt,ws});
 }
 
 /// The given name is attached, which distinguishes the returned data-type from
@@ -2120,7 +2061,7 @@ TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws,const stri
   TypePointer tmp(s,pt,ws);
   tmp.name = n;
   tmp.id = Datatype::hashName(n);
-  return (TypePointer *) findAdd(tmp);
+  return findAdd(move(tmp));
 }
 
 // Don't create more than a depth of 2, i.e. ptr->ptr->ptr->...
@@ -2146,16 +2087,6 @@ TypePointer *TypeFactory::getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws)
   return getTypePointer(s,pt,ws);
 }
 
-/// \param as is the number of elements in the desired array
-/// \param ao is the data-type of the array element
-/// \return the TypeArray object
-TypeArray *TypeFactory::getTypeArray(int4 as,Datatype *ao)
-
-{
-  TypeArray tmp(as,ao);
-  return (TypeArray *) findAdd(tmp);
-}
-
 /// The created structure will have no fields. They must be added later.
 /// \param n is the name of the structure
 /// \return the TypeStruct object
@@ -2166,7 +2097,7 @@ TypeStruct *TypeFactory::getTypeStruct(const string &n)
 				// But I am currently choosing not to
   TypeStruct tmp(n);
   tmp.id = Datatype::hashName(n);
-  return (TypeStruct *) findAdd(tmp);
+  return findAdd(move(tmp));
 }
 
 /// The created enumeration will have no named values and a default configuration
@@ -2178,18 +2109,7 @@ TypeEnum *TypeFactory::getTypeEnum(const string &n)
 {
   TypeEnum tmp(enumsize,enumtype,n);
   tmp.id = Datatype::hashName(n);
-  return (TypeEnum *) findAdd(tmp);
-}
-
-/// Creates the special TypeSpacebase with an associated address space and scope
-/// \param id is the address space
-/// \param addr specifies the function scope, or isInvalid() for global scope
-/// \return the TypeSpacebase object
-TypeSpacebase *TypeFactory::getTypeSpacebase(AddrSpace *id,const Address &addr)
-
-{
-  TypeSpacebase tsb(id,addr,glb);
-  return (TypeSpacebase *) findAdd(tsb);
+  return findAdd(move(tmp));
 }
 
 /// Creates a TypeCode object and associates a specific function prototype with it.
@@ -2204,18 +2124,7 @@ TypeCode *TypeFactory::getTypeCode(ProtoModel *model,Datatype *outtype,
 {
   TypeCode tc("");		// getFuncdata type with no name
   tc.set(this,model,outtype,intypes,dotdotdot,getTypeVoid());
-  return (TypeCode *) findAdd(tc);
-}
-
-/// Create a typedef to a data-type
-/// \param dt is the dt this typedef is aliasing
-/// \param n is the name of this type
-/// \return the typedef
-TypeAlias *TypeFactory::getTypeDef(const Datatype *dt, const string &n)
-
-{
-  TypeAlias td(n, dt);
-  return (TypeAlias *) findAdd(td);
+  return findAdd(move(tc));
 }
 
 /// The indicated Datatype object is removed from this container.
@@ -2313,8 +2222,8 @@ Datatype *TypeFactory::restoreXmlTypeWithCodeFlags(const Element *el,bool isCons
   TypeCode tc("");
   tc.restoreXml(subel,*this);
   tc.setProperties(isConstructor,isDestructor);		// Add in flags
-  tp.ptrto = findAdd(tc);				// THEN add to container
-  return findAdd(tp);
+  tp.ptrto = findAdd(move(tc));				// THEN add to container
+  return findAdd(move(tp));
 }
 
 /// All data-types, in dependency order, are written out to an XML stream
@@ -2393,9 +2302,9 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
     {
       TypeAlias td;
       td.restoreXml(el, *this);
-      ct = findAdd(td);
+      ct = findAdd(move(td));
       if (ct != (Datatype *)0)
-        ((TypeAlias *)ct)->size = td.getSize(); // always refresh the size
+	((TypeAlias *)ct)->size = td.getSize(); // always refresh the size
     }
     break;
   case TYPE_PTR:
@@ -2404,7 +2313,7 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
       tp.restoreXml(el,*this);
       if (forcecore)
 	tp.flags |= Datatype::coretype;
-      ct = findAdd(tp);
+      ct = findAdd(move(tp));
     }
     break;
   case TYPE_ARRAY:
@@ -2413,7 +2322,7 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
       ta.restoreXml(el,*this);
       if (forcecore)
 	ta.flags |= Datatype::coretype;
-      ct = findAdd(ta);
+      ct = findAdd(move(ta));
     }
     break;
   case TYPE_STRUCT:
@@ -2426,44 +2335,26 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
       bool isVarLength = false;
       for(int4 i=0;i<num;++i) {
 	const string &attribName(el->getAttributeName(i));
-	if (attribName == "id") {
-	  istringstream s(el->getAttributeValue(i));
-	  s.unsetf(ios::dec | ios::hex | ios::oct);
-	  s >> newid;
-	}
-	else if (attribName == "size") {
-	  istringstream s(el->getAttributeValue(i));
-	  s.unsetf(ios::dec | ios::hex | ios::oct);
-	  s >> structsize;
-	}
-	else if (attribName == "varlength") {
+	if (attribName == "id")
+	  newid = to_hex_number<uint8>(el->getAttributeValue(i));
+	else if (attribName == "size")
+	  structsize = to_number<int4>(el->getAttributeValue(i));
+	else if (attribName == "varlength")
 	  isVarLength = xml_readbool(el->getAttributeValue(i));
-	}
       }
       if (newid == 0)
 	newid = Datatype::hashName(structname);
       if (isVarLength)
 	newid = Datatype::hashSize(newid, structsize);
+      ts.id = newid;
+      ts.size = structsize;	// Include size if we have it, so arrays can be defined without knowing struct fields
       ct = findByIdLocal(structname,newid);
-      bool stubfirst = false;
-      if (ct == (Datatype *)0) {
-	ts.id = newid;
-	ts.size = structsize;	// Include size if we have it, so arrays can be defined without knowing struct fields
-	ct = findAdd(ts);	// Create stub to allow recursive definitions
-	stubfirst = true;
-      }
-      else if (ct->getMetatype() != TYPE_STRUCT)
-	throw LowlevelError("Trying to redefine type: "+structname);
-      ts.restoreXml(el,*this);
-      if (forcecore)
-	ts.flags |= Datatype::coretype;
-      if ((ct->getSize() != 0)&&(!stubfirst)) {	// Structure of this name was already present
-	if (0!=ct->compareDependency(ts))
-	  throw LowlevelError("Redefinition of structure: "+structname);
-      }
-      else			// If structure is a placeholder stub
-	if (!setFields(ts.field,(TypeStruct *)ct,ts.size,ts.flags)) // Define structure now by copying fields
-	  throw LowlevelError("Bad structure definition");
+      if (ct == nullptr)
+	ct = findAdd(move(ts));	// Create stub to allow recursive definitions
+      else if (ct->numDepend()==0)
+	*((TypeStruct *)ct) = move(ts);
+      else
+	throw LowlevelError("Redefinition of structure: "+structname);
     }
     break;
   case TYPE_SPACEBASE:
@@ -2472,7 +2363,7 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
       tsb.restoreXml(el,*this);
       if (forcecore)
 	tsb.flags |= Datatype::coretype;
-      ct = findAdd(tsb);
+      ct = findAdd(move(tsb));
     }
     break;
   case TYPE_CODE:
@@ -2481,7 +2372,7 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
       tc.restoreXml(el,*this);
       if (forcecore)
 	tc.flags |= Datatype::coretype;
-      ct = findAdd(tc);
+      ct = findAdd(move(tc));
     }
     break;
   default:
@@ -2492,7 +2383,7 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
 	tc.restoreXml(el,*this);
 	if (forcecore)
 	  tc.flags |= Datatype::coretype;
-	ct = findAdd(tc);
+	ct = findAdd(move(tc));
 	return ct;
       }
       else if ((el->getAttributeName(i) == "enum") &&
@@ -2501,7 +2392,7 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
 	te.restoreXml(el,*this);
 	if (forcecore)
 	  te.flags |= Datatype::coretype;
-	ct = findAdd(te);
+	ct = findAdd(move(te));
 	return ct;
       }
       else if ((el->getAttributeName(i) == "utf") &&
@@ -2510,7 +2401,7 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
 	tu.restoreXml(el,*this);
 	if (forcecore)
 	  tu.flags |= Datatype::coretype;
-	ct = findAdd(tu);
+	ct = findAdd(move(tu));
 	return ct;
       }
     }
@@ -2519,7 +2410,7 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
       tb.restoreXml(el,*this);
       if (forcecore)
 	tb.flags |= Datatype::coretype;
-      ct = findAdd(tb);
+      ct = findAdd(move(tb));
     }
     break;
   }
@@ -2762,7 +2653,7 @@ void TypeAlias::restoreXml(const Element *el,TypeFactory &typegrp)
 
 {
   name = el->getAttributeValue("name");
-  id = stoull(el->getAttributeValue("id"), nullptr, 16);
+  id = hashName(name);
   dataType = typegrp.restoreXmlType( el->getChildren().front() );
   flags = dataType->getInheritable();
   size = dataType->getSize();
@@ -2773,7 +2664,6 @@ void TypeAlias::saveXml(ostream &s) const
 {
   s << "<type";
   a_v(s,"name",name);
-  a_v_u(s,"id",id);
   s << '>';
   dataType->saveXmlRef(s);
   s << "</type>";
@@ -2782,9 +2672,7 @@ void TypeAlias::saveXml(ostream &s) const
 int4 TypeAlias::compareDependency(const Datatype &op) const
 
 {
-  if (id == op.getId())
-    return 0;
-  return op.getId() == dataType->getId() ? 1 : dataType->compareDependency(op);
+  return Datatype::compareDependency(op);
 }
 
 bool TypeAlias::isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const

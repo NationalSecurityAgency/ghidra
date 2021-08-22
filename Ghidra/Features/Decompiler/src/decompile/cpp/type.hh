@@ -31,6 +31,7 @@ extern void print_data(ostream &s,uint1 *buffer,int4 size,const Address &baseadd
 /// the number, the more \b specific the type, in calculations involving the generality
 /// of a type.
 enum type_metatype {
+  TYPE_ALIAS,   ///< Typedef data-type
   TYPE_STRUCT,		///< Structure data-type, made up of component datatypes
   TYPE_ARRAY,		///< Array data-type, made up of a sequence of "element" datatype
   TYPE_PTR,			///< Pointer data-type
@@ -43,7 +44,6 @@ enum type_metatype {
   TYPE_UNKNOWN,		///< An unknown low-level type. Treated as an unsigned integer.
   TYPE_SPACEBASE,		///< Placeholder for symbol/type look-up calculations
   TYPE_VOID,		///< Standard "void" type, absence of type
-  TYPE_ALIAS,   ///< Typedef data-type
 };
 
 /// Convert type \b meta-type to name
@@ -91,12 +91,15 @@ protected:
   static uint8 hashSize(uint8 id,int4 size);	///< Reversibly hash size into id
 public:
   /// Construct the base data-type copying low-level properties of another
-  Datatype(const Datatype &op) { size = op.size; name=op.name; metatype=op.metatype; flags=op.flags; id=op.id; }
+  Datatype(const Datatype &op) = delete;
+  Datatype(Datatype&&) = default;
+  Datatype &operator=(const Datatype&) = default;
+  Datatype &operator=(Datatype&&) = default;
   /// Construct the base data-type providing size and meta-type
-  Datatype(int4 s,type_metatype m) { size=s; metatype=m; flags=0; id=0; }
+  Datatype(int4 s,type_metatype m) : size(s), name(""), metatype(m), flags(0), id(0) {}
   /// Construct the base data-type providing size, meta-type, and name
   Datatype(int4 s,type_metatype m,const string &n) { name=n; size=s; metatype=m; flags=0; id=0; }
-  virtual ~Datatype(void) {}	///< Destructor
+  virtual ~Datatype() = default;	///< Destructor
   bool isCoreType(void) const { return ((flags&coretype)!=0); }	///< Is this a core data-type
   bool isCharPrint(void) const { return ((flags&(chartype|utf16|utf32|opaque_string))!=0); }	///< Does this print as a 'char'
   bool isEnumType(void) const { return ((flags&enumtype)!=0); }		///< Is this an enumerated type
@@ -121,7 +124,6 @@ public:
   virtual void printNameBase(ostream &s) const { if (!name.empty()) s<<name[0]; } ///< Print name as short prefix
   virtual int4 compare(const Datatype &op,int4 level) const; ///< Order types for propagation
   virtual int4 compareDependency(const Datatype &op) const; ///< Compare for storage in tree structure
-  virtual Datatype *clone(void) const=0;	///< Clone the data-type
   virtual void saveXml(ostream &s) const;	///< Serialize the data-type to XML
   int4 typeOrder(const Datatype &op) const { if (this==&op) return 0; return compare(op,10); }	///< Order this with -op- datatype
   int4 typeOrderBool(const Datatype &op) const;	///< Order \b this with -op-, treating \e bool data-type as special
@@ -143,9 +145,11 @@ struct TypeField {
 struct DatatypeCompare {
   /// Comparison operator
   bool operator()(const Datatype *a,const Datatype *b) const {
+    if (a == b) return false;
     int4 res = a->compareDependency(*b);
     if (res != 0) return (res<0);
-    return a->getId() < b->getId(); }
+    return a->getId() < b->getId();
+  }
 };
 
 /// Compare two Datatype pointers: first by name, then by id
@@ -171,12 +175,12 @@ protected:
   friend class TypeFactory;
 public:
   /// Construct TypeBase copying properties from another data-type
-  TypeBase(const TypeBase &op) : Datatype(op) {}
+  TypeBase(const TypeBase &op) = delete;
+  TypeBase(TypeBase&&) = default;
   /// Construct TypeBase from a size and meta-type
   TypeBase(int4 s,type_metatype m) : Datatype(s,m) {}
   /// Construct TypeBase from a size, meta-type, and name
   TypeBase(int4 s,type_metatype m,const string &n) : Datatype(s,m,n) {}
-  virtual Datatype *clone(void) const { return new TypeBase(*this); }
   virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const;
 };
 
@@ -188,10 +192,10 @@ protected:
   friend class TypeFactory;
 public:
   /// Construct TypeChar copying properties from another data-type
-  TypeChar(const TypeChar &op) : TypeBase(op) { flags |= Datatype::chartype; }
+  TypeChar(const TypeChar &op) = delete;
+  TypeChar(TypeChar&&) = default;
   /// Construct a char (always 1-byte) given a name
   TypeChar(const string &n) : TypeBase(1,TYPE_INT,n) { flags |= Datatype::chartype; }
-  virtual Datatype *clone(void) const { return new TypeChar(*this); }
   virtual void saveXml(ostream &s) const;
 };
 
@@ -205,9 +209,9 @@ protected:
   virtual void restoreXml(const Element *el,TypeFactory &typegrp);
 public:
   TypeUnicode(void) : TypeBase(0,TYPE_INT) {} ///< For use with restoreXml
-  TypeUnicode(const TypeUnicode &op) : TypeBase(op) {}	///< Construct from another TypeUnicode
+  TypeUnicode(const TypeUnicode &op) = delete;
+  TypeUnicode(TypeUnicode&&) = default;
   TypeUnicode(const string &nm,int4 sz,type_metatype m);	///< Construct given name,size, meta-type
-  virtual Datatype *clone(void) const { return new TypeUnicode(*this); }
   virtual void saveXml(ostream &s) const;
 };
 
@@ -220,10 +224,10 @@ protected:
   friend class TypeFactory;
 public:
   /// Construct from another TypeVoid
-  TypeVoid(const TypeVoid &op) : Datatype(op) { flags |= Datatype::coretype; }
+  TypeVoid(const TypeVoid &op) = delete;
+  TypeVoid(TypeVoid&&) = default;
   /// Constructor
   TypeVoid(void) : Datatype(0,TYPE_VOID,"void") { flags |= Datatype::coretype; }
-  virtual Datatype *clone(void) const { return new TypeVoid(*this); }
   virtual void saveXml(ostream &s) const;
   virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const { return reqtype->getMetatype()==TYPE_VOID; }
 };
@@ -239,7 +243,8 @@ protected:
   TypePointer(void) : Datatype(0,TYPE_PTR) { ptrto = (Datatype *)0; wordsize=1; }
 public:
   /// Construct from another TypePointer
-  TypePointer(const TypePointer &op) : Datatype(op) { ptrto = op.ptrto; wordsize=op.wordsize; }
+  TypePointer(const TypePointer &op) = delete;
+  TypePointer(TypePointer&&) = default;
   /// Construct from a size, pointed-to type, and wordsize
   TypePointer(int4 s,Datatype *pt,uint4 ws) : Datatype(s,TYPE_PTR) { ptrto = pt; flags = ptrto->getInheritable(); wordsize=ws; }
   Datatype *getPtrTo(void) const { return ptrto; }	///< Get the pointed-to Datatype
@@ -250,7 +255,6 @@ public:
   virtual void printNameBase(ostream &s) const { s << 'p'; ptrto->printNameBase(s); }
   virtual int4 compare(const Datatype &op,int4 level) const; // For tree structure
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
-  virtual Datatype *clone(void) const { return new TypePointer(*this); }
   virtual void saveXml(ostream &s) const;
   virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const;
   virtual TypePointer *downChain(uintb &off,bool allowArrayWrap,TypeFactory &typegrp);
@@ -267,7 +271,8 @@ protected:
   TypeArray(void) : Datatype(0,TYPE_ARRAY) { arraysize = 0; arrayof = (Datatype *)0; }
 public:
   /// Construct from another TypeArray
-  TypeArray(const TypeArray &op) : Datatype(op) { arrayof = op.arrayof; arraysize = op.arraysize; }
+  TypeArray(const TypeArray &op) = delete;
+  TypeArray(TypeArray&&) = default;
   /// Construct given an array size and element data-type
   TypeArray(int4 n,Datatype *ao) : Datatype(n*ao->getSize(),TYPE_ARRAY) {
     arraysize = n; arrayof = ao; }
@@ -281,7 +286,6 @@ public:
   virtual void printNameBase(ostream &s) const { s << 'a'; arrayof->printNameBase(s); }
   virtual int4 compare(const Datatype &op,int4 level) const; // For tree structure
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
-  virtual Datatype *clone(void) const { return new TypeArray(*this); }
   virtual void saveXml(ostream &s) const;
   virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const;
 };
@@ -299,7 +303,8 @@ protected:
   virtual void restoreXml(const Element *el,TypeFactory &typegrp);
 public:
   /// Construct from another TypeEnum
-  TypeEnum(const TypeEnum &op);
+  TypeEnum(const TypeEnum &op) = delete;
+  TypeEnum(TypeEnum&&) = default;
   /// Construct from a size and meta-type (TYPE_INT or TYPE_UINT)
   TypeEnum(int4 s,type_metatype m) : TypeBase(s,m) { flags |= enumtype; }
   /// Construct from a size, meta-type, and name
@@ -309,7 +314,6 @@ public:
   bool getMatches(uintb val,vector<string> &matchname) const;	///< Recover the named representation
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
-  virtual Datatype *clone(void) const { return new TypeEnum(*this); }
   virtual void saveXml(ostream &s) const;
   virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const;
 };
@@ -319,12 +323,13 @@ class TypeStruct : public Datatype {
 protected:
   friend class TypeFactory;
   vector<TypeField> field;			///< The list of fields
-  void setFields(const vector<TypeField> &fd);	///< Establish fields for \b this
   int4 getFieldIter(int4 off) const;		///< Get index into field list
   int4 getLowerBoundField(int4 off) const;	///< Get index of last field before or equal to given offset
   virtual void restoreXml(const Element *el,TypeFactory &typegrp);
 public:
-  TypeStruct(const TypeStruct &op);	///< Construct from another TypeStruct
+  TypeStruct(const TypeStruct &op) = delete;
+  TypeStruct(TypeStruct&&) = default;
+  TypeStruct &operator=(TypeStruct&&) = default;
   TypeStruct(const string &n) : Datatype(0,TYPE_STRUCT,n) {}	///< Construct empty TypeStruct from a name
   vector<TypeField>::const_iterator beginField(void) const { return field.begin(); }	///< Beginning of fields
   vector<TypeField>::const_iterator endField(void) const { return field.end(); }	///< End of fields
@@ -336,7 +341,6 @@ public:
   virtual Datatype *getDepend(int4 index) const { return field[index].type; }
   virtual int4 compare(const Datatype &op,int4 level) const; // For tree structure
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
-  virtual Datatype *clone(void) const { return new TypeStruct(*this); }
   virtual void saveXml(ostream &s) const;
   virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const;
 };
@@ -357,8 +361,9 @@ protected:
 	   bool dotdotdot,Datatype *voidtype);	///< Establish a function pointer
   virtual void restoreXml(const Element *el,TypeFactory &typegrp);
 public:
-  TypeCode(const TypeCode &op);		///< Construct from another TypeCode
+  TypeCode(const TypeCode &op) = delete;
   TypeCode(const string &nm);		///< Construct from a name
+  TypeCode(TypeCode &&rhs) : Datatype(move(rhs)), proto(rhs.proto), factory(rhs.factory) { rhs.proto = nullptr; }
   int4 compareBasic(const TypeCode *op) const;	///< Compare surface characteristics of two TypeCodes
   const FuncProto *getPrototype(void) const { return proto; }	///< Get the function prototype
   void setProperties(bool isConstructor,bool isDestructor);	///< Set additional function properties
@@ -367,7 +372,6 @@ public:
   virtual Datatype *getSubType(uintb off,uintb *newoff) const;
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
-  virtual Datatype *clone(void) const { return new TypeCode(*this); }
   virtual void saveXml(ostream &s) const;
   virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const;
 };
@@ -385,12 +389,11 @@ class TypeSpacebase : public Datatype {
   virtual void restoreXml(const Element *el,TypeFactory &typegrp);
 public:
   /// Construct from another TypeSpacebase
-  TypeSpacebase(const TypeSpacebase &op) : Datatype(op) {
-    spaceid = op.spaceid; localframe=op.localframe; glb=op.glb;
-  }
+  TypeSpacebase(const TypeSpacebase &op) = delete;
   /// Construct given an address space, scope, and architecture
   TypeSpacebase(AddrSpace *id,const Address &frame,Architecture *g)
     : Datatype(0,TYPE_SPACEBASE), localframe(frame) { spaceid = id; glb = g; }
+  TypeSpacebase(TypeSpacebase&& rhs) = default;
   Scope *getMap(void) const;	///< Get the symbol table indexed by \b this
   Address getAddress(uintb off,int4 sz,const Address &point) const;	///< Construct an Address given an offset
   virtual Datatype *getSubType(uintb off,uintb *newoff) const;
@@ -398,7 +401,6 @@ public:
   virtual Datatype *nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const;
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
-  virtual Datatype *clone(void) const { return new TypeSpacebase(*this); }
   virtual void saveXml(ostream &s) const;
   virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const;
 };
@@ -411,8 +413,9 @@ class TypeAlias : public Datatype {
   TypeAlias(void) : Datatype(0,TYPE_ALIAS) {}
 public:
   TypeAlias(const string &name, const Datatype *dataType);
-  TypeAlias(const TypeAlias &op) : Datatype(op), dataType(op.dataType) { }
-  virtual Datatype *clone(void) const { return new TypeAlias(*this); }
+  TypeAlias(const TypeAlias &op) = delete;
+  TypeAlias(TypeAlias&&) = default;
+  TypeAlias &operator=(const TypeAlias&) = default;
   virtual bool isEquivalent(const Datatype *reqtype,bool care_uint_int,bool care_ptr_uint) const;
   virtual void saveXml(ostream &s) const;
   const Datatype *getDatatype() const { return dataType; }
@@ -434,14 +437,25 @@ class TypeFactory {
   Datatype *typecache10;	///< Specially cached 10-byte float type
   Datatype *typecache16;	///< Specially cached 16-byte float type
   Datatype *type_nochar;	///< Same dimensions as char but acts and displays as an INT
+  void sharedIdCheck(Datatype *ct);
   Datatype *findNoName(Datatype &ct);	///< Find data-type (in this container) by function
-  Datatype *findAdd(Datatype &ct);	///< Find data-type in this container or add it
+  Datatype *findExisting(Datatype &ct);
+  ///< Find data-type in this container or add it
+  template <class T>
+  T *findAdd(T &&ct) {
+    Datatype *newtype = findExisting(ct);
+    if (newtype != nullptr) return (T *) newtype;
+    newtype = new T(move(ct));
+    sharedIdCheck(newtype);
+    return (T *) newtype;
+  }
   void orderRecurse(vector<Datatype *> &deporder,DatatypeSet &mark,Datatype *ct) const;	///< Write out dependency list
   Datatype *restoreXmlTypeNoRef(const Element *el,bool forcecore);	///< Restore from an XML tag
   void clearCache(void);		///< Clear the common type cache
   TypeChar *getTypeChar(const string &n);	///< Create a default "char" type
   TypeUnicode *getTypeUnicode(const string &nm,int4 sz,type_metatype m);	///< Create a default "unicode" type
   TypeCode *getTypeCode(const string &n);	///< Create a default "code" type
+  void deleteTree(void);
 protected:
   Architecture *glb;		///< The Architecture object that owns this TypeFactory
   Datatype *findByIdLocal(const string &nm,uint8 id) const;	///< Search locally by name and id
@@ -456,9 +470,9 @@ public:
   int4 getStructAlign(void) const { return align; }	///< Get the default structure alignment
   int4 getSizeOfInt(void) const { return sizeOfInt; }	///< Get the size of the default "int"
   Architecture *getArch(void) const { return glb; }	///< Get the Architecture object
-  Datatype *findByName(const string &n);		///< Return type of given name
+  Datatype *findByName(const string &n) { return findById(n,0,0); }		///< Return type of given name
   Datatype *setName(Datatype *ct,const string &n); 	///< Set the given types name
-  bool setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,uint4 flags);	///< Set fields on a TypeStruct
+  bool setFields(vector<TypeField> &&fd,TypeStruct *ot,int4 fixedsize,uint4 flags);	///< Set fields on a TypeStruct
   bool setEnumValues(const vector<string> &namelist,
 		      const vector<uintb> &vallist,
 		      const vector<bool> &assignlist,
@@ -471,17 +485,17 @@ public:
   Datatype *getBase(int4 s,type_metatype m,const string &n);	///< Get named atomic type
   TypeCode *getTypeCode(void);					///< Get an "anonymous" function data-type
   TypePointer *getTypePointerStripArray(int4 s,Datatype *pt,uint4 ws);	///< Construct a pointer data-type, stripping an ARRAY level
-  TypePointer *getTypePointer(int4 s,Datatype *pt,uint4 ws);	///< Construct an absolute pointer data-type
+  TypePointer *getTypePointer(int4 s,Datatype *pt,uint4 ws) { return findAdd(TypePointer{s,pt,ws}); }	///< Construct an absolute pointer data-type
   TypePointer *getTypePointer(int4 s,Datatype *pt,uint4 ws,const string &n);	///< Construct a named pointer data-type
   TypePointer *getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws);	///< Construct a depth limited pointer data-type
-  TypeArray *getTypeArray(int4 as,Datatype *ao);		///< Construct an array data-type
+  TypeArray *getTypeArray(int4 as,Datatype *ao) { return findAdd(TypeArray{as,ao}); }		///< Construct an array data-type
   TypeStruct *getTypeStruct(const string &n);			///< Create an (empty) structure
   TypeEnum *getTypeEnum(const string &n);			///< Create an (empty) enumeration
-  TypeSpacebase *getTypeSpacebase(AddrSpace *id,const Address &addr);	///< Create a "spacebase" type
+  TypeSpacebase *getTypeSpacebase(AddrSpace *id,const Address &addr) { return findAdd(TypeSpacebase{id,addr,glb}); }	///< Create a "spacebase" type
   TypeCode *getTypeCode(ProtoModel *model,Datatype *outtype,
 			const vector<Datatype *> &intypes,
 			bool dotdotdot);			///< Create a "function" datatype
-  TypeAlias *getTypeDef(const Datatype *dt, const string &n); ///< Create a typedef to a data-type
+  TypeAlias *getTypeDef(const Datatype *dt, const string &n) { return findAdd(TypeAlias{n, dt}); } ///< Create a typedef to a data-type
   void destroyType(Datatype *ct);				///< Remove a data-type from \b this
   Datatype *concretize(Datatype *ct);				///< Convert given data-type to concrete form
   void dependentOrder(vector<Datatype *> &deporder) const;	///< Place all data-types in dependency order
@@ -493,6 +507,7 @@ public:
   void parseEnumConfig(const Element *el);		///< Parse the \<enum> tag
   void setCoreType(const string &name,int4 size,type_metatype meta,bool chartp);	///< Create a core data-type
   void cacheCoreTypes(void);				///< Cache common types
+  void isCorrupted();
 };
 
 /// Order data-types, with special handling of the \e bool data-type. Data-types are compared
