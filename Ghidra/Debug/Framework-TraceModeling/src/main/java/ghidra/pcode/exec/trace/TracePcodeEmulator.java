@@ -50,16 +50,18 @@ public class TracePcodeEmulator extends AbstractPcodeEmulator {
 		this(trace, snap, SleighUseropLibrary.nil());
 	}
 
+	protected PcodeExecutorState<byte[]> newState(TraceThread thread) {
+		return new TraceCachedWriteBytesPcodeExecutorState(trace, snap, thread, 0);
+	}
+
 	@Override
 	protected PcodeExecutorState<byte[]> createMemoryState() {
-		return new TraceCachedWriteBytesPcodeExecutorState(trace, snap, null, 0);
+		return newState(null);
 	}
 
 	@Override
 	protected PcodeExecutorState<byte[]> createRegisterState(PcodeThread<byte[]> emuThread) {
-		TraceThread traceThread =
-			trace.getThreadManager().getLiveThreadByPath(snap, emuThread.getName());
-		return new TraceCachedWriteBytesPcodeExecutorState(trace, snap, traceThread, 0);
+		return newState(trace.getThreadManager().getLiveThreadByPath(snap, emuThread.getName()));
 	}
 
 	/**

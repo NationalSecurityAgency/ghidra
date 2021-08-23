@@ -128,30 +128,36 @@ public class TraceCachedWriteBytesPcodeExecutorState
 					: rng.upperEndpoint().longValue() - 1;
 		}
 
+		protected void readUninitializedFromSource(RangeSet<UnsignedLong> uninitialized) {
+			if (!uninitialized.isEmpty()) {
+				Range<UnsignedLong> toRead = uninitialized.span();
+				assert toRead.hasUpperBound() && toRead.hasLowerBound();
+				long lower = lower(toRead);
+				long upper = upper(toRead);
+				ByteBuffer buf = ByteBuffer.allocate((int) (upper - lower + 1));
+				source.getBytes(snap, space.getAddress(lower), buf);
+				for (Range<UnsignedLong> rng : uninitialized.asRanges()) {
+					long l = lower(rng);
+					long u = upper(rng);
+					cache.putData(l, buf.array(), (int) (l - lower), (int) (u - l + 1));
+				}
+			}
+		}
+
+		protected byte[] readCached(long offset, int size) {
+			byte[] data = new byte[size];
+			cache.getData(offset, data);
+			return data;
+		}
+
 		public byte[] read(long offset, int size) {
 			if (source != null) {
 				// TODO: Warn or bail when reading UNKNOWN bytes
 				// NOTE: Read without regard to gaps
 				// NOTE: Cannot write those gaps, though!!!
-				RangeSet<UnsignedLong> uninitialized =
-					cache.getUninitialized(offset, offset + size);
-				if (!uninitialized.isEmpty()) {
-					Range<UnsignedLong> toRead = uninitialized.span();
-					assert toRead.hasUpperBound() && toRead.hasLowerBound();
-					long lower = lower(toRead);
-					long upper = upper(toRead);
-					ByteBuffer buf = ByteBuffer.allocate((int) (upper - lower + 1));
-					source.getBytes(snap, space.getAddress(lower), buf);
-					for (Range<UnsignedLong> rng : uninitialized.asRanges()) {
-						long l = lower(rng);
-						long u = upper(rng);
-						cache.putData(l, buf.array(), (int) (l - lower), (int) (u - l + 1));
-					}
-				}
+				readUninitializedFromSource(cache.getUninitialized(offset, offset + size));
 			}
-			byte[] data = new byte[size];
-			cache.getData(offset, data);
-			return data;
+			return readCached(offset, size);
 		}
 
 		// Must already have started a transaction
@@ -229,12 +235,16 @@ public class TraceCachedWriteBytesPcodeExecutorState
 		return arithmetic.fromConst(l, space.getPointerSize());
 	}
 
+	protected CachedSpace newSpace(AddressSpace space, TraceMemorySpace source, long snap) {
+		return new CachedSpace(space, source, snap);
+	}
+
 	@Override
 	protected CachedSpace getForSpace(AddressSpace space, boolean toWrite) {
 		return spaces.computeIfAbsent(space, s -> {
 			TraceMemorySpace tms = s.isUniqueSpace() ? null
 					: TraceSleighUtils.getSpaceForExecution(s, trace, thread, frame, false);
-			return new CachedSpace(s, tms, snap);
+			return newSpace(s, tms, snap);
 		});
 	}
 
