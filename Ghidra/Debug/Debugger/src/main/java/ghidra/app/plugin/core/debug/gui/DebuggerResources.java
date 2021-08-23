@@ -146,6 +146,7 @@ public interface DebuggerResources {
 	//ResourceManager.loadImage("images/capture-memory.png");
 
 	// TODO: Draw an icon
+	ImageIcon ICON_MAP_IDENTICALLY = ResourceManager.loadImage("images/doubleArrow.png");
 	ImageIcon ICON_MAP_MODULES = ResourceManager.loadImage("images/modules.png");
 	ImageIcon ICON_MAP_SECTIONS = ICON_MAP_MODULES; // TODO
 	ImageIcon ICON_BLOCK = ICON_MAP_SECTIONS; // TODO
@@ -1206,6 +1207,23 @@ public interface DebuggerResources {
 			super(NAME, owner.getName());
 			setDescription("Place enabled but ineffective breakpoints where possible");
 			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
+		}
+	}
+
+	interface MapIdenticallyAction {
+		String NAME = "Map Identically";
+		String DESCRIPTION =
+			"Map the current trace to the current program using identical addresses";
+		Icon ICON = ICON_MAP_IDENTICALLY;
+		String GROUP = GROUP_MAPPING;
+		String HELP_ANCHOR = "map_identically";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 
