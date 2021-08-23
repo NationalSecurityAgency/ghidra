@@ -24,6 +24,7 @@
         <attribute schema="ANY" />
     </schema>
     <schema name="Environment" elementResync="NEVER" attributeResync="NEVER">
+        <interface name="Environment" />
         <element schema="VOID" />
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
