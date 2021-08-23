@@ -40,9 +40,12 @@ import generic.test.AbstractGenericTest;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
+import ghidra.app.plugin.core.symboltree.nodes.SymbolCategoryNode;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -105,6 +108,40 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void tearDown() throws Exception {
 		closeProgram();
 		env.dispose();
+	}
+
+	@Test
+	public void testCloseCategoryIfOrgnodesGetOutOfBalance() throws Exception {
+		showSymbolTree();
+		GTreeNode functionsNode = rootNode.getChild("Functions");
+		assertFalse(functionsNode.isLoaded());
+		functionsNode.expand();
+		waitForTree(tree);
+		assertTrue(functionsNode.isLoaded());
+
+		// add lots of nodes to cause functionsNode to close
+		addFunctions(SymbolCategoryNode.MAX_NODES_BEFORE_CLOSING);
+		waitForTree(tree);
+
+		assertFalse(functionsNode.isLoaded());
+
+		functionsNode.expand();
+		waitForTree(tree);
+
+		// should have 4 nodes, one for each of the original 3 functions and a org node with
+		// all new "FUNCTION*" named functions
+		assertEquals(4, functionsNode.getChildCount());
+	}
+
+	private void addFunctions(int count) throws Exception {
+		tx(program, () -> {
+			for (int i = 0; i < count; i++) {
+				String name = "FUNCTION_" + i;
+				Address address = util.addr(0x1002000 + i);
+				AddressSet body = new AddressSet(address);
+				program.getListing().createFunction(name, address, body, SourceType.USER_DEFINED);
+			}
+		});
 	}
 
 	@Test
