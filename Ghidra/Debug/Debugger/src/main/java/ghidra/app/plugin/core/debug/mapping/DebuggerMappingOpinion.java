@@ -48,7 +48,7 @@ public interface DebuggerMappingOpinion extends ExtensionPoint {
 			}
 			catch (Throwable t) {
 				Msg.error(DebuggerMappingOpinion.class,
-					"Problem querying opinion " + opinion + " for recording/mapping offers: ", t);
+					"Problem querying opinion " + opinion + " for recording/mapping offers: " + t);
 			}
 		}
 		result.sort(HIGHEST_CONFIDENCE_FIRST);
