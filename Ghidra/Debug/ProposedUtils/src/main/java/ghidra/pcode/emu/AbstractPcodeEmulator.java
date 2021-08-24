@@ -30,6 +30,6 @@ public abstract class AbstractPcodeEmulator extends AbstractPcodeMachine<byte[]>
 
 	@Override
 	protected BytesPcodeThread createThread(String name) {
-		return new BytesPcodeThread(name, this, library);
+		return new BytesPcodeThread(name, this);
 	}
 }

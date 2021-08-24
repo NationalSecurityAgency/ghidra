@@ -55,12 +55,12 @@ public class TracePcodeEmulator extends AbstractPcodeEmulator {
 	}
 
 	@Override
-	protected PcodeExecutorState<byte[]> createMemoryState() {
+	protected PcodeExecutorState<byte[]> createSharedState() {
 		return newState(null);
 	}
 
 	@Override
-	protected PcodeExecutorState<byte[]> createRegisterState(PcodeThread<byte[]> emuThread) {
+	protected PcodeExecutorState<byte[]> createLocalState(PcodeThread<byte[]> emuThread) {
 		return newState(trace.getThreadManager().getLiveThreadByPath(snap, emuThread.getName()));
 	}
 
@@ -79,13 +79,13 @@ public class TracePcodeEmulator extends AbstractPcodeEmulator {
 	 * @param synthesizeStacks true to synthesize the innermost stack frame of each thread
 	 */
 	public void writeDown(Trace trace, long destSnap, long threadsSnap, boolean synthesizeStacks) {
-		TraceCachedWriteBytesPcodeExecutorState ms =
-			(TraceCachedWriteBytesPcodeExecutorState) getMemoryState();
-		ms.writeCacheDown(trace, destSnap, null, 0);
+		TraceCachedWriteBytesPcodeExecutorState ss =
+			(TraceCachedWriteBytesPcodeExecutorState) getSharedState();
+		ss.writeCacheDown(trace, destSnap, null, 0);
 		TraceThreadManager threadManager = trace.getThreadManager();
 		for (PcodeThread<byte[]> emuThread : threads.values()) {
-			TraceCachedWriteBytesPcodeExecutorState rs =
-				(TraceCachedWriteBytesPcodeExecutorState) emuThread.getState().getRegisterState();
+			TraceCachedWriteBytesPcodeExecutorState ls =
+				(TraceCachedWriteBytesPcodeExecutorState) emuThread.getState().getLocalState();
 			TraceThread traceThread = threadManager.getLiveThreadByPath(
 				threadsSnap, emuThread.getName());
 			if (traceThread == null) {
@@ -93,7 +93,7 @@ public class TracePcodeEmulator extends AbstractPcodeEmulator {
 					"Given trace does not have thread with name/path '" + emuThread.getName() +
 						"' at snap " + destSnap);
 			}
-			rs.writeCacheDown(trace, destSnap, traceThread, 0);
+			ls.writeCacheDown(trace, destSnap, traceThread, 0);
 			if (synthesizeStacks) {
 				TraceStack stack = trace.getStackManager().getStack(traceThread, destSnap, true);
 				stack.getFrame(0, true).setProgramCounter(emuThread.getCounter());

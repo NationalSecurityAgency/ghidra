@@ -22,9 +22,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-import ghidra.pcode.emu.AbstractPcodeMachine;
-import ghidra.pcode.emu.AbstractPcodeMachine.ThreadPcodeExecutorState;
-import ghidra.pcode.emu.PcodeThread;
+import ghidra.pcode.emu.*;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.RegisterValue;
@@ -387,12 +385,12 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		}
 
 		@Override
-		protected PcodeExecutorState<Void> createMemoryState() {
+		protected PcodeExecutorState<Void> createSharedState() {
 			return null;
 		}
 
 		@Override
-		protected PcodeExecutorState<Void> createRegisterState(PcodeThread<Void> thread) {
+		protected PcodeExecutorState<Void> createLocalState(PcodeThread<Void> thread) {
 			return null;
 		}
 	}
