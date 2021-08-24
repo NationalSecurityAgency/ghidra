@@ -328,6 +328,41 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	@Test
+	public void testActionMapIdentically() throws Exception {
+		assertFalse(modulesProvider.actionMapIdentically.isEnabled());
+
+		createAndOpenTrace();
+		createAndOpenProgramFromTrace();
+		intoProject(tb.trace);
+		intoProject(program);
+
+		// No modules necessary
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		assertTrue(modulesProvider.actionMapIdentically.isEnabled());
+
+		// Need some substance in the program
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Populate", true)) {
+			addBlock();
+		}
+		waitForDomainObject(program);
+
+		performAction(modulesProvider.actionMapIdentically);
+		waitForDomainObject(tb.trace);
+
+		Collection<? extends TraceStaticMapping> mappings =
+			tb.trace.getStaticMappingManager().getAllEntries();
+		assertEquals(1, mappings.size());
+
+		TraceStaticMapping sm = mappings.iterator().next();
+		assertEquals(Range.atLeast(0L), sm.getLifespan());
+		assertEquals("ram:00400000", sm.getStaticAddress());
+		assertEquals(0x1000, sm.getLength()); // Block is 0x1000 in length
+		assertEquals(tb.addr(0x00400000), sm.getMinTraceAddress());
+	}
+
+	@Test
 	public void testActionMapModules() throws Exception {
 		assertFalse(modulesProvider.actionMapModules.isEnabled());
 
