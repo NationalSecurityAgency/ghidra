@@ -30,11 +30,11 @@ This guide includes instructions for obtaining many of these at the relevant ste
 You may not need all of these, depending on which portions you are building or developing.
 #### At minimum you will need all of the following
 * Java JDK 11 (64-bit) - Free long term support (LTS) versions of JDK 11 are provided by:
-    - AdoptOpenJDK
-      - https://adoptopenjdk.net/releases.html?variant=openjdk11&jvmVariant=hotspot
+    - Adoptium Temurin
+      - https://adoptium.net/releases.html?variant=openjdk11&jvmVariant=hotspot
     - Amazon Corretto
       - https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html
-* Gradle 6.0 or later - We use version 6.9, and tested with up to 7.0.1.
+* Gradle 6 or 7
     - https://gradle.org/releases/
 * A C/C++ compiler - We use GCC on Linux, Xcode (Clang) on macOS, and Visual Studio (2017 or later) on Windows.
     - https://gcc.gnu.org/

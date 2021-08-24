@@ -38,7 +38,7 @@ To create the latest development build for your platform from this source reposi
 
 ##### Install build tools:
 * [JDK 11 64-bit][jdk11]
-* [Gradle][gradle] (minimum v6.0)
+* [Gradle 6 or 7][gradle]
 * make, gcc, and g++ (Linux/macOS-only)
 * [Microsoft Visual Studio][vs] (Windows-only)
 
@@ -109,7 +109,7 @@ source project.
 [devguide]: DevGuide.md
 [career]: https://www.intelligencecareers.gov/nsa
 [project]: https://www.ghidra-sre.org/
-[jdk11]: https://adoptopenjdk.net/releases.html?variant=openjdk11&jvmVariant=hotspot
+[jdk11]: https://adoptium.net/releases.html?variant=openjdk11&jvmVariant=hotspot
 [gradle]: https://gradle.org/releases/
 [vs]: https://visualstudio.microsoft.com/vs/community/
 [eclipse]: https://www.eclipse.org/downloads/packages/
