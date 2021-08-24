@@ -26,7 +26,8 @@ import ghidra.async.AsyncFence;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
-import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
+import ghidra.dbg.target.TargetMethod.ParameterDescription;
+import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.lifecycle.Internal;
@@ -40,10 +41,18 @@ import ghidra.lifecycle.Internal;
 public class GdbModelTargetInferior
 		extends DefaultTargetObject<TargetObject, GdbModelTargetInferiorContainer>
 		implements TargetProcess, TargetAggregate, TargetExecutionStateful, TargetAttacher,
-		TargetDeletable, TargetDetachable, TargetKillable, TargetCmdLineLauncher, TargetResumable,
+		TargetDeletable, TargetDetachable, TargetKillable, TargetLauncher, TargetResumable,
 		TargetSteppable, GdbModelSelectableObject {
 
 	public static final String EXIT_CODE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "exit_code";
+
+	public static final ParameterDescription<Boolean> PARAMETER_STARTI =
+		ParameterDescription.create(Boolean.class, "starti", false, false,
+			"Break on first instruction (use starti)",
+			"true to use starti, false to use start. Requires GDB 8.1 or later.");
+
+	public static final TargetParameterMap PARAMETERS =
+		TargetMethod.makeParameters(TargetCmdLineLauncher.PARAMETER_CMDLINE_ARGS, PARAMETER_STARTI);
 
 	protected static final TargetAttachKindSet SUPPORTED_KINDS = TargetAttachKindSet.of( //
 		TargetAttachKind.BY_OBJECT_REF, TargetAttachKind.BY_ID);
@@ -108,10 +117,21 @@ public class GdbModelTargetInferior
 			Map.of( //
 				STATE_ATTRIBUTE_NAME, state = realState, //
 				DISPLAY_ATTRIBUTE_NAME, updateDisplay(), //
-				TargetMethod.PARAMETERS_ATTRIBUTE_NAME, TargetCmdLineLauncher.PARAMETERS, //
+				TargetMethod.PARAMETERS_ATTRIBUTE_NAME, PARAMETERS, //
 				SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS, //
 				SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, GdbModelTargetThread.SUPPORTED_KINDS), //
 			"Initialized");
+	}
+
+	protected TargetParameterMap computeParams() {
+		return TargetMethod.makeParameters(
+			TargetCmdLineLauncher.PARAMETER_CMDLINE_ARGS,
+			PARAMETER_STARTI);
+	}
+
+	@Override
+	public TargetParameterMap getParameters() {
+		return PARAMETERS;
 	}
 
 	@TargetAttributeType(name = GdbModelTargetEnvironment.NAME, required = true, fixed = true)
@@ -150,9 +170,12 @@ public class GdbModelTargetInferior
 	}
 
 	@Override
-	public CompletableFuture<Void> launch(List<String> args) {
-		return impl
-				.gateFuture(GdbModelImplUtils.launch(impl, inferior, args).thenApply(__ -> null));
+	public CompletableFuture<Void> launch(Map<String, ?> args) {
+		List<String> cmdLineArgs =
+			CmdLineParser.tokenize(TargetCmdLineLauncher.PARAMETER_CMDLINE_ARGS.get(args));
+		Boolean useStarti = PARAMETER_STARTI.get(args);
+		return impl.gateFuture(
+			GdbModelImplUtils.launch(impl, inferior, cmdLineArgs, useStarti).thenApply(__ -> null));
 	}
 
 	@Override
