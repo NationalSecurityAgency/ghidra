@@ -48,7 +48,7 @@ public class GdbInJvmDebuggerModelFactory implements DebuggerModelFactory {
 	public CompletableFuture<? extends DebuggerObjectModel> build() {
 		// TODO: Choose Linux or Windows pty based on host OS
 		GdbModelImpl model = new GdbModelImpl(new LinuxPtyFactory());
-		return model.startGDB(gdbCmd, new String[] {}).thenApply(__ -> model);
+		return model.startGDB(existing ? null : gdbCmd, new String[] {}).thenApply(__ -> model);
 	}
 
 	@Override
