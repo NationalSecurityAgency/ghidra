@@ -253,7 +253,6 @@ public class GraphExporterDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		AttributedGraphExporter exporter = getSelectedExporter();
 		setLastExportDirectory(getSelectedOutputFile());
 		if (doExport()) {
 			close();
@@ -273,10 +272,10 @@ public class GraphExporterDialog extends DialogComponentProvider {
 		File outputFile = getSelectedOutputFile();
 
 		if (outputFile.exists() &&
-				OptionDialog.showOptionDialog(getComponent(), "Overwrite Existing File?",
-					"The file " + outputFile + " already exists.\nDo you want to overwrite it?",
-					"Overwrite", OptionDialog.QUESTION_MESSAGE) != OptionDialog.OPTION_ONE) {
-				return false;
+			OptionDialog.showOptionDialog(getComponent(), "Overwrite Existing File?",
+				"The file " + outputFile + " already exists.\nDo you want to overwrite it?",
+				"Overwrite", OptionDialog.QUESTION_MESSAGE) != OptionDialog.OPTION_ONE) {
+			return false;
 		}
 
 		try {

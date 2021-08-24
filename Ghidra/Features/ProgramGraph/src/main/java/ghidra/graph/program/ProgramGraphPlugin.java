@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.action.builder.ToggleActionBuilder;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -44,7 +45,7 @@ import ghidra.util.task.TaskLauncher;
 /**
  * Plugin for generating program graphs. It uses the GraphServiceBroker to consume/display
  * the graphs that it generates. This plugin generates several different types of program graphs.
- * Both the "Block flow" and "code flow" actions generate graph of basic block flows. The only
+ * Both the "block flow" and "code flow" actions will generate a graph of basic block flows. The only
  * difference is that the "code flow" action generates a graph that
  * displays the assembly for for each basic block, whereas the "block flow" action generates a graph
  * that displays the symbol or address at the start of the basic block.  This plugin also
@@ -62,7 +63,7 @@ import ghidra.util.task.TaskLauncher;
 			+ "Once a graph is created, it uses the currenly selected graph output to display "
 			+ "or export the graph.  The plugin "
 			+ "also provides event handling to facilitate interaction between "
-			+ "the graph and the  tool.",
+			+ "the graph and the tool.",
 	servicesRequired = { GoToService.class, BlockModelService.class, GraphDisplayBroker.class },
 	eventsProduced = { ProgramLocationPluginEvent.class, ProgramSelectionPluginEvent.class }
 )
@@ -74,7 +75,7 @@ public class ProgramGraphPlugin extends ProgramPlugin
 	private static final String GRAPH_ENTRY_POINT_NEXUS = "Graph Entry Point Nexus";
 	private static final String FORCE_LOCATION_DISPLAY_OPTION = "Force Location Visible on Graph";
 	private static final String MAX_DEPTH_OPTION = "Max Reference Depth";
-	public static final String MENU_GRAPH = "&Graph";
+	public static final String MENU_GRAPH = ToolConstants.MENU_GRAPH;
 
 	private BlockModelService blockModelService;
 
@@ -149,18 +150,6 @@ public class ProgramGraphPlugin extends ProgramPlugin
 		}
 	}
 
-	/**
-	 * Notification that an option changed.
-	 *
-	 * @param options
-	 *            options object containing the property that changed
-	 * @param optionName
-	 *            name of option that changed
-	 * @param oldValue
-	 *            old value of the option
-	 * @param newValue
-	 *            new value of the option
-	 */
 	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
@@ -181,21 +170,23 @@ public class ProgramGraphPlugin extends ProgramPlugin
 
 	private void createActions() {
 
-		new ActionBuilder("Graph Block Flow", getName()).menuPath(MENU_GRAPH, "&Block Flow")
-				.menuGroup("Graph", "A")
+		new ActionBuilder("Graph Block Flow", getName())
+				.menuPath(MENU_GRAPH, "&Block Flow")
+				.menuGroup(MENU_GRAPH, "A")
 				.onAction(c -> graphBlockFlow())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
-		new ActionBuilder("Graph Code Flow", getName()).menuPath(MENU_GRAPH, "C&ode Flow")
-				.menuGroup("Graph", "B")
+		new ActionBuilder("Graph Code Flow", getName())
+				.menuPath(MENU_GRAPH, "C&ode Flow")
+				.menuGroup(MENU_GRAPH, "B")
 				.onAction(c -> graphCodeFlow())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Graph Calls Using Default Model", getName())
 				.menuPath(MENU_GRAPH, "&Calls")
-				.menuGroup("Graph", "C")
+				.menuGroup(MENU_GRAPH, "C")
 				.onAction(c -> graphSubroutines())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
@@ -228,7 +219,8 @@ public class ProgramGraphPlugin extends ProgramPlugin
 				.buildAndInstall(tool);
 
 		reuseGraphAction =
-			new ToggleActionBuilder("Reuse Graph", getName()).menuPath(MENU_GRAPH, "Reuse Graph")
+			new ToggleActionBuilder("Reuse Graph", getName())
+					.menuPath(MENU_GRAPH, "Reuse Graph")
 					.menuGroup("Graph Options")
 					.selected(reuseGraph)
 					.onAction(c -> reuseGraph = reuseGraphAction.isSelected())
@@ -236,7 +228,8 @@ public class ProgramGraphPlugin extends ProgramPlugin
 					.buildAndInstall(tool);
 
 		appendGraphAction =
-			new ToggleActionBuilder("Append Graph", getName()).menuPath(MENU_GRAPH, "Append Graph")
+			new ToggleActionBuilder("Append Graph", getName())
+					.menuPath(MENU_GRAPH, "Append Graph")
 					.menuGroup("Graph Options")
 					.selected(false)
 					.onAction(c -> updateAppendAndReuseGraph())

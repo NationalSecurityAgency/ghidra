@@ -20,6 +20,7 @@ import java.util.*;
 import docking.ActionContext;
 import docking.action.MenuData;
 import docking.action.ToggleDockingAction;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.GraphDisplayBroker;
@@ -148,7 +149,7 @@ public class GraphDisplayBrokerPlugin extends Plugin
 
 	@Override
 	public GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, Map<String, String> properties,
-											   TaskMonitor monitor) throws GraphException {
+			TaskMonitor monitor) throws GraphException {
 		if (defaultGraphDisplayProvider != null) {
 			return defaultGraphDisplayProvider.getGraphDisplay(reuseGraph, properties, monitor);
 		}
@@ -177,7 +178,9 @@ public class GraphDisplayBrokerPlugin extends Plugin
 			super(provider.getName(), owner);
 			this.provider = provider;
 			setMenuBarData(
-				new MenuData(new String[] { "Graph", "Graph Output", provider.getName() }, "z"));
+				new MenuData(
+					new String[] { ToolConstants.MENU_GRAPH, "Graph Output", provider.getName() },
+					"z"));
 			setHelpLocation(provider.getHelpLocation());
 		}
 
