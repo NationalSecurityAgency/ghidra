@@ -24,6 +24,7 @@ import java.util.*;
 import agent.gdb.pty.PtyChild;
 import agent.gdb.pty.PtySession;
 import agent.gdb.pty.local.LocalProcessPtySession;
+import ghidra.util.Msg;
 
 public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
 	private final String name;
@@ -81,7 +82,13 @@ public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
 		}
 		builder.inheritIO();
 
-		return new LocalProcessPtySession(builder.start());
+		try {
+			return new LocalProcessPtySession(builder.start());
+		}
+		catch (Exception e) {
+			Msg.error(this, "Could not start process with args " + args, e);
+			throw e;
+		}
 	}
 
 	protected PtySession sessionUsingPythonLeader(String[] args, Map<String, String> env)

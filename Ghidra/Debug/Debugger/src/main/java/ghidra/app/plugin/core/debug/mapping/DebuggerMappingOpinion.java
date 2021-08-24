@@ -48,7 +48,7 @@ public interface DebuggerMappingOpinion extends ExtensionPoint {
 			}
 			catch (Throwable t) {
 				Msg.error(DebuggerMappingOpinion.class,
-					"Problem querying opinion " + opinion + " for recording/mapping offers");
+					"Problem querying opinion " + opinion + " for recording/mapping offers: " + t);
 			}
 		}
 		result.sort(HIGHEST_CONFIDENCE_FIRST);
@@ -69,6 +69,10 @@ public interface DebuggerMappingOpinion extends ExtensionPoint {
 		DebuggerObjectModel model = process.getModel();
 		List<String> pathToEnv =
 			model.getRootSchema().searchForSuitable(TargetEnvironment.class, process.getPath());
+		if (pathToEnv == null) {
+			Msg.error(this, "Could not find path to environment");
+			return Set.of();
+		}
 		TargetEnvironment env = (TargetEnvironment) model.getModelObject(pathToEnv);
 		return offersForEnv(env, process);
 	}

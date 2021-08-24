@@ -37,7 +37,15 @@ public interface DebuggerMappingOffer {
 		return null;
 	}
 
-	// TODO: Spec out some standard numbers. Maybe an enum?
+	/**
+	 * Get the confidence of this offer.
+	 * 
+	 * <p>
+	 * Offers with numerically higher confidence are preffered. TODO: Spec out some standard
+	 * numbers. Maybe an enum?
+	 * 
+	 * @return the confidence
+	 */
 	int getConfidence();
 
 	String getDescription();
@@ -46,5 +54,10 @@ public interface DebuggerMappingOffer {
 
 	CompilerSpecID getTraceCompilerSpecID();
 
+	/**
+	 * Get the mapper which implements this offer
+	 * 
+	 * @return the mapper
+	 */
 	DebuggerTargetTraceMapper take();
 }

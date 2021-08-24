@@ -25,27 +25,13 @@ import ghidra.dbg.util.ShellUtils;
 public enum GdbModelImplUtils {
 	;
 	public static CompletableFuture<GdbThread> launch(GdbModelImpl impl, GdbInferior inferior,
-			List<String> args) {
+			List<String> args, boolean useStarti) {
 		// Queue all these up to avoid other commands getting between.
 		CompletableFuture<Void> feas = inferior.fileExecAndSymbols(args.get(0));
 		CompletableFuture<Void> sargs =
 			inferior.setVar("args", ShellUtils.generateLine(args.subList(1, args.size())));
-		CompletableFuture<Void> both = CompletableFuture.allOf(feas, sargs);
-		if (impl.noStarti) {
-			return both.thenCombine(inferior.start(), (__, t) -> t);
-		}
-		else {
-			return both.thenCombine(inferior.starti(), (__, t) -> t).exceptionally(ex -> {
-				impl.noStarti = true;
-				// TODO: Check that the error is actually Undefined command: "starti"
-				return null;
-			}).thenCompose(thread -> {
-				if (thread == null) {
-					return inferior.start();
-				}
-				return CompletableFuture.completedStage(thread);
-			});
-		}
+		CompletableFuture<GdbThread> start = useStarti ? inferior.starti() : inferior.start();
+		return feas.thenCombine(sargs, (v1, v2) -> v2).thenCombine(start, (v, t) -> t);
 	}
 
 	public static <V> V noDupMerge(V first, V second) {
