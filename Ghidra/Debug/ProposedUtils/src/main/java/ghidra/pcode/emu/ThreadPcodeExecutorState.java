@@ -6,57 +6,61 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.mem.MemBuffer;
 
 public class ThreadPcodeExecutorState<T> implements PcodeExecutorState<T> {
-	protected final PcodeExecutorState<T> memoryState;
-	protected final PcodeExecutorState<T> registerState;
+	protected final PcodeExecutorState<T> sharedState;
+	protected final PcodeExecutorState<T> localState;
 
-	public ThreadPcodeExecutorState(PcodeExecutorState<T> memoryState,
-			PcodeExecutorState<T> registerState) {
-		this.memoryState = memoryState;
-		this.registerState = registerState;
+	public ThreadPcodeExecutorState(PcodeExecutorState<T> sharedState,
+			PcodeExecutorState<T> localState) {
+		this.sharedState = sharedState;
+		this.localState = localState;
+	}
+
+	protected boolean isThreadLocalSpace(AddressSpace space) {
+		return space.isRegisterSpace() || space.isUniqueSpace();
 	}
 
 	@Override
 	public T longToOffset(AddressSpace space, long l) {
-		if (space.isRegisterSpace()) {
-			return registerState.longToOffset(space, l);
+		if (isThreadLocalSpace(space)) {
+			return localState.longToOffset(space, l);
 		}
 		else {
-			return memoryState.longToOffset(space, l);
+			return sharedState.longToOffset(space, l);
 		}
 	}
 
 	@Override
 	public void setVar(AddressSpace space, T offset, int size, boolean truncateAddressableUnit,
 			T val) {
-		if (space.isRegisterSpace()) {
-			registerState.setVar(space, offset, size, truncateAddressableUnit, val);
+		if (isThreadLocalSpace(space)) {
+			localState.setVar(space, offset, size, truncateAddressableUnit, val);
 		}
 		else {
-			memoryState.setVar(space, offset, size, truncateAddressableUnit, val);
+			sharedState.setVar(space, offset, size, truncateAddressableUnit, val);
 		}
 	}
 
 	@Override
 	public T getVar(AddressSpace space, T offset, int size, boolean truncateAddressableUnit) {
-		if (space.isRegisterSpace()) {
-			return registerState.getVar(space, offset, size, truncateAddressableUnit);
+		if (isThreadLocalSpace(space)) {
+			return localState.getVar(space, offset, size, truncateAddressableUnit);
 		}
 		else {
-			return memoryState.getVar(space, offset, size, truncateAddressableUnit);
+			return sharedState.getVar(space, offset, size, truncateAddressableUnit);
 		}
 	}
 
 	@Override
 	public MemBuffer getConcreteBuffer(Address address) {
-		assert !address.getAddressSpace().isRegisterSpace();
-		return memoryState.getConcreteBuffer(address);
+		assert !isThreadLocalSpace(address.getAddressSpace());
+		return sharedState.getConcreteBuffer(address);
 	}
 
-	public PcodeExecutorState<T> getMemoryState() {
-		return memoryState;
+	public PcodeExecutorState<T> getSharedState() {
+		return sharedState;
 	}
 
-	public PcodeExecutorState<T> getRegisterState() {
-		return registerState;
+	public PcodeExecutorState<T> getLocalState() {
+		return localState;
 	}
 }

@@ -34,7 +34,7 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	protected final SleighUseropLibrary<T> stubLibrary;
 
 	/* for abstract thread access */ PcodeStateInitializer initializer;
-	private PcodeExecutorState<T> memoryState;
+	private PcodeExecutorState<T> sharedState;
 	protected final Map<String, PcodeThread<T>> threads = new LinkedHashMap<>();
 
 	protected final Map<Address, PcodeProgram> injects = new HashMap<>();
@@ -55,9 +55,9 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 		this.initializer = getPluggableInitializer(language);
 	}
 
-	protected abstract PcodeExecutorState<T> createMemoryState();
+	protected abstract PcodeExecutorState<T> createSharedState();
 
-	protected abstract PcodeExecutorState<T> createRegisterState(PcodeThread<T> thread);
+	protected abstract PcodeExecutorState<T> createLocalState(PcodeThread<T> thread);
 
 	protected SleighUseropLibrary<T> createThreadStubLibrary() {
 		return new DefaultPcodeThread.SleighEmulationLibrary<T>(null);
@@ -113,12 +113,12 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	}
 
 	@Override
-	public PcodeExecutorState<T> getMemoryState() {
-		if (memoryState == null) {
-			memoryState = createMemoryState();
+	public PcodeExecutorState<T> getSharedState() {
+		if (sharedState == null) {
+			sharedState = createSharedState();
 			doPluggableInitialization();
 		}
-		return memoryState;
+		return sharedState;
 	}
 
 	protected PcodeProgram getInject(Address address) {

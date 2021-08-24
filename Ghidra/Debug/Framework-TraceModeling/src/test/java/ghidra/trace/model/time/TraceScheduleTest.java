@@ -385,12 +385,12 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		}
 
 		@Override
-		protected PcodeExecutorState<Void> createMemoryState() {
+		protected PcodeExecutorState<Void> createSharedState() {
 			return null;
 		}
 
 		@Override
-		protected PcodeExecutorState<Void> createRegisterState(PcodeThread<Void> thread) {
+		protected PcodeExecutorState<Void> createLocalState(PcodeThread<Void> thread) {
 			return null;
 		}
 	}

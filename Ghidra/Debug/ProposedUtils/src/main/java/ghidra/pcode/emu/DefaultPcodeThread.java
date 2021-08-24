@@ -114,10 +114,10 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		this.machine = machine;
 		this.language = machine.language;
 		this.arithmetic = machine.arithmetic;
-		PcodeExecutorState<T> memoryState = machine.getMemoryState();
-		PcodeExecutorState<T> registerState = machine.createRegisterState(this);
-		this.state = new ThreadPcodeExecutorState<>(memoryState, registerState);
-		this.decoder = createInstructionDecoder(memoryState);
+		PcodeExecutorState<T> sharedState = machine.getSharedState();
+		PcodeExecutorState<T> localState = machine.createLocalState(this);
+		this.state = new ThreadPcodeExecutorState<>(sharedState, localState);
+		this.decoder = createInstructionDecoder(sharedState);
 		this.library = createUseropLibrary();
 
 		this.executor = createExecutor();
@@ -135,8 +135,8 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		this.reInitialize();
 	}
 
-	protected SleighInstructionDecoder createInstructionDecoder(PcodeExecutorState<T> memoryState) {
-		return new SleighInstructionDecoder(language, memoryState);
+	protected SleighInstructionDecoder createInstructionDecoder(PcodeExecutorState<T> sharedState) {
+		return new SleighInstructionDecoder(language, sharedState);
 	}
 
 	protected SleighUseropLibrary<T> createUseropLibrary() {

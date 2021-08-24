@@ -248,7 +248,7 @@ public interface PcodeThread<T> {
 	 * 
 	 * <p>
 	 * The memory part of this state is shared among all threads in the same machine. See
-	 * {@link PcodeMachine#getMemoryState()}.
+	 * {@link PcodeMachine#getSharedState()}.
 	 * 
 	 */
 	ThreadPcodeExecutorState<T> getState();

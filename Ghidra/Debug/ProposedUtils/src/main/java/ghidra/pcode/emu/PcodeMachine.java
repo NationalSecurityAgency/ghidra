@@ -54,7 +54,7 @@ public interface PcodeMachine<T> {
 	PcodeThread<T> getThread(String name, boolean createIfAbsent);
 
 	/**
-	 * Get the machine's memory state
+	 * Get the machine's shared (memory) state
 	 * 
 	 * <p>
 	 * The returned state will may throw {@link IllegalArgumentException} if the client requests
@@ -62,7 +62,7 @@ public interface PcodeMachine<T> {
 	 * 
 	 * @return the memory state
 	 */
-	PcodeExecutorState<T> getMemoryState();
+	PcodeExecutorState<T> getSharedState();
 
 	/**
 	 * Compile the given SLEIGH code for execution by a thread of this machine
