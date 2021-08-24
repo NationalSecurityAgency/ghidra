@@ -979,6 +979,69 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		manager.add(range, fromLifespan, toURL, toAddress.toString(true));
 	}
 
+	static protected AddressRange clippedRange(Trace trace, String spaceName, long min,
+			long max) {
+		AddressSpace space = trace.getBaseAddressFactory().getAddressSpace(spaceName);
+		if (space == null) {
+			return null;
+		}
+		Address spaceMax = space.getMaxAddress();
+		if (Long.compareUnsigned(min, spaceMax.getOffset()) > 0) {
+			return null;
+		}
+		if (Long.compareUnsigned(max, spaceMax.getOffset()) > 0) {
+			return new AddressRangeImpl(space.getAddress(min), spaceMax);
+		}
+		return new AddressRangeImpl(space.getAddress(min), space.getAddress(max));
+	}
+
+	@Override
+	public void addIdentityMapping(Trace from, Program toProgram, Range<Long> lifespan,
+			boolean truncateExisting) {
+		try (UndoableTransaction tid =
+			UndoableTransaction.start(from, "Add identity mappings", false)) {
+			doAddIdentityMapping(from, toProgram, lifespan, truncateExisting);
+			tid.commit();
+		}
+	}
+
+	protected void doAddIdentityMapping(Trace from, Program toProgram, Range<Long> lifespan,
+			boolean truncateExisting) {
+		Map<String, Address> mins = new HashMap<>();
+		Map<String, Address> maxs = new HashMap<>();
+		for (AddressRange range : toProgram.getMemory().getAddressRanges()) {
+			mins.compute(range.getAddressSpace().getName(), (n, min) -> {
+				Address can = range.getMinAddress();
+				if (min == null || can.compareTo(min) < 0) {
+					return can;
+				}
+				return min;
+			});
+			maxs.compute(range.getAddressSpace().getName(), (n, max) -> {
+				Address can = range.getMaxAddress();
+				if (max == null || can.compareTo(max) > 0) {
+					return can;
+				}
+				return max;
+			});
+		}
+		for (String name : mins.keySet()) {
+			AddressRange range = clippedRange(from, name, mins.get(name).getOffset(),
+				maxs.get(name).getOffset());
+			if (range == null) {
+				continue;
+			}
+			try {
+				addMapping(new DefaultTraceLocation(from, null, lifespan, range.getMinAddress()),
+					new ProgramLocation(toProgram, mins.get(name)), range.getLength(),
+					truncateExisting);
+			}
+			catch (TraceConflictedMappingException e) {
+				Msg.error(this, "Could not add identity mapping " + range + ": " + e.getMessage());
+			}
+		}
+	}
+
 	@Override
 	public void addModuleMapping(TraceModule from, long length, Program toProgram,
 			boolean truncateExisting) throws TraceConflictedMappingException {

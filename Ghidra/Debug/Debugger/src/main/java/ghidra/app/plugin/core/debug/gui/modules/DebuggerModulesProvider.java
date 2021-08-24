@@ -539,6 +539,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	private Program currentProgram;
 	private ProgramLocation currentLocation;
 
+	DockingAction actionMapIdentically;
 	DockingAction actionMapModules;
 	DockingAction actionMapModuleTo;
 	DockingAction actionMapSections;
@@ -747,6 +748,10 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	protected void createActions() {
+		actionMapIdentically = MapIdenticallyAction.builder(plugin)
+				.enabledWhen(ctx -> currentProgram != null && currentTrace != null)
+				.onAction(this::activatedMapIdentically)
+				.buildAndInstallLocal(this);
 		actionMapModules = MapModulesAction.builder(plugin)
 				.enabledWhen(this::isContextNonEmpty)
 				.popupWhen(this::isContextNonEmpty)
@@ -820,6 +825,14 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 			return false;
 		}
 		return sel.stream().map(TraceSection::getModule).distinct().count() == 1;
+	}
+
+	private void activatedMapIdentically(ActionContext ignored) {
+		if (currentProgram == null || currentTrace == null) {
+			return;
+		}
+		staticMappingService.addIdentityMapping(currentTrace, currentProgram,
+			Range.atLeast(traceManager.getCurrentSnap()), true);
 	}
 
 	private void activatedMapModules(ActionContext ignored) {

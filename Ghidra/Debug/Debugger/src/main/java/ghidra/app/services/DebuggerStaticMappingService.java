@@ -532,7 +532,6 @@ public interface DebuggerStaticMappingService {
 	 * Note if the trace is backed by a Ghidra database, the caller must already have started a
 	 * transaction on the relevant domain object.
 	 * 
-	 * 
 	 * @param from the source trace location, including lifespan
 	 * @param to the destination program location
 	 * @param length the length of the mapped region, where 0 indicates {@code 1 << 64}.
@@ -542,6 +541,18 @@ public interface DebuggerStaticMappingService {
 	 */
 	void addMapping(TraceLocation from, ProgramLocation to, long length, boolean truncateExisting)
 			throws TraceConflictedMappingException;
+
+	/**
+	 * Add a static mapping from the given trace to the given program, using identical addresses
+	 *
+	 * @param from the source trace
+	 * @param toProgram the destination program
+	 * @param lifespan the lifespan of the mapping
+	 * @param truncateExisting true to delete or truncate the lifespan of overlapping entries. If
+	 *            false, overlapping entries are omitted.
+	 */
+	void addIdentityMapping(Trace from, Program toProgram, Range<Long> lifespan,
+			boolean truncateExisting);
 
 	/**
 	 * Add a static mapping (relocation) from the given module to the given program
