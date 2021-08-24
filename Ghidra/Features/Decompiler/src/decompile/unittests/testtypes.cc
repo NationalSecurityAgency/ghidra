@@ -18,10 +18,10 @@
 #include "test.hh"
 #include <iostream>
 
-Architecture *glb;
-TypeFactory *types;
-CastStrategy *strategy;
-Funcdata *dummyFunc;
+static Architecture *glb;
+static TypeFactory *types;
+static CastStrategy *strategy;
+static Funcdata *dummyFunc;
 
 class TypeTestEnvironment {
   Architecture *g;

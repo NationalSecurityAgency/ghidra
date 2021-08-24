@@ -350,10 +350,24 @@ uintb OpBehaviorInt2Comp::evaluateUnary(int4 sizeout,int4 sizein,uintb in1) cons
   return res;
 }
 
+uintb OpBehaviorInt2Comp::recoverInputUnary(int4 sizeout,uintb out,int4 sizein) const
+
+{
+  uintb res = uintb_negate(out-1,sizein);
+  return res;
+}
+
 uintb OpBehaviorIntNegate::evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const
 
 {
   uintb res = uintb_negate(in1,sizein);
+  return res;
+}
+
+uintb OpBehaviorIntNegate::recoverInputUnary(int4 sizeout,uintb out,int4 sizein) const
+
+{
+  uintb res = uintb_negate(out,sizein);
   return res;
 }
 
