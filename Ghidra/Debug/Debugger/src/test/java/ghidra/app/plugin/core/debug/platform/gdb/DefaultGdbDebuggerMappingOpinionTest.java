@@ -36,7 +36,6 @@ public class DefaultGdbDebuggerMappingOpinionTest extends AbstractGhidraHeadless
 	public void testQueryOpinionsIncludesLdefsBased() {
 		TestDebuggerObjectModel model = new TestDebuggerObjectModel();
 
-		// TODO: A good number of names are definitely missing from ldefs :(
 		model.session.environment.changeAttributes(List.of(), Map.ofEntries(
 			Map.entry("_debugger", "gdb"),
 			Map.entry("_arch", "armv5t"),

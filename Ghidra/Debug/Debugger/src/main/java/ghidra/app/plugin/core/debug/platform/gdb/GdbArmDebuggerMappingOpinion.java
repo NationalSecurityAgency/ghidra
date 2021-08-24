@@ -15,58 +15,54 @@
  */
 package ghidra.app.plugin.core.debug.platform.gdb;
 
+import java.util.Collection;
 import java.util.Set;
 
 import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOffer;
-import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOpinion;
-import ghidra.dbg.target.TargetEnvironment;
-import ghidra.dbg.target.TargetProcess;
-import ghidra.program.model.lang.CompilerSpecID;
-import ghidra.program.model.lang.LanguageID;
+import ghidra.dbg.target.TargetObject;
+import ghidra.program.model.lang.*;
+import ghidra.program.util.DefaultLanguageService;
 
-public class GdbArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
-	protected static final LanguageID LANG_ID_ARM_LE_V8 = new LanguageID("ARM:LE:32:v8");
-	protected static final LanguageID LANG_ID_ARM_BE_V8 = new LanguageID("ARM:BE:32:v8");
-	protected static final LanguageID LANG_ID_AARCH64_LE_V8A = new LanguageID("AARCH64:LE:64:v8A");
-	protected static final LanguageID LANG_ID_AARCH64_BE_V8A = new LanguageID("AARCH64:BE:64:v8A");
-	protected static final CompilerSpecID COMP_ID_DEFAULT = new CompilerSpecID("default");
+public class GdbArmDebuggerMappingOpinion extends DefaultGdbDebuggerMappingOpinion {
 
-	protected static class GdbArmLELinuxOffer extends AbstractGdbDebuggerMappingOffer {
-		public GdbArmLELinuxOffer(TargetProcess process) {
-			super(process, 100, "GDB on Linux arm", LANG_ID_ARM_LE_V8, COMP_ID_DEFAULT,
-				Set.of("cpsr"));
+	// Just for the sake of having a separate type
+	protected static class GdbArmOffer extends GdbDefaultOffer {
+		public GdbArmOffer(TargetObject target, int confidence, String description,
+				LanguageCompilerSpecPair lcsp, Collection<String> extraRegNames) {
+			super(target, confidence, description, lcsp, extraRegNames);
 		}
 	}
 
-	protected static class GdbAArch64LELinuxOffer extends AbstractGdbDebuggerMappingOffer {
-		public GdbAArch64LELinuxOffer(TargetProcess process) {
-			super(process, 100, "GDB on Linux aarch64", LANG_ID_AARCH64_LE_V8A, COMP_ID_DEFAULT,
-				Set.of("cpsr"));
+	// Just for the sake of having a separate type
+	protected static class GdbAArch64Offer extends GdbDefaultOffer {
+		public GdbAArch64Offer(TargetObject target, int confidence, String description,
+				LanguageCompilerSpecPair lcsp, Collection<String> extraRegNames) {
+			super(target, confidence, description, lcsp, extraRegNames);
 		}
 	}
 
 	@Override
-	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process) {
-		if (env == null) {
-			return Set.of();
+	protected Set<DebuggerMappingOffer> offersForLanguageAndCSpec(TargetObject target, String arch,
+			Endian endian, LanguageCompilerSpecPair lcsp) {
+		LanguageService langServ = DefaultLanguageService.getLanguageService();
+		LanguageDescription desc;
+		try {
+			desc = langServ.getLanguageDescription(lcsp.languageID);
 		}
-		if (!env.getDebugger().toLowerCase().contains("gdb")) {
-			return Set.of();
+		catch (LanguageNotFoundException e) {
+			throw new AssertionError(e);
 		}
-		String os = env.getOperatingSystem();
-		if (!os.contains("Linux")) {
-			return Set.of();
+		String proc = desc.getProcessor().toString();
+		if ("ARM".equalsIgnoreCase(proc)) {
+			if ("Cortex".equalsIgnoreCase(desc.getVariant())) {
+				return Set.of(
+					new GdbArmOffer(target, 50, "ARM-Cortex/GDB for " + arch, lcsp, Set.of()));
+			}
+			return Set.of(new GdbArmOffer(target, 50, "ARM/GDB for " + arch, lcsp, Set.of("cpsr")));
 		}
-		String endian = env.getEndian();
-		if (!endian.contains("little")) {
-			return Set.of();
-		}
-		String arch = env.getArchitecture();
-		if (arch.startsWith("aarch64")) {
-			return Set.of(new GdbAArch64LELinuxOffer(process));
-		}
-		else if (arch.startsWith("arm")) {
-			return Set.of(new GdbArmLELinuxOffer(process));
+		if ("AARCH64".equalsIgnoreCase(proc)) {
+			return Set.of(
+				new GdbAArch64Offer(target, 50, "AARCH64/GDB for " + arch, lcsp, Set.of("cpsr")));
 		}
 		return Set.of();
 	}

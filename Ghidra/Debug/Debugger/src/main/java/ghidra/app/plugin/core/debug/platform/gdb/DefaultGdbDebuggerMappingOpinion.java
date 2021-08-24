@@ -85,8 +85,9 @@ public class DefaultGdbDebuggerMappingOpinion implements DebuggerMappingOpinion 
 		return null;
 	}
 
-	protected Collection<String> getExtraRegNames() {
-		return Set.of();
+	protected Set<DebuggerMappingOffer> offersForLanguageAndCSpec(TargetObject target, String arch,
+			Endian endian, LanguageCompilerSpecPair lcsp) {
+		return Set.of(new GdbDefaultOffer(target, 10, "Default GDB for " + arch, lcsp, Set.of()));
 	}
 
 	@Override
@@ -97,9 +98,8 @@ public class DefaultGdbDebuggerMappingOpinion implements DebuggerMappingOpinion 
 		Endian endian = getEndian(env);
 		String arch = env.getArchitecture();
 
-		return getCompilerSpecsForGnu(arch, endian).stream().map(lcsp -> {
-			return new GdbDefaultOffer(process, 10, "Default GDB for " + arch, lcsp,
-				getExtraRegNames());
-		}).collect(Collectors.toSet());
+		return getCompilerSpecsForGnu(arch, endian).stream()
+				.flatMap(lcsp -> offersForLanguageAndCSpec(process, arch, endian, lcsp).stream())
+				.collect(Collectors.toSet());
 	}
 }
