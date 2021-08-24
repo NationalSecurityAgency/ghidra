@@ -907,10 +907,12 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		assert Swing.isSwingThread();
 		return cbGoTo.invokeWithTop(goingTo -> {
 			if (!isEffectivelyDifferent(goingTo, location)) {
+				getListingPanel().scrollTo(location);
 				return false;
 			}
 			try (Suppression supp = cbGoTo.suppress(location)) {
 				if (!isEffectivelyDifferent(getLocation(), location)) {
+					getListingPanel().scrollTo(location);
 					return true;
 				}
 				// "Disconnected" providers normally do not allow program changes. Override that
