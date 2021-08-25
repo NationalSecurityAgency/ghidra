@@ -34,22 +34,19 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 
 /**
- * <CODE>DisassemblerPlugin</CODE> provides functionality for dynamic disassembly,
- * static disassembly.<BR>
- * In dynamic disassembly disassembling begins from the
- * selected addresses or if there is no selection then at the address of the
- * current cursor location and attempts to continue disassembling
- * through fallthroughs and along all flows from a disassembled instruction.
- * For instance, if a jump instruction is disassembled then the address being
- * jumped to will be disassembled. The dynamic disassembly will also follow
- * data pointers to addresses containing undefined data, which is then
- * disassembled.<BR>
- * In static disassembly a range or set of ranges
- * is given and disassembly is attempted on each range. Any defined code in the
- * ranges before the static disassembly are first removed.<BR>
+ * <CODE>DisassemblerPlugin</CODE> provides functionality for dynamic disassembly, static
+ * disassembly.<BR>
+ * In dynamic disassembly disassembling begins from the selected addresses or if there is no
+ * selection then at the address of the current cursor location and attempts to continue
+ * disassembling through fallthroughs and along all flows from a disassembled instruction. For
+ * instance, if a jump instruction is disassembled then the address being jumped to will be
+ * disassembled. The dynamic disassembly will also follow data pointers to addresses containing
+ * undefined data, which is then disassembled.<BR>
+ * In static disassembly a range or set of ranges is given and disassembly is attempted on each
+ * range. Any defined code in the ranges before the static disassembly are first removed.<BR>
  * <P>
- * <CODE>DisassemblerPlugin</CODE> provides access to its functions as a service
- * that another plugin may use and through the popup menu to the user.
+ * <CODE>DisassemblerPlugin</CODE> provides access to its functions as a service that another plugin
+ * may use and through the popup menu to the user.
  */
 //@formatter:off
 @PluginInfo(
@@ -89,6 +86,8 @@ public class DisassemblerPlugin extends Plugin {
 	private DockingAction mips16DisassembleAction;
 	private DockingAction ppcDisassembleAction;
 	private DockingAction ppcVleDisassembleAction;
+	private DockingAction x86_64DisassembleAction;
+	private DockingAction x86_32DisassembleAction;
 	private DockingAction setFlowOverrideAction;
 
 	/** Dialog for obtaining the processor state to be used for disassembling. */
@@ -128,8 +127,7 @@ public class DisassemblerPlugin extends Plugin {
 	//////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Creates a new instance of the plugin giving it the tool that
-	 * it will work in.
+	 * Creates a new instance of the plugin giving it the tool that it will work in.
 	 */
 	public DisassemblerPlugin(PluginTool tool) {
 		super(tool);
@@ -177,6 +175,8 @@ public class DisassemblerPlugin extends Plugin {
 		mips16DisassembleAction = new MipsDisassembleAction(this, GROUP_NAME, true);
 		ppcDisassembleAction = new PowerPCDisassembleAction(this, GROUP_NAME, false);
 		ppcVleDisassembleAction = new PowerPCDisassembleAction(this, GROUP_NAME, true);
+		x86_64DisassembleAction = new X86_64DisassembleAction(this, GROUP_NAME, false);
+		x86_32DisassembleAction = new X86_64DisassembleAction(this, GROUP_NAME, true);
 		setFlowOverrideAction = new SetFlowOverrideAction(this, GROUP_NAME);
 
 		tool.addAction(disassembleAction);
@@ -190,6 +190,8 @@ public class DisassemblerPlugin extends Plugin {
 		tool.addAction(mips16DisassembleAction);
 		tool.addAction(ppcDisassembleAction);
 		tool.addAction(ppcVleDisassembleAction);
+		tool.addAction(x86_64DisassembleAction);
+		tool.addAction(x86_32DisassembleAction);
 		tool.addAction(contextAction);
 		tool.addAction(setFlowOverrideAction);
 	}
@@ -244,7 +246,8 @@ public class DisassemblerPlugin extends Plugin {
 			try {
 				currentProgram.getMemory().getByte(addr);
 				AddressSetView restrictedSet = null;
-				if (isDynamicListing) {
+				// I believe this is deprecated
+				/*if (isDynamicListing) {
 					// TODO: should we have option to control restricted range?
 					Address min, max;
 					try {
@@ -260,7 +263,7 @@ public class DisassemblerPlugin extends Plugin {
 						max = addr.getAddressSpace().getMaxAddress();
 					}
 					restrictedSet = new AddressSet(min, max);
-				}
+				}*/
 				cmd = new DisassembleCommand(addr, restrictedSet, true);
 			}
 			catch (MemoryAccessException e) {
@@ -407,6 +410,29 @@ public class DisassemblerPlugin extends Plugin {
 		if (cmd != null) {
 			tool.executeBackgroundCommand(cmd, currentProgram);
 		}
+	}
+
+	public void disassembleX86_64Callback(ListingActionContext context, boolean size32Mode) {
+		ProgramSelection currentSelection = context.getSelection();
+		ProgramLocation currentLocation = context.getLocation();
+		Program currentProgram = context.getProgram();
+		final X86_64DisassembleCommand cmd;
+
+		if ((currentSelection != null) && (!currentSelection.isEmpty())) {
+			cmd = new X86_64DisassembleCommand(currentSelection, null, size32Mode);
+		}
+		else {
+			Address addr = currentLocation.getAddress();
+			try {
+				currentProgram.getMemory().getByte(addr);
+				cmd = new X86_64DisassembleCommand(addr, null, size32Mode);
+			}
+			catch (MemoryAccessException e) {
+				tool.setStatusInfo("Can't disassemble uninitialized memory!", true);
+				return;
+			}
+		}
+		tool.executeBackgroundCommand(cmd, currentProgram);
 	}
 
 }

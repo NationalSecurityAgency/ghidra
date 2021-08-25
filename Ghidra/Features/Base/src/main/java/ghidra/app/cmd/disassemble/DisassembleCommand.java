@@ -20,8 +20,7 @@ import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.disassemble.*;
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -46,14 +45,15 @@ public class DisassembleCommand extends BackgroundCommand {
 
 	private int alignment; // required instruction alignment for the last doDisassembly
 	protected boolean disassemblyPerformed; // if true don't report start problems
+	protected String languageError; // non-null to indicate unsupported language
 	protected boolean unalignedStart;
 	protected boolean nonExecutableStart;
 
 	/**
 	 * Constructor for DisassembleCommand.
+	 * 
 	 * @param start Address to start disassembly.
-	 * @param restrictedSet addresses that can be disassembled.
-	 * a null set implies no restrictions
+	 * @param restrictedSet addresses that can be disassembled. a null set implies no restrictions
 	 * @param followFlow true means the disassembly should follow flow
 	 */
 	public DisassembleCommand(Address start, AddressSetView restrictedSet, boolean followFlow) {
@@ -62,22 +62,22 @@ public class DisassembleCommand extends BackgroundCommand {
 	}
 
 	/**
-	* Constructor for DisassembleCommand.
-	* @param startSet set of addresses to be the start of a disassembly.  The
-	* Command object will attempt to start a disassembly at each address in this set.
-	* @param restrictedSet addresses that can be disassembled.
-	* a null set implies no restrictions
-	*/
+	 * Constructor for DisassembleCommand.
+	 * 
+	 * @param startSet set of addresses to be the start of a disassembly. The Command object will
+	 *            attempt to start a disassembly at each address in this set.
+	 * @param restrictedSet addresses that can be disassembled. a null set implies no restrictions
+	 */
 	public DisassembleCommand(AddressSetView startSet, AddressSetView restrictedSet) {
 		this(startSet, restrictedSet, true);
 	}
 
 	/**
 	 * Constructor for DisassembleCommand.
-	 * @param startSet set of addresses to be the start of a disassembly.  The
-	 * Command object will attempt to start a disassembly at each address in this set.
-	 * @param restrictedSet addresses that can be disassembled.
-	 * a null set implies no restrictions
+	 * 
+	 * @param startSet set of addresses to be the start of a disassembly. The Command object will
+	 *            attempt to start a disassembly at each address in this set.
+	 * @param restrictedSet addresses that can be disassembled. a null set implies no restrictions
 	 */
 	public DisassembleCommand(AddressSetView startSet, AddressSetView restrictedSet,
 			boolean followFlow) {
@@ -93,11 +93,12 @@ public class DisassembleCommand extends BackgroundCommand {
 	}
 
 	/**
-	 * Allows the disassembler context to be seeded for the various disassembly start
-	 * points which may be encountered using the future flow state of the specified seedContext.
-	 * Any initial context set via the {@link #setInitialContext(RegisterValue)} method will take
-	 * precedence when combined with any seed values.
-	 * The seedContext should remain unchanged while disassembler command is actively running.
+	 * Allows the disassembler context to be seeded for the various disassembly start points which
+	 * may be encountered using the future flow state of the specified seedContext. Any initial
+	 * context set via the {@link #setInitialContext(RegisterValue)} method will take precedence
+	 * when combined with any seed values. The seedContext should remain unchanged while
+	 * disassembler command is actively running.
+	 * 
 	 * @param seedContext seed context or null
 	 */
 	public void setSeedContext(DisassemblerContextImpl seedContext) {
@@ -105,11 +106,11 @@ public class DisassembleCommand extends BackgroundCommand {
 	}
 
 	/**
-	 * Allows a specified initial context to be used at all start points.  This value will take
+	 * Allows a specified initial context to be used at all start points. This value will take
 	 * precedence when combined with any individual seed context values specified by the
-	 * {@link #setSeedContext(DisassemblerContextImpl)} method.
-	 * The defaultSeedContext should remain unchanged while disassembler command
-	 * is actively running.
+	 * {@link #setSeedContext(DisassemblerContextImpl)} method. The defaultSeedContext should remain
+	 * unchanged while disassembler command is actively running.
+	 * 
 	 * @param initialContextValue the initial context value to set or null to clear it
 	 */
 	public void setInitialContext(RegisterValue initialContextValue) {
@@ -121,8 +122,9 @@ public class DisassembleCommand extends BackgroundCommand {
 	}
 
 	/**
-	 * Set code analysis enablement.  By default new instructions will be
-	 * submitted for auto-analysis.
+	 * Set code analysis enablement. By default new instructions will be submitted for
+	 * auto-analysis.
+	 * 
 	 * @param enable
 	 */
 	public void enableCodeAnalysis(boolean enable) {
@@ -133,6 +135,9 @@ public class DisassembleCommand extends BackgroundCommand {
 	public String getStatusMsg() {
 		if (disassemblyPerformed) {
 			return null;
+		}
+		if (languageError != null) {
+			return "The program's language is not supported: " + languageError;
 		}
 		if (nonExecutableStart) {
 			return "Disassembly of non-executable memory is disabled";
@@ -312,7 +317,7 @@ public class DisassembleCommand extends BackgroundCommand {
 	 * 
 	 * @param disassembler disassembler to use
 	 * @param seedSet set of addresses to be disassembled
-	 * @param mgr 
+	 * @param mgr
 	 * 
 	 * @return addresses actually disassembled
 	 */
@@ -335,16 +340,17 @@ public class DisassembleCommand extends BackgroundCommand {
 	}
 
 	/**
-	 * Determine if intermediate analysis is required to reduce the risk of disassembling 
-	 * data regions when performing static disassembly over a contiguous range if
-	 * addresses.  This method attemps to identify this situation by checking the first 
-	 * range of disassembledSet against the startSet.  Analysis will be triggered if
-	 * startSet contains both the max address of the first range of disassembledSet 
-	 * (M where M=disassembledSet.firstRange().getMaxAddress()) and the next address 
-	 * (M.next()) which will be the next seed point. 
+	 * Determine if intermediate analysis is required to reduce the risk of disassembling data
+	 * regions when performing static disassembly over a contiguous range if addresses. This method
+	 * attemps to identify this situation by checking the first range of disassembledSet against the
+	 * startSet. Analysis will be triggered if startSet contains both the max address of the first
+	 * range of disassembledSet (M where M=disassembledSet.firstRange().getMaxAddress()) and the
+	 * next address (M.next()) which will be the next seed point.
+	 * 
 	 * @param mgr auto analysis manager or null if analysis disabled
 	 * @param startSet disassembly seed points (prior to removing disassembledSet)
-	 * @param disassembledSet last set of disassembled addresses using startSet min-address as seed point
+	 * @param disassembledSet last set of disassembled addresses using startSet min-address as seed
+	 *            point
 	 */
 	private static void analyzeIfNeeded(AutoAnalysisManager mgr, AddressSetView startSet,
 			AddressSetView disassembledSet, TaskMonitor monitor) {
@@ -366,6 +372,7 @@ public class DisassembleCommand extends BackgroundCommand {
 
 	/**
 	 * Returns an address set of all instructions that were disassembled.
+	 * 
 	 * @return an address set of all instructions that were disassembled
 	 */
 	public AddressSet getDisassembledAddressSet() {

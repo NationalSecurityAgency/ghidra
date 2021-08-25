@@ -21,7 +21,7 @@ macro tzcntflags(input, output) {
 
 @ifdef IA64
 # TODO remove ANDN from ia.sinc ?????
-:ANDN Reg64, vexVVVV_r64, rm64 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf2; Reg64 ... & rm64
+:ANDN Reg64, vexVVVV_r64, rm64 is $(LONGMODE_ON) & $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf2; Reg64 ... & rm64
 {
   Reg64 = ~(vexVVVV_r64) & rm64;
   resultflags(Reg64);
@@ -46,7 +46,7 @@ macro tzcntflags(input, output) {
 }
 
 @ifdef IA64
-:BEXTR Reg64, rm64, vexVVVV_r64 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf7; Reg64 ... & rm64
+:BEXTR Reg64, rm64, vexVVVV_r64 is $(LONGMODE_ON) & $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf7; Reg64 ... & rm64
 {
   sourceTmp:1 = vexVVVV_r64[0,8];
   lengthTmp:1 = vexVVVV_r64[8,8];
@@ -74,7 +74,7 @@ macro tzcntflags(input, output) {
 }
 
 @ifdef IA64
-:BLSI vexVVVV_r64, rm64 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf3; reg_opcode=3 ... & rm64
+:BLSI vexVVVV_r64, rm64 is $(LONGMODE_ON) & $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf3; reg_opcode=3 ... & rm64
 {
   vexVVVV_r64 = -rm64 & rm64;
 
@@ -100,7 +100,7 @@ macro tzcntflags(input, output) {
 }
 
 @ifdef IA64
-:BLSMSK vexVVVV_r64, rm64 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf3; reg_opcode=2 ... & rm64
+:BLSMSK vexVVVV_r64, rm64 is $(LONGMODE_ON) & $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf3; reg_opcode=2 ... & rm64
 {
   CF = (rm64 == 0);
   vexVVVV_r64 = (rm64 - 1) ^ rm64;
@@ -126,7 +126,7 @@ macro tzcntflags(input, output) {
 }
 
 @ifdef IA64
-:BLSR vexVVVV_r64, rm64 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf3; reg_opcode=1 ... & rm64
+:BLSR vexVVVV_r64, rm64 is $(LONGMODE_ON) & $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf3; reg_opcode=1 ... & rm64
 {
   CF = (rm64 == 0);
   vexVVVV_r64 = (rm64 - 1) & rm64;
@@ -176,7 +176,7 @@ macro tzcntflags(input, output) {
 }
 
 @ifdef IA64
-:TZCNT Reg64, rm64	is vexMode=0 & opsize=2 & $(PRE_F3) & $(REX_W) & byte=0x0F; byte=0xBC; Reg64 ... & rm64 {
+:TZCNT Reg64, rm64	is $(LONGMODE_ON) & vexMode=0 & opsize=2 & $(PRE_F3) & $(REX_W) & byte=0x0F; byte=0xBC; Reg64 ... & rm64 {
 
   countTmp:8 = 0;
   inputTmp:8 = rm64;

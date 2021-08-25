@@ -12,6 +12,7 @@
       <set name="bit64" val="1"/>
       <set name="opsize" val="1"/>
       <set name="rexprefix" val="0"/>
+      <set name="longMode" val="1"/>
     </context_set>
     <tracked_set space="ram">
       <set name="DF" val="0"/>

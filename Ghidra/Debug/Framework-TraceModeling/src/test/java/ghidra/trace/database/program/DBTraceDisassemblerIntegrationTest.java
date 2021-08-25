@@ -25,8 +25,7 @@ import org.junit.*;
 
 import com.google.common.collect.Range;
 
-import ghidra.app.cmd.disassemble.ArmDisassembleCommand;
-import ghidra.app.cmd.disassemble.MipsDisassembleCommand;
+import ghidra.app.cmd.disassemble.*;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.AddressOverflowException;
@@ -213,6 +212,76 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 			assertEquals("bal 0x1200035bc", cu1.toString());
 			CodeUnit cu2 = cuManager.getAt(0, b.addr(0x1200035b8L));
 			assertEquals("_nop", cu2.toString());
+		}
+	}
+
+	@TestLanguage(ProgramBuilder._X64)
+	public void test64BitX86DBTrace() throws Exception {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			DBTraceMemoryManager memory = b.trace.getMemoryManager();
+			memory.createRegion(".text", 0, b.range(0x00400000, 0x00400fff));
+			memory.putBytes(0, b.addr(0x00400000), b.buf(
+				// MOV RCX,RAX; Same encoding as DEC EAX; MOV ECX,EAX outside long mode
+				0x48, 0x89, 0xc1));
+
+			AddressSet restricted = new AddressSet(b.addr(0x00400000), b.addr(0x00400002));
+			X86_64DisassembleCommand x86Dis =
+				new X86_64DisassembleCommand(b.addr(0x00400000), restricted, false);
+			x86Dis.applyTo(b.trace.getFixedProgramView(0), TaskMonitor.DUMMY);
+
+			DBTraceCodeUnitsMemoryView cuManager = b.trace.getCodeManager().codeUnits();
+			CodeUnit cu1 = cuManager.getAt(0, b.addr(0x00400000));
+			assertEquals("MOV RCX,RAX", cu1.toString());
+		}
+	}
+
+	@Test
+	@TestLanguage(ProgramBuilder._X64)
+	public void test32BitX64CompatDBTrace() throws Exception {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			DBTraceMemoryManager memory = b.trace.getMemoryManager();
+			memory.createRegion(".text", 0, b.range(0x00400000, 0x00400fff));
+			memory.putBytes(0, b.addr(0x00400000), b.buf(
+				// DEC EAX; but REX.W if context not heeded
+				0x48,
+				// MOV ECX,EAX
+				0x89, 0xc1));
+
+			AddressSet restricted = new AddressSet(b.addr(0x00400000), b.addr(0x00400002));
+			X86_64DisassembleCommand x86Dis =
+				new X86_64DisassembleCommand(b.addr(0x00400000), restricted, true);
+			x86Dis.applyTo(b.trace.getFixedProgramView(0), TaskMonitor.DUMMY);
+
+			DBTraceCodeUnitsMemoryView cuManager = b.trace.getCodeManager().codeUnits();
+			CodeUnit cu1 = cuManager.getAt(0, b.addr(0x00400000));
+			assertEquals("DEC EAX", cu1.toString());
+			CodeUnit cu2 = cuManager.getAt(0, b.addr(0x00400001));
+			assertEquals("MOV ECX,EAX", cu2.toString());
+		}
+	}
+
+	@Test
+	@TestLanguage(ProgramBuilder._X86)
+	public void test32BitX86DBTrace() throws Exception {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			DBTraceMemoryManager memory = b.trace.getMemoryManager();
+			memory.createRegion(".text", 0, b.range(0x00400000, 0x00400fff));
+			memory.putBytes(0, b.addr(0x00400000), b.buf(
+				// DEC EAX
+				0x48,
+				// MOV ECX,EAX
+				0x89, 0xc1));
+
+			AddressSet restricted = new AddressSet(b.addr(0x00400000), b.addr(0x00400002));
+			DisassembleCommand dis =
+				new DisassembleCommand(b.addr(0x00400000), restricted, true);
+			dis.applyTo(b.trace.getFixedProgramView(0), TaskMonitor.DUMMY);
+
+			DBTraceCodeUnitsMemoryView cuManager = b.trace.getCodeManager().codeUnits();
+			CodeUnit cu1 = cuManager.getAt(0, b.addr(0x00400000));
+			assertEquals("DEC EAX", cu1.toString());
+			CodeUnit cu2 = cuManager.getAt(0, b.addr(0x00400001));
+			assertEquals("MOV ECX,EAX", cu2.toString());
 		}
 	}
 }

@@ -46,7 +46,7 @@ macro lzcntflags(input, output) {
 }
 
 @ifdef IA64
-:LZCNT Reg64, rm64	is vexMode=0 & opsize=2 & $(PRE_F3) & $(REX_W) & byte=0x0F; byte=0xBD; Reg64 ... & rm64 {
+:LZCNT Reg64, rm64	is $(LONGMODE_ON) & vexMode=0 & opsize=2 & $(PRE_F3) & $(REX_W) & byte=0x0F; byte=0xBD; Reg64 ... & rm64 {
 
   countTmp:8 = 0;
   inputTmp:8 = rm64;

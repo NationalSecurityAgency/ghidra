@@ -3,5 +3,5 @@ define pcodeop rdrandIsValid;
 :RDRAND rm16     is vexMode=0 & opsize=0 & byte=0x0f; byte=0xC7; (rm16 & reg_opcode=6 ...) { rm16 = rdrand(); CF=rdrandIsValid(); }
 :RDRAND rm32     is vexMode=0 & opsize=1 & byte=0x0f; byte=0xC7; (rm32 & reg_opcode=6 ...) { rm32 = rdrand(); CF=rdrandIsValid(); }
 @ifdef IA64
-:RDRAND rm64     is vexMode=0 & opsize=2 & $(REX_W) & byte=0x0f; byte=0xC7; (rm64 & reg_opcode=6 ...) { rm64 = rdrand(); CF=rdrandIsValid(); }
+:RDRAND rm64     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & $(REX_W) & byte=0x0f; byte=0xC7; (rm64 & reg_opcode=6 ...) { rm64 = rdrand(); CF=rdrandIsValid(); }
 @endif
