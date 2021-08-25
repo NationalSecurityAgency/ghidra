@@ -1047,15 +1047,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	private void setInitialLayoutAlgorithm() {
 		String layoutAlgorithmName = graphDisplayOptions.getDefaultLayoutAlgorithmNameLayout();
 		layoutAction.setCurrentActionStateByUserData(layoutAlgorithmName);
-		if (layoutAlgorithmName != null) {
-			layoutTransitionManager.setLayout(layoutAlgorithmName);
-		}
-		else {
-			LayoutAlgorithm<AttributedVertex> initialLayoutAlgorithm =
-				layoutTransitionManager.getInitialLayoutAlgorithm();
-			initialLayoutAlgorithm.setAfter(() -> centerAndScale());
-			viewer.getVisualizationModel().setLayoutAlgorithm(initialLayoutAlgorithm);
-		}
+		TaskLauncher
+				.launch(new SetLayoutTask(viewer, layoutTransitionManager, layoutAlgorithmName));
 	}
 
 	/**
@@ -1549,7 +1542,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			// vertices
 			if (e.getStateChange() == ItemEvent.SELECTED) {
 				Set<AttributedVertex> selectedVertices = getSelectedVertices();
-				notifySelectionChanged(new HashSet<AttributedVertex>(selectedVertices));
+				notifySelectionChanged(new HashSet<>(selectedVertices));
 
 				if (selectedVertices.size() == 1) {
 					// if only one vertex was selected, make it the focused vertex
