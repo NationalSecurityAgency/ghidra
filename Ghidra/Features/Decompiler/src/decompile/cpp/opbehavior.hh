@@ -227,6 +227,7 @@ class OpBehaviorInt2Comp : public OpBehavior {
 public:
   OpBehaviorInt2Comp(void): OpBehavior(CPUI_INT_2COMP,true) {}	///< Constructor
   virtual uintb evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const;
+  virtual uintb recoverInputUnary(int4 sizeout,uintb out,int4 sizein) const;
 };
 
 /// CPUI_INT_NEGATE behavior
@@ -234,6 +235,7 @@ class OpBehaviorIntNegate : public OpBehavior {
 public:
   OpBehaviorIntNegate(void): OpBehavior(CPUI_INT_NEGATE,true) {}	///< Constructor
   virtual uintb evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const;
+  virtual uintb recoverInputUnary(int4 sizeout,uintb out,int4 sizein) const;
 };
 
 /// CPUI_INT_XOR behavior
