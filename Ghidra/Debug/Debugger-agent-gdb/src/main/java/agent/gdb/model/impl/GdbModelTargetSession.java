@@ -79,7 +79,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 			ACCESSIBLE_ATTRIBUTE_NAME, accessible, //
 			PROMPT_ATTRIBUTE_NAME, GDB_PROMPT, //
 			DISPLAY_ATTRIBUTE_NAME, display, //
-			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, TargetCmdLineLauncher.PARAMETERS, //
+			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, GdbModelTargetInferior.PARAMETERS, //
 			SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME, GdbModelTargetInferior.SUPPORTED_KINDS, //
 			FOCUS_ATTRIBUTE_NAME, this // Satisfy schema. Will be set to first inferior.
 		), "Initialized");
