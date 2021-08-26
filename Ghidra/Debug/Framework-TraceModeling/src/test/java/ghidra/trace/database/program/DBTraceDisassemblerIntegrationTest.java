@@ -29,6 +29,7 @@ import org.junit.runner.Description;
 import com.google.common.collect.Range;
 
 import ghidra.app.cmd.disassemble.ArmDisassembleCommand;
+import ghidra.app.cmd.disassemble.MipsDisassembleCommand;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.AddressOverflowException;
@@ -209,10 +210,37 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 				new ArmDisassembleCommand(b.addr(0xb6fa2cdc), restricted, true);
 			thumbDis.applyTo(b.trace.getFixedProgramView(0), TaskMonitor.DUMMY);
 
-			CodeUnit cu1 = b.trace.getCodeManager().codeUnits().getAt(0, b.addr(0xb6fa2cdc));
+			DBTraceCodeUnitsMemoryView cuManager = b.trace.getCodeManager().codeUnits();
+			CodeUnit cu1 = cuManager.getAt(0, b.addr(0xb6fa2cdc));
 			assertEquals("push { r4, r5, r6, r7, r8, lr  }", cu1.toString());
-			CodeUnit cu2 = b.trace.getCodeManager().codeUnits().getAt(0, b.addr(0xb6fa2ce0));
+			CodeUnit cu2 = cuManager.getAt(0, b.addr(0xb6fa2ce0));
 			assertEquals("sub sp,#0x1d8", cu2.toString());
+		}
+	}
+
+	@Test
+	@TestLanguage("MIPS:BE:64:default")
+	public void testDelaySlotSampleDBTrace() throws Exception {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			DBTraceMemoryManager memory = b.trace.getMemoryManager();
+			memory.createRegion(".text", 0, b.range(0x120000000L, 0x120010000L),
+				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
+			memory.putBytes(0, b.addr(0x1200035b4L), b.buf(
+				// bal LAB_1200035bc
+				0x04, 0x11, 0x00, 0x01,
+				// _nop
+				0x00, 0x00, 0x00, 0x00));
+
+			AddressSet restricted = new AddressSet(b.addr(0x1200035b4L), b.addr(0x1200035bbL));
+			MipsDisassembleCommand mipsDis =
+				new MipsDisassembleCommand(b.addr(0x1200035b4L), restricted, false);
+			mipsDis.applyTo(b.trace.getFixedProgramView(0), TaskMonitor.DUMMY);
+
+			DBTraceCodeUnitsMemoryView cuManager = b.trace.getCodeManager().codeUnits();
+			CodeUnit cu1 = cuManager.getAt(0, b.addr(0x1200035b4L));
+			assertEquals("bal 0x1200035bc", cu1.toString());
+			CodeUnit cu2 = cuManager.getAt(0, b.addr(0x1200035b8L));
+			assertEquals("_nop", cu2.toString());
 		}
 	}
 }
