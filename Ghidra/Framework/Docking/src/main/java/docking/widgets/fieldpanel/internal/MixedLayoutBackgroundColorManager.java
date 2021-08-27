@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +92,7 @@ public class MixedLayoutBackgroundColorManager implements LayoutBackgroundColorM
 
 	private Color getPaddingColorBetweenFields(int padIndex) {
 		FieldLocation start = new FieldLocation(index, padIndex-1,Integer.MAX_VALUE,Integer.MAX_VALUE);
-		FieldLocation end = new FieldLocation(index, padIndex, 0, 1);
+		FieldLocation end = new FieldLocation(index, padIndex, 0, 0);
 		FieldRange range = new FieldRange(start, end);
 		boolean gapSelected = selection.containsEntirely(range);
 		boolean gapHighlighted = highlight.containsEntirely(range);
