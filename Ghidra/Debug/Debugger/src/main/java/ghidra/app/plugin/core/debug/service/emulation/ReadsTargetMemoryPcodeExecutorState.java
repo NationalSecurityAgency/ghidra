@@ -61,7 +61,7 @@ public class ReadsTargetMemoryPcodeExecutorState
 		}
 
 		protected void fillUnknownWithRecorder(AddressSet unknown) {
-			waitTimeout(recorder.captureProcessMemory(unknown, TaskMonitor.DUMMY));
+			waitTimeout(recorder.captureProcessMemory(unknown, TaskMonitor.DUMMY, false));
 		}
 
 		private void fillUnknownWithStaticImages(AddressSet unknown) {

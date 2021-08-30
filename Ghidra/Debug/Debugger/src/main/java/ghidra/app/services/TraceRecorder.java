@@ -321,15 +321,20 @@ public interface TraceRecorder {
 	 * returned future completes.
 	 * 
 	 * <p>
-	 * This task is relatively error tolerant. If a region cannot be captured -- a common occurrence
-	 * -- the error is logged, but the future may still complete successfully.
+	 * This task is relatively error tolerant. If a block or region cannot be captured -- a common
+	 * occurrence -- the error is logged, but the future may still complete successfully. For large
+	 * captures, it is recommended to set {@code toMap} to false. The recorder will place the bytes
+	 * into the trace where they can be retrieved later. For small captures, and where bypassing the
+	 * database may offer some advantage, set {@code toMap} to true, and the captured bytes will be
+	 * returned in an interval map. Connected intervals may or may not be joined.
 	 * 
 	 * @param selection the addresses to capture, as viewed in the trace
 	 * @param monitor a monitor for displaying task steps
+	 * @param toMap true to return results in a map, false to complete with null
 	 * @return a future which completes with the capture results
 	 */
 	CompletableFuture<NavigableMap<Address, byte[]>> captureProcessMemory(AddressSetView selection,
-			TaskMonitor monitor);
+			TaskMonitor monitor, boolean toMap);
 
 	/**
 	 * Capture the data types of a target's module.
