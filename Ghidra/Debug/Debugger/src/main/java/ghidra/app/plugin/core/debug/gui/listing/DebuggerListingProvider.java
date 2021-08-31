@@ -134,8 +134,8 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 			Trace trace = current.getTrace();
 			TraceRecorder recorder = current.getRecorder();
 			BackgroundUtils.async(plugin.getTool(), trace, NAME, true, true, false,
-				(__, monitor) -> recorder
-						.captureProcessMemory(getListingPanel().getProgramSelection(), monitor));
+				(__, monitor) -> recorder.captureProcessMemory(
+					getListingPanel().getProgramSelection(), monitor, false));
 		}
 
 		@Override
