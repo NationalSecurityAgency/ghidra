@@ -154,28 +154,24 @@ public class ClearPlugin extends Plugin {
 				return false;
 			}
 
-			// don't allow clearing the last component from a union
-			if (dataType instanceof Union && ((Composite) dataType).getNumComponents() <= 1) {
-				return false;
-			}
-
 			// get the start offset into the data structure
 			int index = compData.getComponentIndex();
+			int endIndex = index;
+			if (end != null) {
+				// assume start and end relate to ths same composite
+				int[] cpath = end.getComponentPath();
+				endIndex = cpath[cpath.length - 1];
+			}
+
 			if (dataType instanceof Union) {
-				((Union) dataType).delete(index);
+				Union union = (Union) dataType;
+				for (int ordinal = endIndex; ordinal >= 0 && ordinal >= index; ordinal--) {
+					union.delete(ordinal);
+				}
 			}
 			else {
-				// now clear it
-				Address startAddress = start.getByteAddress();
-				Address endAddress = (end != null) ? end.getByteAddress() : startAddress;
-				Data parent = compData.getParent();
-				Address parentAddress = parent.getAddress();
-				int startOffset = (int) startAddress.subtract(parentAddress);
-				int endOffset = (int) endAddress.subtract(parentAddress);
 				Structure structure = (Structure) dataType;
-				int startOrdinal = getOrdinalAtOrBefore(structure, startOffset);
-				int endOrdinal = getOrdinalAtOrBefore(structure, endOffset);
-				for (int ordinal = endOrdinal; ordinal >= 0 && ordinal >= startOrdinal; ordinal--) {
+				for (int ordinal = endIndex; ordinal >= 0 && ordinal >= index; ordinal--) {
 					structure.clearComponent(ordinal);
 				}
 			}
@@ -188,18 +184,6 @@ public class ClearPlugin extends Plugin {
 			program.endTransaction(id, commit);
 		}
 		return commit;
-	}
-
-	private int getOrdinalAtOrBefore(Structure structure, int offset) {
-		DataTypeComponent component = structure.getComponentAt(offset);
-		for (int adjustedOffset = offset; component == null &&
-			adjustedOffset >= 0; adjustedOffset--) {
-			component = structure.getComponentAt(offset);
-		}
-		if (component == null) {
-			return -1;
-		}
-		return component.getOrdinal();
 	}
 
 	// /////////////////////////////////////////////////////////////////////
