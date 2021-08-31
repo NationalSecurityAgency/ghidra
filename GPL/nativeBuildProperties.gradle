@@ -24,25 +24,35 @@ apply plugin: 'c'
  ****************************************************************************/
 model {
 
-	// define the platforms that we support in ghidra
+	// Use the PLATFORMS list to create the platforms that Ghidra supports.
 	platforms {
-		win32 {
-			architecture 'x86'
-			operatingSystem 'windows'
-		}
-		win64 {
-			architecture 'x86_64'
-			operatingSystem 'windows'
-		}
-		linux64 {
-			architecture 'x86_64'
-			operatingSystem 'linux'
-		}
-		osx64 {
-			architecture 'x86_64'
-			operatingSystem 'osx'
+		project.PLATFORMS.each { platform ->
+			"${platform.name}" {
+				architecture platform.arch
+				operatingSystem platform.os
+			}
 		}
 	}	
+
+	// The toolChains block is needed because Gradle doesn't find gcc/clang on ARM-based Linux
+	// and macOS platforms without explicitly declaring their targets.  Might be a bug in the 
+	// native Gradle plugin. 
+	toolChains {
+		if (isCurrentLinux()) {
+			gcc(Gcc) {
+				if (isCurrentArm_64()) {
+					target("linux_arm_64")
+				}
+			}
+		}
+		if (isCurrentMac()) {
+			clang(Clang) {
+				if (isCurrentArm_64()) {
+					target("mac_arm_64")
+				}
+			}
+		}
+	}
 }
 
 /*******************************************************************************************
@@ -51,7 +61,7 @@ model {
 task CheckToolChain {
 	// Native C/Cpp plugins will trigger failure if no tool chain found
 	doFirst {
-		if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+		if (isCurrentWindows()) {
 			// ensure that required MS Visual Studio is installed
 			if (!VISUAL_STUDIO_INSTALL_DIR) {
 				throw new GradleException("Visual Studio not found!");
@@ -100,7 +110,7 @@ def shouldSkipNative(task) {
 /*******************************************************************************************
  * Task Rule : builds all the natives in this module for a given platform.
  *
- * Example : gradle buildNatives_win64 will build all win64 native executables and shared libraries.
+ * Example : gradle buildNatives_win_x86_64 will build all win_x86_64 native executables and shared libraries.
  *	
  *		NOTE: you must be on the appropriate platform for this to work.
  *
@@ -151,7 +161,7 @@ tasks.addRule("Pattern: buildNatives_<platform name>]: build all natives for giv
  * Task Rule : builds all the natives in this module for a given platform and copies the 
  *             results to the bin repo.
  *
- * Example : gradle prebuildNatives_win64 will build all win64 native executables and shared 
+ * Example : gradle prebuildNatives_win_x86_64 will build all win_x86_64 native executables and shared 
  *           libraries and copy the results to the appropriate project/os directory in the bin
  *           repo.
  *			

@@ -118,9 +118,9 @@ task zipExtensions (type: Zip) {
 	/////////////////
 	// NATIVES
 	/////////////////		
-	project.OS_NAMES.each { platform ->													
-		from (p.projectDir.toString() + "/os/$platform") {
-			into  { getBaseProjectName(p) + "/os/$platform"	}
+	project.PLATFORMS.each { platform ->													
+		from (p.projectDir.toString() + "/os/${platform.name}") {
+			into  { getBaseProjectName(p) + "/os/${platform.name}"	}
 		}
 	}
 }	
