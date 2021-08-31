@@ -269,11 +269,11 @@ public class DefaultTraceRecorder implements TraceRecorder {
 
 	@Override
 	public CompletableFuture<NavigableMap<Address, byte[]>> captureProcessMemory(AddressSetView set,
-			TaskMonitor monitor) {
+			TaskMonitor monitor, boolean toMap) {
 		if (set.isEmpty()) {
 			return CompletableFuture.completedFuture(new TreeMap<>());
 		}
-		return memoryRecorder.captureProcessMemory(set, monitor);
+		return memoryRecorder.captureProcessMemory(set, monitor, toMap);
 	}
 
 	@Override
