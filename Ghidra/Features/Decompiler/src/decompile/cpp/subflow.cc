@@ -1554,6 +1554,8 @@ bool SplitFlow::traceForward(TransformVar *rvn)
       break;
     case CPUI_SUBPIECE:
     {
+      if (outvn->isPrecisLo() || outvn->isPrecisHi())
+	return false;		// Do not split if we know value comes from double precision pieces
       uintb val = op->getIn(1)->getOffset();
       if ((val==0)&&(outvn->getSize() == laneDescription.getSize(0))) {
 	TransformOp *rop = newPreexistingOp(1,CPUI_COPY,op);	// Grabs the low piece

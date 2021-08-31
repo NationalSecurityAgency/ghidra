@@ -7610,6 +7610,8 @@ int4 RuleSplitFlow::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *vn = op->getIn(0);
   if (!vn->isWritten())
     return 0;
+  if (vn->isPrecisLo() || vn->isPrecisHi())
+    return 0;
   if (op->getOut()->getSize() + loSize != vn->getSize())
     return 0;				// Make sure SUBPIECE is taking most significant part
   PcodeOp *concatOp = (PcodeOp *)0;
