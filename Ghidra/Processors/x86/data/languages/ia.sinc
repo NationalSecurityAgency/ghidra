@@ -75,47 +75,66 @@ define register offset=0x740 size=8    [ BND0_LB BND0_UB BND1_LB BND1_UB BND2_LB
 define register offset=0x7c0 size=8    [ SSP IA32_PL2_SSP IA32_PL1_SSP IA32_PL0_SSP ];
 
 # Floating point registers - as they are in 32-bit protected mode
-define register offset=0x1000 size=10  [ ST0 ST1 ST2 ST3 ST4 ST5 ST6 ST7 ];
-define register offset=0x1080 size=1   [ C0 C1 C2 C3 ];
-define register offset=0x1084 size=4   [ MXCSR ];
-define register offset=0x1090 size=2   [ FPUControlWord FPUStatusWord FPUTagWord
+# See MMx registers below
+define register offset=0x1106 size=10  [ ST0 ];
+define register offset=0x1116 size=10  [ ST1 ];
+define register offset=0x1126 size=10  [ ST2 ];
+define register offset=0x1136 size=10  [ ST3 ];
+define register offset=0x1146 size=10  [ ST4 ];
+define register offset=0x1156 size=10  [ ST5 ];
+define register offset=0x1166 size=10  [ ST6 ];
+define register offset=0x1176 size=10  [ ST7 ];
+define register offset=0x1090 size=1   [ C0 C1 C2 C3 ];
+define register offset=0x1094 size=4   [ MXCSR ];
+define register offset=0x10a0 size=2   [ FPUControlWord FPUStatusWord FPUTagWord
                                          FPULastInstructionOpcode ];
-define register offset=0x1098 size=4   [ FPUDataPointer FPUInstructionPointer ];
+define register offset=0x10a8 size=$(SIZE)   [ FPUDataPointer FPUInstructionPointer ];
+define register offset=0x10c8 size=2  [ FPUPointerSelector FPUDataSelector]; #FCS FDS
                                          
+  # FCS is not modeled, deprecated as 0.
+  # FDS not modeled, deprecated as 0.
 
 #
 # YMM0 - YMM7    - available in 32 bit mode
 # YMM0 - YMM15   - available in 64 bit mode
 #                                      
-define register offset=0x1100 size=8   [ MM0 MM1 MM2  MM3  MM4  MM5  MM6  MM7 ];
+define register offset=0x1100 size=8   [ _ MM0 _ MM1 _ MM2 _ MM3 _ MM4 _ MM5 _ MM6 _ MM7 ];
 define register offset=0x1100 size=4   [
-  MM0_Da MM0_Db 
-  MM1_Da MM1_Db 
-  MM2_Da MM2_Db 
-  MM3_Da MM3_Db 
-  MM4_Da MM4_Db 
-  MM5_Da MM5_Db 
-  MM6_Da MM6_Db 
-  MM7_Da MM7_Db 
+  _ _ MM0_Da MM0_Db 
+  _ _ MM1_Da MM1_Db 
+  _ _ MM2_Da MM2_Db 
+  _ _ MM3_Da MM3_Db 
+  _ _ MM4_Da MM4_Db 
+  _ _ MM5_Da MM5_Db 
+  _ _ MM6_Da MM6_Db 
+  _ _ MM7_Da MM7_Db 
 ];
 define register offset=0x1100 size=2   [
-  MM0_Wa MM0_Wb MM0_Wc MM0_Wd 
-  MM1_Wa MM1_Wb MM1_Wc MM1_Wd 
-  MM2_Wa MM2_Wb MM2_Wc MM2_Wd 
-  MM3_Wa MM3_Wb MM3_Wc MM3_Wd 
-  MM4_Wa MM4_Wb MM4_Wc MM4_Wd 
-  MM5_Wa MM5_Wb MM5_Wc MM5_Wd 
-  MM6_Wa MM6_Wb MM6_Wc MM6_Wd 
-  MM7_Wa MM7_Wb MM7_Wc MM7_Wd 
+  _ _ _ _ MM0_Wa MM0_Wb MM0_Wc MM0_Wd 
+  _ _ _ _ MM1_Wa MM1_Wb MM1_Wc MM1_Wd 
+  _ _ _ _ MM2_Wa MM2_Wb MM2_Wc MM2_Wd 
+  _ _ _ _ MM3_Wa MM3_Wb MM3_Wc MM3_Wd 
+  _ _ _ _ MM4_Wa MM4_Wb MM4_Wc MM4_Wd 
+  _ _ _ _ MM5_Wa MM5_Wb MM5_Wc MM5_Wd 
+  _ _ _ _ MM6_Wa MM6_Wb MM6_Wc MM6_Wd 
+  _ _ _ _ MM7_Wa MM7_Wb MM7_Wc MM7_Wd 
 ];
 define register offset=0x1100 size=1   [
+  _ _ _ _ _ _ _ _ 
   MM0_Ba MM0_Bb MM0_Bc MM0_Bd MM0_Be MM0_Bf MM0_Bg MM0_Bh 
+  _ _ _ _ _ _ _ _ 
   MM1_Ba MM1_Bb MM1_Bc MM1_Bd MM1_Be MM1_Bf MM1_Bg MM1_Bh 
+  _ _ _ _ _ _ _ _ 
   MM2_Ba MM2_Bb MM2_Bc MM2_Bd MM2_Be MM2_Bf MM2_Bg MM2_Bh 
+  _ _ _ _ _ _ _ _ 
   MM3_Ba MM3_Bb MM3_Bc MM3_Bd MM3_Be MM3_Bf MM3_Bg MM3_Bh 
+  _ _ _ _ _ _ _ _ 
   MM4_Ba MM4_Bb MM4_Bc MM4_Bd MM4_Be MM4_Bf MM4_Bg MM4_Bh 
+  _ _ _ _ _ _ _ _ 
   MM5_Ba MM5_Bb MM5_Bc MM5_Bd MM5_Be MM5_Bf MM5_Bg MM5_Bh 
+  _ _ _ _ _ _ _ _ 
   MM6_Ba MM6_Bb MM6_Bc MM6_Bd MM6_Be MM6_Bf MM6_Bg MM6_Bh 
+  _ _ _ _ _ _ _ _ 
   MM7_Ba MM7_Bb MM7_Bc MM7_Bd MM7_Be MM7_Bf MM7_Bg MM7_Bh 
 ];
 
@@ -224,8 +243,6 @@ define register offset=0x1400 size=4   [
   xmmTmp1_Da  xmmTmp1_Db  xmmTmp1_Dc  xmmTmp1_Dd
   xmmTmp2_Da  xmmTmp2_Db  xmmTmp2_Dc  xmmTmp2_Dd
 ];
-
-
 
 # Define context bits
 define register offset=0x2000 size=4   contextreg;
@@ -3997,34 +4014,34 @@ define pcodeop xrstor64;
 define pcodeop xrstors;
 define pcodeop xrstors64;
 
-:XRSTOR Mem    is vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=5 ) ... & Mem { tmp:4 = 512; xrstor(Mem,tmp); }
+:XRSTOR Mem    is vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=5 ) ... & Mem { tmp:4 = 512; xrstor(Mem, tmp); }
 @ifdef IA64
-:XRSTOR64 Mem    is vexMode=0 & $(REX_W) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=5 ) ... & Mem { tmp:4 = 512; xrstor64(Mem,tmp); }
+:XRSTOR64 Mem    is vexMode=0 & $(REX_W) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=5 ) ... & Mem { tmp:4 = 512; xrstor64(Mem, tmp); }
 @endif
 
-:XRSTORS Mem    is vexMode=0 & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=3 ) ... & Mem { tmp:4 = 512; xrstors(Mem,tmp); }
+:XRSTORS Mem    is vexMode=0 & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=3 ) ... & Mem { tmp:4 = 512; xrstors(Mem, tmp); }
 @ifdef IA64
-:XRSTORS64 Mem    is vexMode=0 & $(REX_W) & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=3 ) ... & Mem { tmp:4 = 512; xrstors64(Mem,tmp); }
+:XRSTORS64 Mem    is vexMode=0 & $(REX_W) & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=3 ) ... & Mem { tmp:4 = 512; xrstors64(Mem, tmp); }
 @endif
 
-:XSAVE  Mem    is vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=4 ) ... & Mem { tmp:4 = 512; xsave(Mem,tmp); }
+:XSAVE  Mem    is vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=4 ) ... & Mem { tmp:4 = 512; xsave(Mem, tmp); }
 @ifdef IA64
-:XSAVE64  Mem    is vexMode=0 & $(REX_W) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=4 ) ... & Mem { tmp:4 = 512; xsave64(Mem,tmp); }
+:XSAVE64  Mem    is vexMode=0 & $(REX_W) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=4 ) ... & Mem { tmp:4 = 512; xsave64(Mem, tmp); }
 @endif
 
-:XSAVEC  Mem    is vexMode=0 & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=4 ) ... & Mem { tmp:4 = 512; xsavec(Mem,tmp); }
+:XSAVEC  Mem    is vexMode=0 & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=4 ) ... & Mem { tmp:4 = 512; xsavec(Mem, tmp); }
 @ifdef IA64
-:XSAVEC64  Mem    is vexMode=0 & $(REX_W) & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=4 ) ... & Mem { tmp:4 = 512; xsavec64(Mem,tmp); }
+:XSAVEC64  Mem    is vexMode=0 & $(REX_W) & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=4 ) ... & Mem { tmp:4 = 512; xsavec64(Mem, tmp); }
 @endif
 
-:XSAVEOPT  Mem    is vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=6 ) ... & Mem { tmp:4 = 512; xsaveopt(Mem,tmp); }
+:XSAVEOPT  Mem    is vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=6 ) ... & Mem { tmp:4 = 512; xsaveopt(Mem, tmp); }
 @ifdef IA64
-:XSAVEOPT64  Mem    is vexMode=0 & $(REX_W) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=6 ) ... & Mem { tmp:4 = 512; xsaveopt64(Mem,tmp); }
+:XSAVEOPT64  Mem    is vexMode=0 & $(REX_W) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=6 ) ... & Mem { tmp:4 = 512; xsaveopt64(Mem, tmp); }
 @endif
 
-:XSAVES  Mem    is vexMode=0 & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=5 ) ... & Mem { tmp:4 = 512; xsaves(Mem,tmp); }
+:XSAVES  Mem    is vexMode=0 & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=5 ) ... & Mem { tmp:4 = 512; xsaves(Mem, tmp); }
 @ifdef IA64
-:XSAVES64  Mem    is vexMode=0 & $(REX_W) & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=5 ) ... & Mem { tmp:4 = 512; xsaves64(Mem,tmp); }
+:XSAVES64  Mem    is vexMode=0 & $(REX_W) & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=5 ) ... & Mem { tmp:4 = 512; xsaves64(Mem, tmp); }
 @endif
 
 define pcodeop xtest;
@@ -4037,7 +4054,6 @@ define pcodeop xtest;
 #
 # floating point instructions
 #
-
 define pcodeop f2xm1;
 :F2XM1          is vexMode=0 & byte=0xD9; byte=0xF0                 { ST0 = f2xm1(ST0); } # compute 2^x-1
 
@@ -4121,7 +4137,8 @@ define pcodeop fcos;
                                                                   
 :FINCSTP            is vexMode=0 & byte=0xD9; byte=0xF7                 { finc(); }                                   
 
-:FINIT              is vexMode=0 & byte=0x9B; byte=0xDB; byte=0xE3          { FPUControlWord = 0x037f;        
+:FINIT              is vexMode=0 & byte=0x9B; byte=0xDB; byte=0xE3          {
+										  FPUControlWord = 0x037f;        
                                           FPUStatusWord = 0x0000;         
                                           FPUTagWord = 0xffff;            
                                           FPUDataPointer = 0x00000000;        
@@ -4360,20 +4377,23 @@ define pcodeop fsin;
 :FXCH freg      is vexMode=0 & byte=0xD9; frow=12 & fpage=1 & freg          { local tmp = ST0; ST0 = freg; freg = tmp; }          
 :FXCH           is vexMode=0 & byte=0xD9; byte=0xC9                 { local tmp = ST0; ST0 = ST1; ST1 = tmp; }                    
 
+@ifndef IA64
 # this saves the FPU state into 512 bytes of memory similar to the 32-bit mode
 :FXSAVE Mem    is vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=0 ) ... & Mem
 {
 # not saved in the same spacing as the actual processor
   *:2  (Mem)      = FPUControlWord;
-  *:2  (Mem +  4) = FPUStatusWord;
-  *:2  (Mem +  8) = FPUTagWord;
-  *:4  (Mem + 12) = FPUInstructionPointer;
-  *:2  (Mem + 18) = FPULastInstructionOpcode;
-  *:4  (Mem + 20) = FPUDataPointer;
+  *:2  (Mem +  2) = FPUStatusWord;
+  *:2  (Mem +  4) = FPUTagWord; #The real implementation saves an 'abridged' tag word, but that is a non-trivial operation
+  *:2  (Mem +  6) = FPULastInstructionOpcode;
+  *:4  (Mem +  8) = FPUInstructionPointer;
+  *:2  (Mem + 12) = FPUPointerSelector;
+  *:4  (Mem + 16) = FPUDataPointer;
+  *:2  (Mem + 20) = FPUDataSelector;
   *:4  (Mem + 24) = MXCSR;
+  # MXCSR_MASK not modeled, since it is processor specific, set to 0.
 
 # saved the FPU ST registers to the ST/MM area of the structure,
-# irregardless of the state of the FPU/MMX last execution
   *:10 (Mem +  32) = ST0;
   *:10 (Mem +  48) = ST1;
   *:10 (Mem +  64) = ST2;
@@ -4391,32 +4411,109 @@ define pcodeop fsin;
   *:16 (Mem + 240) = XMM5;
   *:16 (Mem + 256) = XMM6;
   *:16 (Mem + 272) = XMM7;
-
-# saved the MMX registers to the reserved area of the structure,
-# irregardless of the state of the FPU/MMX last execution
-  *:10 (Mem + 288) = MM0;
-  *:10 (Mem + 304) = MM1;
-  *:10 (Mem + 320) = MM2;
-  *:10 (Mem + 336) = MM3;
-  *:10 (Mem + 352) = MM4;
-  *:10 (Mem + 368) = MM5;
-  *:10 (Mem + 384) = MM6;
-  *:10 (Mem + 400) = MM7;
 }
 
-:FXRSTOR Mem   is vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=1 ) ... & Mem
+@else
+# this saves the FPU state into 512 bytes of memory similar to the 32-bit mode
+:FXSAVE Mem    is vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=0 ) ... & Mem
 {
-# not saved in the same spacing as the actual processor
-  FPUControlWord           = *:2  (Mem);
-  FPUStatusWord            = *:2  (Mem +  4);
-  FPUTagWord               = *:2  (Mem +  8);
-  FPUInstructionPointer    = *:4  (Mem + 12);
-  FPULastInstructionOpcode = *:2  (Mem + 18);
-  FPUDataPointer           = *:4  (Mem + 20);
-  MXCSR                    = *:4  (Mem + 24);
+  *:2  (Mem)      = FPUControlWord;
+  *:2  (Mem +  2) = FPUStatusWord;
+  *:2  (Mem +  4) = FPUTagWord; #The real implementation saves an 'abridged' tag word, but that is a non-trivial operation
+  *:2  (Mem +  6) = FPULastInstructionOpcode;
+  *:4  (Mem +  8) = FPUInstructionPointer;
+  *:2  (Mem + 12) = FPUPointerSelector;
+  *:4  (Mem + 16) = FPUDataPointer;
+  *:2  (Mem + 20) = FPUDataSelector;
+  *:4  (Mem + 24) = MXCSR;
+  # MXCSR_MASK not modeled, since it is processor specific, set to 0.
+
 
 # saved the FPU ST registers to the ST/MM area of the structure,
-# irregardless of the state of the FPU/MMX last execution
+  *:10 (Mem +  32) = ST0;
+  *:10 (Mem +  48) = ST1;
+  *:10 (Mem +  64) = ST2;
+  *:10 (Mem +  80) = ST3;
+  *:10 (Mem +  96) = ST4;
+  *:10 (Mem + 112) = ST5;
+  *:10 (Mem + 128) = ST6;
+  *:10 (Mem + 144) = ST7;
+
+  *:16 (Mem + 160) = XMM0;
+  *:16 (Mem + 176) = XMM1;
+  *:16 (Mem + 192) = XMM2;
+  *:16 (Mem + 208) = XMM3;
+  *:16 (Mem + 224) = XMM4;
+  *:16 (Mem + 240) = XMM5;
+  *:16 (Mem + 256) = XMM6;
+  *:16 (Mem + 272) = XMM7;
+  *:16 (Mem + 288) = XMM8;
+  *:16 (Mem + 304) = XMM9;
+  *:16 (Mem + 320) = XMM10;
+  *:16 (Mem + 336) = XMM11;
+  *:16 (Mem + 352) = XMM12;
+  *:16 (Mem + 368) = XMM13;
+  *:16 (Mem + 384) = XMM14;
+  *:16 (Mem + 400) = XMM15;
+}
+
+# this saves the FPU state into 512 bytes of memory similar to the 32-bit mode
+:FXSAVE64 Mem    is vexMode=0 & $(REX_W) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=0 ) ... & Mem
+{
+  *:2  (Mem)      = FPUControlWord;
+  *:2  (Mem +  2) = FPUStatusWord;
+  *:2  (Mem +  4) = FPUTagWord; #The real implementation saves an 'abridged' tag word, but that is a non-trivial operation
+  *:2  (Mem +  6) = FPULastInstructionOpcode;
+  *:8  (Mem +  8) = FPUInstructionPointer;
+  *:8  (Mem + 16) = FPUDataPointer;
+  *:4  (Mem + 24) = MXCSR;
+  # MXCSR_MASK not modeled, since it is processor specific, set to 0.
+
+# saved the FPU ST registers to the ST/MM area of the structure,
+  *:10 (Mem +  32) = ST0;
+  *:10 (Mem +  48) = ST1;
+  *:10 (Mem +  64) = ST2;
+  *:10 (Mem +  80) = ST3;
+  *:10 (Mem +  96) = ST4;
+  *:10 (Mem + 112) = ST5;
+  *:10 (Mem + 128) = ST6;
+  *:10 (Mem + 144) = ST7;
+
+
+  *:16 (Mem + 160) = XMM0;
+  *:16 (Mem + 176) = XMM1;
+  *:16 (Mem + 192) = XMM2;
+  *:16 (Mem + 208) = XMM3;
+  *:16 (Mem + 224) = XMM4;
+  *:16 (Mem + 240) = XMM5;
+  *:16 (Mem + 256) = XMM6;
+  *:16 (Mem + 272) = XMM7;
+  *:16 (Mem + 288) = XMM8;
+  *:16 (Mem + 304) = XMM9;
+  *:16 (Mem + 320) = XMM10;
+  *:16 (Mem + 336) = XMM11;
+  *:16 (Mem + 352) = XMM12;
+  *:16 (Mem + 368) = XMM13;
+  *:16 (Mem + 384) = XMM14;
+  *:16 (Mem + 400) = XMM15;
+}
+@endif
+
+@ifndef IA64
+:FXRSTOR Mem   is vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=1 ) ... & Mem
+{
+  FPUControlWord           = *:2  (Mem);
+  FPUStatusWord            = *:2  (Mem +  2);
+  FPUTagWord               = *:2  (Mem +  4); #The real implementation saves an 'abridged' tag word, but that is a non-trivial operation
+  FPULastInstructionOpcode = *:2  (Mem +  6);
+  FPUInstructionPointer    = *:4  (Mem +  8);
+  FPUPointerSelector       = *:2  (Mem + 12);
+  FPUDataPointer           = *:4  (Mem + 16);
+  FPUDataSelector          = *:2  (Mem + 20);
+  MXCSR                    = *:4  (Mem + 24);
+  # MXCSR_MASK not modeled, since it is processor specific, set to 0.
+
+# saved the FPU ST registers to the ST/MM area of the structure,
   ST0 = *:10 (Mem +  32);
   ST1 = *:10 (Mem +  48);
   ST2 = *:10 (Mem +  64);
@@ -4434,18 +4531,90 @@ define pcodeop fsin;
   XMM5 = *:16 (Mem + 240);
   XMM6 = *:16 (Mem + 256);
   XMM7 = *:16 (Mem + 272);
-
-# saved the MMX registers to the reserved area of the structure,
-# irregardless of the state of the FPU/MMX last execution
-  MM0 = *:10 (Mem + 288);
-  MM1 = *:10 (Mem + 304);
-  MM2 = *:10 (Mem + 320);
-  MM3 = *:10 (Mem + 336);
-  MM4 = *:10 (Mem + 352);
-  MM5 = *:10 (Mem + 368);
-  MM6 = *:10 (Mem + 384);
-  MM7 = *:10 (Mem + 400);
 }
+
+@else
+:FXRSTOR64 Mem   is vexMode=0 & $(REX_W) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=1 ) ... & Mem
+{
+  FPUControlWord           = *:2  (Mem);
+  FPUStatusWord            = *:2  (Mem +  2);
+  FPUTagWord               = *:2  (Mem +  4); #The real implementation saves an 'abridged' tag word, but that is a non-trivial operation
+  FPULastInstructionOpcode = *:2  (Mem +  6);
+  FPUInstructionPointer    = *:8  (Mem +  8);
+  FPUDataPointer           = *:8  (Mem + 16);
+  MXCSR                    = *:4  (Mem + 24);
+ # MXCSR_MASK not modeled, since it is processor specific, set to 0.
+
+# saved the FPU ST registers to the ST/MM area of the structure,
+  ST0 = *:10 (Mem +  32);
+  ST1 = *:10 (Mem +  48);
+  ST2 = *:10 (Mem +  64);
+  ST3 = *:10 (Mem +  80);
+  ST4 = *:10 (Mem +  96);
+  ST5 = *:10 (Mem + 112);
+  ST6 = *:10 (Mem + 128);
+  ST7 = *:10 (Mem + 144);
+
+  XMM0 = *:16 (Mem + 160);
+  XMM1 = *:16 (Mem + 176);
+  XMM2 = *:16 (Mem + 192);
+  XMM3 = *:16 (Mem + 208);
+  XMM4 = *:16 (Mem + 224);
+  XMM5 = *:16 (Mem + 240);
+  XMM6 = *:16 (Mem + 256);
+  XMM7 = *:16 (Mem + 272);
+  XMM8 = *:16 (Mem + 288);
+  XMM9 = *:16 (Mem + 304);
+  XMM10 = *:16 (Mem + 320);
+  XMM11 = *:16 (Mem + 336);
+  XMM12 = *:16 (Mem + 352);
+  XMM13 = *:16 (Mem + 368);
+  XMM14 = *:16 (Mem + 384);
+  XMM15 = *:16 (Mem + 400);
+}
+
+:FXRSTOR Mem   is vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=1 ) ... & Mem
+{
+  FPUControlWord           = *:2  (Mem);
+  FPUStatusWord            = *:2  (Mem +  2);
+  FPUTagWord               = *:2  (Mem +  4); #The real implementation saves an 'abridged' tag word, but that is a non-trivial operation
+  FPULastInstructionOpcode = *:2  (Mem +  6);
+  FPUInstructionPointer    = *:4  (Mem +  8);
+  FPUPointerSelector       = *:2  (Mem + 12);
+  FPUDataPointer           = *:4  (Mem + 16);
+  FPUDataSelector          = *:2  (Mem + 20);
+  MXCSR                    = *:4  (Mem + 24);
+  # MXCSR_MASK not modeled, since it is processor specific, set to 0.
+
+# saved the FPU ST registers to the ST/MM area of the structure,
+  ST0 = *:10 (Mem +  32);
+  ST1 = *:10 (Mem +  48);
+  ST2 = *:10 (Mem +  64);
+  ST3 = *:10 (Mem +  80);
+  ST4 = *:10 (Mem +  96);
+  ST5 = *:10 (Mem + 112);
+  ST6 = *:10 (Mem + 128);
+  ST7 = *:10 (Mem + 144);
+
+
+  XMM0 = *:16 (Mem + 160);
+  XMM1 = *:16 (Mem + 176);
+  XMM2 = *:16 (Mem + 192);
+  XMM3 = *:16 (Mem + 208);
+  XMM4 = *:16 (Mem + 224);
+  XMM5 = *:16 (Mem + 240);
+  XMM6 = *:16 (Mem + 256);
+  XMM7 = *:16 (Mem + 272);
+  XMM8 = *:16 (Mem + 288);
+  XMM9 = *:16 (Mem + 304);
+  XMM10 = *:16 (Mem + 320);
+  XMM11 = *:16 (Mem + 336);
+  XMM12 = *:16 (Mem + 352);
+  XMM13 = *:16 (Mem + 368);
+  XMM14 = *:16 (Mem + 384);
+  XMM15 = *:16 (Mem + 400);
+}
+@endif
 
 :FXTRACT        is vexMode=0 & byte=0xD9; byte=0xF4                 { significand:10 = ST0; exponent:10 = ST0; ST0 = exponent; fpushv(significand); }
 
@@ -4656,7 +4825,7 @@ CMPPD_OPERAND: ", "^imm8 is imm8   { }
 
 :CMP^XmmCondPD^"PD"        XmmReg,m128^CMPPD_OPERAND      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xC2; (m128 & XmmReg ...); XmmCondPD & CMPPD_OPERAND
 {
-        local m:16 = m128;
+    local m:16 = m128;
 	xmmTmp1_Qa = XmmReg[0,64];
 	xmmTmp1_Qb = XmmReg[64,64];
 
@@ -4756,7 +4925,7 @@ CMPPS_OPERAND: ", "^imm8 is imm8   { }
 
 :CMP^XmmCondPS^"PS"        XmmReg,m128^CMPPS_OPERAND      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xC2; (m128 & XmmReg ...); XmmCondPS & CMPPS_OPERAND
 {
-        local m:16 = m128;
+    local m:16 = m128;
 	xmmTmp1_Da = XmmReg[0,32];
 	xmmTmp1_Db = XmmReg[32,32];
 	xmmTmp1_Dc = XmmReg[64,32];
@@ -5571,7 +5740,7 @@ define pcodeop minps;
 :MOVDQU       m128, XmmReg        is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x7F; XmmReg ... & m128            { m128 = XmmReg; }  
 :MOVDQU       XmmReg2, XmmReg1    is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x7F; xmmmod=3 & XmmReg1 & XmmReg2 { XmmReg2 = XmmReg1; }
 
-# this vexMode=0 & is potentially wrong
+# TODO: this vexMode=0 & is potentially wrong
 
 define pcodeop movdq2q;
 :MOVDQ2Q      mmxreg2, XmmReg1    is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0xD6; XmmReg1 & mmxreg2 { mmxreg2 = movdq2q(mmxreg2, XmmReg1); }
@@ -5602,13 +5771,13 @@ define pcodeop movmskpd;
 define pcodeop movmskps;
 :MOVMSKPS     Reg32, XmmReg2      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x50; XmmReg2 & Reg32 { Reg32 = movmskps(Reg32, XmmReg2); }
 
-:MOVNTQ       m64, mmxreg      is vexMode=0 & mandover=0 & byte=0x0F; byte=0xE7; mmxreg ... & m64               { m64 = mmxreg; }
+:MOVNTQ       m64, mmxreg      is vexMode=0 & mandover=0 & byte=0x0F; byte=0xE7; mmxreg ... & m64   { m64 = mmxreg; }
 
 :MOVNTDQ      m128, XmmReg     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xE7; XmmReg ... & m128  { m128 = XmmReg; }
 
 :MOVNTPD      m128, XmmReg     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x2B; XmmReg ... & m128  { m128 = XmmReg; }
 
-:MOVNTPS      m128, XmmReg     is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2B; XmmReg ... & m128             { m128 = XmmReg; }
+:MOVNTPS      m128, XmmReg     is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2B; XmmReg ... & m128 { m128 = XmmReg; }
 
 :MOVQ         mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x6F; mmxreg ... & m64                   { mmxreg = m64; }
 :MOVQ         mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x6F; mmxmod = 3 & mmxreg1 & mmxreg2     { mmxreg1 = mmxreg2; }
@@ -5617,12 +5786,12 @@ define pcodeop movmskps;
 
 :MOVQ         XmmReg, m64      is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x7E; XmmReg ... & m64
 {
-    XmmReg = zext(m64);
+	XmmReg = zext(m64);
 }
 
 :MOVQ         XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x7E; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1 = zext(XmmReg2[0,64]);
+	XmmReg1 = zext(XmmReg2[0,64]);
 }
 
 :MOVQ         m64, XmmReg      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD6; m64 & XmmReg ...
@@ -5677,7 +5846,7 @@ define pcodeop movmskps;
 
 :MOVSS        m32, XmmReg      is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x11; m32 & XmmReg ...
 {
-     m32 = XmmReg[0,32];
+    m32 = XmmReg[0,32];
 }
 
 :MOVSS        XmmReg2, XmmReg1 is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0x11; xmmmod = 3 & XmmReg1 & XmmReg2
@@ -5954,20 +6123,20 @@ macro sswub(sword, ubyte) {
 }
 
 define pcodeop pabsb;
-:PABSB         mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x38; byte=0x1c; mmxreg ... & m64                          { mmxreg=pabsb(mmxreg,m64); }
-:PABSB         mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x38; byte=0x1c; mmxmod = 3 & mmxreg1 & mmxreg2            { mmxreg1=pabsb(mmxreg1,mmxreg2); }
+:PABSB         mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x38; byte=0x1c; mmxreg ... & m64					{ mmxreg=pabsb(mmxreg,m64); }
+:PABSB         mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x38; byte=0x1c; mmxmod = 3 & mmxreg1 & mmxreg2	{ mmxreg1=pabsb(mmxreg1,mmxreg2); }
 :PABSB         XmmReg, m128     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x38; byte=0x1c; XmmReg ... & m128              { XmmReg=pabsb(XmmReg,m128); }
 :PABSB         XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x38; byte=0x1c; xmmmod = 3 & XmmReg1 & XmmReg2 { XmmReg1=pabsb(XmmReg1,XmmReg2); }
 
 define pcodeop pabsw;
-:PABSW         mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x38; byte=0x1d; mmxreg ... & m64                          { mmxreg=pabsw(mmxreg,m64); }
-:PABSW         mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x38; byte=0x1d; mmxmod = 3 & mmxreg1 & mmxreg2            { mmxreg1=pabsw(mmxreg1,mmxreg2); }
+:PABSW         mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x38; byte=0x1d; mmxreg ... & m64					{ mmxreg=pabsw(mmxreg,m64); }
+:PABSW         mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x38; byte=0x1d; mmxmod = 3 & mmxreg1 & mmxreg2	{ mmxreg1=pabsw(mmxreg1,mmxreg2); }
 :PABSW         XmmReg, m128     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x38; byte=0x1d; XmmReg ... & m128              { XmmReg=pabsw(XmmReg,m128); }
 :PABSW         XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x38; byte=0x1d; xmmmod = 3 & XmmReg1 & XmmReg2 { XmmReg1=pabsw(XmmReg1,XmmReg2); }
 
 define pcodeop pabsd;
-:PABSD         mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x38; byte=0x1e; mmxreg ... & m64                          { mmxreg=pabsd(mmxreg,m64); }
-:PABSD         mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x38; byte=0x1e; mmxmod = 3 & mmxreg1 & mmxreg2            { mmxreg1=pabsd(mmxreg1,mmxreg2); }
+:PABSD         mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x38; byte=0x1e; mmxreg ... & m64					{ mmxreg=pabsd(mmxreg,m64); }
+:PABSD         mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x38; byte=0x1e; mmxmod = 3 & mmxreg1 & mmxreg2	{ mmxreg1=pabsd(mmxreg1,mmxreg2); }
 :PABSD         XmmReg, m128     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x38; byte=0x1e; XmmReg ... & m128              { XmmReg=pabsd(XmmReg,m128); }
 :PABSD         XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x38; byte=0x1e; xmmmod = 3 & XmmReg1 & XmmReg2 { XmmReg1=pabsd(XmmReg1,XmmReg2); }
 
@@ -7383,28 +7552,32 @@ define pcodeop psraw;
     mmxreg1[48,16] = mmxreg1[48,16] - mmxreg2[48,16];
 }
                     
-:PSUBD           mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFA; mmxreg ... & m64 ... {
-  local m:8 = m64;
-  mmxreg[0,32] = mmxreg[0,32] - m[0,32];
-  mmxreg[32,32] = mmxreg[32,32] - m[32,32];
+:PSUBD           mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFA; mmxreg ... & m64 ...
+{
+	local m:8 = m64;
+	mmxreg[0,32] = mmxreg[0,32] - m[0,32];
+	mmxreg[32,32] = mmxreg[32,32] - m[32,32];
 }
 
-:PSUBD           mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFA; mmxmod = 3 & mmxreg1 & mmxreg2 {
-  mmxreg1[0,32] = mmxreg1[0,32] - mmxreg2[0,32];
-  mmxreg1[32,32] = mmxreg1[32,32] - mmxreg2[32,32];
+:PSUBD           mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFA; mmxmod = 3 & mmxreg1 & mmxreg2
+{
+	mmxreg1[0,32] = mmxreg1[0,32] - mmxreg2[0,32];
+	mmxreg1[32,32] = mmxreg1[32,32] - mmxreg2[32,32];
 }
 
 :PSUBQ           mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFB; mmxreg ... & m64 ...			{ mmxreg = mmxreg - m64; }
 :PSUBQ           mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xFB; mmxmod = 3 & mmxreg1 & mmxreg2		{ mmxreg1 = mmxreg1 - mmxreg2; }
-:PSUBQ           XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFB; XmmReg ... & m128 ... {
-  local m:16 = m128;
-  XmmReg[0,64] = XmmReg[0,64] - m[0,64];
-  XmmReg[64,64] = XmmReg[64,64] - m[64,64];
+:PSUBQ           XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFB; XmmReg ... & m128 ...
+{
+	local m:16 = m128;
+	XmmReg[0,64] = XmmReg[0,64] - m[0,64];
+	XmmReg[64,64] = XmmReg[64,64] - m[64,64];
 }
 
-:PSUBQ           XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFB; xmmmod = 3 & XmmReg1 & XmmReg2 {
-  XmmReg1[0,64] = XmmReg1[0,64] - XmmReg2[0,64];
-  XmmReg1[64,64] = XmmReg1[64,64] - XmmReg2[64,64];
+:PSUBQ           XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFB; xmmmod = 3 & XmmReg1 & XmmReg2
+{
+	XmmReg1[0,64] = XmmReg1[0,64] - XmmReg2[0,64];
+	XmmReg1[64,64] = XmmReg1[64,64] - XmmReg2[64,64];
 }
 
 :PSUBB           XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xF8; XmmReg ... & m128 ...
@@ -7473,7 +7646,8 @@ define pcodeop psraw;
     XmmReg1[112,16] = XmmReg1[112,16] - XmmReg2[112,16];
 }
                     
-:PSUBD           XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFA; XmmReg ... & m128 ... {
+:PSUBD           XmmReg, m128      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFA; XmmReg ... & m128 ...
+{
   local m:16 = m128;
   XmmReg[0,32] = XmmReg[0,32] - m[0,32];
   XmmReg[32,32] = XmmReg[32,32] - m[32,32];
@@ -7481,7 +7655,8 @@ define pcodeop psraw;
   XmmReg[96,32] = XmmReg[96,32] - m[96,32];
 }
 
-:PSUBD           XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFA; xmmmod = 3 & XmmReg1 & XmmReg2 {
+:PSUBD           XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xFA; xmmmod = 3 & XmmReg1 & XmmReg2
+{
   XmmReg1[0,32] = XmmReg1[0,32] - XmmReg2[0,32];
   XmmReg1[32,32] = XmmReg1[32,32] - XmmReg2[32,32];
   XmmReg1[64,32] = XmmReg1[64,32] - XmmReg2[64,32];
@@ -7944,12 +8119,12 @@ define pcodeop sqrtps;
 
 :UCOMISD         XmmReg, m64      is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x2E; m64 & XmmReg ...
 {
-   fucompe(XmmReg[0,64], m64);
+	fucompe(XmmReg[0,64], m64);
 }
 
 :UCOMISD         XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x2E; xmmmod=3 & XmmReg1 & XmmReg2
 {
-   fucompe(XmmReg1[0,64], XmmReg2[0,64]);
+	fucompe(XmmReg1[0,64], XmmReg2[0,64]);
 }
 
 #Unordered Compare Scalar Single-Precision Floating-Point Values and Set EFLAGS
@@ -7964,12 +8139,12 @@ define pcodeop sqrtps;
 
 :UCOMISS         XmmReg, m32      is vexMode=0 & mandover=0 & byte=0x0F; byte=0x2E; m32 & XmmReg ...
 {
-   fucompe(XmmReg[0,32], m32);
+    fucompe(XmmReg[0,32], m32);
 }
 
 :UCOMISS         XmmReg1, XmmReg2  is vexMode=0 & mandover=0 & byte=0x0F; byte=0x2E; xmmmod=3 & XmmReg1 & XmmReg2
 {
-   fucompe(XmmReg1[0,32], XmmReg2[0,32]);
+    fucompe(XmmReg1[0,32], XmmReg2[0,32]);
 }
 
 :UNPCKHPD        XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x15; m128 & XmmReg ...
