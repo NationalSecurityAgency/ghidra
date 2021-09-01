@@ -348,6 +348,7 @@ abstract class CoreGTreeNode implements Cloneable {
 		GTree tree = getTree();
 		if (tree != null) {
 			tree.getModel().fireNodeRemoved((GTreeNode) this, removedNode, index);
+			tree.refilterLater();
 		}
 	}
 
