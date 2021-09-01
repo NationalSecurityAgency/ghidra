@@ -31,7 +31,7 @@ project.ext.PLATFORMS = [
  * Returns the local platform name.
  *********************************************************************************/
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
-ext.currentPlatformName = null
+ext.currentPlatformName = findProperty("currentPlatformName")
 ext.getCurrentPlatformName = {
 
 	if (currentPlatformName) {
@@ -75,7 +75,7 @@ ext.getCurrentPlatformName = {
 			throw new GradleException("Unrecognized platform architecture: $arch" )
 	}
 
-	currentPlatformName = "${os}_${arch}"
+	currentPlatformName = "${os}_${arch}".toString() // convert GStringImpl to String so .equals() works as expected
 
 	println "OS: " + osJvm + (osJvm != osGradle ? " (gradle: " + osGradle + ")" : "")
 	println "Arch: " + archJvm + (archJvm != archGradle ? " (gradle: " + archGradle + ")" : "")
