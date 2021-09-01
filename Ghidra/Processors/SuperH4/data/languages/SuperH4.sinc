@@ -636,14 +636,11 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # text    addc <REG_M>,<REG_N>
 # arch    arch_sh_up
 :addc M_0t,N_0t             is OP_0=0x3 & N_0t & M_0t & OP_1=0xe {
-
-	tmp1:4 = N_0t + M_0t;
-	tmp0:4 = N_0t;
-	N_0t   = tmp1 + zext($(T_FLAG));
-	$(T_FLAG) = (tmp0 > tmp1);
-	if (tmp1 <= N_0t) goto <skip>;
-	$(T_FLAG) = 1;
-	<skip>
+	local Tcopy:4 = zext($(T_FLAG));
+	$(T_FLAG) = carry( N_0t, M_0t );
+	local result:4 = N_0t + M_0t;
+	$(T_FLAG) = $(T_FLAG) || carry( result, Tcopy );
+	N_0t = result + Tcopy;	
 }
 
 
@@ -653,18 +650,8 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh_up
 :addv M_0t,N_0t             is OP_0=0x3 & N_0t & M_0t & OP_1=0xf {
 
-	dest:4 = 0;
-	dest = zext((!(N_0t s>= 0)));
-	src:4  = 0;
-	src  = zext((!(M_0t s>= 0)));
-	src  = src + dest;
+	$(T_FLAG) = scarry(N_0t,M_0t);
 	N_0t = N_0t + M_0t;
-	ans:4 = 0;
-	ans  = zext((!(N_0t s>= 0)));
-	ans = ans + dest;
-
-	bool:1 = ((src == 0) || (src == 2));
-	$(T_FLAG) = bool * (ans == 1) + !bool * ( 0 );
 }
 
 
@@ -896,7 +883,7 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 	HL:4 = (temp & 0x00FF0000) >> 16;
 	LH:4 = (temp & 0x0000FF00) >> 8;
 	LL:4 =  temp & 0x000000FF;
-	$(T_FLAG) = !((HH:1) && (HL:1) && (LH:1) && (LL:1));
+	$(T_FLAG)   = (HH == 0) || (HL == 0 ) || (LH == 0) || (LL == 0);
 }
 
 
@@ -941,29 +928,29 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh_up
 :div1 M_0t,N_0t             is OP_0=0x3 &  OP_1=0x4 &  M_0t &  N_0t {
 
-@ifdef DIV1_ORIGINAL_IS_BROKEN
-	tmp2:4  =   M_0t;
-	N_0t    =   N_0t << 1;
-	N_0t    =   N_0t | zext($(T_FLAG)); # ???
-	tmp0:4  =   N_0t;
-	N_0t    =   N_0t - zext((($(Q_FLAG)+$(M_FLAG))!=1))*tmp2 + zext(($(Q_FLAG)+$(M_FLAG))==1)*tmp2;
-	tmp1:1  =   ( (($(Q_FLAG)+$(M_FLAG))!=1)*(N_0t > tmp0) + (($(Q_FLAG)+$(M_FLAG))==1)*(N_0t < tmp0));
-	$(Q_FLAG)       =   ((0x80000000 & N_0t)!=0);
-	Q1:1    =   tmp1*($(Q_FLAG)!=0) + (tmp1==0)*($(Q_FLAG)==0);
-	Q2:1    =   tmp1*($(Q_FLAG)==0) + (tmp1==0)*($(Q_FLAG)!=0);
-	$(Q_FLAG)       =   (($(M_FLAG)==1)*Q1 + ($(M_FLAG)!=1)*Q2);
-	$(T_FLAG) = ($(Q_FLAG)==$(M_FLAG));
-@endif # DIV1_ORIGINAL_IS_BROKEN
+#@ifdef DIV1_ORIGINAL_IS_BROKEN
+#	tmp2:4  =   M_0t;
+#	N_0t    =   N_0t << 1;
+#	N_0t    =   N_0t | zext($(T_FLAG)); # ???
+#   tmp0:4  =   N_0t;
+#	N_0t    =   N_0t - zext((($(Q_FLAG)+$(M_FLAG))!=1))*tmp2 + zext(($(Q_FLAG)+$(M_FLAG))==1)*tmp2;
+#	tmp1:1  =   ( (($(Q_FLAG)+$(M_FLAG))!=1)*(N_0t > tmp0) + (($(Q_FLAG)+$(M_FLAG))==1)*(N_0t < tmp0));
+#	$(Q_FLAG)       =   ((0x80000000 & N_0t)!=0);
+#	Q1:1    =   tmp1*($(Q_FLAG)!=0) + (tmp1==0)*($(Q_FLAG)==0);
+#	Q2:1    =   tmp1*($(Q_FLAG)==0) + (tmp1==0)*($(Q_FLAG)!=0);
+#	$(Q_FLAG)       =   (($(M_FLAG)==1)*Q1 + ($(M_FLAG)!=1)*Q2);
+#	$(T_FLAG) = ($(Q_FLAG)==$(M_FLAG));
+#@endif # DIV1_ORIGINAL_IS_BROKEN
 # DIV1_WITH_FORWARD_BRANCHES_WORKS_OK
-	Rm:4 = M_0t;
-	Rn:4 = N_0t;
-	old_Q:1 = $(Q_FLAG);
+	local Rm:4 = M_0t;
+	local Rn:4 = N_0t;
+	local old_Q:1 = $(Q_FLAG);
 	$(Q_FLAG) = ((0x80000000 & Rn)!=0);
-	tmp2:4 = Rm;
+	local tmp2:4 = Rm;
 	Rn = Rn << 1;
 	Rn = Rn | zext($(T_FLAG));
-	tmp0:4 = Rn;
-	tmp1:1 = 0;
+	local tmp0:4 = Rn;
+	local tmp1:1 = 0;
 
 	if (old_Q == 0) && ($(M_FLAG) == 0) goto <section_1>;
 	if (old_Q == 0) && ($(M_FLAG) == 1) goto <section_2>;
@@ -975,43 +962,43 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # ($(Q_FLAG) == 1)
 	$(Q_FLAG) = tmp1;
 	goto <done>;
-	<section_4a>
+<section_4a>
 	$(Q_FLAG) = tmp1 == 0;
 	goto <done>;
 
-	<section_3> # (old_Q == 1) && ($(M_FLAG) == 0)
+<section_3> # (old_Q == 1) && ($(M_FLAG) == 0)
 	Rn = Rn + tmp2;
 	tmp1 = Rn < tmp0;
 	if ($(Q_FLAG) == 0) goto <section_3a>;
 # ($(Q_FLAG) == 1)
 	$(Q_FLAG) = tmp1 == 0;
 	goto <done>;
-	<section_3a>
+<section_3a>
 	$(Q_FLAG) = tmp1;
 	goto <done>;
 
-	<section_2> # (old_Q == 0) && ($(M_FLAG) == 1)
+<section_2> # (old_Q == 0) && ($(M_FLAG) == 1)
 	Rn = Rn + tmp2;
 	tmp1 = Rn < tmp0;
 	if ($(Q_FLAG) == 0) goto <section_2a>;
 # ($(Q_FLAG) == 1)
 	$(Q_FLAG) = tmp1;
 	goto <done>;
-	<section_2a>
+<section_2a>
 	$(Q_FLAG) = tmp1 == 0;
 	goto <done>;
 
-	<section_1> # (old_Q == 0) && ($(M_FLAG) == 0)
+<section_1> # (old_Q == 0) && ($(M_FLAG) == 0)
 	Rn = Rn - tmp2;
 	tmp1 = Rn > tmp0;
 	if ($(Q_FLAG) == 0) goto <section_1a>;
 # ($(Q_FLAG) == 1)
 	$(Q_FLAG) = tmp1 == 0;
 	goto <done>;
-	<section_1a>
+<section_1a>
 	$(Q_FLAG) = tmp1;
 
-	<done>
+<done>
 	$(T_FLAG) = $(Q_FLAG) == $(M_FLAG);
 	N_0t = Rn;
 
@@ -1019,72 +1006,45 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 
 # TODO: the following is currently broken, it should be fixed to eliminate gotos in the code above
 
-@ifdef DIV1_STRAIGHT_CODE # BROKEN
-	Rm:4 = M_0t;
-	Rn:4 = N_0t;
-	old_Q:1 = $(Q_FLAG);
-	$(Q_FLAG) = ((0x80000000 & Rn)!=0);
-	tmp2:4 = Rm;
-	Rn = Rn << 1;
-	Rn = Rn | zext($(T_FLAG));
-	tmp0:4 = Rn;
+#@ifdef DIV1_STRAIGHT_CODE # BROKEN
+#	Rm:4 = M_0t;
+#	Rn:4 = N_0t;
+#	old_Q:1 = $(Q_FLAG);
+#	$(Q_FLAG) = ((0x80000000 & Rn)!=0);
+#	tmp2:4 = Rm;
+#	Rn = Rn << 1;
+#	Rn = Rn | zext($(T_FLAG));
+#	tmp0:4 = Rn;
+#
+#	oldQM_10_01_bool:1 = ( ( (old_Q == 1) && ($(M_FLAG) == 0) ) || ( (old_Q == 1) && ($(M_FLAG) == 0) ) );
+#	oldQM_10_01:4 = zext(oldQM_10_01_bool) * 0xffffffff;
+#
+#	oldQM_11_00_bool:1 = ( (old_Q == 1) && ($(M_FLAG) == 1) ) || ( (old_Q == 0) && ($(M_FLAG) == 0) );
+#	oldQM_11_00:4 = zext(oldQM_11_00_bool) * 0xffffffff;
 
-	oldQM_10_01_bool:1 = ( ( (old_Q == 1) && ($(M_FLAG) == 0) ) || ( (old_Q == 1) && ($(M_FLAG) == 0) ) );
-	oldQM_10_01:4 = zext(oldQM_10_01_bool) * 0xffffffff;
+#	Rn = (oldQM_10_01 & (Rn + tmp2)) | (oldQM_11_00 & (Rn - tmp2));
 
-	oldQM_11_00_bool:1 = ( (old_Q == 1) && ($(M_FLAG) == 1) ) || ( (old_Q == 0) && ($(M_FLAG) == 0) );
-	oldQM_11_00:4 = zext(oldQM_11_00_bool) * 0xffffffff;
+#	tmp1:1 = ( (oldQM_11_00 != 0) && (Rn > tmp0) ) | ( (oldQM_10_01 != 0) && (Rn < tmp0) );
 
-	Rn = (oldQM_10_01 & (Rn + tmp2)) | (oldQM_11_00 & (Rn - tmp2));
+#	QM_10_01:1 = ( ( ($(Q_FLAG) == 1) && ($(M_FLAG) == 0) ) || ( ($(Q_FLAG) == 1) && ($(M_FLAG) == 0) ) ) * 0xff;
+#	QM_11_00:1 = ( ( ($(Q_FLAG) == 1) && ($(M_FLAG) == 1) ) || ( ($(Q_FLAG) == 0) && ($(M_FLAG) == 0) ) ) * 0xff;
 
-	tmp1:1 = ( (oldQM_11_00 != 0) && (Rn > tmp0) ) | ( (oldQM_10_01 != 0) && (Rn < tmp0) );
+#	$(Q_FLAG) = (QM_10_01 & tmp1) || (QM_11_00 & (tmp1 == 0));
 
-	QM_10_01:1 = ( ( ($(Q_FLAG) == 1) && ($(M_FLAG) == 0) ) || ( ($(Q_FLAG) == 1) && ($(M_FLAG) == 0) ) ) * 0xff;
-	QM_11_00:1 = ( ( ($(Q_FLAG) == 1) && ($(M_FLAG) == 1) ) || ( ($(Q_FLAG) == 0) && ($(M_FLAG) == 0) ) ) * 0xff;
-
-	$(Q_FLAG) = (QM_10_01 & tmp1) || (QM_11_00 & (tmp1 == 0));
-
-	$(T_FLAG) = $(Q_FLAG) == $(M_FLAG);
-	N_0t = Rn;
-@endif # DIV1_STRAIGHT_CODE
+#	$(T_FLAG) = $(Q_FLAG) == $(M_FLAG);
+#	N_0t = Rn;
+#@endif # DIV1_STRAIGHT_CODE
 }
 
 # Signed Double-Length Multiplication
 # pattern 0011nnnnmmmm1101
 # text    dmuls.l <REG_M>,<REG_N>
 # arch    arch_sh2_up
-:dmuls.l M_0t,N_0t          is OP_0=0x3 &  OP_1=0xd &  M_0t &  N_0t {
-	tempn:4 = N_0t;
-	tempm:4 = M_0t;
-	tempn   = zext(tempn s> 0)*tempn - zext(tempn s< 0)*tempn;
-	tempm   = zext(tempm s> 0)*tempm - zext(tempm s< 0)*tempm;
-	fnLmL:4 = zext((N_0t^M_0t) s< 0)*-1;
-	temp1:4 = tempn;
-	temp2:4 = tempm;
-	RnL:4   = temp1 & 0x0000FFFF;
-	RnH:4   = (temp1 >> 16) & 0x0000FFFF;
-	RmL:4   = temp2 & 0x0000FFFF;
-	RmH:4   = (temp2 >> 16) & 0x0000FFFF;
-	temp0:4 = RmL*RnL;
-	temp1   = RmH*RnL;
-	temp2   = RmL*RnH;
-	temp3:4 = RmH*RnH;
-	Res2:4  = 0;
-	Res1:4  = temp1 + temp2;
-	Res2    = Res2 + 0x00010000*zext(Res1 s< temp1);
-	temp1   = (Res1 << 16) & 0xFFFF0000;
-	Res0:4  = temp0 + temp1;
-	Res2    = Res2 + 1*zext(Res0 s< temp0);
-	Res2    = Res2 + ((Res1 >> 16) & 0x0000FFFF) + temp3;
-
-	if (!(fnLmL s< 0 )) goto <jmp1>;
-	Res2    =   ~Res2;
-	Res2    =   Res2*zext(Res0 != 0) + (Res2 + 1)*zext(Res0 == 0);
-	Res0    =   (Res0*zext((Res0 == 0)) + (1+(~Res0))*zext((Res0 != 0)));
-	<jmp1>
-
-	MACH    = Res2;
-	MACL    = Res0;
+:dmuls.l M_0t,N_0t          is OP_0=0x3 &  OP_1=0xd &  M_0t &  N_0t 
+{
+	local temp:8 = sext(M_0t) * sext(N_0t);
+	MACL = temp[0,32];
+	MACH = temp[32,32];
 }
 
 # Unsigned Double-Length Multiplication
@@ -1092,23 +1052,9 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # text    dmulu.l <REG_M>,<REG_N>
 # arch    arch_sh2_up
 :dmulu.l M_0t,N_0t          is OP_0=0x3 &  OP_1=0x5 &  M_0t &  N_0t {
-	RnL:4   =   N_0t & 0x0000FFFF;
-	RnH:4   =   (N_0t >> 16) & 0x0000FFFF;
-	RmL:4   =   M_0t & 0x0000FFFF;
-	RmH:4   =   (M_0t >> 16) & 0x0000FFFF;
-	temp0:4 =   RmL*RnL;
-	temp1:4 =   RmH*RnL;
-	temp2:4 =   RmL*RnH;
-	temp3:4 =   RmH*RnH;
-	Res2:4  =   0;
-	Res1:4  =   temp1 + temp2;
-	Res2    =   Res2 + zext(Res1<temp1)*0x00010000;
-	temp1   =   (Res1 << 16) & 0xFFFF0000;
-	Res0:4  =   temp0 + temp1;
-	Res2    =   Res2 + zext(Res0<temp1)*1;
-	Res2    =   Res2 + ((Res1 >> 16) & 0x0000FFFF) + temp3;
-	MACH    =   Res2;
-	MACL    =   Res0;
+	local temp:8 = zext(M_0t) * zext(N_0t);
+	MACL = temp[0,32];
+	MACH = temp[32,32];
 }
 
 # Decrement and Test
@@ -1914,18 +1860,19 @@ define pcodeop LoadTranslationLookasideBuffer;
 # text    mac.l @<REG_M>+,@<REG_N>+
 # arch    arch_sh2_up
 define pcodeop mac_lOp;
-
 :mac.l M_0t_at,N_0t_at      is OP_0=0x0 &  OP_1=0xf &  M_0t_at &  N_0t_at {
-	tmpM:4 = *:4 M_0t_at;
-	tmpN:4 = *:4 N_0t_at;
-	mac:8 = mac_lOp(tmpN,tmpM,MACH,MACL);
-# POSSIBLE THIS WILL WORK WELL ENOUGH
-#	 mac:8 = zext(MACH) << 4 + zext(MACL);
-#    mac = zext(tmpN) * zext(tmpM) + mac;
-#    mac = saturate(mac);
-	MACL = mac:4;
-	mac = mac >> 32;
-	MACH = mac:4;
+	local tmpM:8 = sext(*:4 M_0t_at);
+	local tmpN:8 = sext(*:4 N_0t_at);
+	local mac:8 = zext(MACL) + (zext(MACH) << 32);
+	local product:8 = tmpM * tmpN;
+	if ($(S_FLAG) == 0) goto <unsaturated>;
+	mac = mac_lOp(mac,product);
+	goto <end>;
+<unsaturated>
+    mac = mac + product;
+<end>
+	MACL = mac[0,32];
+	MACH = mac[32,32];
 	M_0t_at = M_0t_at + 4;
 	N_0t_at = N_0t_at + 4;
 }
@@ -1935,18 +1882,19 @@ define pcodeop mac_lOp;
 # text    mac.w @<REG_M>+,@<REG_N>+
 # arch    arch_sh_up
 define pcodeop mac_wOp;
-
 :mac.w M_0t_at,N_0t_at      is OP_0=0x4 &  OP_1=0xf &  M_0t_at &  N_0t_at {
-	tmpM:4 = *:2 M_0t_at;
-	tmpN:4 = *:2 N_0t_at;
-	mac:8 = mac_wOp(tmpN,tmpM,MACH,MACL);
-# POSSIBLE THIS WILL WORK WELL ENOUGH
-#	 mac:8 = zext(MACH) << 4 + zext(MACL);
-#    mac = zext(tmpN) * zext(tmpM) + mac;
-#    mac = saturate(mac);
-	MACL = mac:4;
-	mac = mac >> 32;
-	MACH = mac:4;
+	local tmpM:4 = sext(*:2 M_0t_at);
+	local tmpN:4 = sext(*:2 N_0t_at);
+	local mac:8 = zext(MACL) + (zext(MACH) << 32);
+	local product:4 = tmpN * tmpN;
+	if ($(S_FLAG) == 0) goto <unsaturated>;
+	mac = mac_wOp(mac,product);
+    goto <end>;
+<unsaturated>
+    mac = mac + sext(product);
+<end>
+	MACL = mac[0,32];
+	MACH = mac[32,32];
 	M_0t_at = M_0t_at + 2;
 	N_0t_at = N_0t_at + 2;
 }
@@ -2371,13 +2319,11 @@ define pcodeop mac_wOp;
 # text    negc <REG_M>,<REG_N>
 # arch 
 :negc M_0t,N_0t             is OP_0=0x6 & N_0t & M_0t & OP_1=0xa {
-
-	temp:4 = -M_0t;
-	N_0t = temp - zext($(T_FLAG));
-	$(T_FLAG) = ( 0 != temp );
-	if ( temp >= N_0t ) goto <skip>;
-	$(T_FLAG) = 1;
-	<skip>
+	local Tcopy:4 = zext($(T_FLAG));
+	$(T_FLAG) = 0 != M_0t;
+	local result:4 = - M_0t;
+	$(T_FLAG) = $(T_FLAG) || (result < Tcopy);
+	N_0t = result - Tcopy;
 }
 
 
@@ -2973,14 +2919,11 @@ define pcodeop CacheBlockWriteBack;
 # text    subc <REG_M>,<REG_N>
 # arch    arch_sh_up
 :subc M_0t,N_0t             is OP_0=0x3 & N_0t & M_0t & OP_1=0xa {
-
-	tmp1:4 = N_0t - M_0t;
-	tmp0:4 = N_0t;
-	N_0t   = tmp1 - zext($(T_FLAG));
-	$(T_FLAG) = ( tmp0 < tmp1 );
-	if ( tmp1 >= N_0t ) goto <skip>;
-	$(T_FLAG) = 1;
-	<skip>
+	local Tcopy:4 = zext($(T_FLAG));
+	$(T_FLAG) = N_0t < M_0t;
+	local result:4 = N_0t - M_0t;
+	$(T_FLAG) = $(T_FLAG) || (result < Tcopy);
+	N_0t = result - Tcopy;
 }
 
 
@@ -2989,14 +2932,8 @@ define pcodeop CacheBlockWriteBack;
 # text    subv <REG_M>,<REG_N>
 # arch    arch_sh_up
 :subv M_0t,N_0t             is OP_0=0x3 & N_0t & M_0t & OP_1=0xb {
-
-	local dest = ( N_0t s< 0 );
-	local src  = ( M_0t s< 0 );
-	src  = src + dest;
+	$(T_FLAG) = sborrow(N_0t, M_0t);
 	N_0t = N_0t - M_0t;
-	local ans  = ( N_0t s< 0 );
-	ans  = ans + dest;
-	$(T_FLAG)    = ( (src == 1) && (ans == 1) );
 }
 
 
