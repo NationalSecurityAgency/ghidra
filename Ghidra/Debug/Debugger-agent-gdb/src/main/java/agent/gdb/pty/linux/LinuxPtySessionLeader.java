@@ -18,6 +18,7 @@ package agent.gdb.pty.linux;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import ghidra.util.Msg;
 import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
 
@@ -80,6 +81,7 @@ public class LinuxPtySessionLeader {
 			checkErr(() -> LIB_POSIX.execv(subArgs.get(0), subArgs.toArray(new String[0])));
 		}
 		catch (Throwable t) {
+			Msg.error(this, "Could not execv with args " + subArgs, t);
 			try {
 				checkErr(() -> LIB_POSIX.dup2(bk, 2));
 			}

@@ -22,7 +22,6 @@ import agent.gdb.pty.ssh.GhidraSshPtyFactory;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
-import ghidra.dbg.util.ConfigurableFactory.FactoryOption;
 
 @FactoryDescription(
 	brief = "GNU gdb via SSH",
@@ -69,7 +68,7 @@ public class GdbOverSshDebuggerModelFactory implements DebuggerModelFactory {
 			factory.setUsername(username);
 			return new GdbModelImpl(factory);
 		}).thenCompose(model -> {
-			return model.startGDB(gdbCmd, new String[] {}).thenApply(__ -> model);
+			return model.startGDB(existing ? null : gdbCmd, new String[] {}).thenApply(__ -> model);
 		});
 	}
 

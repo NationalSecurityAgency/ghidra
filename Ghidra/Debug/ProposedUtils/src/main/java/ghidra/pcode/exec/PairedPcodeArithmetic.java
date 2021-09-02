@@ -56,7 +56,7 @@ public class PairedPcodeArithmetic<L, R> implements PcodeArithmetic<Pair<L, R>> 
 			int sizein2, Pair<L, R> in2) {
 		return new ImmutablePair<>(
 			leftArith.binaryOp(op, sizeout, sizein1, in1.getLeft(), sizein2, in2.getLeft()),
-			rightArith.binaryOp(op, sizeout, sizein1, in2.getRight(), sizein2, in2.getRight()));
+			rightArith.binaryOp(op, sizeout, sizein1, in1.getRight(), sizein2, in2.getRight()));
 	}
 
 	@Override

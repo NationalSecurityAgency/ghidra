@@ -98,27 +98,27 @@ rootProject.assembleDistribution {
 }
 
 // copy os specific files for each platform
-rootProject.OS_NAMES.each { platform ->
-	rootProject.tasks.findAll {it.name == "assembleDistribution_$platform"}.each { t -> 
+rootProject.PLATFORMS.each { platform ->
+	rootProject.tasks.findAll {it.name == "assembleDistribution_${platform.name}"}.each { t -> 
 
 		def p = this.project
 		
 			// the getZipPath calls here are not in closures because we are already in a taskGraph.whenReady closure
-		t.from (p.projectDir.toString() + "/build/os/$platform") {
+		t.from (p.projectDir.toString() + "/build/os/${platform.name}") {
 			exclude '*.lib'
 			exclude '*.exp'
-			into getZipPath(p)	+ "/os/$platform"
+			into getZipPath(p)	+ "/os/${platform.name}"
 		}
-		t.from (p.projectDir.toString() + "/os/$platform") {
-			into getZipPath(p) + "/os/$platform"
+		t.from (p.projectDir.toString() + "/os/${platform.name}") {
+			into getZipPath(p) + "/os/${platform.name}"
 		}
 	}	
 }
 
-// For Win64 build, we have to also include any Win32 binaries in the final zip.
-rootProject.assembleDistribution_win64 {
-	from (this.project.projectDir.toString() + "/build/os/win32") {
-		into getZipPath(this.project)	+ "/os/win32"
+// For win_x86_64 build, we have to also include any win_x86_32 binaries in the final zip.
+rootProject.assembleDistribution_win_x86_64 {
+	from (this.project.projectDir.toString() + "/build/os/win_x86_32") {
+		into getZipPath(this.project)	+ "/os/win_x86_32"
 	}
 }
 
@@ -204,10 +204,9 @@ plugins.withType(JavaPlugin) {
 // Native 
 /////////////////////////////////////////////////////////////////////////////	
 plugins.withType(CPlugin) {
-	rootProject.OS_NAMES.each { platform ->
-		rootProject.tasks.findAll {it.name == "assembleDistribution_$platform"}.each { t -> 
+	rootProject.PLATFORMS.each { platform ->
+		rootProject.tasks.findAll {it.name == "assembleDistribution_${platform.name}"}.each { t -> 
 			t.dependsOn this.assemble
-	//		t.dependsOn this.project.name+":buildNatives_$platform" 
 		}
 	}
 }

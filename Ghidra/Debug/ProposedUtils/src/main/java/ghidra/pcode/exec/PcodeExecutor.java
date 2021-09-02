@@ -102,23 +102,11 @@ public class PcodeExecutor<T> {
 			throw new LowlevelError("Unsupported pcode op" + op);
 		}
 		if (b instanceof UnaryOpBehavior) {
-			Varnode in1Var = op.getInput(0);
-			Varnode outVar = op.getOutput();
-			T in1 = state.getVar(in1Var);
-			T out = arithmetic.unaryOp((UnaryOpBehavior) b, outVar.getSize(),
-				in1Var.getSize(), in1);
-			state.setVar(outVar, out);
+			executeUnaryOp(op, (UnaryOpBehavior) b);
 			return;
 		}
 		if (b instanceof BinaryOpBehavior) {
-			Varnode in1Var = op.getInput(0);
-			Varnode in2Var = op.getInput(1);
-			Varnode outVar = op.getOutput();
-			T in1 = state.getVar(in1Var);
-			T in2 = state.getVar(in2Var);
-			T out = arithmetic.binaryOp((BinaryOpBehavior) b, outVar.getSize(),
-				in1Var.getSize(), in1, in2Var.getSize(), in2);
-			state.setVar(outVar, out);
+			executeBinaryOp(op, (BinaryOpBehavior) b);
 			return;
 		}
 		switch (op.getOpcode()) {
@@ -170,6 +158,26 @@ public class PcodeExecutor<T> {
 	protected int getIntConst(Varnode vn) {
 		assert vn.getAddress().getAddressSpace().isConstantSpace();
 		return (int) vn.getAddress().getOffset();
+	}
+
+	public void executeUnaryOp(PcodeOp op, UnaryOpBehavior b) {
+		Varnode in1Var = op.getInput(0);
+		Varnode outVar = op.getOutput();
+		T in1 = state.getVar(in1Var);
+		T out = arithmetic.unaryOp(b, outVar.getSize(),
+			in1Var.getSize(), in1);
+		state.setVar(outVar, out);
+	}
+
+	public void executeBinaryOp(PcodeOp op, BinaryOpBehavior b) {
+		Varnode in1Var = op.getInput(0);
+		Varnode in2Var = op.getInput(1);
+		Varnode outVar = op.getOutput();
+		T in1 = state.getVar(in1Var);
+		T in2 = state.getVar(in2Var);
+		T out = arithmetic.binaryOp(b, outVar.getSize(),
+			in1Var.getSize(), in1, in2Var.getSize(), in2);
+		state.setVar(outVar, out);
 	}
 
 	public void executeLoad(PcodeOp op) {

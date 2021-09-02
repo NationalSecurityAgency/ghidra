@@ -723,6 +723,8 @@ void SplitVarnode::wholeList(Varnode *w,vector<SplitVarnode> &splitvec)
     }
   }
   if (res==0) return;
+  if (res == 3 && (basic.lo->getSize() + basic.hi->getSize() != basic.wholesize))
+    return;
 
   splitvec.push_back(basic);
   findCopies(basic,splitvec);

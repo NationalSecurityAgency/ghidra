@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,12 @@
  */
 package docking.widgets.tree.tasks;
 
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
-
 import javax.swing.JTree;
 
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeTask;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 public class GTreeClearSelectionTask extends GTreeTask {
 

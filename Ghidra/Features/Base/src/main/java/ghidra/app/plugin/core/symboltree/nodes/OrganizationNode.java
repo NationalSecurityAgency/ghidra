@@ -20,7 +20,9 @@ import java.util.*;
 
 import javax.swing.Icon;
 
+import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import docking.widgets.tree.tasks.GTreeCollapseAllTask;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -237,6 +239,24 @@ public class OrganizationNode extends SymbolTreeNode {
 		}
 
 		addNode(index, newNode);
+		checkForTooManyNodes();
+	}
+
+	private void checkForTooManyNodes() {
+		if (getChildCount() > SymbolCategoryNode.MAX_NODES_BEFORE_CLOSING) {
+			// If we have too many nodes, find the root category node and close it
+			GTreeNode parent = getParent();
+			while (parent != null) {
+				if (parent instanceof SymbolCategoryNode) {
+					GTree tree = getTree();
+					// also clear the selection so that it doesn't reopen the category needlessly
+					tree.clearSelectionPaths();
+					tree.runTask(new GTreeCollapseAllTask(tree, parent));
+					return;
+				}
+				parent = parent.getParent();
+			}
+		}
 	}
 
 	@Override
@@ -310,6 +330,10 @@ public class OrganizationNode extends SymbolTreeNode {
 			moreNode = null;
 		}
 		super.removeNode(node);
+		// if this org node is empty, just remove it
+		if (getChildCount() == 0) {
+			getParent().removeNode(this);
+		}
 	}
 
 	@Override

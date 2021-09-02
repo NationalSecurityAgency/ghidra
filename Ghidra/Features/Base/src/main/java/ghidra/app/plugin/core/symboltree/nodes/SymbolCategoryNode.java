@@ -18,7 +18,9 @@ package ghidra.app.plugin.core.symboltree.nodes;
 import java.awt.datatransfer.DataFlavor;
 import java.util.*;
 
+import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import docking.widgets.tree.tasks.GTreeCollapseAllTask;
 import ghidra.app.plugin.core.symboltree.SymbolCategory;
 import ghidra.program.model.address.GlobalNamespace;
 import ghidra.program.model.listing.Program;
@@ -28,7 +30,9 @@ import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
 public abstract class SymbolCategoryNode extends SymbolTreeNode {
-	private static final int MAX_NODES = 40;
+	public static final int MAX_NODES_BEFORE_ORGANIZING = 40;
+	public static final int MAX_NODES_BEFORE_CLOSING = 200;
+
 	protected SymbolCategory symbolCategory;
 	protected SymbolTable symbolTable;
 	protected GlobalNamespace globalNamespace;
@@ -54,7 +58,7 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 		SymbolType symbolType = symbolCategory.getSymbolType();
 		List<GTreeNode> list = getSymbols(symbolType, monitor);
 		monitor.checkCanceled();
-		return OrganizationNode.organize(list, MAX_NODES, monitor);
+		return OrganizationNode.organize(list, MAX_NODES_BEFORE_ORGANIZING, monitor);
 	}
 
 	public Program getProgram() {
@@ -208,6 +212,14 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 		}
 
 		parentNode.addNode(index, newNode);
+		if (parentNode.isLoaded() && parentNode.getChildCount() > MAX_NODES_BEFORE_CLOSING) {
+			GTree tree = parentNode.getTree();
+			// tree needs to be reorganized, close this category node to clear its children
+			// and force a reorganization next time it is opened
+			// also need to clear the selection so that it doesn't re-open the category
+			tree.clearSelectionPaths();
+			tree.runTask(new GTreeCollapseAllTask(tree, parentNode));
+		}
 	}
 
 	public void symbolRemoved(Symbol symbol, TaskMonitor monitor) {

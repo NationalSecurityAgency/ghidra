@@ -40,6 +40,7 @@ import ghidra.trace.model.listing.TraceInstruction;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.util.*;
 import ghidra.util.LockHold;
+import ghidra.util.Msg;
 import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.DBObjectColumn;
 import ghidra.util.database.annot.*;
@@ -139,8 +140,10 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		prototype = space.manager.getPrototypeByKey(prototypeKey);
 		if (prototype == null) {
 			// TODO: Better to just load a sentinel? Why bail on the whole thing?
-			throw new IOException(
-				"Instruction table is corrupt. Missing prototype: " + prototypeKey);
+			Msg.error(this,
+				"Instruction table is corrupt for address " + getMinAddress() +
+					". Missing prototype " + prototypeKey);
+			prototype = new InvalidPrototype(getTrace().getBaseLanguage());
 		}
 		flowOverride = FlowOverride.values()[(flags & FLOWOVERRIDE_SET_MASK) >> FLOWOVERRIDE_SHIFT];
 

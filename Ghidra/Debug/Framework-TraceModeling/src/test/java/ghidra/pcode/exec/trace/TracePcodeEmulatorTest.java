@@ -669,7 +669,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 	}
 
 	/**
-	 * ( Test x86's SAR instruction
+	 * Test x86's SAR instruction
 	 * 
 	 * <p>
 	 * This test hits an INT_SRIGHT p-code op where the two input operands have differing sizes.
@@ -730,6 +730,123 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 			assertEquals(BigInteger.valueOf(0x12340078),
 				TraceSleighUtils.evaluate("RAX", tb.trace, 1, thread, 0));
+		}
+	}
+
+	@Test(expected = AccessPcodeExecutionException.class)
+	public void testCheckedMOV_err() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"RIP = 0x00400000;"),
+				List.of(
+					"MOV RCX,RAX"));
+
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0) {
+				@Override
+				protected PcodeExecutorState<byte[]> newState(TraceThread thread) {
+					return new RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(trace, snap,
+						thread, 0);
+				}
+			};
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.overrideContextWithDefault();
+			emuThread.stepInstruction();
+		}
+	}
+
+	@Test
+	public void testCheckedMOV_known() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"RIP = 0x00400000;",
+					"RAX = 0x1234;"), // Make it known in the trace
+				List.of(
+					"MOV RCX,RAX"));
+
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0) {
+				@Override
+				protected PcodeExecutorState<byte[]> newState(TraceThread thread) {
+					return new RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(trace, snap,
+						thread, 0);
+				}
+			};
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.overrideContextWithDefault();
+			emuThread.stepInstruction();
+		}
+	}
+
+	@Test(expected = AccessPcodeExecutionException.class)
+	public void testCheckedMOV_knownPast_err() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"RIP = 0x00400000;",
+					"RAX = 0x1234;"), // Make it known in the trace
+				List.of(
+					"MOV RCX,RAX"));
+
+			// Start emulator one snap later
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 1) {
+				@Override
+				protected PcodeExecutorState<byte[]> newState(TraceThread thread) {
+					return new RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(trace, snap,
+						thread, 0);
+				}
+			};
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.overrideContextWithDefault();
+			emuThread.stepInstruction();
+		}
+	}
+
+	@Test
+	public void testCheckedMOV_knownPast_has() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"RIP = 0x00400000;",
+					"RAX = 0x1234;"), // Make it known in the trace
+				List.of(
+					"MOV RCX,RAX"));
+
+			// Start emulator one snap later, but with "has-known" checks
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 1) {
+				@Override
+				protected PcodeExecutorState<byte[]> newState(TraceThread thread) {
+					return new RequireHasKnownTraceCachedWriteBytesPcodeExecutorState(trace, snap,
+						thread, 0);
+				}
+			};
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.overrideContextWithDefault();
+			emuThread.stepInstruction();
+		}
+	}
+
+	@Test
+	public void testCheckedMOV_initialized() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"RIP = 0x00400000;"),
+				List.of(
+					"MOV RAX,0", // Have the program initialize it
+					"MOV RCX,RAX"));
+
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0) {
+				@Override
+				protected PcodeExecutorState<byte[]> newState(TraceThread thread) {
+					return new RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(trace, snap,
+						thread, 0);
+				}
+			};
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.overrideContextWithDefault();
+			emuThread.stepInstruction();
+			emuThread.stepInstruction();
 		}
 	}
 }

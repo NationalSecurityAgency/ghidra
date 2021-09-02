@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Derived from "Sh-4 generic and C specific application binary interface" 18-Oct-2011 -->
+<compiler_spec>
+  <data_organization> 
+     <absolute_max_alignment value="0" /> 
+     <machine_alignment value="2" /> 
+     <default_alignment value="1" /> 
+     <default_pointer_alignment value="4" /> 
+     <pointer_size value="4" /> 
+     <wchar_size value="4" /> 
+     <short_size value="2" /> 
+     <integer_size value="4" /> 
+     <long_size value="4" /> 
+     <long_long_size value="8"/>
+     <float_size value="4" /> 
+     <double_size value="8" /> 
+     <long_double_size value="8"/>
+     <size_alignment_map> 
+          <entry size="1" alignment="1" /> 
+          <entry size="2" alignment="2" /> 
+          <entry size="4" alignment="4" /> 
+          <entry size="8" alignment="4" /> 
+     </size_alignment_map> 
+  </data_organization>
+  <global>
+    <range space="ram"/>
+  </global>
+  <stackpointer register="r15" space="ram"  growth="negative"/>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="0" stackshift="0" strategy="register">
+    <input>
+      <pentry minsize="1" maxsize="4" metatype="float">
+        <register name="fr5"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" metatype="float">
+        <register name="fr4"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" metatype="float">
+        <register name="fr7"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" metatype="float">
+        <register name="fr6"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" metatype="float">
+        <register name="fr9"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" metatype="float">
+        <register name="fr8"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" metatype="float">
+        <register name="fr11"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4" metatype="float">
+        <register name="fr10"/>
+      </pentry>
+      <pentry minsize="5" maxsize="8" metatype="float">
+        <register name="dr4"/>
+      </pentry>
+      <pentry minsize="5" maxsize="8" metatype="float">
+        <register name="dr6"/>
+      </pentry>
+      <pentry minsize="5" maxsize="8" metatype="float">
+        <register name="dr8"/>
+      </pentry>
+      <pentry minsize="5" maxsize="8" metatype="float">
+        <register name="dr10"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4">
+        <register name="r4"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4">
+        <register name="r5"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4">
+        <register name="r6"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4">
+        <register name="r7"/>
+      </pentry>
+      <pentry minsize="1" maxsize="500" align="4">
+        <addr offset="0" space="stack"/>
+      </pentry>
+    </input>
+      <output>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="fr0"/>
+        </pentry>
+        <pentry minsize="5" maxsize="8" metatype="float">
+          <register name="dr0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="r0"/>
+        </pentry>
+        <pentry minsize="5" maxsize="8">
+          <addr space="join" piece1="r1" piece2="r0"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="r15"/>
+        <register name="r14"/>
+        <register name="r13"/>
+        <register name="r12"/>
+        <register name="r11"/>
+        <register name="r10"/>
+        <register name="r9"/>
+        <register name="r8"/>
+      </unaffected> 
+      <killedbycall>
+         <register name="r0"/>
+         <register name="r1"/>
+         <register name="r2"/>
+         <register name="r3"/>
+         <register name="fr0"/>
+         <register name="fr1"/>
+         <register name="fr2"/>
+         <register name="fr3"/>
+         <register name="MACH"/>
+         <register name="MACL"/>
+         <register name="PR"/>
+         <register name="FPUL"/>
+         <register name="S"/>
+         <register name="M"/>
+         <register name="Q"/>
+         <register name="T"/>
+      </killedbycall>
+    </prototype>
+  </default_proto>
+</compiler_spec>

@@ -1353,8 +1353,12 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 				String path = currentProgram.getExecutablePath();
 				String cmdlineArgs = launchDialog.getMemorizedArgument(
 					TargetCmdLineLauncher.CMDLINE_ARGS_NAME, String.class);
-				if (path != null && cmdlineArgs != null) {
-					if (!cmdlineArgs.startsWith(path)) {
+				if (path != null) {
+					if (cmdlineArgs == null) {
+						launchDialog.setMemorizedArgument(TargetCmdLineLauncher.CMDLINE_ARGS_NAME,
+							String.class, path);
+					}
+					else if (!cmdlineArgs.startsWith(path)) {
 						launchDialog.setMemorizedArgument(TargetCmdLineLauncher.CMDLINE_ARGS_NAME,
 							String.class, path);
 					}

@@ -96,6 +96,13 @@
     selected modules to Ghidra data types in the trace. These are often the same types that Ghidra
     imports from the static image, anyway.</P>
 
+    <H3><A name="map_identically"></A>Map Identically</H3>
+
+    <P>This action is available when both a trace and a program are opened. It maps the current
+    trace to the current program using identical addresses. This action ignores the module list. It
+    is a suitable mapping when the current program is loaded in the trace <EM>without
+    relocation</EM>. It is also a fallback worth trying in the absence of a module list.</P>
+
     <H3><A name="map_modules"></A>Map Modules</H3>
 
     <P>This action is available from the modules' or sections' pop-up menu. It searches the tool's

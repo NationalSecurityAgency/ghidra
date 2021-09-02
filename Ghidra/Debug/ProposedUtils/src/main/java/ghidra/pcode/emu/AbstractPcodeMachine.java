@@ -20,71 +20,13 @@ import java.util.*;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
-import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.classfinder.ClassSearcher;
 
 /**
  * An abstract implementation of {@link PcodeMachine} suitable as a base for most implementations
  */
 public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
-	public static class ThreadPcodeExecutorState<T> implements PcodeExecutorState<T> {
-		protected final PcodeExecutorState<T> memoryState;
-		protected final PcodeExecutorState<T> registerState;
-
-		public ThreadPcodeExecutorState(PcodeExecutorState<T> memoryState,
-				PcodeExecutorState<T> registerState) {
-			this.memoryState = memoryState;
-			this.registerState = registerState;
-		}
-
-		@Override
-		public T longToOffset(AddressSpace space, long l) {
-			if (space.isRegisterSpace()) {
-				return registerState.longToOffset(space, l);
-			}
-			else {
-				return memoryState.longToOffset(space, l);
-			}
-		}
-
-		@Override
-		public void setVar(AddressSpace space, T offset, int size, boolean truncateAddressableUnit,
-				T val) {
-			if (space.isRegisterSpace()) {
-				registerState.setVar(space, offset, size, truncateAddressableUnit, val);
-			}
-			else {
-				memoryState.setVar(space, offset, size, truncateAddressableUnit, val);
-			}
-		}
-
-		@Override
-		public T getVar(AddressSpace space, T offset, int size, boolean truncateAddressableUnit) {
-			if (space.isRegisterSpace()) {
-				return registerState.getVar(space, offset, size, truncateAddressableUnit);
-			}
-			else {
-				return memoryState.getVar(space, offset, size, truncateAddressableUnit);
-			}
-		}
-
-		@Override
-		public MemBuffer getConcreteBuffer(Address address) {
-			assert !address.getAddressSpace().isRegisterSpace();
-			return memoryState.getConcreteBuffer(address);
-		}
-
-		public PcodeExecutorState<T> getMemoryState() {
-			return memoryState;
-		}
-
-		public PcodeExecutorState<T> getRegisterState() {
-			return registerState;
-		}
-	}
-
 	protected final SleighLanguage language;
 	protected final PcodeArithmetic<T> arithmetic;
 	protected final SleighUseropLibrary<T> library;
@@ -92,8 +34,10 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	protected final SleighUseropLibrary<T> stubLibrary;
 
 	/* for abstract thread access */ PcodeStateInitializer initializer;
-	private PcodeExecutorState<T> memoryState;
+	private PcodeExecutorState<T> sharedState;
 	protected final Map<String, PcodeThread<T>> threads = new LinkedHashMap<>();
+	protected final Collection<PcodeThread<T>> threadsView =
+		Collections.unmodifiableCollection(threads.values());
 
 	protected final Map<Address, PcodeProgram> injects = new HashMap<>();
 
@@ -113,9 +57,9 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 		this.initializer = getPluggableInitializer(language);
 	}
 
-	protected abstract PcodeExecutorState<T> createMemoryState();
+	protected abstract PcodeExecutorState<T> createSharedState();
 
-	protected abstract PcodeExecutorState<T> createRegisterState(PcodeThread<T> thread);
+	protected abstract PcodeExecutorState<T> createLocalState(PcodeThread<T> thread);
 
 	protected SleighUseropLibrary<T> createThreadStubLibrary() {
 		return new DefaultPcodeThread.SleighEmulationLibrary<T>(null);
@@ -128,7 +72,7 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	 * @return the new thread
 	 */
 	protected PcodeThread<T> createThread(String name) {
-		return new DefaultPcodeThread<>(name, this, library);
+		return new DefaultPcodeThread<>(name, this);
 	}
 
 	protected static PcodeStateInitializer getPluggableInitializer(Language language) {
@@ -148,7 +92,7 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 
 	@Override
 	public PcodeThread<T> newThread() {
-		return createThread("Thread" + threads.size());
+		return newThread("Thread " + threads.size());
 	}
 
 	@Override
@@ -171,12 +115,17 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	}
 
 	@Override
-	public PcodeExecutorState<T> getMemoryState() {
-		if (memoryState == null) {
-			memoryState = createMemoryState();
+	public Collection<? extends PcodeThread<T>> getAllThreads() {
+		return threadsView;
+	}
+
+	@Override
+	public PcodeExecutorState<T> getSharedState() {
+		if (sharedState == null) {
+			sharedState = createSharedState();
 			doPluggableInitialization();
 		}
-		return memoryState;
+		return sharedState;
 	}
 
 	protected PcodeProgram getInject(Address address) {

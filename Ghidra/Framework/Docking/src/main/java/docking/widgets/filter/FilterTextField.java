@@ -277,7 +277,7 @@ public class FilterTextField extends JPanel {
 	@Override
 	public void setEnabled(boolean enabled) {
 		textField.setEnabled(enabled);
-		updateField();
+		updateField(textField.getText().length() > 0);
 	}
 
 	@Override
@@ -324,7 +324,7 @@ public class FilterTextField extends JPanel {
 		return textField;
 	}
 
-	private void updateField() {
+	private void updateField(boolean fireEvent) {
 		String text = getText();
 		hasText = text.length() > 0;
 
@@ -332,7 +332,9 @@ public class FilterTextField extends JPanel {
 
 		updateBackgroundColor();
 
-		fireFilterChanged(text);
+		if (fireEvent) {
+			fireFilterChanged(text);
+		}
 
 		boolean showFilterButton = hasText && textField.isEnabled();
 		updateFilterButton(showFilterButton);
@@ -402,17 +404,17 @@ public class FilterTextField extends JPanel {
 	private class FilterDocumentListener implements DocumentListener {
 		@Override
 		public void changedUpdate(DocumentEvent e) {
-			updateField();
+			updateField(true);
 		}
 
 		@Override
 		public void insertUpdate(DocumentEvent e) {
-			updateField();
+			updateField(true);
 		}
 
 		@Override
 		public void removeUpdate(DocumentEvent e) {
-			updateField();
+			updateField(true);
 		}
 	}
 

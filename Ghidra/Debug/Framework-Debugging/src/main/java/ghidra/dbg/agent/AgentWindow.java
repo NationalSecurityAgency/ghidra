@@ -23,27 +23,18 @@ import java.net.SocketAddress;
 import javax.swing.*;
 
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.appender.AbstractAppender;
-import org.apache.logging.log4j.core.config.Property;
+import org.apache.logging.log4j.core.config.Configuration;
 
-public class AgentWindow extends JFrame implements WindowListener {
-	public static final int MAX_LOG_CHARS = 10000;
+import ghidra.framework.LoggingInitialization;
+import ghidra.util.Msg;
+import ghidra.util.Swing;
+import log.LogListener;
+import log.LogPanelAppender;
 
-	protected class WindowAppender extends AbstractAppender {
-		protected WindowAppender() {
-			super("agentAppender", null, null, true, Property.EMPTY_ARRAY);
-		}
-
-		@Override
-		public void append(LogEvent event) {
-			String allText = logArea.getText() + "\n" + event.getMessage().getFormattedMessage();
-			logArea.setText(
-				allText.substring(Math.max(0, allText.length() - MAX_LOG_CHARS), allText.length()));
-			// TODO: Scroll to bottom
-		}
-	}
+public class AgentWindow extends JFrame implements WindowListener, LogListener {
+	public static final int MAX_LOG_CHARS = 100000;
 
 	protected final JTextArea logArea = new JTextArea();
 	protected final JScrollPane logScroll = new JScrollPane(logArea);
@@ -55,15 +46,38 @@ public class AgentWindow extends JFrame implements WindowListener {
 		add(new JLabel("<html>This agent is listening at <b>" + localAddress +
 			"</b>. Close this window to terminate it.</html>"), BorderLayout.NORTH);
 		logArea.setEditable(false);
-		logArea.setFont(Font.getFont(Font.MONOSPACED));
+		logArea.setFont(Font.decode(Font.MONOSPACED));
 		logArea.setAutoscrolls(true);
 		logScroll.setAutoscrolls(true);
 		add(logScroll);
 		setMinimumSize(new Dimension(400, 300));
 		setVisible(true);
 
+		System.setProperty("log4j.configuration", "agent.log4j.xml");
+		LoggingInitialization.initializeLoggingSystem();
 		LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
-		ctx.getConfiguration().addAppender(new WindowAppender());
+		Configuration config = ctx.getConfiguration();
+		Appender appender = config.getAppender("logPanel");
+		if (!(appender instanceof LogPanelAppender)) {
+			Msg.error(this, "Couldn't find LogPanelAppender instance in the Log4j context. " +
+				"Nothing will be logged to the agent's window.");
+		}
+		else {
+			LogPanelAppender logPanelAppender = (LogPanelAppender) appender;
+			logPanelAppender.setLogListener(this);
+		}
+	}
+
+	@Override
+	public void messageLogged(String message, boolean isError) {
+		String fMessage = isError ? "<font color=\"red\">" + message + "</font>" : message;
+		Swing.runIfSwingOrRunLater(() -> {
+			String allText = logArea.getText() + fMessage + "\n";
+			logArea.setText(
+				allText.substring(Math.max(0, allText.length() - MAX_LOG_CHARS), allText.length()));
+			JScrollBar vScroll = logScroll.getVerticalScrollBar();
+			vScroll.setValue(vScroll.getMaximum());
+		});
 	}
 
 	@Override

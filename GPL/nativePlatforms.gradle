@@ -1,0 +1,159 @@
+/* ###
+ * IP: Public Domain
+ */
+/****************************************************************************
+ * nativePlatforms.gradle
+ *
+ * This script defines the various platforms that Ghidra supports being built
+ * on.  Utility methods are provided for determining the current platform, as
+ * well as querying and extracting information about the platform, such as
+ * operating system and architecture.
+ ****************************************************************************/
+
+/****************************************************************************
+ * Create a list containing all the platforms we support for building native
+ * artifacts.  Each platform has the following fields:
+ *   name: Ghidra's naming convention for the platform.  This is used in the 
+           native build tasks, and is the name of the os/ subdirectories.
+ *   os:   Gradle's NativePlatform operatingSystem property naming convention.
+ *   arch: Gradle's NativePlatform architecture property naming convention.
+ ****************************************************************************/
+project.ext.PLATFORMS = [
+	[name: "win_x86_32", os: "windows", arch: "x86"],
+	[name: "win_x86_64", os: "windows", arch: "x86_64"],
+	[name: "linux_x86_64", os: "linux", arch: "x86_64"],
+	[name: "linux_arm_64", os: "linux", arch: "arm64"],
+	[name: "mac_x86_64", os: "osx", arch: "x86_64"],
+	[name: "mac_arm_64", os: "osx", arch: "arm64"]
+]
+
+/*********************************************************************************
+ * Returns the local platform name.
+ *********************************************************************************/
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+ext.currentPlatformName = findProperty("currentPlatformName")
+ext.getCurrentPlatformName = {
+
+	if (currentPlatformName) {
+		return currentPlatformName
+	} 
+
+	def osGradle = DefaultNativePlatform.currentOperatingSystem.getName()
+	def osJvm = System.getProperty("os.name");
+	def os = osJvm
+	switch (osJvm) {
+		case ~/Windows.*/:
+			os = "win"
+			break
+		case ~/Linux.*/:
+			os = "linux"
+			break
+		case ~/Mac OS X.*/:
+			os = "mac"
+			break
+		default:
+			throw new GradleException("Unrecognized platform operating system: $os")
+	}
+
+	def archGradle = DefaultNativePlatform.currentArchitecture.getName()
+	def archJvm = System.getProperty("os.arch");
+	def arch = archJvm
+	switch (arch) {
+		case "x86":
+		case "i386":
+			arch = "x86_32"
+			break
+		case "x86_64":
+		case "amd64":
+			arch = "x86_64"
+			break
+		case "aarch64":
+		case "arm64":
+			arch = "arm_64"
+			break
+		default:
+			throw new GradleException("Unrecognized platform architecture: $arch" )
+	}
+
+	currentPlatformName = "${os}_${arch}".toString() // convert GStringImpl to String so .equals() works as expected
+
+	println "OS: " + osJvm + (osJvm != osGradle ? " (gradle: " + osGradle + ")" : "")
+	println "Arch: " + archJvm + (archJvm != archGradle ? " (gradle: " + archGradle + ")" : "")
+	println "Using platform: " + currentPlatformName
+
+	return currentPlatformName
+}
+
+
+/*********************************************************************************
+ * Returns true if the given platform is linux.
+ *********************************************************************************/
+ext.isLinux = { platform_name ->
+	return platform_name.startsWith("linux")
+}
+/*********************************************************************************
+ * Returns true if the current platform is linux.
+ *********************************************************************************/
+ext.isCurrentLinux = {
+	return isLinux(getCurrentPlatformName())
+}
+
+/*********************************************************************************
+ * Returns true if the given platform is macOS.
+ *********************************************************************************/
+ext.isMac = { platform_name ->
+	return platform_name.startsWith("mac")
+}
+
+/*********************************************************************************
+ * Returns true if the current platform is macOS.
+ *********************************************************************************/
+ext.isCurrentMac = {
+	return isMac(getCurrentPlatformName())
+}
+
+/*********************************************************************************
+ * Returns true if the given platform is Windows.
+ *********************************************************************************/
+ext.isWindows = { platform_name ->
+	return platform_name.startsWith("win")
+}
+
+/*********************************************************************************
+ * Returns true if the current platform is Windows.
+ *********************************************************************************/
+ext.isCurrentWindows = {
+	return isWindows(getCurrentPlatformName())
+}
+
+/*********************************************************************************
+ * Returns true if the given platform is x86.
+ *********************************************************************************/
+ext.isX86_64 = { platform_name ->
+	return platform_name.contains("x86")
+}
+/*********************************************************************************
+ * Returns true if the current platform is x86.
+ *********************************************************************************/
+ext.isCurrentX86_64 = {
+	return isX86_64(getCurrentPlatformName())
+}
+
+/*********************************************************************************
+ * Returns true if the given platform is ARM.
+ *********************************************************************************/
+ext.isArm_64 = { platform_name ->
+	return platform_name.contains("arm")
+}
+/*********************************************************************************
+ * Returns true if the current platform is ARM.
+ *********************************************************************************/
+ext.isCurrentArm_64 = {
+	return isArm_64(getCurrentPlatformName())
+}
+
+/****************************************************************************
+ * Establish Visual Studio configuration environment for Windows native builds
+ * NOTE: vsconfig.gradle path is relative to each GPL project module
+ ****************************************************************************/
+apply from: buildscript.sourceFile.getParent() + "/vsconfig.gradle"

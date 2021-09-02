@@ -744,12 +744,18 @@ bool CircleRange::pullBackUnary(OpCode opc,int4 inSize,int4 outSize)
       left = (~right + 1 + step) & mask;
       right = val;
       break;
+    case CPUI_INT_NEGATE:
+      val = (~left + step) & mask;
+      left = (~right + step) & mask;
+      right = val;
+      break;
     case CPUI_INT_ZEXT:
     {
       val = calc_mask(inSize); // (smaller) input mask
+      uintb rem = left % step;
       CircleRange zextrange;
-      zextrange.left = 0;
-      zextrange.right = val + 1;	// Biggest possible range of ZEXT
+      zextrange.left = rem;
+      zextrange.right = val + 1 + rem;	// Biggest possible range of ZEXT
       zextrange.mask = mask;
       zextrange.step = step;	// Keep the same stride
       zextrange.isempty = false;
@@ -763,8 +769,10 @@ bool CircleRange::pullBackUnary(OpCode opc,int4 inSize,int4 outSize)
     case CPUI_INT_SEXT:
     {
       val = calc_mask(inSize); // (smaller) input mask
+      uintb rem = left & step;
       CircleRange sextrange;
       sextrange.left = val ^ (val >> 1); // High order bit for (small) input space
+      sextrange.left += rem;
       sextrange.right = sign_extend(sextrange.left, inSize, outSize);
       sextrange.mask = mask;
       sextrange.step = step;	// Keep the same stride
@@ -1096,13 +1104,15 @@ bool CircleRange::pushForwardUnary(OpCode opc,const CircleRange &in1,int4 inSize
       isempty = false;
       step = in1.step;
       mask = calc_mask(outSize);
-      left = in1.left;
-      right = (in1.right - in1.step) & in1.mask;
-      if (right < left) {	// Extending causes 2 pieces
-	left = left % step;
+      if (in1.left == in1.right) {
+	left = in1.left % step;
 	right = in1.mask + 1 + left;
       }
       else {
+	left = in1.left;
+	right = (in1.right - in1.step) & in1.mask;
+	if (right < left)
+	  return false;	// Extending causes 2 pieces
 	right += step;	// Impossible for it to wrap with bigger mask
       }
       break;
@@ -1110,16 +1120,19 @@ bool CircleRange::pushForwardUnary(OpCode opc,const CircleRange &in1,int4 inSize
       isempty = false;
       step = in1.step;
       mask = calc_mask(outSize);
-      left = sign_extend(in1.left, inSize, outSize);
-      right = sign_extend((in1.right - in1.step)&in1.mask, inSize, outSize);
-      if ((intb)right < (intb)left) {
-	uintb rem = left % step;
+      if (in1.left == in1.right) {
+	uintb rem = in1.left % step;
 	right = calc_mask(inSize) >> 1;
 	left = (calc_mask(outSize) ^ right) + rem;
 	right = right + 1 + rem;
       }
-      else
-	right += step;
+      else {
+	left = sign_extend(in1.left, inSize, outSize);
+	right = sign_extend((in1.right - in1.step)&in1.mask, inSize, outSize);
+	if ((intb)right < (intb)left)
+	  return false;	// Extending causes 2 pieces
+ 	right  = (right + step) & mask;
+      }
       break;
     case CPUI_INT_2COMP:
       isempty = false;
@@ -1133,8 +1146,8 @@ bool CircleRange::pushForwardUnary(OpCode opc,const CircleRange &in1,int4 inSize
       isempty = false;
       step = in1.step;
       mask = in1.mask;
-      left = -in1.right & mask;
-      right = -in1.left & mask;
+      left = (~in1.right + step) & mask;
+      right =(~in1.left + step) & mask;
       normalize();
       break;
     case CPUI_BOOL_NEGATE:

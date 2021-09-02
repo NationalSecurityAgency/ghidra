@@ -6,11 +6,13 @@ ARCH_TYPE=
 ADDITIONAL_FLAGS=
 SLEIGHVERSION=sleigh-2.1.0
 
-EXTENSION_POINT=../../../../../../../ghidra.ext/Ghidra/Features/DecompilerExtensions/src/decompile/cpp
+EXTENSION_POINT=../../../../../../../ghidra.ext-u/Ghidra/Features/DecompilerExtensions/src/decompile/cpp
 GHIDRA_BIN=../../../../../../../ghidra.bin
 
 OS = $(shell uname -s)
 CPU = $(shell uname -m)
+
+# TODO: need to revise to support arm64/aarch64 arch - improve on both OS and arch detection 
 
 ifeq ($(OS),Linux)
 # Allow ARCH to be specified externally so we can build for 32-bit from a 64-bit Linux
@@ -19,10 +21,10 @@ ifndef ARCH
 endif
 ifeq ($(ARCH),x86_64)
   ARCH_TYPE=-m64
-  OSDIR=linux64
+  OSDIR=linux_x86_64
 else
   ARCH_TYPE=-m32
-  OSDIR=linux32
+  OSDIR=linux_x86_32
 endif
 endif
 
@@ -30,7 +32,7 @@ ifeq ($(OS),Darwin)
   MAKE_STATIC=
   ARCH_TYPE=-arch x86_64
   ADDITIONAL_FLAGS=-mmacosx-version-min=10.6 -w
-  OSDIR=osx64
+  OSDIR=mac_x86_64
 endif
 
 CC=gcc

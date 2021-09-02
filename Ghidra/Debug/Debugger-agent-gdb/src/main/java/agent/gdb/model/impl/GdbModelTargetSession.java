@@ -27,7 +27,6 @@ import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetModelRoot;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.Msg;
@@ -48,7 +47,7 @@ import ghidra.util.Msg;
 		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetSession extends DefaultTargetModelRoot
 		implements TargetAccessConditioned, TargetAttacher, TargetInterpreter, TargetInterruptible,
-		TargetCmdLineLauncher, TargetActiveScope, TargetEventScope, TargetFocusScope,
+		TargetLauncher, TargetActiveScope, TargetEventScope, TargetFocusScope,
 		GdbConsoleOutputListener, GdbEventsListenerAdapter {
 	protected static final String GDB_PROMPT = "(gdb)";
 
@@ -80,7 +79,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 			ACCESSIBLE_ATTRIBUTE_NAME, accessible, //
 			PROMPT_ATTRIBUTE_NAME, GDB_PROMPT, //
 			DISPLAY_ATTRIBUTE_NAME, display, //
-			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, TargetCmdLineLauncher.PARAMETERS, //
+			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, GdbModelTargetInferior.PARAMETERS, //
 			SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME, GdbModelTargetInferior.SUPPORTED_KINDS, //
 			FOCUS_ATTRIBUTE_NAME, this // Satisfy schema. Will be set to first inferior.
 		), "Initialized");
@@ -205,9 +204,12 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 	}
 
 	@Override
-	public CompletableFuture<Void> launch(List<String> args) {
+	public CompletableFuture<Void> launch(Map<String, ?> args) {
+		List<String> cmdLineArgs =
+			CmdLineParser.tokenize(TargetCmdLineLauncher.PARAMETER_CMDLINE_ARGS.get(args));
+		Boolean useStarti = GdbModelTargetInferior.PARAMETER_STARTI.get(args);
 		return impl.gateFuture(impl.gdb.availableInferior().thenCompose(inf -> {
-			return GdbModelImplUtils.launch(impl, inf, args);
+			return GdbModelImplUtils.launch(impl, inf, cmdLineArgs, useStarti);
 		}).thenApply(__ -> null));
 	}
 

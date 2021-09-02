@@ -11,8 +11,9 @@
             manualindexfile="../manuals/superh4.idx"
             id="SuperH4:BE:32:default">
     <description>SuperH-4(a) (SH4) big endian</description>
-    <compiler name="default" spec="SuperH4.cspec" id="default"/>
+    <compiler name="default" spec="SuperH4_be.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="sh4b"/>
+    <external_name tool="gnu" name="sh4"/>
   </language>
   <language processor="SuperH4"
             endian="little"
@@ -24,8 +25,9 @@
             manualindexfile="../manuals/superh4.idx"
             id="SuperH4:LE:32:default">
     <description>SuperH-4(a) (SH4) little endian</description>
-    <compiler name="default" spec="SuperH4.cspec" id="default"/>
-    <compiler name="Visual Studio" spec="SuperH4.cspec" id="windows"/>
+    <compiler name="default" spec="SuperH4_le.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="SuperH4_le.cspec" id="windows"/>
     <external_name tool="IDA-PRO" name="sh4"/>
+    <external_name tool="gnu" name="sh4"/>
   </language>
 </language_definitions>

@@ -17,7 +17,6 @@ package ghidra.pcode.emu;
 
 import java.util.List;
 
-import ghidra.pcode.emu.AbstractPcodeMachine.ThreadPcodeExecutorState;
 import ghidra.pcode.emu.DefaultPcodeThread.SleighEmulationLibrary;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
@@ -249,7 +248,7 @@ public interface PcodeThread<T> {
 	 * 
 	 * <p>
 	 * The memory part of this state is shared among all threads in the same machine. See
-	 * {@link PcodeMachine#getMemoryState()}.
+	 * {@link PcodeMachine#getSharedState()}.
 	 * 
 	 */
 	ThreadPcodeExecutorState<T> getState();

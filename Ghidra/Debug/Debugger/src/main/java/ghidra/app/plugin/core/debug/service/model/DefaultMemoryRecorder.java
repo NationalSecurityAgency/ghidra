@@ -61,10 +61,13 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 	}
 
 	public CompletableFuture<NavigableMap<Address, byte[]>> captureProcessMemory(AddressSetView set,
-			TaskMonitor monitor) {
+			TaskMonitor monitor, boolean toMap) {
 		// TODO: Figure out how to display/select per-thread memory.
 		//   Probably need a thread parameter passed in then?
 		//   NOTE: That thread memory will already be chained to process memory. Good.
+
+		// NOTE: I don't intend to warn about the number of requests.
+		//   They're delivered in serial, and there's a cancel button that works
 
 		int total = 0;
 		AddressSetView expSet = expandToBlocks(set)
@@ -75,22 +78,27 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 		monitor.initialize(total);
 		monitor.setMessage("Capturing memory");
 		// TODO: Read blocks in parallel? Probably NO. Tends to overload the agent.
-		NavigableMap<Address, byte[]> result = new TreeMap<>();
+		NavigableMap<Address, byte[]> result = toMap ? new TreeMap<>() : null;
 		return AsyncUtils.each(TypeSpec.VOID, expSet.iterator(), (r, loop) -> {
-			AddressRangeChunker it = new AddressRangeChunker(r, BLOCK_SIZE);
-			AsyncUtils.each(TypeSpec.VOID, it.iterator(), (vRng, inner) -> {
+			AddressRangeChunker blocks = new AddressRangeChunker(r, BLOCK_SIZE);
+			AsyncUtils.each(TypeSpec.VOID, blocks.iterator(), (vBlk, inner) -> {
 				// The listener in the recorder will copy to the Trace.
 				monitor.incrementProgress(1);
-				AddressRange tRng = recorder.getMemoryMapper().traceToTarget(vRng);
+				AddressRange tBlk = recorder.getMemoryMapper().traceToTarget(vBlk);
 				recorder.getProcessMemory()
-						.readMemory(tRng.getMinAddress(), (int) tRng.getLength())
-						.thenAccept(data -> result.put(tRng.getMinAddress(), data))
+						.readMemory(tBlk.getMinAddress(), (int) tBlk.getLength())
+						.thenAccept(data -> {
+							if (toMap) {
+								result.put(tBlk.getMinAddress(), data);
+							}
+						})
+						.exceptionally(e -> {
+							Msg.error(this, "Error reading block " + tBlk + ": " + e);
+							// NOTE: Above may double log, since recorder listens for errors, too
+							return null; // Continue looping on errors
+						})
 						.thenApply(__ -> !monitor.isCancelled())
 						.handle(inner::repeatWhile);
-			}).exceptionally(e -> {
-				Msg.error(this, "Error reading range " + r + ": " + e);
-				// NOTE: Above may double log, since recorder listens for errors, too
-				return null; // Continue looping on errors
 			}).thenApply(v -> !monitor.isCancelled()).handle(loop::repeatWhile);
 		}).thenApply(__ -> result);
 	}
