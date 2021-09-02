@@ -80,4 +80,12 @@ public class PairedPcodeArithmetic<L, R> implements PcodeArithmetic<Pair<L, R>> 
 	public BigInteger toConcrete(Pair<L, R> value) {
 		return leftArith.toConcrete(value.getLeft());
 	}
+
+	public PcodeArithmetic<L> getLeft() {
+		return leftArith;
+	}
+
+	public PcodeArithmetic<R> getRight() {
+		return rightArith;
+	}
 }
