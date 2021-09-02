@@ -182,7 +182,7 @@ public class WatchRow {
 		private ReadDepsTraceBytesPcodeExecutorState depsState;
 
 		public ReadDepsPcodeExecutor(ReadDepsTraceBytesPcodeExecutorState depsState,
-				Language language, PairedPcodeArithmetic<byte[], Address> arithmetic,
+				SleighLanguage language, PairedPcodeArithmetic<byte[], Address> arithmetic,
 				PcodeExecutorState<Pair<byte[], Address>> state) {
 			super(language, arithmetic, state);
 			this.depsState = depsState;
@@ -207,11 +207,14 @@ public class WatchRow {
 			new ReadDepsTraceBytesPcodeExecutorState(trace, coordinates.getViewSnap(),
 				coordinates.getThread(), coordinates.getFrame());
 		Language language = trace.getBaseLanguage();
+		if (!(language instanceof SleighLanguage)) {
+			throw new IllegalArgumentException("Watch expressions require a SLEIGH language");
+		}
 		PcodeExecutorState<Pair<byte[], Address>> paired =
 			state.paired(new AddressOfPcodeExecutorState(language.isBigEndian()));
 		PairedPcodeArithmetic<byte[], Address> arithmetic = new PairedPcodeArithmetic<>(
 			BytesPcodeArithmetic.forLanguage(language), AddressOfPcodeArithmetic.INSTANCE);
-		return new ReadDepsPcodeExecutor(state, language, arithmetic, paired);
+		return new ReadDepsPcodeExecutor(state, (SleighLanguage) language, arithmetic, paired);
 	}
 
 	public void setCoordinates(DebuggerCoordinates coordinates) {

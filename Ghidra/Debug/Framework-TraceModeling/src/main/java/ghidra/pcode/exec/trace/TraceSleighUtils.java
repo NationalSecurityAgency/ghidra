@@ -51,7 +51,11 @@ public enum TraceSleighUtils {
 		TraceBytesPcodeExecutorState state =
 			new TraceBytesPcodeExecutorState(trace, snap, thread, frame);
 		Language language = trace.getBaseLanguage();
-		return new PcodeExecutor<>(language, BytesPcodeArithmetic.forLanguage(language), state);
+		if (!(language instanceof SleighLanguage)) {
+			throw new IllegalArgumentException("Trace must use a SLEIGH language");
+		}
+		return new PcodeExecutor<>((SleighLanguage) language,
+			BytesPcodeArithmetic.forLanguage(language), state);
 	}
 
 	public static PcodeExecutor<Pair<byte[], TraceMemoryState>> buildByteWithStateExecutor(
@@ -60,9 +64,12 @@ public enum TraceSleighUtils {
 			new TraceBytesPcodeExecutorState(trace, snap, thread, frame);
 		PcodeExecutorState<Pair<byte[], TraceMemoryState>> paired = state.withMemoryState();
 		Language language = trace.getBaseLanguage();
-		return new PcodeExecutor<>(language, new PairedPcodeArithmetic<>(
-			BytesPcodeArithmetic.forLanguage(language),
-			TraceMemoryStatePcodeArithmetic.INSTANCE), paired);
+		if (!(language instanceof SleighLanguage)) {
+			throw new IllegalArgumentException("Trace must use a SLEIGH language");
+		}
+		return new PcodeExecutor<>((SleighLanguage) language, new PairedPcodeArithmetic<>(
+			BytesPcodeArithmetic.forLanguage(language), TraceMemoryStatePcodeArithmetic.INSTANCE),
+			paired);
 	}
 
 	public static byte[] evaluateBytes(SleighExpression expr, Trace trace, long snap,

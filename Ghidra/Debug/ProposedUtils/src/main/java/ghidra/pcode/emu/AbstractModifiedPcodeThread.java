@@ -86,7 +86,7 @@ public abstract class AbstractModifiedPcodeThread<T> extends DefaultPcodeThread<
 	}
 
 	protected class GluePcodeThreadExecutor extends PcodeThreadExecutor {
-		public GluePcodeThreadExecutor(Language language, PcodeArithmetic<T> arithmetic,
+		public GluePcodeThreadExecutor(SleighLanguage language, PcodeArithmetic<T> arithmetic,
 				PcodeExecutorStatePiece<T, T> state) {
 			super(language, arithmetic, state);
 		}
