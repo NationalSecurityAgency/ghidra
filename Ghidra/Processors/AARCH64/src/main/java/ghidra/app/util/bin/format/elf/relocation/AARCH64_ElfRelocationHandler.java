@@ -167,10 +167,44 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 				break;
 			}
 
+			// LD/ST16: (S+A) & 0xffe 
+			case AARCH64_ElfRelocationConstants.R_AARCH64_LDST16_ABS_LO12_NC: {
+				int oldValue = memory.getInt(relocationAddress, isBigEndianInstructions);
+				newValue = (int) ((symbolValue + addend) & 0xffe) >> 1;
+
+				newValue = oldValue | (newValue << 10);
+
+				memory.setInt(relocationAddress, (int) newValue, isBigEndianInstructions);
+				break;
+			}
+
 			// LD/ST32: (S+A) & 0xffc
 			case AARCH64_ElfRelocationConstants.R_AARCH64_LDST32_ABS_LO12_NC: {
 				int oldValue = memory.getInt(relocationAddress, isBigEndianInstructions);
 				newValue = (int) ((symbolValue + addend) & 0xffc) >> 2;
+
+				newValue = oldValue | (newValue << 10);
+
+				memory.setInt(relocationAddress, (int) newValue, isBigEndianInstructions);
+				break;
+			}
+
+			// LD/ST64: (S+A) & 0xff8
+			case AARCH64_ElfRelocationConstants.R_AARCH64_LDST64_ABS_LO12_NC:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_LD64_GOT_LO12_NC: {
+				int oldValue = memory.getInt(relocationAddress, isBigEndianInstructions);
+				newValue = (int) ((symbolValue + addend) & 0xff8) >> 3;
+
+				newValue = oldValue | (newValue << 10);
+
+				memory.setInt(relocationAddress, (int) newValue, isBigEndianInstructions);
+				break;
+			}
+
+			// LD/ST128: (S+A) & 0xff0
+			case AARCH64_ElfRelocationConstants.R_AARCH64_LDST128_ABS_LO12_NC: {
+				int oldValue = memory.getInt(relocationAddress, isBigEndianInstructions);
+				newValue = (int) ((symbolValue + addend) & 0xff0) >> 4;
 
 				newValue = oldValue | (newValue << 10);
 
