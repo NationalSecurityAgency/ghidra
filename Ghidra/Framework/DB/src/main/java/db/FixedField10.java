@@ -126,6 +126,11 @@ public class FixedField10 extends FixedField {
 
 	@Override
 	public FixedField copyField() {
+		if (isNull()) {
+			FixedField10 copy = new FixedField10();
+			copy.setNull();
+			return copy;
+		}
 		return new FixedField10(hi8, lo2, false);
 	}
 

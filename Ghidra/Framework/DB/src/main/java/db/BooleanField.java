@@ -149,6 +149,11 @@ public final class BooleanField extends PrimitiveField {
 
 	@Override
 	public BooleanField copyField() {
+		if (isNull()) {
+			BooleanField copy = new BooleanField();
+			copy.setNull();
+			return copy;
+		}
 		return new BooleanField(getLongValue() != 0);
 	}
 
