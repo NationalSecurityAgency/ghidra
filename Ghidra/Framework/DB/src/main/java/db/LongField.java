@@ -157,6 +157,11 @@ public final class LongField extends PrimitiveField {
 
 	@Override
 	public LongField copyField() {
+		if (isNull()) {
+			LongField copy = new LongField();
+			copy.setNull();
+			return copy;
+		}
 		return new LongField(getLongValue());
 	}
 

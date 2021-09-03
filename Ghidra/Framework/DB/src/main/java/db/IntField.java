@@ -154,6 +154,11 @@ public final class IntField extends PrimitiveField {
 
 	@Override
 	public IntField copyField() {
+		if (isNull()) {
+			IntField copy = new IntField();
+			copy.setNull();
+			return copy;
+		}
 		return new IntField((int) getLongValue());
 	}
 

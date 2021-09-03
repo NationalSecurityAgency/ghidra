@@ -188,6 +188,11 @@ public class BinaryField extends Field {
 
 	@Override
 	public BinaryField copyField() {
+		if (isNull()) {
+			BinaryField copy = new BinaryField();
+			copy.setNull();
+			return copy;
+		}
 		return new BinaryField(getBinaryData().clone());
 	}
 

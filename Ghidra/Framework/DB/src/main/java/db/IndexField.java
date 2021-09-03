@@ -130,7 +130,7 @@ class IndexField extends Field {
 	}
 
 	@Override
-	public IndexField copyField() {
+	public IndexField copyField() { // null state not supported
 		return new IndexField(indexedField.copyField(), primaryKey.copyField());
 	}
 
