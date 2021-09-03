@@ -18,13 +18,12 @@ package ghidra.program.util;
 import java.util.Arrays;
 import java.util.List;
 
-import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.DefaultProgramContext;
 import ghidra.program.model.listing.ProgramContext;
 
 abstract public class AbstractProgramContext implements ProgramContext, DefaultProgramContext {
-	
+
 	protected Language language;
 
 	protected Register baseContextRegister;
@@ -116,10 +115,6 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 	protected void init(Language lang) {
 		this.language = lang;
 		baseContextRegister = lang.getContextBaseRegister();
-		if (baseContextRegister == null) {
-			baseContextRegister =
-				new Register("DEFAULT_CONTEXT", "DEFAULT_CONTEXT", Address.NO_ADDRESS, 4, true, 0);
-		}
 		defaultDisassemblyContext = new RegisterValue(baseContextRegister);
 
 		nonFlowingContextRegisterMask = baseContextRegister.getBaseMask().clone();

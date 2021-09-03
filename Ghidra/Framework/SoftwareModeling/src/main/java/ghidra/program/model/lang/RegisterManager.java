@@ -23,11 +23,11 @@ public class RegisterManager {
 
 	private List<Register> registers;
 	private Map<String, Register> registerNameMap = new HashMap<String, Register>(); // include aliases and case-variations
-	
+
 	private List<String> registerNames; // alphabetical sorted list, excludes aliases
 	private List<Register> contextRegisters;
 	private Register contextBaseRegister;
-	
+
 	private Map<RegisterSizeKey, Register> sizeMap = new HashMap<RegisterSizeKey, Register>();
 	private Map<Address, List<Register>> registerAddressMap =
 		new HashMap<Address, List<Register>>();
@@ -123,6 +123,11 @@ public class RegisterManager {
 			else {
 				populateSizeMapLittleEndian(reg);
 			}
+		}
+		// if there is no context register, force a default one
+		if (contextBaseRegister == null) {
+			contextBaseRegister =
+				new Register("DEFAULT_CONTEXT", "DEFAULT_CONTEXT", Address.NO_ADDRESS, 4, true, 0);
 		}
 		// handle the register size 0 case;
 		Collections.reverse(registerListSortedBySize);
@@ -275,7 +280,8 @@ public class RegisterManager {
 	 */
 	private static int compareVectorRegisters(Register reg1, Register reg2) {
 		if (!(reg1.isVectorRegister() && reg2.isVectorRegister())) {
-			throw new IllegalArgumentException("compareVectorRegisters can only be applied to vector registers!");
+			throw new IllegalArgumentException(
+				"compareVectorRegisters can only be applied to vector registers!");
 		}
 		//want registers sorted in descending order of size
 		int sizeComp = Integer.compare(reg2.getBitLength(), reg1.getBitLength());
