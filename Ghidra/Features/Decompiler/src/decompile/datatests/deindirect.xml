@@ -1,0 +1,36 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+  <!--
+      A contrived function with 2 indirect calls that share the same parameter set up.
+      The parameter setup initially gets associated with only one of the two indirect calls.
+      The indirects eventually collapse to direct calls and a prototype is associated with
+      both calls, but too late for one, forcing a restart.  The decompiler should be
+      able to collapse both indirects to direct calls AND associate the correct prototype.
+  -->
+<bytechunk space="ram" offset="0x10071a" readonly="true">
+                    554889e54883
+ec20897dec8975e88955e4488d0598ff
+ffff488945f88b45e48d50058b45e883
+c00389d689c79090909090837dec097f
+14488b45f8ffd0488d3d2c010000e81d
+feffffeb12488b45f8ffd0488d3d1d01
+0000e809feffff90c9c3
+</bytechunk>
+<bytechunk space="ram" offset="0x10088a" readonly="true">
+  4c657373004d6f726500
+</bytechunk>
+<symbol space="ram" offset="0x10071a" name="deindirect"/>
+<symbol space="ram" offset="0x1006ca" name="realfunc"/>
+<symbol space="ram" offset="0x100580" name="puts"/>
+</binaryimage>
+<script>
+  <com>parse line extern void deindirect(int4 a,int4 b,int4 c);</com>
+  <com>parse line extern void realfunc(int4 a,int4 b);</com>
+  <com>lo fu deindirect</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Deindirect #1" min="0" max="0">Exceeded maximum restarts</stringmatch>
+<stringmatch name="Deindirect #2" min="2" max="2">realfunc\(b \+ 3,c \+ 5\)</stringmatch>
+</decompilertest>
