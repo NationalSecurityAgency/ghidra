@@ -24,7 +24,6 @@ import java.util.HashSet;
 
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
-import javax.rmi.ssl.SslRMIClientSocketFactory;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.PasswordCallback;
@@ -163,7 +162,7 @@ class ServerConnectTask extends Task {
 			}
 			catch (IOException e) {
 				reg = LocateRegistry.getRegistry(server.getServerName(), server.getPortNumber(),
-					new SslRMIClientSocketFactory());
+					new GhidraSSLClientSocket());
 				checkServerBindNames(reg);
 			}
 
@@ -321,7 +320,7 @@ class ServerConnectTask extends Task {
 	private static void testServerSSLConnection(ServerInfo server) throws IOException {
 
 		RMIServerPortFactory portFactory = new RMIServerPortFactory(server.getPortNumber());
-		SslRMIClientSocketFactory factory = new SslRMIClientSocketFactory();
+		GhidraSSLClientSocket factory = new GhidraSSLClientSocket();
 		String serverName = server.getServerName();
 		int sslRmiPort = portFactory.getRMISSLPort();
 

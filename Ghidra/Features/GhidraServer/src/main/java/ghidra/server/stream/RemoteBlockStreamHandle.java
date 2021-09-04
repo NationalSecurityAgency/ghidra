@@ -18,9 +18,10 @@ package ghidra.server.stream;
 import java.io.*;
 import java.net.Socket;
 import java.security.SecureRandom;
+import java.util.*;
 
-import javax.net.SocketFactory;
-import javax.net.ssl.SSLSocketFactory;
+import javax.net.*;
+import javax.net.ssl.*;
 
 import db.buffers.BlockStream;
 import db.buffers.DataBuffer;
@@ -278,7 +279,12 @@ public abstract class RemoteBlockStreamHandle<T extends BlockStream> implements 
 		}
 
 		SocketFactory socketFactory = SSLSocketFactory.getDefault();
-		Socket socket = socketFactory.createSocket(streamServerIPAddress, streamServerPort);
+		SSLSocket socket = (SSLSocket)socketFactory.createSocket(streamServerIPAddress, streamServerPort);
+
+		List<SNIServerName> serverNames = Arrays.asList(new SNIHostName(streamServerIPAddress));
+		SSLParameters params = socket.getSSLParameters();
+		params.setServerNames(serverNames);
+		socket.setSSLParameters(params);
 
 		// TODO: set socket options ?
 
