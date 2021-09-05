@@ -1688,6 +1688,7 @@ Symbol *Scope::addConvertSymbol(uint4 format,uintb value,Address &addr,uint8 has
   Symbol *sym;
 
   sym = new EquateSymbol(owner,"",format,value);
+  addSymbolInternal(sym);
   RangeList rnglist;
   if (!addr.isInvalid())
     rnglist.insertRange(addr.getSpace(),addr.getOffset(),addr.getOffset());

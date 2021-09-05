@@ -15,11 +15,11 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
-import static ghidra.app.plugin.core.decompile.actions.ASTGraphTask.GraphType.*;
+import static ghidra.app.plugin.core.decompile.actions.ASTGraphTask.AstGraphSubType.*;
 
 import java.util.*;
 
-import ghidra.app.plugin.core.decompile.actions.ASTGraphTask.GraphType;
+import ghidra.app.plugin.core.decompile.actions.ASTGraphTask.AstGraphSubType;
 import ghidra.app.plugin.core.graph.AddressBasedGraphDisplayListener;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
@@ -33,10 +33,10 @@ import ghidra.util.exception.AssertException;
  */
 public class ASTGraphDisplayListener extends AddressBasedGraphDisplayListener {
 	private HighFunction hfunction;
-	private GraphType graphType;
+	private AstGraphSubType graphType;
 
 	ASTGraphDisplayListener(PluginTool tool, GraphDisplay display, HighFunction hfunction,
-			GraphType graphType) {
+			AstGraphSubType graphType) {
 		super(tool, hfunction.getFunction().getProgram(), display);
 		this.hfunction = hfunction;
 		this.graphType = graphType;

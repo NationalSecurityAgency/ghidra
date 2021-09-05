@@ -15,12 +15,14 @@
  */
 package agent.gdb.manager.impl;
 
-import static ghidra.async.AsyncUtils.*;
+import static ghidra.async.AsyncUtils.loop;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
+
+import javax.swing.JOptionPane;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.python.core.PyDictionary;
@@ -612,12 +614,20 @@ public class GdbManagerImpl implements GdbManager {
 		}
 		else {
 			Pty mi2Pty = ptyFactory.openpty();
-			Msg.info(this, "Agent is waiting for GDB/MI v2 interpreter at " +
-				mi2Pty.getChild().nullSession());
+			String mi2PtyName = mi2Pty.getChild().nullSession();
+			Msg.info(this, "Agent is waiting for GDB/MI v2 interpreter at " + mi2PtyName);
 			mi2Thread = new PtyThread(mi2Pty, Channel.STDOUT, Interpreter.MI2);
 			mi2Thread.setName("GDB Read MI2");
 
 			mi2Thread.start();
+
+			int choice = JOptionPane.showConfirmDialog(null,
+				"Please enter \"new-ui mi2 " + mi2PtyName + "\" in an existing gdb session. " +
+					"Alternatively, disable 'use existing session' to launch a new session.",
+				"Waiting for GDB/MI session", JOptionPane.OK_CANCEL_OPTION);
+			if (choice == JOptionPane.CANCEL_OPTION) {
+				terminate();
+			}
 		}
 	}
 

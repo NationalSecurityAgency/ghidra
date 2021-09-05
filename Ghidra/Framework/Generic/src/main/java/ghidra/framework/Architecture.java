@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +20,7 @@ public enum Architecture {
 	X86_64("x86_64", "amd64"),
 	POWERPC("ppc"),
 	POWERPC_64("ppc64"),
+	ARM_64("aarch64", "arm64"),
 	UNKNOWN("Unknown Architecture");
 
 	/**

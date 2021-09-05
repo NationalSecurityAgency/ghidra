@@ -49,7 +49,13 @@ public class SshPtyChild extends SshPtyEndpoint implements PtyChild {
 						.collect(Collectors.joining(" ")) +
 					" ";
 		String cmdStr = Stream.of(args).collect(Collectors.joining(" "));
-		session.execCommand(envStr + cmdStr);
+		try {
+			session.execCommand(envStr + cmdStr);
+		}
+		catch (Throwable t) {
+			Msg.error(this, "Could not execute remote command: " + envStr + cmdStr, t);
+			throw t;
+		}
 		return new SshPtySession(session);
 	}
 

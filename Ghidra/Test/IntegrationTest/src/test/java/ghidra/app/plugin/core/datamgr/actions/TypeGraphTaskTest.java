@@ -87,7 +87,7 @@ public class TypeGraphTaskTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(v2);
 		AttributedEdge e1 = graph.getEdge(v1, v2);
 		assertNotNull(e1);
-		assertEquals(TypeGraphTask.EMBEDDED, e1.getAttribute(TypeGraphTask.TYPE_ATTRIBUTE));
+		assertEquals(TypeGraphTask.COMPOSITE, e1.getEdgeType());
 	}
 
 	@Test
@@ -122,7 +122,7 @@ public class TypeGraphTaskTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(v2);
 		AttributedEdge e1 = graph.getEdge(v1, v2);
 		assertNotNull(e1);
-		assertEquals(TypeGraphTask.POINTER, e1.getAttribute(TypeGraphTask.TYPE_ATTRIBUTE));
+		assertEquals(TypeGraphTask.REFERENCE, e1.getEdgeType());
 	}
 
 	@Test
@@ -143,7 +143,7 @@ public class TypeGraphTaskTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(v2);
 		AttributedEdge e1 = graph.getEdge(v1, v2);
 		assertNotNull(e1);
-		assertEquals(TypeGraphTask.EMBEDDED, e1.getAttribute(TypeGraphTask.TYPE_ATTRIBUTE));
+		assertEquals(TypeGraphTask.COMPOSITE, e1.getEdgeType());
 	}
 
 	@Test
@@ -164,7 +164,7 @@ public class TypeGraphTaskTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(v2);
 		AttributedEdge e1 = graph.getEdge(v1, v2);
 		assertNotNull(e1);
-		assertEquals(TypeGraphTask.POINTER, e1.getAttribute(TypeGraphTask.TYPE_ATTRIBUTE));
+		assertEquals(TypeGraphTask.REFERENCE, e1.getEdgeType());
 	}
 
 	@Test
@@ -184,7 +184,7 @@ public class TypeGraphTaskTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(v2);
 		AttributedEdge e1 = graph.getEdge(v1, v2);
 		assertNotNull(e1);
-		assertEquals(TypeGraphTask.EMBEDDED, e1.getAttribute(TypeGraphTask.TYPE_ATTRIBUTE));
+		assertEquals(TypeGraphTask.COMPOSITE, e1.getEdgeType());
 	}
 
 	@Test
@@ -205,7 +205,7 @@ public class TypeGraphTaskTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(v2);
 		AttributedEdge e1 = graph.getEdge(v1, v2);
 		assertNotNull(e1);
-		assertEquals(TypeGraphTask.POINTER, e1.getAttribute(TypeGraphTask.TYPE_ATTRIBUTE));
+		assertEquals(TypeGraphTask.REFERENCE, e1.getEdgeType());
 	}
 
 	@Test

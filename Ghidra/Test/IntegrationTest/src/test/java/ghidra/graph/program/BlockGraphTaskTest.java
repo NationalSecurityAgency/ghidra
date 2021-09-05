@@ -21,16 +21,13 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import ghidra.graph.TestGraphDisplay;
-import ghidra.graph.TestGraphService;
+import ghidra.graph.*;
 import ghidra.program.model.block.CodeBlockModel;
 import ghidra.program.util.ProgramSelection;
 import ghidra.service.graph.*;
 import ghidra.util.task.TaskMonitor;
 
 public class BlockGraphTaskTest extends AbstractBlockGraphTest {
-	private static final boolean SHOW_CODE = true;
-	private static final boolean DONT_SHOW_CODE = false;
 
 	@Test
 	public void testBlockGraph() throws Exception {
@@ -39,8 +36,8 @@ public class BlockGraphTaskTest extends AbstractBlockGraphTest {
 			blockModelService.getNewModelByName(modelName, program, true);
 		TestGraphService graphService = new TestGraphService();
 		BlockGraphTask task =
-			new BlockGraphTask("test", false, DONT_SHOW_CODE, false, false,
-				tool, null, null, model, graphService);
+			new BlockGraphTask(new BlockFlowGraphType(), false, false,
+				false, tool, null, null, model, graphService);
 
 		task.monitoredRun(TaskMonitor.DUMMY);
 
@@ -74,7 +71,7 @@ public class BlockGraphTaskTest extends AbstractBlockGraphTest {
 		assertNotNull(e4);
 		assertNotNull(e5);
 
-		Map<String, String> map = v1.getAttributeMap();
+		Map<String, String> map = v1.getAttributes();
 		assertEquals(2, map.size());
 		assertTrue(map.containsKey("Name"));
 		assertTrue(map.containsKey("VertexType"));
@@ -83,14 +80,13 @@ public class BlockGraphTaskTest extends AbstractBlockGraphTest {
 		assertEquals("Body", v4.getAttribute("VertexType"));
 		assertEquals("Exit", v5.getAttribute("VertexType"));
 
-		map = e1.getAttributeMap();
-		assertEquals(2, map.size());
-		assertTrue(map.containsKey("Name"));
+		map = e1.getAttributes();
+		assertEquals(1, map.size());
 		assertTrue(map.containsKey("EdgeType"));
 
-		assertEquals("Fall-Through", e3.getAttribute("EdgeType"));
-		assertEquals("Fall-Through", e4.getAttribute("EdgeType"));
-		assertEquals("Conditional-Jump", e5.getAttribute("EdgeType"));
+		assertEquals("Fall Through", e3.getAttribute("EdgeType"));
+		assertEquals("Fall Through", e4.getAttribute("EdgeType"));
+		assertEquals("Conditional Jump", e5.getAttribute("EdgeType"));
 	}
 
 	@Test
@@ -100,7 +96,7 @@ public class BlockGraphTaskTest extends AbstractBlockGraphTest {
 			blockModelService.getNewModelByName(modelName, program, true);
 		TestGraphService graphService = new TestGraphService();
 		BlockGraphTask task =
-			new BlockGraphTask("test", false, SHOW_CODE, false, false,
+			new BlockGraphTask(new CodeFlowGraphType(), false, false, false,
 				tool, null, null, model, graphService);
 
 		task.monitoredRun(TaskMonitor.DUMMY);
@@ -135,7 +131,7 @@ public class BlockGraphTaskTest extends AbstractBlockGraphTest {
 		assertNotNull(e4);
 		assertNotNull(e5);
 
-		Map<String, String> map = v3.getAttributeMap();
+		Map<String, String> map = v3.getAttributes();
 		assertEquals(4, map.size());
 		assertTrue(map.containsKey("Name"));
 		assertTrue(map.containsKey("VertexType"));
@@ -153,7 +149,7 @@ public class BlockGraphTaskTest extends AbstractBlockGraphTest {
 			blockModelService.getNewModelByName(modelName, program, true);
 		TestGraphService graphService = new TestGraphService();
 		BlockGraphTask task =
-			new BlockGraphTask("test", false, false, false, false,
+			new BlockGraphTask(new CallGraphType(), false, false, false,
 				tool, null, null, model, graphService);
 
 		task.monitoredRun(TaskMonitor.DUMMY);
@@ -174,7 +170,7 @@ public class BlockGraphTaskTest extends AbstractBlockGraphTest {
 		AttributedEdge e1 = graph.getEdge(v1, v2);
 		assertNotNull(e1);
 
-		Map<String, String> map = v1.getAttributeMap();
+		Map<String, String> map = v1.getAttributes();
 		assertEquals(2, map.size());
 		assertTrue(map.containsKey("Name"));
 		assertTrue(map.containsKey("VertexType"));
@@ -182,13 +178,12 @@ public class BlockGraphTaskTest extends AbstractBlockGraphTest {
 		assertEquals("Entry", v1.getAttribute("VertexType"));
 		assertEquals("Entry", v2.getAttribute("VertexType"));
 
-		map = e1.getAttributeMap();
+		map = e1.getAttributes();
 
-		assertEquals(2, map.size());
-		assertTrue(map.containsKey("Name"));
+		assertEquals(1, map.size());
 		assertTrue(map.containsKey("EdgeType"));
 
-		assertEquals("Unconditional-Call", e1.getAttribute("EdgeType"));
+		assertEquals("Unconditional Call", e1.getAttribute("EdgeType"));
 
 	}
 
@@ -200,8 +195,8 @@ public class BlockGraphTaskTest extends AbstractBlockGraphTest {
 		TestGraphService graphService = new TestGraphService();
 		ProgramSelection sel = new ProgramSelection(addr(0x1002239), addr(0x1002247));
 		BlockGraphTask task =
-			new BlockGraphTask("test", false, DONT_SHOW_CODE, false, false,
-				tool, sel, null, model, graphService);
+			new BlockGraphTask(new BlockFlowGraphType(), false, false,
+				false, tool, sel, null, model, graphService);
 
 		task.monitoredRun(TaskMonitor.DUMMY);
 

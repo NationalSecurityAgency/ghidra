@@ -41,7 +41,7 @@ import ghidra.util.task.TaskMonitor;
 public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 
 	private RepositoryAdapter repository;
-	private FileSystemListenerList listeners = new FileSystemListenerList(true);
+	private FileSystemEventManager eventManager = new FileSystemEventManager(true);
 
 	/**
 	 * Construct a new remote file system which corresponds to a remote repository.
@@ -49,7 +49,7 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 	 */
 	public RemoteFileSystem(RepositoryAdapter repository) {
 		this.repository = repository;
-		repository.setFileSystemListener(listeners);
+		repository.setFileSystemListener(eventManager);
 		repository.addListener(this);
 	}
 
@@ -65,12 +65,12 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 
 	@Override
 	public void addFileSystemListener(FileSystemListener listener) {
-		listeners.add(listener);
+		eventManager.add(listener);
 	}
 
 	@Override
 	public void removeFileSystemListener(FileSystemListener listener) {
-		listeners.remove(listener);
+		eventManager.remove(listener);
 	}
 
 	@Override
@@ -230,13 +230,13 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 	@Override
 	public void connectionStateChanged(Object adapter) {
 		if (adapter == repository) {
-			listeners.syncronize();
+			eventManager.syncronize();
 		}
 	}
 
 	@Override
 	public void dispose() {
-		listeners.dispose();
+		eventManager.dispose();
 	}
 
 }

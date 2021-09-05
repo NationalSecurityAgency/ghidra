@@ -311,7 +311,7 @@ public class GraphExportTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private AttributedGraph createGraph() {
-		AttributedGraph graph = new AttributedGraph();
+		AttributedGraph graph = new AttributedGraph("Test", new EmptyGraphType());
 		AttributedVertex vA = graph.addVertex("A");
 		AttributedVertex vB = graph.addVertex("B");
 		AttributedVertex vC = graph.addVertex("C");

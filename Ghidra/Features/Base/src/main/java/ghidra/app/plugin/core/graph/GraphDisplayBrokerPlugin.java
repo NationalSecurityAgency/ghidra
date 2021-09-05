@@ -148,10 +148,10 @@ public class GraphDisplayBrokerPlugin extends Plugin
 	}
 
 	@Override
-	public GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, Map<String, String> properties,
-			TaskMonitor monitor) throws GraphException {
+	public GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, TaskMonitor monitor)
+			throws GraphException {
 		if (defaultGraphDisplayProvider != null) {
-			return defaultGraphDisplayProvider.getGraphDisplay(reuseGraph, properties, monitor);
+			return defaultGraphDisplayProvider.getGraphDisplay(reuseGraph, monitor);
 		}
 		return null;
 	}
@@ -178,7 +178,9 @@ public class GraphDisplayBrokerPlugin extends Plugin
 			super(provider.getName(), owner);
 			this.provider = provider;
 			setMenuBarData(
-				new MenuData(new String[] { "Graph", "Graph Output", provider.getName() }, "z"));
+				new MenuData(
+					new String[] { ToolConstants.MENU_GRAPH, "Graph Output", provider.getName() },
+					"z"));
 			setHelpLocation(provider.getHelpLocation());
 		}
 

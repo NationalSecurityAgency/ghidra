@@ -25,6 +25,7 @@ class XmlArchitectureCapability : public ArchitectureCapability {
   XmlArchitectureCapability(const XmlArchitectureCapability &op2);	///< Not implemented
   XmlArchitectureCapability &operator=(const XmlArchitectureCapability &op2);	///< Not implemented
 public:
+  virtual ~XmlArchitectureCapability(void);
   virtual Architecture *buildArchitecture(const string &filename,const string &target,ostream *estream);
   virtual bool isFileMatch(const string &filename) const;
   virtual bool isXmlMatch(Document *doc) const;

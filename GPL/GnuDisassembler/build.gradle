@@ -36,13 +36,13 @@ ext.binutilsDistro = "${binutils}.tar.bz2"
 
 // Find the GPL dir
 def gplDir = null;
-if (file("../gpl.gradle").exists()) { 
+if (file("../utils.gradle").exists()) { 
 	gplDir = file("..").getCanonicalPath()
 }
 else {
 	// Module lives disconnected from the GPL directory, which it will need to build.
 	// Find a Ghidra installation directory and use its GPL directory.
-	if (file("../../Extensions").exists() && file("../../../GPL/gpl.gradle").exists()) {
+	if (file("../../Extensions").exists() && file("../../../GPL/utils.gradle").exists()) {
 		// Module is installed within a Ghidra installation (i.e, ghidra/Ghidra/Extensions)
 		gplDir = file("../../../GPL").getCanonicalPath()
 	}
@@ -76,7 +76,8 @@ if (findProject(':Generic') != null) {
 }
 else {
 	// Build GPL extension (gdis)
-	apply from: "${gplDir}/gpl.gradle"
+	apply from: "${gplDir}/utils.gradle"
+	apply from: "${gplDir}/nativePlatforms.gradle"
 	apply from: "${gplDir}/nativeBuildProperties.gradle"
 	apply from: "buildGdis.gradle"
 }

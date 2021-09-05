@@ -33,6 +33,7 @@ import ghidra.graph.visualization.GroupVertex;
 import ghidra.service.graph.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
@@ -445,7 +446,18 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		GraphDisplayBroker broker = tool.getService(GraphDisplayBroker.class);
 		GraphDisplayProvider service = broker.getGraphDisplayProvider("Default Graph Display");
 		display = service.getGraphDisplay(false, TaskMonitor.DUMMY);
-		display.setGraph(graph, "test graph", false, TaskMonitor.DUMMY);
+		GraphDisplayOptions options = new GraphDisplayOptions(graph.getGraphType());
+
+		runSwing(() -> {
+
+			try {
+				display.setGraph(graph, options, "test graph", false, TaskMonitor.DUMMY);
+			}
+			catch (CancelledException e) {
+				// can't happen with a dummy monitor
+			}
+		});
+
 		display.setGraphDisplayListener(new TestGraphDisplayListener("test"));
 	}
 
@@ -536,7 +548,7 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private AttributedGraph createGraph() {
-		AttributedGraph g = new AttributedGraph();
+		AttributedGraph g = new AttributedGraph("Test", new EmptyGraphType());
 		a = g.addVertex("A");
 		b = g.addVertex("B");
 		c = g.addVertex("C");

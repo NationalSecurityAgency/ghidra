@@ -221,9 +221,8 @@ task buildDecompilerHelpPdf(type: Exec) {
  */
 task buildDecompilerDocumentationPdfs(type: Exec) {
 	// Check the OS before enabling task.
-	if (!(org.gradle.internal.os.OperatingSystem.current().isLinux() 
-		|| org.gradle.internal.os.OperatingSystem.current().isMacOsX())) {
-			it.enabled = false
+	if (!(isCurrentLinux() || isCurrentMac())) {
+		it.enabled = false
 	}
 
 	workingDir 'src/main/doc'
@@ -388,9 +387,11 @@ model {
 			baseName "decompile"
 									
 			// these tell gradle for which platforms to build a decompiler executable.
-			targetPlatform "win64"
-			targetPlatform "linux64"
-			targetPlatform "osx64"
+			targetPlatform "win_x86_64"
+			targetPlatform "linux_x86_64"
+			targetPlatform "linux_arm_64"
+			targetPlatform "mac_x86_64"
+			targetPlatform "mac_arm_64"
 			sources {
 				cpp {
 					// NOTE: The bison/flex generated files are assumed to be up-to-date.
@@ -486,9 +487,11 @@ model {
 		} // end decompile
 		
 		sleigh(NativeExecutableSpec) {
-			targetPlatform "win64"
-			targetPlatform "linux64"
-			targetPlatform "osx64"
+			targetPlatform "win_x86_64"
+			targetPlatform "linux_x86_64"
+			targetPlatform "linux_arm_64"
+			targetPlatform "mac_x86_64"
+			targetPlatform "mac_arm_64"
 			sources {
 				cpp {
 					// NOTE: The bison/flex generated files are assumed to be up-to-date.
@@ -557,7 +560,7 @@ model {
 					b.cppCompiler.define "_WINDOWS"
 					b.cppCompiler.define "WIN32"
 					b.cppCompiler.define "_WIN32"
-					if (b.targetPlatform.name == "win64") {
+					if (b.targetPlatform.name == "win_x86_64") {
 						b.cppCompiler.define "WIN64"
 						b.cppCompiler.define "_WIN64"
 					}	

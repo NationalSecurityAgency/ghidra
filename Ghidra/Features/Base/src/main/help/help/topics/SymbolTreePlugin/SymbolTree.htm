@@ -78,12 +78,18 @@
         </LI>
       </UL>
 
-      <P align="left"><A name="GroupNode"></A>When a category or symbol has many elements, the
+      <P align="left"><A name="GroupNode"></A>When the label or function category has many elements, the
       Symbol Tree will show <I>group nodes</I> that represent groups of symbols in order to reduce
       the "clutter" in the tree. In the sample image above, the <I>Labels</I> category contains a
       group node (indicated by the <IMG alt="" src="images/openFolderGroup.png"> icon). The
       <I>group node</I> shows the common prefix for all the symbols in the group. The tool tip
       will display the total number of nodes in the group.</P>
+      <P>The group nodes can become out of balance if enough symbols are added/deleted/renamed. The
+      entire category can be reorganized by closing and reopening the category node (Functions, Labels). 
+      Also, the tree will detect if the organization becomes too far out of balance. In this case, the
+      category node (Functions, Labels) will automatically close. Typically, this would be caused by
+      a long running bulk operation such as analysis. This has the added benefit of 
+      speeding up the bulk operation as it will no longer have to keep updating the nodes in the tree.</P> 
 
       <BLOCKQUOTE>
         <P align="left"><IMG alt="" src="../../shared/note.png"> The Symbol Tree does not show

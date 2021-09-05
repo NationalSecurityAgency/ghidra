@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	
+<!-- Log4j appender that writes messages to the {@link LogPanelAppender}. -->
+<LogPanelAppender name="logPanel">
+	<PatternLayout pattern="%-5p %m %ex"/>  
+</LogPanelAppender>
+

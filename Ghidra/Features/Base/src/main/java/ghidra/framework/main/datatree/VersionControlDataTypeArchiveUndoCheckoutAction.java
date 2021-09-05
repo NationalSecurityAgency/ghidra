@@ -65,11 +65,12 @@ public class VersionControlDataTypeArchiveUndoCheckoutAction extends VersionCont
 		undoCheckOut();
 	}
 
-	/**
-	 * Returns true if at least one of the provided domain files is checked out from the repository.
-	 */
 	@Override
 	public boolean isEnabledForContext(DomainFileContext context) {
+		if (isFileSystemBusy()) {
+			return false; // don't block; we should get called again later
+		}
+
 		List<DomainFile> domainFiles = context.getSelectedFiles();
 		for (DomainFile domainFile : domainFiles) {
 			if (domainFile.isCheckedOut()) {
@@ -91,8 +92,8 @@ public class VersionControlDataTypeArchiveUndoCheckoutAction extends VersionCont
 		closeEditorsForUndoCheckOut();
 
 		List<Archive> archiveList = archiveProvider.getArchives();
-		List<DomainFileArchive> unmodifiedCheckOutsList = new ArrayList<DomainFileArchive>();
-		List<DomainFileArchive> modifiedCheckOutsList = new ArrayList<DomainFileArchive>();
+		List<DomainFileArchive> unmodifiedCheckOutsList = new ArrayList<>();
+		List<DomainFileArchive> modifiedCheckOutsList = new ArrayList<>();
 		for (Archive archive2 : archiveList) {
 			ProjectArchive archive = (ProjectArchive) archive2;
 			DomainFile domainFile = archive.getDomainFile();
@@ -134,7 +135,7 @@ public class VersionControlDataTypeArchiveUndoCheckoutAction extends VersionCont
 	 * will be undone.
 	 * @param unmodifiedArchivesList the list of unmodified archives
 	 * @param modifiedArchivesList the list of archives that have been modified
-	 * @throws CancelledException 
+	 * @throws CancelledException if canclled
 	 */
 	protected void undoCheckOuts(List<DomainFileArchive> unmodifiedArchivesList,
 			List<DomainFileArchive> modifiedArchivesList) throws CancelledException {
@@ -169,7 +170,7 @@ public class VersionControlDataTypeArchiveUndoCheckoutAction extends VersionCont
 	private List<DomainFileArchive> getMatchingArchives(List<DomainFileArchive> archivesList,
 			DomainFile[] selectedFiles) {
 		List<DomainFileArchive> archiveList =
-			new ArrayList<DomainFileArchive>(selectedFiles.length);
+			new ArrayList<>(selectedFiles.length);
 		for (DomainFile domainFile : selectedFiles) {
 			DomainFileArchive archive = getArchiveForDomainFile(archivesList, domainFile);
 			if (archive != null) {
@@ -195,7 +196,7 @@ public class VersionControlDataTypeArchiveUndoCheckoutAction extends VersionCont
 	}
 
 	private List<DomainFile> getDomainFileList(List<DomainFileArchive> modifiedArchivesList) {
-		List<DomainFile> dfList = new ArrayList<DomainFile>(modifiedArchivesList.size());
+		List<DomainFile> dfList = new ArrayList<>(modifiedArchivesList.size());
 		for (DomainFileArchive dfArchive : modifiedArchivesList) {
 			dfList.add(dfArchive.getDomainFile());
 		}
@@ -205,6 +206,7 @@ public class VersionControlDataTypeArchiveUndoCheckoutAction extends VersionCont
 	/**
 	 * Saves all checked out changes.
 	 * @param changedList the list of changes
+	 * @throws CancelledException if cancelled
 	 */
 	protected void saveCheckOutChanges(List<DomainFile> changedList) throws CancelledException {
 		if (changedList.size() > 0) {

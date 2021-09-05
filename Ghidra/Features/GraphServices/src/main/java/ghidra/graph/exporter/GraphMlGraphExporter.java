@@ -50,13 +50,13 @@ public class GraphMlGraphExporter extends AbstractAttributedGraphExporter {
 										entry -> new DefaultAttribute<>(entry.getValue(), AttributeType.STRING))));
 
 		graph.vertexSet().stream()
-				.map(Attributed::getAttributeMap)
+				.map(Attributed::getAttributes)
 				.flatMap(m -> m.entrySet().stream())
 				.map(Map.Entry::getKey)
 				.forEach(key -> exporter.registerAttribute(key, GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING));
 
 		graph.edgeSet().stream()
-				.map(Attributed::getAttributeMap)
+				.map(Attributed::getAttributes)
 				.flatMap(m -> m.entrySet().stream())
 				.map(Map.Entry::getKey)
 				.forEach(key -> exporter.registerAttribute(key, GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING));

@@ -43,7 +43,7 @@ data/languages/pic18.cspec||GHIDRA||||END|
 data/languages/pic18.ldefs||GHIDRA||||END|
 data/languages/pic18.pspec||GHIDRA||reviewed||END|
 data/languages/pic18.sinc||GHIDRA||||END|
-data/languages/pic18.slaspec||GHIDRA||reviewed||END|
+data/languages/pic18.slaspec||GHIDRA||||END|
 data/languages/pic18_instructions.sinc||GHIDRA||||END|
 data/manuals/PIC-12.idx||GHIDRA||||END|
 data/manuals/PIC-16.idx||GHIDRA||||END|

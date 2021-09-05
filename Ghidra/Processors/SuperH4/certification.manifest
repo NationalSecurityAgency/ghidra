@@ -1,12 +1,13 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
 data/build.xml||GHIDRA||||END|
-data/languages/SuperH4.cspec||GHIDRA||||END|
 data/languages/SuperH4.ldefs||GHIDRA||||END|
 data/languages/SuperH4.opinion||GHIDRA||||END|
 data/languages/SuperH4.pspec||GHIDRA||||END|
 data/languages/SuperH4.sinc||GHIDRA||||END|
+data/languages/SuperH4_be.cspec||GHIDRA||||END|
 data/languages/SuperH4_be.slaspec||GHIDRA||||END|
+data/languages/SuperH4_le.cspec||GHIDRA||||END|
 data/languages/SuperH4_le.slaspec||GHIDRA||||END|
 data/languages/old/SuperH4-BE-16.lang||GHIDRA||||END|
 data/languages/old/SuperH4-BE-16.trans||GHIDRA||||END|

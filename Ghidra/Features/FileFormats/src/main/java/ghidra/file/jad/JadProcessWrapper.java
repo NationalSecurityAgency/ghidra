@@ -114,8 +114,8 @@ public class JadProcessWrapper {
 
 	private static String getJadPath() throws IOException {
 		File jadExecutableFile =
-			Application.getOSFile((Platform.CURRENT_PLATFORM == Platform.WIN_32 ||
-				Platform.CURRENT_PLATFORM == Platform.WIN_64) ? "jad.exe" : "jad");
+			Application.getOSFile((Platform.CURRENT_PLATFORM == Platform.WIN_X86_32 ||
+				Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) ? "jad.exe" : "jad");
 
 		String jadPath = jadExecutableFile.getAbsolutePath();
 		return jadPath;

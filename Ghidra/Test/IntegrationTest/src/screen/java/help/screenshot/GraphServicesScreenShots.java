@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import docking.ComponentProvider;
 import ghidra.app.services.GraphDisplayBroker;
+import ghidra.graph.CallGraphType;
 import ghidra.graph.export.GraphExporterDialog;
 import ghidra.graph.visualization.DefaultGraphDisplay;
 import ghidra.graph.visualization.DefaultGraphDisplayComponentProvider;
@@ -46,7 +47,7 @@ public class GraphServicesScreenShots extends GhidraScreenShotGenerator {
 		GraphDisplayBroker broker = tool.getService(GraphDisplayBroker.class);
 		GraphDisplayProvider export = broker.getGraphDisplayProvider("Graph Export");
 		GraphDisplay display = export.getGraphDisplay(false, TaskMonitor.DUMMY);
-		AttributedGraph graph = new AttributedGraph();
+		AttributedGraph graph = new AttributedGraph("Test", new EmptyGraphType());
 		display.setGraph(graph, "test", false, TaskMonitor.DUMMY);
 		GraphExporterDialog dialog = (GraphExporterDialog) getDialog();
 		dialog.setFilePath("/users/user1/graph");
@@ -59,18 +60,18 @@ public class GraphServicesScreenShots extends GhidraScreenShotGenerator {
 		GraphDisplayBroker broker = tool.getService(GraphDisplayBroker.class);
 		GraphDisplayProvider export = broker.getGraphDisplayProvider("Default Graph Display");
 		GraphDisplay display = export.getGraphDisplay(false, TaskMonitor.DUMMY);
-		AttributedGraph graph = new AttributedGraph();
+		AttributedGraph graph = new AttributedGraph("Test", new CallGraphType());
 		AttributedVertex v1 = graph.addVertex("0000", "main");
-		v1.setAttribute("VertexType", "Entry");
+		v1.setVertexType("Entry");
 		AttributedVertex v2 = graph.addVertex("0100", "Fun_One");
-		v2.setAttribute("VertexType", "Entry");
+		v2.setVertexType("Entry");
 		AttributedVertex v3 = graph.addVertex("0200", "Fun_Two");
-		v3.setAttribute("VertexType", "Entry");
+		v3.setVertexType("Entry");
 
 		AttributedEdge e1 = graph.addEdge(v1, v2);
-		e1.setAttribute("EdgeType", "Unconditional-Call");
+		e1.setEdgeType("Unconditional-Call");
 		AttributedEdge e2 = graph.addEdge(v1, v3);
-		e2.setAttribute("EdgeType", "Unconditional-Call");
+		e2.setEdgeType("Unconditional-Call");
 
 		display.setGraph(graph, "Program Graph", false, TaskMonitor.DUMMY);
 		waitForSwing();

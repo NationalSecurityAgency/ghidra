@@ -25,32 +25,34 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 
-@DisassemblyInjectInfo(langIDs = {
-	"ARM:LE:32:v8",
-	"ARM:LE:32:v8T",
-	"ARM:LEBE:32:v8LEInstruction",
-	"ARM:BE:32:v8",
-	"ARM:BE:32:v8T",
-	"ARM:LE:32:v7",
-	"ARM:LEBE:32:v7LEInstruction",
-	"ARM:BE:32:v7",
-	"ARM:LE:32:Cortex",
-	"ARM:BE:32:Cortex",
-	"ARM:LE:32:v6",
-	"ARM:BE:32:v6",
-	"ARM:LE:32:v5t",
-	"ARM:BE:32:v5t",
-	"ARM:LE:32:v5",
-	"ARM:BE:32:v5",
-	"ARM:LE:32:v4t",
-	"ARM:BE:32:v4t",
-	"ARM:LE:32:v4",
-	"ARM:BE:32:v4",
-})
+@DisassemblyInjectInfo(
+	langIDs = {
+		"ARM:LE:32:v8",
+		"ARM:LE:32:v8T",
+		"ARM:LEBE:32:v8LEInstruction",
+		"ARM:BE:32:v8",
+		"ARM:BE:32:v8T",
+		"ARM:LE:32:v7",
+		"ARM:LEBE:32:v7LEInstruction",
+		"ARM:BE:32:v7",
+		"ARM:LE:32:Cortex",
+		"ARM:BE:32:Cortex",
+		"ARM:LE:32:v6",
+		"ARM:BE:32:v6",
+		"ARM:LE:32:v5t",
+		"ARM:BE:32:v5t",
+		"ARM:LE:32:v5",
+		"ARM:BE:32:v5",
+		"ARM:LE:32:v4t",
+		"ARM:BE:32:v4t",
+		"ARM:LE:32:v4",
+		"ARM:BE:32:v4",
+	})
 public class ArmDisassemblyInject implements DisassemblyInject {
 	protected static final long THUMB_BIT = 0x20;
 
@@ -78,9 +80,16 @@ public class ArmDisassemblyInject implements DisassemblyInject {
 
 		TraceMemoryRegisterSpace regs =
 			view.getTrace().getMemoryManager().getMemoryRegisterSpace(thread, false);
-		if (regs == null) {
+		/**
+		 * Some variants (particularly Cortex-M) are missing cpsr This seems to indicate it only
+		 * supports THUMB. There is an epsr (xpsr in gdb), but we don't have it in our models, and
+		 * its TMode bit must be set, or it will fault.
+		 */
+		if (regs == null || regs.getState(view.getSnap(), cpsrReg) != TraceMemoryState.KNOWN) {
+			command.setInitialContext(new RegisterValue(tModeReg, BigInteger.ONE));
 			return;
 		}
+
 		RegisterValue cpsrVal = regs.getValue(view.getSnap(), cpsrReg);
 		if (isThumbMode(cpsrVal)) {
 			command.setInitialContext(new RegisterValue(tModeReg, BigInteger.ONE));

@@ -81,7 +81,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 
 	/**
 	 * Constructor.
-	 * @param file path path for root directory.
+	 * @param rootPath path path for root directory.
 	 * @param isVersioned if true item versioning will be enabled.
 	 * @param readOnly if true modifications within this file-system will not be allowed
 	 * and result in an ReadOnlyException
@@ -740,7 +740,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 					subfolder.name = name;
 					folder.folders.put(name, subfolder);
 					if (option == GetFolderOption.CREATE_ALL_NOTIFY) {
-						listeners.folderCreated(folder.getPathname(), name);
+						eventManager.folderCreated(folder.getPathname(), name);
 					}
 				}
 				else {
@@ -943,7 +943,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 			indexJournal.close();
 		}
 
-		listeners.folderCreated(parentPath, getName(path));
+		eventManager.folderCreated(parentPath, getName(path));
 	}
 
 	/*
@@ -978,7 +978,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 			indexJournal.close();
 		}
 
-		listeners.folderDeleted(getParentPath(folderPath), getName(folderPath));
+		eventManager.folderDeleted(getParentPath(folderPath), getName(folderPath));
 	}
 
 	void migrateItem(LocalFolderItem item) throws IOException {
@@ -1085,10 +1085,10 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		}
 
 		if (folderPath.equals(newFolderPath)) {
-			listeners.itemRenamed(folderPath, name, newName);
+			eventManager.itemRenamed(folderPath, name, newName);
 		}
 		else {
-			listeners.itemMoved(folderPath, name, newFolderPath, newName);
+			eventManager.itemMoved(folderPath, name, newFolderPath, newName);
 		}
 
 		deleteEmptyVersionedFolders(folderPath);
@@ -1142,7 +1142,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 
 		updateAffectedItemPaths(folder);
 
-		listeners.folderMoved(parentPath, folderName, newParentPath);
+		eventManager.folderMoved(parentPath, folderName, newParentPath);
 		deleteEmptyVersionedFolders(parentPath);
 	}
 
@@ -1198,7 +1198,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 
 		updateAffectedItemPaths(folder);
 
-		listeners.folderRenamed(parentPath, folderName, newFolderName);
+		eventManager.folderRenamed(parentPath, folderName, newFolderName);
 	}
 
 	/*

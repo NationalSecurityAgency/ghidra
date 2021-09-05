@@ -27,7 +27,7 @@ if (!hasProperty("VISUAL_STUDIO_INSTALL_DIR")) {
 
 def configureVisualStudio() { 
 	
-	if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+	if (isCurrentWindows()) {
 		
 		// Initialize variables
 		rootProject.ext.VISUAL_STUDIO_INSTALL_DIR = ""

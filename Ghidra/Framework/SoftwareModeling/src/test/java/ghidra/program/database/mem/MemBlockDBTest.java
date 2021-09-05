@@ -294,6 +294,25 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		catch (IndexOutOfBoundsException e) {
 			// expected
 		}
+	}
+
+	@Test
+	public void testGetAddressForFileBytesAndOffset() throws Exception {
+		FileBytes fileBytes = createFileBytes();
+		mem.createInitializedBlock("test1", addr(100), fileBytes, 10, 50, false);
+		mem.createInitializedBlock("test2", addr(200), fileBytes, 40, 50, false);
+
+		List<Address> addresses = mem.locateAddressesForFileBytesOffset(fileBytes, 0);
+		assertTrue(addresses.isEmpty());
+
+		addresses = mem.locateAddressesForFileBytesOffset(fileBytes, 10);
+		assertEquals(1, addresses.size());
+		assertEquals(addr(100), addresses.get(0));
+
+		addresses = mem.locateAddressesForFileBytesOffset(fileBytes, 40);
+		assertEquals(2, addresses.size());
+		assertTrue(addresses.contains(addr(130)));
+		assertTrue(addresses.contains(addr(200)));
 
 	}
 

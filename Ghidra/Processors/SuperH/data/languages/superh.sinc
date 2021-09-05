@@ -681,7 +681,7 @@ MovMLReg2_14:  rm_imm_08_11  is MovMLReg2_13load   & rm_imm_08_11 & rm_08_11=14 
 MovMLReg2_14load:  is MovMLReg2_13load  & rm_imm_08_11 { build MovMLReg2_13load; loadRegister(r14,r15); }
 
 MovMLReg2_15:	MovMLReg2_14  is MovMLReg2_14                                    { r0 = r0; }
-MovMLReg2_15:	rm_imm_08_11  is MovMLReg2_14load  & rm_imm_08_11 & rm_08_11=15  { build MovMLReg2_14load; storeRegister(pr,r15); }
+MovMLReg2_15:	rm_imm_08_11  is MovMLReg2_14load  & rm_imm_08_11 & rm_08_11=15  { build MovMLReg2_14load; loadRegister(pr,r15); }
 
 MovMLReg2: MovMLReg2_15  is MovMLReg2_15 {
 	build MovMLReg2_15;

@@ -86,21 +86,6 @@ else {
 	}
 }
 
-/****************************************************************************
- * Create a set containing all the platforms we need when building native
- * artifacts.  This is here for convenience and can be used in a build file
- * with the following syntax:
- *
- *		project.OS_NAMES.each {...}
- ****************************************************************************/
-
-project.ext.set("OS_NAMES", ["osx64", "win32", "win64", "linux64"])
-
-/****************************************************************************
- * Establish Visual Studio configuration environment for Windows native builds
- ****************************************************************************/
-apply from: "GPL/vsconfig.gradle"
-
 /*********************************************************************************
  * Imports
  *  For these tasks to be available on all subprojects, this MUST be placed 
@@ -112,12 +97,14 @@ apply from: "GPL/vsconfig.gradle"
  * 		Eventually distribution.gradle will be removed entirely, but it is included
  *		here for the time being for those who need it.
  *********************************************************************************/
-apply from: "gradle/root/test.gradle"                     // adds tasks for running tests
-apply from: "gradle/root/prepDev.gradle"					// adds prepDev task for each subproject
-apply from: 'gradle/root/distribution.gradle'				// adds zip tasks
-apply from: 'gradle/root/usage.gradle'						// adds task documentation
-apply from: "gradle/root/svg.gradle"						// adds task to process svg files
-apply from: "gradle/root/jacoco.gradle"                   // adds tasks for java code coverage
+apply from: "GPL/utils.gradle"                // adds utilities used in both Ghidra and GPL projects
+apply from: "GPL/nativePlatforms.gradle"      // adds native platform support
+apply from: "gradle/root/test.gradle"         // adds tasks for running tests
+apply from: "gradle/root/prepDev.gradle"      // adds prepDev task for each subproject
+apply from: 'gradle/root/distribution.gradle' // adds zip tasks
+apply from: 'gradle/root/usage.gradle'        // adds task documentation
+apply from: "gradle/root/svg.gradle"          // adds task to process svg files
+apply from: "gradle/root/jacoco.gradle"       // adds tasks for java code coverage
 
 
 apply plugin: 'base'
@@ -130,69 +117,6 @@ clean {
  * Utility methods used by multiple build.gradle files
  *
  *****************************************************************************************/	
-	
-/*********************************************************************************
- * Returns true if the platform is a linux machine.
- *********************************************************************************/
-def isLinux(String platformName) {
-	return platformName.startsWith("linux")
-}
-
-
-/*********************************************************************************
- * Returns true if the platform is a mac
- *********************************************************************************/
-def isMac(String platformName) {
-	return platformName.startsWith("osx")
-}
-
-
-/*********************************************************************************
- * Returns true if the platform is a Windows machine.
- *********************************************************************************/
-def isWindows(String platformName) {
-	return platformName.startsWith("win")
-}
-
-/******************************************************************************************
- *	Helper method that returns a file that is the same relative location in the bin repo
- *  as the given project is in its repo.
- ******************************************************************************************/
-File getProjectLocationInBinRepo(Project p) {
-	String relativePath = getGhidraRelativePath(p)
-	
-	File binRepoRootProject = new File("${BIN_REPO}")
-	return new File(binRepoRootProject, relativePath)
-}
-
-/****************************************************************************************
- * Returns the "effective" relative path (Path starting with Ghidra)
- * Normally, for files in the ghidra repo this is just the relative path from 
- * the root project (ghidra) to the given project.  
- *
- *  For example <...>/ghidra/Ghidra/Features/Base will return Ghidra/Features/Base
- *
- *  If the project is in a sibling repo (ghidra.<other> that lives in the same directory
- *  as ghidra), then this method returns a relative path as though the project lived
- *  in ghidra.  
- *
- *	for example <...>/ghidra.foo/Ghidra/Features/OtherProject will return Ghidra/Features/OtherProject
- ****************************************************************************************/
-String getGhidraRelativePath(Project p) {
-	String path = rootProject.relativePath(p.projectDir)
-
-	// If the project lives outside the ghidra repo, then its relative path will
-	// start with "../".  In this case, we want to remove the "../" and the next path element
-	// so that the path will appear as though the project lived under the ghidra repo.
-	// example:   "../ghidra/Ghidra/Features/Foo"  will get changed to "Ghidra/Features/Foo"
-	String prefix = ".."+File.separator
-	if (path.startsWith(prefix)) {
-		int index = path.indexOf(File.separator,3)
-		path = path.substring(index+1)
-	}
-
-	return path
-}
 
 /*********************************************************************************
  * Returns a relative path from the root (ghidra) to the project's directory.
@@ -269,42 +193,6 @@ def getCurrentDateTimeLong() {
 	def date = new Date()
 	def formattedDate = date.format('yyyy-MMM-dd HHmm z')
 	return formattedDate
-}
-
-/*********************************************************************************
- * Returns the local platform name.
- *********************************************************************************/
-String getCurrentPlatformName() {
-
-	String osName = System.getProperty("os.name")
-	String archName = System.getProperty("os.arch")
-		
-	boolean isX86_32 = archName.equals("x86") || archName.equals("i386");
-	boolean isX86_64 = archName.equals("x86_64") || archName.equals("amd64");
-	boolean isAARCH_64 = archName.equals("aarch64");
-
-	if (osName.startsWith("Windows")) {
-		if (isX86_32) {
-			return 'win32'
-		}
-		else if (isX86_64) {
-			return 'win64'
-		}
-	}
-	else if (osName.startsWith("Linux")) {
-		if (isX86_64) {
-			return 'linux64'
-		}
-	}
-	else if (osName.startsWith("Mac OS X")) {
-		if (isX86_64) {
-			return 'osx64'
-		}
-		if (isAARCH_64) {
-			return 'aarch64'
-		}
-	}
-	throw new GradleException("Unrecognized current platform -> osName = $osName, archName = $archName")
 }
 
 /*********************************************************************************

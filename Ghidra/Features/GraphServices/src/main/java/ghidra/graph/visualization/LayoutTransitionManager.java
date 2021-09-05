@@ -15,10 +15,6 @@
  */
 package ghidra.graph.visualization;
 
-import static ghidra.graph.visualization.LayoutFunction.*;
-
-import java.util.Comparator;
-import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -30,8 +26,7 @@ import org.jungrapht.visualization.layout.model.Rectangle;
 import org.jungrapht.visualization.util.LayoutAlgorithmTransition;
 import org.jungrapht.visualization.util.LayoutPaintable;
 
-import ghidra.service.graph.AttributedEdge;
-import ghidra.service.graph.AttributedVertex;
+import ghidra.service.graph.*;
 
 /**
  * Manages the selection and transition from one {@link LayoutAlgorithm} to another
@@ -73,14 +68,13 @@ class LayoutTransitionManager {
 	public LayoutTransitionManager(
 			VisualizationServer<AttributedVertex, AttributedEdge> visualizationServer,
 			Predicate<AttributedVertex> rootPredicate,
-			List<String> edgeTypePriorityList,
-			Predicate<AttributedEdge> favoredEdgePredicate) {
+			GraphRenderer renderer) {
+
 		this.visualizationServer = visualizationServer;
 		this.rootPredicate = rootPredicate;
 		this.renderContext = visualizationServer.getRenderContext();
 		this.vertexBoundsFunction = visualizationServer.getRenderContext().getVertexBoundsFunction();
-		this.layoutFunction = new LayoutFunction(new EdgeComparator(edgeTypePriorityList),
-				favoredEdgePredicate);
+		this.layoutFunction = new LayoutFunction(renderer);
 	}
 
 	/**
@@ -144,7 +138,7 @@ class LayoutTransitionManager {
 	 */
 	public LayoutAlgorithm<AttributedVertex> getInitialLayoutAlgorithm() {
 		LayoutAlgorithm<AttributedVertex> initialLayoutAlgorithm =
-			layoutFunction.apply(TIDIER_TREE).build();
+			layoutFunction.apply(LayoutAlgorithmNames.COMPACT_HIERACHICAL).build();
 
 		if (initialLayoutAlgorithm instanceof TreeLayout) {
 			((TreeLayout<AttributedVertex>) initialLayoutAlgorithm)
@@ -157,11 +151,4 @@ class LayoutTransitionManager {
 		return initialLayoutAlgorithm;
 	}
 
-	/**
-	 * Supplies a {@code String[]} array of the supported layout names
-	 * @return
-	 */
-	public String[] getLayoutNames() {
-		return layoutFunction.getNames();
-	}
 }

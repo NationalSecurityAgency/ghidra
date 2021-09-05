@@ -23,5 +23,6 @@ pcodetest/c_src/ParameterPassing2.test||GHIDRA||||END|
 pcodetest/c_src/ParameterPassing3.test||GHIDRA||||END|
 pcodetest/c_src/PointerManipulation.test||GHIDRA||||END|
 pcodetest/c_src/StructUnionManipulation.test||GHIDRA||||END|
+pcodetest/c_src/arm/arm.test||GHIDRA||||END|
 pcodetest/c_src/misc.test||GHIDRA||||END|
 pcodetest/c_src/msp430x.ld||GHIDRA||||END|

@@ -16,13 +16,12 @@
 package ghidra.base.project;
 
 import static generic.test.AbstractGTest.*;
-import static generic.test.AbstractGenericTest.getInstanceField;
 import static generic.test.AbstractGenericTest.invokeInstanceMethod;
 import static generic.test.TestUtils.*;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -32,7 +31,7 @@ import ghidra.framework.data.*;
 import ghidra.framework.model.*;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.FileSystem;
-import ghidra.framework.store.FileSystemListener;
+import ghidra.framework.store.FileSystemEventManager;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.program.model.listing.Program;
 import ghidra.test.TestEnv;
@@ -397,10 +396,16 @@ public class FakeSharedProject {
 
 	private void waitForFileSystemEvents() {
 		LocalFileSystem versionedFileSystem = getVersionedFileSystem();
-		FileSystemListener listener =
-			(FileSystemListener) invokeInstanceMethod("getListener", versionedFileSystem);
-		List<?> eventList = (List<?>) getInstanceField("events", listener);
-		waitForCondition(() -> eventList.isEmpty());
+		FileSystemEventManager eventManager =
+			(FileSystemEventManager) TestUtils.getInstanceField("eventManager",
+				versionedFileSystem);
+
+		try {
+			eventManager.flushEvents(DEFAULT_WAIT_TIMEOUT, TimeUnit.MILLISECONDS);
+		}
+		catch (InterruptedException e) {
+			failWithException("Interrupted waiting for filesystem events", e);
+		}
 	}
 
 	private DomainFolder getFolder(String path) throws Exception {

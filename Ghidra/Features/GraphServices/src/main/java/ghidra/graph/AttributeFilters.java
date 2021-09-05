@@ -155,7 +155,7 @@ public class AttributeFilters implements ItemSelectable {
 
 		// count up the unique attribute values (skipping the 'precluded names' we know we don't want)
 		for (Attributed element : elements) {
-			Map<String, String> attributeMap = new HashMap<>(element.getAttributeMap());
+			Map<String, String> attributeMap = new HashMap<>(element.getAttributes());
 			for (Map.Entry<String, String> entry : attributeMap.entrySet()) {
 				if (!precludedNames.contains(entry.getKey())) {
 					multiset.add(entry.getValue());

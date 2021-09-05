@@ -81,7 +81,7 @@ public class DisplayFilteredGraphAction extends DisplayFilteredAction {
 	@Override
 	protected void finishGetOffspring(ObjectContainer container, final List<String> path) {
 		GraphDisplayProvider graphProvider = graphBroker.getDefaultGraphDisplayProvider();
-		AttributedGraph graph = new AttributedGraph();
+		AttributedGraph graph = new AttributedGraph(container.getName(), new EmptyGraphType());
 		AttributedVertex start = graph.addVertex(container.getName(), container.toString());
 		graphContainer(container, graph, start);
 		try {
