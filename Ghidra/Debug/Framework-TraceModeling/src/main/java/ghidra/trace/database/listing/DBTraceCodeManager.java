@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.listing;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -149,7 +149,7 @@ public class DBTraceCodeManager
 		static RegisterValue getBaseContextValue(Language language, byte[] context,
 				Address address) {
 			Register register = language.getContextBaseRegister();
-			if (register == null) {
+			if (register == Register.NO_CONTEXT) {
 				return null;
 			}
 			if (context == null) {
@@ -193,8 +193,7 @@ public class DBTraceCodeManager
 
 	protected final Map<AddressSnap, UndefinedDBTraceData> undefinedCache =
 		CacheBuilder.newBuilder()
-				.removalListener(
-					this::undefinedRemovedFromCache)
+				.removalListener(this::undefinedRemovedFromCache)
 				.weakValues()
 				.build()
 				.asMap();
@@ -356,8 +355,8 @@ public class DBTraceCodeManager
 		}
 		monitor.setMessage("Clearing instruction prototypes");
 		monitor.setMaximum(protoStore.getRecordCount());
-		for (Iterator<DBTraceCodePrototypeEntry> it =
-			protoStore.asMap().values().iterator(); it.hasNext();) {
+		for (Iterator<DBTraceCodePrototypeEntry> it = protoStore.asMap().values().iterator(); it
+				.hasNext();) {
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
 			DBTraceCodePrototypeEntry protoEnt = it.next();
@@ -491,9 +490,9 @@ public class DBTraceCodeManager
 		}
 		Collection<AbstractDBTraceCodeUnit<?>> changes = new ArrayList<>();
 		for (DBTraceCodeSpace space : memSpaces.values()) {
-			changes.addAll(space.dataMapSpace
-					.reduce(TraceAddressSnapRangeQuery.added(from, to, space.space))
-					.values());
+			changes.addAll(
+				space.dataMapSpace.reduce(TraceAddressSnapRangeQuery.added(from, to, space.space))
+						.values());
 			changes.addAll(space.instructionMapSpace
 					.reduce(TraceAddressSnapRangeQuery.added(from, to, space.space))
 					.values());
@@ -512,9 +511,9 @@ public class DBTraceCodeManager
 		}
 		Collection<AbstractDBTraceCodeUnit<?>> changes = new ArrayList<>();
 		for (DBTraceCodeSpace space : memSpaces.values()) {
-			changes.addAll(space.dataMapSpace
-					.reduce(TraceAddressSnapRangeQuery.removed(from, to, space.space))
-					.values());
+			changes.addAll(
+				space.dataMapSpace.reduce(TraceAddressSnapRangeQuery.removed(from, to, space.space))
+						.values());
 			changes.addAll(space.instructionMapSpace
 					.reduce(TraceAddressSnapRangeQuery.removed(from, to, space.space))
 					.values());

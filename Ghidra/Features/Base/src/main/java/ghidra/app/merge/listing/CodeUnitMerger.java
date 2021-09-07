@@ -147,10 +147,10 @@ class CodeUnitMerger extends AbstractListingMerger {
 		mergeLatest = listingMergeMgr.mergeLatest;
 		mergeOriginal = listingMergeMgr.mergeOriginal;
 
-		myResolvedDts = (Map<Long, DataType>) mergeManager.getResolveInformation(
-			MergeConstants.RESOLVED_MY_DTS);
-		origResolvedDts = (Map<Long, DataType>) mergeManager.getResolveInformation(
-			MergeConstants.RESOLVED_ORIGINAL_DTS);
+		myResolvedDts = (Map<Long, DataType>) mergeManager
+				.getResolveInformation(MergeConstants.RESOLVED_MY_DTS);
+		origResolvedDts = (Map<Long, DataType>) mergeManager
+				.getResolveInformation(MergeConstants.RESOLVED_ORIGINAL_DTS);
 
 		mergedCodeUnits = new AddressSet();
 
@@ -775,7 +775,7 @@ class CodeUnitMerger extends AbstractListingMerger {
 			// May cause the merge code unit to lose info attached to it, such as references.
 			resultListing.clearCodeUnits(range.getMinAddress(), range.getMaxAddress(), false);
 
-			if (contextReg != null) {
+			if (contextReg != Register.NO_CONTEXT) {
 				// Copy context register value
 				mergeProgramContext(resultContext, originContext,
 					originContext.getBaseContextRegister(), range, monitor);

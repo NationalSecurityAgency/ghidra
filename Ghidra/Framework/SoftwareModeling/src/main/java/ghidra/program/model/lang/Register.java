@@ -43,8 +43,9 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	/** Register can be used in SIMD operations **/
 	public final static int TYPE_VECTOR = 128;
 
-	public final static Register DEFAULT_CONTEXT =
-		new Register("DEFAULT_CONTEXT", "DEFAULT_CONTEXT", Address.NO_ADDRESS, 4, true, 0);
+	/** Register used to denote NO defined context for a language **/
+	public final static Register NO_CONTEXT =
+		new Register("NO_CONTEXT", "NO_CONTEXT", Address.NO_ADDRESS, 4, true, 0);
 
 	private String name;
 	private String description; // description of the register

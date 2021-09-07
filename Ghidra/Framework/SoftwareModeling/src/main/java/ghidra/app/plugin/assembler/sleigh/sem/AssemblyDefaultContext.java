@@ -57,7 +57,7 @@ public class AssemblyDefaultContext implements DisassemblerContext, DefaultProgr
 		this.lang = lang;
 		this.at = at;
 		Register ctxreg = lang.getContextBaseRegister();
-		if (null == ctxreg) {
+		if (ctxreg == Register.NO_CONTEXT) {
 			this.defctx = AssemblyPatternBlock.nop();
 			this.curctx = AssemblyPatternBlock.nop();
 		}

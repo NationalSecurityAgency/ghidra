@@ -143,8 +143,8 @@ public class OldLanguageFactory {
 					langSvc.getLanguageDescription(oldLang.getLanguageID());
 				if (curDescr.getVersion() <= oldDescr.getVersion()) {
 					// Ignore old versions which are inappropriate
-					log.warn("WARNING! Ignoring old language spec, version still exists: " +
-						oldLang);
+					log.warn(
+						"WARNING! Ignoring old language spec, version still exists: " + oldLang);
 					continue;
 				}
 			}
@@ -208,8 +208,8 @@ public class OldLanguageFactory {
 	 * @throws IOException if file error occurs
 	 * @throws LanguageNotFoundException if lang is unknown to DefaultLanguageService
 	 */
-	public static void createOldLanguageFile(Language lang, File file) throws IOException,
-			LanguageNotFoundException {
+	public static void createOldLanguageFile(Language lang, File file)
+			throws IOException, LanguageNotFoundException {
 
 		LanguageService languageService = DefaultLanguageService.getLanguageService();
 		if (lang instanceof OldLanguage) {
@@ -272,7 +272,7 @@ public class OldLanguageFactory {
 
 		Register contextReg = lang.getContextBaseRegister();
 		Element registersElement = new Element("registers");
-		if (contextReg != null) {
+		if (contextReg != Register.NO_CONTEXT) {
 			Element ctxElement = getRegisterElement(contextReg);
 			int contextBitLength = contextReg.getBitLength();
 			for (Register bitReg : contextReg.getChildRegisters()) {
