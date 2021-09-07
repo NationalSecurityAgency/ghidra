@@ -43,8 +43,6 @@ public class SH4EarlyAddressAnalyzer extends SH4AddressAnalyzer {
 			AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
 			throws CancelledException {
 
-		final AddressSet coveredSet = new AddressSet();
-
 		// follow all flows building up context
 		// use context to fill out addresses on certain instructions
 		ContextEvaluator eval = new ConstantPropagationContextEvaluator(trustWriteMemOption) {
@@ -83,10 +81,6 @@ public class SH4EarlyAddressAnalyzer extends SH4AddressAnalyzer {
 		};
 
 		AddressSet resultSet = symEval.flowConstants(flowStart, null, eval, true, monitor);
-
-		// Add in any addresses we should assume got covered
-		//   These addresses are put on because we had to stop analysis due to an unknown register value
-		resultSet.add(coveredSet);
 
 		return resultSet;
 	}
