@@ -474,14 +474,14 @@ public class ProgramMerge implements PropertyVisitor {
 			Address max = range.getMaxAddress();
 			Instruction instr = listing.getInstructionContaining(min);
 			if (instr != null) {
-				instructionSet.add(
-					new AddressRangeImpl(instr.getMinAddress(), instr.getMaxAddress()));
+				instructionSet
+						.add(new AddressRangeImpl(instr.getMinAddress(), instr.getMaxAddress()));
 			}
 			InstructionIterator instIter = listing.getInstructions(new AddressSet(min, max), true);
 			while (instIter.hasNext()) {
 				instr = instIter.next();
-				instructionSet.add(
-					new AddressRangeImpl(instr.getMinAddress(), instr.getMaxAddress()));
+				instructionSet
+						.add(new AddressRangeImpl(instr.getMinAddress(), instr.getMaxAddress()));
 			}
 		}
 		return instructionSet;
@@ -563,8 +563,8 @@ public class ProgramMerge implements PropertyVisitor {
 					resultRange.getMaxAddress(), false);
 
 				try {
-					if (resultContextReg != null) {
-						if (originContextReg != null) {
+					if (resultContextReg != Register.NO_CONTEXT) {
+						if (originContextReg != Register.NO_CONTEXT) {
 							// Copy context register value
 							mergeProgramContext(resultContext, originContext,
 								originContext.getBaseContextRegister(), newOriginRange, resultRange,
@@ -759,15 +759,16 @@ public class ProgramMerge implements PropertyVisitor {
 		DisassemblerContextImpl context = new DisassemblerContextImpl(program.getProgramContext());
 		context.flowStart(addr);
 		try {
-			InstructionPrototype proto = program.getLanguage().parse(
-				new DumbMemBufferImpl(program.getMemory(), addr), context, false);
+			InstructionPrototype proto = program.getLanguage()
+					.parse(new DumbMemBufferImpl(program.getMemory(), addr), context, false);
 			return resultListing.createInstruction(addr, proto,
 				new DumbMemBufferImpl(program.getMemory(), addr),
 				new ProgramProcessorContext(program.getProgramContext(), addr));
 		}
 		catch (Exception e) {
-			program.getBookmarkManager().setBookmark(addr, BookmarkType.ERROR,
-				Disassembler.ERROR_BOOKMARK_CATEGORY, "Diff/Merge applied bad instruction");
+			program.getBookmarkManager()
+					.setBookmark(addr, BookmarkType.ERROR, Disassembler.ERROR_BOOKMARK_CATEGORY,
+						"Diff/Merge applied bad instruction");
 		}
 		return null;
 	}
@@ -1251,8 +1252,8 @@ public class ProgramMerge implements PropertyVisitor {
 		}
 		ReferenceManager resultRM = resultProgram.getReferenceManager();
 		Reference[] resultRefs = resultRM.getReferencesFrom(resultCu.getMinAddress(), opIndex);
-		Reference[] originRefs = originProgram.getReferenceManager().getReferencesFrom(
-			originCu.getMinAddress(), opIndex);
+		Reference[] originRefs = originProgram.getReferenceManager()
+				.getReferencesFrom(originCu.getMinAddress(), opIndex);
 		HashMap<Reference, Reference> resultsToKeep = new HashMap<>(); // key=OriginRef, value=ResultRef
 		// Determine the result references to keep that match the origin references.
 		for (Reference originRef : originRefs) {

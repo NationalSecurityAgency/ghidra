@@ -90,7 +90,7 @@ public class SleighDebugLogger {
 
 		ContextCache contextCache = new ContextCache();
 		contextBaseRegister = language.getContextBaseRegister();
-		if (contextBaseRegister != null) {
+		if (contextBaseRegister != Register.NO_CONTEXT) {
 			contextCache.registerVariable(contextBaseRegister);
 		}
 

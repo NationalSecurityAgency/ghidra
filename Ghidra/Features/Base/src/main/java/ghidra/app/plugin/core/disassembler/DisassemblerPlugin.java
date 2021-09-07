@@ -149,15 +149,12 @@ public class DisassemblerPlugin extends Plugin {
 			return;
 		}
 		Options options = program.getOptions(Program.DISASSEMBLER_PROPERTIES);
-		options.registerOption(Disassembler.MARK_BAD_INSTRUCTION_PROPERTY, true,
-			null, "Place ERROR Bookmark at locations where disassembly could not be perfomed.");
-		options.registerOption(
-			Disassembler.MARK_UNIMPL_PCODE_PROPERTY,
-			true,
-			null,
+		options.registerOption(Disassembler.MARK_BAD_INSTRUCTION_PROPERTY, true, null,
+			"Place ERROR Bookmark at locations where disassembly could not be perfomed.");
+		options.registerOption(Disassembler.MARK_UNIMPL_PCODE_PROPERTY, true, null,
 			"Place WARNING Bookmark at locations where a disassembled instruction has unimplemented pcode.");
-		options.registerOption(Disassembler.RESTRICT_DISASSEMBLY_TO_EXECUTE_MEMORY_PROPERTY,
-			false, null, "Restrict disassembly to executable memory blocks.");
+		options.registerOption(Disassembler.RESTRICT_DISASSEMBLY_TO_EXECUTE_MEMORY_PROPERTY, false,
+			null, "Restrict disassembly to executable memory blocks.");
 	}
 
 	//////////////////////////////////////////////////////////////////////
@@ -179,7 +176,7 @@ public class DisassemblerPlugin extends Plugin {
 		mipsDisassembleAction = new MipsDisassembleAction(this, GROUP_NAME, false);
 		mips16DisassembleAction = new MipsDisassembleAction(this, GROUP_NAME, true);
 		ppcDisassembleAction = new PowerPCDisassembleAction(this, GROUP_NAME, false);
-		ppcVleDisassembleAction= new PowerPCDisassembleAction(this, GROUP_NAME, true);
+		ppcVleDisassembleAction = new PowerPCDisassembleAction(this, GROUP_NAME, true);
 		setFlowOverrideAction = new SetFlowOverrideAction(this, GROUP_NAME);
 
 		tool.addAction(disassembleAction);
@@ -236,8 +233,8 @@ public class DisassemblerPlugin extends Plugin {
 		Program currentProgram = context.getProgram();
 		DisassembleCommand cmd = null;
 
-		boolean isDynamicListing =
-			(context instanceof CodeViewerActionContext && ((CodeViewerActionContext) context).isDyanmicListing());
+		boolean isDynamicListing = (context instanceof CodeViewerActionContext &&
+			((CodeViewerActionContext) context).isDyanmicListing());
 
 		if ((currentSelection != null) && (!currentSelection.isEmpty())) {
 			cmd = new DisassembleCommand(currentSelection, null, true);
@@ -276,7 +273,8 @@ public class DisassemblerPlugin extends Plugin {
 		}
 	}
 
-	boolean checkDisassemblyEnabled(ListingActionContext context, Address address, boolean followPtr) {
+	boolean checkDisassemblyEnabled(ListingActionContext context, Address address,
+			boolean followPtr) {
 		ProgramSelection currentSelection = context.getSelection();
 		Program currentProgram = context.getProgram();
 		if ((currentSelection != null) && (!currentSelection.isEmpty())) {
@@ -304,7 +302,7 @@ public class DisassemblerPlugin extends Plugin {
 	public void setDefaultContext(ListingActionContext context) {
 		Program contextProgram = context.getProgram();
 		Register baseContextReg = contextProgram.getLanguage().getContextBaseRegister();
-		if (baseContextReg != null && baseContextReg.hasChildren()) {
+		if (baseContextReg != Register.NO_CONTEXT && baseContextReg.hasChildren()) {
 			tool.showDialog(new ProcessorStateDialog(contextProgram.getProgramContext()),
 				context.getComponentProvider());
 		}
@@ -312,7 +310,7 @@ public class DisassemblerPlugin extends Plugin {
 
 	public boolean hasContextRegisters(Program currentProgram) {
 		Register baseContextReg = currentProgram.getLanguage().getContextBaseRegister();
-		return baseContextReg != null && baseContextReg.hasChildren();
+		return baseContextReg != Register.NO_CONTEXT && baseContextReg.hasChildren();
 	}
 
 	public void disassembleArmCallback(ListingActionContext context, boolean thumbMode) {
@@ -338,7 +336,7 @@ public class DisassemblerPlugin extends Plugin {
 			tool.executeBackgroundCommand(cmd, currentProgram);
 		}
 	}
-	
+
 	public void disassembleHcs12Callback(ListingActionContext context, boolean xgMode) {
 		ProgramSelection currentSelection = context.getSelection();
 		ProgramLocation currentLocation = context.getLocation();
@@ -362,7 +360,7 @@ public class DisassemblerPlugin extends Plugin {
 			tool.executeBackgroundCommand(cmd, currentProgram);
 		}
 	}
-	
+
 	public void disassembleMipsCallback(ListingActionContext context, boolean mips16) {
 		ProgramSelection currentSelection = context.getSelection();
 		ProgramLocation currentLocation = context.getLocation();
@@ -392,7 +390,7 @@ public class DisassemblerPlugin extends Plugin {
 		ProgramLocation currentLocation = context.getLocation();
 		Program currentProgram = context.getProgram();
 		PowerPCDisassembleCommand cmd = null;
-		
+
 		if ((currentSelection != null) && (!currentSelection.isEmpty())) {
 			cmd = new PowerPCDisassembleCommand(currentSelection, null, vle);
 		}

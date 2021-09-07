@@ -254,7 +254,7 @@ public interface Language {
 	/**
 	 * Returns processor context base register or null if one has not been defined by the
 	 * language. 
-	 * @return base context register or null if not defined
+	 * @return base context register or Register.NO_CONTEXT if not defined
 	 */
 	public Register getContextBaseRegister();
 

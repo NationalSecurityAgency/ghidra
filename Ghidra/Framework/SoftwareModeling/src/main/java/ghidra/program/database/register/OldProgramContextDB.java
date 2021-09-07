@@ -86,10 +86,6 @@ public class OldProgramContextDB implements ProgramContext, DefaultProgramContex
 		valueMaps = new HashMap<>();
 
 		baseContextRegister = language.getContextBaseRegister();
-		if (baseContextRegister == null) {
-			baseContextRegister = new Register("DEFAULT_CONTEXT", "DEFAULT_CONTEXT",
-				addrMap.getAddressFactory().getRegisterSpace().getAddress(0x0), 4, true, 0);
-		}
 		defaultDisassemblyContext = new RegisterValue(baseContextRegister);
 
 		initializeDefaultValues(language);

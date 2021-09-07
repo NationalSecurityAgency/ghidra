@@ -36,6 +36,7 @@ import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Swing;
 import ghidra.util.table.GhidraProgramTableModel;
 import ghidra.util.table.actions.DeleteTableRowAction;
 import ghidra.util.task.SwingUpdateManager;
@@ -73,7 +74,7 @@ public class TableServicePlugin extends ProgramPlugin
 		// Unusual Code: We, as a plugin, don't have any actions.  Our transient tables do have
 		// 			     actions.  We need a way to have keybindings shared for all the different
 		//				 actions.  Further, we need to register them now, not when the transient
-		//               providers are created, as they would only appear in the options at 
+		//               providers are created, as they would only appear in the options at
 		//               that point.
 		//
 		DeleteTableRowAction.registerDummy(tool, getName());
@@ -265,16 +266,13 @@ public class TableServicePlugin extends ProgramPlugin
 			navigatable = gotoService.getDefaultNavigatable();
 		}
 
-		TableChooserDialog dialog =
-			new MyTableChooserDialog(this, executor, program, title, navigatable, isModal);
+		Navigatable nav = navigatable;
+		TableChooserDialog dialog = Swing.runNow(
+			() -> new MyTableChooserDialog(this, executor, program, title, nav, isModal));
 
-		List<TableChooserDialog> list = programToDialogMap.get(program);
-		if (list == null) {
-			list = new ArrayList<>();
-			programToDialogMap.put(program, list);
-		}
+		List<TableChooserDialog> list =
+			programToDialogMap.computeIfAbsent(program, p -> new ArrayList<>());
 		list.add(dialog);
 		return dialog;
 	}
-
 }

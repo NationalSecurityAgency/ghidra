@@ -472,8 +472,11 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 					if (prototype.hasDelaySlots()) {
 						// perform bounds check on entire delay slot instruction group
 						try {
-							endAddr = startAddr.addNoWrap(prototype.getFallThroughOffset(
-								protoInstr.getInstructionContext())).previous();
+							endAddr =
+								startAddr
+										.addNoWrap(prototype.getFallThroughOffset(
+											protoInstr.getInstructionContext()))
+										.previous();
 						}
 						catch (AddressOverflowException e) {
 							break;
@@ -553,9 +556,10 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 					InstructionPrototype prototype = lastInstruction.getPrototype();
 					if (prototype.hasDelaySlots()) {
 						try {
-							maxAddr = lastInstruction.getAddress().addNoWrap(
-								prototype.getFallThroughOffset(
-									lastInstruction.getInstructionContext())).previous();
+							maxAddr = lastInstruction.getAddress()
+									.addNoWrap(prototype.getFallThroughOffset(
+										lastInstruction.getInstructionContext()))
+									.previous();
 						}
 						catch (AddressOverflowException e) {
 							// ignore
@@ -630,7 +634,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		prototype = protoMgr.getPrototype(protoID);
 
 		Register contextReg = contextMgr.getBaseContextRegister();
-		if (contextReg != null) {
+		if (contextReg != Register.NO_CONTEXT) {
 			try {
 				RegisterValue contextValue = context.getRegisterValue(contextReg);
 				Address start = address;
@@ -2989,8 +2993,8 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 				boolean isFallthrough =
 					(flowType.isJump() && flowAddr.equals(inst.getMaxAddress().next()));
 				if (!isFallthrough) {
-					mnemonicPrimaryRef = addDefaultMemoryReferenceIfMissing(inst, Reference.MNEMONIC,
-						flowAddr, flowType, oldRefList, mnemonicPrimaryRef);
+					mnemonicPrimaryRef = addDefaultMemoryReferenceIfMissing(inst,
+						Reference.MNEMONIC, flowAddr, flowType, oldRefList, mnemonicPrimaryRef);
 				}
 			}
 		}
@@ -3020,8 +3024,8 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * @param operandPrimaryRef current preferred primary reference for operand
 	 * @return updated preferred primary address for operand (i.e., operandPrimaryRef)
 	 */
-	private Reference addDefaultMemoryReferenceIfMissing(Instruction inst,
-			int opIndex, Address refAddr, RefType refType, List<Reference> oldRefList,
+	private Reference addDefaultMemoryReferenceIfMissing(Instruction inst, int opIndex,
+			Address refAddr, RefType refType, List<Reference> oldRefList,
 			Reference operandPrimaryRef) {
 
 		Reference ref = removeOldReference(oldRefList, refAddr, opIndex, refType);
