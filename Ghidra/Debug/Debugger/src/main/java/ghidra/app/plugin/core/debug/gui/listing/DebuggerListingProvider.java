@@ -1109,8 +1109,8 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		if (trackingSpec != spec) {
 			trackingSpec = spec;
 			updateTitle();
-			doTrackSpec();
 		}
+		doTrackSpec();
 	}
 
 	public LocationTrackingSpec getTrackingSpec() {
