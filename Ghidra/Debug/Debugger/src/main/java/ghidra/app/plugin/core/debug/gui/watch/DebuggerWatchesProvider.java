@@ -21,8 +21,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
+import java.util.function.*;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -31,6 +30,7 @@ import javax.swing.table.TableColumnModel;
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.DockingAction;
+import docking.action.ToggleDockingAction;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
@@ -75,7 +75,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	protected enum WatchTableColumns implements EnumeratedTableColumn<WatchTableColumns, WatchRow> {
 		EXPRESSION("Expression", String.class, WatchRow::getExpression, WatchRow::setExpression),
 		ADDRESS("Address", Address.class, WatchRow::getAddress),
-		VALUE("Value", String.class, WatchRow::getRawValueString),
+		VALUE("Value", String.class, WatchRow::getRawValueString, WatchRow::setRawValueString, WatchRow::isValueEditable),
 		TYPE("Type", DataType.class, WatchRow::getDataType, WatchRow::setDataType),
 		REPR("Repr", String.class, WatchRow::getValueString),
 		ERROR("Error", String.class, WatchRow::getErrorMessage);
@@ -83,19 +83,26 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 		private final String header;
 		private final Function<WatchRow, ?> getter;
 		private final BiConsumer<WatchRow, Object> setter;
+		private final Predicate<WatchRow> editable;
 		private final Class<?> cls;
 
 		@SuppressWarnings("unchecked")
 		<T> WatchTableColumns(String header, Class<T> cls, Function<WatchRow, T> getter,
-				BiConsumer<WatchRow, T> setter) {
+				BiConsumer<WatchRow, T> setter, Predicate<WatchRow> editable) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
 			this.setter = (BiConsumer<WatchRow, Object>) setter;
+			this.editable = editable;
+		}
+
+		<T> WatchTableColumns(String header, Class<T> cls, Function<WatchRow, T> getter,
+				BiConsumer<WatchRow, T> setter) {
+			this(header, cls, getter, setter, null);
 		}
 
 		<T> WatchTableColumns(String header, Class<T> cls, Function<WatchRow, T> getter) {
-			this(header, cls, getter, null);
+			this(header, cls, getter, null, null);
 		}
 
 		@Override
@@ -120,7 +127,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 
 		@Override
 		public boolean isEditable(WatchRow row) {
-			return setter != null;
+			return setter != null && (editable == null || editable.test(row));
 		}
 	}
 
@@ -267,6 +274,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	protected GhidraTable watchTable;
 	protected GhidraTableFilterPanel<WatchRow> watchFilterPanel;
 
+	ToggleDockingAction actionEnableEdits;
 	DockingAction actionApplyDataType;
 	DockingAction actionSelectRange;
 	DockingAction actionSelectAllReads;
@@ -360,6 +368,11 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	}
 
 	protected void createActions() {
+		actionEnableEdits = DebuggerResources.EnableEditsAction.builder(plugin)
+				.enabledWhen(c -> current.getTrace() != null)
+				.onAction(c -> {
+				})
+				.buildAndInstallLocal(this);
 		actionApplyDataType = ApplyDataTypeAction.builder(plugin)
 				.withContext(DebuggerWatchActionContext.class)
 				.enabledWhen(ctx -> current.getTrace() != null && selHasDataType(ctx))
@@ -621,5 +634,9 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 			rows.add(r);
 		}
 		watchTableModel.addAll(rows);
+	}
+
+	public boolean isEditsEnabled() {
+		return actionEnableEdits.isSelected();
 	}
 }

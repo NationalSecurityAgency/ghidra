@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,17 +79,4 @@ public interface DwarfEHDecoder {
 	 * @return the data type.
 	 */
 	public DataType getDataType(Program program);
-
-	/**
-	 * Sets the exception handling data application mode.
-	 * @param mode the application mode
-	 */
-	public void setApplicationMode(DwarfEHDataApplicationMode mode);
-
-	/**
-	 * Sets whether or not the data is an indirect reference.
-	 * @param isIndirect true for an indirect reference.
-	 */
-	public void setIndirect(boolean isIndirect);
-
 }

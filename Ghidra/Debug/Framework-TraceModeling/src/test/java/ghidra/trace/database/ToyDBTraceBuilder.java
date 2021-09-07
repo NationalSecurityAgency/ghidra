@@ -49,6 +49,8 @@ import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.symbol.DBTraceReference;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
+import ghidra.trace.model.ImmutableTraceAddressSnapRange;
+import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.language.TraceGuestLanguage;
 import ghidra.util.Msg;
 import ghidra.util.database.DBOpenMode;
@@ -92,6 +94,10 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 
 	public AddressRange range(long start, long end) {
 		return new AddressRangeImpl(addr(start), addr(end));
+	}
+
+	public TraceAddressSnapRange srange(long snap, long start, long end) {
+		return new ImmutableTraceAddressSnapRange(addr(start), addr(end), snap, snap);
 	}
 
 	public AddressRange drng(long start, long end) {

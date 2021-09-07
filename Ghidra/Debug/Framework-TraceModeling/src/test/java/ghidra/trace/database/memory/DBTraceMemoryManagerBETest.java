@@ -15,11 +15,20 @@
  */
 package ghidra.trace.database.memory;
 
+import org.junit.Test;
+
 import ghidra.program.model.lang.LanguageID;
+import ghidra.trace.util.LanguageTestWatcher.TestLanguage;
 
 public class DBTraceMemoryManagerBETest extends AbstractDBTraceMemoryManagerTest {
 	@Override
 	protected LanguageID getLanguageID() {
 		return new LanguageID("Toy:BE:64:default");
+	}
+
+	@TestLanguage("Toy:BE:32:builder")
+	@Test
+	public void testRegisterBits() throws Exception {
+		runTestRegisterBits();
 	}
 }

@@ -26,20 +26,22 @@ import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.lifecycle.Internal;
+import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.lang.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
+import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -335,6 +337,86 @@ public interface TraceRecorder {
 	 */
 	CompletableFuture<NavigableMap<Address, byte[]>> captureProcessMemory(AddressSetView selection,
 			TaskMonitor monitor, boolean toMap);
+
+	/**
+	 * Write a variable (memory or register) of the given thread or the process
+	 * 
+	 * <p>
+	 * This is a convenience for writing target memory or registers, based on address. If the given
+	 * address represents a register, this will attempt to map it to a register and write it in the
+	 * given thread and frame. If the address is in memory, it will simply delegate to
+	 * {@link #writeProcessMemory(Address, byte[])}.
+	 * 
+	 * @param thread the thread. Ignored (may be null) if address is in memory
+	 * @param frameLevel the frame, usually 0. Ignored if address is in memory
+	 * @param address the starting address
+	 * @param data the value to write
+	 * @return a future which completes when the write is complete
+	 */
+	default CompletableFuture<Void> writeVariable(TraceThread thread, int frameLevel,
+			Address address, byte[] data) {
+		if (address.isMemoryAddress()) {
+			return writeProcessMemory(address, data);
+		}
+		if (address.isRegisterAddress()) {
+			Language lang = getTrace().getBaseLanguage();
+			Register register = lang.getRegister(address, data.length);
+			if (register == null) {
+				throw new IllegalArgumentException(
+					"Cannot identify the (single) register to write: " + address);
+			}
+
+			RegisterValue rv = new RegisterValue(register,
+				Utils.bytesToBigInteger(data, data.length, lang.isBigEndian(), false));
+			TraceMemoryRegisterSpace regs =
+				getTrace().getMemoryManager().getMemoryRegisterSpace(thread, frameLevel, false);
+			rv = TraceRegisterUtils.combineWithTraceBaseRegisterValue(rv, getSnap(), regs, true);
+			return writeThreadRegisters(thread, frameLevel, Map.of(rv.getRegister(), rv));
+		}
+		throw new IllegalArgumentException("Address is not in a recognized space: " + address);
+	}
+
+	/**
+	 * Check if the given register exists on target (is mappable) for the given thread
+	 * 
+	 * @param thread the thread whose registers to examine
+	 * @param register the register to check
+	 * @return true if the given register is known for the given thread on target
+	 */
+	default boolean isRegisterOnTarget(TraceThread thread, Register register) {
+		Collection<Register> onTarget = getRegisterMapper(thread).getRegistersOnTarget();
+		return onTarget.contains(register) || onTarget.contains(register.getBaseRegister());
+	}
+
+	/**
+	 * Check if the given trace address exists in target memory
+	 * 
+	 * @param address the address to check
+	 * @return true if the given trace address can be mapped to the target's memory
+	 */
+	default boolean isMemoryOnTarget(Address address) {
+		return getMemoryMapper().traceToTarget(address) != null;
+	}
+
+	/**
+	 * Check if a given variable (register or memory) exists on target
+	 * 
+	 * @param thread if a register, the thread whose registers to examine
+	 * @param address the address of the variable
+	 * @param size the size of the variable. Ignored for memory
+	 * @return true if the variable can be mapped to the target
+	 */
+	default boolean isVariableOnTarget(TraceThread thread, Address address, int size) {
+		if (address.isMemoryAddress()) {
+			return isMemoryOnTarget(address);
+		}
+		Register register = getTrace().getBaseLanguage().getRegister(address, size);
+		if (register == null) {
+			throw new IllegalArgumentException("Cannot identify the (single) register: " + address);
+		}
+
+		return isRegisterOnTarget(thread, register);
+	}
 
 	/**
 	 * Capture the data types of a target's module.
