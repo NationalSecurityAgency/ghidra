@@ -124,7 +124,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		this.pc = language.getProgramCounter();
 		this.contextreg = language.getContextBaseRegister();
 
-		if (contextreg != null) {
+		if (contextreg != Register.DEFAULT_CONTEXT) {
 			defaultContext = new ProgramContextImpl(language);
 			language.applyContextSettings(defaultContext);
 			this.context = defaultContext.getDefaultDisassemblyContext();
@@ -196,7 +196,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	@Override
 	public void overrideContextWithDefault() {
-		if (contextreg != null) {
+		if (contextreg != Register.DEFAULT_CONTEXT) {
 			overrideContext(defaultContext.getDefaultValue(contextreg, counter));
 		}
 	}
@@ -212,7 +212,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		long offset = arithmetic.toConcrete(state.getVar(pc)).longValue();
 		setCounter(language.getDefaultSpace().getAddress(offset));
 
-		if (contextreg != null) {
+		if (contextreg != Register.DEFAULT_CONTEXT) {
 			try {
 				BigInteger ctx = arithmetic.toConcrete(state.getVar(contextreg));
 				assignContext(new RegisterValue(contextreg, ctx));
@@ -277,7 +277,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		if (frame.isFallThrough()) {
 			overrideCounter(counter.addWrap(decoder.getLastLengthWithDelays()));
 		}
-		if (contextreg != null) {
+		if (contextreg != Register.DEFAULT_CONTEXT) {
 			overrideContext(instruction.getRegisterValue(contextreg));
 		}
 		postExecuteInstruction();

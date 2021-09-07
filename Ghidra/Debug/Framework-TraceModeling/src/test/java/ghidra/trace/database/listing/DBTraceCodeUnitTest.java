@@ -1195,8 +1195,8 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 			i4004 = b.addInstruction(0, b.addr(0x4004), b.language, b.buf(0xf4, 0));
 		}
 
-		// TODO: Test with context
-		assertNull(i4004.getBaseContextRegister());
+		// TODO: Test with non-default context
+		assertEquals(Register.DEFAULT_CONTEXT, i4004.getBaseContextRegister());
 
 		assertEquals(b.language.getRegisters(), i4004.getRegisters());
 		assertEquals(r4, i4004.getRegister("r4"));

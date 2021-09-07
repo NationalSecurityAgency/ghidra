@@ -291,12 +291,12 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 	}
 
 	/**
-	 * This tests an language without a contextreg
+	 * This tests a language without a real contextreg
 	 */
 	@Test
 	public void testIMM() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "Toy:BE:64:default")) {
-			assertNull(tb.language.getContextBaseRegister());
+			assertEquals(Register.DEFAULT_CONTEXT, tb.language.getContextBaseRegister());
 
 			TraceThread thread = initTrace(tb,
 				List.of(
