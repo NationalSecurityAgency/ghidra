@@ -58,7 +58,7 @@ public class EmulateDisassemblerContext implements DisassemblerContext {
 
 	public void setCurrentAddress(Address addr) {
 
-		if (contextReg == null) {
+		if (contextReg == Register.NO_CONTEXT) {
 			return;
 		}
 		RegisterValue partialValue = null;
@@ -99,7 +99,7 @@ public class EmulateDisassemblerContext implements DisassemblerContext {
 	}
 
 	private void initContext() {
-		if (contextReg == null) {
+		if (contextReg == Register.NO_CONTEXT) {
 			return;
 		}
 		flowingContextRegisterMask = contextReg.getBaseMask().clone();
@@ -203,8 +203,7 @@ public class EmulateDisassemblerContext implements DisassemblerContext {
 	}
 
 	@Override
-	public void setFutureRegisterValue(Address fromAddr, Address toAddr,
-			RegisterValue value) {
+	public void setFutureRegisterValue(Address fromAddr, Address toAddr, RegisterValue value) {
 		throw new UnsupportedOperationException();
 	}
 }

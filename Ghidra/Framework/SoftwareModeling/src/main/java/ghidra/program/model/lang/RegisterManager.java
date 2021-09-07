@@ -127,7 +127,7 @@ public class RegisterManager {
 		}
 		// if there is no context register, force a default one
 		if (contextBaseRegister == null) {
-			contextBaseRegister = Register.DEFAULT_CONTEXT;
+			contextBaseRegister = Register.NO_CONTEXT;
 		}
 		// handle the register size 0 case;
 		Collections.reverse(registerListSortedBySize);

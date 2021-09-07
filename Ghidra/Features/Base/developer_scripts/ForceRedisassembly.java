@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,44 +22,48 @@ import ghidra.program.util.LanguageTranslatorAdapter;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 
-
 public class ForceRedisassembly extends GhidraScript {
-	
+
 	@Override
-    public void run() throws Exception {
-		
+	public void run() throws Exception {
+
 		if (currentProgram == null) {
 			Msg.showError(this, null, "No Program Error", "No active program found");
 			return;
 		}
-		ProgramDB program = (ProgramDB)currentProgram;
-		
+		ProgramDB program = (ProgramDB) currentProgram;
+
 		Language lang = program.getLanguage();
-		
-		LanguageTranslator translator = new MyLanguageTranslator(lang.getLanguageID(), lang.getVersion());
+
+		LanguageTranslator translator =
+			new MyLanguageTranslator(lang.getLanguageID(), lang.getVersion());
 		if (!translator.isValid()) {
 			return;
 		}
-		
-		program.setLanguage(translator, program.getCompilerSpec().getCompilerSpecID(), true, monitor);
+
+		program.setLanguage(translator, program.getCompilerSpec().getCompilerSpecID(), true,
+			monitor);
 	}
 
 	private static class MyLanguageTranslator extends LanguageTranslatorAdapter {
 		protected MyLanguageTranslator(LanguageID languageId, int version) {
 			super(languageId, version, languageId, version);
 		}
+
 		@Override
 		public boolean isValid() {
 			if (super.isValid()) {
 				try {
 					validateDefaultSpaceMap();
-				} catch (IncompatibleLanguageException e) {
-				    throw new AssertException();
+				}
+				catch (IncompatibleLanguageException e) {
+					throw new AssertException();
 				}
 				Register newContextReg = getNewLanguage().getContextBaseRegister();
-				if (newContextReg != null) {
+				if (newContextReg != Register.NO_CONTEXT) {
 					Register oldContextReg = getOldLanguage().getContextBaseRegister();
-					if (oldContextReg == null || !isSameRegisterConstruction(oldContextReg, newContextReg)) {
+					if (oldContextReg != Register.NO_CONTEXT ||
+						!isSameRegisterConstruction(oldContextReg, newContextReg)) {
 						throw new AssertException();
 					}
 				}
@@ -68,11 +71,12 @@ public class ForceRedisassembly extends GhidraScript {
 			}
 			return false;
 		}
-		
+
 		@Override
 		public String toString() {
-			return "[" + getOldLanguageID() + " (Version " + getOldVersion() + ")] -> [" + 
-				getNewLanguageID() + " (Version " + getNewVersion() + ")] {Forced Re-Disassembly Translator}";
+			return "[" + getOldLanguageID() + " (Version " + getOldVersion() + ")] -> [" +
+				getNewLanguageID() + " (Version " + getNewVersion() +
+				")] {Forced Re-Disassembly Translator}";
 		}
 	}
 }

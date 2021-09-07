@@ -296,7 +296,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 	@Test
 	public void testIMM() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "Toy:BE:64:default")) {
-			assertEquals(Register.DEFAULT_CONTEXT, tb.language.getContextBaseRegister());
+			assertEquals(Register.NO_CONTEXT, tb.language.getContextBaseRegister());
 
 			TraceThread thread = initTrace(tb,
 				List.of(

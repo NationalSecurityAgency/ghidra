@@ -366,8 +366,8 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 			// re-parse instruction to regenerate fall-through context
 			program.getLanguage().parse(instr, context, instr.isInDelaySlot());
 			RegisterValue contextValue = context.getFlowContextValue(fallThroughAddr, true);
-			program.getProgramContext().setRegisterValue(fallThroughAddr, fallThroughAddr,
-				contextValue);
+			program.getProgramContext()
+					.setRegisterValue(fallThroughAddr, fallThroughAddr, contextValue);
 		}
 		catch (Exception e) {
 			return;
@@ -413,7 +413,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 						continue;
 					}
 					disassemblePoints.addRange(addr, addr);
-					if (contextReg != null) {
+					if (contextReg != Register.NO_CONTEXT) {
 						if (seedContext == null) {
 							seedContext = new DisassemblerContextImpl(programContext);
 						}
@@ -503,7 +503,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 					if (ftAddr != null && (ignoreStart == null || !ftAddr.equals(ignoreStart))) {
 //                        alreadyCleared.addRange(ftAddr, addr);
 						disassemblePoints.addRange(ftAddr, ftAddr);
-						if (contextReg != null) {
+						if (contextReg != Register.NO_CONTEXT) {
 							if (seedContext == null) {
 								seedContext = new DisassemblerContextImpl(programContext);
 							}
@@ -523,8 +523,9 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 //         clearSet.add(alreadyCleared);
 
 		// Get rid of any bad bookmarks at seed points, will be put back if they are still bad.
-		program.getBookmarkManager().removeBookmarks(disassemblePoints, BookmarkType.ERROR,
-			Disassembler.ERROR_BOOKMARK_CATEGORY, monitor);
+		program.getBookmarkManager()
+				.removeBookmarks(disassemblePoints, BookmarkType.ERROR,
+					Disassembler.ERROR_BOOKMARK_CATEGORY, monitor);
 
 		// Disassemble fallthrough reference points
 		DisassembleCommand cmd = new DisassembleCommand(disassemblePoints, null);
@@ -651,9 +652,10 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 			if (protectedSet.contains(fromBlock.getMinAddress())) {
 				continue;
 			}
-			fromBlock = adjustBlockForSplitProtectedBlock(program, blockModel, fromBlock.getFirstStartAddress(), fromBlock);
+			fromBlock = adjustBlockForSplitProtectedBlock(program, blockModel,
+				fromBlock.getFirstStartAddress(), fromBlock);
 
-	        // HOT SPOT - getDestinations()
+			// HOT SPOT - getDestinations()
 			CodeBlockReferenceIterator blockRefIter = fromBlock.getDestinations(monitor);
 			if (clearOffcut) {
 				findDestAddrs(fromBlock, destAddrs); // Needed for detecting offcut flows
@@ -661,7 +663,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 			while (blockRefIter.hasNext()) {
 				monitor.checkCanceled();
 				CodeBlockReference cbRef = blockRefIter.next();
-				
+
 				Address blockAddr = cbRef.getReference();
 				if (protectedSet.contains(blockAddr)) {
 					continue;
@@ -671,7 +673,8 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 				}
 				CodeBlock destBlock = cbRef.getDestinationBlock();
 				if (blockAddr.equals(destBlock.getFirstStartAddress())) {
-				    destBlock = adjustBlockForSplitProtectedBlock(program, blockModel, blockAddr, destBlock);
+					destBlock = adjustBlockForSplitProtectedBlock(program, blockModel, blockAddr,
+						destBlock);
 				}
 				if (neverSnipStartBlock && destBlock.equals(startBlock)) {
 					continue; // do not allow incoming edges to startBlock vertex
@@ -696,13 +699,13 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 							continue;
 						}
 					}
-                    // TODO: check disassembly hint
+					// TODO: check disassembly hint
 					blockSet.add(destBlock);
 					destVertex = new BlockVertex(destBlock);
 					vertexMap.put(blockAddr, destVertex);
 					todoVertices.push(destVertex);
 				}
-		        // HOT SPOT - HashSet.add()
+				// HOT SPOT - HashSet.add()
 				fromVertex.destVertices.add(destVertex);
 				destVertex.srcVertices.add(fromVertex);
 			}
@@ -767,8 +770,8 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 		return blockSet;
 	}
 
-	private CodeBlock adjustBlockForSplitProtectedBlock(Program program, SimpleBlockModel blockModel, Address blockAddr,
-			CodeBlock blockToAdjust) {
+	private CodeBlock adjustBlockForSplitProtectedBlock(Program program,
+			SimpleBlockModel blockModel, Address blockAddr, CodeBlock blockToAdjust) {
 		if (!protectedSet.isEmpty()) {
 			AddressSet intersect = protectedSet.intersectRange(blockToAdjust.getMinAddress(),
 				blockToAdjust.getMaxAddress());
@@ -857,8 +860,9 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 	public static void clearBadBookmarks(Program program, Address start, Address end,
 			TaskMonitor monitor) throws CancelledException {
 		AddressSet set = new AddressSet(start, end);
-		program.getBookmarkManager().removeBookmarks(set, BookmarkType.ERROR,
-			Disassembler.ERROR_BOOKMARK_CATEGORY, monitor);
+		program.getBookmarkManager()
+				.removeBookmarks(set, BookmarkType.ERROR, Disassembler.ERROR_BOOKMARK_CATEGORY,
+					monitor);
 	}
 
 	public static void clearBadBookmarks(Program program, AddressSetView set, TaskMonitor monitor)

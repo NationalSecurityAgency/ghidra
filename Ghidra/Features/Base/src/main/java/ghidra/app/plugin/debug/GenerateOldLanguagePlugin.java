@@ -66,10 +66,10 @@ import ghidra.util.xml.GenericXMLOutputter;
 //@formatter:on
 public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
 
-	private static final ExtensionFileFilter OLD_LANG_FILTER = new ExtensionFileFilter("lang",
-		"Old Language File");
-	private static final ExtensionFileFilter TRANSLATOR_FILTER = new ExtensionFileFilter("trans",
-		"Simple Translator File");
+	private static final ExtensionFileFilter OLD_LANG_FILTER =
+		new ExtensionFileFilter("lang", "Old Language File");
+	private static final ExtensionFileFilter TRANSLATOR_FILTER =
+		new ExtensionFileFilter("trans", "Simple Translator File");
 
 	private DockingAction generateOldLanguageAction;
 	private DockingAction generateTranslatorAction;
@@ -95,8 +95,8 @@ public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
 			}
 		};
 // ACTIONS - auto generated
-		generateOldLanguageAction.setMenuBarData(new MenuData(new String[] { "File",
-			"Generate Old Language File..." }, null, "Language"));
+		generateOldLanguageAction.setMenuBarData(new MenuData(
+			new String[] { "File", "Generate Old Language File..." }, null, "Language"));
 
 		generateOldLanguageAction.setEnabled(true);
 		tool.addAction(generateOldLanguageAction);
@@ -116,8 +116,8 @@ public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
 				}
 			};
 // ACTIONS - auto generated
-		generateTranslatorAction.setMenuBarData(new MenuData(new String[] { "File",
-			"Generate Simple Language Translator..." }, null, "Language"));
+		generateTranslatorAction.setMenuBarData(new MenuData(
+			new String[] { "File", "Generate Simple Language Translator..." }, null, "Language"));
 
 		generateTranslatorAction.setEnabled(true);
 		tool.addAction(generateTranslatorAction);
@@ -176,17 +176,16 @@ public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
 						chooser.setApproveButtonText("Create");
 						// there's no single directory; you need to pick it yourself now
 //						chooser.setCurrentDirectory(LANGUAGE_DIR);
-						chooser.setCurrentDirectory(Application.getApplicationRootDirectory().getFile(
-							false));
+						chooser.setCurrentDirectory(
+							Application.getApplicationRootDirectory().getFile(false));
 					}
 					File file = chooser.getSelectedFile(true);
 					if (file == null) {
 						return;
 					}
 					if (!file.getName().endsWith(OldLanguageFactory.OLD_LANGUAGE_FILE_EXT)) {
-						file =
-							new File(file.getParent(), file.getName() +
-								OldLanguageFactory.OLD_LANGUAGE_FILE_EXT);
+						file = new File(file.getParent(),
+							file.getName() + OldLanguageFactory.OLD_LANGUAGE_FILE_EXT);
 					}
 					if (file.exists()) {
 						if (OptionDialog.showYesNoDialog(panel, "Confirm Overwrite",
@@ -199,12 +198,11 @@ public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
 						OldLanguageFactory.createOldLanguageFile(lang, file);
 						close();
 
-						int resp =
-							OptionDialog.showYesNoDialog(
-								GenerateOldLanguagePlugin.this.tool.getToolFrame(),
-								"Create Simple Translator?",
-								"Old language file generated successfully.\n \n"
-									+ "Would you like to create a simple translator to another language?");
+						int resp = OptionDialog.showYesNoDialog(
+							GenerateOldLanguagePlugin.this.tool.getToolFrame(),
+							"Create Simple Translator?",
+							"Old language file generated successfully.\n \n" +
+								"Would you like to create a simple translator to another language?");
 						if (resp == OptionDialog.YES_OPTION) {
 							GenerateTranslatorDialog translatorDlgProvider =
 								new GenerateTranslatorDialog(lang, file);
@@ -278,35 +276,33 @@ public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
 							chooser.setApproveButtonText("Create");
 							// there's no single directory; you need to pick it yourself now
 //							chooser.setCurrentDirectory(LANGUAGE_DIR);
-							chooser.setCurrentDirectory(Application.getApplicationRootDirectory().getFile(
-								false));
+							chooser.setCurrentDirectory(
+								Application.getApplicationRootDirectory().getFile(false));
 						}
 						transFile = chooser.getSelectedFile(true);
 						if (transFile == null) {
 							return;
 						}
-						if (!transFile.getName().endsWith(
-							LanguageTranslatorFactory.LANGUAGE_TRANSLATOR_FILE_EXT)) {
-							transFile =
-								new File(transFile.getParent(), transFile.getName() +
-									LanguageTranslatorFactory.LANGUAGE_TRANSLATOR_FILE_EXT);
+						if (!transFile.getName()
+								.endsWith(LanguageTranslatorFactory.LANGUAGE_TRANSLATOR_FILE_EXT)) {
+							transFile = new File(transFile.getParent(), transFile.getName() +
+								LanguageTranslatorFactory.LANGUAGE_TRANSLATOR_FILE_EXT);
 						}
 					}
 					else {
 						String filename = GenerateTranslatorDialog.this.oldLangFile.getName();
 						int index = filename.indexOf(OldLanguageFactory.OLD_LANGUAGE_FILE_EXT);
 						if (index > 0) {
-							filename =
-								filename.substring(0, index) +
-									LanguageTranslatorFactory.LANGUAGE_TRANSLATOR_FILE_EXT;
+							filename = filename.substring(0, index) +
+								LanguageTranslatorFactory.LANGUAGE_TRANSLATOR_FILE_EXT;
 						}
-						transFile =
-							new File(GenerateTranslatorDialog.this.oldLangFile.getParentFile(),
-								filename);
+						transFile = new File(
+							GenerateTranslatorDialog.this.oldLangFile.getParentFile(), filename);
 					}
 					if (transFile.exists()) {
 						if (OptionDialog.showYesNoDialog(panel, "Confirm Overwrite",
-							"Overwrite file " + transFile.getName() + "?") != OptionDialog.YES_OPTION) {
+							"Overwrite file " + transFile.getName() +
+								"?") != OptionDialog.YES_OPTION) {
 							return;
 						}
 					}
@@ -353,12 +349,14 @@ public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
 			toLang.setText(newLang.getLanguageID().getIdAsString());
 			root.addContent(toLang);
 
-			for (CompilerSpecDescription oldCompilerSpecDescription : oldLang.getCompatibleCompilerSpecDescriptions()) {
+			for (CompilerSpecDescription oldCompilerSpecDescription : oldLang
+					.getCompatibleCompilerSpecDescriptions()) {
 				CompilerSpecID oldCompilerSpecID = oldCompilerSpecDescription.getCompilerSpecID();
 				String newId;
 				try {
-					newId =
-						newLang.getCompilerSpecByID(oldCompilerSpecID).getCompilerSpecID().getIdAsString();
+					newId = newLang.getCompilerSpecByID(oldCompilerSpecID)
+							.getCompilerSpecID()
+							.getIdAsString();
 				}
 				catch (CompilerSpecNotFoundException e) {
 					newId = newLang.getDefaultCompilerSpec().getCompilerSpecID().getIdAsString();
@@ -398,16 +396,17 @@ public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
 			Register oldCtx = oldLang.getContextBaseRegister();
 			Register newCtx = newLang.getContextBaseRegister();
 			boolean contextWarning = false;
-			if (oldCtx != null && defaultTrans.isValueTranslationRequired(oldCtx)) {
+			if (oldCtx != Register.NO_CONTEXT &&
+				defaultTrans.isValueTranslationRequired(oldCtx)) {
 				contextWarning = true;
 			}
-			else if (oldCtx == null && newCtx != null) {
+			else if (oldCtx == Register.NO_CONTEXT && newCtx != Register.NO_CONTEXT) {
 				contextWarning = true;
 			}
 			if (contextWarning) {
 				Msg.showWarn(getClass(), tool.getToolFrame(), "Translator Warning",
-					"The new context register differs from the old context!\n"
-						+ "A set_context element or custom translator may be required.");
+					"The new context register differs from the old context!\n" +
+						"A set_context element or custom translator may be required.");
 			}
 		}
 	}
@@ -531,7 +530,8 @@ public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
 		}
 
 		@Override
-		public List<LanguageDescription> getLanguageDescriptions(boolean includeDeprecatedLanguages) {
+		public List<LanguageDescription> getLanguageDescriptions(
+				boolean includeDeprecatedLanguages) {
 			// Include deprecated languages
 			List<LanguageDescription> list = new ArrayList<LanguageDescription>();
 			list.addAll(langService.getLanguageDescriptions(true));
