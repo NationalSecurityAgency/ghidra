@@ -604,7 +604,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 					.onAction(c -> createSnapshotActivated())
 					.buildAndInstallLocal(this);
 		}
-		actionEnableEdits = DebuggerResources.EnableRegisterEditsAction.builder(plugin)
+		actionEnableEdits = DebuggerResources.EnableEditsAction.builder(plugin)
 				.enabledWhen(c -> current.getThread() != null)
 				.onAction(c -> {
 				})
@@ -758,12 +758,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (!computeEditsEnabled()) {
 			return false;
 		}
-		Collection<Register> onTarget =
-			current.getRecorder().getRegisterMapper(current.getThread()).getRegistersOnTarget();
-		if (!onTarget.contains(register) && !onTarget.contains(register.getBaseRegister())) {
-			return false;
-		}
-		return true;
+		return current.getRecorder().isRegisterOnTarget(current.getThread(), register);
 	}
 
 	BigInteger getRegisterValue(Register register) {
