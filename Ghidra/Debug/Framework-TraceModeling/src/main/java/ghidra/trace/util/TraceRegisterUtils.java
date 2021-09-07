@@ -34,16 +34,7 @@ public enum TraceRegisterUtils {
 
 	public static AddressRange rangeForRegister(Register register) {
 		Address address = register.getAddress();
-		return new AddressRangeImpl(address, address.add(register.getMinimumByteSize() - 1));
-	}
-
-	public static int byteLengthOf(Register register) {
-		int bitLength = register.getBitLength();
-		if ((bitLength & 7) != 0) {
-			throw new IllegalArgumentException(
-				"Cannot work with sub-byte boundaries. Consider using the base register.");
-		}
-		return bitLength >> 3;
+		return new AddressRangeImpl(address, address.add(register.getNumBytes() - 1));
 	}
 
 	public static byte[] padOrTruncate(byte[] arr, int length) {
@@ -58,33 +49,22 @@ public enum TraceRegisterUtils {
 		return Arrays.copyOfRange(arr, arr.length - length, arr.length);
 	}
 
-	public static ByteBuffer bufferForValue(RegisterValue value) {
-		byte[] arr = value.getSignedValue().toByteArray();
-		int byteLength = byteLengthOf(value.getRegister());
-		arr = padOrTruncate(arr, byteLength);
-		if (!value.getRegister().isBigEndian()) {
-			ArrayUtils.reverse(arr);
+	public static ByteBuffer bufferForValue(Register reg, RegisterValue value) {
+		byte[] bytes = value.toBytes().clone();
+		int start = bytes.length / 2;
+		// NB: I guess contextreg is always big?
+		if (!reg.isBigEndian() && !reg.isProcessorContext()) {
+			ArrayUtils.reverse(bytes, start, bytes.length);
 		}
-		return ByteBuffer.wrap(arr);
-	}
-
-	public static int computeMaskOffset(byte[] arr) {
-		for (int i = 0; i < arr.length; i++) {
-			switch (arr[i]) {
-				case -1:
-					return i;
-				case 0:
-					continue;
-				default:
-					throw new IllegalArgumentException(
-						"Can only handle sub-registers on byte boundaries");
-			}
-		}
-		throw new IllegalArgumentException("No value");
+		int offset = TraceRegisterUtils.computeMaskOffset(reg);
+		return ByteBuffer.wrap(bytes, start + offset, reg.getNumBytes());
 	}
 
 	public static int computeMaskOffset(Register reg) {
-		return computeMaskOffset(reg.getBaseMask());
+		if (reg.isBaseRegister()) {
+			return 0;
+		}
+		return reg.getOffset() - reg.getBaseRegister().getOffset();
 	}
 
 	public static int computeMaskOffset(RegisterValue value) {
@@ -162,21 +142,38 @@ public enum TraceRegisterUtils {
 		return regs.getValue(snap, reg.getBaseRegister()).combineValues(rv);
 	}
 
-	public static RegisterValue getRegisterValue(Register register,
+	public static RegisterValue getRegisterValue(Register reg,
 			BiConsumer<Address, ByteBuffer> readAction) {
-		int byteLength = TraceRegisterUtils.byteLengthOf(register);
-		byte[] mask = register.getBaseMask();
+		/*
+		 * The byte array for reg values spans the whole base register, but we'd like to avoid
+		 * over-reading, so we'll zero in on the bytes actually included in the mask. We'll then
+		 * have to handle endianness and such. The regval instance should then apply the actual mask
+		 * for the sub-register, if applicable.
+		 */
+		int byteLength = reg.getNumBytes();
+		byte[] mask = reg.getBaseMask();
 		ByteBuffer buf = ByteBuffer.allocate(mask.length * 2);
 		buf.put(mask);
-		int maskOffset = TraceRegisterUtils.computeMaskOffset(mask);
+		int maskOffset = TraceRegisterUtils.computeMaskOffset(reg);
 		int startVal = buf.position() + maskOffset;
 		buf.position(startVal);
 		buf.limit(buf.position() + byteLength);
-		readAction.accept(register.getAddress(), buf);
+		readAction.accept(reg.getAddress(), buf);
 		byte[] arr = buf.array();
-		if (!register.isBigEndian()) {
-			ArrayUtils.reverse(arr, startVal, startVal + byteLength);
+		if (!reg.isBigEndian() && !reg.isProcessorContext()) {
+			ArrayUtils.reverse(arr, mask.length, buf.capacity());
 		}
-		return new RegisterValue(register, arr);
+		return new RegisterValue(reg, arr);
+	}
+
+	public static boolean isByteBound(Register register) {
+		return register.getLeastSignificantBit() % 8 == 0 && register.getBitLength() % 8 == 0;
+	}
+
+	public static void requireByteBound(Register register) {
+		if (!isByteBound(register)) {
+			throw new IllegalArgumentException(
+				"Cannot work with sub-byte registers. Consider a parent, instead.");
+		}
 	}
 }

@@ -27,83 +27,65 @@ import java.util.Map.Entry;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import db.DBHandle;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
-import ghidra.program.util.DefaultLanguageService;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.DBTrace;
+import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.stack.DBTraceStack;
 import ghidra.trace.database.thread.DBTraceThread;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.util.LanguageTestWatcher;
 import ghidra.util.database.*;
 import ghidra.util.task.ConsoleTaskMonitor;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractDBTraceMemoryManagerTest
 		extends AbstractGhidraHeadlessIntegrationTest {
-	protected Language toyLanguage;
-	protected DBTrace trace;
+	protected ToyDBTraceBuilder b;
 	protected DBTraceMemoryManager memory;
+
+	@Rule
+	public LanguageTestWatcher testLanguage =
+		new LanguageTestWatcher(getLanguageID().getIdAsString());
 
 	protected abstract LanguageID getLanguageID();
 
 	@Before
 	public void setUp() throws IOException {
-		toyLanguage = DefaultLanguageService.getLanguageService()
-				.getLanguage(getLanguageID());
-		trace = new DBTrace("Testing", toyLanguage.getDefaultCompilerSpec(), this);
-		memory = trace.getMemoryManager();
+		b = new ToyDBTraceBuilder("Testing", testLanguage.getLanguage());
+		try (UndoableTransaction tid = b.startTransaction()) {
+			b.trace.getTimeManager().createSnapshot("Initialize");
+		}
+		memory = b.trace.getMemoryManager();
 	}
 
 	@After
 	public void tearDown() {
-		trace.release(this);
-	}
-
-	protected Address addr(long offset) {
-		return toyLanguage.getDefaultDataSpace().getAddress(offset);
-	}
-
-	protected AddressRange range(long start, long end) {
-		return new AddressRangeImpl(addr(start), addr(end));
-	}
-
-	protected TraceAddressSnapRange srange(long snap, long minOff, long maxOff) {
-		return new ImmutableTraceAddressSnapRange(addr(minOff), addr(maxOff), snap, snap);
-	}
-
-	protected AddressSetView set(AddressRange... ranges) {
-		AddressSet result = new AddressSet();
-		for (AddressRange rng : ranges) {
-			result.add(rng);
-		}
-		return result;
+		b.close();
 	}
 
 	@Test
 	public void testSetState() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			memory.setState(0, addr(0x4000), addr(0x5000), TraceMemoryState.KNOWN);
+		try (UndoableTransaction tid = b.startTransaction()) {
+			memory.setState(0, b.addr(0x4000), b.addr(0x5000), TraceMemoryState.KNOWN);
 
 			// +1 Overflow
-			memory.setState(0, range(0x4000, 0x7fffffffffffffffL), TraceMemoryState.KNOWN);
-			memory.setState(0, range(0x4000, 0xffffffffffffffffL), TraceMemoryState.KNOWN);
+			memory.setState(0, b.range(0x4000, 0x7fffffffffffffffL), TraceMemoryState.KNOWN);
+			memory.setState(0, b.range(0x4000, 0xffffffffffffffffL), TraceMemoryState.KNOWN);
 
 			// NOP
-			memory.setState(0, addr(0x4500), addr(0x5000), TraceMemoryState.KNOWN);
+			memory.setState(0, b.addr(0x4500), b.addr(0x5000), TraceMemoryState.KNOWN);
 
 			AddressSet set = new AddressSet();
-			set.add(addr(0x2000), addr(0x2500));
-			set.add(addr(0x4000), addr(0x5000)); // NOP when set
+			set.add(b.addr(0x2000), b.addr(0x2500));
+			set.add(b.addr(0x4000), b.addr(0x5000)); // NOP when set
 			memory.setState(0, set, TraceMemoryState.KNOWN);
 
 			// ERR
-			AddressSpace regs = trace.getBaseAddressFactory().getRegisterSpace();
+			AddressSpace regs = b.trace.getBaseAddressFactory().getRegisterSpace();
 			try {
 				memory.setState(0, regs.getAddress(0x4000), TraceMemoryState.KNOWN);
 				fail();
@@ -126,42 +108,42 @@ public abstract class AbstractDBTraceMemoryManagerTest
 
 	@Test
 	public void testSetGetStateOneByte() {
-		assertEquals(null, memory.getState(3, addr(0x4000)));
+		assertEquals(null, memory.getState(3, b.addr(0x4000)));
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			memory.setState(3, addr(0x4000), TraceMemoryState.KNOWN);
+		try (UndoableTransaction tid = b.startTransaction()) {
+			memory.setState(3, b.addr(0x4000), TraceMemoryState.KNOWN);
 		}
 
-		assertEquals(TraceMemoryState.KNOWN, memory.getState(3, addr(0x4000)));
-		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(3, addr(0x4001)));
-		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(3, addr(0x3fff)));
-		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(2, addr(0x4000)));
-		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(4, addr(0x4000)));
+		assertEquals(TraceMemoryState.KNOWN, memory.getState(3, b.addr(0x4000)));
+		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(3, b.addr(0x4001)));
+		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(3, b.addr(0x3fff)));
+		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(2, b.addr(0x4000)));
+		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(4, b.addr(0x4000)));
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			memory.setState(3, addr(0x4000), TraceMemoryState.ERROR);
+		try (UndoableTransaction tid = b.startTransaction()) {
+			memory.setState(3, b.addr(0x4000), TraceMemoryState.ERROR);
 		}
 
-		assertEquals(TraceMemoryState.ERROR, memory.getState(3, addr(0x4000)));
-		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(3, addr(0x4001)));
-		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(3, addr(0x3fff)));
-		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(2, addr(0x4000)));
-		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(4, addr(0x4000)));
+		assertEquals(TraceMemoryState.ERROR, memory.getState(3, b.addr(0x4000)));
+		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(3, b.addr(0x4001)));
+		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(3, b.addr(0x3fff)));
+		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(2, b.addr(0x4000)));
+		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(4, b.addr(0x4000)));
 	}
 
 	@Test
 	public void testSetRangeGetState() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			memory.setState(3, addr(0x4000), addr(0x5000), TraceMemoryState.KNOWN);
+		try (UndoableTransaction tid = b.startTransaction()) {
+			memory.setState(3, b.addr(0x4000), b.addr(0x5000), TraceMemoryState.KNOWN);
 		}
 
-		assertEquals(TraceMemoryState.KNOWN, memory.getState(3, addr(0x4800)));
-		assertEquals(TraceMemoryState.KNOWN, memory.getState(3, addr(0x4000)));
-		assertEquals(TraceMemoryState.KNOWN, memory.getState(3, addr(0x5000)));
-		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(3, addr(0x3fff)));
-		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(3, addr(0x5001)));
-		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(2, addr(0x4800)));
-		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(4, addr(0x4800)));
+		assertEquals(TraceMemoryState.KNOWN, memory.getState(3, b.addr(0x4800)));
+		assertEquals(TraceMemoryState.KNOWN, memory.getState(3, b.addr(0x4000)));
+		assertEquals(TraceMemoryState.KNOWN, memory.getState(3, b.addr(0x5000)));
+		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(3, b.addr(0x3fff)));
+		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(3, b.addr(0x5001)));
+		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(2, b.addr(0x4800)));
+		assertEquals(TraceMemoryState.UNKNOWN, memory.getState(4, b.addr(0x4800)));
 	}
 
 	protected static void assertSnapState(long snap, TraceMemoryState state,
@@ -172,216 +154,258 @@ public abstract class AbstractDBTraceMemoryManagerTest
 
 	@Test
 	public void testGetMostRecentStateSingleRange() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			memory.setState(3, addr(0x4000), addr(0x5000), TraceMemoryState.KNOWN);
+		try (UndoableTransaction tid = b.startTransaction()) {
+			memory.setState(3, b.addr(0x4000), b.addr(0x5000), TraceMemoryState.KNOWN);
 		}
 
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x3fff)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x4000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x5001)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x3fff)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4000)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x5000)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0x3fff)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(3, addr(0x4000)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(3, addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0x5001)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x3fff)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(3, b.addr(0x4000)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(3, b.addr(0x5000)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(4, addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(4, addr(0x3fff)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(4, addr(0x4000)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(4, addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(4, addr(0x5001)));
+		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0)));
+		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0x3fff)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(4, b.addr(0x4000)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(4, b.addr(0x5000)));
+		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0x5001)));
 	}
 
 	@Test
 	public void testGetMostRecentStateSameSnap() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			memory.setState(3, addr(0x4000), addr(0x5000), TraceMemoryState.KNOWN);
-			memory.setState(3, addr(0x4020), addr(0x4080), TraceMemoryState.ERROR);
+		try (UndoableTransaction tid = b.startTransaction()) {
+			memory.setState(3, b.addr(0x4000), b.addr(0x5000), TraceMemoryState.KNOWN);
+			memory.setState(3, b.addr(0x4020), b.addr(0x4080), TraceMemoryState.ERROR);
 		}
 
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x3fff)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x4000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x401f)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x4020)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x4080)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x4081)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x5001)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x3fff)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4000)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x401f)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4020)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4080)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4081)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x5000)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0x3fff)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(3, addr(0x4000)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(3, addr(0x401f)));
-		assertSnapState(3, TraceMemoryState.ERROR, memory.getMostRecentStateEntry(3, addr(0x4020)));
-		assertSnapState(3, TraceMemoryState.ERROR, memory.getMostRecentStateEntry(3, addr(0x4080)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(3, addr(0x4081)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(3, addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0x5001)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x3fff)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(3, b.addr(0x4000)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(3, b.addr(0x401f)));
+		assertSnapState(3, TraceMemoryState.ERROR,
+			memory.getMostRecentStateEntry(3, b.addr(0x4020)));
+		assertSnapState(3, TraceMemoryState.ERROR,
+			memory.getMostRecentStateEntry(3, b.addr(0x4080)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(3, b.addr(0x4081)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(3, b.addr(0x5000)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(5, addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(5, addr(0x3fff)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(5, addr(0x4000)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(5, addr(0x401f)));
-		assertSnapState(3, TraceMemoryState.ERROR, memory.getMostRecentStateEntry(5, addr(0x4020)));
-		assertSnapState(3, TraceMemoryState.ERROR, memory.getMostRecentStateEntry(5, addr(0x4080)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(5, addr(0x4081)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(5, addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(5, addr(0x5001)));
+		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0)));
+		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0x3fff)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(5, b.addr(0x4000)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(5, b.addr(0x401f)));
+		assertSnapState(3, TraceMemoryState.ERROR,
+			memory.getMostRecentStateEntry(5, b.addr(0x4020)));
+		assertSnapState(3, TraceMemoryState.ERROR,
+			memory.getMostRecentStateEntry(5, b.addr(0x4080)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(5, b.addr(0x4081)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(5, b.addr(0x5000)));
+		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0x5001)));
 	}
 
 	@Test
 	public void testGetMostRecentStateLaterBefore() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			memory.setState(3, addr(0x4000), addr(0x5000), TraceMemoryState.KNOWN);
-			memory.setState(4, addr(0x3000), addr(0x3500), TraceMemoryState.ERROR);
+		try (UndoableTransaction tid = b.startTransaction()) {
+			memory.setState(3, b.addr(0x4000), b.addr(0x5000), TraceMemoryState.KNOWN);
+			memory.setState(4, b.addr(0x3000), b.addr(0x3500), TraceMemoryState.ERROR);
 		}
 
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x2fff)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x3000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x3500)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x3501)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x3fff)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x4000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x5001)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x2fff)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x3000)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x3500)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x3501)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x3fff)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4000)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x5000)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0x2fff)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0x3000)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0x3500)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0x3501)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0x3fff)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(3, addr(0x4000)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(3, addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0x5001)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x2fff)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x3000)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x3500)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x3501)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x3fff)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(3, b.addr(0x4000)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(3, b.addr(0x5000)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(4, addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(4, addr(0x2fff)));
-		assertSnapState(4, TraceMemoryState.ERROR, memory.getMostRecentStateEntry(4, addr(0x3000)));
-		assertSnapState(4, TraceMemoryState.ERROR, memory.getMostRecentStateEntry(4, addr(0x3500)));
-		assertEquals(null, memory.getMostRecentStateEntry(4, addr(0x3501)));
-		assertEquals(null, memory.getMostRecentStateEntry(4, addr(0x3fff)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(4, addr(0x4000)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(4, addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(4, addr(0x5001)));
+		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0)));
+		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0x2fff)));
+		assertSnapState(4, TraceMemoryState.ERROR,
+			memory.getMostRecentStateEntry(4, b.addr(0x3000)));
+		assertSnapState(4, TraceMemoryState.ERROR,
+			memory.getMostRecentStateEntry(4, b.addr(0x3500)));
+		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0x3501)));
+		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0x3fff)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(4, b.addr(0x4000)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(4, b.addr(0x5000)));
+		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(5, addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(5, addr(0x2fff)));
-		assertSnapState(4, TraceMemoryState.ERROR, memory.getMostRecentStateEntry(5, addr(0x3000)));
-		assertSnapState(4, TraceMemoryState.ERROR, memory.getMostRecentStateEntry(5, addr(0x3500)));
-		assertEquals(null, memory.getMostRecentStateEntry(5, addr(0x3501)));
-		assertEquals(null, memory.getMostRecentStateEntry(5, addr(0x3fff)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(5, addr(0x4000)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(5, addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(5, addr(0x5001)));
+		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0)));
+		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0x2fff)));
+		assertSnapState(4, TraceMemoryState.ERROR,
+			memory.getMostRecentStateEntry(5, b.addr(0x3000)));
+		assertSnapState(4, TraceMemoryState.ERROR,
+			memory.getMostRecentStateEntry(5, b.addr(0x3500)));
+		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0x3501)));
+		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0x3fff)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(5, b.addr(0x4000)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(5, b.addr(0x5000)));
+		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0x5001)));
 	}
 
 	@Test
 	public void testGetMostRecentStateLaterOverStart() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			memory.setState(3, addr(0x4000), addr(0x5000), TraceMemoryState.KNOWN);
-			memory.setState(4, addr(0x3000), addr(0x4500), TraceMemoryState.ERROR);
+		try (UndoableTransaction tid = b.startTransaction()) {
+			memory.setState(3, b.addr(0x4000), b.addr(0x5000), TraceMemoryState.KNOWN);
+			memory.setState(4, b.addr(0x3000), b.addr(0x4500), TraceMemoryState.ERROR);
 		}
 
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x2fff)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x3000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x3fff)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x4000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x4500)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x4501)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, addr(0x5001)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x2fff)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x3000)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x3fff)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4000)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4500)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4501)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x5000)));
+		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0x2fff)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0x3000)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0x3fff)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(3, addr(0x4000)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(3, addr(0x4500)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(3, addr(0x4501)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(3, addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, addr(0x5001)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x2fff)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x3000)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x3fff)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(3, b.addr(0x4000)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(3, b.addr(0x4500)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(3, b.addr(0x4501)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(3, b.addr(0x5000)));
+		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(4, addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(4, addr(0x2fff)));
-		assertSnapState(4, TraceMemoryState.ERROR, memory.getMostRecentStateEntry(4, addr(0x3000)));
-		assertSnapState(4, TraceMemoryState.ERROR, memory.getMostRecentStateEntry(4, addr(0x3fff)));
-		assertSnapState(4, TraceMemoryState.ERROR, memory.getMostRecentStateEntry(4, addr(0x4000)));
-		assertSnapState(4, TraceMemoryState.ERROR, memory.getMostRecentStateEntry(4, addr(0x4500)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(4, addr(0x4501)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(4, addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(4, addr(0x5001)));
+		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0)));
+		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0x2fff)));
+		assertSnapState(4, TraceMemoryState.ERROR,
+			memory.getMostRecentStateEntry(4, b.addr(0x3000)));
+		assertSnapState(4, TraceMemoryState.ERROR,
+			memory.getMostRecentStateEntry(4, b.addr(0x3fff)));
+		assertSnapState(4, TraceMemoryState.ERROR,
+			memory.getMostRecentStateEntry(4, b.addr(0x4000)));
+		assertSnapState(4, TraceMemoryState.ERROR,
+			memory.getMostRecentStateEntry(4, b.addr(0x4500)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(4, b.addr(0x4501)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(4, b.addr(0x5000)));
+		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(5, addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(5, addr(0x2fff)));
-		assertSnapState(4, TraceMemoryState.ERROR, memory.getMostRecentStateEntry(5, addr(0x3000)));
-		assertSnapState(4, TraceMemoryState.ERROR, memory.getMostRecentStateEntry(5, addr(0x3fff)));
-		assertSnapState(4, TraceMemoryState.ERROR, memory.getMostRecentStateEntry(5, addr(0x4000)));
-		assertSnapState(4, TraceMemoryState.ERROR, memory.getMostRecentStateEntry(5, addr(0x4500)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(5, addr(0x4501)));
-		assertSnapState(3, TraceMemoryState.KNOWN, memory.getMostRecentStateEntry(5, addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(5, addr(0x5001)));
+		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0)));
+		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0x2fff)));
+		assertSnapState(4, TraceMemoryState.ERROR,
+			memory.getMostRecentStateEntry(5, b.addr(0x3000)));
+		assertSnapState(4, TraceMemoryState.ERROR,
+			memory.getMostRecentStateEntry(5, b.addr(0x3fff)));
+		assertSnapState(4, TraceMemoryState.ERROR,
+			memory.getMostRecentStateEntry(5, b.addr(0x4000)));
+		assertSnapState(4, TraceMemoryState.ERROR,
+			memory.getMostRecentStateEntry(5, b.addr(0x4500)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(5, b.addr(0x4501)));
+		assertSnapState(3, TraceMemoryState.KNOWN,
+			memory.getMostRecentStateEntry(5, b.addr(0x5000)));
+		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0x5001)));
 	}
 
 	@Test
 	public void testGetAddressesWithState() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			memory.setState(3, addr(0x4000), addr(0x7000), TraceMemoryState.KNOWN);
-			memory.setState(3, addr(0x5000), addr(0x6000), TraceMemoryState.ERROR);
-			memory.setState(4, addr(0x3000), addr(0x4800), TraceMemoryState.KNOWN);
+		try (UndoableTransaction tid = b.startTransaction()) {
+			memory.setState(3, b.addr(0x4000), b.addr(0x7000), TraceMemoryState.KNOWN);
+			memory.setState(3, b.addr(0x5000), b.addr(0x6000), TraceMemoryState.ERROR);
+			memory.setState(4, b.addr(0x3000), b.addr(0x4800), TraceMemoryState.KNOWN);
 		}
 
 		AddressSet set = new AddressSet();
-		set.add(range(0x2800, 0x3800));
-		set.add(range(0x3c00, 0x4800));
-		set.add(range(0x4c00, 0x6100));
-		set.add(range(0x8000, 0x9000));
+		set.add(b.range(0x2800, 0x3800));
+		set.add(b.range(0x3c00, 0x4800));
+		set.add(b.range(0x4c00, 0x6100));
+		set.add(b.range(0x8000, 0x9000));
 
 		AddressSet expected;
 		AddressSetView result;
 
 		expected = new AddressSet();
-		expected.add(range(0x3000, 0x3800));
-		expected.add(range(0x3c00, 0x4800));
+		expected.add(b.range(0x3000, 0x3800));
+		expected.add(b.range(0x3c00, 0x4800));
 		result = memory.getAddressesWithState(4, set, state -> state == TraceMemoryState.KNOWN);
 		assertEquals(expected, set.intersect(result));
 
 		expected = new AddressSet();
-		expected.add(range(0x4000, 0x4800));
-		expected.add(range(0x4c00, 0x4fff));
-		expected.add(range(0x6001, 0x6100));
+		expected.add(b.range(0x4000, 0x4800));
+		expected.add(b.range(0x4c00, 0x4fff));
+		expected.add(b.range(0x6001, 0x6100));
 		result = memory.getAddressesWithState(3, set, state -> state == TraceMemoryState.KNOWN);
 		assertEquals(expected, set.intersect(result));
 
 		// Test gaps
 		expected = new AddressSet();
-		expected.add(range(0x2800, 0x3800));
-		expected.add(range(0x3c00, 0x3fff));
-		expected.add(range(0x8000, 0x9000));
+		expected.add(b.range(0x2800, 0x3800));
+		expected.add(b.range(0x3c00, 0x3fff));
+		expected.add(b.range(0x8000, 0x9000));
 		result = memory.getAddressesWithState(3, set, state -> true);
 		assertEquals(expected, set.subtract(result));
 	}
 
 	@Test
 	public void testGetStates() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			memory.setState(3, addr(0x4000), addr(0x7000), TraceMemoryState.KNOWN);
-			memory.setState(3, addr(0x5000), addr(0x6000), TraceMemoryState.ERROR);
+		try (UndoableTransaction tid = b.startTransaction()) {
+			memory.setState(3, b.addr(0x4000), b.addr(0x7000), TraceMemoryState.KNOWN);
+			memory.setState(3, b.addr(0x5000), b.addr(0x6000), TraceMemoryState.ERROR);
 		}
 
 		Map<TraceAddressSnapRange, TraceMemoryState> expected;
 
 		expected = new HashMap<>();
-		expected.put(srange(3, 0x4000, 0x4fff), TraceMemoryState.KNOWN);
-		expected.put(srange(3, 0x5000, 0x6000), TraceMemoryState.ERROR);
-		expected.put(srange(3, 0x6001, 0x7000), TraceMemoryState.KNOWN);
-		assertEquals(expected, collectAsMap(memory.getStates(3, range(0x3000, 0x8000))));
+		expected.put(b.srange(3, 0x4000, 0x4fff), TraceMemoryState.KNOWN);
+		expected.put(b.srange(3, 0x5000, 0x6000), TraceMemoryState.ERROR);
+		expected.put(b.srange(3, 0x6001, 0x7000), TraceMemoryState.KNOWN);
+		assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x8000))));
 	}
 
 	protected static Map<TraceAddressSnapRange, TraceMemoryState> collectAsMap(
@@ -397,30 +421,34 @@ public abstract class AbstractDBTraceMemoryManagerTest
 
 	@Test
 	public void testGetMostRecentStates() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			memory.setState(3, addr(0x4000), addr(0x7000), TraceMemoryState.KNOWN);
-			memory.setState(3, addr(0x5000), addr(0x6000), TraceMemoryState.ERROR);
-			memory.setState(4, addr(0x3000), addr(0x4800), TraceMemoryState.KNOWN);
+		try (UndoableTransaction tid = b.startTransaction()) {
+			memory.setState(3, b.addr(0x4000), b.addr(0x7000), TraceMemoryState.KNOWN);
+			memory.setState(3, b.addr(0x5000), b.addr(0x6000), TraceMemoryState.ERROR);
+			memory.setState(4, b.addr(0x3000), b.addr(0x4800), TraceMemoryState.KNOWN);
 		}
 
 		Map<TraceAddressSnapRange, TraceMemoryState> expected;
 
 		expected = new HashMap<>();
-		assertEquals(expected, collectAsMap(memory.getMostRecentStates(2, range(0x2800, 0x9000))));
+		assertEquals(expected,
+			collectAsMap(memory.getMostRecentStates(2, b.range(0x2800, 0x9000))));
 
 		expected = new HashMap<>();
-		expected.put(srange(3, 0x4000, 0x4fff), TraceMemoryState.KNOWN);
-		expected.put(srange(3, 0x5000, 0x6000), TraceMemoryState.ERROR);
-		expected.put(srange(3, 0x6001, 0x7000), TraceMemoryState.KNOWN);
-		assertEquals(expected, collectAsMap(memory.getMostRecentStates(3, range(0x2800, 0x9000))));
+		expected.put(b.srange(3, 0x4000, 0x4fff), TraceMemoryState.KNOWN);
+		expected.put(b.srange(3, 0x5000, 0x6000), TraceMemoryState.ERROR);
+		expected.put(b.srange(3, 0x6001, 0x7000), TraceMemoryState.KNOWN);
+		assertEquals(expected,
+			collectAsMap(memory.getMostRecentStates(3, b.range(0x2800, 0x9000))));
 
 		expected = new HashMap<>();
-		expected.put(srange(4, 0x3000, 0x4800), TraceMemoryState.KNOWN);
-		expected.put(srange(3, 0x4801, 0x4fff), TraceMemoryState.KNOWN);
-		expected.put(srange(3, 0x5000, 0x6000), TraceMemoryState.ERROR);
-		expected.put(srange(3, 0x6001, 0x7000), TraceMemoryState.KNOWN);
-		assertEquals(expected, collectAsMap(memory.getMostRecentStates(4, range(0x2800, 0x9000))));
-		assertEquals(expected, collectAsMap(memory.getMostRecentStates(5, range(0x2800, 0x9000))));
+		expected.put(b.srange(4, 0x3000, 0x4800), TraceMemoryState.KNOWN);
+		expected.put(b.srange(3, 0x4801, 0x4fff), TraceMemoryState.KNOWN);
+		expected.put(b.srange(3, 0x5000, 0x6000), TraceMemoryState.ERROR);
+		expected.put(b.srange(3, 0x6001, 0x7000), TraceMemoryState.KNOWN);
+		assertEquals(expected,
+			collectAsMap(memory.getMostRecentStates(4, b.range(0x2800, 0x9000))));
+		assertEquals(expected,
+			collectAsMap(memory.getMostRecentStates(5, b.range(0x2800, 0x9000))));
 	}
 
 	protected byte[] arr(int... e) {
@@ -436,7 +464,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 	}
 
 	protected int getBlockRecordCount() {
-		DBTraceMemorySpace space = memory.getForSpace(toyLanguage.getDefaultSpace(), false);
+		DBTraceMemorySpace space = memory.getForSpace(b.language.getDefaultSpace(), false);
 		if (space == null) {
 			return 0;
 		}
@@ -444,7 +472,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 	}
 
 	protected DBCachedObjectStore<DBTraceMemoryBufferEntry> getBufferStore() {
-		DBTraceMemorySpace space = memory.getForSpace(toyLanguage.getDefaultSpace(), false);
+		DBTraceMemorySpace space = memory.getForSpace(b.language.getDefaultSpace(), false);
 		if (space == null) {
 			return null;
 		}
@@ -461,16 +489,16 @@ public abstract class AbstractDBTraceMemoryManagerTest
 
 	@Test
 	public void testBytes0Length() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			assertEquals(0, memory.putBytes(3, addr(0x4000), buf()));
+		try (UndoableTransaction tid = b.startTransaction()) {
+			assertEquals(0, memory.putBytes(3, b.addr(0x4000), buf()));
 			assertEquals(0, getBlockRecordCount());
 			assertEquals(0, getBufferRecordCount());
 		}
 
-		assertEquals(0, memory.getBytes(3, addr(0x4000), buf()));
+		assertEquals(0, memory.getBytes(3, b.addr(0x4000), buf()));
 
 		ByteBuffer read = buf(-1, -2, -3, -4);
-		assertEquals(4, memory.getBytes(3, addr(0x3ffe), read));
+		assertEquals(4, memory.getBytes(3, b.addr(0x3ffe), read));
 		assertEquals(0, read.remaining());
 		// NOTE: I think this is OK, because the state ought to be UNKNOWN anyway.
 		assertArrayEquals(arr(-1, -2, -3, -4), read.array());
@@ -478,9 +506,9 @@ public abstract class AbstractDBTraceMemoryManagerTest
 
 	@Test
 	public void testBytesSimple4Zeros() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			assertEquals(4, memory.putBytes(3, addr(0x4000), buf(0, 0, 0, 0)));
-			assertEquals(4, memory.putBytes(3, addr(0x4000), buf(0, 0, 0, 0))); // Should have no effect
+		try (UndoableTransaction tid = b.startTransaction()) {
+			assertEquals(4, memory.putBytes(3, b.addr(0x4000), buf(0, 0, 0, 0)));
+			assertEquals(4, memory.putBytes(3, b.addr(0x4000), buf(0, 0, 0, 0))); // Should have no effect
 			assertEquals(1, getBlockRecordCount());
 			// Zeros do not require buffer backing
 			assertEquals(0, getBufferRecordCount());
@@ -489,18 +517,18 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		// verify the corresponding change in state;
 		Map<TraceAddressSnapRange, TraceMemoryState> expected;
 		expected = new HashMap<>();
-		expected.put(srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
-		assertEquals(expected, collectAsMap(memory.getStates(3, range(0x3000, 0x5000))));
+		expected.put(b.srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+		assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 
 		ByteBuffer read = buf(-1, -2, -3, -4); // Verify zeros actually written
-		assertEquals(4, memory.getBytes(3, addr(0x4000), read));
+		assertEquals(4, memory.getBytes(3, b.addr(0x4000), read));
 		assertArrayEquals(arr(0, 0, 0, 0), read.array());
 	}
 
 	@Test
 	public void testBytesSimple4Bytes() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			assertEquals(4, memory.putBytes(3, addr(0x4000), buf(1, 2, 3, 4)));
+		try (UndoableTransaction tid = b.startTransaction()) {
+			assertEquals(4, memory.putBytes(3, b.addr(0x4000), buf(1, 2, 3, 4)));
 			assertEquals(1, getBlockRecordCount());
 			assertEquals(1, getBufferRecordCount());
 		}
@@ -510,68 +538,68 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		// verify the corresponding change in state;
 		Map<TraceAddressSnapRange, TraceMemoryState> expected;
 		expected = new HashMap<>();
-		expected.put(srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
-		assertEquals(expected, collectAsMap(memory.getStates(3, range(0x3000, 0x5000))));
+		expected.put(b.srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+		assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 
 		ByteBuffer read = ByteBuffer.allocate(4);
-		assertEquals(4, memory.getBytes(3, addr(0x4000), read));
+		assertEquals(4, memory.getBytes(3, b.addr(0x4000), read));
 		assertArrayEquals(arr(1, 2, 3, 4), read.array());
 	}
 
 	@Test
 	public void testBytesSpan4Bytes() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			assertEquals(4, memory.putBytes(3, addr(0x3ffe), buf(1, 2, 3, 4)));
+		try (UndoableTransaction tid = b.startTransaction()) {
+			assertEquals(4, memory.putBytes(3, b.addr(0x3ffe), buf(1, 2, 3, 4)));
 			assertEquals(2, getBlockRecordCount());
 			assertEquals(2, getBufferRecordCount());
 		}
 
 		ByteBuffer read = ByteBuffer.allocate(4);
-		assertEquals(4, memory.getBytes(3, addr(0x3ffe), read));
+		assertEquals(4, memory.getBytes(3, b.addr(0x3ffe), read));
 		assertArrayEquals(arr(1, 2, 3, 4), read.array());
 	}
 
 	@Test
 	public void testBytesSpan12BytesInChunks() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			assertEquals(4, memory.putBytes(3, addr(0x3ffa), buf(1, 2, 3, 4)));
+		try (UndoableTransaction tid = b.startTransaction()) {
+			assertEquals(4, memory.putBytes(3, b.addr(0x3ffa), buf(1, 2, 3, 4)));
 			assertEquals(1, getBlockRecordCount());
-			assertEquals(4, memory.putBytes(3, addr(0x3ffe), buf(5, 6, 7, 8)));
+			assertEquals(4, memory.putBytes(3, b.addr(0x3ffe), buf(5, 6, 7, 8)));
 			assertEquals(2, getBlockRecordCount());
-			assertEquals(4, memory.putBytes(3, addr(0x4002), buf(9, 10, 11, 12)));
+			assertEquals(4, memory.putBytes(3, b.addr(0x4002), buf(9, 10, 11, 12)));
 			assertEquals(2, getBlockRecordCount());
 			assertEquals(2, getBufferRecordCount());
 		}
 
 		ByteBuffer read = ByteBuffer.allocate(12);
-		assertEquals(12, memory.getBytes(3, addr(0x3ffa), read));
+		assertEquals(12, memory.getBytes(3, b.addr(0x3ffa), read));
 		assertArrayEquals(arr(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12), read.array());
 	}
 
 	@Test
 	public void testBytesOverflow() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
+		try (UndoableTransaction tid = b.startTransaction()) {
 			ByteBuffer write = buf(1, 2, 3, 4);
-			assertEquals(2, memory.putBytes(3, addr(0xfffffffffffffffeL), write));
+			assertEquals(2, memory.putBytes(3, b.addr(0xfffffffffffffffeL), write));
 			assertEquals(2, write.remaining());
 			assertEquals(1, getBlockRecordCount());
 			assertEquals(1, getBufferRecordCount());
 		}
 
 		ByteBuffer read = buf(-1, -1, -1, -1);
-		assertEquals(2, memory.getBytes(3, addr(0xfffffffffffffffeL), read));
+		assertEquals(2, memory.getBytes(3, b.addr(0xfffffffffffffffeL), read));
 		assertEquals(2, read.remaining());
 		assertArrayEquals(arr(1, 2, -1, -1), read.array());
 	}
 
 	@Test
 	public void testBytesWriteSameLater() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			assertEquals(4, memory.putBytes(3, addr(0x4000), buf(1, 2, 3, 4)));
+		try (UndoableTransaction tid = b.startTransaction()) {
+			assertEquals(4, memory.putBytes(3, b.addr(0x4000), buf(1, 2, 3, 4)));
 			assertEquals(1, getBlockRecordCount());
 			assertEquals(1, getBufferRecordCount());
 
-			assertEquals(4, memory.putBytes(5, addr(0x4000), buf(1, 2, 3, 4)));
+			assertEquals(4, memory.putBytes(5, b.addr(0x4000), buf(1, 2, 3, 4)));
 			assertEquals(1, getBlockRecordCount()); // Should not require a new block
 			assertEquals(1, getBufferRecordCount()); // Definitely not another buffer
 		}
@@ -580,25 +608,25 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		Map<TraceAddressSnapRange, TraceMemoryState> expected;
 
 		expected = new HashMap<>();
-		assertEquals(expected, collectAsMap(memory.getStates(2, range(0x3000, 0x5000))));
-		assertEquals(expected, collectAsMap(memory.getStates(4, range(0x3000, 0x5000))));
-		assertEquals(expected, collectAsMap(memory.getStates(6, range(0x3000, 0x5000))));
+		assertEquals(expected, collectAsMap(memory.getStates(2, b.range(0x3000, 0x5000))));
+		assertEquals(expected, collectAsMap(memory.getStates(4, b.range(0x3000, 0x5000))));
+		assertEquals(expected, collectAsMap(memory.getStates(6, b.range(0x3000, 0x5000))));
 
 		expected = new HashMap<>();
-		expected.put(srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
-		assertEquals(expected, collectAsMap(memory.getStates(3, range(0x3000, 0x5000))));
+		expected.put(b.srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+		assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 		expected = new HashMap<>();
-		expected.put(srange(5, 0x4000, 0x4003), TraceMemoryState.KNOWN);
-		assertEquals(expected, collectAsMap(memory.getStates(5, range(0x3000, 0x5000))));
+		expected.put(b.srange(5, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+		assertEquals(expected, collectAsMap(memory.getStates(5, b.range(0x3000, 0x5000))));
 
 		ByteBuffer read = buf(0, 0, 0, 0);
-		assertEquals(4, memory.getBytes(5, addr(0x4000), read));
+		assertEquals(4, memory.getBytes(5, b.addr(0x4000), read));
 		assertArrayEquals(arr(1, 2, 3, 4), read.array());
 	}
 
 	@Test
 	public void testBytesArrayOffset() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
+		try (UndoableTransaction tid = b.startTransaction()) {
 			byte[] array = new byte[20];
 			array[9] = -1;
 			array[10] = 1;
@@ -606,84 +634,84 @@ public abstract class AbstractDBTraceMemoryManagerTest
 			array[12] = 3;
 			array[13] = 4;
 			array[14] = -1;
-			assertEquals(4, memory.putBytes(3, addr(0x4000), ByteBuffer.wrap(array, 10, 4)));
+			assertEquals(4, memory.putBytes(3, b.addr(0x4000), ByteBuffer.wrap(array, 10, 4)));
 		}
 
 		byte[] array = new byte[20];
 		array[9] = -2;
 		array[16] = -2;
 		ByteBuffer read = ByteBuffer.wrap(array, 10, 6);
-		assertEquals(6, memory.getBytes(3, addr(0x3fff), read));
+		assertEquals(6, memory.getBytes(3, b.addr(0x3fff), read));
 		assertArrayEquals(arr(-2, 0, 1, 2, 3, 4, 0, -2), Arrays.copyOfRange(array, 9, 17));
 	}
 
 	@Test
 	public void testGetBytesMostRecent() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			assertEquals(4, memory.putBytes(3, addr(0x4000), buf(1, 2, 3, 4)));
-			assertEquals(4, memory.putBytes(4, addr(0x4002), buf(5, 6, 7, 8)));
-			assertEquals(1, memory.putBytes(5, addr(0x4003), buf(0)));
+		try (UndoableTransaction tid = b.startTransaction()) {
+			assertEquals(4, memory.putBytes(3, b.addr(0x4000), buf(1, 2, 3, 4)));
+			assertEquals(4, memory.putBytes(4, b.addr(0x4002), buf(5, 6, 7, 8)));
+			assertEquals(1, memory.putBytes(5, b.addr(0x4003), buf(0)));
 			assertEquals(3, getBlockRecordCount());
 			assertEquals(1, getBufferRecordCount());
 		}
 
 		ByteBuffer read = buf(-1, -1, -1, -1);
-		assertEquals(4, memory.getBytes(2, addr(0x4000), read));
+		assertEquals(4, memory.getBytes(2, b.addr(0x4000), read));
 		assertArrayEquals(arr(-1, -1, -1, -1), read.array());
 
 		read.position(0);
-		assertEquals(4, memory.getBytes(3, addr(0x4000), read));
+		assertEquals(4, memory.getBytes(3, b.addr(0x4000), read));
 		assertArrayEquals(arr(1, 2, 3, 4), read.array());
 
 		read.position(0);
-		assertEquals(4, memory.getBytes(4, addr(0x4002), read));
+		assertEquals(4, memory.getBytes(4, b.addr(0x4002), read));
 		assertArrayEquals(arr(5, 6, 7, 8), read.array());
 
 		read.position(0);
-		assertEquals(4, memory.getBytes(4, addr(0x4000), read));
+		assertEquals(4, memory.getBytes(4, b.addr(0x4000), read));
 		assertArrayEquals(arr(1, 2, 5, 6), read.array());
 
 		read = ByteBuffer.allocate(10);
-		assertEquals(10, memory.getBytes(5, addr(0x3ffe), read));
+		assertEquals(10, memory.getBytes(5, b.addr(0x3ffe), read));
 		assertArrayEquals(arr(0, 0, 1, 2, 5, 0, 7, 8, 0, 0), read.array());
 	}
 
 	@Test
 	public void testPutBytesIntoPastGetBytesMostRecent() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			assertEquals(4, memory.putBytes(4, addr(0x4800), buf(5, 6, 7, 8)));
-			assertEquals(4, memory.putBytes(3, addr(0x4802), buf(1, 2, 3, 4)));
+		try (UndoableTransaction tid = b.startTransaction()) {
+			assertEquals(4, memory.putBytes(4, b.addr(0x4800), buf(5, 6, 7, 8)));
+			assertEquals(4, memory.putBytes(3, b.addr(0x4802), buf(1, 2, 3, 4)));
 			assertEquals(10,
-				memory.putBytes(2, addr(0x47fe), buf(9, 10, 11, 12, 13, 14, 15, 16, 17, 18)));
+				memory.putBytes(2, b.addr(0x47fe), buf(9, 10, 11, 12, 13, 14, 15, 16, 17, 18)));
 			assertEquals(3, getBlockRecordCount());
 			assertEquals(1, getBufferRecordCount());
 		}
 
 		ByteBuffer read = buf(-1, -1, -1, -1);
-		assertEquals(4, memory.getBytes(1, addr(0x4802), read));
+		assertEquals(4, memory.getBytes(1, b.addr(0x4802), read));
 		assertArrayEquals(arr(-1, -1, -1, -1), read.array());
 
 		read.position(0);
-		assertEquals(4, memory.getBytes(3, addr(0x4802), read));
+		assertEquals(4, memory.getBytes(3, b.addr(0x4802), read));
 		assertArrayEquals(arr(1, 2, 3, 4), read.array());
 
 		read.position(0);
-		assertEquals(4, memory.getBytes(4, addr(0x4800), read));
+		assertEquals(4, memory.getBytes(4, b.addr(0x4800), read));
 		assertArrayEquals(arr(5, 6, 7, 8), read.array());
 
 		read.position(0);
-		assertEquals(4, memory.getBytes(4, addr(0x4802), read));
+		assertEquals(4, memory.getBytes(4, b.addr(0x4802), read));
 		assertArrayEquals(arr(7, 8, 3, 4), read.array());
 
 		read = ByteBuffer.allocate(14);
-		assertEquals(14, memory.getBytes(4, addr(0x47fc), read));
+		assertEquals(14, memory.getBytes(4, b.addr(0x47fc), read));
 		assertArrayEquals(arr(0, 0, 9, 10, 5, 6, 7, 8, 3, 4, 17, 18, 0, 0), read.array());
 	}
 
 	@Test
 	public void testPutBytesPackGetBytes() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			assertEquals(4, memory.putBytes(3, addr(0x4000), buf(1, 2, 3, 4)));
+		try (UndoableTransaction tid = b.startTransaction()) {
+			assertEquals(4, memory.putBytes(3, b.addr(0x4000), buf(1, 2, 3, 4)));
 			memory.pack();
 			assertEquals(1, getBlockRecordCount());
 			assertEquals(1, getBufferRecordCount());
@@ -692,7 +720,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		assertTrue(bufEnt.isCompressed());
 
 		ByteBuffer read = ByteBuffer.allocate(4);
-		assertEquals(4, memory.getBytes(3, addr(0x4000), read));
+		assertEquals(4, memory.getBytes(3, b.addr(0x4000), read));
 		assertArrayEquals(arr(1, 2, 3, 4), read.array());
 
 		assertTrue(bufEnt.isCompressed());
@@ -700,30 +728,30 @@ public abstract class AbstractDBTraceMemoryManagerTest
 
 	@Test
 	public void testPutBytesPackPutBytes() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			assertEquals(4, memory.putBytes(3, addr(0x4000), buf(1, 2, 3, 4)));
+		try (UndoableTransaction tid = b.startTransaction()) {
+			assertEquals(4, memory.putBytes(3, b.addr(0x4000), buf(1, 2, 3, 4)));
 			memory.pack();
 			assertEquals(1, getBlockRecordCount());
 			assertEquals(1, getBufferRecordCount());
 			DBTraceMemoryBufferEntry bufEnt = getBufferStore().getObjectAt(0);
 			assertTrue(bufEnt.isCompressed());
-			assertEquals(4, memory.putBytes(3, addr(0x4000), buf(1, 2, 3, 4)));
+			assertEquals(4, memory.putBytes(3, b.addr(0x4000), buf(1, 2, 3, 4)));
 			assertFalse(bufEnt.isCompressed()); // TODO: This is an implementation quirk. Do I care?
 		}
 
 		ByteBuffer read = ByteBuffer.allocate(4);
-		assertEquals(4, memory.getBytes(3, addr(0x4000), read));
+		assertEquals(4, memory.getBytes(3, b.addr(0x4000), read));
 		assertArrayEquals(arr(1, 2, 3, 4), read.array());
 	}
 
 	@Test
 	public void testFindBytes() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			assertEquals(5, memory.putBytes(3, addr(0x4000), buf(1, 2, 3, 4, 5)));
+		try (UndoableTransaction tid = b.startTransaction()) {
+			assertEquals(5, memory.putBytes(3, b.addr(0x4000), buf(1, 2, 3, 4, 5)));
 		}
 
 		try {
-			memory.findBytes(3, range(0x4000, 0x4003), buf(1, 2, 3, 4), buf(-1, -1, -1),
+			memory.findBytes(3, b.range(0x4000, 0x4003), buf(1, 2, 3, 4), buf(-1, -1, -1),
 				true, TaskMonitor.DUMMY);
 		}
 		catch (IllegalArgumentException e) {
@@ -732,62 +760,63 @@ public abstract class AbstractDBTraceMemoryManagerTest
 
 		// Degenerate
 		assertNull(
-			memory.findBytes(2, range(0x4000, 0x4003), buf(), buf(),
+			memory.findBytes(2, b.range(0x4000, 0x4003), buf(), buf(),
 				true, TaskMonitor.DUMMY));
 
 		// Too soon
 		assertNull(
-			memory.findBytes(2, range(0x4000, 0x4003), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
+			memory.findBytes(2, b.range(0x4000, 0x4003), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
 				true, TaskMonitor.DUMMY));
 
 		// Too small
 		assertNull(
-			memory.findBytes(3, range(0x4000, 0x4002), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
+			memory.findBytes(3, b.range(0x4000, 0x4002), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
 				true, TaskMonitor.DUMMY));
 
 		// Too high
 		assertNull(
-			memory.findBytes(3, range(0x4001, 0x4004), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
+			memory.findBytes(3, b.range(0x4001, 0x4004), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
 				true, TaskMonitor.DUMMY));
 
 		// Too high, into unknown
 		assertNull(
-			memory.findBytes(3, range(0x4001, 0x4005), buf(1, 2, 3, 4, 5), buf(-1, -1, -1, -1, -1),
+			memory.findBytes(3, b.range(0x4001, 0x4005), buf(1, 2, 3, 4, 5),
+				buf(-1, -1, -1, -1, -1),
 				true, TaskMonitor.DUMMY));
 
 		// Too low
 		assertNull(
-			memory.findBytes(3, range(0x3fff, 0x4002), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
+			memory.findBytes(3, b.range(0x3fff, 0x4002), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
 				true, TaskMonitor.DUMMY));
 
 		// Perfect match
-		assertEquals(addr(0x4000),
-			memory.findBytes(3, range(0x4000, 0x4003), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
+		assertEquals(b.addr(0x4000),
+			memory.findBytes(3, b.range(0x4000, 0x4003), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
 				true, TaskMonitor.DUMMY));
 
 		// Make it work for the match
-		assertEquals(addr(0x4000),
-			memory.findBytes(3, range(0x0, -1), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
+		assertEquals(b.addr(0x4000),
+			memory.findBytes(3, b.range(0x0, -1), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
 				true, TaskMonitor.DUMMY));
 
 		// Make it work for the match
-		assertEquals(addr(0x4000),
-			memory.findBytes(3, range(0x0, -1), buf(1), buf(-1),
+		assertEquals(b.addr(0x4000),
+			memory.findBytes(3, b.range(0x0, -1), buf(1), buf(-1),
 				true, TaskMonitor.DUMMY));
 
 		// Sub match
-		assertEquals(addr(0x4001),
-			memory.findBytes(3, range(0x4000, 0x4003), buf(2, 3, 4), buf(-1, -1, -1),
+		assertEquals(b.addr(0x4001),
+			memory.findBytes(3, b.range(0x4000, 0x4003), buf(2, 3, 4), buf(-1, -1, -1),
 				true, TaskMonitor.DUMMY));
 	}
 
 	@Test
 	public void testRemoveBytes() {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
+		try (UndoableTransaction tid = b.startTransaction()) {
 			assertEquals(10,
-				memory.putBytes(2, addr(0x47fe), buf(9, 10, 11, 12, 13, 14, 15, 16, 17, 18)));
-			assertEquals(4, memory.putBytes(4, addr(0x4800), buf(5, 6, 7, 8)));
-			assertEquals(4, memory.putBytes(3, addr(0x4802), buf(1, 2, 3, 4)));
+				memory.putBytes(2, b.addr(0x47fe), buf(9, 10, 11, 12, 13, 14, 15, 16, 17, 18)));
+			assertEquals(4, memory.putBytes(4, b.addr(0x4800), buf(5, 6, 7, 8)));
+			assertEquals(4, memory.putBytes(3, b.addr(0x4802), buf(1, 2, 3, 4)));
 			assertEquals(3, getBlockRecordCount());
 			assertEquals(1, getBufferRecordCount());
 			/* 0x fe ff 00 01 02 03 04 05 06 07
@@ -797,7 +826,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 			 * 2:  9 10 11 12 13 14 15 16 17 18
 			 */
 
-			memory.removeBytes(2, addr(0x47ff), 14);
+			memory.removeBytes(2, b.addr(0x47ff), 14);
 			/* 0x fe ff 00 01 02 03 04 05 06 07
 			 * 
 			 * 4:        5  6  7  8
@@ -807,45 +836,46 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		}
 
 		ByteBuffer read = ByteBuffer.allocate(4);
-		assertEquals(4, memory.getBytes(1, addr(0x4802), read));
+		assertEquals(4, memory.getBytes(1, b.addr(0x4802), read));
 		assertArrayEquals(arr(0, 0, 0, 0), read.array());
 
 		read.position(0);
-		assertEquals(4, memory.getBytes(3, addr(0x4802), read));
+		assertEquals(4, memory.getBytes(3, b.addr(0x4802), read));
 		assertArrayEquals(arr(1, 2, 3, 4), read.array());
 
 		read.position(0);
-		assertEquals(4, memory.getBytes(4, addr(0x4800), read));
+		assertEquals(4, memory.getBytes(4, b.addr(0x4800), read));
 		assertArrayEquals(arr(5, 6, 7, 8), read.array());
 
 		read.position(0);
-		assertEquals(4, memory.getBytes(4, addr(0x4802), read));
+		assertEquals(4, memory.getBytes(4, b.addr(0x4802), read));
 		assertArrayEquals(arr(7, 8, 3, 4), read.array());
 
 		read = ByteBuffer.allocate(14);
-		assertEquals(14, memory.getBytes(4, addr(0x47fc), read));
+		assertEquals(14, memory.getBytes(4, b.addr(0x47fc), read));
 		assertArrayEquals(arr(0, 0, 9, 0, 5, 6, 7, 8, 3, 4, 0, 0, 0, 0), read.array());
 
 		// Check overall effect on state
 		Map<TraceAddressSnapRange, TraceMemoryState> expected;
 		expected = new HashMap<>();
-		expected.put(srange(2, 0x47fe, 0x47fe), TraceMemoryState.KNOWN);
-		expected.put(srange(4, 0x4800, 0x4803), TraceMemoryState.KNOWN);
-		expected.put(srange(3, 0x4804, 0x4805), TraceMemoryState.KNOWN);
-		assertEquals(expected, collectAsMap(memory.getMostRecentStates(6, range(0x4700, 0x4900))));
+		expected.put(b.srange(2, 0x47fe, 0x47fe), TraceMemoryState.KNOWN);
+		expected.put(b.srange(4, 0x4800, 0x4803), TraceMemoryState.KNOWN);
+		expected.put(b.srange(3, 0x4804, 0x4805), TraceMemoryState.KNOWN);
+		assertEquals(expected,
+			collectAsMap(memory.getMostRecentStates(6, b.range(0x4700, 0x4900))));
 	}
 
 	@Test
 	public void testSaveAndLoad() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			assertEquals(4, memory.putBytes(3, addr(0x4000), buf(1, 2, 3, 4)));
+		try (UndoableTransaction tid = b.startTransaction()) {
+			assertEquals(4, memory.putBytes(3, b.addr(0x4000), buf(1, 2, 3, 4)));
 			assertEquals(1, getBlockRecordCount());
 			assertEquals(1, getBufferRecordCount());
 		}
 
 		Path tmp = Files.createTempFile("test", ".db");
 		Files.delete(tmp); // saveAs must create the file
-		trace.getDBHandle().saveAs(tmp.toFile(), false, new ConsoleTaskMonitor());
+		b.trace.getDBHandle().saveAs(tmp.toFile(), false, new ConsoleTaskMonitor());
 
 		DBHandle opened = new DBHandle(tmp.toFile());
 		DBTrace restored = null;
@@ -853,17 +883,17 @@ public abstract class AbstractDBTraceMemoryManagerTest
 			restored = new DBTrace(opened, DBOpenMode.UPDATE, new ConsoleTaskMonitor(), this);
 
 			DBTraceMemorySpace rSpace =
-				restored.getMemoryManager().getMemorySpace(toyLanguage.getDefaultDataSpace(), true);
+				restored.getMemoryManager().getMemorySpace(b.language.getDefaultDataSpace(), true);
 			assertEquals(1, rSpace.bufferStore.getRecordCount());
 
 			// verify the corresponding change in state;
 			Map<TraceAddressSnapRange, TraceMemoryState> expected;
 			expected = new HashMap<>();
-			expected.put(srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
-			assertEquals(expected, collectAsMap(memory.getStates(3, range(0x3000, 0x5000))));
+			expected.put(b.srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+			assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 
 			ByteBuffer read = ByteBuffer.allocate(4);
-			assertEquals(4, rSpace.getBytes(3, addr(0x4000), read));
+			assertEquals(4, rSpace.getBytes(3, b.addr(0x4000), read));
 			assertArrayEquals(arr(1, 2, 3, 4), read.array());
 		}
 		finally {
@@ -875,16 +905,16 @@ public abstract class AbstractDBTraceMemoryManagerTest
 
 	@Test
 	public void testAddButAbortedStillEmpty() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			assertEquals(4, memory.putBytes(3, addr(0x4000), buf(1, 2, 3, 4)));
+		try (UndoableTransaction tid = b.startTransaction()) {
+			assertEquals(4, memory.putBytes(3, b.addr(0x4000), buf(1, 2, 3, 4)));
 			assertEquals(1, getBlockRecordCount());
 			assertEquals(1, getBufferRecordCount());
 
 			// verify the corresponding change in state;
 			Map<TraceAddressSnapRange, TraceMemoryState> expected;
 			expected = new HashMap<>();
-			expected.put(srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
-			assertEquals(expected, collectAsMap(memory.getStates(3, range(0x3000, 0x5000))));
+			expected.put(b.srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+			assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 
 			tid.abort();
 		}
@@ -894,27 +924,27 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		// verify the corresponding change in state;
 		Map<AddressRange, TraceMemoryState> expected;
 		expected = new HashMap<>();
-		assertEquals(expected, collectAsMap(memory.getStates(3, range(0x3000, 0x5000))));
+		assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 
 		ByteBuffer read = ByteBuffer.allocate(4);
-		assertEquals(4, memory.getBytes(3, addr(0x4000), read));
+		assertEquals(4, memory.getBytes(3, b.addr(0x4000), read));
 		assertArrayEquals(arr(0, 0, 0, 0), read.array());
 	}
 
 	@Test
 	public void testAddThenUndo() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			assertEquals(4, memory.putBytes(3, addr(0x4000), buf(1, 2, 3, 4)));
+		try (UndoableTransaction tid = b.startTransaction()) {
+			assertEquals(4, memory.putBytes(3, b.addr(0x4000), buf(1, 2, 3, 4)));
 			assertEquals(1, getBlockRecordCount());
 			assertEquals(1, getBufferRecordCount());
 
 			// verify the corresponding change in state;
 			Map<TraceAddressSnapRange, TraceMemoryState> expected;
 			expected = new HashMap<>();
-			expected.put(srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
-			assertEquals(expected, collectAsMap(memory.getStates(3, range(0x3000, 0x5000))));
+			expected.put(b.srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+			assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 		}
-		trace.undo();
+		b.trace.undo();
 
 		assertEquals(0, getBlockRecordCount());
 		assertEquals(0, getBufferRecordCount());
@@ -922,27 +952,27 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		// verify the corresponding change in state;
 		Map<AddressRange, TraceMemoryState> expected;
 		expected = new HashMap<>();
-		assertEquals(expected, collectAsMap(memory.getStates(3, range(0x3000, 0x5000))));
+		assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 
 		ByteBuffer read = ByteBuffer.allocate(4);
-		assertEquals(4, memory.getBytes(3, addr(0x4000), read));
+		assertEquals(4, memory.getBytes(3, b.addr(0x4000), read));
 		assertArrayEquals(arr(0, 0, 0, 0), read.array());
 	}
 
 	@Test
 	public void testAddThenUndoThenRedo() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			assertEquals(4, memory.putBytes(3, addr(0x4000), buf(1, 2, 3, 4)));
+		try (UndoableTransaction tid = b.startTransaction()) {
+			assertEquals(4, memory.putBytes(3, b.addr(0x4000), buf(1, 2, 3, 4)));
 			assertEquals(1, getBlockRecordCount());
 			assertEquals(1, getBufferRecordCount());
 
 			// verify the corresponding change in state;
 			Map<TraceAddressSnapRange, TraceMemoryState> expected;
 			expected = new HashMap<>();
-			expected.put(srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
-			assertEquals(expected, collectAsMap(memory.getStates(3, range(0x3000, 0x5000))));
+			expected.put(b.srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+			assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 		}
-		trace.undo();
+		b.trace.undo();
 
 		assertEquals(0, getBlockRecordCount());
 		assertEquals(0, getBufferRecordCount());
@@ -950,23 +980,23 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		// verify the corresponding change in state;
 		Map<TraceAddressSnapRange, TraceMemoryState> expected;
 		expected = new HashMap<>();
-		assertEquals(expected, collectAsMap(memory.getStates(3, range(0x3000, 0x5000))));
+		assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 
 		ByteBuffer read = ByteBuffer.allocate(4);
-		assertEquals(4, memory.getBytes(3, addr(0x4000), read));
+		assertEquals(4, memory.getBytes(3, b.addr(0x4000), read));
 		assertArrayEquals(arr(0, 0, 0, 0), read.array());
 
-		trace.redo();
+		b.trace.redo();
 
 		assertEquals(1, getBlockRecordCount());
 		assertEquals(1, getBufferRecordCount());
 
 		expected = new HashMap<>();
-		expected.put(srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
-		assertEquals(expected, collectAsMap(memory.getStates(3, range(0x3000, 0x5000))));
+		expected.put(b.srange(3, 0x4000, 0x4003), TraceMemoryState.KNOWN);
+		assertEquals(expected, collectAsMap(memory.getStates(3, b.range(0x3000, 0x5000))));
 
 		read.position(0);
-		assertEquals(4, memory.getBytes(3, addr(0x4000), read));
+		assertEquals(4, memory.getBytes(3, b.addr(0x4000), read));
 		assertArrayEquals(arr(1, 2, 3, 4), read.array());
 	}
 
@@ -975,31 +1005,31 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		/**
 		 * This test gets down into the block buffer implementation. If the block number exceeds
 		 * 127, if might (accidentally) get treated as negative. Thanks Java! We can create this
-		 * situation by writing to the same address at more than 127 different snaps.
+		 * situation by writing to the same b.address at more than 127 different snaps.
 		 */
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
+		try (UndoableTransaction tid = b.startTransaction()) {
 			for (int i = 0; i < 300; i++) {
-				memory.putBytes(i, addr(0x4000), buf(1, 2, 3, i % 256));
+				memory.putBytes(i, b.addr(0x4000), buf(1, 2, 3, i % 256));
 			}
 		}
 
 		for (int i = 0; i < 300; i++) {
 			ByteBuffer buf = ByteBuffer.allocate(4);
-			memory.getBytes(i, addr(0x4000), buf);
+			memory.getBytes(i, b.addr(0x4000), buf);
 			assertArrayEquals(arr(1, 2, 3, i % 256), buf.array());
 		}
 	}
 
 	@Test
 	public void testRegisters() throws Exception {
-		Register r0 = toyLanguage.getRegister("r0");
-		Register r0h = toyLanguage.getRegister("r0h");
-		Register r0l = toyLanguage.getRegister("r0l");
+		Register r0 = b.language.getRegister("r0");
+		Register r0h = b.language.getRegister("r0h");
+		Register r0l = b.language.getRegister("r0l");
 
 		DBTraceThread thread;
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			thread = trace.getThreadManager().addThread("Thread1", Range.atLeast(0L));
+		try (UndoableTransaction tid = b.startTransaction()) {
+			thread = b.getOrAddThread("Thread1", 0);
 			DBTraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(thread, true);
 
 			regs.setValue(0, new RegisterValue(r0, new BigInteger("0123456789ABCDEF", 16)));
@@ -1018,7 +1048,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 			assertEquals(new BigInteger("76543210", 16), regs.getValue(0, r0h).getUnsignedValue());
 			assertEquals(new BigInteger("FEDCBA98", 16), regs.getValue(0, r0l).getUnsignedValue());
 
-			DBTraceStack stack = trace.getStackManager().getStack(thread, 0, true);
+			DBTraceStack stack = b.trace.getStackManager().getStack(thread, 0, true);
 			stack.setDepth(2, true);
 			assertEquals(regs, memory.getMemoryRegisterSpace(stack.getFrame(0, false), false));
 			DBTraceMemoryRegisterSpace frame =
@@ -1032,14 +1062,53 @@ public abstract class AbstractDBTraceMemoryManagerTest
 	}
 
 	/**
+	 * This has to be called by the sub-class, having created a trace with the Toy:??:32:builder
+	 * language.
+	 */
+	protected void runTestRegisterBits() throws Exception {
+		Register contextreg = b.language.getRegister("contextreg");
+		Register fctx = b.language.getRegister("fctx");
+		Register nfctx = b.language.getRegister("nfctx");
+		Register phase = b.language.getRegister("phase");
+		Register counter = b.language.getRegister("counter");
+
+		DBTraceThread thread;
+		try (UndoableTransaction tid = b.startTransaction()) {
+			thread = b.getOrAddThread("Thread1", 0);
+			DBTraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(thread, true);
+
+			regs.setValue(0, new RegisterValue(fctx, BigInteger.valueOf(0xa)));
+			assertEquals(BigInteger.valueOf(0xa), regs.getValue(0, fctx).getUnsignedValue());
+
+			regs.setValue(0, new RegisterValue(nfctx, BigInteger.valueOf(0xb)));
+			assertEquals(BigInteger.valueOf(0xb), regs.getValue(0, nfctx).getUnsignedValue());
+			assertEquals(BigInteger.valueOf(0xa), regs.getValue(0, fctx).getUnsignedValue());
+
+			regs.setValue(0, new RegisterValue(phase, BigInteger.valueOf(0x3)));
+			assertEquals(BigInteger.valueOf(0x3), regs.getValue(0, phase).getUnsignedValue());
+			assertEquals(BigInteger.valueOf(0), regs.getValue(0, counter).getUnsignedValue());
+
+			regs.setValue(0, new RegisterValue(counter, BigInteger.valueOf(0xf)));
+			assertEquals(BigInteger.valueOf(0xf), regs.getValue(0, counter).getUnsignedValue());
+
+			assertEquals(BigInteger.valueOf(0xabfc).shiftLeft(48),
+				regs.getValue(0, contextreg).getUnsignedValue());
+
+			regs.setValue(0, new RegisterValue(fctx, BigInteger.valueOf(0x5)));
+			assertEquals(BigInteger.valueOf(0x5bfc).shiftLeft(48),
+				regs.getValue(0, contextreg).getUnsignedValue());
+		}
+	}
+
+	/**
 	 * This test is based on the MWE submitted in GitHub issue #2760.
 	 */
 	@Test
 	public void testManyStateEntries() throws Exception {
-		Register pc = toyLanguage.getRegister("pc");
+		Register pc = b.language.getRegister("pc");
 		DBTraceThread thread;
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
-			thread = trace.getThreadManager().addThread("Thread1", Range.atLeast(0L));
+		try (UndoableTransaction tid = b.startTransaction()) {
+			thread = b.getOrAddThread("Thread1", 0);
 			DBTraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(thread, true);
 
 			for (int i = 1; i < 2000; i++) {
