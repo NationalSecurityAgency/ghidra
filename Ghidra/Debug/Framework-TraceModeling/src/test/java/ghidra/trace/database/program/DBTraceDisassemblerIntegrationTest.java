@@ -19,12 +19,9 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.annotation.*;
 import java.util.Set;
 
 import org.junit.*;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 
 import com.google.common.collect.Range;
 
@@ -45,6 +42,8 @@ import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceOverlappedRegionException;
+import ghidra.trace.util.LanguageTestWatcher;
+import ghidra.trace.util.LanguageTestWatcher.TestLanguage;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.*;
 import ghidra.util.task.ConsoleTaskMonitor;
@@ -54,35 +53,8 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	protected ToyDBTraceBuilder b;
 	protected DBTraceVariableSnapProgramView view;
 
-	@Target(ElementType.METHOD)
-	@Retention(RetentionPolicy.RUNTIME)
-	public @interface TestLanguage {
-		String value();
-	}
-
-	public static class LanguageWatcher extends TestWatcher {
-		String language = ProgramBuilder._TOY64_BE;
-
-		@Override
-		protected void starting(Description description) {
-			language = computeLanguage(description);
-		}
-
-		private String computeLanguage(Description description) {
-			TestLanguage annot = description.getAnnotation(TestLanguage.class);
-			if (annot == null) {
-				return ProgramBuilder._TOY64_BE;
-			}
-			return annot.value();
-		}
-
-		public String getLanguage() {
-			return language;
-		}
-	}
-
 	@Rule
-	public LanguageWatcher testLanguage = new LanguageWatcher();
+	public LanguageTestWatcher testLanguage = new LanguageTestWatcher();
 
 	@Before
 	public void setUp() throws IOException {

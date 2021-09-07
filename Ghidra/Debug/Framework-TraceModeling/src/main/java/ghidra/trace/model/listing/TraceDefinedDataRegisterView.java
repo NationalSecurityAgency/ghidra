@@ -26,7 +26,8 @@ public interface TraceDefinedDataRegisterView
 		extends TraceDefinedDataView, TraceBaseDefinedRegisterView<TraceData> {
 	default TraceData create(Range<Long> lifespan, Register register, DataType dataType)
 			throws CodeUnitInsertionException {
+		TraceRegisterUtils.requireByteBound(register);
 		return create(lifespan, register.getAddress(), dataType,
-			TraceRegisterUtils.byteLengthOf(register));
+			register.getNumBytes());
 	}
 }
