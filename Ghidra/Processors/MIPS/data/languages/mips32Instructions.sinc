@@ -205,21 +205,15 @@ define pcodeop special2;
     # Extract Bit Field
     # RT = extractField(RSsrc, msbd:1, lsb:1);
     # Note that msbd = size - 1
-@if REGSIZE == "4"
-    rs_tmp:4 = RSsrc << (32 - (msbd + lsb + 1));
-    rs_tmp = rs_tmp >> (32 - (msbd + 1));
+    rs_tmp:$(REGSIZE) = RSsrc << ($(REGSIZE) * 8 - (msbd + lsb + 1));
+    rs_tmp = rs_tmp >> ($(REGSIZE) * 8 - (msbd + 1));
     RT = zext(rs_tmp);
-@else
-    rs_tmp:8 = RSsrc << (64 - (msbd + lsb + 1));
-    rs_tmp = rs_tmp >> (64 - (msbd + 1));
-    RT = zext(rs_tmp);
-@endif
 }
 
 # 0111 11ss ssst tttt mmmm mLLL LL00 0100
 :ins RT, RSsrc, lsb, InsSize    is $(AMODE) & prime=0x1F & fct=0x04 & RT & RTsrc & RSsrc & lsb & msbd & InsSize {
     tmpa:$(REGSIZE) = -1;
-    tmpa = tmpa >> ($(REGSIZE) - InsSize);
+    tmpa = tmpa >> ($(REGSIZE) * 8 - InsSize);
     tmpb:$(REGSIZE) = RSsrc & tmpa;
     tmpa = tmpa << lsb;
     tmpa = ~tmpa;
