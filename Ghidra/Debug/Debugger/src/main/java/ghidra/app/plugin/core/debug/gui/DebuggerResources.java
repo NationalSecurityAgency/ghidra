@@ -895,10 +895,10 @@ public interface DebuggerResources {
 		}
 	}
 
-	interface EnableRegisterEditsAction {
+	interface EnableEditsAction {
 		String NAME = "Enable Edits";
-		String DESCRIPTION = "Enable editing of recorded register values";
-		String GROUP = "yyyy";
+		String DESCRIPTION = "Enable editing of recorded or live values";
+		String GROUP = "yyyy2";
 		Icon ICON = ResourceManager.loadImage("images/editbytes.gif");
 		String HELP_ANCHOR = "enable_edits";
 
