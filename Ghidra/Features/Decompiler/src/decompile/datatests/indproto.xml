@@ -1,0 +1,35 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+  <!--
+      A contrived function with 2 indirect calls that share the same parameter set up.
+      The parameter setup initially gets associated with only one of the two indirect calls.
+      A prototype data-type is eventually propagated to both indirect calls
+      but too late for one, forcing a restart.  The decompiler should be able to
+      associate the correct prototype with both indirect calls.
+  -->
+<bytechunk space="ram" offset="0x100771" readonly="true">
+  554889e54883ec10897dfc8975f848
+8955f08b45fc89c79090909090837df8
+647517488b45f0488b00ffd0488d3d53
+010000e838feffffeb16488b45f0488b
+4008ffd0488d3d40010000e820feffff
+90c9c3
+</bytechunk>
+<bytechunk space="ram" offset="0x1008f6" readonly="true">
+  5065656b0047657400
+</bytechunk>
+<symbol space="ram" offset="0x100771" name="indproto"/>
+<symbol space="ram" offset="0x1005e0" name="puts"/>
+</binaryimage>
+<script>
+  <com>parse line struct methods { void (*peek)(int4 a); void (*get)(int4 b); };</com>
+  <com>parse line extern void indproto(int4 a,int4 b,methods *ptr);</com>
+  <com>lo fu indproto</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Indirect prototype #1" min="0" max="0">Exceeded maximum restarts</stringmatch>
+<stringmatch name="Indirect prototype #2" min="1" max="1">ptr-&gt;peek\)\(a\)</stringmatch>
+<stringmatch name="Indirect prototype #3" min="1" max="1">ptr-&gt;get\)\(a\)</stringmatch>
+</decompilertest>
