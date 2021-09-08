@@ -40,24 +40,24 @@ import ghidra.program.util.VarnodeContext;
 
 public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter {
 	protected AddressSet destSet = new AddressSet();
-    private boolean trustMemoryWrite = false;
+	private boolean trustMemoryWrite = false;
 	private long minStoreLoadOffset = 4;
 	private long minSpeculativeOffset = 1024;   // from the beginning of memory
 	private long maxSpeculativeOffset = 256;    // from the end of memory
 
-    
-    public ConstantPropagationContextEvaluator() {
+	public ConstantPropagationContextEvaluator() {
 	}
 
-    /**
-     * @param trustMemoryWrite - true to trust values read from memory that is marked writable
-     */
-    public ConstantPropagationContextEvaluator(boolean trustMemoryWrite) {
-    	this.trustMemoryWrite = trustMemoryWrite;
+	/**
+	 * @param trustMemoryWrite - true to trust values read from memory that is marked writable
+	 */
+	public ConstantPropagationContextEvaluator(boolean trustMemoryWrite) {
+		this.trustMemoryWrite = trustMemoryWrite;
 	}
-    
+
 	public ConstantPropagationContextEvaluator(boolean trustWriteMemOption,
-			long minStoreLoadRefAddress, long minSpeculativeRefAddress, long maxSpeculativeRefAddress) {
+			long minStoreLoadRefAddress, long minSpeculativeRefAddress,
+			long maxSpeculativeRefAddress) {
 		this(trustWriteMemOption);
 		this.minStoreLoadOffset = minStoreLoadRefAddress;
 		this.maxSpeculativeOffset = maxSpeculativeRefAddress;
@@ -68,20 +68,20 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 	 * 
 	 * @return a set of destinations that have computed flow where the flow is unknown
 	 */
-    public AddressSet getDestinationSet() {
-    	return destSet;
-    }
-    
-    /**
-     * If you override this method, and the default behavior of checking 0-256 and mask values is desired,
-     * call super.evaluateConstant() in your overriden method.
-     */
-    @Override
+	public AddressSet getDestinationSet() {
+		return destSet;
+	}
+
+	/**
+	 * If you override this method, and the default behavior of checking 0-256 and mask values is desired,
+	 * call super.evaluateConstant() in your overriden method.
+	 */
+	@Override
 	public Address evaluateConstant(VarnodeContext context, Instruction instr, int pcodeop,
 			Address constant, int size, RefType refType) {
-		
+
 		// Constant references below minSpeculative or near the end of the address space are suspect,
-    	// even if memory exists for those locations.
+		// even if memory exists for those locations.
 		AddressSpace space = constant.getAddressSpace();
 		long maxAddrOffset = space.getMaxAddress().getOffset();
 		long wordOffset = constant.getOffset();
@@ -91,7 +91,7 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 			!space.isExternalSpace()) {
 			return null;
 		}
-		
+
 		// could just be integer -1 extended into address
 		if (wordOffset == 0xffffffffL || wordOffset == 0xffffL || wordOffset == -1L) {
 			return null;
@@ -100,13 +100,20 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 		return constant;
 	}
 
-    /**
-     * If you override this method, and the default behavior of checking 0-256 and mask values is desired,
-     * call super.evaluateReference() in your overriden method.
-     */
+	/**
+	 * If you override this method, and the default behavior of checking 0-256 and mask values is desired,
+	 * call super.evaluateReference() in your overriden method.
+	 */
 	@Override
-	public boolean evaluateReference(VarnodeContext context, Instruction instr,
-			int pcodeop, Address address, int size, RefType refType) {
+	public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop,
+			Address address, int size, RefType refType) {
+
+		// special check for parameters, evaluating the call, an uncomputed call wouldn't get here normally
+		// really there should be another callback when adding parameters
+		if (refType.isCall() && !refType.isComputed() && pcodeop == PcodeOp.UNIMPLEMENTED) {
+			return true;
+		}
+
 		// unless this is a direct address copy, don't trust computed accesses below minStoreLoadOffset
 		//     External spaces can have low addresses... so don't check them
 		AddressSpace space = address.getAddressSpace();
@@ -128,7 +135,7 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 				return false;
 			}
 		}
-		
+
 		return true;
 	}
 
