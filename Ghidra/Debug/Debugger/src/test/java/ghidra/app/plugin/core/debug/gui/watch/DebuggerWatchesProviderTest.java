@@ -280,7 +280,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		performAction(watchesProvider.actionAdd);
 		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
-		row.setExpression("r0");
+		row.setExpression(expression);
 
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
