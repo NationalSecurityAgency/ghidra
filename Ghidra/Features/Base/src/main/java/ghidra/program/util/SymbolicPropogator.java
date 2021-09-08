@@ -357,12 +357,13 @@ public class SymbolicPropogator {
 		Address destination;
 		boolean continueAfterHittingFlow;
 
-		public SavedFlowState(Address source, Address destination,
+		public SavedFlowState(VarnodeContext vContext, Address source, Address destination,
 				boolean continueAfterHittingFlow) {
 			super();
 			this.source = source;
 			this.destination = destination;
 			this.continueAfterHittingFlow = continueAfterHittingFlow;
+			vContext.pushMemState();
 		}
 
 		public Address getSource() {
@@ -375,6 +376,10 @@ public class SymbolicPropogator {
 
 		public boolean isContinueAfterHittingFlow() {
 			return continueAfterHittingFlow;
+		}
+
+		public void restoreState(VarnodeContext vContext) {
+			vContext.popMemState();
 		}
 	}
 
@@ -401,7 +406,7 @@ public class SymbolicPropogator {
 
 		// prime the context stack with the entry point address
 		Stack<SavedFlowState> contextStack = new Stack<>();
-		contextStack.push(new SavedFlowState(fromAddr, startAddr, true));
+		contextStack.push(new SavedFlowState(vContext, fromAddr, startAddr, true));
 		canceled = false;
 
 		// only stop flowing on unknown bad calls when the stack depth could be unknown
@@ -424,6 +429,7 @@ public class SymbolicPropogator {
 			Address nextAddr = nextFlow.getDestination();
 			Address flowFromAddr = nextFlow.getSource();
 			boolean continueAfterHittingFlow = nextFlow.isContinueAfterHittingFlow();
+			nextFlow.restoreState(vContext);
 
 			// already done it!
 			if (body.contains(nextAddr)) {
@@ -538,8 +544,8 @@ public class SymbolicPropogator {
 						}
 						if (!instrFlow.isCall()) {
 							for (Address flow : flows) {
-								contextStack.push(new SavedFlowState(instr.getMinAddress(), flow,
-									continueAfterHittingFlow));
+								contextStack.push(new SavedFlowState(vContext,
+									instr.getMinAddress(), flow, continueAfterHittingFlow));
 							}
 						}
 						else if (flows.length > 1) {
@@ -548,8 +554,9 @@ public class SymbolicPropogator {
 							for (Reference flowRef : flowRefs) {
 								RefType referenceType = flowRef.getReferenceType();
 								if (referenceType.isComputed() && referenceType.isJump()) {
-									contextStack.push(new SavedFlowState(instr.getMinAddress(),
-										flowRef.getToAddress(), continueAfterHittingFlow));
+									contextStack.push(
+										new SavedFlowState(vContext, instr.getMinAddress(),
+											flowRef.getToAddress(), continueAfterHittingFlow));
 								}
 							}
 						}
@@ -584,7 +591,7 @@ public class SymbolicPropogator {
 				Address fallThru = instr.getFallThrough();
 				nextAddr = null;
 				if (retAddr != null) {
-					contextStack.push(new SavedFlowState(instr.getMinAddress(), retAddr,
+					contextStack.push(new SavedFlowState(vContext, instr.getMinAddress(), retAddr,
 						continueAfterHittingFlow));
 					fallThru = null;
 				}
@@ -592,14 +599,14 @@ public class SymbolicPropogator {
 				if (fallThru != null) {
 					if (doFallThruLast) {
 						// put it lowest on the stack to do later!
-						contextStack.add(0, new SavedFlowState(instr.getMinAddress(), fallThru,
-							!callCouldCauseBadStackDepth));
+						contextStack.push(new SavedFlowState(vContext, instr.getMinAddress(),
+							fallThru, !callCouldCauseBadStackDepth));
 					}
 					else if (fallThru.compareTo(maxAddr) < 0) {
 						// this isn't a normal fallthru, must break it up
 						//   don't continue flowing if something else is hit, this is an odd case
-						contextStack.add(0,
-							new SavedFlowState(instr.getMinAddress(), fallThru, false));
+						contextStack.push(
+							new SavedFlowState(vContext, instr.getMinAddress(), fallThru, false));
 					}
 					else {
 						nextAddr = fallThru;
@@ -1763,7 +1770,7 @@ public class SymbolicPropogator {
 			signatureSource = func.getSignatureSource();
 		}
 
-		long callOffset = (callTarget == null ? 0 : callTarget.getOffset());
+		long callOffset = (callTarget == null ? -1 : callTarget.getOffset());
 
 		// If there are params defined or the params were specified (meaning it could be VOID params)
 		boolean signatureAssigned = signatureSource != SourceType.DEFAULT;

@@ -15,60 +15,52 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import ghidra.program.model.listing.ContextChangeException;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.listing.ProgramContext;
-
 import java.math.BigInteger;
 
 import ghidra.app.util.importer.MessageLog;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.lang.Processor;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.address.*;
+import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.program.util.SymbolicPropogator;
 import ghidra.program.util.VarnodeContext;
-import ghidra.util.task.TaskMonitor;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 public class RISCVAddressAnalyzer extends ConstantPropagationAnalyzer {
 
-    public static final String RISCV___GLOBAL_POINTER = "__global_pointer$";
-    
-    private Address gp_assumption_value;
-    
-    private static final String REGISTER_GP = "gp";
-    private Register gp;
-    
-    private static final String PROCESSOR_NAME = "RISCV";
+	public static final String RISCV___GLOBAL_POINTER = "__global_pointer$";
 
-    public RISCVAddressAnalyzer() {
+	private Address gp_assumption_value;
+
+	private static final String REGISTER_GP = "gp";
+	private Register gp;
+
+	private static final String PROCESSOR_NAME = "RISCV";
+
+	public RISCVAddressAnalyzer() {
 		super(PROCESSOR_NAME);
 	}
-    
-    @Override
+
+	@Override
 	public boolean canAnalyze(Program program) {
-		boolean canAnalyze = program.getLanguage().getProcessor().equals(
-			Processor.findOrPossiblyCreateProcessor(PROCESSOR_NAME));
+		boolean canAnalyze = program.getLanguage()
+				.getProcessor()
+				.equals(Processor.findOrPossiblyCreateProcessor(PROCESSOR_NAME));
 
 		if (!canAnalyze) {
 			return false;
 		}
-		
+
 		gp = program.getRegister(REGISTER_GP);
-		
+
 		return true;
-    }
-    
-    @Override
+	}
+
+	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 
@@ -80,16 +72,14 @@ public class RISCVAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 		return super.added(program, set, monitor, log);
 	}
-    
-    @Override
+
+	@Override
 	public AddressSetView flowConstants(final Program program, Address flowStart,
 			AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
 			throws CancelledException {
-    	
-    	// get the function body
-		final Function func = program.getFunctionManager().getFunctionContaining(flowStart);
 
-		final AddressSet coveredSet = new AddressSet();
+		// get the function body
+		final Function func = program.getFunctionManager().getFunctionContaining(flowStart);
 
 		if (func != null && gp_assumption_value != null) {
 			ProgramContext programContext = program.getProgramContext();
@@ -97,8 +87,8 @@ public class RISCVAddressAnalyzer extends ConstantPropagationAnalyzer {
 			if (gpVal == null || !gpVal.hasValue()) {
 				gpVal = new RegisterValue(gp, BigInteger.valueOf(gp_assumption_value.getOffset()));
 				try {
-					program.getProgramContext().setRegisterValue(func.getEntryPoint(),
-						func.getEntryPoint(), gpVal);
+					program.getProgramContext()
+							.setRegisterValue(func.getEntryPoint(), func.getEntryPoint(), gpVal);
 				}
 				catch (ContextChangeException e) {
 					// only happens for context register
@@ -106,28 +96,28 @@ public class RISCVAddressAnalyzer extends ConstantPropagationAnalyzer {
 				}
 			}
 		}
-		
+
 		// follow all flows building up context
 		ConstantPropagationContextEvaluator eval =
-				new ConstantPropagationContextEvaluator(trustWriteMemOption) {
-			private boolean mustStopNow = false;
-			
-			@Override
-			public boolean evaluateContextBefore(VarnodeContext context, Instruction instr) {
-				return mustStopNow;
-			}
-			
-			@Override
-			public boolean evaluateContext(VarnodeContext context, Instruction instr) {
-				return mustStopNow;
-			}
-		};
+			new ConstantPropagationContextEvaluator(trustWriteMemOption) {
+				private boolean mustStopNow = false;
+
+				@Override
+				public boolean evaluateContextBefore(VarnodeContext context, Instruction instr) {
+					return mustStopNow;
+				}
+
+				@Override
+				public boolean evaluateContext(VarnodeContext context, Instruction instr) {
+					return mustStopNow;
+				}
+			};
+
 		AddressSet resultSet = symEval.flowConstants(flowStart, null, eval, true, monitor);
-		resultSet.add(coveredSet);
 
 		return resultSet;
-    }
-    
+	}
+
 	/**
 	 * Check for a global GP register symbol or discovered symbol
 	 * @param program
@@ -135,9 +125,8 @@ public class RISCVAddressAnalyzer extends ConstantPropagationAnalyzer {
 	 * @param monitor
 	 */
 	private void checkForGlobalGP(Program program, AddressSetView set, TaskMonitor monitor) {
-		Symbol symbol = SymbolUtilities.getLabelOrFunctionSymbol(program,
-				RISCV___GLOBAL_POINTER,
-				err -> Msg.error(this, err));
+		Symbol symbol = SymbolUtilities.getLabelOrFunctionSymbol(program, RISCV___GLOBAL_POINTER,
+			err -> Msg.error(this, err));
 		if (symbol != null) {
 			gp_assumption_value = symbol.getAddress();
 			return;
