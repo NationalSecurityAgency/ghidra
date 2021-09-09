@@ -480,7 +480,11 @@ public class Application {
 				exactFilename);
 		}
 
-		throw new OSFileNotFoundException(exactFilename);
+		if (file == null) {
+			throw new OSFileNotFoundException(exactFilename);
+		}
+		
+		return file;
 	}
 
 	private File findModuleFile(String subdirPath, String exactFilename) {
