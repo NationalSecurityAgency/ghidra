@@ -454,7 +454,8 @@ public class Application {
 		return null;
 	}
 
-	private File getModuleOSFile(String exactFilename, String moduleName) {
+	private File getModuleOSFile(String exactFilename, String moduleName)
+			throws OSFileNotFoundException {
 
 		GModule module = app.layout.getModules().get(moduleName);
 		if (module == null) {
@@ -479,7 +480,7 @@ public class Application {
 				exactFilename);
 		}
 
-		return file;
+		throw new OSFileNotFoundException(exactFilename);
 	}
 
 	private File findModuleFile(String subdirPath, String exactFilename) {
@@ -492,7 +493,7 @@ public class Application {
 		return null;
 	}
 
-	private File getOSFileInAnyModule(String path) throws FileNotFoundException {
+	private File getOSFileInAnyModule(String path) throws OSFileNotFoundException {
 
 		File file =
 			findModuleFile("build/os/" + Platform.CURRENT_PLATFORM.getDirectoryName(), path);
@@ -510,8 +511,7 @@ public class Application {
 		}
 
 		if (file == null) {
-			throw new FileNotFoundException("os/" + Platform.CURRENT_PLATFORM.getDirectoryName() +
-				"/" + path + " does not exist");
+			throw new OSFileNotFoundException(path);
 		}
 		return file;
 	}
@@ -904,24 +904,23 @@ public class Application {
 	 * Returns the OS specific file within the given module with the given name.
 	 * @param moduleName the name of the module
 	 * @param exactFilename the name of the OS file within the module.
-	 * @throws FileNotFoundException if the file does not exist.
+	 * @throws OSFileNotFoundException if the file does not exist.
 	 */
 	public static File getOSFile(String moduleName, String exactFilename)
-			throws FileNotFoundException {
+			throws OSFileNotFoundException {
 		File osFile = app.getModuleOSFile(exactFilename, moduleName);
 		if (osFile != null) {
 			return osFile;
 		}
-		throw new FileNotFoundException(
-			"Could not find file " + exactFilename + " in module " + moduleName);
+		throw new OSFileNotFoundException(moduleName, exactFilename);
 	}
 
 	/**
 	 * Returns the OS specific file in the calling class's module.
 	 * @param exactFilename the name of the OS specific file.
-	 * @throws FileNotFoundException if the file does not exist.
+	 * @throws OSFileNotFoundException if the file does not exist.
 	 */
-	public static File getOSFile(String exactFilename) throws FileNotFoundException {
+	public static File getOSFile(String exactFilename) throws OSFileNotFoundException {
 		ResourceFile myModuleRootDirectory = getMyModuleRootDirectory();
 		if (myModuleRootDirectory == null) {
 			// not in a module; may be in a script?
