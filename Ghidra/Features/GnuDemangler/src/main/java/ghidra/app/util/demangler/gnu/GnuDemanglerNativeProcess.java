@@ -24,8 +24,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import ghidra.framework.Application;
-import ghidra.framework.Platform;
+import ghidra.framework.*;
 
 /**
  * A class that allows for the reuse of native demangler executable processes.  This class will
@@ -168,7 +167,7 @@ public class GnuDemanglerNativeProcess {
 		processesByName.put(key, this);
 	}
 
-	private String[] buildCommand() throws FileNotFoundException {
+	private String[] buildCommand() throws OSFileNotFoundException {
 
 		String executableName =
 			applicationName + Platform.CURRENT_PLATFORM.getExecutableExtension();

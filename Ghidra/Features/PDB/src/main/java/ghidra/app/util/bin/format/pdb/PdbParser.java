@@ -15,9 +15,8 @@
  */
 package ghidra.app.util.bin.format.pdb;
 
-import java.util.*;
-
 import java.io.*;
+import java.util.*;
 
 import org.xml.sax.SAXException;
 
@@ -285,8 +284,8 @@ public class PdbParser {
 			pdbExeFile = Application.getOSFile(PDB_EXE);
 			pdbExe = pdbExeFile.getAbsolutePath();
 		}
-		catch (FileNotFoundException e) {
-			throw new PdbException("Unable to find " + PDB_EXE);
+		catch (OSFileNotFoundException e) {
+			throw new PdbException(e.getMessage());
 		}
 
 		if (noValidation) {
