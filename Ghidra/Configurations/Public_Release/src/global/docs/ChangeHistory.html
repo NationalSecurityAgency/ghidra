@@ -7,6 +7,55 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 10.0.3 Change History (September 2021)</H1>
+<blockquote><p><u>New Features</u></p>
+<ul>
+    <li><I>Debugger:Watches</I>. Added ability to modify target memory and registers via the Watches window. (GP-1264, Issue #2866)</li>
+</ul>
+</blockquote>
+<blockquote><p><u>Improvements</u></p>
+<ul>
+    <li><I>Analysis</I>. Improved SH4 constant reference analysis for PIC code, reference placement for jumps/calls, and non-return function analysis. General constant reference analysis has also been improved. (GP-1258)</li>
+    <li><I>Basic Infrastructure</I>. Removed usage of the <code>--illegal-access=permit</code> JVM argument for improved JDK 17 runtime support.  The Ghidra Server continues to require JDK 11 to successfully run at this time. (GP-1193, Issue #3355)</li>
+    <li><I>Debugger</I>. Debugger Agent windows now display log messages. (GP-507)</li>
+    <li><I>Debugger</I>. Changed Debugger's <B>Launch</B> action to propose the current program as the command line. (GP-1176)</li>
+    <li><I>Debugger</I>. Providing broader defaults for recording GDB-supported architectures. (GP-1237)</li>
+    <li><I>Debugger:GDB</I>. GDB connector's <B>Use existing session</B> prompts with more instructions. (GP-1076)</li>
+    <li><I>Debugger:GDB</I>. Added <B>use starti</B> option to GDB launcher. (GP-1158)</li>
+    <li><I>Debugger:Mappings</I>. Added <B>Map Identically</B> action to Modules window. (GP-1232)</li>
+    <li><I>GUI</I>. Changed analysis options to always show current program options when accessed via <B>Edit -> Options for &lt;program&gt;...</B>. Also added warning if the user makes changes to the analysis options and then changes the combo box without saving the changes first. (GP-1188)</li>
+    <li><I>Importer</I>. The ContinuesInterceptor, which allows the import process to proceed past uncaught exceptions that can be encountered while parsing corrupted headers, has been disabled by default. Its usage is now deprecated and will be removed in a future Ghidra release. It can be temporarily re-enabled in <B>support/launch.properties</B>. (GP-1248)</li>
+    <li><I>Importer:ELF</I>. Added support for additional ELF AARCH64 relocations such as <code>R_AARCH64_LDST64_ABS_LO12_NC</code>. (GP-1278, Issue #3352)</li>
+    <li><I>Processors</I>. Corrected semantics for x86/x64 <code>FXSAVE</code> and related instructions. (GP-1228)</li>
+    <li><I>Processors</I>. Added semantics for several x86/x64 vector operations. (GP-1262)</li>
+</ul>
+</blockquote>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>Byte Viewer</I>. Fixed stack overflow issue in ByteViewer. (GP-1276)</li>
+    <li><I>C Parsing</I>. Eliminated static variables that caused follow-on CParser tasks to error because they started in a bad state. (GP-1251, Issue #1421, #3350)</li>
+    <li><I>Debugger</I>. Fixed NullPointerException in Objects window's <B>Import</B>/<B>Export</B> actions. (GP-1047)</li>
+    <li><I>Debugger</I>. Fixed NullPointerException in DBTraceStack. (GP-1059)</li>
+    <li><I>Debugger</I>. Fixed a rare deadlock involving DBTrace.addListener. (GP-1154)</li>
+    <li><I>Debugger</I>. <B>Track PC</B> action now scrolls to cursor even if the cursor is already at PC. (GP-1175)</li>
+    <li><I>Debugger</I>. Created better mapping of GDB ARM architecture names to Ghidra languages for the Debugger. (GP-1221, Issue #3333)</li>
+    <li><I>Debugger</I>. <B>Capture Memory</B> button is more aggressive in finding the correct region to capture, reducing bad region errors. (GP-1227)</li>
+    <li><I>Debugger</I>. Fixed delay slot disassembly in Debugger dynamic listing. (GP-1246, Issue #3358)</li>
+    <li><I>Debugger:Emulator</I>. Fixed cache-reading issue in trace emulation. (GP-1187)</li>
+    <li><I>Debugger:Emulator</I>. Fixed a critical typo in PairedPcodeArithmetic. (GP-1191)</li>
+    <li><I>Debugger:Trace</I>. Dynamic listing now updates immediately when changing data type settings. (GP-1215)</li>
+    <li><I>Debugger:Trace</I>. Removed <code>Missing Instruction Prototype</code> exception in favor of using InvalidPrototype. (GP-1226)</li>
+    <li><I>Debugger:Trace</I>. Adding context fields to Register viewer no longer throws an exception. (GP-1256)</li>
+    <li><I>Decompiler</I>. Fixed a bug that could cause an infinite loop in the Decompiler when using bonded register pairs. (GP-1270, Issue #3105)</li>
+    <li><I>Decompiler</I>. Fixed a bug causing <code>Exceeded maximum restarts with more pending</code> warnings in the Decompiler. (GP-1277, Issue #3104)</li>
+    <li><I>Disassembly</I>. Fixed an IllegalArgumentException in the Non-Returning Functions analyzer caused by processor specifications without a defined context, such as Sparc and SH4. (GP-1216)</li>
+    <li><I>DWARF</I>. Corrected potential random errors in DWARF parsing caused by modifications to a shared global static DWARF decoder. (GP-1272)</li>
+    <li><I>Exporter</I>. Exporters with empty default extension names will no longer append a dot to the output filename. (GP-1201, Issue #3325)</li>
+    <li><I>GUI</I>. Fixed the missing mnemonic of the Graph menu. (GP-1244, Issue #3330)</li>
+    <li><I>Processors</I>. Corrected carry flag semantics for the 6502 processor's <code>SBC</code> instruction. (GP-1109, Issue #3189, #3190)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 10.0.2 Change History (August 2021)</H1>
 <blockquote><p><u>New Features</u></p>
 <ul>

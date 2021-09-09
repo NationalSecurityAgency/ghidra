@@ -764,8 +764,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 		// just in case there is a tool, but it is not visible, grab the tool's manager
 		List<DockingWindowManager> managers =
-			(List<DockingWindowManager>) getInstanceField("instanceList",
-				DockingWindowManager.class);
+			(List<DockingWindowManager>) getInstanceField("instances", DockingWindowManager.class);
 		for (int i = managers.size() - 1; i >= 0; i--) {
 			DockingWindowManager m = managers.get(i);
 			String title = m.getRootFrame().getTitle();
@@ -1096,8 +1095,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		Set<DockingActionIf> ownerActions = tool.getDockingActionsByOwnerName(owner);
 		return ownerActions.stream()
 				.filter(action -> action.getName().equals(name))
-				.collect(
-					Collectors.toSet());
+				.collect(Collectors.toSet());
 	}
 
 	/**

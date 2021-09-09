@@ -154,6 +154,11 @@ public final class ShortField extends PrimitiveField {
 
 	@Override
 	public ShortField copyField() {
+		if (isNull()) {
+			ShortField copy = new ShortField();
+			copy.setNull();
+			return copy;
+		}
 		return new ShortField((short) getLongValue());
 	}
 

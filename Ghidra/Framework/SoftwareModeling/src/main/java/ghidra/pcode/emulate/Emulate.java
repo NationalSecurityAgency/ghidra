@@ -101,8 +101,8 @@ public class Emulate {
 
 	@SuppressWarnings("unchecked")
 	private void initInstuctionStateModifier() {
-		String classname = language.getProperty(
-			GhidraLanguagePropertyKeys.EMULATE_INSTRUCTION_STATE_MODIFIER_CLASS);
+		String classname = language
+				.getProperty(GhidraLanguagePropertyKeys.EMULATE_INSTRUCTION_STATE_MODIFIER_CLASS);
 		if (classname == null) {
 			return;
 		}
@@ -245,7 +245,7 @@ public class Emulate {
 	 */
 	public RegisterValue getContextRegisterValue() {
 		Register contextReg = language.getContextBaseRegister();
-		if (contextReg == null) {
+		if (contextReg == Register.NO_CONTEXT) {
 			return null;
 		}
 		if (pseudoInstruction != null) {

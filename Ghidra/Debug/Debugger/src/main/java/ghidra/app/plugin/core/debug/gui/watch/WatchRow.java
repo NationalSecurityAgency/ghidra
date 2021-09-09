@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.gui.watch;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -38,12 +39,15 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.NumericUtilities;
-import ghidra.util.Swing;
+import ghidra.util.*;
+import ghidra.util.database.UndoableTransaction;
 
 public class WatchRow {
+	public static final int TRUNCATE_BYTES_LENGTH = 64;
+
 	private final DebuggerWatchesProvider provider;
 	private Trace trace;
+	private DebuggerCoordinates coordinates;
 	private SleighLanguage language;
 	private PcodeExecutor<Pair<byte[], TraceMemoryState>> executorWithState;
 	private ReadDepsPcodeExecutor executorWithAddress;
@@ -218,6 +222,7 @@ public class WatchRow {
 		// NB. Caller has already verified coordinates actually changed
 		prevValue = value;
 		trace = coordinates.getTrace();
+		this.coordinates = coordinates;
 		updateType();
 		if (trace == null) {
 			blank();
@@ -327,8 +332,12 @@ public class WatchRow {
 				Utils.bytesToBigInteger(value, value.length, language.isBigEndian(), false);
 			return "0x" + asBigInt.toString(16);
 		}
-		if (value.length > 20) {
-			return "{ " + NumericUtilities.convertBytesToString(value, 0, 20, " ") + " ... }";
+		if (value.length > TRUNCATE_BYTES_LENGTH) {
+			// TODO: I'd like this not to affect the actual value, just the display
+			//   esp., since this will be the "value" when starting to edit.
+			return "{ " +
+				NumericUtilities.convertBytesToString(value, 0, TRUNCATE_BYTES_LENGTH, " ") +
+				" ... }";
 		}
 		return "{ " + NumericUtilities.convertBytesToString(value, " ") + " }";
 	}
@@ -343,6 +352,79 @@ public class WatchRow {
 
 	public String getValueString() {
 		return valueString;
+	}
+
+	public boolean isValueEditable() {
+		return address != null && provider.isEditsEnabled();
+	}
+
+	public void setRawValueString(String valueString) {
+		valueString = valueString.trim();
+		if (valueString.startsWith("{")) {
+			if (!valueString.endsWith("}")) {
+				throw new NumberFormatException("Byte array values must be hex enclosed in {}");
+			}
+
+			setRawValueBytesString(valueString.substring(1, valueString.length() - 1));
+			return;
+		}
+
+		setRawValueIntString(valueString);
+	}
+
+	public void setRawValueBytesString(String bytesString) {
+		setRawValueBytes(NumericUtilities.convertStringToBytes(bytesString));
+	}
+
+	public void setRawValueIntString(String intString) {
+		intString = intString.trim();
+		final BigInteger val;
+		if (intString.startsWith("0x")) {
+			val = new BigInteger(intString.substring(2), 16);
+		}
+		else {
+			val = new BigInteger(intString, 10);
+		}
+		setRawValueBytes(
+			Utils.bigIntegerToBytes(val, value.length, trace.getBaseLanguage().isBigEndian()));
+	}
+
+	public void setRawValueBytes(byte[] bytes) {
+		if (address == null) {
+			throw new IllegalStateException("Cannot write to watch variable without an address");
+		}
+		if (bytes.length != value.length) {
+			throw new IllegalArgumentException("Byte array values must match length of variable");
+		}
+
+		// Allow writes to unmappable registers to fall through to trace
+		// However, attempts to write "weird" register addresses is forbidden
+		if (coordinates.isAliveAndPresent() && coordinates.getRecorder()
+				.isVariableOnTarget(coordinates.getThread(), address, bytes.length)) {
+			coordinates.getRecorder()
+					.writeVariable(coordinates.getThread(), coordinates.getFrame(), address, bytes)
+					.exceptionally(ex -> {
+						Msg.showError(this, null, "Write Failed",
+							"Could not modify watch value (on target)", ex);
+						return null;
+					});
+			// NB: if successful, recorder will write to trace
+			return;
+		}
+
+		try (UndoableTransaction tid =
+			UndoableTransaction.start(trace, "Write watch at " + address, true)) {
+			final TraceMemorySpace space;
+			if (address.isRegisterAddress()) {
+				space = trace.getMemoryManager()
+						.getMemoryRegisterSpace(coordinates.getThread(), coordinates.getFrame(),
+							true);
+			}
+			else {
+				space = trace.getMemoryManager().getMemorySpace(address.getAddressSpace(), true);
+			}
+			space.putBytes(coordinates.getViewSnap(), address, ByteBuffer.wrap(bytes));
+		}
 	}
 
 	public int getValueLength() {

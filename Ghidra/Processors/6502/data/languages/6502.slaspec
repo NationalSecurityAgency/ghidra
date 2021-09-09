@@ -421,7 +421,7 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 :SBC OP1     is (cc=1 & aaa=7) ... & OP1
 {
 	local op1 = OP1;
-	local result = A - op1 - C;
+	local result = A - op1 - !C;
 	
 	subtraction_flags1(A, op1, result);
 	A = result;	

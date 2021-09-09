@@ -158,6 +158,7 @@ public class DBFixedKeySparseIndexedTableTest extends AbstractGenericTest {
 				// all fields correspond to a sparse columns and 
 				// should have a null state initially
 				assertTrue(f.isNull());
+				assertTrue(f.copyField().isNull());
 			}
 
 			if (i < cnt) {
@@ -254,6 +255,7 @@ public class DBFixedKeySparseIndexedTableTest extends AbstractGenericTest {
 			for (int n = columnIndex + 1; n < cnt; n++) {
 				Field f = r.getField(n);
 				assertTrue(f.isNull());
+				assertTrue(f.copyField().isNull());
 			}
 
 			++recordIndex;

@@ -67,19 +67,19 @@ public class FdeTable {
 	TaskMonitor monitor;
 	Program prog;
 	StructureDataType fdeTableEntry;
-	
+
 	/**
 	 * Constructor for an FDE table. 
 	 * 
 	 * @param monitor a status monitor for indicating progress or allowing a task to be cancelled.
 	 * @param curProg the program containing the FDE table.
 	 */
-	public FdeTable( TaskMonitor monitor, Program curProg ) {
+	public FdeTable(TaskMonitor monitor, Program curProg) {
 		this.monitor = monitor;
 		this.prog = curProg;
 		this.fdeTableEntry = new StructureDataType("fde_table_entry", 0);
 	}
-	
+
 	private void initFdeTableDataType(DwarfEHDecoder decoder) throws ExceptionHandlerFrameException {
 
 		DataType encodedDt = decoder.getDataType(prog);
@@ -101,11 +101,11 @@ public class FdeTable {
 
 		fdeTableEntry.add(encodedDt, "initial_loc", "Initial Location");
 		fdeTableEntry.add(encodedDt, "data_loc", "Data location");
-		
+
 		DataTypeManager dtManager = prog.getDataTypeManager();
-		dtManager.addDataType(fdeTableEntry, DataTypeConflictHandler.REPLACE_HANDLER );
+		dtManager.addDataType(fdeTableEntry, DataTypeConflictHandler.REPLACE_HANDLER);
 	}
-	
+
 	/**
 	 * Creates an FDE Table at the specified Address.
 	 * 
@@ -119,13 +119,13 @@ public class FdeTable {
 			throws MemoryAccessException, ExceptionHandlerFrameException {
 		CreateStructureCmd dataCmd = null;
 		long curFdeTableCnt = 0;
-		
-		if (addr == null || decoder == null || monitor.isCancelled()) {
+
+		if (addr == null || decoder == null) {
 			return;
 		}
-		
+
 		initFdeTableDataType(decoder);
-		
+
 		monitor.setMessage("Creating Frame Description Table Entries");
 		monitor.setShowProgressValue(true);
 		monitor.setIndeterminate(false);
@@ -134,13 +134,17 @@ public class FdeTable {
 		/* Create a new FDE structures beginning at startAddress */
 		MemoryBlock curMemBlock = prog.getMemory().getBlock(".eh_frame_hdr");
 		while( curMemBlock != null &&
-			  (addr.compareTo( curMemBlock.getEnd()) < 0) && 
-			  (curFdeTableCnt < fdeTableCnt) )
+				  (addr.compareTo( curMemBlock.getEnd()) < 0) && 
+				  (curFdeTableCnt < fdeTableCnt) )
 		{
+			if (monitor.isCancelled()) {
+				return;
+			}
+
 			/* Create a new FDE structure */
-			dataCmd = new CreateStructureCmd( fdeTableEntry, addr);
+			dataCmd = new CreateStructureCmd(fdeTableEntry, addr);
 			dataCmd.applyTo(prog);
-			
+
 			/*
 			 * -- Create references to the 'initial location' and 'data
 			 * location' --
@@ -159,7 +163,7 @@ public class FdeTable {
 			// TODO: This should be a CODE flow, leaving as INDIRECTION until refactor
 			prog.getReferenceManager().addMemoryReference(locComponentAddr, locAddr,
 				RefType.INDIRECTION,
-				SourceType.ANALYSIS, 0);
+						SourceType.ANALYSIS, 0);
 
 			DataTypeComponent dataComponent = fdeStruct.getComponent(1);
 			Address dataComponentAddr = addr.add(dataComponent.getOffset());
@@ -168,7 +172,7 @@ public class FdeTable {
 			Address dataAddr = decoder.decodeAddress(dataDecodeContext);
 
 			prog.getReferenceManager().addMemoryReference(dataComponentAddr, dataAddr, RefType.DATA,
-					SourceType.ANALYSIS, 0);
+						SourceType.ANALYSIS, 0);
 
 			/* Increment curAddress by number of bytes in a FDE Table entry */
 			curFdeTableCnt++;

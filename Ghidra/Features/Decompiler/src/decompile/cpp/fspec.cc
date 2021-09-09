@@ -4581,6 +4581,8 @@ void FuncCallSpecs::deindirect(Funcdata &data,Funcdata *newfd)
   if (isOverride())	// If we are overridden at the call-site
     return;		// Don't use the discovered function prototype
 
+  data.getOverride().insertIndirectOverride(op->getAddr(),entryaddress);
+
   // Try our best to merge existing prototype
   // with the one we have just been handed
   vector<Varnode *> newinput;
@@ -4592,7 +4594,6 @@ void FuncCallSpecs::deindirect(Funcdata &data,Funcdata *newfd)
     commitNewOutputs(data,newoutput);
   }
   else {
-    data.getOverride().insertIndirectOverride(op->getAddr(),entryaddress);
     data.setRestartPending(true);
   }
 }
@@ -4613,16 +4614,19 @@ void FuncCallSpecs::forceSet(Funcdata &data,const FuncProto &fp)
 {
   vector<Varnode *> newinput;
   Varnode *newoutput;
+
+  // Copy the recovered prototype into the override manager so that
+  // future restarts don't have to rediscover it
+  FuncProto *newproto = new FuncProto();
+  newproto->copy(fp);
+  data.getOverride().insertProtoOverride(op->getAddr(),newproto);
   if (lateRestriction(fp,newinput,newoutput)) {
     commitNewInputs(data,newinput);
     commitNewOutputs(data,newoutput);
   }
   else {
     // Too late to make restrictions to correct prototype
-    // Add a restart override with the forcing prototype
-    FuncProto *newproto = new FuncProto();
-    newproto->copy(fp);
-    data.getOverride().insertProtoOverride(op->getAddr(),newproto);
+    // Force a restart
     data.setRestartPending(true);
   }
   // Regardless of what happened, lock the prototype so it doesn't happen again

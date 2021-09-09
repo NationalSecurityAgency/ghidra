@@ -154,6 +154,11 @@ public final class ByteField extends PrimitiveField {
 
 	@Override
 	public ByteField copyField() {
+		if (isNull()) {
+			ByteField copy = new ByteField();
+			copy.setNull();
+			return copy;
+		}
 		return new ByteField((byte) getLongValue());
 	}
 

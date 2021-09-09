@@ -46,7 +46,7 @@ public class VarnodeContext implements ProcessorContext {
 	protected DisassemblerContextImpl spaceContext;
 
 	// holds temp memory values for computation
-	protected HashMap<Varnode, Varnode> memoryVals = new HashMap<>();
+	protected Stack<HashMap<Varnode, Varnode>> memoryVals = new Stack<HashMap<Varnode, Varnode>>();
 
 	// holds temp values for computation
 	private HashMap<Varnode, Varnode> tempVals = new HashMap<>();
@@ -95,6 +95,8 @@ public class VarnodeContext implements ProcessorContext {
 
 		offsetContext = new DisassemblerContextImpl(programContext);
 		spaceContext = new DisassemblerContextImpl(spaceProgramContext);
+
+		memoryVals.push(new HashMap<Varnode, Varnode>());
 
 		setupValidSymbolicStackNames(program);
 
@@ -417,7 +419,7 @@ public class VarnodeContext implements ProcessorContext {
 			}
 
 			// see if we wrote a value to memory here
-			Varnode lvalue = memoryVals.get(varnode);
+			Varnode lvalue = getMemoryValue(varnode);
 			if (lvalue != null) {
 				if (debug) {
 					Msg.info(this, "   " + varnode + " = " + print(lvalue));
@@ -472,7 +474,6 @@ public class VarnodeContext implements ProcessorContext {
 
 			if (this.program.getListing().getInstructionContaining(addr) != null) {
 				hitDest = true;
-				throw notFoundExc;
 			}
 
 			// don't trust any place that has an external reference off of it
@@ -487,8 +488,8 @@ public class VarnodeContext implements ProcessorContext {
 			// If the memory is Writeable, then maybe don't trust it
 			if (!isReadOnly(addr)) {
 				// don't try to see how far away if it is in a different space.
-				if (addr.getAddressSpace().equals(
-					this.spaceContext.getAddress().getAddressSpace())) {
+				if (addr.getAddressSpace()
+						.equals(this.spaceContext.getAddress().getAddressSpace())) {
 					long diff = addr.subtract(this.spaceContext.getAddress());
 					// if the value loaded is too far away, ask the evaluator if it should be trusted.
 					if (diff < 0 || diff > 4096) {
@@ -544,6 +545,36 @@ public class VarnodeContext implements ProcessorContext {
 			}
 		}
 		throw notFoundExc;
+	}
+
+	/**
+	 * Search the value state stack for the first occurence of the set value
+	 * 
+	 * @param varnode varnode to search for a value
+	 * @return first value found on stack, null otherwise
+	 */
+	protected Varnode getMemoryValue(Varnode varnode) {
+		// traverse pushed memory value states until find value
+		// if don't find, return null
+		for (int i = memoryVals.size() - 1; i >= 0; i--) {
+			HashMap<Varnode, Varnode> stateLayer = memoryVals.get(i);
+			Varnode value = stateLayer.get(varnode);
+			if (value != null) {
+				return value;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Put the value for the varnode on the top of the memory state stack
+	 * 
+	 * @param out varnode for the value
+	 * @param value value to store for the varnode
+	 */
+	protected void putMemoryValue(Varnode out, Varnode value) {
+		// put the value in the top memory value states
+		memoryVals.peek().put(out, value);
 	}
 
 	/**
@@ -676,7 +707,7 @@ public class VarnodeContext implements ProcessorContext {
 				// put the location on both the lastSet, and all locations set
 				addSetVarnodeToLastSetLocations(out, location);
 
-				memoryVals.put(out, result);
+				putMemoryValue(out, result);
 				return;
 			}
 		}
@@ -1429,6 +1460,14 @@ public class VarnodeContext implements ProcessorContext {
 
 	public boolean isSymbolicSpace(int spaceID) {
 		return OffsetAddressFactory.isSymbolSpace(spaceID);
+	}
+
+	public void pushMemState() {
+		memoryVals.push(new HashMap<Varnode, Varnode>());
+	}
+
+	public void popMemState() {
+		memoryVals.pop();
 	}
 }
 

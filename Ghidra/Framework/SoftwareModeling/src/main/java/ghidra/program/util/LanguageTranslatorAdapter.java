@@ -425,9 +425,9 @@ public abstract class LanguageTranslatorAdapter implements LanguageTranslator {
 					return false;
 				}
 				Register newContextReg = getNewLanguage().getContextBaseRegister();
-				if (newContextReg != null) {
+				if (newContextReg != Register.NO_CONTEXT) {
 					Register oldContextReg = getOldLanguage().getContextBaseRegister();
-					if (oldContextReg == null ||
+					if (oldContextReg == Register.NO_CONTEXT ||
 						!isSameRegisterConstruction(oldContextReg, newContextReg)) {
 						Msg.error(this, "Translator can not map context register: " + this);
 						return false;

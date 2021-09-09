@@ -88,8 +88,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 		return false;
 	}
 
-	private void upgrade(AddressMap addressMapExt, TaskMonitor monitor)
-			throws CancelledException {
+	private void upgrade(AddressMap addressMapExt, TaskMonitor monitor) throws CancelledException {
 
 		OldProgramContextDB oldContext =
 			new OldProgramContextDB(dbHandle, errorHandler, language, addressMapExt, lock);
@@ -358,7 +357,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 
 		// May need to fill-in blank context areas with a new specified context value 
 		Register ctxReg = newLanguage.getContextBaseRegister();
-		if (ctxReg != null && translator.isValueTranslationRequired(ctxReg)) {
+		if (ctxReg != Register.NO_CONTEXT && translator.isValueTranslationRequired(ctxReg)) {
 			RegisterValue gapValue = new RegisterValue(ctxReg);
 			gapValue = translator.getNewRegisterValue(gapValue);
 			if (gapValue != null && gapValue.hasAnyValue()) {

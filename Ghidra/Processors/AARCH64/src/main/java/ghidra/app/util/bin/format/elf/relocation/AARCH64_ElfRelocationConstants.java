@@ -19,67 +19,67 @@ public class AARCH64_ElfRelocationConstants {
 	 
 	public static final int R_AARCH64_NONE = 0;
 
-	// .word:  (S+A; 
+	// .word:  (S+A) 
 	public static final int R_AARCH64_P32_ABS32 = 1;
 
-	// .half: (S+A; 
+	// .half: (S+A) 
 	public static final int R_AARCH64_P32_ABS16 = 2;
 
-	// .word: (S+A-P; 
+	// .word: (S+A-P) 
 	public static final int R_AARCH64_P32_PREL32 = 3;
 
-	// .half:  (S+A-P; 
+	// .half:  (S+A-P) 
 	public static final int R_AARCH64_P32_PREL16 = 4;
 
-	// MOV[ZK]:   ((S+A; >>  0; & 0xffff 
+	// MOV[ZK]:   ((S+A) >>  0) & 0xffff 
 	public static final int R_AARCH64_P32_MOVW_UABS_G0 = 5;
 
-	// MOV[ZK]:   ((S+A; >>  0; & 0xffff 
+	// MOV[ZK]:   ((S+A) >>  0) & 0xffff 
 	public static final int R_AARCH64_P32_MOVW_UABS_G0_NC = 6;
 
-	// MOV[ZK]:   ((S+A; >> 16; & 0xffff 
+	// MOV[ZK]:   ((S+A) >> 16) & 0xffff 
 	public static final int R_AARCH64_P32_MOVW_UABS_G1 = 7;
 
-	// MOV[ZN]:   ((S+A; >>  0; & 0xffff 
+	// MOV[ZN]:   ((S+A) >>  0) & 0xffff 
 	public static final int R_AARCH64_P32_MOVW_SABS_G0 = 8;
 
-	// LD-lit: ((S+A-P; >> 2; & 0x7ffff 
+	// LD-lit: ((S+A-P) >> 2) & 0x7ffff 
 	public static final int R_AARCH64_P32_LD_PREL_LO19 = 9;
 
-	// ADR:    (S+A-P; & 0x1fffff 
+	// ADR:    (S+A-P) & 0x1fffff 
 	public static final int R_AARCH64_P32_ADR_PREL_LO21 = 10;
 
-	// ADRH:   ((PG(S+A;-PG(P;; >> 12; & 0x1fffff 
+	// ADRH:   ((PG(S+A)-PG(P)) >> 12) & 0x1fffff 
 	public static final int R_AARCH64_P32_ADR_PREL_PG_HI21 = 11;
 
-	// ADD:    (S+A; & 0xfff 
+	// ADD:    (S+A) & 0xfff 
 	public static final int R_AARCH64_P32_ADD_ABS_LO12_NC = 12;
 
-	// LD/ST8: (S+A; & 0xfff 
+	// LD/ST8: (S+A) & 0xfff 
 	public static final int R_AARCH64_P32_LDST8_ABS_LO12_NC = 13;
 
-	// LD/ST16: (S+A; & 0xffe 
+	// LD/ST16: (S+A) & 0xffe 
 	public static final int R_AARCH64_P32_LDST16_ABS_LO12_NC = 14;
 
-	// LD/ST32: (S+A; & 0xffc 
+	// LD/ST32: (S+A) & 0xffc 
 	public static final int R_AARCH64_P32_LDST32_ABS_LO12_NC = 15;
 
-	// LD/ST64: (S+A; & 0xff8 
+	// LD/ST64: (S+A) & 0xff8 
 	public static final int R_AARCH64_P32_LDST64_ABS_LO12_NC = 16;
 
-	// LD/ST128: (S+A; & 0xff0 
+	// LD/ST128: (S+A) & 0xff0 
 	public static final int R_AARCH64_P32_LDST128_ABS_LO12_NC = 17;
 
-	// TBZ/NZ: ((S+A-P; >> 2; & 0x3fff.  
+	// TBZ/NZ: ((S+A-P) >> 2) & 0x3fff.  
 	public static final int R_AARCH64_P32_TSTBR14 = 18;
 
-	// B.cond: ((S+A-P; >> 2; & 0x7ffff.  
+	// B.cond: ((S+A-P) >> 2) & 0x7ffff.  
 	public static final int R_AARCH64_P32_CONDBR19 = 19;
 
-	// B:      ((S+A-P; >> 2; & 0x3ffffff.  
+	// B:      ((S+A-P) >> 2) & 0x3ffffff.  
 	public static final int R_AARCH64_P32_JUMP26 = 20;
 
-	// BL:     ((S+A-P; >> 2; & 0x3ffffff.  
+	// BL:     ((S+A-P) >> 2) & 0x3ffffff.  
 	public static final int R_AARCH64_P32_CALL26 = 21;
 
 
@@ -138,91 +138,91 @@ public class AARCH64_ElfRelocationConstants {
 
 	// Basic data relocations.  
 
-	// .xword: (S+A; 
+	// .xword: (S+A) 
 	public static final int R_AARCH64_ABS64 = 257;
 
-	// .word:  (S+A; 
+	// .word:  (S+A) 
 	public static final int R_AARCH64_ABS32 = 258;
 
-	// .half: (S+A; 
+	// .half: (S+A) 
 	public static final int R_AARCH64_ABS16 = 259;
 
-	// .xword: (S+A-P; 
+	// .xword: (S+A-P) 
 	public static final int R_AARCH64_PREL64 = 260;
 
-	// .word: (S+A-P; 
+	// .word: (S+A-P) 
 	public static final int R_AARCH64_PREL32 = 261;
 
-	// .half:  (S+A-P; 
+	// .half:  (S+A-P) 
 	public static final int R_AARCH64_PREL16 = 262; 
 
-	// MOV[ZK]:   ((S+A; >>  0; & 0xffff 
+	// MOV[ZK]:   ((S+A) >>  0) & 0xffff 
 	public static final int R_AARCH64_MOVW_UABS_G0 =           263;
 
-	// MOV[ZK]:   ((S+A; >>  0; & 0xffff 
+	// MOV[ZK]:   ((S+A) >>  0) & 0xffff 
 	public static final int R_AARCH64_MOVW_UABS_G0_NC = 264;
 
-	// MOV[ZK]:   ((S+A; >> 16; & 0xffff 
+	// MOV[ZK]:   ((S+A) >> 16) & 0xffff 
 	public static final int R_AARCH64_MOVW_UABS_G1 = 265;
 
-	// MOV[ZK]:   ((S+A; >> 16; & 0xffff 
+	// MOV[ZK]:   ((S+A) >> 16) & 0xffff 
 	public static final int R_AARCH64_MOVW_UABS_G1_NC = 266;
 
-	// MOV[ZK]:   ((S+A; >> 32; & 0xffff 
+	// MOV[ZK]:   ((S+A) >> 32) & 0xffff 
 	public static final int R_AARCH64_MOVW_UABS_G2 = 267;
 	
-	// MOV[ZK]:   ((S+A; >> 32; & 0xffff 
+	// MOV[ZK]:   ((S+A) >> 32) & 0xffff 
 	public static final int R_AARCH64_MOVW_UABS_G2_NC = 268;
 
-	// MOV[ZK]:   ((S+A; >> 48; & 0xffff 
+	// MOV[ZK]:   ((S+A) >> 48) & 0xffff 
 	public static final int R_AARCH64_MOVW_UABS_G3 = 269;
 
-	// MOV[ZN]:   ((S+A; >>  0; & 0xffff 
+	// MOV[ZN]:   ((S+A) >>  0) & 0xffff 
 	public static final int R_AARCH64_MOVW_SABS_G0 = 270;
 
-	// MOV[ZN]:   ((S+A; >> 16; & 0xffff 
+	// MOV[ZN]:   ((S+A) >> 16) & 0xffff 
 	public static final int R_AARCH64_MOVW_SABS_G1 = 271;
 
-	// MOV[ZN]:   ((S+A; >> 32; & 0xffff 
+	// MOV[ZN]:   ((S+A) >> 32) & 0xffff 
 	public static final int R_AARCH64_MOVW_SABS_G2 = 272;
 
-	// LD-lit: ((S+A-P; >> 2; & 0x7ffff 
+	// LD-lit: ((S+A-P) >> 2) & 0x7ffff 
 	public static final int R_AARCH64_LD_PREL_LO19 = 273;
 
-	// ADR:    (S+A-P; & 0x1fffff 
+	// ADR:    (S+A-P) & 0x1fffff 
 	public static final int R_AARCH64_ADR_PREL_LO21 = 274;
 
-	// ADRH:   ((PG(S+A;-PG(P;; >> 12; & 0x1fffff 
+	// ADRH:   ((PG(S+A)-PG(P)) >> 12) & 0x1fffff 
 	public static final int R_AARCH64_ADR_PREL_PG_HI21 = 275;
 
-	// ADRH:   ((PG(S+A;-PG(P;; >> 12; & 0x1fffff 
+	// ADRH:   ((PG(S+A)-PG(P)) >> 12) & 0x1fffff 
 	public static final int R_AARCH64_ADR_PREL_PG_HI21_NC = 276;
 
-	// ADD:    (S+A; & 0xfff 
+	// ADD:    (S+A) & 0xfff 
 	public static final int R_AARCH64_ADD_ABS_LO12_NC = 277;
 
-	// LD/ST8: (S+A; & 0xfff 
+	// LD/ST8: (S+A) & 0xfff 
 	public static final int R_AARCH64_LDST8_ABS_LO12_NC = 278;
 
-	// TBZ/NZ: ((S+A-P; >> 2; & 0x3fff.  
+	// TBZ/NZ: ((S+A-P) >> 2) & 0x3fff.  
 	public static final int R_AARCH64_TSTBR14 = 279;
 
-	// B.cond: ((S+A-P; >> 2; & 0x7ffff.  
+	// B.cond: ((S+A-P) >> 2) & 0x7ffff.  
 	public static final int R_AARCH64_CONDBR19 = 280;
 
-	// B:      ((S+A-P; >> 2; & 0x3ffffff.  
+	// B:      ((S+A-P) >> 2) & 0x3ffffff.  
 	public static final int R_AARCH64_JUMP26 = 282;
 
-	// BL:     ((S+A-P; >> 2; & 0x3ffffff.  
+	// BL:     ((S+A-P) >> 2) & 0x3ffffff.  
 	public static final int R_AARCH64_CALL26 = 283;
 
-	// LD/ST16: (S+A; & 0xffe 
+	// LD/ST16: (S+A) & 0xffe 
 	public static final int R_AARCH64_LDST16_ABS_LO12_NC = 284;
 
-	// LD/ST32: (S+A; & 0xffc 
+	// LD/ST32: (S+A) & 0xffc 
 	public static final int R_AARCH64_LDST32_ABS_LO12_NC = 285;
 
-	// LD/ST64: (S+A; & 0xff8 
+	// LD/ST64: (S+A) & 0xff8 
 	public static final int R_AARCH64_LDST64_ABS_LO12_NC = 286;
 	
 	public static final int R_AARCH64_MOVW_PREL_G0 = 287;
@@ -233,6 +233,9 @@ public class AARCH64_ElfRelocationConstants {
 	public static final int R_AARCH64_MOVW_PREL_G2_NC = 292;
 	public static final int R_AARCH64_MOVW_PREL_G3 = 293;
 	
+	// LD/ST128: (S+A) & 0xff0
+	public static final int R_AARCH64_LDST128_ABS_LO12_NC = 299;
+
 	public static final int R_AARCH64_MOVW_GOTOFF_G0 = 300;
 	public static final int R_AARCH64_MOVW_GOTOFF_G0_NC = 301;
 	public static final int R_AARCH64_MOVW_GOTOFF_G1 = 302;
