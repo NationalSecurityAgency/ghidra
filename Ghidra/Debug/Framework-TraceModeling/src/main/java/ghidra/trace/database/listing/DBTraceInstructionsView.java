@@ -139,10 +139,8 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 						lastInstruction = replaceIfNotNull(lastInstruction,
 							doAddInstructions(lifespan, delayed.iterator(), true));
 					}
-					else {
-						lastInstruction =
-							doCreateInstruction(lifespan, startAddress, prototype, protoInstr);
-					}
+					lastInstruction =
+						doCreateInstruction(lifespan, startAddress, prototype, protoInstr);
 				}
 				if (errorAddress != null && conflictCodeUnit == null &&
 					errorAddress.compareTo(startAddress) <= 0) {

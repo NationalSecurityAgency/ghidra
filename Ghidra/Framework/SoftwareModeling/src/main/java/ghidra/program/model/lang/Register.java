@@ -21,11 +21,10 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 
 /**
- * Class to represent a processor register.  To sort of handle bit registers, a
- * special addressing convention is used.  First the upper bit is set.  Second, the
- * next 3 bits are used to specify what bit position within a byte that this register
- * bit exists at.  Finally, the rest of the address is the address of the byte where
- * the register bit lives.
+ * Class to represent a processor register. To sort of handle bit registers, a special addressing
+ * convention is used. First the upper bit is set. Second, the next 3 bits are used to specify what
+ * bit position within a byte that this register bit exists at. Finally, the rest of the address is
+ * the address of the byte where the register bit lives.
  */
 public class Register implements java.io.Serializable, Comparable<Register> {
 
@@ -44,6 +43,10 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	/** Register can be used in SIMD operations **/
 	public final static int TYPE_VECTOR = 128;
 
+	/** Register used to denote NO defined context for a language **/
+	public final static Register NO_CONTEXT =
+		new Register("NO_CONTEXT", "NO_CONTEXT", Address.NO_ADDRESS, 4, true, 0);
+
 	private String name;
 	private String description; // description of the register
 	private Address address; // smallest address containing bits for this register
@@ -61,7 +64,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	private Register baseRegister;
 	private String group;
 
-	/**Set of valid lane sizes**/
+	/** Set of valid lane sizes **/
 	private TreeSet<Integer> laneSizes;
 
 	/**
@@ -72,10 +75,10 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	 * @param address the address in register space of this register
 	 * @param numBytes the size (in bytes) of this register
 	 * @param bigEndian true if the most significant bytes are associated with the lowest register
-	 * addresses, and false if the least significant bytes are associated with the lowest register 
-	 * addresses. 
-	 * @param typeFlags the type(s) of this Register  (TYPE_NONE, TYPE_FP, TYPE_SP, 
-	 * 	TYPE_PC, TYPE_CONTEXT, TYPE_ZERO);)
+	 *            addresses, and false if the least significant bytes are associated with the lowest
+	 *            register addresses.
+	 * @param typeFlags the type(s) of this Register (TYPE_NONE, TYPE_FP, TYPE_SP, TYPE_PC,
+	 *            TYPE_CONTEXT, TYPE_ZERO);)
 	 */
 	public Register(String name, String description, Address address, int numBytes,
 			boolean bigEndian, int typeFlags) {
@@ -128,6 +131,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Add register alias
+	 * 
 	 * @param aliasReg
 	 */
 	void addAlias(String alias) {
@@ -142,6 +146,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Remove register alias
+	 * 
 	 * @param alias
 	 */
 	void removeAlias(String alias) {
@@ -151,9 +156,8 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	}
 
 	/**
-	 * Return register aliases.
-	 * NOTE: This is generally only supported for
-	 * context register fields.
+	 * Return register aliases. NOTE: This is generally only supported for context register fields.
+	 * 
 	 * @return register aliases or null
 	 */
 	public Iterable<String> getAliases() {
@@ -202,6 +206,19 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	}
 
 	/**
+	 * Returns the number of bytes spanned by this Register.
+	 * 
+	 * <p>
+	 * Compare to {{@link #getMinimumByteSize()}: Suppose a 5-bit register spans 2 bytes: 1 bit in
+	 * the first byte, and the remaining 4 in the following byte. Its value can still be stored in 1
+	 * byte, which is what {@link #getMinimumByteSize()} returns; however, its storage still spans 2
+	 * bytes of the base register, which is what this method returns.
+	 */
+	public int getNumBytes() {
+		return numBytes;
+	}
+
+	/**
 	 * Returns the offset into the register space for this register
 	 */
 	public int getOffset() {
@@ -210,6 +227,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Returns the bit offset from the register address for this register.
+	 * 
 	 * @return the bit offset from the register address for this register.
 	 */
 	public int getLeastSignificantBit() {
@@ -224,8 +242,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	}
 
 	/**
-	 * Returns true for a register whose context value should
-	 * follow the disassembly flow.
+	 * Returns true for a register whose context value should follow the disassembly flow.
 	 */
 	public boolean followsFlow() {
 		return (typeFlags & TYPE_DOES_NOT_FOLLOW_FLOW) == 0;
@@ -335,8 +352,8 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	}
 
 	/**
-	 * Returns list of children registers sorted by
-	 * lest-significant bit-offset within this register.
+	 * Returns list of children registers sorted by lest-significant bit-offset within this
+	 * register.
 	 */
 	public List<Register> getChildRegisters() {
 		return new ArrayList<>(childRegisters);
@@ -400,6 +417,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Returns the mask that indicates which bits in the base register apply to this register.
+	 * 
 	 * @return the mask that indicates which bits in the base register apply to this register
 	 */
 	public byte[] getBaseMask() {
@@ -445,11 +463,11 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	}
 
 	/**
-	 * Determines if reg is contained within this register.
-	 * Method does not work for bit registers (e.g., context-bits)
+	 * Determines if reg is contained within this register. Method does not work for bit registers
+	 * (e.g., context-bits)
+	 * 
 	 * @param reg another register
-	 * @return true if reg equals this register or is contained
-	 * within it. 
+	 * @return true if reg equals this register or is contained within it.
 	 */
 	public boolean contains(Register reg) {
 		if (equals(reg)) {
@@ -472,8 +490,9 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Returns true if this is a vector register
-	 * @return true precisely when {@code this} is a full vector register (i.e., a register that can be
-	 * used as input or output for a SIMD operation).
+	 * 
+	 * @return true precisely when {@code this} is a full vector register (i.e., a register that can
+	 *         be used as input or output for a SIMD operation).
 	 */
 	public boolean isVectorRegister() {
 		return (typeFlags & TYPE_VECTOR) != 0;
@@ -481,8 +500,10 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Determines whether {@code laneSizeInBytes} is a valid lane size for this register.
+	 * 
 	 * @param laneSizeInBytes lane size to check, measured in bytes
-	 * @return true precisely when {@code this} is a vector register and {@code laneSizeInBytes} is a valid lane size.
+	 * @return true precisely when {@code this} is a vector register and {@code laneSizeInBytes} is
+	 *         a valid lane size.
 	 */
 	public boolean isValidLaneSize(int laneSizeInBytes) {
 		if (!isVectorRegister()) {
@@ -496,7 +517,9 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Returns the sorted array of lane sizes for this register, measured in bytes.
-	 * @return array of lane sizes, or {@code null} if {@code this} is not a vector register or no lane sizes have been set.
+	 * 
+	 * @return array of lane sizes, or {@code null} if {@code this} is not a vector register or no
+	 *         lane sizes have been set.
 	 */
 	public int[] getLaneSizes() {
 		if (laneSizes == null) {
@@ -512,9 +535,10 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Adds a lane size.
+	 * 
 	 * @param laneSizeInBytes lane size to add
-	 * @throws UnsupportedOperationException if register is unable to support the definition of 
-	 * lanes.
+	 * @throws UnsupportedOperationException if register is unable to support the definition of
+	 *             lanes.
 	 * @throws IllegalArgumentException if {@code laneSizeInBytes} is invalid
 	 */
 	void addLaneSize(int laneSizeInBytes) {

@@ -718,7 +718,7 @@ PARSER_END(CParser)
 
 TOKEN_MGR_DECLS :
 {
-    static int parenNesting = 0;
+    int parenNesting = 0;
 }
 
 SKIP :

@@ -19,8 +19,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.beans.PropertyEditor;
 import java.io.File;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.KeyStroke;
 
@@ -517,4 +516,29 @@ public interface Options {
 	 */
 	public abstract String getDefaultValueAsString(String optionName);
 
+	/**
+	 * Returns true if the two options objects have the same set of options and values
+	 * @param options1 the first options object to test
+	 * @param options2 the second options object to test
+	 * @return true if the two options objects have the same set of options and values
+	 */
+	public static boolean hasSameOptionsAndValues(Options options1, Options options2) {
+		List<String> leafOptionNames1 = options1.getOptionNames();
+		List<String> leafOptionNames2 = options2.getOptionNames();
+		Collections.sort(leafOptionNames1);
+		Collections.sort(leafOptionNames2);
+
+		if (!leafOptionNames1.equals(leafOptionNames2)) {
+			return false;
+		}
+		for (String optionName : leafOptionNames1) {
+			Object value1 = options1.getObject(optionName, null);
+			Object value2 = options2.getObject(optionName, null);
+			if (!Objects.equals(value1, value2)) {
+				return false;
+			}
+		}
+		return true;
+
+	}
 }

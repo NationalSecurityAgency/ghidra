@@ -126,6 +126,9 @@ public class DBTraceStack extends DBAnnotatedObject implements TraceStack {
 		else {
 			thread = manager.threadManager.getThread(threadSnap.threadKey);
 			frames.clear();
+			if (frameKeys == null) {
+				return;
+			}
 			for (long k : frameKeys) {
 				frames.add(manager.getFrameByKey(k));
 			}

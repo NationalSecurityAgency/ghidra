@@ -160,7 +160,7 @@ class SimpleLanguageTranslator extends LanguageTranslatorAdapter {
 			return super.getNewRegisterValue(oldRegisterValue);
 		}
 		Register newContextReg = getNewLanguage().getContextBaseRegister();
-		if (newContextReg == null || (clearAllContext && contextSettings == null)) {
+		if (newContextReg == Register.NO_CONTEXT || (clearAllContext && contextSettings == null)) {
 			return null;
 		}
 		RegisterValue newValue = null;
@@ -220,8 +220,8 @@ class SimpleLanguageTranslator extends LanguageTranslatorAdapter {
 				LanguagePostUpgradeInstructionHandler.class.getName());
 		}
 		Constructor<?> constructor = handlerClass.getConstructor(new Class<?>[] { Program.class });
-		return (LanguagePostUpgradeInstructionHandler) constructor.newInstance(
-			new Object[] { program });
+		return (LanguagePostUpgradeInstructionHandler) constructor
+				.newInstance(new Object[] { program });
 	}
 
 	@Override

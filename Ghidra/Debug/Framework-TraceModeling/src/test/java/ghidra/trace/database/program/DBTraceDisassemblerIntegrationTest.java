@@ -19,16 +19,14 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.annotation.*;
 import java.util.Set;
 
 import org.junit.*;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 
 import com.google.common.collect.Range;
 
 import ghidra.app.cmd.disassemble.ArmDisassembleCommand;
+import ghidra.app.cmd.disassemble.MipsDisassembleCommand;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.AddressOverflowException;
@@ -44,6 +42,8 @@ import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceOverlappedRegionException;
+import ghidra.trace.util.LanguageTestWatcher;
+import ghidra.trace.util.LanguageTestWatcher.TestLanguage;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.*;
 import ghidra.util.task.ConsoleTaskMonitor;
@@ -53,35 +53,8 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	protected ToyDBTraceBuilder b;
 	protected DBTraceVariableSnapProgramView view;
 
-	@Target(ElementType.METHOD)
-	@Retention(RetentionPolicy.RUNTIME)
-	public @interface TestLanguage {
-		String value();
-	}
-
-	public static class LanguageWatcher extends TestWatcher {
-		String language = ProgramBuilder._TOY64_BE;
-
-		@Override
-		protected void starting(Description description) {
-			language = computeLanguage(description);
-		}
-
-		private String computeLanguage(Description description) {
-			TestLanguage annot = description.getAnnotation(TestLanguage.class);
-			if (annot == null) {
-				return ProgramBuilder._TOY64_BE;
-			}
-			return annot.value();
-		}
-
-		public String getLanguage() {
-			return language;
-		}
-	}
-
 	@Rule
-	public LanguageWatcher testLanguage = new LanguageWatcher();
+	public LanguageTestWatcher testLanguage = new LanguageTestWatcher();
 
 	@Before
 	public void setUp() throws IOException {
@@ -209,10 +182,37 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 				new ArmDisassembleCommand(b.addr(0xb6fa2cdc), restricted, true);
 			thumbDis.applyTo(b.trace.getFixedProgramView(0), TaskMonitor.DUMMY);
 
-			CodeUnit cu1 = b.trace.getCodeManager().codeUnits().getAt(0, b.addr(0xb6fa2cdc));
+			DBTraceCodeUnitsMemoryView cuManager = b.trace.getCodeManager().codeUnits();
+			CodeUnit cu1 = cuManager.getAt(0, b.addr(0xb6fa2cdc));
 			assertEquals("push { r4, r5, r6, r7, r8, lr  }", cu1.toString());
-			CodeUnit cu2 = b.trace.getCodeManager().codeUnits().getAt(0, b.addr(0xb6fa2ce0));
+			CodeUnit cu2 = cuManager.getAt(0, b.addr(0xb6fa2ce0));
 			assertEquals("sub sp,#0x1d8", cu2.toString());
+		}
+	}
+
+	@Test
+	@TestLanguage("MIPS:BE:64:default")
+	public void testDelaySlotSampleDBTrace() throws Exception {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			DBTraceMemoryManager memory = b.trace.getMemoryManager();
+			memory.createRegion(".text", 0, b.range(0x120000000L, 0x120010000L),
+				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
+			memory.putBytes(0, b.addr(0x1200035b4L), b.buf(
+				// bal LAB_1200035bc
+				0x04, 0x11, 0x00, 0x01,
+				// _nop
+				0x00, 0x00, 0x00, 0x00));
+
+			AddressSet restricted = new AddressSet(b.addr(0x1200035b4L), b.addr(0x1200035bbL));
+			MipsDisassembleCommand mipsDis =
+				new MipsDisassembleCommand(b.addr(0x1200035b4L), restricted, false);
+			mipsDis.applyTo(b.trace.getFixedProgramView(0), TaskMonitor.DUMMY);
+
+			DBTraceCodeUnitsMemoryView cuManager = b.trace.getCodeManager().codeUnits();
+			CodeUnit cu1 = cuManager.getAt(0, b.addr(0x1200035b4L));
+			assertEquals("bal 0x1200035bc", cu1.toString());
+			CodeUnit cu2 = cuManager.getAt(0, b.addr(0x1200035b8L));
+			assertEquals("_nop", cu2.toString());
 		}
 	}
 }

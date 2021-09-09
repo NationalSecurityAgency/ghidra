@@ -109,6 +109,15 @@ define pcodeop vgatherqps ;
 }
 @endif
 
+# PCMPEQQ 4-250 PAGE 1370 LINE 71171
+:VPCMPEQQ YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_WIG) & vexVVVV_YmmReg; byte=0x29; YmmReg1 ... & YmmReg2_m256
+{
+	YmmReg1[0,64] = zext(vexVVVV_YmmReg[0,64] == YmmReg2_m256[0,64]) * 0xffffffffffffffff:8;
+	YmmReg1[64,64] = zext(vexVVVV_YmmReg[64,64] == YmmReg2_m256[64,64]) * 0xffffffffffffffff:8;
+	YmmReg1[128,64] = zext(vexVVVV_YmmReg[128,64] == YmmReg2_m256[128,64]) * 0xffffffffffffffff:8;
+	YmmReg1[192,64] = zext(vexVVVV_YmmReg[192,64] == YmmReg2_m256[192,64]) * 0xffffffffffffffff:8;
+	# TODO ZmmReg1 = zext(YmmReg1)
+}
 
 # VPGATHERDD/VPGATHERQD 5-273 PAGE 2097 LINE 107884
 define pcodeop vpgatherdd ;
@@ -200,4 +209,44 @@ define pcodeop vpgatherqq ;
 }
 @endif
 
+
+# PMOVMSKB 4-338 PAGE 1458 LINE 75655
+:VPMOVMSKB Reg32, YmmReg2 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0xD7; Reg32 & (mod=0x3 & YmmReg2) & check_Reg32_dest
+{
+	local byte_mask:4 = 0:4;
+	byte_mask[0,1] = YmmReg2[7,1];
+	byte_mask[1,1] = YmmReg2[15,1];
+	byte_mask[2,1] = YmmReg2[23,1];
+	byte_mask[3,1] = YmmReg2[31,1];
+	byte_mask[4,1] = YmmReg2[39,1];
+	byte_mask[5,1] = YmmReg2[47,1];
+	byte_mask[6,1] = YmmReg2[55,1];
+	byte_mask[7,1] = YmmReg2[63,1];
+	byte_mask[8,1] = YmmReg2[71,1];
+	byte_mask[9,1] = YmmReg2[79,1];
+	byte_mask[10,1] = YmmReg2[87,1];
+	byte_mask[11,1] = YmmReg2[95,1];
+	byte_mask[12,1] = YmmReg2[103,1];
+	byte_mask[13,1] = YmmReg2[111,1];
+	byte_mask[14,1] = YmmReg2[119,1];
+	byte_mask[15,1] = YmmReg2[127,1];
+	byte_mask[16,1] = YmmReg2[135,1];
+	byte_mask[17,1] = YmmReg2[143,1];
+	byte_mask[18,1] = YmmReg2[151,1];
+	byte_mask[19,1] = YmmReg2[159,1];
+	byte_mask[20,1] = YmmReg2[167,1];
+	byte_mask[21,1] = YmmReg2[175,1];
+	byte_mask[22,1] = YmmReg2[183,1];
+	byte_mask[23,1] = YmmReg2[191,1];
+	byte_mask[24,1] = YmmReg2[199,1];
+	byte_mask[25,1] = YmmReg2[207,1];
+	byte_mask[26,1] = YmmReg2[215,1];
+	byte_mask[27,1] = YmmReg2[223,1];
+	byte_mask[28,1] = YmmReg2[231,1];
+	byte_mask[29,1] = YmmReg2[239,1];
+	byte_mask[30,1] = YmmReg2[247,1];
+	byte_mask[31,1] = YmmReg2[255,1];
+	Reg32 = zext(byte_mask);
+	build check_Reg32_dest;
+}
 

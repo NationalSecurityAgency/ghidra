@@ -60,7 +60,6 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 		new DefaultAddressFactory(new AddressSpace[] { space });
 
 	protected final GdbManager gdb;
-	protected boolean noStarti = false;
 	protected final GdbModelTargetSession session;
 
 	protected final CompletableFuture<GdbModelTargetSession> completedSession;

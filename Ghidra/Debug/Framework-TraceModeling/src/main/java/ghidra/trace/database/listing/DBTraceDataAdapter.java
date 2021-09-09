@@ -24,6 +24,7 @@ import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.trace.database.data.DBTraceDataSettingsOperations;
 import ghidra.trace.database.symbol.DBTraceReference;
+import ghidra.trace.model.Trace.TraceCodeChangeType;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.util.*;
@@ -38,150 +39,198 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 
 	@Override
 	default TraceReference[] getValueReferences() {
-		return (TraceReference[]) DataAdapterMinimal.super.getValueReferences();
+		try (LockHold hold = getTrace().lockRead()) {
+			return (TraceReference[]) DataAdapterMinimal.super.getValueReferences();
+		}
 	}
 
 	@Override
 	default void addValueReference(Address refAddr, RefType type) {
-		getTrace().getReferenceManager()
-				.addMemoryReference(getLifespan(), getAddress(), refAddr,
-					type, SourceType.USER_DEFINED, DATA_OP_INDEX);
+		try (LockHold hold = getTrace().lockWrite()) {
+			getTrace().getReferenceManager()
+					.addMemoryReference(getLifespan(), getAddress(), refAddr,
+						type, SourceType.USER_DEFINED, DATA_OP_INDEX);
+		}
 	}
 
 	@Override
 	default void removeValueReference(Address refAddr) {
-		DBTraceReference ref = getTrace().getReferenceManager()
-				.getReference(getStartSnap(),
-					getAddress(), refAddr, DATA_OP_INDEX);
-		if (ref == null) {
-			return;
+		try (LockHold hold = getTrace().lockWrite()) {
+			DBTraceReference ref = getTrace().getReferenceManager()
+					.getReference(getStartSnap(),
+						getAddress(), refAddr, DATA_OP_INDEX);
+			if (ref == null) {
+				return;
+			}
+			ref.delete();
 		}
-		ref.delete();
 	}
 
 	DBTraceDataSettingsOperations getSettingsSpace(boolean createIfAbsent);
 
 	@Override
 	default void setLong(String name, long value) {
-		getSettingsSpace(true).setLong(getLifespan(), getAddress(), name, value);
+		try (LockHold hold = getTrace().lockWrite()) {
+			getSettingsSpace(true).setLong(getLifespan(), getAddress(), name, value);
+		}
+		getTrace().setChanged(new TraceChangeRecord<>(
+			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
+			null));
 	}
 
 	@Override
 	default Long getLong(String name) {
-		DBTraceDataSettingsOperations space = getSettingsSpace(false);
-		if (space != null) {
-			Long value = space.getLong(getStartSnap(), getAddress(), name);
-			if (value != null) {
-				return value;
+		try (LockHold hold = getTrace().lockRead()) {
+			DBTraceDataSettingsOperations space = getSettingsSpace(false);
+			if (space != null) {
+				Long value = space.getLong(getStartSnap(), getAddress(), name);
+				if (value != null) {
+					return value;
+				}
 			}
+			Settings defaultSettings = getDefaultSettings();
+			return defaultSettings == null ? null : defaultSettings.getLong(name);
 		}
-		Settings defaultSettings = getDefaultSettings();
-		return defaultSettings == null ? null : defaultSettings.getLong(name);
 	}
 
 	@Override
 	default void setString(String name, String value) {
-		getSettingsSpace(true).setString(getLifespan(), getAddress(), name, value);
+		try (LockHold hold = getTrace().lockWrite()) {
+			getSettingsSpace(true).setString(getLifespan(), getAddress(), name, value);
+		}
+		getTrace().setChanged(new TraceChangeRecord<>(
+			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
+			null));
 	}
 
 	@Override
 	default String getString(String name) {
-		DBTraceDataSettingsOperations space = getSettingsSpace(false);
-		if (space != null) {
-			String value = space.getString(getStartSnap(), getAddress(), name);
-			if (value != null) {
-				return value;
+		try (LockHold hold = getTrace().lockRead()) {
+			DBTraceDataSettingsOperations space = getSettingsSpace(false);
+			if (space != null) {
+				String value = space.getString(getStartSnap(), getAddress(), name);
+				if (value != null) {
+					return value;
+				}
 			}
+			Settings defaultSettings = getDefaultSettings();
+			return defaultSettings == null ? null : defaultSettings.getString(name);
 		}
-		Settings defaultSettings = getDefaultSettings();
-		return defaultSettings == null ? null : defaultSettings.getString(name);
 
 	}
 
 	@Override
 	default void setByteArray(String name, byte[] value) {
-		getSettingsSpace(true).setBytes(getLifespan(), getAddress(), name, value);
+		try (LockHold hold = getTrace().lockWrite()) {
+			getSettingsSpace(true).setBytes(getLifespan(), getAddress(), name, value);
+		}
+		getTrace().setChanged(new TraceChangeRecord<>(
+			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
+			null));
 	}
 
 	@Override
 	default byte[] getByteArray(String name) {
-		DBTraceDataSettingsOperations space = getSettingsSpace(false);
-		if (space != null) {
-			byte[] value = space.getBytes(getStartSnap(), getAddress(), name);
-			if (value != null) {
-				return value;
+		try (LockHold hold = getTrace().lockRead()) {
+			DBTraceDataSettingsOperations space = getSettingsSpace(false);
+			if (space != null) {
+				byte[] value = space.getBytes(getStartSnap(), getAddress(), name);
+				if (value != null) {
+					return value;
+				}
 			}
+			Settings defaultSettings = getDefaultSettings();
+			return defaultSettings == null ? null : defaultSettings.getByteArray(name);
 		}
-		Settings defaultSettings = getDefaultSettings();
-		return defaultSettings == null ? null : defaultSettings.getByteArray(name);
 	}
 
 	@Override
 	default void setValue(String name, Object value) {
-		getSettingsSpace(true).setValue(getLifespan(), getAddress(), name, value);
+		try (LockHold hold = getTrace().lockWrite()) {
+			getSettingsSpace(true).setValue(getLifespan(), getAddress(), name, value);
+		}
+		getTrace().setChanged(new TraceChangeRecord<>(
+			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
+			null));
 	}
 
 	@Override
 	default Object getValue(String name) {
-		DBTraceDataSettingsOperations space = getSettingsSpace(false);
-		if (space != null) {
-			Object value = space.getValue(getStartSnap(), getAddress(), name);
-			if (value != null) {
-				return value;
+		try (LockHold hold = getTrace().lockRead()) {
+			DBTraceDataSettingsOperations space = getSettingsSpace(false);
+			if (space != null) {
+				Object value = space.getValue(getStartSnap(), getAddress(), name);
+				if (value != null) {
+					return value;
+				}
 			}
+			Settings defaultSettings = getDefaultSettings();
+			return defaultSettings == null ? null : defaultSettings.getValue(name);
 		}
-		Settings defaultSettings = getDefaultSettings();
-		return defaultSettings == null ? null : defaultSettings.getValue(name);
 	}
 
 	@Override
 	default void clearSetting(String name) {
-		DBTraceDataSettingsOperations space = getSettingsSpace(false);
-		if (space == null) {
-			return;
+		try (LockHold hold = getTrace().lockWrite()) {
+			DBTraceDataSettingsOperations space = getSettingsSpace(false);
+			if (space == null) {
+				return;
+			}
+			space.clear(getLifespan(), getAddress(), name);
 		}
-		space.clear(getLifespan(), getAddress(), name);
+		getTrace().setChanged(new TraceChangeRecord<>(
+			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
+			null));
 	}
 
 	@Override
 	default void clearAllSettings() {
-		DBTraceDataSettingsOperations space = getSettingsSpace(false);
-		if (space == null) {
-			return;
+		try (LockHold hold = getTrace().lockWrite()) {
+			DBTraceDataSettingsOperations space = getSettingsSpace(false);
+			if (space == null) {
+				return;
+			}
+			space.clear(getLifespan(), getAddress(), null);
 		}
-		space.clear(getLifespan(), getAddress(), null);
+		getTrace().setChanged(new TraceChangeRecord<>(
+			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
+			null));
 	}
 
 	@Override
 	default String[] getNames() {
-		DBTraceDataSettingsOperations space = getSettingsSpace(false);
-		if (space == null) {
-			return EMPTY_STRING_ARRAY;
+		try (LockHold hold = getTrace().lockRead()) {
+			DBTraceDataSettingsOperations space = getSettingsSpace(false);
+			if (space == null) {
+				return EMPTY_STRING_ARRAY;
+			}
+			Collection<String> names = space.getSettingNames(getLifespan(), getAddress());
+			return names.toArray(new String[names.size()]);
 		}
-		Collection<String> names = space.getSettingNames(getLifespan(), getAddress());
-		return names.toArray(new String[names.size()]);
 	}
 
 	@Override
 	default boolean isEmpty() {
-		DBTraceDataSettingsOperations space = getSettingsSpace(false);
-		if (space == null) {
-			return true;
+		try (LockHold hold = getTrace().lockRead()) {
+			DBTraceDataSettingsOperations space = getSettingsSpace(false);
+			if (space == null) {
+				return true;
+			}
+			return space.isEmpty(getLifespan(), getAddress());
 		}
-		return space.isEmpty(getLifespan(), getAddress());
 	}
 
 	@Override
 	default <T extends SettingsDefinition> T getSettingsDefinition(
 			Class<T> settingsDefinitionClass) {
-		try (LockHold hold = LockHold.lock(getTrace().getReadWriteLock().readLock())) {
+		try (LockHold hold = getTrace().lockRead()) {
 			return DataAdapterFromSettings.super.getSettingsDefinition(settingsDefinitionClass);
 		}
 	}
 
 	@Override
 	default boolean hasMutability(int mutabilityType) {
-		try (LockHold hold = LockHold.lock(getTrace().getReadWriteLock().readLock())) {
+		try (LockHold hold = getTrace().lockRead()) {
 			return DataAdapterFromSettings.super.hasMutability(mutabilityType);
 		}
 	}

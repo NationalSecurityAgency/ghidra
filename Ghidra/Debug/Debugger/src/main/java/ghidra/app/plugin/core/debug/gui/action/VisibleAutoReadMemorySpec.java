@@ -67,6 +67,6 @@ public class VisibleAutoReadMemorySpec implements AutoReadMemorySpec {
 			return AsyncUtils.NIL;
 		}
 
-		return recorder.captureProcessMemory(toRead, TaskMonitor.DUMMY);
+		return recorder.captureProcessMemory(toRead, TaskMonitor.DUMMY, false);
 	}
 }

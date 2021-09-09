@@ -437,7 +437,7 @@ public class PreProcessor {
 	private HashMap<String, Integer> alreadyDone;
 
 	// Toggle printing
-	private static int verboseLevel = 0;
+	private int verboseLevel = 0;
 
 	public int verboseLevel() {
 		int vl = verboseLevel;
@@ -1125,6 +1125,7 @@ public class PreProcessor {
 		this.pathList = parent.pathList;
 		this.shift = parent.shift;
 		this.alreadyDone = parent.alreadyDone;
+		this.verboseLevel = parent.verboseLevel;
 	}
 
 	public PreProcessor(String[] args) throws ParseException {
@@ -2174,7 +2175,7 @@ PPToken ValueExpression() :
 // LEXICAL SCANNER SECTION
 TOKEN_MGR_DECLS :
 {
-    static int parenNesting = 0;
+    int parenNesting = 0;
 }
 
 <DEFAULT>

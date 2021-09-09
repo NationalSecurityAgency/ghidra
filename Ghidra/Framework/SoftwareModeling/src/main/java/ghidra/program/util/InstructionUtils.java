@@ -50,8 +50,8 @@ public class InstructionUtils {
 		FlowType flowType = instruction.getFlowType();
 		textBuf.append("\nFlow Type         : " + flowType.toString());
 		FlowOverride flowOverride = instruction.getFlowOverride();
-		if (flowOverride != FlowOverride.NONE &&
-			instruction.getPrototype().getFlowType(instruction.getInstructionContext()) != flowType) {
+		if (flowOverride != FlowOverride.NONE && instruction.getPrototype()
+				.getFlowType(instruction.getInstructionContext()) != flowType) {
 			textBuf.append("\n  >>> reflects " + flowOverride + " flow override");
 		}
 		Address fallAddr = instruction.getFallThrough();
@@ -62,20 +62,20 @@ public class InstructionUtils {
 		textBuf.append("\nDelay slot depth  : " + instruction.getDelaySlotDepth() +
 			(instruction.isInDelaySlot() ? " in slot" : ""));
 		textBuf.append(
-			"\nHash              : " + Integer.toHexString(instruction.getPrototype().hashCode())).append(
-			'\n');
+			"\nHash              : " + Integer.toHexString(instruction.getPrototype().hashCode()))
+				.append('\n');
 
 		textBuf.append("\nInput Objects:\n" +
 			getString(getFormatedInstructionObjects(instruction, true), true));
 		textBuf.append("\nResult Objects:\n" +
 			getString(getFormatedInstructionObjects(instruction, false), true));
 		textBuf.append(
-			"\nConstructor Line #'s:\n" + getString(debug.getConstructorLineNumbers(), true)).append(
-			'\n');
+			"\nConstructor Line #'s:\n" + getString(debug.getConstructorLineNumbers(), true))
+				.append('\n');
 		textBuf.append("\nByte Length : " + instruction.getLength());
 		try {
-			textBuf.append("\nInstr Bytes : " +
-				SleighDebugLogger.getFormattedBytes(instruction.getBytes()));
+			textBuf.append(
+				"\nInstr Bytes : " + SleighDebugLogger.getFormattedBytes(instruction.getBytes()));
 			textBuf.append("\nMask        : " + debug.getFormattedInstructionMask(-1));
 			textBuf.append("\nMasked Bytes: " + debug.getFormattedMaskedValue(-1)).append('\n');
 		}
@@ -93,10 +93,11 @@ public class InstructionUtils {
 	 * @param instr
 	 * @return formatted context data
 	 */
-	public static String getFormattedContextRegisterValueBreakout(Instruction instr, String indent) {
+	public static String getFormattedContextRegisterValueBreakout(Instruction instr,
+			String indent) {
 		ProgramContext programContext = instr.getProgram().getProgramContext();
 		Register contextReg = programContext.getBaseContextRegister();
-		if (contextReg == null) {
+		if (contextReg == Register.NO_CONTEXT) {
 			return indent + "[Instruction context not defined]";
 		}
 		return getFormattedRegisterValueBits(instr.getRegisterValue(contextReg), indent);

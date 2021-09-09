@@ -195,7 +195,7 @@ public class SleighAssembler implements Assembler {
 			throw new AssemblyError(
 				"Context must be fully-specified (full length, no shift, no unknowns)");
 		}
-		if (lang.getContextBaseRegister() != null &&
+		if (lang.getContextBaseRegister() != Register.NO_CONTEXT &&
 			ctx.length() < lang.getContextBaseRegister().getMinimumByteSize()) {
 			throw new AssemblyError(
 				"Context must be fully-specified (full length, no shift, no unknowns)");

@@ -13,6 +13,7 @@
     <compiler name="default" spec="AARCH64.cspec" id="default"/>
     <compiler name="Visual Studio" spec="AARCH64_win.cspec" id="windows"/>
     <external_name tool="gnu" name="aarch64"/>
+    <external_name tool="gnu" name="aarch64:ilp32"/>
     <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>
   </language>
   <language processor="AARCH64"
@@ -27,6 +28,8 @@
             id="AARCH64:BE:64:v8A">
     <description>Generic ARM v8.5-A LE instructions, BE data, missing some 8.5 vector</description>
     <compiler name="default" spec="AARCH64.cspec" id="default"/>
+    <external_name tool="gnu" name="aarch64"/>
+    <external_name tool="gnu" name="aarch64:ilp32"/>
     <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>
   </language>
 </language_definitions>

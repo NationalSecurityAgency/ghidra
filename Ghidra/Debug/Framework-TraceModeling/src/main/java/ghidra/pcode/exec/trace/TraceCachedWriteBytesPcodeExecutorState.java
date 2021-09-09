@@ -131,7 +131,8 @@ public class TraceCachedWriteBytesPcodeExecutorState
 		public byte[] read(long offset, int size) {
 			if (source != null) {
 				// TODO: Warn or bail when reading UNKNOWN bytes
-				// NOTE: Not going to worry about gaps here:
+				// NOTE: Read without regard to gaps
+				// NOTE: Cannot write those gaps, though!!!
 				RangeSet<UnsignedLong> uninitialized =
 					cache.getUninitialized(offset, offset + size);
 				if (!uninitialized.isEmpty()) {
@@ -141,7 +142,11 @@ public class TraceCachedWriteBytesPcodeExecutorState
 					long upper = upper(toRead);
 					ByteBuffer buf = ByteBuffer.allocate((int) (upper - lower + 1));
 					source.getBytes(snap, space.getAddress(lower), buf);
-					cache.putData(lower, buf.array());
+					for (Range<UnsignedLong> rng : uninitialized.asRanges()) {
+						long l = lower(rng);
+						long u = upper(rng);
+						cache.putData(l, buf.array(), (int) (l - lower), (int) (u - l + 1));
+					}
 				}
 			}
 			byte[] data = new byte[size];

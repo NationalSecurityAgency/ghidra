@@ -64,6 +64,11 @@ public interface ToolConstants extends DockingToolConstants {
 	public static final String MENU_ANALYSIS = "&Analysis";
 
 	/**
+	 * Used when placing an action in the "Graph" menu of the tool
+	 */
+	public static final String MENU_GRAPH = "&Graph";
+
+	/**
 	 *  Used when placing an action in the "Project" menu of the tool
 	 */
 	public static final String MENU_PROJECT = "&Project";

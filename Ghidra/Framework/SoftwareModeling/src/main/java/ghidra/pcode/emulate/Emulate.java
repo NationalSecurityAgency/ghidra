@@ -101,8 +101,8 @@ public class Emulate {
 
 	@SuppressWarnings("unchecked")
 	private void initInstuctionStateModifier() {
-		String classname = language.getProperty(
-			GhidraLanguagePropertyKeys.EMULATE_INSTRUCTION_STATE_MODIFIER_CLASS);
+		String classname = language
+				.getProperty(GhidraLanguagePropertyKeys.EMULATE_INSTRUCTION_STATE_MODIFIER_CLASS);
 		if (classname == null) {
 			return;
 		}
@@ -245,7 +245,7 @@ public class Emulate {
 	 */
 	public RegisterValue getContextRegisterValue() {
 		Register contextReg = language.getContextBaseRegister();
-		if (contextReg == null) {
+		if (contextReg == Register.NO_CONTEXT) {
 			return null;
 		}
 		if (pseudoInstruction != null) {
@@ -377,6 +377,9 @@ public class Emulate {
 	/// completes.
 	public void executeInstruction(boolean stopAtBreakpoint, TaskMonitor monitor)
 			throws CancelledException, LowlevelError, InstructionDecodeException {
+		if (monitor == null) {
+			monitor = TaskMonitor.DUMMY;
+		}
 		if (executionState == EmulateExecutionState.STOPPED) {
 			if (last_execute_address == null && instructionStateModifier != null) {
 				instructionStateModifier.initialExecuteCallback(this, current_address,

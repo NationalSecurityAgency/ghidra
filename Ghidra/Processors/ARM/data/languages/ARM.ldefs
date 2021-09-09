@@ -14,6 +14,12 @@
     <compiler name="default" spec="ARM.cspec" id="default"/>
     <compiler name="Visual Studio" spec="ARM_win.cspec" id="windows"/>
     <external_name tool="gnu" name="iwmmxt"/>
+    <external_name tool="gnu" name="armv8-a"/>
+    <external_name tool="gnu" name="armv8-r"/>
+    <external_name tool="gnu" name="armv8-m.base"/>
+    <external_name tool="gnu" name="armv8-m.main"/>
+    <external_name tool="gnu" name="armv8.1-m.main"/>
+    <external_name tool="gnu" name="arm_any"/>
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
@@ -32,6 +38,7 @@
     <compiler name="default" spec="ARM.cspec" id="default"/>
     <compiler name="Visual Studio" spec="ARM_win.cspec" id="windows"/>
     <external_name tool="gnu" name="iwmmxt"/>
+    <external_name tool="gnu" name="arm_any"/>
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
@@ -65,6 +72,12 @@
     <description>Generic ARM/Thumb v8 big endian</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
     <external_name tool="gnu" name="iwmmxt"/>
+    <external_name tool="gnu" name="armv8-a"/>
+    <external_name tool="gnu" name="armv8-r"/>
+    <external_name tool="gnu" name="armv8-m.base"/>
+    <external_name tool="gnu" name="armv8-m.main"/>
+    <external_name tool="gnu" name="armv8.1-m.main"/>
+    <external_name tool="gnu" name="arm_any"/>
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
@@ -82,6 +95,7 @@
     <description>Generic ARM/Thumb v8 big endian (Thumb is default)</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
     <external_name tool="gnu" name="iwmmxt"/>
+    <external_name tool="gnu" name="arm_any"/>
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
   </language>
@@ -99,6 +113,7 @@
     <compiler name="default" spec="ARM.cspec" id="default"/>
     <compiler name="Visual Studio" spec="ARM_win.cspec" id="windows"/>
     <external_name tool="gnu" name="iwmmxt"/>
+    <external_name tool="gnu" name="armv7"/>
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
@@ -132,6 +147,7 @@
     <description>Generic ARM/Thumb v7 big endian</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
     <external_name tool="gnu" name="iwmmxt"/>
+    <external_name tool="gnu" name="armv7"/>
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
@@ -148,6 +164,11 @@
             id="ARM:LE:32:Cortex">
     <description>ARM Cortex / Thumb little endian</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
+    <external_name tool="gnu" name="armv7e-m"/>
+    <external_name tool="gnu" name="armv6k"/>
+    <external_name tool="gnu" name="armv6kz"/>
+    <external_name tool="gnu" name="armv6-m"/>
+    <external_name tool="gnu" name="armv6s-m"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
   </language>
@@ -163,6 +184,10 @@
             id="ARM:BE:32:Cortex">
     <description>ARM Cortex / Thumb big endian</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
+    <external_name tool="gnu" name="armv6k"/>
+    <external_name tool="gnu" name="armv6kz"/>
+    <external_name tool="gnu" name="armv6-m"/>
+    <external_name tool="gnu" name="armv6s-m"/>
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
   </language>
@@ -179,6 +204,7 @@
     <description>Generic ARM/Thumb v6 little endian</description>
     <compiler name="default" spec="ARM_v45.cspec" id="default"/>
     <external_name tool="gnu" name="xscale"/>
+    <external_name tool="gnu" name="armv6"/>
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
@@ -198,6 +224,7 @@
     <description>Generic ARM/Thumb v6 big endian</description>
     <compiler name="default" spec="ARM_v45.cspec" id="default"/>
     <external_name tool="gnu" name="xscale"/>
+    <external_name tool="gnu" name="armv6"/>
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
@@ -217,6 +244,7 @@
     <description>Generic ARM/Thumb v5 little endian (T-variant)</description>
     <compiler name="default" spec="ARM_v45.cspec" id="default"/>
     <external_name tool="gnu" name="armv5t"/>
+    <external_name tool="gnu" name="armv5tej"/>
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
@@ -234,6 +262,7 @@
     <description>Generic ARM/Thumb v5 big endian (T-variant)</description>
     <compiler name="default" spec="ARM_v45.cspec" id="default"/>
     <external_name tool="gnu" name="armv5t"/>
+    <external_name tool="gnu" name="armv5tej"/>
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
@@ -317,6 +346,10 @@
     <description>Generic ARM v4 little endian</description>
     <compiler name="default" spec="ARM_v45.cspec" id="default"/>
     <external_name tool="gnu" name="armv4"/>
+    <external_name tool="gnu" name="armv2"/>
+    <external_name tool="gnu" name="armv2a"/>
+    <external_name tool="gnu" name="armv3"/>
+    <external_name tool="gnu" name="armv3m"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
   </language>
@@ -333,6 +366,10 @@
     <description>Generic ARM v4 big endian</description>
     <compiler name="default" spec="ARM_v45.cspec" id="default"/>
     <external_name tool="gnu" name="armv4"/>
+    <external_name tool="gnu" name="armv2"/>
+    <external_name tool="gnu" name="armv2a"/>
+    <external_name tool="gnu" name="armv3"/>
+    <external_name tool="gnu" name="armv3m"/>
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
   </language>

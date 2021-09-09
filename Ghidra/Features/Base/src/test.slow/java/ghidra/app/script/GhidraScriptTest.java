@@ -52,10 +52,6 @@ public class GhidraScriptTest extends AbstractGhidraHeadedIntegrationTest {
 	private Program program;
 	private GhidraState state;
 
-	public GhidraScriptTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 
@@ -522,8 +518,10 @@ public class GhidraScriptTest extends AbstractGhidraHeadedIntegrationTest {
 		// Try to set a valid option to an invalid value and verify that the invalid value was not stored.
 		String invalidValue = "d";
 		script.setAnalysisOption(program, validOptionName, invalidValue);
-		assertFalse(script.getCurrentAnalysisOptionsAndValues(program).get(validOptionName).equals(
-			invalidValue));
+		assertFalse(script.getCurrentAnalysisOptionsAndValues(program)
+				.get(validOptionName)
+				.equals(
+					invalidValue));
 
 		// Try to set an invalid option and verify that the option is not successfully set.
 		String invalidOption = "invalidOption";
@@ -826,7 +824,7 @@ public class GhidraScriptTest extends AbstractGhidraHeadedIntegrationTest {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	public enum TestEnum {
 		a, b, c

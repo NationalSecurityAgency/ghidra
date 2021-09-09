@@ -21,7 +21,7 @@ import net.sf.cglib.proxy.Enhancer;
 
 public class ContinuesFactory implements GenericFactory {
 
-	private static final boolean disabled = Boolean.getBoolean("ContinuesInterceptor.disabled");
+	private static final boolean enabled = Boolean.getBoolean("ContinuesInterceptor.enabled");
 
 	private ExceptionHandler exceptionHandler;
 
@@ -36,7 +36,7 @@ public class ContinuesFactory implements GenericFactory {
 	public Object create(Class<?> type, Object... args) {
 		try {
 			Object thing;
-			if (disabled) {
+			if (!enabled) {
 				Constructor<?> c = type.getConstructor(new Class<?>[0]);
 				thing = c.newInstance(args);
 			}

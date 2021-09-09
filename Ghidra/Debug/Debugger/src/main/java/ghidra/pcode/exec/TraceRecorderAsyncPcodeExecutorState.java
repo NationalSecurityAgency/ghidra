@@ -25,10 +25,8 @@ import ghidra.pcode.exec.trace.TraceMemoryStatePcodeExecutorStatePiece;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.task.TaskMonitor;
 
 public class TraceRecorderAsyncPcodeExecutorState
@@ -48,28 +46,7 @@ public class TraceRecorderAsyncPcodeExecutorState
 
 	protected CompletableFuture<?> doSetTargetVar(AddressSpace space, long offset, int size,
 			boolean truncateAddressableUnit, byte[] val) {
-		if (space.isMemorySpace()) {
-			return recorder.writeProcessMemory(space.getAddress(offset), val);
-		}
-		assert space.isRegisterSpace();
-
-		Language lang = recorder.getTrace().getBaseLanguage();
-		Register register = lang.getRegister(space, offset, size);
-		if (register == null) {
-			// TODO: Is this too restrictive? I can't imagine any code producing such nonsense
-			throw new IllegalArgumentException(
-				"write to register space must be to one register");
-		}
-
-		RegisterValue rv = new RegisterValue(register, Utils.bytesToBigInteger(
-			val, size, recorder.getTrace().getBaseLanguage().isBigEndian(), false));
-		TraceMemoryRegisterSpace regs = recorder.getTrace()
-				.getMemoryManager()
-				.getMemoryRegisterSpace(traceState.getThread(), false);
-		rv = TraceRegisterUtils.combineWithTraceBaseRegisterValue(rv, traceState.getSnap(),
-			regs, true);
-		return recorder.writeThreadRegisters(traceState.getThread(), traceState.getFrame(),
-			Map.of(rv.getRegister(), rv));
+		return recorder.writeVariable(traceState.getThread(), 0, space.getAddress(offset), val);
 	}
 
 	protected byte[] knitFromResults(NavigableMap<Address, byte[]> map, Address addr, int size) {
@@ -99,7 +76,7 @@ public class TraceRecorderAsyncPcodeExecutorState
 			Address addr = space.getAddress(truncateOffset(space, offset));
 			AddressSet set = new AddressSet(addr, space.getAddress(offset + size - 1));
 			CompletableFuture<NavigableMap<Address, byte[]>> future =
-				recorder.captureProcessMemory(set, TaskMonitor.DUMMY);
+				recorder.captureProcessMemory(set, TaskMonitor.DUMMY, true);
 			return future.thenApply(map -> {
 				return knitFromResults(map, addr, size);
 			});

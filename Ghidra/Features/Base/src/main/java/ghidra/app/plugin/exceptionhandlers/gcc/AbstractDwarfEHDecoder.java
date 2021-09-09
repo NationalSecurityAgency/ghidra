@@ -38,20 +38,15 @@ abstract class AbstractDwarfEHDecoder implements DwarfEHDecoder {
 	protected static SignedLeb128DataType SLEB_DATA_TYPE = SignedLeb128DataType.dataType;
 	protected static UnsignedLeb128DataType ULEB_DATA_TYPE = UnsignedLeb128DataType.dataType;
 
-	protected DwarfEHDataApplicationMode appMode = DwarfEHDataApplicationMode.DW_EH_PE_absptr;
+	protected final DwarfEHDataApplicationMode appMode;
+	protected final boolean isIndirect;
 
-	protected boolean isIndirect = false;
-
-	@Override
-	public void setApplicationMode(DwarfEHDataApplicationMode mode) {
+	public AbstractDwarfEHDecoder(DwarfEHDataApplicationMode mode, boolean isIndirect) {
 		if (mode == null) {
 			mode = DwarfEHDataApplicationMode.DW_EH_PE_absptr;
 		}
 		appMode = mode;
-	}
 
-	@Override
-	public void setIndirect(boolean isIndirect) {
 		this.isIndirect = isIndirect;
 	}
 
@@ -91,8 +86,8 @@ abstract class AbstractDwarfEHDecoder implements DwarfEHDecoder {
 				return base;
 
 			default:
-				throw new AddressTranslationException("Don't know how to make a " +
-					addr.getPointerSize() + "-byte pointer");
+				throw new AddressTranslationException(
+					"Don't know how to make a " + addr.getPointerSize() + "-byte pointer");
 		}
 	}
 
@@ -113,8 +108,8 @@ abstract class AbstractDwarfEHDecoder implements DwarfEHDecoder {
 			case 8:
 				return readQWord(buf);
 			default:
-				throw new AddressTranslationException("Don't know how to make a " + ptrSize +
-					"-byte pointer");
+				throw new AddressTranslationException(
+					"Don't know how to make a " + ptrSize + "-byte pointer");
 		}
 	}
 

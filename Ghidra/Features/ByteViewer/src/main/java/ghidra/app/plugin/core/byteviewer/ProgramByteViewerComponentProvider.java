@@ -162,7 +162,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 
 	@Override
 	public String getTextSelection() {
-		return getTextSelection();
+		return getCurrentTextSelection();
 	}
 
 	private void setSelection(ProgramSelection selection, boolean notify) {
@@ -433,8 +433,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	}
 
 	/**
-	 * Called when the memory in the current program changes, from the domain
-	 * object listener.
+	 * Called when the memory in the current program changes, from the domain object listener.
 	 */
 	void memoryConfigurationChanged() {
 		ProgramLocation location = currentLocation;
@@ -519,6 +518,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 
 	/**
 	 * Gets the text of the current {@link ProgramSelection}
+	 * 
 	 * @return the text
 	 */
 	String getCurrentTextSelection() {
