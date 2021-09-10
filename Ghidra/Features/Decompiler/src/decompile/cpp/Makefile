@@ -123,7 +123,7 @@ TEST_NAMES=$(CORE) $(DECCORE) $(SLEIGH) $(EXTRA) test
 TEST_DEBUG=-D__TERMINAL__
 
 GHIDRA_NAMES=$(CORE) $(DECCORE) $(GHIDRA)
-GHIDRA_NAMES_DBG=$(GHIDRA_NAMES) callgraph ifacedecomp ifaceterm interface
+GHIDRA_NAMES_DBG=$(GHIDRA_NAMES) callgraph ifacedecomp testfunction ifaceterm interface
 GHIDRA_DEBUG=-DCPUI_DEBUG
 GHIDRA_OPT=
 

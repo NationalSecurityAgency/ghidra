@@ -286,7 +286,6 @@ void Architecture::clearAnalysis(Funcdata *fd)
   fd->clear();			// Clear stuff internal to function
   // Clear out any analysis generated comments
   commentdb->clearType(fd->getAddress(),Comment::warning|Comment::warningheader);
-  stringManager->clear();
 }
 
 /// Symbols do not necessarily need to be available for the decompiler.

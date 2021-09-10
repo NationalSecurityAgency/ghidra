@@ -145,6 +145,7 @@ void IfaceStatus::pushScript(const string &filename,const string &newprompt)
   ifstream *s = new ifstream(filename.c_str());
   if (!*s)
     throw IfaceParseError("Unable to open script file");
+  pushScript(s,newprompt);
 }
 
 /// \brief Provide a new input stream to execute, with an associated command prompt
