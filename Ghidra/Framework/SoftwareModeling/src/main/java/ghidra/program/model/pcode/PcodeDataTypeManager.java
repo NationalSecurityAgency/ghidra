@@ -470,10 +470,10 @@ public class PcodeDataTypeManager {
 		else if (type instanceof Enum) {
 			appendNameIdAttributes(resBuf, origType);
 			Enum enumDt = (Enum) type;
-			long[] keys = enumDt.getValues();
+			long[] values = enumDt.getValues();
 			String metatype = "uint";
-			for (long key : keys) {
-				if (key < 0) {
+			for (long value : values) {
+				if (value < 0) {
 					metatype = "int";
 					break;
 				}
@@ -482,10 +482,17 @@ public class PcodeDataTypeManager {
 			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", enumDt.getLength());
 			SpecXmlUtils.encodeBooleanAttribute(resBuf, "enum", true);
 			resBuf.append(">\n");
-			for (long key : keys) {
+			for (long value : values) {
+				String name;
+				String[] names = enumDt.getNames(value);
+				if (names.length == 1) {
+					name = names[0];
+				} else {
+					name = "(".concat(String.join(" | ", names)).concat(")");
+				}
 				resBuf.append("<val");
-				SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", enumDt.getName(key));
-				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "value", key);
+				SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", name);
+				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "value", value);
 				resBuf.append("/>");
 			}
 		}
