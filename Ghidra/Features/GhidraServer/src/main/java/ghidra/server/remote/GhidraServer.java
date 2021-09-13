@@ -66,6 +66,8 @@ import utility.application.ApplicationLayout;
  */
 public class GhidraServer extends UnicastRemoteObject implements GhidraServerHandle {
 
+	private final static String TLS_SERVER_PROTOCOLS_PROPERTY = "ghidra.tls.server.protocols";
+
 	private static SslRMIServerSocketFactory serverSocketFactory;
 	private static SslRMIClientSocketFactory clientSocketFactory;
 	private static InetAddress bindAddress;
@@ -786,16 +788,18 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			log.info(
 				"   Anonymous server access: " + (allowAnonymousAccess ? "enabled" : "disabled"));
 
-			log.info(SystemUtilities.getUserName() + " starting Ghidra Server...");
-
-			serverSocketFactory = new SslRMIServerSocketFactory(null, null, authMode == PKI_LOGIN) {
+			serverSocketFactory = new SslRMIServerSocketFactory(null, getEnabledTlsProtocols(),
+				authMode == PKI_LOGIN) {
 				@Override
 				public ServerSocket createServerSocket(int port) throws IOException {
 					return new GhidraSSLServerSocket(port, bindAddress, getEnabledCipherSuites(),
 						getEnabledProtocols(), getNeedClientAuth());
 				}
+
 			};
 			clientSocketFactory = new SslRMIClientSocketFactory();
+
+			log.info(SystemUtilities.getUserName() + " starting Ghidra Server...");
 
 			GhidraServer svr = new GhidraServer(serverRoot, authMode, loginDomain,
 				nameCallbackAllowed, altSSHLoginAllowed, defaultPasswordExpiration,
@@ -819,6 +823,21 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			log.fatal("Server error: " + t.getMessage(), t);
 			System.exit(-1);
 		}
+	}
+
+	private static String[] getEnabledTlsProtocols() {
+		String protocolList = System.getProperty(TLS_SERVER_PROTOCOLS_PROPERTY);
+		if (protocolList != null) {
+
+			log.info("   Enabled protocols: " + protocolList);
+
+			String[] protocols = protocolList.split(";");
+			for (int i = 0; i < protocols.length; i++) {
+				protocols[i] = protocols[i].trim();
+			}
+			return protocols;
+		}
+		return null;
 	}
 
 	static synchronized void stop() {
