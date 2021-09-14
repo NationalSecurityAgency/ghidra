@@ -66,7 +66,13 @@ public class DockingErrorDisplay implements ErrorDisplay {
 	private static String wrap(String text) {
 
 		StringBuilder buffy = new StringBuilder();
-		List<String> lines = HtmlLineSplitter.split(text, 100, true);
+
+		// Wrap any poorly formatted text that gets displayed in the label; 80-100 chars is
+		// a reasonable line length based on historical print margins.
+		// Update: increased the limit to handle long messages containing stack trace elements, 
+		//         which look odd when wrapped
+		int limit = 120;
+		List<String> lines = HtmlLineSplitter.split(text, limit, true);
 		String newline = "\n";
 		for (String line : lines) {
 
@@ -80,9 +86,12 @@ public class DockingErrorDisplay implements ErrorDisplay {
 				continue;
 			}
 
-			// wrap any poorly formatted text that gets displayed in the label; 80-100 chars is
-			// a reasonable line length based on historical print margins
-			String wrapped = WordUtils.wrap(line, 100, null, true);
+			String wrapped = line;
+			if (line.length() > limit) {
+				// this method will trim leading spaces; only call if the line is too long
+				wrapped = WordUtils.wrap(line, limit, null, true);
+			}
+
 			buffy.append(wrapped);
 		}
 		return buffy.toString();

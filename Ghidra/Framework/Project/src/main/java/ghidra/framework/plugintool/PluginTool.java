@@ -562,7 +562,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		}
 		catch (PluginException e) {
 			hasErrors = true;
-			Msg.showError(this, getToolFrame(), "Error Restoring Plugins", e.getMessage());
+			Msg.showError(this, getToolFrame(), "Error Restoring Plugins", e.getMessage(), e);
 		}
 
 		winMgr.restoreWindowDataFromXml(root);
