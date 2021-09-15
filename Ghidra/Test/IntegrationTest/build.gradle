@@ -66,8 +66,6 @@ dependencies {
 // We export them to all "unnamed" modules, which are modules that don't define themselves
 // as a new Java 9 style module.  Ghidra is currently using unnamed modules everywhere.
 ext.addExports([
-	'java.base/sun.security.x509=ALL-UNNAMED',
-	'java.base/sun.security.util=ALL-UNNAMED',
 	'java.desktop/sun.awt=ALL-UNNAMED',
 	'java.desktop/sun.swing=ALL-UNNAMED',
 	'java.desktop/sun.java2d=ALL-UNNAMED'

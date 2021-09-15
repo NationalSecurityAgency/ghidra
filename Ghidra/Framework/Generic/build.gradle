@@ -36,14 +36,14 @@ dependencies {
 	api "org.apache.commons:commons-text:1.6"
 	api "commons-io:commons-io:2.6"	
 	api "com.google.code.gson:gson:2.8.6"
+	api 'org.bouncycastle:bcpkix-jdk15on:1.69' // requires bcutil and bcprov
+	api 'org.bouncycastle:bcprov-jdk15on:1.69'
+	api 'org.bouncycastle:bcutil-jdk15on:1.69'
 
 	compileOnly "junit:junit:4.12"
 }
 
 ext.addExports([
-	'java.base/sun.security.x509=ALL-UNNAMED',
-	'java.base/sun.security.provider=ALL-UNNAMED',
-	'java.base/sun.security.util=ALL-UNNAMED',
 	'java.desktop/sun.awt=ALL-UNNAMED'
 ])
 

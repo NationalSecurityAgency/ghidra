@@ -19,8 +19,6 @@ import java.io.*;
 import java.net.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.security.KeyStore;
-import java.security.KeyStore.PasswordProtection;
 import java.security.KeyStore.PrivateKeyEntry;
 import java.util.ArrayList;
 import java.util.zip.ZipEntry;
@@ -49,7 +47,6 @@ import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.timer.GTimer;
-import sun.security.x509.*;
 import utilities.util.FileUtilities;
 
 /**
@@ -902,38 +899,23 @@ public class ServerTestUtil {
 
 		// Generate CA certificate and keystore
 		Msg.info(ServerTestUtil.class, "Generating self-signed CA cert: " + caPath);
-
-		CertificateExtensions caCertExtensions = new CertificateExtensions();
-		BasicConstraintsExtension caBasicConstraints = new BasicConstraintsExtension(true, true, 1);
-		caCertExtensions.set(PKIXExtensions.BasicConstraints_Id.toString(), caBasicConstraints);
-
-		KeyUsageExtension caKeyUsage = new KeyUsageExtension();
-		caKeyUsage.set(KeyUsageExtension.KEY_CERTSIGN, true);
-		caCertExtensions.set(PKIXExtensions.KeyUsage_Id.toString(), caKeyUsage);
-
-		KeyStore caKeystore = ApplicationKeyManagerUtils.createKeyStore(null, "PKCS12",
-			ApplicationKeyManagerFactory.DEFAULT_PASSWORD.toCharArray(), "test-CA",
-			caCertExtensions, TEST_PKI_CA_DN, null, 2);
-		ApplicationKeyManagerUtils.exportX509Certificates(caKeystore, caFile);
-
-		PasswordProtection caPass =
-			new PasswordProtection(ApplicationKeyManagerFactory.DEFAULT_PASSWORD.toCharArray());
-		PrivateKeyEntry caPrivateKeyEntry =
-			(PrivateKeyEntry) caKeystore.getEntry("test-CA", caPass);
+		PrivateKeyEntry caEntry =
+			ApplicationKeyManagerUtils.createKeyEntry("test-CA", TEST_PKI_CA_DN, 2, null, null,
+				"PKCS12", ApplicationKeyManagerFactory.DEFAULT_PASSWORD.toCharArray());
+		ApplicationKeyManagerUtils.exportX509Certificates(caEntry.getCertificateChain(), caFile);
 
 		// Generate User/Client certificate and keystore
 		Msg.info(ServerTestUtil.class, "Generating test user key/cert (signed by test-CA, pwd: " +
 			TEST_PKI_USER_PASSPHRASE + "): " + userKeystorePath);
-		ApplicationKeyManagerUtils.createKeyStore(userKeystoreFile, "PKCS12",
-			TEST_PKI_USER_PASSPHRASE.toCharArray(), "test-sig", null, TEST_PKI_USER_DN,
-			caPrivateKeyEntry, 2);
+		ApplicationKeyManagerUtils.createKeyEntry("test-sig", TEST_PKI_USER_DN, 2, caEntry,
+			userKeystoreFile, "PKCS12", TEST_PKI_USER_PASSPHRASE.toCharArray());
 
 		// Generate Server certificate and keystore
 		Msg.info(ServerTestUtil.class, "Generating test server key/cert (signed by test-CA, pwd: " +
 			TEST_PKI_SERVER_PASSPHRASE + "): " + serverKeystorePath);
-		ApplicationKeyManagerUtils.createKeyStore(serverKeystoreFile, "PKCS12",
-			TEST_PKI_SERVER_PASSPHRASE.toCharArray(), "test-sig", null, TEST_PKI_SERVER_DN,
-			caPrivateKeyEntry, 2);
+
+		ApplicationKeyManagerUtils.createKeyEntry("test-sig", TEST_PKI_SERVER_DN, 2, caEntry,
+			serverKeystoreFile, "PKCS12", TEST_PKI_SERVER_PASSPHRASE.toCharArray());
 	}
 
 	/**
