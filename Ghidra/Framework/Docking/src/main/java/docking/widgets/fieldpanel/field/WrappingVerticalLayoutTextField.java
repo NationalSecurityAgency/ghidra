@@ -17,13 +17,16 @@ package docking.widgets.fieldpanel.field;
 
 import docking.widgets.fieldpanel.support.*;
 
+/**
+ * A text field meant to take a string of text and wrap as needed.
+ */
 public class WrappingVerticalLayoutTextField extends VerticalLayoutTextField {
 
 	/**
-	 * This constructor will create a text field from an single AttributedString.  The string will 
+	 * This constructor will create a text field from an single AttributedString.  The string will
 	 * be word wrapped.
 	 * 
-	 * @param textElement the AttributedString to display
+	 * @param textElement the element to display
 	 * @param startX  the x position to draw the string
 	 * @param width   the max width allocated to this field
 	 * @param maxLines the max number of lines to display
@@ -31,12 +34,13 @@ public class WrappingVerticalLayoutTextField extends VerticalLayoutTextField {
 	 */
 	public WrappingVerticalLayoutTextField(FieldElement textElement, int startX, int width,
 			int maxLines, HighlightFactory hlFactory) {
-
-		super(FieldUtils.wrap(textElement, width), startX, width, maxLines, hlFactory, "");
+		super(FieldUtils.wrap(textElement, width), startX, width, maxLines, hlFactory, " ");
 	}
 
 	/**
-	 * Create a text field from a single FieldElement.  The text is wrapped, either an words or simply
+	 * This constructor will create a text field from an single AttributedString.  The string will
+	 * be word wrapped.
+	 * 
 	 * @param textElement is the element to display
 	 * @param startX is the position to draw the string
 	 * @param width is the max width allocated to this field
@@ -47,16 +51,12 @@ public class WrappingVerticalLayoutTextField extends VerticalLayoutTextField {
 	public WrappingVerticalLayoutTextField(FieldElement textElement, int startX, int width,
 			int maxLines, HighlightFactory hlFactory, boolean breakOnWhiteSpace) {
 		super(FieldUtils.wrap(textElement, width, breakOnWhiteSpace), startX, width, maxLines,
-			hlFactory, "");
+			hlFactory, " ");
 	}
 
-	/**
-	 * Finds the corresponding row, column for string index, and offset
-	 * @param index index into the string array
-	 * @param offset offset into the indexed string.
-	 */
 	@Override
-	public RowColLocation dataToScreenLocation(int index, int offset) {
-		return textOffsetToScreenLocation(offset);
+	public RowColLocation dataToScreenLocation(int dataRow, int dataColumn) {
+		// we represent one data row that may be split into multiple screen rows
+		return textOffsetToScreenLocation(dataColumn);
 	}
 }

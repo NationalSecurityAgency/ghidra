@@ -33,7 +33,7 @@ public class ClangTextField extends WrappingVerticalLayoutTextField {
 	private FieldElement lineNumberFieldElement;
 
 	private static FieldElement createSingleLineElement(FieldElement[] textElements) {
-		return new CompositeFieldElement(textElements, 0, textElements.length);
+		return new CompositeFieldElement(textElements);
 	}
 
 	/**

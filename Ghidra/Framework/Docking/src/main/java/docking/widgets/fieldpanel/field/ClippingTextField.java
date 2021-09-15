@@ -106,8 +106,7 @@ public class ClippingTextField implements TextField {
 
 	@Override
 	public int getCol(int row, int x) {
-		int xPos = Math.max(x - startX, 0); // make x relative to this fields
-		// coordinate system.
+		int xPos = Math.max(x - startX, 0); // make x relative to this fields coordinate system
 		return textElement.getMaxCharactersForWidth(xPos);
 	}
 
@@ -134,7 +133,13 @@ public class ClippingTextField implements TextField {
 	}
 
 	private int getNumCols() {
-		return textElement.length() + 1; // allow one column past the end of the text
+		// allow one column past the end of the text to allow the cursor to be placed after the text
+		return textElement.length() + 1;
+	}
+
+	@Override
+	public int getNumDataRows() {
+		return 1;
 	}
 
 	@Override
@@ -217,7 +222,8 @@ public class ClippingTextField implements TextField {
 
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
-			Rectangle clip, FieldBackgroundColorManager colorManager, RowColLocation cursorLoc, int rowHeight) {
+			Rectangle clip, FieldBackgroundColorManager colorManager, RowColLocation cursorLoc,
+			int rowHeight) {
 		if (context.isPrinting()) {
 			print(g, context);
 		}
@@ -329,14 +335,21 @@ public class ClippingTextField implements TextField {
 	 */
 	@Override
 	public RowColLocation screenToDataLocation(int screenRow, int screenColumn) {
-		return textElement.getDataLocationForCharacterIndex(screenColumn);
+		return originalElement.getDataLocationForCharacterIndex(screenColumn);
 
 	}
 
 	@Override
 	public RowColLocation dataToScreenLocation(int dataRow, int dataColumn) {
 		int column = textElement.getCharacterIndexForDataLocation(dataRow, dataColumn);
-		return new RowColLocation(0, Math.max(column, 0));
+		if (column < 0) {
+			// place at the end if past the end
+			if (dataColumn >= textElement.length()) {
+				return new DefaultRowColLocation(0, textElement.length());
+			}
+			return new DefaultRowColLocation();
+		}
+		return new RowColLocation(0, column);
 	}
 
 	private int findX(int col) {
@@ -381,7 +394,8 @@ public class ClippingTextField implements TextField {
 
 	@Override
 	public RowColLocation textOffsetToScreenLocation(int textOffset) {
-		return new RowColLocation(0, Math.min(textOffset, textElement.getText().length() - 1));
+		// allow the max position to be just after the last character
+		return new RowColLocation(0, Math.min(textOffset, textElement.getText().length()));
 	}
 
 	@Override
@@ -395,9 +409,6 @@ public class ClippingTextField implements TextField {
 
 	@Override
 	public FieldElement getFieldElement(int screenRow, int screenColumn) {
-// TODO - this used to return the clipped value, which is not our clients wanted (at least one). If
-//		  any odd navigation/tracking/action issues appear, then this could be the culprit.
-//		return textElement.getFieldElement(screenColumn);
 		return originalElement.getFieldElement(screenColumn);
 	}
 

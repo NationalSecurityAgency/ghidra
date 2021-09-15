@@ -24,7 +24,7 @@ import javax.swing.JComponent;
 import docking.widgets.fieldpanel.support.RowColLocation;
 
 /**
- * A FieldElement that is composed of other FieldElements.
+ * A FieldElement that is composed of other FieldElements.  The elements are laid out horizontally.
  */
 public class CompositeFieldElement implements FieldElement {
 
@@ -34,17 +34,12 @@ public class CompositeFieldElement implements FieldElement {
 	private int textWidth = -1;
 	private String fullText;
 
-	public CompositeFieldElement(List<? extends FieldElement> stringList) {
-		this(stringList.toArray(new FieldElement[stringList.size()]));
+	public CompositeFieldElement(List<? extends FieldElement> elements) {
+		this(elements.toArray(new FieldElement[elements.size()]));
 	}
 
 	public CompositeFieldElement(FieldElement[] fieldElements) {
 		this.fieldElements = fieldElements;
-	}
-
-	public CompositeFieldElement(FieldElement[] elements, int start, int length) {
-		fieldElements = new FieldElement[length];
-		System.arraycopy(elements, start, fieldElements, 0, length);
 	}
 
 	private IndexedOffset getIndexedOffsetForCharPosition(int charPosition) {
@@ -114,7 +109,7 @@ public class CompositeFieldElement implements FieldElement {
 
 //==================================================================================================
 // FontMetrics methods
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	public int getStringWidth() {
@@ -130,7 +125,7 @@ public class CompositeFieldElement implements FieldElement {
 	@Override
 	public String getText() {
 		if (fullText == null) {
-			StringBuffer buffer = new StringBuffer();
+			StringBuilder buffer = new StringBuilder();
 			for (FieldElement fieldElement : fieldElements) {
 				buffer.append(fieldElement.getText());
 			}
@@ -141,7 +136,7 @@ public class CompositeFieldElement implements FieldElement {
 
 //==================================================================================================
 // Paint methods
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	public void paint(JComponent c, Graphics g, int x, int y) {
@@ -217,9 +212,14 @@ public class CompositeFieldElement implements FieldElement {
 		return getText().length();
 	}
 
+	@Override
+	public String toString() {
+		return getText();
+	}
+
 //==================================================================================================
 // Location Info
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	public RowColLocation getDataLocationForCharacterIndex(int characterIndex) {
@@ -229,12 +229,14 @@ public class CompositeFieldElement implements FieldElement {
 
 	@Override
 	public int getCharacterIndexForDataLocation(int dataRow, int dataColumn) {
-		int columnCount = 0;
+		int columnsSoFar = 0;
 		for (int i = fieldElements.length - 1; i >= 0; i--) {
-			columnCount += fieldElements[i].length();
+			columnsSoFar += fieldElements[i].length();
 			int column = fieldElements[i].getCharacterIndexForDataLocation(dataRow, dataColumn);
 			if (column != -1) {
-				return length() - columnCount + column;
+				// column value is relative to the current field; convert it to this field's offset
+				int fieldStart = length() - columnsSoFar;
+				return fieldStart + column;
 			}
 		}
 

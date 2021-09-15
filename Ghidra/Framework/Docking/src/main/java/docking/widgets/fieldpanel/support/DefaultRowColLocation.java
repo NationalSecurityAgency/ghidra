@@ -13,25 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.widgets.fieldpanel.field;
+package docking.widgets.fieldpanel.support;
 
-public class TextFieldElement extends AbstractTextFieldElement {
+/**
+ * A location used to represent a an edge case where not suitable location can be found and the
+ * client does not wish to return null.
+ */
+public class DefaultRowColLocation extends RowColLocation {
+	public DefaultRowColLocation() {
+		super(0, 0);
+	}
 
-	public TextFieldElement(AttributedString attributedString, int row, int column) {
-		super(attributedString, row, column);
+	public DefaultRowColLocation(int row, int col) {
+		super(row, col);
 	}
 
 	@Override
-	public FieldElement substring(int start, int end) {
-		AttributedString as = attributedString.substring(start, end);
-		if (as == attributedString) {
-			return this;
-		}
-		return new TextFieldElement(as, row, column + start);
+	public RowColLocation withCol(int newColumn) {
+		return new DefaultRowColLocation(row, newColumn);
 	}
 
 	@Override
-	public FieldElement replaceAll(char[] targets, char replacement) {
-		return new TextFieldElement(attributedString.replaceAll(targets, replacement), row, column);
+	public RowColLocation withRow(int newRow) {
+		return new DefaultRowColLocation(newRow, col);
 	}
+
 }

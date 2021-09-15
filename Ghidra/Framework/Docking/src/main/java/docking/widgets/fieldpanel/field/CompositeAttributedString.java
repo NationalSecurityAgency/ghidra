@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +26,7 @@ import javax.swing.JComponent;
 public class CompositeAttributedString extends AttributedString {
 
 	private String fullText;
-	private AttributedString[] attributedStrings;
+	protected AttributedString[] attributedStrings;
 	private int heightAbove = -1;
 	private int heightBelow = -1;
 
@@ -35,7 +34,7 @@ public class CompositeAttributedString extends AttributedString {
 		this(stringList.toArray(new AttributedString[stringList.size()]));
 	}
 
-	public CompositeAttributedString(AttributedString[] attributedStrings) {
+	public CompositeAttributedString(AttributedString... attributedStrings) {
 		this.attributedStrings = attributedStrings;
 	}
 
@@ -54,17 +53,17 @@ public class CompositeAttributedString extends AttributedString {
 	}
 
 	@Override
-	public int getColumnPosition(int width) {
-		int remainingWidth = width;
+	public int getCharPosition(int x) {
+		int remainingWidth = x;
 		int totalCharacters = 0;
-		for (int i = 0; i < attributedStrings.length; i++) {
-			int nextWidth = attributedStrings[i].getStringWidth();
+		for (AttributedString attributedString : attributedStrings) {
+			int nextWidth = attributedString.getStringWidth();
 			if (nextWidth >= remainingWidth) {
-				totalCharacters += attributedStrings[i].getColumnPosition(remainingWidth);
+				totalCharacters += attributedString.getCharPosition(remainingWidth);
 				break;
 			}
 			remainingWidth -= nextWidth;
-			totalCharacters += attributedStrings[i].length();
+			totalCharacters += attributedString.length();
 		}
 
 		return totalCharacters;
@@ -86,8 +85,8 @@ public class CompositeAttributedString extends AttributedString {
 	public int getHeightAbove() {
 		if (heightAbove < 0) {
 			heightAbove = 0;
-			for (int i = 0; i < attributedStrings.length; i++) {
-				heightAbove = Math.max(heightAbove, attributedStrings[i].getHeightAbove());
+			for (AttributedString attributedString : attributedStrings) {
+				heightAbove = Math.max(heightAbove, attributedString.getHeightAbove());
 			}
 		}
 		return heightAbove;
@@ -97,23 +96,23 @@ public class CompositeAttributedString extends AttributedString {
 	public int getHeightBelow() {
 		if (heightBelow < 0) {
 			heightBelow = 0;
-			for (int i = 0; i < attributedStrings.length; i++) {
-				heightBelow = Math.max(heightBelow, attributedStrings[i].getHeightBelow());
+			for (AttributedString attributedString : attributedStrings) {
+				heightBelow = Math.max(heightBelow, attributedString.getHeightBelow());
 			}
 		}
 		return heightBelow;
 	}
 
-	// =============================================================================================
-	// font metrics methods
-	// =============================================================================================
+// =============================================================================================
+// font metrics methods
+// =============================================================================================
 
 	@Override
 	public int getStringWidth() {
 		if (textWidth == -1) {
 			textWidth = 0;
-			for (int i = 0; i < attributedStrings.length; i++) {
-				textWidth += attributedStrings[i].getStringWidth();
+			for (AttributedString attributedString : attributedStrings) {
+				textWidth += attributedString.getStringWidth();
 			}
 		}
 		return textWidth;
@@ -123,24 +122,24 @@ public class CompositeAttributedString extends AttributedString {
 	public String getText() {
 		if (fullText == null) {
 			StringBuffer buffer = new StringBuffer();
-			for (int i = 0; i < attributedStrings.length; i++) {
-				buffer.append(attributedStrings[i].getText());
+			for (AttributedString attributedString : attributedStrings) {
+				buffer.append(attributedString.getText());
 			}
 			fullText = buffer.toString();
 		}
 		return fullText;
 	}
 
-	// =============================================================================================
-	// paint methods
-	// =============================================================================================
+// =============================================================================================
+// paint methods
+// =============================================================================================
 
 	@Override
 	public void paint(JComponent c, Graphics g, int x, int y) {
 		int xPos = x;
-		for (int i = 0; i < attributedStrings.length; i++) {
-			attributedStrings[i].paint(c, g, xPos, y);
-			xPos += attributedStrings[i].getStringWidth();
+		for (AttributedString attributedString : attributedStrings) {
+			attributedString.paint(c, g, xPos, y);
+			xPos += attributedString.getStringWidth();
 		}
 	}
 

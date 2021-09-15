@@ -48,7 +48,7 @@ public class DecompilerClipboardProvider extends ByteCopier
 	private static final PaintContext PAINT_CONTEXT = new PaintContext();
 	private static final ClipboardType TEXT_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Text");
-	private static final List<ClipboardType> COPY_TYPES = new LinkedList<ClipboardType>();
+	private static final List<ClipboardType> COPY_TYPES = new LinkedList<>();
 
 	static {
 		COPY_TYPES.add(TEXT_TYPE);
@@ -58,7 +58,7 @@ public class DecompilerClipboardProvider extends ByteCopier
 	private FieldSelection selection;
 
 	private boolean copyFromSelectionEnabled;
-	private Set<ChangeListener> listeners = new CopyOnWriteArraySet<ChangeListener>();
+	private Set<ChangeListener> listeners = new CopyOnWriteArraySet<>();
 	private int spaceCharWidthInPixels = 7;
 
 	public DecompilerClipboardProvider(DecompilePlugin plugin, DecompilerProvider provider) {
@@ -161,12 +161,12 @@ public class DecompilerClipboardProvider extends ByteCopier
 		return false;
 	}
 
-	protected Transferable copyText(TaskMonitor monitor) {
+	private Transferable copyText(TaskMonitor monitor) {
 		return createStringTransferable(getText());
 	}
 
-	String getText() {
-		StringBuffer buffer = new StringBuffer();
+	private String getText() {
+		StringBuilder buffer = new StringBuilder();
 		int numRanges = selection.getNumRanges();
 		for (int i = 0; i < numRanges; i++) {
 			appendText(buffer, selection.getFieldRange(i));
@@ -174,7 +174,7 @@ public class DecompilerClipboardProvider extends ByteCopier
 		return buffer.toString();
 	}
 
-	void appendText(StringBuffer buffer, FieldRange fieldRange) {
+	private void appendText(StringBuilder buffer, FieldRange fieldRange) {
 		int startIndex = fieldRange.getStart().getIndex().intValue();
 		int endIndex = fieldRange.getEnd().getIndex().intValue();
 		if (startIndex == endIndex) { // single line selection (don't include padding)
@@ -189,7 +189,7 @@ public class DecompilerClipboardProvider extends ByteCopier
 		}
 	}
 
-	private void appendText(StringBuffer buffer, int lineNumber,
+	private void appendText(StringBuilder buffer, int lineNumber,
 			FieldSelection singleLineSelection) {
 		if (singleLineSelection.isEmpty()) {
 			return;
@@ -224,7 +224,7 @@ public class DecompilerClipboardProvider extends ByteCopier
 		}
 	}
 
-	private void appendTextSingleLine(StringBuffer buffer, int lineNumber,
+	private void appendTextSingleLine(StringBuilder buffer, int lineNumber,
 			FieldSelection singleLineSelection) {
 		if (singleLineSelection.isEmpty()) {
 			return;
@@ -249,7 +249,7 @@ public class DecompilerClipboardProvider extends ByteCopier
 
 //==================================================================================================
 // Unsupported Operations
-//==================================================================================================    
+//==================================================================================================
 
 	@Override
 	public boolean enablePaste() {
