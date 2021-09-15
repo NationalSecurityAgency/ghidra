@@ -15,8 +15,7 @@
  */
 package ghidra.net;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -549,8 +548,9 @@ public class ApplicationKeyManagerFactory {
 					Msg.info(this, "Using self-signed certificate: " + defaultIdentity.getName());
 					char[] pwd = DEFAULT_PASSWORD.toCharArray();
 					KeyStore selfSignedKeyStore =
-						ApplicationKeyManagerUtils.createKeyStore(null, "JKS", pwd, "defaultSigKey",
-							null, defaultIdentity.getName(), null, SELF_SIGNED_DURATION_DAYS);
+						ApplicationKeyManagerUtils.createKeyStore("defaultSigKey",
+						defaultIdentity.getName(), SELF_SIGNED_DURATION_DAYS, null,
+							new File(newKeystorePath), "JKS", pwd);
 					keystoreData = new ProtectedKeyStoreData(selfSignedKeyStore, pwd);
 					isSelfSigned = true;
 				}

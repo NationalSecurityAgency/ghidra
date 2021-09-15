@@ -70,13 +70,11 @@ public class ApplicationKeyManagerFactoryTest extends AbstractGenericTest {
 	@Before
 	public void setUp() throws Exception {
 
-		KeyStore selfSignedKeyStore = ApplicationKeyManagerUtils.createKeyStore(null, "PKCS12",
-			TEST_PWD.toCharArray(), ALIAS, null, TEST_IDENTITY, null, 2);
-
 		keystoreFile = createTempFile("test-key", ".p12");
 		keystoreFile.delete();
-		ApplicationKeyManagerUtils.exportKeystore(selfSignedKeyStore, keystoreFile,
-			TEST_PWD.toCharArray());
+
+		ApplicationKeyManagerUtils.createKeyStore(ALIAS, TEST_IDENTITY, 2, null, keystoreFile,
+			"PKCS12", TEST_PWD.toCharArray());
 
 		ApplicationKeyManagerFactory.setKeyStorePasswordProvider(passwordProvider);
 	}

@@ -135,10 +135,7 @@ task createJavadocs(type: Javadoc, description: 'Generate javadocs for all proje
 	
 	// Some internal packages are not public and need to be exported.
     options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt.image=ALL-UNNAMED", 
-    															"java.desktop/sun.awt=ALL-UNNAMED", 
-    															"java.base/sun.security.x509=ALL-UNNAMED", 
-    															"java.base/sun.security.provider=ALL-UNNAMED", 
-    															"java.base/sun.security.util=ALL-UNNAMED"])
+    															"java.desktop/sun.awt=ALL-UNNAMED"])
 }
 
 
@@ -197,10 +194,7 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
 		
 	// Some internal packages are not public and need to be exported. 
     options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt.image=ALL-UNNAMED", 
-    															"java.desktop/sun.awt=ALL-UNNAMED", 
-    															"java.base/sun.security.x509=ALL-UNNAMED", 
-    															"java.base/sun.security.provider=ALL-UNNAMED", 
-    															"java.base/sun.security.util=ALL-UNNAMED"])
+    															"java.desktop/sun.awt=ALL-UNNAMED"])
 	
 	options.doclet = "JsonDoclet"
 	doFirst {

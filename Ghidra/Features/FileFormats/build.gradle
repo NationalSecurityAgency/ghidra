@@ -33,7 +33,6 @@ dependencies {
 	api ':dex-translator:2.0'
 
 	api 'org.ow2.asm:asm-debug-all:4.1'
-	api 'org.bouncycastle:bcprov-jdk15on:1.68'
 
 	api 'org.smali:baksmali:1.4.0' // TODO: upgrade to 2.2.6
 	api 'org.smali:dexlib:1.4.0'

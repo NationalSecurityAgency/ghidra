@@ -139,7 +139,7 @@ public class PKIAuthenticationModule implements AuthenticationModule {
 			}
 
 			ApplicationKeyManagerUtils.validateClient(certChain,
-				ApplicationKeyManagerUtils.DEFAULT_AUTH_TYPE);
+				ApplicationKeyManagerUtils.RSA_TYPE);
 
 			byte[] sigBytes = sigCb.getSignature();
 			if (sigBytes != null) {
