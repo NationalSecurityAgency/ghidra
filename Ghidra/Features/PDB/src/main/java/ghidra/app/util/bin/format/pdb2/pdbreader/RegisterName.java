@@ -52,7 +52,7 @@ public class RegisterName extends AbstractParsableItem {
 		"xmm1_2", "xmm1_3", "xmm2_0", "xmm2_1", "xmm2_2", "xmm2_3", "xmm3_0", "xmm3_1", "xmm3_2",
 		"xmm3_3", "xmm4_0", "xmm4_1", "xmm4_2", "xmm4_3", "xmm5_0", "xmm5_1", "xmm5_2", "xmm5_3",
 		"xmm6_0", "xmm6_1", "xmm6_2", "xmm6_3", "xmm7_0", "xmm7_1", "xmm7_2", "xmm7_3", "xmm0l",
-		"xmm1l", "xmm2l", "xmm3l", "xmm4l", "xmm5l", "xmm6l", "xmm7l", "xmm0l", "xmm1h", "xmm2h",
+		"xmm1l", "xmm2l", "xmm3l", "xmm4l", "xmm5l", "xmm6l", "xmm7l", "xmm0h", "xmm1h", "xmm2h",
 		"xmm3h", "xmm4h", "xmm5h", "xmm6h", "xmm7h", "???", "mxcsr", "???", "???", "???", "???",
 		"???", "???", "???", "???", "emm0l", "emm1l", "emm2l", "emm3l", "emm4l", "emm5l", "emm6l",
 		"emm7l", "emm0h", "emm1h", "emm2h", "emm3h", "emm4h", "emm5h", "emm6h", "emm7h", "mm00",
