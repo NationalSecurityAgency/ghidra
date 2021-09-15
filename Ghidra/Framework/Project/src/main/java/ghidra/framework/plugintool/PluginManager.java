@@ -496,34 +496,38 @@ class PluginManager {
 	}
 
 	private void initConfigStates(Map<String, SaveState> map) throws PluginException {
-		StringBuffer errMsg = new StringBuffer();
+		StringBuilder errMsg = new StringBuilder();
 		Iterator<Plugin> it = pluginList.iterator();
 		while (it.hasNext()) {
 			Plugin p = it.next();
-			configure(p, map, errMsg);
+			readSaveState(p, map, errMsg);
 		}
 		if (errMsg.length() > 0) {
 			throw new PluginException(errMsg.toString());
 		}
 	}
 
-	private void configure(Plugin p, Map<String, SaveState> map, StringBuffer errMsg) {
+	private void readSaveState(Plugin p, Map<String, SaveState> map, StringBuilder errMsg) {
 		SaveState ss = map.get(p.getClass().getName());
-		if (ss != null) {
-			try {
-				p.readConfigState(ss);
+		if (ss == null) {
+			return;
+		}
+
+		try {
+			p.readConfigState(ss);
+		}
+		catch (Exception e) {
+			errMsg.append("Problem restoring plugin state for: " + p.getName()).append("\n\n");
+			errMsg.append(e.getClass().getName())
+					.append(": ")
+					.append(e.getMessage())
+					.append('\n');
+			StackTraceElement[] st = e.getStackTrace();
+			int depth = Math.min(5, st.length); // only show the important stuff (magic guess)
+			for (int j = 0; j < depth; j++) {
+				errMsg.append("    ").append(st[j].toString()).append('\n');
 			}
-			catch (Exception e) {
-				errMsg.append("Problem restoring plugin state for: " + p.getName()).append("\n\n");
-				errMsg.append(e.getClass().getName()).append(": ").append(e.getMessage()).append(
-					'\n');
-				StackTraceElement[] st = e.getStackTrace();
-				int depth = Math.min(5, st.length); // only show the important stuff (magic guess)
-				for (int j = 0; j < depth; j++) {
-					errMsg.append("    ").append(st[j].toString()).append('\n');
-				}
-				errMsg.append('\n'); // extra break between this and future messages
-			}
+			errMsg.append('\n'); // extra break between this and future messages
 		}
 	}
 
