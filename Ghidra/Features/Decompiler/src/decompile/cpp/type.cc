@@ -311,17 +311,31 @@ void Datatype::saveXmlRef(ostream &s) const
     s << "<typeref";
     a_v(s,"name",name);
     if (isVariableLength()) {			// For a type with a "variable length" base
-      uintb origId = hashSize(id, size);	// Emit the size independent version of the id
-      s << " id=\"0x" << hex << origId << '\"';
-      s << " size=\"" << dec << size << '\"';	// but also emit size of this instance
+      a_v_u(s,"id",hashSize(id,size));		// Emit the size independent version of the id
+      a_v_i(s,"size",size);			// but also emit size of this instance
     }
     else {
-      s << " id=\"0x" << hex << id << '\"';
+      a_v_u(s,"id",id);
     }
     s << "/>";
   }
   else
     saveXml(s);
+}
+
+/// Called only if the \b typedefImm field is non-null.  Write the data-type to the
+/// stream as a simple \<typedef> tag including only the names and ids of \b this and
+/// the data-type it typedefs.
+/// \param s is the output stream
+void Datatype::saveXmlTypedef(ostream &s) const
+
+{
+  s << "<def";
+  a_v(s,"name",name);
+  a_v_u(s,"id",id);
+  s << ">";
+  typedefImm->saveXmlRef(s);
+  s << "</def>";
 }
 
 /// A CPUI_PTRSUB must act on a pointer data-type where the given offset addresses a component.
@@ -443,6 +457,10 @@ uint8 Datatype::hashSize(uint8 id,int4 size)
 void TypeChar::saveXml(ostream &s) const
 
 {
+  if (typedefImm != (Datatype *)0) {
+    saveXmlTypedef(s);
+    return;
+  }
   s << "<type";
   saveXmlBasic(s);
   a_v_b(s,"char",true);
@@ -479,6 +497,10 @@ TypeUnicode::TypeUnicode(const string &nm,int4 sz,type_metatype m)
 void TypeUnicode::saveXml(ostream &s) const
 
 {
+  if (typedefImm != (Datatype *)0) {
+    saveXmlTypedef(s);
+    return;
+  }
   s << "<type";
   saveXmlBasic(s);
   a_v_b(s,"utf",true);
@@ -488,6 +510,10 @@ void TypeUnicode::saveXml(ostream &s) const
 void TypeVoid::saveXml(ostream &s) const
 
 {
+  if (typedefImm != (Datatype *)0) {
+    saveXmlTypedef(s);
+    return;
+  }
   s << "<void/>";
 }
 
@@ -533,6 +559,10 @@ int4 TypePointer::compareDependency(const Datatype &op) const
 void TypePointer::saveXml(ostream &s) const
 
 {
+  if (typedefImm != (Datatype *)0) {
+    saveXmlTypedef(s);
+    return;
+  }
   s << "<type";
   saveXmlBasic(s);
   if (wordsize != 1)
@@ -660,6 +690,10 @@ Datatype *TypeArray::getSubEntry(int4 off,int4 sz,int4 *newoff,int4 *el) const
 void TypeArray::saveXml(ostream &s) const
 
 {
+  if (typedefImm != (Datatype *)0) {
+    saveXmlTypedef(s);
+    return;
+  }
   s << "<type";
   saveXmlBasic(s);
   a_v_i(s,"arraysize",arraysize);
@@ -830,6 +864,10 @@ int4 TypeEnum::compareDependency(const Datatype &op) const
 void TypeEnum::saveXml(ostream &s) const
 
 {
+  if (typedefImm != (Datatype *)0) {
+    saveXmlTypedef(s);
+    return;
+  }
   s << "<type";
   saveXmlBasic(s);
   a_v(s,"enum","true");
@@ -1099,6 +1137,10 @@ int4 TypeStruct::compareDependency(const Datatype &op) const
 void TypeStruct::saveXml(ostream &s) const
 
 {
+  if (typedefImm != (Datatype *)0) {
+    saveXmlTypedef(s);
+    return;
+  }
   s << "<type";
   saveXmlBasic(s);
   s << ">\n";
@@ -1326,6 +1368,10 @@ int4 TypeCode::compareDependency(const Datatype &op) const
 void TypeCode::saveXml(ostream &s) const
 
 {
+  if (typedefImm != (Datatype *)0) {
+    saveXmlTypedef(s);
+    return;
+  }
   s << "<type";
   saveXmlBasic(s);
   s << ">\n";
@@ -1500,6 +1546,10 @@ Address TypeSpacebase::getAddress(uintb off,int4 sz,const Address &point) const
 void TypeSpacebase::saveXml(ostream &s) const
 
 {
+  if (typedefImm != (Datatype *)0) {
+    saveXmlTypedef(s);
+    return;
+  }
   s << "<type";
   saveXmlBasic(s);
   a_v(s,"space",spaceid->getName());
@@ -1709,7 +1759,7 @@ Datatype *TypeFactory::findByIdLocal(const string &n,uint8 id) const
 /// Derived classes may search outside this container.
 /// \param n is the name of the data-type
 /// \param id is the type id of the data-type
-/// \param sz is the given distinguishign size if non-zero
+/// \param sz is the given distinguishing size if non-zero
 /// \return the matching Datatype object
 Datatype *TypeFactory::findById(const string &n,uint8 id,int4 sz)
 
@@ -1745,6 +1795,26 @@ Datatype *TypeFactory::findNoName(Datatype &ct)
   return res;
 }
 
+/// Internal method for finally inserting a new Datatype pointer
+/// \param newtype is the new pointer
+void TypeFactory::insert(Datatype *newtype)
+
+{
+  pair<DatatypeSet::iterator,bool> insres = tree.insert(newtype);
+  if (!insres.second) {
+    ostringstream s;
+    s << "Shared type id: " << hex << newtype->getId() << endl;
+    s << "  ";
+    newtype->printRaw(s);
+    s << " : ";
+    (*insres.first)->printRaw(s);
+    delete newtype;
+    throw LowlevelError(s.str());
+  }
+  if (newtype->id!=0)
+    nametree.insert(newtype);
+}
+
 /// Use quickest method (name or id is possible) to locate the matching data-type.
 /// If its not currently in \b this container, clone the data-type and add it to the container.
 /// \param ct is the data-type to match
@@ -1770,18 +1840,7 @@ Datatype *TypeFactory::findAdd(Datatype &ct)
   }
 
   newtype = ct.clone();		// Add the new type to trees
-  pair<DatatypeSet::iterator,bool> insres = tree.insert(newtype);
-  if (!insres.second) {
-    ostringstream s;
-    s << "Shared type id: " << hex << newtype->getId() << endl;
-    s << "  ";
-    newtype->printRaw(s);
-    s << " : ";
-    (*insres.first)->printRaw(s);
-    throw LowlevelError(s.str());
-  }
-  if (newtype->id!=0)
-    nametree.insert(newtype);
+  insert(newtype);
   return newtype;
 }
 
@@ -1926,6 +1985,8 @@ void TypeFactory::orderRecurse(vector<Datatype *> &deporder,DatatypeSet &mark,
 {				// Make sure dependants of ct are in order, then add ct
   pair<DatatypeSet::iterator,bool> res = mark.insert(ct);
   if (!res.second) return;	// Already inserted before
+  if (ct->typedefImm != (Datatype *)0)
+    orderRecurse(deporder,mark,ct->typedefImm);
   int4 size = ct->numDepend();
   for(int4 i=0;i<size;++i)
     orderRecurse(deporder,mark,ct->getDepend(i));
@@ -2072,6 +2133,32 @@ TypeCode *TypeFactory::getTypeCode(const string &nm)
   TypeCode tmp(nm);
   tmp.id = Datatype::hashName(nm);
   return (TypeCode *) findAdd(tmp);
+}
+
+/// Find or create a data-type identical to the given data-type except for its name and id.
+/// If the name and id already describe an incompatible data-type, an exception is thrown.
+/// \param ct is the given data-type to clone
+/// \param name is the new name for the clone
+/// \param id is the new id for the clone (or 0)
+/// \return the (found or created) \e typedef data-type
+Datatype *TypeFactory::getTypedef(Datatype *ct,const string &name,uint8 id)
+
+{
+  if (id == 0)
+    id = Datatype::hashName(name);
+  Datatype *res = findByIdLocal(name, id);
+  if (res != (Datatype *)0) {
+    if (ct != res->getTypedef())
+      throw LowlevelError("Trying to create typedef of existing type: " + name);
+    return res;
+  }
+  res = ct->clone();		// Clone everything
+  res->name = name;		// But a new name
+  res->id = id;			// and new id
+  res->flags &= ~((uint4)Datatype::coretype);	// Not a core type
+  res->typedefImm = ct;
+  insert(res);
+  return res;
 }
 
 /// This creates a pointer to a given data-type.  If the given data-type is
@@ -2355,6 +2442,37 @@ void TypeFactory::saveXmlCoreTypes(ostream &s) const
   s << "</coretypes>\n";
 }
 
+/// Scan the new id and name.  A subtag references the data-type being typedefed.
+/// Construct the new data-type based on the referenced data-type but with new name and id.
+/// \param el is the \<def> element
+/// \return the constructed typedef data-type
+Datatype *TypeFactory::restoreTypedef(const Element *el)
+
+{
+  uint8 id;
+  istringstream s1(el->getAttributeValue("id"));
+  s1.unsetf(ios::dec | ios::hex | ios::oct);
+  s1 >> id;
+  string nm = el->getAttributeValue("name");
+  Datatype *defedType = restoreXmlType( *el->getChildren().begin() );
+  if (defedType->isVariableLength())
+    id = Datatype::hashSize(id, defedType->size);
+  if (defedType->getMetatype() == TYPE_STRUCT) {
+    // Its possible that a typedef of a struct is recursively defined, in which case
+    // an incomplete version may already be in the container
+    TypeStruct *prev = (TypeStruct *)findByIdLocal(nm, id);
+    if (prev != (Datatype *)0) {
+      if (defedType != prev->getTypedef())
+        throw LowlevelError("Trying to create typedef of existing type: " + prev->name);
+      TypeStruct *defedStruct = (TypeStruct *)defedType;
+      if (prev->field.size() != defedStruct->field.size())
+	prev->field = defedStruct->field;
+      return prev;
+    }
+  }
+  return getTypedef(defedType, nm, id);
+}
+
 /// Restore a Datatype object from an XML \<type> tag. (Don't use for \<typeref> tags)
 /// The new Datatype is added to \b this container
 /// \param el is the XML element
@@ -2366,9 +2484,12 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
   string metastring;
   Datatype *ct;
 
-  if (el->getNumAttributes() == 0) {
+  char c = el->getName()[0];
+  if (c != 't') {
     if (el->getName() == "void")
       return getTypeVoid();	// Automatically a coretype
+    if (el->getName() == "def")
+      return restoreTypedef(el);
   }
   metastring = el->getAttributeValue("metatype");
   type_metatype meta = string2metatype(metastring);

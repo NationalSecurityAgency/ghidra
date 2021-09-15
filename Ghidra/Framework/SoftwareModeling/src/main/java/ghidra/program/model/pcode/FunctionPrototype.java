@@ -378,7 +378,7 @@ public class FunctionPrototype {
 			res.append("<addr/>\n   "); // Don't specify where return type is stored
 		}
 
-		res.append(dtmanage.buildTypeRef(returntype, sz));
+		dtmanage.buildTypeRef(res, returntype, sz);
 		res.append("  </returnsym>\n");
 		if (injectname != null) {
 			res.append("<inject>");
@@ -404,7 +404,7 @@ public class FunctionPrototype {
 				if (sz < 0) {
 					sz = 1;
 				}
-				res.append(dtmanage.buildTypeRef(dt, sz));
+				dtmanage.buildTypeRef(res, dt, sz);
 				res.append("</param>\n");
 			}
 			res.append("</internallist>\n");

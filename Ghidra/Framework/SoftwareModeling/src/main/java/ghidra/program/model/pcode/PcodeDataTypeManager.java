@@ -164,7 +164,7 @@ public class PcodeDataTypeManager {
 	 * element 
 	 */
 	public DataType readXMLDataType(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("type", "void", "typeref");
+		XmlElement el = parser.start("type", "void", "typeref", "def");
 		try {
 			if (el == null) {
 				throw new PcodeXMLException("Bad <type> tag");
@@ -175,6 +175,12 @@ public class PcodeDataTypeManager {
 			}
 			if (el.getName().equals("typeref")) {
 				return findBaseType(el.getAttribute("name"), el.getAttribute("id"));
+			}
+			if (el.getName().equals("def")) {
+				String nameStr = el.getAttribute("name");
+				String idStr = el.getAttribute("id");
+				parser.discardSubTree();	// Get rid of unused <typeref>
+				return findBaseType(nameStr, idStr);
 			}
 			String name = el.getAttribute("name");
 			if (name.length() != 0) {
@@ -249,25 +255,29 @@ public class PcodeDataTypeManager {
 	 * fully describing the data-type. Where possible a {@code <typeref>} tag is produced, which just gives
 	 * the name of the data-type, deferring a full description of the data-type. For certain simple or
 	 * nameless data-types, a {@code <type>} tag is emitted giving a full description.
+	 * @param resBuf is the stream to append the tag to
 	 * @param type is the data-type to be converted
 	 * @param size is the size in bytes of the specific instance of the data-type
-	 * @return a StringBuilder containing the XML tag
 	 */
-	public StringBuilder buildTypeRef(DataType type, int size) {
+	public void buildTypeRef(StringBuilder resBuf, DataType type, int size) {
 		if (type != null && type.getDataTypeManager() != progDataTypes) {
 			type = type.clone(progDataTypes);
 		}
 		if ((type instanceof VoidDataType) || (type == null)) {
-			return buildType(type, size);
+			buildType(resBuf, type, size);
+			return;
 		}
 		if (type instanceof AbstractIntegerDataType) {
-			return buildType(type, size);
+			buildType(resBuf, type, size);
+			return;
 		}
 		if (type instanceof Pointer) {
-			return buildType(type, size);
+			buildType(resBuf, type, size);
+			return;
 		}
 		if (type instanceof Array) {
-			return buildType(type, size);
+			buildType(resBuf, type, size);
+			return;
 		}
 		if (type instanceof FunctionDefinition) {
 			long id = progDataTypes.getID(type);
@@ -275,14 +285,15 @@ public class PcodeDataTypeManager {
 				// Its possible the FunctionDefinition was built on the fly and is not
 				// a permanent data-type of the program with an ID.  In this case, we can't
 				// construct a <typeref> tag but must build a full <type> tag.
-				return buildType(type, size);
+				buildType(resBuf, type, size);
+				return;
 			}
 			size = 1;
 		}
 		else if (type.getLength() <= 0) {
-			return buildType(type, size);
+			buildType(resBuf, type, size);
+			return;
 		}
-		StringBuilder resBuf = new StringBuilder();
 		resBuf.append("<typeref");
 		if (type instanceof BuiltIn) {
 			SpecXmlUtils.xmlEscapeAttribute(resBuf, "name",
@@ -300,24 +311,28 @@ public class PcodeDataTypeManager {
 			}
 		}
 		resBuf.append("/>");
-		return resBuf;
 	}
 
-	private StringBuilder getCharTypeRef(int size) {
+	private void appendCharTypeRef(StringBuilder resBuf, int size) {
 		if (size == dataOrganization.getCharSize()) {
-			return new StringBuilder("<typeref name=\"char\"/>"); // could have size 1 or 2
+			resBuf.append("<typeref name=\"char\"/>"); // could have size 1 or 2
+			return;
 		}
 		if (size == dataOrganization.getWideCharSize()) {
-			return new StringBuilder("<typeref name=\"wchar_t\"/>");
+			resBuf.append("<typeref name=\"wchar_t\"/>");
+			return;
 		}
 		if (size == 2) {
-			return new StringBuilder("<typeref name=\"wchar16\"/>");
+			resBuf.append("<typeref name=\"wchar16\"/>");
+			return;
 		}
 		if (size == 4) {
-			return new StringBuilder("<typeref name=\"wchar32\"/>");
+			resBuf.append("<typeref name=\"wchar32\"/>");
+			return;
 		}
 		if (size == 1) {
-			return new StringBuilder("<typeref name=\"byte\"/>");
+			resBuf.append("<typeref name=\"byte\"/>");
+			return;
 		}
 		throw new IllegalArgumentException("Unsupported character size");
 	}
@@ -343,22 +358,10 @@ public class PcodeDataTypeManager {
 		resBuf.append("</field>\n");
 	}
 
-	private String buildTypeInternal(DataType origType, int size) {		// Build all of type except name attribute
-		DataType type;
-		if (origType instanceof TypeDef) {
-			type = ((TypeDef) origType).getBaseDataType();
-		}
-		else {
-			type = origType;
-		}
-		StringBuilder resBuf = new StringBuilder();
+	private String buildTypeInternal(StringBuilder resBuf, DataType type, int size) {
+		resBuf.append("<type");
 		if (type instanceof Pointer) {
-			if (origType == type) {
-				SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
-			}
-			else {
-				appendNameIdAttributes(resBuf, origType);
-			}
+			SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
 			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "ptr");
 			int ptrLen = type.getLength();
 			if (ptrLen <= 0) {
@@ -375,54 +378,46 @@ public class PcodeDataTypeManager {
 				ptrto = ptrto.clone(progDataTypes);
 			}
 
-			StringBuilder ptrtoTypeRef;
 			if (ptrto == null) {
-				ptrtoTypeRef = buildTypeRef(DefaultDataType.dataType, 1);
+				buildTypeRef(resBuf, DefaultDataType.dataType, 1);
 			}
 			else if (ptrto instanceof AbstractStringDataType) {
 				if ((ptrto instanceof StringDataType) ||
 					(type instanceof TerminatedStringDataType)) {	// Convert pointer to string
-					ptrtoTypeRef = getCharTypeRef(dataOrganization.getCharSize()); // to pointer to char
+					appendCharTypeRef(resBuf, dataOrganization.getCharSize()); // to pointer to char
 				}
 				else if (ptrto instanceof StringUTF8DataType) {	// Convert pointer to string
 					// TODO: Need to ensure that UTF8 decoding applies
-					ptrtoTypeRef = getCharTypeRef(1); // to pointer to char
+					appendCharTypeRef(resBuf, 1); // to pointer to char
 				}
 				else if ((ptrto instanceof UnicodeDataType) ||
 					(ptrto instanceof TerminatedUnicodeDataType)) {
-					ptrtoTypeRef = getCharTypeRef(2);
+					appendCharTypeRef(resBuf, 2);
 				}
 				else if ((ptrto instanceof Unicode32DataType) ||
 					(ptrto instanceof TerminatedUnicode32DataType)) {
-					ptrtoTypeRef = getCharTypeRef(4);
+					appendCharTypeRef(resBuf, 4);
 				}
 				else {
-					ptrtoTypeRef = new StringBuilder();
-					ptrtoTypeRef.append("<type");
-					appendNameIdAttributes(ptrtoTypeRef, ptrto);
-					appendOpaqueString(ptrtoTypeRef, ptrto, 16384);
-					ptrtoTypeRef.append("</type>\n");
+					resBuf.append("<type");
+					appendNameIdAttributes(resBuf, ptrto);
+					appendOpaqueString(resBuf, ptrto, 16384);
+					resBuf.append("</type>\n");
 				}
 			}
 			else if (ptrto instanceof FunctionDefinition) {
 				// FunctionDefinition may have size of -1, do not translate to undefined
-				ptrtoTypeRef = buildTypeRef(ptrto, ptrto.getLength());
+				buildTypeRef(resBuf, ptrto, ptrto.getLength());
 			}
 			else if (ptrto.getLength() < 0 && !(ptrto instanceof FunctionDefinition)) {
-				ptrtoTypeRef = buildTypeRef(Undefined1DataType.dataType, 1);
+				buildTypeRef(resBuf, Undefined1DataType.dataType, 1);
 			}
 			else {
-				ptrtoTypeRef = buildTypeRef(ptrto, ptrto.getLength());
+				buildTypeRef(resBuf, ptrto, ptrto.getLength());
 			}
-			resBuf.append(ptrtoTypeRef);
 		}
 		else if (type instanceof Array) {
-			if (origType == type) {
-				SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
-			}
-			else {
-				appendNameIdAttributes(resBuf, origType);
-			}
+			SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
 			int sz = type.getLength();
 			if (sz == 0) {
 				sz = size;
@@ -432,11 +427,10 @@ public class PcodeDataTypeManager {
 			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "arraysize",
 				((Array) type).getNumElements());
 			resBuf.append('>');
-			resBuf.append(
-				buildTypeRef(((Array) type).getDataType(), ((Array) type).getElementLength()));
+			buildTypeRef(resBuf, ((Array) type).getDataType(), ((Array) type).getElementLength());
 		}
 		else if (type instanceof Structure) {
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			// if size is 0, insert an Undefined4 component
 			//
 			int sz = type.getLength();
@@ -462,13 +456,13 @@ public class PcodeDataTypeManager {
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "offset", comp.getOffset());
 				resBuf.append('>');
 				DataType fieldtype = comp.getDataType();
-				resBuf.append(buildTypeRef(fieldtype, comp.getLength()));
+				buildTypeRef(resBuf, fieldtype, comp.getLength());
 				resBuf.append("</field>\n");
 			}
 			// TODO: trailing flexible array component not yet supported
 		}
 		else if (type instanceof Enum) {
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			Enum enumDt = (Enum) type;
 			long[] keys = enumDt.getValues();
 			String metatype = "uint";
@@ -490,7 +484,7 @@ public class PcodeDataTypeManager {
 			}
 		}
 		else if (type instanceof CharDataType) {
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			boolean signed = ((CharDataType) type).isSigned();
 			int sz = type.getLength();
 			if (sz <= 0) {
@@ -508,7 +502,7 @@ public class PcodeDataTypeManager {
 		}
 		else if (type instanceof WideCharDataType || type instanceof WideChar16DataType ||
 			type instanceof WideChar32DataType) {
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "int");
 			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", type.getLength());
 			SpecXmlUtils.encodeBooleanAttribute(resBuf, "utf", true);
@@ -521,7 +515,7 @@ public class PcodeDataTypeManager {
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "arraysize", size);
 				resBuf.append('>');
-				resBuf.append(getCharTypeRef(dataOrganization.getCharSize()));
+				appendCharTypeRef(resBuf, dataOrganization.getCharSize());
 			}
 			else if (type instanceof StringUTF8DataType) {
 				SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
@@ -529,7 +523,7 @@ public class PcodeDataTypeManager {
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "arraysize", size);
 				resBuf.append('>');
-				resBuf.append(getCharTypeRef(1)); // TODO: Need to ensure that UTF8 decoding applies
+				appendCharTypeRef(resBuf, 1); // TODO: Need to ensure that UTF8 decoding applies
 			}
 			else if ((type instanceof UnicodeDataType) ||
 				(type instanceof TerminatedUnicodeDataType)) {
@@ -538,7 +532,7 @@ public class PcodeDataTypeManager {
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "arraysize", size / 2);
 				resBuf.append('>');
-				resBuf.append(getCharTypeRef(2));
+				appendCharTypeRef(resBuf, 2);
 			}
 			else if ((type instanceof Unicode32DataType) ||
 				(type instanceof TerminatedUnicode32DataType)) {
@@ -547,7 +541,7 @@ public class PcodeDataTypeManager {
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "arraysize", size / 4);
 				resBuf.append('>');
-				resBuf.append(getCharTypeRef(4));
+				appendCharTypeRef(resBuf, 4);
 			}
 			else {
 				appendNameIdAttributes(resBuf, type);
@@ -558,7 +552,7 @@ public class PcodeDataTypeManager {
 			if (size <= 0) {
 				size = 1;
 			}
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "code");
 			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", 1);	// Force size of 1
 			resBuf.append('>');
@@ -568,7 +562,7 @@ public class PcodeDataTypeManager {
 			fproto.buildPrototypeXML(resBuf, this);
 		}
 		else if (type instanceof BooleanDataType) {
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "bool");
 			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", type.getLength());
 			resBuf.append('>');
@@ -579,13 +573,13 @@ public class PcodeDataTypeManager {
 			if (sz <= 0) {
 				sz = size;
 			}
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", signed ? "int" : "uint");
 			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
 			resBuf.append('>');
 		}
 		else if (type instanceof AbstractFloatDataType) {
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "float");
 			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", type.getLength());
 			resBuf.append('>');
@@ -597,7 +591,7 @@ public class PcodeDataTypeManager {
 				sz = size;
 				isVarLength = true;
 			}
-			appendNameIdAttributes(resBuf, origType);
+			appendNameIdAttributes(resBuf, type);
 			if (sz < 16) {
 				SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "unknown");
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
@@ -613,6 +607,7 @@ public class PcodeDataTypeManager {
 				resBuf.append('>');
 			}
 		}
+		resBuf.append("</type>");
 		return resBuf.toString();
 	}
 
@@ -633,27 +628,36 @@ public class PcodeDataTypeManager {
 	/**
 	 * Build an XML document string representing the type information for a data type
 	 * 
+	 * @param resBuf is the stream to append the document to
 	 * @param type data type to build XML for
 	 * @param size size of the data type
-	 * 
-	 * @return XML string document
 	 */
-	public StringBuilder buildType(DataType type, int size) {
+	public void buildType(StringBuilder resBuf, DataType type, int size) {
 		if (type != null && type.getDataTypeManager() != progDataTypes) {
 			type = type.clone(progDataTypes);
 		}
-		StringBuilder resBuf = new StringBuilder();
 		if ((type instanceof VoidDataType) || (type == null)) {
-			return resBuf.append("<void/>");
+			resBuf.append("<void/>");
+			return;
 		}
-		resBuf.append("<type");
-		resBuf.append(buildTypeInternal(type, size));
-		resBuf.append("</type>");
-		return resBuf;
+		else if (type instanceof TypeDef) {
+			resBuf.append("<def");
+			appendNameIdAttributes(resBuf, type);
+			resBuf.append('>');
+			DataType refType = ((TypeDef) type).getDataType();
+			int sz = refType.getLength();
+			if (sz <= 0) {
+				sz = size;
+			}
+			buildTypeRef(resBuf, refType, sz);
+			resBuf.append("</def>");
+			return;
+		}
+		buildTypeInternal(resBuf, type, size);
 	}
 
 	/**
-	 * Build an XML document string representing the Structure or Typedef to Structure that has
+	 * Build an XML document string representing the Structure that has
 	 *  its size reported as zero.
 	 * 
 	 * @param type data type to build XML for
@@ -662,8 +666,7 @@ public class PcodeDataTypeManager {
 	 */
 	public StringBuilder buildStructTypeZeroSizeOveride(DataType type) {
 		StringBuilder resBuf = new StringBuilder();
-		if (!((type instanceof Structure) || ((type instanceof TypeDef) &&
-			(((TypeDef) type).getBaseDataType() instanceof Structure)))) {
+		if (!(type instanceof Structure)) {
 			return resBuf; //empty.  Could throw AssertException.
 		}
 		resBuf.append("<type");
