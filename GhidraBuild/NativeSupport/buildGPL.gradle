@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Include files necessary to build natives from a distribution's "GPL" directory
+// Include files necessary to build natives from a distribution's "GPL" directory.
+// This file will live at GPL/build.gradle in a distribution.
 apply from: "utils.gradle"
 apply from: "nativePlatforms.gradle"
 apply from: "nativeBuildProperties.gradle"
