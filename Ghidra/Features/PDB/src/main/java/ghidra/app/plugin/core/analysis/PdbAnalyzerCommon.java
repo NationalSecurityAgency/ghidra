@@ -15,9 +15,8 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import java.util.Set;
-
 import java.io.File;
+import java.util.Set;
 
 import ghidra.app.services.Analyzer;
 import ghidra.app.util.opinion.PeLoader;
@@ -123,7 +122,7 @@ public class PdbAnalyzerCommon {
 	static File findPdb(Analyzer pdbAnalyzer, Program program, boolean allowRemote,
 			TaskMonitor monitor) {
 
-		SymbolFileInfo symbolFileInfo = SymbolFileInfo.fromMetadata(program.getMetadata());
+		SymbolFileInfo symbolFileInfo = SymbolFileInfo.fromProgramInfo(program);
 		if (symbolFileInfo == null) {
 			Msg.info(pdbAnalyzer,
 				"Skipping PDB processing: missing PDB information in program metadata");

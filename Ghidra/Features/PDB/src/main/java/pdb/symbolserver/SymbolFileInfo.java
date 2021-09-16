@@ -15,16 +15,16 @@
  */
 package pdb.symbolserver;
 
-import java.util.Map;
+import java.io.File;
 import java.util.Objects;
 
-import java.io.File;
-
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
-import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbIdentifiers;
 import ghidra.app.util.datatype.microsoft.GUID;
+import ghidra.app.util.pdb.PdbProgramAttributes;
+import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskMonitor;
 import pdb.PdbUtils;
 
@@ -38,32 +38,31 @@ public class SymbolFileInfo {
 	private static final int GUID_HEX_STR_LEN = 32;
 
 	/**
-	 * Create a SymbolFileInfo instance that represents an unknown / bad
-	 * file.
-	 * 
-	 * @param path path string to use
-	 * @return new SymbolFileInfo with a PdbIdentifier with bogus / default values
-	 */
-	public static SymbolFileInfo unknown(String path) {
-		return new SymbolFileInfo(path, new PdbIdentifiers(0, 0, 0, null, null));
-	}
-
-	/**
 	 * Create a SymbolFileInfo instance from the metadata found in a program
-	 *  
-	 * @param metadata Map of String-to-String values taken from a program
+	 * @param program where the Pdb metadata is stored 
 	 * @return new SymbolFileInfo instance, or null if no Pdb info found
 	 */
-	public static SymbolFileInfo fromMetadata(Map<String, String> metadata) {
+	public static SymbolFileInfo fromProgramInfo(Program program) {
 		try {
-			int sig =
-				Integer.parseUnsignedInt(
-					metadata.getOrDefault(PdbParserConstants.PDB_SIGNATURE, "0"), 16);
-			String guidString = metadata.getOrDefault(PdbParserConstants.PDB_GUID, "");
-			GUID guid = (guidString != null && !guidString.isBlank()) ? new GUID(guidString) : null;
-			int age = Integer
-					.parseUnsignedInt(metadata.getOrDefault(PdbParserConstants.PDB_AGE, "0"), 16);
-			String path = metadata.getOrDefault(PdbParserConstants.PDB_FILE, "<unknown>");
+			PdbProgramAttributes pdbAttrs = new PdbProgramAttributes(program);
+			int sig = pdbAttrs.getPdbSignatureAsInt();
+			String guidString = pdbAttrs.getPdbGuid();
+			GUID guid = null;
+			if (!StringUtils.isBlank(guidString)) {
+				try {
+					guid = new GUID(guidString);
+				}
+				catch (IllegalArgumentException e) {
+					// ignore, fallthru with guid==null
+				}
+			}
+			int age = pdbAttrs.getPdbAgeAsInt();
+			String path = pdbAttrs.getPdbFile();
+			path = !StringUtils.isBlank(path) ? path : "";
+			
+			if (sig == 0 && guid == null && path.isEmpty()) {
+				return null;
+			}
 
 			PdbIdentifiers pdbIdentifiers = new PdbIdentifiers(0, sig, age, guid, null);
 
@@ -119,6 +118,9 @@ public class SymbolFileInfo {
 	 * or null if bad GUID / signature id string
 	 */
 	public static SymbolFileInfo fromValues(String path, String uid, int age) {
+		if (StringUtils.isBlank(path)) {
+			return null;
+		}
 		try {
 			GUID guid = new GUID(uid);
 			return new SymbolFileInfo(path, new PdbIdentifiers(0, 0, age, guid, null));
@@ -139,11 +141,13 @@ public class SymbolFileInfo {
 	/**
 	 * Create a new instance using the specified path and {@link PdbIdentifiers}.
 	 * 
-	 * @param path String pdb path filename
+	 * @param path String pdb path filename, can not be null
 	 * @param pdbIdent {@link PdbIdentifiers}
 	 * @return new {@link SymbolFileInfo} instance made of specified path and ident info
+	 * @throws NullPointerException if path is null
 	 */
 	public static SymbolFileInfo fromPdbIdentifiers(String path, PdbIdentifiers pdbIdent) {
+		Objects.requireNonNull(path);
 		return new SymbolFileInfo(path, pdbIdent);
 	}
 
@@ -167,7 +171,7 @@ public class SymbolFileInfo {
 	private final String pdbPath;
 
 	private SymbolFileInfo(String pdbPath, PdbIdentifiers pdbIdentifiers) {
-		this.pdbPath = pdbPath;
+		this.pdbPath = Objects.requireNonNull(pdbPath);
 		this.pdbIdentifiers = pdbIdentifiers;
 	}
 
@@ -183,7 +187,7 @@ public class SymbolFileInfo {
 	/**
 	 * The name of the pdb file, derived from the {@link #getPath() path} value.
 	 * 
-	 * @return String name of the pdb file
+	 * @return String name of the pdb file, never null, maybe blank
 	 */
 	public String getName() {
 		return FilenameUtils.getName(pdbPath);
@@ -194,7 +198,7 @@ public class SymbolFileInfo {
 	 * original binary's debug data.  Typically, this is just a plain name string without any
 	 * path info.
 	 * 
-	 * @return original pdb path string recovered from binary's debug data
+	 * @return original pdb path string recovered from binary's debug data, never null, maybe blank
 	 */
 	public String getPath() {
 		return pdbPath;
@@ -211,6 +215,22 @@ public class SymbolFileInfo {
 				? pdbIdentifiers.getGuid().toString().replace("-", "").toUpperCase()
 				: String.format("%08X", pdbIdentifiers.getSignature());
 
+	}
+
+	/**
+	 * A string that represents the unique fingerprint of a Pdb file, or empty "" if
+	 * invalid.  Does not include the age.
+	 * 
+	 * @return either GUID str or signature hexstring or "" if neither
+	 */
+	public String getUniqifierString() {
+		if (pdbIdentifiers.getGuid() != null) {
+			return pdbIdentifiers.getGuid().toString().replace("-", "").toUpperCase();
+		}
+		if (pdbIdentifiers.getSignature() != 0) {
+			return String.format("%08X", pdbIdentifiers.getSignature());
+		}
+		return "";
 	}
 
 	/**

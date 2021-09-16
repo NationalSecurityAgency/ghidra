@@ -15,10 +15,6 @@
  */
 package ghidra.app.util.pdb;
 
-import java.util.*;
-
-import org.apache.commons.lang3.StringUtils;
-
 import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Program;
@@ -32,35 +28,39 @@ public class PdbProgramAttributes {
 	private String pdbGuid;
 	private String pdbSignature;
 
-	// A formatted string that combines 'pdbAge' and one of ['pdbGuid' or 'pdbSignature'].
-	// This string is used to uniquely identify the PDB version and is used here:
-	//   - as part of the URL when retrieving a PDB from the Symbol Server
-	//   - as a directory name when the PDB is stored locally
-	private String guidAgeCombo;
-
 	private String pdbFile;
 	private String pdbVersion;
 	private boolean pdbLoaded;
 	private boolean programAnalyzed;
 	private String executablePath;
 
-	private List<String> potentialPdbFilenames = null;
-
 	public PdbProgramAttributes(Program program) {
 
 		Options propList = program.getOptions(Program.PROGRAM_INFO);
 
-		pdbGuid = propList.getString(PdbParserConstants.PDB_GUID, (String) null);
-		pdbAge = propList.getString(PdbParserConstants.PDB_AGE, (String) null);
-		pdbLoaded = propList.getBoolean(PdbParserConstants.PDB_LOADED, false);
-		programAnalyzed = propList.getBoolean(Program.ANALYZED, false);
-		pdbSignature = propList.getString(PdbParserConstants.PDB_SIGNATURE, (String) null);
-		pdbFile = propList.getString(PdbParserConstants.PDB_FILE, (String) null);
-		pdbVersion = propList.getString(PdbParserConstants.PDB_VERSION, (String) null);
+		pdbGuid = propList.contains(PdbParserConstants.PDB_GUID)
+				? propList.getString(PdbParserConstants.PDB_GUID, null)
+				: null;
+		pdbAge = propList.contains(PdbParserConstants.PDB_AGE)
+				? propList.getString(PdbParserConstants.PDB_AGE, null)
+				: null;
+		pdbLoaded = propList.contains(PdbParserConstants.PDB_LOADED)
+				? propList.getBoolean(PdbParserConstants.PDB_LOADED, false)
+				: false;
+		programAnalyzed = propList.contains(Program.ANALYZED)
+				? propList.getBoolean(Program.ANALYZED, false)
+				: false;
+		pdbSignature = propList.contains(PdbParserConstants.PDB_SIGNATURE)
+				? propList.getString(PdbParserConstants.PDB_SIGNATURE, null)
+				: null;
+		pdbFile = propList.contains(PdbParserConstants.PDB_FILE)
+				? propList.getString(PdbParserConstants.PDB_FILE, null)
+				: null;
+		pdbVersion = propList.contains(PdbParserConstants.PDB_VERSION)
+				? propList.getString(PdbParserConstants.PDB_VERSION, null)
+				: null;
 
 		executablePath = program.getExecutablePath();
-
-		createGuidAgeString();
 	}
 
 	// Used for testing purposes to make a "dummy" object 
@@ -75,7 +75,6 @@ public class PdbProgramAttributes {
 		pdbVersion = "RSDS"; // TODO: possibly receive this as argument.
 
 		executablePath = execPath;
-		createGuidAgeString();
 	}
 
 	/**
@@ -86,12 +85,40 @@ public class PdbProgramAttributes {
 		return pdbAge;
 	}
 
+	/**
+	 * Returns the decoded integer value of the age string.
+	 * 
+	 * @return int value of age string, or 0 if invalid or undefined
+	 */
+	public int getPdbAgeAsInt() {
+		try {
+			return Integer.parseInt(pdbAge, 16);
+		}
+		catch (NumberFormatException e) {
+			return 0;
+		}
+	}
+
 	public String getPdbGuid() {
 		return pdbGuid;
 	}
 
 	public String getPdbSignature() {
 		return pdbSignature;
+	}
+
+	/**
+	 * Returns the decoded integer value of the signature string.
+	 * 
+	 * @return int value of signature string, or 0 if invalid or undefined
+	 */
+	public int getPdbSignatureAsInt() {
+		try {
+			return Integer.parseUnsignedInt(pdbSignature, 16);
+		}
+		catch (NumberFormatException e) {
+			return 0;
+		}
 	}
 
 	public String getPdbFile() {
@@ -114,104 +141,5 @@ public class PdbProgramAttributes {
 		return programAnalyzed;
 	}
 
-	/**
-	 * Get a potential list of PDB filenames using the 'pdbFile' and 'executablePath' attributes.
-	 * 
-	 * @return  list of unique, potential PDB filenames
-	 */
-	public List<String> getPotentialPdbFilenames() {
-		if (potentialPdbFilenames == null) {
 
-			// Want to preserve add order while only keeping unique entries
-			Set<String> set = new LinkedHashSet<>();
-
-			if (!StringUtils.isBlank(pdbFile)) {
-				set.add(getFilename(pdbFile).toLowerCase());
-				set.add(getFilename(pdbFile));
-			}
-
-			// getExecutablePath can return "unknown"
-			if (!executablePath.equals("unknown")) {
-				String executableFilename = getFilename(executablePath);
-				set.add(
-					getBinaryBasename(executableFilename).toLowerCase() + ".pdb");
-			}
-
-			potentialPdbFilenames = new ArrayList<>(set);
-		}
-
-		return potentialPdbFilenames;
-	}
-
-	public String getGuidAgeCombo() {
-		return guidAgeCombo;
-	}
-
-	private String getBinaryBasename(String filename) {
-		String binaryName = filename;
-		int dotpos = binaryName.lastIndexOf('.');
-
-		// Checking for > 0 because it's not useful if the last '.' is at index 0
-		if (dotpos > 0) {
-			binaryName = binaryName.substring(0, dotpos);
-		}
-
-		return binaryName;
-	}
-
-	/**
-	 *  Reformat GUID or signature and add age to create the guidAgeString. This 
-	 *  string is used as part of the path that stores the PDB file.
-	 * 
-	 *  When GUID (preferred) is not available, signature is used in its place.
-	 */
-	private void createGuidAgeString() {
-
-		if ((StringUtils.isBlank(pdbGuid) && StringUtils.isBlank(pdbSignature)) ||
-			StringUtils.isBlank(pdbAge)) {
-			guidAgeCombo = null;
-			return;
-		}
-
-		try {
-			int pdbAgeDecimal = Integer.parseInt(pdbAge, 16);
-			guidAgeCombo = (pdbGuid == null) ? pdbSignature : pdbGuid;
-			guidAgeCombo = guidAgeCombo.replaceAll("-", "");
-			guidAgeCombo = guidAgeCombo.toUpperCase();
-			guidAgeCombo += pdbAgeDecimal;
-		}
-		catch (NumberFormatException e) {
-			return;
-		}
-	}
-
-	/**
-	 * Extracts the actual file name from a full path.
-	 * 
-	 * Note that Java methods such as File.getName() and Path.getFileName() won't work here, because
-	 * they are OS-specific. If we are on a Linux machine and calling getName("C:\\Windows\\temp.exe"),
-	 * the Java method will return "C:\\Windows\\temp.exe" and not the expected "temp.exe".
-	 * 
-	 * This method also accounts for non-standard paths where both types of slashes are used.
-	 * 
-	 * @param fullPath from which to extract the filename
-	 * @return the name of the file specified by the fullPath
-	 */
-	private String getFilename(String fullPath) {
-		// Remove any trailing slashes
-		String editedPath = fullPath;
-		editedPath = editedPath.replaceAll("[\\/]$", "");
-
-		int lastIndexForwardSlash = editedPath.lastIndexOf('/');
-		int lastIndexBackSlash = editedPath.lastIndexOf('\\');
-
-		if (lastIndexForwardSlash == -1 && lastIndexBackSlash == -1) {
-			return editedPath;
-		}
-
-		int indexToUse = (lastIndexForwardSlash > lastIndexBackSlash) ? lastIndexForwardSlash
-				: lastIndexBackSlash;
-
-		return editedPath.substring(indexToUse + 1);
-	}
 }

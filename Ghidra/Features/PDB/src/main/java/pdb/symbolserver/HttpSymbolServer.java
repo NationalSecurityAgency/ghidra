@@ -41,7 +41,7 @@ public class HttpSymbolServer extends AbstractSymbolServer {
 	private static final String GHIDRA_USER_AGENT = "Ghidra_HttpSymbolServer_client";
 	private static final int HTTP_STATUS_OK = HttpURLConnection.HTTP_OK;
 	private static final int HTTP_REQUEST_TIMEOUT_MS = 10 * 1000; // 10 seconds
-	
+
 	/**
 	 * Predicate that tests if the location string is an instance of a HttpSymbolServer location.
 	 * 
@@ -51,7 +51,7 @@ public class HttpSymbolServer extends AbstractSymbolServer {
 	public static boolean isHttpSymbolServerLocation(String locationString) {
 		return locationString.startsWith("http://") || locationString.startsWith("https://");
 	}
-	
+
 	private final URI serverURI;
 
 	/**
@@ -82,9 +82,14 @@ public class HttpSymbolServer extends AbstractSymbolServer {
 		return exists("", monitor) || exists(PINGME_FILENAME, monitor);
 	}
 
-	private HttpRequest.Builder request(String str) {
-		return HttpRequest.newBuilder(serverURI.resolve(str))
-				.setHeader("User-Agent", GHIDRA_USER_AGENT);
+	private HttpRequest.Builder request(String str) throws IOException {
+		try {
+			return HttpRequest.newBuilder(serverURI.resolve(str))
+					.setHeader("User-Agent", GHIDRA_USER_AGENT);
+		}
+		catch (IllegalArgumentException e) {
+			throw new IOException(e);
+		}
 	}
 
 	@Override

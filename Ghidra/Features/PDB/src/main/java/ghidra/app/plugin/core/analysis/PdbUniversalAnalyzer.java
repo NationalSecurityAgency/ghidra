@@ -22,11 +22,10 @@ import java.util.Date;
 import ghidra.app.services.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.pdb.PdbLocator;
 import ghidra.app.util.pdb.PdbProgramAttributes;
 import ghidra.app.util.pdb.pdbapplicator.PdbApplicator;
 import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorOptions;
-import ghidra.framework.Application;
+import ghidra.framework.*;
 import ghidra.framework.options.OptionType;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
@@ -73,7 +72,14 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	private static final String OPTION_NAME_FORCELOAD_FILE = "Force-Load FilePath";
 	private static final String OPTION_DESCRIPTION_FORCELOAD_FILE =
 		"This file is force-loaded if the '" + OPTION_NAME_DO_FORCELOAD + "' option is checked";
-	private File DEFAULT_FORCE_LOAD_FILE = new File(PdbLocator.DEFAULT_SYMBOLS_DIR, "sample.pdb");
+
+	// Default symbol directory guessing
+	private static final File DEFAULT_SYMBOLS_DIR =
+		Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.WINDOWS
+				? new File("C:\\Symbols")
+				: new File(new File(System.getProperty("user.home")), "Symbols");
+
+	private File DEFAULT_FORCE_LOAD_FILE = new File(DEFAULT_SYMBOLS_DIR, "sample.pdb");
 	private File forceLoadFile;
 
 	private boolean searchRemoteLocations = false;

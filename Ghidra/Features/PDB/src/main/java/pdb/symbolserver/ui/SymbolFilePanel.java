@@ -56,7 +56,7 @@ class SymbolFilePanel extends JPanel {
 		super(new BorderLayout());
 
 		build();
-		setEnablement(false);
+		setEnablement(false, false);
 		searchLocalButton.addActionListener(e -> searchButtonsCallback.searchForPdbs(false));
 		searchAllButton.addActionListener(e -> searchButtonsCallback.searchForPdbs(true));
 	}
@@ -85,9 +85,9 @@ class SymbolFilePanel extends JPanel {
 		ignorePdbUid.setSelected(findOptions.contains(FindOption.ANY_ID));
 	}
 
-	void setEnablement(boolean hasSymbolServerService) {
-		searchLocalButton.setEnabled(hasSymbolServerService);
-		searchAllButton.setEnabled(hasSymbolServerService);
+	void setEnablement(boolean hasSymbolServerService, boolean isSearchable) {
+		searchLocalButton.setEnabled(hasSymbolServerService && isSearchable);
+		searchAllButton.setEnabled(hasSymbolServerService && isSearchable);
 
 		if (welcomePanel != null && hasSymbolServerService) {
 			remove(welcomePanel);
