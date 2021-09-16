@@ -39,7 +39,8 @@ import ghidra.framework.Application;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
-import ghidra.util.task.*;
+import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Hosts the embedded OSGi framework and manages {@link GhidraBundle}s.
@@ -418,6 +419,9 @@ public class BundleHost {
 
 		// setup the cache path
 		config.setProperty(Constants.FRAMEWORK_STORAGE, makeCacheDir());
+		
+		// disable felix url handlers service (performs illegal access to java.net module)
+		config.setProperty(FelixConstants.SERVICE_URLHANDLERS_PROP, "false");
 
 		config.put(FelixConstants.LOG_LEVEL_PROP, "1");
 		if (STDERR_DEBUGGING) {
