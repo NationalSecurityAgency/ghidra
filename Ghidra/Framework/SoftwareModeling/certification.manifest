@@ -6,7 +6,6 @@ Module.manifest||GHIDRA||||END|
 Sleigh.launch||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/charset_info.xml||GHIDRA||||END|
-data/languages/Steps to creation of Format Opinion.txt||GHIDRA||||END|
 data/languages/compiler_spec.rxg||GHIDRA||||END|
 data/languages/format_opinions.rxg||GHIDRA||||END|
 data/languages/language_common.rxg||GHIDRA||||END|
