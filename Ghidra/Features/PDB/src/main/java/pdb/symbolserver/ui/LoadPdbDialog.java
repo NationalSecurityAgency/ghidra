@@ -20,12 +20,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Supplier;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
@@ -41,6 +42,7 @@ import docking.widgets.label.GLabel;
 import docking.widgets.textfield.HexOrDecimalInput;
 import docking.widgets.textfield.HintTextField;
 import ghidra.app.util.bin.format.pdb.PdbParser;
+import ghidra.app.util.bin.format.pdb2.pdbreader.PdbIdentifiers;
 import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorControl;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.listing.Program;
@@ -68,6 +70,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		ResourceManager.loadImage("images/emblem-important.png", 16, 16);
 	public static final GhidraFileFilter PDB_FILES_FILTER =
 		ExtensionFileFilter.forExtensions("Microsoft Program Databases", "pdb", "pd_", "pdb.xml");
+
+	private static final SymbolFileInfo UNKNOWN_SYMFILE = makeUnknownSymbolFileInstance("");
 
 	public static class LoadPdbResults {
 		public File pdbFile;
@@ -103,7 +107,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	private SymbolServerService symbolServerService;
 	private SymbolServerInstanceCreatorContext symbolServerInstanceCreatorContext;
 
-	private SymbolFileInfo programSymbolFileInfo;
+	private SymbolFileInfo programSymbolFileInfo;	// never null
 
 	private List<Supplier<StatusText>> statusTextSuppliers = new ArrayList<>();
 	private Set<FindOption> lastSearchOptions;
@@ -151,10 +155,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		setRememberSize(false);
 
 		this.program = program;
-		this.programSymbolFileInfo = SymbolFileInfo.fromMetadata(program.getMetadata());
-		if (programSymbolFileInfo == null) {
-			programSymbolFileInfo = SymbolFileInfo.unknown("missing");
-		}
+		this.programSymbolFileInfo =
+			Objects.requireNonNullElse(SymbolFileInfo.fromProgramInfo(program), UNKNOWN_SYMFILE);
 		updateSymbolServerServiceInstanceFromPreferences();
 		build();
 	}
@@ -168,13 +170,11 @@ public class LoadPdbDialog extends DialogComponentProvider {
 
 	@Override
 	protected void dialogShown() {
-		pdbPathTextField.setText(programSymbolFileInfo.getPath());
-		pdbUniqueIdTextField.setText(programSymbolFileInfo.getUniqueName());
-		pdbAgeTextField.setValue(programSymbolFileInfo.getIdentifiers().getAge());
-		programNameTextField.setText(program.getName());
 		cancelButton.requestFocusInWindow();
 
-		searchForPdbs(false);
+		if ( getCurrentSymbolFileInfo() != null ) {
+			searchForPdbs(false);
+		}
 	}
 
 	@Override
@@ -262,10 +262,11 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	private void updateButtonEnablement() {
 		boolean hasLocation = selectedSymbolFile != null;
 		boolean hasGoodService = symbolServerService.isValid();
+		boolean isSearchable = getCurrentSymbolFileInfo() != null;
 		loadPdbButton.setEnabled(hasLocation);
 		configButton.setIcon(hasGoodService ? null : MATCH_BAD_ICON);
 		configButton.setToolTipText(hasGoodService ? null : "Missing configuration");
-		symbolFilePanel.setEnablement(hasGoodService);
+		symbolFilePanel.setEnablement(hasGoodService, isSearchable);
 	}
 
 	private SymbolFileInfo getCurrentSymbolFileInfo() {
@@ -284,8 +285,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		}
 		SymbolFileInfo symbolFileInfo = getCurrentSymbolFileInfo();
 		if (symbolFileInfo == null) {
-			Msg.showWarn(this, null, "Bad PDB GUID/ID",
-				"Invalid PDB GUID / UID value: " + pdbUniqueIdTextField.getText());
+			Msg.showWarn(this, null, "Bad PDB Values", "Invalid PDB Path / GUID / UID value");
 			return;
 		}
 		Set<FindOption> findOptions = symbolFilePanel.getFindOptions();
@@ -365,11 +365,22 @@ public class LoadPdbDialog extends DialogComponentProvider {
 
 	private JPanel buildProgramPdbPanel() {
 
+		DocumentListener docListener = new DocumentListener() {
+			//@formatter:off
+			@Override public void removeUpdate(DocumentEvent e) { updateButtonEnablement(); }
+			@Override public void insertUpdate(DocumentEvent e) { updateButtonEnablement(); }
+			@Override public void changedUpdate(DocumentEvent e) { updateButtonEnablement(); }
+			//@formatter:on
+		};
+
 		programNameTextField = new BetterNonEditableTextField(20);
 		programNameTextField.setEditable(false);
+		programNameTextField.setText(program.getName());
 
-		pdbPathTextField = new BetterNonEditableTextField(20);
+		pdbPathTextField = new BetterNonEditableTextField(20, "Missing", Color.red);
 		pdbPathTextField.setEditable(false);
+		pdbPathTextField.setText(programSymbolFileInfo.getPath());
+		pdbPathTextField.getDocument().addDocumentListener(docListener);
 
 		overridePdbPathCheckBox = new GCheckBox();
 		overridePdbPathCheckBox.setVisible(false);
@@ -388,13 +399,15 @@ public class LoadPdbDialog extends DialogComponentProvider {
 					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
 						SymbolFilePanel.SEARCH_OPTIONS_HELP_ANCHOR));
 
-		pdbUniqueIdTextField = new BetterNonEditableTextField(36);
+		pdbUniqueIdTextField = new BetterNonEditableTextField(36, "Missing", Color.red);
 		pdbUniqueIdTextField.setEditable(false);
+		pdbUniqueIdTextField.setText(programSymbolFileInfo.getUniqifierString());
 		pdbUniqueIdTextField.setToolTipText(
 			"<html>PDB GUID - 32 hexadecimal characters:<br>" +
 				"&nbsp;&nbsp;<b>'012345678-0123-0123-0123-0123456789ABC'</b> (with or without dashes) or<br>" +
 				"PDB Signature ID - 8 hexadecimal characters:<br>" +
 				"&nbsp;&nbsp;<b>'11223344'</b>");
+		pdbUniqueIdTextField.getDocument().addDocumentListener(docListener);
 
 		overridePdbUniqueIdCheckBox = new GCheckBox();
 		overridePdbUniqueIdCheckBox.setVisible(false);
@@ -405,7 +418,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 				pdbUniqueIdTextField.requestFocusInWindow();
 			}
 			else {
-				pdbUniqueIdTextField.setText(programSymbolFileInfo.getUniqueName());
+				pdbUniqueIdTextField.setText(programSymbolFileInfo.getUniqifierString());
 			}
 		});
 		DockingWindowManager.getHelpService()
@@ -416,7 +429,9 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		pdbAgeTextField = new BetterNonEditableHexTextField(8);
 		pdbAgeTextField.setAllowNegative(false);
 		pdbAgeTextField.setHexMode();
+		pdbAgeTextField.setValue(programSymbolFileInfo.getIdentifiers().getAge());
 		pdbAgeTextField.setEditable(false);
+		pdbAgeTextField.getDocument().addDocumentListener(docListener);
 
 		overridePdbAgeCheckBox = new GCheckBox();
 		overridePdbAgeCheckBox.setVisible(false);
@@ -684,7 +699,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			executeMonitoredRunnable("Get PDB Info", true, true, 0, monitor -> {
 				SymbolFileInfo pdbSymbolFileInfo = SymbolFileInfo.fromFile(file, monitor);
 				if (pdbSymbolFileInfo == null) {
-					pdbSymbolFileInfo = SymbolFileInfo.unknown(file.getName());
+					pdbSymbolFileInfo = makeUnknownSymbolFileInstance(file.getName());
 				}
 				SymbolFileLocation symbolFileLocation =
 					SameDirSymbolStore.createManuallySelectedSymbolFileLocation(file,
@@ -819,6 +834,10 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		executeProgressTask(task, delay);
 	}
 
+	private static SymbolFileInfo makeUnknownSymbolFileInstance(String path) {
+		return SymbolFileInfo.fromPdbIdentifiers(path, new PdbIdentifiers(0, 0, 0, null, null));
+	}
+
 	//-----------------------------------------------------------------------------------
 
 	static class StatusText {
@@ -852,9 +871,17 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	 * text fields to be the same color as the parent container's background.
 	 */
 	static class BetterNonEditableTextField extends JTextField {
+		private String hint;
+		private Color hintColor;
 
 		BetterNonEditableTextField(int columns) {
+			this(columns, null, null);
+		}
+
+		public BetterNonEditableTextField(int columns, String hint, Color hintColor) {
 			super(columns);
+			this.hint = hint;
+			this.hintColor = hintColor;
 		}
 
 		@Override
@@ -868,6 +895,28 @@ public class LoadPdbDialog extends DialogComponentProvider {
 				return new Color(bg.getRGB());
 			}
 			return super.getBackground();
+		}
+
+		/**
+		 * Overridden to paint the hint text over the field when it's empty
+		 */
+		@Override
+		public void paintComponent(Graphics g) {
+			super.paintComponent(g);
+
+			if (!getText().isEmpty() || hint == null) {
+				return;
+			}
+
+			Graphics2D g2 = (Graphics2D) g;
+			g2.setColor(hintColor != null ? hintColor : Color.LIGHT_GRAY);
+			g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+			Dimension size = getSize();
+			Insets insets = getInsets();
+			int x = 10; // offset
+			int y = size.height - insets.bottom - 1;
+			g2.drawString(hint, x, y);
 		}
 	}
 

@@ -15,12 +15,12 @@
  */
 package pdb.symbolserver;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
-import java.io.IOException;
-
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
@@ -37,6 +37,11 @@ public abstract class AbstractSymbolServer implements SymbolServer {
 	@Override
 	public List<SymbolFileLocation> find(SymbolFileInfo symbolFileInfo, Set<FindOption> options,
 			TaskMonitor monitor) {
+		if (StringUtils.isBlank(symbolFileInfo.getName())) {
+			Msg.warn(this, "Unable to search for empty filename: " + symbolFileInfo);
+			return List.of();
+		}
+
 		initStorageLevelIfNeeded(monitor);
 
 		try {
