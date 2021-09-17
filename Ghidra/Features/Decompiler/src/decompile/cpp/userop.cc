@@ -167,7 +167,6 @@ void SegmentOp::restoreXml(const Element *el)
   injectId = -1;
   baseinsize = 0;
   innerinsize = 0;
-  bool userdefined = false;
   supportsfarpointer = false;
   name = "segment"; 		// Default name, might be overridden by userop attribute
   for(int4 i=0;i<el->getNumAttributes();++i) {
@@ -177,19 +176,16 @@ void SegmentOp::restoreXml(const Element *el)
       supportsfarpointer = true;
     else if (nm == "userop") {	// Based on existing sleigh op
       name = el->getAttributeValue(i);
-      UserPcodeOp *otherop = glb->userops.getOp(name);
-      if (otherop != (UserPcodeOp *)0) {
-	userdefined = true;
-	useropindex = otherop->getIndex();
-	if (dynamic_cast<UnspecializedPcodeOp *>(otherop) == (UnspecializedPcodeOp *)0)
-	  throw LowlevelError("Redefining userop "+name);
-      }
     }
     else
       throw LowlevelError("Bad segmentop tag attribute: "+nm);
   }
-  if (!userdefined)
-    throw LowlevelError("Missing userop attribute in segmentop tag");
+  UserPcodeOp *otherop = glb->userops.getOp(name);
+  if (otherop == (UserPcodeOp *)0)
+    throw LowlevelError("<segmentop> unknown userop " + name);
+  useropindex = otherop->getIndex();
+  if (dynamic_cast<UnspecializedPcodeOp *>(otherop) == (UnspecializedPcodeOp *)0)
+    throw LowlevelError("Redefining userop "+name);
 
   const List &list(el->getChildren());
   List::const_iterator iter;
