@@ -723,7 +723,7 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 				modsRep += mod.toString() + ", ";
 			}
 			if (customMods.size() > 0) {
-				modsRep.substring(0, modsRep.length() - 2); // Remove last comma+space
+				modsRep = modsRep.substring(0, modsRep.length() - 2); // Remove last comma+space
 			}
 			return String.format("SzArray %s %s", modsRep, typeRep);
 		}
