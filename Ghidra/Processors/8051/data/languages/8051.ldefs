@@ -50,4 +50,16 @@
     <compiler name="default" spec="mx51.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="8051"/>
   </language>
+  <language processor="8051"
+            endian="big"
+            size="16"
+            variant="buddha"
+            version="0.1"
+            slafile="buddha.sla"
+            processorspec="buddha.pspec"
+			manualindexfile="../manuals/8051.idx"
+            id="8051:BE:16:buddha">
+    <description>Mysterious Buddha Machine</description>
+    <compiler name="default" spec="buddha.cspec" id="default"/>
+  </language>
 </language_definitions>

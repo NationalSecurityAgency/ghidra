@@ -1,0 +1,14 @@
+# Extended instructions live here, so as to avoid further
+# complicating the main 8051 file.
+
+# All have 0xa5 as prefix, so subtract one
+define token TwoByteOp (8)
+  b2op = (0,7)
+;
+define token ThreeByteOp (16)
+  b3op = (8,15)
+;
+define token FourByteOp (24)
+  b4op = (16,23)
+;
+

@@ -16,6 +16,10 @@ data/languages/mx51.cspec||GHIDRA||||END|
 data/languages/mx51.pspec||GHIDRA||reviewed||END|
 data/languages/mx51.sinc||GHIDRA||||END|
 data/languages/mx51.slaspec||GHIDRA||||END|
+data/languages/buddha.cspec||GHIDRA||||END|
+data/languages/buddha.pspec||GHIDRA||reviewed||END|
+data/languages/buddha.sinc||GHIDRA||||END|
+data/languages/buddha.slaspec||GHIDRA||||END|
 data/languages/old/8051v1.lang||GHIDRA||reviewed||END|
 data/languages/old/8051v1.trans||GHIDRA||reviewed||END|
 data/manuals/8051.idx||GHIDRA||||END|

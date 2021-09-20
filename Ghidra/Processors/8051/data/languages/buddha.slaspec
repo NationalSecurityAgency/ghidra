@@ -1,0 +1,5 @@
+@define MCS51 ""
+@define BUDDHA ""
+
+@include "8051_main.sinc"
+@include "buddha.sinc"
