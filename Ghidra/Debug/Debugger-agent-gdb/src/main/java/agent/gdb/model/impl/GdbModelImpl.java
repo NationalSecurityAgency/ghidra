@@ -131,6 +131,14 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 		}
 	}
 
+	public void setUnixNewLine() {
+		gdb.setUnixNewLine();
+	}
+
+	public void setDosNewLine() {
+		gdb.setDosNewLine();
+	}
+
 	public CompletableFuture<Void> startGDB(String gdbCmd, String[] args) {
 		try {
 			gdb.start(gdbCmd, args);
