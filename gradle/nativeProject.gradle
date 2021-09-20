@@ -19,7 +19,7 @@
 	
 	A gradle project can add native code support by including the following it its build.gradle file:
 
-		apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+		apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
  *****************************************************************************************/
 
 // These same settings are needed in the GPL native, so rather than duplicating this file, we will just call the other file
@@ -33,8 +33,6 @@ apply from: "$projectRootDir/GPL/nativeBuildProperties.gradle"
 // so we can just include their build.gradle as as-is.  
 rootProject.assembleDistribution {
 	def p = this.project
-	def zipPath = getZipPath(p)
-	
 	from (p.projectDir.toString()) {
 		if (p.projectDir.parentFile.name == "GPL") {
 			include "build.gradle"
@@ -43,10 +41,6 @@ rootProject.assembleDistribution {
 			include "buildNatives.gradle"
 			rename "buildNatives.gradle", "build.gradle"
 		}
-		include "src/**"
-		exclude "src/main/**"
-		exclude "src/test/**"
-		exclude "src/test.slow/**"
-		into  { zipPath }
+		into  { getZipPath(p) }
 	}
 }

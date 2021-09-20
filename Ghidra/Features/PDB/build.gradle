@@ -40,3 +40,11 @@ dependencies {
     testImplementation project(path: ':Base', configuration: 'testArtifacts')
     testImplementation project(path: ':SoftwareModeling', configuration: 'testArtifacts')
 }
+
+// Include buildable native source in distribution
+rootProject.assembleDistribution {
+	from (this.project.projectDir.toString()) {
+		include "src/pdb/**"
+		into  { getZipPath(this.project) }
+	}
+}

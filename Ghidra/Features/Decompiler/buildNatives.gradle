@@ -17,6 +17,8 @@
 // Native build files are already applied in development mode (indicated by presence of the
 // Generic project).  Only need to apply them if we are in a distribution.
 if (findProject(':Generic') == null) {
+	apply from: "../../../GPL/utils.gradle"
+	apply from: "../../../GPL/nativePlatforms.gradle"
 	apply from: "../../../GPL/nativeBuildProperties.gradle"
 }
 

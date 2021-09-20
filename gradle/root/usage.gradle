@@ -45,9 +45,6 @@ Task rules:
     buildNatives[_platform]         Builds the native executables and libraries for the     [GPL/nativeBuildProperties.gradle]  
                                       current or specified platform (win_x86_64,
                                       linux_arm_64, mac_x86_64, etc.)
-    prebuildNatives[_platform]      Builds the native executables and libraries for the     [GPL/nativeBuildProperties.gradle]
-                                      current or specified platform and copies results to
-                                      bin repo.
 
 """
 	}

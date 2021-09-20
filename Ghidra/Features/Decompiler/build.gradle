@@ -36,6 +36,14 @@ dependencies {
     helpPath project(path: ":Base", configuration: 'helpPath')
 }
 
+// Include buildable native source in distribution
+rootProject.assembleDistribution {
+	from (this.project.projectDir.toString()) {
+		include "src/decompile/**"
+		into  { getZipPath(this.project) }
+	}
+}
+
 ext.cppSourceDir = "src/decompile/cpp"
 
 /**
