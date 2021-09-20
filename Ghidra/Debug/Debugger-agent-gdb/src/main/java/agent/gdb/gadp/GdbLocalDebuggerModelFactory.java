@@ -41,6 +41,8 @@ public class GdbLocalDebuggerModelFactory extends AbstractGadpLocalDebuggerModel
 	public final Property<Boolean> useExistingOption =
 		Property.fromAccessors(boolean.class, this::isUseExisting, this::setUseExisting);
 
+	// TODO: newLine option?
+
 	@Override
 	public boolean isCompatible() {
 		// TODO: Could potentially support GDB on Windows, but the pty thing would need porting.

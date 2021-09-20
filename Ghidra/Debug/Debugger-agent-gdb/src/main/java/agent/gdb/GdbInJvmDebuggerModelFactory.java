@@ -44,6 +44,8 @@ public class GdbInJvmDebuggerModelFactory implements DebuggerModelFactory {
 	public final Property<Boolean> useExistingOption =
 		Property.fromAccessors(boolean.class, this::isUseExisting, this::setUseExisting);
 
+	// TODO: newLine option?
+
 	@Override
 	public CompletableFuture<? extends DebuggerObjectModel> build() {
 		// TODO: Choose Linux or Windows pty based on host OS

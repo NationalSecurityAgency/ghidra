@@ -58,6 +58,12 @@ public class GdbOverSshDebuggerModelFactory implements DebuggerModelFactory {
 	public final Property<String> keyFileOption =
 		Property.fromAccessors(String.class, this::getKeyFile, this::setKeyFile);
 
+	// Always default to false, despite local system, because remote is likely Linux.
+	private boolean useCrlf = false;
+	@FactoryOption("Use DOS line endings (unchecked for UNIX)")
+	public final Property<Boolean> crlfNewLineOption =
+		Property.fromAccessors(Boolean.class, this::isUseCrlf, this::setUseCrlf);
+
 	@Override
 	public CompletableFuture<? extends DebuggerObjectModel> build() {
 		return CompletableFuture.supplyAsync(() -> {
@@ -68,6 +74,12 @@ public class GdbOverSshDebuggerModelFactory implements DebuggerModelFactory {
 			factory.setUsername(username);
 			return new GdbModelImpl(factory);
 		}).thenCompose(model -> {
+			if (useCrlf) {
+				model.setDosNewLine();
+			}
+			else {
+				model.setUnixNewLine();
+			}
 			return model.startGDB(existing ? null : gdbCmd, new String[] {}).thenApply(__ -> model);
 		});
 	}
@@ -124,5 +136,13 @@ public class GdbOverSshDebuggerModelFactory implements DebuggerModelFactory {
 
 	public void setKeyFile(String keyFile) {
 		this.keyFile = keyFile;
+	}
+
+	public boolean isUseCrlf() {
+		return useCrlf;
+	}
+
+	public void setUseCrlf(boolean useCrlf) {
+		this.useCrlf = useCrlf;
 	}
 }
