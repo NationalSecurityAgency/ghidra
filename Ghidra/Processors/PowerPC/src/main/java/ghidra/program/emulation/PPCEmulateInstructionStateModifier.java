@@ -24,15 +24,28 @@ import ghidra.pcode.emulate.callother.OpBehaviorOther;
 import ghidra.pcode.memstate.MemoryState;
 import ghidra.pcodeCPort.error.LowlevelError;
 import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.pcode.PcodeOp;
 
 public class PPCEmulateInstructionStateModifier extends EmulateInstructionStateModifier {
+
+	private Register VLEModeReg;
+	private RegisterValue vleMode;
+	private RegisterValue ppcMode;
 
 	public PPCEmulateInstructionStateModifier(Emulate emu) {
 		super(emu);
 
+		VLEModeReg = language.getRegister("vle");
 		registerPcodeOpBehavior("countLeadingZeros", new CountLeadingZerosOpBehavior());
 		registerPcodeOpBehavior("vectorPermute", new vectorPermuteOpBehavior());
 
+		if (VLEModeReg != null) {
+			vleMode = new RegisterValue(VLEModeReg, BigInteger.ONE);
+			ppcMode = new RegisterValue(VLEModeReg, BigInteger.ZERO);
+		}
 	}
 
 	private class vectorPermuteOpBehavior implements OpBehaviorOther {
@@ -107,5 +120,52 @@ public class PPCEmulateInstructionStateModifier extends EmulateInstructionStateM
 		int destStartIndex = byteLength - copyCount; // adjust if too few bytes provided
 		System.arraycopy(srcBytes, srcStartIndex, result, destStartIndex, copyCount);
 		return result;
+	}
+
+	/**
+	 * Initialize VLE register based upon context-register state before first instruction is executed.
+	 */
+	@Override
+	public void initialExecuteCallback(Emulate emulate, Address current_address, RegisterValue contextRegisterValue) throws LowlevelError {
+		if (VLEModeReg == null) {
+			return; // VLE mode not supported
+		}
+		BigInteger vleModeValue = BigInteger.ZERO;
+		if (contextRegisterValue != null) {
+			vleModeValue =
+				contextRegisterValue.getRegisterValue(VLEModeReg).getUnsignedValueIgnoreMask();
+		}
+		if (!BigInteger.ZERO.equals(vleModeValue)) {
+			vleModeValue = BigInteger.ONE;
+		}
+		emu.getMemoryState().setValue(VLEModeReg, vleModeValue);
+	}
+
+	/**
+	 * Language should properly preserve the context register during the flow of execution, but it doesn't.
+	 */
+	@Override
+	public void postExecuteCallback(Emulate emulate, Address lastExecuteAddress,
+			PcodeOp[] lastExecutePcode, int lastPcodeIndex, Address currentAddress)
+			throws LowlevelError {
+		if (VLEModeReg == null) {
+			return; // VLE mode not supported
+		}
+		if (lastPcodeIndex < 0) {
+			// ignore fall-through condition
+			return;
+		}
+		int lastOp = lastExecutePcode[lastPcodeIndex].getOpcode();
+		if (lastOp != PcodeOp.BRANCH && lastOp != PcodeOp.CBRANCH && lastOp != PcodeOp.BRANCHIND &&
+			lastOp != PcodeOp.CALL && lastOp != PcodeOp.CALLIND && lastOp != PcodeOp.RETURN) {
+			// only concerned with Branch, Call or Return ops
+			return;
+		}
+		long vle = emu.getMemoryState().getValue(VLEModeReg);
+		if (vle == 1) {
+			emu.setContextRegisterValue(vleMode);
+		} else if (vle == 0) {
+			emu.setContextRegisterValue(ppcMode);
+		}
 	}
 }
