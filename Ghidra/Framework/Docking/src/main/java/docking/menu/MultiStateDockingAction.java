@@ -32,14 +32,14 @@ import ghidra.util.exception.AssertException;
 import resources.icons.EmptyIcon;
 
 /**
- * An action that can be in one of multiple states.   The button of this action has a 
+ * An action that can be in one of multiple states.   The button of this action has a
  * drop-down icon that allows users to change the state of the button.  Also, by default, as
- * the user presses the button, it will execute the action corresponding to the current 
+ * the user presses the button, it will execute the action corresponding to the current
  * state.
  * 
- * <p>Warning: if you use this action in a toolbar, then be sure to call the 
+ * <p>Warning: if you use this action in a toolbar, then be sure to call the
  * {@link #MultiStateDockingAction(String, String, boolean) correct constructor}.  If you call
- * another constructor, or pass false for this boolean above, your 
+ * another constructor, or pass false for this boolean above, your
  * {@link #doActionPerformed(ActionContext)} method will get called twice.
  *
  * @param <T> the type of the user data
@@ -59,7 +59,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	private boolean useCheckboxForIcons;
 
 	// A listener that will get called when the button (not the popup) is clicked.  Toolbar
-	// actions do not use this listener. 
+	// actions do not use this listener.
 	private ActionListener clickListener = e -> {
 		// stub for toolbar actions
 	};
@@ -76,7 +76,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	}
 
 	/**
-	 * Use this constructor explicitly when this action is used in a toolbar, passing true 
+	 * Use this constructor explicitly when this action is used in a toolbar, passing true
 	 * for <code>isToolbarAction</code> (see the javadoc header note).
 	 * 
 	 * @param name the action name
@@ -91,7 +91,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		super.setToolBarData(new ToolBarData(null));
 
 		if (!isToolbarAction) {
-			// we need this listener to perform the action when the user click the button; 
+			// we need this listener to perform the action when the user click the button;
 			// toolbar actions have their own listener
 			clickListener = e -> {
 				actionPerformed(getActionContext());
@@ -131,7 +131,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	/**
 	 * Overrides the default icons for actions shown in popup menu of the multi-state action.  By
 	 * default, the popup menu items will use the icons as provided by the {@link ActionState}.
-	 * By passing true to this method, icons will not be used in the popup menu.  Instead, a 
+	 * By passing true to this method, icons will not be used in the popup menu.  Instead, a
 	 * checkbox icon will be used to show the active action state.
 	 * 
 	 * @param useCheckboxForIcons true to use a checkbox
@@ -166,7 +166,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	 * presses that are on the button and not the drop-down.  This will only be called if
 	 * {@link #performActionOnPrimaryButtonClick} is true.
 	 * 
-	 * @param context the action context 
+	 * @param context the action context
 	 */
 	protected void doActionPerformed(ActionContext context) {
 		// override me to do work
@@ -190,7 +190,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 
 			//@formatter:off
 			boolean isSelected = actionState == selectedState;
-			DockingActionIf a = useCheckboxForIcons ? 
+			DockingActionIf a = useCheckboxForIcons ?
 				new ActionStateToggleAction(actionState, isSelected) :
 			    new ActionStateAction(actionState, isSelected);
 			actions.add(a);
@@ -243,7 +243,12 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 
 	public void setCurrentActionStateByUserData(T t) {
 		for (ActionState<T> actionState : actionStates) {
-			if (actionState.getUserData() == t) {
+
+			// Note: most clients will pass a T that is already in our list.  However, to be more
+			//       flexible, such as for clients with a T class of String, we should have no
+			//       problem using equals() here.
+			// if (actionState.getUserData() == t) {
+			if (actionState.getUserData().equals(t)) {
 				setCurrentActionState(actionState);
 				return;
 			}
