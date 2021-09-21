@@ -324,7 +324,7 @@ public class CompositeVerticalLayoutTextFieldTest extends AbstractGenericTest {
 		assertRowCol(1, 5, field.dataToScreenLocation(1, 5));
 
 		// try accessing clipped rows
-		assertRowCol(1, 0, field.dataToScreenLocation(2, 0));
+		assertRowCol(1, 5, field.dataToScreenLocation(2, 0));
 		assertRowCol(1, 5, field.dataToScreenLocation(2, 5));
 		assertRowCol(1, 5, field.dataToScreenLocation(20, 50));
 	}

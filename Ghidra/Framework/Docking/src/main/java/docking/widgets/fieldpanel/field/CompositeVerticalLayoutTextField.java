@@ -342,12 +342,15 @@ public class CompositeVerticalLayoutTextField implements TextField {
 	}
 
 	private FieldRow getFieldRowFromDataRow(int dataRow) {
+
 		int currentRow = 0;
 		for (FieldRow row : fieldRows) {
-			if (currentRow >= dataRow) {
+			int length = row.field.getNumDataRows();
+
+			if (currentRow + length > dataRow) {
 				return row;
 			}
-			currentRow += row.field.getNumDataRows();
+			currentRow += length;
 		}
 		return fieldRows.get(fieldRows.size() - 1);
 	}
