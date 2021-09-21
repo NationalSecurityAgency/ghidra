@@ -15,8 +15,12 @@
  */
 package agent.gdb.model.invm;
 
-import agent.gdb.model.AbstractModelForGdbAmd64RegistersTest;
+import org.junit.experimental.categories.Category;
 
+import agent.gdb.model.AbstractModelForGdbAmd64RegistersTest;
+import generic.test.category.NightlyCategory;
+
+@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class InVmModelForGdbAmd64RegistersTest extends AbstractModelForGdbAmd64RegistersTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
