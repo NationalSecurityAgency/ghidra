@@ -1250,7 +1250,12 @@ public class FcgProvider
 		@Override
 		boolean isExpandable(FcgVertex vertex) {
 			Iterable<FcgVertex> vertices = getVerticesByLevel(vertex.getLevel());
-			return CollectionUtils.asStream(vertices).anyMatch(v -> v.canExpand());
+			if (direction == IN) {
+				return CollectionUtils.asStream(vertices)
+						.anyMatch(FcgVertex::canExpandIncomingReferences);
+			}
+			return CollectionUtils.asStream(vertices)
+					.anyMatch(FcgVertex::canExpandOutgoingReferences);
 		}
 	}
 }
