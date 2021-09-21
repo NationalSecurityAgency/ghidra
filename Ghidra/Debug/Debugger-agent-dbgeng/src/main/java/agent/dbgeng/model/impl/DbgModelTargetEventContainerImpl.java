@@ -21,48 +21,63 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import agent.dbgeng.manager.DbgEventFilter;
+import agent.dbgeng.manager.cmd.DbgListEventFiltersCommand;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface2.*;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
+import ghidra.util.datastruct.WeakValueHashMap;
 
 @TargetObjectSchemaInfo(
 	name = "EventContainer",
-	elements = { //
-		@TargetElementType(type = DbgModelTargetEvent.class) //
-	},
-	attributes = { //
-		@TargetAttributeType(type = Void.class) //
-	},
+	elements = {
+		@TargetElementType(type = DbgModelTargetEventImpl.class) },
+	attributes = {
+		@TargetAttributeType(type = Void.class) },
 	canonicalContainer = true)
 public class DbgModelTargetEventContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetEventContainer {
 
+	protected final DbgModelTargetDebugContainer debug;
+
+	protected final Map<String, DbgModelTargetEventImpl> events =
+		new WeakValueHashMap<>();
+
 	public DbgModelTargetEventContainerImpl(DbgModelTargetDebugContainer debug) {
 		super(debug.getModel(), debug, "Events", "EventContainer");
-	}
-
-	public DbgModelTargetEvent getTargetEvent(DbgEventFilter info) {
-		DbgModelImpl impl = (DbgModelImpl) model;
-		TargetObject modelObject = impl.getModelObject(info);
-		if (modelObject != null) {
-			return (DbgModelTargetEvent) modelObject;
-		}
-		return new DbgModelTargetEventImpl(this, info);
+		this.debug = debug;
+		requestElements(true);
 	}
 
 	@Override
 	public CompletableFuture<Void> requestElements(boolean refresh) {
-		DbgManagerImpl manager = getManager();
-		return manager.listEventFilters().thenAccept(byName -> {
-			List<TargetObject> filters;
+		DbgModelTargetProcess targetProcess = getParentProcess();
+		if (!refresh || !targetProcess.getProcess().equals(getManager().getCurrentProcess())) {
+			return AsyncUtils.NIL;
+		}
+		return listEventFilters().thenAccept(byName -> {
+			List<TargetObject> eventObjs;
 			synchronized (this) {
-				filters = byName.values()
-						.stream()
-						.map(this::getTargetEvent)
-						.collect(Collectors.toList());
+				eventObjs = byName.stream().map(this::getTargetEvent).collect(Collectors.toList());
 			}
-			setElements(filters, Map.of(), "Refreshed");
+			setElements(eventObjs, Map.of(), "Refreshed");
 		});
+	}
+
+	public synchronized DbgModelTargetEvent getTargetEvent(DbgEventFilter filter) {
+		String id = filter.getName();
+		DbgModelTargetEventImpl event = events.get(id);
+		if (event != null && event.getFilter().getName().equals(id)) {
+			return event;
+		}
+		event = new DbgModelTargetEventImpl(this, filter);
+		events.put(filter.getName(), event);
+		return event;
+	}
+
+	public CompletableFuture<List<DbgEventFilter>> listEventFilters() {
+		DbgManagerImpl manager = getManager();
+		return manager.execute(new DbgListEventFiltersCommand(manager));
 	}
 }

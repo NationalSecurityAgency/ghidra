@@ -384,14 +384,14 @@ public class DebugControlImpl1 implements DebugControlInternal {
 	public DebugExceptionFilterInformation getExceptionFilterParameters(int start, int[] codes,
 			int count) {
 		ULONG ulStart = new ULONG(start);
-		ULONG[] ulCodes = new ULONG[codes.length];
-		for (int i = 0; i < codes.length; i++) {
-			ulCodes[i] = new ULONG(codes[i]);
-		}
+		//ULONG[] ulCodes = new ULONG[codes.length];
+		//for (int i = 0; i < codes.length; i++) {
+		//	ulCodes[i] = new ULONG(codes[i]);
+		//}
 		ULONG ulCount = new ULONG(count);
 		DEBUG_EXCEPTION_FILTER_PARAMETERS[] pParams = new DEBUG_EXCEPTION_FILTER_PARAMETERS[count];
 		COMUtils.checkRC(
-			jnaControl.GetExceptionFilterParameters(ulCount, ulCodes, ulStart, pParams));
+			jnaControl.GetExceptionFilterParameters(ulCount, null, ulStart, pParams));
 		return new DebugExceptionFilterInformation(count, pParams);
 	}
 

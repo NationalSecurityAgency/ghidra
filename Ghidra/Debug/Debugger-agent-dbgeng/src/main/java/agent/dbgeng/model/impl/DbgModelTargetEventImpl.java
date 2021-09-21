@@ -20,22 +20,12 @@ import agent.dbgeng.model.iface2.DbgModelTargetEvent;
 import agent.dbgeng.model.iface2.DbgModelTargetEventContainer;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
-import ghidra.program.model.address.Address;
 
 @TargetObjectSchemaInfo(
-	name = "Module",
+	name = "Event",
 	elements = {
 		@TargetElementType(type = Void.class) },
 	attributes = {
-		@TargetAttributeType(
-			name = "Symbols",
-			type = DbgModelTargetSymbolContainerImpl.class,
-			required = true,
-			fixed = true),
-		@TargetAttributeType(name = "BaseAddress", type = Address.class),
-		@TargetAttributeType(name = "ImageName", type = String.class),
-		@TargetAttributeType(name = "TimeStamp", type = Integer.class),
-		@TargetAttributeType(name = "Len", type = String.class),
 		@TargetAttributeType(type = Void.class) })
 public class DbgModelTargetEventImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetEvent {

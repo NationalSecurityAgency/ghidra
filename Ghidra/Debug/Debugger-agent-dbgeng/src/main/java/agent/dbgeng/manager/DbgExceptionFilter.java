@@ -19,4 +19,6 @@ public interface DbgExceptionFilter {
 
 	String getName();
 
+	String getArg();
+
 }

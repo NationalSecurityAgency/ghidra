@@ -16,26 +16,16 @@
 package agent.dbgeng.model.impl;
 
 import agent.dbgeng.manager.DbgExceptionFilter;
-import agent.dbgeng.model.iface2.DbgModelTargetEventContainer;
 import agent.dbgeng.model.iface2.DbgModelTargetException;
+import agent.dbgeng.model.iface2.DbgModelTargetExceptionContainer;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
-import ghidra.program.model.address.Address;
 
 @TargetObjectSchemaInfo(
-	name = "Module",
+	name = "Exception",
 	elements = {
 		@TargetElementType(type = Void.class) },
 	attributes = {
-		@TargetAttributeType(
-			name = "Symbols",
-			type = DbgModelTargetSymbolContainerImpl.class,
-			required = true,
-			fixed = true),
-		@TargetAttributeType(name = "BaseAddress", type = Address.class),
-		@TargetAttributeType(name = "ImageName", type = String.class),
-		@TargetAttributeType(name = "TimeStamp", type = Integer.class),
-		@TargetAttributeType(name = "Len", type = String.class),
 		@TargetAttributeType(type = Void.class) })
 public class DbgModelTargetExceptionImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetException {
@@ -49,9 +39,9 @@ public class DbgModelTargetExceptionImpl extends DbgModelTargetObjectImpl
 
 	private DbgExceptionFilter filter;
 
-	public DbgModelTargetExceptionImpl(DbgModelTargetEventContainer events,
+	public DbgModelTargetExceptionImpl(DbgModelTargetExceptionContainer exceptions,
 			DbgExceptionFilter filter) {
-		super(events.getModel(), events, keyFilter(filter), "ExceptionFilter");
+		super(exceptions.getModel(), exceptions, keyFilter(filter), "ExceptionFilter");
 		this.getModel().addModelObject(filter, this);
 		this.filter = filter;
 

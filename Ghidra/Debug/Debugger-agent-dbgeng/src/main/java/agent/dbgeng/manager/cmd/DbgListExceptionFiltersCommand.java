@@ -18,33 +18,33 @@ package agent.dbgeng.manager.cmd;
 import java.util.ArrayList;
 import java.util.List;
 
-import agent.dbgeng.dbgeng.DebugExceptionFilterInformation;
-import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_EXCEPTION_FILTER_PARAMETERS;
+import agent.dbgeng.dbgeng.*;
+import agent.dbgeng.manager.DbgExceptionFilter;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
 public class DbgListExceptionFiltersCommand
-		extends AbstractDbgCommand<List<DEBUG_EXCEPTION_FILTER_PARAMETERS>> {
-	private List<DEBUG_EXCEPTION_FILTER_PARAMETERS> result;
+		extends AbstractDbgCommand<List<DbgExceptionFilter>> {
+	private List<DbgExceptionFilter> result;
 
 	public DbgListExceptionFiltersCommand(DbgManagerImpl manager) {
 		super(manager);
 	}
 
 	@Override
-	public List<DEBUG_EXCEPTION_FILTER_PARAMETERS> complete(DbgPendingCommand<?> pending) {
+	public List<DbgExceptionFilter> complete(DbgPendingCommand<?> pending) {
 		return result;
 	}
 
 	@Override
 	public void invoke() {
 		result = new ArrayList<>();
-		// TODO set up codes
-		int[] codes = new int[0];
-		DebugExceptionFilterInformation filterInfo =
-			manager.getControl().getExceptionFilterParameters(0, codes, 0);
-		for (int i = 0; i < filterInfo.getNumberOfParameters(); i++) {
-			DEBUG_EXCEPTION_FILTER_PARAMETERS fi = filterInfo.getParameter(i);
-			result.add(fi);
-		}
+		DebugControl control = manager.getControl();
+		DebugFilterInformation info = control.getNumberEventFilters();
+		int nEvents = info.getNumberEvents();
+		int nExcs = info.getNumberSpecificExceptions();
+		DebugSpecificFilterInformation spec = control.getSpecificFilterParameters(0, nEvents);
+		DebugExceptionFilterInformation exc =
+			control.getExceptionFilterParameters(nEvents, null, nExcs);
+		result = new ArrayList<>();
 	}
 }

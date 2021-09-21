@@ -18,32 +18,35 @@ package agent.dbgeng.manager.cmd;
 import java.util.ArrayList;
 import java.util.List;
 
-import agent.dbgeng.dbgeng.DebugSpecificFilterInformation;
-import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_SPECIFIC_FILTER_PARAMETERS;
+import agent.dbgeng.dbgeng.DebugControl;
+import agent.dbgeng.dbgeng.DebugFilterInformation;
+import agent.dbgeng.manager.DbgEventFilter;
+import agent.dbgeng.manager.impl.DbgEventFilterImpl;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
-public class DbgListSpecificFiltersCommand
-		extends AbstractDbgCommand<List<DEBUG_SPECIFIC_FILTER_PARAMETERS>> {
-	private List<DEBUG_SPECIFIC_FILTER_PARAMETERS> result;
+public class DbgListEventFiltersCommand
+		extends AbstractDbgCommand<List<DbgEventFilter>> {
+	private List<DbgEventFilter> result;
 
-	public DbgListSpecificFiltersCommand(DbgManagerImpl manager) {
+	public DbgListEventFiltersCommand(DbgManagerImpl manager) {
 		super(manager);
 	}
 
 	@Override
-	public List<DEBUG_SPECIFIC_FILTER_PARAMETERS> complete(DbgPendingCommand<?> pending) {
+	public List<DbgEventFilter> complete(DbgPendingCommand<?> pending) {
 		return result;
 	}
 
 	@Override
 	public void invoke() {
 		result = new ArrayList<>();
-		// TODO set parameters
-		DebugSpecificFilterInformation filterInfo =
-			manager.getControl().getSpecificFilterParameters(0, 0);
-		for (int i = 0; i < filterInfo.getNumberOfParameters(); i++) {
-			DEBUG_SPECIFIC_FILTER_PARAMETERS fi = filterInfo.getParameter(i);
-			result.add(fi);
+		DebugControl control = manager.getControl();
+		DebugFilterInformation info = control.getNumberEventFilters();
+		for (int i = 0; i < info.getNumberEvents(); i++) {
+			String text = control.getEventFilterText(i);
+			String cmd = control.getEventFilterCommand(i);
+			DbgEventFilterImpl f = new DbgEventFilterImpl(text, cmd);
+			result.add(f);
 		}
 	}
 }

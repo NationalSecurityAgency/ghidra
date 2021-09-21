@@ -1584,13 +1584,4 @@ public class DbgManagerImpl implements DbgManager {
 	public long getProcessCount() {
 		return processCount;
 	}
-
-	public CompletableFuture<Map<String, DbgEventFilter>> listEventFilters() {
-		return CompletableFuture.completedFuture(new HashMap<String, DbgEventFilter>());
-	}
-
-	public CompletableFuture<Map<String, DbgExceptionFilter>> listExceptionFilters() {
-		return CompletableFuture.completedFuture(new HashMap<String, DbgExceptionFilter>());
-	}
-
 }

@@ -38,7 +38,7 @@ import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 			fixed = true),
 		@TargetAttributeType(
 			name = "Exceptions",
-			type = DbgModelTargetEventContainerImpl.class,
+			type = DbgModelTargetExceptionContainerImpl.class,
 			required = true,
 			fixed = true),
 		@TargetAttributeType(type = Void.class)

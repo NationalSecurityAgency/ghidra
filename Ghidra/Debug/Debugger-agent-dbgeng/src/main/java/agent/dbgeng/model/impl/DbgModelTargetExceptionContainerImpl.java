@@ -21,48 +21,64 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import agent.dbgeng.manager.DbgExceptionFilter;
+import agent.dbgeng.manager.cmd.DbgListExceptionFiltersCommand;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface2.*;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
+import ghidra.util.datastruct.WeakValueHashMap;
 
 @TargetObjectSchemaInfo(
 	name = "ExceptionContainer",
-	elements = { //
-		@TargetElementType(type = DbgModelTargetEvent.class) //
-	},
-	attributes = { //
-		@TargetAttributeType(type = Void.class) //
-	},
+	elements = {
+		@TargetElementType(type = DbgModelTargetExceptionImpl.class) },
+	attributes = {
+		@TargetAttributeType(type = Void.class) },
 	canonicalContainer = true)
 public class DbgModelTargetExceptionContainerImpl extends DbgModelTargetObjectImpl
-		implements DbgModelTargetEventContainer {
+		implements DbgModelTargetExceptionContainer {
+
+	protected final DbgModelTargetDebugContainer debug;
+
+	protected final Map<String, DbgModelTargetExceptionImpl> exceptions =
+		new WeakValueHashMap<>();
 
 	public DbgModelTargetExceptionContainerImpl(DbgModelTargetDebugContainer debug) {
 		super(debug.getModel(), debug, "Exceptions", "ExceptionContainer");
-	}
-
-	public DbgModelTargetException getTargetException(DbgExceptionFilter info) {
-		DbgModelImpl impl = (DbgModelImpl) model;
-		TargetObject modelObject = impl.getModelObject(info);
-		if (modelObject != null) {
-			return (DbgModelTargetException) modelObject;
-		}
-		return new DbgModelTargetExceptionImpl(this, info);
+		this.debug = debug;
+		requestElements(true);
 	}
 
 	@Override
 	public CompletableFuture<Void> requestElements(boolean refresh) {
-		DbgManagerImpl manager = getManager();
-		return manager.listExceptionFilters().thenAccept(byName -> {
-			List<TargetObject> filters;
+		DbgModelTargetProcess targetProcess = getParentProcess();
+		if (!refresh || !targetProcess.getProcess().equals(getManager().getCurrentProcess())) {
+			return AsyncUtils.NIL;
+		}
+		return listExceptionFilters().thenAccept(byName -> {
+			List<TargetObject> excObjs;
 			synchronized (this) {
-				filters = byName.values()
-						.stream()
-						.map(this::getTargetException)
-						.collect(Collectors.toList());
+				excObjs =
+					byName.stream().map(this::getTargetException).collect(Collectors.toList());
 			}
-			setElements(filters, Map.of(), "Refreshed");
+			setElements(excObjs, Map.of(), "Refreshed");
 		});
+	}
+
+	public synchronized DbgModelTargetException getTargetException(DbgExceptionFilter filter) {
+		String id = filter.getName();
+		DbgModelTargetExceptionImpl exc = exceptions.get(id);
+		if (exc != null && exc.getFilter().getName().equals(id)) {
+			return exc;
+		}
+		exc = new DbgModelTargetExceptionImpl(this, filter);
+		exceptions.put(filter.getName(), exc);
+		return exc;
+	}
+
+	public CompletableFuture<List<DbgExceptionFilter>> listExceptionFilters() {
+		DbgManagerImpl manager = getManager();
+		return manager.execute(new DbgListExceptionFiltersCommand(manager));
 	}
 }

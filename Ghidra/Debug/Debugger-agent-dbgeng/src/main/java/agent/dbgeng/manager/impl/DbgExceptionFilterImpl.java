@@ -13,12 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.dbgeng.manager;
+package agent.dbgeng.manager.impl;
 
-public interface DbgEventFilter {
+import agent.dbgeng.manager.DbgExceptionFilter;
 
-	String getName();
+public class DbgExceptionFilterImpl implements DbgExceptionFilter {
+	private final String text;
+	private final String cmd;
 
-	String getCmd();
+	public DbgExceptionFilterImpl(String text, String cmd) {
+		this.text = text;
+		this.cmd = cmd;
+	}
+
+	@Override
+	public String getName() {
+		return text;
+	}
+
+	@Override
+	public String getArg() {
+		return cmd;
+	}
 
 }
