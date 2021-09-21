@@ -88,7 +88,14 @@ public abstract class AbstractAnimatorJob implements GraphJob {
 	void start() {
 		trace("start() - " + getClass().getSimpleName());
 
-		animator = createAnimator();
+		try {
+			animator = createAnimator();
+		}
+		catch (Throwable t) {
+			Msg.error(this, "Unexepected exception creating animator", t);
+			emergencyFinish();
+			return;
+		}
 
 		trace("\tcreated animator - " + animator);
 		if (animator == null) {
@@ -127,6 +134,27 @@ public abstract class AbstractAnimatorJob implements GraphJob {
 		}
 		catch (Throwable t) {
 			Msg.error(this, "Unexpected error in AbstractAnimator: ", t);
+		}
+
+		isFinished = true;
+
+		// a null listener implies we were shortcut before we were started
+		trace("\tmaybe notify finished...");
+		if (finishedListener != null) {
+			trace("\tlistener is not null--calling");
+			finishedListener.jobFinished(this);
+		}
+
+		if (busyListener != null) {
+			busyListener.setBusy(false);
+		}
+	}
+
+	private void emergencyFinish() {
+		trace("emergencyFinish()");
+		if (isFinished) {
+			trace("\talready finished");
+			return; // already called 
 		}
 
 		isFinished = true;

@@ -15,7 +15,7 @@
  */
 package ghidra.graph.viewer.vertex;
 
-import static ghidra.graph.viewer.GraphViewerUtils.PAINT_ZOOM_THRESHOLD;
+import static ghidra.graph.viewer.GraphViewerUtils.*;
 
 import java.awt.*;
 
@@ -61,8 +61,9 @@ public class VisualVertexRenderer<V extends VisualVertex, E extends VisualEdge<V
 	public void paintVertex(RenderContext<V, E> rc, Layout<V, E> layout, V vertex) {
 
 		Graph<V, E> graph = layout.getGraph();
-		if (!rc.getVertexIncludePredicate().apply(
-			Context.<Graph<V, E>, V> getInstance(graph, vertex))) {
+		if (!rc.getVertexIncludePredicate()
+				.apply(
+					Context.<Graph<V, E>, V> getInstance(graph, vertex))) {
 			return;
 		}
 

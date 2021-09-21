@@ -40,7 +40,7 @@ public abstract class AbstractLayoutProvider<V extends VisualVertex,
 									         E extends VisualEdge<V>, 
 									         G extends VisualGraph<V, E>>
 
-	implements LayoutProvider<V, E, G> {
+	implements LayoutProviderExtensionPoint<V, E, G> {
 //@formatter:on
 
 	@Override

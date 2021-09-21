@@ -55,6 +55,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	private MultipleActionDockingToolbarButton multipleButton;
 
 	private boolean performActionOnPrimaryButtonClick = true;
+	private Icon defaultIcon;
 	private boolean useCheckboxForIcons;
 
 	// A listener that will get called when the button (not the popup) is clicked.  Toolbar
@@ -137,6 +138,17 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	 */
 	public void setUseCheckboxForIcons(boolean useCheckboxForIcons) {
 		this.useCheckboxForIcons = useCheckboxForIcons;
+	}
+
+	/**
+	 * Sets the icon to use if the active action state does not supply an icon.  This is useful if
+	 * you wish for your action states to not use icon, but desire the action itself to have an
+	 * icon.
+	 * 
+	 * @param icon the icon
+	 */
+	public void setDefaultIcon(Icon icon) {
+		this.defaultIcon = icon;
 	}
 
 	@Override
@@ -270,6 +282,11 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		if (icon != null) {
 			return icon;
 		}
+
+		if (defaultIcon != null) {
+			return defaultIcon;
+		}
+
 		return EMPTY_ICON;
 	}
 

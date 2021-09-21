@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.functiongraph.graph.jung.renderer;
+package ghidra.app.plugin.core.functiongraph.graph.layout;
 
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
+import ghidra.app.plugin.core.functiongraph.graph.FunctionGraph;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
-import ghidra.graph.viewer.shape.ArticulatedEdgeTransformer;
-import ghidra.program.model.symbol.FlowType;
+import ghidra.graph.viewer.layout.LayoutProviderExtensionPoint;
 
-public class FGArticulatedEdgeTransformer extends ArticulatedEdgeTransformer<FGVertex, FGEdge> {
-
-	@Override
-	public int getOverlapOffset(FGEdge edge) {
-
-		FlowType flowType = edge.getFlowType();
-		if (!flowType.isUnConditional() && flowType.isJump()) {
-			return -OVERLAPPING_EDGE_OFFSET;
-		}
-		else if (flowType.isFallthrough()) {
-			return OVERLAPPING_EDGE_OFFSET;
-		}
-		return 0;
-	}
+/**
+ * A version of {@link FGLayoutProvider} that is discoverable at runtime.   Layouts that do not wish 
+ * to be discoverable should implement {@link FGLayoutProvider} directly, not this interface.
+ */
+//@formatter:off
+public abstract class FGLayoutProviderExtensionPoint 
+	extends FGLayoutProvider 
+	implements LayoutProviderExtensionPoint<FGVertex, FGEdge, FunctionGraph> {
+//@formatter:on
 }

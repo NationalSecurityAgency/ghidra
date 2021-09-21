@@ -20,7 +20,6 @@ import javax.swing.Icon;
 import ghidra.graph.VisualGraph;
 import ghidra.graph.viewer.VisualEdge;
 import ghidra.graph.viewer.VisualVertex;
-import ghidra.util.classfinder.ExtensionPoint;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -40,9 +39,7 @@ import ghidra.util.task.TaskMonitor;
 //@formatter:off
 public interface LayoutProvider<V extends VisualVertex, 
 								E extends VisualEdge<V>, 
-								G extends VisualGraph<V, E>>
-	
-	extends ExtensionPoint {
+								G extends VisualGraph<V, E>> {
 //@formatter:on
 
 	/**
