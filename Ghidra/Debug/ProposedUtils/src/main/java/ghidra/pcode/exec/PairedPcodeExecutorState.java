@@ -41,11 +41,13 @@ public class PairedPcodeExecutorState<L, R>
 		implements PcodeExecutorState<Pair<L, R>> {
 
 	private final PcodeExecutorStatePiece<L, L> left;
+	private final PcodeExecutorStatePiece<L, R> right;
 
 	public PairedPcodeExecutorState(PcodeExecutorStatePiece<L, L> left,
 			PcodeExecutorStatePiece<L, R> right) {
 		super(new PairedPcodeExecutorStatePiece<>(left, right));
 		this.left = left;
+		this.right = right;
 	}
 
 	@Override
@@ -61,5 +63,13 @@ public class PairedPcodeExecutorState<L, R>
 	@Override
 	public MemBuffer getConcreteBuffer(Address address) {
 		return left.getConcreteBuffer(address);
+	}
+
+	public PcodeExecutorStatePiece<L, L> getLeft() {
+		return left;
+	}
+
+	public PcodeExecutorStatePiece<L, R> getRight() {
+		return right;
 	}
 }
