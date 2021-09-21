@@ -26,7 +26,7 @@ public class LayoutAlgorithmNames {
 	public static final String FORCED_BALANCED = "Force Balanced";
 	public static final String FORCE_DIRECTED = "Force Directed";
 	public static final String CIRCLE = "Circle";
-	public static final String COMPACT_HIERACHICAL = "Compact Hierarchical";
+	public static final String COMPACT_HIERARCHICAL = "Compact Hierarchical";
 	public static final String COMPACT_RADIAL = "Compact Radial";
 	public static final String MIN_CROSS_TOP_DOWN = "Hierarchical MinCross Top Down";
 	public static final String MIN_CROSS_LONGEST_PATH = "Hierarchical MinCross Longest Path";
@@ -44,7 +44,7 @@ public class LayoutAlgorithmNames {
 	//@formatter:on
 
 	public static List<String> getLayoutAlgorithmNames() {
-		return Arrays.asList(COMPACT_HIERACHICAL, HIERACHICAL,
+		return Arrays.asList(COMPACT_HIERARCHICAL, HIERACHICAL,
 			COMPACT_RADIAL, MIN_CROSS_TOP_DOWN, MIN_CROSS_LONGEST_PATH,
 			MIN_CROSS_NETWORK_SIMPLEX, MIN_CROSS_COFFMAN_GRAHAM, CIRCLE,
 			VERT_MIN_CROSS_TOP_DOWN,
