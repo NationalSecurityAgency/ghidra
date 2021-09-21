@@ -21,7 +21,8 @@ import java.util.*;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.util.ProgramContextImpl;
@@ -69,7 +70,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	protected class PcodeThreadExecutor extends PcodeExecutor<T> {
 		volatile boolean suspended = false;
 
-		public PcodeThreadExecutor(Language language, PcodeArithmetic<T> arithmetic,
+		public PcodeThreadExecutor(SleighLanguage language, PcodeArithmetic<T> arithmetic,
 				PcodeExecutorStatePiece<T, T> state) {
 			super(language, arithmetic, state);
 		}

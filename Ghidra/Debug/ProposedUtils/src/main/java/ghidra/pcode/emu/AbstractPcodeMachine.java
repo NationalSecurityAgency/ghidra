@@ -57,6 +57,26 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 		this.initializer = getPluggableInitializer(language);
 	}
 
+	@Override
+	public SleighLanguage getLanguage() {
+		return language;
+	}
+
+	@Override
+	public PcodeArithmetic<T> getArithmetic() {
+		return arithmetic;
+	}
+
+	@Override
+	public SleighUseropLibrary<T> getUseropLibrary() {
+		return library;
+	}
+
+	@Override
+	public SleighUseropLibrary<T> getStubUseropLibrary() {
+		return stubLibrary;
+	}
+
 	protected abstract PcodeExecutorState<T> createSharedState();
 
 	protected abstract PcodeExecutorState<T> createLocalState(PcodeThread<T> thread);
