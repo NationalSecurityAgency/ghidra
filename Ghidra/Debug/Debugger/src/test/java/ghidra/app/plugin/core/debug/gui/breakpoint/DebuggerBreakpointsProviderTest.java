@@ -24,11 +24,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import com.google.common.collect.Range;
 
 import docking.widgets.table.RowWrappedEnumeratedColumnTableModel;
 import generic.Unique;
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.breakpoint.DebuggerBreakpointsProvider.LogicalBreakpointTableModel;
@@ -54,6 +56,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
+@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebuggerGUITest
 		implements AsyncTestUtils {
 	protected static final long TIMEOUT_MILLIS =

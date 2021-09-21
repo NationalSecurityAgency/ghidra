@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.target;
 
-import static ghidra.app.plugin.core.debug.gui.target.DebuggerTargetsProviderFriend.selectNodeForObject;
+import static ghidra.app.plugin.core.debug.gui.target.DebuggerTargetsProviderFriend.*;
 import static org.junit.Assert.*;
 
 import java.awt.event.MouseEvent;
@@ -24,8 +24,10 @@ import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import docking.widgets.tree.GTreeNode;
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.service.model.DebuggerConnectDialog;
@@ -34,6 +36,7 @@ import ghidra.dbg.model.TestDebuggerObjectModel;
 /**
  * Tests of the target provider
  */
+@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class DebuggerTargetsProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected DebuggerTargetsPlugin targetsPlugin;
 	protected DebuggerTargetsProvider targetsProvider;
@@ -114,10 +117,8 @@ public class DebuggerTargetsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(0, secondModel.clearInvalidateCachesCount());
 	}
 
-	protected static final Set<String> POPUP_ACTIONS = Set.of(
-		AbstractConnectAction.NAME,
-		AbstractDisconnectAction.NAME,
-		AbstractFlushCachesAction.NAME);
+	protected static final Set<String> POPUP_ACTIONS = Set.of(AbstractConnectAction.NAME,
+		AbstractDisconnectAction.NAME, AbstractFlushCachesAction.NAME);
 
 	@Test
 	public void testPopupActionsOnDebuggerModel() throws Exception {
@@ -127,9 +128,8 @@ public class DebuggerTargetsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		clickTreeNode(targetsProvider.tree,
 			targetsProvider.rootNode.findNodeForObject(mb.testModel), MouseEvent.BUTTON3);
 		waitForSwing();
-		assertMenu(POPUP_ACTIONS, Set.of(
-			AbstractDisconnectAction.NAME,
-			AbstractFlushCachesAction.NAME));
+		assertMenu(POPUP_ACTIONS,
+			Set.of(AbstractDisconnectAction.NAME, AbstractFlushCachesAction.NAME));
 	}
 
 	@Test

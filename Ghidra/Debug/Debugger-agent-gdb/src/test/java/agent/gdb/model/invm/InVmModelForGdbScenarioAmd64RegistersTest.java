@@ -15,9 +15,12 @@
  */
 package agent.gdb.model.invm;
 
-import agent.gdb.model.AbstractModelForGdbScenarioAmd64RegistersTest;
-import ghidra.dbg.testutil.TestDebuggerModelProvider.ModelHost;
+import org.junit.experimental.categories.Category;
 
+import agent.gdb.model.AbstractModelForGdbScenarioAmd64RegistersTest;
+import generic.test.category.NightlyCategory;
+
+@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class InVmModelForGdbScenarioAmd64RegistersTest
 		extends AbstractModelForGdbScenarioAmd64RegistersTest {
 	@Override

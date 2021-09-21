@@ -23,9 +23,11 @@ import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import com.google.common.collect.Range;
 
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.services.TraceRecorder;
 import ghidra.trace.model.Trace;
@@ -35,6 +37,7 @@ import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.util.database.UndoableTransaction;
 
+@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 	protected DebuggerThreadsPlugin threadsPlugin;
