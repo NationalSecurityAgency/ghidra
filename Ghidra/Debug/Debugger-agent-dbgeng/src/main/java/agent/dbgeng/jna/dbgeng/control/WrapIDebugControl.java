@@ -228,7 +228,7 @@ public class WrapIDebugControl extends UnknownWithUtils implements IDebugControl
 	}
 
 	@Override
-	public HRESULT GetExceptionFilterParameters(ULONG Count, ULONGByReference Codes, ULONG Start,
+	public HRESULT GetExceptionFilterParameters(ULONG Count, ULONG[] Codes, ULONG Start,
 			DEBUG_EXCEPTION_FILTER_PARAMETERS[] Params) {
 		return _invokeHR(VTIndices.SET_EVENT_FILTER_COMMAND, getPointer(), Count, Codes, Start,
 			Params);

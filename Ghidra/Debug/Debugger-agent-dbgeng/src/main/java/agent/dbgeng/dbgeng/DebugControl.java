@@ -356,4 +356,29 @@ public interface DebugControl extends DebugControlReentrant {
 	int getExecutingProcessorType();
 
 	int getDebuggeeType();
+
+	DebugFilterInformation getNumberEventFilters();
+
+	String getEventFilterText(int index);
+
+	String getEventFilterCommand(int index);
+
+	void setEventFilterCommand(int index, String text);
+
+	DebugSpecificFilterInformation getSpecificFilterParameters(int start, int count);
+
+	void setSpecificFilterParameters(int start, int count, DebugSpecificFilterInformation info);
+
+	String getSpecificFilterArgument(int index);
+
+	void setSpecificFilterArgument(int index, String arg);
+
+	DebugExceptionFilterInformation getExceptionFilterParameters(int start, int[] codes, int count);
+
+	void setExceptionFilterParameters(int count, DebugExceptionFilterInformation info);
+
+	String getExceptionFilterSecondCommand(int index);
+
+	void setExceptionFilterSecondCommand(int index, String cmd);
+
 }

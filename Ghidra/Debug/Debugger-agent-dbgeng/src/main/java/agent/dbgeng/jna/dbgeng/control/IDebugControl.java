@@ -206,7 +206,7 @@ public interface IDebugControl extends IUnknown {
 
 	HRESULT SetSpecificFilterArgument(ULONG Index, String Argument);
 
-	HRESULT GetExceptionFilterParameters(ULONG Count, ULONGByReference Codes, ULONG Start,
+	HRESULT GetExceptionFilterParameters(ULONG Count, ULONG[] Codes, ULONG Start,
 			DEBUG_EXCEPTION_FILTER_PARAMETERS[] Params);
 
 	HRESULT SetExceptionFilterParameters(ULONG Count,
