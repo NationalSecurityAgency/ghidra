@@ -18,8 +18,8 @@ package agent.dbgeng.manager.cmd;
 import java.util.ArrayList;
 import java.util.List;
 
-import agent.dbgeng.dbgeng.DebugControl;
-import agent.dbgeng.dbgeng.DebugFilterInformation;
+import agent.dbgeng.dbgeng.*;
+import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_SPECIFIC_FILTER_PARAMETERS;
 import agent.dbgeng.manager.DbgEventFilter;
 import agent.dbgeng.manager.impl.DbgEventFilterImpl;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
@@ -42,10 +42,14 @@ public class DbgListEventFiltersCommand
 		result = new ArrayList<>();
 		DebugControl control = manager.getControl();
 		DebugFilterInformation info = control.getNumberEventFilters();
+		DebugSpecificFilterInformation exc =
+			control.getSpecificFilterParameters(0, info.getNumberEvents());
 		for (int i = 0; i < info.getNumberEvents(); i++) {
 			String text = control.getEventFilterText(i);
 			String cmd = control.getEventFilterCommand(i);
-			DbgEventFilterImpl f = new DbgEventFilterImpl(text, cmd);
+			DEBUG_SPECIFIC_FILTER_PARAMETERS p = exc.getParameter(i);
+			DbgEventFilterImpl f = new DbgEventFilterImpl(text, cmd, p.ExecutionOption.intValue(),
+				p.ContinueOption.intValue());
 			result.add(f);
 		}
 	}

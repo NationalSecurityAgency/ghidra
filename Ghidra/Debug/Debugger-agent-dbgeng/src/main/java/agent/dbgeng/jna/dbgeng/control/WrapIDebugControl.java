@@ -206,38 +206,41 @@ public class WrapIDebugControl extends UnknownWithUtils implements IDebugControl
 	@Override
 	public HRESULT GetSpecificFilterParameters(ULONG Start, ULONG Count,
 			DEBUG_SPECIFIC_FILTER_PARAMETERS[] Params) {
-		return _invokeHR(VTIndices.SET_EVENT_FILTER_COMMAND, getPointer(), Start, Count, Params);
+		return _invokeHR(VTIndices.GET_SPECIFIC_FILTER_PARAMETERS, getPointer(), Start, Count,
+			Params);
 	}
 
 	@Override
 	public HRESULT SetSpecificFilterParameters(ULONG Start, ULONG Count,
 			DEBUG_SPECIFIC_FILTER_PARAMETERS[] Params) {
-		return _invokeHR(VTIndices.SET_EVENT_FILTER_COMMAND, getPointer(), Start, Count, Params);
+		return _invokeHR(VTIndices.SET_SPECIFIC_FILTER_PARAMETERS, getPointer(), Start, Count,
+			Params);
 	}
 
 	@Override
 	public HRESULT GetSpecificFilterArgument(ULONG Index, byte[] Buffer, ULONG BufferSize,
 			ULONGByReference ArgumentSize) {
-		return _invokeHR(VTIndices.SET_EVENT_FILTER_COMMAND, getPointer(), Index, Buffer,
+		return _invokeHR(VTIndices.GET_SPECIFIC_FILTER_ARGUMENT, getPointer(), Index, Buffer,
 			BufferSize, ArgumentSize);
 	}
 
 	@Override
 	public HRESULT SetSpecificFilterArgument(ULONG Index, String Argument) {
-		return _invokeHR(VTIndices.SET_EVENT_FILTER_COMMAND, getPointer(), Index, Argument);
+		return _invokeHR(VTIndices.SET_SPECIFIC_FILTER_ARGUMENT, getPointer(), Index, Argument);
 	}
 
 	@Override
 	public HRESULT GetExceptionFilterParameters(ULONG Count, ULONG[] Codes, ULONG Start,
 			DEBUG_EXCEPTION_FILTER_PARAMETERS[] Params) {
-		return _invokeHR(VTIndices.SET_EVENT_FILTER_COMMAND, getPointer(), Count, Codes, Start,
+		return _invokeHR(VTIndices.GET_EXCEPTION_FILTER_PARAMETERS, getPointer(), Count, Codes,
+			Start,
 			Params);
 	}
 
 	@Override
 	public HRESULT SetExceptionFilterParameters(ULONG Count,
 			DEBUG_EXCEPTION_FILTER_PARAMETERS[] Params) {
-		return _invokeHR(VTIndices.SET_EVENT_FILTER_COMMAND, getPointer(), Count, Params);
+		return _invokeHR(VTIndices.SET_EXCEPTION_FILTER_PARAMETERS, getPointer(), Count, Params);
 	}
 
 	@Override

@@ -15,6 +15,9 @@
  */
 package agent.dbgeng.model.impl;
 
+import java.util.List;
+import java.util.Map;
+
 import agent.dbgeng.manager.DbgEventFilter;
 import agent.dbgeng.model.iface2.DbgModelTargetEvent;
 import agent.dbgeng.model.iface2.DbgModelTargetEventContainer;
@@ -26,7 +29,7 @@ import ghidra.dbg.util.PathUtils;
 	elements = {
 		@TargetElementType(type = Void.class) },
 	attributes = {
-		@TargetAttributeType(type = Void.class) })
+		@TargetAttributeType(type = Object.class) })
 public class DbgModelTargetEventImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetEvent {
 	protected static String indexFilter(DbgEventFilter filter) {
@@ -44,20 +47,12 @@ public class DbgModelTargetEventImpl extends DbgModelTargetObjectImpl
 		this.getModel().addModelObject(filter, this);
 		this.filter = filter;
 
-		/*
-		changeAttributes(List.of(), List.of( //
-			symbols //
-		//  sections.getName(), sections, //
-		), Map.of( //
+		changeAttributes(List.of(), List.of(), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, getIndex(), //
-			SHORT_DISPLAY_ATTRIBUTE_NAME, module.getName(), //
-			MODULE_NAME_ATTRIBUTE_NAME, module.getImageName(), //
-			"BaseAddress", space.getAddress(module.getKnownBase()), //
-			"ImageName", module.getImageName(), //
-			"TimeStamp", module.getTimeStamp(), //
-			"Len", Integer.toHexString(module.getSize()) //
+			"Command", filter.getCmd(), //
+			"Execute", filter.getExecutionOption(), //
+			"Continue", filter.getContinueOption() //
 		), "Initialized");
-		*/
 	}
 
 	@Override

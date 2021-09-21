@@ -21,4 +21,12 @@ public interface DbgEventFilter {
 
 	String getCmd();
 
+	int getExecutionOption();
+
+	void setExecutionOption(int executionOption);
+
+	int getContinueOption();
+
+	void setContinueOption(int continueOption);
+
 }

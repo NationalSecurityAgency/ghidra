@@ -19,7 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import agent.dbgeng.dbgeng.*;
+import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_EXCEPTION_FILTER_PARAMETERS;
 import agent.dbgeng.manager.DbgExceptionFilter;
+import agent.dbgeng.manager.impl.DbgExceptionFilterImpl;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
 public class DbgListExceptionFiltersCommand
@@ -42,9 +44,18 @@ public class DbgListExceptionFiltersCommand
 		DebugFilterInformation info = control.getNumberEventFilters();
 		int nEvents = info.getNumberEvents();
 		int nExcs = info.getNumberSpecificExceptions();
-		DebugSpecificFilterInformation spec = control.getSpecificFilterParameters(0, nEvents);
+		//DebugSpecificFilterInformation spec = control.getSpecificFilterParameters(0, nEvents);
 		DebugExceptionFilterInformation exc =
 			control.getExceptionFilterParameters(nEvents, null, nExcs);
-		result = new ArrayList<>();
+		for (int i = 0; i < exc.getParameters().length; i++) {
+			DEBUG_EXCEPTION_FILTER_PARAMETERS p = exc.getParameter(i);
+			String text = control.getEventFilterText(nEvents + i);
+			String cmd = control.getEventFilterCommand(nEvents + i);
+			String cmd2 = control.getExceptionFilterSecondCommand(nEvents + i);
+			DbgExceptionFilterImpl filter = new DbgExceptionFilterImpl(text, cmd, cmd2,
+				p.ExecutionOption.intValue(), p.ContinueOption.intValue(),
+				p.ExceptionCode.longValue());
+			result.add(filter);
+		}
 	}
 }

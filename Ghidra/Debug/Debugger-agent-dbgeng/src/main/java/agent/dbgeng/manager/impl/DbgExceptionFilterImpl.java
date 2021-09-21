@@ -20,10 +20,19 @@ import agent.dbgeng.manager.DbgExceptionFilter;
 public class DbgExceptionFilterImpl implements DbgExceptionFilter {
 	private final String text;
 	private final String cmd;
+	private final String cmd2;
+	private int executionOption;
+	private int continueOption;
+	private long exceptionCode;
 
-	public DbgExceptionFilterImpl(String text, String cmd) {
+	public DbgExceptionFilterImpl(String text, String cmd, String cmd2, int executionOption,
+			int continueOption, long exceptionCode) {
 		this.text = text;
 		this.cmd = cmd;
+		this.cmd2 = cmd2;
+		this.setExecutionOption(executionOption);
+		this.setContinueOption(continueOption);
+		this.exceptionCode = exceptionCode;
 	}
 
 	@Override
@@ -32,8 +41,32 @@ public class DbgExceptionFilterImpl implements DbgExceptionFilter {
 	}
 
 	@Override
-	public String getArg() {
+	public String getCmd() {
 		return cmd;
+	}
+
+	public String getSecondCmd() {
+		return cmd2;
+	}
+
+	public int getExecutionOption() {
+		return executionOption;
+	}
+
+	public void setExecutionOption(int executionOption) {
+		this.executionOption = executionOption;
+	}
+
+	public int getContinueOption() {
+		return continueOption;
+	}
+
+	public void setContinueOption(int continueOption) {
+		this.continueOption = continueOption;
+	}
+
+	public long getExceptionCode() {
+		return exceptionCode;
 	}
 
 }

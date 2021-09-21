@@ -20,10 +20,14 @@ import agent.dbgeng.manager.DbgEventFilter;
 public class DbgEventFilterImpl implements DbgEventFilter {
 	private final String text;
 	private final String cmd;
+	private int executionOption;
+	private int continueOption;
 
-	public DbgEventFilterImpl(String text, String cmd) {
+	public DbgEventFilterImpl(String text, String cmd, int executionOption, int continueOption) {
 		this.text = text;
 		this.cmd = cmd;
+		this.setExecutionOption(executionOption);
+		this.setContinueOption(continueOption);
 	}
 
 	@Override
@@ -34,6 +38,26 @@ public class DbgEventFilterImpl implements DbgEventFilter {
 	@Override
 	public String getCmd() {
 		return cmd;
+	}
+
+	@Override
+	public int getExecutionOption() {
+		return executionOption;
+	}
+
+	@Override
+	public void setExecutionOption(int executionOption) {
+		this.executionOption = executionOption;
+	}
+
+	@Override
+	public int getContinueOption() {
+		return continueOption;
+	}
+
+	@Override
+	public void setContinueOption(int continueOption) {
+		this.continueOption = continueOption;
 	}
 
 }

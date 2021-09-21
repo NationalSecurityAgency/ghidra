@@ -19,6 +19,17 @@ public interface DbgExceptionFilter {
 
 	String getName();
 
-	String getArg();
+	String getCmd();
 
+	String getSecondCmd();
+
+	int getExecutionOption();
+
+	void setExecutionOption(int executionOption);
+
+	int getContinueOption();
+
+	void setContinueOption(int continueOption);
+
+	long getExceptionCode();
 }
