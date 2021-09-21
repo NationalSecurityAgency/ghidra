@@ -60,7 +60,8 @@ public class CommentFieldSearcher extends ProgramDatabaseFieldSearcher {
 		return nextAddress;
 	}
 
-	private void findMatchesForCurrentAddress(Address address, List<ProgramLocation> currentMatches) {
+	private void findMatchesForCurrentAddress(Address address,
+			List<ProgramLocation> currentMatches) {
 		String comment = program.getListing().getComment(commentType, address);
 		if (comment == null) {
 			return;
@@ -84,7 +85,7 @@ public class CommentFieldSearcher extends ProgramDatabaseFieldSearcher {
 					charOffset, rowIndex);
 			case CodeUnit.PLATE_COMMENT:
 				return new PlateFieldLocation(program, address, dataPath, rowIndex, charOffset,
-					comments, rowIndex - 1);
+					comments, rowIndex);
 			case CodeUnit.REPEATABLE_COMMENT:
 				return new RepeatableCommentFieldLocation(program, address, dataPath, comments,
 					rowIndex, charOffset, rowIndex); // TODO One of searchStrIndex parameters is wrong.

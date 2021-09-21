@@ -22,6 +22,7 @@ import java.util.List;
 import javax.swing.JComponent;
 
 import docking.widgets.fieldpanel.support.RowColLocation;
+import generic.json.Json;
 
 /**
  * A FieldElement that is composed of other FieldElements.  The elements are laid out horizontally.
@@ -107,46 +108,6 @@ public class CompositeFieldElement implements FieldElement {
 		return heightBelow;
 	}
 
-//==================================================================================================
-// FontMetrics methods
-//==================================================================================================
-
-	@Override
-	public int getStringWidth() {
-		if (textWidth == -1) {
-			textWidth = 0;
-			for (FieldElement fieldElement : fieldElements) {
-				textWidth += fieldElement.getStringWidth();
-			}
-		}
-		return textWidth;
-	}
-
-	@Override
-	public String getText() {
-		if (fullText == null) {
-			StringBuilder buffer = new StringBuilder();
-			for (FieldElement fieldElement : fieldElements) {
-				buffer.append(fieldElement.getText());
-			}
-			fullText = buffer.toString();
-		}
-		return fullText;
-	}
-
-//==================================================================================================
-// Paint methods
-//==================================================================================================
-
-	@Override
-	public void paint(JComponent c, Graphics g, int x, int y) {
-		int xPos = x;
-		for (FieldElement fieldElement : fieldElements) {
-			fieldElement.paint(c, g, xPos, y);
-			xPos += fieldElement.getStringWidth();
-		}
-	}
-
 	@Override
 	public FieldElement replaceAll(char[] targets, char repacement) {
 		FieldElement[] newStrings = new FieldElement[fieldElements.length];
@@ -191,16 +152,6 @@ public class CompositeFieldElement implements FieldElement {
 		return new CompositeFieldElement(newStrings);
 	}
 
-	private static class IndexedOffset {
-		int index;
-		int offset;
-
-		IndexedOffset(int index, int offset) {
-			this.index = index;
-			this.offset = offset;
-		}
-	}
-
 	@Override
 	public FieldElement getFieldElement(int column) {
 		IndexedOffset startPos = getIndexedOffsetForCharPosition(column);
@@ -217,6 +168,46 @@ public class CompositeFieldElement implements FieldElement {
 		return getText();
 	}
 
+	@Override
+	public int getStringWidth() {
+		if (textWidth == -1) {
+			textWidth = 0;
+			for (FieldElement fieldElement : fieldElements) {
+				textWidth += fieldElement.getStringWidth();
+			}
+		}
+		return textWidth;
+	}
+
+	@Override
+	public String getText() {
+		if (fullText == null) {
+			StringBuilder buffer = new StringBuilder();
+			for (FieldElement fieldElement : fieldElements) {
+				buffer.append(fieldElement.getText());
+			}
+			fullText = buffer.toString();
+		}
+		return fullText;
+	}
+
+	@Override
+	public void paint(JComponent c, Graphics g, int x, int y) {
+		int xPos = x;
+		for (FieldElement fieldElement : fieldElements) {
+			fieldElement.paint(c, g, xPos, y);
+			xPos += fieldElement.getStringWidth();
+		}
+	}
+
+	/**
+	 * Returns the number of sub-elements contained in this field
+	 * @return the number of sub-elements contained in this field
+	 */
+	public int getNumElements() {
+		return fieldElements.length;
+	}
+
 //==================================================================================================
 // Location Info
 //==================================================================================================
@@ -229,6 +220,7 @@ public class CompositeFieldElement implements FieldElement {
 
 	@Override
 	public int getCharacterIndexForDataLocation(int dataRow, int dataColumn) {
+
 		int columnsSoFar = 0;
 		for (int i = fieldElements.length - 1; i >= 0; i--) {
 			columnsSoFar += fieldElements[i].length();
@@ -242,4 +234,20 @@ public class CompositeFieldElement implements FieldElement {
 
 		return -1;
 	}
+
+	private static class IndexedOffset {
+		int index;
+		int offset;
+
+		IndexedOffset(int index, int offset) {
+			this.index = index;
+			this.offset = offset;
+		}
+
+		@Override
+		public String toString() {
+			return Json.toString(this);
+		}
+	}
+
 }

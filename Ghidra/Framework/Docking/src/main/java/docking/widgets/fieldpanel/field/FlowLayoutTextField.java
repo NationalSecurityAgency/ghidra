@@ -20,8 +20,9 @@ import java.util.*;
 import docking.widgets.fieldpanel.support.HighlightFactory;
 
 /**
- * This class provides a TextField implementation that takes multiple AttributedStrings and places
- * as many that will fit on a line without clipping before continuing to the next line.
+ * This class provides a TextField implementation that takes multiple AttributedString field
+ * elements and places as many that will fit on a line without clipping before continuing to the
+ * next line.
  */
 public class FlowLayoutTextField extends VerticalLayoutTextField {
 
@@ -67,27 +68,35 @@ public class FlowLayoutTextField extends VerticalLayoutTextField {
 		int currentIndex = 0;
 		while (currentIndex < elements.size()) {
 			int numberPerLine = getNumberOfElementsPerLine(elements, currentIndex, width);
-			subFields.add(createLine(elements, currentIndex, numberPerLine));
+			subFields.add(createLineFromElements(elements, currentIndex, numberPerLine));
 			currentIndex += numberPerLine;
 		}
 
 		return subFields;
 	}
 
-	private static CompositeFieldElement createLine(List<FieldElement> elements, int from,
-			int length) {
-		return new CompositeFieldElement(elements.subList(from, from + length));
+	@Override
+	protected TextField createFieldForLine(FieldElement element) {
+		CompositeFieldElement composite = (CompositeFieldElement) element;
+		int numDataRows = composite.getNumElements();
+		return new ClippingTextField(startX, width, element, numDataRows, hlFactory);
+	}
+
+	private static CompositeFieldElement createLineFromElements(List<FieldElement> elements,
+			int start, int length) {
+		return new CompositeFieldElement(elements.subList(start, start + length));
 	}
 
 	private static int getNumberOfElementsPerLine(List<FieldElement> elements, int start,
 			int width) {
+
 		int currentWidth = 0;
-		int count = 0;
-		for (FieldElement element : elements) {
+		for (int i = start; i < elements.size(); i++) {
+			FieldElement element = elements.get(i);
 			currentWidth += element.getStringWidth();
-			count++;
 			if (currentWidth > width) {
-				return Math.max(count - 1, 1);
+				int count = i - start;
+				return Math.max(count, 1);
 			}
 		}
 		return elements.size() - start;

@@ -896,7 +896,8 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("XREFs Field.Display Local Block", names.get(1));
 		assertEquals("XREFs Field.Display Namespace", names.get(2));
 		assertEquals("XREFs Field.Display Reference Type", names.get(3));
-		assertEquals("XREFs Field.Maximum Number of XREFs to Display", names.get(4));
+		assertEquals("XREFs Field.Group by Function", names.get(4));
+		assertEquals("XREFs Field.Maximum Number of XREFs to Display", names.get(5));
 
 		assertTrue(cb.goToField(addr("0x1003d9f"), "XRef", 0, 0));
 
@@ -968,7 +969,9 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals(9, btf.getNumRows());
 
-		options.setInt(names.get(4), 3);
+		// note: the 'group by function' option is tested in the XrefFieldFactoryTest
+
+		options.setInt(names.get(5), 3);
 		cb.updateNow();
 		assertTrue(cb.goToField(addr("0x1003d9f"), "XRef", 0, 0));
 		btf = (ListingTextField) cb.getCurrentField();

@@ -551,7 +551,7 @@ public class XRefFieldFactory extends FieldFactory {
 		List<XrefFieldElement> elements = new ArrayList<>();
 		FunctionManager functionManager = program.getFunctionManager();
 		Function currentFunction = functionManager.getFunctionContaining(cu.getMinAddress());
-		int n = tooMany ? maxXRefs + 1 : totalXrefs;
+		int n = tooMany ? maxXRefs : totalXrefs;
 		int count = 0;
 		for (; count < xrefs.size() && count < n; count++) {
 			Reference ref = xrefs.get(count);

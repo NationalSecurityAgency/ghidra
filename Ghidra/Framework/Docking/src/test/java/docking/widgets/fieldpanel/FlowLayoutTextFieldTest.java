@@ -47,6 +47,22 @@ public class FlowLayoutTextFieldTest extends AbstractGenericTest {
 		FontMetrics fm = tk.getFontMetrics(font);
 		List<FieldElement> elements = new ArrayList<>();
 
+		/*
+		 	Data Rows:
+		 	
+		 	Hello
+		 	World
+		 	Supercalifragilisticexpialidocious
+		 	Wow!
+		 	
+		 	
+		 	Screen Rows:
+		 	
+		 	Hello World
+		 	Supercalifra...
+		 	Wow
+		 */
+
 		elements.add(new TextFieldElement(new AttributedString("Hello ", Color.BLUE, fm), 0, 0));
 		elements.add(new TextFieldElement(
 			new AttributedString("World ", Color.RED, fm, true, Color.BLUE), 1, 0));
@@ -95,17 +111,19 @@ public class FlowLayoutTextFieldTest extends AbstractGenericTest {
 
 		assertEquals(new RowColLocation(1, 0), textField.dataToScreenLocation(2, 0));
 		assertEquals(new RowColLocation(1, 4), textField.dataToScreenLocation(2, 4));
-		assertEquals(new RowColLocation(1, 15), textField.dataToScreenLocation(2, 15));
+
+		// Supercalifra (12 chars); ... (3 chars); Supercalifra... (15 chars)
+		assertEquals(new DefaultRowColLocation(1, 12), textField.dataToScreenLocation(2, 15));
 
 		assertEquals(new RowColLocation(2, 0), textField.dataToScreenLocation(3, 0));
 		assertEquals(new RowColLocation(2, 4), textField.dataToScreenLocation(3, 4));
 
-		assertEquals(new RowColLocation(0, 0), textField.dataToScreenLocation(0, 12));
-		assertEquals(new RowColLocation(0, 0), textField.dataToScreenLocation(0, 75));
+		assertEquals(new DefaultRowColLocation(0, 12), textField.dataToScreenLocation(0, 12));
+		assertEquals(new DefaultRowColLocation(0, 12), textField.dataToScreenLocation(0, 75));
 	}
 
 	@Test
-	public void testGetRowColumn() {
+	public void testTextOffsetToScreenLocation() {
 		assertEquals(new RowColLocation(0, 0), textField.textOffsetToScreenLocation(0));
 		assertEquals(new RowColLocation(0, 5), textField.textOffsetToScreenLocation(5));
 		assertEquals(new RowColLocation(0, 6), textField.textOffsetToScreenLocation(6));
@@ -116,7 +134,8 @@ public class FlowLayoutTextFieldTest extends AbstractGenericTest {
 		assertEquals(new RowColLocation(1, 3), textField.textOffsetToScreenLocation(15));
 
 		assertEquals(new RowColLocation(1, 18), textField.textOffsetToScreenLocation(30));
+		assertEquals(new RowColLocation(2, 0), textField.textOffsetToScreenLocation(47));
 
-		assertEquals(new RowColLocation(2, 5), textField.textOffsetToScreenLocation(1000));
+		assertEquals(new DefaultRowColLocation(2, 5), textField.textOffsetToScreenLocation(1000));
 	}
 }

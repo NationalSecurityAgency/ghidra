@@ -39,6 +39,7 @@ public class ClippingTextField implements TextField {
 	protected int startX;
 	private int width;
 	private int preferredWidth;
+	private int numDataRows;
 
 	private String fullText;
 	private boolean isClipped;
@@ -49,28 +50,40 @@ public class ClippingTextField implements TextField {
 
 	/**
 	 * Constructs a new ClippingTextField that allows the cursor beyond the end
-	 * of the line. This is just a pass through constructor that makes the call:
+	 * of the line.
 	 * 
-	 * <pre>
-	 * this(startX, width, new AttributedString[] { textElement }, hlFactory, true);
-	 * </pre>
-	 * 
-	 * @param startX
-	 *            The x position of the field
-	 * @param width
-	 *            The width of the field
-	 * @param textElement
-	 *            The AttributedStrings to display in the field.
-	 * @param hlFactory
-	 *            The HighlightFactory object used to paint highlights.
+	 * @param startX The x position of the field
+	 * @param width The width of the field
+	 * @param textElement The AttributedStrings to display in the field.
+	 * @param hlFactory The HighlightFactory object used to paint highlights.
 	 */
 	public ClippingTextField(int startX, int width, FieldElement textElement,
 			HighlightFactory hlFactory) {
+		// default to one row
+		this(startX, width, textElement, 1, hlFactory);
+	}
 
-		this.textElement = textElement;
-		this.hlFactory = hlFactory;
+	/**
+	 * Constructs a new ClippingTextField that allows the cursor beyond the end
+	 * of the line.
+	 * 
+	 * <p>This constructor allows clients to specify the number of data rows that have been
+	 * converted into a single screen row.
+	 * 
+	 * @param startX The x position of the field
+	 * @param width The width of the field
+	 * @param textElement The AttributedStrings to display in the field.
+	 * @param numDataRows the number of data rows represented by this single screen row field
+	 * @param hlFactory The HighlightFactory object used to paint highlights.
+	 */
+	public ClippingTextField(int startX, int width, FieldElement textElement, int numDataRows,
+			HighlightFactory hlFactory) {
+
 		this.startX = startX;
 		this.width = width;
+		this.numDataRows = numDataRows;
+		this.textElement = textElement;
+		this.hlFactory = hlFactory;
 		this.preferredWidth = textElement.getStringWidth();
 
 		clip(width);
@@ -139,7 +152,7 @@ public class ClippingTextField implements TextField {
 
 	@Override
 	public int getNumDataRows() {
-		return 1;
+		return numDataRows;
 	}
 
 	@Override
@@ -336,18 +349,13 @@ public class ClippingTextField implements TextField {
 	@Override
 	public RowColLocation screenToDataLocation(int screenRow, int screenColumn) {
 		return originalElement.getDataLocationForCharacterIndex(screenColumn);
-
 	}
 
 	@Override
 	public RowColLocation dataToScreenLocation(int dataRow, int dataColumn) {
 		int column = textElement.getCharacterIndexForDataLocation(dataRow, dataColumn);
 		if (column < 0) {
-			// place at the end if past the end
-			if (dataColumn >= textElement.length()) {
-				return new DefaultRowColLocation(0, textElement.length());
-			}
-			return new DefaultRowColLocation();
+			return new DefaultRowColLocation(0, textElement.length());
 		}
 		return new RowColLocation(0, column);
 	}
