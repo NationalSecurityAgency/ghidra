@@ -36,7 +36,7 @@ import resources.icons.EmptyIcon;
  * drop-down icon that allows users to change the state of the button.  Also, by default, as
  * the user presses the button, it will execute the action corresponding to the current
  * state.
- * 
+ *
  * <p>Warning: if you use this action in a toolbar, then be sure to call the
  * {@link #MultiStateDockingAction(String, String, boolean) correct constructor}.  If you call
  * another constructor, or pass false for this boolean above, your
@@ -50,7 +50,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	private static Icon EMPTY_ICON = new EmptyIcon(16, 16);
 
 	private List<ActionState<T>> actionStates = new ArrayList<>();
-	private int currentStateIndex = 0;
+	private int currentStateIndex = -1;
 	private MultiActionDockingActionIf multiActionGenerator;
 	private MultipleActionDockingToolbarButton multipleButton;
 
@@ -66,7 +66,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 
 	/**
 	 * Call this constructor with this action will not be added to a toolbar
-	 * 
+	 *
 	 * @param name the action name
 	 * @param owner the owner
 	 * @see #MultiStateDockingAction(String, String, boolean)
@@ -78,7 +78,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	/**
 	 * Use this constructor explicitly when this action is used in a toolbar, passing true
 	 * for <code>isToolbarAction</code> (see the javadoc header note).
-	 * 
+	 *
 	 * @param name the action name
 	 * @param owner the owner
 	 * @param isToolbarAction true if this action is a toolbar action
@@ -110,7 +110,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	 * <p>
 	 * Also, if the parameter is true, then the button will behave like a button in terms of
 	 * mouse feedback.  If false, then the button will behave more like a label.
-	 * 
+	 *
 	 * @param doPerformAction true to call {@link #doActionPerformed(ActionContext)} when the
 	 *        user presses the button for this action (not the drop-down menu; see above)
 	 */
@@ -133,7 +133,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	 * default, the popup menu items will use the icons as provided by the {@link ActionState}.
 	 * By passing true to this method, icons will not be used in the popup menu.  Instead, a
 	 * checkbox icon will be used to show the active action state.
-	 * 
+	 *
 	 * @param useCheckboxForIcons true to use a checkbox
 	 */
 	public void setUseCheckboxForIcons(boolean useCheckboxForIcons) {
@@ -144,7 +144,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	 * Sets the icon to use if the active action state does not supply an icon.  This is useful if
 	 * you wish for your action states to not use icon, but desire the action itself to have an
 	 * icon.
-	 * 
+	 *
 	 * @param icon the icon
 	 */
 	public void setDefaultIcon(Icon icon) {
@@ -165,7 +165,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	 * This is the callback to be overridden when the child wishes to respond to user button
 	 * presses that are on the button and not the drop-down.  This will only be called if
 	 * {@link #performActionOnPrimaryButtonClick} is true.
-	 * 
+	 *
 	 * @param context the action context
 	 */
 	protected void doActionPerformed(ActionContext context) {
@@ -270,10 +270,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		}
 		currentStateIndex = indexOf;
 
-		// we set the icon here to handle the odd case where this action is not used in a toolbar
-		if (multipleButton != null) {
-			setButtonState(actionState);
-		}
+		setButtonState(actionState);
 
 		ToolBarData tbd = getToolBarData();
 		tbd.setIcon(getIcon(actionState));
@@ -317,6 +314,16 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 
 	private void setButtonState(ActionState<T> actionState) {
 
+		if (multipleButton == null) {
+			return;
+		}
+
+		if (actionState == null) {
+			multipleButton.setIcon(null);
+			multipleButton.setToolTipText(null);
+			return;
+		}
+
 		Icon icon = getIcon(actionState);
 		multipleButton.setIcon(icon);
 		multipleButton.setToolTipText(actionState.getName());
@@ -337,6 +344,9 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	}
 
 	public String getToolTipText() {
+		if (actionStates.isEmpty()) {
+			return getName() + ": <no action states installed>";
+		}
 		return getName() + ": " + getCurrentState().getName();
 	}
 
@@ -355,8 +365,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 
 			setSelected(isSelected);
 
-			setMenuBarData(
-				new MenuData(new String[] { actionState.getName() }));
+			setMenuBarData(new MenuData(new String[] { actionState.getName() }));
 			HelpLocation helpLocation = actionState.getHelpLocation();
 			if (helpLocation != null) {
 				setHelpLocation(helpLocation);
