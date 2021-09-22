@@ -15,7 +15,7 @@
  */
 package docking.widgets.fieldpanel;
 
-import static docking.widgets.EventTrigger.INTERNAL_ONLY;
+import static docking.widgets.EventTrigger.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -74,6 +74,7 @@ public class FieldPanel extends JPanel
 	private List<ViewListener> viewListeners = new ArrayList<>();
 	private List<FieldSelectionListener> selectionListeners = new ArrayList<>();
 	private List<FieldSelectionListener> highlightListeners = new ArrayList<>();
+	private List<FieldSelectionListener> liveSelectionListeners = new ArrayList<>();
 	private List<AnchoredLayout> layouts = new ArrayList<>();
 
 	private int currentViewXpos;
@@ -526,6 +527,22 @@ public class FieldPanel extends JPanel
 
 	public void removeFieldSelectionListener(FieldSelectionListener listener) {
 		selectionListeners.remove(listener);
+	}
+
+	/** 
+	 * Adds a selection listener that will be notified while the selection is being created
+	 * @param listener the listener to be notified
+	 */
+	public void addLiveFieldSelectionListener(FieldSelectionListener listener) {
+		liveSelectionListeners.add(listener);
+	}
+
+	/** 
+	 * Removes the selection listener from being notified when the selection is being created
+	 * @param listener the listener to be removed from being notified
+	 */
+	public void removeLiveFieldSelectionListener(FieldSelectionListener listener) {
+		liveSelectionListeners.remove(listener);
 	}
 
 	public void addHighlightListener(FieldSelectionListener listener) {
@@ -1267,6 +1284,16 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
+	 * Notifies all live listeners that the selection changed.
+	 */
+	private void notifyLiveSelectionChanged() {
+		FieldSelection currentSelection = new FieldSelection(selection);
+		for (FieldSelectionListener l : liveSelectionListeners) {
+			l.selectionChanged(currentSelection, EventTrigger.GUI_ACTION);
+		}
+	}
+
+	/**
 	 * Notifies all listeners that the selection changed.
 	 */
 	private void notifyHighlightChanged() {
@@ -1788,6 +1815,7 @@ public class FieldPanel extends JPanel
 			}
 			scrollPoint = new FieldLocation(point);
 			updateSelection(!removeFromSelection);
+			notifyLiveSelectionChanged();
 		}
 
 		private void updateSelection(boolean add) {
