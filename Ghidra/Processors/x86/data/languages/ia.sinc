@@ -1024,15 +1024,15 @@ cc: "LE" is cond=14         { local tmp = ZF || (OF != SF); export tmp; }
 cc: "G" is cond=15          { local tmp = !ZF && (OF == SF); export tmp; }
 
 # repeat prefixes
-rep: ".REP" is repprefx=1 & addrsize=0  { if (CX==0) goto inst_next; CX=CX-1; }
-rep: ".REP" is repprefx=1 & addrsize=1  { if (ECX==0) goto inst_next; ECX=ECX-1; }
+rep: ".REP" is ((repprefx=1 & repneprefx=0)|(repprefx=0 & repneprefx=1)) & addrsize=0  { if (CX==0) goto inst_next; CX=CX-1; }
+rep: ".REP" is ((repprefx=1 & repneprefx=0)|(repprefx=0 & repneprefx=1)) & addrsize=1  { if (ECX==0) goto inst_next; ECX=ECX-1; }
 @ifdef IA64
-rep: ".REP" is repprefx=1 & addrsize=2  { if (RCX==0) goto inst_next; RCX=RCX-1; }
+rep: ".REP" is ((repprefx=1 & repneprefx=0)|(repprefx=0 & repneprefx=1)) & addrsize=2  { if (RCX==0) goto inst_next; RCX=RCX-1; }
 @endif
-rep:        is repprefx=0           { }
+rep:        is repprefx=0 & repneprefx=0			{ }
 
-reptail:	is repprefx=1			{ goto inst_start; }
-reptail:	is repprefx=0			{ }
+reptail:	is ((repprefx=1 & repneprefx=0)|(repprefx=0 & repneprefx=1))			{ goto inst_start; }
+reptail:	is repprefx=0 & repneprefx=0			{ }
 
 repe: ".REPE"   is repprefx=1 & repneprefx=0 & addrsize=0  { if (CX==0) goto inst_next; CX=CX-1; }
 repe: ".REPE"   is repprefx=1 & repneprefx=0 & addrsize=1  { if (ECX==0) goto inst_next; ECX=ECX-1; }
