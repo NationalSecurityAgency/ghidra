@@ -54,6 +54,7 @@ import ghidra.app.plugin.core.clipboard.ClipboardPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.*;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutProvider;
+import ghidra.app.plugin.core.functiongraph.graph.layout.TestFGLayoutProvider;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.*;
 import ghidra.app.plugin.core.functiongraph.mvc.*;
 import ghidra.app.services.*;
@@ -74,6 +75,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
 import ghidra.util.Msg;
+import ghidra.util.exception.AssertException;
 import ghidra.util.task.RunManager;
 
 public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedIntegrationTest {
@@ -552,11 +554,19 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 	protected void showFunctionGraphProvider() {
 
-		ComponentProvider provider = tool.getComponentProvider("Function Graph");
+		FGProvider provider = (FGProvider) tool.getComponentProvider("Function Graph");
 		tool.showComponentProvider(provider, true);
 
 		graphProvider = waitForComponentProvider(FGProvider.class);
 		assertNotNull("Graph not shown", graphProvider);
+
+		installTestGraphLayout(provider);
+	}
+
+	protected void installTestGraphLayout(FGProvider provider) {
+		FGActionManager actionManager = provider.getActionManager();
+		List<FGLayoutProvider> layouts = List.of(new TestFGLayoutProvider());
+		runSwing(() -> actionManager.setLayouts(layouts));
 	}
 
 	protected ProgramSelection makeSingleVertexSelectionInCodeBrowser() {
@@ -1003,7 +1013,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		combined.add(groupedVertex);
 		pickVertices(combined);
 
-		// execute the 'add to group' action		
+		// execute the 'add to group' action
 		JComponent component = getComponent(groupedVertex);
 		DockingAction action =
 			(DockingAction) TestUtils.getInstanceField("addToGroupAction", component);
@@ -1025,7 +1035,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 			Collection<FGEdge> ungroupedEdges) {
 		for (FGEdge edge : ungroupedEdges) {
 			//
-			// note: the edges we are given *may* be linked to disposed vertices, so we have 
+			// note: the edges we are given *may* be linked to disposed vertices, so we have
 			//       to locate the edge in the graph that may represent the given edge.
 			//
 			FGEdge currentEdge = getCurrentEdge(functionGraph, edge);
@@ -1222,12 +1232,6 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 	protected FGData create12345Graph() {
 
-		//
-		// Note: we are manipulating the graph for testing by removing vertices.  Some layouts
-		//       do not handle this well, so we will use one we know works.
-		//
-		setMinCrossLayout();
-
 		// function sscanf
 		FGData funtionGraphData = graphFunction("100415a");
 
@@ -1316,7 +1320,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	//	      This tests verifies that a group will not be created if there is only one vertex
 	//        found upon restoring settings.  If we want to put that code back, then this test
 	//        is again valid.
-	// 
+	//
 	public void dontTestRestoringWhenCodeBlocksHaveChanged_DoesntRegroup() {
 		int transactionID = -1;
 		try {
@@ -1390,38 +1394,38 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		FGData graphData = graphFunction("01002cf5");
 		FunctionGraph functionGraph = graphData.getFunctionGraph();
 		Graph<FGVertex, FGEdge> graph = functionGraph;
-	
-		Set<FGVertex> ungroupedVertices = selectVertices( functionGraph, 
-																	"01002d2b" /* Another Local*/, 
+
+		Set<FGVertex> ungroupedVertices = selectVertices( functionGraph,
+																	"01002d2b" /* Another Local*/,
 																	"01002d1f" /* MyLocal */);
 		Set<FGEdge> ungroupedEdges = getEdges(graph, ungroupedVertices);
 		assertEquals("Did not grab all known edges for vertices", 4, ungroupedEdges.size());
-	
+
 		group(ungroupedVertices);
-	
+
 		assertVerticesRemoved(graph, ungroupedVertices);
 		assertEdgesRemoved(graph, ungroupedEdges);
-		
+
 		// -1 because one one of the edges was between two of the vertices being grouped
 		int expectedGroupedEdgeCount = ungroupedEdges.size() - 1;
 		GroupedFunctionGraphVertex groupedVertex =
-			validateNewGroupedVertexFromVertices(functionGraph, ungroupedVertices, 
+			validateNewGroupedVertexFromVertices(functionGraph, ungroupedVertices,
 				expectedGroupedEdgeCount);
-	
+
 		ungroup(groupedVertex);
-	
+
 		assertVertexRemoved(graph, groupedVertex);
 		assertVerticesAdded(graph, ungroupedVertices);
 		assertEdgesAdded(functionGraph, ungroupedEdges);
 		assertSelected(ungroupedVertices);
-		
+
 	}
 	// @formatter:on
 
 	protected void doTestGroupingProperlyTranslatesEdgesFromGroupedVerticesToRealVertices() {
 		//
-		//	WARNING!!!  WARNING!!!  WARNING!!!  WARNING!!!  WARNING!!!  WARNING!!!  
-		// This is not a junit test in that it is long, involved, hidden and complicated.  We 
+		//	WARNING!!!  WARNING!!!  WARNING!!!  WARNING!!!  WARNING!!!  WARNING!!!
+		// This is not a junit test in that it is long, involved, hidden and complicated.  We
 		// need to test this functionality, but we don't have a jComplicatedTest, so we will do
 		// it here.
 		//
@@ -1429,32 +1433,32 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		//
 		// Desired Behavior: We want to be able to group vertices, group grouped vertices and then
 		//                   ungroup them in any order.  For us to be able to do this, our group
-		//                   vertices must store enough edge information to be able to ungroup 
+		//                   vertices must store enough edge information to be able to ungroup
 		//                   and find vertices for edges *whether or now those vertices have been
 		//                   grouped or ungrouped*
-		// 
-		// Original Bug: We had a bug loosely described here: 
+		//
+		// Original Bug: We had a bug loosely described here:
 		// 0) Start with a directed graph of vertices.
 		// 1) Create two separate group vertices (A and B), such that A has an edge to B.
-		// 2) Create a third group vertex (Z) that contains a non-grouped vertex (B) *and* one 
+		// 2) Create a third group vertex (Z) that contains a non-grouped vertex (B) *and* one
 		//    of the other groups.
 		// 3) Now, ungroup the 1 remaining originally grouped vertex (A).
-		// 4) **At this point, the code could not determine which endpoint to pick for the edge 
+		// 4) **At this point, the code could not determine which endpoint to pick for the edge
 		//      that used to be from Z->A.  Which vertex inside of A represented the connection
 		//      pointing into Z (by way of B).
-		// 
-		// The fix is mentioned in the Desired Behavior section.  
+		//
+		// The fix is mentioned in the Desired Behavior section.
 		//
 
 		/*
-		 
+		
 		 0) Initial Graph
-		 
+		
 		 1 -> 2 -> 3 -> 4
 		           |
 		           *
 		           5
-		           
+		
 		*/
 
 		create12345Graph();
@@ -1469,7 +1473,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		FGVertex v4 = vertex("1004196");
 		FGVertex v5 = vertex("100419c");
 
-		// verify initial graph 
+		// verify initial graph
 		verifyEdge(v1, v2);
 		verifyEdge(v2, v3);
 		verifyEdge(v3, v4);
@@ -1478,12 +1482,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 		/*
 		 1) Create two separate group vertices (A and B), such that A has an edge to B.
-		            
+		
 		 A (v:{1,2} e:{1->2, 2->3}) -> B (v:{3,4} e:{2->3,3->4,3->5})
 		                               |
 		                               *
 		                               5
-		                               		 
+		
 		 */
 
 		GroupedFunctionGraphVertex groupA = group("A", v1, v2);
@@ -1494,13 +1498,13 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		verifyEdgeCount(2);// no other edges
 
 		/*
-		 2) Create a third group vertex (Z) that contains a non-grouped vertex *and* one 
+		 2) Create a third group vertex (Z) that contains a non-grouped vertex *and* one
 		    of the other groups (B).
-		    
+		
 		 A (v:{1,2} e:{1->2, 2->3}) -> Z (
 		 									v:{B (v:{3,4} e:{2->3,3->4,3->5}), 5}
 		 									e:{2->3, 3->5}
-		 								  )          
+		 								  )
 		
 		*/
 
@@ -1511,12 +1515,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 		/*
 		 3) Now, ungroup the 1 remaining originally grouped vertex (A).
-		 
+		
 		 1 -> 2 -> Z (
 						v:{B (v:{3,4} e:{2->3,3->4,3->5}), 5}
 						e:{2->3, 3->5}
-					  )   
-		 
+					  )
+		
 		 */
 
 		ungroup(groupA);
@@ -1526,14 +1530,14 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		verifyEdgeCount(2);
 
 		/*
-		 
+		
 		 4) Now, ungroup Z and go back to having one remaining group vertex (B)
-		 
+		
 		 1 -> 2 -> -> B (v:{3,4} e:{2->3,3->4,3->5})
 		              |
 		              *
 		              5
-		            		  
+		
 		*/
 
 		ungroup(groupZ);
@@ -1545,12 +1549,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 		/*
 		 5) Finally, ungroup the last group and make sure the graph is restored
-		              
+		
 		 1 -> 2 -> 3 -> 4
 		           |
 		           *
-		           5		
-		  
+		           5
+		
 		 */
 
 		ungroup(groupB);
@@ -1564,19 +1568,19 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	private void doTestRestoringWhenCodeBlocksHaveChanged_DoesntRegroup() {
-		// 
-		// Tests the behavior of how group vertices are restored when one or more of the vertices 
+		//
+		// Tests the behavior of how group vertices are restored when one or more of the vertices
 		// inside of the grouped vertex is no longer available when the graph attempts to restore
 		// the group vertex user settings (i.e., when restarting Ghidra, the previously grouped
-		// vertices should reappear).  
+		// vertices should reappear).
 		//
 		// In this test, we will be mutating a group of 2 nodes such
-		// that one of the nodes has been split into two.  This leaves only one vertex to 
+		// that one of the nodes has been split into two.  This leaves only one vertex to
 		// be found by the regrouping algorithm.  Furthermore, the regrouping will not take place
 		// if at least two vertices cannot be found.
 		//
 
-		// 
+		//
 		// Pick a function and group some nodes.
 		//
 		FGData graphData = graphFunction("01002cf5");
@@ -1587,8 +1591,8 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 		group(ungroupedVertices);
 
-		// 5 edges expected: 
-		// -01002cf5: 2 out 
+		// 5 edges expected:
+		// -01002cf5: 2 out
 		// -01002cf5: 2 in, 1 out
 		int expectedGroupedEdgeCount = 5;
 		GroupedFunctionGraphVertex groupedVertex = validateNewGroupedVertexFromVertices(
@@ -1598,10 +1602,10 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		Address minAddress = addresses.getMinAddress();
 
 		//
-		// Ideally, we would like to save, close and re-open the program so that we can get 
-		// a round-trip saving and reloading.  However, in the test environment, we cannot save 
+		// Ideally, we would like to save, close and re-open the program so that we can get
+		// a round-trip saving and reloading.  However, in the test environment, we cannot save
 		// our programs.  So, we will instead just navigate away from the current function, clear
-		// the cache (to make sure that we read the settings again), and then verify that the 
+		// the cache (to make sure that we read the settings again), and then verify that the
 		// data saved in the program has been used to re-group.
 		//
 		graphFunction("0100415a");
@@ -1623,19 +1627,19 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void doTestRestoringWhenCodeBlocksHaveChanged_WillRegroup() {
-		// 
-		// Tests the behavior of how group vertices are restored when one or more of the vertices 
+		//
+		// Tests the behavior of how group vertices are restored when one or more of the vertices
 		// inside of the grouped vertex is no longer available when the graph attempts to restore
 		// the group vertex user settings (i.e., when restarting Ghidra, the previously grouped
 		// vertices should reappear).
 		//
 		// In this test, we will be mutating a group of 3 nodes such
-		// that one of the nodes has been split into two.  This leaves 2 vertices to 
+		// that one of the nodes has been split into two.  This leaves 2 vertices to
 		// be found by the regrouping algorithm.  Furthermore, the regrouping *will* still
 		// take place, as at least two vertices cannot be found.
 		//
 
-		// 
+		//
 		// Pick a function and group some nodes.
 		//
 		FGData graphData = graphFunction("01002cf5");
@@ -1646,8 +1650,8 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 		group(ungroupedVertices);
 
-		// 5 edges expected: 
-		// -01002cf5: 2 out 
+		// 5 edges expected:
+		// -01002cf5: 2 out
 		// -01002d11: 2 in, (1 out that was removed)
 		// -01002d1f: 2 out (1 in that was removed)
 		int expectedGroupedEdgeCount = 6;
@@ -1659,10 +1663,10 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		Address maxAddress = addresses.getMaxAddress();
 
 		//
-		// Ideally, we would like to save, close and re-open the program so that we can get 
-		// a round-trip saving and reloading.  However, in the test environment, we cannot save 
+		// Ideally, we would like to save, close and re-open the program so that we can get
+		// a round-trip saving and reloading.  However, in the test environment, we cannot save
 		// our programs.  So, we will instead just navigate away from the current function, clear
-		// the cache (to make sure that we read the settings again), and then verify that the 
+		// the cache (to make sure that we read the settings again), and then verify that the
 		// data saved in the program has been used to re-group.
 		//
 		graphFunction("0100415a");
@@ -1706,12 +1710,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	protected void doTestSymbolAddedWhenGrouped_SymbolInsideOfGroupNode() {
 		//
 		// By default, if the FunctionGraph detects a symbol addition to one of the code blocks
-		// in the graph, then it will split the affected vertex (tested elsewhere).  
+		// in the graph, then it will split the affected vertex (tested elsewhere).
 		// However, if the affected vertex is grouped, then the FG will not split the node, but
 		// should still show the 'stale' indicator.
 		//
 
-		// 
+		//
 		// Pick a function and group some nodes.
 		//
 		FGData graphData = graphFunction("01002cf5");
@@ -1722,8 +1726,8 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 		group(ungroupedVertices);
 
-		// 5 edges expected: 
-		// -01002cf5: 2 out 
+		// 5 edges expected:
+		// -01002cf5: 2 out
 		// -01002cf5: 2 in, 1 out
 		int expectedGroupedEdgeCount = 5;
 		GroupedFunctionGraphVertex groupedVertex = validateNewGroupedVertexFromVertices(
@@ -1748,8 +1752,8 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		return reference.get();
 	}
 
-	/** 
-	 * Finds an edge that represents the given edge, which may no longer exist with 
+	/**
+	 * Finds an edge that represents the given edge, which may no longer exist with
 	 * the same (==) edge instances.
 	 */
 	private FGEdge getCurrentEdge(FunctionGraph functionGraph, FGEdge edge) {
@@ -1998,29 +2002,29 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	private void setMinCrossLayout() {
 		Object actionManager = getInstanceField("actionManager", graphProvider);
 		@SuppressWarnings("unchecked")
-		final MultiStateDockingAction<Class<? extends FGLayoutProvider>> action =
-			(MultiStateDockingAction<Class<? extends FGLayoutProvider>>) getInstanceField(
-				"layoutAction", actionManager);
+		final MultiStateDockingAction<FGLayoutProvider> action =
+			(MultiStateDockingAction<FGLayoutProvider>) getInstanceField("layoutAction",
+				actionManager);
 		runSwing(() -> {
-			List<ActionState<Class<? extends FGLayoutProvider>>> states =
-				action.getAllActionStates();
-			for (ActionState<Class<? extends FGLayoutProvider>> state : states) {
-				Class<? extends FGLayoutProvider> layoutClass = state.getUserData();
-				if (layoutClass.getSimpleName().contains("MinCross")) {
+			List<ActionState<FGLayoutProvider>> states = action.getAllActionStates();
+			for (ActionState<FGLayoutProvider> state : states) {
+				FGLayoutProvider layoutProvider = state.getUserData();
+				if (layoutProvider.getLayoutName().contains("MinCross")) {
 					action.setCurrentActionState(state);
+					return;
 				}
 			}
 
+			throw new AssertException("Unable to find MinCross layout");
 		});
-
 	}
 
 	protected FGData triggerPersistenceAndReload(String functionAddress) {
 		//
-		// Ideally, we would like to save, close and re-open the program so that we can get 
-		// a round-trip saving and reloading.  However, in the test environment, we cannot save 
+		// Ideally, we would like to save, close and re-open the program so that we can get
+		// a round-trip saving and reloading.  However, in the test environment, we cannot save
 		// our programs.  So, we will instead just navigate away from the current function, clear
-		// the cache (to make sure that we read the settings again), and then verify that the 
+		// the cache (to make sure that we read the settings again), and then verify that the
 		// data saved in the program has been used to re-group.
 		//
 		String otherAddress = "0100415a";
@@ -2277,7 +2281,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	protected void moveView(int amount) {
 		Point translation = new Point(amount, amount);
@@ -2316,11 +2320,11 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		DockingActionIf action = getAction(tool, "FunctionGraphPlugin", name);
 		ToggleDockingAction displayAction = (ToggleDockingAction) action;
 		setToggleActionSelected(displayAction, new ActionContext(), expectedVisible);
-//	
+//
 //		// make sure the action is not already in the state we expect
 //		assertEquals(name + " action is not selected as expected", !expectedVisible,
 //			displayAction.isSelected());
-//	
+//
 //		performAction(displayAction, true);
 	}
 
