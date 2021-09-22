@@ -114,6 +114,20 @@ public interface DebugControl extends DebugControlReentrant {
 		;
 	}
 
+	public static enum DebugFilterOrdinals {
+		DEBUG_FILTER_CREATE_THREAD, //
+		DEBUG_FILTER_EXIT_THREAD, //
+		DEBUG_FILTER_CREATE_PROCESS, //
+		DEBUG_FILTER_EXIT_PROCESS, //
+		DEBUG_FILTER_LOAD_MODULE, //
+		DEBUG_FILTER_UNLOAD_MODULE, //
+		DEBUG_FILTER_SYSTEM_ERROR, //
+		DEBUG_FILTER_INITIAL_BREAKPOINT, //
+		DEBUG_FILTER_INITIAL_MODULE_LOAD, //
+		DEBUG_FILTER_DEBUGGEE_OUTPUT, //
+		;
+	}
+
 	public static enum DebugFilterExecutionOption {
 		DEBUG_FILTER_BREAK(0, "Break"), //
 		DEBUG_FILTER_SECOND_CHANCE_BREAK(1, "Second-chance Break"), //

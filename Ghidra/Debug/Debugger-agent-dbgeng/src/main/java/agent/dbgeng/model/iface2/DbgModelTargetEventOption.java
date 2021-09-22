@@ -19,9 +19,4 @@ import ghidra.dbg.target.TargetTogglable;
 
 public interface DbgModelTargetEventOption extends DbgModelTargetObject, TargetTogglable {
 
-	@Override
-	public default String getDisplay() {
-		return getName();
-	}
-
 }

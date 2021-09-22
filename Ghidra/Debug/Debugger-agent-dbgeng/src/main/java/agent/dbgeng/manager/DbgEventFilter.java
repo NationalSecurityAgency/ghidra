@@ -17,6 +17,8 @@ package agent.dbgeng.manager;
 
 public interface DbgEventFilter {
 
+	int getIndex();
+
 	String getName();
 
 	String getCmd();

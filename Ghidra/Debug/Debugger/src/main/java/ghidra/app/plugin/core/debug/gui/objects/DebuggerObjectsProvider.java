@@ -1148,43 +1148,43 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		groupTargetIndex++;
 
 		new ActionBuilder("Finish", plugin.getName())
-		.keyBinding("F12")
-		.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
-		.toolBarIcon(AbstractStepFinishAction.ICON)
-		.popupMenuPath("&Finish")
-		.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
-		.popupMenuIcon(AbstractStepFinishAction.ICON)
-		.helpLocation(AbstractStepFinishAction.help(plugin))
-		//.withContext(ObjectActionContext.class)
-		.enabledWhen(ctx -> 
-			isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
-		.popupWhen(ctx -> 
-			isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
-		.onAction(ctx -> performStepFinish(ctx))
-		.enabled(false)
-		.buildAndInstallLocal(this);
+			.keyBinding("F12")
+			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
+			.toolBarIcon(AbstractStepFinishAction.ICON)
+			.popupMenuPath("&Finish")
+			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
+			.popupMenuIcon(AbstractStepFinishAction.ICON)
+			.helpLocation(AbstractStepFinishAction.help(plugin))
+			//.withContext(ObjectActionContext.class)
+			.enabledWhen(ctx -> 
+				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
+			.popupWhen(ctx -> 
+				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
+			.onAction(ctx -> performStepFinish(ctx))
+			.enabled(false)
+			.buildAndInstallLocal(this);
+		
+		groupTargetIndex++;
+		
+		new ActionBuilder("Step Last", plugin.getName())
+			.keyBinding("ALT F8")
+			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
+			.toolBarIcon(AbstractStepLastAction.ICON)
+			.popupMenuPath("&Step Last")
+			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
+			.popupMenuIcon(AbstractStepLastAction.ICON)
+			.helpLocation(AbstractStepLastAction.help(plugin))
+			//.withContext(ObjectActionContext.class)
+			.enabledWhen(ctx -> 
+				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
+			.popupWhen(ctx -> 
+				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
+			.onAction(ctx -> performStepLast(ctx))
+			.enabled(false)
+			.buildAndInstallLocal(this);
+		
+		groupTargetIndex++;
 	
-	groupTargetIndex++;
-	
-	new ActionBuilder("Step Last", plugin.getName())
-		.keyBinding("ALT F8")
-		.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
-		.toolBarIcon(AbstractStepLastAction.ICON)
-		.popupMenuPath("&Step Last")
-		.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
-		.popupMenuIcon(AbstractStepLastAction.ICON)
-		.helpLocation(AbstractStepLastAction.help(plugin))
-		//.withContext(ObjectActionContext.class)
-		.enabledWhen(ctx -> 
-			isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
-		.popupWhen(ctx -> 
-			isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
-		.onAction(ctx -> performStepLast(ctx))
-		.enabled(false)
-		.buildAndInstallLocal(this);
-	
-	groupTargetIndex++;
-
 		actionAddBreakpoint = new ActionBuilder("Add Breakpoint", plugin.getName())
 			.keyBinding("F3")
 			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
@@ -1221,6 +1221,20 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		
 		groupTargetIndex++;
 	
+		new ActionBuilder("Toggle", plugin.getName())
+			.keyBinding("T")
+			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "X" + groupTargetIndex)
+			.popupMenuPath("&Toggle")
+			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "X" + groupTargetIndex)
+			.helpLocation(AbstractToggleAction.help(plugin))
+			.enabledWhen(ctx -> isInstance(ctx, TargetTogglable.class))
+			.popupWhen(ctx -> isInstance(ctx, TargetResumable.class))
+			.onAction(ctx -> performToggle(ctx))
+			.enabled(false)
+			.buildAndInstallLocal(this);
+		
+		groupTargetIndex++;
+
 		displayAsTreeAction = new DisplayAsTreeAction(tool, plugin.getName(), this);
 		displayAsTableAction = new DisplayAsTableAction(tool, plugin.getName(), this);
 		displayAsGraphAction = new DisplayAsGraphAction(tool, plugin.getName(), this);
@@ -1484,6 +1498,12 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			tool.showDialog(breakpointDialog);
 			return AsyncUtils.NIL;
 		}, "Couldn't set breakpoint");
+	}
+
+	public void performToggle(ActionContext context) {
+		performAction(context, false, TargetTogglable.class, t -> {
+			return t.toggle(!t.isEnabled());
+		}, "Couldn't toggle");
 	}
 
 	public void initiateConsole(ActionContext context) {

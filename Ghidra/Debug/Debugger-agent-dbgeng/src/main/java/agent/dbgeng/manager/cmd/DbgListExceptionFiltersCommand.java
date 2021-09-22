@@ -52,7 +52,7 @@ public class DbgListExceptionFiltersCommand
 			String text = control.getEventFilterText(nEvents + i);
 			String cmd = control.getEventFilterCommand(nEvents + i);
 			String cmd2 = control.getExceptionFilterSecondCommand(nEvents + i);
-			DbgExceptionFilterImpl filter = new DbgExceptionFilterImpl(text, cmd, cmd2,
+			DbgExceptionFilterImpl filter = new DbgExceptionFilterImpl(i, text, cmd, cmd2,
 				p.ExecutionOption.intValue(), p.ContinueOption.intValue(),
 				p.ExceptionCode.longValue());
 			result.add(filter);

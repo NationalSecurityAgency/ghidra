@@ -15,15 +15,18 @@
  */
 package agent.dbgeng.model.iface2;
 
-import agent.dbgeng.manager.DbgEventFilter;
+import agent.dbgeng.manager.*;
+import agent.dbgeng.manager.evt.AbstractDbgEvent;
+import agent.dbgeng.model.iface1.DbgModelSelectableObject;
 
-public interface DbgModelTargetEvent extends DbgModelTargetObject {
-
-	@Override
-	public default String getDisplay() {
-		return getName();
-	}
+public interface DbgModelTargetEvent extends DbgModelSelectableObject, DbgEventsListenerAdapter //
+{
 
 	public DbgEventFilter getFilter();
+
+	public int getEventIndex();
+
+	@Override
+	void eventSelected(AbstractDbgEvent<?> event, DbgCause cause);
 
 }

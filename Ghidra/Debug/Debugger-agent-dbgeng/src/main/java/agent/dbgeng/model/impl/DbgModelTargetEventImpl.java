@@ -18,9 +18,10 @@ package agent.dbgeng.model.impl;
 import java.util.List;
 import java.util.Map;
 
-import agent.dbgeng.dbgeng.DebugControl.DebugFilterContinuationOption;
-import agent.dbgeng.dbgeng.DebugControl.DebugFilterExecutionOption;
+import agent.dbgeng.dbgeng.DebugControl.*;
+import agent.dbgeng.manager.DbgCause;
 import agent.dbgeng.manager.DbgEventFilter;
+import agent.dbgeng.manager.evt.*;
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
@@ -55,8 +56,8 @@ public class DbgModelTargetEventImpl extends DbgModelTargetObjectImpl
 			DebugFilterExecutionOption.getByNumber(filter.getExecutionOption());
 		DebugFilterContinuationOption cont =
 			DebugFilterContinuationOption.getByNumber(filter.getContinueOption());
-		execOption = new DbgModelTargetEventOptionImpl(this, exec);
-		contOption = new DbgModelTargetEventOptionImpl(this, cont);
+		execOption = new DbgModelTargetExecutionOptionImpl(this, exec);
+		contOption = new DbgModelTargetContinuationOptionImpl(this, cont);
 
 		changeAttributes(List.of(), List.of(), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, getIndex(), //
@@ -64,6 +65,8 @@ public class DbgModelTargetEventImpl extends DbgModelTargetObjectImpl
 			"Execute", execOption, //
 			"Continue", contOption //
 		), "Initialized");
+
+		getManager().addEventsListener(this);
 	}
 
 	@Override
@@ -71,4 +74,44 @@ public class DbgModelTargetEventImpl extends DbgModelTargetObjectImpl
 		return filter;
 	}
 
+	@Override
+	public int getEventIndex() {
+		return filter.getIndex();
+	}
+
+	@Override
+	public void eventSelected(AbstractDbgEvent<?> event, DbgCause cause) {
+		changeAttributes(List.of(), List.of(), Map.of( //
+			MODIFIED_ATTRIBUTE_NAME, false), "Refreshed");
+		if (event instanceof DbgThreadCreatedEvent &&
+			getEventIndex() == DebugFilterOrdinals.DEBUG_FILTER_CREATE_THREAD.ordinal()) {
+			changeAttributes(List.of(), List.of(), Map.of( //
+				MODIFIED_ATTRIBUTE_NAME, true), "Refreshed");
+		}
+		if (event instanceof DbgThreadExitedEvent &&
+			getEventIndex() == DebugFilterOrdinals.DEBUG_FILTER_EXIT_THREAD.ordinal()) {
+			changeAttributes(List.of(), List.of(), Map.of( //
+				MODIFIED_ATTRIBUTE_NAME, true), "Refreshed");
+		}
+		if (event instanceof DbgProcessCreatedEvent &&
+			getEventIndex() == DebugFilterOrdinals.DEBUG_FILTER_CREATE_PROCESS.ordinal()) {
+			changeAttributes(List.of(), List.of(), Map.of( //
+				MODIFIED_ATTRIBUTE_NAME, true), "Refreshed");
+		}
+		if (event instanceof DbgProcessExitedEvent &&
+			getEventIndex() == DebugFilterOrdinals.DEBUG_FILTER_EXIT_PROCESS.ordinal()) {
+			changeAttributes(List.of(), List.of(), Map.of( //
+				MODIFIED_ATTRIBUTE_NAME, true), "Refreshed");
+		}
+		if (event instanceof DbgModuleLoadedEvent &&
+			getEventIndex() == DebugFilterOrdinals.DEBUG_FILTER_LOAD_MODULE.ordinal()) {
+			changeAttributes(List.of(), List.of(), Map.of( //
+				MODIFIED_ATTRIBUTE_NAME, true), "Refreshed");
+		}
+		if (event instanceof DbgModuleUnloadedEvent &&
+			getEventIndex() == DebugFilterOrdinals.DEBUG_FILTER_UNLOAD_MODULE.ordinal()) {
+			changeAttributes(List.of(), List.of(), Map.of( //
+				MODIFIED_ATTRIBUTE_NAME, true), "Refreshed");
+		}
+	}
 }

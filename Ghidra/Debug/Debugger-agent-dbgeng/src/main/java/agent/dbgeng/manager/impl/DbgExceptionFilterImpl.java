@@ -22,9 +22,10 @@ public class DbgExceptionFilterImpl extends DbgEventFilterImpl implements DbgExc
 	private final String cmd2;
 	private long exceptionCode;
 
-	public DbgExceptionFilterImpl(String text, String cmd, String cmd2, int executionOption,
+	public DbgExceptionFilterImpl(int index, String text, String cmd, String cmd2,
+			int executionOption,
 			int continueOption, long exceptionCode) {
-		super(text, cmd, executionOption, continueOption);
+		super(index, text, cmd, executionOption, continueOption);
 		this.cmd2 = cmd2;
 		this.exceptionCode = exceptionCode;
 	}

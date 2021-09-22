@@ -1210,6 +1210,22 @@ public interface DebuggerResources {
 		}
 	}
 
+	abstract class AbstractToggleAction extends DockingAction {
+		public static final String NAME = "Toggle";
+		public static final Icon ICON = ICON_BREAKPOINT_MIXED_ED_MARKER;
+		public static final String HELP_ANCHOR = "toggle_option";
+
+		public static HelpLocation help(Plugin owner) {
+			return new HelpLocation(owner.getName(), HELP_ANCHOR);
+		}
+
+		public AbstractToggleAction(Plugin owner) {
+			super(NAME, owner.getName());
+			setDescription("Enable or disable an option");
+			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
+		}
+	}
+
 	interface MapIdenticallyAction {
 		String NAME = "Map Identically";
 		String DESCRIPTION =

@@ -20,75 +20,66 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.dbgeng.DebugControl.DebugFilterContinuationOption;
-import agent.dbgeng.dbgeng.DebugControl.DebugFilterExecutionOption;
+import agent.dbgeng.manager.cmd.DbgToggleContinuationCommand;
+import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.schema.*;
-import ghidra.dbg.util.PathUtils;
 
 @TargetObjectSchemaInfo(
-	name = "Event",
+	name = "ContinuationFilter",
 	elements = {
 		@TargetElementType(type = Void.class) },
 	attributes = {
 		@TargetAttributeType(type = Object.class) })
-public class DbgModelTargetEventOptionImpl extends DbgModelTargetObjectImpl
+public class DbgModelTargetContinuationOptionImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetEventOption {
 
-	protected static String keyFilter(DebugFilterExecutionOption option) {
-		return PathUtils.makeKey(option.description);
-	}
-
-	protected static String keyFilter(DebugFilterContinuationOption option) {
-		return PathUtils.makeKey(option.description);
-	}
-
-	private DebugFilterExecutionOption optionEx;
+	private DbgModelTargetEvent event;
 	private DebugFilterContinuationOption optionCont;
 
-	public DbgModelTargetEventOptionImpl(DbgModelTargetEvent event,
-			DebugFilterExecutionOption option) {
-		super(event.getModel(), event, keyFilter(option), "EventFilter");
+	public DbgModelTargetContinuationOptionImpl(DbgModelTargetEvent event,
+			DebugFilterContinuationOption option) {
+		super(event.getModel(), event, "Continue", "ContinuationFilter");
 		this.getModel().addModelObject(option, this);
-		this.optionEx = option;
+		this.event = event;
+		this.optionCont = option;
+		setAttributes();
 	}
 
-	public DbgModelTargetEventOptionImpl(DbgModelTargetEvent event,
+	public DbgModelTargetContinuationOptionImpl(DbgModelTargetException exc,
 			DebugFilterContinuationOption option) {
-		super(event.getModel(), event, keyFilter(option), "EventFilter");
+		super(exc.getModel(), exc, "Continue", "ContinuationFilter");
+		this.event = exc;
 		this.getModel().addModelObject(option, this);
 		this.optionCont = option;
-	}
-
-	public DbgModelTargetEventOptionImpl(DbgModelTargetException exc,
-			DebugFilterExecutionOption option) {
-		super(exc.getModel(), exc, keyFilter(option), "EventFilter");
-		this.getModel().addModelObject(option, this);
-		this.optionEx = option;
-	}
-
-	public DbgModelTargetEventOptionImpl(DbgModelTargetException exc,
-			DebugFilterContinuationOption option) {
-		super(exc.getModel(), exc, keyFilter(option), "EventFilter");
-		this.getModel().addModelObject(option, this);
-		this.optionCont = option;
+		setAttributes();
 	}
 
 	@Override
 	public CompletableFuture<Void> disable() {
-		// TODO Auto-generated method stub
-		return null;
+		DbgManagerImpl manager = getManager();
+		optionCont = DebugFilterContinuationOption.DEBUG_FILTER_GO_NOT_HANDLED;
+		setAttributes();
+		return manager.execute(
+			new DbgToggleContinuationCommand(manager, event.getEventIndex(), optionCont));
 	}
 
 	@Override
 	public CompletableFuture<Void> enable() {
-		// TODO Auto-generated method stub
-		return null;
+		DbgManagerImpl manager = getManager();
+		optionCont = DebugFilterContinuationOption.DEBUG_FILTER_GO_HANDLED;
+		setAttributes();
+		return manager.execute(
+			new DbgToggleContinuationCommand(manager, event.getEventIndex(), optionCont));
 	}
 
 	public void setAttributes() {
 		changeAttributes(List.of(), List.of(), Map.of( //
-			DISPLAY_ATTRIBUTE_NAME, getName() //
-		), "Initialized");
+			DISPLAY_ATTRIBUTE_NAME, getName() + " : " + optionCont.description, //
+			VALUE_ATTRIBUTE_NAME, optionCont, //
+			ENABLED_ATTRIBUTE_NAME,
+			optionCont.equals(DebugFilterContinuationOption.DEBUG_FILTER_GO_HANDLED)),
+			"Refreshed");
 	}
 
 }

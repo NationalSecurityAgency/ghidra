@@ -17,12 +17,7 @@ package agent.dbgeng.model.iface2;
 
 import agent.dbgeng.manager.DbgExceptionFilter;
 
-public interface DbgModelTargetException extends DbgModelTargetObject {
-
-	@Override
-	public default String getDisplay() {
-		return getName();
-	}
+public interface DbgModelTargetException extends DbgModelTargetEvent {
 
 	public DbgExceptionFilter getFilter();
 
