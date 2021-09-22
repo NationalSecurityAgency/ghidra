@@ -18,10 +18,10 @@ package agent.dbgeng.manager.impl;
 import agent.dbgeng.manager.DbgEventFilter;
 
 public class DbgEventFilterImpl implements DbgEventFilter {
-	private final String text;
-	private final String cmd;
-	private int executionOption;
-	private int continueOption;
+	protected final String text;
+	protected final String cmd;
+	protected int executionOption;
+	protected int continueOption;
 
 	public DbgEventFilterImpl(String text, String cmd, int executionOption, int continueOption) {
 		this.text = text;

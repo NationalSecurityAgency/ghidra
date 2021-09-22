@@ -114,6 +114,55 @@ public interface DebugControl extends DebugControlReentrant {
 		;
 	}
 
+	public static enum DebugFilterExecutionOption {
+		DEBUG_FILTER_BREAK(0, "Break"), //
+		DEBUG_FILTER_SECOND_CHANCE_BREAK(1, "Second-chance Break"), //
+		DEBUG_FILTER_OUTPUT(2, "Output-only"), //
+		DEBUG_FILTER_IGNORE(3, "Ignore"), //
+		DEBUG_FILTER_REMOVE(4, "Remove"), //
+		;
+
+		public static DebugFilterExecutionOption getByNumber(int val) {
+			for (DebugFilterExecutionOption m : DebugFilterExecutionOption.values()) {
+				if (m.val == val) {
+					return m;
+				}
+			}
+			return null;
+		}
+
+		DebugFilterExecutionOption(int val, String description) {
+			this.val = val;
+			this.description = description;
+		}
+
+		public final int val;
+		public final String description;
+	}
+
+	public static enum DebugFilterContinuationOption {
+		DEBUG_FILTER_GO_HANDLED(0, "Handled"), //
+		DEBUG_FILTER_GO_NOT_HANDLED(1, "Not Handled"), //
+		;
+
+		public static DebugFilterContinuationOption getByNumber(int val) {
+			for (DebugFilterContinuationOption m : DebugFilterContinuationOption.values()) {
+				if (m.val == val) {
+					return m;
+				}
+			}
+			return null;
+		}
+
+		DebugFilterContinuationOption(int val, String description) {
+			this.val = val;
+			this.description = description;
+		}
+
+		public final int val;
+		public final String description;
+	}
+
 	boolean getInterrupt();
 
 	int getInterruptTimeout();

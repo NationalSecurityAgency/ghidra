@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.dbgeng.manager;
+package agent.dbgeng.model.iface2;
 
-public interface DbgExceptionFilter extends DbgEventFilter {
+import ghidra.dbg.target.TargetTogglable;
 
-	String getSecondCmd();
+public interface DbgModelTargetEventOption extends DbgModelTargetObject, TargetTogglable {
 
-	String getExceptionCode();
+	@Override
+	public default String getDisplay() {
+		return getName();
+	}
+
 }

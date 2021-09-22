@@ -18,9 +18,10 @@ package agent.dbgeng.model.impl;
 import java.util.List;
 import java.util.Map;
 
+import agent.dbgeng.dbgeng.DebugControl.DebugFilterContinuationOption;
+import agent.dbgeng.dbgeng.DebugControl.DebugFilterExecutionOption;
 import agent.dbgeng.manager.DbgExceptionFilter;
-import agent.dbgeng.model.iface2.DbgModelTargetException;
-import agent.dbgeng.model.iface2.DbgModelTargetExceptionContainer;
+import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
@@ -40,6 +41,9 @@ public class DbgModelTargetExceptionImpl extends DbgModelTargetObjectImpl
 		return PathUtils.makeKey(indexFilter(filter));
 	}
 
+	protected DbgModelTargetEventOption execOption;
+	protected DbgModelTargetEventOption contOption;
+
 	private DbgExceptionFilter filter;
 
 	public DbgModelTargetExceptionImpl(DbgModelTargetExceptionContainer exceptions,
@@ -48,13 +52,20 @@ public class DbgModelTargetExceptionImpl extends DbgModelTargetObjectImpl
 		this.getModel().addModelObject(filter, this);
 		this.filter = filter;
 
+		DebugFilterExecutionOption exec =
+			DebugFilterExecutionOption.getByNumber(filter.getExecutionOption());
+		DebugFilterContinuationOption cont =
+			DebugFilterContinuationOption.getByNumber(filter.getContinueOption());
+		execOption = new DbgModelTargetEventOptionImpl(this, exec);
+		contOption = new DbgModelTargetEventOptionImpl(this, cont);
+
 		changeAttributes(List.of(), List.of(), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, getIndex(), //
 			"Command", filter.getCmd(), //
 			"SecondCmd", filter.getCmd(), //
-			"Execute", filter.getExecutionOption(), //
-			"Continue", filter.getContinueOption(), //
-			"Exception", Long.toHexString(filter.getExceptionCode()) //
+			"Execute", execOption, //
+			"Continue", contOption, //
+			"Exception", filter.getExceptionCode() //
 		), "Initialized");
 	}
 
