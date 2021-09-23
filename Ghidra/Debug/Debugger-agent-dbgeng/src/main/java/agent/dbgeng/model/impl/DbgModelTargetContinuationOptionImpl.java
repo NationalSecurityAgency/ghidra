@@ -66,7 +66,7 @@ public class DbgModelTargetContinuationOptionImpl extends DbgModelTargetObjectIm
 	}
 
 	@Override
-	public int getOption() {
+	public Integer getOption() {
 		return optionCont.ordinal();
 	}
 

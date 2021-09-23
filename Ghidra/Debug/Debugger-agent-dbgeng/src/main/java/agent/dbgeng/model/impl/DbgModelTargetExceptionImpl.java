@@ -125,6 +125,15 @@ public class DbgModelTargetExceptionImpl extends DbgModelTargetObjectImpl
 			ParameterDescription.create(String.class, COMMAND2_ATTRIBUTE_NAME, false, "",
 				COMMAND2_ATTRIBUTE_NAME, "filter 2nd-chance command");
 		map.put(COMMAND2_ATTRIBUTE_NAME, cmdDesc2);
+		ParameterDescription<Integer> execDesc =
+			ParameterDescription.create(Integer.class, EXECUTE_OPTION_ATTRIBUTE_NAME, false,
+				execOption.getOption(), EXECUTE_OPTION_ATTRIBUTE_NAME, "filter execution option");
+		map.put(EXECUTE_OPTION_ATTRIBUTE_NAME, execDesc);
+		ParameterDescription<Integer> contDesc =
+			ParameterDescription.create(Integer.class, CONTINUE_OPTION_ATTRIBUTE_NAME, false,
+				contOption.getOption(), CONTINUE_OPTION_ATTRIBUTE_NAME,
+				"filter continuation option");
+		map.put(CONTINUE_OPTION_ATTRIBUTE_NAME, contDesc);
 		return map;
 	}
 
@@ -152,12 +161,12 @@ public class DbgModelTargetExceptionImpl extends DbgModelTargetObjectImpl
 				throw new DebuggerIllegalArgumentException("Command should be a string");
 			case EXECUTE_OPTION_ATTRIBUTE_NAME:
 				if (value instanceof Integer) {
-					execOption.setOption((Integer) value);
+					return execOption.setOption((Integer) value);
 				}
 				throw new DebuggerIllegalArgumentException("Option should be numeric");
 			case CONTINUE_OPTION_ATTRIBUTE_NAME:
 				if (value instanceof Integer) {
-					contOption.setOption((Integer) value);
+					return contOption.setOption((Integer) value);
 				}
 				throw new DebuggerIllegalArgumentException("Option should be numeric");
 			default:

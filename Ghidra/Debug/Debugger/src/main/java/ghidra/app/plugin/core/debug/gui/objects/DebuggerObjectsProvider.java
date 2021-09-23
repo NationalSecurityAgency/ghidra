@@ -338,7 +338,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		//attachDialogOld = new DebuggerAttachDialog(this);
 		attachDialog = new DebuggerAttachDialog(this);
 		breakpointDialog = new DebuggerBreakpointDialog(this);
-		configDialog = new DebuggerMethodInvocationDialog(tool, "Config", "Config",
+		configDialog = new DebuggerMethodInvocationDialog(tool, "Configuration", "Configure",
 			DebuggerResources.ICON_LAUNCH);
 	}
 
@@ -1527,8 +1527,10 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public void performConfigure(ActionContext context) {
 		performAction(context, false, TargetConfigurable.class, configurable -> {
 			Map<String, ?> args = configDialog.promptArguments(configurable.getConfigParameters());
-			for (Entry<String, ?> entry : args.entrySet()) {
-				configurable.writeConfigurationOption(entry.getKey(), entry.getValue());
+			if (args != null) {
+				for (Entry<String, ?> entry : args.entrySet()) {
+					configurable.writeConfigurationOption(entry.getKey(), entry.getValue());
+				}
 			}
 			return AsyncUtils.NIL;
 		}, "Couldn't configure");

@@ -21,7 +21,7 @@ import ghidra.dbg.target.TargetTogglable;
 
 public interface DbgModelTargetEventOption extends DbgModelTargetObject, TargetTogglable {
 
-	int getOption();
+	Integer getOption();
 
 	CompletableFuture<Void> setOption(int ordinal);
 

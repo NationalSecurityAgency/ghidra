@@ -67,7 +67,7 @@ public class DbgModelTargetExecutionOptionImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public int getOption() {
+	public Integer getOption() {
 		return optionExc.ordinal();
 	}
 
