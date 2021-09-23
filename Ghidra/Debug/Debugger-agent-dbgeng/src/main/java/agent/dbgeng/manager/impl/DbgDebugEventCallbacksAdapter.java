@@ -132,6 +132,11 @@ public class DbgDebugEventCallbacksAdapter extends DebugEventCallbacksAdapter {
 		return checkInterrupt(DebugStatus.NO_CHANGE);
 	}
 
+	@Override
+	public DebugStatus systemError(int error, int level) {
+		return checkInterrupt(manager.processEvent(new DbgSystemErrorEvent(error, level)));
+	}
+
 	/*
 	@Override
 	public DebugStatus changeDebuggeeState(BitmaskSet<ChangeDebuggeeState> flags, long argument) {

@@ -126,6 +126,26 @@ public class DbgModelTargetEventImpl extends DbgModelTargetObjectImpl
 			changeAttributes(List.of(), List.of(), Map.of( //
 				MODIFIED_ATTRIBUTE_NAME, true), "Refreshed");
 		}
+		if (event instanceof DbgInitialBreakpointEvent &&
+			getEventIndex() == DebugFilterOrdinals.DEBUG_FILTER_INITIAL_BREAKPOINT.ordinal()) {
+			changeAttributes(List.of(), List.of(), Map.of( //
+				MODIFIED_ATTRIBUTE_NAME, true), "Refreshed");
+		}
+		if (event instanceof DbgInitialModuleLoadEvent &&
+			getEventIndex() == DebugFilterOrdinals.DEBUG_FILTER_INITIAL_MODULE_LOAD.ordinal()) {
+			changeAttributes(List.of(), List.of(), Map.of( //
+				MODIFIED_ATTRIBUTE_NAME, true), "Refreshed");
+		}
+		if (event instanceof DbgSystemErrorEvent &&
+			getEventIndex() == DebugFilterOrdinals.DEBUG_FILTER_SYSTEM_ERROR.ordinal()) {
+			changeAttributes(List.of(), List.of(), Map.of( //
+				MODIFIED_ATTRIBUTE_NAME, true), "Refreshed");
+		}
+		if (event instanceof DbgConsoleOutputEvent &&
+			getEventIndex() == DebugFilterOrdinals.DEBUG_FILTER_DEBUGGEE_OUTPUT.ordinal()) {
+			changeAttributes(List.of(), List.of(), Map.of( //
+				MODIFIED_ATTRIBUTE_NAME, true), "Refreshed");
+		}
 	}
 
 	@Override

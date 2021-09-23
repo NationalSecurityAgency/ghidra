@@ -594,6 +594,7 @@ public class DbgManagerImpl implements DbgManager {
 		handlerMap.put(DbgStateChangedEvent.class, this::processStateChanged);
 		handlerMap.put(DbgSessionSelectedEvent.class, this::processSessionSelected);
 		handlerMap.put(DbgSystemsEvent.class, this::processSystemsEvent);
+		handlerMap.putVoid(DbgSystemErrorEvent.class, this::processSystemErrorEvent);
 		handlerMap.putVoid(DbgCommandDoneEvent.class, this::processDefault);
 		handlerMap.putVoid(DbgStoppedEvent.class, this::processDefault);
 		handlerMap.putVoid(DbgRunningEvent.class, this::processDefault);
@@ -1041,7 +1042,14 @@ public class DbgManagerImpl implements DbgManager {
 		return statusMap.get(evt.getClass());
 	}
 
+	protected void processSystemErrorEvent(DbgSystemErrorEvent evt, Void v) {
+		getEventListeners().fire.eventSelected(evt, evt.getCause());
+		String error = "SystemError " + evt.getError() + ":" + evt.getLevel();
+		getEventListeners().fire.consoleOutput(error, 0);
+	}
+
 	protected void processConsoleOutput(DbgConsoleOutputEvent evt, Void v) {
+		getEventListeners().fire.eventSelected(evt, evt.getCause());
 		getEventListeners().fire.consoleOutput(evt.getInfo(), evt.getMask());
 	}
 
