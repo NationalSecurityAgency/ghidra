@@ -48,8 +48,8 @@ public class DbgModelTargetDebugContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetDebugContainer {
 
 	protected final DbgModelTargetBreakpointContainerImpl breakpoints;
-	protected final DbgModelTargetEventContainerImpl events;
-	protected final DbgModelTargetExceptionContainerImpl exceptions;
+	protected DbgModelTargetEventContainerImpl events;
+	protected DbgModelTargetExceptionContainerImpl exceptions;
 
 	private DbgModelTargetProcess process;
 
