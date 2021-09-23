@@ -1,0 +1,22 @@
+# Ghidra Server serialization filter patterns
+# See java.io.ObjectInputFilter.Config#createFilter(String)
+# 
+# This file establishes allowed and disallowed inbound class de-serialization 
+# rules for the Ghidra Server.  If not specifically allowed or disallowed a 
+# de-serialized class will be subject to an internal filter which allows all 
+# primitive and primitive array classes while rejecting all other classes.
+#
+
+java.base/java.lang.*;
+java.base/java.security.**;
+java.base/javax.security.**;
+java.base/sun.security.**;
+java.base/java.util.**;
+
+ghidra.framework.remote.GhidraPrincipal;
+ghidra.framework.remote.AnonymousCallback;
+ghidra.framework.remote.SSHSignatureCallback;
+ghidra.framework.remote.SignatureCallback;
+ghidra.framework.remote.User;
+ghidra.framework.remote.User[];
+ghidra.framework.store.CheckoutType;

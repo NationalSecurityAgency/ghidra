@@ -66,7 +66,9 @@ import utility.application.ApplicationLayout;
  */
 public class GhidraServer extends UnicastRemoteObject implements GhidraServerHandle {
 
-	private final static String TLS_SERVER_PROTOCOLS_PROPERTY = "ghidra.tls.server.protocols";
+	private static final String SERIAL_FILTER_FILE = "serial.filter";
+
+	private static final String TLS_SERVER_PROTOCOLS_PROPERTY = "ghidra.tls.server.protocols";
 
 	private static SslRMIServerSocketFactory serverSocketFactory;
 	private static SslRMIClientSocketFactory clientSocketFactory;
@@ -136,7 +138,9 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	 * @param allowAnonymousAccess allow anonymous access if true
 	 * @param autoProvisionAuthedUsers flag to turn on automatically adding successfully
 	 * authenticated users to the user manager if they don't already exist
-	 * @throws IOException
+	 * @param jaasConfigFile JAAS configuration file
+	 * @throws IOException if an IO error occurs
+	 * @throws CertificateException if failed to parse CA certs file used for PKI authentication
 	 */
 	GhidraServer(File rootDir, AuthMode authMode, String loginDomain,
 			boolean allowUserToSpecifyName, boolean altSSHLoginAllowed,
@@ -202,6 +206,9 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			allowAnonymousAccess);
 
 		GhidraServer.server = this;
+
+		// Establish serialization filter to address deserialization vulnerabity concerns
+		setGlobalSerializationFilter();
 
 		// Start block stream server - use RMI serverSocketFactory
 		blockStreamServer = BlockStreamServer.getBlockStreamServer();
@@ -853,6 +860,119 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 	public static RMIClientSocketFactory getRMIClientSocketFactory() {
 		return clientSocketFactory;
+	}
+
+	private static void setGlobalSerializationFilter() throws IOException {
+		
+		ObjectInputFilter patternFilter = readSerialFilterPatternFile();
+
+		ObjectInputFilter filter = new ObjectInputFilter() {
+
+			@Override
+			public Status checkInput(FilterInfo info) {
+
+				Class<?> clazz = info.serialClass();
+
+				// Give serial filter patterns first shot
+				Status status = patternFilter.checkInput(info);
+				if (status != Status.UNDECIDED) {
+					if (status == Status.REJECTED) {
+						return serialReject(info, "failed by serial.filter pattern");
+					}
+					return status;
+				}
+
+
+				if (clazz == null) {
+					return Status.ALLOWED;
+				}
+				
+				Class<?> componentType = clazz.getComponentType();
+				if (componentType != null && componentType.isPrimitive()) {
+					return Status.ALLOWED; // allow all primitive arrays
+				}
+
+				return serialReject(info, "not allowed");
+			}
+
+			private Status serialReject(FilterInfo info, String reason) {
+				String clientHost = RepositoryManager.getRMIClient();
+				StringBuilder buf = new StringBuilder();
+				buf.append("Rejected class serialization");
+				if (clientHost != null) {
+					buf.append(" from ");
+					buf.append(clientHost);
+				}
+				buf.append("(");
+				buf.append(reason);
+				buf.append(")");
+
+				Class<?> serialClass = info.serialClass();
+				if (serialClass != null) {
+					buf.append(": ");
+					buf.append(serialClass.getCanonicalName());
+					buf.append(" ");
+					if (serialClass.getComponentType() != null) {
+						buf.append("(");
+						buf.append("array-length=");
+						buf.append(info.arrayLength());
+						buf.append(")");
+					}
+				}
+
+				log.error(buf.toString());
+				return Status.REJECTED;
+			}
+
+		};
+
+		// Install global serial class filter
+		ObjectInputFilter.Config.setSerialFilter(filter);
+	}
+
+	/**
+	 * Read serial.filter file content removing any comments and newlines and generate 
+	 * corresponding {@link ObjectInputFilter}.  See {@link java.io.ObjectInputFilter.Config#createFilter(String)}
+	 * for filter syntax.
+	 * @return serial filter content 
+	 * @throws IOException if file error occurs
+	 */
+	private static ObjectInputFilter readSerialFilterPatternFile() throws IOException {
+
+		File serialFilterFile = Application.getModuleDataFile(SERIAL_FILTER_FILE).getFile(false);
+		if (serialFilterFile == null) {
+			// jar mode not supported
+			throw new FileNotFoundException(SERIAL_FILTER_FILE + " not found");
+		}
+		try {
+			StringBuilder buf = new StringBuilder();
+			try (FileReader fr = new FileReader(serialFilterFile);
+					BufferedReader r = new BufferedReader(fr)) {
+
+				for (String line = r.readLine(); line != null; line = r.readLine()) {
+					int ix = line.indexOf('#');
+					if (ix >= 0) {
+						// strip comment
+						line = line.substring(0, ix);
+					}
+					line = line.trim();
+					if (line.length() == 0) {
+						continue;
+					}
+					if (!line.endsWith(";")) {
+						throw new IllegalArgumentException(
+							"all filter statements must end with `;`");
+					}
+					if (line.length() != 0) {
+						buf.append(line);
+					}
+				}
+			}
+			return ObjectInputFilter.Config.createFilter(buf.toString());
+		}
+		catch (Exception e) {
+			throw new IOException("Failed to parse " + SERIAL_FILTER_FILE, e);
+		}
 	}
 
 }
