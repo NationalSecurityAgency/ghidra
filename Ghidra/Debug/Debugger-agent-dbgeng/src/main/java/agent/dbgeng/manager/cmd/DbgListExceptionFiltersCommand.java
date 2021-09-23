@@ -44,14 +44,14 @@ public class DbgListExceptionFiltersCommand
 		DebugFilterInformation info = control.getNumberEventFilters();
 		int nEvents = info.getNumberEvents();
 		int nExcs = info.getNumberSpecificExceptions();
-		//DebugSpecificFilterInformation spec = control.getSpecificFilterParameters(0, nEvents);
 		DebugExceptionFilterInformation exc =
 			control.getExceptionFilterParameters(nEvents, null, nExcs);
 		for (int i = 0; i < exc.getParameters().length; i++) {
 			DEBUG_EXCEPTION_FILTER_PARAMETERS p = exc.getParameter(i);
-			String text = control.getEventFilterText(nEvents + i);
-			String cmd = control.getEventFilterCommand(nEvents + i);
-			String cmd2 = control.getExceptionFilterSecondCommand(nEvents + i);
+			String text = control.getEventFilterText(nEvents + i, p.TextSize.intValue());
+			String cmd = control.getEventFilterCommand(nEvents + i, p.CommandSize.intValue());
+			String cmd2 = control.getExceptionFilterSecondCommand(nEvents + i,
+				p.SecondCommandSize.intValue());
 			DbgExceptionFilterImpl filter = new DbgExceptionFilterImpl(i, text, cmd, cmd2,
 				p.ExecutionOption.intValue(), p.ContinueOption.intValue(),
 				p.ExceptionCode.longValue());

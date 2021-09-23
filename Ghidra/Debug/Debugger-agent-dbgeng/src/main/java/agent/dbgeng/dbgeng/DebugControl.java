@@ -422,9 +422,9 @@ public interface DebugControl extends DebugControlReentrant {
 
 	DebugFilterInformation getNumberEventFilters();
 
-	String getEventFilterText(int index);
+	String getEventFilterText(int index, int size);
 
-	String getEventFilterCommand(int index);
+	String getEventFilterCommand(int index, int size);
 
 	void setEventFilterCommand(int index, String text);
 
@@ -432,7 +432,7 @@ public interface DebugControl extends DebugControlReentrant {
 
 	void setSpecificFilterParameters(int start, int count, DebugSpecificFilterInformation info);
 
-	String getSpecificFilterArgument(int index);
+	String getSpecificFilterArgument(int index, int size);
 
 	void setSpecificFilterArgument(int index, String arg);
 
@@ -440,7 +440,7 @@ public interface DebugControl extends DebugControlReentrant {
 
 	void setExceptionFilterParameters(int count, DebugExceptionFilterInformation info);
 
-	String getExceptionFilterSecondCommand(int index);
+	String getExceptionFilterSecondCommand(int index, int size);
 
 	void setExceptionFilterSecondCommand(int index, String cmd);
 

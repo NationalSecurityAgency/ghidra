@@ -45,10 +45,10 @@ public class DbgListEventFiltersCommand
 		DebugSpecificFilterInformation exc =
 			control.getSpecificFilterParameters(0, info.getNumberEvents());
 		for (int i = 0; i < info.getNumberEvents(); i++) {
-			String text = control.getEventFilterText(i);
-			String cmd = control.getEventFilterCommand(i);
-			String arg = control.getSpecificFilterArgument(i);
 			DEBUG_SPECIFIC_FILTER_PARAMETERS p = exc.getParameter(i);
+			String text = control.getEventFilterText(i, p.TextSize.intValue());
+			String cmd = control.getEventFilterCommand(i, p.CommandSize.intValue());
+			String arg = control.getSpecificFilterArgument(i, p.ArgumentSize.intValue());
 			DbgEventFilterImpl f =
 				new DbgEventFilterImpl(i, text, cmd, arg, p.ExecutionOption.intValue(),
 					p.ContinueOption.intValue());
