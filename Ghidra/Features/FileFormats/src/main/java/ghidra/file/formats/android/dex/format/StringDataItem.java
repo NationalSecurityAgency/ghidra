@@ -21,9 +21,17 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.dwarf4.LEB128;
-import ghidra.program.model.data.*;
+import ghidra.file.formats.android.dex.util.DexUtil;
+import ghidra.program.model.data.ArrayDataType;
+import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
 
+/**
+ * https://source.android.com/devices/tech/dalvik/dex-format#string-data-item
+ */
 public class StringDataItem implements StructConverter {
 	private static final int MAX_STRING_LEN = 0x200000; // 2Mb'ish
 
@@ -32,8 +40,11 @@ public class StringDataItem implements StructConverter {
 	private int actualLength;
 	private String string;
 
-	public StringDataItem(StringIDItem stringItem, BinaryReader reader) throws IOException {
-		reader = reader.clone(stringItem.getStringDataOffset());
+	public StringDataItem(StringIDItem stringItem, BinaryReader reader, DexHeader dexHeader)
+			throws IOException {
+
+		reader = reader.clone(DexUtil.adjustOffset(stringItem.getStringDataOffset(), dexHeader));
+
 		LEB128 leb128 = LEB128.readUnsignedValue(reader);
 		stringLength = leb128.asUInt32();
 		lebLength = leb128.getLength();
@@ -49,16 +60,24 @@ public class StringDataItem implements StructConverter {
 		string = ModifiedUTF8.decode(in, out);
 	}
 
+	/**
+	 * Only used for invalid string conditions. 
+	 * @param string the invalid string.
+	 */
+	StringDataItem(String string) {
+		this.string = string;
+	}
+
 	public String getString() {
 		return string;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType( "string_data_item_" + actualLength, 0 );
-		structure.add( new ArrayDataType( BYTE, lebLength, BYTE.getLength( ) ), "utf16_size", null );
-		structure.add( UTF8, actualLength, "data", null );
-		structure.setCategoryPath( new CategoryPath( "/dex/string_data_item" ) );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		Structure structure = new StructureDataType("string_data_item_" + actualLength, 0);
+		structure.add(new ArrayDataType(BYTE, lebLength, BYTE.getLength()), "utf16_size", null);
+		structure.add(UTF8, actualLength, "data", null);
+		structure.setCategoryPath(new CategoryPath("/dex/string_data_item"));
 		return structure;
 	}
 

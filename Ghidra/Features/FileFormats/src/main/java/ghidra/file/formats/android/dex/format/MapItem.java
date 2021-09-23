@@ -29,33 +29,33 @@ public class MapItem implements StructConverter {
 	private int size;
 	private int offset;
 
-	public MapItem( BinaryReader reader ) throws IOException {
-		type = reader.readNextShort( );
-		unused = reader.readNextShort( );
-		size = reader.readNextInt( );
-		offset = reader.readNextInt( );
+	public MapItem(BinaryReader reader) throws IOException {
+		type = reader.readNextShort();
+		unused = reader.readNextShort();
+		size = reader.readNextInt();
+		offset = reader.readNextInt();
 	}
 
-	public short getType( ) {
+	public short getType() {
 		return type;
 	}
 
-	public short getUnused( ) {
+	public short getUnused() {
 		return unused;
 	}
 
-	public int getSize( ) {
+	public int getSize() {
 		return size;
 	}
 
-	public int getOffset( ) {
+	public int getOffset() {
 		return offset;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		DataType dataType = StructConverterUtil.toDataType( MapItem.class );
-		dataType.setCategoryPath( new CategoryPath( "/dex" ) );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		DataType dataType = StructConverterUtil.toDataType(MapItem.class);
+		dataType.setCategoryPath(new CategoryPath("/dex"));
 		return dataType;
 	}
 

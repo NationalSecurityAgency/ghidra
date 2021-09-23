@@ -29,20 +29,20 @@ public class EncodedCatchHandler implements StructConverter {
 
 	private int size;
 	private int sizeLength;// in bytes
-	private List< EncodedTypeAddressPair > handlers = new ArrayList< >( );
+	private List<EncodedTypeAddressPair> handlers = new ArrayList<>();
 	private int catchAllAddress;
 	private int catchAllAddressLength;
 
-	public EncodedCatchHandler( BinaryReader reader ) throws IOException {
+	public EncodedCatchHandler(BinaryReader reader) throws IOException {
 		LEB128 leb128 = LEB128.readSignedValue(reader);
 		size = leb128.asInt32();
 		sizeLength = leb128.getLength();
 
-		for ( int i = 0 ; i < Math.abs( size ) ; ++i ) {
-			handlers.add( new EncodedTypeAddressPair( reader ) );
+		for (int i = 0; i < Math.abs(size); ++i) {
+			handlers.add(new EncodedTypeAddressPair(reader));
 		}
 
-		if ( size <= 0 ) {// This element is only present if size is non-positive.
+		if (size <= 0) {// This element is only present if size is non-positive.
 			leb128 = LEB128.readUnsignedValue(reader);
 			catchAllAddress = leb128.asUInt32();
 			catchAllAddressLength = leb128.getLength();
@@ -58,44 +58,46 @@ public class EncodedCatchHandler implements StructConverter {
 	 * And a size of -1 means that there is one typed catch along with a catch-all.
 	 * </pre>
 	 */
-	public int getSize( ) {
+	public int getSize() {
 		return size;
 	}
 
 	/**
 	 * Stream of abs(size) encoded items, one for each caught type, in the order that the types should be tested.
 	 */
-	public List< EncodedTypeAddressPair > getPairs( ) {
+	public List<EncodedTypeAddressPair> getPairs() {
 		return handlers;
 	}
 
 	/**
 	 * Bytecode address of the catch-all handler. This element is only present if size is non-positive.
 	 */
-	public int getCatchAllAddress( ) {
+	public int getCatchAllAddress() {
 		return catchAllAddress;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		StringBuilder builder = new StringBuilder( );
-		builder.append("encoded_catch_handler_" + sizeLength + "_" + catchAllAddressLength + "_" + handlers.size( ) );
-		Structure structure = new StructureDataType( builder.toString( ), 0 );
-		structure.add( new ArrayDataType( BYTE, sizeLength, BYTE.getLength( ) ), "size", null );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		StringBuilder builder = new StringBuilder();
+		builder.append("encoded_catch_handler_" + sizeLength + "_" + catchAllAddressLength + "_" +
+			handlers.size());
+		Structure structure = new StructureDataType(builder.toString(), 0);
+		structure.add(new ArrayDataType(BYTE, sizeLength, BYTE.getLength()), "size", null);
 		int index = 0;
-		for ( EncodedTypeAddressPair pair : handlers ) {
-			DataType dataType = pair.toDataType( );
-			structure.add( dataType, "handler_" + index, null );
-			builder.append( pair.getDataTypeIdString( ) );
+		for (EncodedTypeAddressPair pair : handlers) {
+			DataType dataType = pair.toDataType();
+			structure.add(dataType, "handler_" + index, null);
+			builder.append(pair.getDataTypeIdString());
 		}
-		if ( size <= 0 ) {// This element is only present if size is non-positive.
-			structure.add( new ArrayDataType( BYTE, catchAllAddressLength, BYTE.getLength( ) ), "catch_all_addr", null );
+		if (size <= 0) {// This element is only present if size is non-positive.
+			structure.add(new ArrayDataType(BYTE, catchAllAddressLength, BYTE.getLength()),
+				"catch_all_addr", null);
 		}
-		structure.setCategoryPath( new CategoryPath( "/dex/encoded_catch_handler" ) );
+		structure.setCategoryPath(new CategoryPath("/dex/encoded_catch_handler"));
 		try {
-			structure.setName( builder.toString( ) );
+			structure.setName(builder.toString());
 		}
-		catch ( Exception e ) {
+		catch (Exception e) {
 			// ignore
 		}
 		return structure;

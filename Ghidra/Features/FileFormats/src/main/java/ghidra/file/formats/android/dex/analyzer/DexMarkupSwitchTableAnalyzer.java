@@ -18,17 +18,29 @@ package ghidra.file.formats.android.dex.analyzer;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.services.AnalysisPriority;
 import ghidra.app.services.AnalyzerType;
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.file.analyzers.FileFormatAnalyzer;
-import ghidra.file.formats.android.dex.format.*;
+import ghidra.file.formats.android.cdex.CDexConstants;
+import ghidra.file.formats.android.dex.format.DexConstants;
+import ghidra.file.formats.android.dex.format.PackedSwitchPayload;
+import ghidra.file.formats.android.dex.format.SparseSwitchPayload;
 import ghidra.file.formats.android.dex.util.DexUtil;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.listing.Listing;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.Namespace;
+import ghidra.program.model.symbol.RefType;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.util.task.TaskMonitor;
 
 public class DexMarkupSwitchTableAnalyzer extends FileFormatAnalyzer {
@@ -53,49 +65,59 @@ public class DexMarkupSwitchTableAnalyzer extends FileFormatAnalyzer {
 			monitor.incrementProgress(1);
 			monitor.setMessage("DEX: Instruction markup ... " + instruction.getMinAddress());
 
-			if (instruction.getMnemonicString().startsWith("packed_switch")) {
-				if (instruction.getMnemonicReferences().length > 0) {// already done
-					continue;
-				}
-				Scalar scalar = instruction.getScalar(1);
-				Address address = instruction.getMinAddress().add(scalar.getUnsignedValue() * 2);
-				if (program.getMemory().getShort(address) != PackedSwitchPayload.MAGIC) {
-					log.appendMsg("invalid packed switch at " + address);
-				}
-				else {
-					program.getReferenceManager().addMemoryReference(instruction.getMinAddress(),
-						address, RefType.DATA, SourceType.ANALYSIS, 1);
+			try {
+				if (instruction.getMnemonicString().startsWith("packed_switch")) {
+					if (instruction.getMnemonicReferences().length > 0) {// already done
+						continue;
+					}
+					Scalar scalar = instruction.getScalar(1);
+					Address address =
+						instruction.getMinAddress().add(scalar.getUnsignedValue() * 2);
+					if (program.getMemory().getShort(address) != PackedSwitchPayload.MAGIC) {
+						log.appendMsg("invalid packed switch at " + address);
+					}
+					else {
+						program.getReferenceManager()
+								.addMemoryReference(instruction.getMinAddress(), address,
+									RefType.DATA, SourceType.ANALYSIS, 1);
 
-					reader.setPointerIndex(address.getOffset());
-					PackedSwitchPayload payload = new PackedSwitchPayload(reader);
-					DataType dataType = payload.toDataType();
-					createData(program, address, dataType);
+						reader.setPointerIndex(address.getOffset());
+						PackedSwitchPayload payload = new PackedSwitchPayload(reader);
+						DataType dataType = payload.toDataType();
+						createData(program, address, dataType);
 
-					processPacked(program, instruction, payload, monitor);
-					//TODO setFallThrough( program, instruction );
+						processPacked(program, instruction, payload, monitor);
+						//TODO setFallThrough( program, instruction );
+					}
+				}
+				else if (instruction.getMnemonicString().startsWith("sparse_switch")) {
+					if (instruction.getMnemonicReferences().length > 0) {// already done
+						continue;
+					}
+					Scalar scalar = instruction.getScalar(1);
+					Address address =
+						instruction.getMinAddress().add(scalar.getUnsignedValue() * 2);
+
+					if (program.getMemory().getShort(address) != SparseSwitchPayload.MAGIC) {
+						log.appendMsg("invalid sparse switch at " + address);
+					}
+					else {
+						program.getReferenceManager()
+								.addMemoryReference(instruction.getMinAddress(), address,
+									RefType.DATA, SourceType.ANALYSIS, 1);
+
+						reader.setPointerIndex(address.getOffset());
+						SparseSwitchPayload payload = new SparseSwitchPayload(reader);
+						DataType dataType = payload.toDataType();
+						createData(program, address, dataType);
+
+						processSparse(program, instruction, payload, monitor);
+						//TODO setFallThrough( program, instruction );
+					}
 				}
 			}
-			else if (instruction.getMnemonicString().startsWith("sparse_switch")) {
-				if (instruction.getMnemonicReferences().length > 0) {// already done
-					continue;
-				}
-				Scalar scalar = instruction.getScalar(1);
-				Address address = instruction.getMinAddress().add(scalar.getUnsignedValue() * 2);
-				if (program.getMemory().getShort(address) != SparseSwitchPayload.MAGIC) {
-					log.appendMsg("invalid sparse switch at " + address);
-				}
-				else {
-					program.getReferenceManager().addMemoryReference(instruction.getMinAddress(),
-						address, RefType.DATA, SourceType.ANALYSIS, 1);
-
-					reader.setPointerIndex(address.getOffset());
-					SparseSwitchPayload payload = new SparseSwitchPayload(reader);
-					DataType dataType = payload.toDataType();
-					createData(program, address, dataType);
-
-					processSparse(program, instruction, payload, monitor);
-					//TODO setFallThrough( program, instruction );
-				}
+			catch (MemoryAccessException e) {
+				log.appendMsg("unable to process switch at " + instruction.getMinAddress());
 			}
 		}
 
@@ -106,7 +128,7 @@ public class DexMarkupSwitchTableAnalyzer extends FileFormatAnalyzer {
 	public boolean canAnalyze(Program program) {
 		ByteProvider provider =
 			new MemoryByteProvider(program.getMemory(), program.getMinAddress());
-		return DexConstants.isDexFile(provider);
+		return DexConstants.isDexFile(provider) || CDexConstants.isCDEX(program);
 	}
 
 	@Override
@@ -121,12 +143,12 @@ public class DexMarkupSwitchTableAnalyzer extends FileFormatAnalyzer {
 
 	@Override
 	public String getDescription() {
-		return "Android DEX Switch Table Markup";
+		return "Android DEX/CDEX Switch Table Markup";
 	}
 
 	@Override
 	public String getName() {
-		return "Android DEX Switch Table Markup";
+		return "Android DEX/CDEX Switch Table Markup";
 	}
 
 	@Override
@@ -157,10 +179,11 @@ public class DexMarkupSwitchTableAnalyzer extends FileFormatAnalyzer {
 
 			String caseName = "case_0x" + Integer.toHexString(key);
 			Address caseAddress = instruction.getMinAddress().add(target * 2);
-			program.getSymbolTable().createLabel(caseAddress, caseName, nameSpace,
-				SourceType.ANALYSIS);
-			program.getReferenceManager().addMemoryReference(instruction.getMinAddress(),
-				caseAddress, RefType.COMPUTED_JUMP, SourceType.ANALYSIS, CodeUnit.MNEMONIC);
+			program.getSymbolTable()
+					.createLabel(caseAddress, caseName, nameSpace, SourceType.ANALYSIS);
+			program.getReferenceManager()
+					.addMemoryReference(instruction.getMinAddress(), caseAddress,
+						RefType.COMPUTED_JUMP, SourceType.ANALYSIS, CodeUnit.MNEMONIC);
 			DisassembleCommand dCommand = new DisassembleCommand(caseAddress, null, true);
 			dCommand.applyTo(program);
 			++key;
@@ -177,10 +200,11 @@ public class DexMarkupSwitchTableAnalyzer extends FileFormatAnalyzer {
 
 			String caseName = "case_0x" + Integer.toHexString(payload.getKeys()[i]);
 			Address caseAddress = instruction.getMinAddress().add(payload.getTargets()[i] * 2);
-			program.getSymbolTable().createLabel(caseAddress, caseName, nameSpace,
-				SourceType.ANALYSIS);
-			program.getReferenceManager().addMemoryReference(instruction.getMinAddress(),
-				caseAddress, RefType.COMPUTED_JUMP, SourceType.ANALYSIS, CodeUnit.MNEMONIC);
+			program.getSymbolTable()
+					.createLabel(caseAddress, caseName, nameSpace, SourceType.ANALYSIS);
+			program.getReferenceManager()
+					.addMemoryReference(instruction.getMinAddress(), caseAddress,
+						RefType.COMPUTED_JUMP, SourceType.ANALYSIS, CodeUnit.MNEMONIC);
 			DisassembleCommand dCommand = new DisassembleCommand(caseAddress, null, true);
 			dCommand.applyTo(program);
 		}

@@ -32,29 +32,29 @@ public class BootImage implements StructConverter {
 	private int secondStageAddress;
 	private int tagsAddress;
 	private int pageSize;
-	private int [] unused;
+	private int[] unused;
 	private String name;
 	private String commandLine;
-	private int [] id;
+	private int[] id;
 
 	public BootImage(ByteProvider provider) throws IOException {
-		this( new BinaryReader( provider, true ) );
+		this(new BinaryReader(provider, true));
 	}
 
 	public BootImage(BinaryReader reader) throws IOException {
-		magic                = reader.readNextAsciiString( BootImageConstants.BOOT_IMAGE_MAGIC_SIZE );
-		kernelSize           = reader.readNextInt();
-		kernelAddress        = reader.readNextInt();
-		ramDiskSize          = reader.readNextInt();
-		ramDiskAddress       = reader.readNextInt();
-		secondStageSize      = reader.readNextInt();
-		secondStageAddress   = reader.readNextInt();
-		tagsAddress          = reader.readNextInt();
-		pageSize             = reader.readNextInt();
-		unused               = reader.readNextIntArray( 2 );
-		name                 = reader.readNextAsciiString( BootImageConstants.BOOT_NAME_SIZE );
-		commandLine          = reader.readNextAsciiString( BootImageConstants.BOOT_ARGS_SIZE );
-		id                   = reader.readNextIntArray( 8 );
+		magic = reader.readNextAsciiString(BootImageConstants.BOOT_MAGIC_SIZE);
+		kernelSize = reader.readNextInt();
+		kernelAddress = reader.readNextInt();
+		ramDiskSize = reader.readNextInt();
+		ramDiskAddress = reader.readNextInt();
+		secondStageSize = reader.readNextInt();
+		secondStageAddress = reader.readNextInt();
+		tagsAddress = reader.readNextInt();
+		pageSize = reader.readNextInt();
+		unused = reader.readNextIntArray(2);
+		name = reader.readNextAsciiString(BootImageConstants.BOOT_NAME_SIZE);
+		commandLine = reader.readNextAsciiString(BootImageConstants.BOOT_ARGS_SIZE);
+		id = reader.readNextIntArray(8);
 	}
 
 	public String getMagic() {
@@ -74,7 +74,7 @@ public class BootImage implements StructConverter {
 	}
 
 	public int getKernelSizePageAligned() {
-		int remainder = getPageSize() - ( getKernelSize() % getPageSize() );
+		int remainder = getPageSize() - (getKernelSize() % getPageSize());
 		return getKernelSize() + remainder;
 	}
 
@@ -91,7 +91,7 @@ public class BootImage implements StructConverter {
 	}
 
 	public int getRamDiskSizePageAligned() {
-		int remainder = getPageSize() - ( getRamDiskSize() % getPageSize() );
+		int remainder = getPageSize() - (getRamDiskSize() % getPageSize());
 		return getRamDiskSize() + remainder;
 	}
 
@@ -104,11 +104,11 @@ public class BootImage implements StructConverter {
 	}
 
 	public int getSecondStageOffset() {
-		return getRamDiskOffset() + ( getRamDiskSizePageAligned() * getPageSize() );
+		return getRamDiskOffset() + (getRamDiskSizePageAligned() * getPageSize());
 	}
 
 	public int getSecondStageSizePageAligned() {
-		int remainder = getPageSize() - ( getSecondStageSize() % getPageSize() );
+		int remainder = getPageSize() - (getSecondStageSize() % getPageSize());
 		return getSecondStageSize() + remainder;
 	}
 
@@ -120,7 +120,7 @@ public class BootImage implements StructConverter {
 		return pageSize;
 	}
 
-	public int [] getUnused() {
+	public int[] getUnused() {
 		return unused;
 	}
 
@@ -132,25 +132,25 @@ public class BootImage implements StructConverter {
 		return commandLine;
 	}
 
-	public int [] getId() {
+	public int[] getId() {
 		return id;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType( "boot_img_hdr", 0 );
-		structure.add( UTF8, BootImageConstants.BOOT_IMAGE_MAGIC_SIZE, "magic", null );
-		structure.add( DWORD, "kernelSize", null );
-		structure.add( DWORD, "kernelAddress", null );
-		structure.add( DWORD, "ramDiskSize", null );
-		structure.add( DWORD, "ramDiskAddress", null );
-		structure.add( DWORD, "secondStageSize", null );
-		structure.add( DWORD, "secondStageAddress", null );
-		structure.add( DWORD, "tagsAddress", null );
-		structure.add( DWORD, "pageSize", null );
+		Structure structure = new StructureDataType("boot_img_hdr", 0);
+		structure.add(UTF8, BootImageConstants.BOOT_MAGIC_SIZE, "magic", null);
+		structure.add(DWORD, "kernelSize", null);
+		structure.add(DWORD, "kernelAddress", null);
+		structure.add(DWORD, "ramDiskSize", null);
+		structure.add(DWORD, "ramDiskAddress", null);
+		structure.add(DWORD, "secondStageSize", null);
+		structure.add(DWORD, "secondStageAddress", null);
+		structure.add(DWORD, "tagsAddress", null);
+		structure.add(DWORD, "pageSize", null);
 		structure.add(new ArrayDataType(DWORD, 2, DWORD.getLength()), "unused", null);
-		structure.add( UTF8, BootImageConstants.BOOT_NAME_SIZE, "name", null );
-		structure.add( UTF8, BootImageConstants.BOOT_ARGS_SIZE, "commandLine", null );
+		structure.add(UTF8, BootImageConstants.BOOT_NAME_SIZE, "name", null);
+		structure.add(UTF8, BootImageConstants.BOOT_ARGS_SIZE, "commandLine", null);
 		structure.add(new ArrayDataType(DWORD, 8, DWORD.getLength()), "id", null);
 		return structure;
 	}

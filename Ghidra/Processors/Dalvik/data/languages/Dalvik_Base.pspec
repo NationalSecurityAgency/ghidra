@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <properties>
+    <property key="DisableAllAnalyzers" value="value ignored, just turns them off"/>
+    <property key="Analyzers.Android DEX/CDEX Condense Filler Bytes" value="true"/>
+    <property key="Analyzers.Android DEX/CDEX Data Markup" value="true"/>
+    <property key="Analyzers.Android DEX/CDEX Exception Handlers" value="true"/>
+    <property key="Analyzers.Android DEX/CDEX Header Format" value="true"/>
+    <property key="Analyzers.Android DEX/CDEX Instruction Markup" value="true"/>
+    <property key="Analyzers.Android DEX/CDEX Switch Table Markup" value="true"/>
+    <property key="Analyzers.Android ODEX Header Format" value="true"/>
+    <property key="pcodeInjectLibraryClass" value="ghidra.dalvik.dex.inject.PcodeInjectLibraryDex"/>
+  </properties>
+
+  <inferptrbounds>
+    <range space="ram" first="0" last="0"/>   <!-- Don't try to infer pointers from constants in the body of a function -->
+  </inferptrbounds>
+  
+  <jumpassist name="switchAssist">
+    <case_pcode>
+      <input name="index" size="4"/>
+      <input name="tableSize" size="4"/>
+      <input name="defaultAddr" size="4"/>
+      <input name="table" size="4"/>
+      <input name="distance" size="4"/>
+      <output name="finaladdr" size="4"/>
+      <body><![CDATA[
+        finaladdr = *(table + distance + 4 + index * 4);
+      ]]></body>      
+    </case_pcode>
+    <addr_pcode>
+      <input name="index" size="4"/>
+      <input name="tableSize" size="4"/>
+      <input name="defaultAddr" size="4"/>
+      <input name="table" size="4"/>
+      <input name="distance" size="4"/>
+      <output name="finaladdr" size="4"/>
+      <body><![CDATA[
+        finaladdr = *(table + distance + 4 + tableSize * 4 + index * 4);
+        finaladdr = table + finaladdr * 2;
+      ]]></body>      
+    </addr_pcode>
+    <default_pcode>
+      <input name="index" size="4"/>
+      <input name="tableSize" size="4"/>
+      <input name="defaultAddr" size="4"/>
+      <input name="table" size="4"/>
+      <input name="distance" size="4"/>
+      <output name="finaladdr" size="4"/>
+      <body><![CDATA[
+        finaladdr = defaultAddr;
+      ]]></body>      
+    </default_pcode>
+  </jumpassist>
+</processor_spec>

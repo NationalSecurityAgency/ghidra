@@ -134,8 +134,8 @@ public final class DebugStateMachineOpCodes {
 	 * Special Opcodes 0x0a...0xff (none) advances the line and address registers, emits a position entry, and clears prologue_end and epilogue_begin. See below for description.
 	 * </pre>
 	 */
-	public final static boolean isSpecialOpCode( byte opcode ) {
-		return ( opcode & 0xff ) >= 0xa && ( opcode & 0xff ) <= 0xff;
+	public final static boolean isSpecialOpCode(byte opcode) {
+		return (opcode & 0xff) >= 0xa && (opcode & 0xff) <= 0xff;
 	}
 
 }

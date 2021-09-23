@@ -15,53 +15,51 @@
  */
 package ghidra.file.formats.android.dex.format;
 
-import ghidra.app.util.bin.*;
+import java.io.IOException;
+
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
-import java.io.IOException;
-import java.util.*;
-
 /**
- * annotation_set_item
- * 
- * referenced from annotations_directory_item, field_annotations_item, method_annotations_item, and annotation_set_ref_item
- * 
- * appears in the data section
- * 
- * alignment: 4 bytes
+ * https://android.googlesource.com/platform/art/+/master/libdexfile/dex/dex_file_structs.h#258
  */
 public class AnnotationSetItem implements StructConverter {
 
-	private int size;
-	private List<AnnotationOffsetItem> items = new ArrayList<AnnotationOffsetItem>();
+	private static final int MAX_SANE_COUNT = 0x1000;
 
-	public AnnotationSetItem( BinaryReader reader ) throws IOException {
-		size = reader.readNextInt( );
+	private int size_;
 
-		for ( int i = 0 ; i < size ; ++i ) {
-			items.add( new AnnotationOffsetItem( reader ) );
+	private int[] entries_;
+
+	public AnnotationSetItem(BinaryReader reader, DexHeader dexHeader) throws IOException {
+		size_ = reader.readNextInt();
+		if (size_ > MAX_SANE_COUNT) {
+			throw new IOException(
+				"Too many annotations specified: 0x" + Integer.toHexString(size_));
 		}
+		entries_ = reader.readNextIntArray(size_);
+
 	}
 
-	public int getSize( ) {
-		return size;
+	public int getSize() {
+		return size_;
 	}
 
-	public List< AnnotationOffsetItem > getItems( ) {
-		return Collections.unmodifiableList( items );
+	public int[] getEntries() {
+		return entries_;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType( "annotation_set_item_" + size, 0 );
-		structure.add( DWORD, "size", null );
-		int index = 0;
-		for ( AnnotationOffsetItem item : items ) {
-			structure.add( item.toDataType( ), "item" + index, null );
-			++index;
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		Structure structure = new StructureDataType("annotation_set_item_" + size_, 0);
+		structure.add(DWORD, "size_", null);
+		if (size_ > 0) {
+			ArrayDataType array = new ArrayDataType(DWORD, size_, DWORD.getLength());
+			structure.add(array, "entries_", null);
 		}
-		structure.setCategoryPath( new CategoryPath( "/dex/annotation_set_item" ) );
+		structure.setCategoryPath(new CategoryPath("/dex/annotation_set_item"));
 		return structure;
 	}
 

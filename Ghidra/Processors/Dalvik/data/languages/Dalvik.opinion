@@ -1,5 +1,0 @@
-<opinions>
-    <constraint loader="Dalvik Executable (DEX)" compilerSpecID="default">
-        <constraint primary="1"       processor="Dalvik"   endian="little"    size="32" />
-    </constraint>
-</opinions>

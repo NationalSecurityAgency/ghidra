@@ -38,16 +38,16 @@ public final class MapItemTypeCodes {
 	public final static short TYPE_ENCODED_ARRAY_ITEM = 0x2005;// implicit; must parse
 	public final static short TYPE_ANNOTATIONS_DIRECTORY_ITEM = 0x2006;// implicit; must parse
 
-	public final static String toString( short type ) {
+	public final static String toString(short type) {
 		try {
-			Field [] fields = MapItemTypeCodes.class.getDeclaredFields( );
-			for ( Field field : fields ) {
-				if ( field.getShort( null ) == type ) {
-					return field.getName( );
+			Field[] fields = MapItemTypeCodes.class.getDeclaredFields();
+			for (Field field : fields) {
+				if (field.getShort(null) == type) {
+					return field.getName();
 				}
 			}
 		}
-		catch ( Exception e ) {
+		catch (Exception e) {
 			// ignore
 		}
 		return "Type:" + type;

@@ -26,18 +26,18 @@ public class TypeItem implements StructConverter {
 
 	private short typeIndex;
 
-	public TypeItem( BinaryReader reader ) throws IOException {
-		typeIndex = reader.readNextShort( );
+	public TypeItem(BinaryReader reader) throws IOException {
+		typeIndex = reader.readNextShort();
 	}
 
-	public short getType( ) {
+	public short getType() {
 		return typeIndex;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		DataType dataType = StructConverterUtil.toDataType( TypeItem.class );
-		dataType.setCategoryPath( new CategoryPath( "/dex" ) );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		DataType dataType = StructConverterUtil.toDataType(TypeItem.class);
+		dataType.setCategoryPath(new CategoryPath("/dex"));
 		return dataType;
 	}
 

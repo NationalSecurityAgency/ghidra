@@ -1,0 +1,359 @@
+#------------------------------------------------------------------------------------
+#	Sleigh specification file for DALVIK VM
+#------------------------------------------------------------------------------------
+#
+# Source:
+# https://android.googlesource.com/platform/dalvik/+/refs/heads/kitkat-release/libdex/DexFile.h
+# https://android.googlesource.com/platform/dalvik/+/refs/heads/kitkat-release/libdex/DexOpcodes.h
+#
+
+@include "Dalvik_Base.sinc"
+
+@include "Dalvik_OpCode_3E_43_unused.sinc"
+
+@include "Dalvik_OpCode_73_unused.sinc"
+@include "Dalvik_OpCode_79_unused.sinc"
+@include "Dalvik_OpCode_7A_unused.sinc"
+
+@include "Dalvik_OpCode_FF_unused.sinc"
+
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:iget_volatile registerA4,[registerB4:C_BITS_0_15]  is inst0=0xe3 ; registerA4 & registerB4 ; C_BITS_0_15 
+{
+	registerA4 = getInstanceFieldVolatile( registerB4, C_BITS_0_15:16 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:iput_volatile registerA4,[registerB4:C_BITS_0_15]  is inst0=0xe4 ; registerA4 & registerB4 ; C_BITS_0_15 
+{
+	setInstanceFieldVolatile( registerB4, C_BITS_0_15:16, registerA4 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:sget_volatile registerA8,B_BITS_0_15 is inst0=0xe5 ; registerA8 ; B_BITS_0_15
+{
+	registerA8 = getStaticFieldVolatile( B_BITS_0_15:16 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:sput_volatile registerA8,B_BITS_0_15 is inst0=0xe6 ; registerA8 ; B_BITS_0_15
+{
+	setStaticFieldVolatile( B_BITS_0_15:16, registerA8 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:iget_object_volatile registerA4,[registerB4:C_BITS_0_15]  is inst0=0xe7 ; registerA4 & registerB4 ; C_BITS_0_15 
+{
+	registerA4 = getInstanceFieldVolatile( registerB4, C_BITS_0_15:16 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:iget_wide_volatile registerA4w,[registerB4:C_BITS_0_15]  is inst0=0xe8 ; registerA4w & registerB4 ; C_BITS_0_15 
+{
+	registerA4w = getInstanceFieldVolatile( registerB4, C_BITS_0_15:16 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:iput_wide_volatile registerA4w,[registerB4:C_BITS_0_15]  is inst0=0xe9 ; registerA4w & registerB4 ; C_BITS_0_15 
+{
+	setInstanceFieldVolatile( registerB4, C_BITS_0_15:16, registerA4w );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:sget_wide_volatile registerA8w,B_BITS_0_15 is inst0=0xea ; registerA8w ; B_BITS_0_15
+{
+	registerA8w = getStaticFieldVolatile( B_BITS_0_15:16 );
+}
+
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:sput_wide_volatile registerA8w,B_BITS_0_15 is inst0=0xeb ; registerA8w ; B_BITS_0_15
+{
+	setStaticFieldVolatile( B_BITS_0_15:16, registerA8w );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+#:iput_byte_quick registerA4,[registerB4:C_BITS_0_15]  is inst0=0xec ; registerA4 & registerB4 ; C_BITS_0_15 
+#{
+#	setInstanceFieldQuick( registerB4, C_BITS_0_15:16, registerA4 );
+#}
+
+:breakpoint		is inst0=0xec
+{
+	#TODO
+	breakpoint( );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:throw_verification_error  registerA8,registerB16  is inst0=0xed ; registerA8 ; registerB16
+{
+	registerA8 = registerB16;
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:execute_inline INLINE,{} is inst0=0xee ; N_PARAMS=0 & INLINE
+{
+	destination:4 = *[ram] ( ( 4 * INLINE:4 ) + 0xe0000000 );
+	call [ destination ];
+}
+:execute_inline INLINE,{regParamC} is inst0=0xee ; N_PARAMS=1 & INLINE & regParamC
+{
+	destination:4 = *[ram] ( ( 4 * INLINE:4 ) + 0xe0000000 );
+	call [ destination ];	
+}
+:execute_inline INLINE,{regParamC,regParamD} is inst0=0xee ; N_PARAMS=2 & INLINE & regParamC & regParamD
+{
+	destination:4 = *[ram] ( ( 4 * INLINE:4 ) + 0xe0000000 );
+	call [ destination ];
+}
+:execute_inline INLINE,{regParamC,regParamD,regParamE} is inst0=0xee ; N_PARAMS=3 & INLINE & regParamC & regParamD & regParamE
+{
+	destination:4 = *[ram] ( ( 4 * INLINE:4 ) + 0xe0000000 );
+	call [ destination ];
+}
+:execute_inline INLINE,{regParamC,regParamD,regParamE,regParamF} is inst0=0xee ; N_PARAMS=4 & INLINE & regParamC & regParamD & regParamE & regParamF
+{
+	destination:4 = *[ram] ( ( 4 * INLINE:4 ) + 0xe0000000 );
+	call [ destination ];
+}
+:execute_inline INLINE,{regParamC,regParamD,regParamE,regParamF,regParamG} is inst0=0xee ; N_PARAMS=5 & INLINE & regParamC & regParamD & regParamE & regParamF & regParamG
+{
+	destination:4 = *[ram] ( ( 4 * INLINE:4 ) + 0xe0000000 );
+	call [ destination ];
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:execute_inline_range  "inline@"^B_BITS_0_15,A_BITS_0_7,registerC16  is inst0=0xef ; A_BITS_0_7 ; B_BITS_0_15 ; registerC16
+{
+	destination:4 = *[ram] ( ( 4 * B_BITS_0_15:4 ) + 0xe0000000 );
+	call [ destination ];
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+# THIS ODEX INSTRUCTION WAS VALID UNTIL API version 13 (OS Version 3.2.x)
+
+# :invoke_direct_empty METHOD_INDEX is inst0=0xf0 ; N_PARAMS=0 & METHOD_INDEX
+# {
+# 	destination:4 = *[ram] ( ( 4 * METHOD_INDEX:4 ) + 0xe0000000 );
+# 	call [ destination ];
+# }
+# :invoke_direct_empty METHOD_INDEX,regParamC is inst0=0xf0 ; N_PARAMS=1 & METHOD_INDEX & regParamC
+# {
+# 	destination:4 = *[ram] ( ( 4 * METHOD_INDEX:4 ) + 0xe0000000 );
+# 	call [ destination ];	
+# }
+# :invoke_direct_empty METHOD_INDEX,regParamC,regParamD is inst0=0xf0 ; N_PARAMS=2 & METHOD_INDEX & regParamC & regParamD
+# {
+# 	destination:4 = *[ram] ( ( 4 * METHOD_INDEX:4 ) + 0xe0000000 );
+# 	call [ destination ];
+# }
+# :invoke_direct_empty METHOD_INDEX,regParamC,regParamD,regParamE is inst0=0xf0 ; N_PARAMS=3 & METHOD_INDEX & regParamC & regParamD & regParamE
+# {
+# 	destination:4 = *[ram] ( ( 4 * METHOD_INDEX:4 ) + 0xe0000000 );
+# 	call [ destination ];
+# }
+# :invoke_direct_empty METHOD_INDEX,regParamC,regParamD,regParamE,regParamF is inst0=0xf0 ; N_PARAMS=4 & METHOD_INDEX & regParamC & regParamD & regParamE & regParamF
+# {
+# 	destination:4 = *[ram] ( ( 4 * METHOD_INDEX:4 ) + 0xe0000000 );
+# 	call [ destination ];
+# }
+# :invoke_direct_empty METHOD_INDEX,regParamC,regParamD,regParamE,regParamF,regParamG is inst0=0xf0 ; N_PARAMS=5 & METHOD_INDEX & regParamC & regParamD & regParamE & regParamF & regParamG
+# {
+# 	destination:4 = *[ram] ( ( 4 * METHOD_INDEX:4 ) + 0xe0000000 );
+# 	call [ destination ];
+# }
+
+:invoke_object_init_range  B_BITS_0_15,A_BITS_0_7,registerC16  is inst0=0xf0 ; A_BITS_0_7 ; B_BITS_0_15 ; registerC16
+{
+	destination:4 = *[ram] ( ( 4 * B_BITS_0_15:4 ) + 0xe0000000 );
+	call [ destination ];
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:return_void_barrier  is  inst1=0xf1 & inst1_padding
+{
+	return [sp];#TODO
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:iget_quick "field@"^C_BITS_0_15,registerA4,registerB4  is inst0=0xf2 ; registerA4 & registerB4 ; C_BITS_0_15 
+{
+	registerA4 = getInstanceFieldQuick( registerB4, C_BITS_0_15:16 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:iget_wide_quick "field@"^C_BITS_0_15,registerA4w,registerB4   is inst0=0xf3 ; registerA4w & registerB4 ; C_BITS_0_15 
+{
+	registerA4w = getInstanceFieldQuick( registerB4, C_BITS_0_15:16 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:iget_object_quick "field@"^C_BITS_0_15,registerA4,registerB4  is inst0=0xf4 ; registerA4 & registerB4 ; C_BITS_0_15 
+{
+	registerA4 = getInstanceFieldQuick( registerB4, C_BITS_0_15:16 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:iput_quick "field@"^C_BITS_0_15,registerA4,registerB4  is inst0=0xf5 ; registerA4 & registerB4 ; C_BITS_0_15 
+{
+	setInstanceFieldQuick( registerB4, C_BITS_0_15:16, registerA4 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:iput_wide_quick "field@"^C_BITS_0_15,registerA4w,registerB4  is inst0=0xf6 ; registerA4w & registerB4 ; C_BITS_0_15 
+{
+	setInstanceFieldQuick( registerB4, C_BITS_0_15:16, registerA4w );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:iput_object_quick "field@"^C_BITS_0_15,registerA4,registerB4  is inst0=0xf7 ; registerA4 & registerB4 ; C_BITS_0_15 
+{
+	setInstanceFieldQuick( registerB4, C_BITS_0_15:16, registerA4 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:invoke_virtual_quick "vtable@"^VTABLE_OFFSET is inst0=0xf8 ; N_PARAMS=0 & VTABLE_OFFSET
+{
+	invokeVirtualQuick( VTABLE_OFFSET:4 );
+}
+:invoke_virtual_quick "vtable@"^VTABLE_OFFSET,regParamC is inst0=0xf8 ; N_PARAMS=1 & VTABLE_OFFSET & regParamC
+{
+	invokeVirtualQuick( VTABLE_OFFSET:4, regParamC );
+}
+:invoke_virtual_quick "vtable@"^VTABLE_OFFSET,regParamC,regParamD is inst0=0xf8 ; N_PARAMS=2 & VTABLE_OFFSET & regParamC & regParamD
+{
+	invokeVirtualQuick( VTABLE_OFFSET:4, regParamC, regParamD );
+}
+:invoke_virtual_quick "vtable@"^VTABLE_OFFSET,regParamC,regParamD,regParamE is inst0=0xf8 ; N_PARAMS=3 & VTABLE_OFFSET & regParamC & regParamD & regParamE
+{
+	invokeVirtualQuick( VTABLE_OFFSET:4, regParamC, regParamD, regParamE );
+}
+:invoke_virtual_quick "vtable@"^VTABLE_OFFSET,regParamC,regParamD,regParamE,regParamF is inst0=0xf8 ; N_PARAMS=4 & VTABLE_OFFSET & regParamC & regParamD & regParamE & regParamF
+{
+	invokeVirtualQuick( VTABLE_OFFSET:4, regParamC, regParamD, regParamE, regParamF );
+}
+:invoke_virtual_quick "vtable@"^VTABLE_OFFSET,regParamC,regParamD,regParamE,regParamF,regParamG is inst0=0xf8 ; N_PARAMS=5 & VTABLE_OFFSET & regParamC & regParamD & regParamE & regParamF & regParamG
+{
+	invokeVirtualQuick( VTABLE_OFFSET:4, regParamC, regParamD, regParamE, regParamF, regParamG );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:invoke_virtual_quick_range "vtable@"^B_BITS_0_15,A_BITS_0_7,registerC16  is inst0=0xf9 ; A_BITS_0_7 ; B_BITS_0_15 ; registerC16
+{
+	invokeVirtualQuickRange( B_BITS_0_15:4, A_BITS_0_7:4, registerC16 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:invoke_super_quick "vtable@"^VTABLE_OFFSET is inst0=0xfa ; N_PARAMS=0 & VTABLE_OFFSET
+{
+	invokeSuperQuick( VTABLE_OFFSET:4 );
+}
+:invoke_super_quick "vtable@"^VTABLE_OFFSET,regParamC is inst0=0xfa ; N_PARAMS=1 & VTABLE_OFFSET & regParamC
+{
+	invokeSuperQuick( VTABLE_OFFSET:4, regParamC );
+}
+:invoke_super_quick "vtable@"^VTABLE_OFFSET,regParamC,regParamD is inst0=0xfa ; N_PARAMS=2 & VTABLE_OFFSET & regParamC & regParamD
+{
+	invokeSuperQuick( VTABLE_OFFSET:4, regParamC, regParamD );
+}
+:invoke_super_quick "vtable@"^VTABLE_OFFSET,regParamC,regParamD,regParamE is inst0=0xfa ; N_PARAMS=3 & VTABLE_OFFSET & regParamC & regParamD & regParamE
+{
+	invokeSuperQuick( VTABLE_OFFSET:4, regParamC, regParamD, regParamE );
+}
+:invoke_super_quick "vtable@"^VTABLE_OFFSET,regParamC,regParamD,regParamE,regParamF is inst0=0xfa ; N_PARAMS=4 & VTABLE_OFFSET & regParamC & regParamD & regParamE & regParamF
+{
+	invokeSuperQuick( VTABLE_OFFSET:4, regParamC, regParamD, regParamE, regParamF );
+}
+:invoke_super_quick "vtable@"^VTABLE_OFFSET,regParamC,regParamD,regParamE,regParamF,regParamG is inst0=0xfa ; N_PARAMS=5 & VTABLE_OFFSET & regParamC & regParamD & regParamE & regParamF & regParamG
+{
+	invokeSuperQuick( VTABLE_OFFSET:4, regParamC, regParamD, regParamE, regParamF, regParamG );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:invoke_super_quick_range "vtable@"^B_BITS_0_15,A_BITS_0_7,registerC16  is inst0=0xfb ; A_BITS_0_7 ; B_BITS_0_15 ; registerC16
+{
+	invokeSuperQuickRange( B_BITS_0_15:4, A_BITS_0_7:4, registerC16 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:iput_object_volatile registerA4,registerB4,C_BITS_0_15 is inst0=0xfc ; registerA4 & registerB4 ; C_BITS_0_15 
+{
+	setInstanceFieldVolatile( registerB4, C_BITS_0_15:16, registerA4 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:sget_object_volatile registerA8,B_BITS_0_15 is inst0=0xfd ; registerA8 ; B_BITS_0_15 
+{
+	registerA8 = getStaticFieldVolatile( B_BITS_0_15:16 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+:sput_object_volatile registerA8,B_BITS_0_15 is inst0=0xfe ; registerA8 ; B_BITS_0_15 
+{
+	setStaticFieldVolatile( B_BITS_0_15:16, registerA8 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+
+# 0xff ?
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------

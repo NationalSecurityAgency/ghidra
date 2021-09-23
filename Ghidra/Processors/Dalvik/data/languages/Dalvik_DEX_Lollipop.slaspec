@@ -1,0 +1,33 @@
+#------------------------------------------------------------------------------------
+#	Sleigh specification file for DALVIK VM
+#------------------------------------------------------------------------------------
+
+# Source:
+# https://android.googlesource.com/platform/art/+/refs/heads/lollipop-release/runtime/dex_instruction_list.h
+
+@include "Dalvik_Base.sinc"
+
+@include "Dalvik_OpCode_3E_43_unused.sinc"
+
+@include "Dalvik_OpCode_73_return_void_barrier.sinc"
+
+@include "Dalvik_OpCode_79_unused.sinc"
+@include "Dalvik_OpCode_7A_unused.sinc"
+
+@include "Dalvik_OpCode_E3_EA_dex.sinc"
+
+@include "Dalvik_OpCode_EB_F2_unused.sinc"
+
+@include "Dalvik_OpCode_F3_unused.sinc"
+@include "Dalvik_OpCode_F4_unused.sinc"
+@include "Dalvik_OpCode_F5_unused.sinc"
+@include "Dalvik_OpCode_F6_unused.sinc"
+@include "Dalvik_OpCode_F7_unused.sinc"
+@include "Dalvik_OpCode_F8_unused.sinc"
+@include "Dalvik_OpCode_F9_unused.sinc"
+@include "Dalvik_OpCode_FA_unused.sinc"
+@include "Dalvik_OpCode_FB_unused.sinc"
+@include "Dalvik_OpCode_FC_unused.sinc"
+@include "Dalvik_OpCode_FD_unused.sinc"
+@include "Dalvik_OpCode_FE_unused.sinc"
+@include "Dalvik_OpCode_FF_unused.sinc"

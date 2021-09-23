@@ -26,20 +26,21 @@ public class EncodedArrayItem implements StructConverter {
 
 	private EncodedArray array;
 
-	public EncodedArrayItem( BinaryReader reader ) throws IOException {
-		array = new EncodedArray( reader );
+	public EncodedArrayItem(BinaryReader reader) throws IOException {
+		array = new EncodedArray(reader);
 	}
 
-	public EncodedArray getArray( ) {
+	public EncodedArray getArray() {
 		return array;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		DataType dataType = array.toDataType( );
-		Structure structure = new StructureDataType( "encoded_array_item_" + dataType.getLength( ), 0 );
-		structure.add( dataType, "value", null );
-		structure.setCategoryPath( new CategoryPath( "/dex/encoded_array_item" ) );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		DataType dataType = array.toDataType();
+		Structure structure =
+			new StructureDataType("encoded_array_item_" + dataType.getLength(), 0);
+		structure.add(dataType, "value", null);
+		structure.setCategoryPath(new CategoryPath("/dex/encoded_array_item"));
 		return structure;
 	}
 

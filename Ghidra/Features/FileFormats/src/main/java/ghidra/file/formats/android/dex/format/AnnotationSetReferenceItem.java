@@ -32,33 +32,33 @@ public class AnnotationSetReferenceItem implements StructConverter {
 
 	private AnnotationItem _item;
 
-	public AnnotationSetReferenceItem( BinaryReader reader ) throws IOException {
-		annotationsOffset = reader.readNextInt( );
+	public AnnotationSetReferenceItem(BinaryReader reader) throws IOException {
+		annotationsOffset = reader.readNextInt();
 
-		if ( annotationsOffset > 0 ) {
-			long oldIndex = reader.getPointerIndex( );
+		if (annotationsOffset > 0) {
+			long oldIndex = reader.getPointerIndex();
 			try {
-				reader.setPointerIndex( annotationsOffset );
-				_item = new AnnotationItem( reader );
+				reader.setPointerIndex(annotationsOffset);
+				_item = new AnnotationItem(reader);
 			}
 			finally {
-				reader.setPointerIndex( oldIndex );
+				reader.setPointerIndex(oldIndex);
 			}
 		}
 	}
 
-	public int getAnnotationsOffset( ) {
+	public int getAnnotationsOffset() {
 		return annotationsOffset;
 	}
 
-	public AnnotationItem getItem( ) {
+	public AnnotationItem getItem() {
 		return _item;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		DataType dataType = StructConverterUtil.toDataType( AnnotationSetReferenceItem.class );
-		dataType.setCategoryPath( new CategoryPath( "/dex" ) );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		DataType dataType = StructConverterUtil.toDataType(AnnotationSetReferenceItem.class);
+		dataType.setCategoryPath(new CategoryPath("/dex"));
 		return dataType;
 	}
 

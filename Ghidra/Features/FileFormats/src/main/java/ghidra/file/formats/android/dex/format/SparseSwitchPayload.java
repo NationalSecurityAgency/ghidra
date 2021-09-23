@@ -28,40 +28,40 @@ public class SparseSwitchPayload implements StructConverter {
 
 	private short ident;
 	private short size;
-	private int [] keys;
-	private int [] targets;
+	private int[] keys;
+	private int[] targets;
 
-	public SparseSwitchPayload( BinaryReader reader ) throws IOException {
-		ident = reader.readNextShort( );
-		size = reader.readNextShort( );
-		keys = reader.readNextIntArray( size & 0xffff );
-		targets = reader.readNextIntArray( size & 0xffff );
+	public SparseSwitchPayload(BinaryReader reader) throws IOException {
+		ident = reader.readNextShort();
+		size = reader.readNextShort();
+		keys = reader.readNextIntArray(size & 0xffff);
+		targets = reader.readNextIntArray(size & 0xffff);
 	}
 
-	public short getIdent( ) {
+	public short getIdent() {
 		return ident;
 	}
 
-	public short getSize( ) {
+	public short getSize() {
 		return size;
 	}
 
-	public int [] getKeys( ) {
+	public int[] getKeys() {
 		return keys;
 	}
 
-	public int [] getTargets( ) {
+	public int[] getTargets() {
 		return targets;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType( "sparse_switch_payload_" + size, 0 );
-		structure.add( WORD, "ident", null );
-		structure.add( WORD, "size", null );
-		structure.add( new ArrayDataType( DWORD, size & 0xffff, DWORD.getLength( ) ), "keys", null );
-		structure.add( new ArrayDataType( DWORD, size & 0xffff, DWORD.getLength( ) ), "targets", null );
-		structure.setCategoryPath( new CategoryPath( "/dex/sparse_switch_payload" ) );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		Structure structure = new StructureDataType("sparse_switch_payload_" + size, 0);
+		structure.add(WORD, "ident", null);
+		structure.add(WORD, "size", null);
+		structure.add(new ArrayDataType(DWORD, size & 0xffff, DWORD.getLength()), "keys", null);
+		structure.add(new ArrayDataType(DWORD, size & 0xffff, DWORD.getLength()), "targets", null);
+		structure.setCategoryPath(new CategoryPath("/dex/sparse_switch_payload"));
 		return structure;
 	}
 

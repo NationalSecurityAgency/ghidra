@@ -1,0 +1,71 @@
+#------------------------------------------------------------------------------------
+# V(0xEB, IPUT_BOOLEAN_QUICK, "iput-boolean-quick", k22c, false, kFieldRef, kContinue | kThrow | kStore | kRegCFieldOrConstant, kVerifyRegA | kVerifyRegB | kVerifyRuntimeOnly) \
+
+:iput_boolean_quick registerA4,[registerB4:C_BITS_0_15]  is inst0=0xeb ; registerA4 & registerB4 ; C_BITS_0_15
+{
+	ptr:4 = cpool(registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
+	*ptr = registerA4 : 1;
+}
+
+#------------------------------------------------------------------------------------
+# V(0xEC, IPUT_BYTE_QUICK, "iput-byte-quick", k22c, false, kFieldRef, kContinue | kThrow | kStore | kRegCFieldOrConstant, kVerifyRegA | kVerifyRegB | kVerifyRuntimeOnly) \
+
+:iput_byte_quick registerA4,[registerB4:C_BITS_0_15]  is inst0=0xec ; registerA4 & registerB4 ; C_BITS_0_15
+ {
+	ptr:4 = cpool(registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
+	*ptr = registerA4 : 1;
+}
+
+#------------------------------------------------------------------------------------
+# V(0xED, IPUT_CHAR_QUICK, "iput-char-quick", k22c, false, kFieldRef, kContinue | kThrow | kStore | kRegCFieldOrConstant, kVerifyRegA | kVerifyRegB | kVerifyRuntimeOnly) \
+
+:iput_char_quick registerA4,[registerB4:C_BITS_0_15]  is inst0=0xed ; registerA4 & registerB4 ; C_BITS_0_15
+{
+	ptr:4 = cpool(registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
+	*ptr = registerA4 : 2;	
+}
+
+#------------------------------------------------------------------------------------
+# V(0xEE, IPUT_SHORT_QUICK, "iput-short-quick", k22c, false, kFieldRef, kContinue | kThrow | kStore | kRegCFieldOrConstant, kVerifyRegA | kVerifyRegB | kVerifyRuntimeOnly) \
+
+:iput_short_quick registerA4,[registerB4:C_BITS_0_15]  is inst0=0xee ; registerA4 & registerB4 ; C_BITS_0_15
+{
+	ptr:4 = cpool(registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
+	*ptr = registerA4 : 2;
+}
+
+#------------------------------------------------------------------------------------
+# V(0xEF, IGET_BOOLEAN_QUICK, "iget-boolean-quick", k22c, true, kFieldRef, kContinue | kThrow | kLoad | kRegCFieldOrConstant, kVerifyRegA | kVerifyRegB | kVerifyRuntimeOnly) \
+
+:iget_boolean_quick registerA4,[registerB4:C_BITS_0_15]  is inst0=0xef ; registerA4 & registerB4 ; C_BITS_0_15
+{
+	ptr:4 = cpool( registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
+	registerA4 = zext( *:1 ptr );
+}
+
+#------------------------------------------------------------------------------------
+# V(0xF0, IGET_BYTE_QUICK, "iget-byte-quick", k22c, true, kFieldRef, kContinue | kThrow | kLoad | kRegCFieldOrConstant, kVerifyRegA | kVerifyRegB | kVerifyRuntimeOnly) \
+
+:iget_byte_quick registerA4,[registerB4:C_BITS_0_15]  is inst0=0xf0 ; registerA4 & registerB4 ; C_BITS_0_15
+{
+	ptr:4 = cpool( registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
+	registerA4 = sext( *:1 ptr );
+}
+
+#------------------------------------------------------------------------------------
+# V(0xF1, IGET_CHAR_QUICK, "iget-char-quick", k22c, true, kFieldRef, kContinue | kThrow | kLoad | kRegCFieldOrConstant, kVerifyRegA | kVerifyRegB | kVerifyRuntimeOnly) \
+
+:iget_char_quick registerA4,[registerB4:C_BITS_0_15]  is inst0=0xf1 ; registerA4 & registerB4 ; C_BITS_0_15
+ {
+	ptr:4 = cpool( registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
+	registerA4 = zext( *:2 ptr );
+}
+
+#------------------------------------------------------------------------------------
+# V(0xF2, IGET_SHORT_QUICK, "iget-short-quick", k22c, true, kFieldRef, kContinue | kThrow | kLoad | kRegCFieldOrConstant, kVerifyRegA | kVerifyRegB | kVerifyRuntimeOnly) \
+
+:iget_short_quick registerA4,[registerB4:C_BITS_0_15]  is inst0=0xf2 ; registerA4 & registerB4 ; C_BITS_0_15
+{
+	ptr:4 = cpool( registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
+	registerA4 = sext( *:2 ptr );	
+}
