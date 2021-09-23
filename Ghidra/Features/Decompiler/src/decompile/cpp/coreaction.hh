@@ -311,6 +311,7 @@ public:
 /// immediately.
 class ActionSetCasts : public Action {
   static bool testStructOffset0(Varnode *vn,Datatype *ct,CastStrategy *castStrategy);
+  static bool isOpIdentical(Datatype *ct1,Datatype *ct2);
   static int4 castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStrategy);
   static int4 castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy *castStrategy);
 public:

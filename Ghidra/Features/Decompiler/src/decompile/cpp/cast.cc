@@ -352,9 +352,13 @@ bool CastStrategyC::isSubpieceCastEndian(Datatype *outtype,Datatype *intype,uint
 bool CastStrategyC::isSextCast(Datatype *outtype,Datatype *intype) const
 
 {
-  if (outtype->getMetatype()!=TYPE_INT) return false;
+  type_metatype metaout = outtype->getMetatype();
+  if (metaout != TYPE_UINT && metaout != TYPE_INT)
+    return false;
   type_metatype metain = intype->getMetatype();
-  if ((metain!=TYPE_INT)&&(metain!=TYPE_UINT)&&(metain!=TYPE_BOOL))
+  // Casting to larger storage always extends based on signedness of the input data-type
+  // So the input must be SIGNED in order to treat SEXT as a cast
+  if ((metain!=TYPE_INT)&&(metain!=TYPE_BOOL))
     return false;
   return true;
 }
@@ -362,9 +366,13 @@ bool CastStrategyC::isSextCast(Datatype *outtype,Datatype *intype) const
 bool CastStrategyC::isZextCast(Datatype *outtype,Datatype *intype) const
 
 {
-  if (outtype->getMetatype()!=TYPE_UINT) return false;
+  type_metatype metaout = outtype->getMetatype();
+  if (metaout != TYPE_UINT && metaout != TYPE_INT)
+    return false;
   type_metatype metain = intype->getMetatype();
-  if ((metain!=TYPE_INT)&&(metain!=TYPE_UINT)&&(metain!=TYPE_BOOL))
+  // Casting to larger storage always extends based on signedness of the input data-type
+  // So the input must be UNSIGNED in order to treat ZEXT as a cast
+  if ((metain!=TYPE_UINT)&&(metain!=TYPE_BOOL))
     return false;
   return true;
 }
