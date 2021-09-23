@@ -15,9 +15,11 @@
  */
 package ghidra.program.model.data;
 
-import static ghidra.program.model.data.CharsetSettingsDefinition.*;
-import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.*;
-import static ghidra.program.model.data.TranslationSettingsDefinition.*;
+import static ghidra.program.model.data.CharsetSettingsDefinition.CHARSET;
+import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER;
+import static ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION;
+
+import java.nio.charset.CoderResult;
 
 import ghidra.docking.settings.*;
 import ghidra.program.model.mem.MemBuffer;
@@ -28,8 +30,9 @@ import ghidra.program.model.mem.MemBuffer;
  * See {@link StringDataType} for information about string variations and configuration details.
  * <p>
  * Sub-classes generally only need to implement a constructor that calls the mega-constructor
- * {@link #AbstractStringDataType(String, String, String, String, String, String, String, DataType, StringLayoutEnum, DataTypeManager) AbstractStringDataType.AbstractStringDataType(lots,of,params)}
- * and the {@link DataType#clone(DataTypeManager) } method.
+ * {@link #AbstractStringDataType(String, String, String, String, String, String, String, DataType, StringLayoutEnum, DataTypeManager)
+ * AbstractStringDataType.AbstractStringDataType(lots,of,params)} and the
+ * {@link DataType#clone(DataTypeManager) } method.
  * <p>
  *
  */
@@ -56,8 +59,8 @@ abstract public class AbstractStringDataType extends BuiltIn
 	/**
 	 * The name of the character set used to convert bytes into java native Strings.
 	 * <p>
-	 * If null, the {@link CharsetSettingsDefinition settings} attached to the data
-	 * instance will be queried for a charset, which will default to ASCII if not present.
+	 * If null, the {@link CharsetSettingsDefinition settings} attached to the data instance will be
+	 * queried for a charset, which will default to ASCII if not present.
 	 */
 	private final String charsetName;
 	/**
@@ -83,8 +86,8 @@ abstract public class AbstractStringDataType extends BuiltIn
 	private final StringLayoutEnum stringLayout;
 
 	/**
-	 * String used as a prefix to the data instance location when creating a label when
-	 * there is a problem accessing the string data.
+	 * String used as a prefix to the data instance location when creating a label when there is a
+	 * problem accessing the string data.
 	 * <p>
 	 * Example: "STRING" produces something like: "STRING_00410ea0"
 	 * <p>
@@ -111,17 +114,20 @@ abstract public class AbstractStringDataType extends BuiltIn
 	/**
 	 * Protected constructor used by derived types to provide all their datatype details.
 	 * <p>
+	 * 
 	 * @param name Name of this datatype
 	 * @param mnemonic Mnemonic of this datatype
-	 * @param defaultLabel Label string for this datatype.  See {@link #defaultLabel}.
-	 * @param defaultLabelPrefix Label prefix string for this datatype.  See {@link #defaultLabelPrefix}.
-	 * @param defaultAbbrevLabelPrefix Abbreviated label prefix for this datatype.  See {@link #defaultAbbrevLabelPrefix}.
+	 * @param defaultLabel Label string for this datatype. See {@link #defaultLabel}.
+	 * @param defaultLabelPrefix Label prefix string for this datatype. See
+	 *            {@link #defaultLabelPrefix}.
+	 * @param defaultAbbrevLabelPrefix Abbreviated label prefix for this datatype. See
+	 *            {@link #defaultAbbrevLabelPrefix}.
 	 * @param description Description of this datatype.
-	 * @param charsetName Charset name for this string datatype.  If null the
-	 * settings of the data instance will be queried for a {@link CharsetSettingsDefinition charset}.
+	 * @param charsetName Charset name for this string datatype. If null the settings of the data
+	 *            instance will be queried for a {@link CharsetSettingsDefinition charset}.
 	 * @param replacementDataType Replacement {@link DataType}.
-	 * @param stringLayout {@link StringLayoutEnum stringLayout} controls how the string is laid
-	 * out in memory.
+	 * @param stringLayout {@link StringLayoutEnum stringLayout} controls how the string is laid out
+	 *            in memory.
 	 * @param dtm {@link DataTypeManager} for this datatype, null ok.
 	 */
 	protected AbstractStringDataType(String name, String mnemonic, String defaultLabel,
@@ -170,6 +176,7 @@ abstract public class AbstractStringDataType extends BuiltIn
 	 * Creates a new {@link StringDataInstance} using the bytes in the supplied MemBuffer and
 	 * options provided by this DataType.
 	 * <p>
+	 * 
 	 * @param buf the data.
 	 * @param settings the settings to use for the representation.
 	 * @param length the number of bytes to represent.
@@ -218,13 +225,45 @@ abstract public class AbstractStringDataType extends BuiltIn
 	}
 
 	@Override
+	public boolean isEncodable() {
+		return true;
+	}
+
+	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		return getStringDataInstance(buf, settings, length).getStringValue();
 	}
 
 	@Override
+	public byte[] encodeValue(Object value, MemBuffer buf, Settings settings, int length)
+			throws DataTypeEncodeException {
+		if (!(value instanceof CharSequence)) {
+			throw new DataTypeEncodeException("Requires CharSequence", value, this);
+		}
+		try {
+			StringDataInstance sdi = getStringDataInstance(buf, settings, length);
+			return sdi.encodeReplacementFromStringValue((CharSequence) value);
+		}
+		catch (Exception e) {
+			throw new DataTypeEncodeException(value, this, e);
+		}
+	}
+
+	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		return getStringDataInstance(buf, settings, length).getStringRepresentation();
+	}
+
+	@Override
+	public byte[] encodeRepresentation(String repr, MemBuffer buf, Settings settings, int length)
+			throws DataTypeEncodeException {
+		try {
+			StringDataInstance sdi = getStringDataInstance(buf, settings, length);
+			return sdi.encodeReplacementFromStringRepresentation(repr);
+		}
+		catch (Throwable e) {
+			throw new DataTypeEncodeException(repr, this, e);
+		}
 	}
 
 	@Override

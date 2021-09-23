@@ -22,9 +22,8 @@ import ghidra.util.StringFormat;
 import ghidra.util.classfinder.ClassTranslator;
 
 /**
- * Provides a definition of an primitive char in a program.
- * The size and signed-ness of this type is determined by the data
- * organization of the associated data type manager.
+ * Provides a definition of an primitive char in a program. The size and signed-ness of this type is
+ * determined by the data organization of the associated data type manager.
  */
 public class CharDataType extends AbstractIntegerDataType implements DataTypeWithCharset {
 	private final static long serialVersionUID = 1;
@@ -84,9 +83,8 @@ public class CharDataType extends AbstractIntegerDataType implements DataTypeWit
 	}
 
 	/**
-	 * Returns the C style data-type declaration
-	 * for this data-type.  Null is returned if
-	 * no appropriate declaration exists.
+	 * Returns the C style data-type declaration for this data-type. Null is returned if no
+	 * appropriate declaration exists.
 	 */
 	@Override
 	public String getCDeclaration() {
@@ -130,6 +128,23 @@ public class CharDataType extends AbstractIntegerDataType implements DataTypeWit
 		catch (MemoryAccessException e) {
 			return null;
 		}
+	}
+
+	@Override
+	public boolean isEncodable() {
+		return true;
+	}
+
+	@Override
+	public byte[] encodeValue(Object value, MemBuffer buf, Settings settings, int length)
+			throws DataTypeEncodeException {
+		return encodeCharacterValue(value, buf, settings);
+	}
+
+	@Override
+	public byte[] encodeRepresentation(String repr, MemBuffer buf, Settings settings, int length)
+			throws DataTypeEncodeException {
+		return encodeCharacterRepresentation(repr, buf, settings);
 	}
 
 	@Override

@@ -84,6 +84,41 @@ abstract class AbstractImageBaseOffsetDataType extends BuiltIn {
 	}
 
 	@Override
+	public boolean isEncodable() {
+		return getScalarDataType().isEncodable();
+	}
+
+	@Override
+	public byte[] encodeValue(Object value, MemBuffer buf, Settings settings, int length)
+			throws DataTypeEncodeException {
+		if (!(value instanceof Address)) {
+			throw new DataTypeEncodeException("Requires Address", value, this);
+		}
+		Address addressValue = (Address) value;
+		Address imageBase = buf.getMemory().getProgram().getImageBase();
+		long offset;
+		try {
+			offset = addressValue.subtract(imageBase);
+		}
+		catch (IllegalArgumentException e) {
+			throw new DataTypeEncodeException(value, this, e);
+		}
+		Scalar scalarOffset = new Scalar(imageBase.getSize(), offset, false);
+		DataType dt = getScalarDataType();
+		return dt.encodeValue(scalarOffset, buf, settings, length);
+	}
+
+	@Override
+	public byte[] encodeRepresentation(String repr, MemBuffer buf, Settings settings, int length)
+			throws DataTypeEncodeException {
+		Address address = buf.getMemory().getProgram().getAddressFactory().getAddress(repr);
+		if (address == null) {
+			throw new DataTypeEncodeException("Cannot parse address", repr, this);
+		}
+		return encodeValue(address, buf, settings, length);
+	}
+
+	@Override
 	public Class<?> getValueClass(Settings settings) {
 		return Address.class;
 	}

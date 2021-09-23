@@ -17,6 +17,7 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import db.DBRecord;
@@ -61,29 +62,27 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	}
 
 	/**
-	 * Subclasses implement this to either read the name from the database record or
-	 * compute if it is a derived name such as a pointer or array. Implementers can
-	 * assume that the database lock will be acquired when this method is called.
+	 * Subclasses implement this to either read the name from the database record or compute if it
+	 * is a derived name such as a pointer or array. Implementers can assume that the database lock
+	 * will be acquired when this method is called.
 	 */
 	protected abstract String doGetName();
 
 	/**
-	 * Subclasses implement this to read the category path from the database
-	 * record.Implementers can assume that the database lock will be acquired when
-	 * this method is called.
+	 * Subclasses implement this to read the category path from the database record.Implementers can
+	 * assume that the database lock will be acquired when this method is called.
 	 */
 	protected abstract long doGetCategoryID();
 
 	/**
-	 * Subclasses implement this to update the category path ID to the database.
-	 * Implementers can assume that the database lock will be acquired when this
-	 * method is called.
+	 * Subclasses implement this to update the category path ID to the database. Implementers can
+	 * assume that the database lock will be acquired when this method is called.
 	 */
 	protected abstract void doSetCategoryPathRecord(long categoryID) throws IOException;
 
 	/**
-	 * Subclasses implement this to update the to the database. Implementers can
-	 * assume that the database lock will be acquired when this method is called.
+	 * Subclasses implement this to update the to the database. Implementers can assume that the
+	 * database lock will be acquired when this method is called.
 	 * 
 	 * @param newName new data type name
 	 */
@@ -91,16 +90,14 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 			throws IOException, InvalidNameException;
 
 	/**
-	 * Subclasses implement this to read the source archive id from the record.
-	 * Implementers can assume that the database lock will be acquired when this
-	 * method is called.
+	 * Subclasses implement this to read the source archive id from the record. Implementers can
+	 * assume that the database lock will be acquired when this method is called.
 	 */
 	protected abstract UniversalID getSourceArchiveID();
 
 	/**
-	 * Subclasses implement this to update the source archive id from the record.
-	 * Implementers can assume that the database lock will be acquired when this
-	 * method is called.
+	 * Subclasses implement this to update the source archive id from the record. Implementers can
+	 * assume that the database lock will be acquired when this method is called.
 	 */
 	protected abstract void setSourceArchiveID(UniversalID id);
 
@@ -149,8 +146,8 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	}
 
 	/**
-	 * Get the current name without refresh. This is intended to be used for event
-	 * generation when an old-name is needed.
+	 * Get the current name without refresh. This is intended to be used for event generation when
+	 * an old-name is needed.
 	 * 
 	 * @return old name
 	 */
@@ -186,10 +183,10 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	/**
 	 * Set the data in the form of the appropriate Object for this DataType.
 	 *
-	 * @param buf      the data buffer.
+	 * @param buf the data buffer.
 	 * @param settings the display settings for the current value.
-	 * @param length   the number of bytes to set the value from.
-	 * @param value    the new value to set object
+	 * @param length the number of bytes to set the value from.
+	 * @param value the new value to set object
 	 */
 
 	public void setValue(MemBuffer buf, Settings settings, int length, Object value) {
@@ -417,9 +414,9 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	}
 
 	/**
-	 * Notify all parents that the size of this datatype has changed or
-	 * other significant change that may affect a parent containing this
-	 * datatype.
+	 * Notify all parents that the size of this datatype has changed or other significant change
+	 * that may affect a parent containing this datatype.
+	 * 
 	 * @param isAutoChange true if changes are in response to another datatype's change.
 	 */
 	protected void notifySizeChanged(boolean isAutoChange) {
@@ -431,6 +428,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 
 	/**
 	 * Notification that this composite data type's alignment has changed.
+	 * 
 	 * @param isAutoChange true if changes are in response to another datatype's change.
 	 */
 	protected void notifyAlignmentChanged(boolean isAutoChange) {
@@ -515,8 +513,8 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 
 	/**
 	 * Sets a String briefly describing this DataType. <br>
-	 * If a data type that extends this class wants to allow the description to be
-	 * changed, then it must override this method.
+	 * If a data type that extends this class wants to allow the description to be changed, then it
+	 * must override this method.
 	 * 
 	 * @param description a one-liner describing this DataType.
 	 */
@@ -526,15 +524,13 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	}
 
 	/**
-	 * setUniversalID is a package level method that allows you to change a data
-	 * type's universal ID. This is only intended to be used when transforming a
-	 * newly parsed data type archive so that it can be used as a replacement of the
-	 * archive from a previous software release.
+	 * setUniversalID is a package level method that allows you to change a data type's universal
+	 * ID. This is only intended to be used when transforming a newly parsed data type archive so
+	 * that it can be used as a replacement of the archive from a previous software release.
 	 * 
-	 * @param oldUniversalID the old universal ID value that the user is already
-	 *                       referencing with their data types. This is the
-	 *                       universal ID that we want the new data type to be known
-	 *                       by.
+	 * @param oldUniversalID the old universal ID value that the user is already referencing with
+	 *            their data types. This is the universal ID that we want the new data type to be
+	 *            known by.
 	 */
 	abstract void setUniversalID(UniversalID oldUniversalID);
 
@@ -557,4 +553,20 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 			getName().equals(otherDt.getName()) && isEquivalent(otherDt);
 	}
 
+	@Override
+	public boolean isEncodable() {
+		return false;
+	}
+
+	@Override
+	public byte[] encodeValue(Object value, MemBuffer buf, Settings settings, int length)
+			throws DataTypeEncodeException {
+		throw new DataTypeEncodeException("Encoding not supported", value, this);
+	}
+
+	@Override
+	public byte[] encodeRepresentation(String repr, MemBuffer buf, Settings settings, int length)
+			throws DataTypeEncodeException {
+		throw new DataTypeEncodeException("Encoding not supported", repr, this);
+	}
 }
