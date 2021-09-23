@@ -21,15 +21,17 @@ public class DbgEventFilterImpl implements DbgEventFilter {
 
 	protected int index;
 	protected final String text;
+	protected final String arg;
 	protected final String cmd;
 	protected int executionOption;
 	protected int continueOption;
 
-	public DbgEventFilterImpl(int index, String text, String cmd, int executionOption,
+	public DbgEventFilterImpl(int index, String text, String cmd, String arg, int executionOption,
 			int continueOption) {
 		this.index = index;
 		this.text = text;
 		this.cmd = cmd;
+		this.arg = arg;
 		this.setExecutionOption(executionOption);
 		this.setContinueOption(continueOption);
 	}
@@ -42,6 +44,11 @@ public class DbgEventFilterImpl implements DbgEventFilter {
 	@Override
 	public String getName() {
 		return text;
+	}
+
+	@Override
+	public String getArg() {
+		return arg == null ? "N/A" : arg;
 	}
 
 	@Override

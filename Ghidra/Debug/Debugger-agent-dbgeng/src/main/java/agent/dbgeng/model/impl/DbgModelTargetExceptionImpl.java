@@ -15,19 +15,25 @@
  */
 package agent.dbgeng.model.impl;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.dbgeng.DebugControl.DebugFilterContinuationOption;
 import agent.dbgeng.dbgeng.DebugControl.DebugFilterExecutionOption;
 import agent.dbgeng.dbgeng.DebugExceptionRecord64;
 import agent.dbgeng.manager.DbgCause;
 import agent.dbgeng.manager.DbgExceptionFilter;
+import agent.dbgeng.manager.cmd.DbgSetFilterCommandCommand;
+import agent.dbgeng.manager.cmd.DbgSetFilterSecondChanceCmdCommand;
 import agent.dbgeng.manager.evt.AbstractDbgEvent;
 import agent.dbgeng.manager.evt.DbgExceptionEvent;
+import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
 import agent.dbgeng.model.iface2.*;
+import ghidra.async.AsyncUtils;
+import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetFocusScope;
+import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
@@ -39,6 +45,13 @@ import ghidra.dbg.util.PathUtils;
 		@TargetAttributeType(type = Object.class) })
 public class DbgModelTargetExceptionImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetException {
+
+	final String COMMAND_ATTRIBUTE_NAME = "Command";
+	final String COMMAND2_ATTRIBUTE_NAME = "SecondCmd";
+	final String CONTINUE_OPTION_ATTRIBUTE_NAME = "Continue";
+	final String EXECUTE_OPTION_ATTRIBUTE_NAME = "Execute";
+	final String EXCEPTION_CODE_ATTRIBUTE_NAME = "Exception";
+
 	protected static String indexFilter(DbgExceptionFilter filter) {
 		return filter.getName();
 	}
@@ -67,11 +80,11 @@ public class DbgModelTargetExceptionImpl extends DbgModelTargetObjectImpl
 
 		changeAttributes(List.of(), List.of(), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, getIndex(), //
-			"Command", filter.getCmd(), //
-			"SecondCmd", filter.getCmd(), //
-			"Execute", execOption, //
-			"Continue", contOption, //
-			"Exception", filter.getExceptionCode() //
+			COMMAND_ATTRIBUTE_NAME, filter.getCmd(), //
+			COMMAND2_ATTRIBUTE_NAME, filter.getCmd(), //
+			EXECUTE_OPTION_ATTRIBUTE_NAME, execOption, //
+			CONTINUE_OPTION_ATTRIBUTE_NAME, contOption, //
+			EXCEPTION_CODE_ATTRIBUTE_NAME, filter.getExceptionCode() //
 		), "Initialized");
 
 		getManager().addEventsListener(this);
@@ -100,5 +113,55 @@ public class DbgModelTargetExceptionImpl extends DbgModelTargetObjectImpl
 					MODIFIED_ATTRIBUTE_NAME, true), "Refreshed");
 			}
 		}
+	}
+
+	@Override
+	public Map<String, ParameterDescription<?>> getConfigParameters() {
+		Map<String, ParameterDescription<?>> map = new HashMap<>();
+		ParameterDescription<String> cmdDesc = ParameterDescription.create(String.class,
+			COMMAND_ATTRIBUTE_NAME, false, "", COMMAND_ATTRIBUTE_NAME, "filter command");
+		map.put(COMMAND_ATTRIBUTE_NAME, cmdDesc);
+		ParameterDescription<String> cmdDesc2 =
+			ParameterDescription.create(String.class, COMMAND2_ATTRIBUTE_NAME, false, "",
+				COMMAND2_ATTRIBUTE_NAME, "filter 2nd-chance command");
+		map.put(COMMAND2_ATTRIBUTE_NAME, cmdDesc2);
+		return map;
+	}
+
+	@Override
+	public CompletableFuture<Void> writeConfigurationOption(String key, Object value) {
+		DbgManagerImpl manager = getManager();
+		switch (key) {
+			case COMMAND_ATTRIBUTE_NAME:
+				if (value instanceof String) {
+					this.changeAttributes(List.of(), Map.of(COMMAND_ATTRIBUTE_NAME, value),
+						"Modified");
+					String cmd = (String) getCachedAttribute(COMMAND_ATTRIBUTE_NAME);
+					return manager.execute(
+						new DbgSetFilterCommandCommand(manager, getEventIndex(), cmd));
+				}
+				throw new DebuggerIllegalArgumentException("Command should be a string");
+			case COMMAND2_ATTRIBUTE_NAME:
+				if (value instanceof String) {
+					this.changeAttributes(List.of(), Map.of(COMMAND2_ATTRIBUTE_NAME, value),
+						"Modified");
+					String cmd = (String) getCachedAttribute(COMMAND2_ATTRIBUTE_NAME);
+					return manager.execute(
+						new DbgSetFilterSecondChanceCmdCommand(manager, getEventIndex(), cmd));
+				}
+				throw new DebuggerIllegalArgumentException("Command should be a string");
+			case EXECUTE_OPTION_ATTRIBUTE_NAME:
+				if (value instanceof Integer) {
+					execOption.setOption((Integer) value);
+				}
+				throw new DebuggerIllegalArgumentException("Option should be numeric");
+			case CONTINUE_OPTION_ATTRIBUTE_NAME:
+				if (value instanceof Integer) {
+					contOption.setOption((Integer) value);
+				}
+				throw new DebuggerIllegalArgumentException("Option should be numeric");
+			default:
+		}
+		return AsyncUtils.NIL;
 	}
 }

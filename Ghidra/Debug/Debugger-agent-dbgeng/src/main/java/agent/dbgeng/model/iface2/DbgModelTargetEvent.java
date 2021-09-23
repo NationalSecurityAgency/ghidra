@@ -18,8 +18,12 @@ package agent.dbgeng.model.iface2;
 import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.evt.AbstractDbgEvent;
 import agent.dbgeng.model.iface1.DbgModelSelectableObject;
+import agent.dbgeng.model.iface1.DbgModelTargetConfigurable;
 
-public interface DbgModelTargetEvent extends DbgModelSelectableObject, DbgEventsListenerAdapter //
+public interface DbgModelTargetEvent extends
+		DbgModelSelectableObject, //
+		DbgModelTargetConfigurable, //
+		DbgEventsListenerAdapter //
 {
 
 	public DbgEventFilter getFilter();

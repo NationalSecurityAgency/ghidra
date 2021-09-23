@@ -15,14 +15,20 @@
  */
 package agent.dbgeng.model.impl;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.dbgeng.DebugControl.*;
 import agent.dbgeng.manager.DbgCause;
 import agent.dbgeng.manager.DbgEventFilter;
+import agent.dbgeng.manager.cmd.DbgSetFilterArgumentCommand;
+import agent.dbgeng.manager.cmd.DbgSetFilterCommandCommand;
 import agent.dbgeng.manager.evt.*;
+import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface2.*;
+import ghidra.async.AsyncUtils;
+import ghidra.dbg.error.DebuggerIllegalArgumentException;
+import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
@@ -34,6 +40,12 @@ import ghidra.dbg.util.PathUtils;
 		@TargetAttributeType(type = Object.class) })
 public class DbgModelTargetEventImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetEvent {
+
+	final String COMMAND_ATTRIBUTE_NAME = "Command";
+	final String ARGUMENT_ATTRIBUTE_NAME = "Argument";
+	final String CONTINUE_OPTION_ATTRIBUTE_NAME = "Continue";
+	final String EXECUTE_OPTION_ATTRIBUTE_NAME = "Execute";
+
 	protected static String indexFilter(DbgEventFilter filter) {
 		return filter.getName();
 	}
@@ -61,9 +73,10 @@ public class DbgModelTargetEventImpl extends DbgModelTargetObjectImpl
 
 		changeAttributes(List.of(), List.of(), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, getIndex(), //
-			"Command", filter.getCmd(), //
-			"Execute", execOption, //
-			"Continue", contOption //
+			COMMAND_ATTRIBUTE_NAME, filter.getCmd(), //
+			ARGUMENT_ATTRIBUTE_NAME, filter.getArg(), //
+			EXECUTE_OPTION_ATTRIBUTE_NAME, execOption, //
+			CONTINUE_OPTION_ATTRIBUTE_NAME, contOption //
 		), "Initialized");
 
 		getManager().addEventsListener(this);
@@ -113,5 +126,55 @@ public class DbgModelTargetEventImpl extends DbgModelTargetObjectImpl
 			changeAttributes(List.of(), List.of(), Map.of( //
 				MODIFIED_ATTRIBUTE_NAME, true), "Refreshed");
 		}
+	}
+
+	@Override
+	public Map<String, ParameterDescription<?>> getConfigParameters() {
+		Map<String, ParameterDescription<?>> map = new HashMap<>();
+		ParameterDescription<String> cmdDesc = ParameterDescription.create(String.class,
+			COMMAND_ATTRIBUTE_NAME, false, "", COMMAND_ATTRIBUTE_NAME, "filter command");
+		map.put(COMMAND_ATTRIBUTE_NAME, cmdDesc);
+		ParameterDescription<String> argDesc =
+			ParameterDescription.create(String.class, ARGUMENT_ATTRIBUTE_NAME, false, "",
+				ARGUMENT_ATTRIBUTE_NAME, "filter argument");
+		map.put(ARGUMENT_ATTRIBUTE_NAME, argDesc);
+		return map;
+	}
+
+	@Override
+	public CompletableFuture<Void> writeConfigurationOption(String key, Object value) {
+		DbgManagerImpl manager = getManager();
+		switch (key) {
+			case COMMAND_ATTRIBUTE_NAME:
+				if (value instanceof String) {
+					this.changeAttributes(List.of(), Map.of(COMMAND_ATTRIBUTE_NAME, value),
+						"Modified");
+					String cmd = (String) getCachedAttribute(COMMAND_ATTRIBUTE_NAME);
+					return manager.execute(
+						new DbgSetFilterCommandCommand(manager, getEventIndex(), cmd));
+				}
+				throw new DebuggerIllegalArgumentException("Command should be a string");
+			case ARGUMENT_ATTRIBUTE_NAME:
+				if (value instanceof String) {
+					this.changeAttributes(List.of(), Map.of(ARGUMENT_ATTRIBUTE_NAME, value),
+						"Modified");
+					String cmd = (String) getCachedAttribute(ARGUMENT_ATTRIBUTE_NAME);
+					return manager.execute(
+						new DbgSetFilterArgumentCommand(manager, getEventIndex(), cmd));
+				}
+				throw new DebuggerIllegalArgumentException("Argument should be a string");
+			case EXECUTE_OPTION_ATTRIBUTE_NAME:
+				if (value instanceof Integer) {
+					execOption.setOption((Integer) value);
+				}
+				throw new DebuggerIllegalArgumentException("Option should be numeric");
+			case CONTINUE_OPTION_ATTRIBUTE_NAME:
+				if (value instanceof Integer) {
+					contOption.setOption((Integer) value);
+				}
+				throw new DebuggerIllegalArgumentException("Option should be numeric");
+			default:
+		}
+		return AsyncUtils.NIL;
 	}
 }

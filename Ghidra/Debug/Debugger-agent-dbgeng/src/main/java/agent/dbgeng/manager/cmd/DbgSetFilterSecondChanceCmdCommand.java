@@ -13,24 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.dbgeng.manager;
+package agent.dbgeng.manager.cmd;
 
-public interface DbgEventFilter {
+import agent.dbgeng.dbgeng.DebugControl;
+import agent.dbgeng.manager.impl.DbgManagerImpl;
 
-	int getIndex();
+public class DbgSetFilterSecondChanceCmdCommand
+		extends AbstractDbgCommand<Void> {
 
-	String getName();
+	private int index;
+	private String cmd;
 
-	String getArg();
+	public DbgSetFilterSecondChanceCmdCommand(DbgManagerImpl manager, int index,
+			String cmd) {
+		super(manager);
+		this.index = index;
+		this.cmd = cmd;
+	}
 
-	String getCmd();
-
-	int getExecutionOption();
-
-	void setExecutionOption(int executionOption);
-
-	int getContinueOption();
-
-	void setContinueOption(int continueOption);
-
+	@Override
+	public void invoke() {
+		DebugControl control = manager.getControl();
+		control.setExceptionFilterSecondCommand(index, cmd);
+	}
 }

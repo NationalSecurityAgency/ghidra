@@ -20,6 +20,7 @@ import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -212,6 +213,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	private boolean asTree = true;
 	private MyObjectListener listener = new MyObjectListener();
 
+	public DebuggerMethodInvocationDialog configDialog;
 	public DebuggerMethodInvocationDialog launchDialog;
 	public DebuggerAttachDialog attachDialog;
 	public DebuggerBreakpointDialog breakpointDialog;
@@ -336,6 +338,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		//attachDialogOld = new DebuggerAttachDialog(this);
 		attachDialog = new DebuggerAttachDialog(this);
 		breakpointDialog = new DebuggerBreakpointDialog(this);
+		configDialog = new DebuggerMethodInvocationDialog(tool, "Config", "Config",
+			DebuggerResources.ICON_LAUNCH);
 	}
 
 	private void addToPanel(ObjectPane p) throws Exception {
@@ -1228,13 +1232,27 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "X" + groupTargetIndex)
 			.helpLocation(AbstractToggleAction.help(plugin))
 			.enabledWhen(ctx -> isInstance(ctx, TargetTogglable.class))
-			.popupWhen(ctx -> isInstance(ctx, TargetResumable.class))
+			.popupWhen(ctx -> isInstance(ctx, TargetTogglable.class))
 			.onAction(ctx -> performToggle(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
 		
 		groupTargetIndex++;
-
+	
+		new ActionBuilder("Configure", plugin.getName())
+			.keyBinding("C")
+			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "X" + groupTargetIndex)
+			.popupMenuPath("&Configure")
+			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "X" + groupTargetIndex)
+			.helpLocation(AbstractToggleAction.help(plugin))
+			.enabledWhen(ctx -> isInstance(ctx, TargetConfigurable.class))
+			.popupWhen(ctx -> isInstance(ctx, TargetConfigurable.class))
+			.onAction(ctx -> performConfigure(ctx))
+			.enabled(false)
+			.buildAndInstallLocal(this);
+		
+		groupTargetIndex++;
+	
 		displayAsTreeAction = new DisplayAsTreeAction(tool, plugin.getName(), this);
 		displayAsTableAction = new DisplayAsTableAction(tool, plugin.getName(), this);
 		displayAsGraphAction = new DisplayAsGraphAction(tool, plugin.getName(), this);
@@ -1504,6 +1522,16 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		performAction(context, false, TargetTogglable.class, t -> {
 			return t.toggle(!t.isEnabled());
 		}, "Couldn't toggle");
+	}
+
+	public void performConfigure(ActionContext context) {
+		performAction(context, false, TargetConfigurable.class, configurable -> {
+			Map<String, ?> args = configDialog.promptArguments(configurable.getConfigParameters());
+			for (Entry<String, ?> entry : args.entrySet()) {
+				configurable.writeConfigurationOption(entry.getKey(), entry.getValue());
+			}
+			return AsyncUtils.NIL;
+		}, "Couldn't configure");
 	}
 
 	public void initiateConsole(ActionContext context) {

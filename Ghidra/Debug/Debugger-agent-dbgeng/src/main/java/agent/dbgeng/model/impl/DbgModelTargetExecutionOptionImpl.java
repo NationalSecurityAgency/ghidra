@@ -62,8 +62,18 @@ public class DbgModelTargetExecutionOptionImpl extends DbgModelTargetObjectImpl
 
 	@Override
 	public CompletableFuture<Void> enable() {
-		DbgManagerImpl manager = getManager();
 		int ordinal = (optionExc.ordinal() + 1) % (DebugFilterExecutionOption.values().length - 1);
+		return setOption(ordinal);
+	}
+
+	@Override
+	public int getOption() {
+		return optionExc.ordinal();
+	}
+
+	@Override
+	public CompletableFuture<Void> setOption(int ordinal) {
+		DbgManagerImpl manager = getManager();
 		optionExc = DebugFilterExecutionOption.getByNumber(ordinal);
 		setAttributes();
 		return manager.execute(

@@ -57,17 +57,23 @@ public class DbgModelTargetContinuationOptionImpl extends DbgModelTargetObjectIm
 
 	@Override
 	public CompletableFuture<Void> disable() {
-		DbgManagerImpl manager = getManager();
-		optionCont = DebugFilterContinuationOption.DEBUG_FILTER_GO_NOT_HANDLED;
-		setAttributes();
-		return manager.execute(
-			new DbgToggleContinuationCommand(manager, event.getEventIndex(), optionCont));
+		return setOption(DebugFilterContinuationOption.DEBUG_FILTER_GO_NOT_HANDLED.ordinal());
 	}
 
 	@Override
 	public CompletableFuture<Void> enable() {
+		return setOption(DebugFilterContinuationOption.DEBUG_FILTER_GO_HANDLED.ordinal());
+	}
+
+	@Override
+	public int getOption() {
+		return optionCont.ordinal();
+	}
+
+	@Override
+	public CompletableFuture<Void> setOption(int ordinal) {
 		DbgManagerImpl manager = getManager();
-		optionCont = DebugFilterContinuationOption.DEBUG_FILTER_GO_HANDLED;
+		optionCont = DebugFilterContinuationOption.getByNumber(ordinal);
 		setAttributes();
 		return manager.execute(
 			new DbgToggleContinuationCommand(manager, event.getEventIndex(), optionCont));

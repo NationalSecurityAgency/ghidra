@@ -15,9 +15,12 @@
  */
 package ghidra.dbg.target;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
+import ghidra.dbg.target.TargetMethod.ParameterDescription;
 
 /**
  * A target with writable configuration options
@@ -55,4 +58,8 @@ public interface TargetConfigurable extends TargetObject {
 	 *             is not valid.
 	 */
 	public CompletableFuture<Void> writeConfigurationOption(String key, Object value);
+
+	public default Map<String, ParameterDescription<?>> getConfigParameters() {
+		return new HashMap<>();
+	}
 }

@@ -15,8 +15,14 @@
  */
 package agent.dbgeng.model.iface2;
 
+import java.util.concurrent.CompletableFuture;
+
 import ghidra.dbg.target.TargetTogglable;
 
 public interface DbgModelTargetEventOption extends DbgModelTargetObject, TargetTogglable {
+
+	int getOption();
+
+	CompletableFuture<Void> setOption(int ordinal);
 
 }

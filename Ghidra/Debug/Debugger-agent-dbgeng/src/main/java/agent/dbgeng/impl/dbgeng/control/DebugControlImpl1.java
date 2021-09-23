@@ -365,8 +365,12 @@ public class DebugControlImpl1 implements DebugControlInternal {
 	public String getSpecificFilterArgument(int index) {
 		ULONG ulIndex = new ULONG(index);
 		ULONGByReference ulArgumentSize = new ULONGByReference();
-		COMUtils.checkRC(
-			jnaControl.GetSpecificFilterArgument(ulIndex, null, new ULONG(0), ulArgumentSize));
+		HRESULT hr =
+			jnaControl.GetSpecificFilterArgument(ulIndex, null, new ULONG(0), ulArgumentSize);
+		if (hr.equals(COMUtilsExtra.E_INVALID_PARAM)) {
+			return null;
+		}
+		COMUtils.checkRC(hr);
 		byte[] buffer = new byte[ulArgumentSize.getValue().intValue()];
 		ULONG ulBufferSize = ulArgumentSize.getValue();
 		COMUtils.checkRC(
@@ -376,8 +380,10 @@ public class DebugControlImpl1 implements DebugControlInternal {
 
 	@Override
 	public void setSpecificFilterArgument(int index, String arg) {
-		ULONG ulIndex = new ULONG(index);
-		COMUtils.checkRC(jnaControl.SetSpecificFilterArgument(ulIndex, arg));
+		if (arg != null) {
+			ULONG ulIndex = new ULONG(index);
+			COMUtils.checkRC(jnaControl.SetSpecificFilterArgument(ulIndex, arg));
+		}
 	}
 
 	@Override
