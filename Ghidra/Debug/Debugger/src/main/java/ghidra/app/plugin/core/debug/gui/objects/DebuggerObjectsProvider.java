@@ -54,6 +54,7 @@ import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetConsole.Channel;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
+import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.dbg.util.DebuggerCallbackReorderer;
 import ghidra.dbg.util.PathUtils;
@@ -1193,7 +1194,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.keyBinding("F3")
 			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
 			.toolBarIcon(AbstractSetBreakpointAction.ICON)
-			.popupMenuPath("&AddBreakpoint")
+			.popupMenuPath("&Add Breakpoint")
 			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
 			.popupMenuIcon(AbstractSetBreakpointAction.ICON)
 			.helpLocation(AbstractSetBreakpointAction.help(plugin))
@@ -1526,10 +1527,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	public void performConfigure(ActionContext context) {
 		performAction(context, false, TargetConfigurable.class, configurable -> {
-			Map<String, ?> args = configDialog.promptArguments(configurable.getConfigParameters());
-			if (args != null) {
-				for (Entry<String, ?> entry : args.entrySet()) {
-					configurable.writeConfigurationOption(entry.getKey(), entry.getValue());
+			Map<String, ParameterDescription<?>> configParameters =
+				configurable.getConfigParameters();
+			if (configParameters.size() > 0) {
+				Map<String, ?> args = configDialog.promptArguments(configParameters);
+				if (args != null) {
+					for (Entry<String, ?> entry : args.entrySet()) {
+						configurable.writeConfigurationOption(entry.getKey(), entry.getValue());
+					}
 				}
 			}
 			return AsyncUtils.NIL;

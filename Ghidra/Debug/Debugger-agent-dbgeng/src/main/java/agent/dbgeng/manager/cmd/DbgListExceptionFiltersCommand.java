@@ -44,6 +44,7 @@ public class DbgListExceptionFiltersCommand
 		DebugFilterInformation info = control.getNumberEventFilters();
 		int nEvents = info.getNumberEvents();
 		int nExcs = info.getNumberSpecificExceptions();
+		int nExcsA = info.getNumberArbitraryExceptions();
 		DebugExceptionFilterInformation exc =
 			control.getExceptionFilterParameters(nEvents, null, nExcs);
 		for (int i = 0; i < exc.getParameters().length; i++) {
@@ -56,6 +57,23 @@ public class DbgListExceptionFiltersCommand
 				p.ExecutionOption.intValue(), p.ContinueOption.intValue(),
 				p.ExceptionCode.longValue());
 			result.add(filter);
+		}
+		if (nExcsA > 0) {
+			DebugExceptionFilterInformation excA =
+				control.getExceptionFilterParameters(nEvents + nExcs, null, nExcsA);
+			for (int i = 0; i < excA.getParameters().length; i++) {
+				DEBUG_EXCEPTION_FILTER_PARAMETERS p = excA.getParameter(i);
+				String text = Long.toHexString(p.ExceptionCode.longValue());
+				//	control.getEventFilterText(nEvents + nExcs + i, p.TextSize.intValue());
+				String cmd =
+					control.getEventFilterCommand(nEvents + nExcs + i, p.CommandSize.intValue());
+				String cmd2 = control.getExceptionFilterSecondCommand(nEvents + nExcs + i,
+					p.SecondCommandSize.intValue());
+				DbgExceptionFilterImpl filter = new DbgExceptionFilterImpl(i, text, cmd, cmd2,
+					p.ExecutionOption.intValue(), p.ContinueOption.intValue(),
+					p.ExceptionCode.longValue());
+				result.add(filter);
+			}
 		}
 	}
 }
