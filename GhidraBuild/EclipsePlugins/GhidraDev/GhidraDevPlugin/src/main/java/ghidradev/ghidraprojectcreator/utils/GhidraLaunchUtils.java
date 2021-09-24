@@ -130,6 +130,9 @@ public class GhidraLaunchUtils {
 	/**
 	 * Sets the main type name attribute in the provided working copy.  For Ghidra projects, this 
 	 * should be {@link GhidraLauncher}.
+	 * <p>
+	 * TODO: {@link GhidraLauncher#main(String[])} is deprecated.  Fix in future version of
+	 * GhidraDev when we are ready to break backwards compatibility with Ghidra.
 	 * 
 	 * @param wc The launch configuration working copy to modify.
 	 * @return The modified working copy.
