@@ -416,7 +416,7 @@ public class DataTypeParser {
 			// handle C primitives (e.g.  long long, unsigned long int, etc.)
 			DataType dataType = DataTypeUtilities.getCPrimitiveDataType(baseName);
 			if (dataType != null) {
-				return dataType;
+				return dataType.clone(dtm);
 			}
 
 			dtm.findDataTypes(baseName, list);
