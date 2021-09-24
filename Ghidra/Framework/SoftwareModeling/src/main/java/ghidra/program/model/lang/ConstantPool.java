@@ -102,7 +102,7 @@ public abstract class ConstantPool {
 				SpecXmlUtils.xmlEscape(buf, token);
 				buf.append("</token>\n");
 			}
-			buf.append(dtmanage.buildTypeRef(type, type.getLength()));
+			dtmanage.buildTypeRef(buf, type, type.getLength());
 			buf.append("</cpoolrec>\n");
 			return buf;
 		}

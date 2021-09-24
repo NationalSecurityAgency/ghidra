@@ -97,7 +97,7 @@ public class ReverseClippingTextField implements TextField {
 		}
 
 		isClipped = true;
-		// get the index of the start character that will fit 
+		// get the index of the start character that will fit
 		startingCharIndex =
 			textElement.getMaxCharactersForWidth(w - (availableWidth - DOT_DOT_DOT_WIDTH)) + 1;
 		startingCharIndex = Math.min(startingCharIndex, textElement.length());
@@ -148,6 +148,11 @@ public class ReverseClippingTextField implements TextField {
 
 	private int getNumCols() {
 		return textElement.length() + 1; // allow one column past the end of the text
+	}
+
+	@Override
+	public int getNumDataRows() {
+		return 1;
 	}
 
 	@Override
@@ -230,7 +235,8 @@ public class ReverseClippingTextField implements TextField {
 
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
-			Rectangle clip, FieldBackgroundColorManager colorManager, RowColLocation cursorLoc, int rowHeight) {
+			Rectangle clip, FieldBackgroundColorManager colorManager, RowColLocation cursorLoc,
+			int rowHeight) {
 		if (context.isPrinting()) {
 			print(g, context);
 		}
@@ -341,7 +347,10 @@ public class ReverseClippingTextField implements TextField {
 	@Override
 	public RowColLocation dataToScreenLocation(int dataRow, int dataColumn) {
 		int column = textElement.getCharacterIndexForDataLocation(dataRow, dataColumn);
-		return new RowColLocation(0, Math.max(column, 0));
+		if (column < 0) {
+			return new DefaultRowColLocation();
+		}
+		return new RowColLocation(0, column);
 	}
 
 	private int findX(int col) {
@@ -389,7 +398,9 @@ public class ReverseClippingTextField implements TextField {
 	@Override
 	public RowColLocation textOffsetToScreenLocation(int textOffset) {
 		int col = textOffset + startingCharIndex;
-		col = Math.max(col, 0);
+		if (col < 0) {
+			return new DefaultRowColLocation();
+		}
 		return new RowColLocation(0, Math.min(col, textElement.getText().length() - 1));
 	}
 

@@ -17,6 +17,8 @@ package ghidra.app.util.viewer.field;
 
 import java.awt.Graphics;
 import java.awt.Rectangle;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.JComponent;
 
@@ -34,7 +36,7 @@ import ghidra.app.util.viewer.proxy.ProxyObj;
  */
 public class ListingTextField implements ListingField, TextField {
 
-	private ProxyObj proxy;
+	private ProxyObj<?> proxy;
 	private FieldFactory factory;
 	protected TextField field;
 
@@ -47,9 +49,11 @@ public class ListingTextField implements ListingField, TextField {
 	 * @param startX the starting X position of the field
 	 * @param width the width of the field
 	 * @param provider the highlight provider.
+	 * @return the text field.
 	 */
-	public static ListingTextField createSingleLineTextField(FieldFactory factory, ProxyObj proxy,
-			FieldElement fieldElement, int startX, int width, HighlightProvider provider) {
+	public static ListingTextField createSingleLineTextField(FieldFactory factory,
+			ProxyObj<?> proxy, FieldElement fieldElement, int startX, int width,
+			HighlightProvider provider) {
 
 		HighlightFactory hlFactory =
 			new FieldHighlightFactory(provider, factory.getClass(), proxy.getObject());
@@ -58,7 +62,7 @@ public class ListingTextField implements ListingField, TextField {
 	}
 
 	public static ListingTextField createSingleLineTextFieldWithReverseClipping(
-			AddressFieldFactory factory, ProxyObj proxy, FieldElement fieldElement, int startX,
+			AddressFieldFactory factory, ProxyObj<?> proxy, FieldElement fieldElement, int startX,
 			int width, HighlightProvider provider) {
 		HighlightFactory hlFactory =
 			new FieldHighlightFactory(provider, factory.getClass(), proxy.getObject());
@@ -67,7 +71,7 @@ public class ListingTextField implements ListingField, TextField {
 	}
 
 	/**
-	 * Displays the given text, word-wrapping as needed to avoid clipping (up to the max number of 
+	 * Displays the given text, word-wrapping as needed to avoid clipping (up to the max number of
 	 * lines.)
 	 * @param factory the field factory that generated this field
 	 * @param proxy the object used to populate this field
@@ -77,9 +81,10 @@ public class ListingTextField implements ListingField, TextField {
 	 * @param width the width of the field
 	 * @param maxLines the maxLines to display.
 	 * @param provider the highlight provider.
+	 * @return the text field.
 	 */
-	public static ListingTextField createWordWrappedTextField(FieldFactory factory, ProxyObj proxy,
-			FieldElement fieldElement, int startX, int width, int maxLines,
+	public static ListingTextField createWordWrappedTextField(FieldFactory factory,
+			ProxyObj<?> proxy, FieldElement fieldElement, int startX, int width, int maxLines,
 			HighlightProvider provider) {
 
 		HighlightFactory hlFactory =
@@ -100,14 +105,16 @@ public class ListingTextField implements ListingField, TextField {
 	 * @param width the width of the field
 	 * @param maxLines the maxLines to display.
 	 * @param provider the highlight provider.
+	 * @return the text field.
 	 */
-	public static ListingTextField createPackedTextField(FieldFactory factory, ProxyObj proxy,
+	public static ListingTextField createPackedTextField(FieldFactory factory, ProxyObj<?> proxy,
 			FieldElement[] textElements, int startX, int width, int maxLines,
 			HighlightProvider provider) {
 
 		HighlightFactory hlFactory =
 			new FieldHighlightFactory(provider, factory.getClass(), proxy.getObject());
-		TextField field = new FlowLayoutTextField(textElements, startX, width, maxLines, hlFactory);
+		List<FieldElement> list = Arrays.asList(textElements);
+		TextField field = new FlowLayoutTextField(list, startX, width, maxLines, hlFactory);
 		return new ListingTextField(factory, proxy, field);
 	}
 
@@ -118,22 +125,24 @@ public class ListingTextField implements ListingField, TextField {
 	 * @param textElements the array of elements for the field.
 	 * Each of these holds text, attributes and location information.
 	 * @param startX the starting X position of the field
-	 * @param width the widht of the field
+	 * @param width the width of the field
 	 * @param maxLines the maxLines to display.
 	 * @param provider the highlight provider
+	 * @return the text field.
 	 */
-	public static ListingTextField createMultilineTextField(FieldFactory factory, ProxyObj proxy,
+	public static ListingTextField createMultilineTextField(FieldFactory factory, ProxyObj<?> proxy,
 			FieldElement[] textElements, int startX, int width, int maxLines,
 			HighlightProvider provider) {
 
 		HighlightFactory hlFactory =
 			new FieldHighlightFactory(provider, factory.getClass(), proxy.getObject());
+		List<FieldElement> list = Arrays.asList(textElements);
 		TextField field =
-			new VerticalLayoutTextField(textElements, startX, width, maxLines, hlFactory);
+			new VerticalLayoutTextField(list, startX, width, maxLines, hlFactory);
 		return new ListingTextField(factory, proxy, field);
 	}
 
-	protected ListingTextField(FieldFactory factory, ProxyObj proxy, TextField field) {
+	protected ListingTextField(FieldFactory factory, ProxyObj<?> proxy, TextField field) {
 		this.factory = factory;
 		this.proxy = proxy;
 		this.field = field;
@@ -186,13 +195,19 @@ public class ListingTextField implements ListingField, TextField {
 
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
-			Rectangle clip, FieldBackgroundColorManager map, RowColLocation cursorLoc, int rowHeight) {
+			Rectangle clip, FieldBackgroundColorManager map, RowColLocation cursorLoc,
+			int rowHeight) {
 		field.paint(c, g, context, clip, map, cursorLoc, rowHeight);
 	}
 
 	@Override
 	public boolean contains(int x, int y) {
 		return field.contains(x, y);
+	}
+
+	@Override
+	public int getNumDataRows() {
+		return field.getNumDataRows();
 	}
 
 	@Override
@@ -281,7 +296,7 @@ public class ListingTextField implements ListingField, TextField {
 	}
 
 	@Override
-	public ProxyObj getProxy() {
+	public ProxyObj<?> getProxy() {
 		if (proxy == null) {
 			return EmptyProxy.EMPTY_PROXY;
 		}

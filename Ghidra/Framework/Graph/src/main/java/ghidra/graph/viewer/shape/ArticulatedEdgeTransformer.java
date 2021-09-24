@@ -19,7 +19,8 @@ import java.awt.Shape;
 import java.awt.geom.*;
 import java.util.List;
 
-import edu.uci.ics.jung.visualization.decorators.ParallelEdgeShapeTransformer;
+import com.google.common.base.Function;
+
 import ghidra.graph.viewer.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -30,25 +31,13 @@ import ghidra.util.SystemUtilities;
  * @param <E> the edge type
  */
 public class ArticulatedEdgeTransformer<V extends VisualVertex, E extends VisualEdge<V>>
-		extends ParallelEdgeShapeTransformer<V, E> {
-
-	protected static final int OVERLAPPING_EDGE_OFFSET = 10;
+		implements Function<E, Shape> {
 
 	/**
-	 * Returns a value by which to offset edges that overlap.  This is used to make the edges
-	 * easier to see.
+	 * Get the shape for this edge
 	 * 
-	 * @param edge the edge
-	 * @return the offset value
-	 */
-	public int getOverlapOffset(E edge) {
-		// not sure what the correct default behavior is
-		return OVERLAPPING_EDGE_OFFSET;
-	}
-
-	/**
-	 * Get the shape for this edge, returning either the shared instance or, in
-	 * the case of self-loop edges, the Loop shared instance.
+	 * @param e the edge
+	 * @return the edge shape
 	 */
 	@Override
 	public Shape apply(E e) {
@@ -76,7 +65,9 @@ public class ArticulatedEdgeTransformer<V extends VisualVertex, E extends Visual
 		final double originX = p1.getX();
 		final double originY = p1.getY();
 
-		int offset = getOverlapOffset(e);
+		// TODO pretty sure this is not needed; keeping for a bit as a reminder of how it used to be
+		// int offset = getOverlapOffset(e);
+		int offset = 0;
 		GeneralPath path = new GeneralPath();
 		path.moveTo(0, 0);
 		for (Point2D pt : articulations) {

@@ -427,11 +427,9 @@ public class BytesFieldFactory extends FieldFactory {
 
 		ListingTextField btf = (ListingTextField) bf;
 		RowColLocation rcl = btf.dataToScreenLocation(tokenIndex, tokenOffset);
-
 		if (hasSamePath(bf, loc)) {
 			return new FieldLocation(index, fieldNum, rcl.row(), rcl.col());
 		}
-
 		return null;
 	}
 

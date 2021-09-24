@@ -13,16 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.functiongraph.graph.jung.renderer;
+package docking.widgets.fieldpanel.support;
 
-import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
+/**
+ * A location used to represent a an edge case where not suitable location can be found and the
+ * client does not wish to return null.
+ */
+public class DefaultRowColLocation extends RowColLocation {
+	public DefaultRowColLocation() {
+		super(0, 0);
+	}
 
-public class DNLArticulatedEdgeTransformer extends FGArticulatedEdgeTransformer {
+	public DefaultRowColLocation(int row, int col) {
+		super(row, col);
+	}
 
 	@Override
-	public int getOverlapOffset(FGEdge edge) {
-		// we position all locations ourself manually--no need to offset them to avoid overlapping
-		return 0;
+	public RowColLocation withCol(int newColumn) {
+		return new DefaultRowColLocation(row, newColumn);
+	}
+
+	@Override
+	public RowColLocation withRow(int newRow) {
+		return new DefaultRowColLocation(newRow, col);
 	}
 
 }

@@ -24,19 +24,18 @@ import ghidra.pcode.exec.SleighUseropLibrary.SleighUseropDefinition;
 import ghidra.pcode.opbehavior.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
 public class PcodeExecutor<T> {
-	protected final Language language;
+	protected final SleighLanguage language;
 	protected final PcodeArithmetic<T> arithmetic;
 	protected final PcodeExecutorStatePiece<T, T> state;
 	protected final Register pc;
 	protected final int pointerSize;
 
-	public PcodeExecutor(Language language, PcodeArithmetic<T> arithmetic,
+	public PcodeExecutor(SleighLanguage language, PcodeArithmetic<T> arithmetic,
 			PcodeExecutorStatePiece<T, T> state) {
 		this.language = language;
 		this.arithmetic = arithmetic;
@@ -46,8 +45,35 @@ public class PcodeExecutor<T> {
 		this.pointerSize = language.getDefaultSpace().getPointerSize();
 	}
 
+	/**
+	 * Get the executor's SLEIGH language (processor model)
+	 * 
+	 * @return the language
+	 */
+	public SleighLanguage getLanguage() {
+		return language;
+	}
+
+	/**
+	 * Get the arithmetic applied by the executor
+	 * 
+	 * @return the arithmetic
+	 */
+	public PcodeArithmetic<T> getArithmetic() {
+		return arithmetic;
+	}
+
+	/**
+	 * Get the state bound to this executor
+	 * 
+	 * @return the state
+	 */
+	public PcodeExecutorStatePiece<T, T> getState() {
+		return state;
+	}
+
 	public void executeLine(String line) {
-		PcodeProgram program = SleighProgramCompiler.compileProgram((SleighLanguage) language,
+		PcodeProgram program = SleighProgramCompiler.compileProgram(language,
 			"line", List.of(line + ";"), SleighUseropLibrary.NIL);
 		execute(program, SleighUseropLibrary.nil());
 	}

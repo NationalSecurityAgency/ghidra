@@ -22,7 +22,7 @@ import ghidra.framework.options.Options;
 import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
-public class DecompilerNestedLayoutProvider extends FGLayoutProvider {
+public class DecompilerNestedLayoutProvider extends FGLayoutProviderExtensionPoint {
 
 	private static final Icon ICON =
 		ResourceManager.loadImage("images/function_graph_code_flow.png");

@@ -6098,74 +6098,81 @@ void AddTreeState::buildTree(void)
   data.opDestroy(baseOp);
 }
 
-/// \brief Verify that given PcodeOp occurs at the bottom of the CPUI_INT_ADD tree
-///
-/// The main RulePtrArith algorithm assumes that the pointer Varnode is at the bottom
-/// of the expression tree that is adding an offset to the pointer.  This routine
-/// verifies this condition.
-/// \param op is the given PcodeOp which is the putative last operation in the tree
-/// \param slot is the slot of the pointer Varnode within the given PcodeOp
-/// \return \b true if the pointer is at the bottom of the tree, \b false otherwise
-bool RulePtrArith::verifyAddTreeBottom(PcodeOp *op,int4 slot)
-
-{
-  Varnode *vn = op->getOut();
-  Varnode *ptrbase = op->getIn(slot);
-  list<PcodeOp *>::const_iterator iter=vn->beginDescend();
-  OpCode opc;
-  if (iter == vn->endDescend()) return false; // Don't bother if no descendants
-  PcodeOp *lowerop = *iter++;
-  opc = lowerop->code();
-  if (vn->isSpacebase())		// For the RESULT to be a spacebase pointer
-    if (iter!=vn->endDescend())		// It must have only 1 descendant
-      return false;
-  if (opc == CPUI_INT_ADD)		// Check for lone descendant which is an ADD
-    if (iter==vn->endDescend())
-      return false;			 // this is not bottom of add tree
-  if (ptrbase->isSpacebase() && (ptrbase->isInput()||(ptrbase->isConstant())) &&
-      (op->getIn(1-slot)->isConstant())) {
-    // Look for ANY descendant which LOADs or STOREs off of vn
-    if ((opc==CPUI_LOAD)||(opc==CPUI_STORE)) {
-      if (lowerop->getIn(1) == vn)
-	return false;
-    }
-    while(iter!=vn->endDescend()) {
-      opc = (*iter)->code();
-      if ((opc==CPUI_LOAD)||(opc==CPUI_STORE)) {
-	if ((*iter)->getIn(1) == vn)
-	  return false;
-      }
-      ++iter;
-    }
-  }
-  return true;
-}
-
 /// \brief Test for other pointers in the ADD tree above the given op that might be a preferred base
 ///
-/// This tests the condition of RulePushPtr, making sure that the given op isn't the lone descendant
-/// of a pointer constructed by INT_ADD on another pointer (which would then be preferred).
+/// This tests the condition of RulePushPtr on the node immediately above the given putative base pointer
 /// \param op is the given op
-/// \param slot is the input slot of the pointer
+/// \param slot is the input slot of the putative base pointer
 /// \return \b true if the indicated slot holds the preferred pointer
 bool RulePtrArith::verifyPreferredPointer(PcodeOp *op,int4 slot)
 
 {
   Varnode *vn = op->getIn(slot);
-  // Check if RulePushPtr would apply here
-  if (op->getIn(1-slot)->getType()->getMetatype() != TYPE_PTR && vn->isWritten()) {
-    PcodeOp *preOp = vn->getDef();
-    if (preOp->code() == CPUI_INT_ADD) {
-	if (vn->loneDescend() == op) {
-	  int ptrCount = 0;
-	  if (preOp->getIn(0)->getType()->getMetatype() == TYPE_PTR) ptrCount += 1;
-	  if (preOp->getIn(1)->getType()->getMetatype() == TYPE_PTR) ptrCount += 1;
-	  if (ptrCount == 1)
-	    return false;	// RulePushPtr would apply, so we are not preferred
-	}
+  if (!vn->isWritten()) return true;
+  PcodeOp *preOp = vn->getDef();
+  if (preOp->code() != CPUI_INT_ADD) return true;
+  int preslot = 0;
+  if (preOp->getIn(preslot)->getType()->getMetatype() != TYPE_PTR) {
+    preslot = 1;
+    if (preOp->getIn(preslot)->getType()->getMetatype() != TYPE_PTR)
+      return true;
+  }
+  return (1 != evaluatePointerExpression(preOp, preslot));	// Does earlier varnode look like the base pointer
+}
+
+/// \brief Determine if the expression rooted at the given INT_ADD operation is ready for conversion
+///
+/// Converting an expression of INT_ADDs into PTRSUBs and PTRADDs requires that the base pointer
+/// be at the root of the expression tree.  This method evaluates whether given root has the base
+/// pointer at the bottom.  If not, a \e push transform needs to be performed before RulePtrArith can apply.
+/// This method returns a command code:
+///    -  0 if no action should be taken, the expression is not fully linked or should not be converted
+///    -  1 if a \e push action should be taken, prior to conversion
+///    -  2 if the pointer arithmetic conversion can proceed
+/// \param op is the given INT_ADD
+/// \param slot is the index of the pointer
+/// \return the command code
+int4 RulePtrArith::evaluatePointerExpression(PcodeOp *op,int4 slot)
+
+{
+  int4 res = 1;		// Assume we are going to push
+  int4 count = 0;	// Count descendants
+  Varnode *ptrBase = op->getIn(slot);
+  if (ptrBase->isFree() && !ptrBase->isConstant())
+    return 0;
+  if (op->getIn(1 - slot)->getType()->getMetatype() == TYPE_PTR)
+    res = 2;
+  Varnode *outVn = op->getOut();
+  list<PcodeOp *>::const_iterator iter;
+  for(iter=outVn->beginDescend();iter!=outVn->endDescend();++iter) {
+    PcodeOp *decOp = *iter;
+    count += 1;
+    OpCode opc = decOp->code();
+    if (opc == CPUI_INT_ADD) {
+      Varnode *otherVn = decOp->getIn(1 - decOp->getSlot(outVn));
+      if (otherVn->isFree() && !otherVn->isConstant())
+	return 0;	// No action if the data-flow isn't fully linked
+      if (otherVn->getType()->getMetatype() == TYPE_PTR)
+	res = 2;	// Do not push in the presence of other pointers
+    }
+    else if ((opc == CPUI_LOAD || opc == CPUI_STORE) && decOp->getIn(1) == outVn) {	// If use is as pointer for LOAD or STORE
+      if (ptrBase->isSpacebase() && (ptrBase->isInput()||(ptrBase->isConstant())) &&
+          (op->getIn(1-slot)->isConstant()))
+	return 0;
+      res = 2;
+    }
+    else {	// Any other op besides ADD, do not push
+      res = 2;
     }
   }
-  return true;
+  if (count == 0)
+    return 0;
+  if (count > 1) {
+    if (outVn->isSpacebase())
+      return 0;		// For the RESULT to be a spacebase pointer it must have only 1 descendent
+//    res = 2;		// Uncommenting this line will not let pointers get pushed to multiple descendants
+  }
+  return res;
 }
 
 /// \class RulePtrArith
@@ -6206,7 +6213,7 @@ int4 RulePtrArith::applyOp(PcodeOp *op,Funcdata &data)
     if (ct->getMetatype() == TYPE_PTR) break;
   }
   if (slot == op->numInput()) return 0;
-  if (!verifyAddTreeBottom(op, slot)) return 0;
+  if (evaluatePointerExpression(op, slot) != 2) return 0;
   if (!verifyPreferredPointer(op, slot)) return 0;
 
   const TypePointer *tp = (const TypePointer *) ct;
@@ -6298,6 +6305,82 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
+/// \brief Build a duplicate of the given Varnode as an output of a PcodeOp, preserving the storage address if possible
+///
+/// If the Varnode is already a \e unique or is \e addrtied
+/// \param vn is the given Varnode
+/// \param op is the PcodeOp to which the duplicate should be an output
+/// \param data is the function to add the duplicate to
+/// \return the duplicate Varnode
+Varnode *RulePushPtr::buildVarnodeOut(Varnode *vn,PcodeOp *op,Funcdata &data)
+
+{
+  if (vn->isAddrTied() || vn->getSpace()->getType() == IPTR_INTERNAL)
+    return data.newUniqueOut(vn->getSize(), op);
+  return data.newVarnodeOut(vn->getSize(), vn->getAddr(), op);
+}
+
+/// \brief Generate list of PcodeOps that need to be duplicated as part of pushing the pointer
+///
+/// If the pointer INT_ADD is duplicated as part of the push, some of the operations building
+/// the offset to the pointer may also need to be duplicated.  Identify these and add them
+/// to the result list.
+/// \param reslist is the result list to be populated
+/// \param vn is the offset Varnode being added to the pointer
+void RulePushPtr::collectDuplicateNeeds(vector<PcodeOp *> &reslist,Varnode *vn)
+
+{
+  for(;;) {
+    if (!vn->isWritten()) return;
+    if (vn->isAutoLive()) return;
+    if (vn->loneDescend() == (PcodeOp *)0) return;	// Already has multiple descendants
+    PcodeOp *op = vn->getDef();
+    OpCode opc = op->code();
+    if (opc == CPUI_INT_ZEXT || opc == CPUI_INT_SEXT || opc == CPUI_INT_2COMP)
+      reslist.push_back(op);
+    else if (opc == CPUI_INT_MULT) {
+      if (op->getIn(1)->isConstant())
+	reslist.push_back(op);
+    }
+    else
+      return;
+    vn = op->getIn(0);
+  }
+}
+
+/// \brief Duplicate the given PcodeOp so that the outputs have only 1 descendant
+///
+/// Run through the descendants of the PcodeOp output and create a duplicate
+/// of the PcodeOp right before the descendant.  We assume the PcodeOp either has
+/// a single input, or has 2 inputs where the second is a constant.
+/// The (original) PcodeOp is destroyed.
+/// \param op is the given PcodeOp to duplicate
+/// \param data is function to build duplicates in
+void RulePushPtr::duplicateNeed(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *outVn = op->getOut();
+  Varnode *inVn = op->getIn(0);
+  int num = op->numInput();
+  OpCode opc = op->code();
+  list<PcodeOp *>::const_iterator iter = outVn->beginDescend();
+  do {
+    PcodeOp *decOp = *iter;
+    int4 slot = decOp->getSlot(outVn);
+    PcodeOp *newOp = data.newOp(num, op->getAddr());	// Duplicate op associated with original address
+    Varnode *newOut = buildVarnodeOut(outVn, newOp, data);	// Result contained in original storage
+    newOut->updateType(outVn->getType(),false,false);
+    data.opSetOpcode(newOp, opc);
+    data.opSetInput(newOp, inVn, 0);
+    if (num > 1)
+      data.opSetInput(newOp, op->getIn(1), 1);
+    data.opSetInput(decOp, newOut, slot);
+    data.opInsertBefore(newOp, decOp);
+    iter = outVn->beginDescend();
+  } while(iter != outVn->endDescend());
+  data.opDestroy(op);
+}
+
 /// \class RulePushPtr
 /// \brief Push a Varnode with known pointer data-type to the bottom of its additive expression
 ///
@@ -6312,47 +6395,51 @@ void RulePushPtr::getOpList(vector<uint4> &oplist) const
 int4 RulePushPtr::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  int4 i,j;
-  PcodeOp *decop,*newop;
-  Varnode *vn;
+  int4 slot;
   Varnode *vni = (Varnode *)0;
-  const Datatype *ct;
 
   if (!data.isTypeRecoveryOn()) return 0;
-  for(i=0;i<op->numInput();++i) { // Search for pointer type
-    vni = op->getIn(i);
-    ct = vni->getType();
-    if (ct->getMetatype() == TYPE_PTR) break;
+  for(slot=0;slot<op->numInput();++slot) { // Search for pointer type
+    vni = op->getIn(slot);
+    if (vni->getType()->getMetatype() == TYPE_PTR) break;
   }
-  if (i == op->numInput()) return 0;
-  if ((i==0)&&(op->getIn(1)->getType()->getMetatype() == TYPE_PTR)) return 0;	// Prevent infinite loops
-  
-  vn = op->getOut();
-  if ((decop=vn->loneDescend()) == (PcodeOp *)0) return 0;
-  if (decop->code() != CPUI_INT_ADD) return 0;
+  if (slot == op->numInput()) return 0;
 
-  j = decop->getSlot(vn);
-  if (decop->getIn(1-j)->getType()->getMetatype() == TYPE_PTR) return 0; // Prevent infinite loops
+  if (RulePtrArith::evaluatePointerExpression(op, slot) != 1) return 0;
+  Varnode *vn = op->getOut();
+  Varnode *vnadd2 = op->getIn(1-slot);
+  vector<PcodeOp *> duplicateList;
+  if (vn->loneDescend() == (PcodeOp *)0)
+    collectDuplicateNeeds(duplicateList, vnadd2);
 
-  Varnode *vnadd1 = decop->getIn(1-j);
-  Varnode *vnadd2 = op->getIn(1-i);
-  Varnode *newout;
+  for(;;) {
+    list<PcodeOp *>::const_iterator iter = vn->beginDescend();
+    if (iter == vn->endDescend()) break;
+    PcodeOp *decop = *iter;
+    int4 j = decop->getSlot(vn);
 
-  // vni and vnadd2 are propagated, so they shouldn't be free
-  if (vnadd2->isFree() && (!vnadd2->isConstant())) return 0;
-  if (vni->isFree() && (!vni->isConstant())) return 0;
+    Varnode *vnadd1 = decop->getIn(1-j);
+    Varnode *newout;
 
-  newop = data.newOp(2,decop->getAddr());
-  data.opSetOpcode(newop,CPUI_INT_ADD);
-  newout = data.newUniqueOut(vnadd1->getSize(),newop);
+    // Create new INT_ADD for the intermediate result that didn't exist in original code.
+    // We don't associate it with the address of the original INT_ADD
+    // We don't preserve the Varnode address of the original INT_ADD
+    PcodeOp *newop = data.newOp(2,decop->getAddr());		// Use the later address
+    data.opSetOpcode(newop,CPUI_INT_ADD);
+    newout = data.newUniqueOut(vnadd1->getSize(),newop);	// Use a temporary storage address
 
-  data.opSetInput(decop,vni,0);
-  data.opSetInput(decop,newout,1);
+    data.opSetInput(decop,vni,0);
+    data.opSetInput(decop,newout,1);
 
-  data.opSetInput(newop,vnadd1,0);
-  data.opSetInput(newop,vnadd2,1);
+    data.opSetInput(newop,vnadd1,0);
+    data.opSetInput(newop,vnadd2,1);
 
-  data.opInsertBefore(newop,decop);
+    data.opInsertBefore(newop,decop);
+  }
+  if (!vn->isAutoLive())
+    data.opDestroy(op);
+  for(int4 i=0;i<duplicateList.size();++i)
+    duplicateNeed(duplicateList[i], data);
 
   return 1;
 }
@@ -6645,6 +6732,56 @@ int4 RulePtrsubCharConstant::applyOp(PcodeOp *op,Funcdata &data)
     data.opSetInput(op,newvn,0);
     data.opSetOpcode(op,CPUI_COPY);
   }
+  return 1;
+}
+
+/// \class RuleExtensionPush
+/// \brief Duplicate CPUI_INT_ZEXT and CPUI_INT_SEXT operations if the result is used in multiple pointer calculations
+///
+/// By making the extension operation part of each pointer calculation (where it is usually an implied cast),
+/// we can frequently eliminate an explicit variable that would just hold the extension.
+void RuleExtensionPush::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_ZEXT);
+  oplist.push_back(CPUI_INT_SEXT);
+}
+
+int4 RuleExtensionPush::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *inVn = op->getIn(0);
+  if (inVn->isConstant()) return 0;
+  if (inVn->isAddrForce()) return 0;
+  if (inVn->isAddrTied()) return 0;
+  Varnode *outVn = op->getOut();
+  if (outVn->isTypeLock() || outVn->isNameLock()) return 0;
+  if (outVn->isAddrForce() || outVn->isAddrTied()) return 0;
+  list<PcodeOp *>::const_iterator iter;
+  int4 addcount = 0;		// Number of INT_ADD descendants
+  int4 ptrcount = 0;		// Number of PTRADD descendants
+  for(iter=outVn->beginDescend();iter!=outVn->endDescend();++iter) {
+    PcodeOp *decOp = *iter;
+    OpCode opc = decOp->code();
+    if (opc == CPUI_PTRADD) {
+      // This extension will likely be hidden
+      ptrcount += 1;
+    }
+    else if (opc == CPUI_INT_ADD) {
+      PcodeOp *subOp = decOp->getOut()->loneDescend();
+      if (subOp == (PcodeOp *)0 || subOp->code() != CPUI_PTRADD)
+	return 0;
+      addcount += 1;
+    }
+    else {
+      return 0;
+    }
+  }
+  if ((addcount + ptrcount) <= 1) return 0;
+  if (addcount > 0) {
+    if (op->getIn(0)->loneDescend() != (PcodeOp *)0) return 0;
+  }
+  RulePushPtr::duplicateNeed(op, data);		// Duplicate the extension to all result descendants
   return 1;
 }
 

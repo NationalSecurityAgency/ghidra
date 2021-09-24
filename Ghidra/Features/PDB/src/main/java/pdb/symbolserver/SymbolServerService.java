@@ -15,13 +15,13 @@
  */
 package pdb.symbolserver;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -136,6 +136,12 @@ public class SymbolServerService {
 	 */
 	public List<SymbolFileLocation> find(SymbolFileInfo symbolFileInfo,
 			Set<FindOption> findOptions, TaskMonitor monitor) throws CancelledException {
+
+		if (StringUtils.isBlank(symbolFileInfo.getName())) {
+			Msg.warn(this,
+				logPrefix() + ": Unable to search for empty filename: " + symbolFileInfo);
+			return List.of();
+		}
 
 		List<SymbolFileLocation> allFindResults = new ArrayList<>();
 		Set<String> uniqueSymbolFilePaths = new HashSet<>();

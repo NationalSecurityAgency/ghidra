@@ -17,6 +17,7 @@ package ghidra.pcode.emu;
 
 import java.util.List;
 
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.DefaultPcodeThread.SleighEmulationLibrary;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
@@ -221,6 +222,24 @@ public interface PcodeThread<T> {
 	 * and call {@link #finishInstruction()}.
 	 */
 	void setSuspended(boolean suspended);
+
+	/**
+	 * Get the thread's SLEIGH language (processor model)
+	 * 
+	 * @return the language
+	 */
+	default SleighLanguage getLanguage() {
+		return getExecutor().getLanguage();
+	}
+
+	/**
+	 * Get the thread's p-code arithmetic
+	 * 
+	 * @return the arithmetic
+	 */
+	default PcodeArithmetic<T> getArithmetic() {
+		return getExecutor().getArithmetic();
+	}
 
 	/**
 	 * Get the thread's p-code executor

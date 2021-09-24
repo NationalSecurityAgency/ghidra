@@ -18,6 +18,7 @@ package ghidra.server;
 import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.rmi.server.RemoteServer;
 import java.rmi.server.ServerNotActiveException;
 import java.util.*;
 
@@ -391,7 +392,7 @@ public class RepositoryManager {
 			}
 		}
 		try {
-			host = sun.rmi.transport.tcp.TCPTransport.getClientHost();
+			host = RemoteServer.getClientHost();
 			try {
 				host = InetNameLookup.getCanonicalHostName(host);
 			}

@@ -108,6 +108,37 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	}
 
 	/**
+	 * Set the line terminator (separator) used to serialize commands to GDB
+	 * 
+	 * <p>
+	 * Because the manager may be communicating to GDB running remotely, possibly on another
+	 * platform, it may be necessary to customize the line terminator. The manager will default to
+	 * the line terminator used by the local system, i.e., {@link System#lineSeparator()}.
+	 * 
+	 * <p>
+	 * While permitted, it is not advisable to modify this parameter while the manager is running.
+	 * Chances are, if this was mis-configured, the manager and session are hopelessly out of sync.
+	 * Start a new properly configured session instead.
+	 * 
+	 * @param newLine the line separator to use
+	 */
+	public void setNewLine(String newLine);
+
+	/**
+	 * Set to UNIX-style (CR) line terminator
+	 */
+	default void setUnixNewLine() {
+		setNewLine("\n");
+	}
+
+	/**
+	 * Set to DOS-style (CRLF) line terminator
+	 */
+	default void setDosNewLine() {
+		setNewLine("\r\n");
+	}
+
+	/**
 	 * Launch GDB
 	 * 
 	 * @return a future which completes when GDB is ready to accept commands

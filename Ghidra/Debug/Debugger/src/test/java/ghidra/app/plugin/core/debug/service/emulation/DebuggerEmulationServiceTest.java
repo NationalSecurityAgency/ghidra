@@ -20,8 +20,10 @@ import static org.junit.Assert.*;
 import java.math.BigInteger;
 
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import generic.Unique;
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -37,6 +39,7 @@ import ghidra.trace.model.time.TraceSchedule;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
+@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected DebuggerEmulationServicePlugin emulationPlugin;
 
@@ -57,9 +60,8 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 		Register regR0 = program.getRegister("r0");
 		Register regR1 = program.getRegister("r1");
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize", true)) {
-			MemoryBlock blockText =
-				memory.createInitializedBlock(".text", addrText, 0x1000, (byte) 0,
-					TaskMonitor.DUMMY, false);
+			MemoryBlock blockText = memory.createInitializedBlock(".text", addrText, 0x1000,
+				(byte) 0, TaskMonitor.DUMMY, false);
 			blockText.setExecute(true);
 			memory.createInitializedBlock(".data", addr(program, 0x00600000), 0x1000, (byte) 0,
 				TaskMonitor.DUMMY, false);

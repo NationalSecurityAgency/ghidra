@@ -16,7 +16,6 @@
 package ghidra.app.decompiler;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 
 import ghidra.framework.*;
 import ghidra.util.Msg;
@@ -29,6 +28,8 @@ public class DecompileProcessFactory {
 	private static String exepath;
 	private static final String EXECNAME = "decompile";
 	private static final String WIN32_EXECNAME = "decompile.exe";
+
+	private static boolean errorDisplayed = false;
 
 	public synchronized static DecompileProcess get() {
 		getExePath();
@@ -57,9 +58,12 @@ public class DecompileProcessFactory {
 			File file = Application.getOSFile(exeName);
 			exepath = file.getAbsolutePath();
 		}
-		catch (FileNotFoundException e) {
-			Msg.showError(DecompileProcessFactory.class, null, "Decompiler missing",
-				"Could not find decompiler executable " + exeName);
+		catch (OSFileNotFoundException e) {
+			if (!errorDisplayed) {
+				errorDisplayed = true;
+				Msg.showError(DecompileProcessFactory.class, null, "Decompiler missing",
+					e.getMessage());
+			}
 		}
 	}
 }

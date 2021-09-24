@@ -22,11 +22,13 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.*;
+import org.junit.experimental.categories.Category;
 
 import com.google.common.collect.Range;
 
 import docking.widgets.filechooser.GhidraFileChooser;
 import generic.Unique;
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
@@ -62,6 +64,7 @@ import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 
+@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected DebuggerModulesPlugin modulesPlugin;
 	protected DebuggerModulesProvider modulesProvider;
@@ -403,8 +406,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		clickTableCell(propDialog.table, 0, ModuleMapTableColumns.CHOOSE.ordinal(), 1);
 
-		DataTreeDialog programDialog =
-			waitForDialogComponent(DataTreeDialog.class);
+		DataTreeDialog programDialog = waitForDialogComponent(DataTreeDialog.class);
 		assertEquals(program.getDomainFile(), programDialog.getDomainFile());
 
 		pressButtonByText(programDialog, "OK", true);
@@ -694,11 +696,8 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForPass(() -> assertEquals(4, visibleSections().size()));
 	}
 
-	protected static final Set<String> POPUP_ACTIONS = Set.of(
-		AbstractSelectAddressesAction.NAME,
-		MapModulesAction.NAME,
-		MapSectionsAction.NAME,
-		AbstractImportFromFileSystemAction.NAME);
+	protected static final Set<String> POPUP_ACTIONS = Set.of(AbstractSelectAddressesAction.NAME,
+		MapModulesAction.NAME, MapSectionsAction.NAME, AbstractImportFromFileSystemAction.NAME);
 
 	@Test
 	public void testPopupActionsOnModuleSelections() throws Exception {
@@ -711,9 +710,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		clickTableCellWithButton(modulesProvider.moduleTable, 0, 0, MouseEvent.BUTTON3);
 		waitForSwing();
-		assertMenu(POPUP_ACTIONS, Set.of(
-			MapModulesAction.NAME,
-			MapSectionsAction.NAME,
+		assertMenu(POPUP_ACTIONS, Set.of(MapModulesAction.NAME, MapSectionsAction.NAME,
 			AbstractSelectAddressesAction.NAME));
 
 		pressEscape();
@@ -722,11 +719,8 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForSwing();
 		clickTableCellWithButton(modulesProvider.moduleTable, 0, 0, MouseEvent.BUTTON3);
 		waitForSwing();
-		assertMenu(POPUP_ACTIONS, Set.of(
-			MapModulesAction.NAME,
-			MapSectionsAction.NAME,
-			AbstractSelectAddressesAction.NAME,
-			AbstractImportFromFileSystemAction.NAME));
+		assertMenu(POPUP_ACTIONS, Set.of(MapModulesAction.NAME, MapSectionsAction.NAME,
+			AbstractSelectAddressesAction.NAME, AbstractImportFromFileSystemAction.NAME));
 	}
 
 	@Test
@@ -739,9 +733,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		clickTableCellWithButton(modulesProvider.sectionTable, 0, 0, MouseEvent.BUTTON3);
 		waitForSwing();
-		assertMenu(POPUP_ACTIONS, Set.of(
-			MapModulesAction.NAME,
-			MapSectionsAction.NAME,
+		assertMenu(POPUP_ACTIONS, Set.of(MapModulesAction.NAME, MapSectionsAction.NAME,
 			AbstractSelectAddressesAction.NAME));
 	}
 }

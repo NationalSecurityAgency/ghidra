@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.reflect.*;
 import java.net.*;
@@ -219,7 +220,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	/**
 	 * A callback for subclasses when a test has failed. This will be called
-	 * <b>after</b> <code>tearDown()</code>.  This means that any diagnostics will have to 
+	 * <b>after</b> <code>tearDown()</code>.  This means that any diagnostics will have to
 	 * take into account items that have already been disposed.
 	 * 
 	 * @param e the exception that happened when the test failed
@@ -1118,7 +1119,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Call this version of {@link #runSwing(Runnable)} when you expect your runnable <b>may</b> 
+	 * Call this version of {@link #runSwing(Runnable)} when you expect your runnable <b>may</b>
 	 * throw exceptions
 	 * 
 	 * @param callback the runnable code snippet to call
@@ -1148,13 +1149,13 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	public static void runSwing(Runnable runnable, boolean wait) {
 
-		// 
+		//
 		// Special Case: this check handled re-entrant test code.  That is, an calls to runSwing()
 		//               that are made from within a runSwing() call.  Most clients do not do
 		//               this, but it can happen when a client makes a test API call (which itself
-		//               calls runSwing()) from within a runSwing() call. 
-		//               
-		//               Calling the run method directly here ensures that the order of client 
+		//               calls runSwing()) from within a runSwing() call.
+		//
+		//               Calling the run method directly here ensures that the order of client
 		//               requests is preserved.
 		//
 		if (SwingUtilities.isEventDispatchThread()) {
@@ -1167,7 +1168,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 			return;
 		}
 
-		// don't wait; invoke later; catch any exceptions ourselves in order to fail-fast		
+		// don't wait; invoke later; catch any exceptions ourselves in order to fail-fast
 		Runnable swingExceptionCatcher = () -> {
 			try {
 				runnable.run();
@@ -1243,11 +1244,11 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 				doRun(swingExceptionCatcher);
 			}
 			catch (InterruptedException | InvocationTargetException e) {
-				// Assume that if we have an exception reported by our catcher, then that is 
+				// Assume that if we have an exception reported by our catcher, then that is
 				// the root cause of this exception and do not report this one.   The typical
 				// exception here is an InterrruptedException that is caused by our test
-				// harness when it is interrupting the test thread after a previous Swing 
-				// exception that we have detected--we don't care to report the 
+				// harness when it is interrupting the test thread after a previous Swing
+				// exception that we have detected--we don't care to report the
 				// InterruptedException, as we caused it.  The InvocationTargetException should
 				// be handled by our runnable above.
 			}
@@ -1562,6 +1563,19 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
+	 * Returns a font metrics for the given font using a generic buffered image graphics context.
+	 * @param font the font
+	 * @return the font metrics
+	 */
+	public static FontMetrics getFontMetrics(Font font) {
+		BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB_PRE);
+		Graphics g = image.getGraphics();
+		FontMetrics fm = g.getFontMetrics(font);
+		g.dispose();
+		return fm;
+	}
+
+	/**
 	 * Signals that the client expected the System Under Test (SUT) to report errors.  Use this
 	 * when you wish to verify that errors are reported and you do not want those errors to
 	 * fail the test.  The default value for this setting is false, which means that any
@@ -1582,7 +1596,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 //==================================================================================================
 // Swing Methods
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * Waits for the Swing thread to process any pending events. This method
@@ -1685,11 +1699,11 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		// calls all execute in the Swing thread in a blocking fashion, so when we are done
 		// flushing, there should be no more work scheduled due to us flushing.   Due to other
 		// potential background threads though, more work may be scheduled as we are working.
-		// Thus, for fast tests, you should not have background work happening that is not 
+		// Thus, for fast tests, you should not have background work happening that is not
 		// directly related to your code being tested.
 		//
 
-		// arbitrary; we have at least one level of a manager triggering another manager, 
+		// arbitrary; we have at least one level of a manager triggering another manager,
 		// which would be 2
 		int n = 3;
 		for (int i = 0; i < n; i++) {
@@ -1743,8 +1757,8 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 				SwingUtilities.invokeAndWait(empty);
 			}
 			catch (Exception e) {
-				// Assumption: since our runnable is empty, this can only an interrupted 
-				//             exception, which can happen if our test framework decides to 
+				// Assumption: since our runnable is empty, this can only an interrupted
+				//             exception, which can happen if our test framework decides to
 				//             shut the operation down.
 				return;
 			}

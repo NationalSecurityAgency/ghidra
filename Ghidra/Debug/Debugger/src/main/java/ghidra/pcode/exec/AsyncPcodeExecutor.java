@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.async.AsyncUtils;
-import ghidra.program.model.lang.Language;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
@@ -39,9 +39,10 @@ import ghidra.program.model.pcode.Varnode;
  * @param <T> the type of values in the state
  */
 public class AsyncPcodeExecutor<T> extends PcodeExecutor<CompletableFuture<T>> {
-	public AsyncPcodeExecutor(Language language, PcodeArithmetic<CompletableFuture<T>> behavior,
+	public AsyncPcodeExecutor(SleighLanguage language,
+			PcodeArithmetic<CompletableFuture<T>> arithmetic,
 			PcodeExecutorStatePiece<CompletableFuture<T>, CompletableFuture<T>> state) {
-		super(language, behavior, state);
+		super(language, arithmetic, state);
 	}
 
 	public CompletableFuture<Void> stepOpAsync(PcodeOp op, PcodeFrame frame,

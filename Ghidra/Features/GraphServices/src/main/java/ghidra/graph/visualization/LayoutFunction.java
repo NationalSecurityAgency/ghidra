@@ -124,7 +124,7 @@ class LayoutFunction
 			case HIERACHICAL:
 				return EdgeAwareTreeLayoutAlgorithm
 						.<AttributedVertex, AttributedEdge>edgeAwareBuilder();
-			case COMPACT_HIERACHICAL:
+			case COMPACT_HIERARCHICAL:
 			default:
 				return TidierTreeLayoutAlgorithm
 						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()

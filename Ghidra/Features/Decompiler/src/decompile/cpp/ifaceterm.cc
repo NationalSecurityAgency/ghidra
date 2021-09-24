@@ -51,6 +51,11 @@ IfaceTerm::IfaceTerm(const string &prmpt,istream &is,ostream &os)
 IfaceTerm::~IfaceTerm(void)
 
 {
+  while(!inputstack.empty()) {
+    delete sptr;
+    sptr = inputstack.back();
+    inputstack.pop_back();
+  }
 #ifdef __TERMINAL__
   if (is_terminal) {
     tcsetattr(ifd,TCSANOW,&itty); // Restore original terminal settings

@@ -988,8 +988,8 @@ public class CodeBrowserPlugin extends Plugin
 			return; // not sure if this can happen
 		}
 
-		Set<Reference> refs = XReferenceUtil.getAllXrefs(location);
-		XReferenceUtil.showAllXrefs(connectedProvider, tool, service, location, refs);
+		Set<Reference> refs = XReferenceUtils.getAllXrefs(location);
+		XReferenceUtils.showXrefs(connectedProvider, tool, service, location, refs);
 	}
 
 	private GhidraProgramTableModel<Address> createTableModel(CodeUnitIterator iterator,
@@ -1065,16 +1065,13 @@ public class CodeBrowserPlugin extends Plugin
 	 */
 	public boolean goToField(Address a, String fieldName, int occurrence, int row, int col,
 			boolean scroll) {
-
-		boolean result = SystemUtilities
-				.runSwingNow(() -> doGoToField(a, fieldName, occurrence, row, col, scroll));
-		return result;
+		return Swing.runNow(() -> doGoToField(a, fieldName, occurrence, row, col, scroll));
 	}
 
 	private boolean doGoToField(Address a, String fieldName, int occurrence, int row, int col,
 			boolean scroll) {
 
-		SystemUtilities.assertThisIsTheSwingThread("GoTo must be performed on the Swing thread");
+		Swing.assertSwingThread("'Go To' must be performed on the Swing thread");
 
 		// make sure that the code browser is ready to go--sometimes it is not, due to timing
 		// during the testing process, like when the tool is first loaded.

@@ -22,8 +22,7 @@ import javax.swing.JComponent;
 
 import docking.widgets.fieldpanel.internal.FieldBackgroundColorManager;
 import docking.widgets.fieldpanel.internal.PaintContext;
-import docking.widgets.fieldpanel.support.FieldLocation;
-import docking.widgets.fieldpanel.support.RowColLocation;
+import docking.widgets.fieldpanel.support.*;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.EmptyProxy;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -153,15 +152,16 @@ public class OpenCloseField implements ListingField {
 
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
-			Rectangle clip, FieldBackgroundColorManager map, RowColLocation cursorLoc, int rowHeight) {
-		
+			Rectangle clip, FieldBackgroundColorManager map, RowColLocation cursorLoc,
+			int rowHeight) {
+
 		// center in the heightAbove area (negative, since 0 is the baseline of text, which is at
-		// the bottom of the heightAbove)        
+		// the bottom of the heightAbove)
 		int toggleHandleStartY = -((heightAbove / 2) + (toggleHandleSize / 2));
 		int toggleHandleStartX = startX + (indentLevel * fieldWidth) + insetSpace;
 
 		// TODO: If we're in printing mode, trying to render these open/close images
-		//       causes the JVM to bomb. We'd like to eventually figure out why but in 
+		//       causes the JVM to bomb. We'd like to eventually figure out why but in
 		//       the meantime we can safely comment this out and still generate an acceptable
 		//       image.
 		//
@@ -178,7 +178,7 @@ public class OpenCloseField implements ListingField {
 
 		g.setColor(Color.LIGHT_GRAY);
 
-		// draw the vertical lines to the left of the toggle handle (these are shown when 
+		// draw the vertical lines to the left of the toggle handle (these are shown when
 		// there are vertical bars drawn for inset data)
 		int fieldTopY = -heightAbove;
 		int fieldBottomY = heightBelow;
@@ -205,7 +205,7 @@ public class OpenCloseField implements ListingField {
 
 			boolean lastAndClosed = isLast && !isOpen;
 			if (!lastAndClosed) {
-				// extended vertical line below toggle handle		        
+				// extended vertical line below toggle handle
 				int buttonBottomY = toggleHandleStartY + toggleHandleSize;
 				g.drawLine(midpointX, buttonBottomY, midpointX, fieldBottomY);
 			}
@@ -229,6 +229,11 @@ public class OpenCloseField implements ListingField {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public int getNumDataRows() {
+		return 1;
 	}
 
 	@Override
@@ -310,7 +315,7 @@ public class OpenCloseField implements ListingField {
 
 	@Override
 	public RowColLocation textOffsetToScreenLocation(int textOffset) {
-		return new RowColLocation(0, 0);
+		return new DefaultRowColLocation();
 	}
 
 	@Override
@@ -332,7 +337,7 @@ public class OpenCloseField implements ListingField {
 
 //==================================================================================================
 // Static Methods
-//==================================================================================================	
+//==================================================================================================
 
 	static int getOpenCloseHandleSize() {
 		return openImage.getIconWidth();

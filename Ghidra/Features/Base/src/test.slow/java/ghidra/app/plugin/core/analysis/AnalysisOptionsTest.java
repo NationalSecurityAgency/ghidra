@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.analysis;
 import static org.junit.Assert.*;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.ComboBoxModel;
@@ -310,26 +309,23 @@ public class AnalysisOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 	private AnalysisOptionsDialog invokeAnalysisDialog() {
 		DockingActionIf action = getAction(tool, "Auto Analyze");
 		performAction(action, false);
-		return waitForDialogComponent(AnalysisOptionsDialog.class);
-	}
 
-	private void apply() {
-		pressButtonByText(optionsDialog, "Analyze");
+		// TODO temp debug to catch issue seen when running parallel tests
+		try {
+			return waitForDialogComponent(AnalysisOptionsDialog.class);
+		}
+		catch (Throwable t) {
+
+			printOpenWindows();
+
+			failWithException("Unable to find analysis dialog", t);
+			return null; // can't get here
+		}
 	}
 
 	private boolean isAnalyzerEnabledInProgramOptions(String analyzerName) {
 		Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
 		return options.getBoolean(analyzerName, false);
-	}
-
-	private void verifyDefaultOptions(Collection<Program> programs) {
-		for (Program program : programs) {
-			Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
-			for (String name : options.getOptionNames()) {
-				assertTrue("Program options are unexpectedly changed: " + program,
-					options.isDefaultValue(name));
-			}
-		}
 	}
 
 	private void setAnalyzerEnabled(String name, boolean enabled) {

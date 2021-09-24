@@ -32,7 +32,7 @@ import ghidra.xml.XmlPullParser;
  * SymbolEntry for each mapping.
  */
 public class HighSymbol {
-	
+
 	public static final long ID_BASE = 0x4000000000000000L;	// Put keys in the dynamic symbol portion of the key space
 	protected String name;
 	protected DataType type;
@@ -45,7 +45,7 @@ public class HighSymbol {
 	private boolean isHidden;		// True if we are hidden symbol containing pointer to where return value is stored
 	private long id;				// Unique id of this symbol
 	protected SymbolEntry[] entryList;	// List of mappings for this symbol
-	
+
 	private HighVariable highVariable;
 	private PcodeDataTypeManager dtmanage;	// Datatype manager for XML generation
 
@@ -169,7 +169,7 @@ public class HighSymbol {
 	public void setHighVariable(HighVariable high) {
 		this.highVariable = high;
 	}
-	
+
 	/**
 	 * Get the HighVariable associate with this symbol if any.  This allows the user to go straight
 	 * into the decompiler's function to see how the symbol gets manipulated.
@@ -208,7 +208,7 @@ public class HighSymbol {
 	public int getSize() {
 		return entryList[0].getSize();
 	}
-	
+
 	/**
 	 * Get the first code Address, within the function, where this symbol's storage actually
 	 * holds the value of the symbol.  If there is more than one mapping for the symbol, this
@@ -401,7 +401,7 @@ public class HighSymbol {
 		buf.append("<symbol");
 		saveXMLHeader(buf);
 		buf.append(">\n");
-		buf.append(dtmanage.buildTypeRef(type, getSize()));
+		dtmanage.buildTypeRef(buf, type, getSize());
 		buf.append("</symbol>\n");
 	}
 

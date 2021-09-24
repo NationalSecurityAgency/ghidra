@@ -549,8 +549,9 @@ public class ApplicationKeyManagerFactory {
 					Msg.info(this, "Using self-signed certificate: " + defaultIdentity.getName());
 					char[] pwd = DEFAULT_PASSWORD.toCharArray();
 					KeyStore selfSignedKeyStore =
-						ApplicationKeyManagerUtils.createKeyStore(null, "JKS", pwd, "defaultSigKey",
-							null, defaultIdentity.getName(), null, SELF_SIGNED_DURATION_DAYS);
+						ApplicationKeyManagerUtils.createKeyStore("defaultSigKey",
+							defaultIdentity.getName(), SELF_SIGNED_DURATION_DAYS, null, null, "JKS",
+							pwd);
 					keystoreData = new ProtectedKeyStoreData(selfSignedKeyStore, pwd);
 					isSelfSigned = true;
 				}

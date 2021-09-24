@@ -817,7 +817,8 @@ public class DecompileCallback {
 		if (type == null) {
 			return null;
 		}
-		StringBuilder resBuf = dtmanage.buildType(type, 0);
+		StringBuilder resBuf = new StringBuilder();
+		dtmanage.buildType(resBuf, type, 0);
 		resBuf.append("\n"); // Make into official XML document
 		String res = resBuf.toString();
 		if (debug != null) {

@@ -15,67 +15,91 @@
  */
 package docking.widgets.fieldpanel.field;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import docking.widgets.fieldpanel.support.HighlightFactory;
 
 /**
- * This class provides a TextField implementation that takes multiple
- * AttributedStrings and places as many that will fit on a line without clipping
- * before continuing to the next line.
+ * This class provides a TextField implementation that takes multiple AttributedString field
+ * elements and places as many that will fit on a line without clipping before continuing to the
+ * next line.
  */
 public class FlowLayoutTextField extends VerticalLayoutTextField {
 
 	/**
-	 * This constructor will create a text field that will render one line of
-	 * text. If <code>metrics.stringWidth(text) &gt; width</code>, then the text
-	 * will be clipped. No wrapping will be performed. If <code>text</code>
-	 * contains the highlight string, then it will be highlighted using the
+	 * This constructor will create a text field that will render one line of text. If
+	 * <code>metrics.stringWidth(text) &gt; width</code>, then the text will be wrapped.
+	 * If <code>text</code> contains the highlight string, then it will be highlighted using the
 	 * highlight color.
 	 * 
-	 * @param textElements
-	 *            the AttributedStrings to display
-	 * @param startX
-	 *            the x position to draw the string
-	 * @param width
-	 *            the max width allocated to this field
-	 * @param maxLines
-	 *            the max number of lines to display
-	 * @param hlFactory
-	 *            the highlight factory
+	 * @param textElements the AttributedStrings to display
+	 * @param startX the x position to draw the string
+	 * @param width the max width allocated to this field
+	 * @param maxLines the max number of lines to display
+	 * @param hlFactory the highlight factory
+	 * @deprecated use the constructor that takes a list
 	 */
+	@Deprecated(since = "10.1", forRemoval = true)
 	public FlowLayoutTextField(FieldElement[] textElements, int startX,
 			int width, int maxLines, HighlightFactory hlFactory) {
-		super(createLineElements(textElements, width), startX, width, maxLines, hlFactory,"");
+		this(Arrays.asList(textElements), startX, width, maxLines, hlFactory);
 	}
 
-	private static FieldElement[] createLineElements(FieldElement[] textElements, int width) {
-		List<FieldElement> subFields = new ArrayList<FieldElement>();
+	/**
+	 * This constructor will create a text field that will render one line of text. If
+	 * <code>metrics.stringWidth(text) &gt; width</code>, then the text will be wrapped.
+	 * If <code>text</code> contains the highlight string, then it will be highlighted using the
+	 * highlight color.
+	 * 
+	 * @param elements the AttributedStrings to display
+	 * @param startX the x position to draw the string
+	 * @param width the max width allocated to this field
+	 * @param maxLines the max number of lines to display
+	 * @param hlFactory the highlight factory
+	 */
+	public FlowLayoutTextField(List<FieldElement> elements, int startX,
+			int width, int maxLines, HighlightFactory hlFactory) {
+		super(createLineElements(elements, width), startX, width, maxLines, hlFactory, "");
+	}
 
+	private static List<FieldElement> createLineElements(List<FieldElement> elements,
+			int width) {
+		List<FieldElement> subFields = new ArrayList<>();
 		int currentIndex = 0;
-		while (currentIndex < textElements.length) {
-			int numberPerLine = getNumberOfElementsPerLine(textElements, currentIndex, width);
-			subFields.add(new CompositeFieldElement(textElements, currentIndex, numberPerLine));
+		while (currentIndex < elements.size()) {
+			int numberPerLine = getNumberOfElementsPerLine(elements, currentIndex, width);
+			subFields.add(createLineFromElements(elements, currentIndex, numberPerLine));
 			currentIndex += numberPerLine;
 		}
 
-		return subFields.toArray(new FieldElement[subFields.size()]);
+		return subFields;
 	}
 
-	private static int getNumberOfElementsPerLine(FieldElement[] elements, int start, int width) {
+	@Override
+	protected TextField createFieldForLine(FieldElement element) {
+		CompositeFieldElement composite = (CompositeFieldElement) element;
+		int numDataRows = composite.getNumElements();
+		return new ClippingTextField(startX, width, element, numDataRows, hlFactory);
+	}
+
+	private static CompositeFieldElement createLineFromElements(List<FieldElement> elements,
+			int start, int length) {
+		return new CompositeFieldElement(elements.subList(start, start + length));
+	}
+
+	private static int getNumberOfElementsPerLine(List<FieldElement> elements, int start,
+			int width) {
+
 		int currentWidth = 0;
-		int count = 0;
-		int n = elements.length;
-		for (int i = start; i < n; i++) {
-			currentWidth += elements[i].getStringWidth();
-			count++;
+		for (int i = start; i < elements.size(); i++) {
+			FieldElement element = elements.get(i);
+			currentWidth += element.getStringWidth();
 			if (currentWidth > width) {
-				return Math.max(count - 1, 1);
+				int count = i - start;
+				return Math.max(count, 1);
 			}
 		}
-
-		return elements.length - start;
+		return elements.size() - start;
 	}
 
 }

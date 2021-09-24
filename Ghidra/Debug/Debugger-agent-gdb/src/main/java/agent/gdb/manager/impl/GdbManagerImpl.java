@@ -45,6 +45,7 @@ import ghidra.dbg.util.PrefixMap;
 import ghidra.framework.Application;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
+import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.ListenerSet;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
@@ -75,7 +76,7 @@ public class GdbManagerImpl implements GdbManager {
 	}
 
 	private static final boolean LOG_IO =
-		Boolean.getBoolean("agent.gdb.manager.log");
+		Boolean.getBoolean("agent.gdb.manager.log") || SystemUtilities.isInDevelopmentMode();
 	private static PrintWriter DBG_LOG = null;
 	private static final String PROMPT_GDB = "(gdb)";
 	public static final int INTERRUPT_MAX_RETRIES = 3;
@@ -158,6 +159,8 @@ public class GdbManagerImpl implements GdbManager {
 	private PtyThread cliThread;
 	private PtyThread mi2Thread;
 
+	private String newLine = System.lineSeparator();
+
 	private final AsyncLock cmdLock = new AsyncLock();
 	private final AtomicReference<AsyncLock.Hold> cmdLockHold = new AtomicReference<>(null);
 	private ExecutorService executor;
@@ -205,8 +208,11 @@ public class GdbManagerImpl implements GdbManager {
 		try {
 			File userSettings = Application.getUserSettingsDirectory();
 			File logFile = new File(userSettings, "GDB.log");
-			if (!logFile.canWrite()) {
-				throw new AssertionError(logFile.getPath() + " appears to be unwritable");
+			try {
+				logFile.createNewFile();
+			}
+			catch (Exception e) {
+				throw new AssertionError(logFile.getPath() + " appears to be unwritable", e);
 			}
 			DBG_LOG = new PrintWriter(new FileOutputStream(logFile));
 		}
@@ -560,6 +566,11 @@ public class GdbManagerImpl implements GdbManager {
 	}
 
 	@Override
+	public void setNewLine(String newLine) {
+		this.newLine = newLine;
+	}
+
+	@Override
 	public void start(String gdbCmd, String... args) throws IOException {
 		List<String> fullargs = new ArrayList<>();
 		fullargs.addAll(Arrays.asList(gdbCmd));
@@ -592,7 +603,8 @@ public class GdbManagerImpl implements GdbManager {
 
 					cliThread = iniThread;
 					cliThread.setName("GDB Read CLI");
-					cliThread.writer.println("new-ui mi2 " + mi2Pty.getChild().nullSession());
+					cliThread.writer
+							.print("new-ui mi2 " + mi2Pty.getChild().nullSession() + newLine);
 					cliThread.writer.flush();
 
 					mi2Thread = new PtyThread(mi2Pty, Channel.STDOUT, Interpreter.MI2);
@@ -743,7 +755,7 @@ public class GdbManagerImpl implements GdbManager {
 					Interpreter interpreter = cmd.getInterpreter();
 					PrintWriter wr = getWriter(interpreter);
 					//Msg.debug(this, "STDIN: " + text);
-					wr.println(text);
+					wr.print(text + newLine);
 					wr.flush();
 					if (LOG_IO) {
 						DBG_LOG.println(">" + interpreter + ": " + text);

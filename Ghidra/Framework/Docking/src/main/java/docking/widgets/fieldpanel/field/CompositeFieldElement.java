@@ -22,9 +22,10 @@ import java.util.List;
 import javax.swing.JComponent;
 
 import docking.widgets.fieldpanel.support.RowColLocation;
+import generic.json.Json;
 
 /**
- * A FieldElement that is composed of other FieldElements.
+ * A FieldElement that is composed of other FieldElements.  The elements are laid out horizontally.
  */
 public class CompositeFieldElement implements FieldElement {
 
@@ -34,17 +35,12 @@ public class CompositeFieldElement implements FieldElement {
 	private int textWidth = -1;
 	private String fullText;
 
-	public CompositeFieldElement(List<? extends FieldElement> stringList) {
-		this(stringList.toArray(new FieldElement[stringList.size()]));
+	public CompositeFieldElement(List<? extends FieldElement> elements) {
+		this(elements.toArray(new FieldElement[elements.size()]));
 	}
 
 	public CompositeFieldElement(FieldElement[] fieldElements) {
 		this.fieldElements = fieldElements;
-	}
-
-	public CompositeFieldElement(FieldElement[] elements, int start, int length) {
-		fieldElements = new FieldElement[length];
-		System.arraycopy(elements, start, fieldElements, 0, length);
 	}
 
 	private IndexedOffset getIndexedOffsetForCharPosition(int charPosition) {
@@ -112,46 +108,6 @@ public class CompositeFieldElement implements FieldElement {
 		return heightBelow;
 	}
 
-//==================================================================================================
-// FontMetrics methods
-//==================================================================================================	
-
-	@Override
-	public int getStringWidth() {
-		if (textWidth == -1) {
-			textWidth = 0;
-			for (FieldElement fieldElement : fieldElements) {
-				textWidth += fieldElement.getStringWidth();
-			}
-		}
-		return textWidth;
-	}
-
-	@Override
-	public String getText() {
-		if (fullText == null) {
-			StringBuffer buffer = new StringBuffer();
-			for (FieldElement fieldElement : fieldElements) {
-				buffer.append(fieldElement.getText());
-			}
-			fullText = buffer.toString();
-		}
-		return fullText;
-	}
-
-//==================================================================================================
-// Paint methods
-//==================================================================================================	
-
-	@Override
-	public void paint(JComponent c, Graphics g, int x, int y) {
-		int xPos = x;
-		for (FieldElement fieldElement : fieldElements) {
-			fieldElement.paint(c, g, xPos, y);
-			xPos += fieldElement.getStringWidth();
-		}
-	}
-
 	@Override
 	public FieldElement replaceAll(char[] targets, char repacement) {
 		FieldElement[] newStrings = new FieldElement[fieldElements.length];
@@ -196,16 +152,6 @@ public class CompositeFieldElement implements FieldElement {
 		return new CompositeFieldElement(newStrings);
 	}
 
-	private static class IndexedOffset {
-		int index;
-		int offset;
-
-		IndexedOffset(int index, int offset) {
-			this.index = index;
-			this.offset = offset;
-		}
-	}
-
 	@Override
 	public FieldElement getFieldElement(int column) {
 		IndexedOffset startPos = getIndexedOffsetForCharPosition(column);
@@ -217,9 +163,54 @@ public class CompositeFieldElement implements FieldElement {
 		return getText().length();
 	}
 
+	@Override
+	public String toString() {
+		return getText();
+	}
+
+	@Override
+	public int getStringWidth() {
+		if (textWidth == -1) {
+			textWidth = 0;
+			for (FieldElement fieldElement : fieldElements) {
+				textWidth += fieldElement.getStringWidth();
+			}
+		}
+		return textWidth;
+	}
+
+	@Override
+	public String getText() {
+		if (fullText == null) {
+			StringBuilder buffer = new StringBuilder();
+			for (FieldElement fieldElement : fieldElements) {
+				buffer.append(fieldElement.getText());
+			}
+			fullText = buffer.toString();
+		}
+		return fullText;
+	}
+
+	@Override
+	public void paint(JComponent c, Graphics g, int x, int y) {
+		int xPos = x;
+		for (FieldElement fieldElement : fieldElements) {
+			fieldElement.paint(c, g, xPos, y);
+			xPos += fieldElement.getStringWidth();
+		}
+	}
+
+	/**
+	 * Returns the number of sub-elements contained in this field
+	 * @return the number of sub-elements contained in this field
+	 */
+	public int getNumElements() {
+		return fieldElements.length;
+	}
+
 //==================================================================================================
 // Location Info
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	public RowColLocation getDataLocationForCharacterIndex(int characterIndex) {
@@ -229,15 +220,34 @@ public class CompositeFieldElement implements FieldElement {
 
 	@Override
 	public int getCharacterIndexForDataLocation(int dataRow, int dataColumn) {
-		int columnCount = 0;
+
+		int columnsSoFar = 0;
 		for (int i = fieldElements.length - 1; i >= 0; i--) {
-			columnCount += fieldElements[i].length();
+			columnsSoFar += fieldElements[i].length();
 			int column = fieldElements[i].getCharacterIndexForDataLocation(dataRow, dataColumn);
 			if (column != -1) {
-				return length() - columnCount + column;
+				// column value is relative to the current field; convert it to this field's offset
+				int fieldStart = length() - columnsSoFar;
+				return fieldStart + column;
 			}
 		}
 
 		return -1;
 	}
+
+	private static class IndexedOffset {
+		int index;
+		int offset;
+
+		IndexedOffset(int index, int offset) {
+			this.index = index;
+			this.offset = offset;
+		}
+
+		@Override
+		public String toString() {
+			return Json.toString(this);
+		}
+	}
+
 }

@@ -35,10 +35,6 @@ dependencies {
 	runGhidraServer project
 }
 
-addExports([
-	'java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED'
-])
-
 CopySpec yajswCopySpec = copySpec {
 	File depsFile = file("${DEPS_DIR}/GhidraServer/${yajswRelease}.zip")
 	File binRepoFile = file("${BIN_REPO}/Ghidra/Features/GhidraServer/${yajswRelease}.zip")

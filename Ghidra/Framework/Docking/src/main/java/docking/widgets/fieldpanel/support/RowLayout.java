@@ -72,7 +72,7 @@ public class RowLayout implements Layout {
 		// Can only compress the last field, as the rest are potentially part of a grid surrounded
 		// by other layouts
 		//
-		// Notes: we have to account for any offset for fields that are disabled and are in 
+		// Notes: we have to account for any offset for fields that are disabled and are in
 		//        the beginning of the row.
 		//
 		int startX = fields[0].getStartX();
@@ -180,8 +180,9 @@ public class RowLayout implements Layout {
 			gapIndex = fields.length;
 		}
 		int startX =
-			gapIndex == 0 ? rect.x : fields[gapIndex - 1].getStartX() +
-				fields[gapIndex - 1].getWidth();
+			gapIndex == 0 ? rect.x
+					: fields[gapIndex - 1].getStartX() +
+						fields[gapIndex - 1].getWidth();
 		int endX = gapIndex >= fields.length ? rect.x + rect.width : fields[gapIndex].getStartX();
 
 		if (startX < endX) {
@@ -201,7 +202,7 @@ public class RowLayout implements Layout {
 		Field field = fields[index];
 
 		cursorLoc.fieldNum = index;
-		cursorLoc.row = field.getRow(y - heightAbove);
+		cursorLoc.row = field.getRow(y);
 		cursorLoc.col = field.getCol(cursorLoc.row, x);
 		return field.getX(cursorLoc.row, cursorLoc.col);
 	}

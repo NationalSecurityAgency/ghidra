@@ -15,8 +15,7 @@
  */
 package docking.widgets.fieldpanel.support;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import docking.widgets.fieldpanel.field.FieldElement;
 
@@ -42,14 +41,14 @@ public class FieldUtils {
 	 * Splits the given FieldElement into sub-elements by wrapping the element on whitespace.
 	 * 
 	 * @param fieldElement The element to wrap
-	 * @param width The maximum width to allow before wrapping 
+	 * @param width The maximum width to allow before wrapping
 	 * @return The wrapped elements
 	 */
-	public static FieldElement[] wrap(FieldElement fieldElement, int width) {
+	public static List<FieldElement> wrap(FieldElement fieldElement, int width) {
 
 		FieldElement originalFieldElement = fieldElement.replaceAll(WHITE_SPACE, ' ');
 		if (originalFieldElement.getStringWidth() <= width) {
-			return new FieldElement[] { originalFieldElement };
+			return Arrays.asList(originalFieldElement);
 		}
 
 		List<FieldElement> lines = new ArrayList<>();
@@ -63,7 +62,7 @@ public class FieldUtils {
 			wordWrapPos = findWordWrapPosition(originalFieldElement, width);
 		}
 		lines.add(originalFieldElement);
-		return lines.toArray(new FieldElement[lines.size()]);
+		return lines;
 	}
 
 	/**
@@ -75,14 +74,14 @@ public class FieldUtils {
 	 * @param breakOnWhiteSpace determines whether line breaks should happen at white space chars
 	 * @return the wrapped elements
 	 */
-	public static FieldElement[] wrap(FieldElement fieldElement, int width,
+	public static List<FieldElement> wrap(FieldElement fieldElement, int width,
 			boolean breakOnWhiteSpace) {
 		if (breakOnWhiteSpace) {
 			return wrap(fieldElement, width);
 		}
 		FieldElement originalFieldElement = fieldElement.replaceAll(WHITE_SPACE, ' ');
 		if (originalFieldElement.getStringWidth() <= width) {
-			return new FieldElement[] { originalFieldElement };
+			return Arrays.asList(originalFieldElement);
 		}
 
 		List<FieldElement> lines = new ArrayList<>();
@@ -99,14 +98,14 @@ public class FieldUtils {
 			}
 		}
 		lines.add(originalFieldElement);
-		return lines.toArray(new FieldElement[lines.size()]);
+		return lines;
 	}
 
 	/**
 	 * Splits the given FieldElement into sub-elements by wrapping the element on whitespace.
 	 * 
 	 * @param fieldElement The element to wrap
-	 * @param width The maximum width to allow before wrapping 
+	 * @param width The maximum width to allow before wrapping
 	 * @return The wrapped elements
 	 */
 	public static List<FieldElement> wordWrapList(FieldElement fieldElement, int width) {
@@ -133,10 +132,11 @@ public class FieldUtils {
 
 	/**
 	 * Finds the position within the given element at which to split the line for word wrapping.
-	 * This method only breaks on whitespace characters. It finds the last whitespace character
-	 * that completely fits within the given width.  If there is no whitespace character before
-	 * the width break point, it finds the first whitespace character after the width.  If the
-	 * element cannot be split at all, it returns 0.
+	 * This method finds the last whitespace character that completely fits within the given width.
+	 * If there is no whitespace character before the width break point, it finds the first
+	 * whitespace character after the width.  If no whitespace can be found, then the text will
+	 * be split at a non-whitespace character.
+	 * 
 	 * @param element the element to split
 	 * @param width the max width to allow before looking for a word wrap positions
 	 * @return 0 if the element cannot be split, else the character position of the string
@@ -156,30 +156,19 @@ public class FieldUtils {
 		}
 
 		return wrapPosition;
-		// The following code was replace with the return just above.  This has the effect
-		// of splitting contiguous words at the field width instead of at the next white 
-		// space beyond.
-//		whiteSpacePosition = text.indexOf(" ", wrapPosition);
-//		if (whiteSpacePosition >= 0) {
-//			if (whiteSpacePosition + 1 >= element.length()) {  // if whitespace at end, no split
-//				return 0;
-//			}
-//			return whiteSpacePosition;
-//		}
-//		return 0;
 	}
 
 	/**
-	 * Trims "goofy" characters off of the given label, like spaces, '[',']', etc.
+	 * Trims unwanted characters off of the given label, like spaces, '[',']', etc.
 	 * @param string The string to be trimmed
 	 * @return The trimmed string.
 	 */
 	public static String trimString(String string) {
 		// short-circuit case where the given string starts normally, but contains invalid
 		// characters (e.g., param_1[EAX])
-		StringBuffer buffer = new StringBuffer(string);
+		StringBuilder buffer = new StringBuilder(string);
 		if (Character.isJavaIdentifierPart(buffer.charAt(0))) {
-			// in this case just take all valid characters and then exit            
+			// in this case just take all valid characters and then exit
 			for (int index = 1; index < buffer.length(); index++) {
 				int charAt = buffer.charAt(index);
 				if (!Character.isJavaIdentifierPart(charAt)) {
@@ -189,7 +178,7 @@ public class FieldUtils {
 			return buffer.toString();
 		}
 
-		// the following case is when the given string is surrounded by "goofy" characters        
+		// the following case is when the given string is surrounded by "goofy" characters
 		int index = 0;
 		int charAt = buffer.charAt(index);
 		while (!Character.isJavaIdentifierPart(charAt) && buffer.length() > 0) {

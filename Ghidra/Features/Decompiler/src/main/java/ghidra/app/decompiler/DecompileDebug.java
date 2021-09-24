@@ -347,9 +347,11 @@ public class DecompileDebug {
 		//Next, use the dependency stack to output types.
 		for (DataType dataType : TypeOrderer.getDependencyList()) {
 			if (!(dataType instanceof BuiltIn)) {
-				debugStream.write(
-					(dtmanage.buildType(dataType, dataType.getLength()) + "\n").toString()
-							.getBytes());
+				StringBuilder typeBuf = new StringBuilder();
+
+				dtmanage.buildType(typeBuf, dataType, dataType.getLength());
+				typeBuf.append('\n');
+				debugStream.write(typeBuf.toString().getBytes());
 			}
 		}
 		debugStream.write("</typegrp>\n".getBytes());

@@ -20,19 +20,15 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 import java.util.List;
 
-import com.google.common.base.Function;
-
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.RenderContext;
 import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.edge.VisualEdgeRenderer;
-import ghidra.graph.viewer.shape.ArticulatedEdgeTransformer;
 
 public class ArticulatedEdgeRenderer<V extends VisualVertex, E extends VisualEdge<V>>
 		extends VisualEdgeRenderer<V, E> {
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public Shape getEdgeShape(RenderContext<V, E> rc, Graph<V, E> graph, E e, float x1, float y1,
 			float x2, float y2, boolean isLoop, Shape vertexShape) {
@@ -44,18 +40,14 @@ public class ArticulatedEdgeRenderer<V extends VisualVertex, E extends VisualEdg
 		GeneralPath path = new GeneralPath();
 		path.moveTo(x1, y1);
 
-		int offset = 0;
-		Function<? super E, Shape> edgeShapeTransformer = rc.getEdgeShapeTransformer();
-		if (edgeShapeTransformer instanceof ArticulatedEdgeTransformer) {
-			offset = ((ArticulatedEdgeTransformer<V, E>) edgeShapeTransformer).getOverlapOffset(e);
-		}
+		// TODO investigate using the transformer directly
+		// Function<? super E, Shape> edgeShapeTransformer = rc.getEdgeShapeTransformer();
 
 		List<Point2D> articulations = e.getArticulationPoints();
-		offset = updateOffsetForLeftOrRightHandSizeEdge(rc, offset, x1, articulations);
 		for (Point2D point : articulations) {
 			double x = point.getX();
 			double y = point.getY();
-			Point2D offsetPoint = new Point2D.Double(x + offset, y + offset);
+			Point2D offsetPoint = new Point2D.Double(x, y);
 			point = rc.getMultiLayerTransformer().transform(Layer.LAYOUT, offsetPoint);
 
 			x = point.getX();
@@ -68,27 +60,5 @@ public class ArticulatedEdgeRenderer<V extends VisualVertex, E extends VisualEdg
 		path.closePath();
 
 		return path;
-	}
-
-	private int updateOffsetForLeftOrRightHandSizeEdge(RenderContext<V, E> rc, int offset, float x,
-			List<Point2D> articulations) {
-
-		int size = articulations.size();
-		if (size == 0) {
-			// no articulations or start to destination only, with no angles
-			return offset;
-		}
-
-		Point2D start = articulations.get(0);
-		start = rc.getMultiLayerTransformer().transform(Layer.LAYOUT, start);
-		double delta = x - start.getX();
-		if (delta == 0) {
-			// don't move the edge when it is directly below the vertex (this prevents having 
-			// a slightly skewed/misaligned edge) 
-			return 0;
-		}
-
-		boolean isLeft = delta > 0;
-		return isLeft ? -offset : offset;
 	}
 }

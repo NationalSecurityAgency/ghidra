@@ -27,14 +27,11 @@ import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.commons.collections4.map.LazyMap;
 
-import com.google.common.base.Function;
-
 import edu.uci.ics.jung.visualization.renderers.Renderer.EdgeLabel;
 import ghidra.app.decompiler.DecompInterface;
 import ghidra.app.decompiler.DecompileOptions;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 import ghidra.app.plugin.core.functiongraph.graph.FunctionGraph;
-import ghidra.app.plugin.core.functiongraph.graph.jung.renderer.DNLArticulatedEdgeTransformer;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.GroupedFunctionGraphVertex;
 import ghidra.graph.VisualGraph;
@@ -100,11 +97,6 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		if (initialize) {
 			initialize();
 		}
-	}
-
-	@Override
-	public Function<FGEdge, Shape> getEdgeShapeTransformer() {
-		return new DNLArticulatedEdgeTransformer();
 	}
 
 	@Override
