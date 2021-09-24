@@ -208,20 +208,23 @@ public class VerticalLayoutTextField implements TextField {
 
 	@Override
 	public int getRow(int y) {
-		if (y < -heightAbove) {
+
+		// our start y value is our baseline - the heigh above the baseline
+		int startY = -heightAbove;
+		if (y < startY) {
 			return 0;
 		}
 
-		int heightSoFar = -heightAbove;
-
+		int ySoFar = startY;
 		int n = subFields.size();
 		for (int i = 0; i < n; i++) {
 			Field f = getField(i);
-			heightSoFar += f.getHeight();
-			if (heightSoFar > y) {
+			ySoFar += f.getHeight();
+			if (ySoFar > y) {
 				return i;
 			}
 		}
+
 		return n - 1;
 	}
 
@@ -234,11 +237,14 @@ public class VerticalLayoutTextField implements TextField {
 	@Override
 	public int getY(int row) {
 
-		int y = -heightAbove;
-		for (int i = 0; i < row; i++) {
+		int startY = -heightAbove;
+		int y = startY;
+		int n = Math.min(row, subFields.size() - 1);
+		for (int i = 0; i < n; i++) {
 			Field f = getField(i);
 			y += f.getHeight();
 		}
+
 		return y;
 	}
 
@@ -537,6 +543,9 @@ public class VerticalLayoutTextField implements TextField {
 	}
 
 	private TextField getField(int screenRow) {
+		if (screenRow >= subFields.size()) {
+			return null;
+		}
 		return subFields.get(screenRow).field;
 	}
 

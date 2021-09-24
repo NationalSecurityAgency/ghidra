@@ -25,11 +25,13 @@ import javax.swing.table.TableModel;
 
 import org.junit.*;
 
+import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.InputWithChoicesDialog;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
+import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.Application;
 import ghidra.framework.options.Options;
@@ -307,8 +309,12 @@ public class AnalysisOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private AnalysisOptionsDialog invokeAnalysisDialog() {
+
+		CodeBrowserPlugin cbp = env.getPlugin(CodeBrowserPlugin.class);
+		CodeViewerProvider provider = cbp.getProvider();
 		DockingActionIf action = getAction(tool, "Auto Analyze");
-		performAction(action, false);
+		ActionContext context = runSwing(() -> provider.getActionContext(null));
+		performAction(action, context, false);
 
 		// TODO temp debug to catch issue seen when running parallel tests
 		try {
@@ -331,24 +337,14 @@ public class AnalysisOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 	private void setAnalyzerEnabled(String name, boolean enabled) {
 		TableModel model = getAnalyzerTableModel();
 		int analyzerRow = getRowForAnalyzer(name, model);
-		runSwing(new Runnable() {
-			@Override
-			public void run() {
-				model.setValueAt(enabled, analyzerRow, 0);
-			}
-		});
+		runSwing(() -> model.setValueAt(enabled, analyzerRow, 0));
 	}
 
 	private boolean isAnalyzerEnabled(String name) {
 		TableModel model = getAnalyzerTableModel();
 		int analyzerRow = getRowForAnalyzer(name, model);
 		AtomicBoolean result = new AtomicBoolean();
-		runSwing(new Runnable() {
-			@Override
-			public void run() {
-				result.set((Boolean) model.getValueAt(analyzerRow, 0));
-			}
-		});
+		runSwing(() -> result.set((Boolean) model.getValueAt(analyzerRow, 0)));
 		return result.get();
 	}
 

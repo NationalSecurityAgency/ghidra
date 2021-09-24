@@ -116,7 +116,8 @@ public class CompositeVerticalLayoutTextField implements TextField {
 	private List<FieldRow> layoutRows(List<TextField> fields, int maxLines) {
 
 		List<FieldRow> newSubFields = new ArrayList<>();
-		int heightSoFar = -heightAbove;
+		int startY = -heightAbove;
+		int ySoFar = startY;
 		int currentRow = 0;
 		boolean tooManyLines = fields.size() > maxLines;
 		for (int i = 0; i < fields.size() && i < maxLines; i++) {
@@ -124,15 +125,15 @@ public class CompositeVerticalLayoutTextField implements TextField {
 			if (tooManyLines && (i == maxLines - 1)) {
 				FieldElement element = field.getFieldElement(0, 0);
 				TextField newField = createClippedField(element);
-				newSubFields.add(new FieldRow(newField, currentRow, heightSoFar));
+				newSubFields.add(new FieldRow(newField, currentRow, ySoFar));
 				isClipped = true;
 			}
 			else {
-				newSubFields.add(new FieldRow(field, currentRow, heightSoFar));
+				newSubFields.add(new FieldRow(field, currentRow, ySoFar));
 				isClipped |= field.isClipped();
 			}
 
-			heightSoFar += field.getHeight();
+			ySoFar += field.getHeight();
 			currentRow += field.getNumRows();
 		}
 
@@ -402,31 +403,42 @@ public class CompositeVerticalLayoutTextField implements TextField {
 	@Override
 	public int getY(int row) {
 
-		int y = -heightAbove;
+		int startY = -heightAbove;
+		int ySoFar = startY;
 		List<FieldRow> rows = getAllRows(row);
+		int lastHeight = 0;
 		for (FieldRow fieldRow : rows) {
-			y += fieldRow.field.getHeight();
+			ySoFar += lastHeight;
+			if (fieldRow.displayRowOffset >= row) {
+				return ySoFar;
+			}
+			lastHeight = fieldRow.field.getHeight();
 		}
-		return y;
+
+		return ySoFar;
 	}
 
 	@Override
 	public int getRow(int y) {
-		if (y < 0) {
+
+		// our start y value is our baseline - the heigh above the baseline
+		int startY = -heightAbove;
+		if (y < startY) {
 			return 0;
 		}
 
-		int heightSoFar = 0;
+		int ySoFar = startY;
+
 		for (FieldRow fieldRow : fieldRows) {
 			int fieldHeight = fieldRow.field.getHeight();
-			int bottom = fieldHeight + heightSoFar;
+			int bottom = fieldHeight + ySoFar;
 			if (bottom > y) {
-				int relativeY = y - heightSoFar;
+				int relativeY = y - ySoFar;
 				int relativeRow = fieldRow.field.getRow(relativeY);
 				int displayRow = fieldRow.fromRelativeRow(relativeRow);
 				return displayRow;
 			}
-			heightSoFar += fieldHeight;
+			ySoFar += fieldHeight;
 		}
 		return getNumRows() - 1;
 	}
