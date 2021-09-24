@@ -3037,7 +3037,7 @@ define pcodeop VectorCopyNarrow;
 	VRd = fpscr;
 }
 
-apsr:   "apsr"  is TMode=1 {}
+apsr:   "apsr"  is epsilon {}
 
 :vmrs^COND apsr,fpscr	is COND & apsr & ( ($(AMODE) & c1627=0xef1 & c1215=15 & c0011=0xa10) | ($(TMODE_E) &  thv_c1627=0xef1 & thv_c1215=15 & thv_c0011=0xa10) ) & fpscr
 {
