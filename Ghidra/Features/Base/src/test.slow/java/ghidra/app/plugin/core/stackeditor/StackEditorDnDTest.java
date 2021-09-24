@@ -367,43 +367,26 @@ public class StackEditorDnDTest extends AbstractStackEditorTest {
 		}
 	}
 
-//	public void testDragNDropConsumeAll() throws Exception {
-//		try {
-//			DataType dt;
-//			model.clearComponents(new int[] {1,2,3});
-//
-//			assertEquals(12, model.getNumComponents());
-//			assertEquals(29, model.getLength());
-//
-//			dt = programDTM.findDataType("/double");
-//			assertNotNull(dt);
-//			addAtPoint(dt,0,0);
-//			assertEquals(5, model.getNumComponents());
-//			assertEquals(29, model.getLength());
-//			assertTrue(getDataType(0).isEquivalent(dt));
-//			assertEquals(dt.getLength(), model.getComponent(0).getLength());
-//		}
-//		finally {
-//			cleanup();
-//		}
-//	}
-//
 	@Test
 	public void testDragNDropAddLargerNoFit() throws Exception {
 		try {
-			DataType dt;
 
 			assertEquals(20, model.getNumComponents());
 			assertEquals(0x1e, model.getLength());
 
-			dt = programDTM.getDataType("/double");
-			DataType dt1 = getDataType(1);
-			assertNotNull(dt);
-			addAtPoint(dt, 1, 0);
+			DataType newType = programDTM.getDataType("/double");
+			assertNotNull(newType);
+
+			DataType existingStackType = getDataType(1);
+			DataType tableType = getDataTypeAtRow(1);
+			assertTrue(existingStackType.isEquivalent(tableType));
+
+			addAtPoint(newType, 1, 0);
 			assertEquals(20, model.getNumComponents());
-			assertTrue(getDataType(1).isEquivalent(dt1));
-			assertEquals(dt1.getLength(), model.getComponent(1).getLength());
 			assertEquals(0x1e, model.getLength());
+
+			DataType newStackType = getDataType(1);
+			assertSame("Type should not have been replaced", existingStackType, newStackType);
 			assertEquals("double doesn't fit within 4 bytes, need 8 bytes", model.getStatus());
 		}
 		finally {

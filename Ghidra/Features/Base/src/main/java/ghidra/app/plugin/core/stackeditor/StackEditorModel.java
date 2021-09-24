@@ -46,7 +46,7 @@ import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-class StackEditorModel extends CompositeEditorModel {
+public class StackEditorModel extends CompositeEditorModel {
 
 	private static final long serialVersionUID = 1L;
 	public static final int OFFSET = 0;
