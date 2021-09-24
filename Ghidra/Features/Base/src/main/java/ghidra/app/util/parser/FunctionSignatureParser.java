@@ -206,7 +206,7 @@ public class FunctionSignatureParser {
 		// attempt to separate trailing parameter name from datatype and reparse
 		int spaceIndex = arg.lastIndexOf(' ');
 		if (spaceIndex < 0) {
-			throw new ParseException("Can't resolve datatype: " + dt);
+			throw new ParseException("Can't resolve datatype: " + arg);
 		}
 		int starIndex = arg.lastIndexOf('*');
 		int nameIndex = Math.max(spaceIndex, starIndex) + 1;
