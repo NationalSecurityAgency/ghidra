@@ -38,6 +38,7 @@ import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
+import ghidra.app.plugin.core.stackeditor.StackEditorModel;
 import ghidra.app.plugin.core.stackeditor.StackFrameDataType;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
@@ -442,6 +443,14 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	protected void insertAtPoint(DataType dt, int row, int col) {
 		runSwing(() -> getPanel().insertAtPoint(getPoint(row, col), dt), false);
 		waitForSwing();
+	}
+
+	protected DataType getDataTypeAtRow(int row) {
+		return runSwing(() -> {
+			DataTypeInstance instance =
+				(DataTypeInstance) model.getValueAt(row, StackEditorModel.DATATYPE);
+			return instance.getDataType();
+		});
 	}
 
 	/**
