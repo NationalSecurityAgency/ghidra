@@ -2195,6 +2195,28 @@ bool ActionSetCasts::testStructOffset0(Varnode *vn,Datatype *ct,CastStrategy *ca
   return (castStrategy->castStandard(reqtype, curtype, true, true) == (Datatype *)0);
 }
 
+/// \brief Test if two data-types are operation identical
+///
+/// If, at a source code level, a variable with data-type \b ct1 can be
+/// legally substituted for another variable with data-type \b ct2, return \b true.
+/// The substitution must be allowed for all possible operations the variable
+/// may be involved in.
+/// \param ct1 is the first data-type
+/// \param ct2 is the second data-type
+bool ActionSetCasts::isOpIdentical(Datatype *ct1,Datatype *ct2)
+
+{
+  while((ct1->getMetatype()==TYPE_PTR)&&(ct2->getMetatype()==TYPE_PTR)) {
+    ct1 = ((const TypePointer *)ct1)->getPtrTo();
+    ct2 = ((const TypePointer *)ct2)->getPtrTo();
+  }
+  while(ct1->getTypedef() != (Datatype *)0)
+    ct1 = ct1->getTypedef();
+  while(ct2->getTypedef() != (Datatype *)0)
+    ct2 = ct2->getTypedef();
+  return (ct1 == ct2);
+}
+
 /// \brief Insert cast to output Varnode type after given PcodeOp if it is necessary
 ///
 /// \param op is the given PcodeOp
@@ -2213,7 +2235,15 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
   outvn = op->getOut();
   if (outvn->isImplied()) {
     // implied varnode must have parse type
-    if (outvn->getType()->getMetatype() != TYPE_PTR) // If implied varnode has an atomic (non-pointer) type
+    if (outvn->isTypeLock()) {
+      PcodeOp *outOp = outvn->loneDescend();
+      // The Varnode input to a CPUI_RETURN is marked as implied but
+      // casting should act as if it were explicit
+      if (outOp == (PcodeOp *)0 || outOp->code() != CPUI_RETURN) {
+	force = !isOpIdentical(outvn->getType(), tokenct);
+      }
+    }
+    else if (outvn->getType()->getMetatype() != TYPE_PTR) // If implied varnode has an atomic (non-pointer) type
       outvn->updateType(tokenct,false,false); // Ignore it in favor of the token type
     else if (tokenct->getMetatype() == TYPE_PTR) { // If the token is a pointer AND implied varnode is pointer
       outct = ((TypePointer *)outvn->getType())->getPtrTo();
@@ -2222,8 +2252,6 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
       if ((meta!=TYPE_ARRAY)&&(meta!=TYPE_STRUCT))
 	outvn->updateType(tokenct,false,false); // Otherwise ignore it in favor of the token type
     }
-    if (outvn->getType() != tokenct)
-      force=true;		// Make sure not to drop pointer type
   }
   if (!force) {
     outct = outvn->getHigh()->getType();	// Type of result
