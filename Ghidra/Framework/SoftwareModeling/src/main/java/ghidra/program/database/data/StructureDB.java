@@ -913,8 +913,8 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	}
 
 	/**
-	 * Backup from specified ordinal to the first component which contains the specified offset. 
-	 * @param index defined component index
+	 * Backup from specified defined-component index to the first component which contains the specified offset. 
+	 * @param index any defined component index which contains offset
 	 * @param offset offset within structure
 	 * @return index of first defined component containing specific offset.
 	 */
@@ -933,8 +933,28 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	}
 
 	/**
-	 * Advance from specified ordinal to the last component which contains the specified offset.
-	 * @param index defined component index
+	 * Identify defined-component index of the first non-zero-length component which contains the specified offset.
+	 * If only zero-length components exist, the last zero-length component which contains the offset will be returned. 
+	 * @param index any defined component index which contains offset
+	 * @param offset offset within structure
+	 * @return index of first defined component containing specific offset.
+	 */
+	private int indexOfFirstNonZeroLenComponentContainingOffset(int index, int offset) {
+		index = backupToFirstComponentContainingOffset(index, offset);
+		DataTypeComponentDB next = components.get(index);
+		while (next.getLength() == 0 && index < (components.size() - 1)) {
+			next = components.get(index + 1);
+			if (!next.containsOffset(offset)) {
+				break;
+			}
+			++index;
+		}
+		return index;
+	}
+
+	/**
+	 * Advance from specified defined-component index to the last component which contains the specified offset.
+	 * @param index any defined component index which contains offset
 	 * @param offset offset within structure
 	 * @return index of last defined component containing specific offset.
 	 */
@@ -1070,9 +1090,12 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			if (index >= 0) {
 				// return first matching defined component containing offset
 				DataTypeComponent dtc = components.get(index);
-				index = backupToFirstComponentContainingOffset(index, offset);
+				index = indexOfFirstNonZeroLenComponentContainingOffset(index, offset);
 				dtc = components.get(index);
-				return dtc;
+				if (dtc.getLength() != 0) {
+					return dtc;
+				}
+				index = -index - 1;
 			}
 
 			if (offset != structLength && !isPackingEnabled()) {

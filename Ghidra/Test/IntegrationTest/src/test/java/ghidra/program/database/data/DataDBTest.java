@@ -142,9 +142,9 @@ public class DataDBTest extends AbstractGenericTest {
 		assertNotNull(c);
 		assertEquals("c1", c.getComponentPathName());
 
-		Data c2 = c.getComponentContaining(4);
+		Data c2 = c.getComponentContaining(4); // zero-length component is ignored
 		assertNotNull(c2);
-		assertEquals("c1.", c2.getComponentPathName()); // zero-bitfield has no name
+		assertEquals("c1.bf1", c2.getComponentPathName());
 
 		Data c3 = c.getComponentContaining(5);
 		assertNotNull(c3);

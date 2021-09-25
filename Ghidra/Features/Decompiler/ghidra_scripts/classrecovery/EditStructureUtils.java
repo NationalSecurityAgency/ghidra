@@ -345,8 +345,7 @@ public class EditStructureUtils {
 		while (index >= 0) {
 			monitor.checkCanceled();
 			DataTypeComponent component = structure.getComponentAt(index);
-			if (component.getDataType().getName().equals("undefined") &&
-				component.getLength() == 1) {
+			if (component != null && component.getDataType() == DataType.DEFAULT) {
 				index--;
 				numUndefineds++;
 			}

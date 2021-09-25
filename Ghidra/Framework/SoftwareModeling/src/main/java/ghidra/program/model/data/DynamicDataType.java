@@ -116,10 +116,11 @@ public abstract class DynamicDataType extends BuiltIn implements Dynamic {
 	 * to share the same offset.
 	 * @param offset the offset into the dataType
 	 * @param buf the memory buffer containing the bytes.
-	 * @return the component containing the byte at the given offset or null if no
-	 * component defined.
+	 * @return the first component containing the byte at the given offset or null if no
+	 * component defined.  A zero-length component may be returned.
 	 */
 	public final DataTypeComponent getComponentAt(int offset, MemBuffer buf) {
+		// TODO: This interface should be consistent with Structure
 		DataTypeComponent[] comps = getComps(buf);
 		if (comps == null) {
 			return null;
