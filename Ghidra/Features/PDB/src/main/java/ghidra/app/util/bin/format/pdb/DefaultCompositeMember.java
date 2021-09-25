@@ -234,8 +234,11 @@ public class DefaultCompositeMember extends CompositeMember {
 			// transform last member into flexible array
 			Structure struct = (Structure) memberDataType;
 			Array array = (Array) m.getDataType();
-			struct.setFlexibleArrayComponent(array.getDataType(), m.getName(), m.memberComment); // use unmodified comment
-			struct.delete(struct.getNumComponents() - 1);
+			// TODO: there may be a more direct approach since we now handle zero-length array instantiation
+			struct.delete(struct.getNumComponents() - 1); // delete placeholder component
+			struct.insertAtOffset(m.memberOffset,
+				new ArrayDataType(array.getDataType(), 0, 1, dataTypeManager), 0, m.getName(),
+				m.memberComment); // use unmodified comment
 		}
 	}
 
@@ -286,7 +289,7 @@ public class DefaultCompositeMember extends CompositeMember {
 			return;
 		}
 
-		DataTypeComponent dtc = struct.getComponentAt(preferredSize);
+		DataTypeComponent dtc = struct.getComponentContaining(preferredSize);
 		if (dtc == null) {
 			return;
 		}
@@ -1010,7 +1013,7 @@ public class DefaultCompositeMember extends CompositeMember {
 		}
 		else if (isStructureContainer()) {
 			Structure struct = (Structure) memberDataType;
-			// TODO: complicated by bitfields
+			// TODO: complicated by bitfields where multiple components may occupy same byte
 			struct.deleteAtOffset(newContainerMember.getOffset());
 			struct.insertAtOffset(newContainerMember.getOffset(), newContainerMember.getDataType(),
 				newContainerMember.getLength());

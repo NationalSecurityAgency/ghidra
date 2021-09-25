@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- *
- */
-package ghidra.program.database.data;
+package ghidra.program.model.data;
 
 import static org.junit.Assert.*;
+
+import java.util.List;
 
 import org.apache.commons.compress.utils.Sets;
 import org.junit.*;
 
 import generic.test.AbstractGTest;
-import ghidra.program.model.data.*;
 
 /**
  *
@@ -45,7 +43,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 	private void transitionToBigEndian() {
 
 		// transition default little-endian structure to big-endian
-		DataTypeManager beDtm = new MyBigEndianDataTypeManager();
+		DataTypeManager beDtm = createBigEndianDataTypeManager();
 		struct = struct.clone(beDtm);
 	}
 
@@ -68,6 +66,24 @@ public class StructureDataTypeTest extends AbstractGTest {
 	private Pointer createPointer(DataType dataType, int length) {
 		return new PointerDataType(dataType, length);
 	}
+	
+	@Test
+	public void testEmpty() throws Exception {
+		Structure s = new StructureDataType("foo", 0);
+		assertTrue(s.isNotYetDefined());
+		assertTrue(s.isZeroLength());
+		assertEquals(0, s.getNumComponents());
+		assertEquals(0, s.getNumDefinedComponents());
+	}
+	
+	@Test
+	public void testSizeOne() throws Exception {
+		Structure s = new StructureDataType("foo", 1);
+		assertFalse(s.isNotYetDefined());
+		assertFalse(s.isZeroLength());
+		assertEquals(1, s.getNumComponents());
+		assertEquals(0, s.getNumDefinedComponents());
+	}
 
 	@Test
 	public void testAdd() throws Exception {
@@ -84,7 +100,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		dtc = struct.getComponent(1);
 		assertEquals(1, dtc.getOffset());
 		assertEquals(1, dtc.getOrdinal());
-		assertEquals("field_0x1", dtc.getDefaultFieldName());
+		assertEquals("field1_0x1", dtc.getDefaultFieldName());
 		assertEquals(null, dtc.getFieldName());
 		assertEquals("Comment2", dtc.getComment());
 		assertEquals(WordDataType.class, dtc.getDataType().getClass());
@@ -123,7 +139,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		DataTypeComponent dtc = struct.getComponent(0);
 		assertEquals(0, dtc.getOffset());
 		assertEquals(0, dtc.getOrdinal());
-		assertEquals("field_0x0", dtc.getDefaultFieldName());
+		assertEquals("field0_0x0", dtc.getDefaultFieldName());
 		assertNull(dtc.getFieldName());
 		assertNull(dtc.getComment());
 		assertEquals(DataType.DEFAULT, dtc.getDataType());
@@ -131,7 +147,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		dtc = struct.getComponent(1);
 		assertEquals(1, dtc.getOffset());
 		assertEquals(1, dtc.getOrdinal());
-		assertEquals("field_0x1", dtc.getDefaultFieldName());
+		assertEquals("field1_0x1", dtc.getDefaultFieldName());
 		assertNull(dtc.getFieldName());
 
 		assertEquals(null, dtc.getComment());
@@ -147,7 +163,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		dtc = struct.getComponent(11);
 		assertEquals(11, dtc.getOffset());
 		assertEquals(11, dtc.getOrdinal());
-		assertEquals("field_0xb", dtc.getDefaultFieldName());
+		assertEquals("field11_0xb", dtc.getDefaultFieldName());
 		assertNull(dtc.getFieldName());
 
 		assertEquals("Comment2", dtc.getComment());
@@ -170,7 +186,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		DataTypeComponent dtc = struct.getComponent(0);
 		assertEquals(0, dtc.getOffset());
 		assertEquals(0, dtc.getOrdinal());
-		assertEquals("field_0x0", dtc.getDefaultFieldName());
+		assertEquals("field0_0x0", dtc.getDefaultFieldName());
 		assertNull(dtc.getFieldName());
 		assertNull(dtc.getComment());
 		assertEquals(FloatDataType.class, dtc.getDataType().getClass());
@@ -185,7 +201,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		dtc = struct.getComponent(2);
 		assertEquals(5, dtc.getOffset());
 		assertEquals(2, dtc.getOrdinal());
-		assertEquals("field_0x5", dtc.getDefaultFieldName());
+		assertEquals("field2_0x5", dtc.getDefaultFieldName());
 		assertNull(dtc.getFieldName());
 		assertEquals("Comment2", dtc.getComment());
 		assertEquals(WordDataType.class, dtc.getDataType().getClass());
@@ -223,7 +239,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		dtc = struct.getComponent(1);
 		assertEquals(1, dtc.getOffset());
 		assertEquals(1, dtc.getOrdinal());
-		assertEquals("field_0x1", dtc.getDefaultFieldName());
+		assertEquals("field1_0x1", dtc.getDefaultFieldName());
 		assertNull(dtc.getFieldName());
 		assertEquals("Comment2", dtc.getComment());
 		assertEquals(WordDataType.class, dtc.getDataType().getClass());
@@ -245,7 +261,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		dtc = struct.getComponent(4);
 		assertEquals(8, dtc.getOffset());
 		assertEquals(4, dtc.getOrdinal());
-		assertEquals("field_0x8", dtc.getDefaultFieldName());
+		assertEquals("field4_0x8", dtc.getDefaultFieldName());
 		assertNull(dtc.getFieldName());
 		assertEquals(null, dtc.getComment());
 		assertEquals(FloatDataType.class, dtc.getDataType().getClass());
@@ -269,7 +285,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		dtc = struct.getComponent(1);
 		assertEquals(1, dtc.getOffset());
 		assertEquals(1, dtc.getOrdinal());
-		assertEquals("field_0x1", dtc.getDefaultFieldName());
+		assertEquals("field1_0x1", dtc.getDefaultFieldName());
 		assertNull(dtc.getFieldName());
 		assertEquals("Comment2", dtc.getComment());
 		assertEquals(WordDataType.class, dtc.getDataType().getClass());
@@ -277,7 +293,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		dtc = struct.getComponent(2);
 		assertEquals(3, dtc.getOffset());
 		assertEquals(2, dtc.getOrdinal());
-		assertEquals("field_0x3", dtc.getDefaultFieldName());
+		assertEquals("field2_0x3", dtc.getDefaultFieldName());
 		assertNull(dtc.getFieldName());
 		assertNull(dtc.getComment());
 		assertEquals(FloatDataType.class, dtc.getDataType().getClass());
@@ -380,7 +396,6 @@ public class StructureDataTypeTest extends AbstractGTest {
 
 	}
 
-	// test inserting at offset 1
 	@Test
 	public void testInsertAtOffset2() {
 		struct.insertAtOffset(2, new FloatDataType(), 4);
@@ -407,11 +422,158 @@ public class StructureDataTypeTest extends AbstractGTest {
 		assertEquals(DWordDataType.class, comps[3].getDataType().getClass());
 
 	}
+	
+	@Test
+	public void testInsertWithZeroArrayAtOffset() {
+		struct.insertAtOffset(2, FloatDataType.dataType, -1);
+		Array zeroArray = new ArrayDataType(FloatDataType.dataType, 0, -1);
+		struct.insertAtOffset(2, zeroArray, -1);
+		assertEquals(13, struct.getLength());
+
+		DataTypeComponent[] comps = struct.getDefinedComponents();
+
+		assertEquals(6, comps.length);
+
+		assertEquals(0, comps[0].getOffset());
+		assertEquals(0, comps[0].getOrdinal());
+		assertEquals(ByteDataType.class, comps[0].getDataType().getClass());
+
+		assertEquals(2, comps[1].getOffset());
+		assertEquals(2, comps[1].getOrdinal());
+		assertTrue(zeroArray.isEquivalent(comps[1].getDataType()));
+		
+		assertEquals(2, comps[2].getOffset());
+		assertEquals(3, comps[2].getOrdinal());
+		assertEquals(FloatDataType.class, comps[2].getDataType().getClass());
+
+		assertEquals(6, comps[3].getOffset());
+		assertEquals(4, comps[3].getOrdinal());
+		assertEquals(WordDataType.class, comps[3].getDataType().getClass());
+
+		assertEquals(8, comps[4].getOffset());
+		assertEquals(5, comps[4].getOrdinal());
+		assertEquals(DWordDataType.class, comps[4].getDataType().getClass());
+
+	}
+	
+	@Test
+	public void testInsertWithZeroArrayAtOffset2() {
+		Array zeroArray = new ArrayDataType(FloatDataType.dataType, 0, -1);
+		struct.insertAtOffset(2, zeroArray, -1);
+		struct.insertAtOffset(2, FloatDataType.dataType, -1);
+		assertEquals(13, struct.getLength());
+
+		DataTypeComponent[] comps = struct.getDefinedComponents();
+
+		assertEquals(6, comps.length);
+
+		assertEquals(0, comps[0].getOffset());
+		assertEquals(0, comps[0].getOrdinal());
+		assertEquals(ByteDataType.class, comps[0].getDataType().getClass());
+
+		assertEquals(2, comps[1].getOffset());
+		assertEquals(2, comps[1].getOrdinal());
+		assertEquals(FloatDataType.class, comps[1].getDataType().getClass());
+		
+		assertEquals(6, comps[2].getOffset());
+		assertEquals(3, comps[2].getOrdinal());
+		assertTrue(zeroArray.isEquivalent(comps[2].getDataType()));
+		
+		assertEquals(6, comps[3].getOffset());
+		assertEquals(4, comps[3].getOrdinal());
+		assertEquals(WordDataType.class, comps[3].getDataType().getClass());
+
+		assertEquals(8, comps[4].getOffset());
+		assertEquals(5, comps[4].getOrdinal());
+		assertEquals(DWordDataType.class, comps[4].getDataType().getClass());
+
+	}
 
 	@Test
 	public void testInsertAtOffsetPastEnd() {
 		struct.insertAtOffset(100, new FloatDataType(), 4);
 		assertEquals(104, struct.getLength());
+	}
+	
+	@Test
+	public void testSetFlexArray() throws Exception {
+
+		struct.setPackingEnabled(true);
+
+		struct.delete(2); // remove dword to verify flex array alignment below
+
+		DataTypeComponent flexDtc =
+			struct.add(new ArrayDataType(CharDataType.dataType, 0, -1), "flex", "FlexComment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"pack()\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   2   word   2   null   \"Comment2\"\n" + 
+			"   4   byte   1   field4   \"Comment4\"\n" + 
+			"   5   char[0]   0   flex   \"FlexComment\"\n" + 
+			"}\n" + 
+			"Size = 6   Actual Alignment = 2", struct);
+		//@formatter:on
+
+		struct.replace(flexDtc.getOrdinal(), new ArrayDataType(IntegerDataType.dataType, 0, -1), 0,
+			"flex", "FlexComment");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"pack()\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   2   word   2   null   \"Comment2\"\n" + 
+			"   4   byte   1   field4   \"Comment4\"\n" + 
+			"   8   int[0]   0   flex   \"FlexComment\"\n" + 
+			"}\n" + 
+			"Size = 8   Actual Alignment = 4", struct);
+		//@formatter:on
+	}
+
+	@Test
+	public void testZeroBitFields() throws Exception {
+
+		struct.setPackingEnabled(true);
+
+		struct.delete(2); // remove dword to verify flex array alignment below
+
+		struct.insertBitField(0, 0, 0, IntegerDataType.dataType, 3, "bf2", "bf1Comment");
+		struct.insertBitField(0, 0, 0, IntegerDataType.dataType, 3, "bf1", "bf1Comment");
+		struct.insertBitField(1, 0, 0, IntegerDataType.dataType, 0, "z1", "zero bitfield 1");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"pack()\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
+			"   4   int:0(0)   0      \"zero bitfield 1\"\n" + 
+			"   4   int:3(0)   1   bf2   \"bf1Comment\"\n" + 
+			"   5   byte   1   field1   \"Comment1\"\n" + 
+			"   6   word   2   null   \"Comment2\"\n" + 
+			"   8   byte   1   field4   \"Comment4\"\n" + 
+			"}\n" + 
+			"Size = 12   Actual Alignment = 4", struct);
+		//@formatter:on
+
+		struct.insertBitField(2, 0, 0, IntegerDataType.dataType, 0, "z2", "zero bitfield 2");
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"pack()\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
+			"   4   int:0(0)   0      \"zero bitfield 1\"\n" + 
+			"   4   int:0(0)   0      \"zero bitfield 2\"\n" + 
+			"   4   int:3(0)   1   bf2   \"bf1Comment\"\n" + 
+			"   5   byte   1   field1   \"Comment1\"\n" + 
+			"   6   word   2   null   \"Comment2\"\n" + 
+			"   8   byte   1   field4   \"Comment4\"\n" + 
+			"}\n" + 
+			"Size = 12   Actual Alignment = 4", struct);
+		//@formatter:on
 	}
 
 	@Test
@@ -750,16 +912,6 @@ public class StructureDataTypeTest extends AbstractGTest {
 			// Not enough undefined bytes so should throw this.
 		}
 		assertNull(dtc);
-	}
-
-	@Test
-	public void testReplace() { // bigger, no space below
-		try {
-			struct.replace(0, new QWordDataType(), 8);
-			Assert.fail();
-		}
-		catch (Exception e) {
-		}
 	}
 
 	@Test
@@ -1117,11 +1269,86 @@ public class StructureDataTypeTest extends AbstractGTest {
 	}
 
 	@Test
+	public void testClearAtOffset() {
+
+		assertEquals(8, struct.getLength());
+
+		Array zeroArray = new ArrayDataType(CharDataType.dataType, 0, -1);
+		struct.insertAtOffset(1, zeroArray, -1);
+
+		assertEquals(8, struct.getLength());
+
+		DataTypeComponent[] comps = struct.getDefinedComponents();
+		assertEquals(5, comps.length);
+
+		assertEquals(0, comps[0].getOffset());
+		assertEquals(0, comps[0].getOrdinal());
+		assertEquals(ByteDataType.class, comps[0].getDataType().getClass());
+
+		assertEquals(1, comps[1].getOffset());
+		assertEquals(1, comps[1].getOrdinal());
+		assertTrue(zeroArray.isEquivalent(comps[1].getDataType()));
+
+		assertEquals(1, comps[2].getOffset());
+		assertEquals(2, comps[2].getOrdinal());
+		assertEquals(WordDataType.class, comps[2].getDataType().getClass());
+
+		assertEquals(3, comps[3].getOffset());
+		assertEquals(3, comps[3].getOrdinal());
+		assertEquals(DWordDataType.class, comps[3].getDataType().getClass());
+
+		struct.clearAtOffset(1);
+
+		assertEquals(8, struct.getLength());
+		assertEquals(5, struct.getNumComponents()); // 2 undefined components replaced word
+		comps = struct.getDefinedComponents();
+
+		assertEquals(DWordDataType.class, comps[1].getDataType().getClass());
+		assertEquals(3, comps[1].getOffset());
+		assertEquals(3, comps[1].getOrdinal());
+	}
+
+	@Test
 	public void testDeleteAtOffset() {
 		struct.deleteAtOffset(2);
 		assertEquals(6, struct.getLength());
 		assertEquals(3, struct.getNumComponents());
 		DataTypeComponent[] comps = struct.getDefinedComponents();
+		assertEquals(DWordDataType.class, comps[1].getDataType().getClass());
+		assertEquals(1, comps[1].getOffset());
+	}
+	
+	@Test
+	public void testDeleteAtOffset2() {
+		
+		assertEquals(8, struct.getLength());
+		
+		Array zeroArray = new ArrayDataType(CharDataType.dataType, 0, -1);
+		struct.insertAtOffset(1, zeroArray, -1);
+		
+		assertEquals(8, struct.getLength());
+		
+		DataTypeComponent[] comps = struct.getDefinedComponents();
+		assertEquals(5, comps.length);
+
+		assertEquals(0, comps[0].getOffset());
+		assertEquals(0, comps[0].getOrdinal());
+		assertEquals(ByteDataType.class, comps[0].getDataType().getClass());
+
+		assertEquals(1, comps[1].getOffset());
+		assertEquals(1, comps[1].getOrdinal());
+		assertTrue(zeroArray.isEquivalent(comps[1].getDataType()));
+		
+		assertEquals(1, comps[2].getOffset());
+		assertEquals(2, comps[2].getOrdinal());
+		assertEquals(WordDataType.class, comps[2].getDataType().getClass());
+		
+		struct.deleteAtOffset(1);
+		
+		assertEquals(6, struct.getLength());
+		assertEquals(3, struct.getNumComponents());
+		comps = struct.getDefinedComponents();
+		
 		assertEquals(DWordDataType.class, comps[1].getDataType().getClass());
 		assertEquals(1, comps[1].getOffset());
 	}
@@ -1250,11 +1477,54 @@ public class StructureDataTypeTest extends AbstractGTest {
 	}
 
 	@Test
-	public void testGetComponentAt() {
-		DataTypeComponent dtc = struct.getComponentAt(4);
+	public void testgetComponentContaining() {
+		DataTypeComponent dtc = struct.getComponentContaining(4);
 		assertEquals(DWordDataType.class, dtc.getDataType().getClass());
 		assertEquals(2, dtc.getOrdinal());
 		assertEquals(3, dtc.getOffset());
+	}
+
+	@Test
+	public void testGetComponentsContaining() {
+		List<DataTypeComponent> components = struct.getComponentsContaining(4);
+		assertEquals("[  2  3  dword  4  field3  null]", components.toString());
+
+		struct.add(new ArrayDataType(CharDataType.dataType, 0, -1), "zarray1", null);
+		struct.add(new LongDataType(), "field4", null);
+		struct.add(new ArrayDataType(LongDataType.dataType, 0, -1), "zarray2", null);
+
+		// force components to align
+		struct.setPackingEnabled(true);
+		struct.setPackingEnabled(false);
+
+		assertEquals(16, struct.getLength());
+
+		/**
+		 * /Test
+		 * pack(disabled)
+		 * Structure Test {
+		 *    0   byte   1   field1   "Comment1"
+		 *    2   word   2   null   "Comment2"
+		 *    4   dword   4   field3   ""
+		 *    8   byte   1   field4   "Comment4"
+		 *    9   char[0]   0   zarray1   ""
+		 *    12   long   4   field4   ""
+		 *    16   long[0]   0   zarray2   ""
+		 * }
+		 * Size = 16   Actual Alignment = 1
+		 */
+
+		// DatatypeComponent.toString: <ordinal> <offset> <dtname> <length> <fieldname> <comment>
+		components = struct.getComponentsContaining(9);
+		assertEquals("[  5  9  char[0]  0  zarray1  null,   6  9  undefined  1  null  null]",
+			components.toString());
+
+		components = struct.getComponentsContaining(10);
+		assertEquals("[  7  10  undefined  1  null  null]", components.toString());
+
+		components = struct.getComponentsContaining(16);
+		assertEquals("[  10  16  long[0]  0  zarray2  null]", components.toString());
+
 	}
 
 	@Test
@@ -1264,7 +1534,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		s1.add(new StringDataType(), 10);
 		s1.add(new StringDataType(), 15);
 
-		DataTypeComponent dtc = s1.getComponentAt(5);
+		DataTypeComponent dtc = s1.getComponentContaining(5);
 		DataType dt = dtc.getDataType();
 		assertEquals(-1, dt.getLength());
 		assertEquals(10, dtc.getLength());
@@ -1273,14 +1543,17 @@ public class StructureDataTypeTest extends AbstractGTest {
 	}
 
 	@Test
-	public void testReplaceVarLengthDataTypes() {
+	public void testReplaceAtVarLengthDataTypes() {
+		
+		// TODO: these tests are too simple since they only replace undefined components
+		
 		Structure s1 = new StructureDataType("Test1", 25);
 
 		s1.replaceAtOffset(0, new StringDataType(), 5, null, null);
 		s1.replaceAtOffset(5, new StringDataType(), 10, null, null);
 		s1.replaceAtOffset(15, new StringDataType(), 10, null, null);
 
-		DataTypeComponent dtc = s1.getComponentAt(5);
+		DataTypeComponent dtc = s1.getComponentContaining(5);
 		DataType dt = dtc.getDataType();
 		assertEquals(-1, dt.getLength());
 		assertEquals(10, dtc.getLength());
@@ -1288,7 +1561,9 @@ public class StructureDataTypeTest extends AbstractGTest {
 	}
 
 	@Test
-	public void testReplaceVarLengthDataTypes2() {
+	public void testReplaceAtVarLengthDataTypes2() {
+		
+		// TODO: these tests are too simple since they only replace undefined components
 
 		Structure s1 = new StructureDataType("Test1", 0x60);
 		s1.replaceAtOffset(0, new StringDataType(), 0xd, null, null);
@@ -1301,15 +1576,151 @@ public class StructureDataTypeTest extends AbstractGTest {
 		s1.replaceAtOffset(0x48, new StringDataType(), 0xb, null, null);
 		s1.replaceAtOffset(0x53, new StringDataType(), 0xd, null, null);
 
-		DataTypeComponent dtc = s1.getComponentAt(0);
+		DataTypeComponent dtc = s1.getComponentContaining(0);
 		DataType dt = dtc.getDataType();
 		assertEquals("string", dt.getDisplayName());
 		assertEquals(0xd, dtc.getLength());
 
-		dtc = s1.getComponentAt(0x31);
+		dtc = s1.getComponentContaining(0x31);
 		dt = dtc.getDataType();
 		assertEquals("string", dt.getDisplayName());
 		assertEquals(0xd, dtc.getLength());
+	}
+	
+	@Test
+	public void testReplaceAtPacked() {
+		
+		struct.setPackingEnabled(true); // test case where there is no component
+
+		assertEquals(12, struct.getLength());
+		assertEquals(4, struct.getNumDefinedComponents());
+		
+		struct.replaceAtOffset(0, DataType.DEFAULT, -1, "a", null);
+		struct.replaceAtOffset(1, ByteDataType.dataType, -1, "b", null);
+		struct.replaceAtOffset(2, ByteDataType.dataType, -1, "c", null);
+		
+		assertEquals(12, struct.getLength());
+		assertEquals(5, struct.getNumDefinedComponents());
+		
+		DataTypeComponent[] comps = struct.getDefinedComponents();
+
+		assertEquals(0, comps[0].getOffset());
+		assertEquals(0, comps[0].getOrdinal());
+		assertTrue(Undefined1DataType.dataType.isEquivalent(comps[0].getDataType()));
+
+		assertEquals(1, comps[1].getOffset());
+		assertEquals(1, comps[1].getOrdinal());
+		assertTrue(ByteDataType.dataType.isEquivalent(comps[1].getDataType()));
+		
+		assertEquals(2, comps[2].getOffset());
+		assertEquals(2, comps[2].getOrdinal());
+		assertTrue(ByteDataType.dataType.isEquivalent(comps[2].getDataType()));
+		
+		assertEquals(4, comps[3].getOffset());
+		assertEquals(3, comps[3].getOrdinal());
+		assertTrue(DWordDataType.dataType.isEquivalent(comps[3].getDataType()));
+		
+		assertEquals(8, comps[4].getOffset());
+		assertEquals(4, comps[4].getOrdinal());
+		assertTrue(ByteDataType.dataType.isEquivalent(comps[4].getDataType()));
+
+	}
+	
+	@Test
+	public void testReplaceAt() {
+
+		assertEquals(8, struct.getLength());
+		assertEquals(4, struct.getNumDefinedComponents());
+
+		struct.replaceAtOffset(0, DataType.DEFAULT, -1, "a", null);
+		struct.replaceAtOffset(1, ByteDataType.dataType, -1, "b", null);
+		struct.replaceAtOffset(2, ByteDataType.dataType, -1, "c", null);
+		struct.replaceAtOffset(4, CharDataType.dataType, -1, "d", null);
+
+		assertEquals(8, struct.getLength());
+		assertEquals(4, struct.getNumDefinedComponents());
+
+		DataTypeComponent[] comps = struct.getDefinedComponents();
+
+		assertEquals(1, comps[0].getOffset());
+		assertEquals(1, comps[0].getOrdinal());
+		assertTrue(ByteDataType.dataType.isEquivalent(comps[0].getDataType()));
+
+		assertEquals(2, comps[1].getOffset());
+		assertEquals(2, comps[1].getOrdinal());
+		assertTrue(ByteDataType.dataType.isEquivalent(comps[1].getDataType()));
+
+		assertEquals(4, comps[2].getOffset());
+		assertEquals(4, comps[2].getOrdinal());
+		assertTrue(CharDataType.dataType.isEquivalent(comps[2].getDataType()));
+
+		assertEquals(7, comps[3].getOffset());
+		assertEquals(7, comps[3].getOrdinal());
+		assertTrue(ByteDataType.dataType.isEquivalent(comps[3].getDataType()));
+
+	}
+
+	@Test
+	public void testReplaceAtWithZeroLength() {
+		Array zeroArray = new ArrayDataType(FloatDataType.dataType, 0, -1);
+		struct.insertAtOffset(3, zeroArray, -1);
+		assertEquals(8, struct.getLength());
+		assertEquals(5, struct.getNumDefinedComponents());
+		
+		// replace dword with short
+		struct.replaceAtOffset(3, ShortDataType.dataType, -1, "b", null);
+		
+		assertEquals(8, struct.getLength());
+		assertEquals(5, struct.getNumDefinedComponents());
+
+		DataTypeComponent[] comps = struct.getDefinedComponents();
+
+		assertEquals(0, comps[0].getOffset());
+		assertEquals(0, comps[0].getOrdinal());
+		assertTrue(ByteDataType.dataType.isEquivalent(comps[0].getDataType()));
+
+		assertEquals(1, comps[1].getOffset());
+		assertEquals(1, comps[1].getOrdinal());
+		assertTrue(WordDataType.dataType.isEquivalent(comps[1].getDataType()));
+
+		assertEquals(3, comps[2].getOffset());
+		assertEquals(2, comps[2].getOrdinal());
+		assertTrue(zeroArray.isEquivalent(comps[2].getDataType()));
+
+		assertEquals(3, comps[3].getOffset());
+		assertEquals(3, comps[3].getOrdinal());
+		assertTrue(ShortDataType.dataType.isEquivalent(comps[3].getDataType()));
+
+		assertEquals(7, comps[4].getOffset());
+		assertEquals(6, comps[4].getOrdinal());
+		assertTrue(ByteDataType.dataType.isEquivalent(comps[4].getDataType()));
+
+		Array zeroArray2 = new ArrayDataType(CharDataType.dataType, 0, -1);
+
+		// replace float[0] with char[0]
+		struct.replaceAtOffset(3, zeroArray2, -1, "a", null);
+
+		comps = struct.getDefinedComponents();
+
+		assertEquals(0, comps[0].getOffset());
+		assertEquals(0, comps[0].getOrdinal());
+		assertTrue(ByteDataType.dataType.isEquivalent(comps[0].getDataType()));
+
+		assertEquals(1, comps[1].getOffset());
+		assertEquals(1, comps[1].getOrdinal());
+		assertTrue(WordDataType.dataType.isEquivalent(comps[1].getDataType()));
+
+		assertEquals(3, comps[2].getOffset());
+		assertEquals(2, comps[2].getOrdinal());
+		assertTrue(zeroArray.isEquivalent(comps[2].getDataType()));
+
+		assertEquals(3, comps[3].getOffset());
+		assertEquals(3, comps[3].getOrdinal());
+		assertTrue(zeroArray2.isEquivalent(comps[3].getDataType()));
+
+		assertEquals(7, comps[4].getOffset());
+		assertEquals(8, comps[4].getOrdinal());
+		assertTrue(ByteDataType.dataType.isEquivalent(comps[4].getDataType()));
 	}
 
 	@Test
@@ -1345,7 +1756,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		s1.add(struct);
 		s1.add(new ByteDataType());
 
-		DataTypeComponent dtc = s1.getComponentAt(7);
+		DataTypeComponent dtc = s1.getComponentContaining(7);
 		assertEquals(struct, dtc.getDataType());
 		dtc = s1.getDataTypeAt(7);
 		assertEquals(DWordDataType.class, dtc.getDataType().getClass());
@@ -1388,7 +1799,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		struct.insertBitFieldAt(9, 2, 7, td, 2, "MyBit3", "bitComment3");
 		struct.growStructure(1);
 
-		struct.setFlexibleArrayComponent(td, "myFlex", "flexComment");
+		struct.add(new ArrayDataType(td, 0, -1), "myFlex", "flexComment");
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
@@ -1403,12 +1814,12 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"   9   Foo:3(4)   1   MyBit2   \"bitComment2\"\n" + 
 			"   9   Foo:2(7)   2   MyBit3   \"bitComment3\"\n" + 
 //			"   11   undefined   1   null   \"\"\n" + 
-			"   Foo[0]   0   myFlex   \"flexComment\"\n" + 
+			"   12   Foo[0]   0   myFlex   \"flexComment\"\n" + 
 			"}\n" + 
 			"Size = 12   Actual Alignment = 1", struct);
 		//@formatter:on
 
-		DataTypeManager beDtm = new MyBigEndianDataTypeManager();
+		DataTypeManager beDtm = createBigEndianDataTypeManager();
 
 		Structure newStruct = new StructureDataType("bigStruct", 0, beDtm);
 		newStruct.replaceWith(struct);
@@ -1428,7 +1839,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"   9   Foo:3(4)   1   MyBit2   \"bitComment2\"\n" + 
 			"   9   Foo:2(7)   2   MyBit3   \"bitComment3\"\n" + 
 //			"   11   undefined   1   null   \"\"\n" + 
-			"   Foo[0]   0   myFlex   \"flexComment\"\n" + 
+			"   12   Foo[0]   0   myFlex   \"flexComment\"\n" + 
 			"}\n" + 
 			"Size = 12   Actual Alignment = 1", newStruct);
 		//@formatter:on
@@ -1783,13 +2194,10 @@ public class StructureDataTypeTest extends AbstractGTest {
 		}
 	}
 
-	protected class MyBigEndianDataTypeManager extends StandAloneDataTypeManager {
-		MyBigEndianDataTypeManager() {
-			super("BEdtm");
-			DataOrganizationImpl dataOrg = DataOrganizationImpl.getDefaultOrganization(null);
-			dataOrg.setBigEndian(true);
-			this.dataOrganization = dataOrg;
-		}
+	protected DataTypeManager createBigEndianDataTypeManager() {
+		DataOrganizationImpl dataOrg = DataOrganizationImpl.getDefaultOrganization(null);
+		dataOrg.setBigEndian(true);
+		return new StandAloneDataTypeManager("BEdtm", dataOrg);
 	}
 
 }

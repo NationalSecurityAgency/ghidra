@@ -79,6 +79,16 @@ public class StackEditorModel extends CompositeEditorModel {
 		}
 	}
 
+	@Override
+	protected boolean allowsZeroLengthComponents() {
+		return false;
+	}
+
+	@Override
+	protected boolean allowsBitFields() {
+		return false;
+	}
+
 	void stackChangedExcternally(boolean changed) {
 		stackChangedExternally = changed;
 	}
@@ -612,7 +622,7 @@ public class StackEditorModel extends CompositeEditorModel {
 			if (currentIndex < 0 || currentIndex >= getRowCount()) {
 				return false;
 			}
-			checkIsAllowableDataType(dataType, true);
+			checkIsAllowableDataType(dataType);
 		}
 		catch (InvalidDataTypeException e) {
 			return false;
@@ -720,7 +730,7 @@ public class StackEditorModel extends CompositeEditorModel {
 			if (currentIndex < 0 || currentIndex >= getRowCount()) {
 				return false;
 			}
-			checkIsAllowableDataType(dataType, true);
+			checkIsAllowableDataType(dataType);
 		}
 		catch (InvalidDataTypeException e) {
 			return false;
@@ -788,10 +798,9 @@ public class StackEditorModel extends CompositeEditorModel {
 	}
 
 	@Override
-	public void setComponentDataTypeInstance(int index, DataTypeInstance dti) throws UsrException {
-		DataType dt = dti.getDataType();
-		checkIsAllowableDataType(dt, true);
-		((StackFrameDataType) viewComposite).setDataType(index, dt, dti.getLength());
+	public void setComponentDataTypeInstance(int index, DataType dt, int length) throws UsrException {
+		checkIsAllowableDataType(dt);
+		((StackFrameDataType) viewComposite).setDataType(index, dt, length);
 	}
 
 	@Override
@@ -806,7 +815,7 @@ public class StackEditorModel extends CompositeEditorModel {
 	public void setComponentName(int rowIndex, String newName)
 			throws InvalidInputException, InvalidNameException, DuplicateNameException {
 
-		if (newName.equals("")) {
+		if (newName.trim().length() == 0) {
 			newName = null;
 		}
 //		if (nameExistsElsewhere(newName, currentIndex)) {
@@ -1330,7 +1339,7 @@ public class StackEditorModel extends CompositeEditorModel {
 
 		int newLength = newDt.getLength();
 
-		checkIsAllowableDataType(newDt, true);
+		checkIsAllowableDataType(newDt);
 		newDt = DataTypeHelper.resolveDataType(newDt, viewDTM, null);
 		int maxLength = getMaxReplaceLength(index);
 		if (newLength <= 0) {

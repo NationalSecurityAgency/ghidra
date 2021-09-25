@@ -56,11 +56,6 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	}
 
 	@Override
-	public boolean isNotYetDefined() {
-		return getDataType().isNotYetDefined();
-	}
-
-	@Override
 	public boolean hasLanguageDependantLength() {
 		return getDataType().hasLanguageDependantLength();
 	}
@@ -209,7 +204,6 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		lock.acquire();
 		try {
 			if (checkIsValid() && getDataType() == oldDt) {
-				int oldLen = getLength();
 				oldDt.removeParent(this);
 				newDt = resolve(newDt);
 				newDt.addParent(this);
@@ -221,8 +215,11 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 				catch (IOException e) {
 					dataMgr.dbError(e);
 				}
-				if (oldLen != getLength()) {
+				if (oldDt.getLength() != newDt.getLength()) {
 					notifySizeChanged(false);
+				}
+				else if (oldDt.getAlignment() != newDt.getAlignment()) {
+					notifyAlignmentChanged(false);
 				}
 				else {
 					dataMgr.dataTypeChanged(this, false);

@@ -30,7 +30,7 @@ abstract class ArrayDBAdapter {
 	static final Schema SCHEMA = ArrayDBAdapterV1.V1_SCHEMA;
 	static final int ARRAY_DT_ID_COL = ArrayDBAdapterV1.V1_ARRAY_DT_ID_COL;
 	static final int ARRAY_DIM_COL = ArrayDBAdapterV1.V1_ARRAY_DIM_COL;
-	static final int ARRAY_LENGTH_COL = ArrayDBAdapterV1.V1_ARRAY_LENGTH_COL;
+	static final int ARRAY_ELEMENT_LENGTH_COL = ArrayDBAdapterV1.V1_ARRAY_ELEMENT_LENGTH_COL;
 	static final int ARRAY_CAT_COL = ArrayDBAdapterV1.V1_ARRAY_CAT_COL;
 
 	static ArrayDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)

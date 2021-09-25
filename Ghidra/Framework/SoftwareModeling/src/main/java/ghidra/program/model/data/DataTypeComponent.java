@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- *
- */
 package ghidra.program.model.data;
 
 import ghidra.docking.settings.Settings;
@@ -24,10 +21,6 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * DataTypeComponents are holders for the dataTypes that make up composite (Structures
  * and Unions) dataTypes.
- * <p>
- * While most all components must have a fixed length greater than 0, structures support an
- * optional trailing flexible array component whose length is zero and whose offset equals
- * the length of the structure.
  */
 public interface DataTypeComponent {
 
@@ -36,9 +29,6 @@ public interface DataTypeComponent {
 
 	/**
 	 * Returns the dataType in this component.
-	 * <p>
-	 * NOTE: If this component corresponds to a structure flexible array the returned data type
-	 * reflects the base type of the array (e.g., char is returned for a flexible char array).
 	 * @return the dataType in this component
 	 */
 	public DataType getDataType();
@@ -50,13 +40,6 @@ public interface DataTypeComponent {
 	public DataType getParent();
 
 	/**
-	 * Determine if this component corresponds to a unsized flexible array which is
-	 * permitted as the trailing component within a structure.
-	 * @return true if component is a trailing flexible array component.
-	 */
-	public boolean isFlexibleArrayComponent();
-
-	/**
 	 * Determine if the specified component corresponds to a bit-field.
 	 * @return true if bit-field else false
 	 */
@@ -64,16 +47,12 @@ public interface DataTypeComponent {
 
 	/**
 	 * Determine if the specified component corresponds to a zero-length bit-field.
-	 * @return true if zer-length bit-field else false
+	 * @return true if zero-length bit-field else false
 	 */
 	public boolean isZeroBitFieldComponent();
 
 	/**
 	 * Get the ordinal position within the parent dataType.
-	 * <p>
-	 * NOTE: The special case of a structure flexible array component returns an ordinal equal
-	 * to the parent structure's {@link Structure#getNumComponents()} since it is not included
-	 * in the list of normal components (see {@link Structure#getFlexibleArrayComponent()}.
 	 * @return ordinal of this component within the parent data type.
 	 */
 	public int getOrdinal();
@@ -81,10 +60,6 @@ public interface DataTypeComponent {
 	/**
 	 * Get the byte offset of where this component begins relative to the start of the parent
 	 * data type.  
-	 * <p>
-	 * NOTE: The special case of a structure flexible array component returns an offset equal
-	 * to the length of the parent structure since the flexible array component is not included
-	 * in a structure's length.
 	 * @return offset of start of component relative to the start of the parent
 	 * data type. 
 	 */
@@ -93,25 +68,22 @@ public interface DataTypeComponent {
 	/**
 	 * Get the byte offset of where this component ends relative to the start of the parent
 	 * data type.
-	 * <p>
-	 * NOTE: The special case of a structure flexible array component returns -1 since its
-	 * length is undefined.
 	 * @return offset of end of component relative to the start of the parent
 	 * data type.
 	 */
 	public int getEndOffset();
 
 	/**
-	 * Get the length of this component.
-	 * <p>
-	 * NOTE: The special case of a structure flexible array component returns 0 since its
-	 * length is undefined.
-	 * @return the length of this component or 0 for a structure flexible array.
+	 * Get the length of this component.  Zero-length components will report a length of 0
+	 * and may overlap other components at the same offset.  Similarly, multiple adjacent 
+	 * bit-field components may appear to overlap at the byte-level. 
+	 * @return the length of this component
 	 */
 	public int getLength();
 
 	/**
 	 * Get the comment for this dataTypeComponent.
+	 * @return component comment string or null if one has not been set
 	 */
 	public String getComment();
 
@@ -129,7 +101,7 @@ public interface DataTypeComponent {
 
 	/**
 	 * Sets the comment for the component.
-	 * @param comment this components comment.
+	 * @param comment this components comment or null to clear comment.
 	 */
 	public void setComment(String comment);
 
@@ -153,8 +125,18 @@ public interface DataTypeComponent {
 
 	/**
 	 * Returns a default Field name.  Used only if a field name is not set.
+	 * @return default field name
 	 */
-	public String getDefaultFieldName();
+	public default String getDefaultFieldName() {
+		if (isZeroBitFieldComponent()) {
+			return "";
+		}
+		String name = DEFAULT_FIELD_NAME_PREFIX + getOrdinal();
+		if (getParent() instanceof Structure) {
+			name += "_0x" + Integer.toHexString(getOffset());
+		}
+		return name;
+	}
 
 	/**
 	 * Returns true if the given dataTypeComponent is equivalent to this dataTypeComponent.
@@ -167,5 +149,29 @@ public interface DataTypeComponent {
 	 * @return true if the given dataTypeComponent is equivalent to this dataTypeComponent.
 	 */
 	public boolean isEquivalent(DataTypeComponent dtc);
+
+	/**
+	 * Determine if the specified dataType will be treated as a zero-length component
+	 * allowing it to possibly overlap the next component.  If the specified dataType
+	 * returns true for {@link DataType#isZeroLength()} and true for {@link DataType#isNotYetDefined()}
+	 * this method will return false causing the associated component to use the reported dataType length 
+	 * of 1.
+	 * @param dataType datatype to be evaluated
+	 * @return true if zero-length component 
+	 */
+	public static boolean usesZeroLengthComponent(DataType dataType) {
+		if (dataType.isZeroLength()) {
+			if (dataType instanceof TypeDef) {
+				// need to check base type since TypeDef always returns false for isNotYetDefined()
+				dataType = ((TypeDef) dataType).getBaseDataType();
+			}
+			if (dataType instanceof Array) {
+				return true;
+			}
+			// assumes undefined types will ultimately have a non-zero length
+			return !dataType.isNotYetDefined();
+		}
+		return false;
+	}
 
 }

@@ -649,7 +649,8 @@ public class DataTypesXmlMgr {
 
 	private void writerMember(XmlWriter writer, DataTypeComponent member) {
 		XmlAttributes attrs = new XmlAttributes();
-		// TODO: how should we output bitfields (packed/non-packed) and flex array
+		// TODO: how should we output bitfields (packed/non-packed)
+		// TODO: multiple components at same offset (e.g., zero-length arrays) could throw-off IDA XML import
 		attrs.addAttribute("OFFSET", member.getOffset(), true);
 		attrs.addAttribute("DATATYPE", member.getDataType().getDisplayName());
 		attrs.addAttribute("DATATYPE_NAMESPACE", member.getDataType().getCategoryPath().getPath());

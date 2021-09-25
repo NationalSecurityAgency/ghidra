@@ -16,9 +16,9 @@
 package ghidra.program.model.data;
 
 import ghidra.program.database.data.DataTypeUtilities;
-import ghidra.program.model.listing.Parameter;
-import ghidra.program.model.listing.Variable;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SymbolUtilities;
+import ghidra.util.exception.InvalidInputException;
 
 public class ParameterDefinitionImpl implements ParameterDefinition {
 
@@ -56,55 +56,28 @@ public class ParameterDefinitionImpl implements ParameterDefinition {
 	}
 
 	/**
-	 * Validate the specified datatype based upon its use as a parameter or return type.
-	 * Ensure that the datatype has been cloned to the specified datatype manager (dtMgr).  
-	 * @param dataType datatype to be validated
-	 * @param dtMgr target datatype manager
-	 * @param isReturn true if checking return datatype, false if parameter datatype.
-	 * @return datatype suitable for use within the target {@link FunctionDefinition}.
-	 * @throws IllegalArgumentException if invalid datatype specified
+	 * Check the specified datatype for use as a return, parameter or variable type.  It may
+	 * not be suitable for other uses.  The following datatypes will be mutated into a default pointer datatype:
+	 * <ul>
+	 * <li>Function definition datatype</li>
+	 * <li>An unsized/zero-element array</li>
+	 * </ul>  
+	 * @param dataType datatype to be checked.  If null specified the DEFAULT datatype will be returned.
+	 * @param dtMgr target datatype manager (null permitted which will adopt default data organization)
+	 * @param voidOK true if checking return datatype and void is allow, else false.
+	 * @return cloned/mutated datatype suitable for function parameters and variables (including function return data type).
+	 * @throws IllegalArgumentException if an unacceptable datatype was specified
 	 */
 	public static DataType validateDataType(DataType dataType, DataTypeManager dtMgr,
-			boolean isReturn) throws IllegalArgumentException {
-		String kind = isReturn ? "Return" : "Parameter";
-		if (dataType == null) {
-			dataType = DataType.DEFAULT;
+			boolean voidOK) throws IllegalArgumentException {
+		try {
+			return VariableUtilities.checkDataType(dataType, voidOK, dtMgr);
 		}
-		else if (dataType instanceof FunctionDefinition || (dataType instanceof TypeDef &&
-			((TypeDef) dataType).getBaseDataType() instanceof FunctionDefinition)) {
-			dataType = new PointerDataType(dataType, dtMgr);
+		catch (InvalidInputException e) {
+			throw new IllegalArgumentException(e.getMessage());
 		}
-		else if (dataType instanceof Dynamic || dataType instanceof FactoryDataType) {
-			throw new IllegalArgumentException(
-				kind + " type may not be defined with Dynamic or Factory data-type: " +
-					dataType.getName());
-		}
-		dataType = dataType.clone(dtMgr != null ? dtMgr : dataType.getDataTypeManager());
-		if (dataType.getLength() < 0) {
-			throw new IllegalArgumentException(kind +
-				" type must be specified with fixed-length data type: " + dataType.getName());
-		}
-		DataType baseType = dataType;
-		if(baseType instanceof TypedefDataType) {
-			baseType = ((TypedefDataType)baseType).getBaseDataType();
-		}
-		
-		if (baseType instanceof VoidDataType) {
-			if (!isReturn) {
-				throw new IllegalArgumentException(
-					"Parameter type may not specify the void datatype - empty parameter list should be used");
-			}
-		}
-		else if (dataType.getLength() == 0) {
-			throw new IllegalArgumentException(kind +
-				" type must be specified with fixed-length data type: " + dataType.getName());
-		}
-		return dataType;
 	}
 
-	/**
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
 	@Override
 	public final int compareTo(ParameterDefinition p) {
 		return ordinal - p.getOrdinal();

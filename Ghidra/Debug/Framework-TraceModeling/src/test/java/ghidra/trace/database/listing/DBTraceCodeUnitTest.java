@@ -1414,8 +1414,8 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 		assertNull(u3fff.getFieldName());
 		assertNull(s4000.getFieldName());
 		assertEquals("nuD", s4000nuD.getFieldName());
-		assertEquals("field_0x4", s4000lE.getFieldName());
-		assertEquals("field_0x8", s4000pF.getFieldName());
+		assertEquals("field2_0x4", s4000lE.getFieldName());
+		assertEquals("field3_0x8", s4000pF.getFieldName());
 
 		// TODO: DAT... may change when proper symbols are implemented
 		assertEquals("DAT_00003fff", u3fff.getPathName());

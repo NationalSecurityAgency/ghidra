@@ -22,6 +22,12 @@ import java.util.Comparator;
  */
 public interface CompositeInternal extends Composite {
 
+	// Strings used for toString formatting
+	static final String ALIGN_NAME = "aligned";
+	static final String PACKING_NAME = "pack";
+	static final String DISABLED_PACKING_NAME = "disabled";
+	static final String DEFAULT_PACKING_NAME = "";
+
 	/**
 	 * The stored packing value which corresponds to a composite that will automatically pack 
 	 * based upon the alignment requirements of its components.  A positive pack value will
@@ -148,7 +154,109 @@ public interface CompositeInternal extends Composite {
 			int ordinal = ((Integer) o2).intValue();
 			return dtc.getOrdinal() - ordinal;
 		}
+	}
 
+	/**
+	 * Dump composite and its components for use in {@link #toString()} representation.
+	 * @param composite composite instance to be dumped
+	 * @return formatted dump as string
+	 */
+	public static String toString(Composite composite) {
+		StringBuilder stringBuffer = new StringBuilder();
+		stringBuffer.append(composite.getPathName() + "\n");
+		stringBuffer.append(getAlignmentAndPackingString(composite) + "\n");
+		stringBuffer.append(getTypeName(composite) + " " + composite.getDisplayName() + " {\n");
+		dumpComponents(composite, stringBuffer, "   ");
+		stringBuffer.append("}\n");
+		stringBuffer.append("Size = " + composite.getLength() + "   Actual Alignment = " +
+			composite.getAlignment() + "\n");
+		return stringBuffer.toString();
+	}
+
+	/**
+	 * Dump all components for use in {@link #toString()} representation.
+	 * 
+	 * @param buffer string buffer
+	 * @param pad    padding to be used with each component output line
+	 */
+	private static void dumpComponents(Composite composite, StringBuilder buffer, String pad) {
+		// limit output of filler components for non-packed structures
+		DataTypeComponent[] components = composite.getDefinedComponents();
+		for (DataTypeComponent dtc : components) {
+			DataType dataType = dtc.getDataType();
+//			buffer.append(pad + dtc.getOrdinal());
+//			buffer.append(") ");
+			buffer.append(pad + dtc.getOffset());
+			buffer.append(pad + dataType.getName());
+			if (dataType instanceof BitFieldDataType) {
+				BitFieldDataType bfDt = (BitFieldDataType) dataType;
+				buffer.append("(");
+				buffer.append(Integer.toString(bfDt.getBitOffset()));
+				buffer.append(")");
+			}
+			buffer.append(pad + dtc.getLength());
+			buffer.append(pad + dtc.getFieldName());
+			String comment = dtc.getComment();
+			if (comment == null) {
+				comment = "";
+			}
+			buffer.append(pad + "\"" + comment + "\"");
+			buffer.append("\n");
+		}
+	}
+
+	private static String getTypeName(Composite composite) {
+		if (composite instanceof Structure) {
+			return "Structure";
+		}
+		else if (composite instanceof Union) {
+			return "Union";
+		}
+		return "";
+	}
+
+	public static String getAlignmentAndPackingString(Composite composite) {
+		StringBuilder buf = new StringBuilder(getMinAlignmentString(composite));
+		if (buf.length() != 0) {
+			buf.append(" ");
+		}
+		buf.append(getPackingString(composite));
+		return buf.toString();
+	}
+
+	public static String getMinAlignmentString(Composite composite) {
+		if (composite.isDefaultAligned()) {
+			return "";
+		}
+		StringBuilder buf = new StringBuilder(ALIGN_NAME);
+		buf.append("(");
+		if (composite.isMachineAligned()) {
+			buf.append("machine:");
+			buf.append(composite.getDataOrganization().getMachineAlignment());
+		}
+		else {
+			buf.append(composite.getExplicitMinimumAlignment());
+		}
+		buf.append(")");
+		return buf.toString();
+	}
+
+	public static String getPackingString(Composite composite) {
+		StringBuilder buf = new StringBuilder(PACKING_NAME);
+		buf.append("(");
+		if (composite.isPackingEnabled()) {
+			if (composite.hasExplicitPackingValue()) {
+				buf.append(composite.getExplicitPackingValue());
+			}
+			else {
+				buf.append(DEFAULT_PACKING_NAME);
+			}
+		}
+		else {
+			buf.append(DISABLED_PACKING_NAME); // NO_PACKING
+		}
+		buf.append(")");
+		return buf.toString();
 	}
 
 }

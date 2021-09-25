@@ -294,7 +294,7 @@ class UnionEditorModel extends CompEditorModel {
 			if (currentIndex < 0 || currentIndex > getNumComponents()) {
 				return false;
 			}
-			checkIsAllowableDataType(dataType, true);
+			checkIsAllowableDataType(dataType);
 		}
 		catch (InvalidDataTypeException e) {
 			return false;
@@ -378,7 +378,7 @@ class UnionEditorModel extends CompEditorModel {
 	@Override
 	public DataTypeComponent insert(int rowIndex, DataType dataType, int length, String name,
 			String comment) throws InvalidDataTypeException {
-		checkIsAllowableDataType(dataType, true);
+		checkIsAllowableDataType(dataType);
 		try {
 			DataTypeComponent dtc =
 				((Union) viewComposite).insert(rowIndex, dataType, length, name, comment);
@@ -409,7 +409,7 @@ class UnionEditorModel extends CompEditorModel {
 	@Override
 	public DataTypeComponent replace(int rowIndex, DataType dataType, int length, String name,
 			String comment) throws InvalidDataTypeException {
-		checkIsAllowableDataType(dataType, true);
+		checkIsAllowableDataType(dataType);
 		try {
 			boolean isSelected = selection.containsEntirely(BigInteger.valueOf(rowIndex));
 			((Union) viewComposite).delete(rowIndex);

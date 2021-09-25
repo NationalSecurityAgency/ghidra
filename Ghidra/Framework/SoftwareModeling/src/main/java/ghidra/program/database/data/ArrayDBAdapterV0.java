@@ -27,7 +27,7 @@ class ArrayDBAdapterV0 extends ArrayDBAdapter {
 	private static final String ARRAY_TABLE_NAME = "Arrays";
 	private static final int V0_ARRAY_DT_ID_COL = 0;
 	private static final int V0_ARRAY_DIM_COL = 1;
-	private static final int V0_ARRAY_LENGTH_COL = 2;
+	private static final int V0_ARRAY_ELEMENT_LENGTH_COL = 2; // applies to sizable dynamic types only
 
 	private Table table;
 
@@ -87,7 +87,7 @@ class ArrayDBAdapterV0 extends ArrayDBAdapter {
 		DBRecord rec = ArrayDBAdapter.SCHEMA.createRecord(oldRec.getKey());
 		rec.setLongValue(ArrayDBAdapter.ARRAY_DT_ID_COL, oldRec.getLongValue(V0_ARRAY_DT_ID_COL));
 		rec.setIntValue(ArrayDBAdapter.ARRAY_DIM_COL, oldRec.getIntValue(V0_ARRAY_DIM_COL));
-		rec.setIntValue(ArrayDBAdapter.ARRAY_LENGTH_COL, oldRec.getIntValue(V0_ARRAY_LENGTH_COL));
+		rec.setIntValue(ArrayDBAdapter.ARRAY_ELEMENT_LENGTH_COL, oldRec.getIntValue(V0_ARRAY_ELEMENT_LENGTH_COL));
 		rec.setLongValue(ArrayDBAdapter.ARRAY_CAT_COL, 0);
 		return rec;
 	}

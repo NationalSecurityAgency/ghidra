@@ -26,19 +26,24 @@ import ghidra.util.UniversalID;
  * Basic implementation for the typedef dataType
  */
 public class TypedefDataType extends GenericDataType implements TypeDef {
-	private final static long serialVersionUID = 1;
 
 	private DataType dataType;
 	private boolean deleted = false;
 
+	/**
+	 * Construct a new typedef within the root category
+	 * @param name name of this typedef
+	 * @param dt data type that is being typedef'ed (may not be null)
+	 */
 	public TypedefDataType(String name, DataType dt) {
 		this(CategoryPath.ROOT, name, dt, null);
 	}
 
 	/**
 	 * Construct a new typedef.
-	 * @param name name to use as the alias
-	 * @param dt data type that is being typedef'ed
+	 * @param path category path for this datatype
+	 * @param name name of this typedef
+	 * @param dt data type that is being typedef'ed (may not be null)
 	 */
 	public TypedefDataType(CategoryPath path, String name, DataType dt) {
 		this(path, name, dt, null);
@@ -46,8 +51,10 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 
 	/**
 	 * Construct a new typedef.
-	 * @param name name to use as the alias
-	 * @param dt data type that is being typedef'ed
+	 * @param path category path for this datatype
+	 * @param name name of this typedef
+	 * @param dt data type that is being typedef'ed (may not be null)
+	 * @param dtm the data type manager associated with this data type. This can be null. 
 	 */
 	public TypedefDataType(CategoryPath path, String name, DataType dt, DataTypeManager dtm) {
 		super(path, name, dtm);
@@ -58,15 +65,15 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 
 	/**
 	 * Construct a new typedef.
-	 * @param path the category path indicating where this data type is located.
-	 * @param name the name of the new structure
+	 * @param path category path for this datatype
+	 * @param name name of this typedef
+	 * @param dt data type that is being typedef'ed (may not be null)
 	 * @param universalID the id for the data type
 	 * @param sourceArchive the source archive for this data type
 	 * @param lastChangeTime the last time this data type was changed
 	 * @param lastChangeTimeInSourceArchive the last time this data type was changed in
 	 * its source archive.
 	 * @param dtm the data type manager associated with this data type. This can be null. 
-	 * Also, the data type manager may not contain this actual data type.
 	 */
 	public TypedefDataType(CategoryPath path, String name, DataType dt, UniversalID universalID,
 			SourceArchive sourceArchive, long lastChangeTime, long lastChangeTimeInSourceArchive,
@@ -96,11 +103,6 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	@Override
 	public String getDefaultLabelPrefix() {
 		return getName();
-	}
-
-	@Override
-	public boolean isNotYetDefined() {
-		return dataType.isNotYetDefined();
 	}
 
 	@Override
@@ -229,6 +231,9 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 			newDt.addParent(this);
 			if (oldDt.getLength() != newDt.getLength()) {
 				notifySizeChanged();
+			}
+			else if (oldDt.getAlignment() != newDt.getAlignment()) {
+				notifyAlignmentChanged();
 			}
 		}
 	}

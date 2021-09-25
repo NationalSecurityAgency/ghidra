@@ -416,7 +416,8 @@ public class PcodeDataTypeManager {
 				buildTypeRef(resBuf, ptrto, ptrto.getLength());
 			}
 		}
-		else if (type instanceof Array) {
+		else if ((type instanceof Array) && !type.isZeroLength()) {
+			// TODO: Zero-element arrays not yet supported
 			SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
 			int sz = type.getLength();
 			if (sz == 0) {
@@ -443,8 +444,8 @@ public class PcodeDataTypeManager {
 			resBuf.append(">\n");
 			DataTypeComponent[] comps = ((Structure) type).getDefinedComponents();
 			for (DataTypeComponent comp : comps) {
-				if (comp.isBitFieldComponent()) {
-					// TODO: bitfields are not yet supported by decompiler
+				if (comp.isBitFieldComponent() || comp.getLength() == 0) {
+					// TODO: bitfields, zero-length components and zero-element arrays are not yet supported by decompiler
 					continue;
 				}
 				resBuf.append("<field");
@@ -459,7 +460,6 @@ public class PcodeDataTypeManager {
 				buildTypeRef(resBuf, fieldtype, comp.getLength());
 				resBuf.append("</field>\n");
 			}
-			// TODO: trailing flexible array component not yet supported
 		}
 		else if (type instanceof Enum) {
 			appendNameIdAttributes(resBuf, type);

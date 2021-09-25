@@ -63,6 +63,8 @@ import util.CollectionUtils;
 //@formatter:on
 public class DataTypePreviewPlugin extends ProgramPlugin {
 
+	private static final String ROOT_NAME = "DataTypePreviewer";
+
 	private DTPPComponentProvider provider;
 	private DTPPTableModel model;
 	private DTPPTable table;
@@ -71,7 +73,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 	private GoToService goToService;
 	private DockingAction addAction;
 	private DockingAction deleteAction;
-	private LayeredDataTypeManager dataTypeManager;
+	private DataTypeManager dataTypeManager;
 	private Program activeProgram;
 
 	private SwingUpdateManager updateManager = new SwingUpdateManager(650, () -> updatePreview());
@@ -101,7 +103,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 		model = new DTPPTableModel();
 		table = new DTPPTable(model);
 		component = new DTPPScrollPane(table);
-		dataTypeManager = new LayeredDataTypeManager(activeProgram);
+		dataTypeManager = createLayeredDataTypeManager();
 
 		addDataType(new ByteDataType());
 		addDataType(new WordDataType());
@@ -177,7 +179,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 
 	private void updateModel() {
 
-		LayeredDataTypeManager newDtm = new LayeredDataTypeManager(activeProgram);
+		DataTypeManager newDtm = createLayeredDataTypeManager();
 
 		int transactionId = newDtm.startTransaction("add datatypes");
 		try {
@@ -197,7 +199,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 		List<DataTypePath> dtPaths = getModelDataTypePaths();
 		model.removeAll();
 
-		LayeredDataTypeManager oldDtm = dataTypeManager;
+		DataTypeManager oldDtm = dataTypeManager;
 		dataTypeManager = newDtm;
 		oldDtm.close();
 
@@ -711,24 +713,11 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 		}
 	}
 
-	private class LayeredDataTypeManager extends StandAloneDataTypeManager {
-
-		DataOrganization layeredDataOrganization1;
-
-		public LayeredDataTypeManager(Program program) {
-			super("DataTypePreviewer");
-			this.layeredDataOrganization1 =
-				program != null ? program.getDataTypeManager().getDataOrganization() : null;
-		}
-
-		@Override
-		public DataOrganization getDataOrganization() {
-			if (layeredDataOrganization1 == null) {
-				return super.getDataOrganization();
-			}
-			return layeredDataOrganization1;
-		}
-
+	private DataTypeManager createLayeredDataTypeManager() {
+		DataOrganization dataOrg =
+			(activeProgram != null) ? activeProgram.getCompilerSpec().getDataOrganization()
+					: DataOrganizationImpl.getDefaultOrganization();
+		return new StandAloneDataTypeManager(ROOT_NAME, dataOrg);
 	}
 
 }

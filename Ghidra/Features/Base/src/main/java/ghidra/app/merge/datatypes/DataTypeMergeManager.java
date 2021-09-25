@@ -1094,62 +1094,6 @@ public class DataTypeMergeManager implements MergeResolver {
 		}
 	}
 
-	private void updateFlexArray(long sourceDtID, Structure sourceDt, Structure destStruct,
-			Map<Long, DataType> resolvedDataTypes) {
-
-		DataTypeComponent flexDtc = sourceDt.getFlexibleArrayComponent();
-		if (flexDtc == null) {
-			return;
-		}
-
-		DataTypeManager sourceDTM = sourceDt.getDataTypeManager();
-
-		DataType sourceCompDt = flexDtc.getDataType();
-		String comment = flexDtc.getComment();
-		long sourceComponentID = sourceDTM.getID(sourceCompDt);
-
-		// Try to get a mapping of the source data type to a result data type.
-		DataType resultCompDt = getResolvedComponent(sourceComponentID, resolvedDataTypes);
-
-		if (resultCompDt == null) {
-			// We didn't have a map entry for the data type.
-
-			if (!myDtAddedList.contains(Long.valueOf(sourceComponentID))) {
-				// Not added so should be in result if it wasn't deleted there.
-				DataType rDt = dtms[RESULT].getDataType(sourceComponentID);
-				if (rDt != null) {
-					resultCompDt = rDt;
-				}
-			}
-			if (resultCompDt == null) {
-				// Not added/resolved yet
-				// put an entry in the fixup list
-				fixUpList.add(new FixUpInfo(sourceDtID, sourceComponentID, Integer.MAX_VALUE,
-					resolvedDataTypes));
-				fixUpIDSet.add(sourceDtID);
-
-				// substitute datatype to preserve component name for subsequent fixup
-				resultCompDt = Undefined1DataType.dataType;
-			}
-		}
-		try {
-			// Apply resultCompDt as flex array
-			try {
-				destStruct.setFlexibleArrayComponent(resultCompDt, flexDtc.getFieldName(), comment);
-			}
-			catch (IllegalArgumentException e) {
-				displayError(destStruct, e);
-				DataType badDt = Undefined1DataType.dataType;
-				comment = "Couldn't add " + resultCompDt.getDisplayName() + " here. " +
-					e.getMessage() + " " + ((comment != null) ? (" " + comment) : "");
-				destStruct.setFlexibleArrayComponent(badDt, flexDtc.getFieldName(), comment);
-			}
-		}
-		catch (IllegalArgumentException e) {
-			displayError(destStruct, e);
-		}
-	}
-
 	private void updateStructure(long sourceDtID, Structure sourceDt, Structure destStruct,
 			Map<Long, DataType> resolvedDataTypes) {
 
@@ -1332,8 +1276,6 @@ public class DataTypeMergeManager implements MergeResolver {
 		if (!aligned) {
 			adjustStructureSize(destStruct, sourceDt.getLength());
 		}
-
-		updateFlexArray(sourceDtID, sourceDt, destStruct, resolvedDataTypes);
 	}
 
 	/**
@@ -1343,7 +1285,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	 */
 	private static void adjustStructureSize(Structure struct, int preferredSize) {
 
-		DataTypeComponent dtc = struct.getComponentAt(preferredSize);
+		DataTypeComponent dtc = struct.getComponentContaining(preferredSize);
 		if (dtc == null) {
 			struct.growStructure(preferredSize - struct.getLength());
 			return;
@@ -1895,16 +1837,6 @@ public class DataTypeMergeManager implements MergeResolver {
 				}
 				checkOffsets = true;
 			}
-			DataTypeComponent flexDtc1 = ((Structure) c1).getFlexibleArrayComponent();
-			DataTypeComponent flexDtc2 = ((Structure) c2).getFlexibleArrayComponent();
-			if (flexDtc1 != null && flexDtc2 != null) {
-				if (isChangedComponent(flexDtc1, flexDtc2, dtm1, dtm2, false)) {
-					return true;
-				}
-			}
-			else if (flexDtc1 != null || flexDtc2 != null) {
-				return true;
-			}
 		}
 
 		DataTypeComponent[] c1Components = c1.getDefinedComponents();
@@ -2384,7 +2316,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	/**
-	 * Process fixup for aligned structure component or trailing flexible array
+	 * Process fixup for aligned structure component
 	 * @param info fixup info
 	 * @param struct result structure
 	 * @param dt component datatype
@@ -2392,35 +2324,15 @@ public class DataTypeMergeManager implements MergeResolver {
 	 */
 	private boolean fixUpAlignedStructureComponent(FixUpInfo info, Structure struct, DataType dt) {
 		int ordinal = info.index;
-		boolean isFlexArrayFixup = (info.index == Integer.MAX_VALUE);
 
 		DataTypeComponent dtc = null;
-		if (isFlexArrayFixup) {
-			dtc = struct.getFlexibleArrayComponent();
-		}
-		else {
-			if (ordinal >= 0 || ordinal < struct.getNumComponents()) {
-				dtc = struct.getComponent(ordinal);
-			}
+		if (ordinal >= 0 || ordinal < struct.getNumComponents()) {
+			dtc = struct.getComponent(ordinal);
 		}
 		if (dtc == null) {
 			return false;
 		}
-		if (isFlexArrayFixup) {
-			try {
-				struct.setFlexibleArrayComponent(dt, dtc.getFieldName(), dtc.getComment());
-			}
-			catch (IllegalArgumentException e) {
-				displayError(struct, e);
-				DataType badDt = Undefined1DataType.dataType;
-				String comment = dtc.getComment();
-				comment = "Couldn't add " + dt.getDisplayName() + "[ ] here. " + e.getMessage() +
-					" " + ((comment != null) ? (" " + comment) : "");
-				struct.replace(ordinal, badDt, dtc.getLength(), dtc.getFieldName(), comment);
-				struct.setFlexibleArrayComponent(badDt, dtc.getFieldName(), comment);
-			}
-		}
-		else if (dtc.isBitFieldComponent()) {
+		if (dtc.isBitFieldComponent()) {
 			if (BitFieldDataType.isValidBaseDataType(dt)) {
 				// replace bitfield base datatype - silent if updated type is not a valid base type
 				BitFieldDataType bfDt = (BitFieldDataType) dtc.getDataType();
@@ -2542,13 +2454,10 @@ public class DataTypeMergeManager implements MergeResolver {
 
 			DataType compDt = resolve(info.compID, info.getDataTypeManager(), info.ht);
 
-			boolean isFlexArrayFixup = (info.index == Integer.MAX_VALUE);
-
 			if (compDt != null) {
-				if (struct.isPackingEnabled() || isFlexArrayFixup) {
+				if (struct.isPackingEnabled()) {
 					if (!fixUpAlignedStructureComponent(info, struct, compDt)) {
-						String msg =
-							isFlexArrayFixup ? "flex-array component" : ("component " + info.index);
+						String msg = "component " + info.index;
 						Msg.warn(this, "Structure Merge: Couldn't get " + msg + " in " +
 							struct.getPathName() + " data type during fix up.");
 						return false; // Don't remove this FixUpInfo from the fixupList so the user will get notified.
@@ -2565,9 +2474,6 @@ public class DataTypeMergeManager implements MergeResolver {
 			}
 
 			// Datatype failed to resolved - check to see if we have a placeholder
-			else if (isFlexArrayFixup) {
-				struct.clearFlexibleArrayComponent();
-			}
 			else if (struct.isPackingEnabled()) {
 				int ordinal = info.index;
 				int numComponents = struct.getNumComponents();
@@ -3291,7 +3197,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		if (composite.isPackingEnabled() || (composite instanceof Union)) {
 			return dtc.getOrdinal();
 		}
-		return dtc.getOffset();
+		return dtc.getOffset(); // TODO: use of offset could be problematic with shared offset
 	}
 
 	/**
@@ -3301,7 +3207,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	private class FixUpInfo {
 		long id;
 		long compID;
-		int index;
+		int index; // TODO: index as offset could be problematic with shared offset
 		Map<Long, DataType> ht;
 
 		// bitfield info
@@ -3315,7 +3221,6 @@ public class DataTypeMergeManager implements MergeResolver {
 		 * @param compID id of either component or base type
 		 * @param index offset into non-packed structure, or ordinal into union or packed 
 		 * structure; or parameter/return ordinal; for other data types index is not used (specify -1).
-		 * For structure trailing flex-array specify {@link Integer#MAX_VALUE}.
 		 * @param resolvedDataTypes hashtable used for resolving the data type
 		 */
 		FixUpInfo(long id, long compID, int index,

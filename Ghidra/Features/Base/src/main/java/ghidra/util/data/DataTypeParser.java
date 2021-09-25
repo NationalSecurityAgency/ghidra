@@ -573,9 +573,16 @@ public class DataTypeParser {
 
 		ArraySpecPiece(String piece) throws InvalidDataTypeException {
 			if (piece.startsWith("[") && piece.endsWith("]")) {
-				String elementCountStr = piece.substring(1, piece.length() - 1);
 				try {
-					elementCount = parseSize(elementCountStr);
+					String elementCountStr = piece.substring(1, piece.length() - 1);
+					if (elementCountStr.length() == 0) {
+						// treat empty array spec same as 0
+						// consumer may need to handle resulting array as a pointer (e.g., parameter)
+						elementCount = 0;
+					}
+					else {
+						elementCount = parseSize(elementCountStr);
+					}
 					return;
 				}
 				catch (NumberFormatException e) {

@@ -54,12 +54,12 @@ class AlignedComponentPacker {
 
 	/**
 	 * Add next component within structure.  All components should be added in sequence excluding
-	 * DEFAULT components and any trailing flexible array component.
+	 * DEFAULT components.
 	 * @param dtc structure component
 	 * @param isLastComponent true if dtc is the last component within the structure
 	 */
 	void addComponent(InternalDataTypeComponent dtc, boolean isLastComponent) {
-		if (dtc.getDataType() == DataType.DEFAULT || dtc.isFlexibleArrayComponent()) {
+		if (dtc.getDataType() == DataType.DEFAULT) {
 			throw new IllegalArgumentException("unsupported component");
 		}
 		if (!packComponent(dtc)) {
@@ -81,8 +81,6 @@ class AlignedComponentPacker {
 
 	/**
 	 * Get the external structure alignment after all components have been packed.
-	 * NOTE: This value does not factor in the affects of any trailing flexible array component
-	 * which may exist or the alignment which may have been explicitly set on the structure.
 	 * @return external alignment
 	 */
 	int getDefaultAlignment() {
@@ -138,7 +136,7 @@ class AlignedComponentPacker {
 	}
 
 	private boolean isIgnoredZeroBitField(BitFieldDataType zeroBitFieldDt) {
-		if (!zeroBitFieldDt.isZeroLengthField()) {
+		if (!zeroBitFieldDt.isZeroLength()) {
 			return false;
 		}
 		if (bitFieldPacking.useMSConvention()) {
@@ -202,15 +200,9 @@ class AlignedComponentPacker {
 				}
 
 				if (isLastComponent) {
-					// special handling of zero-length bitfield when it is last component,
-					// place on last byte within structure.
-					int offset = groupOffset;
-					int length = 1;
-					if (lastComponent != null) {
-						offset = groupOffset - 1; // lastComponent.getEndOffset();
-					}
-					updateComponent(dataTypeComponent, nextOrdinal, offset, length,
-						alignment > 0 ? alignment : 1);
+					// special handling of zero-length bitfield when it is last component
+					int offset = DataOrganizationImpl.getAlignedOffset(zeroBitFieldDt.getBaseDataType().getAlignment(), groupOffset);
+					updateComponent(dataTypeComponent, nextOrdinal, offset, 0, alignment > 0 ? alignment : 1);
 					groupOffset = -1;
 				}
 				else {
@@ -261,7 +253,7 @@ class AlignedComponentPacker {
 			groupOffset = zeroAlignmentOffset;
 		}
 
-		updateComponent(lastComponent, ordinal, groupOffset, 1, minimumAlignment);
+		updateComponent(lastComponent, ordinal, groupOffset, 0, minimumAlignment);
 	}
 
 	private boolean packComponent(InternalDataTypeComponent dataTypeComponent) {
@@ -306,8 +298,9 @@ class AlignedComponentPacker {
 	private void alignAndPackNonBitfieldComponent(InternalDataTypeComponent dataTypeComponent,
 			int minOffset) {
 		DataType componentDt = dataTypeComponent.getDataType();
-		int dtSize = componentDt.getLength();
-		if (dtSize <= 0) {
+
+		int dtSize = componentDt.isZeroLength() ? 0 : componentDt.getLength();
+		if (dtSize < 0) {
 			dtSize = dataTypeComponent.getLength();
 		}
 

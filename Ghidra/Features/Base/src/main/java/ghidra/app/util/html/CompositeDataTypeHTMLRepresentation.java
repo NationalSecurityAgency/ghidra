@@ -100,11 +100,11 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 
 	protected List<ValidatableLine> buildAlignmentText(Composite dataType) {
 		List<ValidatableLine> list = new ArrayList<>();
-		String alignStr = CompositeDataTypeImpl.getMinAlignmentString(dataType);
+		String alignStr = CompositeInternal.getMinAlignmentString(dataType);
 		if (alignStr != null && alignStr.length() != 0) {
 			list.add(new TextLine(alignStr));
 		}
-		String packStr = CompositeDataTypeImpl.getPackingString(dataType);
+		String packStr = CompositeInternal.getPackingString(dataType);
 		if (packStr != null && packStr.length() != 0) {
 			list.add(new TextLine(packStr));
 		}
@@ -117,10 +117,6 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 
 	private List<ValidatableLine> buildContent(Composite comp) {
 		List<ValidatableLine> list = new ArrayList<>();
-		if (comp.isZeroLength()) {
-			return list;
-		}
-
 		int count = 0;
 		DataTypeComponent[] components = comp.getComponents();
 		for (DataTypeComponent dataTypeComponent : components) {
@@ -135,25 +131,12 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 				locatableType = getLocatableDataType(dataType);
 			}
 
-			list.add(new DataTypeLine(fieldName, type, comment, locatableType, false));
+			list.add(new DataTypeLine(fieldName, type, comment, locatableType));
 			if (count++ >= MAX_COMPONENT_COUNT) {
 				// Prevent a ridiculous number of components from consuming all memory.
-				list.add(new DataTypeLine("", "Warning: Too many components to display...", "",
-					null, false));
+				list.add(
+					new DataTypeLine("", "Warning: Too many components to display...", "", null));
 				break;
-			}
-		}
-		if (comp instanceof Structure) {
-			Structure struct = (Structure) comp;
-			DataTypeComponent flexibleArrayComponent = struct.getFlexibleArrayComponent();
-			if (count < MAX_COMPONENT_COUNT && flexibleArrayComponent != null) {
-				String fieldName = flexibleArrayComponent.getFieldName();
-				String comment = flexibleArrayComponent.getComment();
-				DataType dataType = flexibleArrayComponent.getDataType();
-				String type = dataType.getDisplayName();
-				DataType locatableType = getLocatableDataType(dataType);
-				list.add(new DataTypeLine(fieldName, type, comment, locatableType, true));
-
 			}
 		}
 		return list;
@@ -239,9 +222,6 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 			StringBuilder lineBuffer = new StringBuilder();
 			DataTypeLine line = (DataTypeLine) iterator.next();
 			String typeName = generateTypeName(line, trim);
-			if (line.isFlexibleArray()) {
-				typeName += "[0]";
-			}
 
 			int fieldLength = ToolTipUtils.LINE_LENGTH / 2;
 			String fieldName = line.getName();

@@ -283,9 +283,15 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return (component == null ? null : component.getComponent(componentPath));
 	}
 
+	@Deprecated
 	@Override
 	public Data getComponentAt(int offset) {
-		if (offset < 0 || offset >= length) {
+		return getComponentContaining(offset);
+	}
+
+	@Override
+	public Data getComponentContaining(int offset) {
+		if (offset < 0 || offset > length) {
 			return null;
 		}
 
@@ -294,21 +300,20 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 			int elementLength = array.getElementLength();
 			int index = offset / elementLength;
 			return getComponent(index);
-
-		}
-		else if (baseDataType instanceof Union) {
-			return getComponent(0);
 		}
 		else if (baseDataType instanceof Structure) {
 			Structure struct = (Structure) baseDataType;
-			DataTypeComponent dtc = struct.getComponentAt(offset);
-			return getComponent(dtc.getOrdinal());
-
+			DataTypeComponent dtc = struct.getComponentContaining(offset);
+			return (dtc != null) ? getComponent(dtc.getOrdinal()) : null;
 		}
 		else if (baseDataType instanceof DynamicDataType) {
 			DynamicDataType ddt = (DynamicDataType) baseDataType;
 			DataTypeComponent dtc = ddt.getComponentAt(offset, this);
-			return getComponent(dtc.getOrdinal());
+			return (dtc != null) ? getComponent(dtc.getOrdinal()) : null;
+		}
+		else if (baseDataType instanceof Union) {
+			// TODO: Returning anything is potentially bad
+			//return getComponent(0);
 		}
 		return null;
 	}
@@ -328,14 +333,8 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		}
 		else if (baseDataType instanceof Structure) {
 			Structure struct = (Structure) baseDataType;
-			DataTypeComponent dtc = struct.getComponentAt(offset);
-			// Logic handles overlapping bit-fields
-			// Include if offset is contained within bounds of component
-			while (dtc != null && (offset >= dtc.getOffset()) &&
-				(offset <= (dtc.getOffset() + dtc.getLength() - 1))) {
-				int ordinal = dtc.getOrdinal();
-				list.add(getComponent(ordinal++));
-				dtc = ordinal < struct.getNumComponents() ? struct.getComponent(ordinal) : null;
+			for (DataTypeComponent dtc : struct.getComponentsContaining(offset)) {
+				list.add(getComponent(dtc.getOrdinal()));
 			}
 		}
 		else if (baseDataType instanceof DynamicDataType) {

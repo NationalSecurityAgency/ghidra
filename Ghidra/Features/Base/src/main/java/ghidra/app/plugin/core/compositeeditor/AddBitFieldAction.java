@@ -47,7 +47,7 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 	public void actionPerformed(ActionContext context) {
 
 		CompEditorModel editorModel = (CompEditorModel) model;
-		if (editorModel.getNumSelectedRows() != 1 || editorModel.isFlexibleArraySelection()) {
+		if (editorModel.getNumSelectedRows() != 1) {
 			return;
 		}
 		int rowIndex = model.getSelectedRows()[0];
@@ -71,7 +71,7 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 		CompEditorModel editorModel = (CompEditorModel) model;
 		// Union do not support non-packed placement of bitfields
 		if (!(editorModel.viewComposite instanceof Structure) || editorModel.isPackingEnabled() ||
-			editorModel.getNumSelectedRows() != 1 || editorModel.isFlexibleArraySelection()) {
+			editorModel.getNumSelectedRows() != 1) {
 			enabled = false;
 		}
 		setEnabled(enabled);

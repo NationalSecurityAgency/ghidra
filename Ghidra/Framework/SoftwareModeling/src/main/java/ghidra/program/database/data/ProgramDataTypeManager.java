@@ -72,14 +72,15 @@ public class ProgramDataTypeManager extends DataTypeManagerDB
 		this.program = p;
 		dataOrganization = p.getCompilerSpec().getDataOrganization();
 		removeOldFileNameList();
+		if (upgrade) {
+			removeOldFileNameList();
+		}
 	}
 
 	private void removeOldFileNameList() {
-		if (upgrade) {
-			Options options = program.getOptions(Program.PROGRAM_INFO);
-			if (options.contains(OLD_DT_ARCHIVE_FILENAMES)) {
-				options.removeOption(OLD_DT_ARCHIVE_FILENAMES);
-			}
+		Options options = program.getOptions(Program.PROGRAM_INFO);
+		if (options.contains(OLD_DT_ARCHIVE_FILENAMES)) {
+			options.removeOption(OLD_DT_ARCHIVE_FILENAMES);
 		}
 	}
 
@@ -93,6 +94,7 @@ public class ProgramDataTypeManager extends DataTypeManagerDB
 			throws IOException, CancelledException {
 		if (openMode == DBConstants.UPGRADE) {
 			doSourceArchiveUpdates(program.getCompilerSpec(), monitor);
+			migrateOldFlexArrayComponentsIfRequired(monitor);
 		}
 	}
 

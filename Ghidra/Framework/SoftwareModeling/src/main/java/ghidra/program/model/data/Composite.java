@@ -32,9 +32,7 @@ public interface Composite extends DataType {
 	/**
 	 * Gets the number of component data types in this composite.
 	 * If this is Structure with packing disabled, the count will include all undefined filler
-	 * components which may be present.  In addition, Structures do not include the
-	 * optional trailing flexible array component in this count 
-	 * (see {@link Structure#hasFlexibleArrayComponent()}).
+	 * components which may be present.
 	 * @return the number of components that make up this composite
 	 */
 	public abstract int getNumComponents();
@@ -45,9 +43,6 @@ public interface Composite extends DataType {
 	 * since they do not contain undefined components.  
 	 * This count will always exclude all undefined filler components which may be present 
 	 * within a Structure whoose packing is disabled (see {@link #isPackingEnabled()}).
-	 * In addition, Structures do not include the
-	 * optional trailing flexible array component in this count 
-	 * (see {@link Structure#hasFlexibleArrayComponent()}).
 	 * @return  the number of explicitly defined components in this composite
 	 */
 	public abstract int getNumDefinedComponents();
@@ -63,7 +58,6 @@ public interface Composite extends DataType {
 	/**
 	 * Returns an array of Data Type Components that make up this composite including
 	 * undefined filler components which may be present within a Structure whch has packing disabled.
-	 * Structures do not include the optional trailing flexible array component in the returned array.
 	 * The number of components corresponds to {@link #getNumComponents()}.
 	 * @return array all components
 	 */
@@ -74,9 +68,7 @@ public interface Composite extends DataType {
 	 * undefined filler components which may be present within Structures where packing is disabled.
 	 * The number of components corresponds to {@link #getNumDefinedComponents()}.  For Unions and 
 	 * packed Structures this is equivalent to {@link #getComponents()} 
-	 * since they do not contain undefined filler components.  Structures do not include the
-	 * optional trailing flexible array component in the returned array 
-	 * (see {@link Structure#getFlexibleArrayComponent()}).
+	 * since they do not contain undefined filler components.
 	 * @return array all explicitly defined components
 	 */
 	public abstract DataTypeComponent[] getDefinedComponents();

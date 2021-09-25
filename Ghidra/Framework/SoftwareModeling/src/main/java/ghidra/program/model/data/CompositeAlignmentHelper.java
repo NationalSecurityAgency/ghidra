@@ -31,22 +31,6 @@ public class CompositeAlignmentHelper {
 					impartedAlignment);
 			}
 		}
-		if (composite instanceof Structure) {
-			Structure struct = (Structure) composite;
-			DataTypeComponent flexibleArrayComponent = struct.getFlexibleArrayComponent();
-			if (flexibleArrayComponent != null) {
-				allComponentsLCM = getComponentAlignmentLCM(dataOrganization, allComponentsLCM,
-					packingValue, flexibleArrayComponent);
-			}
-		}
-		return allComponentsLCM;
-	}
-
-	private static int getComponentAlignmentLCM(DataOrganization dataOrganization,
-			int allComponentsLCM, int packingValue, DataTypeComponent component) {
-		int componentAlignment = getPackedAlignment(dataOrganization, packingValue, component);
-		allComponentsLCM =
-			DataOrganizationImpl.getLeastCommonMultiple(allComponentsLCM, componentAlignment);
 		return allComponentsLCM;
 	}
 

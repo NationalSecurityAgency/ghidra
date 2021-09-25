@@ -85,6 +85,10 @@ public abstract class DBDomainObjectSupport extends DomainObjectAdapterDB {
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
+
+			// TODO: (see GP-1238) Consider properly supporting VersionException and upgrades.  
+			// Returning a null manager will likely induce an NPE down the line.
+
 			return null;
 		}
 	}

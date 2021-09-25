@@ -84,8 +84,8 @@ public class Pic24DInitAnalyzer extends AbstractAnalyzer {
 			dataRecordType.addBitField(LongDataType.dataType, 9, "page", null); // TODO: factor into dst ram reference
 		} catch (InvalidDataTypeException e) {
 			throw new AssertException(e);
-		} 
-		dataRecordType.setFlexibleArrayComponent(ByteDataType.dataType, "data", null);
+		}
+		dataRecordType.add(new ArrayDataType(ByteDataType.dataType, 0, -1), "data", null);
 		
 		dataRecordType = (Structure) program.getDataTypeManager().resolve(dataRecordType, null);
 		

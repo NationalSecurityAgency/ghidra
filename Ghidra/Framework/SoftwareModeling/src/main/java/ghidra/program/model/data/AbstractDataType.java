@@ -124,6 +124,7 @@ public abstract class AbstractDataType implements DataType {
 
 	@Override
 	public boolean isDeleted() {
+		// NOTE: Support for this concept outside of DataTypeDB should not be relied upon
 		return false;
 	}
 

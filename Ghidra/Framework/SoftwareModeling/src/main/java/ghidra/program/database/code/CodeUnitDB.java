@@ -284,7 +284,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	public Address getMaxAddress() {
 		refreshIfNeeded();
 		if (endAddr == null) {
-			endAddr = address.add(length - 1);
+			endAddr = length == 0 ? address : address.add(length - 1);
 		}
 		return endAddr;
 	}

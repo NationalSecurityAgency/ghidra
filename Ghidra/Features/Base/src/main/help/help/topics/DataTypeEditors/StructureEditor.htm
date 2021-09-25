@@ -373,28 +373,22 @@
     <P><IMG alt="Note:" src="../../shared/note.png">The use of bitfield components is not 
     currently reflected in decompiler results or assembly markup. </P>
 
-	<H2><A name="Structure_Editor_Flex_Array"></A>Flexible Array Component</H2>
+	<H2><A name="Structure_Editor_Flex_Array"></A>Zero-Element / Flexible Array Components</H2>
 
-    <P>A structure may be defined with a trailing flexible array component which corresponds to
-    an unsized array (e.g., char[0]).  Such a component, if it exists, is always displayed as the 
-    last row within the structure editor with the open edit row for additional components located 
-    directly above it.   The <I>DataType</I> column for a flexible array always shows 
-    the base type of the unsized array which can be modified similar to other components.  A
-    flexible array is added to the end of a structure by adding a last row specified by the base 
-    <I>DataType</I> (e.g. char)
-    then invoking the array action and specifying an element count of 0. Attempting to specify
-    an element count of 0 is only permitted on the last component row when a flexible array component
-    does not already exist.  The presence of a flexible array component does not affect the size of a 
-    structure and will not appear within the structure when applied to Data within memory as it 
-    corresponds to the memory location which immediately follows the end of the structure.</P>
-    
+    <P>A structure may be defined with zero-element array components, also referred to as a 
+    flexible array, which correspond to an unsized array (e.g., char[0]).  Such a component
+    is created by simply specifying a zero-element array datatype as you would a sized-array component
+    (see <A href="#Structure_Editor_Create_FlexArray">Create
+    Zero-Element / Flexible Array Component</A>).
+    The resulting component will not consume any space within the structure and will report a component
+    size of 0. As such, it may reside at the same offset as a subsequent component and/or may have an offset 
+    equal to the length of the structure. When packing is enabled such a component may influence the 
+    overall alignment of the structure and its length.
+  
     <P><IMG alt="Note:" src="../../shared/note.png">The use of flexible array components is not 
     currently reflected in decompiler results or listing reference markup. Its primary purpose 
     if to reflect the C/C++ source definition of a structure with correct alignment and structure sizing.</P>
     
-    <P><IMG alt="Note:" src="../../shared/note.png">While C/C++ support flexible arrays anywhere
-    within a structure, Ghidra only supports the case where it is the last structure component.</P>
- 
       <DIV style="text-align: center;">
         <IMG alt="" src="images/StructureEditorWithFlexArray.png"><BR>
         <BR>
@@ -415,7 +409,7 @@
 
     <BLOCKQUOTE>
       <P>Within a non-packed structure <i>undefined</i> components are inserted before the current selection by clicking the <IMG src=
-      "images/Plus.png" alt=""> <B>Insert Undefined Byte</B> button.  Within a packed structure an <i>undefined1<i> datatype component
+      "images/Plus.png" alt=""> <B>Insert Undefined Byte</B> button.  Within a packed structure an <i>undefined1</i> datatype component
       is inserted in a similar fashion, although in packed structures it is more appropriate to use a properly sized datatype (e.g., modify datatype
       on inserted component).</P>
     </BLOCKQUOTE>
@@ -587,24 +581,14 @@
     </BLOCKQUOTE>
     
     <H3><A name="Structure_Editor_Create_FlexArray"></A> <IMG src="images/Array.png" alt="">Create
-    Flexible Array</H3>
+    Zero-Element / Flexible Array Component</H3>
 
     <BLOCKQUOTE>
-      <P>To create an unsized flexible array as the last structure component (assuming one 
-      is not already defined):</P>
-
-      <OL>
-        <LI>Add a component whose <I>DataType</I> corresponds to the base type of the unsized array.</LI>
-      
-        <LI>Select this last structure component in the table.</LI>
-
-        <LI>Press the <IMG src="images/Array.png" alt=""> <B>Create Array</B> button or the '[' 
-        action key binding.</LI>
-
-        <LI>A dialog pops up to request
-        the number of elements in the array.  Specify 0 as the number of elements in the popup 
-        dialog and click OK.</LI>
-      </OL>
+      <P>To create an unsized flexible array component you must use the datatype cell edit feature
+      to select/enter the datatype by name including the array-sizing-specification (e.g., char[0]).
+      To initiate edit mode for a component datatype you must double-click the datatype cell for the component
+      you wish to modify.  This may be an existing component or the empty row at the end of the table.
+      See <A href="#Structure_Editor_Editing_DataType">Editing the DataType Field</A> for more details.
     </BLOCKQUOTE>
     
     <H3><A name="Structure_Editor_Unpackage_Component"></A> <IMG src="images/Unpackage.gif" alt="">
@@ -617,8 +601,7 @@
       button. For example, the array component Word[4] would become four Word components. If the
       structure struct_1 was composed of a Float and a DWord, then unpackaging it would replace the
       struct_1 component with a Float component and a DWord component.</P>
-    </BLOCKQUOTE><BR>
-     
+    </BLOCKQUOTE>
 
     <H3><A name="Structure_Editor_Create_Structure_From_Selection"></A> <IMG src=
     "images/cstruct.png" alt=""> Create Structure From Selection</H3>
@@ -778,49 +761,81 @@
         session top to bottom in the table.</P>
       </BLOCKQUOTE>
 
-      <H3>Editing the <I>DataType</I> Field</H3>
+      <H3><A name="Structure_Editor_Editing_DataType"></A>Editing the <I>DataType</I> Field</H3>
 
-      <P>This can be any data type that is available in the data type manager. To edit the data
-      type double-click the data type cell. This will show the <A href=
+      <P>To edit the data type double-click the data type cell. This will show the <A href=
       "help/topics/DataTypeEditors/DataTypeSelectionDialog.htm">Data Type Selection Dialog</A>,
-      which allows you to easily enter a data type. It can also be Undefined, a pointer to a data
-      type, or an array.</P>
+      which allows you to easily enter a data type or select/modify an existing one from one of the open
+      datatype managers. It can also be Undefined, a pointer to a datatype, or an array.</P>
+ 
+       <P><IMG alt="Note:" src="../../shared/note.png"> Certain restrictions may apply when specifying 
+       or modifying a component's datatype which could cause a modification to fail.  Some common restrictions include
+       but are not limited to:</P>
+       
+       <BLOCKQUOTE>
+       <ul>
+       <li>Fit (non-packed structure only) - when modifying a component 
+       there must be adequate space to place the component.  Any undefined components which immediately follow
+       the modified component may be consumed or added based upon the component size change.  It may be neccessary to 
+       insert undefined bytes or clear other components before the modification may be completed.</li>
+       <li>Illegal Datatype - certain datatypes are not permitted (e.g., data driven Dynamic types, Factory types).</li>
+       <li>Zero-Length Components (non-packed structure only) - modification of an existing zero-length component may
+       not change its size.</li>
+       </ul>
+       </BLOCKQUOTE>
+ 
+      <P>Examples of datatypes which may be specified, include:</P>
 
       <BLOCKQUOTE>
-        <P><B>Basic Data Type</B></P>
+        <P><A name="Structure_Editor_Basic_Data_Type"></A><B>Basic Data Type</B></P>
 
-        <P>This can be a built-in data type (Byte, Word, etc.), a structure, a union, or a
-        typedef.</P>
-
-        <P>For example, Word.</P>
+        <P>This can be any fixed-length built-in data type (e.g., byte, word, etc.), structure, union, typedef, or enum.
+        
+        <P><B>Sizable Dynamic Data Type</B></P>
+        
+        <P>A sizable built-in Dynamic data type such as <i>string</i> may be specified in which case the user
+        will be prompted to specify the component size.</P>
 
         <P><B>Pointer Data Type</B></P>
 
-        <P>This can be the basic Pointer data type or a pointer to a data type. A pointer to a data
-        type is indicated by following the data type with an *.</P>
+        <P>This can be a named Pointer data type (e.g., <i>pointer</i>, <i>pointer16</i>, etc.) or a pointer to a specific data type. A pointer to a data
+        type is indicated by following the data type name with an * (i.e., asterisk symbol).  It is also possible to stipulate a specific pointer-size, although it should be
+        only done when the default pointer size is inappropriate.  A stipulated pointer size may be specified by following the * with its bit-size
+        (16,24,32..64).  The pointer * designation may also be stacked for a pointer-to-pointer type.</P>
 
-        <P>For example, Word * is a pointer to a Word.</P>
+        <P>For example, <i>word*</i> is a pointer to a Word using the default pointer size.  If a non-default size is needed <i>word*16</i> would force
+        the use of a 16-bit pointer.</P>
 
         <P><B>Array</B></P>
 
-        <P>This can be a multidimensional array of any data type.</P>
+        <P>A single or multidimensional array of any <A href="#Structure_Editor_Basic_Data_Type">basic data type</A> may be specified.</P>
 
-        <P>For example, DWord[2][4] is an array with 2 elements, where each element is an array
-        with 4 elements that are DWords.</P>
+        <P>For example, <i>dword[2][4]</i> is an array with 2 elements, where each element is an array
+        with 4 elements that are DWords; In a similar fashion a zero-element character array may be specified
+        as <i>char[0]</i>.</P>
 
         <P><B>Array of Pointers</B></P>
 
-        <P>Arrays of pointers can also be specified.</P>
+        <P>Arrays of pointers may also be specified.</P>
 
-        <P>For example, Float*[5] is an array with five elements where each element is a pointer to
+        <P>For example, <i>float*[5]</i> is an array with five elements where each element is a pointer to
         a Float.</P>
-
+        
+        <P><B>Bitfields</B></P>
+        
+        <P>A bitfield may be specified by appending <b>:&lt;bitsize&gt;</b> to the end of a valid base datatype.  Valid base datatypes include
+        all integer types (e.g., byte, char, int, etc.), a defined enum, or a typedef which corresponds to an integer-type or enum.
+        It is important to note that specifying a bitfield in this manner works well for packed structures, however for non-packed
+        structures it may be neccessary to use the <A href="#Structure_Editor_Bitfield_Actions">Bitfield Actions</A> to properly define a bitfield.</P>
+        
+        <P>For example, <i>int:4</i> defines a signed integer bitfield which is 4-bits in length.  
+ 
         <H4><A name="EffectOfChangingDataTypeSize"></A> <U>Effect of Changing a Component's
         Size</U></H4>
 
         <P>A non-packed union's size will always be the size of its largest component. If you
         change a data type for a component and the component size changes, the union size will
-        change if necessary. A packed union is padded to make its size a multiple of the union's
+        change if necessary.  A packed union is padded to make its size a multiple of the union's
         alignment.<BR>
         </P>
 

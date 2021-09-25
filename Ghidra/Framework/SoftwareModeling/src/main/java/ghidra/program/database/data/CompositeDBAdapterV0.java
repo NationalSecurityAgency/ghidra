@@ -66,6 +66,15 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 		}
 	}
 
+	int getVersion() {
+		return compositeTable.getSchema().getVersion();
+	}
+
+	@Override
+	int getRecordCount() {
+		return compositeTable.getRecordCount();
+	}
+
 	@Override
 	public DBRecord createRecord(String name, String comments, boolean isUnion, long categoryID,
 			int length, int computedAlignment, long sourceArchiveID, long sourceDataTypeID,
@@ -138,5 +147,4 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
 		return null;
 	}
-
 }

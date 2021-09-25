@@ -52,6 +52,7 @@ public class ZeroSizeStructureTest extends AbstractStructureEditorTest {
 
 		DataType dt = pgmRootCat.getDataType(emptyStructure.getName());
 		assertNotNull(dt);
+		assertTrue(dt.isNotYetDefined());
 		assertTrue(dt.isZeroLength());
 
 		assertIsPackingEnabled(false);
@@ -93,6 +94,9 @@ public class ZeroSizeStructureTest extends AbstractStructureEditorTest {
 		assertStatus("");
 
 		deleteAllComponents();
+		
+		assertTrue(model.viewComposite.isNotYetDefined());
+		assertTrue(model.viewComposite.isZeroLength());
 
 		assertEquals(0, model.getNumComponents());
 		assertEquals(1, model.getRowCount());
@@ -116,10 +120,12 @@ public class ZeroSizeStructureTest extends AbstractStructureEditorTest {
 		invoke(applyAction);
 
 		assertTrue(simpleStructure.isEquivalent(model.viewComposite));
+		assertTrue(simpleStructure.isNotYetDefined());
 		assertTrue(simpleStructure.isZeroLength());
 
 		dt = pgmBbCat.getDataType(simpleStructure.getName());
 		assertNotNull(dt);
+		assertTrue(dt.isNotYetDefined());
 		assertTrue(dt.isZeroLength());
 
 		assertIsPackingEnabled(false);
@@ -214,6 +220,7 @@ public class ZeroSizeStructureTest extends AbstractStructureEditorTest {
 
 		dt = pgmTestCat.getDataType(innerStructure.getName());
 		assertNotNull(dt);
+		assertTrue(dt.isNotYetDefined());
 		assertTrue(dt.isZeroLength());
 
 		assertIsPackingEnabled(false);
@@ -309,9 +316,11 @@ public class ZeroSizeStructureTest extends AbstractStructureEditorTest {
 
 		dt = pgmTestCat.getDataType(innerStructure.getName());
 		assertNotNull(dt);
+		assertTrue(dt.isNotYetDefined());
 		assertTrue(dt.isZeroLength());
 
 		assertTrue(innerStructure.isEquivalent(model.viewComposite));
+		assertTrue(innerStructure.isNotYetDefined());
 		assertTrue(innerStructure.isZeroLength());
 
 		assertIsPackingEnabled(false);
@@ -350,7 +359,7 @@ public class ZeroSizeStructureTest extends AbstractStructureEditorTest {
 		}
 		assertNotNull(innerStructure);
 		assertNotNull(innerTypedef);
-		assertTrue(!innerTypedef.isZeroLength());
+		assertFalse(innerTypedef.isZeroLength());
 
 		init(innerStructure, pgmTestCat, false);
 
@@ -402,9 +411,11 @@ public class ZeroSizeStructureTest extends AbstractStructureEditorTest {
 
 		dt = pgmTestCat.getDataType(innerStructure.getName());
 		assertNotNull(dt);
+		assertTrue(dt.isNotYetDefined());
 		assertTrue(dt.isZeroLength());
 
 		assertTrue(innerStructure.isEquivalent(model.viewComposite));
+		assertTrue(innerStructure.isNotYetDefined());
 		assertTrue(innerStructure.isZeroLength());
 
 		assertIsPackingEnabled(false);
@@ -417,6 +428,7 @@ public class ZeroSizeStructureTest extends AbstractStructureEditorTest {
 		assertEquals(false, applyAction.isEnabled());
 //		assertStatus("/testCat/innerStructure is contained in /testCat/innerStructureTypedef and can't be changed to a zero size data type.");
 
+		assertFalse(innerTypedef.isNotYetDefined()); // Typedef is always defined even if referenced type is not
 		assertTrue(innerTypedef.isZeroLength());
 		assertEquals(1, innerTypedef.getLength());
 	}
@@ -498,9 +510,11 @@ public class ZeroSizeStructureTest extends AbstractStructureEditorTest {
 
 		dt = pgmTestCat.getDataType(innerStructure.getName());
 		assertNotNull(dt);
+		assertTrue(dt.isNotYetDefined());
 		assertTrue(dt.isZeroLength());
 
 		assertTrue(innerStructure.isEquivalent(model.viewComposite));
+		assertTrue(innerStructure.isNotYetDefined());
 		assertTrue(innerStructure.isZeroLength());
 
 		assertIsPackingEnabled(false);

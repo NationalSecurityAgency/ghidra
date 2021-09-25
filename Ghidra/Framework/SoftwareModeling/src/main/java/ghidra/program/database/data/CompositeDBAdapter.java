@@ -30,29 +30,42 @@ import ghidra.util.task.TaskMonitor;
 abstract class CompositeDBAdapter {
 
 	static final String COMPOSITE_TABLE_NAME = "Composite Data Types";
-	static final Schema COMPOSITE_SCHEMA = CompositeDBAdapterV5.V5_COMPOSITE_SCHEMA;
+	static final Schema COMPOSITE_SCHEMA = CompositeDBAdapterV5V6.V5V6_COMPOSITE_SCHEMA;
 
-	static final int COMPOSITE_NAME_COL = CompositeDBAdapterV5.V5_COMPOSITE_NAME_COL;
-	static final int COMPOSITE_COMMENT_COL = CompositeDBAdapterV5.V5_COMPOSITE_COMMENT_COL;
-	static final int COMPOSITE_IS_UNION_COL = CompositeDBAdapterV5.V5_COMPOSITE_IS_UNION_COL;
-	static final int COMPOSITE_CAT_COL = CompositeDBAdapterV5.V5_COMPOSITE_CAT_COL;
-	static final int COMPOSITE_LENGTH_COL = CompositeDBAdapterV5.V5_COMPOSITE_LENGTH_COL;
-	static final int COMPOSITE_ALIGNMENT_COL = CompositeDBAdapterV5.V5_COMPOSITE_ALIGNMENT_COL;
+	static final int COMPOSITE_NAME_COL = CompositeDBAdapterV5V6.V5V6_COMPOSITE_NAME_COL;
+	static final int COMPOSITE_COMMENT_COL = CompositeDBAdapterV5V6.V5V6_COMPOSITE_COMMENT_COL;
+	static final int COMPOSITE_IS_UNION_COL = CompositeDBAdapterV5V6.V5V6_COMPOSITE_IS_UNION_COL;
+	static final int COMPOSITE_CAT_COL = CompositeDBAdapterV5V6.V5V6_COMPOSITE_CAT_COL;
+	static final int COMPOSITE_LENGTH_COL = CompositeDBAdapterV5V6.V5V6_COMPOSITE_LENGTH_COL;
+	static final int COMPOSITE_ALIGNMENT_COL = CompositeDBAdapterV5V6.V5V6_COMPOSITE_ALIGNMENT_COL;
 	static final int COMPOSITE_NUM_COMPONENTS_COL =
-		CompositeDBAdapterV5.V5_COMPOSITE_NUM_COMPONENTS_COL;
+		CompositeDBAdapterV5V6.V5V6_COMPOSITE_NUM_COMPONENTS_COL;
 	static final int COMPOSITE_SOURCE_ARCHIVE_ID_COL =
-		CompositeDBAdapterV5.V5_COMPOSITE_SOURCE_ARCHIVE_ID_COL;
+		CompositeDBAdapterV5V6.V5V6_COMPOSITE_SOURCE_ARCHIVE_ID_COL;
 	static final int COMPOSITE_UNIVERSAL_DT_ID =
-		CompositeDBAdapterV5.V5_COMPOSITE_UNIVERSAL_DT_ID_COL;
+		CompositeDBAdapterV5V6.V5V6_COMPOSITE_UNIVERSAL_DT_ID_COL;
 	static final int COMPOSITE_SOURCE_SYNC_TIME_COL =
-		CompositeDBAdapterV5.V5_COMPOSITE_SOURCE_SYNC_TIME_COL;
+		CompositeDBAdapterV5V6.V5V6_COMPOSITE_SOURCE_SYNC_TIME_COL;
 	static final int COMPOSITE_LAST_CHANGE_TIME_COL =
-		CompositeDBAdapterV5.V5_COMPOSITE_LAST_CHANGE_TIME_COL;
+		CompositeDBAdapterV5V6.V5V6_COMPOSITE_LAST_CHANGE_TIME_COL;
 	static final int COMPOSITE_PACKING_COL =
-		CompositeDBAdapterV5.V5_COMPOSITE_PACK_COL;
-	static final int COMPOSITE_MIN_ALIGN_COL = CompositeDBAdapterV5.V5_COMPOSITE_MIN_ALIGN_COL;
+		CompositeDBAdapterV5V6.V5V6_COMPOSITE_PACK_COL;
+	static final int COMPOSITE_MIN_ALIGN_COL = CompositeDBAdapterV5V6.V5V6_COMPOSITE_MIN_ALIGN_COL;
 
 	// Stored Packing and Minimum Alignment values are consistent with CompositeInternal
+
+	static final int FLEX_ARRAY_ELIMINATION_SCHEMA_VERSION = 6;
+
+	private boolean flexArrayMigrationRequired = false; // signals flex-array migration required
+
+	/**
+	 * After construction for UPGRADE mode this method can be used to determine if
+	 * a migration of all Struture flex-array components is required.
+	 * @return true if flex-array migration required, else false
+	 */
+	final boolean isFlexArrayMigrationRequired() {
+		return flexArrayMigrationRequired;
+	}
 
 	/**
 	 * Gets an adapter for working with the composite data type database table. 
@@ -68,11 +81,8 @@ abstract class CompositeDBAdapter {
 	 */
 	static CompositeDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
 			throws VersionException, IOException, CancelledException {
-		if (openMode == DBConstants.CREATE) {
-			return new CompositeDBAdapterV5(handle, true);
-		}
 		try {
-			return new CompositeDBAdapterV5(handle, false);
+			return new CompositeDBAdapterV5V6(handle, openMode);
 		}
 		catch (VersionException e) {
 			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
@@ -95,6 +105,12 @@ abstract class CompositeDBAdapter {
 	 */
 	static CompositeDBAdapter findReadOnlyAdapter(DBHandle handle)
 			throws VersionException, IOException {
+		try {
+			return new CompositeDBAdapterV5V6(handle, DBConstants.READ_ONLY);
+		}
+		catch (VersionException e) {
+			// ignore
+		}
 		try {
 			return new CompositeDBAdapterV2V4(handle);
 		}
@@ -128,7 +144,7 @@ abstract class CompositeDBAdapter {
 		long id = tmpHandle.startTransaction();
 		CompositeDBAdapter tmpAdapter = null;
 		try {
-			tmpAdapter = new CompositeDBAdapterV5(tmpHandle, true);
+			tmpAdapter = new CompositeDBAdapterV5V6(tmpHandle, DBConstants.CREATE);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
 				monitor.checkCanceled();
@@ -136,7 +152,10 @@ abstract class CompositeDBAdapter {
 				tmpAdapter.updateRecord(rec, false);
 			}
 			oldAdapter.deleteTable(handle);
-			CompositeDBAdapter newAdapter = new CompositeDBAdapterV5(handle, true);
+			CompositeDBAdapter newAdapter = new CompositeDBAdapterV5V6(handle, DBConstants.CREATE);
+			if (oldAdapter.getVersion() < FLEX_ARRAY_ELIMINATION_SCHEMA_VERSION) {
+				newAdapter.flexArrayMigrationRequired = true;
+			}
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
 				monitor.checkCanceled();
@@ -150,6 +169,12 @@ abstract class CompositeDBAdapter {
 			tmpHandle.close();
 		}
 	}
+
+	/**
+	 * Get the adapter schema version
+	 * @return adapter schema version
+	 */
+	abstract int getVersion();
 
 	/**
 	 * Creates a database record for a composite data type (structure or union).
@@ -239,5 +264,11 @@ abstract class CompositeDBAdapter {
 	 */
 	abstract DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
 			throws IOException;
+
+	/**
+	 * Get the number of composite records
+	 * @return total number of composite records
+	 */
+	abstract int getRecordCount();
 
 }

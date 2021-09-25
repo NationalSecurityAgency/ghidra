@@ -56,6 +56,18 @@ public abstract class BiDirectionDataType extends StructureDataType
 	}
 
 	@Override
+	protected DataType validateDataType(DataType dataType) {
+		if (DataTypeComponent.usesZeroLengthComponent(dataType)) {
+			throw new IllegalArgumentException(
+				"Zero-length datatype not permitted: " + dataType.getName());
+		}
+		if (dataType instanceof BitFieldDataType) {
+			throw new IllegalArgumentException("Bitfield not permitted: " + dataType.getName());
+		}
+		return super.validateDataType(dataType);
+	}
+
+	@Override
 	public int getAlignment() {
 		throw new UnsupportedOperationException(
 			"BiDirectionDataType.getAlignment() not implemented.");
@@ -91,18 +103,11 @@ public abstract class BiDirectionDataType extends StructureDataType
 		// ignore
 	}
 
-	@Override
-	public DataTypeComponent setFlexibleArrayComponent(DataType flexType, String name,
-			String comment) {
-		throw new UnsupportedOperationException(
-			"BiDirectionDataType.setFlexibleArrayComponent() not implemented.");
-	}
-
 	protected DataTypeComponent getDefinedComponentAt(int offset) {
 		if (offset < splitOffset - negativeLength || offset >= splitOffset + positiveLength) {
 			return null;
 		}
-		int index = Collections.binarySearch(components, new Integer(offset), offsetComparator);
+		int index = Collections.binarySearch(components, Integer.valueOf(offset), offsetComparator);
 		if (index >= 0) {
 			return components.get(index);
 		}
@@ -114,7 +119,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 		if (offset < splitOffset - negativeLength || offset >= splitOffset + positiveLength) {
 			return null;
 		}
-		int index = Collections.binarySearch(components, new Integer(offset), offsetComparator);
+		int index = Collections.binarySearch(components, Integer.valueOf(offset), offsetComparator);
 		if (index >= 0) {
 			return components.get(index);
 		}
@@ -240,7 +245,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 		if (ordinal < 0 || ordinal >= numComponents) {
 			throw new IndexOutOfBoundsException(ordinal);
 		}
-		int idx = Collections.binarySearch(components, new Integer(ordinal), ordinalComparator);
+		int idx = Collections.binarySearch(components, Integer.valueOf(ordinal), ordinalComparator);
 		if (idx >= 0) {
 			return components.get(idx);
 		}
@@ -248,11 +253,11 @@ public abstract class BiDirectionDataType extends StructureDataType
 	}
 
 	@Override
-	public DataTypeComponent getComponent(int ordinal) {
+	public DataTypeComponentImpl getComponent(int ordinal) {
 		if (ordinal < 0 || ordinal >= numComponents) {
 			throw new IndexOutOfBoundsException(ordinal);
 		}
-		int idx = Collections.binarySearch(components, new Integer(ordinal), ordinalComparator);
+		int idx = Collections.binarySearch(components, Integer.valueOf(ordinal), ordinalComparator);
 		if (idx >= 0) {
 			return components.get(idx);
 		}
@@ -307,7 +312,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 		checkAncestry(dataType);
 		dataType = dataType.clone(getDataTypeManager());
 
-		int index = Collections.binarySearch(components, new Integer(offset), offsetComparator);
+		int index = Collections.binarySearch(components, Integer.valueOf(offset), offsetComparator);
 
 		int additionalShift = 0;
 		if (index >= 0) {
@@ -443,7 +448,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 				" within a defined component in " + getDisplayName() + ".");
 		}
 		else {
-			definedIndex = Collections.binarySearch(components, new Integer(dtc.getOrdinal()),
+			definedIndex = Collections.binarySearch(components, Integer.valueOf(dtc.getOrdinal()),
 				ordinalComparator);
 			if (definedIndex < 0) {
 				definedIndex = -definedIndex - 1;
@@ -470,7 +475,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 			throw new IllegalArgumentException(
 				"Offset " + offset + " is not in " + getDisplayName() + ".");
 		}
-		int index = Collections.binarySearch(components, new Integer(offset), offsetComparator);
+		int index = Collections.binarySearch(components, Integer.valueOf(offset), offsetComparator);
 
 		int length = 1;
 		if (index < 0) {
@@ -483,6 +488,25 @@ public abstract class BiDirectionDataType extends StructureDataType
 		}
 		adjustOffsets(index, offset, -1, -length);
 		numComponents--;
+	}
+
+	@Override
+	public void clearAtOffset(int offset) {
+		if (offset < splitOffset - negativeLength || offset >= splitOffset + positiveLength) {
+			throw new IllegalArgumentException(
+				"Offset " + offset + " is not in " + getDisplayName() + ".");
+		}
+		int index = Collections.binarySearch(components, Integer.valueOf(offset), offsetComparator);
+		if (index >= 0) {
+			DataTypeComponent dtc = components.remove(index);
+			dtc.getDataType().removeParent(this);
+			int len = dtc.getLength();
+			if (len > 1) {
+				int deltaLength = len - 1;
+				shiftOffsets(index, deltaLength, 0);
+				numComponents += deltaLength;
+			}
+		}
 	}
 
 	@Override
@@ -531,19 +555,19 @@ public abstract class BiDirectionDataType extends StructureDataType
 	public abstract BiDirectionDataType clone(DataTypeManager dtm);
 
 	@Override
-	public void clearComponent(int index) {
-		if (index < 0 || index >= numComponents) {
-			throw new IndexOutOfBoundsException(index);
+	public void clearComponent(int ordinal) {
+		if (ordinal < 0 || ordinal >= numComponents) {
+			throw new IndexOutOfBoundsException(ordinal);
 		}
-		int idx = Collections.binarySearch(components, new Integer(index), ordinalComparator);
-		if (idx >= 0) {
-			DataTypeComponent dtc = components.remove(idx);
+		int index =
+			Collections.binarySearch(components, Integer.valueOf(ordinal), ordinalComparator);
+		if (index >= 0) {
+			DataTypeComponent dtc = components.remove(index);
 			dtc.getDataType().removeParent(this);
 			int len = dtc.getLength();
-			int deltaLength = len - 1;
-//			int offset = dtc.getOffset();
 			if (len > 1) {
-				shiftOffsets(idx, deltaLength, 0);
+				int deltaLength = len - 1;
+				shiftOffsets(index, deltaLength, 0);
 				numComponents += deltaLength;
 			}
 		}
@@ -644,7 +668,8 @@ public abstract class BiDirectionDataType extends StructureDataType
 		DataTypeComponentImpl newDtc =
 			new DataTypeComponentImpl(dataType, this, length, ordinal, newOffset, newName, comment);
 		dataType.addParent(this);
-		int index = Collections.binarySearch(components, new Integer(ordinal), ordinalComparator);
+		int index =
+			Collections.binarySearch(components, Integer.valueOf(ordinal), ordinalComparator);
 		if (index < 0) {
 			index = -index - 1;
 		}

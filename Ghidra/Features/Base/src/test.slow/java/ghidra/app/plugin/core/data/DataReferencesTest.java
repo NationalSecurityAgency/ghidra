@@ -190,7 +190,8 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 					int e = i / 24;
 					int f = i % 24;
 					assertEquals(
-						"dword ptr [ArrayA[" + e + "].field_0x" + Integer.toHexString(f) + "]",
+						"dword ptr [ArrayA[" + e + "].field" + f + "_0x" + Integer.toHexString(f) +
+							"]",
 						opStr);
 				}
 			}
@@ -233,10 +234,13 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 					assertEquals("dword ptr [StructA]", opStr);
 				}
 				else {
-					int f = (i / 24) * 24;
+					int fOrdinal = i / 24;
+					int fOffset = fOrdinal * 24;
 					int e = (i % 24) / 4;
 					assertEquals(
-						"dword ptr [StructA.field_0x" + Integer.toHexString(f) + "[" + e + "]]",
+						"dword ptr [StructA.field" + fOrdinal + "_0x" +
+							Integer.toHexString(fOffset) + "[" + e +
+							"]]",
 						opStr);
 				}
 			}
@@ -327,10 +331,12 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 					assertEquals("dword ptr [StructA]", opStr);
 				}
 				else {
-					int f1 = (i / 24) * 24;
+					int f1Ordinal = i / 24;
+					int f1Offset = f1Ordinal * 24;
 					int f2 = i % 24;
-					assertEquals("dword ptr [StructA.field_0x" + Integer.toHexString(f1) +
-						".field_0x" + Integer.toHexString(f2) + "]", opStr);
+					assertEquals("dword ptr [StructA.field" + f1Ordinal + "_0x" +
+						Integer.toHexString(f1Offset) +
+						".field" + f2 + "_0x" + Integer.toHexString(f2) + "]", opStr);
 				}
 			}
 		}

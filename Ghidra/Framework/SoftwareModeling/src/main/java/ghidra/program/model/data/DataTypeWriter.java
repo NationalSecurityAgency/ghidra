@@ -447,15 +447,7 @@ public class DataTypeWriter {
 			deferWrite(componentType);
 
 			// TODO the return value of this is not used--delete?
-			getTypeDeclaration(null, componentType, component.getLength(), false, true, monitor);
-		}
-
-		if (composite instanceof Structure) {
-			Structure s = (Structure) composite;
-			if (s.hasFlexibleArrayComponent()) {
-				DataType componentType = s.getFlexibleArrayComponent().getDataType();
-				deferWrite(componentType);
-			}
+			getTypeDeclaration(null, componentType, component.getLength(), true, monitor);
 		}
 	}
 
@@ -478,13 +470,6 @@ public class DataTypeWriter {
 			writeComponent(component, composite, sb, monitor);
 		}
 
-		if (composite instanceof Structure) {
-			Structure s = (Structure) composite;
-			if (s.hasFlexibleArrayComponent()) {
-				writeComponent(s.getFlexibleArrayComponent(), composite, sb, monitor);
-			}
-		}
-
 		sb.append(annotator.getSuffix(composite, null));
 		sb.append("};");
 
@@ -505,8 +490,8 @@ public class DataTypeWriter {
 
 		DataType componentDataType = component.getDataType();
 
-		sb.append(getTypeDeclaration(fieldName, componentDataType, component.getLength(),
-			component.isFlexibleArrayComponent(), false, monitor));
+		sb.append(getTypeDeclaration(fieldName, componentDataType, component.getLength(), false,
+			monitor));
 
 		sb.append(";");
 		sb.append(annotator.getSuffix(composite, component));
@@ -519,7 +504,7 @@ public class DataTypeWriter {
 	}
 
 	private String getTypeDeclaration(String name, DataType dataType, int instanceLength,
-			boolean isFlexArray, boolean writeEnabled, TaskMonitor monitor)
+			boolean writeEnabled, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
 		if (name == null) {
@@ -560,9 +545,6 @@ public class DataTypeWriter {
 			}
 			else {
 				componentString = getDataTypePrefix(dataType) + dataType.getDisplayName();
-				if (isFlexArray) {
-					componentString += "[0]";
-				}
 				if (name.length() != 0) {
 					componentString += " " + name;
 				}
@@ -665,7 +647,7 @@ public class DataTypeWriter {
 			writeDeferredDeclarations(monitor);
 		}
 
-		String typedefString = getTypeDeclaration(typedefName, dataType, -1, false, true, monitor);
+		String typedefString = getTypeDeclaration(typedefName, dataType, -1, true, monitor);
 
 		writer.write("typedef " + typedefString + ";");
 		writer.write(EOL);
@@ -877,8 +859,8 @@ public class DataTypeWriter {
 			if (writeEnabled) {
 				write(dataType, monitor);
 			}
-			String argument = getTypeDeclaration(paramName, dataType, param.getLength(), false,
-				writeEnabled, monitor);
+			String argument =
+				getTypeDeclaration(paramName, dataType, param.getLength(), writeEnabled, monitor);
 
 			buf.append(argument);
 

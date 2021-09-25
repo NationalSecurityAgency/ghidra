@@ -174,12 +174,6 @@ public class DataTypeUtilities {
 					return true;
 				}
 			}
-			if (firstDataType instanceof Structure) {
-				DataTypeComponent flexDtc = ((Structure) firstDataType).getFlexibleArrayComponent();
-				if (flexDtc != null && isSecondPartOfFirst(flexDtc.getDataType(), secondDataType)) {
-					return true;
-				}
-			}
 		}
 		return false;
 	}

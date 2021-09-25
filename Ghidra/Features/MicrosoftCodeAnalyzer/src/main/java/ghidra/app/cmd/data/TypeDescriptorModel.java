@@ -241,7 +241,7 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 		// included in the length of the structure and must have a properly sized char array
 		// created immediately following the structure in memory.
 
-		struct.setFlexibleArrayComponent(CharDataType.dataType, "name", null);
+		struct.add(new ArrayDataType(CharDataType.dataType, 0, -1), "name", null);
 
 		return MSDataTypeUtils.getMatchingDataType(program, struct);
 	}
@@ -281,8 +281,7 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	@Override
 	protected int getDataTypeLength() {
 		Structure struct = (Structure) getDataType();
-		DataTypeComponent nameComponent = struct.getFlexibleArrayComponent();
-		int preNameLength = nameComponent.getOffset();
+		int preNameLength = struct.getLength();
 		int totalLength = preNameLength;
 		// Add the length of the name string too if we can get it.
 		Address nameAddress = getAddress().add(preNameLength);

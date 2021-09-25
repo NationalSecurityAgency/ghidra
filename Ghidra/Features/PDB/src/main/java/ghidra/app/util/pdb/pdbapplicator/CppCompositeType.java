@@ -1285,7 +1285,7 @@ public class CppCompositeType {
 	}
 
 	private int getCompositeLength(Composite myComposite) {
-		if (!myComposite.isNotYetDefined()) {
+		if (!myComposite.isZeroLength()) {
 			return myComposite.getLength();
 		}
 		return 0;
