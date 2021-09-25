@@ -2332,7 +2332,7 @@ define pcodeop Sleep_Standby;
 :bld "#"imm3_00_02, rn_04_07
     is opcode_08_15=0b10000111 & rn_04_07 & opcode_03_03=0b1 & imm3_00_02
 {
-    local b = *:1 (rn_04_07);
+    local b = rn_04_07;
     $(T_FLAG) = ((b & (1 << imm3_00_02)) != 0);
 }
 
