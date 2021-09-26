@@ -1477,11 +1477,158 @@ public class StructureDataTypeTest extends AbstractGTest {
 	}
 
 	@Test
-	public void testgetComponentContaining() {
+	public void testGetComponentAt() {
+		/**
+		* /TestStruct
+		* pack(disabled)
+		* Structure TestStruct {
+		*    0   byte   1   field1   "Comment1"
+		*    1   word   2   null   "Comment2"
+		*    3   dword   4   field3   ""
+		*    7   byte   1   field4   "Comment4"
+		* }
+		* Size = 8   Actual Alignment = 1
+		*/
+
+		DataTypeComponent dtc = struct.getComponentAt(3);
+		assertEquals("  2  3  dword  4  field3  null", dtc.toString());
+
+		dtc = struct.getComponentAt(4); // offcut
+		assertNull(dtc);
+
+		assertEquals(8, struct.getLength());
+
+		dtc = struct.getComponentAt(8);
+		assertNull(dtc);
+
+		struct.add(new ArrayDataType(CharDataType.dataType, 0, -1), "zarray1", null);
+		struct.add(new LongDataType(), "field4", null);
+		struct.add(new ArrayDataType(LongDataType.dataType, 0, -1), "zarray2", null);
+
+		assertEquals(12, struct.getLength());
+
+		/**
+		* /TestStruct
+		* pack(disabled)
+		* Structure TestStruct {
+		*    0   byte   1   field1   "Comment1"
+		*    1   word   2   null   "Comment2"
+		*    3   dword   4   field3   ""
+		*    7   byte   1   field4   "Comment4"
+		*    8   char[0]   0   zarray1   ""
+		*    8   long   4   field4   ""
+		*    12   long[0]   0   zarray2   ""
+		* }
+		* Size = 12   Actual Alignment = 1
+		*/
+
+		dtc = struct.getComponentAt(8);
+		assertEquals("  5  8  long  4  field4  null", dtc.toString());
+
+		dtc = struct.getComponentAt(9); // offcut
+		assertNull(dtc);
+
+		dtc = struct.getComponentAt(12); // end-of-struct
+		assertNull(dtc);
+
+		// force components to align
+		struct.setPackingEnabled(true);
+
+		/**
+		 * /Test
+		 * pack(disabled)
+		 * Structure Test {
+		 *    0   byte   1   field1   "Comment1"
+		 *    2   word   2   null   "Comment2"
+		 *    4   dword   4   field3   ""
+		 *    8   byte   1   field4   "Comment4"
+		 *    9   char[0]   0   zarray1   ""
+		 *    12   long   4   field4   ""
+		 *    16   long[0]   0   zarray2   ""
+		 * }
+		 * Size = 16   Actual Alignment = 1
+		 */
+
+		assertEquals(16, struct.getLength());
+
+		dtc = struct.getComponentAt(9); // offset of zero-length component
+		assertNull(dtc);
+
+		struct.setPackingEnabled(false);
+
+		dtc = struct.getComponentAt(9); // undefined at offset of zero-length component
+		assertEquals("  5  9  undefined  1  null  null", dtc.toString());
+
+	}
+
+	@Test
+	public void testGetComponentContaining() {
 		DataTypeComponent dtc = struct.getComponentContaining(4);
-		assertEquals(DWordDataType.class, dtc.getDataType().getClass());
-		assertEquals(2, dtc.getOrdinal());
-		assertEquals(3, dtc.getOffset());
+		assertEquals("  2  3  dword  4  field3  null", dtc.toString());
+
+		assertEquals(8, struct.getLength());
+
+		dtc = struct.getComponentContaining(8);
+		assertNull(dtc);
+
+		struct.add(new ArrayDataType(CharDataType.dataType, 0, -1), "zarray1", null);
+		struct.add(new LongDataType(), "field4", null);
+		struct.add(new ArrayDataType(LongDataType.dataType, 0, -1), "zarray2", null);
+
+		assertEquals(12, struct.getLength());
+
+		/**
+		* /TestStruct
+		* pack(disabled)
+		* Structure TestStruct {
+		*    0   byte   1   field1   "Comment1"
+		*    1   word   2   null   "Comment2"
+		*    3   dword   4   field3   ""
+		*    7   byte   1   field4   "Comment4"
+		*    8   char[0]   0   zarray1   ""
+		*    8   long   4   field4   ""
+		*    12   long[0]   0   zarray2   ""
+		* }
+		* Size = 12   Actual Alignment = 1
+		*/
+
+		dtc = struct.getComponentContaining(8);
+		assertEquals("  5  8  long  4  field4  null", dtc.toString());
+
+		dtc = struct.getComponentContaining(9); // offcut
+		assertEquals("  5  8  long  4  field4  null", dtc.toString());
+
+		dtc = struct.getComponentContaining(12); // end-of-struct
+		assertNull(dtc);
+
+		// force components to align
+		struct.setPackingEnabled(true);
+
+		/**
+		 * /Test
+		 * pack(disabled)
+		 * Structure Test {
+		 *    0   byte   1   field1   "Comment1"
+		 *    2   word   2   null   "Comment2"
+		 *    4   dword   4   field3   ""
+		 *    8   byte   1   field4   "Comment4"
+		 *    9   char[0]   0   zarray1   ""
+		 *    12   long   4   field4   ""
+		 *    16   long[0]   0   zarray2   ""
+		 * }
+		 * Size = 16   Actual Alignment = 1
+		 */
+
+		assertEquals(16, struct.getLength());
+
+		dtc = struct.getComponentContaining(9); // offset of zero-length component
+		assertNull(dtc);
+
+		struct.setPackingEnabled(false);
+
+		dtc = struct.getComponentContaining(9); // undefined at offset of zero-length component
+		assertEquals("  5  9  undefined  1  null  null", dtc.toString());
+
 	}
 
 	@Test

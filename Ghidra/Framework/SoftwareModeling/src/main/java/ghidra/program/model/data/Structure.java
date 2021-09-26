@@ -44,48 +44,71 @@ public interface Structure extends Composite {
 	public DataTypeComponent getComponent(int ordinal) throws IndexOutOfBoundsException;
 
 	/**
-	 * Gets the first immediate child component located at or after the given offset. 
+	 * Gets the first defined component located at or after the specified offset. 
+	 * Note: The returned component may be a zero-length component.
 	 * 
 	 * @param offset the byte offset into this structure
-	 * @return the immediate child component located at or after the given offset or null if not found.
+	 * @return the first defined component located at or after the specified offset or null if not found.
 	 */
 	public DataTypeComponent getDefinedComponentAtOrAfterOffset(int offset);
 
 	/**
-	 * Gets the first immediate child component that contains the byte at the given offset. 
+	 * Gets the first non-zero-length component that contains the byte at the specified offset. 
 	 * Note that one or more components may share the same offset when a bit-field or zero-length
-	 * component is present since these may share an offset.
+	 * component is present since these may share an offset.  A null may be returned under one of
+	 * the following conditions:
+	 * <ul>
+	 * <li>offset only corresponds to a zero-length component</li>
+	 * <li>offset corresponds to a padding byte within a packed structure</li>
+	 * <li>offset is &gt;= structure length.</li>
+	 * </ul>
 	 * 
 	 * @param offset the byte offset into this structure
-	 * @return the first immediate child component containing offset or null if not found.
+	 * @return the first non-zero-length component that contains the byte at the specified offset
+	 * or null if not found.
 	 */
 	public DataTypeComponent getComponentContaining(int offset);
 	
 	/**
-	 * Gets the first immediate defined child component that contains the byte at the given offset. 
+	 * Gets the first non-zero-length child component that starts at the specified offset. 
 	 * Note that one or more components may share the same offset when a bit-field or zero-length
-	 * component is present since these may share an offset.
+	 * component is present since these may share an offset.  A null may be returned under one of
+	 * the following conditions:
+	 * <ul>
+	 * <li>offset only corresponds to a zero-length component</li>
+	 * <li>offset corresponds to a padding byte within a packed structure</li>
+	 * <li>offset corresponds to a component but is not the starting offset of that component</li>
+	 * <li>offset is &gt;= structure length</li>
+	 * </ul>
 	 * 
 	 * @param offset the byte offset into this structure
-	 * @return the first immediate child component containing offset or null if not found.
-	 * @deprecated method name has been changed to better reflect behavior.  The method 
-	 * {@link #getComponentContaining(int)} should be used instead.  When switching over 
-	 * it may be a could time to verify that the caller can handle the possibility of multiple
-	 * components containing the specified offset due to the possible presence of zero-length
-	 * components, such as zero-element arrays, or bit-fields which can overlap at the
-	 * byte-level.
+	 * @return the first component that starts at specified offset or null if not found.
 	 */
 	public default DataTypeComponent getComponentAt(int offset) {
-		return getComponentContaining(offset);
+		DataTypeComponent dtc = getComponentContaining(offset);
+		if (dtc != null && dtc.getOffset() == offset) {
+			return dtc;
+		}
+		return null;
 	}
 	
 	/**
-	 * Get an ordered list of immediate child components that contain the byte at the given offset.
-	 * Note that this will only return more than one component when a bit-field or zero-length
-	 * component is present since these may share an offset.
+	 * Get an ordered list of components that contain the byte at the specified offset.
+	 * Unlike {@link #getComponentAt(int)} and {@link #getComponentContaining(int)} this method will
+	 * include zero-length components if they exist at the specified offset.  For this reason the
+	 * specified offset may equal the structure length to obtain and trailing zero-length components.
+	 * Note that this method will only return more than one component when a bit-fields and/or 
+	 * zero-length components are present since these may share an offset. An empty list may be 
+	 * returned under the following conditions:
+	 * <ul>
+	 * <li>offset corresponds to a padding byte within a packed structure</li>
+	 * <li>offset corresponds to a component but is not the starting offset of that component</li>
+	 * <li>offset is equal structure length and no trailing zero-length components exist</li>
+	 * <li>offset is &gt; structure length</li>
+	 * </ul>
 	 * 
 	 * @param offset the byte offset into this structure
-	 * @return a list of zero or more child components containing the specified offset
+	 * @return a list of zero or more components containing the specified offset
 	 */
 	public List<DataTypeComponent> getComponentsContaining(int offset);
 
@@ -256,7 +279,7 @@ public interface Structure extends Composite {
 	 * components may be cleared.  This method will preserve the structure length and placement 
 	 * of other components since freed space will appear as undefined components.
 	 * <p>
-	 * To avoid clearing zero-length components at a given offset within a non-packed structure,
+	 * To avoid clearing zero-length components at a specified offset within a non-packed structure,
 	 * the {@link #replaceAtOffset(int, DataType, int, String, String)} may be used with to clear
 	 * only the sized component at the offset by specified {@link DataType#DEFAULT} as the replacement
 	 * datatype. 
@@ -266,7 +289,7 @@ public interface Structure extends Composite {
 	public void clearAtOffset(int offset);
 
 	/**
-	 * Clears the defined component at the given component ordinal. Clearing a component within
+	 * Clears the defined component at the specified component ordinal. Clearing a component within
 	 * a non-packed structure causes a defined component to be replaced with a number of undefined 
 	 * components.  This may not the case when clearing a zero-length component or bit-field 
 	 * which may not result in such undefined components.  In the case of a packed structure 
@@ -397,7 +420,7 @@ public interface Structure extends Composite {
 			String comment) throws IllegalArgumentException;
 
 	/**
-	 * Increases the size of the structure by the given amount by adding undefined filler at the
+	 * Increases the size of the structure by the specified amount by adding undefined filler at the
 	 * end of the structure.  NOTE: This method only has an affect on non-packed structures.
 	 * 
 	 * @param amount the amount by which to grow the structure.

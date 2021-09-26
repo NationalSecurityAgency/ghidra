@@ -302,20 +302,16 @@ public class PreCommentFieldFactory extends FieldFactory {
 
 			if (dt instanceof Structure) {
 				Structure struct = (Structure) dt;
-				lastDtc = struct.getComponentContaining(struct.getLength());
-				int lastDtcOrdinal = struct.getNumComponents() - 1;
-				while (lastDtc != null && lastDtc.isBitFieldComponent() &&
-					lastDtc.getOrdinal() < lastDtcOrdinal) {
-					lastDtc = struct.getComponent(lastDtc.getOrdinal() + 1);
-				}
+				List<DataTypeComponent> components =
+					struct.getComponentsContaining(struct.getLength());
+				lastDtc = components.isEmpty() ? null : components.get(components.size() - 1);
 			}
 			else if (dt instanceof DynamicDataType) {
 				DynamicDataType ddt = (DynamicDataType) dt;
 				lastDtc = ddt.getComponentAt(data.getLength(), data);
-				int lastDtcOrdinal = ddt.getNumComponents(data);
-				while (lastDtc != null && lastDtc.isBitFieldComponent() &&
-					lastDtc.getOrdinal() < lastDtcOrdinal) {
-					lastDtc = ddt.getComponent(lastDtc.getOrdinal() + 1, data);
+				int lastDtcOrdinal = ddt.getNumComponents(data) - 1;
+				if (lastDtc != null && lastDtc.getOrdinal() < lastDtcOrdinal) {
+					lastDtc = ddt.getComponent(lastDtcOrdinal, data);
 				}
 			}
 			

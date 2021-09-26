@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.List;
 
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
@@ -67,21 +66,6 @@ public class RetypeFieldAction extends AbstractDecompilerAction {
 		return false;
 	}
 
-	private DataTypeComponent getComponentContaining(Structure struct, int offset) {
-		DataTypeComponent comp = null;
-		List<DataTypeComponent> components = struct.getComponentsContaining(offset);
-		if (components != null) {
-			for (DataTypeComponent c : components) {
-				// skip components not supported by decompiler
-				if (c.getLength() != 0) {
-					comp = c;
-					break;
-				}
-			}
-		}
-		return comp;
-	}
-
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
 		Program program = context.getProgram();
@@ -102,8 +86,14 @@ public class RetypeFieldAction extends AbstractDecompilerAction {
 			return;
 		}
 
-		// Get original component and datatype
-		DataTypeComponent comp = getComponentContaining(struct, offset);
+		// Get original component and datatype - structure may be packed so an offset which corresponds
+		// to padding byte may return null
+		DataTypeComponent comp = struct.getComponentContaining(offset);
+		if (comp != null && comp.getOffset() != offset) {
+			Msg.showError(this, tool.getToolFrame(), "Retype Failed",
+				"Retype offset does not correspond to start of component");
+			return;
+		}
 		DataType originalDataType = comp != null ? comp.getDataType() : DataType.DEFAULT;
 		if (originalDataType instanceof BitFieldDataType) {
 			Msg.showError(this, tool.getToolFrame(), "Retype Failed",

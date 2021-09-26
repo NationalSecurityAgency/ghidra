@@ -778,20 +778,20 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		DebugInfoEntry structDIE = newStruct("mystruct", 100).create(cu);
 		newMember(structDIE, "f1", intDIE, 0).create(cu);
-		newMember(structDIE, "flexarray", arrayDIE, 99).create(cu);
+		newMember(structDIE, "flexarray", arrayDIE, 100).create(cu);
 
 		importAllDataTypes();
 
 		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
 
-		DataTypeComponent component = structdt.getComponentContaining(99);
-		assertNotNull(component);
+		List<DataTypeComponent> components = structdt.getComponentsContaining(100);
+		assertEquals(1, components.size());
+		DataTypeComponent component = components.get(0);
 		assertEquals(0, component.getLength());
 		DataType dt = component.getDataType();
 		assertTrue(dt.isEquivalent(new ArrayDataType(IntegerDataType.dataType, 0, -1)));
 
 		assertEquals(100, structdt.getLength());
-
 	}
 
 	@Test
