@@ -43,7 +43,7 @@ import util.CollectionUtils;
 class LibrarySymbolTable {
 
 	private static final SimpleDateFormat TIMESTAMP_FORMAT =
-		new SimpleDateFormat("EEE MMM dd hh:mm:ss zzz yyyy");
+		new SimpleDateFormat("EEE MMM dd kk:mm:ss zzz yyyy");
 
 	private static final int NONE = 0;
 	private static final int LIBRARY = 1;
@@ -412,6 +412,7 @@ class LibrarySymbolTable {
 			version = root.getAttributeValue("VERSION");
 
 			List<Element> children = CollectionUtils.asList(root.getChildren(), Element.class);
+/*
 			Iterator<Element> iter = children.iterator();
 			while (iter.hasNext()) {
 				Element export = iter.next();
@@ -436,6 +437,69 @@ class LibrarySymbolTable {
 				exportList.add(sym);
 				symMap.put(name, sym);
 				ordMap.put(new Integer(ordinal), sym);
+			}
+*/
+			
+			List<LibraryExport> libraryExports = new ArrayList<LibraryExport>();
+
+			Iterator<Element> iterElem = children.iterator();
+			while (iterElem.hasNext()) {
+				libraryExports.add(new LibraryExport(iterElem.next()));
+			}
+			
+			try {
+//ShowDebugInfo.printf("Size of %s is %d\n", tableName, libraryExports.size());
+				libraryExports.sort((e1, e2) -> {
+					int result = 0;
+					if (e1.getOrdinal() != e2.getOrdinal()) {
+						result = e1.getOrdinal() - e2.getOrdinal();
+					} else if (e1.getName().startsWith(SymbolUtilities.ORDINAL_PREFIX)) {
+						result = +1;
+					} else if (e2.getName().startsWith(SymbolUtilities.ORDINAL_PREFIX)) {
+						result = -1;
+					} else {
+						result = e1.getName().compareTo(e2.getName());
+					}
+					return result;
+				});
+			}
+			catch (Exception e) {
+				// TODO: handle exception
+				System.out.println(e.getMessage());
+			}
+			
+			Iterator<LibraryExport> iter = libraryExports.iterator();
+			int preOrdinal = -1;
+			while (iter.hasNext()) {
+				LibraryExport export = iter.next();
+				int ordinal = export.getOrdinal();
+				if (preOrdinal == ordinal) {
+					continue;
+				}
+
+				preOrdinal = ordinal;
+				String name = export.getName();
+//ShowDebugInfo.printf("In LibrarySymbolTable.read:(...) %s <ord %3d> : '%s'\n", file.getName(), ordinal, name);
+System.out.printf("In LibrarySymbolTable.read:(...) %s <ord %3d> : '%s'\n", file.getName(), ordinal, name);
+				int purge = export.getPurge();
+				String comment = export.getComment();
+				String fowardLibName = export.getFowardLibName();
+				String fowardSymName = export.getFowardSymName();
+
+				String noReturnStr = export.getNoReturnStr();
+				boolean noReturn = noReturnStr != null && "y".equals(noReturnStr);
+
+				if (fowardLibName != null && fowardLibName.length() > 0 &&
+					!fowardLibName.equals(tableName)) {
+					forwards.add(fowardLibName);
+				}
+
+				LibraryExportedSymbol sym = new LibraryExportedSymbol(tableName, size, ordinal,
+					name, fowardLibName, fowardSymName, purge, noReturn, comment);
+
+				exportList.add(sym);
+				symMap.put(name, sym);
+				ordMap.put(Integer.valueOf(ordinal), sym);
 			}
 		}
 		catch (JDOMException e) {

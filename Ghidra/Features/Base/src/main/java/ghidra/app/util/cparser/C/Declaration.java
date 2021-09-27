@@ -154,4 +154,75 @@ public class Declaration {
 		bitSize = bits;
 	}
 
+	/**
+	 * @return the near address model from the datatype or false if null
+	 */
+	public boolean isNear() {
+		if (dt == null) {
+			return false;
+		} else {
+			return dt.getAddressModel().equals(AddressModel.near);
+		}
+	}
+
+	/**
+	 * @param isNear if true set, otherwise clear
+	 */
+	public void setNear(boolean isNear) {
+		if (dt == null) {
+			return;
+		} else if (isNear) {
+			dt.setAddressModel(AddressModel.near);
+		} else {
+			dt.setAddressModel(AddressModel.unknown);
+		}
+	}
+
+	/**
+	 * @return the far address model from the datatype or false if null
+	 */
+	public boolean isFar() {
+		if (dt == null) {
+			return false;
+		} else {
+			return dt.getAddressModel().equals(AddressModel.far);
+		}
+	}
+
+	/**
+	 * @param isFar if true set, otherwise clear
+	 */
+	public void setFar(boolean isFar) {
+		if (dt == null) {
+			return;
+		} else if (isFar) {
+			dt.setAddressModel(AddressModel.far);
+		} else {
+			dt.setAddressModel(null);
+		}
+	}
+
+	/**
+	 * @return the huge address model from the datatype or false if null
+	 */
+	public boolean isHuge() {
+		if (dt == null) {
+			return false;
+		} else {
+			return dt.getAddressModel().equals(AddressModel.huge);
+		}
+	}
+
+	/**
+	 * @param isHuge if true set, otherwise clear
+	 */
+	public void setHuge(boolean isHuge) {
+		if (dt == null) {
+			return;
+		} else if (isHuge) {
+			dt.setAddressModel(AddressModel.huge);
+		} else {
+			dt.setAddressModel(AddressModel.unknown);
+		}
+	}
 }

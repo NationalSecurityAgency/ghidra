@@ -46,6 +46,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	protected Lock lock;
 	private volatile String name;
 	private volatile Category category;
+	protected AddressModel addressModel;
 
 	protected DataTypeDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
 			DBRecord record) {
@@ -555,6 +556,16 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 		return otherDt.getDataTypeManager() == getDataTypeManager() &&
 			getCategoryPath().equals(otherDt.getCategoryPath()) &&
 			getName().equals(otherDt.getName()) && isEquivalent(otherDt);
+	}
+
+	@Override
+	public AddressModel getAddressModel() {
+		return addressModel;
+	}
+
+	@Override
+	public void setAddressModel(AddressModel addressModel) {
+		this.addressModel = addressModel;
 	}
 
 }

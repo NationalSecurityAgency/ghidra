@@ -870,7 +870,7 @@ public class FunctionEditorModel {
 
 	private void removeExplicitThisParameter() {
 		if (!allowCustomStorage &&
-			CompilerSpec.CALLING_CONVENTION_thiscall.equals(callingConventionName)) {
+			callingConventionName.startsWith(CompilerSpec.CALLING_CONVENTION_thiscall)) {
 			int thisIndex = findExplicitThisParameter();
 			if (thisIndex >= 0) {
 				parameters.remove(thisIndex); // remove explicit 'this' parameter

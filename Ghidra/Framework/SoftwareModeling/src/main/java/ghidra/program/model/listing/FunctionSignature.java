@@ -77,4 +77,9 @@ public interface FunctionSignature {
 	 * @return true if the if the given signature is equivalent to this signature.
 	 */
 	public boolean isEquivalentSignature(FunctionSignature signature);
+	
+	/**
+	 * Returns the address model.
+	 */
+	public AddressModel getAddressModel();
 }

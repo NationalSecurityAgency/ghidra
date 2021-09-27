@@ -48,12 +48,14 @@
 
   TODO:
 
-    Insert the appropiate code to enable C source trees from this grammar.
+    Insert the appropriate code to enable C source trees from this grammar.
 
   */
 
 options {
-	STATIC= false;
+	STATIC=false;
+//	DEBUG_LOOKAHEAD=true;
+//	DEBUG_PARSER=true;
 }
 
 
@@ -108,7 +110,7 @@ public class CParser {
     private final static String ANONYMOUS_UNION_PREFIX = "_union_";
     private final static String ANONYMOUS_FUNC_PREFIX = "_func_";
         
-    // Stack for determining when the parser is parsing a typdef definition.
+    // Stack for determining when the parser is parsing a typedef definition.
     private Stack<Boolean> typedefParsingStack = new Stack<Boolean>();
 
     // Stack for putting defined data types on
@@ -675,25 +677,31 @@ public class CParser {
 
         // Run the parser
     public static void main(String args[]) {
-            CParser parser = new CParser();
+        CParser parser = new CParser();
 
         try {
             if (args.length == 0) {
                 System.out.println("C Parser:  Reading from standard input . . .");
                 parser.parse(System.in);
-            } else if (args.length == 1) {
-                System.out.println("C Parser:  Reading from file " + args[0] + " . . .");
+            } else if (args.length >= 1) {
+            	int i = 0;
+            	if (args.length >= 2) {
+            		i = Integer.parseInt(args[0]);
+            	}
+                System.out.println("C Parser:  Reading from file " + args[i] + " . . .");
                 try {
-                        parser.parse(new java.io.FileInputStream(args[0]));
+                        parser.parse(new java.io.FileInputStream(args[i]));
                 } catch (java.io.FileNotFoundException e) {
-                        System.out.println("C Parser:  File " + args[0] + " not found.");
-                        return;
+                        System.out.println("C Parser:  File " + args[i] + " not found.");
+                    return;
                 }
             } else {
                 System.out.println("C Parser:  Usage is one of:");
                 System.out.println("         java CParser < inputfile");
                 System.out.println("OR");
                 System.out.println("         java CParser inputfile");
+                System.out.println("OR");
+                System.out.println("         java CParser whichfile inputfile ...");
                 return;
             }
 
@@ -861,15 +869,25 @@ TOKEN :
 	|
 	<CDECL : ( [ "_" ] )+ "cdecl"> 
 	|
+	<BASEDSPEC : ( [ "_" ] )+ "based"> 
+	|
+	<SEGNAMESPEC : ( [ "_" ] )+ "segname">
+	|
+	<SEGMENT : ( [ "_" ] )+ "segment">
+	|
+	<OFFSET : ( [ "_" ] )+ "offset">
+	|
 	<DECLSPEC : "__declspec">
 	|
 	<PRAGMA : (("_")+ | "#") "pragma"> : PRAGMALINE
 	| 
 	<READABLETO : "__readableTo">
 	|
-	<STDCALL : ( [ "_" ] )+ "stdcall"> 
+	<PASCAL : ( [ "_" ] )+ "pascal">
 	|
-	<FASTCALL : ( [ "_" ] )+ "fastcall"> 
+	<STDCALL : ( [ "_" ] )+ "stdcall">
+	|
+	<FASTCALL : ( [ "_" ] )+ "fastcall">
 	|
 	<ATTRIBUTE : "__attribute" (["_"])* >
 	|
@@ -919,7 +937,9 @@ TOKEN :
 	|
 	<NEAR : "near"> 
 	|
-	<FAR : "far"> 
+	<FAR : "far">
+	| 
+	<HUGE : "huge">
 	|
 	<FOR : "for"> 
 	|
@@ -940,7 +960,7 @@ TOKEN :
 
 TOKEN :
 {
-	<IDENTIFIER : <LETTER> ( <LETTER> | <DIGIT> )*> 
+	<IDENTIFIER : <LETTER> ( <LETTER> | <DIGIT> | "::")*> 
 	|
 	<#LETTER : [ "$", "A"-"Z", "_", "a"-"z" ]> 
 	|
@@ -1142,6 +1162,7 @@ void TranslationUnit() : {}
 	( ExternalDeclaration() )+ 
 	{
 		//jjt         return jjtThis;
+		printTypes();
 	}
 }
 
@@ -1256,7 +1277,7 @@ Declaration DeclarationSpecifiers(Declaration specDT) : {
 //			LOOKAHEAD(DeclarationSpecifiers()
 //			         , { (typeDT == null ||
 //			             (!typeDT.getName().equals(getToken(1).image) && !isType(getToken(1).image))) }
- //                     )
+//                     )
 			specDT = DeclarationSpecifiers(specDT)
 		]
 		|
@@ -1304,6 +1325,10 @@ Declaration BuiltInTypeSpecifier(Declaration dec) : {
 }
 {
 	(
+		<SEGMENT>	{ dec.setDataType(SegmentCodePointerDataType.dataType); }
+		|
+		<OFFSET>	{ dec.setDataType(OffsetCodePointerDataType.dataType); }
+		|
 		<VOID> 				{ dec.setDataType(VoidDataType.dataType); }
 		|
 		<CHAR> 				{   dt = dec.getDataType();
@@ -1461,8 +1486,12 @@ Declaration TypeQualifier(Declaration dec) : {}
       <CONST>  { dec.setQualifier(CONST); } |
 	  <VOLATILE> |
 	  <CDECL> { dec.setQualifier(CDECL); } |
-	  <NEAR> |
-	  <FAR> |
+	  <NEAR> { dec.setNear(true); } |
+	  <FAR> { dec.setFar(true); } |
+	  <HUGE> { dec.setHuge(true); } |
+	  <SEGMENT> |
+	  <OFFSET> |
+	  <PASCAL> { dec.setQualifier(PASCAL); } |
 	  <STDCALL> { dec.setQualifier(STDCALL); } |
 	  <FASTCALL> { dec.setQualifier(FASTCALL); } |
 	  <W64> |
@@ -1472,6 +1501,7 @@ Declaration TypeQualifier(Declaration dec) : {}
 	  <RESTRICT> |
 	  <EXTENSION> |
 	  <STATIC> |
+	  ( BasedSpec() ) |
 	  ( DeclSpec() )
 	)
 	{
@@ -1503,6 +1533,25 @@ void SubIdent() : { Declaration dt = new Declaration(); }
                         SubIdent()   
                        ]
     )
+}
+
+void BasedSpec() : {
+}
+{
+  ( ( <BASEDSPEC> ) "(" BasedSpecifier() ")" )
+}
+
+void BasedSpecifier() : {
+}
+{
+  <VOID> |
+  ( SegnameSpec() )
+}
+
+void SegnameSpec() : {
+}
+{
+  ( ( <SEGNAMESPEC> ) "(" "\"" <IDENTIFIER> "\"" ")" )
 }
 
 void DeclSpec() : {
@@ -2011,12 +2060,15 @@ Declaration DirectDeclarator(Declaration dt, DataType container) : {
             	case CDECL:
             		funcDT.setGenericCallingConvention(GenericCallingConvention.cdecl);
             		break;
+            	case PASCAL:
+            		funcDT.setGenericCallingConvention(GenericCallingConvention.pascal);
+            		break;
             	case STDCALL:
             		funcDT.setGenericCallingConvention(GenericCallingConvention.stdcall);
             		break;
         		case FASTCALL:
-                funcDT.setGenericCallingConvention(GenericCallingConvention.fastcall);
-                break;
+                	funcDT.setGenericCallingConvention(GenericCallingConvention.fastcall);
+                	break;
             }
 			dec= funcDec;
 			DataType newDT =  addDef("functions", functions, dec.getName(), funcDT);
@@ -2047,7 +2099,18 @@ Declaration Pointer(Declaration dec) : {}
 	("*" | "&") [ dec = TypeQualifierList(dec) ] [ dec = Pointer(dec) ] 
 	{
 	    // TODO: is this right?
-		dec.setDataType(dtMgr.getPointer(dec.getDataType()));
+		if (dec.isNear() && (dec.isFar() || dec.isHuge())) {
+			Msg.info(this, "Mmm, can't be NEAR and (FAR or HUGE)");
+			dec.setDataType(dtMgr.getPointer(dec.getDataType()));
+		} else if (dec.isNear()) {
+			dec.setDataType(dtMgr.getPointer(dec.getDataType(), 2));
+		} else if (dec.isFar()) {
+			dec.setDataType(dtMgr.getPointer(dec.getDataType(), 4));
+		} else if (dec.isHuge()) {
+			dec.setDataType(dtMgr.getPointer(dec.getDataType(), 4));
+		} else {
+			dec.setDataType(dtMgr.getPointer(dec.getDataType()));
+		}
 		return dec;
 	}
 }
@@ -2198,7 +2261,7 @@ Declaration DirectAbstractDeclarator(Declaration dt) : {
 {
 	(
 		LOOKAHEAD(2)
-		"(" [TypeQualifier(dt)] dec= AbstractDeclarator(dt) ")" 
+		"(" [TypeQualifier(dt)] [TypeQualifier(dt)] dec= AbstractDeclarator(dt) ")" 
 		|
 		"[" [ ConstantExpression() ] "]" 
 		|

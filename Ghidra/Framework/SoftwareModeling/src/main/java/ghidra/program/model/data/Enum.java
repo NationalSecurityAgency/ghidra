@@ -38,6 +38,13 @@ public interface Enum extends DataType {
 	public String getName(long value);
 
 	/**
+	 * Get all the names for the given value.
+	 * @param value value of the enum entry.
+	 * @return null if no names with the given value were found.
+	 */
+	public String[] getNames(long value);
+
+	/**
 	 * Get the values of the enum entries.
 	 * @return values sorted in ascending order
 	 */

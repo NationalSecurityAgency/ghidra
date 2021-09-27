@@ -83,4 +83,9 @@ public class TestDoubleFunctionSignature implements FunctionSignature {
 	public boolean isEquivalentSignature(FunctionSignature signature) {
 		throw new UnsupportedOperationException();
 	}
+
+	@Override
+	public AddressModel getAddressModel() {
+		throw new UnsupportedOperationException();
+	}
 }
