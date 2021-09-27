@@ -28,6 +28,7 @@ import ghidra.GhidraOptions;
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.plugin.core.format.*;
 import ghidra.app.services.MarkerService;
+import ghidra.app.util.viewer.listingpanel.AddressSetDisplayListener;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
@@ -87,25 +88,26 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	protected Map<String, ByteViewerComponent> viewMap = new HashMap<>();
 
-	private ToggleEditAction editModeAction;
+	protected ToggleEditAction editModeAction;
 	protected OptionsAction setOptionsAction;
 
 	protected ProgramByteBlockSet blockSet;
 
-	protected final ByteViewerPlugin plugin;
+	protected final AbstractByteViewerPlugin<?> plugin;
 
 	protected SwingUpdateManager updateManager;
 
 	private Map<String, Class<? extends DataFormatModel>> dataFormatModelClassMap;
 
-	protected ByteViewerComponentProvider(PluginTool tool, ByteViewerPlugin plugin, String name,
+	protected ByteViewerComponentProvider(PluginTool tool, AbstractByteViewerPlugin<?> plugin,
+			String name,
 			Class<?> contextType) {
 		super(tool, name, plugin.getName(), contextType);
 		this.plugin = plugin;
 
 		initializedDataFormatModelClassMap();
 
-		panel = new ByteViewerPanel(this);
+		panel = newByteViewerPanel();
 		bytesPerLine = DEFAULT_BYTES_PER_LINE;
 		setIcon(ResourceManager.loadImage("images/binaryData.gif"));
 		setOptions();
@@ -116,6 +118,10 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 		addView(DEFAULT_VIEW);
 		setWindowMenuGroup("Byte Viewer");
+	}
+
+	protected ByteViewerPanel newByteViewerPanel() {
+		return new ByteViewerPanel(this);
 	}
 
 	private void initializedDataFormatModelClassMap() {
@@ -150,6 +156,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	/**
 	 * Notification that an option changed.
+	 * 
 	 * @param options options object containing the property that changed
 	 * @param group
 	 * @param optionName name of option that changed
@@ -338,7 +345,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		}
 	}
 
-	void writeConfigState(SaveState saveState) {
+	protected void writeConfigState(SaveState saveState) {
 		DataModelInfo info = panel.getDataModelInfo();
 		saveState.putStrings(VIEW_NAMES, info.getNames());
 		saveState.putInt(HEX_VIEW_GROUPSIZE, hexGroupSize);
@@ -346,7 +353,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		saveState.putInt(OFFSET_NAME, offset);
 	}
 
-	void readConfigState(SaveState saveState) {
+	protected void readConfigState(SaveState saveState) {
 		String[] names = saveState.getStrings(VIEW_NAMES, new String[0]);
 		hexGroupSize = saveState.getInt(HEX_VIEW_GROUPSIZE, 1);
 		restoreViews(names, false);
@@ -412,10 +419,10 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	}
 
-	abstract void updateLocation(ByteBlock block, BigInteger blockOffset, int column,
+	protected abstract void updateLocation(ByteBlock block, BigInteger blockOffset, int column,
 			boolean export);
 
-	abstract void updateSelection(ByteBlockSelection selection);
+	protected abstract void updateSelection(ByteBlockSelection selection);
 
 	void dispose() {
 		updateManager.dispose();
@@ -445,7 +452,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	}
 
-	ByteViewerPanel getByteViewerPanel() {
+	protected ByteViewerPanel getByteViewerPanel() {
 		return panel;
 	}
 
@@ -481,7 +488,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 			return null;
 		}
 		try {
-			return classy.newInstance();
+			return classy.getConstructor().newInstance();
 		}
 		catch (Exception e) {
 			// cannot happen, since we only get the value from valid class that we put into the map
@@ -492,5 +499,23 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	public MarkerService getMarkerService() {
 		return tool.getService(MarkerService.class);
+	}
+
+	/**
+	 * Add the {@link AddressSetDisplayListener} to the byte viewer panel
+	 * 
+	 * @param listener the listener to add
+	 */
+	public void addDisplayListener(AddressSetDisplayListener listener) {
+		panel.addDisplayListener(listener);
+	}
+
+	/**
+	 * Remove the {@link AddressSetDisplayListener} from the byte viewer panel
+	 * 
+	 * @param listener the listener to remove
+	 */
+	public void removeDisplayListener(AddressSetDisplayListener listener) {
+		panel.removeDisplayListener(listener);
 	}
 }

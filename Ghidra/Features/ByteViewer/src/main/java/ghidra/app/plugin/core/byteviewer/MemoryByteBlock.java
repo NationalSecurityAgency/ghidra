@@ -38,11 +38,12 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Constructor
+	 * 
 	 * @param program program used in generating plugin events
-	 * @param memory  memory from a program
+	 * @param memory memory from a program
 	 * @param block block from memory
 	 */
-	MemoryByteBlock(Program program, Memory memory, MemoryBlock block) {
+	protected MemoryByteBlock(Program program, Memory memory, MemoryBlock block) {
 		this.program = program;
 		this.memory = memory;
 		this.block = block;
@@ -53,6 +54,7 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Get the location representation for the given index.
+	 * 
 	 * @param index byte index into this block
 	 * @throws IndexOutOfBoundsException if index in not in this block.
 	 */
@@ -77,8 +79,7 @@ public class MemoryByteBlock implements ByteBlock {
 	}
 
 	/**
-	 * Return the name to be used for describing the indexes into the
-	 * byte block.
+	 * Return the name to be used for describing the indexes into the byte block.
 	 */
 	@Override
 	public String getIndexName() {
@@ -93,19 +94,20 @@ public class MemoryByteBlock implements ByteBlock {
 
 		long size = block.getSize();
 		if (size < 0) {
-			return BigInteger.valueOf(size + 0x8000000000000000L).subtract(
-				BigInteger.valueOf(0x8000000000000000L));
+			return BigInteger.valueOf(size + 0x8000000000000000L)
+					.subtract(
+						BigInteger.valueOf(0x8000000000000000L));
 		}
 		return BigInteger.valueOf(size);
 	}
 
 	/**
 	 * Set the byte at the given index.
+	 * 
 	 * @param index byte index
 	 * @param value value to set
 	 * @throws ByteBlockAccessException if the block cannot be updated
-	 * @throws IndexOutOfBoundsException if the given index is not in this
-	 * block.
+	 * @throws IndexOutOfBoundsException if the given index is not in this block.
 	 */
 	@Override
 	public void setByte(BigInteger index, byte value) throws ByteBlockAccessException {
@@ -121,10 +123,10 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Get the byte at the given index.
+	 * 
 	 * @param index byte index
 	 * @throws ByteBlockAccessException if the block cannot be read
-	 * @throws IndexOutOfBoundsException if the given index is not in this
-	 * block.
+	 * @throws IndexOutOfBoundsException if the given index is not in this block.
 	 */
 	@Override
 	public byte getByte(BigInteger index) throws ByteBlockAccessException {
@@ -145,11 +147,11 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Set the long at the given index.
+	 * 
 	 * @param index byte index
 	 * @param value value to set
 	 * @throws ByteBlockAccessException if the block cannot be updated
-	 * @throws IndexOutOfBoundsException if the given index is not in this
-	 * block.
+	 * @throws IndexOutOfBoundsException if the given index is not in this block.
 	 */
 	@Override
 	public void setLong(BigInteger index, long value) throws ByteBlockAccessException {
@@ -165,10 +167,10 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Get the long at the given index.
+	 * 
 	 * @param index byte index
 	 * @throws ByteBlockAccessException if the block cannot be read
-	 * @throws IndexOutOfBoundsException if the given index is not in this
-	 * block.
+	 * @throws IndexOutOfBoundsException if the given index is not in this block.
 	 */
 	@Override
 	public long getLong(BigInteger index) throws ByteBlockAccessException {
@@ -183,6 +185,7 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Set the block according to the bigEndian parameter.
+	 * 
 	 * @param bigEndian true means big endian; false means little endian
 	 */
 	@Override
@@ -193,10 +196,10 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Get the int value at the given index.
+	 * 
 	 * @param index byte index
 	 * @throws ByteBlockAccessException if the block cannot be read
-	 * @throws IndexOutOfBoundsException if the given index is not in this
-	 * block.
+	 * @throws IndexOutOfBoundsException if the given index is not in this block.
 	 */
 	@Override
 	public int getInt(BigInteger index) throws ByteBlockAccessException {
@@ -211,11 +214,11 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Set the int at the given index.
+	 * 
 	 * @param index byte index
 	 * @param value value to set
 	 * @throws ByteBlockAccessException if the block cannot be updated
-	 * @throws IndexOutOfBoundsException if the given index is not in this
-	 * block.
+	 * @throws IndexOutOfBoundsException if the given index is not in this block.
 	 */
 	@Override
 	public void setInt(BigInteger index, int value) throws ByteBlockAccessException {
@@ -239,6 +242,7 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Return true if the block is big endian.
+	 * 
 	 * @return false if the block is little endian
 	 */
 	@Override
@@ -247,12 +251,11 @@ public class MemoryByteBlock implements ByteBlock {
 	}
 
 	/**
-	 * Returns the natural alignment (offset) for the given radix.  If there is
-	 * no natural alignment, it should return 0.  A natural alignment only exists if
-	 * there is some underlying indexing structure that isn't based at 0.  For example,
-	 * if the underlying structure is address based and the starting address is not 0,
-	 * then the natural alignment is the address offset mod the radix (if the starting
-	 * address is 10 and the radix is 4, then then the alignment is 2)).
+	 * Returns the natural alignment (offset) for the given radix. If there is no natural alignment,
+	 * it should return 0. A natural alignment only exists if there is some underlying indexing
+	 * structure that isn't based at 0. For example, if the underlying structure is address based
+	 * and the starting address is not 0, then the natural alignment is the address offset mod the
+	 * radix (if the starting address is 10 and the radix is 4, then then the alignment is 2)).
 	 */
 	@Override
 	public int getAlignment(int radix) {
@@ -309,11 +312,10 @@ public class MemoryByteBlock implements ByteBlock {
 	/////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Check for whether edits are allowed at the given address; edits are
-	 * not allowed if a code unit (other than undefined data) exists at the
-	 * given address.
+	 * Check for whether edits are allowed at the given address; edits are not allowed if a code
+	 * unit (other than undefined data) exists at the given address.
 	 */
-	private void checkEditsAllowed(Address addr, long length) throws ByteBlockAccessException {
+	protected void checkEditsAllowed(Address addr, long length) throws ByteBlockAccessException {
 		if (!editAllowed(addr, length)) {
 			String msg = "Instruction exists at address " + addr;
 			if (length > 1) {
@@ -330,10 +332,10 @@ public class MemoryByteBlock implements ByteBlock {
 	}
 
 	/**
-	 * Return true if undefined data exists at the given address; return
-	 * false if code unit exists, thus editing is not allowed.
+	 * Return true if undefined data exists at the given address; return false if code unit exists,
+	 * thus editing is not allowed.
 	 */
-	private boolean editAllowed(Address addr, long length) {
+	protected boolean editAllowed(Address addr, long length) {
 		Listing listing = program.getListing();
 		Address a = addr;
 		for (int i = 0; i < length; i++) {

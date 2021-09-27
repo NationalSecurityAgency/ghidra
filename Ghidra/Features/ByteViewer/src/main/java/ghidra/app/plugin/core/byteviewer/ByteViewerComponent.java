@@ -32,13 +32,12 @@ import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.listener.*;
 import docking.widgets.fieldpanel.support.*;
 import ghidra.app.plugin.core.format.*;
-import ghidra.program.model.address.AddressOutOfBoundsException;
+import ghidra.program.model.address.*;
 import ghidra.util.Msg;
 
 /**
- * FieldViewer to show data formatted according to the DataFormatModel that
- * is passed in to the constructor. The source of the data is an array
- * of ByteBlocks that is managed by an IndexMap.
+ * FieldViewer to show data formatted according to the DataFormatModel that is passed in to the
+ * constructor. The source of the data is an array of ByteBlocks that is managed by an IndexMap.
  */
 public class ByteViewerComponent extends FieldPanel implements FieldMouseListener,
 		FieldLocationListener, FieldSelectionListener, FieldInputListener {
@@ -70,14 +69,14 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Constructor
-	 * @param vpanel the byte viewer panel that this component lives in 
+	 * 
+	 * @param vpanel the byte viewer panel that this component lives in
 	 * @param layoutModel the layout model for this component
-	 * @param model data format model that knows how the data should be
-	 * 			displayed
+	 * @param model data format model that knows how the data should be displayed
 	 * @param bytesPerLine number of bytes displayed in a row
 	 * @param fm the font metrics used for drawing
 	 */
-	ByteViewerComponent(ByteViewerPanel vpanel, ByteViewerLayoutModel layoutModel,
+	protected ByteViewerComponent(ByteViewerPanel vpanel, ByteViewerLayoutModel layoutModel,
 			DataFormatModel model, int bytesPerLine, FontMetrics fm) {
 		super(layoutModel);
 
@@ -357,6 +356,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the color for the component that has focus.
+	 * 
 	 * @param c the color to set
 	 */
 	void setCurrentCursorColor(Color c) {
@@ -366,6 +366,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the background color for the line containing the cursor.
+	 * 
 	 * @param c the color to set
 	 */
 	void setCurrentCursorLineColor(Color c) {
@@ -374,6 +375,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the color for showing gaps in indexes.
+	 * 
 	 * @param c the color to set
 	 */
 	void setSeparatorColor(Color c) {
@@ -415,8 +417,17 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		updatingIndexMap = false;
 	}
 
+	protected IndexMap getIndexMap() {
+		return indexMap;
+	}
+
+	protected ProgramByteBlockSet getBlockSet() {
+		return blockSet;
+	}
+
 	/**
 	 * Set the new group size
+	 * 
 	 * @param groupSize the group size
 	 * @throws UnsupportedOperationException if model for this view does not support groups
 	 */
@@ -442,7 +453,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		}
 	}
 
-	private FieldSelection getFieldSelection(ByteBlockSelection selection) {
+	protected FieldSelection getFieldSelection(ByteBlockSelection selection) {
 		FieldSelection fsel = new FieldSelection();
 		for (int i = 0; i < selection.getNumberOfRanges(); i++) {
 			ByteBlockRange r = selection.getRange(i);
@@ -487,8 +498,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	 * @param block the block
 	 * @param index the index
 	 * @param characterOffset the offset into the UI field
-	 * @return index of the location; return -1 if there was an error
-	 * setting the cursor location
+	 * @return index of the location; return -1 if there was an error setting the cursor location
 	 */
 	int setViewerCursorLocation(ByteBlock block, BigInteger index, int characterOffset) {
 		if (indexMap == null) {
@@ -649,10 +659,9 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	}
 
 	/**
-	 * Set the edit mode according to the given param if the model
-	 * for this view supports editing.
-	 * @param editMode true means to enable editing, and change the cursor
-	 * color.
+	 * Set the edit mode according to the given param if the model for this view supports editing.
+	 * 
+	 * @param editMode true means to enable editing, and change the cursor color.
 	 */
 	void setEditMode(boolean editMode) {
 		consumeKeyStrokes = editMode;
@@ -742,9 +751,8 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		enableHelp();
 	}
 
-	/** 
-	 * Enable help for this component; used the model name as part of
-	 * the help ID.
+	/**
+	 * Enable help for this component; used the model name as part of the help ID.
 	 */
 	private void enableHelp() {
 		HelpService helpService = Help.getHelpService();
@@ -814,7 +822,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	/**
 	 * Create a byte block selection from the field selection.
 	 */
-	private ByteBlockSelection processFieldSelection(FieldSelection selection) {
+	protected ByteBlockSelection processFieldSelection(FieldSelection selection) {
 
 		ByteBlockSelection sel = new ByteBlockSelection();
 		int count = selection.getNumRanges();
@@ -863,6 +871,17 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			}
 		}
 		return null;
+	}
+
+	public AddressSetView getView() {
+		AddressSet result = new AddressSet();
+		if (blockSet != null) {
+			for (ByteBlock block : blockSet.getBlocks()) {
+				Address start = blockSet.getBlockStart(block);
+				result.add(start, start.add(block.getLength().longValue() - 1));
+			}
+		}
+		return result;
 	}
 
 	private class ByteViewerBackgroundColorModel implements BackgroundColorModel {

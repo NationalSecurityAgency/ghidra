@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +15,33 @@
  */
 package ghidra.app.plugin.core.byteviewer;
 
-import ghidra.framework.plugintool.Plugin;
-
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-import resources.ResourceManager;
 import docking.ActionContext;
 import docking.action.*;
+import ghidra.framework.plugintool.Plugin;
+import resources.ResourceManager;
 
-    class ToggleEditAction extends ToggleDockingAction {
-    	private final ByteViewerComponentProvider provider;
-    	public ToggleEditAction(ByteViewerComponentProvider provider, Plugin plugin) {
-    		super("Enable/Disable Byteviewer Editing", plugin.getName());
-			this.provider = provider;
-    		setToolBarData( new ToolBarData( 
-    			ResourceManager.loadImage( "images/editbytes.gif" ), "Byteviewer" ) );
-    		setKeyBindingData( new KeyBindingData( 
-    			KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK ) );
+class ToggleEditAction extends ToggleDockingAction {
+	private final ByteViewerComponentProvider provider;
 
-    		setDescription("Enable/Disable editing of bytes in Byte Viewer panels.");
-    		setSelected(false);
-    		setEnabled(true);
-		}
-        @Override
-        public void actionPerformed(ActionContext context) {
-			boolean isSelected = isSelected(); 
-            provider.setEditMode(isSelected);
-        }
-    }
+	public ToggleEditAction(ByteViewerComponentProvider provider, Plugin plugin) {
+		super("Enable/Disable Byteviewer Editing", plugin.getName());
+		this.provider = provider;
+		setToolBarData(new ToolBarData(
+			ResourceManager.loadImage("images/editbytes.gif"), "Byteviewer"));
+		setKeyBindingData(new KeyBindingData(
+			KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
+
+		setDescription("Enable/Disable editing of bytes in Byte Viewer panels.");
+		setSelected(false);
+		setEnabled(true);
+	}
+
+	@Override
+	public void actionPerformed(ActionContext context) {
+		boolean isSelected = isSelected();
+		provider.setEditMode(isSelected);
+	}
+}

@@ -24,16 +24,21 @@ import ghidra.program.util.ProgramSelection;
 public interface CodeBrowserPluginInterface {
 
 	PluginTool getTool();
+
 	String getName();
 
 	void providerClosed(CodeViewerProvider codeViewerProvider);
+
 	boolean isDisposed();
 
 	void locationChanged(CodeViewerProvider codeViewerProvider, ProgramLocation loc);
+
 	void selectionChanged(CodeViewerProvider codeViewerProvider, ProgramSelection currentSelection);
+
 	void highlightChanged(CodeViewerProvider codeViewerProvider, ProgramSelection highlight);
 
 	ViewManagerService getViewManager(CodeViewerProvider codeViewerProvider);
+
 	CodeViewerProvider createNewDisconnectedProvider();
 
 }

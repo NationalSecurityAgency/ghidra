@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,46 +19,63 @@ import java.util.*;
 
 /**
  * Defines a selection for byte blocks.
+ * 
+ * The selection is a list of disjoint ranges.
  */
 public class ByteBlockSelection {
+	private final List<ByteBlockRange> list;
 
-    private List<ByteBlockRange> list;
+	/**
+	 * Construct a selection from a list of ranges
+	 * 
+	 * @param ranges the ranges
+	 */
+	public ByteBlockSelection(List<ByteBlockRange> ranges) {
+		list = new ArrayList<>(ranges);
+	}
 
-    /**
-     * Construct an empty selection.
-     */
-    public ByteBlockSelection() {
-        list = new ArrayList<ByteBlockRange>();
-    }
-    /**
-     *  Constructor
-     */ 
-    public ByteBlockSelection(ByteBlockRange[] ranges) {
-        List<ByteBlockRange> l = Arrays.asList(ranges);
-        list = new ArrayList<ByteBlockRange>(l);
-    }
+	/**
+	 * Construct an empty selection.
+	 */
+	public ByteBlockSelection() {
+		this(new ArrayList<>());
+	}
 
-    /**
-     * Add a range to the selection.
-     */
-    public void add(ByteBlockRange range) {
-        list.add(range);
-    }
+	/**
+	 * Construct a selection from an array of ranges
+	 * 
+	 * @param ranges the ranges
+	 */
+	public ByteBlockSelection(ByteBlockRange[] ranges) {
+		this(Arrays.asList(ranges));
+	}
 
-    /**
-     * Get the number of byte block ranges in this selection.
-     * 
-     * @return int
-     */
-    public int getNumberOfRanges() {
-        return list.size();
-    }
+	/**
+	 * Add a range to the selection.
+	 * 
+	 * @param range the range to add
+	 */
+	public void add(ByteBlockRange range) {
+		list.add(range);
+	}
 
-    /**
-     * Get the byte block range at the given index.
-     */
-    public ByteBlockRange getRange(int index) {
-        return list.get(index);
-    }
+	/**
+	 * Get the number of byte block ranges in this selection.
+	 * 
+	 * @return the number of (disjoint) ranges
+	 */
+	public int getNumberOfRanges() {
+		return list.size();
+	}
+
+	/**
+	 * Get the byte block range at the given index.
+	 * 
+	 * @param index the index of the range to get
+	 * @return the requested range
+	 */
+	public ByteBlockRange getRange(int index) {
+		return list.get(index);
+	}
 
 }
