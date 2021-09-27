@@ -548,8 +548,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		if (isPackingEnabled()) {
 			return;
 		}
-		numComponents += amount;
-		structLength += amount;
+		doGrowStructure(amount);
 		repack(false);
 		notifySizeChanged();
 	}
@@ -1518,7 +1517,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 					(numComponents != packResult.numComponents);
 			structLength = packResult.structureLength;
 			structAlignment = packResult.alignment;
-			numComponents = packResult.numComponents;
+			numComponents = components.size();
 		}
 
 		if (changed && notify) {
@@ -1566,9 +1565,10 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 	}
 
 	private void doGrowStructure(int amount) {
-		if (!isPackingEnabled()) {
-			numComponents += amount;
+		if (isPackingEnabled()) {
+			throw new AssertException("only valid for non-packed");
 		}
+		numComponents += amount;
 		structLength += amount;
 	}
 
