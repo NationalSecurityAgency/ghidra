@@ -20,7 +20,7 @@ import ghidra.program.model.address.AddressSetView;
 /**
  * Interface for being notified whenever the set of visible addresses change in the listing.
  */
-public interface ListingDisplayListener {
+public interface AddressSetDisplayListener {
 	/**
 	 * Callback whenever the set of visible addresses change in the listing.
 	 * @param visibleAddresses the current set of visible addresses in the listing.  If no

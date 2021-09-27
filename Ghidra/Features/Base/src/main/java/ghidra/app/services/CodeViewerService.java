@@ -219,11 +219,11 @@ public interface CodeViewerService {
 	 * Adds a listener to be notified when the set of visible addresses change.
 	 * @param listener the listener to be notified;
 	 */
-	public void addListingDisplayListener(ListingDisplayListener listener);
+	public void addListingDisplayListener(AddressSetDisplayListener listener);
 
 	/**
 	 * Removes listener from being notified when the set of visible addresses change.
 	 * @param listener the listener to be notified;
 	 */
-	public void removeListingDisplayListener(ListingDisplayListener listener);
+	public void removeListingDisplayListener(AddressSetDisplayListener listener);
 }

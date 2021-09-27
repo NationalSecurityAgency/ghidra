@@ -50,9 +50,9 @@ public class FieldPanel extends JPanel
 	private boolean repaintPosted;
 	private boolean inFocus;
 
-	private BackgroundColorModel backgroundColorModel =
+	protected BackgroundColorModel backgroundColorModel =
 		new DefaultBackgroundColorModel(Color.WHITE);
-	private PaintContext paintContext = new PaintContext();
+	protected PaintContext paintContext = new PaintContext();
 
 	private AnchoredLayoutHandler layoutHandler;
 	private CursorHandler cursorHandler = new CursorHandler();
@@ -1079,7 +1079,7 @@ public class FieldPanel extends JPanel
 		}
 	}
 
-	private LayoutBackgroundColorManager getLayoutSelectionMap(BigInteger layoutIndex) {
+	protected LayoutBackgroundColorManager getLayoutSelectionMap(BigInteger layoutIndex) {
 		Color backgroundColor = backgroundColorModel.getBackgroundColor(layoutIndex);
 		Color defaultBackColor = backgroundColorModel.getDefaultBackgroundColor();
 		boolean isDefault = backgroundColor.equals(defaultBackColor);

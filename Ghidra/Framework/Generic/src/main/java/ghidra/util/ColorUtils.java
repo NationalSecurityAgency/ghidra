@@ -129,8 +129,8 @@ public class ColorUtils {
 	}
 
 	/**
-	 * A method to produce a color (either black or white) that contrasts with the given color.
-	 * This is useful for finding a readable foreground color for a given background.
+	 * A method to produce a color (either black or white) that contrasts with the given color. This
+	 * is useful for finding a readable foreground color for a given background.
 	 * 
 	 * @param color the color for which to find a contrast.
 	 * @return the contrasting color.
@@ -158,9 +158,9 @@ public class ColorUtils {
 	}
 
 	/**
-	 * Takes the first color, blending into it the second color, using the given ratio.  A 
-	 * lower ratio (say .1f) signals to use very little of the first color; a larger ratio
-	 * signals to use more of the first color.
+	 * Takes the first color, blending into it the second color, using the given ratio. A lower
+	 * ratio (say .1f) signals to use very little of the first color; a larger ratio signals to use
+	 * more of the first color.
 	 * 
 	 * @param c1 the first color
 	 * @param c2 the second color
@@ -184,5 +184,51 @@ public class ColorUtils {
 		//@formatter:on
 
 		return color;
+	}
+
+	/**
+	 * Blender of colors
+	 */
+	public static class ColorBlender {
+		int r = 0;
+		int g = 0;
+		int b = 0;
+		int a = 0;
+
+		/**
+		 * Add a color into the mixture, in a quantity proportional to its alpha value
+		 * 
+		 * @param color the color to mix
+		 */
+		public void add(Color color) {
+			int ca = color.getAlpha();
+			a += ca;
+			r += ca * color.getRed();
+			g += ca * color.getGreen();
+			b += ca * color.getBlue();
+		}
+
+		/**
+		 * Reset the mixture
+		 */
+		public void clear() {
+			r = 0;
+			g = 0;
+			b = 0;
+			a = 0;
+		}
+
+		/**
+		 * Get the color of the current mixture
+		 * 
+		 * @param defaultColor the default (background) color, if the mixture has no color
+		 * @return the resulting color
+		 */
+		public Color getColor(Color defaultColor) {
+			if (a == 0) {
+				return defaultColor;
+			}
+			return new Color(r / a, g / a, b / a);
+		}
 	}
 }

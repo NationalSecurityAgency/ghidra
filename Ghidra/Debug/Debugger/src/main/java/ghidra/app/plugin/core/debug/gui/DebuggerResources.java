@@ -257,9 +257,7 @@ public interface DebuggerResources {
 	Color DEFAULT_COLOR_BACKGROUND_ERROR = new Color(1.0f, 0.75f, 0.75f);
 
 	int PRIORITY_REGISTER_MARKER = 10;
-	// TODO: Is this the right name? Used by Location Tracking, which could be anything
-	// Close enough for now
-	String OPTION_NAME_COLORS_REGISTER_MARKERS = "Colors.Register Markers";
+	String OPTION_NAME_COLORS_TRACKING_MARKERS = "Colors.Tracking Markers";
 	Color DEFAULT_COLOR_REGISTER_MARKERS = new Color(0.75f, 0.875f, 0.75f);
 	ImageIcon ICON_REGISTER_MARKER = ResourceManager.loadImage("images/register-marker.png");
 

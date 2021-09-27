@@ -16,49 +16,46 @@
 package ghidra.app.plugin.core.debug.gui.listing;
 
 import static ghidra.app.plugin.core.debug.gui.DebuggerResources.ICON_REGISTER_MARKER;
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.OPTION_NAME_COLORS_REGISTER_MARKERS;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.OPTION_NAME_COLORS_TRACKING_MARKERS;
 
 import java.awt.Color;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.swing.JLabel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.apache.commons.collections4.ComparatorUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom.Element;
 
 import docking.ActionContext;
 import docking.WindowPosition;
-import docking.action.*;
-import docking.menu.ActionState;
+import docking.action.DockingAction;
+import docking.action.MenuData;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import ghidra.app.nav.ListingPanelContainer;
+import ghidra.app.plugin.core.clipboard.CodeBrowserClipboardProvider;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
+import ghidra.app.plugin.core.debug.gui.DebuggerLocationLabel;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.action.*;
-import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
-import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec.TrackingSpecConfigFieldCodec;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerMissingModuleActionContext;
-import ghidra.app.plugin.core.debug.utils.*;
+import ghidra.app.plugin.core.debug.utils.ProgramLocationUtils;
+import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.app.plugin.core.exporter.ExporterDialog;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
-import ghidra.app.util.viewer.listingpanel.ListingDisplayListener;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.async.AsyncDebouncer;
-import ghidra.async.AsyncTimer;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
@@ -67,31 +64,24 @@ import ghidra.framework.plugintool.AutoConfigState;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.pcode.exec.*;
-import ghidra.pcode.utils.Utils;
-import ghidra.program.model.address.*;
-import ghidra.program.model.lang.Language;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
-import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.*;
-import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
-import ghidra.trace.model.stack.TraceStack;
-import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.TraceSnapshot;
-import ghidra.trace.util.TraceAddressSpace;
-import ghidra.util.*;
+import ghidra.util.HTMLUtilities;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.*;
 import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
 
-public class DebuggerListingProvider extends CodeViewerProvider implements ListingDisplayListener {
+public class DebuggerListingProvider extends CodeViewerProvider {
 
 	private static final AutoConfigState.ClassHandler<DebuggerListingProvider> CONFIG_STATE_HANDLER =
 		AutoConfigState.wireHandler(DebuggerListingProvider.class, MethodHandles.lookup());
@@ -114,50 +104,6 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 			return false; // for reg/pc tracking
 		}
 		return true;
-	}
-
-	protected class CaptureSelectedMemoryAction extends AbstractCaptureSelectedMemoryAction {
-		public static final String GROUP = DebuggerResources.GROUP_GENERAL;
-
-		public CaptureSelectedMemoryAction() {
-			super(plugin);
-			setToolBarData(new ToolBarData(ICON, GROUP));
-			addLocalAction(this);
-			setEnabled(false);
-		}
-
-		@Override
-		public void actionPerformed(ActionContext context) {
-			if (!current.isAliveAndReadsPresent()) {
-				return;
-			}
-			Trace trace = current.getTrace();
-			TraceRecorder recorder = current.getRecorder();
-			BackgroundUtils.async(plugin.getTool(), trace, NAME, true, true, false,
-				(__, monitor) -> recorder.captureProcessMemory(
-					getListingPanel().getProgramSelection(), monitor, false));
-		}
-
-		@Override
-		public boolean isEnabledForContext(ActionContext context) {
-			if (!current.isAliveAndReadsPresent()) {
-				return false;
-			}
-			TraceRecorder recorder = current.getRecorder();
-			ProgramSelection selection = getSelection();
-			if (selection == null || selection.isEmpty()) {
-				return false;
-			}
-			// TODO: Either allow partial, or provide action to intersect with accessible
-			if (!recorder.getAccessibleProcessMemory().contains(selection)) {
-				return false;
-			}
-			return true;
-		}
-
-		public void updateEnabled(ActionContext context) {
-			setEnabled(isEnabledForContext(context));
-		}
 	}
 
 	protected class SyncToStaticListingAction extends AbstractSyncToStaticListingAction {
@@ -187,19 +133,6 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		@Override
 		public void actionPerformed(ActionContext context) {
 			doSetFollowsCurrentThread(isSelected());
-		}
-	}
-
-	protected class TrackedLocationBackgroundColorModel
-			extends DebuggerTrackedRegisterListingBackgroundColorModel {
-		public TrackedLocationBackgroundColorModel(DebuggerListingPlugin plugin,
-				ListingPanel listingPanel) {
-			super(plugin, listingPanel);
-		}
-
-		@Override
-		protected ProgramLocation getTrackedLocation() {
-			return trackedLocation;
 		}
 	}
 
@@ -233,89 +166,41 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		}
 	}
 
-	protected class ForTrackingAndLabelingTraceListener extends TraceDomainObjectListener {
-		private final AsyncDebouncer<Void> updateLabelDebouncer =
-			new AsyncDebouncer<>(AsyncTimer.DEFAULT_TIMER, 100);
-
-		public ForTrackingAndLabelingTraceListener() {
-			updateLabelDebouncer
-					.addListener(__ -> Swing.runIfSwingOrRunLater(() -> doUpdateLabel()));
-
-			listenFor(TraceSnapshotChangeType.ADDED, this::snapshotAdded);
-			listenFor(TraceMemoryBytesChangeType.CHANGED, this::registersChanged);
-			listenFor(TraceStackChangeType.CHANGED, this::stackChanged);
-
-			listenFor(TraceMemoryRegionChangeType.ADDED, this::regionChanged);
-			listenFor(TraceMemoryRegionChangeType.CHANGED, this::regionChanged);
-			listenFor(TraceMemoryRegionChangeType.LIFESPAN_CHANGED, this::regionChanged);
-			listenFor(TraceMemoryRegionChangeType.DELETED, this::regionChanged);
-
-			listenFor(TraceModuleChangeType.CHANGED, this::moduleChanged);
-			listenFor(TraceModuleChangeType.LIFESPAN_CHANGED, this::moduleChanged);
-			listenFor(TraceModuleChangeType.DELETED, this::moduleChanged);
-
-			listenFor(TraceSectionChangeType.ADDED, this::sectionChanged);
-			listenFor(TraceSectionChangeType.CHANGED, this::sectionChanged);
-			listenFor(TraceSectionChangeType.DELETED, this::sectionChanged);
+	protected class ForListingGoToTrait extends DebuggerGoToTrait {
+		public ForListingGoToTrait() {
+			super(DebuggerListingProvider.this.tool, DebuggerListingProvider.this.plugin,
+				DebuggerListingProvider.this);
 		}
 
-		private void snapshotAdded(TraceSnapshot snapshot) {
-			actionCaptureSelectedMemory.updateEnabled(null);
-		}
-
-		private void registersChanged(TraceAddressSpace space, TraceAddressSnapRange range,
-				byte[] oldValue, byte[] newValue) {
-			if (current.getView() == null || trackingSpec == null) {
-				// Should only happen during transitional times, if at all.
-				return;
-			}
-			if (!trackingSpec.affectedByRegisterChange(space, range, current)) {
-				return;
-			}
-			doTrackSpec();
-		}
-
-		private void stackChanged(TraceStack stack) {
-			if (current.getView() == null || trackingSpec == null) {
-				// Should only happen during transitional times, if at all.
-				return;
-			}
-			if (!trackingSpec.affectedByStackChange(stack, current)) {
-				return;
-			}
-			doTrackSpec();
-		}
-
-		private void doUpdateLabel() {
-			updateLocationLabel();
-		}
-
-		private void regionChanged(TraceMemoryRegion region) {
-			updateLabelDebouncer.contact(null);
-		}
-
-		private void moduleChanged(TraceModule module) {
-			updateLabelDebouncer.contact(null);
-		}
-
-		private void sectionChanged(TraceSection section) {
-			updateLabelDebouncer.contact(null);
-		}
-	}
-
-	protected class ForAccessRecorderListener implements TraceRecorderListener {
 		@Override
-		public void processMemoryAccessibilityChanged(TraceRecorder recorder) {
-			Swing.runIfSwingOrRunLater(() -> {
-				actionCaptureSelectedMemory.updateEnabled(null);
-			});
+		protected boolean goToAddress(Address address) {
+			return getListingPanel().goTo(address);
 		}
 	}
 
-	private final LocationTrackingSpec defaultTrackingSpec =
-		LocationTrackingSpec.fromConfigName(PCLocationTrackingSpec.CONFIG_NAME);
-	private final AutoReadMemorySpec defaultReadMemorySpec =
-		AutoReadMemorySpec.fromConfigName(VisibleROOnceAutoReadMemorySpec.CONFIG_NAME);
+	protected class ForListingTrackingTrait extends DebuggerTrackLocationTrait {
+		public ForListingTrackingTrait() {
+			super(DebuggerListingProvider.this.tool, DebuggerListingProvider.this.plugin,
+				DebuggerListingProvider.this);
+		}
+
+		@Override
+		protected void locationTracked() {
+			doGoToTracked();
+		}
+	}
+
+	protected class ForListingReadsMemoryTrait extends DebuggerReadsMemoryTrait {
+		public ForListingReadsMemoryTrait() {
+			super(DebuggerListingProvider.this.tool, DebuggerListingProvider.this.plugin,
+				DebuggerListingProvider.this);
+		}
+
+		@Override
+		protected AddressSetView getSelection() {
+			return DebuggerListingProvider.this.getSelection();
+		}
+	}
 
 	private final DebuggerListingPlugin plugin;
 
@@ -334,46 +219,37 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
-	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_MARKERS)
+	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_TRACKING_MARKERS)
 	private Color trackingColor;
 	@SuppressWarnings("unused")
 	private final AutoOptions.Wiring autoOptionsWiring;
 
 	DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
-	protected AddressSetView visible;
-	protected TraceRecorder currentRecorder;
-	protected ProgramLocation trackedLocation;
 
 	protected Program markedProgram;
 	protected Address markedAddress;
 	protected MarkerSet trackingMarker;
 
-	protected CaptureSelectedMemoryAction actionCaptureSelectedMemory;
-	protected MultiStateDockingAction<LocationTrackingSpec> actionTrackLocation;
 	protected DockingAction actionGoTo;
 	protected SyncToStaticListingAction actionSyncToStaticListing;
 	protected FollowsCurrentThreadAction actionFollowsCurrentThread;
 	protected MultiStateDockingAction<AutoReadMemorySpec> actionAutoReadMemory;
+	protected DockingAction actionCaptureSelectedMemory;
 	protected DockingAction actionExportView;
 	protected DockingAction actionOpenProgram;
+	protected MultiStateDockingAction<LocationTrackingSpec> actionTrackLocation;
 
-	protected final DebuggerGoToDialog goToDialog;
-
-	@AutoConfigStateField(codec = TrackingSpecConfigFieldCodec.class)
-	protected LocationTrackingSpec trackingSpec = defaultTrackingSpec;
 	@AutoConfigStateField
 	protected boolean syncToStaticListing;
 	@AutoConfigStateField
 	protected boolean followsCurrentThread = true;
-	@AutoConfigStateField(codec = AutoReadMemorySpecConfigFieldCodec.class)
-	protected AutoReadMemorySpec autoReadMemorySpec = defaultReadMemorySpec;
-	// TODO: followsCurrentSnap
+	// TODO: followsCurrentSnap?
 
-	protected ForTrackingAndLabelingTraceListener forTrackingTraceListener =
-		new ForTrackingAndLabelingTraceListener();
-	protected ForAccessRecorderListener forAccessRecorderListener = new ForAccessRecorderListener();
+	protected DebuggerGoToTrait goToTrait;
+	protected ForListingTrackingTrait trackingTrait;
+	protected ForListingReadsMemoryTrait readsMemTrait;
 
-	protected final JLabel locationLabel = new JLabel();
+	protected final DebuggerLocationLabel locationLabel = new DebuggerLocationLabel();
 
 	protected final MultiBlendedListingBackgroundColorModel colorModel;
 	protected final MarkerSetChangeListener markerChangeListener = new MarkerSetChangeListener();
@@ -392,11 +268,13 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		this.plugin = plugin;
 		this.isMainListing = isConnected;
 
-		goToDialog = new DebuggerGoToDialog(this);
+		goToTrait = new ForListingGoToTrait();
+		trackingTrait = new ForListingTrackingTrait();
+		readsMemTrait = new ForListingReadsMemoryTrait();
 
 		ListingPanel listingPanel = getListingPanel();
 		colorModel = new MultiBlendedListingBackgroundColorModel();
-		colorModel.addModel(new TrackedLocationBackgroundColorModel(plugin, listingPanel));
+		colorModel.addModel(trackingTrait.createListingBackgroundColorModel(listingPanel));
 		colorModel.addModel(new MemoryStateListingBackgroundColorModel(plugin, listingPanel));
 		colorModel.addModel(new CursorBackgroundColorModel(plugin, listingPanel));
 		listingPanel.setBackgroundColorModel(colorModel);
@@ -408,12 +286,15 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		setVisible(true);
 		createActions();
 
-		doTrackSpec();
+		goToTrait.goToCoordinates(current);
+		trackingTrait.goToCoordinates(current);
+		readsMemTrait.goToCoordinates(current);
+		locationLabel.goToCoordinates(current);
 
 		// TODO: An icon to distinguish dynamic from static
 
 		//getComponent().setBorder(BorderFactory.createEmptyBorder());
-		addListingDisplayListener(this);
+		addDisplayListener(readsMemTrait.getDisplayListener());
 
 		this.setNorthComponent(locationLabel);
 		if (isConnected) {
@@ -455,6 +336,11 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	}
 
 	@Override
+	public boolean isReadOnly() {
+		return current.isAliveAndPresent();
+	}
+
+	@Override
 	public String getWindowGroup() {
 		//TODO: Overriding this to align disconnected providers
 		return "Core";
@@ -486,6 +372,8 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		saveState.putXmlElement("formatManager", formatManagerState.saveToXml());
 
 		CONFIG_STATE_HANDLER.writeConfigState(this, saveState);
+		trackingTrait.writeConfigState(saveState);
+		readsMemTrait.writeConfigState(saveState);
 	}
 
 	void readConfigState(SaveState saveState) {
@@ -498,8 +386,9 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		}
 
 		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
+		trackingTrait.readConfigState(saveState);
+		readsMemTrait.readConfigState(saveState);
 
-		actionTrackLocation.setCurrentActionStateByUserData(trackingSpec);
 		if (isMainListing()) {
 			actionSyncToStaticListing.setSelected(syncToStaticListing);
 			followsCurrentThread = true;
@@ -509,7 +398,6 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 			actionFollowsCurrentThread.setSelected(followsCurrentThread);
 			updateBorder();
 		}
-		actionAutoReadMemory.setCurrentActionStateByUserData(autoReadMemorySpec);
 	}
 
 	@Override
@@ -520,6 +408,28 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		setIntraGroupPosition(WindowPosition.STACK);
 		setDefaultWindowPosition(WindowPosition.STACK);
 		super.addToTool();
+	}
+
+	@Override
+	protected CodeBrowserClipboardProvider newClipboardProvider() {
+		/**
+		 * TODO: Ensure memory writes via paste are properly directed to the target process. In the
+		 * meantime, just prevent byte pastes altogether. I cannot disable the clipboard altogether,
+		 * because there are still excellent cases for copying from the dynamic listing, and we
+		 * should still permit pastes of annotations.
+		 */
+		return new CodeBrowserClipboardProvider(tool, this) {
+			@Override
+			protected boolean pasteBytes(Transferable pasteData)
+					throws UnsupportedFlavorException, IOException {
+				return false;
+			}
+
+			@Override
+			protected boolean pasteByteString(String string) {
+				return false;
+			}
+		};
 	}
 
 	protected void updateMarkerServiceColorModel() {
@@ -564,7 +474,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		}
 	}
 
-	@AutoOptionConsumed(name = OPTION_NAME_COLORS_REGISTER_MARKERS)
+	@AutoOptionConsumed(name = OPTION_NAME_COLORS_TRACKING_MARKERS)
 	private void setTrackingColor(Color trackingColor) {
 		if (trackingMarker != null) {
 			trackingMarker.setMarkerColor(trackingColor);
@@ -638,20 +548,6 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		}
 	}
 
-	protected void addNewListeners() {
-		Trace trace = current.getTrace();
-		if (trace != null) {
-			trace.addListener(forTrackingTraceListener);
-		}
-	}
-
-	protected void removeOldListeners() {
-		Trace trace = current.getTrace();
-		if (trace != null) {
-			trace.removeListener(forTrackingTraceListener);
-		}
-	}
-
 	@Override
 	protected void doSetProgram(Program newProgram) {
 		if (newProgram != null && newProgram != current.getView()) {
@@ -666,25 +562,13 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		setSelection(new ProgramSelection());
 		super.doSetProgram(newProgram);
 		updateTitle();
-		updateLocationLabel();
-	}
-
-	protected void doSetRecorder(TraceRecorder newRecorder) {
-		if (currentRecorder == newRecorder) {
-			return;
-		}
-		if (currentRecorder != null) {
-			currentRecorder.removeListener(forAccessRecorderListener);
-		}
-		currentRecorder = newRecorder;
-		if (currentRecorder != null) {
-			currentRecorder.addListener(forAccessRecorderListener);
-		}
+		locationLabel.updateLabel();
 	}
 
 	protected String computeSubTitle() {
 		TraceProgramView view = current.getView();
 		List<String> parts = new ArrayList<>();
+		LocationTrackingSpec trackingSpec = trackingTrait == null ? null : trackingTrait.getSpec();
 		if (trackingSpec != null) {
 			String specTitle = trackingSpec.computeTitle(current);
 			if (specTitle != null) {
@@ -703,104 +587,18 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		setSubTitle(computeSubTitle());
 	}
 
-	protected TraceSection getNearestSectionContaining(Address address) {
-		if (current.getView() == null) {
-			return null;
-		}
-		Trace trace = current.getTrace();
-		List<TraceSection> sections =
-			new ArrayList<>(trace.getModuleManager().getSectionsAt(current.getSnap(), address));
-		if (sections.isEmpty()) {
-			return null;
-		}
-		// TODO: DB's R-Tree could probably do this natively
-		sections.sort(ComparatorUtils.chainedComparator(List.of(
-			Comparator.comparing(s -> s.getRange().getMinAddress()),
-			Comparator.comparing(s -> -s.getRange().getLength()))));
-		return sections.get(sections.size() - 1);
-	}
-
-	protected TraceModule getNearestModuleContaining(Address address) {
-		if (current.getView() == null) {
-			return null;
-		}
-		Trace trace = current.getTrace();
-		List<TraceModule> modules =
-			new ArrayList<>(trace.getModuleManager().getModulesAt(current.getSnap(), address));
-		if (modules.isEmpty()) {
-			return null;
-		}
-		// TODO: DB's R-Tree could probably do this natively
-		modules.sort(ComparatorUtils.chainedComparator(List.of(
-			Comparator.comparing(m -> m.getRange().getMinAddress()),
-			Comparator.comparing(m -> -m.getRange().getLength()))));
-		return modules.get(modules.size() - 1);
-	}
-
-	protected TraceMemoryRegion getRegionContaining(Address address) {
-		if (current.getView() == null) {
-			return null;
-		}
-		Trace trace = current.getTrace();
-		return trace.getMemoryManager().getRegionContaining(current.getSnap(), address);
-	}
-
-	protected String computeLocationString() {
-		TraceProgramView view = current.getView();
-		if (view == null) {
-			return "";
-		}
-		ProgramLocation location = getListingPanel().getProgramLocation();
-		if (location == null) {
-			return "(nowhere)";
-		}
-		Address address = location.getAddress();
-		TraceSection section = getNearestSectionContaining(address);
-		if (section != null) {
-			return section.getModule().getName() + ":" + section.getName();
-		}
-		TraceModule module = getNearestModuleContaining(address);
-		if (module != null) {
-			return module.getName();
-		}
-		TraceMemoryRegion region = getRegionContaining(address);
-		if (region != null) {
-			return region.getName();
-		}
-		return "(unknown)";
-	}
-
-	protected void updateLocationLabel() {
-		locationLabel.setText(computeLocationString());
-	}
-
 	protected void createActions() {
-		// TODO: Add "other" option, and present most-recent in menu, too
-		// TODO: "other" as in arbitrary expression?
-		// Only those applicable to the current thread's registers, though.
-		actionTrackLocation = DebuggerTrackLocationAction.builder(plugin)
-				.onAction(this::activatedLocationTracking)
-				.onActionStateChanged(this::changedLocationTracking)
-				.buildAndInstallLocal(this);
-		actionTrackLocation.setCurrentActionStateByUserData(defaultTrackingSpec);
-
-		actionGoTo = GoToAction.builder(plugin)
-				.enabledWhen(ctx -> current.getView() != null)
-				.onAction(this::activatedGoTo)
-				.buildAndInstallLocal(this);
-
 		if (isMainListing()) {
 			actionSyncToStaticListing = new SyncToStaticListingAction();
 		}
 		else {
 			actionFollowsCurrentThread = new FollowsCurrentThreadAction();
 		}
-		actionCaptureSelectedMemory = new CaptureSelectedMemoryAction();
-		actionAutoReadMemory = DebuggerAutoReadMemoryAction.builder(plugin)
-				.onAction(this::activatedAutoReadMemory)
-				.onActionStateChanged(this::changedAutoReadMemory)
-				.buildAndInstallLocal(this);
-		actionAutoReadMemory.setCurrentActionStateByUserData(defaultReadMemorySpec);
+
+		actionGoTo = goToTrait.installAction();
+		actionTrackLocation = trackingTrait.installAction();
+		actionAutoReadMemory = readsMemTrait.installAutoReadAction();
+		actionCaptureSelectedMemory = readsMemTrait.installCaptureSelectedAction();
 
 		actionExportView = ExportTraceViewAction.builder(plugin)
 				.enabledWhen(ctx -> current.getView() != null)
@@ -813,18 +611,6 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 				.build();
 
 		contextChanged();
-	}
-
-	private void activatedGoTo(ActionContext context) {
-		TraceProgramView view = current.getView();
-		if (view == null) {
-			return;
-		}
-		Language language = view.getLanguage();
-		if (!(language instanceof SleighLanguage)) {
-			return;
-		}
-		goToDialog.show((SleighLanguage) language);
 	}
 
 	private void activatedExportView(ActionContext context) {
@@ -844,24 +630,6 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	private void activatedOpenProgram(DebuggerOpenProgramActionContext context) {
 		programManager.openProgram(context.getDomainFile(), DomainFile.DEFAULT_VERSION,
 			ProgramManager.OPEN_CURRENT);
-	}
-
-	protected void activatedLocationTracking(ActionContext ctx) {
-		doTrackSpec();
-	}
-
-	protected void changedLocationTracking(ActionState<LocationTrackingSpec> newState,
-			EventTrigger trigger) {
-		doSetTrackingSpec(newState.getUserData());
-	}
-
-	protected void activatedAutoReadMemory(ActionContext ctx) {
-		doAutoReadMemory();
-	}
-
-	protected void changedAutoReadMemory(ActionState<AutoReadMemorySpec> newState,
-			EventTrigger trigger) {
-		doSetAutoReadMemory(newState.getUserData());
 	}
 
 	protected boolean isEffectivelyDifferent(ProgramLocation cur, ProgramLocation dest) {
@@ -897,6 +665,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	@Override
 	public void stateChanged(ChangeEvent e) {
 		super.stateChanged(e);
+		ProgramLocation trackedLocation = trackingTrait.getTrackedLocation();
 		if (trackedLocation != null && !isEffectivelyDifferent(getLocation(), trackedLocation)) {
 			cbGoTo.invoke(() -> getListingPanel().goTo(trackedLocation, true));
 		}
@@ -934,7 +703,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 
 	@Override
 	public void programLocationChanged(ProgramLocation location, EventTrigger trigger) {
-		updateLocationLabel();
+		locationLabel.goToAddress(location.getAddress());
 		if (traceManager != null) {
 			location = ProgramLocationUtils.fixLocation(location, false);
 		}
@@ -943,30 +712,6 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 			doSyncToStatic(location);
 			doCheckCurrentModuleMissing();
 		}
-	}
-
-	public CompletableFuture<Boolean> goToSleigh(String spaceName, String expression) {
-		Language language = current.getView().getLanguage();
-		if (!(language instanceof SleighLanguage)) {
-			throw new IllegalStateException("Current trace does not use Sleigh");
-		}
-		SleighLanguage slang = (SleighLanguage) language;
-		AddressSpace space = language.getAddressFactory().getAddressSpace(spaceName);
-		if (space == null) {
-			throw new IllegalArgumentException("No such address space: " + spaceName);
-		}
-		SleighExpression expr = SleighProgramCompiler.compileExpression(slang, expression);
-		return goToSleigh(space, expr);
-	}
-
-	public CompletableFuture<Boolean> goToSleigh(AddressSpace space, SleighExpression expression) {
-		AsyncPcodeExecutor<byte[]> executor = TracePcodeUtils.executorForCoordinates(current);
-		CompletableFuture<byte[]> result = expression.evaluate(executor);
-		return result.thenApply(offset -> {
-			Address address = space.getAddress(
-				Utils.bytesToLong(offset, offset.length, expression.getLanguage().isBigEndian()));
-			return getListingPanel().goTo(address);
-		});
 	}
 
 	protected void doSyncToStatic(ProgramLocation location) {
@@ -1102,19 +847,11 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	}
 
 	public void setTrackingSpec(LocationTrackingSpec spec) {
-		actionTrackLocation.setCurrentActionStateByUserData(spec);
-	}
-
-	protected void doSetTrackingSpec(LocationTrackingSpec spec) {
-		if (trackingSpec != spec) {
-			trackingSpec = spec;
-			updateTitle();
-		}
-		doTrackSpec();
+		trackingTrait.setSpec(spec);
 	}
 
 	public LocationTrackingSpec getTrackingSpec() {
-		return trackingSpec;
+		return trackingTrait.getSpec();
 	}
 
 	public void setSyncToStaticListing(boolean sync) {
@@ -1162,41 +899,16 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		return followsCurrentThread;
 	}
 
-	protected void doSetAutoReadMemory(AutoReadMemorySpec spec) {
-		this.autoReadMemorySpec = spec;
-		if (visible != null) {
-			// HACK: Calling listener method directly
-			doAutoReadMemory();
-		}
-	}
-
 	public void setAutoReadMemorySpec(AutoReadMemorySpec spec) {
-		actionAutoReadMemory.setCurrentActionStateByUserData(spec);
+		readsMemTrait.setAutoSpec(spec);
 	}
 
 	public AutoReadMemorySpec getAutoReadMemorySpec() {
-		return autoReadMemorySpec;
-	}
-
-	protected ProgramLocation computeTrackedLocation() {
-		// Change of register values (for current frame)
-		// Change of stack pc (TODO) (for current frame)
-		// Change of current view (if not caused by goTo)
-		// Change of current thread
-		// Change of current snap (TODO)
-		// Change of current frame (TODO)
-		// Change of tracking settings
-		DebuggerCoordinates cur = current;
-		TraceThread thread = cur.getThread();
-		if (thread == null || trackingSpec == null) {
-			return null;
-		}
-		// NB: view's snap may be forked for emulation
-		Address address = trackingSpec.computeTraceAddress(tool, cur, current.getView().getSnap());
-		return address == null ? null : new ProgramLocation(current.getView(), address);
+		return readsMemTrait.getAutoSpec();
 	}
 
 	protected ProgramLocation doMarkTrackedLocation() {
+		ProgramLocation trackedLocation = trackingTrait.getTrackedLocation();
 		if (trackedLocation == null) {
 			markTrackedStaticLocation(null);
 			return null;
@@ -1207,8 +919,8 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		return trackedStatic;
 	}
 
-	protected void doTrackSpec() {
-		ProgramLocation loc = trackedLocation = computeTrackedLocation();
+	protected void doGoToTracked() {
+		ProgramLocation loc = trackingTrait.getTrackedLocation();
 		ProgramLocation trackedStatic = doMarkTrackedLocation();
 		if (loc == null) {
 			return;
@@ -1232,28 +944,11 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	@Override
 	public void dispose() {
 		super.dispose();
-		removeOldListeners();
 		if (consoleService != null) {
 			if (actionOpenProgram != null) {
 				consoleService.removeResolutionAction(actionOpenProgram);
 			}
 		}
-	}
-
-	@Override
-	public void visibleAddressesChanged(AddressSetView visibleAddresses) {
-		if (Objects.equals(this.visible, visibleAddresses)) {
-			return;
-		}
-		this.visible = visibleAddresses;
-		doAutoReadMemory();
-	}
-
-	protected void doAutoReadMemory() {
-		autoReadMemorySpec.readMemory(tool, current, visible).exceptionally(ex -> {
-			Msg.error(this, "Could not auto-read memory: " + ex);
-			return null;
-		});
 	}
 
 	public void staticProgramLocationChanged(ProgramLocation location) {
@@ -1281,18 +976,12 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 			current = coordinates;
 			return;
 		}
-		boolean doListeners = !Objects.equals(current.getTrace(), coordinates.getTrace());
-		if (doListeners) {
-			removeOldListeners();
-		}
 		current = coordinates;
-		if (doListeners) {
-			addNewListeners();
-		}
 		doSetProgram(current.getView());
-		doSetRecorder(current.getRecorder());
-		doTrackSpec();
-		doAutoReadMemory();
+		goToTrait.goToCoordinates(coordinates);
+		trackingTrait.goToCoordinates(coordinates);
+		readsMemTrait.goToCoordinates(coordinates);
+		locationLabel.goToCoordinates(coordinates);
 		contextChanged();
 	}
 

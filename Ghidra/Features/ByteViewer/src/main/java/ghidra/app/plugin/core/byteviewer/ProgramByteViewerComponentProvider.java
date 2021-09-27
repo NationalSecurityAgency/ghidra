@@ -68,10 +68,14 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 
 	private boolean disposed;
 
-	public ProgramByteViewerComponentProvider(PluginTool tool, ByteViewerPlugin plugin,
+	public ProgramByteViewerComponentProvider(PluginTool tool, AbstractByteViewerPlugin<?> plugin,
 			boolean isConnected) {
-		super(tool, plugin, "Bytes", ByteViewerActionContext.class);
+		this(tool, plugin, "Bytes", isConnected);
+	}
 
+	protected ProgramByteViewerComponentProvider(PluginTool tool,
+			AbstractByteViewerPlugin<?> plugin, String name, boolean isConnected) {
+		super(tool, plugin, name, ByteViewerActionContext.class);
 		this.isConnected = isConnected;
 		setIcon(ResourceManager.loadImage("images/binaryData.gif"));
 		if (!isConnected) {
@@ -215,7 +219,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		clipboardProvider.setPasteEnabled(enabled);
 	}
 
-	void doSetProgram(Program newProgram) {
+	protected void doSetProgram(Program newProgram) {
 		setOptionsAction.setEnabled(newProgram != null);
 		cloneByteViewerAction.setEnabled(newProgram != null);
 
@@ -239,7 +243,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		updateTitle();
 	}
 
-	private void updateTitle() {
+	protected void updateTitle() {
 		String title =
 			"Bytes: " + (program == null ? "No Program" : program.getDomainFile().getName());
 		if (!isConnected()) {
@@ -428,7 +432,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		return loc;
 	}
 
-	void setLocation(ProgramLocation location) {
+	protected void setLocation(ProgramLocation location) {
 		setLocation(location, false);
 	}
 
@@ -559,7 +563,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		}
 	}
 
-	private ProgramByteBlockSet getByteBlockSet(ByteBlockChangeManager changeManager) {
+	protected ProgramByteBlockSet newByteBlockSet(ByteBlockChangeManager changeManager) {
 		if (program == null) {
 			return null;
 		}
@@ -572,12 +576,12 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 			blockSet.dispose();
 		}
 
-		blockSet = getByteBlockSet(changeManager);
+		blockSet = newByteBlockSet(changeManager);
 		panel.setByteBlocks(blockSet);
 	}
 
 	@Override
-	void updateSelection(ByteBlockSelection selection) {
+	protected void updateSelection(ByteBlockSelection selection) {
 		ProgramSelectionPluginEvent event = blockSet.getPluginEvent(plugin.getName(), selection);
 		currentSelection = event.getSelection();
 		plugin.updateSelection(this, event, program);
@@ -586,7 +590,8 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	}
 
 	@Override
-	void updateLocation(ByteBlock block, BigInteger blockOffset, int column, boolean export) {
+	protected void updateLocation(ByteBlock block, BigInteger blockOffset, int column,
+			boolean export) {
 		ProgramLocationPluginEvent event =
 			blockSet.getPluginEvent(plugin.getName(), block, blockOffset, column);
 		currentLocation = event.getLocation();
@@ -595,7 +600,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		contextChanged();
 	}
 
-	void readDataState(SaveState saveState) {
+	protected void readDataState(SaveState saveState) {
 		unRegisterNavigatable();
 		initializeInstanceID(saveState.getLong("NAV_ID", getInstanceID()));
 		registerNavigatable();
@@ -632,10 +637,10 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 			return;
 		}
 		SaveState saveState = (SaveState) state;
-		blockSet.restoreUndoReoState(saveState);
+		blockSet.restoreUndoRedoState(saveState);
 	}
 
-	void writeDataState(SaveState saveState) {
+	protected void writeDataState(SaveState saveState) {
 		saveState.putLong("NAV_ID", getInstanceID());
 		ByteBlockInfo info = panel.getCursorLocation();
 		int blockNumber = -1;
@@ -708,6 +713,22 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		return dataFormatModels;
 	}
 
+	public void cloneWindow() {
+		ProgramByteViewerComponentProvider newProvider = plugin.createNewDisconnectedProvider();
+
+		SaveState saveState = new SaveState();
+		writeConfigState(saveState);
+		newProvider.readConfigState(saveState);
+
+		newProvider.doSetProgram(program);
+
+		newProvider.setLocation(currentLocation);
+		newProvider.setSelection(currentSelection, false);
+		newProvider.setHighlight(currentHighlight);
+		ViewerPosition viewerPosition = panel.getViewerPosition();
+		newProvider.panel.setViewerPosition(viewerPosition);
+	}
+
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
@@ -727,23 +748,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 
 		@Override
 		public void actionPerformed(ActionContext context) {
-			ProgramByteViewerComponentProvider newProvider =
-				new ProgramByteViewerComponentProvider(tool, plugin, false);
-
-			plugin.addProvider(newProvider);
-			SaveState saveState = new SaveState();
-			writeConfigState(saveState);
-			newProvider.readConfigState(saveState);
-
-			tool.showComponentProvider(newProvider, true);
-
-			newProvider.doSetProgram(program);
-
-			newProvider.setLocation(currentLocation);
-			newProvider.setSelection(currentSelection, false);
-			newProvider.setHighlight(currentHighlight);
-			ViewerPosition viewerPosition = panel.getViewerPosition();
-			newProvider.panel.setViewerPosition(viewerPosition);
+			cloneWindow();
 		}
 	}
 
