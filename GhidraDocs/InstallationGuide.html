@@ -31,6 +31,7 @@ future releases.
     <li><a href="#JavaNotes">Java Notes</a></li>
   </ul>
   <li><a href="#Layout">Ghidra Installation Directory Layout</a></li>
+  <li><a href="#Build">Building Ghidra Native Components</a></li>
   <li><a href="#Run">Running Ghidra</a></li>
   <ul>
     <li><a href="#RunGUI">GUI Mode</a></li>
@@ -296,6 +297,39 @@ is complete.</p>
     <td valign="top">Contains licenses used by Ghidra.</td>
   </tr>
 </table>
+<p>(<a href="#top">Back to Top</a>)</p>
+
+<h2><a name="Build"></a>Building Ghidra Native Components</h2>
+<p>Ghidra requires several native binaries to be present in order to successfully run.  An official
+Ghidra release includes native binaries for the following platforms:</p>
+<ul>
+  <li>Windows x86 64-bit</li>
+  <li>Linux x86 64-bit</li>
+  <li>macOS x86 64-bit</li>
+  <li>macOS ARM 64-bit (x86 using Rosetta translation)</li>
+</ul>
+<p>Ghidra supports running on the following additional platforms with user-built native binaries:
+</p>
+<ul>
+  <li>Linux ARM 64-bit</li>
+  <li>macOS ARM 64-bit (Apple silicon)</li>
+</ul>
+<p>In order to build native binaries for your platform, you will need the following installed on your
+system:</p>
+<ul>
+  <li>A <a href="#Requirements">supported</a> version of a Java Development Kit</li>
+  <li><a href="https://gradle.org/releases/">Gradle 6 or 7</a></li>
+  <li>make, gcc, and g++ (Linux/macOS-only)</li>
+  <li>
+    <a href="https://visualstudio.microsoft.com/vs/community/">Microsoft Visual Studio</a>
+    2017 or later (Windows-only)
+  </li>
+</ul>
+<p>To build the native binaries for your current platform, execute the following script:</p>
+<pre><blockquote><i>&lt;GhidraInstallDir&gt;</i>/support/buildNatives(.bat)</i></blockquote></pre>
+<p>When this script successfully completes, Ghidra will contain newly built native binaries in
+the relevant modules' <i>build/os/&lt;platform&gt;/</i> subdirectories, which will override any
+existing pre-built native binaries in the <i>os/&lt;platform&gt;/</i> subdirectories.</p> 
 <p>(<a href="#top">Back to Top</a>)</p>
 
 <h2><a name="Run"></a>Running Ghidra</h2>
