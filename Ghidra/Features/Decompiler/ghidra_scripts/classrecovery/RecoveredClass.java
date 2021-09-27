@@ -488,7 +488,8 @@ public class RecoveredClass {
 
 			int offset = newComponent.getOffset();
 
-			DataTypeComponent currentComponent = computedClassStructure.getComponentAt(offset);
+			DataTypeComponent currentComponent =
+				computedClassStructure.getComponentContaining(offset);
 			DataType currentComponentDataType = currentComponent.getDataType();
 
 			if (currentComponentDataType.equals(newComponentDataType)) {
