@@ -62,6 +62,9 @@ public interface Structure extends Composite {
 	 * <li>offset corresponds to a padding byte within a packed structure</li>
 	 * <li>offset is &gt;= structure length.</li>
 	 * </ul>
+	 * If a bitfield is returned, and the caller supports bitfields, it is recommended that 
+	 * {@link #getComponentsContaining(int)} be invoked to gather all bitfields which contain the 
+	 * specified offset.
 	 * 
 	 * @param offset the byte offset into this structure
 	 * @return the first non-zero-length component that contains the byte at the specified offset
@@ -80,12 +83,20 @@ public interface Structure extends Composite {
 	 * <li>offset is contained within a component but is not the starting offset of that component</li>
 	 * <li>offset is &gt;= structure length</li>
 	 * </ul>
+	 * If a bitfield is returned, and the caller supports bitfields, it is recommended that 
+	 * {@link #getComponentsContaining(int)} be invoked to gather all bitfields which contain the 
+	 * specified offset.
 	 * 
 	 * @param offset the byte offset into this structure
 	 * @return the first component that starts at specified offset or null if not found.
 	 */
 	public default DataTypeComponent getComponentAt(int offset) {
 		DataTypeComponent dtc = getComponentContaining(offset);
+		// scan forward with bitfields to find one which starts with offset
+		while (dtc != null && dtc.isBitFieldComponent() && dtc.getOffset() < offset &&
+			dtc.getOrdinal() < (getNumComponents() - 1)) {
+			dtc = getComponent(dtc.getOrdinal() + 1);
+		}
 		if (dtc != null && dtc.getOffset() == offset) {
 			return dtc;
 		}
