@@ -58,7 +58,7 @@ public interface Structure extends Composite {
 	 * component is present since these may share an offset.  A null may be returned under one of
 	 * the following conditions:
 	 * <ul>
-	 * <li>offset only corresponds to a zero-length component</li>
+	 * <li>offset only corresponds to a zero-length component within a packed structure</li>
 	 * <li>offset corresponds to a padding byte within a packed structure</li>
 	 * <li>offset is &gt;= structure length.</li>
 	 * </ul>
@@ -70,14 +70,14 @@ public interface Structure extends Composite {
 	public DataTypeComponent getComponentContaining(int offset);
 	
 	/**
-	 * Gets the first non-zero-length child component that starts at the specified offset. 
+	 * Gets the first non-zero-length component that starts at the specified offset. 
 	 * Note that one or more components may share the same offset when a bit-field or zero-length
 	 * component is present since these may share an offset.  A null may be returned under one of
 	 * the following conditions:
 	 * <ul>
-	 * <li>offset only corresponds to a zero-length component</li>
+	 * <li>offset only corresponds to a zero-length component within a packed structure</li>
 	 * <li>offset corresponds to a padding byte within a packed structure</li>
-	 * <li>offset corresponds to a component but is not the starting offset of that component</li>
+	 * <li>offset is contained within a component but is not the starting offset of that component</li>
 	 * <li>offset is &gt;= structure length</li>
 	 * </ul>
 	 * 
@@ -101,8 +101,7 @@ public interface Structure extends Composite {
 	 * zero-length components are present since these may share an offset. An empty list may be 
 	 * returned under the following conditions:
 	 * <ul>
-	 * <li>offset corresponds to a padding byte within a packed structure</li>
-	 * <li>offset corresponds to a component but is not the starting offset of that component</li>
+	 * <li>offset only corresponds to a padding byte within a packed structure</li>
 	 * <li>offset is equal structure length and no trailing zero-length components exist</li>
 	 * <li>offset is &gt; structure length</li>
 	 * </ul>
