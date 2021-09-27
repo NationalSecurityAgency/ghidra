@@ -82,7 +82,8 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			structLength = record.getIntValue(CompositeDBAdapter.COMPOSITE_LENGTH_COL);
 			structAlignment = record.getIntValue(CompositeDBAdapter.COMPOSITE_ALIGNMENT_COL);
 			computedAlignment = -1;
-			numComponents = record.getIntValue(CompositeDBAdapter.COMPOSITE_NUM_COMPONENTS_COL);
+			numComponents = isPackingEnabled() ? components.size()
+					: record.getIntValue(CompositeDBAdapter.COMPOSITE_NUM_COMPONENTS_COL);
 
 			if (oldFlexArrayRecord != null) {
 				migrateOldFlexArray(oldFlexArrayRecord);
@@ -205,7 +206,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			DataTypeComponentDB dtc = null;
 			try {
 				if (dataType == DataType.DEFAULT) {
-					// Structre will grow by 1-byte below (ignored by packed structure)
+					// assume non-packed structure - structre will grow by 1-byte below
 					dtc = new DataTypeComponentDB(dataMgr, this, numComponents, structLength);
 				}
 				else {
@@ -262,8 +263,8 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	}
 
 	private void doGrowStructure(int amount) {
-		if (!isPackingEnabled()) {
-			numComponents += amount;
+		if (isPackingEnabled()) {
+			throw new AssertException("only valid for non-packed");
 		}
 		record.setIntValue(CompositeDBAdapter.COMPOSITE_NUM_COMPONENTS_COL, numComponents);
 		structLength += amount;
@@ -2315,7 +2316,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				StructurePackResult packResult =
 					AlignedStructurePacker.packComponents(this, components);
 				changed = packResult.componentsChanged;
-				changed |= updateComposite(packResult.numComponents, packResult.structureLength,
+				changed |= updateComposite(components.size(), packResult.structureLength,
 					packResult.alignment, !isAutoChange);
 			}
 			

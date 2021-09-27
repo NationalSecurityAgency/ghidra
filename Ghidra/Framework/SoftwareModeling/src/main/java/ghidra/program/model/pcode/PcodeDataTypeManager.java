@@ -594,18 +594,16 @@ public class PcodeDataTypeManager {
 			appendNameIdAttributes(resBuf, type);
 			if (sz < 16) {
 				SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "unknown");
-				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
-				resBuf.append('>');
 			}
 			else {
 				// Build an "opaque" structure with no fields
 				SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "struct");
-				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
-				if (isVarLength) {
-					SpecXmlUtils.encodeBooleanAttribute(resBuf, "varlength", isVarLength);
-				}
-				resBuf.append('>');
 			}
+			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
+			if (isVarLength) {
+				SpecXmlUtils.encodeBooleanAttribute(resBuf, "varlength", true);
+			}
+			resBuf.append('>');
 		}
 		resBuf.append("</type>");
 		return resBuf.toString();
