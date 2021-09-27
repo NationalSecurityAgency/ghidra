@@ -352,6 +352,15 @@ task assembleDistribution (type: Copy) {
 	from (ROOT_PROJECT_DIR + "/GhidraBuild/patch") {
 		into "Ghidra/patch"
 	}
+	
+	/////////////////////////////////
+	// Distro native build support
+	/////////////////////////////////
+	from (ROOT_PROJECT_DIR + "/GPL") {
+		include "settings.gradle"
+		into "Ghidra"
+	}
+
 }
 
 /*********************************************************************************

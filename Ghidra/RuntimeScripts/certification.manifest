@@ -14,6 +14,7 @@ Linux/server/svrInstall||GHIDRA||||END|
 Linux/server/svrUninstall||GHIDRA||||END|
 Linux/support/analyzeHeadless||GHIDRA||||END|
 Linux/support/buildGhidraJar||GHIDRA||||END|
+Linux/support/buildNatives||GHIDRA||||END|
 Linux/support/convertStorage||GHIDRA||||END|
 Linux/support/ghidraDebug||GHIDRA||||END|
 Linux/support/pythonRun||GHIDRA||||END|
@@ -26,6 +27,7 @@ Windows/server/svrUninstall.bat||GHIDRA||||END|
 Windows/support/README_createPdbXmlFiles.txt||GHIDRA||||END|
 Windows/support/analyzeHeadless.bat||GHIDRA||||END|
 Windows/support/buildGhidraJar.bat||GHIDRA||||END|
+Windows/support/buildNatives.bat||GHIDRA||||END|
 Windows/support/convertStorage.bat||GHIDRA||||END|
 Windows/support/createPdbXmlFiles.bat||GHIDRA||||END|
 Windows/support/ghidra.ico||GHIDRA||||END|
