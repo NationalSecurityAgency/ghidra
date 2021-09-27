@@ -63,13 +63,13 @@ public class ToolTipUtils {
 	}
 
 	/**
-	 * Examines the give <code>dataType</code> and creates a tool tip for it, 
+	 * Examines the give <code>dataType</code> and creates a tool tip for it,
 	 * depending upon its actual class type.
 	 * 
 	 * <P>Note: the text returned here will be truncated as needed for the type of data.  To
 	 * get the full tool tip text, use {@link #getFullToolTipText(DataType)}.
 	 * 
-	 * @param  dataType The data type from which a tool tip will be 
+	 * @param  dataType The data type from which a tool tip will be
 	 *         created.
 	 * @return tool tip text for the given data type.
 	 */
@@ -78,14 +78,14 @@ public class ToolTipUtils {
 	}
 
 	/**
-	 * Examines the give <code>dataType</code> and creates a tool tip for it, 
+	 * Examines the give <code>dataType</code> and creates a tool tip for it,
 	 * depending upon its actual class type.
 	 * 
 	 * <P>Note: the text returned here will not be truncated.  This can result in tool tip windows
 	 * that are too large to fit in the screen.  For truncated tool tip text, use
 	 * {@link #getToolTipText(DataType)}.
 	 * 
-	 * @param  dataType The data type from which a tool tip will be 
+	 * @param  dataType The data type from which a tool tip will be
 	 *         created.
 	 * @return tool tip text for the given data type.
 	 */
@@ -238,7 +238,7 @@ public class ToolTipUtils {
 		int length = type.length() + 1 + name.length();
 
 		//
-		// Bound the max width of the tooltip 
+		// Bound the max width of the tooltip
 		//
 		if (length > PARAM_MAX_CHAR_LENGTH) {
 			int half = PARAM_MAX_CHAR_LENGTH / 2;
@@ -260,9 +260,15 @@ public class ToolTipUtils {
 		buf.append("<td width=\"1%\">");
 		buf.append(colorString(Color.BLACK, friendlyEncodeHTML(type)));
 		buf.append("</td><td width=\"1%\">");
+
+		boolean usesCustomStorage = false;
+		Function function = param.getFunction();
+		if (function != null) {
+			usesCustomStorage = function.hasCustomVariableStorage();
+		}
+
 		Color paramColor =
-			param.getFunction().hasCustomVariableStorage() ? PARAM_CUSTOM_STORAGE_COLOR
-					: PARAM_DYNAMIC_STORAGE_COLOR;
+			usesCustomStorage ? PARAM_CUSTOM_STORAGE_COLOR : PARAM_DYNAMIC_STORAGE_COLOR;
 		buf.append(
 			colorString(paramColor, friendlyEncodeHTML(param.getVariableStorage().toString())));
 		buf.append("</td><td width=\"1%\">");
@@ -279,9 +285,9 @@ public class ToolTipUtils {
 		 * streamed directly to the output buffer.
 		 * 
 		 *  Parameters are encoded into individual strings, and a non-HTML length is tallied
-		 *  as each parameter is processed. If the non-HTML length exceeds 
+		 *  as each parameter is processed. If the non-HTML length exceeds
 		 *  PARAM_LENGTH_WRAP_THRESHOLD, the parameter strings are streamed into an HTML table
-		 *  for pretty-printing; otherwise, they are merged into one string and emitted.  
+		 *  for pretty-printing; otherwise, they are merged into one string and emitted.
 		 */
 
 		StringBuilder buffy = new StringBuilder();
@@ -377,7 +383,7 @@ public class ToolTipUtils {
 		int rawTextLength = length;
 
 		//
-		// Bound the max width of the tooltip 
+		// Bound the max width of the tooltip
 		//
 		if (length > PARAM_MAX_CHAR_LENGTH) {
 			int half = PARAM_MAX_CHAR_LENGTH / 2;
