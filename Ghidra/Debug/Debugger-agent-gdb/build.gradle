@@ -26,7 +26,7 @@ dependencies {
 	api project(':Framework-AsyncComm')
 	api project(':Framework-Debugging')
 	api project(':Debugger-gadp')
-	api 'org.python:jython-standalone:2.7.1'
+	api project(':Python')
 
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
