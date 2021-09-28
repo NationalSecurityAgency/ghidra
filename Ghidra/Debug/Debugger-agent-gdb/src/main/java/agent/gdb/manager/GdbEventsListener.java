@@ -80,7 +80,8 @@ public interface GdbEventsListener {
 	 * @param reason the reason for the state change
 	 */
 	void inferiorStateChanged(GdbInferior inf, Collection<GdbThread> threads, GdbState state,
-			GdbThread thread, GdbCause cause, GdbReason reason);
+			GdbThread thread,
+			GdbCause cause, GdbReason reason);
 
 	/**
 	 * A thread has been created
@@ -165,10 +166,11 @@ public interface GdbEventsListener {
 	void breakpointDeleted(GdbBreakpointInfo info, GdbCause cause);
 
 	/**
-	 * TODO: This is not yet implemented
+	 * The user has changed the target memory
 	 * 
-	 * It is not clear whether GDB detects when a target writes into its own memory, or if this
-	 * event is emitted when GDB changes the target's memory, or both.
+	 * <p>
+	 * This event is emitted only when GDB changes the target's memory, usually because of a user
+	 * command. It does not get emitted when the target changes its own memory.
 	 * 
 	 * @param inferior the inferior whose memory changed
 	 * @param addr the address of the change
@@ -176,4 +178,20 @@ public interface GdbEventsListener {
 	 * @param cause the cause of this event
 	 */
 	void memoryChanged(GdbInferior inferior, long addr, int len, GdbCause cause);
+
+	/**
+	 * The user has changed a GDB parameter, typically via a {@code set} command
+	 * 
+	 * <p>
+	 * Unfortunately, this does not detect the real value of "{@code auto}"-valued parameters. For
+	 * example, If the user types {@code set arch auto}, this will report the change of "arch" to
+	 * "auto." However, suppose the user then types {@code file echo}, referring to an x86-64
+	 * executable. This will <em>not</em> report the arch automatically detected by GDB. It's still
+	 * just "auto."
+	 * 
+	 * @param param the name of the parameter whose value changed
+	 * @param value the new value of the parameter
+	 * @param cause the cause of this event
+	 */
+	void paramChanged(String param, String value, GdbCause cause);
 }
