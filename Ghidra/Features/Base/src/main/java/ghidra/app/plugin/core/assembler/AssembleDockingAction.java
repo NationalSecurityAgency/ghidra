@@ -67,7 +67,7 @@ public class AssembleDockingAction extends DockingAction {
 	private FieldPanel codepane;
 	private ListingPanel listpane;
 	private Map<Language, CachingSwingWorker<Assembler>> cache =
-		LazyMap.lazyMap(new HashMap<>(), (Language lang) -> new AssemblerConstructorWorker(lang));
+		LazyMap.lazyMap(new HashMap<>(), language -> new AssemblerConstructorWorker(language));
 
 	private Map<Language, Boolean> shownWarning = DefaultedMap.defaultedMap(new HashMap<>(), false);
 
@@ -153,9 +153,6 @@ public class AssembleDockingAction extends DockingAction {
 		}
 	}
 
-	/**
-	 * Create the action, allocating its resources and settings its default menu and key data
-	 */
 	public AssembleDockingAction(PluginTool tool, String name, String owner) {
 		this(name, owner);
 		//this.tool = tool;
@@ -189,20 +186,23 @@ public class AssembleDockingAction extends DockingAction {
 
 	protected void prepareLayout(ActionContext context) {
 		ComponentProvider prov = context.getComponentProvider();
-		if (cv != prov) {
-			if (cv != null) {
-				codepane.setLayout(null);
-				fieldLayoutManager.removeLayoutListener(autoCompleteMover);
-			}
-
-			cv = (CodeViewerProvider) prov;
-			listpane = cv.getListingPanel();
-			codepane = listpane.getFieldPanel();
-
-			fieldLayoutManager = new FieldPanelOverLayoutManager(codepane);
-			codepane.setLayout(fieldLayoutManager);
-			fieldLayoutManager.addLayoutListener(autoCompleteMover);
+		if (cv == prov) {
+			return;
 		}
+
+		if (cv != null) {
+			codepane.setLayout(null);
+			fieldLayoutManager.removeLayoutListener(autoCompleteMover);
+		}
+
+		// we are only added to the popup for a ListingActionContext that has a CodeViewerProvider
+		cv = (CodeViewerProvider) prov;
+		listpane = cv.getListingPanel();
+		codepane = listpane.getFieldPanel();
+
+		fieldLayoutManager = new FieldPanelOverLayoutManager(codepane);
+		codepane.setLayout(fieldLayoutManager);
+		fieldLayoutManager.addLayoutListener(autoCompleteMover);
 	}
 
 	/**
@@ -227,14 +227,14 @@ public class AssembleDockingAction extends DockingAction {
 	 * Retrieve the location in the code viewer's {@link FieldPanel} for the field at the given
 	 * address having the given header text
 	 * 
-	 * @param addr the address
+	 * @param address the address
 	 * @param fieldName the name of the field
 	 * @return if found, the {@link FieldLocation}, otherwise {@code null}
 	 */
-	protected FieldLocation findFieldLocation(Address addr, String fieldName) {
-		Layout layout = listpane.getLayout(addr);
+	protected FieldLocation findFieldLocation(Address address, String fieldName) {
+		Layout layout = listpane.getLayout(address);
 		ListingModelAdapter adapter = (ListingModelAdapter) codepane.getLayoutModel();
-		BigInteger index = adapter.getAddressIndexMap().getIndex(addr);
+		BigInteger index = adapter.getAddressIndexMap().getIndex(address);
 		int count = layout.getNumFields();
 		for (int i = 0; i < count; i++) {
 			ListingField field = (ListingField) layout.getField(i);
@@ -368,18 +368,20 @@ public class AssembleDockingAction extends DockingAction {
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
 
-		// currently only works on a listing
+		// currently only works on a listing that has a CodeViewerProvider
 		if (!(context instanceof ListingActionContext)) {
 			return false;
 		}
 
 		ListingActionContext lac = (ListingActionContext) context;
 		ComponentProvider cp = lac.getComponentProvider();
-		if (cp instanceof CodeViewerProvider) {
-			CodeViewerProvider cv = (CodeViewerProvider) cp;
-			if (cv.isReadOnly()) {
-				return false;
-			}
+		if (!(cp instanceof CodeViewerProvider)) {
+			return false;
+		}
+
+		CodeViewerProvider codeViewer = (CodeViewerProvider) cp;
+		if (codeViewer.isReadOnly()) {
+			return false;
 		}
 
 		Program program = lac.getProgram();
