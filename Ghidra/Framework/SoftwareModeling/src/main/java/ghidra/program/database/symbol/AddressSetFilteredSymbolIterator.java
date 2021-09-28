@@ -20,26 +20,21 @@ import java.util.Iterator;
 
 import db.DBRecord;
 import db.RecordIterator;
-import ghidra.program.database.util.Query;
-import ghidra.program.database.util.QueryRecordIterator;
-import ghidra.program.model.address.*;
+import ghidra.program.database.util.*;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolIterator;
 
 /**
  *
- * Iterator (in address order) over primary symbols in an address set.
+ * Iterator (in address order) over all symbols that match the given query in an address set.
  * 
  * 
  */
 class AddressSetFilteredSymbolIterator implements SymbolIterator {
 	private SymbolManager symbolMgr;
-	private AddressRangeIterator rangeIter;
 	private QueryRecordIterator recIter;
-	private Symbol currentSymbol;
 	private SymbolDatabaseAdapter adapter;
-	private boolean forward;
-	private Query query;
 
 	/**
 	 * Construct a new AddressSetFilteredSymbolIterator.
@@ -51,53 +46,40 @@ class AddressSetFilteredSymbolIterator implements SymbolIterator {
 	AddressSetFilteredSymbolIterator(SymbolManager symbolMgr, AddressSetView set, Query query,
 			boolean forward) {
 		this.symbolMgr = symbolMgr;
-		rangeIter = set.getAddressRanges(forward);
 		adapter = symbolMgr.getDatabaseAdapter();
-		this.forward = forward;
-		this.query = query;
+		try {
+			RecordIterator it = adapter.getSymbols(set, forward);
+			recIter = new QueryRecordIterator(it, query, forward);
+		}
+		catch (IOException e) {
+			symbolMgr.dbError(e);
+			recIter = new QueryRecordIterator(new EmptyRecordIterator(), query, forward);
+		}
 	}
 
 	@Override
 	public boolean hasNext() {
-		if (currentSymbol == null) {
-			try {
-				findNext();
-			}
-			catch (IOException e) {
-				symbolMgr.dbError(e);
-			}
+		try {
+			return recIter.hasNext();
 		}
-		return currentSymbol != null;
+		catch (IOException e) {
+			symbolMgr.dbError(e);
+		}
+		return false;
 	}
 
 	@Override
 	public Symbol next() {
 		if (hasNext()) {
-			Symbol s = currentSymbol;
-			currentSymbol = null;
-			return s;
-		}
-		return null;
-	}
-
-	private void findNext() throws IOException {
-		if (recIter != null && recIter.hasNext()) {
-			DBRecord rec = recIter.next();
-			currentSymbol = symbolMgr.getSymbol(rec);
-		}
-		else {
-			while (rangeIter.hasNext()) {
-				AddressRange range = rangeIter.next();
-				RecordIterator it =
-					adapter.getSymbols(range.getMinAddress(), range.getMaxAddress(), forward);
-				recIter = new QueryRecordIterator(it, query, forward);
-				if (recIter.hasNext()) {
-					DBRecord rec = recIter.next();
-					currentSymbol = symbolMgr.getSymbol(rec);
-					break;
-				}
+			try {
+				DBRecord rec = recIter.next();
+				return symbolMgr.getSymbol(rec);
+			}
+			catch (IOException e) {
+				symbolMgr.dbError(e);
 			}
 		}
+		return null;
 	}
 
 	@Override

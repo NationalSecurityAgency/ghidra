@@ -56,7 +56,7 @@ class IndexField extends Field {
 	}
 
 	@Override
-	boolean isNull() {
+	public boolean isNull() {
 		return false; // not-applicable
 	}
 

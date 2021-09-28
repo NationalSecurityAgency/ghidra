@@ -47,7 +47,7 @@ abstract class FixedField extends BinaryField {
 	}
 
 	@Override
-	final boolean isNull() {
+	public final boolean isNull() {
 		return isNull;
 	}
 

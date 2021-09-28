@@ -16,10 +16,10 @@
 package ghidra.program.database.symbol;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import db.DBRecord;
+import db.Field;
 import ghidra.program.database.*;
 import ghidra.program.database.external.ExternalLocationDB;
 import ghidra.program.database.external.ExternalManagerDB;
@@ -141,21 +141,25 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	 * @param newAddress the new address for the symbol
 	 * @param newName the new name for the symbol (or null if the name should stay the same)
 	 * @param newNamespace the new namespace for the symbol (or null if it should stay the same)
-	 * @param newSource 
+	 * @param newSource the new SourceType for the symbol (or null if it should stay the same)
+	 * @param pinned the new pinned state
 	 */
 	protected void moveLowLevel(Address newAddress, String newName, Namespace newNamespace,
 			SourceType newSource, boolean pinned) {
 		lock.acquire();
 		try {
 			checkDeleted();
-			Address oldAddress = address;
-			record.setLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL,
-				symbolMgr.getAddressMap().getKey(newAddress, true));
+
+			// update the address to the new location
+			long newAddressKey = symbolMgr.getAddressMap().getKey(newAddress, true);
+			record.setLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL, newAddressKey);
+
+			// if the primary field is set, be sure to update it to the new address as well
+			if (record.getFieldValue(SymbolDatabaseAdapter.SYMBOL_PRIMARY_COL) != null) {
+				record.setLongValue(SymbolDatabaseAdapter.SYMBOL_PRIMARY_COL, newAddressKey);
+			}
 			if (newName != null) {
 				record.setString(SymbolDatabaseAdapter.SYMBOL_NAME_COL, newName);
-				if (newName.length() == 0) {
-					setSourceFlagBit(SourceType.DEFAULT);
-				}
 			}
 			if (newNamespace != null) {
 				record.setLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_COL, newNamespace.getID());
@@ -793,32 +797,42 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		}
 	}
 
-	public String getSymbolData3() {
+	/**
+	 * Returns the symbol's string data which has different meanings depending on the symbol type
+	 * and whether or not it is external
+	 * @return the symbol's string data
+	 */
+	public String getSymbolStringData() {
 		lock.acquire();
 		try {
 			checkIsValid();
 			if (record == null) {
 				return null;
 			}
-			return record.getString(SymbolDatabaseAdapter.SYMBOL_DATA3_COL);
+			return record.getString(SymbolDatabaseAdapter.SYMBOL_STRING_DATA_COL);
 		}
 		finally {
 			lock.release();
 		}
 	}
 
-	public void setSymbolData3(String data3) {
+	/**
+	 * Sets the symbol's string data field. This field's data has different uses depending on the 
+	 * symbol type and whether or not it is external. 
+	 * @param stringData the string to store in the string data field
+	 */
+	public void setSymbolStringData(String stringData) {
 		lock.acquire();
 		try {
 			checkDeleted();
 			if (record == null) {
 				return;
 			}
-			String oldData = record.getString(SymbolDatabaseAdapter.SYMBOL_DATA3_COL);
-			if (SystemUtilities.isEqual(data3, oldData)) {
+			String oldData = record.getString(SymbolDatabaseAdapter.SYMBOL_STRING_DATA_COL);
+			if (Objects.equals(stringData, oldData)) {
 				return;
 			}
-			record.setString(SymbolDatabaseAdapter.SYMBOL_DATA3_COL, data3);
+			record.setString(SymbolDatabaseAdapter.SYMBOL_STRING_DATA_COL, stringData);
 			updateRecord();
 			symbolMgr.symbolDataChanged(this);
 		}
@@ -836,14 +850,18 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		}
 	}
 
-	public long getSymbolData1() {
+	public long getDataTypeId() {
 		lock.acquire();
 		try {
 			checkIsValid();
 			if (record != null) {
-				return record.getLongValue(SymbolDatabaseAdapter.SYMBOL_DATA1_COL);
+				Field value = record.getFieldValue(SymbolDatabaseAdapter.SYMBOL_DATATYPE_COL);
+				if (value.isNull()) {
+					return -1;
+				}
+				return value.getLongValue();
 			}
-			return 0;
+			return -1;
 		}
 		finally {
 			lock.release();
@@ -854,12 +872,12 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	 * Sets the generic symbol data 1.
 	 * @param value the value to set as symbol data 1.
 	 */
-	public void setSymbolData1(long value) {
+	public void setDataTypeId(long value) {
 		lock.acquire();
 		try {
 			checkDeleted();
 			if (record != null) {
-				record.setLongValue(SymbolDatabaseAdapter.SYMBOL_DATA1_COL, value);
+				record.setLongValue(SymbolDatabaseAdapter.SYMBOL_DATATYPE_COL, value);
 				updateRecord();
 				symbolMgr.symbolDataChanged(this);
 			}
@@ -873,12 +891,12 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	 * gets the generic symbol data 2 data.
 	 * @return the symbol data
 	 */
-	public int getSymbolData2() {
+	protected int getVariableOffset() {
 		lock.acquire();
 		try {
 			checkIsValid();
 			if (record != null) {
-				return record.getIntValue(SymbolDatabaseAdapter.SYMBOL_DATA2_COL);
+				return record.getIntValue(SymbolDatabaseAdapter.SYMBOL_VAROFFSET_COL);
 			}
 			return 0;
 		}
@@ -888,18 +906,55 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	/**
-	 * Sets the generic symbol data 2 data
-	 * @param value the value to set as the symbols data 2 value.
+	 * Sets the symbol's variable offset. For parameters, this is the ordinal, for locals, it is 
+	 * the first use offset
+	 * @param offset the value to set as the symbols variable offset. 
 	 */
-	public void setSymbolData2(int value) {
+	public void setVariableOffset(int offset) {
 		lock.acquire();
 		try {
 			checkDeleted();
 			if (record != null) {
-				record.setIntValue(SymbolDatabaseAdapter.SYMBOL_DATA2_COL, value);
+				record.setIntValue(SymbolDatabaseAdapter.SYMBOL_VAROFFSET_COL, offset);
 				updateRecord();
 				symbolMgr.symbolDataChanged(this);
 			}
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	protected void doSetPrimary(boolean primary) {
+		lock.acquire();
+		try {
+			checkDeleted();
+			if (record != null) {
+				if (primary) {
+					long addrKey = record.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL);
+					record.setLongValue(SymbolDatabaseAdapter.SYMBOL_PRIMARY_COL, addrKey);
+				}
+				else {
+					record.setField(SymbolDatabaseAdapter.SYMBOL_PRIMARY_COL, null);
+				}
+				updateRecord();
+				symbolMgr.symbolDataChanged(this);
+			}
+		}
+		finally {
+			lock.release();
+		}
+
+	}
+
+	protected boolean doCheckIsPrimary() {
+		lock.acquire();
+		try {
+			checkIsValid();
+			if (record != null) {
+				return !record.getFieldValue(SymbolDatabaseAdapter.SYMBOL_PRIMARY_COL).isNull();
+			}
+			return false;
 		}
 		finally {
 			lock.release();
