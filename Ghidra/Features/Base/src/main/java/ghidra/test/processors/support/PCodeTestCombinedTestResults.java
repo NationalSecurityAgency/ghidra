@@ -101,8 +101,9 @@ public class PCodeTestCombinedTestResults {
 		Element root = new Element("PCODE_TESTS");
 		root.setAttribute("VERSION", XML_VERSION);
 
-		for (String name : combinedResults.keySet()) {
-			PCodeTestResults testResults = combinedResults.get(name);
+		for (Map.Entry<String, PCodeTestResults> combinedResultsEntry : combinedResults.entrySet()) {
+			String name = combinedResultsEntry.getKey();
+			PCodeTestResults testResults = combinedResultsEntry.getValue();
 			root.addContent(testResults.saveToXml());
 		}
 

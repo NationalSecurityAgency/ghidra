@@ -990,8 +990,9 @@ public class ProgramMerge implements PropertyVisitor {
 	 *
 	 */
 	void reApplyDuplicateEquates() {
-		for (String conflictName : dupEquates.keySet()) {
-			DupEquate dupEquate = dupEquates.get(conflictName);
+		for (Map.Entry<String, DupEquate> dupEquatesEntry : dupEquates.entrySet()) {
+			String conflictName = dupEquatesEntry.getKey();
+			DupEquate dupEquate = dupEquatesEntry.getValue();
 			Equate equate = dupEquate.equate;
 			String desiredName = dupEquate.preferredName;
 			try {
@@ -1023,9 +1024,10 @@ public class ProgramMerge implements PropertyVisitor {
 	 *
 	 */
 	String getDuplicateEquatesInfo() {
-		StringBuffer buf = new StringBuffer();
-		for (String conflictName : dupEquates.keySet()) {
-			DupEquate dupEquate = dupEquates.get(conflictName);
+		StringBuilder buf = new StringBuilder();
+		for (Map.Entry<String, DupEquate> dupEquatesEntry : dupEquates.entrySet()) {
+			String conflictName = dupEquatesEntry.getKey();
+			DupEquate dupEquate = dupEquatesEntry.getValue();
 			Equate equate = dupEquate.equate;
 			String desiredName = dupEquate.preferredName;
 			String msg = "Equate '" + desiredName + "' with value of " + equate.getValue() +
@@ -1234,8 +1236,9 @@ public class ProgramMerge implements PropertyVisitor {
 			originToResultMap.put(origRef, resultRef);
 		}
 		// Add the references that aren't there yet and those that weren't the same.
-		for (Reference originRef : originToResultMap.keySet()) {
-			Reference resultRef = originToResultMap.get(originRef);
+		for (Map.Entry<Reference, Reference> originToResultMapEntry : originToResultMap.entrySet()) {
+			Reference originRef = originToResultMapEntry.getKey();
+			Reference resultRef = originToResultMapEntry.getValue();
 			// Leave fallthroughs as they are, so the code unit merge can handle them.
 			if (originRef.getReferenceType().isFallthrough()) {
 				continue;
@@ -1267,8 +1270,9 @@ public class ProgramMerge implements PropertyVisitor {
 			}
 		}
 		// Add the references that aren't there yet and those that weren't the same.
-		for (Reference originRef : resultsToKeep.keySet()) {
-			Reference resultRef = resultsToKeep.get(originRef);
+		for (Map.Entry<Reference, Reference> resultsToKeepEntry : resultsToKeep.entrySet()) {
+			Reference originRef = resultsToKeepEntry.getKey();
+			Reference resultRef = resultsToKeepEntry.getValue();
 			replaceReference(resultRef, originRef);
 		}
 	}

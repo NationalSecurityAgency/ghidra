@@ -252,8 +252,9 @@ public class NormalizedAddressSet implements AddressSetView {
 	public int getNumAddressRanges() {
 		int n = 0;
 
-		for (long key : baseLists.keySet()) {
-			SortedRangeList list = baseLists.get(key);
+		for (Map.Entry<long, SortedRangeList> baseListsEntry : baseLists.entrySet()) {
+			long key = baseListsEntry.getKey();
+			SortedRangeList list = baseListsEntry.getValue();
 			n += list.getNumRanges();
 		}
 		return n;
@@ -286,8 +287,9 @@ public class NormalizedAddressSet implements AddressSetView {
 	@Override
 	public long getNumAddresses() {
 		long n = 0;
-		for (long key : baseLists.keySet()) {
-			SortedRangeList list = baseLists.get(key);
+		for (Map.Entry<long, SortedRangeList> baseListsEntry : baseLists.entrySet()) {
+			long key = baseListsEntry.getKey();
+			SortedRangeList list = baseListsEntry.getValue();
 			n += list.getNumValues();
 		}
 		return n;

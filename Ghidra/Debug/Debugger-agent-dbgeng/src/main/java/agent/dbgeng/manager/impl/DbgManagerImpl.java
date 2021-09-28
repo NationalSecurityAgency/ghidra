@@ -176,8 +176,9 @@ public class DbgManagerImpl implements DbgManager {
 				throw new IllegalArgumentException("There is no process with id " + id);
 			}
 			Set<DebugThreadId> toRemove = new HashSet<>();
-			for (DebugThreadId tid : threads.keySet()) {
-				DbgThreadImpl thread = threads.get(tid);
+			for (Map.Entry<DebugThreadId, DbgThreadImpl> threadsEntry : threads.entrySet()) {
+				DebugThreadId tid = threadsEntry.getKey();
+				DbgThreadImpl thread = threadsEntry.getValue();
 				if (thread.getProcess().getId().equals(id)) {
 					toRemove.add(tid);
 				}

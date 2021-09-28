@@ -445,8 +445,9 @@ public class Table {
 					"Table record count inconsistent: iterator-count=" + actualCount +
 						" stored-count=" + getRecordCount());
 			}
-			for (int indexCol : missingIndexRecMap.keySet()) {
-				int missing = missingIndexRecMap.get(indexCol);
+			for (Map.Entry<int, int> missingIndexRecMapEntry : missingIndexRecMap.entrySet()) {
+				int indexCol = missingIndexRecMapEntry.getKey();
+				int missing = missingIndexRecMapEntry.getValue();
 				logIndexConsistencyError(schema.getFieldNames()[indexCol],
 					"Index is missing " + missing + " record references");
 			}

@@ -385,8 +385,9 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 
 		// update all other registers values in current state
 		if (futureStateMap != null) {
-			for (Register register : futureStateMap.keySet()) {
-				RegisterValue futureValue = futureStateMap.get(register);
+			for (Map.Entry<Register, RegisterValue> futureStateMapEntry : futureStateMap.entrySet()) {
+				Register register = futureStateMapEntry.getKey();
+				RegisterValue futureValue = futureStateMapEntry.getValue();
 				RegisterValue currentValue = registerStateMap.get(register);
 				if (currentValue != null) {
 					futureValue = currentValue.combineValues(futureValue);

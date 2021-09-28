@@ -48,8 +48,9 @@ public class ObjectElementRow {
 		if (map == null) {
 			return keys;
 		}
-		for (String key : map.keySet()) {
-			Object value = map.get(key);
+		for (Map.Entry<String, Object> mapEntry : map.entrySet()) {
+			String key = mapEntry.getKey();
+			Object value = mapEntry.getValue();
 			if (value instanceof TargetObject) {
 				TargetObject t = (TargetObject) value;
 				if (!(t instanceof TargetMethod)) {

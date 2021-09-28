@@ -18,6 +18,7 @@ package help.validator;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.Map.Entry;
 
 import generic.jar.ResourceFile;
@@ -299,7 +300,7 @@ public class JavaHelpValidator {
 		// -Found file, can't find internal anchor
 		// -Found file (and anchor if present), but module is an illegal dependency
 
-		Set<InvalidLink> remainingInvalidLinks = new TreeSet<>();
+		Set<InvalidLink> remainingInvalidLinks = new ConcurrentSkipListSet<>();
 		for (Iterator<InvalidLink> iterator = unresolvedLinks.iterator(); iterator.hasNext();) {
 			InvalidLink link = iterator.next();
 			if (!(link instanceof InvalidHREFLink)) {
@@ -328,7 +329,7 @@ public class JavaHelpValidator {
 		// Link resolution issues:
 		// -Can't find file
 		// -Found file, but module is an illegal dependency
-		Set<InvalidLink> remainingInvalidLinks = new TreeSet<>();
+		Set<InvalidLink> remainingInvalidLinks = new ConcurrentSkipListSet<>();
 		for (InvalidLink link : unresolvedLinks) {
 			if (link instanceof NonExistentIMGFileInvalidLink) {
 				remainingInvalidLinks.add(link);

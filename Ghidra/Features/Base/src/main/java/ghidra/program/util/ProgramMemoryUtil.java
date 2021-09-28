@@ -16,6 +16,7 @@
 package ghidra.program.util;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import ghidra.app.plugin.core.analysis.ReferenceAddressPair;
 import ghidra.program.model.address.*;
@@ -498,7 +499,7 @@ public class ProgramMemoryUtil {
 		byte[] shiftedAddressBytes = getShiftedDirectAddressBytes(program, toAddress);
 
 		Memory memory = program.getMemory();
-		Set<Address> dirRefsAddrs = new TreeSet<>();
+		Set<Address> dirRefsAddrs = new ConcurrentSkipListSet<>();
 		findBytePattern(memory, blocks, addressBytes, alignment, dirRefsAddrs, monitor);
 
 		if (shiftedAddressBytes != null) { // assume shifted address not supported with segmented memory
@@ -649,7 +650,7 @@ public class ProgramMemoryUtil {
 			offsetValue >>= 8; // Shift by a single byte.
 		}
 
-		Set<Address> iboRefsAddrs = new TreeSet<>();
+		Set<Address> iboRefsAddrs = new ConcurrentSkipListSet<>();
 
 		findBytePattern(memory, (AddressRange) null, bytes, alignment, iboRefsAddrs, monitor);
 

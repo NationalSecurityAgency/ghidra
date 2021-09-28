@@ -16,6 +16,7 @@
 package ghidra.app.plugin.assembler.sleigh.symbol;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyGrammar;
 import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParser;
@@ -265,7 +266,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 
 	@Override
 	public Collection<String> getSuggestions(String got, Map<String, Long> labels) {
-		Set<String> s = new TreeSet<>(suggestions);
+		Set<String> s = new ConcurrentSkipListSet<>(suggestions);
 		int labelcount = 0;
 		for (String label : labels.keySet()) {
 			if (labelcount >= MAX_LABEL_SUGGESTIONS) {

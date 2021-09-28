@@ -195,8 +195,9 @@ public class ClipboardPanel extends JPanel {
 		MatchAction[] actions = new MatchAction[1 + regsToValues.size()];
 		actions[0] = funcStartAnalyzer.new FunctionStartAction();
 		int matchIndex = 1;
-		for (String register : regsToValues.keySet()) {
-			BigInteger value = regsToValues.get(register);
+		for (Map.Entry<String, BigInteger> regsToValuesEntry : regsToValues.entrySet()) {
+			String register = regsToValuesEntry.getKey();
+			BigInteger value = regsToValuesEntry.getValue();
 			actions[matchIndex] = funcStartAnalyzer.new ContextAction(register, value);
 			matchIndex++;
 		}
@@ -387,8 +388,9 @@ public class ClipboardPanel extends JPanel {
 	private boolean passesFilter(Program program, Address funcStart,
 			ContextRegisterFilter cRegFilter) {
 		Map<String, BigInteger> valueMap = cRegFilter.getValueMap();
-		for (String register : valueMap.keySet()) {
-			BigInteger value = valueMap.get(register);
+		for (Map.Entry<String, BigInteger> valueMapEntry : valueMap.entrySet()) {
+			String register = valueMapEntry.getKey();
+			BigInteger value = valueMapEntry.getValue();
 			if (value != null) {
 				Register reg = program.getRegister(register);
 				RegisterValue regValue =

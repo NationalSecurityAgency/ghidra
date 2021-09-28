@@ -96,8 +96,9 @@ public class DefaultNavigatableLocationMemento extends LocationMemento {
 			saveState.putLong("FOCUSED_NAV", focusedNavigatable.getInstanceID());
 		}
 		int index = 0;
-		for (Navigatable navigatable : mementos.keySet()) {
-			LocationMemento memento = mementos.get(navigatable);
+		for (Map.Entry<Navigatable, LocationMemento> mementosEntry : mementos.entrySet()) {
+			Navigatable navigatable = mementosEntry.getKey();
+			LocationMemento memento = mementosEntry.getValue();
 			SaveState mementoSaveState = new SaveState();
 			mementoSaveState.putLong("NAV_ID", navigatable.getInstanceID());
 			memento.saveState(mementoSaveState);

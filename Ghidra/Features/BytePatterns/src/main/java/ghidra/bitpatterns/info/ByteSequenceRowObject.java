@@ -105,8 +105,9 @@ public class ByteSequenceRowObject {
 			int numTotalSeqs) {
 		List<ByteSequenceRowObject> rowObjects = new ArrayList<ByteSequenceRowObject>();
 		//iterate over the keyset of the paircount
-		for (String bytes : byteSeqCounts.keySet()) {
-			Integer count = byteSeqCounts.get(bytes);
+		for (Map.Entry<String, Integer> byteSeqCountsEntry : byteSeqCounts.entrySet()) {
+			String bytes = byteSeqCountsEntry.getKey();
+			Integer count = byteSeqCountsEntry.getValue();
 			ByteSequenceRowObject rowObject = new ByteSequenceRowObject(bytes,
 				bytesToDisassembly.get(bytes), count, 100.0 * count / numTotalSeqs);
 			rowObjects.add(rowObject);
@@ -300,8 +301,9 @@ public class ByteSequenceRowObject {
 	private static List<ByteSequenceRowObject> getRowObjectsForPathFilteredSeqs(
 			Map<BytesAndDisassembly, Integer> bytesAndDisCount, int numTotalSeqs) {
 		List<ByteSequenceRowObject> returnRowObjects = new ArrayList<ByteSequenceRowObject>();
-		for (BytesAndDisassembly bytesAndDisassembly : bytesAndDisCount.keySet()) {
-			Integer count = bytesAndDisCount.get(bytesAndDisassembly);
+		for (Map.Entry<BytesAndDisassembly, Integer> bytesAndDisCountEntry : bytesAndDisCount.entrySet()) {
+			BytesAndDisassembly bytesAndDisassembly = bytesAndDisCountEntry.getKey();
+			Integer count = bytesAndDisCountEntry.getValue();
 			ByteSequenceRowObject rowObject =
 				new ByteSequenceRowObject(bytesAndDisassembly.getBytes(),
 					bytesAndDisassembly.getDisassembly(), count, 100.0 * count / numTotalSeqs);

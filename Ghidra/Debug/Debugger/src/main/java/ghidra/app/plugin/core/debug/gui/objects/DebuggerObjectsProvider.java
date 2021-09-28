@@ -726,8 +726,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			return result;
 		}
 		synchronized (objectMap) {
-			for (String key : objectMap.keySet()) {
-				Object object = objectMap.get(key);
+			for (Map.Entry<String, Object> objectMapEntry : objectMap.entrySet()) {
+				String key = objectMapEntry.getKey();
+				Object object = objectMapEntry.getValue();
 				if (object == null) {
 					System.err.println("null object for " + key);
 					continue;
@@ -1595,13 +1596,15 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		@Override
 		public void registersUpdated(TargetObject bank, Map<String, byte[]> updates) {
 			Map<String, ? extends TargetObject> cachedElements = bank.getCachedElements();
-			for (String key : cachedElements.keySet()) {
-				TargetObject ref = cachedElements.get(key);
+			for (Map.Entry<String, TargetObject> cachedElementsEntry : cachedElements.entrySet()) {
+				String key = cachedElementsEntry.getKey();
+				TargetObject ref = cachedElementsEntry.getValue();
 				displayChanged(ref, "registersUpdated");
 			}
 			Map<String, ?> cachedAttributes = bank.getCachedAttributes();
-			for (String key : cachedAttributes.keySet()) {
-				Object obj = cachedAttributes.get(key);
+			for (Map.Entry<String, Object> cachedAttributesEntry : cachedAttributes.entrySet()) {
+				String key = cachedAttributesEntry.getKey();
+				Object obj = cachedAttributesEntry.getValue();
 				if (obj instanceof TargetObject) {
 					displayChanged((TargetObject) obj, "registersUpdated");
 				}

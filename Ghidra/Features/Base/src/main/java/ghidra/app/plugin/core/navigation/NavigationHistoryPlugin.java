@@ -185,8 +185,9 @@ public class NavigationHistoryPlugin extends Plugin
 	@Override
 	public void writeDataState(SaveState saveState) {
 		int count = 0;
-		for (Navigatable navigatable : historyListMap.keySet()) {
-			HistoryList historyList = historyListMap.get(navigatable);
+		for (Map.Entry<Navigatable, HistoryList> historyListMapEntry : historyListMap.entrySet()) {
+			Navigatable navigatable = historyListMapEntry.getKey();
+			HistoryList historyList = historyListMapEntry.getValue();
 			SaveState listSaveState = new SaveState();
 			writeDataState(listSaveState, navigatable, historyList);
 			saveState.putXmlElement(HISTORY_LIST + count, listSaveState.saveToXml());

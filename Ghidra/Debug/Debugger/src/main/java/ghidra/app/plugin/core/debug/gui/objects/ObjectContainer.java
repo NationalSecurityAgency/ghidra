@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.gui.objects;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.jdom.Element;
 
@@ -31,7 +32,7 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 	protected TargetObject targetObject;
 	private final Map<String, TargetObject> elementMap = new LinkedHashMap<>();
 	private final Map<String, Object> attributeMap = new LinkedHashMap<>();
-	private Set<ObjectContainer> currentChildren = new TreeSet<>();
+	private Set<ObjectContainer> currentChildren = new ConcurrentSkipListSet<>();
 
 	private boolean immutable;
 	private boolean visible = true;
@@ -176,7 +177,7 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 
 	public void augmentElements(Collection<String> elementsRemoved,
 			Map<String, ? extends TargetObject> elementsAdded) {
-		Set<ObjectContainer> result = new TreeSet<ObjectContainer>();
+		Set<ObjectContainer> result = new ConcurrentSkipListSet<ObjectContainer>();
 		Map<String, Object> newAdds = new HashMap<>();
 		for (Entry<String, ? extends TargetObject> entry : elementsAdded.entrySet()) {
 			newAdds.put(entry.getKey(), entry.getValue());
@@ -204,8 +205,9 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 				}
 				result.add(child);
 			}
-			for (String key : elementsAdded.keySet()) {
-				TargetObject val = elementsAdded.get(key);
+			for (Map.Entry<String, TargetObject> elementsAddedEntry : elementsAdded.entrySet()) {
+				String key = elementsAddedEntry.getKey();
+				TargetObject val = elementsAddedEntry.getValue();
 				ObjectContainer child =
 					DebuggerObjectsProvider.buildContainerFromObject(targetObject, key, val, false);
 				elementMap.put(key, val);
@@ -223,7 +225,7 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 
 	public void augmentAttributes(Collection<String> attributesRemoved,
 			Map<String, ?> attributesAdded) {
-		Set<ObjectContainer> result = new TreeSet<ObjectContainer>();
+		Set<ObjectContainer> result = new ConcurrentSkipListSet<ObjectContainer>();
 		Map<String, Object> newAdds = new HashMap<>();
 		for (Entry<String, ?> entry : attributesAdded.entrySet()) {
 			newAdds.put(entry.getKey(), entry.getValue());
@@ -248,8 +250,9 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 				}
 				result.add(child);
 			}
-			for (String key : newAdds.keySet()) {
-				Object val = newAdds.get(key);
+			for (Map.Entry<String, Object> newAddsEntry : newAdds.entrySet()) {
+				String key = newAddsEntry.getKey();
+				Object val = newAddsEntry.getValue();
 				ObjectContainer child =
 					DebuggerObjectsProvider.buildContainerFromObject(targetObject, key, val, true);
 				if (child != null) {
@@ -282,7 +285,7 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 			}
 		}
 
-		Set<ObjectContainer> result = new TreeSet<ObjectContainer>();
+		Set<ObjectContainer> result = new ConcurrentSkipListSet<ObjectContainer>();
 		List<ObjectContainer> nodeFromElements =
 			DebuggerObjectsProvider.getContainersFromObjects(elementMap, targetObject, false);
 		result.addAll(nodeFromElements);
@@ -310,8 +313,9 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 			}
 		}
 		if (added != null) {
-			for (String key : added.keySet()) {
-				Object object = added.get(key);
+			for (Map.Entry<String, Object> addedEntry : added.entrySet()) {
+				String key = addedEntry.getKey();
+				Object object = addedEntry.getValue();
 				map.put(key, object);
 			}
 		}

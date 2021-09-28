@@ -18,6 +18,7 @@ package ghidra.framework.options;
 import java.beans.PropertyEditor;
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -80,8 +81,9 @@ public class FileOptions extends AbstractOptions {
 	private void saveToFile() throws IOException {
 		SaveState saveState = new SaveState("File_Options");
 
-		for (String optionName : valueMap.keySet()) {
-			Option optionValue = valueMap.get(optionName);
+		for (Map.Entry<String, Option> valueMapEntry : valueMap.entrySet()) {
+			String optionName = valueMapEntry.getKey();
+			Option optionValue = valueMapEntry.getValue();
 			if (!optionValue.isDefault()) {
 				Object value = optionValue.getValue(null);
 				if (value instanceof CustomOption) {
@@ -143,8 +145,9 @@ public class FileOptions extends AbstractOptions {
 	public FileOptions copy() {
 		FileOptions copy = new FileOptions("new");
 
-		for (String optionName : valueMap.keySet()) {
-			Option optionValue = valueMap.get(optionName);
+		for (Map.Entry<String, Option> valueMapEntry : valueMap.entrySet()) {
+			String optionName = valueMapEntry.getKey();
+			Option optionValue = valueMapEntry.getValue();
 			if (!optionValue.isDefault()) {
 				Object value = optionValue.getValue(null);
 				copy.putObject(optionName, value);

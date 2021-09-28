@@ -185,8 +185,9 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 		Set<String> currentViews = provider.getCurrentViews();
 
 		// now add any views that have been selected
-		for (String viewName : checkboxMap.keySet()) {
-			JCheckBox checkBox = checkboxMap.get(viewName);
+		for (Map.Entry<String, JCheckBox> checkboxMapEntry : checkboxMap.entrySet()) {
+			String viewName = checkboxMapEntry.getKey();
+			JCheckBox checkBox = checkboxMapEntry.getValue();
 			if (!currentViews.contains(viewName) && checkBox.isSelected()) {
 				provider.addView(viewName);
 			}

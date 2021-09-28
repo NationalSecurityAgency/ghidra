@@ -17,6 +17,7 @@ package ghidra.app.plugin.assembler.sleigh.parse;
 
 import java.io.PrintStream;
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Consumer;
 
 import org.apache.commons.collections4.map.LazyMap;
@@ -329,8 +330,8 @@ public class AssemblyParser {
 	 * The map value keyed by {@link MergeKey}
 	 */
 	protected static class MergeValue {
-		Set<Integer> extProds = new TreeSet<>();
-		Set<AssemblyTerminal> follow = new TreeSet<>();
+		Set<Integer> extProds = new ConcurrentSkipListSet<>();
+		Set<AssemblyTerminal> follow = new ConcurrentSkipListSet<>();
 
 		protected void merge(int extProdNum, Collection<AssemblyTerminal> more) {
 			extProds.add(extProdNum);
@@ -366,7 +367,7 @@ public class AssemblyParser {
 				ret.add(AssemblyParseResult.accept(m.getTree()));
 			}
 			else if (m.error != 0) {
-				Set<String> suggestions = new TreeSet<>();
+				Set<String> suggestions = new ConcurrentSkipListSet<>();
 				for (AssemblyTerminal t : m.expected) {
 					suggestions.addAll(t.getSuggestions(m.got, labels));
 				}

@@ -18,6 +18,7 @@ package ghidra.util.database.spatial;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Consumer;
 
 import com.google.common.cache.CacheBuilder;
@@ -890,10 +891,10 @@ public abstract class AbstractConstraintsTree< //
 	public void checkIntegrity() {
 		// Before we visit, integrity check that cache. Visiting will affect cache.
 		for (Entry<Long, Collection<DR>> ent : cachedDataChildren.entrySet()) {
-			Set<DR> databasedChildren = new TreeSet<>(Comparator.comparing(DR::getKey));
+			Set<DR> databasedChildren = new ConcurrentSkipListSet<>(Comparator.comparing(DR::getKey));
 			// NOTE: Bypass the cache by using the variant with a key parameter
 			databasedChildren.addAll(getDataChildrenOf(ent.getKey()));
-			Set<DR> cachedChildren = new TreeSet<>(Comparator.comparing(DR::getKey));
+			Set<DR> cachedChildren = new ConcurrentSkipListSet<>(Comparator.comparing(DR::getKey));
 			cachedChildren.addAll(ent.getValue());
 			if (!databasedChildren.equals(cachedChildren)) {
 				throw new AssertionError("Cached children of node " + ent.getKey() +
@@ -901,10 +902,10 @@ public abstract class AbstractConstraintsTree< //
 			}
 		}
 		for (Entry<Long, Collection<NR>> ent : cachedNodeChildren.entrySet()) {
-			Set<NR> databasedChildren = new TreeSet<>(Comparator.comparing(NR::getKey));
+			Set<NR> databasedChildren = new ConcurrentSkipListSet<>(Comparator.comparing(NR::getKey));
 			// NOTE: Bypass the cache by using the variant with a key parameter
 			databasedChildren.addAll(getNodeChildrenOf(ent.getKey()));
-			Set<NR> cachedChildren = new TreeSet<>(Comparator.comparing(NR::getKey));
+			Set<NR> cachedChildren = new ConcurrentSkipListSet<>(Comparator.comparing(NR::getKey));
 			cachedChildren.addAll(ent.getValue());
 			if (!databasedChildren.equals(cachedChildren)) {
 				throw new AssertionError("Cached children of node " + ent.getKey() +

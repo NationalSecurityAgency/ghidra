@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
@@ -857,7 +858,7 @@ public class PdbReaderMetrics {
 	}
 
 	private AbstractPdb pdb;
-	private Set<PdbAnomaly> pdbAnomalies = new TreeSet<>();
+	private Set<PdbAnomaly> pdbAnomalies = new ConcurrentSkipListSet<>();
 
 	private int numSegments = -1;
 
@@ -1007,7 +1008,7 @@ public class PdbReaderMetrics {
 		/*
 		 * Sort these before printing to avoid sorting performance hit when logging is not used.
 		 */
-		Set<Integer> sortedSet = new TreeSet<>(unknownPrimitives);
+		Set<Integer> sortedSet = new ConcurrentSkipListSet<>(unknownPrimitives);
 		for (Integer val : sortedSet) {
 			builder.append(ds.out(true, String.format("0X%04X", val)));
 		}
@@ -1024,7 +1025,7 @@ public class PdbReaderMetrics {
 		/*
 		 * Sort these before printing to avoid sorting performance hit when logging is not used.
 		 */
-		Set<Integer> sortedSet = new TreeSet<>(newDataTypes);
+		Set<Integer> sortedSet = new ConcurrentSkipListSet<>(newDataTypes);
 		for (Integer val : sortedSet) {
 			builder.append(ds.out(true, String.format("0X%04X", val)));
 		}
@@ -1041,7 +1042,7 @@ public class PdbReaderMetrics {
 		/*
 		 * Sort these before printing to avoid sorting performance hit when logging is not used.
 		 */
-		Set<Integer> sortedSet = new TreeSet<>(newSymbolTypes);
+		Set<Integer> sortedSet = new ConcurrentSkipListSet<>(newSymbolTypes);
 		for (Integer val : sortedSet) {
 			builder.append(ds.out(true, String.format("0X%04X", val)));
 		}

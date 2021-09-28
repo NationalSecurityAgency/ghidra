@@ -26,12 +26,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.Map.Entry;
 
 public class LinkDatabase {
 
 	/** Sorted for later presentation */
-	private Set<InvalidLink> allUnresolvedLinks = new TreeSet<InvalidLink>(
+	private Set<InvalidLink> allUnresolvedLinks = new ConcurrentSkipListSet<InvalidLink>(
 		new Comparator<InvalidLink>() {
 			@Override
 			public int compare(InvalidLink o1, InvalidLink o2) {
@@ -63,8 +64,8 @@ public class LinkDatabase {
 			}
 		});
 
-	private final Set<DuplicateAnchorCollection> duplicateAnchors =
-		new TreeSet<DuplicateAnchorCollection>(new Comparator<DuplicateAnchorCollection>() {
+	private final Set<DuplicateAnchorCollection> duplicateAnchors = 
+		new ConcurrentSkipListSet<DuplicateAnchorCollection>(new Comparator<DuplicateAnchorCollection>() {
 			@Override
 			public int compare(DuplicateAnchorCollection o1, DuplicateAnchorCollection o2) {
 				if (o1.getClass().equals(o2.getClass())) {

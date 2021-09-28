@@ -167,8 +167,9 @@ public class ToolOptions extends AbstractOptions {
 	}
 
 	private void writeNonWrappedOptions(boolean includeDefaultBindings, SaveState saveState) {
-		for (String optionName : valueMap.keySet()) {
-			Option optionValue = valueMap.get(optionName);
+		for (Map.Entry<String, Option> valueMapEntry : valueMap.entrySet()) {
+			String optionName = valueMapEntry.getKey();
+			Option optionValue = valueMapEntry.getValue();
 			if (includeDefaultBindings || !optionValue.isDefault()) {
 				Object value = optionValue.getValue(null);
 				if (isSupportedBySaveState(value)) {
@@ -179,8 +180,9 @@ public class ToolOptions extends AbstractOptions {
 	}
 
 	private void writeWrappedOptions(boolean includeDefaultBindings, Element root) {
-		for (String optionName : valueMap.keySet()) {
-			Option option = valueMap.get(optionName);
+		for (Map.Entry<String, Option> valueMapEntry : valueMap.entrySet()) {
+			String optionName = valueMapEntry.getKey();
+			Option option = valueMapEntry.getValue();
 			if (includeDefaultBindings || !option.isDefault()) {
 
 				Object value = option.getCurrentValue();

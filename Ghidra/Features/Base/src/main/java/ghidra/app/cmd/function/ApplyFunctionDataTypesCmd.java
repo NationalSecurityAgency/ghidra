@@ -168,8 +168,9 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 
 		}
 		monitor.initialize(functionNameMap.size());
-		for (String functionName : functionNameMap.keySet()) {
-			FunctionDefinition fdef = functionNameMap.get(functionName);
+		for (Map.Entry<String, FunctionDefinition> functionNameMapEntry : functionNameMap.entrySet()) {
+			String functionName = functionNameMapEntry.getKey();
+			FunctionDefinition fdef = functionNameMapEntry.getValue();
 			checkForSymbol(monitor, functionName, fdef, symbolMap, null);
 
 			// do any thunks too
