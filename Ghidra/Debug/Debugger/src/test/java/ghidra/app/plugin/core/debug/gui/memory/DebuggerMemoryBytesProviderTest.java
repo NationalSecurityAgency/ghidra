@@ -1081,6 +1081,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
+	@Ignore("TODO")
 	public void testEditLiveBytesWritesTarget() throws Exception {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
@@ -1112,7 +1113,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	@Ignore
+	@Ignore("TODO")
 	public void testEditPastBytesWritesNotTarget() throws Exception {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
@@ -1156,7 +1157,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	@Ignore
+	@Ignore("TODO")
 	public void testPasteLiveBytesWritesTarget() throws Exception {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
