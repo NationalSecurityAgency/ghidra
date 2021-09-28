@@ -77,6 +77,7 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
@@ -257,6 +258,8 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 			listenFor(TraceSectionChangeType.ADDED, this::sectionChanged);
 			listenFor(TraceSectionChangeType.CHANGED, this::sectionChanged);
 			listenFor(TraceSectionChangeType.DELETED, this::sectionChanged);
+
+			listenFor(TraceMemoryStateChangeType.CHANGED, this::memStateChanged);
 		}
 
 		private void snapshotAdded(TraceSnapshot snapshot) {
@@ -300,6 +303,22 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 
 		private void sectionChanged(TraceSection section) {
 			updateLabelDebouncer.contact(null);
+		}
+
+		private void memStateChanged(TraceAddressSnapRange range, TraceMemoryState oldIsNull,
+				TraceMemoryState newState) {
+			if (current.getView() == null) {
+				return;
+			}
+			if (!range.getLifespan().contains(current.getSnap())) {
+				return;
+			}
+			// TODO: Debounce this?
+			getListingPanel().getFieldPanel().repaint();
+
+			if (newState == TraceMemoryState.UNKNOWN) {
+				doAutoReadMemory();
+			}
 		}
 	}
 

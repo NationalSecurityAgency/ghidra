@@ -225,6 +225,13 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
+	public void memoryChanged(DbgProcess proc, long addr, int len, DbgCause cause) {
+		if (proc.equals(this.process)) {
+			listeners.fire.invalidateCacheRequested(memory);
+		}
+	}
+
+	@Override
 	public CompletableFuture<Void> setActive() {
 		DbgManagerImpl manager = getManager();
 		return manager.setActiveProcess(process);

@@ -328,9 +328,19 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 	}
 
 	protected void checkState(TraceMemoryState state) {
-		if (state == null || state == TraceMemoryState.UNKNOWN) {
+		/**
+		 * TODO: I don't remember why I prohibited this originally. It seems some technicality in
+		 * calling something "last known?" We might revisit and specify that definition, in the face
+		 * of memory being invalidated while the target is suspended. It seems appropriate to leave
+		 * the stale bytes in the trace, but change the state to UNKNOWN. Do those stale bytes still
+		 * count as last known? Aside from getBytes, I don't see anything that requires a precise
+		 * distinction. We might be careful how this interacts with removeBytes, though.... Well,
+		 * AFAICT, it doesn't depend on state markings. For now, I'm going to allow it. We'll see
+		 * what happens. Changing this had no effect on the unit tests :/ .
+		 */
+		/*if (state == null || state == TraceMemoryState.UNKNOWN) {
 			throw new IllegalArgumentException("Cannot erase memory state without removing bytes");
-		}
+		}*/
 	}
 
 	@Override
