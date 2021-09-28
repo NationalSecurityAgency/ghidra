@@ -15,7 +15,7 @@
  */
 package ghidra.program.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
@@ -46,7 +46,7 @@ public class AddressEvaluatorTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testEval() throws Exception {
+	public void testEval() throws Exception {
 		Program p = createDefaultProgram("Test", ProgramBuilder._TOY_LE, this);
 		addrFactory = p.getAddressFactory();
 		int txId = p.startTransaction("Test");
@@ -56,6 +56,7 @@ public class AddressEvaluatorTest extends AbstractGhidraHeadedIntegrationTest {
 			assertEquals(addr("0x11"), AddressEvaluator.evaluate(p, "2+(3*5)"));
 			assertEquals(addr("0x11"), AddressEvaluator.evaluate(p, "(2+3*5)"));
 			assertEquals(addr("0x16"), AddressEvaluator.evaluate(p, "0x11+5"));
+			assertEquals(addr("0x02"), AddressEvaluator.evaluate(p, "2-1+1"));
 			assertEquals(addr("0x5"), AddressEvaluator.evaluate(p, "5"));
 			assertEquals(addr("0x3"), AddressEvaluator.evaluate(p, "0-5+8"));
 			assertEquals(addr("0x3"), AddressEvaluator.evaluate(p, "-5+8"));
@@ -66,10 +67,25 @@ public class AddressEvaluatorTest extends AbstractGhidraHeadedIntegrationTest {
 			assertEquals(addr("0x1234"), AddressEvaluator.evaluate(p, "0x1200 | 0x0034"));
 			assertEquals(addr("0xffffffff"), AddressEvaluator.evaluate(p, "~ 0x0"));
 			assertEquals(addr("0x1201"), AddressEvaluator.evaluate(p, "0x1200 | ~(0xfffffffe)"));
+			assertEquals(addr("0x480"), AddressEvaluator.evaluate(p, "0x1200 >> 2"));
+			assertEquals(addr("0x1200"), AddressEvaluator.evaluate(p, "0x480 << 2"));
+
+			assertEquals(addr("0x1"), AddressEvaluator.evaluate(p, "(((0x1 | 0x2) & 0x2) == 0x2)"));
+			assertEquals(addr("0x0"), AddressEvaluator.evaluate(p, "(((0x1 | 0x2) & 0x2) == 0x1)"));
+			assertEquals(addr("0x0"), AddressEvaluator.evaluate(p, "(((0x1 | 0x2) & 0x2) == 0x1)"));
+
+			assertEquals(addr("0x1"), AddressEvaluator.evaluate(p, "(((0x1 | 0x2) & 0x2) >= 0x1)"));
+			assertEquals(addr("0x0"), AddressEvaluator.evaluate(p, "(((0x1 | 0x2) & 0x2) <= 0x1)"));
+
 			Symbol s = p.getSymbolTable().createLabel(addr("0x100"), "entry", SourceType.IMPORTED);
 			Address a = s.getAddress();
 			a = a.add(10);
 			assertEquals(a, AddressEvaluator.evaluate(p, "entry+5*2"));
+			assertEquals(addr("0x101"), AddressEvaluator.evaluate(p, "entry + (entry == 0x100)"));
+			assertEquals(addr("0x500"), AddressEvaluator.evaluate(p,
+				"entry + (entry == 0x100) * 0x400 + (entry < 0x100) * 0x500"));
+			assertEquals(addr("0x600"), AddressEvaluator.evaluate(p,
+				"entry + (entry > 0x100) * 0x400 + (entry <= 0x100) * 0x500"));
 		}
 		finally {
 			p.endTransaction(txId, true);
@@ -78,7 +94,7 @@ public class AddressEvaluatorTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testMultiAddrSpace() throws Exception {
+	public void testMultiAddrSpace() throws Exception {
 		Program p = createDefaultProgram("Test", ProgramBuilder._TOY_LE, this);
 		addrFactory = p.getAddressFactory();
 		try {
