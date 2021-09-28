@@ -29,7 +29,7 @@ import ghidra.util.NumericUtilities;
  */
 public class AddressEvaluator {
 
-	private static final String TOKEN_CHARS = "+-*/()<>|^&~ ";
+	private static final String TOKEN_CHARS = "+-*/()<>|^&~ =";
 
 	/**
 	 * Gets a legitimate address for the specified program as indicated by the string.
@@ -40,26 +40,15 @@ public class AddressEvaluator {
 	 * to a unique legitimate address.
 	 */
 	public static Address evaluate(Program p, Address baseAddr, String s) {
-		StringTokenizer parser = new StringTokenizer(s, TOKEN_CHARS, true);
+
 		AddressFactory af = p.getAddressFactory();
 		SymbolTable st = p.getSymbolTable();
 		List<Object> list = new ArrayList<Object>();
 		if (baseAddr != null) {
 			list.add(baseAddr);
 		}
-		while (parser.hasMoreTokens()) {
-			String tok = parser.nextToken();
-			if (tok.equals(" ")) {
-				continue;
-			}
-			Object obj = Operator.getOperator(tok);
-			if (obj == null) {
-				obj = getValueObject(st, af, tok);
-			}
-			if (obj == null) {
-				return null;
-			}
-			list.add(obj);
+		if (!parseToList(s, af, st, list)) {
+			return null;
 		}
 		Object obj = eval(list);
 		if (obj instanceof Address) {
@@ -70,43 +59,101 @@ public class AddressEvaluator {
 				return af.getDefaultAddressSpace().getAddress(((Long) obj).longValue());
 			}
 			catch (Exception e) {
-
+				// ignore
 			}
 		}
 		return null;
 	}
 
 	public static Long evaluateToLong(String s) {
-		StringTokenizer parser = new StringTokenizer(s, TOKEN_CHARS, true);
 		List<Object> list = new ArrayList<Object>();
 
-		while (parser.hasMoreTokens()) {
-			String tok = parser.nextToken();
-			if (tok.equals(" ")) {
-				continue;
-			}
-			Object obj = Operator.getOperator(tok);
-			if (obj == null) {
-				obj = getValueObject(tok);
-			}
-			if (obj == null) {
-				return null;
-			}
-			list.add(obj);
+		if (!parseToList(s, null, null, list)) {
+			return null;
 		}
 		Object obj = eval(list);
 		if (obj instanceof Address) {
-			return new Long(((Address) obj).getOffset());
+			return ((Address) obj).getOffset();
 		}
 		else if (obj instanceof Long) {
-			try {
-				return (Long) obj;
-			}
-			catch (Exception e) {
-
-			}
+			return (Long) obj;
 		}
 		return null;
+	}
+
+	protected static boolean parseToList(String s, AddressFactory af, SymbolTable st,
+			List<Object> list) {
+		StringTokenizer parser = new StringTokenizer(s, TOKEN_CHARS, true);
+		String lookahead = null;
+		while (lookahead != null || parser.hasMoreTokens()) {
+			String tok = null;
+			if (lookahead != null) {
+				tok = lookahead;
+				lookahead = null;
+			}
+			else {
+				tok = parser.nextToken();
+			}
+
+			if (tok.equals(" ")) {
+				continue;
+			}
+
+			// = must be followed by =, others can be followed
+			if (tok.equals("=") || tok.equals("!") || tok.equals("<") || tok.equals(">")) {
+				lookahead = parser.nextToken();
+				tok = checkDoubleToken(tok, lookahead);
+				// if tok is now longer, consumed lookahead
+				if (tok.length() > 1) {
+					lookahead = null;
+				}
+			}
+			Object obj = Operator.getOperator(tok);
+			if (obj == null) {
+				obj = getValueObject(st, af, tok);
+			}
+			if (obj == null) {
+				return false;
+			}
+			list.add(obj);
+		}
+		return true;
+	}
+
+	private static String checkDoubleToken(String tok, String lookahead) {
+		switch (tok) {
+			case "=":
+				if (lookahead.equals("=")) {
+					return "==";
+				}
+				break;
+
+			case "<":
+				if (lookahead.equals("=")) {
+					return "<=";
+				}
+				if (lookahead.equals("<")) {
+					return "<<";
+				}
+				break;
+
+			case ">":
+				if (lookahead.equals("=")) {
+					return ">=";
+				}
+				if (lookahead.equals(">")) {
+					return ">>";
+				}
+				break;
+
+			case "!":
+				if (lookahead.equals("=")) {
+					return "!=";
+				}
+				break;
+		}
+
+		return tok;
 	}
 
 	/**
@@ -179,8 +226,12 @@ public class AddressEvaluator {
 
 	private static Object getValueObject(SymbolTable st, AddressFactory af, String tok) {
 
+		if (st == null || af == null) {
+			return getValueObject(tok);
+		}
+
 		try {
-			return new Long(NumericUtilities.parseHexLong(tok));
+			return NumericUtilities.parseHexLong(tok);
 		}
 		catch (NumberFormatException e) {
 			// ignore
@@ -215,10 +266,11 @@ public class AddressEvaluator {
 				strValue = strValue.substring(start);
 			}
 
-			return (radix == 10) ? new Long(NumericUtilities.parseLong(strValue))
-					: new Long(NumericUtilities.parseHexLong(strValue));
+			return (radix == 10) ? NumericUtilities.parseLong(strValue)
+					: NumericUtilities.parseHexLong(strValue);
 		}
 		catch (RuntimeException e) {
+			// ignore
 		}
 		return null;
 	}
@@ -250,7 +302,7 @@ public class AddressEvaluator {
 		if (list.size() > 1 && list.get(0) == Operator.MINUS) {
 			Object obj = list.get(1);
 			if (obj instanceof Long) {
-				obj = new Long(-((Long) obj).longValue());
+				obj = -((Long) obj).longValue();
 				list.remove(0);
 				list.set(0, obj);
 			}
@@ -260,7 +312,7 @@ public class AddressEvaluator {
 		if (list.size() > 1 && list.get(0) == Operator.NOT) {
 			Object obj = list.get(1);
 			if (obj instanceof Long) {
-				obj = new Long(~((Long) obj).longValue());
+				obj = ~((Long) obj).longValue();
 				list.remove(0);
 				list.set(0, obj);
 			}
@@ -270,33 +322,15 @@ public class AddressEvaluator {
 		if (list.size() > 3 && list.get(2) == Operator.NOT) {
 			Object obj = list.get(3);
 			if (obj instanceof Long) {
-				obj = new Long(~((Long) obj).longValue());
+				obj = ~((Long) obj).longValue();
 				list.remove(2);
 				list.set(2, obj);
 			}
 		}
 
 		// evaluate all SHIFT because they have precedence
-		done = false;
-		while (!done) {
-			done = true;
-			for (int i = 0; i < list.size() - 1; i++) {
-				if ((list.get(i) == Operator.LEFTSHIFT && list.get(i + 1) == Operator.LEFTSHIFT) ||
-					(list.get(i) == Operator.RIGHTSHIFT &&
-						list.get(i + 1) == Operator.RIGHTSHIFT)) {
-					done = false;
-					if (i == 0 || i == list.size() - 2) {
-						return null;
-					}
-					Object value =
-						computeValue(list.get(i - 1), (Operator) list.get(i), list.get(i + 2));
-					if (value == null) {
-						return null;
-					}
-					list.subList(i, i + 3).clear();
-					list.set(i - 1, value);
-				}
-			}
+		if (!evaluateOperator(list, Operator.RIGHTSHIFT, Operator.LEFTSHIFT)) {
+			return null;
 		}
 
 		// evaluate all TIMES because they have precedence
@@ -319,6 +353,19 @@ public class AddressEvaluator {
 		if (!evaluateOperator(list, Operator.OR, null)) {
 			return null;
 		}
+
+		if (!evaluateOperator(list, Operator.EQUALS, Operator.NOTEQUALS)) {
+			return null;
+		}
+
+		if (!evaluateOperator(list, Operator.LESS, Operator.GREATER)) {
+			return null;
+		}
+
+		if (!evaluateOperator(list, Operator.LESSEQUALS, Operator.GREATEREQUALS)) {
+			return null;
+		}
+
 		if (list.size() != 1) {
 			return null;
 		}
@@ -352,42 +399,42 @@ public class AddressEvaluator {
 	private static Object computeValue(Object v1, Operator op, Object v2) {
 		if (op == Operator.TIMES) {
 			if ((v1 instanceof Long) && (v2 instanceof Long)) {
-				return new Long(((Long) v1).longValue() * ((Long) v2).longValue());
+				return ((Long) v1).longValue() * ((Long) v2).longValue();
 			}
 		}
 		if (op == Operator.DIVIDE) {
 			if ((v1 instanceof Long) && (v2 instanceof Long)) {
-				return new Long(((Long) v1).longValue() / ((Long) v2).longValue());
+				return ((Long) v1).longValue() / ((Long) v2).longValue();
 			}
 		}
 		else if (op == Operator.AND) {
 			if ((v1 instanceof Long) && (v2 instanceof Long)) {
-				return new Long(((Long) v1).longValue() & ((Long) v2).longValue());
+				return ((Long) v1).longValue() & ((Long) v2).longValue();
 			}
 		}
 		else if (op == Operator.XOR) {
 			if ((v1 instanceof Long) && (v2 instanceof Long)) {
-				return new Long(((Long) v1).longValue() ^ ((Long) v2).longValue());
+				return ((Long) v1).longValue() ^ ((Long) v2).longValue();
 			}
 		}
 		else if (op == Operator.OR) {
 			if ((v1 instanceof Long) && (v2 instanceof Long)) {
-				return new Long(((Long) v1).longValue() | ((Long) v2).longValue());
+				return ((Long) v1).longValue() | ((Long) v2).longValue();
 			}
 		}
 		else if (op == Operator.LEFTSHIFT) {
 			if ((v1 instanceof Long) && (v2 instanceof Long)) {
-				return new Long(((Long) v1).longValue() << ((Long) v2).longValue());
+				return ((Long) v1).longValue() << ((Long) v2).longValue();
 			}
 		}
 		else if (op == Operator.RIGHTSHIFT) {
 			if ((v1 instanceof Long) && (v2 instanceof Long)) {
-				return new Long(((Long) v1).longValue() >> ((Long) v2).longValue());
+				return ((Long) v1).longValue() >> ((Long) v2).longValue();
 			}
 		}
 		else if (op == Operator.PLUS) {
 			if ((v1 instanceof Long) && (v2 instanceof Long)) {
-				return new Long(((Long) v1).longValue() + ((Long) v2).longValue());
+				return ((Long) v1).longValue() + ((Long) v2).longValue();
 			}
 			else if ((v1 instanceof Address) && (v2 instanceof Long)) {
 				return ((Address) v1).addWrap(((Long) v2).longValue());
@@ -398,7 +445,7 @@ public class AddressEvaluator {
 		}
 		else if (op == Operator.NOT) {
 			if (v2 instanceof Long) {
-				return new Long(~(((Long) v2).longValue()));
+				return ~(((Long) v2).longValue());
 			}
 			else if (v2 instanceof Address) {
 				return ((Address) v2).getNewAddress(~(((Long) v2).longValue()));
@@ -406,14 +453,63 @@ public class AddressEvaluator {
 		}
 		else if (op == Operator.MINUS) {
 			if ((v1 instanceof Long) && (v2 instanceof Long)) {
-				return new Long(((Long) v1).longValue() - ((Long) v2).longValue());
+				return ((Long) v1).longValue() - ((Long) v2).longValue();
 			}
 			else if ((v1 instanceof Address) && (v2 instanceof Long)) {
 				return ((Address) v1).subtractWrap(((Long) v2).longValue());
 			}
 			else if ((v1 instanceof Address) && (v2 instanceof Address)) {
-				return new Long(((Address) v1).subtract((Address) v2));
+				return ((Address) v1).subtract((Address) v2);
 			}
+		}
+		else if (op == Operator.EQUALS) {
+			Long diff = getDifference(v1, v2);
+			if (diff != null) {
+				return diff == 0L ? 1L : 0L;
+			}
+		}
+		else if (op == Operator.NOTEQUALS) {
+			Long diff = getDifference(v1, v2);
+			if (diff != null) {
+				return diff != 0L ? 1L : 0L;
+			}
+		}
+		else if (op == Operator.LESSEQUALS) {
+			Long diff = getDifference(v1, v2);
+			if (diff != null) {
+				return diff <= 0L ? 1L : 0L;
+			}
+		}
+		else if (op == Operator.GREATEREQUALS) {
+			Long diff = getDifference(v1, v2);
+			if (diff != null) {
+				return diff >= 0L ? 1L : 0L;
+			}
+		}
+		else if (op == Operator.LESS) {
+			Long diff = getDifference(v1, v2);
+			if (diff != null) {
+				return diff < 0L ? 1L : 0L;
+			}
+		}
+		else if (op == Operator.GREATER) {
+			Long diff = getDifference(v1, v2);
+			if (diff != null) {
+				return diff > 0L ? 1L : 0L;
+			}
+		}
+		return null;
+	}
+
+	private static Long getDifference(Object v1, Object v2) {
+		if ((v1 instanceof Address) && (v2 instanceof Long)) {
+			return ((Address) v1).subtractWrap(((Long) v2).longValue()).getOffset();
+		}
+		else if ((v1 instanceof Address) && (v2 instanceof Address)) {
+			return ((Address) v1).subtract((Address) v2);
+		}
+		else if ((v1 instanceof Long) && (v2 instanceof Long)) {
+			return ((Long) v1).longValue() - ((Long) v2).longValue();
 		}
 		return null;
 	}
@@ -436,20 +532,34 @@ public class AddressEvaluator {
 }
 
 class Operator {
-	static Operator PLUS = new Operator();
-	static Operator MINUS = new Operator();
-	static Operator TIMES = new Operator();
-	static Operator DIVIDE = new Operator();
-	static Operator AND = new Operator();
-	static Operator OR = new Operator();
-	static Operator NOT = new Operator();
-	static Operator XOR = new Operator();
-	static Operator LEFTSHIFT = new Operator();
-	static Operator RIGHTSHIFT = new Operator();
-	static Operator LEFT_PAREN = new Operator();
-	static Operator RIGHT_PAREN = new Operator();
+	static Operator PLUS = new Operator("+");
+	static Operator MINUS = new Operator("-");
+	static Operator TIMES = new Operator("*");
+	static Operator DIVIDE = new Operator("/");
+	static Operator AND = new Operator("&");
+	static Operator OR = new Operator("|");
+	static Operator NOT = new Operator("~");
+	static Operator XOR = new Operator("^");
+	static Operator LEFTSHIFT = new Operator("<<");
+	static Operator RIGHTSHIFT = new Operator(">>");
+	static Operator LEFT_PAREN = new Operator("(");
+	static Operator RIGHT_PAREN = new Operator(")");
+	static Operator EQUALS = new Operator("==");
+	static Operator NOTEQUALS = new Operator("!=");
+	static Operator LESS = new Operator("<");
+	static Operator GREATER = new Operator(">");
+	static Operator LESSEQUALS = new Operator("<=");
+	static Operator GREATEREQUALS = new Operator(">=");
 
-	private Operator() {
+	final String name;
+
+	private Operator(String name) {
+		this.name = name;
+	}
+
+	@Override
+	public String toString() {
+		return name;
 	}
 
 	/**
@@ -488,11 +598,29 @@ class Operator {
 		else if (tok.equals("(")) {
 			return LEFT_PAREN;
 		}
-		else if (tok.equals("<")) {
+		else if (tok.equals("<<")) {
 			return LEFTSHIFT;
 		}
-		else if (tok.equals(">")) {
+		else if (tok.equals(">>")) {
 			return RIGHTSHIFT;
+		}
+		else if (tok.equals("==")) {
+			return EQUALS;
+		}
+		else if (tok.equals("!=")) {
+			return NOTEQUALS;
+		}
+		else if (tok.equals("<")) {
+			return LESS;
+		}
+		else if (tok.equals(">")) {
+			return GREATER;
+		}
+		else if (tok.equals("<=")) {
+			return LESSEQUALS;
+		}
+		else if (tok.equals(">=")) {
+			return GREATEREQUALS;
 		}
 		return null;
 	}
