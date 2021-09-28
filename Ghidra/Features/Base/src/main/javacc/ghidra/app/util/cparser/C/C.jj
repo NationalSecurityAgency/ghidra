@@ -520,6 +520,73 @@ public class CParser {
         }
     }
 
+    Object computeBinaryValue(Object obj1, Token operation, Object obj2) {
+		if (!(obj1 instanceof Long && obj2 instanceof Long)) {
+			return null;
+		}
+		Long val1 = (Long) obj1;
+		Long val2 = (Long) obj2;
+		
+		switch(operation.image) {
+		  case "<<":
+		  return val1 << val2;
+		  case ">>":
+		  return val1 >> val2;
+		  case "+":
+		  return val1 + val2;
+		  case "-":
+		  return val1 - val2;
+		  case "*":
+		  return val1 * val2;
+		  case "/":
+		  return val1 / val2;
+		  case "%":
+		  return val1 % val2;
+		  case "|":
+		  return val1 | val2;
+		  case "&":
+		  return val1 & val2;
+		  case "^":
+		  return val1 ^ val2;
+		  case "==":
+		  return (val1 == val2 ? 1 : 0);
+		  case "!=":
+		  return (val1 != val2 ? 1 : 0);
+		  case "<":
+		  return (val1 < val2 ? 1 : 0);
+		  case ">":
+		  return (val1 > val2 ? 1 : 0);
+		  case "<=":
+		  return (val1 <= val2 ? 1 : 0);
+		  case ">=":
+		  return (val1 >= val2 ? 1 : 0);
+		  case "&&":
+		  return ((val1 != 0 && val2 != 0) ? 1 : 0);
+		  case "||":
+		  return ((val1 != 0 || val2 != 0) ? 1 : 0);
+		}
+		return null;
+    }
+
+    Object computeUnaryValue(Object obj, Token operation) {
+		if (!(obj instanceof Long)) {
+			return null;
+		}
+		Long val = (Long) obj;
+		
+		switch(operation.image) {
+		  case "+":
+		  return val;
+		  case "-":
+		  return -val;
+		  case "~":
+		  return ~val;
+		  case "!":
+		  return (val != 0 ? 0 : 1);
+		}
+		return null;
+    }
+
     /**
      * Get the data type manager
      * 
@@ -1517,7 +1584,7 @@ void DeclSpecifier() : {
 {
   "(" DeclSpecifier() ")" |
       <IDENTIFIER> [ "(" 
-                        DeclConstant()   
+                        DeclConstant() ( DeclConstant() )* 
                      ")" ]
 }
 
@@ -1743,6 +1810,7 @@ void StructDeclaration(Composite comp, CompositeHandler compositeHandler) : {
 	Declaration dt = null;
 }
 {
+    LineDef() |
 	(   
 		[ dt = SpecifierQualifierList() ]
 		[
@@ -2158,16 +2226,28 @@ void IdentifierList(FunctionDefinitionDataType funcDT, DataType retDT) : {
 
 void Initializer() : {}
 {
-	( AssignmentExpression() | "{" InitializerList() [ "," ] "}" )
+	( AssignmentExpression() | "{" InitializerList() [ "," ]  "}" )
 }
 
 void InitializerList() : {}
 {
-	Initializer() 
-	(
-		LOOKAHEAD(2)
-		"," Initializer() 
-	)*
+	[ Designation() ] Initializer() [ "," InitializerList() ]
+}
+
+void Designation() : { }
+{
+  DesignatorList() "="
+}
+
+void DesignatorList() : { }
+{
+  Designator() [ DesignatorList() ]
+}
+
+void Designator() : { }
+{
+  "[" ConstantExpression() "]" |
+  "." <IDENTIFIER>
 }
 
 DataType TypeName() : {
@@ -2408,120 +2488,117 @@ Object ConstantExpression() : {
 }
 
 Object LogicalORExpression() : {
-   Object obj = null;
+   Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj = LogicalANDExpression() [ "||" LogicalORExpression() { obj=null; } ]
+	obj = LogicalANDExpression() ( op="||" obj2 = LogicalANDExpression() { obj = computeBinaryValue(obj, op, obj2); } ) *
 	{
 		return obj;
     }
 }
 
 Object LogicalANDExpression() : {
-    Object obj = null;
+    Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj = InclusiveORExpression() [ "&&" LogicalANDExpression() { obj=null; } ]
+	obj = InclusiveORExpression() ( op="&&" obj2=InclusiveORExpression() { obj = computeBinaryValue(obj, op, obj2); } ) *
 	{
 		return obj;
     }
 }
 
 Object InclusiveORExpression() : {
-    Object obj = null;
+    Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj = ExclusiveORExpression() [ "|" InclusiveORExpression() { obj=null; } ]
+	obj = ExclusiveORExpression() ( op="|" obj2=ExclusiveORExpression() { obj = computeBinaryValue(obj, op, obj2); } ) *
 	{
 		return obj;
     }
 }
 
 Object ExclusiveORExpression() : {
-    Object obj = null;
+    Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj = ANDExpression() [ "^" ExclusiveORExpression() { obj=null; } ]
+	obj = ANDExpression() ( op="^" obj2=ANDExpression() { obj = computeBinaryValue(obj, op, obj2); } ) *
 	{
 		return obj;
     }
 }
 
 Object ANDExpression() : {
-    Object obj = null;
+    Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj = EqualityExpression() [ "&" ANDExpression() { obj=null; } ]
+	obj = EqualityExpression() ( op="&" obj2=EqualityExpression() { obj = computeBinaryValue(obj, op, obj2); } ) *
 	{
 		return obj;
     }
 }
 
 Object EqualityExpression() : {
-    Object obj = null;
+    Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj = RelationalExpression() [ ( "==" | "!=" ) EqualityExpression() { obj=null; } ]
+	obj = RelationalExpression()
+	(
+	  (op="=="  | op="!=") obj2 = RelationalExpression() { obj = computeBinaryValue(obj, op, obj2); }   ) *
 	{
 		return obj;
     }
 }
 
 Object RelationalExpression() : {
-    Object obj = null;
+    Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj = ShiftExpression() [ ( "<" | ">" | "<=" | ">=" ) RelationalExpression() { obj=null; } ]
+	obj = ShiftExpression()
+	(
+	  (op="<" | op=">" | op="<=" | op=">=") obj2=ShiftExpression() { obj = computeBinaryValue(obj, op, obj2); }
+	) *
 	{
 		return obj;
     }
 }
 
 Object ShiftExpression() : {
-   Object obj1 = null, obj2 = null;
+   Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj1 = AdditiveExpression()
-	[
-	   "<<" obj2 = AdditiveExpression()
-	   { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) << ((Long) obj2); } }
-	 | ">>" obj2 = AdditiveExpression()
-	   { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) >> ((Long) obj2); } }
-	]
+	obj = AdditiveExpression()
+	(
+	 ( op="<<" | op=">>" ) obj2 = AdditiveExpression()
+	   { obj = computeBinaryValue(obj, op, obj2); }
+	) *
 	{
-		return obj1;
+		return obj;
     }
 }
 
 Object AdditiveExpression() : {
-    Object obj1 = null, obj2 = null;
+    Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj1 = MultiplicativeExpression() [
-	  "+" obj2 = AdditiveExpression()
-	  { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) + ((Long) obj2); } }
-	  | "-" obj2 = AdditiveExpression()
-	  { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) - ((Long) obj2); } }
-	]
+	obj = MultiplicativeExpression()
+	( ( op="+" | op="-" ) obj2 = MultiplicativeExpression()
+	  { obj = computeBinaryValue(obj, op, obj2); }
+    ) *
 	{
-		return obj1;
+		return obj;
     }
 }
 
 Object MultiplicativeExpression() : {
-    Object obj1 = null, obj2 = null;
+    Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj1 = CastExpression() [ 
-	  "*" obj2 = ConstantExpression()
-	  { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) * ((Long) obj2); } }
-	  | "/" obj2 = ConstantExpression()
-	  { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) / ((Long) obj2); } }
-	  | "%" obj2 = ConstantExpression()
-	  { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) % ((Long) obj2); } }	
-    ]
+	obj = CastExpression()
+	( ( op="*" | op="/" | op="%" ) obj2 = CastExpression()
+	  { obj = computeBinaryValue(obj, op, obj2); }
+    ) *
 	{
-		return obj1;
+		return obj;
     }
 }
 
@@ -2530,8 +2607,11 @@ Object CastExpression() : {
 }
 {
 	(
-		LOOKAHEAD("(" TypeName() ")" CastExpression() )
-		"(" TypeName() ")" CastExpression() 
+		LOOKAHEAD("(" TypeName() ")")
+		(
+		   "(" TypeName() ")" ( CastExpression() |
+		   		( "{" InitializerList() [ "," ] "}" ) )
+		)
 		|
 		obj = UnaryExpression() 
 	)
@@ -2543,18 +2623,27 @@ Object CastExpression() : {
 Object UnaryExpression() : {
      DataType dt = null;
      Object obj = null;
+     Token op = null;
 }
 {
 	(
 		LOOKAHEAD(3)
-		obj = PostfixExpression() 
+		obj = PostfixExpression()
+		|
+		UnaryOperator() CastExpression()
 		|
 		"++" UnaryExpression() 
 		|
 		"--" UnaryExpression() 
+	    |
+	    "+" obj=CastExpression()
+	    |
+	    op="-" obj=CastExpression() { obj = computeUnaryValue(obj, op); }
 		|
-		UnaryOperator() CastExpression() 
+		op="~" obj=CastExpression() { obj = computeUnaryValue(obj, op); }
 		|
+		op="!" obj=CastExpression() { obj = computeUnaryValue(obj, op); }
+		| 
 		<SIZEOF> 
 		(
 			LOOKAHEAD(UnaryExpression() )
@@ -2573,9 +2662,13 @@ Object UnaryExpression() : {
     }
 }
 
-void UnaryOperator() : {}
+void UnaryOperator() : { }
 {
-	( "&" | "*" | "+" | "-" | "~" | "!" )
+	(
+	"&"
+	|
+	"*"
+	)
 }
 
 Object PostfixExpression() : {
@@ -2584,14 +2677,14 @@ Object PostfixExpression() : {
 {
 	obj = PrimaryExpression() 
 	(
-		"[" Expression() "]" 
+		( "[" Expression() "]" )
 		|
 		"(" 
 		[
 			LOOKAHEAD(ArgumentExpressionList() )
 			ArgumentExpressionList() 
 		]
-		")" 
+		")"
 		|
 		"." <IDENTIFIER> 
 		|
@@ -2599,7 +2692,7 @@ Object PostfixExpression() : {
 		|
 		"++" 
 		|
-		"--" 
+		"--"      
 	)*
 	{
 		return obj;
