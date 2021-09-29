@@ -16,25 +16,17 @@
 package ghidradev.ghidraprojectcreator.utils;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import javax.naming.OperationNotSupportedException;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.osgi.framework.Bundle;
@@ -163,14 +155,19 @@ public class PyDevUtils {
 	 * @throws CoreException if there was a problem searching for the PyDev source directory.
 	 */
 	public static File getPyDevSrcDir() throws CoreException {
-		Bundle[] bundles = FrameworkUtil.getBundle(PyDevUtilsInternal.class).getBundleContext().getBundles();
+		Bundle[] bundles =
+			FrameworkUtil.getBundle(PyDevUtilsInternal.class).getBundleContext().getBundles();
 
-		Bundle pydevCoreBundle = Stream.of(bundles).filter(bundle -> bundle.getSymbolicName().contains("org.python.pydev.core")).findFirst().orElse(null);
+		Bundle pydevCoreBundle = Stream.of(bundles)
+				.filter(bundle -> bundle.getSymbolicName().contains("org.python.pydev.core"))
+				.findFirst()
+				.orElse(null);
 
-		if(pydevCoreBundle != null) {
+		if (pydevCoreBundle != null) {
 			try {
 				URL pydevDirUrl = FileLocator.toFileURL(pydevCoreBundle.getEntry("/"));
-				URI pydevDirUri = new URI(pydevDirUrl.getProtocol(), pydevDirUrl.getPath(), null).normalize();
+				URI pydevDirUri =
+					new URI(pydevDirUrl.getProtocol(), pydevDirUrl.getPath(), null).normalize();
 				Path pysrcDir = Paths.get(pydevDirUri).resolve("pysrc");
 				if (Files.exists(pysrcDir)) {
 					return pysrcDir.toFile();
