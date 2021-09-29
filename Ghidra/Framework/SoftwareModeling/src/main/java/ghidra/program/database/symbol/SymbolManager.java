@@ -1033,11 +1033,22 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		return list;
 	}
 
+	private Symbol searchNamespaceForFirstSymbol(String name, Namespace namespace,
+			Predicate<Symbol> test) {
+		for (Symbol symbol : getSymbols(namespace)) {
+			if (name.equals(symbol.getName()) && test.test(symbol)) {
+				return symbol;
+			}
+		}
+		return null;
+	}
+
 	private Symbol getSymbolForDynamicName(String name) {
 		Address address = SymbolUtilities.parseDynamicName(addrMap.getAddressFactory(), name);
 		if (address != null) {
 			Symbol primarySymbol = getPrimarySymbol(address);
-			if (primarySymbol != null && primarySymbol.getSource() == SourceType.DEFAULT) {
+			if (primarySymbol != null && primarySymbol.getSource() == SourceType.DEFAULT &&
+				name.equals(primarySymbol.getName())) {
 				return primarySymbol;
 			}
 		}
@@ -1050,6 +1061,18 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		if (namespace == null) {
 			namespace = namespaceMgr.getGlobalNamespace();
 		}
+
+		// if name is possible default parameter or local variable name, must do brute force search
+		if (namespace instanceof Function &&
+			SymbolUtilities.isPossibleDefaultLocalOrParamName(name)) {
+			return searchNamespaceForFirstSymbol(name, namespace, test);
+		}
+
+		// if the name is a possible default external name, do brute force search
+		if (namespace.isExternal() && SymbolUtilities.isPossibleDefaultExternalName(name)) {
+			return searchNamespaceForFirstSymbol(name, namespace, test);
+		}
+
 		lock.acquire();
 		try {
 			RecordIterator it = adapter.getSymbolsByNameAndNamespace(name, namespace.getID());
