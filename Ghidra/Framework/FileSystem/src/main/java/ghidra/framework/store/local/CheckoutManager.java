@@ -163,9 +163,8 @@ class CheckoutManager {
 	 */
 	synchronized boolean isCheckedOut(int version) throws IOException {
 		validate();
-		for (Map.Entry<long, ItemCheckoutStatus> checkoutsEntry : checkouts.entrySet()) {
-			long id = checkoutsEntry.getKey();
-			ItemCheckoutStatus coStatus = checkoutsEntry.getValue();
+		for (long id : checkouts.keySet()) {
+			ItemCheckoutStatus coStatus = checkouts.get(id);
 			if (coStatus.getCheckoutVersion() == version) {
 				return true;
 			}
