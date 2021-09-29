@@ -1107,9 +1107,8 @@ public class DefaultCompositeMember extends CompositeMember {
 		// to multiple components within the actual parent structure so there is not a one-to-one
 		// relationship.
 
-		for (Map.Entry<int, CompositeMember> parentStructureMemberOffsetMapEntry : parent.structureMemberOffsetMap.entrySet()) {
-			int offset = parentStructureMemberOffsetMapEntry.getKey();
-			CompositeMember m = parentStructureMemberOffsetMapEntry.getValue();
+		for (int offset : parent.structureMemberOffsetMap.keySet()) {
+			CompositeMember m = parent.structureMemberOffsetMap.get(offset);
 			if (m.getOffset() >= memberOffset && m != this) {
 				list.add(m);
 			}

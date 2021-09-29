@@ -1602,7 +1602,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 				displayChanged(ref, "registersUpdated");
 			}
 			Map<String, ?> cachedAttributes = bank.getCachedAttributes();
-			for (Map.Entry<String, Object> cachedAttributesEntry : cachedAttributes.entrySet()) {
+			for (Map.Entry<String, ?> cachedAttributesEntry : cachedAttributes.entrySet()) {
 				String key = cachedAttributesEntry.getKey();
 				Object obj = cachedAttributesEntry.getValue();
 				if (obj instanceof TargetObject) {
