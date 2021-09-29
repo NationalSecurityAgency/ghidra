@@ -1988,29 +1988,40 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	private class ClassNamespaceIterator implements Iterator<GhidraClass> {
 
-		private Iterator<Symbol> symbols;
+		private QueryRecordIterator iter;
 
 		ClassNamespaceIterator() {
-			ArrayList<Symbol> list = new ArrayList<>();
-			SymbolIterator iter = getSymbols(namespaceMgr.getGlobalNamespace());
-			while (iter.hasNext()) {
-				Symbol s = iter.next();
-				if (s.getSymbolType() == SymbolType.CLASS) {
-					list.add(s);
-				}
+			try {
+				byte classTypeId = SymbolType.CLASS.getID();
+				iter = new QueryRecordIterator(adapter.getSymbols(),
+					rec -> classTypeId == rec.getByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL));
 			}
-			symbols = list.iterator();
+			catch (IOException e) {
+				dbError(e);
+			}
 		}
 
 		@Override
 		public boolean hasNext() {
-			return symbols.hasNext();
+			try {
+				return iter.hasNext();
+			}
+			catch (IOException e) {
+				dbError(e);
+			}
+			return false;
 		}
 
 		@Override
 		public GhidraClass next() {
-			if (symbols.hasNext()) {
-				return (GhidraClass) symbols.next().getObject();
+			try {
+				if (iter.hasNext()) {
+					Symbol s = getSymbol(iter.next());
+					return (GhidraClass) s.getObject();
+				}
+			}
+			catch (IOException e) {
+				dbError(e);
 			}
 			return null;
 		}
