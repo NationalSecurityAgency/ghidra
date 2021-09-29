@@ -205,7 +205,7 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 				}
 				result.add(child);
 			}
-			for (Map.Entry<String, TargetObject> elementsAddedEntry : elementsAdded.entrySet()) {
+			for (Map.Entry<String, ? extends TargetObject> elementsAddedEntry : elementsAdded.entrySet()) {
 				String key = elementsAddedEntry.getKey();
 				TargetObject val = elementsAddedEntry.getValue();
 				ObjectContainer child =
@@ -313,7 +313,7 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 			}
 		}
 		if (added != null) {
-			for (Map.Entry<String, Object> addedEntry : added.entrySet()) {
+			for (Map.Entry<String, ?> addedEntry : added.entrySet()) {
 				String key = addedEntry.getKey();
 				Object object = addedEntry.getValue();
 				map.put(key, object);
