@@ -167,46 +167,6 @@ tasks.addRule("Pattern: buildNatives[_PlatformName]: build all natives for given
 	}
 }
 
- /*******************************************************************************************
- * Task Rule : prebuildNatives[_PlatformName]
- *
- * Summary: Builds all the natives in this module for a given platform and copies the results
- *          to the bin repo.
- *
- * Args: PlatformName - The name of the platform.  If not specified, the current platform is used.
- *
- * Example: gradle prebuildNatives_win_x86_64 will build all win_x86_64 native executables and 
- *          shared libraries and copy the results to the appropriate project/os directory in
- *          the bin repo.
- *	
- * NOTE: you must be on the appropriate platform for this to work.
- ******************************************************************************************/
-tasks.addRule("Pattern: prebuildNatives<_platform name>]: build all natives for given platform") { String taskName ->
-	if (taskName.startsWith("prebuildNatives")) {
-		def currentPlatform = getCurrentPlatformName()
-		def platform = taskName - "prebuildNatives"
-		if (platform.length() == 0) {
-			platform = currentPlatform
-		}
-		if (platform.startsWith("_")) {
-			platform = platform - "_"
-		}
-		
-		task(taskName)  { myTask ->		
-			dependsOn "buildNatives_$platform"
-
-			doLast {
-				copy  {
-					from "${projectDir}/build/os/${platform}"
-					into "${getProjectLocationInBinRepo(project)}/os/${platform}"
-					exclude "*.exp"
-					exclude "*.lib"
-				}
-			}	
-		}
-	}
-}
-
 /*****************************************************************************************
  * The following block of code changes the output directory for native builds
  * to <projectDir>/build/os/<platform>/<executable>  ?? is there a better way to do this?
