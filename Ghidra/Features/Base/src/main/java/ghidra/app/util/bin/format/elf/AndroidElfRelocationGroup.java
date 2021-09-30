@@ -18,6 +18,8 @@ package ghidra.app.util.bin.format.elf;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import javax.help.UnsupportedOperationException;
+
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.elf.AndroidElfRelocationTableDataType.LEB128Info;
 import ghidra.docking.settings.Settings;
@@ -48,10 +50,8 @@ class AndroidElfRelocationGroup extends DynamicDataType {
 
 	@Override
 	public DataType clone(DataTypeManager dtm) {
-		if (dtm == dataMgr) {
-			return this;
-		}
-		return new AndroidElfRelocationGroup(dtm, baseRelocOffset);
+		// specific instances are used by AndroidElfRelocationTableDatatype
+		throw new UnsupportedOperationException("may not be cloned");
 	}
 
 	@Override
@@ -125,9 +125,10 @@ class AndroidElfRelocationGroup extends DynamicDataType {
 					}
 					else {
 						sleb128 = LEB128Info.parse(reader, true);
+						long baseOffset = relocOffset;
 						relocOffset += sleb128.value;
 						DataTypeComponent dtc = new ReadOnlyDataTypeComponent(
-							new AndroidElfRelocationOffset(dataMgr, relocOffset), this,
+							new AndroidElfRelocationOffset(dataMgr, baseOffset, relocOffset), this,
 							sleb128.byteLength, list.size(), sleb128.offset, "reloc_offset_" + i,
 							null);
 						list.add(dtc);
@@ -161,6 +162,7 @@ class AndroidElfRelocationGroup extends DynamicDataType {
 			return -1;
 		}
 
+		// group_size component
 		Scalar s = (Scalar) comps[0].getDataType().getValue(buf, null, comps[0].getLength());
 		int groupSize = (int) s.getValue();
 
@@ -170,10 +172,7 @@ class AndroidElfRelocationGroup extends DynamicDataType {
 			WrappedMemBuffer cbuf = new WrappedMemBuffer(buf, comps[2].getOffset());
 			s = (Scalar) comps[2].getDataType().getValue(cbuf, null, comps[2].getLength());
 			long groupOffsetDelta = s.getValue();
-			if (lastDtc.getFieldName().startsWith("group_")) {
-				// must compute final offset for group
-				return baseRelocOffset + (groupSize * groupOffsetDelta);
-			}
+			return baseRelocOffset + ((groupSize - 1) * groupOffsetDelta);
 		}
 
 		if (lastDtc.getFieldName().startsWith("group_")) {
@@ -189,7 +188,6 @@ class AndroidElfRelocationGroup extends DynamicDataType {
 			AndroidElfRelocationData d = (AndroidElfRelocationData) dt;
 			return d.getRelocationOffset(); // return stashed offset
 		}
-
 		return -1; // unexpected
 	}
 }

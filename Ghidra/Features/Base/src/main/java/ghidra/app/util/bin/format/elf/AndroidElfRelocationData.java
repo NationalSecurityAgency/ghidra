@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.elf;
 
+import javax.help.UnsupportedOperationException;
+
 import ghidra.app.plugin.exceptionhandlers.gcc.datatype.AbstractLeb128DataType;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
@@ -48,10 +50,8 @@ class AndroidElfRelocationData extends AbstractLeb128DataType {
 
 	@Override
 	public DataType clone(DataTypeManager dtm) {
-		if (dtm == getDataTypeManager()) {
-			return this;
-		}
-		return new AndroidElfRelocationData(dtm, relocationOffset);
+		// specific instances are used by AndroidElfRelocationTableDataType
+		throw new UnsupportedOperationException("may not be cloned");
 	}
 
 	@Override
