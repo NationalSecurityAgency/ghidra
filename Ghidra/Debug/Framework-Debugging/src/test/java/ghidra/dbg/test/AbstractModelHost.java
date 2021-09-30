@@ -17,6 +17,7 @@ package ghidra.dbg.test;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Function;
 
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
@@ -231,8 +232,16 @@ public abstract class AbstractModelHost implements ModelHost, DebuggerModelTestU
 	@Override
 	public <T extends TargetObject> NavigableMap<List<String>, T> findAll(Class<T> cls,
 			List<String> seedPath, boolean atLeastOne) throws Throwable {
-		PathMatcher matcher =
-			model.getRootSchema().getSuccessorSchema(seedPath).searchFor(cls, seedPath, false);
+		return findAll(cls, seedPath, pred -> pred, atLeastOne);
+	}
+
+	@Override
+	public <T extends TargetObject> NavigableMap<List<String>, T> findAll(Class<T> cls,
+			List<String> seedPath, Function<PathPredicates, PathPredicates> adjustPredicates,
+			boolean atLeastOne) throws Throwable {
+		PathPredicates matcher = adjustPredicates.apply(model.getRootSchema()
+				.getSuccessorSchema(seedPath)
+				.searchFor(cls, seedPath, false));
 		if (matcher.isEmpty()) {
 			return new TreeMap<>();
 		}
@@ -244,7 +253,10 @@ public abstract class AbstractModelHost implements ModelHost, DebuggerModelTestU
 		// During testing, we should expend the energy to verify the heap.
 		NavigableMap<List<String>, T> result = new TreeMap<>(PathComparator.KEYED);
 		for (Entry<List<String>, ?> ent : found.entrySet()) {
-			result.put(ent.getKey(), cls.cast(ent.getValue()));
+			//TODO GP-1301
+			if (cls.isInstance(ent.getValue())) {
+				result.put(ent.getKey(), cls.cast(ent.getValue()));
+			}
 		}
 		return result;
 	}
