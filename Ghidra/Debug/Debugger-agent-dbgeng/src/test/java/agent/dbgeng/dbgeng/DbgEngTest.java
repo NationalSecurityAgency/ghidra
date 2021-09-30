@@ -16,7 +16,7 @@
 package agent.dbgeng.dbgeng;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.*;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -29,7 +29,6 @@ import com.sun.jna.Native;
 import com.sun.jna.platform.win32.COM.COMException;
 import com.sun.jna.win32.StdCallLibrary;
 
-//import agent.dbgeng.DummyProc;
 import agent.dbgeng.dbgeng.DebugBreakpoint.BreakType;
 import agent.dbgeng.dbgeng.DebugClient.*;
 import agent.dbgeng.dbgeng.DebugDataSpaces.*;

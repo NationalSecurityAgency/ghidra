@@ -15,9 +15,6 @@
  */
 package agent.dbgeng.manager.evt;
 
-/**
- * The event corresponding with "{@code =thread-selected}"
- */
 public class DbgSystemErrorEvent extends AbstractDbgEvent<Integer> {
 	private final int error;
 	private final int level;

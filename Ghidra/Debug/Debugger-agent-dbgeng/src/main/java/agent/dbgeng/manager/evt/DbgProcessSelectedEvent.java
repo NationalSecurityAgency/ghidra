@@ -18,9 +18,6 @@ package agent.dbgeng.manager.evt;
 import agent.dbgeng.dbgeng.DebugProcessId;
 import agent.dbgeng.manager.impl.DbgProcessImpl;
 
-/**
- * The event corresponding with "{@code =thread-selected}"
- */
 public class DbgProcessSelectedEvent extends AbstractDbgEvent<DebugProcessId> {
 	private final DebugProcessId id;
 	private DbgProcessImpl process;

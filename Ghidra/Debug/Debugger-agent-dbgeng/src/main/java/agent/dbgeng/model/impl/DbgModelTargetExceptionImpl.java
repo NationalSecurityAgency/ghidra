@@ -116,7 +116,7 @@ public class DbgModelTargetExceptionImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public Map<String, ParameterDescription<?>> getConfigParameters() {
+	public Map<String, ParameterDescription<?>> getConfigurableOptions() {
 		Map<String, ParameterDescription<?>> map = new HashMap<>();
 		ParameterDescription<String> cmdDesc = ParameterDescription.create(String.class,
 			COMMAND_ATTRIBUTE_NAME, false, "", COMMAND_ATTRIBUTE_NAME, "filter command");

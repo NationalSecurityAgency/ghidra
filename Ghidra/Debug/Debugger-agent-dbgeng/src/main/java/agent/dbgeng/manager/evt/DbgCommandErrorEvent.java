@@ -18,9 +18,6 @@ package agent.dbgeng.manager.evt;
 import agent.dbgeng.manager.DbgEvent;
 import agent.dbgeng.manager.DbgState;
 
-/**
- * The event corresponding with "{@code ^error}"
- */
 public class DbgCommandErrorEvent extends AbstractDbgCompletedCommandEvent {
 
 	/**

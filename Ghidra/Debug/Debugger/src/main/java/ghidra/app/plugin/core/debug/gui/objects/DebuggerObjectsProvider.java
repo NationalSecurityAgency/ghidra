@@ -46,8 +46,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.objects.actions.*;
 import ghidra.app.plugin.core.debug.gui.objects.components.*;
 import ghidra.app.services.*;
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
+import ghidra.async.*;
 import ghidra.dbg.*;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.target.*;
@@ -1528,17 +1527,22 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public void performConfigure(ActionContext context) {
 		performAction(context, false, TargetConfigurable.class, configurable -> {
 			Map<String, ParameterDescription<?>> configParameters =
-				configurable.getConfigParameters();
-			if (configParameters.size() > 0) {
-				Map<String, ?> args = configDialog.promptArguments(configParameters);
-				if (args != null) {
-					for (Entry<String, ?> entry : args.entrySet()) {
-						configurable.writeConfigurationOption(entry.getKey(), entry.getValue());
-					}
-				}
+				configurable.getConfigurableOptions();
+			if (configParameters.isEmpty()) {
+				return AsyncUtils.NIL;
 			}
-			return AsyncUtils.NIL;
-		}, "Couldn't configure");
+			Map<String, ?> args = configDialog.promptArguments(configParameters);
+			if (args == null) {
+				// User cancelled
+				return AsyncUtils.NIL;
+			}
+			AsyncFence fence = new AsyncFence();
+			for (Entry<String, ?> entry : args.entrySet()) {
+				fence.include(
+					configurable.writeConfigurationOption(entry.getKey(), entry.getValue()));
+			}
+			return fence.ready();
+		}, "Couldn't configure one or more options");
 	}
 
 	public void initiateConsole(ActionContext context) {

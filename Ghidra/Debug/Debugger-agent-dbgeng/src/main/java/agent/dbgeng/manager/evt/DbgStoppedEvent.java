@@ -20,18 +20,13 @@ import agent.dbgeng.manager.DbgState;
 import agent.dbgeng.manager.impl.DbgStackFrameImpl;
 import agent.dbgeng.manager.impl.DbgThreadImpl;
 
-/**
- * The event corresponding with "{@code *stopped}"
- */
 public class DbgStoppedEvent extends AbstractDbgEvent<DebugThreadId> {
 	private final DebugThreadId id;
 
 	/**
-	 * Construct a new event, parsing the tail for information
+	 * Construct a new event with the given thread ID
 	 * 
-	 * A thread ID must be specified by dbgeng.
-	 * 
-	 * @param id the event info
+	 * @param id the thread ID
 	 */
 	public DbgStoppedEvent(DebugThreadId id) {
 		super(id);

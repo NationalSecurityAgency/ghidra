@@ -17,16 +17,11 @@ package agent.dbgeng.manager.evt;
 
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 
-/**
- * The event corresponding with "{@code =breakpoint-deleted}"
- */
 public class DbgBreakpointDeletedEvent extends AbstractDbgEvent<DbgBreakpointInfo> {
 	private final long number;
 
 	/**
-	 * Construct a new event by parsing the tail for information
-	 * 
-	 * The breakpoint number must be specified by GDB.
+	 * Construct a new event from the given info
 	 * 
 	 * @param info breakpoint info
 	 */
