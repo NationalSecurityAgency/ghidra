@@ -30,10 +30,7 @@ import ghidra.program.util.ProgramLocation;
  *
  * Symbol data usage:
  *   EXTERNAL:
- *   	long data1 - external data type
- *   	String data3 - external memory address
- *   NON-EXTERNAL:
- *      int  data2 - primary flag
+ *   	String stringData - external memory address/label
  */
 
 public class CodeSymbol extends SymbolDB {
@@ -162,7 +159,7 @@ public class CodeSymbol extends SymbolDB {
 		if (getSource() == SourceType.DEFAULT || isExternal()) {
 			return true;
 		}
-		return getSymbolData2() == 1;
+		return doCheckIsPrimary();
 	}
 
 	/**
@@ -201,7 +198,7 @@ public class CodeSymbol extends SymbolDB {
 	}
 
 	void setPrimary(boolean primary) {
-		setSymbolData2(primary ? 1 : 0);
+		doSetPrimary(primary);
 	}
 
 	/**

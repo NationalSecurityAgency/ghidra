@@ -42,7 +42,7 @@ abstract class PrimitiveField extends Field {
 	}
 
 	@Override
-	final boolean isNull() {
+	public final boolean isNull() {
 		return isNull;
 	}
 

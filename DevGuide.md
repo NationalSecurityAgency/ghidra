@@ -262,32 +262,15 @@ You may see build path errors until the environment is properly prepared, as des
 ### Building the natives
 
 Some of Ghidra's components are built for the native platform.
-We currently support Linux, macOS, and Windows 64-bit x86 systems.
-Others should be possible, but we do not test on them.
+We currently support 64-bit Linux x86/ARM, macOS x86/ARM, and Windows x86.
 
-Now build using Gradle:
-
-On Linux:
+Build the natives for your current platform using Gradle:
 
 ```bash
-gradle buildNatives_linux_x86_64
-```
-
-On macOS:
-
-```bash
-gradle buildNatives_mac_x86_64
-```
-
-On Windows:
-
-```bash
-gradle buildNatives_win_x86_64
+gradle buildNatives
 ```
 
 This will build the decompiler, the demangler for GNU toolchains, the sleigh compiler, and (on Windows only) the PDB parser.
-
-**NOTE:** `buildNatives_linux_arm_64` and `buildNatives_mac_arm_64` are also supported.
 
 ### Pre-compile Language Modules (optional)
 

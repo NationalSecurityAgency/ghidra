@@ -15,6 +15,7 @@
  */
 package ghidra.dbg.model;
 
+import java.nio.ByteBuffer;
 import java.util.function.Function;
 
 import ghidra.program.model.address.Address;
@@ -53,6 +54,18 @@ public class TestDebuggerModelBuilder {
 
 	public AddressRange rng(long min, long max) {
 		return testModel.range(min, max);
+	}
+
+	public byte[] arr(int... e) {
+		byte[] result = new byte[e.length];
+		for (int i = 0; i < e.length; i++) {
+			result[i] = (byte) e[i];
+		}
+		return result;
+	}
+
+	public ByteBuffer buf(int... e) {
+		return ByteBuffer.wrap(arr(e));
 	}
 
 	public void createTestProcessesAndThreads() {

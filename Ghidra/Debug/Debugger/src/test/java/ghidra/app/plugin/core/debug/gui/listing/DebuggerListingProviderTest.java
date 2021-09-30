@@ -69,7 +69,7 @@ import ghidra.util.task.TaskMonitor;
 
 public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	static LocationTrackingSpec getLocationTrackingSpec(String name) {
-		return /*waitForValue(() ->*/ LocationTrackingSpec.fromConfigName(name)/*)*/;
+		return LocationTrackingSpec.fromConfigName(name);
 	}
 
 	static AutoReadMemorySpec getAutoReadMemorySpec(String name) {
@@ -261,7 +261,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		TraceThread thread1;
 		TraceThread thread2;
-		DebuggerListingProvider extraListing = SwingExecutorService.INSTANCE.submit(
+		DebuggerListingProvider extraProvider = SwingExecutorService.INSTANCE.submit(
 			() -> listingPlugin.createListingIfMissing(trackPc, true)).get();
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
@@ -283,15 +283,15 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.activateThread(thread1);
 		waitForSwing();
 
-		loc = extraListing.getLocation();
+		loc = extraProvider.getLocation();
 		assertEquals(tb.trace.getProgramView(), loc.getProgram());
 		assertEquals(tb.addr(0x00401234), loc.getAddress());
 
-		extraListing.setFollowsCurrentThread(false);
+		extraProvider.setFollowsCurrentThread(false);
 		traceManager.activateThread(thread2);
 		waitForSwing();
 
-		loc = extraListing.getLocation();
+		loc = extraProvider.getLocation();
 		assertEquals(tb.trace.getProgramView(), loc.getProgram());
 		assertEquals(tb.addr(0x00401234), loc.getAddress());
 	}
@@ -432,6 +432,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			loc = listingProvider.getLocation();
 			assertEquals(b1.trace.getProgramView(), loc.getProgram());
 			assertEquals(b1.addr(0x00400000), loc.getAddress());
+			// TODO: Assert thread?
 
 			traceManager.activateThread(t2);
 			waitForSwing();
@@ -820,7 +821,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		performAction(listingProvider.actionGoTo, false);
 		DebuggerGoToDialog dialog = waitForDialogComponent(DebuggerGoToDialog.class);
 
-		dialog.textExpression.setText("r0");
+		dialog.setExpression("r0");
 		dialog.okCallback();
 
 		waitForPass(
@@ -828,7 +829,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		performAction(listingProvider.actionGoTo, false);
 		dialog = waitForDialogComponent(DebuggerGoToDialog.class);
-		dialog.textExpression.setText("*:4 r0");
+		dialog.setExpression("*:4 r0");
 		dialog.okCallback();
 
 		waitForPass(

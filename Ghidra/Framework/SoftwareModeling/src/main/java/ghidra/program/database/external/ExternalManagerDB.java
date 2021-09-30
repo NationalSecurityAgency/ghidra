@@ -22,7 +22,7 @@ import db.*;
 import ghidra.framework.store.FileSystem;
 import ghidra.program.database.ManagerDB;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.database.external.ExternalLocationDB.ExternalData3;
+import ghidra.program.database.external.ExternalLocationDB.ExternalData;
 import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.symbol.*;
@@ -556,15 +556,15 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		if ((type != SymbolType.LABEL && type != SymbolType.FUNCTION) || !sym.isExternal()) {
 			throw new AssertException();
 		}
-		ExternalData3 externalData3 = ExternalLocationDB.getExternalData3(sym);
-		Address addr = externalData3.getAddress(sym.getProgram().getAddressFactory());
+		ExternalData externalData = ExternalLocationDB.getExternalData(sym);
+		Address addr = externalData.getAddress(sym.getProgram().getAddressFactory());
 		if (addr == null) {
 			throw new AssertException("External should not be default without memory address");
 		}
 		if (type == SymbolType.FUNCTION) {
 			return SymbolUtilities.getDefaultExternalFunctionName(addr);
 		}
-		long dataTypeID = sym.getSymbolData1();
+		long dataTypeID = sym.getDataTypeId();
 		DataType dt =
 			(dataTypeID < 0) ? null : sym.getProgram().getDataTypeManager().getDataType(dataTypeID);
 		return SymbolUtilities.getDefaultExternalName(addr, dt);
@@ -695,7 +695,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	private Library addExternalName(String name, String pathname, SourceType source)
 			throws DuplicateNameException, InvalidInputException {
 		SymbolDB s = symbolMgr.createSpecialSymbol(Address.NO_ADDRESS, name,
-			scopeMgr.getGlobalNamespace(), SymbolType.LIBRARY, -1, 0, pathname, source); // 0 set first id for external names
+			scopeMgr.getGlobalNamespace(), SymbolType.LIBRARY, null, null, pathname, source);
 		return (Library) s.getObject();
 	}
 
@@ -742,7 +742,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	public String getExternalLibraryPath(String externalName) {
 		SymbolDB s = (SymbolDB) symbolMgr.getLibrarySymbol(externalName);
 		if (s instanceof LibrarySymbol) {
-			return s.getSymbolData3();
+			return s.getSymbolStringData();
 		}
 		return null;
 	}
@@ -771,7 +771,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 				}
 			}
 			else if (s instanceof LibrarySymbol) {
-				s.setSymbolData3(externalPath);
+				s.setSymbolStringData(externalPath);
 			}
 		}
 		finally {
@@ -802,7 +802,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 				return null;
 			}
 			//long dtId = symbol.getSymbolData1();
-			String extData3 = symbol.getSymbolData3();
+			String extData = symbol.getSymbolStringData();
 			String name = symbol.getName();
 			Namespace namespace = symbol.getParentNamespace();
 			Address extAddr = symbol.getAddress();
@@ -810,7 +810,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 			((CodeSymbol) symbol).delete(true);
 
-			return functionMgr.createExternalFunction(extAddr, name, namespace, extData3, source);
+			return functionMgr.createExternalFunction(extAddr, name, namespace, extData, source);
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -927,8 +927,8 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		while (externalSymbols.hasNext()) {
 			monitor.checkCanceled();
 			SymbolDB s = (SymbolDB) externalSymbols.next();
-			ExternalData3 externalData3 = ExternalLocationDB.getExternalData3(s);
-			String addrStr = externalData3.getAddressString();
+			ExternalData externalData = ExternalLocationDB.getExternalData(s);
+			String addrStr = externalData.getAddressString();
 			if (addrStr == null) {
 				continue;
 			}
@@ -947,7 +947,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 			addr = newAddressSpace.getAddress(addr.getOffset());
 			String newAddrStr = addr.toString();
 			if (!newAddrStr.equals(addrStr)) {
-				ExternalLocationDB.updateSymbolData3(s, externalData3.getOriginalImportedName(),
+				ExternalLocationDB.updateSymbolData(s, externalData.getOriginalImportedName(),
 					newAddrStr); // store translated external location address
 			}
 		}

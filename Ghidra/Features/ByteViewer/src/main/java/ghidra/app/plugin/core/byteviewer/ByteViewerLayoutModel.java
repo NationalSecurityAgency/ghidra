@@ -33,15 +33,14 @@ import ghidra.app.plugin.core.format.DataFormatModel;
 /**
  * Implements the LayoutModel for ByteViewer Components.
  */
-
-class ByteViewerLayoutModel implements LayoutModel {
+public class ByteViewerLayoutModel implements LayoutModel {
 	private int width;
 	private IndexMap indexMap;
 	private List<LayoutModelListener> listeners;
 	private FieldFactory[] factorys;
 	private BigInteger numIndexes;
 
-	ByteViewerLayoutModel() {
+	public ByteViewerLayoutModel() {
 		factorys = new FieldFactory[0];
 		listeners = new ArrayList<LayoutModelListener>(1);
 		numIndexes = BigInteger.ZERO;

@@ -20,6 +20,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
 import ghidra.framework.plugintool.Plugin;
 
 public interface DebuggerTrackLocationAction extends TrackLocationAction {
+
 	// TODO: Update the action when new specs enter the class path?
 	static MultiStateActionBuilder<LocationTrackingSpec> builder(Plugin owner) {
 		MultiStateActionBuilder<LocationTrackingSpec> builder = TrackLocationAction.builder(owner);

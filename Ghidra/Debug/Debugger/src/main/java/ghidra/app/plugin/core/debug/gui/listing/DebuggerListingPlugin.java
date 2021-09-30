@@ -28,7 +28,7 @@ import docking.ActionContext;
 import docking.action.MenuData;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
+import ghidra.app.plugin.core.codebrowser.AbstractCodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
@@ -46,7 +46,6 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.program.TraceProgramView;
@@ -89,7 +88,8 @@ import utilities.util.SuppressableCallback.Suppression;
 	servicesProvided = {
 		DebuggerListingService.class,
 	})
-public class DebuggerListingPlugin extends CodeBrowserPlugin implements DebuggerListingService {
+public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerListingProvider>
+		implements DebuggerListingService {
 	private static final String KEY_CONNECTED_PROVIDER = "connectedProvider";
 	private static final String KEY_DISCONNECTED_COUNT = "disconnectedCount";
 	private static final String PREFIX_DISCONNECTED_PROVIDER = "disconnectedProvider";
@@ -124,14 +124,14 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 	//private GoToService goToService;
 	@AutoServiceConsumed
 	private ProgramManager programManager;
-	// NOTE: ListingPlugin doesn't extend AbstractDebuggerPlugin
+	// NOTE: This plugin doesn't extend AbstractDebuggerPlugin
 	@SuppressWarnings("unused")
 	private AutoService.Wiring autoServiceWiring;
 
-	@AutoOptionDefined( //
-		name = OPTION_NAME_COLORS_STALE_MEMORY, //
+	@AutoOptionDefined(
+		name = OPTION_NAME_COLORS_STALE_MEMORY,
 		description = "Color of memory addresses whose content is not known in the view's " +
-			"snap", //
+			"snap",
 		help = @HelpInfo(anchor = "colors"))
 	private Color staleMemoryColor = DEFAULT_COLOR_BACKGROUND_STALE;
 	@AutoOptionDefined( //
@@ -142,7 +142,7 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 	private Color errorMemoryColor = DEFAULT_COLOR_BACKGROUND_ERROR;
 	// NOTE: Static programs are marked via markerSet. Dynamic are marked via custom color model
 	@AutoOptionDefined( //
-		name = OPTION_NAME_COLORS_REGISTER_MARKERS, //
+		name = OPTION_NAME_COLORS_TRACKING_MARKERS, //
 		description = "Background color for locations referred to by a tracked register", //
 		help = @HelpInfo(anchor = "colors"))
 	private Color trackingColor = DEFAULT_COLOR_REGISTER_MARKERS;
@@ -162,15 +162,6 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 		createActions();
 	}
 
-	protected DebuggerListingProvider getConnectedProvider() {
-		return (DebuggerListingProvider) connectedProvider;
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected List<DebuggerListingProvider> getDisconnectedProviders() {
-		return (List) disconnectedProviders;
-	}
-
 	@Override
 	protected DebuggerListingProvider createProvider(FormatManager formatManager,
 			boolean isConnected) {
@@ -184,7 +175,7 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 	public DebuggerListingProvider createListingIfMissing(LocationTrackingSpec spec,
 			boolean followsCurrentThread) {
 		synchronized (disconnectedProviders) {
-			for (DebuggerListingProvider provider : getDisconnectedProviders()) {
+			for (DebuggerListingProvider provider : disconnectedProviders) {
 				if (provider.getTrackingSpec() != spec) {
 					continue;
 				}
@@ -199,11 +190,6 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 			provider.goToCoordinates(current);
 			return provider;
 		}
-	}
-
-	@Override
-	public DebuggerListingProvider createNewDisconnectedProvider() {
-		return (DebuggerListingProvider) super.createNewDisconnectedProvider();
 	}
 
 	@Override
@@ -239,6 +225,12 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 		firePluginEvent(new TraceSelectionPluginEvent(getName(), selection, view));
 	}
 
+	@Override
+	public void highlightChanged(CodeViewerProvider codeViewerProvider,
+			ProgramSelection highlight) {
+		// TODO Nothing, yet
+	}
+
 	protected boolean heedLocationEvent(ProgramLocationPluginEvent ev) {
 		PluginEvent trigger = ev.getTriggerEvent();
 		/*Msg.debug(this, "Location event");
@@ -267,12 +259,11 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 
 	@Override
 	public void processEvent(PluginEvent event) {
-		// Do not call super here. I intend to prevent it from seeing events.
 		if (event instanceof ProgramLocationPluginEvent) {
 			cbProgramLocationEvents.invoke(() -> {
 				ProgramLocationPluginEvent ev = (ProgramLocationPluginEvent) event;
 				if (heedLocationEvent(ev)) {
-					getConnectedProvider().staticProgramLocationChanged(ev.getLocation());
+					connectedProvider.staticProgramLocationChanged(ev.getLocation());
 				}
 			});
 		}
@@ -291,6 +282,9 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 		}
 		if (event instanceof TraceClosedPluginEvent) {
 			TraceClosedPluginEvent ev = (TraceClosedPluginEvent) event;
+			if (current.getTrace() == ev.getTrace()) {
+				current = DebuggerCoordinates.NOWHERE;
+			}
 			allProviders(p -> p.traceClosed(ev.getTrace()));
 		}
 		// TODO: Sync selection and highlights?
@@ -308,34 +302,29 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 	}
 
 	protected void allProviders(Consumer<DebuggerListingProvider> action) {
-		action.accept(getConnectedProvider());
-		for (DebuggerListingProvider provider : getDisconnectedProviders()) {
+		action.accept(connectedProvider);
+		for (DebuggerListingProvider provider : disconnectedProviders) {
 			action.accept(provider);
 		}
 	}
 
-	@Override
-	protected void programClosed(Program program) {
-		// Immaterial
-	}
-
 	@AutoServiceConsumed
 	public void setTraceManager(DebuggerTraceManagerService traceManager) {
-		DebuggerListingProvider provider = getConnectedProvider();
+		DebuggerListingProvider provider = connectedProvider;
 		if (provider == null || traceManager == null) {
 			return;
 		}
-		provider.coordinatesActivated(traceManager.getCurrent());
+		provider.coordinatesActivated(current = traceManager.getCurrent());
 	}
 
 	@Override
 	public void setTrackingSpec(LocationTrackingSpec spec) {
-		getConnectedProvider().setTrackingSpec(spec);
+		connectedProvider.setTrackingSpec(spec);
 	}
 
 	@Override
 	public void setCurrentSelection(ProgramSelection selection) {
-		getConnectedProvider().setSelection(selection);
+		connectedProvider.setSelection(selection);
 	}
 
 	@Override
@@ -345,7 +334,7 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 			return false;
 		}
 		//cbGoTo.invoke(() -> {
-		DebuggerListingProvider provider = getConnectedProvider();
+		DebuggerListingProvider provider = connectedProvider;
 		provider.doSyncToStatic(location);
 		provider.doCheckCurrentModuleMissing();
 		//});
@@ -354,7 +343,7 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 
 	@Override
 	public boolean goTo(Address address, boolean centerOnScreen) {
-		TraceProgramView view = getConnectedProvider().current.getView();
+		TraceProgramView view = connectedProvider.current.getView();
 		if (view == null) {
 			return false;
 		}
@@ -392,17 +381,17 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 	@Override
 	public void writeDataState(SaveState saveState) {
 		SaveState connectedProviderState = new SaveState();
-		getConnectedProvider().writeDataState(connectedProviderState);
+		connectedProvider.writeDataState(connectedProviderState);
 		saveState.putXmlElement(KEY_CONNECTED_PROVIDER, connectedProviderState.saveToXml());
 
 		/**
 		 * Arrange the follows ones first, so that we reload them into corresponding providers
 		 * restored from config state
 		 */
-		List<DebuggerListingProvider> disconnected = getDisconnectedProviders().stream()
+		List<DebuggerListingProvider> disconnected = disconnectedProviders.stream()
 				.filter(p -> p.isFollowsCurrentThread())
 				.collect(Collectors.toList());
-		for (DebuggerListingProvider p : getDisconnectedProviders()) {
+		for (DebuggerListingProvider p : disconnectedProviders) {
 			if (!disconnected.contains(p)) {
 				disconnected.add(p);
 			}
@@ -419,8 +408,8 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 	}
 
 	protected void ensureProviders(int count, boolean followCurrentThread, SaveState configState) {
-		while (getDisconnectedProviders().size() < count) {
-			int index = getDisconnectedProviders().size();
+		while (disconnectedProviders.size() < count) {
+			int index = disconnectedProviders.size();
 			String stateName = PREFIX_DISCONNECTED_PROVIDER + index;
 			DebuggerListingProvider provider = createNewDisconnectedProvider();
 			provider.setFollowsCurrentThread(false);
@@ -442,13 +431,13 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 		Element connectedProviderElement = saveState.getXmlElement(KEY_CONNECTED_PROVIDER);
 		if (connectedProviderElement != null) {
 			SaveState connectedProviderState = new SaveState(connectedProviderElement);
-			getConnectedProvider().readDataState(connectedProviderState);
+			connectedProvider.readDataState(connectedProviderState);
 		}
 
 		int disconnectedCount = saveState.getInt(KEY_DISCONNECTED_COUNT, 0);
 		ensureProviders(disconnectedCount, false, saveState);
 
-		List<DebuggerListingProvider> disconnected = getDisconnectedProviders();
+		List<DebuggerListingProvider> disconnected = disconnectedProviders;
 		for (int index = 0; index < disconnectedCount; index++) {
 			String stateName = PREFIX_DISCONNECTED_PROVIDER + index;
 			Element providerElement = saveState.getXmlElement(stateName);
@@ -463,10 +452,10 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 	@Override
 	public void writeConfigState(SaveState saveState) {
 		SaveState connectedProviderState = new SaveState();
-		getConnectedProvider().writeConfigState(connectedProviderState);
+		connectedProvider.writeConfigState(connectedProviderState);
 		saveState.putXmlElement(KEY_CONNECTED_PROVIDER, connectedProviderState.saveToXml());
 
-		List<DebuggerListingProvider> disconnected = getDisconnectedProviders().stream()
+		List<DebuggerListingProvider> disconnected = disconnectedProviders.stream()
 				.filter(p -> p.isFollowsCurrentThread())
 				.collect(Collectors.toList());
 		int disconnectedCount = disconnected.size();
@@ -485,7 +474,7 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 		Element connectedProviderElement = saveState.getXmlElement(KEY_CONNECTED_PROVIDER);
 		if (connectedProviderElement != null) {
 			SaveState connectedProviderState = new SaveState(connectedProviderElement);
-			getConnectedProvider().readConfigState(connectedProviderState);
+			connectedProvider.readConfigState(connectedProviderState);
 		}
 
 		int disconnectedCount = saveState.getInt(KEY_DISCONNECTED_COUNT, 0);

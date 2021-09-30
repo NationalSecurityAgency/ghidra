@@ -86,6 +86,7 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 	public MemoryBlock[] getBlocks() {
 		List<MemoryBlock> result = new ArrayList<>();
 		forVisibleRegions(reg -> result.add(getBlock(reg)));
+		Collections.sort(result, Comparator.comparing(b -> b.getStart()));
 		return result.toArray(new MemoryBlock[result.size()]);
 	}
 

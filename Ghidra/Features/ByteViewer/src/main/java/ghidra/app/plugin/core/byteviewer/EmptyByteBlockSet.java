@@ -20,6 +20,7 @@ import java.math.BigInteger;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.format.*;
+import ghidra.program.model.address.AddressSet;
 
 public class EmptyByteBlockSet implements ByteBlockSet {
 
@@ -53,4 +54,8 @@ public class EmptyByteBlockSet implements ByteBlockSet {
 			byte[] newValue) {
 	}
 
+	@Override
+	public AddressSet getAddressSet(ByteBlockSelection selection) {
+		return null;
+	}
 }

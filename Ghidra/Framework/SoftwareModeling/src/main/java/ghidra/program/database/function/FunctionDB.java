@@ -990,7 +990,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 					symbolMap.put(v.symbol, v);
 				}
 				if (var.getComment() != null) {
-					v.symbol.setSymbolData3(var.getComment());
+					v.symbol.setSymbolStringData(var.getComment());
 				}
 				manager.functionChanged(this, 0);
 				return v;
@@ -1678,7 +1678,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 					manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_PARAMETERS);
 				}
 				if (var.getComment() != null) {
-					p.symbol.setSymbolData3(var.getComment());
+					p.symbol.setSymbolStringData(var.getComment());
 				}
 				updateSignatureSourceAfterVariableChange(source, p.getDataType());
 				return p;

@@ -73,12 +73,6 @@
     <PostBuildEvent>
       <Command>
 rem copy /y /v /b "$(VSInstallDir)DIA SDK\bin\amd64\msdia*.dll" "$(OutDir)"
-set OS_DIR=$(SolutionDir)..\..\os
-if exist "%OS_DIR%\win_x86_64" (
-   mkdir "%OS_DIR%"
-   mkdir "%OS_DIR%\win_x86_64"
-   xcopy /Y /S "$(OutDir)" "%OS_DIR%"
-)
   </Command>
     </PostBuildEvent>
     <PreLinkEvent>
@@ -106,12 +100,6 @@ if exist "%OS_DIR%\win_x86_64" (
     <PostBuildEvent>
       <Command>
 rem copy /y /v /b "$(VSInstallDir)DIA SDK\bin\amd64\msdia*.dll" "$(OutDir)"
-set OS_DIR=$(SolutionDir)..\..\os
-if exist "%OS_DIR%\win_x86_64" (
-   mkdir "%OS_DIR%"
-   mkdir "%OS_DIR%\win_x86_64"
-   xcopy /Y /S "$(OutDir)" "%OS_DIR%"
-)
   </Command>
     </PostBuildEvent>
     <PreLinkEvent>

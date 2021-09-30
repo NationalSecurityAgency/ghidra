@@ -32,7 +32,6 @@ import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitorAdapter;
 
@@ -53,8 +52,9 @@ public class FunctionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		functionManager = program.getFunctionManager();
 		transactionID = program.startTransaction("Test");
-		program.getMemory().createInitializedBlock("temp", addr(0), 10000, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+		program.getMemory()
+				.createInitializedBlock("temp", addr(0), 10000, (byte) 0,
+					TaskMonitorAdapter.DUMMY_MONITOR, false);
 	}
 
 	@After
@@ -71,7 +71,7 @@ public class FunctionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private Function createFunction(String name, Address entryPt, AddressSetView body)
-			throws DuplicateNameException, InvalidInputException, OverlappingFunctionException {
+			throws InvalidInputException, OverlappingFunctionException {
 
 		functionManager.createFunction(name, entryPt, body, SourceType.USER_DEFINED);
 		Function f = functionManager.getFunctionAt(entryPt);
@@ -209,8 +209,10 @@ public class FunctionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		f = functionManager.getFunctionAt(addr(250));
 		assertEquals(new AddressSet(addr(250), addr(350)), f.getBody());
 
-		assertTrue(program.getSymbolTable().getPrimarySymbol(
-			addr(201)).getSymbolType() != SymbolType.FUNCTION);
+		assertTrue(program.getSymbolTable()
+				.getPrimarySymbol(
+					addr(201))
+				.getSymbolType() != SymbolType.FUNCTION);
 	}
 
 	@Test
@@ -301,16 +303,19 @@ public class FunctionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		createFunction("foo1", addr(250), new AddressSet(addr(250), addr(350)));
 		Function foo2 = createFunction("foo2", addr(201), new AddressSet(addr(201), addr(249)));
 
-		Function fum = program.getExternalManager().addExtLocation("lib", "fum", null,
-			SourceType.USER_DEFINED).createFunction();
+		Function fum = program.getExternalManager()
+				.addExtLocation("lib", "fum", null,
+					SourceType.USER_DEFINED)
+				.createFunction();
 
 		program.getMemory().setInt(addr(50), 201);
 		program.getListing().createData(addr(50), PointerDataType.dataType);
 		assertEquals(foo2, program.getFunctionManager().getReferencedFunction(addr(50)));
 
-		program.getReferenceManager().addExternalReference(addr(50), 0,
-			program.getExternalManager().getExternalLocation(fum.getSymbol()),
-			SourceType.USER_DEFINED, RefType.DATA);
+		program.getReferenceManager()
+				.addExternalReference(addr(50), 0,
+					program.getExternalManager().getExternalLocation(fum.getSymbol()),
+					SourceType.USER_DEFINED, RefType.DATA);
 
 		assertEquals(fum, program.getFunctionManager().getReferencedFunction(addr(50)));
 

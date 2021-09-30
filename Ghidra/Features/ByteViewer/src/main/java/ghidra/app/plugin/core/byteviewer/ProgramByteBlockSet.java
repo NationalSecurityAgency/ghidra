@@ -33,15 +33,15 @@ import ghidra.program.util.ProgramSelection;
 /**
  * ByteBlockSet implementation for a Program object.
  */
-class ProgramByteBlockSet implements ByteBlockSet {
+public class ProgramByteBlockSet implements ByteBlockSet {
 
 	private MemoryBlock[] memBlocks;
-	private Program program;
+	protected final Program program;
 	private ByteBlockChangeManager bbcm;
 	private ByteBlock[] blocks;
 	private final ProgramByteViewerComponentProvider provider;
 
-	ProgramByteBlockSet(ProgramByteViewerComponentProvider provider, Program program,
+	protected ProgramByteBlockSet(ProgramByteViewerComponentProvider provider, Program program,
 			ByteBlockChangeManager bbcm) {
 
 		this.provider = provider;
@@ -53,7 +53,7 @@ class ProgramByteBlockSet implements ByteBlockSet {
 			this.bbcm = new ByteBlockChangeManager(this, bbcm);
 		}
 
-		getMemoryBlocks();
+		newMemoryBlocks();
 	}
 
 	/**
@@ -66,6 +66,7 @@ class ProgramByteBlockSet implements ByteBlockSet {
 
 	/**
 	 * Get the appropriate plugin event for the given block selection.
+	 * 
 	 * @param source source to use in the event
 	 * @param selection selection to use to generate the event
 	 */
@@ -86,6 +87,7 @@ class ProgramByteBlockSet implements ByteBlockSet {
 
 	/**
 	 * Get a plugin event for the given block and offset.
+	 * 
 	 * @param source source to use in the event
 	 * @param block block to use to generate the event
 	 * @param offset offset into the block
@@ -105,38 +107,54 @@ class ProgramByteBlockSet implements ByteBlockSet {
 		}
 	}
 
-	ByteBlockSelection getBlockSelection(ProgramSelection selection) {
-
-		AddressRangeIterator iter = selection.getAddressRanges();
-		List<ByteBlockRange> list = new ArrayList<ByteBlockRange>(3);
-
-		while (iter.hasNext()) {
-			AddressRange range = iter.next();
-
-			for (int i = 0; i < blocks.length; i++) {
-				Address blockStart = memBlocks[i].getStart();
-				Address blockEnd = memBlocks[i].getEnd();
-				AddressRange intersection =
-					range.intersect(new AddressRangeImpl(blockStart, blockEnd));
-				if (intersection != null) {
-					ByteBlockInfo startInfo = getByteBlockInfo(intersection.getMinAddress());
-					ByteBlockInfo endInfo = getByteBlockInfo(intersection.getMaxAddress());
-					ByteBlockRange br = new ByteBlockRange(startInfo.getBlock(),
-						startInfo.getOffset(), endInfo.getOffset());
-					list.add(br);
-				}
+	protected void collectBlockSelection(AddressRange range, List<ByteBlockRange> result) {
+		// TODO: These blocks really ought to be indexed by start address
+		//   Use a NavigableMap
+		//     I'll wait to assess speed before worrying about tree indexing
+		//   Use entries that groups the relevant objects instead of co-indexed arrays
+		//     Though a nicety, it becomes necessary if indexing/sorting by start address
+		for (int i = 0; i < blocks.length; i++) {
+			Address blockStart = memBlocks[i].getStart();
+			Address blockEnd = memBlocks[i].getEnd();
+			AddressRange intersection =
+				range.intersect(new AddressRangeImpl(blockStart, blockEnd));
+			if (intersection != null) {
+				ByteBlockInfo startInfo = getByteBlockInfo(intersection.getMinAddress());
+				ByteBlockInfo endInfo = getByteBlockInfo(intersection.getMaxAddress());
+				ByteBlockRange br = new ByteBlockRange(startInfo.getBlock(),
+					startInfo.getOffset(), endInfo.getOffset());
+				result.add(br);
 			}
 		}
-		ByteBlockRange[] bRange = new ByteBlockRange[list.size()];
-		bRange = list.toArray(bRange);
+	}
 
-		return new ByteBlockSelection(bRange);
+	public ByteBlockSelection getBlockSelection(AddressRange range) {
+		List<ByteBlockRange> list = new ArrayList<>();
+		collectBlockSelection(range, list);
+		return new ByteBlockSelection(list);
+	}
+
+	public ByteBlockSelection getBlockSelection(AddressRangeIterator iter) {
+		List<ByteBlockRange> list = new ArrayList<>();
+		while (iter.hasNext()) {
+			collectBlockSelection(iter.next(), list);
+		}
+		return new ByteBlockSelection(list);
+	}
+
+	public ByteBlockSelection getBlockSelection(AddressSetView addresses) {
+		return getBlockSelection(addresses.getAddressRanges());
+	}
+
+	public ByteBlockSelection getBlockSelection(ProgramSelection selection) {
+		return getBlockSelection(selection.getAddressRanges());
 	}
 
 	/**
 	 * Return true if the block has been changed at the given index.
-	 * @param block  byte block
-	 * @param index  offset into the block
+	 * 
+	 * @param block byte block
+	 * @param index offset into the block
 	 * @param length number of bytes in question
 	 */
 	@Override
@@ -150,6 +168,7 @@ class ProgramByteBlockSet implements ByteBlockSet {
 
 	/**
 	 * Send a notification that a byte block edit occurred.
+	 * 
 	 * @param block block being edited
 	 * @param index offset into the block
 	 * @param oldValue old byte values
@@ -171,21 +190,21 @@ class ProgramByteBlockSet implements ByteBlockSet {
 		return bbcm.getUndoRedoState();
 	}
 
-	void restoreUndoReoState(SaveState saveState) {
+	void restoreUndoRedoState(SaveState saveState) {
 		bbcm.restoreUndoRedoState(saveState);
 	}
 
 	/**
 	 * Get the byte block change manager
 	 */
-	ByteBlockChangeManager getByteBlockChangeManager() {
+	protected ByteBlockChangeManager getByteBlockChangeManager() {
 		return bbcm;
 	}
 
 	/**
 	 * Get the address for the given block and offset.
 	 */
-	Address getAddress(ByteBlock block, BigInteger offset) {
+	protected Address getAddress(ByteBlock block, BigInteger offset) {
 
 		for (int i = 0; i < blocks.length; i++) {
 			if (blocks[i] != block) {
@@ -207,7 +226,7 @@ class ProgramByteBlockSet implements ByteBlockSet {
 	/**
 	 * Given an address, get the byte block info.
 	 */
-	ByteBlockInfo getByteBlockInfo(Address address) {
+	protected ByteBlockInfo getByteBlockInfo(Address address) {
 
 		if (!program.getMemory().contains(address)) {
 			// this block set is out of date...eventually a new
@@ -224,8 +243,9 @@ class ProgramByteBlockSet implements ByteBlockSet {
 				long off = address.subtract(memBlocks[i].getStart());
 				BigInteger offset =
 					(off < 0)
-							? BigInteger.valueOf(off + 0x8000000000000000L).subtract(
-								BigInteger.valueOf(0x8000000000000000L))
+							? BigInteger.valueOf(off + 0x8000000000000000L)
+									.subtract(
+										BigInteger.valueOf(0x8000000000000000L))
 							: BigInteger.valueOf(off);
 				return new ByteBlockInfo(blocks[i], offset);
 			}
@@ -236,15 +256,15 @@ class ProgramByteBlockSet implements ByteBlockSet {
 		return null;
 	}
 
-	Address getBlockStart(ByteBlock block) {
+	protected Address getBlockStart(ByteBlock block) {
 		return getAddress(block, BigInteger.ZERO);
 	}
 
-	Address getBlockStart(int blockNumber) {
+	protected Address getBlockStart(int blockNumber) {
 		return memBlocks[blockNumber].getStart();
 	}
 
-	int getByteBlockNumber(Address blockStartAddr) {
+	protected int getByteBlockNumber(Address blockStartAddr) {
 		for (int i = 0; i < memBlocks.length; i++) {
 			if (memBlocks[i].getStart().compareTo(blockStartAddr) == 0) {
 				return i;
@@ -253,8 +273,8 @@ class ProgramByteBlockSet implements ByteBlockSet {
 		return -1;
 	}
 
-	AddressSet getAddressSet(ByteBlockSelection selection) {
-
+	@Override
+	public AddressSet getAddressSet(ByteBlockSelection selection) {
 		AddressSet addrSet = new AddressSet();
 
 		for (int i = 0; i < selection.getNumberOfRanges(); i++) {
@@ -267,13 +287,17 @@ class ProgramByteBlockSet implements ByteBlockSet {
 		return addrSet;
 	}
 
-	private void getMemoryBlocks() {
+	protected void newMemoryBlocks() {
 		Memory memory = program.getMemory();
-		memBlocks = program.getMemory().getBlocks();
+		memBlocks = memory.getBlocks();
 		blocks = new ByteBlock[memBlocks.length];
 		for (int i = 0; i < memBlocks.length; i++) {
-			blocks[i] = new MemoryByteBlock(program, memory, memBlocks[i]);
+			blocks[i] = newMemoryByteBlock(memory, memBlocks[i]);
 		}
+	}
+
+	protected MemoryByteBlock newMemoryByteBlock(Memory memory, MemoryBlock memBlock) {
+		return new MemoryByteBlock(program, memory, memBlock);
 	}
 
 	@Override

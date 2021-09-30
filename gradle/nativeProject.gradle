@@ -19,10 +19,28 @@
 	
 	A gradle project can add native code support by including the following it its build.gradle file:
 
-		apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+		apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
  *****************************************************************************************/
 
 // These same settings are needed in the GPL native, so rather than duplicating this file, we will just call the other file
 
 def projectRootDir = rootProject.projectDir.path
 apply from: "$projectRootDir/GPL/nativeBuildProperties.gradle"
+
+// Include and rename native projects' buildNative.gradle files to build.gradle in the distribution
+// so a user can build or rebuild natives for their specific platform.
+// NOTE: GPL projects' build.gradle files are already written to build their natives from a release,
+// so we can just include their build.gradle as as-is.  
+rootProject.assembleDistribution {
+	def p = this.project
+	from (p.projectDir.toString()) {
+		if (p.projectDir.parentFile.name == "GPL") {
+			include "build.gradle"
+		}
+		else {
+			include "buildNatives.gradle"
+			rename "buildNatives.gradle", "build.gradle"
+		}
+		into  { getZipPath(p) }
+	}
+}

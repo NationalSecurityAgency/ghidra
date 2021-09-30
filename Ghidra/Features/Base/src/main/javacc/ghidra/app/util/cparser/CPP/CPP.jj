@@ -113,6 +113,7 @@ import ghidra.util.Msg;
 import java.util.*;
 import java.io.*;
 import java.math.BigInteger;
+import ghidra.program.util.AddressEvaluator; 
 
 @SuppressWarnings("all") // ignore warnings from generated code
 public class PreProcessor {
@@ -2133,17 +2134,23 @@ PPToken ValueExpression() :
                 pt.image += atok.image;
             }
             pt.image += ")";
-            // TODO: Can't Really handle this here.  Should do full expansion parse
+
             pt.image = defs.expand(pt.image, true);
-            try {
-            	if (negation) { pt.image = "-" + pt.image; }
-            	if (positive) { pt.image = "+" + pt.image; }
-				int val = Integer.parseInt(pt.image);
+            
+            // The expanded macro text can't be injected into the parse stream
+            // try parsing the expression with an internal simple expression
+            // parser that can handle equality expressions
+        	if (negation) { pt.image = "-" + pt.image; }
+        	if (positive) { pt.image = "+" + pt.image; }
+			Long val = AddressEvaluator.evaluateToLong(pt.image);
+			if (val != null) {
+			    pt.image = val.toString();
 				pt.kind = NUMERIC;
 				pt.setTruth(true);
-		        if (pt.compareToZero()==0) pt.setTruth(false);
-		        return pt;
-			} catch (NumberFormatException e) {
+				if (val == 0) {
+					pt.setTruth(false);
+				}
+				return pt;
 			}
         }
         pt.setTruth(isDef(pt));
@@ -2156,12 +2163,13 @@ PPToken ValueExpression() :
             }
             if (negation) { tv.image = "-" + tv.image; }
             if (positive) { tv.image = "+" + tv.image; }
-            if (tv.kind != 0 && tv.compareToZero()==0) {
-            	pt.setTruth(false);
-            }
-            else {
-            	pt.setTruth(true);
-            }
+			Long val = AddressEvaluator.evaluateToLong(tv.image);
+			pt.setTruth(true);
+			if (val != null) {
+				if (val == 0) {
+					pt.setTruth(false);
+				}
+			}
 		}
 //        if (pt.getTruth()==true) tv =(PPToken) getDef(pt);
 //        if (tv!=null) {

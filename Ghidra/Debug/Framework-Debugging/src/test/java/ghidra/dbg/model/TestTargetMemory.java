@@ -40,11 +40,15 @@ public class TestTargetMemory
 		), "Initialized");
 	}
 
+	public void getMemory(Address address, byte[] data) {
+		assertEquals(getModel().ram, address.getAddressSpace());
+		memory.getData(address.getOffset(), data);
+	}
+
 	@Override
 	public CompletableFuture<byte[]> readMemory(Address address, int length) {
-		assertEquals(getModel().ram, address.getAddressSpace());
 		byte[] data = new byte[length];
-		memory.getData(address.getOffset(), data);
+		getMemory(address, data);
 		CompletableFuture<byte[]> future = getModel().future(data);
 		future.thenAccept(__ -> {
 			listeners.fire.memoryUpdated(this, address, data);

@@ -23,7 +23,9 @@ import db.RecordIterator;
 /**
  * Implementation of a RecordIterator that is always empty.
  */
+
 public class EmptyRecordIterator implements RecordIterator {
+	public static final RecordIterator INSTANCE = new EmptyRecordIterator();
 
 	/**
 	 * @see db.RecordIterator#hasNext()

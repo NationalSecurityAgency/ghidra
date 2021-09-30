@@ -1,0 +1,59 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
+// Native build files are already applied in development mode (indicated by presence of the
+// Generic project).  Only need to apply them if we are in a distribution.
+if (findProject(':Generic') == null) {
+	apply from: "../../../GPL/utils.gradle"
+	apply from: "../../../GPL/nativePlatforms.gradle"
+	apply from: "../../../GPL/nativeBuildProperties.gradle"
+}
+
+if ("win_x86_64".equals(getCurrentPlatformName())) {
+
+	String makeName = "win_x86_64PDBMake"
+	task(type: Exec, makeName) {
+
+		def projectPath = projectDir.toString()
+		def solutionBatchFilePath = projectPath + "/build/buildSolution.bat"
+		def projectPathWindows = projectPath.replace("/", File.separator)
+		def solutionPathWindows = "\"${projectPathWindows}\\src\\pdb\\pdb.sln\""
+		
+		doFirst {
+			file("build/os/win_x86_64").mkdirs()
+			
+			def platformToolset = 'v' + VISUAL_STUDIO_TOOLS_VERSION_DEFAULT.substring(0, 4).replace('.', '');
+			def windowsTargetPlatformVersion = VISUAL_STUDIO_SDK_VERSION_OVERRIDE ?: VISUAL_STUDIO_SDK_VERSION_DEFAULT		
+			def msbuildCmd = "msbuild ${solutionPathWindows} /p:Configuration=Release /p:PlatformToolset=${platformToolset} /p:WindowsTargetPlatformVersion=${windowsTargetPlatformVersion}"
+			
+			println "Executing: " + msbuildCmd
+			
+			new File(solutionBatchFilePath).withWriter { out ->
+				out.println "call " + VISUAL_STUDIO_VCVARS_CMD
+				out.println msbuildCmd
+			}
+		}
+		
+		doLast {
+			assert file("build/os/win_x86_64/pdb.exe").exists() : "Failed to build pdb.exe"
+		}
+		
+		executable "cmd"
+		
+		args	"/c"
+		args	solutionBatchFilePath.replace("/", File.separator)
+	}	
+}

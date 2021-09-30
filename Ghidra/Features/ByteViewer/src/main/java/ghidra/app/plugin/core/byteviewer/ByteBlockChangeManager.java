@@ -25,10 +25,10 @@ import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.Address;
 
 /**
- * Helper class to manage changes within byte blocks; determines what offsets
- * have changed so the changes can be rendered properly in the Byte Viewer.
+ * Helper class to manage changes within byte blocks; determines what offsets have changed so the
+ * changes can be rendered properly in the Byte Viewer.
  */
-class ByteBlockChangeManager {
+public class ByteBlockChangeManager {
 
 	private ProgramByteBlockSet blockSet;
 	private List<ByteEditInfo> changeList; // list of changes for this tool
@@ -57,6 +57,7 @@ class ByteBlockChangeManager {
 
 	/**
 	 * Add a change to the change list.
+	 * 
 	 * @param edit edit object that has the old value and new value
 	 * 
 	 */
@@ -117,12 +118,12 @@ class ByteBlockChangeManager {
 	}
 
 	/**
-	 * Return true if any offset in the range offset to offset+unitByteSize-1
-	 * is in either of the change lists.
+	 * Return true if any offset in the range offset to offset+unitByteSize-1 is in either of the
+	 * change lists.
+	 * 
 	 * @param block block in question
 	 * @param offset offset into the block
-	 * @param unitByteSize number of bytes in the unit (dictated by the
-	 * data format model)
+	 * @param unitByteSize number of bytes in the unit (dictated by the data format model)
 	 * 
 	 * @return boolean true if an offset in the range was found
 	 */
@@ -140,6 +141,7 @@ class ByteBlockChangeManager {
 	//////////////////////////////////////////////////////////////////////
 	/**
 	 * Return true if the block and offset are in the list.
+	 * 
 	 * @param list either the local change list or the external change list
 	 * @param block block in question
 	 * @param offset offset into the block

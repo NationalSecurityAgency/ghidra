@@ -275,6 +275,9 @@ public class AssembleDockingAction extends DockingAction {
 			return;
 		}
 		prepareLayout(context);
+		if (cv.isReadOnly()) {
+			return;
+		}
 		ListingActionContext lac = (ListingActionContext) context;
 
 		ProgramLocation cur = lac.getLocation();
@@ -371,6 +374,13 @@ public class AssembleDockingAction extends DockingAction {
 		}
 
 		ListingActionContext lac = (ListingActionContext) context;
+		ComponentProvider cp = lac.getComponentProvider();
+		if (cp instanceof CodeViewerProvider) {
+			CodeViewerProvider cv = (CodeViewerProvider) cp;
+			if (cv.isReadOnly()) {
+				return false;
+			}
+		}
 
 		Program program = lac.getProgram();
 		if (program == null) {

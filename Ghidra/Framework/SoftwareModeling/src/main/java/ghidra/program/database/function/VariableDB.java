@@ -167,12 +167,12 @@ public abstract class VariableDB implements Variable {
 
 	@Override
 	public String getComment() {
-		return symbol.getSymbolData3();
+		return symbol.getSymbolStringData();
 	}
 
 	@Override
 	public void setComment(String comment) {
-		symbol.setSymbolData3(comment);
+		symbol.setSymbolStringData(comment);
 		functionMgr.functionChanged(function, 0);
 	}
 

@@ -18,9 +18,7 @@ package ghidra.program.model.data;
 import static org.junit.Assert.*;
 
 import java.io.*;
-import java.net.URL;
 import java.util.HashMap;
-import java.util.Iterator;
 
 import generic.test.AbstractGTest;
 import ghidra.app.util.cparser.C.CParser;
@@ -64,33 +62,33 @@ abstract class AbstractCompositeTest extends AbstractGTest {
 		}
 
 		// uncomment to generate datatype archive
-		writeArchive(headerResourcePath);
+		//writeArchive(headerResourcePath);
 	}
 
-	private void writeArchive(String headerResourcePath) throws IOException {
-		URL resource = ResourceManager.getResource(headerResourcePath);
-		File f = new File(resource.getPath() + ".gdt");
-		if (f.exists()) {
-			f.delete();
-		}
-
-		FileDataTypeManager fileDtMgr = FileDataTypeManager.createFileArchive(f);
-		int txId = fileDtMgr.startTransaction("Save Datatypes");
-		try {
-			Iterator<Composite> composites = getDataTypeManager().getAllComposites();
-			while (composites.hasNext()) {
-				fileDtMgr.addDataType(composites.next(), null);
-			}
-		}
-		finally {
-			fileDtMgr.endTransaction(txId, true);
-		}
-
-		fileDtMgr.save();
-		fileDtMgr.close();
-
-		Msg.debug(this, "Saved datatype archive: " + f.getAbsolutePath());
-	}
+//	private void writeArchive(String headerResourcePath) throws IOException {
+//		URL resource = ResourceManager.getResource(headerResourcePath);
+//		File f = new File(resource.getPath() + ".gdt");
+//		if (f.exists()) {
+//			f.delete();
+//		}
+//
+//		FileDataTypeManager fileDtMgr = FileDataTypeManager.createFileArchive(f);
+//		int txId = fileDtMgr.startTransaction("Save Datatypes");
+//		try {
+//			Iterator<Composite> composites = getDataTypeManager().getAllComposites();
+//			while (composites.hasNext()) {
+//				fileDtMgr.addDataType(composites.next(), null);
+//			}
+//		}
+//		finally {
+//			fileDtMgr.endTransaction(txId, true);
+//		}
+//
+//		fileDtMgr.save();
+//		fileDtMgr.close();
+//
+//		Msg.debug(this, "Saved datatype archive: " + f.getAbsolutePath());
+//	}
 
 	protected final DataTypeManager createDataTypeManager(String name, DataOrganization dataOrg) {
 		return new StandAloneDataTypeManager(name, dataOrg);

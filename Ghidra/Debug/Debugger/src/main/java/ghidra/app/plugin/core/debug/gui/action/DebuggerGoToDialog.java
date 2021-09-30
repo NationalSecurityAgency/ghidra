@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.gui.listing;
+package ghidra.app.plugin.core.debug.gui.action;
 
 import java.awt.BorderLayout;
 import java.util.List;
@@ -34,14 +34,15 @@ import ghidra.util.Msg;
 
 public class DebuggerGoToDialog extends DialogComponentProvider {
 
-	private final DebuggerListingProvider provider;
-	final JTextField textExpression;
-	final JComboBox<String> comboSpaces;
+	private final DebuggerGoToTrait trait;
 	private final DefaultComboBoxModel<String> modelSpaces;
 
-	protected DebuggerGoToDialog(DebuggerListingProvider provider) {
+	final JTextField textExpression;
+	final JComboBox<String> comboSpaces;
+
+	public DebuggerGoToDialog(DebuggerGoToTrait trait) {
 		super("Go To", true, true, true, false);
-		this.provider = provider;
+		this.trait = trait;
 
 		textExpression = new JTextField();
 		modelSpaces = new DefaultComboBoxModel<>();
@@ -91,11 +92,11 @@ public class DebuggerGoToDialog extends DialogComponentProvider {
 		}
 	}
 
-	@Override
-	protected void okCallback() {
+	@Override // public for tests
+	public void okCallback() {
 		CompletableFuture<Boolean> future;
 		try {
-			future = provider.goToSleigh((String) comboSpaces.getSelectedItem(),
+			future = trait.goToSleigh((String) comboSpaces.getSelectedItem(),
 				textExpression.getText());
 		}
 		catch (Throwable t) {
@@ -117,12 +118,16 @@ public class DebuggerGoToDialog extends DialogComponentProvider {
 	}
 
 	@Override
-	protected void cancelCallback() {
+	public void cancelCallback() {
 		close();
 	}
 
 	public void show(SleighLanguage language) {
 		populateSpaces(language);
-		provider.getTool().showDialog(this);
+		trait.tool.showDialog(this);
+	}
+
+	public void setExpression(String expression) {
+		textExpression.setText(expression);
 	}
 }
