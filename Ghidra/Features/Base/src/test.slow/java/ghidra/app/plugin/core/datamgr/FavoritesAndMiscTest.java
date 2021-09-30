@@ -109,14 +109,14 @@ public class FavoritesAndMiscTest extends AbstractGhidraHeadedIntegrationTest {
 		tree.expandPath(builtInNode);
 		waitForTree();
 		DataTypeNode node = (DataTypeNode) builtInNode.getChild("undefined1");
-		assertTrue(!node.isFavorite());
+		assertFalse(node.isFavorite());
 
 		tree.setSelectedNode(node);
 		waitForTree();
 
 		favoritesAction.isEnabledForContext(createContext(node));
 		assertTrue(favoritesAction.isEnabled());
-		assertTrue(!favoritesAction.isSelected());
+		assertFalse(favoritesAction.isSelected());
 
 		performToggleAction(favoritesAction, true);
 		assertTrue(node.isFavorite());
@@ -137,7 +137,7 @@ public class FavoritesAndMiscTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(favoritesAction.isSelected());
 
 		performToggleAction(favoritesAction, false);
-		assertTrue(!node.isFavorite());
+		assertFalse(node.isFavorite());
 	}
 
 	@Test
@@ -157,7 +157,7 @@ public class FavoritesAndMiscTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(favoritesAction.isSelected());
 
 		performToggleAction(favoritesAction, false);
-		assertTrue(!node.isFavorite());
+		assertFalse(node.isFavorite());
 
 		performToggleAction(favoritesAction, true);
 		assertTrue(node.isFavorite());
@@ -225,7 +225,7 @@ public class FavoritesAndMiscTest extends AbstractGhidraHeadedIntegrationTest {
 			new TreePath[] { node1.getTreePath(), node2.getTreePath(), node3.getTreePath() });
 		waitForTree();
 
-		assertTrue(!favoritesAction.isEnabledForContext(createContext(node3)));
+		assertFalse(favoritesAction.isEnabledForContext(createContext(node3)));
 
 		// Valid
 		tree.setSelectionPaths(new TreePath[] { node1.getTreePath(), node2.getTreePath() });
@@ -238,7 +238,7 @@ public class FavoritesAndMiscTest extends AbstractGhidraHeadedIntegrationTest {
 			new TreePath[] { node1.getTreePath(), node2.getTreePath(), builtInNode.getTreePath() });
 		waitForTree();
 
-		assertTrue(!favoritesAction.isEnabledForContext(createContext(node2)));
+		assertFalse(favoritesAction.isEnabledForContext(createContext(node2)));
 	}
 
 	@Test
@@ -265,11 +265,10 @@ public class FavoritesAndMiscTest extends AbstractGhidraHeadedIntegrationTest {
 
 		performToggleAction(favoritesAction, false);
 
-		assertTrue(!node.isFavorite());
-		assertTrue(!node2.isFavorite());
-		assertTrue(!node3.isFavorite());
-		assertTrue(!node4.isFavorite());
-
+		assertFalse(node.isFavorite());
+		assertFalse(node2.isFavorite());
+		assertFalse(node3.isFavorite());
+		assertFalse(node4.isFavorite());
 	}
 
 	@Test
@@ -341,8 +340,7 @@ public class FavoritesAndMiscTest extends AbstractGhidraHeadedIntegrationTest {
 
 		runSwing(() -> plugin.getDataType("ArrayStruct"), false);
 
-		DataTypeChooserDialog d =
-			waitForDialogComponent(tool.getToolFrame(), DataTypeChooserDialog.class, 2000);
+		DataTypeChooserDialog d = waitForDialogComponent(DataTypeChooserDialog.class);
 
 		assertNotNull(d);
 
@@ -394,7 +392,7 @@ public class FavoritesAndMiscTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForTree();
 
 		for (GTreeNode node : children) {
-			assertTrue(!tree.isExpanded(node.getTreePath()));
+			assertFalse(tree.isExpanded(node.getTreePath()));
 		}
 	}
 
