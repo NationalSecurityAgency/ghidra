@@ -29,10 +29,12 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 
 	final static int NAME_COL = 0;
 	final static int VALUE_COL = 1;
+	final static int COMMENT_COL = 2;
 
 	final static String NAME = "Name";
 	final static String VALUE = "Value";
-	private static String[] columnNames = { NAME, VALUE };
+	final static String COMMENT = "Comment";
+	private static String[] columnNames = { NAME, VALUE, COMMENT };
 
 	private EnumDataType enuum;
 	private List<EnumEntry> enumEntryList;
@@ -98,6 +100,9 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 				}
 
 				return "0x" + Long.toHexString(v.getValue() & mask);
+
+			case COMMENT_COL:
+				return v.getComment();
 		}
 		return null;
 	}
@@ -119,13 +124,14 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 		EnumEntry entry = enumEntryList.get(rowIndex);
 		Long oldValue = entry.getValue();
 		String oldName = entry.getName();
+		String oldComment = entry.getComment();
 
 		switch (columnIndex) {
 			case NAME_COL:
 				String newName = (String) aValue;
 				if (!oldName.equals(newName) && isNameValid(newName)) {
 					enuum.remove(oldName);
-					enuum.add(newName, oldValue);
+					enuum.add(newName, oldValue, oldComment);
 					entry.setName(newName);
 					notifyListener = true;
 				}
@@ -143,18 +149,28 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 					if (!oldValue.equals(newValue)) {
 						enuum.remove(oldName);
 						try {
-							enuum.add(oldName, newValue);
+							enuum.add(oldName, newValue, oldComment);
 							entry.setValue(newValue);
 							notifyListener = true;
 						}
 						catch (IllegalArgumentException e) {
-							enuum.add(oldName, oldValue);
+							enuum.add(oldName, oldValue, oldComment);
 							editorPanel.setStatusMessage(e.getMessage());
 						}
 					}
 				}
 				catch (NumberFormatException e) {
 					editorPanel.setStatusMessage("Invalid number entered");
+				}
+				break;
+
+			case COMMENT_COL:
+				String newComment = (String) aValue;
+				if (!oldComment.equals(newComment) && newComment != null) {
+					enuum.remove(oldName);
+					enuum.add(oldName, oldValue, newComment);
+					entry.setComment(newComment);
+					notifyListener = true;
 				}
 				break;
 		}
@@ -228,9 +244,10 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 	int addEntry(int afterRow) {
 		Long value = findNextValue(afterRow);
 		String name = getUniqueName();
-		EnumEntry newEntry = new EnumEntry(name, value);
+		String comment = "";
+		EnumEntry newEntry = new EnumEntry(name, value, comment);
 		try {
-			enuum.add(name, value.longValue());
+			enuum.add(name, value.longValue(), comment);
 			int index = getIndexForRowObject(newEntry);
 			if (index < 0) {
 				index = -index - 1;
@@ -249,8 +266,8 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 	}
 
 	private long findNextValue(int afterRow) {
-		if (enumEntryList.size() == 0) {
-			return new Long(0);
+		if (enumEntryList.isEmpty()) {
+			return 0;
 		}
 		if (afterRow < 0 || afterRow >= enumEntryList.size()) {
 			afterRow = 0;
@@ -300,7 +317,7 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 		enumEntryList = new ArrayList<>();
 		String[] names = enuum.getNames();
 		for (String name : names) {
-			enumEntryList.add(new EnumEntry(name, enuum.getValue(name)));
+			enumEntryList.add(new EnumEntry(name, enuum.getValue(name), enuum.getComment(name)));
 		}
 		fireTableDataChanged();
 	}

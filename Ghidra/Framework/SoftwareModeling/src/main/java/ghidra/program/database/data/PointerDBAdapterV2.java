@@ -86,7 +86,10 @@ class PointerDBAdapterV2 extends PointerDBAdapter {
 	@Override
 	void deleteTable(DBHandle handle) throws IOException {
 		handle.deleteTable(POINTER_TABLE_NAME);
-
 	}
 
+	@Override
+	public DBRecord translateRecord(DBRecord rec) {
+		return rec;
+	}
 }

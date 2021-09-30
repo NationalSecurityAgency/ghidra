@@ -17,7 +17,10 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 
+import javax.help.UnsupportedOperationException;
+
 import db.*;
+import ghidra.program.database.util.EmptyRecordIterator;
 
 /**
  * Adapter needed for a read-only version of data type manager that is not going
@@ -34,7 +37,8 @@ class EnumValueDBAdapterNoTable extends EnumValueDBAdapter {
 	}
 
 	@Override
-	public void createRecord(long enumID, String name, long value) throws IOException {
+	public void createRecord(long enumID, String name, long value, String comment)
+			throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -58,4 +62,18 @@ class EnumValueDBAdapterNoTable extends EnumValueDBAdapter {
 		return Field.EMPTY_ARRAY;
 	}
 
+	@Override
+	RecordIterator getRecords() throws IOException {
+		return new EmptyRecordIterator();
+	}
+
+	@Override
+	protected void deleteTable(DBHandle handle) throws IOException {
+		// do nothing
+	}
+
+	@Override
+	public DBRecord translateRecord(DBRecord rec) {
+		throw new UnsupportedOperationException();
+	}
 }

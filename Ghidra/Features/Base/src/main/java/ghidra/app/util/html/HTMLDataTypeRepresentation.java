@@ -70,7 +70,7 @@ public abstract class HTMLDataTypeRepresentation {
 	// Note 1: Indentation tags (note: we switched from <DIV> tags because the Java rendering engine
 	// does not keep the color of the div's parent tags.  The <P> tag seems to work).
 	// Note 2: Switch back to <DIV> from <P>, since the <P> tag gets broken by the <TABLE> tag
-	// used by composite types.   If not inheriting the color becomes an issue, then we will need 
+	// used by composite types.   If not inheriting the color becomes an issue, then we will need
 	// to find another solution for indentation.
 	protected static final String INDENT_OPEN = "<DIV STYLE='margin-left: 10px;'>";
 	protected static final String INDENT_CLOSE = "</DIV>";
@@ -87,7 +87,7 @@ public abstract class HTMLDataTypeRepresentation {
 	protected final static Color DIFF_COLOR = ValidatableLine.INVALID_COLOR;
 
 	private static String createSpace(int numberOfSpaces) {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		for (int i = 0; i < numberOfSpaces; i++) {
 			buffer.append(HTML_SPACE);
 		}
@@ -134,7 +134,7 @@ public abstract class HTMLDataTypeRepresentation {
 	 * Returns the plain-text value of the data type's description.
 	 * <p>
 	 * If there were html tags in the string, they are escaped.
-	 * 
+	 *
 	 * @param dataType the type to get the description / comment for
 	 * @return plain-text string, w/html escaped
 	 */
@@ -167,7 +167,7 @@ public abstract class HTMLDataTypeRepresentation {
 	/**
 	 * Formats a multi-line plain-text comment string into a HTML string where the text has been
 	 * wrapped at MAX_LINE_LENGTH.
-	 *   
+	 *
 	 * @param string plain-text string
 	 * @return list of html strings
 	 */
@@ -241,9 +241,9 @@ public abstract class HTMLDataTypeRepresentation {
 
 	/**
 	 * Formats a multi-line plain-text comment as a list of HTML marked-up lines.
-	 *  
+	 *
 	 * @param comment multi-line plain-text string
-	 * @param maxLines max number of formatted lines to return 
+	 * @param maxLines max number of formatted lines to return
 	 * @return list of html marked-up {@link TextLine}s
 	 */
 	protected static List<TextLine> createCommentLines(String comment, int maxLines) {
@@ -325,9 +325,9 @@ public abstract class HTMLDataTypeRepresentation {
 	}
 
 	/**
-	 * Returns an HTML string for this data representation object.  The HTML returned will be 
+	 * Returns an HTML string for this data representation object.  The HTML returned will be
 	 * truncated if it is too long.   To get the full HTML, call {@link #getFullHTMLString()}.
-	 * 
+	 *
 	 * @return the html
 	 * @see #getFullHTMLString()
 	 */
@@ -337,7 +337,7 @@ public abstract class HTMLDataTypeRepresentation {
 
 	/**
 	 * Returns an HTML string for this data representation object
-	 * 
+	 *
 	 * @return the html
 	 * @see #getHTMLString()
 	 */
@@ -345,16 +345,16 @@ public abstract class HTMLDataTypeRepresentation {
 		return HTML_OPEN + originalHTMLData + HTML_CLOSE;
 	}
 
-	/** 
-	 * This is like {@link #getHTMLString()}, but does not put HTML tags around the data 
+	/**
+	 * This is like {@link #getHTMLString()}, but does not put HTML tags around the data
 	 * @return the content
 	 */
 	public String getHTMLContentString() {
 		return originalHTMLData; // default to full text; subclasses can override
 	}
 
-	/** 
-	* This is like {@link #getHTMLString()}, but does not put HTML tags around the data 
+	/**
+	* This is like {@link #getHTMLString()}, but does not put HTML tags around the data
 	* @return the content
 	*/
 	public String getFullHTMLContentString() {

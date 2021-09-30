@@ -246,6 +246,30 @@ class DataTypePanel extends JPanel {
 		insertLength(comp);
 	}
 
+	private class EnumEntry implements Comparable<EnumEntry> {
+
+		private final String name;
+		private final long value;
+		private final String comment;
+
+		EnumEntry(String name, long value, String comment) {
+			this.name = name;
+			this.value = value;
+			this.comment = comment;
+
+		}
+
+		@Override
+		public int compareTo(EnumEntry o) {
+			int c = Long.compare(value, o.value);
+			if (c == 0) {
+				c = name.compareTo(o.name);
+			}
+			return c;
+		}
+
+	}
+
 	private void formatEnumText(Enum enuum) {
 		formatSourceArchive(enuum);
 		formatPath(enuum);
@@ -254,26 +278,39 @@ class DataTypePanel extends JPanel {
 
 		StringBuffer sb = new StringBuffer();
 
-		String[] names = enuum.getNames();
-		int maxLength = 0;
-		for (String name : names) {
-			if (name.length() > maxLength) {
-				maxLength = name.length();
-			}
-		}
-		long[] values = enuum.getValues();
-		Arrays.sort(values);
+		int maxNameLength = 0;
+		int maxValueLength = 0;
 
-		for (int i = 0; i < values.length; i++) {
-			String name = enuum.getName(values[i]);
-			name = pad(name, maxLength);
-			sb.append("    " + name + " = 0x" + Long.toHexString(values[i]) + " ");
-			if (i < values.length - 1) {
-				sb.append("\n");
-			}
+		String[] names = enuum.getNames();
+		EnumEntry[] entries = new EnumEntry[names.length];
+		for (int i = 0; i < names.length; i++) {
+			String name = names[i];
+			EnumEntry entry = new EnumEntry(name, enuum.getValue(name), enuum.getComment(name));
+			entries[i] = entry;
+			maxNameLength = Math.max(maxNameLength, name.length());
+			String valStr = Long.toHexString(entry.value);
+			maxValueLength = Math.max(maxValueLength, valStr.length());
 		}
-		sb.append("\n }\n");
+		Arrays.sort(entries);
+
+		for (EnumEntry entry : entries) {
+			renderEnumEntry(entry, maxNameLength, maxValueLength);
+		}
+		sb.append("}\n");
 		insertString(sb.toString(), contentAttrSet);
+	}
+
+	private void renderEnumEntry(EnumEntry entry, int maxNameLength, int maxValueLength) {
+		String name = entry.name;
+		name = pad(name, maxNameLength);
+		String valStr = Long.toHexString(entry.value);
+		valStr = pad(valStr, maxValueLength);
+		insertString("    " + name, fieldNameAttrSet);
+		insertString(" = 0x" + valStr, contentAttrSet);
+		if (entry.comment != null) {
+			insertString("   " + entry.comment, commentAttrSet);
+		}
+		insertString("\n", contentAttrSet);
 	}
 
 	private void formatTypeDefText(TypeDef td) {

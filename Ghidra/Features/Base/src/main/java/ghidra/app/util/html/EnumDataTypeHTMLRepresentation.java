@@ -40,8 +40,7 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 
 	// private constructor for making diff copies
 	private EnumDataTypeHTMLRepresentation(Enum enumDataType, List<ValidatableLine> headerLines,
-			TextLine displayName,
-			List<ValidatableLine> bodyContent, TextLine footerLine) {
+			TextLine displayName, List<ValidatableLine> bodyContent, TextLine footerLine) {
 		this.enumDataType = enumDataType;
 		this.headerContent = headerLines;
 		this.displayName = displayName;
@@ -113,7 +112,13 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 				int length = hexString.length();
 				hexString = hexString.substring(length - (n * 2));
 			}
-			list.add(new TextLine(name + " = 0x" + hexString));
+
+			String comment = enumDataType.getComment(name);
+			if (trim && comment != null) {
+				comment = StringUtilities.trim(comment, ToolTipUtils.LINE_LENGTH);
+			}
+
+			list.add(new TextLine(name + " = 0x" + hexString + "    " + comment));
 		}
 
 		return list;
@@ -147,7 +152,7 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 		displayNameText = HTMLUtilities.friendlyEncodeHTML(displayNameText);
 		displayNameText = wrapStringInColor(displayNameText, displayName.getTextColor());
 		//@formatter:off
-		append(fullHtml, truncatedHtml, lineCount, TT_OPEN, 
+		append(fullHtml, truncatedHtml, lineCount, TT_OPEN,
                                                    displayNameText,
                                                    TT_CLOSE,
                                                    HTML_SPACE,
@@ -192,8 +197,8 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 		return fullHtml.toString();
 	}
 
-	private static void append(StringBuilder fullHtml, StringBuilder truncatedHtml,
-			int lineCount, String... content) {
+	private static void append(StringBuilder fullHtml, StringBuilder truncatedHtml, int lineCount,
+			String... content) {
 
 		for (String string : content) {
 			fullHtml.append(string);
@@ -247,8 +252,7 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 				diffDisplayName, bodyDiff.getLeftLines(), footerLine),
 			new EnumDataTypeHTMLRepresentation(enumRepresentation.enumDataType,
 				headerDiff.getRightLines(), otherDiffDisplayName, bodyDiff.getRightLines(),
-				enumRepresentation.footerLine)
-		};
+				enumRepresentation.footerLine) };
 	}
 
 }
