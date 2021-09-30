@@ -5,6 +5,7 @@
 .project||NONE||reviewed||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
+data/InstructionsForPatchingLLDB.txt||GHIDRA||||END|
 src/llvm/lldb/CMakeLists.txt||Apache License 2.0 with LLVM Exceptions||||END|
 src/llvm/lldb/bindings/CMakeLists.txt||Apache License 2.0 with LLVM Exceptions||||END|
 src/llvm/lldb/bindings/java/CMakeLists.txt||Apache License 2.0 with LLVM Exceptions||||END|
