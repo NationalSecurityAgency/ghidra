@@ -339,7 +339,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		attachDialog = new DebuggerAttachDialog(this);
 		breakpointDialog = new DebuggerBreakpointDialog(this);
 		configDialog = new DebuggerMethodInvocationDialog(tool, "Configuration", "Configure",
-			DebuggerResources.ICON_LAUNCH);
+			DebuggerResources.ICON_CONFIG);
 	}
 
 	private void addToPanel(ObjectPane p) throws Exception {

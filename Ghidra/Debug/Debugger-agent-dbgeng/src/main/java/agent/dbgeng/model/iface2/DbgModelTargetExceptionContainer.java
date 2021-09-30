@@ -19,7 +19,7 @@ import ghidra.dbg.target.TargetAggregate;
 import ghidra.dbg.target.schema.*;
 
 @TargetObjectSchemaInfo(
-	name = "EventContainer",
+	name = "ExceptionContainer",
 	elements = {
 		@TargetElementType(type = DbgModelTargetException.class) },
 	attributes = {

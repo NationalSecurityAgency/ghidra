@@ -26,7 +26,7 @@ import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.schema.*;
 
 @TargetObjectSchemaInfo(
-	name = "ExecutionFilter",
+	name = "ExecutionOption",
 	elements = {
 		@TargetElementType(type = Void.class) },
 	attributes = {
@@ -39,7 +39,7 @@ public class DbgModelTargetExecutionOptionImpl extends DbgModelTargetObjectImpl
 
 	public DbgModelTargetExecutionOptionImpl(DbgModelTargetEvent event,
 			DebugFilterExecutionOption option) {
-		super(event.getModel(), event, "Execute", "ExecutionFilter");
+		super(event.getModel(), event, "Execute", "ExecutionOption");
 		this.event = event;
 		this.getModel().addModelObject(option, this);
 		this.optionExc = option;
@@ -48,7 +48,7 @@ public class DbgModelTargetExecutionOptionImpl extends DbgModelTargetObjectImpl
 
 	public DbgModelTargetExecutionOptionImpl(DbgModelTargetException exc,
 			DebugFilterExecutionOption option) {
-		super(exc.getModel(), exc, "Execute", "ExecutionFilter");
+		super(exc.getModel(), exc, "Execute", "ExecutionOption");
 		this.event = exc;
 		this.getModel().addModelObject(option, this);
 		this.optionExc = option;

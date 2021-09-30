@@ -170,6 +170,9 @@ public interface DebuggerResources {
 	ImageIcon ICON_BLANK = ResourceManager.loadImage("images/blank.png");
 	ImageIcon ICON_PACKAGE = ResourceManager.loadImage("images/debugger32.png");
 
+	ImageIcon ICON_CONFIG = ResourceManager.loadImage("images/conf.png");
+	ImageIcon ICON_TOGGLE = ResourceManager.loadImage("images/system-switch-user.png");
+
 	HelpLocation HELP_PACKAGE = new HelpLocation("Debugger", "package");
 
 	String HELP_ANCHOR_PLUGIN = "plugin";
@@ -1212,7 +1215,7 @@ public interface DebuggerResources {
 
 	abstract class AbstractToggleAction extends DockingAction {
 		public static final String NAME = "Toggle";
-		public static final Icon ICON = ICON_BREAKPOINT_MIXED_ED_MARKER;
+		public static final Icon ICON = ICON_TOGGLE;
 		public static final String HELP_ANCHOR = "toggle_option";
 
 		public static HelpLocation help(Plugin owner) {
