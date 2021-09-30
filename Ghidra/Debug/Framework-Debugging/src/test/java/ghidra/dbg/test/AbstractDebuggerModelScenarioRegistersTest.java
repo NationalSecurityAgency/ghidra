@@ -76,6 +76,25 @@ public abstract class AbstractDebuggerModelScenarioRegistersTest extends Abstrac
 	protected abstract Map<String, byte[]> getRegisterWrites();
 
 	/**
+	 * Perform the register writing portion of the test
+	 * 
+	 * <p>
+	 * TODO: It is necessary to override this for LLDB, since it presents its registers in various
+	 * "sub" banks. For it, we need to search the banks for each register to write, and delegate to
+	 * the appropriate bank.
+	 * 
+	 * @param toWrite
+	 * 
+	 * @param the trapped thread
+	 */
+	protected void performRegisterWrites(TargetObject target, Map<String, byte[]> toWrite)
+			throws Throwable {
+		TargetRegisterBank bank = Objects
+				.requireNonNull(m.findWithIndex(TargetRegisterBank.class, "0", target.getPath()));
+		waitOn(bank.writeRegistersNamed(toWrite));
+	}
+
+	/**
 	 * Verify, using {@link Assert}, that the target exhibited the effect of the register write
 	 * 
 	 * <p>
@@ -165,10 +184,8 @@ public abstract class AbstractDebuggerModelScenarioRegistersTest extends Abstrac
 		TargetObject target = waitOn(bpMonitor.trapped);
 
 		Map<String, byte[]> toWrite = getRegisterWrites();
-		TargetRegisterBank bank = Objects
-				.requireNonNull(m.findWithIndex(TargetRegisterBank.class, "0", target.getPath()));
 		Msg.debug(this, "Writing registers: " + toWrite.keySet());
-		waitOn(bank.writeRegistersNamed(toWrite));
+		performRegisterWrites(target, toWrite);
 		Msg.debug(this, "  Done");
 
 		assertTrue(DebugModelConventions.isProcessAlive(process));
