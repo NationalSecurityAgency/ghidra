@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,8 @@ package ghidra.program.model.data;
 
 import java.math.BigInteger;
 import java.util.*;
+
+import org.apache.commons.lang3.StringUtils;
 
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
@@ -95,12 +97,12 @@ public class EnumDataType extends GenericDataType implements Enum {
 	}
 
 	@Override
-	public String getComment(String valueName) throws NoSuchElementException {
-		String valueNameComment = commentMap.get(valueName);
-		if (valueNameComment == null) {
-			valueNameComment = "";
+	public String getComment(String valueName) {
+		String comment = commentMap.get(valueName);
+		if (comment == null) {
+			comment = "";
 		}
-		return valueNameComment;
+		return comment;
 	}
 
 	@Override
@@ -118,39 +120,31 @@ public class EnumDataType extends GenericDataType implements Enum {
 	}
 
 	@Override
-	public String[] getComments() {
-		return commentMap.values().toArray(new String[commentMap.size()]);
-	}
-
-	@Override
 	public int getCount() {
 		return nameMap.size();
 	}
 
 	@Override
 	public void add(String valueName, long value) {
-		String valueNameComment = "";
-		add(valueName, value, valueNameComment);
+		add(valueName, value, null);
 	}
 
 	@Override
-	public void add(String valueName, long value, String valueNameComment) {
+	public void add(String valueName, long value, String comment) {
 		bitGroups = null;
 		checkValue(value);
 		if (nameMap.containsKey(valueName)) {
 			throw new IllegalArgumentException(valueName + " already exists in this enum");
 		}
+
 		nameMap.put(valueName, value);
-		List<String> list = valueMap.get(value);
-		if (list == null) {
-			list = new ArrayList<>();
-			valueMap.put(value, list);
-		}
+		List<String> list = valueMap.computeIfAbsent(value, v -> new ArrayList<>());
 		list.add(valueName);
-		if (valueNameComment == null) {
-			valueNameComment = "";
+
+		if (!StringUtils.isBlank(comment)) {
+			commentMap.put(valueName, comment);
 		}
-		commentMap.put(valueName, valueNameComment);
+
 	}
 
 	private void checkValue(long value) {
@@ -180,21 +174,24 @@ public class EnumDataType extends GenericDataType implements Enum {
 	public void remove(String valueName) {
 		bitGroups = null;
 		Long value = nameMap.get(valueName);
-		if (value != null) {
-			nameMap.remove(valueName);
-			List<String> list = valueMap.get(value);
-			Iterator<String> iter = list.iterator();
-			while (iter.hasNext()) {
-				if (valueName.equals(iter.next())) {
-					iter.remove();
-					break;
-				}
-			}
-			if (list.isEmpty()) {
-				valueMap.remove(value);
-			}
-			commentMap.remove(valueName);
+		if (value == null) {
+			return;
 		}
+
+		nameMap.remove(valueName);
+		List<String> list = valueMap.get(value);
+		Iterator<String> iter = list.iterator();
+		while (iter.hasNext()) {
+			if (valueName.equals(iter.next())) {
+				iter.remove();
+				break;
+			}
+		}
+		if (list.isEmpty()) {
+			valueMap.remove(value);
+		}
+
+		commentMap.remove(valueName);
 	}
 
 	@Override
@@ -231,11 +228,11 @@ public class EnumDataType extends GenericDataType implements Enum {
 
 	public void setLength(int length) {
 		String[] names = getNames();
-		for (String enumName : names) {
-			long value = getValue(enumName);
+		for (String valueName : names) {
+			long value = getValue(valueName);
 			if (isTooBig(length, value)) {
 				throw new IllegalArgumentException("Setting the length of this Enum to a size " +
-					"that cannot contain the current value for \"" + enumName + "\" of " +
+					"that cannot contain the current value for \"" + valueName + "\" of " +
 					Long.toHexString(value));
 			}
 		}
@@ -327,7 +324,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 			return "0";
 		}
 		List<BitGroup> list = getBitGroups();
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		for (BitGroup bitGroup : list) {
 			long subValue = bitGroup.getMask() & value;
 			if (subValue != 0) {
@@ -372,30 +369,45 @@ public class EnumDataType extends GenericDataType implements Enum {
 		if (dt == null || !(dt instanceof Enum)) {
 			return false;
 		}
-		Enum enumm = (Enum) dt;
 
+		Enum enumm = (Enum) dt;
 		if (!DataTypeUtilities.equalsIgnoreConflict(name, enumm.getName()) ||
 			length != enumm.getLength() || getCount() != enumm.getCount()) {
 			return false;
 		}
+
+		if (!isEachValueEquivalent(enumm)) {
+			return false;
+		}
+		return true;
+	}
+
+	private boolean isEachValueEquivalent(Enum enumm) {
 		String[] names = getNames();
 		String[] otherNames = enumm.getNames();
 		try {
 			for (int i = 0; i < names.length; i++) {
+				if (!names[i].equals(otherNames[i])) {
+					return false;
+				}
+
 				long value = getValue(names[i]);
 				long otherValue = enumm.getValue(names[i]);
+				if (value != otherValue) {
+					return false;
+				}
+
 				String comment = getComment(names[i]);
 				String otherComment = enumm.getComment(names[i]);
-				if (!names[i].equals(otherNames[i]) || value != otherValue ||
-					!comment.equals(otherComment)) {
+				if (!comment.equals(otherComment)) {
 					return false;
 				}
 			}
+			return true;
 		}
 		catch (NoSuchElementException e) {
 			return false; // named element not found
 		}
-		return true;
 	}
 
 	@Override
@@ -410,14 +422,14 @@ public class EnumDataType extends GenericDataType implements Enum {
 		commentMap = new HashMap<>();
 		setLength(enumm.getLength());
 		String[] names = enumm.getNames();
-		for (String name2 : names) {
-			add(name2, enumm.getValue(name2), enumm.getComment(name2));
+		for (String valueName : names) {
+			add(valueName, enumm.getValue(valueName), enumm.getComment(valueName));
 		}
 		stateChanged(null);
 	}
 
 	@Override
 	public String getDefaultLabelPrefix() {
-		return name == null ? null : name.toUpperCase();
+		return name;
 	}
 }

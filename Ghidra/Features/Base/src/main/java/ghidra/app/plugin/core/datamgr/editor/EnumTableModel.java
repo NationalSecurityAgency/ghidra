@@ -266,8 +266,8 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 	}
 
 	private long findNextValue(int afterRow) {
-		if (enumEntryList.size() == 0) {
-			return new Long(0);
+		if (enumEntryList.isEmpty()) {
+			return 0;
 		}
 		if (afterRow < 0 || afterRow >= enumEntryList.size()) {
 			afterRow = 0;

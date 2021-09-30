@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.app.plugin.core.datamgr.editor;
+
+import generic.json.Json;
 
 public class EnumEntry {
 	private String name;
@@ -49,5 +50,10 @@ public class EnumEntry {
 
 	public void setComment(String newComment) {
 		this.comment = newComment;
+	}
+
+	@Override
+	public String toString() {
+		return Json.toString(this);
 	}
 }

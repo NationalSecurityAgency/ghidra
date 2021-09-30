@@ -66,7 +66,7 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		dataTypeWindows.add(dataTypeDialog);
 
 		captureComponents(dataTypeWindows);
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 	}
 
 	private DropDownSelectionTextField<?> showTypeChooserDialog() throws Exception {
@@ -189,7 +189,7 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		waitForSwing();
 
 		captureDialog();
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 	}
 
 	@Test

@@ -24,9 +24,9 @@ public interface Enum extends DataType {
 
 	/**
 	 * Get the value for the given name.
-	 * @param name name of the entry
-	 * @return the value
-	 * @throws NoSuchElementException if the name does not exist in this Enum
+	 * @param name name of the entry.
+	 * @return the value.
+	 * @throws NoSuchElementException if the name does not exist in this Enum.
 	 */
 	public long getValue(String name) throws NoSuchElementException;
 
@@ -39,11 +39,11 @@ public interface Enum extends DataType {
 
 	/**
 	 * Get the comment for the given name.
-	 * @param name name of the entry
-	 * @return the comment
-	 * @throws NoSuchElementException if the name does not exist in this Enum
+	 * @param name name of the entry.
+	 * @return the comment or the empty string if the name does not exist in this enum or if no
+	 * comment is set.
 	 */
-	public String getComment(String name) throws NoSuchElementException;
+	public String getComment(String name);
 
 	/**
 	 * Get the values of the enum entries.
@@ -52,17 +52,15 @@ public interface Enum extends DataType {
 	public long[] getValues();
 
 	/**
-	 * Get the names of the enum entries.
+	 * Get the names of the enum entries.  The returned names are sorted using String's natural
+	 * sort order.
+	 * @return the names of the enum entries.
 	 */
 	public String[] getNames();
 
 	/**
-	 * Get the comments of the enum entries.
-	 */
-	public String[] getComments();
-
-	/**
-	 * Get the number of entries in this Enum. 
+	 * Get the number of entries in this Enum.
+	 * @return the number of entries in this Enum.
 	 */
 	public int getCount();
 
@@ -82,14 +80,14 @@ public interface Enum extends DataType {
 	public void add(String name, long value, String comment);
 
 	/**
-	 * Remove the enum entry with the given name. 
+	 * Remove the enum entry with the given name.
 	 * @param name name of entry to remove.
 	 */
 	public void remove(String name);
 
 	/**
 	 * Set the description for this Enum.
-	 * @param description
+	 * @param description the description
 	 */
 	@Override
 	public void setDescription(String description);
@@ -98,6 +96,7 @@ public interface Enum extends DataType {
 	 * Get enum representation of the big-endian value.
 	 * @param bigInt BigInteger value with the appropriate sign
 	 * @param settings integer format settings (PADDING, FORMAT, etc.)
+	 * @param bitLength the bit length
 	 * @return formatted integer string
 	 */
 	public String getRepresentation(BigInteger bigInt, Settings settings, int bitLength);

@@ -22,14 +22,15 @@ import ghidra.util.exception.VersionException;
 
 /**
  * Version 0 implementation for the accessing the pointer database table.
- * 
+ *
  */
 class PointerDBAdapterV0 extends PointerDBAdapter {
 	final static int VERSION = 0;
 
-	static final int OLD_PTR_DTD_COL = 0;
-	static final int OLD_PTR_SIZE_COL = 1;
+	static final int V0_PTR_DTD_COL_ = 0;
+	static final int V0_PTR_SIZE_COL = 1;
 
+//  Keep for reference
 //	static final Schema SCHEMA = new Schema(VERSION, "Pointer ID",
 //								new Class[] {LongField.class, IntField.class},
 //								new String[] {"Data Type ID", "Size"});
@@ -60,7 +61,7 @@ class PointerDBAdapterV0 extends PointerDBAdapter {
 
 	@Override
 	RecordIterator getRecords() throws IOException {
-		return new TranslatedRecordIterator(table.iterator());
+		return new TranslatedRecordIterator(table.iterator(), this);
 	}
 
 	@Override
@@ -79,13 +80,14 @@ class PointerDBAdapterV0 extends PointerDBAdapter {
 	}
 
 	@Override
-	DBRecord translateRecord(DBRecord oldRec) {
+	public DBRecord translateRecord(DBRecord oldRec) {
 		if (oldRec == null) {
 			return null;
 		}
 		DBRecord rec = PointerDBAdapter.SCHEMA.createRecord(oldRec.getKey());
-		rec.setLongValue(PTR_DT_ID_COL, oldRec.getLongValue(OLD_PTR_DTD_COL));
+		rec.setLongValue(PTR_DT_ID_COL, oldRec.getLongValue(V0_PTR_DTD_COL_));
 		rec.setLongValue(PTR_CATEGORY_COL, 0);
+		rec.setByteValue(PTR_LENGTH_COL, (byte) -1);
 		return rec;
 	}
 
