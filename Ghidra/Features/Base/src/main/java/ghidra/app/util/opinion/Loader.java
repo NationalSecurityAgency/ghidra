@@ -22,6 +22,7 @@ import java.util.List;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.formats.gfilesystem.FSRL;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Program;
@@ -169,7 +170,9 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	 * @return The preferred file name to use when loading.
 	 */
 	public default String getPreferredFileName(ByteProvider provider) {
-		return provider.getName().replaceAll("[\\\\:|]+", "/");
+		FSRL fsrl = provider.getFSRL();
+		String name = (fsrl != null) ? fsrl.getName() : provider.getName();
+		return name.replaceAll("[\\\\:|]+", "/");
 	}
 
 	/**

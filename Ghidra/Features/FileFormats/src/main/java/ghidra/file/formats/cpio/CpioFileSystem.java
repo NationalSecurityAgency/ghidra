@@ -15,34 +15,36 @@
  */
 package ghidra.file.formats.cpio;
 
+import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
+
 import java.io.*;
-import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveInputStream;
 
-import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.*;
-import ghidra.formats.gfilesystem.FSUtilities.StreamCopyResult;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
-import ghidra.util.NumericUtilities;
+import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 @FileSystemInfo(type = "cpio", description = "CPIO", factory = CpioFileSystemFactory.class)
 public class CpioFileSystem implements GFileSystem {
+	private FileSystemService fsService;
 	private FSRLRoot fsFSRL;
 	private FileSystemIndexHelper<CpioArchiveEntry> fsIndex;
 	private FileSystemRefManager fsRefManager = new FileSystemRefManager(this);
 	private ByteProvider provider;
 
 
-	public CpioFileSystem(FSRLRoot fsFSRL, ByteProvider provider, TaskMonitor monitor)
+	public CpioFileSystem(FSRLRoot fsFSRL, ByteProvider provider, FileSystemService fsService,
+			TaskMonitor monitor)
 			throws IOException {
 		monitor.setMessage("Opening CPIO...");
+		this.fsService = fsService;
 		this.fsFSRL = fsFSRL;
 		this.provider = provider;
 		this.fsIndex = new FileSystemIndexHelper<>(this, fsFSRL);
@@ -112,50 +114,37 @@ public class CpioFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
+	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
+		FileAttributes result = new FileAttributes();
 		CpioArchiveEntry entry = fsIndex.getMetadata(file);
-		if (entry == null) {
-			return null;
+		if (entry != null) {
+			result.add(NAME_ATTR, entry.getName());
+			result.add(SIZE_ATTR, entry.getSize());
+			result.add(MODIFIED_DATE_ATTR, entry.getLastModifiedDate());
+			result.add(USER_ID_ATTR, entry.getUID());
+			result.add(GROUP_ID_ATTR, entry.getGID());
+			result.add("Mode", Long.toHexString(entry.getMode()));
+			result.add("Inode", Long.toHexString(entry.getInode()));
+			result.add("Format", Long.toHexString(entry.getFormat()));
+			try {
+				result.add("Device ID", Long.toHexString(entry.getDevice()));
+				result.add("Remote Device", Long.toHexString(entry.getRemoteDevice()));
+			}
+			catch (Exception e) {
+				// ignore old format missing exception
+			}
+			try {
+				result.add("Checksum", Long.toHexString(entry.getChksum()));
+			}
+			catch (Exception e) {
+				// ignore new format missing exception
+			}
 		}
-		StringBuilder buffer = new StringBuilder();
-		try {
-			buffer.append("Name: " + entry.getName() + "\n");
-			buffer.append("Format: " + Long.toHexString(entry.getFormat()) + "\n");
-			buffer.append("GID: " + Long.toHexString(entry.getGID()) + "\n");
-			buffer.append("Inode: " + Long.toHexString(entry.getInode()) + "\n");
-			buffer.append("Last Modified: " + entry.getLastModifiedDate() + "\n");
-			buffer.append("Links: " + Long.toHexString(entry.getNumberOfLinks()) + "\n");
-			buffer.append("Mode: " + Long.toHexString(entry.getMode()) + "\n");
-			buffer.append("Size: " + Long.toHexString(entry.getSize()) + "\n");
-			buffer.append("Time: " + new Date(entry.getTime()) + "\n");
-			buffer.append("UID: " + Long.toHexString(entry.getUID()) + "\n");
-		}
-		catch (Exception e) {
-			// ignore 
-		}
-		try {
-			buffer.append("Device ID: " + Long.toHexString(entry.getDevice()) + "\n");
-			buffer.append("Remote Device: " + Long.toHexString(entry.getRemoteDevice()) + "\n");
-		}
-		catch (Exception e) {
-			// ignore old format missing exception
-		}
-		try {
-			buffer.append("Checksum: " + Long.toHexString(entry.getChksum()) + "\n");
-		}
-		catch (Exception e) {
-			// ignore new format missing exception
-		}
-		return buffer.toString();
+
+		return result;
 	}
 
 	@Override
-	public InputStream getInputStream(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		ByteProvider bp = getByteProvider(file, monitor);
-		return bp != null ? bp.getInputStream(0) : null;
-	}
-
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		CpioArchiveEntry targetEntry = fsIndex.getMetadata(file);
@@ -171,25 +160,17 @@ public class CpioFileSystem implements GFileSystem {
 			CpioArchiveEntry currentEntry;
 			while ((currentEntry = cpioInputStream.getNextCPIOEntry()) != null) {
 				if (currentEntry.equals(targetEntry)) {
-					return getByteProviderForEntry(cpioInputStream, file.getFSRL(), monitor);
+					ByteProvider bp =
+						fsService.getDerivedByteProvider(provider.getFSRL(), file.getFSRL(),
+							file.getPath(), currentEntry.getSize(), () -> cpioInputStream, monitor);
+					return bp;
 				}
-				FileUtilities.copyStreamToStream(cpioInputStream, OutputStream.nullOutputStream(),
-					monitor);
+				FSUtilities.streamCopy(cpioInputStream, OutputStream.nullOutputStream(), monitor);
 			}
 		}
 		catch (IllegalArgumentException e) {
 			throw new IOException(e);
 		}
 		throw new IOException("Unable to seek to entry: " + file.getName());
-	}
-
-	private ByteProvider getByteProviderForEntry(CpioArchiveInputStream cpioInputStream, FSRL fsrl,
-			TaskMonitor monitor) throws CancelledException, IOException {
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		StreamCopyResult copyResult = FSUtilities.streamCopy(cpioInputStream, out, monitor);
-		if (fsrl.getMD5() == null) {
-			fsrl = fsrl.withMD5(NumericUtilities.convertBytesToString(copyResult.md5));
-		}
-		return new ByteArrayProvider(out.toByteArray(), fsrl);
 	}
 }

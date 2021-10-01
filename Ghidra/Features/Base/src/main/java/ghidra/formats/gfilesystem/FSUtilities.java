@@ -20,6 +20,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -27,9 +28,8 @@ import java.util.Map.Entry;
 
 import org.apache.commons.io.FilenameUtils;
 
-import com.google.common.io.ByteStreams;
-
 import docking.widgets.OptionDialog;
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
@@ -45,16 +45,6 @@ public class FSUtilities {
 	private static final char DOT = '.';
 	private static final TimeZone GMT = TimeZone.getTimeZone("GMT");
 
-	public static class StreamCopyResult {
-		public long bytesCopied;
-		public byte[] md5;
-
-		public StreamCopyResult(long bytesCopied, byte[] md5) {
-			this.bytesCopied = bytesCopied;
-			this.md5 = md5;
-		}
-	}
-
 	private static char[] hexdigit = "0123456789abcdef".toCharArray();
 
 	/**
@@ -62,25 +52,17 @@ public class FSUtilities {
 	 * case-insensitive.
 	 */
 	public static final Comparator<GFile> GFILE_NAME_TYPE_COMPARATOR = (o1, o2) -> {
-		String n1 = o1.getName();
-		String n2 = o2.getName();
-		if (n1 == null) {
-			return -1;
+		int result = Boolean.compare(!o1.isDirectory(), !o2.isDirectory());
+		if (result == 0) {
+			String n1 = Objects.requireNonNullElse(o1.getName(), "");
+			String n2 = Objects.requireNonNullElse(o2.getName(), "");
+			result = n1.compareToIgnoreCase(n2);
 		}
-		if (o1.isDirectory()) {
-			if (o2.isDirectory()) {
-				return n1.compareToIgnoreCase(n2);
-			}
-			return -1;
-		}
-		else if (o2.isDirectory()) {
-			return 1;
-		}
-		return n1.compareToIgnoreCase(n2);
+		return result;
 	};
 
 	/**
-	 * Converts a string -&gt; string mapping into a "key: value" multi-line string.
+	 * Converts a string-to-string mapping into a "key: value\n" multi-line string.
 	 *
 	 * @param info map of string key to string value.
 	 * @return Multi-line string "key: value" string.
@@ -349,55 +331,61 @@ public class FSUtilities {
 	}
 
 	/**
-	 * Copies a stream and calculates the md5 at the same time.
-	 * <p>
-	 * Does not close the passed-in InputStream or OutputStream.
-	 *
-	 * @param is {@link InputStream} to copy.  NOTE: not closed by this method.
-	 * @param os {@link OutputStream} to write to.  NOTE: not closed by this method.
-	 * @return {@link StreamCopyResult} with md5 and bytes copied count, never null.
+	 * Copy the contents of a {@link ByteProvider} to a file.
+	 * 
+	 * @param provider {@link ByteProvider} source of bytes
+	 * @param destFile {@link File} destination file
+	 * @param monitor {@link TaskMonitor} to update
+	 * @return number of bytes copied
 	 * @throws IOException if error
-	 * @throws CancelledException if canceled
+	 * @throws CancelledException if cancelled
 	 */
-	@SuppressWarnings("resource")
-	public static StreamCopyResult streamCopy(InputStream is, OutputStream os, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		HashingOutputStream hos;
-		try {
-			// This wrapping outputstream is not closed on purpose.
-			hos = new HashingOutputStream(os, "MD5");
+	public static long copyByteProviderToFile(ByteProvider provider, File destFile,
+			TaskMonitor monitor) throws IOException, CancelledException {
+		try (InputStream is = provider.getInputStream(0);
+				FileOutputStream fos = new FileOutputStream(destFile)) {
+			return streamCopy(is, fos, monitor);
 		}
-		catch (NoSuchAlgorithmException e) {
-			throw new IOException("Could not get MD5 hash algo", e);
-		}
+	}
 
-		// TODO: use FileUtilities.copyStreamToStream()
+	/**
+	 * Copy a stream while updating a TaskMonitor.
+	 * 
+	 * @param is {@link InputStream} source of bytes 
+	 * @param os {@link OutputStream} destination of bytes
+	 * @param monitor {@link TaskMonitor} to update
+	 * @return number of bytes copied
+	 * @throws IOException if error
+	 * @throws CancelledException if cancelled
+	 */
+	public static long streamCopy(InputStream is, OutputStream os, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		byte buffer[] = new byte[FileUtilities.IO_BUFFER_SIZE];
 		int bytesRead;
 		long totalBytesCopied = 0;
 		while ((bytesRead = is.read(buffer)) > 0) {
-			hos.write(buffer, 0, bytesRead);
+			os.write(buffer, 0, bytesRead);
 			totalBytesCopied += bytesRead;
 			monitor.setProgress(totalBytesCopied);
 			monitor.checkCanceled();
 		}
-		hos.flush();
-		return new StreamCopyResult(totalBytesCopied, hos.getDigest());
+		os.flush();
+		return totalBytesCopied;
 	}
 
 	/**
-	 * Calculate the MD5 of a stream.
-	 *
-	 * @param is {@link InputStream} to read
-	 * @param monitor {@link TaskMonitor} to watch for cancel
-	 * @return md5 as a hex encoded string, never null.
+	 * Returns the text lines in the specified ByteProvider.
+	 * <p>
+	 * See {@link FileUtilities#getLines(InputStream)}
+	 * 
+	 * @param byteProvider {@link ByteProvider} to read
+	 * @return list of text lines
 	 * @throws IOException if error
-	 * @throws CancelledException if cancelled
 	 */
-	public static String getStreamMD5(InputStream is, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		StreamCopyResult results = streamCopy(is, ByteStreams.nullOutputStream(), monitor);
-		return NumericUtilities.convertBytesToString(results.md5);
+	public static List<String> getLines(ByteProvider byteProvider) throws IOException {
+		try (InputStream is = byteProvider.getInputStream(0)) {
+			return FileUtilities.getLines(is);
+		}
 	}
 
 	/**
@@ -412,7 +400,54 @@ public class FSUtilities {
 	public static String getFileMD5(File f, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		try (FileInputStream fis = new FileInputStream(f)) {
-			return getStreamMD5(fis, monitor);
+			monitor.initialize(f.length());
+			monitor.setMessage("Hashing file: " + f.getName());
+			return getMD5(fis, monitor);
+		}
+	}
+
+	/**
+	 * Calculate the MD5 of a file.
+	 * 
+	 * @param provider {@link ByteProvider} 
+	 * @param monitor {@link TaskMonitor} to watch for cancel
+	 * @return md5 as a hex encoded string, never null.
+	 * @throws IOException if error
+	 * @throws CancelledException if cancelled
+	 */
+	public static String getMD5(ByteProvider provider, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		try (InputStream is = provider.getInputStream(0)) {
+			monitor.initialize(provider.length());
+			monitor.setMessage("Hashing file: " + provider.getName());
+			return getMD5(is, monitor);
+		}
+	}
+
+	/**
+	 * Calculate the hash of an {@link InputStream}.
+	 * 
+	 * @param is {@link InputStream}
+	 * @param monitor {@link TaskMonitor} to update
+	 * @return md5 as a hex encoded string, never null
+	 * @throws IOException if error
+	 * @throws CancelledException if cancelled
+	 */
+	public static String getMD5(InputStream is, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		try {
+			MessageDigest messageDigest = MessageDigest.getInstance(HashUtilities.MD5_ALGORITHM);
+			byte[] buf = new byte[16 * 1024];
+			int bytesRead;
+			while ((bytesRead = is.read(buf)) >= 0) {
+				messageDigest.update(buf, 0, bytesRead);
+				monitor.incrementProgress(bytesRead);
+				monitor.checkCanceled();
+			}
+			return NumericUtilities.convertBytesToString(messageDigest.digest());
+		}
+		catch (NoSuchAlgorithmException e) {
+			throw new IOException(e);
 		}
 	}
 
@@ -534,4 +569,22 @@ public class FSUtilities {
 				: "NA";
 	}
 
+	/**
+	 * Helper method to invoke close() on a Closeable without having to catch
+	 * an IOException.
+	 * 
+	 * @param c {@link Closeable} to close
+	 * @param msg optional msg to log if exception is thrown, null is okay
+	 */
+	public static void uncheckedClose(Closeable c, String msg) {
+		try {
+			if (c != null) {
+				c.close();
+			}
+		}
+		catch (IOException e) {
+			Msg.warn(FSUtilities.class, Objects.requireNonNullElse(msg, "Problem closing object"),
+				e);
+		}
+	}
 }

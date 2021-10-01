@@ -20,6 +20,7 @@ import java.util.*;
 
 import javax.swing.Icon;
 
+import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.file.formats.lzss.LzssCodec;
 import ghidra.file.image.GImage;
@@ -50,20 +51,18 @@ public class iBootImFileSystem extends GFileSystemBase implements GIconProvider 
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException, CryptoException {
-		return new ByteArrayInputStream(bytes);
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) {
+		return new ByteArrayProvider(bytes, file.getFSRL());
 	}
 
 	@Override
 	public Icon getIcon(GFile file, TaskMonitor monitor) throws IOException, CancelledException {
-		File cacheFile = fsService.getFile(file.getFSRL(), monitor);
-		try (InputStream cacheInputStream = new FileInputStream(cacheFile)) {
-			GImageFormat format =
-				(header.getFormat() == iBootImConstants.FORMAT_ARGB) ? GImageFormat.RGB_ALPHA_4BYTE
-						: GImageFormat.GRAY_ALPHA_2BYTE;
+		try (InputStream cacheInputStream = new ByteArrayInputStream(bytes)) {
+			GImageFormat format = (header.getFormat() == iBootImConstants.FORMAT_ARGB)
+					? GImageFormat.RGB_ALPHA_4BYTE
+					: GImageFormat.GRAY_ALPHA_2BYTE;
 			GImage image = new GImage(header.getWidth(), header.getHeight(), format,
-				cacheInputStream, cacheFile.length());
+				cacheInputStream, bytes.length);
 			return image.toPNG();
 		}
 	}
@@ -78,8 +77,8 @@ public class iBootImFileSystem extends GFileSystemBase implements GIconProvider 
 
 	@Override
 	public boolean isValid(TaskMonitor monitor) throws IOException {
-		byte[] bytes = provider.readBytes(0, iBootImConstants.SIGNATURE_LENGTH);
-		return Arrays.equals(bytes, iBootImConstants.SIGNATURE_BYTES);
+		byte[] signatureBytes = provider.readBytes(0, iBootImConstants.SIGNATURE_LENGTH);
+		return Arrays.equals(signatureBytes, iBootImConstants.SIGNATURE_BYTES);
 	}
 
 	@Override

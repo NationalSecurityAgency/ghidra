@@ -38,6 +38,7 @@
 	
 	<file_overlay    name="imported"         icon="images/checkmark_green.gif" />
 	<file_overlay    name="filesystem"       icon="images/nuvola/16x16/ledgreen.png" quadrant="LL"  />
+	<file_overlay    name="password_missing" icon="images/lock.png" quadrant="UR"  />
 </file_extensions>
 
 

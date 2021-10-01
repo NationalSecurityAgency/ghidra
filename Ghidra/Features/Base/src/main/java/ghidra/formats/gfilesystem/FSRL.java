@@ -97,6 +97,19 @@ public class FSRL {
 	}
 
 	/**
+	 * Ensures that a FSRL instance is a file type reference by converting any FSRLRoots
+	 * into the container file that hosts the FSRLRoot.
+	 * 
+	 * @param fsrl FSRL or FSRLRoot instance to possibly convert
+	 * @return original FSRL if already a normal FSRL, or the container if it was a FSRLRoot
+	 */
+	public static FSRL convertRootToContainer(FSRL fsrl) {
+		return (fsrl instanceof FSRLRoot && fsrl.getFS().hasContainer())
+				? fsrl.getFS().getContainer()
+				: fsrl;
+	}
+
+	/**
 	 * Creates a single {@link FSRL} from a FSRL-part string.
 	 * <p>
 	 * A FSRL-part string is defined as protocol_string + "://" + path_string + "?" + param_string.
@@ -283,14 +296,28 @@ public class FSRL {
 	}
 
 	/**
+	 * Tests specified MD5 value against MD5 in this FSRL.
+	 * 
+	 * @param otherMD5 md5 in a hex string  
+	 * @return boolean true if equal, or that both are null, false otherwise
+	 */
+	public boolean isMD5Equal(String otherMD5) {
+		if (this.md5 == null) {
+			return otherMD5 == null;
+		}
+		return this.md5.equalsIgnoreCase(otherMD5);
+	}
+
+	/**
 	 * Creates a new {@link FSRL} instance, using the same information as this instance,
 	 * but with a new {@link #getMD5() MD5} value.
 	 *
 	 * @param newMD5 string md5
-	 * @return new {@link FSRL} instance with the same path and the specified md5 value.
+	 * @return new {@link FSRL} instance with the same path and the specified md5 value,
+	 *         or if newMD5 is same as existing, returns this
 	 */
 	public FSRL withMD5(String newMD5) {
-		return new FSRL(getFS(), path, newMD5);
+		return Objects.equals(md5, newMD5) ? this : new FSRL(getFS(), path, newMD5);
 	}
 
 	/**
@@ -312,7 +339,7 @@ public class FSRL {
 	 * <p>
 	 * Used when re-root'ing a FSRL path onto another parent object (usually during intern()'ing)
 	 *
-	 * @param copyPath
+	 * @param copyPath another FSRL to copy path and md5 from
 	 * @return new FSRL instance
 	 */
 	public FSRL withPath(FSRL copyPath) {
@@ -323,7 +350,7 @@ public class FSRL {
 	 * Creates a new {@link FSRL} instance, using the same {@link FSRLRoot} as this instance,
 	 * combining the current {@link #getPath() path} with the {@code relPath} value.
 	 * <p>
-	 * @param relPath
+	 * @param relPath relative path string to append, '/'s will be automatically added
 	 * @return new {@link FSRL} instance with additional path appended.
 	 */
 	public FSRL appendPath(String relPath) {

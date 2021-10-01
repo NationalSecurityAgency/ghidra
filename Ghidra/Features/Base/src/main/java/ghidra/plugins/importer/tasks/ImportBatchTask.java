@@ -131,8 +131,9 @@ public class ImportBatchTask extends Task {
 	private void doImportApp(BatchLoadConfig batchLoadConfig,
 			BatchGroupLoadSpec selectedBatchGroupLoadSpec, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		try (ByteProvider byteProvider =
-			FileSystemService.getInstance().getByteProvider(batchLoadConfig.getFSRL(), monitor)) {
+		Msg.info(this, "Importing " + batchLoadConfig.getFSRL());
+		try (ByteProvider byteProvider = FileSystemService.getInstance()
+				.getByteProvider(batchLoadConfig.getFSRL(), true, monitor)) {
 			LoadSpec loadSpec = batchLoadConfig.getLoadSpec(selectedBatchGroupLoadSpec);
 			if (loadSpec == null) {
 				Msg.error(this,

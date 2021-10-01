@@ -123,6 +123,19 @@
         of the file systems will display that file system's browser tree.</P>
       </BLOCKQUOTE>
 
+      <H3><A name="FSB_Clear_Cached_Passwords"></A>Clear Cached Passwords</H3>
+
+      <BLOCKQUOTE>
+        <P>Clears any cached passwords that previously entered when accessing a password
+        protected container file.</P>
+      </BLOCKQUOTE>
+      
+      <H3><A name="FSB_Refresh"></A>Refresh</H3>
+
+      <BLOCKQUOTE>
+        <P>Refreshes the status of the selected items.</P>
+      </BLOCKQUOTE>
+      
       <H3><A name="FSB_Close"></A>Close</H3>
 
       <BLOCKQUOTE>
@@ -150,6 +163,20 @@
       </BLOCKQUOTE>
     </BLOCKQUOTE>
 
+    <H2><A name="PasswordDialog"></A>Password Dialog</H2>
+
+    <BLOCKQUOTE>
+      <P>This dialog is used to prompt for a password when opening a password protected container.</P>
+      
+      <P>If the password isn't known, the <b>Cancel</b> button will stop Ghidra from re-prompting
+      for the password for the current file during the current operation (but the user may be
+      re-prompted again later depending on the logic of the operation), and <b>Cancel All</b>
+      will stop Ghidra from prompting for passwords for any file during the current operation.</P>
+      
+      <P>Passwords can also be provided via a text file specified on the java command line, useful
+      for headless operations.  See <b>ghidra.formats.gfilesystem.crypto.CmdLinePasswordProvider</b></P>
+    </BLOCKQUOTE>
+    
     <H2>How To Handle Unsupported File Systems</H2>
 
     <BLOCKQUOTE>

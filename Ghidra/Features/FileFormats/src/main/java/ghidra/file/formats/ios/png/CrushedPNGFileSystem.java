@@ -15,17 +15,18 @@
  */
 package ghidra.file.formats.ios.png;
 
+import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
+
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
+import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
@@ -92,24 +93,27 @@ public class CrushedPNGFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
-		return png.toString();
+	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
+		FileAttributes result = new FileAttributes();
+
+		result.add(SIZE_ATTR, (long) png.getTotalLength());
+		result.add("Type", "Crushed PNG Image");
+		int chunkNum = 0;
+		for (PNGChunk chunk : png.getChunkArray()) {
+			result.add("PNG Chunk " + (chunkNum++), chunk.getIDString());
+		}
+		return result;
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException, CryptoException {
-
-		CrushedPNGUtil util = new CrushedPNGUtil();
-		InputStream is;
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		try {
-			is = util.getUncrushedPNGBytes(png, monitor);
+			return new ByteArrayProvider(CrushedPNGUtil.getUncrushedPNGBytes(png), file.getFSRL());
 		}
 		catch (Exception e) {
-
-			return null;
+			throw new IOException("Error converting crushed PNG bitmap", e);
 		}
-		return is;
 	}
 
 }

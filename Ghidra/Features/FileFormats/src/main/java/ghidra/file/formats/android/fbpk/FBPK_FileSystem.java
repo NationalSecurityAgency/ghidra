@@ -16,17 +16,10 @@
 package ghidra.file.formats.android.fbpk;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.formats.gfilesystem.GFile;
-import ghidra.formats.gfilesystem.GFileImpl;
-import ghidra.formats.gfilesystem.GFileSystemBase;
+import ghidra.app.util.bin.*;
+import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
 import ghidra.util.exception.CancelledException;
@@ -71,17 +64,15 @@ public class FBPK_FileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
-		return null;
-	}
-
-	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException, CryptoException {
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		FBPK_Partition partition = map.get(file);
-
-		return provider.getInputStream(partition.getDataStartOffset());
+		if (partition != null) {
+			return new ByteProviderWrapper(provider, partition.getDataStartOffset(),
+				Integer.toUnsignedLong(partition.getDataSize()), file.getFSRL());
+		}
+		return null;
 	}
 
 }

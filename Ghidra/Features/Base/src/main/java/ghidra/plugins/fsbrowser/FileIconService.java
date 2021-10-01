@@ -60,6 +60,7 @@ public class FileIconService {
 
 	public static final String OVERLAY_IMPORTED = "imported";
 	public static final String OVERLAY_FILESYSTEM = "filesystem";
+	public static final String OVERLAY_MISSING_PASSWORD = "password_missing";
 
 	private static final String FILEEXT_MAPPING_FILE = "file_extension_icons.xml";
 

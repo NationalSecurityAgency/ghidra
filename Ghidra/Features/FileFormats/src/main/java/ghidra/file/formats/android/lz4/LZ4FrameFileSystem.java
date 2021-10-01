@@ -15,24 +15,19 @@
  */
 package ghidra.file.formats.android.lz4;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorInputStream;
 
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.formats.gfilesystem.GFile;
-import ghidra.formats.gfilesystem.GFileImpl;
-import ghidra.formats.gfilesystem.GFileSystemBase;
+import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
 
 /**
  * 
@@ -62,42 +57,32 @@ public class LZ4FrameFileSystem extends GFileSystemBase {
 
 	@Override
 	public void open(TaskMonitor monitor) throws IOException, CancelledException {
-		byte[] decompressedBytes = decompress(monitor);
-		decompressedLZ4FFile =
-			GFileImpl.fromFilename(this, root, NAME, false, decompressedBytes.length, null);
+		try (ByteProvider payloadBP = getPayload(monitor, root.getFSRL().appendPath(NAME))) {
+			decompressedLZ4FFile =
+				GFileImpl.fromFSRL(this, root, payloadBP.getFSRL(), false, payloadBP.length());
+		}
 	}
 
-	private byte[] decompress(TaskMonitor monitor) throws IOException {
-		monitor.setShowProgressValue(true);
-		monitor.setMaximum(100000);
-		monitor.setProgress(0);
-		monitor.setMessage("Decompressing LZ4 Frame...");
-		FramedLZ4CompressorInputStream lz4 =
-			new FramedLZ4CompressorInputStream(provider.getInputStream(0));
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		int chunk = 0;
-		while (!monitor.isCancelled()) {
-			byte[] bytes = new byte[0x1000];
-			int nRead = lz4.read(bytes);
-			if (nRead <= 0) {
-				break;
-			}
-			++chunk;
-			monitor.incrementProgress(1);
-			monitor.setMessage(
-				"Decompressing LZ4F ... " + chunk + " ... 0x" + Integer.toHexString(nRead));
-			baos.write(bytes, 0, nRead);
-		}
-		lz4.close();
-		return baos.toByteArray();
+	private ByteProvider getPayload(TaskMonitor monitor, FSRL payloadFSRL)
+			throws CancelledException, IOException {
+		return fsService.getDerivedByteProviderPush(provider.getFSRL(), payloadFSRL, NAME, -1,
+			(os) -> {
+				UnknownProgressWrappingTaskMonitor upwtm =
+					new UnknownProgressWrappingTaskMonitor(monitor, provider.length());
+				upwtm.setMessage("Decompressing LZ4 Frame...");
+				upwtm.setProgress(0);
+				try (InputStream is =
+					new FramedLZ4CompressorInputStream(provider.getInputStream(0))) {
+					FSUtilities.streamCopy(is, os, upwtm);
+				}
+			}, monitor);
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		if (file == decompressedLZ4FFile || file.equals(decompressedLZ4FFile)) {
-			byte[] decompressedBytes = decompress(monitor);
-			return new ByteArrayInputStream(decompressedBytes);
+			return getPayload(monitor, file.getFSRL());
 		}
 		return null;
 	}

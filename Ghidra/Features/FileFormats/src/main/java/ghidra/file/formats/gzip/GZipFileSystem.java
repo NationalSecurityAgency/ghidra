@@ -15,14 +15,20 @@
  */
 package ghidra.file.formats.gzip;
 
-import java.io.*;
+import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
+
+import java.io.IOException;
 import java.util.*;
 
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipParameters;
+import org.apache.commons.io.FilenameUtils;
 
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
+import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
@@ -41,61 +47,59 @@ public class GZipFileSystem implements GFileSystem {
 	public static final String GZIP_PAYLOAD_FILENAME = "gzip_decompressed";
 
 	private final FSRLRoot fsFSRL;
-	private final FSRL containerFSRL;
 	private final FileSystemRefManager refManager = new FileSystemRefManager(this);
 	private final SingleFileSystemIndexHelper fsIndex;
 	private final FileSystemService fsService;
+	private ByteProvider container;
+	private ByteProvider payloadProvider;
 
-	private String origFilename;
+	private String payloadFilename;
 	private String payloadKey;
 	private String origComment;
 	private long origDate;
-	private long containerSize;
 
-	public GZipFileSystem(FSRL containerFSRL, FSRLRoot fsFSRL, File containerFile,
-			FileSystemService fsService, TaskMonitor monitor)
-			throws IOException, CancelledException {
+	public GZipFileSystem(ByteProvider container, FSRLRoot fsFSRL, FileSystemService fsService,
+			TaskMonitor monitor) throws IOException, CancelledException {
 		this.fsFSRL = fsFSRL;
-		this.containerFSRL = containerFSRL;
 		this.fsService = fsService;
+		this.container = container;
 
-		readGzipMetadata(containerFile, monitor);
-		FileCacheEntry fce = getPayloadFileCacheEntry(monitor);
-		this.fsIndex =
-			new SingleFileSystemIndexHelper(this, fsFSRL, origFilename, fce.file.length(), fce.md5);
+		readGzipMetadata(monitor);
+		payloadProvider = getPayloadByteProvider(monitor);
+		this.fsIndex = new SingleFileSystemIndexHelper(this, fsFSRL, payloadFilename,
+			payloadProvider.length(), payloadProvider.getFSRL().getMD5());
 	}
 
-	private void readGzipMetadata(File containerFile, TaskMonitor monitor) throws IOException {
-		this.containerSize = containerFile.length();
+	private void readGzipMetadata(TaskMonitor monitor) throws IOException {
 		try (GzipCompressorInputStream gzcis =
-			new GzipCompressorInputStream(new FileInputStream(containerFile))) {
+			new GzipCompressorInputStream(container.getInputStream(0))) {
 			GzipParameters metaData = gzcis.getMetaData();
-			origFilename = metaData.getFilename();
-			if (origFilename == null) {
-				origFilename = GZIP_PAYLOAD_FILENAME;
+			payloadFilename = metaData.getFilename();
+			if (payloadFilename == null) {
+				String containerName = fsFSRL.getContainer().getName();
+				if (containerName.toLowerCase().endsWith(".gz")) {
+					payloadFilename = FilenameUtils.removeExtension(containerName);
+				}
+				else {
+					payloadFilename = GZIP_PAYLOAD_FILENAME;
+				}
 			}
 			else {
-				origFilename = FSUtilities.getSafeFilename(origFilename);
+				payloadFilename = FSUtilities.getSafeFilename(payloadFilename);
 			}
 			this.origComment = metaData.getComment();
-
-			// NOTE: the following line does not work in apache-commons-compress 1.8
-			// Apache has a bug where the computed date value is truncated to 32 bytes before
-			// being saved to its 64 bit field.
-			// Bug not present in 1.13 (latest ver as of now)
 			this.origDate = metaData.getModificationTime();
 
-			this.payloadKey = "uncompressed " + origFilename;
+			this.payloadKey = "uncompressed " + payloadFilename;
 		}
 	}
 
-	private FileCacheEntry getPayloadFileCacheEntry(TaskMonitor monitor)
+	private ByteProvider getPayloadByteProvider(TaskMonitor monitor)
 			throws CancelledException, IOException {
 		UnknownProgressWrappingTaskMonitor upwtm =
-			new UnknownProgressWrappingTaskMonitor(monitor, containerSize);
-		FileCacheEntry derivedFile = fsService.getDerivedFile(containerFSRL, payloadKey,
-			(srcFile) -> new GzipCompressorInputStream(new FileInputStream(srcFile)), upwtm);
-		return derivedFile;
+			new UnknownProgressWrappingTaskMonitor(monitor, container.length());
+		return fsService.getDerivedByteProvider(container.getFSRL(), null, payloadKey, -1,
+			() -> new GzipCompressorInputStream(container.getInputStream(0)), upwtm);
 	}
 
 	public GFile getPayloadFile() {
@@ -116,6 +120,14 @@ public class GZipFileSystem implements GFileSystem {
 	public void close() throws IOException {
 		refManager.onClose();
 		fsIndex.clear();
+		if (container != null) {
+			container.close();
+			container = null;
+		}
+		if (payloadProvider != null) {
+			payloadProvider.close();
+			payloadProvider = null;
+		}
 	}
 
 	@Override
@@ -129,11 +141,10 @@ public class GZipFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public InputStream getInputStream(GFile file, TaskMonitor monitor)
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		if (fsIndex.isPayloadFile(file)) {
-			FileCacheEntry fce = getPayloadFileCacheEntry(monitor);
-			return new FileInputStream(fce.file);
+			return new ByteProviderWrapper(payloadProvider, file.getFSRL());
 		}
 		return null;
 	}
@@ -144,21 +155,45 @@ public class GZipFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
-		if (fsIndex.isPayloadFile(file)) {
-			return FSUtilities.infoMapToString(getInfoMap());
+	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
+		long compSize = 0;
+		long payloadSize = 0;
+		try {
+			compSize = container.length();
+			payloadSize = payloadProvider.length();
 		}
-		return null;
+		catch (IOException e) {
+			// ignore
+		}
+		GFile payload = fsIndex.getPayloadFile();
+
+		FileAttributes result = new FileAttributes();
+		result.add(NAME_ATTR, payload.getName());
+		result.add(SIZE_ATTR, payloadSize);
+		result.add(COMPRESSED_SIZE_ATTR, compSize);
+		result.add(MODIFIED_DATE_ATTR, origDate != 0 ? new Date(origDate) : null);
+		result.add(COMMENT_ATTR, origComment);
+		result.add("MD5", payload.getFSRL().getMD5());
+		return result;
 	}
 
 	public Map<String, String> getInfoMap() {
+		long compSize = 0;
+		long payloadSize = 0;
+		try {
+			compSize = container.length();
+			payloadSize = payloadProvider.length();
+		}
+		catch (IOException e) {
+			// ignore
+		}
 		GFile payload = fsIndex.getPayloadFile();
 		Map<String, String> info = new LinkedHashMap<>();
 		info.put("Name", payload.getName());
-		info.put("Size", Long.toString(payload.getLength()));
-		info.put("Compressed Size", Long.toString(containerSize));
-		info.put("Date", (origDate != 0) ? new Date(origDate).toString() : "unknown");
-		info.put("Comment", (origComment != null) ? origComment : "unknown");
+		info.put("Size", FSUtilities.formatSize(payloadSize));
+		info.put("Compressed Size", FSUtilities.formatSize(compSize));
+		info.put("Date", FSUtilities.formatFSTimestamp(origDate != 0 ? new Date(origDate) : null));
+		info.put("Comment", Objects.requireNonNullElse(origComment, "unknown"));
 		info.put("MD5", payload.getFSRL().getMD5());
 		return info;
 	}

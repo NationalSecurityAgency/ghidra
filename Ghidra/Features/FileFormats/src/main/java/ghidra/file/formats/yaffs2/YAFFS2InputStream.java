@@ -17,12 +17,12 @@ package ghidra.file.formats.yaffs2;
 
 import java.io.*;
 
-public class YAFFS2InputStream {
+public class YAFFS2InputStream implements Closeable {
 
 	private int dataBufferSize = YAFFS2Constants.DATA_BUFFER_SIZE;
 	private static int recordSize = YAFFS2Constants.RECORD_SIZE;
 	private boolean hasHitEOF;
-	private long entrySize;
+	private long entrySize;	// TODO: why is this a member var instead of local var?
 	long fileEntryOffset;
 	protected final YAFFS2Buffer buffer;
 	private YAFFS2Entry currEntry;
@@ -84,7 +84,7 @@ public class YAFFS2InputStream {
 	}
 
 	// get data for the selected file - skip to offset and return length bytes
-	public InputStream getEntryData(long offset, long length) throws IOException {
+	public byte[] getEntryData(long offset, long length) throws IOException {
 
 		long numberOfBuffers = length / dataBufferSize;
 		long remainder = length % dataBufferSize;
@@ -113,7 +113,7 @@ public class YAFFS2InputStream {
 			System.arraycopy(dataBuf, 0, contents, indx, (int) remainder);
 		}
 
-		return new ByteArrayInputStream(contents);
+		return contents;
 	}
 
 	private byte[] getRecord() throws IOException {
@@ -135,6 +135,7 @@ public class YAFFS2InputStream {
 		return hasHitEOF ? null : headerBuf;
 	}
 
+	@Override
 	public void close() throws IOException {
 		buffer.close();
 	}

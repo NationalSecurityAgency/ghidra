@@ -18,11 +18,7 @@ package ghidra.file.formats.android.bootimg;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.util.NumericUtilities;
+import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -71,8 +67,7 @@ public class BootImageHeaderV3 extends BootImageHeader {
 	 */
 	@Override
 	public int getKernelPageCount() {
-		return (int) NumericUtilities.getUnsignedAlignedValue(Integer.toUnsignedLong(kernel_size),
-			Integer.toUnsignedLong(BootImageConstants.V3_PAGE_SIZE));
+		return (int)(pageAlign(kernel_size) / BootImageConstants.V3_PAGE_SIZE);
 	}
 
 	@Override
@@ -90,8 +85,8 @@ public class BootImageHeaderV3 extends BootImageHeader {
 	 */
 	@Override
 	public int getRamdiskPageCount() {
-		return (int) NumericUtilities.getUnsignedAlignedValue(Integer.toUnsignedLong(ramdisk_size),
-			Integer.toUnsignedLong(BootImageConstants.V3_PAGE_SIZE));
+		return (int) (pageAlign(Integer.toUnsignedLong(ramdisk_size)) /
+			BootImageConstants.V3_PAGE_SIZE);
 	}
 
 	@Override
@@ -134,6 +129,7 @@ public class BootImageHeaderV3 extends BootImageHeader {
 		return header_version;
 	}
 
+	@Override
 	public String getCommandLine() {
 		return cmdline;
 	}

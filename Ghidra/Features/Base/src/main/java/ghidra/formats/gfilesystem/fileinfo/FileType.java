@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.formats.gfilesystem;
-
-import java.io.File;
+package ghidra.formats.gfilesystem.fileinfo;
 
 /**
- * Simple class that contains a {@link File} and its MD5 string.
+ * Enumeration of file types
  */
-public class FileCacheEntry {
-
-	public String md5;
-	public File file;
-
-	public FileCacheEntry(File file, String md5) {
-		this.file = file;
-		this.md5 = md5;
-	}
+public enum FileType {
+	FILE,
+	DIRECTORY,
+	SYMBOLIC_LINK,
+	OTHER,
+	UNKNOWN
 }

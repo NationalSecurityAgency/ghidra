@@ -30,7 +30,8 @@ import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.*;
 import ghidra.app.util.importer.LibrarySearchPathManager;
-import ghidra.formats.gfilesystem.*;
+import ghidra.formats.gfilesystem.FSRL;
+import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.main.*;
 import ghidra.framework.main.datatree.DomainFolderNode;
 import ghidra.framework.model.*;
@@ -350,8 +351,7 @@ public class ImporterPlugin extends Plugin
 	}
 
 	private void addToProgram(File file) {
-		GFile gFile = FileSystemService.getInstance().getLocalGFile(file);
-		if (gFile.getLength() == 0) {
+		if (file.length() == 0) {
 			Msg.showInfo(this, null, "Import File Failed",
 				"File " + file.getName() + " is empty (0 bytes).");
 			return;

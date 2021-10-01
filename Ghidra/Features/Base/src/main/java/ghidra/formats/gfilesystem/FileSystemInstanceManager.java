@@ -27,7 +27,7 @@ import ghidra.util.Msg;
  * Any filesystems that are not referenced by outside users (via a {@link FileSystemRef}) will
  * be closed and removed from the cache when the next {@link #cacheMaint()} is performed.
  */
-public class FileSystemCache implements FileSystemEventListener {
+class FileSystemInstanceManager implements FileSystemEventListener {
 	private static class FSCacheInfo {
 		FileSystemRef ref;
 
@@ -47,7 +47,7 @@ public class FileSystemCache implements FileSystemEventListener {
 	 * @param rootFS reference to the global root file system, which is a special case
 	 * file system that is not subject to eviction.
 	 */
-	public FileSystemCache(GFileSystem rootFS) {
+	public FileSystemInstanceManager(GFileSystem rootFS) {
 		this.rootFS = rootFS;
 		this.rootFSRL = rootFS.getFSRL();
 	}
@@ -190,7 +190,7 @@ public class FileSystemCache implements FileSystemEventListener {
 				continue;
 			}
 
-			if (fsContainer.equals(containerFSRL)) {
+			if (containerFSRL.isEquivalent(fsContainer)) {
 				return ref.dup();
 			}
 		}
@@ -266,5 +266,24 @@ public class FileSystemCache implements FileSystemEventListener {
 		catch (IOException e) {
 			Msg.error(this, "Error closing filesystem", e);
 		}
+	}
+
+	/**
+	 * Closes the specified ref, and if no other refs to the file system remain, closes the file system.
+	 *  
+	 * @param ref {@link FileSystemRef} to close
+	 */
+	public synchronized void releaseImmediate(FileSystemRef ref) {
+		FSCacheInfo fsci = filesystems.get(ref.getFilesystem().getFSRL());
+		ref.close();
+		if (fsci == null) {
+			Msg.warn(this, "Unknown file system reference: " + ref.getFilesystem().getFSRL());
+			return;
+		}
+		FileSystemRefManager refManager = fsci.ref.getFilesystem().getRefManager();
+		if (refManager.canClose(fsci.ref)) {
+			release(fsci);
+		}
+
 	}
 }

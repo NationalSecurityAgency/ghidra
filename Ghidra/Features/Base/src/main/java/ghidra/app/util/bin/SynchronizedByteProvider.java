@@ -78,9 +78,12 @@ public class SynchronizedByteProvider implements ByteProvider {
 	public synchronized byte[] readBytes(long index, long length) throws IOException {
 		return provider.readBytes(index, length);
 	}
-
+	
 	@Override
 	public synchronized InputStream getInputStream(long index) throws IOException {
-		return provider.getInputStream(index);
+		// Return a ByteProviderInputStream that reads its bytes via this wrapper so that it is completely
+		// synchronized.  Returning the delegate provider's getInputStream() would subvert
+		// synchronization and allow direct access to the underlying delegate provider.
+		return ByteProvider.super.getInputStream(index);
 	}
 }

@@ -21,7 +21,6 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Structure;
 import ghidra.util.InvalidNameException;
-import ghidra.util.NumericUtilities;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -48,11 +47,10 @@ public class BootImageHeaderV2 extends BootImageHeaderV1 {
 
 	/**
 	 * q = (dtb_size + page_size - 1) / page_size
-	 * @return the DTB adjusted size
+	 * @return the DTB adjusted size, as page counts
 	 */
 	public int getDtbSizeAdjusted() {
-		return (int) NumericUtilities.getUnsignedAlignedValue(Integer.toUnsignedLong(dtb_size),
-			Integer.toUnsignedLong(getPageSize()));
+		return (int) (pageAlign(Integer.toUnsignedLong(dtb_size)) / getPageSize());
 	}
 
 	/**

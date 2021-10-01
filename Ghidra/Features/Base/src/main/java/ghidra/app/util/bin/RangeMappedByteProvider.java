@@ -220,11 +220,6 @@ public class RangeMappedByteProvider implements ByteProvider {
 		return totalBytesRead;
 	}
 	
-	@Override
-	public InputStream getInputStream(long index) throws IOException {
-		return new ByteProviderInputStream(this, 0, length);
-	}
-
 	private void ensureBounds(long index, long count) throws IOException {
 		if (index < 0 || index > length) {
 			throw new IOException("Invalid index: " + index);

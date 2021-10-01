@@ -15,20 +15,15 @@
  */
 package ghidra.file.formats.android.bootimg;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.formats.gfilesystem.GFile;
-import ghidra.formats.gfilesystem.GFileImpl;
-import ghidra.formats.gfilesystem.GFileSystemBase;
+import ghidra.app.util.bin.ByteProviderWrapper;
+import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
+import ghidra.formats.gfilesystem.fileinfo.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
@@ -95,38 +90,46 @@ public class BootImageFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
+	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
 		if (file == kernelFile) {
-			return "This is the actual KERNEL for the android device. You can analyze this file.";
+			return FileAttributes.of(
+				FileAttribute.create(FileAttributeType.COMMENT_ATTR,
+					"This is the actual KERNEL for the android device. You can analyze this file."));
 		}
-		else if (file == ramdiskFile) {
-			return "This is a ramdisk, it is a GZIP file containing a CPIO archive.";
+		if (file == ramdiskFile) {
+			return FileAttributes.of(
+				FileAttribute.create(FileAttributeType.COMMENT_ATTR,
+					"This is a ramdisk, it is a GZIP file containing a CPIO archive."));
 		}
 		else if (file == secondStageFile) {
-			return "This is a second stage loader file. It appears unused at this time.";
+			return FileAttributes.of(
+				FileAttribute.create(FileAttributeType.COMMENT_ATTR,
+					"This is a second stage loader file. It appears unused at this time."));
 		}
 		return null;
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException, CryptoException {
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		long offset;
+		long size;
 		if (file == kernelFile) {
-			byte[] kernelBytes =
-				provider.readBytes(header.getKernelOffset(), header.getKernelSize());
-			return new ByteArrayInputStream(kernelBytes);
+			offset = header.getKernelOffset();
+			size = header.getKernelSize();
 		}
 		else if (file == ramdiskFile) {
-			byte[] ramDiskBytes =
-				provider.readBytes(header.getRamdiskOffset(), header.getRamdiskSize());
-			return new ByteArrayInputStream(ramDiskBytes);
+			offset = header.getRamdiskOffset();
+			size = header.getRamdiskSize();
 		}
 		else if (file == secondStageFile) {
-			byte[] secondStageBytes =
-				provider.readBytes(header.getSecondOffset(), header.getSecondSize());
-			return new ByteArrayInputStream(secondStageBytes);
+			offset = header.getSecondOffset();
+			size = header.getSecondSize();
 		}
-		return null;
+		else {
+			return null;
+		}
+		return new ByteProviderWrapper(provider, offset, size, file.getFSRL());
 	}
 
 }

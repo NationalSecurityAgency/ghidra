@@ -18,7 +18,8 @@ package ghidra.file.formats.android.xml;
 import java.io.*;
 import java.util.*;
 
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.ByteArrayProvider;
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
@@ -37,12 +38,6 @@ import ghidra.util.task.TaskMonitor;
 @FileSystemInfo(type = "androidxml", description = "Android XML", factory = GFileSystemBaseFactory.class)
 public class AndroidXmlFileSystem extends GFileSystemBase {
 
-	public static boolean isAndroidXmlFile(File f, TaskMonitor monitor) throws IOException {
-		try (RandomAccessByteProvider rabp = new RandomAccessByteProvider(f)) {
-			return isAndroidXmlFile(rabp, monitor);
-		}
-	}
-
 	public static boolean isAndroidXmlFile(ByteProvider provider, TaskMonitor monitor)
 			throws IOException {
 		byte[] actualBytes =
@@ -51,7 +46,7 @@ public class AndroidXmlFileSystem extends GFileSystemBase {
 			return false;
 		}
 
-		try (InputStream is = new ByteProviderInputStream(provider, 0, provider.length())) {
+		try (InputStream is = provider.getInputStream(0)) {
 			StringWriter sw = new StringWriter();
 			AndroidXmlConvertor.convert(is, new PrintWriter(sw), monitor);
 			return true;
@@ -79,7 +74,7 @@ public class AndroidXmlFileSystem extends GFileSystemBase {
 
 	@Override
 	public void open(TaskMonitor monitor) throws IOException, CryptoException, CancelledException {
-		try (InputStream is = new ByteProviderInputStream(provider, 0, provider.length())) {
+		try (InputStream is = provider.getInputStream(0)) {
 			StringWriter sw = new StringWriter();
 			AndroidXmlConvertor.convert(is, new PrintWriter(sw), monitor);
 			payloadBytes = sw.toString().getBytes();
@@ -91,9 +86,9 @@ public class AndroidXmlFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException, CryptoException {
-		return new ByteArrayInputStream(payloadBytes);
+		return new ByteArrayProvider(payloadBytes, file.getFSRL());
 	}
 
 	@Override

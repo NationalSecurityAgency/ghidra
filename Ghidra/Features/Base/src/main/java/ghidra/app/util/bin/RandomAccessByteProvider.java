@@ -29,7 +29,10 @@ import ghidra.util.Msg;
  * {@link ArrayIndexOutOfBoundsException}s.
  * <p>
  * See {@link SynchronizedByteProvider} as a solution.
+ * <p>
+ * @deprecated See {@link FileByteProvider} as replacement ByteProvider.
  */
+@Deprecated(since = "10.1", forRemoval = true)
 public class RandomAccessByteProvider implements ByteProvider {
 	protected File file;
 	protected GhidraRandomAccessFile randomAccessFile;
