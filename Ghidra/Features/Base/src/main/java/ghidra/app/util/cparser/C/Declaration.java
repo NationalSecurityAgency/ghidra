@@ -158,7 +158,7 @@ public class Declaration {
 	 * @return the near address model from the datatype or false if null
 	 */
 	public boolean isNear() {
-		if (dt == null) {
+		if ((dt == null) || (dt.getAddressModel() == null)) {
 			return false;
 		} else {
 			return dt.getAddressModel().equals(AddressModel.near);
@@ -182,7 +182,7 @@ public class Declaration {
 	 * @return the far address model from the datatype or false if null
 	 */
 	public boolean isFar() {
-		if (dt == null) {
+		if ((dt == null) || (dt.getAddressModel() == null)) {
 			return false;
 		} else {
 			return dt.getAddressModel().equals(AddressModel.far);
@@ -206,7 +206,7 @@ public class Declaration {
 	 * @return the huge address model from the datatype or false if null
 	 */
 	public boolean isHuge() {
-		if (dt == null) {
+		if ((dt == null) || (dt.getAddressModel() == null)) {
 			return false;
 		} else {
 			return dt.getAddressModel().equals(AddressModel.huge);
