@@ -19,16 +19,13 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.function.Consumer;
 
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
 import ghidra.docking.settings.*;
 import ghidra.util.*;
 
 /**
  * Base implementation for dataTypes.
  */
-public abstract class DataTypeImpl extends AbstractDataType implements ChangeListener {
+public abstract class DataTypeImpl extends AbstractDataType {
 
 	private final static SettingsDefinition[] EMPTY_DEFINITIONS = new SettingsDefinition[0];
 	protected Settings defaultSettings;
@@ -46,7 +43,7 @@ public abstract class DataTypeImpl extends AbstractDataType implements ChangeLis
 			SourceArchive sourceArchive, long lastChangeTime, long lastChangeTimeInSourceArchive,
 			DataTypeManager dataMgr) {
 		super(path, name, dataMgr);
-		defaultSettings = new SettingsImpl(this, null);
+		defaultSettings = new SettingsImpl();
 		parentList = new ArrayList<>();
 		this.universalID = universalID == null ? UniversalIdGenerator.nextID() : universalID;
 		this.sourceArchive = sourceArchive;
@@ -80,11 +77,6 @@ public abstract class DataTypeImpl extends AbstractDataType implements ChangeLis
 		if (!DataUtilities.isValidDataTypeName(checkedName)) {
 			throw new InvalidNameException("Invalid Name: " + checkedName);
 		}
-	}
-
-	@Override
-	public void stateChanged(ChangeEvent e) {
-		// don't care
 	}
 
 	@Override

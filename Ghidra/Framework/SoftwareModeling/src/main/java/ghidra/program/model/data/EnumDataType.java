@@ -247,7 +247,6 @@ public class EnumDataType extends GenericDataType implements Enum {
 	@Override
 	public void setDescription(String description) {
 		this.description = description;
-		stateChanged(null);
 	}
 
 	@Override
@@ -425,7 +424,6 @@ public class EnumDataType extends GenericDataType implements Enum {
 		for (String valueName : names) {
 			add(valueName, enumm.getValue(valueName), enumm.getComment(valueName));
 		}
-		stateChanged(null);
 	}
 
 	@Override

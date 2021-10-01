@@ -20,7 +20,6 @@ import static org.junit.Assert.*;
 import org.junit.*;
 
 import generic.test.AbstractGTest;
-import ghidra.docking.settings.SettingsImpl;
 
 public class FunctionDefinitionDataTypeTest extends AbstractGTest {
 	private StandAloneDataTypeManager dtm;
@@ -49,7 +48,7 @@ public class FunctionDefinitionDataTypeTest extends AbstractGTest {
 		assertTrue(impl.getReturnType().isEquivalent(DataType.DEFAULT));
 		assertEquals(impl.getArguments().length, 0);
 		assertNull(impl.getDataTypeManager());
-		assertEquals(impl.getMnemonic(new SettingsImpl(impl, null)),
+		assertEquals(impl.getMnemonic(null),
 			"undefined testFunctionDefinition(void)");
 		assertEquals(impl.getPathName(), "/testFunctionDefinition");
 
@@ -62,7 +61,7 @@ public class FunctionDefinitionDataTypeTest extends AbstractGTest {
 		String rootCat = CategoryPath.ROOT.getPath();
 		assertEquals(fdtCat, rootCat);
 		assertEquals(fdt.getDataTypeManager(), dtm);
-		assertEquals(fdt.getMnemonic(new SettingsImpl(impl, null)),
+		assertEquals(fdt.getMnemonic(null),
 			"undefined testFunctionDefinition(void)");
 		assertEquals("/testFunctionDefinition", fdt.getPathName());
 	}
@@ -79,7 +78,7 @@ public class FunctionDefinitionDataTypeTest extends AbstractGTest {
 		assertTrue(impl.getReturnType().isEquivalent(DataType.DEFAULT));
 		assertEquals(impl.getArguments().length, 0);
 		assertEquals(CategoryPath.ROOT, impl.getCategoryPath());
-		assertEquals(impl.getMnemonic(new SettingsImpl(impl, null)),
+		assertEquals(impl.getMnemonic(null),
 			"undefined testFunctionDefinition(void)");
 		assertEquals(impl.getPathName(), "/testFunctionDefinition");
 
@@ -92,7 +91,7 @@ public class FunctionDefinitionDataTypeTest extends AbstractGTest {
 		String rootCat = CategoryPath.ROOT.getPath();
 		assertEquals(fdtCat, rootCat);
 		assertEquals(fdt.getDataTypeManager(), dtm);
-		assertEquals(fdt.getMnemonic(new SettingsImpl(impl, null)),
+		assertEquals(fdt.getMnemonic(null),
 			"undefined testFunctionDefinition(void)");
 		assertEquals(fdt.getPathName(), "/testFunctionDefinition");
 	}
@@ -102,27 +101,27 @@ public class FunctionDefinitionDataTypeTest extends AbstractGTest {
 		FunctionDefinitionDataType impl;
 		FunctionDefinition fdt;
 		FunctionDefinitionDataType sig = new FunctionDefinitionDataType("testFunctionSig");
-		sig.setReturnType(DataType.VOID);
+		sig.setReturnType(VoidDataType.dataType);
 		// sig
 		impl = new FunctionDefinitionDataType(sig);
 		assertEquals(impl.getName(), "testFunctionSig");
 		assertNull(impl.getComment());
-		assertTrue(impl.getReturnType().isEquivalent(DataType.VOID));
+		assertTrue(impl.getReturnType().isEquivalent(VoidDataType.dataType));
 		assertEquals(impl.getArguments().length, 0);
 		assertNull(impl.getDataTypeManager());
-		assertEquals("void testFunctionSig(void)", impl.getMnemonic(new SettingsImpl(impl, null)));
+		assertEquals("void testFunctionSig(void)", impl.getMnemonic(null));
 		assertEquals(impl.getPathName(), "/testFunctionSig");
 
 		fdt = (FunctionDefinition) dtm.resolve(impl, null);
 		assertEquals(fdt.getName(), "testFunctionSig");
 		assertNull(fdt.getComment());
-		assertTrue(fdt.getReturnType().isEquivalent(DataType.VOID));
+		assertTrue(fdt.getReturnType().isEquivalent(VoidDataType.dataType));
 		assertEquals(fdt.getArguments().length, 0);
 		String fdtCat = fdt.getCategoryPath().getPath();
 		String rootCat = CategoryPath.ROOT.getPath();
 		assertEquals(fdtCat, rootCat);
 		assertEquals(fdt.getDataTypeManager(), dtm);
-		assertEquals("void testFunctionSig(void)", fdt.getMnemonic(new SettingsImpl(impl, null)));
+		assertEquals("void testFunctionSig(void)", fdt.getMnemonic(null));
 		assertEquals(fdt.getPathName(), "/testFunctionSig");
 	}
 
@@ -131,27 +130,27 @@ public class FunctionDefinitionDataTypeTest extends AbstractGTest {
 		FunctionDefinitionDataType impl;
 		FunctionDefinition fdt;
 		FunctionDefinitionDataType sig = new FunctionDefinitionDataType("testFunctionSig");
-		sig.setReturnType(DataType.VOID);
+		sig.setReturnType(VoidDataType.dataType);
 
 		// dtm, sig
 		impl = new FunctionDefinitionDataType(sig);
 		assertEquals(impl.getName(), "testFunctionSig");
 		assertNull(impl.getComment());
-		assertTrue(impl.getReturnType().isEquivalent(DataType.VOID));
+		assertTrue(impl.getReturnType().isEquivalent(VoidDataType.dataType));
 		assertEquals(impl.getArguments().length, 0);
-		assertEquals("void testFunctionSig(void)", impl.getMnemonic(new SettingsImpl(impl, null)));
+		assertEquals("void testFunctionSig(void)", impl.getMnemonic(null));
 		assertEquals(impl.getPathName(), "/testFunctionSig");
 
 		fdt = (FunctionDefinition) dtm.resolve(impl, null);
 		assertEquals(fdt.getName(), "testFunctionSig");
 		assertNull(fdt.getComment());
-		assertTrue(fdt.getReturnType().isEquivalent(DataType.VOID));
+		assertTrue(fdt.getReturnType().isEquivalent(VoidDataType.dataType));
 		assertEquals(fdt.getArguments().length, 0);
 		String fdtCat = fdt.getCategoryPath().getPath();
 		String rootCat = CategoryPath.ROOT.getPath();
 		assertEquals(fdtCat, rootCat);
 		assertEquals(fdt.getDataTypeManager(), dtm);
-		assertEquals("void testFunctionSig(void)", fdt.getMnemonic(new SettingsImpl(impl, null)));
+		assertEquals("void testFunctionSig(void)", fdt.getMnemonic(null));
 		assertEquals(fdt.getPathName(), "/testFunctionSig");
 	}
 
@@ -160,27 +159,27 @@ public class FunctionDefinitionDataTypeTest extends AbstractGTest {
 		FunctionDefinitionDataType impl;
 		FunctionDefinition fdt;
 		FunctionDefinitionDataType sig = new FunctionDefinitionDataType("testFunctionSig");
-		sig.setReturnType(DataType.VOID);
+		sig.setReturnType(VoidDataType.dataType);
 
 		// dtm, name, sig
 		impl = new FunctionDefinitionDataType(CategoryPath.ROOT, "testDtmNameSig", sig);
 		assertEquals(impl.getName(), "testDtmNameSig");
 		assertNull(impl.getComment());
-		assertTrue(impl.getReturnType().isEquivalent(DataType.VOID));
+		assertTrue(impl.getReturnType().isEquivalent(VoidDataType.dataType));
 		assertEquals(impl.getArguments().length, 0);
-		assertEquals("void testDtmNameSig(void)", impl.getMnemonic(new SettingsImpl(impl, null)));
+		assertEquals("void testDtmNameSig(void)", impl.getMnemonic(null));
 		assertEquals(impl.getPathName(), "/testDtmNameSig");
 
 		fdt = (FunctionDefinition) dtm.resolve(impl, null);
 		assertEquals(fdt.getName(), "testDtmNameSig");
 		assertNull(fdt.getComment());
-		assertTrue(fdt.getReturnType().isEquivalent(DataType.VOID));
+		assertTrue(fdt.getReturnType().isEquivalent(VoidDataType.dataType));
 		assertEquals(fdt.getArguments().length, 0);
 		String fdtCat = fdt.getCategoryPath().getPath();
 		String rootCat = CategoryPath.ROOT.getPath();
 		assertEquals(fdtCat, rootCat);
 		assertEquals(fdt.getDataTypeManager(), dtm);
-		assertEquals("void testDtmNameSig(void)", fdt.getMnemonic(new SettingsImpl(impl, null)));
+		assertEquals("void testDtmNameSig(void)", fdt.getMnemonic(null));
 		assertEquals(fdt.getPathName(), "/testDtmNameSig");
 	}
 
@@ -189,29 +188,29 @@ public class FunctionDefinitionDataTypeTest extends AbstractGTest {
 		FunctionDefinitionDataType impl;
 		FunctionDefinition fdt;
 		FunctionDefinitionDataType sig = new FunctionDefinitionDataType("testFunctionSig");
-		sig.setReturnType(DataType.VOID);
+		sig.setReturnType(VoidDataType.dataType);
 		FunctionDefinitionDataType functionDefDt = new FunctionDefinitionDataType(sig);
 
 		// functionDataTypeImpl
 		impl = new FunctionDefinitionDataType(functionDefDt);
 		assertEquals(impl.getName(), "testFunctionSig");
 		assertNull(impl.getComment());
-		assertTrue(impl.getReturnType().isEquivalent(DataType.VOID));
+		assertTrue(impl.getReturnType().isEquivalent(VoidDataType.dataType));
 		assertEquals(impl.getArguments().length, 0);
 		assertNull(null, impl.getDataTypeManager());
-		assertEquals("void testFunctionSig(void)", impl.getMnemonic(new SettingsImpl(impl, null)));
+		assertEquals("void testFunctionSig(void)", impl.getMnemonic(null));
 		assertEquals(impl.getPathName(), "/testFunctionSig");
 
 		fdt = (FunctionDefinition) dtm.resolve(impl, null);
 		assertEquals(fdt.getName(), "testFunctionSig");
 		assertNull(fdt.getComment());
-		assertTrue(fdt.getReturnType().isEquivalent(DataType.VOID));
+		assertTrue(fdt.getReturnType().isEquivalent(VoidDataType.dataType));
 		assertEquals(fdt.getArguments().length, 0);
 		String fdtCat = fdt.getCategoryPath().getPath();
 		String rootCat = CategoryPath.ROOT.getPath();
 		assertEquals(fdtCat, rootCat);
 		assertEquals(fdt.getDataTypeManager(), dtm);
-		assertEquals("void testFunctionSig(void)", fdt.getMnemonic(new SettingsImpl(impl, null)));
+		assertEquals("void testFunctionSig(void)", fdt.getMnemonic(null));
 		assertEquals(fdt.getPathName(), "/testFunctionSig");
 	}
 
