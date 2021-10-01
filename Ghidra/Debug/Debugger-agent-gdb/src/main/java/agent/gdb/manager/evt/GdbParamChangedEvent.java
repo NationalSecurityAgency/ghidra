@@ -17,9 +17,43 @@ package agent.gdb.manager.evt;
 
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
 
+/**
+ * The event corresponding to "@{code =cmd-param-changed}"
+ */
 public class GdbParamChangedEvent extends AbstractGdbEventWithFields {
+	private final String param;
+	private final String value;
+
+	/**
+	 * Construct a new event by parsing the tail for information
+	 * 
+	 * <p>
+	 * The param (name) and value must be specified by GDB.
+	 * 
+	 * @param tail the text following the event type in the GDB/MI event record
+	 * @throws GdbParseError if the tail cannot be parsed
+	 */
 	public GdbParamChangedEvent(CharSequence tail) throws GdbParseError {
 		super(tail);
+		this.param = getInfo().getString("param");
+		this.value = getInfo().getString("value");
 	}
-	// TODO
+
+	/**
+	 * Get the parameter name
+	 * 
+	 * @return the name
+	 */
+	public String getParam() {
+		return param;
+	}
+
+	/**
+	 * Get the parameter value
+	 * 
+	 * @return the value
+	 */
+	public String getValue() {
+		return value;
+	}
 }
