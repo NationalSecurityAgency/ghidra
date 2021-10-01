@@ -7,6 +7,28 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 10.0.4 Change History (September 2021)</H1>
+<blockquote><p><u>Improvements</u></p>
+<ul>
+    <li><I>Multi-User</I>. Added class serialization filter to Ghidra Server as a security measure. (GP-1314)</li>
+</ul>
+</blockquote>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>C Parsing</I>. Changes to the CParser have been made to successfully parse a greater number of header files.  The CParser will now correctly evaluate the truth of expanded macro substitutions in <code>#if</code> statements.  Operator precedence has been corrected and support for additional operators added for constant simplification that is used to specify array sizes during parse.  In addition, C17 structure initialization syntax and multiple type casts are now parsed. (GP-1295, Issue #1652, #2665, #2666, #3410)</li>
+    <li><I>Debugger</I>. Changed <B>Track Program Counter</B>, etc., to re-track even when clicking them doesn't <B>change</B> the current setting. (GP-1282)</li>
+    <li><I>Debugger:GDB</I>. Fixed issue with CRLF using GDB/SSH from Windows. (GP-1309, Issue #3426)</li>
+    <li><I>Decompiler</I>. Fixed a NullPointerException encountered when hovering over the name of an Undefined Function in the Decompiler window. (GP-1260)</li>
+    <li><I>Decompiler</I>. Fixed bug causing the <code>Missing userop attribute in segmentop tag</code> error message in the Decompiler for Z80 executables. (GP-1305, Issue #3329)</li>
+    <li><I>Decompiler</I>. The Decompiler now handles small dynamically sized data types, like <code>Alignment</code>. (GP-1327, Issue #3399)</li>
+    <li><I>GUI</I>. Fixed an AssertException in the Default Graph Display encountered when loading a saved graph layout. (GP-1313, Issue #3441)</li>
+    <li><I>Headless</I>. Corrected NullPointerException for headless when no opinion results are found. (GP-1323)</li>
+    <li><I>Importer:PE</I>. Fixed a regression with parsing COFF Aux symbols for PE/MZ loaders. (GP-1174, Issue #3442)</li>
+    <li><I>Multi-User</I>. Corrected and improved specification of TLS version restrictions for client use via <code>launch.properties</code> and Ghidra Server use via <code>server.conf</code>. (GP-1287)</li>
+    <li><I>Processors</I>. Corrected endianness mix-up in MIPS function start bit-patterns. (GP-1310, Issue #3421)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 10.0.3 Change History (September 2021)</H1>
 <blockquote><p><u>New Features</u></p>
 <ul>

@@ -58,8 +58,9 @@ public class LcsHintLoadSpecChooser implements LoadSpecChooser {
 		// Try to use a known LoadSpec that matches the desired language/compiler spec
 		Collection<LoadSpec> loadSpecs = loaderMap.get(loader);
 		for (LoadSpec loadSpec : loadSpecs) {
+			// single loadSpec with null LCS pair may exist when no opinion was found
 			LanguageCompilerSpecPair lcsPair = loadSpec.getLanguageCompilerSpec();
-			if (lcsPair.languageID.equals(languageID) &&
+			if (lcsPair != null && lcsPair.languageID.equals(languageID) &&
 				(compilerSpecID == null || lcsPair.compilerSpecID.equals(compilerSpecID))) {
 				return loadSpec;
 			}

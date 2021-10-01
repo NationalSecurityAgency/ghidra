@@ -48,7 +48,8 @@ public class ParameterDefinitionImpl implements ParameterDefinition {
 	 * @throws IllegalArgumentException if invalid parameter datatype specified
 	 */
 	protected ParameterDefinitionImpl(String name, DataType dataType, String comment, int ordinal) {
-		this.dataType = validateDataType(dataType, null, false);
+		this.dataType = validateDataType(dataType,
+			dataType != null ? dataType.getDataTypeManager() : null, false);
 		this.name = name;
 		this.comment = comment;
 		this.ordinal = ordinal;

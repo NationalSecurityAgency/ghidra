@@ -24,31 +24,25 @@ import ghidra.framework.ModuleInitializer;
 import ghidra.util.Msg;
 
 /**
- * Initialize the default SSLContext for use by SSL connections (e.g., https).
+ * Initialize the default SSLContext for use by all SSL connections (e.g., https).
  * It is the responsibility of the Application to properly invoke this initializer 
- * so that the default SSLContext may be established. While HTTPS URL connections
+ * to ensure that the default SSLContext is properly established. While HTTPS URL connections
  * will make use of this default SSLContext, other SSL connections may need to 
  * specify the {@link ApplicationSSLSocketFactory} to leverage the applications
  * default SSLContext.
+ * <p>
+ * The property <code>jdk.tls.client.protocols</code> should be set to restrict secure
+ * client connections to a specific set of enabled TLS protocols (e.g., TLSv1.2,TLSv1.3).
+ * See <A href="https://java.com/en/configure_crypto.html">JDK and JRE Cryptographic Algorithms</A> 
+ * for details.
+ * 
  * @see ApplicationTrustManagerFactory
  * @see ApplicationKeyManagerFactory
  * @see ApplicationKeyManagerUtils
  */
 public class SSLContextInitializer implements ModuleInitializer {
 
-	// NOTE: specifying a default protocol of "TLS" will defer the default 
-	// protocol selection to the underlying protocol implementation.
-	// The protocol may be specified as a comma-separated list of protocol
-	// versions where the leftmost takes precendence during the initial 
-	// negotiation.  The Java security policy may be modified to disable
-	// the use of specific protocols via the jdk.tls.disabledAlgorithms
-	// property.  The security property file is located within the
-	// java installation at jre/lib/security/java.security
-
-	// Default list of allowed TLS protocols for outbound connections
-	private static final String DEFAULT_TLS_PROTOCOL = "TLS";
-
-	private static final String PROTOCOL_PROPERTY = "ghidra.net.ssl.protocol";
+	private static final String DEFAULT_SSL_PROTOCOL = "TLS";
 
 	private static SSLContext sslContext;
 
@@ -68,17 +62,6 @@ public class SSLContextInitializer implements ModuleInitializer {
 		return initialize();
 	}
 
-	private static String getSSLProtocol() {
-		String value = System.getProperty(PROTOCOL_PROPERTY);
-		if (value != null) {
-			value = value.trim();
-			if (value.length() != 0) {
-				return value;
-			}
-		}
-		return DEFAULT_TLS_PROTOCOL;
-	}
-
 	/**
 	 * Initialize default SSLContext
 	 * @return true if successful, else false (see logged error)
@@ -95,8 +78,8 @@ public class SSLContextInitializer implements ModuleInitializer {
 		KeyManager[] keyManagers = ApplicationKeyManagerFactory.getInstance().getKeyManagers();
 
 		try {
-
-			sslContext = SSLContext.getInstance(getSSLProtocol());
+			// Use new instance of SSLContext to avoid adopting CA certs provided with Java
+			sslContext = SSLContext.getInstance(DEFAULT_SSL_PROTOCOL);
 			SecureRandom random = SecureRandomFactory.getSecureRandom();
 			sslContext.init(keyManagers, ApplicationTrustManagerFactory.getTrustManagers(), random);
 			SSLContext.setDefault(sslContext);

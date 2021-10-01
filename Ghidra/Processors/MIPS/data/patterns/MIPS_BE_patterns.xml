@@ -7,7 +7,7 @@
       <data>0x03e00008 0x........ 0x00000000 0x00000000 0x00000000 </data> <!-- RETN :  delayslot filler -->
       <data>0x08...... 0x27 0xbd 0....... ......00</data> <!-- J xyz : _ADDIU   This is probably a shared return-->
       <data>0x1000.... 0x27 0xbd 0....... ......00</data> <!-- B xyz : _ADDIU   This is probably a shared return-->
-      <data>..001000 00000... 0x20 0x03  0x0. 0x.. 0xbd 0x27 </data>  <!-- JR t9   : _ADDIU --> 
+      <data>0x03 0x20 00000...  ..001000 0x27 0xbd 0x0. 0x.. </data>  <!-- JR t9   : _ADDIU --> 
     </prepatterns>
     <postpatterns>
       <data>00100111 10111101 1....... ......00</data>             <!-- ADDIU SP,SP,-xxxx -->

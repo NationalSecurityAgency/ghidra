@@ -3,6 +3,19 @@
 <processor_spec>
   <programcounter register="PC"/>
   
+  <segmentop space="ram" userop="segment" farpointer="yes">
+    <pcode>
+      <input name="base" size="2"/>
+      <input name="inner" size="2"/>
+      <output name="res" size="2"/>
+      <body><![CDATA[
+        res = (base << 12) + inner;
+      ]]></body>
+    </pcode>
+    <constresolve>
+      <register name="rBBR"/>
+    </constresolve>
+  </segmentop>
   <context_data>
     <tracked_set space="ram">
       <set name="DECOMPILE_MODE" val="1"/>

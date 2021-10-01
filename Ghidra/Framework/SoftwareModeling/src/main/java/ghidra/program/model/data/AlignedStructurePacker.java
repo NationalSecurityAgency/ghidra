@@ -83,7 +83,8 @@ public class AlignedStructurePacker {
 			InternalDataTypeComponent dataTypeComponent = componentIterator.next();
 			DataType componentDt = dataTypeComponent.getDataType();
 			if (DataType.DEFAULT == componentDt) {
-				componentIterator.remove(); // remove default components.
+				// transform improper DEFAULT datatype use to Undefined1
+				dataTypeComponent.setDataType(Undefined1DataType.dataType);
 				componentsChanged = true;
 			}
 			++componentCount;
