@@ -18,8 +18,7 @@ package agent.dbgeng.manager.impl;
 import java.nio.file.Paths;
 
 import agent.dbgeng.dbgeng.*;
-import agent.dbgeng.dbgeng.DebugClient.ChangeEngineState;
-import agent.dbgeng.dbgeng.DebugClient.DebugStatus;
+import agent.dbgeng.dbgeng.DebugClient.*;
 import agent.dbgeng.dbgeng.util.DebugEventCallbacksAdapter;
 import agent.dbgeng.manager.DbgState;
 import agent.dbgeng.manager.evt.*;
@@ -132,13 +131,14 @@ public class DbgDebugEventCallbacksAdapter extends DebugEventCallbacksAdapter {
 		return checkInterrupt(DebugStatus.NO_CHANGE);
 	}
 
-	/*
 	@Override
 	public DebugStatus changeDebuggeeState(BitmaskSet<ChangeDebuggeeState> flags, long argument) {
-		System.err.println("CHANGE_DEBUGGEE_STATE: " + flags + ":" + argument);
-		return DebugStatus.NO_CHANGE;
+		//System.err.println("CHANGE_DEBUGGEE_STATE: " + flags + ":" + argument);
+		return checkInterrupt(
+			manager.processEvent(new DbgDebuggeeStateChangeEvent(flags, argument)));
 	}
-	
+
+	/*
 	@Override
 	public DebugStatus sessionStatus(SessionStatus status) {
 		System.err.println("SESSION_STATUS: " + status);

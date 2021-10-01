@@ -181,6 +181,8 @@ public class GdbModelTargetProcessMemory
 		});
 	}
 
+	// TODO: Seems this is only called when sco.getState() == STOPPED.
+	// Maybe should name it such
 	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {
 		return requestElements(false).thenCompose(__ -> {
 			AsyncFence fence = new AsyncFence();
