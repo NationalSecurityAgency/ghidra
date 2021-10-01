@@ -560,7 +560,8 @@ public interface SymbolTable {
 	public Namespace getNamespace(Address addr);
 
 	/**
-	 * Returns all Class Namespaces defined within the program.
+	 * Returns all Class Namespaces defined within the program in an
+	 * arbitrary ordering.
 	 * @return iterator of {@link GhidraClass}
 	 */
 	public Iterator<GhidraClass> getClassNamespaces();

@@ -310,6 +310,7 @@ public class GdbManagerImpl implements GdbManager {
 		handlerMap.putVoid(GdbBreakpointDeletedEvent.class, this::processBreakpointDeleted);
 
 		handlerMap.putVoid(GdbMemoryChangedEvent.class, this::processMemoryChanged);
+		handlerMap.putVoid(GdbParamChangedEvent.class, this::processParamChanged);
 	}
 
 	@Override
@@ -1268,6 +1269,17 @@ public class GdbManagerImpl implements GdbManager {
 		GdbInferior inf = getInferior(iid);
 		event(() -> listenersEvent.fire.memoryChanged(inf, evt.getAddress(), evt.getLength(),
 			evt.getCause()), "memoryChanged");
+	}
+
+	/**
+	 * Handler for "=cmd-param-changed" events
+	 * 
+	 * @param evt the event
+	 * @param v nothing
+	 */
+	protected void processParamChanged(GdbParamChangedEvent evt, Void v) {
+		event(() -> listenersEvent.fire.paramChanged(evt.getParam(), evt.getValue(),
+			evt.getCause()), "paramChanged");
 	}
 
 	/**

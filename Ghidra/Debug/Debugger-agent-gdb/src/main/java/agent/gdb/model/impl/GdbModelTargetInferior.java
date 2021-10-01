@@ -441,9 +441,13 @@ public class GdbModelTargetInferior
 			inferiorRunning(sco.getReason());
 			List<Object> params = new ArrayList<>();
 			gatherThreads(params, sco.getAffectedThreads());
+			if (targetEventThread == null && !params.isEmpty()) {
+				targetEventThread = threads.getTargetThread(sco.getAffectedThreads().iterator().next());
+			}
 			if (targetEventThread != null) {
 				impl.session.getListeners().fire.event(impl.session, targetEventThread,
 					TargetEventType.RUNNING, "Running", params);
+				invalidateMemoryAndRegisterCaches();
 			}
 		}
 		if (sco.getState() != GdbState.STOPPED) {

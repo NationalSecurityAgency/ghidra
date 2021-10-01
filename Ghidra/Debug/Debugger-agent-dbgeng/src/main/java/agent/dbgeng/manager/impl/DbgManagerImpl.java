@@ -15,7 +15,7 @@
  */
 package agent.dbgeng.manager.impl;
 
-import static ghidra.async.AsyncUtils.*;
+import static ghidra.async.AsyncUtils.sequence;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -594,6 +594,7 @@ public class DbgManagerImpl implements DbgManager {
 		handlerMap.put(DbgStateChangedEvent.class, this::processStateChanged);
 		handlerMap.put(DbgSessionSelectedEvent.class, this::processSessionSelected);
 		handlerMap.put(DbgSystemsEvent.class, this::processSystemsEvent);
+		handlerMap.putVoid(DbgDebuggeeStateChangeEvent.class, this::processDebuggeeStateChanged);
 		handlerMap.putVoid(DbgCommandDoneEvent.class, this::processDefault);
 		handlerMap.putVoid(DbgStoppedEvent.class, this::processDefault);
 		handlerMap.putVoid(DbgRunningEvent.class, this::processDefault);
@@ -1032,6 +1033,12 @@ public class DbgManagerImpl implements DbgManager {
 			return statusByNameMap.get(key);
 		}
 		return statusMap.get(evt.getClass());
+	}
+
+	protected void processDebuggeeStateChanged(DbgDebuggeeStateChangeEvent evt, Void v) {
+		if (evt.getFlags().contains(ChangeDebuggeeState.DATA)) {
+			getEventListeners().fire.memoryChanged(currentProcess, 0L, 0, evt.getCause());
+		}
 	}
 
 	protected void processConsoleOutput(DbgConsoleOutputEvent evt, Void v) {
