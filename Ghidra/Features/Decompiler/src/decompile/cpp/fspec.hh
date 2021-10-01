@@ -56,7 +56,8 @@ public:
     smallsize_inttype = 32,	///< Assume values that are below the max \b size are sign OR zero extended based on integer type
     smallsize_floatext = 64,	///< Assume values smaller than max \b size are floating-point extended to full size
     extracheck_high = 128,	///< Perform extra checks during parameter recovery on most sig portion of the double
-    extracheck_low = 256	///< Perform extra checks during parameter recovery on least sig portion of the double
+    extracheck_low = 256,	///< Perform extra checks during parameter recovery on least sig portion of the double
+    is_grouped = 512		///< This entry is grouped with other entries
   };
 private:
   uint4 flags;			///< Boolean properties of the parameter
@@ -70,7 +71,8 @@ private:
   int4 alignment;		///< How much alignment (0 means only 1 logical value is allowed)
   int4 numslots;		///< (Maximum) number of slots that can store separate parameters
   JoinRecord *joinrec;		///< Non-null if this is logical variable from joined pieces
-  void resolveJoin(void); 	///< If the ParamEntry is initialized with a \e join address, cache the join record
+  static const ParamEntry *findEntryByStorage(const list<ParamEntry> &entryList,const VarnodeData &vn);
+  void resolveJoin(list<ParamEntry> &curList); 	///< Make adjustments for a \e join ParamEntry
 
   /// \brief Is the logical value left-justified within its container
   bool isLeftJustified(void) const { return (((flags&force_left_justify)!=0)||(!spaceid->isBigEndian())); }
@@ -85,6 +87,8 @@ public:
   type_metatype getType(void) const { return type; }	///< Get the data-type class associated with \b this
   bool isExclusion(void) const { return (alignment==0); }	///< Return \b true if this holds a single parameter exclusively
   bool isReverseStack(void) const { return ((flags & reverse_stack)!=0); }	///< Return \b true if parameters are allocated in reverse order
+  bool isGrouped(void) const { return ((flags & is_grouped)!=0); }	///< Return \b true if \b this is grouped with other entries
+  bool isNonOverlappingJoin(void) const;	///< Return \b true if not all pieces overlap other ParamEntry tags
   bool contains(const ParamEntry &op2) const;		///< Does \b this contain the indicated entry.
   bool containedBy(const Address &addr,int4 sz) const;	///< Is this entry contained by the given range
   int4 justifiedContain(const Address &addr,int4 sz) const;	///< Calculate endian aware containment
@@ -94,10 +98,12 @@ public:
   AddrSpace *getSpace(void) const { return spaceid; }	///< Get the address space containing \b this entry
   uintb getBase(void) const { return addressbase; }	///< Get the starting offset of \b this entry
   Address getAddrBySlot(int4 &slot,int4 sz) const;
-  void restoreXml(const Element *el,const AddrSpaceManager *manage,bool normalstack);
+  void restoreXml(const Element *el,const AddrSpaceManager *manage,bool normalstack,bool grouped,list<ParamEntry> &curList);
   void extraChecks(list<ParamEntry> &entry);
   bool isParamCheckHigh(void) const { return ((flags & extracheck_high)!=0); }	///< Return \b true if there is a high overlap
   bool isParamCheckLow(void) const { return ((flags & extracheck_low)!=0); }	///< Return \b true if there is a low overlap
+  int4 countJoinOverlap(const list<ParamEntry> &curList) const;		///< Count the number of other entries \b this overlaps
+  static void orderWithinGroup(const ParamEntry &entry1,const ParamEntry &entry2);	///< Enforce ParamEntry group ordering rules
 };
 
 /// \brief Class for storing ParamEntry objects in an interval range (rangemap)
@@ -318,22 +324,22 @@ public:
     unknown_effect = 4	///< An unknown effect (indicates the absence of an EffectRecord)
   };
 private:
-  VarnodeData address;		///< The memory range affected
+  VarnodeData range;		///< The memory range affected
   uint4 type;			///< The type of effect
 public:
   EffectRecord(void) {}		///< Constructor for use with restoreXml()
-  EffectRecord(const EffectRecord &op2) { address = op2.address; type = op2.type; }	///< Copy constructor
+  EffectRecord(const EffectRecord &op2) { range = op2.range; type = op2.type; }	///< Copy constructor
   EffectRecord(const Address &addr,int4 size);		///< Construct a memory range with an unknown effect
   EffectRecord(const ParamEntry &entry,uint4 t);	///< Construct an effect on a parameter storage location
   EffectRecord(const VarnodeData &addr,uint4 t);	///< Construct an effect on a memory range
   uint4 getType(void) const { return type; }		///< Get the type of effect
-  Address getAddress(void) const { return Address(address.space,address.offset); }	///< Get the starting address of the affected range
-  int4 getSize(void) const { return address.size; }	///< Get the size of the affected range
-  bool operator<(const EffectRecord &op2) const;	///< Comparator for EffectRecords
+  Address getAddress(void) const { return Address(range.space,range.offset); }	///< Get the starting address of the affected range
+  int4 getSize(void) const { return range.size; }	///< Get the size of the affected range
   bool operator==(const EffectRecord &op2) const;	///< Equality operator
   bool operator!=(const EffectRecord &op2) const;	///< Inequality operator
   void saveXml(ostream &s) const;			///< Save the record to an XML stream
   void restoreXml(uint4 grouptype,const Element *el,const AddrSpaceManager *manage);	///< Restore the record from an XML stream
+  static bool compareByAddress(const EffectRecord &op1,const EffectRecord &op2);
 };
 
 /// A group of ParamEntry objects that form a complete set for passing
@@ -501,19 +507,23 @@ protected:
   int4 maxdelay;			///< Maximum heritage delay across all parameters
   int4 pointermax; 			///< If non-zero, maximum size of a data-type before converting to a pointer
   bool thisbeforeret;			///< Does a \b this parameter come before a hidden return parameter
-  int4 nonfloatgroup;			///< Group of first entry which is not marked float
+  int4 resourceTwoStart;		///< If there are two resource sections, the group of the first entry in the second section
   list<ParamEntry> entry;		///< The ordered list of parameter entries
   vector<ParamEntryResolver *> resolverMap;	///< Map from space id to resolver
   AddrSpace *spacebase;			///< Address space containing relative offset parameters
   const ParamEntry *findEntry(const Address &loc,int4 size) const;	///< Given storage location find matching ParamEntry
   Address assignAddress(const Datatype *tp,vector<int4> &status) const;	///< Assign storage for given parameter data-type
   void buildTrialMap(ParamActive *active) const;	///< Build map from parameter trials to model ParamEntrys
-  void separateFloat(ParamActive *active,int4 &floatstart,int4 &floatstop,int4 &start,int4 &stop) const;
+  void separateSections(ParamActive *active,int4 &oneStart,int4 &oneStop,int4 &twoStart,int4 &twoStop) const;
   void forceExclusionGroup(ParamActive *active) const;
   void forceNoUse(ParamActive *active,int4 start,int4 stop) const;
-  void forceInactiveChain(ParamActive *active,int4 maxchain,int4 start,int4 stop) const;
+  void forceInactiveChain(ParamActive *active,int4 maxchain,int4 start,int4 stop,int4 groupstart) const;
   void calcDelay(void);		///< Calculate the maximum heritage delay for any potential parameter in this list
   void populateResolver(void);	///< Build the ParamEntry resolver maps
+  void parsePentry(const Element *el,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,
+		   int4 groupid,bool normalstack,bool autokill,bool splitFloat,bool grouped);
+  void parseGroup(const Element *el,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,
+		  int4 groupid,bool normalstack,bool autokill,bool splitFloat);
 public:
   ParamListStandard(void) {}						///< Construct for use with restoreXml()
   ParamListStandard(const ParamListStandard &op2);			///< Copy constructor
@@ -710,9 +720,8 @@ public:
   const RangeList &getParamRange(void) const { return paramrange; }	///< Get the range of (possible) stack parameters
   vector<EffectRecord>::const_iterator effectBegin(void) const { return effectlist.begin(); }	///< Get an iterator to the first EffectRecord
   vector<EffectRecord>::const_iterator effectEnd(void) const { return effectlist.end(); }	///< Get an iterator to the last EffectRecord
-  int4 numLikelyTrash(void) const { return likelytrash.size(); }	///< Get the number of \e likelytrash locations
-  const VarnodeData &getLikelyTrash(int4 i) const { return likelytrash[i]; }	///< Get the i-th \e likelytrashh location
-
+  vector<VarnodeData>::const_iterator trashBegin(void) const { return likelytrash.begin(); }	///< Get an iterator to the first \e likelytrash
+  vector<VarnodeData>::const_iterator trashEnd(void) const { return likelytrash.end(); }	///< Get an iterator to the last \e likelytrash
   /// \brief Characterize whether the given range overlaps parameter storage
   ///
   /// Does the range naturally fit inside a potential parameter entry from this model or does
@@ -841,6 +850,7 @@ public:
   virtual bool isMerged(void) const { return false; }	///< Is \b this a merged prototype model
   virtual void restoreXml(const Element *el);		///< Restore \b this model from an XML stream
   static uint4 lookupEffect(const vector<EffectRecord> &efflist,const Address &addr,int4 size);
+  static int4 lookupRecord(const vector<EffectRecord> &efflist,int4 listSize,const Address &addr,int4 size);
 };
 
 /// \brief Class for calculating "goodness of fit" of parameter trials against a prototype model
@@ -1187,6 +1197,10 @@ class FuncProto {
   int4 injectid;		///< (If non-negative) id of p-code snippet that should replace this function
   int4 returnBytesConsumed;	///< Number of bytes of return value that are consumed by callers (0 = all bytes)
   void updateThisPointer(void);	///< Make sure any "this" parameter is properly marked
+  void saveEffectXml(ostream &s) const;		///< Save any overriding EffectRecords to XML stream
+  void saveLikelyTrashXml(ostream &s) const;	///< Save any overriding likelytrash registers to XML stream
+  void restoreEffectXml(void);	///< Merge in any EffectRecord overrides
+  void restoreLikelyTrashXml(void);	///< Merge in any \e likelytrash overrides
 protected:
   void paramShift(int4 paramshift);	///< Add parameters to the front of the input parameter list
   bool isParamshiftApplied(void) const { return ((flags&paramshift_applied)!=0); }	///< Has a parameter shift been applied
@@ -1360,8 +1374,8 @@ public:
   uint4 hasEffect(const Address &addr,int4 size) const;
   vector<EffectRecord>::const_iterator effectBegin(void) const;	///< Get iterator to front of EffectRecord list
   vector<EffectRecord>::const_iterator effectEnd(void) const;	///< Get iterator to end of EffectRecord list
-  int4 numLikelyTrash(void) const;				///< Get the number of \e likely-trash locations
-  const VarnodeData &getLikelyTrash(int4 i) const;		///< Get the i-th \e likely-trash location
+  vector<VarnodeData>::const_iterator trashBegin(void) const;	///< Get iterator to front of \e likelytrash list
+  vector<VarnodeData>::const_iterator trashEnd(void) const;	///< Get iterator to end of \e likelytrash list
   int4 characterizeAsInputParam(const Address &addr,int4 size) const;
   bool possibleInputParam(const Address &addr,int4 size) const;
   bool possibleOutputParam(const Address &addr,int4 size) const;
@@ -1553,28 +1567,30 @@ inline const ParamTrial &ParamActive::getTrialForInputVarnode(int4 slot) const
   return trial[slot];
 }
 
-/// Sort on the memory range, then the effect type
-/// \param op2 is the other record to compare with \b this
+/// \brief Compare two EffectRecords by their start Address
+///
+/// \param op1 is the first record to compare
+/// \param op2 is the other record to compare
 /// \return \b true if \b this should be ordered before the other record
-inline bool EffectRecord::operator<(const EffectRecord &op2) const
+inline bool EffectRecord::compareByAddress(const EffectRecord &op1,const EffectRecord &op2)
 
 {
-  if (address < op2.address) return true;
-  if (address != op2.address) return false;
-  return (type < op2.type);
+  if (op1.range.space != op2.range.space)
+    return (op1.range.space->getIndex() < op2.range.space->getIndex());
+  return (op1.range.offset < op2.range.offset);
 }
 
 inline bool EffectRecord::operator==(const EffectRecord &op2) const
 
 {
-  if (address != op2.address) return false;
+  if (range != op2.range) return false;
   return (type == op2.type);
 }
 
 inline bool EffectRecord::operator!=(const EffectRecord &op2) const
 
 {
-  if (address != op2.address) return true;
+  if (range != op2.range) return true;
   return (type != op2.type);
 }
 

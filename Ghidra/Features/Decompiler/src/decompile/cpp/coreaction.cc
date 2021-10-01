@@ -2066,9 +2066,11 @@ int4 ActionLikelyTrash::apply(Funcdata &data)
 {
   vector<PcodeOp *> indlist;
 
-  int4 num = data.getFuncProto().numLikelyTrash();
-  for(int4 j=0;j<num;++j) {
-    const VarnodeData &vdata( data.getFuncProto().getLikelyTrash(j) );
+  vector<VarnodeData>::const_iterator iter,enditer;
+  iter = data.getFuncProto().trashBegin();
+  enditer = data.getFuncProto().trashEnd();
+  for(;iter!=enditer;++iter) {
+    const VarnodeData &vdata( *iter );
     Varnode *vn = data.findCoveredInput(vdata.size,vdata.getAddr());
     if (vn == (Varnode *)0) continue;
     if (vn->isTypeLock()||vn->isNameLock()) continue;

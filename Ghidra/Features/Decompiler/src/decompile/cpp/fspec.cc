@@ -16,44 +16,65 @@
 #include "fspec.hh"
 #include "funcdata.hh"
 
-void ParamEntry::resolveJoin(void)
+/// \brief Find a ParamEntry matching the given storage Varnode
+///
+/// Search through the list backward.
+/// \param entryList is the list of ParamEntry to search through
+/// \param vn is the storage to search for
+/// \return the matching ParamEntry or null
+const ParamEntry *ParamEntry::findEntryByStorage(const list<ParamEntry> &entryList,const VarnodeData &vn)
 
 {
-  if (spaceid->getType() == IPTR_JOIN) 
-    joinrec = spaceid->getManager()->findJoin(addressbase);
-  else
-    joinrec = (JoinRecord *)0;
+  list<ParamEntry>::const_reverse_iterator iter = entryList.rbegin();
+  for(;iter!=entryList.rend();++iter) {
+    const ParamEntry &entry(*iter);
+    if (entry.spaceid == vn.space && entry.addressbase == vn.offset && entry.size == vn.size) {
+      return &entry;
+    }
+  }
+  return (const ParamEntry *)0;
 }
 
-/// \brief Construct entry from components
-///
-/// \param t is the data-type class (TYPE_UNKNOWN or TYPE_FLOAT)
-/// \param grp is the group id
-/// \param grpsize is the number of consecutive groups occupied
-/// \param loc is the starting address of the memory range
-/// \param sz is the number of bytes in the range
-/// \param mnsz is the smallest size of a logical value
-/// \param align is the alignment (0 means the memory range will hold one parameter exclusively)
-/// \param normalstack is \b true if parameters are allocated from the front of the range
-ParamEntry::ParamEntry(type_metatype t,int4 grp,int4 grpsize,const Address &loc,int4 sz,int4 mnsz,int4 align,bool normalstack)
+/// If the ParamEntry is initialized with a \e join address, cache the join record and
+/// adjust the group and groupsize based on the ParamEntrys being overlapped
+/// \param curList is the current list of ParamEntry
+void ParamEntry::resolveJoin(list<ParamEntry> &curList)
 
 {
-  flags = 0;
-  type = t;
-  group = grp;
-  groupsize = grpsize;
-  spaceid = loc.getSpace();
-  addressbase = loc.getOffset();
-  size = sz;
-  minsize = mnsz;
-  alignment = align;
-  if (alignment != 0)
-    numslots = size / alignment;
-  else
-    numslots = 1;
-  if (!normalstack)
-    flags |= reverse_stack;
-  resolveJoin();
+  if (spaceid->getType() != IPTR_JOIN) {
+    joinrec = (JoinRecord *)0;
+    return;
+  }
+  joinrec = spaceid->getManager()->findJoin(addressbase);
+  int4 mingrp = 1000;
+  int4 maxgrp = -1;
+  for(int4 i=0;i<joinrec->numPieces();++i) {
+    const ParamEntry *entry = findEntryByStorage(curList, joinrec->getPiece(i));
+    if (entry != (const ParamEntry *)0) {
+      if (entry->group < mingrp)
+	mingrp = entry->group;
+      int4 max = entry->group + entry->groupsize;
+      if (max > maxgrp)
+	maxgrp = max;
+    }
+  }
+  if (maxgrp < 0 || mingrp >= 1000)
+    throw LowlevelError("<pentry> join must overlap at least one previous entry");
+  group = mingrp;
+  groupsize = (maxgrp - mingrp);
+  if (groupsize > joinrec->numPieces())
+    throw LowlevelError("<pentry> join must overlap sequential entries");
+}
+
+/// A ParamEntry with \e join storage must either overlap a single other ParamEntry or
+/// all pieces must overlap.
+/// \return \b true if \b this is a join whose pieces do not all overlap
+bool ParamEntry::isNonOverlappingJoin(void) const
+
+{
+  if (joinrec == (JoinRecord *)0)
+    return false;
+  return (joinrec->numPieces() != groupsize);
 }
 
 /// This entry must properly contain the other memory range, and
@@ -299,7 +320,9 @@ Address ParamEntry::getAddrBySlot(int4 &slotnum,int4 sz) const
 /// \param el is the root \<pentry> element
 /// \param manage is a manager to resolve address space references
 /// \param normalstack is \b true if the parameters should be allocated from the front of the range
-void ParamEntry::restoreXml(const Element *el,const AddrSpaceManager *manage,bool normalstack)
+/// \param grouped is \b true if \b this will be grouped with other entries
+/// \param curList is the list of ParamEntry defined up to this point
+void ParamEntry::restoreXml(const Element *el,const AddrSpaceManager *manage,bool normalstack,bool grouped,list<ParamEntry> &curList)
 
 {
   flags = 0;
@@ -334,16 +357,6 @@ void ParamEntry::restoreXml(const Element *el,const AddrSpaceManager *manage,boo
     }
     else if (attrname == "metatype")
       type = string2metatype(el->getAttributeValue(i));
-    else if (attrname == "group") { // Override the group
-      istringstream i5(el->getAttributeValue(i));
-      i5.unsetf(ios::dec | ios::hex | ios::oct);
-      i5 >> group;
-    }
-    else if (attrname == "groupsize") {
-      istringstream i6(el->getAttributeValue(i));
-      i6.unsetf(ios::dec | ios::hex | ios::oct);
-      i6 >> groupsize;
-    }
     else if (attrname == "extension") {
       flags &= ~((uint4)(smallsize_zext | smallsize_sext | smallsize_inttype));
       if (el->getAttributeValue(i) == "sign")
@@ -386,7 +399,9 @@ void ParamEntry::restoreXml(const Element *el,const AddrSpaceManager *manage,boo
 	throw LowlevelError("For positive stack growth, <pentry> size must match alignment");
     }
   }
-  resolveJoin();
+  if (grouped)
+    flags |= is_grouped;
+  resolveJoin(curList);
 }
 
 /// \brief Check if \b this entry represents a \e joined parameter and requires extra scrutiny
@@ -418,6 +433,43 @@ void ParamEntry::extraChecks(list<ParamEntry> &entry)
     flags |= extracheck_high;				// The default is to do extra checks on the high
 }
 
+/// If the storage is in the \e join space, we count the number of join pieces that overlap something
+/// in the given list of entries.
+/// \param curList is the list of entries to check
+/// \return the number of overlapping pieces
+int4 ParamEntry::countJoinOverlap(const list<ParamEntry> &curList) const
+
+{
+  if (joinrec == (JoinRecord *)0)
+    return 0;
+
+  int count = 0;
+  for (int4 i=0;i<joinrec->numPieces();++i) {
+    const ParamEntry *match = findEntryByStorage(curList, joinrec->getPiece(i));
+    if (match != (const ParamEntry *)0)
+      count += 1;
+  }
+  return count;
+}
+
+/// Entries within a group must be distinguishable by size or by type.
+/// Throw an exception if the entries aren't distinguishable
+/// \param entry1 is the first ParamEntry to compare
+/// \param entry2 is the second ParamEntry to compare
+void ParamEntry::orderWithinGroup(const ParamEntry &entry1,const ParamEntry &entry2)
+
+{
+  if (entry2.minsize > entry1.size || entry1.minsize > entry2.size)
+    return;
+  if (entry1.type != entry2.type) {
+    if (entry1.type == TYPE_UNKNOWN) {
+      throw LowlevelError("<pentry> tags with a specific type must come before the general type");
+    }
+    return;
+  }
+  throw LowlevelError("<pentry> tags within a group must be distinguished by size or type");
+}
+
 ParamListStandard::ParamListStandard(const ParamListStandard &op2)
 
 {
@@ -427,7 +479,7 @@ ParamListStandard::ParamListStandard(const ParamListStandard &op2)
   maxdelay = op2.maxdelay;
   pointermax = op2.pointermax;
   thisbeforeret = op2.thisbeforeret;
-  nonfloatgroup = op2.nonfloatgroup;
+  resourceTwoStart = op2.resourceTwoStart;
   populateResolver();
 }
 
@@ -677,30 +729,39 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
   active->sortTrials();
 }
 
-/// \brief Calculate the range of floating-point entries within a given set of parameter \e trials
+/// \brief Calculate the range of trials in each of the two resource sections
 ///
-/// The trials must already be mapped, which should put floating-point entries first.
-/// This method calculates the range of floating-point entries and the range of general purpose
-/// entries and passes them back.
+/// The trials must already be mapped, which should put them in group order.  The sections
+/// split at the group given by \b resourceTwoStart.  We pass back the range of trial indices
+/// for each section.  If \b resourceTwoStart is 0, then there is really only one section, and
+/// the empty range [0,0] is passed back for the second section.
 /// \param active is the given set of parameter trials
-/// \param floatstart will pass back the index of the first floating-point trial
-/// \param floatstop will pass back the index (+1) of the last floating-point trial
-/// \param start will pass back the index of the first general purpose trial
-/// \param stop will pass back the index (+1) of the last general purpose trial
-void ParamListStandard::separateFloat(ParamActive *active,int4 &floatstart,int4 &floatstop,int4 &start,int4 &stop) const
+/// \param oneStart will pass back the index of the first trial in the first section
+/// \param oneStop will pass back the index (+1) of the last trial in the first section
+/// \param twoStart will pass back the index of the first trial in the second section
+/// \param twoStop will pass back the index (+1) of the last trial in the second section
+void ParamListStandard::separateSections(ParamActive *active,int4 &oneStart,int4 &oneStop,int4 &twoStart,int4 &twoStop) const
 
 {
   int4 numtrials = active->getNumTrials();
+  if (resourceTwoStart == 0) {
+    // Only one section
+    oneStart = 0;
+    oneStop = numtrials;
+    twoStart = 0;
+    twoStop = 0;
+    return;
+  }
   int4 i=0;
   for(;i<numtrials;++i) {
     ParamTrial &curtrial(active->getTrial(i));
     if (curtrial.getEntry()==(const ParamEntry *)0) continue;
-    if (curtrial.getEntry()->getType()!=TYPE_FLOAT) break;
+    if (curtrial.getEntry()->getGroup() >= resourceTwoStart) break;
   }
-  floatstart = 0;
-  floatstop = i;
-  start = i;
-  stop = numtrials;
+  oneStart = 0;
+  oneStop = i;
+  twoStart = i;
+  twoStop = numtrials;
 }
 
 /// \brief Enforce exclusion rules for the given set of parameter trials
@@ -768,14 +829,17 @@ void ParamListStandard::forceNoUse(ParamActive *active, int4 start, int4 stop) c
 ///
 /// If there is a chain of slots whose length is greater than \b maxchain,
 /// where all trials are \e inactive, mark trials in any later slot as \e inactive.
-/// Mark any \e inactive trials before this (that aren't in a maximal chain)
-/// as active.  Inspection and marking is restricted to a given range of trials
-/// to facilitate separate analysis of floating-point and general-purpose resources.
+/// Mark any \e inactive trials before this (that aren't in a maximal chain) as active.
+/// The parameter entries in the model may be split up into different resource sections,
+/// as in floating-point vs general purpose.  This method must be called on a single
+/// section at a time. The \b start and \b stop indices describe the range of trials
+/// in the particular section.
 /// \param active is the set of trials, which must be sorted
 /// \param maxchain is the maximum number of \e inactive trials to allow in a chain
 /// \param start is the first index in the range of trials to consider
 /// \param stop is the last index (+1) in the range of trials to consider
-void ParamListStandard::forceInactiveChain(ParamActive *active,int4 maxchain,int4 start,int4 stop) const
+/// \param groupstart is the smallest group id in the particular section
+void ParamListStandard::forceInactiveChain(ParamActive *active,int4 maxchain,int4 start,int4 stop,int4 groupstart) const
 
 {
   bool seenchain = false;
@@ -794,10 +858,7 @@ void ParamListStandard::forceInactiveChain(ParamActive *active,int4 maxchain,int
 	  seenchain = true;	// Mark that we have already seen an inactive chain
       }
       if (i==start) {
-	if (trial.getEntry()->getType() == TYPE_FLOAT)
-	  chainlength += (active->getTrial(0).slotGroup()+1);
-	else
-	  chainlength += (trial.slotGroup() - nonfloatgroup + 1);
+	chainlength += (trial.slotGroup() - groupstart + 1);
       }
       else
 	chainlength += trial.slotGroup() - active->getTrial(i-1).slotGroup();
@@ -861,6 +922,76 @@ void ParamListStandard::populateResolver(void)
   }
 }
 
+/// \brief Read a \<pentry> tag and add it to \b this list
+///
+/// \param el is the \<pentry element
+/// \param manage is manager for parsing address spaces
+/// \param effectlist holds any passed back effect records
+/// \param groupid is the group to which the new ParamEntry is assigned
+/// \param normalstack is \b true if the parameters should be allocated from the front of the range
+/// \param autokill is \b true if parameters are automatically added to the killedbycall list
+/// \param splitFloat is \b true if floating-point parameters are in their own resource section
+/// \param grouped is \b true if the new ParamEntry is grouped with other entries
+void ParamListStandard::parsePentry(const Element *el,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,
+				    int4 groupid,bool normalstack,bool autokill,bool splitFloat,bool grouped)
+{
+  entry.emplace_back(groupid);
+  entry.back().restoreXml(el,manage,normalstack,grouped,entry);
+  if (splitFloat) {
+    if (entry.back().getType() == TYPE_FLOAT) {
+      if (resourceTwoStart >= 0)
+	throw LowlevelError("parameter list floating-point entries must come first");
+    }
+    else if (resourceTwoStart < 0)
+      resourceTwoStart = groupid; // First time we have seen an integer slot
+  }
+  AddrSpace *spc = entry.back().getSpace();
+  if (spc->getType() == IPTR_SPACEBASE)
+    spacebase = spc;
+  else if (autokill)	// If a register parameter AND we automatically generate killedbycall
+    effectlist.push_back(EffectRecord(entry.back(),EffectRecord::killedbycall));
+
+  int4 maxgroup = entry.back().getGroup() + entry.back().getGroupSize();
+  if (maxgroup > numgroup)
+    numgroup = maxgroup;
+}
+
+/// \brief Read a group of \<pentry> tags that are allocated as a group
+///
+/// All ParamEntry objects will share the same \b group id.
+/// \param el is the \<pentry element
+/// \param manage is manager for parsing address spaces
+/// \param effectlist holds any passed back effect records
+/// \param groupid is the group to which all ParamEntry elements are assigned
+/// \param normalstack is \b true if the parameters should be allocated from the front of the range
+/// \param autokill is \b true if parameters are automatically added to the killedbycall list
+/// \param splitFloat is \b true if floating-point parameters are in their own resource section
+void ParamListStandard::parseGroup(const Element *el,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,
+				   int4 groupid,bool normalstack,bool autokill,bool splitFloat)
+{
+  const List &flist(el->getChildren());
+  List::const_iterator iter = flist.begin();
+  int4 basegroup = numgroup;
+  ParamEntry *previous1 = (ParamEntry *)0;
+  ParamEntry *previous2 = (ParamEntry *)0;
+  for(;iter!=flist.end();++iter) {
+    const Element *subel = *iter;
+    if (subel->getName() != "pentry")
+      throw LowlevelError("Expected <pentry> child of <group>: " + subel->getName());
+    parsePentry(subel, manage, effectlist, basegroup, normalstack, autokill, splitFloat, true);
+    ParamEntry &pentry( entry.back() );
+    if (pentry.getSpace()->getType() == IPTR_JOIN)
+      throw LowlevelError("<pentry> in the join space not allowed in <group> tag");
+    if (previous1 != (ParamEntry *)0) {
+      ParamEntry::orderWithinGroup(*previous1,pentry);
+      if (previous2 != (ParamEntry *)0)
+	ParamEntry::orderWithinGroup(*previous2,pentry);
+    }
+    previous2 = previous1;
+    previous1 = &pentry;
+  }
+}
+
 void ParamListStandard::fillinMap(ParamActive *active) const
 
 {
@@ -869,12 +1000,12 @@ void ParamListStandard::fillinMap(ParamActive *active) const
   buildTrialMap(active); // Associate varnodes with sorted list of parameter locations
 
   forceExclusionGroup(active);
-  int4 floatstart,floatstop,start,stop;
-  separateFloat(active,floatstart,floatstop,start,stop);
-  forceNoUse(active,floatstart,floatstop);
-  forceNoUse(active,start,stop);	    // Definitely not used -- overrides active
-  forceInactiveChain(active,2,floatstart,floatstop);	// Chains of inactivity override later actives
-  forceInactiveChain(active,2,start,stop);
+  int4 oneStart,oneStop,twoStart,twoStop;
+  separateSections(active,oneStart,oneStop,twoStart,twoStop);
+  forceNoUse(active,oneStart,oneStop);
+  forceNoUse(active,twoStart,twoStop);	    // Definitely not used -- overrides active
+  forceInactiveChain(active,2,oneStart,oneStop,0);	// Chains of inactivity override later actives
+  forceInactiveChain(active,2,twoStart,twoStop,resourceTwoStart);
 
   // Mark every active trial as used
   for(int4 i=0;i<active->getNumTrials();++i) {
@@ -1024,11 +1155,11 @@ void ParamListStandard::restoreXml(const Element *el,const AddrSpaceManager *man
 				   vector<EffectRecord> &effectlist,bool normalstack)
 
 {
-  int4 lastgroup = -1;
   numgroup = 0;
   spacebase = (AddrSpace *)0;
   pointermax = 0;
   thisbeforeret = false;
+  bool splitFloat = true;		// True if we should split FLOAT entries into their own resource section
   bool autokilledbycall = false;
   for(int4 i=0;i<el->getNumAttributes();++i) {
     const string &attrname( el->getAttributeName(i) );
@@ -1043,33 +1174,29 @@ void ParamListStandard::restoreXml(const Element *el,const AddrSpaceManager *man
     else if (attrname == "killedbycall") {
       autokilledbycall = xml_readbool( el->getAttributeValue(i) );
     }
+    else if (attrname == "separatefloat") {
+      splitFloat = xml_readbool( el->getAttributeValue(i) );
+    }
   }
-  nonfloatgroup = -1;		// We haven't seen any integer slots yet
+  resourceTwoStart = splitFloat ? -1 : 0;
   const List &flist(el->getChildren());
   List::const_iterator fiter;
   for(fiter=flist.begin();fiter!=flist.end();++fiter) {
     const Element *subel = *fiter;
     if (subel->getName() == "pentry") {
-      entry.emplace_back(numgroup);
-      entry.back().restoreXml(subel,manage,normalstack);
-      if (entry.back().getType()==TYPE_FLOAT) {
-	  if (nonfloatgroup >= 0)
-	    throw LowlevelError("parameter list floating-point entries must come first");
+      parsePentry(subel, manage, effectlist, numgroup, normalstack, autokilledbycall, splitFloat, false);
+    }
+    else if (subel->getName() == "group") {
+      parseGroup(subel, manage, effectlist, numgroup, normalstack, autokilledbycall, splitFloat);
+    }
+  }
+  // Check that any pentry tags with join storage don't overlap following tags
+  for (list<ParamEntry>::const_iterator eiter=entry.begin();eiter!=entry.end();++eiter) {
+    const ParamEntry &curEntry( *eiter );
+    if (curEntry.isNonOverlappingJoin()) {
+      if (curEntry.countJoinOverlap(entry) != 1) {
+	throw LowlevelError("pentry tag must be listed after all its overlaps");
       }
-      else if (nonfloatgroup < 0)
-	nonfloatgroup = numgroup; // First time we have seen an integer slot
-      AddrSpace *spc = entry.back().getSpace();
-      if (spc->getType() == IPTR_SPACEBASE)
-	spacebase = spc;
-      else if (autokilledbycall)	// If a register parameter AND we automatically generate killedbycall
-	effectlist.push_back(EffectRecord(entry.back(),EffectRecord::killedbycall));
-
-      int4 maxgroup = entry.back().getGroup() + entry.back().getGroupSize();
-      if (maxgroup > numgroup)
-	numgroup = maxgroup;
-      if (entry.back().getGroup() < lastgroup)
-	throw LowlevelError("pentrys must come in group order");
-      lastgroup = entry.back().getGroup();
     }
   }
   calcDelay();
@@ -1214,8 +1341,19 @@ void ParamListStandardOut::restoreXml(const Element *el,const AddrSpaceManager *
   ParamListStandard::restoreXml(el,manage,effectlist,normalstack);
   // Check for double precision entries
   list<ParamEntry>::iterator iter;
-  for(iter=entry.begin();iter!=entry.end();++iter)
-    (*iter).extraChecks(entry);
+  ParamEntry *previous1 = (ParamEntry *)0;
+  ParamEntry *previous2 = (ParamEntry *)0;
+  for(iter=entry.begin();iter!=entry.end();++iter) {
+    ParamEntry &curEntry(*iter);
+    curEntry.extraChecks(entry);
+    if (previous1 != (ParamEntry *)0) {
+      ParamEntry::orderWithinGroup(*previous1, curEntry);
+      if (previous2 != (ParamEntry *)0)
+	ParamEntry::orderWithinGroup(*previous2, curEntry);
+    }
+    previous2 = previous1;
+    previous1 = &curEntry;
+  }
 }
 
 ParamList *ParamListStandardOut::clone(void) const
@@ -1628,9 +1766,9 @@ void FspecSpace::restoreXml(const Element *el)
 EffectRecord::EffectRecord(const Address &addr,int4 size)
 
 {
-  address.space = addr.getSpace();
-  address.offset = addr.getOffset();
-  address.size = size;
+  range.space = addr.getSpace();
+  range.offset = addr.getOffset();
+  range.size = size;
   type = unknown_effect;
 }
 
@@ -1639,9 +1777,9 @@ EffectRecord::EffectRecord(const Address &addr,int4 size)
 EffectRecord::EffectRecord(const ParamEntry &entry,uint4 t)
 
 {
-  address.space = entry.getSpace();
-  address.offset = entry.getBase();
-  address.size = entry.getSize();
+  range.space = entry.getSpace();
+  range.offset = entry.getBase();
+  range.size = entry.getSize();
   type = t;
 }
 
@@ -1650,7 +1788,7 @@ EffectRecord::EffectRecord(const ParamEntry &entry,uint4 t)
 EffectRecord::EffectRecord(const VarnodeData &data,uint4 t)
 
 {
-  address = data;
+  range = data;
   type = t;
 }
 
@@ -1659,9 +1797,9 @@ EffectRecord::EffectRecord(const VarnodeData &data,uint4 t)
 void EffectRecord::saveXml(ostream &s) const
 
 {
-  Address addr(address.space,address.offset);
+  Address addr(range.space,range.offset);
   if ((type == unaffected)||(type == killedbycall)||(type == return_address))
-    addr.saveXml(s,address.size);
+    addr.saveXml(s,range.size);
   else
     throw LowlevelError("Bad EffectRecord type");
 }
@@ -1674,7 +1812,7 @@ void EffectRecord::restoreXml(uint4 grouptype,const Element *el,const AddrSpaceM
 
 {
   type = grouptype;
-  address.restoreXml(el,manage);
+  range.restoreXml(el,manage);
 }
 
 void ProtoModel::defaultLocalRange(void)
@@ -1881,7 +2019,7 @@ uint4 ProtoModel::lookupEffect(const vector<EffectRecord> &efflist,const Address
 
   vector<EffectRecord>::const_iterator iter;
 
-  iter = upper_bound(efflist.begin(),efflist.end(),cur);
+  iter = upper_bound(efflist.begin(),efflist.end(),cur,EffectRecord::compareByAddress);
   // First element greater than cur  (address must be greater)
   // go back one more, and we get first el less or equal to cur
   if (iter==efflist.begin()) return EffectRecord::unknown_effect; // Can't go back one
@@ -1894,6 +2032,44 @@ uint4 ProtoModel::lookupEffect(const vector<EffectRecord> &efflist,const Address
   if ((where>=0)&&(where+size<=sz))
     return (*iter).getType();
   return EffectRecord::unknown_effect;
+}
+
+/// \brief Look up a particular EffectRecord from a given list by its Address and size
+///
+/// The index of the matching EffectRecord from the given list is returned.  Only the first
+/// \e listSize elements are examined, which much be sorted by Address.
+/// If no matching range exists, a negative number is returned.
+///   - -1 if the Address and size don't overlap any other EffectRecord
+///   - -2 if there is overlap with another EffectRecord
+///
+/// \param efflist is the given list
+/// \param listSize is the number of records in the list to search through
+/// \param addr is the starting Address of the record to find
+/// \param size is the size of the record to find
+/// \return the index of the matching record or a negative number
+int4 ProtoModel::lookupRecord(const vector<EffectRecord> &efflist,int4 listSize,
+			      const Address &addr,int4 size)
+{
+  if (listSize == 0) return -1;
+  EffectRecord cur(addr,size);
+
+  vector<EffectRecord>::const_iterator begiter = efflist.begin();
+  vector<EffectRecord>::const_iterator enditer = begiter + listSize;
+  vector<EffectRecord>::const_iterator iter;
+
+  iter = upper_bound(begiter,enditer,cur,EffectRecord::compareByAddress);
+  // First element greater than cur  (address must be greater)
+  // go back one more, and we get first el less or equal to cur
+  if (iter==efflist.begin()) {
+    Address closeAddr = (*iter).getAddress();
+    return (closeAddr.overlap(0,addr,size) < 0) ? -1 : -2;
+  }
+  --iter;
+  Address closeAddr =(*iter).getAddress();
+  int4 sz = (*iter).getSize();
+  if (addr == closeAddr && size == sz)
+    return iter - begiter;
+  return (addr.overlap(0,closeAddr,sz) < 0) ? -1 : -2;
 }
 
 /// The model is searched for an EffectRecord matching the given range
@@ -2054,7 +2230,7 @@ void ProtoModel::restoreXml(const Element *el)
     // Provide the default return address, if there isn't a specific one for the model
     effectlist.push_back(EffectRecord(glb->defaultReturnAddr,EffectRecord::return_address));
   }
-  sort(effectlist.begin(),effectlist.end());
+  sort(effectlist.begin(),effectlist.end(),EffectRecord::compareByAddress);
   sort(likelytrash.begin(),likelytrash.end());
   if (!sawlocalrange)
     defaultLocalRange();
@@ -2151,17 +2327,18 @@ void ProtoModelMerged::intersectEffects(const vector<EffectRecord> &efflist)
     const EffectRecord &eff1( effectlist[i] );
     const EffectRecord &eff2( efflist[j] );
 
-    if (eff1 < eff2)
+    if (EffectRecord::compareByAddress(eff1, eff2))
       i += 1;
-    else if (eff2 < eff1)
+    else if (EffectRecord::compareByAddress(eff2, eff1))
       j += 1;
     else {
-      newlist.push_back(eff1);
+      if (eff1 == eff2)
+	newlist.push_back(eff1);
       i += 1;
       j += 1;
     }
   }
-  effectlist = newlist;
+  effectlist.swap(newlist);
 }
 
 /// The \e likely-trash locations are intersected. Anything in \b this that is not also in the
@@ -2918,6 +3095,126 @@ void FuncProto::updateThisPointer(void)
   param->setThisPointer(true);
 }
 
+/// If the \e effectlist for \b this is non-empty, it contains the complete set of
+/// EffectRecords.  Save just those that override the underlying list from ProtoModel
+/// \param s is the stream to write to
+void FuncProto::saveEffectXml(ostream &s) const
+
+{
+  if (effectlist.empty()) return;
+  vector<const EffectRecord *> unaffectedList;
+  vector<const EffectRecord *> killedByCallList;
+  const EffectRecord *retAddr = (const EffectRecord *)0;
+  for(vector<EffectRecord>::const_iterator iter=effectlist.begin();iter!=effectlist.end();++iter) {
+    const EffectRecord &curRecord( *iter );
+    uint4 type = model->hasEffect(curRecord.getAddress(), curRecord.getSize());
+    if (type == curRecord.getType()) continue;
+    if (curRecord.getType() == EffectRecord::unaffected)
+      unaffectedList.push_back(&curRecord);
+    else if (curRecord.getType() == EffectRecord::killedbycall)
+      killedByCallList.push_back(&curRecord);
+    else if (curRecord.getType() == EffectRecord::return_address)
+      retAddr = &curRecord;
+  }
+  if (!unaffectedList.empty()) {
+    s << "  <unaffected>\n";
+    for(int4 i=0;i<unaffectedList.size();++i) {
+      s << "    ";
+      unaffectedList[i]->saveXml(s);
+      s << '\n';
+    }
+    s << "  </unaffected>\n";
+  }
+  if (!killedByCallList.empty()) {
+    s << "  <killedbycall>\n";
+    for(int4 i=0;i<killedByCallList.size();++i) {
+      s << "    ";
+      killedByCallList[i]->saveXml(s);
+      s << '\n';
+    }
+    s << "  </killedbycall>\n";
+  }
+  if (retAddr != (const EffectRecord *)0) {
+    s << "  <returnaddress>\n    ";
+    retAddr->saveXml(s);
+    s << "\n  </returnaddress>\n";
+  }
+}
+
+/// If the -likelytrash- list is not empty it overrides the underlying ProtoModel's list.
+/// Write any VarnodeData that does not appear in the ProtoModel to the XML stream.
+/// \param s is the stream to write to
+void FuncProto::saveLikelyTrashXml(ostream &s) const
+
+{
+  if (likelytrash.empty()) return;
+  vector<VarnodeData>::const_iterator iter1,iter2;
+  iter1 = model->trashBegin();
+  iter2 = model->trashEnd();
+  s << "  <likelytrash>\n";
+  for(vector<VarnodeData>::const_iterator iter=likelytrash.begin();iter!=likelytrash.end();++iter) {
+    const VarnodeData &cur(*iter);
+    if (binary_search(iter1,iter2,cur)) continue;	// Already exists in ProtoModel
+    s << "    <addr";
+    cur.space->saveXmlAttributes(s,cur.offset,cur.size);
+    s << "/>\n";
+  }
+  s << "  </likelytrash>\n";
+}
+
+/// EffectRecords read into \e effectlist by restoreXml() override the list from ProtoModel.
+/// If this list is not empty, set up \e effectlist as a complete override containing
+/// all EffectRecords from ProtoModel plus all the overrides.
+void FuncProto::restoreEffectXml(void)
+
+{
+  if (effectlist.empty()) return;
+  vector<EffectRecord> tmpList;
+  tmpList.swap(effectlist);
+  for(vector<EffectRecord>::const_iterator iter=model->effectBegin();iter!=model->effectEnd();++iter) {
+    effectlist.push_back(*iter);
+  }
+  bool hasNew = false;
+  int4 listSize = effectlist.size();
+  for(vector<EffectRecord>::const_iterator iter=tmpList.begin();iter!=tmpList.end();++iter) {
+    const EffectRecord &curRecord( *iter );
+    int4 off = ProtoModel::lookupRecord(effectlist, listSize, curRecord.getAddress(), curRecord.getSize());
+    if (off == -2)
+      throw LowlevelError("Partial overlap of prototype override with existing effects");
+    else if (off >= 0) {
+      // Found matching record, change its type
+      effectlist[off] = curRecord;
+    }
+    else {
+      effectlist.push_back(curRecord);
+      hasNew = true;
+    }
+  }
+  if (hasNew)
+    sort(effectlist.begin(),effectlist.end(),EffectRecord::compareByAddress);
+}
+
+/// VarnodeData read into \e likelytrash by restoreXml() are additional registers over
+/// what is already in ProtoModel.  Make \e likelytrash in \b this a complete list by
+/// merging in everything from ProtoModel.
+void FuncProto::restoreLikelyTrashXml(void)
+
+{
+  if (likelytrash.empty()) return;
+  vector<VarnodeData> tmpList;
+  tmpList.swap(likelytrash);
+  vector<VarnodeData>::const_iterator iter1,iter2;
+  iter1 = model->trashBegin();
+  iter2 = model->trashEnd();
+  for(vector<VarnodeData>::const_iterator iter=iter1;iter!=iter2;++iter)
+    likelytrash.push_back(*iter);
+  for(vector<VarnodeData>::const_iterator iter=tmpList.begin();iter!=tmpList.end();++iter) {
+    if (!binary_search(iter1,iter2,*iter))
+      likelytrash.push_back(*iter);		// Add in the new register
+  }
+  sort(likelytrash.begin(),likelytrash.end());
+}
+
 /// Prepend the indicated number of input parameters to \b this.
 /// The new parameters have a data-type of xunknown4. If they were
 /// originally locked, the existing parameters are preserved.
@@ -3472,23 +3769,22 @@ vector<EffectRecord>::const_iterator FuncProto::effectEnd(void) const
   return effectlist.end();
 }
 
-/// \return the number of individual storage locations
-int4 FuncProto::numLikelyTrash(void) const
+/// \return the iterator to the start of the list
+vector<VarnodeData>::const_iterator FuncProto::trashBegin(void) const
 
 {
   if (likelytrash.empty())
-    return model->numLikelyTrash();
-  return likelytrash.size();
+    return model->trashBegin();
+  return likelytrash.begin();
 }
 
-/// \param i is the index of the storage location
-/// \return the storage location which may hold a trash value
-const VarnodeData &FuncProto::getLikelyTrash(int4 i) const
+/// \return the iterator to the end of the list
+vector<VarnodeData>::const_iterator FuncProto::trashEnd(void) const
 
 {
   if (likelytrash.empty())
-    return model->getLikelyTrash(i);
-  return likelytrash[i];
+    return model->trashEnd();
+  return likelytrash.end();
 }
 
 /// \brief Decide whether a given storage location could be, or could hold, an input parameter
@@ -3772,57 +4068,8 @@ void FuncProto::saveXml(ostream &s) const
   outparam->getAddress().saveXml(s,outparam->getSize());
   outparam->getType()->saveXml(s);
   s << "  </returnsym>\n";
-  if (!effectlist.empty()) {
-    int4 othercount = 0;
-    s << "  <unaffected>\n";
-    for(uint4 i=0;i<effectlist.size();++i) {
-      uint4 tp = effectlist[i].getType();
-      if (tp!=EffectRecord::unaffected) {
-	othercount += 1;
-	continue;
-      }
-      s << "    ";
-      effectlist[i].saveXml(s);
-      s << '\n';
-    }
-    s << "  </unaffected>\n";
-    if (othercount > 0) {
-      othercount = 0;
-      s << "  <killedbycall>\n";
-      for(uint4 i=0;i<effectlist.size();++i) {
-	uint4 tp = effectlist[i].getType();
-	if (tp != EffectRecord::killedbycall) {
-	  othercount += 1;
-	  continue;
-	}
-	s << "    ";
-	effectlist[i].saveXml(s);
-	s << '\n';
-      }
-      s << "  </killedbycall>\n";
-    }
-    if (othercount > 0) {
-      s << "  <returnaddress>\n";
-      for(uint4 i=0;i<effectlist.size();++i) {
-	uint4 tp = effectlist[i].getType();
-	if (tp != EffectRecord::return_address) continue;
-	s << "    ";
-	effectlist[i].saveXml(s);
-	s << '\n';
-      }
-      s << "  </returnaddress>\n";
-    }
-  }
-  if (!likelytrash.empty()) {
-    s << "  <likelytrash>\n";
-    for(uint4 i=0;i<likelytrash.size();++i) {
-      s << "    <addr";
-      const VarnodeData &vdata(likelytrash[i]);
-      vdata.space->saveXmlAttributes(s,vdata.offset,vdata.size);
-      s << "/>\n";
-    }
-    s << "  </likelytrash>\n";
-  }
+  saveEffectXml(s);
+  saveLikelyTrashXml(s);
   if (injectid >= 0) {
     Architecture *glb = model->getArch();
     s << "  <inject>" << glb->pcodeinjectlib->getCallFixupName(injectid) << "</inject>\n";
@@ -4006,8 +4253,8 @@ void FuncProto::restoreXml(const Element *el,Architecture *glb)
       store->restoreXml(*iter,model);
     }
   }
-  sort(effectlist.begin(),effectlist.end());
-  sort(likelytrash.begin(),likelytrash.end());
+  restoreEffectXml();
+  restoreLikelyTrashXml();
   if (!isModelLocked()) {
     if (isInputLocked())
       flags |= modellock;
