@@ -124,6 +124,14 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		protected AddressSetView getSelection() {
 			return DebuggerMemoryBytesProvider.this.getSelection();
 		}
+
+		@Override
+		protected void repaintPanel() {
+			for (ByteViewerComponent view : getByteViewerPanel().getViewList()) {
+				// NB. ByteViewerComponent extends FieldPanel
+				view.repaint();
+			}
+		}
 	}
 
 	private final AutoReadMemorySpec defaultReadMemorySpec =
