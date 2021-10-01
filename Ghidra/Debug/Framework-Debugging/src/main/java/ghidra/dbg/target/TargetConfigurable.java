@@ -15,18 +15,20 @@
  */
 package ghidra.dbg.target;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
+import ghidra.dbg.target.TargetMethod.ParameterDescription;
 
 /**
  * A target with writable configuration options
  * 
  * <p>
- * In general, the options are stored as attributes, so that the current values are retrievable by
- * the client, and so that the names and types of options are known. Note that not every attribute
- * denotes a writable option. Enumeration of available options is not yet specified, but for the
- * moment, we assume a subset of the attributes.
+ * In general, the options are also stored as attributes, so that the current values are retrievable
+ * by the client. Note that not every attribute denotes a writable option. The list of configurable
+ * options, along with a description of each, is retrieved using {@link #getConfigurableOptions()}.
  * 
  * <p>
  * Options should be close to their scope of applicability. For example, if an object affects the
@@ -48,6 +50,11 @@ public interface TargetConfigurable extends TargetObject {
 	/**
 	 * Write a single option to this object
 	 * 
+	 * <p>
+	 * TODO: This should probably be replaced with a {@code configure(Map<String,Object> options)}
+	 * method. That should also make it easy to validate the arguments using the same mechanisms as
+	 * for {@link TargetMethod#invoke(Map)}.
+	 * 
 	 * @param key the name of the option, typically corresponding to the same-named attribute
 	 * @param value the value to assign the option, typically conforming to the attribute schema
 	 * @return a future which completes when the change is processed.
@@ -55,4 +62,17 @@ public interface TargetConfigurable extends TargetObject {
 	 *             is not valid.
 	 */
 	public CompletableFuture<Void> writeConfigurationOption(String key, Object value);
+
+	/**
+	 * Get the map of writable configuration options
+	 * 
+	 * <p>
+	 * TODO: Implement this properly in all subclasses to advertise their parameters. Then remove
+	 * this default implementation.
+	 * 
+	 * @return a map of names to option descriptions
+	 */
+	public default Map<String, ParameterDescription<?>> getConfigurableOptions() {
+		return new HashMap<>();
+	}
 }

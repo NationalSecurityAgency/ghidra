@@ -29,7 +29,6 @@ import com.sun.jna.Native;
 import com.sun.jna.platform.win32.COM.COMException;
 import com.sun.jna.win32.StdCallLibrary;
 
-import agent.dbgeng.DummyProc;
 import agent.dbgeng.dbgeng.DebugBreakpoint.BreakType;
 import agent.dbgeng.dbgeng.DebugClient.*;
 import agent.dbgeng.dbgeng.DebugDataSpaces.*;
@@ -40,6 +39,7 @@ import agent.dbgeng.dbgeng.DebugValue.DebugInt64Value;
 import agent.dbgeng.dbgeng.DebugValue.DebugValueType;
 import agent.dbgeng.dbgeng.util.DebugEventCallbacksAdapter;
 import ghidra.comm.util.BitmaskSet;
+import ghidra.dbg.testutil.DummyProc;
 import ghidra.framework.Application;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.Msg;
@@ -697,7 +697,7 @@ public class DbgEngTest extends AbstractGhidraHeadlessIntegrationTest {
 				return DebugStatus.NO_CHANGE;
 			}
 		});
-		try (DummyProc proc = new DummyProc(specimen)) {
+		try (DummyProc proc = DummyProc.run(specimen)) {
 			System.out.println("Started " + specimen + " with PID=" + proc.pid);
 			Thread.sleep(1000);
 			System.out.println("Attaching...");
@@ -839,7 +839,7 @@ public class DbgEngTest extends AbstractGhidraHeadlessIntegrationTest {
 		final String specimenA = "C:\\windows\\notepad.exe";
 		final String specimenC = "C:\\windows\\system32\\win32calc.exe";
 
-		try (DummyProc proc = new DummyProc(specimenX)) {
+		try (DummyProc proc = DummyProc.run(specimenX)) {
 			client.setOutputCallbacks(new ConsoleOutputCallbacks());
 			BreakAllCallbacks cb = new BreakAllCallbacks(client);
 			client.setEventCallbacks(cb);

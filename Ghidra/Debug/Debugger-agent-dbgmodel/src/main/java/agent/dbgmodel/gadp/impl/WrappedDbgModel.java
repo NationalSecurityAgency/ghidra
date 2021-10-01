@@ -102,7 +102,7 @@ public class WrappedDbgModel
 	}
 
 	@Override
-	public void attachProcess(DebugServerId si, int processId,
+	public void attachProcess(DebugServerId si, long processId,
 			BitmaskSet<DebugAttachFlags> attachFlags) {
 		client.attachProcess(si, processId, attachFlags);
 	}

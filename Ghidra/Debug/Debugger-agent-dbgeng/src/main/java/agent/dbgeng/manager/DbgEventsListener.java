@@ -17,6 +17,7 @@ package agent.dbgeng.manager;
 
 import agent.dbgeng.dbgeng.*;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
+import agent.dbgeng.manager.evt.AbstractDbgEvent;
 
 public interface DbgEventsListener {
 
@@ -122,6 +123,14 @@ public interface DbgEventsListener {
 	 * @param cause the cause of this event
 	 */
 	void threadSelected(DbgThread thread, DbgStackFrame frame, DbgCause cause);
+
+	/**
+	 * A system event has occurred (gained focus)
+	 * 
+	 * @param event a handle to the current event
+	 * @param cause the cause of this event
+	 */
+	void eventSelected(AbstractDbgEvent<?> event, DbgCause cause);
 
 	/**
 	 * A module has been loaded by an process

@@ -17,14 +17,8 @@ package agent.dbgeng.manager.evt;
 
 import agent.dbgeng.manager.DbgState;
 
-/**
- * The event corresponding with "{@code ^running}"
- */
 public class DbgCommandRunningEvent extends AbstractDbgCompletedCommandEvent {
 
-	/**
-	 * Construct a new event, parsing the tail for information
-	 */
 	public DbgCommandRunningEvent() {
 		super();
 	}

@@ -23,8 +23,7 @@ import com.sun.jna.platform.win32.WinDef.*;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
 import com.sun.jna.ptr.PointerByReference;
 
-import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_STACK_FRAME;
-import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_VALUE;
+import agent.dbgeng.jna.dbgeng.DbgEngNative.*;
 import agent.dbgeng.jna.dbgeng.UnknownWithUtils;
 import agent.dbgeng.jna.dbgeng.breakpoint.IDebugBreakpoint;
 
@@ -178,4 +177,82 @@ public class WrapIDebugControl extends UnknownWithUtils implements IDebugControl
 		return _invokeHR(VTIndices.GET_DEBUGGEE_TYPE, getPointer(), Class, Qualifier);
 	}
 
+	@Override
+	public HRESULT GetNumberEventFilters(ULONGByReference SpecificEvents,
+			ULONGByReference SpecificExceptions, ULONGByReference ArbitraryExceptions) {
+		return _invokeHR(VTIndices.GET_NUMBER_EVENT_FILTERS, getPointer(), SpecificEvents,
+			SpecificExceptions, ArbitraryExceptions);
+	}
+
+	@Override
+	public HRESULT GetEventFilterText(ULONG Index, byte[] Buffer, ULONG BufferSize,
+			ULONGByReference TextSize) {
+		return _invokeHR(VTIndices.GET_EVENT_FILTER_TEXT, getPointer(), Index, Buffer,
+			BufferSize, TextSize);
+	}
+
+	@Override
+	public HRESULT GetEventFilterCommand(ULONG Index, byte[] Buffer, ULONG BufferSize,
+			ULONGByReference CommandSize) {
+		return _invokeHR(VTIndices.GET_EVENT_FILTER_COMMAND, getPointer(), Index, Buffer,
+			BufferSize, CommandSize);
+	}
+
+	@Override
+	public HRESULT SetEventFilterCommand(ULONG Index, String Command) {
+		return _invokeHR(VTIndices.SET_EVENT_FILTER_COMMAND, getPointer(), Index, Command);
+	}
+
+	@Override
+	public HRESULT GetSpecificFilterParameters(ULONG Start, ULONG Count,
+			DEBUG_SPECIFIC_FILTER_PARAMETERS[] Params) {
+		return _invokeHR(VTIndices.GET_SPECIFIC_FILTER_PARAMETERS, getPointer(), Start, Count,
+			Params);
+	}
+
+	@Override
+	public HRESULT SetSpecificFilterParameters(ULONG Start, ULONG Count,
+			DEBUG_SPECIFIC_FILTER_PARAMETERS[] Params) {
+		return _invokeHR(VTIndices.SET_SPECIFIC_FILTER_PARAMETERS, getPointer(), Start, Count,
+			Params);
+	}
+
+	@Override
+	public HRESULT GetSpecificFilterArgument(ULONG Index, byte[] Buffer, ULONG BufferSize,
+			ULONGByReference ArgumentSize) {
+		return _invokeHR(VTIndices.GET_SPECIFIC_FILTER_ARGUMENT, getPointer(), Index, Buffer,
+			BufferSize, ArgumentSize);
+	}
+
+	@Override
+	public HRESULT SetSpecificFilterArgument(ULONG Index, String Argument) {
+		return _invokeHR(VTIndices.SET_SPECIFIC_FILTER_ARGUMENT, getPointer(), Index, Argument);
+	}
+
+	@Override
+	public HRESULT GetExceptionFilterParameters(ULONG Count, ULONG[] Codes, ULONG Start,
+			DEBUG_EXCEPTION_FILTER_PARAMETERS[] Params) {
+		return _invokeHR(VTIndices.GET_EXCEPTION_FILTER_PARAMETERS, getPointer(), Count, Codes,
+			Start,
+			Params);
+	}
+
+	@Override
+	public HRESULT SetExceptionFilterParameters(ULONG Count,
+			DEBUG_EXCEPTION_FILTER_PARAMETERS[] Params) {
+		return _invokeHR(VTIndices.SET_EXCEPTION_FILTER_PARAMETERS, getPointer(), Count, Params);
+	}
+
+	@Override
+	public HRESULT GetExceptionFilterSecondCommand(ULONG Index, byte[] Buffer, ULONG BufferSize,
+			ULONGByReference CommandSize) {
+		return _invokeHR(VTIndices.GET_EXCEPTION_FILTER_SECOND_COMMAND, getPointer(), Index, Buffer,
+			BufferSize, CommandSize);
+	}
+
+	@Override
+	public HRESULT SetExceptionFilterSecondCommand(ULONG Index, String Command) {
+		return _invokeHR(VTIndices.SET_EXCEPTION_FILTER_SECOND_COMMAND, getPointer(), Index,
+			Command);
+	}
 }

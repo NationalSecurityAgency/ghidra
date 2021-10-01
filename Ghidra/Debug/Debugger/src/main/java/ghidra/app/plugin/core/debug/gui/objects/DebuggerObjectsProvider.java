@@ -20,6 +20,7 @@ import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -45,14 +46,14 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.objects.actions.*;
 import ghidra.app.plugin.core.debug.gui.objects.components.*;
 import ghidra.app.services.*;
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
+import ghidra.async.*;
 import ghidra.dbg.*;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetConsole.Channel;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
+import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.dbg.util.DebuggerCallbackReorderer;
 import ghidra.dbg.util.PathUtils;
@@ -212,6 +213,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	private boolean asTree = true;
 	private MyObjectListener listener = new MyObjectListener();
 
+	public DebuggerMethodInvocationDialog configDialog;
 	public DebuggerMethodInvocationDialog launchDialog;
 	public DebuggerAttachDialog attachDialog;
 	public DebuggerBreakpointDialog breakpointDialog;
@@ -336,6 +338,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		//attachDialogOld = new DebuggerAttachDialog(this);
 		attachDialog = new DebuggerAttachDialog(this);
 		breakpointDialog = new DebuggerBreakpointDialog(this);
+		configDialog = new DebuggerMethodInvocationDialog(tool, "Configuration", "Configure",
+			DebuggerResources.ICON_CONFIG);
 	}
 
 	private void addToPanel(ObjectPane p) throws Exception {
@@ -1148,48 +1152,48 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		groupTargetIndex++;
 
 		new ActionBuilder("Finish", plugin.getName())
-		.keyBinding("F12")
-		.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
-		.toolBarIcon(AbstractStepFinishAction.ICON)
-		.popupMenuPath("&Finish")
-		.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
-		.popupMenuIcon(AbstractStepFinishAction.ICON)
-		.helpLocation(AbstractStepFinishAction.help(plugin))
-		//.withContext(ObjectActionContext.class)
-		.enabledWhen(ctx -> 
-			isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
-		.popupWhen(ctx -> 
-			isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
-		.onAction(ctx -> performStepFinish(ctx))
-		.enabled(false)
-		.buildAndInstallLocal(this);
+			.keyBinding("F12")
+			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
+			.toolBarIcon(AbstractStepFinishAction.ICON)
+			.popupMenuPath("&Finish")
+			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
+			.popupMenuIcon(AbstractStepFinishAction.ICON)
+			.helpLocation(AbstractStepFinishAction.help(plugin))
+			//.withContext(ObjectActionContext.class)
+			.enabledWhen(ctx -> 
+				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
+			.popupWhen(ctx -> 
+				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
+			.onAction(ctx -> performStepFinish(ctx))
+			.enabled(false)
+			.buildAndInstallLocal(this);
+		
+		groupTargetIndex++;
+		
+		new ActionBuilder("Step Last", plugin.getName())
+			.keyBinding("ALT F8")
+			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
+			.toolBarIcon(AbstractStepLastAction.ICON)
+			.popupMenuPath("&Step Last")
+			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
+			.popupMenuIcon(AbstractStepLastAction.ICON)
+			.helpLocation(AbstractStepLastAction.help(plugin))
+			//.withContext(ObjectActionContext.class)
+			.enabledWhen(ctx -> 
+				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
+			.popupWhen(ctx -> 
+				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
+			.onAction(ctx -> performStepLast(ctx))
+			.enabled(false)
+			.buildAndInstallLocal(this);
+		
+		groupTargetIndex++;
 	
-	groupTargetIndex++;
-	
-	new ActionBuilder("Step Last", plugin.getName())
-		.keyBinding("ALT F8")
-		.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
-		.toolBarIcon(AbstractStepLastAction.ICON)
-		.popupMenuPath("&Step Last")
-		.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
-		.popupMenuIcon(AbstractStepLastAction.ICON)
-		.helpLocation(AbstractStepLastAction.help(plugin))
-		//.withContext(ObjectActionContext.class)
-		.enabledWhen(ctx -> 
-			isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
-		.popupWhen(ctx -> 
-			isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
-		.onAction(ctx -> performStepLast(ctx))
-		.enabled(false)
-		.buildAndInstallLocal(this);
-	
-	groupTargetIndex++;
-
 		actionAddBreakpoint = new ActionBuilder("Add Breakpoint", plugin.getName())
 			.keyBinding("F3")
 			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
 			.toolBarIcon(AbstractSetBreakpointAction.ICON)
-			.popupMenuPath("&AddBreakpoint")
+			.popupMenuPath("&Add Breakpoint")
 			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
 			.popupMenuIcon(AbstractSetBreakpointAction.ICON)
 			.helpLocation(AbstractSetBreakpointAction.help(plugin))
@@ -1216,6 +1220,34 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.enabledWhen(ctx -> isInstance(ctx, TargetInterpreter.class))
 			.popupWhen(ctx -> isInstance(ctx, TargetInterpreter.class))
 			.onAction(ctx -> initiateConsole(ctx))
+			.enabled(false)
+			.buildAndInstallLocal(this);
+		
+		groupTargetIndex++;
+	
+		new ActionBuilder("Toggle", plugin.getName())
+			.keyBinding("T")
+			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "X" + groupTargetIndex)
+			.popupMenuPath("&Toggle")
+			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "X" + groupTargetIndex)
+			.helpLocation(AbstractToggleAction.help(plugin))
+			.enabledWhen(ctx -> isInstance(ctx, TargetTogglable.class))
+			.popupWhen(ctx -> isInstance(ctx, TargetTogglable.class))
+			.onAction(ctx -> performToggle(ctx))
+			.enabled(false)
+			.buildAndInstallLocal(this);
+		
+		groupTargetIndex++;
+	
+		new ActionBuilder("Configure", plugin.getName())
+			.keyBinding("C")
+			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "X" + groupTargetIndex)
+			.popupMenuPath("&Configure")
+			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "X" + groupTargetIndex)
+			.helpLocation(AbstractToggleAction.help(plugin))
+			.enabledWhen(ctx -> isInstance(ctx, TargetConfigurable.class))
+			.popupWhen(ctx -> isInstance(ctx, TargetConfigurable.class))
+			.onAction(ctx -> performConfigure(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
 		
@@ -1484,6 +1516,33 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			tool.showDialog(breakpointDialog);
 			return AsyncUtils.NIL;
 		}, "Couldn't set breakpoint");
+	}
+
+	public void performToggle(ActionContext context) {
+		performAction(context, false, TargetTogglable.class, t -> {
+			return t.toggle(!t.isEnabled());
+		}, "Couldn't toggle");
+	}
+
+	public void performConfigure(ActionContext context) {
+		performAction(context, false, TargetConfigurable.class, configurable -> {
+			Map<String, ParameterDescription<?>> configParameters =
+				configurable.getConfigurableOptions();
+			if (configParameters.isEmpty()) {
+				return AsyncUtils.NIL;
+			}
+			Map<String, ?> args = configDialog.promptArguments(configParameters);
+			if (args == null) {
+				// User cancelled
+				return AsyncUtils.NIL;
+			}
+			AsyncFence fence = new AsyncFence();
+			for (Entry<String, ?> entry : args.entrySet()) {
+				fence.include(
+					configurable.writeConfigurationOption(entry.getKey(), entry.getValue()));
+			}
+			return fence.ready();
+		}, "Couldn't configure one or more options");
 	}
 
 	public void initiateConsole(ActionContext context) {

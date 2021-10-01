@@ -362,7 +362,7 @@ public interface DebugClient extends DebugClientReentrant {
 	Description getProcessDescription(DebugServerId si, int systemId,
 			BitmaskSet<ProcessDescriptionFlags> flags);
 
-	void attachProcess(DebugServerId si, int processId, BitmaskSet<DebugAttachFlags> attachFlags);
+	void attachProcess(DebugServerId si, long processId, BitmaskSet<DebugAttachFlags> attachFlags);
 
 	void createProcess(DebugServerId si, String commandLine,
 			BitmaskSet<DebugCreateFlags> createFlags);

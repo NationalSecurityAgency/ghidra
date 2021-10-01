@@ -21,9 +21,6 @@ import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.impl.DbgStackFrameImpl;
 import agent.dbgeng.manager.impl.DbgThreadImpl;
 
-/**
- * The event corresponding with "{@code =thread-selected}"
- */
 public class DbgThreadSelectedEvent extends AbstractDbgEvent<DebugThreadId> {
 	private final DebugThreadId id;
 	private DbgState state;
