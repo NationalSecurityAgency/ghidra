@@ -15,25 +15,19 @@
  */
 package ghidra.file.formats.android.lz4;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 import org.apache.commons.compress.compressors.lz4.BlockLZ4CompressorInputStream;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.formats.gfilesystem.GFile;
-import ghidra.formats.gfilesystem.GFileImpl;
-import ghidra.formats.gfilesystem.GFileSystemBase;
+import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
 
 /**
  * 
@@ -74,59 +68,48 @@ public class LZ4ArchiveFileSystem extends GFileSystemBase {
 
 	@Override
 	public void open(TaskMonitor monitor) throws IOException, CancelledException {
-		byte[] decompressedBytes = decompress(monitor);
-		decompressedLZ4File =
-			GFileImpl.fromFilename(this, root, NAME, false, decompressedBytes.length, null);
+		try (ByteProvider payloadBP = getPayload(monitor, root.getFSRL().appendPath(NAME))) {
+			decompressedLZ4File =
+				GFileImpl.fromFSRL(this, root, payloadBP.getFSRL(), false, payloadBP.length());
+		}
 	}
 
-	private byte[] decompress(TaskMonitor monitor) throws IOException {
-		monitor.setShowProgressValue(true);
-		monitor.setMaximum(provider.length());
-		monitor.setProgress(0);
-		monitor.setMessage("Decompressing LZ4 archive...");
+	private ByteProvider getPayload(TaskMonitor monitor, FSRL payloadFSRL)
+			throws CancelledException, IOException {
+		return fsService.getDerivedByteProviderPush(provider.getFSRL(), payloadFSRL, NAME, -1,
+			os -> {
+				BinaryReader reader = new BinaryReader(provider, true);//always LE
+				int magic = reader.readNextInt();
+				if (magic != ARCHIVE_MAGIC) {
+					throw new IOException("LZ4 archive: invalid magic");
+				}
 
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		BinaryReader reader = new BinaryReader(provider, true);//always LE
-		int magic = reader.readNextInt();
-		if (magic != ARCHIVE_MAGIC) {
-			throw new IOException("invalid magic");
-		}
-		try {
-			while (reader.getPointerIndex() < reader.length()) {
-				monitor.checkCanceled();
+				UnknownProgressWrappingTaskMonitor upwtm =
+					new UnknownProgressWrappingTaskMonitor(monitor, provider.length());
+				upwtm.setMessage("Decompressing LZ4 archive...");
+				upwtm.setProgress(0);
 
-				int compressedChunkSize = reader.readNextInt();
-				monitor.setMessage("Chunk size: 0x" + Integer.toHexString(compressedChunkSize));
-				monitor.incrementProgress(compressedChunkSize);
+				while (reader.getPointerIndex() < reader.length()) {
+					monitor.checkCanceled();
 
-				byte[] compressedChunk = reader.readNextByteArray(compressedChunkSize);
-
-				try (InputStream compressedStream =
-					new BlockLZ4CompressorInputStream(new ByteArrayInputStream(compressedChunk))) {
-					while (true) {
-						monitor.checkCanceled();
-						byte[] bytes = new byte[0x10000];
-						int nRead = compressedStream.read(bytes);
-						if (nRead == -1) {
-							break;
-						}
-						baos.write(bytes, 0, nRead);
+					int compressedChunkSize = reader.readNextInt();
+					byte[] compressedChunk = reader.readNextByteArray(compressedChunkSize);
+					try (InputStream compressedStream =
+						new BlockLZ4CompressorInputStream(
+							new ByteArrayInputStream(compressedChunk))) {
+						long bytesCopied =
+							FSUtilities.streamCopy(compressedStream, os, TaskMonitor.DUMMY);
+						upwtm.incrementProgress(bytesCopied);
 					}
 				}
-			}
-		}
-		catch (Exception e) {
-			throw new IOException(e);
-		}
-		return baos.toByteArray();
+			}, monitor);
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		if (file == decompressedLZ4File || file.equals(decompressedLZ4File)) {
-			byte[] decompressedBytes = decompress(monitor);
-			return new ByteArrayInputStream(decompressedBytes);
+			return getPayload(monitor, file.getFSRL());
 		}
 		return null;
 	}

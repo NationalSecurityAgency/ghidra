@@ -15,12 +15,12 @@
  */
 package ghidra.formats.gfilesystem;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A threadsafe helper class that manages creating and releasing {@link FileSystemRef} instances
@@ -166,7 +166,8 @@ public class FileSystemRefManager {
 		// where instances are created and thrown away without a close() to probe
 		// filesystem container files.
 		if (fs != null && !(fs instanceof GFileSystemBase)) {
-			Msg.warn(this, "Unclosed FilesytemRefManager for filesystem: " + fs.getClass());
+			Msg.warn(this, "Unclosed FilesytemRefManager for filesystem: " + fs.getClass() + ", " +
+				fs.getName());
 		}
 	}
 

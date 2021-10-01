@@ -4,13 +4,12 @@
  */
 package ghidra.file.formats.ios.png;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.zip.*;
 
 import ghidra.file.formats.zlib.ZLIB;
-import ghidra.util.task.TaskMonitor;
 
 public class CrushedPNGUtil {
 
@@ -21,7 +20,7 @@ public class CrushedPNGUtil {
 	 * @return An InputStream of the correctly formated bytes of a png
 	 * @throws Exception 
 	 */
-	public InputStream getUncrushedPNGBytes(ProcessedPNG png, TaskMonitor monitor) throws Exception {
+	public static byte[] getUncrushedPNGBytes(ProcessedPNG png) throws Exception {
 		boolean foundIHDR = false;
 		boolean foundIDAT = false;
 		boolean foundCgBI = false;
@@ -184,9 +183,7 @@ public class CrushedPNGUtil {
 
 		}
 
-		InputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
-		return inputStream;
-
+		return outputStream.toByteArray();
 	}
 
 	/**
@@ -195,7 +192,7 @@ public class CrushedPNGUtil {
 	 * @param decompressedResult result of the zlib decompression
 	 * @throws PNGFormatException
 	 */
-	private void processIDATChunks(IHDRChunk ihdrChunk, byte[] decompressedResult)
+	private static void processIDATChunks(IHDRChunk ihdrChunk, byte[] decompressedResult)
 			throws PNGFormatException {
 		int width;
 		int height;
@@ -318,7 +315,7 @@ public class CrushedPNGUtil {
 	 * @param data the image data
 	 * @param offset the offset into data
 	 */
-	private void removeRowFilters(int width, int height, byte[] data, int offset) {
+	private static void removeRowFilters(int width, int height, byte[] data, int offset) {
 
 		/*
 		 * Yes, it is generally bad convention to have x in function scope in this way. However the 
@@ -426,7 +423,7 @@ public class CrushedPNGUtil {
 	 * @param data the image data
 	 * @param offset the offset into the data
 	 */
-	private void applyRowFilters(int width, int height, byte[] data, int offset) {
+	private static void applyRowFilters(int width, int height, byte[] data, int offset) {
 
 		/*
 		 * Yes, it is generally bad convention to have x in function scope in this way. However the 
@@ -525,7 +522,7 @@ public class CrushedPNGUtil {
 	 * @param data image data
 	 * @param offset offset into data
 	 */
-	private void demultiplyAlpha(int width, int height, byte[] data, int offset) {
+	private static void demultiplyAlpha(int width, int height, byte[] data, int offset) {
 		int srcPtr = offset;
 
 		for (int i = 0; i < height; i++) {
@@ -558,7 +555,7 @@ public class CrushedPNGUtil {
 	 * @param idatChunks the set of idat chunks
 	 * @return idat chunks with the new header
 	 */
-	private byte[] getFixedIdatDataBytes(ByteArrayOutputStream idatChunks) {
+	private static byte[] getFixedIdatDataBytes(ByteArrayOutputStream idatChunks) {
 
 		//Prepend the needed Zlib header info to the IDAT chunk data
 		byte[] idatData = idatChunks.toByteArray();
@@ -576,7 +573,7 @@ public class CrushedPNGUtil {
 	 * @param data the byte array to calculate crc32 from
 	 * @return The crc32 result
 	 */
-	private byte[] calculateCRC32(byte[] data) {
+	private static byte[] calculateCRC32(byte[] data) {
 		CRC32 checksum = new CRC32();
 		checksum.update(data);
 		long result = checksum.getValue();
@@ -588,7 +585,7 @@ public class CrushedPNGUtil {
 	 * @param chunk the chunk to calculate crc32 from
 	 * @return The crc32 result
 	 */
-	private byte[] calculateCRC32(PNGChunk chunk) {
+	private static byte[] calculateCRC32(PNGChunk chunk) {
 		CRC32 checksum = new CRC32();
 		checksum.update(ByteBuffer.allocate(4 + chunk.getLength()).putInt(chunk.getChunkID()).put(
 			chunk.getData()).array());

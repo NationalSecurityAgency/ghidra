@@ -15,7 +15,8 @@
  */
 package ghidra.file.formats.tar;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -23,6 +24,8 @@ import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.lang3.ArrayUtils;
 
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.recognizer.Bzip2Recognizer;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.factory.*;
@@ -31,8 +34,8 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
 
-public class TarFileSystemFactory implements GFileSystemFactoryWithFile<TarFileSystem>,
-		GFileSystemProbeBytesOnly, GFileSystemProbeWithFile {
+public class TarFileSystemFactory implements GFileSystemFactoryByteProvider<TarFileSystem>,
+		GFileSystemProbeBytesOnly, GFileSystemProbeByteProvider {
 
 	public static final int TAR_MAGIC_BYTES_REQUIRED =
 		TarConstants.VERSION_OFFSET + TarConstants.VERSIONLEN;
@@ -40,22 +43,24 @@ public class TarFileSystemFactory implements GFileSystemFactoryWithFile<TarFileS
 	private static final String[] TAR_EXTS = { ".tar", ".tgz", ".tar.gz", ".tbz2", ".tar.bz2" };
 
 	@Override
-	public TarFileSystem create(FSRL containerFSRL, FSRLRoot targetFSRL, File containerFile,
+	public TarFileSystem create(FSRLRoot targetFSRL, ByteProvider provider,
 			FileSystemService fsService, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
-		if (isCompressedTarFile(containerFile)) {
+		FSRL containerFSRL = provider.getFSRL();
+		ByteProvider uncompressedBP = provider;
+		if (isCompressedMagicBytes(provider)) {
 			UnknownProgressWrappingTaskMonitor upwtm =
-				new UnknownProgressWrappingTaskMonitor(monitor, containerFile.length());
-			FileCacheEntry fce =
-				fsService.getDerivedFile(containerFSRL, "uncompressed tar", (srcFile) -> {
+				new UnknownProgressWrappingTaskMonitor(monitor, provider.length());
+			uncompressedBP = fsService.getDerivedByteProvider(containerFSRL, null,
+				"uncompressed tar", -1, () -> {
 					Msg.info(TarFileSystem.class, "Uncompressing tar file " + containerFSRL);
-					return newFileInputStreamAutoDetectCompressed(srcFile);
+					return newFileInputStreamAutoDetectCompressed(provider);
 				}, upwtm);
-			containerFile = fce.file;
+			provider.close();
 		}
-		TarFileSystem fs = new TarFileSystem(containerFile, targetFSRL, fsService);
-		fs.mount(false, monitor);
+		TarFileSystem fs = new TarFileSystem(targetFSRL, uncompressedBP, fsService);
+		fs.mount(monitor);
 		return fs;
 	}
 
@@ -78,9 +83,9 @@ public class TarFileSystemFactory implements GFileSystemFactoryWithFile<TarFileS
 	 *
 	 */
 	@Override
-	public boolean probe(FSRL containerFSRL, File containerFile, FileSystemService fsService,
+	public boolean probe(ByteProvider provider, FileSystemService fsService,
 			TaskMonitor taskMonitor) throws IOException, CancelledException {
-		String filename = containerFSRL.getName();
+		String filename = provider.getFSRL().getName();
 		String ext = FSUtilities.getExtension(filename, 1);
 		if (ext == null) {
 			return false;
@@ -97,48 +102,49 @@ public class TarFileSystemFactory implements GFileSystemFactoryWithFile<TarFileS
 			return false;
 		}
 
-		try (InputStream is = newFileInputStreamAutoDetectCompressed(containerFile)) {
+		if (!isCompressedMagicBytes(provider)) {
+			return false;
+		}
+
+		try (InputStream is = newFileInputStreamAutoDetectCompressed(provider)) {
 			byte[] startBytes = new byte[TAR_MAGIC_BYTES_REQUIRED];
 			if (is.read(startBytes) != TAR_MAGIC_BYTES_REQUIRED) {
 				return false;
 			}
 
-			return probeStartBytes(null, startBytes);
+			return probeStartBytes(provider.getFSRL(), startBytes);
 		}
 	}
 
-	private static int readUShort(InputStream in) throws IOException {
-		byte[] buf = new byte[2];
-		if (in.read(buf) != 2) {
-			throw new IOException("Not enough bytes to read short");
-		}
-		return ((buf[1] & 0xff) << 8) | (buf[0] & 0xff);
-	}
+	private static InputStream newFileInputStreamAutoDetectCompressed(ByteProvider bp)
+			throws IOException {
+		int magicBytes = readMagicBytes(bp);
 
-	private static InputStream newFileInputStreamAutoDetectCompressed(File f) throws IOException {
-		InputStream is = new BufferedInputStream(new FileInputStream(f));
-		is.mark(2);
-		int magicbytes = readUShort(is);
-		is.reset();
-		switch (magicbytes) {
+		InputStream is = bp.getInputStream(0);
+		switch (magicBytes) {
 			case GZIPInputStream.GZIP_MAGIC:
-				is = new GZIPInputStream(is);
-				break;
+				return new GZIPInputStream(is);
 			case Bzip2Recognizer.MAGIC_BYTES:
-				is = new BZip2CompressorInputStream(is);
-				break;
+				return new BZip2CompressorInputStream(is);
 		}
 		return is;
 	}
 
-	private static boolean isCompressedStream(InputStream is) {
-		// this needs to match the implementation details of the newFileInputStreamAutoDetectCompressed() func just a few lines above.
-		return (is instanceof GZIPInputStream) || (is instanceof BZip2CompressorInputStream);
+	private static boolean isCompressedMagicBytes(ByteProvider bp) throws IOException {
+		int magicBytes = readMagicBytes(bp);
+		switch (magicBytes) {
+			case GZIPInputStream.GZIP_MAGIC:
+			case Bzip2Recognizer.MAGIC_BYTES:
+				return true;
+			default:
+				return false;
+		}
 	}
 
-	private static boolean isCompressedTarFile(File f) throws IOException {
-		try (InputStream is = newFileInputStreamAutoDetectCompressed(f)) {
-			return isCompressedStream(is);
-		}
+	private static int readMagicBytes(ByteProvider bp) throws IOException {
+		BinaryReader br = new BinaryReader(bp, true /* LE */);
+		int magicBytes = br.readUnsignedShort(0);
+
+		return magicBytes;
 	}
 }

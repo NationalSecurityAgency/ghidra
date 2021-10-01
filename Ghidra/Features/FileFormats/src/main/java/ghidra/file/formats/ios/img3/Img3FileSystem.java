@@ -15,8 +15,8 @@
  */
 package ghidra.file.formats.ios.img3;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.List;
 
 import javax.swing.Icon;
 
@@ -24,40 +24,33 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.file.formats.ios.img3.tag.DataTag;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
-import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
 
 @FileSystemInfo(type = "img3", description = "iOS " +
-	Img3Constants.IMG3_SIGNATURE, factory = GFileSystemBaseFactory.class)
-public class Img3FileSystem extends GFileSystemBase {
+	Img3Constants.IMG3_SIGNATURE, factory = Img3FileSystemFactory.class)
+public class Img3FileSystem implements GFileSystem {
 
-	private Img3 header;
-	private List<GFile> dataFileList = new ArrayList<>();
+	private FSRLRoot fsFSRL;
+	private FileSystemRefManager fsRefManager = new FileSystemRefManager(this);
+	private FileSystemIndexHelper<DataTag> fsIndexHelper;
+	private ByteProvider provider;
+	private FileSystemService fsService;
 
-	public Img3FileSystem(String fileSystemName, ByteProvider provider) {
-		super(fileSystemName, provider);
-	}
+	public Img3FileSystem(FSRLRoot fsFSRL, ByteProvider provider, FileSystemService fsService,
+			TaskMonitor monitor) throws IOException {
+		this.fsFSRL = fsFSRL;
+		this.fsIndexHelper = new FileSystemIndexHelper<>(this, fsFSRL);
+		this.provider = provider;
+		this.fsService = fsService;
 
-	@Override
-	public boolean isValid(TaskMonitor monitor) throws IOException {
-		byte[] bytes = provider.readBytes(0, Img3Constants.IMG3_SIGNATURE_LENGTH);
-		return Arrays.equals(bytes, Img3Constants.IMG3_SIGNATURE_BYTES);
-	}
-
-	@Override
-	public void open(TaskMonitor monitor) throws IOException {
 		monitor.setMessage("Opening IMG3...");
-
-		this.header = new Img3(provider);
-
+		Img3 header = new Img3(provider);
 		if (!header.getMagic().equals(Img3Constants.IMG3_SIGNATURE)) {
 			throw new IOException("Unable to decrypt file: invalid IMG3 file!");
 		}
-
 		List<DataTag> tags = header.getTags(DataTag.class);
-
 		monitor.initialize(tags.size());
 
 		for (int i = 0; i < tags.size(); ++i) {
@@ -68,9 +61,8 @@ public class Img3FileSystem extends GFileSystemBase {
 
 			DataTag dataTag = tags.get(i);
 			String filename = getDataTagFilename(dataTag, i, tags.size() > 1);
-			GFileImpl dataFile = GFileImpl.fromPathString(this, root, filename, null, false,
-				dataTag.getTotalLength());
-			dataFileList.add(dataFile);
+			fsIndexHelper.storeFileWithParent(filename, fsIndexHelper.getRootDir(), i, false,
+				dataTag.getTotalLength(), dataTag);
 		}
 	}
 
@@ -81,34 +73,33 @@ public class Img3FileSystem extends GFileSystemBase {
 
 	@Override
 	public void close() throws IOException {
-		super.close();
+		fsRefManager.onClose();
+		fsIndexHelper.clear();
+		if (provider != null) {
+			provider.close();
+			provider = null;
+		}
 	}
 
 	@Override
-	public InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CryptoException, CancelledException {
-		FSRLRoot fsFSRL = getFSRL();
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
+			throws IOException, CancelledException {
+
 		if (fsFSRL.getNestingDepth() < 3) {
 			throw new CryptoException(
 				"Unable to decrypt IMG3 data because IMG3 crypto keys are specific to the container it is embedded in and this IMG3 was not in a container");
 		}
 
-		List<DataTag> tags = header.getTags(DataTag.class);
-		for (int i = 0; i < tags.size(); ++i) {
-			DataTag dataTag = tags.get(i);
-			String filename = getDataTagFilename(dataTag, i, tags.size() > 1);
-			if (file.getName().equals(filename)) {
-				FileCacheEntry derivedFile =
-					fsService.getDerivedFile(fsFSRL.getContainer(), "decrypted_img3_" + filename,
-						(srcFile) -> dataTag.getDecryptedInputStream(fsFSRL.getName(2),
-							fsFSRL.getName(1)),
-						monitor);
-
-				return new FileInputStream(derivedFile.file);
-			}
+		DataTag dataTag = fsIndexHelper.getMetadata(file);
+		if (dataTag == null) {
+			throw new IOException("Unknown file: " + file);
 		}
 
-		throw new IOException("Unable to get DATA for " + file.getPath());
+		ByteProvider derivedBP = fsService.getDerivedByteProvider(fsFSRL.getContainer(),
+			file.getFSRL(), "decrypted_img3_" + file.getName(), dataTag.getTotalLength(),
+			() -> dataTag.getDecryptedInputStream(fsFSRL.getName(2), fsFSRL.getName(1)), monitor);
+
+		return derivedBP;
 	}
 
 	public Icon getIcon() {
@@ -116,39 +107,33 @@ public class Img3FileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
-		return null;
+	public List<GFile> getListing(GFile directory) {
+		return fsIndexHelper.getListing(directory);
 	}
 
 	@Override
-	public List<GFile> getListing(GFile directory) {
-		if (directory == null || directory.equals(root)) {
-			if (dataFileList.isEmpty()) {
-				if (header != null) {
-					List<DataTag> tags = header.getTags(DataTag.class);
-					for (int i = 0; i < tags.size(); ++i) {
-						DataTag dataTag = tags.get(i);
-						String name = dataTag.getMagic();
-						if (tags.size() > 1) {
-							name = name + i;
-						}
-						GFileImpl dataFile = GFileImpl.fromFilename(this, root, name, false,
-							dataTag.getTotalLength(), null);
-						dataFileList.add(dataFile);
-					}
-				}
-			}
-			return dataFileList;
-		}
-		return new ArrayList<>();
+	public String getName() {
+		return fsFSRL.getContainer().getName();
 	}
 
-	public boolean isDirectory(GFileImpl directory) {
-		return directory.equals(root);
+	@Override
+	public FSRLRoot getFSRL() {
+		return fsFSRL;
 	}
 
-	public boolean isFile(GFileImpl file) {
-		return !file.equals(root);
+	@Override
+	public boolean isClosed() {
+		return provider == null;
+	}
+
+	@Override
+	public FileSystemRefManager getRefManager() {
+		return fsRefManager;
+	}
+
+	@Override
+	public GFile lookup(String path) throws IOException {
+		return fsIndexHelper.lookup(path);
 	}
 
 }

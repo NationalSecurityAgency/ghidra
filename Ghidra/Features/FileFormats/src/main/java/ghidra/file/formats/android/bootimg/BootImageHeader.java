@@ -16,6 +16,7 @@
 package ghidra.file.formats.android.bootimg;
 
 import ghidra.app.util.bin.StructConverter;
+import ghidra.util.NumericUtilities;
 
 public abstract class BootImageHeader implements StructConverter {
 	/**
@@ -30,6 +31,16 @@ public abstract class BootImageHeader implements StructConverter {
 	 * @return the page size, as defined in the header
 	 */
 	public abstract int getPageSize();
+
+	/**
+	 * Aligns a value upwards to nearest page boundary.
+	 *  
+	 * @param value unsigned value to align
+	 * @return value rounded up to next page size (if not already aligned)
+	 */
+	public long pageAlign(long value) {
+		return NumericUtilities.getUnsignedAlignedValue(value, getPageSize());
+	}
 
 	/**
 	 * Returns the kernel size, as defined in the header.

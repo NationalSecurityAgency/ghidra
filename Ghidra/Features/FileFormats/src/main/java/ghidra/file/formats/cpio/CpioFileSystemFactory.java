@@ -15,27 +15,25 @@
  */
 package ghidra.file.formats.cpio;
 
-import java.io.File;
 import java.io.IOException;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveInputStream;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.*;
-import ghidra.formats.gfilesystem.factory.GFileSystemFactoryFull;
+import ghidra.formats.gfilesystem.factory.GFileSystemFactoryByteProvider;
 import ghidra.formats.gfilesystem.factory.GFileSystemProbeBytesOnly;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class CpioFileSystemFactory
-		implements GFileSystemFactoryFull<CpioFileSystem>, GFileSystemProbeBytesOnly {
+		implements GFileSystemFactoryByteProvider<CpioFileSystem>, GFileSystemProbeBytesOnly {
 
 	@Override
-	public CpioFileSystem create(FSRL containerFSRL, FSRLRoot targetFSRL,
-			ByteProvider byteProvider, File containerFile, FileSystemService fsService,
-			TaskMonitor monitor) throws IOException, CancelledException {
-
-		CpioFileSystem fs = new CpioFileSystem(targetFSRL, byteProvider, monitor);
+	public CpioFileSystem create(FSRLRoot targetFSRL, ByteProvider byteProvider,
+			FileSystemService fsService, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		CpioFileSystem fs = new CpioFileSystem(targetFSRL, byteProvider, fsService, monitor);
 		return fs;
 	}
 

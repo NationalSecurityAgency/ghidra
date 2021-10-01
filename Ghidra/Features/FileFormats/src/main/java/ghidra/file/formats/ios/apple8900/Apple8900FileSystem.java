@@ -16,7 +16,6 @@
 package ghidra.file.formats.ios.apple8900;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 import ghidra.app.util.bin.ByteProvider;
@@ -43,13 +42,16 @@ public class Apple8900FileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException, CryptoException {
 		if (file != null && file.equals(dataFile)) {
-			Apple8900Decryptor decryptor = new Apple8900Decryptor();
-			DecryptedPacket decrypt = decryptor.decrypt(null /* does not matter*/,
-				null /* does not matter */, provider, monitor);
-			return decrypt.decryptedStream;
+			return fsService.getDerivedByteProvider(provider.getFSRL(), file.getFSRL(),
+				file.getName(), -1, () -> {
+					Apple8900Decryptor decryptor = new Apple8900Decryptor();
+					DecryptedPacket decrypt = decryptor.decrypt(null /* does not matter*/,
+						null /* does not matter */, provider, monitor);
+					return decrypt.decryptedStream;
+				}, monitor);
 		}
 		return null;
 	}

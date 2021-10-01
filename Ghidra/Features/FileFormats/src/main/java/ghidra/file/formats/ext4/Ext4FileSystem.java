@@ -15,16 +15,18 @@
  */
 package ghidra.file.formats.ext4;
 
+import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
+
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.BitSet;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.util.bin.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
+import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
+import ghidra.formats.gfilesystem.fileinfo.FileType;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
@@ -183,31 +185,45 @@ public class Ext4FileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
+	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
+		FileAttributes result = new FileAttributes();
+
 		Ext4File ext4File = fsih.getMetadata(file);
-		if (ext4File == null) {
-			return null;
-		}
-		Ext4Inode inode = ext4File.getInode();
-		String info = "";
-		if (inode.isSymLink()) {
-			try {
-				info += "Symlink to \"" + readLink(file, ext4File, monitor) + "\"\n";
+		if (ext4File != null) {
+			Ext4Inode inode = ext4File.getInode();
+			result.add(NAME_ATTR, ext4File.getName());
+			result.add(SIZE_ATTR, inode.getSize());
+			result.add(FILE_TYPE_ATTR, inodeToFileType(inode));
+			if (inode.isSymLink()) {
+				String symLinkDest = "unknown";
+				try {
+					symLinkDest = readLink(file, ext4File, monitor);
+				}
+				catch (IOException e) {
+					// fall thru with default value
+				}
+				result.add(SYMLINK_DEST_ATTR, symLinkDest);
 			}
-			catch (IOException e) {
-				// ignore
-			}
+			result.add(MODIFIED_DATE_ATTR, new Date(inode.getI_mtime() * 1000));
+			result.add(UNIX_ACL_ATTR, (long) (inode.getI_mode() & 0xFFF));
+			result.add(USER_ID_ATTR, Short.toUnsignedLong(inode.getI_uid()));
+			result.add(GROUP_ID_ATTR, Short.toUnsignedLong(inode.getI_gid()));
+			result.add("Link Count", inode.getI_links_count());
 		}
-		long size = inode.getSize();
-		info += "File size:  " + FSUtilities.formatSize(size) + "\n";
-		return info;
+		return result;
 	}
 
-	@Override
-	public InputStream getInputStream(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		ByteProvider bp = getByteProvider(file, monitor);
-		return (bp != null) ? new ByteProviderInputStream(bp, 0, bp.length()) : null;
+	FileType inodeToFileType(Ext4Inode inode) {
+		if (inode.isDir()) {
+			return FileType.DIRECTORY;
+		}
+		if (inode.isSymLink()) {
+			return FileType.SYMBOLIC_LINK;
+		}
+		if (inode.isFile()) {
+			return FileType.FILE;
+		}
+		return FileType.UNKNOWN;
 	}
 
 	private static final int MAX_SYMLINK_LOOKUP_COUNT = 100;
@@ -281,6 +297,7 @@ public class Ext4FileSystem implements GFileSystem {
 	 * responsible for closing the ByteProvider
 	 * @throws IOException if error
 	 */
+	@Override
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) throws IOException {
 		Ext4Inode inode = getInodeFor(file, monitor);
 		if (inode == null) {

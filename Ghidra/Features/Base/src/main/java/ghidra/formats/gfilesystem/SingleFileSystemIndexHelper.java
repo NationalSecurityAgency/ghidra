@@ -141,7 +141,7 @@ public class SingleFileSystemIndexHelper {
 	 * the payload file.
 	 */
 	public GFile lookup(String path) {
-		if (path.equals("/")) {
+		if (path == null || path.equals("/")) {
 			return rootDir;
 		}
 		else if (path.equals(payloadFile.getFSRL().getPath())) {

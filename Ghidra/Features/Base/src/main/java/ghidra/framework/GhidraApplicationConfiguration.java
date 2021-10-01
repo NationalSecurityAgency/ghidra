@@ -25,6 +25,8 @@ import docking.framework.ApplicationInformationDisplayFactory;
 import docking.framework.SplashScreen;
 import docking.widgets.PopupKeyStorePasswordProvider;
 import ghidra.docking.util.DockingWindowsLookAndFeelUtils;
+import ghidra.formats.gfilesystem.crypto.CryptoProviders;
+import ghidra.formats.gfilesystem.crypto.PopupGUIPasswordProvider;
 import ghidra.framework.main.GhidraApplicationInformationDisplayFactory;
 import ghidra.framework.main.UserAgreementDialog;
 import ghidra.framework.preferences.Preferences;
@@ -58,6 +60,7 @@ public class GhidraApplicationConfiguration extends HeadlessGhidraApplicationCon
 
 		ApplicationKeyManagerFactory.setKeyStorePasswordProvider(
 			new PopupKeyStorePasswordProvider());
+		CryptoProviders.getInstance().registerCryptoProvider(new PopupGUIPasswordProvider());
 	}
 
 	private static void platformSpecificFixups() {

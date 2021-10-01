@@ -15,115 +15,21 @@
  */
 package ghidra.file.formats.zip;
 
-import java.io.*;
-import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-
-import ghidra.formats.gfilesystem.*;
+import ghidra.file.formats.sevenzip.SevenZipFileSystem;
+import ghidra.formats.gfilesystem.FSRLRoot;
+import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
+/**
+ * Derivative of 7zip file system to provide "zip" flavored FSRLs.
+ * <p>
+ * 7Zip's features are superior to the native java zip handling (ie. passwords)
+ */
 @FileSystemInfo(type = "zip", description = "ZIP", factory = ZipFileSystemFactory.class, priority = FileSystemInfo.PRIORITY_HIGH)
-public class ZipFileSystem implements GFileSystem {
+public class ZipFileSystem extends SevenZipFileSystem {
 
-	private FileSystemIndexHelper<ZipEntry> fsIndexHelper;
-	private FSRLRoot fsrl;
-	private ZipFile zipFile;
-	private FileSystemRefManager refManager = new FileSystemRefManager(this);
-
-	public ZipFileSystem(FSRLRoot fsrl) {
-		this.fsrl = fsrl;
-		this.fsIndexHelper = new FileSystemIndexHelper<>(this, fsrl);
+	public ZipFileSystem(FSRLRoot fsrl, FileSystemService fsService) {
+		super(fsrl, fsService);
 	}
 
-	@Override
-	public String getName() {
-		return fsrl.getContainer().getName();
-	}
-
-	@Override
-	public void close() throws IOException {
-		refManager.onClose();
-		if (zipFile != null) {
-			zipFile.close();
-			zipFile = null;
-		}
-		fsIndexHelper.clear();
-	}
-
-	@Override
-	public boolean isClosed() {
-		return zipFile == null;
-	}
-
-	@Override
-	public FSRLRoot getFSRL() {
-		return fsrl;
-	}
-
-	@Override
-	public int getFileCount() {
-		return fsIndexHelper.getFileCount();
-	}
-
-	public void mount(File f, TaskMonitor monitor) throws CancelledException, IOException {
-		this.zipFile = new ZipFile(f);
-
-		Enumeration<? extends ZipEntry> entries = zipFile.entries();
-		while (entries.hasMoreElements()) {
-			monitor.checkCanceled();
-			ZipEntry currentEntry = entries.nextElement();
-			fsIndexHelper.storeFile(currentEntry.getName(), -1, currentEntry.isDirectory(),
-				currentEntry.getSize(), currentEntry);
-		}
-	}
-
-	public Map<String, String> getInfoMap(ZipEntry blob) {
-		Map<String, String> info = new HashMap<>();
-		info.put("Name", blob.getName());
-		info.put("Comment", blob.getComment());
-		info.put("Compressed Size", "0x" + Long.toHexString(blob.getCompressedSize()));
-		info.put("Uncompressed Size", "0x" + Long.toHexString(blob.getSize()));
-		info.put("CRC", "0x" + Long.toHexString(blob.getCrc()));
-		info.put("Compression Method", "0x" + Integer.toHexString(blob.getMethod()));
-		info.put("Time", new Date(blob.getTime()).toString());
-		info.put("Extra Bytes",
-			(blob.getExtra() == null ? "null" : Arrays.toString(blob.getExtra())));
-		return info;
-	}
-
-	@Override
-	public String toString() {
-		return "ZipFilesystem [ fsrl=" + fsrl + ", filename=" + zipFile.getName() + " ]";
-	}
-
-	@Override
-	public GFile lookup(String path) throws IOException {
-		return fsIndexHelper.lookup(path);
-	}
-
-	@Override
-	public InputStream getInputStream(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		ZipEntry zipEntry = fsIndexHelper.getMetadata(file);
-		return (zipEntry != null) ? zipFile.getInputStream(zipEntry) : null;
-	}
-
-	@Override
-	public List<GFile> getListing(GFile directory) throws IOException {
-		return fsIndexHelper.getListing(directory);
-	}
-
-	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
-		ZipEntry zipEntry = fsIndexHelper.getMetadata(file);
-		return (zipEntry != null) ? FSUtilities.infoMapToString(getInfoMap(zipEntry)) : null;
-	}
-
-	@Override
-	public FileSystemRefManager getRefManager() {
-		return refManager;
-	}
 }

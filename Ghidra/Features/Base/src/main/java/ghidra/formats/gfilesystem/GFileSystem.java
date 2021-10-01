@@ -15,12 +15,14 @@
  */
 package ghidra.formats.gfilesystem;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.List;
 
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.ByteProviderInputStream;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
+import ghidra.formats.gfilesystem.fileinfo.FileAttribute;
+import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.util.classfinder.ExtensionPoint;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -30,8 +32,9 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  * Operations take a {@link TaskMonitor} if they need to be cancel-able.
  * <p>
- * Use {@link FileSystemService} to discover and open instances of filesystems in files or
- * to open a known {@link FSRL} path.
+ * Use a {@link FileSystemService FileSystemService instance} to discover and 
+ * open instances of filesystems in files or to open a known {@link FSRL} path or to
+ * deal with creating {@link FileSystemService#createTempFile(long) temp files}.
  * <p>
  * NOTE:<p>
  * ALL GFileSystem sub-CLASSES MUST END IN "FileSystem". If not, the ClassSearcher
@@ -137,7 +140,24 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	 * @throws IOException if IO problem
 	 * @throws CancelledException if user cancels.
 	 */
-	public InputStream getInputStream(GFile file, TaskMonitor monitor)
+	default public InputStream getInputStream(GFile file, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		return getInputStreamHelper(file, this, monitor);
+	}
+
+	/**
+	 * Returns a {@link ByteProvider} that contains the contents of the specified {@link GFile}.
+	 * <p>
+	 * The caller is responsible for closing the provider.
+	 * 
+	 * @param file {@link GFile} to get bytes for
+	 * @param monitor {@link TaskMonitor} to watch and update progress
+	 * @return new {@link ByteProvider} that contains the contents of the file, or NULL if file
+	 * doesn't have data
+	 * @throws IOException if error
+	 * @throws CancelledException if user cancels
+	 */
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException;
 
 	/**
@@ -151,17 +171,36 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	public List<GFile> getListing(GFile directory) throws IOException;
 
 	/**
-	 * Returns a multi-line string with information about the specified {@link GFile file}.
+	 * Returns a container of {@link FileAttribute} values.
 	 * <p>
-	 * TODO:{@literal this method needs to be refactored to return a Map<String, String>; instead of}
-	 * a pre-formatted multi-line string.
-	 * <p>
-	 * @param file {@link GFile} to get info message for.
-	 * @param monitor {@link TaskMonitor} to watch and update progress.
-	 * @return multi-line formatted string with info about the file, or null.
+	 * Implementors of this method are not required to add FSRL, NAME, or PATH values unless
+	 * the values are non-standard.
+	 * 
+	 * @param file {@link GFile} to get the attributes for
+	 * @param monitor {@link TaskMonitor}
+	 * @return {@link FileAttributes} instance (possibly read-only), maybe empty but never null
 	 */
-	default public String getInfo(GFile file, TaskMonitor monitor) {
-		return null;
+	default public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
+		return FileAttributes.EMPTY;
+	}
+
+	/**
+	 * Default implementation of getting an {@link InputStream} from a {@link GFile}'s
+	 * {@link ByteProvider}.
+	 * <p>
+	 * 
+	 * @param file {@link GFile}
+	 * @param fs the {@link GFileSystem filesystem} containing the file
+	 * @param monitor {@link TaskMonitor} to allow canceling
+	 * @return new {@link InputStream} containing bytes of the file
+	 * @throws CancelledException if canceled
+	 * @throws IOException if error
+	 */
+	public static InputStream getInputStreamHelper(GFile file, GFileSystem fs, TaskMonitor monitor)
+			throws CancelledException, IOException {
+		ByteProvider bp = fs.getByteProvider(file, monitor);
+		return (bp != null) ? new ByteProviderInputStream.ClosingInputStream(bp) : null;
+
 	}
 
 }

@@ -22,8 +22,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import docking.ActionContext;
-import docking.action.*;
+import javax.swing.KeyStroke;
+
+import docking.action.DockingAction;
+import docking.action.builder.ActionBuilder;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import ghidra.app.CorePluginPackage;
@@ -50,7 +52,7 @@ import utilities.util.FileUtilities;
 /**
  * A {@link Plugin} that supplies a {@link GFileSystem filesystem} browser component
  * that allows the user to view the contents of filesystems and perform actions on the
- * files inside those filesystems.x
+ * files inside those filesystems.
  */
 //@formatter:off
 @PluginInfo(
@@ -65,14 +67,13 @@ import utilities.util.FileUtilities;
 )
 //@formatter:on
 public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, ProjectListener,
-		FileSystemEventListener, FileSystemBrowserService {
-
-	private static final String MENU_GROUP = "Import";
+		FileSystemBrowserService {
 
 	/* package */ DockingAction openFilesystemAction;
 	private GhidraFileChooser chooserOpen;
 	private FrontEndService frontEndService;
 	private Map<FSRL, FileSystemBrowserComponentProvider> currentBrowsers = new HashMap<>();
+	private FileSystemService fsService; // don't use this directly, use fsService() instead
 
 	public FileSystemBrowserPlugin(PluginTool tool) {
 		super(tool);
@@ -138,7 +139,6 @@ public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, Pro
 			fsRef.close();
 		}
 		else {
-			fsRef.getFilesystem().getRefManager().addListener(this);
 			provider = new FileSystemBrowserComponentProvider(this, fsRef);
 			currentBrowsers.put(fsFSRL, provider);
 			getTool().addComponentProvider(provider, false);
@@ -148,25 +148,14 @@ public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, Pro
 		if (show) {
 			getTool().showComponentProvider(provider, true);
 			getTool().toFront(provider);
+			provider.contextChanged();
 		}
 	}
 
-	/**
-	 * Closes any FilesystemBrowser window component that is showing the specified filesystem.
-	 *
-	 * @param fsFSRL {@link FSRLRoot} of the filesystem to close.
-	 */
-	/* package */ void removeFileSystemBrowser(FSRLRoot fsFSRL) {
-		Swing.runIfSwingOrRunLater(() -> {
-			FileSystemBrowserComponentProvider fsbcp = currentBrowsers.get(fsFSRL);
-			if (fsbcp == null) {
-				return;
-			}
-
-			currentBrowsers.remove(fsFSRL);
-			fsbcp.removeFromTool();
-			fsbcp.dispose();
-		});
+	void removeFileSystemBrowserComponent(FileSystemBrowserComponentProvider componentProvider) {
+		if (componentProvider != null) {
+			Swing.runIfSwingOrRunLater(() -> currentBrowsers.remove(componentProvider.getFSRL()));
+		}
 	}
 
 	/**
@@ -176,7 +165,6 @@ public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, Pro
 		Swing.runIfSwingOrRunLater(() -> {
 			for (FileSystemBrowserComponentProvider fsbcp : new ArrayList<>(
 				currentBrowsers.values())) {
-				fsbcp.removeFromTool();
 				fsbcp.dispose();
 			}
 			currentBrowsers.clear();
@@ -197,7 +185,7 @@ public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, Pro
 	public void projectClosed(Project project) {
 		removeAllFileSystemBrowsers();
 		if (FileSystemService.isInitialized()) {
-			FileSystemService.getInstance().closeUnusedFileSystems();
+			fsService().closeUnusedFileSystems();
 		}
 	}
 
@@ -207,28 +195,14 @@ public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, Pro
 	}
 
 	private void setupOpenFileSystemAction() {
-		String actionName = "Open File System";
-
-		openFilesystemAction = new DockingAction(actionName, this.getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				doOpenFileSystem();
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				return tool.getProject() != null;
-			}
-		};
-		openFilesystemAction.setMenuBarData(
-			new MenuData(new String[] { "&File", actionName + "..." }, null, MENU_GROUP,
-				MenuData.NO_MNEMONIC, "z"));
-		openFilesystemAction.setKeyBindingData(
-			new KeyBindingData(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK));
-		openFilesystemAction.setDescription(getPluginDescription().getDescription());
-		openFilesystemAction.setEnabled(tool.getProject() != null);
-
-		tool.addAction(openFilesystemAction);
+		openFilesystemAction = new ActionBuilder("Open File System", this.getName())
+				.description(getPluginDescription().getDescription())
+				.enabledWhen(ac -> tool.getProject() != null)
+				.menuPath("File", "Open File System...")
+				.menuGroup("Import", "z")
+				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK))
+				.onAction(ac -> doOpenFileSystem())
+				.buildAndInstall(tool);
 	}
 
 	private void openChooser(String title, String buttonText, boolean multiSelect) {
@@ -254,18 +228,15 @@ public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, Pro
 	private void doOpenFilesystem(FSRL containerFSRL, Component parent, TaskMonitor monitor) {
 		try {
 			monitor.setMessage("Probing " + containerFSRL.getName() + " for filesystems");
-			FileSystemRef ref = FileSystemService.getInstance()
-					.probeFileForFilesystem(
-						containerFSRL, monitor, FileSystemProbeConflictResolver.GUI_PICKER);
+			FileSystemRef ref = fsService().probeFileForFilesystem(containerFSRL, monitor,
+				FileSystemProbeConflictResolver.GUI_PICKER);
 			if (ref == null) {
 				Msg.showWarn(this, parent, "Open Filesystem",
 					"No filesystem provider for " + containerFSRL.getName());
 				return;
 			}
 
-			Swing.runLater(() -> {
-				createNewFileSystemBrowser(ref, true);
-			});
+			createNewFileSystemBrowser(ref, true);
 		}
 		catch (IOException | CancelledException e) {
 			FSUtilities.displayException(this, parent, "Open Filesystem Error",
@@ -301,22 +272,18 @@ public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, Pro
 			return;
 		}
 
-		FSRL containerFSRL = FileSystemService.getInstance().getLocalFSRL(file);
+		FSRL containerFSRL = fsService().getLocalFSRL(file);
 		TaskLauncher.launchModal("Open File System", (monitor) -> {
 			doOpenFilesystem(containerFSRL, parent, monitor);
 		});
 	}
 
-	@Override
-	public void onFilesystemClose(GFileSystem fs) {
-		Msg.info(this, "File system " + fs.getFSRL() + " was closed! Closing browser window");
-		removeFileSystemBrowser(fs.getFSRL());
-	}
-
-	@Override
-	public void onFilesystemRefChange(GFileSystem fs, FileSystemRefManager refManager) {
-		//Msg.info(this, "File system " + fs.getFSRL() + " ref changed");
-		// nada
+	private FileSystemService fsService() {
+		// use a delayed initialization so we don't force the FileSystemService to initialize
+		if (fsService == null) {
+			fsService = FileSystemService.getInstance();
+		}
+		return fsService;
 	}
 
 	/**

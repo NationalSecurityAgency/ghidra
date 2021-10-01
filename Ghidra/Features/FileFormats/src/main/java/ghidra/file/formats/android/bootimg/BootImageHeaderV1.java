@@ -9,7 +9,6 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Structure;
 import ghidra.util.InvalidNameException;
-import ghidra.util.NumericUtilities;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -38,11 +37,10 @@ public class BootImageHeaderV1 extends BootImageHeaderV0 {
 
 	/**
 	 * p = (recovery_dtbo_size + page_size - 1) / page_size
-	 * @return the recovery DTBO adjusted size
+	 * @return the recovery DTBO adjusted size, as page counts
 	 */
 	public int getRecoveryDtboSizeAdjusted() {
-		return (int) NumericUtilities.getUnsignedAlignedValue(
-			Integer.toUnsignedLong(recovery_dtbo_size), Integer.toUnsignedLong(getPageSize()));
+		return (int) (pageAlign(Integer.toUnsignedLong(recovery_dtbo_size)) / getPageSize());
 	}
 
 	/**

@@ -15,26 +15,25 @@
  */
 package ghidra.formats.gfilesystem.factory;
 
-import ghidra.formats.gfilesystem.FSRL;
+import java.io.IOException;
+
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-import java.io.File;
-import java.io.IOException;
-
 /**
- * A {@link GFileSystemProbe} interface for filesystems that only need a {@link File}
- * reference to the source file.
+ * A {@link GFileSystemProbe} interface for filesystems that need to examine
+ * a {@link ByteProvider}.
  */
-public interface GFileSystemProbeWithFile extends GFileSystemProbe {
+public interface GFileSystemProbeByteProvider extends GFileSystemProbe {
 	/**
-	 * Probes the specified {@code containerFile} to determine if this filesystem implementation
+	 * Probes the specified {@code ByteProvider} to determine if this filesystem implementation
 	 * can handle the file.
 	 * 
-	 * @param containerFSRL the {@link FSRL} of the file being probed 
-	 * @param containerFile the {@link File} (probably in the filecache with non-useful filename)
-	 * being probed.
+	 * @param byteProvider a {@link ByteProvider} containing the contents of the file being probed. 
+	 * Implementors of this method should <b>NOT</b> {@link ByteProvider#close() close()} this
+	 * object.  
 	 * @param fsService a reference to the {@link FileSystemService} object
 	 * @param monitor a {@link TaskMonitor} that should be polled to see if the user has
 	 * requested to cancel the operation, and updated with progress information. 
@@ -43,6 +42,6 @@ public interface GFileSystemProbeWithFile extends GFileSystemProbe {
 	 * @throws IOException if there is an error reading files.
 	 * @throws CancelledException if the user cancels
 	 */
-	public boolean probe(FSRL containerFSRL, File containerFile, FileSystemService fsService,
+	public boolean probe(ByteProvider byteProvider, FileSystemService fsService,
 			TaskMonitor monitor) throws IOException, CancelledException;
 }

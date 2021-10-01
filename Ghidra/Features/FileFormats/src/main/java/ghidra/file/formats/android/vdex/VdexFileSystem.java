@@ -16,18 +16,12 @@
 package ghidra.file.formats.android.vdex;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.file.formats.android.cdex.CDexHeader;
 import ghidra.file.formats.android.dex.format.DexHeader;
-import ghidra.formats.gfilesystem.GFile;
-import ghidra.formats.gfilesystem.GFileImpl;
-import ghidra.formats.gfilesystem.GFileSystemBase;
+import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
 import ghidra.util.exception.CancelledException;
@@ -38,7 +32,7 @@ import ghidra.util.task.TaskMonitor;
 public class VdexFileSystem extends GFileSystemBase {
 
 	private VdexHeader header;
-	private List<GFile> listing = new ArrayList<GFile>();
+	private List<GFile> listing = new ArrayList<>();
 
 	public VdexFileSystem(String fileSystemName, ByteProvider provider) {
 		super(fileSystemName, provider);
@@ -95,22 +89,16 @@ public class VdexFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		int index = listing.indexOf(file);
-
-		if (index >= 0 && index < header.getDexHeaderList().size() - 1) {
-			long length = Integer.toUnsignedLong(header.getDexHeaderList().get(index).getFileSize());
-			return "DEX Header Size: 0x" + Long.toHexString(length);
+		if (index < 0) {
+			throw new IOException("Unknown file: " + file);
 		}
-		return null;
-	}
-
-	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException, CryptoException {
-		int index = listing.indexOf(file);
+		DexHeader dexHeader = header.getDexHeaderList().get(index);
 		long startIndex = header.getDexStartOffset(index);
-		return provider.getInputStream(startIndex);
+		return new ByteProviderWrapper(provider, startIndex,
+			Integer.toUnsignedLong(dexHeader.getFileSize()), file.getFSRL());
 	}
 
 }

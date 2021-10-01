@@ -19,12 +19,13 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.file.formats.zlib.ZLIB;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
+import ghidra.formats.gfilesystem.fileinfo.FileAttribute;
+import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
@@ -40,27 +41,40 @@ public class ProfileFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException, CryptoException {
+	public void open(TaskMonitor monitor) throws IOException, CryptoException, CancelledException {
+		BinaryReader reader = new BinaryReader(provider, true);
+		header = new ProfileHeader(reader);
+		dataFile = GFileImpl.fromFilename(this, root, "uncompressed-data", false,
+			header.getUncompressedSizeOfZippedData(), null);
+	}
 
-		if (file != null) {
-			if (file.equals(dataFile)) {
-				InputStream compressedStream =
-					provider.getInputStream(header.getCompressedDataOffset());
-				ZLIB zlib = new ZLIB();
-				ByteArrayOutputStream decompressedBytes =
-					zlib.decompress(compressedStream, header.getUncompressedSizeOfZippedData());
-				return new ByteArrayInputStream(decompressedBytes.toByteArray());
-			}
+	@Override
+	public void close() throws IOException {
+		super.close();
+		header = null;
+		dataFile = null;
+	}
+
+	@Override
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		if (dataFile.equals(file)) {
+			InputStream compressedStream =
+				provider.getInputStream(header.getCompressedDataOffset());
+			ZLIB zlib = new ZLIB();
+			ByteArrayOutputStream decompressedBytes =
+				zlib.decompress(compressedStream, header.getUncompressedSizeOfZippedData());
+			return new ByteArrayProvider(decompressedBytes.toByteArray(), file.getFSRL());
 		}
 		return null;
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
-		StringBuilder builder = new StringBuilder();
-		builder.append("Magic:       " + header.getMagic()).append("\n");
-		return builder.toString();
+	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
+		if (file == dataFile) {
+			return FileAttributes.of(FileAttribute.create("Magic", header.getMagic()));
+		}
+		return null;
 	}
 
 	@Override
@@ -75,21 +89,6 @@ public class ProfileFileSystem extends GFileSystemBase {
 	@Override
 	public boolean isValid(TaskMonitor monitor) throws IOException {
 		return ProfileConstants.isProfile(provider);
-	}
-
-	@Override
-	public void open(TaskMonitor monitor) throws IOException, CryptoException, CancelledException {
-		BinaryReader reader = new BinaryReader(provider, true);
-		header = new ProfileHeader(reader);
-		dataFile = GFileImpl.fromFilename(this, root, "uncompressed-data", false,
-			header.getUncompressedSizeOfZippedData(), null);
-	}
-
-	@Override
-	public void close() throws IOException {
-		super.close();
-		header = null;
-		dataFile = null;
 	}
 
 }

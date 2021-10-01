@@ -130,26 +130,6 @@ public abstract class GFileSystemBase implements GFileSystem {
 	abstract public List<GFile> getListing(GFile directory) throws IOException;
 
 	/**
-	 * Legacy implementation of {@link #getInputStream(GFile, TaskMonitor)}.
-	 *
-	 * @param file {@link GFile} to get an InputStream for
-	 * @param monitor {@link TaskMonitor} to watch and update progress
-	 * @return new {@link InputStream} contains the contents of the file or NULL if the
-	 * file doesn't have data.
-	 * @throws IOException if IO problem
-	 * @throws CancelledException if user cancels.
-	 * @throws CryptoException if crypto problem.
-	 */
-	abstract protected InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException, CryptoException;
-
-	@Override
-	public InputStream getInputStream(GFile file, TaskMonitor monitor)
-			throws CancelledException, IOException {
-		return getData(file, monitor);
-	}
-
-	/**
 	 * Writes the given bytes to a tempfile in the temp directory.
 	 * @param bytes the bytes to write
 	 * @param fileName the prefix of the temp file name
