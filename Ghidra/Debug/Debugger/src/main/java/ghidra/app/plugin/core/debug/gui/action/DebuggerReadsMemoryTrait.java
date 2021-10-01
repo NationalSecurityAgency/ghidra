@@ -37,9 +37,10 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
+import ghidra.trace.model.Trace.TraceMemoryStateChangeType;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
-import ghidra.trace.model.TraceDomainObjectListener;
+import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
@@ -88,13 +89,30 @@ public abstract class DebuggerReadsMemoryTrait {
 		}
 	}
 
-	protected class ForCaptureEnabledTraceListener extends TraceDomainObjectListener {
-		public ForCaptureEnabledTraceListener() {
+	protected class ForCaptureTraceListener extends TraceDomainObjectListener {
+		public ForCaptureTraceListener() {
 			listenFor(TraceSnapshotChangeType.ADDED, this::snapshotAdded);
+			listenFor(TraceMemoryStateChangeType.CHANGED, this::memStateChanged);
 		}
 
 		private void snapshotAdded(TraceSnapshot snapshot) {
 			actionCaptureSelected.updateEnabled(null);
+		}
+
+		private void memStateChanged(TraceAddressSnapRange range, TraceMemoryState oldIsNull,
+				TraceMemoryState newState) {
+			if (current.getView() == null) {
+				return;
+			}
+			if (!range.getLifespan().contains(current.getSnap())) {
+				return;
+			}
+			// TODO: Debounce this?
+			repaintPanel();
+
+			if (newState == TraceMemoryState.UNKNOWN) {
+				doAutoRead();
+			}
 		}
 	}
 
@@ -131,8 +149,8 @@ public abstract class DebuggerReadsMemoryTrait {
 	protected final Plugin plugin;
 	protected final ComponentProvider provider;
 
-	protected final ForCaptureEnabledTraceListener traceListener =
-		new ForCaptureEnabledTraceListener();
+	protected final ForCaptureTraceListener traceListener =
+		new ForCaptureTraceListener();
 	protected final ForAccessRecorderListener recorderListener = new ForAccessRecorderListener();
 	protected final ForVisibilityListener displayListener = new ForVisibilityListener();
 
@@ -268,4 +286,6 @@ public abstract class DebuggerReadsMemoryTrait {
 	}
 
 	protected abstract AddressSetView getSelection();
+
+	protected abstract void repaintPanel();
 }

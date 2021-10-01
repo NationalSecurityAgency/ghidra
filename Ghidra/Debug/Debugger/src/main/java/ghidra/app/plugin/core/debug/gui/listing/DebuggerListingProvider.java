@@ -199,6 +199,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		protected AddressSetView getSelection() {
 			return DebuggerListingProvider.this.getSelection();
 		}
+
+		@Override
+		protected void repaintPanel() {
+			getListingPanel().getFieldPanel().repaint();
+		}
 	}
 
 	private final DebuggerListingPlugin plugin;
