@@ -55,6 +55,7 @@ ElementId ELEM_SETLANGUAGE = ElementId("setlanguage",207);
 ElementId ELEM_STRUCTALIGN = ElementId("structalign",208);
 ElementId ELEM_TOGGLERULE = ElementId("togglerule",209);
 ElementId ELEM_WARNING = ElementId("warning",210);
+ElementId ELEM_COMMENTINDENTALIGN = ElementId("commentindentalign",271);
 
 /// If the parameter is "on" return \b true, if "off" return \b false.
 /// Any other value causes an exception.
@@ -109,6 +110,7 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionMaxLineWidth());
   registerOption(new OptionIndentIncrement());
   registerOption(new OptionCommentIndent());
+  registerOption(new OptionCommentIndentAlign());
   registerOption(new OptionCommentStyle());
   registerOption(new OptionCommentHeader());
   registerOption(new OptionCommentInstruction());
@@ -522,6 +524,16 @@ string OptionCommentIndent::apply(Architecture *glb,const string &p1,const strin
     throw ParseError("Must specify integer comment indent");
   glb->print->setLineCommentIndent(val);
   return "Comment indent set to "+p1;
+}
+
+/// \class OptionCommentIndentAlign
+/// \brief Toggle whether to align the comment with the current code rather or use a fixed indentation.
+string OptionCommentIndentAlign::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  bool val = onOrOff(p1);
+  glb->print->setLineCommentIndentAlign(val);
+  return "Comment indent alignment turned "+p1;
 }
 
 /// \class OptionCommentStyle

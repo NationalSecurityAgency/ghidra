@@ -61,6 +61,7 @@ extern ElementId ELEM_SETLANGUAGE;		///< Marshaling element \<setlanguage>
 extern ElementId ELEM_STRUCTALIGN;		///< Marshaling element \<structalign>
 extern ElementId ELEM_TOGGLERULE;		///< Marshaling element \<togglerule>
 extern ElementId ELEM_WARNING;			///< Marshaling element \<warning>
+extern ElementId ELEM_COMMENTINDENTALIGN;	///< Marshaling element \<commentindentalign>
 
 /// \brief Base class for options classes that affect the configuration of the Architecture object
 ///
@@ -209,6 +210,12 @@ public:
 class OptionCommentIndent : public ArchOption {
 public:
   OptionCommentIndent(void) { name = "commentindent"; }	///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
+class OptionCommentIndentAlign : public ArchOption {
+public:
+  OptionCommentIndentAlign(void) { name = "commentindentalign"; }	///< Constructor
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 

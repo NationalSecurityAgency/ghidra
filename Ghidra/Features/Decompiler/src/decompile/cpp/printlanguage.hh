@@ -248,6 +248,7 @@ private:
   vector<NodePending> nodepend;		///< Data-flow nodes waiting to be pushed onto the RPN stack
   int4 pending;				///< Number of data-flow nodes waiting to be pushed
   int4 line_commentindent;		///< Number of characters a comment line should be indented
+  bool line_commentindentalign;		///< Whether to align comment lines with code or use a fixed indentation
   string commentstart;			///< Delimiter characters for the start of a comment
   string commentend;			///< Delimiter characters (if any) for the end of a comment
 protected:
@@ -428,6 +429,7 @@ public:
   void setMaxLineSize(int4 mls) { emit->setMaxLineSize(mls); }		///< Set the maximum number of characters per line
   void setIndentIncrement(int4 inc) { emit->setIndentIncrement(inc); }	///< Set the number of characters to indent per level of code nesting
   void setLineCommentIndent(int4 val);					///< Set the number of characters to indent comment lines
+  void setLineCommentIndentAlign(bool val);				///< Set whether to align comment lines with code lines or not
   void setCommentDelimeter(const string &start,const string &stop,
 			   bool usecommentfill);			///< Establish comment delimiters for the language
   uint4 getInstructionComment(void) const { return instr_comment_type; }	///< Get the type of comments suitable within the body of a function

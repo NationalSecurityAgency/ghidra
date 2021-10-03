@@ -87,6 +87,13 @@ void PrintLanguage::setLineCommentIndent(int4 val)
   line_commentindent = val;
 }
 
+/// \param val is whether to align comments with code or use a fixed indentation
+void PrintLanguage::setLineCommentIndentAlign(bool val)
+
+{
+  line_commentindentalign = val;
+}
+
 /// By default, comments are indicated in the high-level language by preceding
 /// them with a specific sequence of delimiter characters, and optionally
 /// by ending the comment with another set of delimiter characters.
@@ -573,6 +580,7 @@ void PrintLanguage::resetDefaultsInternal(void)
   mods = 0;
   head_comment_type = Comment::header | Comment::warningheader;
   line_commentindent = 20;
+  line_commentindentalign = false;
   namespc_strategy = MINIMAL_NAMESPACES;
   instr_comment_type = Comment::user2 | Comment::warning;
 }
@@ -587,9 +595,14 @@ void PrintLanguage::emitLineComment(int4 indent,const Comment *comm)
   const string &text( comm->getText() );
   const AddrSpace *spc = comm->getAddr().getSpace();
   uintb off = comm->getAddr().getOffset();
-  if (indent <0)
-    indent = line_commentindent; // User specified default indent
-  emit->tagLine(indent);
+  if (line_commentindentalign) {
+    emit->tagLine();
+  }
+  else {
+    if (indent <0)
+      indent = line_commentindent; // User specified default indent
+    emit->tagLine(indent);
+  }
   int4 id = emit->startComment();
   // The comment delimeters should not be printed as
   // comment tags, so that they won't get filled
