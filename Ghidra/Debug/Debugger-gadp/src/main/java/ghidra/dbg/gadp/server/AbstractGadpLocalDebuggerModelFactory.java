@@ -47,6 +47,11 @@ public abstract class AbstractGadpLocalDebuggerModelFactory implements DebuggerM
 	public final Property<Integer> jdwpPortOption =
 		Property.fromAccessors(int.class, this::getJdwpPort, this::setJdwpPort);
 
+	protected boolean jdwpSuspend = false;
+	@FactoryOption("Suspend for JDWP")
+	public final Property<Boolean> jdwpSuspendOption =
+		Property.fromAccessors(boolean.class, this::isJdwpSuspend, this::setJdwpSuspend);
+
 	/**
 	 * Get the name of the thread which processes the agent's stdout
 	 */
@@ -86,6 +91,14 @@ public abstract class AbstractGadpLocalDebuggerModelFactory implements DebuggerM
 		this.jdwpPort = jdwpPort;
 	}
 
+	public boolean isJdwpSuspend() {
+		return jdwpSuspend;
+	}
+
+	public void setJdwpSuspend(boolean jdwpSuspend) {
+		this.jdwpSuspend = jdwpSuspend;
+	}
+
 	class AgentThread extends Thread {
 		int port;
 		Process process;
@@ -104,7 +117,7 @@ public abstract class AbstractGadpLocalDebuggerModelFactory implements DebuggerM
 				cmd.addAll(List.of("-cp", System.getProperty("java.class.path")));
 				if (jdwpPort >= 0) {
 					cmd.add("-agentlib:jdwp=server=y,transport=dt_socket,address=" + jdwpPort +
-						",suspend=n");
+						",suspend=" + (jdwpSuspend ? "y" : "n"));
 				}
 				completeCommandLine(cmd);
 				builder.command(cmd);
