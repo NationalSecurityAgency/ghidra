@@ -52,7 +52,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 	@Override
 	public boolean canApply(Program program) {
 		try {
-			Options options = program.getOptions("Program Information");
+			Options options = program.getOptions(Program.PROGRAM_INFO);
 			String format = options.getString("Executable Format", null);
 			if (!BinaryLoader.BINARY_NAME.equals(format)) {
 				return false;
