@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,12 @@
  */
 package ghidra.app.context;
 
+import ghidra.app.nav.Navigatable;
 
+/**
+ * Marker interface for {@link Navigatable} contexts that don't support navigating to the entire
+ * program. Typically, these are used by providers that show only one function at a time such
+ * as the Decompiler.
+ */
 public interface RestrictedAddressSetContext {
 }

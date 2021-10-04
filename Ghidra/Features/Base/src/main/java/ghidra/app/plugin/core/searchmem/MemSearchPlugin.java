@@ -30,7 +30,8 @@ import docking.widgets.fieldpanel.support.Highlight;
 import docking.widgets.table.threaded.*;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
-import ghidra.app.context.*;
+import ghidra.app.context.NavigatableActionContext;
+import ghidra.app.context.NavigatableContextAction;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigatableRemovalListener;
@@ -342,16 +343,11 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 	}
 
 	private void createActions() {
-		searchAction = new NavigatableContextAction("Search Memory", getName()) {
+		searchAction = new NavigatableContextAction("Search Memory", getName(), false) {
 			@Override
 			public void actionPerformed(NavigatableActionContext context) {
 				setNavigatable(context.getNavigatable());
 				invokeSearchDialog(context);
-			}
-
-			@Override
-			protected boolean isEnabledForContext(NavigatableActionContext context) {
-				return !(context instanceof RestrictedAddressSetContext);
 			}
 		};
 		searchAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, searchAction.getName()));
@@ -362,16 +358,11 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 		searchAction.addToWindowWhen(NavigatableActionContext.class);
 		tool.addAction(searchAction);
 
-		searchAgainAction = new NavigatableContextAction("Repeat Memory Search", getName()) {
+		searchAgainAction = new NavigatableContextAction("Repeat Memory Search", getName(), false) {
 			@Override
 			public void actionPerformed(NavigatableActionContext context) {
 				setNavigatable(context.getNavigatable());
 				performSearch(searchInfo);
-			}
-
-			@Override
-			protected boolean isEnabledForContext(NavigatableActionContext context) {
-				return !(context instanceof RestrictedAddressSetContext) && searchInfo != null;
 			}
 		};
 		searchAgainAction

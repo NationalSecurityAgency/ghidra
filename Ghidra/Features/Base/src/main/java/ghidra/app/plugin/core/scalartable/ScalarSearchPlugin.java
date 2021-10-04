@@ -21,7 +21,8 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
-import ghidra.app.context.*;
+import ghidra.app.context.NavigatableActionContext;
+import ghidra.app.context.NavigatableContextAction;
 import ghidra.app.events.ViewChangedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
@@ -138,15 +139,10 @@ public class ScalarSearchPlugin extends ProgramPlugin implements DomainObjectLis
 
 	private void createActions() {
 
-		searchAction = new NavigatableContextAction(SEARCH_ACTION_NAME, getName()) {
+		searchAction = new NavigatableContextAction(SEARCH_ACTION_NAME, getName(), false) {
 			@Override
 			public void actionPerformed(NavigatableActionContext context) {
 				openSearchDialog();
-			}
-
-			@Override
-			protected boolean isEnabledForContext(NavigatableActionContext context) {
-				return !(context instanceof RestrictedAddressSetContext);
 			}
 		};
 
