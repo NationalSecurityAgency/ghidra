@@ -120,31 +120,6 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 	}
 
 	@Override
-	default void setByteArray(String name, byte[] value) {
-		try (LockHold hold = getTrace().lockWrite()) {
-			getSettingsSpace(true).setBytes(getLifespan(), getAddress(), name, value);
-		}
-		getTrace().setChanged(new TraceChangeRecord<>(
-			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
-			null));
-	}
-
-	@Override
-	default byte[] getByteArray(String name) {
-		try (LockHold hold = getTrace().lockRead()) {
-			DBTraceDataSettingsOperations space = getSettingsSpace(false);
-			if (space != null) {
-				byte[] value = space.getBytes(getStartSnap(), getAddress(), name);
-				if (value != null) {
-					return value;
-				}
-			}
-			Settings defaultSettings = getDefaultSettings();
-			return defaultSettings == null ? null : defaultSettings.getByteArray(name);
-		}
-	}
-
-	@Override
 	default void setValue(String name, Object value) {
 		try (LockHold hold = getTrace().lockWrite()) {
 			getSettingsSpace(true).setValue(getLifespan(), getAddress(), name, value);

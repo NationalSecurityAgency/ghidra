@@ -24,7 +24,6 @@ import javax.swing.table.AbstractTableModel;
 
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
-import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.model.data.*;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
@@ -32,7 +31,8 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 import utility.function.Callback;
 
-class CompositeViewerModel extends AbstractTableModel implements DataTypeManagerChangeListener {
+abstract class CompositeViewerModel extends AbstractTableModel
+		implements DataTypeManagerChangeListener {
 
 	/** Flag indicating that the model is updating the selection and 
 	 * should ignore any attempts to set the selection until it is no 
@@ -41,18 +41,16 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 
 	protected Composite originalComposite;
 	protected DataTypePath originalDataTypePath;
-
-	/** database id for original composite data type. */
-	protected long compositeID;
+	protected long originalCompositeId;
 
 	protected Composite viewComposite;
 	protected DataTypeManager viewDTM;
 
 	private List<CompositeViewerModelListener> modelListeners = new ArrayList<>();
-	/** OriginalCompositeListeners */
-	private List<OriginalCompositeListener> originalListeners = new ArrayList<>();
+
 	/** the current status */
 	private String status = "";
+
 	/** The selection associated with the components. */
 	protected FieldSelection selection;
 
@@ -148,57 +146,20 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 
 	/**
 	 * Updates the model to now view the indicated data structure.
+	 * This method should cleanup from a previous load if neccessary
+	 * and must initilize the following model state:
+	 * <ul>
+	 * <li>originalComposite</li>
+	 * <li>originalDataTypePath</li>
+	 * <li>originalCompositeId</li>
+	 * <li>originalDataTypePath</li>
+	 * <li>viewComposite</li>
+	 * <li>viewDTM</li>
+	 * </ul>
 	 *
 	 * @param dataType the composite date type to be viewed.
 	 */
-	void load(Composite dataType) {
-		DataTypeManager dataTypeManager = dataType.getDataTypeManager();
-		if (dataTypeManager == null) {
-			throw new IllegalArgumentException(
-				"Datatype " + dataType.getName() + " doesn't have a data type manager specified.");
-		}
-		CategoryPath categoryPath = dataType.getCategoryPath();
-		if (categoryPath == null) {
-			throw new IllegalArgumentException(
-				"Datatype " + dataType.getName() + " doesn't have a category path specified.");
-		}
-		Category category = dataTypeManager.getCategory(categoryPath);
-		if (category == null) {
-			throw new IllegalArgumentException(
-				"Datatype " + dataType.getName() + " doesn't have a category specified.");
-		}
-
-		if (isLoaded()) {
-			unload();
-		}
-
-		// No longer want to listen for changes to previous category.
-		DataTypeManager originalDTM =
-			(originalComposite != null) ? originalComposite.getDataTypeManager() : null;
-		if (originalDTM != null) {
-			originalDTM.removeDataTypeManagerListener(this);
-		}
-
-		// DataType should be a Composite.
-		originalComposite = dataType;
-		originalDataTypePath = dataType.getDataTypePath();
-		viewComposite = originalComposite;
-
-		// Listen so we can update editor if name changes for this structure.
-		if (originalDTM != null) {
-			if (originalDTM.contains(dataType)) {
-				compositeID = originalDTM.getID(dataType); // Get the id if editing an existing data type.
-			}
-			originalDTM.addDataTypeManagerListener(this);
-		}
-		setSelection(new FieldSelection());
-		clearStatus();
-		originalNameChanged();
-		originalCategoryChanged();
-		compositeInfoChanged();
-		fireTableDataChanged();
-		componentDataChanged();
-	}
+	abstract void load(Composite dataType);
 
 	/**
 	 * Unloads the currently loaded composite data type.
@@ -216,12 +177,9 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 			originalDTM.removeDataTypeManagerListener(this);
 			originalDTM = null;
 		}
-		if (this.originalComposite != null) {
-			this.originalComposite = null;
-		}
-		if (this.viewComposite != null) {
-			this.viewComposite = null;
-		}
+		originalComposite = null;
+		originalCompositeId = DataTypeManager.NULL_DATATYPE_ID;
+		viewComposite = null;
 		originalDataTypePath = null;
 		if (viewDTM != null) {
 			viewDTM.close();
@@ -295,7 +253,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 */
 	protected Composite getOriginalComposite() {
 		DataTypeManager originalDTM = getOriginalDataTypeManager();
-		if (originalDTM != null) {
+		if (originalDataTypePath != null && originalDTM != null) {
 			DataType dt = originalDTM.getDataType(originalDataTypePath);
 			if (dt instanceof Composite) {
 				return (Composite) dt;
@@ -309,7 +267,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * @return the name
 	 */
 	public final String getOriginalDataTypeName() {
-		return originalDataTypePath.getDataTypeName();
+		return originalDataTypePath != null ? originalDataTypePath.getDataTypeName() : "";
 	}
 
 	/**
@@ -590,7 +548,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 		}
 		else if (columnIndex == getMnemonicColumn()) {
 			DataType dt = dtc.getDataType();
-			value = dt.getMnemonic(new SettingsImpl());
+			value = dt.getMnemonic(dtc.getDefaultSettings());
 			int compLen = dtc.getLength();
 			int dtLen = dt.isZeroLength() ? 0 : dt.getLength();
 			if (dtLen > compLen) {
@@ -701,22 +659,6 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 * Adds an OriginalCompositeListener to be notified when changes occur
-	 * @param listener the listener
-	 */
-	public void addOriginalCompositeListener(OriginalCompositeListener listener) {
-		originalListeners.add(listener);
-	}
-
-	/**
-	 * Removes an OriginalCompositeListener that was being notified when changes occur
-	 * @param listener the listener
-	 */
-	public void removeOriginalCompositeListener(OriginalCompositeListener listener) {
-		originalListeners.remove(listener);
-	}
-
-	/**
 	 * Called whenever the composite's non-component information changes.
 	 * For example, the name, or description change.
 	 */
@@ -729,37 +671,6 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 */
 	protected void componentDataChanged() {
 		notify(modelListeners, CompositeViewerModelListener::componentDataChanged);
-	}
-
-	/**
-	 * Called when the original composite we are editing has been changed.
-	 */
-	public void originalNameChanged() {
-
-		notify(originalListeners, listener -> {
-			String originalDtName = getOriginalDataTypeName();
-			listener.originalNameChanged(originalDtName);
-			provider.updateTitle();
-		});
-	}
-
-	/**
-	 * Called when the original composite we are editing has been changed.
-	 */
-	public void originalCategoryChanged() {
-
-		notify(originalListeners, listener -> {
-			CategoryPath originalCatPath = getOriginalCategoryPath();
-			listener.originalCategoryChanged(originalCatPath);
-		});
-	}
-
-	/**
-	 * Called when the original composite we are editing has been changed.
-	 */
-	public void originalComponentsChanged() {
-
-		notify(originalListeners, OriginalCompositeListener::originalComponentsChanged);
 	}
 
 	/**
@@ -777,7 +688,22 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	@Override
+	public void sourceArchiveAdded(DataTypeManager dataTypeManager, SourceArchive dataTypeSource) {
+		// don't care
+	}
+
+	@Override
+	public void sourceArchiveChanged(DataTypeManager dataTypeManager,
+			SourceArchive dataTypeSource) {
+		// don't care
+	}
+
+	@Override
 	public void categoryRemoved(DataTypeManager dtm, CategoryPath path) {
+		DataTypeManager originalDTM = getOriginalDataTypeManager();
+		if (dtm != originalDTM) {
+			return; // Different DTM than the one for this data type.
+		}
 		if (originalDataTypePath.isAncestor(path)) {
 			String msg = "\"" + originalDataTypePath.getDataTypeName() + "\" had its category \"" +
 				path.getPath() + "\" removed.";
@@ -796,12 +722,14 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 		String suffix = originalCategory.substring(oldPath.getPath().length());
 		originalDataTypePath =
 			new DataTypePath(newPath + suffix, originalDataTypePath.getDataTypeName());
-		originalCategoryChanged();
 	}
 
 	@Override
 	public void categoryRenamed(DataTypeManager dtm, CategoryPath oldPath, CategoryPath newPath) {
-
+		DataTypeManager originalDTM = getOriginalDataTypeManager();
+		if (dtm != originalDTM) {
+			return; // Different DTM than the one for this data type.
+		}
 		if (!viewDTM.containsCategory(oldPath)) {
 			return;
 		}
@@ -823,6 +751,10 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 
 	@Override
 	public void categoryMoved(DataTypeManager dtm, CategoryPath oldPath, CategoryPath newPath) {
+		DataTypeManager originalDTM = getOriginalDataTypeManager();
+		if (dtm != originalDTM) {
+			return; // Different DTM than the one for this data type.
+		}
 		if (!viewDTM.containsCategory(oldPath)) {
 			return;
 		}
@@ -852,6 +784,12 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 
 	@Override
 	public void dataTypeRemoved(DataTypeManager dtm, DataTypePath path) {
+
+		DataTypeManager originalDTM = getOriginalDataTypeManager();
+		if (dtm != originalDTM) {
+			return; // Different DTM than the one for this data type.
+		}
+
 		DataType dataType = viewDTM.getDataType(path.getCategoryPath(), path.getDataTypeName());
 		if (dataType == null) {
 			return;
@@ -863,9 +801,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 			DataType dt = viewDTM.getDataType(dtPath);
 			if (dt != null) {
 				if (hasSubDt(viewComposite, dtPath)) {
-					String msg =
-						"Removed data type \"" + dtPath + "\", which is a sub-component of \"" +
-							originalDataTypePath.getDataTypeName() + "\".";
+					String msg = "Removed sub-component data type \"" + dtPath;
 					setStatus(msg, true);
 				}
 				viewDTM.remove(dt, TaskMonitor.DUMMY);
@@ -885,62 +821,39 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 
 	@Override
 	public void dataTypeRenamed(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
-		String oldName = oldPath.getDataTypeName();
-		String newName = newPath.getDataTypeName();
-		if (oldName.equals(newName)) {
+
+		DataTypeManager originalDTM = getOriginalDataTypeManager();
+		if (dtm != originalDTM) {
+			return; // Different DTM than the one for this data type.
+		}
+
+		DataType dt = viewDTM.getDataType(oldPath);
+		if (dt == null) {
 			return;
 		}
 
-		// Does the old name match our original name.
-		if (originalDataTypePath.equals(oldPath)) {
-			originalDataTypePath = newPath;
-			if (!newName.equals(originalComposite.getName())) {
-				try {
-					originalComposite.setName(newName); // Is this the correct thing to do?
-				}
-				catch (DuplicateNameException e) {
-					Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-				}
-				catch (InvalidNameException e) {
-					Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-				}
-			}
-			try {
-				if (viewComposite.getName().equals(oldName)) {
-					viewComposite.setName(newName);
-					compositeInfoChanged();
-				}
-			}
-			catch (DuplicateNameException e) {
-				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-			}
-			catch (InvalidNameException e) {
-				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-			}
-			originalNameChanged();
+		try {
+			dt.setName(newPath.getDataTypeName());
+			fireTableDataChanged();
+			componentDataChanged();
 		}
-		else {
-			DataType dt = viewDTM.getDataType(oldPath);
-			if (dt != null) {
-				try {
-					dt.setName(newName);
-					fireTableDataChanged();
-					componentDataChanged();
-				}
-				catch (InvalidNameException e) {
-					Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-				}
-				catch (DuplicateNameException e) {
-					Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-				}
-			}
+		catch (InvalidNameException e) {
+			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
+		}
+		catch (DuplicateNameException e) {
+			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 		}
 	}
 
 	@Override
 	public void dataTypeMoved(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
-		DataType dt = viewDTM.getDataType(oldPath);
 
+		DataTypeManager originalDTM = getOriginalDataTypeManager();
+		if (dtm != originalDTM) {
+			return; // Different DTM than the one for this data type.
+		}
+
+		DataType dt = viewDTM.getDataType(oldPath);
 		if (dt == null) {
 			return;
 		}
@@ -956,7 +869,6 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 		if (originalDataTypePath.getDataTypeName().equals(newPath.getDataTypeName()) &&
 			originalDataTypePath.getCategoryPath().equals(oldPath.getCategoryPath())) {
 			originalDataTypePath = newPath;
-			originalCategoryChanged();
 			compositeInfoChanged();
 		}
 		else {
@@ -967,13 +879,15 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 
 	@Override
 	public void dataTypeChanged(DataTypeManager dtm, DataTypePath path) {
-		if (isLoaded()) {
-			// If we don't currently have any modifications that need applying and
-			// the structure in the editor just changed, then show the changed
-			// structure.
 
-			if (originalDataTypePath.equals(path)) {
-				originalComponentsChanged();
+		DataTypeManager originalDTM = getOriginalDataTypeManager();
+		if (dtm != originalDTM) {
+			return; // Different DTM than the one for this data type.
+		}
+
+		if (isLoaded()) {
+			if (originalCompositeId != DataTypeManager.NULL_DATATYPE_ID &&
+				path.equals(originalDataTypePath)) {
 				compositeInfoChanged();
 			}
 			else {
@@ -983,8 +897,8 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 				if (dt == null) {
 					return;
 				}
-				DataTypeManager originalDTM = getOriginalDataTypeManager();
 				if (originalDTM != viewDTM) {
+					// update changed datatype
 					DataType dataType = dtm.getDataType(path);
 					viewDTM.resolve(dataType, DataTypeConflictHandler.REPLACE_HANDLER);
 				}
@@ -997,45 +911,43 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	@Override
 	public void dataTypeReplaced(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath,
 			DataType newDataType) {
-		if (newDataType.getDataTypeManager() == null) {
-			throw new IllegalArgumentException("Datatype " + newDataType.getName() +
-				" doesn't have a data type manager specified.");
-		}
+
 		DataTypeManager originalDTM = getOriginalDataTypeManager();
 		if (dtm != originalDTM) {
 			return; // Different DTM than the one for this data type.
 		}
-		if (isLoaded()) {
-			if (!oldPath.equals(originalDataTypePath)) { // am I editing the replaced dataType?
-				DataType dt = viewDTM.getDataType(oldPath);
-				if (dt != null) {
-					if (hasSubDt(viewComposite, oldPath)) {
-						String msg = "Replaced data type \"" + oldPath.getPath() +
-							"\", which is a sub-component of \"" +
-							originalDataTypePath.getDataTypeName() + "\".";
-						setStatus(msg, true);
-					}
-					try {
 
-						viewDTM.replaceDataType(dt, newDataType, true);
-					}
-					catch (DataTypeDependencyException e) {
-						throw new AssertException(e);
-					}
-					fireTableDataChanged();
-					componentDataChanged();
+		if (!isLoaded()) {
+			return;
+		}
+
+		if (!oldPath.equals(originalDataTypePath)) { // am I editing the replaced dataType?
+			DataType dt = viewDTM.getDataType(oldPath);
+			if (dt != null) {
+				if (hasSubDt(viewComposite, oldPath)) {
+					String msg = "Replaced sub-component data type \"" + oldPath.getPath();
+					setStatus(msg, true);
 				}
+				try {
+
+					viewDTM.replaceDataType(dt, newDataType, true);
+				}
+				catch (DataTypeDependencyException e) {
+					throw new AssertException(e);
+				}
+				fireTableDataChanged();
+				componentDataChanged();
 			}
-			else {
-				load((Composite) newDataType);
-			}
+		}
+		else {
+			load((Composite) newDataType);
 		}
 	}
 
 	@Override
 	public void favoritesChanged(DataTypeManager dtm, DataTypePath path, boolean isFavorite) {
 		// Don't care.
-	}
+		}
 
 	/*******************************************************************
 	 * Helper methods for CategoryChangeListener methods.
@@ -1123,14 +1035,13 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * @return the selected row count
 	 */
 	public int getNumSelectedRows() {
-		int numRanges = this.selection.getNumRanges();
-		int numSelected = 0;
-		for (int i = 0; i < numRanges; i++) {
-			FieldRange range = this.selection.getFieldRange(i);
-			numSelected +=
-				range.getEnd().getIndex().intValue() - range.getStart().getIndex().intValue();
+		int count = 0;
+		for (FieldRange range : this.selection) {
+			int endIndex = range.getEnd().getIndex().intValue();
+			int startIndex = range.getStart().getIndex().intValue();
+			count += endIndex - startIndex;
 		}
-		return numSelected;
+		return count;
 	}
 
 	/**
@@ -1140,17 +1051,17 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * @return the selected row count
 	 */
 	public int getNumSelectedComponentRows() {
-		FieldSelection tmpSelection = new FieldSelection();
-		tmpSelection.addRange(0, getNumComponents());
-		tmpSelection.intersect(this.selection);
-		int numRanges = tmpSelection.getNumRanges();
-		int numSelected = 0;
-		for (int i = 0; i < numRanges; i++) {
-			FieldRange range = tmpSelection.getFieldRange(i);
-			numSelected +=
-				range.getEnd().getIndex().intValue() - range.getStart().getIndex().intValue();
+		int numComponents = getNumComponents();
+		int count = 0;
+		for (FieldRange range : this.selection) {
+			int endIndex = Math.min(range.getEnd().getIndex().intValue(), numComponents);
+			int startIndex = range.getStart().getIndex().intValue();
+			int rangeCount = endIndex - startIndex;
+			if (rangeCount > 0) {
+				count += rangeCount;
+			}
 		}
-		return numSelected;
+		return count;
 	}
 
 	/**
@@ -1200,19 +1111,15 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * @return the selected rows
 	 */
 	public int[] getSelectedRows() {
-		int[] selectedRows = new int[getNumSelectedRows()];
-		int newIndex = 0;
-		int numRanges = selection.getNumRanges();
-		for (int i = 0; i < numRanges; i++) {
-			FieldRange range = selection.getFieldRange(i);
-			for (int tempRow =
-				range.getStart().getIndex().intValue(); tempRow < range.getEnd()
-						.getIndex()
-						.intValue(); tempRow++) {
-				selectedRows[newIndex++] = tempRow;
+		ArrayList<Integer> list = new ArrayList<>();
+		for (FieldRange range : this.selection) {
+			int endIndex = range.getEnd().getIndex().intValue();
+			int startIndex = range.getStart().getIndex().intValue();
+			for (int i = startIndex; i < endIndex; i++) {
+				list.add(i);
 			}
 		}
-		return selectedRows;
+		return list.stream().mapToInt(Integer::intValue).toArray();
 	}
 
 	/**
@@ -1220,21 +1127,16 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * @return the selected rows
 	 */
 	public int[] getSelectedComponentRows() {
-		int[] selectedRows = new int[getNumSelectedComponentRows()];
-		int newIndex = 0;
+		ArrayList<Integer> list = new ArrayList<>();
 		int numComponents = getNumComponents();
-		int numRanges = selection.getNumRanges();
-		for (int i = 0; i < numRanges; i++) {
-			FieldRange range = selection.getFieldRange(i);
-			for (int tempRow =
-				range.getStart().getIndex().intValue(); tempRow < range.getEnd()
-						.getIndex()
-						.intValue() &&
-					tempRow < numComponents; tempRow++) {
-				selectedRows[newIndex++] = tempRow;
+		for (FieldRange range : this.selection) {
+			int endIndex = Math.min(range.getEnd().getIndex().intValue(), numComponents);
+			int startIndex = range.getStart().getIndex().intValue();
+			for (int i = startIndex; i < endIndex; i++) {
+				list.add(i);
 			}
 		}
-		return selectedRows;
+		return list.stream().mapToInt(Integer::intValue).toArray();
 	}
 
 	/**
@@ -1428,17 +1330,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	protected long getCompositeID() {
-		return compositeID;
+		return originalCompositeId;
 	}
 
-	@Override
-	public void sourceArchiveAdded(DataTypeManager dataTypeManager, SourceArchive dataTypeSource) {
-		// don't care
-	}
-
-	@Override
-	public void sourceArchiveChanged(DataTypeManager dataTypeManager,
-			SourceArchive dataTypeSource) {
-		// don't care
-	}
 }

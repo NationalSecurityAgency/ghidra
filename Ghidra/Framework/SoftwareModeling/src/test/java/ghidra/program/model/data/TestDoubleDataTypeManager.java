@@ -345,4 +345,14 @@ public class TestDoubleDataTypeManager implements DataTypeManager {
 	public Set<DataType> getDataTypesContaining(DataType dataType) {
 		throw new UnsupportedOperationException();
 	}
+
+	@Override
+	public boolean allowsDefaultBuiltInSettings() {
+		return false;
+	}
+
+	@Override
+	public boolean allowsDefaultComponentSettings() {
+		return false;
+	}
 }

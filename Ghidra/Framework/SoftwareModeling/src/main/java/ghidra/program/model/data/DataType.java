@@ -63,16 +63,41 @@ public interface DataType {
 	public boolean hasLanguageDependantLength();
 
 	/**
-	 * Gets a list of all the settingsDefinitions used by this datatype.
+	 * Get the list of settings definitions available for use with this datatype.
+	 * <p>
+	 * In the case of a {@link TypeDef}, the return list will include the 
+	 * {@link TypeDefSettingsDefinition} list from the associated base data type.
+	 * <p>
+	 * Unlike {@link TypeDefSettingsDefinition} standard settings definitions
+	 * generally support default, component-default and data-instance use. 
+	 * In addition, standard settings definitions are never considered during
+	 * {@link #isEquivalent(DataType)} checking or during the resolve process.
 	 * 
-	 * @return a list of the settingsDefinitions used by this datatype.
+	 * @return list of the settings definitions for this datatype.
 	 */
 	public SettingsDefinition[] getSettingsDefinitions();
 
 	/**
-	 * Gets the default settings for this datatype.
+	 * Get the list of all settings definitions for this datatype that may be
+	 * used for an associated {@link TypeDef}.  When used for an associated
+	 * {@link TypeDef}, these settings will be considered during a 
+	 * {@link TypeDef#isEquivalent(DataType)} check and will be preserved
+	 * during the resolve process.
 	 * 
-	 * @return the default settings for this datatype.
+	 * @return a list of the settings definitions for a {@link TypeDef}
+	 * associated with this datatype.
+	 */
+	public TypeDefSettingsDefinition[] getTypeDefSettingsDefinitions();
+
+	/**
+	 * Gets the settings for this data type.  The settings may have underlying default settings
+	 * and may in turn become defaults for instance-specific settings (e.g., Data or DataTypeComponent).
+	 * It is important to note that these settings are tied to a specific DataType instantiation
+	 * so it is important to understand the scope of its use.  Example: The {@link BuiltInDataTypeManager}
+	 * has its own set of DataType instances which are separate from those which have been instantiated
+	 * or resolved to a specific Program/Archive {@link DataTypeManager}. Settings manipulation may
+	 * be disabled by default in some instances.
+	 * @return the settings for this dataType.
 	 */
 	public Settings getDefaultSettings();
 
@@ -448,20 +473,11 @@ public interface DataType {
 	public void dataTypeReplaced(DataType oldDt, DataType newDt);
 
 	/**
-	 * Set the default settings for this datatype.
-	 * <p>
-	 * TODO: This method is reserved for internal DB use. <br>
+	 * Inform this data type that it has the given parent
+	 * <br>
+	 * TODO: This method is reserved for internal DB use.
 	 * 
-	 * @param settings the settings to be used as this dataTypes default settings.
-	 */
-	public void setDefaultSettings(Settings settings);
-
-	/**
-	 * Inform this datatype that it has the given parent
-	 * <p>
-	 * TODO: This method is reserved for internal DB use. <br>
-	 * 
-	 * @param dt parent datatype
+	 * @param dt parent data type
 	 */
 	public void addParent(DataType dt);
 

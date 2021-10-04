@@ -1533,7 +1533,7 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 			Settings defs = myTypedef.getDefaultSettings();
 			defs.setLong("myDefaultLong", 0x123456789L);
 			defs.setString("myDefaultString", "Hello!");
-			defs.setByteArray("myDefaultBytes", new byte[] { 4, 3, 2, 1 });
+			//defs.setByteArray("myDefaultBytes", new byte[] { 4, 3, 2, 1 });
 
 			assertTrue(d4000.isEmpty()); // This is a terribly counter-intuitive method name
 			assertArrayEquals(new String[] {}, d4000.getNames());
@@ -1546,23 +1546,23 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 			assertNull(u3fff.getLong("myLong"));
 			assertNull(d4000.getLong("myLong"));
 			assertNull(d4000.getString("myString"));
-			assertNull(d4000.getByteArray("myBytes"));
+			//assertNull(d4000.getByteArray("myBytes"));
 			assertNull(d4000.getValue("myLong"));
 			assertFalse(d4000.isConstant());
 			assertFalse(d4000.isVolatile());
 
 			assertEquals(0x123456789L, d4000.getLong("myDefaultLong").longValue());
 			assertEquals("Hello!", d4000.getString("myDefaultString"));
-			assertArrayEquals(new byte[] { 4, 3, 2, 1 }, d4000.getByteArray("myDefaultBytes"));
+			//assertArrayEquals(new byte[] { 4, 3, 2, 1 }, d4000.getByteArray("myDefaultBytes"));
 			assertEquals("Hello!", d4000.getValue("myDefaultString"));
 
 			d4000.setLong("myLong", Long.MAX_VALUE);
 			d4000.setString("myString", "Good bye!");
-			d4000.setByteArray("myBytes", new byte[] { 8, 7, 6, 5 });
+			//d4000.setByteArray("myBytes", new byte[] { 8, 7, 6, 5 });
 
 			assertFalse(d4000.isEmpty());
 			// TODO: Figure out whether or not this includes defaultSettings?
-			assertEquals(Set.of("myLong", "myString", "myBytes"), set(d4000.getNames()));
+			assertEquals(Set.of("myLong", "myString" /*, "myBytes"*/), set(d4000.getNames()));
 
 			d4000.setLong("myDefaultLong", Long.MAX_VALUE);
 			d4000.setString("myDefaultString", "Good bye!");
@@ -1570,12 +1570,13 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 
 			assertEquals(Long.MAX_VALUE, d4000.getLong("myLong").longValue());
 			assertEquals("Good bye!", d4000.getString("myString"));
-			assertArrayEquals(new byte[] { 8, 7, 6, 5 }, d4000.getByteArray("myBytes"));
-			assertArrayEquals(new byte[] { 8, 7, 6, 5 }, (byte[]) d4000.getValue("myBytes"));
+			//assertArrayEquals(new byte[] { 8, 7, 6, 5 }, d4000.getByteArray("myBytes"));
+			//assertArrayEquals(new byte[] { 8, 7, 6, 5 }, (byte[]) d4000.getValue("myBytes"));
 
 			assertEquals(Long.MAX_VALUE, d4000.getLong("myDefaultLong").longValue());
 			assertEquals("Good bye!", d4000.getString("myDefaultString"));
-			assertArrayEquals(new byte[] { 8, 7, 6, 5 }, d4000.getByteArray("myDefaultBytes"));
+			//assertArrayEquals(new byte[] { 8, 7, 6, 5 }, d4000.getByteArray("myDefaultBytes"));
+			assertArrayEquals(new byte[] { 8, 7, 6, 5 }, (byte[]) d4000.getValue("myDefaultBytes"));
 
 			d4000.clearSetting("myDefaultLong");
 			assertEquals(0x123456789L, d4000.getLong("myDefaultLong").longValue());
@@ -1587,11 +1588,11 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 
 			assertNull(d4000.getLong("myLong"));
 			assertNull(d4000.getString("myString"));
-			assertNull(d4000.getByteArray("myBytes"));
+			//assertNull(d4000.getByteArray("myBytes"));
 
 			assertEquals(0x123456789L, d4000.getLong("myDefaultLong").longValue());
 			assertEquals("Hello!", d4000.getString("myDefaultString"));
-			assertArrayEquals(new byte[] { 4, 3, 2, 1 }, d4000.getByteArray("myDefaultBytes"));
+			//assertArrayEquals(new byte[] { 4, 3, 2, 1 }, d4000.getByteArray("myDefaultBytes"));
 			assertNull(d4000.getValue("myLong"));
 
 			assertFalse(d4000.isConstant());

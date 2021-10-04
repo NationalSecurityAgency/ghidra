@@ -19,7 +19,7 @@ import java.util.*;
 
 import ghidra.docking.settings.Settings;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.database.data.DataTypeManagerDB;
+import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.data.*;
@@ -40,7 +40,7 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 
 	protected static final int OP_INDEX = 0;
 	protected int level = 0;
-	protected DataTypeManagerDB dataMgr;
+	protected ProgramDataTypeManager dataMgr;
 
 	private static final int[] EMPTY_PATH = new int[0];
 
@@ -127,7 +127,7 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 					new PseudoDataComponent(program, address.add(dtc.getOffset()), this, dtc, this);
 			}
 		}
-		catch (MemoryAccessException | AddressOverflowException e) {
+		catch (AddressOverflowException e) {
 			throw new ConcurrentModificationException("Data type length changed");
 		}
 		return data;
@@ -227,11 +227,6 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 	}
 
 	@Override
-	public byte[] getByteArray(String name) {
-		return null;
-	}
-
-	@Override
 	public Long getLong(String name) {
 		return null;
 	}
@@ -252,11 +247,6 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 			return baseDataType.getValue(this, this, length);
 		}
 		return null;
-	}
-
-	@Override
-	public void setByteArray(String name, byte[] value) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

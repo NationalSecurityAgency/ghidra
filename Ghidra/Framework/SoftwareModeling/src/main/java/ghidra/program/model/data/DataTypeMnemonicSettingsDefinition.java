@@ -59,6 +59,11 @@ public class DataTypeMnemonicSettingsDefinition implements EnumSettingsDefinitio
 	}
 
 	@Override
+	public String getValueString(Settings settings) {
+		return choices[getChoice(settings)];
+	}
+
+	@Override
 	public int getChoice(Settings settings) {
 		return getMnemonicStyle(settings);
 	}

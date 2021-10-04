@@ -60,7 +60,7 @@ public abstract class DatabaseObject {
 	/**
 	 * Marks the object as deleted.
 	 */
-	void setDeleted() {
+	protected void setDeleted() {
 		deleted = true;
 	}
 

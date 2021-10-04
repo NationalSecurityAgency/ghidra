@@ -55,10 +55,15 @@ public class MemoryOffsetSettingsDefinition implements EnumSettingsDefinition {
 			return DEFAULT_CHOICE;
 		}
 		Long value = settings.getLong(MEMORY_OFFSET);
-		if (value == null) {
+		if (value == null || value < 0 || value >= choices.length) {
 			return DEFAULT_CHOICE;
 		}
 		return value.intValue();
+	}
+
+	@Override
+	public String getValueString(Settings settings) {
+		return choices[getChoice(settings)];
 	}
 
 	@Override

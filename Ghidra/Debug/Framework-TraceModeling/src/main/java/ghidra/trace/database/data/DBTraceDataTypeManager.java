@@ -21,7 +21,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
 import ghidra.framework.model.DomainFile;
-import ghidra.program.database.data.DataTypeManagerDB;
+import ghidra.program.database.data.ProgramBasedDataTypeManagerDB;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
@@ -33,7 +34,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-public class DBTraceDataTypeManager extends DataTypeManagerDB
+public class DBTraceDataTypeManager extends ProgramBasedDataTypeManagerDB
 		implements TraceBasedDataTypeManager, DBTraceManager {
 
 	protected final ReadWriteLock lock;
@@ -43,8 +44,18 @@ public class DBTraceDataTypeManager extends DataTypeManagerDB
 			TaskMonitor monitor, DBTrace trace)
 			throws CancelledException, VersionException, IOException {
 		super(dbh, null, openMode.toInteger(), trace, trace.getLock(), monitor);
-		this.lock = lock;
+		this.lock = lock; // TODO: nothing uses this local lock - not sure what its purpose is
 		this.trace = trace;
+	}
+
+	@Override
+	protected void dataSettingChanged(Address address) {
+		// ignored - instance settings are not current supported (no AddressMap provided)
+	}
+
+	@Override
+	public boolean allowsDefaultBuiltInSettings() {
+		return true;
 	}
 
 	@Override

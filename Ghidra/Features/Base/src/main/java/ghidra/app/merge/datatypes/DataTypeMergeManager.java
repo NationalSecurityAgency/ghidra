@@ -1791,9 +1791,6 @@ public class DataTypeMergeManager implements MergeResolver {
 					Composite c2 = (Composite) dt2;
 					return compositeDataTypeWasChanged(c1, c2);
 				}
-				if (dt1 instanceof TypeDef) {
-					return false;
-				}
 				return !dt1.isEquivalent(dt2);
 			}
 		}

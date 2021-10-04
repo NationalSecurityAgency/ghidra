@@ -22,9 +22,9 @@ import org.junit.*;
 import ghidra.app.cmd.memory.MoveBlockListener;
 import ghidra.app.cmd.memory.MoveBlockTask;
 import ghidra.program.database.ProgramBuilder;
-import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.data.ProgramBasedDataTypeManager;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -80,12 +80,11 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		model.initialize(block);
 
 		int transactionID = x8051.startTransaction("Set settings");
-		DataTypeManagerDB dtm = (DataTypeManagerDB) x8051.getDataTypeManager();
+		ProgramBasedDataTypeManager dtm = x8051.getDataTypeManager();
 		for (int i = 0; i < 10; i++) {
 			Address a = getAddr(x8051, "BITS", i);
 			dtm.setStringSettingsValue(a, "color", "red" + i);
 			dtm.setLongSettingsValue(a, "someLongValue", i);
-			dtm.setByteSettingsValue(a, "bytes", new byte[] { 0, 1, 2 });
 		}
 		x8051.endTransaction(transactionID, true);
 	}
@@ -196,7 +195,7 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		waitForCondition(() -> moveCompleted && x8051.canLock());
 
 		// make sure settings on data got moved
-		DataTypeManagerDB dtm = (DataTypeManagerDB) x8051.getDataTypeManager();
+		ProgramBasedDataTypeManager dtm = x8051.getDataTypeManager();
 		for (int i = 0; i < 10; i++) {
 			Address a = getAddr(x8051, "CODE", 0x2000 + i);
 
@@ -205,8 +204,6 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 
 			Long lvalue = dtm.getLongSettingsValue(a, "someLongValue");
 			assertEquals(i, lvalue.longValue());
-
-			assertNotNull(dtm.getByteSettingsValue(a, "bytes"));
 		}
 	}
 

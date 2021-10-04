@@ -80,11 +80,6 @@ public class SettingsBuilder implements Settings {
 	}
 
 	@Override
-	public byte[] getByteArray(String name) {
-		return settings.getByteArray(name);
-	}
-
-	@Override
 	public Object getValue(String name) {
 		return settings.getValue(name);
 	}
@@ -97,11 +92,6 @@ public class SettingsBuilder implements Settings {
 	@Override
 	public void setString(String name, String value) {
 		settings.setString(name, value);
-	}
-
-	@Override
-	public void setByteArray(String name, byte[] value) {
-		settings.setByteArray(name, value);
 	}
 
 	@Override

@@ -90,6 +90,11 @@ public class FormatSettingsDefinition implements EnumSettingsDefinition {
 	}
 
 	@Override
+	public String getValueString(Settings settings) {
+		return choices[getChoice(settings)];
+	}
+
+	@Override
 	public void setChoice(Settings settings, int value) {
 		if (value < 0 || value > CHAR) {
 			settings.clearSetting(FORMAT);

@@ -25,6 +25,7 @@ public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager {
 	 */
 	private DataTypeManager originalDTM;
 	private int transactionID;
+
 	/**
 	 * Creates a data type manager that the structure editor will use
 	 * internally for updating the structure being edited.
@@ -48,6 +49,11 @@ public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager {
 	@Override
     public ArchiveType getType() {
 		return originalDTM.getType();
+	}
+
+	@Override
+	public boolean allowsDefaultBuiltInSettings() {
+		return originalDTM.allowsDefaultBuiltInSettings();
 	}
 
 }

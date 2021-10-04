@@ -175,6 +175,11 @@ public class JavaEnumSettingsDefinition<T extends Enum<T>> implements EnumSettin
 	}
 
 	@Override
+	public String getValueString(Settings settings) {
+		return values[getChoice(settings)].toString();
+	}
+
+	@Override
 	public void setChoice(Settings settings, int value) {
 		settings.setLong(getSettingName(), value);
 	}

@@ -75,5 +75,4 @@ public abstract class GenericDataType extends DataTypeImpl {
 		}
 		categoryPath = path;
 	}
-
 }

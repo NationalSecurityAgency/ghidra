@@ -18,32 +18,31 @@ package ghidra.program.database.data;
 import db.DBRecord;
 
 /**
- * DatabaseObject for a Default settings record.
- * 
- * 
+ * Setting DBRecord wrapper for cache use
  */
-class SettingsDB {
+class SettingDB {
+
+	private String name;
 	private DBRecord record;
 
 	/**
-	 * Constructor
-	 * @param cache
-	 * @param record
+	 * Construction setting object
+	 * @param record setting record
+	 * @param name setting name
 	 */
-	SettingsDB(DBRecord record) {
+	SettingDB(DBRecord record, String name) {
 		this.record = record;
+		this.name = name;
 	}
 
 	String getName() {
-		return record.getString(SettingsDBAdapter.SETTINGS_NAME_COL);
+		return name;
 	}
 
 	Long getLongValue() {
-
 		Long lvalue = null;
-		if (getStringValue() == null && getByteValue() == null) {
-			long l = record.getLongValue(SettingsDBAdapter.SETTINGS_LONG_VALUE_COL);
-			lvalue = new Long(l);
+		if (getStringValue() == null) {
+			lvalue = record.getLongValue(SettingsDBAdapter.SETTINGS_LONG_VALUE_COL);
 		}
 		return lvalue;
 	}
@@ -52,19 +51,19 @@ class SettingsDB {
 		return record.getString(SettingsDBAdapter.SETTINGS_STRING_VALUE_COL);
 	}
 
-	byte[] getByteValue() {
-		return record.getBinaryData(SettingsDBAdapter.SETTINGS_BYTE_VALUE_COL);
-	}
-
 	Object getValue() {
 		Object obj = getStringValue();
 		if (obj != null) {
 			return obj;
 		}
-		obj = getByteValue();
-		if (obj != null) {
-			return obj;
-		}
-		return getLongValue();
+		return record.getLongValue(SettingsDBAdapter.SETTINGS_LONG_VALUE_COL);
+	}
+
+	long getKey() {
+		return record.getKey();
+	}
+
+	DBRecord getRecord() {
+		return record;
 	}
 }

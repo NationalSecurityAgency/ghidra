@@ -175,8 +175,7 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 												   BR);
 		append(fullHtml, truncatedHtml, lineCount, LENGTH_PREFIX,
 												   footerText.getText(), 
-												   BR);
-		append(fullHtml, truncatedHtml, lineCount, BR, BR);
+												   BR, BR);
 		//@formatter:on
 
 		// header
@@ -341,15 +340,6 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 		DataTypeUrl url = new DataTypeUrl(dt);
 		String wrapped = HTMLUtilities.wrapWithLinkPlaceholder(type, url.toString());
 		return wrapped;
-	}
-
-	protected static StringBuilder addAlignmentValue(String alignmentValueString,
-			StringBuilder buffer) {
-
-		buffer.append(BR);
-		buffer.append(ALIGNMENT_VALUE_PREFIX + alignmentValueString);
-
-		return buffer;
 	}
 
 	// overridden to return truncated text by default

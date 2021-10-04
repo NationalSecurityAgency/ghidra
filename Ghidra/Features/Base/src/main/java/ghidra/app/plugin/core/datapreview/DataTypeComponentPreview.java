@@ -18,7 +18,6 @@
  */
 package ghidra.app.plugin.core.datapreview;
 
-import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.*;
@@ -71,7 +70,7 @@ class DataTypeComponentPreview implements Preview {
 	        addr = addr.add(dtc.getOffset());
 		    MemBuffer mb = new DumbMemBufferImpl(memory, addr);
 		    DataType dt = dtc.getDataType();
-		    return dt.getRepresentation(mb, new SettingsImpl(), dtc.getLength());
+			return dt.getRepresentation(mb, dtc.getDefaultSettings(), dtc.getLength());
 	    }
 	    catch (Exception e) {
 	        return "ERROR: unable to create preview";

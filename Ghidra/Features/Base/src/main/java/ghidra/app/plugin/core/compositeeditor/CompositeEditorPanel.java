@@ -540,7 +540,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		}
 		if (reload) {
 			cancelCellEditing(); // Make sure a field isn't being edited.
-			model.load(originalDt, model.isOffline()); // reload the structure
+			model.load(originalDt); // reload the structure
 			model.updateAndCheckChangeState();
 		}
 	}

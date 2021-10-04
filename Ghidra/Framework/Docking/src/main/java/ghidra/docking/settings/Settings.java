@@ -35,13 +35,6 @@ public interface Settings {
 	 * @return the String value for a key
 	 */
 	String getString(String name);
-
-	/**
-	 * Gets the byte[] value associated with the given name
-	 * @param name the key used to retrieve a value
-	 * @return the byte[] value for a key
-	 */
-	byte[] getByteArray(String name);
 	
 	/**
 	 * Gets the object associated with the given name
@@ -56,18 +49,13 @@ public interface Settings {
 	 * @param value the value associated with the key
 	 */
 	void setLong(String name, long value);
+
 	/**
 	 * Associates the given String value with the name
 	 * @param name the key
 	 * @param value the value associated with the key
 	 */
 	void setString(String name, String value);
-	/**
-	 * Associates the given byte[] with the name
-	 * @param name the key
-	 * @param value the value associated with the key
-	 */
-	void setByteArray(String name, byte[] value);
 	
 	/**
 	 * Associates the given object with the name
@@ -94,18 +82,16 @@ public interface Settings {
 	String[] getNames();
 	
 	/**
-	 * Returns true if there are no key-value pairs stored in this settings object
+	 * Returns true if there are no key-value pairs stored in this settings object.
+	 * This is not a reflection of the underlying default settings which may still
+	 * contain a key-value pair when this settings object is empty.
+	 * @return true if there are no key-value pairs stored in this settings object
 	 */
 	boolean isEmpty();
 	
-//	/**
-//	 * Sets the settings object to use if this settings object does not have the requested settings name.
-//	 * @param settings the settings object to use if this settings object does not have the requested settings name.
-//	 */
-//	void setDefaultSettings(Settings settings);
-	
 	/**
 	 * Returns the underlying default settings for these settings or null if there are none
+	 * @return underlying default settings or null
 	 */
 	Settings getDefaultSettings();
 

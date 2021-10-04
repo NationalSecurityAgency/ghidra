@@ -21,7 +21,8 @@ import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeComponent;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
+import ghidra.program.model.mem.MemBuffer;
+import ghidra.program.model.mem.WrappedMemBuffer;
 
 /**
  * <code>DataComponent</code> provides Data and CodeUnit access to Struct and Array components.
@@ -39,14 +40,9 @@ class PseudoDataComponent extends PseudoData {
 	private int[] path;
 	private Settings defaultSettings;
 
-	/**
-	 * @throws AddressOverflowException 
-	 * @throws MemoryAccessException 
-	 * 
-	 */
 	PseudoDataComponent(Program program, Address address, PseudoData parent,
 			DataTypeComponent component, MemBuffer memBuffer)
-					throws AddressOverflowException, MemoryAccessException {
+			throws AddressOverflowException {
 		super(program, address, component.getDataType(), new WrappedMemBuffer(memBuffer,
 			component.getOffset()));
 		this.indexInParent = component.getOrdinal();
@@ -68,10 +64,6 @@ class PseudoDataComponent extends PseudoData {
 		this.length = length;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.listing.Data#getComponentPath()
-	 */
 	@Override
 	public int[] getComponentPath() {
 		if (path == null) {
@@ -89,12 +81,6 @@ class PseudoDataComponent extends PseudoData {
 		return path;
 	}
 
-	/**
-	 * Get the name of this Data that is a component of another
-	 * Data Item.
-	 * @return the name as a component of another prototype,
-	 *         and null if this is not a component of another prototype.
-	 */
 	@Override
 	public String getFieldName() {
 		if (component == null) { // is array?
@@ -109,18 +95,12 @@ class PseudoDataComponent extends PseudoData {
 		return myName;
 	}
 
-	/**
-	 * Returns the path name (dot notation) for this field
-	 */
 	@Override
 	public String getPathName() {
 		String parentPath = parent.getPathName();
 		return getComponentName(parentPath);
 	}
 
-	/**
-	 * @return the relative path name (dot notation) for this field
-	 */
 	@Override
 	public String getComponentPathName() {
 		String parentPath = parent.getComponentPathName();
@@ -146,55 +126,31 @@ class PseudoDataComponent extends PseudoData {
 		return nameBuffer.toString();
 	}
 
-	/**
-	 * Get the immediate parent Data Prototype of this component
-	 */
 	@Override
 	public Data getParent() {
 		return parent;
 	}
 
-	/**
-	 * Get the highest level Data Prototype in a hierarchy of structures
-	 * containing this component.
-	 */
 	@Override
 	public Data getRoot() {
 		return parent.getRoot();
 	}
 
-	/**
-	 * Get the offset of this Data item from the start of
-	 *  some hierarchy of structures.
-	 */
 	@Override
 	public int getRootOffset() {
 		return parent.getRootOffset() + getParentOffset();
 	}
 
-	/**
-	 * Get the offset of this Data item from the start of its immediate
-	 * parent.
-	 */
 	@Override
 	public int getParentOffset() {
 		return offset;
 	}
 
-	/**
-	 * Get the index of this Data item within its parent
-	 *
-	 * @return the index of this component in its parent
-	 *         returns -1 if this is not a component
-	 */
 	@Override
 	public int getComponentIndex() {
 		return indexInParent;
 	}
 
-	/**
-	 * Returns whether some other object is "equal to" this one.
-	 */
 	@Override
 	public boolean equals(Object obj) {
 
@@ -214,30 +170,6 @@ class PseudoDataComponent extends PseudoData {
 		return super.equals(obj);
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getByteArray(java.lang.String)
-	 */
-	@Override
-	public byte[] getByteArray(String name) {
-		if (dataMgr == null) {
-			return null;
-		}
-		byte[] settingBytes = dataMgr.getByteSettingsValue(address, name);
-		if (settingBytes != null) {
-			return settingBytes;
-		}
-		if (component == null) {
-			return null;
-		}
-		if (defaultSettings == null) {
-			defaultSettings = component.getDefaultSettings();
-		}
-		return defaultSettings.getByteArray(name);
-	}
-
-	/**
-	 * @see ghidra.docking.settings.Settings#getLong(java.lang.String)
-	 */
 	@Override
 	public Long getLong(String name) {
 		if (dataMgr == null) {
@@ -256,9 +188,6 @@ class PseudoDataComponent extends PseudoData {
 		return defaultSettings.getLong(name);
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getString(java.lang.String)
-	 */
 	@Override
 	public String getString(String name) {
 		if (dataMgr == null) {
@@ -277,9 +206,6 @@ class PseudoDataComponent extends PseudoData {
 		return defaultSettings.getString(name);
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getValue(java.lang.String)
-	 */
 	@Override
 	public Object getValue(String name) {
 		if (dataMgr == null) {
@@ -298,9 +224,6 @@ class PseudoDataComponent extends PseudoData {
 		return defaultSettings.getValue(name);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.CodeUnit#getComment(int)
-	 */
 	@Override
 	public synchronized String getComment(int commentType) {
 		String cmt = super.getComment(commentType);
@@ -310,9 +233,6 @@ class PseudoDataComponent extends PseudoData {
 		return cmt;
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getDefaultSettings()
-	 */
 	@Override
 	public Settings getDefaultSettings() {
 		if (component != null) {

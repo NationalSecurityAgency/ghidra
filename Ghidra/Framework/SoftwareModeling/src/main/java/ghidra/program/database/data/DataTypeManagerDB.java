@@ -32,8 +32,6 @@ import ghidra.graph.*;
 import ghidra.graph.algo.GraphNavigator;
 import ghidra.program.database.*;
 import ghidra.program.database.map.AddressMap;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.KeyRange;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.program.model.data.Enum;
@@ -58,6 +56,18 @@ import ghidra.util.task.TaskMonitor;
  */
 abstract public class DataTypeManagerDB implements DataTypeManager {
 
+	/**
+	 * DB_VERSION should be incremented any time a change is made to the overall
+	 * database schema associated with any of the managers or the nature of the 
+	 * stored data has changed preventing compatibility with older GHIDRA versions.  
+	 * 
+	 * Due to the frequent use of read-only mode for certain archives, read-only 
+	 * mode must always be allowed when opening older versions.
+	 *             - version  1 - legacy prior to overall DTM versioning (not stored)
+	 * 12-Jan-2022 - version  2 - introduced DataTypeManager data map table and overall DTM version 
+	 */
+	static final int DB_VERSION = 2;
+
 	static long ROOT_CATEGORY_ID = 0;
 
 	static final int BUILT_IN = 0;
@@ -73,6 +83,13 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	static final int DATA_TYPE_KIND_SHIFT = 56;
 
+	private static final String MAP_TABLE_NAME = "DataTypeManager";
+
+	// Data map keys
+	private static final String DTM_DB_VERSION_KEY = "DB Version";
+
+	private static final String SETTINGS_TABLE_NAME = "Default Settings";
+
 	private BuiltinDBAdapter builtinAdapter;
 	private ComponentDBAdapter componentAdapter;
 	private CompositeDBAdapter compositeAdapter;
@@ -80,7 +97,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private PointerDBAdapter pointerAdapter;
 	private TypedefDBAdapter typedefAdapter;
 	private SettingsDBAdapter settingsAdapter;
-	private InstanceSettingsDBAdapter instanceSettingsAdapter;
 	private CategoryDBAdapter categoryAdapter;
 	private FunctionDefinitionDBAdapter functionDefAdapter;
 	private FunctionParameterAdapter paramAdapter;
@@ -90,8 +106,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	protected SourceArchiveAdapter sourceArchiveAdapter;
 
 	protected DBHandle dbHandle;
-	private AddressMap addrMap;
-	private ErrorHandler errHandler = new DbErrorHandler();
+	protected final ErrorHandler errHandler;
 	private DataTypeConflictHandler currentHandler;
 
 	private CategoryDB root;
@@ -100,7 +115,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private HashMap<Long, DataType> builtInMap = new HashMap<>();
 	private HashMap<DataType, Long> builtIn2IdMap = new HashMap<>();
 	private DBObjectCache<CategoryDB> catCache = new DBObjectCache<>(50);
-	private SettingsCache settingsCache = new SettingsCache();
+	private SettingsCache<Long> settingsCache = new SettingsCache<>(200);
 	private List<DataType> sortedDataTypes;
 	private Map<Long, Set<String>> enumValueMap;
 
@@ -123,9 +138,11 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	private boolean isBulkRemoving;
 
-	Lock lock;
+	protected AddressMap addrMap;
 
 	protected DataOrganization dataOrganization;
+	
+	protected final Lock lock;
 
 	private static class ResolvePair implements Comparable<ResolvePair> {
 
@@ -171,6 +188,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 */
 	protected DataTypeManagerDB(DataOrganization dataOrganization) {
 		this.lock = new Lock("DataTypeManagerDB");
+		this.errHandler = new DbErrorHandler();
 		this.dataOrganization = dataOrganization;
 
 		try {
@@ -199,12 +217,13 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * 
 	 * @param packedDBfile packed datatype archive file (i.e., *.gdt resource).
 	 * @param openMode     open mode CREATE, READ_ONLY or UPDATE (see
-	 *                     {@link DBConstants})
+	 *                     {@link DBConstants}).
 	 * @throws IOException a low-level IO error. This exception may also be thrown
 	 *                     when a version error occurs (cause is VersionException).
 	 */
 	protected DataTypeManagerDB(ResourceFile packedDBfile, int openMode) throws IOException {
 
+		this.errHandler = new DbErrorHandler();
 		lock = new Lock("DataTypeManagerDB");
 
 		File file = packedDBfile.getFile(false);
@@ -303,17 +322,19 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	/**
-	 * Constructor
+	 * Constructor for a database-backed <code>DataTypeManagerDB</code> extension.
 	 * 
 	 * @param handle     database handle
-	 * @param addrMap    map to convert addresses to longs and longs to addresses
-	 * @param openMode   mode to open the DataTypeManager in
+	 * @param addrMap    address map (may be null)
+	 * @param openMode   open mode CREATE, READ_ONLY or UPDATE (see
+	 *                     {@link DBConstants}).
 	 * @param errHandler the error handler
 	 * @param lock       database lock
 	 * @param monitor    the current task monitor
 	 * @throws CancelledException if an upgrade is cancelled
 	 * @throws IOException if there is a problem reading the database
-	 * @throws VersionException if any database handle's version doesn't match the expected version
+	 * @throws VersionException if any database handle's version doesn't match the expected version.
+	 *                   This exception will never be thrown in READ_ONLY mode.
 	 */
 	protected DataTypeManagerDB(DBHandle handle, AddressMap addrMap, int openMode,
 			ErrorHandler errHandler, Lock lock, TaskMonitor monitor)
@@ -352,6 +373,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		// present severe usability issues when the ability to open for update is not 
 		// possible.
 		//
+
+		checkAndUpdateManagerVersion(openMode);
 
 		VersionException versionExc = null;
 		try {
@@ -404,22 +427,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			versionExc = e.combine(versionExc);
 		}
 		try {
-			settingsAdapter = SettingsDBAdapter.getAdapter(dbHandle, openMode, monitor);
+			settingsAdapter = SettingsDBAdapter.getAdapter(SETTINGS_TABLE_NAME, dbHandle, openMode,
+				null, monitor);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
-		if (addrMap != null) {
-			try {
-				instanceSettingsAdapter =
-					InstanceSettingsDBAdapter.getAdapter(dbHandle, openMode, addrMap, monitor);
-			}
-			catch (VersionException e) {
-				versionExc = e.combine(versionExc);
-			}
-		}
 		try {
-			pointerAdapter = PointerDBAdapter.getAdapter(dbHandle, openMode, monitor, addrMap);
+			pointerAdapter = PointerDBAdapter.getAdapter(dbHandle, openMode, monitor);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
@@ -448,10 +463,31 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
+		
+		try {
+			initializeOtherAdapters(openMode, monitor);
+		}
+		catch (VersionException e) {
+			versionExc = e.combine(versionExc);
+		}
 
 		if (versionExc != null) {
 			throw versionExc;
 		}
+	}
+	
+	/**
+	 * Initialize other DB adapters after base implementation adapters has been
+	 * initialized.
+	 * @param openMode the DB open mode (see {@link DBConstants})
+	 * @param monitor the progress monitor
+	 * @throws CancelledException if the user cancels an upgrade
+	 * @throws VersionException if the database does not match the expected version.
+	 * @throws IOException if a database IO error occurs.
+	 */
+	protected void initializeOtherAdapters(int openMode, TaskMonitor monitor)
+			throws CancelledException, IOException, VersionException {
+		// do nothing
 	}
 
 	/**
@@ -496,6 +532,160 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Check data map for overall manager version for compatibility.
+	 * If not open read-only the map will be immediately updated to latest version.
+	 * @throws VersionException if database is a newer unsupported version
+	 * @throws IOException if an IO error occurs
+	 */
+	private void checkAndUpdateManagerVersion(int openMode) throws IOException, VersionException {
+
+		if (openMode == DBConstants.CREATE) {
+			DBStringMapAdapter dataMap = getDataMap(true);
+			dataMap.put(DTM_DB_VERSION_KEY, Integer.toString(DB_VERSION));
+			return;
+		}
+
+		// Check data map for overall manager version for compatibility.
+		// If not open read-only the map will be immediately updated to latest version.
+		DBStringMapAdapter dataMap = getDataMap(openMode == DBConstants.UPGRADE);
+		if (dataMap != null) {
+			// verify that we are compatible with stored data
+			int dbVersion = dataMap.getInt(DTM_DB_VERSION_KEY, 1);
+			if (dbVersion > DB_VERSION) {
+				throw new VersionException(false);
+			}
+			if (dbVersion < DB_VERSION) {
+				if (openMode == DBConstants.UPGRADE) {
+					// Upgrade mode required to advance overall DB version
+					dataMap.put(DTM_DB_VERSION_KEY, Integer.toString(DB_VERSION));
+				}
+				else if (openMode == DBConstants.UPDATE) {
+					throw new VersionException(true);
+				}
+			}
+		}
+		else if (openMode == DBConstants.UPDATE) {
+			// missing data map
+			throw new VersionException(true);
+		}
+	}
+
+	/**
+	 * Get the manager string data map.
+	 * @param createIfNeeded if true map will be created if it does not exist
+	 * @return manager string data map or null
+	 * @throws IOException if an IO error occurs
+	 */
+	protected DBStringMapAdapter getDataMap(boolean createIfNeeded) throws IOException {
+		DBStringMapAdapter dataMap = null;
+		boolean exists = (dbHandle.getTable(MAP_TABLE_NAME) != null);
+		if (exists) {
+			dataMap = new DBStringMapAdapter(dbHandle, MAP_TABLE_NAME, false);
+		}
+		else if (createIfNeeded) {
+			dataMap = new DBStringMapAdapter(dbHandle, MAP_TABLE_NAME, true);
+		}
+		return dataMap;
+	}
+
+	boolean clearSetting(long dataTypeId, String name) {
+		lock.acquire();
+		try {
+			settingsCache.remove(dataTypeId, name);
+			return settingsAdapter.removeSettingsRecord(dataTypeId, name);
+		}
+		catch (IOException e) {
+			errHandler.dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+		return false;
+	}
+
+	boolean clearAllSettings(long dataTypeId) {
+		lock.acquire();
+		try {
+			boolean changed = false;
+			Field[] keys = settingsAdapter.getSettingsKeys(dataTypeId);
+			for (Field key : keys) {
+				long settingsId = key.getLongValue();
+				DBRecord rec = settingsAdapter.getSettingsRecord(settingsId);
+				String name = settingsAdapter.getSettingName(rec);
+				settingsAdapter.removeSettingsRecord(settingsId);
+				settingsCache.remove(dataTypeId, name);
+				changed = true;
+			}
+			return changed;
+		}
+		catch (IOException e) {
+			errHandler.dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+		return false;
+	}
+
+	String[] getSettingsNames(long dataTypeId) {
+		lock.acquire();
+		try {
+			return settingsAdapter.getSettingsNames(dataTypeId);
+		}
+		catch (IOException e) {
+			errHandler.dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+		return new String[0];
+	}
+
+	SettingDB getSetting(long dataTypeId, String name) {
+		lock.acquire();
+		try {
+			SettingDB setting = settingsCache.get(dataTypeId, name);
+			if (setting != null) {
+				return setting;
+			}
+			DBRecord rec = settingsAdapter.getSettingsRecord(dataTypeId, name);
+			if (rec != null) {
+				setting = new SettingDB(rec, settingsAdapter.getSettingName(rec));
+				settingsCache.put(dataTypeId, name, setting);
+				return setting;
+			}
+		}
+		catch (IOException e) {
+			errHandler.dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+		return null;
+	}
+
+	boolean updateSettingsRecord(long dataTypeId, String name, String strValue, long longValue) {
+		lock.acquire();
+		try {
+			DBRecord rec =
+				settingsAdapter.updateSettingsRecord(dataTypeId, name, strValue, longValue);
+			if (rec != null) {
+				SettingDB setting = new SettingDB(rec, settingsAdapter.getSettingName(rec));
+				settingsCache.put(dataTypeId, name, setting);
+				return true;
+			}
+			return false;
+		}
+		catch (IOException e) {
+			errHandler.dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+		return false;
 	}
 
 	/**
@@ -769,6 +959,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (dataType == DataType.DEFAULT) {
 			return dataType;
 		}
+
 		if (dataType instanceof BitFieldDataType) {
 			return resolveBitFieldDataType((BitFieldDataType) dataType, handler);
 		}
@@ -1830,46 +2021,47 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		dataTypeDeleted(dataTypeID, deletedDtPath);
 	}
 
-	private void deleteDataTypeRecord(long dataID) {
-		int tableID = getTableID(dataID);
+	private void deleteDataTypeRecord(long dataTypeID) {
+		int tableID = getTableID(dataTypeID);
 
 		try {
 			DataType dt = null;
 			switch (tableID) {
 				case BUILT_IN:
-					boolean status = builtinAdapter.removeRecord(dataID);
+					boolean status = builtinAdapter.removeRecord(dataTypeID);
 					if (status) {
-						dt = builtInMap.remove(dataID);
+						dt = builtInMap.remove(dataTypeID);
 						builtIn2IdMap.remove(dt);
 					}
 					break;
 				case COMPOSITE:
-					removeComponents(dataID);
-					status = compositeAdapter.removeRecord(dataID);
+					removeComponents(dataTypeID);
+					status = compositeAdapter.removeRecord(dataTypeID);
 					break;
 				case COMPONENT:
-					status = componentAdapter.removeRecord(dataID);
+					status = componentAdapter.removeRecord(dataTypeID);
 					break;
 				case TYPEDEF:
-					status = typedefAdapter.removeRecord(dataID);
+					status = typedefAdapter.removeRecord(dataTypeID);
 					break;
 				case ARRAY:
-					status = arrayAdapter.removeRecord(dataID);
+					status = arrayAdapter.removeRecord(dataTypeID);
 					break;
 				case POINTER:
-					status = pointerAdapter.removeRecord(dataID);
+					status = pointerAdapter.removeRecord(dataTypeID);
 					break;
 				case FUNCTION_DEF:
-					removeParameters(dataID);
-					status = functionDefAdapter.removeRecord(dataID);
+					removeParameters(dataTypeID);
+					status = functionDefAdapter.removeRecord(dataTypeID);
 					break;
 				case PARAMETER:
-					status = paramAdapter.removeRecord(dataID);
+					status = paramAdapter.removeRecord(dataTypeID);
 					break;
 				case ENUM:
-					status = enumAdapter.removeRecord(dataID);
+					status = enumAdapter.removeRecord(dataTypeID);
 					break;
 			}
+			settingsAdapter.removeAllSettingsRecords(dataTypeID);
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
@@ -2127,11 +2319,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 					}
 				}
 
-				dt = (BuiltInDataType) c.getDeclaredConstructor().newInstance();
-				dt.setName(name);
-				dt.setCategoryPath(catPath);
-				dt = dt.clone(this);
-				dt.setDefaultSettings(new SettingsDBManager(this, dt, dataTypeID));
+				BuiltInDataType bdt = (BuiltInDataType) c.getDeclaredConstructor().newInstance();
+				bdt.setName(name);
+				bdt.setCategoryPath(catPath);
+				bdt = (BuiltInDataType) bdt.clone(this);
+				if (allowsDefaultBuiltInSettings() && bdt.getSettingsDefinitions().length != 0) {
+					bdt.setDefaultSettings(new DataTypeSettingsDB(this, bdt, dataTypeID));
+				}
+				dt = bdt;
 			}
 			catch (Exception e) {
 				Msg.error(this, e);
@@ -2401,7 +2596,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 			structDB.doReplaceWith(struct, false);
 			structDB.setDescription(struct.getDescription());
-//			structDB.notifySizeChanged();
+
 			// doReplaceWith may have updated the last change time so set it back to what we want.
 			structDB.setLastChangeTime(struct.getLastChangeTime());
 
@@ -2419,33 +2614,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		return dbHandle.isChanged();
 	}
 
-//	private int getExternalAlignment(Composite struct) {
-//		if (struct.isDefaultAligned()) {
-//			return CompositeDB.DEFAULT_ALIGNED;
-//		}
-//		else if (struct.isMachineAligned()) {
-//			return CompositeDB.MACHINE_ALIGNED;
-//		}
-//		else {
-//			int alignment = struct.getAlignment();
-//			if (alignment <= 0) {
-//				return CompositeDB.DEFAULT_ALIGNED;
-//			}
-//			return alignment;
-//		}
-//	}
-
-//	private int getInternalAlignment(Composite struct) {
-//		if (struct.isPackingEnabled()) {
-//			int packingValue = struct.getPackingValue();
-//			if (packingValue == 0) {
-//				return CompositeDB.ALIGNED_NO_PACKING;
-//			}
-//			return packingValue;
-//		}
-//		return CompositeDB.UNALIGNED;
-//	}
-
 	private TypeDef createTypeDef(TypeDef typedef, String name, Category cat,
 			long sourceArchiveIdValue, long universalIdValue)
 			throws IOException {
@@ -2456,8 +2624,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		DBRecord record = typedefAdapter.createRecord(getID(dataType), name, cat.getID(),
 			sourceArchiveIdValue, universalIdValue, typedef.getLastChangeTime());
 		TypedefDB typedefDB = new TypedefDB(this, dtCache, typedefAdapter, record);
-		dataType.addParent(typedefDB);
 
+		// Copy TypeDef settings from original
+		DataTypeSettingsDB settings = (DataTypeSettingsDB) typedefDB.getDefaultSettings();
+		boolean wasLocked = settings.setLock(false);
+		TypedefDataType.copyTypeDefSettings(typedef, typedefDB, false);
+		settings.setLock(wasLocked);
+
+		dataType.addParent(typedefDB);
 		return typedefDB;
 	}
 
@@ -2480,7 +2654,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 			unionDB.doReplaceWith(union, false);
 			unionDB.setDescription(union.getDescription());
-//			unionDB.notifySizeChanged();
+
 			// doReplaceWith updated the last change time so set it back to what we want.
 			unionDB.setLastChangeTime(union.getLastChangeTime());
 
@@ -2966,6 +3140,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			root.setInvalid();
 			catCache.invalidate();
 			settingsCache.clear();
+			settingsAdapter.invalidateNameCache();
 			sortedDataTypes = null;
 			enumValueMap = null;
 			fireInvalidated();
@@ -2989,448 +3164,20 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	/**
-	 * Set the long value for instance settings.
-	 * 
-	 * @param dataAddr min address of data
-	 * @param name     settings name
-	 * @param value    value of setting
-	 * @return true if the settings actually changed
-	 */
-
-	public boolean setLongSettingsValue(Address dataAddr, String name, long value) {
-
-		return updateInstanceSettings(dataAddr, name, null, value, null);
-	}
-
-	/**
-	 * Set the string value for instance settings.
-	 * 
-	 * @param dataAddr min address of data
-	 * @param name     settings name
-	 * @param value    value of setting
-	 * @return true if the settings actually changed
-	 */
-	public boolean setStringSettingsValue(Address dataAddr, String name, String value) {
-		return updateInstanceSettings(dataAddr, name, value, -1, null);
-	}
-
-	/**
-	 * Set the byte array value for instance settings.
-	 * 
-	 * @param dataAddr  min address of data ata
-	 * @param name      settings name
-	 * @param byteValue byte array value of setting
-	 * @return true if the settings actually changed
-	 */
-	public boolean setByteSettingsValue(Address dataAddr, String name, byte[] byteValue) {
-		return updateInstanceSettings(dataAddr, name, null, -1, byteValue);
-	}
-
-	/**
-	 * Set the Object settings.
-	 * 
-	 * @param dataAddr min address of data
-	 * @param name     the name of the settings
-	 * @param value    the value for the settings, must be either a String, byte[]
-	 *                 or Long
-	 * @return true if the settings were updated
-	 */
-	public boolean setSettings(Address dataAddr, String name, Object value) {
-		if (value instanceof String) {
-			return updateInstanceSettings(dataAddr, name, (String) value, -1, null);
-		}
-		else if (value instanceof byte[]) {
-			return updateInstanceSettings(dataAddr, name, null, -1, (byte[]) value);
-		}
-		else if (isAllowedNumberType(value)) {
-			return updateInstanceSettings(dataAddr, name, null, ((Number) value).longValue(), null);
-		}
-		throw new IllegalArgumentException(
-			"Unsupportd Settings Value: " + (value == null ? "null" : value.getClass().getName()));
-	}
-
-	private boolean isAllowedNumberType(Object value) {
-		if (value instanceof Long) {
-			return true;
-		}
-		if (value instanceof Integer) {
-			return true;
-		}
-		if (value instanceof Short) {
-			return true;
-		}
-		if (value instanceof Byte) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * Get the long value for an instance setting.
-	 * 
-	 * @param dataAddr min address of data
-	 * @param name     settings name
-	 * @return null if the named setting was not found
-	 */
-	public Long getLongSettingsValue(Address dataAddr, String name) {
-		InstanceSettingsDB settings = getInstanceSettingsDB(dataAddr, name);
-		if (settings != null) {
-			return settings.getLongValue();
-		}
-		return null;
-	}
-
-	/**
-	 * Get the String value for an instance setting.
-	 * 
-	 * @param dataAddr min address of data
-	 * @param name     settings name
-	 * @return null if the named setting was not found
-	 */
-	public String getStringSettingsValue(Address dataAddr, String name) {
-		InstanceSettingsDB settings = getInstanceSettingsDB(dataAddr, name);
-		if (settings != null) {
-			return settings.getStringValue();
-		}
-		return null;
-	}
-
-	/**
-	 * Get the byte array value for an instance setting.
-	 * 
-	 * @param dataAddr min address of data
-	 * @param name     settings name
-	 * @return null if the named setting was not found
-	 */
-	public byte[] getByteSettingsValue(Address dataAddr, String name) {
-
-		InstanceSettingsDB settings = getInstanceSettingsDB(dataAddr, name);
-		if (settings != null) {
-			return settings.getByteValue();
-		}
-		return null;
-	}
-
-	/**
-	 * Gets the value of a settings as an object (either String, byte[], or Long).
-	 * 
-	 * @param dataAddr the address of the data for this settings
-	 * @param name     the name of settings.
-	 * @return the settings object
-	 */
-	public Object getSettings(Address dataAddr, String name) {
-		Object obj = getStringSettingsValue(dataAddr, name);
-		if (obj != null) {
-			return obj;
-		}
-		obj = getByteSettingsValue(dataAddr, name);
-		if (obj != null) {
-			return obj;
-		}
-		return getLongSettingsValue(dataAddr, name);
-	}
-
-	/**
-	 * Clear the setting
-	 * 
-	 * @param dataAddr min address of data
-	 * @param name settings name
-	 * @return true if the settings were cleared
-	 */
-	public boolean clearSetting(Address dataAddr, String name) {
-		if (instanceSettingsAdapter == null) {
-			throw new UnsupportedOperationException();
-		}
-		lock.acquire();
-		try {
-			InstanceSettingsDB settings = getInstanceSettingsDB(dataAddr, name);
-			if (settings != null) {
-				long key = settings.getKey();
-				settingsCache.remove(dataAddr, name);
-				instanceSettingsAdapter.removeInstanceRecord(key);
-				return true;
-			}
-		}
-		catch (IOException e) {
-			errHandler.dbError(e);
-
-		}
-		finally {
-			lock.release();
-		}
-		return false;
-	}
-
-	/**
-	 * Clear all settings at the given address.
-	 * 
-	 * @param dataAddr the address for this settings.
-	 */
-	public void clearAllSettings(Address dataAddr) {
-		if (instanceSettingsAdapter == null) {
-			throw new UnsupportedOperationException();
-		}
-		lock.acquire();
-		try {
-			settingsCache.clear();
-			Field[] keys = instanceSettingsAdapter.getInstanceKeys(addrMap.getKey(dataAddr, false));
-			for (Field key : keys) {
-				instanceSettingsAdapter.removeInstanceRecord(key.getLongValue());
-			}
-		}
-		catch (IOException e) {
-			errHandler.dbError(e);
-
-		}
-		finally {
-			lock.release();
-		}
-	}
-
-	/**
-	 * Clears all settings in the given address range.
-	 * 
-	 * @param start   the first address of the range to clear
-	 * @param end     the last address of the range to clear.
-	 * @param monitor the progress monitor for this operation.
-	 * @throws CancelledException if the user cancels the operation.
-	 */
-	public void clearSettings(Address start, Address end, TaskMonitor monitor)
-			throws CancelledException {
-		if (instanceSettingsAdapter == null) {
-			throw new UnsupportedOperationException();
-		}
-		lock.acquire();
-		try {
-			settingsCache.clear();
-			List<KeyRange> keyRanges = addrMap.getKeyRanges(start, end, false);
-			for (KeyRange range : keyRanges) {
-				RecordIterator iter =
-					instanceSettingsAdapter.getRecords(range.minKey, range.maxKey);
-				while (iter.hasNext()) {
-					if (monitor.isCancelled()) {
-						throw new CancelledException();
-					}
-					iter.next();
-					iter.delete();
-				}
-			}
-		}
-		catch (IOException e) {
-			errHandler.dbError(e);
-		}
-		finally {
-			lock.release();
-		}
-	}
-
-	/**
-	 * Move the settings in the range to the new start address
-	 * 
-	 * @param fromAddr start address from where to move
-	 * @param toAddr   new Address to move to
-	 * @param length   number of addresses to move
-	 * @param monitor  progress monitor
-	 * @throws CancelledException if the operation was cancelled
-	 */
-	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
-			throws CancelledException {
-		if (instanceSettingsAdapter == null) {
-			throw new UnsupportedOperationException();
-		}
-
-		DBHandle scratchPad = null;
-		lock.acquire();
-		try {
-			settingsCache.clear();
-			scratchPad = dbHandle.getScratchPad();
-			Table tmpTable = scratchPad.createTable(InstanceSettingsDBAdapter.INSTANCE_TABLE_NAME,
-				InstanceSettingsDBAdapterV0.V0_INSTANCE_SCHEMA);
-
-			List<KeyRange> keyRanges =
-				addrMap.getKeyRanges(fromAddr, fromAddr.add(length - 1), false);
-			for (KeyRange range : keyRanges) {
-				RecordIterator iter =
-					instanceSettingsAdapter.getRecords(range.minKey, range.maxKey);
-				while (iter.hasNext()) {
-					monitor.checkCanceled();
-					DBRecord rec = iter.next();
-					tmpTable.putRecord(rec);
-					iter.delete();
-				}
-			}
-
-			RecordIterator iter = tmpTable.iterator();
-			while (iter.hasNext()) {
-				monitor.checkCanceled();
-				DBRecord rec = iter.next();
-				// update address column and re-introduce into table
-				Address addr = addrMap.decodeAddress(
-					rec.getLongValue(InstanceSettingsDBAdapter.INST_ADDR_COL));
-				long offset = addr.subtract(fromAddr);
-				addr = toAddr.add(offset);
-				rec.setLongValue(InstanceSettingsDBAdapter.INST_ADDR_COL,
-					addrMap.getKey(addr, true));
-				instanceSettingsAdapter.updateInstanceRecord(rec);
-			}
-
-		}
-		catch (IOException e) {
-			errHandler.dbError(e);
-		}
-		finally {
-			if (scratchPad != null) {
-				try {
-					scratchPad.deleteTable(InstanceSettingsDBAdapter.INSTANCE_TABLE_NAME);
-				}
-				catch (IOException e) {
-					// ignore
-				}
-			}
-			lock.release();
-		}
-	}
-
 	@Override
 	public boolean isUpdatable() {
 		return dbHandle.canUpdate();
 	}
 
-	/**
-	 * Returns all the Settings names for the given address
-	 * 
-	 * @param dataAddr the address
-	 * @return the names
-	 */
-	public String[] getNames(Address dataAddr) {
-		if (instanceSettingsAdapter == null) {
-			throw new UnsupportedOperationException();
-		}
-		lock.acquire();
-		try {
-			Field[] keys = instanceSettingsAdapter.getInstanceKeys(addrMap.getKey(dataAddr, false));
-			ArrayList<String> list = new ArrayList<>();
-			for (Field key : keys) {
-				DBRecord rec = instanceSettingsAdapter.getInstanceRecord(key.getLongValue());
-				list.add(rec.getString(InstanceSettingsDBAdapter.INST_NAME_COL));
-			}
-			String[] names = new String[list.size()];
-			return list.toArray(names);
-		}
-		catch (IOException e) {
-			errHandler.dbError(e);
-		}
-		finally {
-			lock.release();
-		}
-		return null;
+	@Override
+	public boolean allowsDefaultBuiltInSettings() {
+		return false;
 	}
 
-	/**
-	 * Returns true if no settings are set for the given address
-	 * 
-	 * @param dataAddr the address to test
-	 * @return true if not settings
-	 */
-	public boolean isEmptySetting(Address dataAddr) {
-		if (instanceSettingsAdapter == null) {
-			throw new UnsupportedOperationException();
-		}
-		try {
-			return instanceSettingsAdapter.getInstanceKeys(
-				addrMap.getKey(dataAddr, false)).length == 0;
-		}
-		catch (IOException e) {
-			errHandler.dbError(e);
-		}
-		return true;
-	}
-
-	private boolean updateInstanceSettings(Address dataAddr, String name, String strValue,
-			long longValue, byte[] byteValue) {
-
-		boolean wasChanged = false;
-
-		lock.acquire();
-		try {
-			if (instanceSettingsAdapter == null) {
-				throw new UnsupportedOperationException();
-			}
-
-			InstanceSettingsDB settings = getInstanceSettingsDB(dataAddr, name);
-			if (settings == null) {
-				wasChanged = true;
-				// create new record
-
-				DBRecord rec = instanceSettingsAdapter.createInstanceRecord(
-					addrMap.getKey(dataAddr, true), name, strValue, longValue, byteValue);
-				settings = new InstanceSettingsDB(rec);
-				settingsCache.put(dataAddr, name, settings);
-			}
-			else {
-				DBRecord rec = settings.getRecord();
-				String recStrValue = rec.getString(SettingsDBAdapter.SETTINGS_STRING_VALUE_COL);
-				byte[] recByteValue = rec.getBinaryData(SettingsDBAdapter.SETTINGS_BYTE_VALUE_COL);
-				long recLongValue = rec.getLongValue(SettingsDBAdapter.SETTINGS_LONG_VALUE_COL);
-				wasChanged = SettingsDBManager.valuesChanged(recStrValue, strValue, byteValue,
-					recByteValue, recLongValue, longValue);
-				if (wasChanged) {
-					rec.setString(InstanceSettingsDBAdapter.INST_STRING_VALUE_COL, strValue);
-					rec.setLongValue(InstanceSettingsDBAdapter.INST_LONG_VALUE_COL, longValue);
-					rec.setBinaryData(InstanceSettingsDBAdapter.INST_BYTE_VALUE_COL, byteValue);
-					instanceSettingsAdapter.updateInstanceRecord(rec);
-				}
-			}
-		}
-		catch (IOException e) {
-			errHandler.dbError(e);
-		}
-		finally {
-			lock.release();
-		}
-
-		return wasChanged;
-	}
-
-	private InstanceSettingsDB getInstanceSettingsDB(Address dataAddr, String name) {
-		lock.acquire();
-		try {
-			if (instanceSettingsAdapter == null) {
-				throw new UnsupportedOperationException();
-			}
-			InstanceSettingsDB settings = settingsCache.getInstanceSettings(dataAddr, name);
-			if (settings != null) {
-				return settings;
-			}
-			long addr = addrMap.getKey(dataAddr, false);
-			DBRecord rec = getInstanceRecord(addr, name);
-			if (rec != null) {
-				settings = new InstanceSettingsDB(rec);
-				settingsCache.put(dataAddr, name, settings);
-				return settings;
-			}
-			return null;
-		}
-		finally {
-			lock.release();
-		}
-	}
-
-	private DBRecord getInstanceRecord(long addr, String name) {
-		try {
-			Field[] keys = instanceSettingsAdapter.getInstanceKeys(addr);
-			for (Field key : keys) {
-				DBRecord rec = instanceSettingsAdapter.getInstanceRecord(key.getLongValue());
-				if (rec.getString(InstanceSettingsDBAdapter.INST_NAME_COL).equals(name)) {
-					return rec;
-				}
-			}
-		}
-		catch (IOException e) {
-			errHandler.dbError(e);
-		}
-		return null;
+	@Override
+	public final boolean allowsDefaultComponentSettings() {
+		// default component settings support follows the same rules as BuiltIn settings
+		return allowsDefaultBuiltInSettings();
 	}
 
 	/**
@@ -3569,43 +3316,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	@Override
 	public Pointer getPointer(DataType dt) {
-		return new PointerDataType(dt, -1, this);
+		return new PointerDataType(dt, this);
 	}
 
 	@Override
 	public Pointer getPointer(DataType dt, int size) {
 		return new PointerDataType(dt, size, this);
-	}
-
-	/**
-	 * Removes all settings in the range
-	 * 
-	 * @param startAddr the first address in the range.
-	 * @param endAddr   the last address in the range.
-	 * @param monitor   the progress monitor
-	 * @throws CancelledException if the user cancelled the operation.
-	 */
-	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
-			throws CancelledException {
-		if (instanceSettingsAdapter == null) {
-			throw new UnsupportedOperationException();
-		}
-		lock.acquire();
-		try {
-			List<?> addrKeyRanges = addrMap.getKeyRanges(startAddr, endAddr, false);
-			int cnt = addrKeyRanges.size();
-			for (int i = 0; i < cnt; i++) {
-				KeyRange kr = (KeyRange) addrKeyRanges.get(i);
-				instanceSettingsAdapter.delete(kr.minKey, kr.maxKey, monitor);
-			}
-		}
-		catch (IOException e) {
-			dbError(e);
-		}
-		finally {
-			settingsCache.clear();
-			lock.release();
-		}
 	}
 
 	@Override
@@ -4294,42 +4010,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			Msg.showError(this, null, "IO ERROR", message, e);
 		}
 	}
-}
 
-/**
- * Cached object for the instance settings.
- */
-class InstanceSettingsDB {
-
-	private DBRecord record;
-
-	InstanceSettingsDB(DBRecord record) {
-		this.record = record;
-	}
-
-	public long getKey() {
-		return record.getKey();
-	}
-
-	byte[] getByteValue() {
-		return record.getBinaryData(InstanceSettingsDBAdapter.INST_BYTE_VALUE_COL);
-	}
-
-	String getStringValue() {
-		return record.getString(InstanceSettingsDBAdapter.INST_STRING_VALUE_COL);
-	}
-
-	Long getLongValue() {
-		return record.getLongValue(InstanceSettingsDBAdapter.INST_LONG_VALUE_COL);
-	}
-
-	DBRecord getRecord() {
-		return record;
-	}
-
-	protected boolean refresh() {
-		return false;
-	}
 }
 
 class CategoryCache extends FixedSizeHashMap<String, Category> {

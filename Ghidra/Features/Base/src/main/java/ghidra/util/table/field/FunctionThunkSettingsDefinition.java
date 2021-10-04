@@ -41,6 +41,11 @@ public class FunctionThunkSettingsDefinition implements BooleanSettingsDefinitio
 	}
 
 	@Override
+	public String getValueString(Settings settings) {
+		return Boolean.toString(getValue(settings));
+	}
+
+	@Override
 	public void setValue(Settings settings, boolean value) {
 		settings.setString(THUNK, Boolean.toString(value));
 	}

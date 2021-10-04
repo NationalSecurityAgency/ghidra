@@ -45,7 +45,7 @@ public class PointerDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 		return truncatedHtmlData;
 	}
 
-	private static String buildHTMLText(Pointer pointer, boolean trim) {
+	static String buildHTMLText(Pointer pointer, boolean trim) {
 
 		DataType baseDataType = pointer;
 		while (baseDataType instanceof Pointer) {
@@ -115,6 +115,10 @@ public class PointerDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 		if (!Character.isUpperCase(firstChar)) {
 			description = Character.toUpperCase(firstChar) + description.substring(1);
 		}
+
+		int length = pointer.getLength();
+		description += BR;
+		description += "Size: " + (length >= 0 ? length : "default");
 
 		return description;
 	}

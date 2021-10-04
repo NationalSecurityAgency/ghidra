@@ -401,4 +401,16 @@ public class TestDummyDataTypeManager implements DataTypeManager {
 		return null;
 	}
 
+	@Override
+	public boolean allowsDefaultBuiltInSettings() {
+		// stub
+		return false;
+	}
+
+	@Override
+	public boolean allowsDefaultComponentSettings() {
+		// stub
+		return false;
+	}
+
 }

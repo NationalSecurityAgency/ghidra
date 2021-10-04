@@ -538,4 +538,18 @@ public interface DataTypeManager {
 	 * Use of {@link Set} implementations for containing DataTypes is also inefficient.
 	 */
 	public Set<DataType> getDataTypesContaining(DataType dataType);
+
+	/**
+	 * Determine if settings are supported for BuiltIn datatypes within this 
+	 * datatype manager.
+	 * @return true if BuiltIn Settings are permitted
+	 */
+	public boolean allowsDefaultBuiltInSettings();
+
+	/**
+	 * Determine if settings are supported for datatype components within this 
+	 * datatype manager (i.e., for structure and union components).
+	 * @return true if BuiltIn Settings are permitted
+	 */
+	public boolean allowsDefaultComponentSettings();
 }

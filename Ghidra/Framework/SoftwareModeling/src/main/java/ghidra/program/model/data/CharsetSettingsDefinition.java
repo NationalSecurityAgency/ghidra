@@ -71,6 +71,11 @@ public class CharsetSettingsDefinition implements EnumSettingsDefinition {
 		return (cs != null) ? cs : defaultValue;
 	}
 
+	@Override
+	public String getValueString(Settings settings) {
+		return getCharset(settings, null);
+	}
+
 	private String getDeprecatedEncodingValue(Settings settings) {
 		Long langIndex = settings.getLong(DEPRECATED_LANGUAGE_SETTING_NAME);
 		Long encodingIndex = settings.getLong(DEPRECATED_ENCODING_SETTING_NAME);

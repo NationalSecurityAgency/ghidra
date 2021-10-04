@@ -21,6 +21,8 @@ import java.util.*;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.html.diff.DataTypeDiff;
 import ghidra.app.util.html.diff.DataTypeDiffBuilder;
+import ghidra.docking.settings.Settings;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.data.*;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.StringUtilities;
@@ -127,6 +129,47 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 				baseDataType = ((Pointer) baseDataType).getDataType();
 			}
 		}
+		
+		// Show modified default settings details
+		StringBuilder buffy = new StringBuilder();
+		Settings defaultSettings = typeDef.getDefaultSettings();
+		HashSet<Class<?>> ignoredSettings = new HashSet<>();
+
+		for (SettingsDefinition settingsDef : typeDef.getSettingsDefinitions()) {
+			if (!(settingsDef instanceof TypeDefSettingsDefinition) ||
+				!settingsDef.hasValue(defaultSettings)) {
+				continue;
+			}
+			if (settingsDef instanceof PointerTypeSettingsDefinition) {
+				ignoredSettings.add(AddressSpaceSettingsDefinition.class);
+			}
+		}
+
+		for (SettingsDefinition settingsDef : typeDef.getSettingsDefinitions()) {
+			if (!(settingsDef instanceof TypeDefSettingsDefinition) ||
+				!settingsDef.hasValue(defaultSettings)) {
+				continue;
+			}
+			boolean ignored = ignoredSettings.contains(settingsDef.getClass());
+			if (buffy.length() == 0) {
+				buffy.append(INDENT_OPEN);
+			}
+			else {
+				buffy.append(BR);
+			}
+			buffy.append(TT_OPEN)
+					.append(settingsDef.getName())
+					.append(": ")
+					.append(settingsDef.getValueString(defaultSettings));
+			if (ignored) {
+				buffy.append(" (ignored)");
+			}
+			buffy.append(TT_CLOSE);
+		}
+		if (buffy.length() != 0) {
+			buffy.append(INDENT_CLOSE);
+			lines.add(new TextLine(buffy.toString()));
+		}
 		return lines;
 	}
 
@@ -168,6 +211,9 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 
 		// body
 		buffy.append(BR);
+		if (typeDef.isPointer()) {
+			buffy.append("Pointer-");
+		}
 		buffy.append("TypeDef Base Data Type: ").append(BR);
 
 		iterator = bodyLines.iterator();

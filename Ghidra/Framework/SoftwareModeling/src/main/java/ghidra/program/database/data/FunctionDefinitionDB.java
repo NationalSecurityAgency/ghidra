@@ -21,6 +21,7 @@ import java.util.*;
 import db.DBRecord;
 import db.Field;
 import ghidra.docking.settings.Settings;
+import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Function;
@@ -53,6 +54,11 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 	@Override
 	protected long doGetCategoryID() {
 		return record.getLongValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_CAT_ID_COL);
+	}
+
+	@Override
+	protected Settings doGetDefaultSettings() {
+		return SettingsImpl.NO_SETTINGS;
 	}
 
 	private void loadParameters() {
@@ -351,7 +357,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			return false;
 		}
 
-		checkIsValid();
+		validate(lock);
 		if (resolving) { // actively resolving children
 			if (dataType.getUniversalID().equals(getUniversalID())) {
 				return true;

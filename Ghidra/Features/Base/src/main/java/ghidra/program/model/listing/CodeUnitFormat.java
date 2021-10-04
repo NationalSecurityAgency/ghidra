@@ -1169,11 +1169,36 @@ public class CodeUnitFormat {
 			}
 		}
 
+		if (ref.isMemoryReference() && (ref instanceof OffsetReference)) {
+			return getOffsetReferenceRepresentation(cu, (OffsetReference) ref);
+		}
+
 		if (ref.isMemoryReference() || ref.isExternalReference()) {
 			return getMemoryReferenceLabel(cu, ref);
 		}
+
 		return null;
 
+	}
+
+	private Object getOffsetReferenceRepresentation(CodeUnit cu, OffsetReference offsetRef) {
+		Reference baseRef =
+			new MemReferenceImpl(offsetRef.getFromAddress(), offsetRef.getBaseAddress(),
+				RefType.DATA,
+				offsetRef.getSource(), offsetRef.getOperandIndex(), offsetRef.isPrimary());
+		Object baseRefObj = getMemoryReferenceLabel(cu, baseRef);
+		long offset = offsetRef.getOffset();
+		String sign = "+";
+		if (offset < 0) {
+			offset = -offset;
+			sign = "-";
+		}
+		Scalar offsetScalar = new Scalar(64, offsetRef.getOffset(), true);
+		OperandRepresentationList list = new OperandRepresentationList();
+		list.add(baseRefObj);
+		list.add(sign);
+		list.add(offsetScalar);
+		return list;
 	}
 
 	/**

@@ -120,19 +120,6 @@ public interface DBTraceDataSettingsOperations
 		}
 	}
 
-	default void setBytes(Range<Long> lifespan, Address address, String name, byte[] value) {
-		try (LockHold hold = LockHold.lock(getLock().writeLock())) {
-			doExactOrNew(lifespan, address, name).setBytes(value);
-		}
-	}
-
-	default byte[] getBytes(long snap, Address address, String name) {
-		try (LockHold hold = LockHold.lock(getLock().readLock())) {
-			DBTraceSettingsEntry entry = doGetEntry(snap, address, name);
-			return entry == null ? null : entry.getBytes();
-		}
-	}
-
 	default void setValue(Range<Long> lifespan, Address address, String name, Object value) {
 		assertKnownType(value);
 		try (LockHold hold = LockHold.lock(getLock().writeLock())) {

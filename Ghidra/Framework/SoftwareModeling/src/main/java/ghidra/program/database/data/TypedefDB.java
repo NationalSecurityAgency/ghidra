@@ -36,13 +36,17 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	private SettingsDefinition[] settingsDef;
 
 	/**
-	 * Constructor
-	 * @param key
+	 * Construct TypeDefDB instance
+	 * @param dataMgr datatype manager
+	 * @param cache DataTypeDB cache
+	 * @param adapter TypeDef record adapter
+	 * @param record TypeDefDB record
 	 */
 	public TypedefDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
 			TypedefDBAdapter adapter, DBRecord record) {
 		super(dataMgr, cache, record);
 		this.adapter = adapter;
+		this.defaultSettings = null; // ensure lazy initialization
 	}
 
 	@Override
@@ -98,9 +102,7 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 
 	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
-		checkIsValid();
-		TypedefSettings ts = new TypedefSettings(super.getDefaultSettings(), settings);
-		return getDataType().getRepresentation(buf, ts, length);
+		return getDataType().getRepresentation(buf, settings, length);
 	}
 
 	@Override
@@ -164,14 +166,18 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 
 	@Override
 	public DataType clone(DataTypeManager dtm) {
-		return new TypedefDataType(getCategoryPath(), getName(), getDataType(), getUniversalID(),
+		TypedefDataType typeDef =
+			new TypedefDataType(getCategoryPath(), getName(), getDataType(), getUniversalID(),
 			getSourceArchive(), getLastChangeTime(), getLastChangeTimeInSourceArchive(), dtm);
-
+		TypedefDataType.copyTypeDefSettings(this, typeDef, false);
+		return typeDef;
 	}
 
 	@Override
 	public DataType copy(DataTypeManager dtm) {
-		return new TypedefDataType(getCategoryPath(), getName(), getDataType(), dtm);
+		TypedefDataType typeDef =  new TypedefDataType(getCategoryPath(), getName(), getDataType(), dtm);
+		TypedefDataType.copyTypeDefSettings(this, typeDef, false);
+		return typeDef;
 	}
 
 	@Override
@@ -183,8 +189,11 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 			return false;
 		}
 		TypeDef td = (TypeDef) obj;
-		checkIsValid();
+		validate(lock);
 		if (!DataTypeUtilities.equalsIgnoreConflict(getName(), td.getName())) {
+			return false;
+		}
+		if (!hasSameTypeDefSettings(td)) {
 			return false;
 		}
 		return DataTypeUtilities.isSameOrEquivalentDataType(getDataType(), td.getDataType());
@@ -204,6 +213,8 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		lock.acquire();
 		try {
 			if (checkIsValid() && getDataType() == oldDt) {
+				settingsDef = null;
+				defaultSettings = null;
 				oldDt.removeParent(this);
 				newDt = resolve(newDt);
 				newDt.addParent(this);
@@ -240,6 +251,7 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 
 	@Override
 	public void dataTypeNameChanged(DataType dt, String oldName) {
+		// ignore
 	}
 
 	@Override
@@ -253,8 +265,8 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		try {
 			DBRecord rec = adapter.getRecord(key);
 			if (rec != null) {
+				settingsDef = null;
 				record = rec;
-//				super.getDefaultSettings();  // not sure why it was doing this - no one else does.
 				return super.refresh();
 			}
 		}
@@ -271,13 +283,49 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 			checkIsValid();
 			if (settingsDef == null) {
 				DataType dt = getDataType();
-				settingsDef = dt.getSettingsDefinitions();
+				SettingsDefinition[] settingsDefinitions = dt.getSettingsDefinitions();
+				TypeDefSettingsDefinition[] typeDefSettingsDefinitions =
+					dt.getTypeDefSettingsDefinitions();
+				settingsDef = new SettingsDefinition[settingsDefinitions.length +
+					typeDefSettingsDefinitions.length];
+				System.arraycopy(settingsDefinitions, 0, settingsDef, 0,
+					settingsDefinitions.length);
+				System.arraycopy(typeDefSettingsDefinitions, 0, settingsDef,
+					settingsDefinitions.length, typeDefSettingsDefinitions.length);
 			}
 			return settingsDef;
 		}
 		finally {
 			lock.release();
 		}
+	}
+
+	@Override
+	public TypeDefSettingsDefinition[] getTypeDefSettingsDefinitions() {
+		return getDataType().getTypeDefSettingsDefinitions();
+	}
+
+	protected Settings doGetDefaultSettings() {
+		DataTypeSettingsDB settings = new DataTypeSettingsDB(dataMgr, this, key);
+		settings.setLock(dataMgr instanceof BuiltInDataTypeManager);
+		settings.setAllowedSettingPredicate(n -> isAllowedSetting(n));
+		settings.setDefaultSettings(getDataType().getDefaultSettings());
+		return settings;
+	}
+
+	private boolean isAllowedSetting(String settingName) {
+		if (dataMgr instanceof ProgramBasedDataTypeManager) {
+			// any setting permitted within a program DTM
+			return true;
+		}
+		// non-TypeDefSettingsDefinition settings are not permitted in non-program DTM
+		// since they will be discarded during resolve and ignored for equivalence checks
+		for (TypeDefSettingsDefinition def : getTypeDefSettingsDefinitions()) {
+			if (def.getStorageKey().equals(settingName)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -384,8 +432,17 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		if (!(dataType instanceof TypeDef)) {
 			throw new UnsupportedOperationException();
 		}
-		if (dataType != this) {
-			dataTypeReplaced(getDataType(), ((TypeDef) dataType).getDataType());
+		if (dataType == this) {
+			return;
+		}
+		lock.acquire();
+		try {
+			TypeDef td = (TypeDef) dataType;
+			dataTypeReplaced(getDataType(), td.getDataType());
+			TypedefDataType.copyTypeDefSettings(td, this, true);
+		}
+		finally {
+			lock.release();
 		}
 	}
 

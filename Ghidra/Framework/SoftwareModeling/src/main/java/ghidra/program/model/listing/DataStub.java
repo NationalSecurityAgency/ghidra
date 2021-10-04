@@ -333,11 +333,6 @@ public class DataStub implements Data {
 	}
 
 	@Override
-	public byte[] getByteArray(String name) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Object getValue(String name) {
 		throw new UnsupportedOperationException();
 	}
@@ -349,11 +344,6 @@ public class DataStub implements Data {
 
 	@Override
 	public void setString(String name, String value) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setByteArray(String name, byte[] value) {
 		throw new UnsupportedOperationException();
 	}
 
