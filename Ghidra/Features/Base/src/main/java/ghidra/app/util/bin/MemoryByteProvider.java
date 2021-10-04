@@ -125,6 +125,9 @@ public class MemoryByteProvider implements ByteProvider {
 			}
 			return bytes;
 		}
+		catch (IOException e) {
+			throw e;
+		}
 		catch (Exception e) {
 			throw new IOException(e.getMessage());
 		}

@@ -65,7 +65,7 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 		this.fsFSRL = fsrl;
 	}
 
-	private boolean isSameFS(FSRL fsrl) {
+	boolean isSameFS(FSRL fsrl) {
 		return fsFSRL.equals(fsrl.getFS());
 	}
 

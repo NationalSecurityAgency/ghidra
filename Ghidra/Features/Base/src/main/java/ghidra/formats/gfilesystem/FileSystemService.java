@@ -226,7 +226,7 @@ public class FileSystemService {
 	 * @return true if local, false if the path points to an embedded file in a container.
 	 */
 	public boolean isLocal(FSRL fsrl) {
-		return fsrl.getFS().hasContainer() == false;
+		return localFS.isSameFS(fsrl);
 	}
 
 	/**
@@ -517,6 +517,25 @@ public class FileSystemService {
 	 */
 	public FileCacheEntryBuilder createTempFile(long sizeHint) throws IOException {
 		return fileCache.createCacheEntryBuilder(sizeHint);
+	}
+
+	/**
+	 * Returns a {@link ByteProvider} for the specified {@link FileCacheEntry}, using the
+	 * specified filename.
+	 * <p>
+	 * The returned ByteProvider's FSRL will be decorative and does not allow returning to
+	 * the same ByteProvider at a later time.
+	 *  
+	 * @param tempFileCacheEntry {@link FileCacheEntry} (returned by {@link #createTempFile(long)})
+	 * @param name desired name
+	 * @return new {@link ByteProvider} with decorative {@link FSRL}
+	 * @throws IOException if io error
+	 */
+	public ByteProvider getNamedTempFile(FileCacheEntry tempFileCacheEntry, String name)
+			throws IOException {
+		FSRL resultFSRL = FSRLRoot.makeRoot("tmp")
+				.withPathMD5(FSUtilities.appendPath("/", name), tempFileCacheEntry.getMD5());
+		return tempFileCacheEntry.asByteProvider(resultFSRL);
 	}
 
 	/**
