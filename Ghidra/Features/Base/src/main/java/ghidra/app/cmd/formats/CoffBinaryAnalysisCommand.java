@@ -23,7 +23,9 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.app.util.bin.format.coff.*;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.BinaryLoader;
 import ghidra.framework.cmd.BinaryAnalysisCommand;
+import ghidra.framework.options.Options;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
@@ -45,6 +47,11 @@ public class CoffBinaryAnalysisCommand extends FlatProgramAPI
 	@Override
 	public boolean canApply(Program program) {
 		try {
+			Options options = program.getOptions(Program.PROGRAM_INFO);
+			String format = options.getString("Executable Format", null);
+			if (!BinaryLoader.BINARY_NAME.equals(format)) {
+				return false;
+			}
 			Memory memory = program.getMemory();
 			short magic =
 				memory.getShort(program.getAddressFactory().getDefaultAddressSpace().getAddress(0));
