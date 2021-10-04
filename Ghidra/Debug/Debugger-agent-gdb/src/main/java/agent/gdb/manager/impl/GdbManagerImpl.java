@@ -37,16 +37,19 @@ import agent.gdb.manager.impl.cmd.*;
 import agent.gdb.manager.parsing.GdbMiParser;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
 import agent.gdb.pty.*;
+import ghidra.GhidraApplicationLayout;
 import ghidra.async.*;
 import ghidra.async.AsyncLock.Hold;
 import ghidra.dbg.error.DebuggerModelTerminatingException;
 import ghidra.dbg.util.HandlerMap;
 import ghidra.dbg.util.PrefixMap;
 import ghidra.framework.Application;
+import ghidra.framework.GhidraApplicationConfiguration;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.ListenerSet;
+import ghidra.util.task.ConsoleTaskMonitor;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -206,7 +209,8 @@ public class GdbManagerImpl implements GdbManager {
 
 	private void initLog() {
 		try {
-			File userSettings = Application.getUserSettingsDirectory();
+			GhidraApplicationLayout layout = new GhidraApplicationLayout();
+			File userSettings = layout.getUserSettingsDir();
 			File logFile = new File(userSettings, "GDB.log");
 			try {
 				logFile.createNewFile();
@@ -216,7 +220,7 @@ public class GdbManagerImpl implements GdbManager {
 			}
 			DBG_LOG = new PrintWriter(new FileOutputStream(logFile));
 		}
-		catch (FileNotFoundException e) {
+		catch (IOException e) {
 			throw new AssertionError(e);
 		}
 	}
