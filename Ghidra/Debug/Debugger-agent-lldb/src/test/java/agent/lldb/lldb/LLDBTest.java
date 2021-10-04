@@ -16,6 +16,7 @@
 package agent.lldb.lldb;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -45,6 +46,7 @@ public class LLDBTest extends AbstractGhidraHeadlessIntegrationTest {
 			System.load("/usr/lib/liblldb.dylib");
 		}
 		catch (UnsatisfiedLinkError ex) {
+			assumeTrue("lldb not available", false);
 		}
 	}
 
