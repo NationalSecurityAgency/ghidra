@@ -175,7 +175,9 @@ public class GdbModelTargetInferior
 			CmdLineParser.tokenize(TargetCmdLineLauncher.PARAMETER_CMDLINE_ARGS.get(args));
 		Boolean useStarti = PARAMETER_STARTI.get(args);
 		return impl.gateFuture(
-			GdbModelImplUtils.launch(impl, inferior, cmdLineArgs, useStarti).thenApply(__ -> null));
+			GdbModelImplUtils.launch(inferior, cmdLineArgs, useStarti, () -> {
+				return environment.refreshInternal();
+			}).thenApply(__ -> null));
 	}
 
 	@Override
@@ -249,8 +251,16 @@ public class GdbModelTargetInferior
 		parent.getListeners().fire.event(parent, null, TargetEventType.PROCESS_CREATED,
 			"Inferior " + inferior.getId() + " started " + inferior.getExecutable() + " pid=" + pid,
 			List.of(this));
+		/*System.err.println("inferiorStarted: realState = " + realState);
+		changeAttributes(List.of(), Map.ofEntries(
+			// This is hacky, but =inferior-started comes before ^running.
+			// Is it ever not followed by ^running, except on failure?
+			Map.entry(STATE_ATTRIBUTE_NAME, state = TargetExecutionState.RUNNING),
+			Map.entry(PID_ATTRIBUTE_NAME, pid),
+			Map.entry(DISPLAY_ATTRIBUTE_NAME, updateDisplay())),
+			"Refresh on started");*/
 		AsyncFence fence = new AsyncFence();
-		fence.include(modules.refreshInternal());
+		//fence.include(modules.refreshInternal());
 		//fence.include(registers.refreshInternal());
 		fence.include(environment.refreshInternal());
 		fence.include(impl.gdb.listInferiors()); // HACK to update inferior.getExecutable()
@@ -266,14 +276,14 @@ public class GdbModelTargetInferior
 				changeAttributes(List.of(), Map.ofEntries(
 					Map.entry(STATE_ATTRIBUTE_NAME, state = realState),
 					Map.entry(DISPLAY_ATTRIBUTE_NAME, updateDisplay())),
-					"Refresh on started");
+					"Refresh on initial break");
 			}
 			else {
 				changeAttributes(List.of(), Map.ofEntries(
 					Map.entry(STATE_ATTRIBUTE_NAME, state = realState),
 					Map.entry(PID_ATTRIBUTE_NAME, p),
 					Map.entry(DISPLAY_ATTRIBUTE_NAME, updateDisplay())),
-					"Refresh on started");
+					"Refresh on initial break");
 			}
 		});
 	}
@@ -442,7 +452,8 @@ public class GdbModelTargetInferior
 			List<Object> params = new ArrayList<>();
 			gatherThreads(params, sco.getAffectedThreads());
 			if (targetEventThread == null && !params.isEmpty()) {
-				targetEventThread = threads.getTargetThread(sco.getAffectedThreads().iterator().next());
+				targetEventThread =
+					threads.getTargetThread(sco.getAffectedThreads().iterator().next());
 			}
 			if (targetEventThread != null) {
 				impl.session.getListeners().fire.event(impl.session, targetEventThread,

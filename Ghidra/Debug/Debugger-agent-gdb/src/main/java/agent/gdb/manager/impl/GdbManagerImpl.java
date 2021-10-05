@@ -604,6 +604,8 @@ public class GdbManagerImpl implements GdbManager {
 
 					cliThread = iniThread;
 					cliThread.setName("GDB Read CLI");
+					// Looks terrible, but we're already in this world
+					cliThread.writer.print("set confirm off" + newLine);
 					cliThread.writer
 							.print("new-ui mi2 " + mi2Pty.getChild().nullSession() + newLine);
 					cliThread.writer.flush();
@@ -1534,19 +1536,34 @@ public class GdbManagerImpl implements GdbManager {
 		}
 	}
 
+	public void sendInterruptNow(PtyThread thread, byte[] bytes) throws IOException {
+		Msg.info(this, "Interrupting by Ctrl-C on " + thread + "'s pty");
+		OutputStream os = thread.pty.getParent().getOutputStream();
+		os.write(bytes);
+		os.flush();
+	}
+
 	@Override
 	public void sendInterruptNow() throws IOException {
 		checkStarted();
-		Msg.info(this, "Interrupting");
+		/*Msg.info(this, "Interrupting while runningInterpreter = " + runningInterpreter);
+		if (runningInterpreter == Interpreter.MI2) {
+			if (cliThread != null) {
+				Msg.info(this, "Interrupting by 'interrupt' on CLI");
+				OutputStream os = cliThread.pty.getParent().getOutputStream();
+				os.write(("interrupt" + newLine).getBytes());
+				os.flush();
+			}
+			else {
+				sendInterruptNow(mi2Thread);
+			}
+		}
+		else*/
 		if (cliThread != null) {
-			OutputStream os = cliThread.pty.getParent().getOutputStream();
-			os.write(3);
-			os.flush();
+			sendInterruptNow(cliThread, (((char) 3) + "interrupt" + newLine).getBytes());
 		}
 		else if (mi2Thread != null) {
-			OutputStream os = mi2Thread.pty.getParent().getOutputStream();
-			os.write(3);
-			os.flush();
+			sendInterruptNow(mi2Thread, new byte[] { 3 });
 		}
 	}
 

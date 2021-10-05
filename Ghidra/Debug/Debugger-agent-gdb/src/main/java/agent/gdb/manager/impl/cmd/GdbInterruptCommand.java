@@ -41,7 +41,7 @@ public class GdbInterruptCommand extends AbstractGdbCommand<Void> {
 	public String encode() {
 		Interpreter i = getInterpreter();
 		if (i == manager.getRunningInterpreter()) {
-			Msg.debug(this, "Using ^C to interrupt");
+			Msg.debug(this, "Using ^C to interrupt via " + i);
 			return "\u0003";
 		}
 		switch (i) {

@@ -23,7 +23,7 @@ import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
  * Implementation of {@link GdbInferior#cont()}
  */
 public class GdbContinueCommand extends AbstractGdbCommandWithThreadId<Void>
-		implements MixinResumeInCliGdbCommand {
+		implements MixinResumeInCliGdbCommand<Void> {
 	public GdbContinueCommand(GdbManagerImpl manager, Integer threadId) {
 		super(manager, threadId);
 	}
@@ -49,6 +49,7 @@ public class GdbContinueCommand extends AbstractGdbCommandWithThreadId<Void>
 
 	@Override
 	public Void complete(GdbPendingCommand<?> pending) {
-		return completeOnRunning(pending);
+		completeOnRunning(pending);
+		return null;
 	}
 }

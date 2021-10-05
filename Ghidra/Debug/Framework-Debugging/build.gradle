@@ -52,7 +52,15 @@ task testSpecimenLinux64 {
 	dependsOn 'expPrintLinux64Executable'
 	//dependsOn 'expTypesExecutable'//Linux64Executable'
 	dependsOn 'expRegistersLinux64Executable'
+	dependsOn 'expSpinLinux64Executable'
 	dependsOn 'expStackLinux64Executable'
+	
+	doLast {
+		exec {
+			workingDir "build/os/linux64"
+			commandLine "strip", "-o", "expSpin.stripped", "expSpin"
+		}
+	}
 }
 
 model {
@@ -99,6 +107,7 @@ model {
 			targetPlatform "win32" // TODO: Test on these
 		}
 		expSpin(NativeExecutableSpec) {
+			targetPlatform "linux64"
 			targetPlatform "win64"
 			targetPlatform "win32" // TODO: Test on these
 		}
