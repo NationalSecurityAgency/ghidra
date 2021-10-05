@@ -74,6 +74,8 @@ OpToken PrintC::ptr_expr = { "*", 1, 62, false, OpToken::unary_prefix, 0, 0, (Op
 OpToken PrintC::array_expr = { "[]", 2, 66, false, OpToken::postsurround, 1, 0, (OpToken *)0 };
 OpToken PrintC::enum_cat = { "|", 2, 26, true, OpToken::binary, 0, 0, (OpToken *)0 };
 
+const string PrintC::typePointerRelToken = "ADJ";
+
 // Constructing this registers the capability
 PrintCCapability PrintCCapability::printCCapability;
 
@@ -780,6 +782,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
 
 {
   TypePointer *ptype;
+  TypePointerRel *ptrel;
   Datatype *ct;
   const Varnode *in0;
   bool valueon,flex,arrayvalue;
@@ -791,13 +794,24 @@ void PrintC::opPtrsub(const PcodeOp *op)
     clear();
     throw LowlevelError("PTRSUB off of non-pointer type");
   }
-  ct = ptype->getPtrTo();
+  if (ptype->isFormalPointerRel()) {
+    ptrel = (TypePointerRel *)ptype;
+    ct = ptrel->getParent();
+  }
+  else {
+    ptrel = (TypePointerRel *)0;
+    ct = ptype->getPtrTo();
+  }
   m = mods & ~(print_load_value|print_store_value); // Current state of mods
   valueon = (mods & (print_load_value|print_store_value)) != 0;
   flex = isValueFlexible(in0);
 
   if (ct->getMetatype() == TYPE_STRUCT) {
     uintb suboff = op->getIn(1)->getOffset();	// How far into container
+    if (ptrel != (TypePointerRel *)0) {
+      suboff += ptrel->getPointerOffset();
+      suboff &= calc_mask(ptype->getSize());
+    }
     suboff = AddrSpace::addressToByte(suboff,ptype->getWordSize());
     string fieldname;
     Datatype *fieldtype;
@@ -832,12 +846,16 @@ void PrintC::opPtrsub(const PcodeOp *op)
       if (flex) {		// EMIT  &( ).name
 	pushOp(&addressof,op);
 	pushOp(&object_member,op);
+	if (ptrel != (TypePointerRel *)0)
+	  pushTypePointerRel(op);
 	pushVnImplied(in0,op,m | print_load_value);
 	pushAtom(Atom(fieldname,fieldtoken,EmitXml::no_color,ct,fieldoffset));
       }
       else {			// EMIT  &( )->name
 	pushOp(&addressof,op);
 	pushOp(&pointer_member,op);
+	if (ptrel != (TypePointerRel *)0)
+	  pushTypePointerRel(op);
 	pushVnImplied(in0,op,m);
 	pushAtom(Atom(fieldname,fieldtoken,EmitXml::no_color,ct,fieldoffset));
       }
@@ -847,11 +865,15 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	pushOp(&subscript,op);
       if (flex) {		// EMIT  ( ).name
 	pushOp(&object_member,op);
+	if (ptrel != (TypePointerRel *)0)
+	  pushTypePointerRel(op);
 	pushVnImplied(in0,op,m | print_load_value);
 	pushAtom(Atom(fieldname,fieldtoken,EmitXml::no_color,ct,fieldoffset));
       }
       else {			// EMIT  ( )->name
 	pushOp(&pointer_member,op);
+	if (ptrel != (TypePointerRel *)0)
+	  pushTypePointerRel(op);
 	pushVnImplied(in0,op,m);
 	pushAtom(Atom(fieldname,fieldtoken,EmitXml::no_color,ct,fieldoffset));
       }
@@ -912,22 +934,30 @@ void PrintC::opPtrsub(const PcodeOp *op)
       if (flex) {		// EMIT  ( )
 				// (*&struct->arrayfield)[i]
 				// becomes struct->arrayfield[i]
+	if (ptrel != (TypePointerRel *)0)
+	  pushTypePointerRel(op);
 	pushVnImplied(in0,op,m);
       }
       else {			// EMIT  *( )
 	pushOp(&dereference,op);
+	if (ptrel != (TypePointerRel *)0)
+	  pushTypePointerRel(op);
 	pushVnImplied(in0,op,m);
       }
     }
     else {
       if (flex) {		// EMIT  ( )[0]
 	pushOp(&subscript,op);
+	if (ptrel != (TypePointerRel *)0)
+	  pushTypePointerRel(op);
 	pushVnImplied(in0,op,m);
 	push_integer(0,4,false,(Varnode *)0,op);
       }
       else {			// EMIT  (* )[0]
 	pushOp(&subscript,op);
 	pushOp(&dereference,op);
+	if (ptrel != (TypePointerRel *)0)
+	  pushTypePointerRel(op);
 	pushVnImplied(in0,op,m);
 	push_integer(0,4,false,(Varnode *)0,op);
       }
@@ -1561,6 +1591,7 @@ void PrintC::pushConstant(uintb val,const Datatype *ct,
     clear();
     throw LowlevelError("Cannot have a constant of type void");
   case TYPE_PTR:
+  case TYPE_PTRSTRUCT:
     if (option_NULL&&(val==0)) { // A null pointer
       pushAtom(Atom(nullToken,vartoken,EmitXml::var_color,op,vn));
       return;
@@ -1582,6 +1613,7 @@ void PrintC::pushConstant(uintb val,const Datatype *ct,
   case TYPE_CODE:
   case TYPE_ARRAY:
   case TYPE_STRUCT:
+  case TYPE_PARTIALSTRUCT:
     break;
   }
   // Default printing

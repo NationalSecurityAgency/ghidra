@@ -113,6 +113,7 @@ protected:
   static OpToken ptr_expr;		///< Pointer adornment for a type declaration
   static OpToken array_expr;		///< Array adornment for a type declaration
   static OpToken enum_cat;		///< The \e concatenation operator for enumerated values
+  static const string typePointerRelToken;	///< The token to print indicating PTRSUB relative to a TypePointerRel
   bool option_NULL;		///< Set to \b true if we should emit NULL keyword
   bool option_inplace_ops;	///< Set to \b true if we should use '+=' '&=' etc.
   bool option_convention;	///< Set to \b true if we should print calling convention
@@ -196,6 +197,7 @@ protected:
   virtual void emitFunctionDeclaration(const Funcdata *fd);
   virtual void emitTypeDefinition(const Datatype *ct);
   virtual bool checkPrintNegation(const Varnode *vn);
+  void pushTypePointerRel(const PcodeOp *op);
 public:
   PrintC(Architecture *g,const string &nm="c-language");	///< Constructor
   void setNULLPrinting(bool val) { option_NULL = val; }		///< Toggle the printing of a 'NULL' token
@@ -312,5 +314,17 @@ public:
   int4 getIndentId(void) const { return indentId; }	///< If commands have been issued, returns the new indent level id.
   virtual void callback(EmitXml *emit);
 };
+
+/// \brief Push a token indicating a PTRSUB (a -> operator) is acting at an offset from the original pointer
+///
+/// When a variable has TypePointerRel as its data-type, PTRSUB acts relative to the \e parent
+/// data-type.  We print a specific token to indicate this relative shift is happening.
+/// \param op is is the PTRSUB op
+inline void PrintC::pushTypePointerRel(const PcodeOp *op)
+
+{
+  pushOp(&function_call,op);
+  pushAtom(Atom(typePointerRelToken,optoken,EmitXml::funcname_color,op));
+}
 
 #endif
