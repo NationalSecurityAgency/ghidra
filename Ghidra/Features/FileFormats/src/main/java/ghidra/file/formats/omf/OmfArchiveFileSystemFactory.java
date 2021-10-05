@@ -15,7 +15,6 @@
  */
 package ghidra.file.formats.omf;
 
-import java.io.File;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
@@ -23,19 +22,20 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.omf.OmfFileHeader;
 import ghidra.app.util.bin.format.omf.OmfLibraryRecord;
 import ghidra.app.util.opinion.OmfLoader;
-import ghidra.formats.gfilesystem.*;
-import ghidra.formats.gfilesystem.factory.GFileSystemFactoryFull;
-import ghidra.formats.gfilesystem.factory.GFileSystemProbeFull;
+import ghidra.formats.gfilesystem.FSRLRoot;
+import ghidra.formats.gfilesystem.FileSystemService;
+import ghidra.formats.gfilesystem.factory.GFileSystemFactoryByteProvider;
+import ghidra.formats.gfilesystem.factory.GFileSystemProbeByteProvider;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-public class OmfArchiveFileSystemFactory
-		implements GFileSystemFactoryFull<OmfArchiveFileSystem>, GFileSystemProbeFull {
+public class OmfArchiveFileSystemFactory implements
+		GFileSystemFactoryByteProvider<OmfArchiveFileSystem>, GFileSystemProbeByteProvider {
 
 	@Override
-	public OmfArchiveFileSystem create(FSRL containerFSRL, FSRLRoot targetFSRL,
-			ByteProvider byteProvider, File containerFile, FileSystemService fsService,
-			TaskMonitor monitor) throws IOException, CancelledException {
+	public OmfArchiveFileSystem create(FSRLRoot targetFSRL, ByteProvider byteProvider,
+			FileSystemService fsService, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		OmfArchiveFileSystem fs = new OmfArchiveFileSystem(targetFSRL, byteProvider);
 		fs.mount(monitor);
@@ -43,9 +43,8 @@ public class OmfArchiveFileSystemFactory
 	}
 
 	@Override
-	public boolean probe(FSRL containerFSRL, ByteProvider byteProvider, File containerFile,
-			FileSystemService fsService, TaskMonitor monitor)
-			throws IOException, CancelledException {
+	public boolean probe(ByteProvider byteProvider, FileSystemService fsService,
+			TaskMonitor monitor) throws IOException, CancelledException {
 
 		if (byteProvider.length() < OmfLoader.MIN_BYTE_LENGTH) {
 			return false;

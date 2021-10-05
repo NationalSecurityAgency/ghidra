@@ -15,7 +15,7 @@
  */
 package ghidra.formats.gfilesystem;
 
-import ghidra.util.SystemUtilities;
+import java.util.Objects;
 
 /**
  * Base implementation of file in a {@link GFileSystem filesystem}.
@@ -140,11 +140,11 @@ public class GFileImpl implements GFile {
 		return new GFileImpl(fileSystem, parent, isDirectory, length, fsrl);
 	}
 
-	private GFileSystem fileSystem;
-	private GFile parentFile;
-	private boolean isDirectory = false;
-	private long length = -1;
-	private FSRL fsrl;
+	private final GFileSystem fileSystem;
+	private final GFile parentFile;
+	private final boolean isDirectory;
+	private long length;
+	private final FSRL fsrl;
 
 	/**
 	 * Protected constructor, use static helper methods to create new instances.
@@ -198,21 +198,6 @@ public class GFileImpl implements GFile {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (!(obj instanceof GFile)) {
-			return false;
-		}
-
-		GFile other = (GFile) obj;
-		return SystemUtilities.isEqual(fsrl, other.getFSRL()) && isDirectory == other.isDirectory();
-	}
-
-	@Override
-	public int hashCode() {
-		return fsrl.hashCode() ^ Boolean.hashCode(isDirectory());
-	}
-
-	@Override
 	public String getPath() {
 		return fsrl.getPath();
 	}
@@ -226,7 +211,22 @@ public class GFileImpl implements GFile {
 		return fsrl;
 	}
 
-	public void setFSRL(FSRL fsrl) {
-		this.fsrl = fsrl;
+	@Override
+	public int hashCode() {
+		return Objects.hash(fileSystem, fsrl.getPath(), isDirectory);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof GFile)) {
+			return false;
+		}
+		GFile other = (GFile) obj;
+		return Objects.equals(fileSystem, other.getFilesystem()) &&
+			Objects.equals(fsrl.getPath(), other.getFSRL().getPath()) &&
+			isDirectory == other.isDirectory();
 	}
 }

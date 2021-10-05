@@ -23,7 +23,8 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
-import ghidra.app.context.*;
+import ghidra.app.context.NavigatableActionContext;
+import ghidra.app.context.NavigatableContextAction;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.instructionsearch.ui.InstructionSearchDialog;
@@ -238,17 +239,11 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 	}
 
 	private void createActions() {
-		searchAction = new NavigatableContextAction(SEARCH_ACTION_NAME, getName()) {
+		searchAction = new NavigatableContextAction(SEARCH_ACTION_NAME, getName(), false) {
 			@Override
 			public void actionPerformed(NavigatableActionContext context) {
 				showSearchDialog(context);
 			}
-
-			@Override
-			protected boolean isEnabledForContext(NavigatableActionContext context) {
-				return !(context instanceof RestrictedAddressSetContext);
-			}
-
 		};
 		searchAction.addToWindowWhen(NavigatableActionContext.class);
 		searchAction.setHelpLocation(new HelpLocation("Search", "Instruction_Pattern_Search"));

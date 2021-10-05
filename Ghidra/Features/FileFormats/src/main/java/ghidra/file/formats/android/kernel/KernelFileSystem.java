@@ -16,10 +16,10 @@
 package ghidra.file.formats.android.kernel;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
@@ -96,10 +96,11 @@ public class KernelFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException, CryptoException {
-		if (compressedKernelFile != null) {
-			return provider.getInputStream(compressedKernelIndex);
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		if (compressedKernelFile != null && compressedKernelFile.equals(file)) {
+			return new ByteProviderWrapper(provider, compressedKernelIndex,
+				provider.length() - compressedKernelIndex, file.getFSRL());
 		}
 		return null;
 	}

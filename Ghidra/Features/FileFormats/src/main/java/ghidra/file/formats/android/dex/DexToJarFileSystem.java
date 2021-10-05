@@ -15,7 +15,7 @@
  */
 package ghidra.file.formats.android.dex;
 
-import java.io.*;
+import java.io.IOException;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -36,10 +36,8 @@ import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
-import utilities.util.FileUtilities;
 
 /**
  * {@link GFileSystem} that converts a DEX file into a JAR file.
@@ -58,14 +56,9 @@ public class DexToJarFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException, CryptoException {
-
-		if (file.equals(jarFile)) {
-			FileCacheEntry jarFileInfo = getJarFile(monitor);
-			return new FileInputStream(jarFileInfo.file);
-		}
-		return null;
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		return file.equals(jarFile) ? getJarFile(jarFile.getFSRL(), monitor) : null;
 	}
 
 	@Override
@@ -79,22 +72,22 @@ public class DexToJarFileSystem extends GFileSystemBase {
 		return DexConstants.isDexFile(provider);
 	}
 
-	private FileCacheEntry getJarFile(TaskMonitor monitor) throws CancelledException, IOException {
+	private ByteProvider getJarFile(FSRL jarFSRL, TaskMonitor monitor)
+			throws CancelledException, IOException {
 		TaskMonitor upwtm = new UnknownProgressWrappingTaskMonitor(monitor, 1);
 		upwtm.setMessage("Converting DEX to JAR...");
 
 		FSRLRoot targetFSRL = getFSRL();
 		FSRL containerFSRL = targetFSRL.getContainer();
-		File containerFile = fsService.getFile(containerFSRL, monitor);
 
-		FileCacheEntry derivedFileInfo =
-			fsService.getDerivedFilePush(containerFSRL, "dex2jar", (os) -> {
+		ByteProvider jarBP = fsService.getDerivedByteProviderPush(containerFSRL, jarFSRL,
+			"dex2jar", -1, (os) -> {
 				try (ZipOutputStream outputStream = new ZipOutputStream(os)) {
 
 					DexToJarExceptionHandler exceptionHandler = new DexToJarExceptionHandler();
 
-					DexFileReader reader =
-						new DexFileReader(FileUtilities.getBytesFromFile(containerFile));
+					byte[] containerFileBytes = provider.readBytes(0, provider.length());
+					DexFileReader reader = new DexFileReader(containerFileBytes);
 
 					DexFileNode fileNode = new DexFileNode();
 					try {
@@ -154,21 +147,21 @@ public class DexToJarFileSystem extends GFileSystemBase {
 
 			}, monitor);
 
-		return derivedFileInfo;
+		return jarBP;
 	}
 
 	@Override
 	public void open(TaskMonitor monitor) throws CancelledException, IOException {
 
-		FileCacheEntry jarFileInfo = getJarFile(monitor);
+		ByteProvider jarBP = getJarFile(null, monitor);
 
 		FSRLRoot targetFSRL = getFSRL();
 		FSRL containerFSRL = targetFSRL.getContainer();
 		String baseName = FilenameUtils.removeExtension(containerFSRL.getName());
 		String jarName = baseName + ".jar";
-		FSRL jarFSRL = targetFSRL.withPathMD5(jarName, jarFileInfo.md5);
+		FSRL jarFSRL = targetFSRL.withPathMD5(jarName, jarBP.getFSRL().getMD5());
 		this.jarFile = GFileImpl.fromFilename(this, root, baseName + ".jar", false,
-			jarFileInfo.file.length(), jarFSRL);
+			jarBP.length(), jarFSRL);
 	}
 
 	@Override

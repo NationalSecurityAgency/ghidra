@@ -319,6 +319,27 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				DbgModelTargetTTD ttd = (DbgModelTargetTTD) proxy;
 				return ttd.init(attrs);
 			}
+			if (proxy instanceof DbgModelTargetDebugContainer) {
+				DbgModelTargetEventContainer events;
+				if (attributes.containsKey("Events")) {
+					events = (DbgModelTargetEventContainer) attributes.get("Events");
+				}
+				else {
+					events =
+						new DbgModelTargetEventContainerImpl((DbgModelTargetDebugContainer) proxy);
+				}
+				attrs.put(events.getName(), events);
+				DbgModelTargetExceptionContainer exceptions;
+				if (attributes.containsKey("Exceptions")) {
+					exceptions = (DbgModelTargetExceptionContainer) attributes.get("Exceptions");
+				}
+				else {
+					exceptions =
+						new DbgModelTargetExceptionContainerImpl(
+							(DbgModelTargetDebugContainer) proxy);
+				}
+				attrs.put(exceptions.getName(), exceptions);
+			}
 		}
 
 		return CompletableFuture.completedFuture(null);

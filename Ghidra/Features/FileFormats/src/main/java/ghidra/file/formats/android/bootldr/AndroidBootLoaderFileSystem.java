@@ -16,24 +16,18 @@
 package ghidra.file.formats.android.bootldr;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.formats.gfilesystem.GFile;
-import ghidra.formats.gfilesystem.GFileImpl;
-import ghidra.formats.gfilesystem.GFileSystemBase;
+import ghidra.app.util.bin.*;
+import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
 
-@FileSystemInfo(type = "androidbootloader", // ([a-z0-9]+ only)
-		description = "Android Boot Loader Image", factory = GFileSystemBaseFactory.class)
-
+@FileSystemInfo(type = "androidbootloader", description = "Android Boot Loader Image", factory = GFileSystemBaseFactory.class)
 public class AndroidBootLoaderFileSystem extends GFileSystemBase {
 	private List<GFileImpl> fileList = new ArrayList<>();
 	private List<Integer> offsetList = new ArrayList<>();
@@ -71,18 +65,14 @@ public class AndroidBootLoaderFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
-		return null;
-	}
-
-	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException, CryptoException {
-
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		int index = fileList.indexOf(file);
+		if (index < 0) {
+			throw new IOException("Unknown file: " + file);
+		}
 		int offset = offsetList.get(index);
-
-		return provider.getInputStream(offset);
+		return new ByteProviderWrapper(provider, offset, file.getLength(), file.getFSRL());
 	}
 
 }

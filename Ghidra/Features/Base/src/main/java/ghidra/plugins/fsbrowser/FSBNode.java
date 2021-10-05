@@ -17,12 +17,16 @@ package ghidra.plugins.fsbrowser;
 
 import java.util.*;
 
+import javax.swing.Icon;
+
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeSlowLoadingNode;
 import ghidra.formats.gfilesystem.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
- * Base interface for all filesystem browser gtree nodes.
+ * Base class for all filesystem browser gtree nodes.
  */
 public abstract class FSBNode extends GTreeSlowLoadingNode {
 
@@ -34,6 +38,31 @@ public abstract class FSBNode extends GTreeSlowLoadingNode {
 	 * @return {@link FSRL} of the filesystem object.
 	 */
 	public abstract FSRL getFSRL();
+
+	@Override
+	public String getToolTip() {
+		return getName();
+	}
+
+	@Override
+	public Icon getIcon(boolean expanded) {
+		return null;
+	}
+
+	@Override
+	public String getName() {
+		return getFSRL().getName();
+	}
+
+	public FSBRootNode getFSBRootNode() {
+		GTreeNode node = getParent();
+		while (node != null && !(node instanceof FSBRootNode)) {
+			node = node.getParent();
+		}
+		return (node instanceof FSBRootNode) ? (FSBRootNode) node : null;
+	}
+
+	protected abstract void updateFileAttributes(TaskMonitor monitor) throws CancelledException;
 
 	/**
 	 * Returns the {@link FSBRootNode} that represents the root of the file system that
@@ -54,15 +83,21 @@ public abstract class FSBNode extends GTreeSlowLoadingNode {
 	 * Helper method to convert {@link GFile} objects to FSBNode objects.
 	 *
 	 * @param files {@link List} of {@link GFile} objects to convert
+	 * @param monitor {@link TaskMonitor}
 	 * @return {@link List} of {@link FSBNode} instances (return typed as a GTreeNode list),
 	 * specific to each GFile instance's type.
 	 */
-	public static List<GTreeNode> getNodesFromFileList(List<GFile> files) {
-		List<GTreeNode> nodes = new ArrayList<>(files.size());
-
+	public static List<GTreeNode> createNodesFromFileList(List<GFile> files, TaskMonitor monitor) {
+		files = new ArrayList<>(files);
 		Collections.sort(files, FSUtilities.GFILE_NAME_TYPE_COMPARATOR);
+
+		List<GTreeNode> nodes = new ArrayList<>(files.size());
 		for (GFile child : files) {
-			nodes.add((GTreeNode) getNodeFromFile(child));
+			FSBFileNode node = createNodeFromFile(child);
+			if (node.isLeaf()) {
+				node.updateFileAttributes(monitor);
+			}
+			nodes.add(node);
 		}
 		return nodes;
 	}
@@ -71,11 +106,10 @@ public abstract class FSBNode extends GTreeSlowLoadingNode {
 	 * Helper method to convert a single {@link GFile} object into a FSBNode object.
 	 *
 	 * @param file {@link GFile} to convert
-	 * @return a new {@link FSBNode} with type specific to the GFile's type.
+	 * @return a new {@link FSBFileNode} with type specific to the GFile's type.
 	 */
-	public static FSBNode getNodeFromFile(GFile file) {
-		return file.isDirectory() ? new FSBDirNode(file.getFSRL())
-				: new FSBFileNode(file.getFSRL());
+	public static FSBFileNode createNodeFromFile(GFile file) {
+		return file.isDirectory() ? new FSBDirNode(file) : new FSBFileNode(file);
 	}
 
 }

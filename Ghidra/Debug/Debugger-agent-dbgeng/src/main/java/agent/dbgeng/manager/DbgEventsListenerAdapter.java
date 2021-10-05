@@ -17,6 +17,7 @@ package agent.dbgeng.manager;
 
 import agent.dbgeng.dbgeng.*;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
+import agent.dbgeng.manager.evt.AbstractDbgEvent;
 
 public interface DbgEventsListenerAdapter extends DbgEventsListener {
 
@@ -79,6 +80,11 @@ public interface DbgEventsListenerAdapter extends DbgEventsListener {
 
 	@Override
 	public default void threadSelected(DbgThread thread, DbgStackFrame frame, DbgCause cause) {
+		// Extension point
+	}
+
+	@Override
+	public default void eventSelected(AbstractDbgEvent<?> event, DbgCause cause) {
 		// Extension point
 	}
 

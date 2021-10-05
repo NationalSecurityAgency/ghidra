@@ -15,12 +15,12 @@
  */
 package ghidra.file.formats.ios.img2;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.*;
 import ghidra.program.model.data.DataType;
 import ghidra.util.StringUtilities;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 public class Img2 implements StructConverter {
 
@@ -58,6 +58,10 @@ public class Img2 implements StructConverter {
 		headerChecksum  = reader.readNextInt();
 		checksum2       = reader.readNextInt();
 		unknown3        = reader.readNextByteArray( 0x394 );
+	}
+
+	public boolean isValid() {
+		return getSignature().equals(Img2Constants.IMG2_SIGNATURE);
 	}
 
 	public String getSignature() {
@@ -100,6 +104,7 @@ public class Img2 implements StructConverter {
 		throw new RuntimeException("invalid unknown index");
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		return StructConverterUtil.toDataType(this);
 	}

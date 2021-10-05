@@ -15,15 +15,15 @@
  */
 package ghidra.file.formats.ios.dyldcache;
 
-import java.io.*;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import generic.continues.RethrowContinuesFactory;
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
+import ghidra.formats.gfilesystem.FSRL;
 import ghidra.util.*;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
@@ -34,18 +34,18 @@ import ghidra.util.task.TaskMonitor;
 public class DyldCacheDylibExtractor {
 
 	/**
-	 * Gets an {@link InputStream} that reads a DYLIB from a {@link DyldCacheFileSystem}.  The
+	 * Gets an {@link ByteProvider} that reads a DYLIB from a {@link DyldCacheFileSystem}.  The
 	 * DYLIB's header will be altered to account for its segment bytes being packed down.   
 	 * 
 	 * @param dylibOffset The offset of the DYLIB in the given provider
 	 * @param provider The DYLD
-	 * @param monitor A cancellable {@link TaskMonitor}
-	 * @return An {@link InputStream} that reads the specified DYLIB from the given DYLD 
-	 *   {@link ByteProvider}
+	 * @param fsrl {@link FSRL} to assign to the resulting ByteProvider
+	 * @param monitor {@link TaskMonitor}
+	 * @return {@link ByteProvider} containing the bytes of the dylib
 	 * @throws IOException If there was an IO-related issue with extracting the DYLIB
 	 * @throws MachException If there was an error parsing the DYLIB headers
 	 */
-	public static InputStream extractDylib(long dylibOffset, ByteProvider provider,
+	public static ByteProvider extractDylib(long dylibOffset, ByteProvider provider, FSRL fsrl,
 			TaskMonitor monitor) throws IOException, MachException {
 
 		// Make sure Mach-O header is valid
@@ -81,7 +81,7 @@ public class DyldCacheDylibExtractor {
 			}
 		}
 
-		return packedDylib.getInputStream();
+		return packedDylib.getByteProvider(fsrl);
 	}
 
 	/**
@@ -236,13 +236,8 @@ public class DyldCacheDylibExtractor {
 			}
 		}
 
-		/**
-		 * Gets an {@link InputStream} that reads the packed DYLIB
-		 * 
-		 * @return An {@link InputStream} that reads the packed DYLIB
-		 */
-		public InputStream getInputStream() {
-			return new ByteArrayInputStream(packed);
+		ByteProvider getByteProvider(FSRL fsrl) {
+			return new ByteArrayProvider(packed, fsrl);
 		}
 
 		/**

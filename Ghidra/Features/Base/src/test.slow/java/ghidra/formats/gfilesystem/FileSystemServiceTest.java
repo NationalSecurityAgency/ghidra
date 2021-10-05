@@ -15,12 +15,16 @@
  */
 package ghidra.formats.gfilesystem;
 
+import static org.junit.Assert.*;
+
 import java.io.File;
 import java.io.IOException;
 
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -43,34 +47,27 @@ public class FileSystemServiceTest extends AbstractGhidraHeadedIntegrationTest {
 		File localFile = new File(fssTestDir, "file.txt");
 		FileUtilities.writeStringToFile(localFile, "this is a test");
 		FSRL localFSRL = fsService.getLocalFSRL(localFile);
-		localFSRL = fsService.getFullyQualifiedFSRL(localFSRL, monitor);
-		File localResult = fsService.getFile(localFSRL, monitor);
-
-		Assert.assertNotNull(localFSRL.getMD5());
-		Assert.assertEquals(localFile, localResult);
+		try (ByteProvider byteProvider = fsService.getByteProvider(localFSRL, true, monitor)) {
+			assertEquals(localFile, byteProvider.getFile());
+		}
 	}
 
-	/**
-	 * Verifies that a fully qualified FSRL with MD5 generates a IOException failure
-	 * when the original file was changed.
-	 *
-	 * @throws IOException
-	 * @throws CancelledException
-	 */
 	@Test
 	public void testChangedLocalFile() throws IOException, CancelledException {
+		// Verifies that a fully qualified FSRL with MD5 generates a IOException failure
+		// when the original file was changed.
 		File localFile = new File(fssTestDir, "file.txt");
 		FileUtilities.writeStringToFile(localFile, "this is a test");
 		FSRL localFSRL = fsService.getLocalFSRL(localFile);
 		localFSRL = fsService.getFullyQualifiedFSRL(localFSRL, monitor);
 
 		FileUtilities.writeStringToFile(localFile, "this is a test with additional bytes");
-		try {
-			File localResult2 = fsService.getFile(localFSRL, monitor);
-			Assert.fail("Should not get here, got: " + localResult2);
+		try (ByteProvider byteProvider = fsService.getByteProvider(localFSRL, false, monitor)) {
+			fail("Should not get here, got: " + byteProvider.getFSRL());
 		}
-		catch (IOException ioe) {
-			Assert.assertTrue(ioe.getMessage().contains("Exact file no longer exists"));
+		catch (IOException e) {
+			assertTrue(e.getMessage().contains("hash has changed"));
+
 		}
 	}
 }

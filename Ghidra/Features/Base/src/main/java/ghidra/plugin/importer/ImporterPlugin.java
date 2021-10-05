@@ -17,7 +17,8 @@ package ghidra.plugin.importer;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import docking.ActionContext;
@@ -29,8 +30,14 @@ import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.*;
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.LibrarySearchPathManager;
-import ghidra.formats.gfilesystem.*;
+import ghidra.app.util.opinion.LoaderMap;
+import ghidra.app.util.opinion.LoaderService;
+import ghidra.formats.gfilesystem.FSRL;
+import ghidra.formats.gfilesystem.FileCache.FileCacheEntry;
+import ghidra.formats.gfilesystem.FileCache.FileCacheEntryBuilder;
+import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.main.*;
 import ghidra.framework.main.datatree.DomainFolderNode;
 import ghidra.framework.model.*;
@@ -350,8 +357,7 @@ public class ImporterPlugin extends Plugin
 	}
 
 	private void addToProgram(File file) {
-		GFile gFile = FileSystemService.getInstance().getLocalGFile(file);
-		if (gFile.getLength() == 0) {
+		if (file.length() == 0) {
 			Msg.showInfo(this, null, "Import File Failed",
 				"File " + file.getName() + " is empty (0 bytes).");
 			return;
@@ -385,20 +391,30 @@ public class ImporterPlugin extends Plugin
 			return;
 		}
 
-		Memory memory = program.getMemory();
-		MemoryBlock block = memory.getBlock(range.getMinAddress());
-		String tempFileName =
-			block.getName() + "_[" + range.getMinAddress() + "," + range.getMaxAddress() + "]_";
 		try {
-			File tempFile = File.createTempFile(tempFileName, ".tmp");
-			try (OutputStream outputStream = new FileOutputStream(tempFile)) {
+			Memory memory = program.getMemory();
+			FileSystemService fsService = FileSystemService.getInstance();
+
+			// create a tmp ByteProvider that contains the bytes from the selected region
+			FileCacheEntry tmpFile;
+			try (FileCacheEntryBuilder tmpFileBuilder =
+				fsService.createTempFile(range.getLength())) {
 				byte[] bytes = new byte[(int) range.getLength()];
 				memory.getBytes(range.getMinAddress(), bytes);
-				outputStream.write(bytes);
+				tmpFileBuilder.write(bytes);
+				tmpFile = tmpFileBuilder.finish();
 			}
 
-			DomainFolder folder = AppInfo.getActiveProject().getProjectData().getRootFolder();
-			importFile(folder, tempFile);
+			MemoryBlock block = memory.getBlock(range.getMinAddress());
+			String rangeName =
+				block.getName() + "[" + range.getMinAddress() + "," + range.getMaxAddress() + "]";
+			ByteProvider bp =
+				fsService.getNamedTempFile(tmpFile, program.getName() + " " + rangeName);
+			LoaderMap loaderMap = LoaderService.getAllSupportedLoadSpecs(bp);
+
+			ImporterDialog importerDialog =
+				new ImporterDialog(tool, programManager, loaderMap, bp, null);
+			tool.showDialog(importerDialog);
 		}
 		catch (IOException e) {
 			Msg.showError(this, null, "I/O Error Occurred", e.getMessage(), e);

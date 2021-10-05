@@ -111,7 +111,6 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 				break;
 			}
 			case RUNNING: {
-				session.invalidateMemoryAndRegisterCaches();
 				session.setAccessible(false);
 				break;
 			}

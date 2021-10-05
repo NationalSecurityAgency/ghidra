@@ -15,13 +15,13 @@
  */
 package ghidra.app.util.bin.format.coff.archive;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.StringUtilities;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 public class CoffArchiveMemberHeader implements StructConverter {
 	public static final String SLASH = "/";
@@ -249,6 +249,24 @@ public class CoffArchiveMemberHeader implements StructConverter {
 		return groupId;
 	}
 
+	public int getUserIdInt() {
+		try {
+			return Integer.parseInt(userId);
+		}
+		catch (NumberFormatException nfe) {
+			return 0;
+		}
+	}
+
+	public int getGroupIdInt() {
+		try {
+			return Integer.parseInt(groupId);
+		}
+		catch (NumberFormatException nfe) {
+			return 0;
+		}
+	}
+
 	public String getMode() {
 		return mode;
 	}
@@ -274,6 +292,7 @@ public class CoffArchiveMemberHeader implements StructConverter {
 			!name.equals(CoffArchiveMemberHeader.SLASH_SLASH);
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		String camh_name = StructConverterUtil.parseName(CoffArchiveMemberHeader.class);
 		Structure struct = new StructureDataType(camh_name, 0);

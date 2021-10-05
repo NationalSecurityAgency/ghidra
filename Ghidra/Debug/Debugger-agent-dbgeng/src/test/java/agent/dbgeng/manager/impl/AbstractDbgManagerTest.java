@@ -15,8 +15,7 @@
  */
 package agent.dbgeng.manager.impl;
 
-import static agent.dbgeng.testutil.DummyProc.runProc;
-import static ghidra.async.AsyncUtils.sequence;
+import static ghidra.async.AsyncUtils.*;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
@@ -38,9 +37,9 @@ import agent.dbgeng.dbgeng.DebugProcessId;
 import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.DbgManager.ExecSuffix;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
-import agent.dbgeng.testutil.DummyProc;
 import ghidra.async.AsyncFence;
 import ghidra.async.TypeSpec;
+import ghidra.dbg.testutil.DummyProc;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.Msg;
 
@@ -188,7 +187,7 @@ public abstract class AbstractDbgManagerTest extends AbstractGhidraHeadlessInteg
 
 	@Test
 	public void testAttachDetach() throws Throwable {
-		try (DummyProc echo = runProc("dd"); DbgManager mgr = DbgManager.newInstance()) {
+		try (DummyProc echo = DummyProc.run("dd"); DbgManager mgr = DbgManager.newInstance()) {
 			AtomicReference<Set<DbgThread>> threads = new AtomicReference<>();
 			waitOn(sequence(TypeSpec.VOID).then(seq -> {
 				startManager(mgr).handle(seq::next);

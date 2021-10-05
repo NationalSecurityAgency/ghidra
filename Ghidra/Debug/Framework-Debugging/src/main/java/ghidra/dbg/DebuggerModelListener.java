@@ -304,7 +304,7 @@ public interface DebuggerModelListener {
 	 * it need only report reads or writes which updated that cache. However, that cache must be
 	 * invalidated whenever any other event occurs which could change register values, e.g., the
 	 * target stepping or running. See {@link #invalidateCacheRequested(TargetObject)}. If the
-	 * implementation doe not employ a cache, then it must report <em>every</em> successful
+	 * implementation does not employ a cache, then it must report <em>every</em> successful
 	 * client-driven read or write. If the implementation can detect <em>debugger-driven</em>
 	 * register reads and writes, then it recommended to call this method for those events. However,
 	 * this method <em>must not</em> be called for <em>target-driven</em> register changes, except

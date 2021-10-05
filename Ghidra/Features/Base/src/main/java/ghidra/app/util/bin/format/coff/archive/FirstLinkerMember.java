@@ -15,31 +15,30 @@
  */
 package ghidra.app.util.bin.format.coff.archive;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
 import ghidra.util.BigEndianDataConverter;
 import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 public final class FirstLinkerMember implements StructConverter {
 
 	private int numberOfSymbols;
 	private int [] offsets;
-	private List<String> stringTable = new ArrayList<String>();
+	private List<String> stringTable = new ArrayList<>();
 
 	private long _fileOffset;
-	private List<Integer> stringLengths = new ArrayList<Integer>();
+	private List<Integer> stringLengths = new ArrayList<>();
 
 	public FirstLinkerMember(BinaryReader reader, CoffArchiveMemberHeader header, boolean skip)
 			throws IOException {
 		_fileOffset = reader.getPointerIndex();
-
-		boolean isLittleEndian = reader.isLittleEndian();
-		reader.setLittleEndian(false);//this entire structure is stored as big-endian..
+		BinaryReader origReader = reader;
+		reader = reader.asBigEndian(); //this entire structure is stored as big-endian..
 
 		numberOfSymbols = readNumberOfSymbols(reader);
 
@@ -57,7 +56,7 @@ public final class FirstLinkerMember implements StructConverter {
 			}
 		}
 		else {
-			stringTable = new ArrayList<String>(numberOfSymbols);
+			stringTable = new ArrayList<>(numberOfSymbols);
 			for (int i = 0 ; i < numberOfSymbols ; ++i) {
 				String string = reader.readNextAsciiString();
 				stringTable.add( string );
@@ -65,8 +64,7 @@ public final class FirstLinkerMember implements StructConverter {
 			}
 		}
 
-		reader.setLittleEndian(isLittleEndian);
-		reader.setPointerIndex(_fileOffset + header.getSize());
+		origReader.setPointerIndex(_fileOffset + header.getSize());
 	}
 
 	/**
@@ -100,9 +98,10 @@ public final class FirstLinkerMember implements StructConverter {
 		if (stringTable.isEmpty()) {
 			throw new RuntimeException("FirstLinkerMember::getStringTable() has been skipped.");
 		}
-		return new ArrayList<String>(stringTable);
+		return new ArrayList<>(stringTable);
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		String name = StructConverterUtil.parseName(FirstLinkerMember.class);
 		Structure struct = new StructureDataType(name + "_" + numberOfSymbols, 0);

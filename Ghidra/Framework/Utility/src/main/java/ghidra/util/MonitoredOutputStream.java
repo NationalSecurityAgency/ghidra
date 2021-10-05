@@ -15,11 +15,11 @@
  */
 package ghidra.util;
 
-import ghidra.util.exception.IOCancelledException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 import java.io.OutputStream;
+
+import ghidra.util.exception.IOCancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * An OutputStream which utilizes a TaskMonitor to indicate output progress and
@@ -32,18 +32,11 @@ public class MonitoredOutputStream extends OutputStream {
 	protected OutputStream out;
 	private TaskMonitor monitor;
 	private int smallCount = 0;
-	private int count = 0;
+	private long count = 0;
 
 	public MonitoredOutputStream(OutputStream out, TaskMonitor monitor) {
 		this.out = out;
 		this.monitor = monitor;
-	}
-
-	/**
-	 * Reset the current progress count to the specified value.
-	 */
-	public void setProgress(int count) {
-		this.count = count;
 	}
 
 	/**
@@ -63,8 +56,9 @@ public class MonitoredOutputStream extends OutputStream {
 		out.write(b);
 		++smallCount;
 		if (smallCount >= PROGRESS_INCREMENT) {
-			if (monitor.isCancelled())
+			if (monitor.isCancelled()) {
 				throw new IOCancelledException();
+			}
 			count += smallCount;
 			smallCount = 0;
 			monitor.setProgress(count);
@@ -118,8 +112,9 @@ public class MonitoredOutputStream extends OutputStream {
 		smallCount += len;
 
 		if (smallCount >= PROGRESS_INCREMENT) {
-			if (monitor.isCancelled())
+			if (monitor.isCancelled()) {
 				throw new IOCancelledException();
+			}
 			count += smallCount;
 			smallCount = 0;
 			monitor.setProgress(count);

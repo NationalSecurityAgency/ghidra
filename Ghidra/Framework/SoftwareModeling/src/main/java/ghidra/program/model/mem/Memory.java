@@ -462,9 +462,9 @@ public interface Memory extends AddressSetView {
 	 * @param destIndex the offset into dest to place the bytes.
 	 * @param size the number of bytes to get.
 	 * @return the number of bytes put into dest.  May be less than
-	 * size if the requested number extends beyond available memory.
+	 * size if the requested number extends beyond initialized / available memory.
 	 * @throws MemoryAccessException if the starting address is
-	 * not contained in any memory block.
+	 * not contained in any memory block or is an uninitialized location.
 	 */
 	public int getBytes(Address addr, byte[] dest, int destIndex, int size)
 			throws MemoryAccessException;

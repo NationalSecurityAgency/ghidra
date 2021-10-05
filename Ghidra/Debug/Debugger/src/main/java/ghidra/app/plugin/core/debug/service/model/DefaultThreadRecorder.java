@@ -26,8 +26,7 @@ import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.util.PathUtils;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.Pointer;
 import ghidra.program.model.lang.*;
 import ghidra.trace.model.Trace;
@@ -329,6 +328,24 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 				}
 			}
 		}, getTargetThread().getJoinedPath("."));
+	}
+
+	@Override
+	public void invalidateRegisterValues(TargetRegisterBank bank) {
+		int frameLevel = stackRecorder.getSuccessorFrameLevel(bank);
+		long snap = recorder.getSnap();
+		String path = bank.getJoinedPath(".");
+
+		recorder.parTx.execute("Registers invalidated: " + path, () -> {
+			TraceMemoryRegisterSpace regSpace =
+				memoryManager.getMemoryRegisterSpace(traceThread, frameLevel, false);
+			if (regSpace == null) {
+				return;
+			}
+			AddressSpace as = regSpace.getAddressSpace();
+			regSpace.setState(snap, as.getMinAddress(), as.getMaxAddress(),
+				TraceMemoryState.UNKNOWN);
+		}, path);
 	}
 
 	public CompletableFuture<Void> writeThreadRegisters(int frameLevel,

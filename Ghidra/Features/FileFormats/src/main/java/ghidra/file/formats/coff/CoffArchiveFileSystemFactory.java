@@ -15,27 +15,26 @@
  */
 package ghidra.file.formats.coff;
 
-import java.io.File;
 import java.io.IOException;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.coff.archive.CoffArchiveConstants;
 import ghidra.formats.gfilesystem.*;
-import ghidra.formats.gfilesystem.factory.GFileSystemFactoryFull;
+import ghidra.formats.gfilesystem.factory.GFileSystemFactoryByteProvider;
 import ghidra.formats.gfilesystem.factory.GFileSystemProbeBytesOnly;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.ArrayUtilities;
 
-public class CoffArchiveFileSystemFactory
-		implements GFileSystemFactoryFull<CoffArchiveFileSystem>, GFileSystemProbeBytesOnly {
+public class CoffArchiveFileSystemFactory implements
+		GFileSystemFactoryByteProvider<CoffArchiveFileSystem>, GFileSystemProbeBytesOnly {
 
 	public static final int PROBE_BYTES_REQUIRED = CoffArchiveConstants.MAGIC_LEN;
 
 	@Override
-	public CoffArchiveFileSystem create(FSRL containerFSRL, FSRLRoot targetFSRL,
-			ByteProvider byteProvider, File containerFile, FileSystemService fsService,
-			TaskMonitor monitor) throws IOException, CancelledException {
+	public CoffArchiveFileSystem create(FSRLRoot targetFSRL, ByteProvider byteProvider,
+			FileSystemService fsService, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		CoffArchiveFileSystem fs = new CoffArchiveFileSystem(targetFSRL, byteProvider);
 		fs.mount(monitor);

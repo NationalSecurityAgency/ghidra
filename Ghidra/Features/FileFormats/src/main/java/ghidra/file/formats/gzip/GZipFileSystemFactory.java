@@ -15,27 +15,26 @@
  */
 package ghidra.file.formats.gzip;
 
+import java.io.IOException;
+
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.*;
-import ghidra.formats.gfilesystem.factory.GFileSystemFactoryWithFile;
+import ghidra.formats.gfilesystem.factory.GFileSystemFactoryByteProvider;
 import ghidra.formats.gfilesystem.factory.GFileSystemProbeBytesOnly;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-import java.io.File;
-import java.io.IOException;
-
 public class GZipFileSystemFactory
-		implements GFileSystemFactoryWithFile<GZipFileSystem>, GFileSystemProbeBytesOnly {
+		implements GFileSystemFactoryByteProvider<GZipFileSystem>, GFileSystemProbeBytesOnly {
 
 	public static final int PROBE_BYTES_REQUIRED = GZipConstants.MAGIC_BYTES_COUNT;
 
 	@Override
-	public GZipFileSystem create(FSRL containerFSRL, FSRLRoot targetFSRL, File containerFile,
+	public GZipFileSystem create(FSRLRoot targetFSRL, ByteProvider byteProvider,
 			FileSystemService fsService, TaskMonitor monitor)
-					throws IOException, CancelledException {
+			throws IOException, CancelledException {
 
-		GZipFileSystem fs =
-			new GZipFileSystem(containerFSRL, targetFSRL, containerFile, fsService, monitor);
+		GZipFileSystem fs = new GZipFileSystem(byteProvider, targetFSRL, fsService, monitor);
 		return fs;
 	}
 

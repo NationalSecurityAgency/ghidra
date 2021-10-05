@@ -20,7 +20,7 @@ import java.io.*;
 import ghidra.formats.gfilesystem.FSRL;
 
 /**
- * An implementation of {@link ByteProvider} where the underlying bytes are supplied by a static 
+ * An implementation of {@link ByteProvider} where the underlying bytes are supplied by a
  * byte array.
  * <p>
  * NOTE: Use of this class is discouraged when the byte array could be large.
@@ -66,6 +66,16 @@ public class ByteArrayProvider implements ByteProvider {
 		// don't do anything for now
 	}
 
+	/**
+	 * Releases the byte storage of this instance.
+	 * <p>
+	 * This is separate from the normal close() to avoid changing existing
+	 * behavior of this class. 
+	 */
+	public void hardClose() {
+		srcBytes = new byte[0];
+	}
+
 	@Override
 	public FSRL getFSRL() {
 		return fsrl;
@@ -78,12 +88,12 @@ public class ByteArrayProvider implements ByteProvider {
 
 	@Override
 	public String getName() {
-		return name;
+		return fsrl != null ? fsrl.getName() : name;
 	}
 
 	@Override
 	public String getAbsolutePath() {
-		return "";
+		return fsrl != null ? fsrl.getPath() : "";
 	}
 
 	@Override

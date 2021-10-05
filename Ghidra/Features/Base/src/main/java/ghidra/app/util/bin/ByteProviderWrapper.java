@@ -15,12 +15,13 @@
  */
 package ghidra.app.util.bin;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 
 import ghidra.formats.gfilesystem.FSRL;
 
 /**
- * Creates a {@link ByteProvider} constrained to a sub-section of an existing {@link ByteProvider}.
+ * A {@link ByteProvider} constrained to a sub-section of an existing {@link ByteProvider}.
  */
 public class ByteProviderWrapper implements ByteProvider {
 	private ByteProvider provider;
@@ -29,7 +30,21 @@ public class ByteProviderWrapper implements ByteProvider {
 	private FSRL fsrl;
 
 	/**
-	 * Constructs a {@link ByteProviderWrapper} around the specified {@link ByteProvider}
+	 * Creates a wrapper around a {@link ByteProvider} that contains the same bytes as the specified
+	 * provider, but with a new {@link FSRL} identity.
+	 * <p>
+	 * 
+	 * @param provider {@link ByteProvider} to wrap
+	 * @param fsrl {@link FSRL} identity for the instance
+	 * @throws IOException if error
+	 */
+	public ByteProviderWrapper(ByteProvider provider, FSRL fsrl) throws IOException {
+		this(provider, 0, provider.length(), fsrl);
+	}
+
+	/**
+	 * Constructs a {@link ByteProviderWrapper} around the specified {@link ByteProvider},
+	 * constrained to a subsection of the provider.
 	 * 
 	 * @param provider the {@link ByteProvider} to wrap
 	 * @param subOffset the offset in the {@link ByteProvider} of where to start the new
@@ -41,13 +56,14 @@ public class ByteProviderWrapper implements ByteProvider {
 	}
 
 	/**
-	 * Constructs a {@link ByteProviderWrapper} around the specified {@link ByteProvider}
+	 * Constructs a {@link ByteProviderWrapper} around the specified {@link ByteProvider},
+	 * constrained to a subsection of the provider.
 	 * 
 	 * @param provider the {@link ByteProvider} to wrap
 	 * @param subOffset the offset in the {@link ByteProvider} of where to start the new
 	 *   {@link ByteProviderWrapper} 
 	 * @param subLength the length of the new {@link ByteProviderWrapper} 
-	 * @param fsrl FSRL identity of the file this ByteProvider represents
+	 * @param fsrl {@link FSRL} identity of the file this ByteProvider represents
 	 */
 	public ByteProviderWrapper(ByteProvider provider, long subOffset, long subLength, FSRL fsrl) {
 		this.provider = provider;
@@ -57,8 +73,8 @@ public class ByteProviderWrapper implements ByteProvider {
 	}
 
 	@Override
-	public void close() {
-		// don't do anything for now
+	public void close() throws IOException {
+		// do not close the wrapped provider
 	}
 
 	@Override
@@ -68,24 +84,22 @@ public class ByteProviderWrapper implements ByteProvider {
 
 	@Override
 	public File getFile() {
-		return provider.getFile();
-	}
-
-	@Override
-	public InputStream getInputStream(long index) throws IOException {
-		return new ByteProviderInputStream(this, index, subLength - index);
+		// there is no file that represents the actual contents of the subrange, so return null
+		return null;
 	}
 
 	@Override
 	public String getName() {
-		return provider.getName() + "[0x" + Long.toHexString(subOffset) + ",0x" +
-			Long.toHexString(subLength) + "]";
+		return (fsrl != null)
+				? fsrl.getName()
+				: String.format("%s[0x%x,0x%x]", provider.getName(), subOffset, subLength);
 	}
 
 	@Override
 	public String getAbsolutePath() {
-		return provider.getAbsolutePath() + "[0x" + Long.toHexString(subOffset) + ",0x" +
-			Long.toHexString(subLength) + "]";
+		return (fsrl != null)
+				? fsrl.getPath()
+				: String.format("%s[0x%x,0x%x]", provider.getAbsolutePath(), subOffset, subLength);
 	}
 
 	@Override
@@ -95,10 +109,7 @@ public class ByteProviderWrapper implements ByteProvider {
 
 	@Override
 	public boolean isValidIndex(long index) {
-		if (provider.isValidIndex(index)) {
-			return index >= subOffset && index < subLength;
-		}
-		return false;
+		return (0 <= index && index < subLength) && provider.isValidIndex(subOffset + index);
 	}
 
 	@Override

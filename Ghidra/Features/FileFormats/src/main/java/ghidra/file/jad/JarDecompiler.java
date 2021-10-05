@@ -16,18 +16,18 @@
 package ghidra.file.jad;
 
 import java.io.*;
-import java.util.Enumeration;
 import java.util.Iterator;
-import java.util.zip.*;
+import java.util.List;
+import java.util.zip.ZipException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.formats.gfilesystem.FSRL;
-import ghidra.formats.gfilesystem.FileSystemService;
+import ghidra.formats.gfilesystem.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 import utilities.util.FileUtilities;
@@ -92,73 +92,28 @@ public class JarDecompiler {
 	private void unzip(TaskMonitor monitor)
 			throws ZipException, IOException, FileNotFoundException, CancelledException {
 
-		File file = FileSystemService.getInstance().getFile(jarFile, monitor);
-		ZipFile zipFile = new ZipFile(file);
-
-		monitor.initialize(countZipEntries(zipFile, monitor));
-
-		try {
-			Enumeration<? extends ZipEntry> entries = zipFile.entries();
-			while (entries.hasMoreElements()) {
+		FileSystemService fsService = FileSystemService.getInstance();
+		try (GFileSystem fs = fsService.openFileSystemContainer(jarFile, monitor)) {
+			List<GFile> files = FSUtilities.listFileSystem(fs, null, null, monitor);
+			monitor.initialize(files.size());
+			for (GFile file : files) {
 				if (monitor.isCancelled()) {
 					break;
 				}
-				ZipEntry zipEntry = entries.nextElement();
-				File absoluteFile = new File(outputDirectory.getAbsolutePath(), zipEntry.getName());
-				if (!FileUtilities.isPathContainedWithin(outputDirectory, absoluteFile)) {
-					throw new IOException("Extracted file " + absoluteFile.getPath() +
+				File outputFile = new File(outputDirectory.getAbsolutePath(), file.getPath());
+				if (!FileUtilities.isPathContainedWithin(outputDirectory, outputFile)) {
+					throw new IOException("Extracted file " + outputFile.getPath() +
 						" would be outside of root destination directory: " + outputDirectory);
 				}
-				FileUtilities.checkedMkdirs(absoluteFile.getParentFile());
-				if (!zipEntry.isDirectory()) {
+				FileUtilities.checkedMkdirs(outputFile.getParentFile());
+				if (!file.isDirectory()) {
 					monitor.setMessage("Unzipping jar file... ");
 					monitor.incrementProgress(1);
-					writeFile(zipFile, zipEntry, absoluteFile, monitor);
+					try (ByteProvider fileBP = fs.getByteProvider(file, monitor)) {
+						FSUtilities.copyByteProviderToFile(fileBP, outputFile, monitor);
+					}
 				}
 			}
 		}
-		finally {
-			zipFile.close();
-		}
-	}
-
-	private void writeFile(ZipFile zipFile, ZipEntry zipEntry, File absoluteFile,
-			TaskMonitor monitor) throws IOException {
-		byte[] bytes = new byte[0x100000];
-		InputStream inputStream = zipFile.getInputStream(zipEntry);
-		try {
-			OutputStream outputStream = new FileOutputStream(absoluteFile);
-			try {
-				while (true) {
-					if (monitor.isCancelled()) {
-						break;
-					}
-					int nRead = inputStream.read(bytes);
-					if (nRead == -1) {
-						break;
-					}
-					outputStream.write(bytes, 0, nRead);
-				}
-			}
-			finally {
-				outputStream.close();
-			}
-		}
-		finally {
-			inputStream.close();
-		}
-	}
-
-	private int countZipEntries(ZipFile zipFile, TaskMonitor monitor) {
-		int count = 0;
-		Enumeration<? extends ZipEntry> entries = zipFile.entries();
-		while (entries.hasMoreElements()) {
-			if (monitor.isCancelled()) {
-				break;
-			}
-			entries.nextElement();
-			++count;
-		}
-		return count;
 	}
 }

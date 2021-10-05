@@ -132,13 +132,20 @@ public class DbgDebugEventCallbacksAdapter extends DebugEventCallbacksAdapter {
 		return checkInterrupt(DebugStatus.NO_CHANGE);
 	}
 
+	@Override
+	public DebugStatus systemError(int error, int level) {
+		return checkInterrupt(manager.processEvent(new DbgSystemErrorEvent(error, level)));
+	}
+
 	/*
 	@Override
 	public DebugStatus changeDebuggeeState(BitmaskSet<ChangeDebuggeeState> flags, long argument) {
-		System.err.println("CHANGE_DEBUGGEE_STATE: " + flags + ":" + argument);
-		return DebugStatus.NO_CHANGE;
+		//System.err.println("CHANGE_DEBUGGEE_STATE: " + flags + ":" + argument);
+		return checkInterrupt(
+			manager.processEvent(new DbgDebuggeeStateChangeEvent(flags, argument)));
 	}
-	
+
+	/*
 	@Override
 	public DebugStatus sessionStatus(SessionStatus status) {
 		System.err.println("SESSION_STATUS: " + status);

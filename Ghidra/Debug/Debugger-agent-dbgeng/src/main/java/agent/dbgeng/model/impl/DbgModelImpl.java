@@ -164,6 +164,7 @@ public class DbgModelImpl extends AbstractDbgModel implements DebuggerObjectMode
 		return objectMap.get(object);
 	}
 
+	@Override
 	public void deleteModelObject(Object object) {
 		objectMap.remove(object);
 	}

@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.ICON_REGISTER_MARKER;
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.OPTION_NAME_COLORS_TRACKING_MARKERS;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
 import java.awt.Color;
 import java.awt.datatransfer.Transferable;
@@ -199,6 +198,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		@Override
 		protected AddressSetView getSelection() {
 			return DebuggerListingProvider.this.getSelection();
+		}
+
+		@Override
+		protected void repaintPanel() {
+			getListingPanel().getFieldPanel().repaint();
 		}
 	}
 

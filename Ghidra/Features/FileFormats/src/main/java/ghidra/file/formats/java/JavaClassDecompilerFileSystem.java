@@ -16,14 +16,17 @@
 package ghidra.file.formats.java;
 
 import java.io.*;
-import java.util.*;
+import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
 
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.file.jad.JadProcessController;
 import ghidra.file.jad.JadProcessWrapper;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
+import ghidra.formats.gfilesystem.fileinfo.FileAttribute;
+import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
@@ -39,53 +42,58 @@ public class JavaClassDecompilerFileSystem implements GFileSystem {
 	private FSRLRoot fsFSRL;
 	private FileSystemRefManager refManager = new FileSystemRefManager(this);
 	private SingleFileSystemIndexHelper fsIndexHelper;
+	private ByteProvider provider;
 	private FSRL containerFSRL;
 	private String className;
 	private String javaSrcFilename;
 	private FileSystemService fsService;
 
-	public JavaClassDecompilerFileSystem(FSRLRoot fsFSRL, FileSystemService fsService,
-			TaskMonitor monitor) throws CancelledException, IOException {
+	public JavaClassDecompilerFileSystem(FSRLRoot fsFSRL, ByteProvider provider,
+			FileSystemService fsService, TaskMonitor monitor)
+			throws CancelledException, IOException {
 		this.fsService = fsService;
 		this.fsFSRL = fsFSRL;
+		this.provider = provider;
 
-		this.containerFSRL = fsFSRL.getContainer();
+		this.containerFSRL = provider.getFSRL();
 		this.className = FilenameUtils.removeExtension(containerFSRL.getName());
 		this.javaSrcFilename = className + ".java";
 
-		FileCacheEntry fce = getDecompiledJavaSrcFileEntry(monitor);
-		this.fsIndexHelper = new SingleFileSystemIndexHelper(this, fsFSRL, javaSrcFilename,
-			fce.file.length(), fce.md5);
+		try (ByteProvider decompiledBP = getDecompiledJavaSrcFileEntry(null, monitor)) {
+			this.fsIndexHelper = new SingleFileSystemIndexHelper(this, fsFSRL, javaSrcFilename,
+				decompiledBP.length(), decompiledBP.getFSRL().getMD5());
+		}
 	}
 
-	private FileCacheEntry getDecompiledJavaSrcFileEntry(TaskMonitor monitor)
+	private ByteProvider getDecompiledJavaSrcFileEntry(FSRL targetFSRL, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		FileCacheEntry derivedFileInfo =
-			fsService.getDerivedFilePush(containerFSRL, javaSrcFilename, (os) -> {
-				File tempDir = null;
-				try {
-					tempDir = FileUtilities.createTempDirectory("JavaClassDecompilerFileSystem");
+		return fsService.getDerivedByteProviderPush(containerFSRL, targetFSRL, javaSrcFilename, -1,
+			(os) -> decompileClassFileToStream(os, monitor), monitor);
+	}
 
-					File srcClassFile = fsService.getFile(containerFSRL, monitor);
-					File tempClassFile = new File(tempDir, containerFSRL.getName());
-					FileUtilities.copyFile(srcClassFile, tempClassFile, false, monitor);
+	private void decompileClassFileToStream(OutputStream os, TaskMonitor monitor)
+			throws CancelledException, IOException {
+		File tempDir = null;
+		try {
+			tempDir = FileUtilities.createTempDirectory("JavaClassDecompilerFileSystem");
 
-					// tempDestJavaSrcFile (ie. "javaclass.java") contents are automagically
-					// created by the Jad process based on the class name it finds inside
-					// the binary "javaclass.class" file.  Class, class, class.
-					File tempDestJavaSrcFile = new File(tempDir, javaSrcFilename);
+			File tempClassFile = new File(tempDir, containerFSRL.getName());
+			FSUtilities.copyByteProviderToFile(provider, tempClassFile, monitor);
 
-					JadProcessWrapper wrapper = new JadProcessWrapper(tempClassFile);
-					JadProcessController controller = new JadProcessController(wrapper, className);
-					controller.decompile(5, monitor);
+			// tempDestJavaSrcFile (ie. "javaclass.java") contents are automagically
+			// created by the Jad process based on the class name it finds inside
+			// the binary "javaclass.class" file.  Class, class, class.
+			File tempDestJavaSrcFile = new File(tempDir, javaSrcFilename);
 
-					FileUtilities.copyFileToStream(tempDestJavaSrcFile, os, monitor);
-				}
-				finally {
-					FileUtilities.deleteDir(tempDir, monitor);
-				}
-			}, monitor);
-		return derivedFileInfo;
+			JadProcessWrapper wrapper = new JadProcessWrapper(tempClassFile);
+			JadProcessController controller = new JadProcessController(wrapper, className);
+			controller.decompile(5, monitor);
+
+			FileUtilities.copyFileToStream(tempDestJavaSrcFile, os, monitor);
+		}
+		finally {
+			FileUtilities.deleteDir(tempDir, monitor);
+		}
 	}
 
 	public GFile getPayloadFile() {
@@ -101,6 +109,7 @@ public class JavaClassDecompilerFileSystem implements GFileSystem {
 	public void close() throws IOException {
 		refManager.onClose();
 		fsIndexHelper.clear();
+		provider.close();
 	}
 
 	@Override
@@ -124,11 +133,10 @@ public class JavaClassDecompilerFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public InputStream getInputStream(GFile file, TaskMonitor monitor)
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		if (fsIndexHelper.isPayloadFile(file)) {
-			FileCacheEntry fce = getDecompiledJavaSrcFileEntry(monitor);
-			return new FileInputStream(fce.file);
+			return getDecompiledJavaSrcFileEntry(file.getFSRL(), monitor);
 		}
 		return null;
 	}
@@ -139,13 +147,8 @@ public class JavaClassDecompilerFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
-		if (fsIndexHelper.isPayloadFile(file)) {
-			Map<String, String> info = new HashMap<>();
-			info.put("Class name", className);
-			return FSUtilities.infoMapToString(info);
-		}
-		return null;
+	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
+		return FileAttributes.of(FileAttribute.create("Class name", className));
 	}
 
 	@Override

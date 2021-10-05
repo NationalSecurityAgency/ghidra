@@ -17,7 +17,6 @@ package ghidra.plugins.fsbrowser;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +25,8 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
-import docking.ActionContext;
 import docking.WindowPosition;
+import docking.event.mouse.GMouseListenerAdapter;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeRenderer;
@@ -37,7 +36,7 @@ import ghidra.formats.gfilesystem.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.plugin.importer.ProgramMappingService;
 import ghidra.program.model.listing.Program;
-import ghidra.util.HelpLocation;
+import ghidra.util.*;
 
 /**
  * Plugin component provider for the {@link FileSystemBrowserPlugin}.
@@ -46,13 +45,15 @@ import ghidra.util.HelpLocation;
  * <p>
  * Visible to just this package.
  */
-class FileSystemBrowserComponentProvider extends ComponentProviderAdapter {
+class FileSystemBrowserComponentProvider extends ComponentProviderAdapter
+		implements FileSystemEventListener {
 	private static final String TITLE = "Filesystem Viewer";
 
 	private FileSystemBrowserPlugin plugin;
 	private FSBActionManager actionManager;
 	private GTree gTree;
 	private FSBRootNode rootNode;
+	private FileSystemService fsService = FileSystemService.getInstance();
 
 	/**
 	 * Creates a new {@link FileSystemBrowserComponentProvider} instance, taking
@@ -80,31 +81,17 @@ class FileSystemBrowserComponentProvider extends ComponentProviderAdapter {
 				handleSingleClick(clickedNode);
 			}
 		});
-		gTree.addMouseListener(new MouseAdapter() {
-			/**
-			 * Keep track of the previous mouse button that was clicked so we
-			 * can ensure that it was two left clicks that activated
-			 * our dbl-click handler.
-			 */
-			int prevMouseButton = -1;
-
+		gTree.addMouseListener(new GMouseListenerAdapter() {
 			@Override
-			public void mouseReleased(MouseEvent e) {
-				// keep track of the mouse button so it can be checked next time
-				int localPrevMouseButton = prevMouseButton;
-				prevMouseButton = e.getButton();
-
-				if (e.isPopupTrigger()) {
-					return;
-				}
-
-				GTreeNode clickedNode = gTree.getNodeForLocation(e.getX(), e.getY());
-				if (e.getClickCount() == 1) {
-					handleSingleClick(clickedNode);
-				}
-				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1 &&
-					localPrevMouseButton == MouseEvent.BUTTON1) {
-					handleDoubleClick(clickedNode);
+			public void doubleClickTriggered(MouseEvent e) {
+				handleDoubleClick(gTree.getNodeForLocation(e.getX(), e.getY()));
+				e.consume();
+			}
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				super.mouseClicked(e);
+				if (!e.isConsumed()) {
+					handleSingleClick(gTree.getNodeForLocation(e.getX(), e.getY()));
 				}
 			}
 		});
@@ -118,6 +105,9 @@ class FileSystemBrowserComponentProvider extends ComponentProviderAdapter {
 
 				if (value instanceof FSBRootNode) {
 					renderFS((FSBRootNode) value, selected);
+				}
+				else if (value instanceof FSBDirNode) {
+					// do nothing special
 				}
 				else if (value instanceof FSBFileNode) {
 					renderFile((FSBFileNode) value, selected);
@@ -145,14 +135,22 @@ class FileSystemBrowserComponentProvider extends ComponentProviderAdapter {
 			private void renderFile(FSBFileNode node, boolean selected) {
 				FSRL fsrl = node.getFSRL();
 				String filename = fsrl.getName();
-				Icon ico = FileIconService.getInstance().getImage(filename,
-					ProgramMappingService.isFileImportedIntoProject(fsrl)
-							? FileIconService.OVERLAY_IMPORTED
-							: null,
-					FileSystemService.getInstance().isFilesystemMountedAt(fsrl)
-							? FileIconService.OVERLAY_FILESYSTEM
-							: null);
+
+				String importOverlay = ProgramMappingService.isFileImportedIntoProject(fsrl)
+						? FileIconService.OVERLAY_IMPORTED
+						: null;
+				String mountedOverlay = fsService.isFilesystemMountedAt(fsrl)
+						? FileIconService.OVERLAY_FILESYSTEM
+						: null;
+
+				String missingPasswordOverlay = node.hasMissingPassword()
+						? FileIconService.OVERLAY_MISSING_PASSWORD
+						: null;
+
+				Icon ico = FileIconService.getInstance()
+						.getImage(filename, importOverlay, mountedOverlay, missingPasswordOverlay);
 				setIcon(ico);
+
 				if (ProgramMappingService.isFileOpen(fsrl)) {
 					// TODO: change this to a OVERLAY_OPEN option when fetching icon
 					setForeground(selected ? Color.CYAN : Color.MAGENTA);
@@ -171,6 +169,7 @@ class FileSystemBrowserComponentProvider extends ComponentProviderAdapter {
 		setHelpLocation(
 			new HelpLocation("FileSystemBrowserPlugin", "FileSystemBrowserIntroduction"));
 
+		fsRef.getFilesystem().getRefManager().addListener(this);
 	}
 
 	/**
@@ -182,21 +181,53 @@ class FileSystemBrowserComponentProvider extends ComponentProviderAdapter {
 		return gTree;
 	}
 
+	FSRL getFSRL() {
+		return rootNode != null ? rootNode.getFSRL() : null;
+	}
+
 	FSBActionManager getActionManager() {
 		return actionManager;
 	}
 
+	void dispose() {
+		if (rootNode != null && rootNode.getFSRef() != null && !rootNode.getFSRef().isClosed()) {
+			rootNode.getFSRef().getFilesystem().getRefManager().removeListener(this);
+		}
+		removeFromTool();
+		if (actionManager != null) {
+			actionManager.dispose();
+			actionManager = null;
+		}
+		if (gTree != null) {
+			gTree.dispose(); // calls dispose() on tree's rootNode, which will release the fsRefs
+			gTree = null;
+		}
+		rootNode = null;
+		plugin = null;
+	}
+
 	@Override
 	public void componentHidden() {
-		// if the component is 'closed', nuke ourselves via the plugin
-		if (plugin != null && rootNode.getFSRef() != null &&
-			rootNode.getFSRef().getFilesystem() != null) {
-			plugin.removeFileSystemBrowser(rootNode.getFSRef().getFilesystem().getFSRL());
+		// if the component is 'closed', nuke ourselves
+		if (plugin != null) {
+			plugin.removeFileSystemBrowserComponent(this);
+			dispose();
 		}
 	}
 
 	public void afterAddedToTool() {
 		actionManager.registerComponentActionsInTool();
+	}
+
+	@Override
+	public void onFilesystemClose(GFileSystem fs) {
+		Msg.info(this, "File system " + fs.getFSRL() + " was closed! Closing browser window");
+		Swing.runIfSwingOrRunLater(() -> componentHidden());
+	}
+
+	@Override
+	public void onFilesystemRefChange(GFileSystem fs, FileSystemRefManager refManager) {
+		// nothing
 	}
 
 	/*****************************************/
@@ -230,12 +261,26 @@ class FileSystemBrowserComponentProvider extends ComponentProviderAdapter {
 			FSBFileNode node = (FSBFileNode) clickedNode;
 			if (node.getFSRL() != null) {
 				quickShowProgram(node.getFSRL());
+				updatePasswordStatus(node);
 			}
 		}
 	}
 
+	private void updatePasswordStatus(FSBFileNode node) {
+		// currently this is the only state that might change
+		// and that effect the node display
+		if (node.hasMissingPassword()) {
+			// check and see if its status has changed
+			gTree.runTask(monitor -> {
+				if (node.needsFileAttributesUpdate(monitor)) {
+					actionManager.doRefreshInfo(List.of(node), monitor);
+				}
+			});
+		}
+	}
+
 	private void handleDoubleClick(GTreeNode clickedNode) {
-		if (clickedNode instanceof FSBFileNode) {
+		if (clickedNode instanceof FSBFileNode && clickedNode.isLeaf()) {
 			FSBFileNode node = (FSBFileNode) clickedNode;
 
 			if (node.getFSRL() != null && !quickShowProgram(node.getFSRL())) {
@@ -247,40 +292,34 @@ class FileSystemBrowserComponentProvider extends ComponentProviderAdapter {
 	/*****************************************/
 
 	@Override
-	public ActionContext getActionContext(MouseEvent event) {
+	public FSBActionContext getActionContext(MouseEvent event) {
+		return new FSBActionContext(this, getSelectedNodes(event), event, gTree);
+	}
+
+	private FSBNode[] getSelectedNodes(MouseEvent event) {
 		TreePath[] selectionPaths = gTree.getSelectionPaths();
-		if (selectionPaths != null && selectionPaths.length == 1) {
-			Object lastPathComponent = selectionPaths[0].getLastPathComponent();
-			return new FSBActionContext(this, lastPathComponent, gTree);
-		}
-		if (selectionPaths != null && selectionPaths.length > 0) {
-			List<FSBNode> list = new ArrayList<>();
-			for (TreePath selectionPath : selectionPaths) {
-				Object lastPathComponent = selectionPath.getLastPathComponent();
-				if (lastPathComponent instanceof FSBNode) {
-					FSBNode node = (FSBNode) lastPathComponent;
-					list.add(node);
-				}
+		List<FSBNode> list = new ArrayList<>(selectionPaths.length);
+		for (TreePath selectionPath : selectionPaths) {
+			Object lastPathComponent = selectionPath.getLastPathComponent();
+			if (lastPathComponent instanceof FSBNode) {
+				list.add((FSBNode) lastPathComponent);
 			}
-			if (list.size() == 1) {
-				return new FSBActionContext(this, list.get(0), gTree);
-			}
-			FSBNode[] nodes = new FSBNode[list.size()];
-			list.toArray(nodes);
-			return new FSBActionContext(this, nodes, gTree);
 		}
-		if (event != null) {
+		if (list.isEmpty() && event != null) {
 			Object source = event.getSource();
 			int x = event.getX();
 			int y = event.getY();
 			if (source instanceof JTree) {
 				JTree sourceTree = (JTree) source;
 				if (gTree.isMyJTree(sourceTree)) {
-					return new FSBActionContext(this, gTree.getNodeForLocation(x, y), gTree);
+					GTreeNode nodeAtEventLocation = gTree.getNodeForLocation(x, y);
+					if (nodeAtEventLocation != null && nodeAtEventLocation instanceof FSBNode) {
+						list.add((FSBNode) nodeAtEventLocation);
+					}
 				}
 			}
 		}
-		return null;
+		return list.toArray(FSBNode[]::new);
 	}
 
 	@Override
@@ -298,15 +337,4 @@ class FileSystemBrowserComponentProvider extends ComponentProviderAdapter {
 		return WindowPosition.WINDOW;
 	}
 
-	void dispose() {
-		if (actionManager != null) {
-			actionManager.dispose();
-			actionManager = null;
-		}
-		if (gTree != null) {
-			gTree.dispose();
-			gTree = null;
-		}
-		plugin = null;
-	}
 }

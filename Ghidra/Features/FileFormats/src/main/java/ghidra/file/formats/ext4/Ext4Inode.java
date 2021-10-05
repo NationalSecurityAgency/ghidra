@@ -66,7 +66,7 @@ public class Ext4Inode implements StructConverter {
 	}
 	
 	public Ext4Inode(BinaryReader reader, int inodeSize) throws IOException {
-		if (inodeSize < MINIMAL_SIZEOF_INODE) {
+		if (inodeSize < INODE_BASE_SIZE) {
 			throw new IOException("Bad inodeSize: " + inodeSize);
 		}
 		long inodeStart = reader.getPointerIndex();
@@ -88,21 +88,23 @@ public class Ext4Inode implements StructConverter {
 		i_size_high = reader.readNextInt();
 		i_obso_faddr = reader.readNextInt();
 		i_osd2 = reader.readNextByteArray(12); //12 bytes long
-		i_extra_isize = reader.readNextShort();
-		i_checksum_hi = reader.readNextShort();
-		i_ctime_extra = reader.readNextInt();
-		i_mtime_extra = reader.readNextInt();
-		i_atime_extra = reader.readNextInt();
-		i_crtime = reader.readNextInt();
-		i_crtime_extra = reader.readNextInt();
-		i_version_hi = reader.readNextInt();
-		i_projid = reader.readNextInt();
+		if (inodeSize > INODE_BASE_SIZE) {
+			i_extra_isize = reader.readNextShort();
+			i_checksum_hi = reader.readNextShort();
+			i_ctime_extra = reader.readNextInt();
+			i_mtime_extra = reader.readNextInt();
+			i_atime_extra = reader.readNextInt();
+			i_crtime = reader.readNextInt();
+			i_crtime_extra = reader.readNextInt();
+			i_version_hi = reader.readNextInt();
+			i_projid = reader.readNextInt();
 
-		// skipping unknown fields here
+			// skipping unknown fields here
 
-		// read EAs if present
-		reader.setPointerIndex(inodeStart + INODE_BASE_SIZE + i_extra_isize);
-		xAttributes = Ext4Xattributes.readInodeXAttributes(reader, inodeStart + inodeSize);
+			// read EAs if present
+			reader.setPointerIndex(inodeStart + INODE_BASE_SIZE + i_extra_isize);
+			xAttributes = Ext4Xattributes.readInodeXAttributes(reader, inodeStart + inodeSize);
+		}
 	}
 
 	

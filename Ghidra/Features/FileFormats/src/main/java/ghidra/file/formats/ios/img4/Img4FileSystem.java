@@ -15,13 +15,14 @@
  */
 package ghidra.file.formats.ios.img4;
 
-import java.io.*;
+import java.io.IOException;
 import java.util.*;
 
 import javax.swing.Icon;
 
 import org.bouncycastle.asn1.*;
 
+import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.file.crypto.CryptoKey;
 import ghidra.file.crypto.CryptoKeyFactory;
@@ -30,7 +31,6 @@ import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
 
 @FileSystemInfo(type = "img4", description = "iOS Img4", factory = GFileSystemBaseFactory.class)
@@ -121,20 +121,15 @@ public class Img4FileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CryptoException, CancelledException {
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		if (dataFileList.contains(file)) {
-			return new ByteArrayInputStream(decryptedBytes);
+			return new ByteArrayProvider(decryptedBytes, file.getFSRL());
 		}
 		throw new IOException("Unable to get DATA for " + file.getPath());
 	}
 
 	public Icon getIcon() {
-		return null;
-	}
-
-	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
 		return null;
 	}
 

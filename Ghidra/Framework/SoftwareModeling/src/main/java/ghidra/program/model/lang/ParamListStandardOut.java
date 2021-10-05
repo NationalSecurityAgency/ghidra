@@ -15,12 +15,14 @@
  */
 package ghidra.program.model.lang;
 
+import java.util.ArrayList;
+
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.util.exception.InvalidInputException;
-
-import java.util.ArrayList;
+import ghidra.xml.XmlParseException;
+import ghidra.xml.XmlPullParser;
 
 public class ParamListStandardOut extends ParamListStandard {
 
@@ -29,8 +31,9 @@ public class ParamListStandardOut extends ParamListStandard {
 			ArrayList<VariableStorage> res, boolean addAutoParams) {
 
 		int[] status = new int[numgroup];
-		for (int i = 0; i < numgroup; ++i)
+		for (int i = 0; i < numgroup; ++i) {
 			status[i] = 0;
+		}
 
 		VariableStorage store = assignAddress(prog, proto[0], status, false, false);
 		if (!store.isUnassignedStorage()) {
@@ -57,4 +60,16 @@ public class ParamListStandardOut extends ParamListStandard {
 
 	}
 
+	@Override
+	public void restoreXml(XmlPullParser parser, CompilerSpec cspec) throws XmlParseException {
+		super.restoreXml(parser, cspec);
+
+		// ParamEntry tags in the output list are considered a group
+		for (int i = 1; i < entry.length; ++i) {
+			ParamEntry.orderWithinGroup(entry[i - 1], entry[i]);
+			if (i > 1) {
+				ParamEntry.orderWithinGroup(entry[i - 2], entry[i]);
+			}
+		}
+	}
 }

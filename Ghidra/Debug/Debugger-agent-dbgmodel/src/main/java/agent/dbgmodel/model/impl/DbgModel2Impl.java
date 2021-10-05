@@ -183,6 +183,11 @@ public class DbgModel2Impl extends AbstractDbgModel
 	}
 
 	@Override
+	public void deleteModelObject(Object object) {
+		objectMap.remove(object);
+	}
+
+	@Override
 	public <T> CompletableFuture<T> gateFuture(CompletableFuture<T> future) {
 		return super.gateFuture(future).exceptionally(ex -> {
 			for (Throwable cause = ex; cause != null; cause = cause.getCause()) {

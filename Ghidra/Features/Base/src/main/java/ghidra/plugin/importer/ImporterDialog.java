@@ -89,7 +89,8 @@ public class ImporterDialog extends DialogComponentProvider {
 	 * @param tool the active tool that spawned this dialog.
 	 * @param programManager program manager to open imported file with or null
 	 * @param loaderMap the loaders and their corresponding load specifications
-	 * @param byteProvider the ByteProvider for getting the bytes from the file to be imported.
+	 * @param byteProvider the ByteProvider for getting the bytes from the file to be imported.  The
+	 *        dialog takes ownership of the ByteProvider and it will be closed when the dialog is closed
 	 * @param suggestedDestinationPath optional string path that will be pre-pended to the destination
 	 * filename.  Any path specified in the destination filename field will be created when
 	 * the user performs the import (as opposed to the {@link #setDestinationFolder(DomainFolder) destination folder}
@@ -166,8 +167,10 @@ public class ImporterDialog extends DialogComponentProvider {
 	}
 
 	private Component buildFilenameTextField() {
-		filenameTextField = new JTextField();
-		filenameTextField.setText(getSuggestedFilename());
+		String initalSuggestedFilename =
+			FSUtilities.appendPath(suggestedDestinationPath, getSuggestedFilename());
+		int columns = (initalSuggestedFilename.length() > 50) ? 50 : 0;
+		filenameTextField = new JTextField(initalSuggestedFilename, columns);
 
 		// Use a key listener to track users edits.   We can't use the document listener, as
 		// we change the name field ourselves when other fields are changed.
@@ -302,13 +305,9 @@ public class ImporterDialog extends DialogComponentProvider {
 		if (loader != null) {
 			languageNeeded = isLanguageNeeded(loader);
 			setSelectedLanguage(getPreferredLanguage(loader));
-			if (suggestedDestinationPath != null) {
-				setFilename(
-					FSUtilities.appendPath(suggestedDestinationPath, getSuggestedFilename()));
-			}
-			else {
-				setFilename(getSuggestedFilename());
-			}
+			String newSuggestedFilename =
+				FSUtilities.appendPath(suggestedDestinationPath, getSuggestedFilename());
+			setFilename(newSuggestedFilename);
 		}
 		else {
 			languageNeeded = true;
@@ -556,6 +555,7 @@ public class ImporterDialog extends DialogComponentProvider {
 		}
 
 		filenameTextField.setText(s);
+		filenameTextField.setCaretPosition(s.length());
 	}
 
 	protected void setSelectedLanguage(LanguageCompilerSpecPair lcsPair) {

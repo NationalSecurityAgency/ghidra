@@ -31,6 +31,16 @@ import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 			type = DbgModelTargetBreakpointContainerImpl.class,
 			required = true,
 			fixed = true),
+		@TargetAttributeType(
+			name = "Events",
+			type = DbgModelTargetEventContainerImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Exceptions",
+			type = DbgModelTargetExceptionContainerImpl.class,
+			required = true,
+			fixed = true),
 		@TargetAttributeType(type = Void.class)
 	},
 	canonicalContainer = true)
@@ -38,6 +48,9 @@ public class DbgModelTargetDebugContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetDebugContainer {
 
 	protected final DbgModelTargetBreakpointContainerImpl breakpoints;
+	protected DbgModelTargetEventContainerImpl events;
+	protected DbgModelTargetExceptionContainerImpl exceptions;
+
 	private DbgModelTargetProcess process;
 
 	public DbgModelTargetDebugContainerImpl(DbgModelTargetProcess process) {
@@ -45,9 +58,13 @@ public class DbgModelTargetDebugContainerImpl extends DbgModelTargetObjectImpl
 		this.process = process;
 
 		this.breakpoints = new DbgModelTargetBreakpointContainerImpl(this);
+		this.events = new DbgModelTargetEventContainerImpl(this);
+		this.exceptions = new DbgModelTargetExceptionContainerImpl(this);
 
 		changeAttributes(List.of(), List.of(  //
-			breakpoints //
+			breakpoints, //
+			events, //
+			exceptions //
 		), Map.of(), "Initialized");
 	}
 

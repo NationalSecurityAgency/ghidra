@@ -17,17 +17,12 @@ package agent.dbgeng.manager.evt;
 
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 
-/**
- * The event corresponding with "{@code =breakpoint-modified}"
- */
 public class DbgBreakpointModifiedEvent extends AbstractDbgEvent<DbgBreakpointInfo> {
 
 	private long bptId;
 
 	/**
-	 * Construct a new event by parsing the tail for information
-	 * 
-	 * The breakpoint information must be specified by GDB.
+	 * Construct a new event from the given info
 	 * 
 	 * @param info breakpoint info
 	 */
@@ -44,7 +39,7 @@ public class DbgBreakpointModifiedEvent extends AbstractDbgEvent<DbgBreakpointIn
 	/**
 	 * Get the breakpoint information
 	 * 
-	 * @return the parsed, but not processed, breakpoint information
+	 * @return the breakpoint information
 	 */
 	public DbgBreakpointInfo getBreakpointInfo() {
 		return getInfo();

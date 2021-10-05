@@ -16,7 +16,6 @@
 package ghidra.file.formats.ios.dyldcache;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
@@ -50,7 +49,7 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor) throws IOException {
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) throws IOException {
 		DyldCacheImageInfo data = map.get(file);
 		if (data == null) {
 			return null;
@@ -58,7 +57,7 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 		long machHeaderStartIndexInProvider = data.getAddress() - header.getBaseAddress();
 		try {
 			return DyldCacheDylibExtractor.extractDylib(machHeaderStartIndexInProvider, provider,
-				monitor);
+				file.getFSRL(), monitor);
 		}
 		catch (MachException e) {
 			throw new IOException("Invalid Mach-O header detected at 0x" +

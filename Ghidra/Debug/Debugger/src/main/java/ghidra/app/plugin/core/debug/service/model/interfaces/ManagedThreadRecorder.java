@@ -39,6 +39,8 @@ public interface ManagedThreadRecorder extends AbstractTraceRecorder {
 
 	public void recordRegisterValues(TargetRegisterBank bank, Map<String, byte[]> updates);
 
+	public void invalidateRegisterValues(TargetRegisterBank bank);
+
 	public boolean objectRemoved(TargetObject removed);
 
 	public void stateChanged(TargetExecutionState state);

@@ -15,12 +15,15 @@
  */
 package ghidra.file.formats.ios.dmg;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
+import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -47,7 +50,8 @@ public class DmgClientFileSystem implements GFileSystem {
 	private final FSRLRoot fsrl;
 	private FileSystemRefManager refManager = new FileSystemRefManager(this);
 	private FileSystemIndexHelper<Object> fsih;
-	private File decrypted_dmg_file;
+	private File decryptedDmgFile;
+	private boolean deleteFileWhenDone;
 	private DmgServerProcessManager processManager;
 	private CancelledListener listener = () -> processManager.interruptCmd();
 	private FileSystemService fsService;
@@ -56,21 +60,22 @@ public class DmgClientFileSystem implements GFileSystem {
 	 * Creates a {@link DmgClientFileSystem} instance, using a decrypted dmg file and
 	 * the filesystem's {@link FSRLRoot}.
 	 *
-	 * @param decrypted_dmg_file path to a decrypted DMG file.  The DmgClientFileSystemFactory
+	 * @param decryptedDmgFile path to a decrypted DMG file.  The DmgClientFileSystemFactory
 	 * takes care of decrypting for us.
 	 * @param fsrl {@link FSRLRoot} of this filesystem.
 	 */
-	public DmgClientFileSystem(File decrypted_dmg_file, FSRLRoot fsrl,
+	public DmgClientFileSystem(File decryptedDmgFile, boolean deleteFileWhenDone, FSRLRoot fsrl,
 			FileSystemService fsService) {
 		this.fsrl = fsrl;
 		this.fsih = new FileSystemIndexHelper<>(this, fsrl);
-		this.decrypted_dmg_file = decrypted_dmg_file;
+		this.decryptedDmgFile = decryptedDmgFile;
+		this.deleteFileWhenDone = deleteFileWhenDone;
 		this.fsService = fsService;
 	}
 
 	public void mount(TaskMonitor monitor) throws CancelledException, IOException {
 		processManager =
-			new DmgServerProcessManager(decrypted_dmg_file, fsrl.getContainer().getName());
+			new DmgServerProcessManager(decryptedDmgFile, fsrl.getContainer().getName());
 
 		monitor.addCancelledListener(listener);
 		try {
@@ -95,6 +100,10 @@ public class DmgClientFileSystem implements GFileSystem {
 
 		fsih.clear();
 		fsih = null;
+		if (deleteFileWhenDone) {
+			Msg.info(this, "Deleting DMG temp file:" + decryptedDmgFile);
+			decryptedDmgFile.delete();
+		}
 	}
 
 	@Override
@@ -118,7 +127,7 @@ public class DmgClientFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public InputStream getInputStream(GFile file, TaskMonitor monitor)
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		monitor.addCancelledListener(listener);
 
@@ -134,12 +143,9 @@ public class DmgClientFileSystem implements GFileSystem {
 			if (!extractedFile.exists() || extractedFile.length() == 0) {
 				return null;
 			}
-			try (FileInputStream fis = new FileInputStream(extractedFile)) {
-				FileCacheEntry fce = fsService.addStreamToCache(fis, monitor);
-				fis.close();
-				extractedFile.delete();
-				return new FileInputStream(fce.file);
-			}
+			ByteProvider fileProvider =
+				fsService.pushFileToCache(extractedFile, file.getFSRL(), monitor);
+			return fileProvider;
 		}
 		finally {
 			monitor.removeCancelledListener(listener);
@@ -200,14 +206,21 @@ public class DmgClientFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile gFile, TaskMonitor monitor) {
+	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
 		monitor.addCancelledListener(listener);
 
-		StringBuffer buffer = new StringBuffer();
+		FileAttributes fileAttributes = new FileAttributes();
 		try {
-			List<String> infoResults = processManager.sendCmd("get_info " + gFile.getPath(), -1);
+			List<String> infoResults = processManager.sendCmd("get_info " + file.getPath(), -1);
+			int count = 1;
 			for (String s : infoResults) {
-				buffer.append(s).append("\n");
+				String[] sParts = s.split(": *", 2);
+				if (sParts.length == 2) {
+					fileAttributes.add(sParts[0], sParts[1]);
+				}
+				else {
+					fileAttributes.add("Unknown Attribute " + (count++), s);
+				}
 			}
 		}
 		catch (Exception e) {
@@ -216,7 +229,7 @@ public class DmgClientFileSystem implements GFileSystem {
 		finally {
 			monitor.removeCancelledListener(listener);
 		}
-		return buffer.toString();
+		return fileAttributes;
 	}
 
 }

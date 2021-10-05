@@ -15,16 +15,16 @@
  */
 package ghidra.file.formats.complzss;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
-import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.file.formats.lzss.LzssCodec;
 import ghidra.file.formats.lzss.LzssConstants;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
-import ghidra.util.HashUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -35,21 +35,19 @@ public class CompLzssFileSystem implements GFileSystem {
 	private FileSystemRefManager fsRefManager = new FileSystemRefManager(this);
 	private ByteProvider payloadProvider;
 
-	public CompLzssFileSystem(FSRLRoot fsrl, ByteProvider provider, TaskMonitor monitor)
-			throws IOException {
+	public CompLzssFileSystem(FSRLRoot fsrl, ByteProvider provider, FileSystemService fsService,
+			TaskMonitor monitor) throws IOException, CancelledException {
 		monitor.setMessage("Decompressing LZSS...");
 
-		byte[] compressedBytes = provider.readBytes(LzssConstants.HEADER_LENGTH,
+		try (ByteProvider tmpBP = new ByteProviderWrapper(provider, LzssConstants.HEADER_LENGTH,
 			provider.length() - LzssConstants.HEADER_LENGTH);
-		ByteArrayOutputStream decompressedBOS = new ByteArrayOutputStream();
-		LzssCodec.decompress(decompressedBOS, new ByteArrayInputStream(compressedBytes));
-		byte[] decompressedBytes = decompressedBOS.toByteArray();
+				InputStream tmpIS = tmpBP.getInputStream(0);) {
 
-		String md5 = HashUtilities.getHash(HashUtilities.MD5_ALGORITHM, decompressedBytes);
-		this.fsIndex = new SingleFileSystemIndexHelper(this, fsFSRL, "lzss_decompressed",
-			decompressedBytes.length, md5);
-		this.payloadProvider =
-			new ByteArrayProvider(decompressedBytes, fsIndex.getPayloadFile().getFSRL());
+			this.payloadProvider = fsService.getDerivedByteProviderPush(provider.getFSRL(), null,
+				"decompressed lzss", -1, (os) -> LzssCodec.decompress(os, tmpIS), monitor);
+			this.fsIndex = new SingleFileSystemIndexHelper(this, fsFSRL, "lzss_decompressed",
+				payloadProvider.length(), payloadProvider.getFSRL().getMD5());
+		}
 	}
 
 	@Override
@@ -83,14 +81,10 @@ public class CompLzssFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public InputStream getInputStream(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		ByteProvider bp = getByteProvider(file, monitor);
-		return bp != null ? bp.getInputStream(0) : null;
-	}
-
-	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) {
-		return fsIndex.isPayloadFile(file) ? payloadProvider : null;
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) throws IOException {
+		return fsIndex.isPayloadFile(file)
+				? new ByteProviderWrapper(payloadProvider, file.getFSRL())
+				: null;
 	}
 
 	@Override

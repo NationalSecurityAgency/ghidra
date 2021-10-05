@@ -16,7 +16,6 @@
 package ghidra.file.formats.iso9660;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
@@ -132,25 +131,6 @@ public class ISO9660FileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
-		ISO9660Directory dir = fileToDirectoryMap.get(file);
-		if (dir != null) {
-			return dir.toString();
-		}
-		return null;
-	}
-
-	/*
-	 * Returns the actual file data from a given Gfile(linked to directory)
-	 */
-	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException, CryptoException {
-
-		ByteProvider bp = getByteProvider(file, monitor);
-		return bp != null ? bp.getInputStream(0) : null;
-	}
-
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		ISO9660Directory dir = fileToDirectoryMap.get(file);
@@ -161,10 +141,10 @@ public class ISO9660FileSystem extends GFileSystemBase {
 	 * From a given parent directory create each child directory
 	 * under that parent directory and add them to a list
 	 */
-	private ArrayList<ISO9660Directory> createDirectoryList(BinaryReader reader,
+	private List<ISO9660Directory> createDirectoryList(BinaryReader reader,
 			ISO9660Directory parentDir, long blockSize, TaskMonitor monitor) throws IOException {
 
-		ArrayList<ISO9660Directory> directoryList = new ArrayList<>();
+		List<ISO9660Directory> directoryList = new ArrayList<>();
 		ISO9660Directory childDir = null;
 		long dirIndex;
 		long endIndex;
@@ -239,8 +219,8 @@ public class ISO9660FileSystem extends GFileSystemBase {
 		}
 	}
 
-	private void addAndStoreDirectory(TaskMonitor monitor,
-			ArrayList<ISO9660Directory> directoryList, ISO9660Directory childDir) {
+	private void addAndStoreDirectory(TaskMonitor monitor, List<ISO9660Directory> directoryList,
+			ISO9660Directory childDir) {
 
 		directoryList.add(childDir);
 

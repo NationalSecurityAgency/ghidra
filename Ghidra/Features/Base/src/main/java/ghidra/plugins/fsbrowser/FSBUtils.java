@@ -18,10 +18,8 @@ package ghidra.plugins.fsbrowser;
 import java.util.ArrayList;
 import java.util.List;
 
-import docking.ActionContext;
-import docking.widgets.tree.GTreeNode;
 import ghidra.app.services.ProgramManager;
-import ghidra.formats.gfilesystem.*;
+import ghidra.formats.gfilesystem.SelectFromListDialog;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 
@@ -30,41 +28,6 @@ import ghidra.util.Msg;
  */
 public class FSBUtils {
 
-	public static FSRL getFileFSRLFromContext(ActionContext context) {
-		return getFSRLFromContext(context, false);
-	}
-
-	public static FSRL getFSRLFromContext(ActionContext context, boolean dirsOk) {
-		if (context == null || !(context.getContextObject() instanceof FSBNode)) {
-			return null;
-		}
-
-		FSBNode node = (FSBNode) context.getContextObject();
-		FSRL fsrl = node.getFSRL();
-		if (!dirsOk && node instanceof FSBRootNode && fsrlHasContainer(fsrl.getFS())) {
-			// 'convert' a file system root node back into its container file
-			return fsrl.getFS().getContainer();
-		}
-
-		boolean isDir = (node instanceof FSBDirNode) || (node instanceof FSBRootNode);
-		if (isDir && !dirsOk) {
-			return null;
-		}
-
-		return fsrl;
-	}
-
-	public static boolean fsrlHasContainer(FSRLRoot fsFSRL) {
-		return fsFSRL.hasContainer() && !fsFSRL.getProtocol().equals(LocalFileSystem.FSTYPE);
-	}
-
-	public static FSBRootNode getNodesRoot(FSBNode node) {
-		GTreeNode tmp = node;
-		while (tmp != null && !(tmp instanceof FSBRootNode)) {
-			tmp = tmp.getParent();
-		}
-		return (tmp instanceof FSBRootNode) ? (FSBRootNode) tmp : null;
-	}
 
 	/**
 	 * Returns the {@link ProgramManager} associated with this fs browser plugin.

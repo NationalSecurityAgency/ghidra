@@ -16,7 +16,6 @@
 package ghidra.file.formats.ios.ipsw;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,6 +49,7 @@ public class IpswFileSystem extends GFileSystemBase {
 
 	@Override
 	public void open(TaskMonitor monitor) throws IOException, CryptoException, CancelledException {
+		// does nothing yet
 	}
 
 	@Override
@@ -58,8 +58,7 @@ public class IpswFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException, CryptoException {
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) {
 		return null;
 	}
 

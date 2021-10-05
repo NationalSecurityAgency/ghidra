@@ -15,7 +15,6 @@
  */
 package ghidra.formats.gfilesystem.factory;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -39,7 +38,7 @@ import ghidra.util.task.TaskMonitor;
  *
  */
 public class GFileSystemBaseFactory
-		implements GFileSystemFactoryFull<GFileSystemBase>, GFileSystemProbeFull {
+		implements GFileSystemFactoryByteProvider<GFileSystemBase>, GFileSystemProbeByteProvider {
 
 	private Class<? extends GFileSystemBase> fsClass;
 	private static final Class<?>[] FS_CTOR_PARAM_TYPES =
@@ -54,14 +53,15 @@ public class GFileSystemBaseFactory
 	}
 
 	@Override
-	public boolean probe(FSRL containerFSRL, ByteProvider byteProvider, File containerFile,
-			FileSystemService fsService, TaskMonitor monitor)
-			throws IOException, CancelledException {
+	public boolean probe(ByteProvider byteProvider, FileSystemService fsService,
+			TaskMonitor monitor) throws IOException, CancelledException {
 
 		try {
+			FSRL containerFSRL = byteProvider.getFSRL();
 			Constructor<? extends GFileSystemBase> ctor =
 				fsClass.getConstructor(FS_CTOR_PARAM_TYPES);
 			GFileSystemBase fs = ctor.newInstance(containerFSRL.getName(), byteProvider);
+			fs.setFilesystemService(fsService);
 			// do NOT close fs here because that would close the byteProvider
 			return fs.isValid(monitor);
 		}
@@ -72,21 +72,22 @@ public class GFileSystemBaseFactory
 	}
 
 	@Override
-	public GFileSystemBase create(FSRL containerFSRL, FSRLRoot targetFSRL,
-			ByteProvider byteProvider, File containerFile, FileSystemService fsService,
-			TaskMonitor monitor) throws IOException, CancelledException {
+	public GFileSystemBase create(FSRLRoot targetFSRL, ByteProvider byteProvider,
+			FileSystemService fsService, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		try {
+			FSRL containerFSRL = byteProvider.getFSRL();
 			Constructor<? extends GFileSystemBase> ctor =
 				fsClass.getConstructor(FS_CTOR_PARAM_TYPES);
 			GFileSystemBase fs = ctor.newInstance(containerFSRL.getName(), byteProvider);
+			fs.setFilesystemService(fsService);
+			fs.setFSRL(targetFSRL);
 			try {
 				if (!fs.isValid(monitor)) {
 					throw new IOException("Error when creating new filesystem " +
 						fsClass.getName() + ", isvalid failed");
 				}
-				fs.setFilesystemService(fsService);
-				fs.setFSRL(targetFSRL);
 				fs.open(monitor);
 
 				GFileSystemBase successFS = fs;

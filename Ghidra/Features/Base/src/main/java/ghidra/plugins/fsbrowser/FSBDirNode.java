@@ -16,68 +16,49 @@
 package ghidra.plugins.fsbrowser;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
-import javax.swing.Icon;
-
 import docking.widgets.tree.GTreeNode;
-import ghidra.formats.gfilesystem.*;
-import ghidra.util.Msg;
+import ghidra.formats.gfilesystem.GFile;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * GTreeNode that represents a directory on a filesystem.
- * <p>
- * Visible to just this package.
  */
-public class FSBDirNode extends FSBNode {
-	private FSRL fsrl;
+public class FSBDirNode extends FSBFileNode {
 
-	FSBDirNode(FSRL fsrl) {
-		this.fsrl = fsrl;
+	FSBDirNode(GFile dirFile) {
+		super(dirFile);
 	}
 
 	@Override
 	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
-		try (RefdFile dir = FileSystemService.getInstance().getRefdFile(fsrl, monitor)) {
-			return FSBNode.getNodesFromFileList(dir.file.getListing());
+		try {
+			return FSBNode.createNodesFromFileList(file.getListing(), monitor);
 		}
 		catch (IOException e) {
-			Msg.showError(this, null, "loadChildren", e);
+			// fall thru, return empty list
 		}
-		return Collections.emptyList();
+		return List.of();
 	}
 
 	@Override
-	public Icon getIcon(boolean expanded) {
-		return null;
-	}
-
-	@Override
-	public String getName() {
-		return fsrl.getName();
-	}
-
-	@Override
-	public FSRL getFSRL() {
-		return fsrl;
-	}
-
-	@Override
-	public String getToolTip() {
-		return fsrl.getName();
+	public void updateFileAttributes(TaskMonitor monitor) {
+		for (GTreeNode node : getChildren()) {
+			if (node instanceof FSBFileNode) {
+				((FSBFileNode) node).updateFileAttributes(monitor);
+			}
+			if (monitor.isCancelled()) {
+				break;
+			}
+		}
+		super.updateFileAttributes(monitor);
 	}
 
 	@Override
 	public boolean isLeaf() {
 		return false;
-	}
-
-	@Override
-	public int hashCode() {
-		return fsrl.hashCode();
 	}
 
 }

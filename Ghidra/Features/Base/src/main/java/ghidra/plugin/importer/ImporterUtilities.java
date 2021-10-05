@@ -72,6 +72,8 @@ public class ImporterUtilities {
 		ExtensionFileFilter.forExtensions("Container files", "zip", "tar", "tgz", "jar", "gz",
 			"ipsw", "img3", "dmg", "apk", "cpio", "rpm", "lib");
 
+	private static final FileSystemService fsService = FileSystemService.getInstance();
+
 	static List<LanguageCompilerSpecPair> getPairs(Collection<LoadSpec> loadSpecs) {
 		Set<LanguageCompilerSpecPair> pairs = new HashSet<>();
 		for (LoadSpec loadSpec : loadSpecs) {
@@ -99,7 +101,7 @@ public class ImporterUtilities {
 
 		int id = program.startTransaction("setImportProperties");
 		try {
-			fsrl = FileSystemService.getInstance().getFullyQualifiedFSRL(fsrl, monitor);
+			fsrl = fsService.getFullyQualifiedFSRL(fsrl, monitor);
 
 			Options propertyList = program.getOptions(Program.PROGRAM_INFO);
 			propertyList.setString(ProgramMappingService.PROGRAM_SOURCE_FSRL, fsrl.toString());
@@ -165,11 +167,10 @@ public class ImporterUtilities {
 
 		RefdFile referencedFile = null;
 		try {
-			FileSystemService service = FileSystemService.getInstance();
-			referencedFile = service.getRefdFile(fsrl, monitor);
+			referencedFile = fsService.getRefdFile(fsrl, monitor);
 
-			FSRL fullFsrl = service.getFullyQualifiedFSRL(fsrl, monitor);
-			boolean isFSContainer = service.isFileFilesystemContainer(fullFsrl, monitor);
+			FSRL fullFsrl = fsService.getFullyQualifiedFSRL(fsrl, monitor);
+			boolean isFSContainer = fsService.isFileFilesystemContainer(fullFsrl, monitor);
 			if (referencedFile.file.getLength() == 0) {
 				Msg.showError(ImporterUtilities.class, null, "File is empty",
 					"File " + fsrl.getPath() + " is empty, nothing to import");
@@ -264,10 +265,11 @@ public class ImporterUtilities {
 		Objects.requireNonNull(monitor);
 
 		try {
-			ByteProvider provider = FileSystemService.getInstance().getByteProvider(fsrl, monitor);
+			ByteProvider provider = fsService.getByteProvider(fsrl, false, monitor);
 			if (provider.length() == 0) {
 				Msg.showWarn(null, null, "Error opening " + fsrl.getName(),
 					"The item does not correspond to a valid file.");
+				provider.close();
 				return;
 			}
 
@@ -307,8 +309,7 @@ public class ImporterUtilities {
 			TaskMonitor monitor) {
 
 		try {
-
-			ByteProvider provider = FileSystemService.getInstance().getByteProvider(fsrl, monitor);
+			ByteProvider provider = fsService.getByteProvider(fsrl, true, monitor);
 			LoaderMap loaderMap = LoaderService.getAllSupportedLoadSpecs(provider);
 
 			SystemUtilities.runSwingLater(() -> {
@@ -393,7 +394,7 @@ public class ImporterUtilities {
 
 		Objects.requireNonNull(monitor);
 
-		try (ByteProvider bp = FileSystemService.getInstance().getByteProvider(fsrl, monitor)) {
+		try (ByteProvider bp = fsService.getByteProvider(fsrl, false, monitor)) {
 
 			Object consumer = new Object();
 			MessageLog messageLog = new MessageLog();
@@ -464,7 +465,7 @@ public class ImporterUtilities {
 		Objects.requireNonNull(monitor);
 
 		MessageLog messageLog = new MessageLog();
-		try (ByteProvider bp = FileSystemService.getInstance().getByteProvider(fsrl, monitor)) {
+		try (ByteProvider bp = fsService.getByteProvider(fsrl, false, monitor)) {
 			loadSpec.getLoader().loadInto(bp, loadSpec, options, messageLog, program, monitor);
 			displayResults(tool, program, program.getDomainFile(), messageLog.toString());
 		}

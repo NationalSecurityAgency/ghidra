@@ -15,9 +15,6 @@
  */
 package agent.dbgeng.manager.evt;
 
-/**
- * The event corresponding with "{@code ~""}" output records
- */
 public class DbgConsoleOutputEvent extends AbstractDbgEvent<String> {
 
 	private int mask;

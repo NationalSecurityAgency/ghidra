@@ -15,7 +15,7 @@
  */
 package ghidra.program.model.lang;
 
-import java.util.Iterator;
+import java.util.*;
 import java.util.Map.Entry;
 
 import ghidra.app.plugin.processors.sleigh.VarnodeData;
@@ -36,6 +36,9 @@ public class ParamEntry {
 	private static final int IS_BIG_ENDIAN = 16; // Interpret values in this container as big endian
 	private static final int SMALLSIZE_INTTYPE = 32;	// Assume values that are below max size are extended based on integer type
 	private static final int SMALLSIZE_FLOAT = 64;		// Assume values smaller than max -size- are floating-point extended to full size
+	//private static final int EXTRACHECK_HIGH = 128;
+	//private static final int EXTRACHECK_LOW = 256;
+	private static final int IS_GROUPED = 512;			// The entry is grouped with other entries
 
 	public static final int TYPE_UNKNOWN = 8;			// Default type restriction
 	public static final int TYPE_PTR = 2;				// pointer types
@@ -93,6 +96,10 @@ public class ParamEntry {
 		return ((flags & REVERSE_STACK) != 0);
 	}
 
+	public boolean isGrouped() {
+		return ((flags & IS_GROUPED) != 0);
+	}
+
 	public boolean isBigEndian() {
 		return ((flags & IS_BIG_ENDIAN) != 0);
 	}
@@ -103,6 +110,16 @@ public class ParamEntry {
 
 	private boolean isLeftJustified() {
 		return (((flags & IS_BIG_ENDIAN) == 0) || ((flags & FORCE_LEFT_JUSTIFY) != 0));
+	}
+
+	/**
+	 * @return true if at least one piece of a join doesn't overlap with another ParamEntry
+	 */
+	public boolean isNonOverlappingJoin() {
+		if (joinrec == null) {
+			return false;
+		}
+		return (joinrec.length != groupsize);
 	}
 
 	public AddressSpace getSpace() {
@@ -264,6 +281,71 @@ public class ParamEntry {
 		return slotnum;
 	}
 
+	/**
+	 * Find the ParamEntry in the list whose storage matches the given Varnode
+	 * @param curList is the list of ParamEntry
+	 * @param varnode is the given Varnode
+	 * @return the matching entry or null
+	 */
+	private static ParamEntry findEntryByStorage(List<ParamEntry> curList, Varnode varnode) {
+		ListIterator<ParamEntry> iter = curList.listIterator(curList.size());
+		while (iter.hasPrevious()) {
+			ParamEntry entry = iter.previous();
+			if (entry.spaceid.getSpaceID() == varnode.getSpace() &&
+				entry.addressbase == varnode.getOffset() && entry.size == varnode.getSize()) {
+				return entry;
+			}
+		}
+		return null;
+	}
+
+	public int countJoinOverlap(List<ParamEntry> curList) {
+		if (joinrec == null) {
+			return 0;
+		}
+		int count = 0;
+		for (Varnode vn : joinrec) {
+			ParamEntry match = findEntryByStorage(curList, vn);
+			if (match != null) {
+				count += 1;
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Adjust the group and groupsize based on the ParamEntrys being overlapped
+	 * @param curList is the current list of ParamEntry
+	 * @throws XmlParseException if no overlap is found
+	 */
+	private void resolveJoin(List<ParamEntry> curList) throws XmlParseException {
+		if (joinrec == null) {
+			return;
+		}
+		int mingrp = 1000;
+		int maxgrp = -1;
+		for (Varnode piece : joinrec) {
+			ParamEntry entry = findEntryByStorage(curList, piece);
+			if (entry != null) {
+				if (entry.group < mingrp) {
+					mingrp = entry.group;
+				}
+				int max = entry.group + entry.groupsize;
+				if (max > maxgrp) {
+					maxgrp = max;
+				}
+			}
+		}
+		if (maxgrp < 0 || mingrp >= 1000) {
+			throw new XmlParseException("<pentry> join must overlap at least one previous entry");
+		}
+		group = mingrp;
+		groupsize = (maxgrp - mingrp);
+		if (groupsize > joinrec.length) {
+			throw new XmlParseException("<pentry> join must overlap sequential entries");
+		}
+	}
+
 	public void saveXml(StringBuilder buffer) {
 		buffer.append("<pentry");
 		SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "minsize", minsize);
@@ -274,9 +356,6 @@ public class ParamEntry {
 		if (type == TYPE_FLOAT || type == TYPE_PTR) {
 			String tok = (type == TYPE_FLOAT) ? "float" : "ptr";
 			SpecXmlUtils.encodeStringAttribute(buffer, "metatype", tok);
-		}
-		if (groupsize != 1) {
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "groupsize", groupsize);
 		}
 		String extString = null;
 		if ((flags & SMALLSIZE_SEXT) != 0) {
@@ -307,7 +386,8 @@ public class ParamEntry {
 		buffer.append("</pentry>");
 	}
 
-	public void restoreXml(XmlPullParser parser, CompilerSpec cspec) throws XmlParseException {
+	public void restoreXml(XmlPullParser parser, CompilerSpec cspec, List<ParamEntry> curList,
+			boolean grouped) throws XmlParseException {
 		flags = 0;
 		type = TYPE_UNKNOWN;
 		size = minsize = -1;		// Must be filled in
@@ -343,12 +423,6 @@ public class ParamEntry {
 						type = TYPE_PTR;
 					}
 				}
-			}
-			else if (name.equals("group")) {
-				group = SpecXmlUtils.decodeInt(entry.getValue());
-			}
-			else if (name.equals("groupsize")) {
-				groupsize = SpecXmlUtils.decodeInt(entry.getValue());
 			}
 			else if (name.equals("extension")) {
 				flags &= ~(SMALLSIZE_ZEXT | SMALLSIZE_SEXT | SMALLSIZE_INTTYPE | SMALLSIZE_FLOAT);
@@ -413,7 +487,10 @@ public class ParamEntry {
 				}
 			}
 		}
-		// resolveJoin
+		if (grouped) {
+			flags |= IS_GROUPED;
+		}
+		resolveJoin(curList);
 		parser.end(el);
 	}
 
@@ -517,5 +594,27 @@ public class ParamEntry {
 			return TYPE_PTR;
 		}
 		return TYPE_UNKNOWN;
+	}
+
+	/**
+	 * ParamEntry within a group must be distinguishable by size or by type
+	 * @param entry1 is the first being compared
+	 * @param entry2 is the second being compared
+	 * @throws XmlParseException if the pair is not distinguishable
+	 */
+	public static void orderWithinGroup(ParamEntry entry1, ParamEntry entry2)
+			throws XmlParseException {
+		if (entry2.minsize > entry1.size || entry1.minsize > entry2.size) {
+			return;
+		}
+		if (entry1.type != entry2.type) {
+			if (entry1.type == TYPE_UNKNOWN) {
+				throw new XmlParseException(
+					"<pentry> tags with a specific type must come before the general type");
+			}
+			return;
+		}
+		throw new XmlParseException(
+			"<pentry> tags within a group must be distinguished by size or type");
 	}
 }

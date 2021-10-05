@@ -15,26 +15,25 @@
  */
 package ghidra.file.formats.complzss;
 
-import java.io.File;
 import java.io.IOException;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.file.formats.lzss.LzssCompressionHeader;
 import ghidra.formats.gfilesystem.*;
-import ghidra.formats.gfilesystem.factory.GFileSystemFactoryFull;
+import ghidra.formats.gfilesystem.factory.GFileSystemFactoryByteProvider;
 import ghidra.formats.gfilesystem.factory.GFileSystemProbeBytesOnly;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class CompLzssFileSystemFactory
-		implements GFileSystemFactoryFull<CompLzssFileSystem>, GFileSystemProbeBytesOnly {
+		implements GFileSystemFactoryByteProvider<CompLzssFileSystem>, GFileSystemProbeBytesOnly {
 
 	@Override
-	public CompLzssFileSystem create(FSRL containerFSRL, FSRLRoot targetFSRL,
-			ByteProvider byteProvider, File containerFile, FileSystemService fsService,
-			TaskMonitor monitor) throws IOException, CancelledException {
-
-		CompLzssFileSystem fs = new CompLzssFileSystem(targetFSRL, byteProvider, monitor);
+	public CompLzssFileSystem create(FSRLRoot targetFSRL, ByteProvider byteProvider,
+			FileSystemService fsService, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		CompLzssFileSystem fs =
+			new CompLzssFileSystem(targetFSRL, byteProvider, fsService, monitor);
 		return fs;
 	}
 

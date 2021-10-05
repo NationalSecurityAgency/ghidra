@@ -17,22 +17,13 @@ package ghidra.plugins.fsbrowser.tasks;
 
 import java.awt.Component;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import docking.widgets.OptionDialog;
-import ghidra.formats.gfilesystem.AbstractFileExtractorTask;
-import ghidra.formats.gfilesystem.FSRL;
-import ghidra.formats.gfilesystem.FileSystemService;
-import ghidra.formats.gfilesystem.GFile;
-import ghidra.formats.gfilesystem.GFileSystem;
-import ghidra.formats.gfilesystem.RefdFile;
-import ghidra.util.DateUtils;
-import ghidra.util.HTMLUtilities;
-import ghidra.util.Msg;
+import ghidra.formats.gfilesystem.*;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
@@ -154,12 +145,4 @@ public class GFileSystemExtractAllTask extends AbstractFileExtractorTask {
 		}
 		return true;
 	}
-
-	@Override
-	protected InputStream getSourceFileInputStream(GFile file, TaskMonitor monitor)
-			throws CancelledException, IOException {
-		File cacheFile = FileSystemService.getInstance().getFile(file.getFSRL(), monitor);
-		return new FileInputStream(cacheFile);
-	}
-
 }

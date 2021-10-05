@@ -17,10 +17,13 @@ package ghidra.formats.gfilesystem;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -35,24 +38,20 @@ import ghidra.util.task.TaskMonitor;
  * by the FileSystemFactoryMgr.
  *
  */
-public class LocalFileSystemSub implements GFileSystem {
+public class LocalFileSystemSub implements GFileSystem, GFileHashProvider {
 	private final FSRLRoot fsFSRL;
-	private final GFileSystem rootFS;
-	private final List<GFile> emptyDir = Collections.emptyList();
+	private final LocalFileSystem rootFS;
 	private File localfsRootDir;
 	private FileSystemRefManager refManager = new FileSystemRefManager(this);
 	private GFileLocal rootGFile;
 
-	public LocalFileSystemSub(File rootDir, GFileSystem rootFS) throws IOException {
+	public LocalFileSystemSub(File rootDir, LocalFileSystem rootFS) throws IOException {
 		this.rootFS = rootFS;
 		this.localfsRootDir = rootDir.getCanonicalFile();
 
-		GFile containerDir = rootFS.lookup(localfsRootDir.getPath());
-		if (containerDir == null) {
-			throw new IOException("Bad root dir: " + rootDir);
-		}
-		this.fsFSRL = FSRLRoot.nestedFS(containerDir.getFSRL(), rootFS.getFSRL().getProtocol());
-		this.rootGFile = new GFileLocal(localfsRootDir, "/", containerDir.getFSRL(), this, null);
+		FSRL containerFSRL = rootFS.getLocalFSRL(localfsRootDir);
+		this.fsFSRL = FSRLRoot.nestedFS(containerFSRL, rootFS.getFSRL().getProtocol());
+		this.rootGFile = new GFileLocal(localfsRootDir, "/", containerFSRL, this, null);
 	}
 
 	@Override
@@ -97,17 +96,17 @@ public class LocalFileSystemSub implements GFileSystem {
 			directory = rootGFile;
 		}
 		if (!directory.isDirectory()) {
-			return emptyDir;
+			return List.of();
 		}
 		File localDir = getFileFromGFile(directory);
 		if (Files.isSymbolicLink(localDir.toPath())) {
-			return emptyDir;
+			return List.of();
 		}
 
 		File[] localFiles = localDir.listFiles();
 
 		if (localFiles == null) {
-			return emptyDir;
+			return List.of();
 		}
 
 		List<GFile> tmp = new ArrayList<>(localFiles.length);
@@ -130,19 +129,15 @@ public class LocalFileSystemSub implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
+	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
 		try {
 			File localFile = getFileFromGFile(file);
-			StringBuilder buffer = new StringBuilder();
-			buffer.append("Name: " + localFile.getName() + "\n");
-			buffer.append("Size: " + localFile.length() + "\n");
-			buffer.append("Date: " + new Date(localFile.lastModified()).toString() + "\n");
-			return buffer.toString();
+			return rootFS.getFileAttributes(localFile);
 		}
 		catch (IOException e) {
 			// fail and return null
 		}
-		return null;
+		return FileAttributes.EMPTY;
 	}
 
 	@Override
@@ -179,8 +174,7 @@ public class LocalFileSystemSub implements GFileSystem {
 	@Override
 	public InputStream getInputStream(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
-
-		return new FileInputStream(getFileFromGFile(file));
+		return rootFS.getInputStream(file.getFSRL(), monitor);
 	}
 
 	@Override
@@ -191,5 +185,17 @@ public class LocalFileSystemSub implements GFileSystem {
 	@Override
 	public String toString() {
 		return getName();
+	}
+
+	@Override
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		return rootFS.getByteProvider(file.getFSRL(), monitor);
+	}
+
+	@Override
+	public String getMD5Hash(GFile file, boolean required, TaskMonitor monitor)
+			throws CancelledException, IOException {
+		return rootFS.getMD5Hash(file.getFSRL(), required, monitor);
 	}
 }
