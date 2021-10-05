@@ -37,16 +37,6 @@ import ghidra.util.task.TaskMonitor;
 
 public final class ReferenceUtils {
 
-	private static final String EMBOLDEN_START =
-		"<span style=\"background-color: #a3e4d7; color: black;\"><b><font size=4>";
-	private static final String EMBOLDEN_END = "</font></b></span>";
-
-	public static final String CONTEXT_CALLOUT_START = "[|";
-	public static final String CONTEXT_CALLOUT_END = "|]";
-
-	public static final String CONTEXT_CALLOUT_START_REGEX = "\\[\\|";
-	public static final String CONTEXT_CALLOUT_END_REGEX = "\\|\\]";
-
 	private ReferenceUtils() {
 		// utility class
 	}
@@ -79,7 +69,7 @@ public final class ReferenceUtils {
 	 * @param accumulator The Accumulator into which LocationReferences will be placed.
 	 * @param location The location for which to find references
 	 * @param monitor the task monitor used to track progress and cancel the work
-	 * @throws CancelledException if the operation was cancelled 
+	 * @throws CancelledException if the operation was cancelled
 	 */
 	public static void getReferences(Accumulator<LocationReference> accumulator,
 			ProgramLocation location, TaskMonitor monitor) throws CancelledException {
@@ -205,8 +195,8 @@ public final class ReferenceUtils {
 	 * @param fieldName optional field name for which to search; the <tt>dataType</tt> must be
 	 *                  a {@link Composite} to search for a field
 	 * @param program The program from within which to find references.
-	 * @param discoverTypes if true, the {@link DataTypeReferenceFinder} service 
-	 *                will be used to search for data types that are not applied in memory.  
+	 * @param discoverTypes if true, the {@link DataTypeReferenceFinder} service
+	 *                will be used to search for data types that are not applied in memory.
 	 *                Using the service will be slower, but will recover type usage that could
 	 *                not be found by examining the Listing.
 	 * @param monitor A task monitor to be updated as data is searched; if this is null, then a
@@ -249,7 +239,7 @@ public final class ReferenceUtils {
 			FunctionIterator iterator = listing.getFunctions(false);
 			findDataTypeMatchesInFunctionHeaders(asSet, iterator, dataType, localsOnly, monitor);
 
-			// external functions don't get searched by type discovery  
+			// external functions don't get searched by type discovery
 			localsOnly = false;
 			iterator = listing.getExternalFunctions();
 			findDataTypeMatchesInFunctionHeaders(asSet, iterator, dataType, localsOnly, monitor);
@@ -288,7 +278,7 @@ public final class ReferenceUtils {
 
 		Consumer<DataTypeReference> callback = ref -> {
 
-			String context = emboldenBracketedText(ref.getContext());
+			LocationReferenceContext context = ref.getContext();
 			LocationReference locationReference = new LocationReference(ref.getAddress(), context);
 			accumulator.add(locationReference);
 		};
@@ -566,7 +556,7 @@ public final class ReferenceUtils {
 	}
 
 	/*
-	 * Creates a location descriptor from a field location 
+	 * Creates a location descriptor from a field location
 	 * (which has more info than just an address).  A
 	 * {@link FieldNameFieldLocation} can be tied to a {@link Composite} field or it can
 	 * be an array index subscript.
@@ -631,8 +621,8 @@ public final class ReferenceUtils {
 	}
 
 	/*
-	 * Creates a location descriptor from just an address (which has less info than an 
-	 * actual location)  A {@link FieldNameFieldLocation} can be tied to 
+	 * Creates a location descriptor from just an address (which has less info than an
+	 * actual location)  A {@link FieldNameFieldLocation} can be tied to
 	 * a {@link Composite} field or it can be an array index subscript.
 	 *
 	 * Since this method is handed only an address and not a ProgramLocation, we have to do
@@ -656,11 +646,11 @@ public final class ReferenceUtils {
 		String fieldPath = getFieldPath(location);
 		if (!fieldPath.contains(".")) {
 
-			// no field reference, so don't create a structure member reference, but just 
+			// no field reference, so don't create a structure member reference, but just
 			// a generic data type reference
 			DataType type = outermostData.getDataType();
 			if (type == DataType.DEFAULT || Undefined.isUndefined(type)) {
-				// nobody wants to search for undefined usage; too many (this is the case 
+				// nobody wants to search for undefined usage; too many (this is the case
 				// where the user is not on an actual data type)
 				return null;
 			}
@@ -672,7 +662,8 @@ public final class ReferenceUtils {
 
 		String fieldName = getFieldName(location);
 		Address parentAddress = outermostData.getMinAddress();
-		Data subData = outermostData.getComponentAt((int) refAddress.subtract(parentAddress));
+		int componentAddress = (int) refAddress.subtract(parentAddress);
+		Data subData = outermostData.getComponentContaining(componentAddress);
 		if (subData != null) {
 
 			int[] componentPath = subData.getComponentPath();
@@ -697,7 +688,7 @@ public final class ReferenceUtils {
 	}
 
 	/*
-	 * Creates a location descriptor using the String display markup and type information 
+	 * Creates a location descriptor using the String display markup and type information
 	 * found inside of the VariableOffset object.
 	 * 
 	 * This method differs from createDataMemberLocationDescriptor() in that this method
@@ -757,7 +748,7 @@ public final class ReferenceUtils {
 		// field inside of the 'bar' composite type.  We need to find the type of 'bar'.
 		//
 		// examples: foo.bar.baz
-		// 
+		//
 		Stack<String> path = new Stack<>();
 		for (int i = parts.length - 1; i >= 0; i--) {
 			path.push(parts[i]);
@@ -803,7 +794,7 @@ public final class ReferenceUtils {
 
 	/*
 	 * Finds the data type represented by the lowest-level value in the stack.  This is done
-	 * by using the given parent and the item on the top of the stack to find a matching 
+	 * by using the given parent and the item on the top of the stack to find a matching
 	 * field (the parent must be a Composite).
 	 */
 	private static DataType findLeafDataType(DataType parent, Stack<String> path) {
@@ -848,7 +839,7 @@ public final class ReferenceUtils {
 
 		if (reference == null) {
 
-			// Prefer using the reference, for consistency.  Without that, the 
+			// Prefer using the reference, for consistency.  Without that, the
 			// VariableOffset object contains markup and type information we can use.
 			// Having a VariableOffset without a reference occurs when a
 			// register variable reference is inferred during instruction operand formatting.
@@ -867,7 +858,7 @@ public final class ReferenceUtils {
 		// Using the reference, we can heck for the 'Extended Markup' style reference, such as:
 		// 		instruction ...=>Foo.bar.baz
 		//                     -------------
-		// Note: these references are to labels (not sure why the reference isn't to a data 
+		// Note: these references are to labels (not sure why the reference isn't to a data
 		//       symbol)
 		//
 
@@ -957,7 +948,7 @@ public final class ReferenceUtils {
 	 * @param dataMatcher the predicate that determines a successful match
 	 * @param fieldName the optional field name for which to search
 	 * @param monitor the task monitor used to track progress and cancel the work
-	 * @throws CancelledException if the operation was cancelled 
+	 * @throws CancelledException if the operation was cancelled
 	 */
 	public static void findDataTypeMatchesInDefinedData(Accumulator<LocationReference> accumulator,
 			Program program, Predicate<Data> dataMatcher, String fieldName, TaskMonitor monitor)
@@ -1131,19 +1122,6 @@ public final class ReferenceUtils {
 
 			monitor.incrementProgress(1);
 		}
-	}
-
-	private static String emboldenBracketedText(String context) {
-		String escaped = HTMLUtilities.escapeHTML(context);
-		String updated = fixBreakingSpaces(escaped);
-		updated = updated.replaceFirst(CONTEXT_CALLOUT_START_REGEX, EMBOLDEN_START);
-		updated = updated.replaceFirst(CONTEXT_CALLOUT_END_REGEX, EMBOLDEN_END);
-		return "<html>" + updated;
-	}
-
-	private static String fixBreakingSpaces(String s) {
-		String updated = s.replaceAll("\\s", "&nbsp;");
-		return updated;
 	}
 
 	private static boolean dataTypesMatch(DataType searchType, DataType possibleType) {

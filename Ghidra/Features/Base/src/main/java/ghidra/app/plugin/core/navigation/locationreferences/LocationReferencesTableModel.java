@@ -127,23 +127,15 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 //==================================================================================================
 
 	private class ContextTableColumn
-			extends AbstractProgramBasedDynamicTableColumn<LocationReference, String> {
+			extends
+			AbstractProgramBasedDynamicTableColumn<LocationReference, LocationReference> {
 
-		private static final String OFFCUT_STRING = "<< OFFCUT >>";
-		private OffcutTableCellRenderer renderer = new OffcutTableCellRenderer();
+		private ContextCellRenderer renderer = new ContextCellRenderer();
 
 		@Override
-		public String getValue(LocationReference rowObject, Settings settings, Program p,
+		public LocationReference getValue(LocationReference rowObject, Settings settings, Program p,
 				ServiceProvider sp) throws IllegalArgumentException {
-
-			String refType = rowObject.getRefTypeString();
-			if (!StringUtils.isBlank(refType)) {
-				return refType + (rowObject.isOffcutReference() ? OFFCUT_STRING : "");
-			}
-
-			// when the row object does not represent an applied reference, then it may have
-			// some context associated with it
-			return rowObject.getContext();
+			return rowObject;
 		}
 
 		@Override
@@ -159,12 +151,14 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 		}
 
 		@Override
-		public GColumnRenderer<String> getColumnRenderer() {
+		public GColumnRenderer<LocationReference> getColumnRenderer() {
 			return renderer;
 		}
 	}
 
-	private class OffcutTableCellRenderer extends AbstractGhidraColumnRenderer<String> {
+	private class ContextCellRenderer extends AbstractGhidraColumnRenderer<LocationReference> {
+
+		private static final String OFFCUT_STRING = "<< OFFCUT >>";
 
 		{
 			setHTMLRenderingEnabled(true);
@@ -176,18 +170,42 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 			// initialize
 			super.getTableCellRendererComponent(data);
 
-			Object value = data.getValue();
-
-			if (value.toString().indexOf(ContextTableColumn.OFFCUT_STRING) >= 0) {
-				setForeground(Color.RED);
+			LocationReference rowObject = (LocationReference) data.getRowObject();
+			String refTypeString = getRefTypeString(rowObject);
+			if (refTypeString != null) {
+				setText(refTypeString);
+				return this;
 			}
 
+			// when the row object does not represent an applied reference, then it may have context
+			LocationReferenceContext context = rowObject.getContext();
+			String text = context.getBoldMatchingText();
+			setText(text);
 			return this;
 		}
 
+		private String getRefTypeString(LocationReference rowObject) {
+			String refType = rowObject.getRefTypeString();
+			if (!StringUtils.isBlank(refType)) {
+				String trailingText = "";
+				if (rowObject.isOffcutReference()) {
+					setForeground(Color.RED);
+					trailingText = OFFCUT_STRING;
+				}
+				return refType + trailingText;
+			}
+			return null;
+		}
+
 		@Override
-		public String getFilterString(String t, Settings settings) {
-			return t;
+		public String getFilterString(LocationReference rowObject, Settings settings) {
+			String refTypeString = getRefTypeString(rowObject);
+			if (refTypeString != null) {
+				return refTypeString;
+			}
+
+			LocationReferenceContext context = rowObject.getContext();
+			return context.getPlainText();
 		}
 	}
 }
