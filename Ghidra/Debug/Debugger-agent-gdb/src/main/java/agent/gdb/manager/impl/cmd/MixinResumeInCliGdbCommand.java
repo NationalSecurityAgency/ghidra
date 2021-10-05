@@ -29,7 +29,7 @@ import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
  * "interrupt" from the primary (console) interpreter. So, for these resumes, I need to issue the
  * command from the console, allowing ^C to work.
  */
-public interface MixinResumeInCliGdbCommand extends GdbCommand<Void> {
+public interface MixinResumeInCliGdbCommand<T> extends GdbCommand<T> {
 
 	default Interpreter getInterpreter(GdbManagerImpl manager) {
 		if (manager.hasCli()) {
@@ -55,8 +55,7 @@ public interface MixinResumeInCliGdbCommand extends GdbCommand<Void> {
 		return false;
 	}
 
-	default Void completeOnRunning(GdbPendingCommand<?> pending) {
+	default void completeOnRunning(GdbPendingCommand<?> pending) {
 		pending.checkCompletion(GdbCommandRunningEvent.class);
-		return null;
 	}
 }
