@@ -1714,6 +1714,8 @@ Datatype *TypeOpPtrsub::getOutputToken(const PcodeOp *op,CastStrategy *castStrat
     Datatype *rettype = ptype->downChain(offset,false,*tlst);
     if ((offset==0)&&(rettype != (Datatype *)0))
       return rettype;
+    rettype = tlst->getBase(1, TYPE_UNKNOWN);
+    return tlst->getTypePointer(op->getOut()->getSize(), rettype, ptype->getWordSize());
   }
   return TypeOp::getOutputToken(op,castStrategy);
 }
