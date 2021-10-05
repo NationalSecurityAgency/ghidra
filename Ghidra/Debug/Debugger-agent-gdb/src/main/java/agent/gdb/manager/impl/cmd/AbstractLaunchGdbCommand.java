@@ -18,38 +18,39 @@ package agent.gdb.manager.impl.cmd;
 import agent.gdb.manager.GdbThread;
 import agent.gdb.manager.evt.*;
 import agent.gdb.manager.impl.*;
+import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
 
-public abstract class AbstractLaunchGdbCommand extends AbstractGdbCommand<GdbThread> {
+public abstract class AbstractLaunchGdbCommand extends AbstractGdbCommand<GdbThread>
+		implements MixinResumeInCliGdbCommand<GdbThread> {
 
 	protected AbstractLaunchGdbCommand(GdbManagerImpl manager) {
 		super(manager);
 	}
 
 	@Override
+	public Interpreter getInterpreter() {
+		//return getInterpreter(manager);
+
+		/**
+		 * A lot of good event-handling logic is factored in the Mixin interface. However, errors
+		 * from CLI commands are catastrophically mishandled or just missed entirely, so we will
+		 * still use MI2 for these.
+		 */
+		return Interpreter.MI2;
+	}
+
+	@Override
 	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
 		evt = checkErrorViaCli(evt);
-		if (evt instanceof GdbCommandRunningEvent) {
-			pending.claim(evt);
-			return pending.hasAny(GdbRunningEvent.class);
-		}
-		else if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
-			return true; // Not the expected Completed event
-		}
-		else if (evt instanceof GdbRunningEvent) {
-			// Event happens no matter which interpreter received the command
-			pending.claim(evt);
-			return pending.hasAny(GdbCommandRunningEvent.class);
-		}
-		else if (evt instanceof GdbThreadCreatedEvent) {
+		if (evt instanceof GdbThreadCreatedEvent) {
 			pending.claim(evt);
 		}
-		return false;
+		return handleExpectingRunning(evt, pending);
 	}
 
 	@Override
 	public GdbThread complete(GdbPendingCommand<?> pending) {
-		pending.checkCompletion(GdbCommandRunningEvent.class);
+		completeOnRunning(pending);
 
 		// Just take the first thread. Others are considered clones.
 		GdbThreadCreatedEvent created = pending.findFirstOf(GdbThreadCreatedEvent.class);

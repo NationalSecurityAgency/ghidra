@@ -59,6 +59,12 @@ public enum GdbLinuxSpecimen implements DebuggerTestSpecimen, DebuggerModelTestU
 			return DummyProc.which("expRegisters");
 		}
 	},
+	SPIN_STRIPPED {
+		@Override
+		String getCommandLine() {
+			return DummyProc.which("expSpin.stripped");
+		}
+	},
 	STACK {
 		@Override
 		String getCommandLine() {

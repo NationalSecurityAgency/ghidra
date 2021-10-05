@@ -209,7 +209,9 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 			CmdLineParser.tokenize(TargetCmdLineLauncher.PARAMETER_CMDLINE_ARGS.get(args));
 		Boolean useStarti = GdbModelTargetInferior.PARAMETER_STARTI.get(args);
 		return impl.gateFuture(impl.gdb.availableInferior().thenCompose(inf -> {
-			return GdbModelImplUtils.launch(impl, inf, cmdLineArgs, useStarti);
+			return GdbModelImplUtils.launch(inf, cmdLineArgs, useStarti, () -> {
+				return inferiors.getTargetInferior(inf).environment.refreshInternal();
+			});
 		}).thenApply(__ -> null));
 	}
 
@@ -231,7 +233,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		//return impl.gdb.interrupt();
 		try {
 			impl.gdb.sendInterruptNow();
-			impl.gdb.cancelCurrentCommand();
+			//impl.gdb.cancelCurrentCommand();
 		}
 		catch (IOException e) {
 			Msg.error(this, "Could not interrupt", e);

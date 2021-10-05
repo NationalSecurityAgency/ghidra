@@ -35,6 +35,31 @@ import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 public abstract class AbstractDebuggerModelLauncherTest extends AbstractDebuggerModelTest
 		implements RequiresLaunchSpecimen {
 
+	protected  class ProcessCreatedDebugModelListener extends AnnotatedDebuggerAttributeListener {
+		public final CompletableFuture<Void> observedCreated = new CompletableFuture<>();
+
+		public ProcessCreatedDebugModelListener() {
+			super(MethodHandles.lookup());
+		}
+
+		@AttributeCallback(TargetExecutionStateful.STATE_ATTRIBUTE_NAME)
+		public void stateChanged(TargetObject object, TargetExecutionState state) {
+			// We're only expecting one process, so this should be fine
+			TargetProcess process = DebugModelConventions.liveProcessOrNull(object);
+			if (process == null) {
+				return;
+			}
+			try {
+				TargetEnvironment env = findEnvironment(process.getPath());
+				assertEnvironment(env);
+				observedCreated.complete(null);
+			}
+			catch (Throwable e) {
+				observedCreated.completeExceptionally(e);
+			}
+		}
+	}
+
 	public List<String> getExpectedLauncherPath() {
 		return null;
 	}
@@ -80,26 +105,7 @@ public abstract class AbstractDebuggerModelLauncherTest extends AbstractDebugger
 	public void testLaunch() throws Throwable {
 		m.build();
 
-		var listener = new AnnotatedDebuggerAttributeListener(MethodHandles.lookup()) {
-			CompletableFuture<Void> observedCreated = new CompletableFuture<>();
-
-			@AttributeCallback(TargetExecutionStateful.STATE_ATTRIBUTE_NAME)
-			public void stateChanged(TargetObject object, TargetExecutionState state) {
-				// We're only expecting one process, so this should be fine
-				TargetProcess process = DebugModelConventions.liveProcessOrNull(object);
-				if (process == null) {
-					return;
-				}
-				try {
-					TargetEnvironment env = findEnvironment(process.getPath());
-					assertEnvironment(env);
-					observedCreated.complete(null);
-				}
-				catch (Throwable e) {
-					observedCreated.completeExceptionally(e);
-				}
-			}
-		};
+		ProcessCreatedDebugModelListener listener = new ProcessCreatedDebugModelListener();
 		// NB. I've intentionally omitted the reorderer here. The model should get it right.
 		m.getModel().addModelListener(listener);
 
