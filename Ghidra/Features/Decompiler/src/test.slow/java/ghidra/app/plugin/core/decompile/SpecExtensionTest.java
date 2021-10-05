@@ -137,6 +137,8 @@ public class SpecExtensionTest extends AbstractDecompilerTest {
 		// Replace the output register EAX with ECX
 		defaultString = defaultString.replace("<addr space=\"register\" offset=\"0x0\"/>",
 			"<addr space=\"register\" offset=\"4\"/>");
+		defaultString =
+			defaultString.replace("piece2=\"register:0x0:4\"", "piece2=\"register:0x4:4\"");
 		// Change the name
 		defaultString = defaultString.replace("name=\"__stdcall\"", "name=\"myproto\"");
 		SpecExtension specExtension = new SpecExtension(program);
@@ -166,7 +168,7 @@ public class SpecExtensionTest extends AbstractDecompilerTest {
 
 		decompile("100272e");
 		// Look for the affect of ECX being the output register
-		line = getLineContaining("FUN_010026a7(extraout_EAX);");
+		line = getLineContaining("FUN_010026a7(in_EAX);");
 		assertNotNull(line);
 
 		int id3 = program.startTransaction("Change eval model");
