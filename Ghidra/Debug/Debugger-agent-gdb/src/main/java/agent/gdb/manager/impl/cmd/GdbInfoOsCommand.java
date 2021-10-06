@@ -17,9 +17,9 @@ package agent.gdb.manager.impl.cmd;
 
 import agent.gdb.manager.GdbManager;
 import agent.gdb.manager.GdbTable;
-import agent.gdb.manager.evt.AbstractGdbCompletedCommandEvent;
 import agent.gdb.manager.evt.GdbCommandDoneEvent;
-import agent.gdb.manager.impl.*;
+import agent.gdb.manager.impl.GdbManagerImpl;
+import agent.gdb.manager.impl.GdbPendingCommand;
 
 /**
  * Implementation of {@link GdbManager#infoOs(String)}
@@ -35,15 +35,6 @@ public class GdbInfoOsCommand extends AbstractGdbCommand<GdbTable> {
 	@Override
 	public String encode() {
 		return "-info-os " + type;
-	}
-
-	@Override
-	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
-			return true;
-		}
-		return false;
 	}
 
 	@Override

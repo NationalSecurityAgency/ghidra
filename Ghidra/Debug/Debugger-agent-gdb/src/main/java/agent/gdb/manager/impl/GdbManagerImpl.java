@@ -22,10 +22,12 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.python.core.PyDictionary;
+import org.python.icu.text.MessageFormat;
 import org.python.util.InteractiveConsole;
 
 import agent.gdb.manager.*;
@@ -34,6 +36,7 @@ import agent.gdb.manager.breakpoint.GdbBreakpointInfo;
 import agent.gdb.manager.breakpoint.GdbBreakpointType;
 import agent.gdb.manager.evt.*;
 import agent.gdb.manager.impl.cmd.*;
+import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
 import agent.gdb.manager.parsing.GdbMiParser;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
 import agent.gdb.pty.*;
@@ -43,13 +46,10 @@ import ghidra.async.AsyncLock.Hold;
 import ghidra.dbg.error.DebuggerModelTerminatingException;
 import ghidra.dbg.util.HandlerMap;
 import ghidra.dbg.util.PrefixMap;
-import ghidra.framework.Application;
-import ghidra.framework.GhidraApplicationConfiguration;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.ListenerSet;
-import ghidra.util.task.ConsoleTaskMonitor;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -72,6 +72,15 @@ import sun.misc.SignalHandler;
  */
 public class GdbManagerImpl implements GdbManager {
 	private static final String GDB_IS_TERMINATING = "GDB is terminating";
+
+	private static final String PTY_DIALOG_MESSAGE_PATTERN =
+		"<html><p>Please enter:</p>" +
+			"<pre>new-ui mi2 <b>{0}</b></pre>" + "" +
+			"<p>into an existing gdb session.</p><br/>" +
+			"<p>Alternatively, to launch a new session, cancel this dialog. " +
+			"Then, retry with <b>use existing session</b> disabled.</p></html>";
+
+	private static final String CANCEL = "Cancel";
 
 	@Internal
 	public enum Interpreter {
@@ -138,6 +147,31 @@ public class GdbManagerImpl implements GdbManager {
 				terminate();
 				Msg.debug(this, channel + "," + interpreter + " reader exiting because " + e);
 				//throw new AssertionError(e);
+			}
+		}
+	}
+
+	class PtyInfoDialogThread extends Thread {
+		private final JOptionPane pane;
+		private final JDialog dialog;
+		final CompletableFuture<Integer> result = new CompletableFuture<>();
+
+		public PtyInfoDialogThread(String ptyName) {
+			String message = MessageFormat.format(PTY_DIALOG_MESSAGE_PATTERN, ptyName);
+			pane = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE, 0, null,
+				new Object[] { CANCEL });
+			dialog = pane.createDialog("Waiting for GDB/MI session");
+		}
+
+		@Override
+		public void run() {
+			dialog.setVisible(true);
+			Object sel = pane.getValue();
+			if (CANCEL.equals(sel)) {
+				result.complete(JOptionPane.CANCEL_OPTION);
+			}
+			else {
+				result.complete(JOptionPane.CLOSED_OPTION);
 			}
 		}
 	}
@@ -505,13 +539,18 @@ public class GdbManagerImpl implements GdbManager {
 		return unmodifiableBreakpoints;
 	}
 
-	private GdbBreakpointInfo addKnownBreakpoint(GdbBreakpointInfo bkpt, boolean expectExisting) {
+	@Internal
+	public Map<Long, GdbBreakpointInfo> getKnownBreakpointsInternal() {
+		return breakpoints;
+	}
+
+	public GdbBreakpointInfo addKnownBreakpoint(GdbBreakpointInfo bkpt, boolean expectExisting) {
 		GdbBreakpointInfo old = breakpoints.put(bkpt.getNumber(), bkpt);
 		if (expectExisting && old == null) {
-			Msg.warn(this, "Breakpoint " + bkpt.getNumber() + " is not known");
+			Msg.warn(this, "Was missing breakpoint " + bkpt.getNumber());
 		}
 		else if (!expectExisting && old != null) {
-			Msg.warn(this, "Breakpoint " + bkpt.getNumber() + " is already known");
+			Msg.warn(this, "Already had breakpoint " + bkpt.getNumber());
 		}
 		return old;
 	}
@@ -524,10 +563,10 @@ public class GdbManagerImpl implements GdbManager {
 		return info;
 	}
 
-	private GdbBreakpointInfo removeKnownBreakpoint(long number) {
+	public GdbBreakpointInfo removeKnownBreakpoint(long number) {
 		GdbBreakpointInfo del = breakpoints.remove(number);
 		if (del == null) {
-			Msg.warn(this, "Breakpoint " + number + " is not known");
+			Msg.warn(this, "Deleted missing breakpoint " + number);
 		}
 		return del;
 	}
@@ -640,14 +679,28 @@ public class GdbManagerImpl implements GdbManager {
 
 			mi2Thread.start();
 
-			int choice = JOptionPane.showConfirmDialog(null,
-				"Please enter \"new-ui mi2 " + mi2PtyName + "\" in an existing gdb session. " +
-					"Alternatively, disable 'use existing session' to launch a new session.",
-				"Waiting for GDB/MI session", JOptionPane.OK_CANCEL_OPTION);
-			if (choice == JOptionPane.CANCEL_OPTION) {
+			PtyInfoDialogThread dialog = new PtyInfoDialogThread(mi2PtyName);
+			dialog.start();
+			dialog.result.thenAccept(choice -> {
+				if (choice == JOptionPane.CANCEL_OPTION) {
+					mi2Thread.hasWriter.cancel(false);
+					// This will cause 
+				}
+			});
+
+			// Yes, wait on the user indefinitely.
+			try {
+				mi2Thread.hasWriter.get();
+			}
+			catch (InterruptedException | ExecutionException e) {
+				Msg.info(this, "The user cancelled, or something else: " + e);
 				terminate();
 			}
+			dialog.dialog.setVisible(false);
 		}
+
+		// Do this whether or not joining existing. It's possible .gdbinit did stuff.
+		resync();
 	}
 
 	@Override
@@ -662,6 +715,25 @@ public class GdbManagerImpl implements GdbManager {
 	 */
 	protected CompletableFuture<Void> rc() {
 		return AsyncUtils.NIL;
+	}
+
+	protected void resync() {
+		AsyncFence fence = new AsyncFence();
+		fence.include(listInferiors().thenCompose(infs -> {
+			AsyncFence inner = new AsyncFence();
+			for (GdbInferior inf : infs.values()) {
+				// NOTE: Mappings need not be constantly synced
+				// NOTE: Modules need not be constantly synced
+				inner.include(inf.listThreads());
+			}
+			return inner.ready();
+		}));
+		fence.include(listBreakpoints());
+		// NOTE: Available processes need not be constantly synced
+		fence.ready().exceptionally(ex -> {
+			Msg.error(this, "Could not resync the GDB session: " + ex);
+			return null;
+		});
 	}
 
 	private void waitGdbExit() {
@@ -1043,7 +1115,11 @@ public class GdbManagerImpl implements GdbManager {
 		int iid = evt.getInferiorId();
 		GdbInferiorImpl inf = getInferior(iid);
 		inf.setPid(evt.getPid());
-		event(() -> listenersEvent.fire.inferiorStarted(inf, evt.getCause()), "inferiorStarted");
+		fireInferiorStarted(inf, evt.getCause(), "inferiorStarted");
+	}
+
+	public void fireInferiorStarted(GdbInferiorImpl inf, GdbCause cause, String text) {
+		event(() -> listenersEvent.fire.inferiorStarted(inf, cause), text);
 	}
 
 	/**
@@ -1567,7 +1643,7 @@ public class GdbManagerImpl implements GdbManager {
 			sendInterruptNow(cliThread, (((char) 3) + "interrupt" + newLine).getBytes());
 		}
 		else if (mi2Thread != null) {
-			sendInterruptNow(mi2Thread, new byte[] { 3 });
+			sendInterruptNow(mi2Thread, (((char) 3) + "-exec-interrupt" + newLine).getBytes());
 		}
 	}
 
@@ -1600,6 +1676,7 @@ public class GdbManagerImpl implements GdbManager {
 	}
 
 	@Override
+	@Deprecated
 	public CompletableFuture<Void> claimStopped() {
 		return execute(new GdbClaimStopped(this));
 	}
@@ -1641,15 +1718,15 @@ public class GdbManagerImpl implements GdbManager {
 	}
 
 	@Override
-	public CompletableFuture<Void> console(String command) {
+	public CompletableFuture<Void> console(String command, CompletesWithRunning cwr) {
 		return execute(new GdbConsoleExecCommand(this, null, null, command,
-			GdbConsoleExecCommand.Output.CONSOLE)).thenApply(e -> null);
+			GdbConsoleExecCommand.Output.CONSOLE, cwr)).thenApply(e -> null);
 	}
 
 	@Override
-	public CompletableFuture<String> consoleCapture(String command) {
+	public CompletableFuture<String> consoleCapture(String command, CompletesWithRunning cwr) {
 		return execute(new GdbConsoleExecCommand(this, null, null, command,
-			GdbConsoleExecCommand.Output.CAPTURE));
+			GdbConsoleExecCommand.Output.CAPTURE, cwr));
 	}
 
 	@Override

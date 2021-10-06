@@ -32,7 +32,7 @@ import agent.gdb.manager.impl.GdbThreadInfo;
  * finished executing the command.
  */
 public interface GdbThread
-		extends GdbBreakpointInsertions, GdbMemoryOperations, GdbStackFrameOperations {
+		extends GdbBreakpointInsertions, GdbMemoryOperations, GdbContextualOperations {
 
 	/**
 	 * Get the inferior to which this thread belongs

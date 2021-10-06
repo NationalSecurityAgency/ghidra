@@ -18,9 +18,9 @@ package agent.gdb.manager.impl.cmd;
 import java.nio.ByteBuffer;
 
 import agent.gdb.manager.GdbThread;
-import agent.gdb.manager.evt.AbstractGdbCompletedCommandEvent;
 import agent.gdb.manager.evt.GdbCommandDoneEvent;
-import agent.gdb.manager.impl.*;
+import agent.gdb.manager.impl.GdbManagerImpl;
+import agent.gdb.manager.impl.GdbPendingCommand;
 
 /**
  * Implementation of {@link GdbThread#writeMemory(long, ByteBuffer, int)}
@@ -56,15 +56,6 @@ public class GdbWriteMemoryCommand extends AbstractGdbCommandWithThreadId<Void> 
 			b.append(String.format("%02x", n));
 		}
 		return b.toString();
-	}
-
-	@Override
-	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
-			return true;
-		}
-		return false;
 	}
 
 	@Override

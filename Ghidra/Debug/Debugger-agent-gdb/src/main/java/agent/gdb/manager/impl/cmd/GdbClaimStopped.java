@@ -22,7 +22,10 @@ import agent.gdb.manager.impl.*;
 
 /**
  * Implementation of {@link GdbManager#claimStopped()}
+ * 
+ * @deprecated I don't see this being used anywhere. Probably defunct.
  */
+@Deprecated
 public class GdbClaimStopped extends AbstractGdbCommand<Void> {
 	public GdbClaimStopped(GdbManagerImpl manager) {
 		super(manager);

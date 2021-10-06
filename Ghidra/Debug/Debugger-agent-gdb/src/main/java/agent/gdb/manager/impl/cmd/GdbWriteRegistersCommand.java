@@ -22,14 +22,13 @@ import java.util.Map;
 import org.apache.commons.lang3.ArrayUtils;
 
 import agent.gdb.manager.GdbRegister;
-import agent.gdb.manager.GdbStackFrameOperations;
-import agent.gdb.manager.evt.AbstractGdbCompletedCommandEvent;
+import agent.gdb.manager.GdbContextualOperations;
 import agent.gdb.manager.evt.GdbCommandDoneEvent;
 import agent.gdb.manager.impl.*;
 import ghidra.dbg.util.ConversionUtils;
 
 /**
- * Implementation of {@link GdbStackFrameOperations#writeRegisters(Map)}
+ * Implementation of {@link GdbContextualOperations#writeRegisters(Map)}
  */
 public class GdbWriteRegistersCommand extends AbstractGdbCommandWithThreadAndFrameId<Void> {
 	protected static final BigInteger UINT128_MAX =
@@ -121,15 +120,6 @@ public class GdbWriteRegistersCommand extends AbstractGdbCommandWithThreadAndFra
 			b.append(ent.getValue().toString(16));
 		}
 		return b.toString();
-	}
-
-	@Override
-	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
-			return true;
-		}
-		return false;
 	}
 
 	@Override

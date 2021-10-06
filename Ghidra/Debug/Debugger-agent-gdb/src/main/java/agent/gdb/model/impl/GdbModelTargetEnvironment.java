@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetEnvironment;
@@ -83,7 +84,7 @@ public class GdbModelTargetEnvironment
 		 * --thread parameter.
 		 */
 		return CompletableFuture.supplyAsync(() -> null).thenCompose(__ -> {
-			return impl.gdb.consoleCapture("show architecture");
+			return impl.gdb.consoleCapture("show architecture", CompletesWithRunning.CANNOT);
 		}).thenAccept(out -> {
 			String[] tokens = out.split("\\s+");
 			String arch = tokens[tokens.length - 1].trim();
@@ -116,7 +117,7 @@ public class GdbModelTargetEnvironment
 		 * TODO: Ditto the "current inferior" issue as refreshArchitecture
 		 */
 		return CompletableFuture.supplyAsync(() -> null).thenCompose(__ -> {
-			return impl.gdb.consoleCapture("show os");
+			return impl.gdb.consoleCapture("show os", CompletesWithRunning.CANNOT);
 		}).thenAccept(out -> {
 			String[] tokens = out.split("\n")[0].split("\\s+");
 			String os = tokens[tokens.length - 1].trim();
@@ -145,7 +146,7 @@ public class GdbModelTargetEnvironment
 	protected CompletableFuture<Void> refreshEndian() {
 		// TODO: This duplicates GdbInferiorImpl.syncEndianness....
 		return CompletableFuture.supplyAsync(() -> null).thenCompose(__ -> {
-			return impl.gdb.consoleCapture("show endian");
+			return impl.gdb.consoleCapture("show endian", CompletesWithRunning.CANNOT);
 		}).thenAccept(out -> {
 			if (out.toLowerCase().contains("little endian")) {
 				endian = "little";

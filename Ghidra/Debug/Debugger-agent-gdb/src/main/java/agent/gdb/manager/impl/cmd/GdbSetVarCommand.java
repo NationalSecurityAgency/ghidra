@@ -16,9 +16,9 @@
 package agent.gdb.manager.impl.cmd;
 
 import agent.gdb.manager.GdbInferior;
-import agent.gdb.manager.evt.AbstractGdbCompletedCommandEvent;
 import agent.gdb.manager.evt.GdbCommandDoneEvent;
-import agent.gdb.manager.impl.*;
+import agent.gdb.manager.impl.GdbManagerImpl;
+import agent.gdb.manager.impl.GdbPendingCommand;
 
 /**
  * Implementation of {@link GdbInferior#setVar(String, String)}
@@ -36,15 +36,6 @@ public class GdbSetVarCommand extends AbstractGdbCommandWithThreadId<Void> {
 	@Override
 	public String encode(String threadPart) {
 		return "-gdb-set" + threadPart + " " + varName + " " + val;
-	}
-
-	@Override
-	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
-			return true;
-		}
-		return false;
 	}
 
 	@Override

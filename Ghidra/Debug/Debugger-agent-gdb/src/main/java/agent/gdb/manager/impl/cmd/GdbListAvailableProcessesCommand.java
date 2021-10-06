@@ -18,9 +18,9 @@ package agent.gdb.manager.impl.cmd;
 import java.util.List;
 
 import agent.gdb.manager.GdbProcessThreadGroup;
-import agent.gdb.manager.evt.AbstractGdbCompletedCommandEvent;
 import agent.gdb.manager.evt.GdbCommandDoneEvent;
-import agent.gdb.manager.impl.*;
+import agent.gdb.manager.impl.GdbManagerImpl;
+import agent.gdb.manager.impl.GdbPendingCommand;
 
 public class GdbListAvailableProcessesCommand
 		extends AbstractGdbCommand<List<GdbProcessThreadGroup>> {
@@ -31,15 +31,6 @@ public class GdbListAvailableProcessesCommand
 	@Override
 	public String encode() {
 		return "-list-thread-groups --available";
-	}
-
-	@Override
-	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
-			return true;
-		}
-		return false;
 	}
 
 	@Override

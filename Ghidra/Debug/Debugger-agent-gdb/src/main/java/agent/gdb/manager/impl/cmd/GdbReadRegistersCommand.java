@@ -22,9 +22,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import agent.gdb.manager.GdbRegister;
-import agent.gdb.manager.GdbStackFrameOperations;
-import agent.gdb.manager.evt.AbstractGdbCompletedCommandEvent;
-import agent.gdb.manager.evt.GdbCommandDoneEvent;
+import agent.gdb.manager.GdbContextualOperations;
+import agent.gdb.manager.evt.*;
 import agent.gdb.manager.impl.*;
 import agent.gdb.manager.parsing.GdbCValueParser;
 import agent.gdb.manager.parsing.GdbCValueParser.*;
@@ -34,7 +33,7 @@ import ghidra.pcode.utils.Utils;
 import ghidra.util.Msg;
 
 /**
- * Implementation of {@link GdbStackFrameOperations#readRegisters(Set)}
+ * Implementation of {@link GdbContextualOperations#readRegisters(Set)}
  */
 public class GdbReadRegistersCommand
 		extends AbstractGdbCommandWithThreadAndFrameId<Map<GdbRegister, BigInteger>> {
@@ -67,15 +66,6 @@ public class GdbReadRegistersCommand
 			b.append(r.getNumber());
 		}
 		return b.toString();
-	}
-
-	@Override
-	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
-			return true;
-		}
-		return false;
 	}
 
 	protected BigInteger packElements(GdbArrayValue av, int byteCount, int bytesPer,

@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-public interface GdbStackFrameOperations {
+public interface GdbContextualOperations extends GdbConsoleOperations {
 	/**
 	 * Evaluate an expression
 	 * 
@@ -47,23 +47,4 @@ public interface GdbStackFrameOperations {
 	 * @return a future that completes when the registers have been written
 	 */
 	CompletableFuture<Void> writeRegisters(Map<GdbRegister, BigInteger> regVals);
-
-	/**
-	 * Execute an arbitrary CLI command, printing output to the CLI console
-	 * 
-	 * @param command the command to execute
-	 * @return a future that completes when GDB has executed the command
-	 */
-	CompletableFuture<Void> console(String command);
-
-	/**
-	 * Execute an arbitrary CLI command, capturing its console output
-	 * 
-	 * The output will not be printed to the CLI console.
-	 * 
-	 * @param command the command to execute
-	 * @return a future that completes with the captured output when GDB has executed the command
-	 */
-	CompletableFuture<String> consoleCapture(String command);
-
 }

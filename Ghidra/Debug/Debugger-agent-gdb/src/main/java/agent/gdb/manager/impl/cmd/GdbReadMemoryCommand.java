@@ -21,11 +21,11 @@ import java.util.List;
 import com.google.common.collect.*;
 
 import agent.gdb.manager.GdbThread;
-import agent.gdb.manager.evt.AbstractGdbCompletedCommandEvent;
 import agent.gdb.manager.evt.GdbCommandDoneEvent;
-import agent.gdb.manager.impl.*;
-import agent.gdb.manager.parsing.GdbParsingUtils;
+import agent.gdb.manager.impl.GdbManagerImpl;
+import agent.gdb.manager.impl.GdbPendingCommand;
 import agent.gdb.manager.parsing.GdbMiParser.GdbMiFieldList;
+import agent.gdb.manager.parsing.GdbParsingUtils;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 
@@ -49,15 +49,6 @@ public class GdbReadMemoryCommand extends AbstractGdbCommandWithThreadId<RangeSe
 	@Override
 	protected String encode(String threadPart) {
 		return "-data-read-memory-bytes" + threadPart + " 0x" + Long.toHexString(addr) + " " + len;
-	}
-
-	@Override
-	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
-			return true;
-		}
-		return false;
 	}
 
 	@Override

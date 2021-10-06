@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import agent.gdb.manager.*;
 import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
+import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
 import agent.gdb.manager.reason.*;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.agent.DefaultTargetObject;
@@ -104,7 +105,8 @@ public class GdbModelTargetInferior
 		this.threads = new GdbModelTargetThreadContainer(this);
 		this.breakpoints = new GdbModelTargetBreakpointLocationContainer(this);
 
-		this.realState = TargetExecutionState.INACTIVE;
+		this.realState =
+			inferior.getPid() == null ? TargetExecutionState.INACTIVE : TargetExecutionState.ALIVE;
 
 		changeAttributes(List.of(), //
 			List.of( //
@@ -215,7 +217,7 @@ public class GdbModelTargetInferior
 				throw new UnsupportedOperationException(kind.name());
 			case ADVANCE: // Why no exec-advance in GDB/MI?
 				// TODO: This doesn't work, since advance requires a parameter
-				return model.gateFuture(inferior.console("advance"));
+				return model.gateFuture(inferior.console("advance", CompletesWithRunning.MUST));
 			default:
 				return model.gateFuture(inferior.step(convertToGdb(kind)));
 		}
@@ -260,8 +262,9 @@ public class GdbModelTargetInferior
 			Map.entry(DISPLAY_ATTRIBUTE_NAME, updateDisplay())),
 			"Refresh on started");*/
 		AsyncFence fence = new AsyncFence();
-		//fence.include(modules.refreshInternal());
-		//fence.include(registers.refreshInternal());
+		fence.include(memory.refreshInternal()); // In case of resync
+		fence.include(modules.refreshInternal());
+		fence.include(threads.refreshInternal()); // In case of resync
 		fence.include(environment.refreshInternal());
 		fence.include(impl.gdb.listInferiors()); // HACK to update inferior.getExecutable()
 		return fence.ready().thenAccept(__ -> {
@@ -279,6 +282,9 @@ public class GdbModelTargetInferior
 					"Refresh on initial break");
 			}
 			else {
+				if (!realState.isAlive()) {
+					realState = TargetExecutionState.ALIVE;
+				}
 				changeAttributes(List.of(), Map.ofEntries(
 					Map.entry(STATE_ATTRIBUTE_NAME, state = realState),
 					Map.entry(PID_ATTRIBUTE_NAME, p),

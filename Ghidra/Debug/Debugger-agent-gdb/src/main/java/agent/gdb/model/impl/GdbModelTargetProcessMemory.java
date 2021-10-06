@@ -100,8 +100,12 @@ public class GdbModelTargetProcessMemory
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	protected CompletableFuture<Void> requestElements(boolean refresh) {
 		// Can't use refresh getKnownMappings is only populated by listMappings
+		return doRefresh();
+	}
+	
+	protected CompletableFuture<Void> doRefresh() {
 		if (inferior.getPid() == null) {
 			setElements(List.of(), "Refreshed (while no process)");
 			return AsyncUtils.NIL;
@@ -184,12 +188,19 @@ public class GdbModelTargetProcessMemory
 	// TODO: Seems this is only called when sco.getState() == STOPPED.
 	// Maybe should name it such
 	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {
-		return requestElements(false).thenCompose(__ -> {
+		return doRefresh().thenCompose(__ -> {
 			AsyncFence fence = new AsyncFence();
 			for (GdbModelTargetMemoryRegion modelRegion : regionsByStart.values()) {
 				fence.include(modelRegion.stateChanged(sco));
 			}
 			return fence.ready();
+		});
+	}
+
+	protected CompletableFuture<?> refreshInternal() {
+		return doRefresh().exceptionally(ex -> {
+			impl.reportError(this, "Problem refreshing inferior's memory regions", ex);
+			return null;
 		});
 	}
 }

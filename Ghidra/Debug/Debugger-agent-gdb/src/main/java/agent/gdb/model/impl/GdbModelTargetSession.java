@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.manager.*;
 import agent.gdb.manager.impl.*;
+import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import agent.gdb.manager.reason.GdbReason;
 import ghidra.async.AsyncUtils;
@@ -112,7 +113,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 
 	protected void getVersion() {
 		impl.gdb.waitForPrompt().thenCompose(__ -> {
-			return impl.gdb.consoleCapture("show version");
+			return impl.gdb.consoleCapture("show version", CompletesWithRunning.CANNOT);
 		}).thenAccept(out -> {
 			debugger = out;
 			changeAttributes(List.of(),

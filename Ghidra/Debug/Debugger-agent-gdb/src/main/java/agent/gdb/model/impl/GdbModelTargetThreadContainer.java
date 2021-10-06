@@ -95,6 +95,10 @@ public class GdbModelTargetThreadContainer
 			updateUsingThreads(inferior.getKnownThreads());
 			return AsyncUtils.NIL;
 		}
+		return doRefresh();
+	}
+
+	protected CompletableFuture<Void> doRefresh() {
 		return inferior.listThreads().thenAccept(byTID -> {
 			updateUsingThreads(byTID);
 		});
@@ -172,4 +176,10 @@ public class GdbModelTargetThreadContainer
 		return AsyncUtils.NIL;
 	}
 
+	protected CompletableFuture<?> refreshInternal() {
+		return doRefresh().exceptionally(ex -> {
+			impl.reportError(this, "Problem refreshing inferior's threads", ex);
+			return null;
+		});
+	}
 }

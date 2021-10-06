@@ -127,7 +127,7 @@ public class GdbModelTargetModuleContainer
 		return (GdbModelTargetModule) impl.getModelObject(name);
 	}
 
-	public CompletableFuture<?> refreshInternal() {
+	protected CompletableFuture<?> refreshInternal() {
 		return doRefresh().exceptionally(ex -> {
 			impl.reportError(this, "Problem refreshing inferior's modules", ex);
 			return null;

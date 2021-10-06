@@ -15,7 +15,8 @@
  */
 package agent.gdb.manager.impl.cmd;
 
-import agent.gdb.manager.evt.*;
+import agent.gdb.manager.evt.GdbCommandDoneEvent;
+import agent.gdb.manager.evt.GdbThreadSelectedEvent;
 import agent.gdb.manager.impl.*;
 
 public class GdbInferiorSelectCommand extends AbstractGdbCommand<Void> {
@@ -45,8 +46,7 @@ public class GdbInferiorSelectCommand extends AbstractGdbCommand<Void> {
 
 	@Override
 	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
+		if (super.handle(evt, pending)) {
 			return true;
 		}
 		if (evt instanceof GdbThreadSelectedEvent) {
