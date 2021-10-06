@@ -714,7 +714,12 @@ public class GdbManagerImpl implements GdbManager {
 	 * @return a future which completes when the rc commands are complete
 	 */
 	protected CompletableFuture<Void> rc() {
-		return AsyncUtils.NIL;
+		if (cliThread != null) {
+			return AsyncUtils.NIL;
+		}
+		else {
+			return console("set confirm off", CompletesWithRunning.CANNOT);
+		}
 	}
 
 	protected void resync() {
