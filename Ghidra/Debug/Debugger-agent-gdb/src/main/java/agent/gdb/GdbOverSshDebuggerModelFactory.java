@@ -15,12 +15,14 @@
  */
 package agent.gdb;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.model.impl.GdbModelImpl;
 import agent.gdb.pty.ssh.GhidraSshPtyFactory;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.util.ShellUtils;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
 
 @FactoryDescription(
@@ -66,6 +68,7 @@ public class GdbOverSshDebuggerModelFactory implements DebuggerModelFactory {
 
 	@Override
 	public CompletableFuture<? extends DebuggerObjectModel> build() {
+		List<String> gdbCmdLine = ShellUtils.parseArgs(gdbCmd);
 		return CompletableFuture.supplyAsync(() -> {
 			GhidraSshPtyFactory factory = new GhidraSshPtyFactory();
 			factory.setHostname(hostname);
@@ -80,7 +83,10 @@ public class GdbOverSshDebuggerModelFactory implements DebuggerModelFactory {
 			else {
 				model.setUnixNewLine();
 			}
-			return model.startGDB(existing ? null : gdbCmd, new String[] {}).thenApply(__ -> model);
+			return model
+					.startGDB(existing ? null : gdbCmdLine.get(0),
+						gdbCmdLine.subList(1, gdbCmdLine.size()).toArray(String[]::new))
+					.thenApply(__ -> model);
 		});
 	}
 
