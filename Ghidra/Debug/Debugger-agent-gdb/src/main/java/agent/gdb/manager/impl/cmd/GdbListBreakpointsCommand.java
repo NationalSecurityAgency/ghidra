@@ -17,13 +17,15 @@ package agent.gdb.manager.impl.cmd;
 
 import java.util.*;
 
+import agent.gdb.manager.GdbCause.Causes;
 import agent.gdb.manager.GdbInferior;
 import agent.gdb.manager.breakpoint.GdbBreakpointInfo;
 import agent.gdb.manager.breakpoint.GdbBreakpointLocation;
-import agent.gdb.manager.evt.AbstractGdbCompletedCommandEvent;
 import agent.gdb.manager.evt.GdbCommandDoneEvent;
-import agent.gdb.manager.impl.*;
+import agent.gdb.manager.impl.GdbManagerImpl;
+import agent.gdb.manager.impl.GdbPendingCommand;
 import agent.gdb.manager.parsing.GdbMiParser.GdbMiFieldList;
+import ghidra.util.Msg;
 
 /**
  * Implementation of {@link GdbInferior#listBreakpoints()}
@@ -41,28 +43,40 @@ public class GdbListBreakpointsCommand
 	}
 
 	@Override
-	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
-			return true;
-		}
-		return false;
-	}
-
-	@Override
 	public Map<Long, GdbBreakpointInfo> complete(GdbPendingCommand<?> pending) {
 		GdbCommandDoneEvent done = pending.checkCompletion(GdbCommandDoneEvent.class);
 		// Do not use GdbTable here, since col_names provide good IDs
 		// Also, there are some bonus fields that don't appear in cells....
 		GdbMiFieldList tbl = done.assumeBreakpointTable();
 		GdbMiFieldList body = tbl.getFieldList("body");
-		Map<Long, GdbBreakpointInfo> list = new LinkedHashMap<>();
+		Set<Long> nums = new HashSet<>();
+		Map<Long, GdbBreakpointInfo> allBreakpoints = manager.getKnownBreakpointsInternal();
 		List<GdbBreakpointLocation> allLocs = GdbBreakpointInfo.parseLocations(body);
 		for (Object bkpt : body.get("bkpt")) {
 			GdbBreakpointInfo info =
 				GdbBreakpointInfo.parseBkpt((GdbMiFieldList) bkpt, allLocs, null);
-			list.put(info.getNumber(), info);
+			nums.add(info.getNumber());
+			GdbBreakpointInfo exists = allBreakpoints.get(info.getNumber());
+			if (exists != null) {
+				if (!exists.equals(info)) {
+					// Need to update as if =breakpoint-modified
+					Msg.warn(this, "Resync: Missed breakpoint modification: " + info);
+					manager.doBreakpointModified(info, Causes.UNCLAIMED);
+				}
+				continue;
+			}
+			// Need to add as if =breakpoint-created
+			Msg.warn(this, "Resync: Was missing breakpoint: " + info);
+			manager.doBreakpointCreated(info, Causes.UNCLAIMED);
 		}
-		return list;
+		for (long num : new ArrayList<>(manager.getKnownBreakpoints().keySet())) {
+			if (nums.contains(num)) {
+				continue; // Do nothing, we're in sync
+			}
+			// Need to remove as if =breakpoint-deleted
+			Msg.warn(this, "Resync: Had extra breakpoint: " + num);
+			manager.doBreakpointDeleted(num, Causes.UNCLAIMED);
+		}
+		return manager.getKnownBreakpoints();
 	}
 }

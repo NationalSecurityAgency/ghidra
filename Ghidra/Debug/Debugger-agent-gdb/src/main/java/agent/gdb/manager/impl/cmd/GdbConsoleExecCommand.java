@@ -19,8 +19,7 @@ import org.apache.commons.text.StringEscapeUtils;
 
 import agent.gdb.manager.GdbManager;
 import agent.gdb.manager.GdbManager.Channel;
-import agent.gdb.manager.evt.AbstractGdbCompletedCommandEvent;
-import agent.gdb.manager.evt.GdbConsoleOutputEvent;
+import agent.gdb.manager.evt.*;
 import agent.gdb.manager.impl.*;
 import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
 
@@ -28,18 +27,64 @@ import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
  * Implementation of {@link GdbManager#console(String)} and similar
  */
 public class GdbConsoleExecCommand extends AbstractGdbCommandWithThreadAndFrameId<String> {
+	public enum CompletesWithRunning {
+		/**
+		 * Ignore {@code ^running} events, because they cannot complete this command
+		 */
+		CANNOT(AbstractGdbCompletedCommandEvent.class) {
+			@Override
+			boolean handleRunning(GdbCommandRunningEvent evt, GdbPendingCommand<?> pending) {
+				return false;
+			}
+		},
+		/**
+		 * Allow any completion, including a {@code ^running} event, to complete this command
+		 * 
+		 * <p>
+		 * Use this when the nature of the command is unknown, e.g., when it was input by the user.
+		 */
+		CAN(AbstractGdbCompletedCommandEvent.class) {
+			@Override
+			boolean handleRunning(GdbCommandRunningEvent evt, GdbPendingCommand<?> pending) {
+				pending.claim(evt);
+				return true;
+			}
+		},
+		/**
+		 * Require completion by a {@code ^running} event
+		 */
+		MUST(GdbCommandRunningEvent.class) {
+			@Override
+			boolean handleRunning(GdbCommandRunningEvent evt, GdbPendingCommand<?> pending) {
+				pending.claim(evt);
+				return true;
+			}
+		};
+
+		private final Class<? extends AbstractGdbCompletedCommandEvent> completionClass;
+
+		private CompletesWithRunning(
+				Class<? extends AbstractGdbCompletedCommandEvent> completionClass) {
+			this.completionClass = completionClass;
+		}
+
+		abstract boolean handleRunning(GdbCommandRunningEvent evt, GdbPendingCommand<?> pending);
+	}
+
 	public enum Output {
 		CONSOLE, CAPTURE;
 	}
 
-	private String command;
-	private Output to;
+	private final String command;
+	private final Output to;
+	private final CompletesWithRunning cwr;
 
 	public GdbConsoleExecCommand(GdbManagerImpl manager, Integer threadId, Integer frameId,
-			String command, Output to) {
+			String command, Output to, CompletesWithRunning cwr) {
 		super(manager, threadId, frameId);
 		this.command = command;
 		this.to = to;
+		this.cwr = cwr;
 	}
 
 	/**
@@ -80,7 +125,10 @@ public class GdbConsoleExecCommand extends AbstractGdbCommandWithThreadAndFrameI
 			return false;
 		}
 		// MI2
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
+		if (evt instanceof GdbCommandRunningEvent) {
+			return cwr.handleRunning((GdbCommandRunningEvent) evt, pending);
+		}
+		else if (evt instanceof AbstractGdbCompletedCommandEvent) {
 			pending.claim(evt);
 			return true;
 		}
@@ -109,7 +157,7 @@ public class GdbConsoleExecCommand extends AbstractGdbCommandWithThreadAndFrameI
 			return null;
 		}
 		// MI2
-		pending.checkCompletion(AbstractGdbCompletedCommandEvent.class);
+		pending.checkCompletion(cwr.completionClass);
 
 		if (to == Output.CONSOLE) {
 			return null;

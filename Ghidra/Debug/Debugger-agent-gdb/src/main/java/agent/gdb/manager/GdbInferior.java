@@ -32,7 +32,7 @@ import agent.gdb.manager.impl.GdbMemoryMapping;
  * method issuing a command will first change focus to this inferior. The returned future completes
  * when GDB has finished executing the command.
  */
-public interface GdbInferior extends GdbMemoryOperations {
+public interface GdbInferior extends GdbConsoleOperations, GdbMemoryOperations {
 
 	/**
 	 * Get the GDB-assigned inferior number
@@ -218,30 +218,6 @@ public interface GdbInferior extends GdbMemoryOperations {
 	 * @return a future that completes with a set of handles to all threads of the attached inferior
 	 */
 	CompletableFuture<Set<GdbThread>> attach(long pid);
-
-	/**
-	 * Execute an arbitrary CLI command, printing output to the CLI console
-	 * 
-	 * <p>
-	 * Note: to ensure a certain thread has focus for a console command, see
-	 * {@link GdbThread#console(String)}.
-	 * 
-	 * @param command the command to execute
-	 * @return a future that completes when GDB has executed the command
-	 */
-	CompletableFuture<Void> console(String command);
-
-	/**
-	 * Execute an arbitrary CLI command, capturing its console output
-	 * 
-	 * <p>
-	 * The output will not be printed to the CLI console. To ensure a certain thread has focus for a
-	 * console command, see {@link GdbThread#consoleCapture(String)}.
-	 * 
-	 * @param command the command to execute
-	 * @return a future that completes with the captured output when GDB has executed the command
-	 */
-	CompletableFuture<String> consoleCapture(String command);
 
 	/**
 	 * Continue execution
