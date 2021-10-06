@@ -15,11 +15,11 @@
  */
 package ghidra.app.plugin.core.searchmem;
 
-import ghidra.util.HTMLUtilities;
-
 import java.util.*;
 
 import javax.swing.event.ChangeListener;
+
+import ghidra.util.HTMLUtilities;
 
 public class HexSearchFormat extends SearchFormat {
 
@@ -33,8 +33,8 @@ public class HexSearchFormat extends SearchFormat {
 
 	@Override
 	public String getToolTip() {
-		return HTMLUtilities.toHTML("Interpret value as a sequence of\n"
-			+ "hex numbers, separated by spaces.\n" + "Enter '*' or '?' for a wildcard match");
+		return HTMLUtilities.toHTML("Interpret value as a sequence of\n" +
+			"hex numbers, separated by spaces.\n" + "Enter '.' or '?' for a wildcard match");
 	}
 
 	@Override
@@ -65,16 +65,30 @@ public class HexSearchFormat extends SearchFormat {
 	}
 
 	private List<String> getByteStrings(String token) {
-		if (token.length() % 2 != 0) {
+
+		if (isSingleWildCardChar(token)) {
+			// treat single wildcards as a double wildcard entry, as this is more intuitive to users
+			token += token;
+		}
+		else if (token.length() % 2 != 0) {
+			// pad an odd number of nibbles with 0; assuming users leave off leading 0
 			token = "0" + token;
 		}
+
 		int n = token.length() / 2;
 		List<String> list = new ArrayList<String>(n);
-
 		for (int i = 0; i < n; i++) {
 			list.add(token.substring(i * 2, i * 2 + 2));
 		}
 		return list;
+	}
+
+	private boolean isSingleWildCardChar(String token) {
+		if (token.length() == 1) {
+			char c = token.charAt(0);
+			return WILD_CARDS.indexOf(c) >= 0;
+		}
+		return false;
 	}
 
 	private boolean isValidHex(String str) {
@@ -92,19 +106,13 @@ public class HexSearchFormat extends SearchFormat {
 	}
 
 	/**
-	 * Returns the byte value to be used for the given hex bytes.  Handles wildcard
-	 * characters by return treating them as 0s.
+	 * Returns the byte value to be used for the given hex bytes.  Handles wildcard characters by
+	 * return treating them as 0s.
 	 */
 	private byte getByte(String tok) {
 		char c1 = tok.charAt(0);
 		char c2 = tok.charAt(1);
-		if (WILD_CARDS.indexOf(c1) > 0) {
-			c1 = '0';
-		}
-		if (WILD_CARDS.indexOf(c2) > 0) {
-			c2 = '0';
-		}
-
+		// note: the hexValueOf() method will turn wildcard chars into 0s
 		return (byte) (hexValueOf(c1) * 16 + hexValueOf(c2));
 	}
 
@@ -117,13 +125,13 @@ public class HexSearchFormat extends SearchFormat {
 		char c2 = tok.charAt(1);
 		int index1 = WILD_CARDS.indexOf(c1);
 		int index2 = WILD_CARDS.indexOf(c2);
-		if ((index1 >= 0) && (index2 >= 0)) {
+		if (index1 >= 0 && index2 >= 0) {
 			return (byte) 0x00;
 		}
-		if ((index1 >= 0) && (index2 < 0)) {
+		if (index1 >= 0 && index2 < 0) {
 			return (byte) 0x0F;
 		}
-		if ((index1 < 0) && (index2 >= 0)) {
+		if (index1 < 0 && index2 >= 0) {
 			return (byte) 0xF0;
 		}
 		return (byte) 0xFF;
@@ -142,8 +150,9 @@ public class HexSearchFormat extends SearchFormat {
 		else if ((c >= 'A') && (c <= 'F')) {
 			return c - 'A' + 10;
 		}
-		else
+		else {
 			return 0;
+		}
 	}
 
 }
