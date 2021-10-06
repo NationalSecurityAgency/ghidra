@@ -18,7 +18,7 @@ package agent.gdb.manager;
 import java.math.BigInteger;
 import java.util.concurrent.CompletableFuture;
 
-public interface GdbStackFrame extends GdbStackFrameOperations {
+public interface GdbStackFrame extends GdbContextualOperations {
 	// TODO: from, args?
 
 	/**

@@ -17,7 +17,6 @@ package agent.gdb.manager.impl.cmd;
 
 import java.util.List;
 
-import agent.gdb.manager.evt.AbstractGdbCompletedCommandEvent;
 import agent.gdb.manager.evt.GdbCommandDoneEvent;
 import agent.gdb.manager.impl.*;
 import agent.gdb.manager.parsing.GdbMiParser.GdbMiFieldList;
@@ -39,15 +38,6 @@ public class GdbGetThreadInfoCommand extends AbstractGdbCommandWithThreadId<GdbT
 	@Override
 	public Integer impliesCurrentThreadId() {
 		return null;
-	}
-
-	@Override
-	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
-			return true;
-		}
-		return false;
 	}
 
 	@Override

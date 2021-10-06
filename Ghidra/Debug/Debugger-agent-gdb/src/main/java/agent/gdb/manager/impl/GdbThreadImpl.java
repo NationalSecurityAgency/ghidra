@@ -30,6 +30,7 @@ import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.breakpoint.GdbBreakpointInfo;
 import agent.gdb.manager.breakpoint.GdbBreakpointType;
 import agent.gdb.manager.impl.cmd.*;
+import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
 import agent.gdb.manager.parsing.GdbCValueParser;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
 import agent.gdb.manager.reason.GdbReason;
@@ -232,15 +233,15 @@ public class GdbThreadImpl implements GdbThread {
 	}
 
 	@Override
-	public CompletableFuture<Void> console(String command) {
+	public CompletableFuture<Void> console(String command, CompletesWithRunning cwr) {
 		return execute(new GdbConsoleExecCommand(manager, id, null, command,
-			GdbConsoleExecCommand.Output.CONSOLE)).thenApply(e -> null);
+			GdbConsoleExecCommand.Output.CONSOLE, cwr)).thenApply(e -> null);
 	}
 
 	@Override
-	public CompletableFuture<String> consoleCapture(String command) {
+	public CompletableFuture<String> consoleCapture(String command, CompletesWithRunning cwr) {
 		return execute(new GdbConsoleExecCommand(manager, id, null, command,
-			GdbConsoleExecCommand.Output.CAPTURE));
+			GdbConsoleExecCommand.Output.CAPTURE, cwr));
 	}
 
 	@Override

@@ -18,7 +18,6 @@ package agent.gdb.manager.impl.cmd;
 import java.util.*;
 
 import agent.gdb.manager.GdbThread;
-import agent.gdb.manager.evt.AbstractGdbCompletedCommandEvent;
 import agent.gdb.manager.evt.GdbCommandDoneEvent;
 import agent.gdb.manager.impl.*;
 import ghidra.util.Msg;
@@ -34,15 +33,6 @@ public class GdbListThreadsCommand extends AbstractGdbCommand<Map<Integer, GdbTh
 	@Override
 	public String encode() {
 		return "-list-thread-groups i" + inferior.getId();
-	}
-
-	@Override
-	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
-			return true;
-		}
-		return false;
 	}
 
 	@Override

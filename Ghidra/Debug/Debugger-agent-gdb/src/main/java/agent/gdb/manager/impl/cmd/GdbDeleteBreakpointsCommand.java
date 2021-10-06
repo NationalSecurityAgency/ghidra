@@ -18,7 +18,7 @@ package agent.gdb.manager.impl.cmd;
 import org.apache.commons.lang3.StringUtils;
 
 import agent.gdb.manager.GdbInferior;
-import agent.gdb.manager.evt.AbstractGdbCompletedCommandEvent;
+import agent.gdb.manager.evt.GdbBreakpointDeletedEvent;
 import agent.gdb.manager.evt.GdbCommandDoneEvent;
 import agent.gdb.manager.impl.*;
 
@@ -41,9 +41,11 @@ public class GdbDeleteBreakpointsCommand extends AbstractGdbCommand<Void> {
 
 	@Override
 	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
+		if (super.handle(evt, pending)) {
 			return true;
+		}
+		if (evt instanceof GdbBreakpointDeletedEvent) {
+			pending.claim(evt);
 		}
 		return false;
 	}

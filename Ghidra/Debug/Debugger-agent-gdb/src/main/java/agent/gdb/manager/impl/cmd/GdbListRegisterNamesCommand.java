@@ -18,9 +18,9 @@ package agent.gdb.manager.impl.cmd;
 import java.util.List;
 
 import agent.gdb.manager.GdbThread;
-import agent.gdb.manager.evt.AbstractGdbCompletedCommandEvent;
 import agent.gdb.manager.evt.GdbCommandDoneEvent;
-import agent.gdb.manager.impl.*;
+import agent.gdb.manager.impl.GdbManagerImpl;
+import agent.gdb.manager.impl.GdbPendingCommand;
 
 /**
  * Implementation of {@link GdbThread#listRegisters()}
@@ -34,15 +34,6 @@ public class GdbListRegisterNamesCommand extends AbstractGdbCommandWithThreadId<
 	@Override
 	protected String encode(String threadPart) {
 		return "-data-list-register-names" + threadPart;
-	}
-
-	@Override
-	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
-			return true;
-		}
-		return false;
 	}
 
 	@Override

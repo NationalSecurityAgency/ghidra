@@ -27,8 +27,10 @@ import java.util.regex.Pattern;
 import com.google.common.collect.RangeSet;
 
 import agent.gdb.manager.*;
+import agent.gdb.manager.GdbCause.Causes;
 import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.impl.cmd.*;
+import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
 import ghidra.async.AsyncLazyValue;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
@@ -84,9 +86,15 @@ public class GdbInferiorImpl implements GdbInferior {
 	}
 
 	public void update(GdbInferiorThreadGroup g) {
+		Long oldPid = pid;
 		this.pid = g.getPid();
 		this.exitCode = g.getExitCode();
 		this.executable = g.getExecutable();
+		
+		// Because we're only called to resync, we should synth started, if needed
+		if (oldPid == null && pid != null) {
+			manager.fireInferiorStarted(this, Causes.UNCLAIMED, "resyncInferiorStarted");
+		}
 	}
 
 	@Override
@@ -225,8 +233,9 @@ public class GdbInferiorImpl implements GdbInferior {
 	public CompletableFuture<Map<String, GdbModule>> listModules() {
 		// "nosections" is an unlikely section name. Goal is to exclude section lines.
 		// TODO: See how this behaves on other GDB versions.
-		return consoleCapture("maintenance info sections ALLOBJ nosections")
-				.thenApply(this::parseModuleNames);
+		return consoleCapture("maintenance info sections ALLOBJ nosections",
+			CompletesWithRunning.CANNOT)
+					.thenApply(this::parseModuleNames);
 	}
 
 	protected CompletableFuture<Void> loadSections() {
@@ -234,7 +243,7 @@ public class GdbInferiorImpl implements GdbInferior {
 	}
 
 	protected CompletableFuture<Void> doLoadSections() {
-		return consoleCapture("maintenance info sections ALLOBJ")
+		return consoleCapture("maintenance info sections ALLOBJ", CompletesWithRunning.CANNOT)
 				.thenAccept(this::parseAndUpdateAllModuleSections);
 	}
 
@@ -319,7 +328,8 @@ public class GdbInferiorImpl implements GdbInferior {
 
 	@Override
 	public CompletableFuture<Map<BigInteger, GdbMemoryMapping>> listMappings() {
-		return consoleCapture("info proc mappings").thenApply(this::parseMappings);
+		return consoleCapture("info proc mappings", CompletesWithRunning.CANNOT)
+				.thenApply(this::parseMappings);
 	}
 
 	protected Map<BigInteger, GdbMemoryMapping> parseMappings(String out) {
@@ -377,15 +387,15 @@ public class GdbInferiorImpl implements GdbInferior {
 	}
 
 	@Override
-	public CompletableFuture<Void> console(String command) {
+	public CompletableFuture<Void> console(String command, CompletesWithRunning cwr) {
 		return execute(new GdbConsoleExecCommand(manager, null, null, command,
-			GdbConsoleExecCommand.Output.CONSOLE)).thenApply(e -> null);
+			GdbConsoleExecCommand.Output.CONSOLE, cwr)).thenApply(e -> null);
 	}
 
 	@Override
-	public CompletableFuture<String> consoleCapture(String command) {
+	public CompletableFuture<String> consoleCapture(String command, CompletesWithRunning cwr) {
 		return execute(new GdbConsoleExecCommand(manager, null, null, command,
-			GdbConsoleExecCommand.Output.CAPTURE));
+			GdbConsoleExecCommand.Output.CAPTURE, cwr));
 	}
 
 	@Override
@@ -457,7 +467,7 @@ public class GdbInferiorImpl implements GdbInferior {
 
 	@Internal
 	public CompletableFuture<Void> syncEndianness() {
-		return consoleCapture("show endian").thenAccept(out -> {
+		return consoleCapture("show endian", CompletesWithRunning.CANNOT).thenAccept(out -> {
 			if (out.toLowerCase().contains("little endian")) {
 				endianness = ByteOrder.LITTLE_ENDIAN;
 			}

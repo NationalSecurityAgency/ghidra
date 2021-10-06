@@ -36,7 +36,7 @@ import agent.gdb.pty.linux.LinuxPtyFactory;
  * {@link CompletableFuture} all send commands to GDB, and the future completes when the command has
  * been executed.
  */
-public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
+public interface GdbManager extends AutoCloseable, GdbConsoleOperations, GdbBreakpointInsertions {
 	public static final String DEFAULT_GDB_CMD = "/usr/bin/gdb";
 
 	/**
@@ -396,7 +396,9 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	 * This is used to squelch normal processing of a stopped event until the next prompt
 	 * 
 	 * @return a future which completes when the "command" has finished execution
+	 * @deprecated I don't see this being used anywhere. Probably defunct.
 	 */
+	@Deprecated
 	CompletableFuture<Void> claimStopped();
 
 	/**
@@ -431,34 +433,6 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	 * @return a future which completes then GDB has executed the command
 	 */
 	CompletableFuture<Void> removeInferior(GdbInferior inferior);
-
-	/**
-	 * Execute an arbitrary CLI command, printing output to the CLI console
-	 * 
-	 * <p>
-	 * Note: to ensure a certain thread or inferior has focus for a console command, see
-	 * {@link GdbThread#console(String)} and {@link GdbInferior#console(String)}.
-	 * 
-	 * @param command the command to execute
-	 * @return a future that completes when GDB has executed the command
-	 */
-	CompletableFuture<Void> console(String command);
-
-	/**
-	 * Execute an arbitrary CLI command, capturing its console output
-	 * 
-	 * <p>
-	 * The output will not be printed to the CLI console. To ensure a certain thread or inferior has
-	 * focus for a console command, see {@link GdbThread#consoleCapture(String)} and
-	 * {@link GdbInferior#consoleCapture(String)}. The caller should take care that other commands
-	 * or events are not actively producing console output. If they are, those lines may be captured
-	 * though they are unrelated to the given command. Generally, this can be achieved by assuring
-	 * that GDB is in the {@link GdbState#STOPPED} state using {@link #waitForState(GdbState)}.
-	 * 
-	 * @param command the command to execute
-	 * @return a future that completes with the captured output when GDB has executed the command
-	 */
-	CompletableFuture<String> consoleCapture(String command);
 
 	/**
 	 * Interrupt the GDB session
