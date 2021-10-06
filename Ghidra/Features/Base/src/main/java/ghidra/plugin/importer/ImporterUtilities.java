@@ -15,10 +15,11 @@
  */
 package ghidra.plugin.importer;
 
+import java.util.*;
+
 import java.awt.Window;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.*;
 
 import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.help.AboutDomainObjectUtils;
@@ -104,7 +105,9 @@ public class ImporterUtilities {
 			fsrl = fsService.getFullyQualifiedFSRL(fsrl, monitor);
 
 			Options propertyList = program.getOptions(Program.PROGRAM_INFO);
-			propertyList.setString(ProgramMappingService.PROGRAM_SOURCE_FSRL, fsrl.toString());
+			if (!propertyList.contains(ProgramMappingService.PROGRAM_SOURCE_FSRL)) {
+				propertyList.setString(ProgramMappingService.PROGRAM_SOURCE_FSRL, fsrl.toString());
+			}
 			String md5 = program.getExecutableMD5();
 			if ((md5 == null || md5.isEmpty()) && fsrl.getMD5() != null) {
 				program.setExecutableMD5(fsrl.getMD5());
