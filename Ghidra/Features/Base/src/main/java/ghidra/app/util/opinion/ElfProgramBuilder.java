@@ -1570,7 +1570,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		return address;
 	}
-	
+
 	/**
 	 * Find memory register with matching name (ignoring leading and trailing underscore chars).
 	 * @param elfSymbol ELF symbol
@@ -1586,7 +1586,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 		return regAddr;
 	}
-	
+
 	private Address getMemoryRegister(String name, long value) {
 		Register reg = program.getRegister(name);
 		if (reg != null && reg.getAddress().isMemoryAddress()) {
@@ -2360,9 +2360,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					.addMemoryReference(valueData.getAddress(), refAddr, RefType.DATA,
 						SourceType.ANALYSIS, 0);
 			if (label != null) {
-				// add label if a non-default label does not exist
-				Symbol[] symbols = program.getSymbolTable().getSymbols(refAddr);
-				if (symbols.length == 0 || symbols[0].getSource() == SourceType.DEFAULT) {
+				// add label if no label exists of there is just a default label
+				Symbol symbol = program.getSymbolTable().getPrimarySymbol(refAddr);
+				if (symbol == null || symbol.getSource() == SourceType.DEFAULT) {
 					createSymbol(refAddr, "_" + label, false, false, null);
 				}
 			}

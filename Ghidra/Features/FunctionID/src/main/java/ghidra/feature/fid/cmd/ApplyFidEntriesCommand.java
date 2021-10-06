@@ -278,7 +278,7 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 	private boolean hasUserOrImportedSymbols(Function function) {
 		Program program = function.getProgram();
 		SymbolTable symbolTable = program.getSymbolTable();
-		Symbol[] symbols = symbolTable.getSymbols(function.getEntryPoint());
+		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(function.getEntryPoint());
 		for (Symbol symbol : symbols) {
 			SourceType sourceType = symbol.getSource();
 			if (sourceType == SourceType.USER_DEFINED || sourceType == SourceType.IMPORTED) {
@@ -297,38 +297,25 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 	}
 
 	/**
-	 * Delete a symbol of the given name and address, knowing there are multiple Symbols at the address.
-	 * If the symbol is primary, make another Symbol at the address primary before deleting
+	 * Delete a symbol of the given name at the given address.
+	 * 
 	 * @param matchName is the given Symbol name
 	 * @param addr is the given Address
 	 * @param program is the Program
 	 * @return the number of Symbols remaining at the address
 	 */
 	private int deleteSymbol(String matchName, Address addr, Program program) {
-		int numSymbols = 0;
-		for (int i = 0; i < 2; ++i) {	// Try to find non-primary matching Symbol at most twice
-			Symbol[] symbols = program.getSymbolTable().getSymbols(addr);
-			numSymbols = symbols.length;
-			if (numSymbols <= 1) {
+		Symbol[] symbols = program.getSymbolTable().getSymbols(addr);
+		int numSymbols = symbols.length;
+		if (numSymbols <= 1) {
+			return numSymbols;
+		}
+		// find the matching symbol and delete it
+		for (Symbol sym : symbols) {
+			if (sym.getName().equals(matchName)) {
+				sym.delete();
+				numSymbols -= 1;
 				break;
-			}
-			for (Symbol sym : symbols) {		// Among Symbols at the Address
-				if (sym.getName().equals(matchName)) {	// Find one with matching name
-					if (!sym.isPrimary()) {		// If it is not primary
-						sym.delete();			// delete it immediately
-						numSymbols -= 1;
-						break;					// and we are done
-					}
-					Symbol otherSym = symbols[0];
-					if (otherSym == sym) {		// Otherwise find another Symbol, which must not be primary
-						otherSym = symbols[1];
-					}
-					// Set the other symbol to primary
-					SetLabelPrimaryCmd cmd = new SetLabelPrimaryCmd(addr, otherSym.getName(),
-						otherSym.getParentNamespace());
-					cmd.applyTo(program);
-					break;
-				}
 			}
 		}
 		return numSymbols;
@@ -390,7 +377,7 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 				BookmarkManager bookmarkManager = function.getProgram().getBookmarkManager();
 				bookmarkManager.setBookmark(addr, BookmarkType.ANALYSIS,
 					FIDCONFLICT_BOOKMARK_CATEGORY,
-				"Multiple likely matching functions");
+					"Multiple likely matching functions");
 			}
 		}
 	}

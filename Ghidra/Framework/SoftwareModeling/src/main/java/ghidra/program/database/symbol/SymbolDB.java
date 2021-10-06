@@ -270,16 +270,21 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		try {
 			checkIsValid();
 			ReferenceManager rm = symbolMgr.getReferenceManager();
-			ReferenceIterator iter = rm.getReferencesTo(address);
-			boolean isPrimary = this.isPrimary();
-			Symbol[] symbols = symbolMgr.getSymbols(address);
-			if (symbols.length == 1) {
+
+			// if there is only one symbol, then all the references to this address count 
+			if (hasExactlyOneSymbolAtAddress(address)) {
 				return rm.getReferenceCountTo(address);
 			}
+
+			// search through references and see which ones apply specifically to this symbol
+			ReferenceIterator iter = rm.getReferencesTo(address);
 			int count = 0;
+			boolean isPrimary = this.isPrimary();
 			while (iter.hasNext()) {
 				Reference ref = iter.next();
 				long symbolID = ref.getSymbolID();
+				// references refer to me if it matches my key or I'm primary and it doesn't
+				// specify a specific symbol id
 				if (symbolID == key || (isPrimary && symbolID < 0)) {
 					count++;
 				}
@@ -289,6 +294,15 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		finally {
 			lock.release();
 		}
+	}
+
+	private boolean hasExactlyOneSymbolAtAddress(Address addr) {
+		SymbolIterator it = symbolMgr.getSymbolsAsIterator(addr);
+		if (!it.hasNext()) {
+			return false;
+		}
+		it.next();
+		return !it.hasNext();
 	}
 
 	@Override

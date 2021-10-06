@@ -199,7 +199,28 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(!s.isGlobal());
 		assertTrue(s.getSource() == SourceType.USER_DEFINED);
 		assertTrue(s.isPrimary());
+	}
 
+	@Test
+	public void testGetSymbolIteratorByAddress() throws Exception {
+		createSymbol(addr(100), "A");
+		createSymbol(addr(100), "fred");
+		createSymbol(addr(100), "joe");
+		Namespace scope = st.createNameSpace(null, "MyNamespace", SourceType.USER_DEFINED);
+		createSymbol(addr(200), "fred", scope);
+
+		SymbolIterator it = st.getSymbolsAsIterator(addr(100));
+
+		assertTrue(it.hasNext());
+		assertEquals("A", it.next().getName());
+
+		assertTrue(it.hasNext());
+		assertEquals("fred", it.next().getName());
+
+		assertTrue(it.hasNext());
+		assertEquals("joe", it.next().getName());
+
+		assertFalse(it.hasNext());
 	}
 
 	@Test

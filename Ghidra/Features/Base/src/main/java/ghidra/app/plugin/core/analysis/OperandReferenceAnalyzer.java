@@ -970,10 +970,11 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 				return false;
 			}
 
-			// See if the tested address is contained in memory
+			// if the reference is not in memory or to a well known location, then don't create it
+			// because we are not sure it is correct
 			if (!memory.contains(testAddr)) {
-				Symbol syms[] = program.getSymbolTable().getSymbols(testAddr);
-				if (syms == null || syms.length == 0 || syms[0].getSource() == SourceType.DEFAULT) {
+				Symbol symbol = program.getSymbolTable().getPrimarySymbol(testAddr);
+				if (symbol == null || symbol.getSource() == SourceType.DEFAULT) {
 					return false;
 				}
 			}

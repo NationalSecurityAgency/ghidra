@@ -353,10 +353,25 @@ public interface SymbolTable {
 	 * the primary symbol will be returned in array slot 0.
 	 * WARNING! Use of this method with a Variable address is highly discouraged since
 	 * a single Variable address could be used multiple times by many functions.
+	 * Note that unless all the symbols are needed at once, you should consider using 
+	 * the {@link #getSymbolsAsIterator(Address)} method instead. 
 	 * @param addr the address at which to retrieve all symbols.
 	 * @return a zero-length array when no symbols are defined at address.
+	 * @see #getSymbolsAsIterator(Address)
 	 */
 	public Symbol[] getSymbols(Address addr);
+
+	/**
+	 * Returns a symbol iterator over all the symbols at the given address.  Use this instead of 
+	 * {@link #getSymbols(Address)} when you do not need to get all symbols, but rather are  
+	 * searching for a particular symbol.   This method prevents all symbols at the given address
+	 * from being loaded up front.
+	 * 
+	 * @param addr the address at which to retrieve all symbols
+	 * @return an iterator over all the symbols at the given address
+	 * @see #getSymbols(Address)
+	 */
+	public SymbolIterator getSymbolsAsIterator(Address addr);
 
 	/**
 	 * Returns an array of all user defined symbols at the given address

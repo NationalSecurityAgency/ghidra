@@ -1032,7 +1032,7 @@ public class SymbolUtilities {
 
 			if (namespace.isGlobal()) {
 				// do not add global symbol if same name already exists at address
-				for (Symbol s : program.getSymbolTable().getSymbols(address)) {
+				for (Symbol s : program.getSymbolTable().getSymbolsAsIterator(address)) {
 					if (name.equals(s.getName())) {
 						return null;
 					}
