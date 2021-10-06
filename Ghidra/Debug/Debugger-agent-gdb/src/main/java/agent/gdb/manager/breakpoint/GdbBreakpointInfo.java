@@ -24,10 +24,12 @@ import agent.gdb.manager.parsing.GdbParsingUtils;
 /**
  * Information about a GDB breakpoint
  * 
- * The contains the semantic processing for GDB breakpoint information. Mostly, it just stores the
+ * <p>
+ * This contains the semantic processing for GDB breakpoint information. Mostly, it just stores the
  * information, but it also enumerates the locations of a breakpoint and generates the "effective"
  * breakpoints.
  * 
+ * <p>
  * Note this is not a handle to the breakpoint. Rather, this is the captured information from some
  * event or request. If other commands have been executed since this information was gathered, the
  * information may be stale.
@@ -48,8 +50,10 @@ public class GdbBreakpointInfo {
 	/**
 	 * Process a parsed GDB breakpoint information block
 	 * 
+	 * <p>
 	 * The passed info should be the field list containing "{@code bkpt={...}}."
 	 * 
+	 * <p>
 	 * It may also contain {@code wpt}, {@code hw-awpt}, or {@code hw-rwpt}, in which case the
 	 * "parsed info" is synthesized to match what would be given by {@code -break-list} for that
 	 * watchpoint.
@@ -65,15 +69,18 @@ public class GdbBreakpointInfo {
 		}
 		GdbMiFieldList wpt = info.getFieldList("wpt");
 		if (wpt != null) {
-			return parseWpt(wpt, GdbBreakpointType.HW_WATCHPOINT, curIid);
+			return parseWpt(wpt, GdbBreakpointType.HW_WATCHPOINT,
+				GdbBreakpointType.HW_WATCHPOINT.getName(), curIid);
 		}
 		GdbMiFieldList hwAWpt = info.getFieldList("hw-awpt");
 		if (hwAWpt != null) {
-			return parseWpt(hwAWpt, GdbBreakpointType.ACCESS_WATCHPOINT, curIid);
+			return parseWpt(hwAWpt, GdbBreakpointType.ACCESS_WATCHPOINT,
+				GdbBreakpointType.ACCESS_WATCHPOINT.getName(), curIid);
 		}
 		GdbMiFieldList hwRWpt = info.getFieldList("hw-rwpt");
 		if (hwRWpt != null) {
-			return parseWpt(hwRWpt, GdbBreakpointType.READ_WATCHPOINT, curIid);
+			return parseWpt(hwRWpt, GdbBreakpointType.READ_WATCHPOINT,
+				GdbBreakpointType.READ_WATCHPOINT.getName(), curIid);
 		}
 		throw new AssertionError("No breakpoint or watchpoint in info: " + info);
 	}
@@ -88,21 +95,27 @@ public class GdbBreakpointInfo {
 	 */
 	public static GdbBreakpointInfo parseBkpt(GdbMiFieldList bkpt,
 			List<GdbBreakpointLocation> allLocs, Integer curIid) {
+		// TODO: A more polymorphic approach to info types?
 		long number = Long.parseLong(bkpt.getString("number"));
-		GdbBreakpointType type = GdbBreakpointType.fromStr(bkpt.getString("type"));
+		String typeName = bkpt.getString("type");
+		GdbBreakpointType type = GdbBreakpointType.fromStr(typeName);
 		GdbBreakpointDisp disp = GdbBreakpointDisp.fromStr(bkpt.getString("disp"));
 		boolean enabled = "y".equals(bkpt.getString("enabled"));
 		String addr = bkpt.getString("addr");
-		String at = bkpt.getString("at");
-		if (at == null) {
-			at = bkpt.getString("what");
+		String what = bkpt.getString("at");
+		if (what == null) {
+			what = bkpt.getString("what");
 		}
+		String catchType = bkpt.getString("catch-type");
 		String origLoc = bkpt.getString("original-location");
 		String pending = bkpt.getString("pending");
 		int times = Integer.parseInt(bkpt.getString("times"));
 		List<GdbBreakpointLocation> locations = new ArrayList<>();
 
-		if ("<MULTIPLE>".equals(addr)) {
+		if (type == GdbBreakpointType.CATCHPOINT) {
+			// no locations
+		}
+		else if ("<MULTIPLE>".equals(addr)) {
 			allLocs.stream().filter(l -> l.getNumber() == number).forEachOrdered(locations::add);
 		}
 		else {
@@ -112,8 +125,8 @@ public class GdbBreakpointInfo {
 			}
 			locations.add(new GdbBreakpointLocation(number, 1, true, addr, iids));
 		}
-		return new GdbBreakpointInfo(number, type, disp, addr, at, origLoc, pending, enabled, times,
-			locations);
+		return new GdbBreakpointInfo(number, type, typeName, disp, addr, what, catchType, origLoc,
+			pending, enabled, times, locations);
 	}
 
 	/**
@@ -125,7 +138,7 @@ public class GdbBreakpointInfo {
 	 * @return the info
 	 */
 	public static GdbBreakpointInfo parseWpt(GdbMiFieldList wpt, GdbBreakpointType type,
-			int curIid) {
+			String typeName, int curIid) {
 		int number = Integer.parseInt(wpt.getString("number"));
 		String origLoc = wpt.getString("exp");
 
@@ -136,8 +149,8 @@ public class GdbBreakpointInfo {
 		else {
 			locs = List.of();
 		}
-		return new GdbBreakpointInfo(number, type, GdbBreakpointDisp.KEEP, null, origLoc, origLoc,
-			null, true, 0, locs);
+		return new GdbBreakpointInfo(number, type, typeName, GdbBreakpointDisp.KEEP, null, null,
+			origLoc, origLoc, null, true, 0, locs);
 	}
 
 	/**
@@ -165,9 +178,11 @@ public class GdbBreakpointInfo {
 
 	private final long number;
 	private final GdbBreakpointType type;
+	private final String typeName;
 	private final GdbBreakpointDisp disp;
 	private final String addr;
-	private final String at;
+	private final String what;
+	private final String catchType;
 	private final String originalLocation;
 	private final String pending;
 	private final boolean enabled;
@@ -181,19 +196,22 @@ public class GdbBreakpointInfo {
 	 * @param type the type of breakpoint
 	 * @param disp the breakpoint disposition
 	 * @param addr the location of the breakpoint
+	 * @param what the "what" of the breakpoint
 	 * @param pending if pending, the location that is not yet resolved
 	 * @param enabled true if the breakpoint is enabled, false otherwise
 	 * @param times the number of times the breakpoint has been hit
 	 * @param locations the resolved address(es) of this breakpoint
 	 */
-	GdbBreakpointInfo(long number, GdbBreakpointType type, GdbBreakpointDisp disp, String addr,
-			String at, String origLoc, String pending, boolean enabled, int times,
-			List<GdbBreakpointLocation> locations) {
+	GdbBreakpointInfo(long number, GdbBreakpointType type, String typeName, GdbBreakpointDisp disp,
+			String addr, String what, String catchType, String origLoc, String pending,
+			boolean enabled, int times, List<GdbBreakpointLocation> locations) {
 		this.number = number;
 		this.type = type;
+		this.typeName = typeName;
 		this.disp = disp;
 		this.addr = addr;
-		this.at = at;
+		this.what = what;
+		this.catchType = catchType;
 		this.originalLocation = origLoc;
 		this.pending = pending;
 		this.enabled = enabled;
@@ -269,6 +287,19 @@ public class GdbBreakpointInfo {
 	}
 
 	/**
+	 * Get the type of breakpoint as named by GDB
+	 * 
+	 * <p>
+	 * In case of {@link GdbBreakpointType#OTHER}, this at least reports the string GDB uses to name
+	 * the type.
+	 * 
+	 * @return the type name
+	 */
+	public String getTypeName() {
+		return typeName;
+	}
+
+	/**
 	 * Get the breakpoint disposition, i.e., what happens to the breakpoint once it has been hit
 	 * 
 	 * @return the disposition
@@ -292,7 +323,16 @@ public class GdbBreakpointInfo {
 	 * @return the location
 	 */
 	public String getWhat() {
-		return at;
+		return what;
+	}
+
+	/**
+	 * For a catchpoint, get the event being caught
+	 * 
+	 * @return the catch-type
+	 */
+	public String getCatchType() {
+		return catchType;
 	}
 
 	/**
@@ -357,7 +397,7 @@ public class GdbBreakpointInfo {
 		if (isEnabled() == enabled) {
 			return this;
 		}
-		return new GdbBreakpointInfo(number, type, disp, addr, at, originalLocation, pending,
-			enabled, times, locations);
+		return new GdbBreakpointInfo(number, type, typeName, disp, addr, what, catchType,
+			originalLocation, pending, enabled, times, locations);
 	}
 }

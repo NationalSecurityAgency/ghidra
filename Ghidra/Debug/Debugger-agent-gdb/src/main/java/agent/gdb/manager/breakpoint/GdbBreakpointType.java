@@ -48,6 +48,10 @@ public enum GdbBreakpointType {
 	 */
 	ACCESS_WATCHPOINT("acc watchpoint", true),
 	/**
+	 * A catchpoint to catch (break on) events, usual set via {@code catch}
+	 */
+	CATCHPOINT("catchpoint", false),
+	/**
 	 * Some type not known to the manager
 	 */
 	OTHER("<OTHER>", false);

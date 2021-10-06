@@ -90,11 +90,7 @@ public class GdbModelTargetBreakpointLocation
 	 */
 	protected CompletableFuture<Void> initWpt() {
 		assert loc.getAddr() == null;
-		String what = parent.info.getWhat();
-		if (!what.startsWith(GdbBreakpointLocation.WATCHPOINT_LOCATION_PREFIX)) {
-			throw new AssertionError("non-location location");
-		}
-		String exp = what.substring(GdbBreakpointLocation.WATCHPOINT_LOCATION_PREFIX.length());
+		String exp = parent.info.getWhat();
 		int iid = Unique.assertOne(loc.getInferiorIds());
 		GdbModelTargetInferior inf = impl.session.inferiors.getTargetInferior(iid);
 		String addrSizeExp = String.format("{(long long)&(%s), (long long)sizeof(%s)}", exp, exp);
