@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.platform;
+package ghidra.app.plugin.core.debug.platform.arm;
 
 import java.util.Set;
 
@@ -22,6 +22,11 @@ import ghidra.dbg.target.*;
 import ghidra.program.model.lang.*;
 import ghidra.util.Msg;
 
+/**
+ * TODO: How does LLDB name its target architectures? If same as GNU, use that. If not, maybe we
+ * should add those external names to .ldefs? It'd be nice to have an .ldefs-based opinion that this
+ * can be refactored onto.
+ */
 public class LldbArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 	protected static final LanguageID LANG_ID_AARCH64 = new LanguageID("AARCH64:LE:64:v8A");
 	protected static final CompilerSpecID COMP_ID_GCC = new CompilerSpecID("gcc");
@@ -42,31 +47,16 @@ public class LldbArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 		}
 	}
 
-	protected static class LldbAarch64MacosOffer extends AbstractLldbDebuggerMappingOffer {
+	protected static class LldbAarch64MacosOffer extends DefaultDebuggerMappingOffer {
 		public LldbAarch64MacosOffer(TargetProcess process) {
 			super(process, 50, "AARCH64/LLDB on macos", LANG_ID_AARCH64, COMP_ID_GCC,
 				Set.of("cpsr"));
 		}
-
-		@Override
-		public DebuggerTargetTraceMapper take() {
-			try {
-				return new LldbTargetTraceMapper(target, langID, csID, extraRegNames) {
-					@Override
-					protected DebuggerRegisterMapper createRegisterMapper(
-							TargetRegisterContainer registers) {
-						return new LldbI386X86_64RegisterMapper(cSpec, registers);
-					}
-				};
-			}
-			catch (LanguageNotFoundException | CompilerSpecNotFoundException e) {
-				throw new AssertionError(e);
-			}
-		}
 	}
 
 	@Override
-	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process) {
+	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process,
+			boolean includesOverrides) {
 		if (!env.getDebugger().toLowerCase().contains("lldb")) {
 			return Set.of();
 		}
