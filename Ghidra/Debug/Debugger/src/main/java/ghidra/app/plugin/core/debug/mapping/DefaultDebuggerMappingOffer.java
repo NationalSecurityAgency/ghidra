@@ -20,10 +20,9 @@ import java.util.Set;
 
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
-import ghidra.program.model.lang.CompilerSpecID;
-import ghidra.program.model.lang.LanguageID;
+import ghidra.program.model.lang.*;
 
-public abstract class AbstractDebuggerMappingOffer implements DebuggerMappingOffer {
+public class DefaultDebuggerMappingOffer implements DebuggerMappingOffer {
 	protected final TargetObject target;
 	protected final int confidence;
 	protected final String description;
@@ -33,7 +32,7 @@ public abstract class AbstractDebuggerMappingOffer implements DebuggerMappingOff
 	// TODO: Not sure this really belongs here....
 	protected final Set<String> extraRegNames;
 
-	public AbstractDebuggerMappingOffer(TargetObject target, int confidence,
+	public DefaultDebuggerMappingOffer(TargetObject target, int confidence,
 			String description, LanguageID langID, CompilerSpecID csID,
 			Collection<String> extraRegNames) {
 		this.target = target;
@@ -69,5 +68,20 @@ public abstract class AbstractDebuggerMappingOffer implements DebuggerMappingOff
 	@Override
 	public CompilerSpecID getTraceCompilerSpecID() {
 		return csID;
+	}
+
+	protected DebuggerTargetTraceMapper createMapper()
+			throws LanguageNotFoundException, CompilerSpecNotFoundException {
+		return new DefaultDebuggerTargetTraceMapper(target, langID, csID, extraRegNames);
+	}
+
+	@Override
+	public DebuggerTargetTraceMapper take() {
+		try {
+			return createMapper();
+		}
+		catch (LanguageNotFoundException | CompilerSpecNotFoundException e) {
+			throw new AssertionError(e);
+		}
 	}
 }

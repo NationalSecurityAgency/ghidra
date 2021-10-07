@@ -17,13 +17,16 @@ package ghidra.app.plugin.core.debug.platform.gdb;
 
 import java.util.Set;
 
-import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOffer;
-import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOpinion;
+import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.target.TargetProcess;
 import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.lang.LanguageID;
 
+/**
+ * TODO: Without architecture-specific extensions, this opinion is supplanted by the .ldefs-based
+ * one. Remove me?
+ */
 public class GdbPowerPCDebuggerMappingOpinion implements DebuggerMappingOpinion {
 	protected static final LanguageID LANG_ID_PPC32_BE = new LanguageID("PowerPC:BE:32:default");
 	protected static final LanguageID LANG_ID_PPC64_BE = new LanguageID("PowerPC:BE:64:default");
@@ -33,28 +36,28 @@ public class GdbPowerPCDebuggerMappingOpinion implements DebuggerMappingOpinion 
 		new LanguageID("PowerPC:BE:64:A2ALT-32addr");
 	protected static final CompilerSpecID COMP_ID_DEFAULT = new CompilerSpecID("default");
 
-	protected static class GdbPowerPCBE32DefLinuxOffer extends AbstractGdbDebuggerMappingOffer {
+	protected static class GdbPowerPCBE32DefLinuxOffer extends DefaultDebuggerMappingOffer {
 		public GdbPowerPCBE32DefLinuxOffer(TargetProcess process) {
 			super(process, 100, "GDB on Linux PowerPC - 32-bit", LANG_ID_PPC32_BE, COMP_ID_DEFAULT,
 				Set.of());
 		}
 	}
 
-	protected static class GdbPowerPCBE64DefLinuxOffer extends AbstractGdbDebuggerMappingOffer {
+	protected static class GdbPowerPCBE64DefLinuxOffer extends DefaultDebuggerMappingOffer {
 		public GdbPowerPCBE64DefLinuxOffer(TargetProcess process) {
 			super(process, 100, "GDB on Linux PowerPC - 64-bit", LANG_ID_PPC64_BE, COMP_ID_DEFAULT,
 				Set.of());
 		}
 	}
 
-	protected static class GdbPowerPCBE64A2LinuxOffer extends AbstractGdbDebuggerMappingOffer {
+	protected static class GdbPowerPCBE64A2LinuxOffer extends DefaultDebuggerMappingOffer {
 		public GdbPowerPCBE64A2LinuxOffer(TargetProcess process) {
 			super(process, 100, "GDB on Linux PowerPC - 64-bit A2", LANG_ID_PPC64_BE_A2,
 				COMP_ID_DEFAULT, Set.of());
 		}
 	}
 
-	protected static class GdbPowerPCBA64A2AltLinuxOffer extends AbstractGdbDebuggerMappingOffer {
+	protected static class GdbPowerPCBA64A2AltLinuxOffer extends DefaultDebuggerMappingOffer {
 		public GdbPowerPCBA64A2AltLinuxOffer(TargetProcess process) {
 			super(process, 100, "GDB on Linux PowerPC - 64-bit A2 ALT", LANG_ID_PPC64_BE_A2ALT,
 				COMP_ID_DEFAULT, Set.of());
@@ -62,7 +65,8 @@ public class GdbPowerPCDebuggerMappingOpinion implements DebuggerMappingOpinion 
 	}
 
 	@Override
-	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process) {
+	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process,
+			boolean includeOverrides) {
 		if (!env.getDebugger().toLowerCase().contains("gdb")) {
 			return Set.of();
 		}

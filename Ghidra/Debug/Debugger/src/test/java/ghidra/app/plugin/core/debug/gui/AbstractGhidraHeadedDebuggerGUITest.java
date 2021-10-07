@@ -74,9 +74,9 @@ import ghidra.util.task.ConsoleTaskMonitor;
 public abstract class AbstractGhidraHeadedDebuggerGUITest
 		extends AbstractGhidraHeadedIntegrationTest {
 
-	protected static final String LANGID_TOYBE64 = "Toy:BE:64:default";
+	public static final String LANGID_TOYBE64 = "Toy:BE:64:default";
 
-	public static class TestDebuggerTargetTraceMapper extends AbstractDebuggerTargetTraceMapper {
+	public static class TestDebuggerTargetTraceMapper extends DefaultDebuggerTargetTraceMapper {
 		// TODO: Instantiate this in an opinion / offer
 		public TestDebuggerTargetTraceMapper(TargetObject target)
 				throws LanguageNotFoundException, CompilerSpecNotFoundException {
