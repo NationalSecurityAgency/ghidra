@@ -684,7 +684,7 @@ define pcodeop vcvtsd2si_avx ;
 
 # CVTSD2SI 3-253 PAGE 823 LINE 44317
 @ifdef IA64
-:VCVTSD2SI Reg64, XmmReg2_m64 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_W1); byte=0x2D; Reg64 ... & XmmReg2_m64
+:VCVTSD2SI Reg64, XmmReg2_m64 is $(LONGMODE_ON) & $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_W1); byte=0x2D; Reg64 ... & XmmReg2_m64
 {
 	Reg64 = vcvtsd2si_avx( XmmReg2_m64 );
 }
@@ -710,7 +710,7 @@ define pcodeop vcvtsi2sd_avx ;
 
 # CVTSI2SD 3-257 PAGE 827 LINE 44519
 @ifdef IA64
-:VCVTSI2SD XmmReg1, vexVVVV_XmmReg, rm64 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x2A; (XmmReg1 & YmmReg1) ... & rm64
+:VCVTSI2SD XmmReg1, vexVVVV_XmmReg, rm64 is $(LONGMODE_ON) & $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x2A; (XmmReg1 & YmmReg1) ... & rm64
 {
 	local tmp:16 = vcvtsi2sd_avx( vexVVVV_XmmReg, rm64 );
 	YmmReg1 = zext(tmp);
@@ -729,7 +729,7 @@ define pcodeop vcvtsi2ss_avx ;
 
 # CVTSI2SS 3-259 PAGE 829 LINE 44634
 @ifdef IA64
-:VCVTSI2SS XmmReg1, vexVVVV_XmmReg, rm64 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_0F) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x2A; (XmmReg1 & YmmReg1) ... & rm64
+:VCVTSI2SS XmmReg1, vexVVVV_XmmReg, rm64 is $(LONGMODE_ON) & $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_0F) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x2A; (XmmReg1 & YmmReg1) ... & rm64
 {
 	local tmp:16 = vcvtsi2ss_avx( vexVVVV_XmmReg, rm64 );
 	YmmReg1 = zext(tmp);
@@ -756,7 +756,7 @@ define pcodeop vcvtss2si_avx ;
 
 # CVTSS2SI 3-263 PAGE 833 LINE 44837
 @ifdef IA64
-:VCVTSS2SI Reg64, XmmReg2_m32 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_0F) & $(VEX_W1); byte=0x2D; Reg64 ... & XmmReg2_m32
+:VCVTSS2SI Reg64, XmmReg2_m32 is $(LONGMODE_ON) & $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_0F) & $(VEX_W1); byte=0x2D; Reg64 ... & XmmReg2_m32
 {
 	Reg64 = vcvtss2si_avx( XmmReg2_m32 );
 }
@@ -805,7 +805,7 @@ define pcodeop vcvttsd2si_avx ;
 
 # CVTTSD2SI 3-274 PAGE 844 LINE 45382
 @ifdef IA64
-:VCVTTSD2SI Reg64, XmmReg2_m64 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_W1); byte=0x2C; Reg64 ... & XmmReg2_m64
+:VCVTTSD2SI Reg64, XmmReg2_m64 is $(LONGMODE_ON) & $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_W1); byte=0x2C; Reg64 ... & XmmReg2_m64
 {
 	Reg64 = vcvttsd2si_avx( XmmReg2_m64 );
 }
@@ -821,7 +821,7 @@ define pcodeop vcvttss2si_avx ;
 
 # CVTTSS2SI 3-276 PAGE 846 LINE 45476
 @ifdef IA64
-:VCVTTSS2SI Reg64, XmmReg2_m32 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_0F) & $(VEX_W1); byte=0x2C; Reg64 ... & XmmReg2_m32
+:VCVTTSS2SI Reg64, XmmReg2_m32 is $(LONGMODE_ON) & $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_0F) & $(VEX_W1); byte=0x2C; Reg64 ... & XmmReg2_m32
 {
 	Reg64 = vcvttss2si_avx( XmmReg2_m32 );
 }
@@ -1186,7 +1186,7 @@ define pcodeop vmovd_avx ;
 # MOVD/MOVQ 4-55 PAGE 1175 LINE 61360
 define pcodeop vmovq_avx ;
 @ifdef IA64
-:VMOVQ XmmReg1, rm64 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W1); byte=0x6E; (XmmReg1 & YmmReg1) ... & rm64
+:VMOVQ XmmReg1, rm64 is $(LONGMODE_ON) & $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W1); byte=0x6E; (XmmReg1 & YmmReg1) ... & rm64
 {
 	local tmp:16 = vmovq_avx( rm64 );
 	YmmReg1 = zext(tmp);
@@ -1202,7 +1202,7 @@ define pcodeop vmovq_avx ;
 
 # MOVD/MOVQ 4-55 PAGE 1175 LINE 61364
 @ifdef IA64
-:VMOVQ rm64, XmmReg1 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W1); byte=0x7E; XmmReg1 ... & rm64
+:VMOVQ rm64, XmmReg1 is $(LONGMODE_ON) & $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W1); byte=0x7E; XmmReg1 ... & rm64
 {
 	rm64 = vmovq_avx( XmmReg1 );
 }
@@ -1947,7 +1947,7 @@ define pcodeop vpextrd_avx ;
 # PEXTRB/PEXTRD/PEXTRQ 4-274 PAGE 1394 LINE 72330
 define pcodeop vpextrq_avx ;
 @ifdef IA64
-:VPEXTRQ rm64, XmmReg1, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1); byte=0x16; XmmReg1 ... & rm64; imm8
+:VPEXTRQ rm64, XmmReg1, imm8 is $(LONGMODE_ON) & $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1); byte=0x16; XmmReg1 ... & rm64; imm8
 {
 	rm64 = vpextrq_avx( XmmReg1, imm8:1 );
 }
@@ -2052,7 +2052,7 @@ define pcodeop vpinsrd_avx ;
 # PINSRB/PINSRD/PINSRQ 4-293 PAGE 1413 LINE 73327
 define pcodeop vpinsrq_avx ;
 @ifdef IA64
-:VPINSRQ XmmReg1, vexVVVV_XmmReg, rm64, imm8 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x22; (XmmReg1 & YmmReg1) ... & rm64; imm8
+:VPINSRQ XmmReg1, vexVVVV_XmmReg, rm64, imm8 is $(LONGMODE_ON) & $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x22; (XmmReg1 & YmmReg1) ... & rm64; imm8
 {
 	local tmp:16 = vpinsrq_avx( vexVVVV_XmmReg, rm64, imm8:1 );
 	YmmReg1 = zext(tmp);

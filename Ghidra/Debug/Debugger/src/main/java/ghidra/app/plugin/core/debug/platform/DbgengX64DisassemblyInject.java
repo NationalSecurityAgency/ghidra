@@ -71,20 +71,15 @@ public class DbgengX64DisassemblyInject implements DisassemblyInject {
 		}
 		Mode mode = modes.iterator().next();
 		Language lang = trace.getBaseLanguage();
-		Register addrsizeReg = lang.getRegister("addrsize");
-		Register opsizeReg = lang.getRegister("opsize");
+		Register longModeReg = lang.getRegister("longMode");
 		ProgramContextImpl context = new ProgramContextImpl(lang);
 		lang.applyContextSettings(context);
-		RegisterValue ctxVal = context.getDisassemblyContext(first.getMinAddress());
+		RegisterValue ctxVal = new RegisterValue(context.getBaseContextRegister());
 		if (mode == Mode.X64) {
-			command.setInitialContext(ctxVal
-					.assign(addrsizeReg, BigInteger.TWO)
-					.assign(opsizeReg, BigInteger.TWO));
+			command.setInitialContext(ctxVal.assign(longModeReg, BigInteger.ONE));
 		}
 		else if (mode == Mode.X86) {
-			command.setInitialContext(ctxVal
-					.assign(addrsizeReg, BigInteger.ONE)
-					.assign(opsizeReg, BigInteger.ONE));
+			command.setInitialContext(ctxVal.assign(longModeReg, BigInteger.ZERO));
 		}
 		// Shouldn't ever get anything else.
 	}
