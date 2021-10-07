@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.platform;
+package ghidra.app.plugin.core.debug.platform.dbgeng;
 
 import java.util.Collection;
 import java.util.Set;
@@ -42,47 +42,35 @@ public class DbgengX64DebuggerMappingOpinion implements DebuggerMappingOpinion {
 		}
 	}
 
-	protected static class DbgTargetTraceMapper extends AbstractDebuggerTargetTraceMapper {
-		public DbgTargetTraceMapper(TargetObject target, LanguageID langID, CompilerSpecID csId,
-				Collection<String> extraRegNames)
+	protected static class DbgI386X86_64WindowsTraceMapper
+			extends DefaultDebuggerTargetTraceMapper {
+		public DbgI386X86_64WindowsTraceMapper(TargetObject target, LanguageID langID,
+				CompilerSpecID csId, Collection<String> extraRegNames)
 				throws LanguageNotFoundException, CompilerSpecNotFoundException {
 			super(target, langID, csId, extraRegNames);
 		}
 
 		@Override
-		protected DebuggerMemoryMapper createMemoryMapper(TargetMemory memory) {
-			return new DefaultDebuggerMemoryMapper(language, memory.getModel());
-		}
-
-		@Override
 		protected DebuggerRegisterMapper createRegisterMapper(TargetRegisterContainer registers) {
-			return new DefaultDebuggerRegisterMapper(cSpec, registers, false);
+			return new DbgI386X86_64RegisterMapper(cSpec, registers);
 		}
 	}
 
-	protected static class DbgI386X86_64WindowsOffer extends AbstractDebuggerMappingOffer {
+	protected static class DbgI386X86_64WindowsOffer extends DefaultDebuggerMappingOffer {
 		public DbgI386X86_64WindowsOffer(TargetProcess process) {
 			super(process, 100, "Dbgeng on Windows x64", LANG_ID_X86_64, COMP_ID_VS, Set.of());
 		}
 
 		@Override
-		public DebuggerTargetTraceMapper take() {
-			try {
-				return new DbgTargetTraceMapper(target, langID, csID, extraRegNames) {
-					@Override
-					protected DebuggerRegisterMapper createRegisterMapper(
-							TargetRegisterContainer registers) {
-						return new DbgI386X86_64RegisterMapper(cSpec, registers);
-					}
-				};
-			}
-			catch (LanguageNotFoundException | CompilerSpecNotFoundException e) {
-				throw new AssertionError(e);
-			}
+		public DebuggerTargetTraceMapper createMapper()
+				throws LanguageNotFoundException, CompilerSpecNotFoundException {
+			return new DbgI386X86_64WindowsTraceMapper(target, langID, csID, extraRegNames);
 		}
 	}
 
-	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process) {
+	@Override
+	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process,
+			boolean includeOverrides) {
 		if (env == null || !env.getDebugger().toLowerCase().contains("dbg")) {
 			return Set.of();
 		}

@@ -34,7 +34,7 @@ import ghidra.trace.model.thread.TraceThread;
 
 public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDebuggerGUITest {
 
-	static class TestTargetMapper extends AbstractDebuggerTargetTraceMapper {
+	static class TestTargetMapper extends DefaultDebuggerTargetTraceMapper {
 		public TestTargetMapper(TargetObject target)
 				throws LanguageNotFoundException, CompilerSpecNotFoundException {
 			super(target, new LanguageID(ToyProgramBuilder._X64), new CompilerSpecID("gcc"),

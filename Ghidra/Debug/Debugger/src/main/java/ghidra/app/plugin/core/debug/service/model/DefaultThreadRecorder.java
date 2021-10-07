@@ -60,7 +60,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 	private final TraceMemoryManager memoryManager;
 
 	private DebuggerRegisterMapper regMapper;
-	private final AbstractDebuggerTargetTraceMapper mapper;
+	private final DefaultDebuggerTargetTraceMapper mapper;
 
 	private final DefaultStackRecorder stackRecorder;
 	private final DefaultBreakpointRecorder breakpointRecorder;
@@ -71,7 +71,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 	}
 
 	public DefaultThreadRecorder(DefaultTraceRecorder recorder,
-			AbstractDebuggerTargetTraceMapper mapper, TargetThread targetThread,
+			DefaultDebuggerTargetTraceMapper mapper, TargetThread targetThread,
 			TraceThread traceThread) {
 		this.recorder = recorder;
 		this.mapper = mapper;
