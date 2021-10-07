@@ -42,12 +42,12 @@ class FilteredMemoryState extends MemoryState {
 
 	@Override
 	public void setChunk(byte[] res, AddressSpace spc, long off, int size) {
-		super.setChunk(res, spc, off, size);
 		if (filterEnabled && filter != null) {
 			filterEnabled = false;
 			filter.filterWrite(spc, off, size, res);
 			filterEnabled = true;
 		}
+		super.setChunk(res, spc, off, size);
 	}
 
 	MemoryAccessFilter setFilter(MemoryAccessFilter filter) {
