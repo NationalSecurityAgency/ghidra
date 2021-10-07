@@ -18,6 +18,7 @@ package ghidra.app.extension.datatype.finder;
 import java.util.List;
 
 import ghidra.app.decompiler.*;
+import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext;
 import ghidra.app.services.DataTypeReference;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
@@ -64,7 +65,7 @@ public abstract class VariableDR extends DecompilerReference {
 			return;
 		}
 
-		String context = getContext();
+		LocationReferenceContext context = getContext();
 		Function function = getFunction();
 		Address address = getAddress();
 		if (fieldName == null) {
