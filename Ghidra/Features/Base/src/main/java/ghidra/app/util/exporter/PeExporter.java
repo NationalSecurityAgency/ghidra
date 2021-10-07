@@ -27,7 +27,7 @@ public class PeExporter extends AbstractLoaderExporter {
 	 * Creates a new {@link PeExporter}
 	 */
 	public PeExporter() {
-		super("PE", "exe", new HelpLocation("ExporterPlugin", "pe"));
+		super("PE", new HelpLocation("ExporterPlugin", "pe"));
 	}
 
 	@Override

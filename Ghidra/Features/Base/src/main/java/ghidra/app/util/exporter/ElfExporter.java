@@ -27,7 +27,7 @@ public class ElfExporter extends AbstractLoaderExporter {
 	 * Create a new {@link ElfExporter}
 	 */
 	public ElfExporter() {
-		super("ELF", "", new HelpLocation("ExporterPlugin", "elf"));
+		super("ELF", new HelpLocation("ExporterPlugin", "elf"));
 	}
 	
 	@Override

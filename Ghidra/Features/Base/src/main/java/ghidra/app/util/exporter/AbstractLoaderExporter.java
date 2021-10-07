@@ -43,11 +43,10 @@ public abstract class AbstractLoaderExporter extends Exporter {
 	 * Creates a new {@link AbstractLoaderExporter}
 	 * 
 	 * @param name The display name of this exporter
-	 * @param extension The default extension for this exporter
 	 * @param help The {@link HelpLocation} for this exporter
 	 */
-	protected AbstractLoaderExporter(String name, String extension, HelpLocation help) {
-		super(name, extension, help);
+	protected AbstractLoaderExporter(String name, HelpLocation help) {
+		super(name, "", help);
 	}
 	
 	/**
