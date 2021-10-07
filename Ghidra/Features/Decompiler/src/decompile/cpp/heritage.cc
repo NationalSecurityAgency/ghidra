@@ -2400,7 +2400,8 @@ void Heritage::heritage(void)
 	}
 	disjoint.add((*liter).first,(*liter).second.size,pass,prev);
       }
-      else {
+      else {	// Partially contained in old range, but may contain new stuff
+	disjoint.add((*liter).first,(*liter).second.size,pass,prev);
 	if ((!needwarning)&&(info->deadremoved>0)) {
 	  // TODO: We should check if this varnode is tiled by previously heritaged ranges
 	  if (vn->isHeritageKnown()) continue;		// Assume that it is tiled and produced by merging
@@ -2409,7 +2410,6 @@ void Heritage::heritage(void)
 	  bumpDeadcodeDelay(vn);
 	  warnvn = vn;
 	}
-	disjoint.add((*liter).first,(*liter).second.size,pass,prev);
       }
     }
 
