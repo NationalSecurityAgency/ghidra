@@ -18,8 +18,7 @@ package ghidra.app.plugin.core.debug.service.model;
 import static org.junit.Assert.*;
 
 import java.awt.Component;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -42,6 +41,7 @@ import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.model.TestDebuggerModelFactory;
 import ghidra.dbg.model.TestDebuggerObjectModel;
+import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.testutil.DebuggerModelTestUtils;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
@@ -562,5 +562,73 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 		TestDebuggerObjectModel model = new TestDebuggerObjectModel();
 		mb.testFactory.pollBuild().complete(model);
 		assertEquals(model, waitOn(futureModel));
+	}
+
+	@Test
+	public void testRecordBestOfferRecognized() throws Exception {
+		createTestModel();
+		mb.testModel.session.environment.changeAttributes(List.of(),
+			Map.of(TargetEnvironment.ARCH_ATTRIBUTE_NAME, TestKnownArchDebuggerMappingOpinion.ARCH),
+			"Testing");
+		mb.createTestProcessesAndThreads();
+		// NB. Model service does not "auto-record". Objects provider does that.
+
+		modelService.recordTargetBestOffer(mb.testProcess1);
+
+		assertEquals(1, modelService.getTraceRecorders().size());
+	}
+
+	@Test(expected = NoSuchElementException.class)
+	public void testRecordBestOfferUnrecognized() throws Exception {
+		createTestModel();
+		mb.testModel.session.environment.changeAttributes(List.of(),
+			Map.of(TargetEnvironment.ARCH_ATTRIBUTE_NAME, "test-bogus-arch"),
+			"Testing");
+		mb.createTestProcessesAndThreads();
+
+		modelService.recordTargetBestOffer(mb.testProcess1);
+	}
+
+	@Test
+	public void testRecordPromptOffersRecognized() throws Exception {
+		createTestModel();
+		mb.testModel.session.environment.changeAttributes(List.of(),
+			Map.of(TargetEnvironment.ARCH_ATTRIBUTE_NAME, TestKnownArchDebuggerMappingOpinion.ARCH),
+			"Testing");
+		mb.createTestProcessesAndThreads();
+
+		runSwingLater(() -> modelService.recordTargetPromptOffers(mb.testProcess1));
+		DebuggerSelectMappingOfferDialog dialog =
+			waitForDialogComponent(DebuggerSelectMappingOfferDialog.class);
+		dialog.okCallback();
+
+		waitForPass(() -> assertEquals(1, modelService.getTraceRecorders().size()));
+	}
+
+	@Test
+	public void testRecordPromptOffersUnrecognized() throws Exception {
+		createTestModel();
+		mb.testModel.session.environment.changeAttributes(List.of(),
+			Map.of(TargetEnvironment.ARCH_ATTRIBUTE_NAME, "test-bogus-arch"),
+			"Testing");
+		mb.createTestProcessesAndThreads();
+
+		runSwingLater(() -> modelService.recordTargetPromptOffers(mb.testProcess1));
+		DebuggerSelectMappingOfferDialog dialog =
+			waitForDialogComponent(DebuggerSelectMappingOfferDialog.class);
+
+		assertTrue(dialog.getDisplayedOffers().isEmpty());
+
+		runSwing(() -> dialog.setFilterRecommended(false));
+		waitForPass(() -> assertFalse(dialog.getDisplayedOffers().isEmpty()));
+		// TODO: setFilterRecommended's call to selectPreferred comes to early.
+		if (dialog.getSelectedOffer() == null) {
+			dialog.setSelectedOffer(dialog.getDisplayedOffers().get(0));
+		}
+
+		// Do I care which language is actually selected?
+		dialog.okCallback();
+
+		waitForPass(() -> assertEquals(1, modelService.getTraceRecorders().size()));
 	}
 }

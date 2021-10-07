@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.platform;
+package ghidra.app.plugin.core.debug.platform.jvm;
 
 import java.util.Collection;
 import java.util.Set;
@@ -22,15 +22,15 @@ import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.dbg.target.*;
 import ghidra.program.model.lang.*;
 
-public class JdiDalvikDebuggerMappingOpinion implements DebuggerMappingOpinion {
-	protected static final LanguageID LANG_ID_DALVIK = new LanguageID("Dalvik:LE:32:default");
+public class JdiJavaDebuggerMappingOpinion implements DebuggerMappingOpinion {
+	protected static final LanguageID LANG_ID_JAVA = new LanguageID("JVM:BE:32:default");
 	protected static final CompilerSpecID COMP_ID_VS = new CompilerSpecID("default");
 
-	protected static final Set<String> DALVIK_VM_NAMES = Set.of("Dalvik");
+	// TODO: Catalog other VMs that are Java, but not Dalvik
+	protected static final Set<String> JVM_NAMES = Set.of("OpenJDK");
 
-	protected static class DalvikDebuggerTargetTraceMapper
-			extends AbstractDebuggerTargetTraceMapper {
-		public DalvikDebuggerTargetTraceMapper(TargetObject target, LanguageID langID,
+	protected static class JavaDebuggerTargetTraceMapper extends DefaultDebuggerTargetTraceMapper {
+		public JavaDebuggerTargetTraceMapper(TargetObject target, LanguageID langID,
 				CompilerSpecID csId, Collection<String> extraRegNames)
 				throws LanguageNotFoundException, CompilerSpecNotFoundException {
 			super(target, langID, csId, extraRegNames);
@@ -47,27 +47,25 @@ public class JdiDalvikDebuggerMappingOpinion implements DebuggerMappingOpinion {
 		}
 	}
 
-	protected static class DalvikDebuggerMappingOffer extends AbstractDebuggerMappingOffer {
-		public DalvikDebuggerMappingOffer(TargetProcess process) {
-			super(process, 100, "Dalvik Virtual Machine", LANG_ID_DALVIK, COMP_ID_VS, Set.of());
+	protected static class JavaDebuggerMappingOffer extends DefaultDebuggerMappingOffer {
+		public JavaDebuggerMappingOffer(TargetProcess process) {
+			super(process, 100, "Java Virtual Machine", LANG_ID_JAVA, COMP_ID_VS, Set.of());
 		}
 
 		@Override
-		public DebuggerTargetTraceMapper take() {
-			try {
-				return new DalvikDebuggerTargetTraceMapper(target, langID, csID, extraRegNames);
-			}
-			catch (LanguageNotFoundException | CompilerSpecNotFoundException e) {
-				throw new AssertionError(e);
-			}
+		public DebuggerTargetTraceMapper createMapper()
+				throws LanguageNotFoundException, CompilerSpecNotFoundException {
+			return new JavaDebuggerTargetTraceMapper(target, langID, csID, extraRegNames);
 		}
 	}
 
 	protected static boolean containsRecognizedJvmName(String name) {
-		return DALVIK_VM_NAMES.stream().anyMatch(name::contains);
+		return JVM_NAMES.stream().anyMatch(name::contains);
 	}
 
-	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process) {
+	@Override
+	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process,
+			boolean includeOverrides) {
 		if (!env.getDebugger().contains("Java Debug Interface")) {
 			return Set.of();
 		}
@@ -75,6 +73,6 @@ public class JdiDalvikDebuggerMappingOpinion implements DebuggerMappingOpinion {
 			return Set.of();
 		}
 		// NOTE: Not worried about JRE version
-		return Set.of(new DalvikDebuggerMappingOffer(process));
+		return Set.of(new JavaDebuggerMappingOffer(process));
 	}
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.platform;
+package ghidra.app.plugin.core.debug.platform.dbgeng;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -71,15 +71,20 @@ public class DbgengX64DisassemblyInject implements DisassemblyInject {
 		}
 		Mode mode = modes.iterator().next();
 		Language lang = trace.getBaseLanguage();
-		Register longModeReg = lang.getRegister("longMode");
+		Register addrsizeReg = lang.getRegister("addrsize");
+		Register opsizeReg = lang.getRegister("opsize");
 		ProgramContextImpl context = new ProgramContextImpl(lang);
 		lang.applyContextSettings(context);
-		RegisterValue ctxVal = new RegisterValue(context.getBaseContextRegister());
+		RegisterValue ctxVal = context.getDisassemblyContext(first.getMinAddress());
 		if (mode == Mode.X64) {
-			command.setInitialContext(ctxVal.assign(longModeReg, BigInteger.ONE));
+			command.setInitialContext(ctxVal
+					.assign(addrsizeReg, BigInteger.TWO)
+					.assign(opsizeReg, BigInteger.TWO));
 		}
 		else if (mode == Mode.X86) {
-			command.setInitialContext(ctxVal.assign(longModeReg, BigInteger.ZERO));
+			command.setInitialContext(ctxVal
+					.assign(addrsizeReg, BigInteger.ONE)
+					.assign(opsizeReg, BigInteger.ONE));
 		}
 		// Shouldn't ever get anything else.
 	}

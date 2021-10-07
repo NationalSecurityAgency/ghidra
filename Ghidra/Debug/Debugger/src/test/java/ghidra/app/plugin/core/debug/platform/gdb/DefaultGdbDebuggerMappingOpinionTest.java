@@ -44,7 +44,7 @@ public class DefaultGdbDebuggerMappingOpinionTest extends AbstractGhidraHeadless
 
 		TestTargetProcess process = model.addProcess(1234);
 
-		List<DebuggerMappingOffer> offers = DebuggerMappingOpinion.queryOpinions(process);
+		List<DebuggerMappingOffer> offers = DebuggerMappingOpinion.queryOpinions(process, false);
 		assertFalse(offers.isEmpty());
 		Set<DebuggerMappingOffer> ldefsOnes = offers.stream()
 				.filter(o -> o.getClass().equals(GdbDefaultOffer.class))

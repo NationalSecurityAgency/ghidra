@@ -351,7 +351,7 @@ public class DebuggerModelServicePlugin extends Plugin
 			}
 		}
 		DebuggerTargetTraceMapper mapper =
-			DebuggerMappingOffer.first(DebuggerMappingOpinion.queryOpinions(target));
+			DebuggerMappingOffer.first(DebuggerMappingOpinion.queryOpinions(target, false));
 		if (mapper == null) {
 			throw new NoSuchElementException("No mapper for target: " + target);
 		}
@@ -373,20 +373,13 @@ public class DebuggerModelServicePlugin extends Plugin
 				return recorder;
 			}
 		}
-		List<DebuggerMappingOffer> offers = DebuggerMappingOpinion.queryOpinions(target);
-		DebuggerMappingOffer selected;
-		if (offers.size() == 1) {
-			selected = offers.get(0);
+		List<DebuggerMappingOffer> offers = DebuggerMappingOpinion.queryOpinions(target, true);
+		offerDialog.setOffers(offers);
+		t.showDialog(offerDialog);
+		if (offerDialog.isCancelled()) {
+			return null;
 		}
-		else {
-			offerDialog.setOffers(offers);
-			t.showDialog(offerDialog);
-			// TODO: Is cancelled?
-			if (offerDialog.isCancelled()) {
-				return null;
-			}
-			selected = offerDialog.getSelectedOffer();
-		}
+		DebuggerMappingOffer selected = offerDialog.getSelectedOffer();
 		assert selected != null;
 		DebuggerTargetTraceMapper mapper = selected.take();
 		try {

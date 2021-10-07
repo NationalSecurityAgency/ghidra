@@ -27,14 +27,14 @@ import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.trace.model.Trace;
 
-public abstract class AbstractDebuggerTargetTraceMapper implements DebuggerTargetTraceMapper {
+public class DefaultDebuggerTargetTraceMapper implements DebuggerTargetTraceMapper {
 	protected final TargetObject target;
 	protected final Language language;
 	protected final CompilerSpec cSpec;
 
 	protected final Set<String> extraRegNames;
 
-	public AbstractDebuggerTargetTraceMapper(TargetObject target, LanguageID langID,
+	public DefaultDebuggerTargetTraceMapper(TargetObject target, LanguageID langID,
 			CompilerSpecID csId, Collection<String> extraRegNames)
 			throws LanguageNotFoundException, CompilerSpecNotFoundException {
 		this.target = target;
@@ -49,16 +49,25 @@ public abstract class AbstractDebuggerTargetTraceMapper implements DebuggerTarge
 	 * Create a mapper between trace and target memory
 	 * 
 	 * <p>
-	 * TODO: Now that every impl just usese the model's address factory, we should probably just
-	 * have this take a model, and create the mapper in the recorder's constructor.
+	 * TODO: Now that every impl just uses the model's address factory, we should probably just have
+	 * this take a model, and create the mapper in the recorder's constructor.
 	 * 
 	 * @param memory the target memory
 	 * @return the mapper
 	 */
-	protected abstract DebuggerMemoryMapper createMemoryMapper(TargetMemory memory);
+	protected DebuggerMemoryMapper createMemoryMapper(TargetMemory memory) {
+		return new DefaultDebuggerMemoryMapper(language, memory.getModel());
+	}
 
-	protected abstract DebuggerRegisterMapper createRegisterMapper(
-			TargetRegisterContainer registers);
+	/**
+	 * Create a mapper between trace and target registers
+	 * 
+	 * @param registers the target's register container
+	 * @return the mapper
+	 */
+	protected DebuggerRegisterMapper createRegisterMapper(TargetRegisterContainer registers) {
+		return new DefaultDebuggerRegisterMapper(cSpec, registers, false);
+	}
 
 	// TODO: Make this synchronous, or remove it
 	public CompletableFuture<DebuggerMemoryMapper> offerMemory(TargetMemory memory) {

@@ -24,12 +24,13 @@ import java.util.function.Function;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.widgets.table.DefaultEnumeratedColumnTableModel;
+import docking.widgets.table.*;
+import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOffer;
-import ghidra.program.model.lang.CompilerSpecID;
-import ghidra.program.model.lang.LanguageID;
+import ghidra.program.model.lang.*;
+import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 
@@ -37,20 +38,68 @@ public class DebuggerSelectMappingOfferDialog extends DialogComponentProvider {
 
 	protected enum OfferTableColumns
 		implements EnumeratedTableColumn<OfferTableColumns, DebuggerMappingOffer> {
-		DESCRIPTION("Description", String.class, DebuggerMappingOffer::getDescription),
-		LANGUAGE("Language", LanguageID.class, DebuggerMappingOffer::getTraceLanguageID),
-		COMPILER("Compiler", CompilerSpecID.class, DebuggerMappingOffer::getTraceCompilerSpecID),
-		CONFIDENCE("Confidence", Integer.class, DebuggerMappingOffer::getConfidence);
+		CONFIDENCE("Confidence", Integer.class, DebuggerMappingOffer::getConfidence, SortDirection.DESCENDING),
+		PROCESSOR("Processor", Processor.class, OfferTableColumns::getProcessor),
+		VARIANT("Variant", String.class, OfferTableColumns::getVariant),
+		SIZE("Size", Integer.class, OfferTableColumns::getSize),
+		ENDIAN("Endian", Endian.class, OfferTableColumns::getEndian),
+		COMPILER("Compiler", CompilerSpecID.class, DebuggerMappingOffer::getTraceCompilerSpecID);
+
+		private static final LanguageService LANG_SERV =
+			DefaultLanguageService.getLanguageService();
+
+		private static Processor getProcessor(DebuggerMappingOffer offer) {
+			try {
+				return LANG_SERV.getLanguageDescription(offer.getTraceLanguageID()).getProcessor();
+			}
+			catch (LanguageNotFoundException e) {
+				return Processor.findOrPossiblyCreateProcessor("Not Found");
+			}
+		}
+
+		private static String getVariant(DebuggerMappingOffer offer) {
+			try {
+				return LANG_SERV.getLanguageDescription(offer.getTraceLanguageID()).getVariant();
+			}
+			catch (LanguageNotFoundException e) {
+				return "???";
+			}
+		}
+
+		private static int getSize(DebuggerMappingOffer offer) {
+			try {
+				return LANG_SERV.getLanguageDescription(offer.getTraceLanguageID()).getSize();
+			}
+			catch (LanguageNotFoundException e) {
+				return 0;
+			}
+		}
+
+		private static Endian getEndian(DebuggerMappingOffer offer) {
+			try {
+				return LANG_SERV.getLanguageDescription(offer.getTraceLanguageID()).getEndian();
+			}
+			catch (LanguageNotFoundException e) {
+				return null;
+			}
+		}
 
 		private final String header;
 		private final Class<?> cls;
 		private final Function<DebuggerMappingOffer, ?> getter;
+		private final SortDirection sortDir;
 
 		<T> OfferTableColumns(String header, Class<T> cls,
-				Function<DebuggerMappingOffer, T> getter) {
+				Function<DebuggerMappingOffer, T> getter, SortDirection sortDir) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
+			this.sortDir = sortDir;
+		}
+
+		<T> OfferTableColumns(String header, Class<T> cls,
+				Function<DebuggerMappingOffer, T> getter) {
+			this(header, cls, getter, SortDirection.ASCENDING);
 		}
 
 		@Override
@@ -67,6 +116,11 @@ public class DebuggerSelectMappingOfferDialog extends DialogComponentProvider {
 		public String getHeader() {
 			return header;
 		}
+
+		@Override
+		public SortDirection defaultSortDirection() {
+			return sortDir;
+		}
 	}
 
 	public static class OfferTableModel
@@ -78,18 +132,20 @@ public class DebuggerSelectMappingOfferDialog extends DialogComponentProvider {
 
 		@Override
 		public List<OfferTableColumns> defaultSortOrder() {
-			return List.of(OfferTableColumns.CONFIDENCE, OfferTableColumns.DESCRIPTION,
-				OfferTableColumns.LANGUAGE, OfferTableColumns.COMPILER);
+			return List.of(OfferTableColumns.CONFIDENCE, OfferTableColumns.PROCESSOR,
+				OfferTableColumns.VARIANT, OfferTableColumns.COMPILER);
 		}
 	}
 
 	public static class OfferPanel extends JPanel {
-		private OfferTableModel offerTableModel = new OfferTableModel();
-		private GhidraTable offerTable = new GhidraTable(offerTableModel);
-		private GhidraTableFilterPanel<DebuggerMappingOffer> offerTableFilterPanel =
+		private final OfferTableModel offerTableModel = new OfferTableModel();
+		private final GhidraTable offerTable = new GhidraTable(offerTableModel);
+		private final GhidraTableFilterPanel<DebuggerMappingOffer> offerTableFilterPanel =
 			new GhidraTableFilterPanel<>(offerTable, offerTableModel);
+		private final JLabel descLabel = new JLabel();
+		private final JCheckBox overrideCheckBox = new JCheckBox("Show Only Recommended Offers");
 
-		private JScrollPane scrollPane = new JScrollPane(offerTable) {
+		private final JScrollPane scrollPane = new JScrollPane(offerTable) {
 			@Override
 			public Dimension getPreferredSize() {
 				Dimension pref = super.getPreferredSize();
@@ -99,22 +155,103 @@ public class DebuggerSelectMappingOfferDialog extends DialogComponentProvider {
 				return pref;
 			}
 		};
+		private final TableFilter<DebuggerMappingOffer> filterRecommended = new TableFilter<>() {
+			@Override
+			public boolean acceptsRow(DebuggerMappingOffer offer) {
+				return !offer.isOverride();
+			}
+
+			@Override
+			public boolean isSubFilterOf(TableFilter<?> tableFilter) {
+				return false;
+			}
+		};
+
+		private LanguageID preferredLangID;
+		private CompilerSpecID preferredCsID;
 
 		{
+			JPanel descPanel = new JPanel(new BorderLayout());
+			descPanel.setBorder(BorderFactory.createTitledBorder("Description"));
+			descPanel.add(descLabel, BorderLayout.CENTER);
+
+			JPanel nested1 = new JPanel(new BorderLayout());
+			nested1.add(scrollPane, BorderLayout.CENTER);
+			nested1.add(offerTableFilterPanel, BorderLayout.SOUTH);
+
+			JPanel nested2 = new JPanel(new BorderLayout());
+			nested2.add(nested1, BorderLayout.CENTER);
+			nested2.add(descPanel, BorderLayout.SOUTH);
+
 			setLayout(new BorderLayout());
-			add(scrollPane, BorderLayout.CENTER);
-			add(offerTableFilterPanel, BorderLayout.SOUTH);
+			add(nested2, BorderLayout.CENTER);
+			add(overrideCheckBox, BorderLayout.SOUTH);
+
+			setFilterRecommended(true);
+			offerTable.getSelectionModel().addListSelectionListener(e -> {
+				DebuggerMappingOffer offer = getSelectedOffer();
+				descLabel.setText(offer == null ? "" : offer.getDescription());
+			});
+
+			overrideCheckBox.addActionListener(evt -> {
+				setFilterRecommended(overrideCheckBox.isSelected());
+			});
+		}
+
+		public void setPreferredIDs(LanguageID langID, CompilerSpecID csID) {
+			this.preferredLangID = langID;
+			this.preferredCsID = csID;
 		}
 
 		public void setOffers(Collection<DebuggerMappingOffer> offers) {
 			offerTableModel.clear();
 			offerTableModel.addAll(offers);
 
-			offerTable.getSelectionModel().setSelectionInterval(0, 0);
+			selectPreferred();
+		}
+
+		private void selectPreferred() {
+			// As sorted and filtered, pick the first matching offer
+			// NB. It should never be one or the other. Always both or none.
+			RowObjectFilterModel<DebuggerMappingOffer> model =
+				offerTableFilterPanel.getTableFilterModel();
+			int count = model.getRowCount();
+			if (preferredLangID != null && preferredCsID != null) {
+				for (int i = 0; i < count; i++) {
+					DebuggerMappingOffer offer = model.getRowObject(i);
+					if (offer.getTraceLanguageID().equals(preferredLangID) &&
+						offer.getTraceCompilerSpecID().equals(preferredCsID)) {
+						offerTable.getSelectionModel().setSelectionInterval(i, i);
+						return;
+					}
+				}
+			}
+			// Fall back to first offer; disregard preference
+			if (model.getRowCount() > 0) {
+				offerTable.getSelectionModel().setSelectionInterval(0, 0);
+			}
+		}
+
+		public void setFilterRecommended(boolean recommendedOnly) {
+			boolean hasSelection = offerTableFilterPanel.getSelectedItem() != null;
+			overrideCheckBox.setSelected(recommendedOnly);
+			offerTableFilterPanel.setSecondaryFilter(recommendedOnly ? filterRecommended : null);
+			if (!hasSelection) {
+				selectPreferred();
+			}
+		}
+
+		public void setSelectedOffer(DebuggerMappingOffer offer) {
+			offerTableFilterPanel.setSelectedItem(offer);
 		}
 
 		public DebuggerMappingOffer getSelectedOffer() {
 			return offerTableFilterPanel.getSelectedItem();
+		}
+
+		// For tests
+		public List<DebuggerMappingOffer> getDisplayedOffers() {
+			return List.copyOf(offerTableFilterPanel.getTableFilterModel().getModelData());
 		}
 	}
 
@@ -144,6 +281,19 @@ public class DebuggerSelectMappingOfferDialog extends DialogComponentProvider {
 		});
 	}
 
+	/**
+	 * Set the preferred language and compiler spec IDs, typically from the current program.
+	 * 
+	 * <p>
+	 * This must be called before {@link #setOffers(Collection)}.
+	 * 
+	 * @param langID the preferred language
+	 * @param csID the preferred compiler spec (ABI)
+	 */
+	public void setPreferredIDs(LanguageID langID, CompilerSpecID csID) {
+		offerPanel.setPreferredIDs(langID, csID);
+	}
+
 	public void setOffers(Collection<DebuggerMappingOffer> offers) {
 		offerPanel.setOffers(offers);
 	}
@@ -152,8 +302,21 @@ public class DebuggerSelectMappingOfferDialog extends DialogComponentProvider {
 		return isCancelled;
 	}
 
+	public void setSelectedOffer(DebuggerMappingOffer offer) {
+		offerPanel.setSelectedOffer(offer);
+	}
+
 	public DebuggerMappingOffer getSelectedOffer() {
 		return offerPanel.getSelectedOffer();
+	}
+
+	// For tests
+	protected List<DebuggerMappingOffer> getDisplayedOffers() {
+		return offerPanel.getDisplayedOffers();
+	}
+
+	protected void setFilterRecommended(boolean recommendedOnly) {
+		offerPanel.setFilterRecommended(recommendedOnly);
 	}
 
 	@Override
