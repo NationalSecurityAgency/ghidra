@@ -649,6 +649,7 @@ public class GdbManagerImpl implements GdbManager {
 					cliThread.setName("GDB Read CLI");
 					// Looks terrible, but we're already in this world
 					cliThread.writer.print("set confirm off" + newLine);
+					cliThread.writer.print("set pagination off" + newLine);
 					cliThread.writer
 							.print("new-ui mi2 " + mi2Pty.getChild().nullSession() + newLine);
 					cliThread.writer.flush();
@@ -715,9 +716,11 @@ public class GdbManagerImpl implements GdbManager {
 	 */
 	protected CompletableFuture<Void> rc() {
 		if (cliThread != null) {
+			// NB. confirm and pagination are already disabled here
 			return AsyncUtils.NIL;
 		}
 		else {
+			// NB. Don't disable pagination here. MI2 is not paginated.
 			return console("set confirm off", CompletesWithRunning.CANNOT);
 		}
 	}
