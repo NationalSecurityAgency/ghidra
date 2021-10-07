@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -723,7 +723,7 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 				modsRep += mod.toString() + ", ";
 			}
 			if (customMods.size() > 0) {
-				modsRep.substring(0, modsRep.length() - 2); // Remove last comma+space
+				modsRep = modsRep.substring(0, modsRep.length() - 2); // Remove last comma+space
 			}
 			return String.format("SzArray %s %s", modsRep, typeRep);
 		}
