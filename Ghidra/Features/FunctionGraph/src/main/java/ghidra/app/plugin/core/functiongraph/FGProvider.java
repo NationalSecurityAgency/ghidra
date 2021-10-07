@@ -764,14 +764,10 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		SymbolTable symbolTable = currentProgram.getSymbolTable();
 		AddressSetView vertexAddresses = destinationVertex.getAddresses();
 		Address minAddress = vertexAddresses.getMinAddress();
-		Symbol[] symbols = symbolTable.getSymbols(minAddress);
-		if (symbols.length > 1) {
-			return; // real user symbols
-		}
-		else if (symbols.length == 1) {
-			if (!symbols[0].isDynamic()) {
-				return; // real user symbol
-			}
+
+		Symbol primary = symbolTable.getPrimarySymbol(minAddress);
+		if (!primary.isDynamic()) {
+			return;
 		}
 
 		ReferenceManager referenceManager = currentProgram.getReferenceManager();

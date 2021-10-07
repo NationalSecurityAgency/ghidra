@@ -56,10 +56,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private static final String VFTABLE_META_PTR_LABEL = "vftable_meta_ptr";
 	private static final String VFTABLE_LABEL = "vftable";
 
-
 	private static final String CLASS_VTABLE_STRUCT_NAME = "_vbtable";
 	private static final String CLASS_VTABLE_PTR_FIELD_EXT = "vftablePtr";
-
 
 	private static final int CHD_MULTINH = 0x00000001; //Multiple inheritance
 	private static final int CHD_VIRTINH = 0x00000002; //Virtual inheritance
@@ -91,7 +89,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		return true;
 	}
 
-
 	@Override
 	public boolean isValidProgramType() {
 		if (!isVisualStudioOrClangPe()) {
@@ -99,7 +96,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		}
 		return true;
 	}
-
 
 	@Override
 	public void fixUpProgram() {
@@ -184,9 +180,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			determineParentClassInfoFromBaseClassArray(recoveredClasses);
 
-
 			assignParentClassToVftables(recoveredClasses);
-
 
 			// using all the information found above, create the class structures, add the constructor,
 			// destructor, vfunctions to class which finds the appropriate class structure and assigns 
@@ -205,7 +199,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				//println("Removing erroneous FID namespaces and corresponding class data types");
 				removeEmptyClassesAndStructures();
 			}
-		
+
 			return recoveredClasses;
 		}
 		catch (CancelledException e) {
@@ -219,13 +213,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 	}
 
-
 	private boolean isVisualStudioOrClangPe() {
 		return program.getExecutableFormat().equals(PeLoader.PE_NAME) &&
 			(program.getCompiler().equals(CompilerEnum.VisualStudio.toString()) ||
 				program.getCompiler().equals(CompilerEnum.Clang.toString()));
 	}
-
 
 	private boolean hasTypeInfoVftable() throws CancelledException {
 
@@ -474,8 +466,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			Address baseClassDescriptorAddress = getReferencedAddress(address.add(i * 4));
 
 			Data baseClassDescriptor = extraUtils.getDataAt(baseClassDescriptorAddress);
-			if (baseClassDescriptor == null || !baseClassDescriptor.getDataType().getName().equals(
-				RTTI_BASE_CLASS_DESCRIPTOR_DATA_NAME)) {
+			if (baseClassDescriptor == null || !baseClassDescriptor.getDataType()
+					.getName()
+					.equals(
+						RTTI_BASE_CLASS_DESCRIPTOR_DATA_NAME)) {
 
 				int num1 = extraUtils.getInt(baseClassDescriptorAddress.add(8));
 				int num2 = extraUtils.getInt(baseClassDescriptorAddress.add(12));
@@ -563,8 +557,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		Data classHierarchyStructure = extraUtils.getDataAt(classHierarchyDescriptorAddress);
 
 		if (classHierarchyStructure != null &&
-			classHierarchyStructure.getDataType().getName().equals(
-				RTTI_CLASS_HIERARCHY_DESCRIPTOR_DATA_NAME)) {
+			classHierarchyStructure.getDataType()
+					.getName()
+					.equals(
+						RTTI_CLASS_HIERARCHY_DESCRIPTOR_DATA_NAME)) {
 			return classHierarchyDescriptorAddress;
 
 		}
@@ -803,7 +799,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private Symbol getGivenSymbol(Address address, String name, Namespace namespace)
 			throws CancelledException {
 
-		Symbol[] symbols = symbolTable.getSymbols(address);
+		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(address);
 		for (Symbol sym : symbols) {
 			monitor.checkCanceled();
 			if (sym.getName().contains(name) && sym.getParentNamespace().equals(namespace)) {
@@ -884,10 +880,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		findFunctionsUsingAtexit();
 	}
 
-
-
-
-
 	/**
 	 * Method to recover the class information for each vftable symbol on the list
 	 * * For each virtual function table:
@@ -923,7 +915,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			if (classNamespace.getSymbol().getSymbolType() != SymbolType.CLASS) {
 				classNamespace = promoteToClassNamespace(classNamespace);
-				if(classNamespace.getSymbol().getSymbolType() != SymbolType.CLASS) {
+				if (classNamespace.getSymbol().getSymbolType() != SymbolType.CLASS) {
 					Msg.debug(this,
 						classHierarchyDescriptorAddress.toString() + " Could not promote " +
 							classNamespace.getName(true) + " to a class namespace.");
@@ -963,11 +955,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				List<RecoveredClass> classesWithVftablesInNamespace =
 					recoverClassesFromVftables(vftableSymbolsInNamespace, false, false);
 				if (classesWithVftablesInNamespace.size() == 0) {
-					Msg.debug(this,"No class recovered for namespace " + classNamespace.getName());
+					Msg.debug(this, "No class recovered for namespace " + classNamespace.getName());
 					continue;
 				}
 				if (classesWithVftablesInNamespace.size() > 1) {
-					Msg.debug(this,"Unexpected multiple classes recovered for namespace " +
+					Msg.debug(this, "Unexpected multiple classes recovered for namespace " +
 						classNamespace.getName());
 					continue;
 				}
@@ -1371,7 +1363,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		findRealVBaseFunctions(recoveredClasses);
 
 	}
-
 
 	/**
 	 * Method to recover parent information, including class offsets, vbase structure and its offset and address if applicable, and whether
@@ -2142,14 +2133,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 	}
 
-
-
-
-
-
-
-
-
 	/**
 	 * Method to call create and apply class structures method starting with top parent classes
 	 * and non-virtual classes then the children and their children until all classes are processed.
@@ -2493,7 +2476,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			Structure recoveredClassDataStruct =
 				createClassMemberDataStructure(recoveredClass,
-				classStructureDataType, dataLen, dataOffset);
+					classStructureDataType, dataLen, dataOffset);
 
 			if (recoveredClassDataStruct != null) {
 				classStructureDataType = structUtils.addDataTypeToStructure(
@@ -2502,7 +2485,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		}
 
-		if (classStructureDataType.getNumComponents() == classStructureDataType.getNumDefinedComponents()) {
+		if (classStructureDataType.getNumComponents() == classStructureDataType
+				.getNumDefinedComponents()) {
 			classStructureDataType.setPackingEnabled(true);
 		}
 
@@ -2590,7 +2574,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		return classStructureDataType;
 	}
 
-
 	/**
 	 * Method to apply the given class's vbtable structure
 	 * @param recoveredClass the given RecoveredClass object which, if applicable, contains the address and structure to apply
@@ -2614,7 +2597,5 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		api.setPlateComment(vbtableAddress,
 			recoveredClass.getClassNamespace().getName(true) + "::vbtable");
 	}
-
-
 
 }

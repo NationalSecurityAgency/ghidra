@@ -287,11 +287,7 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 		CompoundCmd cmd = new CompoundCmd("Delete symbol(s)");
 		for (Symbol symbol : rowObjects) {
 			if (symbol.isDynamic()) {
-				Symbol[] symbols = symbolTable.getSymbols(symbol.getAddress());
-				if (symbols.length == 1) {
-					tool.setStatusInfo("Unable to delete symbol: " + symbol.getName());
-					continue;//can't delete dynamic symbols...
-				}
+				continue;//can't delete dynamic symbols...
 			}
 
 			deleteList.add(symbol);

@@ -234,7 +234,7 @@ public class ElfDefaultGotPltMarkup {
 			long symbolSearchSpacing; // nominal PLT entry size for computing maxSymbolSearchAddress
 
 			Address firstPltEntryAddr = null; // may be offcut within first PLT entry
-			
+
 			if (pltSpacing == 0) { // Entries have same original bytes which refer to PLT head
 				Function pltHeadFunc = elfLoadHelper.createOneByteFunction(null, pltAddr1, false);
 				if (pltHeadFunc.getSymbol().getSource() == SourceType.DEFAULT) {
@@ -537,8 +537,9 @@ public class ElfDefaultGotPltMarkup {
 				// Stop on first error but discard error bookmark since
 				// some plt sections are partly empty and must rely
 				// on normal flow disassembly during analysis
-				prog.getBookmarkManager().removeBookmarks(set, BookmarkType.ERROR,
-					Disassembler.ERROR_BOOKMARK_CATEGORY, monitor);
+				prog.getBookmarkManager()
+						.removeBookmarks(set, BookmarkType.ERROR,
+							Disassembler.ERROR_BOOKMARK_CATEGORY, monitor);
 				break;//we did not disassemble anything...
 			}
 			set.delete(disset);
@@ -604,11 +605,8 @@ public class ElfDefaultGotPltMarkup {
 		if (memory.contains(refAddr)) {
 			return true;
 		}
-		Symbol syms[] = program.getSymbolTable().getSymbols(refAddr);
-		if (syms != null && syms.length > 0 && syms[0].getSource() != SourceType.DEFAULT) {
-			return true;
-		}
-		return false;
+		Symbol primary = program.getSymbolTable().getPrimarySymbol(refAddr);
+		return primary != null && primary.getSource() != SourceType.DEFAULT;
 	}
 
 	private void removeMemRefs(Data data) {

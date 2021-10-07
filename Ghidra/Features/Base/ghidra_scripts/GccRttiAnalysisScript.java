@@ -77,7 +77,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 		symbolTable = currentProgram.getSymbolTable();
 
 		globalNamespace = (GlobalNamespace) currentProgram.getGlobalNamespace();
-		
+
 		// create the path for the data type manager root/ClassDataTypes folder
 		classDataTypesCategoryPath =
 			createDataTypeCategoryPath(CategoryPath.ROOT, DTM_CLASS_DATA_FOLDER_NAME);
@@ -201,7 +201,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 		// find the three special vtables and replace the incorrectly made array with 
 		// data types found in vtable
 		boolean continueProcessing = createSpecialVtables();
-		if(!continueProcessing) {
+		if (!continueProcessing) {
 			return;
 		}
 		// find all typeinfo symbols and get their class namespace and create RecoveredClass object
@@ -264,9 +264,11 @@ public class GccRttiAnalysisScript extends GhidraScript {
 				return false;
 			}
 		}
-		
-		if(class_type_info_vtable == null && si_class_type_info_vtable == null && vmi_class_type_info_vtable == null) {
-			println("Since there are no class typeinfo tables this program does not appear to have RTTI.");
+
+		if (class_type_info_vtable == null && si_class_type_info_vtable == null &&
+			vmi_class_type_info_vtable == null) {
+			println(
+				"Since there are no class typeinfo tables this program does not appear to have RTTI.");
 			return false;
 		}
 		return true;
@@ -378,7 +380,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 
 			// Except for the first one which should have a symbol, if there is a symbol at the 
 			// address, stop making longs because it there are no references into the vtable longs
-			if (offset > 0 && symbolTable.getSymbols(address).length > 0) {
+			if (offset > 0 && symbolTable.getPrimarySymbol(address) != null) {
 				return numLongs;
 			}
 
@@ -499,8 +501,11 @@ public class GccRttiAnalysisScript extends GhidraScript {
 	private void setIsGcc() {
 
 		isGcc =
-			currentProgram.getCompilerSpec().getCompilerSpecID().getIdAsString().equalsIgnoreCase(
-				"gcc");
+			currentProgram.getCompilerSpec()
+					.getCompilerSpecID()
+					.getIdAsString()
+					.equalsIgnoreCase(
+						"gcc");
 	}
 
 	private void createTypeinfoStructs(List<Symbol> typeinfoSymbols) throws CancelledException {
@@ -684,7 +689,6 @@ public class GccRttiAnalysisScript extends GhidraScript {
 	 */
 	private void processVtables() throws Exception {
 
-
 		// find all vtable symbols
 		List<Symbol> listOfVtableSymbols = getListOfSymbolsInAddressSet(
 			currentProgram.getAddressFactory().getAddressSet(), VTABLE_LABEL, false);
@@ -699,7 +703,6 @@ public class GccRttiAnalysisScript extends GhidraScript {
 			Address vtableAddress = vtableSymbol.getAddress();
 
 			processVtable(vtableAddress, vtableNamespace, true);
-
 
 		}
 		return;
@@ -756,7 +759,6 @@ public class GccRttiAnalysisScript extends GhidraScript {
 			return;
 		}
 
-
 		int numFunctionPointers = getNumFunctionPointers(vftableAddress, true, true);
 
 		// if at least one function pointer make vftable label - the createVftable method will
@@ -790,7 +792,6 @@ public class GccRttiAnalysisScript extends GhidraScript {
 				return;
 			}
 		}
-
 
 		// check for an internal vtable and make a symbol there if there is one
 		// will process them later
@@ -1160,7 +1161,6 @@ public class GccRttiAnalysisScript extends GhidraScript {
 		}
 	}
 
-
 	private Address findNextTypeinfoRef(Address startAddress) {
 
 		int offset = 0;
@@ -1275,4 +1275,3 @@ public class GccRttiAnalysisScript extends GhidraScript {
 	}
 
 }
-

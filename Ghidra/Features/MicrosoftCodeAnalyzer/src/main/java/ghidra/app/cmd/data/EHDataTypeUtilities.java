@@ -278,7 +278,7 @@ public class EHDataTypeUtilities {
 		dataTypeName = SymbolUtilities.replaceInvalidChars(dataTypeName, true);
 
 		SymbolTable symbolTable = program.getSymbolTable();
-		Symbol[] symbols = symbolTable.getSymbols(address);
+		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(address);
 		for (Symbol symbol : symbols) {
 			if (symbol.getName().contains(dataTypeName)) {
 				return null; // Already have one with dataTypeName.

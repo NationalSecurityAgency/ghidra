@@ -401,7 +401,7 @@ public class NamespaceUtils {
 			return null;
 		}
 
-		Symbol[] symbols = program.getSymbolTable().getSymbols(address);
+		SymbolIterator symbols = program.getSymbolTable().getSymbolsAsIterator(address);
 		for (Symbol symbol : symbols) {
 			if (symbol.getSymbolType() == SymbolType.FUNCTION &&
 				symbolPath.matchesPathOf(symbol)) {

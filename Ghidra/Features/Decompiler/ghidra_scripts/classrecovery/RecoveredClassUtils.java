@@ -169,7 +169,6 @@ public class RecoveredClassUtils {
 		decompilerUtils = new DecompilerScriptUtils(program, tool, monitor);
 		structUtils = new EditStructureUtils();
 
-
 		dataTypeManager = program.getDataTypeManager();
 		symbolTable = program.getSymbolTable();
 
@@ -236,7 +235,7 @@ public class RecoveredClassUtils {
 			}
 		}
 	}
-	
+
 	public List<Address> getVftableReferences(Function function) {
 		return functionToVftableRefsMap.get(function);
 	}
@@ -521,8 +520,6 @@ public class RecoveredClassUtils {
 	public List<Function> getAllInlinedDestructors() {
 		return allInlinedDestructors;
 	}
-
-
 
 	/**
 	 * Method to determine if referenced vftables are from the same class
@@ -907,7 +904,7 @@ public class RecoveredClassUtils {
 	 */
 	public Address getStoredVftableAddress(List<OffsetPcodeOpPair> storedPcodeOps)
 			throws CancelledException {
-		
+
 		if (storedPcodeOps.size() > 0) {
 			Iterator<OffsetPcodeOpPair> iterator = storedPcodeOps.iterator();
 			// figure out if vftable is referenced
@@ -1287,8 +1284,6 @@ public class RecoveredClassUtils {
 		}
 
 	}
-
-
 
 	/**
 	 * Method to determine if the given possible ancestor is an ancestor of any of the listed classes 
@@ -2658,7 +2653,6 @@ public class RecoveredClassUtils {
 		return false;
 	}
 
-
 	/**
 	 * Method to create a new recovered class object and add it to the namespaceToClassMap
 	 * @param namespace the namespace to put the new class in
@@ -2724,7 +2718,7 @@ public class RecoveredClassUtils {
 				}
 				continue;
 			}
-			
+
 			// get only the functions from the ones that are not already processed structures
 			// return null if not an unprocessed table
 			List<Function> virtualFunctions = getFunctionsFromVftable(vftableAddress, vftableSymbol,
@@ -2765,7 +2759,6 @@ public class RecoveredClassUtils {
 
 			Map<Address, Function> vftableReferenceToFunctionMapping =
 				createVftableReferenceToFunctionMapping(referencesToVftable);
-
 
 			//vftableReferenceToFunctionMapping
 			List<Function> possibleConstructorDestructorsForThisClass =
@@ -2909,8 +2902,6 @@ public class RecoveredClassUtils {
 		}
 		return cdFunctions;
 	}
-
-
 
 	/**
 	 * Method to get functions from vftable
@@ -3890,8 +3881,8 @@ public class RecoveredClassUtils {
 
 		String simpleName = extraUtils.removeTemplate(name);
 
-		Symbol[] symbols = symbolTable.getSymbols(address);
-		for (Symbol symbol : symbols) {
+		SymbolIterator it = symbolTable.getSymbolsAsIterator(address);
+		for (Symbol symbol : it) {
 			monitor.checkCanceled();
 
 			String simpleSymbolName = extraUtils.removeTemplate(symbol.getName());
@@ -4541,7 +4532,7 @@ public class RecoveredClassUtils {
 				if (nameField.contains("purecall")) {
 					nameField = DEFAULT_VFUNCTION_PREFIX + vfunctionNumber;
 					comment = recoveredClass.getName() + " pure " + comment;
-					
+
 				}
 
 				PointerDataType functionPointerDataType =
@@ -4932,10 +4923,11 @@ public class RecoveredClassUtils {
 			//TODO: remove after testing
 			if (!classVftableRef.equals(otherWayRef)) {
 				if (DEBUG) {
-				Msg.debug(this,
-					recoveredClass.getName() + " function " +
-					functionContainingInline.getEntryPoint().toString() + " first ref: " +
-					classVftableRef.toString() + " other way ref: " + otherWayRef.toString());
+					Msg.debug(this,
+						recoveredClass.getName() + " function " +
+							functionContainingInline.getEntryPoint().toString() + " first ref: " +
+							classVftableRef.toString() + " other way ref: " +
+							otherWayRef.toString());
 				}
 			}
 
@@ -5056,8 +5048,9 @@ public class RecoveredClassUtils {
 					Function firstCalledFunction =
 						extraUtils.getCalledFunctionByCallOrder(deletingDestructor, 1);
 					if (firstCalledFunction == null ||
-						!recoveredClass.getConstructorOrDestructorFunctions().contains(
-							firstCalledFunction)) {
+						!recoveredClass.getConstructorOrDestructorFunctions()
+								.contains(
+									firstCalledFunction)) {
 						return null;
 					}
 
@@ -5201,11 +5194,14 @@ public class RecoveredClassUtils {
 					return;
 				}
 				if (parentDestructorClasses.size() == 1) {
-					if (!parentDestructorClasses.get(0).getDestructorList().contains(
-						parentDestructor)) {
+					if (!parentDestructorClasses.get(0)
+							.getDestructorList()
+							.contains(
+								parentDestructor)) {
 						addDestructorToClass(parentDestructorClasses.get(0), parentDestructor);
-						parentDestructorClasses.get(0).removeIndeterminateConstructorOrDestructor(
-							parentDestructor);
+						parentDestructorClasses.get(0)
+								.removeIndeterminateConstructorOrDestructor(
+									parentDestructor);
 					}
 				}
 				// if more than one parent class for this function then let either inline or multi-class
@@ -5390,8 +5386,10 @@ public class RecoveredClassUtils {
 	 */
 	public boolean isClassOffsetToVftableMapComplete(RecoveredClass recoveredClass) {
 
-		if (recoveredClass.getClassOffsetToVftableMap().values().containsAll(
-			recoveredClass.getVftableAddresses())) {
+		if (recoveredClass.getClassOffsetToVftableMap()
+				.values()
+				.containsAll(
+					recoveredClass.getVftableAddresses())) {
 			return true;
 		}
 		return false;
@@ -5434,8 +5432,9 @@ public class RecoveredClassUtils {
 				Function secondCalledFunction =
 					extraUtils.getCalledFunctionByCallOrder(vFunction, 2);
 				if (firstCalledFunction != null && secondCalledFunction != null &&
-					!recoveredClass.getConstructorOrDestructorFunctions().contains(
-						firstCalledFunction) &&
+					!recoveredClass.getConstructorOrDestructorFunctions()
+							.contains(
+								firstCalledFunction) &&
 					secondCalledFunction.equals(operator_delete) &&
 					!getAllConstructorsAndDestructors().contains(vFunction)) {
 					recoveredClass.addDeletingDestructor(vFunction);
@@ -6903,7 +6902,6 @@ public class RecoveredClassUtils {
 			}
 		}
 
-
 		return changedItems;
 
 	}
@@ -7419,12 +7417,12 @@ public class RecoveredClassUtils {
 
 	private Structure getParentClassStructure(Structure childClassStructure, String nameOfParent)
 			throws CancelledException {
-		
+
 		DataTypeComponent[] components = childClassStructure.getComponents();
 		for (DataTypeComponent component : components) {
 			monitor.checkCanceled();
 			DataType componentDataType = component.getDataType();
-			if(componentDataType.getName().equals(nameOfParent)) {
+			if (componentDataType.getName().equals(nameOfParent)) {
 				return (Structure) componentDataType;
 			}
 		}
@@ -7520,22 +7518,24 @@ public class RecoveredClassUtils {
 				DataTypeComponent[] vfunctionComponents = vfunctionStructure.getComponents();
 				for (DataTypeComponent vfunctionComponent : vfunctionComponents) {
 					monitor.checkCanceled();
-					Object changedItem = updateListingVfunctionSignature(data, vfunctionComponent, vftableAddress);
-					if(changedItem != null && !changedItems.contains(changedItem)) {
+					Object changedItem =
+						updateListingVfunctionSignature(data, vfunctionComponent, vftableAddress);
+					if (changedItem != null && !changedItems.contains(changedItem)) {
 						changedItems.add(changedItem);
 
-						FunctionDefinition newFunctionDefinition = getComponentFunctionDefinition(vfunctionComponent);
-						if(newFunctionDefinition == null) {
+						FunctionDefinition newFunctionDefinition =
+							getComponentFunctionDefinition(vfunctionComponent);
+						if (newFunctionDefinition == null) {
 							continue;
 						}
-						
+
 						List<Object> changedStructs =
-								applyNewFunctionDefinitionToComponents(vfunctionComponent,
-									newFunctionDefinition);
+							applyNewFunctionDefinitionToComponents(vfunctionComponent,
+								newFunctionDefinition);
 						if (changedStructs.isEmpty()) {
 							continue;
 						}
-							
+
 						changedItems = updateList(changedItems, changedStructs);
 					}
 				}
@@ -7603,7 +7603,6 @@ public class RecoveredClassUtils {
 		if (areEquivalentFunctionSignatures(newFunctionDefinition, listingFunctionSignature)) {
 			return null;
 		}
-
 
 		boolean changed = updateFunctionSignature(vfunction, newFunctionDefinition);
 		if (changed) {
