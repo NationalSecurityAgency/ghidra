@@ -216,8 +216,7 @@ public class PackedDatabaseCache {
 		ItemDeserializer itemDeserializer = null;
 		boolean success = false;
 		try {
-			long dbTime = packedDbFile.lastModified();
-			if (dbTime == 0 || !packedDbFile.isFile()) {
+			if (!packedDbFile.isFile()) {
 				throw new FileNotFoundException("File not found: " + packedDbFile);
 			}
 			itemDeserializer = new ItemDeserializer(packedDbFile);
