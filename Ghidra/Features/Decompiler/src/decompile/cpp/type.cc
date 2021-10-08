@@ -357,11 +357,11 @@ bool Datatype::isPtrsubMatching(uintb offset) const
       return false;
   }
   else {
-    int4 size = offset;
+    int4 sz = offset;
     int4 typesize = basetype->getSize();
     if ((basetype->metatype != TYPE_ARRAY)&&(basetype->metatype != TYPE_STRUCT))
       return false;	// Not a pointer to a structured type
-    else if ((typesize <= AddrSpace::addressToByteInt(size,wordsize))&&(typesize!=0))
+    else if ((typesize <= AddrSpace::addressToByteInt(sz,wordsize))&&(typesize!=0))
       return false;
   }
   return true;
@@ -374,10 +374,10 @@ void Datatype::restoreXmlBasic(const Element *el)
 
 {
   name = el->getAttributeValue("name");
-  istringstream i(el->getAttributeValue("size"));
-  i.unsetf(ios::dec | ios::hex | ios::oct);
+  istringstream s(el->getAttributeValue("size"));
+  s.unsetf(ios::dec | ios::hex | ios::oct);
   size = -1;
-  i >> size;
+  s >> size;
   if (size < 0)
     throw LowlevelError("Bad size for type "+name);
   metatype = string2metatype( el->getAttributeValue("metatype") );
@@ -389,9 +389,9 @@ void Datatype::restoreXmlBasic(const Element *el)
 	flags |= coretype;
     }
     else if (attribName == "id") {
-      istringstream i1(el->getAttributeValue(i));
-      i1.unsetf(ios::dec | ios::hex | ios::oct);
-      i1 >> id;
+      istringstream s1(el->getAttributeValue(i));
+      s1.unsetf(ios::dec | ios::hex | ios::oct);
+      s1 >> id;
     }
     else if (attribName == "varlength") {
       if (xml_readbool(el->getAttributeValue(i)))
@@ -1293,10 +1293,10 @@ int4 TypeCode::compareBasic(const TypeCode *op) const
   int4 opnump = op->proto->numParams();
   if (nump != opnump)
     return (opnump < nump) ? -1 : 1;
-  uint4 flags = proto->getComparableFlags();
+  uint4 myflags = proto->getComparableFlags();
   uint4 opflags = op->proto->getComparableFlags();
-  if (flags != opflags)
-    return (flags < opflags) ? -1 : 1;
+  if (myflags != opflags)
+    return (myflags < opflags) ? -1 : 1;
 
   return 2;			// Carry on with comparison of parameters
 }
@@ -1467,8 +1467,8 @@ Datatype *TypeSpacebase::nearestArrayedComponentForward(uintb off,uintb *newoff,
 	return symbolType;
       }
     }
-    int4 size = AddrSpace::byteToAddressInt(smallest->getSize(), spaceid->getWordSize());
-    nextAddr = smallest->getAddr() + size;
+    int4 sz = AddrSpace::byteToAddressInt(smallest->getSize(), spaceid->getWordSize());
+    nextAddr = smallest->getAddr() + sz;
   }
   if (nextAddr < addr)
     return (Datatype *)0;		// Don't let the address wrap

@@ -251,9 +251,9 @@ void PrintC::pushTypeStart(const Datatype *ct,bool noident)
 
   if (ct->getName().size()==0) {	// Check for anonymous type
     // We could support a struct or enum declaration here
-    string name = genericTypeName(ct);
+    string nm = genericTypeName(ct);
     pushOp(tok,(const PcodeOp *)0);
-    pushAtom(Atom(name,typetoken,EmitXml::type_color,ct));
+    pushAtom(Atom(nm,typetoken,EmitXml::type_color,ct));
   }
   else {
     pushOp(tok,(const PcodeOp *)0);
@@ -514,8 +514,8 @@ void PrintC::opCall(const PcodeOp *op)
   if (callpoint->getSpace()->getType()==IPTR_FSPEC) {
     fc = FuncCallSpecs::getFspecFromConst(callpoint->getAddr());
     if (fc->getName().size()==0) {
-      string name = genericFunctionName(fc->getEntryAddress());
-      pushAtom(Atom(name,functoken,EmitXml::funcname_color,op,(const Funcdata *)0));
+      string nm = genericFunctionName(fc->getEntryAddress());
+      pushAtom(Atom(nm,functoken,EmitXml::funcname_color,op,(const Funcdata *)0));
     }
     else {
       Funcdata *fd = fc->getFuncdata();
@@ -621,9 +621,9 @@ void PrintC::opConstructor(const PcodeOp *op,bool withNew)
   if (dt->getMetatype() == TYPE_PTR) {
     dt = ((TypePointer *)dt)->getPtrTo();
   }
-  string name = dt->getName();
+  string nm = dt->getName();
   pushOp(&function_call,op);
-  pushAtom(Atom(name,optoken,EmitXml::funcname_color,op));
+  pushAtom(Atom(nm,optoken,EmitXml::funcname_color,op));
   // implied vn's pushed on in reverse order for efficiency
   // see PrintLanguage::pushVnImplied
   if (op->numInput()>3) {	// Multiple (non-this) parameters
@@ -1035,19 +1035,19 @@ void PrintC::opNewOp(const PcodeOp *op)
       // Array allocation form
       pushOp(&new_op,op);
       pushAtom(Atom("new",optoken,EmitXml::keyword_color,op,outvn));
-      string name;
+      string nm;
       if (outvn == (const Varnode *)0) {	// Its technically possible, for new result to be unused
-	name = "<unused>";
+	nm = "<unused>";
       }
       else {
 	Datatype *dt = outvn->getType();
 	while (dt->getMetatype() == TYPE_PTR) {
 	  dt = ((TypePointer *)dt)->getPtrTo();
 	}
-	name = dt->getName();
+	nm = dt->getName();
       }
       pushOp(&subscript,op);
-      pushAtom(Atom(name,optoken,EmitXml::type_color,op));
+      pushAtom(Atom(nm,optoken,EmitXml::type_color,op));
       pushVnImplied(vn1,op,mods);
       return;
     }
@@ -1642,7 +1642,7 @@ bool PrintC::pushEquate(uintb val,int4 sz,const EquateSymbol *sym,const Varnode 
 void PrintC::pushAnnotation(const Varnode *vn,const PcodeOp *op)
 
 {
-  const Scope *scope = op->getParent()->getFuncdata()->getScopeLocal();
+  const Scope *symScope = op->getParent()->getFuncdata()->getScopeLocal();
   int4 size = 0;
   if (op->code() == CPUI_CALLOTHER) {
   // This construction is for volatile CALLOTHERs where the input annotation is the original address
@@ -1663,9 +1663,9 @@ void PrintC::pushAnnotation(const Varnode *vn,const PcodeOp *op)
   }
   SymbolEntry *entry;
   if (size != 0)
-    entry = scope->queryContainer(vn->getAddr(),size,op->getAddr());
+    entry = symScope->queryContainer(vn->getAddr(),size,op->getAddr());
   else {
-    entry = scope->queryContainer(vn->getAddr(),1,op->getAddr());
+    entry = symScope->queryContainer(vn->getAddr(),1,op->getAddr());
     if (entry != (SymbolEntry *)0)
       size = entry->getSize();
     else
@@ -1829,8 +1829,8 @@ void PrintC::pushMismatchSymbol(const Symbol *sym,int4 off,int4 sz,
 
   // We prepend an underscore to indicate a close
   // but not quite match
-    string name = '_'+sym->getName();
-    pushAtom(Atom(name,vartoken,EmitXml::var_color,op,vn));
+    string nm = '_'+sym->getName();
+    pushAtom(Atom(nm,vartoken,EmitXml::var_color,op,vn));
   }
   else
     pushUnnamedLocation(vn->getAddr(),vn,op);
@@ -2235,15 +2235,15 @@ void PrintC::emitVarDeclStatement(const Symbol *sym)
   emit->print(";");
 }
 
-bool PrintC::emitScopeVarDecls(const Scope *scope,int4 cat)
+bool PrintC::emitScopeVarDecls(const Scope *symScope,int4 cat)
 
 {
   bool notempty = false;
   
   if (cat >= 0) {		// If a category is specified
-    int4 sz = scope->getCategorySize(cat);
+    int4 sz = symScope->getCategorySize(cat);
     for(int4 i=0;i<sz;++i) {
-      Symbol *sym = scope->getCategorySymbol(cat,i);
+      Symbol *sym = symScope->getCategorySymbol(cat,i);
       // Slightly different handling for categorized symbols (cat=1 is dynamic symbols)
       if (sym->getName().size() == 0) continue;
       if (sym->isNameUndefined()) continue;
@@ -2252,8 +2252,8 @@ bool PrintC::emitScopeVarDecls(const Scope *scope,int4 cat)
     }
     return notempty;
   }
-  MapIterator iter = scope->begin();
-  MapIterator enditer = scope->end();
+  MapIterator iter = symScope->begin();
+  MapIterator enditer = symScope->end();
   for(;iter!=enditer;++iter) {
     const SymbolEntry *entry = *iter;
     if (entry->isPiece()) continue; // Don't do a partial entry
@@ -2271,8 +2271,8 @@ bool PrintC::emitScopeVarDecls(const Scope *scope,int4 cat)
     notempty = true;
     emitVarDeclStatement(sym);
   }
-  list<SymbolEntry>::const_iterator iter_d = scope->beginDynamic();
-  list<SymbolEntry>::const_iterator enditer_d = scope->endDynamic();
+  list<SymbolEntry>::const_iterator iter_d = symScope->beginDynamic();
+  list<SymbolEntry>::const_iterator enditer_d = symScope->endDynamic();
   for(;iter_d!=enditer_d;++iter_d) {
     const SymbolEntry *entry = &(*iter_d);
     if (entry->isPiece()) continue; // Don't do a partial entry
@@ -2326,15 +2326,15 @@ void PrintC::emitFunctionDeclaration(const Funcdata *fd)
 
 /// For the given scope and all of its children that are not \e function scopes,
 /// emit a variable declaration for each symbol.
-/// \param scope is the given scope
-void PrintC::emitGlobalVarDeclsRecursive(Scope *scope)
+/// \param symScope is the given scope
+void PrintC::emitGlobalVarDeclsRecursive(Scope *symScope)
 
 {
-  if (!scope->isGlobal()) return;
-  emitScopeVarDecls(scope,-1);
+  if (!symScope->isGlobal()) return;
+  emitScopeVarDecls(symScope,-1);
   ScopeMap::const_iterator iter,enditer;
-  iter = scope->childrenBegin();
-  enditer = scope->childrenEnd();
+  iter = symScope->childrenBegin();
+  enditer = symScope->childrenEnd();
   for(;iter!=enditer;++iter) {
     emitGlobalVarDeclsRecursive((*iter).second);
   }
@@ -2665,12 +2665,12 @@ void PrintC::emitBlockIf(const BlockIf *bl)
 	emit->endBlock(id2);
       }
       else {
-	int4 id = emit->startIndent();
+	int4 id2 = emit->startIndent();
 	emit->print("{");
-	int4 id2 = emit->beginBlock(elseBlock);
+	int4 id3 = emit->beginBlock(elseBlock);
 	elseBlock->emit(this);
-	emit->endBlock(id2);
-	emit->stopIndent(id);
+	emit->endBlock(id3);
+	emit->stopIndent(id2);
 	emit->tagLine();
 	emit->print("}");
       }
@@ -2923,8 +2923,8 @@ void PrintC::emitLabel(const FlowBlock *bl)
   uintb off = addr.getOffset();
   if (!bb->hasSpecialLabel()) {
     if (bb->getType() == FlowBlock::t_basic) {
-      const Scope *scope = ((const BlockBasic *)bb)->getFuncdata()->getScopeLocal();
-      Symbol *sym = scope->queryCodeLabel(addr);
+      const Scope *symScope = ((const BlockBasic *)bb)->getFuncdata()->getScopeLocal();
+      Symbol *sym = symScope->queryCodeLabel(addr);
       if (sym != (Symbol *)0) {
 	emit->tagLabel(sym->getName().c_str(),EmitXml::no_color,spc,off);
 	return;

@@ -722,12 +722,12 @@ MapState::MapState(AddrSpace *spc,const RangeList &rn,
 {
   spaceid = spc;
   defaultType = dt;
-  set<Range>::const_iterator iter;
-  for(iter=pm.begin();iter!=pm.end();++iter) {
-    AddrSpace *spc = (*iter).getSpace();
-    uintb first = (*iter).getFirst();
-    uintb last = (*iter).getLast();
-    range.removeRange(spc,first,last); // Clear possible input symbols
+  set<Range>::const_iterator pmiter;
+  for(pmiter=pm.begin();pmiter!=pm.end();++pmiter) {
+    AddrSpace *pmSpc = (*pmiter).getSpace();
+    uintb first = (*pmiter).getFirst();
+    uintb last = (*pmiter).getLast();
+    range.removeRange(pmSpc,first,last); // Clear possible input symbols
   }
 #ifdef OPACTION_DEBUG
   debugon = false;
@@ -737,9 +737,9 @@ MapState::MapState(AddrSpace *spc,const RangeList &rn,
 MapState::~MapState(void)
 
 {
-  vector<RangeHint *>::iterator iter;
-  for(iter=maplist.begin();iter!=maplist.end();++iter)
-    delete *iter;
+  vector<RangeHint *>::iterator riter;
+  for(riter=maplist.begin();riter!=maplist.end();++riter)
+    delete *riter;
 }
 
 /// A specific range of bytes is described for the hint, given a starting offset and other information.
@@ -760,8 +760,8 @@ void MapState::addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,i
   intb sst = (intb)AddrSpace::byteToAddress(st,spaceid->getWordSize());
   sign_extend(sst,spaceid->getAddrSize()*8-1);
   sst = (intb)AddrSpace::addressToByte(sst,spaceid->getWordSize());
-  RangeHint *range = new RangeHint(st,sz,sst,ct,fl,rt,hi);
-  maplist.push_back(range);
+  RangeHint *newRange = new RangeHint(st,sz,sst,ct,fl,rt,hi);
+  maplist.push_back(newRange);
 #ifdef OPACTION_DEBUG
   if (debugon) {
     ostringstream s;
@@ -863,14 +863,14 @@ void MapState::addGuard(const LoadGuard &guard,OpCode opc,TypeFactory *typeFacto
 void MapState::gatherSymbols(const EntryMap *rangemap)
 
 {
-  list<SymbolEntry>::const_iterator iter;
+  list<SymbolEntry>::const_iterator riter;
   Symbol *sym;
   if (rangemap == (EntryMap *)0) return;
-  for(iter=rangemap->begin_list();iter!=rangemap->end_list();++iter) {
-    sym = (*iter).getSymbol();
+  for(riter=rangemap->begin_list();riter!=rangemap->end_list();++riter) {
+    sym = (*riter).getSymbol();
     if (sym == (Symbol *)0) continue;
     //    if ((*iter).isPiece()) continue;     // This should probably never happen
-    uintb start = (*iter).getAddr().getOffset();
+    uintb start = (*riter).getAddr().getOffset();
     Datatype *ct = sym->getType();
     addRange(start,ct,sym->getFlags(),RangeHint::fixed,-1);
   }
@@ -890,8 +890,8 @@ bool MapState::initialize(void)
   sign_extend(sst,spaceid->getAddrSize()*8-1);
   sst = (intb)AddrSpace::addressToByte(sst,spaceid->getWordSize());
   // Add extra range to bound any final open entry
-  RangeHint *range = new RangeHint(high,1,sst,defaultType,0,RangeHint::endpoint,-2);
-  maplist.push_back(range);
+  RangeHint *termRange = new RangeHint(high,1,sst,defaultType,0,RangeHint::endpoint,-2);
+  maplist.push_back(termRange);
 
   stable_sort(maplist.begin(),maplist.end(),RangeHint::compareRanges);
   reconcileDatatypes();
@@ -906,12 +906,12 @@ bool MapState::initialize(void)
 void MapState::gatherVarnodes(const Funcdata &fd)
 
 {
-  VarnodeLocSet::const_iterator iter,iterend;
+  VarnodeLocSet::const_iterator riter,iterend;
   Varnode *vn;
-  iter = fd.beginLoc(spaceid);
+  riter = fd.beginLoc(spaceid);
   iterend = fd.endLoc(spaceid);
-  while(iter != iterend) {
-    vn = *iter++;
+  while(riter != iterend) {
+    vn = *riter++;
     if (vn->isFree()) continue;
     uintb start = vn->getOffset();
     Datatype *ct = vn->getType();
@@ -929,13 +929,13 @@ void MapState::gatherHighs(const Funcdata &fd)
 
 {
   vector<HighVariable *> varvec;
-  VarnodeLocSet::const_iterator iter,iterend;
+  VarnodeLocSet::const_iterator riter,iterend;
   Varnode *vn;
   HighVariable *high;
-  iter = fd.beginLoc(spaceid);
+  riter = fd.beginLoc(spaceid);
   iterend = fd.endLoc(spaceid);
-  while(iter != iterend) {
-    vn = *iter++;
+  while(riter != iterend) {
+    vn = *riter++;
     high = vn->getHigh();
     if (high == (HighVariable *)0) continue;
     if (high->isMark()) continue;
@@ -986,12 +986,12 @@ void MapState::gatherOpen(const Funcdata &fd)
 
   TypeFactory *typeFactory = fd.getArch()->types;
   const list<LoadGuard> &loadGuard( fd.getLoadGuards() );
-  for(list<LoadGuard>::const_iterator iter=loadGuard.begin();iter!=loadGuard.end();++iter)
-    addGuard(*iter,CPUI_LOAD,typeFactory);
+  for(list<LoadGuard>::const_iterator giter=loadGuard.begin();giter!=loadGuard.end();++giter)
+    addGuard(*giter,CPUI_LOAD,typeFactory);
 
   const list<LoadGuard> &storeGuard( fd.getStoreGuards() );
-  for(list<LoadGuard>::const_iterator iter=storeGuard.begin();iter!=storeGuard.end();++iter)
-    addGuard(*iter,CPUI_STORE,typeFactory);
+  for(list<LoadGuard>::const_iterator siter=storeGuard.begin();siter!=storeGuard.end();++siter)
+    addGuard(*siter,CPUI_STORE,typeFactory);
 }
 
 /// Define stack Symbols based on Varnodes.

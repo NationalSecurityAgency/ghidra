@@ -4174,7 +4174,7 @@ void FuncProto::restoreXml(const Element *el,Architecture *glb)
     bool outputlock = false;
 
     if (subel->getName() == "returnsym") {
-      int4 num = subel->getNumAttributes();
+      num = subel->getNumAttributes();
       for(int4 i=0;i<num;++i) {
 	const string &attrname( subel->getAttributeName(i) );
 	if (attrname == "typelock")
@@ -4891,9 +4891,9 @@ void FuncCallSpecs::forceSet(Funcdata &data,const FuncProto &fp)
 void FuncCallSpecs::insertPcode(Funcdata &data)
 
 {
-  int4 injectid = getInjectUponReturn();
-  if (injectid < 0) return;		// Nothing to inject
-  InjectPayload *payload = data.getArch()->pcodeinjectlib->getPayload(injectid);
+  int4 id = getInjectUponReturn();
+  if (id < 0) return;		// Nothing to inject
+  InjectPayload *payload = data.getArch()->pcodeinjectlib->getPayload(id);
 
   // do the insertion right after the callpoint
   list<PcodeOp *>::iterator iter = op->getBasicIter();
@@ -4964,13 +4964,13 @@ void FuncCallSpecs::checkInputTrialUse(Funcdata &data,AliasChecker &aliascheck)
 
   int4 maxancestor = data.getArch()->trim_recurse_max;
   bool callee_pop = false;
-  int4 extrapop = 0;
+  int4 expop = 0;
   if (hasModel()) {
     callee_pop = (getModelExtraPop() == ProtoModel::extrapop_unknown);
     if (callee_pop) {		
-      extrapop = getExtraPop();
+      expop = getExtraPop();
       // Tried to use getEffectiveExtraPop at one point, but it is too unreliable
-      if ((extrapop==ProtoModel::extrapop_unknown)||(extrapop <=4))
+      if ((expop==ProtoModel::extrapop_unknown)||(expop <=4))
 	callee_pop = false;
       // If the subfunctions do their own parameter popping and
       // if the extrapop is successfully recovered this is hard evidence
@@ -4992,7 +4992,7 @@ void FuncCallSpecs::checkInputTrialUse(Funcdata &data,AliasChecker &aliascheck)
       else if (!data.getFuncProto().getLocalRange().inRange(vn->getAddr(),1))
 	trial.markNoUse();
       else if (callee_pop) {
-	if ((int4)(trial.getAddress().getOffset() + (trial.getSize()-1)) < extrapop)
+	if ((int4)(trial.getAddress().getOffset() + (trial.getSize()-1)) < expop)
 	  trial.markActive();
 	else
 	  trial.markNoUse();

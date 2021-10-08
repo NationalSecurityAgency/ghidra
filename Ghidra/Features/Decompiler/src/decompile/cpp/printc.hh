@@ -146,7 +146,7 @@ protected:
   void emitEnumDefinition(const TypeEnum *ct);		///< Emit the definition of an \e enumeration data-type
   void emitPrototypeOutput(const FuncProto *proto,const Funcdata *fd);	///< Emit the output data-type of a function prototype
   void emitPrototypeInputs(const FuncProto *proto);	///< Emit the input data-types of a function prototype
-  void emitGlobalVarDeclsRecursive(Scope *scope);	///< Emit variable declarations for all global symbols under given scope
+  void emitGlobalVarDeclsRecursive(Scope *symScope);	///< Emit variable declarations for all global symbols under given scope
   void emitLocalVarDecls(const Funcdata *fd);		///< Emit variable declarations for a function
   void emitStatement(const PcodeOp *inst);		///< Emit a statement in the body of a function
   bool emitInplaceOp(const PcodeOp *op);		///< Attempt to emit an expression rooted at an \e in-place operator
@@ -192,7 +192,7 @@ protected:
   virtual void emitExpression(const PcodeOp *op);
   virtual void emitVarDecl(const Symbol *sym);
   virtual void emitVarDeclStatement(const Symbol *sym);
-  virtual bool emitScopeVarDecls(const Scope *scope,int4 cat);
+  virtual bool emitScopeVarDecls(const Scope *symScope,int4 cat);
   virtual void emitFunctionDeclaration(const Funcdata *fd);
   virtual void emitTypeDefinition(const Datatype *ct);
   virtual bool checkPrintNegation(const Varnode *vn);
