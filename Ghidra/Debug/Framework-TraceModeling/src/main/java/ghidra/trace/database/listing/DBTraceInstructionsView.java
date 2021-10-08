@@ -27,6 +27,8 @@ import ghidra.program.model.lang.InstructionError.InstructionErrorType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.database.context.DBTraceRegisterContextManager;
+import ghidra.trace.database.context.DBTraceRegisterContextSpace;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.Trace.TraceCodeChangeType;
@@ -64,9 +66,34 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			this.conflictCodeUnit = conflictCodeUnit;
 		}
 
+		protected void doSetContexts(Range<Long> lifespan, Address min, Address max,
+				ProcessorContextView context) {
+			Language language = space.baseLanguage;
+			Register contextReg = language.getContextBaseRegister();
+			if (contextReg == null) {
+				return;
+			}
+			RegisterValue newValue = context.getRegisterValue(contextReg);
+			DBTraceRegisterContextManager ctxMgr = space.trace.getRegisterContextManager();
+			if (Objects.equals(ctxMgr.getDefaultValue(language, contextReg, min), newValue)) {
+				DBTraceRegisterContextSpace ctxSpace = ctxMgr.get(space, false);
+				if (ctxSpace == null) {
+					return;
+				}
+				ctxSpace.setValue(language, null, lifespan, new AddressRangeImpl(min, max));
+				return;
+			}
+			DBTraceRegisterContextSpace ctxSpace = ctxMgr.get(space, true);
+			// TODO: Do not save non-flowing context beyond???
+			ctxSpace.setValue(language, newValue, lifespan, new AddressRangeImpl(min, max));
+		}
+
 		protected Instruction doCreateInstruction(Range<Long> lifespan, Address address,
 				InstructionPrototype prototype, Instruction protoInstr) {
 			try {
+				doSetContexts(lifespan, address, address.addNoWrap(prototype.getLength() - 1),
+					protoInstr);
+
 				Instruction created = doCreate(lifespan, address, prototype, protoInstr);
 				// copy override settings to replacement instruction
 				if (protoInstr.isFallThroughOverridden()) {
