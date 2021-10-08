@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.junit.Test;
@@ -32,8 +33,7 @@ import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Instruction;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
@@ -775,6 +775,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.overrideContextWithDefault();
 			emuThread.stepInstruction();
+			// No assertions. It should simply not throw an exception.
 		}
 	}
 
@@ -799,6 +800,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.overrideContextWithDefault();
 			emuThread.stepInstruction();
+			// No assertions. It should throw an exception.
 		}
 	}
 
@@ -823,6 +825,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.overrideContextWithDefault();
 			emuThread.stepInstruction();
+			// No assertions. It should simply not throw an exception.
 		}
 	}
 
@@ -847,6 +850,54 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 			emuThread.overrideContextWithDefault();
 			emuThread.stepInstruction();
 			emuThread.stepInstruction();
+			// No assertions. It should simply not throw an exception.
+		}
+	}
+
+	@Test
+	public void testDEC_MOV_compat32() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			Language lang = tb.trace.getBaseLanguage();
+			Register ctxReg = lang.getContextBaseRegister();
+			Register opsizeReg = lang.getRegister("opsize");
+			Register addrsizeReg = lang.getRegister("addrsize");
+			Register longModeReg = lang.getRegister("longMode");
+			RegisterValue ctxVal = new RegisterValue(ctxReg)
+					.assign(opsizeReg, BigInteger.ONE)
+					.assign(addrsizeReg, BigInteger.ONE)
+					.assign(longModeReg, BigInteger.ZERO);
+			try (UndoableTransaction tid = tb.startTransaction()) {
+				tb.trace.getRegisterContextManager()
+						.setValue(lang, ctxVal, Range.atLeast(0L),
+							tb.range(0x00400000, 0x00400002));
+			}
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"RIP = 0x00400000;",
+					"RSP = 0x00110000;",
+					"RAX = 0xff12345678;"),
+				List.of(
+					"DEC EAX",
+					"MOV ECX,EAX"));
+			// Assembly sanity check
+			ByteBuffer buf = ByteBuffer.allocate(3);
+			tb.trace.getMemoryManager().getBytes(0, tb.addr(0x00400000), buf);
+			assertArrayEquals(tb.arr(0x48, 0x89, 0xc1), buf.array());
+
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.overrideContext(ctxVal);
+			emuThread.stepInstruction();
+			emuThread.stepInstruction();
+
+			try (UndoableTransaction tid = tb.startTransaction()) {
+				emu.writeDown(tb.trace, 1, 1, false);
+			}
+
+			assertEquals(BigInteger.valueOf(0x00400003),
+				TraceSleighUtils.evaluate("RIP", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0x12345677),
+				TraceSleighUtils.evaluate("RCX", tb.trace, 1, thread, 0));
 		}
 	}
 }

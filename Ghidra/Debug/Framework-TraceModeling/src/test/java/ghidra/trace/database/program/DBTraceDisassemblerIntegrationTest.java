@@ -215,6 +215,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 		}
 	}
 
+	@Test
 	@TestLanguage(ProgramBuilder._X64)
 	public void test64BitX86DBTrace() throws Exception {
 		try (UndoableTransaction tid = b.startTransaction()) {
@@ -229,6 +230,15 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 				new X86_64DisassembleCommand(b.addr(0x00400000), restricted, false);
 			x86Dis.applyTo(b.trace.getFixedProgramView(0), TaskMonitor.DUMMY);
 
+			DBTraceCodeUnitsMemoryView cuManager = b.trace.getCodeManager().codeUnits();
+			CodeUnit cu1 = cuManager.getAt(0, b.addr(0x00400000));
+			assertEquals("MOV RCX,RAX", cu1.toString());
+		}
+
+		File saved = b.save();
+
+		// Check that required context is actually saved and restored
+		try (ToyDBTraceBuilder b = new ToyDBTraceBuilder(saved)) {
 			DBTraceCodeUnitsMemoryView cuManager = b.trace.getCodeManager().codeUnits();
 			CodeUnit cu1 = cuManager.getAt(0, b.addr(0x00400000));
 			assertEquals("MOV RCX,RAX", cu1.toString());
@@ -252,6 +262,17 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 				new X86_64DisassembleCommand(b.addr(0x00400000), restricted, true);
 			x86Dis.applyTo(b.trace.getFixedProgramView(0), TaskMonitor.DUMMY);
 
+			DBTraceCodeUnitsMemoryView cuManager = b.trace.getCodeManager().codeUnits();
+			CodeUnit cu1 = cuManager.getAt(0, b.addr(0x00400000));
+			assertEquals("DEC EAX", cu1.toString());
+			CodeUnit cu2 = cuManager.getAt(0, b.addr(0x00400001));
+			assertEquals("MOV ECX,EAX", cu2.toString());
+		}
+
+		File saved = b.save();
+
+		// Check that required context is actually saved and restored
+		try (ToyDBTraceBuilder b = new ToyDBTraceBuilder(saved)) {
 			DBTraceCodeUnitsMemoryView cuManager = b.trace.getCodeManager().codeUnits();
 			CodeUnit cu1 = cuManager.getAt(0, b.addr(0x00400000));
 			assertEquals("DEC EAX", cu1.toString());
