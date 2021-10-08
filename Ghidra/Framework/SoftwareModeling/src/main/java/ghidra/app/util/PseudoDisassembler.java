@@ -758,7 +758,8 @@ public class PseudoDisassembler {
 							// does this reference a valid function?
 							if (program != null) {
 								Symbol primary = program.getSymbolTable().getPrimarySymbol(flow);
-								if (primary.getSymbolType() == SymbolType.FUNCTION) {
+								if (primary != null &&
+									primary.getSymbolType() == SymbolType.FUNCTION) {
 									didCallValidSubroutine = true;
 								}
 							}
