@@ -71,13 +71,20 @@ public class GdbModelTargetBreakpointContainer
 		GdbModelTargetBreakpointSpec spec = getTargetBreakpointSpec(info);
 		spec.init().thenRun(() -> {
 			changeElements(List.of(), List.of(spec), "Created");
+		}).exceptionally(ex -> {
+			model.reportError(this, "Could not update created breakpoint", ex);
+			return null;
 		});
 	}
 
 	@Override
 	public void breakpointModified(GdbBreakpointInfo newInfo, GdbBreakpointInfo oldInfo,
 			GdbCause cause) {
-		getTargetBreakpointSpec(oldInfo).updateInfo(oldInfo, newInfo, "Modified");
+		GdbModelTargetBreakpointSpec spec = getTargetBreakpointSpec(oldInfo);
+		spec.updateInfo(oldInfo, newInfo, "Modified").exceptionally(ex -> {
+			model.reportError(this, "Could not updated modified breakpoint", ex);
+			return null;
+		});
 	}
 
 	protected GdbModelTargetBreakpointLocation breakpointHit(long bpId,
