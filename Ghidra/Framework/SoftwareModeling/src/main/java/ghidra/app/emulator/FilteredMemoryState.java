@@ -34,8 +34,12 @@ class FilteredMemoryState extends MemoryState {
 		int readLen = super.getChunk(res, spc, off, size, stopOnUnintialized);
 		if (filterEnabled && filter != null) {
 			filterEnabled = false;
-			filter.filterRead(spc, off, readLen, res);
-			filterEnabled = true;
+			try {
+				filter.filterRead(spc, off, readLen, res);
+			}
+			finally {
+				filterEnabled = true;
+			}
 		}
 		return readLen;
 	}
@@ -44,8 +48,12 @@ class FilteredMemoryState extends MemoryState {
 	public void setChunk(byte[] res, AddressSpace spc, long off, int size) {
 		if (filterEnabled && filter != null) {
 			filterEnabled = false;
-			filter.filterWrite(spc, off, size, res);
-			filterEnabled = true;
+			try {
+				filter.filterWrite(spc, off, size, res);
+			}
+			finally {
+				filterEnabled = true;
+			}
 		}
 		super.setChunk(res, spc, off, size);
 	}
