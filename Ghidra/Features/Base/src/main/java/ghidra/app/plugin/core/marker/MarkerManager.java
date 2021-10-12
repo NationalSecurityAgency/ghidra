@@ -99,6 +99,7 @@ public class MarkerManager implements MarkerService {
 	private PopupWindow popupWindow;
 
 	private List<ChangeListener> listeners = new ArrayList<>();
+	private MarkerClickedListener markerClickedListener = null;
 
 	public MarkerManager(Plugin ownerPlugin) {
 		this(ownerPlugin.getName(), ownerPlugin.getTool());
@@ -127,6 +128,23 @@ public class MarkerManager implements MarkerService {
 		markerPanel = new MarkerPanel(this);
 		markerPanel.setPreferredSize(new Dimension(16, 1));
 		marginProvider = new MyMarginProvider();
+
+		markerPanel.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() != 2 || markerClickedListener == null) {
+					return;
+				}
+				Address addr = getAddress(e.getY());
+				if (addr == null) {
+					return;
+				}
+				MarkerSet marker = getMarkerSet(addr);
+				MarkerLocation location =
+					new MarkerLocation(marker, currentProgram, addr, e.getX(), e.getY());
+				markerClickedListener.markerDoubleClicked(location);
+			}
+		});
 
 		actionList = new MarkerActionList();
 	}
@@ -865,4 +883,12 @@ public class MarkerManager implements MarkerService {
 		}
 	}
 
+	@Override
+	public void setMarkerClickedListener(MarkerClickedListener listener) {
+		if (listener != null && markerClickedListener != null) {
+			throw new IllegalStateException(
+				"Attempted to assign more than one MarkerClickedListener!");
+		}
+		markerClickedListener = listener;
+	}
 }
