@@ -113,6 +113,37 @@ public final class DWARFAttribute {
 	public static final int DW_AT_const_expr = 0x6c;
 	public static final int DW_AT_enum_class = 0x6d;
 	public static final int DW_AT_linkage_name = 0x6e;
+	public static final int DW_AT_string_length_bit_size = 0x6f;
+	public static final int DW_AT_string_length_byte_size = 0x70;
+	public static final int DW_AT_rank = 0x71;
+	public static final int DW_AT_str_offsets_base = 0x72;
+	public static final int DW_AT_addr_base = 0x73;
+	public static final int DW_AT_rnglists_base = 0x74;
+	// 0x75 reserved, unused
+	public static final int DW_AT_dwo_name = 0x76;
+	public static final int DW_AT_reference = 0x77;
+	public static final int DW_AT_rvalue_reference = 0x78;
+	public static final int DW_AT_macros = 0x79;
+	public static final int DW_AT_call_all_calls = 0x7a;
+	public static final int DW_AT_call_all_source_calls = 0x7b;
+	public static final int DW_AT_call_all_tail_calls = 0x7c;
+	public static final int DW_AT_call_return_pc = 0x7d;
+	public static final int DW_AT_call_value = 0x7e;
+	public static final int DW_AT_call_origin = 0x7f;
+	public static final int DW_AT_call_parameter = 0x80;
+	public static final int DW_AT_call_pc = 0x81;
+	public static final int DW_AT_call_tail_call = 0x82;
+	public static final int DW_AT_call_target = 0x83;
+	public static final int DW_AT_call_target_clobbered = 0x84;
+	public static final int DW_AT_call_data_location = 0x85;
+	public static final int DW_AT_call_data_value = 0x86;
+	public static final int DW_AT_noreturn = 0x87;
+	public static final int DW_AT_alignment = 0x88;
+	public static final int DW_AT_export_symbols = 0x89;
+	public static final int DW_AT_deleted = 0x8a;
+	public static final int DW_AT_defaulted = 0x8b;
+	public static final int DW_AT_loclists_base = 0x8c;
+
 	public static final int DW_AT_lo_user = 0x2000;
 	public static final int DW_AT_hi_user = 0x3fff;
 	public static final int DW_AT_MIPS_linkage_name = 0x2007;
