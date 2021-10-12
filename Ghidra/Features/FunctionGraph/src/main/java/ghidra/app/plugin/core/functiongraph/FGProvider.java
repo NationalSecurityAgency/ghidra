@@ -766,17 +766,10 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		Address minAddress = vertexAddresses.getMinAddress();
 
 		Symbol primary = symbolTable.getPrimarySymbol(minAddress);
-		if (!primary.isDynamic()) {
-			return;
+		// if there is a symbol, then the block should not be merged
+		if (primary == null) {
+			controller.mergeVertexWithParent(destinationVertex);
 		}
-
-		ReferenceManager referenceManager = currentProgram.getReferenceManager();
-		ReferenceIterator references = referenceManager.getReferencesTo(minAddress);
-		if (references.hasNext()) {
-			return; // other references to this vertex entry point
-		}
-
-		controller.mergeVertexWithParent(destinationVertex);
 	}
 
 	private void handleReferenceAdded(DomainObjectChangeRecord record) {
