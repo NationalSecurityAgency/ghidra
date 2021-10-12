@@ -361,7 +361,7 @@ bool Funcdata::removeUnreachableBlocks(bool issuewarning,bool checkexistence)
     if (bblocks.getBlock(i)->isEntryPoint()) break;
   bblocks.collectReachable(list,bblocks.getBlock(i),true); // Collect (un)reachable blocks
 
-  for(int4 i=0;i<list.size();++i) {
+  for(i=0;i<list.size();++i) {
     list[i]->setDead();
     if (issuewarning) {
       ostringstream s;
@@ -374,12 +374,12 @@ bool Funcdata::removeUnreachableBlocks(bool issuewarning,bool checkexistence)
       warningHeader(s.str());
     }
   }
-  for(int4 i=0;i<list.size();++i) {
+  for(i=0;i<list.size();++i) {
     BlockBasic *bb = (BlockBasic *)list[i];
     while(bb->sizeOut() > 0)
       branchRemoveInternal(bb,0);
   }
-  for(int4 i=0;i<list.size();++i) {
+  for(i=0;i<list.size();++i) {
     BlockBasic *bb = (BlockBasic *)list[i];
     blockRemoveInternal(bb,true);
   }
@@ -770,9 +770,9 @@ PcodeOp *Funcdata::nodeSplitCloneOp(PcodeOp *op)
   }
   dup = newOp(op->numInput(),op->getAddr());
   opSetOpcode(dup,op->code());
-  uint4 flags = op->flags & (PcodeOp::startbasic | PcodeOp::nocollapse |
-			     PcodeOp::startmark);
-  dup->setFlag(flags);
+  uint4 fl = op->flags & (PcodeOp::startbasic | PcodeOp::nocollapse |
+			  PcodeOp::startmark);
+  dup->setFlag(fl);
   return dup;
 }
 

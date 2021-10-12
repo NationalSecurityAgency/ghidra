@@ -249,10 +249,10 @@ class Heritage {
   void guard(const Address &addr,int4 size,vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &inputvars);
   void guardInput(const Address &addr,int4 size,vector<Varnode *> &input);
   void guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,const Address &transAddr,int4 size);
-  void guardCalls(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write);
+  void guardCalls(uint4 fl,const Address &addr,int4 size,vector<Varnode *> &write);
   void guardStores(const Address &addr,int4 size,vector<Varnode *> &write);
-  void guardLoads(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write);
-  void guardReturns(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write);
+  void guardLoads(uint4 fl,const Address &addr,int4 size,vector<Varnode *> &write);
+  void guardReturns(uint4 fl,const Address &addr,int4 size,vector<Varnode *> &write);
   static void buildRefinement(vector<int4> &refine,const Address &addr,int4 size,const vector<Varnode *> &vnlist);
   void splitByRefinement(Varnode *vn,const Address &addr,const vector<int4> &refine,vector<Varnode *> &split);
   void refineRead(Varnode *vn,const Address &addr,const vector<int4> &refine,vector<Varnode *> &newvn);

@@ -319,8 +319,8 @@ ExternRefSymbol *ScopeGhidra::findExternalRef(const Address &addr) const
 Funcdata *ScopeGhidra::findFunction(const Address &addr) const
 
 {
-  Funcdata *fd = cache->findFunction(addr);
-  if (fd == (Funcdata *)0) {
+  Funcdata *resFd = cache->findFunction(addr);
+  if (resFd == (Funcdata *)0) {
     // Check if this address has already been queried,
     // (returning a symbol other than a function_symbol)
     SymbolEntry *entry = cache->findContainer(addr,1,Address());
@@ -328,10 +328,10 @@ Funcdata *ScopeGhidra::findFunction(const Address &addr) const
       FunctionSymbol *sym;
       sym = dynamic_cast<FunctionSymbol *>(removeQuery(addr));
       if (sym != (FunctionSymbol *)0)
-	fd = sym->getFunction();
+	resFd = sym->getFunction();
     }
   }
-  return fd;
+  return resFd;
 }
 
 LabSymbol *ScopeGhidra::findCodeLabel(const Address &addr) const
@@ -356,40 +356,40 @@ LabSymbol *ScopeGhidra::findCodeLabel(const Address &addr) const
 Funcdata *ScopeGhidra::resolveExternalRefFunction(ExternRefSymbol *sym) const
 
 {
-  Funcdata *fd = (Funcdata *)0;
+  Funcdata *resFd = (Funcdata *)0;
   const Scope *basescope = ghidra->symboltab->mapScope(this,sym->getRefAddr(),Address());
   // Truncate search at this scope, we don't want
   // the usual remote_query if the function isn't in cache
   // this won't recover external functions, but will just
   // return the externalref symbol again
-  stackFunction(basescope,this,sym->getRefAddr(),&fd);
-  if (fd == (Funcdata *)0)
-    fd = cache->findFunction(sym->getRefAddr());
-  if (fd == (Funcdata *)0) {
+  stackFunction(basescope,this,sym->getRefAddr(),&resFd);
+  if (resFd == (Funcdata *)0)
+    resFd = cache->findFunction(sym->getRefAddr());
+  if (resFd == (Funcdata *)0) {
     // If the function isn't in cache, we use the special
     // getExternalRefXML interface to recover the external function
     Document *doc;
     SymbolEntry *entry = sym->getFirstWholeMap();
     doc = ghidra->getExternalRefXML(entry->getAddr());
     if (doc != (Document *)0) {
-      FunctionSymbol *sym;
+      FunctionSymbol *funcSym;
       // Make sure referenced function is cached
-      sym = dynamic_cast<FunctionSymbol *>(dump2Cache(doc));
+      funcSym = dynamic_cast<FunctionSymbol *>(dump2Cache(doc));
       delete doc;
-      if (sym != (FunctionSymbol *)0)
-	fd = sym->getFunction();
+      if (funcSym != (FunctionSymbol *)0)
+	resFd = funcSym->getFunction();
     }
   }
-  return fd;
+  return resFd;
 }
 
-SymbolEntry *ScopeGhidra::addSymbol(const string &name,Datatype *ct,
-					      const Address &addr,const Address &usepoint)
+SymbolEntry *ScopeGhidra::addSymbol(const string &nm,Datatype *ct,
+				    const Address &addr,const Address &usepoint)
 {
   // We do not inform Ghidra of the new symbol, we just
   // stick it in the cache.  This allows the mapglobals action
   // to build global variables that Ghidra knows nothing about
-  return cache->addSymbol(name,ct,addr,usepoint);
+  return cache->addSymbol(nm,ct,addr,usepoint);
 }
 
 SymbolEntry *ScopeGhidraNamespace::addMapInternal(Symbol *sym,uint4 exfl,const Address &addr,int4 off,int4 sz,

@@ -1168,27 +1168,27 @@ Scope::~Scope(void)
 /// If there are no Symbols in \b this Scope, recurse into the parent Scope.
 /// If there are 1 (or more) Symbols matching in \b this Scope, add them to
 /// the result list
-/// \param name is the name to search for
+/// \param nm is the name to search for
 /// \param res is the result list
-void Scope::queryByName(const string &name,vector<Symbol *> &res) const
+void Scope::queryByName(const string &nm,vector<Symbol *> &res) const
 
 {
-  findByName(name,res);
+  findByName(nm,res);
   if (!res.empty())
     return;
   if (parent != (Scope *)0)
-    parent->queryByName(name,res);
+    parent->queryByName(nm,res);
 }
 
 /// Starting with \b this Scope, find a function with the given name.
 /// If there are no Symbols with that name in \b this Scope at all, recurse into the parent Scope.
-/// \param name if the name to search for
+/// \param nm if the name to search for
 /// \return the Funcdata object of the matching function, or NULL if it doesn't exist
-Funcdata *Scope::queryFunction(const string &name) const
+Funcdata *Scope::queryFunction(const string &nm) const
 
 {
   vector<Symbol *> symList;
-  queryByName(name,symList);
+  queryByName(nm,symList);
   for(int4 i=0;i<symList.size();++i) {
     Symbol *sym = symList[i];
     FunctionSymbol *funcsym = dynamic_cast<FunctionSymbol *>(sym);
@@ -1284,23 +1284,23 @@ LabSymbol *Scope::queryCodeLabel(const Address &addr) const
 }
 
 /// Look for the immediate child of \b this with a given name
-/// \param name is the child's name
+/// \param nm is the child's name
 /// \param strategy is \b true if hash of the name determines id
 /// \return the child Scope or NULL if there is no child with that name
-Scope *Scope::resolveScope(const string &name,bool strategy) const
+Scope *Scope::resolveScope(const string &nm,bool strategy) const
 
 {
   if (strategy) {
-    uint8 key = hashScopeName(uniqueId, name);
+    uint8 key = hashScopeName(uniqueId, nm);
     ScopeMap::const_iterator iter = children.find(key);
     if (iter == children.end()) return (Scope *)0;
     Scope *scope = (*iter).second;
-    if (scope->name == name)
+    if (scope->name == nm)
       return scope;
   }
-  else if (name.length() > 0 && name[0] <= '9' && name[0] >= '0') {
+  else if (nm.length() > 0 && nm[0] <= '9' && nm[0] >= '0') {
     // Allow the string to directly specify the id
-    istringstream s(name);
+    istringstream s(nm);
     s.unsetf(ios::dec | ios::hex | ios::oct);
     uint8 key;
     s >> key;
@@ -1312,7 +1312,7 @@ Scope *Scope::resolveScope(const string &name,bool strategy) const
     ScopeMap::const_iterator iter;
     for(iter=children.begin();iter!=children.end();++iter) {
       Scope *scope = (*iter).second;
-      if (scope->name == name)
+      if (scope->name == nm)
 	return scope;
     }
   }
@@ -1479,15 +1479,15 @@ const Scope *Scope::findDistinguishingScope(const Scope *op2) const
 }
 
 /// The Symbol is created and added to any name map, but no SymbolEntry objects are created for it.
-/// \param name is the name of the new Symbol
+/// \param nm is the name of the new Symbol
 /// \param ct is a data-type to assign to the new Symbol
 /// \return the new Symbol object
-Symbol *Scope::addSymbol(const string &name,Datatype *ct)
+Symbol *Scope::addSymbol(const string &nm,Datatype *ct)
 
 {
   Symbol *sym;
 
-  sym = new Symbol(owner,name,ct);
+  sym = new Symbol(owner,nm,ct);
   addSymbolInternal(sym);		// Let this scope lay claim to the new object
   return sym;
 }
@@ -1497,18 +1497,18 @@ Symbol *Scope::addSymbol(const string &name,Datatype *ct)
 /// The Symbol object will be created with the given name and data-type.  A single mapping (SymbolEntry)
 /// will be created for the Symbol based on a given storage address for the symbol
 /// and an address for code that accesses the Symbol at that storage location.
-/// \param name is the new name of the Symbol
+/// \param nm is the new name of the Symbol
 /// \param ct is the data-type of the new Symbol
 /// \param addr is the starting address of the Symbol storage
 /// \param usepoint is the point accessing that storage (may be \e invalid)
 /// \return the SymbolEntry matching the new mapping
-SymbolEntry *Scope::addSymbol(const string &name,Datatype *ct,
+SymbolEntry *Scope::addSymbol(const string &nm,Datatype *ct,
 			      const Address &addr,
 			      const Address &usepoint)
 {
   Symbol *sym;
 
-  sym = new Symbol(owner,name,ct);
+  sym = new Symbol(owner,nm,ct);
   addSymbolInternal(sym);
   return addMapPoint(sym,addr,usepoint);
 }
@@ -2344,13 +2344,13 @@ SymbolEntry *ScopeInternal::findOverlap(const Address &addr,int4 size) const
   return (SymbolEntry *)0;
 }
 
-void ScopeInternal::findByName(const string &name,vector<Symbol *> &res) const
+void ScopeInternal::findByName(const string &nm,vector<Symbol *> &res) const
 
 {
-  SymbolNameTree::const_iterator iter = findFirstByName(name);
+  SymbolNameTree::const_iterator iter = findFirstByName(nm);
   while(iter != nametree.end()) {
     Symbol *sym = *iter;
-    if (sym->name != name) break;
+    if (sym->name != nm) break;
     res.push_back(sym);
     ++iter;
   }
@@ -2664,15 +2664,15 @@ void ScopeInternal::insertNameTree(Symbol *sym)
 
 /// \brief Find an iterator pointing to the first Symbol in the ordering with a given name
 ///
-/// \param name is the name to search for
+/// \param nm is the name to search for
 /// \return iterator pointing to the first Symbol or nametree.end() if there is no matching Symbol
-SymbolNameTree::const_iterator ScopeInternal::findFirstByName(const string &name) const
+SymbolNameTree::const_iterator ScopeInternal::findFirstByName(const string &nm) const
 
 {
-  Symbol sym((Scope *)0,name,(Datatype *)0);
+  Symbol sym((Scope *)0,nm,(Datatype *)0);
   SymbolNameTree::const_iterator iter = nametree.lower_bound(&sym);
   if (iter == nametree.end()) return iter;
-  if ((*iter)->getName() != name)
+  if ((*iter)->getName() != nm)
     return nametree.end();
   return iter;
 }

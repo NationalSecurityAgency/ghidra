@@ -1091,7 +1091,7 @@ void Heritage::guard(const Address &addr,int4 size,vector<Varnode *> &read,vecto
 		     vector<Varnode *> &inputvars)
 
 {
-  uint4 flags;
+  uint4 fl;
   Varnode *vn;
   vector<Varnode *>::iterator iter;
   bool guardneeded = true;
@@ -1130,14 +1130,14 @@ void Heritage::guard(const Address &addr,int4 size,vector<Varnode *> &read,vecto
 				// for the same address confuses the renaming algorithm
 				// SO we don't guard if we think we've guarded before
   if (guardneeded) {
-    flags = 0;
+    fl = 0;
     // Query for generic properties of address (use empty usepoint)
-    fd->getScopeLocal()->queryProperties(addr,size,Address(),flags);
-    guardCalls(flags,addr,size,write);
-    guardReturns(flags,addr,size,write);
+    fd->getScopeLocal()->queryProperties(addr,size,Address(),fl);
+    guardCalls(fl,addr,size,write);
+    guardReturns(fl,addr,size,write);
     if (fd->getArch()->highPtrPossible(addr,size)) {
       guardStores(addr,size,write);
-      guardLoads(flags,addr,size,write);
+      guardLoads(fl,addr,size,write);
     }
   }
 }
@@ -1184,18 +1184,18 @@ void Heritage::guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,c
 /// across each call site in the function.  If an effect is unknown, an
 /// INDIRECT op is added, prepopulating data-flow through the call.
 /// Any new INDIRECT causes a new Varnode to be added to the \b write list.
-/// \param flags are any boolean properties associated with the address range
+/// \param fl are any boolean properties associated with the address range
 /// \param addr is the first address of given range
 /// \param size is the number of bytes in the range
 /// \param write is the list of written Varnodes in the range (may be updated)
-void Heritage::guardCalls(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write)
+void Heritage::guardCalls(uint4 fl,const Address &addr,int4 size,vector<Varnode *> &write)
 
 {
   FuncCallSpecs *fc;
   PcodeOp *indop;
   uint4 effecttype;
 
-  bool holdind = ((flags&Varnode::addrtied)!=0);
+  bool holdind = ((fl&Varnode::addrtied)!=0);
   for(int4 i=0;i<fd->numCalls();++i) {
     fc = fd->getCallSpecs(i);
     if (fc->getOp()->isAssignment()) {
@@ -1297,17 +1297,17 @@ void Heritage::guardStores(const Address &addr,int4 size,vector<Varnode *> &writ
 /// The op must be in the loadGuard list, which means it may pull values from an indexed
 /// range on the stack.  A COPY guard is placed for the given range on any LOAD op whose
 /// indexed range it intersects.
-/// \param flags is boolean properties associated with the address
+/// \param fl is boolean properties associated with the address
 /// \param addr is the first address of the given range
 /// \param size is the number of bytes in the given range
 /// \param write is the list of written Varnodes in the range (may be updated)
-void Heritage::guardLoads(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write)
+void Heritage::guardLoads(uint4 fl,const Address &addr,int4 size,vector<Varnode *> &write)
 
 {
   PcodeOp *copyop;
   list<LoadGuard>::iterator iter;
 
-  if ((flags & Varnode::addrtied)==0) return;	// If not address tied, don't consider for index alias
+  if ((fl & Varnode::addrtied)==0) return;	// If not address tied, don't consider for index alias
   iter = loadGuard.begin();
   while(iter!=loadGuard.end()) {
     LoadGuard &guardRec(*iter);
@@ -1342,11 +1342,11 @@ void Heritage::guardLoads(uint4 flags,const Address &addr,int4 size,vector<Varno
 /// is added as input to the RETURN (for possible return values), or a COPY
 /// is inserted right before the RETURN with its output marked as
 /// \b address \b forced.
-/// \param flags are any boolean properties associated with the address range
+/// \param fl are any boolean properties associated with the address range
 /// \param addr is the first address of the given range
 /// \param size is the number of bytes in the range
 /// \param write is the list of written Varnodes in the range (unused)
-void Heritage::guardReturns(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write)
+void Heritage::guardReturns(uint4 fl,const Address &addr,int4 size,vector<Varnode *> &write)
 
 {
   list<PcodeOp *>::const_iterator iter,iterend;
@@ -1367,7 +1367,7 @@ void Heritage::guardReturns(uint4 flags,const Address &addr,int4 size,vector<Var
       }
     }
   }
-  if ((flags&Varnode::persist)==0) return;
+  if ((fl&Varnode::persist)==0) return;
   iterend = fd->endOp(CPUI_RETURN);
   for(iter=fd->beginOp(CPUI_RETURN);iter!=iterend;++iter) {
     op = *iter;
@@ -1609,7 +1609,7 @@ bool Heritage::refinement(const Address &addr,int4 size,const vector<Varnode *> 
 
   // Alter the disjoint cover (both locally and globally) to reflect our refinement
   LocationMap::iterator iter = disjoint.find(addr);
-  int4 pass = (*iter).second.pass;
+  int4 addrPass = (*iter).second.pass;
   disjoint.erase(iter);
   iter = globaldisjoint.find(addr);
   globaldisjoint.erase(iter);
@@ -1618,8 +1618,8 @@ bool Heritage::refinement(const Address &addr,int4 size,const vector<Varnode *> 
   int4 intersect;
   while(cut < size) {
     int4 sz = refine[cut];
-    disjoint.add(curaddr,sz,pass,intersect);
-    globaldisjoint.add(curaddr,sz,pass,intersect);
+    disjoint.add(curaddr,sz,addrPass,intersect);
+    globaldisjoint.add(curaddr,sz,addrPass,intersect);
     cut += sz;
     curaddr = curaddr + sz;
   }
@@ -1681,8 +1681,8 @@ void Heritage::guardInput(const Address &addr,int4 size,vector<Varnode *> &input
   // Now we need to make sure that all the inputs get linked
   // together into a single input
   if (newinput.size()==1) return; // Will get linked in automatically
-  for(uint4 i=0;i<newinput.size();++i)
-    newinput[i]->setWriteMask();
+  for(uint4 j=0;j<newinput.size();++j)
+    newinput[j]->setWriteMask();
 //   if (!seenunspliced) {
 //     // Check to see if a concatenation of inputs already exists
 //     // If it existed already it would be defined at fd->getAddress()

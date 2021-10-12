@@ -382,9 +382,9 @@ protected:
   ///
   /// A subset of all variables can be declared by specifying a category,
   /// 0 for parameters, -1 for everything.
-  /// \param scope is the given Scope
+  /// \param symScope is the given Scope
   /// \param cat is the category of variable to declare
-  virtual bool emitScopeVarDecls(const Scope *scope,int4 cat)=0;
+  virtual bool emitScopeVarDecls(const Scope *symScope,int4 cat)=0;
 
   /// \brief Emit a full expression
   ///
