@@ -779,9 +779,10 @@ Mem: segWide^Addr32_64 is $(LONGMODE_ON) & addrsize=1 & segWide; Addr32_64 			{ 
 Mem: segWide^Addr32_64 is $(LONGMODE_ON) & addrsize=1 & segWide & highseg=1; Addr32_64	{ tmp:8 = segWide + Addr32_64; export tmp; }
 Mem: segWide^addr64 is $(LONGMODE_ON) & addrsize=2 & segWide; addr64             { export addr64; }
 Mem: segWide^addr64 is $(LONGMODE_ON) & addrsize=2 & segWide & highseg=1; addr64 { tmp:$(SIZE) = segWide + addr64; export tmp; }
-@endif
-# TODO: It'd be nice if we could use 32-bit pointers in the 64-bit spec outside of long mode
 Mem: segWide^addr32 is $(LONGMODE_OFF) & addrsize=1 & segWide; addr32       		{ tmp:$(SIZE) = zext(addr32); export tmp; }
+@else
+Mem: segWide^addr32 is $(LONGMODE_OFF) & addrsize=1 & segWide; addr32       		{ export addr32; }
+@endif
 Mem: segWide^addr32 is $(LONGMODE_OFF) & addrsize=1 & segWide & highseg=1; addr32 	{ tmp:$(SIZE) = segWide + zext(addr32); export tmp; }
 
 rel8: reloc is simm8        [ reloc=inst_next+simm8; ] { export *[ram]:$(SIZE) reloc; }
