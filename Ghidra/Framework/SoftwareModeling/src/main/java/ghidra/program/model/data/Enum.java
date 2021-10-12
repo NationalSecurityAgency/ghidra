@@ -52,8 +52,8 @@ public interface Enum extends DataType {
 	public long[] getValues();
 
 	/**
-	 * Get the names of the enum entries.  The returned names are sorted using String's natural
-	 * sort order.
+	 * Get the names of the enum entries.  The returned names are first sorted by the enum int
+	 * value, then sub-sorted by name value where there are multiple name values per int value.
 	 * @return the names of the enum entries.
 	 */
 	public String[] getNames();

@@ -45,7 +45,7 @@ class EnumDB extends DataTypeDB implements Enum {
 	private EnumValueDBAdapter valueAdapter;
 
 	private Map<String, Long> nameMap; // name to value
-	private Map<Long, List<String>> valueMap; // value to names
+	private TreeMap<Long, List<String>> valueMap; // value to names
 	private Map<String, String> commentMap; // name to comment
 	private List<BitGroup> bitGroups;
 
@@ -86,7 +86,7 @@ class EnumDB extends DataTypeDB implements Enum {
 	private void initialize() throws IOException {
 		bitGroups = null;
 		nameMap = new HashMap<>();
-		valueMap = new HashMap<>();
+		valueMap = new TreeMap<>();
 		commentMap = new HashMap<>();
 
 		Field[] ids = valueAdapter.getValueIdsInEnum(key);
@@ -190,9 +190,7 @@ class EnumDB extends DataTypeDB implements Enum {
 		try {
 			checkIsValid();
 			initializeIfNeeded();
-			long[] values = valueMap.keySet().stream().mapToLong(Long::longValue).toArray();
-			Arrays.sort(values);
-			return values;
+			return valueMap.keySet().stream().mapToLong(Long::longValue).toArray();
 		}
 		finally {
 			lock.release();
@@ -205,9 +203,15 @@ class EnumDB extends DataTypeDB implements Enum {
 		try {
 			checkIsValid();
 			initializeIfNeeded();
-			String[] names = nameMap.keySet().toArray(new String[nameMap.size()]);
-			Arrays.sort(names);
-			return names;
+
+			// names are first sorted by int value, then sub-sorted by name value
+			List<String> names = new ArrayList<>();
+			Collection<List<String>> values = valueMap.values();
+			for (List<String> list : values) {
+				Collections.sort(list);
+				names.addAll(list);
+			}
+			return names.toArray(new String[0]);
 		}
 		finally {
 			lock.release();
@@ -319,7 +323,7 @@ class EnumDB extends DataTypeDB implements Enum {
 
 			bitGroups = null;
 			nameMap = new HashMap<>();
-			valueMap = new HashMap<>();
+			valueMap = new TreeMap<>();
 			commentMap = new HashMap<>();
 
 			Field[] ids = valueAdapter.getValueIdsInEnum(key);

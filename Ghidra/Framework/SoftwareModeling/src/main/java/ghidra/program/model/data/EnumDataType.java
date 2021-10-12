@@ -34,7 +34,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 		new SettingsDefinition[] { MutabilitySettingsDefinition.DEF };
 
 	private Map<String, Long> nameMap; // name to value
-	private Map<Long, List<String>> valueMap; // value to names
+	private TreeMap<Long, List<String>> valueMap; // value to names
 	private Map<String, String> commentMap; // name to comment
 	private int length;
 	private String description;
@@ -54,7 +54,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 			throw new IllegalArgumentException("unsupported enum length: " + length);
 		}
 		nameMap = new HashMap<>();
-		valueMap = new HashMap<>();
+		valueMap = new TreeMap<>();
 		commentMap = new HashMap<>();
 		this.length = length;
 	}
@@ -68,7 +68,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 			throw new IllegalArgumentException("unsupported enum length: " + length);
 		}
 		nameMap = new HashMap<>();
-		valueMap = new HashMap<>();
+		valueMap = new TreeMap<>();
 		commentMap = new HashMap<>();
 		this.length = length;
 	}
@@ -108,15 +108,19 @@ public class EnumDataType extends GenericDataType implements Enum {
 	@Override
 	public long[] getValues() {
 		long[] values = valueMap.keySet().stream().mapToLong(Long::longValue).toArray();
-		Arrays.sort(values);
 		return values;
 	}
 
 	@Override
 	public String[] getNames() {
-		String[] names = nameMap.keySet().toArray(new String[nameMap.size()]);
-		Arrays.sort(names);
-		return names;
+		// names are first sorted by int value, then sub-sorted by name value
+		List<String> names = new ArrayList<>();
+		Collection<List<String>> values = valueMap.values();
+		for (List<String> list : values) {
+			Collections.sort(list);
+			names.addAll(list);
+		}
+		return names.toArray(new String[0]);
 	}
 
 	@Override
@@ -417,7 +421,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 		}
 		Enum enumm = (Enum) dataType;
 		nameMap = new HashMap<>();
-		valueMap = new HashMap<>();
+		valueMap = new TreeMap<>();
 		commentMap = new HashMap<>();
 		setLength(enumm.getLength());
 		String[] names = enumm.getNames();
