@@ -3043,12 +3043,12 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	/**
-	 * Remove matching DEFAULT memory reference from oldRefList
+	 * Remove matching memory reference from oldRefList (considers toAddr and opIndex only)
 	 * @param oldRefList list of existing DEFAULT memory references (may be null)
 	 * @param toAddr new reference desination address
 	 * @param opIndex new reference operand
 	 * @param refType new reference type
-	 * @return existing reference if it already exists in oldRefList, else null
+	 * @return existing reference if it already exists in oldRefList with matching refType, else null
 	 */
 	private Reference removeOldReference(List<Reference> oldRefList, Address toAddr, int opIndex,
 			RefType refType) {
@@ -3058,10 +3058,12 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		Iterator<Reference> iterator = oldRefList.iterator();
 		while (iterator.hasNext()) {
 			Reference ref = iterator.next();
-			if (opIndex == ref.getOperandIndex() && refType == ref.getReferenceType() &&
-				toAddr.equals(ref.getToAddress())) {
+			if (opIndex == ref.getOperandIndex() && toAddr.equals(ref.getToAddress())) {
 				iterator.remove();
-				return ref;
+				if (refType == ref.getReferenceType()) {
+					return ref;
+				}
+				break; // return null - can't re-use due to refType change
 			}
 		}
 		return null;
