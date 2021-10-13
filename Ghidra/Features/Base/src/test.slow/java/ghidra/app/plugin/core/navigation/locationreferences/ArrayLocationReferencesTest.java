@@ -15,10 +15,9 @@
  */
 package ghidra.app.plugin.core.navigation.locationreferences;
 
-import static ghidra.GhidraOptions.CATEGORY_BROWSER_FIELDS;
-import static ghidra.app.util.viewer.format.FormatManager.ARRAY_DISPLAY_OPTIONS;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.not;
+import static ghidra.GhidraOptions.*;
+import static ghidra.app.util.viewer.format.FormatManager.*;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 import java.util.Arrays;
@@ -50,20 +49,20 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 		//
 		// Find all references to the array.  With all references pointing to the min address
 		// of array elements, none of the results should report being offcut.
-		// 
+		//
 
 		/*
 		 	Disassembly:
 		 	
-		 				DWORD_ARRAY_010054e8[1]   XREF[1,2]:   01005300(R), 01005301(R), 
-		                DWORD_ARRAY_010054e8[2]                01005302(R)  
+		 				DWORD_ARRAY_010054e8[1]   XREF[1,2]:   01005300(R), 01005301(R),
+		                DWORD_ARRAY_010054e8[2]                01005302(R)
 		                DWORD_ARRAY_010054e8
 		    010054e8 00 00 00        ddw[3]
-		             00 00 00 
-		             00 00 00 
-		       010054e8 00 00 00 00     ddw       0h  [0] XREF[1]:     01005300(R)  
-		       010054ec 00 00 00 00     ddw       0h  [1] XREF[1]:     01005301(R)  
-		       010054f0 00 00 00 00     ddw       0h  [2] XREF[1]:     01005302(R)  
+		             00 00 00
+		             00 00 00
+		       010054e8 00 00 00 00     ddw       0h  [0] XREF[1]:     01005300(R)
+		       010054ec 00 00 00 00     ddw       0h  [1] XREF[1]:     01005301(R)
+		       010054f0 00 00 00 00     ddw       0h  [2] XREF[1]:     01005302(R)
 		
 		 */
 
@@ -78,7 +77,7 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 
 		List<LocationReference> results = getResultLocations();
 
-		// we searched on the mnemonic--the results should be the 3 direct refs and the 
+		// we searched on the mnemonic--the results should be the 3 direct refs and the
 		// data type refs of each array element
 		assertContainsAddrs(results, addr("01005300"), addr("01005301"), addr("01005302"));
 		assertContainsAddrs(results, addr("010054e8"));
@@ -95,21 +94,21 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 		//
 		// Find all references to the array.  With all references pointing to the min address
 		// of array elements, some of the results should report being offcut.
-		// 
+		//
 
 		/*
 		 	Disassembly:
 		 	
 		 				// 2 offcuts
-		 				DWORD_ARRAY_010054e8[1]+1    XREF[1,2]:   01005300(R), 01005301(R), 
-		             	DWORD_ARRAY_010054e8[2]+1                 01005302(R)  
+		 				DWORD_ARRAY_010054e8[1]+1    XREF[1,2]:   01005300(R), 01005301(R),
+		             	DWORD_ARRAY_010054e8[2]+1                 01005302(R)
 		             	DWORD_ARRAY_010054e8
 		   010054e8 00 00 00        ddw[3]
-		         	 00 00 00 
-		         	 00 00 00 
-			   010054e8 00 00 00 00     ddw       0h [0] XREF[1]:     01005300(R)  
-			   010054ec 00 00 00 00     ddw       0h [1] XREF[0,1]:   01005301(R)   // offuct
-			   010054f0 00 00 00 00     ddw       0h [2] XREF[0,1]:   01005302(R)   // offuct		
+		         	 00 00 00
+		         	 00 00 00
+			   010054e8 00 00 00 00     ddw       0h [0] XREF[1]:     01005300(R)
+			   010054ec 00 00 00 00     ddw       0h [1] XREF[0,1]:   01005301(R)   // offcut
+			   010054f0 00 00 00 00     ddw       0h [2] XREF[0,1]:   01005302(R)   // offcut
 		 */
 
 		// go to an unused address
@@ -123,7 +122,7 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 
 		List<LocationReference> results = getResultLocations();
 
-		// we searched on the mnemonic--the results should be the 3 direct refs and the 
+		// we searched on the mnemonic--the results should be the 3 direct refs and the
 		// data type refs of each array element
 		assertContainsAddrs(results, addr("01005300"), addr("01005301"), addr("01005302"));
 		assertContainsAddrs(results, addr("010054e8"));
@@ -142,20 +141,20 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 		//
 		// Find all references to the array.  With all references pointing to the min address
 		// of array elements, none of the results should report being offcut.
-		// 
+		//
 
 		/*
 		 	Disassembly:
 		 	
-		 				DWORD_ARRAY_010054e8[1]   XREF[1,2]:   01005300(R), 01005301(R), 
-		                DWORD_ARRAY_010054e8[2]                01005302(R)  
+		 				DWORD_ARRAY_010054e8[1]   XREF[1,2]:   01005300(R), 01005301(R),
+		                DWORD_ARRAY_010054e8[2]                01005302(R)
 		                DWORD_ARRAY_010054e8
 		    010054e8 00 00 00        ddw[3]
-		             00 00 00 
-		             00 00 00 
-		       010054e8 00 00 00 00     ddw       0h  [0] XREF[1]:     01005300(R)  
-		       010054ec 00 00 00 00     ddw       0h  [1] XREF[1]:     01005301(R)  
-		       010054f0 00 00 00 00     ddw       0h  [2] XREF[1]:     01005302(R)  
+		             00 00 00
+		             00 00 00
+		       010054e8 00 00 00 00     ddw       0h  [0] XREF[1]:     01005300(R)
+		       010054ec 00 00 00 00     ddw       0h  [1] XREF[1]:     01005301(R)
+		       010054f0 00 00 00 00     ddw       0h  [2] XREF[1]:     01005302(R)
 		
 		 */
 
@@ -178,21 +177,21 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 		//
 		// Find all references to the array.  With all references pointing to the min address
 		// of array elements, some of the results should report being offcut.
-		// 
+		//
 
 		/*
 		 	Disassembly:
 		 	
 		 				// 2 offcuts
-		 				DWORD_ARRAY_010054e8[1]+1    XREF[1,2]:   01005300(R), 01005301(R), 
-		             	DWORD_ARRAY_010054e8[2]+1                 01005302(R)  
+		 				DWORD_ARRAY_010054e8[1]+1    XREF[1,2]:   01005300(R), 01005301(R),
+		             	DWORD_ARRAY_010054e8[2]+1                 01005302(R)
 		             	DWORD_ARRAY_010054e8
 		   010054e8 00 00 00        ddw[3]
-		         	 00 00 00 
-		         	 00 00 00 
-			   010054e8 00 00 00 00     ddw       0h [0] XREF[1]:     01005300(R)  
-			   010054ec 00 00 00 00     ddw       0h [1] XREF[0,1]:   01005301(R)   // offuct
-			   010054f0 00 00 00 00     ddw       0h [2] XREF[0,1]:   01005302(R)   // offuct		
+		         	 00 00 00
+		         	 00 00 00
+			   010054e8 00 00 00 00     ddw       0h [0] XREF[1]:     01005300(R)
+			   010054ec 00 00 00 00     ddw       0h [1] XREF[0,1]:   01005301(R)   // offcut
+			   010054f0 00 00 00 00     ddw       0h [2] XREF[0,1]:   01005302(R)   // offcut
 		 */
 
 		Address arrayAddr = addr(0x010054e8);
@@ -212,21 +211,21 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 	@Test
 	public void testArrayElementReferences_AddressField_FirstElement() {
 		//
-		// Only find references to the actual array element, not the entire array. 
+		// Only find references to the actual array element, not the entire array.
 		//
 
 		/*
 		Disassembly:
 		
-					DWORD_ARRAY_010054e8[1]   XREF[1,2]:   01005300(R), 01005301(R), 
-		            DWORD_ARRAY_010054e8[2]                01005302(R)  
+					DWORD_ARRAY_010054e8[1]   XREF[1,2]:   01005300(R), 01005301(R),
+		            DWORD_ARRAY_010054e8[2]                01005302(R)
 		            DWORD_ARRAY_010054e8
 		   010054e8 00 00 00        ddw[3]
-		         00 00 00 
+		         00 00 00
 		         00 00 00                        (row)
-			   010054e8 00 00 00 00     ddw       0h  [0] XREF[1]:     01005300(R)  
-			   010054ec 00 00 00 00     ddw       0h  [1] XREF[1]:     01005301(R)  
-			   010054f0 00 00 00 00     ddw       0h  [2] XREF[1]:     01005302(R)  
+			   010054e8 00 00 00 00     ddw       0h  [0] XREF[1]:     01005300(R)
+			   010054ec 00 00 00 00     ddw       0h  [1] XREF[1]:     01005301(R)
+			   010054f0 00 00 00 00     ddw       0h  [2] XREF[1]:     01005302(R)
 		
 		*/
 
@@ -251,21 +250,21 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 	@Test
 	public void testArrayElementReferences_AddressField_SecondElement() {
 		//
-		// Only find references to the actual array element, not the entire array. 
+		// Only find references to the actual array element, not the entire array.
 		//
 
 		/*
 		Disassembly:
 		
-					DWORD_ARRAY_010054e8[1]   XREF[1,2]:   01005300(R), 01005301(R), 
-		            DWORD_ARRAY_010054e8[2]                01005302(R)  
+					DWORD_ARRAY_010054e8[1]   XREF[1,2]:   01005300(R), 01005301(R),
+		            DWORD_ARRAY_010054e8[2]                01005302(R)
 		            DWORD_ARRAY_010054e8
 		   010054e8 00 00 00        ddw[3]
-		         00 00 00 
+		         00 00 00
 		         00 00 00                        (row)
-			   010054e8 00 00 00 00     ddw       0h  [0] XREF[1]:     01005300(R)  
-			   010054ec 00 00 00 00     ddw       0h  [1] XREF[1]:     01005301(R)  
-			   010054f0 00 00 00 00     ddw       0h  [2] XREF[1]:     01005302(R)  
+			   010054e8 00 00 00 00     ddw       0h  [0] XREF[1]:     01005300(R)
+			   010054ec 00 00 00 00     ddw       0h  [1] XREF[1]:     01005301(R)
+			   010054f0 00 00 00 00     ddw       0h  [2] XREF[1]:     01005302(R)
 		
 		*/
 
@@ -293,21 +292,21 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 		 	
 		 	The Instruction:
 		 												\/
-		 	 01002252 b9 81 00        MOV        ECX=>DWORD_ARRAY_010054e8,0x81                   = 
+		 	 01002252 b9 81 00        MOV        ECX=>DWORD_ARRAY_010054e8,0x81                   =
 		         00 00
 		
 		
 		 	The Array:
 		 	
-		 				DWORD_ARRAY_010054e8[1]   XREF[1,2]:   01005300(R), 01005301(R), 
-		                DWORD_ARRAY_010054e8[2]                01005302(R)  
+		 				DWORD_ARRAY_010054e8[1]   XREF[1,2]:   01005300(R), 01005301(R),
+		                DWORD_ARRAY_010054e8[2]                01005302(R)
 		                DWORD_ARRAY_010054e8
 		    010054e8 00 00 00        ddw[3]
-		             00 00 00 
-		             00 00 00 
-		       010054e8 00 00 00 00     ddw       0h  [0] XREF[1]:     01005300(R)  
-		       010054ec 00 00 00 00     ddw       0h  [1] XREF[1]:     01005301(R)  
-		       010054f0 00 00 00 00     ddw       0h  [2] XREF[1]:     01005302(R)  
+		             00 00 00
+		             00 00 00
+		       010054e8 00 00 00 00     ddw       0h  [0] XREF[1]:     01005300(R)
+		       010054ec 00 00 00 00     ddw       0h  [1] XREF[1]:     01005301(R)
+		       010054f0 00 00 00 00     ddw       0h  [2] XREF[1]:     01005302(R)
 		
 		 */
 
@@ -357,15 +356,14 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 
 		//@formatter:off
 		list.stream()
-		    .filter(ref -> {			
+		    .filter(ref -> {
 		    		Address addr = ref.getLocationOfUse();
 		    		boolean contains = Arrays.asList(expected).contains(addr);
 		    		return contains;
 		    	})
 		    .collect(Collectors.toList())
 		    .forEach(ref -> {
-		    		String context = getContextColumnValue(ref);
-		    		assertEquals(errorPrefix + ": " + ref, expectOffcut, context.contains("OFFCUT"));
+		    	assertEquals(errorPrefix + ": " + ref, expectOffcut, ref.isOffcutReference());
 		    })
 		    ;
 		//@formatter:on
