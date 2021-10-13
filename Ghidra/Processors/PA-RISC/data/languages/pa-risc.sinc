@@ -1425,11 +1425,11 @@ OFF_BASE_14: lse14^SRRB	is lse14 & SRRB & SPCBASE { temp:$(ADDRSIZE) = SPCBASE +
 # shift conditions. There are no inverted forms of these conditions.
 ShiftCond:				is c=0 { export 0:1; } # never 
 ShiftCond:				is c=1 & RT { tmp:1 = (nullifyCondResult == 0) ; export tmp; } # equal 
-ShiftCond:				is c=2 & RT { tmp:1 = ((nullifyCondResult & (1:$(REGSIZE) << $(REGSIZE)-1)) != 0) ; export tmp; } # leftmost bit is one
+ShiftCond:				is c=2 & RT { tmp:1 = (((nullifyCondResult >> ($(REGSIZE)*8 - 1)) & 1) != 0) ; export tmp; } # leftmost bit is one
 ShiftCond:				is c=3 & RT { tmp:1 = ((nullifyCondResult & 0x1) != 0) ; export tmp; } # rightmost bit is 1 (odd)
 ShiftCond:				is c=4 { export 1:1; } # always
 ShiftCond:				is c=5 & RT { tmp:1 = (nullifyCondResult != 0) ; export tmp; } # some bits are one
-ShiftCond:				is c=6 & RT { tmp:1 = ((nullifyCondResult & (1:$(REGSIZE) << $(REGSIZE)-1)) == 0) ; export tmp; } # leftmost bit is zero
+ShiftCond:				is c=6 & RT { tmp:1 = (((nullifyCondResult >> ($(REGSIZE)*8 - 1)) & 1) == 0) ; export tmp; } # leftmost bit is zero
 ShiftCond:				is c=7 & RT { tmp:1 = ((nullifyCondResult & 0x1) == 0) ; export tmp; } # rightmost bit is zero (even)
 
 ShiftCondNullify:	is c=0 { }
@@ -1456,13 +1456,13 @@ DepCondNullify:	is DepCond [nullifyEnable = 1; globalset(inst_next, nullifyEnabl
 
 # extract conditions. The extract ops target R1, not R2 like deposit does
 ExtrCond:				is c=0 { export 0:1; } # never 
-ExtrCond:				is c=1 { tmp:1 = (nullifyCondResult == 0) ; export tmp; } # equal 
-ExtrCond:				is c=2 { tmp:1 = ((nullifyCondResult & (1:$(REGSIZE) << $(REGSIZE)-1)) != 0) ; export tmp; } # leftmost bit is one
+ExtrCond:				is c=1 { tmp:1 = (nullifyCondResult == 0); export tmp; } # equal 
+ExtrCond:				is c=2 { tmp:1 = (((nullifyCondResult >> ($(REGSIZE)*8 - 1)) & 1) != 0); export tmp; } # leftmost bit is one
 ExtrCond:				is c=3 { tmp:1 = ((nullifyCondResult & 0x1) != 0) ; export tmp; } # rightmost bit is 1 (odd)
 ExtrCond:				is c=4 { export 1:1; } # always
-ExtrCond:				is c=5 { tmp:1 = (nullifyCondResult != 0) ; export tmp; } # some bits are one
-ExtrCond:				is c=6 { tmp:1 = ((nullifyCondResult & (1:$(REGSIZE) << $(REGSIZE)-1)) == 0) ; export tmp; } # leftmost bit is zero
-ExtrCond:				is c=7 { tmp:1 = ((nullifyCondResult & 0x1) == 0) ; export tmp; } # rightmost bit is zero (even)
+ExtrCond:				is c=5 { tmp:1 = (nullifyCondResult != 0); export tmp; } # some bits are one
+ExtrCond:				is c=6 { tmp:1 = (((nullifyCondResult >> ($(REGSIZE)*8 - 1)) & 1) == 0); export tmp; } # leftmost bit is zero
+ExtrCond:				is c=7 { tmp:1 = ((nullifyCondResult & 0x1) == 0); export tmp; } # rightmost bit is zero (even)
 
 ExtrCondNullify:	is c=0 { }
 ExtrCondNullify:	is ExtrCond [ nullifyEnable = 1; globalset(inst_next, nullifyEnable); ]
