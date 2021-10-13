@@ -13,13 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
+import java.nio.ByteOrder
+
 // Native build files are already applied in development mode (indicated by presence of the
 // Generic project).  Only need to apply them if we are in a distribution.
 if (findProject(':Generic') == null) {
 	apply from: "../../../GPL/utils.gradle"
 	apply from: "../../../GPL/nativePlatforms.gradle"
 	apply from: "../../../GPL/nativeBuildProperties.gradle"
+}
+
+def getHostEndianDefine() {
+	if (ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN)) {
+		return "HOST_ENDIAN=1"
+	}
+	return "HOST_ENDIAN=0"
 }
 
 /**
@@ -187,6 +196,7 @@ model {
 	
 	binaries {
 		all{ b ->
+			b.cppCompiler.define getHostEndianDefine()
 			if (b.toolChain in Gcc) {
 				b.cppCompiler.args "-std=c++11"
 				b.cppCompiler.args "-Wall"
