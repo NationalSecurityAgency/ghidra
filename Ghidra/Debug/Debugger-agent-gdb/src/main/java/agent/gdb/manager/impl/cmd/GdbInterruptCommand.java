@@ -17,7 +17,6 @@ package agent.gdb.manager.impl.cmd;
 
 import agent.gdb.manager.GdbManager;
 import agent.gdb.manager.GdbState;
-import agent.gdb.manager.evt.AbstractGdbCompletedCommandEvent;
 import agent.gdb.manager.evt.GdbStoppedEvent;
 import agent.gdb.manager.impl.*;
 import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
@@ -41,7 +40,7 @@ public class GdbInterruptCommand extends AbstractGdbCommand<Void> {
 	public String encode() {
 		Interpreter i = getInterpreter();
 		if (i == manager.getRunningInterpreter()) {
-			Msg.debug(this, "Using ^C to interrupt");
+			Msg.debug(this, "Using ^C to interrupt via " + i);
 			return "\u0003";
 		}
 		switch (i) {
@@ -58,8 +57,7 @@ public class GdbInterruptCommand extends AbstractGdbCommand<Void> {
 
 	@Override
 	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
+		if (super.handle(evt, pending)) {
 			return true;
 		}
 		else if (evt instanceof GdbStoppedEvent) {

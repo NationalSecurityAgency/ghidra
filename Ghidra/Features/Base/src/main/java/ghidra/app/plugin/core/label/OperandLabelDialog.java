@@ -121,7 +121,7 @@ public class OperandLabelDialog extends DialogComponentProvider {
 	// the presentation at the call or jump instruction, it doesn't matter which symbol of the
 	// same name you pick.
 	private Symbol findSymbol(SymbolTable symTable, String currentLabel, Address symAddr) {
-		Symbol[] symbols = symTable.getSymbols(symAddr);
+		SymbolIterator symbols = symTable.getSymbolsAsIterator(symAddr);
 		for (Symbol symbol : symbols) {
 			if (symbol.getName(true).equals(currentLabel)) {
 				return symbol;

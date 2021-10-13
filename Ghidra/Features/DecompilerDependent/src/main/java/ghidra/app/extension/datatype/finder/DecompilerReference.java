@@ -15,11 +15,11 @@
  */
 package ghidra.app.extension.datatype.finder;
 
-import java.util.Arrays;
 import java.util.List;
 
 import ghidra.app.decompiler.*;
-import ghidra.app.plugin.core.navigation.locationreferences.ReferenceUtils;
+import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext;
+import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContextBuilder;
 import ghidra.app.services.DataTypeReference;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
@@ -46,11 +46,11 @@ public abstract class DecompilerReference {
 	}
 
 	/**
-	 * Scan this reference for any data type matches. 
+	 * Scan this reference for any data type matches.
 	 * <p>
 	 * The <tt>fieldName</tt> is optional.  If not included, then only data type matches will
-	 * be sought.  If it is included, then a match is only included when it is a reference 
-	 * to the given data type where that type is being accessed by the given field name. 
+	 * be sought.  If it is included, then a match is only included when it is a reference
+	 * to the given data type where that type is being accessed by the given field name.
 	 * 
 	 * @param dt the data type to find
 	 * @param fieldName the optional field name used to restrict matches.
@@ -86,15 +86,25 @@ public abstract class DecompilerReference {
 		return line;
 	}
 
-	protected String getContext() {
-		String context = getContext(variable);
+	protected LocationReferenceContext getContext() {
+		LocationReferenceContext context = getContext(variable);
 		return context;
 	}
 
-	protected String getContext(DecompilerVariable var) {
-		String context = line.toDebugString(Arrays.asList(var.variable),
-			ReferenceUtils.CONTEXT_CALLOUT_START, ReferenceUtils.CONTEXT_CALLOUT_END);
-		return context;
+	protected LocationReferenceContext getContext(DecompilerVariable var) {
+
+		LocationReferenceContextBuilder builder = new LocationReferenceContextBuilder();
+		builder.append(line.getLineNumber() + ": ");
+		List<ClangToken> tokens = line.getAllTokens();
+		for (ClangToken token : tokens) {
+			if (token.equals(var.variable)) {
+				builder.appendMatch(token.getText());
+			}
+			else {
+				builder.append(token.getText());
+			}
+		}
+		return builder.build();
 	}
 
 	// Note: using isEquivalent() allows different data types to match.  I don't think we want

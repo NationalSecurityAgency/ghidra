@@ -1895,8 +1895,8 @@ int4 ActionRestrictLocal::apply(Funcdata &data)
     if (!fc->isInputLocked()) continue;
     if (fc->getSpacebaseOffset() == FuncCallSpecs::offset_unknown) continue;
     int4 numparam = fc->numParams();
-    for(int4 i=0;i<numparam;++i) {
-      ProtoParameter *param = fc->getParam(i);
+    for(int4 j=0;j<numparam;++j) {
+      ProtoParameter *param = fc->getParam(j);
       Address addr = param->getAddress();
       if (addr.getSpace()->getType() != IPTR_SPACEBASE) continue;
       uintb off = addr.getSpace()->wrapOffset(fc->getSpacebaseOffset() + addr.getOffset());
@@ -2516,7 +2516,6 @@ void ActionNameVars::lookForFuncParamNames(Funcdata &data,const vector<Varnode *
     if (!sym->isNameUndefined()) continue;
     iter = recmap.find(high);
     if (iter != recmap.end()) {
-      Symbol *sym = high->getSymbol();
       sym->getScope()->renameSymbol(sym,localmap->makeNameUnique((*iter).second.namerec));
     }
   }
@@ -3873,9 +3872,6 @@ void ActionPrototypeTypes::extendInput(Funcdata &data,Varnode *invn,ProtoParamet
 int4 ActionPrototypeTypes::apply(Funcdata &data)
 
 {
-  int4 i;
-  PcodeOp *op;
-  Varnode *vn;
   list<PcodeOp *>::const_iterator iter,iterend;
 
   // Set the evalutation prototype if we are not already locked
@@ -3891,10 +3887,10 @@ int4 ActionPrototypeTypes::apply(Funcdata &data)
 				// (Because we don't want to see this compiler
 				// mechanism in the high-level C output)
   for(iter=data.beginOp(CPUI_RETURN);iter!=iterend;++iter) {
-    op = *iter;
+    PcodeOp *op = *iter;
     if (op->isDead()) continue;
     if (!op->getIn(0)->isConstant()) {
-      vn = data.newConstant(op->getIn(0)->getSize(),0);
+      Varnode *vn = data.newConstant(op->getIn(0)->getSize(),0);
       data.opSetInput(op,vn,0);
     }
   }
@@ -3903,10 +3899,10 @@ int4 ActionPrototypeTypes::apply(Funcdata &data)
     ProtoParameter *outparam = data.getFuncProto().getOutput();
     if (outparam->getType()->getMetatype() != TYPE_VOID) {
       for(iter=data.beginOp(CPUI_RETURN);iter!=iterend;++iter) {
-	op = *iter;
+	PcodeOp *op = *iter;
 	if (op->isDead()) continue;
 	if (op->getHaltType() != 0) continue;
-	vn = data.newVarnode(outparam->getSize(),outparam->getAddress());
+	Varnode *vn = data.newVarnode(outparam->getSize(),outparam->getAddress());
 	data.opInsertInput(op,vn,op->numInput());
 	vn->updateType(outparam->getType(),true,true);
       }
@@ -3952,7 +3948,7 @@ int4 ActionPrototypeTypes::apply(Funcdata &data)
       topbl = (BlockBasic *)data.getBasicBlocks().getBlock(0);
 
     int4 numparams = data.getFuncProto().numParams();
-    for(i=0;i<numparams;++i) {
+    for(int4 i=0;i<numparams;++i) {
       ProtoParameter *param = data.getFuncProto().getParam(i);
       Varnode *vn = data.newVarnode( param->getSize(), param->getAddress());
       vn = data.setInputVarnode(vn);
@@ -4509,9 +4505,9 @@ bool ActionInferTypes::propagateTypeEdge(TypeFactory *typegrp,PcodeOp *op,int4 i
     break;
   case CPUI_NEW:
     {
-      Varnode *invn = op->getIn(0);
-      if (!invn->isWritten()) return false;		// Don't propagate
-      if (invn->getDef()->code() != CPUI_CPOOLREF) return false;
+      Varnode *vn0 = op->getIn(0);
+      if (!vn0->isWritten()) return false;		// Don't propagate
+      if (vn0->getDef()->code() != CPUI_CPOOLREF) return false;
       newtype = alttype;		// Propagate cpool result as result of new operator
     }
     break;

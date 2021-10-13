@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.navigation.locationreferences;
 
+import static ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext.*;
+
 import java.util.Objects;
 
 import ghidra.program.model.address.Address;
@@ -22,7 +24,7 @@ import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.ProgramLocation;
 
 /**
- * A simple container object to provide clients with a reference and an address when both are 
+ * A simple container object to provide clients with a reference and an address when both are
  * available.  If no reference exists, then only the {@link #getLocationOfUse()} address is
  * available.
  */
@@ -31,7 +33,7 @@ public class LocationReference implements Comparable<LocationReference> {
 	private final boolean isOffcutReference;
 	private final Address locationOfUseAddress;
 	private final String refType;
-	private final String context;
+	private final LocationReferenceContext context;
 	private final ProgramLocation location;
 
 	private int hashCode = -1;
@@ -40,36 +42,41 @@ public class LocationReference implements Comparable<LocationReference> {
 		return r != null ? r.getReferenceType().getName() : "";
 	}
 
-	// Note: the address is the location that item backed by this class is used. For 
-	//       references, this represents the 'from' address for a reference; for parameters 
-	//       and variables of a function, this represents the address of that variable.
+	// Note: the address is the location of the item passed to this class. For references, this
+	//       represents the 'from' address for a reference; for parameters and variables of a
+	//       function, this represents the address of that variable.
 	private LocationReference(Address address, ProgramLocation location, String refType,
-			String context, boolean isOffcut) {
+			LocationReferenceContext context, boolean isOffcut) {
 		this.locationOfUseAddress = Objects.requireNonNull(address);
 		this.location = location;
 		this.refType = refType == null ? "" : refType;
-		this.context = context == null ? "" : context;
+		this.context = context == null ? EMPTY_CONTEXT : context;
 		this.isOffcutReference = isOffcut;
 	}
 
 	LocationReference(Reference reference, boolean isOffcutReference) {
-		this(reference.getFromAddress(), null, getRefType(reference), null, isOffcutReference);
+		this(reference.getFromAddress(), null, getRefType(reference), EMPTY_CONTEXT,
+			isOffcutReference);
 	}
 
 	LocationReference(Address locationOfUseAddress, String refType, boolean isOffcutReference) {
-		this(locationOfUseAddress, null, refType, null, isOffcutReference);
+		this(locationOfUseAddress, null, refType, EMPTY_CONTEXT, isOffcutReference);
 	}
 
 	LocationReference(Address locationOfUseAddress) {
-		this(locationOfUseAddress, null, null, null, false);
+		this(locationOfUseAddress, null, null, EMPTY_CONTEXT, false);
 	}
 
 	LocationReference(Address locationOfUseAddress, String context) {
-		this(locationOfUseAddress, null, null, context, false);
+		this(locationOfUseAddress, null, null, LocationReferenceContext.get(context), false);
+	}
+
+	LocationReference(Address locationOfUseAddress, LocationReferenceContext context) {
+		this(locationOfUseAddress, null, null, LocationReferenceContext.get(context), false);
 	}
 
 	LocationReference(Address locationOfUseAddress, String context, ProgramLocation location) {
-		this(locationOfUseAddress, location, null, context, false);
+		this(locationOfUseAddress, location, null, LocationReferenceContext.get(context), false);
 	}
 
 	/**
@@ -82,18 +89,18 @@ public class LocationReference implements Comparable<LocationReference> {
 
 	/**
 	 * Returns true if the corresponding reference is to an offcut address
-	 * @return
+	 * @return true if offcut
 	 */
 	public boolean isOffcutReference() {
 		return isOffcutReference;
 	}
 
 	/**
-	 * Returns the address where the item described by this object is used.  For example, for 
+	 * Returns the address where the item described by this object is used.  For example, for
 	 * data types, the address is where a data type is applied; for references, this value is the
 	 * <tt>from</tt> address.
 	 * 
-	 * @return  the address where the item described by this object is used. 
+	 * @return  the address where the item described by this object is used.
 	 */
 	public Address getLocationOfUse() {
 		return locationOfUseAddress;
@@ -106,7 +113,15 @@ public class LocationReference implements Comparable<LocationReference> {
 	 * 
 	 * @return the context
 	 */
-	public String getContext() {
+
+	/**
+	 * Returns the context associated with this location.  The context may be a simple plain string
+	 * or may be String that highlights part of a function signature the location matches or
+	 * a line from the Decompiler that matches.
+	 * 
+	 * @return the context
+	 */
+	public LocationReferenceContext getContext() {
 		return context;
 	}
 
@@ -175,11 +190,11 @@ public class LocationReference implements Comparable<LocationReference> {
 	@Override
 	public String toString() {
 		//@formatter:off
-		return "{\n" + 
+		return "{\n" +
 			"\taddress: " + locationOfUseAddress + ",\n" +
 			((refType.equals("")) ? "" : "\trefType: " + refType + ",\n") +
 			"\tisOffcut: " + isOffcutReference + ",\n" +
-			((context.equals("")) ? "" : "\tcontext: " + context + ",") +
+			((context == EMPTY_CONTEXT) ? "" : "\tcontext: " + context + ",") +
 		"}";
 		//@formatter:off
 	}

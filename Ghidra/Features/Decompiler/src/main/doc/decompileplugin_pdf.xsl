@@ -6,6 +6,25 @@
 
 <xsl:include href="decompileplugin_common.xsl" />
 
+<!-- Turn on italics for cross-references -->
+<xsl:template match="sect1|sect2|sect3|sect4|sect5|section|simplesect"
+	      mode="insert.title.markup">
+  <xsl:param name="purpose"/>
+  <xsl:param name="xrefstyle"/>
+  <xsl:param name="title"/>
+
+  <xsl:choose>
+    <xsl:when test="$purpose = 'xref'">
+      <fo:inline font-style="italic">
+	<xsl:copy-of select="$title"/>
+      </fo:inline>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:copy-of select="$title"/>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
 <xsl:param name="fop1.extensions" select="1"/>  <!-- Use fop extensions when converting to pdf -->
 
 <xsl:param name="alignment" select="'left'"/>   <!-- Justify normal text (only) on the left -->

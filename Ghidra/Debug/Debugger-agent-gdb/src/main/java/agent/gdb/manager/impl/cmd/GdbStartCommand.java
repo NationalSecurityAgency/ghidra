@@ -28,13 +28,16 @@ public class GdbStartCommand extends AbstractLaunchGdbCommand {
 		super(manager);
 	}
 
-	@Override
+	/*@Override
 	public Interpreter getInterpreter() {
 		return Interpreter.MI2;
-	}
+	}*/
 
 	@Override
 	public String encode() {
+		if (getInterpreter() == Interpreter.CLI) {
+			return "start";
+		}
 		return "-exec-run --start";
 	}
 }

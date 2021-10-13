@@ -757,16 +757,15 @@ public class PseudoDisassembler {
 						for (Address flow : flows) {
 							// does this reference a valid function?
 							if (program != null) {
-								Symbol[] syms = program.getSymbolTable().getSymbols(flow);
-								for (Symbol sym : syms) {
-									if (sym.getSymbolType() == SymbolType.FUNCTION) {
-										didCallValidSubroutine = true;
-										break;
-									}
+								Symbol primary = program.getSymbolTable().getPrimarySymbol(flow);
+								if (primary != null &&
+									primary.getSymbolType() == SymbolType.FUNCTION) {
+									didCallValidSubroutine = true;
 								}
 							}
 							// if respecting execute flag on memory, test to make sure we did flow into non-execute memory
-							if (respectExecuteFlag && !execSet.isEmpty() && !execSet.contains(flow)) {
+							if (respectExecuteFlag && !execSet.isEmpty() &&
+								!execSet.contains(flow)) {
 								if (!flow.isExternalAddress()) {
 									MemoryBlock block = memory.getBlock(flow);
 									// flowing into non-executable, but readable memory is bad
@@ -782,7 +781,9 @@ public class PseudoDisassembler {
 				target = newTarget;
 			}
 		}
-		catch (InsufficientBytesException e) {
+		catch (
+
+		InsufficientBytesException e) {
 			return false;
 		}
 		catch (UnknownInstructionException e) {

@@ -141,7 +141,7 @@ public class DBTraceCodeManager
 			}
 			catch (Exception e) {
 				Msg.error(this, "Bad Instruction Prototype found in DB! Address: " + address +
-					"b Bytes: " + NumericUtilities.convertBytesToString(bytes));
+					"Bytes: " + NumericUtilities.convertBytesToString(bytes));
 				return new InvalidPrototype(language);
 			}
 		}
@@ -237,6 +237,11 @@ public class DBTraceCodeManager
 		}
 	}
 
+	protected byte[] valueBytes(RegisterValue rv) {
+		byte[] bytes = rv.toBytes();
+		return Arrays.copyOfRange(bytes, bytes.length / 2, bytes.length);
+	}
+
 	protected int doRecordPrototype(InstructionPrototype prototype, MemBuffer memBuffer,
 			ProcessorContextView context) {
 		DBTraceCodePrototypeEntry protoEnt = protoStore.create();
@@ -250,8 +255,8 @@ public class DBTraceCodeManager
 			ctx = null;
 		}
 		else {
-			BigInteger value = context.getValue(baseCtxReg, true);
-			ctx = value == null ? null : value.toByteArray();
+			RegisterValue value = context.getRegisterValue(baseCtxReg);
+			ctx = value == null ? null : valueBytes(value);
 		}
 		protoEnt.set(languageManager.getKeyForLanguage(prototype.getLanguage()), bytes, ctx,
 			memBuffer.getAddress(), prototype.isInDelaySlot());

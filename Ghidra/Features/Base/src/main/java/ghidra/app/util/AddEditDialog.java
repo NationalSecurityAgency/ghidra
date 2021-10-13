@@ -370,11 +370,9 @@ public class AddEditDialog extends DialogComponentProvider {
 
 	private FunctionSymbol getFunctionSymbol(Address address) {
 		SymbolTable symbolTable = program.getSymbolTable();
-		Symbol[] symbols = symbolTable.getSymbols(address);
-		for (Symbol localSymbol : symbols) {
-			if (localSymbol instanceof FunctionSymbol) {
-				return (FunctionSymbol) localSymbol;
-			}
+		Symbol primary = symbolTable.getPrimarySymbol(address);
+		if (primary instanceof FunctionSymbol) {
+			return (FunctionSymbol) primary;
 		}
 		return null;
 	}
@@ -395,10 +393,8 @@ public class AddEditDialog extends DialogComponentProvider {
 		pinnedCheckBox.setEnabled(true);
 		pinnedCheckBox.setSelected(false);
 
-		Symbol[] symbols = symbolTable.getSymbols(address);
-
-		FunctionSymbol functionSymbol = getFunctionSymbol(address);
-		if (functionSymbol == null && symbols.length == 0) {
+		Symbol primarySymbol = symbolTable.getPrimarySymbol(address);
+		if (primarySymbol == null) {
 			primaryCheckBox.setSelected(true);
 			primaryCheckBox.setEnabled(false);
 		}
@@ -463,9 +459,8 @@ public class AddEditDialog extends DialogComponentProvider {
 			nameBorder.setTitle("Enter Label:");
 			entryPointCheckBox.setEnabled(true);
 			entryPointCheckBox.setSelected(symbolTable.isExternalEntryPoint(addr));
-			Symbol[] symbols = symbolTable.getSymbols(addr);
 			primaryCheckBox.setSelected(s.isPrimary());
-			primaryCheckBox.setEnabled(!s.isPrimary() && symbols.length > 1);
+			primaryCheckBox.setEnabled(!s.isPrimary());
 			pinnedCheckBox.setEnabled(true);
 			pinnedCheckBox.setSelected(s.isPinned());
 			namespaceChoices.setEnabled(true);

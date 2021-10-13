@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.platform.gdb;
 
+import java.util.Collection;
 import java.util.Set;
 
 import ghidra.app.plugin.core.debug.mapping.*;
@@ -22,6 +23,9 @@ import ghidra.dbg.target.*;
 import ghidra.program.model.lang.*;
 import ghidra.util.Msg;
 
+/**
+ * TODO: Refactor this onto the .ldefs-based gdb opinion.
+ */
 public class GdbX86DebuggerMappingOpinion implements DebuggerMappingOpinion {
 	protected static final LanguageID LANG_ID_X86 = new LanguageID("x86:LE:32:default");
 	protected static final LanguageID LANG_ID_X86_64 = new LanguageID("x86:LE:64:default");
@@ -44,75 +48,60 @@ public class GdbX86DebuggerMappingOpinion implements DebuggerMappingOpinion {
 		}
 	}
 
-	protected static class GdbI386LinuxOffer extends AbstractDebuggerMappingOffer {
+	protected static class GdbI386LinuxOffer extends DefaultDebuggerMappingOffer {
 		public GdbI386LinuxOffer(TargetProcess process) {
 			super(process, 100, "GDB on Linux i386", LANG_ID_X86, COMP_ID_GCC, Set.of());
 		}
-
-		@Override
-		public DebuggerTargetTraceMapper take() {
-			try {
-				return new GdbTargetTraceMapper(target, langID, csID, extraRegNames);
-			}
-			catch (LanguageNotFoundException | CompilerSpecNotFoundException e) {
-				throw new AssertionError(e);
-			}
-		}
 	}
 
-	protected static class GdbI386WindowsOffer extends AbstractGdbDebuggerMappingOffer {
+	protected static class GdbI386WindowsOffer extends DefaultDebuggerMappingOffer {
 		public GdbI386WindowsOffer(TargetProcess process) {
 			super(process, 100, "GDB on Cygwin/MSYS (Windows) i386", LANG_ID_X86, COMP_ID_VS,
 				Set.of());
 		}
 	}
 
-	protected static class GdbI386X86_64LinuxOffer extends AbstractGdbDebuggerMappingOffer {
+	protected static class GdbI386X86_64TraceMapper extends DefaultDebuggerTargetTraceMapper {
+		public GdbI386X86_64TraceMapper(TargetObject target, LanguageID langID, CompilerSpecID csId,
+				Collection<String> extraRegNames)
+				throws LanguageNotFoundException, CompilerSpecNotFoundException {
+			super(target, langID, csId, extraRegNames);
+		}
+
+		@Override
+		protected DebuggerRegisterMapper createRegisterMapper(TargetRegisterContainer registers) {
+			return new GdbI386X86_64RegisterMapper(cSpec, registers);
+		}
+	}
+
+	protected static class GdbI386X86_64LinuxOffer extends DefaultDebuggerMappingOffer {
 		public GdbI386X86_64LinuxOffer(TargetProcess process) {
 			super(process, 100, "GDB on Linux x86_64", LANG_ID_X86_64, COMP_ID_GCC, Set.of());
 		}
 
 		@Override
-		public DebuggerTargetTraceMapper take() {
-			try {
-				return new GdbTargetTraceMapper(target, langID, csID, extraRegNames) {
-					@Override
-					protected DebuggerRegisterMapper createRegisterMapper(
-							TargetRegisterContainer registers) {
-						return new GdbI386X86_64RegisterMapper(cSpec, registers);
-					}
-				};
-			}
-			catch (LanguageNotFoundException | CompilerSpecNotFoundException e) {
-				throw new AssertionError(e);
-			}
+		public DebuggerTargetTraceMapper createMapper()
+				throws LanguageNotFoundException, CompilerSpecNotFoundException {
+			return new GdbI386X86_64TraceMapper(target, langID, csID, extraRegNames);
 		}
 	}
 
-	protected static class GdbI386X86_64WindowsOffer extends AbstractGdbDebuggerMappingOffer {
+	protected static class GdbI386X86_64WindowsOffer extends DefaultDebuggerMappingOffer {
 		public GdbI386X86_64WindowsOffer(TargetProcess process) {
 			super(process, 100, "GDB on Cygwin/MSYS2 (Windows) x64", LANG_ID_X86_64, COMP_ID_VS,
 				Set.of());
 		}
 
 		@Override
-		public DebuggerTargetTraceMapper take() {
-			try {
-				return new GdbTargetTraceMapper(target, langID, csID, extraRegNames) {
-					@Override
-					protected DebuggerRegisterMapper createRegisterMapper(
-							TargetRegisterContainer registers) {
-						return new GdbI386X86_64RegisterMapper(cSpec, registers);
-					}
-				};
-			}
-			catch (LanguageNotFoundException | CompilerSpecNotFoundException e) {
-				throw new AssertionError(e);
-			}
+		public DebuggerTargetTraceMapper createMapper()
+				throws LanguageNotFoundException, CompilerSpecNotFoundException {
+			return new GdbI386X86_64TraceMapper(target, langID, csID, extraRegNames);
 		}
 	}
 
-	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process) {
+	@Override
+	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process,
+			boolean includeOverrides) {
 		if (!env.getDebugger().toLowerCase().contains("gdb")) {
 			return Set.of();
 		}
@@ -122,7 +111,7 @@ public class GdbX86DebuggerMappingOpinion implements DebuggerMappingOpinion {
 		}
 		boolean is64Bit = arch.contains("x86-64") || arch.contains("x64-32");
 		String os = env.getOperatingSystem();
-		Msg.info(this, "Using os=" + os + " arch=" + arch);
+		Msg.info(this, "Generating offer for os=" + os + " arch=" + arch);
 		if (os.contains("Linux")) {
 			if (is64Bit) {
 				return Set.of(new GdbI386X86_64LinuxOffer(process));

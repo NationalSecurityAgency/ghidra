@@ -17,26 +17,36 @@
 <div class="simplesect">
 <div class="titlepage"></div>
   <p>
-    This lists configuration options that explicitly affect the behavior of the decompiler or
-    its output, independent of the code that is being decompiled. The bulk of these are
+    This page lists configuration options that explicitly affect the behavior of the Decompiler or
+    its output, independent of the code that is being decompiled. The bulk of these options are
     accessible by selecting the Code Browser menu
     </p>
 <div class="informalexample">
-      <span class="bold"><strong>Edit -&gt; Tool Options</strong></span>
+      <span class="bold"><strong>Edit -&gt; Tool Options...</strong></span>
     </div>
 <p>
-    and then picking the <span class="emphasis"><em>Decompiler</em></span> sub-folder. These options are associated
-    with the particular tool (Code Browser) being used and will apply to decompilation of any Program
-    being analyzed by that tool. The three categories of options are:
+    and then picking the <span class="emphasis"><em>Decompiler</em></span> folder. The options are associated
+    with the particular Code Browser or other tool being used and will apply to decompilation of any Program
+    being analyzed by that tool. There are three categories of options, which are listed by clicking either on the
+    <span class="emphasis"><em>Decompiler</em></span> folder or one of its two subsections.
     </p>
 <div class="informalexample">
-      <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
-<li class="listitem" style="list-style-type: disc">
-<a class="xref" href="DecompilerOptions.html#GeneralOptions" title="General Options">&#8220;General Options&#8221;</a> affecting the engine behavior</li>
-<li class="listitem" style="list-style-type: disc">
-<a class="xref" href="DecompilerOptions.html#AnalysisOptions" title="Analysis Options">&#8220;Analysis Options&#8221;</a> affecting the decompiler's transformation process</li>
-<li class="listitem" style="list-style-type: disc">
-<a class="xref" href="DecompilerOptions.html#DisplayOptions" title="Display Options">&#8220;Display Options&#8221;</a> affecting the final presentation of decompiler output</li>
+      <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none">
+	  <span class="guiicon">
+	    <span class="inlinemediaobject"><img src="images/openFolder.png" width="25" height="17"></span>
+	  </span><span class="emphasis"><em>Decompiler</em></span> - lists <a class="xref" href="DecompilerOptions.html#GeneralOptions" title="General Options">General Options</a> that affect the engine behavior.
+	</li>
+<li class="listitem" style="list-style-type: none">
+	  &#8195;<span class="guiicon">
+	    <span class="inlinemediaobject"><img src="images/document-properties.png" width="16" height="16"></span>
+	  </span> <span class="emphasis"><em>Analysis</em></span> - lists <a class="xref" href="DecompilerOptions.html#AnalysisOptions" title="Analysis Options">Analysis Options</a> that affect the Decompiler's transformation process.
+	</li>
+<li class="listitem" style="list-style-type: none">
+	  &#8195;<span class="guiicon">
+	    <span class="inlinemediaobject"><img src="images/document-properties.png" width="16" height="16"></span>
+	  </span> <span class="emphasis"><em>Display</em></span> - lists <a class="xref" href="DecompilerOptions.html#DisplayOptions" title="Display Options">Display Options</a> that affect the final presentation of Decompiler output.
+	</li>
 </ul></div>
     </div>
 <p>
@@ -46,13 +56,13 @@
     selecting the Code Browser menu
     </p>
 <div class="informalexample">
-      <span class="bold"><strong>Edit -&gt; Options for &lt;Program&gt;</strong></span>
+      <span class="bold"><strong>Edit -&gt; Options for &lt;program&gt;...</strong></span>.
     </div>
 <p>
-    Picking the <span class="emphasis"><em>Decompiler</em></span> tab shows <a class="xref" href="DecompilerOptions.html#ProgramOptions" title="Program Options">&#8220;Program Options&#8221;</a>
-    that only affect the decompiler.  Picking the <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">&#8220;Specification Extensions&#8221;</a> tab
+    Picking the <span class="emphasis"><em>Decompiler</em></span> section shows <a class="xref" href="DecompilerOptions.html#ProgramOptions" title="Program Options">Program Options</a>
+    that only affect the Decompiler.  Picking the <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">Specification Extensions</a> section
     shows a table of the available prototype models, call-fixups, and callother-fixups. These
-    affect more than just the decompiler but are also documented here.
+    affect more than just the Decompiler but are also documented here.
   </p>
 </div>
 <div class="section">
@@ -60,7 +70,7 @@
 <a name="GeneralOptions"></a>General Options</h2></div></div></div>
   
   <p>
-    These options govern what resources are available to the Plug-in and the decompiler engine but do
+    These options govern what resources are available to the Plug-in and the Decompiler engine but do
     not affect how analysis is performed or results are displayed.
   </p>
   <p>
@@ -72,7 +82,7 @@
 </dt>
 <dd>
 	<p>
-	  Decompilation results for a single function can be compute intensive to produce.
+	  Producing decompilation results for a single function can be computationally intensive.
 	  This option specifies the number of functions whose decompilation results
 	  can be cached simultaneously. When navigating to a function that
 	  has been recently cached, as when navigating back and forth between a few functions,
@@ -84,7 +94,7 @@
 </dt>
 <dd>
 	<p>
-	  This is a limit on the number of bytes that can be produced by the decompiler process as output
+	  This option limits the number of bytes that can be produced by the Decompiler process as output
 	  when decompiling a single function. A payload includes the actual characters to be displayed in
 	  the window, additional token markup, symbol information, and other details of the underlying
 	  syntax tree. The limit is specified in megabytes of data. If the limit is exceeded for a single
@@ -97,11 +107,11 @@
 </dt>
 <dd>
 	<p>
-	  This option sets an upper limit on the number of seconds the decompiler spends attempting
+	  This option sets an upper limit on the number of seconds the Decompiler spends attempting
 	  to analyze one function before aborting.
-	  It is currently <span class="bold"><strong>not</strong></span> enforced for the Decompilation
-	  Window.  Instead it applies to the DecompilerSwitchAnalyzer, the <code class="code">analyzeHeadless</code> command, scripts, or other
-	  plug-ins that make use of the decompiler service.
+	  It is currently <span class="bold"><strong>not</strong></span> enforced for a Decompiler
+	  window.  Instead it applies to the DecompilerSwitchAnalyzer, the <code class="code">analyzeHeadless</code> command, scripts, and other
+	  plug-ins that make use of the Decompiler service.
 	</p>
       </dd>
 <dt>
@@ -109,10 +119,10 @@
 </dt>
 <dd>
     <p>
-      This option sets a maximum number of machine instructions that the decompiler will attempt
+      This option sets a maximum number of machine instructions that the Decompiler will attempt
       to analyze for a single function, as a safeguard against analyzing a long sequence
-      of zeroes or other constant data. The decompiler will quickly throw an exception if it
-      traces control-flow into more than the indicated number of instructions.
+      of zeroes or other constant data. The Decompiler will quickly throw an exception if it
+      traces control flow into more than the indicated number of instructions.
     </p>
       </dd>
 </dl></div>
@@ -126,7 +136,7 @@
 <a name="AnalysisOptions"></a>Analysis Options</h2></div></div></div>
   
   <p>
-    These options directly affect how the decompiler performs its analysis, either by
+    These options directly affect how the Decompiler performs its analysis, either by
     toggling specific analysis passes or changing how it treats various annotations.
   </p>
   <p>
@@ -138,16 +148,16 @@
 </dt>
 <dd>
 	<p>
-	  When deciding if an individual stack location has become dead, the decompiler
+	  When deciding if an individual stack location has become dead, the Decompiler
 	  must consider <span class="emphasis"><em>aliases</em></span>, pointers onto the stack that could
-	  be used to modify the location within a called function.  One strong heuristic the decompiler
-	  uses is; if the user has explicitly created a variable on the stack between the
+	  be used to modify the location within a called function.  One strong heuristic the Decompiler
+	  uses is: if the user has explicitly created a variable on the stack between the
 	  base location referenced by the pointer and the individual stack location, then
-	  the decompiler can assume that the pointer is not an alias of the stack location.
+	  the Decompiler can assume that the pointer is not an alias of the stack location.
 	  The alias is <span class="emphasis"><em>blocked</em></span> by the explicit variable.
 	  However, if the user's explicit variable is labeling something that isn't
-	  really an explicit variable, like a field within a larger structure for instance,
-	  the decompiler may incorrectly consider the stack location as dead and start removing
+	  really an explicit variable, like a field within a larger structure, for instance,
+	  the Decompiler may incorrectly consider the stack location as dead and start removing
 	  live code.
 	</p>
 	<p>
@@ -157,12 +167,13 @@
 <div class="informalexample">
             <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc">
-<span class="bold"><strong>None</strong></span> - No data-type is considered blocking.</li>
+<span class="bold"><strong>None</strong></span> - No data-type is considered blocking</li>
 <li class="listitem" style="list-style-type: disc">
-<span class="bold"><strong>Structures</strong></span> - Only structured data-types are blocking.</li>
-<li class="listitem" style="list-style-type: disc"><span class="bold"><strong>Structures and Arrays</strong></span></li>
+<span class="bold"><strong>Structures</strong></span> - Only structures are blocking</li>
 <li class="listitem" style="list-style-type: disc">
-<span class="bold"><strong>All Data-types</strong></span> - All data-types are blocking.</li>
+<span class="bold"><strong>Structures and Arrays</strong></span> - Only structures and arrays are blocking</li>
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>All Data-types</strong></span> - All data-types are blocking</li>
 </ul></div>
 	  </div>
 <p>
@@ -172,11 +183,58 @@
 	</p>
       </dd>
 <dt>
+<a name="AnalysisUnreachable"></a><span class="term"><span class="bold"><strong>Eliminate unreachable code</strong></span></span>
+</dt>
+<dd>
+	<p>
+	  When toggled <span class="emphasis"><em>on</em></span>, the Decompiler eliminates code that it
+	  considers unreachable.  This usually happens when, due to constant propagation and other
+	  analysis, the Decompiler decides that a boolean value controlling a conditional branch can
+	  only take one possible value and removes the branch corresponding to the other value. Toggling
+	  this to <span class="emphasis"><em>off</em></span> lets the user see the dead code, which is typically demarcated
+	  by the control-flow structure:
+	  </p>
+<div class="informalexample">
+	    <code class="code">if (false) { ... }</code>
+	  </div>
+<p>
+	</p>
+      </dd>
+<dt>
+<a name="AnalysisIgnoreUnimplemented"></a><span class="term"><span class="bold"><strong>Ignore unimplemented instructions</strong></span></span>
+</dt>
+<dd>
+	<p>
+	  When toggled <span class="emphasis"><em>on</em></span>, the Decompiler treats instructions whose semantics
+	  have been formally marked <span class="bold"><strong>unimplemented</strong></span> as if they do
+	  nothing (no operation). Crucially, control flow falls through to the next instruction.
+	  In this case, the Decompiler inserts the warning "Control flow ignored unimplemented
+	  instructions" as a comment in the function header, but the exact point at which
+	  instruction was ignored may not be clear.
+	  If this option is toggled <span class="emphasis"><em>off</em></span>, the Decompiler inserts the built-in
+	  function <code class="code">halt_unimplemented()</code> at the point of the unimplemented instruction, and
+	  control flow does not fall through.
+	</p>
+      </dd>
+<dt>
+<a name="AnalysisInferConstants"></a><span class="term"><span class="bold"><strong>Infer constant pointers</strong></span></span>
+</dt>
+<dd>
+	<p>
+	  When toggled <span class="emphasis"><em>on</em></span>, the Decompiler infers a data-type for constants
+	  it determines are likely pointers. In the basic heuristic,
+          each constant is considered as an address, and if that address starts a known data or function element
+          in the program, the constant is assumed to be a pointer.  The constants are treated like
+	  any other source of data-type information, and the inferred data-types are freely propagated by
+	  the Decompiler to other parts of the function.
+	</p>
+      </dd>
+<dt>
 <a name="AnalysisForLoops"></a><span class="term"><span class="bold"><strong>Recover -for- loops</strong></span></span>
 </dt>
 <dd>
 	<p>
-	  When this is toggle <span class="emphasis"><em>on</em></span>, the decompiler attempts to pinpoint
+	  When toggled <span class="emphasis"><em>on</em></span>, the Decompiler attempts to pinpoint
 	  variables that control the iteration over specific loops in the function body.
 	  When these <span class="emphasis"><em>loop</em></span> variables are discovered, the loop is
 	  rendered using a standard <span class="bold"><strong>for</strong></span> loop header
@@ -188,51 +246,9 @@
 <p>
 	</p>
 	<p>
-	  If the toggle is <span class="emphasis"><em>off</em></span>, the loop is displayed using
+	  When toggled <span class="emphasis"><em>off</em></span>, the loop is displayed using
 	  <span class="bold"><strong>while</strong></span> syntax, with any initializer and
 	  iterating statements mixed in with the loop body or preceding basic blocks.
-	</p>
-      </dd>
-<dt>
-<a name="AnalysisUnreachable"></a><span class="term"><span class="bold"><strong>Eliminate unreachable code</strong></span></span>
-</dt>
-<dd>
-	<p>
-	  When this is toggled <span class="emphasis"><em>on</em></span>, the decompiler eliminates code that it
-	  considers unreachable.  This usually happens when, due to constant propagation and other
-	  analysis, the decompiler decides that a boolean value controlling a conditional branch can
-	  only take one possible value and removes the branch corresponding to the other value. Toggling
-	  this to <span class="emphasis"><em>off</em></span> lets the user see the dead code, which is typically demarcated
-	  by the control-flow structure -- <code class="code">if (false) { ... }</code>.
-	</p>
-      </dd>
-<dt>
-<a name="AnalysisIgnoreUnimplemented"></a><span class="term"><span class="bold"><strong>Ignore unimplemented instructions</strong></span></span>
-</dt>
-<dd>
-	<p>
-	  When toggled <span class="emphasis"><em>on</em></span>, the decompiler treats instructions whose semantics
-	  have been formally marked <span class="bold"><strong>unimplemented</strong></span> as if they do
-	  nothing (no operation). Crucially, control-flow falls through to the next instruction.
-	  In this case, the decompiler inserts the warning "Control flow ignored unimplemented
-	  instructions" as a comment in the function header, but the exact point at which
-	  instruction was ignored may not be clear.
-	  If this option is toggled <span class="emphasis"><em>off</em></span>, the decompiler inserts the built-in
-	  function <code class="code">halt_unimplemented()</code> at the point of the unimplemented instruction, and
-	  control-flow does not fall through.
-	</p>
-      </dd>
-<dt>
-<a name="AnalysisInferConstants"></a><span class="term"><span class="bold"><strong>Infer constant pointers</strong></span></span>
-</dt>
-<dd>
-	<p>
-	  When toggled <span class="emphasis"><em>on</em></span>, the decompiler infers a data-type for constants
-	  it determines are likely pointers. In the basic heuristic,
-          each constant is considered as an address, and if that address starts a known data or function element
-          in the program, the constant is assumed to be a pointer.  The constants are treated like
-	  any other source of data-type information, and the inferred data-types are freely propagated by
-	  the decompiler to other parts of the function.
 	</p>
       </dd>
 <dt>
@@ -240,20 +256,20 @@
 </dt>
 <dd>
 	<p>
-	  When toggled <span class="emphasis"><em>on</em></span>, the decompiler treats any values in memory
+	  When toggled <span class="emphasis"><em>on</em></span>, the Decompiler treats any values in memory
           marked <span class="emphasis"><em>read-only</em></span> as constant. If a read-only memory location is explicitly
 	  referenced by the function being decompiled, it is considered to be unchanging, and the initial
-	  value present in the Program is pulled in to the data-flow of the function as a constant.
+	  value present in the Program is pulled into the data flow of the function as a constant.
 	  Due to <span class="emphasis"><em>Constant Propagation</em></span> and other transformations, read-only memory
-	  can have a large effect on decompiler output.
+	  can have a large effect on Decompiler output.
 	</p>
 	<p>
-           Typically as part of the import process, Ghidra marks memory blocks as read-only if they
+           Typically, as part of the import process, Ghidra marks memory blocks as read-only if they
            are tagged as such by a section header or other meta-data in the original binary.
 	   Users can actively set whether specific memory regions are considered read-only through the
 	  <span class="emphasis"><em>Memory Manager</em></span>, and individual data elements can be marked
 	  as <span class="emphasis"><em>constant</em></span> via the <span class="bold"><strong>Mutability</strong></span> setting
-	  (See <a class="xref" href="DecompilerAnnotations.html#AnnoteMutability" title="Data Mutability">&#8220;Data Mutability&#8221;</a>). 
+	  (see <a class="xref" href="DecompilerAnnotations.html#AnnoteMutability" title="Data Mutability">Data Mutability</a>). 
 	</p>
       </dd>
 <dt>
@@ -261,7 +277,7 @@
 </dt>
 <dd>
 	<p>
-	  This toggles whether the decompiler attempts to simplify double precision arithmetic operations,
+	  This toggles whether the Decompiler attempts to simplify double precision arithmetic operations,
           where a single logical operation is split into two parts, calculating the high and low pieces
 	  of the result in separate instructions.  Decompiler support for this kind of transform is currently
 	  limited, and only certain constructions are simplified.
@@ -272,10 +288,10 @@
 </dt>
 <dd>
 	<p>
-	  When this option is active, the decompiler simplifies code sequences containing
+	  When this option is active, the Decompiler simplifies code sequences containing
 	  <span class="emphasis"><em>predicated</em></span> instructions. A predicated instruction is executed
 	  conditionally based on a boolean value, the <span class="bold"><strong>predicate</strong></span>,
-	  and a sequence of instructions can share the same predicate. The decompiler merges the
+	  and a sequence of instructions can share the same predicate. The Decompiler merges the
 	  resulting <code class="code">if/else</code> blocks that share the same predicate so that the condition is only
 	  printed once.
 	</p>
@@ -285,7 +301,7 @@
 </dt>
 <dd>
 	<p>
-	  When toggled <span class="emphasis"><em>on</em></span>, the decompiler employs in-place assignment operators,
+	  When toggled <span class="emphasis"><em>on</em></span>, the Decompiler employs in-place assignment operators,
 	  such as <code class="code">+=</code> and <code class="code">&lt;&lt;=</code>, in its output syntax.
 	</p>
       </dd>
@@ -300,7 +316,7 @@
 <a name="DisplayOptions"></a>Display Options</h2></div></div></div>
   
   <p>
-    These options do not change the decompiler's analysis but only affect how the results are presented.
+    These options do not change the Decompiler's analysis but only affect how the results are presented.
   </p>
   <p>
     </p>
@@ -315,11 +331,21 @@
 	</p>
       </dd>
 <dt>
+<a name="DisplayColorDefault"></a><span class="term"><span class="bold"><strong>Color Default</strong></span></span>
+</dt>
+<dd>
+	<p>
+	  Assign the color to any characters emitted by the Decompiler that do not fall into one of token types
+	  listed below. This includes delimiter characters like commas and parentheses as well as various <span class="emphasis"><em>operator</em></span>
+	  characters.
+	</p>
+      </dd>
+<dt>
 <a name="DisplayTokenColor"></a><span class="term"><span class="bold"><strong>Color for &lt;token&gt;</strong></span></span>
 </dt>
 <dd>
 	<p>
-	  Assign colors to the different types of language tokens emitted by the decompiler.
+	  Assign colors to the different types of language tokens emitted by the Decompiler.
 	  These include:
           </p>
 <div class="informalexample">
@@ -344,21 +370,11 @@
 	</p>
       </dd>
 <dt>
-<a name="DisplayColorDefault"></a><span class="term"><span class="bold"><strong>Color Default</strong></span></span>
-</dt>
-<dd>
-	<p>
-	  Assign the color to any characters emitted by the decompiler that do not fall into one of token types
-	  listed above. This includes delimiter characters like commas and parentheses as well as various <span class="emphasis"><em>operator</em></span>
-	  characters.
-	</p>
-      </dd>
-<dt>
 <a name="DisplayCurrentHighlight"></a><span class="term"><span class="bold"><strong>Color for Current Variable Highlight</strong></span></span>
 </dt>
 <dd>
 	<p>
-	  Assign the background color used to highlight the token currently under the cursor in a Decompiler Window.
+	  Assign the background color used to highlight the token currently under the cursor in a Decompiler window.
 	</p>
       </dd>
 <dt>
@@ -366,8 +382,8 @@
 </dt>
 <dd>
 	<p>
-	  Assign the background color used to highlight characters matching the current <span class="emphasis"><em>Find</em></span> pattern.
-	  See <a class="xref" href="DecompilerWindow.html#ActionFind" title="Find ...">&#8220;Find ...&#8221;</a>.
+	  Assign the background color used to highlight characters matching the current <span class="emphasis"><em>Find</em></span> pattern
+	  (see <a class="xref" href="DecompilerWindow.html#ActionFind" title="Find...">Find...</a>).
 	</p>
       </dd>
 <dt>
@@ -375,7 +391,7 @@
 </dt>
 <dd>
 	<p>
-	  Set the number of characters that comment lines are indented within decompiler output. This applies only
+	  Set the number of characters that comment lines are indented within Decompiler output. This applies only
 	  to comments within the body of the function being displayed.  Comments at the head of the function
 	  are not indented.
 	</p>
@@ -385,7 +401,7 @@
 </dt>
 <dd>
 	<p>
-	  Set the language syntax used to delimit comments emitted as part of decompiler output. For C and Java,
+	  Set the language syntax used to delimit comments emitted as part of Decompiler output. For C and Java,
 	  the choices are <code class="code">/* C style comments */</code> and <code class="code">// C++ style comments</code>.
 	</p>
       </dd>
@@ -394,7 +410,7 @@
 </dt>
 <dd>
 	<p>
-	  Set whether the syntax for <span class="emphasis"><em>type casts</em></span> is emitted in decompiler output.
+	  Set whether the syntax for <span class="emphasis"><em>type casts</em></span> is emitted in Decompiler output.
 	  If this is toggled on, type cast syntax is never displayed, even when rules of the language
 	  require it. So individual statements may no longer be formally accurate.
 	</p>
@@ -404,28 +420,29 @@
 </dt>
 <dd>
 	<p>
-	  Set whether a specific kind of comment can be incorporated into decompiler output. Comments in
-	  Ghidra are categorized based on their placement within the Listing Window, and the decompiler
-	  in general tries to display comments where appropriate. See the discussion in <a class="xref" href="DecompilerAnnotations.html#AnnoteComments" title="Comments">&#8220;Comments&#8221;</a>.
-	  Each kind of comment has its own toggle and can be individually included or excluded from decompiler output. 
+	  Set whether a specific type of comment should be incorporated into Decompiler output. 
+	  Each type has its own toggle and can be individually included or excluded from Decompiler output. 
 	  </p>
 <div class="informalexample">
 	    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc">
-		<span class="bold"><strong>PLATE</strong></span> - Whether plate comments <span class="emphasis"><em>within the body of the function</em></span> are displayed
+		<span class="bold"><strong>EOL</strong></span>
 	      </li>
 <li class="listitem" style="list-style-type: disc">
-		<span class="bold"><strong>PRE</strong></span>
+		<span class="bold"><strong>PLATE</strong></span> - Whether plate comments <span class="emphasis"><em>within the body of the function</em></span> are displayed
 	      </li>
 <li class="listitem" style="list-style-type: disc">
 		<span class="bold"><strong>POST</strong></span>
 	      </li>
 <li class="listitem" style="list-style-type: disc">
-		<span class="bold"><strong>EOL</strong></span>
+		<span class="bold"><strong>PRE</strong></span>
 	      </li>
 </ul></div>
 	  </div>
 <p>
+	  A comment's type indicates how it is placed within a Listing window, not how it is placed in
+	  a Decompiler window.  All comments within the body of the function are displayed in the same way
+	  by the decompiler, regardless of their type (see the discussion in <a class="xref" href="DecompilerAnnotations.html#AnnoteComments" title="Comments">Comments</a>).
 	</p>
       </dd>
 <dt>
@@ -433,9 +450,9 @@
 </dt>
 <dd>
 	<p>
-	  Toggle whether the decompiler emits comments at the head (before the beginning) of a function.
+	  Toggle whether the Decompiler emits comments at the head (before the beginning) of a function.
 	  The header is built from Plate comments placed at the <span class="emphasis"><em>entry point</em></span> of the
-	  function. See the discussion in <a class="xref" href="DecompilerAnnotations.html#AnnoteComments" title="Comments">&#8220;Comments&#8221;</a>.
+	  function (see the discussion in <a class="xref" href="DecompilerAnnotations.html#AnnoteComments" title="Comments">Comments</a>).
 	  The inclusion of other Plate comments is controlled by the <span class="bold"><strong>Display PLATE comments</strong></span> toggle, described above. 
 	</p>
       </dd>
@@ -444,11 +461,11 @@
 </dt>
 <dd>
 	<p>
-	  Toggle whether line numbers are displayed in any Decompiler Window.  If toggled
-	  on, each Decompiler Window reserves space to display a numbers down the left
-	  side of the window, labeling each line of output produced by the decompiler.
+	  Toggle whether line numbers are displayed in any Decompiler window.  If toggled
+	  on, each Decompiler window reserves space to display a numbers down the left
+	  side of the window, labeling each line of output produced by the Decompiler.
 	  Line numbers are associated with the window itself and are not formally part of
-	  the decompiler's output.
+	  the Decompiler's output.
 	</p>
       </dd>
 <dt>
@@ -456,19 +473,19 @@
 </dt>
 <dd>
 	<p>
-	  Control how the decompiler displays namespace information associated
+	  Control how the Decompiler displays namespace information associated
 	  with function and variable symbols. The possible settings are:
 	  </p>
 <div class="informalexample">
 	    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc">
+		<span class="bold"><strong>Minimally</strong></span> - Display the minimal path that distinguishes the symbol 
+	      </li>
+<li class="listitem" style="list-style-type: disc">
 		<span class="bold"><strong>Always</strong></span> - Always display the entire namespace path
 	      </li>
 <li class="listitem" style="list-style-type: disc">
 		<span class="bold"><strong>Never</strong></span> - Never display the namespace path
-	      </li>
-<li class="listitem" style="list-style-type: disc">
-		<span class="bold"><strong>Minimally</strong></span> - Display the minimal path that distinguishes the symbol 
 	      </li>
 </ul></div>
 	  </div>
@@ -489,9 +506,9 @@
 </dt>
 <dd>
 	<p>
-	  Toggle whether decompiler generated <span class="emphasis"><em>WARNING</em></span> comments are displayed as part
-	  of the output. The decompiler generates these comments, independent of those laid down by users, to
-	  indicate unusual conditions or possible errors (See <a class="xref" href="DecompilerAnnotations.html#CommentWarnings" title="Warning Comments">&#8220;Warning Comments&#8221;</a>). 
+	  Toggle whether Decompiler generated <span class="emphasis"><em>WARNING</em></span> comments are displayed as part
+	  of the output. The Decompiler generates these comments, independent of those laid down by users, to
+	  indicate unusual conditions or possible errors (see <a class="xref" href="DecompilerAnnotations.html#CommentWarnings" title="Warning Comments">Warning Comments</a>). 
 	</p>
       </dd>
 <dt>
@@ -499,8 +516,8 @@
 </dt>
 <dd>
 	<p>
-	  Set the typeface used to render characters in any Decompiler Window. Indentation is generally clearer
-	  using a monospaced (fixed width) font, but any font available to the system can be used.  The size of
+	  Set the typeface used to render characters in any Decompiler window. Indentation is generally clearer
+	  using a monospaced (fixed-width) font, but any font available to Ghidra can be used.  The size of
 	  the font can also be controlled from this option.
 	</p>
       </dd>
@@ -509,19 +526,19 @@
 </dt>
 <dd>
 	<p>
-	  Set how integer constants are formatted in the decompiler output.
+	  Set how integer constants are formatted in the Decompiler output.
 	  The possible settings are:
 	  </p>
 <div class="informalexample">
 	    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc">
-		<span class="bold"><strong>Best Fit</strong></span> - Select the most <span class="emphasis"><em>natural</em></span> representation
+		<span class="bold"><strong>Force Hexadecimal</strong></span> - Always use a hexadecimal representation
 	      </li>
 <li class="listitem" style="list-style-type: disc">
 		<span class="bold"><strong>Force Decimal</strong></span> - Always use a decimal representation
 	      </li>
 <li class="listitem" style="list-style-type: disc">
-		<span class="bold"><strong>Force Hexadecimal</strong></span> - Always use a hexadecimal representation
+		<span class="bold"><strong>Best Fit</strong></span> - Select the most <span class="emphasis"><em>natural</em></span> representation
 	      </li>
 </ul></div>
 	  </div>
@@ -536,8 +553,8 @@
 </dt>
 <dd>
 	<p>
-	  Set the maximum number of characters in a line of code emitted by the decompiler before a line break
-	  is forced.  The decompiler will not split an individual token across lines. So line breaks frequently
+	  Set the maximum number of characters in a line of code emitted by the Decompiler before a line break
+	  is forced.  The Decompiler will not split an individual token across lines. So line breaks frequently
 	  will come before the maximum number of characters is reached, and technically a single token can
 	  extend the line beyond the maximum.
 	</p>
@@ -548,9 +565,9 @@
 <dd>
 	<p>
 	  Set the amount of indenting used to print statements within a nested scope in the
-	  decompiler output.  Each level of nesting (for function bodies,
+	  Decompiler output.  Each level of nesting (function bodies,
 	  loop bodies, <span class="bold"><strong>if/else</strong></span> bodies, etc.)
-	  bodies adds this number characters.
+	  adds this number characters.
 	</p>
       </dd>
 <dt>
@@ -558,10 +575,10 @@
 </dt>
 <dd>
 	<p>
-	  Set how null pointers are displayed in decompiler output.  If this is toggled
-	  on, the decompiler will print a constant pointer value of zero (a <span class="bold"><strong>null</strong></span> pointer)
+	  Set how null pointers are displayed in Decompiler output.  If this is toggled
+	  on, the Decompiler will print a constant pointer value of zero (a <span class="bold"><strong>null</strong></span> pointer)
 	  using the special token <code class="code">NULL</code>.  Otherwise the pointer value is represented with the '0' character,
-	  which is then type cast into a pointer.
+	  which is then cast to a pointer.
 	</p>
       </dd>
 <dt>
@@ -570,10 +587,10 @@
 <dd>
 	<p>
 	  Set whether the <span class="emphasis"><em>calling convention</em></span> is printed as part of the function
-	  declaration in decompiler output. If this option is turned on, the name of the calling convention
+	  declaration in Decompiler output. If this option is turned on, the name of the calling convention
 	  is printed just prior to the return value data-type within the function declaration.  All functions
 	  in Ghidra have an associated calling convention (or prototype model) that is used during
-	  decompiler analysis.  See the discussion in <a class="xref" href="DecompilerConcepts.html#ConceptPrototypeModel" title="Prototype Model">&#8220;Prototype Model&#8221;</a>.
+	  Decompiler analysis (see the discussion in <a class="xref" href="DecompilerConcepts.html#ConceptPrototypeModel" title="Prototype Model">Prototype Model</a>).
 	</p>
       </dd>
 </dl></div>
@@ -587,7 +604,7 @@
 <a name="ProgramOptions"></a>Program Options</h2></div></div></div>
   
   <p>
-    Changes to these options affect only the decompiler and only for
+    Changes to these options affect only the Decompiler and only for
     the current Program being analyzed.
   </p>
   <p>
@@ -600,9 +617,9 @@
 <dd>
 	<p>
 	  Sets the calling convention (prototype model) used when decompiling a function where
-	  the convention is not known (i.e. marked as "unknown").  Many architectures have multiple
-	  calling conventions, <code class="code">__stdcall</code>, <code class="code">__thiscall</code> etc.  See the
-	  discussion in <a class="xref" href="DecompilerConcepts.html#ConceptPrototypeModel" title="Prototype Model">&#8220;Prototype Model&#8221;</a>.  
+	  the convention is not known; i.e., marked as <span class="bold"><strong>unknown</strong></span>.  Many architectures have multiple
+	  calling conventions, <span class="bold"><strong>__stdcall</strong></span>, <span class="bold"><strong>__thiscall</strong></span>, etc.
+	  (see the discussion in <a class="xref" href="DecompilerConcepts.html#ConceptPrototypeModel" title="Prototype Model">Prototype Model</a>).  
 	</p>
       </dd>
 </dl></div>
@@ -615,25 +632,25 @@
 <a name="ExtensionOptions"></a>Specification Extensions</h2></div></div></div>
   
   <p>
-    This tab displays elements from the Program's <span class="emphasis"><em>compiler specification</em></span> and
+    This entry displays elements from the Program's <span class="emphasis"><em>compiler specification</em></span> and
     <span class="emphasis"><em>processor specification</em></span> and allows the user to add or remove
     <span class="bold"><strong>extensions</strong></span>, including prototype models, call-fixups, and
     callother-fixups.
   </p>
   <p>
     Every program has a <span class="emphasis"><em>core</em></span> set of specification elements,
-    loaded from the <a class="xref" href="DecompilerConcepts.html#ConceptSpecification" title="SLEIGH Specification Files">&#8220;SLEIGH Specification Files&#8221;</a>, that cannot
+    loaded from the <a class="xref" href="DecompilerConcepts.html#ConceptSpecification" title="SLEIGH Specification Files">SLEIGH Specification Files</a>, that cannot
     be modified or removed. Extensions, however, can be added to this core specification. Any extension
     imported from this dialog is directly associated with the active Program and is stored permanently
     with it.
   </p>
   <p>
-    Users can change or reimport an extension, if new information points to a better definition.
+    Users can change or reimport an extension if new information points to a better definition.
     Users have full control over an extension, and unlike a core element, can tailor it specifically
     to the Program.  
   </p>
   <p>
-    This options tab presents a table of all specification elements.
+    This options entry presents a table of all specification elements.
     Each element, whether core or an extension, is displayed on a separate row with three columns:
     </p>
 <div class="informalexample">
@@ -648,7 +665,7 @@
     </div>
 <p>
     The core elements of the specification have a blank Status column, and any extension
-    is labeled either as "extension" or "override".
+    is labeled either as <span class="bold"><strong>extension</strong></span> or <span class="bold"><strong>override</strong></span>.
   </p>
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
@@ -665,14 +682,14 @@
 <dt><span class="term"><span class="bold"><strong>prototype</strong></span></span></dt>
 <dd>
 	    <p>
-	      This element is a <a class="xref" href="DecompilerConcepts.html#ConceptPrototypeModel" title="Prototype Model">&#8220;Prototype Model&#8221;</a> that holds a specific named set
-	      of parameter passing details. It
-	      can be applied to individual functions by name, typically via the "Calling Convention" menu
+	      This element is a named <a class="xref" href="DecompilerConcepts.html#ConceptPrototypeModel" title="Prototype Model">Prototype Model</a> that holds a specific set
+	      of parameter-passing details. It
+	      can be applied to individual functions by name, typically via the <span class="bold"><strong>Calling Convention</strong></span> menu
 	      in the <a class="ulink" href="help/topics/FunctionPlugin/Variables.htm#Edit_Function" target="_top">Function Editor Dialog</a>.
-	      See the documentation on <a class="xref" href="DecompilerAnnotations.html#AnnotePrototype" title="Function Prototypes">&#8220;Function Prototypes&#8221;</a> for how they affect decompilation.
+	      See the documentation on <a class="xref" href="DecompilerAnnotations.html#AnnotePrototype" title="Function Prototypes">Function Prototypes</a> for how they affect decompilation.
 	    </p>
 	    <p>
-	      The XML tag, <code class="code">&lt;prototype&gt;</code> always has a <span class="bold"><strong>name</strong></span> attribute
+	      The XML <code class="code">&lt;prototype&gt;</code> tag always has a <span class="bold"><strong>name</strong></span> attribute
 	      that defines the formal name of the prototype model, which must be unique across all models.
 	      </p>
 <pre class="programlisting">
@@ -693,7 +710,7 @@
 	    <p>
 	      This element is a Call-fixup, which can be used to substitute a specific p-code
 	      sequence for CALL instructions during decompilation, as described in
-	      <a class="xref" href="DecompilerAnnotations.html#AnnotePrototype" title="Function Prototypes">&#8220;Function Prototypes&#8221;</a>.
+	      <a class="xref" href="DecompilerAnnotations.html#AnnotePrototype" title="Function Prototypes">Function Prototypes</a>.
 	    </p>
 	    <p>
 	      The <code class="code">&lt;callfixup&gt;</code> tag has a <span class="bold"><strong>name</strong></span>
@@ -719,7 +736,7 @@
 	    <p>
 	      This element is a Callother-fixup, which can be used to substitute a specific p-code
 	      sequence for CALLOTHER p-code operations.  A CALLOTHER
-	      is a black-box, or unspecified p-code operation, see <a class="xref" href="DecompilerConcepts.html#ConceptCallother" title="User-defined P-code Operations - CALLOTHER">&#8220;User-defined P-code Operations - CALLOTHER&#8221;</a>.
+	      is a black-box, or unspecified p-code operation (see <a class="xref" href="DecompilerConcepts.html#ConceptCallother" title="User-defined P-code Operations - CALLOTHER">User-defined P-code Operations - CALLOTHER</a>).
 	    </p>
 	    <p>
 	      The <code class="code">&lt;callotherfixup&gt;</code> tag has a
@@ -769,7 +786,7 @@
 <dt><span class="term"><span class="bold"><strong>extension</strong></span></span></dt>
 <dd>
 	    <p>
-	      Indicates that the element is a program specific extension that has been
+	      Indicates that the element is a program-specific extension that has been
 	      added to the specification.
 	    </p>
 	  </dd>
@@ -778,7 +795,7 @@
 	    <p>
 	      Indicates that the element, which must be a <span class="bold"><strong>callotherfixup</strong></span>,
 	      is an extension that overrides a core element with the same target.  The extension
-	      effectively replaces the p-code injection of the core element with a user supplied one.
+	      effectively replaces the p-code injection of the core element with a user-supplied one.
 	      If this type of extension is later removed, the core element becomes active again.
 	    </p>
 	  </dd>
@@ -789,7 +806,7 @@
     <p>
       If the user has either imported additional extensions or selected an extension for removal but
       has not yet clicked the <span class="emphasis"><em>Apply</em></span> button in the Options dialog, the Status column
-      may show one of the following values, indicating a pending change.
+      may show one of the following values, indicating a pending change:
       </p>
 <div class="informalexample">
 	<div class="variablelist"><dl class="variablelist">
@@ -830,7 +847,7 @@
     
     <p>
       The <span class="emphasis"><em>Import</em></span> button at the bottom of the
-      "Specification Extensions" pane allows the user to import one of the
+      <span class="bold"><strong>Specification Extensions</strong></span> pane allows the user to import one of the
       three element types, <span class="bold"><strong>prototype</strong></span>,
       <span class="bold"><strong>callfixup</strong></span>, or <span class="bold"><strong>callotherfixup</strong></span>,
       into the program as a new extension.
@@ -850,8 +867,8 @@
       The XML file describing the extension <span class="emphasis"><em>must</em></span> have one of the tags,
       <code class="code">&lt;prototype&gt;</code>, <code class="code">&lt;callfixup&gt;</code>, or <code class="code">&lt;callotherfixup&gt;</code>,
       as its single root element. Users can find numerous examples within the compiler
-      and processor specification files that come as part of Ghidra's installation.
-      See <a class="xref" href="DecompilerConcepts.html#ConceptSpecification" title="SLEIGH Specification Files">&#8220;SLEIGH Specification Files&#8221;</a>.
+      and processor specification files that come as part of Ghidra's installation
+      (see <a class="xref" href="DecompilerConcepts.html#ConceptSpecification" title="SLEIGH Specification Files">SLEIGH Specification Files</a>).
     </p>
     <p>
       In the case of <span class="bold"><strong>prototype</strong></span> and <span class="bold"><strong>callfixup</strong></span>
@@ -868,7 +885,7 @@
 <a name="ExtendRemove"></a>Removing an Extension</h3></div></div></div>
     
     <p>
-      The <span class="emphasis"><em>Remove</em></span> button at the bottom of the "Specification Extensions" pane allows
+      The <span class="emphasis"><em>Remove</em></span> button at the bottom of the <span class="bold"><strong>Specification Extensions</strong></span> pane allows
       the user to remove a previously installed extension.  A row from the table is selected first, which
       must have a Status of <span class="bold"><strong>extension</strong></span> or <span class="bold"><strong>override</strong></span>.
       Core elements of the specification cannot be removed.

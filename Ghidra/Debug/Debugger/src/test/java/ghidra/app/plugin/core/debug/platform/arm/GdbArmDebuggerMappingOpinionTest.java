@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.platform.gdb;
+package ghidra.app.plugin.core.debug.platform.arm;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -25,8 +25,8 @@ import org.junit.Test;
 
 import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOffer;
 import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOpinion;
-import ghidra.app.plugin.core.debug.platform.gdb.GdbArmDebuggerMappingOpinion.GdbAArch64Offer;
-import ghidra.app.plugin.core.debug.platform.gdb.GdbArmDebuggerMappingOpinion.GdbArmOffer;
+import ghidra.app.plugin.core.debug.platform.arm.GdbArmDebuggerMappingOpinion.GdbAArch64Offer;
+import ghidra.app.plugin.core.debug.platform.arm.GdbArmDebuggerMappingOpinion.GdbArmOffer;
 import ghidra.dbg.model.TestDebuggerObjectModel;
 import ghidra.dbg.model.TestTargetProcess;
 import ghidra.program.model.lang.LanguageID;
@@ -45,7 +45,7 @@ public class GdbArmDebuggerMappingOpinionTest extends AbstractGhidraHeadlessInte
 
 		TestTargetProcess process = model.addProcess(1234);
 
-		List<DebuggerMappingOffer> offers = DebuggerMappingOpinion.queryOpinions(process);
+		List<DebuggerMappingOffer> offers = DebuggerMappingOpinion.queryOpinions(process, false);
 		assertFalse(offers.isEmpty());
 		Set<DebuggerMappingOffer> ldefsOnes = offers.stream()
 				.filter(o -> o.getClass().equals(GdbArmOffer.class))
@@ -68,7 +68,7 @@ public class GdbArmDebuggerMappingOpinionTest extends AbstractGhidraHeadlessInte
 
 		TestTargetProcess process = model.addProcess(1234);
 
-		List<DebuggerMappingOffer> offers = DebuggerMappingOpinion.queryOpinions(process);
+		List<DebuggerMappingOffer> offers = DebuggerMappingOpinion.queryOpinions(process, false);
 		assertFalse(offers.isEmpty());
 		Set<DebuggerMappingOffer> ldefsOnes = offers.stream()
 				.filter(o -> o.getClass().equals(GdbArmOffer.class))
@@ -88,7 +88,7 @@ public class GdbArmDebuggerMappingOpinionTest extends AbstractGhidraHeadlessInte
 
 		TestTargetProcess process = model.addProcess(1234);
 
-		List<DebuggerMappingOffer> offers = DebuggerMappingOpinion.queryOpinions(process);
+		List<DebuggerMappingOffer> offers = DebuggerMappingOpinion.queryOpinions(process, false);
 		assertFalse(offers.isEmpty());
 		Set<DebuggerMappingOffer> ldefsOnes = offers.stream()
 				.filter(o -> o.getClass().equals(GdbAArch64Offer.class))

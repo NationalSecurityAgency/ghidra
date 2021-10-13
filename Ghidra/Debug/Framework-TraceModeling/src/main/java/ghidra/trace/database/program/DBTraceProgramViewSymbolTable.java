@@ -327,6 +327,13 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 	}
 
 	@Override
+	public SymbolIterator getSymbolsAsIterator(Address addr) {
+		Symbol[] symbols = getSymbols(addr);
+		List<Symbol> list = Arrays.asList(symbols);
+		return new SymbolIteratorAdapter(list.iterator());
+	}
+
+	@Override
 	public Symbol[] getUserSymbols(Address addr) {
 		try (LockHold hold = program.trace.lockRead()) {
 			Collection<? extends TraceSymbol> at =

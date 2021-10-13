@@ -21,10 +21,10 @@
   
   <p>
     P-code is Ghidra's Intermediate Representation (IR) language. When analyzing a function,
-    the decompiler translates every machine instruction into p-code first and performs its
-    analysis directly on the operators and variables of the language. Output of the decompiler
+    the Decompiler translates every machine instruction into p-code first and performs its
+    analysis directly on the operators and variables of the language. Output of the Decompiler
     is also best understood in terms of p-code. This section presents the key concepts of
-    p-code. For a more detailed discussion see the document "P-Code Reference Manual".
+    p-code. For a more detailed discussion see the document "P-Code Reference Manual."
   </p>
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
@@ -54,7 +54,7 @@
     <p>
       For a p-code model of a specific processor, all elements of the processor state (including RAM, registers,
       flags, etc.) must be contained in some address space. The model will define multiple address spaces
-      to accomplish this, and beyond the raw translation of machine instructions to p-code, the decompiler
+      to accomplish this, and beyond the raw translation of machine instructions to p-code, the Decompiler
       can add additional spaces. Address space definitions that are common across many different processors include:
       </p>
 <div class="informalexample">
@@ -79,7 +79,7 @@
 <dd>
 	    <p>
 	      A space dedicated to <span class="emphasis"><em>temporary</em></span> registers.
-	      It is used to hold intermediate values when modeling instruction behavior, and the decompiler
+	      It is used to hold intermediate values when modeling instruction behavior, and the Decompiler
 	      uses it to allocate space for variables that don't directly correspond to the low level
 	      processor state.  The name <span class="emphasis"><em>unique</em></span> is reserved for this purpose and
 	      is present in all processor models.
@@ -89,7 +89,7 @@
 <dd>
 	    <p>
 	      A space that represents bytes explicitly indexed through a <span class="emphasis"><em>stack pointer</em></span>.
-	      This is an example of an address space added by the decompiler beyond what the raw processor
+	      This is an example of an address space added by the Decompiler beyond what the raw processor
 	      model defines.  The <span class="emphasis"><em>stack</em></span> space is a logical construction representing the set of bytes a
 	      single function might access through its stack pointer.  Each stack address represents
 	      the offset of a byte in some underlying space (usually <span class="emphasis"><em>ram</em></span>) relative
@@ -135,7 +135,7 @@
     </p>
     <p>
       Varnodes by themselves do not necessarily have a data-type associated with them.
-      The decompiler ultimately assigns a formal data-type, but at the lowest level of p-code,
+      The Decompiler ultimately assigns a formal data-type, but at the lowest level of p-code,
       varnodes inherit one the building block data-types from the p-code operations that
       act on them:
       </p>
@@ -262,10 +262,10 @@
       
     <p>
       Most opcodes naturally correspond to a particular C operator token,
-      and in decompiler output, many of the operator tokens displayed correspond
-      directly to a p-code operation present in the decompiler's internal
+      and in Decompiler output, many of the operator tokens displayed correspond
+      directly to a p-code operation present in the Decompiler's internal
       representation.  The biggest exception are the <span class="emphasis"><em>Branching</em></span>
-      operations; the decompiler uses standard high-level language control-flow
+      operations; the Decompiler uses standard high-level language control-flow
       structures, like <span class="emphasis"><em>if/else</em></span>, <span class="emphasis"><em>switch</em></span>, and
       <span class="emphasis"><em>do/while</em></span> blocks, instead of the
       low-level branching operations. But even here, there is some correspondence
@@ -669,7 +669,7 @@
 <a name="ConceptControlFlow"></a>P-code Control Flow</h4></div></div></div>
     
     <p>
-      P-code has natural <span class="bold"><strong>control-flow</strong></span>, with the subtlety that flow
+      P-code has natural <span class="bold"><strong>control flow</strong></span>, with the subtlety that flow
       happens both within and across machine instructions.  Most p-code operators have
       <span class="bold"><strong>fall-through</strong></span> semantics, meaning that flow moves to the
       next operator in the sequence associated with the instruction, or, if the operator is the
@@ -680,7 +680,7 @@
     </p>
     <p>
       Ghidra labels a machine instruction with one of the following <span class="bold"><strong>Flow Types</strong></span> that describe
-      its overall control-flow.  The Flow Type is derived directly from the control-flow of the p-code for the instruction,
+      its overall control flow.  The Flow Type is derived directly from the control flow of the p-code for the instruction,
       with the basic types corresponding directly with a specific branching p-code operator.
       </p>
 <div class="informalexample">
@@ -737,8 +737,8 @@
       not specified.
     </p>
     <p>
-      The decompiler treats a CALLOTHER operation as a black box. It will keep track of data
-      flowing into and out of the operation but won't simplify or transform it. In decompiler
+      The Decompiler treats a CALLOTHER operation as a black box. It will keep track of data
+      flowing into and out of the operation but won't simplify or transform it. In Decompiler
       output, a CALLOTHER is usually displayed using its unique name, with functional syntax
       showing its inputs and output.
     </p>
@@ -748,7 +748,7 @@
       <span class="bold"><strong>Callother-Fixup</strong></span>, which is substituted for the
       CALLOTHER operation during decompilation, or by other Analyzers that use p-code.
       Callother-Fixups are applied by Ghidra for specific processor or compiler variants,
-      and a user can choose to apply them to an individual Program. (See <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">&#8220;Specification Extensions&#8221;</a>)
+      and a user can choose to apply them to an individual Program (see <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">Specification Extensions</a>).
     </p>
   </div>
 
@@ -757,10 +757,10 @@
 <a name="ConceptInternalFunctions"></a>Internal Decompiler Functions</h4></div></div></div>
     
     <p>
-      Certain p-code operations can show up in decompiler output that cannot be represented
+      Certain p-code operations can show up in Decompiler output that cannot be represented
       as either an operator token, a cast operation, or other depiction that is natural to
-      the language.  The decompiler generally tries to eliminate these, but this isn't always
-      possible. The decompiler resorts to a functional syntax for these kinds
+      the language.  The Decompiler generally tries to eliminate these, but this isn't always
+      possible. The Decompiler resorts to a functional syntax for these kinds
       of p-code operations, displaying them as if they were built-in functions for the language.
     </p>
     <div class="informalexample">
@@ -878,7 +878,7 @@
   
   <p>
     A <span class="bold"><strong>HighFunction</strong></span> is the collection of specific information
-    produced by the decompiler about a function, referring to the root class in the Ghidra
+    produced by the Decompiler about a function, referring to the root class in the Ghidra
     source which holds this information.
     The HighFunction is made up of the following explicit objects:
     </p>
@@ -900,11 +900,11 @@
 <p>
   </p>
   <p>
-    The decompiler's output provides a standalone view of the function which is distinct
+    The Decompiler's output provides a standalone view of the function which is distinct
     from any annotations about the function that are present in the Program database
-    and displayed in the Listing view (although the output may be informed by these annotations).
+    and displayed in the Listing (although the output may be informed by these annotations).
     The terms <span class="emphasis"><em>HighFunction</em></span>, <span class="emphasis"><em>HighVariable</em></span>, and
-    <span class="emphasis"><em>HighSymbol</em></span> refer to this decompiler specific view of the function.
+    <span class="emphasis"><em>HighSymbol</em></span> refer to this Decompiler specific view of the function.
   </p>
 
   <div class="sect2">
@@ -913,7 +913,7 @@
     
     <p>
 	A <span class="bold"><strong>HighSymbol</strong></span> is one of the explicit symbols recovered by the
-	decompiler.  It is made up of a name and data-type and can describe either:
+	Decompiler.  It is made up of a name and data-type and can describe either:
 	</p>
 <div class="informalexample">
 	  <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
@@ -933,10 +933,10 @@
     <p>
 	An important aspect of HighSymbols is that they are distinct from 
 	the standard Ghidra symbols stored in the Program database and are part of
-	the decompiler's separate view of the function. When the decompiler displays
+	the Decompiler's separate view of the function. When the Decompiler displays
 	declarations for symbols in its output for instance, it is displaying
 	HighSymbols, which may not directly match up with database symbols.
-	The decompiler is generally
+	The Decompiler is generally
 	<span class="emphasis"><em>informed</em></span> by annotations in the database and may
 	copy specific symbols from the database into its view, but it is
 	generally free to invent new symbols discovered during its analysis. 
@@ -953,12 +953,12 @@
 <a name="ConceptVarnodeSSA"></a>Varnodes in the Decompiler</h3></div></div></div>
     
   <p>
-    Varnodes are the central <span class="emphasis"><em>variable</em></span> concept for the decompiler.
-    They form the individual nodes in the decompiler's data-flow representation
+    Varnodes are the central <span class="emphasis"><em>variable</em></span> concept for the Decompiler.
+    They form the individual nodes in the Decompiler's data-flow representation
     of functions and are used during all stages of analysis.  During the initial stages
     of analysis, varnodes simply represent specific storage locations that are accessed
-    in sequence by individual p-code operations. The decompiler immediately converts
-    the p-code into a graph based data-flow representation, called Static Single
+    in sequence by individual p-code operations. The Decompiler immediately converts
+    the p-code into a graph-based data-flow representation, called Static Single
     Assignment (SSA) form.  In this form, the varnodes take on some additional attributes.
   </p>
   <p>
@@ -984,15 +984,15 @@
 </ul></div>
     </div>
 <p>
-    The scope extends via control-flow to each p-code operation that <span class="emphasis"><em>reads</em></span> the
+    The scope extends via control flow to each p-code operation that <span class="emphasis"><em>reads</em></span> the
     specific varnode as an operand.  The value of the varnode between the defining p-code operation
     and the reading operations does not change. The scope of a varnode can be thought of as a set
-    of addresses within the function's body connected by control-flow.  The address of the defining
+    of addresses within the function's body connected by control flow.  The address of the defining
     p-code operation is referred to as the varnode's <span class="bold"><strong>first use point</strong></span>
     or <span class="bold"><strong>first use offset</strong></span>.
   </p>
   <p>
-    In the decompiler output for a specific high-level language like C or Java,
+    In the Decompiler output for a specific high-level language like C or Java,
     a varnode still has a <span class="emphasis"><em>scope</em></span> and represents a variable
     in the high-level language only across this connected region of the code.
     A set of varnodes, with disjoint scopes, provides a complete
@@ -1008,7 +1008,7 @@
     <p>
 	A <span class="bold"><strong>HighVariable</strong></span> is a set varnodes that, taken
 	together, represent the storage of an entire variable in the high-level language
-	being output by the decompiler.  Each varnode describes where the variable's
+	being output by the Decompiler.  Each varnode describes where the variable's
 	value is stored across some section of code.
     </p>
     <p>
@@ -1038,9 +1038,9 @@
 	
 	<p>
 	  <span class="bold"><strong>Merging</strong></span> is the part of the analysis process where
-	  the decompiler decides what varnodes get grouped together to create the final
+	  the Decompiler decides what varnodes get grouped together to create the final
 	  HighVariables in the output.  Each varnode's scope (see the discussion in
-	  <a class="xref" href="DecompilerConcepts.html#ConceptVarnodeSSA" title="Varnodes in the Decompiler">&#8220;Varnodes in the Decompiler&#8221;</a>) provides the fundamental restriction on this process.
+	  <a class="xref" href="DecompilerConcepts.html#ConceptVarnodeSSA" title="Varnodes in the Decompiler">Varnodes in the Decompiler</a>) provides the fundamental restriction on this process.
 	  Two varnodes cannot be merged if their scopes intersect.  But this leaves a lot of
 	  leeway in what varnodes <span class="emphasis"><em>can</em></span> be merged.
 	</p>
@@ -1051,14 +1051,14 @@
 	  to as <span class="bold"><strong>forced merging</strong></span>.
 	</p>
 	<p>
-	  The decompiler may also merge varnodes that could just as easily exist as separate
+	  The Decompiler may also merge varnodes that could just as easily exist as separate
 	  variables.  This is called <span class="bold"><strong>speculative merging</strong></span>.
-	  In addition to the intersection condition on varnode scopes, the decompiler only
-	  speculatively merges variables that share the same data-type. Beyond this, the decompiler
+	  In addition to the intersection condition on varnode scopes, the Decompiler only
+	  speculatively merges variables that share the same data-type. Beyond this, the Decompiler
 	  prioritizes variable pairs that are read and written within the same instruction and
-	  then pairs that are "near" each other in the control-flow of the function.
+	  then pairs that are <span class="emphasis"><em>near</em></span> each other in the control flow of the function.
 	  To a limited extent, users are able to control this kind of merging
-	  (See <a class="xref" href="DecompilerWindow.html#ActionIsolate" title="Split Out As New Variable">&#8220;Split Out As New Variable&#8221;</a>).
+	  (see <a class="xref" href="DecompilerWindow.html#ActionIsolate" title="Split Out As New Variable">Split Out As New Variable</a>).
 	</p>
     </div>
   </div>
@@ -1077,12 +1077,12 @@
       a calling convention and holds its specific rules and resource details.
     </p>
     <p>
-      Prototype models are architecture specific, and depending on the compiler, a single Program may make
-      use of multiple models.  Subsequently, each distinct model has a name like <code class="code">__stdcall</code> or
-      <code class="code">__thiscall</code>. The decompiler makes use of the prototype model, as assigned to the function by the user or
+      Prototype models are architecture-specific, and depending on the compiler, a single Program may make
+      use of multiple models.  Subsequently, each distinct model has a name like <span class="bold"><strong>__stdcall</strong></span> or
+      <span class="bold"><strong>__thiscall</strong></span>. The Decompiler makes use of the prototype model, as assigned to the function by the user or
       discovered in some other way, when performing its analysis of parameters.
-      It is possible for users to extend the set of prototype models available to a Program,
-      see <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">&#8220;Specification Extensions&#8221;</a>.
+      It is possible for users to extend the set of prototype models available to a Program
+      (see <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">Specification Extensions</a>).
     </p>
     <p>
       A prototype model is typically used as a whole and is assigned by name to individual functions.  But some of
@@ -1103,12 +1103,60 @@
 	If the parameter
 	is stored on the stack, the storage location is viewed as a constant offset in the <span class="bold"><strong>stack</strong></span>
 	space, where the offset is relative to the incoming value of <span class="emphasis"><em>stack pointer</em></span>
-	(See the discussion in <a class="xref" href="DecompilerConcepts.html#ConceptAddressSpace" title="Address Space">&#8220;Address Space&#8221;</a>).
+	(see the discussion in <a class="xref" href="DecompilerConcepts.html#ConceptAddressSpace" title="Address Space">Address Space</a>).
       </p>
       <p>
-	The <span class="emphasis"><em>return value</em></span> for the function, similarly, is stored at a single memory location.  It
-	is guaranteed to be at that location only at points where the function is exited.  There may be multiple exit
-	points, but they all share the same return value storage location.
+	The <span class="emphasis"><em>return value</em></span> for the function, unless it is passed back on the stack, is also stored at a single
+	memory location.  It is guaranteed to be at that location only at points where the function is exited.  There may be multiple exit
+	points, but they all share the same return value storage location.  For return values passed back on the stack, compilers
+	generally implement a special input register to hold the location where the value will be stored.  See the
+	discussion of <a class="xref" href="DecompilerConcepts.html#ConceptAutoParameters" title="Auto-Parameters">Auto-Parameters</a> and the <span class="bold"><strong>__return_storage_ptr__</strong></span> below.
+      </p>
+    </div>
+    <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="ConceptAutoParameters"></a>Auto-Parameters</h4></div></div></div>
+      
+      <p>
+	Compiled binaries may pass values as parameters between functions that aren't in the formal
+	list of parameters as defined by the original source code for the program. These are referred to
+	as <span class="bold"><strong>auto-parameters</strong></span> or sometimes <span class="bold"><strong>hidden</strong></span>
+	parameters within the documentation. If the prototype model requires it, Ghidra will automatically
+	create an auto-parameter for a function to honor a user's request for a specific formal signature.
+	See <a class="ulink" href="help/topics/FunctionPlugin/Variables.htm#Edit_Function" target="_top">Function Editor Dialog</a>.
+	Because reverse engineers need to see them, the
+	Decompiler will generally display auto-parameters explicitly in function prototypes as part of its output, even though
+	they would not be present in the original source. 
+	Ghidra explicitly defines two auto-parameters:
+	</p>
+<div class="informalexample">
+	  <div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>this</strong></span></span></dt>
+<dd>
+	      <p>
+		Within Object Oriented languages, a function defined as a class <span class="emphasis"><em>method</em></span>
+		often has a <span class="bold"><strong>this</strong></span> parameter pointing to an instantiation of the
+		class' structure data-type.  Within Ghidra, functions with the <span class="bold"><strong>__thiscall</strong></span>
+		calling convention are automatically assigned a <span class="bold"><strong>this</strong></span> parameter.
+		If the function is part of a class namespace and the class has an associated structure, the
+		<span class="bold"><strong>this</strong></span> parameter will be a pointer to the structure, otherwise
+		it will be a pointer to the <span class="bold"><strong>void</strong></span> data-type.
+	      </p>
+	    </dd>
+<dt><span class="term"><span class="bold"><strong>__return_storage_ptr__</strong></span></span></dt>
+<dd>
+	      <p>
+		Most calling conventions allow the value returned by a function, if it is large enough, to be passed back
+		on the stack instead of in a register. This is usually implemented by having the calling function
+		pass an additional <span class="emphasis"><em>input</em></span> parameter that holds a pointer to the location on
+		the stack where the return value should be stored.  Ghidra labels this special parameter as
+		<span class="bold"><strong>__return_storage_ptr__</strong></span>, which will be a pointer to the
+		data-type of the return value.
+	      </p>
+	    </dd>
+</dl></div>
+	</div>
+<p>
       </p>
     </div>
     <div class="sect3">
@@ -1122,7 +1170,7 @@
 	These encompass a calling convention's <span class="emphasis"><em>saved registers</em></span>, where a calling function
         can store values it doesn't want to change unexpectedly, but also may include other registers that are
 	known not to change, like the stack pointer.
-	The decompiler uses the information to determine which locations can be safely propagated across
+	The Decompiler uses the information to determine which locations can be safely propagated across
 	a called function.
       </p>
     </div>
@@ -1153,7 +1201,7 @@
 	  Disassemble machine instructions from the underlying bytes and
 	</li>
 <li class="listitem" style="list-style-type: disc">
-	  Produce the raw p-code consumed by the decompiler and other analyzers.
+	  Produce the raw p-code consumed by the Decompiler and other analyzers.
       </li>
 </ul></div>
     </div>
@@ -1161,8 +1209,8 @@
   </p>
   <p>
     Specification files are selected based on the <span class="emphasis"><em>Language Id</em></span>
-    assigned to the Program at the time it is imported into Ghidra.
-    (See <a class="ulink" href="help/topics/ImporterPlugin/importer.htm" target="_top">Import Program</a>)
+    assigned to the Program at the time it is imported into Ghidra
+    (see <a class="ulink" href="help/topics/ImporterPlugin/importer.htm" target="_top">Import Program</a>).
     </p>
 <div class="informalexample">
       <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: none; ">
@@ -1180,16 +1228,17 @@
 <li class="listitem">Processor family</li>
 <li class="listitem">Endianess</li>
 <li class="listitem">Size of the address bus</li>
-<li class="listitem">Process variant</li>
+<li class="listitem">Processor variant</li>
 <li class="listitem">Compiler producing the Program</li>
 </ul></div>
     </div>
 <p>
-    A field with the value 'default' indicates either the preferred processor variant or the preferred compiler.
+    A field with the value <span class="bold"><strong>default</strong></span> indicates either the preferred processor variant or the preferred compiler.
   </p>
   <p>
     Within the Ghidra installation, specification files are stored based on the overarching
-    processor family, such as 'MIPS' or 'x86'.  For a specific family, files are located under
+    processor family, such as <span class="bold"><strong>MIPS</strong></span> or
+    <span class="bold"><strong>x86</strong></span>.  For a specific family, files are located under
     </p>
 <div class="informalexample">
       <code class="code">&lt;Root&gt;/Ghidra/Processors/&lt;Family&gt;/data/languages</code>
@@ -1210,7 +1259,7 @@
 	    These are the human readable SLEIGH language files. A single specification is
 	    rooted in one of the <code class="code">*.slaspec</code> files, which may recursively include
 	    one or more <code class="code">*.sinc</code> files.  The format of these files is described
-	    in the document "SLEIGH: A Language for Rapid Processor Specification".
+	    in the document "SLEIGH: A Language for Rapid Processor Specification."
 	  </p>
 	</dd>
 <dt><span class="term"><span class="bold"><strong>Compiled SLEIGH files</strong></span> - *.sla</span></dt>
@@ -1258,7 +1307,7 @@
       Changing any of the specification files described here is not recommended.
       To make additions to either the <span class="emphasis"><em>compiler specification</em></span>
       or the <span class="emphasis"><em>processor specification</em></span> files, see
-      <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">&#8220;Specification Extensions&#8221;</a>, which describes a safe and portable way
+      <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">Specification Extensions</a>, which describes a safe and portable way
       to add specific elements.
     </p>
     <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">

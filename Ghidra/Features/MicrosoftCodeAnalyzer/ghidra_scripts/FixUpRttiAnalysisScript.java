@@ -264,8 +264,10 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 			Address baseClassDescriptorAddress = getReferencedAddress(address.add(i * 4));
 
 			Data baseClassDescriptor = getDataAt(baseClassDescriptorAddress);
-			if (baseClassDescriptor == null || !baseClassDescriptor.getDataType().getName().equals(
-				RTTI_BASE_CLASS_DESCRIPTOR_DATA_NAME)) {
+			if (baseClassDescriptor == null || !baseClassDescriptor.getDataType()
+					.getName()
+					.equals(
+						RTTI_BASE_CLASS_DESCRIPTOR_DATA_NAME)) {
 
 				int num1 = getInt(baseClassDescriptorAddress.add(8));
 				int num2 = getInt(baseClassDescriptorAddress.add(12));
@@ -352,8 +354,10 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 		Data classHierarchyStructure = getDataAt(classHierarchyDescriptorAddress);
 
 		if (classHierarchyStructure != null &&
-			classHierarchyStructure.getDataType().getName().equals(
-				RTTI_CLASS_HIERARCHY_DESCRIPTOR_DATA_NAME)) {
+			classHierarchyStructure.getDataType()
+					.getName()
+					.equals(
+						RTTI_CLASS_HIERARCHY_DESCRIPTOR_DATA_NAME)) {
 			return classHierarchyDescriptorAddress;
 
 		}
@@ -588,7 +592,7 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 	private Symbol getGivenSymbol(Address address, String name, Namespace namespace)
 			throws CancelledException {
 
-		Symbol[] symbols = symbolTable.getSymbols(address);
+		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(address);
 		for (Symbol sym : symbols) {
 			monitor.checkCanceled();
 			if (sym.getName().contains(name) && sym.getParentNamespace().equals(namespace)) {

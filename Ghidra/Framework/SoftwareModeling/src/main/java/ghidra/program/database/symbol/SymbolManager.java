@@ -600,7 +600,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			if (sym.getSymbolType() == SymbolType.FUNCTION) {
 				Address addr = sym.getAddress();
 				Function f = (Function) sym.getObject();
-				Symbol nextPrimary = getNextPrimarySymbol(this, addr);
+				Symbol nextPrimary = findFirstNonPrimarySymbol(addr);
 				String name;
 				Namespace parentNamespace;
 				SourceType source;
@@ -636,20 +636,14 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		}
 	}
 
-//	@Override
-//	public boolean removeSymbol(Symbol sym) {
-//		return removeSymbolSpecial(sym);
-//	}
-
-	private Symbol getNextPrimarySymbol(SymbolManager sm, Address addr2) {
-		Symbol[] symbols = sm.getSymbols(addr2);
-		Symbol next = null;
-		for (int i = symbols.length - 1; i >= 0; i--) {
-			if (!symbols[i].isPrimary()) {
-				return symbols[i]; // For now return the last non-primary found.
+	private Symbol findFirstNonPrimarySymbol(Address address) {
+		SymbolIterator it = getSymbolsAsIterator(address);
+		for (Symbol symbol : it) {
+			if (!symbol.isPrimary()) {
+				return symbol; // return the first non-primary symbol we find
 			}
 		}
-		return next;
+		return null;
 	}
 
 	void removeChildren(SymbolDB sym) {
@@ -804,6 +798,21 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		return false;
 	}
 
+	public SymbolIterator getSymbolsAsIterator(Address addr) {
+		lock.acquire();
+		try {
+			RecordIterator iterator = adapter.getSymbols(addr, addr, true);
+			return new SymbolRecordIterator(iterator, true, true);
+		}
+		catch (IOException e) {
+			program.dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+		return new SymbolRecordIterator(new EmptyRecordIterator(), true, true);
+	}
+
 	@Override
 	public Symbol[] getSymbols(Address addr) {
 		lock.acquire();
@@ -932,14 +941,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	@Override
 	public Symbol getGlobalSymbol(String name, Address addr) {
-		Symbol[] symbols = getSymbols(addr);
-		for (Symbol symbol : symbols) {
-			// there can be only one global symbol with a name at an address
-			if (symbol.getName().equals(name) && symbol.isGlobal()) {
-				return symbol;
-			}
-		}
-		return null;
+		return getSymbol(name, addr, program.getGlobalNamespace());
 	}
 
 	@Override
@@ -1714,9 +1716,9 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 		private void findNextDynamicSymbol() {
 			while (addrIt.hasNext()) {
-				Symbol[] symbols = getSymbols(addrIt.next());
-				if (symbols.length == 1 && symbols[0].isDynamic()) {
-					nextDynamicSymbol = symbols[0];
+				Symbol symbol = getPrimarySymbol(addrIt.next());
+				if (symbol != null && symbol.isDynamic()) {
+					nextDynamicSymbol = symbol;
 					return;
 				}
 			}
@@ -3060,30 +3062,5 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	private Symbol getSpecificSymbol(String name, Namespace namespace, SymbolType type) {
 		return getFirstSymbol(name, namespace, s -> s.getSymbolType() == type);
-	}
-}
-
-class SymbolMatcher implements Predicate<Symbol> {
-
-	private String name;
-	private Namespace namespace;
-	private SymbolType type1;
-
-	public SymbolMatcher(String name, Namespace namespace, SymbolType type1) {
-		this.name = name;
-		this.namespace = namespace;
-		this.type1 = type1;
-	}
-
-	@Override
-	public boolean test(Symbol s) {
-		if (!name.equals(s.getName())) {
-			return false;
-		}
-		if (!namespace.equals(s.getParentNamespace())) {
-			return false;
-		}
-		SymbolType type = s.getSymbolType();
-		return type == type1;
 	}
 }

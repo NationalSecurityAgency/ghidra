@@ -178,7 +178,7 @@ bool SplitVarnode::inHandHiOut(Varnode *h)
   list<PcodeOp *>::const_iterator iter,enditer;
   iter = h->beginDescend();
   enditer = h->endDescend();
-  Varnode *lo = (Varnode *)0;
+  Varnode *loTmp = (Varnode *)0;
   Varnode *outvn = (Varnode *)0;
   while(iter != enditer) {
     PcodeOp *pieceop = *iter;
@@ -187,12 +187,12 @@ bool SplitVarnode::inHandHiOut(Varnode *h)
     if (pieceop->getIn(0) != h) continue;
     Varnode *l = pieceop->getIn(1);
     if (!l->isPrecisLo()) continue;
-    if (lo != (Varnode *)0) return false; // Whole is not unique
-    lo = l;
+    if (loTmp != (Varnode *)0) return false; // Whole is not unique
+    loTmp = l;
     outvn = pieceop->getOut();
   }
-  if (lo != (Varnode *)0) {
-    initAll(outvn,lo,h);
+  if (loTmp != (Varnode *)0) {
+    initAll(outvn,loTmp,h);
     return true;
   }
   return false;
@@ -204,7 +204,7 @@ bool SplitVarnode::inHandLoOut(Varnode *l)
   list<PcodeOp *>::const_iterator iter,enditer;
   iter = l->beginDescend();
   enditer = l->endDescend();
-  Varnode *hi = (Varnode *)0;
+  Varnode *hiTmp = (Varnode *)0;
   Varnode *outvn = (Varnode *)0;
   while(iter != enditer) {
     PcodeOp *pieceop = *iter;
@@ -213,12 +213,12 @@ bool SplitVarnode::inHandLoOut(Varnode *l)
     if (pieceop->getIn(1) != l) continue;
     Varnode *h = pieceop->getIn(0);
     if (!h->isPrecisHi()) continue;
-    if (hi != (Varnode *)0) return false; // Whole is not unique
-    hi = h;
+    if (hiTmp != (Varnode *)0) return false; // Whole is not unique
+    hiTmp = h;
     outvn = pieceop->getOut();
   }
-  if (hi != (Varnode *)0) {
-    initAll(outvn,l,hi);
+  if (hiTmp != (Varnode *)0) {
+    initAll(outvn,l,hiTmp);
     return true;
   }
   return false;
@@ -1398,11 +1398,11 @@ int4 LogicalForm::findHiMatch(void)
   // the least significant part,  look for a known double precis out, then look for known double
   // precis in.  If the other input is constant, look for a unique op that might be computing the high,
   // Return 0 if we found an op, return -1, if we can't find an op, return -2 if no op exists
-  Varnode *lo1 = in.getLo();
-  Varnode *vn2 = loop->getIn( 1-loop->getSlot( lo1 ) );
+  Varnode *lo1Tmp = in.getLo();
+  Varnode *vn2 = loop->getIn( 1-loop->getSlot( lo1Tmp ) );
   
   SplitVarnode out;
-  if (out.inHandLoOut(lo1)) {	// If we already know what the double precision output looks like
+  if (out.inHandLoOut(lo1Tmp)) {	// If we already know what the double precision output looks like
     Varnode *hi = out.getHi();
     if (hi->isWritten()) {	// Just look at construction of hi precisi
       PcodeOp *maybeop = hi->getDef();
@@ -2806,9 +2806,9 @@ bool PhiForm::applyRule(SplitVarnode &i,PcodeOp *hphi,bool workishi,Funcdata &da
 
   int4 numin = hiphi->numInput();
   vector<SplitVarnode> inlist;
-  for(int4 i=0;i<numin;++i) {
-    Varnode *vhi = hiphi->getIn(i);
-    Varnode *vlo = lophi->getIn(i);
+  for(int4 j=0;j<numin;++j) {
+    Varnode *vhi = hiphi->getIn(j);
+    Varnode *vlo = lophi->getIn(j);
     inlist.push_back(SplitVarnode(vlo,vhi));
   }
   outvn.initPartial(lophi->getOut(),hiphi->getOut());

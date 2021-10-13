@@ -16,9 +16,9 @@
 package agent.gdb.manager.impl.cmd;
 
 import agent.gdb.manager.GdbInferior;
-import agent.gdb.manager.evt.AbstractGdbCompletedCommandEvent;
 import agent.gdb.manager.evt.GdbCommandDoneEvent;
-import agent.gdb.manager.impl.*;
+import agent.gdb.manager.impl.GdbManagerImpl;
+import agent.gdb.manager.impl.GdbPendingCommand;
 
 /**
  * Implementation of {@link GdbInferior#fileExecAndSymbols(String)}
@@ -35,15 +35,6 @@ public class GdbFileExecAndSymbolsCommand extends AbstractGdbCommand<Void> {
 	@Override
 	public String encode() {
 		return "-file-exec-and-symbols " + file;
-	}
-
-	@Override
-	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
-			return true;
-		}
-		return false;
 	}
 
 	@Override

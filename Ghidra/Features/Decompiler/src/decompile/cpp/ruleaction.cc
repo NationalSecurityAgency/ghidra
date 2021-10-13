@@ -3922,9 +3922,9 @@ int4 RuleLoadVarnode::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *refvn = op->getOut();
   if (refvn->isSpacebasePlaceholder()) {
     refvn->clearSpacebasePlaceholder();	// Clear the trigger
-    PcodeOp *op = refvn->loneDescend();
-    if (op != (PcodeOp *)0) {
-      FuncCallSpecs *fc = data.getCallSpecs(op);
+    PcodeOp *placeOp = refvn->loneDescend();
+    if (placeOp != (PcodeOp *)0) {
+      FuncCallSpecs *fc = data.getCallSpecs(placeOp);
       if (fc != (FuncCallSpecs *)0)
 	fc->resolveSpacebaseRelative(data,refvn);
     }
@@ -4622,10 +4622,10 @@ int4 RuleSubZext::applyOp(PcodeOp *op,Funcdata &data)
       if (subvn->loneDescend() != op) return 0; // and there is no other use of the truncated value
       Varnode *newvn = data.newUnique(basevn->getSize(),(Datatype *)0);
       constvn = subop->getIn(1);
-      uintb val = constvn->getOffset() * 8;
+      uintb rightVal = constvn->getOffset() * 8;
       data.opSetInput(op,newvn,0);
       data.opSetOpcode(subop,CPUI_INT_RIGHT); // Convert the truncation to a shift
-      data.opSetInput(subop,data.newConstant(constvn->getSize(),val),1);
+      data.opSetInput(subop,data.newConstant(constvn->getSize(),rightVal),1);
       data.opSetOutput(subop,newvn);
     }
     else
@@ -8146,15 +8146,13 @@ int4 RuleSubfloatConvert::applyOp(PcodeOp *op,Funcdata &data)
     SubfloatFlow subflow(&data,outvn,insize);
     if (!subflow.doTrace()) return 0;
     subflow.apply();
-    return 1;
   }
   else {
     SubfloatFlow subflow(&data,invn,outsize);
     if (!subflow.doTrace()) return 0;
     subflow.apply();
-    return 1;
   }
-  return 0;
+  return 1;
 }
 
 /// \class RuleNegateNegate
@@ -9072,7 +9070,6 @@ Varnode *RulePopcountBoolXor::getBooleanResult(Varnode *vn,int4 bitPos,int4 &con
 	return (Varnode *)0;
     }
   }
-  return (Varnode *)0;	// Never reach here
 }
 
 /// \brief Return \b true if concatenating with a SUBPIECE of the given Varnode is unusual

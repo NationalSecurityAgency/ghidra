@@ -15,6 +15,7 @@
  */
 package ghidra.app.services;
 
+import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Function;
@@ -30,10 +31,10 @@ public class DataTypeReference {
 	private Address address;
 
 	/** A preview of how the reference was used */
-	private String context;
+	private LocationReferenceContext context;
 
 	public DataTypeReference(DataType dataType, String fieldName, Function function,
-			Address address, String context) {
+			Address address, LocationReferenceContext context) {
 		this.dataType = dataType;
 		this.fieldName = fieldName;
 		this.function = function;
@@ -52,22 +53,22 @@ public class DataTypeReference {
 	public Address getAddress() {
 		return address;
 	}
-	
-	public String getContext() {
+
+	public LocationReferenceContext getContext() {
 		return context;
 	}
 
 	@Override
 	public String toString() {
 		String fieldNameText = fieldName == null ? "" : "\tfieldName: " + fieldName + "\n";
-		
+
 		//@formatter:off
-		return "{\n" + 
+		return "{\n" +
 			"\tdataType: " + dataType.getName() + "\n" +
-			fieldNameText + 
+			fieldNameText +
 			"\tfunction: " + function.getName() + "\n" +
 			"\taddress: " + address + "\n" +
-			"\tcontext: " + context + "\n" + 
+			"\tcontext: " + context + "\n" +
 		"}";
 		//@formatter:on
 	}

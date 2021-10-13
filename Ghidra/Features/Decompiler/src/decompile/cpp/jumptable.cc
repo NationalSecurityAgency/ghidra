@@ -1518,16 +1518,16 @@ bool JumpBasic2::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)
   return true;
 }
 
-void JumpBasic2::initializeStart(const PathMeld &pathMeld)
+void JumpBasic2::initializeStart(const PathMeld &pMeld)
 
 {
-  if (pathMeld.empty()) {
+  if (pMeld.empty()) {
     extravn = (Varnode *)0;
     return;
   }
   // Initialize at point where the JumpBasic model failed
-  extravn = pathMeld.getVarnode(pathMeld.numCommonVarnode()-1);
-  origPathMeld.set(pathMeld);
+  extravn = pMeld.getVarnode(pMeld.numCommonVarnode()-1);
+  origPathMeld.set(pMeld);
 }
 
 bool JumpBasic2::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize)

@@ -338,10 +338,10 @@ bool ConditionMarker::finalJudgement(Varnode *vn)
   return true;
 }
 
-bool ConditionMarker::verifyCondition(PcodeOp *op,PcodeOp *initop)
+bool ConditionMarker::verifyCondition(PcodeOp *op,PcodeOp *iop)
 
 {
-  setupInitOp(initop);
+  setupInitOp(iop);
   Varnode *matchvn = findMatch(op);
   if (matchvn == (Varnode *)0) return false;
   if (!finalJudgement(matchvn)) return false;

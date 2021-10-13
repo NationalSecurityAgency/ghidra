@@ -556,10 +556,10 @@ public class PackedDatabase extends Database {
 			lock(packedDbLock, true, true);
 		}
 		try {
-			long modTime = packedDbFile.lastModified();
-			if (modTime == 0) {
+			if (!packedDbFile.isFile()) {
 				throw new FileNotFoundException("File not found: " + packedDbFile);
 			}
+			long modTime = packedDbFile.lastModified();
 			if (isCached) {
 				CachedDB entry = PackedDatabaseCache.getCache().getCachedDBEntry(packedDbFile);
 				if (entry != null && entry.getLastModified() == modTime) {

@@ -68,8 +68,7 @@ public class MemSearchHexTest extends AbstractMemSearchTest {
 		MemoryBlock overlayBlock = builder.createOverlayMemory("otherOverlay", "OTHER:0", 100);
 
 		//create and disassemble a function
-		builder.setBytes(
-			"0x01002cf5",
+		builder.setBytes("0x01002cf5",
 			"55 8b ec 83 7d 14 00 56 8b 35 e0 10 00 01 57 74 09 ff 75 14 ff d6 8b f8 eb 02 33 " +
 				"ff ff 75 10 ff d6 03 c7 8d 44 00 02 50 6a 40 ff 15 dc 10 00 01 8b f0 85 f6 74 27 " +
 				"56 ff 75 14 ff 75 10 e8 5c ff ff ff ff 75 18 ff 75 0c 56 ff 75 08 ff 15 04 12 00 " +
@@ -93,7 +92,8 @@ public class MemSearchHexTest extends AbstractMemSearchTest {
 		builder.setBytes("0x1001004", "85 4f dc 77");
 		builder.applyDataType("0x1001004", new Pointer32DataType(), 1);
 		builder.createEncodedString("0x01001708", "Notepad", StandardCharsets.UTF_16BE, true);
-		builder.createEncodedString("0x01001740", "something else", StandardCharsets.UTF_16BE, true);
+		builder.createEncodedString("0x01001740", "something else", StandardCharsets.UTF_16BE,
+			true);
 		builder.createEncodedString("0x010013cc", "notepad.exe", StandardCharsets.US_ASCII, true);
 
 		//create some undefined data
@@ -117,7 +117,7 @@ public class MemSearchHexTest extends AbstractMemSearchTest {
 		assertTrue(searchAction.isEnabled());
 
 		// dig up the components of the dialog
-		dialog = waitForDialogComponent(tool.getToolFrame(), MemSearchDialog.class, 2000);
+		dialog = waitForDialogComponent(MemSearchDialog.class);
 		assertNotNull(dialog);
 		assertNotNull(valueComboBox);
 		assertNotNull(hexLabel);
@@ -209,20 +209,20 @@ public class MemSearchHexTest extends AbstractMemSearchTest {
 
 		//@formatter:off
 		List<Address> addrs = addrs(
-			0x01002d06, 
-			0x01002d11, 
-			0x01002d2c, 
-			0x01002d2f, 
-			0x01002d37, 
-			0x01002d3a, 
-			0x01002d3e, 
-			0x01002d52, 
-			0x01002d55, 
-			0x01002d58, 
-			0x01002d5b, 
-			0x010035fd, 
-			0x01004122, 	
-			0x01004202, 
+			0x01002d06,
+			0x01002d11,
+			0x01002d2c,
+			0x01002d2f,
+			0x01002d37,
+			0x01002d3a,
+			0x01002d3e,
+			0x01002d52,
+			0x01002d55,
+			0x01002d58,
+			0x01002d5b,
+			0x010035fd,
+			0x01004122,
+			0x01004202,
 			0x01004249
 		);
 		//@formatter:on
@@ -353,7 +353,7 @@ public class MemSearchHexTest extends AbstractMemSearchTest {
 		Highlight[] h = getByteHighlights(addr(0x10029bd), "ff 15 d4 10 00 01");
 		assertEquals(1, h.length);
 		assertEquals(15, h[0].getStart());
-		// end is not important since the match crosses code units 
+		// end is not important since the match crosses code units
 	}
 
 	@Test
@@ -366,7 +366,7 @@ public class MemSearchHexTest extends AbstractMemSearchTest {
 		Highlight[] h = getByteHighlights(addr(0x10029c3), "8b d8");
 		assertEquals(1, h.length);
 		assertEquals(3, h[0].getStart());
-		// end is not important since the match crosses code units 
+		// end is not important since the match crosses code units
 
 	}
 
@@ -502,6 +502,40 @@ public class MemSearchHexTest extends AbstractMemSearchTest {
 		List<Address> addrs = addrs(0x01002d0b, 0x01002d25, 0x01002d48, 0x01002d64);
 
 		setValueText("8b f?");
+
+		performSearchTest(addrs, "Next");
+	}
+
+	@Test
+	public void testHexWildcardSearch_SingleWildcardCharacter_QuestionMark() throws Exception {
+
+		//
+		// This tests that a single wildcard character will get converted to a value of '00' and
+		// a mast of 'FF'.   This allows a single '?' character to be used in place of '??'.
+		//
+
+		goTo(0x01001000);
+
+		List<Address> addrs = addrs(0x01001004, 0x01002d27);
+
+		setValueText("85 ?");
+
+		performSearchTest(addrs, "Next");
+	}
+
+	@Test
+	public void testHexWildcardSearch_SingleWildcardCharacter_Dot() throws Exception {
+
+		//
+		// This tests that a single wildcard character will get converted to a value of '00' and
+		// a mast of 'FF'.   This allows a single '.' character to be used in place of '..'.
+		//
+
+		goTo(0x01001000);
+
+		List<Address> addrs = addrs(0x01001004, 0x01002d27);
+
+		setValueText("85 .");
 
 		performSearchTest(addrs, "Next");
 	}

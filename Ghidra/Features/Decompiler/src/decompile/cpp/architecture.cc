@@ -229,7 +229,6 @@ AddrSpace *Architecture::getSpaceBySpacebase(const Address &loc,int4 size) const
     }
   }
   throw LowlevelError("Unable to find entry for spacebase register");
-  return (AddrSpace *)0;
 }
 
 /// Look-up the laned register record associated with a specific storage location. Currently, the

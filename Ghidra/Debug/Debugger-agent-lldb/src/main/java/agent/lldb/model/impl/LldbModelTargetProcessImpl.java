@@ -75,9 +75,9 @@ public class LldbModelTargetProcessImpl extends LldbModelTargetObjectImpl
 		return PathUtils.makeKey(indexProcess(process));
 	}
 
-	protected final LldbModelTargetMemoryContainer memory;
-	protected final LldbModelTargetThreadContainer threads;
-	protected final LldbModelTargetBreakpointLocationContainer breakpoints;
+	protected final LldbModelTargetMemoryContainerImpl memory;
+	protected final LldbModelTargetThreadContainerImpl threads;
+	protected final LldbModelTargetBreakpointLocationContainerImpl breakpoints;
 	// Note: not sure section info is available from the lldb
 	//protected final LldbModelTargetProcessSectionContainer sections;
 
@@ -150,7 +150,11 @@ public class LldbModelTargetProcessImpl extends LldbModelTargetObjectImpl
 		TargetExecutionState targetState = DebugClient.convertState(state);
 		setExecutionState(targetState, "ThreadStateChanged");
 		if (state.equals(StateType.eStateStopped)) {
-			((LldbModelTargetThreadContainerImpl) threads).requestElements(true);
+			threads.requestElements(true);
+			StopReason stopReason = getManager().getCurrentThread().GetStopReason();
+			if (!stopReason.equals(StopReason.eStopReasonPlanComplete)) {
+				memory.requestElements(true);			
+			}
 		}
 	}
 

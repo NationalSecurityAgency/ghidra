@@ -437,7 +437,7 @@ abstract class MarkerSetImpl implements MarkerSet {
 			BigInteger bigEndy = BigInteger.valueOf(y + MARKER_HEIGHT);
 			BigInteger numIndexes = map.getIndexCount();
 			BigInteger numIndexesMinus1 = numIndexes.subtract(BigInteger.ONE);
-			numIndexesMinus1.max(BigInteger.ZERO);
+			numIndexesMinus1 = numIndexesMinus1.max(BigInteger.ZERO);
 
 			BigInteger start = getIndex(bigStarty, bigHeight, numIndexes, numIndexesMinus1);
 			BigInteger end = getIndex(bigEndy, bigHeight, numIndexes, numIndexesMinus1);

@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 
 import agent.gdb.manager.GdbModule;
 import agent.gdb.manager.GdbModuleSection;
+import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
 import ghidra.async.AsyncLazyValue;
 import ghidra.async.AsyncUtils;
 import ghidra.util.MathUtilities;
@@ -138,7 +139,7 @@ public class GdbModuleImpl implements GdbModule {
 		// TODO: Apparently, this is using internal GDB-debugging commands....
 		// TODO: Also make methods for "full" symbols (DWARF?)
 		String cmd = "maintenance print msymbols -objfile " + name;
-		return inferior.consoleCapture(cmd).thenApply(out -> {
+		return inferior.consoleCapture(cmd, CompletesWithRunning.CANNOT).thenApply(out -> {
 			Map<String, GdbMinimalSymbol> result = new LinkedHashMap<>();
 			for (String line : out.split("\n")) {
 				Matcher mat = MSYMBOL_LINE_PATTERN.matcher(line);

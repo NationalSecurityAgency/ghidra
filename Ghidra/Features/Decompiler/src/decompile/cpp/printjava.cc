@@ -101,8 +101,8 @@ void PrintJava::pushTypeStart(const Datatype *ct,bool noident)
 
   if (ct->getName().size()==0) {	// Check for anonymous type
     // We could support a struct or enum declaration here
-    string name = genericTypeName(ct);
-    pushAtom(Atom(name,typetoken,EmitXml::type_color,ct));
+    string nm = genericTypeName(ct);
+    pushAtom(Atom(nm,typetoken,EmitXml::type_color,ct));
   }
   else {
     pushAtom(Atom(ct->getName(),typetoken,EmitXml::type_color,ct));

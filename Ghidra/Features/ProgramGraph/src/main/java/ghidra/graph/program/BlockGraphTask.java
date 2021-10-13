@@ -57,6 +57,7 @@ public class BlockGraphTask extends Task {
 	private ColorizingService colorizingService;
 
 	private final static String ENTRY_NEXUS_NAME = "Entry Points";
+	private static final int MAX_SYMBOLS = 10;
 	private CodeBlockModel blockModel;
 	private AddressSetView selection;
 	private ProgramLocation location;
@@ -417,14 +418,20 @@ public class BlockGraphTask extends Task {
 	}
 
 	private void addSymbolAttribute(AttributedVertex vertex, CodeBlock bb) {
-		Symbol[] symbols = program.getSymbolTable().getSymbols(bb.getMinAddress());
-		if (symbols.length != 0) {
+		SymbolIterator it = program.getSymbolTable().getSymbolsAsIterator(bb.getMinAddress());
+		int count = 0;
+		if (it.hasNext()) {
 			StringBuffer buf = new StringBuffer();
-			for (int i = 0; i < symbols.length; i++) {
-				if (i != 0) {
+			for (Symbol symbol : it) {
+				if (count != 0) {
 					buf.append('\n');
 				}
-				buf.append(symbols[i].getName());
+				// limit the number of symbols to include (there can be a ridiculous # of symbols) 
+				if (count++ > MAX_SYMBOLS) {
+					buf.append("...");
+					break;
+				}
+				buf.append(symbol.getName());
 			}
 			vertex.setAttribute(SYMBOLS_ATTRIBUTE, buf.toString());
 		}

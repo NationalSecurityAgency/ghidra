@@ -1377,7 +1377,7 @@ public class FlatProgramAPI {
 	 */
 	@Deprecated
 	public final Symbol getSymbolAt(Address address, String name) {
-		Symbol[] symbols = currentProgram.getSymbolTable().getSymbols(address);
+		SymbolIterator symbols = currentProgram.getSymbolTable().getSymbolsAsIterator(address);
 		for (Symbol symbol : symbols) {
 			if (symbol.getName().equals(name)) {
 				return symbol;

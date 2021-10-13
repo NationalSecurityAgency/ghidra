@@ -324,15 +324,15 @@ public class DeleteLabelCmdTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(1, symbols.length);
 		assertEquals("MyFunction", symbols[0].getName());
 
-		createSymbol(addr, "ThirdSymbol");
 		createSymbol(addr, "OtherSymbol");
+		createSymbol(addr, "ThirdSymbol");
 
 		symbols = getSymbols(addr);
 		assertEquals(3, symbols.length);
 		assertEquals("MyFunction", symbols[0].getName());
 		assertEquals(true, symbols[0].isPrimary());
-		assertEquals("ThirdSymbol", symbols[1].getName());
-		assertEquals("OtherSymbol", symbols[2].getName());
+		assertEquals("OtherSymbol", symbols[1].getName());
+		assertEquals("ThirdSymbol", symbols[2].getName());
 
 		// Add a reference from 01002257 Operand1 to 01002239
 		ReferenceManager refMgr = notepad.getReferenceManager();

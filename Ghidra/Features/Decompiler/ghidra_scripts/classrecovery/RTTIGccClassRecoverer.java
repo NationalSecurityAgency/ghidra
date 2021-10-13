@@ -166,8 +166,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		byte[] gccBytes = { (byte) 0x47, (byte) 0x43, (byte) 0x43, (byte) 0x3a };
 		byte[] maskBytes = { (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff };
 
-		Address found = program.getMemory().findBytes(commentBlock.getStart(),
-			commentBlock.getEnd(), gccBytes, maskBytes, true, monitor);
+		Address found = program.getMemory()
+				.findBytes(commentBlock.getStart(),
+					commentBlock.getEnd(), gccBytes, maskBytes, true, monitor);
 		if (found == null) {
 			return false;
 		}
@@ -255,7 +256,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		createClassesFromTypeinfoSymbols(typeinfoSymbols);
 
 		updateClassesWithParentsAndFlags(typeinfoSymbols);
-
 
 		// update the vftable offset map
 		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
@@ -417,7 +417,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			if (specialTypeinfoRef.equals(vmi_class_type_info) ||
 				specialTypeinfoRef.equals(vmi_class_type_info_vtable)) {
 
-
 				List<RecoveredClass> parents =
 					addGccClassParentsFromVmiStruct(recoveredClass, typeinfoAddress);
 
@@ -493,7 +492,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		for (Address typeinfoRef : typeinfoReferencesNotInTypeinfoStructs) {
 			monitor.checkCanceled();
 
-
 			Address typeinfoAddress = extraUtils.getPointer(typeinfoRef);
 
 			if (typeinfoAddress == null) {
@@ -524,14 +522,13 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			if (!typeinfoSymbol.getName().equals("typeinfo")) {
 				continue;
 			}
-			
+
 			// check for construction table and make new namespace if so
 			Namespace classNamespace = typeinfoSymbol.getParentNamespace();
-			
+
 			if (classNamespace.equals(globalNamespace)) {
 				throw new Exception("typeinfo has global namespace " + typeinfoAddress);
 			}
-			
 
 			try {
 				Symbol vtableSymbol = symbolTable.createLabel(vtableAddress, VTABLE_LABEL,
@@ -617,8 +614,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return false;
 	}
 
-
-
 	private Namespace createConstructionNamespace(Symbol vtableSymbol, Symbol vttSymbol)
 			throws Exception {
 
@@ -635,7 +630,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			try {
 				Namespace newNamespace =
 					NamespaceUtils.createNamespaceHierarchy(name, vtableNamespace,
-				program, SourceType.ANALYSIS);
+						program, SourceType.ANALYSIS);
 				return newNamespace;
 			}
 			catch (InvalidInputException e) {
@@ -721,7 +716,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 					prog.getListing().getFunctionContaining(addr);
 
 				Data dataContainingTypeinfoRef = prog.getListing().getDefinedDataContaining(addr);
-
 
 				Instruction instructionContainingAddr =
 					prog.getListing().getInstructionContaining(addr);
@@ -863,8 +857,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 								api.setPlateComment(vtableAddress, "construction vtable " + n +
 									" for class " +
-									vttSymbolBeforeConstructionVtable.getParentNamespace().getName(
-										true));
+									vttSymbolBeforeConstructionVtable.getParentNamespace()
+											.getName(
+												true));
 
 							}
 							catch (InvalidInputException e) {
@@ -897,7 +892,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 
 		int numFunctionPointers = getNumFunctionPointers(possibleVftableAddress, true, true);
-		
+
 		if (numFunctionPointers == 0) {
 			// if not a vftable check for an internal vtable
 			boolean isInternalVtable =
@@ -1190,7 +1185,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			return false;
 		}
 
-
 		return true;
 	}
 
@@ -1402,7 +1396,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 			// Except for the first one which should have a symbol, if there is a symbol at the 
 			// address, stop making longs because it there are no references into the vtable longs
-			if (offset > 0 && symbolTable.getSymbols(address).length > 0) {
+			if (offset > 0 && symbolTable.getPrimarySymbol(address) != null) {
 				return numLongs;
 			}
 
@@ -1489,33 +1483,34 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			// create a "no inheritance" struct here
 			if (specialTypeinfoRef.equals(class_type_info) ||
 				specialTypeinfoRef.equals(class_type_info_vtable)) {
-					
+
 				newStructure = applyTypeinfoStructure(classTypeInfoStructure, typeinfoAddress);
 			}
 
 			// create a "single inheritance" struct here
 			else if (specialTypeinfoRef.equals(si_class_type_info) ||
 				specialTypeinfoRef.equals(si_class_type_info_vtable)) {
-					
+
 				newStructure = applyTypeinfoStructure(siClassTypeInfoStructure, typeinfoAddress);
 			}
 
 			// create a "virtual multip inheritance" struct here
 			else if (specialTypeinfoRef.equals(vmi_class_type_info) ||
 				specialTypeinfoRef.equals(vmi_class_type_info_vtable)) {
-					
+
 				Structure vmiClassTypeinfoStructure =
 					getOrCreateVmiTypeinfoStructure(typeinfoAddress, baseClassTypeInfoStructure);
 				if (vmiClassTypeinfoStructure != null) {
-						newStructure = applyTypeinfoStructure(vmiClassTypeinfoStructure, typeinfoAddress);
+					newStructure =
+						applyTypeinfoStructure(vmiClassTypeinfoStructure, typeinfoAddress);
 				}
 			}
-				
+
 			if (newStructure == null) {
 				throw new Exception(
 					"ERROR: Could not apply typeinfo structure to " + typeinfoAddress);
 			}
-				
+
 			// check for existing symbol and if none, demangle the name and apply
 			Symbol typeinfoSymbol = api.getSymbolAt(typeinfoAddress);
 			if (typeinfoSymbol == null || typeinfoSymbol.getSource() == SourceType.DEFAULT) {
@@ -1840,7 +1835,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return specialTypeinfoRefs;
 	}
 
-
 	/**
 	 * Method to call the various methods to determine whether the functions that make references to
 	 * the vftables are constructors, destructors, deleting destructors, clones, or vbase functions
@@ -1985,7 +1979,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		DataType pointer = dataTypeManager.getPointer(null);
 		DataType charPointer = dataTypeManager.getPointer(characterDT);
 
-
 		vmiClassTypeInfoStructure.add(pointer, "classTypeinfoPtr", null);
 		vmiClassTypeInfoStructure.add(charPointer, "typeinfoName", null);
 		vmiClassTypeInfoStructure.add(unsignedIntDT, "flags", null);
@@ -2010,7 +2003,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 */
 	private List<RecoveredClass> addGccClassParentsFromVmiStruct(RecoveredClass recoveredClass,
 			Address typeinfoAddress) throws Exception {
-
 
 		Structure vmiTypeinfoStructure = getTypeinfoStructure(typeinfoAddress);
 		if (vmiTypeinfoStructure == null ||
@@ -2150,8 +2142,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 			parentClass.setIsPublicClass(isPublic);
 
-
-
 			// from doc:
 			//All but the lower 8 bits of __offset_flags are a signed offset. For a 
 			//non-virtual base, this is the offset in the object of the base subobject. 
@@ -2167,7 +2157,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			parentToOffsetMap.put(parentClass, offset);
 
 			continue;
-
 
 		}
 
@@ -2893,7 +2882,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			return;
 		}
 
-
 		if (!recoveredClass.hasVftable()) {
 			createSimpleClassStructure(recoveredClass, null);
 			// return in this case because if there is no vftable for a class the script cannot
@@ -3018,7 +3006,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 						" : structure should exist but doesn't.");
 				}
 
-
 				if (structUtils.canAdd(classStructureDataType, parentOffset,
 					baseClassStructure.getLength(), monitor)) {
 					classStructureDataType =
@@ -3049,7 +3036,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		}
 
-		if (classStructureDataType.getNumComponents() == classStructureDataType.getNumDefinedComponents()) {
+		if (classStructureDataType.getNumComponents() == classStructureDataType
+				.getNumDefinedComponents()) {
 			classStructureDataType.setPackingEnabled(true);
 		}
 
