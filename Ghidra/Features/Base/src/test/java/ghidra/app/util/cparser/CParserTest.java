@@ -333,13 +333,16 @@ public class CParserTest extends AbstractGenericTest {
 		assertTrue(dt instanceof Structure);
 		sdt = (Structure) dt;
 
-		assertTrue(sdt.hasFlexibleArrayComponent());
-
-		DataTypeComponent component = sdt.getFlexibleArrayComponent();
-		assertTrue(component.isFlexibleArrayComponent());
-
-		assertTrue(component.getDataType() instanceof CharDataType);
-		assertEquals("Size of the component is zero", 0, component.getLength());
+		// Check trailing flex-array
+		DataTypeComponent flexDtc = sdt.getComponent(sdt.getNumComponents() - 1);
+		assertEquals("Flex-array reports component length of 0", 0, flexDtc.getLength());
+		dt = flexDtc.getDataType();
+		assertTrue(dt instanceof Array);
+		Array a = (Array) dt;
+		assertEquals(0, a.getNumElements());
+		assertTrue(a.isZeroLength());
+		assertTrue(a.getDataType() instanceof CharDataType);
+		assertEquals(1, a.getElementLength());
 
 		dt = dtMgr.getDataType(new CategoryPath("/"), "BitFields1");
 		assertEquals("char size bitfield", 1, dt.getLength());
@@ -362,7 +365,7 @@ public class CParserTest extends AbstractGenericTest {
 		sdt = (Structure) dt;
 		assertEquals("Explicit packing", true, sdt.hasExplicitPackingValue());
 		assertEquals("Packing of packed2", 2, sdt.getExplicitPackingValue());
-		comp = sdt.getComponentAt(4);  // int should be covering offset 4
+		comp = sdt.getComponentAt(2);  // int should be at offset 2
 		assertEquals("d", comp.getFieldName());
 		assertEquals(2, comp.getOffset());
 
@@ -371,7 +374,7 @@ public class CParserTest extends AbstractGenericTest {
 		sdt = (Structure) dt;
 		assertEquals("Explicit packing", true, sdt.hasExplicitPackingValue());
 		assertEquals("Packing of packed4", 4, sdt.getExplicitPackingValue());
-		comp = sdt.getComponentAt(4);  // int should be covering offset 4
+		comp = sdt.getComponentAt(4);  // int should be at offset 4
 		assertEquals("d", comp.getFieldName());
 		assertEquals(4, comp.getOffset());
 
@@ -411,8 +414,16 @@ public class CParserTest extends AbstractGenericTest {
 		assertEquals("Computed Array correct", data8.getLength(), 32);
 		DataTypeComponent data16 = sdt.getComponent(5);
 		assertEquals("Computed Array correct", data16.getLength(), 64);
-		DataTypeComponent flex = sdt.getFlexibleArrayComponent();
-		assertEquals("Computed Array correct", 0, flex.getLength());
-
+		
+		// Check trailing flex-array
+		flexDtc = sdt.getComponent(sdt.getNumComponents() - 1);
+		assertEquals("Flex-array reports component length of 0", 0, flexDtc.getLength());
+		dt = flexDtc.getDataType();
+		assertTrue(dt instanceof Array);
+		a = (Array) dt;
+		assertEquals(0, a.getNumElements());
+		assertTrue(a.isZeroLength());
+		assertTrue(a.getDataType() instanceof UnsignedLongDataType);
+		assertEquals(4, a.getElementLength());
 	}
 }
