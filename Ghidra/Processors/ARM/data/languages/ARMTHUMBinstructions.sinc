@@ -215,13 +215,20 @@ macro th_addflags(op1,op2) {
 
 #See ARM Architecture reference section "Pseudocode details of addition and subtraction"
 macro th_add_with_carry_flags(op1,op2){
-local CYz = zext(CY);
-local CYa = carry( op1, op2 );
-local OVa = scarry( op1, op2 );
-local result = op1 + op2;
-tmpCY = CYa || carry( result, CYz );
-tmpOV = OVa ^^ scarry( result, CYz );
+  local CYz = zext(CY);
+  local result = op1 + op2;
+  tmpCY = carry( op1, op2 ) || carry( result, CYz );
+  tmpOV = scarry( op1, op2) ^^ scarry( result, CYz );
 }
+
+#Note: used for subtraction op1 - (op2 + !CY)
+#sets tmpCY if there is NO borrow
+macro th_sub_with_carry_flags(op1, op2){
+  local result = op1 - op2;
+  tmpCY = (op1 > op2) || (result < zext(CY)); 
+  tmpOV = sborrow(op1,op2) ^^ sborrow(result,zext(!CY));	
+}
+
 
 macro th_test_flags(result){
   ZR = (result == 0);
@@ -3688,7 +3695,7 @@ macro th_set_carry_for_ror(result, count) {
 :sbc^CheckInIT_CZNO^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x106 & Rm0305 & Rd0002 & CheckInIT_CZNO
 {
   build ItCond;
-  th_add_with_carry_flags(Rd0002,~Rm0305);
+  th_sub_with_carry_flags(Rd0002,Rm0305);
   Rd0002 = Rd0002 - Rm0305 - zext(!CY);
   resflags(Rd0002);
   build CheckInIT_CZNO;
@@ -3700,7 +3707,7 @@ macro th_set_carry_for_ror(result, count) {
 {
   build ItCond;
   build ThumbExpandImm12;
-  th_add_with_carry_flags(Rn0003,~ThumbExpandImm12);
+  th_sub_with_carry_flags(Rn0003,ThumbExpandImm12);
   Rd0811 = Rn0003 - ThumbExpandImm12 - zext(!CY);
   resflags(Rd0811);
   build thSBIT_CZNO;
@@ -3710,7 +3717,7 @@ macro th_set_carry_for_ror(result, count) {
 {
   build ItCond;
   build thshift2;
-  th_add_with_carry_flags(Rn0003,~thshift2);
+  th_sub_with_carry_flags(Rn0003,thshift2);
   Rd0811 = Rn0003 - thshift2 - zext(!CY);
   resflags(Rd0811);
   build thSBIT_CZNO;

@@ -408,34 +408,24 @@ macro addCarryFlags ( op1, op2 ) {
 	local op1_low_32:4 = op1:4;
 	local op2_low_32:4 = op2:4;
 	local CFcopy:$(SIZE) = zext(i_cf);
-	local CFcopy_32:4 = zext(i_cf);
-	i_cf = carry( op1_low_32, op2_low_32);
-	x_cf = carry(op1,op2);
-	i_vf = scarry( op1_low_32, op2_low_32);
-	x_vf = scarry(op1, op2);
 	local result:$(SIZE) = op1 + op2;
 	local result_low_32:4 = op1_low_32 + op2_low_32;
-	i_cf = i_cf || carry( result_low_32, CFcopy_32 );
-	x_cf = x_cf || carry(result,CFcopy);
-	i_vf = i_vf ^^ scarry( result_low_32, CFcopy_32 );
-	x_vf = x_vf ^^ scarry(result,CFcopy);
+	i_cf = carry( op1_low_32, op2_low_32) || carry( result_low_32, CFcopy:4 );
+	x_cf = carry(op1,op2) || carry(result,CFcopy);
+	i_vf = scarry( op1_low_32, op2_low_32) ^^ scarry( result_low_32, CFcopy:4 );
+	x_vf = scarry(op1, op2) ^^ scarry(result,CFcopy);
 }
 
 macro subCarryFlags ( op1, op2 ) {
 	local op1_low_32:4 = op1:4;
 	local op2_low_32:4 = op2:4;
 	local CFcopy:$(SIZE) = zext(i_cf);
-	local CFCopy_32:4 = zext(i_cf);
-	i_cf = op1_low_32 < op2_low_32;
-	x_cf = op1 < op2;
-	i_vf = sborrow( op1_low_32, op2_low_32);
-	x_vf = sborrow(op1, op2);
 	local result:$(SIZE) = op1 - op2;
 	local result_low_32:4 = op1_low_32 - op2_low_32;
-	i_cf = i_cf || (result_low_32 < CFCopy_32);
-	x_cf = x_cf || (result < CFcopy);
-	i_vf = i_vf ^^ sborrow( result_low_32, CFCopy_32);
-	x_vf = x_vf ^^ sborrow(result,CFcopy);	
+	i_cf = (op1_low_32 < op2_low_32) || (result_low_32 < CFcopy:4);
+	x_cf = (op1 < op2) || (result < CFcopy);
+	i_vf = sborrow( op1_low_32, op2_low_32) ^^ sborrow( result_low_32, CFcopy:4);
+	x_vf = sborrow(op1, op2) ^^ sborrow(result,CFcopy);	
 }
 
 macro logicflags() {
