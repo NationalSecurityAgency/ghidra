@@ -898,19 +898,20 @@ public class ElfHeader implements StructConverter, Writeable {
 		}
 
 		parsedSectionHeaders = true;
-        try{
-            sectionHeaders = new ElfSectionHeader[e_shnum];
-            for (int i = 0; i < e_shnum; ++i) {
-                long index = e_shoff + (i * e_shentsize);
-                reader.setPointerIndex(index);
-                sectionHeaders[i] = ElfSectionHeader.createElfSectionHeader(reader, this);
-            }
-        } catch(Exception e) {
-            e_shnum = 0;
-            sectionHeaders = new ElfSectionHeader[e_shnum];
-            Msg.warn(ElfHeader.class, "There was an error creating the ElfSectionHeader: " + e.getMessage());
-            Msg.info(ElfHeader.class, "A dummy ElfSectionHeader containing 0 section header entries was created.");
-        }
+		try {
+			sectionHeaders = new ElfSectionHeader[e_shnum];
+			for (int i = 0; i < e_shnum; ++i) {
+				long index = e_shoff + (i * e_shentsize);
+				reader.setPointerIndex(index);
+				sectionHeaders[i] = ElfSectionHeader.createElfSectionHeader(reader, this);
+			}
+		}
+		catch (EOFException e) {
+			e_shnum = 0;
+			sectionHeaders = new ElfSectionHeader[e_shnum];
+			Msg.warn(ElfHeader.class, "There was an error creating the ElfSectionHeader: " + e.getMessage());
+			Msg.info(ElfHeader.class, "A dummy ElfSectionHeader containing 0 section header entries was created.");
+		}
 
 		//note: we cannot retrieve all the names
 		//until after we have read all the section headers.
