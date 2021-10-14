@@ -1,0 +1,280 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#pragma once
+
+
+#ifndef _CRTIMP
+    #define _VCRT_DEFINED_CRTIMP
+    #if defined CRTDLL && defined _CRTBLD
+        #define _CRTIMP __declspec(dllexport)
+    #else
+        #ifdef _DLL
+            #define _CRTIMP __declspec(dllimport)
+        #else /* this is an else comment that goes to the next line
+                #define and this should be ignored */
+            #define _CRTIMP
+        #endif /* this is a endif comment that goes to the next line
+                #define and this should be ignored */
+    #endif
+#endif    /* this is a comment that goes to the next line
+             #endif and this should be ignored */
+
+#define ONEFISH 1
+#define TWOFISH 2
+
+#if (ONEFISH + TWOFISH + REDFISH + BLUEFISH) > 2
+#error "Too many fish"
+#define TOO_MANY_FISH 0
+int TooManyFish;
+#endif
+
+#define TEST1 one
+
+#if defined(TEST1) + \
+   defined(TEST2) + \
+   defined(TEST3) > 1
+#error "Two or more defined, only one allowed of TEST1, TEST2, TEST3
+#define TEST_FAILED 1
+int TEST_FAILED;
+#endif
+
+#if !defined(__GNUC__) || __GNUC__ < 4
+#warning "Unsupported compiler detected"
+#endif
+
+#if defined(else)  // end comment
+#error Cannot redefine C keywords
+#else  STUPIDCOMMENT IS IGNORED
+#define ElseNotDefined TRUE
+#endif  /* !_SYS_UNISTD_H_ */
+
+#define O_M 0xffff0000 // test commment
+#define N_V 0x60010001  // test comment
+
+#define K 0x06010000
+
+/**
+ ** Test Various define value simplification to Enum
+ **/
+#define DefVal1 (((ULONG_PTR)((WORD)(32516))))
+
+#define DefVal2 (((long) K + 0xf1))
+#define DefVal3 ((long ) ((long) N_V & 0x21234) | (( ULONG ) 1))
+
+#define DefVal4 ((long ) (0x1 << (1 + 2 | 4)))
+
+#define DefVal5 (0xFF000000 & (~(0x01000000 | 0x02000000 | 0x04000000)))
+
+#define DefVal6 ((0x000F0000L)|(0x00100000L)|0x3)
+
+#define DefVal7 0x40000000UL
+
+#define DefVal8 ((3 << 13)|(3 << 9)|4)
+
+#define DefVal9 ((0x7fff & ~(((1 << 4) - 1))))
+
+#define DefVal10 ((0x7fff) * 900L / 1000)
+
+#define BIGNUM 64 * 16 + 16
+
+#define ImOctal 01234567
+
+/**
+ ** Test for recursive definitions, Should not cause an infinite loop
+ **/
+#define AVERSION enum AVERSION
+AVERSION
+{
+    AVERSION_5 = 1,
+    AVERSION_6,
+    AVERSION_7,
+    AVERSION_8,
+};
+
+#define Group(a,b)
+
+#define _In Group(_In,a)
+
+int doit(_In int a);
+
+
+
+/**
+ ** test concat operator
+ **/
+ 
+#if (N_V >= K) // [
+int ntver_gt_nt2k(int a, int b);
+#endif
+
+#if ((O_M & N_V) == K)
+#error VM setting conflicts with N_V setting
+#endif
+
+// make a symbol
+#define $$doit(x, y) x ## y
+#define $doit(x, y) $$doit(x, y)
+#define $dosym(x) $doit(x, __cnt__)
+
+
+#define __mode(x)												\
+      __declspec("marker(\"" #x "\")")								\
+      __inline void $dosym(__dud_)(void){}
+
+__mode(Why);
+
+#define _fpf(t)    __declspec("fp("f", " #t ")")
+#define _fpc(t)   __declspec("fp(\"c\", " #t ")")
+#define _fpl(typ)    extern int __declspec("fp(\"l\", " #typ ")") __ifpl##typ;
+
+_fpl(bob)
+
+#define BUILD_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
+        EXTERN_C const GUID DECLSPEC_SELECTANY name \
+                = { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }
+
+BUILD_GUID(LIBID_ADO20,0x##00000200,0x##0000,0x##0010,0x##80,0x##00,0x##00,0x##AA,0x##00,0x##6D,0x##2E,0x##A4)
+
+
+#define ___POSIX_C_DEPRECATED_STARTING_199506L
+
+#define __POSIX_C_DEPRECATED(ver) ___POSIX_C_DEPRECATED_STARTING_##ver
+
+int      chroot(const char *) __POSIX_C_DEPRECATED(199506L);
+
+
+/**
+ ** Test for correct macro expansion truth evaluation in #if constructs
+ **/
+#define A 0x2
+#define B 0x1
+
+#define FAMILY_APP (B | A)
+
+#define FAMILY FAMILY_APP
+
+#define FUNC(v) ((FAMILY & v) == v)
+
+#if FUNC(A)
+#define isDefineOnValue 1
+#endif
+
+
+
+
+#define MEMORY_OBJECT_INFO_MAX      (1024)
+typedef int     *mem_info_t;
+typedef int      mem_flavor_t;
+typedef int      mem_info_data_t[MEMORY_OBJECT_INFO_MAX];
+
+
+#define PERF_INFO   11
+#define ATTR_INFO   14
+#define BEHAVE_INFO 15
+
+
+#define MEMORY_OBJECT_BEHAVE_INFO_COUNT ((mach_msg_type_number_t)       \
+                (sizeof(memory_object_behave_info_data_t)/sizeof(int)))
+
+#define invalid_memory_object_flavor(f)                                 \
+        (f != ATTR_INFO &&                           \
+         f != PERF_INFO &&                         \
+         f != OLD_BEHAVE_INFO &&                        \
+         f != BEHAVE_INFO &&                            \
+         f != OLD_ATTR_INFO)
+
+
+#define GET_IT(flags)      \
+        ((((unsigned int)(flags)) >> 24) & 0xFF)
+
+#define SET_MEM(ca, flags)     \
+        ((flags) = ((((unsigned int)(ca)) << 24) \
+                        & 0xFF000000) | ((flags) & 0xFFFFFF));
+
+
+struct p_info {
+        unsigned int    dummy[2];      /* dummy funcs */
+};
+
+
+typedef struct p_info    p_info_t;
+typedef p_info_t         *p_info_array_t;
+typedef p_info_array_t   p_list_ptr_t;
+
+typedef uint32_t        p_offset_t;   /* offset */
+typedef uint32_t        p_size_t;     /* size */
+
+
+#	define LDP(protos)	protos
+
+#define LDP_CONST  /* no const */
+
+ldp LDP((
+        LDP *ld,
+        LDP_CONST char *dn, /* usually NULL */
+        LDP_CONST char *saslMechanism,
+        LDPControl **sCont,
+
+        /* controls */
+        ungiend flag,
+        LDP_UNDEP *proc,
+        void *defaults,
+
+        /* result */
+        LDPValue *result,
+
+        /* installed */
+        const char **rm,
+        int *id ));
+
+#define SPECHSZ 64
+#if     ((SPECHSZ&(SPECHSZ-1)) == 0)
+#define SPECHASH(d)  (((d>>21)+(d))&(SPECHSZ-1))
+#else
+#define SPECHASH(d)  (((unsigned)((d>>21)+(d)))%SPECHSZ)
+#endif
+
+
+
+#if -_LARGEFILE64_SOURCE - -1 == 1
+#  undef _LARGEFILE64_SOURCE
+#endif
+
+/**
+ ** Multi line define
+ **/
+#define __MISMATCH_TAGS_PUSH                                            \
+        _Pragma("clang diagnostic push")                                \
+        _Pragma("clang diagnostic ignored \"-Wmismatched-tags\"")
+
+
+#if defined(__has_include)
+#if __has_include(<gethostuuid_private.h>)
+int does_has_include_found();
+#else
+int does_has_include_not_found();
+#endif
+#else
+int does_not_has_include();
+#endif
+
+#if (defined(__MINGW32__) || defined(_MSC_VER)) && \
+    defined(__has_include_next) && __has_include_next(<float.h>)
+#  include_next <float.h>
+#endif
+
+
+theEnd();
