@@ -143,37 +143,30 @@ public class ParamListStandard implements ParamList {
 	}
 
 	@Override
-	public void assignMap(Program prog, DataType[] proto, boolean isinput,
-			ArrayList<VariableStorage> res, boolean addAutoParams) {
+	public void assignMap(Program prog, DataType[] proto, ArrayList<VariableStorage> res,
+			boolean addAutoParams) {
 		int[] status = new int[numgroup];
 		for (int i = 0; i < numgroup; ++i) {
 			status[i] = 0;
 		}
 
-		if (isinput) {
-			if (addAutoParams && res.size() == 2) {	// Check for hidden parameters defined by the output list
-				DataTypeManager dtm = prog.getDataTypeManager();
-				Pointer pointer = dtm.getPointer(proto[0]);
-				VariableStorage store = assignAddress(prog, pointer, status, true, false);
-				res.set(1, store);
-			}
-			for (int i = 1; i < proto.length; ++i) {
-				VariableStorage store;
-				if ((pointermax != 0) && (proto[i] != null) &&
-					(proto[i].getLength() > pointermax)) {	// DataType is too big
-					// Assume datatype is stored elsewhere and only the pointer is passed
-					DataTypeManager dtm = prog.getDataTypeManager();
-					Pointer pointer = dtm.getPointer(proto[i]);
-					store = assignAddress(prog, pointer, status, false, true);
-				}
-				else {
-					store = assignAddress(prog, proto[i], status, false, false);
-				}
-				res.add(store);
-			}
+		if (addAutoParams && res.size() == 2) {	// Check for hidden parameters defined by the output list
+			DataTypeManager dtm = prog.getDataTypeManager();
+			Pointer pointer = dtm.getPointer(proto[0]);
+			VariableStorage store = assignAddress(prog, pointer, status, true, false);
+			res.set(1, store);
 		}
-		else {
-			VariableStorage store = assignAddress(prog, proto[0], status, false, false);
+		for (int i = 1; i < proto.length; ++i) {
+			VariableStorage store;
+			if ((pointermax != 0) && (proto[i] != null) && (proto[i].getLength() > pointermax)) {	// DataType is too big
+				// Assume datatype is stored elsewhere and only the pointer is passed
+				DataTypeManager dtm = prog.getDataTypeManager();
+				Pointer pointer = dtm.getPointer(proto[i]);
+				store = assignAddress(prog, pointer, status, false, true);
+			}
+			else {
+				store = assignAddress(prog, proto[i], status, false, false);
+			}
 			res.add(store);
 		}
 	}
@@ -279,11 +272,12 @@ public class ParamListStandard implements ParamList {
 				throw new XmlParseException(
 					"<pentry> in the join space not allowed in <group> tag");
 			}
-			if (count > 1) {
-				ParamEntry.orderWithinGroup(pe.get(pe.size() - 2), lastEntry);
-				if (count > 2) {
-					ParamEntry.orderWithinGroup(pe.get(pe.size() - 3), lastEntry);
-				}
+		}
+		// Check that all entries in the group are distinguishable
+		for (int i = 1; i < count; ++i) {
+			ParamEntry curEntry = pe.get(pe.size() - 1 - i);
+			for (int j = 0; j < i; ++i) {
+				ParamEntry.orderWithinGroup(pe.get(pe.size() - 1 - j), curEntry);
 			}
 		}
 		parser.end(el);

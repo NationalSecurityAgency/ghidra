@@ -355,6 +355,7 @@ public:
     p_standard,		///< Standard input parameter model
     p_standard_out,	///< Standard output (return value) model
     p_register,		///< Unordered parameter passing locations model
+    p_register_out,	///< Multiple possible return value locations model
     p_merged		///< A merged model (multiple models merged together)
   };
   virtual ~ParamList(void) {}			///< Destructor
@@ -364,11 +365,9 @@ public:
   ///
   /// If we know the function prototype, recover how parameters are actually stored using the model.
   /// \param proto is the ordered list of data-types
-  /// \param isinput is \b true for the input prototype, \b false for output prototype
   /// \param typefactory is the TypeFactory (for constructing pointers)
   /// \param res will contain the storage locations corresponding to the datatypes
-  virtual void assignMap(const vector<Datatype *> &proto,bool isinput,
-			 TypeFactory &typefactory,vector<ParameterPieces> &res) const=0;
+  virtual void assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const=0;
 
   /// \brief Given an unordered list of storage locations, calculate a function prototype
   ///
@@ -530,8 +529,7 @@ public:
   virtual ~ParamListStandard(void);
   const list<ParamEntry> &getEntry(void) const { return entry; }	///< Get the list of parameter entries
   virtual uint4 getType(void) const { return p_standard; }
-  virtual void assignMap(const vector<Datatype *> &proto,bool isinput,
-			 TypeFactory &typefactory,vector<ParameterPieces> &res) const;
+  virtual void assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const;
   virtual void fillinMap(ParamActive *active) const;
   virtual bool checkJoin(const Address &hiaddr,int4 hisize,const Address &loaddr,int4 losize) const;
   virtual bool checkSplit(const Address &loc,int4 size,int4 splitpoint) const;
@@ -548,20 +546,19 @@ public:
   virtual ParamList *clone(void) const;
 };
 
-/// \brief A standard model for passing back return values from a function
+/// \brief A model for passing back return values from a function
 ///
-/// This models a resource list of potential storage locations for a return value,
-/// at most 1 of which will be chosen for a given function. Order only matters in that the
-/// first ParamEntry that fits is used. If no entry fits, the return value is
-/// converted to a pointer data-type, storage allocation is attempted again, and the
-/// return value is marked as a \e hidden return parameter to inform the input model.
-class ParamListStandardOut : public ParamListStandard {
+/// This is a resource list of potential storage locations for a return value,
+/// at most 1 of which will be chosen for a given function. This models a simple strategy
+/// for selecting a storage location. When assigning based on data-type (assignMap), the first list
+/// entry that fits is chosen.  When assigning from a set of actively used locations (fillinMap),
+/// this class chooses the location that is the closest fitting match to an entry in the resource list.
+class ParamListRegisterOut : public ParamListStandard {
 public:
-  ParamListStandardOut(void) : ParamListStandard() {}		///< Constructor
-  ParamListStandardOut(const ParamListStandardOut &op2) : ParamListStandard(op2) {}	///< Copy constructor
-  virtual uint4 getType(void) const { return p_standard_out; }
-  virtual void assignMap(const vector<Datatype *> &proto,bool isinput,
-			 TypeFactory &typefactory,vector<ParameterPieces> &res) const;
+  ParamListRegisterOut(void) : ParamListStandard() {}		///< Constructor
+  ParamListRegisterOut(const ParamListRegisterOut &op2) : ParamListStandard(op2) {}	///< Copy constructor
+  virtual uint4 getType(void) const { return p_register_out; }
+  virtual void assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const;
   virtual void fillinMap(ParamActive *active) const;
   virtual bool possibleParam(const Address &loc,int4 size) const;
   virtual void restoreXml(const Element *el,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,bool normalstack);
@@ -584,6 +581,24 @@ public:
   virtual ParamList *clone(void) const;
 };
 
+/// \brief A standard model for returning output parameters from a function
+///
+/// This has a more involved assignment strategy than its parent class.
+/// Entries in the resource list are treated as a \e group, meaning that only one can
+/// fit the desired storage size and type attributes of the return value. If no entry
+/// fits, the return value is converted to a pointer data-type, storage allocation is
+/// attempted again, and the return value is marked as a \e hidden return parameter
+/// to inform the input model.
+class ParamListStandardOut : public ParamListRegisterOut {
+public:
+  ParamListStandardOut(void) : ParamListRegisterOut() {}	///< Constructor for use with restoreXml()
+  ParamListStandardOut(const ParamListStandardOut &op2) : ParamListRegisterOut(op2) {}	///< Copy constructor
+  virtual uint4 getType(void) const { return p_standard_out; }
+  virtual void assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const;
+  virtual void restoreXml(const Element *el,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,bool normalstack);
+  virtual ParamList *clone(void) const;
+};
+
 /// \brief A union of other input parameter passing models
 ///
 /// This model is viewed as a union of a constituent set of resource lists.
@@ -599,8 +614,7 @@ public:
   void foldIn(const ParamListStandard &op2);				///< Add another model to the union
   void finalize(void) { populateResolver(); }				///< Fold-ins are finished, finalize \b this
   virtual uint4 getType(void) const { return p_merged; }
-  virtual void assignMap(const vector<Datatype *> &proto,bool isinput,
-			 TypeFactory &typefactory,vector<ParameterPieces> &res) const {
+  virtual void assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const {
     throw LowlevelError("Cannot assign prototype before model has been resolved"); }
   virtual void fillinMap(ParamActive *active) const {
     throw LowlevelError("Cannot determine prototype before model has been resolved"); }
