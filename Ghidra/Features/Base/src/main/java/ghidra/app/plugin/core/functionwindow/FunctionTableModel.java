@@ -62,6 +62,18 @@ public class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject
 		// Function tag column is not something widely used, so make hidden by default
 		descriptor.addHiddenColumn(
 			DiscoverableTableUtils.adaptColumForModel(this, new FunctionTagTableColumn()));
+		
+		descriptor.addHiddenColumn(
+			DiscoverableTableUtils.adaptColumForModel(this, new IsFunctionInlineTableColumn()));
+		
+		descriptor.addHiddenColumn(
+			DiscoverableTableUtils.adaptColumForModel(this, new IsFunctionNonReturningTableColumn()));
+		
+		descriptor.addHiddenColumn(
+			DiscoverableTableUtils.adaptColumForModel(this, new IsFunctionVarargsTableColumn()));
+		
+		descriptor.addHiddenColumn(
+			DiscoverableTableUtils.adaptColumForModel(this, new IsFunctionCustomStorageTableColumn()));
 
 		return descriptor;
 	}
