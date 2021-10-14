@@ -16,20 +16,15 @@
  */
 /* typedefs for getting specific word sizes */
 
-/* Defines for the "preferred" intm size, where this is not determined by the */
-/* algorithm being coded. I.e. the code works without change using */
-/* maximum wordsize when compiled on 64 OR 32 machines */
-
-/* uintp is intended to be an unsigned integer that is the same size as a pointer */
-
 #ifndef __MYTYPES__
 #define __MYTYPES__
 
 #include <cstdint>
-#include <type_traits>
 
-typedef size_t uintm;
-typedef std::make_signed<uintm>::type intm;
+// Use of uintm and intm is deprecated.  They must currently be set to be 32-bit.
+typedef uint32_t uintm;
+typedef int32_t intm;
+
 typedef uint64_t uint8;
 typedef int64_t int8;
 typedef uint32_t uint4;
@@ -38,7 +33,15 @@ typedef uint16_t uint2;
 typedef int16_t int2;
 typedef uint8_t uint1;
 typedef int8_t int1;
+
+/* uintp is intended to be an unsigned integer that is the same size as a pointer */
 typedef uintptr_t uintp;
+
+class Endian {
+public:
+  static constexpr const union { int4 whole; int1 part[4]; } host = { 1 };
+};
+#define HOST_ENDIAN Endian::host.part[3]
 
 #if defined(_WINDOWS)
 #pragma warning (disable:4312)
@@ -57,34 +60,15 @@ typedef uintptr_t uintp;
 //#define _HAS_ITERATOR_DEBUGGING 0
 #endif
 
-/* In order to have a little more flexibility in integer precision vs efficiency,
-  we subdivide the integer types into three classes:
-
-  Small integers:   Integers that never come close to overflowing their (machine word)
-                    precision. We will always use int4 or uint4 (or smaller) for
-                    these so that the precision is explicitly given.
-
-  Machine word integers:   These integers exactly match the largest precision that
-                           will fit in a general purpose register.  They should be
-                           used exclusively by in implementations of larger
-                           precision objects.  Use intm or uintm
-
+/*
   Big integers: These are intended to be arbitrary precison integers. However
-                for efficiency, these will always be implemented as fixed precision.
+                for efficiency, these are currently implemented as fixed precision.
                 So for coding purposes, these should be interpreted as fixed
                 precision integers that store as big a number as you would ever need.
 */
 
-/* Specify that unsigned big ints are coded with 8 bytes */
-#define UINTB8
-
 typedef int8 intb;		/* This is a signed big integer */
-//#include "integer.hh"
-#ifdef UINTB8
 typedef uint8 uintb;		/* This is an unsigned big integer */
-#else
-typedef uint4 uintb;
-#endif
 
 /*
 
