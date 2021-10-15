@@ -124,8 +124,10 @@ public final class LoadCommandTypes {
 			case LC_REEXPORT_DYLIB: {
 				return DynamicLibraryCommand.createDynamicLibraryCommand(reader);
 			}
-			case LC_ENCRYPTION_INFO: {
-				return EncryptedInformationCommand.createEncryptedInformationCommand(reader);
+			case LC_ENCRYPTION_INFO: 
+			case LC_ENCRYPTION_INFO_64: {
+				return EncryptedInformationCommand.createEncryptedInformationCommand(reader,
+					header.is32bit());
 			}
 			case LC_DYLD_INFO:
 			case LC_DYLD_INFO_ONLY: {
