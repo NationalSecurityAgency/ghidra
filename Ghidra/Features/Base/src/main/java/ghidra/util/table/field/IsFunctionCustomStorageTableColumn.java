@@ -20,7 +20,7 @@ import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 
-public class IfFunctionCustomStorageTableColumn
+public class IsFunctionCustomStorageTableColumn
 		extends ProgramBasedDynamicTableColumnExtensionPoint<Function, Boolean> {
 
 	@Override
