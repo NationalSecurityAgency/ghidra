@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,12 @@
  */
 package ghidra.app.util.bin.format.objc2;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.objectiveC.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 public class ObjectiveC2_Method extends ObjectiveC_Method {
 	private String name;
@@ -30,19 +29,19 @@ public class ObjectiveC2_Method extends ObjectiveC_Method {
 
 	private boolean isSmall;
 
-	public ObjectiveC2_Method(ObjectiveC2_State state, BinaryReader reader, ObjectiveC_MethodType methodType, boolean isSmallList) throws IOException {
+	public ObjectiveC2_Method(ObjectiveC2_State state, BinaryReader reader,
+			ObjectiveC_MethodType methodType, boolean isSmallList) throws IOException {
 		super(state, reader, methodType);
 
 		isSmall = isSmallList;
 
 		if (isSmallList) {
 			int nameOffset = (int)ObjectiveC1_Utilities.readNextIndex(reader, true);
-			name = reader.readAsciiString(_index + nameOffset);
+			int namePtr = reader.readInt(_index + nameOffset);
+			name = reader.readAsciiString(namePtr);
 
 			int typesOffset = (int)ObjectiveC1_Utilities.readNextIndex(reader, true);
 			types = reader.readAsciiString(_index + 4 + typesOffset);
-
-			imp = new ObjectiveC2_Implementation(state, reader, true);
 		}
 		else {
 			long nameIndex = ObjectiveC1_Utilities.readNextIndex(reader, state.is32bit);
@@ -50,9 +49,9 @@ public class ObjectiveC2_Method extends ObjectiveC_Method {
 
 			long typesIndex = ObjectiveC1_Utilities.readNextIndex(reader, state.is32bit);
 			types = reader.readAsciiString(typesIndex);
-
-			imp   = new ObjectiveC2_Implementation(state, reader);
 		}
+		
+		imp = new ObjectiveC2_Implementation(state, reader, isSmallList);
 	}
 
 	@Override
@@ -69,22 +68,21 @@ public class ObjectiveC2_Method extends ObjectiveC_Method {
 	}
 
 	public DataType toDataType() throws DuplicateNameException, IOException {
+		Structure struct = new StructureDataType("method_t", 0);
 		if (isSmall) {
-			Structure struct = new StructureDataType("method_t_small", 0);
-			struct.add(new SignedDWordDataType(), 4, "name", null);
-			struct.add(new SignedDWordDataType(), 4, "types", null);
-			struct.add(new SignedDWordDataType(), 4, "imp", null);
-			struct.setCategoryPath(ObjectiveC2_Constants.CATEGORY_PATH);
-			return struct;
+			DataType sdw = SignedDWordDataType.dataType;
+			String comment = "offset from this address";
+			struct.add(sdw, sdw.getLength(), "name", comment);
+			struct.add(sdw, sdw.getLength(), "types", comment);
+			struct.add(sdw, sdw.getLength(), "imp", comment);
 		}
 		else {
-			Structure struct = new StructureDataType("method_t", 0);
 			struct.add(new PointerDataType(STRING), _state.pointerSize, "name",  null);
 			struct.add(new PointerDataType(STRING), _state.pointerSize, "types", null);
 			struct.add(new PointerDataType(VOID),   _state.pointerSize, "imp",   null);
-			struct.setCategoryPath(ObjectiveC2_Constants.CATEGORY_PATH);
-			return struct;
 		}
+		struct.setCategoryPath(ObjectiveC2_Constants.CATEGORY_PATH);
+		return struct;
 	}
 
 }

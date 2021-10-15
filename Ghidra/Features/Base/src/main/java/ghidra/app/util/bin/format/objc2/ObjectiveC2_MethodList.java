@@ -46,8 +46,8 @@ public class ObjectiveC2_MethodList extends ObjectiveC_MethodList {
 		}
 	}
 
-	public long getEntsize() {
-		return entsizeAndFlags & ~0xffff0003;
+	public long getEntsizeAndFlags() {
+		return entsizeAndFlags;
 	}
 
 	public long getCount() {
