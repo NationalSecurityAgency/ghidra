@@ -109,6 +109,14 @@ class ParameterTableModel extends AbstractGTableModel<FunctionVariableData> {
 		fireTableDataChanged();
 	}
 
+	public void setAllowStorageEditing(boolean canCustomizeStorage) {
+		this.canCustomizeStorage = canCustomizeStorage;
+	}
+
+//==================================================================================================
+// Inner Classes
+//==================================================================================================
+
 	private abstract class ParamCol {
 		private String name;
 		private boolean isEditable;
@@ -229,11 +237,7 @@ class ParameterTableModel extends AbstractGTableModel<FunctionVariableData> {
 		}
 	}
 
-	public void setAllowStorageEditing(boolean canCustomizeStorage) {
-		this.canCustomizeStorage = canCustomizeStorage;
-	}
-
-	class ParameterRowData implements FunctionVariableData {
+	private class ParameterRowData implements FunctionVariableData {
 		private ParamInfo param;
 
 		ParameterRowData(ParamInfo paramInfo) {
@@ -265,8 +269,8 @@ class ParameterTableModel extends AbstractGTableModel<FunctionVariableData> {
 		}
 
 		@Override
-		public void setFormalDataType(DataType dataType) {
-			functionModel.setParameterFormalDataType(param, dataType);
+		public boolean setFormalDataType(DataType dataType) {
+			return functionModel.setParameterFormalDataType(param, dataType);
 		}
 
 		@Override
@@ -280,7 +284,7 @@ class ParameterTableModel extends AbstractGTableModel<FunctionVariableData> {
 		}
 	}
 
-	class ReturnRowData implements FunctionVariableData {
+	private class ReturnRowData implements FunctionVariableData {
 		private DataType formalDataType;
 		private VariableStorage storage;
 
@@ -310,8 +314,8 @@ class ParameterTableModel extends AbstractGTableModel<FunctionVariableData> {
 		}
 
 		@Override
-		public void setFormalDataType(DataType dataType) {
-			functionModel.setFormalReturnType(dataType);
+		public boolean setFormalDataType(DataType dataType) {
+			return functionModel.setFormalReturnType(dataType);
 		}
 
 		@Override
@@ -321,8 +325,7 @@ class ParameterTableModel extends AbstractGTableModel<FunctionVariableData> {
 
 		@Override
 		public void setName(String name) {
-			// TODO Auto-generated method stub
-
+			// no name for return type
 		}
 	}
 }

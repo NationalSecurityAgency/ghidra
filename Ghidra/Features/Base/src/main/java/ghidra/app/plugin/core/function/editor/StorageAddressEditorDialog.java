@@ -19,6 +19,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -41,9 +42,7 @@ import ghidra.util.layout.VerticalLayout;
 
 public class StorageAddressEditorDialog extends DialogComponentProvider
 		implements ModelChangeListener {
-	private FunctionVariableData variableData;
-	private StorageAddressModel model;
-	private VarnodeTableModel varnodeTableModel;
+
 	private ParameterDataTypeCellEditor dataTypeEditor;
 	private GTable varnodeTable;
 	private ListSelectionListener selectionListener;
@@ -52,23 +51,34 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 	private JButton removeButton;
 	private JButton upButton;
 	private JButton downButton;
-	private int size;
 	private JLabel currentSizeLabel;
+
+	private FunctionVariableData variableData;
+	private StorageAddressModel model;
+	private VarnodeTableModel varnodeTableModel;
+	private int size;
 	private boolean cancelled = true;
+	private boolean adjustingDataType = false;
+
+	private DataType previousDataType;
+	private DataType currentDataType;
 
 	/**
 	 * Constructor
-	 * @param program
-	 * @param service
-	 * @param storage
-	 * @param variableData
+	 * @param program the program
+	 * @param service the data type manager service
+	 * @param storage the variable storage
+	 * @param variableData the variable data
 	 */
 	public StorageAddressEditorDialog(Program program, DataTypeManagerService service,
 			VariableStorage storage, FunctionVariableData variableData) {
 		super("Storage Address Editor");
 		this.variableData = variableData;
 		model = new StorageAddressModel(program, storage, this);
-		setDataType(variableData.getFormalDataType());
+
+		currentDataType = variableData.getFormalDataType();
+		previousDataType = currentDataType;
+		setDataType(currentDataType);
 		setHelpLocation(new HelpLocation("FunctionPlugin", "Edit_Parameter_Storage"));
 		addWorkPanel(buildMainPanel(service));
 		addOKButton();
@@ -78,50 +88,14 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 
 	/**
 	 * Read-only use constructor for Help screenshot
-	 * @param program
-	 * @param service
+	 * @param program the program
+	 * @param service the data type manager service
 	 * @param var function parameter to be displayed in editor dialog
 	 * @param ordinal parameter ordinal (-1 for return)
 	 */
 	public StorageAddressEditorDialog(Program program, DataTypeManagerService service,
 			final Variable var, final int ordinal) {
-		this(program, service, var.getVariableStorage(), new FunctionVariableData() {
-
-			@Override
-			public void setStorage(VariableStorage storage) {
-				// unsupported
-			}
-
-			@Override
-			public void setName(String name) {
-				// unsupported
-			}
-
-			@Override
-			public void setFormalDataType(DataType dataType) {
-				// unsupported
-			}
-
-			@Override
-			public VariableStorage getStorage() {
-				return var.getVariableStorage();
-			}
-
-			@Override
-			public String getName() {
-				return var.getName();
-			}
-
-			@Override
-			public Integer getIndex() {
-				return ordinal;
-			}
-
-			@Override
-			public DataType getFormalDataType() {
-				return var.getDataType();
-			}
-		});
+		this(program, service, var.getVariableStorage(), new ReadOnlyVariableData(ordinal, var));
 	}
 
 	@Override
@@ -131,6 +105,15 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 				return;
 			}
 		}
+
+		if (!Objects.equals(previousDataType, currentDataType)) {
+			boolean isValid = variableData.setFormalDataType(currentDataType);
+			if (!isValid) {
+				setStatusText("Invalid data type");
+				return;
+			}
+		}
+
 		cancelled = false;
 		close();
 	}
@@ -147,13 +130,12 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 	}
 
 	private void setDataType(DataType dt) {
-		DataType dataType = variableData.getFormalDataType();
-		size = dataType.getLength();
-		boolean unconstrained =
-			(dataType instanceof AbstractFloatDataType) || Undefined.isUndefined(dataType);
+		currentDataType = dt;
+		size = dt.getLength();
+		boolean unconstrained = (dt instanceof AbstractFloatDataType) || Undefined.isUndefined(dt);
 		model.setRequiredSize(size, unconstrained);
 		if (sizeLabel != null) {
-			sizeLabel.setText("" + size);
+			sizeLabel.setText(Integer.toString(size));
 			dataChanged();
 		}
 	}
@@ -171,7 +153,6 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 			@Override
 			public void editingStopped(ChangeEvent e) {
 				DataType dt = (DataType) dataTypeEditor.getCellEditorValue();
-				variableData.setFormalDataType(dt);
 				setDataType(dt);
 			}
 
@@ -213,7 +194,7 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 
 		panel.add(dataTypeEditComponent);
 		panel.add(new GLabel("Datatype Size: "));
-		sizeLabel = new GDLabel("" + size);
+		sizeLabel = new GDLabel(Integer.toString(size));
 		panel.add(sizeLabel);
 		panel.add(new GLabel("Allocated Size:"));
 		currentSizeLabel = new GDLabel("");
@@ -312,7 +293,6 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 
 	private void updateTableSelection() {
 		int[] selectedRows = model.getSelectedVarnodeRows();
-
 		if (!Arrays.equals(selectedRows, varnodeTable.getSelectedRows())) {
 			varnodeTable.clearSelection();
 			for (int i : selectedRows) {
@@ -342,14 +322,11 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 	}
 
 	private void updateCurrentSize() {
-		currentSizeLabel.setText("" + model.getCurrentSize());
+		currentSizeLabel.setText(Integer.toString(model.getCurrentSize()));
 	}
 
-	private boolean adjustingDataType = false;
-
 	private void updateDataType() {
-		// If storage size has changed with an undefined datatype, 
-		// alter the size of the undefined type
+
 		if (adjustingDataType) {
 			return;
 		}
@@ -358,7 +335,7 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 			int currentSize = model.getCurrentSize();
 			if (currentSize > 0 && Undefined.isUndefined(variableData.getFormalDataType())) {
 				DataType adjustedUndefinedtype = Undefined.getUndefinedDataType(currentSize);
-				variableData.setFormalDataType(adjustedUndefinedtype);
+				currentDataType = adjustedUndefinedtype;
 				dataTypeEditor.getEditor().setCellEditorValue(adjustedUndefinedtype);
 				setDataType(adjustedUndefinedtype);
 			}
@@ -367,22 +344,6 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 			adjustingDataType = false;
 		}
 	}
-
-//	public static void main(String[] args) throws Exception {
-////		DockingWindowsLookAndFeelUtils.setLookAndFeel("Metal");
-//		ProgramBuilder builder = new ProgramBuilder();
-//		builder.addMemory("1000", 1000);
-//		Function fun = builder.addFunction("foo", "1000", 20, new VoidDataType());
-//
-//		Program program = builder.getProgram();
-//		AddressSpace stackSpace = program.getAddressFactory().getStackSpace();
-//		Address address = stackSpace.getAddress(4);
-//		VariableStorage storage = new VariableStorage(program, address, 4);
-//
-//		DockingWindowManager dwm = new DockingWindowManager("Test", null, null);
-//		dwm.showDialog(new StorageAddressEditorDialog(program, storage, 8));
-//		System.exit(0);
-//	}
 
 	@Override
 	public void tableRowsChanged() {
@@ -397,4 +358,51 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 	public boolean wasCancelled() {
 		return cancelled;
 	}
+
+	private static class ReadOnlyVariableData implements FunctionVariableData {
+
+		private int ordinal;
+		private Variable variable;
+
+		private ReadOnlyVariableData(int ordinal, Variable variable) {
+			this.ordinal = ordinal;
+			this.variable = variable;
+		}
+
+		@Override
+		public void setStorage(VariableStorage storage) {
+			// unsupported
+		}
+
+		@Override
+		public boolean setFormalDataType(DataType dataType) {
+			return false;
+		}
+
+		@Override
+		public void setName(String name) {
+			// unsupported
+		}
+
+		@Override
+		public VariableStorage getStorage() {
+			return variable.getVariableStorage();
+		}
+
+		@Override
+		public String getName() {
+			return variable.getName();
+		}
+
+		@Override
+		public Integer getIndex() {
+			return ordinal;
+		}
+
+		@Override
+		public DataType getFormalDataType() {
+			return variable.getDataType();
+		}
+	}
+
 }
