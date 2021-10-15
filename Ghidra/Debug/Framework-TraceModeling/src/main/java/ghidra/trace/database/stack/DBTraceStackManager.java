@@ -24,6 +24,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
 import ghidra.trace.database.stack.DBTraceStack.ThreadSnap;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
@@ -44,6 +45,7 @@ public class DBTraceStackManager implements TraceStackManager, DBTraceManager {
 	protected final DBTrace trace;
 
 	protected final DBTraceThreadManager threadManager;
+	protected final DBTraceOverlaySpaceAdapter overlayAdapter;
 
 	protected final DBCachedObjectStore<DBTraceStack> stackStore;
 	protected final DBCachedObjectIndex<ThreadSnap, DBTraceStack> stacksByThreadSnap;
@@ -51,12 +53,14 @@ public class DBTraceStackManager implements TraceStackManager, DBTraceManager {
 	protected final DBCachedObjectIndex<Address, DBTraceStackFrame> framesByPC;
 
 	public DBTraceStackManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
-			TaskMonitor monitor, DBTrace trace, DBTraceThreadManager threadManager)
+			TaskMonitor monitor, DBTrace trace, DBTraceThreadManager threadManager,
+			DBTraceOverlaySpaceAdapter overlayAdapter)
 			throws VersionException, IOException {
 		this.dbh = dbh;
 		this.lock = lock;
 		this.trace = trace;
 		this.threadManager = threadManager;
+		this.overlayAdapter = overlayAdapter;
 
 		DBCachedObjectStoreFactory factory = trace.getStoreFactory();
 

@@ -73,6 +73,7 @@ public class DBTraceAddressPropertyManager implements TraceAddressPropertyManage
 		void set(String name, Class<?> valueClass) {
 			this.name = name;
 			this.type = valueClass.getName();
+			update(NAME_COLUMN, TYPE_COLUMN);
 		}
 
 		Class<?> getValueClass() throws ClassNotFoundException {
@@ -189,7 +190,7 @@ public class DBTraceAddressPropertyManager implements TraceAddressPropertyManage
 			}
 			if (valueClass != map.getValueClass()) {
 				throw new TypeMismatchException("Property " + name + " has type " +
-						map.getValueClass() + ", not " + valueClass);
+					map.getValueClass() + ", not " + valueClass);
 			}
 			return (AbstractDBTracePropertyMap<T, ?>) map;
 		}
@@ -222,7 +223,7 @@ public class DBTraceAddressPropertyManager implements TraceAddressPropertyManage
 			}
 			if (!valueClass.isAssignableFrom(map.getValueClass())) {
 				throw new TypeMismatchException("Property " + name + " has type " +
-						map.getValueClass() + ", which does not extend " + valueClass);
+					map.getValueClass() + ", which does not extend " + valueClass);
 			}
 			return (TracePropertyMap<? extends T>) map;
 		}
@@ -245,7 +246,7 @@ public class DBTraceAddressPropertyManager implements TraceAddressPropertyManage
 			}
 			if (!map.getValueClass().isAssignableFrom(valueClass)) {
 				throw new TypeMismatchException("Property " + name + " has type " +
-						map.getValueClass() + ", which is not a super-type of " + valueClass);
+					map.getValueClass() + ", which is not a super-type of " + valueClass);
 			}
 			return (TracePropertyMap<T>) map;
 		}

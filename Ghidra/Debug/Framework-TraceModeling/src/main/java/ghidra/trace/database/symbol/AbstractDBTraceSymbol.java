@@ -34,7 +34,8 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
-import ghidra.trace.database.DBTraceUtils.DecodesAddresses;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
 import ghidra.trace.database.program.DBTraceProgramView;
 import ghidra.trace.database.symbol.DBTraceSymbolManager.DBTraceSymbolIDEntry;
 import ghidra.trace.database.symbol.DBTraceSymbolManager.MySymbolTypes;
@@ -160,8 +161,8 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 	}
 
 	@Override
-	public Address decodeAddress(int spaceId, long offset) {
-		return manager.trace.getBaseAddressFactory().getAddress(spaceId, offset);
+	public DBTraceOverlaySpaceAdapter getOverlaySpaceAdapter() {
+		return manager.overlayAdapter;
 	}
 
 	@Override

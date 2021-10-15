@@ -76,40 +76,72 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		this.trace = new DBTrace(name, language.getDefaultCompilerSpec(), this);
 	}
 
-	public Address addr(long offset) {
-		return language.getDefaultSpace().getAddress(offset);
+	public Address addr(AddressSpace space, long offset) {
+		return space.getAddress(offset);
 	}
 
-	public Address data(long offset) {
-		return language.getDefaultDataSpace().getAddress(offset);
+	public Address addr(Language lang, long offset) {
+		return addr(lang.getDefaultSpace(), offset);
+	}
+
+	public Address addr(long offset) {
+		return addr(language, offset);
 	}
 
 	public Address addr(TraceGuestLanguage lang, long offset) {
 		return lang.getLanguage().getDefaultSpace().getAddress(offset);
 	}
 
+	public Address data(Language lang, long offset) {
+		return addr(lang.getDefaultDataSpace(), offset);
+	}
+
+	public Address data(long offset) {
+		return data(language, offset);
+	}
+
 	public Address data(TraceGuestLanguage lang, long offset) {
-		return lang.getLanguage().getDefaultDataSpace().getAddress(offset);
+		return data(lang.getLanguage(), offset);
+	}
+
+	public AddressRange range(Address start, Address end) {
+		return new AddressRangeImpl(start, end);
+	}
+
+	public AddressRange range(AddressSpace space, long start, long end) {
+		return range(addr(space, start), addr(space, end));
+	}
+
+	public AddressRange range(Language lang, long start, long end) {
+		return range(lang.getDefaultSpace(), start, end);
 	}
 
 	public AddressRange range(long start, long end) {
-		return new AddressRangeImpl(addr(start), addr(end));
+		return range(language, start, end);
+	}
+
+	public AddressRange range(long singleton) {
+		return range(singleton, singleton);
 	}
 
 	public TraceAddressSnapRange srange(long snap, long start, long end) {
 		return new ImmutableTraceAddressSnapRange(addr(start), addr(end), snap, snap);
 	}
 
+	public AddressRange drng(Language lang, long start, long end) {
+		return range(language.getDefaultDataSpace(), start, end);
+	}
+
 	public AddressRange drng(long start, long end) {
-		return new AddressRangeImpl(data(start), data(end));
+		return drng(language, start, end);
 	}
 
 	public AddressRange range(TraceGuestLanguage lang, long start, long end) {
-		return new AddressRangeImpl(addr(lang, start), addr(lang, end));
+		return range(lang.getLanguage(), start, end);
 	}
 
 	public AddressRange drng(TraceGuestLanguage lang, long start, long end) {
-		return new AddressRangeImpl(data(lang, start), data(lang, end));
+		return drng(lang.getLanguage(), start, end);
 	}
 
 	public AddressSetView set(AddressRange... ranges) {

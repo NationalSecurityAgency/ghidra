@@ -21,8 +21,10 @@ import java.util.Objects;
 import db.DBRecord;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.Address;
-import ghidra.trace.database.DBTraceUtils.AddressDBFieldCodec;
-import ghidra.trace.database.DBTraceUtils.DecodesAddresses;
+import ghidra.program.model.address.AddressFactory;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.AddressDBFieldCodec;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
 import ghidra.trace.model.Trace.TraceStackChangeType;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.util.TraceChangeRecord;
@@ -69,8 +71,8 @@ public class DBTraceStackFrame extends DBAnnotatedObject
 	}
 
 	@Override
-	public Address decodeAddress(int space, long offset) {
-		return manager.trace.getBaseAddressFactory().getAddress(space, offset);
+	public DBTraceOverlaySpaceAdapter getOverlaySpaceAdapter() {
+		return manager.overlayAdapter;
 	}
 
 	@Override
