@@ -30,7 +30,10 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
-import ghidra.trace.database.DBTraceUtils.*;
+import ghidra.trace.database.DBTraceUtils.RefTypeDBFieldCodec;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.AddressDBFieldCodec;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
 import ghidra.trace.database.map.*;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
@@ -121,7 +124,10 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 			return DBTraceUtils.tableName(TABLE_NAME, space, threadKey, frameLevel);
 		}
 
-		@DBAnnotatedField(column = TO_ADDR_COLUMN_NAME, indexed = true, codec = AddressDBFieldCodec.class)
+		@DBAnnotatedField(
+			column = TO_ADDR_COLUMN_NAME,
+			indexed = true,
+			codec = AddressDBFieldCodec.class)
 		protected Address toAddress;
 		@DBAnnotatedField(column = SYMBOL_ID_COLUMN_NAME, indexed = true)
 		protected long symbolId; // TODO: Is this at the from or to address? I think TO...
@@ -146,8 +152,8 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 		}
 
 		@Override
-		public Address decodeAddress(int spaceId, long offset) {
-			return this.space.baseLanguage.getAddressFactory().getAddress(spaceId, offset);
+		public DBTraceOverlaySpaceAdapter getOverlaySpaceAdapter() {
+			return this.space.manager.overlayAdapter;
 		}
 
 		@Override

@@ -30,6 +30,7 @@ import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTrace;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
 import ghidra.trace.database.symbol.DBTraceReferenceSpace.DBTraceReferenceEntry;
@@ -49,10 +50,14 @@ public class DBTraceReferenceManager extends
 		implements TraceReferenceManager, DBTraceDelegatingManager<DBTraceReferenceSpace> {
 	public static final String NAME = "Reference";
 
+	protected final DBTraceOverlaySpaceAdapter overlayAdapter;
+
 	public DBTraceReferenceManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
-			DBTraceThreadManager threadManager) throws VersionException, IOException {
+			DBTraceThreadManager threadManager, DBTraceOverlaySpaceAdapter overlayAdapter)
+			throws VersionException, IOException {
 		super(NAME, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager);
+		this.overlayAdapter = overlayAdapter;
 
 		loadSpaces();
 	}

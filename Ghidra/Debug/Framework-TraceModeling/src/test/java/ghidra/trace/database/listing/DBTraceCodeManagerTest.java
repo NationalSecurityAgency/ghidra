@@ -32,6 +32,7 @@ import ghidra.lifecycle.Unfinished;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.ContextChangeException;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.scalar.Scalar;
@@ -1821,6 +1822,23 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		assertEquals(b.language.getRegister("r4").getAddress(), data.getAddress());
 		assertEquals(new Scalar(32, 0), data.getValue());
 		assertEquals(4, data.getLength());
+	}
+
+	@Test
+	public void testOverlaySpaces() throws Exception {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			AddressSpace os = b.trace.getMemoryManager()
+					.createOverlayAddressSpace("test",
+						b.trace.getBaseAddressFactory().getDefaultAddressSpace());
+			DBTraceCodeSpace space = manager.getCodeSpace(os, true);
+
+			b.addInstruction(0, os.getAddress(0x4004), b.language, b.buf(0xf4, 0));
+
+			List<CodeUnit> all = new ArrayList<>();
+			space.definedUnits().get(0, true).forEach(all::add);
+			assertEquals(1, all.size());
+			assertEquals(os, all.get(0).getAddress().getAddressSpace());
+		}
 	}
 
 	// TODO: Test using a context-sensitive language

@@ -27,6 +27,7 @@ import db.DBHandle;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.database.*;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
 import ghidra.trace.model.Trace.TraceStaticMappingChangeType;
 import ghidra.trace.model.modules.TraceConflictedMappingException;
 import ghidra.trace.model.modules.TraceStaticMappingManager;
@@ -40,6 +41,7 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 	protected final DBHandle dbh;
 	protected final ReadWriteLock lock;
 	protected final DBTrace trace;
+	protected final DBTraceOverlaySpaceAdapter overlayAdapter;
 
 	// TODO: Why doesn't this use the R*-Tree-based store like the others?
 	//       Perhaps I thought it was overkill.... Probably should change over.
@@ -49,10 +51,13 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 	protected final Collection<DBTraceStaticMapping> view;
 
 	public DBTraceStaticMappingManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
-			TaskMonitor monitor, DBTrace trace) throws VersionException, IOException {
+			TaskMonitor monitor, DBTrace trace, DBTraceOverlaySpaceAdapter overlayAdapter)
+			throws VersionException, IOException {
 		this.dbh = dbh;
 		this.lock = lock;
 		this.trace = trace;
+
+		this.overlayAdapter = overlayAdapter;
 
 		DBCachedObjectStoreFactory factory = trace.getStoreFactory();
 		mappingStore = factory.getOrCreateCachedStore(DBTraceStaticMapping.TABLE_NAME,

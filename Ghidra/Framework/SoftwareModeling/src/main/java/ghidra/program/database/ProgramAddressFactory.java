@@ -97,25 +97,27 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 		return originalFactory;
 	}
 
-	void addOverlayAddressSpace(OverlayAddressSpace ovSpace) throws DuplicateNameException {
+	protected void addOverlayAddressSpace(OverlayAddressSpace ovSpace)
+			throws DuplicateNameException {
 		addAddressSpace(ovSpace);
 	}
 
 	/**
 	 * Create a new OverlayAddressSpace based upon the given overlay blockName and base AddressSpace
-	 * @param name the preferred name of the overlay address space to be created.  
-	 * This name may be modified if preserveName is false to produce a valid overlay space 
-	 * name and avoid duplication.
-	 * @param preserveName if true specified name will be preserved, if false an unique acceptable 
-	 * overlay space name will be generated from the specified name.
-	 * @param originalSpace the base AddressSpace to overlay	
+	 * 
+	 * @param name the preferred name of the overlay address space to be created. This name may be
+	 *            modified if preserveName is false to produce a valid overlay space name and avoid
+	 *            duplication.
+	 * @param preserveName if true specified name will be preserved, if false an unique acceptable
+	 *            overlay space name will be generated from the specified name.
+	 * @param originalSpace the base AddressSpace to overlay
 	 * @param minOffset the min offset of the space
 	 * @param maxOffset the max offset of the space
 	 * @return the new overlay space
 	 * @throws IllegalArgumentException if originalSpace is not permitted or preserveName is true
-	 * and a space with specified name already exists.
+	 *             and a space with specified name already exists.
 	 */
-	OverlayAddressSpace addOverlayAddressSpace(String name, boolean preserveName,
+	protected OverlayAddressSpace addOverlayAddressSpace(String name, boolean preserveName,
 			AddressSpace originalSpace, long minOffset, long maxOffset) {
 
 		if (!originalSpace.isMemorySpace() || originalSpace.isOverlaySpace()) {
@@ -154,8 +156,8 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 	}
 
 	/**
-	 * Get a unique address space name based on the specified
-	 * baseOverlayName
+	 * Get a unique address space name based on the specified baseOverlayName
+	 * 
 	 * @param baseOverlayName base overlay address space name
 	 * @return unique overlay space name
 	 */
@@ -173,12 +175,12 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 	}
 
 	/**
-	 * Get base overlay name removing any numeric suffix which may
-	 * have been added to avoid duplication.  This method is intended
-	 * to be used during rename only.
+	 * Get base overlay name removing any numeric suffix which may have been added to avoid
+	 * duplication. This method is intended to be used during rename only.
+	 * 
 	 * @param overlayName existing overlay space name
-	 * @return base overlay name with any trailing index removed
-	 * which may have been added to avoid duplication.
+	 * @return base overlay name with any trailing index removed which may have been added to avoid
+	 *         duplication.
 	 */
 	private String getBaseOverlayName(String overlayName) {
 		int index = overlayName.lastIndexOf('.');
@@ -200,9 +202,10 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 	}
 
 	/**
-	 * Generate an allowed address space name from a block name.  Use of unsupported
-	 * characters will be converted to underscore (includes colon and all whitespace chars).
-	 * double-underscore to ensure uniqueness.
+	 * Generate an allowed address space name from a block name. Use of unsupported characters will
+	 * be converted to underscore (includes colon and all whitespace chars). double-underscore to
+	 * ensure uniqueness.
+	 * 
 	 * @param blockName corresponding memory block name
 	 * @return overlay space name
 	 */
@@ -249,18 +252,17 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 		return addr;
 	}
 
-	void removeOverlaySpace(String name) {
+	protected void removeOverlaySpace(String name) {
 		removeAddressSpace(name);
 	}
 
 	/**
-	 * Rename overlay with preferred newName.  Actual name used will be returned
-	 * and may differ from specified newName to ensure validity and avoid
-	 * duplication.
+	 * Rename overlay with preferred newName. Actual name used will be returned and may differ from
+	 * specified newName to ensure validity and avoid duplication.
+	 * 
 	 * @param oldOverlaySpaceName the existing overlay address space name
-	 * @param newName the preferred new name of the overlay address space.  
-	 * This name may be modified to produce a valid overlay space 
-	 * name to avoid duplication.
+	 * @param newName the preferred new name of the overlay address space. This name may be modified
+	 *            to produce a valid overlay space name to avoid duplication.
 	 * @return new name applied to existing overlay space
 	 */
 	@Override

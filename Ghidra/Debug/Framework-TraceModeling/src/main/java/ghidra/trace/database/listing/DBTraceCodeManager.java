@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.listing;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -37,8 +37,9 @@ import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.util.ProgramContextImpl;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.DBTraceUtils.AddressDBFieldCodec;
-import ghidra.trace.database.DBTraceUtils.DecodesAddresses;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.AddressDBFieldCodec;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
 import ghidra.trace.database.data.DBTraceDataTypeManager;
 import ghidra.trace.database.language.DBTraceLanguageManager;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
@@ -109,13 +110,8 @@ public class DBTraceCodeManager
 		}
 
 		@Override
-		public Address decodeAddress(int space, long offset) {
-			Language lang = manager.languageManager.getLanguageByKey(langKey);
-			if (lang == null) {
-				throw new AssertionError(
-					"Database is corrupt. Missing language with key: " + langKey);
-			}
-			return manager.baseLanguage.getAddressFactory().getAddress(space, offset);
+		public DBTraceOverlaySpaceAdapter getOverlaySpaceAdapter() {
+			return manager.overlayAdapter;
 		}
 
 		void set(int langKey, byte[] bytes, byte[] context, Address address, boolean delaySlot) {
@@ -175,6 +171,7 @@ public class DBTraceCodeManager
 
 	protected final DBTraceLanguageManager languageManager;
 	protected final DBTraceDataTypeManager dataTypeManager;
+	protected final DBTraceOverlaySpaceAdapter overlayAdapter;
 	protected final DBTraceReferenceManager referenceManager;
 
 	protected final DBCachedObjectStore<DBTraceCodePrototypeEntry> protoStore;
@@ -201,11 +198,12 @@ public class DBTraceCodeManager
 	public DBTraceCodeManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager, DBTraceLanguageManager languageManager,
-			DBTraceDataTypeManager dataTypeManager, DBTraceReferenceManager referenceManager)
-			throws IOException, VersionException {
+			DBTraceDataTypeManager dataTypeManager, DBTraceOverlaySpaceAdapter overlayAdapter,
+			DBTraceReferenceManager referenceManager) throws IOException, VersionException {
 		super(NAME, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager);
 		this.languageManager = languageManager;
 		this.dataTypeManager = dataTypeManager;
+		this.overlayAdapter = overlayAdapter;
 		this.referenceManager = referenceManager;
 
 		DBCachedObjectStoreFactory factory = trace.getStoreFactory();

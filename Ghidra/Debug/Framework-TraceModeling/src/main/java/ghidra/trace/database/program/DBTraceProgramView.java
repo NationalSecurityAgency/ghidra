@@ -58,7 +58,6 @@ import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.program.TraceProgramViewMemory;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.*;
@@ -1036,7 +1035,7 @@ public class DBTraceProgramView implements TraceProgramView {
 	}
 
 	@Override
-	public TraceProgramViewMemory getMemory() {
+	public DBTraceProgramViewMemory getMemory() {
 		return memory;
 	}
 

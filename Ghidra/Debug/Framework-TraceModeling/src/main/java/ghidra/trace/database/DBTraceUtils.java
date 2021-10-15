@@ -19,6 +19,7 @@ import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -38,9 +39,6 @@ import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
 
 public enum DBTraceUtils {
 	;
-	public interface DecodesAddresses {
-		Address decodeAddress(int space, long offset);
-	}
 
 	public static class OffsetSnap {
 		public final long offset;
@@ -119,52 +117,6 @@ public enum DBTraceUtils {
 			}
 			catch (MalformedURLException e) {
 				throw new RuntimeException(e);
-			}
-		}
-	}
-
-	public static class AddressDBFieldCodec<OT extends DBAnnotatedObject & DecodesAddresses>
-			extends AbstractDBFieldCodec<Address, OT, BinaryField> {
-
-		public AddressDBFieldCodec(Class<OT> objectType, Field field, int column) {
-			super(Address.class, objectType, BinaryField.class, field, column);
-		}
-
-		protected byte[] encode(Address address) {
-			if (address == null) {
-				return null;
-			}
-			ByteBuffer buf = ByteBuffer.allocate(10);
-			short space = (short) address.getAddressSpace().getSpaceID();
-			buf.putShort(space);
-			long offset = address.getOffset();
-			buf.putLong(offset);
-			return buf.array();
-		}
-
-		@Override
-		public void store(Address value, BinaryField f) {
-			f.setBinaryData(encode(value));
-		}
-
-		@Override
-		protected void doStore(OT obj, DBRecord record)
-				throws IllegalArgumentException, IllegalAccessException {
-			record.setBinaryData(column, encode(getValue(obj)));
-		}
-
-		@Override
-		protected void doLoad(OT obj, DBRecord record)
-				throws IllegalArgumentException, IllegalAccessException {
-			byte[] data = record.getBinaryData(column);
-			if (data == null) {
-				setValue(obj, null);
-			}
-			else {
-				ByteBuffer buf = ByteBuffer.wrap(data);
-				short space = buf.getShort();
-				long offset = buf.getLong();
-				setValue(obj, obj.decodeAddress(space, offset));
 			}
 		}
 	}

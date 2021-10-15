@@ -24,7 +24,10 @@ import com.google.common.collect.Range;
 import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTraceUtils;
-import ghidra.trace.database.DBTraceUtils.*;
+import ghidra.trace.database.DBTraceUtils.URLDBFieldCodec;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.AddressDBFieldCodec;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.util.LockHold;
@@ -73,7 +76,10 @@ public class DBTraceStaticMapping extends DBAnnotatedObject
 	@DBAnnotatedColumn(STATIC_ADDRESS_COLUMN_NAME)
 	static DBObjectColumn STATIC_ADDRESS_COLUMN;
 
-	@DBAnnotatedField(column = TRACE_ADDRESS_COLUMN_NAME, indexed = true, codec = AddressDBFieldCodec.class)
+	@DBAnnotatedField(
+		column = TRACE_ADDRESS_COLUMN_NAME,
+		indexed = true,
+		codec = AddressDBFieldCodec.class)
 	private Address traceAddress;
 	@DBAnnotatedField(column = LENGTH_COLUMN_NAME)
 	private long length;
@@ -134,8 +140,8 @@ public class DBTraceStaticMapping extends DBAnnotatedObject
 	}
 
 	@Override
-	public Address decodeAddress(int space, long offset) {
-		return manager.trace.getBaseAddressFactory().getAddress(space, offset);
+	public DBTraceOverlaySpaceAdapter getOverlaySpaceAdapter() {
+		return manager.overlayAdapter;
 	}
 
 	@Override

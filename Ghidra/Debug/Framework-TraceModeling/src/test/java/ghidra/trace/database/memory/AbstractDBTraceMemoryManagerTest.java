@@ -1118,4 +1118,23 @@ public abstract class AbstractDBTraceMemoryManagerTest
 			}
 		}
 	}
+
+	@Test
+	public void testOverlaySpaces() throws Exception {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			AddressSpace os = memory.createOverlayAddressSpace("test",
+				b.trace.getBaseAddressFactory().getDefaultAddressSpace());
+			DBTraceMemorySpace space = memory.getMemorySpace(os, true);
+			assertEquals(4, space.putBytes(0, os.getAddress(0x4000), buf(1, 2, 3, 4)));
+
+			ByteBuffer read = ByteBuffer.allocate(4);
+			// This is from original space, not overlay, so should be 0s
+			assertEquals(4, memory.getBytes(0, b.addr(0x4000), read));
+			assertArrayEquals(arr(0, 0, 0, 0), read.array());
+			read.clear();
+
+			assertEquals(4, space.getBytes(0, os.getAddress(0x4000), read));
+			assertArrayEquals(arr(1, 2, 3, 4), read.array());
+		}
+	}
 }
