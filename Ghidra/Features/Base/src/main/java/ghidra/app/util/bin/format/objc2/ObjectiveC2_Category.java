@@ -45,6 +45,8 @@ public class ObjectiveC2_Category implements StructConverter {
 
 		readName(reader);
 		readClass(reader);
+		if (cls.getISA() == null)
+			return;
 		readInstanceMethods(reader);
 		readClassMethods(reader);
 		readProtocols(reader);
