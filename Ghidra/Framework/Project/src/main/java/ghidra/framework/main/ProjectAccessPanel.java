@@ -482,6 +482,7 @@ public class ProjectAccessPanel extends AbstractWizardJPanel {
 	 * Panel for displaying the list of users with repository access.
 	 */
 	class KnownUsersPanel extends JPanel {
+		private static final int DEFAULT_USERLIST_ROWS_TO_SHOW = 20;
 
 		private JList<String> userList;
 		private DefaultListModel<String> listModel;
@@ -514,6 +515,8 @@ public class ProjectAccessPanel extends AbstractWizardJPanel {
 			// Set the minimum dimensions of the scroll pane so we can't collapse it.
 			Dimension d = userList.getPreferredSize();
 			d.width = 100;
+			d.height =
+				Math.min(userList.getFixedCellHeight() * DEFAULT_USERLIST_ROWS_TO_SHOW, d.height);
 			sp.setPreferredSize(d);
 			sp.setMinimumSize(new Dimension(100, 200));
 
