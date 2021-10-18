@@ -35,6 +35,7 @@ import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import utilities.util.IDHashed;
 
 interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	public static class ProgramBreakpoint {
@@ -248,33 +249,6 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	}
 
 	static class TraceBreakpointSet {
-		private static class IDHashed<T> {
-			final T obj;
-
-			public IDHashed(T obj) {
-				this.obj = obj;
-			}
-
-			@Override
-			public String toString() {
-				return obj.toString();
-			}
-
-			@Override
-			public int hashCode() {
-				return System.identityHashCode(obj);
-			}
-
-			@Override
-			public boolean equals(Object o) {
-				if (!(o instanceof IDHashed<?>)) {
-					return false;
-				}
-				IDHashed<?> that = (IDHashed<?>) o;
-				return this.obj.equals(that.obj);
-			}
-		}
-
 		private final TraceRecorder recorder;
 		private final Trace trace;
 		private final Address address;
