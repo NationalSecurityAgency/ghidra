@@ -30,8 +30,11 @@ import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "RegisterContainer", attributes = {
-	@TargetAttributeType(type = Void.class) }, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "RegisterContainer",
+	attributes = {
+		@TargetAttributeType(type = Void.class) },
+	canonicalContainer = true)
 public class GdbModelTargetRegisterContainer
 		extends DefaultTargetObject<GdbModelTargetRegister, GdbModelTargetInferior>
 		implements TargetRegisterContainer {
@@ -86,9 +89,6 @@ public class GdbModelTargetRegisterContainer
 	}
 
 	public CompletableFuture<Void> refreshInternal() {
-		if (!isObserved()) {
-			return AsyncUtils.NIL;
-		}
 		return doRefresh().exceptionally(ex -> {
 			Msg.error(this, "Problem refreshing inferior's register descriptions", ex);
 			return null;
