@@ -2850,7 +2850,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @endif # VERSION_6T2
 
-:ldrsb^COND^"sb" Rd,addrmode3 	is $(AMODE) &  COND & c2527=0 & L20=1 & c0407=13 & Rd & addrmode3
+:ldrsb^COND Rd,addrmode3 	is $(AMODE) &  COND & c2527=0 & L20=1 & c0407=13 & Rd & addrmode3
 {
   build COND;
   build addrmode3;
