@@ -22,9 +22,11 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.model.map.UnsignedUtils;
 import ghidra.util.database.spatial.rect.EuclideanSpace2D;
+import utilities.util.IDHashed;
 
 public class TraceAddressSnapSpace implements EuclideanSpace2D<Address, Long> {
-	private static final Map<AddressSpace, TraceAddressSnapSpace> SPACES = new HashMap<>();
+	private static final Map<IDHashed<AddressSpace>, TraceAddressSnapSpace> SPACES =
+		new HashMap<>();
 
 	/**
 	 * Get the trace-address-snap space for a given address space
@@ -38,7 +40,8 @@ public class TraceAddressSnapSpace implements EuclideanSpace2D<Address, Long> {
 	 */
 	public static TraceAddressSnapSpace forAddressSpace(AddressSpace space) {
 		synchronized (SPACES) {
-			return SPACES.computeIfAbsent(space, TraceAddressSnapSpace::new);
+			return SPACES.computeIfAbsent(new IDHashed<>(space),
+				s -> new TraceAddressSnapSpace(space));
 		}
 	}
 
