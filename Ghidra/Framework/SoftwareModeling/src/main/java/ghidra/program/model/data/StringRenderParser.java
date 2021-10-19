@@ -68,7 +68,7 @@ public class StringRenderParser {
 		private State(boolean isFinal, String accepts) {
 			this(isFinal, accepts.chars()
 					.mapToObj(i -> (char) i)
-					.collect(Collectors.toCollection(HashSet::new)));
+					.collect(Collectors.toSet()));
 		}
 
 		private State(boolean isFinal, Set<Character> accepts) {
