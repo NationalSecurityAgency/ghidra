@@ -264,4 +264,21 @@ public abstract class AbstractDataType implements DataType {
 		// By default we will do nothing different for offcut values
 		return getDefaultLabelPrefix(buf, settings, len, options);
 	}
+
+	@Override
+	public boolean isEncodable() {
+		return false;
+	}
+
+	@Override
+	public byte[] encodeValue(Object value, MemBuffer buf, Settings settings, int length)
+			throws DataTypeEncodeException {
+		throw new DataTypeEncodeException("Encoding not supported", value, this);
+	}
+
+	@Override
+	public byte[] encodeRepresentation(String repr, MemBuffer buf, Settings settings, int length)
+			throws DataTypeEncodeException {
+		throw new DataTypeEncodeException("Encoding not supported", repr, this);
+	}
 }

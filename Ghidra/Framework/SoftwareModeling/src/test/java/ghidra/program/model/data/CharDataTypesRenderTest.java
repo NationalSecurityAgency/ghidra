@@ -73,6 +73,33 @@ public class CharDataTypesRenderTest extends AbstractGTest {
 	}
 
 	@Test
+	public void testEncodeSimpleASCIIChar() throws DataTypeEncodeException {
+		assertArrayEquals(bytes('a'),
+			charDT.encodeRepresentation("'a'", mb(false), newset(), -1));
+		assertArrayEquals(bytes('a'),
+			ucharDT.encodeRepresentation("'a'", mb(false), newset(), -1));
+		// TODO: UTF-8?
+		assertArrayEquals(bytes('a', 0),
+			wcharDT.encodeRepresentation("u'a'", mb(false), newset(), -1));
+		assertArrayEquals(bytes('a', 0),
+			wchar16DT.encodeRepresentation("u'a'", mb(false), newset(), -1));
+		assertArrayEquals(bytes('a', 0, 0, 0),
+			wchar32DT.encodeRepresentation("U'a'", mb(false), newset(), -1));
+
+		assertArrayEquals(bytes('a'),
+			charDT.encodeRepresentation("'a'", mb(true), newset(), -1));
+		assertArrayEquals(bytes('a'),
+			ucharDT.encodeRepresentation("'a'", mb(true), newset(), -1));
+		// TODO: UTF-8?
+		assertArrayEquals(bytes(0, 'a'),
+			wcharDT.encodeRepresentation("u'a'", mb(true), newset(), -1));
+		assertArrayEquals(bytes(0, 'a'),
+			wchar16DT.encodeRepresentation("u'a'", mb(true), newset(), -1));
+		assertArrayEquals(bytes(0, 0, 0, 'a'),
+			wchar32DT.encodeRepresentation("U'a'", mb(true), newset(), -1));
+	}
+
+	@Test
 	public void testWideCharsNonAscii() {
 		// Test rendering a non-ascii, but valid ideographic character.
 		// The literal const strings used below as the "expected" values
@@ -98,6 +125,30 @@ public class CharDataTypesRenderTest extends AbstractGTest {
 	}
 
 	@Test
+	public void testEncodeWideCharsNonAscii() throws DataTypeEncodeException {
+		// Contrast to the _EscSeq variant by the same name below.
+		// The single \ucc01 is interpreted by the Java compiler.
+		// Double \\ucc01 is interpreted by the parser under test.
+		assertArrayEquals(bytes(66),
+			charDT.encodeRepresentation("'\u0e01'", mb(false), newset().set(thaiCS), -1));
+
+		assertArrayEquals(bytes(0xcc, 0x01),
+			wcharDT.encodeRepresentation("u'\ucc01'", mb(true), newset(), -1));
+		assertArrayEquals(bytes(0x01, 0xcc),
+			wcharDT.encodeRepresentation("u'\ucc01'", mb(false), newset(), -1));
+
+		assertArrayEquals(bytes(0xcc, 0x01),
+			wchar16DT.encodeRepresentation("u'\ucc01'", mb(true), newset(), -1));
+		assertArrayEquals(bytes(0x01, 0xcc),
+			wchar16DT.encodeRepresentation("u'\ucc01'", mb(false), newset(), -1));
+
+		assertArrayEquals(bytes(0, 0, 0xcc, 0x01),
+			wchar32DT.encodeRepresentation("U'\ucc01'", mb(true), newset(), -1));
+		assertArrayEquals(bytes(0x01, 0xcc, 0, 0),
+			wchar32DT.encodeRepresentation("U'\ucc01'", mb(false), newset(), -1));
+	}
+
+	@Test
 	public void testWideCharsNonAscii_EscSeq() {
 		ByteMemBufferImpl buf_thai = mb(false, 66);
 		ByteMemBufferImpl buf_be16 = mb(true, 0xcc, 0x01);
@@ -119,12 +170,42 @@ public class CharDataTypesRenderTest extends AbstractGTest {
 	}
 
 	@Test
+	public void testEncodeWideCharsNonAscii_EscSeq() throws DataTypeEncodeException {
+		// Contrast to the non_EscSeq variant by the same name above.
+		// The single \ucc01 is interpreted by the Java compiler.
+		// Double \\ucc01 is interpreted by the parser under test.
+		assertArrayEquals(bytes(66),
+			charDT.encodeRepresentation("'\\u0e01'", mb(false), newset().set(thaiCS), -1));
+
+		assertArrayEquals(bytes(0xcc, 0x01),
+			wcharDT.encodeRepresentation("u'\\ucc01'", mb(true), newset(), -1));
+		assertArrayEquals(bytes(0x01, 0xcc),
+			wcharDT.encodeRepresentation("u'\\ucc01'", mb(false), newset(), -1));
+
+		assertArrayEquals(bytes(0xcc, 0x01),
+			wchar16DT.encodeRepresentation("u'\\ucc01'", mb(true), newset(), -1));
+		assertArrayEquals(bytes(0x01, 0xcc),
+			wchar16DT.encodeRepresentation("u'\\ucc01'", mb(false), newset(), -1));
+
+		assertArrayEquals(bytes(0, 0, 0xcc, 0x01),
+			wchar32DT.encodeRepresentation("U'\\ucc01'", mb(true), newset(), -1));
+		assertArrayEquals(bytes(0x01, 0xcc, 0, 0),
+			wchar32DT.encodeRepresentation("U'\\ucc01'", mb(false), newset(), -1));
+	}
+
+	@Test
 	public void testNonAsciiCharset() {
 		// in thai charset, byte 73 ('I') maps to the normal ascii char '['
 		String result =
 			charDT.getRepresentation(mb(false, 73), newset().set(thaiCS), charDT.getLength());
 
 		assertEquals("'['", result);
+	}
+
+	@Test
+	public void testEncodeNonAsciiCharset() throws DataTypeEncodeException {
+		assertArrayEquals(bytes(73),
+			charDT.encodeRepresentation("'['", mb(false), newset().set(thaiCS), -1));
 	}
 
 	@Test
@@ -197,5 +278,11 @@ public class CharDataTypesRenderTest extends AbstractGTest {
 		result = wchar16DT.getRepresentation(mb(false, 0xfd, 0xff),
 			newset().set(RENDER_ENUM.BYTE_SEQ), wchar16DT.getLength());
 		assertEquals("FDh,FFh", result);
+	}
+
+	@Test
+	public void testEncodeByteSequence() throws DataTypeEncodeException {
+		assertArrayEquals(bytes(0xaa, 0xff, 0xfd),
+			charDT.encodeRepresentation("AAh,FFh,FDh", mb(true), newset(), -1));
 	}
 }

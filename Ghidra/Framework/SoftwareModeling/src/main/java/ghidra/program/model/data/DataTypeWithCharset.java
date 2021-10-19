@@ -16,16 +16,72 @@
 package ghidra.program.model.data;
 
 import ghidra.docking.settings.Settings;
+import ghidra.program.model.mem.MemBuffer;
 
 public interface DataTypeWithCharset extends DataType {
 
 	/**
+	 * Utility for character data types to encode a value.
+	 * 
+	 * @param value the character value to encode.
+	 * @param buf a buffer representing the eventual destination of the bytes.
+	 * @param settings the settings to use.
+	 * @return the encoded value
+	 * @throws DataTypeEncodeException if the value cannot be encoded
+	 */
+	public default byte[] encodeCharacterValue(Object value, MemBuffer buf, Settings settings)
+			throws DataTypeEncodeException {
+		char[] normalizedValue;
+		if (value instanceof Character) {
+			normalizedValue = new char[] { (Character) value };
+		}
+		else if (value instanceof char[]) {
+			normalizedValue = (char[]) value;
+			if (normalizedValue.length > 2) {
+				throw new DataTypeEncodeException("char[] must represent a single code point",
+					value, this);
+			}
+		}
+		else {
+			throw new DataTypeEncodeException(
+				"Requires Character or char[] with a single code point", value, this);
+		}
+		StringDataInstance sdi = new StringDataInstance(this, settings, buf, getLength());
+		try {
+			return sdi.encodeReplacementFromCharValue(normalizedValue);
+		}
+		catch (Throwable e) {
+			throw new DataTypeEncodeException(value, this, e);
+		}
+	}
+
+	/**
+	 * Utility for character data types to encode a representation.
+	 * 
+	 * @param repr the single-character string to encode.
+	 * @param buf a buffer representing the eventual destination of the bytes.
+	 * @param settings the settings to use.
+	 * @return the encoded value
+	 * @throws DataTypeEncodeException if the value cannot be encoded
+	 */
+	public default byte[] encodeCharacterRepresentation(String repr, MemBuffer buf,
+			Settings settings) throws DataTypeEncodeException {
+		StringDataInstance sdi = new StringDataInstance(this, settings, buf, getLength());
+		try {
+			return sdi.encodeReplacementFromCharRepresentation(repr);
+		}
+		catch (Throwable e) {
+			throw new DataTypeEncodeException(repr, this, e);
+		}
+	}
+
+	/**
 	 * Get the character set for a specific data type and settings
+	 * 
 	 * @param settings data instance settings
 	 * @return Charset for this datatype and settings
 	 */
 	public default String getCharsetName(Settings settings) {
 		return StringDataInstance.DEFAULT_CHARSET_NAME;
 	}
-
 }

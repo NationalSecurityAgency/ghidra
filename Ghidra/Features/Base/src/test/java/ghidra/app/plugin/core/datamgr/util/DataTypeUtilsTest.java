@@ -23,7 +23,7 @@ import org.junit.Test;
 import generic.test.AbstractGTest;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeComparator;
-import ghidra.program.model.data.TestDoubleDataType;
+import ghidra.program.model.data.StubDataType;
 import ghidra.util.UniversalIdGenerator;
 
 public class DataTypeUtilsTest {
@@ -114,7 +114,7 @@ public class DataTypeUtilsTest {
 		AbstractGTest.assertListEqualUnordered(null, expectedMatches, actualMatches);
 	}
 
-	private class FakeDataType extends TestDoubleDataType {
+	private class FakeDataType extends StubDataType {
 
 		FakeDataType(String name) {
 			super(name);

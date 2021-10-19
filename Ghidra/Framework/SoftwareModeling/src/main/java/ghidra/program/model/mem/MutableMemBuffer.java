@@ -18,14 +18,12 @@ package ghidra.program.model.mem;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 
-
 /**
- * The MutableMemBuffer interface facilitates
- * repositioning of a MemBuffer object.
+ * The MutableMemBuffer interface facilitates repositioning of a MemBuffer object.
  */
 public interface MutableMemBuffer extends MemBuffer {
 
-    /**
+	/**
 	 * Advance the Address pointer.
 	 *
 	 * @param displacement the amount to adjust the pointer by.
@@ -33,15 +31,16 @@ public interface MutableMemBuffer extends MemBuffer {
 	 */
 	public void advance(int displacement) throws AddressOverflowException;
 
-    /**
-     * Sets the Address to which offset of 0 points to.
-     *
-     * @param addr the new base Address.
-     */
-    public void setPosition(Address addr);
+	/**
+	 * Sets the Address to which offset of 0 points to.
+	 *
+	 * @param addr the new base Address.
+	 */
+	public void setPosition(Address addr);
 
 	/**
 	 * Create a cloned copy of this MutableMemBuffer
+	 * 
 	 * @return new cloned instance of this buffer object
 	 */
 	public MutableMemBuffer clone();

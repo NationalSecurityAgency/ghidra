@@ -199,7 +199,7 @@ public class DataTypeUrlTest {
 // Inner Classes
 //==================================================================================================	
 
-	private class FakeDataType extends TestDoubleDataType {
+	private class FakeDataType extends StubDataType {
 
 		private DataTypeManager manager = new FakeDataTypeManager();
 
