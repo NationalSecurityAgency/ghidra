@@ -18,7 +18,7 @@
     function in the Code Browser, then select the
     <span class="guiicon">
       <span class="inlinemediaobject"><img src="images/decompileFunction.gif" width="16" height="16"></span>
-      </span> icon from the tool bar, or the
+      </span>ï¿½icon from the tool bar, or the
     <span class="bold"><strong>Decompile</strong></span> option from the
     <span class="bold"><strong>Window</strong></span> menu in the tool.
   </p>
@@ -91,7 +91,7 @@
     Initially pressing
     <span class="guiicon">
       <span class="inlinemediaobject"><img src="images/decompileFunction.gif" width="16" height="16"></span>
-      </span> or selecting
+      </span>ï¿½or selecting
     <span class="bold"><strong>Decompile</strong></span> from the <span class="bold"><strong>Window</strong></span> menu in the tool
     brings up the <span class="emphasis"><em>main</em></span> window.  The main window always displays the function
     at the <span class="emphasis"><em>current address</em></span> within the Code Browser and follows as the user navigates
@@ -153,7 +153,7 @@
     Pressing the
     <span class="guiicon">
       <span class="inlinemediaobject"><img src="images/camera-photo.png" width="16" height="16"></span>
-    </span> icon
+    </span>ï¿½icon
     in any Decompiler window's toolbar causes a <span class="emphasis"><em>Snapshot</em></span> window
     to be created, which shows decompilation of the same function.
     Unlike the <span class="emphasis"><em>main</em></span> window however, the <span class="emphasis"><em>Snapshot</em></span> window
@@ -240,7 +240,7 @@
   <p>
     <span class="guiicon">
       <span class="inlinemediaobject"><img src="images/page_edit.png" width="16" height="16"></span>
-      </span> - button
+      </span>ï¿½- button
   </p>
   <p>
     Exports the decompiled result of the current function to a file. A file chooser
@@ -265,7 +265,7 @@
   <p>
     <span class="guiicon">
       <span class="inlinemediaobject"><img src="images/camera-photo.png" width="16" height="16"></span>
-      </span> - button
+      </span>ï¿½- button
   </p>
   <p>
     Creates a new <span class="emphasis"><em>Snapshot</em></span> window.  The <span class="emphasis"><em>Snapshot</em></span> window
@@ -282,7 +282,7 @@
   <p>
     <span class="guiicon">
       <span class="inlinemediaobject"><img src="images/reload3.png" width="16" height="16"></span>
-      </span> - button
+      </span>ï¿½- button
   </p>
   <p>
     Triggers a re-decompilation of the current function displayed in the window.
@@ -310,7 +310,7 @@
   <p>
     <span class="guiicon">
       <span class="inlinemediaobject"><img src="images/page_white_copy.png" width="16" height="16"></span>
-      </span> - button
+      </span>ï¿½- button
   </p>
   <p>
     Copies the currently selected text in the Decompiler window to the clipboard.
@@ -1036,6 +1036,26 @@
     normal analysis.
   </p>
 </div>
+
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionRemoveLabel"></a>Remove Label</h3></div></div></div>
+  
+  <p>
+    Remove the label corresponding to the token under the cursor.
+  </p>
+  <p>
+	A label can be removed by triggering this action while the corresponding label token is
+    under the cursor.   For more on removing labels, see 
+ 	<a class="ulink" href="help/topics/LabelMgrPlugin/Labels.htm#Remove_Label" target="_top">Removing a Label</a>.
+  </p>
+  <p>
+    The change will be immediately visible across all references to the label
+    (including in any Decompiler, Listing, and Functions windows).
+  </p>
+</div>
+
 
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">

@@ -26,6 +26,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Processor;
 import ghidra.program.model.listing.Program;
+import ghidra.util.HelpLocation;
 
 public class X86_64DisassembleAction extends ListingContextAction {
 	private final DisassemblerPlugin plugin;
@@ -42,6 +43,11 @@ public class X86_64DisassembleAction extends ListingContextAction {
 
 		int keyEvent = (disassemble32Bit ? KeyEvent.VK_F12 : KeyEvent.VK_F11);
 		setKeyBindingData(new KeyBindingData(keyEvent, 0));
+
+		// Need to override the default help location since this action doesn't have its own
+		// section in the help.
+		HelpLocation location = new HelpLocation("DisassemblerPlugin", "Disassemble");
+		this.setHelpLocation(location);
 	}
 
 	@Override
