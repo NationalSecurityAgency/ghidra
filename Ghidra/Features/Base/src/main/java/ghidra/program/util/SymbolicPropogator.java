@@ -18,6 +18,8 @@ package ghidra.program.util;
 import java.math.BigInteger;
 import java.util.*;
 
+import org.apache.commons.collections4.map.LRUMap;
+
 import generic.util.UnsignedDataUtils;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CallDepthChangeInfo;
@@ -38,7 +40,7 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class SymbolicPropogator {
-
+	private static int LRU_SIZE = 1024;
 	// QUESTIONS
 	// 1. How are "register-relative" varnodes distinguished based upon target space ?  Not sure how we handle wrapping/truncation concerns.
 	//   1) The offset is the only thing that could be used as a reference.
@@ -77,6 +79,18 @@ public class SymbolicPropogator {
 	private AddressRange externalBlockRange;
 
 	protected static final int MAX_EXACT_INSTRUCTIONS = 100;
+
+	// Cache flows from instructions
+	Map<Address, Address[]> instructionFlowsCache = new LRUMap<>(LRU_SIZE);
+
+	// Cache PcodeOps so that we won't have to grab them again if we re-visit the node.
+	Map<Address, PcodeOp[]> pcodeCache = new LRUMap<>(LRU_SIZE);
+
+	// Cache Instructions looked up by At
+	Map<Address, Instruction> instructionAtCache = new LRUMap<>(LRU_SIZE);
+
+	// Cache instructions looked up by containing
+	Map<Address, Instruction> instructionContainingCache = new LRUMap<>(LRU_SIZE);
 
 	public SymbolicPropogator(Program program) {
 		this.program = program;
@@ -684,10 +698,6 @@ public class SymbolicPropogator {
 		return false;
 	}
 
-	// Cache PcodeOps so that we won't have to grab them again if we re-visit the node.
-	//
-	HashMap<Address, PcodeOp[]> pcodeCache = new HashMap<>();
-
 	private PcodeOp[] getInstructionPcode(Instruction instruction) {
 		PcodeOp ops[] = pcodeCache.get(instruction.getMinAddress());
 		if (ops == null) {
@@ -696,12 +706,6 @@ public class SymbolicPropogator {
 		}
 		return ops;
 	}
-
-	// Cache Instructions looked up by At
-	HashMap<Address, Instruction> instructionAtCache = new HashMap<>();
-
-	// Cache instructions looked up by containing
-	HashMap<Address, Instruction> instructionContainingCache = new HashMap<>();
 
 	private Instruction getInstructionAt(Address addr) {
 		Instruction instr = instructionAtCache.get(addr);
@@ -738,9 +742,6 @@ public class SymbolicPropogator {
 		instructionContainingCache.put(addr, instr);
 		return instr;
 	}
-
-	// Cache flows from instructions
-	HashMap<Address, Address[]> instructionFlowsCache = new HashMap<>();
 
 	private Address[] getInstructionFlows(Instruction instruction) {
 		Address addr = instruction.getMinAddress();
