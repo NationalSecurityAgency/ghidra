@@ -24,11 +24,23 @@ import ghidra.util.exception.InvalidInputException;
 import ghidra.xml.XmlParseException;
 import ghidra.xml.XmlPullParser;
 
-public class ParamListStandardOut extends ParamListStandard {
+/**
+ * A list of resources describing possible storage locations for a function's return value,
+ * and a strategy for selecting a storage location based on data-types in a function signature.
+ * 
+ * Similar to the parent class, when assigning storage, the first entry that matches the data-type
+ * is chosen.  But if this instance fails to find a match (because the return value data-type is too
+ * big) the data-type is converted to a pointer and storage is assigned based on that pointer.
+ * Additionally, if configured, this instance will signal that a hidden input parameter is required
+ * to fully model where the large return value is stored.
+ * 
+ * The resource list is checked to ensure entries are distinguishable.
+ */
+public class ParamListStandardOut extends ParamListRegisterOut {
 
 	@Override
-	public void assignMap(Program prog, DataType[] proto, boolean isinput,
-			ArrayList<VariableStorage> res, boolean addAutoParams) {
+	public void assignMap(Program prog, DataType[] proto, ArrayList<VariableStorage> res,
+			boolean addAutoParams) {
 
 		int[] status = new int[numgroup];
 		for (int i = 0; i < numgroup; ++i) {
@@ -64,11 +76,10 @@ public class ParamListStandardOut extends ParamListStandard {
 	public void restoreXml(XmlPullParser parser, CompilerSpec cspec) throws XmlParseException {
 		super.restoreXml(parser, cspec);
 
-		// ParamEntry tags in the output list are considered a group
+		// ParamEntry tags in the output list are considered a group. Check that entries are distinguishable.
 		for (int i = 1; i < entry.length; ++i) {
-			ParamEntry.orderWithinGroup(entry[i - 1], entry[i]);
-			if (i > 1) {
-				ParamEntry.orderWithinGroup(entry[i - 2], entry[i]);
+			for (int j = 0; j < i; ++j) {
+				ParamEntry.orderWithinGroup(entry[j], entry[i]);
 			}
 		}
 	}

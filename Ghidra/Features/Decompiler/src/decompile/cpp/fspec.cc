@@ -583,49 +583,35 @@ Address ParamListStandard::assignAddress(const Datatype *tp,vector<int4> &status
   return Address();		// Return invalid address to indicated we could not assign anything
 }
 
-void ParamListStandard::assignMap(const vector<Datatype *> &proto,bool isinput,TypeFactory &typefactory,
-				  vector<ParameterPieces> &res) const
+void ParamListStandard::assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const
 
 {
   vector<int4> status(numgroup,0);
 
-  if (isinput) {
-    if (res.size()==2) { // Check for hidden parameters defined by the output list
-      res.back().addr = assignAddress(res.back().type,status); // Reserve first param for hidden ret value
-      res.back().flags |= ParameterPieces::hiddenretparm;
-      if (res.back().addr.isInvalid())
-	throw ParamUnassignedError("Cannot assign parameter address for " + res.back().type->getName());
-    }
-    for(int4 i=1;i<proto.size();++i) {
-      res.emplace_back();
-      if ((pointermax != 0)&&(proto[i]->getSize() > pointermax)) { // Datatype is too big
-	// Assume datatype is stored elsewhere and only the pointer is passed
-	AddrSpace *spc = spacebase;
-	if (spc == (AddrSpace *)0)
-	  spc = typefactory.getArch()->getDefaultDataSpace();
-	int4 pointersize = spc->getAddrSize();
-	int4 wordsize = spc->getWordSize();
-	Datatype *pointertp = typefactory.getTypePointer(pointersize,proto[i],wordsize);
-	res.back().addr = assignAddress(pointertp,status);
-	res.back().type = pointertp;
-	res.back().flags = ParameterPieces::indirectstorage;
-      }
-      else
-	res.back().addr = assignAddress(proto[i],status);
-      if (res.back().addr.isInvalid())
-	throw ParamUnassignedError("Cannot assign parameter address for " + proto[i]->getName());
-      res.back().type = proto[i];
-      res.back().flags = 0;
-    }
+  if (res.size() == 2) {	// Check for hidden parameters defined by the output list
+    res.back().addr = assignAddress(res.back().type,status);	// Reserve first param for hidden ret value
+    res.back().flags |= ParameterPieces::hiddenretparm;
+    if (res.back().addr.isInvalid())
+      throw ParamUnassignedError("Cannot assign parameter address for " + res.back().type->getName());
   }
-  else {
+  for(int4 i=1;i<proto.size();++i) {
     res.emplace_back();
-    if (proto[0]->getMetatype() != TYPE_VOID) {
-      res.back().addr = assignAddress(proto[0],status);
-      if (res.back().addr.isInvalid())
-	throw ParamUnassignedError("Cannot assign parameter address for " + proto[0]->getName());
+    if ((pointermax != 0) && (proto[i]->getSize() > pointermax)) { // Datatype is too big
+      // Assume datatype is stored elsewhere and only the pointer is passed
+      AddrSpace *spc = spacebase;
+      if (spc == (AddrSpace*)0) spc = typefactory.getArch()->getDefaultDataSpace();
+      int4 pointersize = spc->getAddrSize();
+      int4 wordsize = spc->getWordSize();
+      Datatype *pointertp = typefactory.getTypePointer(pointersize,proto[i],wordsize);
+      res.back().addr = assignAddress(pointertp,status);
+      res.back().type = pointertp;
+      res.back().flags = ParameterPieces::indirectstorage;
     }
-    res.back().type = proto[0];
+    else
+      res.back().addr = assignAddress(proto[i],status);
+    if (res.back().addr.isInvalid())
+      throw ParamUnassignedError("Cannot assign parameter address for " + proto[i]->getName());
+    res.back().type = proto[i];
     res.back().flags = 0;
   }
 }
@@ -1210,40 +1196,21 @@ ParamList *ParamListStandard::clone(void) const
   return res;
 }
 
-void ParamListStandardOut::assignMap(const vector<Datatype *> &proto,bool isinput,
-				     TypeFactory &typefactory,vector<ParameterPieces> &res) const
+void ParamListRegisterOut::assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const
+
 {
   vector<int4> status(numgroup,0);
-
-  // This is always an output list so we ignore -isinput-
   res.emplace_back();
+  if (proto[0]->getMetatype() != TYPE_VOID) {
+    res.back().addr = assignAddress(proto[0],status);
+    if (res.back().addr.isInvalid())
+      throw ParamUnassignedError("Cannot assign parameter address for " + proto[0]->getName());
+  }
   res.back().type = proto[0];
   res.back().flags = 0;
-  if (proto[0]->getMetatype() == TYPE_VOID) {
-    return;			// Leave the address as invalid
-  }
-  res.back().addr = assignAddress(proto[0],status);
-  if (res.back().addr.isInvalid()) { // Could not assign an address (too big)
-    AddrSpace *spc = spacebase;
-    if (spc == (AddrSpace *)0)
-      spc = typefactory.getArch()->getDefaultDataSpace();
-    int4 pointersize = spc->getAddrSize();
-    int4 wordsize = spc->getWordSize();
-    Datatype *pointertp = typefactory.getTypePointer(pointersize, proto[0], wordsize);
-    res.back().addr = assignAddress(pointertp,status);
-    if (res.back().addr.isInvalid())
-      throw ParamUnassignedError("Cannot assign return value as a pointer");
-    res.back().type = pointertp;
-    res.back().flags = ParameterPieces::indirectstorage;
-
-    res.emplace_back();			// Add extra storage location in the input params
-    res.back().type = pointertp;	// that holds a pointer to where the return value should be stored
-    // leave its address invalid, to be filled in by the input list assignMap
-    res.back().flags = ParameterPieces::hiddenretparm; // Mark it as special
-  }
 }
 
-void ParamListStandardOut::fillinMap(ParamActive *active) const
+void ParamListRegisterOut::fillinMap(ParamActive *active) const
 
 {
   if (active->getNumTrials() == 0) return; // No trials to check
@@ -1324,7 +1291,7 @@ void ParamListStandardOut::fillinMap(ParamActive *active) const
   }
 }
 
-bool ParamListStandardOut::possibleParam(const Address &loc,int4 size) const
+bool ParamListRegisterOut::possibleParam(const Address &loc,int4 size) const
 
 {
   list<ParamEntry>::const_iterator iter;
@@ -1335,31 +1302,21 @@ bool ParamListStandardOut::possibleParam(const Address &loc,int4 size) const
   return false;
 }
 
-void ParamListStandardOut::restoreXml(const Element *el,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,bool normalstack)
-
+void ParamListRegisterOut::restoreXml(const Element *el,const AddrSpaceManager *manage,
+				      vector<EffectRecord> &effectlist,bool normalstack)
 {
   ParamListStandard::restoreXml(el,manage,effectlist,normalstack);
-  // Check for double precision entries
   list<ParamEntry>::iterator iter;
-  ParamEntry *previous1 = (ParamEntry *)0;
-  ParamEntry *previous2 = (ParamEntry *)0;
   for(iter=entry.begin();iter!=entry.end();++iter) {
     ParamEntry &curEntry(*iter);
     curEntry.extraChecks(entry);
-    if (previous1 != (ParamEntry *)0) {
-      ParamEntry::orderWithinGroup(*previous1, curEntry);
-      if (previous2 != (ParamEntry *)0)
-	ParamEntry::orderWithinGroup(*previous2, curEntry);
-    }
-    previous2 = previous1;
-    previous1 = &curEntry;
   }
 }
 
-ParamList *ParamListStandardOut::clone(void) const
+ParamList *ParamListRegisterOut::clone(void) const
 
 {
-  ParamList *res = new ParamListStandardOut(*this);
+  ParamList *res = new ParamListRegisterOut(*this);
   return res;
 }
 
@@ -1387,6 +1344,65 @@ ParamList *ParamListRegister::clone(void) const
 
 {
   ParamList *res = new ParamListRegister( *this );
+  return res;
+}
+
+void ParamListStandardOut::assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const
+
+{
+  vector<int4> status(numgroup,0);
+
+  res.emplace_back();
+  res.back().type = proto[0];
+  res.back().flags = 0;
+  if (proto[0]->getMetatype() == TYPE_VOID) {
+    return;			// Leave the address as invalid
+  }
+  res.back().addr = assignAddress(proto[0],status);
+  if (res.back().addr.isInvalid()) { // Could not assign an address (too big)
+    AddrSpace *spc = spacebase;
+    if (spc == (AddrSpace *)0)
+      spc = typefactory.getArch()->getDefaultDataSpace();
+    int4 pointersize = spc->getAddrSize();
+    int4 wordsize = spc->getWordSize();
+    Datatype *pointertp = typefactory.getTypePointer(pointersize, proto[0], wordsize);
+    res.back().addr = assignAddress(pointertp,status);
+    if (res.back().addr.isInvalid())
+      throw ParamUnassignedError("Cannot assign return value as a pointer");
+    res.back().type = pointertp;
+    res.back().flags = ParameterPieces::indirectstorage;
+
+    res.emplace_back();			// Add extra storage location in the input params
+    res.back().type = pointertp;	// that holds a pointer to where the return value should be stored
+    // leave its address invalid, to be filled in by the input list assignMap
+    res.back().flags = ParameterPieces::hiddenretparm; // Mark it as special
+  }
+}
+
+void ParamListStandardOut::restoreXml(const Element *el,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,bool normalstack)
+
+{
+  ParamListRegisterOut::restoreXml(el,manage,effectlist,normalstack);
+  // Check for double precision entries
+  list<ParamEntry>::iterator iter;
+  ParamEntry *previous1 = (ParamEntry *)0;
+  ParamEntry *previous2 = (ParamEntry *)0;
+  for(iter=entry.begin();iter!=entry.end();++iter) {
+    ParamEntry &curEntry(*iter);
+    if (previous1 != (ParamEntry *)0) {
+      ParamEntry::orderWithinGroup(*previous1, curEntry);
+      if (previous2 != (ParamEntry *)0)
+	ParamEntry::orderWithinGroup(*previous2, curEntry);
+    }
+    previous2 = previous1;
+    previous1 = &curEntry;
+  }
+}
+
+ParamList *ParamListStandardOut::clone(void) const
+
+{
+  ParamList *res = new ParamListStandardOut( *this );
   return res;
 }
 
@@ -1884,7 +1900,7 @@ void ProtoModel::buildParamList(const string &strategy)
   }
   else if (strategy == "register") {
     input = new ParamListRegister();
-    output = new ParamListStandardOut();
+    output = new ParamListRegisterOut();
   }
   else
     throw LowlevelError("Unknown strategy type: "+strategy);
@@ -1985,7 +2001,7 @@ void ProtoModel::assignParameterStorage(const vector<Datatype *> &typelist,vecto
 {
   if (ignoreOutputError) {
     try {
-      output->assignMap(typelist,false,*glb->types,res);
+      output->assignMap(typelist,*glb->types,res);
     }
     catch(ParamUnassignedError &err) {
       res.clear();
@@ -1996,9 +2012,9 @@ void ProtoModel::assignParameterStorage(const vector<Datatype *> &typelist,vecto
     }
   }
   else {
-    output->assignMap(typelist,false,*glb->types,res);
+    output->assignMap(typelist,*glb->types,res);
   }
-  input->assignMap(typelist,true,*glb->types,res);
+  input->assignMap(typelist,*glb->types,res);
 }
 
 /// \brief Look up an effect from the given EffectRecord list
