@@ -13,29 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.gdb.pty.ssh;
+package agent.gdb.model.ssh;
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import static org.junit.Assume.assumeFalse;
 
-import agent.gdb.pty.PtyEndpoint;
+import org.junit.Before;
 
-public class SshPtyEndpoint implements PtyEndpoint {
-	protected final OutputStream outputStream;
-	protected final InputStream inputStream;
+import agent.gdb.model.AbstractModelForGdbFactoryTest;
+import ghidra.util.SystemUtilities;
 
-	public SshPtyEndpoint(OutputStream outputStream, InputStream inputStream) {
-		this.outputStream = outputStream;
-		this.inputStream = inputStream;
+public class SshJoinModelForGdbFactoryTest extends AbstractModelForGdbFactoryTest {
+
+	@Before
+	public void checkInteractive() {
+		assumeFalse(SystemUtilities.isInTestingBatchMode());
 	}
 
 	@Override
-	public OutputStream getOutputStream() {
-		return outputStream;
-	}
-
-	@Override
-	public InputStream getInputStream() {
-		return inputStream;
+	public ModelHost modelHost() throws Throwable {
+		return new SshJoinGdbModelHost();
 	}
 }

@@ -30,7 +30,7 @@ import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
 	htmlDetails = "Launch a GDB session over an SSH connection")
 public class GdbOverSshDebuggerModelFactory implements DebuggerModelFactory {
 
-	private String gdbCmd = "gdb";
+	private String gdbCmd = "/usr/bin/gdb";
 	@FactoryOption("GDB launch command")
 	public final Property<String> gdbCommandOption =
 		Property.fromAccessors(String.class, this::getGdbCommand, this::setGdbCommand);
@@ -40,29 +40,29 @@ public class GdbOverSshDebuggerModelFactory implements DebuggerModelFactory {
 	public final Property<Boolean> useExistingOption =
 		Property.fromAccessors(boolean.class, this::isUseExisting, this::setUseExisting);
 
-	private String hostname = "localhost";
+	private String hostname = GhidraSshPtyFactory.DEFAULT_HOSTNAME;
 	@FactoryOption("SSH hostname")
 	public final Property<String> hostnameOption =
 		Property.fromAccessors(String.class, this::getHostname, this::setHostname);
 
-	private int port = 22;
+	private int port = GhidraSshPtyFactory.DEFAULT_PORT;
 	@FactoryOption("SSH TCP port")
 	public final Property<Integer> portOption =
 		Property.fromAccessors(Integer.class, this::getPort, this::setPort);
 
-	private String username = "user";
+	private String username = GhidraSshPtyFactory.DEFAULT_USERNAME;
 	@FactoryOption("SSH username")
 	public final Property<String> usernameOption =
 		Property.fromAccessors(String.class, this::getUsername, this::setUsername);
 
-	private String keyFile = "";
-	@FactoryOption("SSH identity (blank for password auth)")
+	private String configFile = GhidraSshPtyFactory.DEFAULT_CONFIG_FILE;
+	@FactoryOption("Open SSH config file")
 	public final Property<String> keyFileOption =
-		Property.fromAccessors(String.class, this::getKeyFile, this::setKeyFile);
+		Property.fromAccessors(String.class, this::getConfigFile, this::setConfigFile);
 
 	// Always default to false, despite local system, because remote is likely Linux.
 	private boolean useCrlf = false;
-	@FactoryOption("Use DOS line endings (unchecked for UNIX)")
+	@FactoryOption("Use DOS line endings (unchecked for UNIX remote)")
 	public final Property<Boolean> crlfNewLineOption =
 		Property.fromAccessors(Boolean.class, this::isUseCrlf, this::setUseCrlf);
 
@@ -73,7 +73,7 @@ public class GdbOverSshDebuggerModelFactory implements DebuggerModelFactory {
 			GhidraSshPtyFactory factory = new GhidraSshPtyFactory();
 			factory.setHostname(hostname);
 			factory.setPort(port);
-			factory.setKeyFile(keyFile);
+			factory.setConfigFile(configFile);
 			factory.setUsername(username);
 			return new GdbModelImpl(factory);
 		}).thenCompose(model -> {
@@ -136,12 +136,12 @@ public class GdbOverSshDebuggerModelFactory implements DebuggerModelFactory {
 		this.username = username;
 	}
 
-	public String getKeyFile() {
-		return keyFile;
+	public String getConfigFile() {
+		return configFile;
 	}
 
-	public void setKeyFile(String keyFile) {
-		this.keyFile = keyFile;
+	public void setConfigFile(String configFile) {
+		this.configFile = configFile;
 	}
 
 	public boolean isUseCrlf() {
