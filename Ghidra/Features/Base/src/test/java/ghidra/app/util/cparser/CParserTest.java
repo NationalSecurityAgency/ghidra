@@ -410,11 +410,15 @@ public class CParserTest extends AbstractGenericTest {
 
 		dt = dtMgr.getDataType(new CategoryPath("/"), "ArraysInStruct");
 		sdt = (Structure) ((TypeDef) dt).getBaseDataType();
-		DataTypeComponent data8 = sdt.getComponent(4);
-		assertEquals("Computed Array correct", data8.getLength(), 32);
-		DataTypeComponent data16 = sdt.getComponent(5);
-		assertEquals("Computed Array correct", data16.getLength(), 64);
-		
+		DataTypeComponent data4 = sdt.getComponent(4);
+		assertEquals("Computed Array correct", 32, data4.getLength());
+		DataTypeComponent flexOne = sdt.getComponent(5);
+		assertEquals("Flex Array middle component", 0, flexOne.getLength());
+		DataTypeComponent data16 = sdt.getComponent(6);
+		assertEquals("Computed Array correct", 64, data16.getLength());
+		DataTypeComponent flexTwo = sdt.getComponent(8);
+		assertEquals("Flex Array end component", 0, flexTwo.getLength());
+
 		// Check trailing flex-array
 		flexDtc = sdt.getComponent(sdt.getNumComponents() - 1);
 		assertEquals("Flex-array reports component length of 0", 0, flexDtc.getLength());
