@@ -323,7 +323,7 @@ public class SpecExtensionPanel extends JPanel {
 				if (injectLibrary.isOverride(fixupName, InjectPayload.CALLOTHERFIXUP_TYPE)) {
 					status = Status.EXTENSION_OVERRIDE;
 				}
-				if (injectLibrary.getPayload(InjectPayload.CALLFIXUP_TYPE, fixupName)
+				if (injectLibrary.getPayload(InjectPayload.CALLOTHERFIXUP_TYPE, fixupName)
 						.isErrorPlaceholder()) {
 					status = Status.EXTENSION_ERROR;
 				}
