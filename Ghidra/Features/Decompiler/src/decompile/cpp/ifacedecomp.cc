@@ -3163,6 +3163,9 @@ void IfcLoadTestFile::execute(istream &s)
   s >> filename;
   dcp->testCollection = new FunctionTestCollection(status);
   dcp->testCollection->loadTest(filename);
+#ifdef OPACTION_DEBUG
+  dcp->conf->setDebugStream(status->fileoptr);
+#endif
   *status->optr << filename << " test successfully loaded: " << dcp->conf->getDescription() << endl;
 }
 
