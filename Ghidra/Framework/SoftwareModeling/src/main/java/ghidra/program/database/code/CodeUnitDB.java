@@ -284,7 +284,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	public Address getMaxAddress() {
 		refreshIfNeeded();
 		if (endAddr == null) {
-			endAddr = length == 0 ? address : address.add(length - 1);
+			endAddr = getLength() == 0 ? address : address.add(getLength() - 1);
 		}
 		return endAddr;
 	}
@@ -669,9 +669,10 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 		try {
 			checkIsValid();
 			populateByteArray();
-			byte[] b = new byte[length];
-			if (bytes.length < length) {
-				if (program.getMemory().getBytes(address, b) != length) {
+			int len = getLength();
+			byte[] b = new byte[len];
+			if (bytes.length < len) {
+				if (program.getMemory().getBytes(address, b) != len) {
 					throw new MemoryAccessException("Couldn't get all bytes for CodeUnit");
 				}
 			}
@@ -829,7 +830,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	}
 
 	protected int getPreferredCacheLength() {
-		return length;
+		return getLength();
 	}
 
 	private void validateOpIndex(int opIndex) {

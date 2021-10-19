@@ -71,10 +71,7 @@ class DataDB extends CodeUnitDB implements Data {
 		baseDataType = getBaseDataType(dataType);
 
 		defaultSettings = dataType.getDefaultSettings();
-		computeLength();
-		if (length < 0) {
-			Msg.error(this, " bad bad");
-		}
+		length = -1; // lazy compute
 	}
 
 	protected static DataType getBaseDataType(DataType dataType) {
@@ -121,8 +118,22 @@ class DataDB extends CodeUnitDB implements Data {
 		dataType = dt;
 		baseDataType = getBaseDataType(dataType);
 		defaultSettings = dataType.getDefaultSettings();
-		computeLength();
+		length = -1; // set to compute lazily later
 		return false;
+	}
+
+	@Override
+	public int getLength() {
+		if (length == -1) {
+			lock.acquire();
+			try {
+				computeLength();
+			}
+			finally {
+				lock.release();
+			}
+		}
+		return length;
 	}
 
 	private void computeLength() {
@@ -165,6 +176,17 @@ class DataDB extends CodeUnitDB implements Data {
 			}
 		}
 
+		bytes = null;
+
+		// if this is not a component where the size could change and
+		// the length restricted by the following instruction/data item, assume
+		// the createData method stopped fixed code units that won't fit from being added
+		if (!(baseDataType instanceof Composite || baseDataType instanceof ArrayDataType)) {
+			return;
+		}
+
+		// This is potentially expensive! So only do if necessary
+		// see if the datatype length is restricted by a following codeunit
 		Address nextAddr = codeMgr.getDefinedAddressAfter(address);
 		if ((nextAddr != null) && nextAddr.compareTo(endAddress) <= 0) {
 			length = (int) nextAddr.subtract(address);
@@ -269,7 +291,7 @@ class DataDB extends CodeUnitDB implements Data {
 		lock.acquire();
 		try {
 			checkIsValid();
-			return dataType.getRepresentation(this, this, length);
+			return dataType.getRepresentation(this, this, getLength());
 		}
 		finally {
 			lock.release();
@@ -501,7 +523,7 @@ class DataDB extends CodeUnitDB implements Data {
 		lock.acquire();
 		try {
 			checkIsValid();
-			if (offset < 0 || offset > length) {
+			if (offset < 0 || offset > getLength()) {
 				return null;
 			}
 
@@ -538,7 +560,7 @@ class DataDB extends CodeUnitDB implements Data {
 		lock.acquire();
 		try {
 			checkIsValid();
-			if (offset < 0 || offset >= length) {
+			if (offset < 0 || offset >= getLength()) {
 				return null;
 			}
 			if (baseDataType instanceof Array) {
@@ -662,7 +684,7 @@ class DataDB extends CodeUnitDB implements Data {
 		lock.acquire();
 		try {
 			checkIsValid();
-			if (length < dataType.getLength()) {
+			if (getLength() < dataType.getLength()) {
 				return -1;
 			}
 			if (baseDataType instanceof Composite) {
@@ -715,7 +737,7 @@ class DataDB extends CodeUnitDB implements Data {
 		lock.acquire();
 		try {
 			checkIsValid();
-			if (offset < 0 || offset >= length) {
+			if (offset < 0 || offset >= getLength()) {
 				return null;
 			}
 			Data dc = getComponentContaining(offset);
@@ -744,7 +766,7 @@ class DataDB extends CodeUnitDB implements Data {
 		lock.acquire();
 		try {
 			checkIsValid();
-			return baseDataType.getValue(this, this, length);
+			return baseDataType.getValue(this, this, getLength());
 		}
 		finally {
 			lock.release();
@@ -773,7 +795,7 @@ class DataDB extends CodeUnitDB implements Data {
 		if (options == null) {
 			options = DataTypeDisplayOptions.DEFAULT;
 		}
-		return dataType.getDefaultLabelPrefix(this, this, length, options);
+		return dataType.getDefaultLabelPrefix(this, this, getLength(), options);
 	}
 
 	@Override
