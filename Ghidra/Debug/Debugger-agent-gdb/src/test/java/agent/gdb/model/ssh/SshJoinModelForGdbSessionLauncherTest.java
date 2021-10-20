@@ -13,29 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.gdb.pty.ssh;
+package agent.gdb.model.ssh;
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import org.junit.experimental.categories.Category;
 
-import agent.gdb.pty.PtyEndpoint;
+import agent.gdb.model.AbstractModelForGdbSessionLauncherTest;
+import generic.test.category.NightlyCategory;
 
-public class SshPtyEndpoint implements PtyEndpoint {
-	protected final OutputStream outputStream;
-	protected final InputStream inputStream;
-
-	public SshPtyEndpoint(OutputStream outputStream, InputStream inputStream) {
-		this.outputStream = outputStream;
-		this.inputStream = inputStream;
-	}
-
+@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
+public class SshJoinModelForGdbSessionLauncherTest extends AbstractModelForGdbSessionLauncherTest {
 	@Override
-	public OutputStream getOutputStream() {
-		return outputStream;
-	}
-
-	@Override
-	public InputStream getInputStream() {
-		return inputStream;
+	public ModelHost modelHost() throws Throwable {
+		return new SshJoinGdbModelHost();
 	}
 }
