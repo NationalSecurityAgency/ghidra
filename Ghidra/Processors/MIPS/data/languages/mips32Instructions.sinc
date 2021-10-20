@@ -755,7 +755,7 @@ define pcodeop SYNC;
     EntryHi = TLB_read_indexed_entryHi(Index);
     EntryLo0 = TLB_read_indexed_entryLo0(Index);
     EntryLo1 = TLB_read_indexed_entryLo1(Index);
-    PageMask = TLB_read_indexed_entryLo1(Index);
+    PageMask = TLB_read_indexed_entryPageMask(Index);
 }
 
 :tlbwi		is $(AMODE) & prime=0x10  & bit25=1 & copfill=0x00 & fct=0x02 {
