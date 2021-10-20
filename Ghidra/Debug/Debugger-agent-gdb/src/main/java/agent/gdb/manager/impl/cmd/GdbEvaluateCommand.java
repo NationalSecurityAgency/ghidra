@@ -26,6 +26,10 @@ import agent.gdb.manager.impl.GdbPendingCommand;
  * Implementation of {@link GdbInferior#evaluate(String)}
  */
 public class GdbEvaluateCommand extends AbstractGdbCommandWithThreadAndFrameId<String> {
+	private static final String MI2_CMD = "-data-evaluate-expression";
+	// 6 accounts for digits in threadId and frameId. 999 each should be plenty....
+	public static final int MAX_EXPR_LEN = GdbManagerImpl.MAX_CMD_LEN - MI2_CMD.length() -
+		MI2_THREAD_PREFIX.length() - MI2_FRAME_PREFIX.length() - 6;
 	private final String expression;
 
 	public GdbEvaluateCommand(GdbManagerImpl manager, Integer threadId, Integer frameId,
@@ -36,7 +40,7 @@ public class GdbEvaluateCommand extends AbstractGdbCommandWithThreadAndFrameId<S
 
 	@Override
 	protected String encode(String threadPart, String framePart) {
-		return "-data-evaluate-expression" + threadPart + framePart + " \"" +
+		return MI2_CMD + threadPart + framePart + " \"" +
 			StringEscapeUtils.escapeJava(expression) + '"';
 	}
 

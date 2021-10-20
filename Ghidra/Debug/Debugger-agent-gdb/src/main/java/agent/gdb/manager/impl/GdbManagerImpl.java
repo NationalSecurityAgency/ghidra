@@ -72,6 +72,7 @@ import sun.misc.SignalHandler;
  */
 public class GdbManagerImpl implements GdbManager {
 	private static final String GDB_IS_TERMINATING = "GDB is terminating";
+	public static final int MAX_CMD_LEN = 4094; // Account for longest possible line end
 
 	private static final String PTY_DIALOG_MESSAGE_PATTERN =
 		"<html><p>Please enter:</p>" +
