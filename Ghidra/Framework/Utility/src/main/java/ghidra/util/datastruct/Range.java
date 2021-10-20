@@ -15,14 +15,18 @@
  */
 package ghidra.util.datastruct;
 
+import java.util.Iterator;
+import java.util.stream.IntStream;
+
 /**
  * A class for holding a minimum and maximum signed int values that define a range.
  */
-public class Range implements Comparable<Range> {
+public class Range implements Comparable<Range>, Iterable<Integer> {
 	/** The range's minimum extent. */
 	public int min;
 	/** The range's maximum extent (inclusive). */
 	public int max;
+
 	/**
 	 * Creates a range whose extent is from min to max.
 	 * @param min the minimum extent.
@@ -31,8 +35,8 @@ public class Range implements Comparable<Range> {
 	 */
 	public Range(int min, int max) {
 		if (max < min) {
-			throw new IllegalArgumentException("Range max (" + max
-					+ ") cannot be less than min (" + min + ").");
+			throw new IllegalArgumentException(
+				"Range max (" + max + ") cannot be less than min (" + min + ").");
 		}
 		this.min = min;
 		this.max = max;
@@ -50,11 +54,11 @@ public class Range implements Comparable<Range> {
 	}
 
 	@Override
-    public boolean equals(Object obj) {
+	public boolean equals(Object obj) {
 		if (obj.getClass() != Range.class) {
 			return false;
 		}
-		Range other = (Range)obj;
+		Range other = (Range) obj;
 		return other.min == min && other.max == max;
 	}
 
@@ -64,20 +68,29 @@ public class Range implements Comparable<Range> {
 	}
 
 	@Override
-    public String toString() {
-		return "("+min+","+max+")";
+	public String toString() {
+		return "(" + min + "," + max + ")";
 	}
+
 	/**
 	 * Returns true if the value is within the ranges extent.
 	 * @param value the value to check.
+	 * @return true if the value is within the ranges extent.
 	 */
 	public boolean contains(int value) {
 		return value >= min && value <= max;
 	}
+
 	/**
 	 * Returns the range's size.
+	 * @return the size
 	 */
 	public long size() {
-		return (long)max - (long)min + 1;
+		return (long) max - (long) min + 1;
+	}
+
+	@Override
+	public Iterator<Integer> iterator() {
+		return IntStream.range(min, max + 1).iterator();
 	}
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +15,25 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
+import docking.action.MenuData;
+import docking.action.ToggleDockingAction;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesProvider;
 import ghidra.util.HelpLocation;
-import docking.action.MenuData;
-import docking.action.ToggleDockingAction;
 
 public class IncludeDataTypesInFilterAction extends ToggleDockingAction {
 
 	private final DataTypesProvider provider;
 
-	public IncludeDataTypesInFilterAction(DataTypeManagerPlugin plugin, DataTypesProvider provider) {
+	public IncludeDataTypesInFilterAction(DataTypeManagerPlugin plugin, DataTypesProvider provider,
+			String menuSubGroup) {
 		super("Include Data Members in Filter", plugin.getName());
 		this.provider = provider;
 
 		setMenuBarData(new MenuData(new String[] { "Include Data Members in Filter" }, null,
-			"VeryLast", MenuData.NO_MNEMONIC, "3"));
-		setDescription("Selected indicates to include member names and data types in filter operations.");
+			"VeryLast", MenuData.NO_MNEMONIC, menuSubGroup));
+		setDescription(
+			"Selected indicates to include member names and data types in filter operations.");
 
 		setEnabled(true);
 		setSelected(false); // default to off!

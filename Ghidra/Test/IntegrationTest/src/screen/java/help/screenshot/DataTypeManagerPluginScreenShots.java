@@ -31,6 +31,7 @@ import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.*;
+import ghidra.app.plugin.core.datamgr.actions.FindStructuresBySizeAction;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.archive.InvalidFileArchive;
 import ghidra.app.plugin.core.datamgr.util.ConflictDialog;
@@ -151,6 +152,14 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 	public void testFindDataTypes() {
 		performAction("Find Data Types", "DataTypeManagerPlugin", false);
 		JDialog d = waitForJDialog("Find Data Types");
+		captureDialog();
+		pressButtonByText(d, "Cancel");
+	}
+
+	@Test
+	public void testFindDataTypesBySize() {
+		performAction(FindStructuresBySizeAction.NAME, "DataTypeManagerPlugin", false);
+		JDialog d = waitForJDialog(FindStructuresBySizeAction.NAME);
 		captureDialog();
 		pressButtonByText(d, "Cancel");
 	}

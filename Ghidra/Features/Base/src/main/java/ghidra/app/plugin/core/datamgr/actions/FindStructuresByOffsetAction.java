@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
+import java.util.Iterator;
+
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
@@ -26,50 +28,46 @@ import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesProvider;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
-import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.datastruct.Range;
 import ghidra.util.datastruct.SortedRangeList;
+import util.CollectionUtils;
 
-public class FindDataTypesBySizeAction extends DockingAction {
+/**
+ * Allows the user to supply one or more offsets that are used to search for structures that have
+ * any of those offsets.   
+ */
+public class FindStructuresByOffsetAction extends DockingAction {
 
-	public static final String NAME = "Find Data Types by Size";
+	public static final String NAME = "Find Structures by Offset";
 
 	private DataTypeManagerPlugin plugin;
 
-	public FindDataTypesBySizeAction(DataTypeManagerPlugin plugin, String menuSubGroup) {
-		this(plugin, NAME, menuSubGroup);
-	}
-
-	FindDataTypesBySizeAction(DataTypeManagerPlugin plugin, String name, String menuSubGroup) {
-		super(name, plugin.getName());
+	public FindStructuresByOffsetAction(DataTypeManagerPlugin plugin, String menuSubGroup) {
+		super(NAME, plugin.getName());
 		this.plugin = plugin;
 
 		setMenuBarData(
-			new MenuData(new String[] { name + "..." }, null, "VeryLast", -1, menuSubGroup));
-		setHelpLocation(new HelpLocation("DataTypeManagerPlugin", "Find_Data_Types_By_Size"));
+			new MenuData(new String[] { NAME + "..." }, null, "VeryLast", -1, menuSubGroup));
+		setHelpLocation(new HelpLocation("DataTypeManagerPlugin", "Find_Data_Types_By_Offset"));
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
 
 		NumberRangeInputDialog inputDialog =
-			new NumberRangeInputDialog(getName(), "Size(s)");
+			new NumberRangeInputDialog(NAME, "Offset(s)");
 		if (!inputDialog.show()) {
 			return;
 		}
 
 		SortedRangeList values = inputDialog.getValue();
 		DataTypesProvider newProvider = plugin.createProvider();
-		newProvider.setTitle(getName());
+		newProvider.setTitle(NAME);
 		DataTypeArchiveGTree tree = newProvider.getGTree();
-		GTreeFilter filter = createFilter(values);
-		tree.setFilterProvider(new MyTreeFilterProvider(tree, filter));
+		tree.setFilterProvider(new MyTreeFilterProvider(tree, new OffsetGTreeFilter(values)));
 		newProvider.setVisible(true);
-	}
-
-	protected GTreeFilter createFilter(SortedRangeList values) {
-		return new SizeGTreeFilter(values);
 	}
 
 	private class MyTreeFilterProvider extends DefaultGTreeFilterProvider {
@@ -90,12 +88,12 @@ public class FindDataTypesBySizeAction extends DockingAction {
 		}
 	}
 
-	private class SizeGTreeFilter implements GTreeFilter {
+	private class OffsetGTreeFilter implements GTreeFilter {
 
-		private final SortedRangeList sizes;
+		private final SortedRangeList offsets;
 
-		SizeGTreeFilter(SortedRangeList sizes) {
-			this.sizes = sizes;
+		OffsetGTreeFilter(SortedRangeList offsets) {
+			this.offsets = offsets;
 		}
 
 		@Override
@@ -109,15 +107,53 @@ public class FindDataTypesBySizeAction extends DockingAction {
 				return false;
 			}
 			DataTypeNode dataTypeNode = (DataTypeNode) node;
-			DataType dt = dataTypeNode.getDataType();
-			int length = dt.getLength();
-			for (Range range : sizes) {
-				if (range.contains(length)) {
-					return true;
+			DataType dataType = dataTypeNode.getDataType();
+			if (!(dataType instanceof Structure)) {
+				return false;
+			}
+
+			Structure structure = (Structure) dataType;
+			OffsetIterator it = new OffsetIterator(structure);
+			for (Integer structureOffset : CollectionUtils.asIterable(it)) {
+				for (Range range : offsets) {
+					if (range.contains(structureOffset)) {
+						return true;
+					}
+					if (structureOffset > range.max) {
+						// ranges are ascending sorted order; the structure offset is already 
+						// bigger than this range, so no more ranges can match
+						break;
+					}
 				}
 			}
 
 			return false;
+		}
+
+		private class OffsetIterator implements Iterator<Integer> {
+
+			private DataTypeComponent[] components;
+			private int index = 0;
+			private int length;
+
+			OffsetIterator(Structure s) {
+				this.components = s.getComponents();
+				this.length = components.length;
+			}
+
+			@Override
+			public boolean hasNext() {
+				if (index >= length) {
+					return false;
+				}
+				return true;
+			}
+
+			@Override
+			public Integer next() {
+				DataTypeComponent dtc = components[index++];
+				return dtc.getOffset();
+			}
 		}
 	}
 }

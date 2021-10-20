@@ -24,8 +24,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -35,6 +34,7 @@ import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
+import docking.DialogComponentProvider;
 import docking.DockingUtils;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingActionIf;
@@ -42,11 +42,12 @@ import docking.actions.KeyBindingUtils;
 import docking.tool.ToolConstants;
 import docking.tool.util.DockingToolConstants;
 import docking.widgets.OptionDialog;
+import docking.widgets.dialogs.NumberRangeInputDialog;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.plugin.core.compositeeditor.ApplyAction;
 import ghidra.app.plugin.core.compositeeditor.CompositeEditorTableAction;
-import ghidra.app.plugin.core.datamgr.actions.CreateTypeDefDialog;
+import ghidra.app.plugin.core.datamgr.actions.*;
 import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.*;
@@ -62,9 +63,10 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
 import ghidra.test.*;
-import ghidra.util.classfinder.ClassFilter;
-import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.classfinder.ClassSearchTask;
+import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
+import util.CollectionUtils;
 import utilities.util.FileUtilities;
 
 /**
@@ -74,10 +76,11 @@ import utilities.util.FileUtilities;
 
 public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private static final String BUILTIN_NAME = "BuiltInTypes";
-	private static final String PROGRAM_FILENAME = "notepad";
+	private static final String PROGRAM_FILENAME = "sample";
 
 	private TestEnv env;
 	private PluginTool tool;
+	private ProgramBuilder builder;
 	private ProgramDB program;
 	private DataTypeManagerPlugin plugin;
 	private DataTypeArchiveGTree tree;
@@ -122,7 +125,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	private ProgramDB buildProgram() throws Exception {
-		ProgramBuilder builder = new ProgramBuilder("notepad", ProgramBuilder._TOY, this);
+		builder = new ProgramBuilder("sample", ProgramBuilder._TOY, this);
 
 		builder.createMemory(".text", "0x1001000", 0x100);
 		CategoryPath miscPath = new CategoryPath("/MISC");
@@ -231,10 +234,10 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		// select "New Category" action
 		DataTypeTestUtils.performAction(action, tree, false);
 
-		waitForDialogComponent("Cannot Edit Tree Node");
+		DialogComponentProvider dialog = waitForDialogComponent("Cannot Edit Tree Node");
+		close(dialog);
 
-		// verify that  the tree opens a new node with the default
-		// category name is "New Category"
+		// verify that  the tree opens a new node with the default category name is "New Category"
 		assertEquals(childCount + 1, miscNode.getChildCount());
 		GTreeNode node = miscNode.getChild("New Category");
 		assertNotNull(node);
@@ -620,7 +623,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		toggleDetailedSearch(true);
 		assertSingleFilterMatch(
-			new String[] { "Data Types", "notepad", "Category1", "Category2", "MyStruct" });
+			new String[] { "Data Types", "sample", "Category1", "Category2", "MyStruct" });
 	}
 
 	@Test
@@ -663,48 +666,34 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 	@Test
 	public void testRefreshBuiltins() throws Exception {
+
+		try {
+			doTestRefreshBuiltins();
+		}
+		finally {
+			cleanupTestBuiltin();
+		}
+	}
+
+	private void doTestRefreshBuiltins() throws Exception {
 		GTreeNode treeRoot = tree.getModelRoot();
 		GTreeNode builtInNode = treeRoot.getChild("BuiltInTypes");
 
 		assertNull("Test setup Error: ghidra.app.test.TestDataType was not removed!",
 			builtInNode.getChild("TestDataType"));
 
-		compileJavaFile();
+		compileJavaDataType();
 
 		DockingActionIf action = getAction(plugin, "Refresh BuiltInTypes");
 		assertTrue(action.isEnabledForContext(treeContext));
 		DataTypeTestUtils.performAction(action, tree, false);
 
 		waitForTasks();
-
 		waitForProgram();
-
 		waitForActionToBeEnabled(action);
 
 		builtInNode = treeRoot.getChild("BuiltInTypes");
 		assertNotNull(builtInNode.getChild("TestDataType"));
-
-		ClassFilter filter = new BuiltInDataTypeClassExclusionFilter();
-		ArrayList<DataType> listOne =
-			new ArrayList<>(ClassSearcher.getInstances(BuiltInDataType.class, filter));
-
-		DataTypeManager bdtm = plugin.getBuiltInDataTypesManager();
-		ArrayList<DataType> listTwo = new ArrayList<>();
-		Iterator<DataType> iter = bdtm.getAllDataTypes();
-		while (iter.hasNext()) {
-			DataType dt = iter.next();
-			listTwo.add(dt);
-		}
-		for (DataType dt : listOne) {
-			boolean found = false;
-			for (DataType dt2 : listTwo) {
-				if (dt.isEquivalent(dt2)) {
-					found = true;
-					break;
-				}
-			}
-			assertTrue(found);
-		}
 	}
 
 	@Test
@@ -793,9 +782,162 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		assertNotNull(message, action);
 	}
 
+	@Test
+	public void testAction_FindStructureByOffset() {
+
+		DockingActionIf action = getAction(plugin, FindStructuresByOffsetAction.NAME);
+		performAction(action, false);
+
+		NumberRangeInputDialog dialog = waitForDialogComponent(NumberRangeInputDialog.class);
+		setText(dialog, "0x1");
+
+		pressButtonByText(dialog, "OK");
+
+		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
+			FindStructuresByOffsetAction.NAME);
+		assertMatchingStructures(resultsProvider, "ArrayStruct");
+	}
+
+	@Test
+	public void testAction_FindStructureByOffset_NoMatches() {
+
+		DockingActionIf action = getAction(plugin, FindStructuresByOffsetAction.NAME);
+		performAction(action, false);
+
+		NumberRangeInputDialog dialog = waitForDialogComponent(NumberRangeInputDialog.class);
+		setText(dialog, "0x100");
+
+		pressButtonByText(dialog, "OK");
+
+		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
+			FindStructuresByOffsetAction.NAME);
+		assertMatchingStructures(resultsProvider);
+	}
+
+	@Test
+	public void testAction_FindStructureByOffset_Range() {
+
+		DockingActionIf action = getAction(plugin, FindStructuresByOffsetAction.NAME);
+		performAction(action, false);
+
+		NumberRangeInputDialog dialog = waitForDialogComponent(NumberRangeInputDialog.class);
+		setText(dialog, "0x1:0x3,20");
+
+		pressButtonByText(dialog, "OK");
+
+		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
+			FindStructuresByOffsetAction.NAME);
+		assertMatchingStructures(resultsProvider, "ArrayStruct");
+	}
+
+	@Test
+	public void testAction_FindStructureByOffset_MixedInput() {
+
+		createStructureWithOffset_0x4(); // 0x4
+		createStructureWithOffset_0x8(); // 0x4, 0x8
+		createStructureWithOffset_0x10(); // 0x4, 0x8, 0x10
+		createStructureWithOffset_0x20(); // 0x8, 0x16, 0x20
+
+		DockingActionIf action = getAction(plugin, FindStructuresByOffsetAction.NAME);
+		performAction(action, false);
+
+		NumberRangeInputDialog dialog = waitForDialogComponent(NumberRangeInputDialog.class);
+		setText(dialog, "0x8:0x10, 32");
+
+		pressButtonByText(dialog, "OK");
+
+		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
+			FindStructuresByOffsetAction.NAME);
+		assertMatchingStructures(resultsProvider, "Structure_0x8", "Structure_0x10",
+			"Structure_0x20");
+	}
+
+	@Test
+	public void testAction_FindStructureBySize() {
+
+		createStructureWithOffset_0x4(); // 6
+		createStructureWithOffset_0x8(); // 10
+		createStructureWithOffset_0x10(); // 12
+		createStructureWithOffset_0x20(); // 22
+
+		DockingActionIf action = getAction(plugin, FindStructuresBySizeAction.NAME);
+		performAction(action, false);
+
+		NumberRangeInputDialog dialog = waitForDialogComponent(NumberRangeInputDialog.class);
+		setText(dialog, "10");
+
+		pressButtonByText(dialog, "OK");
+
+		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
+			FindStructuresBySizeAction.NAME);
+		assertMatchingStructures(resultsProvider, "Structure_0x8");
+	}
+
+	@Test
+	public void testAction_FindStructureBySize_Ranage() {
+
+		createStructureWithOffset_0x4(); // 6
+		createStructureWithOffset_0x8(); // 10
+		createStructureWithOffset_0x10(); // 12
+		createStructureWithOffset_0x20(); // 22
+
+		DockingActionIf action = getAction(plugin, FindStructuresBySizeAction.NAME);
+		performAction(action, false);
+
+		NumberRangeInputDialog dialog = waitForDialogComponent(NumberRangeInputDialog.class);
+		setText(dialog, "12:22");
+
+		pressButtonByText(dialog, "OK");
+
+		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
+			FindStructuresBySizeAction.NAME);
+		assertMatchingStructures(resultsProvider, "Structure_0x10", "Structure_0x20");
+	}
+
 //==================================================================================================
 // Private methods
 //==================================================================================================
+
+	private void createStructureWithOffset_0x4() {
+
+		StructureDataType stuct = new StructureDataType("Structure_0x4", 0);
+		stuct.add(new DWordDataType());
+		stuct.add(new WordDataType());
+		builder.addDataType(stuct);
+	}
+
+	private void createStructureWithOffset_0x8() {
+
+		StructureDataType stuct = new StructureDataType("Structure_0x8", 0);
+		stuct.add(new DWordDataType());
+		stuct.add(new DWordDataType());
+		stuct.add(new WordDataType());
+		builder.addDataType(stuct);
+	}
+
+	private void createStructureWithOffset_0x10() {
+
+		StructureDataType stuct = new StructureDataType("Structure_0x10", 0);
+		stuct.add(new DWordDataType());
+		stuct.add(new DWordDataType());
+		stuct.add(new WordDataType());
+		stuct.add(new WordDataType());
+		builder.addDataType(stuct);
+	}
+
+	private void createStructureWithOffset_0x20() {
+
+		StructureDataType stuct = new StructureDataType("Structure_0x20", 0);
+		stuct.add(new QWordDataType());
+		stuct.add(new QWordDataType());
+		stuct.add(new DWordDataType());
+		stuct.add(new WordDataType());
+		builder.addDataType(stuct);
+	}
+
+	private void setText(NumberRangeInputDialog dialog, String text) {
+		runSwing(() -> dialog.setValue(text));
+	}
 
 	private void editSignature(String name, String newSignature) {
 		expandNode(programNode);
@@ -914,6 +1056,41 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 				node = childBox[0];
 			}
 		}
+	}
+
+	private void assertMatchingStructures(DataTypesProvider resultsProvider, String... names) {
+
+		DataTypeArchiveGTree gTree = resultsProvider.getGTree();
+		waitForTree(gTree);
+		Map<String, Structure> structures = getStructures(resultsProvider);
+		assertEquals("Incorrect number of matches.\n\tExpected: " + Arrays.toString(names) +
+			"\n\tFound: " + structures.keySet(), names.length, structures.size());
+		for (String name : names) {
+			if (!structures.containsKey(name)) {
+				fail("Structure not found in results: '" + name + "'.\nFound: " +
+					structures.keySet());
+			}
+		}
+	}
+
+	private Map<String, Structure> getStructures(DataTypesProvider resultsProvider) {
+
+		Map<String, Structure> map = new HashMap<>();
+		DataTypeArchiveGTree gTree = resultsProvider.getGTree();
+		GTreeNode rootNode = gTree.getViewRoot();
+		Iterator<GTreeNode> it = rootNode.iterator(true);
+		for (GTreeNode node : CollectionUtils.asIterable(it)) {
+			if (!(node instanceof DataTypeNode)) {
+				continue;
+			}
+			DataTypeNode dtNode = (DataTypeNode) node;
+			DataType dt = dtNode.getDataType();
+			if (dt instanceof Structure) {
+				map.put(dt.getName(), (Structure) dt);
+			}
+		}
+
+		return map;
 	}
 
 	private void assertEmptyTree() {
@@ -1061,7 +1238,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		}
 	}
 
-	private void compileJavaFile() throws Exception {
+	private void compileJavaDataType() throws Exception {
 
 		boolean success = false;
 		try {
@@ -1072,8 +1249,8 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 					Assert.fail("Could not create directory " + binDir.getAbsolutePath());
 				}
 			}
-			File javaFile = new File(binDir, "TestDataType.java");
 
+			File javaFile = new File(binDir, "TestDataType.java");
 			FileUtilities.copyFile(file, javaFile, false, TaskMonitor.DUMMY);
 			assertTrue(javaFile.exists());
 
@@ -1086,6 +1263,31 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 				removeBinTestDir();
 			}
 		}
+	}
+
+	private void cleanupTestBuiltin() throws Exception {
+		File binDir = getClassesDirectory();
+		File javaFile = new File(binDir, "TestDataType.java");
+		File classFile = new File(binDir, "TestDataType.class");
+		javaFile.delete();
+		classFile.delete();
+
+		// force built-ins to get restored
+		Task task = new ClassSearchTask();
+		task.run(TaskMonitor.DUMMY);
+
+		DockingActionIf action = getAction(plugin, "Refresh BuiltInTypes");
+		assertTrue(action.isEnabledForContext(treeContext));
+		DataTypeTestUtils.performAction(action, tree, false);
+
+		waitForTasks();
+		waitForProgram();
+		waitForActionToBeEnabled(action);
+
+		GTreeNode treeRoot = tree.getModelRoot();
+		GTreeNode builtInNode = treeRoot.getChild("BuiltInTypes");
+		assertNull("Test setup Error: ghidra.app.test.TestDataType was not removed!",
+			builtInNode.getChild("TestDataType"));
 	}
 
 	private File getTestDataTypeFile() {

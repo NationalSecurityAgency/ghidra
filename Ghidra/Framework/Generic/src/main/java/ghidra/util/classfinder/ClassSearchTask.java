@@ -29,10 +29,10 @@ public class ClassSearchTask extends Task {
 	}
 
 	@Override
-	public void run(final TaskMonitor taskMonitor) {
+	public void run(final TaskMonitor monitor) {
 
 		try {
-			ClassSearcher.search(true, taskMonitor);
+			ClassSearcher.search(true, monitor);
 		}
 		catch (CancelledException e) {
 			// user cancelled
