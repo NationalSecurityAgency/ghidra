@@ -21,6 +21,7 @@ import javax.swing.ImageIcon;
 import javax.swing.event.ChangeListener;
 
 import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
+import ghidra.app.util.viewer.listingpanel.MarkerClickedListener;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -258,4 +259,15 @@ public interface MarkerService {
 	 * @param listener the listener
 	 */
 	public void removeChangeListener(ChangeListener listener);
+
+	/**
+	 * Sets the listener to be notified when the user double-clicks in the Marker Margin area. Note
+	 * that only one listener is allowed to be set at a time. If an attempt to set a second listener
+	 * occurs, then an IllegalStateException is thrown.
+	 * 
+	 * @param listener the listener to be notified or null to remove the current listener
+	 * @throws IllegalStateException if a listener is already set.
+	 */
+	public void setMarkerClickedListener(MarkerClickedListener listener);
+
 }

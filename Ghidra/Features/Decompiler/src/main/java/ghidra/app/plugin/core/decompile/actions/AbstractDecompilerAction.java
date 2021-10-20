@@ -17,7 +17,9 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
+import docking.action.KeyBindingType;
 import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.plugin.core.decompile.DecompilePlugin;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.datatype.DataTypeSelectionDialog;
@@ -26,15 +28,18 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolTable;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 
 /**
- * A base class for {@link DecompilePlugin} actions that handles checking whether the 
- * decompiler is busy.   Each action is responsible for deciding its enablement via 
+ * A base class for {@link DecompilePlugin} actions that handles checking whether the
+ * decompiler is busy.   Each action is responsible for deciding its enablement via
  * {@link #isEnabledForDecompilerContext(DecompilerActionContext)}.  Each action must implement
  * {@link #decompilerActionPerformed(DecompilerActionContext)} to complete its work.
  * 
- * <p>This parent class uses the {@link DecompilerActionContext} to check for the decompiler's 
+ * <p>This parent class uses the {@link DecompilerActionContext} to check for the decompiler's
  * busy status.  If the decompiler is busy, then the action will report that it is enabled.  We
  * do this so that any keybindings registered for this action will get consumed and not passed up
  * to the global context.   Then, if the action is executed, this class does not call the child
@@ -44,6 +49,10 @@ public abstract class AbstractDecompilerAction extends DockingAction {
 
 	AbstractDecompilerAction(String name) {
 		super(name, DecompilePlugin.class.getSimpleName());
+	}
+
+	AbstractDecompilerAction(String name, KeyBindingType kbType) {
+		super(name, DecompilePlugin.class.getSimpleName(), kbType);
 	}
 
 	@Override
@@ -194,13 +203,45 @@ public abstract class AbstractDecompilerAction extends DockingAction {
 		return false;
 	}
 
-	public DataType chooseDataType(PluginTool tool, Program program, DataType currentDataType) {
+	protected DataType chooseDataType(PluginTool tool, Program program, DataType currentDataType) {
 		DataTypeManager dataTypeManager = program.getDataTypeManager();
 		DataTypeSelectionDialog chooserDialog = new DataTypeSelectionDialog(tool, dataTypeManager,
 			Integer.MAX_VALUE, AllowedDataTypes.FIXED_LENGTH);
 		chooserDialog.setInitialDataType(currentDataType);
 		tool.showDialog(chooserDialog);
 		return chooserDialog.getUserChosenDataType();
+	}
+
+	protected Symbol getSymbol(DecompilerActionContext context) {
+
+		// prefer the decompiler's function reference over the program location's address
+		Function function = getFunction(context);
+		if (function != null) {
+			return function.getSymbol();
+		}
+
+		Program program = context.getProgram();
+		SymbolTable symbolTable = program.getSymbolTable();
+		Address address = context.getAddress();
+		if (address == null) {
+			return null;
+		}
+		return symbolTable.getPrimarySymbol(address);
+	}
+
+	protected Function getFunction(DecompilerActionContext context) {
+		ProgramLocation location = context.getLocation();
+		if (!(location instanceof DecompilerLocation)) {
+			return null;
+		}
+
+		ClangToken token = ((DecompilerLocation) location).getToken();
+		if (!(token instanceof ClangFuncNameToken)) {
+			return null;
+		}
+
+		Program program = location.getProgram();
+		return DecompilerUtils.getFunction(program, (ClangFuncNameToken) token);
 	}
 
 	/**

@@ -300,7 +300,9 @@ public class DWARFFunctionImporter {
 		Function gfunc = createFunction(dfunc, diea);
 
 		if (gfunc != null) {
-
+			if (diea.getBool(DWARFAttribute.DW_AT_noreturn, false)) {
+				gfunc.setNoReturn(true);
+			}
 			if (formalParams.isEmpty() && dfunc.localVarErrors) {
 				// if there were no defined parameters and we had problems decoding local variables,
 				// don't force the method to have an empty param signature because there are other

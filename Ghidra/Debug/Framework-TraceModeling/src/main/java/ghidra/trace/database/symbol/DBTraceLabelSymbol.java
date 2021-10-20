@@ -24,8 +24,8 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolType;
 import ghidra.trace.database.DBTraceUtils;
-import ghidra.trace.database.DBTraceUtils.AddressDBFieldCodec;
-import ghidra.trace.database.DBTraceUtils.DecodesAddresses;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.AddressDBFieldCodec;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
 import ghidra.trace.database.listing.*;
 import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.database.thread.DBTraceThread;
@@ -105,11 +105,6 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 		this.parent = parent;
 		this.thread = thread;
 		this.lifespan = lifespan;
-	}
-
-	@Override
-	public Address decodeAddress(int spaceId, long offset) {
-		return manager.trace.getBaseAddressFactory().getAddress(spaceId, offset);
 	}
 
 	@Override

@@ -368,7 +368,7 @@ public class FunctionEditorModel {
 
 	private boolean isValidParamType(ParamInfo param) {
 		DataType dataType = param.getDataType();
-		if (dataType.isEquivalent(DataType.VOID)) {
+		if (dataType.isEquivalent(VoidDataType.dataType)) {
 			statusText = "\"void\" is not allowed as a parameter datatype.";
 			return false;
 		}
@@ -440,8 +440,8 @@ public class FunctionEditorModel {
 		return returnInfo.getFormalDataType();
 	}
 
-	public void setFormalReturnType(DataType formalReturnType) {
-		setParameterFormalDataType(returnInfo, formalReturnType);
+	public boolean setFormalReturnType(DataType formalReturnType) {
+		return setParameterFormalDataType(returnInfo, formalReturnType);
 	}
 
 	public String getStatusText() {
@@ -775,18 +775,20 @@ public class FunctionEditorModel {
 		notifyDataChanged();
 	}
 
-	public void setParameterFormalDataType(ParamInfo param, DataType formalDataType) {
+	public boolean setParameterFormalDataType(ParamInfo param, DataType formalDataType) {
 		boolean isReturn = (param.getOrdinal() == Parameter.RETURN_ORIDINAL);
 		try {
 			formalDataType = VariableUtilities.checkDataType(formalDataType, isReturn, 0, program);
 		}
 		catch (InvalidInputException e) {
 			Msg.showError(this, null, "Invalid Data Type", e.getMessage());
-			return;
+			return false;
 		}
+
 		if (formalDataType.equals(param.getFormalDataType())) {
-			return;
+			return true;
 		}
+
 		param.setFormalDataType(formalDataType.clone(program.getDataTypeManager()));
 		if (allowCustomStorage) {
 			if (isReturn && (formalDataType instanceof VoidDataType)) {
@@ -808,6 +810,7 @@ public class FunctionEditorModel {
 			updateParameterAndReturnStorage();
 		}
 		notifyDataChanged();
+		return true;
 	}
 
 	private void adjustStorageSize(ParamInfo param, VariableStorage curStorage, int newSize) {
@@ -1180,7 +1183,7 @@ public class FunctionEditorModel {
 	/**
 	 * Sets the change state of the model. Normally, the model sets the modelChanged variable to true
 	 * every time something is changed. This provides a way to for applications to make some initial changes
-	 * but make the dialog think that nothing has changed.  
+	 * but make the dialog think that nothing has changed.
 	 * @param b the  new changeState for this model
 	 */
 	public void setModelChanged(boolean b) {

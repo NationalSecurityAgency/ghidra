@@ -4555,6 +4555,22 @@
   </para>
 </sect2>
 
+<sect2 id="ActionRemoveLabel">
+  <title>Remove Label</title>
+  <para>
+    Remove the label corresponding to the token under the cursor.
+  </para>
+  <para>
+    A label can be removed by triggering this action while the corresponding label token is
+    under the cursor.   For more on removing labels, see 
+    <link xlink:href="help/topics/LabelMgrPlugin/Labels.htm#Remove_Label">Removing a Label</link>.
+  </para>
+  <para>
+    The change will be immediately visible across all references to the label
+    (including in any Decompiler, Listing, and Functions windows).
+  </para>
+</sect2>
+
 <sect2 id="ActionRenameFunction">
   <title>Rename Function</title>
   <para>

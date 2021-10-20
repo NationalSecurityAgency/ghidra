@@ -42,16 +42,12 @@ class RemoveLabelAction extends ListingContextAction {
 	 * @param plugin Label Manager Plugin instance
 	 */
 	RemoveLabelAction(LabelMgrPlugin plugin) {
-		super("Remove Label", plugin.getName());
+		super("Remove Label", plugin.getName(), KeyBindingType.SHARED);
+		this.plugin = plugin;
 
-		// the above sets the default (preferred) values, but not the actuals
-		// below we indicate that the popup and keybinding are also needed
 		setPopupMenuData(new MenuData(POPUP_PATH, null, "Label"));
 		setKeyBindingData(new KeyBindingData(KEYBINDING));
 
-		// Set the Group
-
-		this.plugin = plugin;
 		setEnabled(true);
 	}
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.objc2;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.objectiveC.*;
@@ -23,8 +24,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 public class ObjectiveC2_Category implements StructConverter {
 	public final static String NAME = "category_t";
@@ -45,10 +44,12 @@ public class ObjectiveC2_Category implements StructConverter {
 
 		readName(reader);
 		readClass(reader);
-		readInstanceMethods(reader);
-		readClassMethods(reader);
-		readProtocols(reader);
-		readInstanceProperties(reader);
+		if (cls != null && cls.getISA() != null) {
+			readInstanceMethods(reader);
+			readClassMethods(reader);
+			readProtocols(reader);
+			readInstanceProperties(reader);
+		}
 	}
 
 	public long getIndex() {

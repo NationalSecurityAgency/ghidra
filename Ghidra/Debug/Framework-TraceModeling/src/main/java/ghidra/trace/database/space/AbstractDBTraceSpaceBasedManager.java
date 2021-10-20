@@ -127,11 +127,11 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 	@SuppressWarnings("unchecked")
 	protected void loadSpaces() throws VersionException, IOException {
 		for (DBTraceSpaceEntry ent : spaceStore.asMap().values()) {
-			AddressFactory addressFactory = baseLanguage.getAddressFactory();
+			AddressFactory addressFactory = trace.getBaseAddressFactory();
 			AddressSpace space = addressFactory.getAddressSpace(ent.spaceName);
 			if (space == null) {
-				Msg.error(this, "Space " + ent.spaceName + " does not exist in " + baseLanguage +
-					". Perhaps the language changed.");
+				Msg.error(this, "Space " + ent.spaceName + " does not exist in trace (language=" +
+					baseLanguage + ").");
 			}
 			else if (space.isRegisterSpace()) {
 				DBTraceThread thread = threadManager.getThread(ent.threadKey);

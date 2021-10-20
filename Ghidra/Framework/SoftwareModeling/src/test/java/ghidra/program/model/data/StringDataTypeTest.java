@@ -367,12 +367,28 @@ public class StringDataTypeTest extends AbstractGTest {
 	}
 
 	@Test
+	public void testProbeEncodeStringRep_LeadingBinaryBytes() throws DataTypeEncodeException {
+		byte[] bytes = bytes(1, 2, 'x');
+		assertArrayEquals(bytes,
+			fixedlenString.encodeRepresentation("01h,02h,\"x\"", mb(false), newset(),
+				bytes.length));
+	}
+
+	@Test
 	public void testGetStringRep_FixedLen() {
 		ByteMemBufferImpl buf = mb(false, 'h', 'e', 'l', 'l', 'o', 0, 'a', '\n', 'b', 255, 0);
 
 		// US-ASCII charset doesn't map 0x80-0xff, they result in error characters
 		assertEquals("\"hello\\0a\\nb\",FFh",
 			fixedlenString.getRepresentation(buf, newset(), buf.getLength()));
+	}
+
+	@Test
+	public void testEncodeStringRep_FixedLen() throws DataTypeEncodeException {
+		byte[] bytes = bytes('h', 'e', 'l', 'l', 'o', 0, 'a', '\n', 'b', 255, 0);
+		assertArrayEquals(bytes,
+			fixedlenString.encodeRepresentation("\"hello\\0a\\nb\",FFh", mb(false), newset(),
+				bytes.length));
 	}
 
 	@Test
@@ -383,10 +399,22 @@ public class StringDataTypeTest extends AbstractGTest {
 	}
 
 	@Test
+	public void testEncodeStringRepEmpty_Term() throws DataTypeEncodeException {
+		assertArrayEquals(bytes(0), // NOTE: Differs from inverse test above.
+			termString.encodeRepresentation("\"\"", mb(false), newset(), -1));
+	}
+
+	@Test
 	public void testGetStringRepEmpty_TermUTF16() {
 		ByteMemBufferImpl buf = mb(false, 0, 0);
 
 		assertEquals("u\"\"", termUtf16String.getRepresentation(buf, newset(), buf.getLength()));
+	}
+
+	@Test
+	public void testEncodeStringRepEmpty_TermUTF16() throws DataTypeEncodeException {
+		assertArrayEquals(bytes(0, 0),
+			termUtf16String.encodeRepresentation("u\"\"", mb(false), newset(), -1));
 	}
 
 	@Test
@@ -397,10 +425,24 @@ public class StringDataTypeTest extends AbstractGTest {
 	}
 
 	@Test
+	public void testEncodeStringRepEmpty_FixedLen() throws DataTypeEncodeException {
+		// TODO: Should the caller or the encoder handle padding the remaining bytes
+		byte[] bytes = bytes(0, 0, 0, 0, 0);
+		assertArrayEquals(bytes,
+			fixedlenString.encodeRepresentation("\"\"", mb(false), newset(), bytes.length));
+	}
+
+	@Test
 	public void testGetStringRepEmpty_P() {
 		ByteMemBufferImpl buf = mb(false, 0, 0);
 
 		assertEquals("\"\"", pascalString.getRepresentation(buf, newset(), buf.getLength()));
+	}
+
+	@Test
+	public void testEncodeStringRepEmpty_P() throws DataTypeEncodeException {
+		assertArrayEquals(bytes(0, 0),
+			pascalString.encodeRepresentation("\"\"", mb(false), newset(), -1));
 	}
 
 	@Test
@@ -436,6 +478,32 @@ public class StringDataTypeTest extends AbstractGTest {
 	}
 
 	@Test
+	public void testEncodeStringRepAllChars() throws DataTypeEncodeException {
+		byte[] allAsciiChars = new byte[256];
+		for (int i = 0; i < allAsciiChars.length; i++) {
+			allAsciiChars[i] = (byte) i;
+		}
+		String repr = "" +
+			"\"\\0\"," +
+			"01h,02h,03h,04h,05h,06h," +
+			"\"\\a\\b\\t\\n\\v\\f\\r\",0Eh,0Fh,10h,11h,12h,13h,14h,15h,16h,17h,18h,19h,1Ah,1Bh,1Ch,1Dh,1Eh,1Fh,\"" +
+			" !\\\"#$%&'()*+,-./0123456789:;<=>?@" +
+			"ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]^_`" +
+			"abcdefghijklmnopqrstuvwxyz{|}~\",7Fh," +
+			"80h,81h,82h,83h,84h,85h,86h,87h,88h,89h,8Ah,8Bh,8Ch,8Dh,8Eh,8Fh," +
+			"90h,91h,92h,93h,94h,95h,96h,97h,98h,99h,9Ah,9Bh,9Ch,9Dh,9Eh,9Fh," +
+			"A0h,A1h,A2h,A3h,A4h,A5h,A6h,A7h,A8h,A9h,AAh,ABh,ACh,ADh,AEh,AFh," +
+			"B0h,B1h,B2h,B3h,B4h,B5h,B6h,B7h,B8h,B9h,BAh,BBh,BCh,BDh,BEh,BFh," +
+			"C0h,C1h,C2h,C3h,C4h,C5h,C6h,C7h,C8h,C9h,CAh,CBh,CCh,CDh,CEh,CFh," +
+			"D0h,D1h,D2h,D3h,D4h,D5h,D6h,D7h,D8h,D9h,DAh,DBh,DCh,DDh,DEh,DFh," +
+			"E0h,E1h,E2h,E3h,E4h,E5h,E6h,E7h,E8h,E9h,EAh,EBh,ECh,EDh,EEh,EFh," +
+			"F0h,F1h,F2h,F3h,F4h,F5h,F6h,F7h,F8h,F9h,FAh,FBh,FCh,FDh,FEh,FFh";
+
+		assertArrayEquals(allAsciiChars, fixedlenString.encodeRepresentation(repr, mb(false),
+			newset().set(StandardCharsets.US_ASCII), -1));
+	}
+
+	@Test
 	public void testGetStringRep_utf16_le() {
 		ByteMemBufferImpl buf = mb(false, //
 			'h', 0, //
@@ -449,6 +517,20 @@ public class StringDataTypeTest extends AbstractGTest {
 
 		assertEquals("u\"hello\\0xy\"",
 			fixedUtf16String.getRepresentation(buf, newset(), buf.getLength()));
+	}
+
+	@Test
+	public void testEncodeStringRep_utf16_le() throws DataTypeEncodeException {
+		assertArrayEquals(bytes(
+			'h', 0,  //
+			'e', 0,  //
+			'l', 0,  //
+			'l', 0,  //
+			'o', 0,  //
+			0, 0,  //
+			'x', 0, //
+			'y', 0),
+			fixedUtf16String.encodeRepresentation("U\"hello\\0xy\"", mb(false), newset(), -1));
 	}
 
 	@Test
@@ -476,6 +558,31 @@ public class StringDataTypeTest extends AbstractGTest {
 	}
 
 	@Test
+	public void testEncodeStringRep_utf16_ideographic() throws DataTypeEncodeException {
+		byte[] bytes_be = bytes(0, 'a', 0, 'b', 0xcc, 0x01, 0x12, 0x02);
+		byte[] bytes_le = bytes('a', 0, 'b', 0, 0x01, 0xcc, 0x02, 0x12);
+
+		String e1 = "u\"ab\ucc01\u1202\"";
+		assertArrayEquals(bytes_be,
+			fixedUtf16String.encodeRepresentation(e1, mb(true), newset(), -1));
+		assertArrayEquals(bytes_le,
+			fixedUtf16String.encodeRepresentation(e1, mb(false), newset(), -1));
+
+		String e2_be = "u\"ab\",CCh,01h,12h,02h";
+		String e2_le = "u\"ab\",01h,CCh,02h,12h";
+		assertArrayEquals(bytes_be,
+			fixedUtf16String.encodeRepresentation(e2_be, mb(true), newset(), -1));
+		assertArrayEquals(bytes_le,
+			fixedUtf16String.encodeRepresentation(e2_le, mb(false), newset(), -1));
+
+		String e3 = "u\"ab\\uCC01\\u1202\"";
+		assertArrayEquals(bytes_be,
+			fixedUtf16String.encodeRepresentation(e3, mb(true), newset(), -1));
+		assertArrayEquals(bytes_le,
+			fixedUtf16String.encodeRepresentation(e3, mb(false), newset(), -1));
+	}
+
+	@Test
 	public void testGetStringRep_utf16_escapeseq_U() {
 		// 2 utf-16 chars that create a single code point.
 		// Should get a 32bit escape seq even though this is 16 bit string.
@@ -483,6 +590,12 @@ public class StringDataTypeTest extends AbstractGTest {
 
 		assertEquals("u\"ab\\U00010112c\"", fixedUtf16String.getRepresentation(buf_be,
 			newset().set(RENDER_ENUM.ESC_SEQ), buf_be.getLength()));
+	}
+
+	@Test
+	public void testEncodeStringRep_utf16_escapeseq_U() throws DataTypeEncodeException {
+		assertArrayEquals(bytes(0, 'a', 0, 'b', 0xd8, 0x00, 0xdd, 0x12, 0, 'c'),
+			fixedUtf16String.encodeRepresentation("u\"ab\\U00010112c\"", mb(true), newset(), -1));
 	}
 
 	@Test
@@ -499,6 +612,20 @@ public class StringDataTypeTest extends AbstractGTest {
 
 		assertEquals("U\"hello\\0xy\"",
 			fixedUtf32String.getRepresentation(buf, newset(), buf.getLength()));
+	}
+
+	@Test
+	public void testEncodeStringRep_utf32() throws DataTypeEncodeException {
+		assertArrayEquals(bytes(
+			'h', 0, 0, 0, //
+			'e', 0, 0, 0, //
+			'l', 0, 0, 0, //
+			'l', 0, 0, 0, //
+			'o', 0, 0, 0, //
+			0, 0, 0, 0, //
+			'x', 0, 0, 0, //
+			'y', 0, 0, 0),
+			fixedUtf32String.encodeRepresentation("U\"hello\\0xy\"", mb(false), newset(), -1));
 	}
 
 	@Test

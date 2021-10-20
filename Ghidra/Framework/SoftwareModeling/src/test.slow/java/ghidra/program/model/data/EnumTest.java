@@ -22,7 +22,7 @@ import java.util.NoSuchElementException;
 import org.junit.*;
 
 import generic.test.AbstractGTest;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for Enum data types.
@@ -166,7 +166,7 @@ public class EnumTest extends AbstractGTest {
 		Enum enummDT = (Enum) c.addDataType(enumm, DataTypeConflictHandler.DEFAULT_HANDLER);
 		assertNotNull(enummDT);
 
-		c.remove(enummDT, TaskMonitorAdapter.DUMMY_MONITOR);
+		c.remove(enummDT, TaskMonitor.DUMMY);
 		assertNull(c.getDataType("Color"));
 
 		assertTrue(enummDT.isDeleted());
@@ -235,6 +235,7 @@ public class EnumTest extends AbstractGTest {
 			Assert.fail("Should have gotten no such element exception!");
 		}
 		catch (NoSuchElementException e) {
+			// expected
 		}
 	}
 

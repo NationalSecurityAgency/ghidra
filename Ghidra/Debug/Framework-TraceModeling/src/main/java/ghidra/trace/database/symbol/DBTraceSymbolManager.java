@@ -30,6 +30,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
 import ghidra.trace.database.data.DBTraceDataTypeManager;
 import ghidra.trace.database.map.*;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
@@ -426,6 +427,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 	protected final ReadWriteLock lock;
 	protected final DBTraceThreadManager threadManager;
 	protected final DBTraceDataTypeManager dataTypeManager;
+	protected final DBTraceOverlaySpaceAdapter overlayAdapter;
 
 	protected final DBTraceAddressSnapRangePropertyMap<Long, DBTraceSymbolIDEntry> idMap;
 
@@ -473,12 +475,14 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 
 	public DBTraceSymbolManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
-			DBTraceThreadManager threadManager, DBTraceDataTypeManager dataTypeManager)
+			DBTraceThreadManager threadManager, DBTraceDataTypeManager dataTypeManager,
+			DBTraceOverlaySpaceAdapter overlayAdapter)
 			throws VersionException, IOException {
 		this.trace = trace;
 		this.lock = lock;
 		this.threadManager = threadManager;
 		this.dataTypeManager = dataTypeManager;
+		this.overlayAdapter = overlayAdapter;
 
 		DBCachedObjectStoreFactory factory = trace.getStoreFactory();
 

@@ -45,6 +45,26 @@ enum type_metatype {
   TYPE_STRUCT = 0		///< Structure data-type, made up of component datatypes
 };
 
+enum sub_metatype {
+  SUB_VOID = 16,		///< Compare as a TYPE_VOID
+  SUB_SPACEBASE = 15,		///< Compare as a TYPE_SPACEBASE
+  SUB_UNKNOWN = 14,		///< Compare as a TYPE_UNKNOWN
+  SUB_INT_CHAR = 13,		///< Signed 1-byte character, sub-type of TYPE_INT
+  SUB_UINT_CHAR = 12,		///< Unsigned 1-byte character, sub-type of TYPE_UINT
+  SUB_INT_PLAIN = 11,		///< Compare as a plain TYPE_INT
+  SUB_UINT_PLAIN = 10,		///< Compare as a plain TYPE_UINT
+  SUB_INT_ENUM = 9,		///< Signed enum, sub-type of TYPE_INT
+  SUB_UINT_ENUM = 8,		///< Unsigned enum, sub-type of TYPE_UINT
+  SUB_INT_UNICODE = 7,		///< Signed wide character, sub-type of TYPE_INT
+  SUB_UINT_UNICODE = 6,		///< Unsigned wide character, sub-type of TYPE_UINT
+  SUB_BOOL = 5,			///< Compare as TYPE_BOOL
+  SUB_CODE = 4,			///< Compare as TYPE_CODE
+  SUB_FLOAT = 3,		///< Compare as TYPE_FLOAT
+
+  SUB_PTR = 2,			///< Compare as TYPE_PTR
+  SUB_ARRAY = 1,		///< Compare as TYPE_ARRAY
+  SUB_STRUCT = 0		///< Compare as TYPE_STRUCT
+};
 /// Convert type \b meta-type to name
 extern void metatype2string(type_metatype metatype,string &res);
 
@@ -61,6 +81,7 @@ struct DatatypeCompare;
 /// Used for symbols, function prototypes, type propagation etc.
 class Datatype {
 protected:
+  static sub_metatype base2sub[11];
   /// Boolean properties of datatypes
   enum {
     coretype = 1,		///< This is a basic type which will never be redefined
@@ -82,6 +103,7 @@ protected:
   int4 size;			///< Size (of variable holding a value of this type)
   string name;			///< Name of type
   type_metatype metatype;	///< Meta-type - type disregarding size
+  sub_metatype submeta;		///< Sub-type of of the meta-type, for comparisons
   uint4 flags;			///< Boolean properties of the type
   uint8 id;			///< A unique id for the type (or 0 if an id is not assigned)
   Datatype *typedefImm;		///< The immediate data-type being typedefed by \e this
@@ -94,11 +116,12 @@ protected:
   static uint8 hashSize(uint8 id,int4 size);	///< Reversibly hash size into id
 public:
   /// Construct the base data-type copying low-level properties of another
-  Datatype(const Datatype &op) { size = op.size; name=op.name; metatype=op.metatype; flags=op.flags; id=op.id; typedefImm=op.typedefImm; }
+  Datatype(const Datatype &op) { size = op.size; name=op.name; metatype=op.metatype; submeta=op.submeta; flags=op.flags;
+    id=op.id; typedefImm=op.typedefImm; }
   /// Construct the base data-type providing size and meta-type
-  Datatype(int4 s,type_metatype m) { size=s; metatype=m; flags=0; id=0; typedefImm=(Datatype *)0; }
+  Datatype(int4 s,type_metatype m) { size=s; metatype=m; submeta=base2sub[m]; flags=0; id=0; typedefImm=(Datatype *)0; }
   /// Construct the base data-type providing size, meta-type, and name
-  Datatype(int4 s,type_metatype m,const string &n) { name=n; size=s; metatype=m; flags=0; id=0; typedefImm=(Datatype *)0; }
+  Datatype(int4 s,type_metatype m,const string &n) { name=n; size=s; metatype=m; submeta=base2sub[m]; flags=0; id=0; typedefImm=(Datatype *)0; }
   virtual ~Datatype(void) {}	///< Destructor
   bool isCoreType(void) const { return ((flags&coretype)!=0); }	///< Is this a core data-type
   bool isCharPrint(void) const { return ((flags&(chartype|utf16|utf32|opaque_string))!=0); }	///< Does this print as a 'char'
@@ -186,11 +209,12 @@ public:
 class TypeChar : public TypeBase {
 protected:
   friend class TypeFactory;
+  virtual void restoreXml(const Element *el,TypeFactory &typegrp);
 public:
   /// Construct TypeChar copying properties from another data-type
   TypeChar(const TypeChar &op) : TypeBase(op) { flags |= Datatype::chartype; }
   /// Construct a char (always 1-byte) given a name
-  TypeChar(const string &n) : TypeBase(1,TYPE_INT,n) { flags |= Datatype::chartype; }
+  TypeChar(const string &n) : TypeBase(1,TYPE_INT,n) { flags |= Datatype::chartype; submeta = SUB_INT_CHAR; }
   virtual Datatype *clone(void) const { return new TypeChar(*this); }
   virtual void saveXml(ostream &s) const;
 };
@@ -298,9 +322,11 @@ public:
   /// Construct from another TypeEnum
   TypeEnum(const TypeEnum &op);
   /// Construct from a size and meta-type (TYPE_INT or TYPE_UINT)
-  TypeEnum(int4 s,type_metatype m) : TypeBase(s,m) { flags |= enumtype; }
+  TypeEnum(int4 s,type_metatype m) : TypeBase(s,m) {
+    flags |= enumtype; submeta = (m==TYPE_INT) ? SUB_INT_ENUM : SUB_UINT_ENUM; }
   /// Construct from a size, meta-type, and name
-  TypeEnum(int4 s,type_metatype m,const string &nm) : TypeBase(s,m,nm) { flags |= enumtype; }
+  TypeEnum(int4 s,type_metatype m,const string &nm) : TypeBase(s,m,nm) {
+    flags |= enumtype; submeta = (m==TYPE_INT) ? SUB_INT_ENUM : SUB_UINT_ENUM; }
   map<uintb,string>::const_iterator beginEnum(void) const { return namemap.begin(); }	///< Beginning of name map
   map<uintb,string>::const_iterator endEnum(void) const { return namemap.end(); }	///< End of name map
   bool getMatches(uintb val,vector<string> &matchname) const;	///< Recover the named representation

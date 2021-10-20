@@ -33,10 +33,6 @@ public class DataTypeWriterTest extends AbstractGTest {
 	private StringWriter writer;
 	private DataTypeWriter dtWriter;
 
-	public DataTypeWriterTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 
@@ -105,8 +101,16 @@ public class DataTypeWriterTest extends AbstractGTest {
 		enumm.add("E", 4);
 		dtWriter.write(enumm, TaskMonitor.DUMMY);
 		String actual = writer.getBuffer().toString();
-		String expected = "typedef enum myEnum {" + EOL + "    A=0," + EOL + "    B=1," + EOL +
-			"    C=2," + EOL + "    D=3," + EOL + "    E=4" + EOL + "} myEnum;" + EOL + EOL;
+
+		//@formatter:off
+		String expected = "typedef enum myEnum {" + EOL +
+				"    A=0," + EOL +
+				"    B=1," + EOL +
+				"    C=2," + EOL +
+				"    D=3," + EOL +
+				"    E=4" + EOL +
+		"} myEnum;" + EOL + EOL;
+		//@formatter:on
 		assertEquals(expected, actual);
 	}
 
@@ -120,8 +124,84 @@ public class DataTypeWriterTest extends AbstractGTest {
 		enumm.add("E", 254);
 		dtWriter.write(enumm, TaskMonitor.DUMMY);
 		String actual = writer.getBuffer().toString();
-		String expected = "typedef enum myEnum {" + EOL + "    A=4," + EOL + "    B=8," + EOL +
-			"    C=16," + EOL + "    D=32," + EOL + "    E=254" + EOL + "} myEnum;" + EOL + EOL;
+
+		//@formatter:off
+		String expected = "typedef enum myEnum {" + EOL +
+				"    A=4," + EOL +
+				"    B=8," + EOL +
+				"    C=16," + EOL +
+				"    D=32," + EOL +
+				"    E=254" + EOL +
+		"} myEnum;" + EOL + EOL;
+		//@formatter:on
+		assertEquals(expected, actual);
+	}
+
+	@Test
+	public void testEnum_WithComments() throws IOException, CancelledException {
+		Enum enumm = new EnumDataType("myEnum", 1);
+		enumm.add("A", 0);
+		enumm.add("B", 1, "B Comment");
+		enumm.add("C", 2);
+		enumm.add("D", 3, "D Comment");
+		enumm.add("E", 4);
+		dtWriter.write(enumm, TaskMonitor.DUMMY);
+		String actual = writer.getBuffer().toString();
+
+		//@formatter:off
+		String expected = "typedef enum myEnum {" + EOL +
+				"    A=0," + EOL +
+				"    B=1 /* B Comment */," + EOL +
+				"    C=2," + EOL +
+				"    D=3 /* D Comment */," + EOL +
+				"    E=4" + EOL +
+		"} myEnum;" + EOL + EOL;
+		//@formatter:on
+		assertEquals(expected, actual);
+	}
+
+	@Test
+	public void testEnum_MultipleNamesPerValue() throws IOException, CancelledException {
+		Enum enumm = new EnumDataType("myEnum", 1);
+		enumm.add("A", 4);
+		enumm.add("Two", 8);
+		enumm.add("One", 8);
+		enumm.add("End", 32);
+		dtWriter.write(enumm, TaskMonitor.DUMMY);
+		String actual = writer.getBuffer().toString();
+
+		//@formatter:off
+		String expected = "typedef enum myEnum {" + EOL +
+				"    A=4," + EOL +
+				"    One=8," + EOL +
+				"    Two=8," + EOL +
+				"    End=32" + EOL +
+		"} myEnum;" + EOL + EOL;
+		//@formatter:on
+		assertEquals(expected, actual);
+	}
+
+	@Test
+	public void testEnum_NamesOrderDifferenentThanValueOrder()
+			throws IOException, CancelledException {
+		Enum enumm = new EnumDataType("myEnum", 1);
+		enumm.add("E", 4);
+		enumm.add("C", 8);
+		enumm.add("D", 16);
+		enumm.add("B", 32);
+		enumm.add("A", 254);
+		dtWriter.write(enumm, TaskMonitor.DUMMY);
+		String actual = writer.getBuffer().toString();
+
+		//@formatter:off
+		String expected = "typedef enum myEnum {" + EOL +
+				"    E=4," + EOL +
+				"    C=8," + EOL +
+				"    D=16," + EOL +
+				"    B=32," + EOL +
+				"    A=254" + EOL +
+		"} myEnum;" + EOL + EOL;
+		//@formatter:on
 		assertEquals(expected, actual);
 	}
 

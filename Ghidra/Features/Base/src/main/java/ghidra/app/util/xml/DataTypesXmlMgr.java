@@ -30,7 +30,6 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 import ghidra.util.xml.*;
 import ghidra.xml.*;
 
@@ -245,7 +244,7 @@ public class DataTypesXmlMgr {
 	private boolean processEnum(XmlTreeNode root) {
 		XmlElement element = root.getStartElement();
 		String name = element.getAttribute("NAME");
-		String comment = getRegularComment(root);
+		String enuumComment = getRegularComment(root);
 		CategoryPath cp = getCategoryPath(element);
 		int size = XmlUtilities.parseInt(element.getAttribute("SIZE"), defaultEnumSize);
 
@@ -257,9 +256,10 @@ public class DataTypesXmlMgr {
 			XmlElement childElement = node.getStartElement();
 			String entryName = childElement.getAttribute("NAME");
 			long entryValue = XmlUtilities.parseLong(childElement.getAttribute("VALUE"));
-			enuum.add(entryName, entryValue);
+			String comment = childElement.getAttribute("COMMENT");
+			enuum.add(entryName, entryValue, comment);
 		}
-		enuum.setDescription(comment);
+		enuum.setDescription(enuumComment);
 		dataManager.addDataType(enuum, null);
 		return true;
 	}
@@ -288,6 +288,7 @@ public class DataTypesXmlMgr {
 			td.setCategoryPath(cp);
 		}
 		catch (DuplicateNameException e) {
+			log.appendMsg("Unable to place typedef '" + name + "' in category '" + cp + "'");
 		}
 
 		dataManager.addDataType(td, null);
@@ -546,11 +547,11 @@ public class DataTypesXmlMgr {
 		writeRegularComment(writer, enuum.getDescription());
 
 		String[] names = enuum.getNames();
-		Arrays.sort(names);
 		for (String name : names) {
 			attrs = new XmlAttributes();
 			attrs.addAttribute("NAME", name);
 			attrs.addAttribute("VALUE", enuum.getValue(name), true);
+			attrs.addAttribute("COMMENT", enuum.getComment(name));
 			writer.startElement("ENUM_ENTRY", attrs);
 			writer.endElement("ENUM_ENTRY");
 		}
@@ -666,8 +667,8 @@ public class DataTypesXmlMgr {
 
 	/**
 	 * Output data types in XML format for debugging purposes.
-	 * NOTE: There is no support for reading the XML produced by this
-	 * method.
+	 * NOTE: There is no support for reading the XML produced by this method.
+	 * @param dataManager the data type manager
 	 * @param outputFilename name of the output file
 	 * @throws IOException if there was a problem writing to the file
 	 */
@@ -683,9 +684,10 @@ public class DataTypesXmlMgr {
 		MessageLog log = new MessageLog();
 		DataTypesXmlMgr mgr = new DataTypesXmlMgr(dataManager, log);
 		try {
-			mgr.write(writer, TaskMonitorAdapter.DUMMY_MONITOR);
+			mgr.write(writer, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
+			// can't happen with dummy monitor
 		}
 
 		writer.close();

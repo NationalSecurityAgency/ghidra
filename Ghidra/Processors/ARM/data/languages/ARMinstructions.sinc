@@ -1878,13 +1878,20 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
 
 #See ARM Architecture reference section "Pseudocode details of addition and subtraction"
 macro add_with_carry_flags(op1,op2){
-local CYz = zext(CY);
-local CYa = carry( op1, op2 );
-local OVa = scarry( op1, op2 );
-local result = op1 + op2;
-tmpCY = CYa || carry( result, CYz );
-tmpOV = OVa ^^ scarry( result, CYz );
+  local CYz = zext(CY);
+  local result = op1 + op2;
+  tmpCY = carry( op1, op2) || carry( result, CYz );
+  tmpOV = scarry( op1, op2 ) ^^ scarry( result, CYz );
 }
+
+#Note: used for subtraction op1 - (op2 + !CY)
+#sets tmpCY if there is NO borrow
+macro sub_with_carry_flags(op1, op2){
+  local result = op1 - op2;
+  tmpCY = (op1 > op2) || (result < zext(CY));
+  tmpOV = sborrow(op1,op2) ^^ sborrow(result,zext(!CY));	
+}
+
 
 :adc^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) &  COND & c2124=5 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
 {
@@ -4653,7 +4660,7 @@ macro BitReverse_arm(val) {
   build COND;
   build rn;
   build shift1;
-  add_with_carry_flags(~rn,shift1);
+  sub_with_carry_flags(shift1,rn);
   Rd=shift1-(rn+zext(!CY));
   resultflags(Rd);
   build SBIT_CZNO;
@@ -4664,7 +4671,7 @@ macro BitReverse_arm(val) {
   build COND;
   build rn;
   build shift2;
-  add_with_carry_flags(~rn,shift2);
+  sub_with_carry_flags(shift2,rn);
   Rd=shift2-(rn+zext(!CY));
   resultflags(Rd);
   build SBIT_CZNO;
@@ -4675,7 +4682,7 @@ macro BitReverse_arm(val) {
   build COND;
   build rn;
   build shift3;
-  add_with_carry_flags(~rn,shift3);
+  sub_with_carry_flags(shift3,rn);
   Rd=shift3-(rn+zext(!CY));
   resultflags(Rd);
   build SBIT_CZNO;
@@ -4686,7 +4693,7 @@ macro BitReverse_arm(val) {
   build COND;
   build rn;
   build shift1;
-  add_with_carry_flags(~rn,shift1);
+  sub_with_carry_flags(shift1,rn);
   local dest:4=shift1-(rn+zext(!CY));
   resultflags(dest);
   build SBIT_CZNO;
@@ -4699,7 +4706,7 @@ macro BitReverse_arm(val) {
   build COND;
   build rn;
   build shift2;
-  add_with_carry_flags(~rn,shift2);
+  sub_with_carry_flags(shift2,rn);
   local dest:4=shift2-(rn + zext(!CY));
   resultflags(dest);
   build SBIT_CZNO;
@@ -4712,7 +4719,7 @@ macro BitReverse_arm(val) {
   build COND;
   build rn;
   build shift3;
-  add_with_carry_flags(~rn,shift3);
+  sub_with_carry_flags(shift3,rn);
   local dest:4=shift3-(rn + zext(!CY));
   resultflags(dest);
   build SBIT_CZNO;
@@ -4785,7 +4792,7 @@ macro BitReverse_arm(val) {
   build COND;
   build rn;
   build shift1;
-  add_with_carry_flags(rn,~shift1);
+  sub_with_carry_flags(rn,shift1);
   Rd = rn-(shift1+zext(!CY));
   resultflags(Rd);
   build SBIT_CZNO;
@@ -4796,7 +4803,7 @@ macro BitReverse_arm(val) {
   build COND;
   build rn;
   build shift2;
-  add_with_carry_flags(rn,~shift2);
+  sub_with_carry_flags(rn,shift2);
   Rd = rn-(shift2 + zext(!CY));
   resultflags(Rd);
   build SBIT_CZNO;
@@ -4807,7 +4814,7 @@ macro BitReverse_arm(val) {
   build COND;
   build rn;
   build shift3;
-  add_with_carry_flags(rn,~shift3);
+  sub_with_carry_flags(rn,shift3);
   Rd = rn-(shift3+zext(!CY));
   resultflags(Rd);
   build SBIT_CZNO;
@@ -4818,7 +4825,7 @@ macro BitReverse_arm(val) {
   build COND;
   build rn;
   build shift1;
-  add_with_carry_flags(rn,~shift1);
+  sub_with_carry_flags(rn,shift1);
   local dest:4 = rn-(shift1 + zext(!CY));
   resultflags(dest);
   build SBIT_CZNO;
@@ -4831,7 +4838,7 @@ macro BitReverse_arm(val) {
   build COND;
   build rn;
   build shift2;
-  add_with_carry_flags(rn,~shift2);
+  sub_with_carry_flags(rn,shift2);
   local dest:4 = rn-(shift2+zext(!CY));
   resultflags(dest);
   build SBIT_CZNO;
@@ -4844,7 +4851,7 @@ macro BitReverse_arm(val) {
   build COND;
   build rn;
   build shift3;
-  add_with_carry_flags(rn,~shift3);
+  sub_with_carry_flags(rn,shift3);
   local dest:4 = rn-(shift3 + zext(!CY));
   resultflags(dest);
   build SBIT_CZNO;

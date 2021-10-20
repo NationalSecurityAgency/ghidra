@@ -29,7 +29,7 @@ import ghidra.program.model.data.Enum;
 import ghidra.program.model.data.EnumDataType;
 import ghidra.program.util.ChangeManager;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for Enum data types.
@@ -39,10 +39,6 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 	private ProgramDB program;
 	private DataTypeManagerDB dataMgr;
 	private int transactionID;
-
-	public EnumTest() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -223,7 +219,7 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 		Enum enummDT = (Enum) dataMgr.resolve(enumm, null);
 		assertNotNull(enummDT);
 
-		c.remove(enummDT, TaskMonitorAdapter.DUMMY_MONITOR);
+		c.remove(enummDT, TaskMonitor.DUMMY);
 		assertNull(c.getDataType("Color"));
 
 		assertTrue(enummDT.isDeleted());
@@ -294,6 +290,7 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 			Assert.fail("Should have gotten no such element exception!");
 		}
 		catch (NoSuchElementException e) {
+			// expected
 		}
 	}
 
@@ -335,27 +332,56 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 		myEnum.add("Green", 15);
 		myEnum.add("Blue", 20);
 		assertTrue(enummDT.isEquivalent(myEnum));
+	}
 
+	@Test
+	public void testNameSort() {
+
+		Enum myEnum = new EnumDataType("Color", 1);
+		myEnum.add("Red", 1);
+		myEnum.add("Green", 5);
+		myEnum.add("Blue", 10);
+
+		String[] names = myEnum.getNames();
+		assertEquals("Red", names[0]);
+		assertEquals("Green", names[1]);
+		assertEquals("Blue", names[2]);
+
+		myEnum = new EnumDataType("Color", 1);
+		myEnum.add("Red", 20);
+		myEnum.add("Green", 1);
+		myEnum.add("Blue", 3);
+
+		names = myEnum.getNames();
+		assertEquals("Green", names[0]);
+		assertEquals("Blue", names[1]);
+		assertEquals("Red", names[2]);
+
+		// multiple names per value, requires sub-sorting
+		myEnum = new EnumDataType("Color", 1);
+		myEnum.add("Red", 20);
+		myEnum.add("Pink", 20);
+		myEnum.add("Salmon", 20);
+		myEnum.add("Green", 1);
+		myEnum.add("AnotherGreen", 1);
+		myEnum.add("Blue", 3);
+
+		names = myEnum.getNames();
+		assertEquals("AnotherGreen", names[0]);
+		assertEquals("Green", names[1]);
+		assertEquals("Blue", names[2]);
+		assertEquals("Pink", names[3]);
+		assertEquals("Red", names[4]);
+		assertEquals("Salmon", names[5]);
 	}
 
 	private void waitForListenerCount(DomainObjListener listener, int count) {
-		int cnt = 0;
-		try {
-			while (cnt++ < 10 && listener.getCount() != count) {
-				Thread.sleep(100);
-			}
-			Thread.sleep(300);
-		}
-		catch (InterruptedException e) {
-		}
+		waitForCondition(() -> listener.getCount() == count);
 	}
 
 	private class DomainObjListener implements DomainObjectListener {
 		private int count;
 
-		/* (non-Javadoc)
-		 * @see ghidra.framework.model.DomainObjectListener#domainObjectChanged(ghidra.framework.model.DomainObjectChangedEvent)
-		 */
 		@Override
 		public void domainObjectChanged(DomainObjectChangedEvent ev) {
 			for (int i = 0; i < ev.numRecords(); i++) {

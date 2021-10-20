@@ -150,7 +150,6 @@ public class GhidraLauncher {
 
 		// this is each jar file, sorted for loading consistency
 		List<String> jars = findJarsInDir(patchDir);
-		Collections.sort(jars);
 		pathList.addAll(jars);
 	}
 
@@ -205,8 +204,8 @@ public class GhidraLauncher {
 			throw new FileNotFoundException(LIBDEPS + " file was not found!  Please do a prepDev.");
 		}
 
-		// Add the jars to the path list (don't add duplicates)
-		Set<String> pathSet = new HashSet<>();
+		// Add the jars to the path list (don't add duplicates, preserve order)
+		Set<String> pathSet = new LinkedHashSet<>();
 		try (BufferedReader reader =
 			new BufferedReader(new FileReader(libraryDependenciesFile.getFile(false)))) {
 			String line;
@@ -233,21 +232,22 @@ public class GhidraLauncher {
 
 	/**
 	 * Searches the given directory (non-recursively) for jars and returns their paths in a list.
+	 * The paths will be sorted by jar file name.
 	 * 
-	 * @param dir The directory to search for jars in.
-	 * @return A list of discovered jar paths.
+	 * @param dir The directory to search for jars in
+	 * @return A list of discovered jar paths, sorted by jar file name
 	 */
 	public static List<String> findJarsInDir(ResourceFile dir) {
-		List<String> list = new ArrayList<>();
+		Set<ResourceFile> set = new TreeSet<>((a, b) -> a.getName().compareTo(b.getName()));
 		ResourceFile[] names = dir.listFiles();
 		if (names != null) {
 			for (ResourceFile file : names) {
 				if (file.getName().endsWith(".jar")) {
-					list.add(file.getAbsolutePath());
+					set.add(file);
 				}
 			}
 		}
-		return list;
+		return set.stream().map(f -> f.getAbsolutePath()).collect(Collectors.toList());
 	}
 
 	/**

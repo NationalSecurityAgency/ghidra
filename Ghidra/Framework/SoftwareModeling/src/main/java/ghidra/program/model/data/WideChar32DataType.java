@@ -24,7 +24,7 @@ import ghidra.util.StringUtilities;
 
 public class WideChar32DataType extends BuiltIn implements ArrayStringable, DataTypeWithCharset {
 
-	/** A statically defined WideCharDataType instance.*/
+	/** A statically defined WideCharDataType instance. */
 	public final static WideChar32DataType dataType = new WideChar32DataType();
 
 	public WideChar32DataType() {
@@ -78,6 +78,23 @@ public class WideChar32DataType extends BuiltIn implements ArrayStringable, Data
 			// ignore
 		}
 		return null;
+	}
+
+	@Override
+	public boolean isEncodable() {
+		return true;
+	}
+
+	@Override
+	public byte[] encodeValue(Object value, MemBuffer buf, Settings settings, int length)
+			throws DataTypeEncodeException {
+		return encodeCharacterValue(value, buf, settings);
+	}
+
+	@Override
+	public byte[] encodeRepresentation(String repr, MemBuffer buf, Settings settings, int length)
+			throws DataTypeEncodeException {
+		return encodeCharacterRepresentation(repr, buf, settings);
 	}
 
 	@Override

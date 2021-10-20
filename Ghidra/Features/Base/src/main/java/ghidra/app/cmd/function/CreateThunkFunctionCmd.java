@@ -796,6 +796,9 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 		}
 		// check the parent varnode
 		Register register = program.getRegister(regVarnode);
+		if (register == null) {
+			return false;
+		}
 		Register parentRegister = register.getParentRegister();
 		if (parentRegister == null) {
 			return false;

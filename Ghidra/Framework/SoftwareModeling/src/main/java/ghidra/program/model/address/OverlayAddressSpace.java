@@ -16,17 +16,17 @@
 package ghidra.program.model.address;
 
 public class OverlayAddressSpace extends AbstractAddressSpace {
-    public static final String OV_SEPARATER = ":";
+	public static final String OV_SEPARATER = ":";
 
 	private AddressSpace originalSpace;
 
 	private long databaseKey;
 
-	public OverlayAddressSpace(String name, AddressSpace originalSpace, int unique, 
+	public OverlayAddressSpace(String name, AddressSpace originalSpace, int unique,
 			long minOffset, long maxOffset) {
 		super(name, originalSpace.getSize(), originalSpace.getAddressableUnitSize(),
-					originalSpace.getType(), unique);
-		
+			originalSpace.getType(), unique);
+
 		this.originalSpace = originalSpace;
 		this.setShowSpaceName(true);
 
@@ -37,7 +37,7 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 		minAddress = new GenericAddress(this, minOffset);
 		maxAddress = new GenericAddress(this, maxOffset);
 	}
-	
+
 	//	public Address addNoWrap(Address addr, long displacement) throws AddressOverflowException {
 //		addr = super.addNoWrap(addr, displacement);
 //		
@@ -59,21 +59,22 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 //	}
 //
 	@Override
-    public Address getAddress(String addrString) throws AddressFormatException {
+	public Address getAddress(String addrString) throws AddressFormatException {
 		addrString = addrString.replaceAll("::", ":");
 
 		int firstColonPos = addrString.indexOf(":");
 		int lastColonPos = addrString.lastIndexOf(":");
 
 		if (firstColonPos != lastColonPos) {
-			String middleName = addrString.substring(firstColonPos+1, lastColonPos);
+			String middleName = addrString.substring(firstColonPos + 1, lastColonPos);
 			if (middleName.equals(originalSpace.getName())) {
-				addrString = addrString.substring(0, firstColonPos)+addrString.substring(lastColonPos);
+				addrString =
+					addrString.substring(0, firstColonPos) + addrString.substring(lastColonPos);
 			}
 		}
 		return super.getAddress(addrString);
 //		return translateAddress(super.getAddress(addrString));
-		
+
 	}
 
 //	public Address next(Address addr) {
@@ -93,7 +94,7 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 //	}
 
 	@Override
-    public long subtract(Address addr1, Address addr2) {
+	public long subtract(Address addr1, Address addr2) {
 		AddressSpace space1 = addr1.getAddressSpace();
 		AddressSpace space2 = addr2.getAddressSpace();
 		if (space1.equals(this)) {
@@ -104,9 +105,9 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 		}
 		if (!space1.equals(space2)) {
 			throw new IllegalArgumentException("Address are in different spaces " +
-						              addr1.getAddressSpace().getName() + " != " + addr2.getAddressSpace().getName());
+				addr1.getAddressSpace().getName() + " != " + addr2.getAddressSpace().getName());
 		}
-		return addr1.getOffset()-addr2.getOffset();
+		return addr1.getOffset() - addr2.getOffset();
 	}
 
 //	public Address subtractNoWrap(Address addr, long displacement) throws AddressOverflowException {
@@ -116,59 +117,60 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 //	public Address subtractWrap(Address addr, long displacement) {
 //		return translateAddress(super.subtractWrap(addr, displacement));
 //	}
-	
+
 	@Override
-    public boolean isOverlaySpace() {
+	public boolean isOverlaySpace() {
 		return originalSpace != null;
 	}
-	
+
 	public AddressSpace getOverlayedSpace() {
 		return originalSpace;
 	}
 
 	@Override
-    public AddressSpace getPhysicalSpace() {
+	public AddressSpace getPhysicalSpace() {
 		return originalSpace.getPhysicalSpace();
 	}
 
 	@Override
-    public boolean hasMappedRegisters() {
+	public boolean hasMappedRegisters() {
 		return originalSpace.hasMappedRegisters();
 	}
-	
+
 	public long getMinOffset() {
 		return minOffset;
 	}
+
 	public long getMaxOffset() {
 		return maxOffset;
 	}
-	
-	public boolean contains(long offset) { 
-		return (offset >= minOffset && offset <= maxOffset);
+
+	public boolean contains(long offset) {
+		return Long.compareUnsigned(minOffset, offset) <= 0 &&
+			Long.compareUnsigned(offset, maxOffset) <= 0;
 	}
-	
+
 	@Override
-    public Address getAddressInThisSpaceOnly(long offset) {
+	public Address getAddressInThisSpaceOnly(long offset) {
 		return new GenericAddress(offset, this);
 	}
-	
+
 	@Override
-    public Address getAddress(long offset) {
+	public Address getAddress(long offset) {
 		if (contains(offset)) {
 			return new GenericAddress(this, offset);
 		}
 		return originalSpace.getAddress(offset);
 	}
-	
+
 	@Override
-    protected Address getUncheckedAddress(long offset) {
+	protected Address getUncheckedAddress(long offset) {
 		return new GenericAddress(offset, this);
 	}
-	
+
 	@Override
-    public Address getOverlayAddress(Address addr) {
-		if (getOverlayedSpace().equals(addr.getAddressSpace()))
-		{
+	public Address getOverlayAddress(Address addr) {
+		if (getOverlayedSpace().equals(addr.getAddressSpace())) {
 			if (contains(addr.getOffset())) {
 				return new GenericAddress(this, addr.getOffset());
 			}
@@ -178,25 +180,27 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 
 	/**
 	 * If the given address is outside the overlay block, then the address is tranlated to an
-	 * address in the base space with the same offset, otherwise (if the address exists in the overlay
-	 * block), it is returned
+	 * address in the base space with the same offset, otherwise (if the address exists in the
+	 * overlay block), it is returned
+	 * 
 	 * @param addr the address to translate to the base space if it is outside the overlay block
 	 * @return either the given address if it is contained in the overlay memory block or an address
-	 * in the base space with the same offset as the given address.
+	 *         in the base space with the same offset as the given address.
 	 */
 	public Address translateAddress(Address addr) {
 		return translateAddress(addr, false);
 	}
+
 	/**
-	 * Tranlated an overlay-space address (addr, which may exceed the bounds of the overlay space) 
-	 * to an address in the base space with the same offset.
-	 * If forceTranslation is false and addr is contained within the overlay-space 
-	 * the original addr is returned.
+	 * Tranlated an overlay-space address (addr, which may exceed the bounds of the overlay space)
+	 * to an address in the base space with the same offset. If forceTranslation is false and addr
+	 * is contained within the overlay-space the original addr is returned.
+	 * 
 	 * @param addr the address to translate to the base space
-	 * @param forceTranslation if true addr will be translated even if addr falls within the 
-	 * bounds of this overlay-space.
+	 * @param forceTranslation if true addr will be translated even if addr falls within the bounds
+	 *            of this overlay-space.
 	 * @return either the given address if it is contained in the overlay memory block or an address
-	 * in the base space with the same offset as the given address.
+	 *         in the base space with the same offset as the given address.
 	 */
 	public Address translateAddress(Address addr, boolean forceTranslation) {
 		if (addr == null) {
@@ -207,18 +211,19 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 		}
 		return new GenericAddress(originalSpace, addr.getOffset());
 	}
-	
+
 	/**
 	 * @return the ID of the address space underlying this space
 	 */
-    public int getBaseSpaceID() {
+	public int getBaseSpaceID() {
 		return originalSpace.getSpaceID();
 	}
-	
+
 	@Override
-    public String toString() {
-		return super.toString()+OV_SEPARATER;
+	public String toString() {
+		return super.toString() + OV_SEPARATER;
 	}
+
 	public void setName(String newName) {
 		name = newName;
 	}
@@ -226,12 +231,13 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 	public void setDatabaseKey(long key) {
 		databaseKey = key;
 	}
+
 	public long getDatabaseKey() {
 		return databaseKey;
 	}
-	
+
 	@Override
-    public boolean equals(Object obj) {
+	public boolean equals(Object obj) {
 		if (obj == this) {
 			return true;
 		}
@@ -241,11 +247,11 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 		if (!(obj instanceof OverlayAddressSpace)) {
 			return false;
 		}
-		OverlayAddressSpace s = (OverlayAddressSpace)obj;
-		
-        return	originalSpace.equals(s.originalSpace) &&
-        	name.equals(s.name) &&
-        	minOffset == s.minOffset &&
-        	maxOffset == s.maxOffset;	
+		OverlayAddressSpace s = (OverlayAddressSpace) obj;
+
+		return originalSpace.equals(s.originalSpace) &&
+			name.equals(s.name) &&
+			minOffset == s.minOffset &&
+			maxOffset == s.maxOffset;
 	}
 }

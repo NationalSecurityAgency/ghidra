@@ -15,20 +15,21 @@
  */
 package ghidra.program.model.data;
 
-import static ghidra.program.model.data.EndianSettingsDefinition.*;
-import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.*;
+import static ghidra.program.model.data.EndianSettingsDefinition.ENDIAN;
+import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER;
 import static ghidra.program.model.data.StringLayoutEnum.*;
-import static ghidra.program.model.data.TranslationSettingsDefinition.*;
+import static ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION;
 
-import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.*;
+import java.nio.charset.*;
+import java.util.*;
 
 import generic.stl.Pair;
 import ghidra.docking.settings.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER_ENUM;
+import ghidra.program.model.data.StringRenderParser.StringParseException;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.mem.*;
@@ -37,10 +38,10 @@ import ghidra.util.*;
 /**
  * Represents an instance of a string in a {@link MemBuffer}.
  * <p>
- * This class handles all the details of detecting a terminated string's length,
- * converting the bytes in the membuffer into a java native String, and converting
- * the raw String into a formatted human-readable version, according to the
- * various {@link SettingsDefinition}s attached to the string data location.
+ * This class handles all the details of detecting a terminated string's length, converting the
+ * bytes in the membuffer into a java native String, and converting the raw String into a formatted
+ * human-readable version, according to the various {@link SettingsDefinition}s attached to the
+ * string data location.
  * <p>
  */
 public class StringDataInstance {
@@ -69,13 +70,12 @@ public class StringDataInstance {
 	}
 
 	/**
-	 * Returns true if the specified {@link DataType} is (or could be) a
-	 * string.
+	 * Returns true if the specified {@link DataType} is (or could be) a string.
 	 * <p>
-	 * Arrays of char-like elements (see {@link ArrayStringable}) are treated
-	 * as string data types.  The actual data instance needs to be inspected
-	 * to determine if the array is an actual string.
+	 * Arrays of char-like elements (see {@link ArrayStringable}) are treated as string data types.
+	 * The actual data instance needs to be inspected to determine if the array is an actual string.
 	 * <p>
+	 * 
 	 * @param dt DataType to test
 	 * @return boolean true if data type is or could be a string
 	 */
@@ -91,7 +91,7 @@ public class StringDataInstance {
 	 * Returns true if the {@link Data} instance is one of the many 'char' data types.
 	 * 
 	 * @param data {@link Data} instance to test, null ok
-	 * @return boolean true if char data 
+	 * @return boolean true if char data
 	 */
 	public static boolean isChar(Data data) {
 		if (data == null) {
@@ -103,14 +103,17 @@ public class StringDataInstance {
 	}
 
 	/**
-	 * Returns a string representation of the character(s) contained in the byte array, suitable
-	 * for display as a single character, or as a sequence of characters.
+	 * Returns a string representation of the character(s) contained in the byte array, suitable for
+	 * display as a single character, or as a sequence of characters.
 	 * <p>
 	 * 
-	 * @param dataType the {@link DataType} of the element containing the bytes (most likely a ByteDataType)
+	 * @param dataType the {@link DataType} of the element containing the bytes (most likely a
+	 *            ByteDataType)
 	 * @param bytes the big-endian ordered bytes to convert to a char representation
-	 * @param settings the {@link Settings} object for the location where the bytes came from, or null
-	 * @return formatted string (typically with quotes around the contents): single character: 'a', multiple characters: "a\x12bc"
+	 * @param settings the {@link Settings} object for the location where the bytes came from, or
+	 *            null
+	 * @return formatted string (typically with quotes around the contents): single character: 'a',
+	 *         multiple characters: "a\x12bc"
 	 */
 	public static String getCharRepresentation(DataType dataType, byte[] bytes, Settings settings) {
 		if (bytes == null || bytes.length == 0) {
@@ -127,11 +130,11 @@ public class StringDataInstance {
 	}
 
 	/**
-	 * Determine if bytes contain only a single ASCII value within 
-	 * least-significant-byte of big-endian byte array
+	 * Determine if bytes contain only a single ASCII value within least-significant-byte of
+	 * big-endian byte array
+	 * 
 	 * @param bytes value byte array in big-endian order
-	 * @return true if bytes contain a single ASCII value within 
-	 * least-significant-byte
+	 * @return true if bytes contain a single ASCII value within least-significant-byte
 	 */
 	private static boolean isSingleAsciiValue(byte[] bytes) {
 
@@ -150,8 +153,9 @@ public class StringDataInstance {
 	/**
 	 * Returns a new {@link StringDataInstance} using the bytes in the data codeunit.
 	 * <p>
+	 * 
 	 * @param data {@link Data} item
-	 * @return new {@link StringDataInstance}, never NULL.  See {@link #NULL_INSTANCE}.
+	 * @return new {@link StringDataInstance}, never NULL. See {@link #NULL_INSTANCE}.
 	 */
 	public static StringDataInstance getStringDataInstance(Data data) {
 		if (data == null) {
@@ -176,11 +180,12 @@ public class StringDataInstance {
 	/**
 	 * Returns a new {@link StringDataInstance} using the bytes in the MemBuffer.
 	 * <p>
+	 * 
 	 * @param dataType {@link DataType} of the bytes in the buffer.
 	 * @param buf memory buffer containing the bytes.
 	 * @param settings the Settings object
 	 * @param length the length of the data.
-	 * @return new {@link StringDataInstance}, never NULL.  See {@link #NULL_INSTANCE}.
+	 * @return new {@link StringDataInstance}, never NULL. See {@link #NULL_INSTANCE}.
 	 */
 	public static StringDataInstance getStringDataInstance(DataType dataType, MemBuffer buf,
 			Settings settings, int length) {
@@ -220,8 +225,8 @@ public class StringDataInstance {
 	 */
 	private static final String BOM_RESULT_STR = "\ufeff";
 
-	private static final int SIZEOF_PASCAL255_STR_LEN_FIELD = 1;
-	private static final int SIZEOF_PASCAL64k_STR_LEN_FIELD = 2;
+	static final int SIZEOF_PASCAL255_STR_LEN_FIELD = 1;
+	static final int SIZEOF_PASCAL64k_STR_LEN_FIELD = 2;
 
 	private final String charsetName;
 	private final int charSize;
@@ -251,35 +256,35 @@ public class StringDataInstance {
 	}
 
 	/**
-	 * Creates a string instance using the data in the {@link MemBuffer} and the settings
-	 * pulled from the {@link AbstractStringDataType string data type}.
+	 * Creates a string instance using the data in the {@link MemBuffer} and the settings pulled
+	 * from the {@link AbstractStringDataType string data type}.
 	 * 
-	 * @param dataType {@link DataType} of the string, either a {@link AbstractStringDataType} derived type
-	 * or an {@link ArrayStringable} element-of-char-array type. 
+	 * @param dataType {@link DataType} of the string, either a {@link AbstractStringDataType}
+	 *            derived type or an {@link ArrayStringable} element-of-char-array type.
 	 * @param settings {@link Settings} attached to the data location.
 	 * @param buf {@link MemBuffer} containing the data.
-	 * @param length Length passed from the caller to the datatype.  -1 indicates a 'probe'
-	 * trying to detect the length of an unknown string, otherwise it will be the length
-	 * of the containing field of the data instance.
+	 * @param length Length passed from the caller to the datatype. -1 indicates a 'probe' trying to
+	 *            detect the length of an unknown string, otherwise it will be the length of the
+	 *            containing field of the data instance.
 	 */
 	public StringDataInstance(DataType dataType, Settings settings, MemBuffer buf, int length) {
 		this(dataType, settings, buf, length, false);
 	}
 
 	/**
-	 * Creates a string instance using the data in the {@link MemBuffer} and the settings
-	 * pulled from the {@link AbstractStringDataType string data type}.
+	 * Creates a string instance using the data in the {@link MemBuffer} and the settings pulled
+	 * from the {@link AbstractStringDataType string data type}.
 	 * 
-	 * @param dataType {@link DataType} of the string, either a {@link AbstractStringDataType} derived type
-	 * or an {@link ArrayStringable} element-of-char-array type. 
+	 * @param dataType {@link DataType} of the string, either a {@link AbstractStringDataType}
+	 *            derived type or an {@link ArrayStringable} element-of-char-array type.
 	 * @param settings {@link Settings} attached to the data location.
 	 * @param buf {@link MemBuffer} containing the data.
-	 * @param length Length passed from the caller to the datatype.  -1 indicates a 'probe'
-	 * trying to detect the length of an unknown string, otherwise it will be the length
-	 * of the containing field of the data instance.
-	 * @param isArrayElement boolean flag, true indicates that the specified dataType is an
-	 * element in an array (ie. char[] vs. just a plain char), causing the string layout
-	 * to be forced to {@link StringLayoutEnum#NULL_TERMINATED_BOUNDED}
+	 * @param length Length passed from the caller to the datatype. -1 indicates a 'probe' trying to
+	 *            detect the length of an unknown string, otherwise it will be the length of the
+	 *            containing field of the data instance.
+	 * @param isArrayElement boolean flag, true indicates that the specified dataType is an element
+	 *            in an array (ie. char[] vs. just a plain char), causing the string layout to be
+	 *            forced to {@link StringLayoutEnum#NULL_TERMINATED_BOUNDED}
 	 */
 	public StringDataInstance(DataType dataType, Settings settings, MemBuffer buf, int length,
 			boolean isArrayElement) {
@@ -337,7 +342,7 @@ public class StringDataInstance {
 		return StringLayoutEnum.NULL_TERMINATED_BOUNDED;
 	}
 
-	private static String getCharsetNameFromDataTypeOrSettings(DataType dataType,
+	static String getCharsetNameFromDataTypeOrSettings(DataType dataType,
 			Settings settings) {
 		if (dataType instanceof BitFieldDataType) {
 			dataType = ((BitFieldDataType) dataType).getBaseDataType();
@@ -388,32 +393,31 @@ public class StringDataInstance {
 	}
 
 	/**
-	 * Returns the length, in bytes, of the string data object contained in the
-	 * {@link MemBuffer}, or -1 if the length could not be determined.
+	 * Returns the length, in bytes, of the string data object contained in the {@link MemBuffer},
+	 * or -1 if the length could not be determined.
 	 * <p>
 	 * This is not the same as the number of characters in the string, or the number of bytes
-	 * occupied by the characters.  For instance, pascal strings have a 1 or 2 byte length
-	 * field that increases the size of the string data object beyond the characters in the
-	 * string, and null terminated strings have don't include the null character, but its
-	 * presence is included in the size of the string object.
+	 * occupied by the characters. For instance, pascal strings have a 1 or 2 byte length field that
+	 * increases the size of the string data object beyond the characters in the string, and null
+	 * terminated strings have don't include the null character, but its presence is included in the
+	 * size of the string object.
 	 * <p>
-	 * For length-specified string data types that do not use null-terminators and with a
-	 * known data instance length (ie. not a probe), this method just returns the
-	 * value specified in the constructor {@code length} parameter, otherwise a null-terminator
-	 * is searched for.
+	 * For length-specified string data types that do not use null-terminators and with a known data
+	 * instance length (ie. not a probe), this method just returns the value specified in the
+	 * constructor {@code length} parameter, otherwise a null-terminator is searched for.
 	 * <p>
-	 * When searching for a null-terminator, the constructor {@code length} parameter will
-	 * be respected or ignored depending on the {@link StringLayoutEnum}.
+	 * When searching for a null-terminator, the constructor {@code length} parameter will be
+	 * respected or ignored depending on the {@link StringLayoutEnum}.
 	 * <p>
-	 * When the length parameter is ignored (ie. "unbounded" searching), the search is
-	 * limited to {@link #MAX_STRING_LENGTH} bytes.
+	 * When the length parameter is ignored (ie. "unbounded" searching), the search is limited to
+	 * {@link #MAX_STRING_LENGTH} bytes.
 	 * <p>
-	 * The MemBuffer's endian'ness is used to determine which end of the padded character
-	 * field contains our n-bit character which will be tested for null-ness.  (not the
-	 * endian'ness of the character set name - ie. "UTF-16BE")
+	 * The MemBuffer's endian'ness is used to determine which end of the padded character field
+	 * contains our n-bit character which will be tested for null-ness. (not the endian'ness of the
+	 * character set name - ie. "UTF-16BE")
 	 *
-	 * @return length of the string (NOT including null term if null term probe), in bytes,
-	 * or -1 if no terminator found.
+	 * @return length of the string (NOT including null term if null term probe), in bytes, or -1 if
+	 *         no terminator found.
 	 */
 	public int getStringLength() {
 		if (stringLayout.isPascal()) {
@@ -457,8 +461,8 @@ public class StringDataInstance {
 	/**
 	 * Returns true if the string should have a trailing NULL character and doesn't.
 	 *
-	 * @return boolean true if the trailing NULL character is missing, false if string type
-	 * doesn't need a trailing NULL character or if it is present.
+	 * @return boolean true if the trailing NULL character is missing, false if string type doesn't
+	 *         need a trailing NULL character or if it is present.
 	 */
 	public boolean isMissingNullTerminator() {
 
@@ -502,20 +506,20 @@ public class StringDataInstance {
 	}
 
 	/**
-	 * Returns the string contained in the specified {@link MemBuffer}, or null if
-	 * all the bytes of the string could not be read.
+	 * Returns the string contained in the specified {@link MemBuffer}, or null if all the bytes of
+	 * the string could not be read.
 	 * <p>
 	 * This method deals in characters of size {@link #charSize}, that might be
-	 * {@link #paddedCharSize padded} to a larger size.  The raw n-byte characters
-	 * are converted into a Java String using a Java {@link Charset} or by
-	 * using a custom Ghidra conversion.  (see convertBytesToStringCustomCharset)
+	 * {@link #paddedCharSize padded} to a larger size. The raw n-byte characters are converted into
+	 * a Java String using a Java {@link Charset} or by using a custom Ghidra conversion. (see
+	 * convertBytesToStringCustomCharset)
 	 * <p>
-	 * The MemBuffer's endian'ness is used to determine which end of the
-	 * {@link #paddedCharSize padded } field contains our {@link #charSize}
-	 * character bytes which will be used to create the java String.
+	 * The MemBuffer's endian'ness is used to determine which end of the {@link #paddedCharSize
+	 * padded } field contains our {@link #charSize} character bytes which will be used to create
+	 * the java String.
 	 *
-	 * @return String containing the characters in buf or null if unable to read all
-	 * {@code length} bytes from the membuffer.
+	 * @return String containing the characters in buf or null if unable to read all {@code length}
+	 *         bytes from the membuffer.
 	 */
 	public String getStringValue() {
 		String str = getStringValueNoTrim();
@@ -633,6 +637,21 @@ public class StringDataInstance {
 		return unpaddedBytes;
 	}
 
+	private byte[] convertUnpaddedToPadded(byte[] unpaddedBytes) {
+		if (paddedCharSize == charSize || unpaddedBytes == null) {
+			return unpaddedBytes;
+		}
+
+		byte[] paddedBytes = new byte[(unpaddedBytes.length / charSize) * paddedCharSize];
+		for (int srcOffset = 0, destOffset = buf.isBigEndian() ? paddedCharSize - charSize
+				: 0; srcOffset < unpaddedBytes.length; srcOffset += charSize, destOffset +=
+					paddedCharSize) {
+			System.arraycopy(unpaddedBytes, srcOffset, paddedBytes, destOffset, charSize);
+		}
+
+		return paddedBytes;
+	}
+
 	private Endian getMemoryEndianness() {
 		return buf.isBigEndian() ? Endian.BIG : Endian.LITTLE;
 	}
@@ -642,6 +661,17 @@ public class StringDataInstance {
 		return (cs != null)
 				? new String(bytes, aci.byteStartOffset, bytes.length - aci.byteStartOffset, cs)
 				: convertBytesToStringCustomCharset(bytes, aci);
+	}
+
+	private AdjustedCharsetInfo getAdjustedCharsetInfo() {
+		if (length == -1 && getStringLength() == -1) {
+			return getAdjustedCharsetInfo(new byte[] {});
+		}
+		byte[] stringBytes = convertPaddedToUnpadded(getStringBytes());
+		if (stringBytes == null) {
+			return getAdjustedCharsetInfo(new byte[] {});
+		}
+		return getAdjustedCharsetInfo(stringBytes);
 	}
 
 	private AdjustedCharsetInfo getAdjustedCharsetInfo(byte[] bytes) {
@@ -712,9 +742,9 @@ public class StringDataInstance {
 	/**
 	 * Returns a formatted version of the string returned by {@link #getStringValue()}.
 	 * <p>
-	 * The resulting string will be formatted with quotes around the parts that contain
-	 * plain ASCII alpha characters (and simple escape sequences), and out-of-range
-	 * byte-ish values listed as comma separated hex-encoded values:
+	 * The resulting string will be formatted with quotes around the parts that contain plain ASCII
+	 * alpha characters (and simple escape sequences), and out-of-range byte-ish values listed as
+	 * comma separated hex-encoded values:
 	 * <p>
 	 * Example (quotes are part of result): {@code "Test\tstring",01,02,"Second\npart",00}
 	 *
@@ -875,6 +905,7 @@ public class StringDataInstance {
 	 * {@link TranslationSettingsDefinition#getTranslatedValue(Settings) translated settings}
 	 * string.
 	 * <p>
+	 * 
 	 * @return previously translated string.
 	 */
 	public String getTranslatedValue() {
@@ -882,8 +913,8 @@ public class StringDataInstance {
 	}
 
 	/**
-	 * Returns true if the user should be shown the translated value of the string instead
-	 * of the real value.
+	 * Returns true if the user should be shown the translated value of the string instead of the
+	 * real value.
 	 *
 	 * @return boolean true if should show previously translated value.
 	 */
@@ -892,8 +923,8 @@ public class StringDataInstance {
 	}
 
 	/**
-	 * Convert a char value (or sequence of char values) in memory into its canonical unicode representation, using
-	 * attached charset and encoding information.
+	 * Convert a char value (or sequence of char values) in memory into its canonical unicode
+	 * representation, using attached charset and encoding information.
 	 * <p>
 	 *
 	 * @return String containing the representation of the char.
@@ -978,12 +1009,13 @@ public class StringDataInstance {
 	}
 
 	/**
-	 * Returns a new {@link StringDataInstance} that points to the string characters
-	 * that start at {@code byteOffset} from the start of this instance.
+	 * Returns a new {@link StringDataInstance} that points to the string characters that start at
+	 * {@code byteOffset} from the start of this instance.
 	 * <p>
 	 * If the requested offset is not valid, the base string instance (itself) will be returned
 	 * instead of a new instance.
 	 * <p>
+	 * 
 	 * @param byteOffset number of bytes from start of data instance to start new instance.
 	 * @return new StringDataInstance, or <code>this</code> if offset not valid.
 	 */
@@ -999,21 +1031,22 @@ public class StringDataInstance {
 	}
 
 	/**
-	 * Create a new {@link StringDataInstance} that points to a portion of this
-	 * instance, starting at a character offset (whereever that may be) into the data.
+	 * Create a new {@link StringDataInstance} that points to a portion of this instance, starting
+	 * at a character offset (whereever that may be) into the data.
 	 * <p>
-	 * @param offsetChars number of characters from the beginning of the string to start
-	 * the new StringDataInstance.
+	 * 
+	 * @param offsetChars number of characters from the beginning of the string to start the new
+	 *            StringDataInstance.
 	 * @return new {@link StringDataInstance} pointing to a subset of characters, or the
-	 * <code>this</code> instance if there was an error.
+	 *         <code>this</code> instance if there was an error.
 	 */
 	public StringDataInstance getCharOffcut(int offsetChars) {
 		return getByteOffcut(getCharOffset(offsetChars));
 	}
 
 	/**
-	 * Maps a {@link StringDataInstance}'s layout and charset info into the best String
-	 * DataType that can handle this type of data instance.
+	 * Maps a {@link StringDataInstance}'s layout and charset info into the best String DataType
+	 * that can handle this type of data instance.
 	 * <p>
 	 * An entry with a null charset name is equivalent to any charset.
 	 *
@@ -1041,11 +1074,12 @@ public class StringDataInstance {
 	}
 
 	/**
-	 * Maps a {@link StringDataInstance} (this type) to the String DataType that best
-	 * can handle this type of data.
+	 * Maps a {@link StringDataInstance} (this type) to the String DataType that best can handle
+	 * this type of data.
 	 * <p>
 	 * I dare myself to type Type one more time.
 	 * <p>
+	 * 
 	 * @return {@link DataType}, defaulting to {@link StringDataType} if no direct match found.
 	 */
 	public DataType getStringDataTypeGuess() {
@@ -1062,6 +1096,129 @@ public class StringDataInstance {
 	@Override
 	public String toString() {
 		return getStringValue();
+	}
+
+	private static ByteBuffer allocBuf(MemBuffer buf, int length) {
+		return ByteBuffer.allocate(length)
+				.order(buf.isBigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
+	}
+
+	private static boolean fitsIn(ByteBuffer buf, int lenLen) {
+		return buf.limit() < (1 << (8 * lenLen));
+	}
+
+	/**
+	 * Encode a string to replace the current value
+	 * 
+	 * @param value the value to encode
+	 * @return the encoded value
+	 * @throws CharacterCodingException if a character could not be encoded
+	 */
+	public byte[] encodeReplacementFromStringValue(CharSequence value)
+			throws CharacterCodingException {
+		CharsetEncoder ce = Charset.forName(charsetName).newEncoder();
+		ByteBuffer bb = ce.encode(CharBuffer.wrap(value));
+		return convertUnpaddedToPadded(checkAndEncodeLayout(bb));
+	}
+
+	/**
+	 * Parse and encode a string from its representation to replace the current value
+	 * 
+	 * @param repr the representation of the string
+	 * @return the encoded value
+	 * @throws StringParseException if the representation could not be parsed
+	 * @throws UnmappableCharacterException if a character could not be encoded
+	 * @throws MalformedInputException if the input contains invalid character sequences
+	 */
+	public byte[] encodeReplacementFromStringRepresentation(CharSequence repr)
+			throws MalformedInputException, UnmappableCharacterException, StringParseException {
+		AdjustedCharsetInfo aci = getAdjustedCharsetInfo();
+		StringRenderParser parser = new StringRenderParser(StringRenderBuilder.DOUBLE_QUOTE,
+			aci.endian, aci.charsetName, aci.byteStartOffset != 0);
+		ByteBuffer bb = parser.parse(CharBuffer.wrap(repr));
+		return convertUnpaddedToPadded(checkAndEncodeLayout(bb));
+	}
+
+	/**
+	 * Encode a single character to replace the current value
+	 * 
+	 * @param value a single code point to encode
+	 * @return the encoded value
+	 * @throws CharacterCodingException if the character could not be encoded
+	 */
+	public byte[] encodeReplacementFromCharValue(char[] value) throws CharacterCodingException {
+		CharsetEncoder ce = Charset.forName(charsetName).newEncoder();
+		ByteBuffer bb = ce.encode(CharBuffer.wrap(value));
+		return Arrays.copyOf(bb.array(), bb.limit());
+	}
+
+	/**
+	 * Parse and encode a single character from its representation to replace the current value
+	 * 
+	 * @param repr the representation of a single character
+	 * @return the encoded value
+	 * @throws StringParseException if the representation could not be parsed
+	 * @throws UnmappableCharacterException if a character could not be encoded
+	 * @throws MalformedInputException if the input contains invalid character sequences
+	 */
+	public byte[] encodeReplacementFromCharRepresentation(CharSequence repr)
+			throws MalformedInputException, UnmappableCharacterException, StringParseException {
+		// TODO: Given all the representation forms, how to check for a single character?
+		AdjustedCharsetInfo aci = getAdjustedCharsetInfo();
+		StringRenderParser parser = new StringRenderParser(StringRenderBuilder.SINGLE_QUOTE,
+			aci.endian, aci.charsetName, aci.byteStartOffset != 0);
+		ByteBuffer bb = parser.parse(CharBuffer.wrap(repr));
+		return Arrays.copyOf(bb.array(), bb.limit());
+	}
+
+	private byte[] checkAndEncodeLayout(ByteBuffer encoded) {
+		switch (stringLayout) {
+			case CHAR_SEQ:
+			case FIXED_LEN: {
+				if (length != -1 && encoded.limit() > length) {
+					throw new IllegalArgumentException("Encoded string does not fit");
+				}
+				byte[] result = new byte[length != -1 ? length : encoded.limit()];
+				encoded.get(result, 0, encoded.limit());
+				return result;
+			}
+			case NULL_TERMINATED_BOUNDED: {
+				if (length != -1 && encoded.limit() + charSize > length) {
+					throw new IllegalArgumentException("Encoded string does not fit");
+				}
+				byte[] result = new byte[encoded.limit() + charSize];
+				encoded.get(result, 0, encoded.limit());
+				return result;
+			}
+			case NULL_TERMINATED_UNBOUNDED: {
+				byte[] result = new byte[encoded.limit() + charSize];
+				encoded.get(result, 0, encoded.limit());
+				return result;
+			}
+			case PASCAL_255: {
+				if (!fitsIn(encoded, StringDataInstance.SIZEOF_PASCAL255_STR_LEN_FIELD)) {
+					throw new IllegalArgumentException("Encoded string does not fit");
+				}
+				ByteBuffer result = allocBuf(buf,
+					encoded.limit() + StringDataInstance.SIZEOF_PASCAL255_STR_LEN_FIELD);
+				result.put((byte) encoded.limit());
+				result.put(encoded);
+				return result.array();
+			}
+			case PASCAL_64k: {
+				if (!fitsIn(encoded, StringDataInstance.SIZEOF_PASCAL64k_STR_LEN_FIELD)) {
+					throw new IllegalArgumentException("Encoded string does not fit");
+				}
+				ByteBuffer result = allocBuf(buf,
+					encoded.limit() + StringDataInstance.SIZEOF_PASCAL64k_STR_LEN_FIELD);
+				result.putShort((short) encoded.limit());
+				result.put(encoded);
+				return result.array();
+			}
+			default: {
+				throw new IllegalArgumentException("Unknown string layout");
+			}
+		}
 	}
 
 //==================================================================================================

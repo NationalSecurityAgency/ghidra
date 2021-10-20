@@ -16,6 +16,7 @@
 package ghidra.program.model.data;
 
 import java.net.URL;
+import java.nio.ByteBuffer;
 
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
@@ -24,15 +25,15 @@ import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * A stub of the {@link DataType} interface.  This can be used to supply a test values 
- * or to spy on system internals by overriding methods as needed.
+ * A stub of the {@link DataType} interface. This can be used to supply a test values or to spy on
+ * system internals by overriding methods as needed.
  */
-public class TestDoubleDataType implements DataType {
+public class StubDataType implements DataType {
 
 	private UniversalID id;
 	private String name;
 
-	public TestDoubleDataType(String name) {
+	public StubDataType(String name) {
 		this.name = name;
 		this.id = UniversalIdGenerator.nextID();
 	}
@@ -154,6 +155,17 @@ public class TestDoubleDataType implements DataType {
 	}
 
 	@Override
+	public boolean isEncodable() {
+		return false;
+	}
+
+	@Override
+	public byte[] encodeValue(Object value, MemBuffer buf, Settings settings, int length)
+			throws DataTypeEncodeException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public Class<?> getValueClass(Settings settings) {
 		throw new UnsupportedOperationException();
 	}
@@ -182,6 +194,12 @@ public class TestDoubleDataType implements DataType {
 
 	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public byte[] encodeRepresentation(String repr, MemBuffer buf, Settings settings, int length)
+			throws DataTypeEncodeException {
 		throw new UnsupportedOperationException();
 	}
 
