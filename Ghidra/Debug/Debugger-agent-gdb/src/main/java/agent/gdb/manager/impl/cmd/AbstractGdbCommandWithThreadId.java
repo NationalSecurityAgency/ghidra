@@ -23,6 +23,7 @@ import agent.gdb.manager.impl.GdbManagerImpl;
  * @param <T> the type of object "returned" by the command
  */
 public abstract class AbstractGdbCommandWithThreadId<T> extends AbstractGdbCommand<T> {
+	protected static final String MI2_THREAD_PREFIX = " --thread ";
 	protected final Integer threadId;
 
 	/**
@@ -37,7 +38,7 @@ public abstract class AbstractGdbCommandWithThreadId<T> extends AbstractGdbComma
 	}
 
 	protected String makeThreadPart() {
-		return threadId == null ? "" : " --thread " + threadId;
+		return threadId == null ? "" : MI2_THREAD_PREFIX + threadId;
 	}
 
 	@Override

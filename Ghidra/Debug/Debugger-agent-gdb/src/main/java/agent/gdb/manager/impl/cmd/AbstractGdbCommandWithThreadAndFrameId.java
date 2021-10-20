@@ -25,6 +25,7 @@ import agent.gdb.manager.impl.GdbManagerImpl;
  */
 public abstract class AbstractGdbCommandWithThreadAndFrameId<T>
 		extends AbstractGdbCommandWithThreadId<T> {
+	protected static final String MI2_FRAME_PREFIX = " --frame ";
 	protected final Integer frameId;
 
 	/**
@@ -41,7 +42,7 @@ public abstract class AbstractGdbCommandWithThreadAndFrameId<T>
 	}
 
 	protected String makeFramePart() {
-		return frameId == null ? "" : " --frame " + frameId;
+		return frameId == null ? "" : MI2_FRAME_PREFIX + frameId;
 	}
 
 	/**
