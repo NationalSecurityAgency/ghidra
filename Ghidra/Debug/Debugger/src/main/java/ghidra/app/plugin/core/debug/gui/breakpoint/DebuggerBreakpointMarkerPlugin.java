@@ -965,7 +965,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		 */
 		Trace trace = getTraceFromContext(context);
 		boolean mapped = breakpointService.anyMapped(bs, trace);
-		Enablement toggled = en = en.getToggled(mapped);
+		Enablement toggled = en.getToggled(mapped);
 		if (toggled.enabled) {
 			breakpointService.enableAll(bs, trace).exceptionally(ex -> {
 				breakpointError(title, "Could not enable breakpoints", ex);
@@ -1049,10 +1049,12 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 
 	@AutoServiceConsumed
 	private void setMarkerService(MarkerService markerService) {
+		if (this.markerService != null) {
+			this.markerService.setMarkerClickedListener(null);
+		}
 		this.markerService = markerService;
-		// NB. There's no way to remove such a listener...
-		if (markerService != null) {
-			markerService.setMarkerClickedListener(markerClickedListener);
+		if (this.markerService != null) {
+			this.markerService.setMarkerClickedListener(markerClickedListener);
 		}
 	}
 
