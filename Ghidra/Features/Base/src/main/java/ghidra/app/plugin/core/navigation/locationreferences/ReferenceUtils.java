@@ -855,7 +855,7 @@ public final class ReferenceUtils {
 		// }
 
 		//
-		// Using the reference, we can heck for the 'Extended Markup' style reference, such as:
+		// Using the reference, we can check for the 'Extended Markup' style reference, such as:
 		// 		instruction ...=>Foo.bar.baz
 		//                     -------------
 		// Note: these references are to labels (not sure why the reference isn't to a data

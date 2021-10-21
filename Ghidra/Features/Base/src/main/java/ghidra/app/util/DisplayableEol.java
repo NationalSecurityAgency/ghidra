@@ -17,6 +17,8 @@ package ghidra.app.util;
 
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.fieldpanel.support.RowColLocation;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -116,7 +118,7 @@ public class DisplayableEol {
 
 	/**
 	 * Return whether the associated code unit has an end of line comment
-	 * @return whether the associated code unit has an end of line comment 
+	 * @return whether the associated code unit has an end of line comment
 	 */
 	public boolean hasEOL() {
 		return (displayCommentArrays[MY_EOLS] != null) &&
@@ -144,10 +146,10 @@ public class DisplayableEol {
 	}
 
 	/**
-	 * Return whether this code unit has an automatic comment.  For example, a memory reference 
-	 * from this code unit has a function defined at the reference's to address, or if the to 
+	 * Return whether this code unit has an automatic comment.  For example, a memory reference
+	 * from this code unit has a function defined at the reference's to address, or if the to
 	 * address is a pointer.
-	 * @return whether this code unit has an automatic comment 
+	 * @return whether this code unit has an automatic comment
 	 */
 	public boolean hasAutomatic() {
 		return (displayCommentArrays[MY_AUTOMATIC] != null) &&
@@ -240,7 +242,10 @@ public class DisplayableEol {
 			}
 		}
 
-		set.add("= " + getDataValueRepresentation(dataAccessAddress, data));
+		String dataRepresentation = getDataValueRepresentation(dataAccessAddress, data);
+		if (!StringUtils.isBlank(dataRepresentation)) {
+			set.add("= " + dataRepresentation);
+		}
 	}
 
 	private String getDataValueRepresentation(Address dataAccessAddress, Data data) {
@@ -249,8 +254,7 @@ public class DisplayableEol {
 		}
 
 		if (isOffcut(dataAccessAddress, data)) {
-			String offcut = getOffcutDataString(dataAccessAddress, data);
-			return offcut;
+			return getOffcutDataString(dataAccessAddress, data);
 		}
 
 		return data.getDefaultValueRepresentation();
@@ -516,13 +520,17 @@ public class DisplayableEol {
 			}
 
 			Address address = memRefs[i].getToAddress();
+			String repeatableComment = listing.getComment(CodeUnit.REPEATABLE_COMMENT, address);
+			if (repeatableComment != null) {
+				set.add(new RefRepeatComment(address, new String[] { repeatableComment }));
+			}
+
 			CodeUnit cu = listing.getCodeUnitAt(address);
 			if (cu == null) {
 				continue;
 			}
 
 			String[] comment = new String[0];
-
 			Function func = listing.getFunctionAt(address);
 			if (func != null) {
 				comment = func.getRepeatableCommentAsArray();
@@ -641,6 +649,33 @@ public class DisplayableEol {
 	 */
 	public String[] getAutomaticComment() {
 		return (String[]) displayCommentArrays[MY_AUTOMATIC];
+	}
+
+	@Override
+	public String toString() {
+
+		StringBuilder buffy = new StringBuilder();
+		String[] eols = (String[]) displayCommentArrays[MY_EOLS];
+		if (eols.length != 0) {
+			buffy.append("EOLs: ").append(Arrays.toString(eols));
+		}
+
+		String[] myRepeatables = (String[]) displayCommentArrays[MY_REPEATABLES];
+		if (myRepeatables.length != 0) {
+			buffy.append("My Repeatables: ").append(Arrays.toString(myRepeatables));
+		}
+
+		Object[] refRepeatables = displayCommentArrays[REF_REPEATABLES];
+		if (refRepeatables.length != 0) {
+			buffy.append("Ref Repeatables: ").append(Arrays.toString(refRepeatables));
+		}
+
+		String[] myAutomatic = (String[]) displayCommentArrays[MY_AUTOMATIC];
+		if (myAutomatic.length != 0) {
+			buffy.append("My Automatic: ").append(Arrays.toString(myAutomatic));
+		}
+
+		return buffy.toString();
 	}
 
 	public int getCommentLineCount(int subType) {
