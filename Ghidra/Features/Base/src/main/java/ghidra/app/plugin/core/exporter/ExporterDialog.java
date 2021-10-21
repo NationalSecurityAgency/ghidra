@@ -352,7 +352,7 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 			setStatusText("Please enter a destination file.");
 			return;
 		}
-		File file = new File(fileToExportInto);
+		File file = getSelectedOutputFile();
 		if (file.isDirectory()) {
 			setStatusText("The specified output file is a directory.");
 			return;
