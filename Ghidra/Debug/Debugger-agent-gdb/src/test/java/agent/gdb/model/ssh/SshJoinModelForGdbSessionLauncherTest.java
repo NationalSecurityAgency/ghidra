@@ -15,13 +15,23 @@
  */
 package agent.gdb.model.ssh;
 
+import static org.junit.Assume.assumeFalse;
+
+import org.junit.Before;
 import org.junit.experimental.categories.Category;
 
 import agent.gdb.model.AbstractModelForGdbSessionLauncherTest;
 import generic.test.category.NightlyCategory;
+import ghidra.util.SystemUtilities;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class SshJoinModelForGdbSessionLauncherTest extends AbstractModelForGdbSessionLauncherTest {
+
+	@Before
+	public void checkInteractive() {
+		assumeFalse(SystemUtilities.isInTestingBatchMode());
+	}
+
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new SshJoinGdbModelHost();
