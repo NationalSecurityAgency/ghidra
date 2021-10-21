@@ -50,7 +50,7 @@ public class FindStructuresByOffsetAction extends DockingAction {
 
 		setMenuBarData(
 			new MenuData(new String[] { NAME + "..." }, null, "VeryLast", -1, menuSubGroup));
-		setHelpLocation(new HelpLocation("DataTypeManagerPlugin", "Find_Data_Types_By_Offset"));
+		setHelpLocation(new HelpLocation("DataTypeManagerPlugin", "Find_Structures_By_Offset"));
 	}
 
 	@Override
