@@ -65,7 +65,7 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 	}
 
 	/**
-	 * Creates a new application using the specified application name 
+	 * Creates a new application using the specified application name
 	 * and version.
 	 * @param name application name
 	 * @param version application version
@@ -146,7 +146,7 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 
 		Application.initializeApplication(layout, configuration);
 		try {
-			ClassSearcher.search(false, configuration.getTaskMonitor());
+			ClassSearcher.search(configuration.getTaskMonitor());
 		}
 		catch (CancelledException e) {
 			Msg.debug(this, "Class searching unexpectedly cancelled.");

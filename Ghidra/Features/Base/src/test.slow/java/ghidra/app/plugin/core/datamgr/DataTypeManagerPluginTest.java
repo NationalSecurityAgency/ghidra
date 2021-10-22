@@ -63,8 +63,6 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
 import ghidra.test.*;
-import ghidra.util.classfinder.ClassSearchTask;
-import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 import util.CollectionUtils;
 import utilities.util.FileUtilities;
@@ -665,38 +663,6 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	@Test
-	public void testRefreshBuiltins() throws Exception {
-
-		try {
-			doTestRefreshBuiltins();
-		}
-		finally {
-			cleanupTestBuiltin();
-		}
-	}
-
-	private void doTestRefreshBuiltins() throws Exception {
-		GTreeNode treeRoot = tree.getModelRoot();
-		GTreeNode builtInNode = treeRoot.getChild("BuiltInTypes");
-
-		assertNull("Test setup Error: ghidra.app.test.TestDataType was not removed!",
-			builtInNode.getChild("TestDataType"));
-
-		compileJavaDataType();
-
-		DockingActionIf action = getAction(plugin, "Refresh BuiltInTypes");
-		assertTrue(action.isEnabledForContext(treeContext));
-		DataTypeTestUtils.performAction(action, tree, false);
-
-		waitForTasks();
-		waitForProgram();
-		waitForActionToBeEnabled(action);
-
-		builtInNode = treeRoot.getChild("BuiltInTypes");
-		assertNotNull(builtInNode.getChild("TestDataType"));
-	}
-
-	@Test
 	public void testDataTypePreviewCopyHtmlText() throws Exception {
 
 		openPreview();
@@ -1207,7 +1173,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	/**
-	 * This directory is bin in eclipse; it will be a resources directory in the classpath when run 
+	 * This directory is bin in eclipse; it will be a resources directory in the classpath when run
 	 * in batch mode.   The directory is one specifically created by and for this test.
 	 * @return class output directory
 	 * @throws FileNotFoundException Could not find class output directory
@@ -1263,31 +1229,6 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 				removeBinTestDir();
 			}
 		}
-	}
-
-	private void cleanupTestBuiltin() throws Exception {
-		File binDir = getClassesDirectory();
-		File javaFile = new File(binDir, "TestDataType.java");
-		File classFile = new File(binDir, "TestDataType.class");
-		javaFile.delete();
-		classFile.delete();
-
-		// force built-ins to get restored
-		Task task = new ClassSearchTask();
-		task.run(TaskMonitor.DUMMY);
-
-		DockingActionIf action = getAction(plugin, "Refresh BuiltInTypes");
-		assertTrue(action.isEnabledForContext(treeContext));
-		DataTypeTestUtils.performAction(action, tree, false);
-
-		waitForTasks();
-		waitForProgram();
-		waitForActionToBeEnabled(action);
-
-		GTreeNode treeRoot = tree.getModelRoot();
-		GTreeNode builtInNode = treeRoot.getChild("BuiltInTypes");
-		assertNull("Test setup Error: ghidra.app.test.TestDataType was not removed!",
-			builtInNode.getChild("TestDataType"));
 	}
 
 	private File getTestDataTypeFile() {
