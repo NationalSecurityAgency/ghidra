@@ -32,7 +32,7 @@ task genTestPy(type: JavaExec) {
 	outputs.dir(outDir)
 	classpath(sourceSets["main"].runtimeClasspath)
 	classpath(sourceSets["test"].runtimeClasspath)
-	main = "ghidra.comm.util.pyexport.GeneratePython"
+	mainClass = "ghidra.comm.util.pyexport.GeneratePython"
 	args("ghidra.comm.tests.packet", outDir)
 	doLast {
 		println("NOTE: It is normal to see some export errors, since some classes are intentionally broken to test error detection")
