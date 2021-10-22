@@ -214,7 +214,6 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(new OpenProjectArchiveAction(plugin));
 		addLocalAction(new CreateArchiveAction(plugin));
 		addLocalAction(new CreateProjectArchiveAction(plugin));
-		addLocalAction(new RefreshAction(plugin));
 		ToggleDockingAction previewAction = getPreviewWindowAction();
 		addLocalAction(previewAction);
 
