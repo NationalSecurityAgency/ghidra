@@ -104,11 +104,9 @@ task jacocoReport(type: JacocoReport, group: 'Coverage reports') {
   
    reports {
       html {
-         enabled true
+         required
          destination new File(rootDir.absolutePath + "/jacocoReport")
       }
-      xml {
-         enabled false
-      }
+      xml { }
    }
 }
