@@ -55,8 +55,7 @@ import resources.ResourceManager;
 import utility.function.Callback;
 
 public class DecompilerProvider extends NavigatableComponentProviderAdapter
-		implements DomainObjectListener, OptionsChangeListener, DecompilerCallbackHandler,
-		DecompilerHighlightService {
+		implements DomainObjectListener, OptionsChangeListener, DecompilerCallbackHandler {
 	final static String OPTIONS_TITLE = "Decompiler";
 
 	private static Icon REFRESH_ICON = Icons.REFRESH_ICON;
@@ -1074,17 +1073,4 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	public void programClosed(Program closedProgram) {
 		controller.programClosed(closedProgram);
 	}
-
-	@Deprecated // to be removed post 9.2; replace with an API to manipulate primary highlights
-	@Override
-	public ClangLayoutController getLayoutModel() {
-		return (ClangLayoutController) getDecompilerPanel().getLayoutModel();
-	}
-
-	@Deprecated // to be removed post 9.2; replace with an API to manipulate primary highlights
-	@Override
-	public void clearHighlights() {
-		getDecompilerPanel().clearPrimaryHighlights();
-	}
-
 }
